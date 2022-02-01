@@ -70,7 +70,7 @@ Open a Pull Request
 
 When you feel that work on your new feature is complete, you should create a *Pull Request*. This will propose your work to be merged into the main SkyPy repository.
 
-  1. Go to `SkyPy Pull Requests <https://github.com/LSST-strong-lensing/sim-pipeline/pulls>`_
+  1. Go to `sim-pipeline Pull Requests <https://github.com/LSST-strong-lensing/sim-pipeline/pulls>`_
   2. Click the green **New pull request** button
   3. Click **compare across forks**
   4. Confirm that the base fork is ``LSST-strong-lensing/sim-pipeline`` and the base branch is ``main``
