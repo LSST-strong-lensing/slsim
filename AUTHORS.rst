@@ -2,12 +2,10 @@
 Credits
 =======
 
-Development Lead
-----------------
-
-* DESC/SLSC
+This is a joint LSST-DESC and LSST-SLSC pipeline project.
 
 Contributors
 ------------
 
-None yet. Why not be the first?
+* Simon Birrer `sibirrer <https://github.com/sibirrer/>`_
+
