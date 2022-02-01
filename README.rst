@@ -16,8 +16,9 @@ LSST strong lensing simulation pipeline
 .. _Contributor Guidelines: https://sim-pipeline.readthedocs.io/en/latest/developer/contributing.html
 
 
-.. |Read the Docs| image:: https://img.shields.io/readthedocs/sim-pipeline/stable?label=Docs&logo=read%20the%20docs
-    :target: https://sim-pipeline.readthedocs.io/en/stable
+.. |Read the Docs| image:: https://readthedocs.org/projects/sim-pipeline/badge/?version=latest
+    :target: https://sim-pipeline.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
 
 .. |GitHub| image:: https://github.com/LSST-strong-lensing/sim-pipeline/workflows/CI/badge.svg
     :target: https://github.com/LSST-strong-lensing/sim-pipeline/actions
