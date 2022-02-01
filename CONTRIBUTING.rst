@@ -10,7 +10,7 @@ Fork and Clone the SkyPy Repository
 
 First *fork* the SkyPy repository. A fork is your own remote copy of the repository on GitHub. To create a fork:
 
-  1. Go to the `SkyPy GitHub Repository <https://github.com/LSST-strong-lensing/sim-pipeline>`_
+  1. Go to the `LSST-strong-lensing GitHub Repository <https://github.com/LSST-strong-lensing/sim-pipeline>`_
   2. Click the **Fork** button (in the top-right-hand corner)
   3. Choose where to create the fork, typically your personal GitHub account
 
