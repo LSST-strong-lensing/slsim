@@ -36,7 +36,7 @@ setup(
     keywords='sim_pipeline',
     name='sim_pipeline',
     packages=find_packages(include=['sim_pipeline', 'sim_pipeline.*']),
-    test_suite='test',
+    test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/LSST-strong-lensing/sim_pipeline',
     version='0.1.0',

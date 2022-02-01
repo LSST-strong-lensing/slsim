@@ -32,13 +32,12 @@ jobs:
           pip install -r requirements.txt
           pip install -r test_requirements.txt
           python -m pip install .
+
       - name: Test with pytest
         run: |
-          cd test
-          coverage run --source paltas -m unittest -v *_tests.py
-          coverage lcov --omit *config*.py
+          pytest --cov=sim-pipeline
       - name: Coveralls
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: ./test/coverage.lcov
+          path-to-lcov: ./tests/coverage.lcov
