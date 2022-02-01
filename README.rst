@@ -3,7 +3,7 @@ sim-pipeline
 ============
 LSST-strong-lensing/sim-pipeline
 
-|Read the Docs| |GitHub| |Codecov| |Compatibility|
+|Read the Docs| |GitHub| |Codecov|
 
 
 LSST strong lensing simulation pipeline
@@ -22,8 +22,6 @@ LSST strong lensing simulation pipeline
 .. |GitHub| image:: https://github.com/LSST-strong-lensing/sim-pipeline/workflows/Tests/badge.svg
     :target: https://github.com/LSST-strong-lensing/sim-pipeline/actions
 
-.. |Compatibility| image:: https://github.com/LSST-strong-lensing/sim-pipeline/actions/workflows/compatibility.yaml/badge.svg
-    :target: https://github.com/LSST-strong-lensing/sim-pipeline/actions/workflows/compatibility.yaml
 
 .. |Codecov| image:: https://codecov.io/gh/LSST-strong-lensing/sim-pipeline/branch/main/graph/badge.svg
     :target: https://codecov.io/gh/LSST-strong-lensing/sim-pipeline
