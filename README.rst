@@ -3,7 +3,7 @@ sim-pipeline
 ============
 LSST-strong-lensing/sim-pipeline
 
-|Read the Docs| |GitHub| |Codecov|
+|Read the Docs| |GitHub| |Coveralls|
 
 
 LSST strong lensing simulation pipeline
@@ -19,9 +19,8 @@ LSST strong lensing simulation pipeline
 .. |Read the Docs| image:: https://img.shields.io/readthedocs/sim-pipeline/stable?label=Docs&logo=read%20the%20docs
     :target: https://sim-pipeline.readthedocs.io/en/stable
 
-.. |GitHub| image:: https://github.com/LSST-strong-lensing/sim-pipeline/workflows/Tests/badge.svg
+.. |GitHub| image:: https://github.com/LSST-strong-lensing/sim-pipeline/workflows/ci_test/badge.svg
     :target: https://github.com/LSST-strong-lensing/sim-pipeline/actions
 
-
-.. |Codecov| image:: https://codecov.io/gh/LSST-strong-lensing/sim-pipeline/branch/main/graph/badge.svg
-    :target: https://codecov.io/gh/LSST-strong-lensing/sim-pipeline
+.. |Coveralls| image:: https://coveralls.io/repos/github/LSST-strong-lensing/sim-pipeline/badge.svg
+    :target: https://coveralls.io/github/LSST-strong-lensing/sim-pipeline
