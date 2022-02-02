@@ -4,11 +4,11 @@ Contributor Guidelines
 GitHub Workflow
 ---------------
 
-Fork and Clone the SkyPy Repository
+Fork and Clone the sim-pipeline Repository
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 **You should only need to do this step once**
 
-First *fork* the SkyPy repository. A fork is your own remote copy of the repository on GitHub. To create a fork:
+First *fork* the sim-pipeline repository. A fork is your own remote copy of the repository on GitHub. To create a fork:
 
   1. Go to the `LSST-strong-lensing GitHub Repository <https://github.com/LSST-strong-lensing/sim-pipeline>`_
   2. Click the **Fork** button (in the top-right-hand corner)
@@ -25,7 +25,7 @@ Finally add the ``sim-pipeline-project`` repository as a *remote*. This will all
 
 ::
 
-  cd skypy
+  cd sim-pipeline
   git remote add sim-pipeline-project https://github.com/LSST-strong-lensing/sim-pipeline.git
 
 
@@ -68,7 +68,7 @@ Write the new code you would like to contribute and *commit* it to the feature b
 Open a Pull Request
 ^^^^^^^^^^^^^^^^^^^
 
-When you feel that work on your new feature is complete, you should create a *Pull Request*. This will propose your work to be merged into the main SkyPy repository.
+When you feel that work on your new feature is complete, you should create a *Pull Request*. This will propose your work to be merged into the main sim-pipeline repository.
 
   1. Go to `sim-pipeline Pull Requests <https://github.com/LSST-strong-lensing/sim-pipeline/pulls>`_
   2. Click the green **New pull request** button
@@ -91,18 +91,18 @@ A series of automated checks will be run on your pull request, some of which wil
 Updating your branch
 ^^^^^^^^^^^^^^^^^^^^
 
-As you work on your feature, new commits might be made to the ``skypyproject`` main branch. You will need to update your branch with these new commits before your pull request can be accepted. You can achieve this in a few different ways:
+As you work on your feature, new commits might be made to the ``sim-pipeline-project`` main branch. You will need to update your branch with these new commits before your pull request can be accepted. You can achieve this in a few different ways:
 
   - If your pull request has no conflicts, click **Update branch**
   - If your pull request has conflicts, click **Resolve conflicts**, manually resolve the conflicts and click **Mark as resolved**
-  - *merge* the ``skypyproject`` main branch from the command line:
+  - *merge* the ``sim-pipeline-project`` main branch from the command line:
 
     ::
 
         git fetch sim-pipeline-project
         git merge sim-pipeline-project/main
 
-  - *rebase* your feature branch onto the ``skypyproject`` main branch from the command line:
+  - *rebase* your feature branch onto the ``sim-pipeline-project`` main branch from the command line:
     ::
 
         git fetch sim-pipeline-project
@@ -124,15 +124,15 @@ More information regarding the usage of GitHub can be found in the `GitHub Guide
 Coding Guidelines
 -----------------
 
-Before your pull request can be merged into the codebase, it will be reviewed by one of the SkyPy developers and required to pass a number of automated checks. Below are a minimum set of guidelines for developers to follow:
+Before your pull request can be merged into the codebase, it will be reviewed by one of the sim-pipeline developers and required to pass a number of automated checks. Below are a minimum set of guidelines for developers to follow:
 
 General Guidelines
 ^^^^^^^^^^^^^^^^^^
 
-- SkyPy is compatible with Python>=3.7 (see `setup.cfg <https://github.com/skypyproject/skypy/blob/main/setup.cfg>`_). SkyPy *does not* support backwards compatibility with Python 2.x; `six`, `__future__` and `2to3` should not be used.
+- sim-pipeline is compatible with Python>=3.7 (see `setup.cfg <https://github.com/herjy/sim-pipeline/blob/main/setup.cfg>`_). sim-pipeline *does not* support backwards compatibility with Python 2.x; `six`, `__future__` and `2to3` should not be used.
 - All contributions should follow the `PEP8 Style Guide for Python Code <https://www.python.org/dev/peps/pep-0008/>`_. We recommend using `flake8 <https://flake8.pycqa.org/>`__ to check your code for PEP8 compliance.
-- Importing SkyPy should only depend on having `NumPy <https://www.numpy.org>`_, `SciPy <https://www.scipy.org/>`_ and `Astropy <https://www.astropy.org/>`__ installed.
-- Code is grouped into submodules based on broad science areas e.g. `galaxies <https://skypy.readthedocs.io/en/stable/galaxies.html>`_. There is also a `utils <https://skypy.readthedocs.io/en/stable/utils/index.html>`_ submodule for general utility functions.
+- Importing sim-pipeline should only depend on having `NumPy <https://www.numpy.org>`_, `SciPy <https://www.scipy.org/>`_ and `Astropy <https://www.astropy.org/>`__ installed.
+- Code will be grouped into submodules based on broad science areas.
 - For more information see the `Astropy Coding Guidelines <http://docs.astropy.org/en/latest/development/codeguide.html>`_.
 
 Unit Tests
