@@ -1,19 +1,47 @@
 ============
 sim-pipeline
 ============
-LSST-strong-lensing/sim-pipeline
 
 |Read the Docs| |GitHub| |Coveralls|
 
 
-LSST strong lensing simulation pipeline
+LSST strong lensing simulation pipeline.
+
+This GitHub project originates from an intercollaboration agreement between
+the two LSST Science collaborations:
+
+- `Strong Lensing Science Collaboration (SLSC) <https://sites.google.com/view/lsst-stronglensing?pli=1>`_
+- `Dark Energy Science Collaboration (DESC) <https://lsstdesc.org>`_
+
+This repository provides the simulation tools for the purpose of conducting strong gravitational lensing science with the Vera C. Rubin Observatory.
+All the tools are open-source available. Check out below how you can contribute and become part of the LSST strong lensing science.
 
 
 * Free software: MIT license
 * Documentation: https://sim-pipeline.readthedocs.io.
 
 
-.. _Contributor Guidelines: https://sim-pipeline.readthedocs.io/en/latest/developer/contributing.html
+How to contribute to the repository?
+------------------------------------
+Check out our step-by-step instructions how you can contribute code to this project Contributing_ Guidelines.
+Are you new to coding and contributing to a software development project? No worries! We help you out! Write us on the LSST Slack channel #sl-pipeline.
+
+
+How can I participate in LSST strong lensing projects?
+------------------------------------------------------
+We have a dedicated Onbording_ page with all the information about the collaboration structure and how to become part of this project.
+We are excited to having you part of the LSST strong lensing effort!
+
+
+How can I give credit when using this package?
+----------------------------------------------
+We strive to acknowledge all contributors of this repository, be it direct code contributions or for the project at large.
+See our Citation_ guidelines.
+
+
+.. _Contributing: https://sim-pipeline.readthedocs.io/en/latest/contributing.html
+.. _Onbording: https://sim-pipeline.readthedocs.io/en/latest/onbording.html
+.. _Citation: https://sim-pipeline.readthedocs.io/en/latest/citation.html
 
 
 .. |Read the Docs| image:: https://readthedocs.org/projects/sim-pipeline/badge/?version=latest
