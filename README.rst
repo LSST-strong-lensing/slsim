@@ -29,7 +29,7 @@ Are you new to coding and contributing to a software development project? No wor
 
 How can I participate in LSST strong lensing projects?
 ------------------------------------------------------
-We have a dedicated Onbording_ page with all the information about the collaboration structure and how to become part of this project.
+We have a dedicated Onboarding_ page with all the information about the collaboration structure and how to become part of this project.
 We are excited to having you part of the LSST strong lensing effort!
 
 
@@ -40,7 +40,7 @@ See our Citation_ guidelines.
 
 
 .. _Contributing: https://sim-pipeline.readthedocs.io/en/latest/contributing.html
-.. _Onbording: https://sim-pipeline.readthedocs.io/en/latest/onbording.html
+.. _Onboarding: https://sim-pipeline.readthedocs.io/en/latest/onboarding.html
 .. _Citation: https://sim-pipeline.readthedocs.io/en/latest/citation.html
 
 
