@@ -8,4 +8,4 @@ Contributors (alphabetical)
 ---------------------------
 
 * Simon Birrer `sibirrer <https://github.com/sibirrer/>`_
-* Aprajita Verma `sibirrer <https://github.com/aprajita/>`_
+* Aprajita Verma `aprajita <https://github.com/aprajita/>`_
