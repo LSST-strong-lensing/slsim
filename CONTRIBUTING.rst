@@ -5,7 +5,7 @@ GitHub Workflow
 ---------------
 
 Fork and Clone the sim-pipeline Repository
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 **You should only need to do this step once**
 
 First *fork* the sim-pipeline repository. A fork is your own remote copy of the repository on GitHub. To create a fork:
