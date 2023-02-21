@@ -9,4 +9,5 @@ Contributors (alphabetical)
 
 * Simon Birrer `sibirrer <https://github.com/sibirrer/>`_
 * Remy Joseph `herjy <https://github.com/herjy/>`_
+* Narayan Khadka `nkhadka21 <https://github.com/nkhadka21/>`_
 * Aprajita Verma `aprajita <https://github.com/aprajita/>`_
