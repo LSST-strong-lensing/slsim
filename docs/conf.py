@@ -47,8 +47,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'sim-pipeline'
-copyright = "2022, DESC/SLSC"
-author = "DESC/SLSC"
+copyright = "2022, DESC & SLSC"
+author = "DESC & SLSC"
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout
@@ -129,7 +129,7 @@ latex_elements = {
 latex_documents = [
     (master_doc, 'sim_pipeline.tex',
      'sim-pipeline Documentation',
-     'DESC/SLSC', 'manual'),
+     'DESC & SLSC', 'manual'),
 ]
 
 
