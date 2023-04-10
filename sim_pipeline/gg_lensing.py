@@ -1,19 +1,15 @@
 import os
 import random
 # lenstronomy module import
-import lenstronomy
 import matplotlib.pyplot as plt
 import numpy as np
-import skypy
 from lenstronomy.SimulationAPI.sim_api import SimAPI
 from lenstronomy.Util import constants
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
-from skypy.pipeline import Pipeline
 from skypy.galaxies.velocity_dispersion import schechter_vdf
 from astropy.cosmology import FlatLambdaCDM
 from astropy.visualization import make_lupton_rgb
 from lenstronomy.SimulationAPI.ObservationConfig.LSST import LSST
-from lenstronomy.ImSim.image_model import ImageModel
 
 from get_vd_from_stallermass import get_vd_from_stallermass
 
