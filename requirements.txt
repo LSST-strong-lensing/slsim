@@ -1,3 +1,6 @@
 skypy
 lenstronomy
 astropy
+numpy
+speclite
+yaml
