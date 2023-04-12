@@ -34,7 +34,7 @@ class GGLens(object):
             center_x_lens, center_y_lens = np.random.normal(loc=0, scale=0.1), np.random.normal(loc=0, scale=0.1)
             self._center_lens = [center_x_lens, center_y_lens]
         if not hasattr(self, '_center_source'):
-            r_squared, theta = [np.random.randint(0, self.einstein_radius() * 2), 2*np.pi*np.random.random()]
+            r_squared, theta = [self.einstein_radius() * np.sqrt(np.random.random()), 2*np.pi*np.random.random()]
             center_x_source = np.sqrt(r_squared) * np.cos(theta)
             center_y_source = np.sqrt(r_squared) * np.sin(theta)
             self._center_source = [center_x_source, center_y_source]
@@ -66,7 +66,6 @@ class GGLens(object):
 
         :return: Einstein radius [arc seconds]
         """
-
         return self._theta_E
 
     def deflector_ellipticity(self):

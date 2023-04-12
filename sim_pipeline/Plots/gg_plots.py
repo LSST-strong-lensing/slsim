@@ -9,7 +9,7 @@ class GGLensingPlots(object):
 
 
     """
-    def __init__(self, lens_pop, num_pix=64, coadd_years=1):
+    def __init__(self, lens_pop, num_pix=64, coadd_years=10):
         """
 
         :param lens_pop: lens population class, such as GGLensPop()

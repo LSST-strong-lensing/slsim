@@ -17,6 +17,19 @@ class EarlyTypeLensGalaxies(object):
         :param kwargs_mass2light: mass-to-light relation
         :param cosmo: astropy.cosmology instance
         """
+        n = len(galaxy_list)
+        column_names = galaxy_list.colnames
+        if 'vel_disp' not in column_names:
+            galaxy_list['vel_disp'] = -np.ones(n)
+        if 'e1_light' not in column_names or 'e2_light' not in column_names:
+            galaxy_list['e1_light'] = -np.ones(n)
+            galaxy_list['e2_light'] = -np.ones(n)
+        if 'e1_mass' not in column_names or 'e2_mass' not in column_names:
+            galaxy_list['e1_mass'] = -np.ones(n)
+            galaxy_list['e2_mass'] = -np.ones(n)
+        if 'n_sersic' not in column_names:
+            galaxy_list['n_sersic'] = -np.ones(n)
+
         self._galaxy_select = galaxy_cut(galaxy_list, **kwargs_cut)
         self._num_select = len(self._galaxy_select)
 
@@ -28,17 +41,17 @@ class EarlyTypeLensGalaxies(object):
 
         index = random.randint(0, self._num_select - 1)
         deflector = self._galaxy_select[index]
-        if 'vel_disp' not in deflector:
+        if deflector['vel_disp'] == -1:
             stellar_mass = deflector['stellar_mass']
             vel_disp = vel_disp_from_m_star(stellar_mass)
             deflector['vel_disp'] = vel_disp
-        if 'e1_light' not in deflector or 'e2_light' not in deflector:
+        if deflector['e1_light'] == -1 or deflector['e2_light'] == - 1:
             e1_light, e2_light, e1_mass, e2_mass = early_type_projected_eccentricity(**deflector)
             deflector['e1_light'] = e1_light
             deflector['e2_light'] = e2_light
             deflector['e1_mass'] = e1_mass
             deflector['e2_mass'] = e2_mass
-        if 'n_sersic' not in deflector:
+        if deflector['n_sersic'] == -1:
             deflector['n_sersic'] = 4  # TODO make a better estimate with scatter
         return deflector
 

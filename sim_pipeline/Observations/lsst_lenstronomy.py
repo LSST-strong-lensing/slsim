@@ -1,7 +1,7 @@
 from lenstronomy.SimulationAPI.ObservationConfig.LSST import LSST
 
 
-def kwargs_single_band(band, psf_type='GAUSSIAN', coadd_years=5):
+def kwargs_single_band(band, psf_type='GAUSSIAN', coadd_years=10):
     """
     this is the function for returning the band information
 
