@@ -3,4 +3,4 @@ lenstronomy
 astropy
 numpy
 speclite
-yaml
+pyyaml
