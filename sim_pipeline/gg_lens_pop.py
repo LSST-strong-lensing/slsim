@@ -60,8 +60,28 @@ class GGLensPop(object):
     def draw_population(self):
         """
         return full population list of all lenses within the area
-        # TODO: need to implement a version of it.
+        # TODO: need to implement a version of it. (improve the algorithm)
+            Draw a population of galaxy-galaxy lenses within the area.
 
-        :return:
+        :return: List of GGLens instances with parameters of the deflectors and lens and source light.
+        :rtype: list
         """
-        raise NotImplemented()
+        valid_lenses = []
+        count = 0
+
+        num_trials = 10000  #need implement
+        for _ in range(num_trials):
+            # using draw_galaxy and draw_deflector randon lensing system
+            source = self._source_galaxies.draw_galaxy()
+            lens = self._lens_galaxies.draw_deflector()
+
+            gg_lens = GGLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo)
+
+            if gg_lens.validity_test():
+                valid_lenses.append(gg_lens)
+                count += 1
+
+        return valid_lenses, count
+
+
+

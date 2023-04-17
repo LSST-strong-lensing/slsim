@@ -69,7 +69,11 @@ def vel_disp_from_m_star(m_star):
     function for calculate the velocity dispersion from the staller mass using empirical relation for
     early type galaxies
 
-    #TODO: write latex formula of power law
+    The power-law formula is given by:
+
+    .. math::
+
+         V_{\mathrm{disp}} = 10^{2.32} \left( \frac{M_{\mathrm{star}}}{10^{11} M_\odot} \right)^{0.24}
 
     2.32,0.24 is the parameters from [1] table 2
     [1]:Auger, M. W., et al. "The Sloan Lens ACS Survey. X. Stellar, dynamical, and total mass correlations of massive

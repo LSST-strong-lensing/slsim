@@ -1,7 +1,8 @@
 import numpy as np
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 from lenstronomy.Util import constants
-
+from lenstronomy.LensModel.lens_model import LensModel
+from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
 
 class GGLens(object):
     """
@@ -57,6 +58,14 @@ class GGLens(object):
         if self._theta_E * 2 > max_image_separation:
             return False
         # TODO: test for image multiplicities
+        kwargs_model, kwargs_params = self.lenstronomy_kwargs('any_band')
+        lens_model_class = LensModel(lens_model_list=kwargs_model['lens_model_list'])
+        lens_eq_solver = LensEquationSolver(lens_model_class)
+
+        source_pos = kwargs_params['kwargs_source'][0]['center_x'], kwargs_params['kwargs_source'][0]['center_y']
+        image_positions = lens_eq_solver.image_position_from_source(source_pos, kwargs_params['kwargs_lens'])
+        if len(image_positions)<2 return False
+
         # TODO: test for lensed arc brightness
         return True
 
