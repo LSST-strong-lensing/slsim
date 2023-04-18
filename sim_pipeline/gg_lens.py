@@ -64,8 +64,8 @@ class GGLens(object):
 
         source_pos = kwargs_params['kwargs_source'][0]['center_x'], kwargs_params['kwargs_source'][0]['center_y']
         image_positions = lens_eq_solver.image_position_from_source(source_pos, kwargs_params['kwargs_lens'])
-        if len(image_positions)<2 return False
-
+        if len(image_positions)<2:    #?????
+            return False
         # TODO: test for lensed arc brightness
         return True
 
