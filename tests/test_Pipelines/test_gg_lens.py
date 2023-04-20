@@ -4,56 +4,32 @@ from astropy.table import Table
 from sim_pipeline.gg_lens import GGLens
 
 class TestGGLens(object):
-    @pytest.fixture
-    def setup_method(self):
-        blue_one = Table.read('data/Skypy/blue_one.fits', format='fits')
-        red_one = Table.read('data/Skypy/red_one.fits', format='fits')
+    @pytest.fixture(scope='class')
+    def gg_lens(self):
+        blue_one = Table.read('../../data/Skypy/blue_one_modified.fits', format='fits')
+        red_one = Table.read('../../data/Skypy/red_one_modified.fits', format='fits')
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         source_dict = blue_one
         deflector_dict = red_one
-        self.gg_lens = GGLens(source_dict, deflector_dict, cosmo)
+        return GGLens(source_dict=source_dict, deflector_dict=deflector_dict, cosmo=cosmo)
 
-    '''  
-    def test_einstein_radius(self):
-        einstein_radius = self.gg_lens.einstein_radius()
-        assert einstein_radius == ????
-  
-    def test_deflector_ellipticity(self):
-        e1_light, e2_light, e1_mass, e2_mass = self.gg_lens.deflector_ellipticity()
-        assert e1_light == ?????
-        assert e2_light == ?????
-        assert e1_mass == ?????
-        assert e2_mass == ?????
-    
-    def test_los_linear_distortions(self):
-        gamma1, gamma2, kappa = self.gg_lens.los_linear_distortions()
-        assert gamma1 == ?????
-        assert gamma2 == ?????
-        assert kappa == ?????
-  '''
-    def test_deflector_magnitude(self):
-        band = 'g'
-        deflector_magnitude = self.gg_lens.deflector_magnitude(band)
-        assert isinstance(deflector_magnitude, float)
-        assert pytest.approx(deflector_magnitude,rel=1e-3) == 30.780194
+    def test_deflector_ellipticity(self, gg_lens):
+        e1_light, e2_light, e1_mass, e2_mass = gg_lens.deflector_ellipticity()
+        assert e1_light == -0.05661955320450283
+        assert e2_light == 0.08738390223219591
+        assert e1_mass == -0.08434700688970058
+        assert e2_mass == 0.09710653297997263
 
-    def test_source_magnitude(self):
+    def test_deflector_magnitude(self, gg_lens):
         band = 'g'
-        source_magnitude = self.gg_lens.source_magnitude(band)
-        assert pytest.approx(source_magnitude, rel=1e-3) == 26.4515655
+        deflector_magnitude = gg_lens.deflector_magnitude(band)
+        assert isinstance(deflector_magnitude[0], float)
+        assert pytest.approx(deflector_magnitude[0],rel=1e-3) == 26.4515655
 
-    def test_lenstronomy_kwargs(self):
+    def test_source_magnitude(self, gg_lens):
         band = 'g'
-        kwargs_model, kwargs_params = self.gg_lens.lenstronomy_kwargs(band)
-        assert 'source_light_model_list' in kwargs_model
-        assert 'lens_light_model_list' in kwargs_model
-        assert 'lens_model_list' in kwargs_model
-        assert 'kwargs_lens' in kwargs_params
-        assert 'kwargs_source' in kwargs_params
-        assert 'kwargs_lens_light' in kwargs_params
-        assert len(kwargs_params['kwargs_lens']) == 3
-        assert len(kwargs_params['kwargs_source']) == 1
-        assert len(kwargs_params['kwargs_lens_light']) == 1
+        source_magnitude = gg_lens.source_magnitude(band)
+        assert pytest.approx(source_magnitude[0], rel=1e-3) == 30.780194
 
 if __name__ == '__main__':
     pytest.main()

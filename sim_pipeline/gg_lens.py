@@ -57,12 +57,12 @@ class GGLens(object):
             return False
         if self._theta_E * 2 > max_image_separation:
             return False
-        # TODO: test for image multiplicities
         kwargs_model, kwargs_params = self.lenstronomy_kwargs('any_band')
         lens_model_class = LensModel(lens_model_list=kwargs_model['lens_model_list'])
         lens_eq_solver = LensEquationSolver(lens_model_class)
 
         source_pos = kwargs_params['kwargs_source'][0]['center_x'], kwargs_params['kwargs_source'][0]['center_y']
+        # TODO: make image_position definition to not re-compute lens equation solver multiple times
         image_positions = lens_eq_solver.image_position_from_source(source_pos, kwargs_params['kwargs_lens'])
         if len(image_positions)<2:    #?????
             return False
