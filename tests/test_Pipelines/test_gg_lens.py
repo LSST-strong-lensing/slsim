@@ -9,10 +9,10 @@ import os
 class TestGGLens(object):
     @pytest.fixture(scope='class')
     def gg_lens(self):
-        path = os.path.dirname(sim_pipeline.__file__)
-        module_path, _ = os.path.split(path)
-        blue_one = Table.read(os.path.join(module_path, 'data/Skypy/blue_one_modified.fits'), format='fits')
-        red_one = Table.read(os.path.join(module_path, 'data/Skypy/red_one_modified.fits'), format='fits')
+        tests_path = os.path.dirname(os.path.abspath(__file__))
+        base_path = os.path.abspath(os.path.join(tests_path, '..', '..'))
+        blue_one = Table.read(os.path.join(base_path, 'data', 'Skypy', 'blue_one_modified.fits'), format='fits')
+        red_one = Table.read(os.path.join(base_path, 'data', 'Skypy', 'red_one_modified.fits'), format='fits')
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         source_dict = blue_one
         deflector_dict = red_one
