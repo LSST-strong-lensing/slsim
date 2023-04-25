@@ -17,21 +17,25 @@ class EarlyTypeLensGalaxies(object):
         :param kwargs_mass2light: mass-to-light relation
         :param cosmo: astropy.cosmology instance
         """
-        n = len(galaxy_list)
+        self.n = len(galaxy_list)
         column_names = galaxy_list.colnames
         if 'vel_disp' not in column_names:
-            galaxy_list['vel_disp'] = -np.ones(n)
+            galaxy_list['vel_disp'] = -np.ones(self.n)
         if 'e1_light' not in column_names or 'e2_light' not in column_names:
-            galaxy_list['e1_light'] = -np.ones(n)
-            galaxy_list['e2_light'] = -np.ones(n)
+            galaxy_list['e1_light'] = -np.ones(self.n)
+            galaxy_list['e2_light'] = -np.ones(self.n)
         if 'e1_mass' not in column_names or 'e2_mass' not in column_names:
-            galaxy_list['e1_mass'] = -np.ones(n)
-            galaxy_list['e2_mass'] = -np.ones(n)
+            galaxy_list['e1_mass'] = -np.ones(self.n)
+            galaxy_list['e2_mass'] = -np.ones(self.n)
         if 'n_sersic' not in column_names:
-            galaxy_list['n_sersic'] = -np.ones(n)
+            galaxy_list['n_sersic'] = -np.ones(self.n)
 
         self._galaxy_select = galaxy_cut(galaxy_list, **kwargs_cut)
         self._num_select = len(self._galaxy_select)
+
+    def deflector_number(self):
+        number = self.n
+        return number
 
     def draw_deflector(self):
         """
