@@ -5,7 +5,8 @@ from sim_pipeline.image_simulation import simulate_image
 
 class GGLensingPlots(object):
     """
-    A class to create and display simulated gravitational lensing images using the provided configurations for the source (blue) and lens (red) galaxies.
+    A class to create and display simulated gravitational lensing images using the provided configurations for the
+    source (blue) and lens (red) galaxies.
 
 
     """

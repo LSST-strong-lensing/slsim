@@ -4,6 +4,7 @@ from lenstronomy.Util import constants
 from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
 
+
 class GGLens(object):
     """
     class to manage individual galaxy-galaxy lenses
@@ -42,41 +43,40 @@ class GGLens(object):
         return self._center_lens, self._center_source
 
     def validity_test(self, min_image_separation=0, max_image_separation=10):
-            """
-            check whether lensing configuration matches selection and plausibility criteria
+        """
+        check whether lensing configuration matches selection and plausibility criteria
 
-            :param min_image_separation:
-            :param max_image_separation:
-            :return: boolean
-            """
-            z_lens = self._lens_dict['z']
-            z_source = self._source_dict['z']
-            if z_lens >= z_source:
-                return False
-            if self._theta_E * 2 < min_image_separation:
-                return False
-            if self._theta_E * 2 > max_image_separation:
-                return False
-            kwargs_model, kwargs_params = self.lenstronomy_kwargs('g')
-            lens_model_class = LensModel(lens_model_list=kwargs_model['lens_model_list'])
-            lens_eq_solver = LensEquationSolver(lens_model_class)
+        :param min_image_separation:
+        :param max_image_separation:
+        :return: boolean
+        """
+        z_lens = self._lens_dict['z']
+        z_source = self._source_dict['z']
+        if z_lens >= z_source:
+            return False
+        if self._theta_E * 2 < min_image_separation:
+            return False
+        if self._theta_E * 2 > max_image_separation:
+            return False
+        kwargs_model, kwargs_params = self.lenstronomy_kwargs('g')
+        lens_model_class = LensModel(lens_model_list=kwargs_model['lens_model_list'])
+        lens_eq_solver = LensEquationSolver(lens_model_class)
 
-            # TODO: make image_position definition to not re-compute lens equation solver multiple times
-            source_pos_x = kwargs_params['kwargs_source'][0]['center_x']
-            source_pos_y = kwargs_params['kwargs_source'][0]['center_y']
-            if (source_pos_x) ** 2 + (source_pos_y) ** 2 > (self._theta_E) ** 2:
-                return False
+        # TODO: make image_position definition to not re-compute lens equation solver multiple times
+        source_pos_x = kwargs_params['kwargs_source'][0]['center_x']
+        source_pos_y = kwargs_params['kwargs_source'][0]['center_y']
+        if (source_pos_x) ** 2 + (source_pos_y) ** 2 > (self._theta_E) ** 2:
+            return False
 
-            kwargs_lens = kwargs_params['kwargs_lens']
-            image_positions = lens_eq_solver.image_position_from_source(source_pos_x, source_pos_y, kwargs_lens)
-            if len(image_positions) < 2:
-                return False
+        kwargs_lens = kwargs_params['kwargs_lens']
+        image_positions = lens_eq_solver.image_position_from_source(source_pos_x, source_pos_y, kwargs_lens)
+        if len(image_positions) < 2:
+            return False
 
-            return True
+        return True
         #image_separation = np.sqrt((image_positions[0][0] - image_positions[1][0]) ** 2 + (image_positions[0][1] - image_positions[1][1]) ** 2)
 
         # TODO: test for lensed arc brightness
-
 
     def einstein_radius(self):
         """

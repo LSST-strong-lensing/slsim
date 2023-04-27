@@ -1,19 +1,19 @@
 import pytest
 from astropy.cosmology import FlatLambdaCDM
 from astropy.table import Table
-import sim_pipeline
 from sim_pipeline.gg_lens import GGLens
 
 import os
 
 
 class TestGGLens(object):
-    #pytest.fixture(scope='class')
+    # pytest.fixture(scope='class')
     def setup_method(self):
-        #path = os.path.dirname(sim_pipeline.__file__)
+        # path = os.path.dirname(sim_pipeline.__file__)
 
         path = os.path.dirname(__file__)
         module_path, _ = os.path.split(path)
+        print(path, module_path)
         blue_one = Table.read(os.path.join(module_path, 'TestData/blue_one_modified.fits'), format='fits')
         red_one = Table.read(os.path.join(module_path, 'TestData/red_one_modified.fits'), format='fits')
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -32,7 +32,7 @@ class TestGGLens(object):
         band = 'g'
         deflector_magnitude = self.gg_lens.deflector_magnitude(band)
         assert isinstance(deflector_magnitude[0], float)
-        assert pytest.approx(deflector_magnitude[0],rel=1e-3) == 26.4515655
+        assert pytest.approx(deflector_magnitude[0], rel=1e-3) == 26.4515655
 
     def test_source_magnitude(self):
         band = 'g'
