@@ -1,5 +1,4 @@
 import os
-import yaml
 from skypy.pipeline import Pipeline
 import sim_pipeline
 

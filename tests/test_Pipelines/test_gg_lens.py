@@ -1,5 +1,4 @@
 import pytest
-import pkg_resources
 from astropy.cosmology import FlatLambdaCDM
 from astropy.table import Table
 import sim_pipeline
@@ -10,11 +9,13 @@ import os
 
 class TestGGLens(object):
     #pytest.fixture(scope='class')
-    def setup(self):
-        path = os.path.dirname(sim_pipeline.__file__)
+    def setup_method(self):
+        #path = os.path.dirname(sim_pipeline.__file__)
+
+        path = os.path.dirname(__file__)
         module_path, _ = os.path.split(path)
-        blue_one = Table.read(os.path.join(module_path, 'data/Skypy/blue_one_modified.fits'), format='fits')
-        red_one = Table.read(os.path.join(module_path, 'data/Skypy/red_one_modified.fits'), format='fits')
+        blue_one = Table.read(os.path.join(module_path, 'TestData/blue_one_modified.fits'), format='fits')
+        red_one = Table.read(os.path.join(module_path, 'TestData/red_one_modified.fits'), format='fits')
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         source_dict = blue_one
         deflector_dict = red_one

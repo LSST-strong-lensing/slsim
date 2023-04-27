@@ -3,7 +3,7 @@ from sim_pipeline.Pipelines.skypy_pipeline import SkyPyPipeline
 
 class TestSkyPyPipeline(object):
 
-    def setup(self):
+    def setup_method(self):
         self.pipeline = SkyPyPipeline(skypy_config=None, f_sky=0.1)
 
     def test_blue_galaxies(self):
