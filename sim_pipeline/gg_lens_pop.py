@@ -7,7 +7,7 @@ class GGLensPop(object):
     class to perform samples of galaxy-galaxy lensing
     """
 
-    def __init__(self, lens_type='early-type', source_type='galaxy', kwargs_lens_cut=None, kwargs_source_cut=None,
+    def __init__(self, lens_type='early-type', source_type='galaxies', kwargs_lens_cut=None, kwargs_source_cut=None,
                  kwargs_mass2light=None, skypy_config=None, f_sky=0.1, cosmo=None):
         """
 
@@ -60,8 +60,25 @@ class GGLensPop(object):
     def draw_population(self):
         """
         return full population list of all lenses within the area
-        # TODO: need to implement a version of it.
+        # TODO: need to implement a version of it. (improve the algorithm)
+            Draw a population of galaxy-galaxy lenses within the area.
 
-        :return:
+        :return: List of GGLens instances with parameters of the deflectors and lens and source light.
+        :rtype: list
         """
-        raise NotImplemented()
+
+        # Initialize an empty list to store the GGLens instances
+        gg_lens_population = []
+        # Estimate the number of lensing systems
+        num_lenses = self._lens_galaxies.deflector_number()
+        num_sources = self._source_galaxies.galaxies_number()
+        num_lens_systems = int(num_lenses * num_sources)
+        print(num_lens_systems)
+        for _ in range(100):
+            source = self._source_galaxies.draw_galaxy()
+            lens = self._lens_galaxies.draw_deflector()
+            gg_lens = GGLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo)
+            # Check the validity of the lens system
+            if gg_lens.validity_test():
+                gg_lens_population.append(gg_lens)
+        return len(gg_lens_population)

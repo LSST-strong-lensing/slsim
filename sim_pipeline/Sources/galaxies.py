@@ -16,18 +16,22 @@ class Galaxies(object):
         :type kwargs_cut: dict
         :param cosmo: astropy.cosmology instance
         """
-        n = len(galaxy_list)
+        self.n = len(galaxy_list)
         # add missing keywords in astropy.Table object
         column_names = galaxy_list.colnames
         if 'e1' not in column_names or 'e2' not in column_names:
-            galaxy_list['e1'] = -np.ones(n)
-            galaxy_list['e2'] = -np.ones(n)
+            galaxy_list['e1'] = -np.ones(self.n)
+            galaxy_list['e2'] = -np.ones(self.n)
         if 'n_sersic' not in column_names:
-            galaxy_list['n_sersic'] = -np.ones(n)
+            galaxy_list['n_sersic'] = -np.ones(self.n)
         # make cuts
         self._galaxy_select = galaxy_cut(galaxy_list, **kwargs_cut)
 
         self._num_select = len(self._galaxy_select)
+
+    def galaxies_number(self):
+        number = self.n
+        return number
 
     def draw_galaxy(self):
 

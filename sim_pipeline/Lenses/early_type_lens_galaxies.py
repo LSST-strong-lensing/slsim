@@ -17,21 +17,25 @@ class EarlyTypeLensGalaxies(object):
         :param kwargs_mass2light: mass-to-light relation
         :param cosmo: astropy.cosmology instance
         """
-        n = len(galaxy_list)
+        self.n = len(galaxy_list)
         column_names = galaxy_list.colnames
         if 'vel_disp' not in column_names:
-            galaxy_list['vel_disp'] = -np.ones(n)
+            galaxy_list['vel_disp'] = -np.ones(self.n)
         if 'e1_light' not in column_names or 'e2_light' not in column_names:
-            galaxy_list['e1_light'] = -np.ones(n)
-            galaxy_list['e2_light'] = -np.ones(n)
+            galaxy_list['e1_light'] = -np.ones(self.n)
+            galaxy_list['e2_light'] = -np.ones(self.n)
         if 'e1_mass' not in column_names or 'e2_mass' not in column_names:
-            galaxy_list['e1_mass'] = -np.ones(n)
-            galaxy_list['e2_mass'] = -np.ones(n)
+            galaxy_list['e1_mass'] = -np.ones(self.n)
+            galaxy_list['e2_mass'] = -np.ones(self.n)
         if 'n_sersic' not in column_names:
-            galaxy_list['n_sersic'] = -np.ones(n)
+            galaxy_list['n_sersic'] = -np.ones(self.n)
 
         self._galaxy_select = galaxy_cut(galaxy_list, **kwargs_cut)
         self._num_select = len(self._galaxy_select)
+
+    def deflector_number(self):
+        number = self.n
+        return number
 
     def draw_deflector(self):
         """
@@ -82,7 +86,11 @@ def vel_disp_from_m_star(m_star):
     function for calculate the velocity dispersion from the staller mass using empirical relation for
     early type galaxies
 
-    #TODO: write latex formula of power law
+    The power-law formula is given by:
+
+    .. math::
+
+         V_{\mathrm{disp}} = 10^{2.32} \left( \frac{M_{\mathrm{star}}}{10^{11} M_\odot} \right)^{0.24}
 
     2.32,0.24 is the parameters from [1] table 2
     [1]:Auger, M. W., et al. "The Sloan Lens ACS Survey. X. Stellar, dynamical, and total mass correlations of massive
