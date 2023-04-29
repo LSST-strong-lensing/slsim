@@ -10,7 +10,7 @@ class GGLens(object):
     class to manage individual galaxy-galaxy lenses
     """
 
-    def __init__(self, source_dict, deflector_dict, cosmo):
+    def __init__(self, source_dict, deflector_dict, cosmo, test_area=90 * np.pi):
         """
 
         :param source_dict: source properties
@@ -22,23 +22,31 @@ class GGLens(object):
         self._source_dict = source_dict
         self._lens_dict = deflector_dict
         self.cosmo = cosmo
-
+        self.test_area = test_area
         self._lens_cosmo = LensCosmo(z_lens=self._lens_dict['z'], z_source=self._source_dict['z'], cosmo=self.cosmo)
         self._theta_E = self._lens_cosmo.sis_sigma_v2theta_E(self._lens_dict['vel_disp'])
 
     def position_alignment(self):
         """
-        draws position of the lens and source
+        Draws position of the lens and source in arcseconds.lens and source center positions as 2D lists
 
-        :return:
+        :return: [center_x_lens, center_y_lens], [center_x_source, center_y_source] in arc-seconds
+
         """
         if not hasattr(self, '_center_lens'):
             center_x_lens, center_y_lens = np.random.normal(loc=0, scale=0.1), np.random.normal(loc=0, scale=0.1)
             self._center_lens = [center_x_lens, center_y_lens]
+        # TODO: make it more realistic scatter
+
         if not hasattr(self, '_center_source'):
-            r_squared, theta = [self.einstein_radius() * np.sqrt(np.random.random()), 2*np.pi*np.random.random()]
-            center_x_source = np.sqrt(r_squared) * np.cos(theta)
-            center_y_source = np.sqrt(r_squared) * np.sin(theta)
+            # Define the radius of the test area circle
+            test_area_radius = np.sqrt(self.test_area / np.pi)
+            # Randomly generate a radius within the test area circle
+            r = np.sqrt(np.random.random()) * test_area_radius
+            theta = 2 * np.pi * np.random.random()
+            # Convert polar coordinates to cartesian coordinates
+            center_x_source = self._center_lens[0] + r * np.cos(theta)
+            center_y_source = self._center_lens[1] + r * np.sin(theta)
             self._center_source = [center_x_source, center_y_source]
         return self._center_lens, self._center_source
 
@@ -62,10 +70,12 @@ class GGLens(object):
         lens_model_class = LensModel(lens_model_list=kwargs_model['lens_model_list'])
         lens_eq_solver = LensEquationSolver(lens_model_class)
 
-        # TODO: make image_position definition to not re-compute lens equation solver multiple times
         source_pos_x = kwargs_params['kwargs_source'][0]['center_x']
         source_pos_y = kwargs_params['kwargs_source'][0]['center_y']
-        if (source_pos_x) ** 2 + (source_pos_y) ** 2 > (self._theta_E) ** 2:
+#      print((source_pos_x - self._center_lens[0]) ** 2, "+", (source_pos_y - self._center_lens[0]) ** 2
+#              , "~", (self._theta_E) ** 2)
+        if (source_pos_x - self._center_lens[0]) ** 2 + (source_pos_y - self._center_lens[0]) ** 2 > (
+                self._theta_E) ** 2:
             return False
 
         kwargs_lens = kwargs_params['kwargs_lens']
@@ -74,9 +84,11 @@ class GGLens(object):
             return False
 
         return True
-        #image_separation = np.sqrt((image_positions[0][0] - image_positions[1][0]) ** 2 + (image_positions[0][1] - image_positions[1][1]) ** 2)
-
+        # image_separation = np.sqrt((image_positions[0][0] - image_positions[1][0]) ** 2 + (image_positions[0][1] - image_positions[1][1]) ** 2)
+        # TODO: make image_position definition to not re-compute lens equation solver multiple times
         # TODO: test for lensed arc brightness
+        # TODO: test for SN ratio
+        # TODO: check real image_separation test (not directly criteria on theta_E?)
 
     def einstein_radius(self):
         """
@@ -104,7 +116,6 @@ class GGLens(object):
         # TODO: more realistic distribution of shear and convergence,
         #  the covariances among them and redshift correlations
         if not hasattr(self, '_gamma'):
-
             gamma = np.random.normal(loc=0, scale=0.1)
             phi = 2 * np.pi * np.random.random()
             gamma1 = gamma * np.cos(2 * phi)
