@@ -10,7 +10,7 @@ class GGLens(object):
     class to manage individual galaxy-galaxy lenses
     """
 
-    def __init__(self, source_dict, deflector_dict, cosmo, test_area=90 * np.pi):
+    def __init__(self, source_dict, deflector_dict, cosmo, test_area=9 * np.pi):
         """
 
         :param source_dict: source properties
@@ -18,6 +18,7 @@ class GGLens(object):
         :param deflector_dict: deflector properties
         :type deflector_dict: dict
         :param cosmo: astropy.cosmology instance
+        :param test_area: area of disk around one lensing galaxies to be investigated on (in arc-seconds^2)
         """
         self._source_dict = source_dict
         self._lens_dict = deflector_dict

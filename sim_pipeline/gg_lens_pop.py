@@ -59,7 +59,13 @@ class GGLensPop(object):
         gg_lens = GGLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo)
         return gg_lens
 
-    def draw_population(self, testarea= 90*np.pi):
+    def get_num_lenses(self):
+        return self._lens_galaxies.deflector_number()
+
+    def get_num_sources(self):
+        return self._source_galaxies.galaxies_number()
+
+    def draw_population(self, testarea=9 * np.pi):
         """
         return full population list of all lenses within the area
         # TODO: need to implement a version of it. (improve the algorithm)
@@ -74,17 +80,27 @@ class GGLensPop(object):
         # Estimate the number of lensing systems
         num_lenses = self._lens_galaxies.deflector_number()
         num_sources = self._source_galaxies.galaxies_number()
-        num_sources_tested_mean = (testarea * self.f_sky * num_sources)/12960000
-        print(num_sources_tested_mean)
-        print(np.int(num_lenses*num_sources_tested_mean))
 
-# Draw a population of galaxy-galaxy lenses within the area.
+        # To show the mean of source galaxies needed to tested within the test area.
+        # (later draw a normal distribution around the mean for the number of source galaxies tested);
+        # num_sources_tested_mean/ testarea = num_sources/ f_sky;
+        num_sources_tested_mean = (testarea * num_sources) / (12960000 * self.f_sky)
+
+#        print(num_sources_tested_mean)
+#        print("num_lenses is " + str(num_lenses))
+#        print("num_sources is " + str(num_sources))
+#        print(np.int(num_lenses * num_sources_tested_mean))
+
+        # Draw a population of galaxy-galaxy lenses within the area.
         for _ in range(num_lenses):
             lens = self._lens_galaxies.draw_deflector()
-            for _ in range(max(1,int(np.rint(np.random.normal
-                                                 (loc=num_sources_tested_mean, scale=num_sources_tested_mean/5))))):
+            num_sources_range = max(1, int(np.rint(
+                np.random.normal(loc=num_sources_tested_mean, scale=num_sources_tested_mean / 5))))
+            # num_sources_range is the number of sources to be tested for each lens,
+            # which is a normal distribution with mean=num_sources_tested_mean and std=num_sources_tested_mean/5
+            for _ in range(num_sources_range):
                 source = self._source_galaxies.draw_galaxy()
-                gg_lens = GGLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo, test_area = testarea)
+                gg_lens = GGLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo, test_area=testarea)
                 # Check the validity of the lens system
                 if gg_lens.validity_test():
                     gg_lens_population.append(gg_lens)
