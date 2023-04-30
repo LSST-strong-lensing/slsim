@@ -4,5 +4,4 @@ astropy
 numpy
 speclite
 pyyaml
-tempfile
 matplotlib
