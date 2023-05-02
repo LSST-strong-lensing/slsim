@@ -65,7 +65,7 @@ class GGLensPop(object):
     def get_num_sources(self):
         return self._source_galaxies.galaxies_number()
 
-    def draw_population(self, testarea=9 * np.pi):
+    def draw_population(self, testarea=4 * np.pi):
         """
         return full population list of all lenses within the area
         # TODO: need to implement a version of it. (improve the algorithm)
@@ -84,6 +84,7 @@ class GGLensPop(object):
         # To show the mean of source galaxies needed to tested within the test area.
         # (later draw a normal distribution around the mean for the number of source galaxies tested);
         # num_sources_tested_mean/ testarea = num_sources/ f_sky;
+        # testarea is in units off arcsec^2, f_sky is in units of deg^2. 1 deg^2 = 12960000 arcsec^2
         num_sources_tested_mean = (testarea * num_sources) / (12960000 * self.f_sky)
 
 #        print(num_sources_tested_mean)

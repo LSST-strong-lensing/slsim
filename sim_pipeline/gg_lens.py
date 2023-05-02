@@ -10,7 +10,7 @@ class GGLens(object):
     class to manage individual galaxy-galaxy lenses
     """
 
-    def __init__(self, source_dict, deflector_dict, cosmo, test_area=9 * np.pi):
+    def __init__(self, source_dict, deflector_dict, cosmo, test_area=4 * np.pi):
         """
 
         :param source_dict: source properties
@@ -81,15 +81,24 @@ class GGLens(object):
 
         kwargs_lens = kwargs_params['kwargs_lens']
         image_positions = lens_eq_solver.image_position_from_source(source_pos_x, source_pos_y, kwargs_lens)
-        if len(image_positions) < 2:
+        if len(image_positions[0]) < 2:
             return False
 
+        if len(image_positions[0]) == 2:
+            max_image_separation = np.sqrt((image_positions[0][0] - image_positions[0][1]) ** 2 + (
+                        image_positions[1][0] - image_positions[1][1]) ** 2)
+        else:
+            coords = np.stack((image_positions[0], image_positions[1]), axis=-1)
+            separations = np.sqrt(np.sum((coords[:, np.newaxis] - coords[np.newaxis, :]) ** 2, axis=-1))
+            max_image_separation = np.max(separations)
+        if max_image_separation < min_image_separation:
+            return False
+        if max_image_separation > max_image_separation:
+            return False
         return True
-        # image_separation = np.sqrt((image_positions[0][0] - image_positions[1][0]) ** 2 + (image_positions[0][1] - image_positions[1][1]) ** 2)
         # TODO: make image_position definition to not re-compute lens equation solver multiple times
         # TODO: test for lensed arc brightness
         # TODO: test for SN ratio
-        # TODO: check real image_separation test (not directly criteria on theta_E?)
 
     def einstein_radius(self):
         """
