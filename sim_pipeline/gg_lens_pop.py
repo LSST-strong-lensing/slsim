@@ -2,6 +2,7 @@ from sim_pipeline.Pipelines.skypy_pipeline import SkyPyPipeline
 from sim_pipeline.gg_lens import GGLens, theta_e_when_source_infinity
 import numpy as np
 
+
 def draw_test_area(deflector):
     """
     draw a test area around the deflector
@@ -9,7 +10,7 @@ def draw_test_area(deflector):
     :return: test area in arcsec^2
     """
     theta_e_infinity = theta_e_when_source_infinity(deflector)
-    test_area = np.pi * (theta_e_infinity*2) ** 2
+    test_area = np.pi * (theta_e_infinity * 1.3) ** 2
     return test_area
 
 
@@ -75,17 +76,23 @@ class GGLensPop(object):
     def get_num_sources(self):
         return self._source_galaxies.galaxies_number()
 
-    def get_num_sources_tested(self, testarea):
+    def get_num_sources_tested_mean(self, testarea):
         """
-         To show the mean of source galaxies needed to tested within the test area.
-         (later draw a normal distribution around the mean for the number of source galaxies tested);
-         num_sources_tested_mean/ testarea = num_sources/ f_sky;
-         testarea is in units off arcsec^2, f_sky is in units of deg^2. 1 deg^2 = 12960000 arcsec^2
-         num_source_range is in Poisson distribution with mean of num_sources_tested_mean.
-
+        Compute the mean of source galaxies needed to be tested within the test area.
+        num_sources_tested_mean/ testarea = num_sources/ f_sky;
+        testarea is in units of arcsec^2, f_sky is in units of deg^2. 1 deg^2 = 12960000 arcsec^2
         """
         num_sources = self._source_galaxies.galaxies_number()
         num_sources_tested_mean = (testarea * num_sources) / (12960000 * self.f_sky)
+        return num_sources_tested_mean
+
+    def get_num_sources_tested(self, testarea=None, num_sources_tested_mean=None):
+        """
+        Draw a realization of the expected distribution (Poisson) around the mean
+        for the number of source galaxies tested.
+        """
+        if num_sources_tested_mean is None:
+            num_sources_tested_mean = self.get_num_sources_tested_mean(testarea)
         num_sources_range = np.random.poisson(lam=num_sources_tested_mean)
         return num_sources_range
 
@@ -104,16 +111,17 @@ class GGLensPop(object):
         # Estimate the number of lensing systems
         num_lenses = self._lens_galaxies.deflector_number()
         num_sources = self._source_galaxies.galaxies_number()
-#        print(num_sources_tested_mean)
-#        print("num_lenses is " + str(num_lenses))
-#        print("num_sources is " + str(num_sources))
-#        print(np.int(num_lenses * num_sources_tested_mean))
+        #        print(num_sources_tested_mean)
+        #        print("num_lenses is " + str(num_lenses))
+        #        print("num_sources is " + str(num_sources))
+        #        print(np.int(num_lenses * num_sources_tested_mean))
 
         # Draw a population of galaxy-galaxy lenses within the area.
         for _ in range(num_lenses):
             lens = self._lens_galaxies.draw_deflector()
             test_area = draw_test_area(deflector=lens)
             num_sources_range = self.get_num_sources_tested(testarea=test_area)
+            # TODO: to implement this for a multi-source plane lens system
             if num_sources_range > 0:
                 for _ in range(num_sources_range):
                     source = self._source_galaxies.draw_galaxy()

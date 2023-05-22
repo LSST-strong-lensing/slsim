@@ -7,7 +7,8 @@ from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
 
 def image_separation_from_positions(image_positions):
     """
-    calculate image separation in arc-seconds
+    calculate image separation in arc-seconds; if there are only two images, the separation between them is returned;
+    if there are more than 2 images, the maximum separation is returned
 
     :param image_positions: list of image positions in arc-seconds
     :return: image separation in arc-seconds
@@ -22,13 +23,20 @@ def image_separation_from_positions(image_positions):
     return image_separation
 
 
-def theta_e_when_source_infinity(deflector_dict):
+def theta_e_when_source_infinity(deflector_dict=None, v_sigma=None):
     """
             calculate Einstein radius in arc-seconds for a source at infinity
 
+            :param deflector_dict: deflector properties
+            :param v_sigma: velocity dispersion in km/s
             :return: Einstein radius in arc-seconds
             """
-    v_sigma = deflector_dict['vel_disp']
+    if v_sigma is None:
+        if deflector_dict is None:
+            raise ValueError("Either deflector_dict or v_sigma must be provided")
+        else:
+            v_sigma = deflector_dict['vel_disp']
+
     theta_E_infinity = 4 * np.pi * (v_sigma * 1000. / constants.c) ** 2 / constants.arcsec
     return theta_E_infinity
 
@@ -79,6 +87,16 @@ class GGLens(object):
             self._center_source = [center_x_source, center_y_source]
         return self._center_lens, self._center_source
 
+    def get_image_positions(self):
+        kwargs_model, kwargs_params = self.lenstronomy_kwargs('g')
+        lens_model_class = LensModel(lens_model_list=kwargs_model['lens_model_list'])
+        lens_eq_solver = LensEquationSolver(lens_model_class)
+        source_pos_x = kwargs_params['kwargs_source'][0]['center_x']
+        source_pos_y = kwargs_params['kwargs_source'][0]['center_y']
+        kwargs_lens = kwargs_params['kwargs_lens']
+        image_positions = lens_eq_solver.image_position_from_source(source_pos_x, source_pos_y, kwargs_lens)
+        return image_positions
+
     def validity_test(self, min_image_separation=0, max_image_separation=10):
         """
         check whether lensing configuration matches selection and plausibility criteria
@@ -103,18 +121,15 @@ class GGLens(object):
 
         # Criteria 3: The distance between the lens center and the source position must be less than or equal to the
         # angular Einstein radius of the lensing configuration.
-        kwargs_model, kwargs_params = self.lenstronomy_kwargs('g')
-        lens_model_class = LensModel(lens_model_list=kwargs_model['lens_model_list'])
-        lens_eq_solver = LensEquationSolver(lens_model_class)
-        source_pos_x = kwargs_params['kwargs_source'][0]['center_x']
-        source_pos_y = kwargs_params['kwargs_source'][0]['center_y']
-        if (source_pos_x - self._center_lens[0]) ** 2 + (source_pos_y - self._center_lens[0]) ** 2 > (
-                self._theta_E) ** 2:
+        image_positions = self.get_image_positions()
+        source_pos_x = image_positions[0]
+        source_pos_y = image_positions[1]
+
+        if ((source_pos_x - self._center_lens[0]) ** 2 + (source_pos_y - self._center_lens[0]) ** 2 >
+            self._theta_E ** 2).all():
             return False
 
         # Criteria 4: The lensing configuration must produce at least two SL images.
-        kwargs_lens = kwargs_params['kwargs_lens']
-        image_positions = lens_eq_solver.image_position_from_source(source_pos_x, source_pos_y, kwargs_lens)
         if len(image_positions[0]) < 2:
             return False
 
@@ -209,7 +224,7 @@ class GGLens(object):
         size_lens_arcsec = self._lens_dict['angular_size'] / constants.arcsec  # convert radian to arc seconds
         mag_lens = self.deflector_magnitude(band)
         kwargs_lens_light = [{'magnitude': mag_lens, 'R_sersic': size_lens_arcsec,
-                              'n_sersic': self._lens_dict['n_sersic'],
+                              'n_sersic': self._source_dict['n_sersic'],
                               'e1': e1_light_lens, 'e2': e2_light_lens,
                               'center_x': center_lens[0], 'center_y': center_lens[1]}]
 
@@ -222,4 +237,6 @@ class GGLens(object):
 
         kwargs_params = {'kwargs_lens': kwargs_lens, 'kwargs_source': kwargs_source,
                          'kwargs_lens_light': kwargs_lens_light}
+        print('kwargs_params', kwargs_params)
+        print('kwargs_model', kwargs_model)
         return kwargs_model, kwargs_params

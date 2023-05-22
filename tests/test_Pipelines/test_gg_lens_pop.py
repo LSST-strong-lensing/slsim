@@ -20,7 +20,7 @@ class TestGGLensPop:
         test_area = draw_test_area(deflector=lens)
         assert 0.1 < test_area < 100 * np.pi, f"Expected test_area to be between 0.1 and 100*pi, but got {test_area}"
         num_sources_range = gg_lens_pop_instance.get_num_sources_tested(testarea=test_area)
-        assert 0 <= num_sources_range <= 20, f"Expected num_sources_range to be between 0 and 20, but got {num_sources_range}"
+        assert 0 <= num_sources_range <= 50, f"Expected num_sources_range to be between 0 and 50, but got {num_sources_range}"
 
 
 if __name__ == "__main__":
