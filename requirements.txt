@@ -2,6 +2,7 @@ skypy
 lenstronomy
 astropy
 numpy
+scipy
 speclite
 pyyaml
 matplotlib
