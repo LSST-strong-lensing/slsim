@@ -57,5 +57,3 @@ class SkyPyPipeline:
         :rtype: list of dict
         """
         return self._pipeline['red']
-
-

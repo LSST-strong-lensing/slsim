@@ -60,8 +60,8 @@ class GGLens(object):
         self._lens_dict = deflector_dict
         self.cosmo = cosmo
         self.test_area = test_area
-        self._lens_cosmo = LensCosmo(z_lens=self._lens_dict['z'], z_source=self._source_dict['z'], cosmo=self.cosmo)
-        self._theta_E = self._lens_cosmo.sis_sigma_v2theta_E(self._lens_dict['vel_disp'])
+        self._lens_cosmo = LensCosmo(z_lens=float(self._lens_dict['z']), z_source=float(self._source_dict['z']), cosmo=self.cosmo)
+        self._theta_E = self._lens_cosmo.sis_sigma_v2theta_E(float(self._lens_dict['vel_disp']))
 
     def position_alignment(self):
         """
@@ -93,6 +93,7 @@ class GGLens(object):
         lens_eq_solver = LensEquationSolver(lens_model_class)
         source_pos_x = kwargs_params['kwargs_source'][0]['center_x']
         source_pos_y = kwargs_params['kwargs_source'][0]['center_y']
+
         kwargs_lens = kwargs_params['kwargs_lens']
         image_positions = lens_eq_solver.image_position_from_source(source_pos_x, source_pos_y, kwargs_lens)
         return image_positions
@@ -159,8 +160,8 @@ class GGLens(object):
 
         :return: e1_light, e2_light, e1_mass, e2_mass
         """
-        e1_light, e2_light = self._lens_dict['e1_light'], self._lens_dict['e2_light']
-        e1_mass, e2_mass = self._lens_dict['e1_mass'], self._lens_dict['e2_mass']
+        e1_light, e2_light = float(self._lens_dict['e1_light']), float(self._lens_dict['e2_light'])
+        e1_mass, e2_mass = float(self._lens_dict['e1_mass']), float(self._lens_dict['e2_mass'])
         return e1_light, e2_light, e1_mass, e2_mass
 
     def los_linear_distortions(self):
@@ -237,6 +238,4 @@ class GGLens(object):
 
         kwargs_params = {'kwargs_lens': kwargs_lens, 'kwargs_source': kwargs_source,
                          'kwargs_lens_light': kwargs_lens_light}
-        print('kwargs_params', kwargs_params)
-        print('kwargs_model', kwargs_model)
         return kwargs_model, kwargs_params

@@ -14,8 +14,8 @@ class TestGGLens(object):
         path = os.path.dirname(__file__)
         module_path, _ = os.path.split(path)
         print(path, module_path)
-        blue_one = Table.read(os.path.join(module_path, 'TestData/blue_one_modified.fits'), format='fits')
-        red_one = Table.read(os.path.join(module_path, 'TestData/red_one_modified.fits'), format='fits')
+        blue_one = Table.read(os.path.join(path, 'TestData/blue_one_modified.fits'), format='fits')
+        red_one = Table.read(os.path.join(path, 'TestData/red_one_modified.fits'), format='fits')
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         self.source_dict = blue_one
         self.deflector_dict = red_one
