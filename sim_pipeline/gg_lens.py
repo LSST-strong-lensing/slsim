@@ -5,12 +5,48 @@ from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
 
 
+def image_separation_from_positions(image_positions):
+    """
+    calculate image separation in arc-seconds; if there are only two images, the separation between them is returned;
+    if there are more than 2 images, the maximum separation is returned
+
+    :param image_positions: list of image positions in arc-seconds
+    :return: image separation in arc-seconds
+    """
+    if len(image_positions[0]) == 2:
+        image_separation = np.sqrt((image_positions[0][0] - image_positions[0][1]) ** 2 + (
+                image_positions[1][0] - image_positions[1][1]) ** 2)
+    else:
+        coords = np.stack((image_positions[0], image_positions[1]), axis=-1)
+        separations = np.sqrt(np.sum((coords[:, np.newaxis] - coords[np.newaxis, :]) ** 2, axis=-1))
+        image_separation = np.max(separations)
+    return image_separation
+
+
+def theta_e_when_source_infinity(deflector_dict=None, v_sigma=None):
+    """
+            calculate Einstein radius in arc-seconds for a source at infinity
+
+            :param deflector_dict: deflector properties
+            :param v_sigma: velocity dispersion in km/s
+            :return: Einstein radius in arc-seconds
+            """
+    if v_sigma is None:
+        if deflector_dict is None:
+            raise ValueError("Either deflector_dict or v_sigma must be provided")
+        else:
+            v_sigma = deflector_dict['vel_disp']
+
+    theta_E_infinity = 4 * np.pi * (v_sigma * 1000. / constants.c) ** 2 / constants.arcsec
+    return theta_E_infinity
+
+
 class GGLens(object):
     """
     class to manage individual galaxy-galaxy lenses
     """
 
-    def __init__(self, source_dict, deflector_dict, cosmo):
+    def __init__(self, source_dict, deflector_dict, cosmo, test_area=4 * np.pi):
         """
 
         :param source_dict: source properties
@@ -18,29 +54,48 @@ class GGLens(object):
         :param deflector_dict: deflector properties
         :type deflector_dict: dict
         :param cosmo: astropy.cosmology instance
+        :param test_area: area of disk around one lensing galaxies to be investigated on (in arc-seconds^2)
         """
         self._source_dict = source_dict
         self._lens_dict = deflector_dict
         self.cosmo = cosmo
-
+        self.test_area = test_area
         self._lens_cosmo = LensCosmo(z_lens=self._lens_dict['z'], z_source=self._source_dict['z'], cosmo=self.cosmo)
         self._theta_E = self._lens_cosmo.sis_sigma_v2theta_E(self._lens_dict['vel_disp'])
 
     def position_alignment(self):
         """
-        draws position of the lens and source
+        Draws position of the lens and source in arcseconds.lens and source center positions as 2D lists
 
-        :return:
+        :return: [center_x_lens, center_y_lens], [center_x_source, center_y_source] in arc-seconds
+
         """
         if not hasattr(self, '_center_lens'):
             center_x_lens, center_y_lens = np.random.normal(loc=0, scale=0.1), np.random.normal(loc=0, scale=0.1)
             self._center_lens = [center_x_lens, center_y_lens]
+        # TODO: make it more realistic scatter
+
         if not hasattr(self, '_center_source'):
-            r_squared, theta = [self.einstein_radius() * np.sqrt(np.random.random()), 2*np.pi*np.random.random()]
-            center_x_source = np.sqrt(r_squared) * np.cos(theta)
-            center_y_source = np.sqrt(r_squared) * np.sin(theta)
+            # Define the radius of the test area circle
+            test_area_radius = np.sqrt(self.test_area / np.pi)
+            # Randomly generate a radius within the test area circle
+            r = np.sqrt(np.random.random()) * test_area_radius
+            theta = 2 * np.pi * np.random.random()
+            # Convert polar coordinates to cartesian coordinates
+            center_x_source = self._center_lens[0] + r * np.cos(theta)
+            center_y_source = self._center_lens[1] + r * np.sin(theta)
             self._center_source = [center_x_source, center_y_source]
         return self._center_lens, self._center_source
+
+    def get_image_positions(self):
+        kwargs_model, kwargs_params = self.lenstronomy_kwargs('g')
+        lens_model_class = LensModel(lens_model_list=kwargs_model['lens_model_list'])
+        lens_eq_solver = LensEquationSolver(lens_model_class)
+        source_pos_x = kwargs_params['kwargs_source'][0]['center_x']
+        source_pos_y = kwargs_params['kwargs_source'][0]['center_y']
+        kwargs_lens = kwargs_params['kwargs_lens']
+        image_positions = lens_eq_solver.image_position_from_source(source_pos_x, source_pos_y, kwargs_lens)
+        return image_positions
 
     def validity_test(self, min_image_separation=0, max_image_separation=10):
         """
@@ -50,33 +105,46 @@ class GGLens(object):
         :param max_image_separation:
         :return: boolean
         """
+        # Criteria 1:The redshift of the lens (z_lens) must be less than the redshift of the source (z_source).
         z_lens = self._lens_dict['z']
         z_source = self._source_dict['z']
         if z_lens >= z_source:
             return False
+
+        # Criteria 2: The angular Einstein radius of the lensing configuration (theta_E) times 2 must be greater than
+        # or equal to the minimum image separation (min_image_separation) and less than or equal to the maximum image
+        # separation (max_image_separation).
         if self._theta_E * 2 < min_image_separation:
             return False
         if self._theta_E * 2 > max_image_separation:
             return False
-        kwargs_model, kwargs_params = self.lenstronomy_kwargs('g')
-        lens_model_class = LensModel(lens_model_list=kwargs_model['lens_model_list'])
-        lens_eq_solver = LensEquationSolver(lens_model_class)
 
-        # TODO: make image_position definition to not re-compute lens equation solver multiple times
-        source_pos_x = kwargs_params['kwargs_source'][0]['center_x']
-        source_pos_y = kwargs_params['kwargs_source'][0]['center_y']
-        if (source_pos_x) ** 2 + (source_pos_y) ** 2 > (self._theta_E) ** 2:
+        # Criteria 3: The distance between the lens center and the source position must be less than or equal to the
+        # angular Einstein radius of the lensing configuration.
+        image_positions = self.get_image_positions()
+        source_pos_x = image_positions[0]
+        source_pos_y = image_positions[1]
+
+        if ((source_pos_x - self._center_lens[0]) ** 2 + (source_pos_y - self._center_lens[0]) ** 2 >
+            self._theta_E ** 2).all():
             return False
 
-        kwargs_lens = kwargs_params['kwargs_lens']
-        image_positions = lens_eq_solver.image_position_from_source(source_pos_x, source_pos_y, kwargs_lens)
-        if len(image_positions) < 2:
+        # Criteria 4: The lensing configuration must produce at least two SL images.
+        if len(image_positions[0]) < 2:
+            return False
+
+        # Criteria 5: The maximum separation between any two image positions must be greater than or equal to the
+        # minimum image separation and less than or equal to the maximum image separation.
+        image_separation = image_separation_from_positions(image_positions)
+        if image_separation < min_image_separation:
+            return False
+        if image_separation > max_image_separation:
             return False
 
         return True
-        #image_separation = np.sqrt((image_positions[0][0] - image_positions[1][0]) ** 2 + (image_positions[0][1] - image_positions[1][1]) ** 2)
-
+        # TODO: make image_position definition to not re-compute lens equation solver multiple times
         # TODO: test for lensed arc brightness
+        # TODO: test for SN ratio
 
     def einstein_radius(self):
         """
@@ -104,7 +172,6 @@ class GGLens(object):
         # TODO: more realistic distribution of shear and convergence,
         #  the covariances among them and redshift correlations
         if not hasattr(self, '_gamma'):
-
             gamma = np.random.normal(loc=0, scale=0.1)
             phi = 2 * np.pi * np.random.random()
             gamma1 = gamma * np.cos(2 * phi)
@@ -157,7 +224,7 @@ class GGLens(object):
         size_lens_arcsec = self._lens_dict['angular_size'] / constants.arcsec  # convert radian to arc seconds
         mag_lens = self.deflector_magnitude(band)
         kwargs_lens_light = [{'magnitude': mag_lens, 'R_sersic': size_lens_arcsec,
-                              'n_sersic': self._lens_dict['n_sersic'],
+                              'n_sersic': self._source_dict['n_sersic'],
                               'e1': e1_light_lens, 'e2': e2_light_lens,
                               'center_x': center_lens[0], 'center_y': center_lens[1]}]
 
@@ -170,4 +237,6 @@ class GGLens(object):
 
         kwargs_params = {'kwargs_lens': kwargs_lens, 'kwargs_source': kwargs_source,
                          'kwargs_lens_light': kwargs_lens_light}
+        print('kwargs_params', kwargs_params)
+        print('kwargs_model', kwargs_model)
         return kwargs_model, kwargs_params
