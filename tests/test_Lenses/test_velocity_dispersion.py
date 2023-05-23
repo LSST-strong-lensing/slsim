@@ -1,7 +1,5 @@
 
-
-from skypy.galaxies.velocity_dispersion import schechter_vdf
-from sim_pipeline.Lenses.velocity_dispersion import schechter_vel_disp
+from sim_pipeline.Lenses.velocity_dispersion import schechter_vel_disp, schechter_vdf
 
 import matplotlib.pyplot as plt
 import numpy as np
