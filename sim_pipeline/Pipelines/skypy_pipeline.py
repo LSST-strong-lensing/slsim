@@ -4,19 +4,19 @@ import sim_pipeline
 import tempfile
 
 class SkyPyPipeline:
-    def __init__(self, skypy_config=None, f_sky=0.1):
+    def __init__(self, skypy_config=None, sky_area=0.1):
         """
         :param skypy_config: path to SkyPy configuration yaml file
         :type skypy_config: string or None
-        :param f_sky: sky area (in deg^2)
-        :type f_sky: float
+        :type sky_area: `~astropy.units.Quantity`
+        :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid angle.
         """
         if skypy_config is None:
             path = os.path.dirname(sim_pipeline.__file__)
             module_path, _ = os.path.split(path)
             skypy_config = os.path.join(module_path, 'data/SkyPy/lsst-like.yml')  # read the file
 
-        if f_sky == 0.1:
+        if sky_area.value == 0.1 and sky_area.unit == 'deg2':
             self._pipeline = Pipeline.read(skypy_config)
             self._pipeline.execute()
         else:
@@ -24,7 +24,7 @@ class SkyPyPipeline:
                 content = file.read()
 
             old_fsky = "fsky: 0.1 deg2"
-            new_fsky = f"fsky: {f_sky} deg2"
+            new_fsky = f"fsky: %s %s" % (sky_area.valuem, sky_area.unit)
             new_content = content.replace(old_fsky, new_fsky)
 
             with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.yml') as tmp_file:

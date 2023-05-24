@@ -8,7 +8,10 @@ import numpy as np
 def test_schechter_vdf():
 
     # SDSS velocity dispersion function for galaxies brighter than Mr >= -16.8
-    phi_star = 8.0 * 10 ** (-3)
+    from astropy.cosmology import FlatLambdaCDM
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+
+    phi_star = 8.0 * 10 ** (-3) / cosmo.h ** 3
     vd_star = 161
     alpha = 2.32
     beta = 2.67
@@ -27,9 +30,9 @@ def test_schechter_vdf():
     cosmology = cosmo
     np.random.seed(42)
 
-    z_list, vel_disp_list = schechter_vel_disp(redshift, phi_star, alpha, beta, vd_star, vd_min, vd_max, sky_area, cosmology,
-                                               noise=True)
-    assert len(z_list) == 126
+    z_list, vel_disp_list = schechter_vel_disp(redshift, phi_star, alpha, beta, vd_star, vd_min, vd_max, sky_area,
+                                               cosmology, noise=True)
+    assert len(z_list) == 373
 
     # plt.hist(np.log10(vel_disp_list))
     # plt.show()

@@ -4,7 +4,9 @@ from sim_pipeline.Pipelines.skypy_pipeline import SkyPyPipeline
 class TestSkyPyPipeline(object):
 
     def setup_method(self):
-        self.pipeline = SkyPyPipeline(skypy_config=None, f_sky=0.1)
+        from astropy.units import Quantity
+        sky_area = Quantity(value=0.1, unit='deg2')
+        self.pipeline = SkyPyPipeline(skypy_config=None, sky_area=sky_area)
 
     def test_blue_galaxies(self):
         blue_galaxies = self.pipeline.blue_galaxies

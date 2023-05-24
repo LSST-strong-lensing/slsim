@@ -7,6 +7,60 @@ from skypy.utils.random import schechter
 #  from skypy.galaxies.velocity_dispersion import schechter_vdf
 
 
+def vel_disp_sdss(sky_area, redshift, vd_min, vd_max, cosmology, noise=True):
+    """
+    velocity dispersion function in a cone matched by SDSS measurements
+
+    Parameters
+    ----------
+    sky_area : `~astropy.units.Quantity`
+        Sky area over which galaxies are sampled. Must be in units of solid angle.
+    redshift : array_like
+        Input redshift grid on which the Schechter function parameters are
+        evaluated. Galaxies are sampled over this redshift range.
+    vd_min, vd_max: int
+        Lower and upper bounds of random variable x. Samples are drawn uniformly from bounds.
+    cosmology : Cosmology
+        Cosmology object to calculate comoving densities.
+    noise : bool, optional
+        Poisson-sample the number of galaxies. Default is `True`.
+
+    Returns
+    -------
+    redshifts, velocity dispersion : tuple of array_like
+        Redshifts and velocity dispersion of the galaxy sample described by the Schechter
+        velocity dispersion function.
+
+    Notes
+    -----
+    The probability distribution function :math:`p(\sigma)` for velocity dispersion :math:`\sigma`
+    can be described by a Schechter function (see eq. (4) in [1]_)
+
+    .. math::
+
+        \phi = \phi_* \left(\frac{\sigma}{\sigma_*}\right)^\alpha
+            \exp\left[-\left( \frac{\sigma}{\sigma_*} \right)^\beta\right]
+            \frac{\beta}{\Gamma(\alpha/\beta)} \frac{1}{\sigma} \mathrm{d}\sigma \;.
+
+    where :math:`\Gamma` is the gamma function, :math:`\sigma_*` is the
+    characteristic velocity dispersion, :math:`\phi_*` is
+    number density and
+    :math:`\alpha` and :math:`\beta` are free parameters.
+
+    References
+    ----------
+    .. [1] Choi, Park and Vogeley, (2007), astro-ph/0611607, doi:10.1086/511060
+
+    """
+    # SDSS velocity dispersion function for galaxies brighter than Mr >= -16.8
+    phi_star = 8.0 * 10 ** (-3) / cosmology.h**3
+    vd_star = 161
+    alpha = 2.32
+    beta = 2.67
+    return schechter_vel_disp(redshift, phi_star, alpha, beta, vd_star, vd_min, vd_max, sky_area, cosmology,
+                              noise=noise)
+
+
 def schechter_vel_disp(redshift, phi_star, alpha, beta, vd_star, vd_min, vd_max, sky_area, cosmology, noise=True):
     r'''Sample redshifts and stellar masses from a Schechter mass function.
 
@@ -22,11 +76,11 @@ def schechter_vel_disp(redshift, phi_star, alpha, beta, vd_star, vd_min, vd_max,
     phi_star : array_like or function
         Normalisation of the Schechter function. Can be a single value, an
         array of values for each `redshift`, or a function of redshift.
-    alpha: int
+    alpha: float
         The alpha parameter in the modified Schechter equation.
-    beta: int
+    beta: float
         The beta parameter in the modified Schechter equation.
-    vd_star: int
+    vd_star: float
         The characteristic velocity dispersion.
     vd_min, vd_max: int
         Lower and upper bounds of random variable x. Samples are drawn uniformly from bounds.
@@ -76,11 +130,11 @@ def schechter_vel_disp_redshift(redshift, phi_star, alpha, beta, vd_star, vd_min
     phi_star : array_like or function
         Normalisation of the Schechter function. Can be a single value, an
         array of values for each `redshift`, or a function of redshift.
-    alpha: int
+    alpha: float
         The alpha parameter in the modified Schechter equation.
-    beta: int
+    beta: float
         The beta parameter in the modified Schechter equation.
-    vd_star: int
+    vd_star: float
         The characteristic velocity dispersion.
     vd_min, vd_max: int
         Lower and upper bounds of random variable x. Samples are drawn uniformly from bounds.
@@ -115,18 +169,7 @@ def schechter_vel_disp_redshift(redshift, phi_star, alpha, beta, vd_star, vd_min
     References
     ----------
     .. [1] Choi, Park and Vogeley, (2007), astro-ph/0611607, doi:10.1086/511060
-    sky_area : `~astropy.units.Quantity`
-        Sky area over which galaxies are sampled. Must be in units of solid angle.
-    cosmology : Cosmology
-        Cosmology object to convert comoving density.
-    noise : bool, optional
-        Poisson-sample the number of galaxies. Default is `True`.
 
-    Returns
-    -------
-    redshifts : array_like
-        Redshifts of the galaxy sample described by the Schechter
-        function.
 
     '''
     alpha_prime = alpha / beta - 1
@@ -163,11 +206,11 @@ def schechter_vdf(alpha, beta, vd_star, vd_min, vd_max, size=None, resolution=10
 
     Parameters
     ----------
-    alpha: int
+    alpha: float
         The alpha parameter in the modified Schechter equation.
-    beta: int
+    beta: float
         The beta parameter in the modified Schechter equation.
-    vd_star: int
+    vd_star: float
         The characteristic velocity dispersion.
     vd_min, vd_max: int
         Lower and upper bounds of random variable x. Samples are drawn uniformly from bounds.

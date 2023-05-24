@@ -1,4 +1,4 @@
-def galaxy_cut(galaxy_list, z_min=0, z_max=5, mag_g_max=30):
+def galaxy_cut(galaxy_list, z_min=0, z_max=5, mag_g_max=25):
     """
 
     :param galaxy_list: galaxies prior to selection criteria
