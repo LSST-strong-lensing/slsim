@@ -51,5 +51,6 @@ class TestGGLens(object):
         # We expect that theta_E_infinity should be less than 15
         assert theta_E_infinity < 15
 
+
 if __name__ == '__main__':
     pytest.main()

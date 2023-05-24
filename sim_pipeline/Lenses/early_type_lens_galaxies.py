@@ -1,13 +1,14 @@
 import numpy as np
 import numpy.random as random
 from sim_pipeline.selection import galaxy_cut
+from sim_pipeline.Lenses.velocity_dispersion import vel_disp_sdss
 
 
 class EarlyTypeLensGalaxies(object):
     """
     class describing early-type galaxies
     """
-    def __init__(self, galaxy_list, kwargs_cut, kwargs_mass2light, cosmo):
+    def __init__(self, galaxy_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area):
         """
 
         :param galaxy_list: list of dictionary with galaxy parameters of early-type galaxies
@@ -16,6 +17,8 @@ class EarlyTypeLensGalaxies(object):
         :type kwargs_cut: dict
         :param kwargs_mass2light: mass-to-light relation
         :param cosmo: astropy.cosmology instance
+        :type sky_area: `~astropy.units.Quantity`
+        :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid angle.
         """
         self.n = len(galaxy_list)
         column_names = galaxy_list.colnames
@@ -32,6 +35,23 @@ class EarlyTypeLensGalaxies(object):
 
         self._galaxy_select = galaxy_cut(galaxy_list, **kwargs_cut)
         self._num_select = len(self._galaxy_select)
+
+        z_min, z_max = 0, np.max(self._galaxy_select['z'])
+        redshift = np.linspace(start=z_min, stop=z_max, num=20)
+        z_list, vel_disp_list = vel_disp_sdss(sky_area, redshift, vd_min=100, vd_max=500, cosmology=cosmo, noise=True)
+        # sort for stellar masses
+        self._galaxy_select.sort('stellar_mass')
+        # sort velocity dispersion
+        vel_disp_list = np.sort(vel_disp_list)
+        num_vel_disp = len(vel_disp_list)
+        # print(num_vel_disp, self._num_select, z_max, 'test ')
+        if num_vel_disp > self._num_select:
+            # randomly select
+            pass
+            # np.random.choice()
+        # TODO: abundance match velocity dispersion with early-type galaxy catalogue
+
+        # TODO: random reshuffle of matched list
 
     def deflector_number(self):
         number = self.n
@@ -90,7 +110,7 @@ def vel_disp_from_m_star(m_star):
 
     .. math::
 
-         V_{\mathrm{disp}} = 10^{2.32} \left( \frac{M_{\mathrm{star}}}{10^{11} M_\odot} \right)^{0.24}
+         V_{\\mathrm{disp}} = 10^{2.32} \\left( \\frac{M_{\\mathrm{star}}}{10^{11} M_\\odot} \\right)^{0.24}
 
     2.32,0.24 is the parameters from [1] table 2
     [1]:Auger, M. W., et al. "The Sloan Lens ACS Survey. X. Stellar, dynamical, and total mass correlations of massive

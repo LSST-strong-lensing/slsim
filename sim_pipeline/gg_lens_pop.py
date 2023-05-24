@@ -6,6 +6,7 @@ import numpy as np
 def draw_test_area(deflector):
     """
     draw a test area around the deflector
+
     :param deflector: deflector dictionary
     :return: test area in arcsec^2
     """
@@ -20,7 +21,7 @@ class GGLensPop(object):
     """
 
     def __init__(self, lens_type='early-type', source_type='galaxies', kwargs_lens_cut=None, kwargs_source_cut=None,
-                 kwargs_mass2light=None, skypy_config=None, f_sky=0.1, cosmo=None):
+                 kwargs_mass2light=None, skypy_config=None, sky_area=None, cosmo=None):
         """
 
         :param lens_type: type of the lens
@@ -31,10 +32,10 @@ class GGLensPop(object):
         :type kwargs_selection: dict
         :param skypy_config: path to SkyPy configuration yaml file
         :type skypy_config: string
-        :param f_sky: sky area (in deg^2)
-        :type f_sky: float
+        :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid angle.
+        :type sky_area: `~astropy.units.Quantity`
         """
-        pipeline = SkyPyPipeline(skypy_config=skypy_config, f_sky=f_sky)
+        pipeline = SkyPyPipeline(skypy_config=skypy_config, sky_area=sky_area)
         if kwargs_lens_cut is None:
             kwargs_lens_cut = {}
         if kwargs_mass2light is None:
@@ -42,7 +43,8 @@ class GGLensPop(object):
         if lens_type == 'early-type':
             from sim_pipeline.Lenses.early_type_lens_galaxies import EarlyTypeLensGalaxies
             self._lens_galaxies = EarlyTypeLensGalaxies(pipeline.red_galaxies, kwargs_cut=kwargs_lens_cut,
-                                                        kwargs_mass2light=kwargs_mass2light, cosmo=cosmo)
+                                                        kwargs_mass2light=kwargs_mass2light, cosmo=cosmo,
+                                                        sky_area=sky_area)
         else:
             raise ValueError('lens_type %s is not supported' % lens_type)
 
@@ -54,7 +56,7 @@ class GGLensPop(object):
         else:
             raise ValueError('source_type %s is not supported' % source_type)
         self.cosmo = cosmo
-        self.f_sky = f_sky
+        self.f_sky = sky_area
 
     def select_lens_at_random(self):
         """
@@ -83,7 +85,7 @@ class GGLensPop(object):
         testarea is in units of arcsec^2, f_sky is in units of deg^2. 1 deg^2 = 12960000 arcsec^2
         """
         num_sources = self._source_galaxies.galaxies_number()
-        num_sources_tested_mean = (testarea * num_sources) / (12960000 * self.f_sky)
+        num_sources_tested_mean = (testarea * num_sources) / (12960000 * self.f_sky.to_value('deg2'))
         return num_sources_tested_mean
 
     def get_num_sources_tested(self, testarea=None, num_sources_tested_mean=None):
@@ -129,4 +131,4 @@ class GGLensPop(object):
                     # Check the validity of the lens system
                     if gg_lens.validity_test():
                         gg_lens_population.append(gg_lens)
-        return len(gg_lens_population)
+        return gg_lens_population
