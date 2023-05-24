@@ -2,6 +2,7 @@ import pytest
 from sim_pipeline.gg_lens_pop import GGLensPop, draw_test_area
 import numpy as np
 
+
 class TestGGLensPop:
 
     @pytest.fixture(scope="class")
@@ -16,7 +17,7 @@ class TestGGLensPop:
         num_lenses = gg_lens_pop_instance.get_num_lenses()
         num_sources = gg_lens_pop_instance.get_num_sources()
 
-        assert 1000 <= num_lenses <= 6600, f"Expected num_lenses to be between 5800 and 6600, but got {num_lenses}"
+        assert 100 <= num_lenses <= 6600, f"Expected num_lenses to be between 5800 and 6600, but got {num_lenses}"
         assert 100000 <= num_sources <= 500000, f"Expected num_sources to be between 1090000 and 1110000, but got {num_sources}"
         # assert 1 == 0
 

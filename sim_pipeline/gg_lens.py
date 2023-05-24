@@ -164,6 +164,20 @@ class GGLens(object):
         e1_mass, e2_mass = float(self._lens_dict['e1_mass']), float(self._lens_dict['e2_mass'])
         return e1_light, e2_light, e1_mass, e2_mass
 
+    def deflector_stellar_mass(self):
+        """
+
+        :return: stellar mass of deflector
+        """
+        return self._lens_dict['stellar_mass']
+
+    def deflector_velocity_dispersion(self):
+        """
+
+        :return: velocity dispersion [km/s]
+        """
+        return self._lens_dict['vel_disp']
+
     def los_linear_distortions(self):
         """
         line-of-sight distortions in shear and convergence

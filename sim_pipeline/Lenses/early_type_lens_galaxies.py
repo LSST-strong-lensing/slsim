@@ -20,41 +20,44 @@ class EarlyTypeLensGalaxies(object):
         :type sky_area: `~astropy.units.Quantity`
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid angle.
         """
-        self.n = len(galaxy_list)
+        n = len(galaxy_list)
         column_names = galaxy_list.colnames
         if 'vel_disp' not in column_names:
-            galaxy_list['vel_disp'] = -np.ones(self.n)
+            galaxy_list['vel_disp'] = -np.ones(n)
         if 'e1_light' not in column_names or 'e2_light' not in column_names:
-            galaxy_list['e1_light'] = -np.ones(self.n)
-            galaxy_list['e2_light'] = -np.ones(self.n)
+            galaxy_list['e1_light'] = -np.ones(n)
+            galaxy_list['e2_light'] = -np.ones(n)
         if 'e1_mass' not in column_names or 'e2_mass' not in column_names:
-            galaxy_list['e1_mass'] = -np.ones(self.n)
-            galaxy_list['e2_mass'] = -np.ones(self.n)
+            galaxy_list['e1_mass'] = -np.ones(n)
+            galaxy_list['e2_mass'] = -np.ones(n)
         if 'n_sersic' not in column_names:
-            galaxy_list['n_sersic'] = -np.ones(self.n)
+            galaxy_list['n_sersic'] = -np.ones(n)
 
         self._galaxy_select = galaxy_cut(galaxy_list, **kwargs_cut)
         self._num_select = len(self._galaxy_select)
 
         z_min, z_max = 0, np.max(self._galaxy_select['z'])
-        redshift = np.linspace(start=z_min, stop=z_max, num=20)
+        redshift = np.arange(z_min, z_max, 0.1)
         z_list, vel_disp_list = vel_disp_sdss(sky_area, redshift, vd_min=100, vd_max=500, cosmology=cosmo, noise=True)
-        # sort for stellar masses
+        # sort for stellar masses in decreasing manner
         self._galaxy_select.sort('stellar_mass')
-        # sort velocity dispersion
-        vel_disp_list = np.sort(vel_disp_list)
+        self._galaxy_select.reverse()
+        # sort velocity dispersion, largest values first
+        vel_disp_list = np.flip(np.sort(vel_disp_list))
         num_vel_disp = len(vel_disp_list)
-        # print(num_vel_disp, self._num_select, z_max, 'test ')
-        if num_vel_disp > self._num_select:
+        # abundance match velocity dispersion with early-type galaxy catalogue
+        if num_vel_disp >= self._num_select:
+            self._galaxy_select['vel_disp'] = vel_disp_list[:self._num_select]
             # randomly select
-            pass
-            # np.random.choice()
-        # TODO: abundance match velocity dispersion with early-type galaxy catalogue
+        else:
+            self._galaxy_select = self._galaxy_select[:num_vel_disp]
+            self._galaxy_select['vel_disp'] = vel_disp_list
+            self._num_select = num_vel_disp
 
         # TODO: random reshuffle of matched list
 
     def deflector_number(self):
-        number = self.n
+        number = self._num_select
         return number
 
     def draw_deflector(self):
