@@ -5,9 +5,6 @@
 import pytest
 
 
-from sim_pipeline import sim_pipeline
-
-
 @pytest.fixture
 def response():
     """Sample pytest fixture.
