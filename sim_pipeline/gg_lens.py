@@ -5,6 +5,8 @@ from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
 
 
+import corner.corner
+
 def image_separation_from_positions(image_positions):
     """
     calculate image separation in arc-seconds; if there are only two images, the separation between them is returned;
@@ -60,8 +62,12 @@ class GGLens(object):
         self._lens_dict = deflector_dict
         self.cosmo = cosmo
         self.test_area = test_area
-        self._lens_cosmo = LensCosmo(z_lens=float(self._lens_dict['z']), z_source=float(self._source_dict['z']), cosmo=self.cosmo)
-        self._theta_E = self._lens_cosmo.sis_sigma_v2theta_E(float(self._lens_dict['vel_disp']))
+        if self._lens_dict['z'] >= self._source_dict['z']:
+            self._theta_E = 0
+        else:
+            lens_cosmo = LensCosmo(z_lens=float(self._lens_dict['z']), z_source=float(self._source_dict['z']),
+                                         cosmo=self.cosmo)
+            self._theta_E = lens_cosmo.sis_sigma_v2theta_E(float(self._lens_dict['vel_disp']))
 
     def position_alignment(self):
         """
@@ -72,7 +78,7 @@ class GGLens(object):
         """
         if not hasattr(self, '_center_lens'):
             center_x_lens, center_y_lens = np.random.normal(loc=0, scale=0.1), np.random.normal(loc=0, scale=0.1)
-            self._center_lens = [center_x_lens, center_y_lens]
+            self._center_lens = np.array([center_x_lens, center_y_lens])
         # TODO: make it more realistic scatter
 
         if not hasattr(self, '_center_source'):
@@ -84,18 +90,21 @@ class GGLens(object):
             # Convert polar coordinates to cartesian coordinates
             center_x_source = self._center_lens[0] + r * np.cos(theta)
             center_y_source = self._center_lens[1] + r * np.sin(theta)
-            self._center_source = [center_x_source, center_y_source]
+            self._center_source = np.array([center_x_source, center_y_source])
         return self._center_lens, self._center_source
 
     def get_image_positions(self):
         kwargs_model, kwargs_params = self.lenstronomy_kwargs('g')
-        lens_model_class = LensModel(lens_model_list=kwargs_model['lens_model_list'])
+        lens_model_list = kwargs_model['lens_model_list']
+        lens_model_class = LensModel(lens_model_list=lens_model_list)
         lens_eq_solver = LensEquationSolver(lens_model_class)
         source_pos_x = kwargs_params['kwargs_source'][0]['center_x']
         source_pos_y = kwargs_params['kwargs_source'][0]['center_y']
 
         kwargs_lens = kwargs_params['kwargs_lens']
-        image_positions = lens_eq_solver.image_position_from_source(source_pos_x, source_pos_y, kwargs_lens)
+        # TODO: analytical solver possible but currently does not support the convergence term
+        image_positions = lens_eq_solver.image_position_from_source(source_pos_x, source_pos_y, kwargs_lens,
+                                                                    solver='lenstronomy')
         return image_positions
 
     def validity_test(self, min_image_separation=0, max_image_separation=10):
@@ -115,22 +124,17 @@ class GGLens(object):
         # Criteria 2: The angular Einstein radius of the lensing configuration (theta_E) times 2 must be greater than
         # or equal to the minimum image separation (min_image_separation) and less than or equal to the maximum image
         # separation (max_image_separation).
-        if self._theta_E * 2 < min_image_separation:
-            return False
-        if self._theta_E * 2 > max_image_separation:
+        if self._theta_E * 2 < min_image_separation or self._theta_E * 2 > max_image_separation:
             return False
 
         # Criteria 3: The distance between the lens center and the source position must be less than or equal to the
-        # angular Einstein radius of the lensing configuration.
-        image_positions = self.get_image_positions()
-        source_pos_x = image_positions[0]
-        source_pos_y = image_positions[1]
-
-        if ((source_pos_x - self._center_lens[0]) ** 2 + (source_pos_y - self._center_lens[0]) ** 2 >
-            self._theta_E ** 2).all():
+        # angular Einstein radius of the lensing configuration (times sqrt(2)).
+        center_lens, center_source = self.position_alignment()
+        if np.sum((center_lens - center_source)**2) > self._theta_E **2 * 2:
             return False
 
         # Criteria 4: The lensing configuration must produce at least two SL images.
+        image_positions = self.get_image_positions()
         if len(image_positions[0]) < 2:
             return False
 
@@ -147,6 +151,23 @@ class GGLens(object):
         # TODO: test for lensed arc brightness
         # TODO: test for SN ratio
 
+    @property
+    def lens_redshift(self):
+        """
+
+        :return: lens redshift
+        """
+        return self._lens_dict['z']
+
+    @property
+    def source_redshift(self):
+        """
+
+        :return: source redshift
+        """
+        return self._source_dict['z']
+
+    @property
     def einstein_radius(self):
         """
         Einstein radius
@@ -228,7 +249,7 @@ class GGLens(object):
         kwargs_model = {'source_light_model_list': ['SERSIC_ELLIPSE'],
                         'lens_light_model_list': ['SERSIC_ELLIPSE'],
                         'lens_model_list': ['EPL', 'SHEAR', 'CONVERGENCE']}
-        theta_E = self.einstein_radius()
+        theta_E = self.einstein_radius
         e1_light_lens, e2_light_lens, e1_mass, e2_mass = self.deflector_ellipticity()
         center_lens, center_source = self.position_alignment()
         gamma1, gamma2, kappa_ext = self.los_linear_distortions()
