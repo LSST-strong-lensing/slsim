@@ -67,10 +67,12 @@ class GGLensPop(object):
 
         :return: GGLens() instance with parameters of the deflector and lens and source light
         """
-        source = self._source_galaxies.draw_galaxy()
-        lens = self._lens_galaxies.draw_deflector()
-        gg_lens = GGLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo)
-        return gg_lens
+        while True:
+            source = self._source_galaxies.draw_galaxy()
+            lens = self._lens_galaxies.draw_deflector()
+            gg_lens = GGLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo)
+            if gg_lens.validity_test():
+                return gg_lens
 
     def get_num_lenses(self):
         return self._lens_galaxies.deflector_number()
@@ -112,7 +114,7 @@ class GGLensPop(object):
         gg_lens_population = []
         # Estimate the number of lensing systems
         num_lenses = self._lens_galaxies.deflector_number()
-        num_sources = self._source_galaxies.galaxies_number()
+        # num_sources = self._source_galaxies.galaxies_number()
         #        print(num_sources_tested_mean)
         #        print("num_lenses is " + str(num_lenses))
         #        print("num_sources is " + str(num_sources))
@@ -131,4 +133,5 @@ class GGLensPop(object):
                     # Check the validity of the lens system
                     if gg_lens.validity_test():
                         gg_lens_population.append(gg_lens)
+                        break
         return gg_lens_population
