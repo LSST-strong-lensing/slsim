@@ -3,7 +3,7 @@ from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 from lenstronomy.Util import constants
 from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
-
+from sim_pipeline.para_distribution import GaussianMixtureModel
 
 import corner.corner
 
@@ -208,7 +208,12 @@ class GGLens(object):
         # TODO: more realistic distribution of shear and convergence,
         #  the covariances among them and redshift correlations
         if not hasattr(self, '_gamma'):
-            gamma = np.random.normal(loc=0, scale=0.1)
+            mixture = GaussianMixtureModel(
+                means=[0.00330796, -0.07635054, 0.11829008],
+                stds=[np.sqrt(0.00283885), np.sqrt(0.01066668), np.sqrt(0.0097978)],
+                weights=[0.62703102, 0.23732313, 0.13564585]
+            )
+            gamma = np.abs(mixture.rvs(size=1))[0]
             phi = 2 * np.pi * np.random.random()
             gamma1 = gamma * np.cos(2 * phi)
             gamma2 = gamma * np.sin(2 * phi)
