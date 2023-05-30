@@ -58,7 +58,7 @@ class GGLensPop(object):
         self.cosmo = cosmo
         self.f_sky = sky_area
 
-    def select_lens_at_random(self):
+    def select_lens_at_random(self, **kwargs_lens_cut):
         """
         draw a random lens within the cuts of the lens and source, with possible additional cut in the lensing
         configuration.
@@ -71,7 +71,7 @@ class GGLensPop(object):
             source = self._source_galaxies.draw_galaxy()
             lens = self._lens_galaxies.draw_deflector()
             gg_lens = GGLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo)
-            if gg_lens.validity_test():
+            if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens
 
     def get_num_lenses(self):
@@ -100,12 +100,14 @@ class GGLensPop(object):
         num_sources_range = np.random.poisson(lam=num_sources_tested_mean)
         return num_sources_range
 
-    def draw_population(self):
+    def draw_population(self, kwargs_lens_cuts):
         """
         return full population list of all lenses within the area
         # TODO: need to implement a version of it. (improve the algorithm)
             Draw a population of galaxy-galaxy lenses within the area.
 
+        :param kwargs_lens_cuts: validity test keywords
+        :type kwargs_lens_cuts: dict
         :return: List of GGLens instances with parameters of the deflectors and lens and source light.
         :rtype: list
         """
@@ -131,7 +133,7 @@ class GGLensPop(object):
                     source = self._source_galaxies.draw_galaxy()
                     gg_lens = GGLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo, test_area=test_area)
                     # Check the validity of the lens system
-                    if gg_lens.validity_test():
+                    if gg_lens.validity_test(**kwargs_lens_cuts):
                         gg_lens_population.append(gg_lens)
                         break
         return gg_lens_population

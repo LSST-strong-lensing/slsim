@@ -2,8 +2,11 @@ import numpy as np
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 from lenstronomy.Util import constants
 from lenstronomy.LensModel.lens_model import LensModel
+from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
 from sim_pipeline.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
+from lenstronomy.Util import util, data_util
+
 
 def image_separation_from_positions(image_positions):
     """
@@ -102,25 +105,28 @@ class GGLens(object):
         return self._center_lens, self._center_source
 
     def get_image_positions(self):
-        kwargs_model, kwargs_params = self.lenstronomy_kwargs('g')
-        lens_model_list = kwargs_model['lens_model_list']
-        lens_model_class = LensModel(lens_model_list=lens_model_list)
-        lens_eq_solver = LensEquationSolver(lens_model_class)
-        source_pos_x = kwargs_params['kwargs_source'][0]['center_x']
-        source_pos_y = kwargs_params['kwargs_source'][0]['center_y']
+        if not hasattr(self, '_image_positions'):
+            kwargs_model, kwargs_params = self.lenstronomy_kwargs('g')
+            lens_model_list = kwargs_model['lens_model_list']
+            lens_model_class = LensModel(lens_model_list=lens_model_list)
+            lens_eq_solver = LensEquationSolver(lens_model_class)
+            source_pos_x = kwargs_params['kwargs_source'][0]['center_x']
+            source_pos_y = kwargs_params['kwargs_source'][0]['center_y']
 
-        kwargs_lens = kwargs_params['kwargs_lens']
-        # TODO: analytical solver possible but currently does not support the convergence term
-        image_positions = lens_eq_solver.image_position_from_source(source_pos_x, source_pos_y, kwargs_lens,
-                                                                    solver='lenstronomy')
-        return image_positions
+            kwargs_lens = kwargs_params['kwargs_lens']
+            # TODO: analytical solver possible but currently does not support the convergence term
+            self._image_positions = lens_eq_solver.image_position_from_source(source_pos_x, source_pos_y, kwargs_lens,
+                                                                              solver='lenstronomy')
+        return self._image_positions
 
-    def validity_test(self, min_image_separation=0, max_image_separation=10):
+    def validity_test(self, min_image_separation=0, max_image_separation=10, mag_arc_limit=None):
         """
         check whether lensing configuration matches selection and plausibility criteria
 
-        :param min_image_separation:
-        :param max_image_separation:
+        :param min_image_separation: minimum image separation
+        :param max_image_separation: maximum image separation
+        :param mag_arc_limit: dictionary with key of bands and values of magnitude limits of integrated lensed arc
+        :type mag_arc_limit: dict with key of bands and values of magnitude limits
         :return: boolean
         """
         # Criteria 1:The redshift of the lens (z_lens) must be less than the redshift of the source (z_source).
@@ -138,6 +144,7 @@ class GGLens(object):
         # Criteria 3: The distance between the lens center and the source position must be less than or equal to the
         # angular Einstein radius of the lensing configuration (times sqrt(2)).
         center_lens, center_source = self.position_alignment()
+
         if np.sum((center_lens - center_source) ** 2) > self._theta_E ** 2 * 2:
             return False
 
@@ -154,10 +161,22 @@ class GGLens(object):
         if image_separation > max_image_separation:
             return False
 
+        # Criteria 6: (optional)
+        # compute the magnified brightness of the lensed extended arc for different bands
+        # at least in one band, the magnitude has to be brighter than the limit
+        if mag_arc_limit is not None:
+            bool_mag_limit = False
+            host_mag = self.host_magnification()
+            for band, mag_limit_band in mag_arc_limit.items():
+                mag_source = self.source_magnitude(band)
+                mag_arc = mag_source - 2.5 * np.log10(host_mag)  # lensing magnification results in a shift in magnitude
+                if mag_arc < mag_limit_band:
+                    bool_mag_limit = True
+                    break
+            if bool_mag_limit is False:
+                return False
         return True
-        # TODO: make image_position definition to not re-compute lens equation solver multiple times
-        # TODO: test for lensed arc brightness
-        # TODO: test for SN ratio
+        # TODO: test for SN ratio in surface brightness
 
     @property
     def lens_redshift(self):
@@ -255,18 +274,83 @@ class GGLens(object):
         band_string = str('mag_' + band)
         return self._source_dict[band_string]
 
-    def lenstronomy_kwargs(self, band):
+    def host_magnification(self):
         """
+        compute the extended lensed surface brightness and calculates the integrated flux-weighted magnification factor
+        of the extended host galaxy
 
         :param band: imaging band
         :type band: string
+        :return: integrated magnification factor of host magnitude
+        """
+        kwargs_model, kwargs_params = self.lenstronomy_kwargs(band=None)
 
+        lightModel = LightModel(light_model_list=kwargs_model.get('source_light_model_list', []))
+        lensModel = LensModel(lens_model_list=kwargs_model.get('lens_model_list', []))
+        theta_E = self.einstein_radius
+        center_lens, center_source = self.position_alignment()
+
+        kwargs_source_mag = kwargs_params['kwargs_source']
+        kwargs_source_amp = data_util.magnitude2amplitude(lightModel, kwargs_source_mag, magnitude_zero_point=0)
+
+        num_pix = 200
+        delta_pix = theta_E * 4 / num_pix
+        x, y = util.make_grid(numPix=200, deltapix=delta_pix)
+        x += center_source[0]
+        y += center_source[1]
+        beta_x, beta_y = lensModel.ray_shooting(x, y, kwargs_params['kwargs_lens'])
+        flux_lensed = np.sum(lightModel.surface_brightness(beta_x, beta_y, kwargs_source_amp))
+        flux_no_lens = np.sum(lightModel.surface_brightness(x, y, kwargs_source_amp))
+        if flux_no_lens > 0:
+            return flux_lensed / flux_no_lens
+        return None
+
+    def lenstronomy_kwargs(self, band=None):
+        """
+
+        :param band: imaging band, if =None, will result in un-normalized amplitudes
+        :type band: string or None
         :return: lenstronomy model and parameter conventions
 
         """
+        lens_model_list, kwargs_lens = self.lens_model_lenstronomy()
         kwargs_model = {'source_light_model_list': ['SERSIC_ELLIPSE'],
                         'lens_light_model_list': ['SERSIC_ELLIPSE'],
-                        'lens_model_list': ['EPL', 'SHEAR', 'CONVERGENCE']}
+                        'lens_model_list':  lens_model_list}
+
+        e1_light_lens, e2_light_lens, e1_mass, e2_mass = self.deflector_ellipticity()
+        center_lens, center_source = self.position_alignment()
+
+        size_lens_arcsec = self._lens_dict['angular_size'] / constants.arcsec  # convert radian to arc seconds
+        if band is None:
+            mag_lens = 1
+            mag_source = 1
+        else:
+            mag_lens = self.deflector_magnitude(band)
+            mag_source = self.source_magnitude(band)
+        kwargs_lens_light = [{'magnitude': mag_lens, 'R_sersic': size_lens_arcsec,
+                              'n_sersic': float(self._source_dict['n_sersic']),
+                              'e1': e1_light_lens, 'e2': e2_light_lens,
+                              'center_x': center_lens[0], 'center_y': center_lens[1]}]
+
+        size_source_arcsec = float(self._source_dict['angular_size']) / constants.arcsec  # convert radian to arc seconds
+
+        kwargs_source = [{'magnitude': mag_source, 'R_sersic': size_source_arcsec,
+                          'n_sersic': float(self._source_dict['n_sersic']),
+                          'e1': float(self._source_dict['e1']), 'e2': float(self._source_dict['e2']),
+                          'center_x': center_source[0], 'center_y': center_source[1]}]
+
+        kwargs_params = {'kwargs_lens': kwargs_lens, 'kwargs_source': kwargs_source,
+                         'kwargs_lens_light': kwargs_lens_light}
+        return kwargs_model, kwargs_params
+
+    def lens_model_lenstronomy(self):
+        """
+        returns lens model instance and parameters in lenstronomy conventions
+
+        :return: lens_model_list, kwargs_lens
+        """
+        lens_model_list = ['EPL', 'SHEAR', 'CONVERGENCE']
         theta_E = self.einstein_radius
         e1_light_lens, e2_light_lens, e1_mass, e2_mass = self.deflector_ellipticity()
         center_lens, center_source = self.position_alignment()
@@ -275,20 +359,4 @@ class GGLens(object):
                         'center_x': center_lens[0], 'center_y': center_lens[1]},
                        {'gamma1': gamma1, 'gamma2': gamma2, 'ra_0': 0, 'dec_0': 0},
                        {'kappa': kappa_ext, 'ra_0': 0, 'dec_0': 0}]
-        size_lens_arcsec = self._lens_dict['angular_size'] / constants.arcsec  # convert radian to arc seconds
-        mag_lens = self.deflector_magnitude(band)
-        kwargs_lens_light = [{'magnitude': mag_lens, 'R_sersic': size_lens_arcsec,
-                              'n_sersic': self._source_dict['n_sersic'],
-                              'e1': e1_light_lens, 'e2': e2_light_lens,
-                              'center_x': center_lens[0], 'center_y': center_lens[1]}]
-
-        size_source_arcsec = self._source_dict['angular_size'] / constants.arcsec  # convert radian to arc seconds
-        mag_source = self.source_magnitude(band)
-        kwargs_source = [{'magnitude': mag_source, 'R_sersic': size_source_arcsec,
-                          'n_sersic': self._source_dict['n_sersic'],
-                          'e1': self._source_dict['e1'], 'e2': self._source_dict['e2'],
-                          'center_x': center_source[0], 'center_y': center_source[1]}]
-
-        kwargs_params = {'kwargs_lens': kwargs_lens, 'kwargs_source': kwargs_source,
-                         'kwargs_lens_light': kwargs_lens_light}
-        return kwargs_model, kwargs_params
+        return lens_model_list, kwargs_lens
