@@ -3,9 +3,7 @@ from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 from lenstronomy.Util import constants
 from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
-from sim_pipeline.para_distribution import GaussianMixtureModel
-
-import corner.corner
+from sim_pipeline.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
 
 def image_separation_from_positions(image_positions):
     """
@@ -48,7 +46,8 @@ class GGLens(object):
     class to manage individual galaxy-galaxy lenses
     """
 
-    def __init__(self, source_dict, deflector_dict, cosmo, test_area=4 * np.pi):
+    def __init__(self, source_dict, deflector_dict, cosmo, test_area=4 * np.pi,
+                 mixgauss_means=None, mixgauss_stds=None, mixgauss_weights=None):
         """
 
         :param source_dict: source properties
@@ -57,16 +56,25 @@ class GGLens(object):
         :type deflector_dict: dict
         :param cosmo: astropy.cosmology instance
         :param test_area: area of disk around one lensing galaxies to be investigated on (in arc-seconds^2)
+        :param mixgauss_weights: weights of the Gaussian mixture
+        :param mixgauss_stds: standard deviations of the Gaussian mixture
+        :param mixgauss_means: means of the Gaussian mixture
+        :type mixgauss_weights: list of float
+        :type mixgauss_stds: list of float
+        :type mixgauss_means: list of float
         """
         self._source_dict = source_dict
         self._lens_dict = deflector_dict
         self.cosmo = cosmo
         self.test_area = test_area
+        self._mixgauss_means = mixgauss_means
+        self._mixgauss_stds = mixgauss_stds
+        self._mixgauss_weights = mixgauss_weights
         if self._lens_dict['z'] >= self._source_dict['z']:
             self._theta_E = 0
         else:
             lens_cosmo = LensCosmo(z_lens=float(self._lens_dict['z']), z_source=float(self._source_dict['z']),
-                                         cosmo=self.cosmo)
+                                   cosmo=self.cosmo)
             self._theta_E = lens_cosmo.sis_sigma_v2theta_E(float(self._lens_dict['vel_disp']))
 
     def position_alignment(self):
@@ -130,7 +138,7 @@ class GGLens(object):
         # Criteria 3: The distance between the lens center and the source position must be less than or equal to the
         # angular Einstein radius of the lensing configuration (times sqrt(2)).
         center_lens, center_source = self.position_alignment()
-        if np.sum((center_lens - center_source)**2) > self._theta_E **2 * 2:
+        if np.sum((center_lens - center_source) ** 2) > self._theta_E ** 2 * 2:
             return False
 
         # Criteria 4: The lensing configuration must produce at least two SL images.
@@ -207,11 +215,14 @@ class GGLens(object):
         """
         # TODO: more realistic distribution of shear and convergence,
         #  the covariances among them and redshift correlations
+        mixgauss_means = self._mixgauss_means
+        mixgauss_stds = self._mixgauss_stds
+        mixgauss_weights = self._mixgauss_weights
         if not hasattr(self, '_gamma'):
             mixture = GaussianMixtureModel(
-                means=[0.00330796, -0.07635054, 0.11829008],
-                stds=[np.sqrt(0.00283885), np.sqrt(0.01066668), np.sqrt(0.0097978)],
-                weights=[0.62703102, 0.23732313, 0.13564585]
+                means=mixgauss_means,
+                stds=mixgauss_stds,
+                weights=mixgauss_weights,
             )
             gamma = np.abs(mixture.rvs(size=1))[0]
             phi = 2 * np.pi * np.random.random()
@@ -249,7 +260,9 @@ class GGLens(object):
 
         :param band: imaging band
         :type band: string
+
         :return: lenstronomy model and parameter conventions
+
         """
         kwargs_model = {'source_light_model_list': ['SERSIC_ELLIPSE'],
                         'lens_light_model_list': ['SERSIC_ELLIPSE'],
