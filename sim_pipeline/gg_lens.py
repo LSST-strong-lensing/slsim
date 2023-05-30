@@ -4,6 +4,7 @@ from lenstronomy.Util import constants
 from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
+from sim_pipeline.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
 from lenstronomy.Util import util, data_util
 
 
@@ -48,7 +49,8 @@ class GGLens(object):
     class to manage individual galaxy-galaxy lenses
     """
 
-    def __init__(self, source_dict, deflector_dict, cosmo, test_area=4 * np.pi):
+    def __init__(self, source_dict, deflector_dict, cosmo, test_area=4 * np.pi,
+                 mixgauss_means=None, mixgauss_stds=None, mixgauss_weights=None):
         """
 
         :param source_dict: source properties
@@ -57,11 +59,20 @@ class GGLens(object):
         :type deflector_dict: dict
         :param cosmo: astropy.cosmology instance
         :param test_area: area of disk around one lensing galaxies to be investigated on (in arc-seconds^2)
+        :param mixgauss_weights: weights of the Gaussian mixture
+        :param mixgauss_stds: standard deviations of the Gaussian mixture
+        :param mixgauss_means: means of the Gaussian mixture
+        :type mixgauss_weights: list of float
+        :type mixgauss_stds: list of float
+        :type mixgauss_means: list of float
         """
         self._source_dict = source_dict
         self._lens_dict = deflector_dict
         self.cosmo = cosmo
         self.test_area = test_area
+        self._mixgauss_means = mixgauss_means
+        self._mixgauss_stds = mixgauss_stds
+        self._mixgauss_weights = mixgauss_weights
         if self._lens_dict['z'] >= self._source_dict['z']:
             self._theta_E = 0
         else:
@@ -133,7 +144,8 @@ class GGLens(object):
         # Criteria 3: The distance between the lens center and the source position must be less than or equal to the
         # angular Einstein radius of the lensing configuration (times sqrt(2)).
         center_lens, center_source = self.position_alignment()
-        if np.sum((center_lens - center_source)**2) > self._theta_E ** 2 * 2:
+
+        if np.sum((center_lens - center_source) ** 2) > self._theta_E ** 2 * 2:
             return False
 
         # Criteria 4: The lensing configuration must produce at least two SL images.
@@ -222,8 +234,16 @@ class GGLens(object):
         """
         # TODO: more realistic distribution of shear and convergence,
         #  the covariances among them and redshift correlations
+        mixgauss_means = self._mixgauss_means
+        mixgauss_stds = self._mixgauss_stds
+        mixgauss_weights = self._mixgauss_weights
         if not hasattr(self, '_gamma'):
-            gamma = np.random.normal(loc=0, scale=0.1)
+            mixture = GaussianMixtureModel(
+                means=mixgauss_means,
+                stds=mixgauss_stds,
+                weights=mixgauss_weights,
+            )
+            gamma = np.abs(mixture.rvs(size=1))[0]
             phi = 2 * np.pi * np.random.random()
             gamma1 = gamma * np.cos(2 * phi)
             gamma2 = gamma * np.sin(2 * phi)
@@ -259,6 +279,8 @@ class GGLens(object):
         compute the extended lensed surface brightness and calculates the integrated flux-weighted magnification factor
         of the extended host galaxy
 
+        :param band: imaging band
+        :type band: string
         :return: integrated magnification factor of host magnitude
         """
         kwargs_model, kwargs_params = self.lenstronomy_kwargs(band=None)
@@ -289,6 +311,7 @@ class GGLens(object):
         :param band: imaging band, if =None, will result in un-normalized amplitudes
         :type band: string or None
         :return: lenstronomy model and parameter conventions
+
         """
         lens_model_list, kwargs_lens = self.lens_model_lenstronomy()
         kwargs_model = {'source_light_model_list': ['SERSIC_ELLIPSE'],
