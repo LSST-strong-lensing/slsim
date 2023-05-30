@@ -5,7 +5,7 @@ class TestSkyPyPipeline(object):
 
     def setup_method(self):
         from astropy.units import Quantity
-        sky_area = Quantity(value=0.1, unit='deg2')
+        sky_area = Quantity(value=0.05, unit='deg2')
         self.pipeline = SkyPyPipeline(skypy_config=None, sky_area=sky_area)
 
     def test_blue_galaxies(self):

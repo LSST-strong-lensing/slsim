@@ -95,7 +95,7 @@ class GGLens(object):
 
     def get_image_positions(self):
         if not hasattr(self, '_image_positions'):
-            kwargs_model, kwargs_params = self.lenstronomy_kwargs('g')
+            kwargs_model, kwargs_params = self.lenstronomy_kwargs(band=None)
             lens_model_list = kwargs_model['lens_model_list']
             lens_model_class = LensModel(lens_model_list=lens_model_list)
             lens_eq_solver = LensEquationSolver(lens_model_class)

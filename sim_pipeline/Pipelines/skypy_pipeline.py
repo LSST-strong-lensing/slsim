@@ -5,31 +5,34 @@ import tempfile
 
 
 class SkyPyPipeline:
-    def __init__(self, skypy_config=None, sky_area=0.1):
+    def __init__(self, skypy_config=None, sky_area=None, filters=None):
         """
         :param skypy_config: path to SkyPy configuration yaml file
         :type skypy_config: string or None
         :type sky_area: `~astropy.units.Quantity`
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid angle.
+        :param filters: filters for SED integration
+        :type filters: list of strings or None
         """
+        path = os.path.dirname(sim_pipeline.__file__)
+        module_path, _ = os.path.split(path)
         if skypy_config is None:
-            path = os.path.dirname(sim_pipeline.__file__)
-            module_path, _ = os.path.split(path)
-            skypy_config = os.path.join(module_path, 'data/SkyPy/lsst-like.yml')  # read the file
+            skypy_config = os.path.join(module_path, 'data/SkyPy/lsst-like.yml')
 
-        if sky_area.value == 0.1 and sky_area.unit == 'deg2':
+        if sky_area is None and filters is None:
             self._pipeline = Pipeline.read(skypy_config)
             self._pipeline.execute()
         else:
             with open(skypy_config, 'r') as file:
                 content = file.read()
 
-            old_fsky = "fsky: 0.1 deg2"
-            new_fsky = f"fsky: %s %s" % (sky_area.valuem, sky_area.unit)
-            new_content = content.replace(old_fsky, new_fsky)
+            if sky_area is not None:
+                old_fsky = "fsky: 0.1 deg2"
+                new_fsky = f"fsky: %s %s" % (sky_area.value, sky_area.unit)
+                content = content.replace(old_fsky, new_fsky)
 
             with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.yml') as tmp_file:
-                tmp_file.write(new_content)
+                tmp_file.write(content)
 
             self._pipeline = Pipeline.read(tmp_file.name)
             self._pipeline.execute()

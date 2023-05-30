@@ -1,20 +1,24 @@
-from sim_pipeline.Observations import lsst_lenstronomy
 from lenstronomy.SimulationAPI.sim_api import SimAPI
 
 
-def simulate_image(lens_class, band, num_pix, add_noise=True, coadd_years=10):
+def simulate_image(lens_class, band, num_pix, add_noise=True, observatory='LSST', **kwargs):
     """
 
     :param lens_class: class object containing all information of the lensing system (e.g., GGLens())
     :param band: imaging band
     :param num_pix: number of pixels per axis
     :param add_noise: if True, add noise
-    :param coadd_years: int, number of years corresponding to num_exposures in obs dict. Currently supported: 1-10.
+    :param observatory: telescope type to be simulated
+    :type observatory: str
+    :param kwargs: additional keyword arguments for the bands
+    :type kwargs: dict
     :return: simulated image
     :rtype: 2d numpy array
     """
     kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band)
-    kwargs_single_band = lsst_lenstronomy.kwargs_single_band(band=band, coadd_years=coadd_years, psf_type='GAUSSIAN')
+    from sim_pipeline.Observations import image_quality_lenstronomy
+    kwargs_single_band = image_quality_lenstronomy.kwargs_single_band(observatory=observatory, band=band, **kwargs)
+
     sim_api = SimAPI(numpix=num_pix, kwargs_single_band=kwargs_single_band, kwargs_model=kwargs_model)
     kwargs_lens_light, kwargs_source, kwargs_ps = sim_api.magnitude2amplitude(kwargs_lens_light_mag=kwargs_params.get('kwargs_lens_light', None),
                                                                               kwargs_source_mag=kwargs_params.get('kwargs_source', None),

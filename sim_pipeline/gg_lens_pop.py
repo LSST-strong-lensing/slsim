@@ -21,7 +21,7 @@ class GGLensPop(object):
     """
 
     def __init__(self, lens_type='early-type', source_type='galaxies', kwargs_lens_cut=None, kwargs_source_cut=None,
-                 kwargs_mass2light=None, skypy_config=None, sky_area=None, cosmo=None):
+                 kwargs_mass2light=None, skypy_config=None, sky_area=None, filters=None, cosmo=None):
         """
 
         :param lens_type: type of the lens
@@ -34,8 +34,10 @@ class GGLensPop(object):
         :type skypy_config: string
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid angle.
         :type sky_area: `~astropy.units.Quantity`
+        :param filters: filters for SED integration
+        :type filters: list of strings or None
         """
-        pipeline = SkyPyPipeline(skypy_config=skypy_config, sky_area=sky_area)
+        pipeline = SkyPyPipeline(skypy_config=skypy_config, sky_area=sky_area, filters=filters)
         if kwargs_lens_cut is None:
             kwargs_lens_cut = {}
         if kwargs_mass2light is None:
