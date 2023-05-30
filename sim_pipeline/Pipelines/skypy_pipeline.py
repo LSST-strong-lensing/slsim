@@ -3,6 +3,7 @@ from skypy.pipeline import Pipeline
 import sim_pipeline
 import tempfile
 
+
 class SkyPyPipeline:
     def __init__(self, skypy_config=None, sky_area=0.1):
         """
