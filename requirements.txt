@@ -1,5 +1,5 @@
 skypy
-lenstronomy
+lenstronomy>=1.11.2
 astropy
 numpy
 scipy

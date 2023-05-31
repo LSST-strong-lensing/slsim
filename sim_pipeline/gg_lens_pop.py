@@ -20,31 +20,41 @@ class GGLensPop(object):
     class to perform samples of galaxy-galaxy lensing
     """
 
-    def __init__(self, lens_type='early-type', source_type='galaxies', kwargs_lens_cut=None, kwargs_source_cut=None,
-                 kwargs_mass2light=None, skypy_config=None, sky_area=None, cosmo=None):
+    def __init__(self, lens_type='early-type', source_type='galaxies', kwargs_deflector_cut=None,
+                 kwargs_source_cut=None, kwargs_mass2light=None, skypy_config=None, sky_area=None, filters=None,
+                 cosmo=None):
         """
 
         :param lens_type: type of the lens
         :type lens_type: string
         :param source_type: type of the source
         :type source_type: string
-        :param kwargs_selection:
-        :type kwargs_selection: dict
+        :param kwargs_deflector_cut: cuts on the deflector to be excluded in the sample
+        :type kwargs_deflector_cut: dict
+        :param kwargs_source_cut: cuts on the source to be excluded in the sample
+        :type kwargs_source_cut: dict
         :param skypy_config: path to SkyPy configuration yaml file
         :type skypy_config: string
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid angle.
         :type sky_area: `~astropy.units.Quantity`
+        :param filters: filters for SED integration
+        :type filters: list of strings or None
         """
-        pipeline = SkyPyPipeline(skypy_config=skypy_config, sky_area=sky_area)
-        if kwargs_lens_cut is None:
-            kwargs_lens_cut = {}
+        pipeline = SkyPyPipeline(skypy_config=skypy_config, sky_area=sky_area, filters=filters)
+        if kwargs_deflector_cut is None:
+            kwargs_deflector_cut = {}
         if kwargs_mass2light is None:
             kwargs_mass2light = {}
         if lens_type == 'early-type':
             from sim_pipeline.Lenses.early_type_lens_galaxies import EarlyTypeLensGalaxies
-            self._lens_galaxies = EarlyTypeLensGalaxies(pipeline.red_galaxies, kwargs_cut=kwargs_lens_cut,
+            self._lens_galaxies = EarlyTypeLensGalaxies(pipeline.red_galaxies, kwargs_cut=kwargs_deflector_cut,
                                                         kwargs_mass2light=kwargs_mass2light, cosmo=cosmo,
                                                         sky_area=sky_area)
+        elif lens_type == 'all-galaxies':
+            from sim_pipeline.Lenses.all_lens_galaxies import AllLensGalaxies
+            self._lens_galaxies = AllLensGalaxies(pipeline.red_galaxies, pipeline.blue_galaxies,
+                                                  kwargs_cut=kwargs_deflector_cut, kwargs_mass2light=kwargs_mass2light,
+                                                  cosmo=cosmo, sky_area=sky_area)
         else:
             raise ValueError('lens_type %s is not supported' % lens_type)
 
@@ -58,7 +68,7 @@ class GGLensPop(object):
         self.cosmo = cosmo
         self.f_sky = sky_area
 
-    def select_lens_at_random(self):
+    def select_lens_at_random(self, **kwargs_lens_cut):
         """
         draw a random lens within the cuts of the lens and source, with possible additional cut in the lensing
         configuration.
@@ -71,7 +81,7 @@ class GGLensPop(object):
             source = self._source_galaxies.draw_galaxy()
             lens = self._lens_galaxies.draw_deflector()
             gg_lens = GGLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo)
-            if gg_lens.validity_test():
+            if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens
 
     def get_num_lenses(self):
@@ -100,12 +110,14 @@ class GGLensPop(object):
         num_sources_range = np.random.poisson(lam=num_sources_tested_mean)
         return num_sources_range
 
-    def draw_population(self):
+    def draw_population(self, kwargs_lens_cuts):
         """
         return full population list of all lenses within the area
         # TODO: need to implement a version of it. (improve the algorithm)
             Draw a population of galaxy-galaxy lenses within the area.
 
+        :param kwargs_lens_cuts: validity test keywords
+        :type kwargs_lens_cuts: dict
         :return: List of GGLens instances with parameters of the deflectors and lens and source light.
         :rtype: list
         """
@@ -131,7 +143,7 @@ class GGLensPop(object):
                     source = self._source_galaxies.draw_galaxy()
                     gg_lens = GGLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo, test_area=test_area)
                     # Check the validity of the lens system
-                    if gg_lens.validity_test():
+                    if gg_lens.validity_test(**kwargs_lens_cuts):
                         gg_lens_population.append(gg_lens)
                         break
         return gg_lens_population
