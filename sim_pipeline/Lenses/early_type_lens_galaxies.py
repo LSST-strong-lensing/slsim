@@ -2,6 +2,7 @@ import numpy as np
 import numpy.random as random
 from sim_pipeline.selection import galaxy_cut
 from sim_pipeline.Lenses.velocity_dispersion import vel_disp_sdss
+from sim_pipeline.Util import param_util
 
 
 class EarlyTypeLensGalaxies(object):
@@ -93,7 +94,7 @@ def early_type_projected_eccentricity(ellipticity, **kwargs):
     :type kwargs: dict
     :return: e1_light, e2_light,e1_mass, e2_mass eccentricity components
     """
-    e_light = ellipticity
+    e_light = param_util.epsilon2e(ellipticity)
     phi_light = np.random.uniform(0, np.pi)
     e1_light = e_light * np.cos(phi_light)
     e2_light = e_light * np.sin(phi_light)

@@ -42,7 +42,7 @@ class GGLensingPlots(object):
         image_rgb = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
         return image_rgb
 
-    def plot_montage(self, rgb_band_list, add_noise=True, n_horizont=1, n_vertical=1):
+    def plot_montage(self, rgb_band_list, add_noise=True, n_horizont=1, n_vertical=1, kwargs_lens_cut=None):
         """
         Method to generate and display a grid of simulated gravitational lensing images with or without noise.
 
@@ -50,12 +50,15 @@ class GGLensingPlots(object):
         :param add_noise: boolean flag, set to True to add noise to the images, default is True
         :param n_horizont: number of images to display horizontally, default is 1
         :param n_vertical: number of images to display vertically, default is 1
+        :param kwargs_lens_cut: lens selection cuts for GGLens.validity_test() function
         """
+        if kwargs_lens_cut is None:
+            kwargs_lens_cut = {}
         fig, axes = plt.subplots(n_vertical, n_horizont, figsize=(n_horizont * 3, n_vertical * 3))
         for i in range(n_horizont):
             for j in range(n_vertical):
                 ax = axes[j, i]
-                lens_class = self._lens_pop.select_lens_at_random()
+                lens_class = self._lens_pop.select_lens_at_random(**kwargs_lens_cut)
                 image_rgb = self.rgb_image(lens_class, rgb_band_list, add_noise=add_noise)
                 ax.imshow(image_rgb, aspect='equal', origin='lower')
                 ax.get_xaxis().set_visible(False)

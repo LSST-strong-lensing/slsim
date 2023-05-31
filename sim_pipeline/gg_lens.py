@@ -243,16 +243,22 @@ class GGLens(object):
         band_string = str('mag_' + band)
         return self._lens_dict[band_string]
 
-    def source_magnitude(self, band):
+    def source_magnitude(self, band, lensed=False):
         """
         unlensed apparent magnitude of the source for a given band
 
         :param band: imaging band
         :type band: string
-        :return: magnitude of deflector in given band
+        :param lensed: if True, returns the lensed magnified magnitude
+        :type lensed: bool
+        :return: magnitude of source in given band
         """
         band_string = str('mag_' + band)
-        return self._source_dict[band_string]
+        source_mag = self._source_dict[band_string]
+        if lensed:
+            mag = self.host_magnification()
+            return source_mag - 2.5 * np.log10(mag)
+        return source_mag
 
     def host_magnification(self):
         """
@@ -261,27 +267,29 @@ class GGLens(object):
 
         :return: integrated magnification factor of host magnitude
         """
-        kwargs_model, kwargs_params = self.lenstronomy_kwargs(band=None)
+        if not hasattr(self, '_host_magnification'):
+            kwargs_model, kwargs_params = self.lenstronomy_kwargs(band=None)
+            lightModel = LightModel(light_model_list=kwargs_model.get('source_light_model_list', []))
+            lensModel = LensModel(lens_model_list=kwargs_model.get('lens_model_list', []))
+            theta_E = self.einstein_radius
+            center_lens, center_source = self.position_alignment()
 
-        lightModel = LightModel(light_model_list=kwargs_model.get('source_light_model_list', []))
-        lensModel = LensModel(lens_model_list=kwargs_model.get('lens_model_list', []))
-        theta_E = self.einstein_radius
-        center_lens, center_source = self.position_alignment()
+            kwargs_source_mag = kwargs_params['kwargs_source']
+            kwargs_source_amp = data_util.magnitude2amplitude(lightModel, kwargs_source_mag, magnitude_zero_point=0)
 
-        kwargs_source_mag = kwargs_params['kwargs_source']
-        kwargs_source_amp = data_util.magnitude2amplitude(lightModel, kwargs_source_mag, magnitude_zero_point=0)
-
-        num_pix = 200
-        delta_pix = theta_E * 4 / num_pix
-        x, y = util.make_grid(numPix=200, deltapix=delta_pix)
-        x += center_source[0]
-        y += center_source[1]
-        beta_x, beta_y = lensModel.ray_shooting(x, y, kwargs_params['kwargs_lens'])
-        flux_lensed = np.sum(lightModel.surface_brightness(beta_x, beta_y, kwargs_source_amp))
-        flux_no_lens = np.sum(lightModel.surface_brightness(x, y, kwargs_source_amp))
-        if flux_no_lens > 0:
-            return flux_lensed / flux_no_lens
-        return None
+            num_pix = 200
+            delta_pix = theta_E * 4 / num_pix
+            x, y = util.make_grid(numPix=200, deltapix=delta_pix)
+            x += center_source[0]
+            y += center_source[1]
+            beta_x, beta_y = lensModel.ray_shooting(x, y, kwargs_params['kwargs_lens'])
+            flux_lensed = np.sum(lightModel.surface_brightness(beta_x, beta_y, kwargs_source_amp))
+            flux_no_lens = np.sum(lightModel.surface_brightness(x, y, kwargs_source_amp))
+            if flux_no_lens > 0:
+                self._host_magnification = flux_lensed / flux_no_lens
+            else:
+                self._host_magnification = 0
+        return self._host_magnification
 
     def lenstronomy_kwargs(self, band=None):
         """

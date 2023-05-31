@@ -20,16 +20,19 @@ class GGLensPop(object):
     class to perform samples of galaxy-galaxy lensing
     """
 
-    def __init__(self, lens_type='early-type', source_type='galaxies', kwargs_lens_cut=None, kwargs_source_cut=None,
-                 kwargs_mass2light=None, skypy_config=None, sky_area=None, filters=None, cosmo=None):
+    def __init__(self, lens_type='early-type', source_type='galaxies', kwargs_deflector_cut=None,
+                 kwargs_source_cut=None, kwargs_mass2light=None, skypy_config=None, sky_area=None, filters=None,
+                 cosmo=None):
         """
 
         :param lens_type: type of the lens
         :type lens_type: string
         :param source_type: type of the source
         :type source_type: string
-        :param kwargs_selection:
-        :type kwargs_selection: dict
+        :param kwargs_deflector_cut: cuts on the deflector to be excluded in the sample
+        :type kwargs_deflector_cut: dict
+        :param kwargs_source_cut: cuts on the source to be excluded in the sample
+        :type kwargs_source_cut: dict
         :param skypy_config: path to SkyPy configuration yaml file
         :type skypy_config: string
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid angle.
@@ -38,15 +41,20 @@ class GGLensPop(object):
         :type filters: list of strings or None
         """
         pipeline = SkyPyPipeline(skypy_config=skypy_config, sky_area=sky_area, filters=filters)
-        if kwargs_lens_cut is None:
-            kwargs_lens_cut = {}
+        if kwargs_deflector_cut is None:
+            kwargs_deflector_cut = {}
         if kwargs_mass2light is None:
             kwargs_mass2light = {}
         if lens_type == 'early-type':
             from sim_pipeline.Lenses.early_type_lens_galaxies import EarlyTypeLensGalaxies
-            self._lens_galaxies = EarlyTypeLensGalaxies(pipeline.red_galaxies, kwargs_cut=kwargs_lens_cut,
+            self._lens_galaxies = EarlyTypeLensGalaxies(pipeline.red_galaxies, kwargs_cut=kwargs_deflector_cut,
                                                         kwargs_mass2light=kwargs_mass2light, cosmo=cosmo,
                                                         sky_area=sky_area)
+        elif lens_type == 'all-galaxies':
+            from sim_pipeline.Lenses.all_lens_galaxies import AllLensGalaxies
+            self._lens_galaxies = AllLensGalaxies(pipeline.red_galaxies, pipeline.blue_galaxies,
+                                                  kwargs_cut=kwargs_deflector_cut, kwargs_mass2light=kwargs_mass2light,
+                                                  cosmo=cosmo, sky_area=sky_area)
         else:
             raise ValueError('lens_type %s is not supported' % lens_type)
 

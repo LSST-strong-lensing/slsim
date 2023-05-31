@@ -40,12 +40,15 @@ def configure_roman_filters():
     group_name = 'Roman'
     wave = []
 
+    area = (2.4 / 2) ** 2 * np.pi  # Roman mirror diameter is 2.4 meters
+    # we need to divide by the area as the through puts are given in effective area in m^2
+
     with open(file_name_roman, newline='') as myFile:
         reader = csv.DictReader(myFile)
         for row in reader:
             wave.append(float(row['Wave']))
             for name in _filter_name_list:
-                responses[name].append(float(row[name]))
+                responses[name].append(float(row[name]) / area)
     wave = np.array(wave)
 
     # convert micrometer to Angstrom
