@@ -102,7 +102,7 @@ def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
     galaxy_list_zmax = copy.deepcopy(galaxy_list[bool_cut])
     num_select = len(galaxy_list_zmax)
 
-    redshift = np.arange(0, z_max, 0.1)
+    redshift = np.arange(0, z_max+0.001, 0.1)
     z_list, vel_disp_list = vel_disp_sdss(sky_area, redshift, vd_min=50, vd_max=500, cosmology=cosmo, noise=True)
 
     # sort for stellar masses in decreasing manner

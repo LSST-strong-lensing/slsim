@@ -139,11 +139,14 @@ class GGLensPop(object):
             num_sources_range = self.get_num_sources_tested(testarea=test_area)
             # TODO: to implement this for a multi-source plane lens system
             if num_sources_range > 0:
-                for _ in range(num_sources_range):
+                n = 0
+                while n < num_sources_range:
                     source = self._source_galaxies.draw_galaxy()
                     gg_lens = GGLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo, test_area=test_area)
                     # Check the validity of the lens system
                     if gg_lens.validity_test(**kwargs_lens_cuts):
                         gg_lens_population.append(gg_lens)
-                        break
+                        n = num_sources_range
+                    else:
+                        n += 1
         return gg_lens_population
