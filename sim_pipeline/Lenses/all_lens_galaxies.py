@@ -36,7 +36,7 @@ class AllLensGalaxies(object):
         red_galaxy_list = fill_table(red_galaxy_list)
         blue_galaxy_list = fill_table(blue_galaxy_list)
         galaxy_list = vstack([red_galaxy_list, blue_galaxy_list])
-        self._f_vel_disp = vel_disp_abundance_matching(galaxy_list, z_max=0.3, sky_area=sky_area, cosmo=cosmo)
+        self._f_vel_disp = vel_disp_abundance_matching(galaxy_list, z_max=0.5, sky_area=sky_area, cosmo=cosmo)
 
         self._galaxy_select = galaxy_cut(galaxy_list, **kwargs_cut)
         self._num_select = len(self._galaxy_select)
@@ -102,7 +102,7 @@ def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
     galaxy_list_zmax = copy.deepcopy(galaxy_list[bool_cut])
     num_select = len(galaxy_list_zmax)
 
-    redshift = np.arange(0, z_max, 0.1)
+    redshift = np.arange(0, z_max+0.001, 0.1)
     z_list, vel_disp_list = vel_disp_sdss(sky_area, redshift, vd_min=50, vd_max=500, cosmology=cosmo, noise=True)
 
     # sort for stellar masses in decreasing manner
@@ -120,8 +120,10 @@ def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
         galaxy_list_zmax['vel_disp'] = vel_disp_list
     # interpolate relationship between stellar mass and velocity dispersion
     stellar_mass = np.asarray(galaxy_list_zmax['stellar_mass'])
-    stellar_mass = np.append(stellar_mass, 10**5)
     vel_disp = np.asarray(galaxy_list_zmax['vel_disp'])
+
+    # here we make sure we interpolate to low stellar masses
+    stellar_mass = np.append(stellar_mass, 10**5)
     vel_disp = np.append(vel_disp, 10)
     f = interpolate.interp1d(x=np.log10(stellar_mass), y=vel_disp,
                              fill_value=(0, np.max(galaxy_list_zmax['vel_disp'])), bounds_error=False)
