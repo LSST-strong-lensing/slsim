@@ -40,7 +40,7 @@ class Galaxies(object):
         galaxy = self._galaxy_select[index]
 
         if galaxy['e1'] == -1 or galaxy['e2'] == -1:
-            e1, e2 = galaxy_projected_eccentricity(**galaxy)
+            e1, e2 = galaxy_projected_eccentricity(float(galaxy['ellipticity']))
             galaxy['e1'] = e1
             galaxy['e2'] = e2
         if galaxy['n_sersic'] == -1:
@@ -48,7 +48,7 @@ class Galaxies(object):
         return galaxy
 
 
-def galaxy_projected_eccentricity(ellipticity, **kwargs):
+def galaxy_projected_eccentricity(ellipticity):
     """
     projected eccentricity of early-type galaxies as a function of other deflector parameters
 
