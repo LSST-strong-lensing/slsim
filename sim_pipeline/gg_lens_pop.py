@@ -45,6 +45,9 @@ class GGLensPop(object):
             kwargs_deflector_cut = {}
         if kwargs_mass2light is None:
             kwargs_mass2light = {}
+        if cosmo is None:
+            from astropy.cosmology import FlatLambdaCDM
+            cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         if lens_type == 'early-type':
             from sim_pipeline.Lenses.early_type_lens_galaxies import EarlyTypeLensGalaxies
             self._lens_galaxies = EarlyTypeLensGalaxies(pipeline.red_galaxies, kwargs_cut=kwargs_deflector_cut,
