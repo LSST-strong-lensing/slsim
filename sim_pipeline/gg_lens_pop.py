@@ -1,7 +1,7 @@
 from sim_pipeline.Pipelines.skypy_pipeline import SkyPyPipeline
 from sim_pipeline.gg_lens import GGLens, theta_e_when_source_infinity
 import numpy as np
-
+import warnings
 
 def draw_test_area(deflector):
     """
@@ -40,11 +40,19 @@ class GGLensPop(object):
         :param filters: filters for SED integration
         :type filters: list of strings or None
         """
+        if sky_area is None:
+            from astropy.units import Quantity
+            sky_area = Quantity(value=0.1, unit='deg2')
+            warnings.warn("No sky area provided, instead uses 0.1 deg2")
         pipeline = SkyPyPipeline(skypy_config=skypy_config, sky_area=sky_area, filters=filters)
         if kwargs_deflector_cut is None:
             kwargs_deflector_cut = {}
         if kwargs_mass2light is None:
             kwargs_mass2light = {}
+        if cosmo is None:
+            warnings.warn("No cosmology provided, instead uses flat LCDM with default parameters")
+            from astropy.cosmology import FlatLambdaCDM
+            cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         if lens_type == 'early-type':
             from sim_pipeline.Lenses.early_type_lens_galaxies import EarlyTypeLensGalaxies
             self._lens_galaxies = EarlyTypeLensGalaxies(pipeline.red_galaxies, kwargs_cut=kwargs_deflector_cut,
