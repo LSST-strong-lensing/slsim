@@ -19,7 +19,11 @@ class TestGGLens(object):
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         self.source_dict = blue_one
         self.deflector_dict = red_one
-        self.gg_lens = GGLens(source_dict=self.source_dict, deflector_dict=self.deflector_dict, cosmo=cosmo)
+        while True:
+            gg_lens = GGLens(source_dict=self.source_dict, deflector_dict=self.deflector_dict, cosmo=cosmo)
+            if gg_lens.validity_test():
+                self.gg_lens= gg_lens
+                break
 
     def test_deflector_ellipticity(self):
         e1_light, e2_light, e1_mass, e2_mass = self.gg_lens.deflector_ellipticity()
@@ -43,7 +47,6 @@ class TestGGLens(object):
         image_positions = self.gg_lens.get_image_positions()
         image_separation = image_separation_from_positions(image_positions)
         theta_E_infinity = theta_e_when_source_infinity(deflector_dict=self.deflector_dict)
-
         assert image_separation < 2 * theta_E_infinity
 
     def test_theta_e_when_source_infinity(self):
