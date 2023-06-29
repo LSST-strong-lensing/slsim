@@ -116,7 +116,10 @@ class GGLens(object):
             kwargs_lens = kwargs_params['kwargs_lens']
             # TODO: analytical solver possible but currently does not support the convergence term
             self._image_positions = lens_eq_solver.image_position_from_source(source_pos_x, source_pos_y, kwargs_lens,
-                                                                              solver='lenstronomy')
+                                                                              solver='lenstronomy',
+                                                                              search_window=self.einstein_radius*6,
+                                                                              min_distance=self.einstein_radius*6/100
+                                                                              )
         return self._image_positions
 
     def validity_test(self, min_image_separation=0, max_image_separation=10, mag_arc_limit=None):
