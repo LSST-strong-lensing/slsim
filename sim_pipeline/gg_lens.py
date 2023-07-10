@@ -74,11 +74,11 @@ class GGLens(object):
         self._mixgauss_stds = mixgauss_stds
         self._mixgauss_weights = mixgauss_weights
         if self._lens_dict['z'] >= self._source_dict['z']:
-            self._theta_E = 0
+            self._theta_E_sis = 0
         else:
             lens_cosmo = LensCosmo(z_lens=float(self._lens_dict['z']), z_source=float(self._source_dict['z']),
                                    cosmo=self.cosmo)
-            self._theta_E = lens_cosmo.sis_sigma_v2theta_E(float(self._lens_dict['vel_disp']))
+            self._theta_E_sis = lens_cosmo.sis_sigma_v2theta_E(float(self._lens_dict['vel_disp']))
 
     def position_alignment(self):
         """
@@ -141,14 +141,14 @@ class GGLens(object):
         # Criteria 2: The angular Einstein radius of the lensing configuration (theta_E) times 2 must be greater than
         # or equal to the minimum image separation (min_image_separation) and less than or equal to the maximum image
         # separation (max_image_separation).
-        if self._theta_E * 2 < min_image_separation or self._theta_E * 2 > max_image_separation:
+        if self._theta_E_sis * 2 < min_image_separation or self._theta_E_sis * 2 > max_image_separation:
             return False
 
         # Criteria 3: The distance between the lens center and the source position must be less than or equal to the
         # angular Einstein radius of the lensing configuration (times sqrt(2)).
         center_lens, center_source = self.position_alignment()
 
-        if np.sum((center_lens - center_source) ** 2) > self._theta_E ** 2 * 2:
+        if np.sum((center_lens - center_source) ** 2) > self._theta_E_sis ** 2 * 2:
             return False
 
         # Criteria 4: The lensing configuration must produce at least two SL images.
@@ -200,11 +200,12 @@ class GGLens(object):
     @property
     def einstein_radius(self):
         """
-        Einstein radius
+        Einstein radius, including the SIS + external convergence effect
 
         :return: Einstein radius [arc seconds]
         """
-        return self._theta_E
+        _, _, kappa_ext = self.los_linear_distortions()
+        return self._theta_E_sis / (1 - kappa_ext)
 
     def deflector_ellipticity(self):
         """
