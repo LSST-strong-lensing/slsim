@@ -62,3 +62,17 @@ def sharp_image(lens_class, band, mag_zero_point, delta_pix, num_pix, with_defle
                               kwargs_ps=kwargs_ps, unconvolved=True, source_add=True, lens_light_add=with_deflector,
                               point_source_add=False)
     return image
+
+def sharp_rgb_image(self, lens_class, rgb_band_list, mag_zero_point, delta_pix, num_pix, with_deflector=True):
+        """
+        Method to generate a sharp rgb-image with lupton_rgb color scale
+
+        :param lens_class: class object containing all information of the lensing system (e.g., GGLens())
+        :param rgb_band_list: list of imaging band names corresponding to r-g-b color map
+        :param add_noise: boolean flag, set to True to add noise to the image, default is True
+        """
+        image_r = sharp_image(lens_class=lens_class, band=rgb_band_list[0], mag_zero_point, delta_pix, num_pix)
+        image_g = sharp_image(lens_class=lens_class, band=rgb_band_list[1], mag_zero_point, delta_pix, num_pix)
+        image_b = sharp_image(lens_class=lens_class, band=rgb_band_list[2], mag_zero_point, delta_pix, num_pix)
+        image_rgb = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
+        return image_rgb
