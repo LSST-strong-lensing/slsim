@@ -22,7 +22,7 @@ class TestGGLens(object):
         while True:
             gg_lens = GGLens(source_dict=self.source_dict, deflector_dict=self.deflector_dict, cosmo=cosmo)
             if gg_lens.validity_test():
-                self.gg_lens= gg_lens
+                self.gg_lens = gg_lens
                 break
 
     def test_deflector_ellipticity(self):
