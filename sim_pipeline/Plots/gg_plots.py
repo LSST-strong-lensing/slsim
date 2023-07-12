@@ -10,7 +10,7 @@ class GGLensingPlots(object):
 
 
     """
-    def __init__(self, lens_pop, num_pix=64, observatory='LSST', **kwargs):
+    def __init__(self, lens_pop, delta_pix = 0.3, num_pix=64, observatory='LSST', **kwargs):
         """
 
         :param lens_pop: lens population class, such as GGLensPop()
@@ -22,6 +22,7 @@ class GGLensingPlots(object):
         """
         self._lens_pop = lens_pop
         self.num_pix = num_pix
+        self.delta_pix = delta_pix
         self._observatory = observatory
         self._kwargs = kwargs
 
@@ -39,6 +40,20 @@ class GGLensingPlots(object):
                                  add_noise=add_noise, observatory=self._observatory, **self._kwargs)
         image_b = simulate_image(lens_class=lens_class, band=rgb_band_list[2], num_pix=self.num_pix,
                                  add_noise=add_noise, observatory=self._observatory, **self._kwargs)
+        image_rgb = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
+        return image_rgb
+    
+    def sharp_rgb_image(self, lens_class, rgb_band_list, mag_zero_point=23, delta_pix, num_pix):
+        """
+        Method to generate a sharp rgb-image with lupton_rgb color scale
+
+        :param lens_class: class object containing all information of the lensing system (e.g., GGLens())
+        :param rgb_band_list: list of imaging band names corresponding to r-g-b color map
+        :param add_noise: boolean flag, set to True to add noise to the image, default is True
+        """
+        image_r = simulate_image(lens_class=lens_class, band=rgb_band_list[0], mag_zero_point, delta_pix=self.delta_pix,                        num_pix=self.num_pix, **self._kwargs)
+        image_g = simulate_image(lens_class=lens_class, band=rgb_band_list[1], mag_zero_point, delta_pix=self.delta_pix,                        num_pix=self.num_pix, **self._kwargs)
+        image_b = simulate_image(lens_class=lens_class, band=rgb_band_list[2], mag_zero_point, delta_pix=self.delta_pix,                        num_pix=self.num_pix, **self._kwargs)
         image_rgb = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
         return image_rgb
 
