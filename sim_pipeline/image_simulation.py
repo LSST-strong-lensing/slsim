@@ -1,4 +1,5 @@
 from lenstronomy.SimulationAPI.sim_api import SimAPI
+from astropy.visualization import make_lupton_rgb
 
 
 def simulate_image(lens_class, band, num_pix, add_noise=True, observatory='LSST', **kwargs):
@@ -63,7 +64,7 @@ def sharp_image(lens_class, band, mag_zero_point, delta_pix, num_pix, with_defle
                               point_source_add=False)
     return image
 
-def sharp_rgb_image(self, lens_class, rgb_band_list, mag_zero_point, delta_pix, num_pix, with_deflector=True):
+def sharp_rgb_image(lens_class, rgb_band_list, mag_zero_point, delta_pix, num_pix):
         """
         Method to generate a sharp rgb-image with lupton_rgb color scale
 
