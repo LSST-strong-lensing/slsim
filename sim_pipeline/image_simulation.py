@@ -74,7 +74,7 @@ def gsobj(image, pix_scale, flux):
     gso = galsim.InterpolatedImage(galsim.Image(image), scale = pix_scale, flux = flux)
     return gso
 
-def gsobj_test(image, pix_scale):
+def gsobj_true_flux(image, pix_scale):
     """
     :param image: image that need to be interpolated
     :param pix_scale: pixel scale to be asigned to the interpolated image
