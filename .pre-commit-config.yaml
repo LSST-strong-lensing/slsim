@@ -4,6 +4,7 @@ repos:
     rev: v0.0.279
     hooks:
       - id: ruff
+        exclude: docs/.*
   - repo: https://github.com/nbQA-dev/nbQA
     rev: 1.7.0
     hooks:

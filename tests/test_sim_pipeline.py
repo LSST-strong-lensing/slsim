@@ -4,8 +4,7 @@
 
 import pytest
 
-
-from sim_pipeline import sim_pipeline
+# from sim_pipeline import sim_pipeline
 
 
 @pytest.fixture
