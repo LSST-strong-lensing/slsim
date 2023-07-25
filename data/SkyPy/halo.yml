@@ -1,9 +1,9 @@
-fsky: 0.1 deg2
-z_range: !numpy.linspace [0, 5.00, 10000]
+fsky: 0.0001 deg2
+z_range: !numpy.linspace [0, 5.00, 1000]
 cosmology: !astropy.cosmology.default_cosmology.get []
-wavenumber: !numpy.logspace [-3, 1, 10000]
+wavenumber: !numpy.logspace [-3, 1, 1000]
 power_spectrum: !skypy.power_spectrum.eisenstein_hu
-  wavenumber: !numpy.logspace [-3, 1, 10000]
+  wavenumber: !numpy.logspace [-3, 1, 1000]
   A_s: 2.1982e-09
   n_s: 0.969453
   cosmology: $cosmology
@@ -15,20 +15,20 @@ tables:
     redshift_list: $z_range
     sky_area: $fsky
     cosmology: $cosmology
-    m_min: 1.0E+13
+    m_min: 1.0E+11
     m_max: 1.0E+15
-    resolution: 10000
+    resolution: 1000
     wavenumber: $wavenumber
     power_spectrum: $power_spectrum
     collapse_function: $collapse_function
     params: [0.3, 0.7, 0.3, 1.686]
-  press-schechter: !skypy.halos.mass.press_schechter
-    m_min: 1.0E+13
-    m_max: 1.0E+15
+  mass: !sim_pipeline.halos.halos.halo_mass_at_z
+    z: $halos.z
+    cosmology: $cosmology
+    m_min: 1.0E+11
+    m_max: 1.0E+16
     resolution: !numpy.size [$halos.z]
     wavenumber: $wavenumber
     power_spectrum: $power_spectrum
-    growth_function: !sim_pipeline.halos.halos.growth_factor_at_redshift
-      z: $halos.z
-      cosmology: $cosmology
-    cosmology: $cosmology
+    collapse_function: $collapse_function
+    params: [0.3, 0.7, 0.3, 1.686]

@@ -10,7 +10,7 @@ class HalosSkyPyPipeline:
         :param skypy_config: path to SkyPy configuration yaml file
         :type skypy_config: string or None
         :type sky_area: `~astropy.units.Quantity`
-        :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid angle.
+        :param sky_area: Sky area over which halos are sampled. Must be in units of solid angle.
         :param filters: filters for SED integration
         :type filters: list of strings or None
         """
@@ -27,7 +27,7 @@ class HalosSkyPyPipeline:
                 content = file.read()
 
             if sky_area is not None:
-                old_fsky = "fsky: 0.1 deg2"
+                old_fsky = "fsky: 0.0001 deg2"
                 new_fsky = f"fsky: %s %s" % (sky_area.value, sky_area.unit)
                 content = content.replace(old_fsky, new_fsky)
 

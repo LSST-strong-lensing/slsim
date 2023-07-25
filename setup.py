@@ -30,6 +30,11 @@ setup(
     ],
     description="LSST strong lensing simulation pipeline",
     install_requires=requirements,
+    extras_require={
+        'halos': [
+            'hmf'
+        ]
+    },
     license="MIT license",
     long_description=readme + '\n\n' + history,
     include_package_data=True,
