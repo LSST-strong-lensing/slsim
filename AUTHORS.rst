@@ -11,3 +11,4 @@ Contributors (alphabetical)
 * Remy Joseph `herjy <https://github.com/herjy/>`_
 * Narayan Khadka `nkhadka21 <https://github.com/nkhadka21/>`_
 * Aprajita Verma `aprajita <https://github.com/aprajita/>`_
+* Xianzhe Tang `trivialTZ <https://github.com/trivialTZ>`_
