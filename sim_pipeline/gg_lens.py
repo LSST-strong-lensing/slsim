@@ -8,48 +8,14 @@ from sim_pipeline.ParamDistributions.gaussian_mixture_model import GaussianMixtu
 from lenstronomy.Util import util, data_util
 
 
-def image_separation_from_positions(image_positions):
-    """
-    calculate image separation in arc-seconds; if there are only two images, the separation between them is returned;
-    if there are more than 2 images, the maximum separation is returned
-
-    :param image_positions: list of image positions in arc-seconds
-    :return: image separation in arc-seconds
-    """
-    if len(image_positions[0]) == 2:
-        image_separation = np.sqrt((image_positions[0][0] - image_positions[0][1]) ** 2 + (
-                image_positions[1][0] - image_positions[1][1]) ** 2)
-    else:
-        coords = np.stack((image_positions[0], image_positions[1]), axis=-1)
-        separations = np.sqrt(np.sum((coords[:, np.newaxis] - coords[np.newaxis, :]) ** 2, axis=-1))
-        image_separation = np.max(separations)
-    return image_separation
-
-
-def theta_e_when_source_infinity(deflector_dict=None, v_sigma=None):
-    """
-            calculate Einstein radius in arc-seconds for a source at infinity
-
-            :param deflector_dict: deflector properties
-            :param v_sigma: velocity dispersion in km/s
-            :return: Einstein radius in arc-seconds
-            """
-    if v_sigma is None:
-        if deflector_dict is None:
-            raise ValueError("Either deflector_dict or v_sigma must be provided")
-        else:
-            v_sigma = deflector_dict['vel_disp']
-
-    theta_E_infinity = 4 * np.pi * (v_sigma * 1000. / constants.c) ** 2 / constants.arcsec
-    return theta_E_infinity
-
-
 class GGLens(object):
     """
     class to manage individual galaxy-galaxy lenses
     """
 
-    def __init__(self, source_dict, deflector_dict, cosmo, test_area=4 * np.pi,
+    def __init__(self, source_dict, deflector_dict, cosmo,
+                 source_type='extended',
+                 test_area=4 * np.pi,
                  mixgauss_means=None, mixgauss_stds=None, mixgauss_weights=None):
         """
 
@@ -58,6 +24,8 @@ class GGLens(object):
         :param deflector_dict: deflector properties
         :type deflector_dict: dict
         :param cosmo: astropy.cosmology instance
+        :param source_type: type of the source 'extended' or 'point_source' supported
+        :type source_type: str
         :param test_area: area of disk around one lensing galaxies to be investigated on (in arc-seconds^2)
         :param mixgauss_weights: weights of the Gaussian mixture
         :param mixgauss_stds: standard deviations of the Gaussian mixture
@@ -69,6 +37,7 @@ class GGLens(object):
         self._source_dict = source_dict
         self._lens_dict = deflector_dict
         self.cosmo = cosmo
+        self._source_type = source_type
         self.test_area = test_area
         self._mixgauss_means = mixgauss_means
         self._mixgauss_stds = mixgauss_stds
@@ -80,17 +49,27 @@ class GGLens(object):
                                    cosmo=self.cosmo)
             self._theta_E_sis = lens_cosmo.sis_sigma_v2theta_E(float(self._lens_dict['vel_disp']))
 
-    def position_alignment(self):
+    @property
+    def lens_position(self):
         """
-        Draws position of the lens and source in arcseconds.lens and source center positions as 2D lists
+        center of the deflector position
 
-        :return: [center_x_lens, center_y_lens], [center_x_source, center_y_source] in arc-seconds
-
+        :return: [x_pox, y_pos] in arc seconds
         """
         if not hasattr(self, '_center_lens'):
             center_x_lens, center_y_lens = np.random.normal(loc=0, scale=0.1), np.random.normal(loc=0, scale=0.1)
             self._center_lens = np.array([center_x_lens, center_y_lens])
-        # TODO: make it more realistic scatter
+        return self._center_lens
+
+    @property
+    def source_position(self):
+        """
+        source position, either the center of the extended source or the point source. If not present from the cataloge,
+        it is drawn uniform within the circle of the test area centered on the lens
+
+        :return: [x_pos, y_pos]
+        """
+        center_lens = self.lens_position
 
         if not hasattr(self, '_center_source'):
             # Define the radius of the test area circle
@@ -99,19 +78,24 @@ class GGLens(object):
             r = np.sqrt(np.random.random()) * test_area_radius
             theta = 2 * np.pi * np.random.random()
             # Convert polar coordinates to cartesian coordinates
-            center_x_source = self._center_lens[0] + r * np.cos(theta)
-            center_y_source = self._center_lens[1] + r * np.sin(theta)
+            center_x_source = center_lens[0] + r * np.cos(theta)
+            center_y_source = center_lens[1] + r * np.sin(theta)
             self._center_source = np.array([center_x_source, center_y_source])
-        return self._center_lens, self._center_source
+        return self._center_source
 
-    def get_image_positions(self):
+    def image_positions(self):
+        """
+        returns image positions by solving the lens equation, these are either the centers of the extended source, or
+        the point sources in case of (added) point-like sources, such as quasars or SNe.
+
+        :return: x-pos, y-pos
+        """
         if not hasattr(self, '_image_positions'):
             kwargs_model, kwargs_params = self.lenstronomy_kwargs(band=None)
             lens_model_list = kwargs_model['lens_model_list']
             lens_model_class = LensModel(lens_model_list=lens_model_list)
             lens_eq_solver = LensEquationSolver(lens_model_class)
-            source_pos_x = kwargs_params['kwargs_source'][0]['center_x']
-            source_pos_y = kwargs_params['kwargs_source'][0]['center_y']
+            source_pos_x, source_pos_y = self.source_position
 
             kwargs_lens = kwargs_params['kwargs_lens']
             # TODO: analytical solver possible but currently does not support the convergence term
@@ -146,13 +130,13 @@ class GGLens(object):
 
         # Criteria 3: The distance between the lens center and the source position must be less than or equal to the
         # angular Einstein radius of the lensing configuration (times sqrt(2)).
-        center_lens, center_source = self.position_alignment()
+        center_lens, center_source = self.lens_position, self.source_position
 
         if np.sum((center_lens - center_source) ** 2) > self._theta_E_sis ** 2 * 2:
             return False
 
         # Criteria 4: The lensing configuration must produce at least two SL images.
-        image_positions = self.get_image_positions()
+        image_positions = self.image_positions()
         if len(image_positions[0]) < 2:
             return False
 
@@ -171,15 +155,16 @@ class GGLens(object):
             bool_mag_limit = False
             host_mag = self.host_magnification()
             for band, mag_limit_band in mag_arc_limit.items():
-                mag_source = self.source_magnitude(band)
+                mag_source = self.extended_source_magnitude(band)
                 mag_arc = mag_source - 2.5 * np.log10(host_mag)  # lensing magnification results in a shift in magnitude
                 if mag_arc < mag_limit_band:
                     bool_mag_limit = True
                     break
             if bool_mag_limit is False:
                 return False
+        # TODO make similar criteria for point source magnitudes
         return True
-        # TODO: test for SN ratio in surface brightness
+        # TODO: test for signal-to-noise ratio in surface brightness
 
     @property
     def lens_redshift(self):
@@ -267,9 +252,30 @@ class GGLens(object):
         band_string = str('mag_' + band)
         return self._lens_dict[band_string]
 
-    def source_magnitude(self, band, lensed=False):
+    def point_source_magnitude(self, band, lensed=False):
         """
-        unlensed apparent magnitude of the source for a given band
+        point source magnitude, either unlensed (single value) or lensed (array) with macro-model magnifications
+
+        # TODO: time-variability with time-delayed and micro-lensing
+
+        :param band: imaging band
+        :type band: string
+        :param lensed: if True, returns the lensed magnified magnitude
+        :type lensed: bool
+        :return: point source magnitude
+        """
+        band_string = str('mag_' + band)
+        # TODO: might have to change conventions between extended and point source
+        source_mag = self._source_dict[band_string]
+        if lensed:
+            mag = self.point_source_magnification()
+            return source_mag - 2.5 * np.log10(np.abs(mag))
+        return source_mag
+
+    def extended_source_magnitude(self, band, lensed=False):
+        """
+        unlensed apparent magnitude of the extended source for a given band
+        (assumes that size is the same for different bands)
 
         :param band: imaging band
         :type band: string
@@ -278,19 +284,31 @@ class GGLens(object):
         :return: magnitude of source in given band
         """
         band_string = str('mag_' + band)
+        # TODO: might have to change conventions between extended and point source
         source_mag = self._source_dict[band_string]
         if lensed:
             mag = self.host_magnification()
             return source_mag - 2.5 * np.log10(mag)
         return source_mag
 
+    def point_source_magnification(self):
+        """
+        macro-model magnification of point sources
+
+        :return: signed magnification of point sources in same order as image positions
+        """
+        if not hasattr(self, '_ps_magnification'):
+            lens_model_list, kwargs_lens = self.lens_model_lenstronomy()
+            lensModel = LensModel(lens_model_list=lens_model_list)
+            img_x, img_y = self.image_positions()
+            self._ps_magnification = lensModel.magnification(img_x, img_y, kwargs_lens)
+        return self._ps_magnification
+
     def host_magnification(self):
         """
         compute the extended lensed surface brightness and calculates the integrated flux-weighted magnification factor
         of the extended host galaxy
 
-        :param band: imaging band
-        :type band: string
         :return: integrated magnification factor of host magnitude
         """
         if not hasattr(self, '_host_magnification'):
@@ -298,7 +316,7 @@ class GGLens(object):
             lightModel = LightModel(light_model_list=kwargs_model.get('source_light_model_list', []))
             lensModel = LensModel(lens_model_list=kwargs_model.get('lens_model_list', []))
             theta_E = self.einstein_radius
-            center_lens, center_source = self.position_alignment()
+            center_source = self.source_position
 
             kwargs_source_mag = kwargs_params['kwargs_source']
             kwargs_source_amp = data_util.magnitude2amplitude(lightModel, kwargs_source_mag, magnitude_zero_point=0)
@@ -326,34 +344,50 @@ class GGLens(object):
 
         """
         lens_model_list, kwargs_lens = self.lens_model_lenstronomy()
-        kwargs_model = {'source_light_model_list': ['SERSIC_ELLIPSE'],
-                        'lens_light_model_list': ['SERSIC_ELLIPSE'],
+        kwargs_model = {'lens_light_model_list': ['SERSIC_ELLIPSE'],
                         'lens_model_list':  lens_model_list}
 
-        e1_light_lens, e2_light_lens, e1_mass, e2_mass = self.deflector_ellipticity()
-        center_lens, center_source = self.position_alignment()
+        center_lens, center_source = self.lens_position, self.source_position
+        if self._source_type == 'extended':
+            # convert radian to arc seconds
+            if band is None:
+                mag_source = 1
+            else:
+                mag_source = self.extended_source_magnitude(band)
+            size_source_arcsec = float(self._source_dict['angular_size']) / constants.arcsec
+            kwargs_model['source_light_model_list'] = ['SERSIC_ELLIPSE']
+            kwargs_source = [{'magnitude': mag_source, 'R_sersic': size_source_arcsec,
+                              'n_sersic': float(self._source_dict['n_sersic']),
+                              'e1': float(self._source_dict['e1']), 'e2': float(self._source_dict['e2']),
+                              'center_x': center_source[0], 'center_y': center_source[1]}]
+        else:
+            kwargs_source = None
 
+        if self._source_type == 'point_source':
+            kwargs_model['point_source_model'] = ['LENSED_POSITION']
+            img_x, img_y = self.image_positions()
+            if band is None:
+                image_magnitudes = np.abs(self.point_source_magnification())
+            else:
+                image_magnitudes = self.point_source_magnitude(band=band, lensed=True)
+            kwargs_ps = [{'ra_image': img_x, 'dec_image': img_y, 'point_amp': image_magnitudes}]
+        else:
+            kwargs_ps = None
+
+        e1_light_lens, e2_light_lens, e1_mass, e2_mass = self.deflector_ellipticity()
         size_lens_arcsec = self._lens_dict['angular_size'] / constants.arcsec  # convert radian to arc seconds
+
         if band is None:
             mag_lens = 1
-            mag_source = 1
         else:
             mag_lens = self.deflector_magnitude(band)
-            mag_source = self.source_magnitude(band)
         kwargs_lens_light = [{'magnitude': mag_lens, 'R_sersic': size_lens_arcsec,
                               'n_sersic': float(self._source_dict['n_sersic']),
                               'e1': e1_light_lens, 'e2': e2_light_lens,
                               'center_x': center_lens[0], 'center_y': center_lens[1]}]
 
-        size_source_arcsec = float(self._source_dict['angular_size']) / constants.arcsec  # convert radian to arc seconds
-
-        kwargs_source = [{'magnitude': mag_source, 'R_sersic': size_source_arcsec,
-                          'n_sersic': float(self._source_dict['n_sersic']),
-                          'e1': float(self._source_dict['e1']), 'e2': float(self._source_dict['e2']),
-                          'center_x': center_source[0], 'center_y': center_source[1]}]
-
         kwargs_params = {'kwargs_lens': kwargs_lens, 'kwargs_source': kwargs_source,
-                         'kwargs_lens_light': kwargs_lens_light}
+                         'kwargs_lens_light': kwargs_lens_light, 'kwargs_ps': kwargs_ps}
         return kwargs_model, kwargs_params
 
     def lens_model_lenstronomy(self):
@@ -365,10 +399,46 @@ class GGLens(object):
         lens_model_list = ['EPL', 'SHEAR', 'CONVERGENCE']
         theta_E = self.einstein_radius
         e1_light_lens, e2_light_lens, e1_mass, e2_mass = self.deflector_ellipticity()
-        center_lens, center_source = self.position_alignment()
+        center_lens = self.lens_position
         gamma1, gamma2, kappa_ext = self.los_linear_distortions()
         kwargs_lens = [{'theta_E': theta_E, 'gamma': 2, 'e1': e1_mass, 'e2': e2_mass,
                         'center_x': center_lens[0], 'center_y': center_lens[1]},
                        {'gamma1': gamma1, 'gamma2': gamma2, 'ra_0': 0, 'dec_0': 0},
                        {'kappa': kappa_ext, 'ra_0': 0, 'dec_0': 0}]
         return lens_model_list, kwargs_lens
+
+
+def image_separation_from_positions(image_positions):
+    """
+    calculate image separation in arc-seconds; if there are only two images, the separation between them is returned;
+    if there are more than 2 images, the maximum separation is returned
+
+    :param image_positions: list of image positions in arc-seconds
+    :return: image separation in arc-seconds
+    """
+    if len(image_positions[0]) == 2:
+        image_separation = np.sqrt((image_positions[0][0] - image_positions[0][1]) ** 2 + (
+                image_positions[1][0] - image_positions[1][1]) ** 2)
+    else:
+        coords = np.stack((image_positions[0], image_positions[1]), axis=-1)
+        separations = np.sqrt(np.sum((coords[:, np.newaxis] - coords[np.newaxis, :]) ** 2, axis=-1))
+        image_separation = np.max(separations)
+    return image_separation
+
+
+def theta_e_when_source_infinity(deflector_dict=None, v_sigma=None):
+    """
+            calculate Einstein radius in arc-seconds for a source at infinity
+
+            :param deflector_dict: deflector properties
+            :param v_sigma: velocity dispersion in km/s
+            :return: Einstein radius in arc-seconds
+            """
+    if v_sigma is None:
+        if deflector_dict is None:
+            raise ValueError("Either deflector_dict or v_sigma must be provided")
+        else:
+            v_sigma = deflector_dict['vel_disp']
+
+    theta_E_infinity = 4 * np.pi * (v_sigma * 1000. / constants.c) ** 2 / constants.arcsec
+    return theta_E_infinity
