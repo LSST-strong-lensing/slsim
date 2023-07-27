@@ -2,13 +2,14 @@ import numpy as np
 import numpy.random as random
 from sim_pipeline.selection import galaxy_cut
 from sim_pipeline.Util import param_util
+from sim_pipeline.Sources.source_base import SourceBase
 
 
-class Galaxies(object):
+class Galaxies(SourceBase):
     """
     class describing early-type galaxies
     """
-    def __init__(self, galaxy_list, kwargs_cut, cosmo):
+    def __init__(self, galaxy_list, kwargs_cut, cosmo, sky_area):
         """
 
         :param galaxy_list: list of dictionary with galaxy parameters
@@ -16,6 +17,8 @@ class Galaxies(object):
         :param kwargs_cut: cuts in parameters
         :type kwargs_cut: dict
         :param cosmo: astropy.cosmology instance
+        :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid angle.
+        :type sky_area: `~astropy.units.Quantity`
         """
         self.n = len(galaxy_list)
         # add missing keywords in astropy.Table object
@@ -29,12 +32,23 @@ class Galaxies(object):
         self._galaxy_select = galaxy_cut(galaxy_list, **kwargs_cut)
 
         self._num_select = len(self._galaxy_select)
+        super(Galaxies, self).__init__(cosmo=cosmo, sky_area=sky_area)
 
-    def galaxies_number(self):
+    def source_number(self):
+        """
+        number of sources registered (within given area on the sky)
+
+        :return: number of sources
+        """
         number = self.n
         return number
 
-    def draw_galaxy(self):
+    def draw_source(self):
+        """
+        chose source at random
+
+        :return: dictionary of source
+        """
 
         index = random.randint(0, self._num_select - 1)
         galaxy = self._galaxy_select[index]
