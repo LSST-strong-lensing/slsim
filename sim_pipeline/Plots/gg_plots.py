@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
 from sim_pipeline.image_simulation import simulate_image
 
-
 class GGLensingPlots(object):
     """
     A class to create and display simulated gravitational lensing images using the provided configurations for the

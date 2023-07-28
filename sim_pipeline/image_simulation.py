@@ -1,5 +1,6 @@
 from lenstronomy.SimulationAPI.sim_api import SimAPI
-
+import galsim
+from astropy.visualization import make_lupton_rgb
 
 def simulate_image(lens_class, band, num_pix, add_noise=True, observatory='LSST', **kwargs):
     """
@@ -62,3 +63,47 @@ def sharp_image(lens_class, band, mag_zero_point, delta_pix, num_pix, with_defle
                               kwargs_ps=kwargs_ps, unconvolved=True, source_add=True, lens_light_add=with_deflector,
                               point_source_add=False)
     return image
+
+
+def gsobj(image, pix_scale, flux):
+    """
+    :param image: image that need to be interpolated
+    :param pix_scale: pixel scale to be asigned to the interpolated image
+    :param flux: flux value to be asigned to the interpolated image
+    :returns : interpolated image with specified pixel scale and flux"""
+    gso = galsim.InterpolatedImage(galsim.Image(image), scale = pix_scale, flux = flux)
+    return gso
+
+def gsobj_true_flux(image, pix_scale):
+    """
+    :param image: image that need to be interpolated
+    :param pix_scale: pixel scale to be asigned to the interpolated image
+    :param flux: flux value to be asigned to the interpolated image
+    :returns : interpolated image with specified pixel scale and flux"""
+    gso_test = galsim.InterpolatedImage(galsim.Image(image), scale = pix_scale, normalization='flux')
+    return gso_test
+
+def sharp_rgb_image(lens_class, rgb_band_list, mag_zero_point, delta_pix, num_pix):
+    """
+
+    :param lens_class: GGLens() object
+    :param rgb_band_list: imaging band list
+    :param mag_zero_point: magnitude zero point in band
+    :param delta_pix: pixel scale of image generated
+    :param num_pix: number of pixels per axis
+    :return: rgb image
+    """
+    image_r = sharp_image(lens_class=lens_class, band=rgb_band_list[0], mag_zero_point=mag_zero_point, delta_pix=delta_pix,           num_pix=num_pix)
+    image_g = sharp_image(lens_class=lens_class, band=rgb_band_list[1], mag_zero_point=mag_zero_point, delta_pix=delta_pix,           num_pix=num_pix)
+    image_b = sharp_image(lens_class=lens_class, band=rgb_band_list[2], mag_zero_point=mag_zero_point, delta_pix=delta_pix,           num_pix=num_pix)
+    image_rgb = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
+    return image_rgb
+
+def rgb_image_from_image_list(image_list, stretch):
+    """
+
+    :param image_list: images in r, g, and b band
+    :return: rgb image
+    """
+    image_rgb = make_lupton_rgb(image_list[0], image_list[1], image_list[2], stretch=stretch)
+    return image_rgb

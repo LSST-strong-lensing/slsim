@@ -40,11 +40,11 @@ class TestGGLens(object):
 
     def test_source_magnitude(self):
         band = 'g'
-        source_magnitude = self.gg_lens.source_magnitude(band)
+        source_magnitude = self.gg_lens.extended_source_magnitude(band)
         assert pytest.approx(source_magnitude[0], rel=1e-3) == 30.780194
 
     def test_image_separation_from_positions(self):
-        image_positions = self.gg_lens.get_image_positions()
+        image_positions = self.gg_lens.image_positions()
         image_separation = image_separation_from_positions(image_positions)
         theta_E_infinity = theta_e_when_source_infinity(deflector_dict=self.deflector_dict)
         assert image_separation < 2 * theta_E_infinity
