@@ -1,4 +1,4 @@
-fsky: 0.0001 deg2
+fsky: 0.00001 deg2
 z_range: !numpy.linspace [0, 5.00, 1000]
 cosmology: !astropy.cosmology.default_cosmology.get []
 wavenumber: !numpy.logspace [-3, 1, 1000]
