@@ -151,8 +151,8 @@ def random_ra_dec(ra_min, ra_max, dec_min, dec_max, n):
 def multiple_lens_injection(lens_pop, ra, dec, num_pix, delta_pix, butler, flux=None):
     """
     :param lens_pop: lens population from sim-pipeline
-    :param ra: ra for the cutout
-    :param dec: dec for the cutout
+    :param ra: ra for a cutout
+    :param dec: dec for a cutout
     :param num_pix: number of pixel for the cutout
     :param delta_pix: pixel scale for the lens image
     :param butler: butler object
