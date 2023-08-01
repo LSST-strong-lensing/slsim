@@ -18,6 +18,8 @@ from sim_pipeline.image_simulation import sharp_image
 
 def DC2_cutout(ra, dec, num_pix, butler, band):
     """
+    Draws a cutout from the DC2 data based on the given ra, dec pair.
+    
     :param ra: ra for the cutout
     :param dec: dec for the cutout
     :param num_pix: number of pixel for the cutout
@@ -49,6 +51,8 @@ def DC2_cutout(ra, dec, num_pix, butler, band):
     
 def lens_inejection(lens_pop, ra, dec, num_pix, delta_pix, butler, flux=None):
     """
+    Chooses a random lens from the lens population and injects it to a DC2 cutout image.
+    
     :param lens_pop: lens population from sim-pipeline
     :param ra: ra for the cutout
     :param dec: dec for the cutout
@@ -129,11 +133,13 @@ def lens_inejection(lens_pop, ra, dec, num_pix, delta_pix, butler, flux=None):
         cutout_image.append(arr_r)
         lens_image.append((inj_arr_r-arr_r))
 
-    t = Table([[lens_image[0]], [cutout_image[0]],[injected_final_image[0]], [injected_final_image[1]], [injected_final_image[2]], [box_center[0]]], names=('lens','cutout_image','injected_lens_r', 'injected_lens_g', 'injected_lens_i', 'cutout_center'))
+    t = Table([[lens_image[0]], [cutout_image[0]],[injected_final_image[0]], [injected_final_image[1]],                             [injected_final_image[2]], [box_center[0]]], names=('lens','cutout_image','injected_lens_r', 'injected_lens_g',              'injected_lens_i', 'cutout_center'))
     return t
 
 def random_ra_dec(ra_min, ra_max, dec_min, dec_max, n):
     """
+    Generates random ra, dec pair with in a given limits.
+    
     :param ra_min: minimum limit for ra
     :param ra_max: maximum limit for ra
     :param dec_min: minimum limit for dec
@@ -150,6 +156,8 @@ def random_ra_dec(ra_min, ra_max, dec_min, dec_max, n):
 
 def multiple_lens_injection(lens_pop, ra, dec, num_pix, delta_pix, butler, flux=None):
     """
+    Draws multiple DC2 cutout images and injects random lenses from the lens population.
+    
     :param lens_pop: lens population from sim-pipeline
     :param ra: ra for a cutout
     :param dec: dec for a cutout
