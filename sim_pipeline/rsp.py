@@ -49,7 +49,7 @@ def DC2_cutout(ra, dec, num_pix, butler, band):
     coadd_cut_r = butler.get("deepCoadd", parameters={'bbox':bbox}, dataId=coaddId_r)
     return coadd_cut_r
     
-def lens_inejection(lens_pop, ra, dec, num_pix, delta_pix, butler, flux=None):
+def lens_inejection(lens_pop, ra, dec, num_pix, delta_pix, butler, lens_cut=None, flux=None):
     """
     Chooses a random lens from the lens population and injects it to a DC2 cutout image. For this one needs to provide a       butler to this function. To initiate Butler, you need to specify data configuration and collection of the data.
     
@@ -59,12 +59,17 @@ def lens_inejection(lens_pop, ra, dec, num_pix, delta_pix, butler, flux=None):
     :param num_pix: number of pixel for the cutout
     :param delta_pix: pixel scale for the lens image
     :param butler: butler object
+    :param lens_cut: list of criteria for lens selection
     :param flux: flux need to be asigned to the lens image. It sould be None
     :param: path: path to save the output
     :returns: An astropy table containing Injected lens in r-band, DC2 cutout image in r-band, cutout image with injected       lens in r, g , and i band 
     """   
     #lens = sim_lens
-    kwargs_lens_cut={'min_image_separation': 0.8, 'max_image_separation': 10, 'mag_arc_limit': {'g': 23, 'r': 23, 'i': 23}}
+    if lens_cut == None:
+        kwargs_lens_cut = {}
+    else:
+        kwargs_lens_cut = lens_cut
+    
     rgb_band_list=['r', 'g', 'i']
     lens_class = lens_pop.select_lens_at_random(**kwargs_lens_cut)
     theta_E=lens_class.einstein_radius
@@ -150,7 +155,7 @@ def multiple_lens_injection(lens_pop, ra, dec, num_pix, delta_pix, butler, flux=
     """
     injected_images=[]
     for i in range(len(ra)):
-       injected_images.append(lens_inejection(lens_pop, ra[i], dec[i], num_pix, delta_pix, butler, flux=None))
+        injected_images.append(lens_inejection(lens_pop, ra[i], dec[i], num_pix, delta_pix, butler, flux=None))
     injected_image_catalog=vstack(injected_images)
     return injected_image_catalog
 
