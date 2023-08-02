@@ -3,17 +3,6 @@ from sim_pipeline.gg_lens import GGLens, theta_e_when_source_infinity
 import numpy as np
 import warnings
 
-def draw_test_area(deflector):
-    """
-    draw a test area around the deflector
-
-    :param deflector: deflector dictionary
-    :return: test area in arcsec^2
-    """
-    theta_e_infinity = theta_e_when_source_infinity(deflector)
-    test_area = np.pi * (theta_e_infinity * 1.3) ** 2
-    return test_area
-
 
 class GGLensPop(object):
     """
@@ -44,7 +33,8 @@ class GGLensPop(object):
             from astropy.units import Quantity
             sky_area = Quantity(value=0.1, unit='deg2')
             warnings.warn("No sky area provided, instead uses 0.1 deg2")
-        pipeline = SkyPyPipeline(skypy_config=skypy_config, sky_area=sky_area, filters=filters)
+        if lens_type in ['early-type', 'all-galaxies'] or source_type in ['galaxies']:
+            pipeline = SkyPyPipeline(skypy_config=skypy_config, sky_area=sky_area, filters=filters)
         if kwargs_deflector_cut is None:
             kwargs_deflector_cut = {}
         if kwargs_mass2light is None:
@@ -70,7 +60,13 @@ class GGLensPop(object):
             kwargs_source_cut = {}
         if source_type == 'galaxies':
             from sim_pipeline.Sources.galaxies import Galaxies
-            self._source_galaxies = Galaxies(pipeline.blue_galaxies, kwargs_cut=kwargs_source_cut, cosmo=cosmo)
+            self._sources = Galaxies(pipeline.blue_galaxies, kwargs_cut=kwargs_source_cut, cosmo=cosmo,
+                                     sky_area=sky_area)
+            self._source_model_type = 'extended'
+        elif source_type == 'quasars':
+            from sim_pipeline.Sources.quasars import Quasars
+            self._sources = Quasars(cosmo=cosmo, sky_area=sky_area)
+            self._source_model_type = 'point_source'
         else:
             raise ValueError('source_type %s is not supported' % source_type)
         self.cosmo = cosmo
@@ -81,22 +77,35 @@ class GGLensPop(object):
         draw a random lens within the cuts of the lens and source, with possible additional cut in the lensing
         configuration.
 
-        #TODO: make sure mass function is preserved, as well as option to draw all lenses within the cuts within the area
+        #TODO: make sure mass function is preserved,
+        # as well as option to draw all lenses within the cuts within the area
 
         :return: GGLens() instance with parameters of the deflector and lens and source light
         """
         while True:
-            source = self._source_galaxies.draw_galaxy()
+            source = self._sources.draw_source()
             lens = self._lens_galaxies.draw_deflector()
-            gg_lens = GGLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo)
+            gg_lens = GGLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo,
+                             source_type=self._source_model_type)
             if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens
 
-    def get_num_lenses(self):
+    def deflector_number(self):
+        """
+        number of potential deflectors (meaning all objects with mass that are being considered to have potential
+        sources behind them)
+
+        :return: number of potential deflectors
+        """
         return self._lens_galaxies.deflector_number()
 
-    def get_num_sources(self):
-        return self._source_galaxies.galaxies_number()
+    def source_number(self):
+        """
+        number of sources that are being considered to be placed in the sky area potentially aligned behind deflectors
+
+        :return: number of sources
+        """
+        return self._sources.source_number()
 
     def get_num_sources_tested_mean(self, testarea):
         """
@@ -104,7 +113,7 @@ class GGLensPop(object):
         num_sources_tested_mean/ testarea = num_sources/ f_sky;
         testarea is in units of arcsec^2, f_sky is in units of deg^2. 1 deg^2 = 12960000 arcsec^2
         """
-        num_sources = self._source_galaxies.galaxies_number()
+        num_sources = self._sources.source_number()
         num_sources_tested_mean = (testarea * num_sources) / (12960000 * self.f_sky.to_value('deg2'))
         return num_sources_tested_mean
 
@@ -149,8 +158,9 @@ class GGLensPop(object):
             if num_sources_range > 0:
                 n = 0
                 while n < num_sources_range:
-                    source = self._source_galaxies.draw_galaxy()
-                    gg_lens = GGLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo, test_area=test_area)
+                    source = self._sources.draw_source()
+                    gg_lens = GGLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo, test_area=test_area,
+                                     source_type=self._source_model_type)
                     # Check the validity of the lens system
                     if gg_lens.validity_test(**kwargs_lens_cuts):
                         gg_lens_population.append(gg_lens)
@@ -158,3 +168,15 @@ class GGLensPop(object):
                     else:
                         n += 1
         return gg_lens_population
+
+
+def draw_test_area(deflector):
+    """
+    draw a test area around the deflector
+
+    :param deflector: deflector dictionary
+    :return: test area in arcsec^2
+    """
+    theta_e_infinity = theta_e_when_source_infinity(deflector)
+    test_area = np.pi * (theta_e_infinity * 1.3) ** 2
+    return test_area
