@@ -2,6 +2,7 @@ from lenstronomy.SimulationAPI.sim_api import SimAPI
 import galsim
 from astropy.visualization import make_lupton_rgb
 
+
 def simulate_image(lens_class, band, num_pix, add_noise=True, observatory='LSST', **kwargs):
     """
     Creates an image of a selected lens with noise.
@@ -78,6 +79,7 @@ def galsimobj(image, pix_scale, flux):
     gso = galsim.InterpolatedImage(galsim.Image(image), scale = pix_scale, flux = flux)
     return gso
 
+
 def galsimobj_true_flux(image, pix_scale):
     """
     Creates an interpolated version of the given image with preserved flux.
@@ -88,6 +90,7 @@ def galsimobj_true_flux(image, pix_scale):
     :returns : interpolated image with specified pixel scale and flux"""
     gso_test = galsim.InterpolatedImage(galsim.Image(image), scale = pix_scale, normalization='flux')
     return gso_test
+
 
 def sharp_rgb_image(lens_class, rgb_band_list, mag_zero_point, delta_pix, num_pix):
     """
@@ -105,6 +108,7 @@ def sharp_rgb_image(lens_class, rgb_band_list, mag_zero_point, delta_pix, num_pi
     image_b = sharp_image(lens_class=lens_class, band=rgb_band_list[2], mag_zero_point=mag_zero_point, delta_pix=delta_pix,           num_pix=num_pix)
     image_rgb = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
     return image_rgb
+
 
 def rgb_image_from_image_list(image_list, stretch):
     """

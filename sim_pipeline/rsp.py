@@ -16,6 +16,7 @@ from astropy.io import fits
 from astropy.table import Table, vstack
 from sim_pipeline.image_simulation import sharp_image
 
+
 def DC2_cutout(ra, dec, num_pix, butler, band):
     """
     Draws a cutout from the DC2 data based on the given ra, dec pair. For this one needs to provide a butler to this           function. To initiate Butler, you need to specify data configuration and collection of the data.
@@ -48,6 +49,7 @@ def DC2_cutout(ra, dec, num_pix, butler, band):
     }
     coadd_cut_r = butler.get("deepCoadd", parameters={'bbox':bbox}, dataId=coaddId_r)
     return coadd_cut_r
+ 
     
 def lens_inejection(lens_pop, ra, dec, num_pix, delta_pix, butler, lens_cut=None, flux=None):
     """
@@ -139,7 +141,8 @@ def lens_inejection(lens_pop, ra, dec, num_pix, delta_pix, butler, lens_cut=None
     t = Table([[lens_image[0]], [cutout_image[0]],[injected_final_image[0]], [injected_final_image[1]],                             [injected_final_image[2]], [box_center[0]]], names=('lens','cutout_image','injected_lens_r', 'injected_lens_g',              'injected_lens_i', 'cutout_center'))
     return t
 
-def multiple_lens_injection(lens_pop, ra, dec, num_pix, delta_pix, butler, flux=None):
+
+def multiple_lens_injection(lens_pop, ra, dec, num_pix, delta_pix, butler, lens_cut=None, flux=None):
     """
     Draws multiple DC2 cutout images and injects random lenses from the lens population. For this one needs to provide a       butler to this function. To initiate Butler, you need to specify data configuration and collection of the data.
     
@@ -155,7 +158,7 @@ def multiple_lens_injection(lens_pop, ra, dec, num_pix, delta_pix, butler, flux=
     """
     injected_images=[]
     for i in range(len(ra)):
-        injected_images.append(lens_inejection(lens_pop, ra[i], dec[i], num_pix, delta_pix, butler, flux=None))
+        injected_images.append(lens_inejection(lens_pop, ra[i], dec[i], num_pix, delta_pix, butler, lens_cut=None,                                 flux=None))
     injected_image_catalog=vstack(injected_images)
     return injected_image_catalog
 
