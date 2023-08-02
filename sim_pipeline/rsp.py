@@ -10,7 +10,7 @@ import lsst.daf.butler as dafButler
 import lsst.geom as geom
 # Source injection
 from lsst.pipe.tasks.insertFakes import _add_fake_sources
-from sim_pipeline.image_simulation import gsobj_true_flux
+from sim_pipeline.image_simulation import galsimobj_true_flux
 import galsim
 from astropy.io import fits
 from astropy.table import Table, vstack
@@ -99,7 +99,7 @@ def lens_inejection(lens_pop, ra, dec, num_pix, delta_pix, butler, lens_cut=None
         coadd_cut_r = butler.get("deepCoadd", parameters={'bbox':bbox}, dataId=coaddId_r)
         lens=sharp_image(lens_class=lens_class, band=band, mag_zero_point=27, delta_pix=delta_pix, num_pix=num_pix)
         if flux == None:
-            gsobj = gsobj_true_flux(lens, pix_scale=delta_pix)
+            gsobj = galsimobj_true_flux(lens, pix_scale=delta_pix)
         else:
             gsobj = galsim.InterpolatedImage(galsim.Image(lens), scale = delta_pix, flux = flux)
 
