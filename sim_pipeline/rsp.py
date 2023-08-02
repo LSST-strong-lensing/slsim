@@ -19,7 +19,8 @@ from sim_pipeline.image_simulation import sharp_image
 
 def DC2_cutout(ra, dec, num_pix, butler, band):
     """
-    Draws a cutout from the DC2 data based on the given ra, dec pair. For this one needs to provide a butler to this           function. To initiate Butler, you need to specify data configuration and collection of the data.
+    Draws a cutout from the DC2 data based on the given ra, dec pair. For this one needs to provide
+    a butler to this function. To initiate Butler, you need to specify data configuration and collection of the data.
     
     :param ra: ra for the cutout
     :param dec: dec for the cutout
@@ -53,7 +54,8 @@ def DC2_cutout(ra, dec, num_pix, butler, band):
     
 def lens_inejection(lens_pop, ra, dec, num_pix, delta_pix, butler, lens_cut=None, flux=None):
     """
-    Chooses a random lens from the lens population and injects it to a DC2 cutout image. For this one needs to provide     a butler to this function. To initiate Butler, you need to specify data configuration and collection of the data.
+    Chooses a random lens from the lens population and injects it to a DC2 cutout image. For this one needs to provide
+    a butler to this function. To initiate Butler, you need to specify data configuration and collection of the data.
     
     :param lens_pop: lens population from sim-pipeline
     :param ra: ra for the cutout
@@ -144,7 +146,8 @@ def lens_inejection(lens_pop, ra, dec, num_pix, delta_pix, butler, lens_cut=None
 
 def multiple_lens_injection(lens_pop, ra, dec, num_pix, delta_pix, butler, lens_cut=None, flux=None):
     """
-    Draws multiple DC2 cutout images and injects random lenses from the lens population. For this one needs to provide     a butler to this function. To initiate Butler, you need to specify data configuration and collection of the data.
+    Draws multiple DC2 cutout images and injects random lenses from the lens population. For this one needs to provide
+    a butler to this function. To initiate Butler, you need to specify data configuration and collection of the data.
     
     :param lens_pop: lens population from sim-pipeline
     :param ra: ra for a cutout
