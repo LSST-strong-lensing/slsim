@@ -14,8 +14,8 @@ class TestGGLensPop:
         return GGLensPop(sky_area=sky_area, cosmo=cosmo)
 
     def test_num_lenses_and_sources(self, gg_lens_pop_instance):
-        num_lenses = gg_lens_pop_instance.get_num_lenses()
-        num_sources = gg_lens_pop_instance.get_num_sources()
+        num_lenses = gg_lens_pop_instance.deflector_number()
+        num_sources = gg_lens_pop_instance.source_number()
 
         assert 100 <= num_lenses <= 6600, f"Expected num_lenses to be between 5800 and 6600, but got {num_lenses}"
         assert 100000 <= num_sources <= 500000, f"Expected num_sources to be between 1090000 and 1110000, but got {num_sources}"
