@@ -4,6 +4,7 @@ from astropy.visualization import make_lupton_rgb
 
 def simulate_image(lens_class, band, num_pix, add_noise=True, observatory='LSST', **kwargs):
     """
+    Creates an image of a selected lens with noise.
 
     :param lens_class: class object containing all information of the lensing system (e.g., GGLens())
     :param band: imaging band
@@ -37,6 +38,7 @@ def simulate_image(lens_class, band, num_pix, add_noise=True, observatory='LSST'
 
 def sharp_image(lens_class, band, mag_zero_point, delta_pix, num_pix, with_deflector=True):
     """
+    Creates a high resolution image of a selected lens.
 
     :param lens_class: GGLens() object
     :param band: imaging band
@@ -65,8 +67,10 @@ def sharp_image(lens_class, band, mag_zero_point, delta_pix, num_pix, with_defle
     return image
 
 
-def gsobj(image, pix_scale, flux):
+def galsimobj(image, pix_scale, flux):
     """
+    Creates an interpolated version of the given image with specified flux.
+    
     :param image: image that need to be interpolated
     :param pix_scale: pixel scale to be asigned to the interpolated image
     :param flux: flux value to be asigned to the interpolated image
@@ -74,8 +78,10 @@ def gsobj(image, pix_scale, flux):
     gso = galsim.InterpolatedImage(galsim.Image(image), scale = pix_scale, flux = flux)
     return gso
 
-def gsobj_true_flux(image, pix_scale):
+def galsimobj_true_flux(image, pix_scale):
     """
+    Creates an interpolated version of the given image with preserved flux.
+    
     :param image: image that need to be interpolated
     :param pix_scale: pixel scale to be asigned to the interpolated image
     :param flux: flux value to be asigned to the interpolated image
@@ -85,6 +91,7 @@ def gsobj_true_flux(image, pix_scale):
 
 def sharp_rgb_image(lens_class, rgb_band_list, mag_zero_point, delta_pix, num_pix):
     """
+    Creates a high resolution rgb image of a selected lens.
 
     :param lens_class: GGLens() object
     :param rgb_band_list: imaging band list
@@ -101,6 +108,7 @@ def sharp_rgb_image(lens_class, rgb_band_list, mag_zero_point, delta_pix, num_pi
 
 def rgb_image_from_image_list(image_list, stretch):
     """
+    Creates a rgb image using list of images in r, g, and b.
 
     :param image_list: images in r, g, and b band
     :return: rgb image
