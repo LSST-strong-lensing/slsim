@@ -1,4 +1,4 @@
-fsky: 0.00001 deg2
+fsky: 0.0001 deg2
 z_range: !numpy.linspace [0, 5.00, 1000]
 cosmology: !astropy.cosmology.default_cosmology.get []
 wavenumber: !numpy.logspace [-3, 1, 1000]
@@ -15,8 +15,8 @@ tables:
     redshift_list: $z_range
     sky_area: $fsky
     cosmology: $cosmology
-    m_min: 1.0E+11
-    m_max: 1.0E+15
+    m_min: 5.0E+11
+    m_max: 1.0E+16
     resolution: 1000
     wavenumber: $wavenumber
     power_spectrum: $power_spectrum
@@ -25,7 +25,7 @@ tables:
   mass: !sim_pipeline.halos.halos.halo_mass_at_z
     z: $halos.z
     cosmology: $cosmology
-    m_min: 1.0E+11
+    m_min: 5.0E+11
     m_max: 1.0E+16
     resolution: !numpy.size [$halos.z]
     wavenumber: $wavenumber

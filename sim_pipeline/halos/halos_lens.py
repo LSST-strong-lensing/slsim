@@ -2,6 +2,8 @@ import numpy as np
 from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 import warnings
+from tqdm import tqdm
+import time
 
 
 def concentration_from_mass(z, mass, A=75.4, d=-0.422, m=-0.089):
@@ -74,11 +76,10 @@ class HalosLens(object):
         The masses of the halos.
     cosmo : astropy.Cosmology instance
         The cosmology assumed in the lensing computations.
-
+    lens_model : lenstronomy.LensModel instance
+                The LensModel object with a NFW profile for every halo.
     Methods
     -------
-    set_lens_model() :
-        Returns a LensModel instance for the NFW profile for all halos.
     random_position() :
         Returns random x and y coordinates in the sky, uniformly distributed within a circular sky area.
     get_nfw_kwargs() :
@@ -89,36 +90,30 @@ class HalosLens(object):
     get_convergence_shear() :
         Returns the convergence and shear at the origin due to all the halos.
     """
+
     # TODO: ADD test functions
-    def __init__(self, halos_list, cosmo=None, sky_area=4 * np.pi):
+    def __init__(self, halos_list, cosmo=None, sky_area=4 * np.pi, samples_number=1000):
         self.halos_list = halos_list
         self.n_halos = len(self.halos_list)
         self.sky_area = sky_area
         self.redshift_list = halos_list['z']
         self.mass_list = halos_list['mass']
+        self.samples_number = samples_number
         if cosmo is None:
             warnings.warn("No cosmology provided, instead uses astropy.cosmology import default_cosmology")
             from astropy.cosmology import default_cosmology
             self.cosmo = default_cosmology.get()
+        else:
+            self.cosmo = cosmo
 
-    def set_lens_model(self):
-        """
-        Initializes and returns a LensModel object with a Navarro-Frenk-White (NFW) profile for every halo.
-
-        Returns
-        -------
-        lens_model : lenstronomy.LensModel instance
-            The LensModel object with a NFW profile for every halo.
-        """
-        lens_model = LensModel(lens_model_list=['NFW'] * self.n_halos,
-                               lens_redshift_list=self.redshift_list,
-                               cosmo=self.cosmo,
-                               observed_convention_index=[],
-                               multi_plane=True,
-                               z_source=5
-                               )
+        self.lens_model = LensModel(lens_model_list=['NFW'] * self.n_halos,
+                                    lens_redshift_list=self.redshift_list,
+                                    cosmo=self.cosmo,
+                                    observed_convention_index=[],
+                                    multi_plane=True,
+                                    z_source=5
+                                    )
         # TODO: Set z_source as an input parameter or other way
-        return lens_model
 
     def random_position(self):
         """
@@ -187,10 +182,52 @@ class HalosLens(object):
         kappa, gamma1, gamma2 : float
             The computed convergence and two components of the shear at the origin.
         """
-        kappa = self.set_lens_model().kappa(0.0, 0.0, self.get_halos_lens_kwargs(),
-                                            diff=1.0,
-                                            diff_method='square')
-        gamma1, gamma2 = self.set_lens_model().gamma(0.0, 0.0, self.get_halos_lens_kwargs(),
-                                                     diff=1.0,
-                                                     diff_method='square')
-        return kappa, gamma1, gamma2
+        kappa = self.lens_model.kappa(0.0, 0.0, self.get_halos_lens_kwargs(),
+                                      diff=1.0,
+                                      diff_method='square')
+        gamma1, gamma2 = self.lens_model.gamma(0.0, 0.0, self.get_halos_lens_kwargs(),
+                                               diff=1.0,
+                                               diff_method='square')
+        gamma = np.sqrt(gamma1 ** 2 + gamma2 ** 2)
+
+        return kappa, gamma, gamma1, gamma2
+
+    # TODO: Add option to return gamma1, gamma2 OR gamma (also computer gamma only)
+
+    def get_kappa_gamma_distib(self, gamma_tot=False):
+        """
+        Runs the method get_convergence_shear() a specific number of times and stores the results
+        for kappa, gamma1, and gamma2 in separate lists.
+
+        Parameters
+        ----------
+        gamma_tot : bool, optional
+            If True, the function will return gamma values in place of gamma1 and gamma2 values.
+            Default is False.
+
+        Returns
+        -------
+        kappa_gamma_distribution: list of lists If gamma is False, the returned list contains three
+        lists with kappa, gamma1, and gamma2 values for each sample, respectively. If gamma is True, the returned
+        list contains two lists with kappa and gamma values for each sample, respectively.
+
+        Notes
+        -----
+        This function assumes the method get_convergence_shear() is implemented, and it returns a 4-tuple:
+        (kappa, gamma1, gamma2, gamma). If gamma parameter is False, gamma1 and gamma2 are stored,
+        otherwise gamma is stored. All returned values from get_convergence_shear() are assumed to be floats.
+        """
+        kappa_gamma_distribution = []
+        start_time = time.time()
+        if gamma_tot:
+            for _ in tqdm(range(self.samples_number)):
+                kappa, gamma, _, _ = self.get_convergence_shear()
+                kappa_gamma_distribution.append([kappa, gamma])
+        else:
+            for _ in tqdm(range(self.samples_number)):
+                kappa, _, gamma1, gamma2 = self.get_convergence_shear()
+                kappa_gamma_distribution.append([kappa, gamma1, gamma2])
+
+        print(f"For this halos list, elapsed time for computer weak-lensing maps: {time.time() - start_time} seconds")
+
+        return kappa_gamma_distribution

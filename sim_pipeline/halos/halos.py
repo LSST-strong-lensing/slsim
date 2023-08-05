@@ -7,6 +7,8 @@ from skypy.halos.mass import press_schechter_collapse_function
 from hmf.cosmology.growth_factor import GrowthFactor
 import numpy as np
 import warnings
+from tqdm import tqdm
+import time
 
 
 def set_defaults(m_min=None, m_max=None, wavenumber=None, resolution=None, power_spectrum=None, cosmology=None,
@@ -215,12 +217,15 @@ def halo_mass_at_z(z, m_min=None, m_max=None, resolution=None, wavenumber=None, 
         z = [z]
 
     mass = []
-    for z_val in z:
+    start_time = time.time()
+    for z_val in tqdm(z):
         gf = GrowthFactor(cosmo=cosmology)
         growth_function = gf.growth_factor(z_val)
 
         mass.append(halo_mass_sampler(m_min=m_min, m_max=m_max, resolution=resolution, wavenumber=wavenumber,
                                       power_spectrum=power_spectrum, growth_function=growth_function, params=params,
                                       cosmology=cosmology, collapse_function=collapse_function))
+
+    print(f"Elapsed time for computing the halos mass for the list: {time.time() - start_time} seconds")
 
     return mass
