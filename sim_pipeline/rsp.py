@@ -125,15 +125,15 @@ def lens_inejection(lens_pop, ra, dec, num_pix, delta_pix, butler, lens_cut=None
         dec_degrees = point_r.getDec().asDegrees()
         center =(ra_degrees, dec_degrees)
 
-        image_r = butler.get("deepCoadd", parameters={'bbox':bbox_r}, dataId=coaddId_r)
+        #image_r = butler.get("deepCoadd", parameters={'bbox':bbox_r}, dataId=coaddId_r)
         mat = np.eye(3)
         mat[:2,:2] = wcs_r.getCdMatrix()
 
         transform = Affine2D(mat)
-        arr_r = np.copy(image_r.image.array)
+        arr_r = np.copy(coadd_cut_r.image.array)
 
-        _add_fake_sources(image_r, [(point_r, gsobj)])
-        inj_arr_r = image_r.image.array
+        _add_fake_sources(coadd_cut_r, [(point_r, gsobj)])
+        inj_arr_r = coadd_cut_r.image.array
         injected_final_image.append(inj_arr_r)
         #band_report.append(band)
         box_center.append(center)
