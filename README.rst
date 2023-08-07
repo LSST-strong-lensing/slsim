@@ -26,6 +26,7 @@ How to contribute to the repository?
 Check out our step-by-step instructions how you can contribute code to this project Contributing_ Guidelines.
 Are you new to coding and contributing to a software development project? No worries! We help you out! Write us on the LSST Slack channel #sl-pipeline.
 
+Note: `sim-pipeline` is written in object-oriented python. What fun!
 
 How can I participate in LSST strong lensing projects?
 ------------------------------------------------------
