@@ -15,7 +15,7 @@ tables:
     redshift_list: $z_range
     sky_area: $fsky
     cosmology: $cosmology
-    m_min: 5.0E+11
+    m_min: 1.0E+12
     m_max: 1.0E+16
     resolution: 1000
     wavenumber: $wavenumber
@@ -25,9 +25,9 @@ tables:
   mass: !sim_pipeline.halos.halos.halo_mass_at_z
     z: $halos.z
     cosmology: $cosmology
-    m_min: 5.0E+11
+    m_min: 1.0E+12
     m_max: 1.0E+16
-    resolution: !numpy.size [$halos.z]
+    resolution: 1000
     wavenumber: $wavenumber
     power_spectrum: $power_spectrum
     collapse_function: $collapse_function

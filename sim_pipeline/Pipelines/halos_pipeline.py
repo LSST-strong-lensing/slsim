@@ -5,21 +5,30 @@ import tempfile
 
 
 class HalosSkyPyPipeline:
-    def __init__(self, skypy_config=None, sky_area=None, filters=None):
+    def __init__(self, skypy_config=None, sky_area=None, m_min=None, m_max=None, z_max=None):
         """
-        :param skypy_config: path to SkyPy configuration yaml file
-        :type skypy_config: string or None
-        :type sky_area: `~astropy.units.Quantity`
-        :param sky_area: Sky area over which halos are sampled. Must be in units of solid angle.
-        :param filters: filters for SED integration
-        :type filters: list of strings or None
+        Initialize the class with the given parameters.
+
+        Parameters
+        ----------
+        skypy_config : str or None, optional
+            Path to SkyPy configuration yaml file. If None, the default SkyPy configuration file is used.
+        sky_area : `~astropy.units.Quantity`, optional
+            Sky area over which halos are sampled. Must be in units of solid angle.
+        m_min : float, optional
+            Minimum halo mass.
+        m_max : float, optional
+            Maximum halo mass.
+        z_max : float, optional
+            Maximum redshift value in z_range.
+
         """
         path = os.path.dirname(sim_pipeline.__file__)
         module_path, _ = os.path.split(path)
         if skypy_config is None:
             skypy_config = os.path.join(module_path, 'data/SkyPy/halo.yml')
 
-        if sky_area is None and filters is None:
+        if sky_area is None and m_min is None and m_max is None and z_max is None:
             self._pipeline = Pipeline.read(skypy_config)
             self._pipeline.execute()
         else:
@@ -28,27 +37,42 @@ class HalosSkyPyPipeline:
 
             if sky_area is not None:
                 old_fsky = "fsky: 0.0001 deg2"
-                new_fsky = f"fsky: %s deg2" % sky_area
+                new_fsky = f"fsky: {sky_area} deg2"
                 content = content.replace(old_fsky, new_fsky)
+
+            if m_min is not None:
+                old_m_min = "m_min: 1.0E+12"
+                new_m_min = f"m_min: {m_min}"
+                content = content.replace(old_m_min, new_m_min)
+
+            if m_max is not None:
+                old_m_max = "m_max: 1.0E+16"
+                new_m_max = f"m_max: {m_max}"
+                content = content.replace(old_m_max, new_m_max)
+
+            if z_max is not None:
+                old_z_range = "z_range: !numpy.linspace [0, 5.00, 1000]"
+                new_z_range = f"z_range: !numpy.linspace [0, {z_max}, 1000]"
+                content = content.replace(old_z_range, new_z_range)
 
             with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.yml') as tmp_file:
                 tmp_file.write(content)
 
             self._pipeline = Pipeline.read(tmp_file.name)
             self._pipeline.execute()
-
+            # TODO:Add cosmo as an input
             # Remove the temporary file after the pipeline has been executed
             os.remove(tmp_file.name)
-        #TODO: note that the f_sky can not be set to large. Need to figure out how to do this properly
-        # for LSST simulations (10^5 deg^2)
 
     @property
     def halos(self):
         """
-        skypy pipeline for blue galaxies
+        SkyPy pipeline for halos.
 
-        :return: list of blue galaxies
-        :rtype: list of dict
+        Returns
+        -------
+        list of dict
+            List of blue galaxies.
+
         """
         return self._pipeline['halos']
-

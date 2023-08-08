@@ -7,8 +7,6 @@ from skypy.halos.mass import press_schechter_collapse_function
 from hmf.cosmology.growth_factor import GrowthFactor
 import numpy as np
 import warnings
-from tqdm import tqdm
-import time
 
 
 def set_defaults(m_min=None, m_max=None, wavenumber=None, resolution=None, power_spectrum=None, cosmology=None,
@@ -16,24 +14,39 @@ def set_defaults(m_min=None, m_max=None, wavenumber=None, resolution=None, power
     """
     Utility function to set default values for parameters if not provided.
 
-    :param m_min: The minimum halo mass. (in M_sol)
-    :param m_max: The maximum halo mass. (in M_sol)
-    :param wavenumber: The wavenumber array for power spectrum.
-    :param resolution: The resolution of the grid.
-    :param power_spectrum: The power spectrum function.
-    :param cosmology: The cosmology instance to use.
-    :param collapse_function: The halo collapse function.
-    :param params: The parameters for the collapse function.
-    :return: The parameters with default values set where applicable.
+    Parameters
+    ----------
+    m_min : float, optional
+        The minimum halo mass (in M_sol).
+    m_max : float, optional
+        The maximum halo mass (in M_sol).
+    wavenumber : array_like, optional
+        The wavenumber array for power spectrum.
+    resolution : int, optional
+        The resolution of the grid.
+    power_spectrum : function, optional
+        The power spectrum function.
+    cosmology : astropy.cosmology instance, optional
+        The cosmology instance to use.
+    collapse_function : function, optional
+        The halo collapse function.
+    params : tuple, optional
+        The parameters for the collapse function.
+
+    Returns
+    -------
+    tuple
+        The parameters with default values set where applicable.
+
     """
 
     # Default values
     if m_min is None:
-        m_min = 1e10
+        m_min = 1E+10
         warnings.warn("No minimum mass provided, instead uses 1e10 Msun")
 
     if m_max is None:
-        m_max = 1e14
+        m_max = 1E+14
         warnings.warn("No maximum mass provided, instead uses 1e14 Msun")
 
     if resolution is None:
@@ -69,26 +82,32 @@ def number_density_at_redshift(z, m_min=None, m_max=None, resolution=None, waven
     """
     Function to calculate the cumulative number density of halos at a given redshift.
 
-    :param z: The redshift at which to evaluate the number density.
-    :type z: float
-    :param m_min: The minimum halo mass. (in M_sol)
-    :type m_min: float, optional
-    :param m_max: The maximum halo mass. (in M_sol)
-    :type m_max: float, optional
-    :param resolution: The resolution of the mass grid.
-    :type resolution: int, optional
-    :param wavenumber: The wave number array for power spectrum.
-    :type wavenumber: array, optional
-    :param power_spectrum: The power spectrum function.
-    :type power_spectrum: function, optional
-    :param cosmology: The cosmology instance to use.
-    :type cosmology: astropy.cosmology instance, optional
-    :param collapse_function: The halo collapse function.
-    :type collapse_function: function, optional
-    :param params: The parameters for the collapse function.
-    :type params: tuple, optional
-    :return: The cumulative number density of halos.
-    :rtype: array
+    Parameters
+    ----------
+    z : float or array_like
+        The redshift at which to evaluate the number density.
+    m_min : float, optional
+        The minimum halo mass (in M_sol).
+    m_max : float, optional
+        The maximum halo mass (in M_sol).
+    resolution : int, optional
+        The resolution of the mass grid.
+    wavenumber : array_like, optional
+        The wave number array for power spectrum.
+    power_spectrum : function, optional
+        The power spectrum function.
+    cosmology : astropy.cosmology instance, optional
+        The cosmology instance to use.
+    collapse_function : function, optional
+        The halo collapse function.
+    params : tuple, optional
+        The parameters for the collapse function.
+
+    Returns
+    -------
+    array
+        The cumulative number density of halos.
+
     """
     # define default parameters
     m_min, m_max, wavenumber, resolution, power_spectrum, cosmology, collapse_function, params = set_defaults(
@@ -109,14 +128,24 @@ def number_density_at_redshift(z, m_min=None, m_max=None, resolution=None, waven
 
 def growth_factor_at_redshift(z, cosmology=None):
     """
-    Function to calculate the growth factor at a given redshift.
+    Calculate the growth factor at a given redshift.
 
-    :param z: The redshift at which to evaluate the growth factor.
-    :type z: float
-    :param cosmology: The cosmology instance to use.
-    :type cosmology: astropy.cosmology instance, optional
-    :return: The growth factor at redshift z.
-    :rtype: float
+    Parameters
+    ----------
+    z : float
+        The redshift at which to evaluate the growth factor.
+    cosmology : astropy.cosmology instance, optional
+        The cosmology instance to use.
+
+    Returns
+    -------
+    float
+        The growth factor at redshift z.
+
+    Notes
+    -----
+         Using hmf library to calculate growth factor.
+
     """
     if cosmology is None:
         warnings.warn("No cosmology provided, instead uses flat LCDM with default parameters")
@@ -131,30 +160,41 @@ def redshift_halos_array_from_comoving_density(redshift_list, sky_area, cosmolog
                                                resolution=None, wavenumber=None, collapse_function=None,
                                                power_spectrum=None, params=None):
     """
-    Function to calculate an array of halo redshifts from a given comoving density.
+    Calculate an array of halo redshifts from a given comoving density.
 
-    :param redshift_list: A list of redshifts.
-    :type redshift_list: array
-    :param sky_area: The area of the sky to consider (in square degrees).
-    :type sky_area: `~astropy.units.Quantity`
-    :param cosmology: The cosmology instance to use.
-    :type cosmology: astropy.cosmology instance, optional
-    :param m_min: The minimum halo mass. (in M_sol)
-    :type m_min: float, optional
-    :param m_max: The maximum halo mass.(in M_sol)
-    :type m_max: float, optional
-    :param resolution: The resolution of the mass grid.
-    :type resolution: int, optional
-    :param wavenumber: The wave number array for power spectrum.
-    :type wavenumber: array, optional
-    :param collapse_function: The halo collapse function.
-    :type collapse_function: function, optional
-    :param power_spectrum: The power spectrum function.
-    :type power_spectrum: function, optional
-    :param params: The parameters for the collapse function.
-    :type params: tuple, optional
-    :return: An array of redshifts of halos.
-    :rtype: array
+    The function computes the expected number of halos at different redshifts using the differential comoving volume
+    and the halo number density then apply the poisson distribution on it. After determining the expected number of
+    halos, the function produces an array of halo redshifts based on the cumulative distribution function (CDF) of
+    the number density.
+
+    Parameters
+    ----------
+    redshift_list : array_like
+        A list of redshifts.
+    sky_area : `~astropy.units.Quantity`
+        The area of the sky to consider (in square degrees).
+    cosmology : astropy.cosmology instance, optional
+        The cosmology instance to use.
+    m_min : float, optional
+        The minimum halo mass (in M_sol).
+    m_max : float, optional
+        The maximum halo mass (in M_sol).
+    resolution : int, optional
+        The resolution of the mass grid.
+    wavenumber : array_like, optional
+        The wave number array for power spectrum.
+    collapse_function : function, optional
+        The halo collapse function.
+    power_spectrum : function, optional
+        The power spectrum function.
+    params : tuple, optional
+        The parameters for the collapse function.
+
+    Returns
+    -------
+    array
+        An array of redshifts of halos.
+
     """
     if cosmology is None:
         warnings.warn("No cosmology provided, instead uses flat LCDM with default parameters")
@@ -168,9 +208,10 @@ def redshift_halos_array_from_comoving_density(redshift_list, sky_area, cosmolog
                                          collapse_function=collapse_function, params=params)
     dN_dz *= density
 
-    # integrate density to get expected number of galaxies
+    # integrate density to get expected number of halos
     N = np.trapz(dN_dz, redshift_list)
     N = int(N)
+    N = np.random.poisson(N)
 
     # cumulative trapezoidal rule to get redshift CDF
     cdf = dN_dz  # reuse memory
@@ -178,54 +219,56 @@ def redshift_halos_array_from_comoving_density(redshift_list, sky_area, cosmolog
     cdf[0] = 0
     cdf /= cdf[-1]
 
-    # sample N galaxy redshifts
     return np.interp(np.random.rand(N), cdf, redshift_list)
 
 
 def halo_mass_at_z(z, m_min=None, m_max=None, resolution=None, wavenumber=None, power_spectrum=None, cosmology=None,
                    collapse_function=None, params=None):
     """
-    Function to calculate the mass of halos at a given redshift.
+    Calculate the mass of halos at a given redshift (list).
 
-    :param z: The redshift at which to evaluate the halo mass.
-    :type z: float
-    :param m_min: The minimum halo mass. (in M_sol)
-    :type m_min: float, optional
-    :param m_max: The maximum halo mass. (in M_sol)
-    :type m_max: float, optional
-    :param resolution: The resolution of the mass grid.
-    :type resolution: int, optional
-    :param wavenumber: The wavenumber array for power spectrum.
-    :type wavenumber: array, optional
-    :param power_spectrum: The power spectrum function.
-    :type power_spectrum: function, optional
-    :param cosmology: The cosmology instance to use.
-    :type cosmology: astropy.cosmology instance, optional
-    :param collapse_function: The halo collapse function.
-    :type collapse_function: function, optional
-    :param params: The parameters for the collapse function.
-    :type params: tuple, optional
-    :return: The mass of halos at redshift z.
-    :rtype: array
+    Parameters
+    ----------
+    z : float or array_like
+        The redshift at which to evaluate the halo mass.
+    m_min : float, optional
+        The minimum halo mass (in M_sol).
+    m_max : float, optional
+        The maximum halo mass (in M_sol).
+    resolution : int, optional
+        The resolution of the mass grid.
+    wavenumber : array_like, optional
+        The wavenumber array for power spectrum.
+    power_spectrum : function, optional
+        The power spectrum function.
+    cosmology : astropy.cosmology instance, optional
+        The cosmology instance to use.
+    collapse_function : function, optional
+        The halo collapse function.
+    params : tuple, optional
+        The parameters for the collapse function.
+
+    Returns
+    -------
+    array
+        The mass of halos at redshift z.
+
     """
+
     m_min, m_max, wavenumber, resolution, power_spectrum, cosmology, collapse_function, params = set_defaults(
         m_min, m_max, wavenumber, resolution, power_spectrum, cosmology, collapse_function, params)
-
     try:
         iter(z)
     except TypeError:
         z = [z]
 
     mass = []
-    start_time = time.time()
-    for z_val in tqdm(z):
+    for z_val in z:
         gf = GrowthFactor(cosmo=cosmology)
         growth_function = gf.growth_factor(z_val)
 
         mass.append(halo_mass_sampler(m_min=m_min, m_max=m_max, resolution=resolution, wavenumber=wavenumber,
                                       power_spectrum=power_spectrum, growth_function=growth_function, params=params,
-                                      cosmology=cosmology, collapse_function=collapse_function))
-
-    print(f"Elapsed time for computing the halos mass for the list: {time.time() - start_time} seconds")
+                                      cosmology=cosmology, collapse_function=collapse_function, size=1))
 
     return mass

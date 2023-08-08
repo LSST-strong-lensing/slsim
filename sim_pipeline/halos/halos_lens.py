@@ -2,7 +2,7 @@ import numpy as np
 from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 import warnings
-from tqdm import tqdm
+from tqdm.notebook import tqdm
 import time
 
 
@@ -51,44 +51,54 @@ def concentration_from_mass(z, mass, A=75.4, d=-0.422, m=-0.089):
 
 class HalosLens(object):
     """
-    A class to manage the lensing properties of the halos.
+    Manage lensing properties of halos.
+
+    Provides methods to compute lensing properties of halos, such as their convergence and shear.
 
     Parameters
     ----------
     halos_list : table
-        List of halos with ['z']&['mass'] for which the lensing properties are computed.
+        Table of halos with columns ['z'] and ['mass'] for which lensing properties will be computed.
     cosmo : astropy.cosmology instance, optional
-        The cosmology assumed in the lensing computations. If none is provided, the default astropy cosmology is used.
+        Cosmology used for lensing computations. If not provided, default astropy cosmology is used.
     sky_area : float, optional
-        The total sky area over which the halos are distributed. Default is the full sky (4pi steradians).
+        Total sky area (in steradians) over which halos are distributed. Defaults to full sky (4pi steradians).
+    samples_number : int, optional
+        Number of samples for statistical calculations. Defaults to 1000.
 
     Attributes
     ----------
     halos_list : table
-        List of halos for which the lensing properties are computed.
+        Table of halos.
     n_halos : int
-        The number of halos in `halos_list`.
+        Number of halos in `halos_list`.
     sky_area : float
-        The total sky area in deg^2 over which the halos are distributed.
+        Total sky area in square degrees.
     redshift_list : array_like
-        The redshifts of the halos.
+        Redshifts of the halos.
     mass_list : array_like
-        The masses of the halos.
+        Masses of the halos in solar masses.
     cosmo : astropy.Cosmology instance
-        The cosmology assumed in the lensing computations.
+        Cosmology used for computations.
     lens_model : lenstronomy.LensModel instance
-                The LensModel object with a NFW profile for every halo.
+        LensModel with a NFW profile for each halo.
+
     Methods
     -------
     random_position() :
-        Returns random x and y coordinates in the sky, uniformly distributed within a circular sky area.
+        Generate random x and y coordinates in the sky.
     get_nfw_kwargs() :
-        Returns the scale radius, observed bending angle at the scale radius, and positions of the halos
-        in the lens plane.
+        Get scale radius, observed bending angle, and positions of halos in lens plane.
     get_halos_lens_kwargs() :
-        Returns the list of keyword arguments for each halo to be used in the lens model.
-    get_convergence_shear() :
-        Returns the convergence and shear at the origin due to all the halos.
+        Get list of keyword arguments for each halo in lens model.
+    get_convergence_shear(gamma12=False, diff=1.0, diff_method='square') :
+        Compute convergence and shear at origin due to all halos.
+    get_kappa_gamma_distib(gamma_tot=False, diff=1.0, diff_method='square') :
+        Get distribution of convergence and shear values by repeatedly sampling.
+
+    Notes
+    -----
+    This class need external libraries such as lenstronomy for its computations.
     """
 
     # TODO: ADD test functions
@@ -99,6 +109,7 @@ class HalosLens(object):
         self.redshift_list = halos_list['z']
         self.mass_list = halos_list['mass']
         self.samples_number = samples_number
+        self._z_source_convention = 10
         if cosmo is None:
             warnings.warn("No cosmology provided, instead uses astropy.cosmology import default_cosmology")
             from astropy.cosmology import default_cosmology
@@ -111,8 +122,8 @@ class HalosLens(object):
                                     cosmo=self.cosmo,
                                     observed_convention_index=[],
                                     multi_plane=True,
-                                    z_source=5
-                                    )
+                                    z_source=5, z_source_convention=self._z_source_convention)
+
         # TODO: Set z_source as an input parameter or other way
 
     def random_position(self):
@@ -126,7 +137,7 @@ class HalosLens(object):
         """
         phi = 2 * np.pi * np.random.random()
         upper_bound = np.sqrt(self.sky_area / np.pi)
-        random_radius = 3600 * np.random.uniform(0, upper_bound)
+        random_radius = 3600 * np.sqrt(np.random.random()) * upper_bound
         px = random_radius * np.cos(2 * phi)
         py = random_radius * np.sin(2 * phi)
         return px, py
@@ -148,7 +159,7 @@ class HalosLens(object):
         px, py = np.empty(n_halos), np.empty(n_halos)
         c_200 = np.empty(n_halos)
         for h in range(n_halos):
-            lens_cosmo = LensCosmo(z_lens=self.redshift_list[h], z_source=9999, cosmo=self.cosmo)
+            lens_cosmo = LensCosmo(z_lens=self.redshift_list[h], z_source=self._z_source_convention, cosmo=self.cosmo)
             c_200[h] = concentration_from_mass(z=self.redshift_list[h], mass=self.mass_list[h])
             Rs_angle_h, alpha_Rs_h = lens_cosmo.nfw_physical2angle(M=self.mass_list[h],
                                                                    c=c_200[h])
@@ -173,28 +184,41 @@ class HalosLens(object):
                         for h in range(self.n_halos)]
         return kwargs_halos
 
-    def get_convergence_shear(self):
+    def get_convergence_shear(self, gamma12=False, diff=1.0, diff_method='square'):
         """
         Calculates and returns the convergence and shear at the origin due to all the halos.
 
+        Parameters
+        ----------
+        gamma12 : bool, optional
+            If True, the function will return gamma1 and gamma2 instead of gamma. Default is False.
+        diff : float, optional
+            Differential used in the computation of the Hessian matrix. Default is 1.0.
+        diff_method : str, optional
+            The method to compute differential. Default is 'square'.
+
         Returns
         -------
-        kappa, gamma1, gamma2 : float
-            The computed convergence and two components of the shear at the origin.
+        kappa : float
+            The computed convergence at the origin.
+        gamma1, gamma2 : float
+            The computed two components of the shear at the origin if gamma12 is True.
+        gamma : float
+            The computed shear at the origin if gamma12 is False.
         """
-        kappa = self.lens_model.kappa(0.0, 0.0, self.get_halos_lens_kwargs(),
-                                      diff=1.0,
-                                      diff_method='square')
-        gamma1, gamma2 = self.lens_model.gamma(0.0, 0.0, self.get_halos_lens_kwargs(),
-                                               diff=1.0,
-                                               diff_method='square')
-        gamma = np.sqrt(gamma1 ** 2 + gamma2 ** 2)
+        f_xx, f_xy, f_yx, f_yy = self.lens_model.hessian(0.0, 0.0, self.get_halos_lens_kwargs(),
+                                                         diff=diff,
+                                                         diff_method=diff_method)
+        kappa = 1/2. * (f_xx + f_yy)
+        if gamma12:
+            gamma1 = 1. / 2 * (f_xx - f_yy)
+            gamma2 = f_xy
+            return kappa, gamma1, gamma2
+        else:
+            gamma = np.sqrt(f_xy ** 2 + 0.25 * (f_xx - f_yy) ** 2)
+            return kappa, gamma
 
-        return kappa, gamma, gamma1, gamma2
-
-    # TODO: Add option to return gamma1, gamma2 OR gamma (also computer gamma only)
-
-    def get_kappa_gamma_distib(self, gamma_tot=False):
+    def get_kappa_gamma_distib(self, gamma_tot=False, diff=1.0, diff_method='square'):
         """
         Runs the method get_convergence_shear() a specific number of times and stores the results
         for kappa, gamma1, and gamma2 in separate lists.
@@ -218,16 +242,24 @@ class HalosLens(object):
         otherwise gamma is stored. All returned values from get_convergence_shear() are assumed to be floats.
         """
         kappa_gamma_distribution = []
+
+        loop = range(self.samples_number)
+        if self.samples_number > 999:
+            loop = tqdm(loop)
+
         start_time = time.time()
+
         if gamma_tot:
-            for _ in tqdm(range(self.samples_number)):
-                kappa, gamma, _, _ = self.get_convergence_shear()
+            for _ in loop:
+                kappa, gamma = self.get_convergence_shear(gamma12=False, diff=diff, diff_method=diff_method)
                 kappa_gamma_distribution.append([kappa, gamma])
         else:
-            for _ in tqdm(range(self.samples_number)):
-                kappa, _, gamma1, gamma2 = self.get_convergence_shear()
+            for _ in loop:
+                kappa, gamma1, gamma2 = self.get_convergence_shear(gamma12=True, diff=diff, diff_method=diff_method)
                 kappa_gamma_distribution.append([kappa, gamma1, gamma2])
 
-        print(f"For this halos list, elapsed time for computer weak-lensing maps: {time.time() - start_time} seconds")
+        if self.samples_number > 999:
+            elapsed_time = time.time() - start_time
+            print(f"For this halos list, elapsed time for computing weak-lensing maps: {elapsed_time} seconds")
 
         return kappa_gamma_distribution

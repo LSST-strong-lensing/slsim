@@ -76,7 +76,7 @@ The file contains a table for dark matter halos. The table computes several prop
   - `cosmology` : The cosmological model used for the simulation. It defaults to the current default cosmology in Astropy if not provided.
   - `m_min` : The minimum halo mass (in solar masses, M☉) considered in the simulation.
   - `m_max` : The maximum halo mass (in solar masses, M☉) considered in the simulation.
-  - `resolution` : Here, it is set equal to the number of redshifts in `$halos.z`.
+  - `resolution` : The number of pieces used for trapezoidal integration from log(min mass) to log(max mass) when calculating the halo mass.
   - `wavenumber` : The array of wavenumbers (in 1/Mpc) at which the power spectrum is calculated.
   - `power_spectrum` : The power spectrum used in the simulation. Here, it is calculated using the Eisenstein & Hu fitting function.
   - `collapse_function` : The collapse function used to calculate the halo mass function. The ellipsoidal collapse function is used in this case.
