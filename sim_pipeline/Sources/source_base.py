@@ -1,6 +1,6 @@
+from abc import ABC, abstractmethod
 
-
-class SourceBase(object):
+class SourceBase(ABC):
     """
     base class with functions all source classes must have to be able to render populations
 
@@ -16,18 +16,20 @@ class SourceBase(object):
         self._cosmo = cosmo
         self._sky_area = sky_area
 
+    @abstractmethod
     def source_number(self):
         """
         number of sources registered (within given area on the sky)
 
         :return: number of sources
         """
-        raise NotImplementedError('Function source_number not implemented in chosen source class.')
-
+        pass
+    
+    @abstractmethod
     def draw_source(self):
         """
         chose source at random
 
         :return: dictionary of source
         """
-        raise NotImplementedError('Function draw_source not implemented in chosen source class.')
+        pass
