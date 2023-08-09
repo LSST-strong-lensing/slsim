@@ -1,9 +1,9 @@
-from skypy.halos.mass import halo_mass_sampler
-from skypy.halos.mass import halo_mass_function
-from skypy.power_spectrum import eisenstein_hu
+from sim_pipeline.Skypy_halos_duplicate.halos.mass import halo_mass_sampler
+from sim_pipeline.Skypy_halos_duplicate.halos.mass import halo_mass_function
+from sim_pipeline.Skypy_halos_duplicate.power_spectrum import eisenstein_hu
 from scipy import integrate
-from skypy.halos.mass import ellipsoidal_collapse_function
-from skypy.halos.mass import press_schechter_collapse_function
+from sim_pipeline.Skypy_halos_duplicate.halos.mass import ellipsoidal_collapse_function
+from sim_pipeline.Skypy_halos_duplicate.halos.mass import press_schechter_collapse_function
 from hmf.cosmology.growth_factor import GrowthFactor
 import numpy as np
 import warnings

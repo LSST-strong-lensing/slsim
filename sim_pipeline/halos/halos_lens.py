@@ -4,6 +4,7 @@ from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 import warnings
 from tqdm.notebook import tqdm
 import time
+import multiprocessing
 
 
 def concentration_from_mass(z, mass, A=75.4, d=-0.422, m=-0.089):
@@ -94,7 +95,9 @@ class HalosLens(object):
     get_convergence_shear(gamma12=False, diff=1.0, diff_method='square') :
         Compute convergence and shear at origin due to all halos.
     get_kappa_gamma_distib(gamma_tot=False, diff=1.0, diff_method='square') :
-        Get distribution of convergence and shear values by repeatedly sampling.
+        Get distribution of convergence and shear values by repeatedly sampling with multiprocessing.
+    get_kappa_gamma_distib_without_multiprocessing(gamma_tot=False, diff=1.0, diff_method='square') :
+        Compute and store the results for kappa, gamma1, and gamma2 in separate lists without using multiprocessing.
 
     Notes
     -----
@@ -112,7 +115,7 @@ class HalosLens(object):
         self._z_source_convention = 10
         if cosmo is None:
             warnings.warn("No cosmology provided, instead uses astropy.cosmology import default_cosmology")
-            from astropy.cosmology import default_cosmology
+            import astropy.cosmology as default_cosmology
             self.cosmo = default_cosmology.get()
         else:
             self.cosmo = cosmo
@@ -155,18 +158,20 @@ class HalosLens(object):
             Arrays containing Rs_angle, alpha_Rs, and x and y positions of all the halos.
         """
         n_halos = self.n_halos
-        Rs_angle, alpha_Rs = np.empty(n_halos), np.empty(n_halos)
-        px, py = np.empty(n_halos), np.empty(n_halos)
-        c_200 = np.empty(n_halos)
+        Rs_angle = []
+        alpha_Rs = []
+        c_200 = concentration_from_mass(z=self.redshift_list, mass=self.mass_list)
+        lens_cosmo = [LensCosmo(z_lens=self.redshift_list[h],
+                                z_source=self._z_source_convention, cosmo=self.cosmo) for h in range(n_halos)]
         for h in range(n_halos):
-            lens_cosmo = LensCosmo(z_lens=self.redshift_list[h], z_source=self._z_source_convention, cosmo=self.cosmo)
-            c_200[h] = concentration_from_mass(z=self.redshift_list[h], mass=self.mass_list[h])
-            Rs_angle_h, alpha_Rs_h = lens_cosmo.nfw_physical2angle(M=self.mass_list[h],
-                                                                   c=c_200[h])
-            px[h], py[h] = self.random_position()
-            Rs_angle[h] = Rs_angle_h
-            alpha_Rs[h] = alpha_Rs_h
-        # TODO: Also z_source
+            Rs_angle_h, alpha_Rs_h = lens_cosmo[h].nfw_physical2angle(M=self.mass_list[h],
+                                                                      c=c_200[h])
+            Rs_angle.extend(Rs_angle_h)
+            alpha_Rs.extend(alpha_Rs_h)
+        # TODO: Check if I need to add mulit-processing when n_halos is large (Probably not)
+        px, py = np.array([self.random_position() for _ in range(n_halos)]).T
+        Rs_angle = np.array(Rs_angle)
+        Rs_angle = np.array(Rs_angle)
         return Rs_angle, alpha_Rs, px, py
 
     def get_halos_lens_kwargs(self):
@@ -209,7 +214,7 @@ class HalosLens(object):
         f_xx, f_xy, f_yx, f_yy = self.lens_model.hessian(0.0, 0.0, self.get_halos_lens_kwargs(),
                                                          diff=diff,
                                                          diff_method=diff_method)
-        kappa = 1/2. * (f_xx + f_yy)
+        kappa = 1 / 2. * (f_xx + f_yy)
         if gamma12:
             gamma1 = 1. / 2 * (f_xx - f_yy)
             gamma2 = f_xy
@@ -218,13 +223,98 @@ class HalosLens(object):
             gamma = np.sqrt(f_xy ** 2 + 0.25 * (f_xx - f_yy) ** 2)
             return kappa, gamma
 
+    @staticmethod
+    def compute_kappa_gamma(i, obj, gamma_tot, diff, diff_method):
+        """
+        Compute the convergence and shear values for a given index.
+
+        This method is designed to be used with multiprocessing to speed up the process.
+
+        Parameters
+        ----------
+        i : int
+            Index of the sample for which the computation will be done.
+        obj : HalosLens object
+            Instance of the HalosLens class.
+        gamma_tot : bool
+            If True, the function will return total shear gamma. If False, it will return gamma1 and gamma2.
+        diff : float
+            Differential used in the computation of the Hessian matrix.
+        diff_method : str
+            Method used to compute differential.
+
+        Returns
+        -------
+        list
+            A list containing kappa and either gamma or gamma1 and gamma2, based on the value of `gamma_tot`.
+
+        Notes
+        -----
+        This function is designed to work in conjunction with `get_kappa_gamma_distib` which uses multiprocessing
+        to compute the kappa and gamma values for multiple samples in parallel.
+        """
+        if gamma_tot:
+            kappa, gamma = obj.get_convergence_shear(gamma12=False, diff=diff, diff_method=diff_method)
+            return [kappa, gamma]
+        else:
+            kappa, gamma1, gamma2 = obj.get_convergence_shear(gamma12=True, diff=diff, diff_method=diff_method)
+            return [kappa, gamma1, gamma2]
+
     def get_kappa_gamma_distib(self, gamma_tot=False, diff=1.0, diff_method='square'):
+        """
+        Computes and returns the distribution of convergence and shear values.
+
+        This method uses multiprocessing to compute the convergence and shear values for multiple samples in parallel.
+
+        Parameters
+        ----------
+        gamma_tot : bool, optional
+            If True, the function will return total shear gamma values. If False, it will return gamma1 and gamma2 values.
+            Default is False.
+        diff : float, optional
+            Differential used in the computation of the Hessian matrix. Default is 1.0.
+        diff_method : str, optional
+            Method used to compute differential. Default is 'square'.
+
+        Returns
+        -------
+        numpy.ndarray
+            A 2D array containing kappa and either gamma or gamma1 and gamma2 for each sample, based on the value
+            of `gamma_tot`.
+
+        Notes
+        -----
+        The method uses the `compute_kappa_gamma` static method to compute the values for each sample.
+        If the number of samples exceeds 2000, a print statement will indicate the elapsed time for computation.
+        """
+        kappa_gamma_distribution = np.empty((self.samples_number, 2 if gamma_tot else 3))
+        start_time = time.time()
+
+        with multiprocessing.Pool() as pool:
+            results = pool.starmap(self.compute_kappa_gamma,
+                                   [(i, self, gamma_tot, diff, diff_method) for i in range(self.samples_number)])
+
+        for i, result in enumerate(results):
+            kappa_gamma_distribution[i] = result
+
+        if self.samples_number > 2000:
+            elapsed_time = time.time() - start_time
+            print(f"For this halos list, elapsed time for computing weak-lensing maps: {elapsed_time} seconds")
+
+        return kappa_gamma_distribution
+        # TODO: Maybe considering a choice between multiprocessing and not multiprocessing.
+
+    def get_kappa_gamma_distib_without_multiprocessing(self, gamma_tot=False, diff=1.0, diff_method='square'):
         """
         Runs the method get_convergence_shear() a specific number of times and stores the results
         for kappa, gamma1, and gamma2 in separate lists.
 
         Parameters
         ----------
+        diff_method : str, optional
+            The method to compute differential. Default is 'square'.
+        diff: float, optional
+            Differential used in the computation of the Hessian matrix. Default is 1.0.
         gamma_tot : bool, optional
             If True, the function will return gamma values in place of gamma1 and gamma2 values.
             Default is False.
@@ -241,7 +331,8 @@ class HalosLens(object):
         (kappa, gamma1, gamma2, gamma). If gamma parameter is False, gamma1 and gamma2 are stored,
         otherwise gamma is stored. All returned values from get_convergence_shear() are assumed to be floats.
         """
-        kappa_gamma_distribution = []
+
+        kappa_gamma_distribution = np.empty((self.samples_number, 2 if gamma_tot else 3))
 
         loop = range(self.samples_number)
         if self.samples_number > 999:
@@ -250,13 +341,13 @@ class HalosLens(object):
         start_time = time.time()
 
         if gamma_tot:
-            for _ in loop:
+            for i in loop:
                 kappa, gamma = self.get_convergence_shear(gamma12=False, diff=diff, diff_method=diff_method)
-                kappa_gamma_distribution.append([kappa, gamma])
+                kappa_gamma_distribution[i] = [kappa, gamma]
         else:
-            for _ in loop:
+            for i in loop:
                 kappa, gamma1, gamma2 = self.get_convergence_shear(gamma12=True, diff=diff, diff_method=diff_method)
-                kappa_gamma_distribution.append([kappa, gamma1, gamma2])
+                kappa_gamma_distribution[i] = [kappa, gamma1, gamma2]
 
         if self.samples_number > 999:
             elapsed_time = time.time() - start_time

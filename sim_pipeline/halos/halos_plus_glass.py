@@ -1,11 +1,15 @@
 import numpy as np
 from sim_pipeline.Pipelines.halos_pipeline import HalosSkyPyPipeline
 from sim_pipeline.halos.halos_lens import HalosLens
-from astropy.units import Quantity
+from astropy.cosmology import FlatLambdaCDM
 from tqdm.notebook import tqdm
+from tqdm.contrib.concurrent import process_map
+from itertools import starmap
 import time
 from scipy import stats
 import warnings
+import multiprocessing
+from multiprocessing import get_context
 
 
 def read_glass_data(file_name="kgdata.npy"):
@@ -317,3 +321,45 @@ def run_halos_without_kde(n_iterations=1, sky_area=0.0001, samples_number=1500, 
     print(f'The {n_iterations} halo-lists took {(end_time - start_time)} seconds to run')
 
     return kappa_values_total, gamma_values_total
+
+
+"""
+def worker_run_halos_without_kde(iter_num, sky_area, m_min, m_max, z_max, cosmo, samples_number):
+
+    npipeline = HalosSkyPyPipeline(sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max)
+    nhalos = npipeline.halos
+
+    nhalos_lens = HalosLens(halos_list=nhalos, sky_area=sky_area, cosmo=cosmo, samples_number=samples_number)
+
+    nkappa_gamma_distribution = nhalos_lens.get_kappa_gamma_distib(gamma_tot=True)
+    nkappa_gamma_distribution = np.array(nkappa_gamma_distribution)
+
+    nkappa_values_halos = nkappa_gamma_distribution[:, 0]
+    ngamma_values_halos = nkappa_gamma_distribution[:, 1]
+
+    return nkappa_values_halos, ngamma_values_halos
+
+
+def run_halos_without_kde(n_iterations=1, sky_area=0.0001, samples_number=1500, cosmo=None, m_min=None, m_max=None,
+                          z_max=None):
+
+    if cosmo is None:
+        warnings.warn("No cosmology provided, instead uses astropy.cosmology default cosmology")
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    kappa_values_total = []
+    gamma_values_total = []
+
+    args = [(i, sky_area, m_min, m_max, z_max, cosmo, samples_number) for i in range(n_iterations)]
+
+    # Use multiprocessing
+    with get_context('spawn').Pool() as pool:
+        results = pool.starmap(worker_run_halos_without_kde, args)
+
+    for nkappa, ngamma in results:
+        kappa_values_total.extend(nkappa)
+        gamma_values_total.extend(ngamma)
+
+    return kappa_values_total, gamma_values_total
+
+"""
+# TODO: make the mulitprocessing work (mulit in mulit)
