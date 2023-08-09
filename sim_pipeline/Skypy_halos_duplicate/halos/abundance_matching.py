@@ -15,7 +15,7 @@ Models
 """
 
 import numpy as np
-from skypy.halos.mass import press_schechter, number_subhalos, subhalo_mass_sampler
+from sim_pipeline.Skypy_halos_duplicate.halos.mass import press_schechter, number_subhalos, subhalo_mass_sampler
 from skypy.galaxies.luminosity import schechter_lf_magnitude
 
 __all__ = [
