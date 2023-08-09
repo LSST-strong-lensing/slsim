@@ -7,7 +7,7 @@ power_spectrum: !sim_pipeline.Skypy_halos_duplicate.power_spectrum.eisenstein_hu
   A_s: 2.1982e-09
   n_s: 0.969453
   cosmology: $cosmology
-collapse_function: !skypy.halos.mass.ellipsoidal_collapse_function
+collapse_function: !sim_pipeline.Skypy_halos_duplicate.halos.mass.ellipsoidal_collapse_function
 
 tables:
  halos:
