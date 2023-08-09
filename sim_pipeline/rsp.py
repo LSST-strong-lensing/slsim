@@ -1,18 +1,10 @@
 import numpy as np
-import random
-import matplotlib.pyplot as plt
-import mpl_toolkits.axisartist.floating_axes as floating_axes
-from mpl_toolkits.axisartist.grid_finder import (FixedLocator, MaxNLocator,
-                                                 DictFormatter)
 from matplotlib.transforms import Affine2D
-import pickle
-import lsst.daf.butler as dafButler
 import lsst.geom as geom
 # Source injection
 from lsst.pipe.tasks.insertFakes import _add_fake_sources
 from sim_pipeline.image_simulation import galsimobj_true_flux
 import galsim
-from astropy.io import fits
 from astropy.table import Table, vstack
 from sim_pipeline.image_simulation import sharp_image
 
