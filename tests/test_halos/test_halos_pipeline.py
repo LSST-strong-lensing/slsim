@@ -1,10 +1,11 @@
 from sim_pipeline.Pipelines.halos_pipeline import HalosSkyPyPipeline
 
+
 class TestHalosSkyPyPipeline(object):
 
     def setup_method(self):
         from astropy.units import Quantity
-        sky_area = Quantity(value=0.00001, unit='deg2')
+        sky_area = 0.00005
         self.pipeline = HalosSkyPyPipeline(skypy_config=None, sky_area=sky_area)
 
     def test_halos(self):
