@@ -27,7 +27,7 @@ def colossus_mass_sampler(redshift, model, mdef, m_min, m_max,
                           cosmology, sigma8, ns, size=None, resolution=1000):
     """Colossus halo mass sampler.
 
-    This function generate a sample of halos from a mass function which
+    This function generate a sample of Halos from a mass function which
     is available in COLOSSUS [1]_.
 
     Parameters
@@ -48,7 +48,7 @@ def colossus_mass_sampler(redshift, model, mdef, m_min, m_max,
     ns : float
         Cosmology parameter, spectral index of scalar perturbation power spectrum.
     size : int, optional
-        Number of halos to sample. If size is None (default), a single value is returned.
+        Number of Halos to sample. If size is None (default), a single value is returned.
     resolution : int, optional
         Resolution of the inverse transform sampling spline. Default is 1000.
 
@@ -82,7 +82,7 @@ def colossus_mf_redshift(redshift, model, mdef, m_min, m_max, sky_area,
                          cosmology, sigma8, ns, resolution=1000, noise=True):
     r'''Sample redshifts from a COLOSSUS halo mass function.
 
-    Sample the redshifts of dark matter halos following a mass function
+    Sample the redshifts of dark matter Halos following a mass function
     implemented in COLOSSUS [1]_ within given mass and redshift ranges and for
     a given area of the sky.
 
@@ -98,7 +98,7 @@ def colossus_mf_redshift(redshift, model, mdef, m_min, m_max, sky_area,
     m_min, m_max : float
         Lower and upper bounds for the halo mass in units of Solar mass, Msun.
     sky_area : `~astropy.units.Quantity`
-        Sky area over which halos are sampled. Must be in units of solid angle.
+        Sky area over which Halos are sampled. Must be in units of solid angle.
     cosmology : Cosmology
         Cosmology object to convert comoving density.
     sigma8 : float
@@ -108,7 +108,7 @@ def colossus_mf_redshift(redshift, model, mdef, m_min, m_max, sky_area,
         Cosmology parameter, spectral index of scalar perturbation power
         spectrum.
     noise : bool, optional
-        Poisson-sample the number of halos. Default is `True`.
+        Poisson-sample the number of Halos. Default is `True`.
 
     Returns
     -------
@@ -126,7 +126,7 @@ def colossus_mf_redshift(redshift, model, mdef, m_min, m_max, sky_area,
     # Set the cosmology in COLOSSUS
     fromAstropy(cosmology, sigma8, ns)
 
-    # Integrate the mass function to get the number density of halos at each redshift
+    # Integrate the mass function to get the number density of Halos at each redshift
     def dndlnM(lnm, z):
         return massFunction(np.exp(lnm), z, 'M', 'dndlnM', mdef, model)
     lnmmin = np.log(m_min*cosmology.h)
@@ -143,7 +143,7 @@ def colossus_mf(redshift, model, mdef, m_min, m_max, sky_area, cosmology,
                 sigma8, ns, resolution=1000, noise=True):
     r'''Sample halo redshifts and masses from a COLOSSUS mass function.
 
-    Sample the redshifts and masses of dark matter halos following a mass
+    Sample the redshifts and masses of dark matter Halos following a mass
     function implemented in COLOSSUS [1]_ within given mass and redshift ranges
     and for a given area of the sky.
 
@@ -161,7 +161,7 @@ def colossus_mf(redshift, model, mdef, m_min, m_max, sky_area, cosmology,
     m_min, m_max : float
         Lower and upper bounds for the halo mass in units of Solar mass, Msun.
     sky_area : `~astropy.units.Quantity`
-        Sky area over which halos are sampled. Must be in units of solid angle.
+        Sky area over which Halos are sampled. Must be in units of solid angle.
     cosmology : Cosmology
         Cosmology object to calculate comoving densities.
     sigma8 : float
@@ -171,7 +171,7 @@ def colossus_mf(redshift, model, mdef, m_min, m_max, sky_area, cosmology,
         Cosmology parameter, spectral index of scalar perturbation power
         spectrum.
     noise : bool, optional
-        Poisson-sample the number of halos. Default is `True`.
+        Poisson-sample the number of Halos. Default is `True`.
 
     Returns
     -------

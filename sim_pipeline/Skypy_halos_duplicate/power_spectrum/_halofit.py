@@ -5,7 +5,9 @@ import numpy as np
 from scipy import optimize
 from ._base import PowerSpectrum
 from ._eisenstein_hu import eisenstein_hu, growth_function_carroll
-
+# TODO: This code has been temporarily borrowed from SkyPy.  Once the feature is available in the main branch or
+#  release version of SkyPy,  this code should be deprecated and replaced with the official implementation. Original
+#  Source: [https://github.com/skypyproject/skypy/tree/module/halos]
 
 __all__ = [
    'HalofitParameters',

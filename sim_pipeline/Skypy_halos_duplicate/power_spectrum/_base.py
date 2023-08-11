@@ -2,7 +2,9 @@ from abc import ABCMeta, abstractmethod
 from inspect import signature
 import numpy as np
 from scipy.interpolate import RectBivariateSpline
-
+# TODO: This code has been temporarily borrowed from SkyPy.  Once the feature is available in the main branch or
+#  release version of SkyPy,  this code should be deprecated and replaced with the official implementation. Original
+#  Source: [https://github.com/skypyproject/skypy/tree/module/halos]
 
 class PowerSpectrum(metaclass=ABCMeta):
     '''Base class for power spectrum calculation'''

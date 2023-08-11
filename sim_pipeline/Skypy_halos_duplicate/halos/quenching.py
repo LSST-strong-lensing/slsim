@@ -1,7 +1,7 @@
 """Galaxy quenching.
 
 This module implements models for environment and mass
-quenching by dark matter halos.
+quenching by dark matter Halos.
 
 Models
 ======
@@ -12,7 +12,9 @@ Models
    environment_quenched
    mass_quenched
 """
-
+# TODO: This code has been temporarily borrowed from SkyPy.  Once the feature is available in the main branch or
+#  release version of SkyPy,  this code should be deprecated and replaced with the official implementation. Original
+#  Source: [https://github.com/skypyproject/skypy/tree/module/halos]
 import numpy as np
 from scipy import special
 
@@ -45,10 +47,10 @@ def environment_quenched(nh, probability):
     ---------
 
     This example shows how many subhalos are environtment quenched (True)
-    and how many survive (False) from a list of 1000 halos:
+    and how many survive (False) from a list of 1000 Halos:
 
     >>> import numpy as np
-    >>> from skypy.halos.quenching import environment_quenched
+    >>> from skypy.Halos.quenching import environment_quenched
     >>> from collections import Counter
     >>> quenched = environment_quenched(1000, 0.5)
     >>> Counter(quenched)
@@ -88,12 +90,12 @@ def mass_quenched(halo_mass, offset, width):
     Examples
     ---------
 
-    This example shows how many halos are mass quenched (True)
-    and how many survive (False) from a list of 1000 halos:
+    This example shows how many Halos are mass quenched (True)
+    and how many survive (False) from a list of 1000 Halos:
 
     >>> import numpy as np
     >>> from astropy import units
-    >>> from skypy.halos.quenching import mass_quenched
+    >>> from skypy.Halos.quenching import mass_quenched
     >>> from collections import Counter
     >>> offset, width = 1.0e12, 0.5
     >>> halo_mass = np.random.lognormal(mean=np.log(offset), sigma=width,

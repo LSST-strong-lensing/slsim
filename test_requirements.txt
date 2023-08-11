@@ -1,1 +1,3 @@
 hmf
+pytest
+scipy

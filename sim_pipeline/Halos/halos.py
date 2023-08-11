@@ -50,7 +50,7 @@ def set_defaults(m_min=None, m_max=None, wavenumber=None, resolution=None, power
         warnings.warn("No maximum mass provided, instead uses 1e14 Msun")
 
     if resolution is None:
-        resolution = 10000
+        resolution = 1000
         warnings.warn("No resolution provided, instead uses 10000")
 
     if wavenumber is None:
@@ -80,7 +80,7 @@ def set_defaults(m_min=None, m_max=None, wavenumber=None, resolution=None, power
 def number_density_at_redshift(z, m_min=None, m_max=None, resolution=None, wavenumber=None, power_spectrum=None,
                                cosmology=None, collapse_function=None, params=None):
     """
-    Function to calculate the cumulative number density of halos at a given redshift.
+    Function to calculate the cumulative number density of Halos at a given redshift.
 
     Parameters
     ----------
@@ -106,7 +106,7 @@ def number_density_at_redshift(z, m_min=None, m_max=None, resolution=None, waven
     Returns
     -------
     array
-        The cumulative number density of halos.
+        The cumulative number density of Halos.
 
     """
     # define default parameters
@@ -162,9 +162,9 @@ def redshift_halos_array_from_comoving_density(redshift_list, sky_area, cosmolog
     """
     Calculate an array of halo redshifts from a given comoving density.
 
-    The function computes the expected number of halos at different redshifts using the differential comoving volume
+    The function computes the expected number of Halos at different redshifts using the differential comoving volume
     and the halo number density then apply the poisson distribution on it. After determining the expected number of
-    halos, the function produces an array of halo redshifts based on the cumulative distribution function (CDF) of
+    Halos, the function produces an array of halo redshifts based on the cumulative distribution function (CDF) of
     the number density.
 
     Parameters
@@ -193,7 +193,7 @@ def redshift_halos_array_from_comoving_density(redshift_list, sky_area, cosmolog
     Returns
     -------
     array
-        An array of redshifts of halos.
+        An array of redshifts of Halos.
 
     """
     if cosmology is None:
@@ -208,7 +208,7 @@ def redshift_halos_array_from_comoving_density(redshift_list, sky_area, cosmolog
                                          collapse_function=collapse_function, params=params)
     dN_dz *= density
 
-    # integrate density to get expected number of halos
+    # integrate density to get expected number of Halos
     N = np.trapz(dN_dz, redshift_list)
     N = int(N)
     N = np.random.poisson(N)
@@ -225,7 +225,7 @@ def redshift_halos_array_from_comoving_density(redshift_list, sky_area, cosmolog
 def halo_mass_at_z(z, m_min=None, m_max=None, resolution=None, wavenumber=None, power_spectrum=None, cosmology=None,
                    collapse_function=None, params=None):
     """
-    Calculate the mass of halos at a given redshift (list).
+    Calculate the mass of Halos at a given redshift (list).
 
     Parameters
     ----------
@@ -251,7 +251,7 @@ def halo_mass_at_z(z, m_min=None, m_max=None, resolution=None, wavenumber=None, 
     Returns
     -------
     array
-        The mass of halos at redshift z.
+        The mass of Halos at redshift z.
 
     """
 

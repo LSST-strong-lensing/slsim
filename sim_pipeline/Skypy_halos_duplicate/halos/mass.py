@@ -1,5 +1,5 @@
 r'''Halo mass sampler.
-This code samples halos from their mass function.
+This code samples Halos from their mass function.
 
 Models
 ======
@@ -20,7 +20,9 @@ Models
    sheth_tormen_mass_function
    subhalo_mass_sampler
 '''
-
+# TODO: This code has been temporarily borrowed from SkyPy.  Once the feature is available in the main branch or
+#  release version of SkyPy,  this code should be deprecated and replaced with the official implementation. Original
+#  Source: [https://github.com/skypyproject/skypy/tree/module/halos]
 import numpy as np
 from scipy import integrate
 from scipy.special import gamma
@@ -83,7 +85,7 @@ def halo_mass_function(M, wavenumber, power_spectrum, growth_function,
     Examples
     ---------
     >>> import numpy as np
-    >>> from skypy.halos import mass
+    >>> from skypy.Halos import mass
     >>> from skypy.power_spectrum import eisenstein_hu
 
     This example will compute the halo mass function for elliptical and
@@ -173,7 +175,7 @@ def halo_mass_sampler(m_min, m_max, resolution, wavenumber, power_spectrum,
     Examples
     ---------
     >>> import numpy as np
-    >>> from skypy.halos import mass
+    >>> from skypy.Halos import mass
     >>> from skypy.power_spectrum import eisenstein_hu
 
     This example will sample from the halo mass function for
@@ -238,7 +240,7 @@ def ellipsoidal_collapse_function(sigma, params):
     Examples
     ---------
     >>> import numpy as np
-    >>> from skypy.halos import mass
+    >>> from skypy.Halos import mass
     >>> from skypy.power_spectrum import eisenstein_hu
     >>> from skypy.power_spectrum import growth_function
 
@@ -361,12 +363,12 @@ def number_subhalos(halo_mass, alpha, beta, gamma_M, x, m_min, noise=True):
     Returns
     --------
     nsubhalos: array_like
-        Array of the number of subhalos assigned to parent halos with mass halo_mass.
+        Array of the number of subhalos assigned to parent Halos with mass halo_mass.
 
     Examples
     ---------
     >>> import numpy as np
-    >>> from skypy.halos import mass
+    >>> from skypy.Halos import mass
 
     This gives the number of subhalos in a parent halo of mass :math:`10^{12} M_\odot`
 
@@ -405,7 +407,7 @@ def subhalo_mass_sampler(halo_mass, nsubhalos, alpha, beta,
     halo_mass : (nm, ) array_like
         The mass of the halo parent, in units of solar mass.
     nsubhalos: (nm, ) array_like
-        Array of the number of subhalos assigned to parent halos with mass `halo_mass`.
+        Array of the number of subhalos assigned to parent Halos with mass `halo_mass`.
     alpha, beta : float
         Parameters that determines the subhalo Schechter function. Its the amplitude
         is defined by equation 2 in [1].
@@ -423,12 +425,12 @@ def subhalo_mass_sampler(halo_mass, nsubhalos, alpha, beta,
     sample: (nh, ) array_like
         List of original masses drawn from the subhalo mass function for each
         parent halo, in units of solar mass. The length corresponds to the total
-        number of subhalos for all parent halos, i.e. `np.sum(nsubhalos)`.
+        number of subhalos for all parent Halos, i.e. `np.sum(nsubhalos)`.
 
     Examples
     ---------
     >>> import numpy as np
-    >>> from skypy.halos import mass
+    >>> from skypy.Halos import mass
 
     This example samples 100 subhalos for a parent halo of mass 1.0E12 Msun:
 

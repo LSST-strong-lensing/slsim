@@ -1,7 +1,9 @@
 import numpy as np
 from astropy import units
 from ._base import TabulatedPowerSpectrum
-
+# TODO: This code has been temporarily borrowed from SkyPy.  Once the feature is available in the main branch or
+#  release version of SkyPy,  this code should be deprecated and replaced with the official implementation. Original
+#  Source: [https://github.com/skypyproject/skypy/tree/module/halos]
 
 __all__ = [
     'CAMB',

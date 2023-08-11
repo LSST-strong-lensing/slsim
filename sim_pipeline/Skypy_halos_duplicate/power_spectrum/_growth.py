@@ -3,7 +3,9 @@
 This computes the linear growth function in
 perturbation theory.
 """
-
+# TODO: This code has been temporarily borrowed from SkyPy.  Once the feature is available in the main branch or
+#  release version of SkyPy,  this code should be deprecated and replaced with the official implementation. Original
+#  Source: [https://github.com/skypyproject/skypy/tree/module/halos]
 from astropy.utils import isiterable
 import numpy as np
 from scipy import integrate

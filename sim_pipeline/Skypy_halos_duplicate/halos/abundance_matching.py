@@ -1,7 +1,7 @@
 """Abundance matching module.
 
 This module provides methods to perform abundance matching between catalogs of
-galaxies and dark matter halos.
+galaxies and dark matter Halos.
 
 Models
 ======
@@ -13,6 +13,9 @@ Models
    vale_ostriker
 
 """
+# TODO: This code has been temporarily borrowed from SkyPy.  Once the feature is available in the main branch or
+#  release version of SkyPy,  this code should be deprecated and replaced with the official implementation. Original
+#  Source: [https://github.com/skypyproject/skypy/tree/module/halos]
 
 import numpy as np
 from sim_pipeline.Skypy_halos_duplicate.halos.mass import press_schechter, number_subhalos, subhalo_mass_sampler
@@ -25,21 +28,21 @@ __all__ = [
 
 def vale_ostriker(halo_kwargs, subhalo_kwargs, galaxy_kwargs, cosmology):
     """Vale & Ostriker abundance matching.
-    Generate matched arrays of (sub)halos masses and galaxy absolute magnitudes
+    Generate matched arrays of (sub)Halos masses and galaxy absolute magnitudes
     following the abundance matching model in [1]_.
 
     Parameters
     ----------
     halo_kwargs : dict
-        Dictionary of keyword arguments for `~skypy.halos.mass.press_schechter`.
+        Dictionary of keyword arguments for `~skypy.Halos.mass.press_schechter`.
     subhalo_kwargs : dict
-        Dictionary of keyword arguments for `~skypy.halos.mass.number_subhalos`
-        and `~skypy.halos.mass.subhalo_mass_sampler`.
+        Dictionary of keyword arguments for `~skypy.Halos.mass.number_subhalos`
+        and `~skypy.Halos.mass.subhalo_mass_sampler`.
     galaxy_kwargs : dict
         Dictionary of keyword arguments for
         `~skypy.galaxies.luminosity.schechter_lf_magnitude`.
     cosmology : astropy.cosmology.Cosmology
-        Cosmology argument for `~skypy.halos.mass.press_schechter` and
+        Cosmology argument for `~skypy.Halos.mass.press_schechter` and
         `~skypy.galaxies.luminosity.schechter_lf_magnitude`.
 
     Returns
@@ -65,7 +68,7 @@ def vale_ostriker(halo_kwargs, subhalo_kwargs, galaxy_kwargs, cosmology):
     sampler_kwargs = {k: v for k, v in subhalo_kwargs.items() if k not in ['gamma_M', 'noise']}
     subhalo_mass = subhalo_mass_sampler(halo_mass, n_subhalos, **sampler_kwargs)
 
-    # Assign subhalos to groups with their parent halos
+    # Assign subhalos to groups with their parent Halos
     n_halos = len(halo_mass)
     halo_group = np.arange(n_halos)
     indexing = np.zeros(n_halos + 1, dtype=int)
@@ -75,7 +78,7 @@ def vale_ostriker(halo_kwargs, subhalo_kwargs, galaxy_kwargs, cosmology):
     for first, last, id in zip(indexing[:-1], indexing[1:], halo_group):
         subhalo_group[first:last] = id
 
-    # Concatenate halos and subhalos
+    # Concatenate Halos and subhalos
     mass = np.concatenate([halo_mass, subhalo_mass])
     group = np.concatenate([halo_group, subhalo_group])
     parent = np.empty(n_halos+total_subhalos, dtype=bool)
@@ -86,7 +89,7 @@ def vale_ostriker(halo_kwargs, subhalo_kwargs, galaxy_kwargs, cosmology):
     magnitude = schechter_lf_magnitude(**galaxy_kwargs, cosmology=cosmology)
     n_galaxies = len(magnitude)
 
-    # Sort halos and galaxies by mass and magnitude
+    # Sort Halos and galaxies by mass and magnitude
     n_matches = min(n_halos + total_subhalos, n_galaxies)
     sort_mass = np.argsort(mass)[-n_matches:][::-1]
     sort_magnitudes = np.argsort(magnitude)[:n_matches]

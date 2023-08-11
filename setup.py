@@ -31,7 +31,7 @@ setup(
     description="LSST strong lensing simulation pipeline",
     install_requires=requirements,
     extras_require={
-        'halos': [
+        'Halos': [
             'hmf'
         ]
     },

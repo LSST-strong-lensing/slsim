@@ -11,7 +11,7 @@ collapse_function: !sim_pipeline.Skypy_halos_duplicate.halos.mass.ellipsoidal_co
 
 tables:
  halos:
-  z: !sim_pipeline.halos.halos.redshift_halos_array_from_comoving_density
+  z: !sim_pipeline.Halos.halos.redshift_halos_array_from_comoving_density
     redshift_list: $z_range
     sky_area: $fsky
     cosmology: $cosmology
@@ -22,7 +22,7 @@ tables:
     power_spectrum: $power_spectrum
     collapse_function: $collapse_function
     params: [0.3, 0.7, 0.3, 1.686]
-  mass: !sim_pipeline.halos.halos.halo_mass_at_z
+  mass: !sim_pipeline.Halos.halos.halo_mass_at_z
     z: $halos.z
     cosmology: $cosmology
     m_min: 1.0E+12

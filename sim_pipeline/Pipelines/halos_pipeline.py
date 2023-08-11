@@ -14,7 +14,7 @@ class HalosSkyPyPipeline:
         skypy_config : str or None, optional
             Path to SkyPy configuration yaml file. If None, the default SkyPy configuration file is used.
         sky_area : `~astropy.units.Quantity`, optional
-            Sky area over which halos are sampled. Must be in units of solid angle.
+            Sky area over which Halos are sampled. Must be in units of solid angle.
         m_min : float, optional
             Minimum halo mass.
         m_max : float, optional
@@ -67,7 +67,7 @@ class HalosSkyPyPipeline:
     @property
     def halos(self):
         """
-        SkyPy pipeline for halos.
+        SkyPy pipeline for Halos.
 
         Returns
         -------

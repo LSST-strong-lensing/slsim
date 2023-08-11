@@ -10,7 +10,7 @@ import multiprocessing
 def concentration_from_mass(z, mass, A=75.4, d=-0.422, m=-0.089):
     """
     Get the halo concentration from halo masses using the fit in Childs et al. 2018 Eq(19),
-    Table 2 for all individual halos, both relaxed and unrelaxed.
+    Table 2 for all individual Halos, both relaxed and unrelaxed.
 
     Parameters
     ----------
@@ -52,33 +52,33 @@ def concentration_from_mass(z, mass, A=75.4, d=-0.422, m=-0.089):
 
 class HalosLens(object):
     """
-    Manage lensing properties of halos.
+    Manage lensing properties of Halos.
 
-    Provides methods to compute lensing properties of halos, such as their convergence and shear.
+    Provides methods to compute lensing properties of Halos, such as their convergence and shear.
 
     Parameters
     ----------
     halos_list : table
-        Table of halos with columns ['z'] and ['mass'] for which lensing properties will be computed.
+        Table of Halos with columns ['z'] and ['mass'] for which lensing properties will be computed.
     cosmo : astropy.cosmology instance, optional
         Cosmology used for lensing computations. If not provided, default astropy cosmology is used.
     sky_area : float, optional
-        Total sky area (in steradians) over which halos are distributed. Defaults to full sky (4pi steradians).
+        Total sky area (in steradians) over which Halos are distributed. Defaults to full sky (4pi steradians).
     samples_number : int, optional
         Number of samples for statistical calculations. Defaults to 1000.
 
     Attributes
     ----------
     halos_list : table
-        Table of halos.
+        Table of Halos.
     n_halos : int
-        Number of halos in `halos_list`.
+        Number of Halos in `halos_list`.
     sky_area : float
         Total sky area in square degrees.
     redshift_list : array_like
-        Redshifts of the halos.
+        Redshifts of the Halos.
     mass_list : array_like
-        Masses of the halos in solar masses.
+        Masses of the Halos in solar masses.
     cosmo : astropy.Cosmology instance
         Cosmology used for computations.
     lens_model : lenstronomy.LensModel instance
@@ -89,11 +89,11 @@ class HalosLens(object):
     random_position() :
         Generate random x and y coordinates in the sky.
     get_nfw_kwargs() :
-        Get scale radius, observed bending angle, and positions of halos in lens plane.
+        Get scale radius, observed bending angle, and positions of Halos in lens plane.
     get_halos_lens_kwargs() :
         Get list of keyword arguments for each halo in lens model.
     get_convergence_shear(gamma12=False, diff=1.0, diff_method='square') :
-        Compute convergence and shear at origin due to all halos.
+        Compute convergence and shear at origin due to all Halos.
     get_kappa_gamma_distib(gamma_tot=False, diff=1.0, diff_method='square') :
         Get distribution of convergence and shear values by repeatedly sampling with multiprocessing.
     get_kappa_gamma_distib_without_multiprocessing(gamma_tot=False, diff=1.0, diff_method='square') :
@@ -147,7 +147,7 @@ class HalosLens(object):
 
     def get_nfw_kwargs(self):
         """
-        Returns the angle at scale radius, observed bending angle at the scale radius, and positions of the halos in
+        Returns the angle at scale radius, observed bending angle at the scale radius, and positions of the Halos in
         the lens plane from physical mass and concentration parameter of an NFW profile.
 
         Returns
@@ -155,7 +155,7 @@ class HalosLens(object):
         Rs_angle, alpha_Rs, px, py : np.array
             Rs_angle (angle at scale radius) (in units of arcsec)
             alpha_Rs (observed bending angle at the scale radius) (in units of arcsec)
-            Arrays containing Rs_angle, alpha_Rs, and x and y positions of all the halos.
+            Arrays containing Rs_angle, alpha_Rs, and x and y positions of all the Halos.
         """
         n_halos = self.n_halos
         Rs_angle = []
@@ -191,7 +191,7 @@ class HalosLens(object):
 
     def get_convergence_shear(self, gamma12=False, diff=1.0, diff_method='square'):
         """
-        Calculates and returns the convergence and shear at the origin due to all the halos.
+        Calculates and returns the convergence and shear at the origin due to all the Halos.
 
         Parameters
         ----------
@@ -299,7 +299,7 @@ class HalosLens(object):
 
         if self.samples_number > 2000:
             elapsed_time = time.time() - start_time
-            print(f"For this halos list, elapsed time for computing weak-lensing maps: {elapsed_time} seconds")
+            print(f"For this Halos list, elapsed time for computing weak-lensing maps: {elapsed_time} seconds")
 
         return kappa_gamma_distribution
         # TODO: Maybe considering a choice between multiprocessing and not multiprocessing.
@@ -351,6 +351,6 @@ class HalosLens(object):
 
         if self.samples_number > 999:
             elapsed_time = time.time() - start_time
-            print(f"For this halos list, elapsed time for computing weak-lensing maps: {elapsed_time} seconds")
+            print(f"For this Halos list, elapsed time for computing weak-lensing maps: {elapsed_time} seconds")
 
         return kappa_gamma_distribution

@@ -1,6 +1,6 @@
 import numpy as np
 from sim_pipeline.Pipelines.halos_pipeline import HalosSkyPyPipeline
-from sim_pipeline.halos.halos_lens import HalosLens
+from sim_pipeline.Halos.halos_lens import HalosLens
 from astropy.cosmology import FlatLambdaCDM
 from tqdm.notebook import tqdm
 from tqdm.contrib.concurrent import process_map
@@ -197,15 +197,15 @@ def generate_meanzero_halos_multiple_times(n_times=20, skypy_config=None, skyare
 
 def halos_plus_glass(kappa_random_halos, gamma_random_halos, kappa_random_glass, gamma_random_glass):
     r"""
-    Combine the kappa and gamma values from halos and Glass distributions, returning the combined
-    values. For halos kappa, it is suggested to use modified kappa values (i.e., direct kappa minus mean(kappa)).
+    Combine the kappa and gamma values from Halos and Glass distributions, returning the combined
+    values. For Halos kappa, it is suggested to use modified kappa values (i.e., direct kappa minus mean(kappa)).
 
     Parameters
     ----------
     kappa_random_halos : numpy.ndarray
-        The randomly resampled kappa values from the halos.
+        The randomly resampled kappa values from the Halos.
     gamma_random_halos : numpy.ndarray
-        The randomly resampled gamma values from the halos.
+        The randomly resampled gamma values from the Halos.
     kappa_random_glass : numpy.ndarray
         The randomly resampled kappa values from Glass.
     gamma_random_glass : numpy.ndarray
@@ -214,29 +214,29 @@ def halos_plus_glass(kappa_random_halos, gamma_random_halos, kappa_random_glass,
     Returns
     -------
     tuple
-        A tuple containing two numpy arrays for the combined kappa and gamma values.
+        A tuple containing two list of numpy arrays for the combined kappa and gamma values.
 
     Notes
     -----
     The total shear, :math:`\gamma_{\text{tot}}`, is computed based on the relationships:
 
-    .. math:: \gamma_{\text{tot}} = \sqrt{(\gamma1_{\text{halos}}  + \gamma1_{\text{GLASS}})^2 + (\gamma2_{\text{
-        halos}}  + \gamma2_{\text{GLASS}})^2}
+    .. math:: \gamma_{\text{tot}} = \sqrt{(\gamma1_{\text{Halos}}  + \gamma1_{\text{GLASS}})^2 + (\gamma2_{\text{
+        Halos}}  + \gamma2_{\text{GLASS}})^2}
 
     and
 
-    .. math:: \gamma_{\text{tot}} = \sqrt{\gamma_{\text{halos}}^2 + \gamma_{\text{GLASS}}^2 + 2\gamma_{\text{
-        halos}}\gamma_{\text{GLASS}} \times \cos(\alpha-\beta)}
+    .. math:: \gamma_{\text{tot}} = \sqrt{\gamma_{\text{Halos}}^2 + \gamma_{\text{GLASS}}^2 + 2\gamma_{\text{
+        Halos}}\gamma_{\text{GLASS}} \times \cos(\alpha-\beta)}
 
     Given that :math:`\alpha` and :math:`\beta` are randomly distributed, and their difference, :math:`\alpha-\beta`,
     follows a normal distribution, the shear is given by:
 
-    .. math:: \gamma_{\text{tot}}^2 = \gamma_{\text{halos}}^2 + \gamma_{\text{GLASS}}^2 + 2\gamma_{\text{
-        halos}}\gamma_{\text{GLASS}} \cdot \text{random}(-1,1)
+    .. math:: \gamma_{\text{tot}}^2 = \gamma_{\text{Halos}}^2 + \gamma_{\text{GLASS}}^2 + 2\gamma_{\text{
+        Halos}}\gamma_{\text{GLASS}} \cdot \text{random}(-1,1)
     """
     total_kappa = [k_h + k_g for k_h, k_g in zip(kappa_random_halos, kappa_random_glass)]
-
-    random_numbers = np.random.uniform(-1, 1, size=len(gamma_random_halos))
+    random_angles = np.random.uniform(0, 2 * np.pi, size=len(gamma_random_halos))
+    random_numbers = np.cos(random_angles)
     total_gamma = [
         np.sqrt((g_h ** 2) + (g_g ** 2) + (2 * r * g_h * g_g))
         for g_h, g_g, r in zip(gamma_random_halos, gamma_random_glass, random_numbers)
@@ -259,17 +259,17 @@ def run_halos_without_kde(n_iterations=1, sky_area=0.0001, samples_number=1500, 
     n_iterations : int, optional
         Number of iterations or halo lists to generate. Defaults to 1.
     sky_area : float, optional
-        Total sky area (in steradians) over which halos are distributed. Defaults to 0.0001 steradians.
+        Total sky area (in steradians) over which Halos are distributed. Defaults to 0.0001 steradians.
     samples_number : int, optional
         Number of samples for statistical calculations. Defaults to 1500.
     cosmo : astropy.cosmology instance, optional
         Cosmology used for the simulations. If not provided, the default astropy cosmology is used.
     m_min : float, optional
-        Minimum mass of the halos to consider. If not provided, no lower limit is set.
+        Minimum mass of the Halos to consider. If not provided, no lower limit is set.
     m_max : float, optional
-        Maximum mass of the halos to consider. If not provided, no upper limit is set.
+        Maximum mass of the Halos to consider. If not provided, no upper limit is set.
     z_max : float, optional
-        Maximum redshift of the halos to consider. If not provided, no upper limit is set.
+        Maximum redshift of the Halos to consider. If not provided, no upper limit is set.
 
     Returns
     -------
@@ -280,7 +280,7 @@ def run_halos_without_kde(n_iterations=1, sky_area=0.0001, samples_number=1500, 
 
     Notes
     -----
-    This function initializes a halo distribution pipeline for each iteration, simulates halos,
+    This function initializes a halo distribution pipeline for each iteration, simulates Halos,
     and then computes the lensing properties (`kappa` and `gamma`). The results from all iterations
     are concatenated to form the final output lists.
 
@@ -327,7 +327,7 @@ def run_halos_without_kde(n_iterations=1, sky_area=0.0001, samples_number=1500, 
 def worker_run_halos_without_kde(iter_num, sky_area, m_min, m_max, z_max, cosmo, samples_number):
 
     npipeline = HalosSkyPyPipeline(sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max)
-    nhalos = npipeline.halos
+    nhalos = npipeline.Halos
 
     nhalos_lens = HalosLens(halos_list=nhalos, sky_area=sky_area, cosmo=cosmo, samples_number=samples_number)
 
