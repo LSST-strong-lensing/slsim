@@ -231,8 +231,8 @@ def halos_plus_glass(kappa_random_halos, gamma_random_halos, kappa_random_glass,
     Given that :math:`\alpha` and :math:`\beta` are randomly distributed, and their difference, :math:`\alpha-\beta`,
     follows a normal distribution, the shear is given by:
 
-    .. math:: \gamma_{\text{tot}}^2 = \gamma_{\text{Halos}}^2 + \gamma_{\text{GLASS}}^2 + 2\gamma_{\text{
-        Halos}}\gamma_{\text{GLASS}} \cdot \text{random}(-1,1)
+    .. math:: \gamma_{\text{tot}}^2 = \gamma_{\text{halos}}^2 + \gamma_{\text{GLASS}}^2 + 2\gamma_{\text{
+        halos}}\gamma_{\text{GLASS}}\cdot \cos(\text{random angle})
     """
     total_kappa = [k_h + k_g for k_h, k_g in zip(kappa_random_halos, kappa_random_glass)]
     random_angles = np.random.uniform(0, 2 * np.pi, size=len(gamma_random_halos))
@@ -323,15 +323,13 @@ def run_halos_without_kde(n_iterations=1, sky_area=0.0001, samples_number=1500, 
     return kappa_values_total, gamma_values_total
 
 
-"""
 def worker_run_halos_without_kde(iter_num, sky_area, m_min, m_max, z_max, cosmo, samples_number):
-
     npipeline = HalosSkyPyPipeline(sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max)
-    nhalos = npipeline.Halos
+    nhalos = npipeline.halos
 
     nhalos_lens = HalosLens(halos_list=nhalos, sky_area=sky_area, cosmo=cosmo, samples_number=samples_number)
 
-    nkappa_gamma_distribution = nhalos_lens.get_kappa_gamma_distib(gamma_tot=True)
+    nkappa_gamma_distribution = nhalos_lens.get_kappa_gamma_distib_without_multiprocessing(gamma_tot=True)
     nkappa_gamma_distribution = np.array(nkappa_gamma_distribution)
 
     nkappa_values_halos = nkappa_gamma_distribution[:, 0]
@@ -340,14 +338,15 @@ def worker_run_halos_without_kde(iter_num, sky_area, m_min, m_max, z_max, cosmo,
     return nkappa_values_halos, ngamma_values_halos
 
 
-def run_halos_without_kde(n_iterations=1, sky_area=0.0001, samples_number=1500, cosmo=None, m_min=None, m_max=None,
-                          z_max=None):
-
+def run_halos_without_kde_by_multiprocessing(n_iterations=1, sky_area=0.0001, samples_number=1500, cosmo=None,
+                                             m_min=None, m_max=None, z_max=None):
     if cosmo is None:
         warnings.warn("No cosmology provided, instead uses astropy.cosmology default cosmology")
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     kappa_values_total = []
     gamma_values_total = []
+
+    start_time = time.time()  # Note the start time
 
     args = [(i, sky_area, m_min, m_max, z_max, cosmo, samples_number) for i in range(n_iterations)]
 
@@ -359,7 +358,8 @@ def run_halos_without_kde(n_iterations=1, sky_area=0.0001, samples_number=1500, 
         kappa_values_total.extend(nkappa)
         gamma_values_total.extend(ngamma)
 
+    end_time = time.time()  # Note the end time
+    print(f'The {n_iterations} halo-lists took {(end_time - start_time)} seconds to run')
     return kappa_values_total, gamma_values_total
 
-"""
 # TODO: make the mulitprocessing work (mulit in mulit)
