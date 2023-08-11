@@ -6,7 +6,8 @@ class TestHalosSkyPyPipeline(object):
     def setup_method(self):
         from astropy.units import Quantity
         sky_area = 0.00005
-        self.pipeline = HalosSkyPyPipeline(skypy_config=None, sky_area=sky_area)
+        self.pipeline = HalosSkyPyPipeline(skypy_config=None, sky_area=sky_area,
+                                           m_min=1.0E+13, m_max=1.0E+15, z_max=4.00)
 
     def test_halos(self):
         halos = self.pipeline.halos

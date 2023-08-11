@@ -1,5 +1,6 @@
 from sim_pipeline.Halos.halos_plus_glass import read_glass_data, generate_samples_from_glass, skyarea_form_n, \
-    generate_maps_kmean_zero_using_halos, halos_plus_glass, generate_meanzero_halos_multiple_times,run_halos_without_kde
+    generate_maps_kmean_zero_using_halos, halos_plus_glass, generate_meanzero_halos_multiple_times, \
+    run_halos_without_kde, run_halos_without_kde_by_multiprocessing
 import os
 import numpy as np
 import pytest
@@ -62,3 +63,13 @@ class Testhalosplusglass(object):
         assert len(kappa_run_halos_without_kde) == len(gamma_run_halos_without_kde) == 10
         assert isinstance(kappa_run_halos_without_kde, (list, np.ndarray))
         assert isinstance(gamma_run_halos_without_kde, (list, np.ndarray))
+
+    def test_run_halos_without_kde_by_multiprocessing(self):
+        kappa_run_halos_without_kde_by_multiprocessing, \
+            gamma_run_halos_without_kde_by_multiprocessing = run_halos_without_kde_by_multiprocessing(n_iterations=2,
+                                                                                                      sky_area=0.00003,
+                                                                                                      samples_number=5)
+        assert len(kappa_run_halos_without_kde_by_multiprocessing) \
+               == len(gamma_run_halos_without_kde_by_multiprocessing) == 10
+        assert isinstance(kappa_run_halos_without_kde_by_multiprocessing, (list, np.ndarray))
+        assert isinstance(gamma_run_halos_without_kde_by_multiprocessing, (list, np.ndarray))
