@@ -309,7 +309,7 @@ def add_object(dp0_image, objects, calibFluxRadius=12):
     for spt, lens, pix_scale in objects:
         num_pix_lens = np.shape(lens)[0]
         if num_pix_cutout != num_pix_lens:
-            raise ValueError('Images with different pixel number cannot be combined. Please make 
+            raise ValueError('Images with different pixel number cannot be combined. Please make' 
                              'sure that your lens and dp0 cutout image have the same pixel number.'
                              f'lens pixel number = {num_pix_lens} and dp0 image pixel number =' 
                              f'{num_pix_cutout}')
