@@ -8,7 +8,7 @@ def simulate_image(lens_class, band, num_pix, add_noise=True, observatory='LSST'
     Creates an image of a selected lens with noise.
 
     :param lens_class: class object containing all information of the lensing system (e.g., 
-    GGLens())
+     GGLens())
     :param band: imaging band
     :param num_pix: number of pixels per axis
     :param add_noise: if True, add noise
