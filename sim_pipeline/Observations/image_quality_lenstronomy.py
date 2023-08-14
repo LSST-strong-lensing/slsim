@@ -1,4 +1,5 @@
 from lenstronomy.SimulationAPI.ObservationConfig.LSST import LSST
+from lenstronomy.SimulationAPI.ObservationConfig.Roman import Roman
 
 
 def kwargs_single_band(band, observatory='LSST', **kwargs):
@@ -15,9 +16,7 @@ def kwargs_single_band(band, observatory='LSST', **kwargs):
     :rtype: dict
     """
     if observatory == 'LSST':
-        from lenstronomy.SimulationAPI.ObservationConfig.LSST import LSST
         observatory = LSST(band=band, **kwargs)
     elif observatory == 'Roman':
-        from lenstronomy.SimulationAPI.ObservationConfig.Roman import Roman
         observatory = Roman(band=band, **kwargs)
     return observatory.kwargs_single_band()
