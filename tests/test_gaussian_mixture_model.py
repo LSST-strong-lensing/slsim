@@ -19,5 +19,5 @@ def test_gaussian_mixture_model():
 
     # Check if at least 80% of the samples are between -1 and 1
     within_range = np.sum((-1 <= samples) & (samples <= 1))
-    assert within_range / size >= 0.8, f"Less than 80% of samples are within the range (-1, 1)." 
+    assert within_range / size >= 0.8, "Less than 80% of samples are within the range (-1, 1)." 
     f"Only {within_range / size * 100}% are within range."
