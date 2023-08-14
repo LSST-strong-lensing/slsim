@@ -13,7 +13,8 @@ from scipy.signal import convolve2d
 def DC2_cutout(ra, dec, num_pix, butler, band):
     """
     Draws a cutout from the DC2 data based on the given ra, dec pair. For this one needs to provide
-    a butler to this function. To initiate Butler, you need to specify data configuration and collection of the data.
+    a butler to this function. To initiate Butler, you need to specify data configuration and 
+    collection of the data.
     
     :param ra: ra for the cutout
     :param dec: dec for the cutout
@@ -47,8 +48,9 @@ def DC2_cutout(ra, dec, num_pix, butler, band):
     
 def lens_inejection(lens_pop, num_pix, delta_pix, butler, ra, dec, lens_cut=None, flux=None):
     """
-    Chooses a random lens from the lens population and injects it to a DC2 cutout image. For this one needs to provide
-    a butler to this function. To initiate Butler, you need to specify data configuration and collection of the data.
+    Chooses a random lens from the lens population and injects it to a DC2 cutout image. For this 
+    one needs to provide a butler to this function. To initiate Butler, you need to specify data 
+    configuration and collection of the data.
     
     :param lens_pop: lens population from sim-pipeline
     :param num_pix: number of pixel for the cutout
@@ -59,8 +61,8 @@ def lens_inejection(lens_pop, num_pix, delta_pix, butler, ra, dec, lens_cut=None
     :param lens_cut: list of criteria for lens selection
     :param flux: flux need to be asigned to the lens image. It sould be None
     :param: path: path to save the output
-    :returns: An astropy table containing Injected lens in r-band, DC2 cutout image in r-band, cutout image with           
-    injected lens in r, g , and i band 
+    :returns: An astropy table containing Injected lens in r-band, DC2 cutout image in r-band, 
+    cutout image with injected lens in r, g , and i band 
     """   
     #lens = sim_lens
     if lens_cut == None:
@@ -95,7 +97,8 @@ def lens_inejection(lens_pop, num_pix, delta_pix, butler, ra, dec, lens_cut=None
         
         #coadd cutout image
         coadd_cut_r = butler.get("deepCoadd", parameters={'bbox':bbox}, dataId=coaddId_r)
-        lens=sharp_image(lens_class=lens_class, band=band, mag_zero_point=27, delta_pix=delta_pix, num_pix=num_pix)
+        lens=sharp_image(lens_class=lens_class, band=band, mag_zero_point=27, delta_pix=delta_pix, 
+                         num_pix=num_pix)
         if flux == None:
             gsobj = galsimobj_true_flux(lens, pix_scale=delta_pix)
         else:
@@ -134,16 +137,19 @@ def lens_inejection(lens_pop, num_pix, delta_pix, butler, ra, dec, lens_cut=None
         cutout_image.append(arr_r)
         lens_image.append((inj_arr_r-arr_r))
 
-    t = Table([[lens_image[0]], [cutout_image[0]],[injected_final_image[0]], [injected_final_image[1]],                             
-               [injected_final_image[2]], [box_center[0]]], names=('lens','cutout_image','injected_lens_r', 
-                                                                   'injected_lens_g', 'injected_lens_i', 'cutout_center'))
+    t = Table([[lens_image[0]], [cutout_image[0]],[injected_final_image[0]], 
+               [injected_final_image[1]], [injected_final_image[2]], [box_center[0]]], 
+               names=('lens','cutout_image','injected_lens_r', 'injected_lens_g', 
+                      'injected_lens_i', 'cutout_center'))
     return t
 
 
-def lens_inejection_fast(lens_pop, num_pix, delta_pix, butler, ra, dec, num_cutout_per_patch=10, lens_cut=None, flux=None):
+def lens_inejection_fast(lens_pop, num_pix, delta_pix, butler, ra, dec, num_cutout_per_patch=10,
+                          lens_cut=None, flux=None):
     """
-    Chooses a random lens from the lens population and injects it to a DC2 cutout image. For this one needs to provide
-    a butler to this function. To initiate Butler, you need to specify data configuration and collection of the data.
+    Chooses a random lens from the lens population and injects it to a DC2 cutout image. For this 
+    one needs to provide a butler to this function. To initiate Butler, you need to specify data 
+    configuration and collection of the data.
     
     :param lens_pop: lens population from sim-pipeline
     :param num_pix: number of pixel for the cutout
@@ -155,7 +161,8 @@ def lens_inejection_fast(lens_pop, num_pix, delta_pix, butler, ra, dec, num_cuto
     :param lens_cut: list of criteria for lens selection
     :param flux: flux need to be asigned to the lens image. It sould be None
     :param: path: path to save the output
-    :returns: An astropy table containing Injected lens in r-band, DC2 cutout image in r-band, cutout image with           
+    :returns: An astropy table containing Injected lens in r-band, DC2 cutout image in r-band, 
+    cutout image with           
     injected lens in r, g , and i 
     band 
     """   
@@ -201,14 +208,15 @@ def lens_inejection_fast(lens_pop, num_pix, delta_pix, butler, ra, dec, num_cuto
     table = []
     for i in range(len(x_center)):
         lens_class = lens_pop.select_lens_at_random(**kwargs_lens_cut)
-        cutout_bbox = geom.Box2I(geom.Point2I(xbox_min[i], ybox_min[i]),geom.Point2I(xbox_max[i], ybox_max[i]))
+        cutout_bbox = geom.Box2I(geom.Point2I(xbox_min[i], ybox_min[i]),geom.Point2I(xbox_max[i],
+                                                                                      ybox_max[i]))
         injected_final_image = []
         box_center = []
         cutout_image_list = []
         lens_image=[]
         for j in range(len(coadd)):
-            lens=sharp_image(lens_class=lens_class, band=rgb_band_list[j], mag_zero_point=27, delta_pix=delta_pix, 
-                             num_pix=num_pix)
+            lens=sharp_image(lens_class=lens_class, band=rgb_band_list[j], mag_zero_point=27, 
+                             delta_pix=delta_pix, num_pix=num_pix)
             cutout_image = coadd[j][cutout_bbox]
             objects = [(geom.Point2D(x_center[i], y_center[i]), lens, delta_pix)]
             final_injected_image = add_object(cutout_image, objects, calibFluxRadius=12)
@@ -220,19 +228,21 @@ def lens_inejection_fast(lens_pop, num_pix, delta_pix, butler, ra, dec, num_cuto
             box_center.append((ra_deg, dec_deg))
             cutout_image_list.append(cutout_image.image.array)
             lens_image.append((final_injected_image-cutout_image.image.array))
-        table_1 = Table([[lens_image[0]], [cutout_image_list[0]],[injected_final_image[0]], [injected_final_image[1]],                             
-               [injected_final_image[2]], [box_center[0]]], names=('lens','cutout_image','injected_lens_r', 
-                                                                   'injected_lens_g', 'injected_lens_i', 'cutout_center'))
+        table_1 = Table([[lens_image[0]], [cutout_image_list[0]],[injected_final_image[0]], 
+                         [injected_final_image[1]], [injected_final_image[2]], [box_center[0]]], 
+                         names=('lens','cutout_image','injected_lens_r', 'injected_lens_g', 
+                                'injected_lens_i', 'cutout_center'))
         table.append(table_1)
     lens_catalog = vstack(table)
     return lens_catalog
 
 
-def multiple_lens_injection(lens_pop, num_pix, delta_pix, butler, ra, dec, lens_cut=None, flux=None):
+def multiple_lens_injection(lens_pop, num_pix, delta_pix, butler, ra, dec, lens_cut=None, 
+                            flux=None):
     """
-    Injects random lenses from the lens population to multiple DC2 cutout images using lens_inejection function. For 
-    this one needs to provide
-    a butler to this function. To initiate Butler, you need to specify data configuration and collection of the data.
+    Injects random lenses from the lens population to multiple DC2 cutout images using 
+    lens_inejection function. For this one needs to provide a butler to this function. To initiate 
+    Butler, you need to specify data configuration and collection of the data.
     
     :param lens_pop: lens population from sim-pipeline
     :param num_pix: number of pixel for the cutout
@@ -242,24 +252,23 @@ def multiple_lens_injection(lens_pop, num_pix, delta_pix, butler, ra, dec, lens_
     :param dec: dec for a cutout
     :param flux: flux need to be asigned to the lens image. It sould be None
     :param: path: path to save the output
-    :returns: An astropy table containing Injected lenses in r-band, DC2 cutout images in r-band, cutout images with 
-    injected lens in r, g , and i 
-    band for a given set of ra and dec
+    :returns: An astropy table containing Injected lenses in r-band, DC2 cutout images in r-band, 
+    cutout images with injected lens in r, g , and i band for a given set of ra and dec
     """
     injected_images=[]
     for i in range(len(ra)):
-        injected_images.append(lens_inejection(lens_pop, num_pix, delta_pix, butler, ra[i], dec[i], lens_cut=None,         
-                                               flux=None))
+        injected_images.append(lens_inejection(lens_pop, num_pix, delta_pix, butler, ra[i], dec[i],
+                                               lens_cut=None, flux=None))
     injected_image_catalog=vstack(injected_images)
     return injected_image_catalog
 
 
-def multiple_lens_injection_fast(lens_pop, num_pix, delta_pix, butler, ra, dec, num_cutout_per_patch=10, lens_cut=None, 
-                                 flux=None):
+def multiple_lens_injection_fast(lens_pop, num_pix, delta_pix, butler, ra, dec, 
+                                 num_cutout_per_patch=10, lens_cut=None, flux=None):
     """
-    Injects random lenses from the lens population to multiple DC2 cutout images using lens_inejection_fast function. For 
-    this one needs to provide
-    a butler to this function. To initiate Butler, you need to specify data configuration and collection of the data.
+    Injects random lenses from the lens population to multiple DC2 cutout images using 
+    lens_inejection_fast function. For this one needs to provide a butler to this function. 
+    To initiate Butler, you need to specify data configuration and collection of the data.
     
     :param lens_pop: lens population from sim-pipeline
     :param num_pix: number of pixel for the cutout
@@ -269,13 +278,14 @@ def multiple_lens_injection_fast(lens_pop, num_pix, delta_pix, butler, ra, dec, 
     :param dec: dec for a cutout
     :param flux: flux need to be asigned to the lens image. It sould be None
     :param: path: path to save the output
-    :returns: An astropy table containing Injected lenses in r-band, DC2 cutout images in r-band, cutout images with 
-    injected lens in r, g , and i band for a given set of ra and dec
+    :returns: An astropy table containing Injected lenses in r-band, DC2 cutout images in r-band, 
+    cutout images with injected lens in r, g , and i band for a given set of ra and dec
     """
     injected_images=[]
     for i in range(len(ra)):
-        injected_images.append(lens_inejection_fast(lens_pop, num_pix, delta_pix, butler, ra[i], dec[i], 
-                                                    num_cutout_per_patch, lens_cut=None, flux=None))
+        injected_images.append(lens_inejection_fast(lens_pop, num_pix, delta_pix, butler, ra[i],
+                                                    dec[i],  num_cutout_per_patch, lens_cut=None, 
+                                                    flux=None))
     injected_image_catalog=vstack(injected_images)
     return injected_image_catalog
 
@@ -284,12 +294,11 @@ def add_object(dp0_image, objects, calibFluxRadius=12):
     """ Injects a given object in a dp0 cutout image
     
     :param dp0_image: cutout image from the dp0 data or any other image
-    :param objects: a tuple of point/coordinate where we want to inject the image, source image, and pixel scale of source 
-    image. Eg. [(point, image, pixel_scale)]
-    :param calibFluxRadius: (optional) Aperture radius (in pixels) used to define the calibration for this
-        exposure+catalog.  This is used to produce the correct instrumental fluxes
-        within the radius.  The value should match that of the field defined in
-        slot_CalibFlux_instFlux.
+    :param objects: a tuple of point/coordinate where we want to inject the image, source image, 
+    and pixel scale of source image. Eg. [(point, image, pixel_scale)]
+    :param calibFluxRadius: (optional) Aperture radius (in pixels) used to define the calibration 
+    for thisexposure+catalog. This is used to produce the correct instrumental fluxes within the 
+    radius.  The value should match that of the field defined in slot_CalibFlux_instFlux.
     :returns: an image with injected source
     """
     wcs = dp0_image.getWcs()
@@ -300,12 +309,14 @@ def add_object(dp0_image, objects, calibFluxRadius=12):
     for spt, lens, pix_scale in objects:
         num_pix_lens = np.shape(lens)[0]
         if num_pix_cutout != num_pix_lens:
-            raise ValueError('Images with different pixel number cannot be combined. Please make sure that' 
-                              f'your lens and dp0 cutout image have the same pixel number. lens pixel number =' 
-                             f'{num_pix_lens} and dp0 image pixel number = {num_pix_cutout}')
+            raise ValueError('Images with different pixel number cannot be combined. Please make 
+                             'sure that your lens and dp0 cutout image have the same pixel number.'
+                             f'lens pixel number = {num_pix_lens} and dp0 image pixel number =' 
+                             f'{num_pix_cutout}')
         if abs(pixscale - pix_scale) >= 10**-4:
-            raise ValueError('Images with different pixel scale should be combined. Please make sure that your' 
-                              'lens image and dp0 cutout image have compatible pixel scale.')
+            raise ValueError('Images with different pixel scale should be combined. Please make' 
+                             'sure that your lens image and dp0 cutout image have compatible pixel' 
+                             'scale.')
         else:
             pt = spt
             psfArr = psf.computeKernelImage(pt).array
