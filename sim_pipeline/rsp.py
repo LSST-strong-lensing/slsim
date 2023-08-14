@@ -1,5 +1,4 @@
 import numpy as np
-from matplotlib.transforms import Affine2D
 import lsst.geom as geom
 # Source injection
 from lsst.pipe.tasks.insertFakes import _add_fake_sources
