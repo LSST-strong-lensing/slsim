@@ -7,13 +7,13 @@ from sim_pipeline.image_simulation import galsimobj_true_flux
 import galsim
 from astropy.table import Table, vstack
 from sim_pipeline.image_simulation import sharp_image
+from scipy.signal import convolve2d
 
 
 def DC2_cutout(ra, dec, num_pix, butler, band):
     """
     Draws a cutout from the DC2 data based on the given ra, dec pair. For this one needs to provide
-    a butler to this function. To initiate Butler, you need to specify data configuration and 
-    collection of the data.
+    a butler to this function. To initiate Butler, you need to specify data configuration and collection of the data.
     
     :param ra: ra for the cutout
     :param dec: dec for the cutout
@@ -47,21 +47,20 @@ def DC2_cutout(ra, dec, num_pix, butler, band):
     
 def lens_inejection(lens_pop, num_pix, delta_pix, butler, ra, dec, lens_cut=None, flux=None):
     """
-    Chooses a random lens from the lens population and injects it to a DC2 cutout image. For this 
-    one needs to provide a butler to this function. To initiate Butler, you need to specify data 
-    configuration and collection of the data.
+    Chooses a random lens from the lens population and injects it to a DC2 cutout image. For this one needs to provide
+    a butler to this function. To initiate Butler, you need to specify data configuration and collection of the data.
     
     :param lens_pop: lens population from sim-pipeline
-    :param ra: ra for the cutout
-    :param dec: dec for the cutout
     :param num_pix: number of pixel for the cutout
     :param delta_pix: pixel scale for the lens image
     :param butler: butler object
+    :param ra: ra for the cutout
+    :param dec: dec for the cutout
     :param lens_cut: list of criteria for lens selection
     :param flux: flux need to be asigned to the lens image. It sould be None
     :param: path: path to save the output
-    :returns: An astropy table containing Injected lens in r-band, DC2 cutout image in r-band, 
-    cutout image with injected lens in r, g , and i band 
+    :returns: An astropy table containing Injected lens in r-band, DC2 cutout image in r-band, cutout image with           
+    injected lens in r, g , and i band 
     """   
     #lens = sim_lens
     if lens_cut == None:
@@ -96,8 +95,7 @@ def lens_inejection(lens_pop, num_pix, delta_pix, butler, ra, dec, lens_cut=None
         
         #coadd cutout image
         coadd_cut_r = butler.get("deepCoadd", parameters={'bbox':bbox}, dataId=coaddId_r)
-        lens=sharp_image(lens_class=lens_class, band=band, mag_zero_point=27, delta_pix=delta_pix, 
-                         num_pix=num_pix)
+        lens=sharp_image(lens_class=lens_class, band=band, mag_zero_point=27, delta_pix=delta_pix, num_pix=num_pix)
         if flux == None:
             gsobj = galsimobj_true_flux(lens, pix_scale=delta_pix)
         else:
@@ -234,14 +232,14 @@ def multiple_lens_injection(lens_pop, num_pix, delta_pix, butler, ra, dec, lens_
     """
     Injects random lenses from the lens population to multiple DC2 cutout images using lens_inejection function. For 
     this one needs to provide
-    a butler to this function. To initiate Butler, you need to specify data configuration and collection of the data. 
+    a butler to this function. To initiate Butler, you need to specify data configuration and collection of the data.
     
     :param lens_pop: lens population from sim-pipeline
-    :param ra: ra for a cutout
-    :param dec: dec for a cutout
     :param num_pix: number of pixel for the cutout
     :param delta_pix: pixel scale for the lens image
     :param butler: butler object
+    :param ra: ra for a cutout
+    :param dec: dec for a cutout
     :param flux: flux need to be asigned to the lens image. It sould be None
     :param: path: path to save the output
     :returns: An astropy table containing Injected lenses in r-band, DC2 cutout images in r-band, cutout images with 
@@ -256,18 +254,19 @@ def multiple_lens_injection(lens_pop, num_pix, delta_pix, butler, ra, dec, lens_
     return injected_image_catalog
 
 
-def multiple_lens_injection_fast(lens_pop, num_pix, delta_pix, butler, ra, dec, num_cutout_per_patch=10, lens_cut=None, flux=None):
+def multiple_lens_injection_fast(lens_pop, num_pix, delta_pix, butler, ra, dec, num_cutout_per_patch=10, lens_cut=None, 
+                                 flux=None):
     """
     Injects random lenses from the lens population to multiple DC2 cutout images using lens_inejection_fast function. For 
     this one needs to provide
     a butler to this function. To initiate Butler, you need to specify data configuration and collection of the data.
     
     :param lens_pop: lens population from sim-pipeline
-    :param ra: ra for a cutout
-    :param dec: dec for a cutout
     :param num_pix: number of pixel for the cutout
     :param delta_pix: pixel scale for the lens image
     :param butler: butler object
+    :param ra: ra for a cutout
+    :param dec: dec for a cutout
     :param flux: flux need to be asigned to the lens image. It sould be None
     :param: path: path to save the output
     :returns: An astropy table containing Injected lenses in r-band, DC2 cutout images in r-band, cutout images with 
@@ -302,8 +301,8 @@ def add_object(dp0_image, objects, calibFluxRadius=12):
         num_pix_lens = np.shape(lens)[0]
         if num_pix_cutout != num_pix_lens:
             raise ValueError('Images with different pixel number cannot be combined. Please make sure that' 
-                              f'your lens and dp0 cutout image have the same pixel number. lens pixel number = 
-                             {num_pix_lens} and dp0 image pixel number = {num_pix_cutout}')
+                              f'your lens and dp0 cutout image have the same pixel number. lens pixel number =' 
+                             f'{num_pix_lens} and dp0 image pixel number = {num_pix_cutout}')
         if abs(pixscale - pix_scale) >= 10**-4:
             raise ValueError('Images with different pixel scale should be combined. Please make sure that your' 
                               'lens image and dp0 cutout image have compatible pixel scale.')
