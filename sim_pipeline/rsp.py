@@ -65,14 +65,13 @@ def lens_inejection(lens_pop, num_pix, delta_pix, butler, ra, dec, lens_cut=None
     cutout image with injected lens in r, g , and i band 
     """   
     #lens = sim_lens
-    if lens_cut == None:
+    if lens_cut is None:
         kwargs_lens_cut = {}
     else:
         kwargs_lens_cut = lens_cut
     
     rgb_band_list=['r', 'g', 'i']
     lens_class = lens_pop.select_lens_at_random(**kwargs_lens_cut)
-    theta_E=lens_class.einstein_radius
     skymap = butler.get("skyMap")
     point = geom.SpherePoint(ra, dec, geom.degrees)
     cutoutSize = geom.ExtentI(num_pix, num_pix)
@@ -99,7 +98,7 @@ def lens_inejection(lens_pop, num_pix, delta_pix, butler, ra, dec, lens_cut=None
         coadd_cut_r = butler.get("deepCoadd", parameters={'bbox':bbox}, dataId=coaddId_r)
         lens=sharp_image(lens_class=lens_class, band=band, mag_zero_point=27, delta_pix=delta_pix, 
                          num_pix=num_pix)
-        if flux == None:
+        if flux is None:
             gsobj = galsimobj_true_flux(lens, pix_scale=delta_pix)
         else:
             gsobj = galsim.InterpolatedImage(galsim.Image(lens), scale = delta_pix, flux = flux)
@@ -123,10 +122,6 @@ def lens_inejection(lens_pop, num_pix, delta_pix, butler, ra, dec, lens_cut=None
         center =(ra_degrees, dec_degrees)
 
         #image_r = butler.get("deepCoadd", parameters={'bbox':bbox_r}, dataId=coaddId_r)
-        mat = np.eye(3)
-        mat[:2,:2] = wcs_r.getCdMatrix()
-
-        transform = Affine2D(mat)
         arr_r = np.copy(coadd_cut_r.image.array)
 
         _add_fake_sources(coadd_cut_r, [(point_r, gsobj)])
@@ -167,7 +162,7 @@ def lens_inejection_fast(lens_pop, num_pix, delta_pix, butler, ra, dec, num_cuto
     band 
     """   
     
-    if lens_cut == None:
+    if lens_cut is None:
         kwargs_lens_cut = {}
     else:
         kwargs_lens_cut = lens_cut
@@ -175,7 +170,7 @@ def lens_inejection_fast(lens_pop, num_pix, delta_pix, butler, ra, dec, num_cuto
     rgb_band_list=['r', 'g', 'i']
     skymap = butler.get("skyMap")
     point = geom.SpherePoint(ra, dec, geom.degrees)
-    cutoutSize = geom.ExtentI(num_pix, num_pix)
+    #cutoutSize = geom.ExtentI(num_pix, num_pix)
     
     tractInfo = skymap.findTract(point)
     patchInfo = tractInfo.findPatch(point)
