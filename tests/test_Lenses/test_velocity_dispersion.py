@@ -1,7 +1,5 @@
 
 from sim_pipeline.Lenses.velocity_dispersion import schechter_vel_disp, schechter_vdf
-
-import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -16,7 +14,8 @@ def test_schechter_vdf():
     alpha = 2.32
     beta = 2.67
 
-    vel_disp_list = schechter_vdf(alpha, beta, vd_star, vd_min=50, vd_max=500, size=10000, resolution=100)
+    vel_disp_list = schechter_vdf(alpha, beta, vd_star, vd_min=50, vd_max=500, size=10000, 
+                                  resolution=100)
 
     #plt.hist(np.log10(vel_disp_list))
     #plt.show()
@@ -30,8 +29,8 @@ def test_schechter_vdf():
     cosmology = cosmo
     np.random.seed(42)
 
-    z_list, vel_disp_list = schechter_vel_disp(redshift, phi_star, alpha, beta, vd_star, vd_min, vd_max, sky_area,
-                                               cosmology, noise=True)
+    z_list, vel_disp_list = schechter_vel_disp(redshift, phi_star, alpha, beta, vd_star, vd_min,
+                                                vd_max, sky_area, cosmology, noise=True)
     assert len(z_list) == 373
 
     # plt.hist(np.log10(vel_disp_list))
