@@ -10,7 +10,9 @@ from sim_pipeline.Lenses.early_type_lens_galaxies import early_type_projected_ec
 
 
 class AllLensGalaxies(object):
-
+    """
+    class describing all-type galaxies
+    """
     def __init__(self, red_galaxy_list, blue_galaxy_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area):
         """
 
@@ -44,6 +46,10 @@ class AllLensGalaxies(object):
         # TODO: random reshuffle of matched list
 
     def deflector_number(self):
+        """
+
+        :return: number of deflector
+        """
         number = self._num_select
         return number
 

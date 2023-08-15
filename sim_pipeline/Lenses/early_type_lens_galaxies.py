@@ -58,6 +58,10 @@ class EarlyTypeLensGalaxies(object):
         # TODO: random reshuffle of matched list
 
     def deflector_number(self):
+        """
+
+        :return: number of deflector
+        """
         number = self._num_select
         return number
 
