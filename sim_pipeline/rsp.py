@@ -61,7 +61,7 @@ def lens_inejection(lens_pop, num_pix, delta_pix, butler, ra, dec, lens_cut=None
     :param flux: flux need to be asigned to the lens image. It sould be None
     :param: path: path to save the output
     :returns: An astropy table containing Injected lens in r-band, DC2 cutout image in r-band, 
-    cutout image with injected lens in r, g , and i band 
+     cutout image with injected lens in r, g , and i band 
     """   
     #lens = sim_lens
     if lens_cut is None:
@@ -156,9 +156,7 @@ def lens_inejection_fast(lens_pop, num_pix, delta_pix, butler, ra, dec, num_cuto
     :param flux: flux need to be asigned to the lens image. It sould be None
     :param: path: path to save the output
     :returns: An astropy table containing Injected lens in r-band, DC2 cutout image in r-band, 
-    cutout image with           
-    injected lens in r, g , and i 
-    band 
+     cutout image with injected lens in r, g , and i band 
     """   
     
     if lens_cut is None:
@@ -247,7 +245,7 @@ def multiple_lens_injection(lens_pop, num_pix, delta_pix, butler, ra, dec, lens_
     :param flux: flux need to be asigned to the lens image. It sould be None
     :param: path: path to save the output
     :returns: An astropy table containing Injected lenses in r-band, DC2 cutout images in r-band, 
-    cutout images with injected lens in r, g , and i band for a given set of ra and dec
+     cutout images with injected lens in r, g , and i band for a given set of ra and dec
     """
     injected_images=[]
     for i in range(len(ra)):
@@ -273,7 +271,7 @@ def multiple_lens_injection_fast(lens_pop, num_pix, delta_pix, butler, ra, dec,
     :param flux: flux need to be asigned to the lens image. It sould be None
     :param: path: path to save the output
     :returns: An astropy table containing Injected lenses in r-band, DC2 cutout images in r-band, 
-    cutout images with injected lens in r, g , and i band for a given set of ra and dec
+     cutout images with injected lens in r, g , and i band for a given set of ra and dec
     """
     injected_images=[]
     for i in range(len(ra)):
@@ -289,10 +287,10 @@ def add_object(dp0_image, objects, calibFluxRadius=12):
     
     :param dp0_image: cutout image from the dp0 data or any other image
     :param objects: a tuple of point/coordinate where we want to inject the image, source image, 
-    and pixel scale of source image. Eg. [(point, image, pixel_scale)]
+     and pixel scale of source image. Eg. [(point, image, pixel_scale)]
     :param calibFluxRadius: (optional) Aperture radius (in pixels) used to define the calibration 
-    for thisexposure+catalog. This is used to produce the correct instrumental fluxes within the 
-    radius.  The value should match that of the field defined in slot_CalibFlux_instFlux.
+     for thisexposure+catalog. This is used to produce the correct instrumental fluxes within the 
+     radius. The value should match that of the field defined in slot_CalibFlux_instFlux.
     :returns: an image with injected source
     """
     wcs = dp0_image.getWcs()
