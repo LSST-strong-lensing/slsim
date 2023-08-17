@@ -20,8 +20,8 @@ def vel_disp_sdss(sky_area, redshift, vd_min, vd_max, cosmology, noise=True):
         evaluated. Galaxies are sampled over this redshift range.
     vd_min, vd_max: float
         Lower and upper bounds of random variable x. Samples are drawn uniformly from bounds.
-    cosmology : Cosmology
-        Cosmology object to calculate comoving densities.
+    cosmology : `astropy.cosmology`
+        `astropy.cosmology` object to calculate comoving densities.
     noise : bool, optional
         Poisson-sample the number of galaxies. Default is `True`.
 
