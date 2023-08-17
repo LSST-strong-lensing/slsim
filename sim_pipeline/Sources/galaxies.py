@@ -7,7 +7,7 @@ from sim_pipeline.Sources.source_base import SourceBase
 
 class Galaxies(SourceBase):
     """
-    class describing elliptical galaxies
+    class describing early-type galaxies
     """
     def __init__(self, galaxy_list, kwargs_cut, cosmo, sky_area):
         """
