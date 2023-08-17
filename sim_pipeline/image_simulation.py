@@ -3,6 +3,7 @@ import galsim
 from astropy.visualization import make_lupton_rgb
 
 
+
 def simulate_image(lens_class, band, num_pix, add_noise=True, observatory='LSST', **kwargs):
     """
     Creates an image of a selected lens with noise.
