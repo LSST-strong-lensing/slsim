@@ -200,7 +200,7 @@ def schechter_vel_disp_redshift(redshift, phi_star, alpha, beta, vd_star, vd_min
                                            sky_area=sky_area, cosmology=cosmology, noise=noise)
 
 
-def schechter_vdf(alpha, beta, vd_star, vd_min, vd_max, size=None, resolution=1000):
+def schechter_velocity_distribution_function(alpha, beta, vd_star, vd_min, vd_max, size=None, resolution=1000):
     r"""Sample velocity dispersion of elliptical galaxies in the local universe
     following a Schecter function.
 
