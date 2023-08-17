@@ -95,6 +95,7 @@ def fill_table(galaxy_list):
 
 def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
     """
+    Provides velocity dispersion as a function of stellar mass.
 
     :param galaxy_list: list of galaxies with stellar masses given
     :type galaxy_list: ~astropy.Table object
