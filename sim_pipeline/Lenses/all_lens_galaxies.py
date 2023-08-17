@@ -18,7 +18,7 @@ class AllLensGalaxies(object):
 
         :param red_galaxy_list: list of dictionary with galaxy parameters of elliptical galaxies
          (currently supporting skypy pipelines)
-        :param blue_galaxy_list: list of dictionary with galaxy parameters of late-type galaxies
+        :param blue_galaxy_list: list of dictionary with galaxy parameters of spiral galaxies
          (currently supporting skypy pipelines)
         :param kwargs_cut: cuts in parameters
         :type kwargs_cut: dict
