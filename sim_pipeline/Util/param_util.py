@@ -3,8 +3,7 @@ import numpy as np
 
 def epsilon_to_e(epsilon):
     """
-
-    translates ellipticity definitions from
+    Translates ellipticity definitions from
 
     .. math::
         epsilon = \\equic \\frac{1 - q^2}{1 + q^2}
