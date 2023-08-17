@@ -25,7 +25,7 @@ class SourceBase(object):
 
     def draw_source(self):
         """
-        chose source at random
+        Choose source at random.
 
         :return: dictionary of source
         """
