@@ -15,7 +15,7 @@ def vel_disp_sdss(sky_area, redshift, vd_min, vd_max, cosmology, noise=True):
     ----------
     sky_area : `~astropy.units.Quantity`
         Sky area over which galaxies are sampled. Must be in units of solid angle.
-    redshift : array_like
+    redshift : `numpy.array`
         Input redshift grid on which the Schechter function parameters are
         evaluated. Galaxies are sampled over this redshift range.
     vd_min, vd_max: int
