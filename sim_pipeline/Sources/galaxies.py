@@ -66,7 +66,7 @@ class Galaxies(SourceBase):
 
 def galaxy_projected_eccentricity(ellipticity):
     """
-    projected eccentricity of early-type galaxies as a function of other deflector parameters
+    Projected eccentricity of elliptical galaxies as a function of other deflector parameters
 
     :param ellipticity: eccentricity amplitude
     :type ellipticity: float [0,1)
