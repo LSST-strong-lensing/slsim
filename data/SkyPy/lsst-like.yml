@@ -1,3 +1,4 @@
+# See the ReadMe file for parameter definitions
 mag_lim: 30
 fsky: 0.1 deg2
 z_range: !numpy.arange [0, 5.01, 0.1]

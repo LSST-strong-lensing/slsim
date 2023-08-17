@@ -23,6 +23,8 @@ class Galaxies(SourceBase):
         self.n = len(galaxy_list)
         # add missing keywords in astropy.Table object
         column_names = galaxy_list.colnames
+        if 'ellipticity' not in column_names:
+            raise ValueError('required parameters missing in galaxy_list columns')
         if 'e1' not in column_names or 'e2' not in column_names:
             galaxy_list['e1'] = -np.ones(self.n)
             galaxy_list['e2'] = -np.ones(self.n)
@@ -45,7 +47,7 @@ class Galaxies(SourceBase):
 
     def draw_source(self):
         """
-        chose source at random
+        Choose source at random.
 
         :return: dictionary of source
         """
@@ -64,7 +66,7 @@ class Galaxies(SourceBase):
 
 def galaxy_projected_eccentricity(ellipticity):
     """
-    projected eccentricity of early-type galaxies as a function of other deflector parameters
+    Projected eccentricity of early-type galaxies as a function of other deflector parameters
 
     :param ellipticity: eccentricity amplitude
     :type ellipticity: float [0,1)

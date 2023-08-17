@@ -4,7 +4,7 @@ from lenstronomy.SimulationAPI.ObservationConfig.Roman import Roman
 
 def kwargs_single_band(band, observatory='LSST', **kwargs):
     """
-    this is the function for returning the band information
+    This is the function for returning the band information.
 
     :param band: 'u', 'g', 'r', 'i', 'z' or 'y' supported. Determines imaging bands.
     :type band: str

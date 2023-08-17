@@ -6,17 +6,19 @@ class GGLensingPlots(object):
     """
     A class to create and display simulated gravitational lensing images using the provided configurations for the
     source (blue) and lens (red) galaxies.
-
-
     """
     def __init__(self, lens_pop, num_pix=64, observatory='LSST', **kwargs):
         """
 
-        :param lens_pop: lens population class, such as GGLensPop()
+        :param lens_pop: lens population class
+        :type lens_pop: `GGLensPop`
         :param num_pix: number of pixels for the simulated image, default is 64
+        :type num_pix: int
         :param observatory: observatory chosen
         :type observatory: str
-        :param kwargs: additional keyword arguments for the bands
+        :param kwargs: additional keyword arguments for the bands. Eg: coadd_years (=10): this is
+         the number of years corresponding to num_exposures in obs dict. Currently 
+         supported: 1-10.
         :type kwargs: dict
         """
         self._lens_pop = lens_pop

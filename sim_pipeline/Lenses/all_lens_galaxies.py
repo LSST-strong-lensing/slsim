@@ -16,9 +16,9 @@ class AllLensGalaxies(object):
     def __init__(self, red_galaxy_list, blue_galaxy_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area):
         """
 
-        :param red_galaxy_list: list of dictionary with galaxy parameters of early-type galaxies
+        :param red_galaxy_list: list of dictionary with galaxy parameters of elliptical galaxies
          (currently supporting skypy pipelines)
-        :param blue_galaxy_list: list of dictionary with galaxy parameters of late-type galaxies
+        :param blue_galaxy_list: list of dictionary with galaxy parameters of spiral galaxies
          (currently supporting skypy pipelines)
         :param kwargs_cut: cuts in parameters
         :type kwargs_cut: dict
@@ -112,13 +112,13 @@ def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
     redshift = np.arange(0, z_max+0.001, 0.1)
     z_list, vel_disp_list = vel_disp_sdss(sky_area, redshift, vd_min=50, vd_max=500, cosmology=cosmo, noise=True)
 
-    # sort for stellar masses in decreasing manner
+    # sort for stellar masses, largest values first
     galaxy_list_zmax.sort('stellar_mass')
     galaxy_list_zmax.reverse()
     # sort velocity dispersion, largest values first
     vel_disp_list = np.flip(np.sort(vel_disp_list))
     num_vel_disp = len(vel_disp_list)
-    # abundance match velocity dispersion with early-type galaxy catalogue
+    # abundance match velocity dispersion with elliptical galaxy catalogue
     if num_vel_disp >= num_select:
         galaxy_list_zmax['vel_disp'] = vel_disp_list[:num_select]
         # randomly select

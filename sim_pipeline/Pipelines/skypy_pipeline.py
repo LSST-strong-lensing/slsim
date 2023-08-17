@@ -5,9 +5,12 @@ import tempfile
 
 
 class SkyPyPipeline:
+    """
+    Class for skypy configuration.
+    """
     def __init__(self, skypy_config=None, sky_area=None, filters=None):
         """
-        :param skypy_config: path to SkyPy configuration yaml file
+        :param skypy_config: path to SkyPy configuration yaml file. If None, uses 'data/SkyPy/lsst-like.yml'.
         :type skypy_config: string or None
         :type sky_area: `~astropy.units.Quantity`
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid angle.

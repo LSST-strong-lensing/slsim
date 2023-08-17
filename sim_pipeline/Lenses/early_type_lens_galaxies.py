@@ -7,12 +7,12 @@ from sim_pipeline.Util import param_util
 
 class EarlyTypeLensGalaxies(object):
     """
-    class describing early-type galaxies
+    class describing elliptical galaxies
     """
     def __init__(self, galaxy_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area):
         """
 
-        :param galaxy_list: list of dictionary with galaxy parameters of early-type galaxies
+        :param galaxy_list: list of dictionary with galaxy parameters of elliptical galaxies
          (currently supporting skypy pipelines)
         :param kwargs_cut: cuts in parameters
         :type kwargs_cut: dict
@@ -78,7 +78,7 @@ class EarlyTypeLensGalaxies(object):
             vel_disp = vel_disp_from_m_star(stellar_mass)
             deflector['vel_disp'] = vel_disp
         if deflector['e1_light'] == -1 or deflector['e2_light'] == - 1:
-            e1_light, e2_light, e1_mass, e2_mass = early_type_projected_eccentricity(**deflector)
+            e1_light, e2_light, e1_mass, e2_mass = elliptical_projected_eccentricity(**deflector)
             deflector['e1_light'] = e1_light
             deflector['e2_light'] = e2_light
             deflector['e1_mass'] = e1_mass
@@ -88,9 +88,9 @@ class EarlyTypeLensGalaxies(object):
         return deflector
 
 
-def early_type_projected_eccentricity(ellipticity, **kwargs):
+def elliptical_projected_eccentricity(ellipticity, **kwargs):
     """
-    projected eccentricity of early-type galaxies as a function of other deflector parameters
+    projected eccentricity of elliptical galaxies as a function of other deflector parameters
 
     :param ellipticity: eccentricity amplitude
     :type ellipticity: float [0,1)
@@ -111,8 +111,8 @@ def early_type_projected_eccentricity(ellipticity, **kwargs):
 
 def vel_disp_from_m_star(m_star):
     """
-    function for calculate the velocity dispersion from the staller mass using empirical relation for
-    early type galaxies
+    Function to calculate the velocity dispersion from the staller mass using empirical relation for
+    elliptical galaxies
 
     The power-law formula is given by:
 

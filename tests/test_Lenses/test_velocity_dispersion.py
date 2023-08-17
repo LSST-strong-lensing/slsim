@@ -1,5 +1,5 @@
 
-from sim_pipeline.Lenses.velocity_dispersion import schechter_vel_disp, schechter_vdf
+from sim_pipeline.Lenses.velocity_dispersion import schechter_vel_disp, schechter_velocity_dispersion_function
 import numpy as np
 
 
@@ -14,7 +14,7 @@ def test_schechter_vdf():
     alpha = 2.32
     beta = 2.67
 
-    vel_disp_list = schechter_vdf(alpha, beta, vd_star, vd_min=50, vd_max=500, size=10000, 
+    vel_disp_list = schechter_velocity_dispersion_function(alpha, beta, vd_star, vd_min=50, vd_max=500, size=10000, 
                                   resolution=100)
 
     #plt.hist(np.log10(vel_disp_list))
