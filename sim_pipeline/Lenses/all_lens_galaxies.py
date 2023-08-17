@@ -117,7 +117,7 @@ def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
     # sort velocity dispersion, largest values first
     vel_disp_list = np.flip(np.sort(vel_disp_list))
     num_vel_disp = len(vel_disp_list)
-    # abundance match velocity dispersion with early-type galaxy catalogue
+    # abundance match velocity dispersion with elliptical galaxy catalogue
     if num_vel_disp >= num_select:
         galaxy_list_zmax['vel_disp'] = vel_disp_list[:num_select]
         # randomly select
