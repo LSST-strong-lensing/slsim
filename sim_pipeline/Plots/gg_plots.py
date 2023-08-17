@@ -14,6 +14,7 @@ class GGLensingPlots(object):
 
         :param lens_pop: lens population class, such as GGLensPop()
         :param num_pix: number of pixels for the simulated image, default is 64
+        :type num_pix: int
         :param observatory: observatory chosen
         :type observatory: str
         :param kwargs: additional keyword arguments for the bands
