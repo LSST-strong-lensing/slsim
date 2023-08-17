@@ -2,8 +2,7 @@
 
 class SourceBase(object):
     """
-    base class with functions all source classes must have to be able to render populations
-
+    Base class with functions all source classes must have to be able to render populations
     """
     def __init__(self, cosmo, sky_area):
         """
