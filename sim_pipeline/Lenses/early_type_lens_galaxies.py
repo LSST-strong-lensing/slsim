@@ -7,7 +7,7 @@ from sim_pipeline.Util import param_util
 
 class EarlyTypeLensGalaxies(object):
     """
-    class describing early-type galaxies
+    class describing elliptical galaxies
     """
     def __init__(self, galaxy_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area):
         """
