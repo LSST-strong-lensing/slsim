@@ -110,7 +110,8 @@ def schechter_vel_disp(redshift, phi_star, alpha, beta, vd_star, vd_min, vd_max,
     z = schechter_vel_disp_redshift(redshift, phi_star, alpha, beta, vd_star, vd_min, vd_max,
                                     sky_area, cosmology, noise)
     # sample galaxy mass for redshifts
-    vel_disp = schechter_velocity_distribution_function(alpha, beta, vd_star, vd_min=vd_min, vd_max=vd_max, size=len(z), resolution=100)
+    vel_disp = schechter_velocity_distribution_function(alpha, beta, vd_star, vd_min=vd_min,
+                                                        vd_max=vd_max, size=len(z), resolution=100)
     return z, vel_disp
 
 
