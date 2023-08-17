@@ -17,7 +17,7 @@ class SourceBase(object):
 
     def source_number(self):
         """
-        number of sources registered (within given area on the sky)
+        Number of sources registered (within given area on the sky)
 
         :return: number of sources
         """
