@@ -86,8 +86,8 @@ def schechter_vel_disp(redshift, phi_star, alpha, beta, vd_star, vd_min, vd_max,
         Lower and upper bounds of random variable x. Samples are drawn uniformly from bounds.
     sky_area : `~astropy.units.Quantity`
         Sky area over which galaxies are sampled. Must be in units of solid angle.
-    cosmology : Cosmology
-        Cosmology object to calculate comoving densities.
+    cosmology : `astropy.cosmology`
+        `astropy.cosmology` object to calculate comoving densities.
     noise : bool, optional
         Poisson-sample the number of galaxies. Default is `True`.
 
