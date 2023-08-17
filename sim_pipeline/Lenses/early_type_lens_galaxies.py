@@ -112,7 +112,7 @@ def elliptical_projected_eccentricity(ellipticity, **kwargs):
 def vel_disp_from_m_star(m_star):
     """
     Function to calculate the velocity dispersion from the staller mass using empirical relation for
-    early type galaxies
+    elliptical galaxies
 
     The power-law formula is given by:
 
