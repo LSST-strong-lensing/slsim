@@ -88,7 +88,7 @@ class EarlyTypeLensGalaxies(object):
         return deflector
 
 
-def early_type_projected_eccentricity(ellipticity, **kwargs):
+def elliptical_projected_eccentricity(ellipticity, **kwargs):
     """
     projected eccentricity of early-type galaxies as a function of other deflector parameters
 
