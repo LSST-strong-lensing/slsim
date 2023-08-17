@@ -2,8 +2,7 @@
 
 class SourceBase(object):
     """
-    base class with functions all source classes must have to be able to render populations
-
+    Base class with functions all source classes must have to be able to render populations
     """
     def __init__(self, cosmo, sky_area):
         """
@@ -18,7 +17,7 @@ class SourceBase(object):
 
     def source_number(self):
         """
-        number of sources registered (within given area on the sky)
+        Number of sources registered (within given area on the sky)
 
         :return: number of sources
         """
@@ -26,7 +25,7 @@ class SourceBase(object):
 
     def draw_source(self):
         """
-        chose source at random
+        Choose source at random.
 
         :return: dictionary of source
         """

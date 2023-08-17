@@ -3,14 +3,14 @@ import numpy as np
 
 class GaussianMixtureModel:
     """
-        A Gaussian Mixture Model (GMM) class.
-        This class is used to represent a mixture of Gaussian distributions,
-        each of which is defined by its mean, standard deviation and weight.
-        """
+    A Gaussian Mixture Model (GMM) class.
+    This class is used to represent a mixture of Gaussian distributions,
+    each of which is defined by its mean, standard deviation and weight.
+    """
     def __init__(self, means=None, stds=None, weights=None):
         """
-
-        The constructor for GaussianMixtureModel class.
+        The constructor for GaussianMixtureModel class. The default values are the means, standard deviations,
+        and weights of the fits to the data in the table 2 of https://doi.org/10.1093/mnras/stac2235 and others.
 
         :param means: the mean values of the Gaussian components.
         :type means: list of float
@@ -18,9 +18,6 @@ class GaussianMixtureModel:
         :type stds: list of float
         :param weights: The weights of the Gaussian components in the mixture.
         :type weights: list of float
-
-        the default values are the means, standard deviations, and weights of the fits to the data in the table 2 of
-        https://doi.org/10.1093/mnras/stac2235 and others.
         """
         if means is None:
             means = [0.00330796, -0.07635054, 0.11829008]
