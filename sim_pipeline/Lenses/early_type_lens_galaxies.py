@@ -90,7 +90,7 @@ class EarlyTypeLensGalaxies(object):
 
 def elliptical_projected_eccentricity(ellipticity, **kwargs):
     """
-    projected eccentricity of early-type galaxies as a function of other deflector parameters
+    projected eccentricity of elliptical galaxies as a function of other deflector parameters
 
     :param ellipticity: eccentricity amplitude
     :type ellipticity: float [0,1)
