@@ -5,6 +5,9 @@ import tempfile
 
 
 class SkyPyPipeline:
+    """
+    Class for skypy configuration.
+    """
     def __init__(self, skypy_config=None, sky_area=None, filters=None):
         """
         :param skypy_config: path to SkyPy configuration yaml file
