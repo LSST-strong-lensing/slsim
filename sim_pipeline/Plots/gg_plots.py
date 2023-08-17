@@ -10,7 +10,8 @@ class GGLensingPlots(object):
     def __init__(self, lens_pop, num_pix=64, observatory='LSST', **kwargs):
         """
 
-        :param lens_pop: lens population class, such as GGLensPop()
+        :param lens_pop: lens population class
+        :type lens_pop: `GGLensPop`
         :param num_pix: number of pixels for the simulated image, default is 64
         :type num_pix: int
         :param observatory: observatory chosen
