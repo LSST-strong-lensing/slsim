@@ -6,8 +6,6 @@ class GGLensingPlots(object):
     """
     A class to create and display simulated gravitational lensing images using the provided configurations for the
     source (blue) and lens (red) galaxies.
-
-
     """
     def __init__(self, lens_pop, num_pix=64, observatory='LSST', **kwargs):
         """
