@@ -3,10 +3,10 @@ import numpy as np
 
 class GaussianMixtureModel:
     """
-        A Gaussian Mixture Model (GMM) class.
-        This class is used to represent a mixture of Gaussian distributions,
-        each of which is defined by its mean, standard deviation and weight.
-        """
+    A Gaussian Mixture Model (GMM) class.
+    This class is used to represent a mixture of Gaussian distributions,
+    each of which is defined by its mean, standard deviation and weight.
+    """
     def __init__(self, means=None, stds=None, weights=None):
         """
 
