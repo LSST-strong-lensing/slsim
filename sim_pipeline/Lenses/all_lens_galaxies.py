@@ -16,7 +16,7 @@ class AllLensGalaxies(object):
     def __init__(self, red_galaxy_list, blue_galaxy_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area):
         """
 
-        :param red_galaxy_list: list of dictionary with galaxy parameters of early-type galaxies
+        :param red_galaxy_list: list of dictionary with galaxy parameters of elliptical galaxies
          (currently supporting skypy pipelines)
         :param blue_galaxy_list: list of dictionary with galaxy parameters of late-type galaxies
          (currently supporting skypy pipelines)
