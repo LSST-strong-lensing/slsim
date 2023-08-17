@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def epsilon2e(epsilon):
+def epsilon_to_e(epsilon):
     """
 
     translates ellipticity definitions from
