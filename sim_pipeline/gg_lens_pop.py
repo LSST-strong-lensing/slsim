@@ -9,7 +9,7 @@ class GGLensPop(object):
     class to perform samples of galaxy-galaxy lensing
     """
 
-    def __init__(self, lens_type='early-type', source_type='galaxies', kwargs_deflector_cut=None,
+    def __init__(self, lens_type='elliptical', source_type='galaxies', kwargs_deflector_cut=None,
                  kwargs_source_cut=None, kwargs_mass2light=None, skypy_config=None, sky_area=None, filters=None,
                  cosmo=None):
         """
@@ -33,7 +33,7 @@ class GGLensPop(object):
             from astropy.units import Quantity
             sky_area = Quantity(value=0.1, unit='deg2')
             warnings.warn("No sky area provided, instead uses 0.1 deg2")
-        if lens_type in ['early-type', 'all-galaxies'] or source_type in ['galaxies']:
+        if lens_type in ['elliptical', 'all-galaxies'] or source_type in ['galaxies']:
             pipeline = SkyPyPipeline(skypy_config=skypy_config, sky_area=sky_area, filters=filters)
         if kwargs_deflector_cut is None:
             kwargs_deflector_cut = {}
