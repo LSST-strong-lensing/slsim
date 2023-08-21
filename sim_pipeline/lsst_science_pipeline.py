@@ -8,6 +8,10 @@ from astropy.table import Table, vstack
 from sim_pipeline.image_simulation import sharp_image
 from scipy.signal import convolve2d
 
+"""
+This module provides necessary functions to inject lenses to the dp0 data. For this, it uses some of
+the packages provided by the LSST Science Pipeline.
+"""
 
 def DC2_cutout(ra, dec, num_pix, butler, band):
     """
