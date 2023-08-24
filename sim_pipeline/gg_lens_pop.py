@@ -124,8 +124,8 @@ class GGLensPop(object):
         """
         if num_sources_tested_mean is None:
             num_sources_tested_mean = self.get_num_sources_tested_mean(testarea)
-        num_sources_tested = np.random.poisson(lam=num_sources_tested_mean)
-        return num_sources_tested
+        num_sources_range = np.random.poisson(lam=num_sources_tested_mean)
+        return num_sources_range
 
     def draw_population(self, kwargs_lens_cuts):
         """
@@ -153,18 +153,18 @@ class GGLensPop(object):
         for _ in range(num_lenses):
             lens = self._lens_galaxies.draw_deflector()
             test_area = draw_test_area(deflector=lens)
-            num_sources_range = self.get_num_sources_tested(testarea=test_area)
+            num_sources_tested = self.get_num_sources_tested(testarea=test_area)
             # TODO: to implement this for a multi-source plane lens system
-            if num_sources_range > 0:
+            if num_sources_tested > 0:
                 n = 0
-                while n < num_sources_range:
+                while n < num_sources_tested:
                     source = self._sources.draw_source()
                     gg_lens = GGLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo, test_area=test_area,
                                      source_type=self._source_model_type)
                     # Check the validity of the lens system
                     if gg_lens.validity_test(**kwargs_lens_cuts):
                         gg_lens_population.append(gg_lens)
-                        n = num_sources_range
+                        n = num_sources_tested
                     else:
                         n += 1
         return gg_lens_population
