@@ -164,6 +164,8 @@ class GGLensPop(object):
                     # Check the validity of the lens system
                     if gg_lens.validity_test(**kwargs_lens_cuts):
                         gg_lens_population.append(gg_lens)
+                        # if a lens system passes the validity test, code exit the validity test.
+                        #so, n should be greater or equal to num_sources_tested
                         n = num_sources_tested
                     else:
                         n += 1
