@@ -124,8 +124,8 @@ class GGLensPop(object):
         """
         if num_sources_tested_mean is None:
             num_sources_tested_mean = self.get_num_sources_tested_mean(testarea)
-        num_sources_range = np.random.poisson(lam=num_sources_tested_mean)
-        return num_sources_range
+        num_sources_tested = np.random.poisson(lam=num_sources_tested_mean)
+        return num_sources_tested
 
     def draw_population(self, kwargs_lens_cuts):
         """
