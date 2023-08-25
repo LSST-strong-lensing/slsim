@@ -85,7 +85,7 @@ class GGLens(object):
 
     def image_positions(self):
         """
-        returns image positions by solving the lens equation, these are either the centers of the extended source, or
+        Return image positions by solving the lens equation. These are either the centers of the extended source, or
         the point sources in case of (added) point-like sources, such as quasars or SNe.
 
         :return: x-pos, y-pos
