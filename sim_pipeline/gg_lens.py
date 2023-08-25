@@ -15,7 +15,7 @@ class GGLens(object):
 
     def __init__(self, source_dict, deflector_dict, cosmo,
                  source_type='extended',
-                 test_area=4 * np.pi,
+                 test_area=4*np.pi,
                  mixgauss_means=None, mixgauss_stds=None, mixgauss_weights=None):
         """
 
