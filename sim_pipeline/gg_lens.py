@@ -143,9 +143,7 @@ class GGLens(object):
         # Criteria 5: The maximum separation between any two image positions must be greater than or equal to the
         # minimum image separation and less than or equal to the maximum image separation.
         image_separation = image_separation_from_positions(image_positions)
-        if image_separation < min_image_separation:
-            return False
-        if image_separation > max_image_separation:
+        if not min_image_separation <= image_separation <= max_image_separation:
             return False
 
         # Criteria 6: (optional)
