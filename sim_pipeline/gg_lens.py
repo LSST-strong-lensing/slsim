@@ -125,7 +125,7 @@ class GGLens(object):
         # Criteria 2: The angular Einstein radius of the lensing configuration (theta_E) times 2 must be greater than
         # or equal to the minimum image separation (min_image_separation) and less than or equal to the maximum image
         # separation (max_image_separation).
-        if self._theta_E_sis * 2 < min_image_separation or self._theta_E_sis * 2 > max_image_separation:
+        if not min_image_separation <= 2 * self._theta_E_sis <= max_image_separation:
             return False
 
         # Criteria 3: The distance between the lens center and the source position must be less than or equal to the
