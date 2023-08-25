@@ -64,8 +64,8 @@ class GGLens(object):
     @property
     def source_position(self):
         """
-        source position, either the center of the extended source or the point source. If not present from the cataloge,
-        it is drawn uniform within the circle of the test area centered on the lens
+        source position, either the center of the extended source or the point source. If not present from the catalog,
+        it is drawn uniformly within the circle of the test area centered on the lens
 
         :return: [x_pos, y_pos]
         """
