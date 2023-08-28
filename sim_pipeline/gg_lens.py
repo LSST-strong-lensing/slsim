@@ -15,7 +15,7 @@ class GGLens(object):
 
     def __init__(self, source_dict, deflector_dict, cosmo,
                  source_type='extended',
-                 test_area=4 * np.pi,
+                 test_area=4*np.pi,
                  mixgauss_means=None, mixgauss_stds=None, mixgauss_weights=None):
         """
 
@@ -64,8 +64,8 @@ class GGLens(object):
     @property
     def source_position(self):
         """
-        source position, either the center of the extended source or the point source. If not present from the cataloge,
-        it is drawn uniform within the circle of the test area centered on the lens
+        source position, either the center of the extended source or the point source. If not present from the catalog,
+        it is drawn uniformly within the circle of the test area centered on the lens
 
         :return: [x_pos, y_pos]
         """
@@ -85,7 +85,7 @@ class GGLens(object):
 
     def image_positions(self):
         """
-        returns image positions by solving the lens equation, these are either the centers of the extended source, or
+        Return image positions by solving the lens equation. These are either the centers of the extended source, or
         the point sources in case of (added) point-like sources, such as quasars or SNe.
 
         :return: x-pos, y-pos
@@ -125,7 +125,7 @@ class GGLens(object):
         # Criteria 2: The angular Einstein radius of the lensing configuration (theta_E) times 2 must be greater than
         # or equal to the minimum image separation (min_image_separation) and less than or equal to the maximum image
         # separation (max_image_separation).
-        if self._theta_E_sis * 2 < min_image_separation or self._theta_E_sis * 2 > max_image_separation:
+        if not min_image_separation <= 2 * self._theta_E_sis <= max_image_separation:
             return False
 
         # Criteria 3: The distance between the lens center and the source position must be less than or equal to the
@@ -143,9 +143,7 @@ class GGLens(object):
         # Criteria 5: The maximum separation between any two image positions must be greater than or equal to the
         # minimum image separation and less than or equal to the maximum image separation.
         image_separation = image_separation_from_positions(image_positions)
-        if image_separation < min_image_separation:
-            return False
-        if image_separation > max_image_separation:
+        if not min_image_separation <= image_separation <= max_image_separation:
             return False
 
         # Criteria 6: (optional)
