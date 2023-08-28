@@ -6,3 +6,4 @@ scipy
 speclite
 pyyaml
 matplotlib
+tqdm

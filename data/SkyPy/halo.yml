@@ -1,5 +1,9 @@
 fsky: 0.0001 deg2
-z_range: !numpy.linspace [0, 5.00, 1000]
+z_max: 5.00
+z_range: !numpy.linspace
+  start: 0
+  stop: $z_max
+  num: 1000
 cosmology: !astropy.cosmology.default_cosmology.get []
 wavenumber: !numpy.logspace [-3, 1, 1000]
 power_spectrum: !sim_pipeline.Skypy_halos_duplicate.power_spectrum.eisenstein_hu
@@ -32,3 +36,13 @@ tables:
     power_spectrum: $power_spectrum
     collapse_function: $collapse_function
     params: [0.3, 0.7, 0.3, 1.686]
+  first_moment: !sim_pipeline.Halos.halos.mass_first_moment_at_redshift
+    z: $halos.z
+    cosmology: $cosmology
+    m_min: 1.0E+12
+    m_max: 1.0E+16
+    resolution: 1000
+    wavenumber: $wavenumber
+    power_spectrum: $power_spectrum
+    collapse_function: $collapse_function
+    params: [ 0.3, 0.7, 0.3, 1.686 ]

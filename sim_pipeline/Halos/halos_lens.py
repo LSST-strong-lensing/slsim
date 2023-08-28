@@ -5,6 +5,20 @@ import warnings
 from tqdm.notebook import tqdm
 import time
 import multiprocessing
+from lenstronomy.Util import constants
+
+
+def deg2_to_cone_angle(solid_angle_deg2):
+    # Compute the cone angle in radians
+    theta = np.arccos(1 - solid_angle_deg2 * np.pi / 648000)  # rad
+    return theta
+
+
+def cone_radius_angle_to_sky_area(radius_rad, z, cosmo):
+    comoving_radius = cosmo.comoving_transverse_distance(z) * radius_rad
+    area_comoving = np.pi * comoving_radius ** 2
+
+    return area_comoving
 
 
 def concentration_from_mass(z, mass, A=75.4, d=-0.422, m=-0.089):
@@ -34,7 +48,7 @@ def concentration_from_mass(z, mass, A=75.4, d=-0.422, m=-0.089):
     -----
     The function implements the following formula:
 
-    .. math::
+    . math::
         C_{200c} = A(1+z)^d M^m;
 
     Here, A=75.4, d=-0.422, and m=-0.089 by default. The concentration parameter cannot be less than 1,
@@ -42,7 +56,7 @@ def concentration_from_mass(z, mass, A=75.4, d=-0.422, m=-0.089):
 
     References
     ----------
-    .. [1] Childs et al. 2018, arXiv:1804.10199, doi:10.3847/1538-4357/aabf95
+    . [1] Childs et al. 2018, arXiv:1804.10199, doi:10.3847/1538-4357/aabf95
     """
     c_200 = A * ((1 + z) ** d) * (mass ** m)
     c_200 = np.maximum(c_200, 1)
@@ -59,7 +73,6 @@ class HalosLens(object):
     Parameters
     ----------
     halos_list : table
-        Table of Halos with columns ['z'] and ['mass'] for which lensing properties will be computed.
     cosmo : astropy.cosmology instance, optional
         Cosmology used for lensing computations. If not provided, default astropy cosmology is used.
     sky_area : float, optional
@@ -105,29 +118,64 @@ class HalosLens(object):
     """
 
     # TODO: ADD test functions
-    def __init__(self, halos_list, cosmo=None, sky_area=4 * np.pi, samples_number=1000):
+    def __init__(self, halos_list, cosmo=None, sky_area=4 * np.pi, samples_number=1000, mass_sheet=True):
         self.halos_list = halos_list
+        self.mass_sheet = mass_sheet
         self.n_halos = len(self.halos_list)
         self.sky_area = sky_area
         self.redshift_list = halos_list['z']
         self.mass_list = halos_list['mass']
+        self.first_moment = halos_list['first_moment']
         self.samples_number = samples_number
         self._z_source_convention = 10
         if cosmo is None:
             warnings.warn("No cosmology provided, instead uses astropy.cosmology import default_cosmology")
             import astropy.cosmology as default_cosmology
-            self.cosmo = default_cosmology.get()
+            self.cosmo = default_cosmology
         else:
             self.cosmo = cosmo
 
-        self.lens_model = LensModel(lens_model_list=['NFW'] * self.n_halos,
-                                    lens_redshift_list=self.redshift_list,
-                                    cosmo=self.cosmo,
-                                    observed_convention_index=[],
-                                    multi_plane=True,
-                                    z_source=5, z_source_convention=self._z_source_convention)
+        self.lens_cosmo = [LensCosmo(z_lens=self.redshift_list[h % self.n_halos],
+                                     z_source=self._z_source_convention, cosmo=self.cosmo) for h in
+                           range(2 * self.n_halos)]
 
+        self.lens_model = self.get_lens_model()
         # TODO: Set z_source as an input parameter or other way
+
+    def get_lens_model(self):
+        if self.mass_sheet:
+            lens_redshift_list = []
+            for _ in range(2):
+                for z in self.redshift_list:
+                    lens_redshift_list.append(z)
+            lens_model = LensModel(lens_model_list=['NFW'] * self.n_halos + ['CONVERGENCE'] * self.n_halos,
+                                   lens_redshift_list= lens_redshift_list,
+                                   cosmo=self.cosmo,
+                                   observed_convention_index=[],
+                                   multi_plane=True,
+                                   z_source=5, z_source_convention=self._z_source_convention)
+        else:
+            lens_model = LensModel(lens_model_list=['NFW'] * self.n_halos,
+                                   lens_redshift_list=self.redshift_list,
+                                   cosmo=self.cosmo,
+                                   observed_convention_index=[],
+                                   multi_plane=True,
+                                   z_source=5, z_source_convention=self._z_source_convention)
+        return lens_model
+
+    def kappa_ext_for_each_sheet(self):
+        cone_opening_angle = deg2_to_cone_angle(self.sky_area)
+        # TODO: make it possible for other geometry model
+        epsilon_crit = [0] * self.n_halos
+        ra_0 = [0] * self.n_halos
+        dec_0 = [0] * self.n_halos
+        for h in range(self.n_halos):
+            epsilon_crit[h] = self.lens_cosmo[h].sigma_crit
+
+        area = cone_radius_angle_to_sky_area(cone_opening_angle / 2, self.redshift_list, self.cosmo)  # mpc2
+        sigma_crit_mass = (area * epsilon_crit).value
+        kappa_ext = np.divide(np.squeeze(np.array(self.first_moment)), sigma_crit_mass)
+        return -kappa_ext, ra_0, dec_0
 
     def random_position(self):
         """
@@ -161,11 +209,9 @@ class HalosLens(object):
         Rs_angle = []
         alpha_Rs = []
         c_200 = concentration_from_mass(z=self.redshift_list, mass=self.mass_list)
-        lens_cosmo = [LensCosmo(z_lens=self.redshift_list[h],
-                                z_source=self._z_source_convention, cosmo=self.cosmo) for h in range(n_halos)]
         for h in range(n_halos):
-            Rs_angle_h, alpha_Rs_h = lens_cosmo[h].nfw_physical2angle(M=self.mass_list[h],
-                                                                      c=c_200[h])
+            Rs_angle_h, alpha_Rs_h = self.lens_cosmo[h].nfw_physical2angle(M=self.mass_list[h],
+                                                                           c=c_200[h])
             Rs_angle.extend(Rs_angle_h)
             alpha_Rs.extend(alpha_Rs_h)
         # TODO: Check if I need to add mulit-processing when n_halos is large (Probably not)
@@ -181,13 +227,23 @@ class HalosLens(object):
         Returns
         -------
         kwargs_halos : list of dicts
-            The list of dictionaries containing the keyword arguments for each halo.
+            The list of dictionaries containing the keyword arguments for each halo.!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         """
-        Rs_angle, alpha_Rs, px, py = self.get_nfw_kwargs()
+        if self.mass_sheet:
+            Rs_angle, alpha_Rs, px, py = self.get_nfw_kwargs()
+            kappa, ra_0, dec_0 = self.kappa_ext_for_each_sheet()
 
-        kwargs_halos = [{'Rs': Rs_angle[h], 'alpha_Rs': alpha_Rs[h], 'center_x': px[h], 'center_y': py[h]}
-                        for h in range(self.n_halos)]
-        return kwargs_halos
+            kwargs_lens = [{'Rs': Rs_angle[h], 'alpha_Rs': alpha_Rs[h], 'center_x': px[h], 'center_y': py[h]}
+                           for h in range(self.n_halos)] + \
+                          [{'kappa': kappa[h], 'ra_0': ra_0[h], 'dec_0': dec_0[h]} for h in range(self.n_halos)]
+
+        else:
+            Rs_angle, alpha_Rs, px, py = self.get_nfw_kwargs()
+
+            kwargs_lens = [{'Rs': Rs_angle[h], 'alpha_Rs': alpha_Rs[h], 'center_x': px[h], 'center_y': py[h]}
+                           for h in range(self.n_halos)]
+
+        return kwargs_lens
 
     def get_convergence_shear(self, gamma12=False, diff=1.0, diff_method='square'):
         """

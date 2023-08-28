@@ -212,6 +212,8 @@ def redshift_halos_array_from_comoving_density(redshift_list, sky_area, cosmolog
     N = np.trapz(dN_dz, redshift_list)
     N = int(N)
     N = np.random.poisson(N)
+    if N < 1:
+        N = 1
 
     # cumulative trapezoidal rule to get redshift CDF
     cdf = dN_dz  # reuse memory
@@ -272,3 +274,32 @@ def halo_mass_at_z(z, m_min=None, m_max=None, resolution=None, wavenumber=None, 
                                       cosmology=cosmology, collapse_function=collapse_function, size=1))
 
     return mass
+
+
+def mass_first_moment_at_redshift(z, m_min=None, m_max=None, resolution=None, wavenumber=None, power_spectrum=None,
+                                  cosmology=None, collapse_function=None, params=None):
+    # define default parameters
+    m_min, m_max, wavenumber, resolution, power_spectrum, cosmology, collapse_function, params = set_defaults(
+        m_min, m_max, wavenumber, resolution, power_spectrum, cosmology, collapse_function, params)
+
+    m = np.logspace(np.log10(m_min), np.log10(m_max), resolution)
+    expectation_m_result = []
+
+    for h in range(len(z)):
+        gf = GrowthFactor(cosmo=cosmology)
+        growth_function = gf.growth_factor(z[h])
+
+        massf = halo_mass_function(
+            M=m,
+            wavenumber=wavenumber,
+            power_spectrum=power_spectrum,
+            growth_function=growth_function,
+            cosmology=cosmology,
+            collapse_function=collapse_function,
+            params=params
+        )
+        expectation_M = integrate.cumtrapz(m * massf, m, initial=0)
+
+        expectation_m_result.append(expectation_M[-1])
+
+    return expectation_m_result
