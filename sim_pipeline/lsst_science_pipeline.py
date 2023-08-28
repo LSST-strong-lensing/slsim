@@ -29,8 +29,8 @@ def DC2_cutout(ra, dec, num_pix, butler, band):
     """
     skymap = butler.get("skyMap")
     point = geom.SpherePoint(ra, dec, geom.degrees)
-    cutoutSize = geom.ExtentI(num_pix, num_pix)
-    #print(cutoutSize)
+    cutout_size = geom.ExtentI(num_pix, num_pix)
+    #print(cutout_size)
 
 
     #Read this from the table we have at hand... 
@@ -39,7 +39,7 @@ def DC2_cutout(ra, dec, num_pix, butler, band):
     my_tract = tractInfo.tract_id
     my_patch = patchInfo.getSequentialIndex()
     xy = geom.PointI(tractInfo.getWcs().skyToPixel(point))
-    bbox = geom.BoxI(xy - cutoutSize//2, cutoutSize)
+    bbox = geom.BoxI(xy - cutout_size//2, cutout_size)
     coaddId_r = {
         'tract':my_tract, 
         'patch':my_patch,
@@ -77,14 +77,14 @@ def lens_inejection(lens_pop, num_pix, delta_pix, butler, ra, dec, lens_cut=None
     lens_class = lens_pop.select_lens_at_random(**kwargs_lens_cut)
     skymap = butler.get("skyMap")
     point = geom.SpherePoint(ra, dec, geom.degrees)
-    cutoutSize = geom.ExtentI(num_pix, num_pix)
+    cutout_size = geom.ExtentI(num_pix, num_pix)
     #Read this from the table we have at hand 
     tractInfo = skymap.findTract(point)
     patchInfo = tractInfo.findPatch(point)
     my_tract = tractInfo.tract_id
     my_patch = patchInfo.getSequentialIndex()
     xy = geom.PointI(tractInfo.getWcs().skyToPixel(point))
-    bbox = geom.BoxI(xy - cutoutSize//2, cutoutSize)
+    bbox = geom.BoxI(xy - cutout_size//2, cutout_size)
     injected_final_image = []
     #band_report = []
     box_center = []
@@ -171,7 +171,7 @@ def lens_inejection_fast(lens_pop, num_pix, delta_pix, butler, ra, dec, num_cuto
     rgb_band_list=['r', 'g', 'i']
     skymap = butler.get("skyMap")
     point = geom.SpherePoint(ra, dec, geom.degrees)
-    #cutoutSize = geom.ExtentI(num_pix, num_pix)
+    #cutout_size = geom.ExtentI(num_pix, num_pix)
     
     tractInfo = skymap.findTract(point)
     patchInfo = tractInfo.findPatch(point)
@@ -310,7 +310,7 @@ def add_object(dp0_image, objects, calibFluxRadius=12):
                              f'lens pixel number = {num_pix_lens} and dp0 image pixel number =' 
                              f'{num_pix_cutout}')
         if abs(pixscale - pix_scale) >= 10**-4:
-            raise ValueError('Images with different pixel scale should be combined. Please make' 
+            raise ValueError('Images with different pixel scale should not be combined. Please make' 
                              'sure that your lens image and dp0 cutout image have compatible pixel' 
                              'scale.')
         else:
