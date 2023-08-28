@@ -9,13 +9,13 @@ class GGLensPop(object):
     class to perform samples of galaxy-galaxy lensing
     """
 
-    def __init__(self, lens_type='elliptical', source_type='galaxies', kwargs_deflector_cut=None,
+    def __init__(self, deflector_type='elliptical', source_type='galaxies', kwargs_deflector_cut=None,
                  kwargs_source_cut=None, kwargs_mass2light=None, skypy_config=None, sky_area=None, filters=None,
                  cosmo=None):
         """
 
-        :param lens_type: type of the lens
-        :type lens_type: string
+        :param deflector_type: type of the lens
+        :type deflector_type: string
         :param source_type: type of the source
         :type source_type: string
         :param kwargs_deflector_cut: cuts on the deflector to be excluded in the sample
@@ -33,7 +33,7 @@ class GGLensPop(object):
             from astropy.units import Quantity
             sky_area = Quantity(value=0.1, unit='deg2')
             warnings.warn("No sky area provided, instead uses 0.1 deg2")
-        if lens_type in ['elliptical', 'all-galaxies'] or source_type in ['galaxies']:
+        if deflector_type in ['elliptical', 'all-galaxies'] or source_type in ['galaxies']:
             pipeline = SkyPyPipeline(skypy_config=skypy_config, sky_area=sky_area, filters=filters)
         if kwargs_deflector_cut is None:
             kwargs_deflector_cut = {}
@@ -43,18 +43,18 @@ class GGLensPop(object):
             warnings.warn("No cosmology provided, instead uses flat LCDM with default parameters")
             from astropy.cosmology import FlatLambdaCDM
             cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-        if lens_type == 'elliptical':
+        if deflector_type == 'elliptical':
             from sim_pipeline.Deflectors.elliptical_lens_galaxies import EllipticalLensGalaxies
             self._lens_galaxies = EllipticalLensGalaxies(pipeline.red_galaxies, kwargs_cut=kwargs_deflector_cut,
                                                         kwargs_mass2light=kwargs_mass2light, cosmo=cosmo,
                                                         sky_area=sky_area)
-        elif lens_type == 'all-galaxies':
+        elif deflector_type == 'all-galaxies':
             from sim_pipeline.Deflectors.all_lens_galaxies import AllLensGalaxies
             self._lens_galaxies = AllLensGalaxies(pipeline.red_galaxies, pipeline.blue_galaxies,
                                                   kwargs_cut=kwargs_deflector_cut, kwargs_mass2light=kwargs_mass2light,
                                                   cosmo=cosmo, sky_area=sky_area)
         else:
-            raise ValueError('lens_type %s is not supported' % lens_type)
+            raise ValueError('deflector_type %s is not supported' % deflector_type)
 
         if kwargs_source_cut is None:
             kwargs_source_cut = {}
