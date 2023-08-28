@@ -44,12 +44,12 @@ class GGLensPop(object):
             from astropy.cosmology import FlatLambdaCDM
             cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         if lens_type == 'elliptical':
-            from sim_pipeline.Lenses.elliptical_lens_galaxies import EllipticalLensGalaxies
+            from sim_pipeline.Deflectors.elliptical_lens_galaxies import EllipticalLensGalaxies
             self._lens_galaxies = EllipticalLensGalaxies(pipeline.red_galaxies, kwargs_cut=kwargs_deflector_cut,
                                                         kwargs_mass2light=kwargs_mass2light, cosmo=cosmo,
                                                         sky_area=sky_area)
         elif lens_type == 'all-galaxies':
-            from sim_pipeline.Lenses.all_lens_galaxies import AllLensGalaxies
+            from sim_pipeline.Deflectors.all_lens_galaxies import AllLensGalaxies
             self._lens_galaxies = AllLensGalaxies(pipeline.red_galaxies, pipeline.blue_galaxies,
                                                   kwargs_cut=kwargs_deflector_cut, kwargs_mass2light=kwargs_mass2light,
                                                   cosmo=cosmo, sky_area=sky_area)
