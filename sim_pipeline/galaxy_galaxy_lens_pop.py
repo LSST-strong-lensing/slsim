@@ -181,5 +181,5 @@ def draw_test_area(deflector):
     :return: test area in arcsec^2
     """
     theta_e_infinity = theta_e_when_source_infinity(deflector)
-    test_area = np.pi * (theta_e_infinity * 1.3) ** 2
+    test_area = np.pi * (theta_e_infinity * 2.5) ** 2
     return test_area
