@@ -1,5 +1,5 @@
 from sim_pipeline.Pipelines.skypy_pipeline import SkyPyPipeline
-from sim_pipeline.gg_lens import GalaxyGalaxyLens, theta_e_when_source_infinity
+from sim_pipeline.galaxy_galaxy_lens import GalaxyGalaxyLens, theta_e_when_source_infinity
 import numpy as np
 import warnings
 

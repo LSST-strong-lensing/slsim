@@ -1,5 +1,5 @@
 import pytest
-from sim_pipeline.gg_lens_pop import GalaxyGalaxyLensPop, draw_test_area
+from sim_pipeline.galaxy_galaxy_lens_pop import GalaxyGalaxyLensPop, draw_test_area
 import numpy as np
 
 
