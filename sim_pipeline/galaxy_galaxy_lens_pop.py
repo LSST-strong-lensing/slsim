@@ -159,8 +159,8 @@ class GalaxyGalaxyLensPop(object):
                 n = 0
                 while n < num_sources_tested:
                     source = self._sources.draw_source()
-                    gg_lens = GalaxyGalaxyLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo, test_area=test_area,
-                                     source_type=self._source_model_type)
+                    gg_lens = GalaxyGalaxyLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo,
+                                               test_area=test_area, source_type=self._source_model_type)
                     # Check the validity of the lens system
                     if gg_lens.validity_test(**kwargs_lens_cuts):
                         gg_lens_population.append(gg_lens)
