@@ -5,8 +5,8 @@ from scipy import interpolate
 import numpy.random as random
 from astropy.table import vstack
 from sim_pipeline.selection import galaxy_cut
-from sim_pipeline.Lenses.velocity_dispersion import vel_disp_sdss
-from sim_pipeline.Lenses.early_type_lens_galaxies import early_type_projected_eccentricity
+from sim_pipeline.Deflectors.velocity_dispersion import vel_disp_sdss
+from sim_pipeline.Deflectors.elliptical_lens_galaxies import elliptical_projected_eccentricity
 
 
 class AllLensGalaxies(object):
@@ -62,7 +62,7 @@ class AllLensGalaxies(object):
         index = random.randint(0, self._num_select - 1)
         deflector = self._galaxy_select[index]
         if deflector['e1_light'] == -1 or deflector['e2_light'] == - 1:
-            e1_light, e2_light, e1_mass, e2_mass = early_type_projected_eccentricity(**deflector)
+            e1_light, e2_light, e1_mass, e2_mass = elliptical_projected_eccentricity(**deflector)
             deflector['e1_light'] = e1_light
             deflector['e2_light'] = e2_light
             deflector['e1_mass'] = e1_mass
@@ -95,6 +95,7 @@ def fill_table(galaxy_list):
 
 def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
     """
+    function for calculate the velocity dispersion from the staller mass
 
     :param galaxy_list: list of galaxies with stellar masses given
     :type galaxy_list: ~astropy.Table object

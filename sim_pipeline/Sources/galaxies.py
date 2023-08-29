@@ -7,7 +7,7 @@ from sim_pipeline.Sources.source_base import SourceBase
 
 class Galaxies(SourceBase):
     """
-    class describing early-type galaxies
+    class describing elliptical galaxies
     """
     def __init__(self, galaxy_list, kwargs_cut, cosmo, sky_area):
         """
@@ -66,7 +66,7 @@ class Galaxies(SourceBase):
 
 def galaxy_projected_eccentricity(ellipticity):
     """
-    Projected eccentricity of early-type galaxies as a function of other deflector parameters
+    Projected eccentricity of elliptical galaxies as a function of other deflector parameters
 
     :param ellipticity: eccentricity amplitude
     :type ellipticity: float [0,1)

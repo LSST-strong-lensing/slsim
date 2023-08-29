@@ -1,12 +1,13 @@
 import pytest
 from astropy.cosmology import FlatLambdaCDM
 from astropy.table import Table
-from sim_pipeline.gg_lens import GGLens, image_separation_from_positions, theta_e_when_source_infinity
+from sim_pipeline.galaxy_galaxy_lens import (GalaxyGalaxyLens, image_separation_from_positions,
+                                              theta_e_when_source_infinity)
 
 import os
 
 
-class TestGGLens(object):
+class TestGalaxyGalaxyLens(object):
     # pytest.fixture(scope='class')
     def setup_method(self):
         # path = os.path.dirname(sim_pipeline.__file__)
@@ -20,7 +21,7 @@ class TestGGLens(object):
         self.source_dict = blue_one
         self.deflector_dict = red_one
         while True:
-            gg_lens = GGLens(source_dict=self.source_dict, deflector_dict=self.deflector_dict, cosmo=cosmo)
+            gg_lens = GalaxyGalaxyLens(source_dict=self.source_dict, deflector_dict=self.deflector_dict, cosmo=cosmo)
             if gg_lens.validity_test():
                 self.gg_lens = gg_lens
                 break

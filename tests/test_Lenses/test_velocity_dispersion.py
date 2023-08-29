@@ -1,5 +1,5 @@
 
-from sim_pipeline.Lenses.velocity_dispersion import schechter_vel_disp, schechter_velocity_dispersion_function
+from sim_pipeline.Deflectors.velocity_dispersion import schechter_vel_disp, schechter_velocity_dispersion_function
 import numpy as np
 
 

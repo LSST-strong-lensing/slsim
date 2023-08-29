@@ -1,13 +1,13 @@
 import numpy as np
 import numpy.random as random
 from sim_pipeline.selection import galaxy_cut
-from sim_pipeline.Lenses.velocity_dispersion import vel_disp_sdss
+from sim_pipeline.Deflectors.velocity_dispersion import vel_disp_sdss
 from sim_pipeline.Util import param_util
 
 
-class EarlyTypeLensGalaxies(object):
+class EllipticalLensGalaxies(object):
     """
-    class describing early-type galaxies
+    class describing elliptical galaxies
     """
     def __init__(self, galaxy_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area):
         """
@@ -46,7 +46,7 @@ class EarlyTypeLensGalaxies(object):
         # sort velocity dispersion, largest values first
         vel_disp_list = np.flip(np.sort(vel_disp_list))
         num_vel_disp = len(vel_disp_list)
-        # abundance match velocity dispersion with early-type galaxy catalogue
+        # abundance match velocity dispersion with elliptical galaxy catalogue
         if num_vel_disp >= self._num_select:
             self._galaxy_select['vel_disp'] = vel_disp_list[:self._num_select]
             # randomly select
@@ -78,7 +78,7 @@ class EarlyTypeLensGalaxies(object):
             vel_disp = vel_disp_from_m_star(stellar_mass)
             deflector['vel_disp'] = vel_disp
         if deflector['e1_light'] == -1 or deflector['e2_light'] == - 1:
-            e1_light, e2_light, e1_mass, e2_mass = early_type_projected_eccentricity(**deflector)
+            e1_light, e2_light, e1_mass, e2_mass = elliptical_projected_eccentricity(**deflector)
             deflector['e1_light'] = e1_light
             deflector['e2_light'] = e2_light
             deflector['e1_mass'] = e1_mass
@@ -88,9 +88,9 @@ class EarlyTypeLensGalaxies(object):
         return deflector
 
 
-def early_type_projected_eccentricity(ellipticity, **kwargs):
+def elliptical_projected_eccentricity(ellipticity, **kwargs):
     """
-    projected eccentricity of early-type galaxies as a function of other deflector parameters
+    projected eccentricity of elliptical galaxies as a function of other deflector parameters
 
     :param ellipticity: eccentricity amplitude
     :type ellipticity: float [0,1)
@@ -122,7 +122,7 @@ def vel_disp_from_m_star(m_star):
 
     2.32,0.24 is the parameters from [1] table 2
     [1]:Auger, M. W., et al. "The Sloan Lens ACS Survey. X. Stellar, dynamical, and total mass correlations of massive
-    early-type galaxies." The Astrophysical Journal 724.1 (2010): 511.
+    elliptical galaxies." The Astrophysical Journal 724.1 (2010): 511.
 
     :param m_star: stellar mass in the unit of solar mass
     :return: the velocity dispersion ("km/s")

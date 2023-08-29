@@ -21,8 +21,8 @@ def vel_disp_sdss(sky_area, redshift, vd_min, vd_max, cosmology, noise=True):
     redshift : `numpy.array`
         Input redshift grid on which the Schechter function parameters are
         evaluated. Galaxies are sampled over this redshift range.
-    vd_min, vd_max: float
-        Lower and upper bounds of random variable x. Samples are drawn uniformly from bounds.
+    vd_min, vd_max: int
+        Lower and upper bounds of random variable x (velocity dispersion). Samples are drawn uniformly from bounds.
     cosmology : `astropy.cosmology`
         `astropy.cosmology` object to calculate comoving densities.
     noise : bool, optional

@@ -8,7 +8,7 @@ from sim_pipeline.ParamDistributions.gaussian_mixture_model import GaussianMixtu
 from lenstronomy.Util import util, data_util
 
 
-class GGLens(object):
+class GalaxyGalaxyLens(object):
     """
     class to manage individual galaxy-galaxy lenses
     """
