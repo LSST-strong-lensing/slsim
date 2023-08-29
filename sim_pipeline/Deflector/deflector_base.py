@@ -5,16 +5,18 @@ class DeflectorBase(ABC):
     base class with functions all deflector classes must have to be able to render populations
 
     """
-    def __init__(self, cosmo, sky_area):
-        """
-
-        :param cosmo: cosmology
-        :type cosmo: ~astropy.cosmology class
-        :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid angle.
-        :type sky_area: `~astropy.units.Quantity`
-        """
-        self._cosmo = cosmo
-        self._sky_area = sky_area
+    def __init__(self, source_dict, deflector_dict, cosmo,
+                 source_type='extended',
+                 test_area=4 * np.pi,
+                 mixgauss_means=None, mixgauss_stds=None, mixgauss_weights=None):
+        self._source_dict = source_dict
+        self._lens_dict = deflector_dict
+        self.cosmo = cosmo
+        self._source_type = source_type
+        self.test_area = test_area
+        self._mixgauss_means = mixgauss_means
+        self._mixgauss_stds = mixgauss_stds
+        self._mixgauss_weights = mixgauss_weights
 
 
     @abstractmethod
@@ -91,7 +93,7 @@ class DeflectorBase(ABC):
 
         :return: velocity dispersion [km/s]
         """
-        return self._lens_dict['vel_disp']
+        pass
 
     def los_linear_distortions(self):
         """
@@ -175,7 +177,7 @@ class DeflectorBase(ABC):
         """
         returns lens model instance and parameters in lenstronomy conventions
 
-        :return: lens_model_list, kwargs_lens
+        :return: light_model_list, kwargs_lens_light
         """
         pass
 

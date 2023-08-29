@@ -1,7 +1,7 @@
 import pytest
 from astropy.cosmology import FlatLambdaCDM
 from astropy.table import Table
-from sim_pipeline.gg_lens import GGLens, image_separation_from_positions, theta_e_when_source_infinity
+from sim_pipeline.Deflector.gg_lens import GGLens, image_separation_from_positions, theta_e_when_source_infinity
 
 import os
 

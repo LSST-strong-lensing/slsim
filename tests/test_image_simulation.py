@@ -1,7 +1,7 @@
 import os
 from astropy.table import Table
 from astropy.cosmology import FlatLambdaCDM
-from sim_pipeline.gg_lens import GGLens
+from sim_pipeline.Deflector.gg_lens import GGLens
 from sim_pipeline.image_simulation import simulate_image, sharp_image
 
 
