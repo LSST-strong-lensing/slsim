@@ -1,9 +1,9 @@
 import pytest
-from sim_pipeline.gg_lens_pop import GGLensPop, draw_test_area
+from sim_pipeline.gg_lens_pop import GalaxyGalaxyLensPop, draw_test_area
 import numpy as np
 
 
-class TestGGLensPop:
+class TestGalaxyGalaxyLensPop:
 
     @pytest.fixture(scope="class")
     def gg_lens_pop_instance(self):
@@ -11,7 +11,7 @@ class TestGGLensPop:
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         from astropy.units import Quantity
         sky_area = Quantity(value=0.1, unit='deg2')
-        return GGLensPop(sky_area=sky_area, cosmo=cosmo)
+        return GalaxyGalaxyLensPop(sky_area=sky_area, cosmo=cosmo)
 
     def test_num_lenses_and_sources(self, gg_lens_pop_instance):
         num_lenses = gg_lens_pop_instance.deflector_number()

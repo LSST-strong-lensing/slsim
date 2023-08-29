@@ -1,10 +1,10 @@
 from sim_pipeline.Pipelines.skypy_pipeline import SkyPyPipeline
-from sim_pipeline.gg_lens import GGLens, theta_e_when_source_infinity
+from sim_pipeline.gg_lens import GalaxyGalaxyLens, theta_e_when_source_infinity
 import numpy as np
 import warnings
 
 
-class GGLensPop(object):
+class GalaxyGalaxyLensPop(object):
     """
     class to perform samples of galaxy-galaxy lensing
     """
@@ -80,12 +80,12 @@ class GGLensPop(object):
         #TODO: make sure mass function is preserved,
         # as well as option to draw all lenses within the cuts within the area
 
-        :return: GGLens() instance with parameters of the deflector and lens and source light
+        :return: GalaxyGalaxyLens() instance with parameters of the deflector and lens and source light
         """
         while True:
             source = self._sources.draw_source()
             lens = self._lens_galaxies.draw_deflector()
-            gg_lens = GGLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo,
+            gg_lens = GalaxyGalaxyLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo,
                              source_type=self._source_model_type)
             if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens
@@ -135,11 +135,11 @@ class GGLensPop(object):
 
         :param kwargs_lens_cuts: validity test keywords
         :type kwargs_lens_cuts: dict
-        :return: List of GGLens instances with parameters of the deflectors and lens and source light.
+        :return: List of GalaxyGalaxyLens instances with parameters of the deflectors and lens and source light.
         :rtype: list
         """
 
-        # Initialize an empty list to store the GGLens instances
+        # Initialize an empty list to store the GalaxyGalaxyLens instances
         gg_lens_population = []
         # Estimate the number of lensing systems
         num_lenses = self._lens_galaxies.deflector_number()
@@ -159,7 +159,7 @@ class GGLensPop(object):
                 n = 0
                 while n < num_sources_tested:
                     source = self._sources.draw_source()
-                    gg_lens = GGLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo, test_area=test_area,
+                    gg_lens = GalaxyGalaxyLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo, test_area=test_area,
                                      source_type=self._source_model_type)
                     # Check the validity of the lens system
                     if gg_lens.validity_test(**kwargs_lens_cuts):

@@ -9,7 +9,7 @@ def simulate_image(lens_class, band, num_pix, add_noise=True, observatory='LSST'
     Creates an image of a selected lens with noise.
 
     :param lens_class: class object containing all information of the lensing system (e.g., 
-     GGLens())
+     GalaxyGalaxyLens())
     :param band: imaging band
     :param num_pix: number of pixels per axis
     :param add_noise: if True, add noise
@@ -45,7 +45,7 @@ def sharp_image(lens_class, band, mag_zero_point, delta_pix, num_pix, with_defle
     """
     Creates a high resolution image of a selected lens.
 
-    :param lens_class: GGLens() object
+    :param lens_class: GalaxyGalaxyLens() object
     :param band: imaging band
     :param mag_zero_point: magnitude zero point in band
     :param delta_pix: pixel scale of image generated
@@ -105,7 +105,7 @@ def sharp_rgb_image(lens_class, rgb_band_list, mag_zero_point, delta_pix, num_pi
     """
     Creates a high resolution rgb image of a selected lens.
 
-    :param lens_class: GGLens() object
+    :param lens_class: GalaxyGalaxyLens() object
     :param rgb_band_list: imaging band list
     :param mag_zero_point: magnitude zero point in band
     :param delta_pix: pixel scale of image generated

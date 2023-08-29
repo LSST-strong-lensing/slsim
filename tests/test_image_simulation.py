@@ -1,7 +1,7 @@
 import os
 from astropy.table import Table
 from astropy.cosmology import FlatLambdaCDM
-from sim_pipeline.gg_lens import GGLens
+from sim_pipeline.gg_lens import GalaxyGalaxyLens
 from sim_pipeline.image_simulation import simulate_image, sharp_image
 
 
@@ -19,7 +19,7 @@ class TestImageSimulation(object):
         self.source_dict = blue_one
         self.deflector_dict = red_one
         while True:
-            gg_lens = GGLens(source_dict=self.source_dict, deflector_dict=self.deflector_dict, cosmo=cosmo)
+            gg_lens = GalaxyGalaxyLens(source_dict=self.source_dict, deflector_dict=self.deflector_dict, cosmo=cosmo)
             if gg_lens.validity_test():
                 self.gg_lens = gg_lens
                 break
