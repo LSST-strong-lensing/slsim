@@ -1,7 +1,8 @@
 import pytest
 from astropy.cosmology import FlatLambdaCDM
 from astropy.table import Table
-from sim_pipeline.galaxy_galaxy_lens import GalaxyGalaxyLens, image_separation_from_positions, theta_e_when_source_infinity
+from sim_pipeline.galaxy_galaxy_lens import GalaxyGalaxyLens, image_separation_from_positions,
+                                                theta_e_when_source_infinity
 
 import os
 
