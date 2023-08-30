@@ -1,21 +1,21 @@
 from sim_pipeline.Pipelines.skypy_pipeline import SkyPyPipeline
-from sim_pipeline.Deflector.gg_lens import GGLens, theta_e_when_source_infinity
+from sim_pipeline.galaxy_galaxy_lens import GalaxyGalaxyLens, theta_e_when_source_infinity
 import numpy as np
 import warnings
 
 
-class GGLensPop(object):
+class GalaxyGalaxyLensPop(object):
     """
     class to perform samples of galaxy-galaxy lensing
     """
 
-    def __init__(self, lens_type='early-type', source_type='galaxies', kwargs_deflector_cut=None,
+    def __init__(self, deflector_type='elliptical', source_type='galaxies', kwargs_deflector_cut=None,
                  kwargs_source_cut=None, kwargs_mass2light=None, skypy_config=None, sky_area=None, filters=None,
                  cosmo=None):
         """
 
-        :param lens_type: type of the lens
-        :type lens_type: string
+        :param deflector_type: type of the lens
+        :type deflector_type: string
         :param source_type: type of the source
         :type source_type: string
         :param kwargs_deflector_cut: cuts on the deflector to be excluded in the sample
@@ -33,7 +33,7 @@ class GGLensPop(object):
             from astropy.units import Quantity
             sky_area = Quantity(value=0.1, unit='deg2')
             warnings.warn("No sky area provided, instead uses 0.1 deg2")
-        if lens_type in ['early-type', 'all-galaxies'] or source_type in ['galaxies']:
+        if deflector_type in ['elliptical', 'all-galaxies'] or source_type in ['galaxies']:
             pipeline = SkyPyPipeline(skypy_config=skypy_config, sky_area=sky_area, filters=filters)
         if kwargs_deflector_cut is None:
             kwargs_deflector_cut = {}
@@ -43,18 +43,18 @@ class GGLensPop(object):
             warnings.warn("No cosmology provided, instead uses flat LCDM with default parameters")
             from astropy.cosmology import FlatLambdaCDM
             cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-        if lens_type == 'early-type':
-            from sim_pipeline.Lenses.early_type_lens_galaxies import EarlyTypeLensGalaxies
-            self._lens_galaxies = EarlyTypeLensGalaxies(pipeline.red_galaxies, kwargs_cut=kwargs_deflector_cut,
+        if deflector_type == 'elliptical':
+            from sim_pipeline.Deflectors.elliptical_lens_galaxies import EllipticalLensGalaxies
+            self._lens_galaxies = EllipticalLensGalaxies(pipeline.red_galaxies, kwargs_cut=kwargs_deflector_cut,
                                                         kwargs_mass2light=kwargs_mass2light, cosmo=cosmo,
                                                         sky_area=sky_area)
-        elif lens_type == 'all-galaxies':
-            from sim_pipeline.Lenses.all_lens_galaxies import AllLensGalaxies
+        elif deflector_type == 'all-galaxies':
+            from sim_pipeline.Deflectors.all_lens_galaxies import AllLensGalaxies
             self._lens_galaxies = AllLensGalaxies(pipeline.red_galaxies, pipeline.blue_galaxies,
                                                   kwargs_cut=kwargs_deflector_cut, kwargs_mass2light=kwargs_mass2light,
                                                   cosmo=cosmo, sky_area=sky_area)
         else:
-            raise ValueError('lens_type %s is not supported' % lens_type)
+            raise ValueError('deflector_type %s is not supported' % deflector_type)
 
         if kwargs_source_cut is None:
             kwargs_source_cut = {}
@@ -80,12 +80,12 @@ class GGLensPop(object):
         #TODO: make sure mass function is preserved,
         # as well as option to draw all lenses within the cuts within the area
 
-        :return: GGLens() instance with parameters of the deflector and lens and source light
+        :return: GalaxyGalaxyLens() instance with parameters of the deflector and lens and source light
         """
         while True:
             source = self._sources.draw_source()
             lens = self._lens_galaxies.draw_deflector()
-            gg_lens = GGLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo,
+            gg_lens = GalaxyGalaxyLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo,
                              source_type=self._source_model_type)
             if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens
@@ -135,11 +135,11 @@ class GGLensPop(object):
 
         :param kwargs_lens_cuts: validity test keywords
         :type kwargs_lens_cuts: dict
-        :return: List of GGLens instances with parameters of the deflectors and lens and source light.
+        :return: List of GalaxyGalaxyLens instances with parameters of the deflectors and lens and source light.
         :rtype: list
         """
 
-        # Initialize an empty list to store the GGLens instances
+        # Initialize an empty list to store the GalaxyGalaxyLens instances
         gg_lens_population = []
         # Estimate the number of lensing systems
         num_lenses = self._lens_galaxies.deflector_number()
@@ -153,18 +153,21 @@ class GGLensPop(object):
         for _ in range(num_lenses):
             lens = self._lens_galaxies.draw_deflector()
             test_area = draw_test_area(deflector=lens)
-            num_sources_range = self.get_num_sources_tested(testarea=test_area)
+            num_sources_tested = self.get_num_sources_tested(testarea=test_area)
             # TODO: to implement this for a multi-source plane lens system
-            if num_sources_range > 0:
+            if num_sources_tested > 0:
                 n = 0
-                while n < num_sources_range:
+                while n < num_sources_tested:
                     source = self._sources.draw_source()
-                    gg_lens = GGLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo, test_area=test_area,
-                                     source_type=self._source_model_type)
+                    gg_lens = GalaxyGalaxyLens(deflector_dict=lens, source_dict=source, cosmo=self.cosmo,
+                                               test_area=test_area, source_type=self._source_model_type)
                     # Check the validity of the lens system
                     if gg_lens.validity_test(**kwargs_lens_cuts):
                         gg_lens_population.append(gg_lens)
-                        n = num_sources_range
+                        # if a lens system passes the validity test, code should exit the loop.
+                        #so, n should be greater or equal to num_sources_tested which will break the
+                        ## the while loop (instead of this one can simply use break).
+                        n = num_sources_tested
                     else:
                         n += 1
         return gg_lens_population
@@ -178,5 +181,5 @@ def draw_test_area(deflector):
     :return: test area in arcsec^2
     """
     theta_e_infinity = theta_e_when_source_infinity(deflector)
-    test_area = np.pi * (theta_e_infinity * 1.3) ** 2
+    test_area = np.pi * (theta_e_infinity * 2.5) ** 2
     return test_area

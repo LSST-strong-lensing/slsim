@@ -5,18 +5,20 @@ from scipy import interpolate
 import numpy.random as random
 from astropy.table import vstack
 from sim_pipeline.selection import galaxy_cut
-from sim_pipeline.Lenses.velocity_dispersion import vel_disp_sdss
-from sim_pipeline.Lenses.early_type_lens_galaxies import early_type_projected_eccentricity
+from sim_pipeline.Deflectors.velocity_dispersion import vel_disp_sdss
+from sim_pipeline.Deflectors.elliptical_lens_galaxies import elliptical_projected_eccentricity
 
 
 class AllLensGalaxies(object):
-
+    """
+    class describing all-type galaxies
+    """
     def __init__(self, red_galaxy_list, blue_galaxy_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area):
         """
 
-        :param red_galaxy_list: list of dictionary with galaxy parameters of early-type galaxies
+        :param red_galaxy_list: list of dictionary with galaxy parameters of elliptical galaxies
          (currently supporting skypy pipelines)
-        :param blue_galaxy_list: list of dictionary with galaxy parameters of late-type galaxies
+        :param blue_galaxy_list: list of dictionary with galaxy parameters of spiral galaxies
          (currently supporting skypy pipelines)
         :param kwargs_cut: cuts in parameters
         :type kwargs_cut: dict
@@ -44,6 +46,10 @@ class AllLensGalaxies(object):
         # TODO: random reshuffle of matched list
 
     def deflector_number(self):
+        """
+
+        :return: number of deflector
+        """
         number = self._num_select
         return number
 
@@ -56,7 +62,7 @@ class AllLensGalaxies(object):
         index = random.randint(0, self._num_select - 1)
         deflector = self._galaxy_select[index]
         if deflector['e1_light'] == -1 or deflector['e2_light'] == - 1:
-            e1_light, e2_light, e1_mass, e2_mass = early_type_projected_eccentricity(**deflector)
+            e1_light, e2_light, e1_mass, e2_mass = elliptical_projected_eccentricity(**deflector)
             deflector['e1_light'] = e1_light
             deflector['e2_light'] = e2_light
             deflector['e1_mass'] = e1_mass
@@ -89,6 +95,7 @@ def fill_table(galaxy_list):
 
 def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
     """
+    function for calculate the velocity dispersion from the staller mass
 
     :param galaxy_list: list of galaxies with stellar masses given
     :type galaxy_list: ~astropy.Table object
@@ -105,13 +112,13 @@ def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
     redshift = np.arange(0, z_max+0.001, 0.1)
     z_list, vel_disp_list = vel_disp_sdss(sky_area, redshift, vd_min=50, vd_max=500, cosmology=cosmo, noise=True)
 
-    # sort for stellar masses in decreasing manner
+    # sort for stellar masses, largest values first
     galaxy_list_zmax.sort('stellar_mass')
     galaxy_list_zmax.reverse()
     # sort velocity dispersion, largest values first
     vel_disp_list = np.flip(np.sort(vel_disp_list))
     num_vel_disp = len(vel_disp_list)
-    # abundance match velocity dispersion with early-type galaxy catalogue
+    # abundance match velocity dispersion with elliptical galaxy catalogue
     if num_vel_disp >= num_select:
         galaxy_list_zmax['vel_disp'] = vel_disp_list[:num_select]
         # randomly select
