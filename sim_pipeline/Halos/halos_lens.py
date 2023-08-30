@@ -15,10 +15,10 @@ def deg2_to_cone_angle(solid_angle_deg2):
 
 
 def cone_radius_angle_to_sky_area(radius_rad, z, cosmo):
-    comoving_radius = cosmo.comoving_transverse_distance(z) * radius_rad
+    comoving_radius = cosmo.comoving_transverse_distance(z) * radius_rad  # Mpc
     area_comoving = np.pi * comoving_radius ** 2
 
-    return area_comoving
+    return area_comoving  # in Mpc2
 
 
 def concentration_from_mass(z, mass, A=75.4, d=-0.422, m=-0.089):
@@ -149,7 +149,7 @@ class HalosLens(object):
                 for z in self.redshift_list:
                     lens_redshift_list.append(z)
             lens_model = LensModel(lens_model_list=['NFW'] * self.n_halos + ['CONVERGENCE'] * self.n_halos,
-                                   lens_redshift_list= lens_redshift_list,
+                                   lens_redshift_list=lens_redshift_list,
                                    cosmo=self.cosmo,
                                    observed_convention_index=[],
                                    multi_plane=True,
@@ -172,10 +172,10 @@ class HalosLens(object):
         for h in range(self.n_halos):
             epsilon_crit[h] = self.lens_cosmo[h].sigma_crit
 
-        area = cone_radius_angle_to_sky_area(cone_opening_angle / 2, self.redshift_list, self.cosmo)  # mpc2
+        area = cone_radius_angle_to_sky_area(cone_opening_angle/2, self.redshift_list, self.cosmo)  # mpc2
         sigma_crit_mass = (area * epsilon_crit).value
         kappa_ext = np.divide(np.squeeze(np.array(self.first_moment)), sigma_crit_mass)
-        return -kappa_ext, ra_0, dec_0
+        return kappa_ext, ra_0, dec_0
 
     def random_position(self):
         """

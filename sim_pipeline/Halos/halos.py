@@ -284,22 +284,15 @@ def mass_first_moment_at_redshift(z, m_min=None, m_max=None, resolution=None, wa
 
     m = np.logspace(np.log10(m_min), np.log10(m_max), resolution)
     expectation_m_result = []
-
-    for h in range(len(z)):
-        gf = GrowthFactor(cosmo=cosmology)
-        growth_function = gf.growth_factor(z[h])
+    gf = GrowthFactor(cosmo=cosmology)
+    for z_val in z:
+        growth_function = gf.growth_factor(z_val)
 
         massf = halo_mass_function(
-            M=m,
-            wavenumber=wavenumber,
-            power_spectrum=power_spectrum,
-            growth_function=growth_function,
-            cosmology=cosmology,
-            collapse_function=collapse_function,
-            params=params
-        )
-        expectation_M = integrate.cumtrapz(m * massf, m, initial=0)
+            m, wavenumber, power_spectrum, growth_function,
+            cosmology, collapse_function, params=params)
 
-        expectation_m_result.append(expectation_M[-1])
-
+        CDF = integrate.cumtrapz(massf, m, initial=0)
+        CDF = CDF / CDF[-1]
+        expectation_m_result.append(np.interp(0.5, CDF, m))
     return expectation_m_result
