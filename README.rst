@@ -2,7 +2,7 @@
 sim-pipeline
 ============
 
-|Read the Docs| |GitHub| |Coveralls|
+|Read the Docs| |GitHub| |Codecov|
 
 
 LSST strong lensing simulation pipeline.
@@ -50,6 +50,8 @@ See our Citation_ guidelines.
 
 .. |GitHub| image:: https://github.com/LSST-strong-lensing/sim-pipeline/workflows/CI/badge.svg
     :target: https://github.com/LSST-strong-lensing/sim-pipeline/actions
+    :alt: Build Status
 
-.. |Coveralls| image:: https://coveralls.io/repos/github/LSST-strong-lensing/sim-pipeline/badge.svg
-    :target: https://coveralls.io/github/LSST-strong-lensing/sim-pipeline
+.. |Codecov| image:: https://codecov.io/gh/LSST-strong-lensing/sim-pipeline/graph/badge.svg?token=PyDRdtsGSX
+    :target: https://codecov.io/gh/LSST-strong-lensing/sim-pipeline
+    :alt: Code coverage
