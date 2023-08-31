@@ -6,9 +6,6 @@ on:
       - main
       - cleanup
   pull_request:
-    branches:
-      - main
-      - cleanup
 
 jobs:
   build:
