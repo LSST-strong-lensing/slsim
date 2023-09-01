@@ -6,14 +6,14 @@ import pytest
 
 class test_all_galaxies(object):
         def setup_method(self): 
-            sky_area = Quantity(value=0.1, unit='deg2')
-            pipeline = SkyPyPipeline(skypy_config=None, sky_area=sky_area, filters=None)
+            self.sky_area = Quantity(value=0.1, unit='deg2')
+            pipeline = SkyPyPipeline(skypy_config=None, sky_area=self.sky_area, filters=None)
             kwargs_deflector_cut = {}
             kwargs_mass2light = {}
-            cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+            self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
             self.lens_galaxies = AllLensGalaxies(pipeline.red_galaxies, pipeline.blue_galaxies,
                                                     kwargs_cut=kwargs_deflector_cut, kwargs_mass2light=kwargs_mass2light,
-                                                    cosmo=cosmo, sky_area=sky_area)
+                                                    cosmo = self.cosmo, sky_area = self.fsky_area)
             
         def test_deflector_number(self):
             number = self.lens_galaxies.deflector_number()
@@ -29,7 +29,7 @@ class test_all_galaxies(object):
              assert len(list) > 0
 
         def test_vel_disp_abundance_matching(self):
-             vdp = vel_disp_abundance_matching(self.lens_galaxies, z_max=0.5, sky_area=sky_area, cosmo=cosmo)
+             vdp = vel_disp_abundance_matching(self.lens_galaxies, z_max=0.5, sky_area=self.sky_area, cosmo=self.cosmo)
              assert vdp(10**10) != 0
 
 if __name__ == '__main__':
