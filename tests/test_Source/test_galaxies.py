@@ -2,6 +2,7 @@ from astropy.cosmology import FlatLambdaCDM
 from sim_pipeline.Pipelines.skypy_pipeline import SkyPyPipeline
 from astropy.units import Quantity
 from sim_pipeline.Sources.galaxies import Galaxies
+from sim_pipeline.Sources.galaxies import galaxy_projected_eccentricity
 import pytest
 
 class test_galaxies(object):
@@ -16,6 +17,15 @@ class test_galaxies(object):
         def test_source_number(self):
             number = self.galaxies.source_number()
             assert number > 0
+
+        def test_draw_source(self):
+             galaxy = self.galaxies.draw_source()
+             assert len(galaxy) > 0
+
+def test_galaxy_projected_eccentricity():
+     e1, e2 = galaxy_projected_eccentricity(0)
+     assert e1 == 0
+     assert e2 == 0
 
 if __name__ == '__main__':
     pytest.main()
