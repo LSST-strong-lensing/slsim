@@ -1,8 +1,13 @@
-from sim_pipeline.Deflectors.all_lens_galaxies import AllLensGalaxies
+from astropy.cosmology import FlatLambdaCDM
+from sim_pipeline.Deflectors.all_lens_galaxies import AllLensGalaxies, fill_table, vel_disp_abundance_matching
+from sim_pipeline.Pipelines.skypy_pipeline import SkyPyPipeline
+from astropy.units import Quantity
+import pytest
+
 class test_all_galaxies(object):
         def setup_method(self): 
             sky_area = Quantity(value=0.1, unit='deg2')
-            pipeline = SkyPyPipeline(skypy_config=skypy_config, sky_area=sky_area, filters=filters)
+            pipeline = SkyPyPipeline(skypy_config=None, sky_area=sky_area, filters=None)
             kwargs_deflector_cut = {}
             kwargs_mass2light = {}
             cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -10,7 +15,22 @@ class test_all_galaxies(object):
                                                     kwargs_cut=kwargs_deflector_cut, kwargs_mass2light=kwargs_mass2light,
                                                     cosmo=cosmo, sky_area=sky_area)
             
+        def test_deflector_number(self):
+            number = self.lens_galaxies.deflector_number()
+            assert number > 0
 
+        
+        def test_draw_deflector(self):
+            deflector_drawn = self.lens_galaxies.draw_deflector()
+            assert deflector_drawn > 0  
+
+        def test_fill_table(self):
+             list = fill_table(self.lens_galaxies)
+             assert len(list) > 0
+
+        def test_vel_disp_abundance_matching(self):
+             vdp = vel_disp_abundance_matching(self.lens_galaxies, z_max=0.5, sky_area=sky_area, cosmo=cosmo)
+             assert vdp(10**10) != 0
 
 if __name__ == '__main__':
     pytest.main()
