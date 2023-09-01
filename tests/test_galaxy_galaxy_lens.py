@@ -59,6 +59,18 @@ class TestGalaxyGalaxyLens(object):
         host_mag = self.gg_lens.host_magnification()
         assert host_mag > 0
 
+    def test_deflector_stellar_mass(self):
+        s_mass = self.gg_lens.deflector_stellar_mass()
+        assert s_mass >= 10**5
+
+    def test_deflector_velocity_dispersion(self):
+        vdp = self.gg_lens.deflector_velocity_dispersion()
+        assert vdp >= 10
+
+    def test_los_linear_distortions(self):
+        losd = self.gg_lens.los_linear_distortions()
+        assert losd != None
+
 
 if __name__ == '__main__':
     pytest.main()
