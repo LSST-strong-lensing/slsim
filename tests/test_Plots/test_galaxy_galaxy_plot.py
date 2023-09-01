@@ -18,8 +18,7 @@ class test_GalaxyGalaxyLensingPlots(object):
          assert len(image) == 64
     
     def test_plot_montage(self):
-         kwargs_lens_cut_plot = {'min_image_separation': 0.8, 'max_image_separation': 10, 
-                        'mag_arc_limit': {'g': 23, 'r': 23, 'i': 23}}
+         kwargs_lens_cut_plot = {}
          fig, axes = self.gg_plot.plot_montage(rgb_band_list=['i', 'r', 'g'], add_noise=True, n_horizont=1, 
                                  n_vertical=1, kwargs_lens_cut=kwargs_lens_cut_plot)
          assert len(axes) == 1
