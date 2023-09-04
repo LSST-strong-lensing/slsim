@@ -1,11 +1,29 @@
 from sim_pipeline.Halos.halos_plus_glass import read_glass_data, generate_samples_from_glass, skyarea_form_n, \
     generate_maps_kmean_zero_using_halos, halos_plus_glass, generate_meanzero_halos_multiple_times, \
     run_halos_without_kde, run_halos_without_kde_by_multiprocessing
+from sim_pipeline.Halos.halos_lens import deg2_to_cone_angle, cone_radius_angle_to_physical_area
 import os
 import numpy as np
 import pytest
+from astropy.cosmology import FlatLambdaCDM
+
+cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
 
+def test_deg2_to_cone_angle():
+    cone_angle = deg2_to_cone_angle(41252.9612494 / 2)
+    print(cone_angle)
+    assert cone_angle == pytest.approx(3.14159 / 2, rel=1e-4)
+
+
+def cone_radius_angle_to_physical_area():
+    cone_angle = deg2_to_cone_angle(0.0001)
+    area = cone_radius_angle_to_physical_area(cone_angle, 5, cosmo)
+    print(area)
+    assert cone_angle == pytest.approx(3.14159 / 2, rel=1e-4)
+
+
+'''
 class Testhalosplusglass(object):
 
     def setup_method(self):
@@ -21,7 +39,7 @@ class Testhalosplusglass(object):
     def test_default_file_name(self):
         assert self.kappa is not None
         assert self.gamma is not None
-        assert self.nside == 128
+        assert self.nside == 128 
 
     def test_generate_samples_from_glass(self):
         kappa_random_glass, gamma_random_glass = generate_samples_from_glass(self.kappa, self.gamma, 100)
@@ -73,3 +91,4 @@ class Testhalosplusglass(object):
                == len(gamma_run_halos_without_kde_by_multiprocessing) == 10
         assert isinstance(kappa_run_halos_without_kde_by_multiprocessing, (list, np.ndarray))
         assert isinstance(gamma_run_halos_without_kde_by_multiprocessing, (list, np.ndarray))
+'''

@@ -14,7 +14,7 @@ from multiprocessing import get_context
 
 def read_glass_data(file_name="kgdata.npy"):
     """
-    This function loads a numpy data file and extracts the kappa and gamma values.
+    This function loads a numpy data file and extracts the kappa and gamma vealues.
 
     Parameters:
         file_name (str, optional): The name of the file to load. Defaults to "kgdata.npy".
@@ -340,6 +340,48 @@ def worker_run_halos_without_kde(iter_num, sky_area, m_min, m_max, z_max, cosmo,
 
 def run_halos_without_kde_by_multiprocessing(n_iterations=1, sky_area=0.0001, samples_number=1500, cosmo=None,
                                              m_min=None, m_max=None, z_max=None):
+    """
+    Under the specified `sky_area`, generate `n_iterations` sets of halo lists. For each set,
+    simulate `samples_number` times to obtain the convergence (`kappa`) and shear (`gamma`) values
+    at the origin. These values are directly appended without any additional processing (i.e., without
+    KDE computation, resampling, or subtracting the mean kappa value), the process procedure `n_iterations` generate
+    with multiprocessing.
+
+    Parameters
+    ----------
+    n_iterations : int, optional
+        Number of iterations or halo lists to generate. Defaults to 1.
+    sky_area : float, optional
+        Total sky area (in steradians) over which Halos are distributed. Defaults to 0.0001 steradians.
+    samples_number : int, optional
+        Number of samples for statistical calculations. Defaults to 1500.
+    cosmo : astropy.cosmology instance, optional
+        Cosmology used for the simulations. If not provided, the default astropy cosmology is used.
+    m_min : float, optional
+        Minimum mass of the Halos to consider. If not provided, no lower limit is set.
+    m_max : float, optional
+        Maximum mass of the Halos to consider. If not provided, no upper limit is set.
+    z_max : float, optional
+        Maximum redshift of the Halos to consider. If not provided, no upper limit is set.
+
+    Returns
+    -------
+    kappa_values_total : list
+        Combined list of convergence (`kappa`) values from all iterations.
+    gamma_values_total : list
+        Combined list of shear (`gamma`) values from all iterations.
+
+    Notes
+    -----
+    This function initializes a halo distribution pipeline for each iteration, simulates Halos,
+    and then computes the lensing properties (`kappa` and `gamma`). The results from all iterations
+    are concatenated to form the final output lists.
+
+    Warnings
+    --------
+    If no cosmology is provided, the function uses the default astropy cosmology, which is a flat
+    Lambda-CDM model with H0=70 and Om0=0.3.
+    """
     if cosmo is None:
         warnings.warn("No cosmology provided, instead uses astropy.cosmology default cosmology")
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -361,5 +403,3 @@ def run_halos_without_kde_by_multiprocessing(n_iterations=1, sky_area=0.0001, sa
     end_time = time.time()  # Note the end time
     print(f'The {n_iterations} halo-lists took {(end_time - start_time)} seconds to run')
     return kappa_values_total, gamma_values_total
-
-# TODO: make the mulitprocessing work (mulit in mulit)

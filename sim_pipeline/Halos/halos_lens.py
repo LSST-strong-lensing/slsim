@@ -9,16 +9,15 @@ from lenstronomy.Util import constants
 
 
 def deg2_to_cone_angle(solid_angle_deg2):
-    # Compute the cone angle in radians
-    theta = np.arccos(1 - solid_angle_deg2 * np.pi / 648000)  # rad
+    solid_angle_sr = solid_angle_deg2 * (np.pi / 180) ** 2
+    theta = np.arccos(1 - solid_angle_sr / (2 * np.pi))  # rad
     return theta
 
 
-def cone_radius_angle_to_sky_area(radius_rad, z, cosmo):
-    comoving_radius = cosmo.comoving_transverse_distance(z) * radius_rad  # Mpc
-    area_comoving = np.pi * comoving_radius ** 2
-
-    return area_comoving  # in Mpc2
+def cone_radius_angle_to_physical_area(radius_rad, z, cosmo):
+    physical_radius = cosmo.angular_diameter_distance(z) * radius_rad  # Mpc
+    area_physical = np.pi * physical_radius ** 2
+    return area_physical  # in Mpc2
 
 
 def concentration_from_mass(z, mass, A=75.4, d=-0.422, m=-0.089):
@@ -172,10 +171,14 @@ class HalosLens(object):
         for h in range(self.n_halos):
             epsilon_crit[h] = self.lens_cosmo[h].sigma_crit
 
-        area = cone_radius_angle_to_sky_area(cone_opening_angle/2, self.redshift_list, self.cosmo)  # mpc2
-        sigma_crit_mass = (area * epsilon_crit).value
+        area = cone_radius_angle_to_physical_area(cone_opening_angle, self.redshift_list, self.cosmo)  # mpc2
+        print('area', area)
+        sigma_crit_mass = (0.05 * epsilon_crit).value
+        print('epsilon_crit', epsilon_crit)
+        print('first_moment/area', np.divide(np.squeeze(np.array(self.first_moment)), area))
         kappa_ext = np.divide(np.squeeze(np.array(self.first_moment)), sigma_crit_mass)
-        return kappa_ext, ra_0, dec_0
+        print('-kappa ext:',-kappa_ext)
+        return -kappa_ext, ra_0, dec_0
 
     def random_position(self):
         """
