@@ -172,12 +172,14 @@ class HalosLens(object):
             epsilon_crit[h] = self.lens_cosmo[h].sigma_crit
 
         area = cone_radius_angle_to_physical_area(cone_opening_angle, self.redshift_list, self.cosmo)  # mpc2
-        print('area', area)
-        sigma_crit_mass = (0.05 * epsilon_crit).value
-        print('epsilon_crit', epsilon_crit)
-        print('first_moment/area', np.divide(np.squeeze(np.array(self.first_moment)), area))
-        kappa_ext = np.divide(np.squeeze(np.array(self.first_moment)), sigma_crit_mass)
-        print('-kappa ext:',-kappa_ext)
+    #    print('area', area)
+    #    print('epsilon_crit', epsilon_crit)
+        first_moment_d_area = np.divide(np.array(self.first_moment), np.array(area))
+    #    print('first_moment/area', first_moment_d_area)
+    #    print('F[1]',self.first_moment[1])
+    #    print('f/a[1]',self.first_moment[1]/area[1])
+        kappa_ext = np.divide(first_moment_d_area, epsilon_crit)
+    #    print('-kappa ext:',-kappa_ext)
         return -kappa_ext, ra_0, dec_0
 
     def random_position(self):

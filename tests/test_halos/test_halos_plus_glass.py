@@ -16,14 +16,12 @@ def test_deg2_to_cone_angle():
     assert cone_angle == pytest.approx(3.14159 / 2, rel=1e-4)
 
 
-def cone_radius_angle_to_physical_area():
-    cone_angle = deg2_to_cone_angle(0.0001)
-    area = cone_radius_angle_to_physical_area(cone_angle, 5, cosmo)
-    print(area)
-    assert cone_angle == pytest.approx(3.14159 / 2, rel=1e-4)
+def test_cone_radius_angle_to_physical_area():
+    area = cone_radius_angle_to_physical_area(4.84813681e-6, 0.0000000002369, cosmo)
+    # for z:0.0000000002369 ~1PC, rad:4.84813681e-6~ 1arcsec, 4.84813681344e-12Mpc~ 1AU
+    assert area.value == pytest.approx((np.pi * 4.84813681344e-12 ** 2), rel=0)
 
 
-'''
 class Testhalosplusglass(object):
 
     def setup_method(self):
@@ -39,7 +37,7 @@ class Testhalosplusglass(object):
     def test_default_file_name(self):
         assert self.kappa is not None
         assert self.gamma is not None
-        assert self.nside == 128 
+        assert self.nside == 128
 
     def test_generate_samples_from_glass(self):
         kappa_random_glass, gamma_random_glass = generate_samples_from_glass(self.kappa, self.gamma, 100)
@@ -91,4 +89,3 @@ class Testhalosplusglass(object):
                == len(gamma_run_halos_without_kde_by_multiprocessing) == 10
         assert isinstance(kappa_run_halos_without_kde_by_multiprocessing, (list, np.ndarray))
         assert isinstance(gamma_run_halos_without_kde_by_multiprocessing, (list, np.ndarray))
-'''
