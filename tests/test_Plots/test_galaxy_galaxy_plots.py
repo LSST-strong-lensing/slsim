@@ -8,6 +8,7 @@ from sim_pipeline.Plots.galaxy_galaxy_plots import GalaxyGalaxyLensingPlots
 
 class test_GalaxyGalaxyLensingPlots(object):
 
+    @pytest.fixture(scope="class")
     def gg_lensing_instance(self):
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         sky_area = Quantity(value=0.1, unit='deg2')
