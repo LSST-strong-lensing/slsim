@@ -69,7 +69,7 @@ class TestGalaxyGalaxyLens(object):
 
     def test_los_linear_distortions(self):
         losd = self.gg_lens.los_linear_distortions()
-        assert losd != None
+        assert losd != 0
 
 
 if __name__ == '__main__':

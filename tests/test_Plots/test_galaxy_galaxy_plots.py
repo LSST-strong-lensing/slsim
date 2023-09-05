@@ -7,9 +7,7 @@ from sim_pipeline.Plots.galaxy_galaxy_plots import GalaxyGalaxyLensingPlots
 import matplotlib.pyplot as plt
 
 def gg_lens_pop_instance():
-        from astropy.cosmology import FlatLambdaCDM
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-        from astropy.units import Quantity
         sky_area = Quantity(value=0.1, unit='deg2')
         return GalaxyGalaxyLensPop(sky_area=sky_area, cosmo=cosmo)
 
@@ -35,9 +33,8 @@ def test_plot_montage(galaxy_galaxy_lensing_plots):
     n_horizont = 2
     n_vertical = 2
     kwargs_lens_cut_plot = None
-    fig, axes = galaxy_galaxy_lensing_plots.plot_montage(
-        rgb_band_list, add_noise=add_noise, n_horizont=n_horizont, n_vertical=n_vertical, kwargs_lens_cut=kwargs_lens_cut_plot
-    )
+    fig, axes = galaxy_galaxy_lensing_plots.plot_montage(rgb_band_list, add_noise=add_noise, 
+                    n_horizont=n_horizont, n_vertical=n_vertical, kwargs_lens_cut=kwargs_lens_cut_plot)
     assert isinstance(fig, plt.Figure)
     assert len(axes) == n_vertical
     assert len(axes[0]) == n_horizont

@@ -1,4 +1,3 @@
-import numpy as np
 from sim_pipeline.Util.param_util import epsilon2e, e2epsilon, random_ra_dec
 
 def test_epsilon2e():
