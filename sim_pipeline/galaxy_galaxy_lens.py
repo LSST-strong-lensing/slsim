@@ -9,9 +9,7 @@ from lenstronomy.Util import util, data_util
 
 
 class GalaxyGalaxyLens(object):
-    """
-    class to manage individual galaxy-galaxy lenses
-    """
+    """Class to manage individual galaxy-galaxy lenses."""
 
     def __init__(
         self,
@@ -63,8 +61,7 @@ class GalaxyGalaxyLens(object):
 
     @property
     def lens_position(self):
-        """
-        center of the deflector position
+        """Center of the deflector position.
 
         :return: [x_pox, y_pos] in arc seconds
         """
@@ -77,9 +74,9 @@ class GalaxyGalaxyLens(object):
 
     @property
     def source_position(self):
-        """
-        source position, either the center of the extended source or the point source. If not present from the catalog,
-        it is drawn uniformly within the circle of the test area centered on the lens
+        """Source position, either the center of the extended source or the point
+        source. If not present from the catalog, it is drawn uniformly within the circle
+        of the test area centered on the lens.
 
         :return: [x_pos, y_pos]
         """
@@ -98,9 +95,9 @@ class GalaxyGalaxyLens(object):
         return self._center_source
 
     def image_positions(self):
-        """
-        Return image positions by solving the lens equation. These are either the centers of the extended source, or
-        the point sources in case of (added) point-like sources, such as quasars or SNe.
+        """Return image positions by solving the lens equation. These are either the
+        centers of the extended source, or the point sources in case of (added) point-
+        like sources, such as quasars or SNe.
 
         :return: x-pos, y-pos
         """
@@ -126,12 +123,13 @@ class GalaxyGalaxyLens(object):
     def validity_test(
         self, min_image_separation=0, max_image_separation=10, mag_arc_limit=None
     ):
-        """
-        check whether lensing configuration matches selection and plausibility criteria
+        """Check whether lensing configuration matches selection and plausibility
+        criteria.
 
         :param min_image_separation: minimum image separation
         :param max_image_separation: maximum image separation
-        :param mag_arc_limit: dictionary with key of bands and values of magnitude limits of integrated lensed arc
+        :param mag_arc_limit: dictionary with key of bands and values of magnitude
+            limits of integrated lensed arc
         :type mag_arc_limit: dict with key of bands and values of magnitude limits
         :return: boolean
         """
@@ -203,8 +201,7 @@ class GalaxyGalaxyLens(object):
 
     @property
     def einstein_radius(self):
-        """
-        Einstein radius, including the SIS + external convergence effect
+        """Einstein radius, including the SIS + external convergence effect.
 
         :return: Einstein radius [arc seconds]
         """
@@ -239,8 +236,7 @@ class GalaxyGalaxyLens(object):
         return self._lens_dict["vel_disp"]
 
     def los_linear_distortions(self):
-        """
-        line-of-sight distortions in shear and convergence
+        """Line-of-sight distortions in shear and convergence.
 
         :return: kappa, gamma1, gamma2
         """
@@ -265,8 +261,7 @@ class GalaxyGalaxyLens(object):
         return self._gamma[0], self._gamma[1], self._kappa
 
     def deflector_magnitude(self, band):
-        """
-        apparent magnitude of the deflector for a given band
+        """Apparent magnitude of the deflector for a given band.
 
         :param band: imaging band
         :type band: string
@@ -276,8 +271,8 @@ class GalaxyGalaxyLens(object):
         return self._lens_dict[band_string]
 
     def point_source_magnitude(self, band, lensed=False):
-        """
-        point source magnitude, either unlensed (single value) or lensed (array) with macro-model magnifications
+        """Point source magnitude, either unlensed (single value) or lensed (array) with
+        macro-model magnifications.
 
         # TODO: time-variability with time-delayed and micro-lensing
 
@@ -296,9 +291,8 @@ class GalaxyGalaxyLens(object):
         return source_mag
 
     def extended_source_magnitude(self, band, lensed=False):
-        """
-        unlensed apparent magnitude of the extended source for a given band
-        (assumes that size is the same for different bands)
+        """Unlensed apparent magnitude of the extended source for a given band (assumes
+        that size is the same for different bands)
 
         :param band: imaging band
         :type band: string
@@ -315,8 +309,7 @@ class GalaxyGalaxyLens(object):
         return source_mag
 
     def point_source_magnification(self):
-        """
-        macro-model magnification of point sources
+        """Macro-model magnification of point sources.
 
         :return: signed magnification of point sources in same order as image positions
         """
@@ -328,9 +321,8 @@ class GalaxyGalaxyLens(object):
         return self._ps_magnification
 
     def host_magnification(self):
-        """
-        compute the extended lensed surface brightness and calculates the integrated flux-weighted magnification factor
-        of the extended host galaxy
+        """Compute the extended lensed surface brightness and calculates the integrated
+        flux-weighted magnification factor of the extended host galaxy.
 
         :return: integrated magnification factor of host magnitude
         """
@@ -450,8 +442,7 @@ class GalaxyGalaxyLens(object):
         return kwargs_model, kwargs_params
 
     def lens_model_lenstronomy(self):
-        """
-        returns lens model instance and parameters in lenstronomy conventions
+        """Returns lens model instance and parameters in lenstronomy conventions.
 
         :return: lens_model_list, kwargs_lens
         """
@@ -476,9 +467,9 @@ class GalaxyGalaxyLens(object):
 
 
 def image_separation_from_positions(image_positions):
-    """
-    calculate image separation in arc-seconds; if there are only two images, the separation between them is returned;
-    if there are more than 2 images, the maximum separation is returned
+    """Calculate image separation in arc-seconds; if there are only two images, the
+    separation between them is returned; if there are more than 2 images, the maximum
+    separation is returned.
 
     :param image_positions: list of image positions in arc-seconds
     :return: image separation in arc-seconds
@@ -498,8 +489,7 @@ def image_separation_from_positions(image_positions):
 
 
 def theta_e_when_source_infinity(deflector_dict=None, v_sigma=None):
-    """
-    calculate Einstein radius in arc-seconds for a source at infinity
+    """Calculate Einstein radius in arc-seconds for a source at infinity.
 
     :param deflector_dict: deflector properties
     :param v_sigma: velocity dispersion in km/s

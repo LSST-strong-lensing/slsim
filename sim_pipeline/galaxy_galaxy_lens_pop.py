@@ -8,9 +8,7 @@ import warnings
 
 
 class GalaxyGalaxyLensPop(object):
-    """
-    class to perform samples of galaxy-galaxy lensing
-    """
+    """Class to perform samples of galaxy-galaxy lensing."""
 
     def __init__(
         self,
@@ -112,14 +110,14 @@ class GalaxyGalaxyLensPop(object):
         self.f_sky = sky_area
 
     def select_lens_at_random(self, **kwargs_lens_cut):
-        """
-        draw a random lens within the cuts of the lens and source, with possible additional cut in the lensing
-        configuration.
+        """Draw a random lens within the cuts of the lens and source, with possible
+        additional cut in the lensing configuration.
 
-        #TODO: make sure mass function is preserved,
-        # as well as option to draw all lenses within the cuts within the area
+        #TODO: make sure mass function is preserved, # as well as option to draw all
+        lenses within the cuts within the area
 
-        :return: GalaxyGalaxyLens() instance with parameters of the deflector and lens and source light
+        :return: GalaxyGalaxyLens() instance with parameters of the deflector and lens
+            and source light
         """
         while True:
             source = self._sources.draw_source()
@@ -134,27 +132,26 @@ class GalaxyGalaxyLensPop(object):
                 return gg_lens
 
     def deflector_number(self):
-        """
-        number of potential deflectors (meaning all objects with mass that are being considered to have potential
-        sources behind them)
+        """Number of potential deflectors (meaning all objects with mass that are being
+        considered to have potential sources behind them)
 
         :return: number of potential deflectors
         """
         return self._lens_galaxies.deflector_number()
 
     def source_number(self):
-        """
-        number of sources that are being considered to be placed in the sky area potentially aligned behind deflectors
+        """Number of sources that are being considered to be placed in the sky area
+        potentially aligned behind deflectors.
 
         :return: number of sources
         """
         return self._sources.source_number()
 
     def get_num_sources_tested_mean(self, testarea):
-        """
-        Compute the mean of source galaxies needed to be tested within the test area.
-        num_sources_tested_mean/ testarea = num_sources/ f_sky;
-        testarea is in units of arcsec^2, f_sky is in units of deg^2. 1 deg^2 = 12960000 arcsec^2
+        """Compute the mean of source galaxies needed to be tested within the test area.
+
+        num_sources_tested_mean/ testarea = num_sources/ f_sky; testarea is in units of
+        arcsec^2, f_sky is in units of deg^2. 1 deg^2 = 12960000 arcsec^2
         """
         num_sources = self._sources.source_number()
         num_sources_tested_mean = (testarea * num_sources) / (
@@ -163,24 +160,22 @@ class GalaxyGalaxyLensPop(object):
         return num_sources_tested_mean
 
     def get_num_sources_tested(self, testarea=None, num_sources_tested_mean=None):
-        """
-        Draw a realization of the expected distribution (Poisson) around the mean
-        for the number of source galaxies tested.
-        """
+        """Draw a realization of the expected distribution (Poisson) around the mean for
+        the number of source galaxies tested."""
         if num_sources_tested_mean is None:
             num_sources_tested_mean = self.get_num_sources_tested_mean(testarea)
         num_sources_range = np.random.poisson(lam=num_sources_tested_mean)
         return num_sources_range
 
     def draw_population(self, kwargs_lens_cuts):
-        """
-        return full population list of all lenses within the area
-        # TODO: need to implement a version of it. (improve the algorithm)
-            Draw a population of galaxy-galaxy lenses within the area.
+        """Return full population list of all lenses within the area # TODO: need to
+        implement a version of it. (improve the algorithm) Draw a population of galaxy-
+        galaxy lenses within the area.
 
         :param kwargs_lens_cuts: validity test keywords
         :type kwargs_lens_cuts: dict
-        :return: List of GalaxyGalaxyLens instances with parameters of the deflectors and lens and source light.
+        :return: List of GalaxyGalaxyLens instances with parameters of the deflectors
+            and lens and source light.
         :rtype: list
         """
 
@@ -224,8 +219,7 @@ class GalaxyGalaxyLensPop(object):
 
 
 def draw_test_area(deflector):
-    """
-    draw a test area around the deflector
+    """Draw a test area around the deflector.
 
     :param deflector: deflector dictionary
     :return: test area in arcsec^2

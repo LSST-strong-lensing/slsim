@@ -4,10 +4,8 @@ from sim_pipeline.image_simulation import simulate_image
 
 
 class GalaxyGalaxyLensingPlots(object):
-    """
-    A class to create and display simulated gravitational lensing images using the provided configurations for the
-    source (blue) and lens (red) galaxies.
-    """
+    """A class to create and display simulated gravitational lensing images using the
+    provided configurations for the source (blue) and lens (red) galaxies."""
 
     def __init__(self, lens_pop, num_pix=64, observatory="LSST", **kwargs):
         """
@@ -29,12 +27,14 @@ class GalaxyGalaxyLensingPlots(object):
         self._kwargs = kwargs
 
     def rgb_image(self, lens_class, rgb_band_list, add_noise=True):
-        """
-        Method to generate a rgb-image with lupton_rgb color scale
+        """Method to generate a rgb-image with lupton_rgb color scale.
 
-        :param lens_class: class object containing all information of the lensing system (e.g., GalaxyGalaxyLens())
-        :param rgb_band_list: list of imaging band names corresponding to r-g-b color map
-        :param add_noise: boolean flag, set to True to add noise to the image, default is True
+        :param lens_class: class object containing all information of the lensing system
+            (e.g., GalaxyGalaxyLens())
+        :param rgb_band_list: list of imaging band names corresponding to r-g-b color
+            map
+        :param add_noise: boolean flag, set to True to add noise to the image, default
+            is True
         """
         image_r = simulate_image(
             lens_class=lens_class,
@@ -71,14 +71,17 @@ class GalaxyGalaxyLensingPlots(object):
         n_vertical=1,
         kwargs_lens_cut=None,
     ):
-        """
-        Method to generate and display a grid of simulated gravitational lensing images with or without noise.
+        """Method to generate and display a grid of simulated gravitational lensing
+        images with or without noise.
 
-        :param rgb_band_list: list of imaging band names corresponding to r-g-b color map
-        :param add_noise: boolean flag, set to True to add noise to the images, default is True
+        :param rgb_band_list: list of imaging band names corresponding to r-g-b color
+            map
+        :param add_noise: boolean flag, set to True to add noise to the images, default
+            is True
         :param n_horizont: number of images to display horizontally, default is 1
         :param n_vertical: number of images to display vertically, default is 1
-        :param kwargs_lens_cut: lens selection cuts for GalaxyGalaxyLens.validity_test() function
+        :param kwargs_lens_cut: lens selection cuts for GalaxyGalaxyLens.validity_test()
+            function
         """
         if kwargs_lens_cut is None:
             kwargs_lens_cut = {}

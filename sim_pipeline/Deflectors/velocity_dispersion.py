@@ -11,8 +11,7 @@ This module provides functions to compute velocity dispersion using schechter fu
 
 
 def vel_disp_sdss(sky_area, redshift, vd_min, vd_max, cosmology, noise=True):
-    """
-    velocity dispersion function in a cone matched by SDSS measurements
+    """Velocity dispersion function in a cone matched by SDSS measurements.
 
     Parameters
     ----------
@@ -53,7 +52,6 @@ def vel_disp_sdss(sky_area, redshift, vd_min, vd_max, cosmology, noise=True):
     References
     ----------
     .. [1] Choi, Park and Vogeley, (2007), astro-ph/0611607, doi:10.1086/511060
-
     """
     # SDSS velocity dispersion function for galaxies brighter than Mr >= -16.8
     phi_star = 8.0 * 10 ** (-3) / cosmology.h**3
@@ -127,7 +125,6 @@ def schechter_vel_disp(
     redshifts, velocity dispersion : tuple of array_like
         Redshifts and velocity dispersion of the galaxy sample described by the Schechter
         velocity dispersion function.
-
     """
 
     # sample halo redshifts
@@ -215,8 +212,6 @@ def schechter_vel_disp_redshift(
     References
     ----------
     .. [1] Choi, Park and Vogeley, (2007), astro-ph/0611607, doi:10.1086/511060
-
-
     """
     alpha_prime = alpha / beta - 1
     x_min, x_max = (vd_min / vd_star) ** beta, (vd_max / vd_star) ** beta
@@ -253,8 +248,8 @@ def schechter_vel_disp_redshift(
 def schechter_velocity_dispersion_function(
     alpha, beta, vd_star, vd_min, vd_max, size=None, resolution=1000
 ):
-    r"""Sample velocity dispersion of elliptical galaxies in the local universe
-    following a Schecter function.
+    r"""Sample velocity dispersion of elliptical galaxies in the local universe following
+    a Schecter function.
 
     Parameters
     ----------
@@ -295,7 +290,6 @@ def schechter_velocity_dispersion_function(
     References
     ----------
     .. [1] Choi, Park and Vogeley, (2007), astro-ph/0611607, doi:10.1086/511060
-
     """
 
     if np.ndim(alpha) > 0:

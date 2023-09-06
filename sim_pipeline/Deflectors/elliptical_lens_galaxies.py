@@ -6,9 +6,7 @@ from sim_pipeline.Util import param_util
 
 
 class EllipticalLensGalaxies(object):
-    """
-    class describing elliptical galaxies
-    """
+    """Class describing elliptical galaxies."""
 
     def __init__(self, galaxy_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area):
         """
@@ -94,8 +92,8 @@ class EllipticalLensGalaxies(object):
 
 
 def elliptical_projected_eccentricity(ellipticity, **kwargs):
-    """
-    projected eccentricity of elliptical galaxies as a function of other deflector parameters
+    """Projected eccentricity of elliptical galaxies as a function of other deflector
+    parameters.
 
     :param ellipticity: eccentricity amplitude
     :type ellipticity: float [0,1)
@@ -115,9 +113,8 @@ def elliptical_projected_eccentricity(ellipticity, **kwargs):
 
 
 def vel_disp_from_m_star(m_star):
-    """
-    Function to calculate the velocity dispersion from the staller mass using empirical relation for
-    elliptical galaxies
+    """Function to calculate the velocity dispersion from the staller mass using
+    empirical relation for elliptical galaxies.
 
     The power-law formula is given by:
 
@@ -131,7 +128,6 @@ def vel_disp_from_m_star(m_star):
 
     :param m_star: stellar mass in the unit of solar mass
     :return: the velocity dispersion ("km/s")
-
     """
     v_disp = np.power(10, 2.32) * np.power(m_star / 1e11, 0.24)
     return v_disp

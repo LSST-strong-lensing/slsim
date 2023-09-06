@@ -6,11 +6,10 @@ from astropy.visualization import make_lupton_rgb
 def simulate_image(
     lens_class, band, num_pix, add_noise=True, observatory="LSST", **kwargs
 ):
-    """
-    Creates an image of a selected lens with noise.
+    """Creates an image of a selected lens with noise.
 
-    :param lens_class: class object containing all information of the lensing system (e.g.,
-     GalaxyGalaxyLens())
+    :param lens_class: class object containing all information of the lensing system
+        (e.g., GalaxyGalaxyLens())
     :param band: imaging band
     :param num_pix: number of pixels per axis
     :param add_noise: if True, add noise
@@ -56,8 +55,7 @@ def simulate_image(
 def sharp_image(
     lens_class, band, mag_zero_point, delta_pix, num_pix, with_deflector=True
 ):
-    """
-    Creates a high resolution image of a selected lens.
+    """Creates a high resolution image of a selected lens.
 
     :param lens_class: GalaxyGalaxyLens() object
     :param band: imaging band
@@ -103,25 +101,25 @@ def sharp_image(
 
 
 def galsimobj(image, pix_scale, flux):
-    """
-    Creates an interpolated version of the given image with specified flux.
+    """Creates an interpolated version of the given image with specified flux.
 
     :param image: image that need to be interpolated
     :param pix_scale: pixel scale to be asigned to the interpolated image
     :param flux: flux value to be asigned to the interpolated image
-    :returns : interpolated image with specified pixel scale and flux"""
+    :returns : interpolated image with specified pixel scale and flux
+    """
     gso = galsim.InterpolatedImage(galsim.Image(image), scale=pix_scale, flux=flux)
     return gso
 
 
 def galsimobj_true_flux(image, pix_scale):
-    """
-    Creates an interpolated version of the given image with preserved flux.
+    """Creates an interpolated version of the given image with preserved flux.
 
     :param image: image that need to be interpolated
     :param pix_scale: pixel scale to be asigned to the interpolated image
     :param flux: flux value to be asigned to the interpolated image
-    :returns : interpolated image with specified pixel scale and flux"""
+    :returns : interpolated image with specified pixel scale and flux
+    """
     gso_test = galsim.InterpolatedImage(
         galsim.Image(image), scale=pix_scale, normalization="flux"
     )
@@ -129,8 +127,7 @@ def galsimobj_true_flux(image, pix_scale):
 
 
 def sharp_rgb_image(lens_class, rgb_band_list, mag_zero_point, delta_pix, num_pix):
-    """
-    Creates a high resolution rgb image of a selected lens.
+    """Creates a high resolution rgb image of a selected lens.
 
     :param lens_class: GalaxyGalaxyLens() object
     :param rgb_band_list: imaging band list
@@ -165,8 +162,7 @@ def sharp_rgb_image(lens_class, rgb_band_list, mag_zero_point, delta_pix, num_pi
 
 
 def rgb_image_from_image_list(image_list, stretch):
-    """
-    Creates a rgb image using list of images in r, g, and b.
+    """Creates a rgb image using list of images in r, g, and b.
 
     :param image_list: images in r, g, and b band
     :return: rgb image

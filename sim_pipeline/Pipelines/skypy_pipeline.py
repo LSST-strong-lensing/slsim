@@ -5,9 +5,7 @@ import tempfile
 
 
 class SkyPyPipeline:
-    """
-    Class for skypy configuration.
-    """
+    """Class for skypy configuration."""
 
     def __init__(self, skypy_config=None, sky_area=None, filters=None):
         """
@@ -50,8 +48,7 @@ class SkyPyPipeline:
 
     @property
     def blue_galaxies(self):
-        """
-        skypy pipeline for blue galaxies
+        """Skypy pipeline for blue galaxies.
 
         :return: list of blue galaxies
         :rtype: list of dict
@@ -60,8 +57,7 @@ class SkyPyPipeline:
 
     @property
     def red_galaxies(self):
-        """
-        skypy pipeline for red galaxies
+        """Skypy pipeline for red galaxies.
 
         :return: list of red galaxies
         :rtype: list of dict

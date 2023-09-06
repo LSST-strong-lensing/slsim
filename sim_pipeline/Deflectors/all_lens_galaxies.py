@@ -12,9 +12,7 @@ from sim_pipeline.Deflectors.elliptical_lens_galaxies import (
 
 
 class AllLensGalaxies(object):
-    """
-    class describing all-type galaxies
-    """
+    """Class describing all-type galaxies."""
 
     def __init__(
         self,
@@ -111,8 +109,7 @@ def fill_table(galaxy_list):
 
 
 def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
-    """
-    function for calculate the velocity dispersion from the staller mass
+    """Function for calculate the velocity dispersion from the staller mass.
 
     :param galaxy_list: list of galaxies with stellar masses given
     :type galaxy_list: ~astropy.Table object

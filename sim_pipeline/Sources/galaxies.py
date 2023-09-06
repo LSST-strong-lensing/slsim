@@ -6,9 +6,7 @@ from sim_pipeline.Sources.source_base import SourceBase
 
 
 class Galaxies(SourceBase):
-    """
-    class describing elliptical galaxies
-    """
+    """Class describing elliptical galaxies."""
 
     def __init__(self, galaxy_list, kwargs_cut, cosmo, sky_area):
         """
@@ -38,8 +36,7 @@ class Galaxies(SourceBase):
         super(Galaxies, self).__init__(cosmo=cosmo, sky_area=sky_area)
 
     def source_number(self):
-        """
-        number of sources registered (within given area on the sky)
+        """Number of sources registered (within given area on the sky)
 
         :return: number of sources
         """
@@ -47,8 +44,7 @@ class Galaxies(SourceBase):
         return number
 
     def draw_source(self):
-        """
-        Choose source at random.
+        """Choose source at random.
 
         :return: dictionary of source
         """
@@ -66,8 +62,8 @@ class Galaxies(SourceBase):
 
 
 def galaxy_projected_eccentricity(ellipticity):
-    """
-    Projected eccentricity of elliptical galaxies as a function of other deflector parameters
+    """Projected eccentricity of elliptical galaxies as a function of other deflector
+    parameters.
 
     :param ellipticity: eccentricity amplitude
     :type ellipticity: float [0,1)

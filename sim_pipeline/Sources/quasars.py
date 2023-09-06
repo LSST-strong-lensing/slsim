@@ -2,10 +2,7 @@ from sim_pipeline.Sources.source_base import SourceBase
 
 
 class Quasars(SourceBase):
-    """
-    Class to describe quasars as sources.
-
-    """
+    """Class to describe quasars as sources."""
 
     def __init__(self, cosmo, sky_area):
         """
