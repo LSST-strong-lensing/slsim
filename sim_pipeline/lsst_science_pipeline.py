@@ -3,7 +3,6 @@ import lsst.geom as geom
 
 # Source injection
 from lsst.pipe.tasks.insertFakes import _add_fake_sources
-from sim_pipeline.image_simulation import galsimobj_true_flux
 import galsim
 from astropy.table import Table, vstack
 from sim_pipeline.image_simulation import sharp_image
