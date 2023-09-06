@@ -1,5 +1,5 @@
 # Galaxy Simulation Configuration File
-This YAML configuration file is used to generate simulated galaxy populations, including their redshift, luminosity, morphology, and other properties, using the SkyPy package. The file defines two populations of galaxies: blue galaxies and red galaxies, each with their unique parameters.
+This YAML configuration file is used to generate simulated galaxy populations, including their redshift, luminosity, morphology, and other properties, using the SkyPy package. The file defines two populations of galaxies: blue galaxies (sources) and red galaxies (lenses), each with their unique parameters.
 
 ## Parameters
 *  mag_lim: Magnitude limit of the galaxy sample (default: 35)

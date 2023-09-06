@@ -2,7 +2,7 @@
 sim-pipeline
 ============
 
-|Read the Docs| |GitHub| |Coveralls|
+|Read the Docs| |GitHub| |Codecov| |Black| |docformatter| |docstyle|
 
 
 LSST strong lensing simulation pipeline.
@@ -50,6 +50,17 @@ See our Citation_ guidelines.
 
 .. |GitHub| image:: https://github.com/LSST-strong-lensing/sim-pipeline/workflows/CI/badge.svg
     :target: https://github.com/LSST-strong-lensing/sim-pipeline/actions
+    :alt: Build Status
 
-.. |Coveralls| image:: https://coveralls.io/repos/github/LSST-strong-lensing/sim-pipeline/badge.svg
-    :target: https://coveralls.io/github/LSST-strong-lensing/sim-pipeline
+.. |Codecov| image:: https://codecov.io/gh/LSST-strong-lensing/sim-pipeline/graph/badge.svg?token=PyDRdtsGSX
+    :target: https://codecov.io/gh/LSST-strong-lensing/sim-pipeline
+    :alt: Code coverage
+
+.. |Black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/psf/black
+
+.. |docstyle| image:: https://img.shields.io/badge/%20style-sphinx-0a507a.svg
+    :target: https://www.sphinx-doc.org/en/master/usage/index.html
+
+.. |docformatter| image:: https://img.shields.io/badge/%20formatter-docformatter-fedcba.svg
+    :target: https://github.com/PyCQA/docformatter
