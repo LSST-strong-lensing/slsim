@@ -1,12 +1,14 @@
 from lenstronomy.SimulationAPI.sim_api import SimAPI
 from astropy.visualization import make_lupton_rgb
 
-def simulate_image(lens_class, band, num_pix, add_noise=True, observatory='LSST', **kwargs):
-    """
-    Creates an image of a selected lens with noise.
 
-    :param lens_class: class object containing all information of the lensing system (e.g., 
-     GalaxyGalaxyLens())
+def simulate_image(
+    lens_class, band, num_pix, add_noise=True, observatory="LSST", **kwargs
+):
+    """Creates an image of a selected lens with noise.
+
+    :param lens_class: class object containing all information of the lensing system
+        (e.g., GalaxyGalaxyLens())
     :param band: imaging band
     :param num_pix: number of pixels per axis
     :param add_noise: if True, add noise

@@ -2,8 +2,13 @@ import os
 from astropy.table import Table
 from astropy.cosmology import FlatLambdaCDM
 from sim_pipeline.galaxy_galaxy_lens import GalaxyGalaxyLens
-from sim_pipeline.image_simulation import (simulate_image, sharp_image, sharp_rgb_image, 
-                                           rgb_image_from_image_list)
+from sim_pipeline.image_simulation import (
+    simulate_image,
+    sharp_image,
+    sharp_rgb_image,
+    rgb_image_from_image_list,
+)
+
 
 class TestImageSimulation(object):
     def setup_method(self):
