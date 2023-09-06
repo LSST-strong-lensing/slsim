@@ -10,8 +10,8 @@ from sim_pipeline.image_simulation import sharp_image
 from scipy.signal import convolve2d
 
 """
-This module provides necessary functions to inject lenses to the dp0 data. For this, it uses some of
-the packages provided by the LSST Science Pipeline.
+This module provides necessary functions to inject lenses to the dp0 data. For this, it 
+uses some of the packages provided by the LSST Science Pipeline.
 """
 
 
@@ -126,7 +126,7 @@ def lens_inejection(
         dec_degrees = point_r.getDec().asDegrees()
         center = (ra_degrees, dec_degrees)
 
-        # image_r = butler.get("deepCoadd", parameters={'bbox':bbox_r}, dataId=coaddId_r)
+        # image_r = butler.get("deepCoadd", parameters={'bbox':bbox_r},dataId=coaddId_r)
         arr_r = np.copy(coadd_cut_r.image.array)
 
         _add_fake_sources(coadd_cut_r, [(point_r, gsobj)])

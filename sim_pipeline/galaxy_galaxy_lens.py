@@ -31,7 +31,8 @@ class GalaxyGalaxyLens(object):
         :param cosmo: astropy.cosmology instance
         :param source_type: type of the source 'extended' or 'point_source' supported
         :type source_type: str
-        :param test_area: area of disk around one lensing galaxies to be investigated on (in arc-seconds^2)
+        :param test_area: area of disk around one lensing galaxies to be investigated
+            on (in arc-seconds^2)
         :param mixgauss_weights: weights of the Gaussian mixture
         :param mixgauss_stds: standard deviations of the Gaussian mixture
         :param mixgauss_means: means of the Gaussian mixture
@@ -109,7 +110,8 @@ class GalaxyGalaxyLens(object):
             source_pos_x, source_pos_y = self.source_position
 
             kwargs_lens = kwargs_params["kwargs_lens"]
-            # TODO: analytical solver possible but currently does not support the convergence term
+            # TODO: analytical solver possible but currently does not support the
+            #  convergence term
             self._image_positions = lens_eq_solver.image_position_from_source(
                 source_pos_x,
                 source_pos_y,
@@ -133,20 +135,23 @@ class GalaxyGalaxyLens(object):
         :type mag_arc_limit: dict with key of bands and values of magnitude limits
         :return: boolean
         """
-        # Criteria 1:The redshift of the lens (z_lens) must be less than the redshift of the source (z_source).
+        # Criteria 1:The redshift of the lens (z_lens) must be less than the redshift of
+        # the source (z_source).
         z_lens = self._lens_dict["z"]
         z_source = self._source_dict["z"]
         if z_lens >= z_source:
             return False
 
-        # Criteria 2: The angular Einstein radius of the lensing configuration (theta_E) times 2 must be greater than
-        # or equal to the minimum image separation (min_image_separation) and less than or equal to the maximum image
+        # Criteria 2: The angular Einstein radius of the lensing configuration (theta_E)
+        # times 2 must be greater than or equal to the minimum image separation
+        # (min_image_separation) and less than or equal to the maximum image
         # separation (max_image_separation).
         if not min_image_separation <= 2 * self._theta_E_sis <= max_image_separation:
             return False
 
-        # Criteria 3: The distance between the lens center and the source position must be less than or equal to the
-        # angular Einstein radius of the lensing configuration (times sqrt(2)).
+        # Criteria 3: The distance between the lens center and the source position must
+        # be less than or equal to the angular Einstein radius of the lensing
+        # configuration (times sqrt(2)).
         center_lens, center_source = self.lens_position, self.source_position
 
         if np.sum((center_lens - center_source) ** 2) > self._theta_E_sis**2 * 2:
@@ -157,15 +162,16 @@ class GalaxyGalaxyLens(object):
         if len(image_positions[0]) < 2:
             return False
 
-        # Criteria 5: The maximum separation between any two image positions must be greater than or equal to the
-        # minimum image separation and less than or equal to the maximum image separation.
+        # Criteria 5: The maximum separation between any two image positions must be
+        # greater than or equal to the minimum image separation and less than or
+        # equal to the maximum image separation.
         image_separation = image_separation_from_positions(image_positions)
         if not min_image_separation <= image_separation <= max_image_separation:
             return False
 
         # Criteria 6: (optional)
-        # compute the magnified brightness of the lensed extended arc for different bands
-        # at least in one band, the magnitude has to be brighter than the limit
+        # compute the magnified brightness of the lensed extended arc for different
+        # bands at least in one band, the magnitude has to be brighter than the limit
         if mag_arc_limit is not None:
             bool_mag_limit = False
             host_mag = self.host_magnification()

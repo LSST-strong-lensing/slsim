@@ -25,16 +25,17 @@ class AllLensGalaxies(object):
     ):
         """
 
-        :param red_galaxy_list: list of dictionary with galaxy parameters of elliptical galaxies
-         (currently supporting skypy pipelines)
-        :param blue_galaxy_list: list of dictionary with galaxy parameters of spiral galaxies
-         (currently supporting skypy pipelines)
+        :param red_galaxy_list: list of dictionary with galaxy parameters of elliptical
+            galaxies (currently supporting skypy pipelines)
+        :param blue_galaxy_list: list of dictionary with galaxy parameters of spiral
+        galaxies (currently supporting skypy pipelines)
         :param kwargs_cut: cuts in parameters
         :type kwargs_cut: dict
         :param kwargs_mass2light: mass-to-light relation
         :param cosmo: astropy.cosmology instance
         :type sky_area: `~astropy.units.Quantity`
-        :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid angle.
+        :param sky_area: Sky area over which galaxies are sampled. Must be in units of
+            solid angle.
         """
         red_column_names = red_galaxy_list.colnames
         if "galaxy_type" not in red_column_names:
@@ -113,10 +114,12 @@ def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
 
     :param galaxy_list: list of galaxies with stellar masses given
     :type galaxy_list: ~astropy.Table object
-    :param z_max: maximum redshift to which the abundance matching with the SDSS velocity dispersion function is valid
+    :param z_max: maximum redshift to which the abundance matching with the SDSS
+        velocity dispersion function is valid
     :param cosmo: astropy.cosmology instance
     :type sky_area: `~astropy.units.Quantity`
-    :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid angle.
+    :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid
+        angle.
     :return: interpolation function f; f(stellar_mass) -> vel_disp
     """
     bool_cut = galaxy_list["z"] < z_max

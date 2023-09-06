@@ -34,7 +34,8 @@ class GalaxyGalaxyLensPop(object):
         :type kwargs_source_cut: dict
         :param skypy_config: path to SkyPy configuration yaml file
         :type skypy_config: string
-        :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid angle.
+        :param sky_area: Sky area over which galaxies are sampled. Must be in units of
+            solid angle.
         :type sky_area: `~astropy.units.Quantity`
         :param filters: filters for SED integration
         :type filters: list of strings or None
@@ -209,9 +210,10 @@ class GalaxyGalaxyLensPop(object):
                     # Check the validity of the lens system
                     if gg_lens.validity_test(**kwargs_lens_cuts):
                         gg_lens_population.append(gg_lens)
-                        # if a lens system passes the validity test, code should exit the loop.
-                        # so, n should be greater or equal to num_sources_tested which will break the
-                        ## the while loop (instead of this one can simply use break).
+                        # if a lens system passes the validity test, code should exit
+                        # the loop. so, n should be greater or equal to
+                        # num_sources_tested which will break the the while loop
+                        # (instead of this one can simply use break).
                         n = num_sources_tested
                     else:
                         n += 1

@@ -11,14 +11,15 @@ class EllipticalLensGalaxies(object):
     def __init__(self, galaxy_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area):
         """
 
-        :param galaxy_list: list of dictionary with galaxy parameters of elliptical galaxies
-         (currently supporting skypy pipelines)
+        :param galaxy_list: list of dictionary with galaxy parameters of elliptical
+            galaxies (currently supporting skypy pipelines)
         :param kwargs_cut: cuts in parameters
         :type kwargs_cut: dict
         :param kwargs_mass2light: mass-to-light relation
         :param cosmo: astropy.cosmology instance
         :type sky_area: `~astropy.units.Quantity`
-        :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid angle.
+        :param sky_area: Sky area over which galaxies are sampled. Must be in units of
+            solid angle.
         """
         n = len(galaxy_list)
         column_names = galaxy_list.colnames
@@ -120,11 +121,13 @@ def vel_disp_from_m_star(m_star):
 
     .. math::
 
-         V_{\\mathrm{disp}} = 10^{2.32} \\left( \\frac{M_{\\mathrm{star}}}{10^{11} M_\\odot} \\right)^{0.24}
+         V_{\\mathrm{disp}} = 10^{2.32} \\left( \\frac{M_{\\mathrm{star}}}{10^{11}
+         M_\\odot} \\right)^{0.24}
 
     2.32,0.24 is the parameters from [1] table 2
-    [1]:Auger, M. W., et al. "The Sloan Lens ACS Survey. X. Stellar, dynamical, and total mass correlations of massive
-    elliptical galaxies." The Astrophysical Journal 724.1 (2010): 511.
+    [1]:Auger, M. W., et al. "The Sloan Lens ACS Survey. X. Stellar, dynamical, and
+    total mass correlations of massive elliptical galaxies." The Astrophysical
+    Journal 724.1 (2010): 511.
 
     :param m_star: stellar mass in the unit of solar mass
     :return: the velocity dispersion ("km/s")

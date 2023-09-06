@@ -7,7 +7,8 @@ class SourceBase(object):
 
         :param cosmo: cosmology
         :type cosmo: ~astropy.cosmology class
-        :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid angle.
+        :param sky_area: Sky area over which galaxies are sampled. Must be in units of
+            solid angle.
         :type sky_area: `~astropy.units.Quantity`
         """
         self._cosmo = cosmo

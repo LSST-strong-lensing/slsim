@@ -66,7 +66,8 @@ def configure_roman_filters():
     wave = []
 
     area = (2.4 / 2) ** 2 * np.pi  # Roman mirror diameter is 2.4 meters
-    # we need to divide by the area as the throughputs are given in effective area in m^2
+    # we need to divide by the area as the throughputs are given in effective area
+    # in m^2
 
     with open(file_name_roman, newline="") as myFile:
         reader = csv.DictReader(myFile)

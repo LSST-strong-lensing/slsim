@@ -9,10 +9,12 @@ class SkyPyPipeline:
 
     def __init__(self, skypy_config=None, sky_area=None, filters=None):
         """
-        :param skypy_config: path to SkyPy configuration yaml file. If None, uses 'data/SkyPy/lsst-like.yml'.
+        :param skypy_config: path to SkyPy configuration yaml file. If None, uses
+            'data/SkyPy/lsst-like.yml'.
         :type skypy_config: string or None
         :type sky_area: `~astropy.units.Quantity`
-        :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid angle.
+        :param sky_area: Sky area over which galaxies are sampled. Must be in units of
+            solid angle.
         :param filters: filters for SED integration
         :type filters: list of strings or None
         """
@@ -43,7 +45,8 @@ class SkyPyPipeline:
 
             # Remove the temporary file after the pipeline has been executed
             os.remove(tmp_file.name)
-        # TODO: note that the f_sky can not be set to large. Need to figure out how to do this properly
+        # TODO: note that the f_sky can not be set to large. Need to figure out
+        #  how to do this properly
         # for LSST simulations (10^5 deg^2)
 
     @property

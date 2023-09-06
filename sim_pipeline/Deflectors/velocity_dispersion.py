@@ -6,7 +6,8 @@ from skypy.utils.random import schechter
 """
 This module provides functions to compute velocity dispersion using schechter function.
 """
-#  TODO: some functionality may directly be imported from skypy, once a version is released
+#  TODO: some functionality may directly be imported from skypy, once a version is
+#  released
 #  from skypy.galaxies.velocity_dispersion import schechter_vdf
 
 
@@ -21,7 +22,8 @@ def vel_disp_sdss(sky_area, redshift, vd_min, vd_max, cosmology, noise=True):
         Input redshift grid on which the Schechter function parameters are
         evaluated. Galaxies are sampled over this redshift range.
     vd_min, vd_max: int
-        Lower and upper bounds of random variable x (velocity dispersion). Samples are drawn uniformly from bounds.
+        Lower and upper bounds of random variable x (velocity dispersion). Samples are
+        drawn uniformly from bounds.
     cosmology : `astropy.cosmology`
         `astropy.cosmology` object to calculate comoving densities.
     noise : bool, optional
@@ -30,13 +32,13 @@ def vel_disp_sdss(sky_area, redshift, vd_min, vd_max, cosmology, noise=True):
     Returns
     -------
     redshifts, velocity dispersion : tuple of array_like
-        Redshifts and velocity dispersion of the galaxy sample described by the Schechter
-        velocity dispersion function.
+        Redshifts and velocity dispersion of the galaxy sample described by the
+        Schechter velocity dispersion function.
 
     Notes
     -----
-    The probability distribution function :math:`p(\sigma)` for velocity dispersion :math:`\sigma`
-    can be described by a Schechter function (see eq. (4) in [1]_)
+    The probability distribution function :math:`p(\sigma)` for velocity dispersion
+    :math:`\sigma` can be described by a Schechter function (see eq. (4) in [1]_)
 
     .. math::
 
@@ -105,7 +107,8 @@ def schechter_vel_disp(
     vd_star: float
         The characteristic velocity dispersion.
     vd_min, vd_max: float
-        Lower and upper bounds of random variable x. Samples are drawn uniformly from bounds.
+        Lower and upper bounds of random variable x. Samples are drawn uniformly from
+        bounds.
     sky_area : `~astropy.units.Quantity`
         Sky area over which galaxies are sampled. Must be in units of solid angle.
     cosmology : `astropy.cosmology`
@@ -123,8 +126,8 @@ def schechter_vel_disp(
     Returns
     -------
     redshifts, velocity dispersion : tuple of array_like
-        Redshifts and velocity dispersion of the galaxy sample described by the Schechter
-        velocity dispersion function.
+        Redshifts and velocity dispersion of the galaxy sample described by the
+        Schechter velocity dispersion function.
     """
 
     # sample halo redshifts
@@ -180,7 +183,8 @@ def schechter_vel_disp_redshift(
     vd_star: float
         The characteristic velocity dispersion.
     vd_min, vd_max: int
-        Lower and upper bounds of random variable x. Samples are drawn uniformly from bounds.
+        Lower and upper bounds of random variable x. Samples are drawn uniformly from
+        bounds.
     sky_area : `~astropy.units.Quantity`
         Sky area over which galaxies are sampled. Must be in units of solid angle.
     cosmology : Cosmology
@@ -195,8 +199,8 @@ def schechter_vel_disp_redshift(
 
     Notes
     -----
-    The probability distribution function :math:`p(\sigma)` for velocity dispersion :math:`\sigma`
-    can be described by a Schechter function (see eq. (4) in [1]_)
+    The probability distribution function :math:`p(\sigma)` for velocity dispersion
+    :math:`\sigma` can be described by a Schechter function (see eq. (4) in [1]_)
 
     .. math::
 
@@ -248,8 +252,8 @@ def schechter_vel_disp_redshift(
 def schechter_velocity_dispersion_function(
     alpha, beta, vd_star, vd_min, vd_max, size=None, resolution=1000
 ):
-    r"""Sample velocity dispersion of elliptical galaxies in the local universe following
-    a Schecter function.
+    r"""Sample velocity dispersion of elliptical galaxies in the local universe
+    following a Schecter function.
 
     Parameters
     ----------
@@ -260,7 +264,8 @@ def schechter_velocity_dispersion_function(
     vd_star: float
         The characteristic velocity dispersion.
     vd_min, vd_max: int
-        Lower and upper bounds of random variable x. Samples are drawn uniformly from bounds.
+        Lower and upper bounds of random variable x. Samples are drawn uniformly from
+        bounds.
     resolution: int
         Resolution of the inverse transform sampling spline. Default is 100.
     size: int
@@ -273,8 +278,8 @@ def schechter_velocity_dispersion_function(
 
     Notes
     -----
-    The probability distribution function :math:`p(\sigma)` for velocity dispersion :math:`\sigma`
-    can be described by a Schechter function (see eq. (4) in [1]_)
+    The probability distribution function :math:`p(\sigma)` for velocity dispersion
+    :math:`\sigma` can be described by a Schechter function (see eq. (4) in [1]_)
 
     .. math::
 

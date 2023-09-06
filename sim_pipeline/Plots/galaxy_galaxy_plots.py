@@ -16,9 +16,9 @@ class GalaxyGalaxyLensingPlots(object):
         :type num_pix: int
         :param observatory: observatory chosen
         :type observatory: str
-        :param kwargs: additional keyword arguments for the bands. Eg: coadd_years (=10): this is
-         the number of years corresponding to num_exposures in obs dict. Currently
-         supported: 1-10.
+        :param kwargs: additional keyword arguments for the bands. Eg: coadd_years
+            (=10): this is the number of years corresponding to num_exposures in obs
+            dict. Currently supported: 1-10.
         :type kwargs: dict
         """
         self._lens_pop = lens_pop

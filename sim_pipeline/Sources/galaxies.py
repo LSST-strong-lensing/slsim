@@ -16,7 +16,8 @@ class Galaxies(SourceBase):
         :param kwargs_cut: cuts in parameters
         :type kwargs_cut: dict
         :param cosmo: astropy.cosmology instance
-        :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid angle.
+        :param sky_area: Sky area over which galaxies are sampled. Must be in units of
+            solid angle.
         :type sky_area: `~astropy.units.Quantity`
         """
         self.n = len(galaxy_list)
