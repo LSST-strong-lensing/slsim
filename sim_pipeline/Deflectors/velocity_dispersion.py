@@ -44,7 +44,8 @@ def vel_disp_sdss(sky_area, redshift, vd_min, vd_max, cosmology, noise=True):
 
         \\phi = \\phi_* \\left(\\frac{\\sigma}{\\sigma_*}\\right)^\\alpha
             \\exp\\left[-\\left( \\frac{\\sigma}{\\sigma_*} \\right)^\\beta\\right]
-            \\frac{\\beta}{\\Gamma(\\alpha/\\beta)} \frac{1}{\\sigma} \\mathrm{d}\\sigma \\;.
+            \\frac{\\beta}{\\Gamma(\\alpha/\\beta)} \frac{1}{\\sigma}
+            \\mathrm{d}\\sigma \\;.
 
     where :math:`\\Gamma` is the gamma function, :math:`\\sigma_*` is the
     characteristic velocity dispersion, :math:`\\phi_*` is
@@ -205,7 +206,8 @@ def schechter_vel_disp_redshift(
 
         \\phi = \\phi_* \\left(\\frac{\\sigma}{\\sigma_*}\\right)^\\alpha
             \\exp\\left[-\\left( \\frac{\\sigma}{\\sigma_*} \\right)^\\beta\\right]
-            \\frac{\\beta}{\\Gamma(\\alpha/\\beta)} \\frac{1}{\\sigma} \\mathrm{d}\\sigma \\;.
+            \\frac{\\beta}{\\Gamma(\\alpha/\\beta)} \\frac{1}{\\sigma} \\mathrm{d}
+            \\sigma \\;.
 
     where :math:`\\Gamma` is the gamma function, :math:`\\sigma_*` is the
     characteristic velocity dispersion, :math:`\\phi_*` is
@@ -284,7 +286,8 @@ def schechter_velocity_dispersion_function(
 
         \\phi = \\phi_* \\left(\\frac{\\sigma}{\\sigma_*}\\right)^\\alpha
             \\exp\\left[-\\left( \\frac{\\sigma}{\\sigma_*} \\right)^\\beta\\right]
-            \\frac{\\beta}{\\Gamma(\\alpha/\\beta)} \frac{1}{\\sigma} \\mathrm{d}\\sigma \\;.
+            \\frac{\\beta}{\\Gamma(\\alpha/\\beta)} \frac{1}{\\sigma} \\mathrm{d}
+            \\sigma \\;.
 
     where :math:`\\Gamma` is the gamma function, :math:`\\sigma_*` is the
     characteristic velocity dispersion, :math:`\\phi_*` is
