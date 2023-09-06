@@ -3,7 +3,6 @@ import lsst.geom as geom
 
 # Source injection
 from lsst.pipe.tasks.insertFakes import _add_fake_sources
-from sim_pipeline.image_simulation import galsimobj_true_flux
 import galsim
 from astropy.table import Table, vstack
 from sim_pipeline.image_simulation import sharp_image
@@ -102,7 +101,9 @@ def lens_inejection(
             num_pix=num_pix,
         )
         if flux is None:
-            gsobj = galsimobj_true_flux(lens, pix_scale=delta_pix)
+            gsobj = galsim.InterpolatedImage(
+                galsim.Image(lens), scale=delta_pix, normalization="flux"
+            )
         else:
             gsobj = galsim.InterpolatedImage(
                 galsim.Image(lens), scale=delta_pix, flux=flux
