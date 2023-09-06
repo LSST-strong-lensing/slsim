@@ -1,8 +1,6 @@
 from lenstronomy.SimulationAPI.sim_api import SimAPI
 from astropy.visualization import make_lupton_rgb
 
-
-
 def simulate_image(lens_class, band, num_pix, add_noise=True, observatory='LSST', **kwargs):
     """
     Creates an image of a selected lens with noise.
@@ -73,6 +71,7 @@ def sharp_image(lens_class, band, mag_zero_point, delta_pix, num_pix, with_defle
                               unconvolved=True, source_add=True, lens_light_add=with_deflector,
                               point_source_add=False)
     return image
+
 
 def sharp_rgb_image(lens_class, rgb_band_list, mag_zero_point, delta_pix, num_pix):
     """
