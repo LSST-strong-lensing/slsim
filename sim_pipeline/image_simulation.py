@@ -106,7 +106,7 @@ def galsimobj(image, pix_scale, flux):
     :param image: image that need to be interpolated
     :param pix_scale: pixel scale to be asigned to the interpolated image
     :param flux: flux value to be asigned to the interpolated image
-    :returns : interpolated image with specified pixel scale and flux
+    :returns: interpolated image with specified pixel scale and flux
     """
     gso = galsim.InterpolatedImage(galsim.Image(image), scale=pix_scale, flux=flux)
     return gso
@@ -118,7 +118,7 @@ def galsimobj_true_flux(image, pix_scale):
     :param image: image that need to be interpolated
     :param pix_scale: pixel scale to be asigned to the interpolated image
     :param flux: flux value to be asigned to the interpolated image
-    :returns : interpolated image with specified pixel scale and flux
+    :returns: interpolated image with specified pixel scale and flux
     """
     gso_test = galsim.InterpolatedImage(
         galsim.Image(image), scale=pix_scale, normalization="flux"

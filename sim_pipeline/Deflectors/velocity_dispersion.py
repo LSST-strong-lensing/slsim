@@ -37,19 +37,20 @@ def vel_disp_sdss(sky_area, redshift, vd_min, vd_max, cosmology, noise=True):
 
     Notes
     -----
-    The probability distribution function :math:`p(\sigma)` for velocity dispersion
-    :math:`\sigma` can be described by a Schechter function (see eq. (4) in [1]_)
+    The probability distribution function :math:`p(\\sigma)` for velocity dispersion
+    :math:`\\sigma` can be described by a Schechter function (see eq. (4) in [1]_)
 
     .. math::
 
-        \phi = \phi_* \left(\frac{\sigma}{\sigma_*}\right)^\alpha
-            \exp\left[-\left( \frac{\sigma}{\sigma_*} \right)^\beta\right]
-            \frac{\beta}{\Gamma(\alpha/\beta)} \frac{1}{\sigma} \mathrm{d}\sigma \;.
+        \\phi = \\phi_* \\left(\\frac{\\sigma}{\\sigma_*}\\right)^\\alpha
+            \\exp\\left[-\\left( \\frac{\\sigma}{\\sigma_*} \\right)^\\beta\\right]
+            \\frac{\\beta}{\\Gamma(\\alpha/\\beta)} \frac{1}{\\sigma}
+            \\mathrm{d}\\sigma \\;.
 
-    where :math:`\Gamma` is the gamma function, :math:`\sigma_*` is the
-    characteristic velocity dispersion, :math:`\phi_*` is
+    where :math:`\\Gamma` is the gamma function, :math:`\\sigma_*` is the
+    characteristic velocity dispersion, :math:`\\phi_*` is
     number density and
-    :math:`\alpha` and :math:`\beta` are free parameters.
+    :math:`\\alpha` and :math:`\\beta` are free parameters.
 
     References
     ----------
@@ -118,7 +119,6 @@ def schechter_vel_disp(
 
     Notes
     -----
-
     Effectively calls `~skypy.galaxies.redshift.schechter_smf_redshift` and
     `~skypy.galaxies.stellar_mass.schechter_smf_mass` internally and returns
     the tuple of results.
@@ -199,23 +199,24 @@ def schechter_vel_disp_redshift(
 
     Notes
     -----
-    The probability distribution function :math:`p(\sigma)` for velocity dispersion
-    :math:`\sigma` can be described by a Schechter function (see eq. (4) in [1]_)
+    The probability distribution function :math:`p(\\sigma)` for velocity dispersion
+    :math:`\sigma` can be described by a Schechter function (see eq. (4) in [2]_)
 
     .. math::
 
-        \phi = \phi_* \left(\frac{\sigma}{\sigma_*}\right)^\alpha
-            \exp\left[-\left( \frac{\sigma}{\sigma_*} \right)^\beta\right]
-            \frac{\beta}{\Gamma(\alpha/\beta)} \frac{1}{\sigma} \mathrm{d}\sigma \;.
+        \\phi = \\phi_* \\left(\\frac{\\sigma}{\\sigma_*}\\right)^\\alpha
+            \\exp\\left[-\\left( \\frac{\\sigma}{\\sigma_*} \\right)^\\beta\\right]
+            \\frac{\\beta}{\\Gamma(\\alpha/\\beta)} \\frac{1}{\\sigma} \\mathrm{d}
+            \\sigma \\;.
 
-    where :math:`\Gamma` is the gamma function, :math:`\sigma_*` is the
-    characteristic velocity dispersion, :math:`\phi_*` is
+    where :math:`\\Gamma` is the gamma function, :math:`\\sigma_*` is the
+    characteristic velocity dispersion, :math:`\\phi_*` is
     number density and
-    :math:`\alpha` and :math:`\beta` are free parameters.
+    :math:`\\alpha` and :math:`\beta` are free parameters.
 
     References
     ----------
-    .. [1] Choi, Park and Vogeley, (2007), astro-ph/0611607, doi:10.1086/511060
+    .. [2] Choi, Park and Vogeley, (2007), astro-ph/0611607, doi:10.1086/511060
     """
     alpha_prime = alpha / beta - 1
     x_min, x_max = (vd_min / vd_star) ** beta, (vd_max / vd_star) ** beta
@@ -278,23 +279,24 @@ def schechter_velocity_dispersion_function(
 
     Notes
     -----
-    The probability distribution function :math:`p(\sigma)` for velocity dispersion
-    :math:`\sigma` can be described by a Schechter function (see eq. (4) in [1]_)
+    The probability distribution function :math:`p(\\sigma)` for velocity dispersion
+    :math:`\\sigma` can be described by a Schechter function (see eq. (4) in [3]_)
 
     .. math::
 
-        \phi = \phi_* \left(\frac{\sigma}{\sigma_*}\right)^\alpha
-            \exp\left[-\left( \frac{\sigma}{\sigma_*} \right)^\beta\right]
-            \frac{\beta}{\Gamma(\alpha/\beta)} \frac{1}{\sigma} \mathrm{d}\sigma \;.
+        \\phi = \\phi_* \\left(\\frac{\\sigma}{\\sigma_*}\\right)^\\alpha
+            \\exp\\left[-\\left( \\frac{\\sigma}{\\sigma_*} \\right)^\\beta\\right]
+            \\frac{\\beta}{\\Gamma(\\alpha/\\beta)} \frac{1}{\\sigma} \\mathrm{d}
+            \\sigma \\;.
 
-    where :math:`\Gamma` is the gamma function, :math:`\sigma_*` is the
-    characteristic velocity dispersion, :math:`\phi_*` is
+    where :math:`\\Gamma` is the gamma function, :math:`\\sigma_*` is the
+    characteristic velocity dispersion, :math:`\\phi_*` is
     number density of all spiral galaxies and
-    :math:`\alpha` and :math:`\beta` are free parameters.
+    :math:`\\alpha` and :math:`\\beta` are free parameters.
 
     References
     ----------
-    .. [1] Choi, Park and Vogeley, (2007), astro-ph/0611607, doi:10.1086/511060
+    .. [3] Choi, Park and Vogeley, (2007), astro-ph/0611607, doi:10.1086/511060
     """
 
     if np.ndim(alpha) > 0:
