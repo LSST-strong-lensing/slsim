@@ -2,7 +2,9 @@ from lenstronomy.SimulationAPI.sim_api import SimAPI
 from astropy.visualization import make_lupton_rgb
 
 
-def simulate_image(lens_class, band, num_pix, add_noise=True, observatory="LSST", **kwargs):
+def simulate_image(
+    lens_class, band, num_pix, add_noise=True, observatory="LSST", **kwargs
+):
     """Creates an image of a selected lens with noise.
 
     :param lens_class: class object containing all information of the lensing system
