@@ -2,7 +2,7 @@ from lenstronomy.SimulationAPI.ObservationConfig.LSST import LSST
 from lenstronomy.SimulationAPI.ObservationConfig.Roman import Roman
 
 
-def kwargs_single_band(band, observatory='LSST', **kwargs):
+def kwargs_single_band(band, observatory="LSST", **kwargs):
     """
     This is the function for returning the band information.
 
@@ -15,8 +15,8 @@ def kwargs_single_band(band, observatory='LSST', **kwargs):
     :return: configuration of imaging data
     :rtype: dict
     """
-    if observatory == 'LSST':
+    if observatory == "LSST":
         observatory = LSST(band=band, **kwargs)
-    elif observatory == 'Roman':
+    elif observatory == "Roman":
         observatory = Roman(band=band, **kwargs)
     return observatory.kwargs_single_band()

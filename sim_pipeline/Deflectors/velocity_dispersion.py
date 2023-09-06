@@ -60,12 +60,33 @@ def vel_disp_sdss(sky_area, redshift, vd_min, vd_max, cosmology, noise=True):
     vd_star = 161
     alpha = 2.32
     beta = 2.67
-    return schechter_vel_disp(redshift, phi_star, alpha, beta, vd_star, vd_min, vd_max, sky_area, cosmology,
-                              noise=noise)
+    return schechter_vel_disp(
+        redshift,
+        phi_star,
+        alpha,
+        beta,
+        vd_star,
+        vd_min,
+        vd_max,
+        sky_area,
+        cosmology,
+        noise=noise,
+    )
 
 
-def schechter_vel_disp(redshift, phi_star, alpha, beta, vd_star, vd_min, vd_max, sky_area, cosmology, noise=True):
-    r'''Sample redshifts and stellar masses from a Schechter mass function.
+def schechter_vel_disp(
+    redshift,
+    phi_star,
+    alpha,
+    beta,
+    vd_star,
+    vd_min,
+    vd_max,
+    sky_area,
+    cosmology,
+    noise=True,
+):
+    r"""Sample redshifts and stellar masses from a Schechter mass function.
 
     Sample the redshifts and stellar masses of galaxies following a Schechter
     mass function with potentially redshift-dependent parameters, limited
@@ -107,20 +128,41 @@ def schechter_vel_disp(redshift, phi_star, alpha, beta, vd_star, vd_min, vd_max,
         Redshifts and velocity dispersion of the galaxy sample described by the Schechter
         velocity dispersion function.
 
-    '''
+    """
 
     # sample halo redshifts
-    z = schechter_vel_disp_redshift(redshift, phi_star, alpha, beta, vd_star, vd_min, vd_max,
-                                    sky_area, cosmology, noise)
+    z = schechter_vel_disp_redshift(
+        redshift,
+        phi_star,
+        alpha,
+        beta,
+        vd_star,
+        vd_min,
+        vd_max,
+        sky_area,
+        cosmology,
+        noise,
+    )
     # sample galaxy mass for redshifts
-    vel_disp = schechter_velocity_dispersion_function(alpha, beta, vd_star, vd_min=vd_min,
-                                                        vd_max=vd_max, size=len(z), resolution=100)
+    vel_disp = schechter_velocity_dispersion_function(
+        alpha, beta, vd_star, vd_min=vd_min, vd_max=vd_max, size=len(z), resolution=100
+    )
     return z, vel_disp
 
 
-def schechter_vel_disp_redshift(redshift, phi_star, alpha, beta, vd_star, vd_min, vd_max, sky_area,
-                                cosmology, noise=True):
-    r'''Sample redshifts from Schechter function.
+def schechter_vel_disp_redshift(
+    redshift,
+    phi_star,
+    alpha,
+    beta,
+    vd_star,
+    vd_min,
+    vd_max,
+    sky_area,
+    cosmology,
+    noise=True,
+):
+    r"""Sample redshifts from Schechter function.
 
     Sample the redshifts of velocity dispersion following a Schechter function
     with potentially redshift-dependent parameters, limited by velocity dispersion
@@ -175,7 +217,7 @@ def schechter_vel_disp_redshift(redshift, phi_star, alpha, beta, vd_star, vd_min
     .. [1] Choi, Park and Vogeley, (2007), astro-ph/0611607, doi:10.1086/511060
 
 
-    '''
+    """
     alpha_prime = alpha / beta - 1
     x_min, x_max = (vd_min / vd_star) ** beta, (vd_max / vd_star) ** beta
 
@@ -184,27 +226,33 @@ def schechter_vel_disp_redshift(redshift, phi_star, alpha, beta, vd_star, vd_min
 
     # gamma function integrand
     def f(lnx, a):
-        return np.exp(a*lnx - np.exp(lnx)) if lnx < lnxmax.max() else 0.
+        return np.exp(a * lnx - np.exp(lnx)) if lnx < lnxmax.max() else 0.0
 
     # integrate gamma function for each redshift
 
-    gamma_ab = scipy.special.gamma(alpha/beta)
+    gamma_ab = scipy.special.gamma(alpha / beta)
 
     gam = np.empty_like(redshift)
 
     for i, _ in np.ndenumerate(gam):
-
         gam[i], _ = scipy.integrate.quad(f, lnxmin, lnxmax, args=(alpha_prime,))
 
     # comoving number density is normalisation times upper incomplete gamma
-    density = phi_star*gam / gamma_ab
+    density = phi_star * gam / gamma_ab
 
     # sample redshifts from the comoving density
-    return redshifts_from_comoving_density(redshift=redshift, density=density,
-                                           sky_area=sky_area, cosmology=cosmology, noise=noise)
+    return redshifts_from_comoving_density(
+        redshift=redshift,
+        density=density,
+        sky_area=sky_area,
+        cosmology=cosmology,
+        noise=noise,
+    )
 
 
-def schechter_velocity_dispersion_function(alpha, beta, vd_star, vd_min, vd_max, size=None, resolution=1000):
+def schechter_velocity_dispersion_function(
+    alpha, beta, vd_star, vd_min, vd_max, size=None, resolution=1000
+):
     r"""Sample velocity dispersion of elliptical galaxies in the local universe
     following a Schecter function.
 
@@ -251,12 +299,12 @@ def schechter_velocity_dispersion_function(alpha, beta, vd_star, vd_min, vd_max,
     """
 
     if np.ndim(alpha) > 0:
-        raise NotImplementedError('only scalar alpha is supported')
+        raise NotImplementedError("only scalar alpha is supported")
 
-    alpha_prime = alpha/beta - 1
-    x_min, x_max = (vd_min/vd_star)**beta, (vd_max/vd_star)**beta
+    alpha_prime = alpha / beta - 1
+    x_min, x_max = (vd_min / vd_star) ** beta, (vd_max / vd_star) ** beta
 
     samples = schechter(alpha_prime, x_min, x_max, resolution=resolution, size=size)
-    samples = samples**(1/beta) * vd_star
+    samples = samples ** (1 / beta) * vd_star
 
     return samples

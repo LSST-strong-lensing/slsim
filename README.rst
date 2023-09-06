@@ -2,7 +2,7 @@
 sim-pipeline
 ============
 
-|Read the Docs| |GitHub| |Codecov|
+|Read the Docs| |GitHub| |Codecov| |Black|
 
 
 LSST strong lensing simulation pipeline.
@@ -55,3 +55,6 @@ See our Citation_ guidelines.
 .. |Codecov| image:: https://codecov.io/gh/LSST-strong-lensing/sim-pipeline/graph/badge.svg?token=PyDRdtsGSX
     :target: https://codecov.io/gh/LSST-strong-lensing/sim-pipeline
     :alt: Code coverage
+
+.. |Black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/psf/black

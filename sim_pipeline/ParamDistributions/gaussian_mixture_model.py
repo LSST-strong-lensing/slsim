@@ -7,6 +7,7 @@ class GaussianMixtureModel:
     This class is used to represent a mixture of Gaussian distributions,
     each of which is defined by its mean, standard deviation and weight.
     """
+
     def __init__(self, means=None, stds=None, weights=None):
         """
         The constructor for GaussianMixtureModel class. The default values are the means, standard deviations,
@@ -25,8 +26,9 @@ class GaussianMixtureModel:
             stds = [np.sqrt(0.00283885), np.sqrt(0.01066668), np.sqrt(0.0097978)]
         if weights is None:
             weights = [0.62703102, 0.23732313, 0.13564585]
-        assert len(means) == len(stds) == len(
-            weights), 'Lengths of means, standard deviations, and weights must be equal.'
+        assert (
+            len(means) == len(stds) == len(weights)
+        ), "Lengths of means, standard deviations, and weights must be equal."
         self.means = means
         self.stds = stds
         self.weights = weights
@@ -42,4 +44,9 @@ class GaussianMixtureModel:
         :rtype: np.array
         """
         components = np.random.choice(len(self.means), size=size, p=self.weights)
-        return np.array([np.random.normal(self.means[component], self.stds[component]) for component in components])
+        return np.array(
+            [
+                np.random.normal(self.means[component], self.stds[component])
+                for component in components
+            ]
+        )

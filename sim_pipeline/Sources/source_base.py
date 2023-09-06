@@ -1,9 +1,8 @@
-
-
 class SourceBase(object):
     """
     Base class with functions all source classes must have to be able to render populations
     """
+
     def __init__(self, cosmo, sky_area):
         """
 
@@ -21,7 +20,9 @@ class SourceBase(object):
 
         :return: number of sources
         """
-        raise NotImplementedError('Function source_number not implemented in chosen source class.')
+        raise NotImplementedError(
+            "Function source_number not implemented in chosen source class."
+        )
 
     def draw_source(self):
         """
@@ -29,4 +30,6 @@ class SourceBase(object):
 
         :return: dictionary of source
         """
-        raise NotImplementedError('Function draw_source not implemented in chosen source class.')
+        raise NotImplementedError(
+            "Function draw_source not implemented in chosen source class."
+        )

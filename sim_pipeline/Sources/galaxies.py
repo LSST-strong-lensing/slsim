@@ -9,6 +9,7 @@ class Galaxies(SourceBase):
     """
     class describing elliptical galaxies
     """
+
     def __init__(self, galaxy_list, kwargs_cut, cosmo, sky_area):
         """
 
@@ -23,13 +24,13 @@ class Galaxies(SourceBase):
         self.n = len(galaxy_list)
         # add missing keywords in astropy.Table object
         column_names = galaxy_list.colnames
-        if 'ellipticity' not in column_names:
-            raise ValueError('required parameters missing in galaxy_list columns')
-        if 'e1' not in column_names or 'e2' not in column_names:
-            galaxy_list['e1'] = -np.ones(self.n)
-            galaxy_list['e2'] = -np.ones(self.n)
-        if 'n_sersic' not in column_names:
-            galaxy_list['n_sersic'] = -np.ones(self.n)
+        if "ellipticity" not in column_names:
+            raise ValueError("required parameters missing in galaxy_list columns")
+        if "e1" not in column_names or "e2" not in column_names:
+            galaxy_list["e1"] = -np.ones(self.n)
+            galaxy_list["e2"] = -np.ones(self.n)
+        if "n_sersic" not in column_names:
+            galaxy_list["n_sersic"] = -np.ones(self.n)
         # make cuts
         self._galaxy_select = galaxy_cut(galaxy_list, **kwargs_cut)
 
@@ -55,12 +56,12 @@ class Galaxies(SourceBase):
         index = random.randint(0, self._num_select - 1)
         galaxy = self._galaxy_select[index]
 
-        if galaxy['e1'] == -1 or galaxy['e2'] == -1:
-            e1, e2 = galaxy_projected_eccentricity(float(galaxy['ellipticity']))
-            galaxy['e1'] = e1
-            galaxy['e2'] = e2
-        if galaxy['n_sersic'] == -1:
-            galaxy['n_sersic'] = 1  # TODO make a better estimate with scatter
+        if galaxy["e1"] == -1 or galaxy["e2"] == -1:
+            e1, e2 = galaxy_projected_eccentricity(float(galaxy["ellipticity"]))
+            galaxy["e1"] = e1
+            galaxy["e2"] = e2
+        if galaxy["n_sersic"] == -1:
+            galaxy["n_sersic"] = 1  # TODO make a better estimate with scatter
         return galaxy
 
 

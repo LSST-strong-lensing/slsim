@@ -46,7 +46,7 @@ def e2epsilon(e):
 def random_ra_dec(ra_min, ra_max, dec_min, dec_max, n):
     """
     Generates n number of random ra, dec pair with in a given limits.
-    
+
     :param ra_min: minimum limit for ra
     :param ra_max: maximum limit for ra
     :param dec_min: minimum limit for dec
@@ -54,6 +54,6 @@ def random_ra_dec(ra_min, ra_max, dec_min, dec_max, n):
     :param n: number of random sample
     :returns: n number of ra, dec pair within given limits
     """
-    ra=np.random.uniform(ra_min,ra_max, n)
-    dec=np.random.uniform(dec_min, dec_max, n)
+    ra = np.random.uniform(ra_min, ra_max, n)
+    dec = np.random.uniform(dec_min, dec_max, n)
     return ra, dec
