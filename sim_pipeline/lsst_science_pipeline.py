@@ -102,7 +102,8 @@ def lens_inejection(lens_pop, num_pix, delta_pix, butler, ra, dec, lens_cut=None
         lens = sharp_image(lens_class=lens_class, band=band, mag_zero_point=27, delta_pix=delta_pix, 
                          num_pix=num_pix)
         if flux is None:
-            gsobj = galsimobj_true_flux(lens, pix_scale=delta_pix)
+            gsobj = galsim.InterpolatedImage(galsim.Image(lens), scale = delta_pix, 
+                                        normalization='flux')
         else:
             gsobj = galsim.InterpolatedImage(galsim.Image(lens), scale = delta_pix, flux = flux)
 

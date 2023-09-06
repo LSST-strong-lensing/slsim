@@ -1,5 +1,4 @@
 from lenstronomy.SimulationAPI.sim_api import SimAPI
-import galsim
 from astropy.visualization import make_lupton_rgb
 
 
@@ -74,32 +73,6 @@ def sharp_image(lens_class, band, mag_zero_point, delta_pix, num_pix, with_defle
                               unconvolved=True, source_add=True, lens_light_add=with_deflector,
                               point_source_add=False)
     return image
-
-
-def galsimobj(image, pix_scale, flux):
-    """
-    Creates an interpolated version of the given image with specified flux.
-    
-    :param image: image that need to be interpolated
-    :param pix_scale: pixel scale to be asigned to the interpolated image
-    :param flux: flux value to be asigned to the interpolated image
-    :returns : interpolated image with specified pixel scale and flux"""
-    gso = galsim.InterpolatedImage(galsim.Image(image), scale = pix_scale, flux = flux)
-    return gso
-
-
-def galsimobj_true_flux(image, pix_scale):
-    """
-    Creates an interpolated version of the given image with preserved flux.
-    
-    :param image: image that need to be interpolated
-    :param pix_scale: pixel scale to be asigned to the interpolated image
-    :param flux: flux value to be asigned to the interpolated image
-    :returns : interpolated image with specified pixel scale and flux"""
-    gso_test = galsim.InterpolatedImage(galsim.Image(image), scale = pix_scale, 
-                                        normalization='flux')
-    return gso_test
-
 
 def sharp_rgb_image(lens_class, rgb_band_list, mag_zero_point, delta_pix, num_pix):
     """
