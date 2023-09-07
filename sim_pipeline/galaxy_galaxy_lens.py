@@ -285,20 +285,26 @@ class GalaxyGalaxyLens(object):
         :rtype: numpy array
         """
         lens_model_list, kwargs_lens = self.lens_model_lenstronomy()
-        lens_model = LensModel(lens_model_list=lens_model_list, cosmo=self.cosmo,
-                               z_lens=self.lens_redshift, z_source=self.source_redshift)
+        lens_model = LensModel(
+            lens_model_list=lens_model_list,
+            cosmo=self.cosmo,
+            z_lens=self.lens_redshift,
+            z_source=self.source_redshift,
+        )
         x_image, y_image = self.image_positions()
-        arrival_times = lens_model.arrival_time(x_image, y_image, kwargs_lens=kwargs_lens)
+        arrival_times = lens_model.arrival_time(
+            x_image, y_image, kwargs_lens=kwargs_lens
+        )
         return arrival_times
 
     def image_observer_times(self, t_obs):
-        """calculates time of the source at the different images,
-        not correcting for redshifts, but for time delays.
-        The time is relative to the first arriving image.
-
+        """Calculates time of the source at the different images, not correcting for
+        redshifts, but for time delays. The time is relative to the first arriving
+        image.
 
         :param t_obs: time of observation [days]
-        :return: time of the source when seen in the different images (without redshift correction)
+        :return: time of the source when seen in the different images (without redshift
+            correction)
         :rtype: numpy array
         """
         arrival_times = self.point_source_arrival_times()
