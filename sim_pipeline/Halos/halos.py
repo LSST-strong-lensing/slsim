@@ -5,6 +5,7 @@ from scipy import integrate
 from sim_pipeline.Skypy_halos_duplicate.halos.mass import ellipsoidal_collapse_function
 from sim_pipeline.Skypy_halos_duplicate.halos.mass import press_schechter_collapse_function
 from hmf.cosmology.growth_factor import GrowthFactor
+from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 import numpy as np
 import warnings
 
@@ -116,14 +117,17 @@ def number_density_at_redshift(z, m_min=None, m_max=None, resolution=None, waven
     m = np.logspace(np.log10(m_min), np.log10(m_max), resolution)
 
     gf = GrowthFactor(cosmo=cosmology)
-    growth_function = gf.growth_factor(z)
+    if z is np.array([np.nan]):
+        return 0
+    else:
+        growth_function = gf.growth_factor(z)
 
-    massf = halo_mass_function(
-        M=m, wavenumber=wavenumber, power_spectrum=power_spectrum, growth_function=growth_function,
-        cosmology=cosmology, collapse_function=collapse_function, params=params)
+        massf = halo_mass_function(
+            M=m, wavenumber=wavenumber, power_spectrum=power_spectrum, growth_function=growth_function,
+            cosmology=cosmology, collapse_function=collapse_function, params=params)
 
-    CDF = integrate.cumtrapz(massf, m, initial=0)
-    return CDF
+        CDF = integrate.cumtrapz(massf, m, initial=0)
+        return CDF
 
 
 def growth_factor_at_redshift(z, cosmology=None):
@@ -210,18 +214,18 @@ def redshift_halos_array_from_comoving_density(redshift_list, sky_area, cosmolog
 
     # integrate density to get expected number of Halos
     N = np.trapz(dN_dz, redshift_list)
-    N = int(N)
-    N = np.random.poisson(N)
-    if N < 1:
-        N = 1
-
-    # cumulative trapezoidal rule to get redshift CDF
-    cdf = dN_dz  # reuse memory
-    np.cumsum((dN_dz[1:] + dN_dz[:-1]) / 2 * np.diff(redshift_list), out=cdf[1:])
-    cdf[0] = 0
-    cdf /= cdf[-1]
-
-    return np.interp(np.random.rand(N), cdf, redshift_list)
+    N_0 = int(N)
+    N = np.random.poisson(N_0)
+    if N == 0:
+        warnings.warn("No Halos found in the given redshift range")
+        return np.array([np.nan])
+    else:
+        # cumulative trapezoidal rule to get redshift CDF
+        cdf = dN_dz  # reuse memory
+        np.cumsum((dN_dz[1:] + dN_dz[:-1]) / 2 * np.diff(redshift_list), out=cdf[1:])
+        cdf[0] = 0
+        cdf /= cdf[-1]
+        return np.interp(np.random.rand(N), cdf, redshift_list)
 
 
 def halo_mass_at_z(z, m_min=None, m_max=None, resolution=None, wavenumber=None, power_spectrum=None, cosmology=None,
@@ -265,6 +269,8 @@ def halo_mass_at_z(z, m_min=None, m_max=None, resolution=None, wavenumber=None, 
         z = [z]
 
     mass = []
+    if z is np.array([np.nan]):
+        return 0
     for z_val in z:
         gf = GrowthFactor(cosmo=cosmology)
         growth_function = gf.growth_factor(z_val)
@@ -285,14 +291,116 @@ def mass_first_moment_at_redshift(z, m_min=None, m_max=None, resolution=None, wa
     m = np.logspace(np.log10(m_min), np.log10(m_max), resolution)
     expectation_m_result = []
     gf = GrowthFactor(cosmo=cosmology)
-    for z_val in z:
-        growth_function = gf.growth_factor(z_val)
+    if z is np.array([np.nan]):
+        return 0
+    else:
+        for z_val in z:
+            growth_function = gf.growth_factor(z_val)
 
-        massf = halo_mass_function(
-            m, wavenumber, power_spectrum, growth_function,
-            cosmology, collapse_function, params=params)
+            massf = halo_mass_function(
+                m, wavenumber, power_spectrum, growth_function,
+                cosmology, collapse_function, params=params)
 
-        CDF = integrate.cumtrapz(massf, m, initial=0)
-        CDF = CDF / CDF[-1]
-        expectation_m_result.append(np.interp(0.5, CDF, m))
-    return expectation_m_result
+            CDF = integrate.cumtrapz(massf, m, initial=0)
+            CDF = CDF / CDF[-1]
+            expectation_m_result.append(np.interp(0.5, CDF, m))
+        return expectation_m_result
+
+
+def redshift_mass_sheet_correction_array_from_comoving_density(redshift_list, sky_area, cosmology, m_min=None,
+                                                               m_max=None,
+                                                               resolution=None, wavenumber=None, collapse_function=None,
+                                                               power_spectrum=None, params=None):
+    """
+
+    """
+    if cosmology is None:
+        warnings.warn("No cosmology provided, instead uses flat LCDM with default parameters")
+        from astropy.cosmology import FlatLambdaCDM
+        cosmology = FlatLambdaCDM(H0=70, Om0=0.3)
+
+    dN_dz = (cosmology.differential_comoving_volume(redshift_list) * sky_area).to_value('Mpc3')
+    density = number_density_at_redshift(z=redshift_list, m_min=m_min, m_max=m_max, resolution=resolution,
+                                         wavenumber=wavenumber,
+                                         power_spectrum=power_spectrum, cosmology=cosmology,
+                                         collapse_function=collapse_function, params=params)
+    dN_dz *= density
+
+    # integrate density to get expected number of Halos
+    N = np.trapz(dN_dz, redshift_list)
+    N_0 = int(N)
+    if N_0 == 0:
+        warnings.warn("No Halos found in the given redshift range")
+        return np.array([np.nan])
+    else:
+        cdf = dN_dz  # reuse memory
+        np.cumsum((dN_dz[1:] + dN_dz[:-1]) / 2 * np.diff(redshift_list), out=cdf[1:])
+        cdf[0] = 0
+        cdf /= cdf[-1]
+        return np.interp(np.linspace(1 / N_0, 1, N_0), cdf, redshift_list)
+
+
+def deg2_to_cone_angle(solid_angle_deg2):
+    """
+    Convert solid angle in square degrees to half cone angle in radians.
+
+    Parameters
+    ----------
+    solid_angle_deg2 : float
+        The solid angle in square degrees to be converted.
+
+    Returns
+    -------
+    float
+        The cone angle in radians corresponding to the provided solid angle.
+
+    Notes
+    -----
+    This function calculates the cone angle using the relationship between
+    the solid angle in steradians and the cone's apex angle.
+    """
+    solid_angle_sr = solid_angle_deg2 * (np.pi / 180) ** 2
+    theta = np.arccos(1 - solid_angle_sr / (2 * np.pi))  # rad
+    return theta
+
+
+def cone_radius_angle_to_physical_area(radius_rad, z, cosmo):
+    """
+    Convert cone radius angle to physical area at a given redshift.
+
+    Parameters
+    ----------
+    radius_rad : float
+        The half cone's angle in radians.
+    z : float
+        The redshift at which the physical area is to be calculated.
+    cosmo : astropy.Cosmology instance
+        The cosmology used for the conversion.
+
+    Returns
+    -------
+    float
+        The physical area in Mpc^2 corresponding to the given cone radius and redshift.
+
+    Notes
+    -----
+    The function calculates the physical area of a patch of the sky with
+    a specified cone angle and redshift using the angular diameter distance.
+    """
+    physical_radius = cosmo.angular_diameter_distance(z) * radius_rad  # Mpc
+    area_physical = np.pi * physical_radius ** 2
+    return area_physical  # in Mpc2
+
+
+def kappa_ext_for_each_sheet(redshift_list, first_moment, sky_area, cosmology):
+    cone_opening_angle = deg2_to_cone_angle(sky_area.value)
+    # TODO: make it possible for other geometry model
+
+    lens_cosmo = LensCosmo(z_lens=redshift_list,
+                           z_source=10, cosmo=cosmology)
+    epsilon_crit = lens_cosmo.sigma_crit
+
+    area = cone_radius_angle_to_physical_area(cone_opening_angle, redshift_list, cosmology)  # mpc2
+    first_moment_d_area = np.divide(np.array(first_moment), np.array(area))
+    kappa_ext = np.divide(first_moment_d_area, epsilon_crit)
+    return -kappa_ext

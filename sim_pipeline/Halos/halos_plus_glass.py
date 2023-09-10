@@ -85,6 +85,7 @@ def skyarea_form_n(nside, deg2=True):
 
 
 def generate_maps_kmean_zero_using_halos(skypy_config=None, skyarea=0.0001, cosmo=None,
+                                         m_min=None, m_max=None, z_max=None,
                                          samples_number_for_one_halos=1000,
                                          renders_numbers=500):
     """
@@ -120,10 +121,11 @@ def generate_maps_kmean_zero_using_halos(skypy_config=None, skyarea=0.0001, cosm
 
     sky_area = skyarea
 
-    pipeline = HalosSkyPyPipeline(sky_area=sky_area, skypy_config=skypy_config)
+    pipeline = HalosSkyPyPipeline(sky_area=sky_area, skypy_config=skypy_config, m_min=m_min, m_max=m_max, z_max=z_max)
     halos = pipeline.halos
+    mass_sheet_correction = pipeline.mass_sheet_correction
 
-    halos_lens = HalosLens(halos_list=halos, sky_area=sky_area, cosmo=cosmo,
+    halos_lens = HalosLens(halos_list=halos, mass_correction_list=mass_sheet_correction, sky_area=sky_area, cosmo=cosmo,
                            samples_number=samples_number_for_one_halos)
     kappa_gamma_distribution = halos_lens.get_kappa_gamma_distib(gamma_tot=True)
     kappa_gamma_distribution = np.array(kappa_gamma_distribution)
@@ -142,6 +144,7 @@ def generate_maps_kmean_zero_using_halos(skypy_config=None, skyarea=0.0001, cosm
 
 
 def generate_meanzero_halos_multiple_times(n_times=20, skypy_config=None, skyarea=0.0001, cosmo=None,
+                                           m_min=None, m_max=None, z_max=None,
                                            samples_number_for_one_halos=1000, renders_numbers=500):
     """
     Given the specified parameters, this function repeatedly renders same halo list (same z & m) for different
@@ -185,7 +188,8 @@ def generate_meanzero_halos_multiple_times(n_times=20, skypy_config=None, skyare
                                                  skyarea=skyarea,
                                                  cosmo=cosmo,
                                                  samples_number_for_one_halos=samples_number_for_one_halos,
-                                                 renders_numbers=renders_numbers)
+                                                 renders_numbers=renders_numbers,
+                                                 m_min=m_min, m_max=m_max, z_max=z_max)
         accumulated_kappa_random_halos.extend(kappa_random_halos)
         accumulated_gamma_random_halos.extend(gamma_random_halos)
 
@@ -247,7 +251,7 @@ def halos_plus_glass(kappa_random_halos, gamma_random_halos, kappa_random_glass,
 
 
 def run_halos_without_kde(n_iterations=1, sky_area=0.0001, samples_number=1500, cosmo=None, m_min=None, m_max=None,
-                          z_max=None):
+                          z_max=None, mass_sheet_correction=True):
     """
     Under the specified `sky_area`, generate `n_iterations` sets of halo lists. For each set,
     simulate `samples_number` times to obtain the convergence (`kappa`) and shear (`gamma`) values
@@ -302,20 +306,33 @@ def run_halos_without_kde(n_iterations=1, sky_area=0.0001, samples_number=1500, 
 
     start_time = time.time()  # Note the start time
     for _ in iter_range:
-        # Initialize the pipeline and get the halo list
         npipeline = HalosSkyPyPipeline(sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max)
         nhalos = npipeline.halos
+        if mass_sheet_correction:
+            mass_sheet_correction_list = npipeline.mass_sheet_correction
+            nhalos_lens = HalosLens(halos_list=nhalos, mass_correction_list=mass_sheet_correction_list,
+                                    sky_area=sky_area, cosmo=cosmo, samples_number=samples_number, mass_sheet=True)
 
-        nhalos_lens = HalosLens(halos_list=nhalos, sky_area=sky_area, cosmo=cosmo, samples_number=samples_number)
+            nkappa_gamma_distribution = nhalos_lens.get_kappa_gamma_distib(gamma_tot=True)
+            nkappa_gamma_distribution = np.array(nkappa_gamma_distribution)  # Convert list of lists to numpy array
 
-        nkappa_gamma_distribution = nhalos_lens.get_kappa_gamma_distib(gamma_tot=True)
-        nkappa_gamma_distribution = np.array(nkappa_gamma_distribution)  # Convert list of lists to numpy array
+            nkappa_values_halos = nkappa_gamma_distribution[:, 0]
+            ngamma_values_halos = nkappa_gamma_distribution[:, 1]
 
-        nkappa_values_halos = nkappa_gamma_distribution[:, 0]
-        ngamma_values_halos = nkappa_gamma_distribution[:, 1]
+            kappa_values_total.extend(nkappa_values_halos)
+            gamma_values_total.extend(ngamma_values_halos)
+        else:
+            nhalos_lens = HalosLens(halos_list=nhalos, sky_area=sky_area, cosmo=cosmo, samples_number=samples_number,
+                                    mass_sheet=False)
 
-        kappa_values_total.extend(nkappa_values_halos)
-        gamma_values_total.extend(ngamma_values_halos)
+            nkappa_gamma_distribution = nhalos_lens.get_kappa_gamma_distib(gamma_tot=True)
+            nkappa_gamma_distribution = np.array(nkappa_gamma_distribution)  # Convert list of lists to numpy array
+
+            nkappa_values_halos = nkappa_gamma_distribution[:, 0]
+            ngamma_values_halos = nkappa_gamma_distribution[:, 1]
+
+            kappa_values_total.extend(nkappa_values_halos)
+            gamma_values_total.extend(ngamma_values_halos)
 
     end_time = time.time()  # Note the end time
     print(f'The {n_iterations} halo-lists took {(end_time - start_time)} seconds to run')
@@ -323,12 +340,16 @@ def run_halos_without_kde(n_iterations=1, sky_area=0.0001, samples_number=1500, 
     return kappa_values_total, gamma_values_total
 
 
-def worker_run_halos_without_kde(iter_num, sky_area, m_min, m_max, z_max, cosmo, samples_number):
+def worker_run_halos_without_kde(iter_num, sky_area, m_min, m_max, z_max, cosmo, samples_number,
+                                 mass_sheet_correction):
     npipeline = HalosSkyPyPipeline(sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max)
     nhalos = npipeline.halos
-
-    nhalos_lens = HalosLens(halos_list=nhalos, sky_area=sky_area, cosmo=cosmo, samples_number=samples_number)
-
+    if mass_sheet_correction:
+        mass_sheet_correction_list = npipeline.mass_sheet_correction
+        nhalos_lens = HalosLens(halos_list=nhalos, mass_correction_list=mass_sheet_correction_list,
+                                sky_area=sky_area, cosmo=cosmo, samples_number=samples_number)
+    else:
+        nhalos_lens = HalosLens(halos_list=nhalos, sky_area=sky_area, cosmo=cosmo, samples_number=samples_number)
     nkappa_gamma_distribution = nhalos_lens.get_kappa_gamma_distib_without_multiprocessing(gamma_tot=True)
     nkappa_gamma_distribution = np.array(nkappa_gamma_distribution)
 
@@ -339,7 +360,7 @@ def worker_run_halos_without_kde(iter_num, sky_area, m_min, m_max, z_max, cosmo,
 
 
 def run_halos_without_kde_by_multiprocessing(n_iterations=1, sky_area=0.0001, samples_number=1500, cosmo=None,
-                                             m_min=None, m_max=None, z_max=None):
+                                             m_min=None, m_max=None, z_max=None, mass_sheet_correction=True):
     """
     Under the specified `sky_area`, generate `n_iterations` sets of halo lists. For each set,
     simulate `samples_number` times to obtain the convergence (`kappa`) and shear (`gamma`) values
@@ -390,7 +411,8 @@ def run_halos_without_kde_by_multiprocessing(n_iterations=1, sky_area=0.0001, sa
 
     start_time = time.time()  # Note the start time
 
-    args = [(i, sky_area, m_min, m_max, z_max, cosmo, samples_number) for i in range(n_iterations)]
+    args = [(i, sky_area, m_min, m_max, z_max, cosmo, samples_number, mass_sheet_correction)
+            for i in range(n_iterations)]
 
     # Use multiprocessing
     with get_context('spawn').Pool() as pool:

@@ -72,7 +72,20 @@ class HalosSkyPyPipeline:
         Returns
         -------
         list of dict
-            List of blue galaxies.
+            List of halos.
 
         """
         return self._pipeline['halos']
+
+    @property
+    def mass_sheet_correction(self):
+        """
+        SkyPy pipeline for mass sheet correction.
+
+        Returns
+        -------
+        list of dict
+            List of sheet of mass for correction.
+
+        """
+        return self._pipeline['mass_sheet_correction']
