@@ -29,6 +29,17 @@ Finally add the ``sim-pipeline-project`` repository as a *remote*. This will all
   git remote add sim-pipeline-project https://github.com/LSST-strong-lensing/sim-pipeline.git
 
 
+Install sim-pipeline in development mode
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+To run your own version of sim-pipeline and making sure that your own development changes are reflected (as well as switcing branches),
+install the sim-pipeline package in development mode with
+
+::
+
+  cd sim-pipeline
+  python setup.py develop --user
+
+
 Create a branch for your new feature
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
