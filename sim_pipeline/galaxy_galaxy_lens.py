@@ -276,6 +276,41 @@ class GalaxyGalaxyLens(object):
         band_string = str("mag_" + band)
         return self._lens_dict[band_string]
 
+    def point_source_arrival_times(self):
+        """Arrival time of images relative to a straight line without lensing. Negative
+        values correspond to images arriving earlier, and positive signs correspond to
+        images arriving later.
+
+        :return: arrival times for each image [days]
+        :rtype: numpy array
+        """
+        lens_model_list, kwargs_lens = self.lens_model_lenstronomy()
+        lens_model = LensModel(
+            lens_model_list=lens_model_list,
+            cosmo=self.cosmo,
+            z_lens=self.lens_redshift,
+            z_source=self.source_redshift,
+        )
+        x_image, y_image = self.image_positions()
+        arrival_times = lens_model.arrival_time(
+            x_image, y_image, kwargs_lens=kwargs_lens
+        )
+        return arrival_times
+
+    def image_observer_times(self, t_obs):
+        """Calculates time of the source at the different images, not correcting for
+        redshifts, but for time delays. The time is relative to the first arriving
+        image.
+
+        :param t_obs: time of observation [days]
+        :return: time of the source when seen in the different images (without redshift
+            correction)
+        :rtype: numpy array
+        """
+        arrival_times = self.point_source_arrival_times()
+        observer_times = t_obs + arrival_times - np.min(arrival_times)
+        return observer_times
+
     def point_source_magnitude(self, band, lensed=False):
         """Point source magnitude, either unlensed (single value) or lensed (array) with
         macro-model magnifications.
@@ -291,6 +326,8 @@ class GalaxyGalaxyLens(object):
         band_string = str("mag_" + band)
         # TODO: might have to change conventions between extended and point source
         source_mag = self._source_dict[band_string]
+        # TODO: requires time information and needs to be shifted for
+        # different arriving images
         if lensed:
             mag = self.point_source_magnification()
             return source_mag - 2.5 * np.log10(np.abs(mag))
