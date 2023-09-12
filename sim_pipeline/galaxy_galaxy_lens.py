@@ -326,7 +326,7 @@ class GalaxyGalaxyLens(object):
         band_string = str("mag_" + band)
         # TODO: might have to change conventions between extended and point source
         source_mag = self._source_dict[band_string]
-        # TODO: requires time information and needs to be shifted for 
+        # TODO: requires time information and needs to be shifted for
         # different arriving images
         if lensed:
             mag = self.point_source_magnification()
