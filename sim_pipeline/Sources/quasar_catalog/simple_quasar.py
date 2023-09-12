@@ -1,10 +1,10 @@
 import numpy as np
 from astropy.table import Table
 
-def quasar_catalog(n, z_min, z_max, logL_min, logL_max):
+def quasar_catalog(n, z_min, z_max, L_min, L_max):
     num_quasars = n
     redshifts = np.random.uniform(z_min, z_max, num_quasars)
-    luminosities = np.random.uniform(logL_min, logL_max, num_quasars)
+    luminosities = np.random.uniform(L_min, L_max, num_quasars)
 
     # Calculate apparent magnitudes in r, g, and i bands
     # need appropriate distance and k-corrections here
