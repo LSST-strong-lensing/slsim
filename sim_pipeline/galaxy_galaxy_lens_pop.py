@@ -102,8 +102,10 @@ class GalaxyGalaxyLensPop(object):
             self._source_model_type = "extended"
         elif source_type == "quasars":
             from sim_pipeline.Sources.quasars import Quasars
+            from sim_pipeline.Sources.quasar_catalog.simple_quasar import quasar_catalog
 
-            self._sources = Quasars(cosmo=cosmo, sky_area=sky_area)
+            self._sources = Quasars(quasar_catalog(200000, 0.1, 5, 1e10, 1e20),cosmo=cosmo, 
+                                    sky_area=sky_area)
             self._source_model_type = "point_source"
         else:
             raise ValueError("source_type %s is not supported" % source_type)
