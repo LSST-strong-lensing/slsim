@@ -21,7 +21,7 @@ class GalaxyGalaxyLens(object):
         mixgauss_means=None,
         mixgauss_stds=None,
         mixgauss_weights=None,
-        magnification_limit=0.1,
+        magnification_limit=0.01,
     ):
         """
 
