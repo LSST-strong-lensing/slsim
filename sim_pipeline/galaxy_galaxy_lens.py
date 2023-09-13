@@ -447,14 +447,14 @@ class GalaxyGalaxyLens(object):
             kwargs_source = None
 
         if self._source_type == "point_source":
-            kwargs_model["point_source_model"] = ["LENSED_POSITION"]
+            kwargs_model["point_source_model_list"] = ["LENSED_POSITION"]
             img_x, img_y = self.image_positions()
             if band is None:
                 image_magnitudes = np.abs(self.point_source_magnification())
             else:
                 image_magnitudes = self.point_source_magnitude(band=band, lensed=True)
             kwargs_ps = [
-                {"ra_image": img_x, "dec_image": img_y, "point_amp": image_magnitudes}
+                {"ra_image": img_x, "dec_image": img_y, "magnitude": image_magnitudes}
             ]
         else:
             kwargs_ps = None
