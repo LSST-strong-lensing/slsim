@@ -104,7 +104,7 @@ class GalaxyGalaxyLensPop(object):
             from sim_pipeline.Sources.quasars import Quasars
             from sim_pipeline.Sources.quasar_catalog.simple_quasar import quasar_catalog
 
-            quasar_source = quasar_catalog(10000, 0.1, 4.5, 1e10, 1e20)
+            quasar_source = quasar_catalog(100000, 0.1, 5, 14, 20)
             self._sources = Quasars(quasar_source,cosmo=cosmo, 
                                     sky_area=sky_area)
             self._source_model_type = "point_source"
