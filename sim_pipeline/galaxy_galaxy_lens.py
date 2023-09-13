@@ -21,7 +21,7 @@ class GalaxyGalaxyLens(object):
         mixgauss_means=None,
         mixgauss_stds=None,
         mixgauss_weights=None,
-        magnification_limit=0.01
+        magnification_limit=0.01,
     ):
         """
 
@@ -102,8 +102,8 @@ class GalaxyGalaxyLens(object):
 
     def image_positions(self):
         """Return image positions by solving the lens equation. These are either the
-        centers of the extended source, or the point sources in case of (added)
-        point-like sources, such as quasars or SNe.
+        centers of the extended source, or the point sources in case of (added) point-
+        like sources, such as quasars or SNe.
 
         :return: x-pos, y-pos
         """
@@ -121,7 +121,7 @@ class GalaxyGalaxyLens(object):
                 solver="lenstronomy",
                 search_window=self.einstein_radius * 6,
                 min_distance=self.einstein_radius * 6 / 100,
-                magnification_limit=self._magnification_limit
+                magnification_limit=self._magnification_limit,
             )
         return self._image_positions
 
@@ -175,7 +175,7 @@ class GalaxyGalaxyLens(object):
         # Criteria 6: (optional)
         # compute the magnified brightness of the lensed extended arc for different
         # bands at least in one band, the magnitude has to be brighter than the limit
-        if mag_arc_limit is not None and self._source_type in ['extended']:
+        if mag_arc_limit is not None and self._source_type in ["extended"]:
             # makes sure magnification of extended source is only used when there is
             # an extended source
             bool_mag_limit = False
