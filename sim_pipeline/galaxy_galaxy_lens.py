@@ -409,7 +409,7 @@ class GalaxyGalaxyLens(object):
         return self._host_magnification
 
     def lenstronomy_kwargs(self, band=None):
-        """generates lenstronomy dictionary conventions for the class object.
+        """Generates lenstronomy dictionary conventions for the class object.
 
         :param band: imaging band, if =None, will result in un-normalized amplitudes
         :type band: string or None
