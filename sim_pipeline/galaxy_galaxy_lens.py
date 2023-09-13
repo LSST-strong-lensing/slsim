@@ -21,7 +21,7 @@ class GalaxyGalaxyLens(object):
         mixgauss_means=None,
         mixgauss_stds=None,
         mixgauss_weights=None,
-        magnification_limit=0.01,
+        magnification_limit=0.01
     ):
         """
 
@@ -178,7 +178,9 @@ class GalaxyGalaxyLens(object):
         # Criteria 6: (optional)
         # compute the magnified brightness of the lensed extended arc for different
         # bands at least in one band, the magnitude has to be brighter than the limit
-        if mag_arc_limit is not None:
+        if mag_arc_limit is not None and self._source_type in ['extended']:
+            # makes sure magnification of extended source is only used when there is
+            # an extended source
             bool_mag_limit = False
             host_mag = self.host_magnification()
             for band, mag_limit_band in mag_arc_limit.items():
