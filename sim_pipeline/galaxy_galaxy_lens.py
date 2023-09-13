@@ -414,7 +414,6 @@ class GalaxyGalaxyLens(object):
         :param band: imaging band, if =None, will result in un-normalized amplitudes
         :type band: string or None
         :return: lenstronomy model and parameter conventions
-
         """
         lens_model_list, kwargs_lens = self.lens_model_lenstronomy()
         kwargs_model = {
