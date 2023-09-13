@@ -13,8 +13,7 @@ from multiprocessing import get_context
 
 
 def read_glass_data(file_name="kgdata.npy"):
-    """
-    This function loads a numpy data file and extracts the kappa and gamma vealues.
+    """This function loads a numpy data file and extracts the kappa and gamma vealues.
 
     Parameters:
         file_name (str, optional): The name of the file to load. Defaults to "kgdata.npy".
@@ -42,9 +41,9 @@ def read_glass_data(file_name="kgdata.npy"):
 
 
 def generate_samples_from_glass(kappa_values, gamma_values, n=10000):
-    """
-    This function fits a Gaussian Kernel Density Estimation (KDE) to the joint distribution of kappa and gamma values,
-    and then generates a random sample from this distribution.
+    """This function fits a Gaussian Kernel Density Estimation (KDE) to the joint
+    distribution of kappa and gamma values, and then generates a random sample from this
+    distribution.
 
     Parameters
     ----------
@@ -63,9 +62,9 @@ def generate_samples_from_glass(kappa_values, gamma_values, n=10000):
 
 
 def skyarea_form_n(nside, deg2=True):
-    """
-    This function calculates the sky area corresponding to each pixel when the sky is divided into 12 * nside ** 2
-    equal areas. 4*pi*(180/pi)^2=129600/pi deg^2; 4*pi*(180/pi)^2*(3600)^2=1679616000000/pi arcsec^2.
+    """This function calculates the sky area corresponding to each pixel when the sky is
+    divided into 12 * nside ** 2 equal areas. 4*pi*(180/pi)^2=129600/pi deg^2;
+    4*pi*(180/pi)^2*(3600)^2=1679616000000/pi arcsec^2.
 
     Parameters
     ----------
@@ -78,20 +77,28 @@ def skyarea_form_n(nside, deg2=True):
         float: The sky area per pixel in either degree^2 or arcsecond^2, depending on the value of deg2.
     """
     if deg2:
-        skyarea = 129600 / (12 * np.pi * nside ** 2)  # sky area in square degrees
+        skyarea = 129600 / (12 * np.pi * nside**2)  # sky area in square degrees
     else:
-        skyarea = 1679616000000 / (12 * np.pi * nside ** 2)  # sky area in square arcseconds
+        skyarea = 1679616000000 / (
+            12 * np.pi * nside**2
+        )  # sky area in square arcseconds
     return skyarea
 
 
-def generate_maps_kmean_zero_using_halos(skypy_config=None, skyarea=0.0001, cosmo=None,
-                                         m_min=None, m_max=None, z_max=None,
-                                         samples_number_for_one_halos=1000,
-                                         renders_numbers=500):
-    """
-    Given the specified parameters, this function repeatedly renders same halo list (same z & m) for different
-    positions (`samples_number_for_one_halos`) times and then ensuring that the mean of the kappa values is zero,
-    then get the kde of the weak-lensing distribution for this halo list and resample `renders_numbers` sets of the
+def generate_maps_kmean_zero_using_halos(
+    skypy_config=None,
+    skyarea=0.0001,
+    cosmo=None,
+    m_min=None,
+    m_max=None,
+    z_max=None,
+    samples_number_for_one_halos=1000,
+    renders_numbers=500,
+):
+    """Given the specified parameters, this function repeatedly renders same halo list
+    (same z & m) for different positions (`samples_number_for_one_halos`) times and then
+    ensuring that the mean of the kappa values is zero, then get the kde of the weak-
+    lensing distribution for this halo list and resample `renders_numbers` sets of the
     corresponding convergence (`kappa`) and shear (`gamma`) values for this halo list.
 
     Parameters
@@ -116,17 +123,31 @@ def generate_maps_kmean_zero_using_halos(skypy_config=None, skyarea=0.0001, cosm
     """
     if cosmo is None:
         from astropy.cosmology import FlatLambdaCDM
-        warnings.warn("No cosmology provided, instead uses astropy.cosmology default cosmology")
+
+        warnings.warn(
+            "No cosmology provided, instead uses astropy.cosmology default cosmology"
+        )
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
     sky_area = skyarea
 
-    pipeline = HalosSkyPyPipeline(sky_area=sky_area, skypy_config=skypy_config, m_min=m_min, m_max=m_max, z_max=z_max)
+    pipeline = HalosSkyPyPipeline(
+        sky_area=sky_area,
+        skypy_config=skypy_config,
+        m_min=m_min,
+        m_max=m_max,
+        z_max=z_max,
+    )
     halos = pipeline.halos
     mass_sheet_correction = pipeline.mass_sheet_correction
 
-    halos_lens = HalosLens(halos_list=halos, mass_correction_list=mass_sheet_correction, sky_area=sky_area, cosmo=cosmo,
-                           samples_number=samples_number_for_one_halos)
+    halos_lens = HalosLens(
+        halos_list=halos,
+        mass_correction_list=mass_sheet_correction,
+        sky_area=sky_area,
+        cosmo=cosmo,
+        samples_number=samples_number_for_one_halos,
+    )
     kappa_gamma_distribution = halos_lens.get_kappa_gamma_distib(gamma_tot=True)
     kappa_gamma_distribution = np.array(kappa_gamma_distribution)
     kappa_values_halos = kappa_gamma_distribution[:, 0]
@@ -143,15 +164,23 @@ def generate_maps_kmean_zero_using_halos(skypy_config=None, skyarea=0.0001, cosm
     #  with bandwidth of kde)
 
 
-def generate_meanzero_halos_multiple_times(n_times=20, skypy_config=None, skyarea=0.0001, cosmo=None,
-                                           m_min=None, m_max=None, z_max=None,
-                                           samples_number_for_one_halos=1000, renders_numbers=500):
-    """
-    Given the specified parameters, this function repeatedly renders same halo list (same z & m) for different
-    positions (`samples_number_for_one_halos`) times and then ensuring that the mean of the kappa values is zero,
-    then get the kde of the weak-lensing distribution for this halo list and resample `renders_numbers` sets of the
-    corresponding convergence (`kappa`) and shear (`gamma`) values for this halo list. This process is repeated
-    `n_times` to accumulate the results.
+def generate_meanzero_halos_multiple_times(
+    n_times=20,
+    skypy_config=None,
+    skyarea=0.0001,
+    cosmo=None,
+    m_min=None,
+    m_max=None,
+    z_max=None,
+    samples_number_for_one_halos=1000,
+    renders_numbers=500,
+):
+    """Given the specified parameters, this function repeatedly renders same halo list
+    (same z & m) for different positions (`samples_number_for_one_halos`) times and then
+    ensuring that the mean of the kappa values is zero, then get the kde of the weak-
+    lensing distribution for this halo list and resample `renders_numbers` sets of the
+    corresponding convergence (`kappa`) and shear (`gamma`) values for this halo list.
+    This process is repeated `n_times` to accumulate the results.
 
     Parameters
     ----------
@@ -183,26 +212,33 @@ def generate_meanzero_halos_multiple_times(n_times=20, skypy_config=None, skyare
 
     start_time = time.time()
     for _ in n_times_range:
-        kappa_random_halos, gamma_random_halos = \
-            generate_maps_kmean_zero_using_halos(skypy_config=skypy_config,
-                                                 skyarea=skyarea,
-                                                 cosmo=cosmo,
-                                                 samples_number_for_one_halos=samples_number_for_one_halos,
-                                                 renders_numbers=renders_numbers,
-                                                 m_min=m_min, m_max=m_max, z_max=z_max)
+        kappa_random_halos, gamma_random_halos = generate_maps_kmean_zero_using_halos(
+            skypy_config=skypy_config,
+            skyarea=skyarea,
+            cosmo=cosmo,
+            samples_number_for_one_halos=samples_number_for_one_halos,
+            renders_numbers=renders_numbers,
+            m_min=m_min,
+            m_max=m_max,
+            z_max=z_max,
+        )
         accumulated_kappa_random_halos.extend(kappa_random_halos)
         accumulated_gamma_random_halos.extend(gamma_random_halos)
 
     end_time = time.time()  # Note the end time
     print(f"Elapsed time: {end_time - start_time} seconds")
 
-    return np.array(accumulated_kappa_random_halos), np.array(accumulated_gamma_random_halos)
+    return np.array(accumulated_kappa_random_halos), np.array(
+        accumulated_gamma_random_halos
+    )
 
 
-def halos_plus_glass(kappa_random_halos, gamma_random_halos, kappa_random_glass, gamma_random_glass):
-    r"""
-    Combine the kappa and gamma values from Halos and Glass distributions, returning the combined
-    values. For Halos kappa, it is suggested to use modified kappa values (i.e., direct kappa minus mean(kappa)).
+def halos_plus_glass(
+    kappa_random_halos, gamma_random_halos, kappa_random_glass, gamma_random_glass
+):
+    r"""Combine the kappa and gamma values from Halos and Glass distributions, returning
+    the combined values. For Halos kappa, it is suggested to use modified kappa values
+    (i.e., direct kappa minus mean(kappa)).
 
     Parameters
     ----------
@@ -238,11 +274,13 @@ def halos_plus_glass(kappa_random_halos, gamma_random_halos, kappa_random_glass,
     .. math:: \gamma_{\text{tot}}^2 = \gamma_{\text{halos}}^2 + \gamma_{\text{GLASS}}^2 + 2\gamma_{\text{
         halos}}\gamma_{\text{GLASS}}\cdot \cos(\text{random angle})
     """
-    total_kappa = [k_h + k_g for k_h, k_g in zip(kappa_random_halos, kappa_random_glass)]
+    total_kappa = [
+        k_h + k_g for k_h, k_g in zip(kappa_random_halos, kappa_random_glass)
+    ]
     random_angles = np.random.uniform(0, 2 * np.pi, size=len(gamma_random_halos))
     random_numbers = np.cos(random_angles)
     total_gamma = [
-        np.sqrt((g_h ** 2) + (g_g ** 2) + (2 * r * g_h * g_g))
+        np.sqrt((g_h**2) + (g_g**2) + (2 * r * g_h * g_g))
         for g_h, g_g, r in zip(gamma_random_halos, gamma_random_glass, random_numbers)
     ]
 
@@ -250,13 +288,21 @@ def halos_plus_glass(kappa_random_halos, gamma_random_halos, kappa_random_glass,
     # TODO: Add math
 
 
-def run_halos_without_kde(n_iterations=1, sky_area=0.0001, samples_number=1500, cosmo=None, m_min=None, m_max=None,
-                          z_max=None, mass_sheet_correction=True):
-    """
-    Under the specified `sky_area`, generate `n_iterations` sets of halo lists. For each set,
-    simulate `samples_number` times to obtain the convergence (`kappa`) and shear (`gamma`) values
-    at the origin. These values are directly appended without any additional processing (i.e., without
-    KDE computation, resampling, or subtracting the mean kappa value).
+def run_halos_without_kde(
+    n_iterations=1,
+    sky_area=0.0001,
+    samples_number=1500,
+    cosmo=None,
+    m_min=None,
+    m_max=None,
+    z_max=None,
+    mass_sheet_correction=True,
+):
+    """Under the specified `sky_area`, generate `n_iterations` sets of halo lists. For
+    each set, simulate `samples_number` times to obtain the convergence (`kappa`) and
+    shear (`gamma`) values at the origin. These values are directly appended without any
+    additional processing (i.e., without KDE computation, resampling, or subtracting the
+    mean kappa value).
 
     Parameters
     ----------
@@ -295,7 +341,10 @@ def run_halos_without_kde(n_iterations=1, sky_area=0.0001, samples_number=1500, 
     """
     if cosmo is None:
         from astropy.cosmology import FlatLambdaCDM
-        warnings.warn("No cosmology provided, instead uses astropy.cosmology default cosmology")
+
+        warnings.warn(
+            "No cosmology provided, instead uses astropy.cosmology default cosmology"
+        )
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     kappa_values_total = []
     gamma_values_total = []
@@ -306,15 +355,27 @@ def run_halos_without_kde(n_iterations=1, sky_area=0.0001, samples_number=1500, 
 
     start_time = time.time()  # Note the start time
     for _ in iter_range:
-        npipeline = HalosSkyPyPipeline(sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max)
+        npipeline = HalosSkyPyPipeline(
+            sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max
+        )
         nhalos = npipeline.halos
         if mass_sheet_correction:
             mass_sheet_correction_list = npipeline.mass_sheet_correction
-            nhalos_lens = HalosLens(halos_list=nhalos, mass_correction_list=mass_sheet_correction_list,
-                                    sky_area=sky_area, cosmo=cosmo, samples_number=samples_number, mass_sheet=True)
+            nhalos_lens = HalosLens(
+                halos_list=nhalos,
+                mass_correction_list=mass_sheet_correction_list,
+                sky_area=sky_area,
+                cosmo=cosmo,
+                samples_number=samples_number,
+                mass_sheet=True,
+            )
 
-            nkappa_gamma_distribution = nhalos_lens.get_kappa_gamma_distib(gamma_tot=True)
-            nkappa_gamma_distribution = np.array(nkappa_gamma_distribution)  # Convert list of lists to numpy array
+            nkappa_gamma_distribution = nhalos_lens.get_kappa_gamma_distib(
+                gamma_tot=True
+            )
+            nkappa_gamma_distribution = np.array(
+                nkappa_gamma_distribution
+            )  # Convert list of lists to numpy array
 
             nkappa_values_halos = nkappa_gamma_distribution[:, 0]
             ngamma_values_halos = nkappa_gamma_distribution[:, 1]
@@ -322,11 +383,20 @@ def run_halos_without_kde(n_iterations=1, sky_area=0.0001, samples_number=1500, 
             kappa_values_total.extend(nkappa_values_halos)
             gamma_values_total.extend(ngamma_values_halos)
         else:
-            nhalos_lens = HalosLens(halos_list=nhalos, sky_area=sky_area, cosmo=cosmo, samples_number=samples_number,
-                                    mass_sheet=False)
+            nhalos_lens = HalosLens(
+                halos_list=nhalos,
+                sky_area=sky_area,
+                cosmo=cosmo,
+                samples_number=samples_number,
+                mass_sheet=False,
+            )
 
-            nkappa_gamma_distribution = nhalos_lens.get_kappa_gamma_distib(gamma_tot=True)
-            nkappa_gamma_distribution = np.array(nkappa_gamma_distribution)  # Convert list of lists to numpy array
+            nkappa_gamma_distribution = nhalos_lens.get_kappa_gamma_distib(
+                gamma_tot=True
+            )
+            nkappa_gamma_distribution = np.array(
+                nkappa_gamma_distribution
+            )  # Convert list of lists to numpy array
 
             nkappa_values_halos = nkappa_gamma_distribution[:, 0]
             ngamma_values_halos = nkappa_gamma_distribution[:, 1]
@@ -335,22 +405,46 @@ def run_halos_without_kde(n_iterations=1, sky_area=0.0001, samples_number=1500, 
             gamma_values_total.extend(ngamma_values_halos)
 
     end_time = time.time()  # Note the end time
-    print(f'The {n_iterations} halo-lists took {(end_time - start_time)} seconds to run')
+    print(
+        f"The {n_iterations} halo-lists took {(end_time - start_time)} seconds to run"
+    )
 
     return kappa_values_total, gamma_values_total
 
 
-def worker_run_halos_without_kde(iter_num, sky_area, m_min, m_max, z_max, cosmo, samples_number,
-                                 mass_sheet_correction):
-    npipeline = HalosSkyPyPipeline(sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max)
+def worker_run_halos_without_kde(
+    iter_num,
+    sky_area,
+    m_min,
+    m_max,
+    z_max,
+    cosmo,
+    samples_number,
+    mass_sheet_correction,
+):
+    npipeline = HalosSkyPyPipeline(
+        sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max
+    )
     nhalos = npipeline.halos
     if mass_sheet_correction:
         mass_sheet_correction_list = npipeline.mass_sheet_correction
-        nhalos_lens = HalosLens(halos_list=nhalos, mass_correction_list=mass_sheet_correction_list,
-                                sky_area=sky_area, cosmo=cosmo, samples_number=samples_number)
+        nhalos_lens = HalosLens(
+            halos_list=nhalos,
+            mass_correction_list=mass_sheet_correction_list,
+            sky_area=sky_area,
+            cosmo=cosmo,
+            samples_number=samples_number,
+        )
     else:
-        nhalos_lens = HalosLens(halos_list=nhalos, sky_area=sky_area, cosmo=cosmo, samples_number=samples_number)
-    nkappa_gamma_distribution = nhalos_lens.get_kappa_gamma_distib_without_multiprocessing(gamma_tot=True)
+        nhalos_lens = HalosLens(
+            halos_list=nhalos,
+            sky_area=sky_area,
+            cosmo=cosmo,
+            samples_number=samples_number,
+        )
+    nkappa_gamma_distribution = (
+        nhalos_lens.get_kappa_gamma_distib_without_multiprocessing(gamma_tot=True)
+    )
     nkappa_gamma_distribution = np.array(nkappa_gamma_distribution)
 
     nkappa_values_halos = nkappa_gamma_distribution[:, 0]
@@ -359,14 +453,22 @@ def worker_run_halos_without_kde(iter_num, sky_area, m_min, m_max, z_max, cosmo,
     return nkappa_values_halos, ngamma_values_halos
 
 
-def run_halos_without_kde_by_multiprocessing(n_iterations=1, sky_area=0.0001, samples_number=1500, cosmo=None,
-                                             m_min=None, m_max=None, z_max=None, mass_sheet_correction=True):
-    """
-    Under the specified `sky_area`, generate `n_iterations` sets of halo lists. For each set,
-    simulate `samples_number` times to obtain the convergence (`kappa`) and shear (`gamma`) values
-    at the origin. These values are directly appended without any additional processing (i.e., without
-    KDE computation, resampling, or subtracting the mean kappa value), the process procedure `n_iterations` generate
-    with multiprocessing.
+def run_halos_without_kde_by_multiprocessing(
+    n_iterations=1,
+    sky_area=0.0001,
+    samples_number=1500,
+    cosmo=None,
+    m_min=None,
+    m_max=None,
+    z_max=None,
+    mass_sheet_correction=True,
+):
+    """Under the specified `sky_area`, generate `n_iterations` sets of halo lists. For
+    each set, simulate `samples_number` times to obtain the convergence (`kappa`) and
+    shear (`gamma`) values at the origin. These values are directly appended without any
+    additional processing (i.e., without KDE computation, resampling, or subtracting the
+    mean kappa value), the process procedure `n_iterations` generate with
+    multiprocessing.
 
     Parameters
     ----------
@@ -404,18 +506,22 @@ def run_halos_without_kde_by_multiprocessing(n_iterations=1, sky_area=0.0001, sa
     Lambda-CDM model with H0=70 and Om0=0.3.
     """
     if cosmo is None:
-        warnings.warn("No cosmology provided, instead uses astropy.cosmology default cosmology")
+        warnings.warn(
+            "No cosmology provided, instead uses astropy.cosmology default cosmology"
+        )
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     kappa_values_total = []
     gamma_values_total = []
 
     start_time = time.time()  # Note the start time
 
-    args = [(i, sky_area, m_min, m_max, z_max, cosmo, samples_number, mass_sheet_correction)
-            for i in range(n_iterations)]
+    args = [
+        (i, sky_area, m_min, m_max, z_max, cosmo, samples_number, mass_sheet_correction)
+        for i in range(n_iterations)
+    ]
 
     # Use multiprocessing
-    with get_context('spawn').Pool() as pool:
+    with get_context("spawn").Pool() as pool:
         results = pool.starmap(worker_run_halos_without_kde, args)
 
     for nkappa, ngamma in results:
@@ -423,5 +529,7 @@ def run_halos_without_kde_by_multiprocessing(n_iterations=1, sky_area=0.0001, sa
         gamma_values_total.extend(ngamma)
 
     end_time = time.time()  # Note the end time
-    print(f'The {n_iterations} halo-lists took {(end_time - start_time)} seconds to run')
+    print(
+        f"The {n_iterations} halo-lists took {(end_time - start_time)} seconds to run"
+    )
     return kappa_values_total, gamma_values_total

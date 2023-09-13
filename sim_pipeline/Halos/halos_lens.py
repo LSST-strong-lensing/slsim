@@ -8,9 +8,8 @@ import multiprocessing
 
 
 def concentration_from_mass(z, mass, A=75.4, d=-0.422, m=-0.089):
-    """
-    Get the halo concentration from halo masses using the fit in Childs et al. 2018 Eq(19),
-    Table 2 for all individual Halos, both relaxed and unrelaxed.
+    """Get the halo concentration from halo masses using the fit in Childs et al. 2018
+    Eq(19), Table 2 for all individual Halos, both relaxed and unrelaxed.
 
     Parameters
     ----------
@@ -44,15 +43,14 @@ def concentration_from_mass(z, mass, A=75.4, d=-0.422, m=-0.089):
     ----------
     . [1] Childs et al. 2018, arXiv:1804.10199, doi:10.3847/1538-4357/aabf95
     """
-    c_200 = A * ((1 + z) ** d) * (mass ** m)
+    c_200 = A * ((1 + z) ** d) * (mass**m)
     c_200 = np.maximum(c_200, 1)
     return c_200
     # TODO: Add test function
 
 
 class HalosLens(object):
-    """
-    Manage lensing properties of Halos.
+    """Manage lensing properties of Halos.
 
     Provides methods to compute lensing properties of Halos, such as their convergence and shear.
 
@@ -105,10 +103,15 @@ class HalosLens(object):
 
     # TODO: ADD test functions
     # TODO: Add documentation for all methods, CHANGE the documentation for all methods
-    def __init__(self, halos_list, mass_correction_list=None, cosmo=None, sky_area=4 * np.pi, samples_number=1000,
-                 mass_sheet=True,
-                 ):
-
+    def __init__(
+        self,
+        halos_list,
+        mass_correction_list=None,
+        cosmo=None,
+        sky_area=4 * np.pi,
+        samples_number=1000,
+        mass_sheet=True,
+    ):
         if not mass_sheet:
             mass_correction_list = None
         if mass_sheet and mass_correction_list is None:
@@ -120,50 +123,68 @@ class HalosLens(object):
         self.n_halos = len(self.halos_list)
         self.n_correction = len(self.mass_correction_list)
         self.sky_area = sky_area
-        self.halos_redshift_list = halos_list['z']
-        self.mass_list = halos_list['mass']
-        self.mass_sheet_correction_redshift = mass_correction_list['z']
-        self.kappa_ext_list = mass_correction_list['kappa_ext']
+        self.halos_redshift_list = halos_list["z"]
+        self.mass_list = halos_list["mass"]
+        self.mass_sheet_correction_redshift = mass_correction_list["z"]
+        self.kappa_ext_list = mass_correction_list["kappa_ext"]
         # self.first_moment = mass_correction_list['first_moment']
         self.samples_number = samples_number
-        self._z_source_convention = 10  # if this need to be changed, change it in the halos.py too
+        self._z_source_convention = (
+            10  # if this need to be changed, change it in the halos.py too
+        )
         if cosmo is None:
-            warnings.warn("No cosmology provided, instead uses astropy.cosmology import default_cosmology")
+            warnings.warn(
+                "No cosmology provided, instead uses astropy.cosmology import default_cosmology"
+            )
             import astropy.cosmology as default_cosmology
+
             self.cosmo = default_cosmology
         else:
             self.cosmo = cosmo
 
-        self.combined_redshift_list = np.concatenate((self.halos_redshift_list, self.mass_sheet_correction_redshift))
+        self.combined_redshift_list = np.concatenate(
+            (self.halos_redshift_list, self.mass_sheet_correction_redshift)
+        )
 
-        self.lens_cosmo = [LensCosmo(z_lens=self.combined_redshift_list[h],
-                                     z_source=self._z_source_convention,
-                                     cosmo=self.cosmo)
-                           for h in range(self.n_halos + self.n_correction)]
+        self.lens_cosmo = [
+            LensCosmo(
+                z_lens=self.combined_redshift_list[h],
+                z_source=self._z_source_convention,
+                cosmo=self.cosmo,
+            )
+            for h in range(self.n_halos + self.n_correction)
+        ]
 
         self.lens_model = self.get_lens_model()
         # TODO: Set z_source as an input parameter or other way
 
     def get_lens_model(self):
         if self.mass_sheet:
-            lens_model = LensModel(lens_model_list=['NFW'] * self.n_halos + ['CONVERGENCE'] * self.n_correction,
-                                   lens_redshift_list=self.combined_redshift_list,
-                                   cosmo=self.cosmo,
-                                   observed_convention_index=[],
-                                   multi_plane=True,
-                                   z_source=5, z_source_convention=self._z_source_convention)
+            lens_model = LensModel(
+                lens_model_list=["NFW"] * self.n_halos
+                + ["CONVERGENCE"] * self.n_correction,
+                lens_redshift_list=self.combined_redshift_list,
+                cosmo=self.cosmo,
+                observed_convention_index=[],
+                multi_plane=True,
+                z_source=5,
+                z_source_convention=self._z_source_convention,
+            )
         else:
-            lens_model = LensModel(lens_model_list=['NFW'] * self.n_halos,
-                                   lens_redshift_list=self.halos_redshift_list,
-                                   cosmo=self.cosmo,
-                                   observed_convention_index=[],
-                                   multi_plane=True,
-                                   z_source=5, z_source_convention=self._z_source_convention)
+            lens_model = LensModel(
+                lens_model_list=["NFW"] * self.n_halos,
+                lens_redshift_list=self.halos_redshift_list,
+                cosmo=self.cosmo,
+                observed_convention_index=[],
+                multi_plane=True,
+                z_source=5,
+                z_source_convention=self._z_source_convention,
+            )
         return lens_model
 
     def random_position(self):
-        """
-        Generates and returns random positions in the sky using a uniform distribution.
+        """Generates and returns random positions in the sky using a uniform
+        distribution.
 
         Returns
         -------
@@ -178,9 +199,9 @@ class HalosLens(object):
         return px, py
 
     def get_nfw_kwargs(self):
-        """
-        Returns the angle at scale radius, observed bending angle at the scale radius, and positions of the Halos in
-        the lens plane from physical mass and concentration parameter of an NFW profile.
+        """Returns the angle at scale radius, observed bending angle at the scale
+        radius, and positions of the Halos in the lens plane from physical mass and
+        concentration parameter of an NFW profile.
 
         Returns
         -------
@@ -194,8 +215,9 @@ class HalosLens(object):
         alpha_Rs = []
         c_200 = concentration_from_mass(z=self.halos_redshift_list, mass=self.mass_list)
         for h in range(n_halos):
-            Rs_angle_h, alpha_Rs_h = self.lens_cosmo[h].nfw_physical2angle(M=self.mass_list[h],
-                                                                           c=c_200[h])
+            Rs_angle_h, alpha_Rs_h = self.lens_cosmo[h].nfw_physical2angle(
+                M=self.mass_list[h], c=c_200[h]
+            )
             Rs_angle.extend(Rs_angle_h)
             alpha_Rs.extend(alpha_Rs_h)
         # TODO: Check if I need to add mulit-processing when n_halos is large (Probably not)
@@ -205,8 +227,8 @@ class HalosLens(object):
         return Rs_angle, alpha_Rs, px, py
 
     def get_halos_lens_kwargs(self):
-        """
-        Constructs and returns the list of keyword arguments for each halo to be used in the lens model for lenstronomy.
+        """Constructs and returns the list of keyword arguments for each halo to be used
+        in the lens model for lenstronomy.
 
         Returns
         -------
@@ -219,21 +241,37 @@ class HalosLens(object):
             ra_0 = [0] * self.n_correction
             dec_0 = [0] * self.n_correction
 
-            kwargs_lens = [{'Rs': Rs_angle[h], 'alpha_Rs': alpha_Rs[h], 'center_x': px[h], 'center_y': py[h]}
-                           for h in range(self.n_halos)] + \
-                          [{'kappa': kappa[h], 'ra_0': ra_0[h], 'dec_0': dec_0[h]} for h in range(self.n_correction)]
+            kwargs_lens = [
+                {
+                    "Rs": Rs_angle[h],
+                    "alpha_Rs": alpha_Rs[h],
+                    "center_x": px[h],
+                    "center_y": py[h],
+                }
+                for h in range(self.n_halos)
+            ] + [
+                {"kappa": kappa[h], "ra_0": ra_0[h], "dec_0": dec_0[h]}
+                for h in range(self.n_correction)
+            ]
 
         else:
             Rs_angle, alpha_Rs, px, py = self.get_nfw_kwargs()
 
-            kwargs_lens = [{'Rs': Rs_angle[h], 'alpha_Rs': alpha_Rs[h], 'center_x': px[h], 'center_y': py[h]}
-                           for h in range(self.n_halos)]
+            kwargs_lens = [
+                {
+                    "Rs": Rs_angle[h],
+                    "alpha_Rs": alpha_Rs[h],
+                    "center_x": px[h],
+                    "center_y": py[h],
+                }
+                for h in range(self.n_halos)
+            ]
 
         return kwargs_lens
 
-    def get_convergence_shear(self, gamma12=False, diff=1.0, diff_method='square'):
-        """
-        Calculates and returns the convergence and shear at the origin due to all the Halos.
+    def get_convergence_shear(self, gamma12=False, diff=1.0, diff_method="square"):
+        """Calculates and returns the convergence and shear at the origin due to all the
+        Halos.
 
         Parameters
         ----------
@@ -253,22 +291,21 @@ class HalosLens(object):
         gamma : float
             The computed shear at the origin if gamma12 is False.
         """
-        f_xx, f_xy, f_yx, f_yy = self.lens_model.hessian(0.0, 0.0, self.get_halos_lens_kwargs(),
-                                                         diff=diff,
-                                                         diff_method=diff_method)
-        kappa = 1 / 2. * (f_xx + f_yy)
+        f_xx, f_xy, f_yx, f_yy = self.lens_model.hessian(
+            0.0, 0.0, self.get_halos_lens_kwargs(), diff=diff, diff_method=diff_method
+        )
+        kappa = 1 / 2.0 * (f_xx + f_yy)
         if gamma12:
-            gamma1 = 1. / 2 * (f_xx - f_yy)
+            gamma1 = 1.0 / 2 * (f_xx - f_yy)
             gamma2 = f_xy
             return kappa, gamma1, gamma2
         else:
-            gamma = np.sqrt(f_xy ** 2 + 0.25 * (f_xx - f_yy) ** 2)
+            gamma = np.sqrt(f_xy**2 + 0.25 * (f_xx - f_yy) ** 2)
             return kappa, gamma
 
     @staticmethod
     def compute_kappa_gamma(i, obj, gamma_tot, diff, diff_method):
-        """
-        Compute the convergence and shear values for a given index.
+        """Compute the convergence and shear values for a given index.
 
         This method is designed to be used with multiprocessing to speed up the process.
 
@@ -296,15 +333,18 @@ class HalosLens(object):
         to compute the kappa and gamma values for multiple samples in parallel.
         """
         if gamma_tot:
-            kappa, gamma = obj.get_convergence_shear(gamma12=False, diff=diff, diff_method=diff_method)
+            kappa, gamma = obj.get_convergence_shear(
+                gamma12=False, diff=diff, diff_method=diff_method
+            )
             return [kappa, gamma]
         else:
-            kappa, gamma1, gamma2 = obj.get_convergence_shear(gamma12=True, diff=diff, diff_method=diff_method)
+            kappa, gamma1, gamma2 = obj.get_convergence_shear(
+                gamma12=True, diff=diff, diff_method=diff_method
+            )
             return [kappa, gamma1, gamma2]
 
-    def get_kappa_gamma_distib(self, gamma_tot=False, diff=1.0, diff_method='square'):
-        """
-        Computes and returns the distribution of convergence and shear values.
+    def get_kappa_gamma_distib(self, gamma_tot=False, diff=1.0, diff_method="square"):
+        """Computes and returns the distribution of convergence and shear values.
 
         This method uses multiprocessing to compute the convergence and shear values for multiple samples in parallel.
 
@@ -329,27 +369,37 @@ class HalosLens(object):
         The method uses the `compute_kappa_gamma` static method to compute the values for each sample.
         If the number of samples exceeds 2000, a print statement will indicate the elapsed time for computation.
         """
-        kappa_gamma_distribution = np.empty((self.samples_number, 2 if gamma_tot else 3))
+        kappa_gamma_distribution = np.empty(
+            (self.samples_number, 2 if gamma_tot else 3)
+        )
         start_time = time.time()
 
         with multiprocessing.Pool() as pool:
-            results = pool.starmap(self.compute_kappa_gamma,
-                                   [(i, self, gamma_tot, diff, diff_method) for i in range(self.samples_number)])
+            results = pool.starmap(
+                self.compute_kappa_gamma,
+                [
+                    (i, self, gamma_tot, diff, diff_method)
+                    for i in range(self.samples_number)
+                ],
+            )
 
         for i, result in enumerate(results):
             kappa_gamma_distribution[i] = result
 
         if self.samples_number > 2000:
             elapsed_time = time.time() - start_time
-            print(f"For this Halos list, elapsed time for computing weak-lensing maps: {elapsed_time} seconds")
+            print(
+                f"For this Halos list, elapsed time for computing weak-lensing maps: {elapsed_time} seconds"
+            )
 
         return kappa_gamma_distribution
         # TODO: Maybe considering a choice between multiprocessing and not multiprocessing.
 
-    def get_kappa_gamma_distib_without_multiprocessing(self, gamma_tot=False, diff=1.0, diff_method='square'):
-        """
-        Runs the method get_convergence_shear() a specific number of times and stores the results
-        for kappa, gamma1, and gamma2 in separate lists.
+    def get_kappa_gamma_distib_without_multiprocessing(
+        self, gamma_tot=False, diff=1.0, diff_method="square"
+    ):
+        """Runs the method get_convergence_shear() a specific number of times and stores
+        the results for kappa, gamma1, and gamma2 in separate lists.
 
         Parameters
         ----------
@@ -374,7 +424,9 @@ class HalosLens(object):
         otherwise gamma is stored. All returned values from get_convergence_shear() are assumed to be floats.
         """
 
-        kappa_gamma_distribution = np.empty((self.samples_number, 2 if gamma_tot else 3))
+        kappa_gamma_distribution = np.empty(
+            (self.samples_number, 2 if gamma_tot else 3)
+        )
 
         loop = range(self.samples_number)
         if self.samples_number > 999:
@@ -384,15 +436,21 @@ class HalosLens(object):
 
         if gamma_tot:
             for i in loop:
-                kappa, gamma = self.get_convergence_shear(gamma12=False, diff=diff, diff_method=diff_method)
+                kappa, gamma = self.get_convergence_shear(
+                    gamma12=False, diff=diff, diff_method=diff_method
+                )
                 kappa_gamma_distribution[i] = [kappa, gamma]
         else:
             for i in loop:
-                kappa, gamma1, gamma2 = self.get_convergence_shear(gamma12=True, diff=diff, diff_method=diff_method)
+                kappa, gamma1, gamma2 = self.get_convergence_shear(
+                    gamma12=True, diff=diff, diff_method=diff_method
+                )
                 kappa_gamma_distribution[i] = [kappa, gamma1, gamma2]
 
         if self.samples_number > 999:
             elapsed_time = time.time() - start_time
-            print(f"For this Halos list, elapsed time for computing weak-lensing maps: {elapsed_time} seconds")
+            print(
+                f"For this Halos list, elapsed time for computing weak-lensing maps: {elapsed_time} seconds"
+            )
 
         return kappa_gamma_distribution

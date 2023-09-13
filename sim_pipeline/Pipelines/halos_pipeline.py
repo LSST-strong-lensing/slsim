@@ -5,9 +5,10 @@ import tempfile
 
 
 class HalosSkyPyPipeline:
-    def __init__(self, skypy_config=None, sky_area=None, m_min=None, m_max=None, z_max=None):
-        """
-        Initialize the class with the given parameters.
+    def __init__(
+        self, skypy_config=None, sky_area=None, m_min=None, m_max=None, z_max=None
+    ):
+        """Initialize the class with the given parameters.
 
         Parameters
         ----------
@@ -21,18 +22,17 @@ class HalosSkyPyPipeline:
             Maximum halo mass.
         z_max : float, optional
             Maximum redshift value in z_range.
-
         """
         path = os.path.dirname(sim_pipeline.__file__)
         module_path, _ = os.path.split(path)
         if skypy_config is None:
-            skypy_config = os.path.join(module_path, 'data/SkyPy/halo.yml')
+            skypy_config = os.path.join(module_path, "data/SkyPy/halo.yml")
 
         if sky_area is None and m_min is None and m_max is None and z_max is None:
             self._pipeline = Pipeline.read(skypy_config)
             self._pipeline.execute()
         else:
-            with open(skypy_config, 'r') as file:
+            with open(skypy_config, "r") as file:
                 content = file.read()
 
             if sky_area is not None:
@@ -55,7 +55,9 @@ class HalosSkyPyPipeline:
                 new_z_range = f"z_range: !numpy.linspace [0, {z_max}, 1000]"
                 content = content.replace(old_z_range, new_z_range)
 
-            with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.yml') as tmp_file:
+            with tempfile.NamedTemporaryFile(
+                mode="w", delete=False, suffix=".yml"
+            ) as tmp_file:
                 tmp_file.write(content)
 
             self._pipeline = Pipeline.read(tmp_file.name)
@@ -66,26 +68,22 @@ class HalosSkyPyPipeline:
 
     @property
     def halos(self):
-        """
-        SkyPy pipeline for Halos.
+        """SkyPy pipeline for Halos.
 
         Returns
         -------
         list of dict
             List of halos.
-
         """
-        return self._pipeline['halos']
+        return self._pipeline["halos"]
 
     @property
     def mass_sheet_correction(self):
-        """
-        SkyPy pipeline for mass sheet correction.
+        """SkyPy pipeline for mass sheet correction.
 
         Returns
         -------
         list of dict
             List of sheet of mass for correction.
-
         """
-        return self._pipeline['mass_sheet_correction']
+        return self._pipeline["mass_sheet_correction"]

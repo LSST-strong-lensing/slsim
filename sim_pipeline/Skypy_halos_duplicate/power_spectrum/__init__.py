@@ -1,5 +1,4 @@
-"""
-This module contains methods that model the matter power spectrum.
+"""This module contains methods that model the matter power spectrum.
 
 Linear Power Spectrum
 =====================
@@ -40,7 +39,6 @@ Growth Functions
    growth_function
    growth_function_carroll
    growth_function_derivative
-
 """
 
 from ._classy import *  # noqa F401,F403
@@ -48,4 +46,4 @@ from ._camb import *  # noqa F401,F403
 from ._eisenstein_hu import *  # noqa F401,F403
 from ._halofit import *  # noqa F401,F403
 from ._growth import *  # noqa F401,F403
-from ._base import * # noqa F401,F403
+from ._base import *  # noqa F401,F403
