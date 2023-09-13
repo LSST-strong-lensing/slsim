@@ -108,13 +108,10 @@ class GalaxyGalaxyLens(object):
         :return: x-pos, y-pos
         """
         if not hasattr(self, "_image_positions"):
-            kwargs_model, kwargs_params = self.lenstronomy_kwargs(band=None)
-            lens_model_list = kwargs_model["lens_model_list"]
+            lens_model_list, kwargs_lens = self.lens_model_lenstronomy()
             lens_model_class = LensModel(lens_model_list=lens_model_list)
             lens_eq_solver = LensEquationSolver(lens_model_class)
             source_pos_x, source_pos_y = self.source_position
-
-            kwargs_lens = kwargs_params["kwargs_lens"]
             # TODO: analytical solver possible but currently does not support the
             #  convergence term
             self._image_positions = lens_eq_solver.image_position_from_source(
