@@ -3,7 +3,6 @@ from sim_pipeline.Skypy_halos_duplicate.halos.mass import halo_mass_function
 from sim_pipeline.Skypy_halos_duplicate.power_spectrum import eisenstein_hu
 from scipy import integrate
 from sim_pipeline.Skypy_halos_duplicate.halos.mass import ellipsoidal_collapse_function
-from sim_pipeline.Skypy_halos_duplicate.halos.mass import press_schechter_collapse_function
 from hmf.cosmology.growth_factor import GrowthFactor
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 import numpy as np

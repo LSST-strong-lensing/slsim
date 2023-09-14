@@ -1,4 +1,3 @@
-from astropy.cosmology import FlatLambdaCDM
 import numpy as np
 from sim_pipeline.Halos.halos import number_density_at_redshift, growth_factor_at_redshift, halo_mass_at_z, \
     set_defaults, redshift_halos_array_from_comoving_density

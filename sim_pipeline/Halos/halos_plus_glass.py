@@ -3,12 +3,9 @@ from sim_pipeline.Pipelines.halos_pipeline import HalosSkyPyPipeline
 from sim_pipeline.Halos.halos_lens import HalosLens
 from astropy.cosmology import FlatLambdaCDM
 from tqdm.notebook import tqdm
-from tqdm.contrib.concurrent import process_map
-from itertools import starmap
 import time
 from scipy import stats
 import warnings
-import multiprocessing
 from multiprocessing import get_context
 
 
