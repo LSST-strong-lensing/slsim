@@ -1,4 +1,6 @@
 import pytest
+import numpy as np
+from numpy import testing as npt
 from astropy.cosmology import FlatLambdaCDM
 from astropy.table import Table
 from sim_pipeline.galaxy_galaxy_lens import (
@@ -85,6 +87,18 @@ class TestGalaxyGalaxyLens(object):
     def test_los_linear_distortions(self):
         losd = self.gg_lens.los_linear_distortions()
         assert losd != 0
+
+    def test_point_source_arrival_times(self):
+        dt_days = self.gg_lens.point_source_arrival_times()
+        assert np.min(dt_days) > -1000
+        assert np.max(dt_days) < 1000
+
+    def test_image_observer_times(self):
+        t_obs = 1000
+        dt_days = self.gg_lens.image_observer_times(t_obs=t_obs)
+        arrival_times = self.gg_lens.point_source_arrival_times()
+        observer_times = t_obs + arrival_times - np.min(arrival_times)
+        npt.assert_almost_equal(dt_days, observer_times, decimal=5)
 
 
 if __name__ == "__main__":

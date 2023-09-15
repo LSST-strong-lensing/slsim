@@ -94,7 +94,7 @@ def sharp_image(
         unconvolved=True,
         source_add=True,
         lens_light_add=with_deflector,
-        point_source_add=False,
+        point_source_add=False
     )
     return image
 
@@ -144,3 +144,48 @@ def rgb_image_from_image_list(image_list, stretch):
         image_list[0], image_list[1], image_list[2], stretch=stretch
     )
     return image_rgb
+
+def lens_pixel_coordinates_and_image_magnitude(
+    lens_class, band, mag_zero_point, delta_pix, num_pix):
+    """provides pixel coordinates for deflector and images. Currently, 
+    this function only works for point source. 
+
+    :param lens_class: GalaxyGalaxyLens() object
+    :param band: imaging band
+    :param mag_zero_point: magnitude zero point in band
+    :param delta_pix: pixel scale of image generated
+    :param num_pix: number of pixels per axis
+    :return: list of deflector and image coordinate in pixel unit
+    """
+    kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band)
+    kwargs_band = {
+        "pixel_scale": delta_pix,
+        "magnitude_zero_point": mag_zero_point,
+        "background_noise": 0,  # these are keywords not being used but need to be
+        ## set in SimAPI
+        "psf_type": "NONE",  # these are keywords not being used but need to be set
+        ##in SimAPI
+        "exposure_time": 1,
+    }  # these are keywords not being used but need to be set in
+    ##SimAPI
+    sim_api = SimAPI(
+        numpix=num_pix, kwargs_single_band=kwargs_band, kwargs_model=kwargs_model
+    )
+
+    image_data = sim_api.data_class
+    
+    ra_lens_value = kwargs_params['kwargs_lens'][1]['ra_0']
+    dec_lens_value = kwargs_params['kwargs_lens'][1]['dec_0']
+    lens_pix_coordinate = image_data.map_coord2pix(ra_lens_value, dec_lens_value)
+
+    ps_coordinate = kwargs_params['kwargs_ps']
+    ra_image_values = [item['ra_image'] for item in ps_coordinate]
+    dec_image_values = [item['dec_image'] for item in ps_coordinate]
+    image_magnitude = [item['magnitude'] for item in ps_coordinate]
+    image_pix_coordinate = []
+    for image_ra, image_dec in zip(ra_image_values[0], dec_image_values[0]):
+        image_pix_coordinate.append(image_data.map_coord2pix(image_ra, image_dec))
+
+    data = {'deflector_pix': (lens_pix_coordinate[0], lens_pix_coordinate[1]), 
+            'image_pix': image_pix_coordinate, 'image_magnitude': image_magnitude[0]}
+    return data

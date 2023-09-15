@@ -21,6 +21,7 @@ class GalaxyGalaxyLens(object):
         mixgauss_means=None,
         mixgauss_stds=None,
         mixgauss_weights=None,
+        magnification_limit=0.01,
     ):
         """
 
@@ -39,6 +40,9 @@ class GalaxyGalaxyLens(object):
         :type mixgauss_weights: list of float
         :type mixgauss_stds: list of float
         :type mixgauss_means: list of float
+        :param magnification_limit: absolute lensing magnification lower limit to
+            register a point source (ignore highly de-magnified images)
+        :type magnification_limit: float >= 0
         """
         self._source_dict = source_dict
         self._lens_dict = deflector_dict
@@ -48,6 +52,7 @@ class GalaxyGalaxyLens(object):
         self._mixgauss_means = mixgauss_means
         self._mixgauss_stds = mixgauss_stds
         self._mixgauss_weights = mixgauss_weights
+        self._magnification_limit = magnification_limit
         if self._lens_dict["z"] >= self._source_dict["z"]:
             self._theta_E_sis = 0
         else:
@@ -103,13 +108,10 @@ class GalaxyGalaxyLens(object):
         :return: x-pos, y-pos
         """
         if not hasattr(self, "_image_positions"):
-            kwargs_model, kwargs_params = self.lenstronomy_kwargs(band=None)
-            lens_model_list = kwargs_model["lens_model_list"]
+            lens_model_list, kwargs_lens = self.lens_model_lenstronomy()
             lens_model_class = LensModel(lens_model_list=lens_model_list)
             lens_eq_solver = LensEquationSolver(lens_model_class)
             source_pos_x, source_pos_y = self.source_position
-
-            kwargs_lens = kwargs_params["kwargs_lens"]
             # TODO: analytical solver possible but currently does not support the
             #  convergence term
             self._image_positions = lens_eq_solver.image_position_from_source(
@@ -119,6 +121,7 @@ class GalaxyGalaxyLens(object):
                 solver="lenstronomy",
                 search_window=self.einstein_radius * 6,
                 min_distance=self.einstein_radius * 6 / 100,
+                magnification_limit=self._magnification_limit,
             )
         return self._image_positions
 
@@ -172,7 +175,9 @@ class GalaxyGalaxyLens(object):
         # Criteria 6: (optional)
         # compute the magnified brightness of the lensed extended arc for different
         # bands at least in one band, the magnitude has to be brighter than the limit
-        if mag_arc_limit is not None:
+        if mag_arc_limit is not None and self._source_type in ["extended"]:
+            # makes sure magnification of extended source is only used when there is
+            # an extended source
             bool_mag_limit = False
             host_mag = self.host_magnification()
             for band, mag_limit_band in mag_arc_limit.items():
@@ -276,6 +281,41 @@ class GalaxyGalaxyLens(object):
         band_string = str("mag_" + band)
         return self._lens_dict[band_string]
 
+    def point_source_arrival_times(self):
+        """Arrival time of images relative to a straight line without lensing. Negative
+        values correspond to images arriving earlier, and positive signs correspond to
+        images arriving later.
+
+        :return: arrival times for each image [days]
+        :rtype: numpy array
+        """
+        lens_model_list, kwargs_lens = self.lens_model_lenstronomy()
+        lens_model = LensModel(
+            lens_model_list=lens_model_list,
+            cosmo=self.cosmo,
+            z_lens=self.lens_redshift,
+            z_source=self.source_redshift,
+        )
+        x_image, y_image = self.image_positions()
+        arrival_times = lens_model.arrival_time(
+            x_image, y_image, kwargs_lens=kwargs_lens
+        )
+        return arrival_times
+
+    def image_observer_times(self, t_obs):
+        """Calculates time of the source at the different images, not correcting for
+        redshifts, but for time delays. The time is relative to the first arriving
+        image.
+
+        :param t_obs: time of observation [days]
+        :return: time of the source when seen in the different images (without redshift
+            correction)
+        :rtype: numpy array
+        """
+        arrival_times = self.point_source_arrival_times()
+        observer_times = t_obs + arrival_times - np.min(arrival_times)
+        return observer_times
+
     def point_source_magnitude(self, band, lensed=False):
         """Point source magnitude, either unlensed (single value) or lensed (array) with
         macro-model magnifications.
@@ -291,6 +331,8 @@ class GalaxyGalaxyLens(object):
         band_string = str("mag_" + band)
         # TODO: might have to change conventions between extended and point source
         source_mag = self._source_dict[band_string]
+        # TODO: requires time information and needs to be shifted for
+        # different arriving images
         if lensed:
             mag = self.point_source_magnification()
             return source_mag - 2.5 * np.log10(np.abs(mag))
@@ -367,12 +409,11 @@ class GalaxyGalaxyLens(object):
         return self._host_magnification
 
     def lenstronomy_kwargs(self, band=None):
-        """
+        """Generates lenstronomy dictionary conventions for the class object.
 
         :param band: imaging band, if =None, will result in un-normalized amplitudes
         :type band: string or None
         :return: lenstronomy model and parameter conventions
-
         """
         lens_model_list, kwargs_lens = self.lens_model_lenstronomy()
         kwargs_model = {
@@ -406,14 +447,14 @@ class GalaxyGalaxyLens(object):
             kwargs_source = None
 
         if self._source_type == "point_source":
-            kwargs_model["point_source_model"] = ["LENSED_POSITION"]
+            kwargs_model["point_source_model_list"] = ["LENSED_POSITION"]
             img_x, img_y = self.image_positions()
             if band is None:
                 image_magnitudes = np.abs(self.point_source_magnification())
             else:
                 image_magnitudes = self.point_source_magnitude(band=band, lensed=True)
             kwargs_ps = [
-                {"ra_image": img_x, "dec_image": img_y, "point_amp": image_magnitudes}
+                {"ra_image": img_x, "dec_image": img_y, "magnitude": image_magnitudes}
             ]
         else:
             kwargs_ps = None

@@ -102,8 +102,11 @@ class GalaxyGalaxyLensPop(object):
             self._source_model_type = "extended"
         elif source_type == "quasars":
             from sim_pipeline.Sources.quasars import Quasars
+            from sim_pipeline.Sources.quasar_catalog.simple_quasar import quasar_catalog
 
-            self._sources = Quasars(cosmo=cosmo, sky_area=sky_area)
+            quasar_source = quasar_catalog(50000, 0.1, 5, 14, 23)
+            self._sources = Quasars(quasar_source,cosmo=cosmo, 
+                                    sky_area=sky_area)
             self._source_model_type = "point_source"
         else:
             raise ValueError("source_type %s is not supported" % source_type)
@@ -212,7 +215,7 @@ class GalaxyGalaxyLensPop(object):
                         gg_lens_population.append(gg_lens)
                         # if a lens system passes the validity test, code should exit
                         # the loop. so, n should be greater or equal to
-                        # num_sources_tested which will break the the while loop
+                        # num_sources_tested which will break the while loop
                         # (instead of this one can simply use break).
                         n = num_sources_tested
                     else:
