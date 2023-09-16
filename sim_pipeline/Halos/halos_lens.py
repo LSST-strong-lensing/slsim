@@ -3,6 +3,7 @@ from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 import warnings
 from tqdm.notebook import tqdm
+import math
 import time
 import multiprocessing
 
@@ -59,7 +60,7 @@ class HalosLens(object):
     Parameters
     ----------
     halos_list : table
-    cosmo : astropy.cosmology instance, optional
+    cosmo : astropy.Cosmology instance, optional
         Cosmology used for lensing computations. If not provided, default astropy cosmology is used.
     sky_area : float, optional
         Total sky area (in steradians) over which Halos are distributed. Defaults to full sky (4pi steradians).
@@ -177,11 +178,7 @@ class HalosLens(object):
         py = random_radius * np.sin(2 * phi)
         return px, py
 
-<<<<<<< Updated upstream
-    def get_nfw_kwargs(self, z=None, mass=None, n_halos=None):
-=======
-    def get_nfw_kwargs(self):
->>>>>>> Stashed changes
+    def get_nfw_kwargs(self, z=None, mass=None, n_halos=None, lens_cosmo=None):
         """
         Returns the angle at scale radius, observed bending angle at the scale radius, and positions of the Halos in
         the lens plane from physical mass and concentration parameter of an NFW profile.
@@ -193,7 +190,8 @@ class HalosLens(object):
             alpha_Rs (observed bending angle at the scale radius) (in units of arcsec)
             Arrays containing Rs_angle, alpha_Rs, and x and y positions of all the Halos.
         """
-<<<<<<< Updated upstream
+        # TODO: make for divided
+
         if n_halos is None:
             n_halos = self.n_halos
         Rs_angle = []
@@ -203,17 +201,11 @@ class HalosLens(object):
         if mass is None:
             mass = self.mass_list
         c_200 = concentration_from_mass(z=z, mass=mass)
+        if lens_cosmo is None:
+            lens_cosmo = self.lens_cosmo
         for h in range(n_halos):
-            Rs_angle_h, alpha_Rs_h = self.lens_cosmo[h].nfw_physical2angle(M=mass[h],
-=======
-        n_halos = self.n_halos
-        Rs_angle = []
-        alpha_Rs = []
-        c_200 = concentration_from_mass(z=self.halos_redshift_list, mass=self.mass_list)
-        for h in range(n_halos):
-            Rs_angle_h, alpha_Rs_h = self.lens_cosmo[h].nfw_physical2angle(M=self.mass_list[h],
->>>>>>> Stashed changes
-                                                                           c=c_200[h])
+            Rs_angle_h, alpha_Rs_h = lens_cosmo[h].nfw_physical2angle(M=mass[h],
+                                                                      c=c_200[h])
             Rs_angle.extend(Rs_angle_h)
             alpha_Rs.extend(alpha_Rs_h)
         # TODO: Check if I need to add mulit-processing when n_halos is large (Probably not)
@@ -249,11 +241,8 @@ class HalosLens(object):
 
         return kwargs_lens
 
-<<<<<<< Updated upstream
-    def get_convergence_shear(self, gamma12=False, diff=0.0001, diff_method='square'):
-=======
-    def get_convergence_shear(self, gamma12=False, diff=1.0, diff_method='square'):
->>>>>>> Stashed changes
+    def get_convergence_shear(self, gamma12=False, diff=0.0001, diff_method='square', kwargs=None, lens_model=None
+                              , zdzs=None):
         """
         Calculates and returns the convergence and shear at the origin due to all the Halos.
 
@@ -262,11 +251,7 @@ class HalosLens(object):
         gamma12 : bool, optional
             If True, the function will return gamma1 and gamma2 instead of gamma. Default is False.
         diff : float, optional
-<<<<<<< Updated upstream
             Differential used in the computation of the Hessian matrix. Default is 0.0001.
-=======
-            Differential used in the computation of the Hessian matrix. Default is 1.0.
->>>>>>> Stashed changes
         diff_method : str, optional
             The method to compute differential. Default is 'square'.
 
@@ -279,9 +264,21 @@ class HalosLens(object):
         gamma : float
             The computed shear at the origin if gamma12 is False.
         """
-        f_xx, f_xy, f_yx, f_yy = self.lens_model.hessian(0.0, 0.0, self.get_halos_lens_kwargs(),
-                                                         diff=diff,
-                                                         diff_method=diff_method)
+        if kwargs is None:
+            kwargs = self.get_halos_lens_kwargs()
+        if lens_model is None:
+            lens_model = self.lens_model
+        if zdzs is not None:
+            f_xx, f_xy, f_yx, f_yy = lens_model.hessian_z1z2(z1=zdzs[0],
+                                                             z2=zdzs[1],
+                                                             theta_x=0,
+                                                             theta_y=0,
+                                                             kwargs_lens=kwargs,
+                                                             diff=0.00000001)
+        else:
+            f_xx, f_xy, f_yx, f_yy = lens_model.hessian(x=0.0, y=0.0, kwargs=kwargs,
+                                                        diff=diff,
+                                                        diff_method=diff_method)
         kappa = 1 / 2. * (f_xx + f_yy)
         if gamma12:
             gamma1 = 1. / 2 * (f_xx - f_yy)
@@ -328,11 +325,7 @@ class HalosLens(object):
             kappa, gamma1, gamma2 = obj.get_convergence_shear(gamma12=True, diff=diff, diff_method=diff_method)
             return [kappa, gamma1, gamma2]
 
-<<<<<<< Updated upstream
     def get_kappa_gamma_distib(self, gamma_tot=False, diff=0.0001, diff_method='square'):
-=======
-    def get_kappa_gamma_distib(self, gamma_tot=False, diff=1.0, diff_method='square'):
->>>>>>> Stashed changes
         """
         Computes and returns the distribution of convergence and shear values.
 
@@ -344,11 +337,7 @@ class HalosLens(object):
             If True, the function will return total shear gamma values. If False, it will return gamma1 and gamma2 values.
             Default is False.
         diff : float, optional
-<<<<<<< Updated upstream
             Differential used in the computation of the Hessian matrix. Default is 0.0001.
-=======
-            Differential used in the computation of the Hessian matrix. Default is 1.0.
->>>>>>> Stashed changes
         diff_method : str, optional
             Method used to compute differential. Default is 'square'.
 
@@ -430,141 +419,169 @@ class HalosLens(object):
             print(f"For this Halos list, elapsed time for computing weak-lensing maps: {elapsed_time} seconds")
 
         return kappa_gamma_distribution
-<<<<<<< Updated upstream
 
-    def filter_halos_by_redshift(self, zd):
-        """
-        Filters halos and mass corrections based on redshift and returns separate LensModel and LensCosmo instances
-        for the regions between the observer and the deflector (od) and the deflector to the source (ds).
+    def filter_halos_by_redshift(self, zd, zs):
+        halos_od, halos_ds, halos_os = self._filter_halos_by_condition(zd, zs)
+        if zs < zd:
+            raise ValueError("Source redshift cannot be less than deflector redshift.")
+        mass_correction_od, mass_correction_ds, mass_correction_os = self._filter_mass_correction_by_condition(zd, zs)
+        return self._build_lens_data(halos_ds, mass_correction_ds, zd=zd, zs=zs), \
+            self._build_lens_data(halos_od, mass_correction_od, zd=0, zs=zd), \
+            self._build_lens_data(halos_os, mass_correction_os, zd=0, zs=zs)
 
-        Parameters
-        ----------
-        zd : float
-            The redshift threshold to differentiate between observer-deflector (od) and deflector-source (ds) halos.
+    def _filter_halos_by_condition(self, zd, zs):
+        halos_ds = self.halos_list[(self.halos_list['z'] >= zd) & (self.halos_list['z'] < zs)]
+        halos_od = self.halos_list[self.halos_list['z'] < zd]
+        halos_os = self.halos_list[self.halos_list['z'] < zs]
+        return halos_od, halos_ds, halos_os
 
-        Returns
-        -------
-        lens_model_ds : lenstronomy.LensModel instance
-            The LensModel instance for halos in the deflector-source (ds) region.
-        lens_cosmo_ds : list of lenstronomy.Cosmo.lens_cosmo.LensCosmo instances
-            List of LensCosmo instances for halos in the deflector-source (ds) region.
-        kwargs_lens_ds : list of dicts
-            List of keyword arguments for each halo in the deflector-source (ds) region.
-        lens_model_od : lenstronomy.LensModel instance
-            The LensModel instance for halos in the observer-deflector (od) region.
-        lens_cosmo_od : list of lenstronomy.Cosmo.lens_cosmo.LensCosmo instances
-            List of LensCosmo instances for halos in the observer-deflector (od) region.
-        kwargs_lens_od : list of dicts
-            List of keyword arguments for each halo in the observer-deflector (od) region.
+    def _filter_mass_correction_by_condition(self, zd, zs):
+        if self.mass_correction_list is None:
+            return None, None
+        mass_correction_ds = self.mass_correction_list[(self.mass_correction_list['z'] >= zd)
+                                                       & (self.mass_correction_list['z'] < zs)]
+        mass_correction_od = self.mass_correction_list[self.mass_correction_list['z'] < zd]
+        mass_correction_os = self.mass_correction_list[self.mass_correction_list['z'] < zs]
+        return mass_correction_od, mass_correction_ds, mass_correction_os
 
-        Notes
-        -----
-        This function filters halos based on their redshift and splits them into two categories: those between
-        the observer and the deflector (od) and those between the deflector and the source (ds).
-        It then creates LensModel and LensCosmo instances for each category.
-        """
+    def _build_lens_data(self, halos, mass_correction, zd, zs):
+        n_halos = len(halos)
+        n_mass_correction = len(mass_correction) if mass_correction is not None else 0
+        z_halo = halos['z']
+        mass_halo = halos['mass']
 
-        def _filter_and_build(halos_z_condition, mass_z_condition):
-            """
-            Filters halos and mass corrections using the provided conditions and constructs associated lenstronomy instances.
+        if mass_correction is not None and self.mass_sheet:
+            z_mass_correction = mass_correction['z']
+            kappa_ext_list = mass_correction['kappa_ext']
+        else:
+            z_mass_correction = []
+            kappa_ext_list = []
 
-            Parameters
-            ----------
-            halos_z_condition : np.ndarray of bool
-                Condition to filter halos based on their redshift.
-            mass_z_condition : np.ndarray of bool
-                Condition to filter mass corrections based on their redshift.
+        combined_redshift_list = np.concatenate((z_halo, z_mass_correction))
 
-            Returns
-            -------
-            lens_model_filtered : lenstronomy.LensModel instance
-                The LensModel instance based on filtered halos.
-            lens_cosmo_filtered : list of lenstronomy.Cosmo.lens_cosmo.LensCosmo instances
-                List of LensCosmo instances for filtered halos.
-            kwargs_lens_filtered : list of dicts
-                List of keyword arguments for each filtered halo.
-            """
-            # Filter halos by redshift
-            filtered_halos = self.halos_list[halos_z_condition]
-            n_halos_filtered = len(filtered_halos)
-            halos_redshift_list_filtered = filtered_halos['z']
-            mass_list_filtered = filtered_halos['mass']
+        if not combined_redshift_list.size:
+            warnings.warn("No halos OR mass correction in the given redshift range.")
+            return None, None, None
+        if zs < zd:
+            raise ValueError("Source redshift cannot be less than deflector redshift.")
+        if min(combined_redshift_list) < zd:
+            raise ValueError("Redshift of the last halo cannot be less than deflector redshift.")
+        if max(combined_redshift_list) > zs:
+            raise ValueError("Redshift of the last halo cannot be larger than source redshift.")
 
-            # Filter mass corrections by redshift (if available)
-            if self.mass_correction_list is not None and self.mass_sheet:
-                filtered_mass_corrections = self.mass_correction_list[mass_z_condition]
-                n_correction_filtered = len(filtered_mass_corrections)
-                mass_sheet_correction_redshift_filtered = filtered_mass_corrections['z']
-                kappa_ext_list_filtered = filtered_mass_corrections['kappa_ext']
-            else:
-                n_correction_filtered = 0
-                kappa_ext_list_filtered = [0]
-                mass_sheet_correction_redshift_filtered = []
+        lens_cosmo_list = self._build_lens_cosmo_list(combined_redshift_list, zs)
+        lens_model, lens_model_list = self._build_lens_model(combined_redshift_list, zs, n_halos)
+        kwargs_lens = self._build_kwargs_lens(n_halos, n_mass_correction, z_halo, mass_halo, lens_model_list,
+                                              kappa_ext_list, lens_cosmo_list)
 
-            # Compute combined redshift list
-            combined_redshift_list_filtered = np.concatenate(
-                (halos_redshift_list_filtered, mass_sheet_correction_redshift_filtered))
+        return lens_model, lens_cosmo_list, kwargs_lens
 
-            if len(combined_redshift_list_filtered) == 0:
-                return None
+    def _build_lens_cosmo_list(self, combined_redshift_list, z_source):
+        return [LensCosmo(z_lens=z, z_source=z_source, cosmo=self.cosmo) for z in combined_redshift_list]
 
-            if combined_redshift_list_filtered[0] > zd:
-                z_source = 5
-                z_source_convention = self._z_source_convention
-            else:
-                z_source = zd
-                z_source_convention = None
+    def _build_lens_model(self, combined_redshift_list, z_source, n_halos):
+        n_halos = n_halos
+        len(combined_redshift_list)
 
-            # Build lens_cosmo instances
-            lens_cosmo_filtered = [LensCosmo(z_lens=combined_redshift_list_filtered[h],
-                                             z_source=z_source,
-                                             cosmo=self.cosmo)
-                                   for h in range(n_halos_filtered + n_correction_filtered)]
+        if len(combined_redshift_list) - n_halos > 0:
+            lens_model_list = ['NFW'] * n_halos + ['CONVERGENCE'] * (len(combined_redshift_list) - n_halos)
+        elif len(combined_redshift_list) - n_halos < 0:
+            raise ValueError("Combined redshift list shorter than number of halos.")
+        else:
+            lens_model_list = ['NFW'] * n_halos
 
-            # Build lens_model instance
-            if self.mass_sheet:
-                lens_model_list_filtered = ['NFW'] * n_halos_filtered + ['CONVERGENCE'] * n_correction_filtered
-            else:
-                lens_model_list_filtered = ['NFW'] * n_halos_filtered
+        lens_model = LensModel(lens_model_list=lens_model_list,
+                               lens_redshift_list=combined_redshift_list,
+                               cosmo=self.cosmo,
+                               observed_convention_index=[],
+                               multi_plane=True,
+                               z_source=z_source,
+                               z_source_convention=None if combined_redshift_list[
+                                                               0] <= z_source else self._z_source_convention)
+        return lens_model, lens_model_list
 
-            lens_model_filtered = LensModel(lens_model_list=lens_model_list_filtered,
-                                            lens_redshift_list=combined_redshift_list_filtered,
-                                            cosmo=self.cosmo,
-                                            observed_convention_index=[],
-                                            multi_plane=True,
-                                            z_source=z_source,
-                                            z_source_convention=z_source_convention)
+    def _build_kwargs_lens(self, n_halos, n_mass_correction, z_halo, mass_halo, lens_model_list, kappa_ext_list,
+                           lens_cosmo_list=None):
+        if n_halos == 0 and 'CONVERGENCE' not in lens_model_list:
+            return None
+        if n_halos == 0 and 'CONVERGENCE' in lens_model_list:
+            return [{'kappa': kappa_ext_list[h], 'ra_0': 0, 'dec_0': 0} for h in range(n_mass_correction)]
 
-            # Construct the kwargs_lens based on filtered data
-            Rs_angle, alpha_Rs, px, py = self.get_nfw_kwargs(z=halos_redshift_list_filtered,
-                                                             mass=mass_list_filtered,
-                                                             n_halos=n_halos_filtered)
+        Rs_angle, alpha_Rs, px, py = self.get_nfw_kwargs(z=z_halo, mass=mass_halo, n_halos=n_halos,
+                                                         lens_cosmo=lens_cosmo_list)
+        # TODO: make it only comuter once for same lists
 
-            if self.mass_sheet:
-                kwargs_lens_filtered = [{'Rs': Rs_angle[h], 'alpha_Rs': alpha_Rs[h], 'center_x': px[h],
-                                         'center_y': py[h]}
-                                        for h in range(n_halos_filtered)] + \
-                                       [{'kappa': kappa_ext_list_filtered[h], 'ra_0': 0, 'dec_0': 0}
-                                        for h in range(n_correction_filtered)]
-            else:
-                kwargs_lens_filtered = [
-                    {'Rs': Rs_angle[h], 'alpha_Rs': alpha_Rs[h], 'center_x': px[h], 'center_y': py[h]}
-                    for h in range(n_halos_filtered)]
+        if 'CONVERGENCE' in lens_model_list:
+            return [{'Rs': Rs_angle[i], 'alpha_Rs': alpha_Rs[i], 'center_x': px[i], 'center_y': py[i]} for i in
+                    range(n_halos)] + \
+                [{'kappa': kappa_ext_list[h], 'ra_0': 0, 'dec_0': 0} for h in range(n_mass_correction)]
+        return [{'Rs': Rs_angle[i], 'alpha_Rs': alpha_Rs[i], 'center_x': px[i], 'center_y': py[i]} for i in
+                range(n_halos)]
 
-            return lens_model_filtered, lens_cosmo_filtered, kwargs_lens_filtered
+    def get_lens_data_by_redshift(self, zd, zs):
 
-        print(len(self.halos_list))
-        print(len(self.halos_list[self.halos_list['z'] > zd]))
-        print(len(self.halos_list[self.halos_list['z'] < zd]))
-        # Separate halos into those from deflector to source and observer to deflector
-        lens_model_ds, lens_cosmo_ds, kwargs_lens_ds = _filter_and_build(halos_z_condition=self.halos_list['z'] >= zd
-                                                                         , mass_z_condition=self.mass_correction_list[
-                                                                                                'z'] >= zd
-                                                                         )
-        lens_model_od, lens_cosmo_od, kwargs_lens_od = _filter_and_build(halos_z_condition=self.halos_list['z'] < zd
-                                                                         , mass_z_condition=self.mass_correction_list[
-                                                                                                'z'] < zd)
+        '''
 
-        return lens_model_ds, lens_cosmo_ds, kwargs_lens_ds, lens_model_od, lens_cosmo_od, kwargs_lens_od
-=======
->>>>>>> Stashed changes
+        Note:
+            lens_model_ds = lens_data['ds']['lens_model']
+            lens_cosmo_ds = lens_data['ds']['lens_cosmo']
+            kwargs_lens_ds = lens_data['ds']['kwargs_lens']
+             ... and similarly for 'od' and 'os' data
+
+        '''
+        ds_data, od_data, os_data = self.filter_halos_by_redshift(zd, zs)
+
+        lens_model_ds, lens_cosmo_ds, kwargs_lens_ds = ds_data
+        lens_model_od, lens_cosmo_od, kwargs_lens_od = od_data
+        lens_model_os, lens_cosmo_os, kwargs_lens_os = os_data
+
+        return {
+            'ds': {
+                'lens_model': lens_model_ds,
+                'lens_cosmo': lens_cosmo_ds,
+                'kwargs_lens': kwargs_lens_ds
+            },
+            'od': {
+                'lens_model': lens_model_od,
+                'lens_cosmo': lens_cosmo_od,
+                'kwargs_lens': kwargs_lens_od
+            },
+            'os': {
+                'lens_model': lens_model_os,
+                'lens_cosmo': lens_cosmo_os,
+                'kwargs_lens': kwargs_lens_os
+            }
+        }
+
+    def compute_various_kappa_gamma_values(self, zd, zs):
+        # Obtain the lens data for each redshift using the get_lens_data_by_redshift function
+        lens_data = self.get_lens_data_by_redshift(zd, zs)
+
+        # Extracting lens model and kwargs for 'od' and 'os'
+        lens_model_od = lens_data['od']['lens_model']
+        kwargs_lens_od = lens_data['od']['kwargs_lens']
+
+        lens_model_os = lens_data['os']['lens_model']
+        kwargs_lens_os = lens_data['os']['kwargs_lens']
+
+        lens_model_ds = lens_data['ds']['lens_model']
+        kwargs_lens_ds = lens_data['ds']['kwargs_lens']
+
+        kappa_od, gamma_od1, gamma_od2 = self.get_convergence_shear(gamma12=True, kwargs=kwargs_lens_od,
+                                                                    lens_model=lens_model_od)
+
+        kappa_os, gamma_os1, gamma_os2 = self.get_convergence_shear(gamma12=True, kwargs=kwargs_lens_os,
+                                                                    lens_model=lens_model_os)
+        kappa_ds, gamma_ds1, gamma_ds2 = self.get_convergence_shear(gamma12=True, kwargs=kwargs_lens_ds,
+                                                                    lens_model=lens_model_ds, zdzs=(zd, zs))
+
+        return kappa_od, kappa_os, gamma_od1, gamma_od2, gamma_os1, gamma_os2, kappa_ds, gamma_ds1, gamma_ds2
+
+    def get_kext_gext_values(self, zd, zs):
+        kappa_od, kappa_os, gamma_od1, gamma_od2, gamma_os1, \
+            gamma_os2, kappa_ds, gamma_ds1, gamma_ds2 = self.compute_various_kappa_gamma_values(zd, zs)
+
+        kext = 1 - (1 - kappa_od) * (1 - kappa_os) / (1 - kappa_ds)
+        gext = math.sqrt((gamma_od1 + gamma_os1 - gamma_ds1)**2 + (gamma_od2 + gamma_os2 - gamma_ds2)**2)
+
+        return kext, gext
