@@ -177,7 +177,11 @@ class HalosLens(object):
         py = random_radius * np.sin(2 * phi)
         return px, py
 
+<<<<<<< Updated upstream
     def get_nfw_kwargs(self, z=None, mass=None, n_halos=None):
+=======
+    def get_nfw_kwargs(self):
+>>>>>>> Stashed changes
         """
         Returns the angle at scale radius, observed bending angle at the scale radius, and positions of the Halos in
         the lens plane from physical mass and concentration parameter of an NFW profile.
@@ -189,6 +193,7 @@ class HalosLens(object):
             alpha_Rs (observed bending angle at the scale radius) (in units of arcsec)
             Arrays containing Rs_angle, alpha_Rs, and x and y positions of all the Halos.
         """
+<<<<<<< Updated upstream
         if n_halos is None:
             n_halos = self.n_halos
         Rs_angle = []
@@ -200,6 +205,14 @@ class HalosLens(object):
         c_200 = concentration_from_mass(z=z, mass=mass)
         for h in range(n_halos):
             Rs_angle_h, alpha_Rs_h = self.lens_cosmo[h].nfw_physical2angle(M=mass[h],
+=======
+        n_halos = self.n_halos
+        Rs_angle = []
+        alpha_Rs = []
+        c_200 = concentration_from_mass(z=self.halos_redshift_list, mass=self.mass_list)
+        for h in range(n_halos):
+            Rs_angle_h, alpha_Rs_h = self.lens_cosmo[h].nfw_physical2angle(M=self.mass_list[h],
+>>>>>>> Stashed changes
                                                                            c=c_200[h])
             Rs_angle.extend(Rs_angle_h)
             alpha_Rs.extend(alpha_Rs_h)
@@ -236,7 +249,11 @@ class HalosLens(object):
 
         return kwargs_lens
 
+<<<<<<< Updated upstream
     def get_convergence_shear(self, gamma12=False, diff=0.0001, diff_method='square'):
+=======
+    def get_convergence_shear(self, gamma12=False, diff=1.0, diff_method='square'):
+>>>>>>> Stashed changes
         """
         Calculates and returns the convergence and shear at the origin due to all the Halos.
 
@@ -245,7 +262,11 @@ class HalosLens(object):
         gamma12 : bool, optional
             If True, the function will return gamma1 and gamma2 instead of gamma. Default is False.
         diff : float, optional
+<<<<<<< Updated upstream
             Differential used in the computation of the Hessian matrix. Default is 0.0001.
+=======
+            Differential used in the computation of the Hessian matrix. Default is 1.0.
+>>>>>>> Stashed changes
         diff_method : str, optional
             The method to compute differential. Default is 'square'.
 
@@ -307,7 +328,11 @@ class HalosLens(object):
             kappa, gamma1, gamma2 = obj.get_convergence_shear(gamma12=True, diff=diff, diff_method=diff_method)
             return [kappa, gamma1, gamma2]
 
+<<<<<<< Updated upstream
     def get_kappa_gamma_distib(self, gamma_tot=False, diff=0.0001, diff_method='square'):
+=======
+    def get_kappa_gamma_distib(self, gamma_tot=False, diff=1.0, diff_method='square'):
+>>>>>>> Stashed changes
         """
         Computes and returns the distribution of convergence and shear values.
 
@@ -319,7 +344,11 @@ class HalosLens(object):
             If True, the function will return total shear gamma values. If False, it will return gamma1 and gamma2 values.
             Default is False.
         diff : float, optional
+<<<<<<< Updated upstream
             Differential used in the computation of the Hessian matrix. Default is 0.0001.
+=======
+            Differential used in the computation of the Hessian matrix. Default is 1.0.
+>>>>>>> Stashed changes
         diff_method : str, optional
             Method used to compute differential. Default is 'square'.
 
@@ -401,6 +430,7 @@ class HalosLens(object):
             print(f"For this Halos list, elapsed time for computing weak-lensing maps: {elapsed_time} seconds")
 
         return kappa_gamma_distribution
+<<<<<<< Updated upstream
 
     def filter_halos_by_redshift(self, zd):
         """
@@ -536,3 +566,5 @@ class HalosLens(object):
                                                                                                 'z'] < zd)
 
         return lens_model_ds, lens_cosmo_ds, kwargs_lens_ds, lens_model_od, lens_cosmo_od, kwargs_lens_od
+=======
+>>>>>>> Stashed changes
