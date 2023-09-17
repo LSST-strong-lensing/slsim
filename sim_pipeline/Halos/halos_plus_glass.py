@@ -422,3 +422,134 @@ def run_halos_without_kde_by_multiprocessing(n_iterations=1, sky_area=0.0001, sa
     end_time = time.time()  # Note the end time
     print(f'The {n_iterations} halo-lists took {(end_time - start_time)} seconds to run')
     return kappa_values_total, gamma_values_total
+
+
+def run_kappaext_gammaext_kde_by_multiprocessing(n_iterations=1, sky_area=0.0001, samples_number=1, cosmo=None,
+                                                 m_min=None, m_max=None, z_max=None, mass_sheet_correction=True):
+    """
+    Run the kappa-gamma external convergence distribution for a given number of iterations using multiprocessing.
+
+    This function generates kappa and gamma distributions using the provided parameters and
+    a worker function (`worker_kappaext_gammaext_kde`). The distributions are generated
+    in parallel over the specified number of iterations.
+
+    Parameters
+    ----------
+    n_iterations : int, optional
+        The number of iterations to run the simulation. Defaults to 1.
+
+    sky_area : float, optional
+        The area of the sky under consideration (in steradians). Defaults to 0.0001.
+
+    samples_number : int, optional
+        The number of samples to be used. Defaults to 1.
+
+    cosmo : astropy.cosmology instance, optional
+        The cosmology to be used. If not provided, it defaults to FlatLambdaCDM with H0=70 and Om0=0.3.
+
+    m_min : float, optional
+        The minimum mass for the simulation. If None, it is decided by the worker function.
+
+    m_max : float, optional
+        The maximum mass for the simulation. If None, it is decided by the worker function.
+
+    z_max : float, optional
+        The maximum redshift for the simulation. If None, it is decided by the worker function.
+
+    mass_sheet_correction : bool, optional
+        If True, apply mass sheet correction. Defaults to True.
+
+    Returns
+    -------
+    list
+        A list of kappa and gamma values across all iterations.
+
+    Notes
+    -----
+    The function employs multiprocessing to run simulations in parallel, improving computational efficiency.
+    The elapsed runtime for the simulations is printed to the console.
+
+    """
+    if cosmo is None:
+        warnings.warn("No cosmology provided, instead uses astropy.cosmology default cosmology")
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+
+    kappaext_gammaext_values_total = []
+
+    start_time = time.time()  # Note the start time
+
+    args = [(i, sky_area, m_min, m_max, z_max, cosmo, samples_number, mass_sheet_correction)
+            for i in range(n_iterations)]
+
+    # Use multiprocessing
+    with get_context('spawn').Pool() as pool:
+        results = pool.starmap(worker_kappaext_gammaext_kde, args)
+
+    for generate_distributions_0to5 in results:
+        kappaext_gammaext_values_total.extend(generate_distributions_0to5)
+
+    end_time = time.time()  # Note the end time
+    print(f'The {n_iterations} halo-lists took {(end_time - start_time)} seconds to run')
+    return kappaext_gammaext_values_total
+
+
+def worker_kappaext_gammaext_kde(iter_num, sky_area, m_min, m_max, z_max, cosmo, samples_number,
+                                 mass_sheet_correction):
+    """
+    Worker function that generates kappa-gamma distributions for given parameters.
+
+    This function utilizes the `HalosSkyPyPipeline` to generate halos and, if necessary, mass sheet
+    corrections. It then uses these halos (and corrections) to construct a `HalosLens` object and
+    generate kappa-gamma distributions.
+
+    Parameters
+    ----------
+    iter_num : int
+        The iteration number, mainly used for tracking in a parallel processing context.
+
+    sky_area : float
+        The area of the sky under consideration (in steradians).
+
+    m_min : float
+        The minimum mass for the simulation.
+
+    m_max : float
+        The maximum mass for the simulation.
+
+    z_max : float
+        The maximum redshift for the simulation.
+
+    cosmo : astropy.cosmology instance
+        The cosmology to be used.
+
+    samples_number : int
+        The number of samples to be used.
+
+    mass_sheet_correction : bool
+        If True, apply mass sheet correction.
+
+    Returns
+    -------
+    list
+        A list of kappa and gamma values for the specified parameters.
+
+    Notes
+    -----
+    This function is primarily intended to be used as a worker function in a parallel processing
+    framework, where multiple instances of the function can be run simultaneously.
+    """
+    npipeline = HalosSkyPyPipeline(sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max)
+    nhalos = npipeline.halos
+
+    if mass_sheet_correction:
+        nmass_sheet_correction = npipeline.mass_sheet_correction
+        nhalos_lens = HalosLens(halos_list=nhalos,
+                                mass_correction_list=nmass_sheet_correction,
+                                sky_area=sky_area,
+                                cosmo=cosmo,
+                                samples_number=samples_number)
+    else:
+        nhalos_lens = HalosLens(halos_list=nhalos, sky_area=sky_area, cosmo=cosmo, samples_number=samples_number)
+
+    distributions_0to5 = nhalos_lens.generate_distributions_0to5()
+    return distributions_0to5
