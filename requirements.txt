@@ -6,4 +6,3 @@ scipy
 speclite
 pyyaml
 matplotlib
-galsim
