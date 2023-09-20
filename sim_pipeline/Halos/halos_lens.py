@@ -1026,19 +1026,28 @@ class HalosLens(object):
 
         return kappa_gamma_distribution
 
-    def generate_distributions_0to5(self):
+    def generate_distributions_0to5(self, output_format='dict'):
         """
         Generates distributions of external convergence (kappa_ext) and external shear (gamma_ext)
         for a range of deflector and source redshifts from 0 to 5.
 
+        Parameters
+        ----------
+        output_format : str, optional
+            The format of the output data. Options are:
+            'dict' - A list of dictionaries.
+            'vector' - A list of vectors [zd, zs, kappa, gamma].
+            Default is 'dict'.
+
         Returns
         -------
         distributions : list
-            A list of dictionaries. Each dictionary contains:
+            If output_format='dict', a list of dictionaries. Each dictionary contains:
             - zd (float) : The deflector redshift.
             - zs (float) : The source redshift.
             - kappa (float) : The computed external convergence value for the given zd and zs.
             - gamma (float) : The computed external shear magnitude for the given zd and zs.
+            If output_format='vector', a list of vectors with elements [zd, zs, kappa, gamma].
 
         Notes
         -----
@@ -1046,21 +1055,25 @@ class HalosLens(object):
         For each zs, it considers zd values from 0 to zs-0.1 in steps of 0.1. For each zd, zs pair,
         it computes the kappa_ext and gamma_ext distributions and appends them to the result list.
         """
-        # A matrix to store results with columns corresponding to zd, zs, kappa, gamma
         distributions = []
         zs_values = np.linspace(0, 5, int(5 / 0.1 + 1))
-        # TODO: zmax should be a parameter replacing 5 above.
         for zs in zs_values:
             zd_values = np.linspace(0, zs - 0.1, int(zs / 0.1))
             for zd in zd_values:
                 kappa_gamma_dist = self.get_kappaext_gammaext_distib_zdzs(zd=zd, zs=zs)
                 for kappa_gamma in kappa_gamma_dist:
                     kappa, gamma = kappa_gamma
-                    distributions.append({
-                        'zd': zd,
-                        'zs': zs,
-                        'kappa': kappa,
-                        'gamma': gamma
-                    })
+
+                    if output_format == 'dict':
+                        distributions.append({
+                            'zd': round(zd, 3),
+                            'zs': round(zs, 3),
+                            'kappa': kappa,
+                            'gamma': gamma
+                        })
+                    elif output_format == 'vector':
+                        distributions.append([round(zd, 3), round(zs, 3), kappa, gamma])
+                    else:
+                        raise ValueError("Invalid output_format. Choose either 'dict' or 'vector'.")
 
         return distributions

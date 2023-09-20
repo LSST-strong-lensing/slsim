@@ -3,10 +3,7 @@ from sim_pipeline.Halos.halos import number_density_at_redshift, growth_factor_a
     set_defaults, redshift_halos_array_from_comoving_density, mass_first_moment_at_redshift, \
     redshift_mass_sheet_correction_array_from_comoving_density, kappa_ext_for_each_sheet
 
-from sim_pipeline.Skypy_halos_duplicate.halos.mass import halo_mass_function
-from hmf.cosmology.growth_factor import GrowthFactor
 from astropy.cosmology import default_cosmology
-from astropy.units import Quantity
 from astropy import units
 import pytest
 

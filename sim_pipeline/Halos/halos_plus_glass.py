@@ -425,7 +425,8 @@ def run_halos_without_kde_by_multiprocessing(n_iterations=1, sky_area=0.0001, sa
 
 
 def run_kappaext_gammaext_kde_by_multiprocessing(n_iterations=1, sky_area=0.0001, samples_number=1, cosmo=None,
-                                                 m_min=None, m_max=None, z_max=None, mass_sheet_correction=True):
+                                                 m_min=None, m_max=None, z_max=None, mass_sheet_correction=True
+                                                 , output_format='dict'):
     """
     Run the kappa-gamma external convergence distribution for a given number of iterations using multiprocessing.
 
@@ -459,6 +460,9 @@ def run_kappaext_gammaext_kde_by_multiprocessing(n_iterations=1, sky_area=0.0001
     mass_sheet_correction : bool, optional
         If True, apply mass sheet correction. Defaults to True.
 
+    output_format : str, optional
+        The format in which the results should be returned, either as 'dict' or 'vector'. Defaults to 'dict'.
+
     Returns
     -------
     list
@@ -478,7 +482,7 @@ def run_kappaext_gammaext_kde_by_multiprocessing(n_iterations=1, sky_area=0.0001
 
     start_time = time.time()  # Note the start time
 
-    args = [(i, sky_area, m_min, m_max, z_max, cosmo, samples_number, mass_sheet_correction)
+    args = [(i, sky_area, m_min, m_max, z_max, cosmo, samples_number, mass_sheet_correction, output_format)
             for i in range(n_iterations)]
 
     # Use multiprocessing
@@ -494,7 +498,7 @@ def run_kappaext_gammaext_kde_by_multiprocessing(n_iterations=1, sky_area=0.0001
 
 
 def worker_kappaext_gammaext_kde(iter_num, sky_area, m_min, m_max, z_max, cosmo, samples_number,
-                                 mass_sheet_correction):
+                                 mass_sheet_correction, output_format='dict'):
     """
     Worker function that generates kappa-gamma distributions for given parameters.
 
@@ -528,6 +532,9 @@ def worker_kappaext_gammaext_kde(iter_num, sky_area, m_min, m_max, z_max, cosmo,
     mass_sheet_correction : bool
         If True, apply mass sheet correction.
 
+    output_format : str, optional
+        The format in which the results should be returned, either as 'dict' or 'vector'. Defaults to 'dict'.
+
     Returns
     -------
     list
@@ -551,5 +558,5 @@ def worker_kappaext_gammaext_kde(iter_num, sky_area, m_min, m_max, z_max, cosmo,
     else:
         nhalos_lens = HalosLens(halos_list=nhalos, sky_area=sky_area, cosmo=cosmo, samples_number=samples_number)
 
-    distributions_0to5 = nhalos_lens.generate_distributions_0to5()
+    distributions_0to5 = nhalos_lens.generate_distributions_0to5(output_format=output_format)
     return distributions_0to5
