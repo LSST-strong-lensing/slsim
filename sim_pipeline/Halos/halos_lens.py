@@ -6,6 +6,7 @@ from tqdm.notebook import tqdm
 import math
 import time
 import multiprocessing
+from collections.abc import Iterable
 
 
 def concentration_from_mass(z, mass, A=75.4, d=-0.422, m=-0.089):
@@ -48,7 +49,7 @@ def concentration_from_mass(z, mass, A=75.4, d=-0.422, m=-0.089):
     c_200 = A * ((1 + z) ** d) * (mass ** m)
     c_200 = np.maximum(c_200, 1)
     return c_200
-    # TODO: Add test function
+    # TODO: Make this able for list
 
 
 class HalosLens(object):
@@ -277,8 +278,16 @@ class HalosLens(object):
         for h in range(n_halos):
             Rs_angle_h, alpha_Rs_h = lens_cosmo[h].nfw_physical2angle(M=mass[h],
                                                                       c=c_200[h])
-            Rs_angle.extend(Rs_angle_h)
-            alpha_Rs.extend(alpha_Rs_h)
+            if isinstance(Rs_angle_h, Iterable):
+                Rs_angle.extend(Rs_angle_h)
+            else:
+                Rs_angle.append(Rs_angle_h)
+
+            if isinstance(alpha_Rs_h, Iterable):
+                alpha_Rs.extend(alpha_Rs_h)
+            else:
+                alpha_Rs.append(alpha_Rs_h)
+
         px, py = np.array([self.random_position() for _ in range(n_halos)]).T
         Rs_angle = np.array(Rs_angle)
         Rs_angle = np.array(Rs_angle)
