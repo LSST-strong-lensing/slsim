@@ -1,3 +1,5 @@
+import numpy as np
+from astropy.table import Table
 from lenstronomy.SimulationAPI.sim_api import SimAPI
 from astropy.visualization import make_lupton_rgb
 
@@ -145,7 +147,7 @@ def rgb_image_from_image_list(image_list, stretch):
     )
     return image_rgb
 
-def lens_pixel_coordinates_and_image_magnitude(
+def point_source_image_properties(
     lens_class, band, mag_zero_point, delta_pix, num_pix):
     """provides pixel coordinates for deflector and images. Currently, 
     this function only works for point source. 
@@ -155,7 +157,7 @@ def lens_pixel_coordinates_and_image_magnitude(
     :param mag_zero_point: magnitude zero point in band
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
-    :return: list of deflector and image coordinate in pixel unit
+    :return: astropy table of deflector and image coordinate in pixel unit and other properties
     """
     kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band)
     kwargs_band = {
@@ -184,8 +186,33 @@ def lens_pixel_coordinates_and_image_magnitude(
     image_magnitude = [item['magnitude'] for item in ps_coordinate]
     image_pix_coordinate = []
     for image_ra, image_dec in zip(ra_image_values[0], dec_image_values[0]):
-        image_pix_coordinate.append(image_data.map_coord2pix(image_ra, image_dec))
+        image_pix_coordinate.append((image_data.map_coord2pix(image_ra, image_dec)))
+    ra_at_xy_0, dec_at_xy_0 = image_data.map_pix2coord(0, 0)
+    
+    kwargs_lens_light, kwargs_source, kwargs_ps = sim_api.magnitude2amplitude(
+        kwargs_lens_light_mag=kwargs_params.get("kwargs_lens_light", None),
+        kwargs_source_mag=kwargs_params.get("kwargs_source", None),
+        kwargs_ps_mag=kwargs_params.get("kwargs_ps", None),
+    )
+    image_amplitude = [item['point_amp'] for item in kwargs_ps]
 
-    data = {'deflector_pix': (lens_pix_coordinate[0], lens_pix_coordinate[1]), 
-            'image_pix': image_pix_coordinate, 'image_magnitude': image_magnitude[0]}
+    """data = {'deflector_pix': (lens_pix_coordinate[0], lens_pix_coordinate[1]), 
+            'image_pix': image_pix_coordinate, 'image_amplitude': image_amplitude[0], 'image_magnitude': image_magnitude[0],
+            'radec_at_xy_0': np.array([ra_at_xy_0, dec_at_xy_0])}"""
+    data = Table(
+        [
+            (lens_pix_coordinate[0], lens_pix_coordinate[1]),
+            image_pix_coordinate, ra_image_values[0], dec_image_values[0],
+            image_amplitude[0],
+            image_magnitude[0],
+            np.array([ra_at_xy_0, dec_at_xy_0]),
+        ],
+        names=(
+            "deflector_pix",
+            "image_pix", "ra_image", "dec_image",
+            "image_amplitude",
+            "image_magnitude",
+            "radec_at_xy_0",
+        ),
+    )
     return data
