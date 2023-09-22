@@ -1,11 +1,11 @@
 import numpy as np
 import numpy.random as random
-from sim_pipeline.selection import galaxy_cut
+from sim_pipeline.selection import deflector_cut
 from sim_pipeline.Deflectors.velocity_dispersion import vel_disp_sdss
 from sim_pipeline.Util import param_util
+from sim_pipeline.Deflectors.deflector_base import DeflectorBase
 
-
-class EllipticalLensGalaxies(object):
+class EllipticalLensGalaxies(DeflectorBase):
     """
     class describing elliptical galaxies
     """
@@ -14,13 +14,16 @@ class EllipticalLensGalaxies(object):
 
         :param galaxy_list: list of dictionary with galaxy parameters of elliptical galaxies
          (currently supporting skypy pipelines)
-        :param kwargs_cut: cuts in parameters
+        :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max
         :type kwargs_cut: dict
         :param kwargs_mass2light: mass-to-light relation
         :param cosmo: astropy.cosmology instance
         :type sky_area: `~astropy.units.Quantity`
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid angle.
         """
+        super().__init__(deflector_table=galaxy_list, kwargs_cut=kwargs_cut, 
+                         cosmo=cosmo, sky_area=sky_area)
+        
         n = len(galaxy_list)
         column_names = galaxy_list.colnames
         if 'vel_disp' not in column_names:
@@ -33,13 +36,14 @@ class EllipticalLensGalaxies(object):
             galaxy_list['e2_mass'] = -np.ones(n)
         if 'n_sersic' not in column_names:
             galaxy_list['n_sersic'] = -np.ones(n)
-
-        self._galaxy_select = galaxy_cut(galaxy_list, **kwargs_cut)
-        self._num_select = len(self._galaxy_select)
+        self._galaxy_select = self._deflector_select
 
         z_min, z_max = 0, np.max(self._galaxy_select['z'])
         redshift = np.arange(z_min, z_max, 0.1)
-        z_list, vel_disp_list = vel_disp_sdss(sky_area, redshift, vd_min=100, vd_max=500, cosmology=cosmo, noise=True)
+        z_list, vel_disp_list = vel_disp_sdss(
+            sky_area, redshift, vd_min=100, 
+            vd_max=500, cosmology=cosmo, noise=True
+            )
         # sort for stellar masses in decreasing manner
         self._galaxy_select.sort('stellar_mass')
         self._galaxy_select.reverse()
@@ -48,11 +52,11 @@ class EllipticalLensGalaxies(object):
         num_vel_disp = len(vel_disp_list)
         # abundance match velocity dispersion with elliptical galaxy catalogue
         if num_vel_disp >= self._num_select:
-            self._galaxy_select['vel_disp'] = vel_disp_list[:self._num_select]
+            self._galaxy_select["vel_disp"] = vel_disp_list[: self._num_select]
             # randomly select
         else:
             self._galaxy_select = self._galaxy_select[:num_vel_disp]
-            self._galaxy_select['vel_disp'] = vel_disp_list
+            self._galaxy_select["vel_disp"] = vel_disp_list
             self._num_select = num_vel_disp
 
         # TODO: random reshuffle of matched list
@@ -60,14 +64,14 @@ class EllipticalLensGalaxies(object):
     def deflector_number(self):
         """
 
-        :return: number of deflector
+        :return: number of deflectors
         """
         number = self._num_select
         return number
 
     def draw_deflector(self):
         """
-
+        
         :return: dictionary of complete parameterization of deflector
         """
 

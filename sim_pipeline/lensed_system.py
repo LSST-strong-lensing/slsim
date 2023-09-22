@@ -1,23 +1,30 @@
 from abc import ABC, abstractmethod
+import numpy as np
 
-class DeflectorBase(ABC):
+
+class LensedSystem(ABC):
     """
     base class with functions all deflector classes must have to be able to render populations
 
     """
-    def __init__(self, source_dict, deflector_dict, cosmo,
-                 source_type='extended',
-                 test_area=4 * np.pi,
-                 mixgauss_means=None, mixgauss_stds=None, mixgauss_weights=None):
-        self._source_dict = source_dict
-        self._lens_dict = deflector_dict
-        self.cosmo = cosmo
-        self._source_type = source_type
-        self.test_area = test_area
-        self._mixgauss_means = mixgauss_means
-        self._mixgauss_stds = mixgauss_stds
-        self._mixgauss_weights = mixgauss_weights
+    def __init__(self, source_dict,
+                 deflector_dict, cosmo,
+                 test_area=4 * np.pi):
+        
+        """
+        :param source_dict: source properties
+        :type source_dict: dict
+        :param deflector_dict: deflector properties
+        :type deflector_dict: dict
+        :param cosmo: astropy.cosmology instance
+        :param test_area: area of disk around one lensing galaxies to be investigated on (in arc-seconds^2)
 
+        """
+        self._source_dict = source_dict
+        self._deflector_dict = deflector_dict
+        # TODO: tell them what keys the dictionary should contain
+        self.test_area = test_area
+        self.cosmo = cosmo
 
     @abstractmethod
     def deflector_position(self):
@@ -34,8 +41,9 @@ class DeflectorBase(ABC):
         source position, either the center of the extended source or the point source. If not present from the cataloge,
         it is drawn uniform within the circle of the test area centered on the lens
 
-        :return: [x_pos, y_pos]
+        :return: [x_pos, y_pos] in arc seconds
         """
+        pass
 
     @abstractmethod
     def image_positions(self):
@@ -51,14 +59,16 @@ class DeflectorBase(ABC):
     @abstractmethod
     def deflector_redshift(self):
         """
+        Deflector redshift
 
-        :return: lens redshift
+        :return: deflector redshift
         """
         pass
 
     @abstractmethod
     def source_redshift(self):
         """
+        Source redshift
 
         :return: source redshift
         """
@@ -67,7 +77,7 @@ class DeflectorBase(ABC):
     @abstractmethod
     def einstein_radius(self):
         """
-        Einstein radius, including the SIS + external convergence effect
+        Einstein radius
 
         :return: Einstein radius [arc seconds]
         """
@@ -76,25 +86,22 @@ class DeflectorBase(ABC):
     @abstractmethod
     def deflector_ellipticity(self):
         """
+        Ellipticity components for deflector light and mass profile
 
         :return: e1_light, e2_light, e1_mass, e2_mass
         """
         pass
+    
 
-    def deflector_stellar_mass(self):
-        """
-
-        :return: stellar mass of deflector
-        """
-        pass
-
+    @abstractmethod
     def deflector_velocity_dispersion(self):
         """
-
+        
         :return: velocity dispersion [km/s]
         """
         pass
-
+    
+    @abstractmethod
     def los_linear_distortions(self):
         """
         line-of-sight distortions in shear and convergence
@@ -106,7 +113,7 @@ class DeflectorBase(ABC):
     @abstractmethod
     def deflector_magnitude(self, band):
         """
-        apparent magnitude of the deflector for a given band
+        apparent magnitude of the deflector for a given band (AB mag)
 
         :param band: imaging band
         :type band: string
@@ -119,8 +126,6 @@ class DeflectorBase(ABC):
         """
         point source magnitude, either unlensed (single value) or lensed (array) with macro-model magnifications
 
-        # TODO: time-variability with time-delayed and micro-lensing
-
         :param band: imaging band
         :type band: string
         :param lensed: if True, returns the lensed magnified magnitude
@@ -132,7 +137,7 @@ class DeflectorBase(ABC):
     @abstractmethod
     def extended_source_magnitude(self, band, lensed=False):
         """
-        unlensed apparent magnitude of the extended source for a given band
+        apparent magnitude of the extended source for a given band (lensed or unlensed)
         (assumes that size is the same for different bands)
 
         :param band: imaging band
@@ -153,10 +158,9 @@ class DeflectorBase(ABC):
         pass
     
     @abstractmethod
-    def host_magnification(self):
+    def extended_source_magnification(self):
         """
-        compute the extended lensed surface brightness and calculates the integrated flux-weighted magnification factor
-        of the extended host galaxy
+        Extended source (or host) magnification
 
         :return: integrated magnification factor of host magnitude
         """
@@ -165,9 +169,9 @@ class DeflectorBase(ABC):
     @abstractmethod
     def deflector_mass_model_lenstronomy(self):
         """
-        returns lens model instance and parameters in lenstronomy conventions
+        returns lens mass model instance and parameters in lenstronomy conventions
 
-        :return: lens_model_list, kwargs_lens
+        :return: lens_mass_model_list, kwargs_lens_mass
         """
         pass
 
@@ -177,7 +181,17 @@ class DeflectorBase(ABC):
         """
         returns lens model instance and parameters in lenstronomy conventions
 
-        :return: light_model_list, kwargs_lens_light
+        :return: lens_light_model_list, kwargs_lens_light
+        """
+        pass
+
+
+    @abstractmethod
+    def source_light_model_lenstronomy(self):
+        """
+        returns source light model instance and parameters in lenstronomy conventions
+
+        :return: source_light_model_list, kwargs_source_light
         """
         pass
 

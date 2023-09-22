@@ -34,6 +34,7 @@ class GalaxyGalaxyLensingPlots(object):
         :param rgb_band_list: list of imaging band names corresponding to r-g-b color map
         :param add_noise: boolean flag, set to True to add noise to the image, default is True
         """
+        
         image_r = simulate_image(lens_class=lens_class, band=rgb_band_list[0], num_pix=self.num_pix,
                                  add_noise=add_noise, observatory=self._observatory, **self._kwargs)
         image_g = simulate_image(lens_class=lens_class, band=rgb_band_list[1], num_pix=self.num_pix,
@@ -59,7 +60,7 @@ class GalaxyGalaxyLensingPlots(object):
         for i in range(n_horizont):
             for j in range(n_vertical):
                 ax = axes[j, i]
-                lens_class = self._lens_pop.select_lens_at_random(**kwargs_lens_cut)
+                lens_class = self._lens_pop.generate_random_lensed_system(**kwargs_lens_cut)
                 image_rgb = self.rgb_image(lens_class, rgb_band_list, add_noise=add_noise)
                 ax.imshow(image_rgb, aspect='equal', origin='lower')
                 ax.get_xaxis().set_visible(False)
