@@ -99,6 +99,12 @@ def generate_maps_kmean_zero_using_halos(skypy_config=None, skyarea=0.0001, cosm
         The sky area in square degrees. Default is 0.0001.
     cosmo : astropy.cosmology.FlatLambdaCDM, optional
         The cosmological model. If None, a default FlatLambdaCDM model with H0=70 and Om0=0.3 is used.
+    m_min : float or None, optional
+        Minimum halo mass for the pipeline. Default is None.
+    m_max : float or None, optional
+        Maximum halo mass for the pipeline. Default is None.
+    z_max : float or None, optional
+        Maximum redshift for the pipeline. Default is None.
     samples_number_for_one_halos : int, optional
         The number of samples for each halo. Default is 1000.
     renders_numbers : int, optional
@@ -160,6 +166,12 @@ def generate_meanzero_halos_multiple_times(n_times=20, skypy_config=None, skyare
         The sky area in square degrees. Default is 0.0001.
     cosmo : astropy.cosmology.FlatLambdaCDM, optional
         The cosmological model. If None, a default FlatLambdaCDM model with H0=70 and Om0=0.3 is used.
+    m_min : float or None, optional
+        Minimum halo mass for the pipeline. Default is None.
+    m_max : float or None, optional
+        Maximum halo mass for the pipeline. Default is None.
+    z_max : float or None, optional
+        Maximum redshift for the pipeline. Default is None.
     samples_number_for_one_halos : int, optional
         The number of samples for each halo. Default is 1000.
     renders_numbers : int, optional
@@ -381,6 +393,9 @@ def run_halos_without_kde_by_multiprocessing(n_iterations=1, sky_area=0.0001, sa
         Maximum mass of the Halos to consider. If not provided, no upper limit is set.
     z_max : float, optional
         Maximum redshift of the Halos to consider. If not provided, no upper limit is set.
+    mass_sheet_correction : bool, optional
+        If True, apply mass sheet correction. Defaults to True.
+
 
     Returns
     -------
@@ -523,7 +538,7 @@ def worker_kappaext_gammaext_kde(iter_num, sky_area, m_min, m_max, z_max, cosmo,
     z_max : float
         The maximum redshift for the simulation.
 
-    cosmo : astropy.cosmology instance
+    cosmo : astropy.Cosmology instance
         The cosmology to be used.
 
     samples_number : int
@@ -560,3 +575,48 @@ def worker_kappaext_gammaext_kde(iter_num, sky_area, m_min, m_max, z_max, cosmo,
 
     distributions_0to5 = nhalos_lens.generate_distributions_0to5(output_format=output_format)
     return distributions_0to5
+
+
+def run_certain_redshift_lensext_kde_by_multiprocessing(n_iterations=1, sky_area=0.0001, samples_number=1, cosmo=None,
+                                                        m_min=None, m_max=None, z_max=None, mass_sheet_correction=True
+                                                        , zs=1.0, zd=1.5):
+    if cosmo is None:
+        warnings.warn("No cosmology provided, instead uses astropy.cosmology default cosmology")
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+
+    kappaext_gammaext_values = []
+
+    start_time = time.time()  # Note the start time
+
+    args = [(i, sky_area, m_min, m_max, z_max, cosmo, samples_number, mass_sheet_correction, zs, zd)
+            for i in range(n_iterations)]
+
+    # Use multiprocessing
+    with get_context('spawn').Pool() as pool:
+        results = pool.starmap(worker_certain_redshift_lensext_kde, args)
+
+    for distributions in results:
+        kappaext_gammaext_values.extend(distributions)
+
+    end_time = time.time()  # Note the end time
+    print(f'The {n_iterations} halo-lists took {(end_time - start_time)} seconds to run')
+    return kappaext_gammaext_values
+
+
+def worker_certain_redshift_lensext_kde(iter_num, sky_area, m_min, m_max, z_max, cosmo, samples_number,
+                                        mass_sheet_correction, zs, zd):
+    npipeline = HalosSkyPyPipeline(sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max)
+    nhalos = npipeline.halos
+
+    if mass_sheet_correction:
+        nmass_sheet_correction = npipeline.mass_sheet_correction
+        nhalos_lens = HalosLens(halos_list=nhalos,
+                                mass_correction_list=nmass_sheet_correction,
+                                sky_area=sky_area,
+                                cosmo=cosmo,
+                                samples_number=samples_number)
+    else:
+        nhalos_lens = HalosLens(halos_list=nhalos, sky_area=sky_area, cosmo=cosmo, samples_number=samples_number)
+
+    distributions = nhalos_lens.get_kappaext_gammaext_distib_zdzs(zd, zs)
+    return distributions
