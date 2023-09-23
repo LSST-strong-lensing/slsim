@@ -10,9 +10,7 @@ from astropy.table import vstack
 
 
 class GalaxyGalaxyLensPop(LensedSample):
-    """
-    class to perform samples of galaxy-galaxy lensing
-    """
+    """Class to perform samples of galaxy-galaxy lensing."""
 
     def __init__(
         self,
@@ -27,7 +25,7 @@ class GalaxyGalaxyLensPop(LensedSample):
         cosmo=None,
     ):
         """
-        
+
         :param deflector_type: type of the lens
         :type deflector_type: string
         :param source_type: type of the source
@@ -56,7 +54,6 @@ class GalaxyGalaxyLensPop(LensedSample):
         if kwargs_mass2light is None:
             kwargs_mass2light = {}
 
-        
         if deflector_type == "elliptical":
             from sim_pipeline.Deflectors.elliptical_lens_galaxies import (
                 EllipticalLensGalaxies,
@@ -70,25 +67,27 @@ class GalaxyGalaxyLensPop(LensedSample):
                 sky_area=sky_area,
             )
 
-        elif deflector_type == 'all-galaxies':
+        elif deflector_type == "all-galaxies":
             from sim_pipeline.Deflectors.all_lens_galaxies import AllLensGalaxies
+
             red_galaxy_list = pipeline.red_galaxies
             blue_galaxy_list = pipeline.blue_galaxies
             red_column_names = red_galaxy_list.colnames
-            if 'galaxy_type' not in red_column_names:
-                red_galaxy_list['galaxy_type'] = 'red'
+            if "galaxy_type" not in red_column_names:
+                red_galaxy_list["galaxy_type"] = "red"
 
             blue_column_names = blue_galaxy_list.colnames
-            if 'galaxy_type' not in blue_column_names:
-                blue_galaxy_list['galaxy_type'] = 'blue'
+            if "galaxy_type" not in blue_column_names:
+                blue_galaxy_list["galaxy_type"] = "blue"
 
             galaxy_list = vstack([red_galaxy_list, blue_galaxy_list])
             self._lens_galaxies = AllLensGalaxies(
                 galaxy_list,
                 kwargs_cut=kwargs_deflector_cut,
                 kwargs_mass2light=kwargs_mass2light,
-                cosmo=cosmo, 
-                sky_area=sky_area)
+                cosmo=cosmo,
+                sky_area=sky_area,
+            )
 
         else:
             raise ValueError("deflector_type %s is not supported" % deflector_type)
@@ -115,10 +114,8 @@ class GalaxyGalaxyLensPop(LensedSample):
         self.cosmo = cosmo
         self.f_sky = sky_area
 
-
     def generate_random_lensed_system(self, **kwargs_lens_cut):
-        """
-        Draw a random lens within the cuts of the lens and source, with possible
+        """Draw a random lens within the cuts of the lens and source, with possible
         additional cut in the lensing configuration.
 
         # TODO: make sure mass function is preserved, # as well as option to draw all
@@ -139,10 +136,8 @@ class GalaxyGalaxyLensPop(LensedSample):
             if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens
 
-
     def potential_deflector_number(self):
-        """
-        Number of potential deflectors (meaning all objects with mass that are being
+        """Number of potential deflectors (meaning all objects with mass that are being
         considered to have potential sources behind them)
 
         :return: number of potential deflectors
@@ -150,8 +145,7 @@ class GalaxyGalaxyLensPop(LensedSample):
         return self._lens_galaxies.deflector_number()
 
     def potential_source_number(self):
-        """
-        Number of sources that are being considered to be placed in the sky area
+        """Number of sources that are being considered to be placed in the sky area
         potentially aligned behind deflectors.
 
         :return: number of sources
@@ -178,11 +172,9 @@ class GalaxyGalaxyLensPop(LensedSample):
         num_sources_range = np.random.poisson(lam=num_sources_tested_mean)
         return num_sources_range
 
-
     def draw_sample(self, kwargs_lens_cuts):
-        """
-        Return full population list of all lenses within the area 
-        # TODO: need to implement a version of it. (improve the algorithm) 
+        """Return full population list of all lenses within the area # TODO: need to
+        implement a version of it. (improve the algorithm)
 
         :param kwargs_lens_cuts: validity test keywords
         :type kwargs_lens_cuts: dict

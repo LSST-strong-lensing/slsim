@@ -5,10 +5,10 @@ from sim_pipeline.Deflectors.velocity_dispersion import vel_disp_sdss
 from sim_pipeline.Util import param_util
 from sim_pipeline.Deflectors.deflector_base import DeflectorBase
 
+
 class EllipticalLensGalaxies(DeflectorBase):
-    """
-    class describing elliptical galaxies
-    """
+    """Class describing elliptical galaxies."""
+
     def __init__(self, galaxy_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area):
         """
 
@@ -22,9 +22,13 @@ class EllipticalLensGalaxies(DeflectorBase):
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
         """
-        super().__init__(deflector_table=galaxy_list, kwargs_cut=kwargs_cut, 
-                         cosmo=cosmo, sky_area=sky_area)
-        
+        super().__init__(
+            deflector_table=galaxy_list,
+            kwargs_cut=kwargs_cut,
+            cosmo=cosmo,
+            sky_area=sky_area,
+        )
+
         n = len(galaxy_list)
         column_names = galaxy_list.colnames
         if "vel_disp" not in column_names:
@@ -72,7 +76,7 @@ class EllipticalLensGalaxies(DeflectorBase):
 
     def draw_deflector(self):
         """
-        
+
         :return: dictionary of complete parameterization of deflector
         """
 

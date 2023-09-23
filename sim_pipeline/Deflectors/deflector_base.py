@@ -5,8 +5,8 @@ from abc import ABC, abstractmethod
 
 
 class DeflectorBase(ABC):
-    """
-    Abstract Base Class to create a deflector object.
+    """Abstract Base Class to create a deflector object.
+
     All object that inherit from Lensed System must contain the methods it contains.
     """
 
@@ -22,9 +22,8 @@ class DeflectorBase(ABC):
         """
         self.deflector_table = deflector_table
         self.kwargs_cut = kwargs_cut
-        self.cosmo=cosmo
+        self.cosmo = cosmo
         self.sky_area = sky_area
-
 
     @abstractmethod
     def deflector_number(self):
@@ -33,7 +32,7 @@ class DeflectorBase(ABC):
         :return: number of deflectors
         """
         pass
-    
+
     @abstractmethod
     def draw_deflector(self):
         """
