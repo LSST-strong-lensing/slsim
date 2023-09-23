@@ -6,7 +6,9 @@ import numpy.random as random
 from astropy.table import vstack
 from sim_pipeline.selection import deflector_cut
 from sim_pipeline.Deflectors.velocity_dispersion import vel_disp_sdss
-from sim_pipeline.Deflectors.elliptical_lens_galaxies import elliptical_projected_eccentricity
+from sim_pipeline.Deflectors.elliptical_lens_galaxies import (
+    elliptical_projected_eccentricity,
+)
 from sim_pipeline.Deflectors.deflector_base import DeflectorBase
 
 
@@ -16,15 +18,18 @@ class AllLensGalaxies(DeflectorBase):
     """
     def __init__(self, galaxy_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area):
         """
-
         :param galaxy_list: list of dictionary with galaxy parameters of elliptical galaxies
          (currently supporting skypy pipelines)
         :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max
+        :param red_galaxy_list: list of dictionary with galaxy parameters of elliptical and spiral
+        galaxies (currently supporting skypy pipelines)
+        :param kwargs_cut: cuts in parameters
         :type kwargs_cut: dict
         :param kwargs_mass2light: mass-to-light relation
         :param cosmo: astropy.cosmology instance
         :type sky_area: `~astropy.units.Quantity`
-        :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid angle.
+        :param sky_area: Sky area over which galaxies are sampled. Must be in units of
+            solid angle.
         """
 
         super().__init__(deflector_table=galaxy_list, kwargs_cut=kwargs_cut, 
@@ -52,7 +57,9 @@ class AllLensGalaxies(DeflectorBase):
 
         self._galaxy_select = deflector_cut(galaxy_list, **kwargs_cut)
         self._num_select = len(self._galaxy_select)
-        self._galaxy_select['vel_disp'] = self._f_vel_disp(np.log10(self._galaxy_select['stellar_mass']))
+        self._galaxy_select["vel_disp"] = self._f_vel_disp(
+            np.log10(self._galaxy_select["stellar_mass"])
+        )
         # TODO: random reshuffle of matched list
 
     def deflector_number(self):
@@ -71,15 +78,16 @@ class AllLensGalaxies(DeflectorBase):
 
         index = random.randint(0, self._num_select - 1)
         deflector = self._galaxy_select[index]
-        # what are galaxy_select columns
-        if deflector['e1_light'] == -1 or deflector['e2_light'] == - 1:
-            e1_light, e2_light, e1_mass, e2_mass = elliptical_projected_eccentricity(**deflector)
-            deflector['e1_light'] = e1_light
-            deflector['e2_light'] = e2_light
-            deflector['e1_mass'] = e1_mass
-            deflector['e2_mass'] = e2_mass
-        if deflector['n_sersic'] == -1:
-            deflector['n_sersic'] = 4  # TODO make a better estimate with scatter
+        if deflector["e1_light"] == -1 or deflector["e2_light"] == -1:
+            e1_light, e2_light, e1_mass, e2_mass = elliptical_projected_eccentricity(
+                **deflector
+            )
+            deflector["e1_light"] = e1_light
+            deflector["e2_light"] = e2_light
+            deflector["e1_mass"] = e1_mass
+            deflector["e2_mass"] = e2_mass
+        if deflector["n_sersic"] == -1:
+            deflector["n_sersic"] = 4  # TODO make a better estimate with scatter
         return deflector
 
 
@@ -91,16 +99,16 @@ def fill_table(galaxy_list):
     """
     n = len(galaxy_list)
     column_names = galaxy_list.colnames
-    if 'vel_disp' not in column_names:
-        galaxy_list['vel_disp'] = -np.ones(n)
-    if 'e1_light' not in column_names or 'e2_light' not in column_names:
-        galaxy_list['e1_light'] = -np.ones(n)
-        galaxy_list['e2_light'] = -np.ones(n)
-    if 'e1_mass' not in column_names or 'e2_mass' not in column_names:
-        galaxy_list['e1_mass'] = -np.ones(n)
-        galaxy_list['e2_mass'] = -np.ones(n)
-    if 'n_sersic' not in column_names:
-        galaxy_list['n_sersic'] = -np.ones(n)
+    if "vel_disp" not in column_names:
+        galaxy_list["vel_disp"] = -np.ones(n)
+    if "e1_light" not in column_names or "e2_light" not in column_names:
+        galaxy_list["e1_light"] = -np.ones(n)
+        galaxy_list["e2_light"] = -np.ones(n)
+    if "e1_mass" not in column_names or "e2_mass" not in column_names:
+        galaxy_list["e1_mass"] = -np.ones(n)
+        galaxy_list["e2_mass"] = -np.ones(n)
+    if "n_sersic" not in column_names:
+        galaxy_list["n_sersic"] = -np.ones(n)
     return galaxy_list
 
 
@@ -110,10 +118,12 @@ def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
 
     :param galaxy_list: list of galaxies with stellar masses given
     :type galaxy_list: ~astropy.Table object
-    :param z_max: maximum redshift to which the abundance matching with the SDSS velocity dispersion function is valid
+    :param z_max: maximum redshift to which the abundance matching with the SDSS
+        velocity dispersion function is valid
     :param cosmo: astropy.cosmology instance
     :type sky_area: `~astropy.units.Quantity`
-    :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid angle.
+    :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid
+        angle.
     :return: interpolation function f; f(stellar_mass) -> vel_disp
     """
 
@@ -145,12 +155,16 @@ def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
         galaxy_list_zmax = galaxy_list_zmax[:num_vel_disp]
         galaxy_list_zmax["vel_disp"] = vel_disp_list
     # interpolate relationship between stellar mass and velocity dispersion
-    stellar_mass = np.asarray(galaxy_list_zmax['stellar_mass'])
-    vel_disp = np.asarray(galaxy_list_zmax['vel_disp'])
+    stellar_mass = np.asarray(galaxy_list_zmax["stellar_mass"])
+    vel_disp = np.asarray(galaxy_list_zmax["vel_disp"])
 
     # here we make sure we interpolate to low stellar masses
     stellar_mass = np.append(stellar_mass, 10**5)
     vel_disp = np.append(vel_disp, 10)
-    f = interpolate.interp1d(x=np.log10(stellar_mass), y=vel_disp,
-                             fill_value=(0, np.max(galaxy_list_zmax['vel_disp'])), bounds_error=False)
+    f = interpolate.interp1d(
+        x=np.log10(stellar_mass),
+        y=vel_disp,
+        fill_value=(0, np.max(galaxy_list_zmax["vel_disp"])),
+        bounds_error=False,
+    )
     return f

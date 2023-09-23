@@ -6,9 +6,6 @@ on:
       - main
       - cleanup
   pull_request:
-    branches:
-      - main
-      - cleanup
 
 jobs:
   build:
@@ -19,7 +16,7 @@ jobs:
         python-version: [3.8]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
@@ -29,15 +26,23 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install --upgrade pytest
           python -m pip install flake8 pytest pytest-cov coveralls
+          python -m pip install codecov
           pip install -r requirements.txt
           pip install -r test_requirements.txt
           python -m pip install .
 
       - name: Test with pytest
         run: |
-          pytest --cov=sim-pipeline
-      - name: Coveralls
+          pytest --cov=./ --cov-report=xml
+          codecov
+#      - name: Coveralls
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        run: |
+#          coveralls --service=github
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          coveralls --service=github
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          files: ./coverage.xml
