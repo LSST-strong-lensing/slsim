@@ -91,7 +91,9 @@ class GalaxyGalaxyLensingPlots(object):
         for i in range(n_horizont):
             for j in range(n_vertical):
                 ax = axes[j, i]
-                lens_class = self._lens_pop.generate_random_lensed_system(**kwargs_lens_cut)
+                lens_class = self._lens_pop.generate_random_lensed_system(
+                    **kwargs_lens_cut
+                )
                 image_rgb = self.rgb_image(
                     lens_class, rgb_band_list, add_noise=add_noise
                 )

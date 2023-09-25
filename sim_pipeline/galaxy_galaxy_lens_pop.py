@@ -72,8 +72,8 @@ class GalaxyGalaxyLensPop(LensedSample):
             blue_galaxy_list = pipeline.blue_galaxies
 
             self._lens_galaxies = AllLensGalaxies(
-                red_galaxy_list = red_galaxy_list,
-                blue_galaxy_list= blue_galaxy_list,
+                red_galaxy_list=red_galaxy_list,
+                blue_galaxy_list=blue_galaxy_list,
                 kwargs_cut=kwargs_deflector_cut,
                 kwargs_mass2light=kwargs_mass2light,
                 cosmo=cosmo,
