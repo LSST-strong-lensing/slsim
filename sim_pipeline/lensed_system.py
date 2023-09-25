@@ -3,14 +3,10 @@ import numpy as np
 
 
 class LensedSystem(ABC):
-    """
-    base class with functions all deflector classes must have to be able to render populations
+    """Base class with functions all deflector classes must have to be able to render
+    populations."""
 
-    """
-    def __init__(self, source_dict,
-                 deflector_dict, cosmo,
-                 test_area=4 * np.pi):
-        
+    def __init__(self, source_dict, deflector_dict, cosmo, test_area=4 * np.pi):
         """
         :param source_dict: source properties
         :type source_dict: dict
@@ -28,8 +24,7 @@ class LensedSystem(ABC):
 
     @abstractmethod
     def deflector_position(self):
-        """
-        center of the deflector position
+        """Center of the deflector position.
 
         :return: [x_pox, y_pos] in arc seconds
         """
@@ -37,9 +32,9 @@ class LensedSystem(ABC):
 
     @abstractmethod
     def source_position(self):
-        """
-        source position, either the center of the extended source or the point source. If not present from the cataloge,
-        it is drawn uniform within the circle of the test area centered on the lens
+        """Source position, either the center of the extended source or the point
+        source. If not present from the cataloge, it is drawn uniform within the circle
+        of the test area centered on the lens.
 
         :return: [x_pos, y_pos] in arc seconds
         """
@@ -47,19 +42,17 @@ class LensedSystem(ABC):
 
     @abstractmethod
     def image_positions(self):
-        """
-        returns image positions by solving the lens equation, these are either the centers of the extended source, or
-        the point sources in case of (added) point-like sources, such as quasars or SNe.
+        """Returns image positions by solving the lens equation, these are either the
+        centers of the extended source, or the point sources in case of (added) point-
+        like sources, such as quasars or SNe.
 
         :return: x-pos, y-pos
         """
         pass
 
-
     @abstractmethod
     def deflector_redshift(self):
-        """
-        Deflector redshift
+        """Deflector redshift.
 
         :return: deflector redshift
         """
@@ -67,8 +60,7 @@ class LensedSystem(ABC):
 
     @abstractmethod
     def source_redshift(self):
-        """
-        Source redshift
+        """Source redshift.
 
         :return: source redshift
         """
@@ -76,8 +68,7 @@ class LensedSystem(ABC):
 
     @abstractmethod
     def einstein_radius(self):
-        """
-        Einstein radius
+        """Einstein radius.
 
         :return: Einstein radius [arc seconds]
         """
@@ -85,26 +76,23 @@ class LensedSystem(ABC):
 
     @abstractmethod
     def deflector_ellipticity(self):
-        """
-        Ellipticity components for deflector light and mass profile
+        """Ellipticity components for deflector light and mass profile.
 
         :return: e1_light, e2_light, e1_mass, e2_mass
         """
         pass
-    
 
     @abstractmethod
     def deflector_velocity_dispersion(self):
         """
-        
+
         :return: velocity dispersion [km/s]
         """
         pass
-    
+
     @abstractmethod
     def los_linear_distortions(self):
-        """
-        line-of-sight distortions in shear and convergence
+        """Line-of-sight distortions in shear and convergence.
 
         :return: kappa, gamma1, gamma2
         """
@@ -112,19 +100,18 @@ class LensedSystem(ABC):
 
     @abstractmethod
     def deflector_magnitude(self, band):
-        """
-        apparent magnitude of the deflector for a given band (AB mag)
+        """Apparent magnitude of the deflector for a given band (AB mag)
 
         :param band: imaging band
         :type band: string
         :return: magnitude of deflector in given band
         """
         pass
-    
+
     @abstractmethod
     def point_source_magnitude(self, band, lensed=False):
-        """
-        point source magnitude, either unlensed (single value) or lensed (array) with macro-model magnifications
+        """Point source magnitude, either unlensed (single value) or lensed (array) with
+        macro-model magnifications.
 
         :param band: imaging band
         :type band: string
@@ -133,12 +120,11 @@ class LensedSystem(ABC):
         :return: point source magnitude
         """
         pass
-    
+
     @abstractmethod
     def extended_source_magnitude(self, band, lensed=False):
-        """
-        apparent magnitude of the extended source for a given band (lensed or unlensed)
-        (assumes that size is the same for different bands)
+        """Apparent magnitude of the extended source for a given band (lensed or
+        unlensed) (assumes that size is the same for different bands)
 
         :param band: imaging band
         :type band: string
@@ -147,20 +133,18 @@ class LensedSystem(ABC):
         :return: magnitude of source in given band
         """
         pass
-    
+
     @abstractmethod
     def point_source_magnification(self):
-        """
-        macro-model magnification of point sources
+        """Macro-model magnification of point sources.
 
         :return: signed magnification of point sources in same order as image positions
         """
         pass
-    
+
     @abstractmethod
     def extended_source_magnification(self):
-        """
-        Extended source (or host) magnification
+        """Extended source (or host) magnification.
 
         :return: integrated magnification factor of host magnitude
         """
@@ -168,35 +152,29 @@ class LensedSystem(ABC):
 
     @abstractmethod
     def deflector_mass_model_lenstronomy(self):
-        """
-        returns lens mass model instance and parameters in lenstronomy conventions
+        """Returns lens mass model instance and parameters in lenstronomy conventions.
 
         :return: lens_mass_model_list, kwargs_lens_mass
         """
         pass
 
-
     @abstractmethod
     def deflector_light_model_lenstronomy(self):
-        """
-        returns lens model instance and parameters in lenstronomy conventions
+        """Returns lens model instance and parameters in lenstronomy conventions.
 
         :return: lens_light_model_list, kwargs_lens_light
         """
         pass
 
-
     @abstractmethod
     def source_light_model_lenstronomy(self):
-        """
-        returns source light model instance and parameters in lenstronomy conventions
+        """Returns source light model instance and parameters in lenstronomy
+        conventions.
 
         :return: source_light_model_list, kwargs_source_light
         """
         pass
 
-    
-    
     @abstractmethod
     def lenstronomy_kwargs(self, band=None):
         """
@@ -207,10 +185,3 @@ class LensedSystem(ABC):
 
         """
         pass
-    
-    
-
-
-
-
-

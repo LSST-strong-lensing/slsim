@@ -13,9 +13,8 @@ from sim_pipeline.Deflectors.deflector_base import DeflectorBase
 
 
 class AllLensGalaxies(DeflectorBase):
-    """
-    class describing all-type galaxies
-    """
+    """Class describing all-type galaxies."""
+
     def __init__(self, galaxy_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area):
         """
         :param galaxy_list: list of dictionary with galaxy parameters of elliptical galaxies
@@ -32,28 +31,31 @@ class AllLensGalaxies(DeflectorBase):
             solid angle.
         """
 
-        super().__init__(deflector_table=galaxy_list, kwargs_cut=kwargs_cut, 
-                         cosmo=cosmo, sky_area=sky_area)
+        super().__init__(
+            deflector_table=galaxy_list,
+            kwargs_cut=kwargs_cut,
+            cosmo=cosmo,
+            sky_area=sky_area,
+        )
 
         n = len(galaxy_list)
         column_names = galaxy_list.colnames
-        if 'vel_disp' not in column_names:
-            galaxy_list['vel_disp'] = -np.ones(n)
-        if 'e1_light' not in column_names or 'e2_light' not in column_names:
-            galaxy_list['e1_light'] = -np.ones(n)
-            galaxy_list['e2_light'] = -np.ones(n)
-        if 'e1_mass' not in column_names or 'e2_mass' not in column_names:
-            galaxy_list['e1_mass'] = -np.ones(n)
-            galaxy_list['e2_mass'] = -np.ones(n)
-        if 'n_sersic' not in column_names:
-            galaxy_list['n_sersic'] = -np.ones(n)
-
+        if "vel_disp" not in column_names:
+            galaxy_list["vel_disp"] = -np.ones(n)
+        if "e1_light" not in column_names or "e2_light" not in column_names:
+            galaxy_list["e1_light"] = -np.ones(n)
+            galaxy_list["e2_light"] = -np.ones(n)
+        if "e1_mass" not in column_names or "e2_mass" not in column_names:
+            galaxy_list["e1_mass"] = -np.ones(n)
+            galaxy_list["e2_mass"] = -np.ones(n)
+        if "n_sersic" not in column_names:
+            galaxy_list["n_sersic"] = -np.ones(n)
 
         galaxy_list = fill_table(galaxy_list)
-        
+
         self._f_vel_disp = vel_disp_abundance_matching(
             galaxy_list, z_max=0.5, sky_area=sky_area, cosmo=cosmo
-            )
+        )
 
         self._galaxy_select = deflector_cut(galaxy_list, **kwargs_cut)
         self._num_select = len(self._galaxy_select)
@@ -113,8 +115,7 @@ def fill_table(galaxy_list):
 
 
 def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
-    """
-    Calculates the velocity dispersion from the steller mass
+    """Calculates the velocity dispersion from the steller mass.
 
     :param galaxy_list: list of galaxies with stellar masses given
     :type galaxy_list: ~astropy.Table object
@@ -128,21 +129,20 @@ def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
     """
 
     # selects galaxies with redshift below maximum redshift (z_max)
-    bool_cut = (galaxy_list['z'] < z_max)
+    bool_cut = galaxy_list["z"] < z_max
     galaxy_list_zmax = copy.deepcopy(galaxy_list[bool_cut])
 
     # number of selected galaxies
     num_select = len(galaxy_list_zmax)
 
-    redshift = np.arange(0, z_max+0.001, 0.1)
+    redshift = np.arange(0, z_max + 0.001, 0.1)
     z_list, vel_disp_list = vel_disp_sdss(
-        sky_area, redshift, vd_min=50, 
-        vd_max=500, cosmology=cosmo, noise=True
-        )
+        sky_area, redshift, vd_min=50, vd_max=500, cosmology=cosmo, noise=True
+    )
 
     # sort for stellar masses, largest values first
-    galaxy_list_zmax.sort('stellar_mass', reverse=True)
-    
+    galaxy_list_zmax.sort("stellar_mass", reverse=True)
+
     # sort velocity dispersion, largest values first
     vel_disp_list = np.flip(np.sort(vel_disp_list))
     num_vel_disp = len(vel_disp_list)
