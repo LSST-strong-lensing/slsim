@@ -66,7 +66,7 @@ class EllipticalLensGalaxies(DeflectorBase):
 
         # TODO: random reshuffle of matched list
 
-    def deflector_number(self):
+    def __len__(self):
         """
 
         :return: number of deflectors

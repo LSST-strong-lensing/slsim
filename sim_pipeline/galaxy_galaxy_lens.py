@@ -66,7 +66,7 @@ class GalaxyGalaxyLens(LensedSystem):
                 cosmo=self.cosmo,
             )
             self._theta_E_sis = lens_cosmo.sis_sigma_v2theta_E(
-                float(self._lens_dict["vel_disp"])
+                float(self._deflector_dict["vel_disp"])
             )
 
     @property
@@ -112,7 +112,7 @@ class GalaxyGalaxyLens(LensedSystem):
         :return: x-pos, y-pos
         """
         if not hasattr(self, "_image_positions"):
-            lens_model_list, kwargs_lens = self.lens_model_lenstronomy()
+            lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
             lens_model_class = LensModel(lens_model_list=lens_model_list)
             lens_eq_solver = LensEquationSolver(lens_model_class)
             source_pos_x, source_pos_y = self.source_position

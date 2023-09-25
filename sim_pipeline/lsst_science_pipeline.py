@@ -70,7 +70,7 @@ def lens_inejection(
         kwargs_lens_cut = lens_cut
 
     rgb_band_list = ["r", "g", "i"]
-    lens_class = lens_pop.select_lens_at_random(**kwargs_lens_cut)
+    lens_class = lens_pop.generate_random_lensed_system(**kwargs_lens_cut)
     skymap = butler.get("skyMap")
     point = geom.SpherePoint(ra, dec, geom.degrees)
     cutoutSize = geom.ExtentI(num_pix, num_pix)
@@ -223,7 +223,7 @@ def lens_inejection_fast(
 
     table = []
     for i in range(len(x_center)):
-        lens_class = lens_pop.select_lens_at_random(**kwargs_lens_cut)
+        lens_class = lens_pop.generate_random_lensed_system(**kwargs_lens_cut)
         cutout_bbox = geom.Box2I(
             geom.Point2I(xbox_min[i], ybox_min[i]),
             geom.Point2I(xbox_max[i], ybox_max[i]),

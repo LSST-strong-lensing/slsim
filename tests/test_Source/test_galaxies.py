@@ -20,7 +20,7 @@ class test_galaxies(object):
         )
 
     def test_source_number(self):
-        number = self.galaxies.source_number()
+        number = len(self.galaxies)
         assert number > 0
 
     def test_draw_source(self):

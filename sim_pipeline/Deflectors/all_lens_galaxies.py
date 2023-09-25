@@ -9,15 +9,20 @@ from sim_pipeline.Deflectors.elliptical_lens_galaxies import (
     elliptical_projected_eccentricity,
 )
 from sim_pipeline.Deflectors.deflector_base import DeflectorBase
+from astropy.table import vstack
 
 
 class AllLensGalaxies(DeflectorBase):
     """Class describing all-type galaxies."""
 
-    def __init__(self, galaxy_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area):
+    def __init__(self, red_galaxy_list, blue_galaxy_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area):
         """
-        :param galaxy_list: list of dictionary with galaxy parameters
-            (supporting skypy pipelines)
+        :param red_galaxy_list: list of dictionary with elliptical galaxy 
+            parameters (supporting skypy pipelines)
+        :type red_galaxy_list: astropy.Table
+        :param blue_galaxy_list: list of dictionary with spiral galaxy 
+            parameters (supporting skypy pipelines)
+        :type blue_galaxy_list: astropy.Table
         :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max
         :type kwargs_cut: dict
         :param kwargs_mass2light: mass-to-light relation
@@ -27,13 +32,23 @@ class AllLensGalaxies(DeflectorBase):
             solid angle.
         """
 
+        red_column_names = red_galaxy_list.colnames
+        if "galaxy_type" not in red_column_names:
+            red_galaxy_list["galaxy_type"] = "red"
+
+        blue_column_names = blue_galaxy_list.colnames
+        if "galaxy_type" not in blue_column_names:
+            blue_galaxy_list["galaxy_type"] = "blue"
+
+        galaxy_list = vstack([red_galaxy_list, blue_galaxy_list])
+
         super().__init__(
             deflector_table=galaxy_list,
             kwargs_cut=kwargs_cut,
             cosmo=cosmo,
             sky_area=sky_area,
         )
-
+        
         n = len(galaxy_list)
         column_names = galaxy_list.colnames
         if "vel_disp" not in column_names:
@@ -60,10 +75,11 @@ class AllLensGalaxies(DeflectorBase):
         )
         # TODO: random reshuffle of matched list
 
-    def deflector_number(self):
+
+    def __len__(self):
         """
 
-        :return: number of deflector
+        :return: number of deflectors after applied cuts
         """
         number = self._num_select
         return number
@@ -71,7 +87,7 @@ class AllLensGalaxies(DeflectorBase):
     def draw_deflector(self):
         """
 
-        :return: dictionary of complete parameterization of deflector
+        :return: dictionary of complete parameterization of a deflector
         """
 
         index = random.randint(0, self._num_select - 1)

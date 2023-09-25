@@ -18,7 +18,7 @@ class SourceBase(ABC):
         self._sky_area = sky_area
 
     @abstractmethod
-    def source_number(self):
+    def __len__(self):
         """Number of sources registered (within given area on the sky)
 
         :return: number of sources

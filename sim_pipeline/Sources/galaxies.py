@@ -36,7 +36,7 @@ class Galaxies(SourceBase):
 
         self._num_select = len(self._galaxy_select)
 
-    def source_number(self):
+    def __len__(self):
         """Number of sources registered (within given area on the sky)
 
         :return: number of sources

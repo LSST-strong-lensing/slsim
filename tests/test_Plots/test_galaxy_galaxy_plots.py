@@ -22,7 +22,7 @@ def galaxy_galaxy_lensing_plots():
 def test_rgb_image(galaxy_galaxy_lensing_plots):
     lens_pop = gg_lens_pop_instance()
     kwargs_lens_cut = {}
-    lens_class = lens_pop.select_lens_at_random(**kwargs_lens_cut)
+    lens_class = lens_pop.generate_random_lensed_system(**kwargs_lens_cut)
     rgb_band_list = ["r", "g", "i"]
     add_noise = True
     image_rgb = galaxy_galaxy_lensing_plots.rgb_image(
