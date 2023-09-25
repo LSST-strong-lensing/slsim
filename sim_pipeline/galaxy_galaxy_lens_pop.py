@@ -4,7 +4,6 @@ from sim_pipeline.galaxy_galaxy_lens import (
     theta_e_when_source_infinity,
 )
 import numpy as np
-import warnings
 from sim_pipeline.lensed_sample import LensedSample
 from astropy.table import vstack
 

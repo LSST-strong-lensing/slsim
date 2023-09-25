@@ -3,7 +3,6 @@ import copy
 import numpy as np
 from scipy import interpolate
 import numpy.random as random
-from astropy.table import vstack
 from sim_pipeline.selection import deflector_cut
 from sim_pipeline.Deflectors.velocity_dispersion import vel_disp_sdss
 from sim_pipeline.Deflectors.elliptical_lens_galaxies import (
@@ -17,12 +16,8 @@ class AllLensGalaxies(DeflectorBase):
 
     def __init__(self, galaxy_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area):
         """
-        :param galaxy_list: list of dictionary with galaxy parameters of elliptical galaxies
-         (currently supporting skypy pipelines)
+        :param galaxy_list: list of dictionary with galaxy parameters (supporting skypy pipelines)
         :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max
-        :param red_galaxy_list: list of dictionary with galaxy parameters of elliptical and spiral
-        galaxies (currently supporting skypy pipelines)
-        :param kwargs_cut: cuts in parameters
         :type kwargs_cut: dict
         :param kwargs_mass2light: mass-to-light relation
         :param cosmo: astropy.cosmology instance

@@ -16,7 +16,7 @@ class LensedSystem(ABC):
         :param deflector_dict: deflector properties
         :type deflector_dict: dict
         :param cosmo: astropy.cosmology instance
-        :param test_area: area of disk around one lensing galaxies to be investigated on (in arc-seconds^2)
+        :param test_area: area (arc-sec^2) around lensing galaxy to be investigated
 
         """
         self._source_dict = source_dict

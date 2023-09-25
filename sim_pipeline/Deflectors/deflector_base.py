@@ -1,6 +1,3 @@
-import numpy as np
-import numpy.random as random
-from sim_pipeline.selection import deflector_cut
 from abc import ABC, abstractmethod
 
 
@@ -18,7 +15,7 @@ class DeflectorBase(ABC):
         :type kwargs_cut: dict
         :param cosmo: astropy.cosmology instance
         :type sky_area: `~astropy.units.Quantity`
-        :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid angle.
+        :param sky_area: Sky area (solid angle) over which galaxies are sampled.
         """
         self.deflector_table = deflector_table
         self.kwargs_cut = kwargs_cut
