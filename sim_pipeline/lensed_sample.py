@@ -11,7 +11,7 @@ import warnings
 class LensedSample(ABC):
     """Abstract Base Class to create a sample of lensed systems.
 
-    All object that inherit from Lensed System must contain the methods it contains.
+    All object that inherit from Lensed Sample must contain the methods it contains.
     """
 
     def __init__(self, sky_area=None, cosmo=None):

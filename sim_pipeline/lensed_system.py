@@ -3,8 +3,11 @@ import numpy as np
 
 
 class LensedSystem(ABC):
-    """Base class with functions all deflector classes must have to be able to render
-    populations."""
+    """
+    Abstract Base class to create a lens system with all lensing properties required to render
+    populations.
+    
+    """
 
     def __init__(self, source_dict, deflector_dict, cosmo, test_area=4 * np.pi):
         """
