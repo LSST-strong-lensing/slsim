@@ -2,6 +2,9 @@ import numpy as np
 from astropy.table import Table
 from lenstronomy.SimulationAPI.sim_api import SimAPI
 from astropy.visualization import make_lupton_rgb
+from lenstronomy.Data.psf import PSF
+from lenstronomy.Data.pixel_grid import PixelGrid
+from lenstronomy.ImSim.Numerics.point_source_rendering import PointSourceRendering
 
 
 def simulate_image(
