@@ -22,6 +22,7 @@ class LensedSample(ABC):
         self.f_sky = sky_area
         if sky_area is None:
             from astropy.units import Quantity
+
             sky_area = Quantity(value=0.1, unit="deg2")
             warnings.warn("No sky area provided, instead uses 0.1 deg2")
 
