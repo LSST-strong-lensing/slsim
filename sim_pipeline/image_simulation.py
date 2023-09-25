@@ -216,3 +216,67 @@ def point_source_image_properties(
         ),
     )
     return data
+
+def point_source_image(lens_class, band, mag_zero_point, delta_pix, num_pix, psf_kernels, variability=None, lensed = True):
+    """Creates lensed point source images on the basis of given information
+    
+    :param lens_class: GalaxyGalaxyLens() object
+    :param band: imaging band
+    :param mag_zero_point: magnitude zero point in band
+    :param delta_pix: pixel scale of image generated
+    :param num_pix: number of pixels per axis
+    :param psf_kernels: psf kernels extracted from the dp0 cutout images
+    :param variability: None or list of variability function and time. Eg: variability = {'time': t, 
+     'function': sinusoidal_variability}, where t is a observation time and sinusoidal_variability is a                  source variability function. If None, creates images without variability.
+    :param lensed: True or False. If True, returns magnitude of lensed images.In this function, it should be True.
+    :return: astropy table of deflector and image coordinate in pixel unit and other properties
+    """
+    
+    image_data=point_source_image_properties(lens_class = lens_class, band = band, mag_zero_point=mag_zero_point, 
+                            delta_pix=delta_pix, num_pix=num_pix)
+    transform_matrix = np.array([[delta_pix, 0], [0, delta_pix]])
+    grid = PixelGrid(nx=num_pix, ny=num_pix, transform_pix2angle=transform_matrix,
+                       ra_at_xy_0=image_data['radec_at_xy_0'][0], dec_at_xy_0=image_data['radec_at_xy_0'][1])
+    
+    ra_image_values = image_data['ra_image']
+    dec_image_values = image_data['dec_image']
+    amp = image_data['image_amplitude']
+    magnitude = lens_class.point_source_magnitude(band, lensed=lensed)
+    psf_class = []
+    for i in range(len(psf_kernels)):
+        psf_class.append(PSF(psf_type="PIXEL", kernel_point_source = psf_kernels[i]))
+    #point_source_images = []
+    if variability is None:
+        point_source_images = []
+        for i in range(len(psf_class)):
+            rendering_class = PointSourceRendering(pixel_grid = grid, supersampling_factor = 1, psf = psf_class[i])
+            point_source = rendering_class.point_source_rendering(np.array([ra_image_values[i]]), np.array([dec_image_values[i]]), np.array([amp[i]]))
+            point_source_images.append(point_source)
+    else:
+        time = variability['time']
+        function = variability['function']
+        observed_time = []
+        for t_obs in time:
+            observed_time.append(lens_class.image_observer_times(t_obs))
+        transformed_observed_time = np.array(observed_time).T.tolist()
+        variable_mag_array = []
+        for i in range(len(magnitude)):
+            for j in range(len(time)):
+                variable_mag_array.append(magnitude[i] + function(transformed_observed_time[i][j]))
+        variable_mag = np.array(variable_mag_array).reshape(len(magnitude), len(time))
+        variable_amp_array = []
+        for i in range(len(magnitude)):
+            for j in range(len(time)):
+                delta_m = variable_mag[i][j] - mag_zero_point
+                counts = 10**(-delta_m / 2.5)
+                variable_amp_array.append(counts)
+        variable_amp = np.array(variable_amp_array).reshape(len(magnitude), len(time))
+        point_source_images = []
+        for i in range(len(psf_class)):
+            point_source_images_single = []
+            for j in range(len(time)):
+                rendering_class = PointSourceRendering(pixel_grid = grid, supersampling_factor = 1, psf = psf_class[i])
+                point_source = rendering_class.point_source_rendering(np.array([ra_image_values[i]]), np.array([dec_image_values[i]]), np.array([variable_amp[i][j]]))
+                point_source_images_single.append(point_source) 
+            point_source_images.append(point_source_images_single) 
+    return point_source_images
