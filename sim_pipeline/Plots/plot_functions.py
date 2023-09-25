@@ -35,9 +35,9 @@ def create_image_montage_from_image_list(num_rows, num_cols, images, time = None
     return None
 
 def plot_montage_of_random_injected_lens(
-        image_list,
+        image_list, num,
         n_horizont=1,
-        n_vertical=1, num):
+        n_vertical=1):
     """Creates an image montage of random lenses from the catalog of injected lens.
 
     :param images_list: list of catalog images 
@@ -46,21 +46,21 @@ def plot_montage_of_random_injected_lens(
     :param num: length of the injected lens catalog
     :return: image montage of random injected lenses.
     """
-        fig, axes = plt.subplots(
-            n_vertical, n_horizont, figsize=(n_horizont * 3, n_vertical * 3)
-        )
-        for i in range(n_horizont):
-            for j in range(n_vertical):
-                ax = axes[j, i]
-                index = random.randint(0, num)
-                image = image_list[index]
-                ax.imshow(image, aspect="equal", origin="lower")
-                ax.get_xaxis().set_visible(False)
-                ax.get_yaxis().set_visible(False)
-                ax.autoscale(False)
+    fig, axes = plt.subplots(
+        n_vertical, n_horizont, figsize=(n_horizont * 3, n_vertical * 3)
+    )
+    for i in range(n_horizont):
+        for j in range(n_vertical):
+            ax = axes[j, i]
+            index = random.randint(0, num)
+            image = image_list[index]
+            ax.imshow(image, aspect="equal", origin="lower")
+            ax.get_xaxis().set_visible(False)
+            ax.get_yaxis().set_visible(False)
+            ax.autoscale(False)
 
-        fig.tight_layout()
-        fig.subplots_adjust(
-            left=None, bottom=None, right=None, top=None, wspace=0.0, hspace=0.05
-        )
-        return None
+    fig.tight_layout()
+    fig.subplots_adjust(
+        left=None, bottom=None, right=None, top=None, wspace=0.0, hspace=0.05
+    )
+    return None
