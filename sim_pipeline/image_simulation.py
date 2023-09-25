@@ -1,8 +1,4 @@
 from lenstronomy.SimulationAPI.sim_api import SimAPI
-<<<<<<< HEAD
-# import galsim
-=======
->>>>>>> main
 from astropy.visualization import make_lupton_rgb
 
 
