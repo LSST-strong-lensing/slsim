@@ -156,8 +156,9 @@ class GalaxyGalaxyLens(LensedSystem):
         if not min_image_separation <= 2 * self._theta_E_sis <= max_image_separation:
             return False
 
-        # Criteria 3: The distance between the lens center and the source position must be less than
-        # or equal to the angular Einstein radius of the lensing configuration (times sqrt(2)).
+        # Criteria 3: The distance between the lens center and the source position
+        # must be less than or equal to the angular Einstein radius 
+        # of the lensing configuration (times sqrt(2)).
         center_lens, center_source = self.deflector_position, self.source_position
 
         if np.sum((center_lens - center_source) ** 2) > self._theta_E_sis**2 * 2:

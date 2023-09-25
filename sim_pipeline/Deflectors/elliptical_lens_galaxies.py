@@ -13,7 +13,7 @@ class EllipticalLensGalaxies(DeflectorBase):
         """
 
         :param galaxy_list: list of dictionary with galaxy parameters of elliptical galaxies
-         (currently supporting skypy pipelines)
+            (currently supporting skypy pipelines)
         :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max
         :type kwargs_cut: dict
         :param kwargs_mass2light: mass-to-light relation

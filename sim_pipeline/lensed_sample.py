@@ -15,7 +15,7 @@ class LensedSample(ABC):
         :type deflector_type: string
         :param source_type: type of the source
         :type source_type: string
-        :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid angle.
+        :param sky_area: Sky area (solid angle) over which galaxies are sampled.
         :type sky_area: `~astropy.units.Quantity`
         """
         self.cosmo = cosmo
