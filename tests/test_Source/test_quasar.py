@@ -16,11 +16,11 @@ def Quasar_class():
         cosmo=cosmo,
         sky_area=sky_area)
 
-def test_source_number():
+def test_source_number(Quasar_class):
     number = Quasar_class.source_number()
     assert number > 0
 
-def test_draw_source():
+def test_draw_source(Quasar_class):
     quasar = Quasar_class.draw_source()
     assert len(quasar) > 0
 
