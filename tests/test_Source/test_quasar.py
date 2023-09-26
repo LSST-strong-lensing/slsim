@@ -12,7 +12,6 @@ def Quasar_class():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     return Quasars(
         quasar_list=quasar_list,
-        kwargs_cut=None,
         cosmo=cosmo,
         sky_area=sky_area)
 
