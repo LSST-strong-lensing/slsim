@@ -41,7 +41,7 @@ def test_num_sources_tested_and_test_area(gg_lens_pop_instance):
 
 def test_draw_population(gg_lens_pop_instance):
     kwargs_lens_cuts = {}
-    gg_lens_population = gg_lens_pop_instance.draw_sample(kwargs_lens_cuts)
+    gg_lens_population = gg_lens_pop_instance.draw_population(kwargs_lens_cuts)
     assert isinstance(gg_lens_population, list)
 
 

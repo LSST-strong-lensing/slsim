@@ -297,7 +297,7 @@ class GalaxyGalaxyLens(LensedSystem):
         lens_model = LensModel(
             lens_model_list=lens_model_list,
             cosmo=self.cosmo,
-            z_lens=self.lens_redshift,
+            z_lens=self.deflector_redshift,
             z_source=self.source_redshift,
         )
         x_image, y_image = self.image_positions()

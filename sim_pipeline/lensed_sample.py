@@ -65,7 +65,7 @@ class LensedSample(ABC):
         pass
 
     @abstractmethod
-    def draw_sample(self):
+    def draw_population(self):
         """Return full sample list of all lenses within the area.
 
         :return: List of LensedSystem instances with parameters of the deflectors and

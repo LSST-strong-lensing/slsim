@@ -163,7 +163,7 @@ class GalaxyGalaxyLensPop(LensedSample):
         num_sources_range = np.random.poisson(lam=num_sources_tested_mean)
         return num_sources_range
 
-    def draw_sample(self, kwargs_lens_cuts):
+    def draw_population(self, kwargs_lens_cuts):
         """Return full population list of all lenses within the area # TODO: need to
         implement a version of it. (improve the algorithm)
 
