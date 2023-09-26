@@ -1,4 +1,6 @@
-from sim_pipeline.Util.param_util import epsilon2e, e2epsilon, random_ra_dec
+import numpy as np
+from sim_pipeline.Util.param_util import (epsilon2e, e2epsilon, random_ra_dec, 
+                                          convolved_image)
 
 
 def test_epsilon2e():
@@ -14,3 +16,9 @@ def test_e2epsilon():
 def test_random_ra_dec():
     ra, dec = random_ra_dec(ra_min=30, ra_max=62, dec_min=-63, dec_max=-36, n=50)
     assert len(ra) == 50
+
+def test_convolved_image():
+    image = np.loadtxt('/Users/narayankhadka/sim-pipeline/data/dp0/image.txt', unpack = True)
+    psf = np.loadtxt('/Users/narayankhadka/sim-pipeline/data/dp0/psf_kernels_for_deflector.txt', unpack = True)
+    c_image = convolved_image(image, psf)
+    assert c_image.shape[0] == 101
