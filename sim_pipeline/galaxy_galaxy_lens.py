@@ -472,7 +472,7 @@ class GalaxyGalaxyLens(object):
             {
                 "magnitude": mag_lens,
                 "R_sersic": size_lens_arcsec,
-                "n_sersic": float(self._source_dict["n_sersic"]),
+                "n_sersic": float(self._lens_dict["n_sersic"]),
                 "e1": e1_light_lens,
                 "e2": e2_light_lens,
                 "center_x": center_lens[0],

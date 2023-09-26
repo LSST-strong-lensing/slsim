@@ -11,6 +11,28 @@ This module provides functions to compute velocity dispersion using schechter fu
 #  from skypy.galaxies.velocity_dispersion import schechter_vdf
 
 
+def vel_disp_composite_model(m_star, r_star, m_halo, c_halo, cosmo):
+    """
+    computes the luminosity weighted velocity dispersion
+    for a deflector with a stellar Hernquist profile and
+    a NFW halo profile
+
+    :param m_star: stellar mass [M_sun]
+    :param r_star: stellar half light radius [physical kpc]
+    :param m_halo: Halo mass [physical M_sun]
+    :param c_halo: halo concentration
+    :return: velocity dispersion [km/s]
+    """
+    from lenstronomy.Cosmo.lens_cosmo import LensCosmo
+    lens_cosmo = LensCosmo(z_lens=0.5, z_source=1.5, cosmo=cosmo)
+    sigma0, rs_angle = lens_cosmo.hernquist_phys2angular(mass=10 ** 11, rs=0.02)
+    # turn physical masses to lenstronomy units
+
+    from lenstronomy.GalKin.numeric_kinematics import NumericKinematics
+
+
+
+
 def vel_disp_sdss(sky_area, redshift, vd_min, vd_max, cosmology, noise=True):
     """Velocity dispersion function in a cone matched by SDSS measurements.
 
