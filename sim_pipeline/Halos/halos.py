@@ -329,7 +329,7 @@ def redshift_mass_sheet_correction_array_from_comoving_density(redshift_list, sk
     N = np.trapz(dN_dz, redshift_list)
     N_0 = int(N)
     if N_0 == 0:
-        warnings.warn("No Halos found in the given redshift range")
+        warnings.warn("No Mass sheet found in the given redshift range")
         return np.array([np.nan])
     else:
         cdf = dN_dz  # reuse memory
@@ -403,3 +403,27 @@ def kappa_ext_for_each_sheet(redshift_list, first_moment, sky_area, cosmology):
     first_moment_d_area = np.divide(np.array(first_moment), np.array(area))
     kappa_ext = np.divide(first_moment_d_area, epsilon_crit)
     return -kappa_ext
+
+
+def redshift_mass_number(redshift_list, sky_area, cosmology, m_min=None,
+                         m_max=None,
+                         resolution=None, wavenumber=None, collapse_function=None,
+                         power_spectrum=None, params=None):
+    """
+
+    """
+    if cosmology is None:
+        warnings.warn("No cosmology provided, instead uses flat LCDM with default parameters")
+        from astropy.cosmology import FlatLambdaCDM
+        cosmology = FlatLambdaCDM(H0=70, Om0=0.3)
+
+    dN_dz = (cosmology.differential_comoving_volume(redshift_list) * sky_area).to_value('Mpc3')
+    density = number_density_at_redshift(z=redshift_list, m_min=m_min, m_max=m_max, resolution=resolution,
+                                         wavenumber=wavenumber,
+                                         power_spectrum=power_spectrum, cosmology=cosmology,
+                                         collapse_function=collapse_function, params=params)
+    dN_dz *= density
+
+    # integrate density to get expected number of Halos
+    N = np.trapz(dN_dz, redshift_list)
+    return N

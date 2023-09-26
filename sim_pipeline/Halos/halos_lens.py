@@ -320,7 +320,7 @@ class HalosLens(object):
 
         return kwargs_lens
 
-    def get_convergence_shear(self, gamma12=False, diff=0.0001, diff_method='square', kwargs=None, lens_model=None
+    def get_convergence_shear(self, gamma12=False, diff=0.00000001, diff_method='square', kwargs=None, lens_model=None
                               , zdzs=None):
         """
         Calculates and returns the convergence and shear at the origin due to all the Halos.
@@ -404,7 +404,7 @@ class HalosLens(object):
             kappa, gamma1, gamma2 = obj.get_convergence_shear(gamma12=True, diff=diff, diff_method=diff_method)
             return [kappa, gamma1, gamma2]
 
-    def get_kappa_gamma_distib(self, gamma_tot=False, diff=0.0001, diff_method='square'):
+    def get_kappa_gamma_distib(self, gamma_tot=False, diff=0.00000001, diff_method='square'):
         """
         Computes and returns the distribution of convergence and shear values.
 
@@ -448,7 +448,7 @@ class HalosLens(object):
         return kappa_gamma_distribution
         # TODO: Maybe considering a choice between multiprocessing and not multiprocessing.
 
-    def get_kappa_gamma_distib_without_multiprocessing(self, gamma_tot=False, diff=1.0, diff_method='square'):
+    def get_kappa_gamma_distib_without_multiprocessing(self, gamma_tot=False, diff=0.00000001, diff_method='square'):
         """
         Runs the method get_convergence_shear() a specific number of times and stores the results
         for kappa, gamma1, and gamma2 in separate lists.
