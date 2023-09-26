@@ -24,6 +24,7 @@ class test_quasar(object):
     def test_draw_source(self):
         quasar = self.quasar.draw_source()
         assert len(quasar) > 0
+        assert len(self.quasar_list) == 50000
 
 if __name__ == "__main__":
     pytest.main()
