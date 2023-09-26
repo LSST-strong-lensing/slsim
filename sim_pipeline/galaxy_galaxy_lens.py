@@ -293,7 +293,7 @@ class GalaxyGalaxyLens(LensedSystem):
         :return: arrival times for each image [days]
         :rtype: numpy array
         """
-        lens_model_list, kwargs_lens = self.lens_model_lenstronomy()
+        lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
         lens_model = LensModel(
             lens_model_list=lens_model_list,
             cosmo=self.cosmo,
