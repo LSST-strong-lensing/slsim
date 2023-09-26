@@ -15,12 +15,20 @@ from astropy.table import vstack
 class AllLensGalaxies(DeflectorBase):
     """Class describing all-type galaxies."""
 
-    def __init__(self, red_galaxy_list, blue_galaxy_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area):
+    def __init__(
+        self,
+        red_galaxy_list,
+        blue_galaxy_list,
+        kwargs_cut,
+        kwargs_mass2light,
+        cosmo,
+        sky_area,
+    ):
         """
-        :param red_galaxy_list: list of dictionary with elliptical galaxy 
+        :param red_galaxy_list: list of dictionary with elliptical galaxy
             parameters (supporting skypy pipelines)
         :type red_galaxy_list: astropy.Table
-        :param blue_galaxy_list: list of dictionary with spiral galaxy 
+        :param blue_galaxy_list: list of dictionary with spiral galaxy
             parameters (supporting skypy pipelines)
         :type blue_galaxy_list: astropy.Table
         :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max
@@ -48,7 +56,7 @@ class AllLensGalaxies(DeflectorBase):
             cosmo=cosmo,
             sky_area=sky_area,
         )
-        
+
         n = len(galaxy_list)
         column_names = galaxy_list.colnames
         if "vel_disp" not in column_names:
@@ -74,7 +82,6 @@ class AllLensGalaxies(DeflectorBase):
             np.log10(self._galaxy_select["stellar_mass"])
         )
         # TODO: random reshuffle of matched list
-
 
     def __len__(self):
         """
