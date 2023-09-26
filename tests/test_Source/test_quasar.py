@@ -11,7 +11,7 @@ class test_quasar(object):
         self.quasar_list = quasar_catalog(50000, 0.1, 5, 17, 23)
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         self.quasar = Quasars(
-            galaxy_list=self.quasar_list,
+            quasar_list=self.quasar_list,
             kwargs_cut=None,
             cosmo=self.cosmo,
             sky_area=sky_area,
