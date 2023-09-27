@@ -25,6 +25,6 @@ def test_roman_speclite():
     )
 
     speclite.filters.load_filters("Roman-F062", "Roman-F087", "Roman-F106")
-    # os.remove(save_path + 'Roman-F062.ecsv')
-    # os.remove(save_path + 'Roman-F087.ecsv')
-    # os.remove(save_path + 'Roman-F106.ecsv')
+    os.remove(save_path + 'Roman-F062.ecsv')
+    os.remove(save_path + 'Roman-F087.ecsv')
+    os.remove(save_path + 'Roman-F106.ecsv')
