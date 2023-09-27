@@ -138,7 +138,7 @@ def test_point_source_image(quasar_lens_pop_instance):
     path = os.path.dirname(__file__)
     #module_path, _ = os.path.split(path)
     #print(path, module_path)
-    psf_image_1 = [np.loadtxt(os.path.join(path, "/data/dp0/psf_kernels_for_image_1.txt"), unpack = True)]
+    psf_image_1 = [np.loadtxt(os.path.join(path, "TestData/psf_kernels_for_image_1.txt"), unpack = True)]
     psf_kernels = psf_image_1[:-1]
     psf_kernels.extend([psf_image_1[-1]] * number)
     
