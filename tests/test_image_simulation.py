@@ -12,7 +12,6 @@ from sim_pipeline.image_simulation import (
 )
 import pytest
 
-@pytest.fixture
 class TestImageSimulation(object):
     def setup_method(self):
         # path = os.path.dirname(sim_pipeline.__file__)
@@ -99,6 +98,7 @@ class TestImageSimulation(object):
         image = rgb_image_from_image_list(image_list, 0.5)
         assert len(image) == 100
 
+@pytest.fixture
 def quasar_lens_pop_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     sky_area = Quantity(value=0.1, unit="deg2")
