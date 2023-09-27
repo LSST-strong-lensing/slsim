@@ -405,9 +405,13 @@ def add_object(dp0_image, objects, calibFluxRadius=12):
             injected_image = np.array(dp0_image.image.array) + np.array(convolved_image)
             return injected_image
 
-def cutout_image_psf_kernel(dp0_image, lens_class, band, mag_zero_point, delta_pix, num_pix, calibFluxRadius=12):
-    """This function extracts psf kernels from the dp0 cutout image at point source image positions and deflector          position.
-    
+
+def cutout_image_psf_kernel(
+    dp0_image, lens_class, band, mag_zero_point, delta_pix, num_pix, calibFluxRadius=12
+):
+    """This function extracts psf kernels from the dp0 cutout image at point source
+    image positions and deflector          position.
+
     :param dp0_image: cutout image from the dp0 data or any other image
     :param lens_class: class object containing all information of the lensing system
         (e.g., GalaxyGalaxyLens())
@@ -421,40 +425,56 @@ def cutout_image_psf_kernel(dp0_image, lens_class, band, mag_zero_point, delta_p
         defined in slot_CalibFlux_instFlux.
     :returns: Astropy table containing psf kernel at image and deflector positions.
     """
-    image_data = point_source_image_properties(lens_class = lens_class, band = band, mag_zero_point=mag_zero_point, 
-                            delta_pix=delta_pix, num_pix=num_pix)
-    #get the property of cutout image
+    image_data = point_source_image_properties(
+        lens_class=lens_class,
+        band=band,
+        mag_zero_point=mag_zero_point,
+        delta_pix=delta_pix,
+        num_pix=num_pix,
+    )
+    # get the property of cutout image
     bbox = dp0_image.getBBox()
     #wcs = dp0_image.getWcs()
     xmin_cut, ymin_cut = bbox.getBegin()
     xmax_cut, ymax_cut = bbox.getEnd()
     dp0_image_psf = dp0_image.getPsf()
     grid_shape = np.shape(dp0_image.image.array)
-    x_center = (xmin_cut + xmax_cut)/2
-    y_center = (ymin_cut + ymax_cut)/2
+    x_center = (xmin_cut + xmax_cut) / 2
+    y_center = (ymin_cut + ymax_cut) / 2
 
-    #map pixel grid to dp0 pixel coordinate 
-    x_original = np.arange(xmin_cut, xmax_cut+1)
-    x_rescale = np.arange(0, grid_shape[1]+1)
+    # map pixel grid to dp0 pixel coordinate
+    x_original = np.arange(xmin_cut, xmax_cut + 1)
+    x_rescale = np.arange(0, grid_shape[1] + 1)
     f_x = interpolate.interp1d(x_rescale, x_original)
 
-    y_original = np.arange(ymin_cut, ymax_cut+1)
-    y_rescale = np.arange(0, grid_shape[0]+1)
+    y_original = np.arange(ymin_cut, ymax_cut + 1)
+    y_rescale = np.arange(0, grid_shape[0] + 1)
     f_y = interpolate.interp1d(y_rescale, y_original)
 
     ## transform image pix coordinate of point source image to dp0 pixel coodinate.
-    image_list = image_data['image_pix']
+    image_list = image_data["image_pix"]
     image_rescaled_to_dp0_cord = []
     for i in range(len(image_list)):
-        image_rescaled_to_dp0_cord.append((float(f_x(image_list[i][0])), float(f_y(image_list[i][1]))))
+        image_rescaled_to_dp0_cord.append(
+            (float(f_x(image_list[i][0])), float(f_y(image_list[i][1])))
+        )
 
     psf_kernels = []
     for i in range(len(image_rescaled_to_dp0_cord)):
-        psf_kernels.append(dp0_image_psf.computeKernelImage(geom.Point2D(image_rescaled_to_dp0_cord[i][0], image_rescaled_to_dp0_cord[i][1])).array)
-    
+        psf_kernels.append(
+            dp0_image_psf.computeKernelImage(
+                geom.Point2D(
+                    image_rescaled_to_dp0_cord[i][0], image_rescaled_to_dp0_cord[i][1]
+                )
+            ).array
+        )
+
     pt = geom.Point2D(x_center, y_center)
     psf_kernel_for_deflector = dp0_image_psf.computeKernelImage(pt).array
     ap_Corr = dp0_image_psf.computeApertureFlux(calibFluxRadius, pt)
     psf_kernel_for_deflector /= ap_Corr
-    table_of_kernels = Table([[psf_kernels], [psf_kernel_for_deflector]], names=("psf_kernel_for_images","psf_kernel_for_deflector"))
+    table_of_kernels = Table(
+        [[psf_kernels], [psf_kernel_for_deflector]],
+        names=("psf_kernel_for_images", "psf_kernel_for_deflector"),
+    )
     return table_of_kernels

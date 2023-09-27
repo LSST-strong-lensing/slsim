@@ -21,7 +21,7 @@ class Quasars(SourceBase):
         if "mag_r" not in column_names:
             raise ValueError("required parameters missing in quasar_list columns")
         # make cuts
-        self._quasar_select = quasar_list # can apply a filter here
+        self._quasar_select = quasar_list  # can apply a filter here
 
         self._num_select = len(self._quasar_select)
         super(Quasars, self).__init__(cosmo=cosmo, sky_area=sky_area)
@@ -44,4 +44,3 @@ class Quasars(SourceBase):
         quasar = self._quasar_select[index]
 
         return quasar
-

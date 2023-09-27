@@ -99,7 +99,7 @@ def sharp_image(
         unconvolved=True,
         source_add=True,
         lens_light_add=with_deflector,
-        point_source_add=False
+        point_source_add=False,
     )
     return image
 
@@ -150,10 +150,10 @@ def rgb_image_from_image_list(image_list, stretch):
     )
     return image_rgb
 
-def point_source_image_properties(
-    lens_class, band, mag_zero_point, delta_pix, num_pix):
-    """provides pixel coordinates for deflector and images. Currently, 
-    this function only works for point source. 
+
+def point_source_image_properties(lens_class, band, mag_zero_point, delta_pix, num_pix):
+    """Provides pixel coordinates for deflector and images. Currently, this function
+    only works for point source.
 
     :param lens_class: GalaxyGalaxyLens() object
     :param band: imaging band
@@ -179,20 +179,20 @@ def point_source_image_properties(
     )
 
     image_data = sim_api.data_class
-    
-    ra_lens_value = kwargs_params['kwargs_lens'][1]['ra_0']
-    dec_lens_value = kwargs_params['kwargs_lens'][1]['dec_0']
+
+    ra_lens_value = kwargs_params["kwargs_lens"][1]["ra_0"]
+    dec_lens_value = kwargs_params["kwargs_lens"][1]["dec_0"]
     lens_pix_coordinate = image_data.map_coord2pix(ra_lens_value, dec_lens_value)
 
-    ps_coordinate = kwargs_params['kwargs_ps']
-    ra_image_values = [item['ra_image'] for item in ps_coordinate]
-    dec_image_values = [item['dec_image'] for item in ps_coordinate]
-    image_magnitude = [item['magnitude'] for item in ps_coordinate]
+    ps_coordinate = kwargs_params["kwargs_ps"]
+    ra_image_values = [item["ra_image"] for item in ps_coordinate]
+    dec_image_values = [item["dec_image"] for item in ps_coordinate]
+    image_magnitude = [item["magnitude"] for item in ps_coordinate]
     image_pix_coordinate = []
     for image_ra, image_dec in zip(ra_image_values[0], dec_image_values[0]):
         image_pix_coordinate.append((image_data.map_coord2pix(image_ra, image_dec)))
     ra_at_xy_0, dec_at_xy_0 = image_data.map_pix2coord(0, 0)
-    
+
     kwargs_lens_light, kwargs_source, kwargs_ps = sim_api.magnitude2amplitude(
         kwargs_lens_light_mag=kwargs_params.get("kwargs_lens_light", None),
         kwargs_source_mag=kwargs_params.get("kwargs_source", None),
@@ -203,14 +203,18 @@ def point_source_image_properties(
     data = Table(
         [
             (lens_pix_coordinate[0], lens_pix_coordinate[1]),
-            image_pix_coordinate, ra_image_values[0], dec_image_values[0],
+            image_pix_coordinate,
+            ra_image_values[0],
+            dec_image_values[0],
             image_amplitude[0],
             image_magnitude[0],
             np.array([ra_at_xy_0, dec_at_xy_0]),
         ],
         names=(
             "deflector_pix",
-            "image_pix", "ra_image", "dec_image",
+            "image_pix",
+            "ra_image",
+            "dec_image",
             "image_amplitude",
             "image_magnitude",
             "radec_at_xy_0",
@@ -252,8 +256,8 @@ def point_source_image(lens_class, band, mag_zero_point, delta_pix, num_pix,
     magnitude = lens_class.point_source_magnitude(band, lensed=lensed)
     psf_class = []
     for i in range(len(psf_kernels)):
-        psf_class.append(PSF(psf_type="PIXEL", kernel_point_source = psf_kernels[i]))
-    #point_source_images = []
+        psf_class.append(PSF(psf_type="PIXEL", kernel_point_source=psf_kernels[i]))
+    # point_source_images = []
     if variability is None:
         point_source_images = []
         for i in range(len(psf_class)):
@@ -264,8 +268,8 @@ def point_source_image(lens_class, band, mag_zero_point, delta_pix, num_pix,
                 np.array([amp[i]]))
             point_source_images.append(point_source)
     else:
-        time = variability['time']
-        function = variability['function']
+        time = variability["time"]
+        function = variability["function"]
         observed_time = []
         for t_obs in time:
             observed_time.append(lens_class.image_observer_times(t_obs))
@@ -280,7 +284,7 @@ def point_source_image(lens_class, band, mag_zero_point, delta_pix, num_pix,
         for i in range(len(magnitude)):
             for j in range(len(time)):
                 delta_m = variable_mag[i][j] - mag_zero_point
-                counts = 10**(-delta_m / 2.5)
+                counts = 10 ** (-delta_m / 2.5)
                 variable_amp_array.append(counts)
         variable_amp = np.array(variable_amp_array).reshape(len(magnitude), len(time))
         point_source_images = []
