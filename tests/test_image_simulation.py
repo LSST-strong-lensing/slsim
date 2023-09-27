@@ -160,7 +160,7 @@ def test_point_source_image(quasar_lens_pop_instance):
             mag_zero_point = 27, delta_pix = 0.2, num_pix = 101, 
             psf_kernels = psf_kernels, variability = None,
                 lensed=True)
-    plots = create_image_montage_from_image_list(2, 3, result2)
+    plots = create_image_montage_from_image_list(2, 2, result2)
     assert len(result1[0]) == len(time)
     assert len(result2) == number
     assert plots == None
