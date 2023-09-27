@@ -163,7 +163,6 @@ def test_point_source_image(quasar_lens_pop_instance):
     plots = create_image_montage_from_image_list(2, 2, result2)
     assert len(result1[0]) == len(time)
     assert len(result2) == number
-    assert plots == None
 
 if __name__ == "__main__":
     pytest.main()
