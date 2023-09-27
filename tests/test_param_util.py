@@ -1,4 +1,5 @@
 import numpy as np
+import os
 from sim_pipeline.Util.param_util import (epsilon2e, e2epsilon, random_ra_dec, 
                                           convolved_image)
 
@@ -18,7 +19,8 @@ def test_random_ra_dec():
     assert len(ra) == 50
 
 def test_convolved_image():
-    image = np.loadtxt('/Users/narayankhadka/sim-pipeline/data/dp0/image.txt', unpack = True)
-    psf = np.loadtxt('/Users/narayankhadka/sim-pipeline/data/dp0/psf_kernels_for_deflector.txt', unpack = True)
+    path = os.path.dirname(__file__)
+    image = np.loadtxt(np.loadtxt(os.path.join(path, "TestData/image.txt"), unpack = True))
+    psf = np.loadtxt(np.loadtxt(os.path.join(path, "TestData/psf_kernels_for_deflector.txt"), unpack = True))
     c_image = convolved_image(image, psf)
     assert c_image.shape[0] == 101
