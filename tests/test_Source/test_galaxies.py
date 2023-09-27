@@ -14,7 +14,7 @@ class TestGalaxies(object):
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         self.galaxies = Galaxies(
             galaxy_list=self.galaxy_list,
-            kwargs_cut=None,
+            kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
         )
