@@ -31,7 +31,8 @@ def test_plot_montage_of_random_injected_lens(quasar_lens_pop_instance):
                         mag_zero_point = 27, delta_pix = 0.2, num_pix = 101)
     number = len(image_data['image_pix'])
     path = os.path.dirname(__file__)
-    psf_image_1 = [np.loadtxt(os.path.join(path, "TestData/psf_kernels_for_image_1.txt"), unpack = True)]
+    psf=np.loadtxt(os.path.join(path, "TestData/psf_kernels_for_deflector.txt"), unpack = True)
+    psf_image_1 = [psf]
     psf_kernels = psf_image_1[:-1]
     psf_kernels.extend([psf_image_1[-1]] * number)
 
