@@ -27,11 +27,8 @@ def create_image_montage_from_image_list(num_rows, num_cols, images, time = None
                     axes[i, j].text(0.05, 0.95, f"Time: {round(time[i * num_cols + j],2)}", fontsize=10, verticalalignment='top', horizontalalignment='left', transform=axes[i, j].transAxes)
                     axes[i, j].axis('off')  # Turn off axis labels
 
-    # Adjust spacing between subplots
-    plt.subplots_adjust(wspace=0.0, hspace=0.05)
-
-    # Show the montage
-    plt.show()
+    fig.tight_layout()
+    fig.subplots_adjust(wspace=0.0, hspace=0.05)
     return None
 
 def plot_montage_of_random_injected_lens(
