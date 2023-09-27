@@ -24,7 +24,7 @@ def quasar_lens_pop_instance():
 
 
 
-def plot_montage_of_random_injected_lens(quasar_lens_pop_instance):
+def test_plot_montage_of_random_injected_lens(quasar_lens_pop_instance):
     kwargs_lens_cut={'min_image_separation': 0.8, 'max_image_separation': 10}
     lens_class = quasar_lens_pop_instance.select_lens_at_random(**kwargs_lens_cut)
     image_data = point_source_image_properties(lens_class = lens_class, band = 'i', 
