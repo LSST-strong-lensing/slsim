@@ -7,4 +7,3 @@ speclite
 pyyaml
 matplotlib
 tqdm
-galsim

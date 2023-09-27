@@ -51,9 +51,9 @@ class HalosSkyPyPipeline:
                 content = content.replace(old_m_max, new_m_max)
 
             if z_max is not None:
-                old_z_range = "z_range: !numpy.linspace [0, 5.00, 1000]"
-                new_z_range = f"z_range: !numpy.linspace [0, {z_max}, 1000]"
-                content = content.replace(old_z_range, new_z_range)
+                old_z_max = "z_max: 5.00"
+                new_z_max = f"z_max: {z_max}"
+                content = content.replace(old_z_max, new_z_max)
 
             with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.yml') as tmp_file:
                 tmp_file.write(content)
