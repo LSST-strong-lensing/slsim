@@ -4,7 +4,7 @@ from astropy.cosmology import FlatLambdaCDM
 from sim_pipeline.galaxy_galaxy_lens_pop import GalaxyGalaxyLensPop
 from sim_pipeline.Sources.source_variability.variability import sinusoidal_variability
 from astropy.units import Quantity
-from sim_pipeline.Plots.plot_functions import create_image_montage_from_image_list
+from sim_pipeline.Plots.plot_functions import plot_montage_of_random_injected_lens
 from sim_pipeline.image_simulation import (point_source_image_properties, 
                                            point_source_image)
 import pytest
