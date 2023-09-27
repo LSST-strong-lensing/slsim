@@ -11,6 +11,7 @@ This module provides functions to compute velocity dispersion using schechter fu
 #  from skypy.galaxies.velocity_dispersion import schechter_vdf
 
 
+
 def vel_disp_composite_model(m_star, rs_star, m_halo, c_halo, cosmo):
     """
     computes the luminosity weighted velocity dispersion
