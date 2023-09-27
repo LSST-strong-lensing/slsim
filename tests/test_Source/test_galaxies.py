@@ -6,7 +6,7 @@ from sim_pipeline.Sources.galaxies import galaxy_projected_eccentricity
 import pytest
 
 
-class test_galaxies(object):
+class TestGalaxies(object):
     def setup_method(self):
         sky_area = Quantity(value=0.1, unit="deg2")
         pipeline = SkyPyPipeline(skypy_config=None, sky_area=sky_area, filters=None)
