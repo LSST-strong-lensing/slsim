@@ -434,7 +434,7 @@ def cutout_image_psf_kernel(
     )
     # get the property of cutout image
     bbox = dp0_image.getBBox()
-    #wcs = dp0_image.getWcs()
+    # wcs = dp0_image.getWcs()
     xmin_cut, ymin_cut = bbox.getBegin()
     xmax_cut, ymax_cut = bbox.getEnd()
     dp0_image_psf = dp0_image.getPsf()
