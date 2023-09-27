@@ -21,6 +21,6 @@ def test_random_ra_dec():
 def test_convolved_image():
     path = os.path.dirname(__file__)
     image = np.loadtxt(os.path.join(path, "TestData/image.txt"), unpack = True)
-    psf = np.loadtxt(np.loadtxt(os.path.join(path, "TestData/psf_kernels_for_deflector.txt"), unpack = True))
+    psf = np.loadtxt(os.path.join(path, "TestData/psf_kernels_for_deflector.txt"), unpack = True)
     c_image = convolved_image(image, psf)
     assert c_image.shape[0] == 101
