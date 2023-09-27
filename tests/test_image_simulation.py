@@ -6,6 +6,7 @@ from sim_pipeline.galaxy_galaxy_lens import GalaxyGalaxyLens
 from sim_pipeline.galaxy_galaxy_lens_pop import GalaxyGalaxyLensPop
 from sim_pipeline.Sources.source_variability.variability import sinusoidal_variability
 from astropy.units import Quantity
+from sim_pipeline.Plots.plot_functions import create_image_montage_from_image_list
 from sim_pipeline.image_simulation import (
     simulate_image,
     sharp_image,
@@ -147,7 +148,7 @@ def test_point_source_image(quasar_lens_pop_instance):
                                 #unpack = True)
     #psf_kernels = [psf_image_1, psf_image_2, psf_deflector]
 
-    time = np.linspace(0, 10, 3)
+    time = np.linspace(0, 10, 4)
     variability = {'time': time, 
         'function': sinusoidal_variability}
     # Call the function to get the result
@@ -159,8 +160,10 @@ def test_point_source_image(quasar_lens_pop_instance):
             mag_zero_point = 27, delta_pix = 0.2, num_pix = 101, 
             psf_kernels = psf_kernels, variability = None,
                 lensed=True)
+    plots = create_image_montage_from_image_list(2, 3, result2)
     assert len(result1[0]) == len(time)
     assert len(result2) == number
+    assert plots == None
 
 if __name__ == "__main__":
     pytest.main()
