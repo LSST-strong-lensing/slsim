@@ -45,7 +45,6 @@ def vel_disp_composite_model(r, m_star, rs_star, m_halo, c_halo, cosmo):
     kwargs_light = [{"amp": 1, "Rs": rs_angle_hernquist,
                      'center_x': 0, 'center_y': 0}]
     kwargs_anisotropy = {"beta": 0}
-    print(kwargs_mass, 'test')
 
     from lenstronomy.GalKin.numeric_kinematics import NumericKinematics
 
@@ -320,7 +319,7 @@ def schechter_velocity_dispersion_function(
         The beta parameter in the modified Schechter equation.
     vd_star: float
         The characteristic velocity dispersion.
-    vd_min, vd_max: int
+    vd_min, vd_max: float
         Lower and upper bounds of random variable x. Samples are drawn uniformly from
         bounds.
     resolution: int
