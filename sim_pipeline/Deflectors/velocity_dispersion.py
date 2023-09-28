@@ -12,8 +12,7 @@ This module provides functions to compute velocity dispersion using schechter fu
 
 
 def vel_disp_composite_model(r, m_star, rs_star, m_halo, c_halo, cosmo):
-    """
-    computes the luminosity weighted velocity dispersion
+    """Computes the luminosity weighted velocity dispersion
     for a deflector with a stellar Hernquist profile and
     a NFW halo profile, assuming isotropic anisotropy
 
@@ -26,24 +25,25 @@ def vel_disp_composite_model(r, m_star, rs_star, m_halo, c_halo, cosmo):
     :param cosmo: cosmology
     :type cosmo: ~astropy.cosmology class
     """
-    kwargs_model = {"mass_profile_list": ['HERNQUIST', 'NFW'],
-                    "light_profile_list": ['HERNQUIST'],
-                    "anisotropy_model": "const"}
+    kwargs_model = {
+        "mass_profile_list": ["HERNQUIST", 'NFW'],
+        "light_profile_list": ["HERNQUIST"],
+        "anisotropy_model": "const"}
 
     # turn physical masses to lenstronomy units
     from lenstronomy.Cosmo.lens_cosmo import LensCosmo
     lens_cosmo = LensCosmo(z_lens=0.5, z_source=1.5, cosmo=cosmo)
     # Hernquist profile
-    sigma0, rs_angle_hernquist = lens_cosmo.hernquist_phys2angular(mass=m_star,
-                                                                   rs=rs_star)
+    sigma0, rs_angle_hernquist = lens_cosmo.hernquist_phys2angular(
+        mass=m_star, rs=rs_star
+    )
     # NFW profile
     rs_angle_nfw, alpha_Rs = lens_cosmo.nfw_physical2angle(M=m_halo, c=c_halo)
-    kwargs_mass = [{"sigma0": sigma0, "Rs": rs_angle_hernquist,
-                    'center_x': 0, 'center_y': 0},
-                   {"alpha_Rs": alpha_Rs, "Rs": rs_angle_nfw,
-                    'center_x': 0, 'center_y': 0}]
-    kwargs_light = [{"amp": 1, "Rs": rs_angle_hernquist,
-                     'center_x': 0, 'center_y': 0}]
+    kwargs_mass = [
+        {"sigma0": sigma0, "Rs": rs_angle_hernquist, 'center_x': 0, 'center_y': 0},
+        {"alpha_Rs": alpha_Rs, "Rs": rs_angle_nfw, 'center_x': 0, 'center_y': 0}
+    ]
+    kwargs_light = [{"amp": 1, "Rs": rs_angle_hernquist, 'center_x': 0, 'center_y': 0}]
     kwargs_anisotropy = {"beta": 0}
 
     from lenstronomy.GalKin.numeric_kinematics import NumericKinematics
