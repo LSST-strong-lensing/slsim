@@ -9,7 +9,7 @@ from astropy.cosmology import FlatLambdaCDM
 
 
 def test_vel_disp_composite_model():
-    """ """
+    """"""
     m_star = 10**11  # M_sun
     rs_star = 0.005  # 5kpc
     m_halo = 10**13.5  # M_sun
@@ -21,9 +21,7 @@ def test_vel_disp_composite_model():
 
 
 def test_schechter_vdf():
-    """
-    SDSS velocity dispersion function for galaxies brighter than Mr >= -16.8
-    """
+    """SDSS velocity dispersion function for galaxies brighter than Mr >= -16.8."""
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 

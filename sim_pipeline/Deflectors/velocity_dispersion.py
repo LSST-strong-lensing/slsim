@@ -12,9 +12,8 @@ This module provides functions to compute velocity dispersion using schechter fu
 
 
 def vel_disp_composite_model(r, m_star, rs_star, m_halo, c_halo, cosmo):
-    """Computes the luminosity weighted velocity dispersion
-    for a deflector with a stellar Hernquist profile and
-    a NFW halo profile, assuming isotropic anisotropy
+    """Computes the luminosity weighted velocity dispersion for a deflector with a
+    stellar Hernquist profile and a NFW halo profile, assuming isotropic anisotropy.
 
     :param r: radius of the luminosity-weighted velocity dispersion [arcsec]
     :param m_star: stellar mass [M_sun]
