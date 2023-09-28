@@ -34,7 +34,8 @@ def vel_disp_composite_model(r, m_star, rs_star, m_halo, c_halo, cosmo):
     from lenstronomy.Cosmo.lens_cosmo import LensCosmo
     lens_cosmo = LensCosmo(z_lens=0.5, z_source=1.5, cosmo=cosmo)
     # Hernquist profile
-    sigma0, rs_angle_hernquist = lens_cosmo.hernquist_phys2angular(mass=m_star, rs=rs_star)
+    sigma0, rs_angle_hernquist = lens_cosmo.hernquist_phys2angular(mass=m_star,
+                                                                   rs=rs_star)
     # NFW profile
     rs_angle_nfw, alpha_Rs = lens_cosmo.nfw_physical2angle(M=m_halo, c=c_halo)
     kwargs_mass = [{"sigma0": sigma0, "Rs": rs_angle_hernquist,
