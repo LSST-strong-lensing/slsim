@@ -1,3 +1,5 @@
+import numpy as np
+import matplotlib.pyplot as plt
 from astropy.cosmology import FlatLambdaCDM
 from sim_pipeline.galaxy_galaxy_lens_pop import GalaxyGalaxyLensPop
 from astropy.units import Quantity
@@ -39,11 +41,14 @@ def test_create_image_montage_from_image_list(quasar_lens_pop_instance):
                 num_pix=101,
             )
         )
-
-    plots = create_image_montage_from_image_list(
-        num_rows=2, num_cols=3, images=image_list, time=None
+    num_rows = 2
+    num_cols = 3
+    t = np.linspace(0, 10, 6)
+    fig = create_image_montage_from_image_list(
+        num_rows = num_rows, num_cols = num_cols, images=image_list, time = t
     )
-    assert plots is None
+    assert isinstance(fig, plt.Figure)
+    assert fig.get_size_inches()[0] == np.array([num_cols * 3, num_rows * 3])[0]
 
 
 def test_plot_montage_of_random_injected_lens(quasar_lens_pop_instance):
@@ -61,10 +66,13 @@ def test_plot_montage_of_random_injected_lens(quasar_lens_pop_instance):
             )
         )
 
-    plots = plot_montage_of_random_injected_lens(
-        image_list=image_list, num=4, n_horizont=2, n_vertical=2
+    num_rows = 2
+    num_cols = 2
+    fig = plot_montage_of_random_injected_lens(
+        image_list=image_list, num=4, n_horizont=num_rows, n_vertical=num_cols
     )
-    assert plots is None
+    assert isinstance(fig, plt.Figure)
+    assert fig.get_size_inches()[0] == np.array([num_cols * 3, num_rows * 3])[0]
 
 
 if __name__ == "__main__":

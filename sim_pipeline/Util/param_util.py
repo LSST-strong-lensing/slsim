@@ -57,6 +57,10 @@ def random_ra_dec(ra_min, ra_max, dec_min, dec_max, n):
 
 
 def convolved_image(image, psf_kernel):
-    """Convolves an image with given psf :param image: image to be convolved :param
-    psf_kernel: kernel used to convolve the given image :returns: convolved image."""
+    """Convolves an image with given psf 
+    :param image: image to be convolved 
+    :param psf_kernel: kernel used to convolve the given image. It should be a pixel 
+     psf kernel.
+    :returns: convolved image.
+    """
     return convolve2d(image, psf_kernel, mode="same", boundary="symm", fillvalue=0.0)

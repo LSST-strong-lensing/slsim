@@ -10,6 +10,8 @@ def create_image_montage_from_image_list(num_rows, num_cols, images, time=None):
     :param num_rows: number of images to display horizontally
     :param num_cols: number of images to display vertically
     :param images: list of images
+    :param time: array of observation time for point source images. If None, 
+     considers static case.
     :return: image montage of given images.
     """
 
@@ -20,11 +22,10 @@ def create_image_montage_from_image_list(num_rows, num_cols, images, time=None):
             if i * num_cols + j < len(images):
                 image = images[i * num_cols + j]
 
-                if time is None:
-                    axes[i, j].imshow(image, origin="lower")
-                    axes[i, j].axis("off")  # Turn off axis labels
-                else:
-                    axes[i, j].imshow(image, origin="lower")
+                
+                axes[i, j].imshow(image, origin="lower")
+                axes[i, j].axis("off")  # Turn off axis labels
+                if time is not None:
                     axes[i, j].text(
                         0.05,
                         0.95,
@@ -34,11 +35,10 @@ def create_image_montage_from_image_list(num_rows, num_cols, images, time=None):
                         horizontalalignment="left",
                         transform=axes[i, j].transAxes,
                     )
-                    axes[i, j].axis("off")  # Turn off axis labels
 
     fig.tight_layout()
     fig.subplots_adjust(wspace=0.0, hspace=0.05)
-    return None
+    return fig
 
 
 def plot_montage_of_random_injected_lens(image_list, num, n_horizont=1, n_vertical=1):
@@ -67,4 +67,4 @@ def plot_montage_of_random_injected_lens(image_list, num, n_horizont=1, n_vertic
     fig.subplots_adjust(
         left=None, bottom=None, right=None, top=None, wspace=0.0, hspace=0.05
     )
-    return None
+    return fig

@@ -16,6 +16,7 @@ class GalaxyGalaxyLensPop(object):
         source_type="galaxies",
         kwargs_deflector_cut=None,
         kwargs_source_cut=None,
+        kwargs_quasars = None,
         kwargs_mass2light=None,
         skypy_config=None,
         sky_area=None,
@@ -32,6 +33,9 @@ class GalaxyGalaxyLensPop(object):
         :type kwargs_deflector_cut: dict
         :param kwargs_source_cut: cuts on the source to be excluded in the sample
         :type kwargs_source_cut: dict
+        :param kwargs_quasars: a dict of the form kwargs_quasars = {'number': 50000, 
+         'z_min': 0.1, 'z_max': 5, 'm_min': 17, 'm_max': 23} and param are explained 
+         below. if None, uses default values for the required variables.
         :param skypy_config: path to SkyPy configuration yaml file
         :type skypy_config: string
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
@@ -103,8 +107,12 @@ class GalaxyGalaxyLensPop(object):
         elif source_type == "quasars":
             from sim_pipeline.Sources.quasars import Quasars
             from sim_pipeline.Sources.quasar_catalog.simple_quasar import quasar_catalog
-
-            quasar_source = quasar_catalog(50000, 0.1, 5, 17, 23)
+            if kwargs_quasars is None:
+                kwargs_quasars = {}
+            quasar_source = quasar_catalog(**kwargs_quasars)
+            column_names = quasar_source.colnames
+            if "mag_r" not in column_names:
+                raise ValueError("required parameters missing in quasar_list columns")
             self._sources = Quasars(quasar_source, cosmo=cosmo, sky_area=sky_area)
             self._source_model_type = "point_source"
         else:

@@ -16,10 +16,6 @@ class Quasars(SourceBase):
         :type sky_area: `~astropy.units.Quantity`
         """
         self.n = len(quasar_list)
-        # add missing keywords in astropy.Table object
-        column_names = quasar_list.colnames
-        if "mag_r" not in column_names:
-            raise ValueError("required parameters missing in quasar_list columns")
         # make cuts
         self._quasar_select = quasar_list  # can apply a filter here
 
