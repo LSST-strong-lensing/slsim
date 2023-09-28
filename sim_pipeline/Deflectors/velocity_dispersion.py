@@ -21,9 +21,9 @@ def vel_disp_composite_model(r, m_star, rs_star, m_halo, c_halo, cosmo):
     :param rs_star: stellar half light radius [physical kpc]
     :param m_halo: Halo mass [physical M_sun]
     :param c_halo: halo concentration
-    :return: velocity dispersion [km/s]
     :param cosmo: cosmology
     :type cosmo: ~astropy.cosmology class
+    :return: velocity dispersion [km/s]
     """
     kwargs_model = {
         "mass_profile_list": ["HERNQUIST", 'NFW'],
