@@ -11,6 +11,62 @@ This module provides functions to compute velocity dispersion using schechter fu
 #  from skypy.galaxies.velocity_dispersion import schechter_vdf
 
 
+def vel_disp_composite_model(r, m_star, rs_star, m_halo, c_halo, cosmo):
+    """Computes the luminosity weighted velocity dispersion for a deflector with a
+    stellar Hernquist profile and a NFW halo profile, assuming isotropic anisotropy.
+
+    :param r: radius of the luminosity-weighted velocity dispersion [arcsec]
+    :param m_star: stellar mass [M_sun]
+    :param rs_star: stellar half light radius [physical kpc]
+    :param m_halo: Halo mass [physical M_sun]
+    :param c_halo: halo concentration
+    :param cosmo: cosmology
+    :type cosmo: ~astropy.cosmology class
+    :return: velocity dispersion [km/s]
+    """
+    kwargs_model = {
+        "mass_profile_list": ["HERNQUIST", "NFW"],
+        "light_profile_list": ["HERNQUIST"],
+        "anisotropy_model": "const",
+    }
+
+    # turn physical masses to lenstronomy units
+    from lenstronomy.Cosmo.lens_cosmo import LensCosmo
+
+    lens_cosmo = LensCosmo(z_lens=0.5, z_source=1.5, cosmo=cosmo)
+    # Hernquist profile
+    sigma0, rs_angle_hernquist = lens_cosmo.hernquist_phys2angular(
+        mass=m_star, rs=rs_star
+    )
+    # NFW profile
+    rs_angle_nfw, alpha_Rs = lens_cosmo.nfw_physical2angle(M=m_halo, c=c_halo)
+    kwargs_mass = [
+        {"sigma0": sigma0, "Rs": rs_angle_hernquist, "center_x": 0, "center_y": 0},
+        {"alpha_Rs": alpha_Rs, "Rs": rs_angle_nfw, "center_x": 0, "center_y": 0},
+    ]
+    kwargs_light = [{"amp": 1, "Rs": rs_angle_hernquist, "center_x": 0, "center_y": 0}]
+    kwargs_anisotropy = {"beta": 0}
+
+    from lenstronomy.GalKin.numeric_kinematics import NumericKinematics
+
+    kwargs_numerics = {
+        "interpol_grid_num": 1000,
+        "log_integration": True,
+        "max_integrate": 1000,
+        "min_integrate": 0.0001,
+        "max_light_draw": None,
+        "lum_weight_int_method": True,
+    }
+
+    kwargs_cosmo = {"d_d": lens_cosmo.dd, "d_s": lens_cosmo.ds, "d_ds": lens_cosmo.dds}
+
+    num_kin = NumericKinematics(kwargs_model, kwargs_cosmo, **kwargs_numerics)
+    vel_disp = num_kin.lum_weighted_vel_disp(
+        r, kwargs_mass, kwargs_light, kwargs_anisotropy
+    )
+    return vel_disp
+
+
 def vel_disp_sdss(sky_area, redshift, vd_min, vd_max, cosmology, noise=True):
     """Velocity dispersion function in a cone matched by SDSS measurements.
 
@@ -112,7 +168,7 @@ def schechter_vel_disp(
         bounds.
     sky_area : `~astropy.units.Quantity`
         Sky area over which galaxies are sampled. Must be in units of solid angle.
-    cosmology : `astropy.cosmology`
+    cosmology : `~astropy.cosmology`
         `astropy.cosmology` object to calculate comoving densities.
     noise : bool, optional
         Poisson-sample the number of galaxies. Default is `True`.
@@ -264,7 +320,7 @@ def schechter_velocity_dispersion_function(
         The beta parameter in the modified Schechter equation.
     vd_star: float
         The characteristic velocity dispersion.
-    vd_min, vd_max: int
+    vd_min, vd_max: float
         Lower and upper bounds of random variable x. Samples are drawn uniformly from
         bounds.
     resolution: int
