@@ -9,9 +9,7 @@ from astropy.cosmology import FlatLambdaCDM
 
 
 def test_vel_disp_composite_model():
-    """
-
-    """
+    """ """
     m_star = 10**11  # M_sun
     rs_star = 0.005  # 5kpc
     m_halo = 10**13.5  # M_sun
