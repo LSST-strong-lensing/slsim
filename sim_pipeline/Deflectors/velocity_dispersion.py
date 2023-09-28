@@ -12,12 +12,13 @@ This module provides functions to compute velocity dispersion using schechter fu
 
 
 
-def vel_disp_composite_model(m_star, rs_star, m_halo, c_halo, cosmo):
+def vel_disp_composite_model(r, m_star, rs_star, m_halo, c_halo, cosmo):
     """
     computes the luminosity weighted velocity dispersion
     for a deflector with a stellar Hernquist profile and
     a NFW halo profile, assuming isotropic anisotropy
 
+    :param r: radius of the luminosity-weighted velocity dispersion [arcsec]
     :param m_star: stellar mass [M_sun]
     :param rs_star: stellar half light radius [physical kpc]
     :param m_halo: Halo mass [physical M_sun]
@@ -28,7 +29,7 @@ def vel_disp_composite_model(m_star, rs_star, m_halo, c_halo, cosmo):
     """
     kwargs_model = {"mass_profile_list": ['HERNQUIST', 'NFW'],
                     "light_profile_list": ['HERNQUIST'],
-                    "anisotropy_model": "isotropic"}
+                    "anisotropy_model": "const"}
 
     # turn physical masses to lenstronomy units
     from lenstronomy.Cosmo.lens_cosmo import LensCosmo
@@ -38,9 +39,10 @@ def vel_disp_composite_model(m_star, rs_star, m_halo, c_halo, cosmo):
     # NFW profile
     rs_angle_nfw, alpha_Rs = lens_cosmo.nfw_physical2angle(M=m_halo, c=c_halo)
     kwargs_mass = [{"sigma0": sigma0, "Rs": rs_angle_hernquist, 'center_x': 0, 'center_y': 0},
-                   {"alpha_rs": alpha_Rs, "Rs": rs_angle_nfw, 'center_x': 0, 'center_y': 0}]
-    kwargs_light = [{"amp": 1, "Rs": rs_angle_hernquist}]
+                   {"alpha_Rs": alpha_Rs, "Rs": rs_angle_nfw, 'center_x': 0, 'center_y': 0}]
+    kwargs_light = [{"amp": 1, "Rs": rs_angle_hernquist, 'center_x': 0, 'center_y': 0}]
     kwargs_anisotropy = {"beta": 0}
+    print(kwargs_mass, 'test')
 
     from lenstronomy.GalKin.numeric_kinematics import NumericKinematics
 
@@ -53,8 +55,8 @@ def vel_disp_composite_model(m_star, rs_star, m_halo, c_halo, cosmo):
 
     kwargs_cosmo = {"d_d": lens_cosmo.dd, "d_s": lens_cosmo.ds, "d_ds": lens_cosmo.dds}
 
-    num_kin = NumericKinematics(kwargs_model, kwargs_cosmo,**kwargs_numerics)
-    vel_disp = num_kin.lum_weighted_vel_disp(R, kwargs_mass, kwargs_light, kwargs_anisotropy)
+    num_kin = NumericKinematics(kwargs_model, kwargs_cosmo, **kwargs_numerics)
+    vel_disp = num_kin.lum_weighted_vel_disp(r, kwargs_mass, kwargs_light, kwargs_anisotropy)
     return vel_disp
 
 
