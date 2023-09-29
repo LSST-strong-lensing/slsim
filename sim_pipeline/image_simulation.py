@@ -195,12 +195,11 @@ def point_source_image_properties(lens_class, band, mag_zero_point, delta_pix, n
         image_pix_coordinate.append((image_data.map_coord2pix(image_ra, image_dec)))
     ra_at_xy_0, dec_at_xy_0 = image_data.map_pix2coord(0, 0)
 
-    kwargs_lens_light, kwargs_source, kwargs_ps = sim_api.magnitude2amplitude(
-        kwargs_lens_light_mag=kwargs_params.get("kwargs_lens_light", None),
-        kwargs_source_mag=kwargs_params.get("kwargs_source", None),
-        kwargs_ps_mag=kwargs_params.get("kwargs_ps", None),
-    )
-    image_amplitude = [item['point_amp'] for item in kwargs_ps]
+    image_amplitude = []
+    for i in range(len(image_magnitude)):
+        delta_m = image_magnitude[i] - mag_zero_point
+        counts = 10 ** (-delta_m / 2.5)
+        image_amplitude.append(counts)
 
     data = Table(
         [
@@ -208,7 +207,7 @@ def point_source_image_properties(lens_class, band, mag_zero_point, delta_pix, n
             image_pix_coordinate,
             ra_image_values,
             dec_image_values,
-            image_amplitude[0],
+            image_amplitude,
             image_magnitude,
             np.array([ra_at_xy_0, dec_at_xy_0]),
         ],
