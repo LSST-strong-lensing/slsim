@@ -202,7 +202,8 @@ def point_source_image_properties(lens_class, band, mag_zero_point, delta_pix, n
         image_amplitude.append(counts)
 
     data = Table(
-        [lens_pix_coordinate,
+        [
+            lens_pix_coordinate,
             image_pix_coordinate,
             ra_image_values,
             dec_image_values,
@@ -222,40 +223,50 @@ def point_source_image_properties(lens_class, band, mag_zero_point, delta_pix, n
     )
     return data
 
-def point_source_image(lens_class, band, mag_zero_point, delta_pix, num_pix, 
-                       psf_kernels, variability=None):
-    """Creates lensed point source images on the basis of given information
-    
+
+def point_source_image(
+    lens_class, band, mag_zero_point, delta_pix, num_pix, psf_kernels, variability=None
+):
+    """Creates lensed point source images on the basis of given information.
+
     :param lens_class: GalaxyGalaxyLens() object
     :param band: imaging band
     :param mag_zero_point: magnitude zero point in band
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
     :param psf_kernels: psf kernels extracted from the dp0 cutout images
-    :param variability: None or list of variability function, time, and 
-     kwargs_variability for variability model. Eg: variability 
-     = {'time': t, 'function': sinusoidal_variability, 'kwargs_variability': 
-     {'amp': 2.0, 'freq': 0.5}}, where t is a observation 
-     time which is a astropy.unit object and sinusoidal_variability is a source 
-     variability function. If None, creates images without variability.
-    :return: astropy table of deflector and image coordinate in pixel unit and other 
-     properties
+    :param variability: None or list of variability function, time, and
+        kwargs_variability for variability model. Eg: variability = {'time': t,
+        'function': sinusoidal_variability, 'kwargs_variability': {'amp': 2.0, 'freq':
+        0.5}}, where t is a observation time which is a astropy.unit object and
+        sinusoidal_variability is a source variability function. If None, creates images
+        without variability.
+    :return: astropy table of deflector and image coordinate in pixel unit and other
+        properties
     """
-    
-    image_data=point_source_image_properties(lens_class = lens_class, band = band, 
-                                             mag_zero_point=mag_zero_point, 
-                            delta_pix=delta_pix, num_pix=num_pix)
-    #pixel to coordinate tranform matrix.
-    #DOTO: compute more complete transform_matrix by considering telescope orientation 
+
+    image_data = point_source_image_properties(
+        lens_class=lens_class,
+        band=band,
+        mag_zero_point=mag_zero_point,
+        delta_pix=delta_pix,
+        num_pix=num_pix,
+    )
+    # pixel to coordinate tranform matrix.
+    # DOTO: compute more complete transform_matrix by considering telescope orientation
     # in the world coordinate system.
     transform_matrix = np.array([[delta_pix, 0], [0, delta_pix]])
-    grid = PixelGrid(nx=num_pix, ny=num_pix, transform_pix2angle=transform_matrix,
-                       ra_at_xy_0=image_data['radec_at_xy_0'][0], 
-                       dec_at_xy_0=image_data['radec_at_xy_0'][1])
-    
-    ra_image_values = image_data['ra_image']
-    dec_image_values = image_data['dec_image']
-    amp = image_data['image_amplitude']
+    grid = PixelGrid(
+        nx=num_pix,
+        ny=num_pix,
+        transform_pix2angle=transform_matrix,
+        ra_at_xy_0=image_data["radec_at_xy_0"][0],
+        dec_at_xy_0=image_data["radec_at_xy_0"][1],
+    )
+
+    ra_image_values = image_data["ra_image"]
+    dec_image_values = image_data["dec_image"]
+    amp = image_data["image_amplitude"]
     magnitude = lens_class.point_source_magnitude(band, lensed=True)
     psf_class = []
     for i in range(len(psf_kernels)):
@@ -275,23 +286,26 @@ def point_source_image(lens_class, band, mag_zero_point, delta_pix, num_pix,
             point_source_images.append(point_source)
     else:
         from sim_pipeline.Sources.source_variability.variability import Variability
-        if variability['time'].unit == u.day:
-            time = variability['time']
+
+        if variability["time"].unit == u.day:
+            time = variability["time"]
         else:
-            time = variability['time'].to(u.day)
-        if variability['time'].unit == u.minute:
-            time = variability['time'].to(u.day)  
-        kwargs_variability = variability['kwargs_variability']
+            time = variability["time"].to(u.day)
+        if variability["time"].unit == u.minute:
+            time = variability["time"].to(u.day)
+        kwargs_variability = variability["kwargs_variability"]
         variability_class = Variability(**kwargs_variability)
-        if variability['variability_model'] == 'sinusoidal':
+        if variability["variability_model"] == "sinusoidal":
             function = variability_class.sinusoidal_variability
         else:
-            raise ValueError("given model is not supported. Currently,"
-                             "supported model is sinusoudal.")
+            raise ValueError(
+                "given model is not supported. Currently,"
+                "supported model is sinusoudal."
+            )
         observed_time = []
         for t_obs in time.value:
             observed_time.append(lens_class.image_observer_times(t_obs))
-        transformed_observed_time = np.array(observed_time).T.tolist()*u.day
+        transformed_observed_time = np.array(observed_time).T.tolist() * u.day
         variable_mag_array = []
         for i in range(len(magnitude)):
             for j in range(len(time)):

@@ -10,8 +10,8 @@ def create_image_montage_from_image_list(num_rows, num_cols, images, time=None):
     :param num_rows: number of images to display horizontally
     :param num_cols: number of images to display vertically
     :param images: list of images
-    :param time: array of observation time for point source images. If None, 
-     considers static case.
+    :param time: array of observation time for point source images. If None, considers
+        static case.
     :return: image montage of given images.
     """
 
@@ -22,7 +22,6 @@ def create_image_montage_from_image_list(num_rows, num_cols, images, time=None):
             if i * num_cols + j < len(images):
                 image = images[i * num_cols + j]
 
-                
                 axes[i, j].imshow(image, origin="lower")
                 axes[i, j].axis("off")  # Turn off axis labels
                 if time is not None:

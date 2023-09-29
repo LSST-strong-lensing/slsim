@@ -108,16 +108,24 @@ class TestImageSimulation(object):
 def quasar_lens_pop_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     sky_area = Quantity(value=0.1, unit="deg2")
-    return GalaxyGalaxyLensPop(deflector_type="all-galaxies",
-    source_type="quasars",
-    kwargs_deflector_cut=None,
-    kwargs_source_cut=None,
-    kwargs_quasars={'number': 50000, 
-         'z_min': 0.1, 'z_max': 5, 'm_min': 17, 'm_max': 23},
-    kwargs_mass2light=None,
-    skypy_config=None,
-    sky_area=sky_area,
-    cosmo=cosmo)
+    return GalaxyGalaxyLensPop(
+        deflector_type="all-galaxies",
+        source_type="quasars",
+        kwargs_deflector_cut=None,
+        kwargs_source_cut=None,
+        kwargs_quasars={
+            "number": 50000,
+            "z_min": 0.1,
+            "z_max": 5,
+            "m_min": 17,
+            "m_max": 23,
+        },
+        kwargs_mass2light=None,
+        skypy_config=None,
+        sky_area=sky_area,
+        cosmo=cosmo,
+    )
+
 
 def test_point_source_image_properties(quasar_lens_pop_instance):
     kwargs_lens_cut = {"min_image_separation": 0.8, "max_image_separation": 10}
@@ -152,23 +160,37 @@ def test_point_source_image(quasar_lens_pop_instance):
     )
     number = len(image_data["image_pix"])
     path = os.path.dirname(__file__)
-    
+
     psf_image_1 = [np.load(os.path.join(path, "TestData/psf_kernels_for_image_1.npy"))]
     psf_kernels = psf_image_1[:-1]
     psf_kernels.extend([psf_image_1[-1]] * number)
-    
 
-    time = np.linspace(0, 10, 4)*u.day
-    variability = {'time': time, 
-        'variability_model': 'sinusoidal', 'kwargs_variability': {'amp': 1.0, 'freq': 0.5}}
+    time = np.linspace(0, 10, 4) * u.day
+    variability = {
+        "time": time,
+        "variability_model": "sinusoidal",
+        "kwargs_variability": {"amp": 1.0, "freq": 0.5},
+    }
     # Call the function to get the result
-    result1 = point_source_image(lens_class = lens_class, band = 'i', 
-            mag_zero_point = 27, delta_pix = 0.2, num_pix = 101, 
-            psf_kernels = psf_kernels, variability = variability)
-    result2 = point_source_image(lens_class = lens_class, band = 'i', 
-            mag_zero_point = 27, delta_pix = 0.2, num_pix = 101, 
-            psf_kernels = psf_kernels, variability = None)
-    
+    result1 = point_source_image(
+        lens_class=lens_class,
+        band="i",
+        mag_zero_point=27,
+        delta_pix=0.2,
+        num_pix=101,
+        psf_kernels=psf_kernels,
+        variability=variability,
+    )
+    result2 = point_source_image(
+        lens_class=lens_class,
+        band="i",
+        mag_zero_point=27,
+        delta_pix=0.2,
+        num_pix=101,
+        psf_kernels=psf_kernels,
+        variability=None,
+    )
+
     assert len(result1[0]) == len(time)
     assert len(result2) == number
 
