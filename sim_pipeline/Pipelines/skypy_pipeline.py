@@ -9,13 +9,16 @@ class SkyPyPipeline:
 
     def __init__(self, skypy_config=None, sky_area=None, filters=None, cosmo=None):
         """
-        :param skypy_config: path to SkyPy configuration yaml file. If None, uses 'data/SkyPy/lsst-like.yml'.
+        :param skypy_config: path to SkyPy configuration yaml file.
+                            If None, uses 'data/SkyPy/lsst-like.yml'.
         :type skypy_config: string or None
         :type sky_area: `~astropy.units.Quantity`
-        :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid angle.
+        :param sky_area: Sky area over which galaxies are sampled.
+                                Must be in units of solid angle.
         :param filters: filters for SED integration
         :type filters: list of strings or None
-        :param cosmo: An instance of an astropy cosmology model (e.g., FlatLambdaCDM(H0=70, Om0=0.3)).
+        :param cosmo: An instance of an astropy cosmology model
+                        (e.g., FlatLambdaCDM(H0=70, Om0=0.3)).
         :type cosmo: astropy.cosmology instance or None
         """
         path = os.path.dirname(sim_pipeline.__file__)
@@ -53,7 +56,9 @@ class SkyPyPipeline:
                 cosmology_params_str = "\n".join(cosmology_params_list)
 
                 old_cosmo = "cosmology: !astropy.cosmology.default_cosmology.get []"
-                new_cosmo = f"cosmology: !astropy.cosmology.{cosmology_model_name}\n{cosmology_params_str}"
+                new_cosmo = \
+                    f"cosmology: !astropy.cosmology." \
+                    f"{cosmology_model_name}\n{cosmology_params_str}"
                 content = content.replace(old_cosmo, new_cosmo)
 
             with tempfile.NamedTemporaryFile(
