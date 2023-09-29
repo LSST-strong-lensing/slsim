@@ -202,12 +202,11 @@ def point_source_image_properties(lens_class, band, mag_zero_point, delta_pix, n
         image_amplitude.append(counts)
 
     data = Table(
-        [
-            lens_pix_coordinate,
+        [lens_pix_coordinate,
             image_pix_coordinate,
             ra_image_values,
             dec_image_values,
-            image_amplitude,
+            np.array(image_amplitude),
             image_magnitude,
             np.array([ra_at_xy_0, dec_at_xy_0]),
         ],
@@ -234,8 +233,8 @@ def point_source_image(lens_class, band, mag_zero_point, delta_pix, num_pix,
     :param num_pix: number of pixels per axis
     :param psf_kernels: psf kernels extracted from the dp0 cutout images
     :param variability: None or list of variability function, time, and 
-     kwargs for variability model. Eg: variability 
-     = {'time': t, 'function': sinusoidal_variability, kwargs: 
+     kwargs_variability for variability model. Eg: variability 
+     = {'time': t, 'function': sinusoidal_variability, 'kwargs_variability': 
      {'amp': 2.0, 'freq': 0.5}}, where t is a observation 
      time which is a astropy.unit object and sinusoidal_variability is a source 
      variability function. If None, creates images without variability.
@@ -276,8 +275,8 @@ def point_source_image(lens_class, band, mag_zero_point, delta_pix, num_pix,
             time = variability['time'].to(u.day)
         if variability['time'].unit == u.minute:
             time = variability['time'].to(u.day)  
-        kwargs = variability['kwargs']
-        variability_class = Variability(**kwargs)
+        kwargs_variability = variability['kwargs_variability']
+        variability_class = Variability(**kwargs_variability)
         if variability['variability_model'] == 'sinusoidal':
             function = variability_class.sinusoidal_variability
         else:
