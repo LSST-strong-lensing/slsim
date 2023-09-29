@@ -38,7 +38,7 @@ class SkyPyPipeline:
                 new_fsky = f"fsky: {sky_area.value} {sky_area.unit}"
                 content = content.replace(old_fsky, new_fsky)
 
-            if cosmo:
+            if cosmo is not None:
                 cosmology_model_name = cosmo.__class__.__name__
 
                 cosmology_params_list = []
