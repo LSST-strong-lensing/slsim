@@ -3,7 +3,7 @@ import astropy.units as u
 
 """This class aims to have realistic variability models for AGN and Supernovae."""
 
-class Variability:
+class Variability(object):
     def __init__(self, **kwargs_variability):
         """
         Initialize the variability class.
