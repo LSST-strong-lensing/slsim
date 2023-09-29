@@ -67,6 +67,6 @@ def convolved_image(image, psf_kernel, type = 'fft'):
     """
     if type == 'fft':
         return fftconvolve(image, psf_kernel, mode="same")
-    if type == 'convolve2d':
+    if type == 'grid':
         return convolve2d(image, psf_kernel, mode="same", boundary="symm", 
                           fillvalue=0.0)

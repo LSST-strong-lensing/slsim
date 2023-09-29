@@ -30,6 +30,6 @@ def test_convolved_image():
         os.path.join(path, "TestData/psf_kernels_for_deflector.npy")
     )
     c_image = convolved_image(image, psf)
-    c_image_1 = convolved_image(image, psf, type = 'convolve2d')
+    c_image_1 = convolved_image(image, psf, type = 'grid')
     assert c_image.shape[0] == 101
     assert c_image_1.shape[0] == 101
