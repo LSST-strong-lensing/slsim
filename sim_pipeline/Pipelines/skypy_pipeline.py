@@ -16,7 +16,7 @@ class SkyPyPipeline:
         :param filters: filters for SED integration
         :type filters: list of strings or None
         :param cosmo: An instance of an astropy cosmology model (e.g., FlatLambdaCDM(H0=70, Om0=0.3)).
-        :type cosmo: astropy.cosmology.FLRW instance or None
+        :type cosmo: astropy.cosmology instance or None
         """
         path = os.path.dirname(sim_pipeline.__file__)
         module_path, _ = os.path.split(path)
