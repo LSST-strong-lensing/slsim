@@ -8,8 +8,13 @@ import pytest
 @pytest.fixture
 def Quasar_class():
     sky_area = Quantity(value=0.1, unit="deg2")
-    kwargs_quasars = {'number': 50000,
-        'z_min': 0.1, 'z_max': 5, 'm_min': 17, 'm_max': 25}
+    kwargs_quasars = {
+        "number": 50000,
+        "z_min": 0.1,
+        "z_max": 5,
+        "m_min": 17,
+        "m_max": 25,
+    }
     quasar_list = quasar_catalog(**kwargs_quasars)
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     return Quasars(quasar_list=quasar_list, cosmo=cosmo, sky_area=sky_area)
