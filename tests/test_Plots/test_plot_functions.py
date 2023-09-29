@@ -45,7 +45,7 @@ def test_create_image_montage_from_image_list(quasar_lens_pop_instance):
     num_cols = 3
     t = np.linspace(0, 10, 6)
     fig = create_image_montage_from_image_list(
-        num_rows = num_rows, num_cols = num_cols, images=image_list, time = t
+        num_rows=num_rows, num_cols=num_cols, images=image_list, time=t
     )
     assert isinstance(fig, plt.Figure)
     assert fig.get_size_inches()[0] == np.array([num_cols * 3, num_rows * 3])[0]
