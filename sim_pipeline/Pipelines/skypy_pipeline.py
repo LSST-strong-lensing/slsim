@@ -58,7 +58,7 @@ class SkyPyPipeline:
                 content = content.replace(old_cosmo, new_cosmo)
 
             with tempfile.NamedTemporaryFile(
-                    mode="w", delete=False, suffix=".yml"
+                mode="w", delete=False, suffix=".yml"
             ) as tmp_file:
                 tmp_file.write(content)
 
