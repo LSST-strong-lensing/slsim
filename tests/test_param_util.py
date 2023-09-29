@@ -25,7 +25,7 @@ def test_random_ra_dec():
 
 def test_convolved_image():
     path = os.path.dirname(__file__)
-    image = np.loadtxt(os.path.join(path, "TestData/image.txt"), unpack=True)
+    image = np.load(os.path.join(path, "TestData/image.npy"))
     psf = np.loadtxt(
         os.path.join(path, "TestData/psf_kernels_for_deflector.txt"), unpack=True
     )

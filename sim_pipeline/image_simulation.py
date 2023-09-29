@@ -245,6 +245,9 @@ def point_source_image(lens_class, band, mag_zero_point, delta_pix, num_pix,
     image_data=point_source_image_properties(lens_class = lens_class, band = band, 
                                              mag_zero_point=mag_zero_point, 
                             delta_pix=delta_pix, num_pix=num_pix)
+    #pixel to coordinate tranform matrix.
+    #DOTO: compute more complete transform_matrix by considering telescope orientation 
+    # in the world coordinate system.
     transform_matrix = np.array([[delta_pix, 0], [0, delta_pix]])
     grid = PixelGrid(nx=num_pix, ny=num_pix, transform_pix2angle=transform_matrix,
                        ra_at_xy_0=image_data['radec_at_xy_0'][0], 
