@@ -56,9 +56,10 @@ class SkyPyPipeline:
                 cosmology_params_str = "\n".join(cosmology_params_list)
 
                 old_cosmo = "cosmology: !astropy.cosmology.default_cosmology.get []"
-                new_cosmo = \
-                    f"cosmology: !astropy.cosmology." \
+                new_cosmo = (
+                    f"cosmology: !astropy.cosmology."
                     f"{cosmology_model_name}\n{cosmology_params_str}"
+                )
                 content = content.replace(old_cosmo, new_cosmo)
 
             with tempfile.NamedTemporaryFile(
