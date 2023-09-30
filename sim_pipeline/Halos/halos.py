@@ -9,10 +9,17 @@ import numpy as np
 import warnings
 
 
-def set_defaults(m_min=None, m_max=None, wavenumber=None, resolution=None, power_spectrum=None, cosmology=None,
-                 collapse_function=None, params=None):
-    """
-    Utility function to set default values for parameters if not provided.
+def set_defaults(
+    m_min=None,
+    m_max=None,
+    wavenumber=None,
+    resolution=None,
+    power_spectrum=None,
+    cosmology=None,
+    collapse_function=None,
+    params=None,
+):
+    """Utility function to set default values for parameters if not provided.
 
     Parameters
     ----------
@@ -37,16 +44,15 @@ def set_defaults(m_min=None, m_max=None, wavenumber=None, resolution=None, power
     -------
     tuple
         The parameters with default values set where applicable.
-
     """
 
     # Default values
     if m_min is None:
-        m_min = 1E+10
+        m_min = 1e10
         warnings.warn("No minimum mass provided, instead uses 1e10 Msun")
 
     if m_max is None:
-        m_max = 1E+14
+        m_max = 1e14
         warnings.warn("No maximum mass provided, instead uses 1e14 Msun")
 
     if resolution is None:
@@ -55,32 +61,61 @@ def set_defaults(m_min=None, m_max=None, wavenumber=None, resolution=None, power
 
     if wavenumber is None:
         wavenumber = np.logspace(-3, 1, num=resolution, base=10.0)
-        warnings.warn("No wavenumber provided, instead uses logspace(-3, 1, num=resolution, base=10.0)")
+        warnings.warn(
+            "No wavenumber provided, instead uses logspace(-3, 1, num=resolution, base=10.0)"
+        )
 
     if cosmology is None:
-        warnings.warn("No cosmology provided, instead uses astropy.cosmology import default_cosmology")
+        warnings.warn(
+            "No cosmology provided, instead uses astropy.cosmology import default_cosmology"
+        )
         from astropy.cosmology import default_cosmology
+
         cosmology = default_cosmology.get()
 
     if collapse_function is None:
         collapse_function = ellipsoidal_collapse_function
-        warnings.warn("No collapse function provided, instead uses ellipsoidal_collapse_function")
+        warnings.warn(
+            "No collapse function provided, instead uses ellipsoidal_collapse_function"
+        )
 
     if power_spectrum is None:
-        power_spectrum = eisenstein_hu(wavenumber=wavenumber, cosmology=cosmology, A_s=2.1982e-09, n_s=0.969453)
+        power_spectrum = eisenstein_hu(
+            wavenumber=wavenumber, cosmology=cosmology, A_s=2.1982e-09, n_s=0.969453
+        )
         warnings.warn("No power spectrum provided, instead uses Eisenstein & Hu 1998")
 
     if params is None:
         params = (0.3, 0.7, 0.3, 1.686)
-        warnings.warn("No collapse function parameters provided, instead uses (0.3, 0.7, 0.3, 1.686)")
+        warnings.warn(
+            "No collapse function parameters provided, instead uses (0.3, 0.7, 0.3, 1.686)"
+        )
 
-    return m_min, m_max, wavenumber, resolution, power_spectrum, cosmology, collapse_function, params
+    return (
+        m_min,
+        m_max,
+        wavenumber,
+        resolution,
+        power_spectrum,
+        cosmology,
+        collapse_function,
+        params,
+    )
 
 
-def number_density_at_redshift(z, m_min=None, m_max=None, resolution=None, wavenumber=None, power_spectrum=None,
-                               cosmology=None, collapse_function=None, params=None):
-    """
-    Function to calculate the cumulative number density of Halos at a given redshift for different growth functions.
+def number_density_at_redshift(
+    z,
+    m_min=None,
+    m_max=None,
+    resolution=None,
+    wavenumber=None,
+    power_spectrum=None,
+    cosmology=None,
+    collapse_function=None,
+    params=None,
+):
+    """Function to calculate the cumulative number density of Halos at a given
+    redshift for different growth functions.
 
     Parameters
     ----------
@@ -107,11 +142,27 @@ def number_density_at_redshift(z, m_min=None, m_max=None, resolution=None, waven
     -------
     list of arrays
         The list of number_density for each growth function value. (in Mpc-3)
-
     """
     # define default parameters
-    m_min, m_max, wavenumber, resolution, power_spectrum, cosmology, collapse_function, params = set_defaults(
-        m_min, m_max, wavenumber, resolution, power_spectrum, cosmology, collapse_function, params)
+    (
+        m_min,
+        m_max,
+        wavenumber,
+        resolution,
+        power_spectrum,
+        cosmology,
+        collapse_function,
+        params,
+    ) = set_defaults(
+        m_min,
+        m_max,
+        wavenumber,
+        resolution,
+        power_spectrum,
+        cosmology,
+        collapse_function,
+        params,
+    )
 
     m = np.geomspace(m_min, m_max, resolution)
 
@@ -124,8 +175,14 @@ def number_density_at_redshift(z, m_min=None, m_max=None, resolution=None, waven
 
     for growth_function in growth_functions:
         massf = halo_mass_function(
-            M=m, wavenumber=wavenumber, power_spectrum=power_spectrum, growth_function=growth_function,
-            cosmology=cosmology, collapse_function=collapse_function, params=params)
+            M=m,
+            wavenumber=wavenumber,
+            power_spectrum=power_spectrum,
+            growth_function=growth_function,
+            cosmology=cosmology,
+            collapse_function=collapse_function,
+            params=params,
+        )
         # Halo mass function for a given mass array, cosmology and redshift
         # units of Mpc-3 Msun-1.
 
@@ -136,8 +193,7 @@ def number_density_at_redshift(z, m_min=None, m_max=None, resolution=None, waven
 
 
 def growth_factor_at_redshift(z, cosmology=None):
-    """
-    Calculate the growth factor at a given redshift.
+    """Calculate the growth factor at a given redshift.
 
     Parameters
     ----------
@@ -154,27 +210,39 @@ def growth_factor_at_redshift(z, cosmology=None):
     Notes
     -----
          Using hmf library to calculate growth factor.
-
     """
     if cosmology is None:
-        warnings.warn("No cosmology provided, instead uses flat LCDM with default parameters")
+        warnings.warn(
+            "No cosmology provided, instead uses flat LCDM with default parameters"
+        )
         from astropy.cosmology import FlatLambdaCDM
+
         cosmology = FlatLambdaCDM(H0=70, Om0=0.3)
     gf = GrowthFactor(cosmo=cosmology)
     growth_function = gf.growth_factor(z)
     return growth_function
 
 
-def redshift_halos_array_from_comoving_density(redshift_list, sky_area, cosmology, m_min=None, m_max=None,
-                                               resolution=None, wavenumber=None, collapse_function=None,
-                                               power_spectrum=None, params=None):
-    """
-    Calculate an array of halo redshifts from a given comoving density.
+def redshift_halos_array_from_comoving_density(
+    redshift_list,
+    sky_area,
+    cosmology,
+    m_min=None,
+    m_max=None,
+    resolution=None,
+    wavenumber=None,
+    collapse_function=None,
+    power_spectrum=None,
+    params=None,
+):
+    """Calculate an array of halo redshifts from a given comoving density.
 
-    The function computes the expected number of Halos at different redshifts using the differential comoving volume
-    and the halo number density then apply the poisson distribution on it. After determining the expected number of
-    Halos, the function produces an array of halo redshifts based on the cumulative distribution function (CDF) of
-    the number density.
+    The function computes the expected number of Halos at different
+    redshifts using the differential comoving volume
+    and the halo number density then apply the poisson distribution on it.
+    After determining the expected number of Halos, the function produces
+    an array of halo redshifts based on the cumulative distribution
+    function (CDF) of the number density.
 
     Parameters
     ----------
@@ -203,18 +271,29 @@ def redshift_halos_array_from_comoving_density(redshift_list, sky_area, cosmolog
     -------
     array
         An array of redshifts of Halos.
-
     """
     if cosmology is None:
-        warnings.warn("No cosmology provided, instead uses flat LCDM with default parameters")
+        warnings.warn(
+            "No cosmology provided, instead uses flat LCDM with default parameters"
+        )
         from astropy.cosmology import FlatLambdaCDM
+
         cosmology = FlatLambdaCDM(H0=70, Om0=0.3)
 
-    dN_dz = (cosmology.differential_comoving_volume(redshift_list) * sky_area).to_value('Mpc3')
-    density = number_density_at_redshift(z=redshift_list, m_min=m_min, m_max=m_max, resolution=resolution,
-                                         wavenumber=wavenumber,
-                                         power_spectrum=power_spectrum, cosmology=cosmology,
-                                         collapse_function=collapse_function, params=params)
+    dN_dz = (cosmology.differential_comoving_volume(redshift_list) * sky_area).to_value(
+        "Mpc3"
+    )
+    density = number_density_at_redshift(
+        z=redshift_list,
+        m_min=m_min,
+        m_max=m_max,
+        resolution=resolution,
+        wavenumber=wavenumber,
+        power_spectrum=power_spectrum,
+        cosmology=cosmology,
+        collapse_function=collapse_function,
+        params=params,
+    )
     dN_dz *= density
 
     # integrate density to get expected number of Halos
@@ -233,10 +312,18 @@ def redshift_halos_array_from_comoving_density(redshift_list, sky_area, cosmolog
         return np.interp(np.random.rand(N), cdf, redshift_list)
 
 
-def halo_mass_at_z(z, m_min=None, m_max=None, resolution=None, wavenumber=None, power_spectrum=None, cosmology=None,
-                   collapse_function=None, params=None):
-    """
-    Calculate the mass of Halos at a given redshift (list).
+def halo_mass_at_z(
+    z,
+    m_min=None,
+    m_max=None,
+    resolution=None,
+    wavenumber=None,
+    power_spectrum=None,
+    cosmology=None,
+    collapse_function=None,
+    params=None,
+):
+    """Calculate the mass of Halos at a given redshift (list).
 
     Parameters
     ----------
@@ -263,11 +350,27 @@ def halo_mass_at_z(z, m_min=None, m_max=None, resolution=None, wavenumber=None, 
     -------
     array
         The mass of Halos at redshift z.
-
     """
 
-    m_min, m_max, wavenumber, resolution, power_spectrum, cosmology, collapse_function, params = set_defaults(
-        m_min, m_max, wavenumber, resolution, power_spectrum, cosmology, collapse_function, params)
+    (
+        m_min,
+        m_max,
+        wavenumber,
+        resolution,
+        power_spectrum,
+        cosmology,
+        collapse_function,
+        params,
+    ) = set_defaults(
+        m_min,
+        m_max,
+        wavenumber,
+        resolution,
+        power_spectrum,
+        cosmology,
+        collapse_function,
+        params,
+    )
     try:
         iter(z)
     except TypeError:
@@ -280,18 +383,55 @@ def halo_mass_at_z(z, m_min=None, m_max=None, resolution=None, wavenumber=None, 
         gf = GrowthFactor(cosmo=cosmology)
         growth_function = gf.growth_factor(z_val)
 
-        mass.append(halo_mass_sampler(m_min=m_min, m_max=m_max, resolution=resolution, wavenumber=wavenumber,
-                                      power_spectrum=power_spectrum, growth_function=growth_function, params=params,
-                                      cosmology=cosmology, collapse_function=collapse_function, size=1))
+        mass.append(
+            halo_mass_sampler(
+                m_min=m_min,
+                m_max=m_max,
+                resolution=resolution,
+                wavenumber=wavenumber,
+                power_spectrum=power_spectrum,
+                growth_function=growth_function,
+                params=params,
+                cosmology=cosmology,
+                collapse_function=collapse_function,
+                size=1,
+            )
+        )
 
     return mass
 
 
-def mass_first_moment_at_redshift(z, m_min=None, m_max=None, resolution=None, wavenumber=None, power_spectrum=None,
-                                  cosmology=None, collapse_function=None, params=None):
+def mass_first_moment_at_redshift(
+    z,
+    m_min=None,
+    m_max=None,
+    resolution=None,
+    wavenumber=None,
+    power_spectrum=None,
+    cosmology=None,
+    collapse_function=None,
+    params=None,
+):
     # define default parameters
-    m_min, m_max, wavenumber, resolution, power_spectrum, cosmology, collapse_function, params = set_defaults(
-        m_min, m_max, wavenumber, resolution, power_spectrum, cosmology, collapse_function, params)
+    (
+        m_min,
+        m_max,
+        wavenumber,
+        resolution,
+        power_spectrum,
+        cosmology,
+        collapse_function,
+        params,
+    ) = set_defaults(
+        m_min,
+        m_max,
+        wavenumber,
+        resolution,
+        power_spectrum,
+        cosmology,
+        collapse_function,
+        params,
+    )
 
     m = np.logspace(np.log10(m_min), np.log10(m_max), resolution)
     expectation_m_result = []
@@ -303,8 +443,14 @@ def mass_first_moment_at_redshift(z, m_min=None, m_max=None, resolution=None, wa
             growth_function = gf.growth_factor(z_val)
 
             massf = halo_mass_function(
-                m, wavenumber, power_spectrum, growth_function,
-                cosmology, collapse_function, params=params)
+                m,
+                wavenumber,
+                power_spectrum,
+                growth_function,
+                cosmology,
+                collapse_function,
+                params=params,
+            )
 
             CDF = integrate.cumtrapz(massf, m, initial=0)
             CDF = CDF / CDF[-1]
@@ -312,23 +458,41 @@ def mass_first_moment_at_redshift(z, m_min=None, m_max=None, resolution=None, wa
         return expectation_m_result
 
 
-def redshift_mass_sheet_correction_array_from_comoving_density(redshift_list, sky_area, cosmology, m_min=None,
-                                                               m_max=None,
-                                                               resolution=None, wavenumber=None, collapse_function=None,
-                                                               power_spectrum=None, params=None):
-    """
-
-    """
+def redshift_mass_sheet_correction_array_from_comoving_density(
+    redshift_list,
+    sky_area,
+    cosmology,
+    m_min=None,
+    m_max=None,
+    resolution=None,
+    wavenumber=None,
+    collapse_function=None,
+    power_spectrum=None,
+    params=None,
+):
+    """"""
     if cosmology is None:
-        warnings.warn("No cosmology provided, instead uses flat LCDM with default parameters")
+        warnings.warn(
+            "No cosmology provided, instead uses flat LCDM with default parameters"
+        )
         from astropy.cosmology import FlatLambdaCDM
+
         cosmology = FlatLambdaCDM(H0=70, Om0=0.3)
 
-    dN_dz = (cosmology.differential_comoving_volume(redshift_list) * sky_area).to_value('Mpc3')  # dV/dz
-    density = number_density_at_redshift(z=redshift_list, m_min=m_min, m_max=m_max, resolution=resolution,
-                                         wavenumber=wavenumber,
-                                         power_spectrum=power_spectrum, cosmology=cosmology,
-                                         collapse_function=collapse_function, params=params)
+    dN_dz = (cosmology.differential_comoving_volume(redshift_list) * sky_area).to_value(
+        "Mpc3"
+    )  # dV/dz
+    density = number_density_at_redshift(
+        z=redshift_list,
+        m_min=m_min,
+        m_max=m_max,
+        resolution=resolution,
+        wavenumber=wavenumber,
+        power_spectrum=power_spectrum,
+        cosmology=cosmology,
+        collapse_function=collapse_function,
+        params=params,
+    )
     dN_dz *= density  # dV/dz * dn(z)/dV = dn(z)/dz
     # integrate density to get expected number of Halos
     N = np.trapz(dN_dz, redshift_list)  # N = int(dn(z)/dz dz)
@@ -345,8 +509,7 @@ def redshift_mass_sheet_correction_array_from_comoving_density(redshift_list, sk
 
 
 def deg2_to_cone_angle(solid_angle_deg2):
-    """
-    Convert solid angle in square degrees to half cone angle in radians.
+    """Convert solid angle in square degrees to half cone angle in radians.
 
     Parameters
     ----------
@@ -369,8 +532,7 @@ def deg2_to_cone_angle(solid_angle_deg2):
 
 
 def cone_radius_angle_to_physical_area(radius_rad, z, cosmo):
-    """
-    Convert cone radius angle to physical area at a given redshift.
+    """Convert cone radius angle to physical area at a given redshift.
 
     Parameters
     ----------
@@ -392,7 +554,7 @@ def cone_radius_angle_to_physical_area(radius_rad, z, cosmo):
     a specified cone angle and redshift using the angular diameter distance.
     """
     physical_radius = cosmo.angular_diameter_distance(z) * radius_rad  # Mpc
-    area_physical = np.pi * physical_radius ** 2
+    area_physical = np.pi * physical_radius**2
     return area_physical  # in Mpc2
 
 
@@ -400,33 +562,52 @@ def kappa_ext_for_each_sheet(redshift_list, first_moment, sky_area, cosmology):
     cone_opening_angle = deg2_to_cone_angle(sky_area.value)
     # TODO: make it possible for other geometry model
 
-    lens_cosmo = LensCosmo(z_lens=redshift_list,
-                           z_source=10, cosmo=cosmology)
+    lens_cosmo = LensCosmo(z_lens=redshift_list, z_source=10, cosmo=cosmology)
     epsilon_crit = lens_cosmo.sigma_crit
 
-    area = cone_radius_angle_to_physical_area(cone_opening_angle, redshift_list, cosmology)  # mpc2
+    area = cone_radius_angle_to_physical_area(
+        cone_opening_angle, redshift_list, cosmology
+    )  # mpc2
     first_moment_d_area = np.divide(np.array(first_moment), np.array(area))
     kappa_ext = np.divide(first_moment_d_area, epsilon_crit)
     return -kappa_ext
 
 
-def redshift_mass_number(redshift_list, sky_area, cosmology, m_min=None,
-                         m_max=None,
-                         resolution=None, wavenumber=None, collapse_function=None,
-                         power_spectrum=None, params=None):
-    """
-
-    """
+def redshift_mass_number(
+    redshift_list,
+    sky_area,
+    cosmology,
+    m_min=None,
+    m_max=None,
+    resolution=None,
+    wavenumber=None,
+    collapse_function=None,
+    power_spectrum=None,
+    params=None,
+):
+    """"""
     if cosmology is None:
-        warnings.warn("No cosmology provided, instead uses flat LCDM with default parameters")
+        warnings.warn(
+            "No cosmology provided, instead uses flat LCDM with default parameters"
+        )
         from astropy.cosmology import FlatLambdaCDM
+
         cosmology = FlatLambdaCDM(H0=70, Om0=0.3)
 
-    dN_dz = (cosmology.differential_comoving_volume(redshift_list) * sky_area).to_value('Mpc3')
-    density = number_density_at_redshift(z=redshift_list, m_min=m_min, m_max=m_max, resolution=resolution,
-                                         wavenumber=wavenumber,
-                                         power_spectrum=power_spectrum, cosmology=cosmology,
-                                         collapse_function=collapse_function, params=params)
+    dN_dz = (cosmology.differential_comoving_volume(redshift_list) * sky_area).to_value(
+        "Mpc3"
+    )
+    density = number_density_at_redshift(
+        z=redshift_list,
+        m_min=m_min,
+        m_max=m_max,
+        resolution=resolution,
+        wavenumber=wavenumber,
+        power_spectrum=power_spectrum,
+        cosmology=cosmology,
+        collapse_function=collapse_function,
+        params=params,
+    )
     dN_dz *= density
 
     # integrate density to get expected number of Halos

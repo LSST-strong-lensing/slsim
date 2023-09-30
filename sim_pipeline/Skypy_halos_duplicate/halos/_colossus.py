@@ -2,7 +2,6 @@
 
 This module contains functions that interfaces with the external code
 `Colossus <http://www.benediktdiemer.com/code/colossus/>`_.
-
 """
 
 from astropy.cosmology import z_at_value
@@ -12,7 +11,7 @@ from scipy import integrate
 from skypy.galaxies.redshift import redshifts_from_comoving_density
 
 __all__ = [
-    'colossus_mass_sampler',
+    "colossus_mass_sampler",
 ]
 
 try:
@@ -23,8 +22,18 @@ else:
     HAS_COLOSSUS = True
 
 
-def colossus_mass_sampler(redshift, model, mdef, m_min, m_max,
-                          cosmology, sigma8, ns, size=None, resolution=1000):
+def colossus_mass_sampler(
+    redshift,
+    model,
+    mdef,
+    m_min,
+    m_max,
+    cosmology,
+    sigma8,
+    ns,
+    size=None,
+    resolution=1000,
+):
     """Colossus halo mass sampler.
 
     This function generate a sample of Halos from a mass function which
@@ -60,16 +69,22 @@ def colossus_mass_sampler(redshift, model, mdef, m_min, m_max,
     References
     ----------
     .. [1] Diemer B., 2018, ApJS, 239, 35
-
     """
     from colossus.cosmology.cosmology import fromAstropy
     from colossus.lss import mass_function
+
     fromAstropy(cosmology, sigma8=sigma8, ns=ns)
     h0 = cosmology.h
-    m_h0 = np.logspace(np.log10(m_min*h0), np.log10(m_max*h0), resolution)  # unit: Msun/h
-    dndm = mass_function.massFunction(m_h0, redshift, mdef=mdef, model=model,
-                                      q_out='dndlnM', q_in='M')/m_h0
-    m = m_h0/h0
+    m_h0 = np.logspace(
+        np.log10(m_min * h0), np.log10(m_max * h0), resolution
+    )  # unit: Msun/h
+    dndm = (
+        mass_function.massFunction(
+            m_h0, redshift, mdef=mdef, model=model, q_out="dndlnM", q_in="M"
+        )
+        / m_h0
+    )
+    m = m_h0 / h0
     CDF = integrate.cumtrapz(dndm, (m), initial=0)
     CDF = CDF / CDF[-1]
     n_uniform = np.random.uniform(size=size)
@@ -78,9 +93,20 @@ def colossus_mass_sampler(redshift, model, mdef, m_min, m_max,
 
 
 @units.quantity_input(sky_area=units.sr)
-def colossus_mf_redshift(redshift, model, mdef, m_min, m_max, sky_area,
-                         cosmology, sigma8, ns, resolution=1000, noise=True):
-    r'''Sample redshifts from a COLOSSUS halo mass function.
+def colossus_mf_redshift(
+    redshift,
+    model,
+    mdef,
+    m_min,
+    m_max,
+    sky_area,
+    cosmology,
+    sigma8,
+    ns,
+    resolution=1000,
+    noise=True,
+):
+    r"""Sample redshifts from a COLOSSUS halo mass function.
 
     Sample the redshifts of dark matter Halos following a mass function
     implemented in COLOSSUS [1]_ within given mass and redshift ranges and for
@@ -118,8 +144,7 @@ def colossus_mf_redshift(redshift, model, mdef, m_min, m_max, sky_area,
     References
     ----------
     .. [1] Diemer B., 2018, ApJS, 239, 35
-
-    '''
+    """
     from colossus.cosmology.cosmology import fromAstropy
     from colossus.lss.mass_function import massFunction
 
@@ -128,20 +153,34 @@ def colossus_mf_redshift(redshift, model, mdef, m_min, m_max, sky_area,
 
     # Integrate the mass function to get the number density of Halos at each redshift
     def dndlnM(lnm, z):
-        return massFunction(np.exp(lnm), z, 'M', 'dndlnM', mdef, model)
-    lnmmin = np.log(m_min*cosmology.h)
-    lnmmax = np.log(m_max*cosmology.h)
+        return massFunction(np.exp(lnm), z, "M", "dndlnM", mdef, model)
+
+    lnmmin = np.log(m_min * cosmology.h)
+    lnmmax = np.log(m_max * cosmology.h)
     density = [integrate.quad(dndlnM, lnmmin, lnmmax, args=(z))[0] for z in redshift]
     density = np.array(density) * np.power(cosmology.h, 3)
 
     # Sample halo redshifts and assign to bins
-    return redshifts_from_comoving_density(redshift, density, sky_area, cosmology, noise)
+    return redshifts_from_comoving_density(
+        redshift, density, sky_area, cosmology, noise
+    )
 
 
 @units.quantity_input(sky_area=units.sr)
-def colossus_mf(redshift, model, mdef, m_min, m_max, sky_area, cosmology,
-                sigma8, ns, resolution=1000, noise=True):
-    r'''Sample halo redshifts and masses from a COLOSSUS mass function.
+def colossus_mf(
+    redshift,
+    model,
+    mdef,
+    m_min,
+    m_max,
+    sky_area,
+    cosmology,
+    sigma8,
+    ns,
+    resolution=1000,
+    noise=True,
+):
+    r"""Sample halo redshifts and masses from a COLOSSUS mass function.
 
     Sample the redshifts and masses of dark matter Halos following a mass
     function implemented in COLOSSUS [1]_ within given mass and redshift ranges
@@ -181,12 +220,22 @@ def colossus_mf(redshift, model, mdef, m_min, m_max, sky_area, cosmology,
     References
     ----------
     .. [1] Diemer B., 2018, ApJS, 239, 35
-
-    '''
+    """
 
     # Sample halo redshifts and assign to bins
-    z = colossus_mf_redshift(redshift, model, mdef, m_min, m_max, sky_area,
-                             cosmology, sigma8, ns, resolution, noise)
+    z = colossus_mf_redshift(
+        redshift,
+        model,
+        mdef,
+        m_min,
+        m_max,
+        sky_area,
+        cosmology,
+        sigma8,
+        ns,
+        resolution,
+        noise,
+    )
     redshift_bin = np.digitize(z, redshift)
 
     # Calculate the redshift at the centre of each bin
@@ -199,7 +248,8 @@ def colossus_mf(redshift, model, mdef, m_min, m_max, sky_area, cosmology,
     for i, zm in enumerate(z_mid):
         mask = redshift_bin == i + 1
         size = np.count_nonzero(mask)
-        m[mask] = colossus_mass_sampler(zm, model, mdef, m_min, m_max,
-                                        cosmology, sigma8, ns, size, resolution)
+        m[mask] = colossus_mass_sampler(
+            zm, model, mdef, m_min, m_max, cosmology, sigma8, ns, size, resolution
+        )
 
     return z, m

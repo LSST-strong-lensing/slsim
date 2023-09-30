@@ -1,7 +1,6 @@
 """Growth function.
 
-This computes the linear growth function in
-perturbation theory.
+This computes the linear growth function in perturbation theory.
 """
 # TODO: This code has been temporarily borrowed from SkyPy.  Once the feature is available in the main branch or
 #  release version of SkyPy,  this code should be deprecated and replaced with the official implementation. Original
@@ -12,15 +11,15 @@ from scipy import integrate
 
 
 __all__ = [
-   'growth_factor',
-   'growth_function',
-   'growth_function_carroll',
-   'growth_function_derivative',
+    "growth_factor",
+    "growth_function",
+    "growth_function_carroll",
+    "growth_function_derivative",
 ]
 
 
 def growth_function_carroll(redshift, cosmology):
-    '''Growth function.
+    """Growth function.
 
     This function returns the growth function as a function of redshift for a
     given cosmology as approximated by Carroll, Press & Turner (1992),
@@ -44,22 +43,21 @@ def growth_function_carroll(redshift, cosmology):
     ----------
     .. [1] Carroll, M. and Press, W. and Turner, E., (1992),
         doi : 10.1146/annurev.aa.30.090192.002435
-
-    '''
+    """
 
     if isiterable(redshift):
         redshift = np.asarray(redshift)
     if np.any(redshift < 0):
-        raise ValueError('Redshifts must be non-negative')
+        raise ValueError("Redshifts must be non-negative")
 
     Om = cosmology.Om(redshift)
     Ode = cosmology.Ode(redshift)
     Dz = 2.5 * Om / (1 + redshift)
-    return Dz / (np.power(Om, 4.0/7.0) - Ode + (1 + 0.5*Om) * (1.0 + Ode/70.0))
+    return Dz / (np.power(Om, 4.0 / 7.0) - Ode + (1 + 0.5 * Om) * (1.0 + Ode / 70.0))
 
 
-def growth_factor(redshift, cosmology, gamma=6.0/11.0):
-    r'''Growth factor.
+def growth_factor(redshift, cosmology, gamma=6.0 / 11.0):
+    r"""Growth factor.
 
     Function used to calculate :math:`f(z)`, parametrised growth factor as a
     function of redshift, as described in [1]_ equation 17.
@@ -83,8 +81,7 @@ def growth_factor(redshift, cosmology, gamma=6.0/11.0):
     References
     ----------
     .. [1] E. V. Linder, Phys. Rev. D 72, 043529 (2005)
-
-    '''
+    """
     z = redshift
 
     omega_m_z = cosmology.Om(z)
@@ -93,8 +90,8 @@ def growth_factor(redshift, cosmology, gamma=6.0/11.0):
     return growth_factor
 
 
-def growth_function(redshift, cosmology, gamma=6.0/11.0, z_upper=1100):
-    r'''Growth function.
+def growth_function(redshift, cosmology, gamma=6.0 / 11.0, z_upper=1100):
+    r"""Growth function.
 
     Function used to calculate :math:`D(z)`, growth function at different
     redshifts, as described in [1]_ equation 16.
@@ -120,8 +117,7 @@ def growth_function(redshift, cosmology, gamma=6.0/11.0, z_upper=1100):
     References
     ----------
     .. [1] E. V. Linder, Phys. Rev. D 72, 043529 (2005)
-
-    '''
+    """
 
     def integrand(x):
         integrand = (growth_factor(x, cosmology, gamma) - 1) / (1 + x)
@@ -143,8 +139,8 @@ def growth_function(redshift, cosmology, gamma=6.0/11.0, z_upper=1100):
     return growth_function
 
 
-def growth_function_derivative(redshift, cosmology, gamma=6.0/11.0):
-    r'''First derivative of the growth function.
+def growth_function_derivative(redshift, cosmology, gamma=6.0 / 11.0):
+    r"""First derivative of the growth function.
 
     Function used to calculate D'(z), derivative of the growth function
     with respect to redshift as in [1]_ equation 16.
@@ -177,11 +173,13 @@ def growth_function_derivative(redshift, cosmology, gamma=6.0/11.0):
     References
     ----------
     .. [1] E. V. Linder, Phys. Rev. D 72, 043529 (2005)
-
-    '''
+    """
     z = redshift
 
-    growth_function_derivative = - growth_function(z, cosmology, gamma) * \
-        growth_factor(z, cosmology, gamma) / (1.0 + z)
+    growth_function_derivative = (
+        -growth_function(z, cosmology, gamma)
+        * growth_factor(z, cosmology, gamma)
+        / (1.0 + z)
+    )
 
     return growth_function_derivative

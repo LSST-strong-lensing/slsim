@@ -10,9 +10,9 @@ from collections.abc import Iterable
 
 
 def concentration_from_mass(z, mass, A=75.4, d=-0.422, m=-0.089):
-    """
-    Get the halo concentration from halo masses using the fit in Childs et al. 2018 Eq(19),
-    Table 2 for all individual Halos, both relaxed and unrelaxed.
+    """Get the halo concentration from halo masses using the fit in Childs et
+    al. 2018 Eq(19), Table 2 for all individual Halos, both relaxed and
+    unrelaxed.
 
     Parameters
     ----------
@@ -46,15 +46,14 @@ def concentration_from_mass(z, mass, A=75.4, d=-0.422, m=-0.089):
     ----------
     . [1] Childs et al. 2018, arXiv:1804.10199, doi:10.3847/1538-4357/aabf95
     """
-    c_200 = A * ((1 + z) ** d) * (mass ** m)
+    c_200 = A * ((1 + z) ** d) * (mass**m)
     c_200 = np.maximum(c_200, 1)
     return c_200
     # TODO: Make this able for list
 
 
 class HalosLens(object):
-    """
-    Manage lensing properties of Halos.
+    """Manage lensing properties of Halos.
 
     Provides methods to compute lensing properties of Halos, such as their convergence and shear.
 
@@ -132,11 +131,16 @@ class HalosLens(object):
 
     # TODO: ADD test functions
     # TODO: Add documentation for all methods, CHANGE the documentation for all methods
-    def __init__(self, halos_list, mass_correction_list=None, cosmo=None, sky_area=4 * np.pi, samples_number=1000,
-                 mass_sheet=True,
-                 ):
-        """
-        Initialize the HalosLens class.
+    def __init__(
+        self,
+        halos_list,
+        mass_correction_list=None,
+        cosmo=None,
+        sky_area=4 * np.pi,
+        samples_number=1000,
+        mass_sheet=True,
+    ):
+        """Initialize the HalosLens class.
 
         Parameters
         ----------
@@ -175,33 +179,44 @@ class HalosLens(object):
         self.n_halos = len(self.halos_list)
         self.n_correction = len(self.mass_correction_list)
         self.sky_area = sky_area
-        self.halos_redshift_list = halos_list['z']
-        self.mass_list = halos_list['mass']
-        self.mass_sheet_correction_redshift = mass_correction_list['z']
-        self.kappa_ext_list = mass_correction_list['kappa_ext']
+        self.halos_redshift_list = halos_list["z"]
+        self.mass_list = halos_list["mass"]
+        self.mass_sheet_correction_redshift = mass_correction_list["z"]
+        self.kappa_ext_list = mass_correction_list["kappa_ext"]
         # self.first_moment = mass_correction_list['first_moment']
         self.samples_number = samples_number
-        self._z_source_convention = 10  # if this need to be changed, change it in the halos.py too
+        self._z_source_convention = (
+            10  # if this need to be changed, change it in the halos.py too
+        )
         if cosmo is None:
-            warnings.warn("No cosmology provided, instead uses astropy.cosmology import default_cosmology")
+            warnings.warn(
+                "No cosmology provided, instead uses astropy.cosmology import default_cosmology"
+            )
             import astropy.cosmology as default_cosmology
+
             self.cosmo = default_cosmology
         else:
             self.cosmo = cosmo
 
-        self.combined_redshift_list = np.concatenate((self.halos_redshift_list, self.mass_sheet_correction_redshift))
+        self.combined_redshift_list = np.concatenate(
+            (self.halos_redshift_list, self.mass_sheet_correction_redshift)
+        )
 
-        self.lens_cosmo = [LensCosmo(z_lens=self.combined_redshift_list[h],
-                                     z_source=self._z_source_convention,
-                                     cosmo=self.cosmo)
-                           for h in range(self.n_halos + self.n_correction)]
+        self.lens_cosmo = [
+            LensCosmo(
+                z_lens=self.combined_redshift_list[h],
+                z_source=self._z_source_convention,
+                cosmo=self.cosmo,
+            )
+            for h in range(self.n_halos + self.n_correction)
+        ]
 
         self.lens_model = self.get_lens_model()
         # TODO: Set z_source as an input parameter or other way
 
     def get_lens_model(self):
-        """
-        Create a lens model using provided halos and optional mass sheet correction.
+        """Create a lens model using provided halos and optional mass sheet
+        correction.
 
         This method constructs a lens model based on the halos and (if specified)
         the mass sheet correction. The halos are modeled with the NFW profile,
@@ -219,24 +234,31 @@ class HalosLens(object):
         only the halos' NFW profile is used.
         """
         if self.mass_sheet:
-            lens_model = LensModel(lens_model_list=['NFW'] * self.n_halos + ['CONVERGENCE'] * self.n_correction,
-                                   lens_redshift_list=self.combined_redshift_list,
-                                   cosmo=self.cosmo,
-                                   observed_convention_index=[],
-                                   multi_plane=True,
-                                   z_source=5, z_source_convention=self._z_source_convention)
+            lens_model = LensModel(
+                lens_model_list=["NFW"] * self.n_halos
+                + ["CONVERGENCE"] * self.n_correction,
+                lens_redshift_list=self.combined_redshift_list,
+                cosmo=self.cosmo,
+                observed_convention_index=[],
+                multi_plane=True,
+                z_source=5,
+                z_source_convention=self._z_source_convention,
+            )
         else:
-            lens_model = LensModel(lens_model_list=['NFW'] * self.n_halos,
-                                   lens_redshift_list=self.halos_redshift_list,
-                                   cosmo=self.cosmo,
-                                   observed_convention_index=[],
-                                   multi_plane=True,
-                                   z_source=5, z_source_convention=self._z_source_convention)
+            lens_model = LensModel(
+                lens_model_list=["NFW"] * self.n_halos,
+                lens_redshift_list=self.halos_redshift_list,
+                cosmo=self.cosmo,
+                observed_convention_index=[],
+                multi_plane=True,
+                z_source=5,
+                z_source_convention=self._z_source_convention,
+            )
         return lens_model
 
     def random_position(self):
-        """
-        Generates and returns random positions in the sky using a uniform distribution.
+        """Generates and returns random positions in the sky using a uniform
+        distribution.
 
         Returns
         -------
@@ -251,9 +273,9 @@ class HalosLens(object):
         return px, py
 
     def get_nfw_kwargs(self, z=None, mass=None, n_halos=None, lens_cosmo=None):
-        """
-        Returns the angle at scale radius, observed bending angle at the scale radius, and positions of the Halos in
-        the lens plane from physical mass and concentration parameter of an NFW profile.
+        """Returns the angle at scale radius, observed bending angle at the
+        scale radius, and positions of the Halos in the lens plane from
+        physical mass and concentration parameter of an NFW profile.
 
         Returns
         -------
@@ -276,8 +298,9 @@ class HalosLens(object):
         if lens_cosmo is None:
             lens_cosmo = self.lens_cosmo
         for h in range(n_halos):
-            Rs_angle_h, alpha_Rs_h = lens_cosmo[h].nfw_physical2angle(M=mass[h],
-                                                                      c=c_200[h])
+            Rs_angle_h, alpha_Rs_h = lens_cosmo[h].nfw_physical2angle(
+                M=mass[h], c=c_200[h]
+            )
             if isinstance(Rs_angle_h, Iterable):
                 Rs_angle.extend(Rs_angle_h)
             else:
@@ -294,8 +317,8 @@ class HalosLens(object):
         return Rs_angle, alpha_Rs, px, py
 
     def get_halos_lens_kwargs(self):
-        """
-        Constructs and returns the list of keyword arguments for each halo to be used in the lens model for lenstronomy.
+        """Constructs and returns the list of keyword arguments for each halo
+        to be used in the lens model for lenstronomy.
 
         Returns
         -------
@@ -308,22 +331,45 @@ class HalosLens(object):
             ra_0 = [0] * self.n_correction
             dec_0 = [0] * self.n_correction
 
-            kwargs_lens = [{'Rs': Rs_angle[h], 'alpha_Rs': alpha_Rs[h], 'center_x': px[h], 'center_y': py[h]}
-                           for h in range(self.n_halos)] + \
-                          [{'kappa': kappa[h], 'ra_0': ra_0[h], 'dec_0': dec_0[h]} for h in range(self.n_correction)]
+            kwargs_lens = [
+                {
+                    "Rs": Rs_angle[h],
+                    "alpha_Rs": alpha_Rs[h],
+                    "center_x": px[h],
+                    "center_y": py[h],
+                }
+                for h in range(self.n_halos)
+            ] + [
+                {"kappa": kappa[h], "ra_0": ra_0[h], "dec_0": dec_0[h]}
+                for h in range(self.n_correction)
+            ]
 
         else:
             Rs_angle, alpha_Rs, px, py = self.get_nfw_kwargs()
 
-            kwargs_lens = [{'Rs': Rs_angle[h], 'alpha_Rs': alpha_Rs[h], 'center_x': px[h], 'center_y': py[h]}
-                           for h in range(self.n_halos)]
+            kwargs_lens = [
+                {
+                    "Rs": Rs_angle[h],
+                    "alpha_Rs": alpha_Rs[h],
+                    "center_x": px[h],
+                    "center_y": py[h],
+                }
+                for h in range(self.n_halos)
+            ]
 
         return kwargs_lens
 
-    def get_convergence_shear(self, gamma12=False, diff=1.0, diff_method='square', kwargs=None, lens_model=None
-                              , zdzs=None):
-        """
-        Calculates and returns the convergence and shear at the origin due to all the Halos.
+    def get_convergence_shear(
+        self,
+        gamma12=False,
+        diff=1.0,
+        diff_method="square",
+        kwargs=None,
+        lens_model=None,
+        zdzs=None,
+    ):
+        """Calculates and returns the convergence and shear at the origin due
+        to all the Halos.
 
         Parameters
         ----------
@@ -348,29 +394,30 @@ class HalosLens(object):
         if lens_model is None:
             lens_model = self.lens_model
         if zdzs is not None:
-            f_xx, f_xy, f_yx, f_yy = lens_model.hessian_z1z2(z1=zdzs[0],
-                                                             z2=zdzs[1],
-                                                             theta_x=0,
-                                                             theta_y=0,
-                                                             kwargs_lens=kwargs,
-                                                             diff=1.0)
+            f_xx, f_xy, f_yx, f_yy = lens_model.hessian_z1z2(
+                z1=zdzs[0],
+                z2=zdzs[1],
+                theta_x=0,
+                theta_y=0,
+                kwargs_lens=kwargs,
+                diff=1.0,
+            )
         else:
-            f_xx, f_xy, f_yx, f_yy = lens_model.hessian(x=0.0, y=0.0, kwargs=kwargs,
-                                                        diff=diff,
-                                                        diff_method=diff_method)
-        kappa = 1 / 2. * (f_xx + f_yy)
+            f_xx, f_xy, f_yx, f_yy = lens_model.hessian(
+                x=0.0, y=0.0, kwargs=kwargs, diff=diff, diff_method=diff_method
+            )
+        kappa = 1 / 2.0 * (f_xx + f_yy)
         if gamma12:
-            gamma1 = 1. / 2 * (f_xx - f_yy)
+            gamma1 = 1.0 / 2 * (f_xx - f_yy)
             gamma2 = f_xy
             return kappa, gamma1, gamma2
         else:
-            gamma = np.sqrt(f_xy ** 2 + 0.25 * (f_xx - f_yy) ** 2)
+            gamma = np.sqrt(f_xy**2 + 0.25 * (f_xx - f_yy) ** 2)
             return kappa, gamma
 
     @staticmethod
     def compute_kappa_gamma(i, obj, gamma_tot, diff, diff_method):
-        """
-        Compute the convergence and shear values for a given index.
+        """Compute the convergence and shear values for a given index.
 
         This method is designed to be used with multiprocessing to speed up the process.
 
@@ -398,15 +445,19 @@ class HalosLens(object):
         to compute the kappa and gamma values for multiple samples in parallel.
         """
         if gamma_tot:
-            kappa, gamma = obj.get_convergence_shear(gamma12=False, diff=diff, diff_method=diff_method)
+            kappa, gamma = obj.get_convergence_shear(
+                gamma12=False, diff=diff, diff_method=diff_method
+            )
             return [kappa, gamma]
         else:
-            kappa, gamma1, gamma2 = obj.get_convergence_shear(gamma12=True, diff=diff, diff_method=diff_method)
+            kappa, gamma1, gamma2 = obj.get_convergence_shear(
+                gamma12=True, diff=diff, diff_method=diff_method
+            )
             return [kappa, gamma1, gamma2]
 
-    def get_kappa_gamma_distib(self, gamma_tot=False, diff=1.0, diff_method='square'):
-        """
-        Computes and returns the distribution of convergence and shear values.
+    def get_kappa_gamma_distib(self, gamma_tot=False, diff=1.0, diff_method="square"):
+        """Computes and returns the distribution of convergence and shear
+        values.
 
         This method uses multiprocessing to compute the convergence and shear values for multiple samples in parallel.
 
@@ -431,27 +482,37 @@ class HalosLens(object):
         The method uses the `compute_kappa_gamma` static method to compute the values for each sample.
         If the number of samples exceeds 2000, a print statement will indicate the elapsed time for computation.
         """
-        kappa_gamma_distribution = np.empty((self.samples_number, 2 if gamma_tot else 3))
+        kappa_gamma_distribution = np.empty(
+            (self.samples_number, 2 if gamma_tot else 3)
+        )
         start_time = time.time()
 
         with multiprocessing.Pool() as pool:
-            results = pool.starmap(self.compute_kappa_gamma,
-                                   [(i, self, gamma_tot, diff, diff_method) for i in range(self.samples_number)])
+            results = pool.starmap(
+                self.compute_kappa_gamma,
+                [
+                    (i, self, gamma_tot, diff, diff_method)
+                    for i in range(self.samples_number)
+                ],
+            )
 
         for i, result in enumerate(results):
             kappa_gamma_distribution[i] = result
 
         if self.samples_number > 2000:
             elapsed_time = time.time() - start_time
-            print(f"For this Halos list, elapsed time for computing weak-lensing maps: {elapsed_time} seconds")
+            print(
+                f"For this Halos list, elapsed time for computing weak-lensing maps: {elapsed_time} seconds"
+            )
 
         return kappa_gamma_distribution
         # TODO: Maybe considering a choice between multiprocessing and not multiprocessing.
 
-    def get_kappa_gamma_distib_without_multiprocessing(self, gamma_tot=False, diff=1.0, diff_method='square'):
-        """
-        Runs the method get_convergence_shear() a specific number of times and stores the results
-        for kappa, gamma1, and gamma2 in separate lists.
+    def get_kappa_gamma_distib_without_multiprocessing(
+        self, gamma_tot=False, diff=1.0, diff_method="square"
+    ):
+        """Runs the method get_convergence_shear() a specific number of times
+        and stores the results for kappa, gamma1, and gamma2 in separate lists.
 
         Parameters
         ----------
@@ -476,7 +537,9 @@ class HalosLens(object):
         otherwise gamma is stored. All returned values from get_convergence_shear() are assumed to be floats.
         """
 
-        kappa_gamma_distribution = np.empty((self.samples_number, 2 if gamma_tot else 3))
+        kappa_gamma_distribution = np.empty(
+            (self.samples_number, 2 if gamma_tot else 3)
+        )
 
         loop = range(self.samples_number)
         if self.samples_number > 999:
@@ -486,22 +549,28 @@ class HalosLens(object):
 
         if gamma_tot:
             for i in loop:
-                kappa, gamma = self.get_convergence_shear(gamma12=False, diff=diff, diff_method=diff_method)
+                kappa, gamma = self.get_convergence_shear(
+                    gamma12=False, diff=diff, diff_method=diff_method
+                )
                 kappa_gamma_distribution[i] = [kappa, gamma]
         else:
             for i in loop:
-                kappa, gamma1, gamma2 = self.get_convergence_shear(gamma12=True, diff=diff, diff_method=diff_method)
+                kappa, gamma1, gamma2 = self.get_convergence_shear(
+                    gamma12=True, diff=diff, diff_method=diff_method
+                )
                 kappa_gamma_distribution[i] = [kappa, gamma1, gamma2]
 
         if self.samples_number > 999:
             elapsed_time = time.time() - start_time
-            print(f"For this Halos list, elapsed time for computing weak-lensing maps: {elapsed_time} seconds")
+            print(
+                f"For this Halos list, elapsed time for computing weak-lensing maps: {elapsed_time} seconds"
+            )
 
         return kappa_gamma_distribution
 
     def filter_halos_by_redshift(self, zd, zs):
-        """
-        Filters halos and mass corrections by redshift conditions and constructs lens data.
+        """Filters halos and mass corrections by redshift conditions and
+        constructs lens data.
 
         Parameters
         ----------
@@ -524,19 +593,26 @@ class HalosLens(object):
         - Uses `_filter_halos_by_condition` to filter halos based on redshift conditions.
         - Uses `_filter_mass_correction_by_condition` to filter mass corrections based on redshift conditions.
         - Uses `_build_lens_data` to construct lens data for each condition.
-
         """
         halos_od, halos_ds, halos_os = self._filter_halos_by_condition(zd, zs)
         if zs < zd:
-            raise ValueError(f"Source redshift {zs} cannot be less than deflector redshift {zd}.")
-        mass_correction_od, mass_correction_ds, mass_correction_os = self._filter_mass_correction_by_condition(zd, zs)
-        return self._build_lens_data(halos_ds, mass_correction_ds, zd=zd, zs=zs), \
-            self._build_lens_data(halos_od, mass_correction_od, zd=0, zs=zd), \
-            self._build_lens_data(halos_os, mass_correction_os, zd=0, zs=zs)
+            raise ValueError(
+                f"Source redshift {zs} cannot be less than deflector redshift {zd}."
+            )
+        (
+            mass_correction_od,
+            mass_correction_ds,
+            mass_correction_os,
+        ) = self._filter_mass_correction_by_condition(zd, zs)
+        return (
+            self._build_lens_data(halos_ds, mass_correction_ds, zd=zd, zs=zs),
+            self._build_lens_data(halos_od, mass_correction_od, zd=0, zs=zd),
+            self._build_lens_data(halos_os, mass_correction_os, zd=0, zs=zs),
+        )
 
     def _filter_halos_by_condition(self, zd, zs):
-        """
-        Filters the halos based on redshift conditions relative to deflector and source redshifts.
+        """Filters the halos based on redshift conditions relative to deflector
+        and source redshifts.
 
         This internal method is designed to segregate halos into three categories:
         1. Between the deflector and source redshifts (ds).
@@ -559,14 +635,16 @@ class HalosLens(object):
         ----------
         This method assumes `self.halos_list` is a DataFrame containing a 'z' column that represents the redshift of each halo.
         """
-        halos_ds = self.halos_list[(self.halos_list['z'] >= zd) & (self.halos_list['z'] < zs)]
-        halos_od = self.halos_list[self.halos_list['z'] < zd]
-        halos_os = self.halos_list[self.halos_list['z'] < zs]
+        halos_ds = self.halos_list[
+            (self.halos_list["z"] >= zd) & (self.halos_list["z"] < zs)
+        ]
+        halos_od = self.halos_list[self.halos_list["z"] < zd]
+        halos_os = self.halos_list[self.halos_list["z"] < zs]
         return halos_od, halos_ds, halos_os
 
     def _filter_mass_correction_by_condition(self, zd, zs):
-        """
-        Filters the mass corrections based on redshift conditions relative to deflector and source redshifts.
+        """Filters the mass corrections based on redshift conditions relative
+        to deflector and source redshifts.
 
         This internal method segregates mass corrections into three categories:
         1. Between the deflector and source redshifts (ds).
@@ -593,15 +671,21 @@ class HalosLens(object):
         """
         if self.mass_correction_list is None:
             return None, None
-        mass_correction_ds = self.mass_correction_list[(self.mass_correction_list['z'] >= zd)
-                                                       & (self.mass_correction_list['z'] < zs)]
-        mass_correction_od = self.mass_correction_list[self.mass_correction_list['z'] < zd]
-        mass_correction_os = self.mass_correction_list[self.mass_correction_list['z'] < zs]
+        mass_correction_ds = self.mass_correction_list[
+            (self.mass_correction_list["z"] >= zd)
+            & (self.mass_correction_list["z"] < zs)
+        ]
+        mass_correction_od = self.mass_correction_list[
+            self.mass_correction_list["z"] < zd
+        ]
+        mass_correction_os = self.mass_correction_list[
+            self.mass_correction_list["z"] < zs
+        ]
         return mass_correction_od, mass_correction_ds, mass_correction_os
 
     def _build_lens_data(self, halos, mass_correction, zd, zs):
-        """
-        Constructs lens data based on the provided halos, mass corrections, and redshifts.
+        """Constructs lens data based on the provided halos, mass corrections,
+        and redshifts.
 
         Parameters
         ----------
@@ -643,12 +727,12 @@ class HalosLens(object):
         """
         n_halos = len(halos)
         n_mass_correction = len(mass_correction) if mass_correction is not None else 0
-        z_halo = halos['z']
-        mass_halo = halos['mass']
+        z_halo = halos["z"]
+        mass_halo = halos["mass"]
 
         if mass_correction is not None and self.mass_sheet:
-            z_mass_correction = mass_correction['z']
-            kappa_ext_list = mass_correction['kappa_ext']
+            z_mass_correction = mass_correction["z"]
+            kappa_ext_list = mass_correction["kappa_ext"]
         else:
             z_mass_correction = []
             kappa_ext_list = []
@@ -656,27 +740,44 @@ class HalosLens(object):
         combined_redshift_list = np.concatenate((z_halo, z_mass_correction))
 
         if not combined_redshift_list.size:
-            warnings.warn(f"No halos OR mass correction in the given redshift range from zd={zd} to zs={zs}.")
+            warnings.warn(
+                f"No halos OR mass correction in the given redshift range from zd={zd} to zs={zs}."
+            )
             return None, None, None
         if zs < zd:
-            raise ValueError(f"Source redshift {zs} cannot be less than deflector redshift {zd}.")
+            raise ValueError(
+                f"Source redshift {zs} cannot be less than deflector redshift {zd}."
+            )
         if min(combined_redshift_list) < zd:
-            raise ValueError(f"Redshift of the farthest {min(combined_redshift_list)}"
-                             f" halo cannot be smaller than deflector redshift{zd}.")
+            raise ValueError(
+                f"Redshift of the farthest {min(combined_redshift_list)}"
+                f" halo cannot be smaller than deflector redshift{zd}."
+            )
         if max(combined_redshift_list) > zs:
-            raise ValueError(f"Redshift of the closet halo {max(combined_redshift_list)} "
-                             f"cannot be larger than source redshift {zs}.")
+            raise ValueError(
+                f"Redshift of the closet halo {max(combined_redshift_list)} "
+                f"cannot be larger than source redshift {zs}."
+            )
 
         lens_cosmo_list = self._build_lens_cosmo_list(combined_redshift_list, zs)
-        lens_model, lens_model_list = self._build_lens_model(combined_redshift_list, zs, n_halos)
-        kwargs_lens = self._build_kwargs_lens(n_halos, n_mass_correction, z_halo, mass_halo, lens_model_list,
-                                              kappa_ext_list, lens_cosmo_list)
+        lens_model, lens_model_list = self._build_lens_model(
+            combined_redshift_list, zs, n_halos
+        )
+        kwargs_lens = self._build_kwargs_lens(
+            n_halos,
+            n_mass_correction,
+            z_halo,
+            mass_halo,
+            lens_model_list,
+            kappa_ext_list,
+            lens_cosmo_list,
+        )
 
         return lens_model, lens_cosmo_list, kwargs_lens
 
     def _build_lens_cosmo_list(self, combined_redshift_list, z_source):
-        """
-        Constructs a list of LensCosmo instances based on the provided combined redshift list and source redshift.
+        """Constructs a list of LensCosmo instances based on the provided
+        combined redshift list and source redshift.
 
         The method creates a LensCosmo instance for each lens redshift in the combined redshift list with the specified source redshift.
 
@@ -697,11 +798,14 @@ class HalosLens(object):
         -----
         This method assumes the availability of a `LensCosmo` class and a `cosmo` attribute in the current instance.
         """
-        return [LensCosmo(z_lens=z, z_source=z_source, cosmo=self.cosmo) for z in combined_redshift_list]
+        return [
+            LensCosmo(z_lens=z, z_source=z_source, cosmo=self.cosmo)
+            for z in combined_redshift_list
+        ]
 
     def _build_lens_model(self, combined_redshift_list, z_source, n_halos):
-        """
-        Construct a lens model based on the provided combined redshift list, source redshift, and number of halos.
+        """Construct a lens model based on the provided combined redshift list,
+        source redshift, and number of halos.
 
         The method generates a lens model list using 'NFW' for halos and 'CONVERGENCE' for any additional mass
         corrections present in the combined redshift list. The method ensures that the number of redshifts in the
@@ -737,33 +841,47 @@ class HalosLens(object):
         ['NFW', 'NFW', ..., 'CONVERGENCE', 'CONVERGENCE', ...],
         where the number of 'NFW' entries matches `n_halos` and the number of 'CONVERGENCE' entries corresponds
         to any additional redshifts present in `combined_redshift_list`.
-
         """
         n_halos = n_halos
         len(combined_redshift_list)
 
         if len(combined_redshift_list) - n_halos > 0:
-            lens_model_list = ['NFW'] * n_halos + ['CONVERGENCE'] * (len(combined_redshift_list) - n_halos)
+            lens_model_list = ["NFW"] * n_halos + ["CONVERGENCE"] * (
+                len(combined_redshift_list) - n_halos
+            )
         elif len(combined_redshift_list) - n_halos < 0:
-            raise ValueError(f"Combined redshift list shorter than number of halos."
-                             f"{len(combined_redshift_list)} < {n_halos}")
+            raise ValueError(
+                f"Combined redshift list shorter than number of halos."
+                f"{len(combined_redshift_list)} < {n_halos}"
+            )
         else:
-            lens_model_list = ['NFW'] * n_halos
+            lens_model_list = ["NFW"] * n_halos
 
-        lens_model = LensModel(lens_model_list=lens_model_list,
-                               lens_redshift_list=combined_redshift_list,
-                               cosmo=self.cosmo,
-                               observed_convention_index=[],
-                               multi_plane=True,
-                               z_source=z_source,
-                               z_source_convention=None if combined_redshift_list[
-                                                               0] <= z_source else self._z_source_convention)
+        lens_model = LensModel(
+            lens_model_list=lens_model_list,
+            lens_redshift_list=combined_redshift_list,
+            cosmo=self.cosmo,
+            observed_convention_index=[],
+            multi_plane=True,
+            z_source=z_source,
+            z_source_convention=None
+            if combined_redshift_list[0] <= z_source
+            else self._z_source_convention,
+        )
         return lens_model, lens_model_list
 
-    def _build_kwargs_lens(self, n_halos, n_mass_correction, z_halo, mass_halo, lens_model_list, kappa_ext_list,
-                           lens_cosmo_list=None):
-        """
-        Constructs the lens keyword arguments based on provided input parameters.
+    def _build_kwargs_lens(
+        self,
+        n_halos,
+        n_mass_correction,
+        z_halo,
+        mass_halo,
+        lens_model_list,
+        kappa_ext_list,
+        lens_cosmo_list=None,
+    ):
+        """Constructs the lens keyword arguments based on provided input
+        parameters.
 
         Based on the provided numbers of halos and mass corrections, redshifts, masses, and lens models, this method
         assembles the lensing keyword arguments needed for the lens model. It caters for cases with and without
@@ -802,26 +920,45 @@ class HalosLens(object):
         This method assumes the presence of a method `get_nfw_kwargs` in the current class that provides NFW parameters
         based on given redshifts and masses.
         """
-        if n_halos == 0 and 'CONVERGENCE' not in lens_model_list:
+        if n_halos == 0 and "CONVERGENCE" not in lens_model_list:
             return None
-        if n_halos == 0 and 'CONVERGENCE' in lens_model_list:
-            return [{'kappa': kappa_ext_list[h], 'ra_0': 0, 'dec_0': 0} for h in range(n_mass_correction)]
+        if n_halos == 0 and "CONVERGENCE" in lens_model_list:
+            return [
+                {"kappa": kappa_ext_list[h], "ra_0": 0, "dec_0": 0}
+                for h in range(n_mass_correction)
+            ]
 
-        Rs_angle, alpha_Rs, px, py = self.get_nfw_kwargs(z=z_halo, mass=mass_halo, n_halos=n_halos,
-                                                         lens_cosmo=lens_cosmo_list)
+        Rs_angle, alpha_Rs, px, py = self.get_nfw_kwargs(
+            z=z_halo, mass=mass_halo, n_halos=n_halos, lens_cosmo=lens_cosmo_list
+        )
         # TODO: make it only comuter once for same lists
         # TODO: different lens_cosmo
 
-        if 'CONVERGENCE' in lens_model_list:
-            return [{'Rs': Rs_angle[i], 'alpha_Rs': alpha_Rs[i], 'center_x': px[i], 'center_y': py[i]} for i in
-                    range(n_halos)] + \
-                [{'kappa': kappa_ext_list[h], 'ra_0': 0, 'dec_0': 0} for h in range(n_mass_correction)]
-        return [{'Rs': Rs_angle[i], 'alpha_Rs': alpha_Rs[i], 'center_x': px[i], 'center_y': py[i]} for i in
-                range(n_halos)]
+        if "CONVERGENCE" in lens_model_list:
+            return [
+                {
+                    "Rs": Rs_angle[i],
+                    "alpha_Rs": alpha_Rs[i],
+                    "center_x": px[i],
+                    "center_y": py[i],
+                }
+                for i in range(n_halos)
+            ] + [
+                {"kappa": kappa_ext_list[h], "ra_0": 0, "dec_0": 0}
+                for h in range(n_mass_correction)
+            ]
+        return [
+            {
+                "Rs": Rs_angle[i],
+                "alpha_Rs": alpha_Rs[i],
+                "center_x": px[i],
+                "center_y": py[i],
+            }
+            for i in range(n_halos)
+        ]
 
     def get_lens_data_by_redshift(self, zd, zs):
-        """
-        Retrieves lens data filtered by the specified redshift range.
+        """Retrieves lens data filtered by the specified redshift range.
 
         Given a range of redshifts defined by zd and zs, this function filters halos
         and returns the corresponding lens models, lens cosmologies, and lens keyword arguments
@@ -858,26 +995,26 @@ class HalosLens(object):
         lens_model_os, lens_cosmo_os, kwargs_lens_os = os_data
 
         return {
-            'ds': {
-                'lens_model': lens_model_ds,
-                'lens_cosmo': lens_cosmo_ds,
-                'kwargs_lens': kwargs_lens_ds
+            "ds": {
+                "lens_model": lens_model_ds,
+                "lens_cosmo": lens_cosmo_ds,
+                "kwargs_lens": kwargs_lens_ds,
             },
-            'od': {
-                'lens_model': lens_model_od,
-                'lens_cosmo': lens_cosmo_od,
-                'kwargs_lens': kwargs_lens_od
+            "od": {
+                "lens_model": lens_model_od,
+                "lens_cosmo": lens_cosmo_od,
+                "kwargs_lens": kwargs_lens_od,
             },
-            'os': {
-                'lens_model': lens_model_os,
-                'lens_cosmo': lens_cosmo_os,
-                'kwargs_lens': kwargs_lens_os
-            }
+            "os": {
+                "lens_model": lens_model_os,
+                "lens_cosmo": lens_cosmo_os,
+                "kwargs_lens": kwargs_lens_os,
+            },
         }
 
     def compute_various_kappa_gamma_values(self, zd, zs):
-        """
-        Computes various kappa (convergence) and gamma (shear) values for given deflector and source redshifts.
+        """Computes various kappa (convergence) and gamma (shear) values for
+        given deflector and source redshifts.
 
         This function retrieves the lens data based on the input redshifts and computes the convergence
         and shear for three categories: 'od', 'os', and 'ds'. The gamma values are computed for
@@ -919,35 +1056,46 @@ class HalosLens(object):
 
         gamma_ds2 : float
             The gamma2 shear component for the 'ds' category.
-
         """
         # Obtain the lens data for each redshift using the get_lens_data_by_redshift function
         lens_data = self.get_lens_data_by_redshift(zd, zs)
 
         # Extracting lens model and kwargs for 'od' and 'os'
-        lens_model_od = lens_data['od']['lens_model']
-        kwargs_lens_od = lens_data['od']['kwargs_lens']
+        lens_model_od = lens_data["od"]["lens_model"]
+        kwargs_lens_od = lens_data["od"]["kwargs_lens"]
 
-        lens_model_os = lens_data['os']['lens_model']
-        kwargs_lens_os = lens_data['os']['kwargs_lens']
+        lens_model_os = lens_data["os"]["lens_model"]
+        kwargs_lens_os = lens_data["os"]["kwargs_lens"]
 
-        lens_model_ds = lens_data['ds']['lens_model']
-        kwargs_lens_ds = lens_data['ds']['kwargs_lens']
+        lens_model_ds = lens_data["ds"]["lens_model"]
+        kwargs_lens_ds = lens_data["ds"]["kwargs_lens"]
 
-        kappa_od, gamma_od1, gamma_od2 = self.get_convergence_shear(gamma12=True, kwargs=kwargs_lens_od,
-                                                                    lens_model=lens_model_od)
+        kappa_od, gamma_od1, gamma_od2 = self.get_convergence_shear(
+            gamma12=True, kwargs=kwargs_lens_od, lens_model=lens_model_od
+        )
 
-        kappa_os, gamma_os1, gamma_os2 = self.get_convergence_shear(gamma12=True, kwargs=kwargs_lens_os,
-                                                                    lens_model=lens_model_os)
-        kappa_ds, gamma_ds1, gamma_ds2 = self.get_convergence_shear(gamma12=True, kwargs=kwargs_lens_ds,
-                                                                    lens_model=lens_model_ds, zdzs=(zd, zs))
+        kappa_os, gamma_os1, gamma_os2 = self.get_convergence_shear(
+            gamma12=True, kwargs=kwargs_lens_os, lens_model=lens_model_os
+        )
+        kappa_ds, gamma_ds1, gamma_ds2 = self.get_convergence_shear(
+            gamma12=True, kwargs=kwargs_lens_ds, lens_model=lens_model_ds, zdzs=(zd, zs)
+        )
 
-        return kappa_od, kappa_os, gamma_od1, gamma_od2, gamma_os1, gamma_os2, kappa_ds, gamma_ds1, gamma_ds2
+        return (
+            kappa_od,
+            kappa_os,
+            gamma_od1,
+            gamma_od2,
+            gamma_os1,
+            gamma_os2,
+            kappa_ds,
+            gamma_ds1,
+            gamma_ds2,
+        )
 
     def get_kext_gext_values(self, zd, zs):
-        r"""
-        Computes the external convergence (kappa_ext) and external shear (gamma_ext)
-        for given deflector and source redshifts.
+        r"""Computes the external convergence (kappa_ext) and external shear
+        (gamma_ext) for given deflector and source redshifts.
 
         Parameters
         ----------
@@ -974,20 +1122,30 @@ class HalosLens(object):
 
         .. math::
             \gamma_{\text{ext}} = \sqrt{(\gamma_{\text{od}1}+\gamma_{\text{os}1}-\gamma_{\text{ds}1})^2+(\gamma_{\text{od}2}+\gamma_{\text{os}2}-\gamma_{\text{ds}2})^2}
-
         """
-        kappa_od, kappa_os, gamma_od1, gamma_od2, gamma_os1, \
-            gamma_os2, kappa_ds, gamma_ds1, gamma_ds2 = self.compute_various_kappa_gamma_values(zd, zs)
+        (
+            kappa_od,
+            kappa_os,
+            gamma_od1,
+            gamma_od2,
+            gamma_os1,
+            gamma_os2,
+            kappa_ds,
+            gamma_ds1,
+            gamma_ds2,
+        ) = self.compute_various_kappa_gamma_values(zd, zs)
 
         kext = 1 - (1 - kappa_od) * (1 - kappa_os) / (1 - kappa_ds)
-        gext = math.sqrt((gamma_od1 + gamma_os1 - gamma_ds1) ** 2 + (gamma_od2 + gamma_os2 - gamma_ds2) ** 2)
+        gext = math.sqrt(
+            (gamma_od1 + gamma_os1 - gamma_ds1) ** 2
+            + (gamma_od2 + gamma_os2 - gamma_ds2) ** 2
+        )
 
         return kext, gext
 
     def get_kappaext_gammaext_distib_zdzs(self, zd, zs):
-        """
-        Computes the distribution of external convergence (kappa_ext) and external shear (gamma_ext)
-        for given deflector and source redshifts.
+        """Computes the distribution of external convergence (kappa_ext) and
+        external shear (gamma_ext) for given deflector and source redshifts.
 
         Parameters
         ----------
@@ -1023,14 +1181,16 @@ class HalosLens(object):
 
         if self.samples_number > 999:
             elapsed_time = time.time() - start_time
-            print(f"For this halos lists, zd,zs, elapsed time for computing weak-lensing maps: {elapsed_time} seconds")
+            print(
+                f"For this halos lists, zd,zs, elapsed time for computing weak-lensing maps: {elapsed_time} seconds"
+            )
 
         return kappa_gamma_distribution
 
-    def generate_distributions_0to5(self, output_format='dict'):
-        """
-        Generates distributions of external convergence (kappa_ext) and external shear (gamma_ext)
-        for a range of deflector and source redshifts from 0 to 5.
+    def generate_distributions_0to5(self, output_format="dict"):
+        """Generates distributions of external convergence (kappa_ext) and
+        external shear (gamma_ext) for a range of deflector and source
+        redshifts from 0 to 5.
 
         Parameters
         ----------
@@ -1065,16 +1225,20 @@ class HalosLens(object):
                 for kappa_gamma in kappa_gamma_dist:
                     kappa, gamma = kappa_gamma
 
-                    if output_format == 'dict':
-                        distributions.append({
-                            'zd': round(zd, 3),
-                            'zs': round(zs, 3),
-                            'kappa': kappa,
-                            'gamma': gamma
-                        })
-                    elif output_format == 'vector':
+                    if output_format == "dict":
+                        distributions.append(
+                            {
+                                "zd": round(zd, 3),
+                                "zs": round(zs, 3),
+                                "kappa": kappa,
+                                "gamma": gamma,
+                            }
+                        )
+                    elif output_format == "vector":
                         distributions.append([round(zd, 3), round(zs, 3), kappa, gamma])
                     else:
-                        raise ValueError("Invalid output_format. Choose either 'dict' or 'vector'.")
+                        raise ValueError(
+                            "Invalid output_format. Choose either 'dict' or 'vector'."
+                        )
 
         return distributions

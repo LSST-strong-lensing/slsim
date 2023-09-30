@@ -22,15 +22,23 @@ def setup_halos_lens():
 
     mass = [2058751081954.2866, 1320146153348.6448, 850000000000.0]
 
-    halos = Table([z, mass], names=('z', 'mass'))
+    halos = Table([z, mass], names=("z", "mass"))
 
     z_correction = [0.5]
     kappa_ext_correction = [-0.1]
-    mass_sheet_correction = Table([z_correction, kappa_ext_correction], names=('z', 'kappa_ext'))
+    mass_sheet_correction = Table(
+        [z_correction, kappa_ext_correction], names=("z", "kappa_ext")
+    )
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-    return HalosLens(halos_list=halos, mass_correction_list=mass_sheet_correction, sky_area=0.0001, cosmo=cosmo,
-                     samples_number=1, mass_sheet=True)
+    return HalosLens(
+        halos_list=halos,
+        mass_correction_list=mass_sheet_correction,
+        sky_area=0.0001,
+        cosmo=cosmo,
+        samples_number=1,
+        mass_sheet=True,
+    )
 
 
 def test_init(setup_halos_lens):
@@ -49,7 +57,7 @@ def test_random_position(setup_halos_lens):
 def test_get_lens_model(setup_halos_lens):
     hl = setup_halos_lens
     lens_model = hl.get_lens_model()
-    assert lens_model.lens_model_list == ['NFW', 'NFW', 'NFW', 'CONVERGENCE']
+    assert lens_model.lens_model_list == ["NFW", "NFW", "NFW", "CONVERGENCE"]
 
 
 def test_get_halos_lens_kwargs(setup_halos_lens):
@@ -78,7 +86,7 @@ def test_compute_kappa_gamma(setup_halos_lens):
     i = 0
     gamma_tot = False
     diff = 0.0001
-    diff_method = 'square'
+    diff_method = "square"
     results = hl.compute_kappa_gamma(i, hl, gamma_tot, diff, diff_method)
     assert len(results) == 3
     for res in results:
@@ -134,22 +142,26 @@ def test__filter_halos_by_condition(setup_halos_lens):
     zd = 0.5
     zs = 1.0
     halos_od, halos_ds, halos_os = hl._filter_halos_by_condition(zd, zs)
-    assert all(h['z'] < zd for h in halos_od)
-    assert all(zd <= h['z'] < zs for h in halos_ds)
-    assert all(h['z'] < zs for h in halos_os)
+    assert all(h["z"] < zd for h in halos_od)
+    assert all(zd <= h["z"] < zs for h in halos_ds)
+    assert all(h["z"] < zs for h in halos_os)
 
 
 def test__filter_mass_correction_by_condition(setup_halos_lens):
     hl = setup_halos_lens
     zd = 0.5
     zs = 1.0
-    mass_correction_od, mass_correction_ds, mass_correction_os = hl._filter_mass_correction_by_condition(zd, zs)
+    (
+        mass_correction_od,
+        mass_correction_ds,
+        mass_correction_os,
+    ) = hl._filter_mass_correction_by_condition(zd, zs)
     if mass_correction_od is not None:
-        assert all(h['z'] < zd for h in mass_correction_od)
+        assert all(h["z"] < zd for h in mass_correction_od)
     if mass_correction_ds is not None:
-        assert all(zd <= h['z'] < zs for h in mass_correction_ds)
+        assert all(zd <= h["z"] < zs for h in mass_correction_ds)
     if mass_correction_os is not None:
-        assert all(h['z'] < zs for h in mass_correction_os)
+        assert all(h["z"] < zs for h in mass_correction_os)
 
 
 def test__build_lens_data(setup_halos_lens):
@@ -158,7 +170,9 @@ def test__build_lens_data(setup_halos_lens):
     zs = 1.0
     halos = hl.halos_list
     mass_correction = hl.mass_correction_list
-    lens_model, lens_cosmo_list, kwargs_lens = hl._build_lens_data(halos, mass_correction, zd, zs)
+    lens_model, lens_cosmo_list, kwargs_lens = hl._build_lens_data(
+        halos, mass_correction, zd, zs
+    )
 
     assert isinstance(lens_model, LensModel)
     assert all(isinstance(item, LensCosmo) for item in lens_cosmo_list)
@@ -181,7 +195,9 @@ def test__build_lens_model(setup_halos_lens):
     z_source = 1.0
     n_halos = len(combined_redshift_list)
 
-    lens_model, lens_model_list = hl._build_lens_model(combined_redshift_list, z_source, n_halos)
+    lens_model, lens_model_list = hl._build_lens_model(
+        combined_redshift_list, z_source, n_halos
+    )
 
     assert isinstance(lens_model, LensModel)
     assert len(lens_model_list) == len(combined_redshift_list)
@@ -192,12 +208,14 @@ def test__build_kwargs_lens(setup_halos_lens):
     hl = setup_halos_lens
     n_halos = len(hl.halos_list)
     n_mass_correction = len(hl.mass_correction_list)
-    z_halo = hl.halos_list['z']
-    mass_halo = hl.halos_list['mass']
-    lens_model_list = ['NFW'] * n_halos
-    kappa_ext_list = hl.mass_correction_list['kappa_ext'] if hl.mass_sheet else []
+    z_halo = hl.halos_list["z"]
+    mass_halo = hl.halos_list["mass"]
+    lens_model_list = ["NFW"] * n_halos
+    kappa_ext_list = hl.mass_correction_list["kappa_ext"] if hl.mass_sheet else []
 
-    kwargs_lens = hl._build_kwargs_lens(n_halos, n_mass_correction, z_halo, mass_halo, lens_model_list, kappa_ext_list)
+    kwargs_lens = hl._build_kwargs_lens(
+        n_halos, n_mass_correction, z_halo, mass_halo, lens_model_list, kappa_ext_list
+    )
 
     assert len(kwargs_lens) == n_halos
     for kwargs in kwargs_lens:
@@ -209,24 +227,24 @@ def test_get_lens_data_by_redshift(setup_halos_lens):
     zd = 0.5
     zs = 1.0
     lens_data = hl.get_lens_data_by_redshift(zd, zs)
-    assert 'ds' in lens_data
-    assert isinstance(lens_data['ds']['lens_model'], LensModel)
-    assert isinstance(lens_data['ds']['lens_cosmo'], list)
-    assert all(isinstance(item, LensCosmo) for item in lens_data['ds']['lens_cosmo'])
-    assert isinstance(lens_data['ds']['kwargs_lens'], list)
-    assert all(isinstance(item, dict) for item in lens_data['ds']['kwargs_lens'])
+    assert "ds" in lens_data
+    assert isinstance(lens_data["ds"]["lens_model"], LensModel)
+    assert isinstance(lens_data["ds"]["lens_cosmo"], list)
+    assert all(isinstance(item, LensCosmo) for item in lens_data["ds"]["lens_cosmo"])
+    assert isinstance(lens_data["ds"]["kwargs_lens"], list)
+    assert all(isinstance(item, dict) for item in lens_data["ds"]["kwargs_lens"])
 
-    assert 'od' in lens_data
-    assert lens_data['od']['lens_model'] is None
-    assert lens_data['od']['lens_cosmo'] is None
-    assert lens_data['od']['kwargs_lens'] is None
+    assert "od" in lens_data
+    assert lens_data["od"]["lens_model"] is None
+    assert lens_data["od"]["lens_cosmo"] is None
+    assert lens_data["od"]["kwargs_lens"] is None
 
-    assert 'os' in lens_data
-    assert isinstance(lens_data['os']['lens_model'], LensModel)
-    assert isinstance(lens_data['os']['lens_cosmo'], list)
-    assert all(isinstance(item, LensCosmo) for item in lens_data['os']['lens_cosmo'])
-    assert isinstance(lens_data['os']['kwargs_lens'], list)
-    assert all(isinstance(item, dict) for item in lens_data['os']['kwargs_lens'])
+    assert "os" in lens_data
+    assert isinstance(lens_data["os"]["lens_model"], LensModel)
+    assert isinstance(lens_data["os"]["lens_cosmo"], list)
+    assert all(isinstance(item, LensCosmo) for item in lens_data["os"]["lens_cosmo"])
+    assert isinstance(lens_data["os"]["kwargs_lens"], list)
+    assert all(isinstance(item, dict) for item in lens_data["os"]["kwargs_lens"])
 
 
 def test_get_kext_gext_values(setup_halos_lens):
@@ -256,7 +274,7 @@ def test_generate_distributions_0to5(setup_halos_lens):
 
     assert isinstance(distributions, list)
     for entry in distributions:
-        assert 'zd' in entry and isinstance(entry['zd'], float)
-        assert 'zs' in entry and isinstance(entry['zs'], float)
-        assert 'kappa' in entry and isinstance(entry['kappa'], float)
-        assert 'gamma' in entry and isinstance(entry['gamma'], float)
+        assert "zd" in entry and isinstance(entry["zd"], float)
+        assert "zs" in entry and isinstance(entry["zs"], float)
+        assert "kappa" in entry and isinstance(entry["kappa"], float)
+        assert "gamma" in entry and isinstance(entry["gamma"], float)

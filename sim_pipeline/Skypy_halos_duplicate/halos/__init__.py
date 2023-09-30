@@ -13,7 +13,7 @@ Models
 """
 
 __all__ = [
-    'colossus_mf',
+    "colossus_mf",
 ]
 
 from . import mass  # noqa F401,F403

@@ -1,5 +1,4 @@
-r'''Halo mass sampler.
-This code samples Halos from their mass function.
+r"""Halo mass sampler. This code samples Halos from their mass function.
 
 Models
 ======
@@ -19,7 +18,7 @@ Models
    sheth_tormen_collapse_function
    sheth_tormen_mass_function
    subhalo_mass_sampler
-'''
+"""
 # TODO: This code has been temporarily borrowed from SkyPy.  Once the feature is available in the main branch or
 #  release version of SkyPy,  this code should be deprecated and replaced with the official implementation. Original
 #  Source: [https://github.com/skypyproject/skypy/tree/module/halos]
@@ -33,26 +32,26 @@ from skypy.utils.random import schechter
 from ._colossus import colossus_mass_sampler  # noqa F401,F403
 
 __all__ = [
-    'colossus_mass_sampler',
-    'ellipsoidal_collapse_function',
-    'halo_mass_function',
-    'halo_mass_sampler',
-    'number_subhalos',
-    'press_schechter',
-    'press_schechter_collapse_function',
-    'press_schechter_mass_function',
-    'sheth_tormen',
-    'sheth_tormen_collapse_function',
-    'sheth_tormen_mass_function',
-    'subhalo_mass_sampler',
- ]
+    "colossus_mass_sampler",
+    "ellipsoidal_collapse_function",
+    "halo_mass_function",
+    "halo_mass_sampler",
+    "number_subhalos",
+    "press_schechter",
+    "press_schechter_collapse_function",
+    "press_schechter_mass_function",
+    "sheth_tormen",
+    "sheth_tormen_collapse_function",
+    "sheth_tormen_mass_function",
+    "subhalo_mass_sampler",
+]
 
 
-def halo_mass_function(M, wavenumber, power_spectrum, growth_function,
-                       cosmology, collapse_function, params):
-    r'''Halo mass function.
-    This function computes the halo mass function, defined
-    in equation 7.46 in [1]_.
+def halo_mass_function(
+    M, wavenumber, power_spectrum, growth_function, cosmology, collapse_function, params
+):
+    r"""Halo mass function. This function computes the halo mass function,
+    defined in equation 7.46 in [1]_.
 
     Parameters
     -----------
@@ -121,24 +120,33 @@ def halo_mass_function(M, wavenumber, power_spectrum, growth_function,
     ----------
     .. [1] Mo, H. and van den Bosch, F. and White, S. (2010), Cambridge
         University Press, ISBN: 9780521857932.
-    '''
-    sigma = np.sqrt(_sigma_squared(M, wavenumber, power_spectrum,
-                                   growth_function, cosmology))
+    """
+    sigma = np.sqrt(
+        _sigma_squared(M, wavenumber, power_spectrum, growth_function, cosmology)
+    )
     f_c = collapse_function(sigma, params)
 
     dlognu_dlogm = _dlns_dlnM(sigma, M)
-    rho_bar = (cosmology.critical_density0.to(units.Msun / units.Mpc ** 3)).value
+    rho_bar = (cosmology.critical_density0.to(units.Msun / units.Mpc**3)).value
     rho_m0 = cosmology.Om0 * rho_bar
 
     return rho_m0 * f_c * dlognu_dlogm / np.power(M, 2)
 
 
-def halo_mass_sampler(m_min, m_max, resolution, wavenumber, power_spectrum,
-                      growth_function, cosmology,
-                      collapse_function, params, size=None):
-    r'''Halo mass sampler.
-    This function samples haloes from their mass function,
-    see equation 7.46 in [1]_.
+def halo_mass_sampler(
+    m_min,
+    m_max,
+    resolution,
+    wavenumber,
+    power_spectrum,
+    growth_function,
+    cosmology,
+    collapse_function,
+    params,
+    size=None,
+):
+    r"""Halo mass sampler. This function samples haloes from their mass
+    function, see equation 7.46 in [1]_.
 
     Parameters
     -----------
@@ -207,12 +215,18 @@ def halo_mass_sampler(m_min, m_max, resolution, wavenumber, power_spectrum,
     ----------
     .. [1] Mo, H. and van den Bosch, F. and White, S. (2010), Cambridge
         University Press, ISBN: 9780521857932.
-    '''
+    """
     m = np.logspace(np.log10(m_min), np.log10(m_max), resolution)
 
     massf = halo_mass_function(
-            m, wavenumber, power_spectrum, growth_function,
-            cosmology, collapse_function, params=params)
+        m,
+        wavenumber,
+        power_spectrum,
+        growth_function,
+        cosmology,
+        collapse_function,
+        params=params,
+    )
 
     CDF = integrate.cumtrapz(massf, m, initial=0)
     CDF = CDF / CDF[-1]
@@ -221,9 +235,8 @@ def halo_mass_sampler(m_min, m_max, resolution, wavenumber, power_spectrum,
 
 
 def ellipsoidal_collapse_function(sigma, params):
-    r'''Ellipsoidal collapse function.
-    This function computes the mass function for ellipsoidal
-    collapse, see equation 10 in [1]_ or [2]_.
+    r"""Ellipsoidal collapse function. This function computes the mass function
+    for ellipsoidal collapse, see equation 10 in [1]_ or [2]_.
 
     Parameters
     -----------
@@ -279,37 +292,49 @@ def ellipsoidal_collapse_function(sigma, params):
         (1999), astro-ph/9901122.
     .. [2] https://www.slac.stanford.edu/econf/C070730/talks/
         Wechsler_080207.pdf
-    '''
+    """
     A, a, p, delta_c = params
 
-    return A * np.sqrt(2.0 * a / np.pi) * (delta_c / sigma) * \
-        np.exp(- 0.5 * a * (delta_c / sigma)**2) * \
-        (1.0 + np.power(np.power(sigma / delta_c, 2.0) / a, p))
+    return (
+        A
+        * np.sqrt(2.0 * a / np.pi)
+        * (delta_c / sigma)
+        * np.exp(-0.5 * a * (delta_c / sigma) ** 2)
+        * (1.0 + np.power(np.power(sigma / delta_c, 2.0) / a, p))
+    )
 
 
-press_schechter_collapse_function = partial(ellipsoidal_collapse_function,
-                                            params=(0.5, 1, 0, 1.69))
+press_schechter_collapse_function = partial(
+    ellipsoidal_collapse_function, params=(0.5, 1, 0, 1.69)
+)
 press_schechter_collapse_function.__name__ = "press_schechter_collapse_function"
-sheth_tormen_collapse_function = partial(ellipsoidal_collapse_function,
-                                         params=(0.3222, 0.707, 0.3, 1.686))
+sheth_tormen_collapse_function = partial(
+    ellipsoidal_collapse_function, params=(0.3222, 0.707, 0.3, 1.686)
+)
 sheth_tormen_collapse_function.__name__ = "sheth_tormen_collapse_function"
 sheth_tormen_mass_function = partial(
-                             halo_mass_function,
-                             collapse_function=ellipsoidal_collapse_function,
-                             params=(0.3222, 0.707, 0.3, 1.686))
+    halo_mass_function,
+    collapse_function=ellipsoidal_collapse_function,
+    params=(0.3222, 0.707, 0.3, 1.686),
+)
 sheth_tormen_mass_function.__name__ = "sheth_tormen_mass_function"
 press_schechter_mass_function = partial(
-                                halo_mass_function,
-                                collapse_function=ellipsoidal_collapse_function,
-                                params=(0.5, 1, 0, 1.69))
+    halo_mass_function,
+    collapse_function=ellipsoidal_collapse_function,
+    params=(0.5, 1, 0, 1.69),
+)
 press_schechter_mass_function.__name__ = "press_schechter_mass_function"
-sheth_tormen = partial(halo_mass_sampler,
-                       collapse_function=ellipsoidal_collapse_function,
-                       params=(0.3222, 0.707, 0.3, 1.686))
+sheth_tormen = partial(
+    halo_mass_sampler,
+    collapse_function=ellipsoidal_collapse_function,
+    params=(0.3222, 0.707, 0.3, 1.686),
+)
 sheth_tormen.__name__ = "sheth_tormen"
-press_schechter = partial(halo_mass_sampler,
-                          collapse_function=ellipsoidal_collapse_function,
-                          params=(0.5, 1, 0, 1.69))
+press_schechter = partial(
+    halo_mass_sampler,
+    collapse_function=ellipsoidal_collapse_function,
+    params=(0.5, 1, 0, 1.69),
+)
 press_schechter.__name__ = "press_schechter"
 
 
@@ -320,14 +345,14 @@ def _sigma_squared(M, k, Pk, growth_function, cosmology):
     Dz2 = np.power(growth_function, 2)
 
     # Matter mean density today
-    rho_bar = (cosmology.critical_density0.to(units.Msun / units.Mpc ** 3)).value
+    rho_bar = (cosmology.critical_density0.to(units.Msun / units.Mpc**3)).value
     rho_m0 = cosmology.Om0 * rho_bar
 
     R = np.power(3 * M / (4 * np.pi * rho_m0), 1.0 / 3.0)
-    top_hat = 3. * (np.sin(k * R) - k * R * np.cos(k * R)) / ((k * R)**3.)
+    top_hat = 3.0 * (np.sin(k * R) - k * R * np.cos(k * R)) / ((k * R) ** 3.0)
     integrand = Pk * np.power(top_hat * k, 2)
 
-    return Dz2 * integrate.simps(integrand, k) / (2. * np.pi**2.)
+    return Dz2 * integrate.simps(integrand, k) / (2.0 * np.pi**2.0)
 
 
 def _dlns_dlnM(sigma, M):
@@ -336,11 +361,11 @@ def _dlns_dlnM(sigma, M):
 
 
 def number_subhalos(halo_mass, alpha, beta, gamma_M, x, m_min, noise=True):
-    r'''Number of subhalos.
-    This function calculates the number of subhalos above a given initial mass
-    for a parent halo of given mass according to the model of Vale & Ostriker
-    2004 [1]_ equation (7). The number of subhalos returned can optionally be
-    sampled from a Poisson distribution with that mean.
+    r"""Number of subhalos. This function calculates the number of subhalos
+    above a given initial mass for a parent halo of given mass according to the
+    model of Vale & Ostriker 2004 [1]_ equation (7). The number of subhalos
+    returned can optionally be sampled from a Poisson distribution with that
+    mean.
 
     Parameters
     -----------
@@ -380,7 +405,7 @@ def number_subhalos(halo_mass, alpha, beta, gamma_M, x, m_min, noise=True):
     References
     ----------
     .. [1] Vale, A. and Ostriker, J.P. (2005), arXiv: astro-ph/0402500.
-    '''
+    """
     # m_min is the minimum original subhalo mass
     x_low = m_min / (x * beta * halo_mass)
     # Subhalo amplitude from equation [2]
@@ -394,13 +419,11 @@ def number_subhalos(halo_mass, alpha, beta, gamma_M, x, m_min, noise=True):
     return np.random.poisson(n_subhalos) if noise else n_subhalos
 
 
-def subhalo_mass_sampler(halo_mass, nsubhalos, alpha, beta,
-                         x, m_min, resolution=100):
-    r'''Subhalo mass sampler.
-    This function samples the original, unstriped masses of subhaloes from the
-    subhalo mass function of their parent halo with a constant mass stripping
-    factor given by equation (1) in [1]_ and the upper subhalo mass limit from
-    [2]_.
+def subhalo_mass_sampler(halo_mass, nsubhalos, alpha, beta, x, m_min, resolution=100):
+    r"""Subhalo mass sampler. This function samples the original, unstriped
+    masses of subhaloes from the subhalo mass function of their parent halo
+    with a constant mass stripping factor given by equation (1) in [1]_ and the
+    upper subhalo mass limit from [2]_.
 
     Parameters
     -----------
@@ -444,13 +467,15 @@ def subhalo_mass_sampler(halo_mass, nsubhalos, alpha, beta,
     ----------
     .. [1] Vale, A. and Ostriker, J.P. (2004), arXiv: astro-ph/0402500.
     .. [2] Vale, A. and Ostriker, J.P. (2004), arXiv: astro-ph/0511816.
-    '''
+    """
     halo_mass = np.atleast_1d(halo_mass)
     nsubhalos = np.atleast_1d(nsubhalos)
     subhalo_list = []
     for M, n in zip(halo_mass, nsubhalos):
         x_min = m_min / (x * beta * M)
         x_max = 0.5 / (x * beta)
-        subhalo_mass = schechter(alpha, x_min, x_max, resolution, size=n, scale=x * beta * M)
+        subhalo_mass = schechter(
+            alpha, x_min, x_max, resolution, size=n, scale=x * beta * M
+        )
         subhalo_list.append(subhalo_mass)
     return np.concatenate(subhalo_list)
