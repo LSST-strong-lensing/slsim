@@ -80,7 +80,7 @@ def set_defaults(m_min=None, m_max=None, wavenumber=None, resolution=None, power
 def number_density_at_redshift(z, m_min=None, m_max=None, resolution=None, wavenumber=None, power_spectrum=None,
                                cosmology=None, collapse_function=None, params=None):
     """
-    Function to calculate the cumulative number density of Halos at a given redshift.
+    Function to calculate the cumulative number density of Halos at a given redshift for different growth functions.
 
     Parameters
     ----------
@@ -105,28 +105,34 @@ def number_density_at_redshift(z, m_min=None, m_max=None, resolution=None, waven
 
     Returns
     -------
-    array
-        The cumulative number density of Halos.
+    list of arrays
+        The list of number_density for each growth function value. (in Mpc-3)
 
     """
     # define default parameters
     m_min, m_max, wavenumber, resolution, power_spectrum, cosmology, collapse_function, params = set_defaults(
         m_min, m_max, wavenumber, resolution, power_spectrum, cosmology, collapse_function, params)
 
-    m = np.logspace(np.log10(m_min), np.log10(m_max), resolution)
+    m = np.geomspace(m_min, m_max, resolution)
 
     gf = GrowthFactor(cosmo=cosmology)
-    if z is np.array([np.nan]):
-        return 0
-    else:
-        growth_function = gf.growth_factor(z)
+    if np.array_equal(z, np.array([np.nan])):
+        return [0] * len(gf.growth_factor(z))
 
+    growth_functions = gf.growth_factor(z)
+    cdfs = []
+
+    for growth_function in growth_functions:
         massf = halo_mass_function(
             M=m, wavenumber=wavenumber, power_spectrum=power_spectrum, growth_function=growth_function,
             cosmology=cosmology, collapse_function=collapse_function, params=params)
+        # Halo mass function for a given mass array, cosmology and redshift
+        # units of Mpc-3 Msun-1.
 
-        CDF = integrate.cumtrapz(massf, m, initial=0)
-        return CDF
+        number_density = np.dot(massf, m)  # unit of Mpc-3
+        cdfs.append(number_density)
+
+    return cdfs
 
 
 def growth_factor_at_redshift(z, cosmology=None):
@@ -318,15 +324,14 @@ def redshift_mass_sheet_correction_array_from_comoving_density(redshift_list, sk
         from astropy.cosmology import FlatLambdaCDM
         cosmology = FlatLambdaCDM(H0=70, Om0=0.3)
 
-    dN_dz = (cosmology.differential_comoving_volume(redshift_list) * sky_area).to_value('Mpc3')
+    dN_dz = (cosmology.differential_comoving_volume(redshift_list) * sky_area).to_value('Mpc3')  # dV/dz
     density = number_density_at_redshift(z=redshift_list, m_min=m_min, m_max=m_max, resolution=resolution,
                                          wavenumber=wavenumber,
                                          power_spectrum=power_spectrum, cosmology=cosmology,
                                          collapse_function=collapse_function, params=params)
-    dN_dz *= density
-
+    dN_dz *= density  # dV/dz * dn(z)/dV = dn(z)/dz
     # integrate density to get expected number of Halos
-    N = np.trapz(dN_dz, redshift_list)
+    N = np.trapz(dN_dz, redshift_list)  # N = int(dn(z)/dz dz)
     N_0 = int(N)
     if N_0 == 0:
         warnings.warn("No Mass sheet found in the given redshift range")
