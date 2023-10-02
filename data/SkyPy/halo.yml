@@ -5,7 +5,7 @@ m_max: 1.0E+16
 z_range: !numpy.linspace
   start: 0
   stop: $z_max
-  num: 1000
+  num: 100
 cosmology: !astropy.cosmology.default_cosmology.get []
 wavenumber: !numpy.logspace [-3, 1, 1000]
 power_spectrum: !sim_pipeline.Skypy_halos_duplicate.power_spectrum.eisenstein_hu
@@ -23,7 +23,7 @@ tables:
           cosmology: $cosmology
           m_min: $m_min
           m_max: $m_max
-          resolution: 1000
+          resolution: 100
           wavenumber: $wavenumber
           power_spectrum: $power_spectrum
           collapse_function: $collapse_function
@@ -45,7 +45,7 @@ tables:
            cosmology: $cosmology
            m_min: $m_min
            m_max: $m_max
-           resolution: 1000
+           resolution: 100
            wavenumber: $wavenumber
            power_spectrum: $power_spectrum
            collapse_function: $collapse_function

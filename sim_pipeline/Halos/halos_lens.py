@@ -864,9 +864,7 @@ class HalosLens(object):
             observed_convention_index=[],
             multi_plane=True,
             z_source=z_source,
-            z_source_convention=None
-            if combined_redshift_list[0] <= z_source
-            else self._z_source_convention,
+            z_source_convention=self._z_source_convention,
         )
         return lens_model, lens_model_list
 
