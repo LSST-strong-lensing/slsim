@@ -23,7 +23,7 @@ class DeflectorBase(ABC):
         self.sky_area = sky_area
 
     @abstractmethod
-    def __len__(self):
+    def deflector_number(self):
         """
 
         :return: number of deflectors after applied cuts

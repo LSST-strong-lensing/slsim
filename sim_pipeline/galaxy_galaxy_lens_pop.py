@@ -4,10 +4,10 @@ from sim_pipeline.galaxy_galaxy_lens import (
     theta_e_when_source_infinity,
 )
 import numpy as np
-from sim_pipeline.lensed_sample import LensedSample
+from sim_pipeline.lensed_population import LensedPopulation
 
 
-class GalaxyGalaxyLensPop(LensedSample):
+class GalaxyGalaxyLensPop(LensedPopulation):
     """Class to perform samples of galaxy-galaxy lensing."""
 
     def __init__(
@@ -105,7 +105,7 @@ class GalaxyGalaxyLensPop(LensedSample):
         self.cosmo = cosmo
         self.f_sky = sky_area
 
-    def generate_random_lensed_system(self, **kwargs_lens_cut):
+    def select_lens_at_random(self, **kwargs_lens_cut):
         """Draw a random lens within the cuts of the lens and source, with possible
         additional cut in the lensing configuration.
 
@@ -127,21 +127,21 @@ class GalaxyGalaxyLensPop(LensedSample):
             if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens
 
-    def potential_deflector_number(self):
+    def deflector_number(self):
         """Number of potential deflectors (meaning all objects with mass that are being
         considered to have potential sources behind them)
 
         :return: number of potential deflectors
         """
-        return len(self._lens_galaxies)
+        return self._lens_galaxies.deflector_number()
 
-    def potential_source_number(self):
+    def source_number(self):
         """Number of sources that are being considered to be placed in the sky area
         potentially aligned behind deflectors.
 
         :return: number of potential sources
         """
-        return len(self._sources)
+        return self._sources.source_number()
 
     def get_num_sources_tested_mean(self, testarea):
         """Compute the mean of source galaxies needed to be tested within the test area.
@@ -149,7 +149,7 @@ class GalaxyGalaxyLensPop(LensedSample):
         num_sources_tested_mean/ testarea = num_sources/ f_sky; testarea is in units of
         arcsec^2, f_sky is in units of deg^2. 1 deg^2 = 12960000 arcsec^2
         """
-        num_sources = len(self._sources)
+        num_sources = self._sources.source_number()
         num_sources_tested_mean = (testarea * num_sources) / (
             12960000 * self.f_sky.to_value("deg2")
         )
@@ -177,7 +177,7 @@ class GalaxyGalaxyLensPop(LensedSample):
         # Initialize an empty list to store the GalaxyGalaxyLens instances
         gg_lens_population = []
         # Estimate the number of lensing systems
-        num_lenses = len(self._lens_galaxies)
+        num_lenses = self._lens_galaxies.deflector_number()
         # num_sources = self._source_galaxies.galaxies_number()
         #        print(num_sources_tested_mean)
         #        print("num_lenses is " + str(num_lenses))

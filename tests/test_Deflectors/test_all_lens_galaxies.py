@@ -37,7 +37,7 @@ def all_lens_galaxies():
 
 def test_deflector_number_draw_deflector(all_lens_galaxies):
     galaxy_pop = all_lens_galaxies
-    num_deflectors = len(galaxy_pop)
+    num_deflectors = galaxy_pop.deflector_number()
     deflector = galaxy_pop.draw_deflector()
     assert deflector["z"] != 0
     assert num_deflectors >= 0

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import warnings
 
 
-class LensedSample(ABC):
+class LensedPopulation(ABC):
     """Abstract Base Class to create a sample of lensed systems.
 
     All object that inherit from Lensed Sample must contain the methods it contains.
@@ -35,7 +35,7 @@ class LensedSample(ABC):
             cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
     @abstractmethod
-    def generate_random_lensed_system(self):
+    def select_lens_at_random(self):
         """Draw a random lens within the cuts of the lens and source, with possible
         additional cut in the lensing configuration.
 
@@ -47,7 +47,7 @@ class LensedSample(ABC):
         pass
 
     @abstractmethod
-    def potential_deflector_number(self):
+    def deflector_number(self):
         """Number of potential deflectors (meaning all objects with mass that are being
         considered to have potential sources behind them)
 
@@ -56,7 +56,7 @@ class LensedSample(ABC):
         pass
 
     @abstractmethod
-    def potential_source_number(self):
+    def source_number(self):
         """Number of sources that are being considered to be placed in the sky area
         potentially aligned behind deflectors.
 

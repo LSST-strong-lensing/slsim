@@ -83,7 +83,7 @@ class AllLensGalaxies(DeflectorBase):
         )
         # TODO: random reshuffle of matched list
 
-    def __len__(self):
+    def deflector_number(self):
         """
 
         :return: number of deflectors after applied cuts
