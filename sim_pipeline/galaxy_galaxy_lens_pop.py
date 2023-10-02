@@ -49,7 +49,10 @@ class GalaxyGalaxyLensPop(object):
             "galaxies"
         ]:
             pipeline = SkyPyPipeline(
-                skypy_config=skypy_config, sky_area=sky_area, filters=filters
+                skypy_config=skypy_config,
+                sky_area=sky_area,
+                filters=filters,
+                cosmo=cosmo,
             )
         if kwargs_deflector_cut is None:
             kwargs_deflector_cut = {}
