@@ -4,7 +4,7 @@ import random
 """This module contains various plotting definations."""
 
 
-def create_image_montage_from_image_list(num_rows, num_cols, images, time=None):
+def create_image_montage_from_image_list(num_rows, num_cols, images, time=None, _type = 'number'):
     """Creates an image montage from an image list.
 
     :param num_rows: number of images to display horizontally
@@ -12,6 +12,7 @@ def create_image_montage_from_image_list(num_rows, num_cols, images, time=None):
     :param images: list of images
     :param time: array of observation time for point source images. If None, considers
         static case.
+    :param _type: type of the provided time. It should be number or string
     :return: image montage of given images.
     """
 
@@ -24,7 +25,7 @@ def create_image_montage_from_image_list(num_rows, num_cols, images, time=None):
 
                 axes[i, j].imshow(image, origin="lower")
                 axes[i, j].axis("off")  # Turn off axis labels
-                if time is not None:
+                if time is not None and _type == 'number':
                     axes[i, j].text(
                         0.05,
                         0.95,
@@ -34,6 +35,17 @@ def create_image_montage_from_image_list(num_rows, num_cols, images, time=None):
                         horizontalalignment="left",
                         transform=axes[i, j].transAxes,
                     )
+                if time is not None and _type == 'string': 
+                    axes[i, j].text(
+                        0.05,
+                        0.95,
+                        f"Time: {time[i * num_cols + j]}",
+                        fontsize=10,
+                        verticalalignment="top",
+                        horizontalalignment="left",
+                        transform=axes[i, j].transAxes,
+                    )
+                
 
     fig.tight_layout()
     fig.subplots_adjust(wspace=0.0, hspace=0.05)
