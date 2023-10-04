@@ -10,14 +10,14 @@ import warnings
 
 
 def set_defaults(
-    m_min=None,
-    m_max=None,
-    wavenumber=None,
-    resolution=None,
-    power_spectrum=None,
-    cosmology=None,
-    collapse_function=None,
-    params=None,
+        m_min=None,
+        m_max=None,
+        wavenumber=None,
+        resolution=None,
+        power_spectrum=None,
+        cosmology=None,
+        collapse_function=None,
+        params=None,
 ):
     """Utility function to set default values for parameters if not provided.
 
@@ -56,8 +56,8 @@ def set_defaults(
         warnings.warn("No maximum mass provided, instead uses 1e14 Msun")
 
     if resolution is None:
-        resolution = 1000
-        warnings.warn("No resolution provided, instead uses 10000")
+        resolution = 100
+        warnings.warn("No resolution provided, instead uses 100")
 
     if wavenumber is None:
         wavenumber = np.logspace(-3, 1, num=resolution, base=10.0)
@@ -104,15 +104,15 @@ def set_defaults(
 
 
 def number_density_at_redshift(
-    z,
-    m_min=None,
-    m_max=None,
-    resolution=None,
-    wavenumber=None,
-    power_spectrum=None,
-    cosmology=None,
-    collapse_function=None,
-    params=None,
+        z,
+        m_min=None,
+        m_max=None,
+        resolution=None,
+        wavenumber=None,
+        power_spectrum=None,
+        cosmology=None,
+        collapse_function=None,
+        params=None,
 ):
     """Function to calculate the cumulative number density of Halos at a given
     redshift for different growth functions.
@@ -171,6 +171,10 @@ def number_density_at_redshift(
         return [0] * len(gf.growth_factor(z))
 
     growth_functions = gf.growth_factor(z)
+
+    if not isinstance(growth_functions, (list, np.ndarray)):
+        growth_functions = [growth_functions]
+
     cdfs = []
 
     for growth_function in growth_functions:
@@ -224,16 +228,16 @@ def growth_factor_at_redshift(z, cosmology=None):
 
 
 def redshift_halos_array_from_comoving_density(
-    redshift_list,
-    sky_area,
-    cosmology,
-    m_min=None,
-    m_max=None,
-    resolution=None,
-    wavenumber=None,
-    collapse_function=None,
-    power_spectrum=None,
-    params=None,
+        redshift_list,
+        sky_area,
+        cosmology,
+        m_min=None,
+        m_max=None,
+        resolution=None,
+        wavenumber=None,
+        collapse_function=None,
+        power_spectrum=None,
+        params=None,
 ):
     """Calculate an array of halo redshifts from a given comoving density.
 
@@ -313,15 +317,15 @@ def redshift_halos_array_from_comoving_density(
 
 
 def halo_mass_at_z(
-    z,
-    m_min=None,
-    m_max=None,
-    resolution=None,
-    wavenumber=None,
-    power_spectrum=None,
-    cosmology=None,
-    collapse_function=None,
-    params=None,
+        z,
+        m_min=None,
+        m_max=None,
+        resolution=None,
+        wavenumber=None,
+        power_spectrum=None,
+        cosmology=None,
+        collapse_function=None,
+        params=None,
 ):
     """Calculate the mass of Halos at a given redshift (list).
 
@@ -402,15 +406,15 @@ def halo_mass_at_z(
 
 
 def mass_first_moment_at_redshift(
-    z,
-    m_min=None,
-    m_max=None,
-    resolution=None,
-    wavenumber=None,
-    power_spectrum=None,
-    cosmology=None,
-    collapse_function=None,
-    params=None,
+        z,
+        m_min=None,
+        m_max=None,
+        resolution=None,
+        wavenumber=None,
+        power_spectrum=None,
+        cosmology=None,
+        collapse_function=None,
+        params=None,
 ):
     # define default parameters
     (
@@ -459,16 +463,16 @@ def mass_first_moment_at_redshift(
 
 
 def redshift_mass_sheet_correction_array_from_comoving_density(
-    redshift_list,
-    sky_area,
-    cosmology,
-    m_min=None,
-    m_max=None,
-    resolution=None,
-    wavenumber=None,
-    collapse_function=None,
-    power_spectrum=None,
-    params=None,
+        redshift_list,
+        sky_area,
+        cosmology,
+        m_min=None,
+        m_max=None,
+        resolution=None,
+        wavenumber=None,
+        collapse_function=None,
+        power_spectrum=None,
+        params=None,
 ):
     """"""
     if cosmology is None:
@@ -554,7 +558,7 @@ def cone_radius_angle_to_physical_area(radius_rad, z, cosmo):
     a specified cone angle and redshift using the angular diameter distance.
     """
     physical_radius = cosmo.angular_diameter_distance(z) * radius_rad  # Mpc
-    area_physical = np.pi * physical_radius**2
+    area_physical = np.pi * physical_radius ** 2
     return area_physical  # in Mpc2
 
 
@@ -574,16 +578,16 @@ def kappa_ext_for_each_sheet(redshift_list, first_moment, sky_area, cosmology):
 
 
 def redshift_mass_number(
-    redshift_list,
-    sky_area,
-    cosmology,
-    m_min=None,
-    m_max=None,
-    resolution=None,
-    wavenumber=None,
-    collapse_function=None,
-    power_spectrum=None,
-    params=None,
+        redshift_list,
+        sky_area,
+        cosmology,
+        m_min=None,
+        m_max=None,
+        resolution=None,
+        wavenumber=None,
+        collapse_function=None,
+        power_spectrum=None,
+        params=None,
 ):
     """"""
     if cosmology is None:

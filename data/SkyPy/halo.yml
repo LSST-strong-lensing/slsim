@@ -33,7 +33,7 @@ tables:
           cosmology: $cosmology
           m_min: $m_min
           m_max: $m_max
-          resolution: 1000
+          resolution: 100
           wavenumber: $wavenumber
           power_spectrum: $power_spectrum
           collapse_function: $collapse_function
@@ -58,7 +58,7 @@ tables:
               cosmology: $cosmology
               m_min: $m_min
               m_max: $m_max
-              resolution: 1000
+              resolution: 100
               wavenumber: $wavenumber
               power_spectrum: $power_spectrum
               collapse_function: $collapse_function

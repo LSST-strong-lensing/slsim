@@ -817,6 +817,5 @@ def worker_certain_redshift_lensext_kde(
             cosmo=cosmo,
             samples_number=samples_number,
         )
-
     distributions = nhalos_lens.get_kappaext_gammaext_distib_zdzs(zd, zs)
     return distributions

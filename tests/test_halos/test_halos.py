@@ -49,15 +49,15 @@ def test_defaults_set():
     ) = set_defaults()
     assert m_min == 1e10
     assert m_max == 1e14
-    assert len(wavenumber) == 1000
-    assert resolution == 1000
+    assert len(wavenumber) == 100
+    assert resolution == 100
     assert cosmology.name == "Planck18"
     assert collapse_function.__name__ == "ellipsoidal_collapse_function"
     assert params == (0.3, 0.7, 0.3, 1.686)
 
 
 def test_redshift_halos_array_from_comoving_density():
-    redshift_list = np.linspace(0, 5.00, 1000)
+    redshift_list = np.linspace(0, 5.00, 100)
     sky_area = 0.00005 * units.deg**2
     result = redshift_halos_array_from_comoving_density(
         redshift_list=redshift_list,
@@ -78,7 +78,7 @@ def test_valid_input_values():
     z = [0.5, 1.0, 1.5]
     m_min = 1e10
     m_max = 1e14
-    resolution = 1000
+    resolution = 100
     wavenumber = np.logspace(-3, 1, num=resolution, base=10.0)
     cosmology = default_cosmology.get()
     params = (0.3, 0.7, 0.3, 1.686)
@@ -100,7 +100,7 @@ def test_valid_input_values():
 
 
 def test_returns_array_of_redshift_values():
-    redshift_list = np.linspace(0, 3, 1000)
+    redshift_list = np.linspace(0, 3, 100)
     sky_area = 10 * units.deg**2
     cosmology = cosmo
 
@@ -108,7 +108,7 @@ def test_returns_array_of_redshift_values():
         redshift_list, sky_area, cosmology
     )
 
-    assert len(result) == 67781753
+    assert len(result) == 387007434
     assert isinstance(result[0], float)
 
 

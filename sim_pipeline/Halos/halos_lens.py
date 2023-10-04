@@ -46,7 +46,7 @@ def concentration_from_mass(z, mass, A=75.4, d=-0.422, m=-0.089):
     ----------
     . [1] Childs et al. 2018, arXiv:1804.10199, doi:10.3847/1538-4357/aabf95
     """
-    c_200 = A * ((1 + z) ** d) * (mass**m)
+    c_200 = A * ((1 + z) ** d) * (mass ** m)
     c_200 = np.maximum(c_200, 1)
     return c_200
     # TODO: Make this able for list
@@ -132,13 +132,13 @@ class HalosLens(object):
     # TODO: ADD test functions
     # TODO: Add documentation for all methods, CHANGE the documentation for all methods
     def __init__(
-        self,
-        halos_list,
-        mass_correction_list=None,
-        cosmo=None,
-        sky_area=4 * np.pi,
-        samples_number=1000,
-        mass_sheet=True,
+            self,
+            halos_list,
+            mass_correction_list=None,
+            cosmo=None,
+            sky_area=4 * np.pi,
+            samples_number=1000,
+            mass_sheet=True,
     ):
         """Initialize the HalosLens class.
 
@@ -183,7 +183,6 @@ class HalosLens(object):
         self.mass_list = halos_list["mass"]
         self.mass_sheet_correction_redshift = mass_correction_list["z"]
         self.kappa_ext_list = mass_correction_list["kappa_ext"]
-        # self.first_moment = mass_correction_list['first_moment']
         self.samples_number = samples_number
         self._z_source_convention = (
             10  # if this need to be changed, change it in the halos.py too
@@ -202,17 +201,43 @@ class HalosLens(object):
             (self.halos_redshift_list, self.mass_sheet_correction_redshift)
         )
 
-        self.lens_cosmo = [
-            LensCosmo(
-                z_lens=self.combined_redshift_list[h],
-                z_source=self._z_source_convention,
-                cosmo=self.cosmo,
-            )
-            for h in range(self.n_halos + self.n_correction)
-        ]
+        self._lens_cosmo = None  # place-holder for lazy load
+        self._lens_model = None  # same as above
+        c_200 = [concentration_from_mass(z=zi, mass=mi)[0]
+                 for zi, mi in zip(self.halos_redshift_list, self.mass_list)]
+        self.halos_list['c_200'] = c_200
 
-        self.lens_model = self.get_lens_model()
+        self.enhance_halos_table_random_pos()
         # TODO: Set z_source as an input parameter or other way
+
+    @property
+    def lens_cosmo(self):
+        """Lazy-load lens_cosmo."""
+        if self._lens_cosmo is None:
+            self._lens_cosmo = [
+                LensCosmo(
+                    z_lens=self.combined_redshift_list[h],
+                    z_source=self._z_source_convention,
+                    cosmo=self.cosmo,
+                )
+                for h in range(self.n_halos + self.n_correction)
+            ]
+        return self._lens_cosmo
+
+    @property
+    def lens_model(self):
+        """Lazy-load lens_model."""
+        if self._lens_model is None:  # Only compute if not already done
+            self._lens_model = self.get_lens_model()
+        return self._lens_model
+
+    def enhance_halos_table_random_pos(self):
+        n_halos = self.n_halos
+        px, py = np.array([self.random_position() for _ in range(n_halos)]).T
+
+        # Adding the computed attributes to the halos table
+        self.halos_list['px'] = px
+        self.halos_list['py'] = py
 
     def get_lens_model(self):
         """Create a lens model using provided halos and optional mass sheet
@@ -236,7 +261,7 @@ class HalosLens(object):
         if self.mass_sheet:
             lens_model = LensModel(
                 lens_model_list=["NFW"] * self.n_halos
-                + ["CONVERGENCE"] * self.n_correction,
+                                + ["CONVERGENCE"] * self.n_correction,
                 lens_redshift_list=self.combined_redshift_list,
                 cosmo=self.cosmo,
                 observed_convention_index=[],
@@ -272,7 +297,7 @@ class HalosLens(object):
         py = random_radius * np.sin(2 * phi)
         return px, py
 
-    def get_nfw_kwargs(self, z=None, mass=None, n_halos=None, lens_cosmo=None):
+    def get_nfw_kwargs(self, z=None, mass=None, n_halos=None, lens_cosmo=None, c=None):
         """Returns the angle at scale radius, observed bending angle at the
         scale radius, and positions of the Halos in the lens plane from
         physical mass and concentration parameter of an NFW profile.
@@ -285,6 +310,8 @@ class HalosLens(object):
             Arrays containing Rs_angle, alpha_Rs, and x and y positions of all the Halos.
         """
         # TODO: make for divided
+        # TODO: make only computed one
+        # TODO: docstring
 
         if n_halos is None:
             n_halos = self.n_halos
@@ -294,12 +321,14 @@ class HalosLens(object):
             z = self.halos_redshift_list
         if mass is None:
             mass = self.mass_list
-        c_200 = concentration_from_mass(z=z, mass=mass)
+        assert len(z) == len(mass)
         if lens_cosmo is None:
             lens_cosmo = self.lens_cosmo
+        if c is None:
+            c = self.halos_list['c_200']
         for h in range(n_halos):
             Rs_angle_h, alpha_Rs_h = lens_cosmo[h].nfw_physical2angle(
-                M=mass[h], c=c_200[h]
+                M=mass[h], c=c
             )
             if isinstance(Rs_angle_h, Iterable):
                 Rs_angle.extend(Rs_angle_h)
@@ -311,10 +340,9 @@ class HalosLens(object):
             else:
                 alpha_Rs.append(alpha_Rs_h)
 
-        px, py = np.array([self.random_position() for _ in range(n_halos)]).T
         Rs_angle = np.array(Rs_angle)
         Rs_angle = np.array(Rs_angle)
-        return Rs_angle, alpha_Rs, px, py
+        return Rs_angle, alpha_Rs
 
     def get_halos_lens_kwargs(self):
         """Constructs and returns the list of keyword arguments for each halo
@@ -326,33 +354,33 @@ class HalosLens(object):
             The list of dictionaries containing the keyword arguments for each halo.!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         """
         if self.mass_sheet:
-            Rs_angle, alpha_Rs, px, py = self.get_nfw_kwargs()
+            Rs_angle, alpha_Rs = self.get_nfw_kwargs()
             kappa = self.kappa_ext_list
             ra_0 = [0] * self.n_correction
             dec_0 = [0] * self.n_correction
 
             kwargs_lens = [
-                {
-                    "Rs": Rs_angle[h],
-                    "alpha_Rs": alpha_Rs[h],
-                    "center_x": px[h],
-                    "center_y": py[h],
-                }
-                for h in range(self.n_halos)
-            ] + [
-                {"kappa": kappa[h], "ra_0": ra_0[h], "dec_0": dec_0[h]}
-                for h in range(self.n_correction)
-            ]
+                              {
+                                  "Rs": Rs_angle[h],
+                                  "alpha_Rs": alpha_Rs[h],
+                                  "center_x": self.halos_list['px'][h],
+                                  "center_y": self.halos_list['py'][h],
+                              }
+                              for h in range(self.n_halos)
+                          ] + [
+                              {"kappa": kappa[h], "ra_0": ra_0[h], "dec_0": dec_0[h]}
+                              for h in range(self.n_correction)
+                          ]
 
         else:
-            Rs_angle, alpha_Rs, px, py = self.get_nfw_kwargs()
+            Rs_angle, alpha_Rs = self.get_nfw_kwargs()
 
             kwargs_lens = [
                 {
                     "Rs": Rs_angle[h],
                     "alpha_Rs": alpha_Rs[h],
-                    "center_x": px[h],
-                    "center_y": py[h],
+                    "center_x": self.halos_list['px'][h],
+                    "center_y": self.halos_list['py'][h],
                 }
                 for h in range(self.n_halos)
             ]
@@ -360,13 +388,13 @@ class HalosLens(object):
         return kwargs_lens
 
     def get_convergence_shear(
-        self,
-        gamma12=False,
-        diff=1.0,
-        diff_method="square",
-        kwargs=None,
-        lens_model=None,
-        zdzs=None,
+            self,
+            gamma12=False,
+            diff=1.0,
+            diff_method="square",
+            kwargs=None,
+            lens_model=None,
+            zdzs=None,
     ):
         """Calculates and returns the convergence and shear at the origin due
         to all the Halos.
@@ -402,6 +430,11 @@ class HalosLens(object):
                 kwargs_lens=kwargs,
                 diff=1.0,
             )
+        #    print(f'zd{zdzs[0]}zs{zdzs[1]}', f_xx, f_xy, f_yx, f_yy)
+        #    print('nonezdzs', lens_model.hessian(
+        #        x=0.0, y=0.0, kwargs=kwargs, diff=1.0, diff_method='square'
+        #    ))
+        #    print('------------------------------')
         else:
             f_xx, f_xy, f_yx, f_yy = lens_model.hessian(
                 x=0.0, y=0.0, kwargs=kwargs, diff=diff, diff_method=diff_method
@@ -412,11 +445,10 @@ class HalosLens(object):
             gamma2 = f_xy
             return kappa, gamma1, gamma2
         else:
-            gamma = np.sqrt(f_xy**2 + 0.25 * (f_xx - f_yy) ** 2)
+            gamma = np.sqrt(f_xy ** 2 + 0.25 * (f_xx - f_yy) ** 2)
             return kappa, gamma
 
-    @staticmethod
-    def compute_kappa_gamma(i, obj, gamma_tot, diff, diff_method):
+    def compute_kappa_gamma(self, i, gamma_tot, diff, diff_method):
         """Compute the convergence and shear values for a given index.
 
         This method is designed to be used with multiprocessing to speed up the process.
@@ -444,13 +476,15 @@ class HalosLens(object):
         This function is designed to work in conjunction with `get_kappa_gamma_distib` which uses multiprocessing
         to compute the kappa and gamma values for multiple samples in parallel.
         """
+        self.enhance_halos_table_random_pos()
+
         if gamma_tot:
-            kappa, gamma = obj.get_convergence_shear(
+            kappa, gamma = self.get_convergence_shear(
                 gamma12=False, diff=diff, diff_method=diff_method
             )
             return [kappa, gamma]
         else:
-            kappa, gamma1, gamma2 = obj.get_convergence_shear(
+            kappa, gamma1, gamma2 = self.get_convergence_shear(
                 gamma12=True, diff=diff, diff_method=diff_method
             )
             return [kappa, gamma1, gamma2]
@@ -491,7 +525,7 @@ class HalosLens(object):
             results = pool.starmap(
                 self.compute_kappa_gamma,
                 [
-                    (i, self, gamma_tot, diff, diff_method)
+                    (i, gamma_tot, diff, diff_method)
                     for i in range(self.samples_number)
                 ],
             )
@@ -509,7 +543,7 @@ class HalosLens(object):
         # TODO: Maybe considering a choice between multiprocessing and not multiprocessing.
 
     def get_kappa_gamma_distib_without_multiprocessing(
-        self, gamma_tot=False, diff=1.0, diff_method="square"
+            self, gamma_tot=False, diff=1.0, diff_method="square"
     ):
         """Runs the method get_convergence_shear() a specific number of times
         and stores the results for kappa, gamma1, and gamma2 in separate lists.
@@ -549,12 +583,14 @@ class HalosLens(object):
 
         if gamma_tot:
             for i in loop:
+                self.enhance_halos_table_random_pos()
                 kappa, gamma = self.get_convergence_shear(
                     gamma12=False, diff=diff, diff_method=diff_method
                 )
                 kappa_gamma_distribution[i] = [kappa, gamma]
         else:
             for i in loop:
+                self.enhance_halos_table_random_pos()
                 kappa, gamma1, gamma2 = self.get_convergence_shear(
                     gamma12=True, diff=diff, diff_method=diff_method
                 )
@@ -637,7 +673,7 @@ class HalosLens(object):
         """
         halos_ds = self.halos_list[
             (self.halos_list["z"] >= zd) & (self.halos_list["z"] < zs)
-        ]
+            ]
         halos_od = self.halos_list[self.halos_list["z"] < zd]
         halos_os = self.halos_list[self.halos_list["z"] < zs]
         return halos_od, halos_ds, halos_os
@@ -674,13 +710,13 @@ class HalosLens(object):
         mass_correction_ds = self.mass_correction_list[
             (self.mass_correction_list["z"] >= zd)
             & (self.mass_correction_list["z"] < zs)
-        ]
+            ]
         mass_correction_od = self.mass_correction_list[
             self.mass_correction_list["z"] < zd
-        ]
+            ]
         mass_correction_os = self.mass_correction_list[
             self.mass_correction_list["z"] < zs
-        ]
+            ]
         return mass_correction_od, mass_correction_ds, mass_correction_os
 
     def _build_lens_data(self, halos, mass_correction, zd, zs):
@@ -697,10 +733,10 @@ class HalosLens(object):
             If there's no mass correction, this can be None.
 
         zd : float
-            Deflector redshift.
+            Begin redshift.
 
         zs : float
-            Source redshift.
+            End redshift.
 
         Returns
         -------
@@ -729,6 +765,9 @@ class HalosLens(object):
         n_mass_correction = len(mass_correction) if mass_correction is not None else 0
         z_halo = halos["z"]
         mass_halo = halos["mass"]
+        px_halo = halos["px"]
+        py_halo = halos["py"]
+        c_200_halos = halos["c_200"]
 
         if mass_correction is not None and self.mass_sheet:
             z_mass_correction = mass_correction["z"]
@@ -768,6 +807,9 @@ class HalosLens(object):
             n_mass_correction,
             z_halo,
             mass_halo,
+            px_halo,
+            py_halo,
+            c_200_halos,
             lens_model_list,
             kappa_ext_list,
             lens_cosmo_list,
@@ -843,11 +885,10 @@ class HalosLens(object):
         to any additional redshifts present in `combined_redshift_list`.
         """
         n_halos = n_halos
-        len(combined_redshift_list)
 
         if len(combined_redshift_list) - n_halos > 0:
             lens_model_list = ["NFW"] * n_halos + ["CONVERGENCE"] * (
-                len(combined_redshift_list) - n_halos
+                    len(combined_redshift_list) - n_halos
             )
         elif len(combined_redshift_list) - n_halos < 0:
             raise ValueError(
@@ -861,7 +902,6 @@ class HalosLens(object):
             lens_model_list=lens_model_list,
             lens_redshift_list=combined_redshift_list,
             cosmo=self.cosmo,
-            observed_convention_index=[],
             multi_plane=True,
             z_source=z_source,
             z_source_convention=self._z_source_convention,
@@ -869,14 +909,17 @@ class HalosLens(object):
         return lens_model, lens_model_list
 
     def _build_kwargs_lens(
-        self,
-        n_halos,
-        n_mass_correction,
-        z_halo,
-        mass_halo,
-        lens_model_list,
-        kappa_ext_list,
-        lens_cosmo_list=None,
+            self,
+            n_halos,
+            n_mass_correction,
+            z_halo,
+            mass_halo,
+            px_halo,
+            py_halo,
+            c_200_halos,
+            lens_model_list,
+            kappa_ext_list,
+            lens_cosmo_list=None,
     ):
         """Constructs the lens keyword arguments based on provided input
         parameters.
@@ -926,10 +969,9 @@ class HalosLens(object):
                 for h in range(n_mass_correction)
             ]
 
-        Rs_angle, alpha_Rs, px, py = self.get_nfw_kwargs(
-            z=z_halo, mass=mass_halo, n_halos=n_halos, lens_cosmo=lens_cosmo_list
+        Rs_angle, alpha_Rs = self.get_nfw_kwargs(
+            z=z_halo, mass=mass_halo, n_halos=n_halos, lens_cosmo=lens_cosmo_list, c=c_200_halos
         )
-        # TODO: make it only comuter once for same lists
         # TODO: different lens_cosmo
 
         if "CONVERGENCE" in lens_model_list:
@@ -937,8 +979,8 @@ class HalosLens(object):
                 {
                     "Rs": Rs_angle[i],
                     "alpha_Rs": alpha_Rs[i],
-                    "center_x": px[i],
-                    "center_y": py[i],
+                    "center_x": px_halo[i],
+                    "center_y": py_halo[i],
                 }
                 for i in range(n_halos)
             ] + [
@@ -949,8 +991,8 @@ class HalosLens(object):
             {
                 "Rs": Rs_angle[i],
                 "alpha_Rs": alpha_Rs[i],
-                "center_x": px[i],
-                "center_y": py[i],
+                "center_x": px_halo[i],
+                "center_y": py_halo[i],
             }
             for i in range(n_halos)
         ]
@@ -1174,6 +1216,7 @@ class HalosLens(object):
         start_time = time.time()
 
         for i in loop:
+            self.enhance_halos_table_random_pos()
             kappa, gamma = self.get_kext_gext_values(zd=zd, zs=zs)
             kappa_gamma_distribution[i] = [kappa, gamma]
 
