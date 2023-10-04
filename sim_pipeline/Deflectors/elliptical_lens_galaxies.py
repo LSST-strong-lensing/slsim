@@ -1,19 +1,20 @@
 import numpy as np
 import numpy.random as random
-from sim_pipeline.selection import galaxy_cut
+from sim_pipeline.selection import deflector_cut
 from sim_pipeline.Deflectors.velocity_dispersion import vel_disp_sdss
 from sim_pipeline.Util import param_util
+from sim_pipeline.Deflectors.deflector_base import DeflectorBase
 
 
-class EllipticalLensGalaxies(object):
+class EllipticalLensGalaxies(DeflectorBase):
     """Class describing elliptical galaxies."""
 
     def __init__(self, galaxy_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area):
         """
 
-        :param galaxy_list: list of dictionary with galaxy parameters of elliptical
-            galaxies (currently supporting skypy pipelines)
-        :param kwargs_cut: cuts in parameters
+        :param galaxy_list: list of dictionary with galaxy parameters of
+            elliptical galaxies (currently supporting skypy pipelines)
+        :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max
         :type kwargs_cut: dict
         :param kwargs_mass2light: mass-to-light relation
         :param cosmo: astropy.cosmology instance
@@ -21,6 +22,13 @@ class EllipticalLensGalaxies(object):
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
         """
+        super().__init__(
+            deflector_table=galaxy_list,
+            kwargs_cut=kwargs_cut,
+            cosmo=cosmo,
+            sky_area=sky_area,
+        )
+
         n = len(galaxy_list)
         column_names = galaxy_list.colnames
         if "vel_disp" not in column_names:
@@ -34,9 +42,8 @@ class EllipticalLensGalaxies(object):
         if "n_sersic" not in column_names:
             galaxy_list["n_sersic"] = -np.ones(n)
 
-        self._galaxy_select = galaxy_cut(galaxy_list, **kwargs_cut)
+        self._galaxy_select = deflector_cut(galaxy_list, **kwargs_cut)
         self._num_select = len(self._galaxy_select)
-
         z_min, z_max = 0, np.max(self._galaxy_select["z"])
         redshift = np.arange(z_min, z_max, 0.1)
         z_list, vel_disp_list = vel_disp_sdss(
@@ -62,7 +69,7 @@ class EllipticalLensGalaxies(object):
     def deflector_number(self):
         """
 
-        :return: number of deflector
+        :return: number of deflectors
         """
         number = self._num_select
         return number
