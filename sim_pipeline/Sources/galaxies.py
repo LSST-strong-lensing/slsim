@@ -1,6 +1,6 @@
 import numpy as np
 import numpy.random as random
-from sim_pipeline.selection import galaxy_cut
+from sim_pipeline.selection import deflector_cut
 from sim_pipeline.Util import param_util
 from sim_pipeline.Sources.source_base import SourceBase
 
@@ -13,13 +13,14 @@ class Galaxies(SourceBase):
 
         :param galaxy_list: list of dictionary with galaxy parameters
         :type galaxy_list: astropy Table object
-        :param kwargs_cut: cuts in parameters
+        :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max
         :type kwargs_cut: dict
         :param cosmo: astropy.cosmology instance
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
         :type sky_area: `~astropy.units.Quantity`
         """
+        super(Galaxies, self).__init__(cosmo=cosmo, sky_area=sky_area)
         self.n = len(galaxy_list)
         # add missing keywords in astropy.Table object
         column_names = galaxy_list.colnames
@@ -31,10 +32,9 @@ class Galaxies(SourceBase):
         if "n_sersic" not in column_names:
             galaxy_list["n_sersic"] = -np.ones(self.n)
         # make cuts
-        self._galaxy_select = galaxy_cut(galaxy_list, **kwargs_cut)
+        self._galaxy_select = deflector_cut(galaxy_list, **kwargs_cut)
 
         self._num_select = len(self._galaxy_select)
-        super(Galaxies, self).__init__(cosmo=cosmo, sky_area=sky_area)
 
     def source_number(self):
         """Number of sources registered (within given area on the sky)

@@ -39,6 +39,10 @@ coverage:
 	coverage html
 	open htmlcov/index.html
 
+format:
+	black .
+	docformatter ./* -r --black --in-place
+
 docs:
 	rm -f docs/modules.rst
 	sphinx-apidoc -o docs/ sim_pipeline

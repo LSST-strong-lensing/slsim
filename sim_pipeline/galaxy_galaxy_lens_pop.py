@@ -4,10 +4,10 @@ from sim_pipeline.galaxy_galaxy_lens import (
     theta_e_when_source_infinity,
 )
 import numpy as np
-import warnings
+from sim_pipeline.lensed_population import LensedPopulation
 
 
-class GalaxyGalaxyLensPop(object):
+class GalaxyGalaxyLensPop(LensedPopulation):
     """Class to perform samples of galaxy-galaxy lensing."""
 
     def __init__(
@@ -40,28 +40,21 @@ class GalaxyGalaxyLensPop(object):
         :param filters: filters for SED integration
         :type filters: list of strings or None
         """
-        if sky_area is None:
-            from astropy.units import Quantity
-
-            sky_area = Quantity(value=0.1, unit="deg2")
-            warnings.warn("No sky area provided, instead uses 0.1 deg2")
+        super().__init__(sky_area, cosmo)
         if deflector_type in ["elliptical", "all-galaxies"] or source_type in [
             "galaxies"
         ]:
             pipeline = SkyPyPipeline(
-                skypy_config=skypy_config, sky_area=sky_area, filters=filters
+                skypy_config=skypy_config,
+                sky_area=sky_area,
+                filters=filters,
+                cosmo=cosmo,
             )
         if kwargs_deflector_cut is None:
             kwargs_deflector_cut = {}
         if kwargs_mass2light is None:
             kwargs_mass2light = {}
-        if cosmo is None:
-            warnings.warn(
-                "No cosmology provided, instead uses flat LCDM with default parameters"
-            )
-            from astropy.cosmology import FlatLambdaCDM
 
-            cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         if deflector_type == "elliptical":
             from sim_pipeline.Deflectors.elliptical_lens_galaxies import (
                 EllipticalLensGalaxies,
@@ -74,17 +67,22 @@ class GalaxyGalaxyLensPop(object):
                 cosmo=cosmo,
                 sky_area=sky_area,
             )
+
         elif deflector_type == "all-galaxies":
             from sim_pipeline.Deflectors.all_lens_galaxies import AllLensGalaxies
 
+            red_galaxy_list = pipeline.red_galaxies
+            blue_galaxy_list = pipeline.blue_galaxies
+
             self._lens_galaxies = AllLensGalaxies(
-                pipeline.red_galaxies,
-                pipeline.blue_galaxies,
+                red_galaxy_list=red_galaxy_list,
+                blue_galaxy_list=blue_galaxy_list,
                 kwargs_cut=kwargs_deflector_cut,
                 kwargs_mass2light=kwargs_mass2light,
                 cosmo=cosmo,
                 sky_area=sky_area,
             )
+
         else:
             raise ValueError("deflector_type %s is not supported" % deflector_type)
 
@@ -114,7 +112,7 @@ class GalaxyGalaxyLensPop(object):
         """Draw a random lens within the cuts of the lens and source, with possible
         additional cut in the lensing configuration.
 
-        #TODO: make sure mass function is preserved, # as well as option to draw all
+        # TODO: make sure mass function is preserved, # as well as option to draw all
         lenses within the cuts within the area
 
         :return: GalaxyGalaxyLens() instance with parameters of the deflector and lens
@@ -144,7 +142,7 @@ class GalaxyGalaxyLensPop(object):
         """Number of sources that are being considered to be placed in the sky area
         potentially aligned behind deflectors.
 
-        :return: number of sources
+        :return: number of potential sources
         """
         return self._sources.source_number()
 
@@ -170,8 +168,7 @@ class GalaxyGalaxyLensPop(object):
 
     def draw_population(self, kwargs_lens_cuts):
         """Return full population list of all lenses within the area # TODO: need to
-        implement a version of it. (improve the algorithm) Draw a population of galaxy-
-        galaxy lenses within the area.
+        implement a version of it. (improve the algorithm)
 
         :param kwargs_lens_cuts: validity test keywords
         :type kwargs_lens_cuts: dict

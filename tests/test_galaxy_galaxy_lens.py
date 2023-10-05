@@ -72,8 +72,8 @@ class TestGalaxyGalaxyLens(object):
         # We expect that theta_E_infinity should be less than 15
         assert theta_E_infinity < 15
 
-    def test_host_magnification(self):
-        host_mag = self.gg_lens.host_magnification()
+    def test_extended_source_magnification(self):
+        host_mag = self.gg_lens.extended_source_magnification()
         assert host_mag > 0
 
     def test_deflector_stellar_mass(self):
