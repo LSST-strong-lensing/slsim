@@ -6,9 +6,10 @@ from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
 from sim_pipeline.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
 from lenstronomy.Util import util, data_util
+from sim_pipeline.lensed_system import LensedSystem
 
 
-class GalaxyGalaxyLens(object):
+class GalaxyGalaxyLens(LensedSystem):
     """Class to manage individual galaxy-galaxy lenses."""
 
     def __init__(
@@ -44,29 +45,32 @@ class GalaxyGalaxyLens(object):
             register a point source (ignore highly de-magnified images)
         :type magnification_limit: float >= 0
         """
-        self._source_dict = source_dict
-        self._lens_dict = deflector_dict
+        super().__init__(
+            source_dict=source_dict,
+            deflector_dict=deflector_dict,
+            cosmo=cosmo,
+            test_area=test_area,
+        )
         self.cosmo = cosmo
         self._source_type = source_type
-        self.test_area = test_area
         self._mixgauss_means = mixgauss_means
         self._mixgauss_stds = mixgauss_stds
         self._mixgauss_weights = mixgauss_weights
         self._magnification_limit = magnification_limit
-        if self._lens_dict["z"] >= self._source_dict["z"]:
+        if self._deflector_dict["z"] >= self._source_dict["z"]:
             self._theta_E_sis = 0
         else:
             lens_cosmo = LensCosmo(
-                z_lens=float(self._lens_dict["z"]),
+                z_lens=float(self._deflector_dict["z"]),
                 z_source=float(self._source_dict["z"]),
                 cosmo=self.cosmo,
             )
             self._theta_E_sis = lens_cosmo.sis_sigma_v2theta_E(
-                float(self._lens_dict["vel_disp"])
+                float(self._deflector_dict["vel_disp"])
             )
 
     @property
-    def lens_position(self):
+    def deflector_position(self):
         """Center of the deflector position.
 
         :return: [x_pox, y_pos] in arc seconds
@@ -86,7 +90,7 @@ class GalaxyGalaxyLens(object):
 
         :return: [x_pos, y_pos]
         """
-        center_lens = self.lens_position
+        center_lens = self.deflector_position
 
         if not hasattr(self, "_center_source"):
             # Define the radius of the test area circle
@@ -108,7 +112,7 @@ class GalaxyGalaxyLens(object):
         :return: x-pos, y-pos
         """
         if not hasattr(self, "_image_positions"):
-            lens_model_list, kwargs_lens = self.lens_model_lenstronomy()
+            lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
             lens_model_class = LensModel(lens_model_list=lens_model_list)
             lens_eq_solver = LensEquationSolver(lens_model_class)
             source_pos_x, source_pos_y = self.source_position
@@ -138,9 +142,9 @@ class GalaxyGalaxyLens(object):
         :type mag_arc_limit: dict with key of bands and values of magnitude limits
         :return: boolean
         """
-        # Criteria 1:The redshift of the lens (z_lens) must be less than the redshift of
-        # the source (z_source).
-        z_lens = self._lens_dict["z"]
+        # Criteria 1:The redshift of the lens (z_lens) must be less than the
+        # redshift of the source (z_source).
+        z_lens = self._deflector_dict["z"]
         z_source = self._source_dict["z"]
         if z_lens >= z_source:
             return False
@@ -152,10 +156,10 @@ class GalaxyGalaxyLens(object):
         if not min_image_separation <= 2 * self._theta_E_sis <= max_image_separation:
             return False
 
-        # Criteria 3: The distance between the lens center and the source position must
-        # be less than or equal to the angular Einstein radius of the lensing
-        # configuration (times sqrt(2)).
-        center_lens, center_source = self.lens_position, self.source_position
+        # Criteria 3: The distance between the lens center and the source position
+        # must be less than or equal to the angular Einstein radius
+        # of the lensing configuration (times sqrt(2)).
+        center_lens, center_source = self.deflector_position, self.source_position
 
         if np.sum((center_lens - center_source) ** 2) > self._theta_E_sis**2 * 2:
             return False
@@ -179,7 +183,7 @@ class GalaxyGalaxyLens(object):
             # makes sure magnification of extended source is only used when there is
             # an extended source
             bool_mag_limit = False
-            host_mag = self.host_magnification()
+            host_mag = self.extended_source_magnification()
             for band, mag_limit_band in mag_arc_limit.items():
                 mag_source = self.extended_source_magnitude(band)
                 mag_arc = mag_source - 2.5 * np.log10(
@@ -195,12 +199,12 @@ class GalaxyGalaxyLens(object):
         # TODO: test for signal-to-noise ratio in surface brightness
 
     @property
-    def lens_redshift(self):
+    def deflector_redshift(self):
         """
 
         :return: lens redshift
         """
-        return self._lens_dict["z"]
+        return self._deflector_dict["z"]
 
     @property
     def source_redshift(self):
@@ -224,11 +228,11 @@ class GalaxyGalaxyLens(object):
 
         :return: e1_light, e2_light, e1_mass, e2_mass
         """
-        e1_light, e2_light = float(self._lens_dict["e1_light"]), float(
-            self._lens_dict["e2_light"]
+        e1_light, e2_light = float(self._deflector_dict["e1_light"]), float(
+            self._deflector_dict["e2_light"]
         )
-        e1_mass, e2_mass = float(self._lens_dict["e1_mass"]), float(
-            self._lens_dict["e2_mass"]
+        e1_mass, e2_mass = float(self._deflector_dict["e1_mass"]), float(
+            self._deflector_dict["e2_mass"]
         )
         return e1_light, e2_light, e1_mass, e2_mass
 
@@ -237,14 +241,14 @@ class GalaxyGalaxyLens(object):
 
         :return: stellar mass of deflector
         """
-        return self._lens_dict["stellar_mass"]
+        return self._deflector_dict["stellar_mass"]
 
     def deflector_velocity_dispersion(self):
         """
 
         :return: velocity dispersion [km/s]
         """
-        return self._lens_dict["vel_disp"]
+        return self._deflector_dict["vel_disp"]
 
     def los_linear_distortions(self):
         """Line-of-sight distortions in shear and convergence.
@@ -279,7 +283,7 @@ class GalaxyGalaxyLens(object):
         :return: magnitude of deflector in given band
         """
         band_string = str("mag_" + band)
-        return self._lens_dict[band_string]
+        return self._deflector_dict[band_string]
 
     def point_source_arrival_times(self):
         """Arrival time of images relative to a straight line without lensing. Negative
@@ -289,11 +293,11 @@ class GalaxyGalaxyLens(object):
         :return: arrival times for each image [days]
         :rtype: numpy array
         """
-        lens_model_list, kwargs_lens = self.lens_model_lenstronomy()
+        lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
         lens_model = LensModel(
             lens_model_list=lens_model_list,
             cosmo=self.cosmo,
-            z_lens=self.lens_redshift,
+            z_lens=self.deflector_redshift,
             z_source=self.source_redshift,
         )
         x_image, y_image = self.image_positions()
@@ -352,7 +356,7 @@ class GalaxyGalaxyLens(object):
         # TODO: might have to change conventions between extended and point source
         source_mag = self._source_dict[band_string]
         if lensed:
-            mag = self.host_magnification()
+            mag = self.extended_source_magnification()
             return source_mag - 2.5 * np.log10(mag)
         return source_mag
 
@@ -362,19 +366,19 @@ class GalaxyGalaxyLens(object):
         :return: signed magnification of point sources in same order as image positions
         """
         if not hasattr(self, "_ps_magnification"):
-            lens_model_list, kwargs_lens = self.lens_model_lenstronomy()
+            lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
             lensModel = LensModel(lens_model_list=lens_model_list)
             img_x, img_y = self.image_positions()
             self._ps_magnification = lensModel.magnification(img_x, img_y, kwargs_lens)
         return self._ps_magnification
 
-    def host_magnification(self):
+    def extended_source_magnification(self):
         """Compute the extended lensed surface brightness and calculates the integrated
         flux-weighted magnification factor of the extended host galaxy.
 
         :return: integrated magnification factor of host magnitude
         """
-        if not hasattr(self, "_host_magnification"):
+        if not hasattr(self, "_extended_source_magnification"):
             kwargs_model, kwargs_params = self.lenstronomy_kwargs(band=None)
             lightModel = LightModel(
                 light_model_list=kwargs_model.get("source_light_model_list", [])
@@ -403,10 +407,10 @@ class GalaxyGalaxyLens(object):
                 lightModel.surface_brightness(x, y, kwargs_source_amp)
             )
             if flux_no_lens > 0:
-                self._host_magnification = flux_lensed / flux_no_lens
+                self._extended_source_magnification = flux_lensed / flux_no_lens
             else:
-                self._host_magnification = 0
-        return self._host_magnification
+                self._extended_source_magnification = 0
+        return self._extended_source_magnification
 
     def lenstronomy_kwargs(self, band=None):
         """Generates lenstronomy dictionary conventions for the class object.
@@ -415,70 +419,24 @@ class GalaxyGalaxyLens(object):
         :type band: string or None
         :return: lenstronomy model and parameter conventions
         """
-        lens_model_list, kwargs_lens = self.lens_model_lenstronomy()
+        lens_mass_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
+        (
+            lens_light_model_list,
+            kwargs_lens_light,
+        ) = self.deflector_light_model_lenstronomy(band=band)
+
         kwargs_model = {
-            "lens_light_model_list": ["SERSIC_ELLIPSE"],
-            "lens_model_list": lens_model_list,
+            "lens_light_model_list": lens_light_model_list,
+            "lens_model_list": lens_mass_model_list,
         }
 
-        center_lens, center_source = self.lens_position, self.source_position
-        if self._source_type == "extended":
-            # convert radian to arc seconds
-            if band is None:
-                mag_source = 1
-            else:
-                mag_source = self.extended_source_magnitude(band)
-            size_source_arcsec = (
-                float(self._source_dict["angular_size"]) / constants.arcsec
-            )
-            kwargs_model["source_light_model_list"] = ["SERSIC_ELLIPSE"]
-            kwargs_source = [
-                {
-                    "magnitude": mag_source,
-                    "R_sersic": size_source_arcsec,
-                    "n_sersic": float(self._source_dict["n_sersic"]),
-                    "e1": float(self._source_dict["e1"]),
-                    "e2": float(self._source_dict["e2"]),
-                    "center_x": center_source[0],
-                    "center_y": center_source[1],
-                }
-            ]
-        else:
-            kwargs_source = None
+        sources, sources_kwargs = self.source_light_model_lenstronomy(band=band)
+        # ensure that only the models that exist are getting added to kwargs_model
+        for k in sources.keys():
+            kwargs_model[k] = sources[k]
 
-        if self._source_type == "point_source":
-            kwargs_model["point_source_model"] = ["LENSED_POSITION"]
-            img_x, img_y = self.image_positions()
-            if band is None:
-                image_magnitudes = np.abs(self.point_source_magnification())
-            else:
-                image_magnitudes = self.point_source_magnitude(band=band, lensed=True)
-            kwargs_ps = [
-                {"ra_image": img_x, "dec_image": img_y, "point_amp": image_magnitudes}
-            ]
-        else:
-            kwargs_ps = None
-
-        e1_light_lens, e2_light_lens, e1_mass, e2_mass = self.deflector_ellipticity()
-        size_lens_arcsec = (
-            self._lens_dict["angular_size"] / constants.arcsec
-        )  # convert radian to arc seconds
-
-        if band is None:
-            mag_lens = 1
-        else:
-            mag_lens = self.deflector_magnitude(band)
-        kwargs_lens_light = [
-            {
-                "magnitude": mag_lens,
-                "R_sersic": size_lens_arcsec,
-                "n_sersic": float(self._lens_dict["n_sersic"]),
-                "e1": e1_light_lens,
-                "e2": e2_light_lens,
-                "center_x": center_lens[0],
-                "center_y": center_lens[1],
-            }
-        ]
+        kwargs_source = sources_kwargs["kwargs_source"]
+        kwargs_ps = sources_kwargs["kwargs_ps"]
 
         kwargs_params = {
             "kwargs_lens": kwargs_lens,
@@ -486,17 +444,18 @@ class GalaxyGalaxyLens(object):
             "kwargs_lens_light": kwargs_lens_light,
             "kwargs_ps": kwargs_ps,
         }
+
         return kwargs_model, kwargs_params
 
-    def lens_model_lenstronomy(self):
+    def deflector_mass_model_lenstronomy(self):
         """Returns lens model instance and parameters in lenstronomy conventions.
 
         :return: lens_model_list, kwargs_lens
         """
-        lens_model_list = ["EPL", "SHEAR", "CONVERGENCE"]
+        lens_mass_model_list = ["EPL", "SHEAR", "CONVERGENCE"]
         theta_E = self.einstein_radius
         e1_light_lens, e2_light_lens, e1_mass, e2_mass = self.deflector_ellipticity()
-        center_lens = self.lens_position
+        center_lens = self.deflector_position
         gamma1, gamma2, kappa_ext = self.los_linear_distortions()
         kwargs_lens = [
             {
@@ -510,7 +469,88 @@ class GalaxyGalaxyLens(object):
             {"gamma1": gamma1, "gamma2": gamma2, "ra_0": 0, "dec_0": 0},
             {"kappa": kappa_ext, "ra_0": 0, "dec_0": 0},
         ]
-        return lens_model_list, kwargs_lens
+
+        return lens_mass_model_list, kwargs_lens
+
+    def deflector_light_model_lenstronomy(self, band=None):
+        """Returns lens model instance and parameters in lenstronomy conventions.
+
+        :return: lens_light_model_list, kwargs_lens_light
+        """
+        lens_light_model_list = ["SERSIC_ELLIPSE"]
+        center_lens = self.deflector_position
+        e1_light_lens, e2_light_lens, e1_mass, e2_mass = self.deflector_ellipticity()
+        size_lens_arcsec = (
+            self._deflector_dict["angular_size"] / constants.arcsec
+        )  # convert radian to arc seconds
+
+        if band is None:
+            mag_lens = 1
+        else:
+            mag_lens = self.deflector_magnitude(band)
+        kwargs_lens_light = [
+            {
+                "magnitude": mag_lens,
+                "R_sersic": size_lens_arcsec,
+                "n_sersic": float(self._deflector_dict["n_sersic"]),
+                "e1": e1_light_lens,
+                "e2": e2_light_lens,
+                "center_x": center_lens[0],
+                "center_y": center_lens[1],
+            }
+        ]
+        return lens_light_model_list, kwargs_lens_light
+
+    def source_light_model_lenstronomy(self, band=None):
+        """Returns source light model instance and parameters in lenstronomy
+        conventions.
+
+        :return: source_light_model_list, kwargs_source_light
+        """
+        source_models = {}
+        all_source_kwarg_dict = {}
+        center_source = self.source_position
+        if self._source_type == "extended":
+            # convert radian to arc seconds
+            if band is None:
+                mag_source = 1
+            else:
+                mag_source = self.extended_source_magnitude(band)
+            size_source_arcsec = (
+                float(self._source_dict["angular_size"]) / constants.arcsec
+            )
+            source_models["source_light_model_list"] = ["SERSIC_ELLIPSE"]
+            kwargs_source = [
+                {
+                    "magnitude": mag_source,
+                    "R_sersic": size_source_arcsec,
+                    "n_sersic": float(self._source_dict["n_sersic"]),
+                    "e1": float(self._source_dict["e1"]),
+                    "e2": float(self._source_dict["e2"]),
+                    "center_x": center_source[0],
+                    "center_y": center_source[1],
+                }
+            ]
+        else:
+            # source_models['source_light_model_list'] = None
+            kwargs_source = None
+
+        if self._source_type == "point_source":
+            source_models["point_source_model"] = ["LENSED_POSITION"]
+            img_x, img_y = self.image_positions()
+            if band is None:
+                image_magnitudes = np.abs(self.point_source_magnification())
+            else:
+                image_magnitudes = self.point_source_magnitude(band=band, lensed=True)
+            kwargs_ps = [
+                {"ra_image": img_x, "dec_image": img_y, "point_amp": image_magnitudes}
+            ]
+        else:
+            # source_models['point_source_model'] = None
+            kwargs_ps = None
+        all_source_kwarg_dict["kwargs_source"] = kwargs_source
+        all_source_kwarg_dict["kwargs_ps"] = kwargs_ps
+        return source_models, all_source_kwarg_dict
 
 
 def image_separation_from_positions(image_positions):
