@@ -562,21 +562,6 @@ def cone_radius_angle_to_physical_area(radius_rad, z, cosmo):
     return area_physical  # in Mpc2
 
 
-def kappa_ext_for_each_sheet(redshift_list, first_moment, sky_area, cosmology):
-    cone_opening_angle = deg2_to_cone_angle(sky_area.value)
-    # TODO: make it possible for other geometry model
-
-    lens_cosmo = LensCosmo(z_lens=redshift_list, z_source=10, cosmo=cosmology)
-    epsilon_crit = lens_cosmo.sigma_crit
-
-    area = cone_radius_angle_to_physical_area(
-        cone_opening_angle, redshift_list, cosmology
-    )  # mpc2
-    first_moment_d_area = np.divide(np.array(first_moment), np.array(area))
-    kappa_ext = np.divide(first_moment_d_area, epsilon_crit)
-    return -kappa_ext
-
-
 def redshift_mass_number(
         redshift_list,
         sky_area,

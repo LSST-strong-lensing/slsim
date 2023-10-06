@@ -50,18 +50,14 @@ tables:
            power_spectrum: $power_spectrum
            collapse_function: $collapse_function
            params: [ 0.3, 0.7, 0.3, 1.686 ]
-         kappa_ext: !sim_pipeline.Halos.halos.kappa_ext_for_each_sheet
-            redshift_list: $mass_sheet_correction.z
+         first_moment: !sim_pipeline.Halos.halos.mass_first_moment_at_redshift
+            z: $mass_sheet_correction.z
             cosmology: $cosmology
-            first_moment: !sim_pipeline.Halos.halos.mass_first_moment_at_redshift
-              z: $mass_sheet_correction.z
-              cosmology: $cosmology
-              m_min: $m_min
-              m_max: $m_max
-              resolution: 100
-              wavenumber: $wavenumber
-              power_spectrum: $power_spectrum
-              collapse_function: $collapse_function
-              params: [ 0.3, 0.7, 0.3, 1.686 ]
-            sky_area: $fsky
+            m_min: $m_min
+            m_max: $m_max
+            resolution: 100
+            wavenumber: $wavenumber
+            power_spectrum: $power_spectrum
+            collapse_function: $collapse_function
+            params: [ 0.3, 0.7, 0.3, 1.686 ]
 

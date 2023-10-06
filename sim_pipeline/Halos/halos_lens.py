@@ -9,6 +9,56 @@ import multiprocessing
 from collections.abc import Iterable
 
 
+def deg2_to_cone_angle(solid_angle_deg2):
+    """Convert solid angle in square degrees to half cone angle in radians.
+
+    Parameters
+    ----------
+    solid_angle_deg2 : float
+        The solid angle in square degrees to be converted.
+
+    Returns
+    -------
+    float
+        The cone angle in radians corresponding to the provided solid angle.
+
+    Notes
+    -----
+    This function calculates the cone angle using the relationship between
+    the solid angle in steradians and the cone's apex angle.
+    """
+    solid_angle_sr = solid_angle_deg2 * (np.pi / 180) ** 2
+    theta = np.arccos(1 - solid_angle_sr / (2 * np.pi))  # rad
+    return theta
+
+
+def cone_radius_angle_to_physical_area(radius_rad, z, cosmo):
+    """Convert cone radius angle to physical area at a given redshift.
+
+    Parameters
+    ----------
+    radius_rad : float
+        The half cone's angle in radians.
+    z : float
+        The redshift at which the physical area is to be calculated.
+    cosmo : astropy.Cosmology instance
+        The cosmology used for the conversion.
+
+    Returns
+    -------
+    float
+        The physical area in Mpc^2 corresponding to the given cone radius and redshift.
+
+    Notes
+    -----
+    The function calculates the physical area of a patch of the sky with
+    a specified cone angle and redshift using the angular diameter distance.
+    """
+    physical_radius = cosmo.angular_diameter_distance(z) * radius_rad  # Mpc
+    area_physical = np.pi * physical_radius ** 2
+    return area_physical  # in Mpc2
+
+
 def concentration_from_mass(z, mass, A=75.4, d=-0.422, m=-0.089):
     """Get the halo concentration from halo masses using the fit in Childs et
     al. 2018 Eq(19), Table 2 for all individual Halos, both relaxed and
@@ -182,7 +232,7 @@ class HalosLens(object):
         self.halos_redshift_list = halos_list["z"]
         self.mass_list = halos_list["mass"]
         self.mass_sheet_correction_redshift = mass_correction_list["z"]
-        self.kappa_ext_list = mass_correction_list["kappa_ext"]
+        self.mass_first_moment = mass_correction_list["first_moment"]
         self.samples_number = samples_number
         self._z_source_convention = (
             10  # if this need to be changed, change it in the halos.py too
@@ -353,9 +403,12 @@ class HalosLens(object):
         kwargs_halos : list of dicts
             The list of dictionaries containing the keyword arguments for each halo.!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         """
-        if self.mass_sheet:
+        if self.mass_sheet and self.n_correction > 0:
             Rs_angle, alpha_Rs = self.get_nfw_kwargs()
-            kappa = self.kappa_ext_list
+            first_moment = self.mass_first_moment
+            kappa = self.kappa_ext_for_mass_sheet(self.mass_sheet_correction_redshift,
+                                                  self.lens_cosmo[-self.n_correction:], first_moment, self.cosmo)
+
             ra_0 = [0] * self.n_correction
             dec_0 = [0] * self.n_correction
 
@@ -762,20 +815,19 @@ class HalosLens(object):
         It also takes into account certain conditions and constraints related to the redshifts of halos and the source.
         """
         n_halos = len(halos)
-        n_mass_correction = len(mass_correction) if mass_correction is not None else 0
+        n_mass_correction = len(mass_correction) if mass_correction is not None and self.mass_sheet else 0
         z_halo = halos["z"]
         mass_halo = halos["mass"]
         px_halo = halos["px"]
         py_halo = halos["py"]
         c_200_halos = halos["c_200"]
 
-        if mass_correction is not None and self.mass_sheet:
+        if mass_correction is not None and len(mass_correction) > 0 and self.mass_sheet:  # check
             z_mass_correction = mass_correction["z"]
-            kappa_ext_list = mass_correction["kappa_ext"]
+            mass_first_moment = mass_correction["first_moment"]
         else:
             z_mass_correction = []
-            kappa_ext_list = []
-
+            mass_first_moment = []
         combined_redshift_list = np.concatenate((z_halo, z_mass_correction))
 
         if not combined_redshift_list.size:
@@ -798,10 +850,22 @@ class HalosLens(object):
                 f"cannot be larger than source redshift {zs}."
             )
 
-        lens_cosmo_list = self._build_lens_cosmo_list(combined_redshift_list, zs)
+        lens_cosmo_dict = self._build_lens_cosmo_dict(combined_redshift_list, zs)
         lens_model, lens_model_list = self._build_lens_model(
             combined_redshift_list, zs, n_halos
         )
+
+        # Extract only the LensCosmo instances for z_mass_correction
+        relevant_lens_cosmo_list = [lens_cosmo_dict[z] for z in z_mass_correction]
+
+        if mass_correction is not None and len(mass_correction) > 0 and self.mass_sheet:  # check
+            kappa_ext_list = self.kappa_ext_for_mass_sheet(
+                z_mass_correction, relevant_lens_cosmo_list, mass_first_moment, self.cosmo
+            )
+        else:
+            kappa_ext_list = []
+
+        lens_cosmo_list = list(lens_cosmo_dict.values())
         kwargs_lens = self._build_kwargs_lens(
             n_halos,
             n_mass_correction,
@@ -813,15 +877,35 @@ class HalosLens(object):
             lens_model_list,
             kappa_ext_list,
             lens_cosmo_list,
-        )
+        )  # todo: MASS_MOMENT, deal mass_moment outside _build_kwargs_lens  as no input z_source
 
         return lens_model, lens_cosmo_list, kwargs_lens
 
-    def _build_lens_cosmo_list(self, combined_redshift_list, z_source):
-        """Constructs a list of LensCosmo instances based on the provided
-        combined redshift list and source redshift.
+    def kappa_ext_for_mass_sheet(self, z, lens_cosmo, first_moment, cosmology):
+        cone_opening_angle = deg2_to_cone_angle(self.sky_area)
+        # TODO: make it possible for other geometry model
+        sigma_crit = []
+        area = []
 
-        The method creates a LensCosmo instance for each lens redshift in the combined redshift list with the specified source redshift.
+        for item in lens_cosmo:
+            sigma_crit0 = item.sigma_crit
+            sigma_crit.append(sigma_crit0)
+
+        for z_val in z:
+            area_val = cone_radius_angle_to_physical_area(cone_opening_angle, z_val, cosmology)
+            area.append(area_val)
+        area_values = [a.value for a in area]
+        if isinstance(first_moment[0], np.void):
+            first_moment_values = [entry['first_moment'] for entry in first_moment]
+        else:
+            first_moment_values = first_moment
+        first_moment_d_area = np.divide(np.array(first_moment_values), np.array(area_values))
+        kappa_ext = np.divide(first_moment_d_area, sigma_crit)
+
+        return -kappa_ext
+
+    def _build_lens_cosmo_dict(self, combined_redshift_list, z_source):
+        """Constructs a dictionary mapping each redshift to its corresponding LensCosmo instance.
 
         Parameters
         ----------
@@ -833,17 +917,13 @@ class HalosLens(object):
 
         Returns
         -------
-        lens_cosmo_list : list of LensCosmo objects
-            List containing LensCosmo instances initialized with the individual redshift values from the combined redshift list and the specified source redshift.
-
-        Notes
-        -----
-        This method assumes the availability of a `LensCosmo` class and a `cosmo` attribute in the current instance.
+        lens_cosmo_dict : dict
+            Dictionary mapping each redshift to its corresponding LensCosmo instance.
         """
-        return [
-            LensCosmo(z_lens=z, z_source=z_source, cosmo=self.cosmo)
+        return {
+            z: LensCosmo(z_lens=z, z_source=z_source, cosmo=self.cosmo)
             for z in combined_redshift_list
-        ]
+        }
 
     def _build_lens_model(self, combined_redshift_list, z_source, n_halos):
         """Construct a lens model based on the provided combined redshift list,
