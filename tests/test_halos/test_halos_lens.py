@@ -147,7 +147,7 @@ def test__filter_halos_by_condition(setup_halos_lens):
     assert all(h["z"] < zs for h in halos_os)
 
 
-def test__filter_mass_correction_by_condition(setup_halos_lens):
+def test_filter_mass_correction_by_condition(setup_halos_lens):
     hl = setup_halos_lens
     zd = 0.5
     zs = 1.0
@@ -164,7 +164,7 @@ def test__filter_mass_correction_by_condition(setup_halos_lens):
         assert all(h["z"] < zs for h in mass_correction_os)
 
 
-def test__build_lens_data(setup_halos_lens):
+def test_build_lens_data(setup_halos_lens):
     hl = setup_halos_lens
     zd = 0.5
     zs = 1.0
@@ -179,7 +179,7 @@ def test__build_lens_data(setup_halos_lens):
     assert isinstance(kwargs_lens, list)
 
 
-def test__build_lens_cosmo_list(setup_halos_lens):
+def test_build_lens_cosmo_list(setup_halos_lens):
     hl = setup_halos_lens
     combined_redshift_list = [0.5, 0.6, 0.7]
     z_source = 1.0
@@ -189,7 +189,7 @@ def test__build_lens_cosmo_list(setup_halos_lens):
     assert all(isinstance(item, LensCosmo) for item in lens_cosmo_list)
 
 
-def test__build_lens_model(setup_halos_lens):
+def test_build_lens_model(setup_halos_lens):
     hl = setup_halos_lens
     combined_redshift_list = [0.5, 0.6, 0.7]
     z_source = 1.0
@@ -204,7 +204,7 @@ def test__build_lens_model(setup_halos_lens):
     assert all(isinstance(model_type, str) for model_type in lens_model_list)
 
 
-def test__build_kwargs_lens(setup_halos_lens):
+def test_build_kwargs_lens(setup_halos_lens):
     hl = setup_halos_lens
     n_halos = len(hl.halos_list)
     n_mass_correction = len(hl.mass_correction_list)

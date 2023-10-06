@@ -189,6 +189,7 @@ class HalosLens(object):
             sky_area=4 * np.pi,
             samples_number=1000,
             mass_sheet=True,
+            z_source=5
     ):
         """Initialize the HalosLens class.
 
@@ -225,7 +226,7 @@ class HalosLens(object):
             self.n_correction = 0
         else:
             self.n_correction = len(mass_correction_list)
-
+        self.z_source = z_source
         self.halos_list = halos_list
         self.mass_correction_list = mass_correction_list
         self.mass_sheet = mass_sheet
@@ -269,7 +270,7 @@ class HalosLens(object):
             self._lens_cosmo = [
                 LensCosmo(
                     z_lens=self.combined_redshift_list[h],
-                    z_source=self._z_source_convention,
+                    z_source=self.z_source,
                     cosmo=self.cosmo,
                 )
                 for h in range(self.n_halos + self.n_correction)
@@ -318,7 +319,7 @@ class HalosLens(object):
                 cosmo=self.cosmo,
                 observed_convention_index=[],
                 multi_plane=True,
-                z_source=5,
+                z_source=self.z_source,
                 z_source_convention=self._z_source_convention,
             )
         else:
@@ -328,7 +329,7 @@ class HalosLens(object):
                 cosmo=self.cosmo,
                 observed_convention_index=[],
                 multi_plane=True,
-                z_source=5,
+                z_source=self.z_source,
                 z_source_convention=self._z_source_convention,
             )
         return lens_model
@@ -1365,3 +1366,104 @@ class HalosLens(object):
                         )
 
         return distributions
+
+    def compute_various_kappa_gamma_values_new(self, zd, zs):
+        # Obtain the lens data for each redshift using the get_lens_data_by_redshift function
+        lens_data = self.get_lens_data_by_redshift(zd, zs)
+
+        # Extracting lens model and kwargs for 'od' and 'os'
+        lens_model_od = lens_data["od"]["lens_model"]
+        kwargs_lens_od = lens_data["od"]["kwargs_lens"]
+
+        lens_model_os = lens_data["os"]["lens_model"]
+        kwargs_lens_os = lens_data["os"]["kwargs_lens"]
+
+        lens_model_ds = lens_data["ds"]["lens_model"]
+        kwargs_lens_ds = lens_data["ds"]["kwargs_lens"]
+
+        kappa_od, gamma_od1, gamma_od2 = self.get_convergence_shear(
+            gamma12=True, kwargs=kwargs_lens_od, lens_model=lens_model_od
+        )
+
+        kappa_os, gamma_os1, gamma_os2 = self.get_convergence_shear(
+            gamma12=True, kwargs=kwargs_lens_os, lens_model=lens_model_os
+        )
+
+        kappa_os2, gamma_os12, gamma_os22 = self.get_convergence_shear(
+            gamma12=True, kwargs=kwargs_lens_os, lens_model=lens_model_os, zdzs=(0, zs)
+        )
+
+        kappa_ds, gamma_ds1, gamma_ds2 = self.get_convergence_shear(
+            gamma12=True, kwargs=kwargs_lens_ds, lens_model=lens_model_ds, zdzs=(zd, zs)
+        )
+
+        kext = 1 - (1 - kappa_od) * (1 - kappa_os) / (1 - kappa_ds)
+        gext = math.sqrt(
+            (gamma_od1 + gamma_os1 - gamma_ds1) ** 2
+            + (gamma_od2 + gamma_os2 - gamma_ds2) ** 2
+        )
+
+        return (
+            kappa_od,
+            kappa_os,
+            gamma_od1,
+            gamma_od2,
+            gamma_os1,
+            gamma_os2,
+            kappa_ds,
+            gamma_ds1,
+            gamma_ds2,
+            kappa_os2,
+            gamma_os12,
+            gamma_os22,
+            kext,
+            gext
+        ), (kwargs_lens_os, lens_model_os)
+
+    def get_alot_distib_(self, zd, zs):
+        """Computes the distribution of external convergence (kappa_ext) and
+        external shear (gamma_ext) for given deflector and source redshifts.
+
+        Parameters
+        ----------
+        zd : float
+            The deflector redshift.
+        zs : float
+            The source redshift.
+
+        Returns
+        -------
+        kappa_gamma_distribution : numpy.ndarray
+            An array of shape (samples_number, 2) containing the computed kappa_ext and gamma_ext values
+            for the given deflector and source redshifts. Each row corresponds to a sample,
+            with the first column being kappa_ext and the second column being gamma_ext.
+
+        Notes
+        -----
+        The progress is shown with a tqdm progress bar if the number of samples exceeds 999.
+        The total elapsed time for computing weak-lensing maps is printed at the end.
+        """
+
+        kappa_gamma_distribution = np.empty((self.samples_number, 14))
+        lens_instance = np.empty((self.samples_number, 2), dtype=object)
+
+        loop = range(self.samples_number)
+        if self.samples_number > 999:
+            loop = tqdm(loop)
+
+        start_time = time.time()
+
+        for i in loop:
+            self.enhance_halos_table_random_pos()
+            (kappa_od, kappa_os, gamma_od1, gamma_od2, gamma_os1, gamma_os2, kappa_ds, gamma_ds1, gamma_ds2, kappa_os2, gamma_os12, gamma_os22, kext, gext),(kwargs_lens_os, lens_model_os) = self.compute_various_kappa_gamma_values_new(
+                zd=zd, zs=zs)
+            kappa_gamma_distribution[i] = [kappa_od, kappa_os, gamma_od1, gamma_od2, gamma_os1, gamma_os2, kappa_ds,
+                                           gamma_ds1, gamma_ds2, kappa_os2, gamma_os12, gamma_os22, kext, gext]
+            lens_instance[i] = [kwargs_lens_os, lens_model_os]
+        if self.samples_number > 999:
+            elapsed_time = time.time() - start_time
+            print(
+                f"For this halos lists, zd,zs, elapsed time for computing weak-lensing maps: {elapsed_time} seconds"
+            )
+
+        return kappa_gamma_distribution , lens_instance
