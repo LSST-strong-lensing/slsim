@@ -454,6 +454,7 @@ def worker_run_halos_without_kde(
             sky_area=sky_area,
             cosmo=cosmo,
             samples_number=samples_number,
+            mass_sheet=False
         )
     nkappa_gamma_distribution = (
         nhalos_lens.get_kappa_gamma_distib_without_multiprocessing(gamma_tot=True)
@@ -724,6 +725,7 @@ def worker_kappaext_gammaext_kde(
             sky_area=sky_area,
             cosmo=cosmo,
             samples_number=samples_number,
+            mass_sheet=False
         )
 
     distributions_0to5 = nhalos_lens.generate_distributions_0to5(
@@ -816,6 +818,7 @@ def worker_certain_redshift_lensext_kde(
             sky_area=sky_area,
             cosmo=cosmo,
             samples_number=samples_number,
+            mass_sheet=False
         )
     distributions = nhalos_lens.get_kappaext_gammaext_distib_zdzs(zd, zs)
     return distributions

@@ -218,21 +218,23 @@ class HalosLens(object):
         samples_number
         mass_sheet
         """
-        if not mass_sheet:
-            mass_correction_list = None
         if mass_sheet and mass_correction_list is None:
             warnings.warn("Mass sheet correction is not applied")
+        if not mass_sheet:
+            mass_correction_list = {}
+            self.n_correction = 0
+        else:
+            self.n_correction = len(mass_correction_list)
 
         self.halos_list = halos_list
         self.mass_correction_list = mass_correction_list
         self.mass_sheet = mass_sheet
         self.n_halos = len(self.halos_list)
-        self.n_correction = len(self.mass_correction_list)
         self.sky_area = sky_area
         self.halos_redshift_list = halos_list["z"]
         self.mass_list = halos_list["mass"]
-        self.mass_sheet_correction_redshift = mass_correction_list["z"]
-        self.mass_first_moment = mass_correction_list["first_moment"]
+        self.mass_sheet_correction_redshift = mass_correction_list.get("z", [])
+        self.mass_first_moment = mass_correction_list.get("first_moment", [])
         self.samples_number = samples_number
         self._z_source_convention = (
             10  # if this need to be changed, change it in the halos.py too
@@ -740,7 +742,7 @@ class HalosLens(object):
         2. From zero redshift up to the deflector redshift (od).
         3. From zero redshift up to the source redshift (os).
 
-        If `self.mass_correction_list` is None, all returned values will be None.
+        If `self.mass_correction_list` is {}, all returned values will be None.
 
         Parameters
         ----------
@@ -758,8 +760,8 @@ class HalosLens(object):
         ----------
         This method assumes `self.mass_correction_list` is a DataFrame containing a 'z' column that represents the redshift of each mass correction entry.
         """
-        if self.mass_correction_list is None:
-            return None, None
+        if not self.mass_correction_list:
+            return None, None, None
         mass_correction_ds = self.mass_correction_list[
             (self.mass_correction_list["z"] >= zd)
             & (self.mass_correction_list["z"] < zs)
