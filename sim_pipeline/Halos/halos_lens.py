@@ -224,8 +224,12 @@ class HalosLens(object):
         if not mass_sheet:
             mass_correction_list = {}
             self.n_correction = 0
+            self.mass_sheet_correction_redshift = mass_correction_list.get("z", [])
+            self.mass_first_moment = mass_correction_list.get("first_moment", [])
         else:
             self.n_correction = len(mass_correction_list)
+            self.mass_sheet_correction_redshift = mass_correction_list["z"]
+            self.mass_first_moment = mass_correction_list["first_moment"]
         self.z_source = z_source
         self.halos_list = halos_list
         self.mass_correction_list = mass_correction_list
@@ -234,8 +238,6 @@ class HalosLens(object):
         self.sky_area = sky_area
         self.halos_redshift_list = halos_list["z"]
         self.mass_list = halos_list["mass"]
-        self.mass_sheet_correction_redshift = mass_correction_list.get("z", [])
-        self.mass_first_moment = mass_correction_list.get("first_moment", [])
         self.samples_number = samples_number
         self._z_source_convention = (
             10  # if this need to be changed, change it in the halos.py too
