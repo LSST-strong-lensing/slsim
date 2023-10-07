@@ -412,7 +412,7 @@ class HalosLens(object):
             Rs_angle, alpha_Rs = self.get_nfw_kwargs()
             first_moment = self.mass_first_moment
             kappa = self.kappa_ext_for_mass_sheet(self.mass_sheet_correction_redshift,
-                                                  self.lens_cosmo[-self.n_correction:], first_moment, self.cosmo)
+                                                  self.lens_cosmo[-self.n_correction:], first_moment)
 
             ra_0 = [0] * self.n_correction
             dec_0 = [0] * self.n_correction
@@ -865,7 +865,7 @@ class HalosLens(object):
 
         if mass_correction is not None and len(mass_correction) > 0 and self.mass_sheet:  # check
             kappa_ext_list = self.kappa_ext_for_mass_sheet(
-                z_mass_correction, relevant_lens_cosmo_list, mass_first_moment, self.cosmo
+                z_mass_correction, relevant_lens_cosmo_list, mass_first_moment
             )
         else:
             kappa_ext_list = []
@@ -886,18 +886,16 @@ class HalosLens(object):
 
         return lens_model, lens_cosmo_list, kwargs_lens
 
-    def kappa_ext_for_mass_sheet(self, z, lens_cosmo, first_moment, cosmology):
+    def kappa_ext_for_mass_sheet(self, z, lens_cosmo, first_moment):
         cone_opening_angle = deg2_to_cone_angle(self.sky_area)
         # TODO: make it possible for other geometry model
-        sigma_crit = []
         area = []
-
-        for item in lens_cosmo:
-            sigma_crit0 = item.sigma_crit
-            sigma_crit.append(sigma_crit0)
+        sigma_crit = []
+        for i in range(len(lens_cosmo)):
+            sigma_crit.append(lens_cosmo[i].sigma_crit)
 
         for z_val in z:
-            area_val = cone_radius_angle_to_physical_area(cone_opening_angle, z_val, cosmology)
+            area_val = cone_radius_angle_to_physical_area(cone_opening_angle, z_val, self.cosmo)
             area.append(area_val)
         area_values = [a.value for a in area]
         if isinstance(first_moment[0], np.void):
@@ -905,8 +903,9 @@ class HalosLens(object):
         else:
             first_moment_values = first_moment
         first_moment_d_area = np.divide(np.array(first_moment_values), np.array(area_values))
+        print('s_c',sigma_crit)
         kappa_ext = np.divide(first_moment_d_area, sigma_crit)
-
+        assert kappa_ext.ndim == 1
         return -kappa_ext
 
     def _build_lens_cosmo_dict(self, combined_redshift_list, z_source):

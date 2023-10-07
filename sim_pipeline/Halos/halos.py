@@ -407,6 +407,87 @@ def halo_mass_at_z(
 
 def mass_first_moment_at_redshift(
         z,
+        sky_area,
+        m_min=None,
+        m_max=None,
+        resolution=None,
+        wavenumber=None,
+        power_spectrum=None,
+        cosmology=None,
+        collapse_function=None,
+        params=None,
+):
+    # define default parameters
+    (
+        m_min,
+        m_max,
+        wavenumber,
+        resolution,
+        power_spectrum,
+        cosmology,
+        collapse_function,
+        params,
+    ) = set_defaults(
+        m_min,
+        m_max,
+        wavenumber,
+        resolution,
+        power_spectrum,
+        cosmology,
+        collapse_function,
+        params,
+    )
+
+    final_results = []
+
+    for zi in z:
+        redshift_list = np.linspace(zi - 0.025, zi + 0.025, 20)
+        dN_dz = (cosmology.differential_comoving_volume(redshift_list) * sky_area).to_value("Mpc3")
+        density = number_density_at_redshift(
+            z=redshift_list,
+            m_min=m_min,
+            m_max=m_max,
+            resolution=resolution,
+            wavenumber=wavenumber,
+            power_spectrum=power_spectrum,
+            cosmology=cosmology,
+            collapse_function=collapse_function,
+            params=params,
+        )
+        dN_dz *= density
+        N = np.trapz(dN_dz, redshift_list)
+
+        m = np.logspace(np.log10(m_min), np.log10(m_max), resolution)
+        gf = GrowthFactor(cosmo=cosmology)
+        growth_function = gf.growth_factor(zi)
+        massf = halo_mass_function(
+            m,
+            wavenumber,
+            power_spectrum,
+            growth_function,
+            cosmology,
+            collapse_function,
+            params=params,
+        )
+        CDF = np.cumsum(massf) * (np.log10(m_max) - np.log10(m_min)) / resolution
+        CDF = CDF / CDF[-1]
+        expectation_m = np.interp(0.5, CDF, m)
+        final_results.append(expectation_m * N)
+
+    return final_results
+
+
+def redshift_mass_sheet_correction_array_from_comoving_density(
+        redshift_list
+):
+    """"""
+    z_max = redshift_list[-1]
+    linspace_values = np.arange(0.025, z_max, 0.05)
+    return linspace_values
+
+
+def deprecated_mass_first_moment_at_redshift(
+        z,
         m_min=None,
         m_max=None,
         resolution=None,
@@ -462,7 +543,7 @@ def mass_first_moment_at_redshift(
         return expectation_m_result
 
 
-def redshift_mass_sheet_correction_array_from_comoving_density(
+def deprecated_redshift_mass_sheet_correction_array_from_comoving_density(
         redshift_list,
         sky_area,
         cosmology,
