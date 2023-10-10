@@ -59,6 +59,8 @@ class Source(object):
                 variable_mag = np.array(variable_mag_array).reshape(len(source_mag), 
                                                                 len(observed_time[0]))
                 return variable_mag
+            else:
+                return source_mag
         else:
             source_mag = self.source_dict[band_string]
             return source_mag
