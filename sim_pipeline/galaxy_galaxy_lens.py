@@ -7,6 +7,7 @@ from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
 from sim_pipeline.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
 from lenstronomy.Util import util, data_util
 from sim_pipeline.lensed_system import LensedSystem
+import astropy.units as u
 
 
 class GalaxyGalaxyLens(LensedSystem):
@@ -320,7 +321,7 @@ class GalaxyGalaxyLens(LensedSystem):
         observer_times = t_obs + arrival_times - np.min(arrival_times)
         return observer_times
 
-    def point_source_magnitude(self, band, lensed=False):
+    def point_source_magnitude(self, band, lensed=False, variability = None):
         """Point source magnitude, either unlensed (single value) or lensed (array) with
         macro-model magnifications.
 
@@ -330,16 +331,39 @@ class GalaxyGalaxyLens(LensedSystem):
         :type band: string
         :param lensed: if True, returns the lensed magnified magnitude
         :type lensed: bool
+        :param variability: None or list of variability function, time, and
+         kwargs_variability for variability model. Eg: variability = {'time': t,
+         'function': sinusoidal_variability, 'kwargs_variability': {'amp': 2.0, 'freq':
+         0.5}}, where t is a observation time which is a astropy.unit object and
+         sinusoidal_variability is a source variability function. If None, provides 
+         magnitude without variability.
         :return: point source magnitude
         """
         band_string = str("mag_" + band)
         # TODO: might have to change conventions between extended and point source
         source_mag = self._source_dict[band_string]
-        # TODO: requires time information and needs to be shifted for
-        # different arriving images
         if lensed:
-            mag = self.point_source_magnification()
-            return source_mag - 2.5 * np.log10(np.abs(mag))
+            from sim_pipeline.Sources.source import Source
+            source_dict = self._source_dict
+            magnif = self.point_source_magnification()
+            if variability is not None:
+                variability_model = variability["variability_model"]
+                kwargs_variab = variability["kwargs_variability"]
+                time = variability['time']
+                observed_time = []
+                for t_obs in time.value:
+                    observed_time.append(self.image_observer_times(t_obs))
+                transformed_observed_time = np.array(observed_time).T.tolist() * u.day
+                source_class=Source(source_dict=source_dict, magnification = magnif, 
+                        variability_model = variability_model, kwargs_variab = 
+                        kwargs_variab, image_observation_times = 
+                        transformed_observed_time)
+                variable_mag = source_class.magnitude(band)
+                return variable_mag
+            else:
+                source_class=Source(source_dict=source_dict, magnification = magnif)
+                magnified_mag = source_class.magnitude(band)
+                return magnified_mag
         return source_mag
 
     def extended_source_magnitude(self, band, lensed=False):
