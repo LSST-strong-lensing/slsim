@@ -181,7 +181,7 @@ def point_source_image_properties(lens_class, band, mag_zero_point, delta_pix, n
 
     image_data = sim_api.data_class
 
-    lens_center = lens_class.lens_position
+    lens_center = lens_class.deflector_position
     ra_lens_value = lens_center[0]
     dec_lens_value = lens_center[1]
     lens_pix_coordinate = image_data.map_coord2pix(ra_lens_value, dec_lens_value)
