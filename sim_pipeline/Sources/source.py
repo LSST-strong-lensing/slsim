@@ -4,34 +4,34 @@ class Source(object):
     """This class provides source dictionary and variable magnitude of a 
     individual source.
     """
-    def __init__(self, source_dict, magnification = None, variability_model = None, 
-                 kwargs_variab = None, image_observation_times = None):
+    def __init__(self, source_dict, variability_model = None, 
+                 kwargs_variab = None):
         """
         :param source_dict: Source properties
         :type source_dict: dict
-        :param magnification: Array of lensing magnification of each images. If None, 
-         considers unlensed case
         :param variability_model: Variability model for source.
         :param kwargs_variab: Keyword arguments for variability class.
-        :param image_observation_times: Images observation time for each image. Eg: for 
-         two images, the form of this param is np.array([[t11, t12,...t1n],
-         [t21, t22,...t2n]]). This should be based on lensing calculation.
         """
         self.source_dict = source_dict
-        self.magnification = magnification
         self.variability_model = variability_model
         self.kwargs_variab = kwargs_variab
-        self.image_observation_times = image_observation_times
 
-    def magnitude(self, band):
+    def magnitude(self, band, magnification = None, image_observation_times = None):
         """
         Get the magnitude of the source in a specific band.
 
         :param band: Imaging band
         :type band: str
+        :param magnification: Array of lensing magnification of each images. If None, 
+         considers unlensed case.
+        :param image_observation_times: Images observation time for each image. Eg: for 
+         two images, the form of this param is np.array([[t11, t12,...t1n],
+         [t21, t22,...t2n]]). This should be based on lensing calculation.
         :return: Magnitude of the source in the specified band
         :rtype: float
         """
+        self.magnification = magnification
+        self.image_observation_times = image_observation_times
 
         band_string = "mag_" + band
         if self.magnification is not None:
