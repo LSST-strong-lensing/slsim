@@ -197,10 +197,12 @@ def point_source_coordinate_properties(
         image_pix_coordinate.append((image_data.map_coord2pix(image_ra, image_dec)))
     ra_at_xy_0, dec_at_xy_0 = image_data.map_pix2coord(0, 0)
     """image_amplitude = []
+
     for i in range(len(image_magnitude)):
         delta_m = image_magnitude[i] - mag_zero_point
         counts = 10 ** (-delta_m / 2.5)
-        image_amplitude.append(counts)"""
+        image_amplitude.append(counts)
+    """
 
     data = Table(
         [
