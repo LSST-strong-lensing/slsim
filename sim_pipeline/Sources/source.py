@@ -12,9 +12,13 @@ class Source(object):
         :param kwargs_variab: Keyword arguments for variability class.
         """
         self.source_dict = source_dict
-        self.variability_model = kwargs_variab['variability_model']
-        self.kwargs_variability_model = {key: value for key, value in 
+        if kwargs_variab is not None:
+            self.variability_model = kwargs_variab['variability_model']
+            self.kwargs_variability_model = {key: value for key, value in 
                 kwargs_variab.items() if key != list(kwargs_variab.keys())[0]}
+        else:
+            self.variability_model = None
+            self.kwargs_variability_model = None
     def magnitude(self, band, magnification = None, image_observation_times = None):
         """
         Get the magnitude of the source in a specific band.
@@ -37,8 +41,14 @@ class Source(object):
             mag = self.magnification
             source_mag = self.source_dict[band_string] - 2.5 * np.log10(np.abs(mag))
             if self.image_observation_times is not None:
-                from sim_pipeline.Sources.source_variability.variability \
-                    import Variability
+                if self.variability_model is not None:
+                    from sim_pipeline.Sources.source_variability.variability \
+                        import Variability
+                else:
+                    raise ValueError(
+                        "variability model is not provided. Please include one of the" 
+                        "variability models in your kwargs_variability as a first entry."
+                    )
                 kwargs_variability_model = self.kwargs_variability_model
                 variability_class = Variability(**kwargs_variability_model)
                 if self.variability_model == "sinusoidal":

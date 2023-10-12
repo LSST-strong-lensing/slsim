@@ -359,8 +359,8 @@ class GalaxyGalaxyLens(LensedSystem):
                 else:
                     time = time.to(u.day)
                 if self._source.variability_model is None:
-                    raise ValueError("Variability model is not provided."
-                    "Please choose of the variability model from Variability class.")
+                    raise ValueError("Variability model is not provided. Please choose" 
+                            "one of the variability models from the Variability class.")
                 else:   
                     observed_time = []
                     for t_obs in time.value:
