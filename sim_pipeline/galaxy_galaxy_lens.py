@@ -20,12 +20,13 @@ class GalaxyGalaxyLens(LensedSystem):
         deflector_dict,
         cosmo,
         source_type="extended",
-        kwargs_variab = None,
+        kwargs_variab=None,
         test_area=4 * np.pi,
         mixgauss_means=None,
         mixgauss_stds=None,
         mixgauss_weights=None,
-        magnification_limit=0.01):
+        magnification_limit=0.01,
+    ):
         """
 
         :param source_dict: source properties
@@ -55,7 +56,7 @@ class GalaxyGalaxyLens(LensedSystem):
             cosmo=cosmo,
             test_area=test_area,
         )
-        
+
         self.cosmo = cosmo
         self._source_type = source_type
         self._mixgauss_means = mixgauss_means
@@ -65,9 +66,7 @@ class GalaxyGalaxyLens(LensedSystem):
         self.kwargs_variab = kwargs_variab
 
         if self._source_type == "extended" and self.kwargs_variab is not None:
-            raise ValueError(
-                "Extended source can not have variability."
-            )
+            raise ValueError("Extended source can not have variability.")
         self._source = Source(self._source_dict, self.kwargs_variab)
         if self._deflector_dict["z"] >= self._source_dict["z"]:
             self._theta_E_sis = 0
@@ -332,7 +331,7 @@ class GalaxyGalaxyLens(LensedSystem):
         observer_times = t_obs + arrival_times - np.min(arrival_times)
         return observer_times
 
-    def point_source_magnitude(self, band, lensed=False, time = None):
+    def point_source_magnitude(self, band, lensed=False, time=None):
         """Point source magnitude, either unlensed (single value) or lensed (array) with
         macro-model magnifications.
 
@@ -342,13 +341,13 @@ class GalaxyGalaxyLens(LensedSystem):
         :type band: string
         :param lensed: if True, returns the lensed magnified magnitude
         :type lensed: bool
-        :param time: time is a image observation time which is a astropy.unit object. 
-         If None, provides magnitude without variability.
+        :param time: time is a image observation time which is a astropy.unit object. If
+            None, provides magnitude without variability.
         :return: point source magnitude
         """
-        #band_string = str("mag_" + band)
+        # band_string = str("mag_" + band)
         # TODO: might have to change conventions between extended and point source
-        #source_mag = self._source_dict[band_string]
+        # source_mag = self._source_dict[band_string]
         if lensed:
             magnif = self.point_source_magnification()
             if time is not None:
@@ -357,18 +356,25 @@ class GalaxyGalaxyLens(LensedSystem):
                 else:
                     time = time.to(u.day)
                 if self._source.variability_model is None:
-                    raise ValueError("Variability model is not provided. Please choose" 
-                            "one of the variability models from the Variability class.")
-                else:   
+                    raise ValueError(
+                        "Variability model is not provided. Please choose"
+                        "one of the variability models from the Variability class."
+                    )
+                else:
                     observed_time = []
                     for t_obs in time.value:
                         observed_time.append(self.image_observer_times(t_obs))
-                    transformed_observed_time = np.array(observed_time).T.tolist()*u.day
-                    variable_mag = self._source.magnitude(band, magnification = magnif, 
-                                    image_observation_times = transformed_observed_time)
+                    transformed_observed_time = (
+                        np.array(observed_time).T.tolist() * u.day
+                    )
+                    variable_mag = self._source.magnitude(
+                        band,
+                        magnification=magnif,
+                        image_observation_times=transformed_observed_time,
+                    )
                     return variable_mag
             else:
-                magnified_mag = self._source.magnitude(band, magnification = magnif)
+                magnified_mag = self._source.magnitude(band, magnification=magnif)
                 return magnified_mag
         return self._source.magnitude(band)
 

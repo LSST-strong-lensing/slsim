@@ -49,9 +49,7 @@ class GalaxyGalaxyLensPop(LensedPopulation):
         """
         super().__init__(sky_area, cosmo)
         if source_type == "galaxies" and kwargs_variability is not None:
-            raise ValueError(
-                "Extended source cannot have variability."
-            )
+            raise ValueError("Extended source cannot have variability.")
         self.kwargs_variability = kwargs_variability
         if deflector_type in ["elliptical", "all-galaxies"] or source_type in [
             "galaxies"
