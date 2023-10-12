@@ -3,8 +3,13 @@ import pytest
 
 
 def test_simple_quasar():
-    kwargs_quasars = {'number': 50000,
-        'z_min': 0.1, 'z_max': 5, 'm_min': 17, 'm_max': 25}
+    kwargs_quasars = {
+        "number": 50000,
+        "z_min": 0.1,
+        "z_max": 5,
+        "m_min": 17,
+        "m_max": 25,
+    }
     catalog = simple_quasar.quasar_catalog(**kwargs_quasars)
     column_names = ["z", "mag_r", "mag_g", "mag_i"]
     assert catalog.colnames[0] == column_names[0]
