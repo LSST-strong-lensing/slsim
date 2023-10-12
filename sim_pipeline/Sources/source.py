@@ -50,8 +50,10 @@ class Source(object):
                         Variability,
                     )
                 else:
-                    raise ValueError("variability model is not provided. Please include"
-                             "one of the variability models in your kwargs_variability.")
+                    raise ValueError(
+                        "variability model is not provided. Please include"
+                        "one of the variability models in your kwargs_variability."
+                    )
                 kwargs_variability_model = self.kwargs_variability_model
                 variability_class = Variability(**kwargs_variability_model)
                 if self.variability_model == "sinusoidal":
