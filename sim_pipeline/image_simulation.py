@@ -6,6 +6,7 @@ from astropy.visualization import make_lupton_rgb
 from lenstronomy.Data.psf import PSF
 from lenstronomy.Data.pixel_grid import PixelGrid
 from lenstronomy.ImSim.Numerics.point_source_rendering import PointSourceRendering
+from sim_pipeline.Util.param_util import magnitude_to_amplitude
 
 
 def simulate_image(
@@ -152,7 +153,7 @@ def rgb_image_from_image_list(image_list, stretch):
     return image_rgb
 
 
-def point_source_image_properties(lens_class, band, mag_zero_point, delta_pix, num_pix):
+def point_source_coordinate_properties(lens_class, band, mag_zero_point, delta_pix, num_pix):
     """Provides pixel coordinates for deflector and images. Currently, this function
     only works for point source.
 
@@ -162,7 +163,7 @@ def point_source_image_properties(lens_class, band, mag_zero_point, delta_pix, n
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
     :return: astropy table of deflector and image coordinate in pixel unit and other
-        properties
+        coordinate properties.
     """
     kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band)
     kwargs_band = {
@@ -189,26 +190,23 @@ def point_source_image_properties(lens_class, band, mag_zero_point, delta_pix, n
     ps_coordinate = lens_class.image_positions()
     ra_image_values = ps_coordinate[0]
     dec_image_values = ps_coordinate[1]
-    image_magnitude = lens_class.point_source_magnitude(band=band, lensed=True)
+    #image_magnitude = lens_class.point_source_magnitude(band=band, lensed=True)
     image_pix_coordinate = []
     for image_ra, image_dec in zip(ra_image_values, dec_image_values):
         image_pix_coordinate.append((image_data.map_coord2pix(image_ra, image_dec)))
     ra_at_xy_0, dec_at_xy_0 = image_data.map_pix2coord(0, 0)
 
-    image_amplitude = []
+    """image_amplitude = []
     for i in range(len(image_magnitude)):
         delta_m = image_magnitude[i] - mag_zero_point
         counts = 10 ** (-delta_m / 2.5)
-        image_amplitude.append(counts)
+        image_amplitude.append(counts)"""
 
     data = Table(
-        [
-            lens_pix_coordinate,
+        [lens_pix_coordinate,
             image_pix_coordinate,
             ra_image_values,
             dec_image_values,
-            np.array(image_amplitude),
-            image_magnitude,
             np.array([ra_at_xy_0, dec_at_xy_0]),
         ],
         names=(
@@ -216,17 +214,14 @@ def point_source_image_properties(lens_class, band, mag_zero_point, delta_pix, n
             "image_pix",
             "ra_image",
             "dec_image",
-            "image_amplitude",
-            "image_magnitude",
             "radec_at_xy_0",
         ),
     )
     return data
 
 
-def point_source_image(
-    lens_class, band, mag_zero_point, delta_pix, num_pix, psf_kernels, variability=None
-):
+def point_source_image(lens_class, band, mag_zero_point, delta_pix, num_pix, 
+                       psf_kernels, time = None):
     """Creates lensed point source images on the basis of given information.
 
     :param lens_class: GalaxyGalaxyLens() object
@@ -235,17 +230,12 @@ def point_source_image(
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
     :param psf_kernels: psf kernels extracted from the dp0 cutout images
-    :param variability: None or list of variability function, time, and
-        kwargs_variability for variability model. Eg: variability = {'time': t,
-        'function': sinusoidal_variability, 'kwargs_variability': {'amp': 2.0, 'freq':
-        0.5}}, where t is a observation time which is a astropy.unit object and
-        sinusoidal_variability is a source variability function. If None, creates images
-        without variability.
-    :return: astropy table of deflector and image coordinate in pixel unit and other
-        properties
+    :param time: time is a image observation time which is a astropy.unit object.
+     If None, creates images without variability.
+    :return: point source images
     """
 
-    image_data = point_source_image_properties(
+    image_data = point_source_coordinate_properties(
         lens_class=lens_class,
         band=band,
         mag_zero_point=mag_zero_point,
@@ -266,13 +256,15 @@ def point_source_image(
 
     ra_image_values = image_data["ra_image"]
     dec_image_values = image_data["dec_image"]
-    amp = image_data["image_amplitude"]
-    magnitude = lens_class.point_source_magnitude(band, lensed=True)
+    #amp = image_data["image_amplitude"]
+    #magnitude = lens_class.point_source_magnitude(band, lensed=True)
     psf_class = []
     for i in range(len(psf_kernels)):
         psf_class.append(PSF(psf_type="PIXEL", kernel_point_source=psf_kernels[i]))
     # point_source_images = []
-    if variability is None:
+    if time is None:
+        magnitude = lens_class.point_source_magnitude(band, lensed=True)
+        amp = magnitude_to_amplitude(magnitude, mag_zero_point)
         point_source_images = []
         for i in range(len(psf_class)):
             rendering_class = PointSourceRendering(
@@ -285,41 +277,10 @@ def point_source_image(
             )
             point_source_images.append(point_source)
     else:
-        from sim_pipeline.Sources.source_variability.variability import Variability
-
-        if variability["time"].unit == u.day:
-            time = variability["time"]
-        else:
-            time = variability["time"].to(u.day)
-        if variability["time"].unit == u.minute:
-            time = variability["time"].to(u.day)
-        kwargs_variability = variability["kwargs_variability"]
-        variability_class = Variability(**kwargs_variability)
-        if variability["variability_model"] == "sinusoidal":
-            function = variability_class.sinusoidal_variability
-        else:
-            raise ValueError(
-                "given model is not supported. Currently,"
-                "supported model is sinusoudal."
-            )
-        observed_time = []
-        for t_obs in time.value:
-            observed_time.append(lens_class.image_observer_times(t_obs))
-        transformed_observed_time = np.array(observed_time).T.tolist() * u.day
-        variable_mag_array = []
-        for i in range(len(magnitude)):
-            for j in range(len(time)):
-                variable_mag_array.append(
-                    magnitude[i] + function(transformed_observed_time[i][j])
-                )
-        variable_mag = np.array(variable_mag_array).reshape(len(magnitude), len(time))
-        variable_amp_array = []
-        for i in range(len(magnitude)):
-            for j in range(len(time)):
-                delta_m = variable_mag[i][j] - mag_zero_point
-                counts = 10 ** (-delta_m / 2.5)
-                variable_amp_array.append(counts)
-        variable_amp = np.array(variable_amp_array).reshape(len(magnitude), len(time))
+        time = time
+        variable_mag = lens_class.point_source_magnitude(band=band, lensed=True, 
+                                                         time=time)
+        variable_amp = magnitude_to_amplitude(variable_mag, mag_zero_point)
         point_source_images = []
         for i in range(len(psf_class)):
             point_source_images_single = []
