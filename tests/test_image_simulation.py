@@ -165,11 +165,6 @@ def test_point_source_image(quasar_lens_pop_instance):
     psf_kernels.extend([psf_image_1[-1]] * number)
 
     time = np.linspace(0, 10, 4) * u.day
-    variability = {
-        "time": time,
-        "variability_model": "sinusoidal",
-        "kwargs_variability": {"amp": 1.0, "freq": 0.5},
-    }
     # Call the function to get the result
     result1 = point_source_image(
         lens_class=lens_class,
