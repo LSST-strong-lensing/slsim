@@ -4,8 +4,7 @@ class Source(object):
     """This class provides source dictionary and variable magnitude of a 
     individual source.
     """
-    def __init__(self, source_dict, variability_model = None, 
-                 kwargs_variab = None):
+    def __init__(self, source_dict, kwargs_variab = None):
         """
         :param source_dict: Source properties
         :type source_dict: dict
@@ -13,9 +12,9 @@ class Source(object):
         :param kwargs_variab: Keyword arguments for variability class.
         """
         self.source_dict = source_dict
-        self.variability_model = variability_model
-        self.kwargs_variab = kwargs_variab
-
+        self.variability_model = kwargs_variab['variability_model']
+        self.kwargs_variability_model = {key: value for key, value in 
+                kwargs_variab.items() if key != list(kwargs_variab.keys())[0]}
     def magnitude(self, band, magnification = None, image_observation_times = None):
         """
         Get the magnitude of the source in a specific band.
@@ -40,8 +39,8 @@ class Source(object):
             if self.image_observation_times is not None:
                 from sim_pipeline.Sources.source_variability.variability \
                     import Variability
-                kwargs_variability = self.kwargs_variab
-                variability_class = Variability(**kwargs_variability)
+                kwargs_variability_model = self.kwargs_variability_model
+                variability_class = Variability(**kwargs_variability_model)
                 if self.variability_model == "sinusoidal":
                     function = variability_class.sinusoidal_variability
                 else:

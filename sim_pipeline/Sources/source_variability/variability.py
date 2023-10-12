@@ -5,13 +5,13 @@ import astropy.units as u
 
 
 class Variability(object):
-    def __init__(self, **kwargs_variability):
+    def __init__(self, **kwargs_variability_model):
         """Initialize the variability class.
 
         :param kwargs_variability: Keyword arguments for variability class. For
             sinusoidal_variability kwargs are amplitude ('amp') and frequency ('freq').
         """
-        self.kwargs_variability = kwargs_variability
+        self.kwargs_variability_model = kwargs_variability_model
 
     def sinusoidal_variability(self, x):
         """Calculate the sinusoidal variability for a given observation time.
@@ -24,7 +24,7 @@ class Variability(object):
             t = x
         else:
             t = x.to(u.day)
-        amplitude = self.kwargs_variability.get("amp", 1.0)
-        frequency = self.kwargs_variability.get("freq", 1.0)
+        amplitude = self.kwargs_variability_model.get("amp", 1.0)
+        frequency = self.kwargs_variability_model.get("freq", 1.0)
 
         return amplitude * np.sin(2 * np.pi * frequency * t.value)

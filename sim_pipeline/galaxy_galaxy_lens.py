@@ -20,7 +20,6 @@ class GalaxyGalaxyLens(LensedSystem):
         deflector_dict,
         cosmo,
         source_type="extended",
-        variability_model = None,
         kwargs_variab = None,
         test_area=4 * np.pi,
         mixgauss_means=None,
@@ -61,14 +60,13 @@ class GalaxyGalaxyLens(LensedSystem):
         self._mixgauss_stds = mixgauss_stds
         self._mixgauss_weights = mixgauss_weights
         self._magnification_limit = magnification_limit
-        self.variability_model = variability_model
         self.kwargs_variab = kwargs_variab
 
-        if self._source_type == "extended" and self.variability_model is not None:
+        if self._source_type == "extended" and self.kwargs_variab is not None:
             raise ValueError(
                 "Extended source can not have variability."
             )
-        self._source = Source(self._source_dict, self.variability_model, self.kwargs_variab)
+        self._source = Source(self._source_dict, self.kwargs_variab)
         if self._deflector_dict["z"] >= self._source_dict["z"]:
             self._theta_E_sis = 0
         else:
