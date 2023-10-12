@@ -35,6 +35,8 @@ class GalaxyGalaxyLens(LensedSystem):
         :param cosmo: astropy.cosmology instance
         :param source_type: type of the source 'extended' or 'point_source' supported
         :type source_type: str
+        :param kwargs_variab: keyword arguments for the variability of a source
+        :type kwargs_variab: dict
         :param test_area: area of disk around one lensing galaxies to be investigated
             on (in arc-seconds^2)
         :param mixgauss_weights: weights of the Gaussian mixture
@@ -340,12 +342,8 @@ class GalaxyGalaxyLens(LensedSystem):
         :type band: string
         :param lensed: if True, returns the lensed magnified magnitude
         :type lensed: bool
-        :param variability: None or list of variability function, time, and
-         kwargs_variability for variability model. Eg: variability = {'time': t,
-         'function': sinusoidal_variability, 'kwargs_variability': {'amp': 2.0, 'freq':
-         0.5}}, where t is a observation time which is a astropy.unit object and
-         sinusoidal_variability is a source variability function. If None, provides 
-         magnitude without variability.
+        :param time: time is a image observation time which is a astropy.unit object. 
+         If None, provides magnitude without variability.
         :return: point source magnitude
         """
         #band_string = str("mag_" + band)
