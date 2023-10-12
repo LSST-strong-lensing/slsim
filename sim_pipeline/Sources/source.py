@@ -52,7 +52,8 @@ class Source(object):
                 else:
                     raise ValueError(
                         "variability model is not provided. Please include one of the" 
-                    "variability models in your kwargs_variability as a first entry."
+                        "variability models in your kwargs_variability as a first" 
+                        "entry."
                     )
                 kwargs_variability_model = self.kwargs_variability_model
                 variability_class = Variability(**kwargs_variability_model)
