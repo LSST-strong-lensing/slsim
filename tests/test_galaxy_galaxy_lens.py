@@ -101,7 +101,7 @@ class TestGalaxyGalaxyLens(object):
         npt.assert_almost_equal(dt_days, observer_times, decimal=5)
 
     def test_point_source_magnitude(self):
-        mag = self.gg_lens.point_source_magnitude(band = "i", lensed=True)
+        mag = self.gg_lens.point_source_magnitude(band="i", lensed=True)
         assert len(mag) >= 2
 
 

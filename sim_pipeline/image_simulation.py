@@ -152,7 +152,9 @@ def rgb_image_from_image_list(image_list, stretch):
     return image_rgb
 
 
-def point_source_coordinate_properties(lens_class, band, mag_zero_point, delta_pix, num_pix):
+def point_source_coordinate_properties(
+    lens_class, band, mag_zero_point, delta_pix, num_pix
+):
     """Provides pixel coordinates for deflector and images. Currently, this function
     only works for point source.
 
@@ -189,12 +191,11 @@ def point_source_coordinate_properties(lens_class, band, mag_zero_point, delta_p
     ps_coordinate = lens_class.image_positions()
     ra_image_values = ps_coordinate[0]
     dec_image_values = ps_coordinate[1]
-    #image_magnitude = lens_class.point_source_magnitude(band=band, lensed=True)
+    # image_magnitude = lens_class.point_source_magnitude(band=band, lensed=True)
     image_pix_coordinate = []
     for image_ra, image_dec in zip(ra_image_values, dec_image_values):
         image_pix_coordinate.append((image_data.map_coord2pix(image_ra, image_dec)))
     ra_at_xy_0, dec_at_xy_0 = image_data.map_pix2coord(0, 0)
-
     """image_amplitude = []
     for i in range(len(image_magnitude)):
         delta_m = image_magnitude[i] - mag_zero_point
@@ -202,7 +203,8 @@ def point_source_coordinate_properties(lens_class, band, mag_zero_point, delta_p
         image_amplitude.append(counts)"""
 
     data = Table(
-        [lens_pix_coordinate,
+        [
+            lens_pix_coordinate,
             image_pix_coordinate,
             ra_image_values,
             dec_image_values,
@@ -219,8 +221,9 @@ def point_source_coordinate_properties(lens_class, band, mag_zero_point, delta_p
     return data
 
 
-def point_source_image(lens_class, band, mag_zero_point, delta_pix, num_pix, 
-                       psf_kernels, time = None):
+def point_source_image(
+    lens_class, band, mag_zero_point, delta_pix, num_pix, psf_kernels, time=None
+):
     """Creates lensed point source images on the basis of given information.
 
     :param lens_class: GalaxyGalaxyLens() object
@@ -229,8 +232,8 @@ def point_source_image(lens_class, band, mag_zero_point, delta_pix, num_pix,
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
     :param psf_kernels: psf kernels extracted from the dp0 cutout images
-    :param time: time is a image observation time which is a astropy.unit object.
-     If None, creates images without variability.
+    :param time: time is a image observation time which is a astropy.unit object. If
+        None, creates images without variability.
     :return: point source images
     """
 
@@ -255,8 +258,8 @@ def point_source_image(lens_class, band, mag_zero_point, delta_pix, num_pix,
 
     ra_image_values = image_data["ra_image"]
     dec_image_values = image_data["dec_image"]
-    #amp = image_data["image_amplitude"]
-    #magnitude = lens_class.point_source_magnitude(band, lensed=True)
+    # amp = image_data["image_amplitude"]
+    # magnitude = lens_class.point_source_magnitude(band, lensed=True)
     psf_class = []
     for i in range(len(psf_kernels)):
         psf_class.append(PSF(psf_type="PIXEL", kernel_point_source=psf_kernels[i]))
@@ -277,8 +280,9 @@ def point_source_image(lens_class, band, mag_zero_point, delta_pix, num_pix,
             point_source_images.append(point_source)
     else:
         time = time
-        variable_mag = lens_class.point_source_magnitude(band=band, lensed=True, 
-                                                         time=time)
+        variable_mag = lens_class.point_source_magnitude(
+            band=band, lensed=True, time=time
+        )
         variable_amp = magnitude_to_amplitude(variable_mag, mag_zero_point)
         point_source_images = []
         for i in range(len(psf_class)):

@@ -35,11 +35,10 @@ def create_image_montage_from_image_list(num_rows, num_cols, images, time=None):
                         horizontalalignment="left",
                         transform=axes[i, j].transAxes,
                     )
-                    
+
     fig.tight_layout()
     fig.subplots_adjust(wspace=0.0, hspace=0.05)
     return fig
-
 
 
 def plot_montage_of_random_injected_lens(image_list, num, n_horizont=1, n_vertical=1):

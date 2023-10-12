@@ -71,10 +71,11 @@ def convolved_image(image, psf_kernel, type="fft"):
         return convolve2d(
             image, psf_kernel, mode="same", boundary="symm", fillvalue=0.0
         )
-    
+
+
 def magnitude_to_amplitude(magnitude, mag_zero_point):
-    """converts source magnitude to amplitude
-    
+    """Converts source magnitude to amplitude.
+
     :param magnitude: source magnitude
     :param mag_zero_point: zero point magnitude for the image simulation
     :returns: source amplitude
