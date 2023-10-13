@@ -9,6 +9,7 @@ from lenstronomy.Util import util, data_util
 from slsim.lensed_system_base import LensedSystemBase
 import astropy.units as u
 from slsim.Sources.source import Source
+import warnings
 
 
 class Lens(LensedSystemBase):
@@ -66,7 +67,9 @@ class Lens(LensedSystemBase):
         self.kwargs_variab = kwargs_variab
 
         if self._source_type == "extended" and self.kwargs_variab is not None:
-            raise ValueError("Extended source can not have variability.")
+            warning_msg="Extended source can not have variability. Therefore, variability \
+            information provided by you will not be used."
+            warnings.warn(warning_msg, category=UserWarning,stacklevel=2)
         self._source = Source(self._source_dict, self.kwargs_variab)
         if self._deflector_dict["z"] >= self._source_dict["z"]:
             self._theta_E_sis = 0
