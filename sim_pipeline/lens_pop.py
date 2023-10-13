@@ -4,7 +4,7 @@ from sim_pipeline.lens import (
     theta_e_when_source_infinity,
 )
 import numpy as np
-from sim_pipeline.lensed_population import LensedPopulationBase
+from sim_pipeline.lensed_population_base import LensedPopulationBase
 
 
 class LensPop(LensedPopulationBase):

@@ -6,7 +6,7 @@ from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
 from sim_pipeline.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
 from lenstronomy.Util import util, data_util
-from sim_pipeline.lensed_system import LensedSystemBase
+from sim_pipeline.lensed_system_base import LensedSystemBase
 import astropy.units as u
 from sim_pipeline.Sources.source import Source
 
