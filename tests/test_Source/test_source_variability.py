@@ -1,6 +1,6 @@
 import astropy.units as u
 import numpy as np
-from sim_pipeline.Sources.source_variability.variability import Variability
+from slsim.Sources.source_variability.variability import Variability
 import pytest
 
 

@@ -1,4 +1,4 @@
-from sim_pipeline.Sources.source import Source
+from slsim.Sources.source import Source
 import numpy as np
 import astropy.units as u
 import pytest

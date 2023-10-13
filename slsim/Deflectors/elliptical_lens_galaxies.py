@@ -1,9 +1,9 @@
 import numpy as np
 import numpy.random as random
-from sim_pipeline.selection import deflector_cut
-from sim_pipeline.Deflectors.velocity_dispersion import vel_disp_sdss
-from sim_pipeline.Util import param_util
-from sim_pipeline.Deflectors.deflector_base import DeflectorBase
+from slsim.selection import deflector_cut
+from slsim.Deflectors.velocity_dispersion import vel_disp_sdss
+from slsim.Util import param_util
+from slsim.Deflectors.deflector_base import DeflectorBase
 
 
 class EllipticalLensGalaxies(DeflectorBase):

@@ -12,7 +12,7 @@ To install sim-pipeline, run this command in your terminal:
 
 .. code-block:: console
 
-    $ pip install sim_pipeline
+    $ pip install slsim
 
 This is the preferred method to install sim-pipeline, as it will always install the most recent stable release.
 
@@ -32,7 +32,7 @@ You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://github.com/LSST-strong-lensing/sim_pipeline
+    $ git clone git://github.com/LSST-strong-lensing/slsim
 
 Or download the `tarball`_:
 

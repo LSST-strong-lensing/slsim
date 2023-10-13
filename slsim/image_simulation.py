@@ -5,7 +5,7 @@ from astropy.visualization import make_lupton_rgb
 from lenstronomy.Data.psf import PSF
 from lenstronomy.Data.pixel_grid import PixelGrid
 from lenstronomy.ImSim.Numerics.point_source_rendering import PointSourceRendering
-from sim_pipeline.Util.param_util import magnitude_to_amplitude
+from slsim.Util.param_util import magnitude_to_amplitude
 
 
 def simulate_image(
@@ -26,7 +26,7 @@ def simulate_image(
     :rtype: 2d numpy array
     """
     kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band)
-    from sim_pipeline.Observations import image_quality_lenstronomy
+    from slsim.Observations import image_quality_lenstronomy
 
     kwargs_single_band = image_quality_lenstronomy.kwargs_single_band(
         observatory=observatory, band=band, **kwargs

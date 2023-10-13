@@ -5,10 +5,10 @@ import lsst.geom as geom
 from lsst.pipe.tasks.insertFakes import _add_fake_sources
 import galsim
 from astropy.table import Table, vstack
-from sim_pipeline.image_simulation import sharp_image
+from slsim.image_simulation import sharp_image
 from scipy.signal import convolve2d
 from scipy import interpolate
-from sim_pipeline.image_simulation import point_source_image_properties
+from slsim.image_simulation import point_source_image_properties
 
 """
 This module provides necessary functions to inject lenses to the dp0 data. For this, it 

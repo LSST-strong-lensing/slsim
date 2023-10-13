@@ -1,10 +1,10 @@
-from sim_pipeline.Pipelines.skypy_pipeline import SkyPyPipeline
-from sim_pipeline.lens import (
+from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
+from slsim.lens import (
     Lens,
     theta_e_when_source_infinity,
 )
 import numpy as np
-from sim_pipeline.lensed_population_base import LensedPopulationBase
+from slsim.lensed_population_base import LensedPopulationBase
 
 
 class LensPop(LensedPopulationBase):
@@ -66,7 +66,7 @@ class LensPop(LensedPopulationBase):
             kwargs_mass2light = {}
 
         if deflector_type == "elliptical":
-            from sim_pipeline.Deflectors.elliptical_lens_galaxies import (
+            from slsim.Deflectors.elliptical_lens_galaxies import (
                 EllipticalLensGalaxies,
             )
 
@@ -79,7 +79,7 @@ class LensPop(LensedPopulationBase):
             )
 
         elif deflector_type == "all-galaxies":
-            from sim_pipeline.Deflectors.all_lens_galaxies import AllLensGalaxies
+            from slsim.Deflectors.all_lens_galaxies import AllLensGalaxies
 
             red_galaxy_list = pipeline.red_galaxies
             blue_galaxy_list = pipeline.blue_galaxies
@@ -99,7 +99,7 @@ class LensPop(LensedPopulationBase):
         if kwargs_source_cut is None:
             kwargs_source_cut = {}
         if source_type == "galaxies":
-            from sim_pipeline.Sources.galaxies import Galaxies
+            from slsim.Sources.galaxies import Galaxies
 
             self._sources = Galaxies(
                 pipeline.blue_galaxies,
@@ -109,8 +109,8 @@ class LensPop(LensedPopulationBase):
             )
             self._source_model_type = "extended"
         elif source_type == "quasars":
-            from sim_pipeline.Sources.quasars import Quasars
-            from sim_pipeline.Sources.quasar_catalog.simple_quasar import quasar_catalog
+            from slsim.Sources.quasars import Quasars
+            from slsim.Sources.quasar_catalog.simple_quasar import quasar_catalog
 
             if kwargs_quasars is None:
                 kwargs_quasars = {}

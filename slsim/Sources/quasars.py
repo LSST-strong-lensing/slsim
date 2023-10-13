@@ -1,5 +1,5 @@
 import numpy.random as random
-from sim_pipeline.Sources.source_base import SourceBase
+from slsim.Sources.source_base import SourceBase
 
 
 class Quasars(SourceBase):

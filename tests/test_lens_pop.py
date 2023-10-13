@@ -1,7 +1,7 @@
 import pytest
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
-from sim_pipeline.lens_pop import LensPop, draw_test_area
+from slsim.lens_pop import LensPop, draw_test_area
 import numpy as np
 
 

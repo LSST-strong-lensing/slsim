@@ -1,13 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.cosmology import FlatLambdaCDM
-from sim_pipeline.lens_pop import LensPop
+from slsim.lens_pop import LensPop
 from astropy.units import Quantity
-from sim_pipeline.Plots.plot_functions import (
+from slsim.Plots.plot_functions import (
     create_image_montage_from_image_list,
     plot_montage_of_random_injected_lens,
 )
-from sim_pipeline.image_simulation import sharp_image
+from slsim.image_simulation import sharp_image
 import pytest
 
 

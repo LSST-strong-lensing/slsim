@@ -3,7 +3,7 @@ import numpy as np
 from numpy import testing as npt
 from astropy.cosmology import FlatLambdaCDM
 from astropy.table import Table
-from sim_pipeline.lens import (
+from slsim.lens import (
     Lens,
     image_separation_from_positions,
     theta_e_when_source_infinity,
@@ -15,7 +15,7 @@ import os
 class TestLens(object):
     # pytest.fixture(scope='class')
     def setup_method(self):
-        # path = os.path.dirname(sim_pipeline.__file__)
+        # path = os.path.dirname(slsim.__file__)
 
         path = os.path.dirname(__file__)
         module_path, _ = os.path.split(path)

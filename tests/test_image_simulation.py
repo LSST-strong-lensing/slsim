@@ -3,10 +3,10 @@ import numpy as np
 from astropy.table import Table
 import astropy.units as u
 from astropy.cosmology import FlatLambdaCDM
-from sim_pipeline.lens import Lens
-from sim_pipeline.lens_pop import LensPop
+from slsim.lens import Lens
+from slsim.lens_pop import LensPop
 from astropy.units import Quantity
-from sim_pipeline.image_simulation import (
+from slsim.image_simulation import (
     simulate_image,
     sharp_image,
     sharp_rgb_image,
@@ -19,7 +19,7 @@ import pytest
 
 class TestImageSimulation(object):
     def setup_method(self):
-        # path = os.path.dirname(sim_pipeline.__file__)
+        # path = os.path.dirname(slsim.__file__)
 
         path = os.path.dirname(__file__)
         module_path, _ = os.path.split(path)

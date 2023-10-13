@@ -46,7 +46,7 @@ class Source(object):
             source_mag = self.source_dict[band_string] - 2.5 * np.log10(np.abs(mag))
             if self.image_observation_times is not None:
                 if self.variability_model is not None:
-                    from sim_pipeline.Sources.source_variability.variability import (
+                    from slsim.Sources.source_variability.variability import (
                         Variability,
                     )
                 else:

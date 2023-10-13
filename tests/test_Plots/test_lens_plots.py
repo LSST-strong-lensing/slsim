@@ -1,9 +1,9 @@
 import pytest
-from sim_pipeline.lens_pop import LensPop
+from slsim.lens_pop import LensPop
 import numpy as np
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
-from sim_pipeline.Plots.lens_plots import LensingPlots
+from slsim.Plots.lens_plots import LensingPlots
 import matplotlib.pyplot as plt
 
 

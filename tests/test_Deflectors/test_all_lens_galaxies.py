@@ -1,10 +1,10 @@
 from astropy.cosmology import FlatLambdaCDM
-from sim_pipeline.Deflectors.all_lens_galaxies import (
+from slsim.Deflectors.all_lens_galaxies import (
     AllLensGalaxies,
     fill_table,
     vel_disp_abundance_matching,
 )
-from sim_pipeline.Pipelines.skypy_pipeline import SkyPyPipeline
+from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 from astropy.units import Quantity
 from astropy.table import Table
 import numpy as np

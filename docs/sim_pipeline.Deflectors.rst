@@ -7,7 +7,7 @@ Submodules
 sim\_pipeline.Deflectors.all\_lens\_galaxies module
 ---------------------------------------------------
 
-.. automodule:: sim_pipeline.Deflectors.all_lens_galaxies
+.. automodule:: slsim.Deflectors.all_lens_galaxies
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,7 +15,7 @@ sim\_pipeline.Deflectors.all\_lens\_galaxies module
 sim\_pipeline.Deflectors.elliptical\_lens\_galaxies module
 ----------------------------------------------------------
 
-.. automodule:: sim_pipeline.Deflectors.elliptical_lens_galaxies
+.. automodule:: slsim.Deflectors.elliptical_lens_galaxies
    :members:
    :undoc-members:
    :show-inheritance:
@@ -23,7 +23,7 @@ sim\_pipeline.Deflectors.elliptical\_lens\_galaxies module
 sim\_pipeline.Deflectors.velocity\_dispersion module
 ----------------------------------------------------
 
-.. automodule:: sim_pipeline.Deflectors.velocity_dispersion
+.. automodule:: slsim.Deflectors.velocity_dispersion
    :members:
    :undoc-members:
    :show-inheritance:
@@ -31,7 +31,7 @@ sim\_pipeline.Deflectors.velocity\_dispersion module
 Module contents
 ---------------
 
-.. automodule:: sim_pipeline.Deflectors
+.. automodule:: slsim.Deflectors
    :members:
    :undoc-members:
    :show-inheritance:

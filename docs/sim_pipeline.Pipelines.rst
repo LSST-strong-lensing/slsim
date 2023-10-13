@@ -7,7 +7,7 @@ Submodules
 sim\_pipeline.Pipelines.skypy\_pipeline module
 ----------------------------------------------
 
-.. automodule:: sim_pipeline.Pipelines.skypy_pipeline
+.. automodule:: slsim.Pipelines.skypy_pipeline
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,7 +15,7 @@ sim\_pipeline.Pipelines.skypy\_pipeline module
 Module contents
 ---------------
 
-.. automodule:: sim_pipeline.Pipelines
+.. automodule:: slsim.Pipelines
    :members:
    :undoc-members:
    :show-inheritance:

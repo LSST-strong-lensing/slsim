@@ -1,6 +1,6 @@
 import numpy as np
 import os
-from sim_pipeline.Util.param_util import (
+from slsim.Util.param_util import (
     epsilon2e,
     e2epsilon,
     random_ra_dec,

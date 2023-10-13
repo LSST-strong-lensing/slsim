@@ -1,4 +1,4 @@
-from sim_pipeline.Sources.quasar_catalog import simple_quasar
+from slsim.Sources.quasar_catalog import simple_quasar
 import pytest
 
 

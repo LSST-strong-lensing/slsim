@@ -3,12 +3,12 @@ import copy
 import numpy as np
 from scipy import interpolate
 import numpy.random as random
-from sim_pipeline.selection import deflector_cut
-from sim_pipeline.Deflectors.velocity_dispersion import vel_disp_sdss
-from sim_pipeline.Deflectors.elliptical_lens_galaxies import (
+from slsim.selection import deflector_cut
+from slsim.Deflectors.velocity_dispersion import vel_disp_sdss
+from slsim.Deflectors.elliptical_lens_galaxies import (
     elliptical_projected_eccentricity,
 )
-from sim_pipeline.Deflectors.deflector_base import DeflectorBase
+from slsim.Deflectors.deflector_base import DeflectorBase
 from astropy.table import vstack
 
 

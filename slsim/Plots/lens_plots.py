@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from astropy.visualization import make_lupton_rgb
-from sim_pipeline.image_simulation import simulate_image
+from slsim.image_simulation import simulate_image
 
 
 class LensingPlots(object):

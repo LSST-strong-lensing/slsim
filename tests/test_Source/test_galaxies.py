@@ -1,8 +1,8 @@
 from astropy.cosmology import FlatLambdaCDM
-from sim_pipeline.Pipelines.skypy_pipeline import SkyPyPipeline
+from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 from astropy.units import Quantity
-from sim_pipeline.Sources.galaxies import Galaxies
-from sim_pipeline.Sources.galaxies import galaxy_projected_eccentricity
+from slsim.Sources.galaxies import Galaxies
+from slsim.Sources.galaxies import galaxy_projected_eccentricity
 import pytest
 
 

@@ -1,8 +1,8 @@
 import numpy as np
 import numpy.random as random
-from sim_pipeline.selection import deflector_cut
-from sim_pipeline.Util import param_util
-from sim_pipeline.Sources.source_base import SourceBase
+from slsim.selection import deflector_cut
+from slsim.Util import param_util
+from slsim.Sources.source_base import SourceBase
 
 
 class Galaxies(SourceBase):
