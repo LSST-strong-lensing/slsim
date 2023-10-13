@@ -1,7 +1,7 @@
 import pytest
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
-from sim_pipeline.galaxy_galaxy_lens_pop import GalaxyGalaxyLensPop, draw_test_area
+from sim_pipeline.lens_pop import LensPop, draw_test_area
 import numpy as np
 
 
@@ -9,7 +9,7 @@ import numpy as np
 def gg_lens_pop_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     sky_area = Quantity(value=0.1, unit="deg2")
-    return GalaxyGalaxyLensPop(sky_area=sky_area, cosmo=cosmo)
+    return LensPop(sky_area=sky_area, cosmo=cosmo)
 
 
 def test_num_lenses_and_sources(gg_lens_pop_instance):

@@ -3,8 +3,8 @@ import numpy as np
 from astropy.table import Table
 import astropy.units as u
 from astropy.cosmology import FlatLambdaCDM
-from sim_pipeline.galaxy_galaxy_lens import GalaxyGalaxyLens
-from sim_pipeline.galaxy_galaxy_lens_pop import GalaxyGalaxyLensPop
+from sim_pipeline.lens import Lens
+from sim_pipeline.lens_pop import LensPop
 from astropy.units import Quantity
 from sim_pipeline.image_simulation import (
     simulate_image,
@@ -34,7 +34,7 @@ class TestImageSimulation(object):
         self.source_dict = blue_one
         self.deflector_dict = red_one
         while True:
-            gg_lens = GalaxyGalaxyLens(
+            gg_lens = Lens(
                 source_dict=self.source_dict,
                 deflector_dict=self.deflector_dict,
                 cosmo=cosmo,
@@ -109,7 +109,7 @@ def quasar_lens_pop_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     sky_area = Quantity(value=0.1, unit="deg2")
     kwargs_variability = {"variability_model": "sinusoidal", "amp": 1.0, "freq": 0.5}
-    return GalaxyGalaxyLensPop(
+    return LensPop(
         deflector_type="all-galaxies",
         source_type="quasars",
         kwargs_variability=kwargs_variability,

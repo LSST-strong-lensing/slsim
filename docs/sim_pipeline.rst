@@ -21,7 +21,7 @@ Submodules
 sim\_pipeline.galaxy\_galaxy\_lens module
 -----------------------------------------
 
-.. automodule:: sim_pipeline.galaxy_galaxy_lens
+.. automodule:: sim_pipeline.lens
    :members:
    :undoc-members:
    :show-inheritance:
@@ -29,7 +29,7 @@ sim\_pipeline.galaxy\_galaxy\_lens module
 sim\_pipeline.galaxy\_galaxy\_lens\_pop module
 ----------------------------------------------
 
-.. automodule:: sim_pipeline.galaxy_galaxy_lens_pop
+.. automodule:: sim_pipeline.lens_pop
    :members:
    :undoc-members:
    :show-inheritance:

@@ -414,7 +414,7 @@ def cutout_image_psf_kernel(
 
     :param dp0_image: cutout image from the dp0 data or any other image
     :param lens_class: class object containing all information of the lensing system
-        (e.g., GalaxyGalaxyLens())
+        (e.g., Lens())
     :param band: imaging band
     :param mag_zero_point: magnitude zero point in band
     :param delta_pix: pixel scale of image generated

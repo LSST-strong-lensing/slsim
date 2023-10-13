@@ -6,12 +6,12 @@ from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
 from sim_pipeline.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
 from lenstronomy.Util import util, data_util
-from sim_pipeline.lensed_system import LensedSystem
+from sim_pipeline.lensed_system import LensedSystemBase
 import astropy.units as u
 from sim_pipeline.Sources.source import Source
 
 
-class GalaxyGalaxyLens(LensedSystem):
+class Lens(LensedSystemBase):
     """Class to manage individual galaxy-galaxy lenses."""
 
     def __init__(

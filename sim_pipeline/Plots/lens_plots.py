@@ -3,7 +3,7 @@ from astropy.visualization import make_lupton_rgb
 from sim_pipeline.image_simulation import simulate_image
 
 
-class GalaxyGalaxyLensingPlots(object):
+class LensingPlots(object):
     """A class to create and display simulated gravitational lensing images using the
     provided configurations for the source (blue) and lens (red) galaxies."""
 
@@ -11,7 +11,7 @@ class GalaxyGalaxyLensingPlots(object):
         """
 
         :param lens_pop: lens population class
-        :type lens_pop: `GalaxyGalaxyLensPop`
+        :type lens_pop: `LensPop`
         :param num_pix: number of pixels for the simulated image, default is 64
         :type num_pix: int
         :param observatory: observatory chosen
@@ -30,7 +30,7 @@ class GalaxyGalaxyLensingPlots(object):
         """Method to generate a rgb-image with lupton_rgb color scale.
 
         :param lens_class: class object containing all information of the lensing system
-            (e.g., GalaxyGalaxyLens())
+            (e.g., Lens())
         :param rgb_band_list: list of imaging band names corresponding to r-g-b color
             map
         :param add_noise: boolean flag, set to True to add noise to the image, default
@@ -80,7 +80,7 @@ class GalaxyGalaxyLensingPlots(object):
             is True
         :param n_horizont: number of images to display horizontally, default is 1
         :param n_vertical: number of images to display vertically, default is 1
-        :param kwargs_lens_cut: lens selection cuts for GalaxyGalaxyLens.validity_test()
+        :param kwargs_lens_cut: lens selection cuts for Lens.validity_test()
             function
         """
         if kwargs_lens_cut is None:

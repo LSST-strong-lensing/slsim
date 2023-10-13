@@ -14,7 +14,7 @@ def simulate_image(
     """Creates an image of a selected lens with noise.
 
     :param lens_class: class object containing all information of the lensing system
-        (e.g., GalaxyGalaxyLens())
+        (e.g., Lens())
     :param band: imaging band
     :param num_pix: number of pixels per axis
     :param add_noise: if True, add noise
@@ -62,7 +62,7 @@ def sharp_image(
 ):
     """Creates a high resolution image of a selected lens.
 
-    :param lens_class: GalaxyGalaxyLens() object
+    :param lens_class: Lens() object
     :param band: imaging band
     :param mag_zero_point: magnitude zero point in band
     :param delta_pix: pixel scale of image generated
@@ -108,7 +108,7 @@ def sharp_image(
 def sharp_rgb_image(lens_class, rgb_band_list, mag_zero_point, delta_pix, num_pix):
     """Creates a high resolution rgb image of a selected lens.
 
-    :param lens_class: GalaxyGalaxyLens() object
+    :param lens_class: Lens() object
     :param rgb_band_list: imaging band list
     :param mag_zero_point: magnitude zero point in band
     :param delta_pix: pixel scale of image generated
@@ -158,7 +158,7 @@ def point_source_coordinate_properties(
     """Provides pixel coordinates for deflector and images. Currently, this function
     only works for point source.
 
-    :param lens_class: GalaxyGalaxyLens() object
+    :param lens_class: Lens() object
     :param band: imaging band
     :param mag_zero_point: magnitude zero point in band
     :param delta_pix: pixel scale of image generated
@@ -228,7 +228,7 @@ def point_source_image(
 ):
     """Creates lensed point source images on the basis of given information.
 
-    :param lens_class: GalaxyGalaxyLens() object
+    :param lens_class: Lens() object
     :param band: imaging band
     :param mag_zero_point: magnitude zero point in band
     :param delta_pix: pixel scale of image generated

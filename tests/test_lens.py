@@ -3,8 +3,8 @@ import numpy as np
 from numpy import testing as npt
 from astropy.cosmology import FlatLambdaCDM
 from astropy.table import Table
-from sim_pipeline.galaxy_galaxy_lens import (
-    GalaxyGalaxyLens,
+from sim_pipeline.lens import (
+    Lens,
     image_separation_from_positions,
     theta_e_when_source_infinity,
 )
@@ -12,7 +12,7 @@ from sim_pipeline.galaxy_galaxy_lens import (
 import os
 
 
-class TestGalaxyGalaxyLens(object):
+class TestLens(object):
     # pytest.fixture(scope='class')
     def setup_method(self):
         # path = os.path.dirname(sim_pipeline.__file__)
@@ -30,7 +30,7 @@ class TestGalaxyGalaxyLens(object):
         self.source_dict = blue_one
         self.deflector_dict = red_one
         while True:
-            gg_lens = GalaxyGalaxyLens(
+            gg_lens = Lens(
                 source_dict=self.source_dict,
                 deflector_dict=self.deflector_dict,
                 cosmo=cosmo,

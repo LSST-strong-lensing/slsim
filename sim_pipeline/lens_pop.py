@@ -1,13 +1,13 @@
 from sim_pipeline.Pipelines.skypy_pipeline import SkyPyPipeline
-from sim_pipeline.galaxy_galaxy_lens import (
-    GalaxyGalaxyLens,
+from sim_pipeline.lens import (
+    Lens,
     theta_e_when_source_infinity,
 )
 import numpy as np
-from sim_pipeline.lensed_population import LensedPopulation
+from sim_pipeline.lensed_population import LensedPopulationBase
 
 
-class GalaxyGalaxyLensPop(LensedPopulation):
+class LensPop(LensedPopulationBase):
     """Class to perform samples of galaxy-galaxy lensing."""
 
     def __init__(
@@ -136,13 +136,13 @@ class GalaxyGalaxyLensPop(LensedPopulation):
         # TODO: make sure mass function is preserved, # as well as option to draw all
         lenses within the cuts within the area
 
-        :return: GalaxyGalaxyLens() instance with parameters of the deflector and lens
+        :return: Lens() instance with parameters of the deflector and lens
             and source light
         """
         while True:
             source = self._sources.draw_source()
             lens = self._lens_galaxies.draw_deflector()
-            gg_lens = GalaxyGalaxyLens(
+            gg_lens = Lens(
                 deflector_dict=lens,
                 source_dict=source,
                 kwargs_variab=self.kwargs_variability,
@@ -194,12 +194,12 @@ class GalaxyGalaxyLensPop(LensedPopulation):
 
         :param kwargs_lens_cuts: validity test keywords
         :type kwargs_lens_cuts: dict
-        :return: List of GalaxyGalaxyLens instances with parameters of the deflectors
+        :return: List of Lens instances with parameters of the deflectors
             and lens and source light.
         :rtype: list
         """
 
-        # Initialize an empty list to store the GalaxyGalaxyLens instances
+        # Initialize an empty list to store the Lens instances
         gg_lens_population = []
         # Estimate the number of lensing systems
         num_lenses = self._lens_galaxies.deflector_number()
@@ -219,7 +219,7 @@ class GalaxyGalaxyLensPop(LensedPopulation):
                 n = 0
                 while n < num_sources_tested:
                     source = self._sources.draw_source()
-                    gg_lens = GalaxyGalaxyLens(
+                    gg_lens = Lens(
                         deflector_dict=lens,
                         source_dict=source,
                         cosmo=self.cosmo,

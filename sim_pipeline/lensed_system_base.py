@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 
-class LensedSystem(ABC):
+class LensedSystemBase(ABC):
     """Abstract Base class to create a lens system with all lensing properties required
     to render populations."""
 

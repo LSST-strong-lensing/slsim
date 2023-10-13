@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.cosmology import FlatLambdaCDM
-from sim_pipeline.galaxy_galaxy_lens_pop import GalaxyGalaxyLensPop
+from sim_pipeline.lens_pop import LensPop
 from astropy.units import Quantity
 from sim_pipeline.Plots.plot_functions import (
     create_image_montage_from_image_list,
@@ -15,7 +15,7 @@ import pytest
 def quasar_lens_pop_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     sky_area = Quantity(value=0.1, unit="deg2")
-    return GalaxyGalaxyLensPop(
+    return LensPop(
         deflector_type="all-galaxies",
         source_type="quasars",
         kwargs_deflector_cut=None,

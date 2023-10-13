@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import warnings
 
 
-class LensedPopulation(ABC):
+class LensedPopulationBase(ABC):
     """Abstract Base Class to create a sample of lensed systems.
 
     All object that inherit from Lensed Sample must contain the methods it contains.
@@ -41,7 +41,7 @@ class LensedPopulation(ABC):
 
         # as well as option to draw all lenses within the cuts within the area
 
-        :return: GalaxyGalaxyLens() instance with parameters of the deflector and lens
+        :return: Lens() instance with parameters of the deflector and lens
             and source light
         """
         pass
@@ -68,7 +68,7 @@ class LensedPopulation(ABC):
     def draw_population(self):
         """Return full sample list of all lenses within the area.
 
-        :return: List of LensedSystem instances with parameters of the deflectors and
+        :return: List of LensedSystemBase instances with parameters of the deflectors and
             source.
         :rtype: list
         """
