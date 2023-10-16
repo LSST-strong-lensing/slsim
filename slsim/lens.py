@@ -8,7 +8,6 @@ from slsim.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
 from lenstronomy.Util import util, data_util
 from slsim.lensed_system_base import LensedSystemBase
 import astropy.units as u
-from slsim.Sources.source import Source
 import warnings
 
 
@@ -70,13 +69,12 @@ class Lens(LensedSystemBase):
             warning_msg="Extended source can not have variability. Therefore, variability \
             information provided by you will not be used."
             warnings.warn(warning_msg, category=UserWarning,stacklevel=2)
-        self._source = Source(self._source_dict, self.kwargs_variab)
-        if self._deflector_dict["z"] >= self._source_dict["z"]:
+        if self._deflector_dict["z"] >= self.source.source_dict["z"]:
             self._theta_E_sis = 0
         else:
             lens_cosmo = LensCosmo(
                 z_lens=float(self._deflector_dict["z"]),
-                z_source=float(self._source_dict["z"]),
+                z_source=float(self.source.source_dict["z"]),
                 cosmo=self.cosmo,
             )
             self._theta_E_sis = lens_cosmo.sis_sigma_v2theta_E(
@@ -159,7 +157,7 @@ class Lens(LensedSystemBase):
         # Criteria 1:The redshift of the lens (z_lens) must be less than the
         # redshift of the source (z_source).
         z_lens = self._deflector_dict["z"]
-        z_source = self._source_dict["z"]
+        z_source = self.source.source_dict["z"]
         if z_lens >= z_source:
             return False
 
@@ -226,7 +224,7 @@ class Lens(LensedSystemBase):
 
         :return: source redshift
         """
-        return self._source_dict["z"]
+        return self.source.source_dict["z"]
 
     @property
     def einstein_radius(self):
@@ -350,7 +348,7 @@ class Lens(LensedSystemBase):
         """
         # band_string = str("mag_" + band)
         # TODO: might have to change conventions between extended and point source
-        # source_mag = self._source_dict[band_string]
+        # source_mag = self.source.source_dict[band_string]
         if lensed:
             magnif = self.point_source_magnification()
             if time is not None:
@@ -393,7 +391,7 @@ class Lens(LensedSystemBase):
         """
         band_string = str("mag_" + band)
         # TODO: might have to change conventions between extended and point source
-        source_mag = self._source_dict[band_string]
+        source_mag = self.source.source_dict[band_string]
         if lensed:
             mag = self.extended_source_magnification()
             return source_mag - 2.5 * np.log10(mag)
@@ -556,16 +554,16 @@ class Lens(LensedSystemBase):
             else:
                 mag_source = self.extended_source_magnitude(band)
             size_source_arcsec = (
-                float(self._source_dict["angular_size"]) / constants.arcsec
+                float(self.source.source_dict["angular_size"]) / constants.arcsec
             )
             source_models["source_light_model_list"] = ["SERSIC_ELLIPSE"]
             kwargs_source = [
                 {
                     "magnitude": mag_source,
                     "R_sersic": size_source_arcsec,
-                    "n_sersic": float(self._source_dict["n_sersic"]),
-                    "e1": float(self._source_dict["e1"]),
-                    "e2": float(self._source_dict["e2"]),
+                    "n_sersic": float(self.source.source_dict["n_sersic"]),
+                    "e1": float(self.source.source_dict["e1"]),
+                    "e2": float(self.source.source_dict["e2"]),
                     "center_x": center_source[0],
                     "center_y": center_source[1],
                 }

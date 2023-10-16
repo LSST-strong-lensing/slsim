@@ -17,7 +17,7 @@ class LensedSystemBase(ABC):
         :param test_area: area (arc-sec^2) around lensing galaxy to be investigated
 
         """
-        self._source_dict = source_dict
+        #self._source_dict = source_dict
         self.source = Source(source_dict, kwargs_variability)
         self._deflector_dict = deflector_dict
         # TODO: tell them what keys the dictionary should contain
