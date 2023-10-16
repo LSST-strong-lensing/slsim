@@ -13,12 +13,13 @@ class Source(object):
         :param kwargs_variab: Keyword arguments for variability class.
         """
         self.source_dict = source_dict
+        self.kwarg_variab = kwargs_variab
         if kwargs_variab is not None:
-            self.variability_model = kwargs_variab["variability_model"]
+            self.variability_model = self.kwargs_variab["variability_model"]
             self.kwargs_variability_model = {
                 key: value
-                for key, value in kwargs_variab.items()
-                if key != list(kwargs_variab.keys())[0]
+                for key, value in self.kwargs_variab.items()
+                if key != "variability_model"
             }
         else:
             self.variability_model = None
