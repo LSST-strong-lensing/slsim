@@ -53,7 +53,7 @@ class Lens(LensedSystemBase):
         """
         super().__init__(
             source_dict=source_dict,
-            deflector_dict=deflector_dict,
+            deflector_dict=deflector_dict, kwargs_variability=kwargs_variab,
             cosmo=cosmo,
             test_area=test_area,
         )
