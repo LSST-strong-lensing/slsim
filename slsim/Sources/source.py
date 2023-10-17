@@ -78,8 +78,6 @@ class Source(object):
 
         :param band: Imaging band
         :type band: str
-        :param magnification: Array of lensing magnification of each images. If None,
-            considers unlensed case.
         :param image_observation_times: Images observation time for an image.
         :return: Magnitude of the source in the specified band
         :rtype: float

@@ -8,7 +8,7 @@ class Variability(object):
     def __init__(self, variability_model, **kwargs_variability_model):
         """Initialize the variability class.
 
-        :param variability_model: variability model to be used.
+        :param variability_model: keyword for variability model to be used.
         :type variability_model: str
         :param kwargs_variability_model: Keyword arguments for variability class. For
             sinusoidal_variability kwargs are amplitude ('amp') and frequency ('freq').
