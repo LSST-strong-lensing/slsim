@@ -47,7 +47,7 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = "sim-pipeline"
+project = "slsim"
 copyright = "2022, DESC & SLSC"
 author = "DESC & SLSC"
 
@@ -128,7 +128,7 @@ latex_documents = [
     (
         master_doc,
         "slsim.tex",
-        "sim-pipeline Documentation",
+        "slsim Documentation",
         "DESC & SLSC",
         "manual",
     ),
@@ -139,7 +139,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "slsim", "sim-pipeline Documentation", [author], 1)]
+man_pages = [(master_doc, "slsim", "slsim Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output ----------------------------------------
@@ -151,7 +151,7 @@ texinfo_documents = [
     (
         master_doc,
         "slsim",
-        "sim-pipeline Documentation",
+        "slsim Documentation",
         author,
         "slsim",
         "One line description of project.",

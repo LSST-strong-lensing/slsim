@@ -2,6 +2,6 @@
 Usage
 =====
 
-To use sim-pipeline in a project::
+To use slsim in a project::
 
     import slsim

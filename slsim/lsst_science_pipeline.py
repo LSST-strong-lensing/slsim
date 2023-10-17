@@ -53,7 +53,7 @@ def lens_inejection(
     image. For this one needs to provide a butler to this function. To initiate Butler,
     you need to specify data configuration and collection of the data.
 
-    :param lens_pop: lens population from sim-pipeline
+    :param lens_pop: lens population from slsim
     :param num_pix: number of pixel for the cutout
     :param delta_pix: pixel scale for the lens image
     :param butler: butler object
@@ -176,7 +176,7 @@ def lens_inejection_fast(
     image. For this one needs to provide a butler to this function. To initiate Butler,
     you need to specify data configuration and collection of the data.
 
-    :param lens_pop: lens population from sim-pipeline
+    :param lens_pop: lens population from slsim
     :param num_pix: number of pixel for the cutout
     :param delta_pix: pixel scale for the lens image
     :param butler: butler object
@@ -284,7 +284,7 @@ def multiple_lens_injection(
     function. To initiate Butler, you need to specify data configuration and collection
     of the data.
 
-    :param lens_pop: lens population from sim-pipeline
+    :param lens_pop: lens population from slsim
     :param num_pix: number of pixel for the cutout
     :param delta_pix: pixel scale for the lens image
     :param butler: butler object
@@ -330,7 +330,7 @@ def multiple_lens_injection_fast(
     function. To initiate Butler, you need to specify data configuration and collection
     of the data.
 
-    :param lens_pop: lens population from sim-pipeline
+    :param lens_pop: lens population from slsim
     :param num_pix: number of pixel for the cutout
     :param delta_pix: pixel scale for the lens image
     :param butler: butler object
