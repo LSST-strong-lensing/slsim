@@ -8,7 +8,7 @@ from astropy.table import Table, vstack
 from slsim.image_simulation import sharp_image
 from scipy.signal import convolve2d
 from scipy import interpolate
-from slsim.image_simulation import point_source_image_properties
+from slsim.image_simulation import point_source_coordinate_properties
 
 """
 This module provides necessary functions to inject lenses to the dp0 data. For this, it 
@@ -425,7 +425,7 @@ def cutout_image_psf_kernel(
         defined in slot_CalibFlux_instFlux.
     :returns: Astropy table containing psf kernel at image and deflector positions.
     """
-    image_data = point_source_image_properties(
+    image_data = point_source_coordinate_properties(
         lens_class=lens_class,
         band=band,
         mag_zero_point=mag_zero_point,
