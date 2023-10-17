@@ -138,8 +138,8 @@ class LensPop(LensedPopulationBase):
         # TODO: make sure mass function is preserved, # as well as option to draw all
         lenses within the cuts within the area
 
-        :return: Lens() instance with parameters of the deflector and lens
-            and source light
+        :return: Lens() instance with parameters of the deflector and lens and source
+            light
         """
         while True:
             source = self._sources.draw_source()
@@ -197,8 +197,8 @@ class LensPop(LensedPopulationBase):
 
         :param kwargs_lens_cuts: validity test keywords
         :type kwargs_lens_cuts: dict
-        :return: List of Lens instances with parameters of the deflectors
-            and lens and source light.
+        :return: List of Lens instances with parameters of the deflectors and lens and
+            source light.
         :rtype: list
         """
 

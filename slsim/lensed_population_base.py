@@ -41,8 +41,8 @@ class LensedPopulationBase(ABC):
 
         # as well as option to draw all lenses within the cuts within the area
 
-        :return: Lens() instance with parameters of the deflector and lens
-            and source light
+        :return: Lens() instance with parameters of the deflector and lens and source
+            light
         """
         pass
 
@@ -68,8 +68,8 @@ class LensedPopulationBase(ABC):
     def draw_population(self):
         """Return full sample list of all lenses within the area.
 
-        :return: List of LensedSystemBase instances with parameters of the deflectors and
-            source.
+        :return: List of LensedSystemBase instances with parameters of the deflectors
+            and source.
         :rtype: list
         """
 

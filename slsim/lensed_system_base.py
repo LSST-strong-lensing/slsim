@@ -7,8 +7,15 @@ class LensedSystemBase(ABC):
     """Abstract Base class to create a lens system with all lensing properties required
     to render populations."""
 
-    def __init__(self, source_dict, deflector_dict, cosmo, test_area=4 * np.pi, 
-                 variability_model = None, kwargs_variability = None):
+    def __init__(
+        self,
+        source_dict,
+        deflector_dict,
+        cosmo,
+        test_area=4 * np.pi,
+        variability_model=None,
+        kwargs_variability=None,
+    ):
         """
         :param source_dict: source properties
         :type source_dict: dict
@@ -19,7 +26,7 @@ class LensedSystemBase(ABC):
         :param test_area: area (arc-sec^2) around lensing galaxy to be investigated
 
         """
-        #self._source_dict = source_dict
+        # self._source_dict = source_dict
         self.source = Source(source_dict, variability_model, kwargs_variability)
         self._deflector_dict = deflector_dict
         # TODO: tell them what keys the dictionary should contain

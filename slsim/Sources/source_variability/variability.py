@@ -17,19 +17,16 @@ class Variability(object):
         self._variability_model = variability_model
         if self._variability_model not in ["sinusoidal"]:
             raise ValueError(
-                        "given model is not supported. Currently,"
-                        "supported model is sinusoudal."
-                    )
+                "given model is not supported. Currently,"
+                "supported model is sinusoudal."
+            )
         if self._variability_model == "sinusoidal":
             self._model = sinusoidal_variability
         else:
-            raise ValueError(
-                        "Please provide a supported variability model."
-                    )
-        
+            raise ValueError("Please provide a supported variability model.")
+
         self._kwargs_model = kwargs_variability_model
 
-        
     def variability_at_t(self, observation_times):
         """Provides variability of a source at given time.
 
@@ -37,6 +34,7 @@ class Variability(object):
         :return: variability at given time.
         """
         return self._model(observation_times, **self._kwargs_model)
+
 
 def sinusoidal_variability(x, **kwargs_model):
     """Calculate the sinusoidal variability for a given observation time.
