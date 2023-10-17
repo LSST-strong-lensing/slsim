@@ -3,43 +3,45 @@ import numpy as np
 import astropy.units as u
 import pytest
 from numpy import testing as npt
+from astropy.table import Table
 
 
 class TestSource:
     def setup_method(self):
-        self.source_dict = {"z": 0.5, "mag_r": 20.0, "mag_g": 18.0, "mag_i": 21.0}
+        source_dict = Table(
+            [[0.5], [17], [18], [16], [0.5], [2], [4], [0.35], [0.8], [0.76]],
+            names=("z", "mag_r", "mag_g", "mag_i", "amp", "freq", "n_sersic", 
+                   "angular_size", "e1", "e2"),
+        )
+        self.source = Source(source_dict, variability_model="sinusoidal", 
+                             kwargs_variab={"amp": 1.0, "freq": 0.5})
+        self._source = Source(source_dict, variability_model="sinusoidal", 
+                             kwargs_variab={"amp", "freq"})
 
-        self.kwargs_variab = {"variability_model": "sinusoidal", "amp": 2, "freq": 5}
+    def test_redshift(self):
+        assert self.source.redshift == [0.5]
+
+    def test_n_sersic(self):
+       assert self.source.n_sersic == [4]
+
+    def test_angular_size(self):
+       assert self.source.angular_size == [0.35]
+
+    def test_ellipticity_1(self):
+        assert self.source.ellipticity_1 == [0.8]
+
+    def test_ellipticity_2(self):
+        assert self.source.ellipticity_2 == [0.76]
 
     def test_magnitude_no_variability(self):
-        source = Source(self.source_dict)
-        mag = source.magnitude("i")
-        assert mag == 21.0
+        result = self.source.magnitude("r")
+        assert result == [17]
 
     def test_magnitude_with_variability(self):
-        source = Source(self.source_dict, self.kwargs_variab)
-        mag = source.magnitude(
-            "r",
-            magnification=np.array([2.0, -0.5]),
-            image_observation_times=np.array([[0.0, 1.0], [2, 3]]) * u.day,
-        )
-        mag_cal = np.array([[19.24742501, 19.24742501], [20.75257499, 20.75257499]])
-        npt.assert_almost_equal(mag, mag_cal, decimal=5)
-
-    def test_magnitude_invalid_variability_model(self):
-        source = Source(self.source_dict)
-        with pytest.raises(ValueError):
-            source.magnitude(
-                "r",
-                magnification=np.array([2.0, -0.5]),
-                image_observation_times=np.array([[0.0, 1.0], [2, 3]]) * u.day,
-            )
-
-    def test_to_dict(self):
-        source = Source(self.source_dict)
-        source_dict = source.to_dict()
-        assert source_dict == self.source_dict
-
+        image_observation_times = np.array([np.pi,np.pi/2,np.pi/3])*u.day
+        result = self.source.magnitude("r", image_observation_times)
+        result_comp = np.array([16.56969878, 16.02463203, 16.85226724])
+        npt.assert_almost_equal(result, result_comp, decimal=5)
 
 if __name__ == "__main__":
     pytest.main()

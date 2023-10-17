@@ -39,26 +39,31 @@ class Source(object):
             self._variability_class = None
     @property    
     def redshift(self):
+        """returns source redshift."""
 
         return self.source_dict["z"]
     
     @property 
     def n_sersic(self):
+        """returns sersic index of the source"""
 
         return self.source_dict["n_sersic"]
     
     @property 
     def angular_size(self):
+        """returns angular size of the source"""
 
         return self.source_dict["angular_size"]
     
     @property 
     def ellipticity_1(self):
+        """returns 1st ellipticity component of source"""
 
         return self.source_dict["e1"]
     
     @property
     def ellipticity_2(self):
+        """returns 2nd ellipticity component of source"""
 
         return self.source_dict["e2"]
 

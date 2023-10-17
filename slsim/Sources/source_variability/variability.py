@@ -24,8 +24,7 @@ class Variability(object):
             self._model = sinusoidal_variability
         else:
             raise ValueError(
-                        "given model is not supported. Currently,"
-                        "supported model is sinusoudal."
+                        "Please provide a supported variability model."
                     )
         
         self._kwargs_model = kwargs_variability_model
