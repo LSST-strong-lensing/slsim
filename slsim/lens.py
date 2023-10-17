@@ -19,7 +19,8 @@ class Lens(LensedSystemBase):
         source_dict,
         deflector_dict,
         cosmo,
-        source_type="extended",
+        source_type="extended", 
+        variability_model=None,
         kwargs_variab=None,
         test_area=4 * np.pi,
         mixgauss_means=None,
@@ -52,9 +53,8 @@ class Lens(LensedSystemBase):
         """
         super().__init__(
             source_dict=source_dict,
-            deflector_dict=deflector_dict, kwargs_variability=kwargs_variab,
-            cosmo=cosmo,
-            test_area=test_area,
+            deflector_dict=deflector_dict, cosmo=cosmo, test_area=test_area, 
+            variability_model=variability_model, kwargs_variability=kwargs_variab
         )
 
         self.cosmo = cosmo
@@ -66,15 +66,15 @@ class Lens(LensedSystemBase):
         self.kwargs_variab = kwargs_variab
 
         if self._source_type == "extended" and self.kwargs_variab is not None:
-            warning_msg="Extended source can not have variability. Therefore, variability \
-            information provided by you will not be used."
+            warning_msg=("Extended source can not have variability. Therefore," 
+                          "variability information provided by you will not be used.")
             warnings.warn(warning_msg, category=UserWarning,stacklevel=2)
-        if self._deflector_dict["z"] >= self.source.source_dict["z"]:
+        if self._deflector_dict["z"] >= self.source.redshift:
             self._theta_E_sis = 0
         else:
             lens_cosmo = LensCosmo(
                 z_lens=float(self._deflector_dict["z"]),
-                z_source=float(self.source.source_dict["z"]),
+                z_source=float(self.source.redshift),
                 cosmo=self.cosmo,
             )
             self._theta_E_sis = lens_cosmo.sis_sigma_v2theta_E(
@@ -157,7 +157,7 @@ class Lens(LensedSystemBase):
         # Criteria 1:The redshift of the lens (z_lens) must be less than the
         # redshift of the source (z_source).
         z_lens = self._deflector_dict["z"]
-        z_source = self.source.source_dict["z"]
+        z_source = self.source.redshift
         if z_lens >= z_source:
             return False
 
@@ -224,7 +224,7 @@ class Lens(LensedSystemBase):
 
         :return: source redshift
         """
-        return self.source.source_dict["z"]
+        return self.source.redshift
 
     @property
     def einstein_radius(self):
@@ -336,7 +336,7 @@ class Lens(LensedSystemBase):
         """Point source magnitude, either unlensed (single value) or lensed (array) with
         macro-model magnifications.
 
-        # TODO: time-variability with time-delayed and micro-lensing
+        # TODO: time-variability with micro-lensing
 
         :param band: imaging band
         :type band: string
@@ -348,7 +348,6 @@ class Lens(LensedSystemBase):
         """
         # band_string = str("mag_" + band)
         # TODO: might have to change conventions between extended and point source
-        # source_mag = self.source.source_dict[band_string]
         if lensed:
             magnif = self.point_source_magnification()
             if time is not None:
@@ -356,7 +355,7 @@ class Lens(LensedSystemBase):
                     time = time
                 else:
                     time = time.to(u.day)
-                if self._source.variability_model is None:
+                if self.source._variability_model is None:
                     raise ValueError(
                         "Variability model is not provided. Please choose"
                         "one of the variability models from the Variability class."
@@ -368,16 +367,19 @@ class Lens(LensedSystemBase):
                     transformed_observed_time = (
                         np.array(observed_time).T.tolist() * u.day
                     )
-                    variable_mag = self._source.magnitude(
+                    variable_magnitude = self.source.magnitude(
                         band,
-                        magnification=magnif,
                         image_observation_times=transformed_observed_time,
                     )
-                    return variable_mag
+                    magnif_log = 2.5 * np.log10(abs(magnif))
+                    lensed_variable_magnitude=variable_magnitude - magnif_log[:, 
+                                                                            np.newaxis]
+                    return lensed_variable_magnitude
             else:
-                magnified_mag = self._source.magnitude(band, magnification=magnif)
+                magnified_mag = self.source.magnitude(band) - 2.5 * np.log10(abs(
+                    magnif))
                 return magnified_mag
-        return self._source.magnitude(band)
+        return self.source.magnitude(band)
 
     def extended_source_magnitude(self, band, lensed=False):
         """Unlensed apparent magnitude of the extended source for a given band (assumes
@@ -389,9 +391,9 @@ class Lens(LensedSystemBase):
         :type lensed: bool
         :return: magnitude of source in given band
         """
-        band_string = str("mag_" + band)
+        #band_string = str("mag_" + band)
         # TODO: might have to change conventions between extended and point source
-        source_mag = self.source.source_dict[band_string]
+        source_mag = self.source.magnitude(band)
         if lensed:
             mag = self.extended_source_magnification()
             return source_mag - 2.5 * np.log10(mag)
@@ -554,16 +556,16 @@ class Lens(LensedSystemBase):
             else:
                 mag_source = self.extended_source_magnitude(band)
             size_source_arcsec = (
-                float(self.source.source_dict["angular_size"]) / constants.arcsec
+                float(self.source.angular_size) / constants.arcsec
             )
             source_models["source_light_model_list"] = ["SERSIC_ELLIPSE"]
             kwargs_source = [
                 {
                     "magnitude": mag_source,
                     "R_sersic": size_source_arcsec,
-                    "n_sersic": float(self.source.source_dict["n_sersic"]),
-                    "e1": float(self.source.source_dict["e1"]),
-                    "e2": float(self.source.source_dict["e2"]),
+                    "n_sersic": float(self.source.n_sersic),
+                    "e1": float(self.source.ellipticity_1),
+                    "e2": float(self.source.ellipticity_2),
                     "center_x": center_source[0],
                     "center_y": center_source[1],
                 }

@@ -17,6 +17,7 @@ class LensPop(LensedPopulationBase):
         kwargs_deflector_cut=None,
         kwargs_source_cut=None,
         kwargs_quasars=None,
+        variability_model=None,
         kwargs_variability=None,
         kwargs_mass2light=None,
         skypy_config=None,
@@ -50,6 +51,7 @@ class LensPop(LensedPopulationBase):
         super().__init__(sky_area, cosmo)
         if source_type == "galaxies" and kwargs_variability is not None:
             raise ValueError("Extended source cannot have variability.")
+        self.variability_model = variability_model
         self.kwargs_variability = kwargs_variability
         if deflector_type in ["elliptical", "all-galaxies"] or source_type in [
             "galaxies"
@@ -145,6 +147,7 @@ class LensPop(LensedPopulationBase):
             gg_lens = Lens(
                 deflector_dict=lens,
                 source_dict=source,
+                variability_model=self.variability_model,
                 kwargs_variab=self.kwargs_variability,
                 cosmo=self.cosmo,
                 source_type=self._source_model_type,
