@@ -1,11 +1,11 @@
 ============
-sim-pipeline
+SLSim (Strong Lensing Simulation) pipeline
 ============
 
 |Read the Docs| |GitHub| |Codecov| |Black| |docformatter| |docstyle|
 
 
-LSST strong lensing simulation pipeline.
+SLSim is the strong lensing simulation pipeline for LSST.
 
 This GitHub project originates from an intercollaboration agreement between
 the two LSST Science collaborations:
