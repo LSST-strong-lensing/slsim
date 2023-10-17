@@ -38,6 +38,8 @@ class LensPop(LensedPopulationBase):
         :param kwargs_quasars: a dict of the form kwargs_quasars = {'number': 50000,
          'z_min': 0.1, 'z_max': 5, 'm_min': 17, 'm_max': 23} and param are explained
          below. if None, uses default values for the required variables.
+        :param variability_model: keyword for variability model to be used
+        :type variability_model: str
         :param kwargs_variability: keyword arguments for the variability of a source
         :type kwargs_variability: dict
         :param skypy_config: path to SkyPy configuration yaml file
