@@ -80,8 +80,7 @@ class LensingPlots(object):
             is True
         :param n_horizont: number of images to display horizontally, default is 1
         :param n_vertical: number of images to display vertically, default is 1
-        :param kwargs_lens_cut: lens selection cuts for Lens.validity_test()
-            function
+        :param kwargs_lens_cut: lens selection cuts for Lens.validity_test() function
         """
         if kwargs_lens_cut is None:
             kwargs_lens_cut = {}

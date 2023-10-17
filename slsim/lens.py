@@ -19,7 +19,7 @@ class Lens(LensedSystemBase):
         source_dict,
         deflector_dict,
         cosmo,
-        source_type="extended", 
+        source_type="extended",
         variability_model=None,
         kwargs_variab=None,
         test_area=4 * np.pi,
@@ -53,8 +53,11 @@ class Lens(LensedSystemBase):
         """
         super().__init__(
             source_dict=source_dict,
-            deflector_dict=deflector_dict, cosmo=cosmo, test_area=test_area, 
-            variability_model=variability_model, kwargs_variability=kwargs_variab
+            deflector_dict=deflector_dict,
+            cosmo=cosmo,
+            test_area=test_area,
+            variability_model=variability_model,
+            kwargs_variability=kwargs_variab,
         )
 
         self.cosmo = cosmo
@@ -66,9 +69,11 @@ class Lens(LensedSystemBase):
         self.kwargs_variab = kwargs_variab
 
         if self._source_type == "extended" and self.kwargs_variab is not None:
-            warning_msg=("Extended source can not have variability. Therefore," 
-                          "variability information provided by you will not be used.")
-            warnings.warn(warning_msg, category=UserWarning,stacklevel=2)
+            warning_msg = (
+                "Extended source can not have variability. Therefore,"
+                "variability information provided by you will not be used."
+            )
+            warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
         if self._deflector_dict["z"] >= self.source.redshift:
             self._theta_E_sis = 0
         else:
@@ -372,12 +377,14 @@ class Lens(LensedSystemBase):
                         image_observation_times=transformed_observed_time,
                     )
                     magnif_log = 2.5 * np.log10(abs(magnif))
-                    lensed_variable_magnitude=variable_magnitude - magnif_log[:, 
-                                                                            np.newaxis]
+                    lensed_variable_magnitude = (
+                        variable_magnitude - magnif_log[:, np.newaxis]
+                    )
                     return lensed_variable_magnitude
             else:
-                magnified_mag = self.source.magnitude(band) - 2.5 * np.log10(abs(
-                    magnif))
+                magnified_mag = self.source.magnitude(band) - 2.5 * np.log10(
+                    abs(magnif)
+                )
                 return magnified_mag
         return self.source.magnitude(band)
 
@@ -391,7 +398,7 @@ class Lens(LensedSystemBase):
         :type lensed: bool
         :return: magnitude of source in given band
         """
-        #band_string = str("mag_" + band)
+        # band_string = str("mag_" + band)
         # TODO: might have to change conventions between extended and point source
         source_mag = self.source.magnitude(band)
         if lensed:
@@ -555,9 +562,7 @@ class Lens(LensedSystemBase):
                 mag_source = 1
             else:
                 mag_source = self.extended_source_magnitude(band)
-            size_source_arcsec = (
-                float(self.source.angular_size) / constants.arcsec
-            )
+            size_source_arcsec = float(self.source.angular_size) / constants.arcsec
             source_models["source_light_model_list"] = ["SERSIC_ELLIPSE"]
             kwargs_source = [
                 {

@@ -25,9 +25,7 @@ def test_rgb_image(lensing_plots):
     lens_class = lens_pop.select_lens_at_random(**kwargs_lens_cut)
     rgb_band_list = ["r", "g", "i"]
     add_noise = True
-    image_rgb = lensing_plots.rgb_image(
-        lens_class, rgb_band_list, add_noise=add_noise
-    )
+    image_rgb = lensing_plots.rgb_image(lens_class, rgb_band_list, add_noise=add_noise)
 
     assert isinstance(image_rgb, np.ndarray)
     assert image_rgb.shape == (

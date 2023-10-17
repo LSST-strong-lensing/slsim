@@ -10,22 +10,36 @@ class TestSource:
     def setup_method(self):
         source_dict = Table(
             [[0.5], [17], [18], [16], [0.5], [2], [4], [0.35], [0.8], [0.76]],
-            names=("z", "mag_r", "mag_g", "mag_i", "amp", "freq", "n_sersic", 
-                   "angular_size", "e1", "e2"),
+            names=(
+                "z",
+                "mag_r",
+                "mag_g",
+                "mag_i",
+                "amp",
+                "freq",
+                "n_sersic",
+                "angular_size",
+                "e1",
+                "e2",
+            ),
         )
-        self.source = Source(source_dict, variability_model="sinusoidal", 
-                             kwargs_variab={"amp": 1.0, "freq": 0.5})
-        self._source = Source(source_dict, variability_model="sinusoidal", 
-                             kwargs_variab={"amp", "freq"})
+        self.source = Source(
+            source_dict,
+            variability_model="sinusoidal",
+            kwargs_variab={"amp": 1.0, "freq": 0.5},
+        )
+        self._source = Source(
+            source_dict, variability_model="sinusoidal", kwargs_variab={"amp", "freq"}
+        )
 
     def test_redshift(self):
         assert self.source.redshift == [0.5]
 
     def test_n_sersic(self):
-       assert self.source.n_sersic == [4]
+        assert self.source.n_sersic == [4]
 
     def test_angular_size(self):
-       assert self.source.angular_size == [0.35]
+        assert self.source.angular_size == [0.35]
 
     def test_ellipticity_1(self):
         assert self.source.ellipticity_1 == [0.8]
@@ -38,10 +52,11 @@ class TestSource:
         assert result == [17]
 
     def test_magnitude_with_variability(self):
-        image_observation_times = np.array([np.pi,np.pi/2,np.pi/3])*u.day
+        image_observation_times = np.array([np.pi, np.pi / 2, np.pi / 3]) * u.day
         result = self.source.magnitude("r", image_observation_times)
         result_comp = np.array([16.56969878, 16.02463203, 16.85226724])
         npt.assert_almost_equal(result, result_comp, decimal=5)
+
 
 if __name__ == "__main__":
     pytest.main()
