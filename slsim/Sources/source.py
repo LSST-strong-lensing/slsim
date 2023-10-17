@@ -1,4 +1,3 @@
-import numpy as np
 from slsim.Sources.source_variability.variability import (
                         Variability,
                     )
