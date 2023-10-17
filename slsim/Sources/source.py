@@ -36,7 +36,7 @@ class Source(object):
                         )
                     else:
                         raise ValueError(
-                            "given keywords are not in provided the" "source catalog"
+                            "given keywords are not in the provided source catalog"
                         )
         else:
             self._variability_class = None
