@@ -11,9 +11,11 @@ class Source(object):
         """
         :param source_dict: Source properties
         :type source_dict: dict
-        :param variability_model: keyword for variability model to be used
+        :param variability_model: keyword for variability model to be used. This is an 
+         input for the Variability class.
         :type variability_model: str
-        :param kwargs_variab: Keyword arguments for variability class.
+        :param kwargs_variab: Keyword arguments for variability class. 
+         This is associated with an input for Variability class.
         :type kwargs_variab: list of str
         """
         self.source_dict = source_dict

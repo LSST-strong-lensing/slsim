@@ -37,9 +37,11 @@ class Lens(LensedSystemBase):
         :param cosmo: astropy.cosmology instance
         :param source_type: type of the source 'extended' or 'point_source' supported
         :type source_type: str
-        :param variability_model: keyword for variability model to be used
+        :param variability_model: keyword for variability model to be used. This is an 
+         input for the Variability class.
         :type variability_model: str
-        :param kwargs_variab: keyword arguments for the variability of a source
+        :param kwargs_variab: keyword arguments for the variability of a source. 
+         This is associated with an input for Variability class.
         :type kwargs_variab: list of str
         :param test_area: area of disk around one lensing galaxies to be investigated
             on (in arc-seconds^2)
