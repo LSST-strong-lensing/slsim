@@ -1,6 +1,8 @@
 import numpy as np
 from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
+from lenstronomy.Plots import lens_plot
+from lenstronomy.Plots.model_plot import ModelPlot
 import warnings
 from tqdm.notebook import tqdm
 import math
@@ -96,10 +98,23 @@ def concentration_from_mass(z, mass, A=75.4, d=-0.422, m=-0.089):
     ----------
     . [1] Childs et al. 2018, arXiv:1804.10199, doi:10.3847/1538-4357/aabf95
     """
+    if isinstance(mass, (list, np.ndarray)) and len(mass) == 1:
+        mass = mass[0]
     c_200 = A * ((1 + z) ** d) * (mass ** m)
     c_200 = np.maximum(c_200, 1)
     return c_200
     # TODO: Make this able for list
+
+
+def compute_kappa(args):
+    i, j, X, Y, mask, instance, kwargs, diff, diff_method, lens_model, zdzs = args
+    if mask[i, j]:
+        return i, j, instance.xy_convergence(
+            x=X[i, j], y=Y[i, j], kwargs=kwargs, diff=diff, diff_method=diff_method,
+            lens_model=lens_model, zdzs=zdzs
+        )
+    else:
+        return i, j, None
 
 
 class HalosLens(object):
@@ -225,11 +240,13 @@ class HalosLens(object):
             mass_correction_list = {}
             self.n_correction = 0
             self.mass_sheet_correction_redshift = mass_correction_list.get("z", [])
-            self.mass_first_moment = mass_correction_list.get("first_moment", [])
+            #            self.mass_first_moment = mass_correction_list.get("first_moment", [])
+            self.mass_sheet_kappa = mass_correction_list.get("kappa", [])
         else:
             self.n_correction = len(mass_correction_list)
             self.mass_sheet_correction_redshift = mass_correction_list["z"]
-            self.mass_first_moment = mass_correction_list["first_moment"]
+            #            self.mass_first_moment = mass_correction_list["first_moment"]
+            self.mass_sheet_kappa = mass_correction_list["kappa"]
         self.z_source = z_source
         self.halos_list = halos_list
         self.mass_correction_list = mass_correction_list
@@ -240,7 +257,7 @@ class HalosLens(object):
         self.mass_list = halos_list["mass"]
         self.samples_number = samples_number
         self._z_source_convention = (
-            10  # if this need to be changed, change it in the halos.py too
+            5  # if this need to be changed, change it in the halos.py too
         )
         if cosmo is None:
             warnings.warn(
@@ -258,7 +275,7 @@ class HalosLens(object):
 
         self._lens_cosmo = None  # place-holder for lazy load
         self._lens_model = None  # same as above
-        c_200 = [concentration_from_mass(z=zi, mass=mi)[0]
+        c_200 = [concentration_from_mass(z=zi, mass=mi)
                  for zi, mi in zip(self.halos_redshift_list, self.mass_list)]
         self.halos_list['c_200'] = c_200
 
@@ -410,10 +427,11 @@ class HalosLens(object):
         """
         if self.mass_sheet and self.n_correction > 0:
             Rs_angle, alpha_Rs = self.get_nfw_kwargs()
-            first_moment = self.mass_first_moment
-            kappa = self.kappa_ext_for_mass_sheet(self.mass_sheet_correction_redshift,
-                                                  self.lens_cosmo[-self.n_correction:], first_moment)
-
+            #    first_moment = self.mass_first_moment
+            #    kappa = self.kappa_ext_for_mass_sheet(self.mass_sheet_correction_redshift,
+            #                                          self.lens_cosmo[-self.n_correction:], first_moment)
+            kappa = self.mass_sheet_kappa
+            # TODO:change
             ra_0 = [0] * self.n_correction
             dec_0 = [0] * self.n_correction
 
@@ -547,7 +565,7 @@ class HalosLens(object):
             )
             return [kappa, gamma1, gamma2]
 
-    def get_kappa_gamma_distib(self, gamma_tot=False, diff=1.0, diff_method="square"):
+    def get_kappa_gamma_distib(self, gamma_tot=False, diff=1.0, diff_method="square", listmean=False):
         """Computes and returns the distribution of convergence and shear
         values.
 
@@ -555,6 +573,7 @@ class HalosLens(object):
 
         Parameters
         ----------
+        listmean
         gamma_tot : bool, optional
             If True, the function will return total shear gamma values. If False, it will return gamma1 and gamma2 values.
             Default is False.
@@ -596,18 +615,25 @@ class HalosLens(object):
             print(
                 f"For this Halos list, elapsed time for computing weak-lensing maps: {elapsed_time} seconds"
             )
-
+        if listmean:
+            if gamma_tot:
+                kappa_mean = np.mean(kappa_gamma_distribution[:, 0])
+                kappa_gamma_distribution[:, 0] -= kappa_mean
+            else:
+                kappa_mean = np.mean(kappa_gamma_distribution[:, 0, 0])
+                kappa_gamma_distribution[:, 0, 0] -= kappa_mean
         return kappa_gamma_distribution
         # TODO: Maybe considering a choice between multiprocessing and not multiprocessing.
 
     def get_kappa_gamma_distib_without_multiprocessing(
-            self, gamma_tot=False, diff=1.0, diff_method="square"
+            self, gamma_tot=False, diff=1.0, diff_method="square", listmean=False
     ):
         """Runs the method get_convergence_shear() a specific number of times
         and stores the results for kappa, gamma1, and gamma2 in separate lists.
 
         Parameters
         ----------
+        listmean
         diff_method : str, optional
             The method to compute differential. Default is 'square'.
         diff: float, optional
@@ -646,6 +672,9 @@ class HalosLens(object):
                     gamma12=False, diff=diff, diff_method=diff_method
                 )
                 kappa_gamma_distribution[i] = [kappa, gamma]
+            if listmean:
+                kappa_mean = np.mean(kappa_gamma_distribution[:, 0])
+                kappa_gamma_distribution[:, 0] -= kappa_mean
         else:
             for i in loop:
                 self.enhance_halos_table_random_pos()
@@ -653,6 +682,9 @@ class HalosLens(object):
                     gamma12=True, diff=diff, diff_method=diff_method
                 )
                 kappa_gamma_distribution[i] = [kappa, gamma1, gamma2]
+            if listmean:
+                kappa_mean = np.mean(kappa_gamma_distribution[:, 0, 0])
+                kappa_gamma_distribution[:, 0, 0] -= kappa_mean
 
         if self.samples_number > 999:
             elapsed_time = time.time() - start_time
@@ -829,10 +861,12 @@ class HalosLens(object):
 
         if mass_correction is not None and len(mass_correction) > 0 and self.mass_sheet:  # check
             z_mass_correction = mass_correction["z"]
-            mass_first_moment = mass_correction["first_moment"]
+            #    mass_first_moment = mass_correction["first_moment"]
+            mass_correction_kappa = mass_correction["kappa"]
         else:
             z_mass_correction = []
-            mass_first_moment = []
+            #    mass_first_moment = []
+            mass_correction_kappa = []
         combined_redshift_list = np.concatenate((z_halo, z_mass_correction))
 
         if not combined_redshift_list.size:
@@ -864,9 +898,10 @@ class HalosLens(object):
         relevant_lens_cosmo_list = [lens_cosmo_dict[z] for z in z_mass_correction]
 
         if mass_correction is not None and len(mass_correction) > 0 and self.mass_sheet:  # check
-            kappa_ext_list = self.kappa_ext_for_mass_sheet(
-                z_mass_correction, relevant_lens_cosmo_list, mass_first_moment
-            )
+            #    kappa_ext_list = self.kappa_ext_for_mass_sheet(
+            #        z_mass_correction, relevant_lens_cosmo_list, mass_first_moment
+            #    )
+            kappa_ext_list = mass_correction_kappa
         else:
             kappa_ext_list = []
 
@@ -887,6 +922,9 @@ class HalosLens(object):
         return lens_model, lens_cosmo_list, kwargs_lens
 
     def kappa_ext_for_mass_sheet(self, z, lens_cosmo, first_moment):
+        """
+        Deprecated
+        """
         cone_opening_angle = deg2_to_cone_angle(self.sky_area)
         # TODO: make it possible for other geometry model
         area = []
@@ -903,7 +941,6 @@ class HalosLens(object):
         else:
             first_moment_values = first_moment
         first_moment_d_area = np.divide(np.array(first_moment_values), np.array(area_values))
-        print('s_c',sigma_crit)
         kappa_ext = np.divide(first_moment_d_area, sigma_crit)
         assert kappa_ext.ndim == 1
         return -kappa_ext
@@ -1267,7 +1304,7 @@ class HalosLens(object):
 
         return kext, gext
 
-    def get_kappaext_gammaext_distib_zdzs(self, zd, zs):
+    def get_kappaext_gammaext_distib_zdzs(self, zd, zs, listmean=False):
         """Computes the distribution of external convergence (kappa_ext) and
         external shear (gamma_ext) for given deflector and source redshifts.
 
@@ -1309,16 +1346,20 @@ class HalosLens(object):
             print(
                 f"For this halos lists, zd,zs, elapsed time for computing weak-lensing maps: {elapsed_time} seconds"
             )
+        if listmean:
+            kappa_mean = np.mean(kappa_gamma_distribution[:, 0])
+            kappa_gamma_distribution[:, 0] -= kappa_mean
 
         return kappa_gamma_distribution
 
-    def generate_distributions_0to5(self, output_format="dict"):
+    def generate_distributions_0to5(self, output_format="dict", listmean=False):
         """Generates distributions of external convergence (kappa_ext) and
         external shear (gamma_ext) for a range of deflector and source
         redshifts from 0 to 5.
 
         Parameters
         ----------
+        listmean
         output_format : str, optional
             The format of the output data. Options are:
             'dict' - A list of dictionaries.
@@ -1346,7 +1387,7 @@ class HalosLens(object):
         for zs in zs_values:
             zd_values = np.linspace(0, zs - 0.1, int(zs / 0.1))
             for zd in zd_values:
-                kappa_gamma_dist = self.get_kappaext_gammaext_distib_zdzs(zd=zd, zs=zs)
+                kappa_gamma_dist = self.get_kappaext_gammaext_distib_zdzs(zd=zd, zs=zs, listmean=listmean)
                 for kappa_gamma in kappa_gamma_dist:
                     kappa, gamma = kappa_gamma
 
@@ -1456,7 +1497,9 @@ class HalosLens(object):
 
         for i in loop:
             self.enhance_halos_table_random_pos()
-            (kappa_od, kappa_os, gamma_od1, gamma_od2, gamma_os1, gamma_os2, kappa_ds, gamma_ds1, gamma_ds2, kappa_os2, gamma_os12, gamma_os22, kext, gext),(kwargs_lens_os, lens_model_os) = self.compute_various_kappa_gamma_values_new(
+            (kappa_od, kappa_os, gamma_od1, gamma_od2, gamma_os1, gamma_os2, kappa_ds, gamma_ds1, gamma_ds2, kappa_os2,
+             gamma_os12, gamma_os22, kext, gext), (
+                kwargs_lens_os, lens_model_os) = self.compute_various_kappa_gamma_values_new(
                 zd=zd, zs=zs)
             kappa_gamma_distribution[i] = [kappa_od, kappa_os, gamma_od1, gamma_od2, gamma_os1, gamma_os2, kappa_ds,
                                            gamma_ds1, gamma_ds2, kappa_os2, gamma_os12, gamma_os22, kext, gext]
@@ -1467,4 +1510,103 @@ class HalosLens(object):
                 f"For this halos lists, zd,zs, elapsed time for computing weak-lensing maps: {elapsed_time} seconds"
             )
 
-        return kappa_gamma_distribution , lens_instance
+        return kappa_gamma_distribution, lens_instance
+
+    def compute_kappa_in_bins(self):
+        """Computes the kappa values for each redshift bin."""
+        # todo: different zd,zs
+        bins = np.arange(0, 5.025, 0.05)
+        bin_centers = [round((z1 + z2) / 2, 3) for z1, z2 in zip(bins[:-1], bins[1:])]
+        all_kappa_dicts = []
+        for _ in range(self.samples_number):
+            self.enhance_halos_table_random_pos()
+            # Iterate over the bins
+            kappa_dict = {}
+            for i in range(len(bins) - 1):
+                # Filter halos in the current redshift bin
+                _, halos_ds, _ = self._filter_halos_by_condition(bins[i], bins[i + 1])
+
+                # Since we want halos between zd and zs (in this case, the current bin upper limit)
+                # we will consider halos from halos_ds as those are the ones between zd and zs
+                if len(halos_ds) > 0:
+                    lens_model, lens_cosmo_list, kwargs_lens = self._build_lens_data(
+                        halos_ds, None, zd=0, zs=5)
+                    kappa, _ = self.get_convergence_shear(lens_model=lens_model, kwargs=kwargs_lens, gamma12=False,
+                                                          zdzs=(0, 5))
+                    kappa_dict[bin_centers[i]] = kappa
+                else:
+                    kappa_dict[bin_centers[i]] = 0
+            all_kappa_dicts.append(kappa_dict)
+        return all_kappa_dicts
+
+    def xy_convergence(
+            self,
+            x,
+            y,
+            diff=1.0,
+            diff_method="square",
+            kwargs=None,
+            lens_model=None,
+            zdzs=None
+    ):
+        """
+        """
+        if kwargs is None:
+            kwargs = self.get_halos_lens_kwargs()
+        if lens_model is None:
+            lens_model = self.lens_model
+        if zdzs is not None:
+            f_xx, _, _, f_yy = lens_model.hessian_z1z2(
+                z1=zdzs[0],
+                z2=zdzs[1],
+                theta_x=x,
+                theta_y=y,
+                kwargs_lens=kwargs,
+                diff=1.0,
+            )
+        else:
+            f_xx, _, _, f_yy = lens_model.hessian(
+                x=x, y=y, kwargs=kwargs, diff=diff, diff_method=diff_method
+            )
+        kappa = 1 / 2.0 * (f_xx + f_yy)
+
+        return kappa
+
+    def plot_convergence(self,
+                         diff=1.0,
+                         diff_method="square",
+                         kwargs=None,
+                         lens_model=None,
+                         zdzs=None
+                         ):
+        import matplotlib.pyplot as plt
+        from multiprocessing import Pool, cpu_count
+        radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
+
+        num_points = 500  # number of points along one dimension
+        x = np.linspace(-radius_arcsec, radius_arcsec, num_points)
+        y = np.linspace(-radius_arcsec, radius_arcsec, num_points)
+        X, Y = np.meshgrid(x, y)
+        mask = X ** 2 + Y ** 2 <= radius_arcsec ** 2
+
+        kappa_values = np.zeros_like(X)
+
+        # Create a list of arguments to pass to compute_kappa
+        args = [(i, j, X, Y, mask, self, kwargs, diff, diff_method, lens_model, zdzs)
+                for i in range(num_points) for j in range(num_points)]
+
+        # Create a pool of worker processes
+        with Pool(cpu_count()) as p:
+            results = p.map(compute_kappa, args)
+
+        # Gather the results
+        for i, j, value in results:
+            if value is not None:
+                kappa_values[i, j] = value
+
+        plt.imshow(kappa_values, extent=[-radius_arcsec, radius_arcsec, -radius_arcsec, radius_arcsec])
+        plt.colorbar(label=r'$\kappa$')
+        plt.title(f'Convergence Plot,radius is {radius_arcsec} arcsec')
+        plt.xlabel('x-coordinate (arcsec)')
+        plt.ylabel('y-coordinate (arcsec)')
+        plt.show()

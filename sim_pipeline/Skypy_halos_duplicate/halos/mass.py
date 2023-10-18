@@ -179,42 +179,6 @@ def halo_mass_sampler(
     --------
     sample: (size,) array_like
         Samples drawn from the mass function, in units of solar masses.
-
-    Examples
-    ---------
-    >>> import numpy as np
-    >>> from skypy.Halos import mass
-    >>> from skypy.power_spectrum import eisenstein_hu
-
-    This example will sample from the halo mass function for
-    a Planck15 cosmology at redshift 0. The power spectrum is given
-    by the Eisenstein and Hu fitting formula:
-
-    >>> from astropy.cosmology import Planck15
-    >>> cosmo = Planck15
-    >>> D0 = 1.0
-    >>> k = np.logspace(-3, 1, num=100, base=10.0)
-    >>> A_s, n_s = 2.1982e-09, 0.969453
-    >>> Pk = eisenstein_hu(k, A_s, n_s, cosmo, kwmap=0.02, wiggle=True)
-
-    Sampling from the Sheth and Tormen mass function:
-
-    >>> halo_mass = mass.sheth_tormen(1e9, 1e12, 100, k, Pk, D0, cosmo)
-
-    And from the Press-Schechter mass function:
-
-    >>> halo_mass = mass.press_schechter(1e9, 1e12, 100, k, Pk, D0, cosmo)
-
-    For any other collapse models:
-
-    >>> params_model = (0.3, 0.7, 0.3, 1.686)
-    >>> halo_mass = mass.halo_mass_sampler(1e9, 1e12, 100, k, Pk, D0, cosmo,
-    ...     mass.ellipsoidal_collapse_function, params=params_model)
-
-    References
-    ----------
-    .. [1] Mo, H. and van den Bosch, F. and White, S. (2010), Cambridge
-        University Press, ISBN: 9780521857932.
     """
     m = np.logspace(np.log10(m_min), np.log10(m_max), resolution)
 

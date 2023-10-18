@@ -42,12 +42,12 @@ class HalosSkyPyPipeline:
 
             if m_min is not None:
                 old_m_min = "m_min: 1.0E+12"
-                new_m_min = f"m_min: {m_min}"
+                new_m_min = f"m_min: {str(m_min)}"
                 content = content.replace(old_m_min, new_m_min)
 
             if m_max is not None:
                 old_m_max = "m_max: 1.0E+16"
-                new_m_max = f"m_max: {m_max}"
+                new_m_max = f"m_max: {str(m_max)}"
                 content = content.replace(old_m_max, new_m_max)
 
             if z_max is not None:

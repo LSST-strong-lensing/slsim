@@ -401,6 +401,7 @@ def halo_mass_at_z(
                 size=1,
             )
         )
+    m2_list = []
 
     return mass
 
@@ -417,6 +418,75 @@ def mass_first_moment_at_redshift(
         collapse_function=None,
         params=None,
 ):
+    (m_min,
+     m_max,
+     wavenumber,
+     resolution,
+     power_spectrum,
+     cosmology,
+     collapse_function,
+     params,
+     ) = set_defaults(
+        m_min,
+        m_max,
+        wavenumber,
+        resolution,
+        power_spectrum,
+        cosmology,
+        collapse_function,
+        params,
+    )
+    m2_list = []
+    for zi in z:
+        redshift_list = np.linspace(zi - 0.025, zi + 0.025, 20)
+        dV_dz = (cosmology.differential_comoving_volume(redshift_list) * sky_area).to_value("Mpc3")
+        density = number_density_at_redshift(
+            z=redshift_list,
+            m_min=m_min,
+            m_max=m_max,
+            resolution=resolution,
+            wavenumber=wavenumber,
+            power_spectrum=power_spectrum,
+            cosmology=cosmology,
+            collapse_function=collapse_function,
+            params=params,
+        )
+        assert len(density) == len(redshift_list)
+        dN_dz = density * dV_dz
+        N = np.trapz(dN_dz, redshift_list)
+        m = np.logspace(np.log10(m_min), np.log10(m_max), resolution)
+        gf = GrowthFactor(cosmo=cosmology)
+        growth_function = gf.growth_factor(zi)
+        massf = halo_mass_function(
+            m,
+            wavenumber,
+            power_spectrum,
+            growth_function,
+            cosmology,
+            collapse_function,
+            params=params,
+        )
+        # Halo mass function for a given mass array, cosmology and redshift, in
+        # units of Mpc-3 Msun-1
+        norm_factor = integrate.trapz(massf, m)
+        massf_normalized = massf / norm_factor
+        expectation_m_normalized = integrate.trapz(m * massf_normalized, m)
+        m2 = expectation_m_normalized * N
+        m2_list.append(m2)
+    return m2_list
+
+
+def another_mass_first_moment_at_redshift(z,
+                                          sky_area,
+                                          m_min=None,
+                                          m_max=None,
+                                          resolution=None,
+                                          wavenumber=None,
+                                          power_spectrum=None,
+                                          cosmology=None,
+                                          collapse_function=None,
+                                          params=None,
+                                          ):
     # define default parameters
     (
         m_min,
@@ -437,42 +507,36 @@ def mass_first_moment_at_redshift(
         collapse_function,
         params,
     )
-
+    gf = GrowthFactor(cosmo=cosmology)
     final_results = []
+    z_max = max(z)
+    zbins = np.arange(0, z_max + 0.05, 0.05)
 
-    for zi in z:
-        redshift_list = np.linspace(zi - 0.025, zi + 0.025, 20)
-        dN_dz = (cosmology.differential_comoving_volume(redshift_list) * sky_area).to_value("Mpc3")
-        density = number_density_at_redshift(
-            z=redshift_list,
-            m_min=m_min,
-            m_max=m_max,
-            resolution=resolution,
-            wavenumber=wavenumber,
-            power_spectrum=power_spectrum,
-            cosmology=cosmology,
-            collapse_function=collapse_function,
-            params=params,
-        )
-        dN_dz *= density
-        N = np.trapz(dN_dz, redshift_list)
-
+    for zmin, zmax in zip(zbins[:-1], zbins[1:]):
+        redshift_list = np.linspace(zmin, zmax, 100)
+        dV_dz = (cosmology.differential_comoving_volume(redshift_list) * sky_area).to_value("Mpc3")
+        dV = dV_dz * ((zmax - zmin) / len(redshift_list))
         m = np.logspace(np.log10(m_min), np.log10(m_max), resolution)
-        gf = GrowthFactor(cosmo=cosmology)
-        growth_function = gf.growth_factor(zi)
-        massf = halo_mass_function(
-            m,
-            wavenumber,
-            power_spectrum,
-            growth_function,
-            cosmology,
-            collapse_function,
-            params=params,
-        )
-        CDF = np.cumsum(massf) * (np.log10(m_max) - np.log10(m_min)) / resolution
-        CDF = CDF / CDF[-1]
-        expectation_m = np.interp(0.5, CDF, m)
-        final_results.append(expectation_m * N)
+        dm = np.diff(m)
+        dm = np.append(dm, dm[-1])
+
+        total_masses_list = []
+        for zi, volume in zip(redshift_list, dV):
+            growth_function = gf.growth_factor(zi)
+            massf = halo_mass_function(
+                m,
+                wavenumber,
+                power_spectrum,
+                growth_function,
+                cosmology,
+                collapse_function,
+                params=params,
+            )
+
+            total_mass_for_zi = np.sum(massf * m * dm)
+            total_mass_for_zi *= volume
+            total_masses_list.append(total_mass_for_zi)
+        final_results.append(np.sum(total_masses_list))
 
     return final_results
 
@@ -664,9 +728,12 @@ def redshift_mass_number(
 
         cosmology = FlatLambdaCDM(H0=70, Om0=0.3)
 
-    dN_dz = (cosmology.differential_comoving_volume(redshift_list) * sky_area).to_value(
+    dV_dz = (cosmology.differential_comoving_volume(redshift_list) * sky_area).to_value(
         "Mpc3"
     )
+
+    print('redshift list', redshift_list)
+    print('dv_dz', dV_dz)
     density = number_density_at_redshift(
         z=redshift_list,
         m_min=m_min,
@@ -678,8 +745,53 @@ def redshift_mass_number(
         collapse_function=collapse_function,
         params=params,
     )
-    dN_dz *= density
-
+    print('density', density)
+    dN_dz = density * dV_dz
+    print('dN_dz', dN_dz)
     # integrate density to get expected number of Halos
     N = np.trapz(dN_dz, redshift_list)
-    return N
+    return N, density
+
+
+def determinism_kappa_first_moment_at_redshift(
+        z
+):
+    """
+    m_min= 1e12
+    m_max= 1e16
+    z=5
+    Intercept: 0.0002390784813232419
+    Coefficients:
+        Degree 0: 0.0
+        Degree 1: -0.0014658189854554395
+        Degree 2: -0.11408175546088226
+        Degree 3: 0.1858161514337054
+        Degree 4: -0.14580188720668946
+        Degree 5: 0.07179490182290658
+        Degree 6: -0.023842218143709567
+        Degree 7: 0.00534416068166958
+        Degree 8: -0.0007728539951923031
+        Degree 9: 6.484537448337964e-05
+        Degree 10: -2.389378848385584e-06
+    Parameters
+    ----------
+    z
+
+    Returns
+    -------
+    """
+    m_ls = []
+    for zi in z:
+        m2 = (0.0002390784813232419 +
+              -0.0014658189854554395 * zi +
+              -0.11408175546088226 * (zi**2) +
+              0.1858161514337054 * (zi**3) +
+              -0.14580188720668946 * (zi**4) +
+              0.07179490182290658 * (zi**5) +
+              -0.023842218143709567 * (zi**6) +
+              0.00534416068166958 * (zi**7) +
+              -0.0007728539951923031 * (zi**8) +
+              6.484537448337964e-05 * (zi**9) +
+              -2.389378848385584e-06 * (zi**10))
+        m_ls.append(m2)
+    return m_ls

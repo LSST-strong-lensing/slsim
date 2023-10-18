@@ -310,6 +310,7 @@ def run_halos_without_kde(
         m_max=None,
         z_max=None,
         mass_sheet_correction=True,
+        listmean=False
 ):
     """Under the specified `sky_area`, generate `n_iterations` sets of halo
     lists. For each set, simulate `samples_number` times to obtain the
@@ -385,7 +386,7 @@ def run_halos_without_kde(
             )
 
             nkappa_gamma_distribution = nhalos_lens.get_kappa_gamma_distib(
-                gamma_tot=True
+                gamma_tot=True, listmean=listmean
             )
             nkappa_gamma_distribution = np.array(
                 nkappa_gamma_distribution
@@ -407,7 +408,7 @@ def run_halos_without_kde(
             )
 
             nkappa_gamma_distribution = nhalos_lens.get_kappa_gamma_distib(
-                gamma_tot=True
+                gamma_tot=True, listmean=listmean
             )
             nkappa_gamma_distribution = np.array(
                 nkappa_gamma_distribution
@@ -436,6 +437,7 @@ def worker_run_halos_without_kde(
         cosmo,
         samples_number,
         mass_sheet_correction,
+        listmean
 ):
     npipeline = HalosSkyPyPipeline(
         sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max
@@ -461,7 +463,7 @@ def worker_run_halos_without_kde(
             z_source=z_max
         )
     nkappa_gamma_distribution = (
-        nhalos_lens.get_kappa_gamma_distib_without_multiprocessing(gamma_tot=True)
+        nhalos_lens.get_kappa_gamma_distib_without_multiprocessing(gamma_tot=True, listmean=listmean)
     )
     nkappa_gamma_distribution = np.array(nkappa_gamma_distribution)
 
@@ -480,6 +482,7 @@ def run_halos_without_kde_by_multiprocessing(
         m_max=None,
         z_max=None,
         mass_sheet_correction=True,
+        listmean=False
 ):
     """Under the specified `sky_area`, generate `n_iterations` sets of halo
     lists. For each set, simulate `samples_number` times to obtain the
@@ -490,6 +493,7 @@ def run_halos_without_kde_by_multiprocessing(
 
     Parameters
     ----------
+    listmean
     n_iterations : int, optional
         Number of iterations or halo lists to generate. Defaults to 1.
     sky_area : float, optional
@@ -537,7 +541,7 @@ def run_halos_without_kde_by_multiprocessing(
     start_time = time.time()  # Note the start time
 
     args = [
-        (i, sky_area, m_min, m_max, z_max, cosmo, samples_number, mass_sheet_correction)
+        (i, sky_area, m_min, m_max, z_max, cosmo, samples_number, mass_sheet_correction, listmean)
         for i in range(n_iterations)
     ]
 
@@ -565,6 +569,7 @@ def run_kappaext_gammaext_kde_by_multiprocessing(
         m_max=None,
         z_max=None,
         mass_sheet_correction=True,
+        listmean=False,
         output_format="dict",
 ):
     """Run the kappa-gamma external convergence distribution for a given number
@@ -613,6 +618,7 @@ def run_kappaext_gammaext_kde_by_multiprocessing(
     The function employs multiprocessing to run simulations in parallel, improving computational efficiency.
     The elapsed runtime for the simulations is printed to the console.
     """
+    # TODO: BUG
     if cosmo is None:
         warnings.warn(
             "No cosmology provided, instead uses astropy.cosmology default cosmology"
@@ -633,6 +639,7 @@ def run_kappaext_gammaext_kde_by_multiprocessing(
             cosmo,
             samples_number,
             mass_sheet_correction,
+            listmean,
             output_format,
         )
         for i in range(n_iterations)
@@ -661,7 +668,8 @@ def worker_kappaext_gammaext_kde(
         cosmo,
         samples_number,
         mass_sheet_correction,
-        output_format="dict",
+        listmean,
+        output_format="dict"
 ):
     """Worker function that generates kappa-gamma distributions for given
     parameters.
@@ -735,8 +743,9 @@ def worker_kappaext_gammaext_kde(
         )
 
     distributions_0to5 = nhalos_lens.generate_distributions_0to5(
-        output_format=output_format
+        output_format=output_format, listmean=listmean
     )
+    # TODO: BUG
     return distributions_0to5
 
 
@@ -749,14 +758,30 @@ def run_certain_redshift_lensext_kde_by_multiprocessing(
         m_max=None,
         z_max=None,
         mass_sheet_correction=True,
-        zs=1.0,
-        zd=1.5,
+        zs=None,
+        zd=None,
+        listmean=False
 ):
     if cosmo is None:
         warnings.warn(
             "No cosmology provided, instead uses astropy.cosmology default cosmology"
         )
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    if zs is None:
+        zs = 1.5
+        warnings.warn(
+            "No source redshift provided, instead uses 1.5"
+        )
+    if zd is None:
+        zd = 1.0
+        warnings.warn(
+            "No lens redshift provided, instead uses 1.0"
+        )
+    if z_max is None:
+        z_max = 5.0
+        warnings.warn(
+            "No maximum redshift provided, instead uses 5.0"
+        )
 
     kappaext_gammaext_values = []
 
@@ -774,6 +799,7 @@ def run_certain_redshift_lensext_kde_by_multiprocessing(
             mass_sheet_correction,
             zs,
             zd,
+            listmean
         )
         for i in range(n_iterations)
     ]
@@ -803,6 +829,7 @@ def worker_certain_redshift_lensext_kde(
         mass_sheet_correction,
         zs,
         zd,
+        listmean
 ):
     npipeline = HalosSkyPyPipeline(
         sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max
@@ -828,7 +855,7 @@ def worker_certain_redshift_lensext_kde(
             mass_sheet=False,
             z_source=z_max
         )
-    distributions = nhalos_lens.get_kappaext_gammaext_distib_zdzs(zd, zs)
+    distributions = nhalos_lens.get_kappaext_gammaext_distib_zdzs(zd, zs, listmean=listmean)
     return distributions
 
 
@@ -841,14 +868,29 @@ def run_certain_redshift_many_by_multiprocessing(
         m_max=None,
         z_max=None,
         mass_sheet_correction=True,
-        zs=1.0,
-        zd=1.5,
+        zs=None,
+        zd=None,
 ):
     if cosmo is None:
         warnings.warn(
             "No cosmology provided, instead uses astropy.cosmology default cosmology"
         )
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    if zs is None:
+        zs = 1.5
+        warnings.warn(
+            "No source redshift provided, instead uses 1.5"
+        )
+    if zd is None:
+        zd = 1.0
+        warnings.warn(
+            "No lens redshift provided, instead uses 1.0"
+        )
+    if z_max is None:
+        z_max = 5.0
+        warnings.warn(
+            "No maximum redshift provided, instead uses 5.0"
+        )
 
     kappaext_gammaext_values = []
     lensinstance_values = []
@@ -924,3 +966,110 @@ def worker_certain_redshift_many(
         )
     distributions, lensinstance = nhalos_lens.get_alot_distib_(zd, zs)
     return distributions, lensinstance
+
+
+def run_compute_kappa_in_bins_by_multiprocessing(
+        n_iterations=1,
+        sky_area=0.0001,
+        samples_number=1,
+        cosmo=None,
+        m_min=None,
+        m_max=None,
+        z_max=None,
+        mass_sheet_correction=True,
+        zs=None,
+        zd=None,
+):
+    if cosmo is None:
+        warnings.warn(
+            "No cosmology provided, instead uses astropy.cosmology default cosmology"
+        )
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    if zs is None:
+        zs = 1.5
+        warnings.warn(
+            "No source redshift provided, instead uses 1.5"
+        )
+    if zd is None:
+        zd = 1.0
+        warnings.warn(
+            "No lens redshift provided, instead uses 1.0"
+        )
+    if z_max is None:
+        z_max = 5.0
+        warnings.warn(
+            "No maximum redshift provided, instead uses 5.0"
+        )
+
+    kappa_dict_tot = []
+
+    start_time = time.time()  # Note the start time
+
+    args = [
+        (
+            i,
+            sky_area,
+            m_min,
+            m_max,
+            z_max,
+            cosmo,
+            samples_number,
+            mass_sheet_correction,
+            zs,
+            zd,
+        )
+        for i in range(n_iterations)
+    ]
+
+    # Use multiprocessing
+    with get_context("spawn").Pool() as pool:
+        results = pool.starmap(worker_compute_kappa_in_bins, args)
+        kappa_dict_tot.extend(results)
+
+    kappa_dict_tot = [item for sublist in kappa_dict_tot for item in sublist]
+
+    end_time = time.time()  # Note the end time
+    print(
+        f"The {n_iterations} halo-lists took {(end_time - start_time)} seconds to run"
+    )
+    return kappa_dict_tot
+
+
+def worker_compute_kappa_in_bins(
+        iter_num,
+        sky_area,
+        m_min,
+        m_max,
+        z_max,
+        cosmo,
+        samples_number,
+        mass_sheet_correction,
+        zs,
+        zd,
+):
+    npipeline = HalosSkyPyPipeline(
+        sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max
+    )
+    nhalos = npipeline.halos
+
+    if mass_sheet_correction:
+        nmass_sheet_correction = npipeline.mass_sheet_correction
+        nhalos_lens = HalosLens(
+            halos_list=nhalos,
+            mass_correction_list=nmass_sheet_correction,
+            sky_area=sky_area,
+            cosmo=cosmo,
+            samples_number=samples_number,
+            z_source=z_max
+        )
+    else:
+        nhalos_lens = HalosLens(
+            halos_list=nhalos,
+            sky_area=sky_area,
+            cosmo=cosmo,
+            samples_number=samples_number,
+            mass_sheet=False,
+            z_source=z_max
+        )
+    kappa_dict = nhalos_lens.compute_kappa_in_bins()
+    return kappa_dict
