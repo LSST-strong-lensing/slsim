@@ -5,7 +5,8 @@ from slsim.Sources.source_base import SourceBase
 class Quasars(SourceBase):
     """Class to describe quasars as sources."""
 
-    def __init__(self, quasar_list, cosmo, sky_area):
+    def __init__(self, quasar_list, cosmo, sky_area, variability_model=None,
+                    kwargs_variability_model=None):
         """
 
         :param quasar_list: list of dictionary with quasar parameters
@@ -16,6 +17,8 @@ class Quasars(SourceBase):
         :type sky_area: `~astropy.units.Quantity`
         """
         self.n = len(quasar_list)
+        self._variab_model = variability_model
+        self._kwargs_variab_model = kwargs_variability_model
         # make cuts
         self._quasar_select = quasar_list  # can apply a filter here
 
@@ -40,3 +43,17 @@ class Quasars(SourceBase):
         quasar = self._quasar_select[index]
 
         return quasar
+    
+    @property
+    def variability_model(self):
+        """
+        :return: keyword for the variability model
+        """
+        return self._variab_model
+    
+    @property
+    def kwargs_variability(self):
+        """
+        :return: dict of keyword arguments for the variability model.
+        """
+        return self._kwargs_variab_model

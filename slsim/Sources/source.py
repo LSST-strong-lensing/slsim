@@ -26,7 +26,7 @@ class Source(object):
             for element in kwargs_variab:
                 if element in self.source_dict.colnames:
                     kwargs_variab_extracted[element] = self.source_dict[element]
-                    self._variability_class = Variability(
+                    self.variability_class = Variability(
                         variability_model, **kwargs_variab_extracted
                     )
                 else:
@@ -77,10 +77,10 @@ class Source(object):
 
         # source_mag = self.source_dict[band_string]
         if image_observation_times is not None:
-            if self._variability_class is not None:
+            if self.variability_class is not None:
                 variable_mag = self.source_dict[
                     band_string
-                ] + self._variability_class.variability_at_time(image_observation_times)
+                ] + self.variability_class.variability_at_time(image_observation_times)
                 return variable_mag
             else:
                 raise ValueError(

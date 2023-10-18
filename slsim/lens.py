@@ -332,13 +332,21 @@ class Lens(LensedSystemBase):
         redshifts, but for time delays. The time is relative to the first arriving
         image.
 
-        :param t_obs: time of observation [days]
+        :param t_obs: time of observation [days]. It could be a single observation 
+         time or an array of observation time.
         :return: time of the source when seen in the different images (without redshift
             correction)
-        :rtype: numpy array
+        :rtype: numpy array. Each element of the array corresponds to diffrent 
+         image observation times.
         """
         arrival_times = self.point_source_arrival_times()
-        observer_times = t_obs + arrival_times - np.min(arrival_times)
+        if type(t_obs) is np.ndarray and len(t_obs) > 1:
+              observer_times = (t_obs[:, np.newaxis] + arrival_times - np.min(
+                     arrival_times)).T
+        else:
+            observer_times = (t_obs + arrival_times - np.min(arrival_times))[:, 
+                                                                             np.newaxis]
+              
         return observer_times
 
     def point_source_magnitude(self, band, lensed=False, time=None):
@@ -359,36 +367,26 @@ class Lens(LensedSystemBase):
         # TODO: might have to change conventions between extended and point source
         if lensed:
             magnif = self.point_source_magnification()
+            magnif_log = 2.5 * np.log10(abs(magnif))
             if time is not None:
-                if time.unit == u.day:
-                    time = time
-                else:
-                    time = time.to(u.day)
-                if self.source._variability_class._variability_model is None:
+                time = time
+                if self.source.variability_class.variability_model is None:
                     raise ValueError(
                         "Variability model is not provided. Please choose"
                         "one of the variability models from the Variability class."
                     )
                 else:
-                    observed_time = []
-                    for t_obs in time.value:
-                        observed_time.append(self.image_observer_times(t_obs))
-                    transformed_observed_time = (
-                        np.array(observed_time).T.tolist() * u.day
-                    )
+                    image_observed_times = self.image_observer_times(time)
                     variable_magnitude = self.source.magnitude(
                         band,
-                        image_observation_times=transformed_observed_time,
+                        image_observation_times=image_observed_times,
                     )
-                    magnif_log = 2.5 * np.log10(abs(magnif))
                     lensed_variable_magnitude = (
                         variable_magnitude - magnif_log[:, np.newaxis]
                     )
                     return lensed_variable_magnitude
             else:
-                magnified_mag = self.source.magnitude(band) - 2.5 * np.log10(
-                    abs(magnif)
-                )
+                magnified_mag = self.source.magnitude(band) - magnif_log
                 return magnified_mag
         return self.source.magnitude(band)
 
