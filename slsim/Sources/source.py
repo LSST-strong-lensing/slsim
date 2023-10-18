@@ -14,32 +14,21 @@ class Source(object):
         :param variability_model: keyword for variability model to be used
         :type variability_model: str
         :param kwargs_variab: Keyword arguments for variability class.
-        :type kwargs_variab: list or dict
+        :type kwargs_variab: list of str
         """
         self.source_dict = source_dict
-        self._variability_model = variability_model
-        self._kwargs_variab = kwargs_variab
-        if isinstance(self._kwargs_variab, dict):
-            dictionary = True
-        else:
-            dictionary = False
-        if self._kwargs_variab is not None:
-            if dictionary is True:
-                self._variability_class = Variability(
-                    variability_model, **kwargs_variab
-                )
-            else:
-                kwargs_variab_extracted = {}
-                for element in self._kwargs_variab:
-                    if element in self.source_dict.colnames:
-                        kwargs_variab_extracted[element] = self.source_dict[element]
-                        self._variability_class = Variability(
-                            variability_model, **kwargs_variab_extracted
-                        )
-                    else:
-                        raise ValueError(
-                            "given keywords are not in the provided source catalog"
-                        )
+        if kwargs_variab is not None:
+            kwargs_variab_extracted = {}
+            for element in kwargs_variab:
+                if element in self.source_dict.colnames:
+                    kwargs_variab_extracted[element] = self.source_dict[element]
+                    self._variability_class = Variability(
+                        variability_model, **kwargs_variab_extracted
+                    )
+                else:
+                    raise ValueError(
+                        "given keywords are not in the provided source catalog."
+                    )
         else:
             self._variability_class = None
 

@@ -40,7 +40,7 @@ class Lens(LensedSystemBase):
         :param variability_model: keyword for variability model to be used
         :type variability_model: str
         :param kwargs_variab: keyword arguments for the variability of a source
-        :type kwargs_variab: dict
+        :type kwargs_variab: list of str
         :param test_area: area of disk around one lensing galaxies to be investigated
             on (in arc-seconds^2)
         :param mixgauss_weights: weights of the Gaussian mixture
@@ -362,7 +362,7 @@ class Lens(LensedSystemBase):
                     time = time
                 else:
                     time = time.to(u.day)
-                if self.source._variability_model is None:
+                if self.source._variability_class._variability_model is None:
                     raise ValueError(
                         "Variability model is not provided. Please choose"
                         "one of the variability models from the Variability class."

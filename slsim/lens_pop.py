@@ -41,7 +41,7 @@ class LensPop(LensedPopulationBase):
         :param variability_model: keyword for variability model to be used
         :type variability_model: str
         :param kwargs_variability: keyword arguments for the variability of a source
-        :type kwargs_variability: dict
+        :type kwargs_variability: list of str
         :param skypy_config: path to SkyPy configuration yaml file
         :type skypy_config: string
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
@@ -52,7 +52,8 @@ class LensPop(LensedPopulationBase):
         """
         super().__init__(sky_area, cosmo)
         if source_type == "galaxies" and kwargs_variability is not None:
-            raise ValueError("Extended source cannot have variability.")
+            raise ValueError("Extended source cannot have variability. Either choose" 
+                 "point source (eg: quasars) or do not provide kwargs_variability.")
         self.variability_model = variability_model
         self.kwargs_variability = kwargs_variability
         if deflector_type in ["elliptical", "all-galaxies"] or source_type in [
@@ -149,8 +150,8 @@ class LensPop(LensedPopulationBase):
             gg_lens = Lens(
                 deflector_dict=lens,
                 source_dict=source,
-                variability_model=self.variability_model,
-                kwargs_variab=self.kwargs_variability,
+                variability_model = self.variability_model,
+                kwargs_variab = self.kwargs_variability,
                 cosmo=self.cosmo,
                 source_type=self._source_model_type,
             )
