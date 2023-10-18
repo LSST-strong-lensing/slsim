@@ -27,7 +27,7 @@ class Variability(object):
 
         self._kwargs_model = kwargs_variability_model
 
-    def variability_at_t(self, observation_times):
+    def variability_at_time(self, observation_times):
         """Provides variability of a source at given time.
 
         :param observation_times: image observation time
@@ -43,11 +43,8 @@ def sinusoidal_variability(x, **kwargs_model):
     :param kwargs_model: dictionary of variability parameter associated with a source.
     :return: variability for the given time
     """
-    unit = x.unit
-    if unit == u.day:
-        t = x
-    else:
-        t = x.to(u.day)
+    
+    t = x.to(u.day)
     amplitude = kwargs_model.get("amp", 1.0)
     frequency = kwargs_model.get("freq", 1.0)
 

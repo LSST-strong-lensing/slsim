@@ -26,8 +26,8 @@ class TestVariability:
         observation_times2 = (
             np.array([np.pi * 24, (np.pi / 2) * 24, (np.pi / 3) * 24]) * u.hour
         )
-        result = variability.variability_at_t(observation_times)
-        result2 = variability.variability_at_t(observation_times2)
+        result = variability.variability_at_time(observation_times)
+        result2 = variability.variability_at_time(observation_times2)
         expected_result = np.array([-0.43030122, -0.97536797, -0.14773276])
         npt.assert_almost_equal(result, expected_result, decimal=5)
         npt.assert_almost_equal(result2, expected_result, decimal=5)

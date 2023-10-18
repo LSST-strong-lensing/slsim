@@ -15,7 +15,9 @@ class Source(object):
          input for the Variability class.
         :type variability_model: str
         :param kwargs_variab: Keyword arguments for variability class. 
-         This is associated with an input for Variability class.
+         This is associated with an input for Variability class. By using these key 
+         words, code search for quantities in source_dict with these names and creates 
+         a dictionary and this dict should be passed to the Variability class.
         :type kwargs_variab: list of str
         """
         self.source_dict = source_dict
@@ -53,16 +55,10 @@ class Source(object):
         return self.source_dict["angular_size"]
 
     @property
-    def ellipticity_1(self):
-        """Returns 1st ellipticity component of source."""
+    def ellipticity(self):
+        """Returns ellipticity components of source."""
 
-        return self.source_dict["e1"]
-
-    @property
-    def ellipticity_2(self):
-        """Returns 2nd ellipticity component of source."""
-
-        return self.source_dict["e2"]
+        return self.source_dict["e1"], self.source_dict["e2"]
 
     def magnitude(self, band, image_observation_times=None):
         """Get the magnitude of the source in a specific band.
@@ -73,15 +69,18 @@ class Source(object):
         :return: Magnitude of the source in the specified band
         :rtype: float
         """
-
-        band_string = "mag_" + band
+        column_names = self.source_dict.colnames
+        if ("mag_" + band not in column_names):
+            raise ValueError("required parameter is missing in the source dictionary.")
+        else:
+            band_string = "mag_" + band
 
         # source_mag = self.source_dict[band_string]
         if image_observation_times is not None:
             if self._variability_class is not None:
                 variable_mag = self.source_dict[
                     band_string
-                ] + self._variability_class.variability_at_t(image_observation_times)
+                ] + self._variability_class.variability_at_time(image_observation_times)
                 return variable_mag
             else:
                 raise ValueError(

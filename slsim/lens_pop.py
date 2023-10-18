@@ -122,13 +122,6 @@ class LensPop(LensedPopulationBase):
             if kwargs_quasars is None:
                 kwargs_quasars = {}
             quasar_source = quasar_catalog(**kwargs_quasars)
-            column_names = quasar_source.colnames
-            if (
-                "mag_r" not in column_names
-                and "mag_i" not in column_names
-                and "mag_g" not in column_names
-            ):
-                raise ValueError("required parameters missing in quasar_list columns")
             self._sources = Quasars(quasar_source, cosmo=cosmo, sky_area=sky_area)
             self._source_model_type = "point_source"
         else:

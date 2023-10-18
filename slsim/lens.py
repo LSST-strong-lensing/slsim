@@ -573,8 +573,8 @@ class Lens(LensedSystemBase):
                     "magnitude": mag_source,
                     "R_sersic": size_source_arcsec,
                     "n_sersic": float(self.source.n_sersic),
-                    "e1": float(self.source.ellipticity_1),
-                    "e2": float(self.source.ellipticity_2),
+                    "e1": float(self.source.ellipticity[0]),
+                    "e2": float(self.source.ellipticity[1]),
                     "center_x": center_source[0],
                     "center_y": center_source[1],
                 }
