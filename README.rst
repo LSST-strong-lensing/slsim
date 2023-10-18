@@ -1,5 +1,5 @@
 ============
-slsim
+slsim (strong lensing simulation) pipeline
 ============
 
 |Read the Docs| |GitHub| |Codecov| |Black| |docformatter| |docstyle|
