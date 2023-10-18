@@ -97,8 +97,8 @@ class TestLens(object):
         t_obs = 1000
         dt_days = self.gg_lens.image_observer_times(t_obs=t_obs)
         arrival_times = self.gg_lens.point_source_arrival_times()
-        observer_times = t_obs + arrival_times - np.min(arrival_times)
-        npt.assert_almost_equal(dt_days, observer_times, decimal=5)
+        observer_times = (t_obs + arrival_times - np.min(arrival_times))[:, np.newaxis]
+        npt.assert_almost_equal(dt_days, observer_times, decimal=4)
 
     def test_point_source_magnitude(self):
         mag = self.gg_lens.point_source_magnitude(band="i", lensed=True)

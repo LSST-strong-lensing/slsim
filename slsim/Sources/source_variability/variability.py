@@ -1,5 +1,4 @@
 import numpy as np
-import astropy.units as u
 
 """This class aims to have realistic variability models for AGN and Supernovae."""
 

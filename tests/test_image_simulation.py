@@ -164,7 +164,7 @@ def test_point_source_image(quasar_lens_pop_instance):
     psf_kernels = psf_image_1[:-1]
     psf_kernels.extend([psf_image_1[-1]] * number)
 
-    time = np.linspace(0, 10, 4) * u.day
+    time = np.linspace(0, 10, 4)
     # Call the function to get the result
     result1 = point_source_image(
         lens_class=lens_class,
