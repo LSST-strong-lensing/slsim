@@ -36,11 +36,13 @@ class LensPop(LensedPopulationBase):
         :param kwargs_source_cut: cuts on the source to be excluded in the sample
         :type kwargs_source_cut: dict
         :param kwargs_quasars: a dict of the form kwargs_quasars = {'number': 50000,
-         'z_min': 0.1, 'z_max': 5, 'm_min': 17, 'm_max': 23} and param are explained
-         below. if None, uses default values for the required variables.
-        :param variability_model: keyword for variability model to be used
+         'z_min': 0.1, 'z_max': 5, 'm_min': 17, 'm_max': 23}. if None, uses default 
+         values for the required variables.
+        :param variability_model: keyword for variability model to be used. This is an 
+         input for the variability class.
         :type variability_model: str
-        :param kwargs_variability: keyword arguments for the variability of a source
+        :param kwargs_variability: keyword arguments for the variability of a source. 
+         This is associated with an input for variability class.
         :type kwargs_variability: list of str
         :param skypy_config: path to SkyPy configuration yaml file
         :type skypy_config: string
