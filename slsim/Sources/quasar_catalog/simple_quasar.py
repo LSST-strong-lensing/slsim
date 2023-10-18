@@ -3,11 +3,15 @@ from astropy.table import Table
 
 
 def quasar_catalog(**kwargs_quasars):
-    """Creates an simple catalog of quasars.
+    """Creates an simple catalog of quasars. It generate random redshift and 
+     magnitude values in r, g, and i band. 
 
     :param kwargs_quasars: a dict of the form kwargs_quasars = {'number': 50000,
-        'z_min': 0.1, 'z_max': 5, 'm_min': 17, 'm_max': 25} and param are explained
-        below.
+     'z_min': 0.1, 'z_max': 5, 'm_min': 17, 'm_max': 25} and param are explained
+     below. It also generates amplitude and frequency associated with each source. 
+     This is a toy model which serve as a quasar catalog generator to check point 
+     source code.
+     
     :param number: number of sources we want
     :param z_min: minimum redshift for sources
     :param z_max: maximum redshift for sources
