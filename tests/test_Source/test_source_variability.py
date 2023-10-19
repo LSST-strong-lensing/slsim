@@ -26,5 +26,6 @@ class TestVariability:
         expected_result = np.array([-0.43030122, -0.97536797, -0.14773276])
         npt.assert_almost_equal(result, expected_result, decimal=5)
 
+
 if __name__ == "__main__":
     pytest.main()
