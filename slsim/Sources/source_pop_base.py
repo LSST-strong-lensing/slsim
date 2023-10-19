@@ -26,19 +26,6 @@ class SourcePopBase(ABC):
         self._variab_model = variability_model
         self._kwargs_variab_model = kwargs_variability_model
 
-    @property
-    def variability_model(self):
-        """
-        :return: keyword for the variability model
-        """
-        return self._variab_model
-
-    @property
-    def kwargs_variability(self):
-        """
-        :return: dict of keyword arguments for the variability model.
-        """
-        return self._kwargs_variab_model
 
     @abstractmethod
     def source_number(self):
@@ -55,3 +42,17 @@ class SourcePopBase(ABC):
         :return: dictionary of source
         """
         pass
+
+    @property
+    def variability_model(self):
+        """
+        :return: keyword for the variability model
+        """
+        return self._variab_model
+
+    @property
+    def kwargs_variability(self):
+        """
+        :return: dict of keyword arguments for the variability model.
+        """
+        return self._kwargs_variab_model

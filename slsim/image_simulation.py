@@ -198,7 +198,6 @@ def point_source_coordinate_properties(
     image_pix_coordinate = []
     for image_ra, image_dec in zip(ra_image_values, dec_image_values):
         image_pix_coordinate.append((image_data.map_coord2pix(image_ra, image_dec)))
-    ra_at_xy_0, dec_at_xy_0 = image_data.map_pix2coord(0, 0)
 
     data = Table(
         [
@@ -206,14 +205,12 @@ def point_source_coordinate_properties(
             image_pix_coordinate,
             ra_image_values,
             dec_image_values,
-            np.array([ra_at_xy_0, dec_at_xy_0]),
         ],
         names=(
             "deflector_pix",
             "image_pix",
             "ra_image",
             "dec_image",
-            "radec_at_xy_0",
         ),
     )
     return data
@@ -242,17 +239,19 @@ def point_source_image(
         delta_pix=delta_pix,
         num_pix=num_pix,
     )
-    # pixel to coordinate tranform matrix.
-    # DOTO: compute more complete transform_matrix by considering telescope orientation
-    # in the world coordinate system.
-    transform_matrix = np.array([[delta_pix, 0], [0, delta_pix]])
-    grid = PixelGrid(
-        nx=num_pix,
-        ny=num_pix,
-        transform_pix2angle=transform_matrix,
-        ra_at_xy_0=image_data["radec_at_xy_0"][0],
-        dec_at_xy_0=image_data["radec_at_xy_0"][1],
+    kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band)
+    kwargs_band = {
+        "pixel_scale": delta_pix,
+        "magnitude_zero_point": mag_zero_point,
+        "background_noise": 0,
+        "psf_type": "NONE",
+        "exposure_time": 1,
+    }
+    sim_api = SimAPI(
+        numpix=num_pix, kwargs_single_band=kwargs_band, kwargs_model=kwargs_model
     )
+
+    image_data_class = sim_api.data_class
 
     ra_image_values = image_data["ra_image"]
     dec_image_values = image_data["dec_image"]
@@ -268,7 +267,7 @@ def point_source_image(
         point_source_images = []
         for i in range(len(psf_class)):
             rendering_class = PointSourceRendering(
-                pixel_grid=grid, supersampling_factor=1, psf=psf_class[i]
+                pixel_grid=image_data_class, supersampling_factor=1, psf=psf_class[i]
             )
             point_source = rendering_class.point_source_rendering(
                 np.array([ra_image_values[i]]),
@@ -287,7 +286,8 @@ def point_source_image(
             point_source_images_single = []
             for j in range(len(time)):
                 rendering_class = PointSourceRendering(
-                    pixel_grid=grid, supersampling_factor=1, psf=psf_class[i]
+                    pixel_grid=image_data_class, supersampling_factor=1, 
+                    psf=psf_class[i]
                 )
                 point_source = rendering_class.point_source_rendering(
                     np.array([ra_image_values[i]]),
@@ -296,4 +296,121 @@ def point_source_image(
                 )
                 point_source_images_single.append(point_source)
             point_source_images.append(point_source_images_single)
+    return point_source_images
+
+def point_source_image_without_variability(
+    lens_class, band, mag_zero_point, delta_pix, num_pix, psf_kernels
+):
+    """Creates lensed point source images on the basis of given information.
+
+    :param lens_class: Lens() object
+    :param band: imaging band
+    :param mag_zero_point: magnitude zero point in band
+    :param delta_pix: pixel scale of image generated
+    :param num_pix: number of pixels per axis
+    :param psf_kernels: psf kernels.
+    :return: point source images
+    """
+
+    image_data = point_source_coordinate_properties(
+        lens_class=lens_class,
+        band=band,
+        mag_zero_point=mag_zero_point,
+        delta_pix=delta_pix,
+        num_pix=num_pix,
+    )
+    
+    kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band)
+    kwargs_band = {
+        "pixel_scale": delta_pix,
+        "magnitude_zero_point": mag_zero_point,
+        "background_noise": 0,
+        "psf_type": "NONE",
+        "exposure_time": 1,
+    }
+    sim_api = SimAPI(
+        numpix=num_pix, kwargs_single_band=kwargs_band, kwargs_model=kwargs_model
+    )
+
+    image_data_class = sim_api.data_class
+
+    ra_image_values = image_data["ra_image"]
+    dec_image_values = image_data["dec_image"]
+    psf_class = []
+    for i in range(len(psf_kernels)):
+        psf_class.append(PSF(psf_type="PIXEL", kernel_point_source=psf_kernels[i]))
+    
+    magnitude = lens_class.point_source_magnitude(band, lensed=True)
+    amp = magnitude_to_amplitude(magnitude, mag_zero_point)
+    point_source_images = []
+    for i in range(len(psf_class)):
+        rendering_class = PointSourceRendering(
+            pixel_grid=image_data_class, supersampling_factor=1, psf=psf_class[i]
+        )
+        point_source = rendering_class.point_source_rendering(
+            np.array([ra_image_values[i]]),
+            np.array([dec_image_values[i]]),
+            np.array([amp[i]]),
+        )
+        point_source_images.append(point_source)
+    return point_source_images
+ 
+def point_source_image_with_variability(
+    lens_class, band, mag_zero_point, delta_pix, num_pix, psf_kernels, time
+):
+    """Creates lensed point source images on the basis of given information.
+
+    :param lens_class: Lens() object
+    :param band: imaging band
+    :param mag_zero_point: magnitude zero point in band
+    :param delta_pix: pixel scale of image generated
+    :param num_pix: number of pixels per axis
+    :param psf_kernels: psf kernels in the sequence of exposures being simulated.
+    :param time: time is a image observation time [day].
+    :return: point source images
+    """
+
+    image_data = point_source_coordinate_properties(
+        lens_class=lens_class,
+        band=band,
+        mag_zero_point=mag_zero_point,
+        delta_pix=delta_pix,
+        num_pix=num_pix,
+    )
+    # pixel to coordinate tranform matrix.
+    # DOTO: compute more complete transform_matrix by considering telescope orientation
+    # in the world coordinate system.
+    transform_matrix = np.array([[delta_pix, 0], [0, delta_pix]])
+    grid = PixelGrid(
+        nx=num_pix,
+        ny=num_pix,
+        transform_pix2angle=transform_matrix,
+        ra_at_xy_0=image_data["radec_at_xy_0"][0],
+        dec_at_xy_0=image_data["radec_at_xy_0"][1],
+    )
+
+    ra_image_values = image_data["ra_image"]
+    dec_image_values = image_data["dec_image"]
+    psf_class = []
+    for i in range(len(psf_kernels)):
+        psf_class.append(PSF(psf_type="PIXEL", kernel_point_source=psf_kernels[i]))
+    
+    variable_mag = lens_class.point_source_magnitude(
+        band=band, lensed=True, time=time
+    )
+    variable_amp = magnitude_to_amplitude(variable_mag, mag_zero_point)
+    point_source_images = []
+    for i in range(len(psf_class)):
+        point_source_images_single = []
+        for j in range(len(time)):
+            rendering_class = PointSourceRendering(
+                pixel_grid=grid, supersampling_factor=1, psf=psf_class[i]
+            )
+            point_source = rendering_class.point_source_rendering(
+                np.array([ra_image_values[i]]),
+                np.array([dec_image_values[i]]),
+                np.array([variable_amp[i][j]]),
+            )
+            point_source_images_single.append(point_source)
+        point_source_images.append(point_source_images_single)
     return point_source_images

@@ -29,13 +29,13 @@ class Quasars(SourcePopBase):
          the individual quasars.
         """
         self.n = len(quasar_list)
-        self._variab_model = variability_model
-        self._kwargs_variab_model = kwargs_variability_model
         # make cuts
         self._quasar_select = quasar_list  # can apply a filter here
 
         self._num_select = len(self._quasar_select)
-        super(Quasars, self).__init__(cosmo=cosmo, sky_area=sky_area)
+        super(Quasars, self).__init__(cosmo=cosmo, sky_area=sky_area, 
+                        variability_model=variability_model, 
+                        kwargs_variability_model=kwargs_variability_model)
 
     def source_number(self):
         """Number of sources registered (within given area on the sky)
@@ -55,17 +55,3 @@ class Quasars(SourcePopBase):
         quasar = self._quasar_select[index]
 
         return quasar
-
-    @property
-    def variability_model(self):
-        """
-        :return: keyword for the variability model
-        """
-        return self._variab_model
-
-    @property
-    def kwargs_variability(self):
-        """
-        :return: dict of keyword arguments for the variability model.
-        """
-        return self._kwargs_variab_model
