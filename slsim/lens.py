@@ -364,28 +364,21 @@ class Lens(LensedSystemBase):
             None, provides magnitude without variability.
         :return: point source magnitude
         """
-        # band_string = str("mag_" + band)
         # TODO: might have to change conventions between extended and point source
         if lensed:
             magnif = self.point_source_magnification()
             magnif_log = 2.5 * np.log10(abs(magnif))
             if time is not None:
                 time = time
-                if self.source.variability_class.variability_model is None:
-                    raise ValueError(
-                        "Variability model is not provided. Please choose"
-                        "one of the variability models from the Variability class."
-                    )
-                else:
-                    image_observed_times = self.image_observer_times(time)
-                    variable_magnitude = self.source.magnitude(
-                        band,
-                        image_observation_times=image_observed_times,
-                    )
-                    lensed_variable_magnitude = (
-                        variable_magnitude - magnif_log[:, np.newaxis]
-                    )
-                    return lensed_variable_magnitude
+                image_observed_times = self.image_observer_times(time)
+                variable_magnitude = self.source.magnitude(
+                    band,
+                    image_observation_times=image_observed_times,
+                )
+                lensed_variable_magnitude = (
+                    variable_magnitude - magnif_log[:, np.newaxis]
+                )
+                return lensed_variable_magnitude
             else:
                 magnified_mag = self.source.magnitude(band) - magnif_log
                 return magnified_mag

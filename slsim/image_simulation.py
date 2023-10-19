@@ -60,7 +60,8 @@ def simulate_image(
 def sharp_image(
     lens_class, band, mag_zero_point, delta_pix, num_pix, with_deflector=True
 ):
-    """Creates a high resolution image of a selected lens.
+    """Creates an unconvolved image of a selected lens. Point source image is not 
+     included in this function.
 
     :param lens_class: Lens() object
     :param band: imaging band
@@ -106,10 +107,11 @@ def sharp_image(
 
 
 def sharp_rgb_image(lens_class, rgb_band_list, mag_zero_point, delta_pix, num_pix):
-    """Creates a high resolution rgb image of a selected lens.
+    """Creates an unconvolved rgb image of a selected lens.
 
     :param lens_class: Lens() object
-    :param rgb_band_list: imaging band list
+    :param rgb_band_list: imaging band list. Here, 'i', 'r', and 'g' band are consider
+     as r, g, and b respectively.
     :param mag_zero_point: magnitude zero point in band
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
@@ -143,7 +145,8 @@ def sharp_rgb_image(lens_class, rgb_band_list, mag_zero_point, delta_pix, num_pi
 def rgb_image_from_image_list(image_list, stretch):
     """Creates a rgb image using list of images in r, g, and b.
 
-    :param image_list: images in r, g, and b band
+    :param image_list: images in r, g, and b band. Here, 'i', 'r', and 'g' band are 
+     consider as r, g, and b respectively.
     :return: rgb image
     """
     image_rgb = make_lupton_rgb(
@@ -196,13 +199,6 @@ def point_source_coordinate_properties(
     for image_ra, image_dec in zip(ra_image_values, dec_image_values):
         image_pix_coordinate.append((image_data.map_coord2pix(image_ra, image_dec)))
     ra_at_xy_0, dec_at_xy_0 = image_data.map_pix2coord(0, 0)
-    """image_amplitude = []
-
-    for i in range(len(image_magnitude)):
-        delta_m = image_magnitude[i] - mag_zero_point
-        counts = 10 ** (-delta_m / 2.5)
-        image_amplitude.append(counts)
-    """
 
     data = Table(
         [
@@ -233,7 +229,7 @@ def point_source_image(
     :param mag_zero_point: magnitude zero point in band
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
-    :param psf_kernels: psf kernels extracted from the dp0 cutout images
+    :param psf_kernels: psf kernels in the sequence of exposures being simulated.
     :param time: time is a image observation time which is a astropy.unit object. If
         None, creates images without variability.
     :return: point source images

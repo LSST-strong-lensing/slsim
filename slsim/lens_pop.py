@@ -54,7 +54,7 @@ class LensPop(LensedPopulationBase):
         super().__init__(sky_area, cosmo)
         if source_type == "galaxies" and kwargs_variability is not None:
             raise ValueError(
-                "Extended source cannot have variability. Either choose"
+                "Galaxies cannot have variability. Either choose"
                 "point source (eg: quasars) or do not provide kwargs_variability."
             )
 
