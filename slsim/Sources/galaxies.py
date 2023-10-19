@@ -2,10 +2,10 @@ import numpy as np
 import numpy.random as random
 from slsim.selection import deflector_cut
 from slsim.Util import param_util
-from slsim.Sources.source_base import SourceBase
+from slsim.Sources.source_base import SourcePopBase
 
 
-class Galaxies(SourceBase):
+class Galaxies(SourcePopBase):
     """Class describing elliptical galaxies."""
 
     def __init__(self, galaxy_list, kwargs_cut, cosmo, sky_area):

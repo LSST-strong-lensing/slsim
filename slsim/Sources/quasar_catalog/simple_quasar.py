@@ -2,32 +2,23 @@ import numpy as np
 from astropy.table import Table
 
 
-def quasar_catalog(**kwargs_quasars):
+def quasar_catalog_simple(num_quasars = 50000, z_min = 0.1, z_max=5, m_min=17, m_max=23, 
+                   amp_min=0.9, amp_max=1.3, freq_min=0.5, freq_max=1.5):
     """Creates an simple catalog of quasars. It generate random redshift and magnitude
-    values in r, g, and i band.
+    values in r, g, and i band. Also, generates amplitude and frequency for each source.
+    The function only works for r, g, and i band magnitudes.
 
-    :param kwargs_quasars: a dict of the form kwargs_quasars = {'number': 50000,
-        'z_min': 0.1, 'z_max': 5, 'm_min': 17, 'm_max': 25} and param are explained
-        below. It also generates amplitude and frequency associated with each source.
-        This is a toy model which serve as a quasar catalog generator to check point
-        source code.
     :param number: number of sources we want
     :param z_min: minimum redshift for sources
     :param z_max: maximum redshift for sources
     :param m_min: minimum magnitude for sources in r band
     :param m_max: maximum magnitude for sources in r band
+    :param amp_min: minimum amplitude for sources
+    :param amp_max: maximum amplitude for sources
+    :param freq_min: minimum frequency for sources
+    :param freq_max: maximum frequency for sources
     :return: an astropy table of quasar catalog
     """
-    num_quasars = kwargs_quasars.get("number", 50000)
-    z_min = kwargs_quasars.get("z_min", 0.1)
-    z_max = kwargs_quasars.get("z_max", 5)
-    m_min = kwargs_quasars.get("m_min", 17)
-    m_max = kwargs_quasars.get("m_max", 23)
-    amp_min = kwargs_quasars.get("amp_min", 0.9)
-    amp_max = kwargs_quasars.get("amp_max", 1.3)
-    freq_min = kwargs_quasars.get("freq_min", 0.5)
-    freq_max = kwargs_quasars.get("freq_max", 1.5)
-
     redshifts = np.random.uniform(z_min, z_max, num_quasars)
     magnitude_r = np.random.uniform(m_min, m_max, num_quasars)
     magnitude_g = magnitude_r - 0.5

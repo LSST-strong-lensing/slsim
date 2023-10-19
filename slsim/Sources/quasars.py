@@ -1,8 +1,8 @@
 import numpy.random as random
-from slsim.Sources.source_base import SourceBase
+from slsim.Sources.source_base import SourcePopBase
 
 
-class Quasars(SourceBase):
+class Quasars(SourcePopBase):
     """Class to describe quasars as sources."""
 
     def __init__(
@@ -21,6 +21,12 @@ class Quasars(SourceBase):
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
         :type sky_area: `~astropy.units.Quantity`
+        :param variability_model: keyword for the variability model to be used. This is 
+         a population argument, not the light curve parameter for the individual 
+         quasars.
+        :param kwargs_variability_model: keyword arguments for the variability of 
+         a source. This is a population argument, not the light curve parameter for 
+         the individual quasars.
         """
         self.n = len(quasar_list)
         self._variab_model = variability_model

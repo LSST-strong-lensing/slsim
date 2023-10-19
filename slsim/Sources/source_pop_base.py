@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class SourceBase(ABC):
+class SourcePopBase(ABC):
     """Base class with functions all source classes must have to be able to render
     populations."""
 

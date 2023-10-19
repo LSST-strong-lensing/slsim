@@ -23,7 +23,7 @@ sim\_pipeline.Sources.quasars module
 sim\_pipeline.Sources.source\_base module
 -----------------------------------------
 
-.. automodule:: slsim.Sources.source_base
+.. automodule:: slsim.Sources.source_pop_base
    :members:
    :undoc-members:
    :show-inheritance:
