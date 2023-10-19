@@ -1,6 +1,5 @@
 from slsim.Sources.source import Source
 import numpy as np
-import astropy.units as u
 import pytest
 from numpy import testing as npt
 from astropy.table import Table

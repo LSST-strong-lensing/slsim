@@ -1,7 +1,6 @@
 import os
 import numpy as np
 from astropy.table import Table
-import astropy.units as u
 from astropy.cosmology import FlatLambdaCDM
 from slsim.lens import Lens
 from slsim.lens_pop import LensPop
