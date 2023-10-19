@@ -5,8 +5,14 @@ from slsim.Sources.source_base import SourceBase
 class Quasars(SourceBase):
     """Class to describe quasars as sources."""
 
-    def __init__(self, quasar_list, cosmo, sky_area, variability_model=None,
-                    kwargs_variability_model=None):
+    def __init__(
+        self,
+        quasar_list,
+        cosmo,
+        sky_area,
+        variability_model=None,
+        kwargs_variability_model=None,
+    ):
         """
 
         :param quasar_list: list of dictionary with quasar parameters
@@ -43,14 +49,14 @@ class Quasars(SourceBase):
         quasar = self._quasar_select[index]
 
         return quasar
-    
+
     @property
     def variability_model(self):
         """
         :return: keyword for the variability model
         """
         return self._variab_model
-    
+
     @property
     def kwargs_variability(self):
         """

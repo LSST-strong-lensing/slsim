@@ -36,10 +36,10 @@ class Lens(LensedSystemBase):
         :param cosmo: astropy.cosmology instance
         :param source_type: type of the source 'extended' or 'point_source' supported
         :type source_type: str
-        :param variability_model: keyword for variability model to be used. This is an 
+        :param variability_model: keyword for variability model to be used. This is an
          input for the Variability class.
         :type variability_model: str
-        :param kwargs_variab: keyword arguments for the variability of a source. 
+        :param kwargs_variab: keyword arguments for the variability of a source.
          This is associated with an input for Variability class.
         :type kwargs_variab: list of str
         :param test_area: area of disk around one lensing galaxies to be investigated
@@ -331,21 +331,23 @@ class Lens(LensedSystemBase):
         redshifts, but for time delays. The time is relative to the first arriving
         image.
 
-        :param t_obs: time of observation [days]. It could be a single observation 
-         time or an array of observation time.
+        :param t_obs: time of observation [days]. It could be a single observation time
+            or an array of observation time.
         :return: time of the source when seen in the different images (without redshift
             correction)
-        :rtype: numpy array. Each element of the array corresponds to diffrent 
-         image observation times.
+        :rtype: numpy array. Each element of the array corresponds to diffrent image
+            observation times.
         """
         arrival_times = self.point_source_arrival_times()
         if type(t_obs) is np.ndarray and len(t_obs) > 1:
-              observer_times = (t_obs[:, np.newaxis] + arrival_times - np.min(
-                     arrival_times)).T
+            observer_times = (
+                t_obs[:, np.newaxis] + arrival_times - np.min(arrival_times)
+            ).T
         else:
-            observer_times = (t_obs + arrival_times - np.min(arrival_times))[:, 
-                                                                             np.newaxis]
-              
+            observer_times = (t_obs + arrival_times - np.min(arrival_times))[
+                :, np.newaxis
+            ]
+
         return observer_times
 
     def point_source_magnitude(self, band, lensed=False, time=None):

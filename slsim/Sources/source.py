@@ -11,12 +11,12 @@ class Source(object):
         """
         :param source_dict: Source properties
         :type source_dict: dict
-        :param variability_model: keyword for variability model to be used. This is an 
+        :param variability_model: keyword for variability model to be used. This is an
          input for the Variability class.
         :type variability_model: str
-        :param kwargs_variab: Keyword arguments for variability class. 
-         This is associated with an input for Variability class. By using these key 
-         words, code search for quantities in source_dict with these names and creates 
+        :param kwargs_variab: Keyword arguments for variability class.
+         This is associated with an input for Variability class. By using these key
+         words, code search for quantities in source_dict with these names and creates
          a dictionary and this dict should be passed to the Variability class.
         :type kwargs_variab: list of str
         """
@@ -70,7 +70,7 @@ class Source(object):
         :rtype: float
         """
         column_names = self.source_dict.colnames
-        if ("mag_" + band not in column_names):
+        if "mag_" + band not in column_names:
             raise ValueError("required parameter is missing in the source dictionary.")
         else:
             band_string = "mag_" + band
