@@ -77,8 +77,8 @@ def magnitude_to_amplitude(magnitude, mag_zero_point):
     """Converts source magnitude to amplitude.
 
     :param magnitude: source magnitude
-    :param mag_zero_point: zero point magnitude for the image simulation
-    :returns: source amplitude
+    :param mag_zero_point: zero point magnitude for the image
+    :returns: source amplitude in counts per second
     """
     delta_m = magnitude - mag_zero_point
     counts = 10 ** (-delta_m / 2.5)

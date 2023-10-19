@@ -1,5 +1,5 @@
 import numpy.random as random
-from slsim.Sources.source_base import SourcePopBase
+from slsim.Sources.source_pop_base import SourcePopBase
 
 
 class Quasars(SourcePopBase):
