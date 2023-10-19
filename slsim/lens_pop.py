@@ -148,22 +148,14 @@ class LensPop(LensedPopulationBase):
         while True:
             source = self._sources.draw_source()
             lens = self._lens_galaxies.draw_deflector()
-            if self._source_model_type == "point_source":
-                gg_lens = Lens(
-                    deflector_dict=lens,
-                    source_dict=source,
-                    variability_model=self._sources.variability_model,
-                    kwargs_variab=self._sources.kwargs_variability,
-                    cosmo=self.cosmo,
-                    source_type=self._source_model_type,
-                )
-            else:
-                gg_lens = Lens(
-                    deflector_dict=lens,
-                    source_dict=source,
-                    cosmo=self.cosmo,
-                    source_type=self._source_model_type,
-                )
+            gg_lens = Lens(
+                deflector_dict=lens,
+                source_dict=source,
+                variability_model=self._sources.variability_model,
+                kwargs_variab=self._sources.kwargs_variability,
+                cosmo=self.cosmo,
+                source_type=self._source_model_type,
+            )
             if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens
 
