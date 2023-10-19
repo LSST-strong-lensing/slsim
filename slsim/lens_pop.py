@@ -152,8 +152,8 @@ class LensPop(LensedPopulationBase):
                 gg_lens = Lens(
                     deflector_dict=lens,
                     source_dict=source,
-                    variability_model = self._sources.variability_model,
-                    kwargs_variab = self._sources.kwargs_variability,
+                    variability_model=self._sources.variability_model,
+                    kwargs_variab=self._sources.kwargs_variability,
                     cosmo=self.cosmo,
                     source_type=self._source_model_type,
                 )
