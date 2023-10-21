@@ -1543,7 +1543,7 @@ class HalosLens(object):
             self,
             x,
             y,
-            diff=1.0,
+            diff=0.0000001,
             diff_method="square",
             kwargs=None,
             lens_model=None,
@@ -1551,8 +1551,6 @@ class HalosLens(object):
     ):
         """
         """
-        if kwargs is None:
-            kwargs = self.get_halos_lens_kwargs()
         if lens_model is None:
             lens_model = self.lens_model
         if zdzs is not None:
@@ -1562,7 +1560,7 @@ class HalosLens(object):
                 theta_x=x,
                 theta_y=y,
                 kwargs_lens=kwargs,
-                diff=1.0,
+                diff=0.0000001,
             )
         else:
             f_xx, _, _, f_yy = lens_model.hessian(
@@ -1573,7 +1571,7 @@ class HalosLens(object):
         return kappa
 
     def plot_convergence(self,
-                         diff=1.0,
+                         diff=0.0000001,
                          diff_method="square",
                          kwargs=None,
                          lens_model=None,
@@ -1581,21 +1579,23 @@ class HalosLens(object):
                          ):
         import matplotlib.pyplot as plt
         from multiprocessing import Pool, cpu_count
+
+        if kwargs is None:
+            kwargs = self.get_halos_lens_kwargs()
+
         radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
 
         num_points = 500  # number of points along one dimension
+        # TODO: make this as an input parameter
         x = np.linspace(-radius_arcsec, radius_arcsec, num_points)
         y = np.linspace(-radius_arcsec, radius_arcsec, num_points)
         X, Y = np.meshgrid(x, y)
         mask = X ** 2 + Y ** 2 <= radius_arcsec ** 2
 
         kappa_values = np.zeros_like(X)
-
-        # Create a list of arguments to pass to compute_kappa
         args = [(i, j, X, Y, mask, self, kwargs, diff, diff_method, lens_model, zdzs)
                 for i in range(num_points) for j in range(num_points)]
 
-        # Create a pool of worker processes
         with Pool(cpu_count()) as p:
             results = p.map(compute_kappa, args)
 
@@ -1606,7 +1606,49 @@ class HalosLens(object):
 
         plt.imshow(kappa_values, extent=[-radius_arcsec, radius_arcsec, -radius_arcsec, radius_arcsec])
         plt.colorbar(label=r'$\kappa$')
+
+        # Plot halos
+        halos_x = [k.get('center_x', None) for k in kwargs]
+        halos_y = [k.get('center_y', None) for k in kwargs]
+        plt.scatter(halos_x, halos_y, color='yellow', marker='x', label='Halos')
+
         plt.title(f'Convergence Plot,radius is {radius_arcsec} arcsec')
         plt.xlabel('x-coordinate (arcsec)')
         plt.ylabel('y-coordinate (arcsec)')
+        plt.legend()
         plt.show()
+        self.enhance_halos_table_random_pos()
+
+    def azimuthal_average_kappa_dict(self,
+                                     diff=0.0000001,
+                                     diff_method="square",
+                                     kwargs=None,
+                                     lens_model=None,
+                                     zdzs=None):
+        radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
+        radii = np.linspace(0, radius_arcsec, 25)
+
+        all_kappa_dicts = []
+
+        for _ in range(self.samples_number):
+            self.enhance_halos_table_random_pos()
+
+            kappa_dict = {}
+
+            for r in radii:
+                x_values = np.linspace(-r, r, 25)
+                kappas = []
+
+                for x in x_values:
+                    y1 = np.sqrt(r ** 2 - x ** 2)
+                    y2 = -y1
+
+                    kappas.append(self.xy_convergence(x, y1, diff, diff_method, kwargs, lens_model, zdzs))
+                    kappas.append(self.xy_convergence(x, y2, diff, diff_method, kwargs, lens_model, zdzs))
+
+                kappa_avg = np.mean(kappas)
+                kappa_dict[round(r, 4)] = kappa_avg
+
+            all_kappa_dicts.append(kappa_dict)
+
+        return all_kappa_dicts

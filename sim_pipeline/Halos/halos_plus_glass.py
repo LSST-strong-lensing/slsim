@@ -1073,3 +1073,83 @@ def worker_compute_kappa_in_bins(
         )
     kappa_dict = nhalos_lens.compute_kappa_in_bins()
     return kappa_dict
+
+
+def run_azimuthal_average_by_multiprocessing(
+        cosmo,
+        m_min,
+        m_max,
+        z_max,
+        mass_sheet_correction,
+        n_iterations=1,
+        sky_area=0.0001,
+        samples_number=1,
+):
+    azimuthal_dict_tot = []
+
+    start_time = time.time()  # Note the start time
+
+    args = [
+        (
+            i,
+            sky_area,
+            m_min,
+            m_max,
+            z_max,
+            cosmo,
+            samples_number,
+            mass_sheet_correction,
+        )
+        for i in range(n_iterations)
+    ]
+
+    # Use multiprocessing
+    with get_context("spawn").Pool() as pool:
+        results = pool.starmap(worker_azimuthal_average, args)
+        azimuthal_dict_tot.extend(results)
+
+    azimuthal_dict_tot = [item for sublist in azimuthal_dict_tot for item in sublist]
+
+    end_time = time.time()  # Note the end time
+    print(
+        f"The {n_iterations} halo-lists took {(end_time - start_time)} seconds to run"
+    )
+    return azimuthal_dict_tot
+
+
+def worker_azimuthal_average(
+        iter_num,
+        sky_area,
+        m_min,
+        m_max,
+        z_max,
+        cosmo,
+        samples_number,
+        mass_sheet_correction
+):
+    npipeline = HalosSkyPyPipeline(
+        sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max
+    )
+    nhalos = npipeline.halos
+
+    if mass_sheet_correction:
+        nmass_sheet_correction = npipeline.mass_sheet_correction
+        nhalos_lens = HalosLens(
+            halos_list=nhalos,
+            mass_correction_list=nmass_sheet_correction,
+            sky_area=sky_area,
+            cosmo=cosmo,
+            samples_number=samples_number,
+            z_source=z_max
+        )
+    else:
+        nhalos_lens = HalosLens(
+            halos_list=nhalos,
+            sky_area=sky_area,
+            cosmo=cosmo,
+            samples_number=samples_number,
+            mass_sheet=False,
+            z_source=z_max
+        )
+    azimuthal_dict = nhalos_lens.azimuthal_average_kappa_dict()
+    return azimuthal_dict
