@@ -1582,7 +1582,6 @@ class HalosLens(object):
 
         if kwargs is None:
             kwargs = self.get_halos_lens_kwargs()
-
         radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
 
         num_points = 500  # number of points along one dimension
@@ -1610,8 +1609,8 @@ class HalosLens(object):
         # Plot halos
         halos_x = [k.get('center_x', None) for k in kwargs]
         halos_y = [k.get('center_y', None) for k in kwargs]
-        plt.scatter(halos_x, halos_y, color='yellow', marker='x', label='Halos')
-
+        plt.scatter(halos_x, -halos_y, color='yellow', marker='x', label='Halos')
+        # do not know why, but seems y should be -y here to match the kappa plot
         plt.title(f'Convergence Plot,radius is {radius_arcsec} arcsec')
         plt.xlabel('x-coordinate (arcsec)')
         plt.ylabel('y-coordinate (arcsec)')
