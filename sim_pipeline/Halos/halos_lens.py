@@ -1,8 +1,6 @@
 import numpy as np
 from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
-from lenstronomy.Plots import lens_plot
-from lenstronomy.Plots.model_plot import ModelPlot
 import warnings
 from tqdm.notebook import tqdm
 import math
@@ -1551,8 +1549,6 @@ class HalosLens(object):
     ):
         """
         """
-        if lens_model is None:
-            lens_model = self.lens_model
         if zdzs is not None:
             f_xx, _, _, f_yy = lens_model.hessian_z1z2(
                 z1=zdzs[0],
@@ -1582,7 +1578,13 @@ class HalosLens(object):
 
         if kwargs is None:
             kwargs = self.get_halos_lens_kwargs()
+
+        if lens_model is None:
+            lens_model = self.lens_model
+
         radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
+        print('lens kwargs',kwargs)
+        print('lens model',lens_model)
 
         num_points = 500  # number of points along one dimension
         # TODO: make this as an input parameter
@@ -1608,9 +1610,10 @@ class HalosLens(object):
 
         # Plot halos
         halos_x = [k.get('center_x', None) for k in kwargs]
-        halos_y = [k.get('center_y', None) for k in kwargs]
-        plt.scatter(halos_x, -halos_y, color='yellow', marker='x', label='Halos')
-        # do not know why, but seems y should be -y here to match the kappa plot
+        halos_y = [-k.get('center_y') if k.get('center_y') is not None else None for k in kwargs]
+        #do not know why, but seems y should be -y here to match the kappa plot
+
+        plt.scatter(halos_x, halos_y, color='yellow', marker='x', label='Halos')
         plt.title(f'Convergence Plot,radius is {radius_arcsec} arcsec')
         plt.xlabel('x-coordinate (arcsec)')
         plt.ylabel('y-coordinate (arcsec)')
@@ -1628,9 +1631,13 @@ class HalosLens(object):
         radii = np.linspace(0, radius_arcsec, 25)
 
         all_kappa_dicts = []
+        if lens_model is None:
+            lens_model = self.lens_model
 
         for _ in range(self.samples_number):
             self.enhance_halos_table_random_pos()
+            if kwargs is None:
+                kwargs = self.get_halos_lens_kwargs()
 
             kappa_dict = {}
 
