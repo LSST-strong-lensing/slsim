@@ -57,12 +57,14 @@ def random_ra_dec(ra_min, ra_max, dec_min, dec_max, n):
 
 
 def convolved_image(image, psf_kernel, type="fft"):
-    """Convolves an image with given psf :param image: image to be convolved :param
-    psf_kernel: kernel used to convolve the given image.
+    """Convolves an image with given psf kernel.
 
-    It should be a pixel  psf kernel.
+    :param image: image to be convolved
+    :param psf_kernel: kernel used to convolve the given image. It should be a pixel psf
+        kernel.
     :param type: method to be used to convolve image. currently fftconvolve and
-        convolve2d are supported.
+        convolve2d are supported. The default type is fftconvolve and we prefer to use
+        fftconvolve over convolve2d because it is relatively faster for our purpose.
     :returns: convolved image.
     """
     if type == "fft":
@@ -77,8 +79,8 @@ def magnitude_to_amplitude(magnitude, mag_zero_point):
     """Converts source magnitude to amplitude.
 
     :param magnitude: source magnitude
-    :param mag_zero_point: zero point magnitude for the image simulation
-    :returns: source amplitude
+    :param mag_zero_point: zero point magnitude for the image
+    :returns: source amplitude in counts per second
     """
     delta_m = magnitude - mag_zero_point
     counts = 10 ** (-delta_m / 2.5)

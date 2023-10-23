@@ -1,6 +1,5 @@
 from slsim.Sources.source import Source
 import numpy as np
-import astropy.units as u
 import pytest
 from numpy import testing as npt
 from astropy.table import Table
@@ -26,10 +25,7 @@ class TestSource:
         self.source = Source(
             source_dict,
             variability_model="sinusoidal",
-            kwargs_variab={"amp": 1.0, "freq": 0.5},
-        )
-        self._source = Source(
-            source_dict, variability_model="sinusoidal", kwargs_variab={"amp", "freq"}
+            kwargs_variab={"amp", "freq"},
         )
 
     def test_redshift(self):
@@ -41,20 +37,18 @@ class TestSource:
     def test_angular_size(self):
         assert self.source.angular_size == [0.35]
 
-    def test_ellipticity_1(self):
-        assert self.source.ellipticity_1 == [0.8]
-
-    def test_ellipticity_2(self):
-        assert self.source.ellipticity_2 == [0.76]
+    def test_ellipticity(self):
+        assert self.source.ellipticity[0] == [0.8]
+        assert self.source.ellipticity[1] == [0.76]
 
     def test_magnitude_no_variability(self):
         result = self.source.magnitude("r")
         assert result == [17]
 
     def test_magnitude_with_variability(self):
-        image_observation_times = np.array([np.pi, np.pi / 2, np.pi / 3]) * u.day
+        image_observation_times = np.array([np.pi, np.pi / 2, np.pi / 3])
         result = self.source.magnitude("r", image_observation_times)
-        result_comp = np.array([16.56969878, 16.02463203, 16.85226724])
+        result_comp = np.array([17.48917028, 17.38842661, 17.27946793])
         npt.assert_almost_equal(result, result_comp, decimal=5)
 
 

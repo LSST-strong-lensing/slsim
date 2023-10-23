@@ -11,33 +11,28 @@ class Source(object):
         """
         :param source_dict: Source properties
         :type source_dict: dict
-        :param variability_model: Variability model for source.
+        :param variability_model: keyword for variability model to be used. This is an
+         input for the Variability class.
+        :type variability_model: str
         :param kwargs_variab: Keyword arguments for variability class.
+         This is associated with an input for Variability class. By using these key
+         words, code search for quantities in source_dict with these names and creates
+         a dictionary and this dict should be passed to the Variability class.
+        :type kwargs_variab: list of str
         """
         self.source_dict = source_dict
-        self._variability_model = variability_model
-        self._kwargs_variab = kwargs_variab
-        if isinstance(self._kwargs_variab, dict):
-            dictionary = True
-        else:
-            dictionary = False
-        if self._kwargs_variab is not None:
-            if dictionary is True:
-                self._variability_class = Variability(
-                    variability_model, **kwargs_variab
-                )
-            else:
-                kwargs_variab_extracted = {}
-                for element in self._kwargs_variab:
-                    if element in self.source_dict.colnames:
-                        kwargs_variab_extracted[element] = self.source_dict[element]
-                        self._variability_class = Variability(
-                            variability_model, **kwargs_variab_extracted
-                        )
-                    else:
-                        raise ValueError(
-                            "given keywords are not in the provided source catalog"
-                        )
+        if kwargs_variab is not None:
+            kwargs_variab_extracted = {}
+            for element in kwargs_variab:
+                if element in self.source_dict.colnames:
+                    kwargs_variab_extracted[element] = self.source_dict[element]
+                    self.variability_class = Variability(
+                        variability_model, **kwargs_variab_extracted
+                    )
+                else:
+                    raise ValueError(
+                        "given keywords are not in the provided source catalog."
+                    )
         else:
             self._variability_class = None
 
@@ -60,37 +55,32 @@ class Source(object):
         return self.source_dict["angular_size"]
 
     @property
-    def ellipticity_1(self):
-        """Returns 1st ellipticity component of source."""
+    def ellipticity(self):
+        """Returns ellipticity components of source."""
 
-        return self.source_dict["e1"]
-
-    @property
-    def ellipticity_2(self):
-        """Returns 2nd ellipticity component of source."""
-
-        return self.source_dict["e2"]
+        return self.source_dict["e1"], self.source_dict["e2"]
 
     def magnitude(self, band, image_observation_times=None):
         """Get the magnitude of the source in a specific band.
 
         :param band: Imaging band
         :type band: str
-        :param magnification: Array of lensing magnification of each images. If None,
-            considers unlensed case.
         :param image_observation_times: Images observation time for an image.
         :return: Magnitude of the source in the specified band
         :rtype: float
         """
-
-        band_string = "mag_" + band
+        column_names = self.source_dict.colnames
+        if "mag_" + band not in column_names:
+            raise ValueError("required parameter is missing in the source dictionary.")
+        else:
+            band_string = "mag_" + band
 
         # source_mag = self.source_dict[band_string]
         if image_observation_times is not None:
-            if self._variability_class is not None:
+            if self.variability_class is not None:
                 variable_mag = self.source_dict[
                     band_string
-                ] + self._variability_class.variability_at_t(image_observation_times)
+                ] + self.variability_class.variability_at_time(image_observation_times)
                 return variable_mag
             else:
                 raise ValueError(

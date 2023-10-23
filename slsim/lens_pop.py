@@ -35,11 +35,14 @@ class LensPop(LensedPopulationBase):
         :type kwargs_deflector_cut: dict
         :param kwargs_source_cut: cuts on the source to be excluded in the sample
         :type kwargs_source_cut: dict
-        :param kwargs_quasars: a dict of the form kwargs_quasars = {'number': 50000,
-         'z_min': 0.1, 'z_max': 5, 'm_min': 17, 'm_max': 23} and param are explained
-         below. if None, uses default values for the required variables.
-        :param kwargs_variability: keyword arguments for the variability of a source
-        :type kwargs_variability: dict
+        :param kwargs_quasars: a dict of keyword arguments which is an input for
+         quasar_catalog. Please look at quasar_catalog/simple_quasar.py.
+        :param variability_model: keyword for variability model to be used. This is an
+         input for the Variability class.
+        :type variability_model: str
+        :param kwargs_variability: keyword arguments for the variability of a source.
+         This is associated with an input for Variability class.
+        :type kwargs_variability: list of str
         :param skypy_config: path to SkyPy configuration yaml file
         :type skypy_config: string
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
@@ -50,9 +53,11 @@ class LensPop(LensedPopulationBase):
         """
         super().__init__(sky_area, cosmo)
         if source_type == "galaxies" and kwargs_variability is not None:
-            raise ValueError("Extended source cannot have variability.")
-        self.variability_model = variability_model
-        self.kwargs_variability = kwargs_variability
+            raise ValueError(
+                "Galaxies cannot have variability. Either choose"
+                "point source (eg: quasars) or do not provide kwargs_variability."
+            )
+
         if deflector_type in ["elliptical", "all-galaxies"] or source_type in [
             "galaxies"
         ]:
@@ -112,19 +117,18 @@ class LensPop(LensedPopulationBase):
             self._source_model_type = "extended"
         elif source_type == "quasars":
             from slsim.Sources.quasars import Quasars
-            from slsim.Sources.quasar_catalog.simple_quasar import quasar_catalog
+            from slsim.Sources.quasar_catalog.simple_quasar import quasar_catalog_simple
 
             if kwargs_quasars is None:
                 kwargs_quasars = {}
-            quasar_source = quasar_catalog(**kwargs_quasars)
-            column_names = quasar_source.colnames
-            if (
-                "mag_r" not in column_names
-                and "mag_i" not in column_names
-                and "mag_g" not in column_names
-            ):
-                raise ValueError("required parameters missing in quasar_list columns")
-            self._sources = Quasars(quasar_source, cosmo=cosmo, sky_area=sky_area)
+            quasar_source = quasar_catalog_simple(**kwargs_quasars)
+            self._sources = Quasars(
+                quasar_source,
+                cosmo=cosmo,
+                sky_area=sky_area,
+                variability_model=variability_model,
+                kwargs_variability_model=kwargs_variability,
+            )
             self._source_model_type = "point_source"
         else:
             raise ValueError("source_type %s is not supported" % source_type)
@@ -147,8 +151,8 @@ class LensPop(LensedPopulationBase):
             gg_lens = Lens(
                 deflector_dict=lens,
                 source_dict=source,
-                variability_model=self.variability_model,
-                kwargs_variab=self.kwargs_variability,
+                variability_model=self._sources.variability_model,
+                kwargs_variab=self._sources.kwargs_variability,
                 cosmo=self.cosmo,
                 source_type=self._source_model_type,
             )

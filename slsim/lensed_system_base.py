@@ -21,7 +21,11 @@ class LensedSystemBase(ABC):
         :type source_dict: dict
         :param deflector_dict: deflector properties
         :type deflector_dict: dict
-        :variability_model
+        :param variability_model: keyword for variability model to be used. This is an
+         input for the Variability class.
+        :type variability_model: str
+        :param kwargs_variability: keyword arguments for the variability of a source.
+         This is associated with an input for Variability class.
         :param cosmo: astropy.cosmology instance
         :param test_area: area (arc-sec^2) around lensing galaxy to be investigated
 
