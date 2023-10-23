@@ -346,7 +346,7 @@ class HalosLens(object):
             if self.radial_interpolate is True:
                 lens_model = LensModel(
                     lens_model_list=["NFW"] * self.n_halos
-                                    + ["RadialInterpolate"] * self.n_correction,
+                                    + ["RADIAL_INTERPOL"] * self.n_correction,
                     lens_redshift_list=self.combined_redshift_list,
                     cosmo=self.cosmo,
                     observed_convention_index=[],
@@ -1035,7 +1035,7 @@ class HalosLens(object):
 
         if len(combined_redshift_list) - n_halos > 0:
             if self.radial_interpolate is True:
-                lens_model_list = ["NFW"] * n_halos + ["RadialInterpolate"] * (
+                lens_model_list = ["NFW"] * n_halos + ["RADIAL_INTERPOL"] * (
                         len(combined_redshift_list) - n_halos
                 )
             else:

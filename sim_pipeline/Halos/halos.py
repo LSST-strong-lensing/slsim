@@ -816,7 +816,7 @@ def read_txt_file(filename="average_results.txt"):
                 if stripped_line != "":
                     inner_key, value = stripped_line.split(":")
                     inner_key = float(inner_key.strip())
-                    value = float(value.strip())
+                    value = float(value.strip())*-1.0
                     data[current_key][inner_key] = value
     return data
 
