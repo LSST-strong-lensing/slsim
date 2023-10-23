@@ -1,7 +1,7 @@
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
 from slsim.Sources.quasars import Quasars
-from slsim.Sources.quasar_catalog.simple_quasar import quasar_catalog
+from slsim.Sources.quasar_catalog.simple_quasar import quasar_catalog_simple
 import pytest
 
 
@@ -9,13 +9,13 @@ import pytest
 def Quasar_class():
     sky_area = Quantity(value=0.1, unit="deg2")
     kwargs_quasars = {
-        "number": 50000,
+        "num_quasars": 50000,
         "z_min": 0.1,
         "z_max": 5,
         "m_min": 17,
         "m_max": 25,
     }
-    quasar_list = quasar_catalog(**kwargs_quasars)
+    quasar_list = quasar_catalog_simple(**kwargs_quasars)
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     return Quasars(
         quasar_list=quasar_list,
