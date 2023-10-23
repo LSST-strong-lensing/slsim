@@ -7,7 +7,7 @@ Submodules
 sim\_pipeline.Observations.image\_quality\_lenstronomy module
 -------------------------------------------------------------
 
-.. automodule:: sim_pipeline.Observations.image_quality_lenstronomy
+.. automodule:: slsim.Observations.image_quality_lenstronomy
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,7 +15,7 @@ sim\_pipeline.Observations.image\_quality\_lenstronomy module
 sim\_pipeline.Observations.roman\_speclite module
 -------------------------------------------------
 
-.. automodule:: sim_pipeline.Observations.roman_speclite
+.. automodule:: slsim.Observations.roman_speclite
    :members:
    :undoc-members:
    :show-inheritance:
@@ -23,7 +23,7 @@ sim\_pipeline.Observations.roman\_speclite module
 Module contents
 ---------------
 
-.. automodule:: sim_pipeline.Observations
+.. automodule:: slsim.Observations
    :members:
    :undoc-members:
    :show-inheritance:

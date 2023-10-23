@@ -7,7 +7,7 @@ Submodules
 sim\_pipeline.Sources.galaxies module
 -------------------------------------
 
-.. automodule:: sim_pipeline.Sources.galaxies
+.. automodule:: slsim.Sources.galaxies
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,7 +15,7 @@ sim\_pipeline.Sources.galaxies module
 sim\_pipeline.Sources.quasars module
 ------------------------------------
 
-.. automodule:: sim_pipeline.Sources.quasars
+.. automodule:: slsim.Sources.quasars
    :members:
    :undoc-members:
    :show-inheritance:
@@ -23,7 +23,7 @@ sim\_pipeline.Sources.quasars module
 sim\_pipeline.Sources.source\_base module
 -----------------------------------------
 
-.. automodule:: sim_pipeline.Sources.source_base
+.. automodule:: slsim.Sources.source_pop_base
    :members:
    :undoc-members:
    :show-inheritance:
@@ -31,7 +31,7 @@ sim\_pipeline.Sources.source\_base module
 Module contents
 ---------------
 
-.. automodule:: sim_pipeline.Sources
+.. automodule:: slsim.Sources
    :members:
    :undoc-members:
    :show-inheritance:

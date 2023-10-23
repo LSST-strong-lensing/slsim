@@ -1,7 +1,7 @@
-sim_pipeline
+slsim
 ============
 
 .. toctree::
    :maxdepth: 4
 
-   sim_pipeline
+   slsim
