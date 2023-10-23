@@ -202,7 +202,8 @@ class HalosLens(object):
             sky_area=4 * np.pi,
             samples_number=1000,
             mass_sheet=True,
-            z_source=5
+            z_source=5,
+            RadialInterpolate=False,
     ):
         """Initialize the HalosLens class.
 
@@ -241,10 +242,12 @@ class HalosLens(object):
             #            self.mass_first_moment = mass_correction_list.get("first_moment", [])
             self.mass_sheet_kappa = mass_correction_list.get("kappa", [])
         else:
+            self.radial_interpolate = RadialInterpolate
             self.n_correction = len(mass_correction_list)
             self.mass_sheet_correction_redshift = mass_correction_list["z"]
             #            self.mass_first_moment = mass_correction_list["first_moment"]
             self.mass_sheet_kappa = mass_correction_list["kappa"]
+            self.kwargs_interp = mass_correction_list["kwargs_interp"]
         self.z_source = z_source
         self.halos_list = halos_list
         self.mass_correction_list = mass_correction_list
@@ -329,16 +332,28 @@ class HalosLens(object):
         only the halos' NFW profile is used.
         """
         if self.mass_sheet:
-            lens_model = LensModel(
-                lens_model_list=["NFW"] * self.n_halos
-                                + ["CONVERGENCE"] * self.n_correction,
-                lens_redshift_list=self.combined_redshift_list,
-                cosmo=self.cosmo,
-                observed_convention_index=[],
-                multi_plane=True,
-                z_source=self.z_source,
-                z_source_convention=self._z_source_convention,
-            )
+            if self.radial_interpolate is False:
+                lens_model = LensModel(
+                    lens_model_list=["NFW"] * self.n_halos
+                                    + ["CONVERGENCE"] * self.n_correction,
+                    lens_redshift_list=self.combined_redshift_list,
+                    cosmo=self.cosmo,
+                    observed_convention_index=[],
+                    multi_plane=True,
+                    z_source=self.z_source,
+                    z_source_convention=self._z_source_convention,
+                )
+            if self.radial_interpolate is True:
+                lens_model = LensModel(
+                    lens_model_list=["NFW"] * self.n_halos
+                                    + ["RadialInterpolate"] * self.n_correction,
+                    lens_redshift_list=self.combined_redshift_list,
+                    cosmo=self.cosmo,
+                    observed_convention_index=[],
+                    multi_plane=True,
+                    z_source=self.z_source,
+                    z_source_convention=self._z_source_convention,
+                )
         else:
             lens_model = LensModel(
                 lens_model_list=["NFW"] * self.n_halos,
@@ -428,24 +443,37 @@ class HalosLens(object):
             #    first_moment = self.mass_first_moment
             #    kappa = self.kappa_ext_for_mass_sheet(self.mass_sheet_correction_redshift,
             #                                          self.lens_cosmo[-self.n_correction:], first_moment)
-            kappa = self.mass_sheet_kappa
-            # TODO:change
-            ra_0 = [0] * self.n_correction
-            dec_0 = [0] * self.n_correction
-
-            kwargs_lens = [
-                              {
-                                  "Rs": Rs_angle[h],
-                                  "alpha_Rs": alpha_Rs[h],
-                                  "center_x": self.halos_list['px'][h],
-                                  "center_y": self.halos_list['py'][h],
-                              }
-                              for h in range(self.n_halos)
-                          ] + [
-                              {"kappa": kappa[h], "ra_0": ra_0[h], "dec_0": dec_0[h]}
-                              for h in range(self.n_correction)
-                          ]
-
+            if self.radial_interpolate is False:
+                kappa = self.mass_sheet_kappa
+                # TODO:change
+                ra_0 = [0] * self.n_correction
+                dec_0 = [0] * self.n_correction
+                kwargs_lens = [
+                                  {
+                                      "Rs": Rs_angle[h],
+                                      "alpha_Rs": alpha_Rs[h],
+                                      "center_x": self.halos_list['px'][h],
+                                      "center_y": self.halos_list['py'][h],
+                                  }
+                                  for h in range(self.n_halos)
+                              ] + [
+                                  {"kappa": kappa[h], "ra_0": ra_0[h], "dec_0": dec_0[h]}
+                                  for h in range(self.n_correction)
+                              ]
+            if self.radial_interpolate is True:
+                kwargs_interp = self.kwargs_interp
+                kwargs_lens = [
+                                  {
+                                      "Rs": Rs_angle[h],
+                                      "alpha_Rs": alpha_Rs[h],
+                                      "center_x": self.halos_list['px'][h],
+                                      "center_y": self.halos_list['py'][h],
+                                  }
+                                  for h in range(self.n_halos)
+                              ] + [
+                                  kwargs_interp[h]
+                                  for h in range(self.n_correction)
+                              ]
         else:
             Rs_angle, alpha_Rs = self.get_nfw_kwargs()
 
@@ -1006,9 +1034,14 @@ class HalosLens(object):
         n_halos = n_halos
 
         if len(combined_redshift_list) - n_halos > 0:
-            lens_model_list = ["NFW"] * n_halos + ["CONVERGENCE"] * (
-                    len(combined_redshift_list) - n_halos
-            )
+            if self.radial_interpolate is True:
+                lens_model_list = ["NFW"] * n_halos + ["RadialInterpolate"] * (
+                        len(combined_redshift_list) - n_halos
+                )
+            else:
+                lens_model_list = ["NFW"] * n_halos + ["CONVERGENCE"] * (
+                        len(combined_redshift_list) - n_halos
+                )
         elif len(combined_redshift_list) - n_halos < 0:
             raise ValueError(
                 f"Combined redshift list shorter than number of halos."
@@ -1583,8 +1616,8 @@ class HalosLens(object):
             lens_model = self.lens_model
 
         radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
-        print('lens kwargs',kwargs)
-        print('lens model',lens_model)
+        print('lens kwargs', kwargs)
+        print('lens model', lens_model)
 
         num_points = 500  # number of points along one dimension
         # TODO: make this as an input parameter
@@ -1611,7 +1644,7 @@ class HalosLens(object):
         # Plot halos
         halos_x = [k.get('center_x', None) for k in kwargs]
         halos_y = [-k.get('center_y') if k.get('center_y') is not None else None for k in kwargs]
-        #do not know why, but seems y should be -y here to match the kappa plot
+        # do not know why, but seems y should be -y here to match the kappa plot
 
         plt.scatter(halos_x, halos_y, color='yellow', marker='x', label='Halos')
         plt.title(f'Convergence Plot,radius is {radius_arcsec} arcsec')
@@ -1657,4 +1690,30 @@ class HalosLens(object):
 
             all_kappa_dicts.append(kappa_dict)
 
+        return all_kappa_dicts
+
+    def compute_azimuthal_kappa_in_bins(self):
+        bins = np.arange(0, 5.025, 0.05)
+        bin_centers = [round((z1 + z2) / 2, 3) for z1, z2 in zip(bins[:-1], bins[1:])]
+        all_kappa_dicts = []
+        for _ in range(self.samples_number):
+            self.enhance_halos_table_random_pos()
+            # Iterate over the bins
+            kappa_dict = {}
+            for i in range(len(bins) - 1):
+                # Filter halos in the current redshift bin
+                _, halos_ds, _ = self._filter_halos_by_condition(bins[i], bins[i + 1])
+
+                # Since we want halos between zd and zs (in this case, the current bin upper limit)
+                # we will consider halos from halos_ds as those are the ones between zd and zs
+                if len(halos_ds) > 0:
+                    lens_model, lens_cosmo_list, kwargs_lens = self._build_lens_data(
+                        halos_ds, None, zd=0, zs=5)
+                    kappa = self.azimuthal_average_kappa_dict(diff=0.0000001, diff_method="square", kwargs=kwargs_lens,
+                                                              lens_model=lens_model,
+                                                              zdzs=None)
+                    kappa_dict[bin_centers[i]] = kappa
+                else:
+                    kappa_dict[bin_centers[i]] = 0
+            all_kappa_dicts.append(kappa_dict)
         return all_kappa_dicts

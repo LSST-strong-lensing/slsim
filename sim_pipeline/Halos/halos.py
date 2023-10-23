@@ -7,6 +7,7 @@ from hmf.cosmology.growth_factor import GrowthFactor
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 import numpy as np
 import warnings
+import os
 
 
 def set_defaults(
@@ -784,14 +785,67 @@ def determinism_kappa_first_moment_at_redshift(
     for zi in z:
         m2 = (0.0002390784813232419 +
               -0.0014658189854554395 * zi +
-              -0.11408175546088226 * (zi**2) +
-              0.1858161514337054 * (zi**3) +
-              -0.14580188720668946 * (zi**4) +
-              0.07179490182290658 * (zi**5) +
-              -0.023842218143709567 * (zi**6) +
-              0.00534416068166958 * (zi**7) +
-              -0.0007728539951923031 * (zi**8) +
-              6.484537448337964e-05 * (zi**9) +
-              -2.389378848385584e-06 * (zi**10))
+              -0.11408175546088226 * (zi ** 2) +
+              0.1858161514337054 * (zi ** 3) +
+              -0.14580188720668946 * (zi ** 4) +
+              0.07179490182290658 * (zi ** 5) +
+              -0.023842218143709567 * (zi ** 6) +
+              0.00534416068166958 * (zi ** 7) +
+              -0.0007728539951923031 * (zi ** 8) +
+              6.484537448337964e-05 * (zi ** 9) +
+              -2.389378848385584e-06 * (zi ** 10))
         m_ls.append(m2)
     return m_ls
+
+
+def read_txt_file(filename="average_results.txt"):
+    """Parse the txt file and return the data as a nested dictionary."""
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    filepath = os.path.join(script_dir, filename)
+    data = {}
+    current_key = None
+
+    with open(filepath, 'r') as file:
+        for line in file:
+            stripped_line = line.strip()
+            # If the line is a redshift (outer key):
+            if stripped_line.endswith(":"):
+                current_key = float(stripped_line[:-1])
+                data[current_key] = {}
+            else:
+                if stripped_line != "":
+                    inner_key, value = stripped_line.split(":")
+                    inner_key = float(inner_key.strip())
+                    value = float(value.strip())
+                    data[current_key][inner_key] = value
+    return data
+
+
+def determinism_kappa_RadialInterpolate_at_redshift(z, filename="average_results.txt", tolerance=1e-6):
+    """Return kwargs_interp for the given redshift z."""
+    data = read_txt_file(filename)
+
+    # Ensure z is an array
+    if not isinstance(z, np.ndarray):
+        z = np.array([z])
+
+    kwargs_list = []
+
+    for single_z in z:
+        matching_z = None
+        for possible_z in data.keys():
+            if abs(possible_z - single_z) < tolerance:
+                matching_z = possible_z
+                break
+
+        if matching_z is None:
+            raise ValueError(f"Redshift {single_z} not found in the file.")
+
+        r_bin_log = list(data[matching_z].keys())
+        kappa_r_sis = list(data[matching_z].values())
+        assert len(r_bin_log) == len(kappa_r_sis)
+
+        kwargs_interp = {"r_bin": r_bin_log, "kappa_r": kappa_r_sis}
+        kwargs_list.append(kwargs_interp)
+
+    return kwargs_list

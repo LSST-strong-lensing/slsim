@@ -1153,3 +1153,94 @@ def worker_azimuthal_average(
         )
     azimuthal_dict = nhalos_lens.azimuthal_average_kappa_dict()
     return azimuthal_dict
+
+
+def run_compute_azimuthal_kappa_in_bins_by_multiprocessing(
+        n_iterations=1,
+        sky_area=0.0001,
+        samples_number=1,
+        cosmo=None,
+        m_min=None,
+        m_max=None,
+        z_max=None,
+        mass_sheet_correction=True
+):
+    if cosmo is None:
+        warnings.warn(
+            "No cosmology provided, instead uses astropy.cosmology default cosmology"
+        )
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    if z_max is None:
+        z_max = 5.0
+        warnings.warn(
+            "No maximum redshift provided, instead uses 5.0"
+        )
+
+    azimuthal_kappa_dict_tot = []
+
+    start_time = time.time()  # Note the start time
+
+    args = [
+        (
+            i,
+            sky_area,
+            m_min,
+            m_max,
+            z_max,
+            cosmo,
+            samples_number,
+            mass_sheet_correction
+        )
+        for i in range(n_iterations)
+    ]
+
+    # Use multiprocessing
+    with get_context("spawn").Pool() as pool:
+        results = pool.starmap(worker_compute_azimuthal_kappa_in_bins, args)
+        azimuthal_kappa_dict_tot.extend(results)
+
+    azimuthal_kappa_dict_tot = [item for sublist in azimuthal_kappa_dict_tot for item in sublist]
+
+    end_time = time.time()  # Note the end time
+    print(
+        f"The {n_iterations} halo-lists took {(end_time - start_time)} seconds to run"
+    )
+    return azimuthal_kappa_dict_tot
+
+
+def worker_compute_azimuthal_kappa_in_bins(
+        iter_num,
+        sky_area,
+        m_min,
+        m_max,
+        z_max,
+        cosmo,
+        samples_number,
+        mass_sheet_correction
+):
+    npipeline = HalosSkyPyPipeline(
+        sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max
+    )
+    nhalos = npipeline.halos
+
+    if mass_sheet_correction:
+        nmass_sheet_correction = npipeline.mass_sheet_correction
+        nhalos_lens = HalosLens(
+            halos_list=nhalos,
+            mass_correction_list=nmass_sheet_correction,
+            sky_area=sky_area,
+            cosmo=cosmo,
+            samples_number=samples_number,
+            z_source=z_max
+        )
+    else:
+        nhalos_lens = HalosLens(
+            halos_list=nhalos,
+            sky_area=sky_area,
+            cosmo=cosmo,
+            samples_number=samples_number,
+            mass_sheet=False,
+            z_source=z_max
+        )
+    azimuthal_kappa_dict = nhalos_lens.compute_azimuthal_kappa_in_bins()
+    return azimuthal_kappa_dict

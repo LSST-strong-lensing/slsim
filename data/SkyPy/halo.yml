@@ -41,6 +41,8 @@ tables:
   mass_sheet_correction:
          z: !sim_pipeline.Halos.halos.redshift_mass_sheet_correction_array_from_comoving_density
            redshift_list: $z_range
+         kwargs_interp: !sim_pipeline.Halos.halos.determinism_kappa_RadialInterpolate_at_redshift
+           z: $mass_sheet_correction.z
          kappa: !sim_pipeline.Halos.halos.determinism_kappa_first_moment_at_redshift
            z: $mass_sheet_correction.z
   #       first_moment: !sim_pipeline.Halos.halos.mass_first_moment_at_redshift
@@ -54,4 +56,3 @@ tables:
   #          power_spectrum: $power_spectrum
   #          collapse_function: $collapse_function
   #          params: [ 0.3, 0.7, 0.3, 1.686 ]
-
