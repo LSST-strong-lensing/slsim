@@ -16,7 +16,7 @@ class TestVariability:
             Variability("invalid_model", **kwargs_model)
         assert (
             "Given model is not supported. Currently supported model is sinusoidal."
-            ) in str(excinfo.value)
+        ) in str(excinfo.value)
 
     def test_variability_at_t_sinusoidal(self):
         kwargs_model = {"amp": 1.0, "freq": 0.5}

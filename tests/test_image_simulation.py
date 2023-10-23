@@ -11,10 +11,11 @@ from slsim.image_simulation import (
     sharp_rgb_image,
     rgb_image_from_image_list,
     point_source_coordinate_properties,
-    image_data_class, centered_coordinate_system,
+    image_data_class,
+    centered_coordinate_system,
     point_source_image_with_variability,
     point_source_image_without_variability,
-    point_source_image_at_time
+    point_source_image_at_time,
 )
 import pytest
 
@@ -131,39 +132,46 @@ def quasar_lens_pop_instance():
         cosmo=cosmo,
     )
 
+
 def test_centered_coordinate_system():
-    transform_matrix = np.array([[0.2, 0],[0, 0.2]])
+    transform_matrix = np.array([[0.2, 0], [0, 0.2]])
     grid = centered_coordinate_system(101, transform_pix2angle=transform_matrix)
-    
-    assert grid["ra_at_xy_0"]==-10
-    assert grid["dec_at_xy_0"]==-10
+
+    assert grid["ra_at_xy_0"] == -10
+    assert grid["dec_at_xy_0"] == -10
     assert np.shape(grid["transform_pix2angle"]) == np.shape(transform_matrix)
 
+
 def test_image_data_class(quasar_lens_pop_instance):
-    trans_matrix_1=np.array([[0.2,0],[0, 0.2]])
+    trans_matrix_1 = np.array([[0.2, 0], [0, 0.2]])
     kwargs_lens_cut = {"min_image_separation": 0.8, "max_image_separation": 10}
     lens_class = quasar_lens_pop_instance.select_lens_at_random(**kwargs_lens_cut)
-    data_class = image_data_class(lens_class=lens_class, band='i', mag_zero_point=27, 
-                              delta_pix=0.2, num_pix=101, 
-                     transform_pix2angle=trans_matrix_1)
-    results=data_class._x_at_radec_0
+    data_class = image_data_class(
+        lens_class=lens_class,
+        band="i",
+        mag_zero_point=27,
+        delta_pix=0.2,
+        num_pix=101,
+        transform_pix2angle=trans_matrix_1,
+    )
+    results = data_class._x_at_radec_0
     assert results == 50
 
+
 def test_point_source_image_properties(quasar_lens_pop_instance):
-    transform_matrix = np.array([[0.2, 0],[0, 0.2]])
+    transform_matrix = np.array([[0.2, 0], [0, 0.2]])
     kwargs_lens_cut = {"min_image_separation": 0.8, "max_image_separation": 10}
     lens_class = quasar_lens_pop_instance.select_lens_at_random(**kwargs_lens_cut)
     result = point_source_coordinate_properties(
-        lens_class=lens_class, band="i", mag_zero_point=27, delta_pix=0.2, num_pix=101,
-          transform_pix2angle=transform_matrix
+        lens_class=lens_class,
+        band="i",
+        mag_zero_point=27,
+        delta_pix=0.2,
+        num_pix=101,
+        transform_pix2angle=transform_matrix,
     )
 
-    expected_columns = [
-        "deflector_pix",
-        "image_pix",
-        "ra_image",
-        "dec_image"
-    ]
+    expected_columns = ["deflector_pix", "image_pix", "ra_image", "dec_image"]
     assert result.colnames[0] == expected_columns[0]
     assert result.colnames[1] == expected_columns[1]
     assert result.colnames[2] == expected_columns[2]
@@ -173,10 +181,14 @@ def test_point_source_image_properties(quasar_lens_pop_instance):
 def test_point_source_image_with_and_without_variability(quasar_lens_pop_instance):
     kwargs_lens_cut = {"min_image_separation": 0.8, "max_image_separation": 10}
     lens_class = quasar_lens_pop_instance.select_lens_at_random(**kwargs_lens_cut)
-    transf_matrix = np.array([[0.2, 0],[0, 0.2]])
+    transf_matrix = np.array([[0.2, 0], [0, 0.2]])
     image_data = point_source_coordinate_properties(
-        lens_class=lens_class, band="i", mag_zero_point=27, delta_pix=0.2, num_pix=101, 
-        transform_pix2angle=transf_matrix
+        lens_class=lens_class,
+        band="i",
+        mag_zero_point=27,
+        delta_pix=0.2,
+        num_pix=101,
+        transform_pix2angle=transf_matrix,
     )
     number = len(image_data["image_pix"])
     path = os.path.dirname(__file__)
@@ -193,7 +205,8 @@ def test_point_source_image_with_and_without_variability(quasar_lens_pop_instanc
         mag_zero_point=27,
         delta_pix=0.2,
         num_pix=101,
-        psf_kernels=psf_kernels,transform_pix2angle=transf_matrix,
+        psf_kernels=psf_kernels,
+        transform_pix2angle=transf_matrix,
         time=time,
     )
     result2 = point_source_image_without_variability(
@@ -202,27 +215,38 @@ def test_point_source_image_with_and_without_variability(quasar_lens_pop_instanc
         mag_zero_point=27,
         delta_pix=0.2,
         num_pix=101,
-        psf_kernels=psf_kernels, transform_pix2angle=transf_matrix
+        psf_kernels=psf_kernels,
+        transform_pix2angle=transf_matrix,
     )
 
-    transform_matrix = np.array([np.array([[0.2, 0], [0, 0.2]]), 
-                    np.array([[0.2, 0], [0, 0.2]]), 
-                    np.array([[0.2, 0], [0, 0.2]]), 
-                    np.array([[0.2, 0], [0, 0.2]])])
+    transform_matrix = np.array(
+        [
+            np.array([[0.2, 0], [0, 0.2]]),
+            np.array([[0.2, 0], [0, 0.2]]),
+            np.array([[0.2, 0], [0, 0.2]]),
+            np.array([[0.2, 0], [0, 0.2]]),
+        ]
+    )
     psf_kernel_1 = psf_image_1[:-1]
     psf_kernel_1.extend([psf_image_1[-1]] * number)
     psf_kernel_2 = psf_image_1[:-1]
     psf_kernel_2.extend([psf_image_1[-1]] * number)
     psf_kernel_3 = psf_image_1[:-1]
     psf_kernel_3.extend([psf_image_1[-1]] * number)
-    
+
     psf_kernels_all = np.array([psf_kernel_1, psf_kernel_2, psf_kernel_3])
     mag_zero_points = np.array([27, 27, 27])
     t_obs = np.array([10, 20, 30])
-    result3 = point_source_image_with_variability(lens_class=lens_class, band='i',
-                mag_zero_point=mag_zero_points, delta_pix=0.2, num_pix=101, 
-                psf_kernels=psf_kernels_all, transform_pix2angle=transform_matrix,
-                t_obs = t_obs)
+    result3 = point_source_image_with_variability(
+        lens_class=lens_class,
+        band="i",
+        mag_zero_point=mag_zero_points,
+        delta_pix=0.2,
+        num_pix=101,
+        psf_kernels=psf_kernels_all,
+        transform_pix2angle=transform_matrix,
+        t_obs=t_obs,
+    )
 
     assert len(result1) == len(lens_class.point_source_magnification())
     assert len(result2) == len(lens_class.point_source_magnification())

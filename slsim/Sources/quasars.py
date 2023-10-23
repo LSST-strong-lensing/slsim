@@ -21,11 +21,11 @@ class Quasars(SourcePopBase):
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
         :type sky_area: `~astropy.units.Quantity`
-        :param variability_model: keyword for the variability model to be used. This is 
-         a population argument, not the light curve parameter for the individual 
+        :param variability_model: keyword for the variability model to be used. This is
+         a population argument, not the light curve parameter for the individual
          quasars.
-        :param kwargs_variability_model: keyword arguments for the variability of 
-         a source. This is a population argument, not the light curve parameter for 
+        :param kwargs_variability_model: keyword arguments for the variability of
+         a source. This is a population argument, not the light curve parameter for
          the individual quasars.
         """
         self.n = len(quasar_list)
@@ -33,9 +33,12 @@ class Quasars(SourcePopBase):
         self._quasar_select = quasar_list  # can apply a filter here
 
         self._num_select = len(self._quasar_select)
-        super(Quasars, self).__init__(cosmo=cosmo, sky_area=sky_area, 
-                        variability_model=variability_model, 
-                        kwargs_variability_model=kwargs_variability_model)
+        super(Quasars, self).__init__(
+            cosmo=cosmo,
+            sky_area=sky_area,
+            variability_model=variability_model,
+            kwargs_variability_model=kwargs_variability_model,
+        )
 
     def source_number(self):
         """Number of sources registered (within given area on the sky)

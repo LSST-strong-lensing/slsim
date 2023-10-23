@@ -2,8 +2,17 @@ import numpy as np
 from astropy.table import Table
 
 
-def quasar_catalog_simple(num_quasars = 50000, z_min = 0.1, z_max=5, m_min=17, m_max=23, 
-                   amp_min=0.9, amp_max=1.3, freq_min=0.5, freq_max=1.5):
+def quasar_catalog_simple(
+    num_quasars=50000,
+    z_min=0.1,
+    z_max=5,
+    m_min=17,
+    m_max=23,
+    amp_min=0.9,
+    amp_max=1.3,
+    freq_min=0.5,
+    freq_max=1.5,
+):
     """Creates an simple catalog of quasars. It generate random redshift and magnitude
     values in r, g, and i band. Also, generates amplitude and frequency for each source.
     The function only works for r, g, and i band magnitudes.
