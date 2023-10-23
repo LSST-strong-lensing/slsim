@@ -57,14 +57,14 @@ def random_ra_dec(ra_min, ra_max, dec_min, dec_max, n):
 
 
 def convolved_image(image, psf_kernel, type="fft"):
-    """Convolves an image with given psf kernel. 
-    
-    :param image: image to be convolved 
-    :param psf_kernel: kernel used to convolve the given image. It should be a pixel 
-     psf kernel.
-    :param type: method to be used to convolve image. currently fftconvolve and 
-     convolve2d are supported. The default type is fftconvolve and we prefer to use 
-     fftconvolve over convolve2d because it is relatively faster for our purpose.
+    """Convolves an image with given psf kernel.
+
+    :param image: image to be convolved
+    :param psf_kernel: kernel used to convolve the given image. It should be a pixel psf
+        kernel.
+    :param type: method to be used to convolve image. currently fftconvolve and
+        convolve2d are supported. The default type is fftconvolve and we prefer to use
+        fftconvolve over convolve2d because it is relatively faster for our purpose.
     :returns: convolved image.
     """
     if type == "fft":

@@ -60,8 +60,8 @@ def simulate_image(
 def sharp_image(
     lens_class, band, mag_zero_point, delta_pix, num_pix, with_deflector=True
 ):
-    """Creates an unconvolved image of a selected lens. Point source image is not 
-     included in this function.
+    """Creates an unconvolved image of a selected lens. Point source image is not
+    included in this function.
 
     :param lens_class: Lens() object
     :param band: imaging band
@@ -111,7 +111,7 @@ def sharp_rgb_image(lens_class, rgb_band_list, mag_zero_point, delta_pix, num_pi
 
     :param lens_class: Lens() object
     :param rgb_band_list: imaging band list. Here, 'i', 'r', and 'g' band are consider
-     as r, g, and b respectively.
+        as r, g, and b respectively.
     :param mag_zero_point: magnitude zero point in band
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
@@ -145,14 +145,15 @@ def sharp_rgb_image(lens_class, rgb_band_list, mag_zero_point, delta_pix, num_pi
 def rgb_image_from_image_list(image_list, stretch):
     """Creates a rgb image using list of images in r, g, and b.
 
-    :param image_list: images in r, g, and b band. Here, 'i', 'r', and 'g' band are 
-     consider as r, g, and b respectively.
+    :param image_list: images in r, g, and b band. Here, 'i', 'r', and 'g' band are
+        consider as r, g, and b respectively.
     :return: rgb image
     """
     image_rgb = make_lupton_rgb(
         image_list[0], image_list[1], image_list[2], stretch=stretch
     )
     return image_rgb
+
 
 def centered_coordinate_system(num_pix, transform_pix2angle):
     """Returns dictionary for Coordinate Grid such that (0,0) is centered with given
@@ -179,16 +180,18 @@ def centered_coordinate_system(num_pix, transform_pix2angle):
     }
     return kwargs_grid
 
-def image_data_class(lens_class, band, mag_zero_point, delta_pix, num_pix, 
-                     transform_pix2angle):
+
+def image_data_class(
+    lens_class, band, mag_zero_point, delta_pix, num_pix, transform_pix2angle
+):
     kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band)
     kwargs_band = {
         "pixel_scale": delta_pix,
         "magnitude_zero_point": mag_zero_point,
         "background_noise": 0,
         "psf_type": "NONE",
-        "exposure_time": 1, 
-        "kwargs_pixel_grid": centered_coordinate_system(num_pix, transform_pix2angle)
+        "exposure_time": 1,
+        "kwargs_pixel_grid": centered_coordinate_system(num_pix, transform_pix2angle),
     }
     sim_api = SimAPI(
         numpix=num_pix, kwargs_single_band=kwargs_band, kwargs_model=kwargs_model
@@ -196,6 +199,7 @@ def image_data_class(lens_class, band, mag_zero_point, delta_pix, num_pix,
 
     imagedata = sim_api.data_class
     return imagedata
+
 
 def point_source_coordinate_properties(
     lens_class, band, mag_zero_point, delta_pix, num_pix, transform_pix2angle
@@ -212,8 +216,9 @@ def point_source_coordinate_properties(
         coordinate properties.
     """
 
-    image_data = image_data_class(lens_class, band, mag_zero_point, 
-                                        delta_pix, num_pix, transform_pix2angle)
+    image_data = image_data_class(
+        lens_class, band, mag_zero_point, delta_pix, num_pix, transform_pix2angle
+    )
 
     lens_center = lens_class.deflector_position
     ra_lens_value = lens_center[0]
@@ -244,12 +249,18 @@ def point_source_coordinate_properties(
     )
     return data
 
+
 def point_source_image_without_variability(
-    lens_class, band, mag_zero_point, delta_pix, num_pix, psf_kernels, 
-    transform_pix2angle
+    lens_class,
+    band,
+    mag_zero_point,
+    delta_pix,
+    num_pix,
+    psf_kernels,
+    transform_pix2angle,
 ):
-    """Creates lensed point source images without variability on the basis of 
-    given information.
+    """Creates lensed point source images without variability on the basis of given
+    information.
 
     :param lens_class: Lens() object
     :param band: imaging band
@@ -265,18 +276,20 @@ def point_source_image_without_variability(
         band=band,
         mag_zero_point=mag_zero_point,
         delta_pix=delta_pix,
-        num_pix=num_pix, transform_pix2angle = transform_pix2angle
+        num_pix=num_pix,
+        transform_pix2angle=transform_pix2angle,
     )
 
-    data_class = image_data_class(lens_class, band, mag_zero_point, 
-                                        delta_pix, num_pix, transform_pix2angle)
+    data_class = image_data_class(
+        lens_class, band, mag_zero_point, delta_pix, num_pix, transform_pix2angle
+    )
 
     ra_image_values = image_data["ra_image"]
     dec_image_values = image_data["dec_image"]
     psf_class = []
     for i in range(len(psf_kernels)):
         psf_class.append(PSF(psf_type="PIXEL", kernel_point_source=psf_kernels[i]))
-    
+
     magnitude = lens_class.point_source_magnitude(band, lensed=True)
     amp = magnitude_to_amplitude(magnitude, mag_zero_point)
     point_source_images = []
@@ -291,12 +304,19 @@ def point_source_image_without_variability(
         )
         point_source_images.append(point_source)
     return point_source_images
- 
+
+
 def point_source_image_at_time(
-    lens_class, band, mag_zero_point, delta_pix, num_pix, psf_kernels, 
-    transform_pix2angle, time
+    lens_class,
+    band,
+    mag_zero_point,
+    delta_pix,
+    num_pix,
+    psf_kernels,
+    transform_pix2angle,
+    time,
 ):
-    """Creates lensed point source images with variability at a given time on the basis 
+    """Creates lensed point source images with variability at a given time on the basis
     of given information.
 
     :param lens_class: Lens() object
@@ -314,21 +334,21 @@ def point_source_image_at_time(
         band=band,
         mag_zero_point=mag_zero_point,
         delta_pix=delta_pix,
-        num_pix=num_pix, transform_pix2angle=transform_pix2angle
+        num_pix=num_pix,
+        transform_pix2angle=transform_pix2angle,
     )
 
-    data_class = image_data_class(lens_class, band, mag_zero_point, 
-                                        delta_pix, num_pix, transform_pix2angle)
+    data_class = image_data_class(
+        lens_class, band, mag_zero_point, delta_pix, num_pix, transform_pix2angle
+    )
 
     ra_image_values = image_data["ra_image"]
     dec_image_values = image_data["dec_image"]
     psf_class = []
     for i in range(len(psf_kernels)):
         psf_class.append(PSF(psf_type="PIXEL", kernel_point_source=psf_kernels[i]))
-    
-    variable_mag = lens_class.point_source_magnitude(
-        band=band, lensed=True, time=time
-    )
+
+    variable_mag = lens_class.point_source_magnitude(band=band, lensed=True, time=time)
     variable_amp = magnitude_to_amplitude(variable_mag, mag_zero_point)
     point_source_images = []
     for i in range(len(psf_class)):
@@ -343,10 +363,18 @@ def point_source_image_at_time(
         point_source_images.append(point_source)
     return np.array(point_source_images)
 
-def point_source_image_with_variability(lens_class, band, mag_zero_point, delta_pix, 
-                                num_pix, psf_kernels, transform_pix2angle, t_obs):
-    
-    """Creates lensed point source images with variability for series of time on the 
+
+def point_source_image_with_variability(
+    lens_class,
+    band,
+    mag_zero_point,
+    delta_pix,
+    num_pix,
+    psf_kernels,
+    transform_pix2angle,
+    t_obs,
+):
+    """Creates lensed point source images with variability for series of time on the
     basis of given information.
 
     :param lens_class: Lens() object
@@ -355,16 +383,23 @@ def point_source_image_with_variability(lens_class, band, mag_zero_point, delta_
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
     :param psf_kernels: psf kernels in the sequence of exposures being simulated.
-    :param t_obs:  array of image observation time [day].
+    :param t_obs: array of image observation time [day].
     :return: array of point source images of each source with variability
     """
     all_image = []
-    for time, psf_kernel, mag_zero, transf_matrix in zip(t_obs, psf_kernels, 
-                                                mag_zero_point, transform_pix2angle):
-        image_test=point_source_image_at_time(lens_class, band=band, 
-            mag_zero_point=mag_zero, delta_pix=delta_pix, num_pix=num_pix, 
-            psf_kernels=psf_kernel, transform_pix2angle=transf_matrix, time=time)
+    for time, psf_kernel, mag_zero, transf_matrix in zip(
+        t_obs, psf_kernels, mag_zero_point, transform_pix2angle
+    ):
+        image_test = point_source_image_at_time(
+            lens_class,
+            band=band,
+            mag_zero_point=mag_zero,
+            delta_pix=delta_pix,
+            num_pix=num_pix,
+            psf_kernels=psf_kernel,
+            transform_pix2angle=transf_matrix,
+            time=time,
+        )
         all_image.append(image_test)
     variab_images = [list(x) for x in zip(*all_image)]
     return variab_images
-

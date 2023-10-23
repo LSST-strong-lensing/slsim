@@ -5,8 +5,9 @@ class SourcePopBase(ABC):
     """Base class with functions all source classes must have to be able to render
     populations."""
 
-    def __init__(self, cosmo, sky_area, variability_model = None, 
-                 kwargs_variability_model = None):
+    def __init__(
+        self, cosmo, sky_area, variability_model=None, kwargs_variability_model=None
+    ):
         """
 
         :param cosmo: cosmology
@@ -14,18 +15,17 @@ class SourcePopBase(ABC):
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
         :type sky_area: `~astropy.units.Quantity`
-        :param variability_model: keyword for the variability model to be used. This is 
-         a population argument, not the light curve parameter for the individual 
+        :param variability_model: keyword for the variability model to be used. This is
+         a population argument, not the light curve parameter for the individual
          sources.
-        :param kwargs_variability_model: keyword arguments for the variability of 
-         a source. This is a population argument, not the light curve parameter for 
+        :param kwargs_variability_model: keyword arguments for the variability of
+         a source. This is a population argument, not the light curve parameter for
          the individual sources.
         """
         self._cosmo = cosmo
         self._sky_area = sky_area
         self._variab_model = variability_model
         self._kwargs_variab_model = kwargs_variability_model
-
 
     @abstractmethod
     def source_number(self):

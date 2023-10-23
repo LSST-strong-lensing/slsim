@@ -101,8 +101,8 @@ class TestLens(object):
         arrival_times = self.gg_lens.point_source_arrival_times()
         observer_times = (t_obs + arrival_times - np.min(arrival_times))[:, np.newaxis]
         observer_times2 = (
-                t_obs2[:, np.newaxis] + arrival_times - np.min(arrival_times)
-            ).T
+            t_obs2[:, np.newaxis] + arrival_times - np.min(arrival_times)
+        ).T
         npt.assert_almost_equal(dt_days, observer_times, decimal=5)
         npt.assert_almost_equal(dt_days2, observer_times2, decimal=5)
 

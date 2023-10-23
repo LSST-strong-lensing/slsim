@@ -8,11 +8,11 @@ def test_simple_quasar():
         "z_min": 0.1,
         "z_max": 5,
         "m_min": 17,
-        "m_max": 25, 
-        "amp_min": 0.9, 
-        "amp_max": 1.3, 
-        "freq_min": 0.5, 
-        "freq_max": 1.5
+        "m_max": 25,
+        "amp_min": 0.9,
+        "amp_max": 1.3,
+        "freq_min": 0.5,
+        "freq_max": 1.5,
     }
     catalog = simple_quasar.quasar_catalog_simple(**kwargs_quasars)
     column_names = ["z", "mag_r", "mag_g", "mag_i"]

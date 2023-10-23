@@ -410,7 +410,7 @@ def cutout_image_psf_kernel(
     dp0_image, lens_class, band, mag_zero_point, delta_pix, num_pix, calibFluxRadius=12
 ):
     """This function extracts psf kernels from the dp0 cutout image at point source
-    image positions and deflector position. In the dp0.2 data, psf kernel vary with 
+    image positions and deflector position. In the dp0.2 data, psf kernel vary with
     coordinate and can be computed using given psf model.
 
     :param dp0_image: cutout image from the dp0 data or any other image
