@@ -16,8 +16,7 @@ class Variability(object):
         self.variability_model = variability_model
         if self.variability_model not in ["sinusoidal"]:
             raise ValueError(
-                "Given model is not supported. Currently"
-                "supported model is sinusoidal."
+                "Given model is not supported. Currently supported model is sinusoidal."
             )
         if self.variability_model == "sinusoidal":
             self._model = sinusoidal_variability

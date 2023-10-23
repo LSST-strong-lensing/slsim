@@ -15,7 +15,7 @@ class TestVariability:
         with pytest.raises(ValueError) as excinfo:
             Variability("invalid_model", **kwargs_model)
         assert (
-            "given model is not supported. Currently," "supported model is sinusoudal."
+            "given model is not supported. Currently, supported model is sinusoudal."
         ) in str(excinfo.value)
 
     def test_variability_at_t_sinusoidal(self):
