@@ -1614,11 +1614,13 @@ class HalosLens(object):
 
         original_mass_sheet = self.mass_sheet
         original_radial_interpolate = self.radial_interpolate
-
+        radial = False
         if mass_sheet is not None:
             self.mass_sheet = mass_sheet
-        if radial_interpolate is not None:
-            self.radial_interpolate = radial_interpolate
+            if mass_sheet is True:
+                if radial_interpolate is not None:
+                    self.radial_interpolate = radial_interpolate
+                    radial = True
 
         if kwargs is None:
             kwargs = self.get_halos_lens_kwargs()
@@ -1626,8 +1628,6 @@ class HalosLens(object):
             lens_model = self.lens_model
 
         radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
-        print('lens kwargs', kwargs)
-        print('lens model', lens_model)
 
         num_points = 500  # number of points along one dimension
         # TODO: make this as an input parameter
@@ -1664,7 +1664,8 @@ class HalosLens(object):
         plt.show()
 
         self.mass_sheet = original_mass_sheet
-        self.radial_interpolate = original_radial_interpolate
+        if radial is True:
+            self.radial_interpolate = original_radial_interpolate
         if enhance_pos:
             self.enhance_halos_table_random_pos()
 
@@ -1738,46 +1739,38 @@ class HalosLens(object):
                                  kwargs=None,
                                  lens_model=None,
                                  zdzs=None):
-        import matplotlib.pyplot as plt
 
-        fig, axs = plt.subplots(3, 1, figsize=(15, 5))
+            print('mass_sheet=False')
+            # mass_sheet=False
+            self.plot_convergence(diff=diff,
+                                  diff_method=diff_method,
+                                  kwargs=kwargs,
+                                  lens_model=lens_model,
+                                  zdzs=zdzs,
+                                  mass_sheet=False,
+                                  radial_interpolate=False,
+                                  enhance_pos=False
+                                  )
 
-        # mass_sheet=False
-        plt.sca(axs[0])
-        self.plot_convergence(diff=diff,
-                              diff_method=diff_method,
-                              kwargs=kwargs,
-                              lens_model=lens_model,
-                              zdzs=zdzs,
-                              mass_sheet=False,
-                              enhance_pos=False
-                              )
-        axs[0].set_title('mass_sheet=False')
+            # mass_sheet=True, radial_interpolate=True
+            print('mass_sheet=True, radial_interpolate=True')
+            self.plot_convergence(diff=diff,
+                                  diff_method=diff_method,
+                                  kwargs=kwargs,
+                                  lens_model=lens_model,
+                                  zdzs=zdzs,
+                                  mass_sheet=True,
+                                  radial_interpolate=True,
+                                  enhance_pos=False)
 
-        # mass_sheet=True, radial_interpolate=True
-        plt.sca(axs[1])
-        self.plot_convergence(diff=diff,
-                              diff_method=diff_method,
-                              kwargs=kwargs,
-                              lens_model=lens_model,
-                              zdzs=zdzs,
-                              mass_sheet=True,
-                              radial_interpolate=True,
-                              enhance_pos=False)
-        axs[1].set_title('mass_sheet=True, radial_interpolate=True')
-
-        # mass_sheet=True, radial_interpolate=False
-        plt.sca(axs[2])
-        self.plot_convergence(diff=diff,
-                              diff_method=diff_method,
-                              kwargs=kwargs,
-                              lens_model=lens_model,
-                              zdzs=zdzs,
-                              mass_sheet=True,
-                              radial_interpolate=False,
-                              enhance_pos=False
-                              )
-        axs[2].set_title('mass_sheet=True, radial_interpolate=False')
-
-        plt.tight_layout()
-        plt.show()
+            # mass_sheet=True, radial_interpolate=False
+            print('mass_sheet=True, radial_interpolate=False')
+            self.plot_convergence(diff=diff,
+                                  diff_method=diff_method,
+                                  kwargs=kwargs,
+                                  lens_model=lens_model,
+                                  zdzs=zdzs,
+                                  mass_sheet=True,
+                                  radial_interpolate=False,
+                                  enhance_pos=False
+                                  )
