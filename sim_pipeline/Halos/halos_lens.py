@@ -1604,14 +1604,24 @@ class HalosLens(object):
                          diff_method="square",
                          kwargs=None,
                          lens_model=None,
-                         zdzs=None
+                         zdzs=None,
+                         mass_sheet=None,
+                         radial_interpolate=None,
+                         enhance_pos=True,
                          ):
         import matplotlib.pyplot as plt
         from multiprocessing import Pool, cpu_count
 
+        original_mass_sheet = self.mass_sheet
+        original_radial_interpolate = self.radial_interpolate
+
+        if mass_sheet is not None:
+            self.mass_sheet = mass_sheet
+        if radial_interpolate is not None:
+            self.radial_interpolate = radial_interpolate
+
         if kwargs is None:
             kwargs = self.get_halos_lens_kwargs()
-
         if lens_model is None:
             lens_model = self.lens_model
 
@@ -1652,7 +1662,11 @@ class HalosLens(object):
         plt.ylabel('y-coordinate (arcsec)')
         plt.legend()
         plt.show()
-        self.enhance_halos_table_random_pos()
+
+        self.mass_sheet = original_mass_sheet
+        self.radial_interpolate = original_radial_interpolate
+        if enhance_pos:
+            self.enhance_halos_table_random_pos()
 
     def azimuthal_average_kappa_dict(self,
                                      diff=0.0000001,
@@ -1717,3 +1731,53 @@ class HalosLens(object):
                     kappa_dict[bin_centers[i]] = 0
             all_kappa_dicts.append(kappa_dict)
         return all_kappa_dicts
+
+    def compare_plot_convergence(self,
+                                 diff=0.0000001,
+                                 diff_method="square",
+                                 kwargs=None,
+                                 lens_model=None,
+                                 zdzs=None):
+        import matplotlib.pyplot as plt
+
+        fig, axs = plt.subplots(3, 1, figsize=(15, 5))
+
+        # mass_sheet=False
+        plt.sca(axs[0])
+        self.plot_convergence(diff=diff,
+                              diff_method=diff_method,
+                              kwargs=kwargs,
+                              lens_model=lens_model,
+                              zdzs=zdzs,
+                              mass_sheet=False,
+                              enhance_pos=False
+                              )
+        axs[0].set_title('mass_sheet=False')
+
+        # mass_sheet=True, radial_interpolate=True
+        plt.sca(axs[1])
+        self.plot_convergence(diff=diff,
+                              diff_method=diff_method,
+                              kwargs=kwargs,
+                              lens_model=lens_model,
+                              zdzs=zdzs,
+                              mass_sheet=True,
+                              radial_interpolate=True,
+                              enhance_pos=False)
+        axs[1].set_title('mass_sheet=True, radial_interpolate=True')
+
+        # mass_sheet=True, radial_interpolate=False
+        plt.sca(axs[2])
+        self.plot_convergence(diff=diff,
+                              diff_method=diff_method,
+                              kwargs=kwargs,
+                              lens_model=lens_model,
+                              zdzs=zdzs,
+                              mass_sheet=True,
+                              radial_interpolate=False,
+                              enhance_pos=False
+                              )
+        axs[2].set_title('mass_sheet=True, radial_interpolate=False')
+
+        plt.tight_layout()
+        plt.show()
