@@ -1,1 +1,1 @@
-"""Unit tests package for sim_pipeline."""
+"""Unit tests package for slsim."""

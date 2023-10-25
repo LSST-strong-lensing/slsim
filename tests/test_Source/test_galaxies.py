@@ -1,12 +1,12 @@
 from astropy.cosmology import FlatLambdaCDM
-from sim_pipeline.Pipelines.skypy_pipeline import SkyPyPipeline
+from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 from astropy.units import Quantity
-from sim_pipeline.Sources.galaxies import Galaxies
-from sim_pipeline.Sources.galaxies import galaxy_projected_eccentricity
+from slsim.Sources.galaxies import Galaxies
+from slsim.Sources.galaxies import galaxy_projected_eccentricity
 import pytest
 
 
-class test_galaxies(object):
+class TestGalaxies(object):
     def setup_method(self):
         sky_area = Quantity(value=0.1, unit="deg2")
         pipeline = SkyPyPipeline(skypy_config=None, sky_area=sky_area, filters=None)
@@ -14,7 +14,7 @@ class test_galaxies(object):
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         self.galaxies = Galaxies(
             galaxy_list=self.galaxy_list,
-            kwargs_cut=None,
+            kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
         )

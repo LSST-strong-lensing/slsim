@@ -1,13 +1,27 @@
-from sim_pipeline.Deflectors.velocity_dispersion import (
+from slsim.Deflectors.velocity_dispersion import (
     schechter_vel_disp,
     schechter_velocity_dispersion_function,
+    vel_disp_composite_model,
 )
 import numpy as np
+import numpy.testing as npt
+from astropy.cosmology import FlatLambdaCDM
+
+
+def test_vel_disp_composite_model():
+    """"""
+    m_star = 10**11  # M_sun
+    rs_star = 0.005  # 5kpc
+    m_halo = 10**13.5  # M_sun
+    c_halo = 10
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    r = 1
+    vel_disp = vel_disp_composite_model(r, m_star, rs_star, m_halo, c_halo, cosmo)
+    npt.assert_almost_equal(vel_disp, 200, decimal=-1)
 
 
 def test_schechter_vdf():
-    # SDSS velocity dispersion function for galaxies brighter than Mr >= -16.8
-    from astropy.cosmology import FlatLambdaCDM
+    """SDSS velocity dispersion function for galaxies brighter than Mr >= -16.8."""
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
@@ -28,7 +42,6 @@ def test_schechter_vdf():
 
     sky_area = Quantity(value=0.1, unit="deg2")
     vd_min, vd_max = 50, 500
-    from astropy.cosmology import FlatLambdaCDM
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     cosmology = cosmo

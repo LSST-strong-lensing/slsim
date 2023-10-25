@@ -1,5 +1,5 @@
 ============
-sim-pipeline
+SLSim (Strong Lensing Simulation) pipeline
 ============
 
 |Read the Docs| |GitHub| |Codecov| |Black| |docformatter| |docstyle|
@@ -18,7 +18,7 @@ All the tools are open-source available. Check out below how you can contribute 
 
 
 * Free software: MIT license
-* Documentation: https://sim-pipeline.readthedocs.io.
+* Documentation: https://slsim.readthedocs.io.
 
 
 How to contribute to the repository?
@@ -39,21 +39,21 @@ We strive to acknowledge all contributors of this repository, be it direct code 
 See our Citation_ guidelines.
 
 
-.. _Contributing: https://sim-pipeline.readthedocs.io/en/latest/contributing.html
-.. _Onboarding: https://sim-pipeline.readthedocs.io/en/latest/onboarding.html
-.. _Citation: https://sim-pipeline.readthedocs.io/en/latest/citation.html
+.. _Contributing: https://slsim.readthedocs.io/en/latest/contributing.html
+.. _Onboarding: https://slsim.readthedocs.io/en/latest/onboarding.html
+.. _Citation: https://slsim.readthedocs.io/en/latest/citation.html
 
 
-.. |Read the Docs| image:: https://readthedocs.org/projects/sim-pipeline/badge/?version=latest
-    :target: https://sim-pipeline.readthedocs.io/en/latest/?badge=latest
+.. |Read the Docs| image:: https://readthedocs.org/projects/slsim/badge/?version=latest
+    :target: https://slsim.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-.. |GitHub| image:: https://github.com/LSST-strong-lensing/sim-pipeline/workflows/CI/badge.svg
-    :target: https://github.com/LSST-strong-lensing/sim-pipeline/actions
+.. |GitHub| image:: https://github.com/LSST-strong-lensing/slsim/workflows/CI/badge.svg
+    :target: https://github.com/LSST-strong-lensing/slsim/actions
     :alt: Build Status
 
-.. |Codecov| image:: https://codecov.io/gh/LSST-strong-lensing/sim-pipeline/graph/badge.svg?token=PyDRdtsGSX
-    :target: https://codecov.io/gh/LSST-strong-lensing/sim-pipeline
+.. |Codecov| image:: https://codecov.io/gh/LSST-strong-lensing/slsim/graph/badge.svg?token=PyDRdtsGSX
+    :target: https://codecov.io/gh/LSST-strong-lensing/slsim
     :alt: Code coverage
 
 .. |Black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
