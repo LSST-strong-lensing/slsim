@@ -310,7 +310,8 @@ def run_halos_without_kde(
         m_max=None,
         z_max=None,
         mass_sheet_correction=True,
-        listmean=False
+        listmean=False,
+        RadialInterpolate=False
 ):
     """Under the specified `sky_area`, generate `n_iterations` sets of halo
     lists. For each set, simulate `samples_number` times to obtain the
@@ -382,7 +383,8 @@ def run_halos_without_kde(
                 cosmo=cosmo,
                 samples_number=samples_number,
                 mass_sheet=True,
-                z_source=z_max
+                z_source=z_max,
+                RadialInterpolate=RadialInterpolate
             )
 
             nkappa_gamma_distribution = nhalos_lens.get_kappa_gamma_distib(
@@ -437,7 +439,8 @@ def worker_run_halos_without_kde(
         cosmo,
         samples_number,
         mass_sheet_correction,
-        listmean
+        listmean,
+        RadialInterpolate
 ):
     npipeline = HalosSkyPyPipeline(
         sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max
@@ -451,7 +454,8 @@ def worker_run_halos_without_kde(
             sky_area=sky_area,
             cosmo=cosmo,
             samples_number=samples_number,
-            z_source=z_max
+            z_source=z_max,
+            RadialInterpolate=RadialInterpolate
         )
     else:
         nhalos_lens = HalosLens(
@@ -482,7 +486,8 @@ def run_halos_without_kde_by_multiprocessing(
         m_max=None,
         z_max=None,
         mass_sheet_correction=True,
-        listmean=False
+        listmean=False,
+        RadialInterpolate=False
 ):
     """Under the specified `sky_area`, generate `n_iterations` sets of halo
     lists. For each set, simulate `samples_number` times to obtain the
@@ -541,7 +546,7 @@ def run_halos_without_kde_by_multiprocessing(
     start_time = time.time()  # Note the start time
 
     args = [
-        (i, sky_area, m_min, m_max, z_max, cosmo, samples_number, mass_sheet_correction, listmean)
+        (i, sky_area, m_min, m_max, z_max, cosmo, samples_number, mass_sheet_correction, listmean,RadialInterpolate)
         for i in range(n_iterations)
     ]
 
@@ -571,6 +576,7 @@ def run_kappaext_gammaext_kde_by_multiprocessing(
         mass_sheet_correction=True,
         listmean=False,
         output_format="dict",
+        RadialInterpolate=False,
 ):
     """Run the kappa-gamma external convergence distribution for a given number
     of iterations using multiprocessing.
@@ -641,6 +647,7 @@ def run_kappaext_gammaext_kde_by_multiprocessing(
             mass_sheet_correction,
             listmean,
             output_format,
+            RadialInterpolate
         )
         for i in range(n_iterations)
     ]
@@ -669,7 +676,8 @@ def worker_kappaext_gammaext_kde(
         samples_number,
         mass_sheet_correction,
         listmean,
-        output_format="dict"
+        output_format,
+        RadialInterpolate
 ):
     """Worker function that generates kappa-gamma distributions for given
     parameters.
@@ -730,7 +738,8 @@ def worker_kappaext_gammaext_kde(
             sky_area=sky_area,
             cosmo=cosmo,
             samples_number=samples_number,
-            z_source=z_max
+            z_source=z_max,
+            RadialInterpolate=RadialInterpolate
         )
     else:
         nhalos_lens = HalosLens(
@@ -760,7 +769,8 @@ def run_certain_redshift_lensext_kde_by_multiprocessing(
         mass_sheet_correction=True,
         zs=None,
         zd=None,
-        listmean=False
+        listmean=False,
+        RadialInterpolate=False
 ):
     if cosmo is None:
         warnings.warn(
@@ -799,7 +809,8 @@ def run_certain_redshift_lensext_kde_by_multiprocessing(
             mass_sheet_correction,
             zs,
             zd,
-            listmean
+            listmean,
+            RadialInterpolate
         )
         for i in range(n_iterations)
     ]
@@ -829,7 +840,8 @@ def worker_certain_redshift_lensext_kde(
         mass_sheet_correction,
         zs,
         zd,
-        listmean
+        listmean,
+        RadialInterpolate
 ):
     npipeline = HalosSkyPyPipeline(
         sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max
@@ -844,7 +856,8 @@ def worker_certain_redshift_lensext_kde(
             sky_area=sky_area,
             cosmo=cosmo,
             samples_number=samples_number,
-            z_source=z_max
+            z_source=z_max,
+            RadialInterpolate=RadialInterpolate
         )
     else:
         nhalos_lens = HalosLens(
@@ -870,6 +883,7 @@ def run_certain_redshift_many_by_multiprocessing(
         mass_sheet_correction=True,
         zs=None,
         zd=None,
+        RadialInterpolate=False
 ):
     if cosmo is None:
         warnings.warn(
@@ -909,6 +923,7 @@ def run_certain_redshift_many_by_multiprocessing(
             mass_sheet_correction,
             zs,
             zd,
+            RadialInterpolate
         )
         for i in range(n_iterations)
     ]
@@ -939,6 +954,7 @@ def worker_certain_redshift_many(
         mass_sheet_correction,
         zs,
         zd,
+        RadialInterpolate
 ):
     npipeline = HalosSkyPyPipeline(
         sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max
@@ -953,7 +969,8 @@ def worker_certain_redshift_many(
             sky_area=sky_area,
             cosmo=cosmo,
             samples_number=samples_number,
-            z_source=z_max
+            z_source=z_max,
+            RadialInterpolate=RadialInterpolate
         )
     else:
         nhalos_lens = HalosLens(
