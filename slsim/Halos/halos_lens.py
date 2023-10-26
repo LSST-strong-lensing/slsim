@@ -887,7 +887,7 @@ class HalosLens(object):
         py_halo = halos["py"]
         c_200_halos = halos["c_200"]
 
-        if mass_correction is not None and len(mass_correction) > 0 and self.mass_sheet:  # check
+        if (mass_correction is not None) and (len(mass_correction) > 0) and self.mass_sheet:  # check
             z_mass_correction = mass_correction["z"]
             #    mass_first_moment = mass_correction["first_moment"]
             mass_correction_kappa = mass_correction["kappa"]
@@ -898,7 +898,8 @@ class HalosLens(object):
             mass_correction_kappa = []
             kwargs_interp = []
         combined_redshift_list = np.concatenate((z_halo, z_mass_correction))
-
+        # If this above code need to be changed, notice the change in the following code
+        # including the lens_cosmo_dict one since it assume halos is in front of mass sheet
         if not combined_redshift_list.size:
             warnings.warn(
                 f"No halos OR mass correction in the given redshift range from zd={zd} to zs={zs}."
@@ -923,9 +924,6 @@ class HalosLens(object):
         lens_model, lens_model_list = self._build_lens_model(
             combined_redshift_list, zs, n_halos
         )
-
-        # Extract only the LensCosmo instances for z_mass_correction
-        relevant_lens_cosmo_list = [lens_cosmo_dict[z] for z in z_mass_correction]
 
         if mass_correction is not None and len(mass_correction) > 0 and self.mass_sheet:  # check
             #    kappa_ext_list = self.kappa_ext_for_mass_sheet(
@@ -952,7 +950,6 @@ class HalosLens(object):
             lens_cosmo_list,
         )
         # Note: If MASS_MOMENT (moment),this need to be change
-
         return lens_model, lens_cosmo_list, kwargs_lens
 
     def kappa_ext_for_mass_sheet(self, z, lens_cosmo, first_moment):
@@ -1057,7 +1054,6 @@ class HalosLens(object):
             )
         else:
             lens_model_list = ["NFW"] * n_halos
-
         lens_model = LensModel(
             lens_model_list=lens_model_list,
             lens_redshift_list=combined_redshift_list,
@@ -1122,20 +1118,25 @@ class HalosLens(object):
         This method assumes the presence of a method `get_nfw_kwargs` in the current class that provides NFW parameters
         based on given redshifts and masses.
         """
-        if n_halos == 0 and "CONVERGENCE" not in lens_model_list:
+        if n_halos == 0 and ("CONVERGENCE" not in lens_model_list) and ("RADIAL_INTERPOL" not in lens_model_list):
             return None
-        if n_halos == 0 and ("CONVERGENCE" in lens_model_list) and (self.radial_interpolate is False):
+        elif n_halos == 0 and ("CONVERGENCE" in lens_model_list) and (self.radial_interpolate is False):
             return [
                 {"kappa": kappa_ext_list[h], "ra_0": 0, "dec_0": 0}
                 for h in range(n_mass_correction)
             ]
-        if n_halos == 0 and ("CONVERGENCE" in lens_model_list) and (self.radial_interpolate is True):
+        elif n_halos == 0 and ("RADIAL_INTERPOL" in lens_model_list) and (self.radial_interpolate is True):
             return [
                 kwargs_interp_list[h] for h in range(n_mass_correction)
             ]
-        assert len(z_halo) == len(lens_cosmo_list) == n_halos ==len(mass_halo) == c_200_halos
+        if n_halos != 0:
+            assert len(z_halo) == len(lens_cosmo_list[:n_halos])
         Rs_angle, alpha_Rs = self.get_nfw_kwargs(
-            z=z_halo, mass=mass_halo, n_halos=n_halos, lens_cosmo=lens_cosmo_list, c=c_200_halos
+            z=z_halo,
+            mass=mass_halo,
+            n_halos=n_halos,
+            lens_cosmo=lens_cosmo_list[:n_halos],
+            c=c_200_halos
         )
         # TODO: different lens_cosmo ( for halos and sheet )
 
@@ -1152,7 +1153,7 @@ class HalosLens(object):
                 {"kappa": kappa_ext_list[h], "ra_0": 0, "dec_0": 0}
                 for h in range(n_mass_correction)
             ]
-        if ("CONVERGENCE" in lens_model_list) and (self.radial_interpolate is True):
+        if ("RADIAL_INTERPOL" in lens_model_list) and (self.radial_interpolate is True):
             return [
                 {
                     "Rs": Rs_angle[i],
@@ -1287,7 +1288,6 @@ class HalosLens(object):
 
         lens_model_ds = lens_data["ds"]["lens_model"]
         kwargs_lens_ds = lens_data["ds"]["kwargs_lens"]
-
         kappa_od, gamma_od1, gamma_od2 = self.get_convergence_shear(
             gamma12=True, kwargs=kwargs_lens_od, lens_model=lens_model_od
         )
@@ -1587,7 +1587,7 @@ class HalosLens(object):
                 # we will consider halos from halos_ds as those are the ones between zd and zs
                 if len(halos_ds) > 0:
                     lens_model, lens_cosmo_list, kwargs_lens = self._build_lens_data(
-                        halos_ds,None, zd=0, zs=5)
+                        halos_ds, None, zd=0, zs=5)
                     kappa, _ = self.get_convergence_shear(lens_model=lens_model, kwargs=kwargs_lens, gamma12=False,
                                                           zdzs=(0, 5))
                     kappa_dict[bin_centers[i]] = kappa
@@ -1750,7 +1750,9 @@ class HalosLens(object):
                 if len(halos_ds) > 0:
                     lens_model, lens_cosmo_list, kwargs_lens = self._build_lens_data(
                         halos_ds, None, zd=0, zs=5)
-                    kappa = self.azimuthal_average_kappa_dict(diff=0.0000001, diff_method="square", kwargs=kwargs_lens,
+                    kappa = self.azimuthal_average_kappa_dict(diff=0.0000001,
+                                                              diff_method="square",
+                                                              kwargs=kwargs_lens,
                                                               lens_model=lens_model,
                                                               zdzs=None)
                     kappa_dict[bin_centers[i]] = kappa
