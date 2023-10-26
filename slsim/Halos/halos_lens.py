@@ -943,7 +943,8 @@ class HalosLens(object):
             lens_model_list,
             kappa_ext_list,
             lens_cosmo_list,
-        )  # todo: MASS_MOMENT, deal mass_moment outside _build_kwargs_lens  as no input z_source
+        )
+        # Note: If MASS_MOMENT (moment),this need to be change
 
         return lens_model, lens_cosmo_list, kwargs_lens
 
@@ -1120,7 +1121,7 @@ class HalosLens(object):
                 {"kappa": kappa_ext_list[h], "ra_0": 0, "dec_0": 0}
                 for h in range(n_mass_correction)
             ]
-
+        #TODO: Radial interpolation models!
         Rs_angle, alpha_Rs = self.get_nfw_kwargs(
             z=z_halo, mass=mass_halo, n_halos=n_halos, lens_cosmo=lens_cosmo_list, c=c_200_halos
         )
@@ -1561,7 +1562,7 @@ class HalosLens(object):
                 # we will consider halos from halos_ds as those are the ones between zd and zs
                 if len(halos_ds) > 0:
                     lens_model, lens_cosmo_list, kwargs_lens = self._build_lens_data(
-                        halos_ds, None, zd=0, zs=5)
+                        halos_ds,None, zd=0, zs=5)
                     kappa, _ = self.get_convergence_shear(lens_model=lens_model, kwargs=kwargs_lens, gamma12=False,
                                                           zdzs=(0, 5))
                     kappa_dict[bin_centers[i]] = kappa
@@ -1739,38 +1740,42 @@ class HalosLens(object):
                                  kwargs=None,
                                  lens_model=None,
                                  zdzs=None):
+        # TODO：debug, this is currently not working as expected
+        print('mass_sheet=False')
+        # mass_sheet=False
+        self.plot_convergence(diff=diff,
+                              diff_method=diff_method,
+                              kwargs=kwargs,
+                              lens_model=lens_model,
+                              zdzs=zdzs,
+                              mass_sheet=False,
+                              radial_interpolate=False,
+                              enhance_pos=False
+                              )
 
-            print('mass_sheet=False')
-            # mass_sheet=False
-            self.plot_convergence(diff=diff,
-                                  diff_method=diff_method,
-                                  kwargs=kwargs,
-                                  lens_model=lens_model,
-                                  zdzs=zdzs,
-                                  mass_sheet=False,
-                                  radial_interpolate=False,
-                                  enhance_pos=False
-                                  )
+        # mass_sheet=True, radial_interpolate=True
+        print('mass_sheet=True, radial_interpolate=True')
+        self.plot_convergence(diff=diff,
+                              diff_method=diff_method,
+                              kwargs=kwargs,
+                              lens_model=lens_model,
+                              zdzs=zdzs,
+                              mass_sheet=True,
+                              radial_interpolate=True,
+                              enhance_pos=False)
 
-            # mass_sheet=True, radial_interpolate=True
-            print('mass_sheet=True, radial_interpolate=True')
-            self.plot_convergence(diff=diff,
-                                  diff_method=diff_method,
-                                  kwargs=kwargs,
-                                  lens_model=lens_model,
-                                  zdzs=zdzs,
-                                  mass_sheet=True,
-                                  radial_interpolate=True,
-                                  enhance_pos=False)
+        # mass_sheet=True, radial_interpolate=False
+        print('mass_sheet=True, radial_interpolate=False')
+        self.plot_convergence(diff=diff,
+                              diff_method=diff_method,
+                              kwargs=kwargs,
+                              lens_model=lens_model,
+                              zdzs=zdzs,
+                              mass_sheet=True,
+                              radial_interpolate=False,
+                              enhance_pos=False
+                              )
 
-            # mass_sheet=True, radial_interpolate=False
-            print('mass_sheet=True, radial_interpolate=False')
-            self.plot_convergence(diff=diff,
-                                  diff_method=diff_method,
-                                  kwargs=kwargs,
-                                  lens_model=lens_model,
-                                  zdzs=zdzs,
-                                  mass_sheet=True,
-                                  radial_interpolate=False,
-                                  enhance_pos=False
-                                  )
+    def total_halo_mass(self):
+        mass_list = self.mass_list
+        return np.sum(mass_list)

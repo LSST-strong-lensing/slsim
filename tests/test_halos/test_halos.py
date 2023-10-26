@@ -1,5 +1,5 @@
 import numpy as np
-from sim_pipeline.Halos.halos import (
+from slsim.Halos import (
     number_density_at_redshift,
     growth_factor_at_redshift,
     halo_mass_at_z,

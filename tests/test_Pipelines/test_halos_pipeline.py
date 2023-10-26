@@ -1,4 +1,4 @@
-from sim_pipeline.Pipelines.halos_pipeline import HalosSkyPyPipeline
+from slsim.Pipelines.halos_pipeline import HalosSkyPyPipeline
 
 
 class TestHalosSkyPyPipeline(object):

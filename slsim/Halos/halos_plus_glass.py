@@ -1,6 +1,6 @@
 import numpy as np
-from sim_pipeline.Pipelines.halos_pipeline import HalosSkyPyPipeline
-from sim_pipeline.Halos.halos_lens import HalosLens
+from slsim.Pipelines.halos_pipeline import HalosSkyPyPipeline
+from slsim.Halos.halos_lens import HalosLens
 from astropy.cosmology import FlatLambdaCDM
 from tqdm.notebook import tqdm
 import time
@@ -546,7 +546,7 @@ def run_halos_without_kde_by_multiprocessing(
     start_time = time.time()  # Note the start time
 
     args = [
-        (i, sky_area, m_min, m_max, z_max, cosmo, samples_number, mass_sheet_correction, listmean,RadialInterpolate)
+        (i, sky_area, m_min, m_max, z_max, cosmo, samples_number, mass_sheet_correction, listmean, RadialInterpolate)
         for i in range(n_iterations)
     ]
 
@@ -1213,7 +1213,7 @@ def run_compute_azimuthal_kappa_in_bins_by_multiprocessing(
 
     # Use multiprocessing
     with get_context("spawn").Pool() as pool:
-        results = pool.starmap(worker_compute_azimuthal_kappa_in_bins, args)
+        results = pool.starmap(run_total_mass_by_multiprocessing, args)
         azimuthal_kappa_dict_tot.extend(results)
 
     azimuthal_kappa_dict_tot = [item for sublist in azimuthal_kappa_dict_tot for item in sublist]
@@ -1225,39 +1225,74 @@ def run_compute_azimuthal_kappa_in_bins_by_multiprocessing(
     return azimuthal_kappa_dict_tot
 
 
-def worker_compute_azimuthal_kappa_in_bins(
+def run_total_mass_by_multiprocessing(
+        n_iterations=1,
+        sky_area=0.0001,
+        cosmo=None,
+        m_min=None,
+        m_max=None,
+        z_max=None,
+):
+    if cosmo is None:
+        warnings.warn(
+            "No cosmology provided, instead uses astropy.cosmology default cosmology"
+        )
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    if z_max is None:
+        z_max = 5.0
+        warnings.warn(
+            "No maximum redshift provided, instead uses 5.0"
+        )
+
+    total_mass = []
+
+    start_time = time.time()  # Note the start time
+
+    args = [
+        (
+            i,
+            sky_area,
+            m_min,
+            m_max,
+            z_max,
+            cosmo,
+        )
+        for i in range(n_iterations)
+    ]
+
+    # Use multiprocessing
+    with get_context("spawn").Pool() as pool:
+        results = pool.starmap(worker_run_total_mass_by_multiprocessing, args)
+        total_mass.extend(results)
+
+    end_time = time.time()  # Note the end time
+    print(
+        f"The {n_iterations} halo-lists took {(end_time - start_time)} seconds to run"
+    )
+    return total_mass
+
+
+def worker_run_total_mass_by_multiprocessing(
         iter_num,
         sky_area,
         m_min,
         m_max,
         z_max,
         cosmo,
-        samples_number,
-        mass_sheet_correction
 ):
     npipeline = HalosSkyPyPipeline(
         sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max
     )
     nhalos = npipeline.halos
 
-    if mass_sheet_correction:
-        nmass_sheet_correction = npipeline.mass_sheet_correction
-        nhalos_lens = HalosLens(
-            halos_list=nhalos,
-            mass_correction_list=nmass_sheet_correction,
-            sky_area=sky_area,
-            cosmo=cosmo,
-            samples_number=samples_number,
-            z_source=z_max
-        )
-    else:
-        nhalos_lens = HalosLens(
+    nhalos_lens = HalosLens(
             halos_list=nhalos,
             sky_area=sky_area,
             cosmo=cosmo,
-            samples_number=samples_number,
-            mass_sheet=False,
-            z_source=z_max
+            samples_number=1,
+            z_source=z_max,
+            mass_sheet=False
         )
-    azimuthal_kappa_dict = nhalos_lens.compute_azimuthal_kappa_in_bins()
-    return azimuthal_kappa_dict
+
+    total_mass = nhalos_lens.total_halo_mass()
+    return total_mass

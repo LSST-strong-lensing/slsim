@@ -1,6 +1,6 @@
 import os
 from skypy.pipeline import Pipeline
-import sim_pipeline
+import slsim
 import tempfile
 
 
@@ -23,7 +23,7 @@ class HalosSkyPyPipeline:
             Maximum redshift value in z_range.
 
         """
-        path = os.path.dirname(sim_pipeline.__file__)
+        path = os.path.dirname(slsim.__file__)
         module_path, _ = os.path.split(path)
         if skypy_config is None:
             skypy_config = os.path.join(module_path, 'data/SkyPy/halo.yml')

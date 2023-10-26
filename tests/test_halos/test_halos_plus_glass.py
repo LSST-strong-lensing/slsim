@@ -1,4 +1,4 @@
-from sim_pipeline.Halos.halos_plus_glass import (
+from slsim.Halos import (
     read_glass_data,
     generate_samples_from_glass,
     skyarea_form_n,
@@ -8,7 +8,7 @@ from sim_pipeline.Halos.halos_plus_glass import (
     run_halos_without_kde,
     run_halos_without_kde_by_multiprocessing,
 )
-from sim_pipeline.Halos.halos import (
+from slsim.Halos import (
     deg2_to_cone_angle,
     cone_radius_angle_to_physical_area,
 )

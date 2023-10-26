@@ -1,7 +1,7 @@
-from sim_pipeline.Halos.halos_lens import concentration_from_mass
+from slsim.Halos.halos_lens import concentration_from_mass
 import pytest
 from astropy.cosmology import FlatLambdaCDM
-from sim_pipeline.Halos.halos_lens import HalosLens
+from slsim.Halos.halos_lens import HalosLens
 from astropy.table import Table
 from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
