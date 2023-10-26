@@ -1,4 +1,4 @@
-﻿from sim_pipeline.Pipelines.skypy_pipeline import SkyPyPipeline
+﻿from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 from astropy.cosmology import LambdaCDM, FlatwCDM, w0waCDM
 
 

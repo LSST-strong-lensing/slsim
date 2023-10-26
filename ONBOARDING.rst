@@ -29,4 +29,4 @@ Mailing lists, Slack channels and telecon schedules are listed on the `confluenc
 For pipeline specific discussion, please join #sl-pipeline and #lensed-sn-integration in particular.
 
 
-.. _Contributing: https://sim-pipeline.readthedocs.io/en/latest/contributing.html
+.. _Contributing: https://slsim.readthedocs.io/en/latest/contributing.html

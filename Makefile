@@ -25,7 +25,7 @@ clean-pyc:
 	find . -name '__pycache__' -exec rm -rf {} +
 
 lint:
-	flake8 sim-pipeline test
+	flake8 slsim test
 
 test:
 	py.test
@@ -34,7 +34,7 @@ test-all:
 	tox
 
 coverage:
-	coverage run --source sim-pipeline setup.py test
+	coverage run --source slsim setup.py test
 	coverage report -m
 	coverage html
 	open htmlcov/index.html
@@ -45,7 +45,7 @@ format:
 
 docs:
 	rm -f docs/modules.rst
-	sphinx-apidoc -o docs/ sim_pipeline
+	sphinx-apidoc -o docs/ slsim
 	MAKE -C docs clean
 	MAKE -C docs html
 	open docs/_build/html/index.html

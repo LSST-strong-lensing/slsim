@@ -7,7 +7,7 @@ Submodules
 sim\_pipeline.ParamDistributions.gaussian\_mixture\_model module
 ----------------------------------------------------------------
 
-.. automodule:: sim_pipeline.ParamDistributions.gaussian_mixture_model
+.. automodule:: slsim.ParamDistributions.gaussian_mixture_model
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,7 +15,7 @@ sim\_pipeline.ParamDistributions.gaussian\_mixture\_model module
 Module contents
 ---------------
 
-.. automodule:: sim_pipeline.ParamDistributions
+.. automodule:: slsim.ParamDistributions
    :members:
    :undoc-members:
    :show-inheritance:
