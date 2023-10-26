@@ -820,7 +820,7 @@ def read_txt_file(filename="average_results.txt"):
     return data
 
 
-def determinism_kappa_RadialInterpolate_at_redshift(z, filename="average_results.txt", tolerance=1e-6):
+def determinism_kappa_RadialInterpolate_at_redshift(z, filename="average_results.txt", tolerance=1e-4):
     """Return kwargs_interp for the given redshift z."""
     data = read_txt_file(filename)
 

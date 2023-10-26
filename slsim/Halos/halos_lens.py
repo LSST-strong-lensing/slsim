@@ -241,6 +241,8 @@ class HalosLens(object):
             self.mass_sheet_correction_redshift = mass_correction_list.get("z", [])
             #            self.mass_first_moment = mass_correction_list.get("first_moment", [])
             self.mass_sheet_kappa = mass_correction_list.get("kappa", [])
+            self.kwargs_interp = mass_correction_list.get("kwargs_interp", [])
+            self.radial_interpolate = False
         else:
             self.radial_interpolate = RadialInterpolate
             self.n_correction = len(mass_correction_list)
@@ -889,10 +891,12 @@ class HalosLens(object):
             z_mass_correction = mass_correction["z"]
             #    mass_first_moment = mass_correction["first_moment"]
             mass_correction_kappa = mass_correction["kappa"]
+            kwargs_interp = mass_correction["kwargs_interp"]
         else:
             z_mass_correction = []
             #    mass_first_moment = []
             mass_correction_kappa = []
+            kwargs_interp = []
         combined_redshift_list = np.concatenate((z_halo, z_mass_correction))
 
         if not combined_redshift_list.size:
@@ -928,8 +932,10 @@ class HalosLens(object):
             #        z_mass_correction, relevant_lens_cosmo_list, mass_first_moment
             #    )
             kappa_ext_list = mass_correction_kappa
+            kwargs_interp_list = kwargs_interp
         else:
             kappa_ext_list = []
+            kwargs_interp_list = []
 
         lens_cosmo_list = list(lens_cosmo_dict.values())
         kwargs_lens = self._build_kwargs_lens(
@@ -942,6 +948,7 @@ class HalosLens(object):
             c_200_halos,
             lens_model_list,
             kappa_ext_list,
+            kwargs_interp_list,
             lens_cosmo_list,
         )
         # Note: If MASS_MOMENT (moment),this need to be change
@@ -1072,6 +1079,7 @@ class HalosLens(object):
             c_200_halos,
             lens_model_list,
             kappa_ext_list,
+            kwargs_interp_list,
             lens_cosmo_list=None,
     ):
         """Constructs the lens keyword arguments based on provided input
@@ -1116,18 +1124,22 @@ class HalosLens(object):
         """
         if n_halos == 0 and "CONVERGENCE" not in lens_model_list:
             return None
-        if n_halos == 0 and "CONVERGENCE" in lens_model_list:
+        if n_halos == 0 and ("CONVERGENCE" in lens_model_list) and (self.radial_interpolate is False):
             return [
                 {"kappa": kappa_ext_list[h], "ra_0": 0, "dec_0": 0}
                 for h in range(n_mass_correction)
             ]
-        #TODO: Radial interpolation models!
+        if n_halos == 0 and ("CONVERGENCE" in lens_model_list) and (self.radial_interpolate is True):
+            return [
+                kwargs_interp_list[h] for h in range(n_mass_correction)
+            ]
+        assert len(z_halo) == len(lens_cosmo_list) == n_halos ==len(mass_halo) == c_200_halos
         Rs_angle, alpha_Rs = self.get_nfw_kwargs(
             z=z_halo, mass=mass_halo, n_halos=n_halos, lens_cosmo=lens_cosmo_list, c=c_200_halos
         )
-        # TODO: different lens_cosmo
+        # TODO: different lens_cosmo ( for halos and sheet )
 
-        if "CONVERGENCE" in lens_model_list:
+        if ("CONVERGENCE" in lens_model_list) and (self.radial_interpolate is False):
             return [
                 {
                     "Rs": Rs_angle[i],
@@ -1140,6 +1152,19 @@ class HalosLens(object):
                 {"kappa": kappa_ext_list[h], "ra_0": 0, "dec_0": 0}
                 for h in range(n_mass_correction)
             ]
+        if ("CONVERGENCE" in lens_model_list) and (self.radial_interpolate is True):
+            return [
+                {
+                    "Rs": Rs_angle[i],
+                    "alpha_Rs": alpha_Rs[i],
+                    "center_x": px_halo[i],
+                    "center_y": py_halo[i],
+                }
+                for i in range(n_halos)
+            ] + [
+                kwargs_interp_list[h] for h in range(n_mass_correction)
+            ]
+
         return [
             {
                 "Rs": Rs_angle[i],
