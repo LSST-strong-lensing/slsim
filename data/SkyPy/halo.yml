@@ -8,16 +8,16 @@ z_range: !numpy.linspace
   num: 100
 cosmology: !astropy.cosmology.default_cosmology.get []
 wavenumber: !numpy.logspace [-3, 1, 1000]
-power_spectrum: !sim_pipeline.Skypy_halos_duplicate.power_spectrum.eisenstein_hu
+power_spectrum: !slsim.Skypy_halos_duplicate.power_spectrum.eisenstein_hu
   wavenumber: !numpy.logspace [-3, 1, 1000]
   A_s: 2.1982e-09
   n_s: 0.969453
   cosmology: $cosmology
-collapse_function: !sim_pipeline.Skypy_halos_duplicate.halos.mass.ellipsoidal_collapse_function
+collapse_function: !slsim.Skypy_halos_duplicate.halos.mass.ellipsoidal_collapse_function
 
 tables:
   halos:
-        z: !sim_pipeline.Halos.halos.redshift_halos_array_from_comoving_density
+        z: !slsim.Halos.halos.redshift_halos_array_from_comoving_density
           redshift_list: $z_range
           sky_area: $fsky
           cosmology: $cosmology
@@ -28,7 +28,7 @@ tables:
           power_spectrum: $power_spectrum
           collapse_function: $collapse_function
           params: [0.3, 0.7, 0.3, 1.686]
-        mass: !sim_pipeline.Halos.halos.halo_mass_at_z
+        mass: !slsim.Halos.halos.halo_mass_at_z
           z: $halos.z
           cosmology: $cosmology
           m_min: $m_min
@@ -39,13 +39,13 @@ tables:
           collapse_function: $collapse_function
           params: [0.3, 0.7, 0.3, 1.686]
   mass_sheet_correction:
-         z: !sim_pipeline.Halos.halos.redshift_mass_sheet_correction_array_from_comoving_density
+         z: !slsim.Halos.halos.redshift_mass_sheet_correction_array_from_comoving_density
            redshift_list: $z_range
-         kwargs_interp: !sim_pipeline.Halos.halos.determinism_kappa_RadialInterpolate_at_redshift
+         kwargs_interp: !slsim.Halos.halos.determinism_kappa_RadialInterpolate_at_redshift
            z: $mass_sheet_correction.z
-         kappa: !sim_pipeline.Halos.halos.determinism_kappa_first_moment_at_redshift
+         kappa: !slsim.Halos.halos.determinism_kappa_first_moment_at_redshift
            z: $mass_sheet_correction.z
-  #       first_moment: !sim_pipeline.Halos.halos.mass_first_moment_at_redshift
+  #       first_moment: !slsim.Halos.halos.mass_first_moment_at_redshift
   #          z: $mass_sheet_correction.z
   #          sky_area: $fsky
   #          cosmology: $cosmology
