@@ -13,4 +13,15 @@ class cosmoDC2AGN(SourceBase):
         self.sources = pd.read_csv(source_file)
 
     def source_number(self):
-        return super().source_number()
+        """Number of sources registered (within given area on the sky)
+
+        :return: number of sources
+        """
+        return len(self.sources)
+
+    def draw_source(self):
+        """Choose source at random.
+
+        :return: dictionary of source
+        """
+        return super().draw_source()
