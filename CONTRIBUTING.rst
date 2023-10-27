@@ -4,13 +4,13 @@ Contributor Guidelines
 GitHub Workflow
 ---------------
 
-Fork and Clone the sim-pipeline Repository
+Fork and Clone the slsim Repository
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 **You should only need to do this step once**
 
-First *fork* the sim-pipeline repository. A fork is your own remote copy of the repository on GitHub. To create a fork:
+First *fork* the slsim repository. A fork is your own remote copy of the repository on GitHub. To create a fork:
 
-  1. Go to the `LSST-strong-lensing GitHub Repository <https://github.com/LSST-strong-lensing/sim-pipeline>`_
+  1. Go to the `LSST-strong-lensing GitHub Repository <https://github.com/LSST-strong-lensing/slsim>`_
   2. Click the **Fork** button (in the top-right-hand corner)
   3. Choose where to create the fork, typically your personal GitHub account
 
@@ -18,37 +18,37 @@ Next *clone* your fork. Cloning creates a local copy of the repository on your c
 
 ::
 
-   git clone https://github.com/<your-account>/sim-pipeline.git
+   git clone https://github.com/<your-account>/slsim.git
 
 
-Finally add the ``sim-pipeline-project`` repository as a *remote*. This will allow you to fetch changes made to the codebase. To add the ``sim-pipeline-project`` remote:
+Finally add the ``slsim-project`` repository as a *remote*. This will allow you to fetch changes made to the codebase. To add the ``slsim-project`` remote:
 
 ::
 
-  cd sim-pipeline
-  git remote add sim-pipeline-project https://github.com/LSST-strong-lensing/sim-pipeline.git
+  cd slsim
+  git remote add slsim-project https://github.com/LSST-strong-lensing/slsim.git
 
 
-Install sim-pipeline in development mode
+Install slsim in development mode
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-To run your own version of sim-pipeline and making sure that your own development changes are reflected (as well as switcing branches),
-install the sim-pipeline package in development mode with
+To run your own version of slsim and making sure that your own development changes are reflected (as well as switcing branches),
+install the slsim package in development mode with
 
 ::
 
-  cd sim-pipeline
+  cd slsim
   python setup.py develop --user
 
 
 Create a branch for your new feature
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Create a *branch* off the ``sim-pipeline-project`` main branch. Working on unique branches for each new feature simplifies the development, review and merge processes by maintining logical separation. To create a feature branch:
+Create a *branch* off the ``slsim-project`` main branch. Working on unique branches for each new feature simplifies the development, review and merge processes by maintining logical separation. To create a feature branch:
 
 ::
 
-  git fetch sim-pipeline-project
-  git checkout -b <your-branch-name> sim-pipeline-project/main
+  git fetch slsim-project
+  git checkout -b <your-branch-name> slsim-project/main
 
 
 Hack away!
@@ -79,13 +79,13 @@ Write the new code you would like to contribute and *commit* it to the feature b
 Open a Pull Request
 ^^^^^^^^^^^^^^^^^^^
 
-When you feel that work on your new feature is complete, you should create a *Pull Request*. This will propose your work to be merged into the main sim-pipeline repository.
+When you feel that work on your new feature is complete, you should create a *Pull Request*. This will propose your work to be merged into the main slsim repository.
 
-  1. Go to `sim-pipeline Pull Requests <https://github.com/LSST-strong-lensing/sim-pipeline/pulls>`_
+  1. Go to `slsim Pull Requests <https://github.com/LSST-strong-lensing/slsim/pulls>`_
   2. Click the green **New pull request** button
   3. Click **compare across forks**
-  4. Confirm that the base fork is ``LSST-strong-lensing/sim-pipeline`` and the base branch is ``main``
-  5. Confirm the head fork is ``<your-account>/sim-pipeline`` and the compare branch is ``<your-branch-name>``
+  4. Confirm that the base fork is ``LSST-strong-lensing/slsim`` and the base branch is ``main``
+  5. Confirm the head fork is ``<your-account>/slsim`` and the compare branch is ``<your-branch-name>``
   6. Give your pull request a title and fill out the the template for the description
   7. Click the green **Create pull request** button
 
@@ -102,22 +102,22 @@ A series of automated checks will be run on your pull request, some of which wil
 Updating your branch
 ^^^^^^^^^^^^^^^^^^^^
 
-As you work on your feature, new commits might be made to the ``sim-pipeline-project`` main branch. You will need to update your branch with these new commits before your pull request can be accepted. You can achieve this in a few different ways:
+As you work on your feature, new commits might be made to the ``slsim-project`` main branch. You will need to update your branch with these new commits before your pull request can be accepted. You can achieve this in a few different ways:
 
   - If your pull request has no conflicts, click **Update branch**
   - If your pull request has conflicts, click **Resolve conflicts**, manually resolve the conflicts and click **Mark as resolved**
-  - *merge* the ``sim-pipeline-project`` main branch from the command line:
+  - *merge* the ``slsim-project`` main branch from the command line:
 
     ::
 
-        git fetch sim-pipeline-project
-        git merge sim-pipeline-project/main
+        git fetch slsim-project
+        git merge slsim-project/main
 
-  - *rebase* your feature branch onto the ``sim-pipeline-project`` main branch from the command line:
+  - *rebase* your feature branch onto the ``slsim-project`` main branch from the command line:
     ::
 
-        git fetch sim-pipeline-project
-        git rebase sim-pipeline-project/main
+        git fetch slsim-project
+        git rebase slsim-project/main
 
 
 **Warning**: It is bad practice to *rebase* commits that have already been pushed to a remote such as your fork. Rebasing creates new copies of your commits that can cause the local and remote branches to diverge. ``git push --force`` will **overwrite** the remote branch with your newly rebased local branch. This is strongly discouraged, particularly when working on a shared branch where you could erase a collaborators commits.
@@ -135,14 +135,14 @@ More information regarding the usage of GitHub can be found in the `GitHub Guide
 Coding Guidelines
 -----------------
 
-Before your pull request can be merged into the codebase, it will be reviewed by one of the sim-pipeline developers and required to pass a number of automated checks. Below are a minimum set of guidelines for developers to follow:
+Before your pull request can be merged into the codebase, it will be reviewed by one of the slsim developers and required to pass a number of automated checks. Below are a minimum set of guidelines for developers to follow:
 
 General Guidelines
 ^^^^^^^^^^^^^^^^^^
 
-- sim-pipeline is compatible with Python>=3.7 (see `setup.cfg <https://github.com/herjy/sim-pipeline/blob/main/setup.cfg>`_). sim-pipeline *does not* support backwards compatibility with Python 2.x; `six`, `__future__` and `2to3` should not be used.
+- slsim is compatible with Python>=3.7 (see `setup.cfg <https://github.com/LSST-strong-lensing/slsim/blob/main/setup.cfg>`_). slsim *does not* support backwards compatibility with Python 2.x; `six`, `__future__` and `2to3` should not be used.
 - All contributions should follow the `PEP8 Style Guide for Python Code <https://www.python.org/dev/peps/pep-0008/>`_. We recommend using `flake8 <https://flake8.pycqa.org/>`__ to check your code for PEP8 compliance.
-- Importing sim-pipeline should only depend on having `NumPy <https://www.numpy.org>`_, `SciPy <https://www.scipy.org/>`_ and `Astropy <https://www.astropy.org/>`__ installed.
+- Importing slsim should only depend on having `NumPy <https://www.numpy.org>`_, `SciPy <https://www.scipy.org/>`_ and `Astropy <https://www.astropy.org/>`__ installed.
 - Code will be grouped into submodules based on broad science areas.
 - For more information see the `Astropy Coding Guidelines <http://docs.astropy.org/en/latest/development/codeguide.html>`_.
 

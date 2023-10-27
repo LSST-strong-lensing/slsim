@@ -7,7 +7,7 @@ Submodules
 sim\_pipeline.Plots.galaxy\_galaxy\_plots module
 ------------------------------------------------
 
-.. automodule:: sim_pipeline.Plots.galaxy_galaxy_plots
+.. automodule:: slsim.Plots.lens_plots
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,7 +15,7 @@ sim\_pipeline.Plots.galaxy\_galaxy\_plots module
 Module contents
 ---------------
 
-.. automodule:: sim_pipeline.Plots
+.. automodule:: slsim.Plots
    :members:
    :undoc-members:
    :show-inheritance:

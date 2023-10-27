@@ -1,6 +1,6 @@
 skypy
 lenstronomy>=1.11.2
-astropy
+astropy>=5.2
 numpy
 scipy
 speclite

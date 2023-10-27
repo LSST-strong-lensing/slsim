@@ -13,7 +13,7 @@ ci:
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.0.292
+    rev: v0.1.1
     hooks:
       - id: ruff
         exclude: docs/.*
@@ -24,7 +24,7 @@ repos:
       - id: nbqa-ruff
         args: ["--line-length=120"]
   - repo: https://github.com/psf/black
-    rev: 23.9.1
+    rev: 23.10.0
     hooks:
       - id: black
         # It is recommended to specify the latest version of Python
@@ -33,7 +33,7 @@ repos:
         # https://pre-commit.com/#top_level-default_language_version
         language_version: python3
   - repo: https://github.com/psf/black
-    rev: 23.9.1
+    rev: 23.10.0
     hooks:
       - id: black-jupyter
         language_version: python3

@@ -7,7 +7,7 @@ Submodules
 sim\_pipeline.Util.param\_util module
 -------------------------------------
 
-.. automodule:: sim_pipeline.Util.param_util
+.. automodule:: slsim.Util.param_util
    :members:
    :undoc-members:
    :show-inheritance:
@@ -15,7 +15,7 @@ sim\_pipeline.Util.param\_util module
 Module contents
 ---------------
 
-.. automodule:: sim_pipeline.Util
+.. automodule:: slsim.Util
    :members:
    :undoc-members:
    :show-inheritance:
