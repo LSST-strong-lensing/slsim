@@ -1,12 +1,14 @@
 import numpy as np
 from slsim.Util import check_params
 
+
 class GaussianMixtureModel:
     """A Gaussian Mixture Model (GMM) class.
 
     This class is used to represent a mixture of Gaussian distributions, each of which
     is defined by its mean, standard deviation and weight.
     """
+
     @check_params
     def __init__(self, means, stds, weights):
         """
