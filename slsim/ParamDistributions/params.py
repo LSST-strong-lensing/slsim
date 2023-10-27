@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, PositiveFloat, model_validator
+from pydantic import BaseModel, Field, PositiveFloat, model_validator, field_validator
 import numpy as np
 
 class GaussianMixtureModel(BaseModel):
@@ -6,6 +6,13 @@ class GaussianMixtureModel(BaseModel):
     stds: list[PositiveFloat] = [np.sqrt(0.00283885), np.sqrt(0.01066668), np.sqrt(0.0097978)]
     weights: list[PositiveFloat] = [0.62703102, 0.23732313, 0.13564585]
     
+    @field_validator("weights")
+    @classmethod
+    def check_weights(cls, weight_values):
+        if sum(weight_values) != 1:
+            raise ValueError("The sum of the weights must be 1")
+        return weight_values
+
     @model_validator(mode="after")
     def check_lenghts(self):
         if len(self.means) != len(self.stds) or len(self.means) != len(self.weights):
