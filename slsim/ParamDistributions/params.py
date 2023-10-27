@@ -8,7 +8,7 @@ class GaussianMixtureModel(BaseModel):
                                        np.sqrt(0.0097978)])
     weights: list[float] = [0.62703102, 0.23732313, 0.13564585]
     
-    @model_validator(mode="before")
+    @model_validator(mode="after")
     def check_lenghts(self):
         if len(self.means) != len(self.stds) or len(self.means) != len(self.weights):
             raise ValueError("The lenghts of means, stds and weights must be equal")
