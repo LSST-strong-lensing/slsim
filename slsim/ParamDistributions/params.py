@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from pydantic import Field
 import numpy as np
 
 class GaussianMixtureModel(BaseModel):

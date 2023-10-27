@@ -6,7 +6,8 @@ from functools import wraps
 from inspect import getsourcefile, getargspec
 from pathlib import Path
 from importlib import import_module
-from typing import Callable
+from typing import Callable, Any
+import pydantic
 
 class SlSimParameterException(Exception):
     pass
@@ -33,20 +34,20 @@ def check_params(init_fn: Callable) -> Callable:
                                     ' with__init__ methods')
 
     @wraps(init_fn)
-    def new_init_fn(obj, *args, **kwargs):
+    def new_init_fn(obj: Any, *args, **kwargs) -> Any:
         # Get function argument names
-        all_args = {}
+        pargs = {}
         if args:
             largs = getargspec(init_fn).args
             for i in range(len(args)):
-                all_args[largs[i+1]] = args[i]
-        all_args.update(kwargs)
-        parsed_args = get_defaults(init_fn)(**all_args)
+                pargs[largs[i+1]] = args[i]
+        #Doing it this way ensures we still catch duplicate arguments
+        parsed_args = get_defaults(init_fn)(**pargs, **kwargs)
         return init_fn(obj, **dict(parsed_args))
     return new_init_fn
 
 
-def get_defaults(init_fn):
+def get_defaults(init_fn: Callable) -> pydantic.BaseModel:
     path = getsourcefile(init_fn)
     obj_name = init_fn.__qualname__.split('.')[0]
     start = path.rfind("slsim")
@@ -61,7 +62,7 @@ def get_defaults(init_fn):
         _defaults[modpath] = load_parameters(modpath, obj_name)
     return _defaults[modpath]
 
-def load_parameters(modpath, obj_name):
+def load_parameters(modpath: str, obj_name: str) -> pydantic.BaseModel:
     """
     Loads parameters from the "params.py" file which should be in the same folder
     as the class definition.
@@ -76,4 +77,7 @@ def load_parameters(modpath, obj_name):
     except AttributeError:
         raise SlSimParameterException(f'No default parameters found for class '\
                                     f'\"{obj_name}\"')
+    if not issubclass(obj_defaults, pydantic.BaseModel):
+        raise SlSimParameterException(f'Defaults for \"{obj_name}\" are not in a '\
+                                      'pydantic model!')
     return obj_defaults
