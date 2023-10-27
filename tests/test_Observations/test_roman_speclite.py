@@ -1,7 +1,7 @@
 import speclite.filters
 import os
-import sim_pipeline
-from sim_pipeline.Observations.roman_speclite import (
+import slsim
+from slsim.Observations.roman_speclite import (
     configure_roman_filters,
     filter_names,
 )
@@ -10,7 +10,7 @@ from sim_pipeline.Observations.roman_speclite import (
 def test_roman_speclite():
     configure_roman_filters()
 
-    path = os.path.dirname(sim_pipeline.__file__)
+    path = os.path.dirname(slsim.__file__)
     module_path, _ = os.path.split(path)
 
     save_path = os.path.join(module_path, "data/Filters/Roman/")

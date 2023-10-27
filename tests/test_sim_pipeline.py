@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Tests for `sim_pipeline` package."""
+"""Tests for `slsim` package."""
 
 import pytest
 
