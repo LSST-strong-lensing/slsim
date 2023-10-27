@@ -16,6 +16,6 @@ class GaussianMixtureModel(BaseModel):
     @model_validator(mode="after")
     def check_lengths(self):
         if len(self.means) != len(self.stds) or len(self.means) != len(self.weights):
-            raise ValueError("The lenghts of means, stds and weights must be equal")
+            raise ValueError("The lengths of means, stds and weights must be equal")
         return self
     
