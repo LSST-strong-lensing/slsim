@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, PositiveFloat, model_validator, field_validator
+from pydantic import BaseModel, PositiveFloat, model_validator, field_validator
 import numpy as np
 
 class GaussianMixtureModel(BaseModel):
