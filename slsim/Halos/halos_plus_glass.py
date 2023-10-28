@@ -1287,13 +1287,103 @@ def worker_run_total_mass_by_multiprocessing(
     nhalos = npipeline.halos
 
     nhalos_lens = HalosLens(
-            halos_list=nhalos,
-            sky_area=sky_area,
-            cosmo=cosmo,
-            samples_number=1,
-            z_source=z_max,
-            mass_sheet=False
-        )
+        halos_list=nhalos,
+        sky_area=sky_area,
+        cosmo=cosmo,
+        samples_number=1,
+        z_source=z_max,
+        mass_sheet=False
+    )
 
     total_mass = nhalos_lens.total_halo_mass()
     return total_mass
+
+
+def worker_run_kappa_mean_range(
+        iter_num,
+        sky_area,
+        m_min,
+        m_max,
+        z_max,
+        cosmo,
+        samples_number,
+        mass_sheet_correction,
+        RadialInterpolate,
+        diff
+):
+    npipeline = HalosSkyPyPipeline(
+        sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max
+    )
+    nhalos = npipeline.halos
+    if mass_sheet_correction:
+        mass_sheet_correction_list = npipeline.mass_sheet_correction
+        nhalos_lens = HalosLens(
+            halos_list=nhalos,
+            mass_correction_list=mass_sheet_correction_list,
+            sky_area=sky_area,
+            cosmo=cosmo,
+            samples_number=samples_number,
+            z_source=z_max,
+            RadialInterpolate=RadialInterpolate
+        )
+    else:
+        nhalos_lens = HalosLens(
+            halos_list=nhalos,
+            sky_area=sky_area,
+            cosmo=cosmo,
+            samples_number=samples_number,
+            mass_sheet=False,
+            z_source=z_max
+        )
+    value = (
+        nhalos_lens.get_kappa_mean_range(diff=diff)
+    )
+    value_distribution = np.array(value)
+
+    mean_kappa = value_distribution[:, 0]
+    two_sigma = value_distribution[:, 1]
+
+    return mean_kappa, two_sigma
+
+
+def run_kappa_mean_range_by_multiprocessing(
+        n_iterations=1,
+        sky_area=0.0001,
+        samples_number=1500,
+        cosmo=None,
+        m_min=None,
+        m_max=None,
+        z_max=None,
+        mass_sheet_correction=True,
+        RadialInterpolate=False,
+        diff=1.0,
+):
+    if cosmo is None:
+        warnings.warn(
+            "No cosmology provided, instead uses astropy.cosmology default cosmology"
+        )
+        import astropy.cosmology
+        cosmo = astropy.cosmology.default_cosmology.get()
+    mean_kappa_total = []
+    two_sigma_total = []
+
+    start_time = time.time()  # Note the start time
+
+    args = [
+        (i, sky_area, m_min, m_max, z_max, cosmo, samples_number, mass_sheet_correction, RadialInterpolate,diff)
+        for i in range(n_iterations)
+    ]
+
+    # Use multiprocessing
+    with get_context("spawn").Pool() as pool:
+        results = pool.starmap(worker_run_kappa_mean_range, args)
+
+    for mean_kappa, two_sigma in results:
+        mean_kappa_total.extend(mean_kappa)
+        two_sigma_total.extend(two_sigma)
+
+    end_time = time.time()  # Note the end time
+    print(
+        f"The {n_iterations} halo-lists took {(end_time - start_time)} seconds to run"
+    )
+    return mean_kappa_total, two_sigma_total

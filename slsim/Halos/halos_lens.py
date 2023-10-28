@@ -2058,3 +2058,34 @@ class HalosLens(object):
             dV = dV_dz * ((5 - 0) / len(z))
             total_mass = np.sum(dV * self.cosmo.critical_density(z).to_value("Msun/Mpc3"))
         return total_mass  # In Msun
+
+    def get_kappa_mean_range(
+            self, diff=1.0, diff_method="square"
+    ):
+        kappa_gamma_distribution = np.empty(
+            (self.samples_number, 2)
+        )
+
+        loop = range(self.samples_number)
+        if self.samples_number > 999:
+            loop = tqdm(loop)
+
+        start_time = time.time()
+
+        for i in loop:
+            self.enhance_halos_table_random_pos()
+            kappa, _ = self.get_convergence_shear(
+                    gamma12=False, diff=diff, diff_method=diff_method
+                )
+            kappa_gamma_distribution[i] = [kappa, 0]
+
+        if self.samples_number > 999:
+            elapsed_time = time.time() - start_time
+            print(
+                f"For this Halos list, elapsed time for computing weak-lensing maps: {elapsed_time} seconds"
+            )
+        kappa_values = kappa_gamma_distribution[:, 0]
+        kappa_mean = np.mean(kappa_values)
+        kappa_std = np.std(kappa_values)
+        kappa_2sigma = 2*kappa_std
+        return kappa_mean, kappa_2sigma
