@@ -857,6 +857,7 @@ def worker_certain_redshift_lensext_kde(
             cosmo=cosmo,
             samples_number=samples_number,
             z_source=z_max,
+            mass_sheet=True,
             RadialInterpolate=RadialInterpolate
         )
     else:

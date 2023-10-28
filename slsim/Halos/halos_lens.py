@@ -1,4 +1,5 @@
 import numpy as np
+import astropy.units as u
 from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 import warnings
@@ -105,6 +106,19 @@ def concentration_from_mass(z, mass, A=75.4, d=-0.422, m=-0.089):
 
 
 def compute_kappa(args):
+    """
+    Helper function to compute convergence for a given set of arguments.
+
+    Parameters
+    ----------
+    args : tuple
+        A tuple containing parameters needed to compute the convergence for a specific (i, j) point.
+
+    Returns
+    -------
+    i, j, kappa : tuple
+        Returns the indices (i, j) and the computed convergence value or None if the point lies outside the defined sky area.
+    """
     i, j, X, Y, mask, instance, kwargs, diff, diff_method, lens_model, zdzs = args
     if mask[i, j]:
         return i, j, instance.xy_convergence(
@@ -1331,7 +1345,7 @@ class HalosLens(object):
 
         Notes
         -----
-        The function implements the following formulae:
+        The function implements the following formula:
 
         .. math::
             1 - \kappa_{\text{ext}} = \frac{(1-\kappa_{\text{od}})(1-\kappa_{\text{os}})}{1-\kappa_{\text{ds}}}
@@ -1467,6 +1481,44 @@ class HalosLens(object):
         return distributions
 
     def compute_various_kappa_gamma_values_new(self, zd, zs):
+        r"""
+        Computes various convergence (kappa) and shear (gamma) values for given deflector and source redshifts.
+
+        This function extracts the lens model and its keyword arguments for different redshift combinations
+        ('od', 'os', and 'ds'). It then computes the convergence and shear values for each of these combinations.
+
+        Parameters
+        ----------
+        zd : float
+            The deflector redshift.
+        zs : float
+            The source redshift.
+
+        Returns
+        -------
+        tuple
+            A tuple containing:
+                - A tuple of computed values for kappa and gamma for the different redshift combinations and the
+                  external convergence and shear.
+                - A tuple containing the lens model and its keyword arguments for the 'os' redshift combination.
+
+        Notes
+        -----
+        This function is utilized by the `self.get_alot_distib_()` method. The mathematical formulations behind
+        the calculations, especially for `kext` and `gext`, can be referenced from the documentation of
+        `get_kext_gext_values`, is applied with the line of sight non-linear correction.
+
+        The function implements the following formulae for the external convergence and shear with LOS correction:
+
+        .. math::
+            1 - \kappa_{\text{ext}} = \frac{(1-\kappa_{\text{od}})(1-\kappa_{\text{os}})}{1-\kappa_{\text{ds}}}
+
+        and
+
+        .. math::
+            \gamma_{\text{ext}} = \sqrt{(\gamma_{\text{od}1}+\gamma_{\text{os}1}-\gamma_{\text{ds}1})^2+(\gamma_{\text{od}2}+\gamma_{\text{os}2}-\gamma_{\text{ds}2})^2}
+
+        """
         # Obtain the lens data for each redshift using the get_lens_data_by_redshift function
         lens_data = self.get_lens_data_by_redshift(zd, zs)
 
@@ -1606,7 +1658,39 @@ class HalosLens(object):
             lens_model=None,
             zdzs=None
     ):
-        """
+        r"""
+        Computes the convergence (kappa) at given (x, y) coordinates using either the hessian of the lens model or the
+        hessian based on redshifts z1 and z2 (if provided).
+
+        Parameters
+        ----------
+        x : float
+            x-coordinate.
+        y : float
+            y-coordinate.
+        diff : float, optional
+            The differentiation value used for computing the hessian. Default is 1e-7.
+        diff_method : str, optional
+            The method to use for differentiation when computing the hessian. Default is "square".
+        kwargs : dict, optional
+            Keyword arguments for the lens model.
+        lens_model : lenstronomy.LensModel instance, optional
+            The lens model to use. If not provided, the function will utilize the lens model from the class instance.
+        zdzs : tuple of float, optional
+            A tuple containing two redshift values (z1, z2). If provided, the hessian will be computed based on these
+            redshifts.
+
+        Returns
+        -------
+        kappa : float
+            The computed convergence value at the given (x, y) coordinates.
+
+        Notes
+        -----
+        The convergence, :math:`\kappa`, is computed using the hessian of the lens model as:
+
+        .. math::
+            \kappa = \frac{1}{2} (f_{xx} + f_{yy})
         """
         if zdzs is not None:
             f_xx, _, _, f_yy = lens_model.hessian_z1z2(
@@ -1627,6 +1711,7 @@ class HalosLens(object):
 
     def plot_convergence(self,
                          diff=0.0000001,
+                         num_points=500,
                          diff_method="square",
                          kwargs=None,
                          lens_model=None,
@@ -1635,65 +1720,102 @@ class HalosLens(object):
                          radial_interpolate=None,
                          enhance_pos=True,
                          ):
+        r"""
+        Plots the convergence (:math:`\kappa`) across the lensed sky area.
+
+        Parameters
+        ----------
+        diff : float, optional
+            The differentiation value used for computing the hessian. Default is 1e-7.
+        num_points : int, optional
+            Number of points along each axis for which convergence is computed. Default is 500.
+        diff_method : str, optional
+            The method to use for differentiation when computing the hessian. Default is "square".
+        kwargs : dict, optional
+            Keyword arguments for the lens model. If not provided, the halos lens kwargs of the instance are used.
+        lens_model : LensModel instance, optional
+            The lens model to use. If not provided, the lens model from the class instance is utilized.
+        zdzs : tuple of float, optional
+            A tuple containing two redshift values (z1, z2). If provided, the hessian will be computed based on these redshifts.
+        mass_sheet : bool, optional
+            Whether to utilize a mass sheet for the plot. If set, it will temporarily overwrite the instance's mass sheet.
+        radial_interpolate : bool, optional
+            If set along with `mass_sheet=True`, this will temporarily overwrite the instance's radial interpolate setting.
+        enhance_pos : bool, optional
+            Enhances halo positions randomly after plotting. Default is True.
+
+        Returns
+        -------
+        None
+            The function will display a plot of the computed convergence with plot.
+
+        Notes
+        -----
+        The function computes the convergence for a grid defined by `num_points` and plots the result using matplotlib.
+        The computed sky area is determined by the instance's sky area, converted from square degrees to arcseconds.
+        Overlaying on the convergence plot are positions of halos represented by yellow 'x' markers.
+
+        The computation is parallelized for efficiency, using the number of available CPU cores.
+        Temporary changes made to the instance (like `mass_sheet` and `radial_interpolate`) are reverted at the end of the function.
+        """
         import matplotlib.pyplot as plt
         from multiprocessing import Pool, cpu_count
 
         original_mass_sheet = self.mass_sheet
         original_radial_interpolate = self.radial_interpolate
         radial = False
-        if mass_sheet is not None:
-            self.mass_sheet = mass_sheet
-            if mass_sheet is True:
-                if radial_interpolate is not None:
-                    self.radial_interpolate = radial_interpolate
-                    radial = True
 
-        if kwargs is None:
-            kwargs = self.get_halos_lens_kwargs()
-        if lens_model is None:
-            lens_model = self.lens_model
+        try:
+            if mass_sheet is not None:
+                self.mass_sheet = mass_sheet
+                if mass_sheet is True:
+                    if radial_interpolate is not None:
+                        self.radial_interpolate = radial_interpolate
+                        radial = True
 
-        radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
+            if kwargs is None:
+                kwargs = self.get_halos_lens_kwargs()
+            if lens_model is None:
+                lens_model = self.lens_model
 
-        num_points = 500  # number of points along one dimension
-        # TODO: make this as an input parameter
-        x = np.linspace(-radius_arcsec, radius_arcsec, num_points)
-        y = np.linspace(-radius_arcsec, radius_arcsec, num_points)
-        X, Y = np.meshgrid(x, y)
-        mask = X ** 2 + Y ** 2 <= radius_arcsec ** 2
+            radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
 
-        kappa_values = np.zeros_like(X)
-        args = [(i, j, X, Y, mask, self, kwargs, diff, diff_method, lens_model, zdzs)
-                for i in range(num_points) for j in range(num_points)]
+            x = np.linspace(-radius_arcsec, radius_arcsec, num_points)
+            y = np.linspace(-radius_arcsec, radius_arcsec, num_points)
+            X, Y = np.meshgrid(x, y)
+            mask = X ** 2 + Y ** 2 <= radius_arcsec ** 2
 
-        with Pool(cpu_count()) as p:
-            results = p.map(compute_kappa, args)
+            kappa_values = np.zeros_like(X)
+            args = [(i, j, X, Y, mask, self, kwargs, diff, diff_method, lens_model, zdzs)
+                    for i in range(num_points) for j in range(num_points)]
 
-        # Gather the results
-        for i, j, value in results:
-            if value is not None:
-                kappa_values[i, j] = value
+            with Pool(cpu_count()) as p:
+                results = p.map(compute_kappa, args)
 
-        plt.imshow(kappa_values, extent=[-radius_arcsec, radius_arcsec, -radius_arcsec, radius_arcsec])
-        plt.colorbar(label=r'$\kappa$')
+            for i, j, value in results:
+                if value is not None:
+                    kappa_values[i, j] = value
 
-        # Plot halos
-        halos_x = [k.get('center_x', None) for k in kwargs]
-        halos_y = [-k.get('center_y') if k.get('center_y') is not None else None for k in kwargs]
-        # do not know why, but seems y should be -y here to match the kappa plot
+            plt.imshow(kappa_values, extent=[-radius_arcsec, radius_arcsec, -radius_arcsec, radius_arcsec])
+            plt.colorbar(label=r'$\kappa$')
 
-        plt.scatter(halos_x, halos_y, color='yellow', marker='x', label='Halos')
-        plt.title(f'Convergence Plot,radius is {radius_arcsec} arcsec')
-        plt.xlabel('x-coordinate (arcsec)')
-        plt.ylabel('y-coordinate (arcsec)')
-        plt.legend()
-        plt.show()
+            halos_x = [k.get('center_x', None) for k in kwargs]
+            halos_y = [-k.get('center_y') if k.get('center_y') is not None else None for k in kwargs]
+            # do not know why, but seems y should be -y here to match the kappa plot
 
-        self.mass_sheet = original_mass_sheet
-        if radial is True:
-            self.radial_interpolate = original_radial_interpolate
-        if enhance_pos:
-            self.enhance_halos_table_random_pos()
+            plt.scatter(halos_x, halos_y, color='yellow', marker='x', label='Halos')
+            plt.title(f'Convergence Plot, radius is {radius_arcsec} arcsec')
+            plt.xlabel('x-coordinate (arcsec)')
+            plt.ylabel('y-coordinate (arcsec)')
+            plt.legend()
+            plt.show()
+
+        finally:
+            self.mass_sheet = original_mass_sheet
+            if radial is True:
+                self.radial_interpolate = original_radial_interpolate
+            if enhance_pos:
+                self.enhance_halos_table_random_pos()
 
     def azimuthal_average_kappa_dict(self,
                                      diff=0.0000001,
@@ -1701,6 +1823,33 @@ class HalosLens(object):
                                      kwargs=None,
                                      lens_model=None,
                                      zdzs=None):
+        r"""
+        Computes the azimuthal average of convergence (:math:`\kappa`) values over a set of radii.
+
+        Parameters
+        ----------
+        diff : float, optional
+            The differentiation value used in computing convergence. Default is 1e-7.
+        diff_method : str, optional
+            The method used for differentiation in convergence computation. Default is "square".
+        kwargs : dict, optional
+            Keyword arguments for the lens model. If not provided, the halos lens kwargs of the instance are used.
+        lens_model : LensModel instance, optional
+            The lens model to use. If not provided, the lens model from the class instance is utilized.
+        zdzs : tuple of float, optional
+            A tuple containing two redshift values (z1, z2). If provided, convergence will be computed based on these redshifts.
+
+        Returns
+        -------
+        all_kappa_dicts : list of dict
+            A list of dictionaries. Each dictionary maps a radius (rounded to 4 decimal places) to its azimuthally averaged convergence value.
+
+        Notes
+        -----
+        The function calculates convergence values for a series of radii, taken as a linear space over the entire sky area (converted to arcseconds). For each radius, a series of x-values are considered and the convergence is computed for two y-values (using a circle's equation).
+
+        After computation, the results are averaged and stored in a dictionary, which is then added to a list that encompasses all sample runs.
+        """
         radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
         radii = np.linspace(0, radius_arcsec, 25)
 
@@ -1734,7 +1883,21 @@ class HalosLens(object):
         return all_kappa_dicts
 
     def compute_azimuthal_kappa_in_bins(self):
-        bins = np.arange(0, 5.025, 0.05)
+        r"""
+        Computes the azimuthal average of convergence values binned by redshift.
+
+        Returns
+        -------
+        all_kappa_dicts : list of dict
+            A list of dictionaries. Each dictionary maps a bin center redshift to its
+            corresponding azimuthally averaged convergence value or 0 if no halos are present in the bin.
+
+        Notes
+        -----
+        The function is designed for calculating the azimuthal mass sheet value.
+        """
+
+        bins = np.arange(0, 5.025, 0.05) #todo: different zd,zs
         bin_centers = [round((z1 + z2) / 2, 3) for z1, z2 in zip(bins[:-1], bins[1:])]
         all_kappa_dicts = []
         for _ in range(self.samples_number):
@@ -1767,6 +1930,42 @@ class HalosLens(object):
                                  kwargs=None,
                                  lens_model=None,
                                  zdzs=None):
+        r"""
+        Compares and plots the convergence for different configurations of the mass sheet and radial
+        interpolation parameters.
+
+        This function invokes the `plot_convergence` method three times, with different
+        configurations for the `mass_sheet` and `radial_interpolate` arguments,
+        allowing users to visually compare the effects of these configurations on the convergence plot.
+
+        Parameters
+        ----------
+        diff : float, optional
+            The differentiation value used in computing convergence. Default is 1e-7.
+        diff_method : str, optional
+            The method used for differentiation in convergence computation. Default is "square".
+        kwargs : dict, optional
+            Keyword arguments for the lens model. If not provided,
+            the lens model parameters from the class instance are used.
+        lens_model : LensModel instance, optional
+            The lens model to use. If not provided, the lens model from the class instance is utilized.
+        zdzs : tuple of float, optional
+            A tuple containing two redshift values (z1, z2). If provided,
+            convergence will be computed based on these redshifts.
+
+        Notes
+        -----
+        The configurations for the convergence plots are as follows:
+
+        1. `mass_sheet` set to `False`.
+        2. `mass_sheet` set to `True` and `radial_interpolate` set to `True`.
+        3. `mass_sheet` set to `True` and `radial_interpolate` set to `False`.
+
+        In all cases, the `enhance_pos` parameter for `plot_convergence` is set to `False`.
+
+        This function is currently under development!
+        """
+
         # TODO：debug, this is currently not working as expected
         print('mass_sheet=False')
         # mass_sheet=False
@@ -1804,5 +2003,58 @@ class HalosLens(object):
                               )
 
     def total_halo_mass(self):
+        """
+        Calculates the total mass of all halos.
+
+        This function sums up all the masses from the mass list associated with the class instance to give the total mass of all halos.
+
+        Returns
+        -------
+        float
+            Total mass of all halos.
+
+        Notes
+        -----
+        The total mass is computed by summing up all the entries in the `mass_list` attribute of the class instance.
+        """
+
         mass_list = self.mass_list
         return np.sum(mass_list)
+
+    def total_critical_mass(self, method='differential_comoving_volume'):
+        """
+        Computes the total critical mass within a given sky area up to a redshift of 5
+        using either the total comoving volume or differential comoving volume method.
+
+        The function computes the critical mass using either the 'comoving_volume'
+        method or the 'differential_comoving_volume' method.
+
+        Parameters
+        ----------
+        method : str, optional
+            The method to use for computing the critical mass. Options are:
+            - 'comoving_volume': Computes the total critical mass using the comoving volume method.
+            - 'differential_comoving_volume': Computes the total critical mass using the differential comoving volume method.
+            Default is 'differential_comoving_volume'.
+
+        Returns
+        -------
+        float
+            The computed total critical mass up to redshift 5.
+
+        """
+        v_ratio = self.sky_area / 41252.96
+
+        z = np.linspace(0, 5, 2000)
+        total_mass = 0.0
+        if method == 'comoving_volume':
+            for i in range(1, len(z)):
+                critical_density_z = self.cosmo.critical_density(z[i]).to('Msun/Mpc^3').value
+                # Compute differential comoving volume for this redshift slice
+                dVc = ((self.cosmo.comoving_volume(z[i]) - self.cosmo.comoving_volume(z[i - 1])) * v_ratio).value
+                total_mass += dVc * critical_density_z
+        if method == 'differential_comoving_volume':
+            dV_dz = (self.cosmo.differential_comoving_volume(z) * (self.sky_area * (u.deg ** 2))).to_value("Mpc3")
+            dV = dV_dz * ((5 - 0) / len(z))
+            total_mass = np.sum(dV * self.cosmo.critical_density(z).to_value("Msun/Mpc3"))
+        return total_mass  # In Msun
