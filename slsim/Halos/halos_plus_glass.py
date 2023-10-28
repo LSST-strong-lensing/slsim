@@ -1335,14 +1335,9 @@ def worker_run_kappa_mean_range(
             mass_sheet=False,
             z_source=z_max
         )
-    value = (
+    mean_kappa, two_sigma = (
         nhalos_lens.get_kappa_mean_range(diff=diff)
     )
-    value_distribution = np.array(value)
-
-    mean_kappa = value_distribution[:, 0]
-    two_sigma = value_distribution[:, 1]
-
     return mean_kappa, two_sigma
 
 
@@ -1370,7 +1365,7 @@ def run_kappa_mean_range_by_multiprocessing(
     start_time = time.time()  # Note the start time
 
     args = [
-        (i, sky_area, m_min, m_max, z_max, cosmo, samples_number, mass_sheet_correction, RadialInterpolate,diff)
+        (i, sky_area, m_min, m_max, z_max, cosmo, samples_number, mass_sheet_correction, RadialInterpolate, diff)
         for i in range(n_iterations)
     ]
 
@@ -1379,8 +1374,8 @@ def run_kappa_mean_range_by_multiprocessing(
         results = pool.starmap(worker_run_kappa_mean_range, args)
 
     for mean_kappa, two_sigma in results:
-        mean_kappa_total.extend(mean_kappa)
-        two_sigma_total.extend(two_sigma)
+        mean_kappa_total.append(mean_kappa)
+        two_sigma_total.append(two_sigma)
 
     end_time = time.time()  # Note the end time
     print(
