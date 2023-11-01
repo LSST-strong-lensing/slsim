@@ -140,7 +140,7 @@ Before your pull request can be merged into the codebase, it will be reviewed by
 General Guidelines
 ^^^^^^^^^^^^^^^^^^
 
-- slsim is compatible with Python>=3.7 (see `setup.cfg <https://github.com/LSST-strong-lensing/slsim/blob/main/setup.cfg>`_). slsim *does not* support backwards compatibility with Python 2.x; `six`, `__future__` and `2to3` should not be used.
+- slsim is compatible with Python>=3.7 (see `setup.cfg <https://github.com/herjy/slsim/blob/main/setup.cfg>`_). slsim *does not* support backwards compatibility with Python 2.x; `six`, `__future__` and `2to3` should not be used.
 - All contributions should follow the `PEP8 Style Guide for Python Code <https://www.python.org/dev/peps/pep-0008/>`_. We recommend using `flake8 <https://flake8.pycqa.org/>`__ to check your code for PEP8 compliance.
 - Importing slsim should only depend on having `NumPy <https://www.numpy.org>`_, `SciPy <https://www.scipy.org/>`_ and `Astropy <https://www.astropy.org/>`__ installed.
 - Code will be grouped into submodules based on broad science areas.
