@@ -1,7 +1,10 @@
 import numpy as np
 from slsim.Pipelines.halos_pipeline import HalosSkyPyPipeline
 from slsim.Halos.halos_lens import HalosLens
+from slsim.Halos.halos import deprecated_redshift_mass_sheet_correction_array_from_comoving_density, \
+    deprecated_mass_first_moment_at_redshift
 from astropy.cosmology import FlatLambdaCDM
+import astropy.units as u
 from tqdm.notebook import tqdm
 import time
 from scipy import stats
@@ -1173,59 +1176,6 @@ def worker_azimuthal_average(
     return azimuthal_dict
 
 
-def run_compute_azimuthal_kappa_in_bins_by_multiprocessing(
-        n_iterations=1,
-        sky_area=0.0001,
-        samples_number=1,
-        cosmo=None,
-        m_min=None,
-        m_max=None,
-        z_max=None,
-        mass_sheet_correction=True
-):
-    if cosmo is None:
-        warnings.warn(
-            "No cosmology provided, instead uses astropy.cosmology default cosmology"
-        )
-        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-    if z_max is None:
-        z_max = 5.0
-        warnings.warn(
-            "No maximum redshift provided, instead uses 5.0"
-        )
-
-    azimuthal_kappa_dict_tot = []
-
-    start_time = time.time()  # Note the start time
-
-    args = [
-        (
-            i,
-            sky_area,
-            m_min,
-            m_max,
-            z_max,
-            cosmo,
-            samples_number,
-            mass_sheet_correction
-        )
-        for i in range(n_iterations)
-    ]
-
-    # Use multiprocessing
-    with get_context("spawn").Pool() as pool:
-        results = pool.starmap(run_total_mass_by_multiprocessing, args)
-        azimuthal_kappa_dict_tot.extend(results)
-
-    azimuthal_kappa_dict_tot = [item for sublist in azimuthal_kappa_dict_tot for item in sublist]
-
-    end_time = time.time()  # Note the end time
-    print(
-        f"The {n_iterations} halo-lists took {(end_time - start_time)} seconds to run"
-    )
-    return azimuthal_kappa_dict_tot
-
-
 def run_total_mass_by_multiprocessing(
         n_iterations=1,
         sky_area=0.0001,
@@ -1382,3 +1332,47 @@ def run_kappa_mean_range_by_multiprocessing(
         f"The {n_iterations} halo-lists took {(end_time - start_time)} seconds to run"
     )
     return mean_kappa_total, two_sigma_total
+
+
+def mean_mass(sky_area, cosmo, m_min=None, m_max=None):
+    redshift_list = np.linspace(0.0, 5.0, 100)
+    # Notice sky_Area here should have astropy unit (such as deg**2)
+    z = deprecated_redshift_mass_sheet_correction_array_from_comoving_density(
+        redshift_list=redshift_list,
+        sky_area=sky_area,
+        cosmology=cosmo,
+        m_min=m_min,
+        m_max=m_max,
+        resolution=None,
+        wavenumber=None,
+        collapse_function=None,
+        power_spectrum=None,
+        params=None)
+    mass = deprecated_mass_first_moment_at_redshift(
+        z,
+        m_min=m_min,
+        m_max=m_max,
+        resolution=None,
+        wavenumber=None,
+        power_spectrum=None,
+        cosmology=cosmo,
+        collapse_function=None,
+        params=None)
+    return np.sum(mass)
+
+
+def compute_sigma_m_ratio_for_sky_area(cosmo, n_iterations=200, m_min=None, m_max=None):
+    sky_areas = np.arange(0.0001, 0.00105, 0.00005)
+    ratios = {}
+
+    for sky_area in sky_areas:
+        total_masses = run_total_mass_by_multiprocessing(n_iterations=n_iterations, sky_area=sky_area, cosmo=cosmo,
+                                                         m_min=m_min, m_max=m_max)
+        sigma_m = np.std(total_masses)
+        sk = sky_area * u.deg ** 2
+        m_mean = mean_mass(sky_area=sk, cosmo=cosmo, m_min=m_min, m_max=m_max)
+        ratio = sigma_m / m_mean
+
+        ratios[sky_area] = ratio
+
+    return ratios

@@ -1,3 +1,4 @@
+from lenstronomy.Util.util import make_grid
 import numpy as np
 import astropy.units as u
 from lenstronomy.LensModel.lens_model import LensModel
@@ -1715,7 +1716,6 @@ class HalosLens(object):
                          diff_method="square",
                          kwargs=None,
                          lens_model=None,
-                         zdzs=None,
                          mass_sheet=None,
                          radial_interpolate=None,
                          enhance_pos=True,
@@ -1759,7 +1759,6 @@ class HalosLens(object):
         Temporary changes made to the instance (like `mass_sheet` and `radial_interpolate`) are reverted at the end of the function.
         """
         import matplotlib.pyplot as plt
-        from multiprocessing import Pool, cpu_count
 
         original_mass_sheet = self.mass_sheet
         original_radial_interpolate = self.radial_interpolate
@@ -1779,30 +1778,26 @@ class HalosLens(object):
                 lens_model = self.lens_model
 
             radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
-
             x = np.linspace(-radius_arcsec, radius_arcsec, num_points)
             y = np.linspace(-radius_arcsec, radius_arcsec, num_points)
             X, Y = np.meshgrid(x, y)
-            mask = X ** 2 + Y ** 2 <= radius_arcsec ** 2
+            mask_2D = X ** 2 + Y ** 2 <= radius_arcsec ** 2
+            mask_1D = mask_2D.ravel()
 
-            kappa_values = np.zeros_like(X)
-            args = [(i, j, X, Y, mask, self, kwargs, diff, diff_method, lens_model, zdzs)
-                    for i in range(num_points) for j in range(num_points)]
+            # Use lenstronomy utility to make grid
+            x_grid, y_grid = make_grid(numPix=num_points, deltapix=2 * radius_arcsec / num_points)
+            x_grid, y_grid = x_grid[mask_1D], y_grid[mask_1D]
 
-            with Pool(cpu_count()) as p:
-                results = p.map(compute_kappa, args)
+            # Calculate the kappa values
+            kappa_values = lens_model.kappa(x_grid, y_grid, kwargs, diff=diff, diff_method=diff_method)
+            kappa_image = np.ones((num_points, num_points)) * np.nan
+            kappa_image[mask_2D] = kappa_values
 
-            for i, j, value in results:
-                if value is not None:
-                    kappa_values[i, j] = value
-
-            plt.imshow(kappa_values, extent=[-radius_arcsec, radius_arcsec, -radius_arcsec, radius_arcsec])
+            plt.imshow(kappa_image, extent=[-radius_arcsec, radius_arcsec, -radius_arcsec, radius_arcsec])
             plt.colorbar(label=r'$\kappa$')
 
             halos_x = [k.get('center_x', None) for k in kwargs]
             halos_y = [-k.get('center_y') if k.get('center_y') is not None else None for k in kwargs]
-            # do not know why, but seems y should be -y here to match the kappa plot
-
             plt.scatter(halos_x, halos_y, color='yellow', marker='x', label='Halos')
             plt.title(f'Convergence Plot, radius is {radius_arcsec} arcsec')
             plt.xlabel('x-coordinate (arcsec)')
@@ -1897,7 +1892,7 @@ class HalosLens(object):
         The function is designed for calculating the azimuthal mass sheet value.
         """
 
-        bins = np.arange(0, 5.025, 0.05) #todo: different zd,zs
+        bins = np.arange(0, 5.025, 0.05)  # todo: different zd,zs
         bin_centers = [round((z1 + z2) / 2, 3) for z1, z2 in zip(bins[:-1], bins[1:])]
         all_kappa_dicts = []
         for _ in range(self.samples_number):
@@ -2075,8 +2070,8 @@ class HalosLens(object):
         for i in loop:
             self.enhance_halos_table_random_pos()
             kappa, _ = self.get_convergence_shear(
-                    gamma12=False, diff=diff, diff_method=diff_method
-                )
+                gamma12=False, diff=diff, diff_method=diff_method
+            )
             kappa_gamma_distribution[i] = [kappa, 0]
 
         if self.samples_number > 999:
@@ -2087,5 +2082,5 @@ class HalosLens(object):
         kappa_values = kappa_gamma_distribution[:, 0]
         kappa_mean = np.mean(kappa_values)
         kappa_std = np.std(kappa_values)
-        kappa_2sigma = 2*kappa_std
+        kappa_2sigma = 2 * kappa_std
         return kappa_mean, kappa_2sigma
