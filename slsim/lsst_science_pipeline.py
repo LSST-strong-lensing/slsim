@@ -407,8 +407,19 @@ def add_object(dp0_image, objects, calibFluxRadius=12):
 
 
 def cutout_image_psf_kernel(
+<<<<<<< HEAD
     dp0_image, lens_class, band, mag_zero_point, delta_pix, num_pix,
     transform_pix2angle, calibFluxRadius=12
+=======
+    dp0_image,
+    lens_class,
+    band,
+    mag_zero_point,
+    delta_pix,
+    num_pix,
+    transform_pix2angle,
+    calibFluxRadius=12,
+>>>>>>> 8d8615b0317de7bfdf03664b64f790ef7c843e02
 ):
     """This function extracts psf kernels from the dp0 cutout image at point source
     image positions and deflector position. In the dp0.2 data, psf kernel vary with
@@ -432,7 +443,12 @@ def cutout_image_psf_kernel(
         band=band,
         mag_zero_point=mag_zero_point,
         delta_pix=delta_pix,
+<<<<<<< HEAD
         num_pix=num_pix,transform_pix2angle=transform_pix2angle
+=======
+        num_pix=num_pix,
+        transform_pix2angle=transform_pix2angle,
+>>>>>>> 8d8615b0317de7bfdf03664b64f790ef7c843e02
     )
     # get the property of cutout image
     bbox = dp0_image.getBBox()
