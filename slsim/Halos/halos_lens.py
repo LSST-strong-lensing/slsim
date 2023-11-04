@@ -9,6 +9,7 @@ import math
 import time
 import multiprocessing
 from collections.abc import Iterable
+import matplotlib.pyplot as plt
 
 
 def deg2_to_cone_angle(solid_angle_deg2):
@@ -1710,6 +1711,47 @@ class HalosLens(object):
 
         return kappa
 
+    def compute_kappa(self,
+                      diff=0.0000001,
+                      num_points=500,
+                      diff_method="square",
+                      kwargs=None,
+                      lens_model=None,
+                      mass_sheet=None,
+                      radial_interpolate=None,
+                      enhance_pos=False,
+                      ):
+        if mass_sheet is not None:
+            self.mass_sheet = mass_sheet
+            if mass_sheet is True:
+                if radial_interpolate is not None:
+                    self.radial_interpolate = radial_interpolate
+                    radial = True
+
+        if kwargs is None:
+            kwargs = self.get_halos_lens_kwargs()
+        if lens_model is None:
+            lens_model = self.lens_model
+
+        radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
+        x = np.linspace(-radius_arcsec, radius_arcsec, num_points)
+        y = np.linspace(-radius_arcsec, radius_arcsec, num_points)
+        X, Y = np.meshgrid(x, y)
+        mask_2D = X ** 2 + Y ** 2 <= radius_arcsec ** 2
+        mask_1D = mask_2D.ravel()
+
+        # Use lenstronomy utility to make grid
+        x_grid, y_grid = make_grid(numPix=num_points, deltapix=2 * radius_arcsec / num_points)
+        x_grid, y_grid = x_grid[mask_1D], y_grid[mask_1D]
+
+        # Calculate the kappa values
+        kappa_values = lens_model.kappa(x_grid, y_grid, kwargs, diff=diff, diff_method=diff_method)
+        kappa_image = np.ones((num_points, num_points)) * np.nan
+        kappa_image[mask_2D] = kappa_values
+        if enhance_pos:
+            self.enhance_halos_table_random_pos()
+        return kappa_image, kappa_values
+
     def plot_convergence(self,
                          diff=0.0000001,
                          num_points=500,
@@ -1763,35 +1805,17 @@ class HalosLens(object):
         original_mass_sheet = self.mass_sheet
         original_radial_interpolate = self.radial_interpolate
         radial = False
+        radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
 
         try:
-            if mass_sheet is not None:
-                self.mass_sheet = mass_sheet
-                if mass_sheet is True:
-                    if radial_interpolate is not None:
-                        self.radial_interpolate = radial_interpolate
-                        radial = True
-
-            if kwargs is None:
-                kwargs = self.get_halos_lens_kwargs()
-            if lens_model is None:
-                lens_model = self.lens_model
-
-            radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
-            x = np.linspace(-radius_arcsec, radius_arcsec, num_points)
-            y = np.linspace(-radius_arcsec, radius_arcsec, num_points)
-            X, Y = np.meshgrid(x, y)
-            mask_2D = X ** 2 + Y ** 2 <= radius_arcsec ** 2
-            mask_1D = mask_2D.ravel()
-
-            # Use lenstronomy utility to make grid
-            x_grid, y_grid = make_grid(numPix=num_points, deltapix=2 * radius_arcsec / num_points)
-            x_grid, y_grid = x_grid[mask_1D], y_grid[mask_1D]
-
-            # Calculate the kappa values
-            kappa_values = lens_model.kappa(x_grid, y_grid, kwargs, diff=diff, diff_method=diff_method)
-            kappa_image = np.ones((num_points, num_points)) * np.nan
-            kappa_image[mask_2D] = kappa_values
+            kappa_image, _ = self.compute_kappa(diff=diff,
+                                                num_points=num_points,
+                                                diff_method=diff_method,
+                                                kwargs=kwargs,
+                                                lens_model=lens_model,
+                                                mass_sheet=mass_sheet,
+                                                radial_interpolate=radial_interpolate,
+                                                enhance_pos=False, )
 
             plt.imshow(kappa_image, extent=[-radius_arcsec, radius_arcsec, -radius_arcsec, radius_arcsec])
             plt.colorbar(label=r'$\kappa$')
