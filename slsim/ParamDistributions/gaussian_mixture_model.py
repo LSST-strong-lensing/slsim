@@ -10,11 +10,11 @@ class GaussianMixtureModel:
     """
 
     @check_params
-    def __init__(self, means, stds, weights):
+    def __init__(self, means: list[float], stds: list[float], weights:list[float]):
         """
         The constructor for GaussianMixtureModel class. The default values are the
         means, standard deviations, and weights of the fits to the data in the table
-        2 of https://doi.org/10.1093/mnras/stac2235 and others. See "params.py" for
+        2 of https://doi.org/10.1093/mnras/stac2235 and others. See "_params" for
         defaults and validation logic.
 
         :param means: the mean values of the Gaussian components.
@@ -28,7 +28,8 @@ class GaussianMixtureModel:
         self.stds = stds
         self.weights = weights
 
-    def rvs(self, size):
+    @check_params
+    def rvs(self, size: int):
         """Generate random variables from the GMM distribution.
 
         :param size: The number of random variables to generate.

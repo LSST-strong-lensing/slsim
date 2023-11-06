@@ -83,36 +83,95 @@ def check_params(fn: Callable) -> Callable:
     "params.py" file.
     """
     fn_type = determine_fn_type(fn)
+    if fn_type == _FnType.STANDARD:
+        new_fn = standard_fn_wrapper(fn)
+    elif fn_type == _FnType.METHOD:
+        new_fn = method_fn_wrapper(fn)
+    elif fn_type == _FnType.CLASSMETHOD:
+        new_fn = standard_fn_wrapper(fn)
+ 
+    return new_fn
 
-    @wraps(init_fn)
-    def new_init_fn(obj: Any, *args, **kwargs) -> Any:
+def standard_fn_wrapper(fn: Callable) -> Callable:
+    """A wrapper for standard functions. This is used to parse the arguments to the
+    function and check that they are valid.
+    """
+    spec = inspect.getfullargspec(fn)
+    @wraps(fn)
+    def new_fn(*args, **kwargs) -> Any:
         # Get function argument names
         pargs = {}
         if args:
-            largs = getargspec(init_fn).args
+            largs = getargspec(fn).args
             for i in range(len(args)):
                 pargs[largs[i + 1]] = args[i]
         # Doing it this way ensures we still catch duplicate arguments
-        parsed_args = get_defaults(init_fn)(**pargs, **kwargs)
-        return init_fn(obj, **dict(parsed_args))
+        defaults = get_defaults(fn)
+        parsed_args = defaults(**pargs, **kwargs)
+        return fn(**dict(parsed_args))
 
-    return new_init_fn
+    return new_fn
+
+def method_fn_wrapper(fn: Callable) -> Callable:
+    @wraps(fn)
+    def new_fn(obj: Any, *args, **kwargs) -> Any:
+        # Get function argument names
+        pargs = {}
+        if args:
+            largs = getargspec(fn).args
+            for i in range(len(args)):
+                pargs[largs[i + 1]] = args[i]
+        # Doing it this way ensures we still catch duplicate arguments
+        defaults = get_defaults(fn)
+        parsed_args = defaults(**pargs, **kwargs)
+        return fn(obj, **dict(parsed_args))
+    return new_fn
 
 
-def get_defaults(init_fn: Callable) -> pydantic.BaseModel:
-    path = getsourcefile(init_fn)
-    obj_name = init_fn.__qualname__.split(".")[0]
-    start = path.rfind("slsim")
-    modpath = path[start:].split("/")
-    modpath = modpath[1:-1] + ["params"]
-    modpath = ".".join(["slsim"] + modpath)
-    # Unfortunately, there doesn't seem to be a better way of doing this.
+def get_defaults(fn: Callable) -> pydantic.BaseModel:
+    module_trace = inspect.getmodule(fn).__name__.split(".")
+    file_name = module_trace[-1]
+    parent_trace = module_trace[:-1]
+    parent_path = ".".join(parent_trace)
+    param_path = ".".join([parent_path, "_params"])
+    fn_qualname = fn.__qualname__
+    cache_name = parent_path + "." + fn_qualname
+    if cache_name in _defaults:
+        return _defaults[cache_name]
 
-    if modpath not in _defaults:
-        # Little optimization. We cache defaults so we don't have to reload them
-        # every time we construct a new object.
-        _defaults[modpath] = load_parameters(modpath, obj_name)
-    return _defaults[modpath]
+    try:
+        param_module = import_module(param_path)
+    except ModuleNotFoundError:
+        raise SlSimParameterException(
+            f'No default parameters found in module {".".join(parent_trace)},'\
+            ' but something in that module is trying to use the @check_params decorator'
+            )
+    try:
+        param_model_file = import_module(f'{param_path}.{file_name}')
+    except AttributeError:
+        raise SlSimParameterException(
+            f'No default parameters found for file "{file_name}" in module '\
+            f'{".".join(parent_trace)}, but something in that module is trying to use '\
+            'the @check_params decorator'
+            )
+
+    if fn.__name__ == "__init__":
+        expected_model_name = "_".join(fn_qualname.split(".")[:-1])
+    else:
+        expected_model_name = "_".join(fn_qualname.split("."))
+
+    try:
+        
+        parameter_model = getattr(param_model_file, expected_model_name)
+    except AttributeError:
+        raise SlSimParameterException("No default parameters found for function "\
+                                      f'"{fn_qualname}"')
+    if not issubclass(parameter_model, pydantic.BaseModel):
+        raise SlSimParameterException(
+            f'Defaults for "{fn_qualname}" are not in a pydantic model!'
+        )
+    _defaults[cache_name] = parameter_model
+    return _defaults[cache_name]
 
 
 def load_parameters(modpath: str, obj_name: str) -> pydantic.BaseModel:
