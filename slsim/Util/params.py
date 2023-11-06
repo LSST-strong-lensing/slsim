@@ -88,7 +88,7 @@ def check_params(fn: Callable) -> Callable:
         new_fn = method_fn_wrapper(fn)
     elif fn_type == _FnType.CLASSMETHOD:
         new_fn = standard_fn_wrapper(fn)
-
+ 
     return new_fn
 
 
@@ -97,8 +97,6 @@ def standard_fn_wrapper(fn: Callable) -> Callable:
 
     This is used to parse the arguments to the function and check that they are valid.
     """
-    spec = inspect.getfullargspec(fn)
-
     @wraps(fn)
     def new_fn(*args, **kwargs) -> Any:
         # Get function argument names
@@ -150,7 +148,7 @@ def get_defaults(fn: Callable) -> pydantic.BaseModel:
         return _defaults[cache_name]
 
     try:
-        param_module = import_module(param_path)
+        _ = import_module(param_path)
     except ModuleNotFoundError:
         raise SlSimParameterException(
             f'No default parameters found in module {".".join(parent_trace)},'
