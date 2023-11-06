@@ -1,4 +1,10 @@
-from pydantic import BaseModel, PositiveFloat, PositiveInt, model_validator, field_validator
+from pydantic import (
+    BaseModel,
+    PositiveFloat,
+    PositiveInt,
+    model_validator,
+    field_validator,
+)
 import numpy as np
 
 
@@ -23,6 +29,7 @@ class GaussianMixtureModel(BaseModel):
         if len(self.means) != len(self.stds) or len(self.means) != len(self.weights):
             raise ValueError("The lengths of means, stds and weights must be equal")
         return self
+
 
 class GaussianMixtureModel_rvs(BaseModel):
     size: PositiveInt

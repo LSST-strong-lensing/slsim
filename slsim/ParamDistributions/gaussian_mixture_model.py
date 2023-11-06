@@ -10,7 +10,7 @@ class GaussianMixtureModel:
     """
 
     @check_params
-    def __init__(self, means: list[float], stds: list[float], weights:list[float]):
+    def __init__(self, means: list[float], stds: list[float], weights: list[float]):
         """
         The constructor for GaussianMixtureModel class. The default values are the
         means, standard deviations, and weights of the fits to the data in the table

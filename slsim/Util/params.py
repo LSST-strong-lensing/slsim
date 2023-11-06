@@ -88,14 +88,17 @@ def check_params(fn: Callable) -> Callable:
         new_fn = method_fn_wrapper(fn)
     elif fn_type == _FnType.CLASSMETHOD:
         new_fn = standard_fn_wrapper(fn)
- 
+
     return new_fn
 
+
 def standard_fn_wrapper(fn: Callable) -> Callable:
-    """A wrapper for standard functions. This is used to parse the arguments to the
-    function and check that they are valid.
+    """A wrapper for standard functions.
+
+    This is used to parse the arguments to the function and check that they are valid.
     """
     spec = inspect.getfullargspec(fn)
+
     @wraps(fn)
     def new_fn(*args, **kwargs) -> Any:
         # Get function argument names
@@ -112,6 +115,7 @@ def standard_fn_wrapper(fn: Callable) -> Callable:
         return fn(**dict(parsed_args))
 
     return new_fn
+
 
 def method_fn_wrapper(fn: Callable) -> Callable:
     @wraps(fn)
@@ -130,6 +134,7 @@ def method_fn_wrapper(fn: Callable) -> Callable:
         defaults = get_defaults(fn)
         parsed_args = defaults(**parsed_args, **parsed_kwargs)
         return fn(obj, **dict(parsed_args))
+
     return new_fn
 
 
@@ -148,17 +153,17 @@ def get_defaults(fn: Callable) -> pydantic.BaseModel:
         param_module = import_module(param_path)
     except ModuleNotFoundError:
         raise SlSimParameterException(
-            f'No default parameters found in module {".".join(parent_trace)},'\
-            ' but something in that module is trying to use the @check_params decorator'
-            )
+            f'No default parameters found in module {".".join(parent_trace)},'
+            " but something in that module is trying to use the @check_params decorator"
+        )
     try:
-        param_model_file = import_module(f'{param_path}.{file_name}')
+        param_model_file = import_module(f"{param_path}.{file_name}")
     except AttributeError:
         raise SlSimParameterException(
-            f'No default parameters found for file "{file_name}" in module '\
-            f'{".".join(parent_trace)}, but something in that module is trying to use '\
-            'the @check_params decorator'
-            )
+            f'No default parameters found for file "{file_name}" in module '
+            f'{".".join(parent_trace)}, but something in that module is trying to use '
+            "the @check_params decorator"
+        )
 
     if fn.__name__ == "__init__":
         expected_model_name = "_".join(fn_qualname.split(".")[:-1])
@@ -166,11 +171,11 @@ def get_defaults(fn: Callable) -> pydantic.BaseModel:
         expected_model_name = "_".join(fn_qualname.split("."))
 
     try:
-        
         parameter_model = getattr(param_model_file, expected_model_name)
     except AttributeError:
-        raise SlSimParameterException("No default parameters found for function "\
-                                      f'"{fn_qualname}"')
+        raise SlSimParameterException(
+            "No default parameters found for function " f'"{fn_qualname}"'
+        )
     if not issubclass(parameter_model, pydantic.BaseModel):
         raise SlSimParameterException(
             f'Defaults for "{fn_qualname}" are not in a pydantic model!'
