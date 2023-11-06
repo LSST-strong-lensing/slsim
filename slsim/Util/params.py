@@ -88,7 +88,7 @@ def check_params(fn: Callable) -> Callable:
         new_fn = method_fn_wrapper(fn)
     elif fn_type == _FnType.CLASSMETHOD:
         new_fn = standard_fn_wrapper(fn)
- 
+
     return new_fn
 
 
@@ -97,6 +97,7 @@ def standard_fn_wrapper(fn: Callable) -> Callable:
 
     This is used to parse the arguments to the function and check that they are valid.
     """
+
     @wraps(fn)
     def new_fn(*args, **kwargs) -> Any:
         # Get function argument names
