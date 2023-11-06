@@ -6,8 +6,15 @@ from functools import wraps
 from inspect import getsourcefile, getargspec
 from importlib import import_module
 from typing import Callable, Any
+from enum import Enum
+import inspect
 import pydantic
 
+"""
+Set of routines for validating inputs to functions and classes. The elements of this
+module should never be imported directly. Instead, @check_params can be imported 
+directly from the Util module.
+"""
 
 class SlSimParameterException(Exception):
     pass
@@ -15,8 +22,56 @@ class SlSimParameterException(Exception):
 
 _defaults = {}
 
+class _FnType(Enum):
+    """
+    
+    Enum for the different types of functions we can have. This is used to determine
+    how to parse the arguments to the function.
+    
+    There are three possible cases:
+        1. The function is a standard function, defined outside a class
+        2. The function is a standard object method, 
+           taking "self" as the first parameter
+        3. The funtion is a class method (or staticmethod), not taking 
+           "self" as the first parameter
 
-def check_params(init_fn: Callable) -> Callable:
+    """
+
+    STANDARD = 0
+    METHOD = 1
+    CLASSMETHOD = 2
+
+def determine_fn_type(fn: Callable) -> _FnType:
+    """
+    Determine which of the three possible cases a function falls into. Cases
+    0 and 2 are actually functionally identical. Things only get spicy when we
+    have a "self" argument.
+
+    However the tricky thing is that decorators operate on functions and methods when
+    they are imported, not when they are used. This means "inspect.ismethod" will 
+    always return False, even if the function is a method.
+
+    We can get around this by checking if the parent of the function is a class. Then,
+    we check if the first argument of the function is "self". If both of these are true,
+    then the function is a method.
+    """
+    if not inspect.isfunction(fn):
+        raise TypeError("decorator @check_params can only be used on functions!")
+    qualified_obj_name = fn.__qualname__
+    qualified_obj_path = qualified_obj_name.split(".")
+    if len(qualified_obj_path) == 1:
+        # If the qualified name isn't split, this is a standard function not
+        # attached to a class
+        return _FnType.STANDARD
+    
+    spec = inspect.getfullargspec(fn)
+    if spec.args[0] == "self":
+        return _FnType.METHOD
+    else:
+        return _FnType.CLASSMETHOD
+
+
+def check_params(fn: Callable) -> Callable:
     """A decorator for enforcing checking of params in __init__ methods. This decorator
     will automatically load the default parameters for the class and check that the
     passed parameters are valid. It expeects a "params.py" file in the same folder as
@@ -27,12 +82,11 @@ def check_params(init_fn: Callable) -> Callable:
     __init__ fn. Developers only need to add @check_params above their __init__ method
     definition to enable this feature, then add their default parameters to the
     "params.py" file.
-    """
 
-    if not init_fn.__name__.startswith("__init__"):
-        raise SlSimParameterException(
-            "pcheck decorator can currently only be used" " with__init__ methods"
-        )
+    """
+    fn_type = determine_fn_type(fn)
+
+
 
     @wraps(init_fn)
     def new_init_fn(obj: Any, *args, **kwargs) -> Any:
