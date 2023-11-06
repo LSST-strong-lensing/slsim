@@ -16,40 +16,39 @@ module should never be imported directly. Instead, @check_params can be imported
 directly from the Util module.
 """
 
+
 class SlSimParameterException(Exception):
     pass
 
 
 _defaults = {}
 
+
 class _FnType(Enum):
-    """
-    
-    Enum for the different types of functions we can have. This is used to determine
+    """Enum for the different types of functions we can have. This is used to determine
     how to parse the arguments to the function.
-    
+
     There are three possible cases:
         1. The function is a standard function, defined outside a class
-        2. The function is a standard object method, 
+        2. The function is a standard object method,
            taking "self" as the first parameter
-        3. The funtion is a class method (or staticmethod), not taking 
+        3. The funtion is a class method (or staticmethod), not taking
            "self" as the first parameter
-
     """
 
     STANDARD = 0
     METHOD = 1
     CLASSMETHOD = 2
 
+
 def determine_fn_type(fn: Callable) -> _FnType:
-    """
-    Determine which of the three possible cases a function falls into. Cases
-    0 and 2 are actually functionally identical. Things only get spicy when we
-    have a "self" argument.
+    """Determine which of the three possible cases a function falls into. Cases 0 and 2
+    are actually functionally identical. Things only get spicy when we have a "self"
+    argument.
 
     However the tricky thing is that decorators operate on functions and methods when
-    they are imported, not when they are used. This means "inspect.ismethod" will 
-    always return False, even if the function is a method.
+    they are imported, not when they are used. This means "inspect.ismethod" will always
+    return False, even if the function is a method.
 
     We can get around this by checking if the parent of the function is a class. Then,
     we check if the first argument of the function is "self". If both of these are true,
@@ -63,7 +62,7 @@ def determine_fn_type(fn: Callable) -> _FnType:
         # If the qualified name isn't split, this is a standard function not
         # attached to a class
         return _FnType.STANDARD
-    
+
     spec = inspect.getfullargspec(fn)
     if spec.args[0] == "self":
         return _FnType.METHOD
@@ -82,11 +81,8 @@ def check_params(fn: Callable) -> Callable:
     __init__ fn. Developers only need to add @check_params above their __init__ method
     definition to enable this feature, then add their default parameters to the
     "params.py" file.
-
     """
     fn_type = determine_fn_type(fn)
-
-
 
     @wraps(init_fn)
     def new_init_fn(obj: Any, *args, **kwargs) -> Any:
