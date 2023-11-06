@@ -3,7 +3,6 @@
 Desgined to be unobtrusive to use.
 """
 from functools import wraps
-from inspect import getsourcefile, getargspec
 from importlib import import_module
 from typing import Callable, Any
 from enum import Enum
@@ -102,9 +101,11 @@ def standard_fn_wrapper(fn: Callable) -> Callable:
         # Get function argument names
         pargs = {}
         if args:
-            largs = getargspec(fn).args
+            largs = inspect.signature(fn).parameters
             for i in range(len(args)):
-                pargs[largs[i + 1]] = args[i]
+                arg_value = args[i]
+                if arg_value is not None:
+                    pargs[largs[i + 1]] = args[i]
         # Doing it this way ensures we still catch duplicate arguments
         defaults = get_defaults(fn)
         parsed_args = defaults(**pargs, **kwargs)
@@ -116,14 +117,18 @@ def method_fn_wrapper(fn: Callable) -> Callable:
     @wraps(fn)
     def new_fn(obj: Any, *args, **kwargs) -> Any:
         # Get function argument names
-        pargs = {}
+        parsed_args = {}
         if args:
-            largs = getargspec(fn).args
+            largs = list(inspect.signature(fn).parameters.keys())
+
             for i in range(len(args)):
-                pargs[largs[i + 1]] = args[i]
+                arg_value = args[i]
+                if arg_value is not None:
+                    parsed_args[largs[i + 1]] = arg_value
         # Doing it this way ensures we still catch duplicate arguments
+        parsed_kwargs = {k: v for k, v in kwargs.items() if v is not None}
         defaults = get_defaults(fn)
-        parsed_args = defaults(**pargs, **kwargs)
+        parsed_args = defaults(**parsed_args, **parsed_kwargs)
         return fn(obj, **dict(parsed_args))
     return new_fn
 
