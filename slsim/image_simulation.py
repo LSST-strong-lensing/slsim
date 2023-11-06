@@ -211,7 +211,7 @@ def point_source_coordinate_properties(
     :param mag_zero_point: magnitude zero point in band
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
-    :return: astropy table of deflector and image coordinate in pixel unit and other
+    :return: Dictionary of deflector and image coordinate in pixel unit and other
         coordinate properties.
     """
 
@@ -232,20 +232,10 @@ def point_source_coordinate_properties(
     for image_ra, image_dec in zip(ra_image_values, dec_image_values):
         image_pix_coordinate.append((image_data.map_coord2pix(image_ra, image_dec)))
 
-    data = Table(
-        [
-            lens_pix_coordinate,
-            image_pix_coordinate,
-            ra_image_values,
-            dec_image_values,
-        ],
-        names=(
-            "deflector_pix",
-            "image_pix",
-            "ra_image",
-            "dec_image",
-        ),
-    )
+    data = {"deflector_pix":np.array(lens_pix_coordinate), 
+            "image_pix":np.array(image_pix_coordinate),
+            "ra_image":ra_image_values,
+            "dec_image":dec_image_values,}
     return data
 
 
@@ -311,7 +301,7 @@ def point_source_image_at_time(
     mag_zero_point,
     delta_pix,
     num_pix,
-    psf_kernels,
+    psf_kernel,
     transform_pix2angle,
     time,
 ):
@@ -323,7 +313,7 @@ def point_source_image_at_time(
     :param mag_zero_point: magnitude zero point in band
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
-    :param psf_kernels: psf kernels for the given exposure.
+    :param psf_kernel: psf kernel for the given exposure.
     :param time: time is a image observation time [day].
     :return: point source images with variability
     """
@@ -336,6 +326,8 @@ def point_source_image_at_time(
         num_pix=num_pix,
         transform_pix2angle=transform_pix2angle,
     )
+    psf_kernels= [psf_kernel.copy() for _ in range(len(image_data["ra_image"]))]
+    
 
     data_class = image_data_class(
         lens_class, band, mag_zero_point, delta_pix, num_pix, transform_pix2angle
@@ -395,7 +387,7 @@ def point_source_image_with_variability(
             mag_zero_point=mag_zero,
             delta_pix=delta_pix,
             num_pix=num_pix,
-            psf_kernels=psf_kernel,
+            psf_kernel=psf_kernel,
             transform_pix2angle=transf_matrix,
             time=time,
         )
