@@ -55,18 +55,18 @@ def interpolate_variability(Image_series, Orig_timestamps, New_timestamps):
     """
     initial_shape = np.shape(Image_series)
     npix = initial_shape[1] * initial_shape[2]
-    space_positions = np.linspace(1, npix, npix)  # Order pixels
+    space_positions = np.linspace(1, npix, npix)
     intermediate_movie = np.reshape(
         Image_series, (initial_shape[0], npix)
-    )  # Reshape into (t, space) array
+    )
     interpolation = scipy.interpolate.RegularGridInterpolator(
         (Orig_timestamps, space_positions),
         intermediate_movie,
         bounds_error=False,
-        fill_value=None,
+        fill_value=None
     )
     new_points = np.meshgrid(New_timestamps, space_positions, indexing="ij")
-    Images_resampled = interpolation((new_points[0], new_points[1]))  # Resample
+    Images_resampled = interpolation((new_points[0], new_points[1]))
     return np.reshape(
         Images_resampled, (np.size(New_timestamps), initial_shape[1], initial_shape[2])
     )
