@@ -1,7 +1,7 @@
 import numpy as np
 import scipy
 
-"""This class aims to have realistic variability models for AGN and Supernovae."""
+"""This class aims to have realistic variability models for AGN and supernovae."""
 
 
 class Variability(object):
