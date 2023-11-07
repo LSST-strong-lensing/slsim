@@ -63,7 +63,7 @@ def interpolate_variability(Image_series, Orig_timestamps, New_timestamps):
         (Orig_timestamps, space_positions),
         intermediate_movie,
         bounds_error=False,
-        fill_value=None
+        fill_value=None,
     )
     new_points = np.meshgrid(New_timestamps, space_positions, indexing="ij")
     Images_resampled = interpolation((new_points[0], new_points[1]))
