@@ -4,7 +4,7 @@ Desgined to be unobtrusive to use.
 """
 from functools import wraps
 from importlib import import_module
-from typing import Callable, Any
+from typing import Callable, Any, TypeVar
 from enum import Enum
 import inspect
 import pydantic
@@ -69,7 +69,10 @@ def determine_fn_type(fn: Callable) -> _FnType:
         return _FnType.CLASSMETHOD
 
 
-def check_params(fn: Callable) -> Callable:
+T_ = TypeVar("T_")
+
+
+def check_params(fn: Callable[..., T_]) -> Callable[..., T_]:
     """A decorator for enforcing checking of params in __init__ methods. This decorator
     will automatically load the default parameters for the class and check that the
     passed parameters are valid. It expeects a "params.py" file in the same folder as
@@ -92,14 +95,14 @@ def check_params(fn: Callable) -> Callable:
     return new_fn
 
 
-def standard_fn_wrapper(fn: Callable) -> Callable:
+def standard_fn_wrapper(fn: Callable[..., T_]) -> Callable[..., T_]:
     """A wrapper for standard functions.
 
     This is used to parse the arguments to the function and check that they are valid.
     """
 
     @wraps(fn)
-    def new_fn(*args, **kwargs) -> Any:
+    def new_fn(*args, **kwargs) -> T_:
         # Get function argument names
         pargs = {}
         if args:
@@ -116,9 +119,9 @@ def standard_fn_wrapper(fn: Callable) -> Callable:
     return new_fn
 
 
-def method_fn_wrapper(fn: Callable) -> Callable:
+def method_fn_wrapper(fn: Callable[..., T_]) -> Callable[..., T_]:
     @wraps(fn)
-    def new_fn(obj: Any, *args, **kwargs) -> Any:
+    def new_fn(obj: Any, *args, **kwargs) -> T_:
         # Get function argument names
         parsed_args = {}
         if args:
