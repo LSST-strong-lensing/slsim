@@ -4,6 +4,7 @@ from slsim.selection import deflector_cut
 from slsim.Deflectors.velocity_dispersion import vel_disp_sdss
 from slsim.Util import param_util
 from slsim.Deflectors.deflector_base import DeflectorBase
+from slsim.Util import check_params
 
 
 class EllipticalLensGalaxies(DeflectorBase):
@@ -120,6 +121,7 @@ def elliptical_projected_eccentricity(ellipticity, **kwargs):
     return e1_light, e2_light, e1_mass, e2_mass
 
 
+@check_params
 def vel_disp_from_m_star(m_star):
     """Function to calculate the velocity dispersion from the staller mass using
     empirical relation for elliptical galaxies.

@@ -103,11 +103,11 @@ def standard_fn_wrapper(fn: Callable) -> Callable:
         # Get function argument names
         pargs = {}
         if args:
-            largs = inspect.signature(fn).parameters
+            largs = list(inspect.signature(fn).parameters.keys())
             for i in range(len(args)):
                 arg_value = args[i]
                 if arg_value is not None:
-                    pargs[largs[i + 1]] = args[i]
+                    pargs[largs[i]] = args[i]
         # Doing it this way ensures we still catch duplicate arguments
         defaults = get_defaults(fn)
         parsed_args = defaults(**pargs, **kwargs)
