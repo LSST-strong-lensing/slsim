@@ -10,6 +10,7 @@ from scipy.signal import convolve2d
 from scipy import interpolate
 from slsim.image_simulation import point_source_coordinate_properties
 
+
 """
 This module provides necessary functions to inject lenses to the dp0 data. For this, it 
 uses some of the packages provided by the LSST Science Pipeline.
