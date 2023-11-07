@@ -33,17 +33,28 @@ class TestVariability:
         obs_snapshots = np.array([0, 1, np.pi])
         new_snapshots = np.array([0, 0.5, 1, 1.5])
         movie = np.zeros((3, 2, 2))
-        movie[:, 0, 0] = Variability("sinusoidal", **kwargs_model00).variability_at_time(obs_snapshots)
-        movie[:, 0, 1] = Variability("sinusoidal", **kwargs_model01).variability_at_time(obs_snapshots)
+        movie[:, 0, 0] = Variability(
+            "sinusoidal", **kwargs_model00
+        ).variability_at_time(obs_snapshots)
+        movie[:, 0, 1] = Variability(
+            "sinusoidal", **kwargs_model01
+        ).variability_at_time(obs_snapshots)
         movie[:, 1, 0] = np.array([4, 2, 2])
         movie[:, 1, 1] = np.array([0, -6, 0])
         interp_movie = interpolate_variability(movie, obs_snapshots, new_snapshots)
         expect_movie = np.zeros((4, 2, 2))
-        expect_movie[:, 0, 0] = np.array([0.0, 0.0, 0.0, (np.sin(np.pi * np.pi) - 0.0) * 0.5 / (np.pi - 1.0)])
-        expect_movie[:, 0, 1] = np.array([0.0, 0.0, 0.0, (2 * np.sin(2 * np.pi * np.pi) - 0.0) * 0.5 / (np.pi - 1.0)])
+        expect_movie[:, 0, 0] = np.array(
+            [0.0, 0.0, 0.0, (np.sin(np.pi * np.pi) - 0.0) * 0.5 / (np.pi - 1.0)]
+        )
+        expect_movie[:, 0, 1] = np.array(
+            [0.0, 0.0, 0.0, (2 * np.sin(2 * np.pi * np.pi) - 0.0) * 0.5 / (np.pi - 1.0)]
+        )
         expect_movie[:, 1, 0] = np.array([4.0, 3.0, 2.0, 2.0])
-        expect_movie[:, 1, 1] = np.array([0.0, -3.0, -6.0, -6 + (0.0 + 6.0) * 0.5 / (np.pi - 1.0)])
+        expect_movie[:, 1, 1] = np.array(
+            [0.0, -3.0, -6.0, -6 + (0.0 + 6.0) * 0.5 / (np.pi - 1.0)]
+        )
         npt.assert_almost_equal(interp_movie, expect_movie, decimal=5)
+
 
 if __name__ == "__main__":
     pytest.main()

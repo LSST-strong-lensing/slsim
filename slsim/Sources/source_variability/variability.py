@@ -44,6 +44,7 @@ def sinusoidal_variability(t, amp, freq):
     """
     return amp * np.sin(2 * np.pi * freq * t)
 
+
 def interpolate_variability(Image_series, Orig_timestamps, New_timestamps):
     """Interpolates a variable source to any given time series.
 
@@ -56,9 +57,7 @@ def interpolate_variability(Image_series, Orig_timestamps, New_timestamps):
     initial_shape = np.shape(Image_series)
     npix = initial_shape[1] * initial_shape[2]
     space_positions = np.linspace(1, npix, npix)
-    intermediate_movie = np.reshape(
-        Image_series, (initial_shape[0], npix)
-    )
+    intermediate_movie = np.reshape(Image_series, (initial_shape[0], npix))
     interpolation = scipy.interpolate.RegularGridInterpolator(
         (Orig_timestamps, space_positions),
         intermediate_movie,
