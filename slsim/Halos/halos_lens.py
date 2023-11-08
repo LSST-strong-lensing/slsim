@@ -9,6 +9,7 @@ import math
 import time
 import multiprocessing
 from collections.abc import Iterable
+import matplotlib.pyplot as plt
 
 
 def deg2_to_cone_angle(solid_angle_deg2):
@@ -262,7 +263,7 @@ class HalosLens(object):
             self.radial_interpolate = RadialInterpolate
             self.n_correction = len(mass_correction_list)
             self.mass_sheet_correction_redshift = mass_correction_list["z"]
-            #            self.mass_first_moment = mass_correction_list["first_moment"]
+            #            D
             self.mass_sheet_kappa = mass_correction_list["kappa"]
             self.kwargs_interp = mass_correction_list["kwargs_interp"]
         self.z_source = z_source
@@ -273,6 +274,7 @@ class HalosLens(object):
         self.sky_area = sky_area
         self.halos_redshift_list = halos_list["z"]
         self.mass_list = halos_list["mass"]
+        self.first_moment_list = halos_list["first_moment"]
         self.samples_number = samples_number
         self._z_source_convention = (
             5  # if this need to be changed, change it in the halos.py too
@@ -1710,6 +1712,47 @@ class HalosLens(object):
 
         return kappa
 
+    def compute_kappa(self,
+                      diff=0.0000001,
+                      num_points=500,
+                      diff_method="square",
+                      kwargs=None,
+                      lens_model=None,
+                      mass_sheet=None,
+                      radial_interpolate=None,
+                      enhance_pos=False,
+                      ):
+        if mass_sheet is not None:
+            self.mass_sheet = mass_sheet
+            if mass_sheet is True:
+                if radial_interpolate is not None:
+                    self.radial_interpolate = radial_interpolate
+                    radial = True
+
+        if kwargs is None:
+            kwargs = self.get_halos_lens_kwargs()
+        if lens_model is None:
+            lens_model = self.lens_model
+
+        radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
+        x = np.linspace(-radius_arcsec, radius_arcsec, num_points)
+        y = np.linspace(-radius_arcsec, radius_arcsec, num_points)
+        X, Y = np.meshgrid(x, y)
+        mask_2D = X ** 2 + Y ** 2 <= radius_arcsec ** 2
+        mask_1D = mask_2D.ravel()
+
+        # Use lenstronomy utility to make grid
+        x_grid, y_grid = make_grid(numPix=num_points, deltapix=2 * radius_arcsec / num_points)
+        x_grid, y_grid = x_grid[mask_1D], y_grid[mask_1D]
+
+        # Calculate the kappa values
+        kappa_values = lens_model.kappa(x_grid, y_grid, kwargs, diff=diff, diff_method=diff_method)
+        kappa_image = np.ones((num_points, num_points)) * np.nan
+        kappa_image[mask_2D] = kappa_values
+        if enhance_pos:
+            self.enhance_halos_table_random_pos()
+        return kappa_image, kappa_values
+
     def plot_convergence(self,
                          diff=0.0000001,
                          num_points=500,
@@ -1763,35 +1806,17 @@ class HalosLens(object):
         original_mass_sheet = self.mass_sheet
         original_radial_interpolate = self.radial_interpolate
         radial = False
+        radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
 
         try:
-            if mass_sheet is not None:
-                self.mass_sheet = mass_sheet
-                if mass_sheet is True:
-                    if radial_interpolate is not None:
-                        self.radial_interpolate = radial_interpolate
-                        radial = True
-
-            if kwargs is None:
-                kwargs = self.get_halos_lens_kwargs()
-            if lens_model is None:
-                lens_model = self.lens_model
-
-            radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
-            x = np.linspace(-radius_arcsec, radius_arcsec, num_points)
-            y = np.linspace(-radius_arcsec, radius_arcsec, num_points)
-            X, Y = np.meshgrid(x, y)
-            mask_2D = X ** 2 + Y ** 2 <= radius_arcsec ** 2
-            mask_1D = mask_2D.ravel()
-
-            # Use lenstronomy utility to make grid
-            x_grid, y_grid = make_grid(numPix=num_points, deltapix=2 * radius_arcsec / num_points)
-            x_grid, y_grid = x_grid[mask_1D], y_grid[mask_1D]
-
-            # Calculate the kappa values
-            kappa_values = lens_model.kappa(x_grid, y_grid, kwargs, diff=diff, diff_method=diff_method)
-            kappa_image = np.ones((num_points, num_points)) * np.nan
-            kappa_image[mask_2D] = kappa_values
+            kappa_image, _ = self.compute_kappa(diff=diff,
+                                                num_points=num_points,
+                                                diff_method=diff_method,
+                                                kwargs=kwargs,
+                                                lens_model=lens_model,
+                                                mass_sheet=mass_sheet,
+                                                radial_interpolate=radial_interpolate,
+                                                enhance_pos=False, )
 
             plt.imshow(kappa_image, extent=[-radius_arcsec, radius_arcsec, -radius_arcsec, radius_arcsec])
             plt.colorbar(label=r'$\kappa$')
@@ -2057,30 +2082,93 @@ class HalosLens(object):
     def get_kappa_mean_range(
             self, diff=1.0, diff_method="square"
     ):
-        kappa_gamma_distribution = np.empty(
-            (self.samples_number, 2)
-        )
+        kwargs = self.get_halos_lens_kwargs()
+        lens_model = self.lens_model
+        num_points = 50
+        radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
+        x = np.linspace(-radius_arcsec, radius_arcsec, num_points)
+        y = np.linspace(-radius_arcsec, radius_arcsec, num_points)
+        X, Y = np.meshgrid(x, y)
+        mask_2D = X ** 2 + Y ** 2 <= radius_arcsec ** 2
+        mask_1D = mask_2D.ravel()
 
-        loop = range(self.samples_number)
-        if self.samples_number > 999:
-            loop = tqdm(loop)
+        # Use lenstronomy utility to make grid
+        x_grid, y_grid = make_grid(numPix=num_points, deltapix=2 * radius_arcsec / num_points)
+        x_grid, y_grid = x_grid[mask_1D], y_grid[mask_1D]
 
-        start_time = time.time()
+        # Calculate the kappa values
+        kappa_values = lens_model.kappa(x_grid, y_grid, kwargs, diff=diff, diff_method=diff_method)
 
-        for i in loop:
-            self.enhance_halos_table_random_pos()
-            kappa, _ = self.get_convergence_shear(
-                gamma12=False, diff=diff, diff_method=diff_method
-            )
-            kappa_gamma_distribution[i] = [kappa, 0]
-
-        if self.samples_number > 999:
-            elapsed_time = time.time() - start_time
-            print(
-                f"For this Halos list, elapsed time for computing weak-lensing maps: {elapsed_time} seconds"
-            )
-        kappa_values = kappa_gamma_distribution[:, 0]
         kappa_mean = np.mean(kappa_values)
         kappa_std = np.std(kappa_values)
         kappa_2sigma = 2 * kappa_std
         return kappa_mean, kappa_2sigma
+
+    def get_kappa_mass_relation(
+            self, diff=1.0, diff_method="square"
+    ):
+        kappa_mean, kappa_2sigma = self.get_kappa_mean_range(diff=diff, diff_method=diff_method)
+        mass = self.total_halo_mass()
+        return kappa_mean, kappa_2sigma, mass
+
+    def plot_convergence_test(self,
+                              diff=0.0000001,
+                              num_points=500,
+                              diff_method="square",
+                              kwargs=None,
+                              lens_model=None,
+                              mass_sheet=None,
+                              radial_interpolate=None,
+                              enhance_pos=True,
+                              ):
+        import matplotlib.pyplot as plt
+
+        self.enhance_halos_pos_to0()
+        original_mass_sheet = self.mass_sheet
+        original_radial_interpolate = self.radial_interpolate
+        radial = False
+        radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
+
+        try:
+            kappa_image, _ = self.compute_kappa(diff=diff,
+                                                num_points=num_points,
+                                                diff_method=diff_method,
+                                                kwargs=kwargs,
+                                                lens_model=lens_model,
+                                                mass_sheet=mass_sheet,
+                                                radial_interpolate=radial_interpolate,
+                                                enhance_pos=False, )
+
+            plt.imshow(kappa_image, extent=[-radius_arcsec, radius_arcsec, -radius_arcsec, radius_arcsec])
+            plt.colorbar(label=r'$\kappa$')
+
+            halos_x = [k.get('center_x', None) for k in kwargs]
+            halos_y = [-k.get('center_y') if k.get('center_y') is not None else None for k in kwargs]
+            plt.scatter(halos_x, halos_y, color='yellow', marker='x', label='Halos')
+            plt.title(f'Convergence Plot, radius is {radius_arcsec} arcsec')
+            plt.xlabel('x-coordinate (arcsec)')
+            plt.ylabel('y-coordinate (arcsec)')
+            plt.legend()
+            plt.show()
+
+        finally:
+            self.mass_sheet = original_mass_sheet
+            if radial is True:
+                self.radial_interpolate = original_radial_interpolate
+            if enhance_pos:
+                self.enhance_halos_table_random_pos()
+
+    def enhance_halos_pos_to0(self):
+        n_halos = self.n_halos
+        px, py = np.array([self.random_position() for _ in range(n_halos)]).T
+
+        # Adding the computed attributes to the halos table
+        self.halos_list['px'] = px
+        self.halos_list['py'] = py
+
+    def mass_divide_kcrit(self):
+        mass_list = self.mass_list
+        z = self.halos_redshift_list
+        first_moment = self.first_moment_list
+        kappa_crit = self.kappa_ext_for_mass_sheet(z, self.lens_cosmo[:self.n_halos], first_moment)
+        return mass_list / kappa_crit

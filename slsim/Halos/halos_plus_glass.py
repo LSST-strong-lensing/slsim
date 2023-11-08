@@ -1378,3 +1378,113 @@ def compute_sigma_m_ratio_for_sky_area(cosmo, n_iterations=200, m_min=None, m_ma
         ratios[sky_area] = ratio
 
     return ratios
+
+
+def run_total_kappa_by_multiprocessing(
+        n_iterations=1,
+        sky_area=0.0001,
+        diff=0.0000001,
+        num_points=500,
+        diff_method="square",
+        cosmo=None,
+        m_min=None,
+        m_max=None,
+        z_max=None,
+):
+    if cosmo is None:
+        warnings.warn(
+            "No cosmology provided, instead uses astropy.cosmology default cosmology"
+        )
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    if z_max is None:
+        z_max = 5.0
+        warnings.warn(
+            "No maximum redshift provided, instead uses 5.0"
+        )
+
+    average_kappa_list = []
+
+    start_time = time.time()  # Note the start time
+
+    args = [
+        (
+            i,
+            sky_area,
+            diff,
+            num_points,
+            diff_method,
+            m_min,
+            m_max,
+            z_max,
+            cosmo,
+        )
+        for i in range(n_iterations)
+    ]
+
+    # Use multiprocessing
+    with get_context("spawn").Pool() as pool:
+        results = pool.starmap(worker_run_total_kappa_by_multiprocessing, args)
+        average_kappa_list.append(results)
+
+    end_time = time.time()  # Note the end time
+    print(
+        f"The {n_iterations} halo-lists took {(end_time - start_time)} seconds to run"
+    )
+    return average_kappa_list
+
+
+def worker_run_total_kappa_by_multiprocessing(
+        iter_num,
+        sky_area,
+        diff,
+        num_points,
+        diff_method,
+        m_min,
+        m_max,
+        z_max,
+        cosmo,
+):
+    npipeline = HalosSkyPyPipeline(
+        sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max
+    )
+    nhalos = npipeline.halos
+
+    nhalos_lens = HalosLens(
+        halos_list=nhalos,
+        sky_area=sky_area,
+        cosmo=cosmo,
+        samples_number=1,
+        z_source=z_max,
+        mass_sheet=False
+    )
+
+    _, total_kappa = nhalos_lens.compute_kappa(diff=diff,
+                                               num_points=num_points,
+                                               diff_method=diff_method,
+                                               enhance_pos=False, )
+    average_kappa = np.mean(total_kappa)
+    return average_kappa
+
+
+def compute_total_kappa_for_sky_area(cosmo,
+                                     n_iterations=200,
+                                     diff=0.0000001,
+                                     num_points=50,
+                                     z_max=None,
+                                     m_min=None,
+                                     m_max=None):
+    sky_areas = np.arange(0.0001, 0.00105, 0.00005)
+    average_kappa = {}
+
+    for sky_area in sky_areas:
+        average_kappa_list = run_total_kappa_by_multiprocessing(n_iterations=n_iterations,
+                                                                sky_area=sky_area,
+                                                                diff=diff,
+                                                                num_points=num_points,
+                                                                diff_method="square",
+                                                                cosmo=cosmo,
+                                                                m_min=m_min,
+                                                                m_max=m_max,
+                                                                z_max=z_max)
+        average_kappa[sky_area] = average_kappa_list
+    return average_kappa
