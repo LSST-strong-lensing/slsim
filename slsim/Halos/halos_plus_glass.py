@@ -1285,10 +1285,10 @@ def worker_run_kappa_mean_range(
             mass_sheet=False,
             z_source=z_max
         )
-    mean_kappa, two_sigma = (
-        nhalos_lens.get_kappa_mean_range(diff=diff)
+    mean_kappa, two_sigma, mass = (
+        nhalos_lens.get_kappa_mass_relation(diff=diff)
     )
-    return mean_kappa, two_sigma
+    return mean_kappa, two_sigma , mass
 
 
 def run_kappa_mean_range_by_multiprocessing(
@@ -1311,6 +1311,7 @@ def run_kappa_mean_range_by_multiprocessing(
         cosmo = astropy.cosmology.default_cosmology.get()
     mean_kappa_total = []
     two_sigma_total = []
+    mass_total= []
 
     start_time = time.time()  # Note the start time
 
@@ -1323,15 +1324,16 @@ def run_kappa_mean_range_by_multiprocessing(
     with get_context("spawn").Pool() as pool:
         results = pool.starmap(worker_run_kappa_mean_range, args)
 
-    for mean_kappa, two_sigma in results:
+    for mean_kappa, two_sigma, mass in results:
         mean_kappa_total.append(mean_kappa)
         two_sigma_total.append(two_sigma)
+        mass_total.append(mass)
 
     end_time = time.time()  # Note the end time
     print(
         f"The {n_iterations} halo-lists took {(end_time - start_time)} seconds to run"
     )
-    return mean_kappa_total, two_sigma_total
+    return mean_kappa_total, two_sigma_total, mass_total
 
 
 def mean_mass(sky_area, cosmo, m_min=None, m_max=None):
