@@ -421,6 +421,26 @@ def point_source_image_with_variability(
         results += image[i]
     return results
 
+def image_plus_possion_noise(image, exposure_time):
+    """creates an image with possion noise
+    
+    :param image: image or list of image
+    :param exposure_time: exposure time for each image
+    :return: image with possion noise
+    """
+    if isinstance(image, list):
+        expo_time = exposure_time
+        image_plus_noise = []
+        for i in range(len(image)):
+            data=image[i]
+            data[data < 0] = 0
+            mean_photons = data*expo_time[i]
+            image_plus_noise.append(np.random.poisson(mean_photons)/expo_time[i])
+    else:
+        image[image < 0] = 0
+        image_plus_noise = np.random.poisson(image*exposure_time)/exposure_time
+    return image_plus_noise
+
 def variable_lens_image(lens_class, band, mag_zero_point, 
             delta_pix, num_pix, psf_kernels, exposure_time, transform_pix2angle, t_obs):
     """Creates variable lens images for series of time on the
@@ -462,10 +482,6 @@ def variable_lens_image(lens_class, band, mag_zero_point,
             point_image[i] + convolved_deflector_images[i]
         )
         
-    image_plus_noise = []
-    for i in range(len(final_images)):
-        data=final_images[i]
-        data[data < 0] = 0
-        mean_photons = data*exposure_time
-        image_plus_noise.append(np.random.poisson(mean_photons) / exposure_time)
+    image_plus_noise = image_plus_possion_noise(image=final_images, 
+                                    exposure_time=exposure_time)
     return image_plus_noise
