@@ -1,7 +1,6 @@
 import numpy as np
 import lsst.geom as geom
 
-# Source injection
 from lsst.pipe.tasks.insertFakes import _add_fake_sources
 import galsim
 from astropy.table import Table, vstack
@@ -9,6 +8,8 @@ from slsim.image_simulation import sharp_image
 from scipy.signal import convolve2d
 from scipy import interpolate
 from slsim.image_simulation import point_source_coordinate_properties
+from lsst.rsp import get_tap_service
+from lsst.afw.math import Warper
 
 
 """
@@ -481,3 +482,155 @@ def cutout_image_psf_kernel(
         names=("psf_kernel_for_images", "psf_kernel_for_deflector"),
     )
     return table_of_kernels
+
+def tap_query(center_coords, radius=0.1, band='i'):
+    """This function uses tap_service from RSP to query calexp visit
+    information around a coordinate point.
+    :param center_coords: A coordinate point around 
+     which visit informations are needed.
+    :param radius: Radius around center point for query.
+    :param band: imaging band
+    :return: An astropy table of visit information sorted 
+     with observation time.
+    """
+    service = get_tap_service("tap")
+    query = "SELECT ra, decl," + \
+               "ccdVisitId, band, " + \
+               "visitId, physical_filter, detector, " + \
+               "expMidptMJD, expTime, zeroPoint, skyRotation " + \
+               "FROM dp02_dc2_catalogs.CcdVisit " + \
+               "WHERE CONTAINS(POINT('ICRS', ra, decl), " + \
+               "CIRCLE('ICRS', " + center_coords + ", " + radius + ")) = 1" + \
+               "AND band = " + "'" + str(band) + "' "
+    result = service.search(query)
+    result_table = result.to_table()
+    sorted_column = np.argsort(result_table['expMidptMJD'])
+    expo_information = result_table[sorted_column]
+    return expo_information
+
+def list_of_calexp(expo_information):
+    """Extracts calexp images based on exposure information.
+    
+    :param expo_information: Astropy table containing exposure information.
+     It must contain Visit ID and Detector ID.
+    :return: list of calexp images.
+    """
+    calexp_image=[]
+    for visitid, detectorid in zip(expo_information['visitId'], expo_information['detector']):
+        dataId = {'visit':visitid, 'detector':detectorid}
+        calexp_image.append(butler.get('calexp', dataId=dataId))
+    return calexp_image
+
+def warp_to_exposure(exposure, warp_to_exposure):
+    """This function aligns two given dp0 images.
+    
+    :param exposure: image that need to be aligned
+    :param warp_to_exposure: Reference image on which
+     exposure should be aligned.
+    :return: Image aligned to reference image.
+    """
+    warper = Warper(warpingKernelName='lanczos4')
+    warped_exposure = warper.warpExposure(warp_to_exposure.getWcs(), exposure,
+                                          destBBox=warp_to_exposure.getBBox())
+    return warped_exposure
+
+def aligned_calexp(calexp_image):
+    """ alignes list of given images to the first image in the list.
+    
+    :param calexp_image: list of calexp images.
+    :return: list of aligned images.
+    """
+    selected_calexp = calexp_image[1:]
+    aligned_calexp_image=[calexp_image[0]]
+    for i in range(0, len(selected_calexp), 1):
+        aligned_calexp_image.append(warp_to_exposure(selected_calexp[i], calexp_image[0]))
+    return aligned_calexp_image
+
+def dp0_center_radec(calexp_image):
+    """computes the center ra, dec of given dp0 image.
+    :param calexp_image: dp0 image
+    :return: A sphere point of center ra, dec of given image
+    """
+    bbox = calexp_image.getBBox()
+    xmin, ymin = bbox.getBegin()
+    xmax, ymax = bbox.getEnd()
+    x_center = (xmin + xmax)/2
+    y_center = (ymin + ymax)/2
+    radec_point = geom.SpherePoint(calexp_image.getWcs().pixelToSky(x_center, y_center))
+    return radec_point
+
+def calexp_cutout(calexp_image, radec, size):
+    """ creates the same size cutouts from given list of dp0 images.
+    
+    :param calexp_image: list of dp0 images
+    :param radec: SpherePoint of radec around which we want a cutout
+    :param size: cutout size in pixel unit
+    :return: cutout image of a given size
+    """
+    cutout_extent = geom.ExtentI(size, size)
+    cutout_calexp_image = []
+    for i in range(len(calexp_image)):
+        cutout_calexp_image.append(calexp_image[i].getCutout(radec, cutout_extent))
+    return cutout_calexp_image
+
+def radec_to_pix(radec, dp0_image):
+    """converts ra, dec to pixel units
+    
+    :param radec: SpherePoint of radec
+    :param dp0_image: image containing given radec
+    :return: corresponding Point2D of pixel coordinate
+    """
+    if isinstance(dp0_image, list):
+        pix = []
+        for images in dp0_image:
+            pix.append(images.getWcs().skyToPixel(radec))
+    else:
+        pix = dp0_image.getWcs().skyToPixel(radec)
+    return pix
+
+def dp0_psf_kernels(pixel_coord, dp0_image):
+    """Extracts psf kernels of given dp0 image at given pixel coordinate
+    
+    :param pixel_coord: Pixel coordinate. 
+     eg:Point2D(2129.7674135086986, 2506.6640697199136)
+    :param dp0_image: dp0 image to extract psf
+    :return: list of psf kernels for given images
+    """
+    psf_kernels = []
+    for points, images in zip(pixel_coord, dp0_image):
+        dp0_image_psf = images.getPsf()
+        psf_kernels.append(dp0_image_psf.computeKernelImage(points).array)
+    return psf_kernels
+
+def dp0_time_series_images_data(center_coord, radius="0.1", band='i', size=101):
+    """creates time series data from dp0 data
+    
+    :param center_coord: A coordinate point around 
+     which we need to create time series images.
+    :param radius: radius for query
+    :param band: imaging band
+    :param size: cutout size of images
+    :return: An astropy table containg time series images and 
+     other information 
+    """
+    expo_information=tap_query(center_coords, radius=radius, band=band)
+    calexp_image = list_of_calexp(expo_information)
+    radec = dp0_center_radec(calexp_image[0])
+    cutout_image = calexp_cutout(calexp_image, radec, 450)
+    aligned_image = aligned_calexp(cutout_image)
+    aligned_image_cutout = calexp_cutout(aligned_image, radec, size)
+    pixels = radec_to_pix(radec, calexp_image)
+    psf_kernel = dp0_psf_kernels(pixels, calexp_image)
+    obs_time = expo_information['expMidptMJD']
+    expo_time = expo_information['expTime']
+    zero_point_mag = expo_information['zeroPoint']
+    dp0_time_series_cutout = []
+    for i in range(len(aligned_image_cutout)):
+        dp0_time_series_cutout.append(aligned_image_cutout[i].image.array)
+    table_data = Table(
+        [dp0_time_series_cutout, psf_kernel, obs_time, expo_time, zero_point_mag],
+        names=("time_series_images", "psf_kernel", "obs_time", "expo_time", "zero_point"),
+    )
+    return table_data
+
+
