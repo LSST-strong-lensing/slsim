@@ -467,5 +467,5 @@ def variable_lens_image(lens_class, band, mag_zero_point,
         data=final_images[i]
         data[data < 0] = 0
         mean_photons = data*exposure_time
-        image_plus_noise.append(np.random.poisson(mean_photons))
+        image_plus_noise.append(np.random.poisson(mean_photons) / exposure_time)
     return image_plus_noise
