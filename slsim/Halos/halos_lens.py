@@ -2109,7 +2109,9 @@ class HalosLens(object):
     ):
         kappa_mean, kappa_2sigma = self.get_kappa_mean_range(diff=diff, diff_method=diff_method)
         mass = self.total_halo_mass()
-        return kappa_mean, kappa_2sigma, mass
+        mass_divide_kcrit = self.mass_divide_kcrit()
+        mass_divide_kcrit_tot = np.sum(mass_divide_kcrit)
+        return kappa_mean, kappa_2sigma, mass, mass_divide_kcrit_tot
 
     def plot_convergence_test(self,
                               diff=0.0000001,

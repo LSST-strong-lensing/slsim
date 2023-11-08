@@ -1285,10 +1285,10 @@ def worker_run_kappa_mean_range(
             mass_sheet=False,
             z_source=z_max
         )
-    mean_kappa, two_sigma, mass = (
+    kappa_mean, kappa_2sigma, mass, mass_divide_kcrit_tot = (
         nhalos_lens.get_kappa_mass_relation(diff=diff)
     )
-    return mean_kappa, two_sigma , mass
+    return kappa_mean, kappa_2sigma, mass, mass_divide_kcrit_tot
 
 
 def run_kappa_mean_range_by_multiprocessing(
@@ -1312,6 +1312,7 @@ def run_kappa_mean_range_by_multiprocessing(
     mean_kappa_total = []
     two_sigma_total = []
     mass_total= []
+    mass_divide_kcrit_total = []
 
     start_time = time.time()  # Note the start time
 
@@ -1324,16 +1325,17 @@ def run_kappa_mean_range_by_multiprocessing(
     with get_context("spawn").Pool() as pool:
         results = pool.starmap(worker_run_kappa_mean_range, args)
 
-    for mean_kappa, two_sigma, mass in results:
+    for mean_kappa, two_sigma, mass, mass_divide_kcrit_tot in results:
         mean_kappa_total.append(mean_kappa)
         two_sigma_total.append(two_sigma)
         mass_total.append(mass)
+        mass_divide_kcrit_total.append(mass_divide_kcrit_tot)
 
     end_time = time.time()  # Note the end time
     print(
         f"The {n_iterations} halo-lists took {(end_time - start_time)} seconds to run"
     )
-    return mean_kappa_total, two_sigma_total, mass_total
+    return mean_kappa_total, two_sigma_total, mass_total, mass_divide_kcrit_total
 
 
 def mean_mass(sky_area, cosmo, m_min=None, m_max=None):
