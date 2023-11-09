@@ -1311,7 +1311,7 @@ def run_kappa_mean_range_by_multiprocessing(
         cosmo = astropy.cosmology.default_cosmology.get()
     mean_kappa_total = []
     two_sigma_total = []
-    mass_total= []
+    mass_total = []
     mass_divide_kcrit_total = []
 
     start_time = time.time()  # Note the start time

@@ -274,7 +274,7 @@ class HalosLens(object):
         self.sky_area = sky_area
         self.halos_redshift_list = halos_list["z"]
         self.mass_list = halos_list["mass"]
-        self.first_moment_list = halos_list["first_moment"]
+        #self.first_moment_list = halos_list["first_moment"]
         self.samples_number = samples_number
         self._z_source_convention = (
             5  # if this need to be changed, change it in the halos.py too
@@ -298,8 +298,8 @@ class HalosLens(object):
         c_200 = [concentration_from_mass(z=zi, mass=mi)
                  for zi, mi in zip(self.halos_redshift_list, self.mass_list)]
         self.halos_list['c_200'] = c_200
-
         self.enhance_halos_table_random_pos()
+
         # TODO: Set z_source as an input parameter or other way
 
     @property
@@ -432,7 +432,7 @@ class HalosLens(object):
             c = self.halos_list['c_200']
         for h in range(n_halos):
             Rs_angle_h, alpha_Rs_h = lens_cosmo[h].nfw_physical2angle(
-                M=mass[h], c=c
+                M=mass[h], c=c[h]
             )
             if isinstance(Rs_angle_h, Iterable):
                 Rs_angle.extend(Rs_angle_h)
@@ -2111,6 +2111,8 @@ class HalosLens(object):
         mass = self.total_halo_mass()
         mass_divide_kcrit = self.mass_divide_kcrit()
         mass_divide_kcrit_tot = np.sum(mass_divide_kcrit)
+        if mass_divide_kcrit_tot>5.0:
+            mass_divide_kcrit_tot=5.1
         return kappa_mean, kappa_2sigma, mass, mass_divide_kcrit_tot
 
     def plot_convergence_test(self,
@@ -2124,13 +2126,14 @@ class HalosLens(object):
                               enhance_pos=True,
                               ):
         import matplotlib.pyplot as plt
+        import matplotlib.colors as mcolors
 
         self.enhance_halos_pos_to0()
         original_mass_sheet = self.mass_sheet
         original_radial_interpolate = self.radial_interpolate
         radial = False
         radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
-
+        kwargs = self.get_halos_lens_kwargs()
         try:
             kappa_image, _ = self.compute_kappa(diff=diff,
                                                 num_points=num_points,
@@ -2141,16 +2144,16 @@ class HalosLens(object):
                                                 radial_interpolate=radial_interpolate,
                                                 enhance_pos=False, )
 
-            plt.imshow(kappa_image, extent=[-radius_arcsec, radius_arcsec, -radius_arcsec, radius_arcsec])
-            plt.colorbar(label=r'$\kappa$')
+            colors = [(1, 0, 0, 1)] + [(plt.cm.viridis(i)) for i in range(1, 256)]
+            new_cmap = mcolors.LinearSegmentedColormap.from_list('custom_colormap', colors, N=256)
 
-            halos_x = [k.get('center_x', None) for k in kwargs]
-            halos_y = [-k.get('center_y') if k.get('center_y') is not None else None for k in kwargs]
-            plt.scatter(halos_x, halos_y, color='yellow', marker='x', label='Halos')
+            plt.imshow(kappa_image, cmap=new_cmap,
+                       extent=[-radius_arcsec, radius_arcsec, -radius_arcsec, radius_arcsec])
+            plt.colorbar(label=r'$\kappa$')
             plt.title(f'Convergence Plot, radius is {radius_arcsec} arcsec')
             plt.xlabel('x-coordinate (arcsec)')
             plt.ylabel('y-coordinate (arcsec)')
-            plt.legend()
+            # plt.legend() # Only include if you have legend elements
             plt.show()
 
         finally:
@@ -2162,8 +2165,8 @@ class HalosLens(object):
 
     def enhance_halos_pos_to0(self):
         n_halos = self.n_halos
-        px, py = np.array([self.random_position() for _ in range(n_halos)]).T
-
+        px = np.array([0 for _ in range(n_halos)]).T
+        py = np.array([0 for _ in range(n_halos)]).T
         # Adding the computed attributes to the halos table
         self.halos_list['px'] = px
         self.halos_list['py'] = py
@@ -2171,6 +2174,19 @@ class HalosLens(object):
     def mass_divide_kcrit(self):
         mass_list = self.mass_list
         z = self.halos_redshift_list
-        first_moment = self.first_moment_list
-        kappa_crit = self.kappa_ext_for_mass_sheet(z, self.lens_cosmo[:self.n_halos], first_moment)
-        return mass_list / kappa_crit
+        cone_opening_angle = deg2_to_cone_angle(self.sky_area)
+        # TODO: make it possible for other geometry model
+        area = []
+        sigma_crit = []
+        lens_cosmo=self.lens_cosmo[:self.n_halos]
+        for i in range(len(lens_cosmo)):
+            sigma_crit.append(lens_cosmo[i].sigma_crit)
+        for z_val in z:
+            area_val = cone_radius_angle_to_physical_area(cone_opening_angle, z_val, self.cosmo)
+            area.append(area_val)
+        area_values = [a.value for a in area]
+        mass_list_values = np.array(mass_list).flatten()
+        mass_d_area = np.divide(np.array(mass_list_values), np.array(area_values))
+        kappa_ext = np.divide(mass_d_area, sigma_crit)
+        assert kappa_ext.ndim == 1
+        return kappa_ext
