@@ -62,9 +62,9 @@ def convolved_image(image, psf_kernel, convolution_type="fft"):
     :param image: image to be convolved
     :param psf_kernel: kernel used to convolve the given image. It should be a pixel psf
         kernel.
-    :param convolution_type: method to be used to convolve image. currently fftconvolve and
-        convolve2d are supported. The default type is fftconvolve and we prefer to use
-        fftconvolve over convolve2d because it is relatively faster for our purpose.
+    :param convolution_type: method to be used to convolve image. currently fftconvolve
+        and convolve2d are supported. The default type is fftconvolve and we prefer to
+        use fftconvolve over convolve2d because it is relatively faster for our purpose.
     :returns: convolved image.
     """
     if convolution_type == "fft":
