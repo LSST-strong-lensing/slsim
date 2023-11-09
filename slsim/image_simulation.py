@@ -5,6 +5,7 @@ from astropy.visualization import make_lupton_rgb
 from lenstronomy.Data.psf import PSF
 from lenstronomy.ImSim.Numerics.point_source_rendering import PointSourceRendering
 from slsim.Util.param_util import magnitude_to_amplitude
+from slsim.Util.param_util import convolved_image
 
 
 def simulate_image(
@@ -421,6 +422,28 @@ def point_source_image_with_variability(
         results += image[i]
     return results
 
+def deflector_images_with_different_zeropoint(lens_class, band, 
+                            mag_zero_point, delta_pix, num_pix):
+    """ Creates deflector images with different magnitude zero point.
+    
+    :param lens_class: Lens() object
+    :param band: imaging band
+    :param mag_zero_point: magnitude zero point in band
+    :param delta_pix: pixel scale of image generated
+    :param num_pix: number of pixels per axis
+    :returns: list of deflector images with different zero point
+    """
+    image = []
+    for mag_zero in mag_zero_point:
+        image.append(sharp_image(
+            lens_class=lens_class,
+            band=band,
+            mag_zero_point=mag_zero,
+            delta_pix=delta_pix,
+            num_pix=num_pix,
+        ))
+    return image
+
 def image_plus_possion_noise(image, exposure_time):
     """creates an image with possion noise
     
@@ -477,9 +500,9 @@ def variable_lens_image(lens_class, band, mag_zero_point,
             imag, psf_kern
         ))
     final_images = []
-    for i in range(len(test_data['obs_time'])):
+    for i in range(len(t_obs)):
         final_images.append(
-            point_image[i] + convolved_deflector_images[i]
+            point_image[i] + convolved_deflector_image[i]
         )
         
     image_plus_noise = image_plus_possion_noise(image=final_images, 

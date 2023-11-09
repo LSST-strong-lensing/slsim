@@ -1,9 +1,9 @@
 import numpy as np
 import lsst.geom as geom
-
 from lsst.pipe.tasks.insertFakes import _add_fake_sources
 import galsim
 from astropy.table import Table, vstack
+from astropy.table import Column
 from slsim.image_simulation import sharp_image
 from scipy.signal import convolve2d
 from scipy import interpolate
@@ -508,11 +508,12 @@ def tap_query(center_coords, radius=0.1, band='i'):
     expo_information = result_table[sorted_column]
     return expo_information
 
-def list_of_calexp(expo_information):
+def list_of_calexp(expo_information, butler):
     """Extracts calexp images based on exposure information.
     
     :param expo_information: Astropy table containing exposure information.
      It must contain Visit ID and Detector ID.
+    :param butler: butler object
     :return: list of calexp images.
     """
     calexp_image=[]
@@ -602,9 +603,10 @@ def dp0_psf_kernels(pixel_coord, dp0_image):
         psf_kernels.append(dp0_image_psf.computeKernelImage(points).array)
     return psf_kernels
 
-def dp0_time_series_images_data(center_coord, radius="0.1", band='i', size=101):
+def dp0_time_series_images_data(butler, center_coord, radius="0.1", band='i', size=101):
     """creates time series data from dp0 data
     
+    :param butler: butler object
     :param center_coord: A coordinate point around 
      which we need to create time series images.
     :param radius: radius for query
@@ -613,9 +615,11 @@ def dp0_time_series_images_data(center_coord, radius="0.1", band='i', size=101):
     :return: An astropy table containg time series images and 
      other information 
     """
-    expo_information=tap_query(center_coords, radius=radius, band=band)
-    calexp_image = list_of_calexp(expo_information)
+    expo_information=tap_query(center_coords=center_coord, radius=radius, band=band)
+    calexp_image = list_of_calexp(expo_information, butler=butler)
     radec = dp0_center_radec(calexp_image[0])
+    radec_list = radec_list=[(radec.getRa().asDegrees(), radec.getDec().asDegrees())]
+    radec_list.extend(radec_list*(len(calexp_image)-1))
     cutout_image = calexp_cutout(calexp_image, radec, 450)
     aligned_image = aligned_calexp(cutout_image)
     aligned_image_cutout = calexp_cutout(aligned_image, radec, size)
@@ -628,9 +632,68 @@ def dp0_time_series_images_data(center_coord, radius="0.1", band='i', size=101):
     for i in range(len(aligned_image_cutout)):
         dp0_time_series_cutout.append(aligned_image_cutout[i].image.array)
     table_data = Table(
-        [dp0_time_series_cutout, psf_kernel, obs_time, expo_time, zero_point_mag],
-        names=("time_series_images", "psf_kernel", "obs_time", "expo_time", "zero_point"),
+        [dp0_time_series_cutout, psf_kernel, obs_time, expo_time, zero_point_mag, radec_list],
+        names=("time_series_images", "psf_kernel", "obs_time", "expo_time", "zero_point", "calexp_center"),
     )
     return table_data
+
+def variable_lens_injection(lens_class, band, delta_pix, 
+            num_pix, transform_pix2angle, exposure_data):
+    """Injects variable lens to the dp0 time series data.
+    
+    :param lens_class: Lens() object
+    :param band: imaging band
+    :param delta_pix: pixel scale of image generated
+    :param num_pix: number of pixels per axis
+    :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
+     displacements
+    :param exposure_data: An astropy table of exposure data. It must contain 
+     calexp images (column name should be "time_series_images"), magnitude zero point 
+     (column name should be "zero_point"), psf kernel for each exposure 
+     (column name should be "psf_kernel"), exposure time (column name should be "expo_time"),
+     observation time (column name should be "obs_time")
+    :return: Astropy table of injected lenses and exposure information of dp0 data
+    """
+    
+    lens_images = variable_lens_image(lens_class, band=band, 
+            mag_zero_point=exposure_data['zero_point'], delta_pix=delta_pix, 
+            num_pix=num_pix, psf_kernels=exposure_data['psf_kernel'], 
+            exposure_time=exposure_data['expo_time'], 
+            transform_pix2angle=transform_pix2angle, 
+            t_obs=exposure_data['obs_time'])
+    final_image = []
+    for i in range(len(exposure_data['obs_time'])):
+        final_image.append(exposure_data['time_series_images'][i]  + lens_images[i])
+    lens_col = Column(name='lens', data=lens_images)
+    final_image_col = Column(name='injected_lens', data=final_image)
+    exposure_data.add_columns([lens_col, final_image_col])
+    return exposure_data
+
+def multiple_variable_lens_injection(lens_class_list, band, delta_pix, num_pix, 
+                        transform_matrices_list, exposure_data_list):
+    """Injects multiple variable lenses to multiple dp0 time series data.
+    
+    :param lens_class_list: list of Lens() object
+    :param band: imaging band
+    :param delta_pix: pixel scale of image generated
+    :param num_pix: number of pixels per axis
+    :param transform_matrices_list: list of transformation matrix (2x2) of pixels into coordinate
+     displacements for each exposure
+    :param exposure_data_list: list of astropy tables of each time series data. It must contain 
+     calexp images (column name should be "time_series_images"), magnitude zero point 
+     (column name should be "zero_point"), psf kernel for each exposure 
+     (column name should be "psf_kernel"), exposure time (column name should be "expo_time"),
+     observation time (column name should be "obs_time")
+    :return: list of astropy table of injected lenses and exposure information of dp0 data for each
+     time series lenses.
+    """
+    final_images_catalog = []
+    for lens_class, transform_matrices, expo_data in zip(lens_class_list, 
+        transform_matrices_list, exposure_data_list):
+        final_images_catalog.append(variable_lens_injection(lens_class, band=band, delta_pix=delta_pix, 
+                num_pix=num_pix, transform_pix2angle=transform_matrices, exposure_data=expo_data))
+    return final_images_catalog
+
+
 
 
