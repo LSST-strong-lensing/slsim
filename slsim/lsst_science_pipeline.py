@@ -4,7 +4,7 @@ from lsst.pipe.tasks.insertFakes import _add_fake_sources
 import galsim
 from astropy.table import Table, vstack
 from astropy.table import Column
-from slsim.image_simulation import sharp_image
+from slsim.image_simulation import sharp_image, variable_lens_image
 from scipy.signal import convolve2d
 from scipy import interpolate
 from slsim.image_simulation import point_source_coordinate_properties
