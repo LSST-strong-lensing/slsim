@@ -1490,3 +1490,50 @@ def compute_total_kappa_for_sky_area(cosmo,
                                                                 z_max=z_max)
         average_kappa[sky_area] = average_kappa_list
     return average_kappa
+
+
+def worker_run_halos(iter_num, sky_area, m_min_str, m_max_str, m_min, m_max, z_max):
+    npipeline = HalosSkyPyPipeline(sky_area=sky_area, m_min=m_min_str, m_max=m_max_str, z_max=z_max)
+
+    nhalos = npipeline.halos
+    halos_mass = nhalos['mass']
+    halos_z = nhalos['z']
+    assert len(halos_mass) == len(halos_z)
+    halos_mass_list = [item[0] for item in halos_mass]
+    return halos_mass_list, halos_z
+
+
+def run_halos_by_multiprocessing(
+        m_min_str,
+        m_max_str,
+        m_min,
+        m_max,
+        z_max,
+        n_iterations=1,
+        sky_area=0.0001,
+):
+    halos_mass_total = []
+    halos_z_total = []
+    number_total = []
+
+    start_time = time.time()  # Note the start time
+
+    args = [
+        (i, sky_area, m_min_str, m_max_str, m_min, m_max, z_max)
+        for i in range(n_iterations)
+    ]
+
+    # Use multiprocessing
+    with get_context("spawn").Pool() as pool:
+        results = pool.starmap(worker_run_halos, args)
+
+    for halos_mass, halos_z in results:
+        halos_mass_total.extend(halos_mass)
+        halos_z_total.extend(halos_z)
+        number_total.append(len(halos_mass))
+
+    end_time = time.time()  # Note the end time
+    print(
+        f"The {n_iterations} halo-lists took {(end_time - start_time)} seconds to run"
+    )
+    return halos_mass_total, halos_z_total, number_total
