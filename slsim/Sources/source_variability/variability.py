@@ -1,5 +1,4 @@
 import numpy as np
-import scipy
 
 """This class aims to have realistic variability models for AGN and supernovae."""
 
@@ -43,29 +42,3 @@ def sinusoidal_variability(t, amp, freq):
     :return: variability for the given time
     """
     return amp * np.sin(2 * np.pi * freq * t)
-
-
-def interpolate_variability(Image_series, Orig_timestamps, New_timestamps):
-    """Interpolates a variable source to any given time series.
-
-    :param Image_series: 3 dimensional array of shape (t, x, y) relating to snapshots of
-        a variable object in source plane
-    :param Orig_timestamps: Series of timestamps which represent original snapshots
-    :param New_timestamps: Series of new timestamps to interpolate to
-    :return: Linearly interpolated image along time axis
-    """
-    initial_shape = np.shape(Image_series)
-    npix = initial_shape[1] * initial_shape[2]
-    space_positions = np.linspace(1, npix, npix)
-    intermediate_movie = np.reshape(Image_series, (initial_shape[0], npix))
-    interpolation = scipy.interpolate.RegularGridInterpolator(
-        (Orig_timestamps, space_positions),
-        intermediate_movie,
-        bounds_error=False,
-        fill_value=None,
-    )
-    new_points = np.meshgrid(New_timestamps, space_positions, indexing="ij")
-    Images_resampled = interpolation((new_points[0], new_points[1]))
-    return np.reshape(
-        Images_resampled, (np.size(New_timestamps), initial_shape[1], initial_shape[2])
-    )
