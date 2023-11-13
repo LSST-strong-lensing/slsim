@@ -110,7 +110,7 @@ class OM10LensSystem(LensedSystemBase):
                 kwargs_lens,
                 solver="lenstronomy",
                 search_window=self.einstein_radius * 6,  # CHECK WITH SIMON #
-                min_distance=self.einstein_radius * 2 / 200,  # CHECK WITH SIMON
+                min_distance=self.einstein_radius * 6 / 100,  # CHECK WITH SIMON
                 magnification_limit=self._magnification_limit,  # CHECK WITH SIMON #0.01
             )
         return self._image_positions

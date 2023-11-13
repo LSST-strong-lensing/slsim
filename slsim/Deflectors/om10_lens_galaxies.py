@@ -3,16 +3,16 @@ import numpy as np
 
 
 class OM10Lens(DeflectorBase):
-    def __init__(self, deflector_input, kwargs_cut, cosmo, sky_area):
+    def __init__(self, deflector_table, kwargs_cut, cosmo, sky_area):
         """
-        :param deflector_input: dict-like containing lens properties
+        :param deflector_table: dict-like containing lens properties
         :param kwargs_cut: cuts to impose on lens properties
         :param cosmo: cosmology used
         :param sky_area: area of sky used
 
         """
-        super().__init__(deflector_input, kwargs_cut, cosmo, sky_area)
-        self.deflector_table = deflector_input
+        super().__init__(deflector_table, kwargs_cut, cosmo, sky_area)
+        self.deflector_table = deflector_table
 
     @property
     def deflector_number(self):

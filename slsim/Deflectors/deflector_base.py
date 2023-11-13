@@ -7,17 +7,17 @@ class DeflectorBase(ABC):
     All object that inherit from Lensed System must contain the methods it contains.
     """
 
-    def __init__(self, deflector_input, kwargs_cut, cosmo, sky_area):
+    def __init__(self, deflector_table, kwargs_cut, cosmo, sky_area):
         """
 
-        :param deflector_input: file or table with lens parameters
+        :param deflector_table: file or table with lens parameters
         :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max
         :type kwargs_cut: dict
         :param cosmo: astropy.cosmology instance
         :type sky_area: `~astropy.units.Quantity`
         :param sky_area: Sky area (solid angle) over which galaxies are sampled.
         """
-        self.deflector_input = deflector_input
+        self.deflector_table = deflector_table
         self.kwargs_cut = kwargs_cut
         self.cosmo = cosmo
         self.sky_area = sky_area

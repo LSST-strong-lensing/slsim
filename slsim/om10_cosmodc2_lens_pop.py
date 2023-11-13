@@ -27,7 +27,7 @@ class OM10LensPop(LensedPopulationBase):
         self._pipeline = catalogPipeline(catalog_config=catalog_config)
 
         self._lens_galaxies = OM10Lens(
-            deflector_input=self._pipeline.deflectors,
+            deflector_table=self._pipeline.deflectors,
             kwargs_cut=None,
             cosmo=cosmo,
             sky_area=sky_area,
