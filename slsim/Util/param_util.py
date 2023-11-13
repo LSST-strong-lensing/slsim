@@ -105,7 +105,8 @@ def pixels_to_images(pixels, original_shape):
 
     :param pixels: Series of pixel snapshots to arrange back into the original image
         shape
-    :param original_shape: The original shape of the image snapshots
+    :param original_shape: The original output of np.shape(original_image_series)
+        [tuple]
     :return: Series of image snapshots
     """
     return np.reshape(
