@@ -330,10 +330,15 @@ def point_source_image_at_time(
     :param mag_zero_point: magnitude zero point in band
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
+<<<<<<< HEAD
     :param psf_kernel: psf kernel for the given exposure.
     :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
      displacements
     :param time: time is a image observation time [day].
+=======
+    :param psf_kernels: psf kernels for the given exposure.
+    :param time: time is an image observation time [day].
+>>>>>>> aeb1afc859b9ae088d66ee94828a10d7c385e12f
     :return: point source images with variability
     """
 
