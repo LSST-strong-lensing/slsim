@@ -4,7 +4,8 @@ from lsst.pipe.tasks.insertFakes import _add_fake_sources
 import galsim
 from astropy.table import Table, vstack
 from astropy.table import Column
-from slsim.image_simulation import sharp_image, variable_lens_image
+from slsim.image_simulation import (sharp_image, variable_lens_image, 
+                                    image_plus_possion_noise)
 from scipy.signal import convolve2d
 from scipy import interpolate
 from slsim.image_simulation import point_source_coordinate_properties
@@ -172,7 +173,7 @@ def lens_inejection_fast(
     dec,
     num_cutout_per_patch=10,
     lens_cut=None,
-    flux=None,
+    flux=None, exposure_time = None
 ):
     """Chooses a random lens from the lens population and injects it to a DC2 cutout
     image. For this one needs to provide a butler to this function. To initiate Butler,
@@ -245,7 +246,11 @@ def lens_inejection_fast(
                 num_pix=num_pix,
             )
             cutout_image = coadd[j][cutout_bbox]
-            objects = [(geom.Point2D(x_center[i], y_center[i]), lens, delta_pix)]
+            if exposure_time is none:
+                lens_final = lens
+            else:
+                lens_final = image_plus_possion_noise(lens, exposure_time)
+            objects = [(geom.Point2D(x_center[i], y_center[i]), lens_final, delta_pix)]
             final_injected_image = add_object(cutout_image, objects, calibFluxRadius=12)
             center_wcs = wcs.pixelToSky(objects[0][0])
             ra_deg = center_wcs.getRa().asDegrees()
