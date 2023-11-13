@@ -4,10 +4,12 @@ from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
 from lenstronomy.Util import util, data_util
-from slsim.lensed_system_base import LensedSystem
+from slsim.lensed_system_base import LensedSystemBase
+import lenstronomy.Util.constants as const
+from slsim.Util.param_util import image_separation_from_positions
 
 
-class OM10Lens(LensedSystem):
+class OM10LensSystem(LensedSystemBase):
     """Class to manage individual galaxy-galaxy lenses."""
 
     def __init__(
@@ -36,18 +38,22 @@ class OM10Lens(LensedSystem):
             test_area=test_area,
         )
         self.cosmo = cosmo
-        self.deflector_redshift = self._deflector_dict["ZLENS"]
-        self.source_redshift = self._source_dict["om10z"]
+        self._source_dict = source_dict
+
         self._magnification_limit = magnification_limit
-        if self.deflector_redshift > self.source_redshift:
-            self._theta_E_pemd = 0
+        if self._deflector_dict["ZLENS"] > self._source_dict["om10z"]:
+            self._theta_E_sis = 0
         else:
-            self._theta_E_pemd = (
-                4
-                * np.pi
-                * (self._deflector_dict["VELDISP"] ** 2)
-                * self._deflector_dict["DDS"]
-            ) / ((3e5) ** 2 * self._deflector_dict["DS"])
+            self._theta_E_sis = (
+                (
+                    4
+                    * np.pi
+                    * (self._deflector_dict["VELDISP"] ** 2)
+                    * self._deflector_dict["DDS"]
+                )
+                / ((3e5) ** 2 * self._deflector_dict["DS"])
+                / const.arcsec
+            )
         # self._theta_E_pemd
         self.lens_params = ["theta_E", "gamma", "e1", "e2", "center_x", "center_y"]
 
@@ -90,6 +96,7 @@ class OM10Lens(LensedSystem):
 
         :return: x-pos, y-pos
         """
+
         if not hasattr(self, "_image_positions"):
             lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
             lens_model_class = LensModel(lens_model_list=lens_model_list)
@@ -102,9 +109,9 @@ class OM10Lens(LensedSystem):
                 source_pos_y,
                 kwargs_lens,
                 solver="lenstronomy",
-                search_window=self.einstein_radius * 6,
-                min_distance=self.einstein_radius * 6 / 100,
-                magnification_limit=self._magnification_limit,
+                search_window=self.einstein_radius * 6,  # CHECK WITH SIMON #
+                min_distance=self.einstein_radius * 2 / 200,  # CHECK WITH SIMON
+                magnification_limit=self._magnification_limit,  # CHECK WITH SIMON #0.01
             )
         return self._image_positions
 
@@ -220,7 +227,7 @@ class OM10Lens(LensedSystem):
 
         :return: stellar mass of deflector
         """
-        return None
+        return self._deflector_dict["stellar_mass"]
 
     def deflector_velocity_dispersion(self):
         """
@@ -232,7 +239,7 @@ class OM10Lens(LensedSystem):
     def los_linear_distortions(self):
         """Line-of-sight distortions in shear and convergence.
 
-        :return: kappa, gamma1, gamma2
+        :return: gamma1, gamma2, kappa
         """
 
         gamma = self._deflector_dict["GAMMA"]
@@ -240,6 +247,8 @@ class OM10Lens(LensedSystem):
         gamma1 = gamma * np.cos(2 * phi)
         gamma2 = gamma * np.sin(2 * phi)
         self._gamma = [gamma1, gamma2]
+        # self._kappa = self._deflector_dict['convergence']
+        self._kappa = 0
         if not hasattr(self, "_kappa"):
             self._kappa = np.random.normal(loc=0, scale=0.05)
         return self._gamma[0], self._gamma[1], self._kappa
@@ -293,8 +302,8 @@ class OM10Lens(LensedSystem):
         """Point source magnitude, either unlensed (single value) or lensed (array) with
         macro-model magnifications.
 
-        # TODO: time-variability with time-delayed and micro-lensing
-
+        # TODO: time-variability with time-delayed and micro-lensing # TODO: add whether
+        this is apparent or absolute magnitude
         :param band: imaging band
         :type band: string
         :param lensed: if True, returns the lensed magnified magnitude
@@ -303,7 +312,7 @@ class OM10Lens(LensedSystem):
         """
 
         # TODO: might have to change conventions between extended and point source
-        source_mag = self._source_dict["M_i"]
+        source_mag = self._deflector_dict["MAGI_IN"]
         # TODO: requires time information and needs to be shifted for
         # different arriving images
         if lensed:
@@ -322,7 +331,7 @@ class OM10Lens(LensedSystem):
         :return: magnitude of source in given band
         """
         # TODO: might have to change conventions between extended and point source
-        source_mag = self._source_dict["Mag_true_i_lsst_z0"]
+        source_mag = self._source_dict["mag_true_i"]
         if lensed:
             mag = self.extended_source_magnification()
             return source_mag - 2.5 * np.log10(mag)
@@ -360,7 +369,7 @@ class OM10Lens(LensedSystem):
 
             kwargs_source_mag = kwargs_params["kwargs_source"]
             kwargs_source_amp = data_util.magnitude2amplitude(
-                lightModel, kwargs_source_mag, magnitude_zero_point=0
+                lightModel, kwargs_source_mag, magnitude_zero_point=27
             )
 
             num_pix = 200
@@ -421,7 +430,8 @@ class OM10Lens(LensedSystem):
 
         :return: lens_model_list, kwargs_lens
         """
-        lens_mass_model_list = ["PEMD"]
+        # lens_mass_model_list = ["PEMD", "SHEAR"]
+        lens_mass_model_list = ["EPL", "SHEAR", "CONVERGENCE"]
         theta_E = self.einstein_radius
         e1_light_lens, e2_light_lens, e1_mass, e2_mass = self.deflector_ellipticity()
         center_lens = self.deflector_position
@@ -429,7 +439,8 @@ class OM10Lens(LensedSystem):
         kwargs_lens = [
             {
                 "theta_E": theta_E,
-                "gamma": np.random.normal(2.1, 0.09),
+                "gamma": 2,
+                # "gamma": np.random.normal(loc=2.05, scale=0.15),
                 "e1": e1_mass,
                 "e2": e2_mass,
                 "center_x": center_lens[0],
@@ -450,9 +461,7 @@ class OM10Lens(LensedSystem):
         center_lens = self.deflector_position
         e1_light_lens, e2_light_lens, e1_mass, e2_mass = self.deflector_ellipticity()
         # TODO
-        size_lens_arcsec = self._deflector_dict[
-            "size_true"
-        ]  # convert radian to arc seconds
+        size_lens_arcsec = self._deflector_dict["size_true"]
 
         if band is None:
             mag_lens = 1
@@ -480,7 +489,7 @@ class OM10Lens(LensedSystem):
         source_models = {}
         all_source_kwarg_dict = {}
         center_source = self.source_position
-        # convert radian to arc seconds
+
         if band is None:
             mag_source = 1
         else:
@@ -498,43 +507,23 @@ class OM10Lens(LensedSystem):
                 "center_y": center_source[1],
             }
         ]
-        # source_models['source_light_model_list'] = None
-        kwargs_source = None
-
-        source_models["point_source_model"] = ["LENSED_POSITION"]
+        source_models["point_source_model_list"] = ["SOURCE_POSITION"]
         img_x, img_y = self.image_positions()
         if band is None:
-            image_magnitudes = np.abs(self.point_source_magnification())
+            ps_magnitudes = np.abs(self.point_source_magnification())
         else:
-            image_magnitudes = self.point_source_magnitude(band=band, lensed=True)
+            ps_magnitudes = self.point_source_magnitude(band=band, lensed=False)
+
         kwargs_ps = [
-            {"ra_image": img_x, "dec_image": img_y, "point_amp": image_magnitudes}
+            {
+                "ra_source": center_source[0],
+                "dec_source": center_source[1],
+                "magnitude": ps_magnitudes,
+            }
         ]
         all_source_kwarg_dict["kwargs_source"] = kwargs_source
         all_source_kwarg_dict["kwargs_ps"] = kwargs_ps
         return source_models, all_source_kwarg_dict
-
-
-def image_separation_from_positions(image_positions):
-    """Calculate image separation in arc-seconds; if there are only two images, the
-    separation between them is returned; if there are more than 2 images, the maximum
-    separation is returned.
-
-    :param image_positions: list of image positions in arc-seconds
-    :return: image separation in arc-seconds
-    """
-    if len(image_positions[0]) == 2:
-        image_separation = np.sqrt(
-            (image_positions[0][0] - image_positions[0][1]) ** 2
-            + (image_positions[1][0] - image_positions[1][1]) ** 2
-        )
-    else:
-        coords = np.stack((image_positions[0], image_positions[1]), axis=-1)
-        separations = np.sqrt(
-            np.sum((coords[:, np.newaxis] - coords[np.newaxis, :]) ** 2, axis=-1)
-        )
-        image_separation = np.max(separations)
-    return image_separation
 
 
 def theta_e_when_source_infinity(deflector_dict=None, v_sigma=None):
@@ -548,7 +537,7 @@ def theta_e_when_source_infinity(deflector_dict=None, v_sigma=None):
         if deflector_dict is None:
             raise ValueError("Either deflector_dict or v_sigma must be provided")
         else:
-            v_sigma = deflector_dict["vel_disp"]
+            v_sigma = deflector_dict["VELDISP"]
 
     theta_E_infinity = (
         4 * np.pi * (v_sigma * 1000.0 / constants.c) ** 2 / constants.arcsec

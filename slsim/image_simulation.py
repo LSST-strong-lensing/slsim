@@ -71,6 +71,7 @@ def sharp_image(
     :return: 2d array unblurred image
     """
     kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band)
+
     kwargs_band = {
         "pixel_scale": delta_pix,
         "magnitude_zero_point": mag_zero_point,
@@ -139,6 +140,69 @@ def sharp_rgb_image(lens_class, rgb_band_list, mag_zero_point, delta_pix, num_pi
     )
     image_rgb = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
     return image_rgb
+
+
+def quasar_image(
+    lens_class,
+    band,
+    kwargs_band,
+    num_pix,
+    with_source=True,
+    with_ps=True,
+    with_deflector=True,
+    unconvolved=False,
+    add_noise=True,
+):
+    """
+    :param lens_class: Lens() object
+    :param band: imaging band
+    :param kwargs_band: key word arguments including: read_noise, pixel_scale, ccd_gain,
+    exposure_time, sky_brightness, magnitude_zero_point, num_exposures, seeing, psf_type,
+    kernel_point_source
+    :param num_pix: number of pixels per axis
+    :param with_source: bool, if True includes extended source light
+    :param with_ps: bool, if True includes point source light
+    :param with_deflector: bool, if True includes deflector light
+    :param unconvolved: bool, if True PSF is not convolved with extended source light or lens light
+    :param add_noise: bool, if True add noise
+    :return: 2d array of image
+    """
+    # print(with_ps, with_deflector)
+    kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band)
+    kwargs_band = kwargs_band
+    sim_api = SimAPI(
+        numpix=num_pix, kwargs_single_band=kwargs_band, kwargs_model=kwargs_model
+    )
+    kwargs_lens_light, kwargs_source, kwargs_ps = sim_api.magnitude2amplitude(
+        kwargs_lens_light_mag=kwargs_params.get("kwargs_lens_light", None),
+        kwargs_source_mag=kwargs_params.get("kwargs_source", None),
+        kwargs_ps_mag=kwargs_params.get("kwargs_ps", None),
+    )
+    kwargs_numerics = {"supersampling_factor": 1}
+    image_model = sim_api.image_model_class(kwargs_numerics)
+    kwargs_lens = kwargs_params.get("kwargs_lens", None)
+    image = image_model.image(
+        kwargs_lens=kwargs_lens,
+        kwargs_source=kwargs_source,
+        kwargs_lens_light=kwargs_lens_light,
+        kwargs_ps=kwargs_ps,
+        unconvolved=unconvolved,
+        source_add=with_source,
+        lens_light_add=with_deflector,
+        point_source_add=with_ps,
+    )
+    if add_noise:
+        image += sim_api.noise_for_model(model=image, background_noise=False)
+
+    return (
+        image,
+        kwargs_model,
+        kwargs_params,
+        kwargs_lens,
+        kwargs_lens_light,
+        kwargs_source,
+        kwargs_ps,
+    )
 
 
 def rgb_image_from_image_list(image_list, stretch):
@@ -232,6 +296,14 @@ def point_source_coordinate_properties(
     for image_ra, image_dec in zip(ra_image_values, dec_image_values):
         image_pix_coordinate.append((image_data.map_coord2pix(image_ra, image_dec)))
 
+    print(
+        (lens_pix_coordinate),
+        (image_pix_coordinate),
+        (ra_image_values),
+        (dec_image_values),
+    )
+
+    # this table cannot be built when lens_pix_coordinate and the other values are different lengths
     data = Table(
         [
             lens_pix_coordinate,
@@ -247,6 +319,55 @@ def point_source_coordinate_properties(
         ),
     )
     return data
+
+
+def point_source_with_extended_source_no_var(
+    lens_class,
+    band,
+    mag_zero_point,
+    delta_pix,
+    num_pix,
+    psf_kernels,
+    transform_pix2angle,
+):
+    """Creates lensed point source + extended source images without variability on the
+    basis of given information.
+
+    :param lens_class: Lens() object
+    :param band: imaging band
+    :param mag_zero_point: magnitude zero point in band
+    :param delta_pix: pixel scale of image generated
+    :param num_pix: number of pixels per axis
+    :param psf_kernels: PSF kernel
+    :type psf_kernels:
+    :return: point source images
+    """
+
+    image_data = point_source_coordinate_properties(
+        lens_class=lens_class,
+        band=band,
+        mag_zero_point=mag_zero_point,
+        delta_pix=delta_pix,
+        num_pix=num_pix,
+        transform_pix2angle=transform_pix2angle,
+    )
+
+    data_class = image_data_class(
+        lens_class, band, mag_zero_point, delta_pix, num_pix, transform_pix2angle
+    )
+
+    ra_image_values = image_data["ra_image"]
+    dec_image_values = image_data["dec_image"]
+    psf_class = PSF(psf_type="PIXEL", kernel_point_source=psf_kernels)
+    magnitude = lens_class.point_source_magnitude(band, lensed=True)
+    amp = magnitude_to_amplitude(magnitude, mag_zero_point)
+    rendering_class = PointSourceRendering(
+        pixel_grid=data_class, supersampling_factor=1, psf=psf_class
+    )
+    point_source = rendering_class.point_source_rendering(
+        ra_image_values, dec_image_values, amp
+    )
+    return point_source
 
 
 def point_source_image_without_variability(
@@ -288,7 +409,6 @@ def point_source_image_without_variability(
     psf_class = []
     for i in range(len(psf_kernels)):
         psf_class.append(PSF(psf_type="PIXEL", kernel_point_source=psf_kernels[i]))
-
     magnitude = lens_class.point_source_magnitude(band, lensed=True)
     amp = magnitude_to_amplitude(magnitude, mag_zero_point)
     point_source_images = []

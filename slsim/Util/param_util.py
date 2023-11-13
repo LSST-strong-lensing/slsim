@@ -3,7 +3,7 @@ from scipy.signal import convolve2d, fftconvolve
 
 
 def epsilon2e(epsilon):
-    """Translates ellipticity definitions from.
+    """Translates ellipticity definitions from epsilon to e.
 
     .. math::
         epsilon = \\equic \\frac{1 - q^2}{1 + q^2}
@@ -24,6 +24,21 @@ def epsilon2e(epsilon):
         raise ValueError('Value of "epsilon" is %s and needs to be in [0, 1]' % epsilon)
 
 
+def ellipticity2phi_q(e1, e2):
+    """Transforms complex ellipticity moduli in orientation angle and axis ratio.
+
+    :param e1: eccentricity in x-direction
+    :param e2: eccentricity in xy-direction
+    :return: angle in radian, axis ratio (minor/major)
+    """
+
+    phi = np.arctan2(e2, e1) / 2
+    c = np.sqrt(e1**2 + e2**2)
+    c = np.minimum(c, 0.9999)
+    q = (1 - c) / (1 + c)
+    return phi, q
+
+
 def e2epsilon(e):
     """Translates ellipticity definitions from.
 
@@ -39,6 +54,32 @@ def e2epsilon(e):
     :return: ellipticity
     """
     return 2 * e / (1 + e**2)
+
+
+def image_separation_from_positions(image_positions):
+    """Calculate image separation in arc-seconds; if there are only two images, the
+    separation between them is returned; if there are more than 2 images, the maximum
+    separation is returned.
+
+    :param image_positions: list of image positions in arc-seconds
+    :return: image separation in arc-seconds
+    """
+    if len(image_positions[0]) == 2:
+        image_separation = np.sqrt(
+            (image_positions[0][0] - image_positions[0][1]) ** 2
+            + (image_positions[1][0] - image_positions[1][1]) ** 2
+        )
+    else:
+        coords = np.stack((image_positions[0], image_positions[1]), axis=-1)
+        separations = np.sqrt(
+            np.sum((coords[:, np.newaxis] - coords[np.newaxis, :]) ** 2, axis=-1)
+        )
+        try:
+            image_separation = np.max(separations)
+        except ValueError:
+            print(separations)
+            image_separation = 0
+    return image_separation
 
 
 def random_ra_dec(ra_min, ra_max, dec_min, dec_max, n):
