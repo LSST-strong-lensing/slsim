@@ -25,6 +25,7 @@ def create_image_montage_from_image_list(num_rows, num_cols, images, time=None, 
                 image = images[i * num_cols + j]
 
                 if image_type=='dp0':
+                    zscale = ZScaleInterval()
                     vmin, vmax = zscale.get_limits(image)
                     axes[i, j].imshow(image, origin="lower", cmap='gray', vmin=vmin, vmax=vmax)
                 else:
