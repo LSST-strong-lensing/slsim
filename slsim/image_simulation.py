@@ -324,7 +324,7 @@ def point_source_image_at_time(
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
     :param psf_kernels: psf kernels for the given exposure.
-    :param time: time is a image observation time [day].
+    :param time: time is an image observation time [day].
     :return: point source images with variability
     """
 
