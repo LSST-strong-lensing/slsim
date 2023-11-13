@@ -260,7 +260,7 @@ def point_source_image_without_variability(
     mag_zero_point,
     delta_pix,
     num_pix,
-    psf_kernels,
+    psf_kernel,
     transform_pix2angle,
 ):
     """Creates lensed point source images without variability on the basis of given
@@ -271,7 +271,7 @@ def point_source_image_without_variability(
     :param mag_zero_point: magnitude zero point in band
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
-    :param psf_kernels: psf kernels.
+    :param psf_kernel: psf kernel for an image.
     :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
      displacements
     :return: point source images
@@ -292,16 +292,17 @@ def point_source_image_without_variability(
 
     ra_image_values = image_data["ra_image"]
     dec_image_values = image_data["dec_image"]
-    psf_class = []
-    for i in range(len(psf_kernels)):
-        psf_class.append(PSF(psf_type="PIXEL", kernel_point_source=psf_kernels[i]))
+    #psf_class = []
+    #for i in range(len(psf_kernels)):
+        #psf_class.append(PSF(psf_type="PIXEL", kernel_point_source=psf_kernels[i]))
+    psf_class = PSF(psf_type="PIXEL", kernel_point_source=psf_kernel)
 
     magnitude = lens_class.point_source_magnitude(band, lensed=True)
     amp = magnitude_to_amplitude(magnitude, mag_zero_point)
     point_source_images = []
-    for i in range(len(psf_class)):
+    for i in range(len(ra_image_values)):
         rendering_class = PointSourceRendering(
-            pixel_grid=data_class, supersampling_factor=1, psf=psf_class[i]
+            pixel_grid=data_class, supersampling_factor=1, psf=psf_class
         )
         point_source = rendering_class.point_source_rendering(
             np.array([ra_image_values[i]]),
@@ -330,15 +331,10 @@ def point_source_image_at_time(
     :param mag_zero_point: magnitude zero point in band
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
-<<<<<<< HEAD
     :param psf_kernel: psf kernel for the given exposure.
     :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
      displacements
     :param time: time is a image observation time [day].
-=======
-    :param psf_kernels: psf kernels for the given exposure.
-    :param time: time is an image observation time [day].
->>>>>>> aeb1afc859b9ae088d66ee94828a10d7c385e12f
     :return: point source images with variability
     """
 
@@ -350,7 +346,7 @@ def point_source_image_at_time(
         num_pix=num_pix,
         transform_pix2angle=transform_pix2angle,
     )
-    psf_kernels= [psf_kernel.copy() for _ in range(len(image_data["ra_image"]))]
+    #psf_kernels= [psf_kernel.copy() for _ in range(len(image_data["ra_image"]))]
     
 
     data_class = image_data_class(
@@ -359,16 +355,17 @@ def point_source_image_at_time(
 
     ra_image_values = image_data["ra_image"]
     dec_image_values = image_data["dec_image"]
-    psf_class = []
-    for i in range(len(psf_kernels)):
-        psf_class.append(PSF(psf_type="PIXEL", kernel_point_source=psf_kernels[i]))
+    #psf_class = []
+    #for i in range(len(psf_kernels)):
+        #psf_class.append(PSF(psf_type="PIXEL", kernel_point_source=psf_kernels[i]))
+    psf_class = PSF(psf_type="PIXEL", kernel_point_source=psf_kernel)
 
     variable_mag = lens_class.point_source_magnitude(band=band, lensed=True, time=time)
     variable_amp = magnitude_to_amplitude(variable_mag, mag_zero_point)
     point_source_images = []
-    for i in range(len(psf_class)):
+    for i in range(len(ra_image_values)):
         rendering_class = PointSourceRendering(
-            pixel_grid=data_class, supersampling_factor=1, psf=psf_class[i]
+            pixel_grid=data_class, supersampling_factor=1, psf=psf_class
         )
         point_source = rendering_class.point_source_rendering(
             np.array([ra_image_values[i]]),
@@ -469,8 +466,8 @@ def image_plus_possion_noise(image, exposure_time):
         image_plus_noise = np.random.poisson(image*exposure_time)/exposure_time
     return image_plus_noise
 
-def variable_lens_image(lens_class, band, mag_zero_point, 
-            delta_pix, num_pix, psf_kernels, exposure_time, transform_pix2angle, t_obs):
+def lens_image(lens_class, band, mag_zero_point, 
+            delta_pix, num_pix, psf_kernels, transform_pix2angle, exposure_time=None, t_obs = None):
     """Creates variable lens images for series of time on the
     basis of given information.
 
@@ -479,37 +476,96 @@ def variable_lens_image(lens_class, band, mag_zero_point,
     :param mag_zero_point: magnitude zero point for each exposure
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
-    :param psf_kernels: psf kernels in the sequence of exposures being simulated.
-    :param exposure_time: exposure time for each individual image. 
-     It can be a integer of array
+    :param psf_kernels: psf kernels in the sequence of exposures being simulated 
+     or a single psf.
     :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
      displacements
+    :param exposure_time: exposure time for each individual image. 
+     It can be a integer of array
     :param t_obs: array of image observation time [day].
     :return: array of point source images with variability
     """
-    point_image = point_source_image_with_variability(
-    lens_class=lens_class,
-    band=band,
-    mag_zero_point=mag_zero_point,
-    delta_pix=delta_pix,
-    num_pix=num_pix,
-    psf_kernels=psf_kernels,
-    transform_pix2angle=transform_pix2angle,
-    t_obs=t_obs)
-    
-    images = deflector_images_with_different_zeropoint(lens_class, band=band, 
-                            mag_zero_point=mag_zero_point, delta_pix=delta_pix, num_pix=num_pix)
-    convolved_deflector_image = []
-    for imag, psf_kern in zip(images, psf_kernels):
-        convolved_deflector_image.append(convolved_image(
-            imag, psf_kern
-        ))
-    final_images = []
-    for i in range(len(t_obs)):
-        final_images.append(
-            point_image[i] + convolved_deflector_image[i]
-        )
+    source_type = lens_class._source_type
+    if source_type=="point_source":
+        if t_obs is not None:
+            point_image = point_source_image_with_variability(
+            lens_class=lens_class,
+            band=band,
+            mag_zero_point=mag_zero_point,
+            delta_pix=delta_pix,
+            num_pix=num_pix,
+            psf_kernels=psf_kernels,
+            transform_pix2angle=transform_pix2angle,
+            t_obs=t_obs)
+
+            images = deflector_images_with_different_zeropoint(lens_class, band=band, 
+                                    mag_zero_point=mag_zero_point, delta_pix=delta_pix, num_pix=num_pix)
+            convolved_deflector_image = []
+            for imag, psf_kern in zip(images, psf_kernels):
+                convolved_deflector_image.append(convolved_image(
+                    imag, psf_kern
+                ))
+            final_images = []
+            for i in range(len(t_obs)):
+                final_images.append(
+                    point_image[i] + convolved_deflector_image[i]
+                )
+
+            if exposure_time is not None:
+                final_lens_image = image_plus_possion_noise(image=final_images, 
+                                            exposure_time=exposure_time)
+            else:
+                final_lens_image = final_images
+        else:
+            _point_image = point_source_image_without_variability(
+                lens_class = lens_class, 
+                band = band, 
+                mag_zero_point = mag_zero_point, 
+                delta_pix = delta_pix, 
+                num_pix = num_pix, 
+                psf_kernel = psf_kernels,
+                transform_pix2angle=transform_pix2angle)
+            deflector_image = sharp_image(
+                lens_class=lens_class,
+                band=band,
+                mag_zero_point=mag_zero_point,
+                delta_pix=delta_pix,
+                num_pix=num_pix,
+            )
+            _convolved_deflector_image = convolved_image(image=deflector_image, 
+                                                   psf_kernel=psf_kernels)
+            final_image = sum(_point_image) + _convolved_deflector_image
+            if exposure_time is not None:
+                final_lens_image = image_plus_possion_noise(final_image, exposure_time)
+            else:
+                final_lens_image = final_image
+            
+            
+            
+    elif source_type=="extended":
+        if t_obs is not None:
+            raise ValueError(
+                        "extented source do not have time variability. So," 
+                "do not provide observation time."
+                    )
+        else:
+            lens_image = sharp_image(
+                lens_class=lens_class,
+                band=band,
+                mag_zero_point=mag_zero_point,
+                delta_pix=delta_pix,
+                num_pix=num_pix,
+            )
+            convolved_lens_image = convolved_image(image=lens_image, 
+                                                   psf_kernel=psf_kernels)
+            if exposure_time is not None:
+                final_lens_image = image_plus_possion_noise(image=convolved_lens_image, 
+                                        exposure_time=exposure_time)
+            else:
+                final_lens_image = convolved_lens_image
+    else:
+        raise ValueError(
+                        "source type is not supported."
+                    )
         
-    image_plus_noise = image_plus_possion_noise(image=final_images, 
-                                    exposure_time=exposure_time)
-    return image_plus_noise
+    return final_lens_image
