@@ -451,7 +451,7 @@ def image_plus_possion_noise(image, exposure_time):
     """creates an image with possion noise
     
     :param image: image or list of image
-    :param exposure_time: exposure time for each image
+    :param exposure_time: exposure time for each image or exposure map
     :return: image with possion noise
     """
     if isinstance(image, list):
