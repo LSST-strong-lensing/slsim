@@ -58,7 +58,7 @@ def simulate_image(
 
 
 def sharp_image(
-    lens_class, band, mag_zero_point, delta_pix, num_pix, with_deflector=True
+    lens_class, band, mag_zero_point, delta_pix, num_pix, with_source=True, with_deflector=True
 ):
     """Creates an unconvolved image of a selected lens. Point source image is not
     included in this function.
@@ -68,6 +68,7 @@ def sharp_image(
     :param mag_zero_point: magnitude zero point in band
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
+    :param with_source: bool, if True computes source
     :param with_deflector: bool, if True includes deflector light
     :return: 2d array unblurred image
     """
@@ -99,7 +100,7 @@ def sharp_image(
         kwargs_lens_light=kwargs_lens_light,
         kwargs_ps=kwargs_ps,
         unconvolved=True,
-        source_add=True,
+        source_add=with_source,
         lens_light_add=with_deflector,
         point_source_add=False,
     )
@@ -486,7 +487,7 @@ def lens_image(lens_class, band, mag_zero_point,
     :return: array of point source images with variability
     """
     source_type = lens_class._source_type
-    if source_type=="point_source":
+    if source_type=="point_source" or source_type=="point_plus_extended_source":
         if t_obs is not None:
             point_image = point_source_image_with_variability(
             lens_class=lens_class,
