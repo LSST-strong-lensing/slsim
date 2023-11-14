@@ -4,7 +4,7 @@ from lsst.pipe.tasks.insertFakes import _add_fake_sources
 import galsim
 from astropy.table import Table, vstack
 from astropy.table import Column
-from slsim.image_simulation import (sharp_image, variable_lens_image, 
+from slsim.image_simulation import (sharp_image, lens_image, 
                                     image_plus_possion_noise)
 from scipy.signal import convolve2d
 from scipy import interpolate
@@ -173,7 +173,8 @@ def lens_inejection_fast(
     dec,
     num_cutout_per_patch=10,
     lens_cut=None,
-    flux=None, exposure_time = None
+    flux=None, 
+    noise = True
 ):
     """Chooses a random lens from the lens population and injects it to a DC2 cutout
     image. For this one needs to provide a butler to this function. To initiate Butler,
@@ -209,10 +210,13 @@ def lens_inejection_fast(
     my_patch = patchInfo.getSequentialIndex()
 
     coadd = []
+    coadd_nImage = []
     for band in rgb_band_list:
         coaddId = {"tract": my_tract, "patch": my_patch, "band": band}
 
         coadd.append(butler.get("deepCoadd", dataId=coaddId))
+        coadd_nImage.append(butler.get('deepCoadd_nImage',
+                           dataId = coaddId)
 
     bbox = coadd[0].getBBox()
     xmin, ymin = bbox.getBegin()
@@ -246,10 +250,11 @@ def lens_inejection_fast(
                 num_pix=num_pix,
             )
             cutout_image = coadd[j][cutout_bbox]
-            if exposure_time is none:
-                lens_final = lens
-            else:
+            if noise is True:
+                exposure_map = 30*coadd_nImage[j][cutout_bbox].array
                 lens_final = image_plus_possion_noise(lens, exposure_time)
+            else:
+                lens_final = lens
             objects = [(geom.Point2D(x_center[i], y_center[i]), lens_final, delta_pix)]
             final_injected_image = add_object(cutout_image, objects, calibFluxRadius=12)
             center_wcs = wcs.pixelToSky(objects[0][0])
@@ -331,6 +336,7 @@ def multiple_lens_injection_fast(
     num_cutout_per_patch=10,
     lens_cut=None,
     flux=None,
+    noise=True,
 ):
     """Injects random lenses from the lens population to multiple DC2 cutout images
     using lens_inejection_fast function. For this one needs to provide a butler to this
@@ -362,6 +368,7 @@ def multiple_lens_injection_fast(
                 num_cutout_per_patch,
                 lens_cut=None,
                 flux=None,
+                noise=True,
             )
         )
     injected_image_catalog = vstack(injected_images)
@@ -660,7 +667,7 @@ def variable_lens_injection(lens_class, band, delta_pix,
     :return: Astropy table of injected lenses and exposure information of dp0 data
     """
     
-    lens_images = variable_lens_image(lens_class, band=band, 
+    lens_images = lens_image(lens_class, band=band, 
             mag_zero_point=exposure_data['zero_point'], delta_pix=delta_pix, 
             num_pix=num_pix, psf_kernels=exposure_data['psf_kernel'], 
             exposure_time=exposure_data['expo_time'], 
