@@ -1,14 +1,17 @@
 import numpy as np
 import lsst.geom as geom
-
-# Source injection
 from lsst.pipe.tasks.insertFakes import _add_fake_sources
 import galsim
 from astropy.table import Table, vstack
-from slsim.image_simulation import sharp_image
+from astropy.table import Column
+from slsim.image_simulation import (sharp_image, lens_image, 
+                                    image_plus_possion_noise)
 from scipy.signal import convolve2d
 from scipy import interpolate
 from slsim.image_simulation import point_source_coordinate_properties
+from lsst.rsp import get_tap_service
+from lsst.afw.math import Warper
+
 
 """
 This module provides necessary functions to inject lenses to the dp0 data. For this, it 
@@ -170,7 +173,8 @@ def lens_inejection_fast(
     dec,
     num_cutout_per_patch=10,
     lens_cut=None,
-    flux=None,
+    flux=None, 
+    noise = True
 ):
     """Chooses a random lens from the lens population and injects it to a DC2 cutout
     image. For this one needs to provide a butler to this function. To initiate Butler,
@@ -206,10 +210,13 @@ def lens_inejection_fast(
     my_patch = patchInfo.getSequentialIndex()
 
     coadd = []
+    coadd_nImage = []
     for band in rgb_band_list:
         coaddId = {"tract": my_tract, "patch": my_patch, "band": band}
 
         coadd.append(butler.get("deepCoadd", dataId=coaddId))
+        coadd_nImage.append(butler.get('deepCoadd_nImage',
+                           dataId = coaddId)
 
     bbox = coadd[0].getBBox()
     xmin, ymin = bbox.getBegin()
@@ -243,7 +250,12 @@ def lens_inejection_fast(
                 num_pix=num_pix,
             )
             cutout_image = coadd[j][cutout_bbox]
-            objects = [(geom.Point2D(x_center[i], y_center[i]), lens, delta_pix)]
+            if noise is True:
+                exposure_map = 30*coadd_nImage[j][cutout_bbox].array
+                lens_final = image_plus_possion_noise(lens, exposure_time)
+            else:
+                lens_final = lens
+            objects = [(geom.Point2D(x_center[i], y_center[i]), lens_final, delta_pix)]
             final_injected_image = add_object(cutout_image, objects, calibFluxRadius=12)
             center_wcs = wcs.pixelToSky(objects[0][0])
             ra_deg = center_wcs.getRa().asDegrees()
@@ -324,6 +336,7 @@ def multiple_lens_injection_fast(
     num_cutout_per_patch=10,
     lens_cut=None,
     flux=None,
+    noise=True,
 ):
     """Injects random lenses from the lens population to multiple DC2 cutout images
     using lens_inejection_fast function. For this one needs to provide a butler to this
@@ -355,6 +368,7 @@ def multiple_lens_injection_fast(
                 num_cutout_per_patch,
                 lens_cut=None,
                 flux=None,
+                noise=True,
             )
         )
     injected_image_catalog = vstack(injected_images)
@@ -407,14 +421,8 @@ def add_object(dp0_image, objects, calibFluxRadius=12):
 
 
 def cutout_image_psf_kernel(
-    dp0_image,
-    lens_class,
-    band,
-    mag_zero_point,
-    delta_pix,
-    num_pix,
-    transform_pix2angle,
-    calibFluxRadius=12,
+    dp0_image, lens_class, band, mag_zero_point, delta_pix, num_pix,
+    transform_pix2angle, calibFluxRadius=12
 ):
     """This function extracts psf kernels from the dp0 cutout image at point source
     image positions and deflector position. In the dp0.2 data, psf kernel vary with
@@ -438,8 +446,7 @@ def cutout_image_psf_kernel(
         band=band,
         mag_zero_point=mag_zero_point,
         delta_pix=delta_pix,
-        num_pix=num_pix,
-        transform_pix2angle=transform_pix2angle,
+        num_pix=num_pix,transform_pix2angle=transform_pix2angle
     )
     # get the property of cutout image
     bbox = dp0_image.getBBox()
@@ -487,3 +494,218 @@ def cutout_image_psf_kernel(
         names=("psf_kernel_for_images", "psf_kernel_for_deflector"),
     )
     return table_of_kernels
+
+def tap_query(center_coords, radius=0.1, band='i'):
+    """This function uses tap_service from RSP to query calexp visit
+    information around a coordinate point.
+    :param center_coords: A coordinate point around 
+     which visit informations are needed.
+    :param radius: Radius around center point for query.
+    :param band: imaging band
+    :return: An astropy table of visit information sorted 
+     with observation time.
+    """
+    service = get_tap_service("tap")
+    query = "SELECT ra, decl," + \
+               "ccdVisitId, band, " + \
+               "visitId, physical_filter, detector, " + \
+               "expMidptMJD, expTime, zeroPoint, skyRotation " + \
+               "FROM dp02_dc2_catalogs.CcdVisit " + \
+               "WHERE CONTAINS(POINT('ICRS', ra, decl), " + \
+               "CIRCLE('ICRS', " + center_coords + ", " + radius + ")) = 1" + \
+               "AND band = " + "'" + str(band) + "' "
+    result = service.search(query)
+    result_table = result.to_table()
+    sorted_column = np.argsort(result_table['expMidptMJD'])
+    expo_information = result_table[sorted_column]
+    return expo_information
+
+def list_of_calexp(expo_information, butler):
+    """Extracts calexp images based on exposure information.
+    
+    :param expo_information: Astropy table containing exposure information.
+     It must contain Visit ID and Detector ID.
+    :param butler: butler object
+    :return: list of calexp images.
+    """
+    calexp_image=[]
+    for visitid, detectorid in zip(expo_information['visitId'], expo_information['detector']):
+        dataId = {'visit':visitid, 'detector':detectorid}
+        calexp_image.append(butler.get('calexp', dataId=dataId))
+    return calexp_image
+
+def warp_to_exposure(exposure, warp_to_exposure):
+    """This function aligns two given dp0 images.
+    
+    :param exposure: image that need to be aligned
+    :param warp_to_exposure: Reference image on which
+     exposure should be aligned.
+    :return: Image aligned to reference image.
+    """
+    warper = Warper(warpingKernelName='lanczos4')
+    warped_exposure = warper.warpExposure(warp_to_exposure.getWcs(), exposure,
+                                          destBBox=warp_to_exposure.getBBox())
+    return warped_exposure
+
+def aligned_calexp(calexp_image):
+    """ alignes list of given images to the first image in the list.
+    
+    :param calexp_image: list of calexp images.
+    :return: list of aligned images.
+    """
+    selected_calexp = calexp_image[1:]
+    aligned_calexp_image=[calexp_image[0]]
+    for i in range(0, len(selected_calexp), 1):
+        aligned_calexp_image.append(warp_to_exposure(selected_calexp[i], calexp_image[0]))
+    return aligned_calexp_image
+
+def dp0_center_radec(calexp_image):
+    """computes the center ra, dec of given dp0 image.
+    :param calexp_image: dp0 image
+    :return: A sphere point of center ra, dec of given image
+    """
+    bbox = calexp_image.getBBox()
+    xmin, ymin = bbox.getBegin()
+    xmax, ymax = bbox.getEnd()
+    x_center = (xmin + xmax)/2
+    y_center = (ymin + ymax)/2
+    radec_point = geom.SpherePoint(calexp_image.getWcs().pixelToSky(x_center, y_center))
+    return radec_point
+
+def calexp_cutout(calexp_image, radec, size):
+    """ creates the same size cutouts from given list of dp0 images.
+    
+    :param calexp_image: list of dp0 images
+    :param radec: SpherePoint of radec around which we want a cutout
+    :param size: cutout size in pixel unit
+    :return: cutout image of a given size
+    """
+    cutout_extent = geom.ExtentI(size, size)
+    cutout_calexp_image = []
+    for i in range(len(calexp_image)):
+        cutout_calexp_image.append(calexp_image[i].getCutout(radec, cutout_extent))
+    return cutout_calexp_image
+
+def radec_to_pix(radec, dp0_image):
+    """converts ra, dec to pixel units
+    
+    :param radec: SpherePoint of radec
+    :param dp0_image: image containing given radec
+    :return: corresponding Point2D of pixel coordinate
+    """
+    if isinstance(dp0_image, list):
+        pix = []
+        for images in dp0_image:
+            pix.append(images.getWcs().skyToPixel(radec))
+    else:
+        pix = dp0_image.getWcs().skyToPixel(radec)
+    return pix
+
+def dp0_psf_kernels(pixel_coord, dp0_image):
+    """Extracts psf kernels of given dp0 image at given pixel coordinate
+    
+    :param pixel_coord: Pixel coordinate. 
+     eg:Point2D(2129.7674135086986, 2506.6640697199136)
+    :param dp0_image: dp0 image to extract psf
+    :return: list of psf kernels for given images
+    """
+    psf_kernels = []
+    for points, images in zip(pixel_coord, dp0_image):
+        dp0_image_psf = images.getPsf()
+        psf_kernels.append(dp0_image_psf.computeKernelImage(points).array)
+    return psf_kernels
+
+def dp0_time_series_images_data(butler, center_coord, radius="0.1", band='i', size=101):
+    """creates time series data from dp0 data
+    
+    :param butler: butler object
+    :param center_coord: A coordinate point around 
+     which we need to create time series images.
+    :param radius: radius for query
+    :param band: imaging band
+    :param size: cutout size of images
+    :return: An astropy table containg time series images and 
+     other information 
+    """
+    expo_information=tap_query(center_coords=center_coord, radius=radius, band=band)
+    calexp_image = list_of_calexp(expo_information, butler=butler)
+    radec = dp0_center_radec(calexp_image[0])
+    radec_list = radec_list=[(radec.getRa().asDegrees(), radec.getDec().asDegrees())]
+    radec_list.extend(radec_list*(len(calexp_image)-1))
+    cutout_image = calexp_cutout(calexp_image, radec, 450)
+    aligned_image = aligned_calexp(cutout_image)
+    aligned_image_cutout = calexp_cutout(aligned_image, radec, size)
+    pixels = radec_to_pix(radec, calexp_image)
+    psf_kernel = dp0_psf_kernels(pixels, calexp_image)
+    obs_time = expo_information['expMidptMJD']
+    expo_time = expo_information['expTime']
+    zero_point_mag = expo_information['zeroPoint']
+    dp0_time_series_cutout = []
+    for i in range(len(aligned_image_cutout)):
+        dp0_time_series_cutout.append(aligned_image_cutout[i].image.array)
+    table_data = Table(
+        [dp0_time_series_cutout, psf_kernel, obs_time, expo_time, zero_point_mag, radec_list],
+        names=("time_series_images", "psf_kernel", "obs_time", "expo_time", "zero_point", "calexp_center"),
+    )
+    return table_data
+
+def variable_lens_injection(lens_class, band, delta_pix, 
+            num_pix, transform_pix2angle, exposure_data):
+    """Injects variable lens to the dp0 time series data.
+    
+    :param lens_class: Lens() object
+    :param band: imaging band
+    :param delta_pix: pixel scale of image generated
+    :param num_pix: number of pixels per axis
+    :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
+     displacements
+    :param exposure_data: An astropy table of exposure data. It must contain 
+     calexp images (column name should be "time_series_images"), magnitude zero point 
+     (column name should be "zero_point"), psf kernel for each exposure 
+     (column name should be "psf_kernel"), exposure time (column name should be "expo_time"),
+     observation time (column name should be "obs_time")
+    :return: Astropy table of injected lenses and exposure information of dp0 data
+    """
+    
+    lens_images = lens_image(lens_class, band=band, 
+            mag_zero_point=exposure_data['zero_point'], delta_pix=delta_pix, 
+            num_pix=num_pix, psf_kernels=exposure_data['psf_kernel'], 
+            exposure_time=exposure_data['expo_time'], 
+            transform_pix2angle=transform_pix2angle, 
+            t_obs=exposure_data['obs_time'])
+    final_image = []
+    for i in range(len(exposure_data['obs_time'])):
+        final_image.append(exposure_data['time_series_images'][i]  + lens_images[i])
+    lens_col = Column(name='lens', data=lens_images)
+    final_image_col = Column(name='injected_lens', data=final_image)
+    exposure_data.add_columns([lens_col, final_image_col])
+    return exposure_data
+
+def multiple_variable_lens_injection(lens_class_list, band, delta_pix, num_pix, 
+                        transform_matrices_list, exposure_data_list):
+    """Injects multiple variable lenses to multiple dp0 time series data.
+    
+    :param lens_class_list: list of Lens() object
+    :param band: imaging band
+    :param delta_pix: pixel scale of image generated
+    :param num_pix: number of pixels per axis
+    :param transform_matrices_list: list of transformation matrix (2x2) of pixels into coordinate
+     displacements for each exposure
+    :param exposure_data_list: list of astropy tables of each time series data. It must contain 
+     calexp images (column name should be "time_series_images"), magnitude zero point 
+     (column name should be "zero_point"), psf kernel for each exposure 
+     (column name should be "psf_kernel"), exposure time (column name should be "expo_time"),
+     observation time (column name should be "obs_time")
+    :return: list of astropy table of injected lenses and exposure information of dp0 data for each
+     time series lenses.
+    """
+    final_images_catalog = []
+    for lens_class, transform_matrices, expo_data in zip(lens_class_list, 
+        transform_matrices_list, exposure_data_list):
+        final_images_catalog.append(variable_lens_injection(lens_class, band=band, delta_pix=delta_pix, 
+                num_pix=num_pix, transform_pix2angle=transform_matrices, exposure_data=expo_data))
+    return final_images_catalog
+
+
+
+
