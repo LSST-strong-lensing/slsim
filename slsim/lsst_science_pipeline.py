@@ -216,7 +216,7 @@ def lens_inejection_fast(
 
         coadd.append(butler.get("deepCoadd", dataId=coaddId))
         coadd_nImage.append(butler.get('deepCoadd_nImage',
-                           dataId = coaddId)
+                           dataId = coaddId))
 
     bbox = coadd[0].getBBox()
     xmin, ymin = bbox.getBegin()
