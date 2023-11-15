@@ -5,7 +5,7 @@ import galsim
 from astropy.table import Table, vstack
 from astropy.table import Column
 from slsim.image_simulation import (sharp_image, lens_image, 
-                                    image_plus_possion_noise)
+                                    image_plus_poisson_noise)
 from scipy.signal import convolve2d
 from scipy import interpolate
 from slsim.image_simulation import point_source_coordinate_properties
@@ -252,7 +252,7 @@ def lens_inejection_fast(
             cutout_image = coadd[j][cutout_bbox]
             if noise is True:
                 exposure_map = 30*coadd_nImage[j][cutout_bbox].array
-                lens_final = image_plus_possion_noise(lens, exposure_time)
+                lens_final = image_plus_poisson_noise(lens, exposure_map)
             else:
                 lens_final = lens
             objects = [(geom.Point2D(x_center[i], y_center[i]), lens_final, delta_pix)]

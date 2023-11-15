@@ -17,7 +17,7 @@ from slsim.image_simulation import (
     point_source_image_without_variability,
     point_source_image_at_time, 
     deflector_images_with_different_zeropoint,
-    image_plus_possion_noise,
+    image_plus_poisson_noise,
 )
 import pytest
 
@@ -250,8 +250,10 @@ def test_deflector_images_with_different_zeropoint(quasar_lens_pop_instance):
             delta_pix=0.2,
             num_pix=64,
         )
-        noise_image = image_plus_possion_noise(result_images[0], exposure_time=30)
+        noise_image = image_plus_poisson_noise(result_images[0], exposure_time=30)
         diff_image = noise_image - result_images[0]
+
+        result = image_plus_poisson_noise(image_list, exposure_time)
         assert len(result_images) == len(mag_zero_points)
         assert np.any(diff_image != 0) == True
 
