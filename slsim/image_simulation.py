@@ -447,7 +447,7 @@ def deflector_images_with_different_zeropoint(lens_class, band,
         ))
     return image
 
-def image_plus_possion_noise(image, exposure_time):
+def image_plus_poisson_noise(image, exposure_time):
     """creates an image with possion noise
     
     :param image: image or list of image
@@ -513,7 +513,7 @@ def lens_image(lens_class, band, mag_zero_point,
                 )
 
             if exposure_time is not None:
-                final_lens_image = image_plus_possion_noise(image=final_images, 
+                final_lens_image = image_plus_poisson_noise(image=final_images, 
                                             exposure_time=exposure_time)
             else:
                 final_lens_image = final_images
@@ -537,7 +537,7 @@ def lens_image(lens_class, band, mag_zero_point,
                                                    psf_kernel=psf_kernels)
             final_image = sum(_point_image) + _convolved_deflector_image
             if exposure_time is not None:
-                final_lens_image = image_plus_possion_noise(final_image, exposure_time)
+                final_lens_image = image_plus_poisson_noise(final_image, exposure_time)
             else:
                 final_lens_image = final_image
             
@@ -560,7 +560,7 @@ def lens_image(lens_class, band, mag_zero_point,
             convolved_lens_image = convolved_image(image=lens_image, 
                                                    psf_kernel=psf_kernels)
             if exposure_time is not None:
-                final_lens_image = image_plus_possion_noise(image=convolved_lens_image, 
+                final_lens_image = image_plus_poisson_noise(image=convolved_lens_image, 
                                         exposure_time=exposure_time)
             else:
                 final_lens_image = convolved_lens_image
