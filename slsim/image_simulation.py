@@ -58,7 +58,8 @@ def simulate_image(
 
 
 def sharp_image(
-    lens_class, band, mag_zero_point, delta_pix, num_pix, with_source=True, with_deflector=True
+    lens_class, band, mag_zero_point, delta_pix, num_pix, with_source=True, 
+    with_deflector=True
 ):
     """Creates an unconvolved image of a selected lens. Point source image is not
     included in this function.
@@ -468,7 +469,8 @@ def image_plus_poisson_noise(image, exposure_time):
     return image_plus_noise
 
 def lens_image(lens_class, band, mag_zero_point, 
-            delta_pix, num_pix, psf_kernels, transform_pix2angle, exposure_time=None, t_obs = None):
+            delta_pix, num_pix, psf_kernels, transform_pix2angle, 
+            exposure_time=None, t_obs = None):
     """Creates variable lens images for series of time on the
     basis of given information.
 
@@ -500,7 +502,8 @@ def lens_image(lens_class, band, mag_zero_point,
             t_obs=t_obs)
 
             images = deflector_images_with_different_zeropoint(lens_class, band=band, 
-                                    mag_zero_point=mag_zero_point, delta_pix=delta_pix, num_pix=num_pix)
+                                    mag_zero_point=mag_zero_point, delta_pix=delta_pix,
+                                      num_pix=num_pix)
             convolved_deflector_image = []
             for imag, psf_kern in zip(images, psf_kernels):
                 convolved_deflector_image.append(convolved_image(
