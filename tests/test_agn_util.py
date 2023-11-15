@@ -4,7 +4,7 @@ import pytest
 from astropy import constants as const
 from slsim.Util.agn_util import (
     spin_to_isco,
-    calculate_eddington_luminousity,
+    calculate_eddington_luminosity,
     eddington_ratio_to_accreted_mass,
 )
 
@@ -23,14 +23,12 @@ def test_spin_to_isco():
         spin_to_isco(-100.0)
 
 
-def test_calculate_eddington_luminousity():
+def test_calculate_eddington_luminosity():
     # Check some cases
     test_value_1 = (
         4 * np.pi * const.G * const.m_p * const.c * const.M_sun / const.sigma_T
     )
-    npt.assert_approx_equal(
-        calculate_eddington_luminousity(0).value, test_value_1.value
-    )
+    npt.assert_approx_equal(calculate_eddington_luminosity(0).value, test_value_1.value)
 
     test_value_2 = (
         4
@@ -42,10 +40,8 @@ def test_calculate_eddington_luminousity():
         * const.M_sun
         / const.sigma_T
     )
-    npt.assert_approx_equal(
-        calculate_eddington_luminousity(8).value, test_value_2.value
-    )
-    assert calculate_eddington_luminousity(8).unit == test_value_2.unit
+    npt.assert_approx_equal(calculate_eddington_luminosity(8).value, test_value_2.value)
+    assert calculate_eddington_luminosity(8).unit == test_value_2.unit
 
 
 def test_eddington_ratio_to_accreted_mass():
@@ -57,7 +53,7 @@ def test_eddington_ratio_to_accreted_mass():
     assert eddington_ratio_to_accreted_mass(8.0, 0.0) == 0
 
     # Test typical value
-    expected_value = calculate_eddington_luminousity(8.0) * 0.1 / (0.1 * const.c**2)
+    expected_value = calculate_eddington_luminosity(8.0) * 0.1 / (0.1 * const.c**2)
 
     npt.assert_approx_equal(
         eddington_ratio_to_accreted_mass(8.0, 0.1).value, expected_value.value

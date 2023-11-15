@@ -21,15 +21,15 @@ def spin_to_isco(spin):
     return 3 + z2 - np.sign(spin) * ((3 - z1) * (3 + z1 + 2 * z2)) ** (1 / 2)
 
 
-def calculate_eddington_luminousity(mass_bh_exponent):
-    """Calculates the Eddington luminousity for a black hole mass exponent.
+def calculate_eddington_luminosity(mass_bh_exponent):
+    """Calculates the Eddington luminosity for a black hole mass exponent.
 
-    Eddington_luminousity = 4 * pi * G * mass_bh * mass_proton
+    Eddington_luminosity = 4 * pi * G * mass_bh * mass_proton
                               * c / sigma_thompson
 
     :param mass_bh_exponent: solution to log_10(mass_bh / mass_sun).
         Typical AGN have an exponent ranging from 6 to 10.
-    :return: Eddington luminousity
+    :return: Eddington luminosity
     """
     mass_bh = 10**mass_bh_exponent * const.M_sun
     return 4 * np.pi * const.G * mass_bh * const.m_p * const.c / const.sigma_T
@@ -39,12 +39,12 @@ def eddington_ratio_to_accreted_mass(mass_bh_exponent, eddington_ratio, efficien
     """Calculates the mass that must be accreted by the accretion disk.
 
     for the accretion disk to radiate at the desired Eddington ratio.
-    Bolometric_luminousity = mass_accreted * c^2 * efficiency
+    Bolometric_luminosity = mass_accreted * c^2 * efficiency
 
     :param mass_bh_exponent: solution to log_10(mass_bh / mass_sun). Typical AGN have an
         exponent ranging from 6 to 10.
-    :param eddington_ratio: desired Eddington ratio as a fraction of Eddington
-        luminousity.
+    :param eddington_ratio: desired Eddington ratio defined as a fraction of bolometric
+        luminosity / Eddington luminosity.
     :param efficiency: the efficiency of mass-to-energy conversion in accretion disk
     :return: required mass_accreted for accretion disk to radiate at the desired
         Eddington ratio
@@ -52,10 +52,10 @@ def eddington_ratio_to_accreted_mass(mass_bh_exponent, eddington_ratio, efficien
     if efficiency <= 0:
         raise ValueError("Efficiency cannot be negative")
 
-    # Calculate Eddington luminousity
-    l_eddington = calculate_eddington_luminousity(mass_bh_exponent)
+    # Calculate Eddington luminosity
+    l_eddington = calculate_eddington_luminosity(mass_bh_exponent)
 
-    # Calculate required accreted mass to reach Eddington luminousity
+    # Calculate required accreted mass to reach Eddington luminosity
     m_eddington_accreted = l_eddington / (efficiency * const.c**2)
 
     return eddington_ratio * m_eddington_accreted
