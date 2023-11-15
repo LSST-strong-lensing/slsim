@@ -252,10 +252,13 @@ def test_deflector_images_with_different_zeropoint(quasar_lens_pop_instance):
         )
         noise_image = image_plus_poisson_noise(result_images[0], exposure_time=30)
         diff_image = noise_image - result_images[0]
-
-        result = image_plus_poisson_noise(image_list, exposure_time)
+        exposure_time = [20, 30]
+        result_list = image_plus_poisson_noise(result_images, 
+                                            exposure_time=exposure_time)
+        
         assert len(result_images) == len(mag_zero_points)
         assert np.any(diff_image != 0) == True
+        assert len(result_list) == len(result_images)
 
 
 if __name__ == "__main__":

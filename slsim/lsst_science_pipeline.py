@@ -529,7 +529,8 @@ def list_of_calexp(expo_information, butler):
     :return: list of calexp images.
     """
     calexp_image=[]
-    for visitid, detectorid in zip(expo_information['visitId'], expo_information['detector']):
+    for visitid, detectorid in zip(expo_information['visitId'], 
+                                   expo_information['detector']):
         dataId = {'visit':visitid, 'detector':detectorid}
         calexp_image.append(butler.get('calexp', dataId=dataId))
     return calexp_image
@@ -556,7 +557,8 @@ def aligned_calexp(calexp_image):
     selected_calexp = calexp_image[1:]
     aligned_calexp_image=[calexp_image[0]]
     for i in range(0, len(selected_calexp), 1):
-        aligned_calexp_image.append(warp_to_exposure(selected_calexp[i], calexp_image[0]))
+        aligned_calexp_image.append(warp_to_exposure(selected_calexp[i], 
+                                                     calexp_image[0]))
     return aligned_calexp_image
 
 def dp0_center_radec(calexp_image):
@@ -644,8 +646,10 @@ def dp0_time_series_images_data(butler, center_coord, radius="0.1", band='i', si
     for i in range(len(aligned_image_cutout)):
         dp0_time_series_cutout.append(aligned_image_cutout[i].image.array)
     table_data = Table(
-        [dp0_time_series_cutout, psf_kernel, obs_time, expo_time, zero_point_mag, radec_list],
-        names=("time_series_images", "psf_kernel", "obs_time", "expo_time", "zero_point", "calexp_center"),
+        [dp0_time_series_cutout, psf_kernel, obs_time, expo_time, 
+         zero_point_mag, radec_list],
+        names=("time_series_images", "psf_kernel", "obs_time", "expo_time", 
+               "zero_point", "calexp_center"),
     )
     return table_data
 
@@ -662,7 +666,8 @@ def variable_lens_injection(lens_class, band, delta_pix,
     :param exposure_data: An astropy table of exposure data. It must contain 
      calexp images (column name should be "time_series_images"), magnitude zero point 
      (column name should be "zero_point"), psf kernel for each exposure 
-     (column name should be "psf_kernel"), exposure time (column name should be "expo_time"),
+     (column name should be "psf_kernel"), exposure time (column name should be 
+      "expo_time"),
      observation time (column name should be "obs_time")
     :return: Astropy table of injected lenses and exposure information of dp0 data
     """
@@ -689,21 +694,23 @@ def multiple_variable_lens_injection(lens_class_list, band, delta_pix, num_pix,
     :param band: imaging band
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
-    :param transform_matrices_list: list of transformation matrix (2x2) of pixels into coordinate
-     displacements for each exposure
-    :param exposure_data_list: list of astropy tables of each time series data. It must contain 
-     calexp images (column name should be "time_series_images"), magnitude zero point 
-     (column name should be "zero_point"), psf kernel for each exposure 
-     (column name should be "psf_kernel"), exposure time (column name should be "expo_time"),
+    :param transform_matrices_list: list of transformation matrix (2x2) of pixels into 
+     coordinate displacements for each exposure
+    :param exposure_data_list: list of astropy tables of each time series data. It must
+     contain calexp images (column name should be "time_series_images"), magnitude zero
+     point (column name should be "zero_point"), psf kernel for each exposure (column 
+     name should be "psf_kernel"), exposure time (column name should be "expo_time"),
      observation time (column name should be "obs_time")
-    :return: list of astropy table of injected lenses and exposure information of dp0 data for each
-     time series lenses.
+    :return: list of astropy table of injected lenses and exposure information of dp0 
+     data for each time series lenses.
     """
     final_images_catalog = []
     for lens_class, transform_matrices, expo_data in zip(lens_class_list, 
         transform_matrices_list, exposure_data_list):
-        final_images_catalog.append(variable_lens_injection(lens_class, band=band, delta_pix=delta_pix, 
-                num_pix=num_pix, transform_pix2angle=transform_matrices, exposure_data=expo_data))
+        final_images_catalog.append(variable_lens_injection(lens_class, band=band, 
+                            delta_pix=delta_pix, num_pix=num_pix, 
+                            transform_pix2angle=transform_matrices, 
+                            exposure_data=expo_data))
     return final_images_catalog
 
 
