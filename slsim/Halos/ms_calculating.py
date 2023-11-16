@@ -2,6 +2,8 @@ from slsim.Halos.read_millennium import ReadMS
 from slsim.Halos.ms_halos_lens import HalosMSLens
 from astropy.cosmology import default_cosmology
 import multiprocessing
+import os
+import glob
 
 
 def calculate_kappa_gamma(file_path=None,
@@ -120,3 +122,75 @@ def get_halos_mass_with_muiltprocessing(file_path=None,
         all_lengths.append(len(mass_list))
 
     return all_masses, all_zs, all_lengths
+
+
+def kappa_gamma_from_files(file_path=None,
+                           selecting_area=0.00082,
+                           z_source=5,
+                           cosmo=None,
+                           sample_size=1,
+                           gamma12=False,
+                           diff=0.000001,
+                           diff_method="square"):
+    if cosmo is None:
+        cosmo = default_cosmology.get()
+
+    if file_path is None or not os.path.isdir(file_path):
+        raise ValueError("Invalid file path provided")
+
+    # Find all text files in the specified path
+    txt_files = glob.glob(os.path.join(file_path, '*.txt'))
+
+    all_kappa_results = []
+    all_gamma_results = []
+
+    # Process each file
+    for txt_file in txt_files:
+        kappas, gammas = calculate_kappa_gamma_with_muiltprocessing(file_path=txt_file,
+                                                                    selecting_area=selecting_area,
+                                                                    z_source=z_source,
+                                                                    cosmo=cosmo,
+                                                                    sample_size=sample_size,
+                                                                    gamma12=gamma12,
+                                                                    diff=diff,
+                                                                    diff_method=diff_method)
+        all_kappa_results.extend(kappas)
+        all_gamma_results.extend(gammas)
+
+    return all_kappa_results, all_gamma_results
+
+
+def get_mass_z_from_files(file_path=None,
+                          selecting_area=0.00082,
+                          z_source=5,
+                          cosmo=None,
+                          mass_cut=None,
+                          sample_size=1):
+    if cosmo is None:
+        cosmo = default_cosmology.get()
+
+    # Check if file_path is provided and is a valid directory
+    if file_path is None or not os.path.isdir(file_path):
+        raise ValueError("Invalid file path provided")
+
+    # Find all text files in the specified path
+    txt_files = glob.glob(os.path.join(file_path, '*.txt'))
+
+    # Prepare lists to collect results
+    all_masses_results = []
+    all_zs_results = []
+    all_lengths_results = []
+
+    # Process each file
+    for txt_file in txt_files:
+        masses, zs, lengths = get_halos_mass_with_muiltprocessing(file_path=txt_file,
+                                                                  selecting_area=selecting_area,
+                                                                  z_source=z_source,
+                                                                  cosmo=cosmo,
+                                                                  mass_cut=mass_cut,
+                                                                  sample_size=sample_size)
+        all_masses_results.extend(masses)
+        all_zs_results.extend(zs)
+        all_lengths_results.extend(lengths)
+
+    return all_masses_results, all_zs_results, all_lengths_results
