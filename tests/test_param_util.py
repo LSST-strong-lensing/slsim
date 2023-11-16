@@ -102,8 +102,10 @@ def test_interpolation_for_sinusoidal():
     # compare to 5 decimal points
     npt.assert_almost_equal(interp_image_snapshots, expect_image_snapshots, decimal=5)
 
+
 def test_random_radec_string():
-    radec_result=random_radec_string(ra_min=30, ra_max=62, 
-                                dec_min=-63, dec_max=-36, n=50)
+    radec_result = random_radec_string(
+        ra_min=30, ra_max=62, dec_min=-63, dec_max=-36, n=50
+    )
     assert len(radec_result) == 50
     assert all(isinstance(item, str) for item in radec_result) is True
