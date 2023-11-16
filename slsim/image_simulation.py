@@ -1,5 +1,4 @@
 import numpy as np
-from astropy.table import Table
 from lenstronomy.SimulationAPI.sim_api import SimAPI
 from astropy.visualization import make_lupton_rgb
 from lenstronomy.Data.psf import PSF
