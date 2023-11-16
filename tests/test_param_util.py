@@ -106,4 +106,4 @@ def test_random_radec_string():
     radec_result=random_radec_string(ra_min=30, ra_max=62, 
                                 dec_min=-63, dec_max=-36, n=50)
     assert len(radec_result) == 50
-    assert all(isinstance(item, str) for item in radec_result) == True
+    assert all(isinstance(item, str) for item in radec_result) is True
