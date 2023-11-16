@@ -15,7 +15,7 @@ from slsim.image_simulation import (
     centered_coordinate_system,
     point_source_image_with_variability,
     point_source_image_without_variability,
-    point_source_image_at_time, 
+    point_source_image_at_time,
     deflector_images_with_different_zeropoint,
     image_plus_poisson_noise,
     lens_image,
@@ -134,11 +134,13 @@ def quasar_lens_pop_instance():
         sky_area=sky_area,
         cosmo=cosmo,
     )
+
+
 @pytest.fixture
 def galaxy_lens_pop_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     sky_area = Quantity(value=0.1, unit="deg2")
-    
+
     return LensPop(
         deflector_type="all-galaxies",
         source_type="galaxies",
@@ -185,7 +187,7 @@ def test_point_source_image_properties(quasar_lens_pop_instance):
         transform_pix2angle=transform_matrix,
     )
     keys = result.keys()
-    result_key=[]
+    result_key = []
     for key in keys:
         result_key.append(key)
 
@@ -227,7 +229,8 @@ def test_point_source_image_with_and_without_variability(quasar_lens_pop_instanc
     )
 
     transform_matrix = np.array(
-        [   np.array([[0.2, 0], [0, 0.2]]),
+        [
+            np.array([[0.2, 0], [0, 0.2]]),
             np.array([[0.2, 0], [0, 0.2]]),
             np.array([[0.2, 0], [0, 0.2]]),
         ]
@@ -251,98 +254,141 @@ def test_point_source_image_with_and_without_variability(quasar_lens_pop_instanc
     assert len(result2) == len(lens_class.point_source_magnification())
     assert len(result3) == len(t_obs)
 
+
 def test_deflector_images_with_different_zeropoint(quasar_lens_pop_instance):
-        kwargs_lens_cut = {"min_image_separation": 0.8, "max_image_separation": 10}
-        lens_class = quasar_lens_pop_instance.select_lens_at_random(**kwargs_lens_cut)
-        mag_zero_points=np.array([27, 30])
-        result_images = deflector_images_with_different_zeropoint(
-            lens_class=lens_class,
-            band='i',
-            mag_zero_point=mag_zero_points,
-            delta_pix=0.2,
-            num_pix=64,
-        )
-        noise_image = image_plus_poisson_noise(result_images[0], exposure_time=30)
-        diff_image = noise_image - result_images[0]
-        exposure_time = [20, 30]
-        result_list = image_plus_poisson_noise(result_images, 
-                                            exposure_time=exposure_time)
-        path = os.path.dirname(__file__)
+    kwargs_lens_cut = {"min_image_separation": 0.8, "max_image_separation": 10}
+    lens_class = quasar_lens_pop_instance.select_lens_at_random(**kwargs_lens_cut)
+    mag_zero_points = np.array([27, 30])
+    result_images = deflector_images_with_different_zeropoint(
+        lens_class=lens_class,
+        band="i",
+        mag_zero_point=mag_zero_points,
+        delta_pix=0.2,
+        num_pix=64,
+    )
+    noise_image = image_plus_poisson_noise(result_images[0], exposure_time=30)
+    diff_image = noise_image - result_images[0]
+    exposure_time = [20, 30]
+    result_list = image_plus_poisson_noise(result_images, exposure_time=exposure_time)
+    path = os.path.dirname(__file__)
 
-        psf_image_1 = [np.load(
-            os.path.join(path, "TestData/psf_kernels_for_image_1.npy"))]
-        psf_kernel_single = psf_image_1[-1]
-        transf_matrix = np.array([[0.2, 0], [0, 0.2]])
-        lens_image_result_1 = lens_image(lens_class=lens_class, band='i', 
-                    mag_zero_point=27, 
-            delta_pix=0.2, num_pix=64, psf_kernels=psf_kernel_single, 
-            transform_pix2angle=transf_matrix, 
-            exposure_time=30, t_obs = None)
-        lens_image_result_2 = lens_image(lens_class=lens_class, band='i', 
-                    mag_zero_point=27, 
-            delta_pix=0.2, num_pix=64, psf_kernels=psf_kernel_single, 
-            transform_pix2angle=transf_matrix, 
-            exposure_time=None, t_obs = None)
-        diff_lens_image_result_3 = lens_image_result_2 - lens_image_result_1
+    psf_image_1 = [np.load(os.path.join(path, "TestData/psf_kernels_for_image_1.npy"))]
+    psf_kernel_single = psf_image_1[-1]
+    transf_matrix = np.array([[0.2, 0], [0, 0.2]])
+    lens_image_result_1 = lens_image(
+        lens_class=lens_class,
+        band="i",
+        mag_zero_point=27,
+        delta_pix=0.2,
+        num_pix=64,
+        psf_kernels=psf_kernel_single,
+        transform_pix2angle=transf_matrix,
+        exposure_time=30,
+        t_obs=None,
+    )
+    lens_image_result_2 = lens_image(
+        lens_class=lens_class,
+        band="i",
+        mag_zero_point=27,
+        delta_pix=0.2,
+        num_pix=64,
+        psf_kernels=psf_kernel_single,
+        transform_pix2angle=transf_matrix,
+        exposure_time=None,
+        t_obs=None,
+    )
+    diff_lens_image_result_3 = lens_image_result_2 - lens_image_result_1
 
-        transform_matrix = np.array(
-        [   np.array([[0.2, 0], [0, 0.2]]),
+    transform_matrix = np.array(
+        [
             np.array([[0.2, 0], [0, 0.2]]),
-        ])
-        psf_kernels = psf_image_1[:-1]
-        psf_kernels.extend([psf_image_1[-1]] * 2)
-        lens_image_result_4 = lens_image(lens_class=lens_class, band='i', 
-                    mag_zero_point=np.array([31, 30]), 
-            delta_pix=0.2, num_pix=64, psf_kernels=psf_kernels, 
-            transform_pix2angle=transform_matrix, 
-            exposure_time=np.array([30, 27]), t_obs = np.array([20, 40]))
-        lens_image_result_5 = lens_image(lens_class=lens_class, band='i', 
-                    mag_zero_point=np.array([31, 30]), 
-            delta_pix=0.2, num_pix=64, psf_kernels=psf_kernels, 
-            transform_pix2angle=transform_matrix, 
-            exposure_time=None, t_obs = np.array([20, 40]))
-        diff_lens_image_result_6 = lens_image_result_4[0]-lens_image_result_5[0]
+            np.array([[0.2, 0], [0, 0.2]]),
+        ]
+    )
+    psf_kernels = psf_image_1[:-1]
+    psf_kernels.extend([psf_image_1[-1]] * 2)
+    lens_image_result_4 = lens_image(
+        lens_class=lens_class,
+        band="i",
+        mag_zero_point=np.array([31, 30]),
+        delta_pix=0.2,
+        num_pix=64,
+        psf_kernels=psf_kernels,
+        transform_pix2angle=transform_matrix,
+        exposure_time=np.array([30, 27]),
+        t_obs=np.array([20, 40]),
+    )
+    lens_image_result_5 = lens_image(
+        lens_class=lens_class,
+        band="i",
+        mag_zero_point=np.array([31, 30]),
+        delta_pix=0.2,
+        num_pix=64,
+        psf_kernels=psf_kernels,
+        transform_pix2angle=transform_matrix,
+        exposure_time=None,
+        t_obs=np.array([20, 40]),
+    )
+    diff_lens_image_result_6 = lens_image_result_4[0] - lens_image_result_5[0]
 
-        
-        assert len(result_images) == len(mag_zero_points)
-        assert np.any(diff_image != 0) == True
-        assert len(result_list) == len(result_images)
-        assert lens_image_result_1.shape[0] == 64
-        assert np.any(diff_lens_image_result_3 != 0) == True
-        assert len(lens_image_result_4) == 2
-        assert np.any(diff_lens_image_result_6 != 0) == True
+    assert len(result_images) == len(mag_zero_points)
+    assert np.any(diff_image != 0) == True
+    assert len(result_list) == len(result_images)
+    assert lens_image_result_1.shape[0] == 64
+    assert np.any(diff_lens_image_result_3 != 0) == True
+    assert len(lens_image_result_4) == 2
+    assert np.any(diff_lens_image_result_6 != 0) == True
+
 
 def test_lens_image_extended(galaxy_lens_pop_instance):
     kwargs_lens_cut = {"min_image_separation": 0.8, "max_image_separation": 10}
     lens_class = galaxy_lens_pop_instance.select_lens_at_random(**kwargs_lens_cut)
     path = os.path.dirname(__file__)
-    psf_image_1 = [np.load(
-            os.path.join(path, "TestData/psf_kernels_for_image_1.npy"))]
+    psf_image_1 = [np.load(os.path.join(path, "TestData/psf_kernels_for_image_1.npy"))]
     psf_kernel_single = psf_image_1[-1]
     transf_matrix = np.array([[0.2, 0], [0, 0.2]])
-    lens_image_result_1 = lens_image(lens_class=lens_class, band='i', 
-                    mag_zero_point=30, 
-            delta_pix=0.2, num_pix=64, psf_kernels=psf_kernel_single, 
-            transform_pix2angle=transf_matrix, 
-            exposure_time=30, t_obs = None)
-    lens_image_result_2 = lens_image(lens_class=lens_class, band='i', 
-                    mag_zero_point=30, 
-            delta_pix=0.2, num_pix=64, psf_kernels=psf_kernel_single, 
-            transform_pix2angle=transf_matrix, 
-            exposure_time=None, t_obs = None)
-    
+    lens_image_result_1 = lens_image(
+        lens_class=lens_class,
+        band="i",
+        mag_zero_point=30,
+        delta_pix=0.2,
+        num_pix=64,
+        psf_kernels=psf_kernel_single,
+        transform_pix2angle=transf_matrix,
+        exposure_time=30,
+        t_obs=None,
+    )
+    lens_image_result_2 = lens_image(
+        lens_class=lens_class,
+        band="i",
+        mag_zero_point=30,
+        delta_pix=0.2,
+        num_pix=64,
+        psf_kernels=psf_kernel_single,
+        transform_pix2angle=transf_matrix,
+        exposure_time=None,
+        t_obs=None,
+    )
+
     diff = lens_image_result_1 - lens_image_result_2
     assert lens_image_result_1.shape[0] == 64
     assert np.any(diff != 0) == True
     with pytest.raises(ValueError) as excinfo:
-            lens_image(lens_class=lens_class, band='i', 
-                    mag_zero_point=30, 
-            delta_pix=0.2, num_pix=64, psf_kernels=psf_kernel_single, 
-            transform_pix2angle=transf_matrix, 
-            exposure_time=None, t_obs = 30)
-    assert ("extented source do not have time variability. So," 
-                "do not provide observation time."
-                    ) in str(excinfo.value)
+        lens_image(
+            lens_class=lens_class,
+            band="i",
+            mag_zero_point=30,
+            delta_pix=0.2,
+            num_pix=64,
+            psf_kernels=psf_kernel_single,
+            transform_pix2angle=transf_matrix,
+            exposure_time=None,
+            t_obs=30,
+        )
+    assert (
+        "extented source do not have time variability. So,"
+        "do not provide observation time."
+    ) in str(excinfo.value)
 
 
 if __name__ == "__main__":

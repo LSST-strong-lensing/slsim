@@ -56,6 +56,7 @@ def random_ra_dec(ra_min, ra_max, dec_min, dec_max, n):
     dec = np.random.uniform(dec_min, dec_max, n)
     return ra, dec
 
+
 def random_radec_string(ra_min, ra_max, dec_min, dec_max, n):
     """Generates n number of random "ra, dec" string with in a given limits.
 
@@ -66,12 +67,13 @@ def random_radec_string(ra_min, ra_max, dec_min, dec_max, n):
     :param n: number of random sample
     :returns: n number of "ra, dec" strings within given limits
     """
-    ra, dec=random_ra_dec(ra_min=ra_min, ra_max=ra_max, dec_min=dec_min, dec_max=dec_max, n=n)
+    ra, dec = random_ra_dec(
+        ra_min=ra_min, ra_max=ra_max, dec_min=dec_min, dec_max=dec_max, n=n
+    )
     center_coods_list = []
-    for i in range (n):
-        center_coods_list.append(str(ra[i]) + ', ' + str(dec[i]))
+    for i in range(n):
+        center_coods_list.append(str(ra[i]) + ", " + str(dec[i]))
     return center_coods_list
-
 
 
 def convolved_image(image, psf_kernel, convolution_type="fft"):
