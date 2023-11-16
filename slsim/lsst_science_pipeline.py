@@ -505,7 +505,8 @@ def tap_query(center_coords, radius=0.1, band="i"):
     a coordinate point.
 
     :param center_coords: A coordinate point around which visit informations are needed.
-    :param radius: Radius around center point for query.
+    :type center_coords: string. eg: "65, -36"
+    :param radius: Radius around center point for query. The unit of radius is degree.
     :param band: imaging band
     :return: An astropy table of visit information sorted with observation time.
     """
@@ -611,11 +612,12 @@ def calexp_cutout(calexp_image, radec, size):
 
 
 def radec_to_pix(radec, dp0_image):
-    """Converts ra, dec to pixel units.
+    """Converts ra, dec to pixel units for a fiven image or list of images.
 
     :param radec: SpherePoint of radec
+    :type radec: an object: eg: geom.SpherePoint(65*degree, -36*degree)
     :param dp0_image: image containing given radec
-    :return: corresponding Point2D of pixel coordinate
+    :return: corresponding Point2D of pixel coordinate in provided images.
     """
     if isinstance(dp0_image, list):
         pix = []

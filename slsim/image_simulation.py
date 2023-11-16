@@ -435,11 +435,14 @@ def point_source_image_with_variability(
 def deflector_images_with_different_zeropoint(
     lens_class, band, mag_zero_point, delta_pix, num_pix
 ):
-    """Creates deflector images with different magnitude zero point.
+    """Creates deflector images with different magnitude zero point. This function is 
+    useful when one wants to simulate variable lens images. For this, we need to 
+    simulate delctor images for different exposure (where we want to inject lenses) and
+    those exposure could have different magnitude zero point.
 
     :param lens_class: Lens() object
     :param band: imaging band
-    :param mag_zero_point: magnitude zero point in band
+    :param mag_zero_point: list of magnitude zero point in band for sequence of exposure
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
     :returns: list of deflector images with different zero point
@@ -461,23 +464,24 @@ def deflector_images_with_different_zeropoint(
 def image_plus_poisson_noise(image, exposure_time):
     """Creates an image with possion noise.
 
-    :param image: image or list of image
-    :param exposure_time: exposure time for each image or exposure map
+    :param image: an image 
+    :param exposure_time: exposure time or exposure map for an image
     :return: image with possion noise
     """
-    if isinstance(image, list):
-        expo_time = exposure_time
-        image_plus_noise = []
-        for i in range(len(image)):
-            data = image[i]
-            data[data < 0] = 0
-            mean_photons = data * expo_time[i]
-            image_plus_noise.append(np.random.poisson(mean_photons) / expo_time[i])
-    else:
-        image[image < 0] = 0
-        image_plus_noise = np.random.poisson(image * exposure_time) / exposure_time
-    return image_plus_noise
+    image[image < 0] = 0
+    mean_photons = image * exposure_time
+    return np.random.poisson(mean_photons) / exposure_time
 
+def image_plus_poisson_noise_for_list_of_image(images, exposure_times):
+    """Creates an image with possion noise.
+
+    :param images: list of images 
+    :param exposure_time: list of exposure times or exposure maps
+    :return: list of images with possion noise
+    """
+    list_of_noisy_images = [image_plus_poisson_noise(data, expo_time) for data, 
+                        expo_time in zip(images, exposure_times)]
+    return list_of_noisy_images
 
 def lens_image(
     lens_class,
@@ -490,8 +494,8 @@ def lens_image(
     exposure_time=None,
     t_obs=None,
 ):
-    """Creates variable lens images for series of time on the basis of given
-    information.
+    """Creates lens image on the basis of given
+    information. It can simulate both static lens image and variable lens image.
 
     :param lens_class: Lens() object
     :param band: imaging band
@@ -536,8 +540,8 @@ def lens_image(
                 final_images.append(point_image[i] + convolved_deflector_image[i])
 
             if exposure_time is not None:
-                final_lens_image = image_plus_poisson_noise(
-                    image=final_images, exposure_time=exposure_time
+                final_lens_image = image_plus_poisson_noise_for_list_of_image(
+                    images=final_images, exposure_times=exposure_time
                 )
             else:
                 final_lens_image = final_images
