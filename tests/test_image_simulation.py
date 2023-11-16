@@ -304,28 +304,28 @@ def test_deflector_images_with_different_zeropoint(quasar_lens_pop_instance):
             np.array([[0.2, 0], [0, 0.2]]),
             np.array([[0.2, 0], [0, 0.2]]),
         ])
-        psf_kernels = psf_image_1[:-1]
-        psf_kernels.extend([psf_image_1[-1]] * 2)
-        lens_image_result_4 = lens_image(lens_class=lens_class, band='i', 
-                    mag_zero_point=np.array([31, 30]), 
-            delta_pix=0.2, num_pix=64, psf_kernels=psf_kernels, 
-            transform_pix2angle=transform_matrix, 
-            exposure_time=np.array([30, 27]), t_obs = np.array([20, 40]))
-        lens_image_result_5 = lens_image(lens_class=lens_class, band='i', 
-                    mag_zero_point=np.array([31, 30]), 
-            delta_pix=0.2, num_pix=64, psf_kernels=psf_kernels, 
-            transform_pix2angle=transform_matrix, 
-            exposure_time=None, t_obs = np.array([20, 40]))
-        diff_lens_image_result_6 = lens_image_result_4[0]-lens_image_result_5[0]
+    psf_kernels = psf_image_1[:-1]
+    psf_kernels.extend([psf_image_1[-1]] * 2)
+    lens_image_result_4 = lens_image(lens_class=lens_class, band='i', 
+                mag_zero_point=np.array([31, 30]), 
+        delta_pix=0.2, num_pix=64, psf_kernels=psf_kernels, 
+        transform_pix2angle=transform_matrix, 
+        exposure_time=np.array([30, 27]), t_obs = np.array([20, 40]))
+    lens_image_result_5 = lens_image(lens_class=lens_class, band='i', 
+                mag_zero_point=np.array([31, 30]), 
+        delta_pix=0.2, num_pix=64, psf_kernels=psf_kernels, 
+        transform_pix2angle=transform_matrix, 
+        exposure_time=None, t_obs = np.array([20, 40]))
+    diff_lens_image_result_6 = lens_image_result_4[0]-lens_image_result_5[0]
 
-        
-        assert len(result_images) == len(mag_zero_points)
-        assert np.any(diff_image != 0) is True
-        assert len(result_list) == len(result_images)
-        assert lens_image_result_1.shape[0] == 64
-        assert np.any(diff_lens_image_result_3 != 0) is True
-        assert len(lens_image_result_4) == 2
-        assert np.any(diff_lens_image_result_6 != 0) is True
+    
+    assert len(result_images) == len(mag_zero_points)
+    assert np.any(diff_image != 0) is True
+    assert len(result_list) == len(result_images)
+    assert lens_image_result_1.shape[0] == 64
+    assert np.any(diff_lens_image_result_3 != 0) is True
+    assert len(lens_image_result_4) == 2
+    assert np.any(diff_lens_image_result_6 != 0) is True
 
 
 def test_lens_image_extended(galaxy_lens_pop_instance):
@@ -357,7 +357,6 @@ def test_lens_image_extended(galaxy_lens_pop_instance):
         exposure_time=None,
         t_obs=None,
     )
-
     diff = lens_image_result_1 - lens_image_result_2
     assert lens_image_result_1.shape[0] == 64
     assert np.any(diff != 0) is True
