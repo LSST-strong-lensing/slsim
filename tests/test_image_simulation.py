@@ -332,7 +332,6 @@ def test_lens_image_extended(galaxy_lens_pop_instance):
             exposure_time=None, t_obs = None)
     
     diff = lens_image_result_1 - lens_image_result_2
-    
     assert lens_image_result_1.shape[0] == 64
     assert np.any(diff != 0) == True
     with pytest.raises(ValueError) as excinfo:
