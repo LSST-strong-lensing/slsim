@@ -11,7 +11,7 @@ from slsim.Util.param_util import (
     pixels_to_images,
     random_radec_string,
 )
-from slsim.Sources.source_variability.variability import Variability
+from slsim.Sources.Source_variability.variability import Variability
 
 
 def test_epsilon2e():

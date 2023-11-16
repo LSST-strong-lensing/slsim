@@ -1,4 +1,4 @@
-from slsim.Sources.quasar_catalog import simple_quasar
+from slsim.Sources.Quasar_catalog import simple_quasar
 import pytest
 
 

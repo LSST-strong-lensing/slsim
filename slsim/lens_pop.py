@@ -117,7 +117,7 @@ class LensPop(LensedPopulationBase):
             self._source_model_type = "extended"
         elif source_type == "quasars":
             from slsim.Sources.quasars import Quasars
-            from slsim.Sources.quasar_catalog.simple_quasar import quasar_catalog_simple
+            from slsim.Sources.Quasar_catalog.simple_quasar import quasar_catalog_simple
 
             if kwargs_quasars is None:
                 kwargs_quasars = {}
