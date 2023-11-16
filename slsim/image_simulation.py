@@ -509,7 +509,7 @@ def lens_image(
     :param exposure_time: exposure time for each individual image. It can be a integer
         of array
     :param t_obs: array of image observation time [day].
-    :return: array of point source images with variability
+    :return: A single lens image or array of lens images with variability
     """
     source_type = lens_class._source_type
     if source_type == "point_source" or source_type == "point_plus_extended_source":
