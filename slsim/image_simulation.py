@@ -435,8 +435,8 @@ def point_source_image_with_variability(
 def deflector_images_with_different_zeropoint(
     lens_class, band, mag_zero_point, delta_pix, num_pix
 ):
-    """Creates deflector images with different magnitude zero point. This function is 
-    useful when one wants to simulate variable lens images. For this, we need to 
+    """Creates deflector images with different magnitude zero point. This function is
+    useful when one wants to simulate variable lens images. For this, we need to
     simulate delctor images for different exposure (where we want to inject lenses) and
     those exposure could have different magnitude zero point.
 
@@ -464,7 +464,7 @@ def deflector_images_with_different_zeropoint(
 def image_plus_poisson_noise(image, exposure_time):
     """Creates an image with possion noise.
 
-    :param image: an image 
+    :param image: an image
     :param exposure_time: exposure time or exposure map for an image
     :return: image with possion noise
     """
@@ -472,16 +472,20 @@ def image_plus_poisson_noise(image, exposure_time):
     mean_photons = image * exposure_time
     return np.random.poisson(mean_photons) / exposure_time
 
+
 def image_plus_poisson_noise_for_list_of_image(images, exposure_times):
     """Creates an image with possion noise.
 
-    :param images: list of images 
+    :param images: list of images
     :param exposure_time: list of exposure times or exposure maps
     :return: list of images with possion noise
     """
-    list_of_noisy_images = [image_plus_poisson_noise(data, expo_time) for data, 
-                        expo_time in zip(images, exposure_times)]
+    list_of_noisy_images = [
+        image_plus_poisson_noise(data, expo_time)
+        for data, expo_time in zip(images, exposure_times)
+    ]
     return list_of_noisy_images
+
 
 def lens_image(
     lens_class,
@@ -494,8 +498,8 @@ def lens_image(
     exposure_time=None,
     t_obs=None,
 ):
-    """Creates lens image on the basis of given
-    information. It can simulate both static lens image and variable lens image.
+    """Creates lens image on the basis of given information. It can simulate both static
+    lens image and variable lens image.
 
     :param lens_class: Lens() object
     :param band: imaging band
