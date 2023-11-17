@@ -269,9 +269,10 @@ def test_deflector_images_with_different_zeropoint(quasar_lens_pop_instance):
     )
     noise_image = image_plus_poisson_noise(result_images[0], exposure_time=30)
     diff_image = noise_image - result_images[0]
-    exposure_time = [30]*len(result_images)
-    result_list = image_plus_poisson_noise_for_list_of_image(result_images, 
-                                                exposure_time)
+    exposure_time = [30] * len(result_images)
+    result_list = image_plus_poisson_noise_for_list_of_image(
+        result_images, exposure_time
+    )
     path = os.path.dirname(__file__)
 
     psf_image_1 = [np.load(os.path.join(path, "TestData/psf_kernels_for_image_1.npy"))]
