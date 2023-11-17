@@ -8,7 +8,7 @@ from slsim.lensed_population_base import LensedPopulationBase
 
 
 class LensPop(LensedPopulationBase):
-    """Class to perform samples of galaxy-galaxy lensing."""
+    """Class to perform samples of lens population."""
 
     def __init__(
         self,
