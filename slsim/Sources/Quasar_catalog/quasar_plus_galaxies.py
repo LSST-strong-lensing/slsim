@@ -3,7 +3,7 @@ from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 from astropy.units import Quantity
 from astropy.table import Column
 
-def auasar_galaxies_simple(
+def quasar_galaxies_simple(
     m_min=17,
     m_max=23,
     amp_min=0.9,
