@@ -34,7 +34,8 @@ class Lens(LensedSystemBase):
         :param deflector_dict: deflector properties
         :type deflector_dict: dict
         :param cosmo: astropy.cosmology instance
-        :param source_type: type of the source 'extended' or 'point_source' supported
+        :param source_type: type of the source 'extended' or 'point_source' or 
+         'point_plus_extended' supported
         :type source_type: str
         :param variability_model: keyword for variability model to be used. This is an
          input for the Variability class.
@@ -199,7 +200,8 @@ class Lens(LensedSystemBase):
         # Criteria 6: (optional)
         # compute the magnified brightness of the lensed extended arc for different
         # bands at least in one band, the magnitude has to be brighter than the limit
-        if mag_arc_limit is not None and self._source_type in ["extended"]:
+        if (mag_arc_limit is not None and self._source_type 
+                               in ["extended", "point_plus_extended"]):
             # makes sure magnification of extended source is only used when there is
             # an extended source
             bool_mag_limit = False
@@ -552,7 +554,8 @@ class Lens(LensedSystemBase):
         source_models = {}
         all_source_kwarg_dict = {}
         center_source = self.source_position
-        if self._source_type == "extended":
+        if (self._source_type == "extended" or 
+                 self._source_type == "point_plus_extended"):
             # convert radian to arc seconds
             if band is None:
                 mag_source = 1
@@ -575,7 +578,8 @@ class Lens(LensedSystemBase):
             # source_models['source_light_model_list'] = None
             kwargs_source = None
 
-        if self._source_type == "point_source":
+        if (self._source_type == "point_source" or 
+                  self._source_type == "point_plus_extended"):
             source_models["point_source_model_list"] = ["LENSED_POSITION"]
             img_x, img_y = self.image_positions()
             if band is None:
