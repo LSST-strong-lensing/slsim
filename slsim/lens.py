@@ -362,7 +362,7 @@ class Lens(LensedSystemBase):
         :type band: string
         :param lensed: if True, returns the lensed magnified magnitude
         :type lensed: bool
-        :param time: time is a image observation time which is a astropy.unit object. If
+        :param time: time is a image observation time in day. If
             None, provides magnitude without variability.
         :return: point source magnitude
         """
@@ -373,7 +373,7 @@ class Lens(LensedSystemBase):
             if time is not None:
                 time = time
                 image_observed_times = self.image_observer_times(time)
-                variable_magnitude = self.source.magnitude(
+                variable_magnitude = self.source.ps_magnitude(
                     band,
                     image_observation_times=image_observed_times,
                 )
@@ -382,9 +382,9 @@ class Lens(LensedSystemBase):
                 )
                 return lensed_variable_magnitude
             else:
-                magnified_mag = self.source.magnitude(band) - magnif_log
+                magnified_mag = self.source.ps_magnitude(band) - magnif_log
                 return magnified_mag
-        return self.source.magnitude(band)
+        return self.source.ps_magnitude(band)
 
     def extended_source_magnitude(self, band, lensed=False):
         """Unlensed apparent magnitude of the extended source for a given band (assumes
@@ -398,7 +398,7 @@ class Lens(LensedSystemBase):
         """
         # band_string = str("mag_" + band)
         # TODO: might have to change conventions between extended and point source
-        source_mag = self.source.magnitude(band)
+        source_mag = self.source.es_magnitude(band)
         if lensed:
             mag = self.extended_source_magnification()
             return source_mag - 2.5 * np.log10(mag)
