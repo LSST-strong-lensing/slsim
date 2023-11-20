@@ -1,7 +1,6 @@
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
 from slsim.Sources.point_plus_extended_source import PESource
-from slsim.Sources.galaxies import galaxy_projected_eccentricity
 import os
 from astropy.io import ascii
 import pytest
