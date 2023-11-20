@@ -114,7 +114,7 @@ class TestImageSimulation(object):
 
 @pytest.fixture
 def pes_lens_instance():
-    path = os.path.dirname("/Users/narayankhadka/slsim/tests/")
+    path = os.path.dirname(__file__)
     source_dict = ascii.read(
                 os.path.join(path, "TestData/source_dict_ps.ecsv")
             )
