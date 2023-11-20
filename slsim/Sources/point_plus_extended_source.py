@@ -3,6 +3,7 @@ from slsim.Sources.source_pop_base import SourcePopBase
 from slsim.Util.param_util import epsilon2e
 import numpy as np
 from slsim.selection import deflector_cut
+from slsim.Sources.galaxies import galaxy_projected_eccentricity
 
 
 class PESource(SourcePopBase):
@@ -71,24 +72,10 @@ class PESource(SourcePopBase):
         point_extended_source = self._point_extended_select[index]
 
         if point_extended_source["e1"] == -1 or point_extended_source["e2"] == -1:
-            e1, e2 = host_galaxy_projected_eccentricity(
+            e1, e2 = galaxy_projected_eccentricity(
                 float(point_extended_source["ellipticity"]))
             point_extended_source["e1"] = e1
             point_extended_source["e2"] = e2
         if point_extended_source["n_sersic"] == -1:
             point_extended_source["n_sersic"] = 1  # TODO make a better estimate with scatter
         return point_extended_source
-    
-def host_galaxy_projected_eccentricity(ellipticity):
-    """Projected eccentricity of host galaxies as a function of other deflector
-    parameters.
-
-    :param ellipticity: eccentricity amplitude
-    :type ellipticity: float [0,1)
-    :return: e1, e2 eccentricity components
-    """
-    e = epsilon2e(ellipticity)
-    phi = np.random.uniform(0, np.pi)
-    e1 = e * np.cos(2 * phi)
-    e2 = e * np.sin(2 * phi)
-    return e1, e2
