@@ -11,7 +11,7 @@ import warnings
 
 
 class Lens(LensedSystemBase):
-    """Class to manage individual galaxy-galaxy lenses."""
+    """Class to manage individual lenses."""
 
     def __init__(
         self,
