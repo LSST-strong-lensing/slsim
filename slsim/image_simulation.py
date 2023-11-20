@@ -344,7 +344,7 @@ def point_source_image_at_time(
     :param psf_kernel: psf kernel for the given exposure.
     :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
         displacements
-    :param time: time is a image observation time [day].
+    :param time: time is an image observation time [day].
     :return: point source images with variability
     """
 
@@ -520,12 +520,12 @@ def lens_image(
     :return: lens image
     """
     deflector_source = sharp_image(
-                lens_class=lens_class,
-                band=band,
-                mag_zero_point=mag_zero_point,
-                delta_pix=delta_pix,
-                num_pix=num_pix,
-            )
+                    lens_class=lens_class,
+                    band=band,
+                    mag_zero_point=mag_zero_point,
+                    delta_pix=delta_pix,
+                    num_pix=num_pix,
+                )
     convolved_deflector_source = convolved_image(
                 image=deflector_source, psf_kernel=psf_kernel
             )
