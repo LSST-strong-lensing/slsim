@@ -44,5 +44,6 @@ def quasar_galaxies_simple(
     freq_col = Column(name="freq", data=frequency)
     amp_col = Column(name="amp", data=amplitude)
 
-    catalog.add_columns([mag_r_col, mag_g_col, mag_i_col, amp_col, freq_col])
+    catalog.add_columns([mag_r_col, mag_g_col, mag_i_col, amp_col, 
+                         freq_col])
     return catalog
