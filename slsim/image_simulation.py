@@ -269,7 +269,7 @@ def point_source_image_without_variability(
     delta_pix,
     num_pix,
     psf_kernel,
-    transform_pix2angle,
+    transform_pix2angle
 ):
     """Creates lensed point source images without variability on the basis of given
     information.
@@ -284,29 +284,31 @@ def point_source_image_without_variability(
         displacements
     :return: point source images
     """
-
-    image_data = point_source_coordinate_properties(
-        lens_class=lens_class,
-        band=band,
-        mag_zero_point=mag_zero_point,
-        delta_pix=delta_pix,
-        num_pix=num_pix,
-        transform_pix2angle=transform_pix2angle,
-    )
+    kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band='i')
+    kwargs_ps = kwargs_params['kwargs_ps']
 
     data_class = image_data_class(
         lens_class, band, mag_zero_point, delta_pix, num_pix, transform_pix2angle
     )
 
-    ra_image_values = image_data["ra_image"]
-    dec_image_values = image_data["dec_image"]
-    # psf_class = []
-    # for i in range(len(psf_kernels)):
-    # psf_class.append(PSF(psf_type="PIXEL", kernel_point_source=psf_kernels[i]))
     psf_class = PSF(psf_type="PIXEL", kernel_point_source=psf_kernel)
-
-    magnitude = lens_class.point_source_magnitude(band, lensed=True)
-    amp = magnitude_to_amplitude(magnitude, mag_zero_point)
+    if kwargs_ps is not None:
+        image_data = point_source_coordinate_properties(
+        lens_class=lens_class,
+        band=band,
+        mag_zero_point=mag_zero_point,
+        delta_pix=delta_pix,
+        num_pix=num_pix,
+        transform_pix2angle=transform_pix2angle)
+        ra_image_values = image_data["ra_image"]
+        dec_image_values = image_data["dec_image"]
+        magnitude = lens_class.point_source_magnitude(band, lensed=True)
+        amp = magnitude_to_amplitude(magnitude, mag_zero_point)
+    else:
+        ra_image_values = np.zeros(1)
+        dec_image_values = np.zeros(1)
+        amp = np.zeros(1)
+    
     point_source_images = []
     for i in range(len(ra_image_values)):
         rendering_class = PointSourceRendering(
@@ -362,9 +364,6 @@ def point_source_image_at_time(
 
     ra_image_values = image_data["ra_image"]
     dec_image_values = image_data["dec_image"]
-    # psf_class = []
-    # for i in range(len(psf_kernels)):
-    # psf_class.append(PSF(psf_type="PIXEL", kernel_point_source=psf_kernels[i]))
     psf_class = PSF(psf_type="PIXEL", kernel_point_source=psf_kernel)
 
     variable_mag = lens_class.point_source_magnitude(band=band, lensed=True, time=time)
