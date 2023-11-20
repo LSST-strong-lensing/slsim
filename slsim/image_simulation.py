@@ -514,7 +514,9 @@ def lens_image(
         displacements
     :param exposure_time: exposure time for for the exposure. It could be single 
      exposure time or a exposure map.
-    :param t_obs: array of image observation time [day].
+    :param t_obs: an observation time [day]. This is applicable only for variable 
+     source. In case of point source, if we do not provide t_obs, considers no 
+     variability in the lens.
     :return: lens image
     """
     deflector_source = sharp_image(
@@ -545,3 +547,49 @@ def lens_image(
         final_image = image
 
     return final_image
+
+def lens_image_series(
+    lens_class,
+    band,
+    mag_zero_point,
+    delta_pix,
+    num_pix,
+    psf_kernel,
+    transform_pix2angle,
+    exposure_time=None,
+    t_obs=None,
+):
+    """Creates lens image on the basis of given information. This function is designed 
+    to simulate time series images of a lens.
+
+    :param lens_class: Lens() object
+    :param band: imaging band
+    :param mag_zero_point: list of magnitude zero point for sqeuence of exposure
+    :param delta_pix: pixel scale of image generated
+    :param num_pix: number of pixels per axis
+    :param psf_kernels: list of psf kernel for each exposure.
+    :param transform_pix2angle: list of transformation matrix (2x2) of pixels into coordinate
+        displacements for each exposure
+    :param exposure_time: list of exposure time for each exposure. It could be single 
+     exposure time or a exposure map.
+    :param t_obs: array of image observation time [day] for a lens.
+    :return: list of series of images of a lens
+    """
+    image_series = []
+    for time, psf_kern, mag_zero, transf_matrix, expo_time in zip(
+        t_obs, psf_kernel, mag_zero_point, transform_pix2angle, exposure_time
+    ):
+        image = lens_image(
+            lens_class = lens_class,
+            band=band,
+            mag_zero_point=mag_zero,
+            delta_pix=delta_pix,
+            num_pix=num_pix,
+            psf_kernel=psf_kern,
+            transform_pix2angle=transf_matrix,
+            exposure_time=expo_time,
+            t_obs=time,
+        )
+        image_series.append(image)
+
+    return image_series
