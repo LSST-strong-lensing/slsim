@@ -516,7 +516,7 @@ def lens_image(
     :return: A single lens image or array of lens images with variability
     """
     source_type = lens_class._source_type
-    if source_type == "point_source" or source_type == "point_plus_extended_source":
+    if source_type == "point_source":
         if t_obs is not None:
             point_image = point_source_image_with_variability(
                 lens_class=lens_class,
