@@ -4,12 +4,18 @@ import sncosmo
 from slsim.Util import param_util
 
 
-
 class Supernovae(sncosmo.Model):
     """Class describing elliptical galaxies."""
 
-    def __init__(self, source, redshift, sn_type, absolute_mag, 
-                        absolute_mag_band, absolute_mag_zpsys):
+    def __init__(
+        self,
+        source,
+        redshift,
+        sn_type,
+        absolute_mag,
+        absolute_mag_band,
+        absolute_mag_zpsys,
+    ):
         """
 
         :param source: The model for the spectral evolution of the source. If a string
@@ -28,14 +34,7 @@ class Supernovae(sncosmo.Model):
         :type absolute_mag_zpsys: str
         """
         super(Supernovae, self).__init__(source=source)
-        
+
         self._parameters[0] = redshift
         self._sn_type = sn_type
-        self.set_source_peakabsmag(absolute_mag,absolute_mag_band,absolute_mag_zpsys)
-
-        
-
-
-
-
-    
+        self.set_source_peakabsmag(absolute_mag, absolute_mag_band, absolute_mag_zpsys)
