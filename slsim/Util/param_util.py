@@ -58,7 +58,7 @@ def random_ra_dec(ra_min, ra_max, dec_min, dec_max, n):
 
 
 def random_radec_string(ra_min, ra_max, dec_min, dec_max, n):
-    """Generates n number of random "ra, dec" string with in a given limits.
+    """Generates n number of random "ra, dec" string within given limits.
 
     :param ra_min: minimum limit for ra
     :param ra_max: maximum limit for ra
