@@ -265,8 +265,8 @@ def test_point_source_image_with_and_without_variability(pes_lens_instance):
         t_obs=t_obs,
     )
 
-    assert len(result1) == len(lens_class.point_source_magnification())
-    assert len(result2) == len(lens_class.point_source_magnification())
+    assert result1.shape[0] == 101
+    assert result2.shape[0] == 101
     assert len(result3) == len(t_obs)
 
 
