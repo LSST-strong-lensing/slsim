@@ -74,7 +74,7 @@ class Source(object):
             raise ValueError("required parameter is missing in the source dictionary.")
         else:
             band_string = "ps_mag_" + band
-        
+
         # source_mag = self.source_dict[band_string]
         if image_observation_times is not None:
             if self.variability_class is not None:
@@ -90,7 +90,7 @@ class Source(object):
         else:
             source_mag = self.source_dict[band_string]
             return source_mag
-        
+
     def es_magnitude(self, band):
         """Get the magnitude of the extended source in a specific band.
 
@@ -105,4 +105,4 @@ class Source(object):
         else:
             band_string = "mag_" + band
         source_mag = self.source_dict[band_string]
-        return source_mag     
+        return source_mag

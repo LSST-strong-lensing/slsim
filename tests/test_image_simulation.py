@@ -114,20 +114,21 @@ class TestImageSimulation(object):
         transf_matrix = np.array([[0.2, 0], [0, 0.2]])
         path = os.path.dirname(__file__)
 
-        psf_image_1 = [np.load(os.path.join(path, 
-                                            "TestData/psf_kernels_for_image_1.npy"))]
+        psf_image_1 = [
+            np.load(os.path.join(path, "TestData/psf_kernels_for_image_1.npy"))
+        ]
         psf_kernel_single = psf_image_1[-1]
-        
+
         result1 = point_source_image_at_time(
-        lens_class=self.gg_lens,
-        band="i",
-        mag_zero_point=27,
-        delta_pix=0.2,
-        num_pix=101,
-        psf_kernel=psf_kernel_single,
-        transform_pix2angle=transf_matrix,
-        time=10,
-    )
+            lens_class=self.gg_lens,
+            band="i",
+            mag_zero_point=27,
+            delta_pix=0.2,
+            num_pix=101,
+            psf_kernel=psf_kernel_single,
+            transform_pix2angle=transf_matrix,
+            time=10,
+        )
         result2 = point_source_image_without_variability(
             lens_class=self.gg_lens,
             band="i",
@@ -139,31 +140,27 @@ class TestImageSimulation(object):
         )
         assert np.all(result1[0] == 0)
         assert np.all(result2[0] == 0)
-        
+
 
 @pytest.fixture
 def pes_lens_instance():
     path = os.path.dirname(__file__)
-    source_dict = ascii.read(
-                os.path.join(path, "TestData/source_dict_ps.ecsv")
-            )
-    deflector_dict = ascii.read(
-                os.path.join(path, "TestData/deflector_dict_ps.ecsv")
-            )
+    source_dict = ascii.read(os.path.join(path, "TestData/source_dict_ps.ecsv"))
+    deflector_dict = ascii.read(os.path.join(path, "TestData/deflector_dict_ps.ecsv"))
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
-            pes_lens = Lens(
-                source_dict=source_dict,
-                deflector_dict=deflector_dict,
-                source_type="point_plus_extended",
-                variability_model="sinusoidal",
-                kwargs_variab={"amp", "freq"},
-                cosmo=cosmo,
-            )
-            if pes_lens.validity_test():
-                pes_lens = pes_lens
-                break
+        pes_lens = Lens(
+            source_dict=source_dict,
+            deflector_dict=deflector_dict,
+            source_type="point_plus_extended",
+            variability_model="sinusoidal",
+            kwargs_variab={"amp", "freq"},
+            cosmo=cosmo,
+        )
+        if pes_lens.validity_test():
+            pes_lens = pes_lens
+            break
     return pes_lens
 
 
@@ -291,15 +288,17 @@ def test_deflector_images_with_different_zeropoint(pes_lens_instance):
     psf_image_1 = [np.load(os.path.join(path, "TestData/psf_kernels_for_image_1.npy"))]
     psf_kernel_single = psf_image_1[-1]
     transf_matrix = np.array([[0.2, 0], [0, 0.2]])
-    lens_image_result_1 = lens_image(lens_class=pes_lens_instance,
-    band='i',
-    mag_zero_point=27,
-    delta_pix=0.2,
-    num_pix=64,
-    psf_kernel=psf_kernel_single,
-    transform_pix2angle=np.array([[0.2,0],[0, 0.2]]),
-    exposure_time=30,
-    t_obs=10)
+    lens_image_result_1 = lens_image(
+        lens_class=pes_lens_instance,
+        band="i",
+        mag_zero_point=27,
+        delta_pix=0.2,
+        num_pix=64,
+        psf_kernel=psf_kernel_single,
+        transform_pix2angle=np.array([[0.2, 0], [0, 0.2]]),
+        exposure_time=30,
+        t_obs=10,
+    )
     lens_image_result_2 = lens_image(
         lens_class=lens_class,
         band="i",
@@ -312,7 +311,8 @@ def test_deflector_images_with_different_zeropoint(pes_lens_instance):
         t_obs=None,
     )
 
-    lens_image_result_3 = lens_image_series(lens_class=lens_class,
+    lens_image_result_3 = lens_image_series(
+        lens_class=lens_class,
         band="i",
         mag_zero_point=np.array([27, 30]),
         delta_pix=0.2,
@@ -320,13 +320,15 @@ def test_deflector_images_with_different_zeropoint(pes_lens_instance):
         psf_kernel=np.array([psf_kernel_single, psf_kernel_single]),
         transform_pix2angle=np.array([transf_matrix, transf_matrix]),
         exposure_time=np.array([30, 30]),
-        t_obs=np.array([20, 30]))
+        t_obs=np.array([20, 30]),
+    )
     assert len(result_images) == len(mag_zero_points)
     assert len(result_list) == len(result_images)
     assert np.any(diff_image != 0)
     assert lens_image_result_1.shape[0] == 64
     assert lens_image_result_2.shape[0] == 64
     assert len(lens_image_result_3) == 2
+
 
 if __name__ == "__main__":
     pytest.main()

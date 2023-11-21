@@ -13,7 +13,8 @@ class PESource(SourcePopBase):
         self,
         pes_list,
         cosmo,
-        sky_area, kwargs_cut,
+        sky_area,
+        kwargs_cut,
         variability_model=None,
         kwargs_variability_model=None,
     ):
@@ -53,7 +54,6 @@ class PESource(SourcePopBase):
 
         self._num_select = len(self._point_extended_select)
 
-
     def source_number(self):
         """Number of sources registered (within given area on the sky)
 
@@ -73,9 +73,12 @@ class PESource(SourcePopBase):
 
         if point_extended_source["e1"] == -1 or point_extended_source["e2"] == -1:
             e1, e2 = galaxy_projected_eccentricity(
-                float(point_extended_source["ellipticity"]))
+                float(point_extended_source["ellipticity"])
+            )
             point_extended_source["e1"] = e1
             point_extended_source["e2"] = e2
         if point_extended_source["n_sersic"] == -1:
-            point_extended_source["n_sersic"] = 1  # TODO make a better estimate with scatter
+            point_extended_source[
+                "n_sersic"
+            ] = 1  # TODO make a better estimate with scatter
         return point_extended_source
