@@ -112,6 +112,37 @@ class TestImageSimulation(object):
         image = rgb_image_from_image_list(image_list, 0.5)
         assert len(image) == 100
 
+    def test_point_source_image_with_lens_class_with_no_point_source(self):
+        transf_matrix = np.array([[0.2, 0], [0, 0.2]])
+        path = os.path.dirname(__file__)
+
+        psf_image_1 = [np.load(os.path.join(path, 
+                                            "TestData/psf_kernels_for_image_1.npy"))]
+        psf_kernel_single = psf_image_1[-1]
+        
+        result1 = point_source_image_at_time(
+        lens_class=self.gg_lens,
+        band="i",
+        mag_zero_point=27,
+        delta_pix=0.2,
+        num_pix=101,
+        psf_kernel=psf_kernel_single,
+        transform_pix2angle=transf_matrix,
+        time=10,
+    )
+        result2 = point_source_image_without_variability(
+            lens_class=self.gg_lens,
+            band="i",
+            mag_zero_point=27,
+            delta_pix=0.2,
+            num_pix=101,
+            psf_kernel=psf_kernel_single,
+            transform_pix2angle=transf_matrix,
+        )
+        assert np.all(result1[0] == 0)
+        assert np.all(result2[0] == 0)
+        
+
 @pytest.fixture
 def pes_lens_instance():
     path = os.path.dirname(__file__)
