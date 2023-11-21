@@ -1,12 +1,12 @@
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
-from slsim.Sources.point_plus_extended_source import PESource
+from slsim.Sources.point_plus_extended_source import PointPlusExtendedSource
 import os
 from astropy.table import Table
 import pytest
 
 
-class TestPESource(object):
+class TestPointPlusExtendedSource(object):
     def setup_method(self):
         sky_area = Quantity(value=0.1, unit="deg2")
         self.path = os.path.dirname(__file__)
@@ -16,7 +16,7 @@ class TestPESource(object):
             format="fits",
         )
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-        self.pe_source = PESource(
+        self.pe_source = PointPlusExtendedSource(
             pes_list=self.source_list,
             kwargs_cut={},
             cosmo=self.cosmo,
