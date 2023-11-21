@@ -29,7 +29,9 @@ class PointPlusExtendedSource(Galaxies, SourcePopBase):
          a source. This is a population argument, not the light curve parameter for
          the individual source.
         """
-        Galaxies.__init__(self, point_plus_extended_source_list, 
-                          kwargs_cut, cosmo, sky_area)
-        SourcePopBase.__init__(self, cosmo, sky_area, variability_model, 
-                               kwargs_variability_model)
+        Galaxies.__init__(
+            self, point_plus_extended_source_list, kwargs_cut, cosmo, sky_area
+        )
+        SourcePopBase.__init__(
+            self, cosmo, sky_area, variability_model, kwargs_variability_model
+        )

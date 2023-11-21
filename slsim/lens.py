@@ -364,8 +364,8 @@ class Lens(LensedSystemBase):
         :type band: string
         :param lensed: if True, returns the lensed magnified magnitude
         :type lensed: bool
-        :param time: time is a image observation time in units of days. If None, 
-         provides magnitude without variability.
+        :param time: time is a image observation time in units of days. If None,
+            provides magnitude without variability.
         :return: point source magnitude
         """
         # TODO: might have to change conventions between extended and point source
