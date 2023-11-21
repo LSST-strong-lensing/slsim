@@ -17,7 +17,7 @@ class TestPointPlusExtendedSource(object):
         )
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         self.pe_source = PointPlusExtendedSource(
-            pes_list=self.source_list,
+            point_plus_extended_source_list=self.source_list,
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
