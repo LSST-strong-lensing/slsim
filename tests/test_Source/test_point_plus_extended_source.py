@@ -12,8 +12,8 @@ class TestPESource(object):
         self.path = os.path.dirname(__file__)
         new_path = self.path.replace("test_Source", "/")
         self.source_list = Table.read(
-            os.path.join(new_path, "TestData/point_source_catalog_test.fits"), 
-            format="fits"
+            os.path.join(new_path, "TestData/point_source_catalog_test.fits"),
+            format="fits",
         )
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         self.pe_source = PESource(
