@@ -3,7 +3,6 @@ import numpy as np
 from astropy.table import Table
 from astropy.cosmology import FlatLambdaCDM
 from slsim.lens import Lens
-from astropy.io import ascii
 from slsim.image_simulation import (
     simulate_image,
     sharp_image,
@@ -145,8 +144,12 @@ class TestImageSimulation(object):
 @pytest.fixture
 def pes_lens_instance():
     path = os.path.dirname(__file__)
-    source_dict = ascii.read(os.path.join(path, "TestData/source_dict_ps.ecsv"))
-    deflector_dict = ascii.read(os.path.join(path, "TestData/deflector_dict_ps.ecsv"))
+    source_dict = Table.read(
+            os.path.join(path, "TestData/source_dict_ps.fits"), format="fits"
+        )
+    deflector_dict = Table.read(
+            os.path.join(path, "TestData/deflector_dict_ps.fits"), format="fits"
+        )
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:

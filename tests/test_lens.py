@@ -8,7 +8,6 @@ from slsim.lens import (
     image_separation_from_positions,
     theta_e_when_source_infinity,
 )
-from astropy.io import ascii
 import os
 
 
@@ -110,8 +109,12 @@ class TestLens(object):
 @pytest.fixture
 def pes_lens_instance():
     path = os.path.dirname(__file__)
-    source_dict = ascii.read(os.path.join(path, "TestData/source_dict_ps.ecsv"))
-    deflector_dict = ascii.read(os.path.join(path, "TestData/deflector_dict_ps.ecsv"))
+    source_dict = Table.read(
+            os.path.join(path, "TestData/source_dict_ps.fits"), format="fits"
+        )
+    deflector_dict = Table.read(
+            os.path.join(path, "TestData/deflector_dict_ps.fits"), format="fits"
+        )
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
