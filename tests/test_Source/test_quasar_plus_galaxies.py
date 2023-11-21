@@ -4,16 +4,34 @@ import pytest
 
 
 def test_quasar_plus_galaxies():
-    catalog = quasar_plus_galaxies.quasar_galaxies_simple(m_min=17,
-    m_max=23,
-    amp_min=0.9,
-    amp_max=1.3,
-    freq_min=0.5,
-    freq_max=1.5, sky_area = Quantity(value=0.05, unit="deg2"))
-    column_names = ["z", "M", "coeff", "ellipticity", "physical_size", "stellar_mass", 
-                    "angular_size", "mag_g",
-                    "mag_r", "mag_i", "mag_z", "mag_Y", "ps_mag_r", "ps_mag_g", 
-                    "ps_mag_i", "amp", "freq"]
+    catalog = quasar_plus_galaxies.quasar_galaxies_simple(
+        m_min=17,
+        m_max=23,
+        amp_min=0.9,
+        amp_max=1.3,
+        freq_min=0.5,
+        freq_max=1.5,
+        sky_area=Quantity(value=0.05, unit="deg2"),
+    )
+    column_names = [
+        "z",
+        "M",
+        "coeff",
+        "ellipticity",
+        "physical_size",
+        "stellar_mass",
+        "angular_size",
+        "mag_g",
+        "mag_r",
+        "mag_i",
+        "mag_z",
+        "mag_Y",
+        "ps_mag_r",
+        "ps_mag_g",
+        "ps_mag_i",
+        "amp",
+        "freq",
+    ]
     assert catalog.colnames[0] == column_names[0]
     assert catalog.colnames[1] == column_names[1]
     assert catalog.colnames[2] == column_names[2]

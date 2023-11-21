@@ -8,7 +8,21 @@ from astropy.table import Table
 class TestSource:
     def setup_method(self):
         source_dict = Table(
-            [[0.5], [17], [18], [16], [23], [24], [22], [0.5], [2], [4], [0.35], [0.8], [0.76]],
+            [
+                [0.5],
+                [17],
+                [18],
+                [16],
+                [23],
+                [24],
+                [22],
+                [0.5],
+                [2],
+                [4],
+                [0.35],
+                [0.8],
+                [0.76],
+            ],
             names=(
                 "z",
                 "ps_mag_r",
@@ -53,6 +67,7 @@ class TestSource:
         result = self.source.ps_magnitude("r", image_observation_times)
         result_comp = np.array([17.48917028, 17.38842661, 17.27946793])
         npt.assert_almost_equal(result, result_comp, decimal=5)
+
     def test_es_magnitude(self):
         result = self.source.es_magnitude("r")
         assert result == [23]
