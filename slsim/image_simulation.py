@@ -284,7 +284,7 @@ def point_source_image_without_variability(
         displacements
     :return: point source images
     """
-    kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band="i")
+    kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band=band)
     kwargs_ps = kwargs_params["kwargs_ps"]
 
     data_class = image_data_class(
@@ -305,22 +305,19 @@ def point_source_image_without_variability(
         dec_image_values = image_data["dec_image"]
         magnitude = lens_class.point_source_magnitude(band, lensed=True)
         amp = magnitude_to_amplitude(magnitude, mag_zero_point)
+        point_source_images = []
+        for i in range(len(ra_image_values)):
+            rendering_class = PointSourceRendering(
+                pixel_grid=data_class, supersampling_factor=1, psf=psf_class
+            )
+            point_source = rendering_class.point_source_rendering(
+                np.array([ra_image_values[i]]),
+                np.array([dec_image_values[i]]),
+                np.array([amp[i]]),
+            )
+            point_source_images.append(point_source)
     else:
-        ra_image_values = np.zeros(1)
-        dec_image_values = np.zeros(1)
-        amp = np.zeros(1)
-
-    point_source_images = []
-    for i in range(len(ra_image_values)):
-        rendering_class = PointSourceRendering(
-            pixel_grid=data_class, supersampling_factor=1, psf=psf_class
-        )
-        point_source = rendering_class.point_source_rendering(
-            np.array([ra_image_values[i]]),
-            np.array([dec_image_values[i]]),
-            np.array([amp[i]]),
-        )
-        point_source_images.append(point_source)
+        point_source_images = np.zeros((num_pix, num_pix))
     return point_source_images
 
 
@@ -349,7 +346,7 @@ def point_source_image_at_time(
     :return: point source images with variability
     """
 
-    kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band="i")
+    kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band=band)
     kwargs_ps = kwargs_params["kwargs_ps"]
     data_class = image_data_class(
         lens_class, band, mag_zero_point, delta_pix, num_pix, transform_pix2angle
@@ -372,21 +369,19 @@ def point_source_image_at_time(
             band=band, lensed=True, time=time
         )
         variable_amp = magnitude_to_amplitude(variable_mag, mag_zero_point)
+        point_source_images = []
+        for i in range(len(ra_image_values)):
+            rendering_class = PointSourceRendering(
+                pixel_grid=data_class, supersampling_factor=1, psf=psf_class
+            )
+            point_source = rendering_class.point_source_rendering(
+                np.array([ra_image_values[i]]),
+                np.array([dec_image_values[i]]),
+                np.array([variable_amp[i]]),
+            )
+            point_source_images.append(point_source)
     else:
-        ra_image_values = np.zeros(1)
-        dec_image_values = np.zeros(1)
-        variable_amp = np.zeros(1)
-    point_source_images = []
-    for i in range(len(ra_image_values)):
-        rendering_class = PointSourceRendering(
-            pixel_grid=data_class, supersampling_factor=1, psf=psf_class
-        )
-        point_source = rendering_class.point_source_rendering(
-            np.array([ra_image_values[i]]),
-            np.array([dec_image_values[i]]),
-            np.array([variable_amp[i]]),
-        )
-        point_source_images.append(point_source)
+        point_source_images = np.zeros((num_pix, num_pix))
     return np.array(point_source_images)
 
 
