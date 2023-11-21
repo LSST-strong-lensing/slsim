@@ -110,11 +110,11 @@ class TestLens(object):
 def pes_lens_instance():
     path = os.path.dirname(__file__)
     source_dict = Table.read(
-            os.path.join(path, "TestData/source_dict_ps.fits"), format="fits"
-        )
+        os.path.join(path, "TestData/source_dict_ps.fits"), format="fits"
+    )
     deflector_dict = Table.read(
-            os.path.join(path, "TestData/deflector_dict_ps.fits"), format="fits"
-        )
+        os.path.join(path, "TestData/deflector_dict_ps.fits"), format="fits"
+    )
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
