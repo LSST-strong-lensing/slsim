@@ -305,7 +305,7 @@ def point_source_image_without_variability(
         dec_image_values = image_data["dec_image"]
         magnitude = lens_class.point_source_magnitude(band, lensed=True)
         amp = magnitude_to_amplitude(magnitude, mag_zero_point)
-        point_source_images = []
+        point_source_images_list = []
         for i in range(len(ra_image_values)):
             rendering_class = PointSourceRendering(
                 pixel_grid=data_class, supersampling_factor=1, psf=psf_class
@@ -315,10 +315,11 @@ def point_source_image_without_variability(
                 np.array([dec_image_values[i]]),
                 np.array([amp[i]]),
             )
-            point_source_images.append(point_source)
+            point_source_images_list.append(point_source)
+        point_source_image = sum(point_source_images_list)
     else:
-        point_source_images = np.zeros((num_pix, num_pix))
-    return point_source_images
+        point_source_image = np.zeros((num_pix, num_pix))
+    return point_source_image
 
 
 def point_source_image_at_time(
@@ -369,7 +370,7 @@ def point_source_image_at_time(
             band=band, lensed=True, time=time
         )
         variable_amp = magnitude_to_amplitude(variable_mag, mag_zero_point)
-        point_source_images = []
+        point_source_images_list = []
         for i in range(len(ra_image_values)):
             rendering_class = PointSourceRendering(
                 pixel_grid=data_class, supersampling_factor=1, psf=psf_class
@@ -379,10 +380,11 @@ def point_source_image_at_time(
                 np.array([dec_image_values[i]]),
                 np.array([variable_amp[i]]),
             )
-            point_source_images.append(point_source)
+            point_source_images_list.append(point_source)
+        point_source_image = sum(point_source_images_list)
     else:
-        point_source_images = np.zeros((num_pix, num_pix))
-    return np.array(point_source_images)
+        point_source_image = np.zeros((num_pix, num_pix))
+    return point_source_image
 
 
 def point_source_image_with_variability(
@@ -549,7 +551,7 @@ def lens_image(
             transform_pix2angle=transform_pix2angle,
             time=t_obs,
         )
-    image = convolved_deflector_source + sum(image_ps)
+    image = convolved_deflector_source + image_ps
     if exposure_time is not None:
         final_image = image_plus_poisson_noise(image=image, exposure_time=exposure_time)
     else:
