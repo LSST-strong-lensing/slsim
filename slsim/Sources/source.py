@@ -60,7 +60,7 @@ class Source(object):
 
         return self.source_dict["e1"], self.source_dict["e2"]
 
-    def ps_magnitude(self, band, image_observation_times=None):
+    def point_source_magnitude(self, band, image_observation_times=None):
         """Get the magnitude of the point source in a specific band.
 
         :param band: Imaging band
@@ -91,7 +91,7 @@ class Source(object):
             source_mag = self.source_dict[band_string]
             return source_mag
 
-    def es_magnitude(self, band):
+    def extended_source_magnitude(self, band):
         """Get the magnitude of the extended source in a specific band.
 
         :param band: Imaging band
