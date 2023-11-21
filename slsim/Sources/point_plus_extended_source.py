@@ -1,6 +1,5 @@
 import numpy.random as random
 from slsim.Sources.source_pop_base import SourcePopBase
-from slsim.Util.param_util import epsilon2e
 import numpy as np
 from slsim.selection import deflector_cut
 from slsim.Sources.galaxies import galaxy_projected_eccentricity
