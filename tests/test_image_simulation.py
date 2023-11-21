@@ -3,8 +3,6 @@ import numpy as np
 from astropy.table import Table
 from astropy.cosmology import FlatLambdaCDM
 from slsim.lens import Lens
-from slsim.lens_pop import LensPop
-from astropy.units import Quantity
 from astropy.io import ascii
 from slsim.image_simulation import (
     simulate_image,
@@ -325,6 +323,7 @@ def test_deflector_images_with_different_zeropoint(pes_lens_instance):
         t_obs=np.array([20, 30]))
     assert len(result_images) == len(mag_zero_points)
     assert len(result_list) == len(result_images)
+    assert np.any(diff_image != 0)
     assert lens_image_result_1.shape[0] == 64
     assert lens_image_result_2.shape[0] == 64
     assert len(lens_image_result_3) == 2
