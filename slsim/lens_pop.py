@@ -118,7 +118,7 @@ class LensPop(LensedPopulationBase):
             self._source_model_type = "extended"
         elif source_type == "quasars":
             from slsim.Sources.quasars import Quasars
-            from slsim.Sources.Quasar_catalog.simple_quasar import quasar_catalog_simple
+            from slsim.Sources.QuasarCatalog.simple_quasar import quasar_catalog_simple
 
             if kwargs_quasars is None:
                 kwargs_quasars = {}
@@ -133,7 +133,7 @@ class LensPop(LensedPopulationBase):
             self._source_model_type = "point_source"
         elif source_type in ["quasar_plus_galaxies", "supernovae_plus_galaxies"]:
             from slsim.Sources.point_plus_extended_source import PointPlusExtendedSource
-            from slsim.Sources.Quasar_catalog.quasar_plus_galaxies import (
+            from slsim.Sources.QuasarCatalog.quasar_plus_galaxies import (
                 quasar_galaxies_simple,
             )
 

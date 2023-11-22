@@ -1,4 +1,4 @@
-from slsim.Sources.Quasar_catalog import quasar_plus_galaxies
+from slsim.Sources.QuasarCatalog import quasar_plus_galaxies
 from astropy.units import Quantity
 import pytest
 
