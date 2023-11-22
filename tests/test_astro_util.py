@@ -2,7 +2,7 @@ import numpy as np
 from numpy import testing as npt
 import pytest
 from astropy import constants as const
-from slsim.Util.agn_util import (
+from slsim.Util.astro_util import (
     spin_to_isco,
     calculate_eddington_luminosity,
     eddington_ratio_to_accreted_mass,
