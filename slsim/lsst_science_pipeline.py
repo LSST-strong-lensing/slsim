@@ -616,7 +616,7 @@ def radec_to_pix(radec, dp0_image):
 
     :param radec: SpherePoint of radec
     :type radec: an object: eg: geom.SpherePoint(65*degree, -36*degree)
-    :param dp0_image: image containing given radec
+    :param dp0_image: an image or list of images containing given radec
     :return: corresponding Point2D of pixel coordinate in provided images.
     """
     if isinstance(dp0_image, list):
