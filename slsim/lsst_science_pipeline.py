@@ -2,11 +2,15 @@ import numpy as np
 import galsim
 from astropy.table import Table, vstack
 from astropy.table import Column
-from slsim.image_simulation import (sharp_image, lens_image_series, 
-                                    image_plus_poisson_noise)
+from slsim.image_simulation import (
+    sharp_image,
+    lens_image_series,
+    image_plus_poisson_noise,
+)
 from scipy.signal import convolve2d
 from scipy import interpolate
 from slsim.image_simulation import point_source_coordinate_properties
+
 try:
     import lsst.geom as geom
     from lsst.pipe.tasks.insertFakes import _add_fake_sources
@@ -621,9 +625,9 @@ def radec_to_pix(radec, dp0_image):
     :param radec: SpherePoint of radec
     :type radec: an object: eg: geom.SpherePoint(65*degree, -36*degree)
     :param dp0_image: image containing given radec
-    :return: corresponding Point2D of pixel coordinate in provided images. If an
-     image is provided, output will be a single Point2D. If list of image is provided, 
-     output will be list of correspoding Point2D.
+    :return: corresponding Point2D of pixel coordinate in provided images. If an image
+        is provided, output will be a single Point2D. If list of image is provided,
+        output will be list of correspoding Point2D.
     """
     if isinstance(dp0_image, list):
         pix = []
