@@ -64,7 +64,7 @@ def test_multiple_variable_lens_injection(pes_lens_instance):
     expo_data_2 = Table.read(
         os.path.join(path, "TestData/expo_data_2.fits"), format="fits"
     )
-    expo_data = np.array([expo_data_1, expo_data_2])
+    expo_data = [expo_data_1, expo_data_2]
     transf_matrix_single = np.array([[0.2, 0], [0, 0.2]])
     transform_matrices = []
     for data in expo_data:
