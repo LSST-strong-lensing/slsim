@@ -171,7 +171,7 @@ def number_density_at_redshift(
 
     growth_functions = growth_factor_at_redshift(z, cosmology=cosmology)
     cdfs = []
-    all_massf = []
+    #all_massf = []
     for growth_function in growth_functions:
         massf = halo_mass_function(
             M=m,
@@ -186,8 +186,8 @@ def number_density_at_redshift(
         # units of Mpc-3 Msun-1.
         total_number_density = number_for_certain_mass(massf, m)
         cdfs.append(total_number_density)
-        all_massf.append(massf)
-    return cdfs, all_massf
+        #all_massf.append(massf)
+    return cdfs#, all_massf
 
 
 def number_for_certain_mass(massf, m):
