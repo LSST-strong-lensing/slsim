@@ -8,7 +8,7 @@ from slsim.lensed_population_base import LensedPopulationBase
 
 
 class LensPop(LensedPopulationBase):
-    """Class to perform samples of galaxy-galaxy lensing."""
+    """Class to perform samples of lens population."""
 
     def __init__(
         self,
@@ -117,7 +117,7 @@ class LensPop(LensedPopulationBase):
             self._source_model_type = "extended"
         elif source_type == "quasars":
             from slsim.Sources.quasars import Quasars
-            from slsim.Sources.quasar_catalog.simple_quasar import quasar_catalog_simple
+            from slsim.Sources.QuasarCatalog.simple_quasar import quasar_catalog_simple
 
             if kwargs_quasars is None:
                 kwargs_quasars = {}

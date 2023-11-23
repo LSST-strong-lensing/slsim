@@ -1,4 +1,4 @@
-from slsim.Sources.source_variability.variability import (
+from slsim.Sources.SourceVariability.variability import (
     Variability,
 )
 
