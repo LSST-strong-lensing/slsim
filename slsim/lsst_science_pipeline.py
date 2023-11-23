@@ -1,16 +1,23 @@
 import numpy as np
-import lsst.geom as geom
-from lsst.pipe.tasks.insertFakes import _add_fake_sources
+try:
+    import lsst.geom as geom
+    from lsst.pipe.tasks.insertFakes import _add_fake_sources
+    from lsst.rsp import get_tap_service
+    from lsst.afw.math import Warper
+except ModuleNotFoundError:
+    lsst = None
+#import lsst.geom as geom
+#from lsst.pipe.tasks.insertFakes import _add_fake_sources
 import galsim
 from astropy.table import Table, vstack
 from astropy.table import Column
-from slsim.image_simulation import sharp_image, lens_image, image_plus_poisson_noise
+from slsim.image_simulation import (sharp_image, lens_image_series, 
+                                    image_plus_poisson_noise)
 from scipy.signal import convolve2d
 from scipy import interpolate
 from slsim.image_simulation import point_source_coordinate_properties
-from lsst.rsp import get_tap_service
-from lsst.afw.math import Warper
-
+#from lsst.rsp import get_tap_service
+#from lsst.afw.math import Warper
 """
 This module provides necessary functions to inject lenses to the dp0 data. For this, it 
 uses some of the packages provided by the LSST Science Pipeline.
@@ -710,13 +717,13 @@ def variable_lens_injection(
     :return: Astropy table of injected lenses and exposure information of dp0 data
     """
 
-    lens_images = lens_image(
+    lens_images = lens_image_series(
         lens_class,
         band=band,
         mag_zero_point=exposure_data["zero_point"],
         delta_pix=delta_pix,
         num_pix=num_pix,
-        psf_kernels=exposure_data["psf_kernel"],
+        psf_kernel=exposure_data["psf_kernel"],
         exposure_time=exposure_data["expo_time"],
         transform_pix2angle=transform_pix2angle,
         t_obs=exposure_data["obs_time"],
