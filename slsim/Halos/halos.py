@@ -171,7 +171,7 @@ def number_density_at_redshift(
 
     growth_functions = growth_factor_at_redshift(z, cosmology=cosmology)
     cdfs = []
-    # all_massf = []
+    all_massf = []
     for growth_function in growth_functions:
         massf = halo_mass_function(
             M=m,
@@ -186,8 +186,8 @@ def number_density_at_redshift(
         # units of Mpc-3 Msun-1.
         total_number_density = number_for_certain_mass(massf, m)
         cdfs.append(total_number_density)
-    #    all_massf.append(massf)
-    return cdfs  # , all_massf
+        all_massf.append(massf)
+    return cdfs, all_massf
 
 
 def number_for_certain_mass(massf, m):
@@ -283,8 +283,39 @@ def redshift_halos_array_from_comoving_density(
 
         cosmology = FlatLambdaCDM(H0=70, Om0=0.3)
 
-    dN_dz = v_per_redshift(redshift_list, cosmology, sky_area)
+    dV_dz = v_per_redshift(redshift_list, cosmology, sky_area)
 
+    dN_dz = dv_dz_to_dn_dz(dV_dz,
+                           redshift_list,
+                           m_min=m_min,
+                           m_max=m_max,
+                           resolution=resolution,
+                           wavenumber=wavenumber,
+                           power_spectrum=power_spectrum,
+                           cosmology=cosmology,
+                           collapse_function=collapse_function,
+                           params=params)
+
+    # integrate density to get expected number of Halos
+    N = dndz_to_N(dN_dz, redshift_list)
+    if N == 0:
+        warnings.warn("No Halos found in the given redshift range")
+        return np.array([np.nan])
+    else:
+        return dndz_to_redshifts(N, dN_dz, redshift_list)
+
+
+def dv_dz_to_dn_dz(dV_dz,
+                   redshift_list,
+                   m_min=None,
+                   m_max=None,
+                   resolution=None,
+                   wavenumber=None,
+                   power_spectrum=None,
+                   cosmology=None,
+                   collapse_function=None,
+                   params=None,
+                   ):
     density = number_density_at_redshift(
         z=redshift_list,
         m_min=m_min,
@@ -296,15 +327,8 @@ def redshift_halos_array_from_comoving_density(
         collapse_function=collapse_function,
         params=params,
     )
-    dN_dz *= density
-
-    # integrate density to get expected number of Halos
-    N = dndz_to_N(dN_dz, redshift_list)
-    if N == 0:
-        warnings.warn("No Halos found in the given redshift range")
-        return np.array([np.nan])
-    else:
-        return dndz_to_redshifts(N, dN_dz, redshift_list)
+    dV_dz *= density
+    return dV_dz
 
 
 def dndz_to_N(dN_dz, redshift_list):
@@ -415,7 +439,6 @@ def halo_mass_at_z(
         return 0
     for z_val in z:
         gf_list = growth_factor_at_redshift(z_val, cosmology)
-
 
         mass.append(
             halo_mass_sampler(

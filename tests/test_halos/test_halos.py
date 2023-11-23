@@ -8,6 +8,7 @@ from slsim.Halos.halos import (
     mass_first_moment_at_redshift,
     redshift_mass_sheet_correction_array_from_comoving_density,
     dndz_to_redshifts,
+    dv_dz_to_dn_dz,
     dndz_to_N,
     v_per_redshift,
     number_for_certain_mass
@@ -136,3 +137,12 @@ def test_dndz_to_redshifts():
     assert len(redshifts) == 18
     assert np.all(redshifts > 0.999)
     assert np.all(redshifts < 2.001)
+
+
+def test_dv_dz_to_dn_dz():
+    z = np.linspace(0, 1, 100)
+    dV_dz = np.concatenate([np.array([0] * 50), np.linspace(0, 1, 50)])
+    dn_dz = dv_dz_to_dn_dz(dV_dz, z)
+    assert len(dn_dz) == 100
+    assert dn_dz[0] == dn_dz[10] == 0
+    assert dn_dz[60] > 0
