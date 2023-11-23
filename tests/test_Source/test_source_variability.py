@@ -1,5 +1,5 @@
 import numpy as np
-from slsim.Sources.Source_variability.variability import Variability
+from slsim.Sources.SourceVariability.variability import Variability
 from numpy import testing as npt
 import pytest
 
