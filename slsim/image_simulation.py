@@ -520,7 +520,6 @@ def lens_image(
         variability in the lens.
     :return: lens image
     """
-<<<<<<< HEAD
     deflector_source = sharp_image(
         lens_class=lens_class,
         band=band,
@@ -541,91 +540,6 @@ def lens_image(
             psf_kernel=psf_kernel,
             transform_pix2angle=transform_pix2angle,
         )
-=======
-    source_type = lens_class._source_type
-    if source_type == "point_source" or source_type == "point_plus_extended":
-        if t_obs is not None:
-            point_image = point_source_image_with_variability(
-                lens_class=lens_class,
-                band=band,
-                mag_zero_point=mag_zero_point,
-                delta_pix=delta_pix,
-                num_pix=num_pix,
-                psf_kernels=psf_kernels,
-                transform_pix2angle=transform_pix2angle,
-                t_obs=t_obs,
-            )
-
-            images = deflector_images_with_different_zeropoint(
-                lens_class,
-                band=band,
-                mag_zero_point=mag_zero_point,
-                delta_pix=delta_pix,
-                num_pix=num_pix,
-            )
-            convolved_deflector_image = []
-            for imag, psf_kern in zip(images, psf_kernels):
-                convolved_deflector_image.append(convolved_image(imag, psf_kern))
-            final_images = []
-            for i in range(len(t_obs)):
-                final_images.append(point_image[i] + convolved_deflector_image[i])
-
-            if exposure_time is not None:
-                final_lens_image = image_plus_poisson_noise_for_list_of_image(
-                    images=final_images, exposure_times=exposure_time
-                )
-            else:
-                final_lens_image = final_images
-        else:
-            _point_image = point_source_image_without_variability(
-                lens_class=lens_class,
-                band=band,
-                mag_zero_point=mag_zero_point,
-                delta_pix=delta_pix,
-                num_pix=num_pix,
-                psf_kernel=psf_kernels,
-                transform_pix2angle=transform_pix2angle,
-            )
-            deflector_image = sharp_image(
-                lens_class=lens_class,
-                band=band,
-                mag_zero_point=mag_zero_point,
-                delta_pix=delta_pix,
-                num_pix=num_pix,
-            )
-            _convolved_deflector_image = convolved_image(
-                image=deflector_image, psf_kernel=psf_kernels
-            )
-            final_image = sum(_point_image) + _convolved_deflector_image
-            if exposure_time is not None:
-                final_lens_image = image_plus_poisson_noise(final_image, exposure_time)
-            else:
-                final_lens_image = final_image
-
-    elif source_type == "extended":
-        if t_obs is not None:
-            raise ValueError(
-                "extented source do not have time variability. So,"
-                "do not provide observation time."
-            )
-        else:
-            lens_image = sharp_image(
-                lens_class=lens_class,
-                band=band,
-                mag_zero_point=mag_zero_point,
-                delta_pix=delta_pix,
-                num_pix=num_pix,
-            )
-            convolved_lens_image = convolved_image(
-                image=lens_image, psf_kernel=psf_kernels
-            )
-            if exposure_time is not None:
-                final_lens_image = image_plus_poisson_noise(
-                    image=convolved_lens_image, exposure_time=exposure_time
-                )
-            else:
-                final_lens_image = convolved_lens_image
->>>>>>> d10bb5eb14d1a88125f7efbdca60aa80b6ebde5d
     else:
         image_ps = point_source_image_at_time(
             lens_class=lens_class,
