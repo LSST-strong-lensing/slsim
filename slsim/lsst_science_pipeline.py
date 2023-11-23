@@ -3,7 +3,11 @@ from astropy.table import Table, vstack
 from astropy.table import Column
 from slsim.image_simulation import (
     sharp_image,
+<<<<<<< HEAD
     lens_image_series,
+=======
+    lens_image,
+>>>>>>> d10bb5eb14d1a88125f7efbdca60aa80b6ebde5d
     image_plus_poisson_noise,
 )
 from scipy.signal import convolve2d
@@ -625,7 +629,11 @@ def radec_to_pix(radec, dp0_image):
 
     :param radec: SpherePoint of radec
     :type radec: an object: eg: geom.SpherePoint(65*degree, -36*degree)
+<<<<<<< HEAD
     :param dp0_image: image containing given radec
+=======
+    :param dp0_image: an image or list of images containing given radec
+>>>>>>> d10bb5eb14d1a88125f7efbdca60aa80b6ebde5d
     :return: corresponding Point2D of pixel coordinate in provided images. If an image
         is provided, output will be a single Point2D. If list of image is provided,
         output will be list of correspoding Point2D.
