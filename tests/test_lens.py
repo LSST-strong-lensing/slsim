@@ -8,7 +8,6 @@ from slsim.lens import (
     image_separation_from_positions,
     theta_e_when_source_infinity,
 )
-
 import os
 
 
@@ -106,9 +105,37 @@ class TestLens(object):
         npt.assert_almost_equal(dt_days, observer_times, decimal=5)
         npt.assert_almost_equal(dt_days2, observer_times2, decimal=5)
 
-    def test_point_source_magnitude(self):
-        mag = self.gg_lens.point_source_magnitude(band="i", lensed=True)
-        assert len(mag) >= 2
+
+@pytest.fixture
+def pes_lens_instance():
+    path = os.path.dirname(__file__)
+    source_dict = Table.read(
+        os.path.join(path, "TestData/source_dict_ps.fits"), format="fits"
+    )
+    deflector_dict = Table.read(
+        os.path.join(path, "TestData/deflector_dict_ps.fits"), format="fits"
+    )
+
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    while True:
+        pes_lens = Lens(
+            source_dict=source_dict,
+            deflector_dict=deflector_dict,
+            source_type="point_plus_extended",
+            variability_model="sinusoidal",
+            kwargs_variab={"amp", "freq"},
+            cosmo=cosmo,
+        )
+        if pes_lens.validity_test():
+            pes_lens = pes_lens
+            break
+    return pes_lens
+
+
+def test_point_source_magnitude(pes_lens_instance):
+    pes_lens = pes_lens_instance
+    mag = pes_lens.point_source_magnitude(band="i", lensed=True)
+    assert len(mag) >= 2
 
 
 if __name__ == "__main__":
