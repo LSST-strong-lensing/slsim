@@ -20,16 +20,6 @@ except ModuleNotFoundError:
     lsst = None
     galsim = None
 
-try:
-    import lsst.geom as geom
-    from lsst.pipe.tasks.insertFakes import _add_fake_sources
-    from lsst.rsp import get_tap_service
-    from lsst.afw.math import Warper
-    import galsim
-except ModuleNotFoundError:
-    lsst = None
-    galsim = None
-
 """
 This module provides necessary functions to inject lenses to the dp0 data. For this, it 
 uses some of the packages provided by the LSST Science Pipeline.
