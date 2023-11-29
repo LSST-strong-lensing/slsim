@@ -1,5 +1,5 @@
 slsim
-============
+=====
 
 .. toctree::
    :maxdepth: 4

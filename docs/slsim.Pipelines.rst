@@ -1,11 +1,11 @@
-sim\_pipeline.Pipelines package
-===============================
+slsim.Pipelines package
+=======================
 
 Submodules
 ----------
 
-sim\_pipeline.Pipelines.skypy\_pipeline module
-----------------------------------------------
+slsim.Pipelines.skypy\_pipeline module
+--------------------------------------
 
 .. automodule:: slsim.Pipelines.skypy_pipeline
    :members:
