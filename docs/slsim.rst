@@ -1,5 +1,5 @@
-sim\_pipeline package
-=====================
+slsim package
+=============
 
 Subpackages
 -----------
@@ -18,48 +18,64 @@ Subpackages
 Submodules
 ----------
 
-sim\_pipeline.galaxy\_galaxy\_lens module
------------------------------------------
-
-.. automodule:: slsim.lens
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-sim\_pipeline.galaxy\_galaxy\_lens\_pop module
-----------------------------------------------
-
-.. automodule:: slsim.lens_pop
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-sim\_pipeline.image\_simulation module
---------------------------------------
+slsim.image\_simulation module
+------------------------------
 
 .. automodule:: slsim.image_simulation
    :members:
    :undoc-members:
    :show-inheritance:
 
-sim\_pipeline.lsst\_science\_pipeline module
---------------------------------------------
+slsim.lens module
+-----------------
+
+.. automodule:: slsim.lens
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+slsim.lens\_pop module
+----------------------
+
+.. automodule:: slsim.lens_pop
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+slsim.lensed\_population\_base module
+-------------------------------------
+
+.. automodule:: slsim.lensed_population_base
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+slsim.lensed\_system\_base module
+---------------------------------
+
+.. automodule:: slsim.lensed_system_base
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+slsim.lsst\_science\_pipeline module
+------------------------------------
 
 .. automodule:: slsim.lsst_science_pipeline
    :members:
    :undoc-members:
    :show-inheritance:
 
-sim\_pipeline.selection module
-------------------------------
+slsim.selection module
+----------------------
 
 .. automodule:: slsim.selection
    :members:
    :undoc-members:
    :show-inheritance:
 
-sim\_pipeline.sim\_pipeline module
-----------------------------------
+slsim.slsim module
+------------------
 
 .. automodule:: slsim.slsim
    :members:
