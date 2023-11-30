@@ -4,6 +4,7 @@ from astropy.cosmology import default_cosmology
 import multiprocessing
 import os
 import glob
+from tqdm.notebook import tqdm
 
 
 def calculate_kappa_gamma(file_path=None,
@@ -63,7 +64,7 @@ def calculate_kappa_gamma_with_muiltprocessing(file_path=None,
     tables = read_ms.get_tables()
 
     # Using multiprocessing
-    pool = multiprocessing.Pool(processes=3)
+    pool = multiprocessing.Pool(processes=5)
     results = [pool.apply_async(worker_process_table,
                                 args=(halos, cosmo, selecting_area, z_source, diff, diff_method)) for halos in tables]
 
@@ -93,36 +94,32 @@ def get_halos_mass_with_muiltprocessing(file_path=None,
                                         z_source=5,
                                         cosmo=None,
                                         mass_cut=None,
-                                        sample_size=1, ):
+                                        sample_size=1):
     if cosmo is None:
         cosmo = default_cosmology.get()
 
     read_ms = ReadMS(file_path=file_path,
                      selecting_area=selecting_area,
-                     z_source=z_source, cosmo=cosmo,
+                     z_source=z_source,
+                     cosmo=cosmo,
                      sample_size=sample_size)
     tables = read_ms.get_tables()
 
-    # Using multiprocessing
-    pool = multiprocessing.Pool(processes=3)
-    results = [pool.apply_async(worker_halos_table, args=(halos, z_source, mass_cut)) for halos in tables]
+    # Using multiprocessing with 'with' statement
+    with multiprocessing.Pool() as pool:
+        results = [pool.apply_async(worker_halos_table, args=(halos, z_source, mass_cut)) for halos in tables]
 
-    # Close the pool and wait for each task to complete
-    pool.close()
-    pool.join()
-
-    # Extract results
-    all_masses = []
-    all_zs = []
-    all_lengths = []
-    for result in results:
-        mass_list, z_list = result.get()
-        all_masses.extend(mass_list)
-        all_zs.extend(z_list)
-        all_lengths.append(len(mass_list))
+        # Extract results within the 'with' block
+        all_masses = []
+        all_zs = []
+        all_lengths = []
+        for result in results:
+            mass_list, z_list = result.get()
+            all_masses.extend(mass_list)
+            all_zs.extend(z_list)
+            all_lengths.append(len(mass_list))
 
     return all_masses, all_zs, all_lengths
-
 
 def kappa_gamma_from_files(file_path=None,
                            selecting_area=0.00082,
@@ -145,7 +142,7 @@ def kappa_gamma_from_files(file_path=None,
     all_gamma_results = []
 
     # Process each file
-    for txt_file in txt_files:
+    for txt_file in tqdm(txt_files, desc="Processing files"):
         kappas, gammas = calculate_kappa_gamma_with_muiltprocessing(file_path=txt_file,
                                                                     selecting_area=selecting_area,
                                                                     z_source=z_source,
@@ -182,7 +179,7 @@ def get_mass_z_from_files(file_path=None,
     all_lengths_results = []
 
     # Process each file
-    for txt_file in txt_files:
+    for txt_file in tqdm(txt_files, desc="Processing files"):
         masses, zs, lengths = get_halos_mass_with_muiltprocessing(file_path=txt_file,
                                                                   selecting_area=selecting_area,
                                                                   z_source=z_source,

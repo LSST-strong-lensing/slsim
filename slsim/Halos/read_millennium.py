@@ -33,7 +33,10 @@ class ReadMS(object):
         if file_path is None:
             file_path = 'C:/Users/TXZ27/OneDrive/Documents/GitHub/slsim/notebooks/GGL_los_8_0_3_3_3_N_4096_ang_4_SA_galaxies_on_plane_27_to_63.images.txt'
 
-        self.df = pd.read_csv(file_path, sep='\t')
+        df0 = pd.read_csv(file_path, sep='\t')
+        df0.drop_duplicates(subset='HaloID', inplace=True)
+        self.df = df0
+
         self.selecting_area = selecting_area
         if cosmo is None:
             from astropy.cosmology import default_cosmology
@@ -85,7 +88,7 @@ class ReadMS(object):
 
         selected_objects = self.df[self.df.apply(
             lambda row: np.sqrt((row['pos_0[rad]'] - center_pos_0) ** 2 + (
-                        row['pos_1[rad]'] - center_pos_1) ** 2) <= self.selection_radius,
+                    row['pos_1[rad]'] - center_pos_1) ** 2) <= self.selection_radius,
             axis=1)].copy()  # Create a copy here
 
         return selected_objects, center_pos_0, center_pos_1
