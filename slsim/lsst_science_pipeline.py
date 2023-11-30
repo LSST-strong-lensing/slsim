@@ -324,7 +324,7 @@ def multiple_lens_injection(
                 ra[i],
                 dec[i],
                 lens_cut=lens_cut,
-                flux=None,
+                flux=flux,
             )
         )
     injected_image_catalog = vstack(injected_images)
