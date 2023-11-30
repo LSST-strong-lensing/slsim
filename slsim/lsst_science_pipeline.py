@@ -20,16 +20,6 @@ except ModuleNotFoundError:
     lsst = None
     galsim = None
 
-try:
-    import lsst.geom as geom
-    from lsst.pipe.tasks.insertFakes import _add_fake_sources
-    from lsst.rsp import get_tap_service
-    from lsst.afw.math import Warper
-    import galsim
-except ModuleNotFoundError:
-    lsst = None
-    galsim = None
-
 """
 This module provides necessary functions to inject lenses to the dp0 data. For this, it 
 uses some of the packages provided by the LSST Science Pipeline.
@@ -190,7 +180,6 @@ def lens_inejection_fast(
     dec,
     num_cutout_per_patch=10,
     lens_cut=None,
-    flux=None,
     noise=True,
 ):
     """Chooses a random lens from the lens population and injects it to a DC2 cutout
@@ -268,11 +257,11 @@ def lens_inejection_fast(
             cutout_image = coadd[j][cutout_bbox]
             if noise is True:
                 exposure_map = 30 * coadd_nImage[j][cutout_bbox].array
-                lens_final = image_plus_poisson_noise(lens, exposure_map)
             else:
-                lens_final = lens
-            objects = [(geom.Point2D(x_center[i], y_center[i]), lens_final, delta_pix)]
-            final_injected_image = add_object(cutout_image, objects, calibFluxRadius=12)
+                exposure_map = None
+            objects = [(geom.Point2D(x_center[i], y_center[i]), lens, delta_pix)]
+            final_injected_image = add_object(cutout_image, objects, 
+                                              exposure_map, calibFluxRadius=12)
             center_wcs = wcs.pixelToSky(objects[0][0])
             ra_deg = center_wcs.getRa().asDegrees()
             dec_deg = center_wcs.getDec().asDegrees()
@@ -391,7 +380,7 @@ def multiple_lens_injection_fast(
     return injected_image_catalog
 
 
-def add_object(dp0_image, objects, calibFluxRadius=12):
+def add_object(dp0_image, objects, exposure_time = None, calibFluxRadius=12):
     """Injects a given object in a dp0 cutout image.
 
     :param dp0_image: cutout image from the dp0 data or any other image
@@ -419,7 +408,7 @@ def add_object(dp0_image, objects, calibFluxRadius=12):
             )
         if abs(pixscale - pix_scale) >= 10**-4:
             raise ValueError(
-                "Images with different pixel scale should be combined. Please make"
+                "Images with different pixel scale should not be combined. Please make"
                 "sure that your lens image and dp0 cutout image have compatible pixel"
                 "scale."
             )
@@ -432,7 +421,13 @@ def add_object(dp0_image, objects, calibFluxRadius=12):
             convolved_image = convolve2d(
                 lens, psfArr, mode="same", boundary="symm", fillvalue=0.0
             )
-            injected_image = np.array(dp0_image.image.array) + np.array(convolved_image)
+            if exposure_time is not None:
+                convolved_image_final = image_plus_poisson_noise(convolved_image, 
+                                                                 exposure_time)
+            else:
+                convolved_image_final = convolved_image
+            injected_image = (np.array(dp0_image.image.array) + 
+                              np.array(convolved_image_final))
             return injected_image
 
 
