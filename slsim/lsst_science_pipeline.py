@@ -323,7 +323,7 @@ def multiple_lens_injection(
                 butler,
                 ra[i],
                 dec[i],
-                lens_cut=None,
+                lens_cut=lens_cut,
                 flux=None,
             )
         )
@@ -340,7 +340,6 @@ def multiple_lens_injection_fast(
     dec,
     num_cutout_per_patch=10,
     lens_cut=None,
-    flux=None,
     noise=True,
 ):
     """Injects random lenses from the lens population to multiple DC2 cutout images
@@ -371,9 +370,8 @@ def multiple_lens_injection_fast(
                 ra[i],
                 dec[i],
                 num_cutout_per_patch,
-                lens_cut=None,
-                flux=None,
-                noise=True,
+                lens_cut=lens_cut,
+                noise=noise,
             )
         )
     injected_image_catalog = vstack(injected_images)
