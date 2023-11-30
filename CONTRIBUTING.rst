@@ -30,13 +30,14 @@ Finally add the ``slsim-project`` repository as a *remote*. This will allow you 
 
 
 Install slsim in development mode
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-To run your own version of slsim and making sure that your own development changes are reflected (as well as switcing branches),
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+To run your own version of slsim and making sure that your own development changes are reflected (as well as switching branches),
 install the slsim package in development mode with
 
 ::
 
   cd slsim
+  pip install -r requirements.txt --user
   python setup.py develop --user
 
 

@@ -166,17 +166,12 @@ def number_density_at_redshift(
 
     m = np.geomspace(m_min, m_max, resolution)
 
-    gf = GrowthFactor(cosmo=cosmology)
     if np.array_equal(z, np.array([np.nan])):
-        return [0] * len(gf.growth_factor(z))
+        return [0] * len(z)
 
-    growth_functions = gf.growth_factor(z)
-
-    if not isinstance(growth_functions, (list, np.ndarray)):
-        growth_functions = [growth_functions]
-
+    growth_functions = growth_factor_at_redshift(z, cosmology=cosmology)
     cdfs = []
-
+    #all_massf = []
     for growth_function in growth_functions:
         massf = halo_mass_function(
             M=m,
@@ -189,41 +184,45 @@ def number_density_at_redshift(
         )
         # Halo mass function for a given mass array, cosmology and redshift
         # units of Mpc-3 Msun-1.
+        total_number_density = number_for_certain_mass(massf, m)
+        cdfs.append(total_number_density)
+        #all_massf.append(massf)
+    return cdfs#, all_massf
 
-        number_density = np.dot(massf, m)  # unit of Mpc-3
-        cdfs.append(number_density)
 
-    return cdfs
+def number_for_certain_mass(massf, m):
+    # massf:Mpc-3 Msun-1
+    # output: number per Mpc3 at certain redshift
+    return integrate.trapz(massf * m, np.log(m))
 
 
-def growth_factor_at_redshift(z, cosmology=None):
+def growth_factor_at_redshift(z, cosmology):
     """Calculate the growth factor at a given redshift.
 
     Parameters
     ----------
-    z : float
+    z : float, array_like, or list
         The redshift at which to evaluate the growth factor.
-    cosmology : astropy.cosmology instance, optional
+    cosmology : astropy.cosmology instance
         The cosmology instance to use.
 
     Returns
     -------
-    float
+    float or numpy.ndarray
         The growth factor at redshift z.
 
     Notes
     -----
-         Using hmf library to calculate growth factor.
+    Using hmf library to calculate growth factor.
     """
-    if cosmology is None:
-        warnings.warn(
-            "No cosmology provided, instead uses flat LCDM with default parameters"
-        )
-        from astropy.cosmology import FlatLambdaCDM
+    # Check if z is a list and convert to numpy array if it is
+    if isinstance(z, list):
+        z = np.array(z)
 
-        cosmology = FlatLambdaCDM(H0=70, Om0=0.3)
     gf = GrowthFactor(cosmo=cosmology)
     growth_function = gf.growth_factor(z)
+    if not isinstance(growth_function, (list, np.ndarray)):
+        growth_function = [growth_function]
     return growth_function
 
 
@@ -284,9 +283,39 @@ def redshift_halos_array_from_comoving_density(
 
         cosmology = FlatLambdaCDM(H0=70, Om0=0.3)
 
-    dN_dz = (cosmology.differential_comoving_volume(redshift_list) * sky_area).to_value(
-        "Mpc3"
-    )
+    dV_dz = v_per_redshift(redshift_list, cosmology, sky_area)
+
+    dN_dz = dv_dz_to_dn_dz(dV_dz,
+                           redshift_list,
+                           m_min=m_min,
+                           m_max=m_max,
+                           resolution=resolution,
+                           wavenumber=wavenumber,
+                           power_spectrum=power_spectrum,
+                           cosmology=cosmology,
+                           collapse_function=collapse_function,
+                           params=params)
+
+    # integrate density to get expected number of Halos
+    N = dndz_to_N(dN_dz, redshift_list)
+    if N == 0:
+        warnings.warn("No Halos found in the given redshift range")
+        return np.array([np.nan])
+    else:
+        return dndz_to_redshifts(N, dN_dz, redshift_list)
+
+
+def dv_dz_to_dn_dz(dV_dz,
+                   redshift_list,
+                   m_min=None,
+                   m_max=None,
+                   resolution=None,
+                   wavenumber=None,
+                   power_spectrum=None,
+                   cosmology=None,
+                   collapse_function=None,
+                   params=None,
+                   ):
     density = number_density_at_redshift(
         z=redshift_list,
         m_min=m_min,
@@ -298,22 +327,47 @@ def redshift_halos_array_from_comoving_density(
         collapse_function=collapse_function,
         params=params,
     )
-    dN_dz *= density
+    dV_dz *= density
+    return dV_dz
 
-    # integrate density to get expected number of Halos
+
+def dndz_to_N(dN_dz, redshift_list):
     N = np.trapz(dN_dz, redshift_list)
-    N_0 = int(N)
-    N = np.random.poisson(N_0)
-    if N == 0:
-        warnings.warn("No Halos found in the given redshift range")
-        return np.array([np.nan])
-    else:
-        # cumulative trapezoidal rule to get redshift CDF
-        cdf = dN_dz  # reuse memory
-        np.cumsum((dN_dz[1:] + dN_dz[:-1]) / 2 * np.diff(redshift_list), out=cdf[1:])
-        cdf[0] = 0
-        cdf /= cdf[-1]
-        return np.interp(np.random.rand(N), cdf, redshift_list)
+    N = np.random.poisson(N)
+    return N
+
+
+def dndz_to_redshifts(N, dN_dz, redshift_list):
+    # cumulative trapezoidal rule to get redshift CDF
+    assert len(dN_dz) == len(redshift_list)
+    cdf = dN_dz  # reuse memory
+    np.cumsum((dN_dz[1:] + dN_dz[:-1]) / 2 * np.diff(redshift_list), out=cdf[1:])
+    cdf[0] = 0
+    cdf /= cdf[-1]
+    return np.interp(np.random.rand(N), cdf, redshift_list)
+
+
+def v_per_redshift(redshift_list, cosmology, sky_area):
+    """Calculate the volume per redshift.
+
+    Parameters
+    ----------
+    redshift_list : array_like
+        A list of redshifts.
+    cosmology : astropy.cosmology instance, optional
+        The cosmology instance to use.
+    sky_area : `~astropy.units.Quantity`
+        The area of the sky to consider (in square degrees) or solid angle.
+
+    Returns
+    -------
+    array
+        The volume per redshift in Mpc3.
+    """
+    dV_dz = (cosmology.differential_comoving_volume(redshift_list) * sky_area).to_value(
+        "Mpc3"
+    )
+    return dV_dz
 
 
 def halo_mass_at_z(
@@ -331,7 +385,7 @@ def halo_mass_at_z(
 
     Parameters
     ----------
-    z : float or array_like
+    z : float, list or array_like
         The redshift at which to evaluate the halo mass.
     m_min : float, optional
         The minimum halo mass (in M_sol).
@@ -384,8 +438,7 @@ def halo_mass_at_z(
     if z is np.array([np.nan]):
         return 0
     for z_val in z:
-        gf = GrowthFactor(cosmo=cosmology)
-        growth_function = gf.growth_factor(z_val)
+        gf_list = growth_factor_at_redshift(z_val, cosmology)
 
         mass.append(
             halo_mass_sampler(
@@ -394,7 +447,7 @@ def halo_mass_at_z(
                 resolution=resolution,
                 wavenumber=wavenumber,
                 power_spectrum=power_spectrum,
-                growth_function=growth_function,
+                growth_function=gf_list[0],
                 params=params,
                 cosmology=cosmology,
                 collapse_function=collapse_function,
@@ -815,7 +868,7 @@ def read_txt_file(filename="average_results.txt"):
                 if stripped_line != "":
                     inner_key, value = stripped_line.split(":")
                     inner_key = float(inner_key.strip())
-                    value = float(value.strip())*-1.0
+                    value = float(value.strip()) * -1.0
                     data[current_key][inner_key] = value
     return data
 
