@@ -395,7 +395,6 @@ def add_object(dp0_image, lens_class, band,
     :param mag_zero_point: list of magnitude zero point for sqeuence of exposure
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
-    :param psf_kernels: list of psf kernel for each exposure.
     :param transform_pix2angle: list of transformation matrix (2x2) of pixels into
         coordinate displacements for each exposure
     :param exposure_time: list of exposure time for each exposure. It could be single
