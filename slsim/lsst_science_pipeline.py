@@ -2,7 +2,8 @@ import numpy as np
 from astropy.table import Table, vstack
 from astropy.table import Column
 from slsim.image_simulation import (
-    sharp_image, lens_image,
+    sharp_image,
+    lens_image,
     lens_image_series,
 )
 from scipy import interpolate
@@ -252,13 +253,16 @@ def lens_inejection_fast(
                 exposure_map = 30 * coadd_nImage[j][cutout_bbox].array
             else:
                 exposure_map = None
-            final_injected_image = add_object(cutout_image, lens_class=lens_class, 
-                                              band=rgb_band_list[j], 
-                                              mag_zero_point=mag_zero_point,
-                                              delta_pix=delta_pix,
-                                              num_pix=num_pix,
-                                              transform_pix2angle=transform_pix2angle,
-                                              exposure_time=exposure_map)
+            final_injected_image = add_object(
+                cutout_image,
+                lens_class=lens_class,
+                band=rgb_band_list[j],
+                mag_zero_point=mag_zero_point,
+                delta_pix=delta_pix,
+                num_pix=num_pix,
+                transform_pix2angle=transform_pix2angle,
+                exposure_time=exposure_map,
+            )
             center_point = geom.Point2D(x_center[i], y_center[i])
             center_wcs = wcs.pixelToSky(center_point)
             ra_deg = center_wcs.getRa().asDegrees()
@@ -380,12 +384,17 @@ def multiple_lens_injection_fast(
     return injected_image_catalog
 
 
-def add_object(dp0_image, lens_class, band,
+def add_object(
+    dp0_image,
+    lens_class,
+    band,
     mag_zero_point,
     delta_pix,
     num_pix,
     transform_pix2angle,
-    exposure_time, calibFluxRadius=None):
+    exposure_time,
+    calibFluxRadius=None,
+):
     """Injects a given object in a dp0 cutout image.
 
     :param dp0_image: cutout image from the dp0 data or any other image
@@ -409,8 +418,8 @@ def add_object(dp0_image, lens_class, band,
     bbox = dp0_image.getBBox()
     xmin, ymin = bbox.getBegin()
     xmax, ymax = bbox.getEnd()
-    x_cen, y_cen = (xmin+xmax)/2, (ymin+ymax)/2
-    pt=geom.Point2D(x_cen, y_cen)
+    x_cen, y_cen = (xmin + xmax) / 2, (ymin + ymax) / 2
+    pt = geom.Point2D(x_cen, y_cen)
     psfArr = psf.computeKernelImage(pt).array
     if calibFluxRadius is not None:
         apCorr = psf.computeApertureFlux(calibFluxRadius, pt)
@@ -419,13 +428,16 @@ def add_object(dp0_image, lens_class, band,
         psf_ker = psfArr
     pixscale = wcs.getPixelScale(bbox.getCenter()).asArcseconds()
     num_pix_cutout = np.shape(dp0_image.image.array)[0]
-    lens_im = lens_image(lens_class=lens_class,band=band,
-    mag_zero_point=mag_zero_point,
-    delta_pix=delta_pix,
-    num_pix=num_pix,
-    psf_kernel=psf_ker,
-    transform_pix2angle=transform_pix2angle,
-    exposure_time=exposure_time)
+    lens_im = lens_image(
+        lens_class=lens_class,
+        band=band,
+        mag_zero_point=mag_zero_point,
+        delta_pix=delta_pix,
+        num_pix=num_pix,
+        psf_kernel=psf_ker,
+        transform_pix2angle=transform_pix2angle,
+        exposure_time=exposure_time,
+    )
     objects = [(lens_im, delta_pix)]
     for lens, pix_scale in objects:
         num_pix_lens = np.shape(lens)[0]
