@@ -423,7 +423,7 @@ def add_object(
     psfArr = psf.computeKernelImage(pt).array
     if calibFluxRadius is not None:
         apCorr = psf.computeApertureFlux(calibFluxRadius, pt)
-        psf_ker = psfArr/apCorr
+        psf_ker = psfArr / apCorr
     else:
         psf_ker = psfArr
     pixscale = wcs.getPixelScale(bbox.getCenter()).asArcseconds()
