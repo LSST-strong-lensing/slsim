@@ -5,7 +5,6 @@ from slsim.image_simulation import (
     sharp_image, lens_image,
     lens_image_series,
 )
-from scipy.signal import convolve2d
 from scipy import interpolate
 from slsim.image_simulation import point_source_coordinate_properties
 
@@ -415,7 +414,7 @@ def add_object(dp0_image, lens_class, band,
     psfArr = psf.computeKernelImage(pt).array
     if calibFluxRadius is not None:
         apCorr = psf.computeApertureFlux(calibFluxRadius, pt)
-        psf_ker = psf_Arr/apCorr
+        psf_ker = psfArr/apCorr
     else:
         psf_ker = psfArr
     pixscale = wcs.getPixelScale(bbox.getCenter()).asArcseconds()
