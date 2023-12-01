@@ -2,9 +2,8 @@ import numpy as np
 from astropy.table import Table, vstack
 from astropy.table import Column
 from slsim.image_simulation import (
-    sharp_image,
+    sharp_image, lens_image,
     lens_image_series,
-    image_plus_poisson_noise,
 )
 from scipy.signal import convolve2d
 from scipy import interpolate
@@ -175,6 +174,8 @@ def lens_inejection_fast(
     lens_pop,
     num_pix,
     delta_pix,
+    mag_zero_point,
+    transform_pix2angle,
     butler,
     ra,
     dec,
@@ -247,22 +248,20 @@ def lens_inejection_fast(
         cutout_image_list = []
         lens_image = []
         for j in range(len(coadd)):
-            lens = sharp_image(
-                lens_class=lens_class,
-                band=rgb_band_list[j],
-                mag_zero_point=27,
-                delta_pix=delta_pix,
-                num_pix=num_pix,
-            )
             cutout_image = coadd[j][cutout_bbox]
             if noise is True:
                 exposure_map = 30 * coadd_nImage[j][cutout_bbox].array
             else:
                 exposure_map = None
-            objects = [(geom.Point2D(x_center[i], y_center[i]), lens, delta_pix)]
-            final_injected_image = add_object(cutout_image, objects, 
-                                              exposure_map, calibFluxRadius=12)
-            center_wcs = wcs.pixelToSky(objects[0][0])
+            final_injected_image = add_object(cutout_image, lens_class=lens_class, 
+                                              band=rgb_band_list[j], 
+                                              mag_zero_point=mag_zero_point,
+                                              delta_pix=delta_pix,
+                                              num_pix=num_pix,
+                                              transform_pix2angle=transform_pix2angle,
+                                              exposure_time=exposure_map)
+            center_point = geom.Point2D(x_center[i], y_center[i])
+            center_wcs = wcs.pixelToSky(center_point)
             ra_deg = center_wcs.getRa().asDegrees()
             dec_deg = center_wcs.getDec().asDegrees()
 
@@ -335,6 +334,8 @@ def multiple_lens_injection_fast(
     lens_pop,
     num_pix,
     delta_pix,
+    mag_zero_point,
+    transform_pix2angle,
     butler,
     ra,
     dec,
@@ -366,6 +367,8 @@ def multiple_lens_injection_fast(
                 lens_pop,
                 num_pix,
                 delta_pix,
+                mag_zero_point,
+                transform_pix2angle,
                 butler,
                 ra[i],
                 dec[i],
@@ -378,12 +381,25 @@ def multiple_lens_injection_fast(
     return injected_image_catalog
 
 
-def add_object(dp0_image, objects, exposure_time = None, calibFluxRadius=12):
+def add_object(dp0_image, lens_class, band,
+    mag_zero_point,
+    delta_pix,
+    num_pix,
+    transform_pix2angle,
+    exposure_time, calibFluxRadius=None):
     """Injects a given object in a dp0 cutout image.
 
     :param dp0_image: cutout image from the dp0 data or any other image
-    :param objects: a tuple of point/coordinate where we want to inject the image,
-        source image, and pixel scale of source image. Eg. [(point, image, pixel_scale)]
+    :param lens_class: Lens() object
+    :param band: imaging band
+    :param mag_zero_point: list of magnitude zero point for sqeuence of exposure
+    :param delta_pix: pixel scale of image generated
+    :param num_pix: number of pixels per axis
+    :param psf_kernels: list of psf kernel for each exposure.
+    :param transform_pix2angle: list of transformation matrix (2x2) of pixels into
+        coordinate displacements for each exposure
+    :param exposure_time: list of exposure time for each exposure. It could be single
+        exposure time or a exposure map.
     :param calibFluxRadius: (optional) Aperture radius (in pixels) used to define the
         calibration for thisexposure+catalog. This is used to produce the correct
         instrumental fluxes within the radius. The value should match that of the field
@@ -393,9 +409,27 @@ def add_object(dp0_image, objects, exposure_time = None, calibFluxRadius=12):
     wcs = dp0_image.getWcs()
     psf = dp0_image.getPsf()
     bbox = dp0_image.getBBox()
+    xmin, ymin = bbox.getBegin()
+    xmax, ymax = bbox.getEnd()
+    x_cen, y_cen = (xmin+xmax)/2, (ymin+ymax)/2
+    pt=geom.Point2D(x_cen, y_cen)
+    psfArr = psf.computeKernelImage(pt).array
+    if calibFluxRadius is not None:
+        apCorr = psf.computeApertureFlux(calibFluxRadius, pt)
+        psf_ker = psf_Arr/apCorr
+    else:
+        psf_ker = psfArr
     pixscale = wcs.getPixelScale(bbox.getCenter()).asArcseconds()
     num_pix_cutout = np.shape(dp0_image.image.array)[0]
-    for spt, lens, pix_scale in objects:
+    lens_im = lens_image(lens_class=lens_class,band=band,
+    mag_zero_point=mag_zero_point,
+    delta_pix=delta_pix,
+    num_pix=num_pix,
+    psf_kernel=psf_ker,
+    transform_pix2angle=transform_pix2angle,
+    exposure_time=exposure_time)
+    objects = [(lens_im, delta_pix)]
+    for lens, pix_scale in objects:
         num_pix_lens = np.shape(lens)[0]
         if num_pix_cutout != num_pix_lens:
             raise ValueError(
@@ -411,21 +445,7 @@ def add_object(dp0_image, objects, exposure_time = None, calibFluxRadius=12):
                 "scale."
             )
         else:
-            pt = spt
-            psfArr = psf.computeKernelImage(pt).array
-            apCorr = psf.computeApertureFlux(calibFluxRadius, pt)
-
-            psfArr /= apCorr
-            convolved_image = convolve2d(
-                lens, psfArr, mode="same", boundary="symm", fillvalue=0.0
-            )
-            if exposure_time is not None:
-                convolved_image_final = image_plus_poisson_noise(convolved_image, 
-                                                                 exposure_time)
-            else:
-                convolved_image_final = convolved_image
-            injected_image = (np.array(dp0_image.image.array) + 
-                              np.array(convolved_image_final))
+            injected_image = dp0_image.image.array + lens
             return injected_image
 
 
