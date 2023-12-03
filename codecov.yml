@@ -7,3 +7,4 @@ comment:                  # this is a top-level key
 ignore:
   - "slsim/lsst_science_pipeline.py"
   - "setup.py"
+  - "tests/*"
