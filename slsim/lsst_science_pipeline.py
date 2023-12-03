@@ -192,14 +192,14 @@ def lens_inejection_fast(
     :param delta_pix: pixel scale for the lens image
     :param mag_zero_point: magnitude zero point in band
     :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
-     displacements 
+        displacements
     :param butler: butler object
     :param ra: ra for the cutout
     :param dec: dec for the cutout
     :param num_cutout_per_patch: number of cutout image drawn per patch
     :param lens_cut: list of criteria for lens selection
-    :param noise: poisson noise to be added to an image. If True, poisson noise will be 
-     added to the image based on exposure time.
+    :param noise: poisson noise to be added to an image. If True, poisson noise will be
+        added to the image based on exposure time.
     :returns: An astropy table containing Injected lens in r-band, DC2 cutout image in
         r-band, cutout image with injected lens in r, g , and i band
     """
@@ -359,12 +359,12 @@ def multiple_lens_injection_fast(
     :param delta_pix: pixel scale for the lens image
     :param mag_zero_point: magnitude zero point in band
     :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
-     displacements 
+        displacements
     :param butler: butler object
     :param ra: ra for a cutout
     :param dec: dec for a cutout
-    :param noise: poisson noise to be added to an image. If True, poisson noise will be 
-     added to the image based on exposure time.
+    :param noise: poisson noise to be added to an image. If True, poisson noise will be
+        added to the image based on exposure time.
     :returns: An astropy table containing Injected lenses in r-band, DC2 cutout images
         in r-band, cutout images with injected lens in r, g , and i band for a given set
         of ra and dec
