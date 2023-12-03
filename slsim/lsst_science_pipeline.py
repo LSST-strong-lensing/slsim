@@ -26,7 +26,7 @@ uses some of the packages provided by the LSST Science Pipeline.
 
 
 def DC2_cutout(ra, dec, num_pix, butler, band):
-    """Draws a cutout from the DC2 data based on the given ra, dec pair. For this one
+    """Draws a cutout from the DC2 data based on the given ra, dec pair. For this, one
     needs to provide a butler to this function. To initiate Butler, you need to specify
     data configuration and collection of the data.
 
