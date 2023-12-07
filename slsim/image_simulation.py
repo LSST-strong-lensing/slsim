@@ -500,8 +500,8 @@ def lens_image(
     psf_kernel,
     transform_pix2angle,
     exposure_time=None,
-    t_obs=None, 
-    variance = None
+    t_obs=None,
+    variance=None,
 ):
     """Creates lens image on the basis of given information. It can simulate both static
     lens image and variable lens image.
