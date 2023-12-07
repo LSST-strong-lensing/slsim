@@ -325,12 +325,26 @@ def test_deflector_images_with_different_zeropoint(pes_lens_instance):
         exposure_time=np.array([30, 30]),
         t_obs=np.array([20, 30]),
     )
+    lens_image_result_4 = lens_image(
+        lens_class=lens_class,
+        band="i",
+        mag_zero_point=27,
+        delta_pix=0.2,
+        num_pix=64,
+        psf_kernel=psf_kernel_single,
+        transform_pix2angle=transf_matrix,
+        exposure_time=None,
+        t_obs=None,
+        std_gaussian_noise=0.2
+    )
+    residual = lens_image_result_4-lens_image_result_2
     assert len(result_images) == len(mag_zero_points)
     assert len(result_list) == len(result_images)
     assert np.any(diff_image != 0)
     assert lens_image_result_1.shape[0] == 64
     assert lens_image_result_2.shape[0] == 64
     assert len(lens_image_result_3) == 2
+    assert np.any(residual != 0)
 
 
 if __name__ == "__main__":
