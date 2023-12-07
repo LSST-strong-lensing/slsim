@@ -500,8 +500,8 @@ def lens_image(
     psf_kernel,
     transform_pix2angle,
     exposure_time=None,
-    t_obs=None, 
-    std_gaussian_noise = None
+    t_obs=None,
+    std_gaussian_noise=None,
 ):
     """Creates lens image on the basis of given information. It can simulate both static
     lens image and variable lens image.
@@ -573,8 +573,8 @@ def lens_image_series(
     psf_kernel,
     transform_pix2angle,
     exposure_time=None,
-    t_obs=None, 
-    std_gaussian_noise = None
+    t_obs=None,
+    std_gaussian_noise=None,
 ):
     """Creates lens image on the basis of given information. This function is designed
     to simulate time series images of a lens.
@@ -590,8 +590,8 @@ def lens_image_series(
     :param exposure_time: list of exposure time for each exposure. It could be single
         exposure time or a exposure map.
     :param t_obs: array of image observation time [day] for a lens.
-    :param std_gaussian_noise: array of standard deviation for gaussian noise for 
-     each image
+    :param std_gaussian_noise: array of standard deviation for gaussian noise for each
+        image
     :return: list of series of images of a lens
     """
     image_series = []
@@ -608,7 +608,7 @@ def lens_image_series(
             transform_pix2angle=transf_matrix,
             exposure_time=expo_time,
             t_obs=time,
-            std_gaussian_noise = std_gaussian_noise
+            std_gaussian_noise=std_gaussian_noise,
         )
         image_series.append(image)
 
