@@ -501,7 +501,7 @@ def lens_image(
     transform_pix2angle,
     exposure_time=None,
     t_obs=None, 
-    variance = None
+    std_gaussian_noise = None
 ):
     """Creates lens image on the basis of given information. It can simulate both static
     lens image and variable lens image.
@@ -519,7 +519,7 @@ def lens_image(
     :param t_obs: an observation time [day]. This is applicable only for variable
         source. In case of point source, if we do not provide t_obs, considers no
         variability in the lens.
-    :param variance: variance for a gaussian noise
+    :param std_gaussian_noise: standard deviation for a gaussian noise
     :return: lens image
     """
     deflector_source = sharp_image(
@@ -558,8 +558,8 @@ def lens_image(
         final_image = image_plus_poisson_noise(image=image, exposure_time=exposure_time)
     else:
         final_image = image
-    if variance is not None:
-        gaussian_noise = np.random.normal(0, variance, final_image.shape)
+    if std_gaussian_noise is not None:
+        gaussian_noise = np.random.normal(0, std_gaussian_noise, final_image.shape)
         return final_image + gaussian_noise
     return final_image
 
@@ -573,7 +573,8 @@ def lens_image_series(
     psf_kernel,
     transform_pix2angle,
     exposure_time=None,
-    t_obs=None,
+    t_obs=None, 
+    std_gaussian_noise = None
 ):
     """Creates lens image on the basis of given information. This function is designed
     to simulate time series images of a lens.
@@ -589,6 +590,8 @@ def lens_image_series(
     :param exposure_time: list of exposure time for each exposure. It could be single
         exposure time or a exposure map.
     :param t_obs: array of image observation time [day] for a lens.
+    :param std_gaussian_noise: array of standard deviation for gaussian noise for 
+     each image
     :return: list of series of images of a lens
     """
     image_series = []
@@ -605,6 +608,7 @@ def lens_image_series(
             transform_pix2angle=transf_matrix,
             exposure_time=expo_time,
             t_obs=time,
+            std_gaussian_noise = std_gaussian_noise
         )
         image_series.append(image)
 
