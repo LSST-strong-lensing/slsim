@@ -335,9 +335,9 @@ def test_deflector_images_with_different_zeropoint(pes_lens_instance):
         transform_pix2angle=transf_matrix,
         exposure_time=None,
         t_obs=None,
-        std_gaussian_noise=0.2
+        std_gaussian_noise=0.2,
     )
-    residual = lens_image_result_4-lens_image_result_2
+    residual = lens_image_result_4 - lens_image_result_2
     assert len(result_images) == len(mag_zero_points)
     assert len(result_list) == len(result_images)
     assert np.any(diff_image != 0)

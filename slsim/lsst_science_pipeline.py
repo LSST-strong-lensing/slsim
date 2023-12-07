@@ -753,16 +753,16 @@ def variable_lens_injection(
     :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
         displacements
     :param exposure_data: An astropy table of exposure data. It must contain calexp
-     images or generated noisy background image (column name should be
-     "time_series_images", these images are single exposure images of the same part 
-     of the sky at different time), magnitude zero point (column name should be 
-     "zero_point", these are zero point magnitudes for each single exposure images 
-     in time series image) , psf kernel for each exposure (column name should be
-     "psf_kernel", these are pixel psf kernel for each single exposure images in time
-     series image), exposure time (column name should be "expo_time", these are 
-     exposure time for each single exposure images in time series images), 
-     observation time (column name should be "obs_time", these are observation time 
-     in days for each single exposure images in time series images)
+        images or generated noisy background image (column name should be
+        "time_series_images", these images are single exposure images of the same part
+        of the sky at different time), magnitude zero point (column name should be
+        "zero_point", these are zero point magnitudes for each single exposure images in
+        time series image) , psf kernel for each exposure (column name should be
+        "psf_kernel", these are pixel psf kernel for each single exposure images in time
+        series image), exposure time (column name should be "expo_time", these are
+        exposure time for each single exposure images in time series images),
+        observation time (column name should be "obs_time", these are observation time
+        in days for each single exposure images in time series images)
     :return: Astropy table of injected lenses and exposure information of dp0 data
     """
 
@@ -803,17 +803,17 @@ def multiple_variable_lens_injection(
     :param num_pix: number of pixels per axis
     :param transform_matrices_list: list of transformation matrix (2x2) of pixels into
         coordinate displacements for each exposure
-    :param exposure_data: list of astropy table of exposure data for each set of time 
-     series images. It must contain calexp images or generated noisy background image 
-     (column name should be "time_series_images", these images are single exposure 
-     images of the same part of the sky at different time), magnitude zero point 
-     (column name should be "zero_point", these are zero point magnitudes for each 
-     single exposure images in time series image) , psf kernel for each exposure 
-     (column name should be "psf_kernel", these are pixel psf kernel for each single 
-     exposure images in time series image), exposure time (column name should be 
-     "expo_time", these are exposure time for each single exposure images in time series
-     images), observation time (column name should be "obs_time", these are observation 
-     time in days for each single exposure images in time series images)
+    :param exposure_data: list of astropy table of exposure data for each set of time
+        series images. It must contain calexp images or generated noisy background image
+        (column name should be "time_series_images", these images are single exposure
+        images of the same part of the sky at different time), magnitude zero point
+        (column name should be "zero_point", these are zero point magnitudes for each
+        single exposure images in time series image) , psf kernel for each exposure
+        (column name should be "psf_kernel", these are pixel psf kernel for each single
+        exposure images in time series image), exposure time (column name should be
+        "expo_time", these are exposure time for each single exposure images in time
+        series images), observation time (column name should be "obs_time", these are
+        observation time in days for each single exposure images in time series images)
     :return: list of astropy table of injected lenses and exposure information of dp0
         data for each time series lenses.
     """
