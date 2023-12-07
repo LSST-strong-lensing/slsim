@@ -500,7 +500,8 @@ def lens_image(
     psf_kernel,
     transform_pix2angle,
     exposure_time=None,
-    t_obs=None,
+    t_obs=None, 
+    variance = None
 ):
     """Creates lens image on the basis of given information. It can simulate both static
     lens image and variable lens image.
@@ -518,6 +519,7 @@ def lens_image(
     :param t_obs: an observation time [day]. This is applicable only for variable
         source. In case of point source, if we do not provide t_obs, considers no
         variability in the lens.
+    :param variance: variance for a gaussian noise
     :return: lens image
     """
     deflector_source = sharp_image(
@@ -556,7 +558,9 @@ def lens_image(
         final_image = image_plus_poisson_noise(image=image, exposure_time=exposure_time)
     else:
         final_image = image
-
+    if variance is not None:
+        gaussian_noise = np.random.normal(0, variance, final_image.shape)
+        return final_image + gaussian_noise
     return final_image
 
 
