@@ -56,7 +56,7 @@ class EllipticalLensGalaxies(DeflectorBase):
         num_vel_disp = len(vel_disp_list)
         # abundance match velocity dispersion with elliptical galaxy catalogue
         if num_vel_disp >= num_total:
-            galaxy_list["vel_disp"] = vel_disp_list[: num_total]
+            galaxy_list["vel_disp"] = vel_disp_list[:num_total]
             # randomly select
         else:
             galaxy_list = galaxy_list[:num_vel_disp]
