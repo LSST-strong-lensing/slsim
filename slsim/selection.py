@@ -1,4 +1,4 @@
-def deflector_cut(galaxy_list, z_min=0, z_max=5, band=None, band_max=25):
+def deflector_cut(galaxy_list, z_min=0, z_max=5, band=None, band_max=40):
     """Selects a subset of a given galaxy list satisfying given criteria.
 
     :param galaxy_list: galaxies prior to selection criteria
