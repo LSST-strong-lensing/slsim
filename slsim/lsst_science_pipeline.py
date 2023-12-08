@@ -393,7 +393,8 @@ def add_object(
     num_pix,
     transform_pix2angle,
     exposure_time,
-    calibFluxRadius=None, image_type = "dp0"
+    calibFluxRadius=None,
+    image_type="dp0",
 ):
     """Injects a given object in a dp0 cutout image or SLSimObject.
 
@@ -432,8 +433,10 @@ def add_object(
         psf_ker = image_object.psf_kernel
         pixscale = image_object.pixel_scale
     else:
-        raise ValueError("Provided image object is not supported. Either use dp0 image" 
-                         "object or SLSimObject")
+        raise ValueError(
+            "Provided image object is not supported. Either use dp0 image"
+            "object or SLSimObject"
+        )
     num_pix_cutout = np.shape(image_object.image.array)[0]
     delta_pix = transformmatrix_to_pixelscale(transform_pix2angle)
     lens_im = lens_image(
