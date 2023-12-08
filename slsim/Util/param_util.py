@@ -164,6 +164,7 @@ def interpolate_variability(image_series, orig_timestamps, new_timestamps):
     pixels_resampled = interpolation((new_time_points[0], new_time_points[1]))
     return pixels_to_images(pixels_resampled, np.shape(image_series))
 
+
 def transformmatrix_to_pixelscale(tranform_matrix):
     """Calculates pixel scale using tranform matrix.
 
