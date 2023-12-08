@@ -136,19 +136,8 @@ def test_psf_kernel_property(test_SLSimObject):
 def test_pixel_scale_property(test_SLSimObject):
     scale_result = test_SLSimObject.pixel_scale
     assert scale_result == 0.05
-
-
-def test_transformmatrix_to_pixelscale_non_identity():
-    transform_matrix = np.array([[2, 0], [0, 3]])
-    rotation_matrix = np.array([[0, -1], [1, 0]])
-
-    result = transformmatrix_to_pixelscale(transform_matrix, rotation_matrix)
-    expected_result = np.sqrt(6)
-
-    assert result == expected_result
-
-
-def test_transformmatrix_to_pixelscale_default_rotation():
+    
+def test_transformmatrix_to_pixelscale():
     transform_matrix = np.array([[2, 0], [0, 3]])
 
     result = transformmatrix_to_pixelscale(transform_matrix)

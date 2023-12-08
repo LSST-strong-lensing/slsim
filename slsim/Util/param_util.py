@@ -164,55 +164,12 @@ def interpolate_variability(image_series, orig_timestamps, new_timestamps):
     pixels_resampled = interpolation((new_time_points[0], new_time_points[1]))
     return pixels_to_images(pixels_resampled, np.shape(image_series))
 
-
-class SLSimObject(object):
-    """Class to manage image and corresponding psf."""
-
-    def __init__(self, image_array, psfkernel, pixelscale):
-        """
-        :param image_array: image in the form of numpy array
-        :param psfkernel: psf kernel associated with image_array
-        :param pixelscale: pixel scale in image_array
-        """
-        self.image_array = image_array
-        self.psfkernel = psfkernel
-        self.pixelscale = pixelscale
-
-    @property
-    def image(self):
-        """Returns image array."""
-        return self.ImageWrapper(self.image_array)
-
-    @property
-    def psf_kernel(self):
-        """Returns psf kernel."""
-        return self.psfkernel
-
-    @property
-    def pixel_scale(self):
-        """Returns pixel scale."""
-        return self.pixelscale
-
-    class ImageWrapper:
-        """Wrapper class to access the 'array' attribute directly."""
-
-        def __init__(self, image_array):
-            self.array = image_array
-
-
-def transformmatrix_to_pixelscale(tranform_matrix, rotation_matrix=None):
+def transformmatrix_to_pixelscale(tranform_matrix):
     """Calculates pixel scale using tranform matrix.
 
     :param tranform_matrix: transformation matrix (2x2) of pixels into coordinate
         displacements
-    :param rotation_matrix: rotation matrix associated with the coordinate rotation. If
-        None, uses identity matrix.
     :return: pixel scale
     """
-    if rotation_matrix is None:
-        rot_matrix = np.array([[1, 0], [0, 1]])
-    else:
-        rot_matrix = rotation_matrix
-    rotated_tranform_matrix = tranform_matrix @ rot_matrix
-    determinant = np.linalg.det(rotated_tranform_matrix)
+    determinant = np.linalg.det(tranform_matrix)
     return np.sqrt(determinant)
