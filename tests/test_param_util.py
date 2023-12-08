@@ -11,7 +11,6 @@ from slsim.Util.param_util import (
     pixels_to_images,
     random_radec_string,
     transformmatrix_to_pixelscale,
-    SLSimObject,
 )
 from slsim.Sources.SourceVariability.variability import Variability
 import pytest
