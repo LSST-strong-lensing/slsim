@@ -53,6 +53,7 @@ def test_variable_lens_injection(pes_lens_instance):
     )
     assert len(results) == len(expo_data)
 
+
 def test_multiple_variable_lens_injection(pes_lens_instance):
     lens_class = [pes_lens_instance, pes_lens_instance]
     path = os.path.dirname(__file__)
