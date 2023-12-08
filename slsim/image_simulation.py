@@ -3,8 +3,8 @@ from lenstronomy.SimulationAPI.sim_api import SimAPI
 from astropy.visualization import make_lupton_rgb
 from lenstronomy.Data.psf import PSF
 from lenstronomy.ImSim.Numerics.point_source_rendering import PointSourceRendering
-from slsim.Util.param_util import magnitude_to_amplitude
-from slsim.Util.param_util import convolved_image
+from slsim.Util.param_util import (magnitude_to_amplitude, convolved_image, 
+                                   transformmatrix_to_pixelscale)
 
 
 def simulate_image(
@@ -495,7 +495,6 @@ def lens_image(
     lens_class,
     band,
     mag_zero_point,
-    delta_pix,
     num_pix,
     psf_kernel,
     transform_pix2angle,
@@ -509,7 +508,6 @@ def lens_image(
     :param lens_class: Lens() object
     :param band: imaging band
     :param mag_zero_point: magnitude zero point for the exposure
-    :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
     :param psf_kernels: psf kernel for the exposures being.
     :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
@@ -522,6 +520,7 @@ def lens_image(
     :param std_gaussian_noise: standard deviation for a gaussian noise
     :return: lens image
     """
+    delta_pix = transformmatrix_to_pixelscale(transform_pix2angle)
     deflector_source = sharp_image(
         lens_class=lens_class,
         band=band,
@@ -568,7 +567,6 @@ def lens_image_series(
     lens_class,
     band,
     mag_zero_point,
-    delta_pix,
     num_pix,
     psf_kernel,
     transform_pix2angle,
@@ -582,7 +580,6 @@ def lens_image_series(
     :param lens_class: Lens() object
     :param band: imaging band
     :param mag_zero_point: list of magnitude zero point for sqeuence of exposure
-    :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
     :param psf_kernels: list of psf kernel for each exposure.
     :param transform_pix2angle: list of transformation matrix (2x2) of pixels into
@@ -602,7 +599,6 @@ def lens_image_series(
             lens_class=lens_class,
             band=band,
             mag_zero_point=mag_zero,
-            delta_pix=delta_pix,
             num_pix=num_pix,
             psf_kernel=psf_kern,
             transform_pix2angle=transf_matrix,

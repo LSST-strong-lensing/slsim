@@ -47,7 +47,6 @@ def test_variable_lens_injection(pes_lens_instance):
     results = variable_lens_injection(
         lens_class,
         band="i",
-        delta_pix=0.2,
         num_pix=301,
         transform_pix2angle=transform_matrices,
         exposure_data=expo_data,
@@ -74,7 +73,6 @@ def test_multiple_variable_lens_injection(pes_lens_instance):
     results = multiple_variable_lens_injection(
         lens_class,
         band="i",
-        delta_pix=0.2,
         num_pix=301,
         transform_matrices_list=transform_matrices,
         exposure_data_list=expo_data,
