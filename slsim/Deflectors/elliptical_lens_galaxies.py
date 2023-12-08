@@ -66,8 +66,6 @@ class EllipticalLensGalaxies(DeflectorBase):
         self._galaxy_select = deflector_cut(galaxy_list, **kwargs_cut)
         self._num_select = len(self._galaxy_select)
 
-
-
         # TODO: random reshuffle of matched list
 
     def deflector_number(self):

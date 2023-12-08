@@ -3,22 +3,11 @@ from astropy.table import Table, vstack
 from astropy.table import Column
 from slsim.image_simulation import (
     sharp_image,
+    lens_image,
     lens_image_series,
-    image_plus_poisson_noise,
 )
-from scipy.signal import convolve2d
 from scipy import interpolate
 from slsim.image_simulation import point_source_coordinate_properties
-
-try:
-    import lsst.geom as geom
-    from lsst.pipe.tasks.insertFakes import _add_fake_sources
-    from lsst.rsp import get_tap_service
-    from lsst.afw.math import Warper
-    import galsim
-except ModuleNotFoundError:
-    lsst = None
-    galsim = None
 
 try:
     import lsst.geom as geom
@@ -37,7 +26,7 @@ uses some of the packages provided by the LSST Science Pipeline.
 
 
 def DC2_cutout(ra, dec, num_pix, butler, band):
-    """Draws a cutout from the DC2 data based on the given ra, dec pair. For this one
+    """Draws a cutout from the DC2 data based on the given ra, dec pair. For this, one
     needs to provide a butler to this function. To initiate Butler, you need to specify
     data configuration and collection of the data.
 
@@ -185,12 +174,13 @@ def lens_inejection_fast(
     lens_pop,
     num_pix,
     delta_pix,
+    mag_zero_point,
+    transform_pix2angle,
     butler,
     ra,
     dec,
     num_cutout_per_patch=10,
     lens_cut=None,
-    flux=None,
     noise=True,
 ):
     """Chooses a random lens from the lens population and injects it to a DC2 cutout
@@ -200,13 +190,16 @@ def lens_inejection_fast(
     :param lens_pop: lens population from slsim
     :param num_pix: number of pixel for the cutout
     :param delta_pix: pixel scale for the lens image
+    :param mag_zero_point: magnitude zero point in band
+    :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
+        displacements
     :param butler: butler object
     :param ra: ra for the cutout
     :param dec: dec for the cutout
     :param num_cutout_per_patch: number of cutout image drawn per patch
     :param lens_cut: list of criteria for lens selection
-    :param flux: flux need to be asigned to the lens image. It sould be None
-    :param: path: path to save the output
+    :param noise: poisson noise to be added to an image. If True, poisson noise will be
+        added to the image based on exposure time.
     :returns: An astropy table containing Injected lens in r-band, DC2 cutout image in
         r-band, cutout image with injected lens in r, g , and i band
     """
@@ -258,22 +251,23 @@ def lens_inejection_fast(
         cutout_image_list = []
         lens_image = []
         for j in range(len(coadd)):
-            lens = sharp_image(
-                lens_class=lens_class,
-                band=rgb_band_list[j],
-                mag_zero_point=27,
-                delta_pix=delta_pix,
-                num_pix=num_pix,
-            )
             cutout_image = coadd[j][cutout_bbox]
             if noise is True:
                 exposure_map = 30 * coadd_nImage[j][cutout_bbox].array
-                lens_final = image_plus_poisson_noise(lens, exposure_map)
             else:
-                lens_final = lens
-            objects = [(geom.Point2D(x_center[i], y_center[i]), lens_final, delta_pix)]
-            final_injected_image = add_object(cutout_image, objects, calibFluxRadius=12)
-            center_wcs = wcs.pixelToSky(objects[0][0])
+                exposure_map = None
+            final_injected_image = add_object(
+                cutout_image,
+                lens_class=lens_class,
+                band=rgb_band_list[j],
+                mag_zero_point=mag_zero_point,
+                delta_pix=delta_pix,
+                num_pix=num_pix,
+                transform_pix2angle=transform_pix2angle,
+                exposure_time=exposure_map,
+            )
+            center_point = geom.Point2D(x_center[i], y_center[i])
+            center_wcs = wcs.pixelToSky(center_point)
             ra_deg = center_wcs.getRa().asDegrees()
             dec_deg = center_wcs.getDec().asDegrees()
 
@@ -334,8 +328,8 @@ def multiple_lens_injection(
                 butler,
                 ra[i],
                 dec[i],
-                lens_cut=None,
-                flux=None,
+                lens_cut=lens_cut,
+                flux=flux,
             )
         )
     injected_image_catalog = vstack(injected_images)
@@ -346,12 +340,13 @@ def multiple_lens_injection_fast(
     lens_pop,
     num_pix,
     delta_pix,
+    mag_zero_point,
+    transform_pix2angle,
     butler,
     ra,
     dec,
     num_cutout_per_patch=10,
     lens_cut=None,
-    flux=None,
     noise=True,
 ):
     """Injects random lenses from the lens population to multiple DC2 cutout images
@@ -362,11 +357,14 @@ def multiple_lens_injection_fast(
     :param lens_pop: lens population from slsim
     :param num_pix: number of pixel for the cutout
     :param delta_pix: pixel scale for the lens image
+    :param mag_zero_point: magnitude zero point in band
+    :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
+        displacements
     :param butler: butler object
     :param ra: ra for a cutout
     :param dec: dec for a cutout
-    :param flux: flux need to be asigned to the lens image. It sould be None
-    :param: path: path to save the output
+    :param noise: poisson noise to be added to an image. If True, poisson noise will be
+        added to the image based on exposure time.
     :returns: An astropy table containing Injected lenses in r-band, DC2 cutout images
         in r-band, cutout images with injected lens in r, g , and i band for a given set
         of ra and dec
@@ -378,25 +376,43 @@ def multiple_lens_injection_fast(
                 lens_pop,
                 num_pix,
                 delta_pix,
+                mag_zero_point,
+                transform_pix2angle,
                 butler,
                 ra[i],
                 dec[i],
                 num_cutout_per_patch,
-                lens_cut=None,
-                flux=None,
-                noise=True,
+                lens_cut=lens_cut,
+                noise=noise,
             )
         )
     injected_image_catalog = vstack(injected_images)
     return injected_image_catalog
 
 
-def add_object(dp0_image, objects, calibFluxRadius=12):
+def add_object(
+    dp0_image,
+    lens_class,
+    band,
+    mag_zero_point,
+    delta_pix,
+    num_pix,
+    transform_pix2angle,
+    exposure_time,
+    calibFluxRadius=None,
+):
     """Injects a given object in a dp0 cutout image.
 
     :param dp0_image: cutout image from the dp0 data or any other image
-    :param objects: a tuple of point/coordinate where we want to inject the image,
-        source image, and pixel scale of source image. Eg. [(point, image, pixel_scale)]
+    :param lens_class: Lens() object
+    :param band: imaging band
+    :param mag_zero_point: list of magnitude zero point for sqeuence of exposure
+    :param delta_pix: pixel scale of image generated
+    :param num_pix: number of pixels per axis
+    :param transform_pix2angle: list of transformation matrix (2x2) of pixels into
+        coordinate displacements for each exposure
+    :param exposure_time: list of exposure time for each exposure. It could be single
+        exposure time or a exposure map.
     :param calibFluxRadius: (optional) Aperture radius (in pixels) used to define the
         calibration for thisexposure+catalog. This is used to produce the correct
         instrumental fluxes within the radius. The value should match that of the field
@@ -406,9 +422,30 @@ def add_object(dp0_image, objects, calibFluxRadius=12):
     wcs = dp0_image.getWcs()
     psf = dp0_image.getPsf()
     bbox = dp0_image.getBBox()
+    xmin, ymin = bbox.getBegin()
+    xmax, ymax = bbox.getEnd()
+    x_cen, y_cen = (xmin + xmax) / 2, (ymin + ymax) / 2
+    pt = geom.Point2D(x_cen, y_cen)
+    psfArr = psf.computeKernelImage(pt).array
+    if calibFluxRadius is not None:
+        apCorr = psf.computeApertureFlux(calibFluxRadius, pt)
+        psf_ker = psfArr / apCorr
+    else:
+        psf_ker = psfArr
     pixscale = wcs.getPixelScale(bbox.getCenter()).asArcseconds()
     num_pix_cutout = np.shape(dp0_image.image.array)[0]
-    for spt, lens, pix_scale in objects:
+    lens_im = lens_image(
+        lens_class=lens_class,
+        band=band,
+        mag_zero_point=mag_zero_point,
+        delta_pix=delta_pix,
+        num_pix=num_pix,
+        psf_kernel=psf_ker,
+        transform_pix2angle=transform_pix2angle,
+        exposure_time=exposure_time,
+    )
+    objects = [(lens_im, delta_pix)]
+    for lens, pix_scale in objects:
         num_pix_lens = np.shape(lens)[0]
         if num_pix_cutout != num_pix_lens:
             raise ValueError(
@@ -419,20 +456,12 @@ def add_object(dp0_image, objects, calibFluxRadius=12):
             )
         if abs(pixscale - pix_scale) >= 10**-4:
             raise ValueError(
-                "Images with different pixel scale should be combined. Please make"
+                "Images with different pixel scale should not be combined. Please make"
                 "sure that your lens image and dp0 cutout image have compatible pixel"
                 "scale."
             )
         else:
-            pt = spt
-            psfArr = psf.computeKernelImage(pt).array
-            apCorr = psf.computeApertureFlux(calibFluxRadius, pt)
-
-            psfArr /= apCorr
-            convolved_image = convolve2d(
-                lens, psfArr, mode="same", boundary="symm", fillvalue=0.0
-            )
-            injected_image = np.array(dp0_image.image.array) + np.array(convolved_image)
+            injected_image = dp0_image.image.array + lens
             return injected_image
 
 
