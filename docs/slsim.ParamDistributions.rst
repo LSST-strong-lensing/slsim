@@ -1,11 +1,11 @@
-sim\_pipeline.ParamDistributions package
-========================================
+slsim.ParamDistributions package
+================================
 
 Submodules
 ----------
 
-sim\_pipeline.ParamDistributions.gaussian\_mixture\_model module
-----------------------------------------------------------------
+slsim.ParamDistributions.gaussian\_mixture\_model module
+--------------------------------------------------------
 
 .. automodule:: slsim.ParamDistributions.gaussian_mixture_model
    :members:

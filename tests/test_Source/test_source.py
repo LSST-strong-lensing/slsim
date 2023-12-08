@@ -8,9 +8,26 @@ from astropy.table import Table
 class TestSource:
     def setup_method(self):
         source_dict = Table(
-            [[0.5], [17], [18], [16], [0.5], [2], [4], [0.35], [0.8], [0.76]],
+            [
+                [0.5],
+                [17],
+                [18],
+                [16],
+                [23],
+                [24],
+                [22],
+                [0.5],
+                [2],
+                [4],
+                [0.35],
+                [0.8],
+                [0.76],
+            ],
             names=(
                 "z",
+                "ps_mag_r",
+                "ps_mag_g",
+                "ps_mag_i",
                 "mag_r",
                 "mag_g",
                 "mag_i",
@@ -41,15 +58,19 @@ class TestSource:
         assert self.source.ellipticity[0] == [0.8]
         assert self.source.ellipticity[1] == [0.76]
 
-    def test_magnitude_no_variability(self):
-        result = self.source.magnitude("r")
+    def test_ps_magnitude_no_variability(self):
+        result = self.source.point_source_magnitude("r")
         assert result == [17]
 
-    def test_magnitude_with_variability(self):
+    def test_ps_magnitude_with_variability(self):
         image_observation_times = np.array([np.pi, np.pi / 2, np.pi / 3])
-        result = self.source.magnitude("r", image_observation_times)
+        result = self.source.point_source_magnitude("r", image_observation_times)
         result_comp = np.array([17.48917028, 17.38842661, 17.27946793])
         npt.assert_almost_equal(result, result_comp, decimal=5)
+
+    def test_es_magnitude(self):
+        result = self.source.extended_source_magnitude("r")
+        assert result == [23]
 
 
 if __name__ == "__main__":

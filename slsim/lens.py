@@ -11,7 +11,7 @@ import warnings
 
 
 class Lens(LensedSystemBase):
-    """Class to manage individual galaxy-galaxy lenses."""
+    """Class to manage individual lenses."""
 
     def __init__(
         self,
@@ -34,7 +34,8 @@ class Lens(LensedSystemBase):
         :param deflector_dict: deflector properties
         :type deflector_dict: dict
         :param cosmo: astropy.cosmology instance
-        :param source_type: type of the source 'extended' or 'point_source' supported
+        :param source_type: type of the source 'extended' or 'point_source' or
+         'point_plus_extended' supported
         :type source_type: str
         :param variability_model: keyword for variability model to be used. This is an
          input for the Variability class.
@@ -199,7 +200,10 @@ class Lens(LensedSystemBase):
         # Criteria 6: (optional)
         # compute the magnified brightness of the lensed extended arc for different
         # bands at least in one band, the magnitude has to be brighter than the limit
-        if mag_arc_limit is not None and self._source_type in ["extended"]:
+        if mag_arc_limit is not None and self._source_type in [
+            "extended",
+            "point_plus_extended",
+        ]:
             # makes sure magnification of extended source is only used when there is
             # an extended source
             bool_mag_limit = False
@@ -360,8 +364,8 @@ class Lens(LensedSystemBase):
         :type band: string
         :param lensed: if True, returns the lensed magnified magnitude
         :type lensed: bool
-        :param time: time is a image observation time which is a astropy.unit object. If
-            None, provides magnitude without variability.
+        :param time: time is a image observation time in units of days. If None,
+            provides magnitude without variability.
         :return: point source magnitude
         """
         # TODO: might have to change conventions between extended and point source
@@ -371,7 +375,7 @@ class Lens(LensedSystemBase):
             if time is not None:
                 time = time
                 image_observed_times = self.image_observer_times(time)
-                variable_magnitude = self.source.magnitude(
+                variable_magnitude = self.source.point_source_magnitude(
                     band,
                     image_observation_times=image_observed_times,
                 )
@@ -380,9 +384,9 @@ class Lens(LensedSystemBase):
                 )
                 return lensed_variable_magnitude
             else:
-                magnified_mag = self.source.magnitude(band) - magnif_log
+                magnified_mag = self.source.point_source_magnitude(band) - magnif_log
                 return magnified_mag
-        return self.source.magnitude(band)
+        return self.source.point_source_magnitude(band)
 
     def extended_source_magnitude(self, band, lensed=False):
         """Unlensed apparent magnitude of the extended source for a given band (assumes
@@ -396,7 +400,7 @@ class Lens(LensedSystemBase):
         """
         # band_string = str("mag_" + band)
         # TODO: might have to change conventions between extended and point source
-        source_mag = self.source.magnitude(band)
+        source_mag = self.source.extended_source_magnitude(band)
         if lensed:
             mag = self.extended_source_magnification()
             return source_mag - 2.5 * np.log10(mag)
@@ -552,7 +556,10 @@ class Lens(LensedSystemBase):
         source_models = {}
         all_source_kwarg_dict = {}
         center_source = self.source_position
-        if self._source_type == "extended":
+        if (
+            self._source_type == "extended"
+            or self._source_type == "point_plus_extended"
+        ):
             # convert radian to arc seconds
             if band is None:
                 mag_source = 1
@@ -575,7 +582,10 @@ class Lens(LensedSystemBase):
             # source_models['source_light_model_list'] = None
             kwargs_source = None
 
-        if self._source_type == "point_source":
+        if (
+            self._source_type == "point_source"
+            or self._source_type == "point_plus_extended"
+        ):
             source_models["point_source_model_list"] = ["LENSED_POSITION"]
             img_x, img_y = self.image_positions()
             if band is None:

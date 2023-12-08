@@ -8,7 +8,7 @@ from slsim.lensed_population_base import LensedPopulationBase
 
 
 class LensPop(LensedPopulationBase):
-    """Class to perform samples of galaxy-galaxy lensing."""
+    """Class to perform samples of lens population."""
 
     def __init__(
         self,
@@ -17,6 +17,7 @@ class LensPop(LensedPopulationBase):
         kwargs_deflector_cut=None,
         kwargs_source_cut=None,
         kwargs_quasars=None,
+        kwargs_quasars_galaxies=None,
         variability_model=None,
         kwargs_variability=None,
         kwargs_mass2light=None,
@@ -117,7 +118,7 @@ class LensPop(LensedPopulationBase):
             self._source_model_type = "extended"
         elif source_type == "quasars":
             from slsim.Sources.quasars import Quasars
-            from slsim.Sources.quasar_catalog.simple_quasar import quasar_catalog_simple
+            from slsim.Sources.QuasarCatalog.simple_quasar import quasar_catalog_simple
 
             if kwargs_quasars is None:
                 kwargs_quasars = {}
@@ -130,6 +131,24 @@ class LensPop(LensedPopulationBase):
                 kwargs_variability_model=kwargs_variability,
             )
             self._source_model_type = "point_source"
+        elif source_type in ["quasar_plus_galaxies", "supernovae_plus_galaxies"]:
+            from slsim.Sources.point_plus_extended_source import PointPlusExtendedSource
+            from slsim.Sources.QuasarCatalog.quasar_plus_galaxies import (
+                quasar_galaxies_simple,
+            )
+
+            if kwargs_quasars_galaxies is None:
+                kwargs_quasars_galaxies = {}
+            quasar_galaxy_source = quasar_galaxies_simple(**kwargs_quasars_galaxies)
+            self._sources = PointPlusExtendedSource(
+                quasar_galaxy_source,
+                cosmo=cosmo,
+                sky_area=sky_area,
+                kwargs_cut=kwargs_source_cut,
+                variability_model=variability_model,
+                kwargs_variability_model=kwargs_variability,
+            )
+            self._source_model_type = "point_plus_extended"
         else:
             raise ValueError("source_type %s is not supported" % source_type)
         self.cosmo = cosmo

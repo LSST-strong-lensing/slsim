@@ -1,10 +1,13 @@
 import matplotlib.pyplot as plt
+from astropy.visualization import ZScaleInterval
 import random
 
 """This module contains various plotting definations."""
 
 
-def create_image_montage_from_image_list(num_rows, num_cols, images, time=None):
+def create_image_montage_from_image_list(
+    num_rows, num_cols, images, time=None, image_type="other"
+):
     """Creates an image montage from an image list.
 
     :param num_rows: number of images to display horizontally
@@ -12,7 +15,7 @@ def create_image_montage_from_image_list(num_rows, num_cols, images, time=None):
     :param images: list of images
     :param time: array of observation time for point source images. If None, considers
         static case.
-    :param _type: type of the provided time. It should be number or string
+    :param image_type: type of the provided image. It could be 'dp0' or any other name.
     :return: image montage of given images.
     """
 
@@ -23,7 +26,14 @@ def create_image_montage_from_image_list(num_rows, num_cols, images, time=None):
             if i * num_cols + j < len(images):
                 image = images[i * num_cols + j]
 
-                axes[i, j].imshow(image, origin="lower")
+                if image_type == "dp0":
+                    zscale = ZScaleInterval()
+                    vmin, vmax = zscale.get_limits(image)
+                    axes[i, j].imshow(
+                        image, origin="lower", cmap="gray", vmin=vmin, vmax=vmax
+                    )
+                else:
+                    axes[i, j].imshow(image, origin="lower")
                 axes[i, j].axis("off")  # Turn off axis labels
                 if time is not None:
                     axes[i, j].text(

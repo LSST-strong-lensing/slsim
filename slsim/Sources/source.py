@@ -1,4 +1,4 @@
-from slsim.Sources.source_variability.variability import (
+from slsim.Sources.SourceVariability.variability import (
     Variability,
 )
 
@@ -60,20 +60,20 @@ class Source(object):
 
         return self.source_dict["e1"], self.source_dict["e2"]
 
-    def magnitude(self, band, image_observation_times=None):
-        """Get the magnitude of the source in a specific band.
+    def point_source_magnitude(self, band, image_observation_times=None):
+        """Get the magnitude of the point source in a specific band.
 
         :param band: Imaging band
         :type band: str
         :param image_observation_times: Images observation time for an image.
-        :return: Magnitude of the source in the specified band
+        :return: Magnitude of the point source in the specified band
         :rtype: float
         """
         column_names = self.source_dict.colnames
-        if "mag_" + band not in column_names:
+        if "ps_mag_" + band not in column_names:
             raise ValueError("required parameter is missing in the source dictionary.")
         else:
-            band_string = "mag_" + band
+            band_string = "ps_mag_" + band
 
         # source_mag = self.source_dict[band_string]
         if image_observation_times is not None:
@@ -90,3 +90,19 @@ class Source(object):
         else:
             source_mag = self.source_dict[band_string]
             return source_mag
+
+    def extended_source_magnitude(self, band):
+        """Get the magnitude of the extended source in a specific band.
+
+        :param band: Imaging band
+        :type band: str
+        :return: Magnitude of the extended source in the specified band
+        :rtype: float
+        """
+        column_names = self.source_dict.colnames
+        if "mag_" + band not in column_names:
+            raise ValueError("required parameter is missing in the source dictionary.")
+        else:
+            band_string = "mag_" + band
+        source_mag = self.source_dict[band_string]
+        return source_mag
