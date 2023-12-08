@@ -3,8 +3,11 @@ from lenstronomy.SimulationAPI.sim_api import SimAPI
 from astropy.visualization import make_lupton_rgb
 from lenstronomy.Data.psf import PSF
 from lenstronomy.ImSim.Numerics.point_source_rendering import PointSourceRendering
-from slsim.Util.param_util import (magnitude_to_amplitude, convolved_image, 
-                                   transformmatrix_to_pixelscale)
+from slsim.Util.param_util import (
+    magnitude_to_amplitude,
+    convolved_image,
+    transformmatrix_to_pixelscale,
+)
 
 
 def simulate_image(
