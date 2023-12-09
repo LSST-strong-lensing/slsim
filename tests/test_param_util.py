@@ -10,8 +10,10 @@ from slsim.Util.param_util import (
     images_to_pixels,
     pixels_to_images,
     random_radec_string,
+    transformmatrix_to_pixelscale,
 )
 from slsim.Sources.SourceVariability.variability import Variability
+import pytest
 
 
 def test_epsilon2e():
@@ -109,3 +111,16 @@ def test_random_radec_string():
     )
     assert len(radec_result) == 50
     assert all(isinstance(item, str) for item in radec_result) is True
+
+
+def test_transformmatrix_to_pixelscale():
+    transform_matrix = np.array([[2, 0], [0, 3]])
+
+    result = transformmatrix_to_pixelscale(transform_matrix)
+    expected_result = np.sqrt(6)
+
+    assert result == expected_result
+
+
+if __name__ == "__main__":
+    pytest.main()
