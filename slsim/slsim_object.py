@@ -1,6 +1,7 @@
 class SLSimObject(object):
     """Class to manage image, corresponding psf, and other properties. Provides all 
-    the information about an image."""
+    the information about an image and can be used this object in add_object() function.
+    """
 
     def __init__(self, image_array, psfkernel, pixelscale):
         """
