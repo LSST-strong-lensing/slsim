@@ -203,7 +203,6 @@ class HalosMSLens(object):
             return kappa, gamma
 
     def compute_kappa_gamma(self, i, gamma_tot, diff, diff_method):
-        self.enhance_halos_table_random_pos()
 
         if gamma_tot:
             kappa, gamma = self.get_convergence_shear(

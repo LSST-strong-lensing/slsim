@@ -97,7 +97,7 @@ class ReadMS(object):
         selected_objects['pos_0[rad]'] = rad_to_arcsec(selected_objects['pos_0[rad]'] - center_pos_0)
         selected_objects['pos_1[rad]'] = rad_to_arcsec(selected_objects['pos_1[rad]'] - center_pos_1)
 
-        selected_objects['M_Halo[M_sol/h]'] *= self.cosmo.h
+        selected_objects['M_Halo[M_sol/h]'] /= self.cosmo.h
 
         filtered_data = selected_objects[['z_spec', 'M_Halo[M_sol/h]', 'pos_0[rad]', 'pos_1[rad]']]
 

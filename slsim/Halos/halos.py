@@ -2,11 +2,46 @@ from slsim.Skypy_halos_duplicate.halos.mass import halo_mass_sampler
 from slsim.Skypy_halos_duplicate.halos.mass import halo_mass_function
 from slsim.Skypy_halos_duplicate.power_spectrum import eisenstein_hu
 from scipy import integrate
+from scipy.integrate import cumtrapz
+from colossus.lss import mass_function
+from colossus.cosmology import cosmology as colossus_cosmo
 from slsim.Skypy_halos_duplicate.halos.mass import ellipsoidal_collapse_function
 from hmf.cosmology.growth_factor import GrowthFactor
 import numpy as np
 import warnings
 import os
+
+def colossus_halo_mass_function(m_200,cosmo,z):
+
+    '''
+    m in Msun/h
+    return dn/dlnM (mpc-3)
+    '''
+    colossus_cosmo.setCosmology('planck18');
+    # todo: change cosmology with ...
+    h3 = np.power(cosmo.h,3)
+    mfunc_h3_dmpc3 = mass_function.massFunction(m_200, z, mdef='fof', model='bhattacharya11', q_out='dndlnM')
+    #in h^3*Mpc-3
+    massf = mfunc_h3_dmpc3*h3 #in Mpc-3
+    return massf
+
+def colossus_halo_mass_sampler(
+    m_min,
+    m_max,
+    resolution,
+    z,
+    cosmology,
+    size=None,
+):
+    m = np.logspace(np.log10(m_min*cosmology.h),
+                    np.log10(m_max*cosmology.h),
+                    resolution)
+    massf = colossus_halo_mass_function(m, cosmology, z)
+
+    CDF = integrate.cumtrapz(massf, np.log(m), initial=0)
+    CDF = CDF / CDF[-1]
+    n_uniform = np.random.uniform(size=size)
+    return np.interp(n_uniform, CDF, m)/cosmology.h
 
 
 def set_defaults(
@@ -114,6 +149,51 @@ def number_density_at_redshift(
         collapse_function=None,
         params=None,
 ):
+    (
+        m_min,
+        m_max,
+        wavenumber,
+        resolution,
+        power_spectrum,
+        cosmology,
+        collapse_function,
+        params,
+    ) = set_defaults(
+        m_min,
+        m_max,
+        wavenumber,
+        resolution,
+        power_spectrum,
+        cosmology,
+        collapse_function,
+        params,
+    )
+    m_200 = np.geomspace(m_min*cosmology.h,
+                         m_max*cosmology.h,
+                         resolution)
+    if np.array_equal(z, np.array([np.nan])):
+        return [0] * len(z)
+    cdfs = []
+    for zi in z:
+            massf = colossus_halo_mass_function(m_200, cosmology, zi)
+            total_number_density = number_for_certain_mass(massf,
+                                                           m_200,
+                                                           dndlnM = True)
+            cdfs.append(total_number_density)
+    return cdfs
+
+def number_density_at_redshift_old(
+        z,
+        m_min=None,
+        m_max=None,
+        resolution=None,
+        wavenumber=None,
+        power_spectrum=None,
+        cosmology=None,
+        collapse_function=None,
+        params=None,
+        colossus=True,
+):
     """Function to calculate the cumulative number density of Halos at a given
     redshift for different growth functions.
 
@@ -169,31 +249,44 @@ def number_density_at_redshift(
     if np.array_equal(z, np.array([np.nan])):
         return [0] * len(z)
 
-    growth_functions = growth_factor_at_redshift(z, cosmology=cosmology)
-    cdfs = []
-    #all_massf = []
-    for growth_function in growth_functions:
-        massf = halo_mass_function(
-            M=m,
-            wavenumber=wavenumber,
-            power_spectrum=power_spectrum,
-            growth_function=growth_function,
-            cosmology=cosmology,
-            collapse_function=collapse_function,
-            params=params,
-        )
-        # Halo mass function for a given mass array, cosmology and redshift
-        # units of Mpc-3 Msun-1.
-        total_number_density = number_for_certain_mass(massf, m)
-        cdfs.append(total_number_density)
-        #all_massf.append(massf)
-    return cdfs#, all_massf
+    if colossus:
+        cdfs = []
+        for zi in z:
+            massf = colossus_halo_mass_function(m, cosmology, zi)
+            total_number_density = number_for_certain_mass(massf, m, dndlnM = True)
+            cdfs.append(total_number_density)
+        return cdfs
+    else:
+        growth_functions = growth_factor_at_redshift(z, cosmology=cosmology)
+        cdfs = []
+        #all_massf = []
+        for growth_function in growth_functions:
+            massf = halo_mass_function(
+                M=m,
+                wavenumber=wavenumber,
+                power_spectrum=power_spectrum,
+                growth_function=growth_function,
+                cosmology=cosmology,
+                collapse_function=collapse_function,
+                params=params,
+            )
+            # Halo mass function for a given mass array, cosmology and redshift
+            # units of Mpc-3 Msun-1.
+            total_number_density = number_for_certain_mass(massf, m)
+            cdfs.append(total_number_density)
+            #all_massf.append(massf)
+        return cdfs#, all_massf
 
 
-def number_for_certain_mass(massf, m):
+def number_for_certain_mass(massf, m, dndlnM = False):
     # massf:Mpc-3 Msun-1
     # output: number per Mpc3 at certain redshift
-    return integrate.trapz(massf * m, np.log(m))
+    if dndlnM:
+        # massf: dm/dlnM200 Mpc-3
+        # output: number per Mpc3 at certain redshift
+        return integrate.trapz(massf, np.log(m))
+    else:
+        return integrate.trapz(massf * m, np.log(m))
 
 
 def growth_factor_at_redshift(z, cosmology):
@@ -326,7 +419,7 @@ def dv_dz_to_dn_dz(dV_dz,
         cosmology=cosmology,
         collapse_function=collapse_function,
         params=params,
-    )
+    ) # dn/dv at z; Mpc-3
     dV_dz *= density
     return dV_dz
 
@@ -369,8 +462,60 @@ def v_per_redshift(redshift_list, cosmology, sky_area):
     )
     return dV_dz
 
-
 def halo_mass_at_z(
+        z,
+        m_min=None,
+        m_max=None,
+        resolution=None,
+        wavenumber=None,
+        power_spectrum=None,
+        cosmology=None,
+        collapse_function=None,
+        params=None,
+):
+    """
+    """
+
+    (
+        m_min,
+        m_max,
+        wavenumber,
+        resolution,
+        power_spectrum,
+        cosmology,
+        collapse_function,
+        params,
+    ) = set_defaults(
+        m_min,
+        m_max,
+        wavenumber,
+        resolution,
+        power_spectrum,
+        cosmology,
+        collapse_function,
+        params,
+    )
+    try:
+        iter(z)
+    except TypeError:
+        z = [z]
+
+    mass = []
+    if z is np.array([np.nan]):
+        return 0
+    for z_val in z:
+        mass.append(colossus_halo_mass_sampler(
+            m_min=m_min,
+            m_max=m_max,
+            resolution=resolution,
+            z=z_val,
+            cosmology=cosmology,
+            size=1,)
+        )
+    return mass
+
+
+def halo_mass_at_z_old(
         z,
         m_min=None,
         m_max=None,
@@ -654,7 +799,7 @@ def deprecated_mass_first_moment_at_redshift(
                 params=params,
             )
 
-            CDF = integrate.cumtrapz(massf, m, initial=0)
+            CDF = integrate.cumtrapz(massf, np.log10(m), initial=0)
             CDF = CDF / CDF[-1]
             expectation_m_result.append(np.interp(0.5, CDF, m))
         return expectation_m_result

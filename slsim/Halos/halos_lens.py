@@ -419,6 +419,8 @@ class HalosLens(object):
 
         if n_halos is None:
             n_halos = self.n_halos
+        if n_halos == 0:
+            return [], []
         Rs_angle = []
         alpha_Rs = []
         if z is None:
@@ -538,6 +540,13 @@ class HalosLens(object):
         gamma : float
             The computed shear at the origin if gamma12 is False.
         """
+        if self.n_halos == 1:
+            is_nan = np.isnan(self.halos_list['z'])
+            if is_nan:
+                if gamma12:
+                    return 0, 0, 0
+                else:
+                    return 0, 0
         if kwargs is None:
             kwargs = self.get_halos_lens_kwargs()
         if lens_model is None:
@@ -1808,6 +1817,9 @@ class HalosLens(object):
         radial = False
         radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
 
+        if kwargs is None:
+            kwargs = self.get_halos_lens_kwargs()
+
         try:
             kappa_image, _ = self.compute_kappa(diff=diff,
                                                 num_points=num_points,
@@ -1856,6 +1868,7 @@ class HalosLens(object):
             Keyword arguments for the lens model. If not provided, the halos lens kwargs of the instance are used.
         lens_model : LensModel instance, optional
             The lens model to use. If not provided, the lens model from the class instance is utilized.
+
         zdzs : tuple of float, optional
             A tuple containing two redshift values (z1, z2). If provided, convergence will be computed based on these redshifts.
 
