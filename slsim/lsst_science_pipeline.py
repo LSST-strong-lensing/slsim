@@ -6,6 +6,7 @@ from slsim.image_simulation import (
     lens_image,
     lens_image_series,
 )
+from slsim.Util.param_util import transformmatrix_to_pixelscale
 from scipy import interpolate
 from slsim.image_simulation import point_source_coordinate_properties
 
@@ -173,7 +174,6 @@ def lens_inejection(
 def lens_inejection_fast(
     lens_pop,
     num_pix,
-    delta_pix,
     mag_zero_point,
     transform_pix2angle,
     butler,
@@ -189,7 +189,6 @@ def lens_inejection_fast(
 
     :param lens_pop: lens population from slsim
     :param num_pix: number of pixel for the cutout
-    :param delta_pix: pixel scale for the lens image
     :param mag_zero_point: magnitude zero point in band
     :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
         displacements
@@ -261,7 +260,6 @@ def lens_inejection_fast(
                 lens_class=lens_class,
                 band=rgb_band_list[j],
                 mag_zero_point=mag_zero_point,
-                delta_pix=delta_pix,
                 num_pix=num_pix,
                 transform_pix2angle=transform_pix2angle,
                 exposure_time=exposure_map,
@@ -339,7 +337,6 @@ def multiple_lens_injection(
 def multiple_lens_injection_fast(
     lens_pop,
     num_pix,
-    delta_pix,
     mag_zero_point,
     transform_pix2angle,
     butler,
@@ -356,7 +353,6 @@ def multiple_lens_injection_fast(
 
     :param lens_pop: lens population from slsim
     :param num_pix: number of pixel for the cutout
-    :param delta_pix: pixel scale for the lens image
     :param mag_zero_point: magnitude zero point in band
     :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
         displacements
@@ -375,7 +371,6 @@ def multiple_lens_injection_fast(
             lens_inejection_fast(
                 lens_pop,
                 num_pix,
-                delta_pix,
                 mag_zero_point,
                 transform_pix2angle,
                 butler,
@@ -391,23 +386,23 @@ def multiple_lens_injection_fast(
 
 
 def add_object(
-    dp0_image,
+    image_object,
     lens_class,
     band,
     mag_zero_point,
-    delta_pix,
     num_pix,
     transform_pix2angle,
     exposure_time,
     calibFluxRadius=None,
+    image_type="dp0",
 ):
-    """Injects a given object in a dp0 cutout image.
+    """Injects a given object in a dp0 cutout image or SLSimObject.
 
-    :param dp0_image: cutout image from the dp0 data or any other image
+    :param image_object: cutout image from the dp0 data or SLSimObject.
+     eg: slsim_object = SLSimObject(image_array, psfkernel, pixelscale).
     :param lens_class: Lens() object
     :param band: imaging band
     :param mag_zero_point: list of magnitude zero point for sqeuence of exposure
-    :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
     :param transform_pix2angle: list of transformation matrix (2x2) of pixels into
         coordinate displacements for each exposure
@@ -419,26 +414,35 @@ def add_object(
         defined in slot_CalibFlux_instFlux.
     :returns: an image with injected source
     """
-    wcs = dp0_image.getWcs()
-    psf = dp0_image.getPsf()
-    bbox = dp0_image.getBBox()
-    xmin, ymin = bbox.getBegin()
-    xmax, ymax = bbox.getEnd()
-    x_cen, y_cen = (xmin + xmax) / 2, (ymin + ymax) / 2
-    pt = geom.Point2D(x_cen, y_cen)
-    psfArr = psf.computeKernelImage(pt).array
-    if calibFluxRadius is not None:
-        apCorr = psf.computeApertureFlux(calibFluxRadius, pt)
-        psf_ker = psfArr / apCorr
+    if image_type == "dp0":
+        wcs = image_object.getWcs()
+        psf = image_object.getPsf()
+        bbox = image_object.getBBox()
+        xmin, ymin = bbox.getBegin()
+        xmax, ymax = bbox.getEnd()
+        x_cen, y_cen = (xmin + xmax) / 2, (ymin + ymax) / 2
+        pt = geom.Point2D(x_cen, y_cen)
+        psfArr = psf.computeKernelImage(pt).array
+        if calibFluxRadius is not None:
+            apCorr = psf.computeApertureFlux(calibFluxRadius, pt)
+            psf_ker = psfArr / apCorr
+        else:
+            psf_ker = psfArr
+        pixscale = wcs.getPixelScale(bbox.getCenter()).asArcseconds()
+    elif image_type == "slsim_object":
+        psf_ker = image_object.psf_kernel
+        pixscale = image_object.pixel_scale
     else:
-        psf_ker = psfArr
-    pixscale = wcs.getPixelScale(bbox.getCenter()).asArcseconds()
-    num_pix_cutout = np.shape(dp0_image.image.array)[0]
+        raise ValueError(
+            "Provided image object is not supported. Either use dp0 image"
+            "object or SLSimObject"
+        )
+    num_pix_cutout = np.shape(image_object.image.array)[0]
+    delta_pix = transformmatrix_to_pixelscale(transform_pix2angle)
     lens_im = lens_image(
         lens_class=lens_class,
         band=band,
         mag_zero_point=mag_zero_point,
-        delta_pix=delta_pix,
         num_pix=num_pix,
         psf_kernel=psf_ker,
         transform_pix2angle=transform_pix2angle,
@@ -461,7 +465,7 @@ def add_object(
                 "scale."
             )
         else:
-            injected_image = dp0_image.image.array + lens
+            injected_image = image_object.image.array + lens
             return injected_image
 
 
@@ -742,21 +746,26 @@ def dp0_time_series_images_data(butler, center_coord, radius="0.1", band="i", si
 
 
 def variable_lens_injection(
-    lens_class, band, delta_pix, num_pix, transform_pix2angle, exposure_data
+    lens_class, band, num_pix, transform_pix2angle, exposure_data
 ):
     """Injects variable lens to the dp0 time series data.
 
     :param lens_class: Lens() object
     :param band: imaging band
-    :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
     :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
         displacements
     :param exposure_data: An astropy table of exposure data. It must contain calexp
-        images (column name should be "time_series_images"), magnitude zero point
-        (column name should be "zero_point"), psf kernel for each exposure (column name
-        should be "psf_kernel"), exposure time (column name should be "expo_time"),
-        observation time (column name should be "obs_time")
+        images or generated noisy background image (column name should be
+        "time_series_images", these images are single exposure images of the same part
+        of the sky at different time), magnitude zero point (column name should be
+        "zero_point", these are zero point magnitudes for each single exposure images in
+        time series image) , psf kernel for each exposure (column name should be
+        "psf_kernel", these are pixel psf kernel for each single exposure images in time
+        series image), exposure time (column name should be "expo_time", these are
+        exposure time for each single exposure images in time series images),
+        observation time (column name should be "obs_time", these are observation time
+        in days for each single exposure images in time series images)
     :return: Astropy table of injected lenses and exposure information of dp0 data
     """
 
@@ -764,7 +773,6 @@ def variable_lens_injection(
         lens_class,
         band=band,
         mag_zero_point=exposure_data["zero_point"],
-        delta_pix=delta_pix,
         num_pix=num_pix,
         psf_kernel=exposure_data["psf_kernel"],
         transform_pix2angle=transform_pix2angle,
@@ -784,7 +792,6 @@ def variable_lens_injection(
 def multiple_variable_lens_injection(
     lens_class_list,
     band,
-    delta_pix,
     num_pix,
     transform_matrices_list,
     exposure_data_list,
@@ -793,15 +800,20 @@ def multiple_variable_lens_injection(
 
     :param lens_class_list: list of Lens() object
     :param band: imaging band
-    :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
     :param transform_matrices_list: list of transformation matrix (2x2) of pixels into
         coordinate displacements for each exposure
-    :param exposure_data_list: list of astropy tables of each time series data. It must
-        contain calexp images (column name should be "time_series_images"), magnitude
-        zero point (column name should be "zero_point"), psf kernel for each exposure
-        (column name should be "psf_kernel"), exposure time (column name should be
-        "expo_time"), observation time (column name should be "obs_time")
+    :param exposure_data: list of astropy table of exposure data for each set of time
+        series images. It must contain calexp images or generated noisy background image
+        (column name should be "time_series_images", these images are single exposure
+        images of the same part of the sky at different time), magnitude zero point
+        (column name should be "zero_point", these are zero point magnitudes for each
+        single exposure images in time series image) , psf kernel for each exposure
+        (column name should be "psf_kernel", these are pixel psf kernel for each single
+        exposure images in time series image), exposure time (column name should be
+        "expo_time", these are exposure time for each single exposure images in time
+        series images), observation time (column name should be "obs_time", these are
+        observation time in days for each single exposure images in time series images)
     :return: list of astropy table of injected lenses and exposure information of dp0
         data for each time series lenses.
     """
@@ -813,7 +825,6 @@ def multiple_variable_lens_injection(
             variable_lens_injection(
                 lens_class,
                 band=band,
-                delta_pix=delta_pix,
                 num_pix=num_pix,
                 transform_pix2angle=transform_matrices,
                 exposure_data=expo_data,
