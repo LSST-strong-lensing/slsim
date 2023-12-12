@@ -282,7 +282,9 @@ def schechter_vel_disp_redshift(
 
     # gamma function integrand
     def f(lnx, a):
-        return np.exp(a * lnx - np.exp(lnx)) if lnx < lnxmax.max() else 0.0
+        return (
+            np.exp(lnx) * np.exp(a * lnx - np.exp(lnx)) if lnx < lnxmax.max() else 0.0
+        )
 
     # integrate gamma function for each redshift
 
