@@ -78,9 +78,8 @@ class Source(object):
         # source_mag = self.source_dict[band_string]
         if image_observation_times is not None:
             if self.variability_class is not None:
-                variable_mag = self.source_dict[
-                    band_string
-                ] + self.variability_class.variability_at_time(image_observation_times)
+                variable_mag = self.variability_class.variability_at_time(
+                    image_observation_times)
                 return variable_mag
             else:
                 raise ValueError(
