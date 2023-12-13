@@ -26,12 +26,12 @@ class Source(object):
             for element in kwargs_variab:
                 if element in self.source_dict.colnames:
                     kwargs_variab_extracted[element] = self.source_dict[element]
-                    self.variability_class = Variability(
-                        variability_model, **kwargs_variab_extracted
-                    )
                 else:
                     raise ValueError(
                         "given keywords are not in the provided source catalog."
+                    )
+            self.variability_class = Variability(
+                        variability_model, **kwargs_variab_extracted
                     )
         else:
             self._variability_class = None
