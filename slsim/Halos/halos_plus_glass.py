@@ -1,8 +1,6 @@
 import numpy as np
 from slsim.Pipelines.halos_pipeline import HalosSkyPyPipeline
 from slsim.Halos.halos_lens import HalosLens
-from slsim.Halos.halos import deprecated_redshift_mass_sheet_correction_array_from_comoving_density, \
-    deprecated_mass_first_moment_at_redshift
 from astropy.cosmology import FlatLambdaCDM
 import astropy.units as u
 from tqdm.notebook import tqdm
@@ -314,7 +312,6 @@ def run_halos_without_kde(
         z_max=None,
         mass_sheet_correction=True,
         listmean=False,
-        RadialInterpolate=False
 ):
     """Under the specified `sky_area`, generate `n_iterations` sets of halo
     lists. For each set, simulate `samples_number` times to obtain the
@@ -387,7 +384,6 @@ def run_halos_without_kde(
                 samples_number=samples_number,
                 mass_sheet=True,
                 z_source=z_max,
-                RadialInterpolate=RadialInterpolate
             )
 
             nkappa_gamma_distribution = nhalos_lens.get_kappa_gamma_distib(
@@ -443,7 +439,6 @@ def worker_run_halos_without_kde(
         samples_number,
         mass_sheet_correction,
         listmean,
-        RadialInterpolate
 ):
     npipeline = HalosSkyPyPipeline(
         sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max
@@ -458,7 +453,6 @@ def worker_run_halos_without_kde(
             cosmo=cosmo,
             samples_number=samples_number,
             z_source=z_max,
-            RadialInterpolate=RadialInterpolate
         )
     else:
         nhalos_lens = HalosLens(
@@ -490,7 +484,6 @@ def run_halos_without_kde_by_multiprocessing(
         z_max=None,
         mass_sheet_correction=True,
         listmean=False,
-        RadialInterpolate=False
 ):
     """Under the specified `sky_area`, generate `n_iterations` sets of halo
     lists. For each set, simulate `samples_number` times to obtain the
@@ -549,7 +542,7 @@ def run_halos_without_kde_by_multiprocessing(
     start_time = time.time()  # Note the start time
 
     args = [
-        (i, sky_area, m_min, m_max, z_max, cosmo, samples_number, mass_sheet_correction, listmean, RadialInterpolate)
+        (i, sky_area, m_min, m_max, z_max, cosmo, samples_number, mass_sheet_correction, listmean)
         for i in range(n_iterations)
     ]
 
@@ -579,7 +572,6 @@ def run_kappaext_gammaext_kde_by_multiprocessing(
         mass_sheet_correction=True,
         listmean=False,
         output_format="dict",
-        RadialInterpolate=False,
 ):
     """Run the kappa-gamma external convergence distribution for a given number
     of iterations using multiprocessing.
@@ -650,7 +642,6 @@ def run_kappaext_gammaext_kde_by_multiprocessing(
             mass_sheet_correction,
             listmean,
             output_format,
-            RadialInterpolate
         )
         for i in range(n_iterations)
     ]
@@ -680,7 +671,6 @@ def worker_kappaext_gammaext_kde(
         mass_sheet_correction,
         listmean,
         output_format,
-        RadialInterpolate
 ):
     """Worker function that generates kappa-gamma distributions for given
     parameters.
@@ -742,7 +732,6 @@ def worker_kappaext_gammaext_kde(
             cosmo=cosmo,
             samples_number=samples_number,
             z_source=z_max,
-            RadialInterpolate=RadialInterpolate
         )
     else:
         nhalos_lens = HalosLens(
@@ -773,7 +762,6 @@ def run_certain_redshift_lensext_kde_by_multiprocessing(
         zs=None,
         zd=None,
         listmean=False,
-        RadialInterpolate=False
 ):
     if cosmo is None:
         warnings.warn(
@@ -813,7 +801,6 @@ def run_certain_redshift_lensext_kde_by_multiprocessing(
             zs,
             zd,
             listmean,
-            RadialInterpolate
         )
         for i in range(n_iterations)
     ]
@@ -844,7 +831,6 @@ def worker_certain_redshift_lensext_kde(
         zs,
         zd,
         listmean,
-        RadialInterpolate
 ):
     npipeline = HalosSkyPyPipeline(
         sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max
@@ -861,7 +847,6 @@ def worker_certain_redshift_lensext_kde(
             samples_number=samples_number,
             z_source=z_max,
             mass_sheet=True,
-            RadialInterpolate=RadialInterpolate
         )
     else:
         nhalos_lens = HalosLens(
@@ -887,7 +872,6 @@ def run_certain_redshift_many_by_multiprocessing(
         mass_sheet_correction=True,
         zs=None,
         zd=None,
-        RadialInterpolate=False
 ):
     if cosmo is None:
         warnings.warn(
@@ -927,7 +911,6 @@ def run_certain_redshift_many_by_multiprocessing(
             mass_sheet_correction,
             zs,
             zd,
-            RadialInterpolate
         )
         for i in range(n_iterations)
     ]
@@ -958,7 +941,6 @@ def worker_certain_redshift_many(
         mass_sheet_correction,
         zs,
         zd,
-        RadialInterpolate
 ):
     npipeline = HalosSkyPyPipeline(
         sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max
@@ -974,7 +956,6 @@ def worker_certain_redshift_many(
             cosmo=cosmo,
             samples_number=samples_number,
             z_source=z_max,
-            RadialInterpolate=RadialInterpolate
         )
     else:
         nhalos_lens = HalosLens(
@@ -1258,7 +1239,6 @@ def worker_run_kappa_mean_range(
         cosmo,
         samples_number,
         mass_sheet_correction,
-        RadialInterpolate,
         diff
 ):
     npipeline = HalosSkyPyPipeline(
@@ -1274,7 +1254,6 @@ def worker_run_kappa_mean_range(
             cosmo=cosmo,
             samples_number=samples_number,
             z_source=z_max,
-            RadialInterpolate=RadialInterpolate
         )
     else:
         nhalos_lens = HalosLens(
@@ -1300,7 +1279,6 @@ def run_kappa_mean_range_by_multiprocessing(
         m_max=None,
         z_max=None,
         mass_sheet_correction=True,
-        RadialInterpolate=False,
         diff=1.0,
 ):
     if cosmo is None:
@@ -1317,7 +1295,7 @@ def run_kappa_mean_range_by_multiprocessing(
     start_time = time.time()  # Note the start time
 
     args = [
-        (i, sky_area, m_min, m_max, z_max, cosmo, samples_number, mass_sheet_correction, RadialInterpolate, diff)
+        (i, sky_area, m_min, m_max, z_max, cosmo, samples_number, mass_sheet_correction, diff)
         for i in range(n_iterations)
     ]
 
@@ -1336,50 +1314,6 @@ def run_kappa_mean_range_by_multiprocessing(
         f"The {n_iterations} halo-lists took {(end_time - start_time)} seconds to run"
     )
     return mean_kappa_total, two_sigma_total, mass_total, mass_divide_kcrit_total
-
-
-def mean_mass(sky_area, cosmo, m_min=None, m_max=None):
-    redshift_list = np.linspace(0.0, 5.0, 100)
-    # Notice sky_Area here should have astropy unit (such as deg**2)
-    z = deprecated_redshift_mass_sheet_correction_array_from_comoving_density(
-        redshift_list=redshift_list,
-        sky_area=sky_area,
-        cosmology=cosmo,
-        m_min=m_min,
-        m_max=m_max,
-        resolution=None,
-        wavenumber=None,
-        collapse_function=None,
-        power_spectrum=None,
-        params=None)
-    mass = deprecated_mass_first_moment_at_redshift(
-        z,
-        m_min=m_min,
-        m_max=m_max,
-        resolution=None,
-        wavenumber=None,
-        power_spectrum=None,
-        cosmology=cosmo,
-        collapse_function=None,
-        params=None)
-    return np.sum(mass)
-
-
-def compute_sigma_m_ratio_for_sky_area(cosmo, n_iterations=200, m_min=None, m_max=None):
-    sky_areas = np.arange(0.0001, 0.00105, 0.00005)
-    ratios = {}
-
-    for sky_area in sky_areas:
-        total_masses = run_total_mass_by_multiprocessing(n_iterations=n_iterations, sky_area=sky_area, cosmo=cosmo,
-                                                         m_min=m_min, m_max=m_max)
-        sigma_m = np.std(total_masses)
-        sk = sky_area * u.deg ** 2
-        m_mean = mean_mass(sky_area=sk, cosmo=cosmo, m_min=m_min, m_max=m_max)
-        ratio = sigma_m / m_mean
-
-        ratios[sky_area] = ratio
-
-    return ratios
 
 
 def run_total_kappa_by_multiprocessing(

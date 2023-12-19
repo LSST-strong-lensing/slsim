@@ -219,7 +219,6 @@ class HalosLens(object):
             samples_number=1000,
             mass_sheet=True,
             z_source=5,
-            RadialInterpolate=False,
     ):
         """Initialize the HalosLens class.
 
@@ -257,15 +256,11 @@ class HalosLens(object):
             self.mass_sheet_correction_redshift = mass_correction_list.get("z", [])
             #            self.mass_first_moment = mass_correction_list.get("first_moment", [])
             self.mass_sheet_kappa = mass_correction_list.get("kappa", [])
-            self.kwargs_interp = mass_correction_list.get("kwargs_interp", [])
-            self.radial_interpolate = False
         else:
-            self.radial_interpolate = RadialInterpolate
             self.n_correction = len(mass_correction_list)
             self.mass_sheet_correction_redshift = mass_correction_list["z"]
             #            D
             self.mass_sheet_kappa = mass_correction_list["kappa"]
-            self.kwargs_interp = mass_correction_list["kwargs_interp"]
         self.z_source = z_source
         self.halos_list = halos_list
         self.mass_correction_list = mass_correction_list
@@ -274,7 +269,6 @@ class HalosLens(object):
         self.sky_area = sky_area
         self.halos_redshift_list = halos_list["z"]
         self.mass_list = halos_list["mass"]
-        #self.first_moment_list = halos_list["first_moment"]
         self.samples_number = samples_number
         self._z_source_convention = (
             5  # if this need to be changed, change it in the halos.py too
@@ -351,21 +345,9 @@ class HalosLens(object):
         only the halos' NFW profile is used.
         """
         if self.mass_sheet:
-            if self.radial_interpolate is False:
                 lens_model = LensModel(
                     lens_model_list=["NFW"] * self.n_halos
                                     + ["CONVERGENCE"] * self.n_correction,
-                    lens_redshift_list=self.combined_redshift_list,
-                    cosmo=self.cosmo,
-                    observed_convention_index=[],
-                    multi_plane=True,
-                    z_source=self.z_source,
-                    z_source_convention=self._z_source_convention,
-                )
-            if self.radial_interpolate is True:
-                lens_model = LensModel(
-                    lens_model_list=["NFW"] * self.n_halos
-                                    + ["RADIAL_INTERPOL"] * self.n_correction,
                     lens_redshift_list=self.combined_redshift_list,
                     cosmo=self.cosmo,
                     observed_convention_index=[],
@@ -464,12 +446,10 @@ class HalosLens(object):
             #    first_moment = self.mass_first_moment
             #    kappa = self.kappa_ext_for_mass_sheet(self.mass_sheet_correction_redshift,
             #                                          self.lens_cosmo[-self.n_correction:], first_moment)
-            if self.radial_interpolate is False:
-                kappa = self.mass_sheet_kappa
-                # TODO:change
-                ra_0 = [0] * self.n_correction
-                dec_0 = [0] * self.n_correction
-                kwargs_lens = [
+            kappa = self.mass_sheet_kappa
+            ra_0 = [0] * self.n_correction
+            dec_0 = [0] * self.n_correction
+            kwargs_lens = [
                                   {
                                       "Rs": Rs_angle[h],
                                       "alpha_Rs": alpha_Rs[h],
@@ -481,23 +461,8 @@ class HalosLens(object):
                                   {"kappa": kappa[h], "ra_0": ra_0[h], "dec_0": dec_0[h]}
                                   for h in range(self.n_correction)
                               ]
-            if self.radial_interpolate is True:
-                kwargs_interp = self.kwargs_interp
-                kwargs_lens = [
-                                  {
-                                      "Rs": Rs_angle[h],
-                                      "alpha_Rs": alpha_Rs[h],
-                                      "center_x": self.halos_list['px'][h],
-                                      "center_y": self.halos_list['py'][h],
-                                  }
-                                  for h in range(self.n_halos)
-                              ] + [
-                                  kwargs_interp[h]
-                                  for h in range(self.n_correction)
-                              ]
         else:
             Rs_angle, alpha_Rs = self.get_nfw_kwargs()
-
             kwargs_lens = [
                 {
                     "Rs": Rs_angle[h],
@@ -507,7 +472,6 @@ class HalosLens(object):
                 }
                 for h in range(self.n_halos)
             ]
-
         return kwargs_lens
 
     def get_convergence_shear(
@@ -560,11 +524,6 @@ class HalosLens(object):
                 kwargs_lens=kwargs,
                 diff=1.0,
             )
-        #    print(f'zd{zdzs[0]}zs{zdzs[1]}', f_xx, f_xy, f_yx, f_yy)
-        #    print('nonezdzs', lens_model.hessian(
-        #        x=0.0, y=0.0, kwargs=kwargs, diff=1.0, diff_method='square'
-        #    ))
-        #    print('------------------------------')
         else:
             f_xx, f_xy, f_yx, f_yy = lens_model.hessian(
                 x=0.0, y=0.0, kwargs=kwargs, diff=diff, diff_method=diff_method
@@ -917,12 +876,10 @@ class HalosLens(object):
             z_mass_correction = mass_correction["z"]
             #    mass_first_moment = mass_correction["first_moment"]
             mass_correction_kappa = mass_correction["kappa"]
-            kwargs_interp = mass_correction["kwargs_interp"]
         else:
             z_mass_correction = []
             #    mass_first_moment = []
             mass_correction_kappa = []
-            kwargs_interp = []
         combined_redshift_list = np.concatenate((z_halo, z_mass_correction))
         # If this above code need to be changed, notice the change in the following code
         # including the lens_cosmo_dict one since it assume halos is in front of mass sheet
@@ -956,10 +913,8 @@ class HalosLens(object):
             #        z_mass_correction, relevant_lens_cosmo_list, mass_first_moment
             #    )
             kappa_ext_list = mass_correction_kappa
-            kwargs_interp_list = kwargs_interp
         else:
             kappa_ext_list = []
-            kwargs_interp_list = []
 
         lens_cosmo_list = list(lens_cosmo_dict.values())
         kwargs_lens = self._build_kwargs_lens(
@@ -972,7 +927,6 @@ class HalosLens(object):
             c_200_halos,
             lens_model_list,
             kappa_ext_list,
-            kwargs_interp_list,
             lens_cosmo_list,
         )
         # Note: If MASS_MOMENT (moment),this need to be change
@@ -1065,11 +1019,6 @@ class HalosLens(object):
         n_halos = n_halos
 
         if len(combined_redshift_list) - n_halos > 0:
-            if self.radial_interpolate is True:
-                lens_model_list = ["NFW"] * n_halos + ["RADIAL_INTERPOL"] * (
-                        len(combined_redshift_list) - n_halos
-                )
-            else:
                 lens_model_list = ["NFW"] * n_halos + ["CONVERGENCE"] * (
                         len(combined_redshift_list) - n_halos
                 )
@@ -1101,7 +1050,6 @@ class HalosLens(object):
             c_200_halos,
             lens_model_list,
             kappa_ext_list,
-            kwargs_interp_list,
             lens_cosmo_list=None,
     ):
         """Constructs the lens keyword arguments based on provided input
@@ -1144,16 +1092,12 @@ class HalosLens(object):
         This method assumes the presence of a method `get_nfw_kwargs` in the current class that provides NFW parameters
         based on given redshifts and masses.
         """
-        if n_halos == 0 and ("CONVERGENCE" not in lens_model_list) and ("RADIAL_INTERPOL" not in lens_model_list):
+        if n_halos == 0 and ("CONVERGENCE" not in lens_model_list):
             return None
-        elif n_halos == 0 and ("CONVERGENCE" in lens_model_list) and (self.radial_interpolate is False):
+        elif n_halos == 0 and ("CONVERGENCE" in lens_model_list):
             return [
                 {"kappa": kappa_ext_list[h], "ra_0": 0, "dec_0": 0}
                 for h in range(n_mass_correction)
-            ]
-        elif n_halos == 0 and ("RADIAL_INTERPOL" in lens_model_list) and (self.radial_interpolate is True):
-            return [
-                kwargs_interp_list[h] for h in range(n_mass_correction)
             ]
         if n_halos != 0:
             assert len(z_halo) == len(lens_cosmo_list[:n_halos])
@@ -1166,7 +1110,7 @@ class HalosLens(object):
         )
         # TODO: different lens_cosmo ( for halos and sheet )
 
-        if ("CONVERGENCE" in lens_model_list) and (self.radial_interpolate is False):
+        if ("CONVERGENCE" in lens_model_list):
             return [
                 {
                     "Rs": Rs_angle[i],
@@ -1178,18 +1122,6 @@ class HalosLens(object):
             ] + [
                 {"kappa": kappa_ext_list[h], "ra_0": 0, "dec_0": 0}
                 for h in range(n_mass_correction)
-            ]
-        if ("RADIAL_INTERPOL" in lens_model_list) and (self.radial_interpolate is True):
-            return [
-                {
-                    "Rs": Rs_angle[i],
-                    "alpha_Rs": alpha_Rs[i],
-                    "center_x": px_halo[i],
-                    "center_y": py_halo[i],
-                }
-                for i in range(n_halos)
-            ] + [
-                kwargs_interp_list[h] for h in range(n_mass_correction)
             ]
 
         return [
@@ -1728,15 +1660,10 @@ class HalosLens(object):
                       kwargs=None,
                       lens_model=None,
                       mass_sheet=None,
-                      radial_interpolate=None,
                       enhance_pos=False,
                       ):
         if mass_sheet is not None:
             self.mass_sheet = mass_sheet
-            if mass_sheet is True:
-                if radial_interpolate is not None:
-                    self.radial_interpolate = radial_interpolate
-                    radial = True
 
         if kwargs is None:
             kwargs = self.get_halos_lens_kwargs()
@@ -1769,7 +1696,6 @@ class HalosLens(object):
                          kwargs=None,
                          lens_model=None,
                          mass_sheet=None,
-                         radial_interpolate=None,
                          enhance_pos=True,
                          ):
         r"""
@@ -1791,8 +1717,6 @@ class HalosLens(object):
             A tuple containing two redshift values (z1, z2). If provided, the hessian will be computed based on these redshifts.
         mass_sheet : bool, optional
             Whether to utilize a mass sheet for the plot. If set, it will temporarily overwrite the instance's mass sheet.
-        radial_interpolate : bool, optional
-            If set along with `mass_sheet=True`, this will temporarily overwrite the instance's radial interpolate setting.
         enhance_pos : bool, optional
             Enhances halo positions randomly after plotting. Default is True.
 
@@ -1808,12 +1732,11 @@ class HalosLens(object):
         Overlaying on the convergence plot are positions of halos represented by yellow 'x' markers.
 
         The computation is parallelized for efficiency, using the number of available CPU cores.
-        Temporary changes made to the instance (like `mass_sheet` and `radial_interpolate`) are reverted at the end of the function.
+        Temporary changes made to the instance (like `mass_sheet`) are reverted at the end of the function.
         """
         import matplotlib.pyplot as plt
 
         original_mass_sheet = self.mass_sheet
-        original_radial_interpolate = self.radial_interpolate
         radial = False
         radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
 
@@ -1827,7 +1750,6 @@ class HalosLens(object):
                                                 kwargs=kwargs,
                                                 lens_model=lens_model,
                                                 mass_sheet=mass_sheet,
-                                                radial_interpolate=radial_interpolate,
                                                 enhance_pos=False, )
 
             plt.imshow(kappa_image, extent=[-radius_arcsec, radius_arcsec, -radius_arcsec, radius_arcsec])
@@ -1844,8 +1766,6 @@ class HalosLens(object):
 
         finally:
             self.mass_sheet = original_mass_sheet
-            if radial is True:
-                self.radial_interpolate = original_radial_interpolate
             if enhance_pos:
                 self.enhance_halos_table_random_pos()
 
@@ -1964,11 +1884,10 @@ class HalosLens(object):
                                  lens_model=None,
                                  zdzs=None):
         r"""
-        Compares and plots the convergence for different configurations of the mass sheet and radial
-        interpolation parameters.
+        Compares and plots the convergence for different configurations of the mass sheet.
 
         This function invokes the `plot_convergence` method three times, with different
-        configurations for the `mass_sheet` and `radial_interpolate` arguments,
+        configurations for the `mass_sheet` arguments,
         allowing users to visually compare the effects of these configurations on the convergence plot.
 
         Parameters
@@ -1991,8 +1910,8 @@ class HalosLens(object):
         The configurations for the convergence plots are as follows:
 
         1. `mass_sheet` set to `False`.
-        2. `mass_sheet` set to `True` and `radial_interpolate` set to `True`.
-        3. `mass_sheet` set to `True` and `radial_interpolate` set to `False`.
+        2. `mass_sheet` set to `True` set to `True`.
+        3. `mass_sheet` set to `True` set to `False`.
 
         In all cases, the `enhance_pos` parameter for `plot_convergence` is set to `False`.
 
@@ -2008,32 +1927,17 @@ class HalosLens(object):
                               lens_model=lens_model,
                               zdzs=zdzs,
                               mass_sheet=False,
-                              radial_interpolate=False,
                               enhance_pos=False
                               )
-
-        # mass_sheet=True, radial_interpolate=True
-        print('mass_sheet=True, radial_interpolate=True')
+        print('mass_sheet=True')
         self.plot_convergence(diff=diff,
                               diff_method=diff_method,
                               kwargs=kwargs,
                               lens_model=lens_model,
                               zdzs=zdzs,
                               mass_sheet=True,
-                              radial_interpolate=True,
                               enhance_pos=False)
 
-        # mass_sheet=True, radial_interpolate=False
-        print('mass_sheet=True, radial_interpolate=False')
-        self.plot_convergence(diff=diff,
-                              diff_method=diff_method,
-                              kwargs=kwargs,
-                              lens_model=lens_model,
-                              zdzs=zdzs,
-                              mass_sheet=True,
-                              radial_interpolate=False,
-                              enhance_pos=False
-                              )
 
     def total_halo_mass(self):
         """
@@ -2135,7 +2039,6 @@ class HalosLens(object):
                               kwargs=None,
                               lens_model=None,
                               mass_sheet=None,
-                              radial_interpolate=None,
                               enhance_pos=True,
                               ):
         import matplotlib.pyplot as plt
@@ -2143,7 +2046,6 @@ class HalosLens(object):
 
         self.enhance_halos_pos_to0()
         original_mass_sheet = self.mass_sheet
-        original_radial_interpolate = self.radial_interpolate
         radial = False
         radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
         kwargs = self.get_halos_lens_kwargs()
@@ -2154,7 +2056,6 @@ class HalosLens(object):
                                                 kwargs=kwargs,
                                                 lens_model=lens_model,
                                                 mass_sheet=mass_sheet,
-                                                radial_interpolate=radial_interpolate,
                                                 enhance_pos=False, )
 
             colors = [(1, 0, 0, 1)] + [(plt.cm.viridis(i)) for i in range(1, 256)]
@@ -2171,8 +2072,6 @@ class HalosLens(object):
 
         finally:
             self.mass_sheet = original_mass_sheet
-            if radial is True:
-                self.radial_interpolate = original_radial_interpolate
             if enhance_pos:
                 self.enhance_halos_table_random_pos()
 
