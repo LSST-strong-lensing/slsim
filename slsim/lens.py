@@ -384,8 +384,18 @@ class Lens(LensedSystemBase):
                 )
                 return lensed_variable_magnitude
             else:
-                magnified_mag = self.source.point_source_magnitude(band) - magnif_log
-                return magnified_mag
+                if isinstance(self.source.point_source_magnitude(band),
+                               np.ndarray) and \
+                           self.source.point_source_magnitude(band).ndim == 2 and \
+                       self.source.point_source_magnitude(band).shape[0] == 1:
+                    mag_list = self.source.point_source_magnitude(band).reshape(-1)
+                    magnified_mag_list = []
+                    for i in range(len(magnif_log)):
+                        magnified_mag_list.append(mag_list-magnif_log[i])
+                    return magnified_mag_list
+                else:
+                    magnified_mag=self.source.point_source_magnitude(band) - magnif_log
+                    return magnified_mag
         return self.source.point_source_magnitude(band)
 
     def extended_source_magnitude(self, band, lensed=False):

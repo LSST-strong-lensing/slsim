@@ -1,6 +1,7 @@
 from slsim.Sources.SourceVariability.variability import (
     Variability,
 )
+import numpy as np
 
 
 class Source(object):
@@ -25,7 +26,13 @@ class Source(object):
             kwargs_variab_extracted = {}
             for element in kwargs_variab:
                 if element in self.source_dict.colnames:
-                    kwargs_variab_extracted[element] = self.source_dict[element]
+                    if isinstance(self.source_dict[element], np.ndarray) and \
+                          self.source_dict[element].ndim == 2 and \
+                              self.source_dict[element].shape[0] == 1:
+                        kwargs_variab_extracted[element] = \
+                            self.source_dict[element].reshape(-1)
+                    else:
+                        kwargs_variab_extracted[element] = self.source_dict[element]
                 else:
                     raise ValueError(
                         "given keywords are not in the provided source catalog."
