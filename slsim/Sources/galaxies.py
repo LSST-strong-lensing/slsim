@@ -28,7 +28,8 @@ class Galaxies(SourcePopBase):
         if list_type == "astropy_table":
             column_names = galaxy_list.colnames
             if "ellipticity" not in column_names:
-                    raise ValueError("required parameters missing in galaxy_list columns")
+                    raise ValueError("required parameters missing in galaxy_list" 
+                                     "columns")
             if "e1" not in column_names or "e2" not in column_names:
                     galaxy_list["e1"] = -np.ones(self.n)
                     galaxy_list["e2"] = -np.ones(self.n)

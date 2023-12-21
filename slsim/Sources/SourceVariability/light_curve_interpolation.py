@@ -9,8 +9,8 @@ class LightCurveInterpolation(object):
         """
         self.time_array = times
         self.magnitude_array = magnitudes
-        self.interpolation = interp1d(self.time_array, self.magnitude_array, kind='linear', 
-                                   fill_value='extrapolate')
+        self.interpolation = interp1d(self.time_array, self.magnitude_array, 
+                                kind='linear', fill_value='extrapolate')
 
     def magnitude(self, observation_time):
         """Provides magnitude at given a time.
