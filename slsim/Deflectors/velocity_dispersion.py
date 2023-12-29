@@ -238,7 +238,7 @@ def schechter_vel_disp_redshift(
         The beta parameter in the modified Schechter equation.
     vd_star: float
         The characteristic velocity dispersion.
-    vd_min, vd_max: int
+    vd_min, vd_max: float
         Lower and upper bounds of random variable x. Samples are drawn uniformly from
         bounds.
     sky_area : `~astropy.units.Quantity`
@@ -282,7 +282,9 @@ def schechter_vel_disp_redshift(
 
     # gamma function integrand
     def f(lnx, a):
-        return np.exp(a * lnx - np.exp(lnx)) if lnx < lnxmax.max() else 0.0
+        return (
+            np.exp(lnx) * np.exp(a * lnx - np.exp(lnx)) if lnx < lnxmax.max() else 0.0
+        )
 
     # integrate gamma function for each redshift
 
