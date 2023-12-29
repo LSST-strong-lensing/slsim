@@ -54,7 +54,12 @@ class TestLens(object):
     def test_source_magnitude(self):
         band = "g"
         source_magnitude = self.gg_lens.extended_source_magnitude(band)
+        source_magnitude_lensed = self.gg_lens.extended_source_magnitude(band, 
+                                                                         lensed=True)
+        host_mag = self.gg_lens.extended_source_magnification()
+        expected_lensed_mag = source_magnitude - 2.5 * np.log10(host_mag)
         assert pytest.approx(source_magnitude[0], rel=1e-3) == 30.780194
+        assert source_magnitude_lensed == expected_lensed_mag
 
     def test_image_separation_from_positions(self):
         image_positions = self.gg_lens.image_positions()
