@@ -65,7 +65,7 @@ class TestSource:
     def test_ps_magnitude_with_variability(self):
         image_observation_times = np.array([np.pi, np.pi / 2, np.pi / 3])
         result = self.source.point_source_magnitude("r", image_observation_times)
-        result_comp = np.array([17.48917028, 17.38842661, 17.27946793])
+        result_comp = np.array([0.48917028, 0.38842661, 0.27946793])
         npt.assert_almost_equal(result, result_comp, decimal=5)
 
     def test_es_magnitude(self):

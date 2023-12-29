@@ -29,6 +29,23 @@ def test_pes_lens_pop_instance():
     pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
     assert pes_lens_class._source_type == "point_plus_extended"
 
+def test_supernovae_plus_galaxies_lens_pop_instance():
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    sky_area = Quantity(value=0.05, unit="deg2")
+    pes_lens_pop = LensPop(
+        deflector_type="all-galaxies",
+        source_type="supernovae_plus_galaxies",
+        variability_model="light_curve",
+        kwargs_variability={"MJD", "ps_mag_r"},
+        kwargs_mass2light=None,
+        skypy_config=None,
+        sky_area=sky_area,
+        cosmo=cosmo,
+    )
+    kwargs_lens_cut = {}
+    pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
+    assert pes_lens_class._source_type == "point_plus_extended"
+
 
 def test_num_lenses_and_sources(gg_lens_pop_instance):
     num_lenses = gg_lens_pop_instance.deflector_number()

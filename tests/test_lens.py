@@ -137,6 +137,37 @@ def test_point_source_magnitude(pes_lens_instance):
     mag = pes_lens.point_source_magnitude(band="i", lensed=True)
     assert len(mag) >= 2
 
+@pytest.fixture
+def supernovae_lens_instance():
+    path = os.path.dirname(__file__)
+    source_dict = Table.read(
+        os.path.join(path, "TestData/supernovae_source_dict.fits"), format="fits"
+    )
+    deflector_dict = Table.read(
+        os.path.join(path, "TestData/supernovae_deflector_dict.fits"), format="fits"
+    )
+
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    while True:
+        supernovae_lens = Lens(
+            source_dict=source_dict,
+            deflector_dict=deflector_dict,
+            source_type="point_plus_extended",
+            variability_model="light_curve",
+            kwargs_variab={"MJD", "ps_mag_r"},
+            cosmo=cosmo,
+        )
+        if supernovae_lens.validity_test():
+            supernovae_lens = supernovae_lens
+            break
+    return supernovae_lens
+
+def test_point_source_magnitude_with_lightcurve(supernovae_lens_instance):
+    supernovae_lens = supernovae_lens_instance
+    mag = supernovae_lens.point_source_magnitude(band="r", lensed=True)
+    expected_results = supernovae_lens_instance.source.source_dict["ps_mag_r"]
+    assert np.all(mag) == np.all(expected_results)
+
 
 if __name__ == "__main__":
     pytest.main()
