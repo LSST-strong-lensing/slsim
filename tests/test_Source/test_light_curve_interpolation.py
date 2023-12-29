@@ -1,7 +1,9 @@
 import numpy as np
 from slsim.Sources.SourceVariability.light_curve_interpolation import (
-    LightCurveInterpolation)
+    LightCurveInterpolation,
+)
 import pytest
+
 
 class TestLightCurveInterpolation:
     def test_magnitude(self):
@@ -13,5 +15,6 @@ class TestLightCurveInterpolation:
         result = self.light_curve.magnitude(observation_times)
         assert np.all(result) == np.all(expected_magnitudes)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     pytest.main()

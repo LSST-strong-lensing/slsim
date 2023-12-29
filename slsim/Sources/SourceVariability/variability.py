@@ -1,8 +1,10 @@
-from slsim.Sources.SourceVariability.light_curve_interpolation import \
-    LightCurveInterpolation
+from slsim.Sources.SourceVariability.light_curve_interpolation import (
+    LightCurveInterpolation,
+)
 from slsim.Sources.SourceVariability.sinusoidal_variability import SinusoidalVariability
 
 """This class aims to have realistic variability models for AGN and supernovae."""
+
 
 class Variability(object):
     def __init__(self, variability_model, **kwargs_variability_model):
@@ -20,19 +22,23 @@ class Variability(object):
             sinusoidal_class = SinusoidalVariability(**self.kwargs_model)
             self._model = sinusoidal_class.magnitude
         elif self.variability_model == "light_curve":
-            #Here, we extract light curve from kwargs_model and feed them to 
+            # Here, we extract light curve from kwargs_model and feed them to
             # LightCurveInterpolation class to get interpolation function of magnitude.
             time_array = self.kwargs_model["MJD"]
             string = "ps_mag_"
-            magnitude_values = {key: value for key, 
-                        value in self.kwargs_model.items() if key.startswith(string)}
+            magnitude_values = {
+                key: value
+                for key, value in self.kwargs_model.items()
+                if key.startswith(string)
+            }
             magnitude_array = list(magnitude_values.values())[0]
-            light_curve_class = LightCurveInterpolation(times = time_array, 
-                                                 magnitudes = magnitude_array)
+            light_curve_class = LightCurveInterpolation(
+                times=time_array, magnitudes=magnitude_array
+            )
             self._model = light_curve_class.magnitude
         else:
             raise ValueError(
-                "Given model is not supported. Currently supported models are" 
+                "Given model is not supported. Currently supported models are"
                 "sinusoidal, light_curve."
             )
 

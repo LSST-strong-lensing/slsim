@@ -1,7 +1,7 @@
 import numpy as np
-from slsim.Sources.SourceVariability.sinusoidal_variability import (
-    SinusoidalVariability)
+from slsim.Sources.SourceVariability.sinusoidal_variability import SinusoidalVariability
 import pytest
+
 
 class TestSinusoidalVariability:
     def test_sinusoidal_variability(self):
@@ -15,5 +15,6 @@ class TestSinusoidalVariability:
         assert sinusoidal_variability.amp == 1
         assert sinusoidal_variability.freq == 0.1
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     pytest.main()

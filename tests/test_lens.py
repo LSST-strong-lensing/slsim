@@ -54,8 +54,9 @@ class TestLens(object):
     def test_source_magnitude(self):
         band = "g"
         source_magnitude = self.gg_lens.extended_source_magnitude(band)
-        source_magnitude_lensed = self.gg_lens.extended_source_magnitude(band, 
-                                                                         lensed=True)
+        source_magnitude_lensed = self.gg_lens.extended_source_magnitude(
+            band, lensed=True
+        )
         host_mag = self.gg_lens.extended_source_magnification()
         expected_lensed_mag = source_magnitude - 2.5 * np.log10(host_mag)
         assert pytest.approx(source_magnitude[0], rel=1e-3) == 30.780194
@@ -142,6 +143,7 @@ def test_point_source_magnitude(pes_lens_instance):
     mag = pes_lens.point_source_magnitude(band="i", lensed=True)
     assert len(mag) >= 2
 
+
 @pytest.fixture
 def supernovae_lens_instance():
     path = os.path.dirname(__file__)
@@ -166,6 +168,7 @@ def supernovae_lens_instance():
             supernovae_lens = supernovae_lens
             break
     return supernovae_lens
+
 
 def test_point_source_magnitude_with_lightcurve(supernovae_lens_instance):
     supernovae_lens = supernovae_lens_instance

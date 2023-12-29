@@ -503,9 +503,9 @@ def lens_image(
     transform_pix2angle,
     exposure_time=None,
     t_obs=None,
-    std_gaussian_noise=None, 
+    std_gaussian_noise=None,
     with_source=True,
-    with_deflector=True
+    with_deflector=True,
 ):
     """Creates lens image on the basis of given information. It can simulate both static
     lens image and variable lens image.
@@ -533,7 +533,7 @@ def lens_image(
         delta_pix=delta_pix,
         num_pix=num_pix,
         with_source=with_source,
-    with_deflector=with_deflector
+        with_deflector=with_deflector,
     )
     convolved_deflector_source = convolved_image(
         image=deflector_source, psf_kernel=psf_kernel
@@ -579,9 +579,9 @@ def lens_image_series(
     transform_pix2angle,
     exposure_time=None,
     t_obs=None,
-    std_gaussian_noise=None, 
+    std_gaussian_noise=None,
     with_source=True,
-    with_deflector=True
+    with_deflector=True,
 ):
     """Creates lens image on the basis of given information. This function is designed
     to simulate time series images of a lens.
@@ -615,7 +615,7 @@ def lens_image_series(
             t_obs=time,
             std_gaussian_noise=std_gaussian_noise,
             with_source=with_source,
-            with_deflector=with_deflector
+            with_deflector=with_deflector,
         )
         image_series.append(image)
 

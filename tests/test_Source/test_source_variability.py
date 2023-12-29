@@ -14,7 +14,7 @@ class TestVariability:
         mjd = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
         ps_mag_1 = np.array([20.0, 21.0, 22.0, 23.0, 24.0])
         observation_times = np.array([1, 2, 3, 4, 5])
-        var=Variability(variability_model="light_curve", MJD=mjd, ps_mag_1=ps_mag_1)
+        var = Variability(variability_model="light_curve", MJD=mjd, ps_mag_1=ps_mag_1)
         results = var.variability_at_time(observation_times)
         assert np.all(results) == np.all(ps_mag_1)
 
@@ -23,9 +23,9 @@ class TestVariability:
         with pytest.raises(ValueError) as excinfo:
             Variability("invalid_model", **kwargs_model)
         assert (
-                "Given model is not supported. Currently supported models are" 
-                "sinusoidal, light_curve."
-            ) in str(excinfo.value)
+            "Given model is not supported. Currently supported models are"
+            "sinusoidal, light_curve."
+        ) in str(excinfo.value)
 
     def test_variability_at_t_sinusoidal(self):
         kwargs_model = {"amp": 1.0, "freq": 0.5}
