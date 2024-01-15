@@ -523,8 +523,8 @@ def lens_image(
         source. In case of point source, if we do not provide t_obs, considers no
         variability in the lens.
     :param std_gaussian_noise: standard deviation for a gaussian noise
-    :param with_source: If True, simulates image with extended source in 
-     lens configuration.
+    :param with_source: If True, simulates image with extended source in lens
+        configuration.
     :param with_deflector: If True, simulates image with deflector.
     :return: lens image
     """
@@ -601,8 +601,8 @@ def lens_image_series(
     :param t_obs: array of image observation time [day] for a lens.
     :param std_gaussian_noise: array of standard deviation for gaussian noise for each
         image
-    :param with_source: If True, simulates image with extended source in 
-     lens configuration.
+    :param with_source: If True, simulates image with extended source in lens
+        configuration.
     :param with_deflector: If True, simulates image with deflector.
     :return: list of series of images of a lens
     """

@@ -8,8 +8,8 @@ def deflector_cut(
     :param z_max: maximum redshift of selected sample
     :param band: imaging band
     :param band_max: maximum magnitude of galaxies in band
-    :param list_type: format of the source catalog file. Currently, it supports
-     a single astropy table or a list of astropy tables.
+    :param list_type: format of the source catalog file. Currently, it supports a single
+        astropy table or a list of astropy tables.
     :return: subset of galaxies matching the selection criteria
     """
     if list_type == "astropy_table":
