@@ -26,11 +26,14 @@ class Source(object):
             kwargs_variab_extracted = {}
             for element in kwargs_variab:
                 if element in self.source_dict.colnames:
-                    if isinstance(self.source_dict[element], np.ndarray) and \
-                          self.source_dict[element].ndim == 2 and \
-                              self.source_dict[element].shape[0] == 1:
-                        kwargs_variab_extracted[element] = \
-                            self.source_dict[element].reshape(-1)
+                    if (
+                        isinstance(self.source_dict[element], np.ndarray)
+                        and self.source_dict[element].ndim == 2
+                        and self.source_dict[element].shape[0] == 1
+                    ):
+                        kwargs_variab_extracted[element] = self.source_dict[
+                            element
+                        ].reshape(-1)
                     else:
                         kwargs_variab_extracted[element] = self.source_dict[element]
                 else:
@@ -38,8 +41,8 @@ class Source(object):
                         "given keyword %s is not in the source catalog."%element
                     )
             self.variability_class = Variability(
-                        variability_model, **kwargs_variab_extracted
-                    )
+                variability_model, **kwargs_variab_extracted
+            )
         else:
             self._variability_class = None
 
@@ -86,7 +89,8 @@ class Source(object):
         if image_observation_times is not None:
             if self.variability_class is not None:
                 variable_mag = self.variability_class.variability_at_time(
-                    image_observation_times)
+                    image_observation_times
+                )
                 return variable_mag
             else:
                 raise ValueError(

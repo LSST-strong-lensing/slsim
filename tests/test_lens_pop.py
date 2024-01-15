@@ -29,6 +29,7 @@ def test_pes_lens_pop_instance():
     pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
     assert pes_lens_class._source_type == "point_plus_extended"
 
+
 def test_supernovae_plus_galaxies_lens_pop_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     sky_area = Quantity(value=0.05, unit="deg2")

@@ -1,5 +1,6 @@
 from scipy.interpolate import interp1d
 
+
 class LightCurveInterpolation(object):
     """This class manages interpolation of light curve of a source"""
     def __init__(self, light_curve):

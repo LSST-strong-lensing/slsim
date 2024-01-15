@@ -1,8 +1,10 @@
-from slsim.Sources.SourceVariability.light_curve_interpolation import \
-    LightCurveInterpolation
+from slsim.Sources.SourceVariability.light_curve_interpolation import (
+    LightCurveInterpolation,
+)
 from slsim.Sources.SourceVariability.sinusoidal_variability import SinusoidalVariability
 
 """This class aims to have realistic variability models for AGN and supernovae."""
+
 
 class Variability(object):
     def __init__(self, variability_model, **kwargs_variability_model):
@@ -24,7 +26,7 @@ class Variability(object):
             self._model = light_curve_class.magnitude
         else:
             raise ValueError(
-                "Given model is not supported. Currently supported models are" 
+                "Given model is not supported. Currently supported models are"
                 "sinusoidal, light_curve."
             )
 

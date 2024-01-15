@@ -12,7 +12,8 @@ class PointPlusExtendedSource(Galaxies, SourcePopBase):
         sky_area,
         kwargs_cut,
         variability_model=None,
-        kwargs_variability_model=None, list_type = "astropy_table"
+        kwargs_variability_model=None,
+        list_type="astropy_table",
     ):
         """
 
@@ -32,8 +33,12 @@ class PointPlusExtendedSource(Galaxies, SourcePopBase):
          a single astropy table or a list of astropy tables.
         """
         Galaxies.__init__(
-            self, point_plus_extended_source_list, kwargs_cut, cosmo, sky_area,
-            list_type = list_type
+            self,
+            point_plus_extended_source_list,
+            kwargs_cut,
+            cosmo,
+            sky_area,
+            list_type=list_type,
         )
         SourcePopBase.__init__(
             self, cosmo, sky_area, variability_model, kwargs_variability_model
