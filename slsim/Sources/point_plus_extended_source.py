@@ -28,6 +28,8 @@ class PointPlusExtendedSource(Galaxies, SourcePopBase):
         :param kwargs_variability_model: keyword arguments for the variability of
          a source. This is a population argument, not the light curve parameter for
          the individual source.
+        :param list_type: format of the source catalog file. Currently, it supports
+         a single astropy table or a list of astropy tables.
         """
         Galaxies.__init__(
             self, point_plus_extended_source_list, kwargs_cut, cosmo, sky_area,

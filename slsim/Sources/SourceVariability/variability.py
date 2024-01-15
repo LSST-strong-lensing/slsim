@@ -20,15 +20,7 @@ class Variability(object):
             sinusoidal_class = SinusoidalVariability(**self.kwargs_model)
             self._model = sinusoidal_class.magnitude
         elif self.variability_model == "light_curve":
-            #Here, we extract light curve from kwargs_model and feed them to 
-            # LightCurveInterpolation class to get interpolation function of magnitude.
-            time_array = self.kwargs_model["MJD"]
-            string = "ps_mag_"
-            magnitude_values = {key: value for key, 
-                        value in self.kwargs_model.items() if key.startswith(string)}
-            magnitude_array = list(magnitude_values.values())[0]
-            light_curve_class = LightCurveInterpolation(times = time_array, 
-                                                 magnitudes = magnitude_array)
+            light_curve_class = LightCurveInterpolation(light_curve=self.kwargs_model)
             self._model = light_curve_class.magnitude
         else:
             raise ValueError(
