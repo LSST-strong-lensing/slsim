@@ -2,7 +2,7 @@ from slsim.Sources.source_pop_base import SourcePopBase
 from slsim.Sources.galaxies import Galaxies
 
 
-class PointPlusExtendedSource(Galaxies, SourcePopBase):
+class PointPlusExtendedSources(Galaxies, SourcePopBase):
     """Class to describe point and extended sources."""
 
     def __init__(

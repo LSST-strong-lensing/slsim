@@ -134,7 +134,7 @@ class LensPop(LensedPopulationBase):
             )
             self._source_model_type = "point_source"
         elif source_type == "quasar_plus_galaxies":
-            from slsim.Sources.point_plus_extended_source import PointPlusExtendedSource
+            from slsim.Sources.point_plus_extended_source import PointPlusExtendedSources
             from slsim.Sources.QuasarCatalog.quasar_plus_galaxies import (
                 quasar_galaxies_simple,
             )
@@ -142,7 +142,7 @@ class LensPop(LensedPopulationBase):
             if kwargs_quasars_galaxies is None:
                 kwargs_quasars_galaxies = {}
             quasar_galaxy_source = quasar_galaxies_simple(**kwargs_quasars_galaxies)
-            self._sources = PointPlusExtendedSource(
+            self._sources = PointPlusExtendedSources(
                 quasar_galaxy_source,
                 cosmo=cosmo,
                 sky_area=sky_area,
@@ -152,7 +152,7 @@ class LensPop(LensedPopulationBase):
             )
             self._source_model_type = "point_plus_extended"
         elif source_type == "supernovae_plus_galaxies":
-            from slsim.Sources.point_plus_extended_source import PointPlusExtendedSource
+            from slsim.Sources.point_plus_extended_source import PointPlusExtendedSources
 
             #currently, we are using precomputed supernovae catlog. Future plan is to 
             #develop a supernovae class inside the slsim and them here to generate 
@@ -161,7 +161,7 @@ class LensPop(LensedPopulationBase):
             new_path = self.path + "/Sources/SupernovaeData/supernovae_data.pkl"
             with open(new_path, "rb") as f:
                 load_supernovae_data = pickle.load(f)
-            self._sources = PointPlusExtendedSource(
+            self._sources = PointPlusExtendedSources(
                 load_supernovae_data,
                 cosmo=cosmo,
                 sky_area=sky_area,
