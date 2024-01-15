@@ -8,7 +8,7 @@ class Source(object):
     """This class provides source dictionary and variable magnitude of a individual
     source."""
 
-    def __init__(self, source_dict, variability_model=None, kwargs_variab=None):
+    def __init__(self, source_dict, variability_model=None, kwargs_variability=None):
         """
         :param source_dict: Source properties
         :type source_dict: dict
@@ -22,9 +22,9 @@ class Source(object):
         :type kwargs_variab: list of str
         """
         self.source_dict = source_dict
-        if kwargs_variab is not None:
+        if kwargs_variability is not None:
             kwargs_variab_extracted = {}
-            for element in kwargs_variab:
+            for element in kwargs_variability:
                 if element in self.source_dict.colnames:
                     if (
                         isinstance(self.source_dict[element], np.ndarray)
