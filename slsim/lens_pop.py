@@ -154,6 +154,9 @@ class LensPop(LensedPopulationBase):
         elif source_type == "supernovae_plus_galaxies":
             from slsim.Sources.point_plus_extended_source import PointPlusExtendedSource
 
+            #currently, we are using precomputed supernovae catlog. Future plan is to 
+            #develop a supernovae class inside the slsim and them here to generate 
+            #supernovae light curves.
             self.path = os.path.dirname(__file__)
             new_path = self.path + "/Sources/SupernovaeData/supernovae_data.pkl"
             with open(new_path, "rb") as f:
