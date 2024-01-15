@@ -42,7 +42,7 @@ class TestSource:
         self.source = Source(
             source_dict,
             variability_model="sinusoidal",
-            kwargs_variab={"amp", "freq"},
+            kwargs_variability={"amp", "freq"},
         )
 
     def test_redshift(self):

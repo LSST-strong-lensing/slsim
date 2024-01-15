@@ -19,7 +19,7 @@ class Source(object):
          This is associated with an input for Variability class. By using these key
          words, code search for quantities in source_dict with these names and creates
          a dictionary and this dict should be passed to the Variability class.
-        :type kwargs_variab: list of str
+        :type kwargs_variability: list of str
         """
         self.source_dict = source_dict
         if kwargs_variability is not None:

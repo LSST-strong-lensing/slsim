@@ -129,7 +129,7 @@ def pes_lens_instance():
             deflector_dict=deflector_dict,
             source_type="point_plus_extended",
             variability_model="sinusoidal",
-            kwargs_variab={"amp", "freq"},
+            kwargs_variability={"amp", "freq"},
             cosmo=cosmo,
         )
         if pes_lens.validity_test():
@@ -161,7 +161,7 @@ def supernovae_lens_instance():
             deflector_dict=deflector_dict,
             source_type="point_plus_extended",
             variability_model="light_curve",
-            kwargs_variab={"MJD", "ps_mag_r"},
+            kwargs_variability={"MJD", "ps_mag_r"},
             cosmo=cosmo,
         )
         if supernovae_lens.validity_test():
