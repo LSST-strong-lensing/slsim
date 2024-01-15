@@ -7,7 +7,7 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
 
     def __init__(
         self,
-        point_plus_extended_source_list,
+        point_plus_extended_sources_list,
         cosmo,
         sky_area,
         kwargs_cut,
@@ -34,7 +34,7 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
         """
         Galaxies.__init__(
             self,
-            point_plus_extended_source_list,
+            point_plus_extended_sources_list,
             kwargs_cut,
             cosmo,
             sky_area,

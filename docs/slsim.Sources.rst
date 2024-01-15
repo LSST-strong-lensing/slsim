@@ -24,7 +24,7 @@ slsim.Sources.galaxies module
 slsim.Sources.point\_plus\_extended\_source module
 --------------------------------------------------
 
-.. automodule:: slsim.Sources.point_plus_extended_source
+.. automodule:: slsim.Sources.point_plus_extended_sources
    :members:
    :undoc-members:
    :show-inheritance:

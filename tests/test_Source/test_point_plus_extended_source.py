@@ -1,6 +1,6 @@
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
-from slsim.Sources.point_plus_extended_source import PointPlusExtendedSources
+from slsim.Sources.point_plus_extended_sources import PointPlusExtendedSources
 import os
 from astropy.table import Table
 import pytest
@@ -17,7 +17,7 @@ class TestPointPlusExtendedSources(object):
         )
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         self.pe_source = PointPlusExtendedSources(
-            point_plus_extended_source_list=self.source_list,
+            point_plus_extended_sources_list=self.source_list,
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
@@ -28,8 +28,8 @@ class TestPointPlusExtendedSources(object):
         assert number > 0
 
     def test_draw_source(self):
-        point_plus_extended_source = self.pe_source.draw_source()
-        assert len(point_plus_extended_source) > 0
+        point_plus_extended_sources = self.pe_source.draw_source()
+        assert len(point_plus_extended_sources) > 0
 
 
 if __name__ == "__main__":
