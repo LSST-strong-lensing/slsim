@@ -15,7 +15,7 @@ class Source(object):
         :param variability_model: keyword for variability model to be used. This is an
          input for the Variability class.
         :type variability_model: str
-        :param kwargs_variab: Keyword arguments for variability class.
+        :param kwargs_variability: Keyword arguments for variability class.
          This is associated with an input for Variability class. By using these key
          words, code search for quantities in source_dict with these names and creates
          a dictionary and this dict should be passed to the Variability class.
