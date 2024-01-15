@@ -38,7 +38,7 @@ class Source(object):
                         kwargs_variab_extracted[element] = self.source_dict[element]
                 else:
                     raise ValueError(
-                        "given keyword %s is not in the source catalog."%element
+                        "given keyword %s is not in the source catalog." % element
                     )
             self.variability_class = Variability(
                 variability_model, **kwargs_variab_extracted
