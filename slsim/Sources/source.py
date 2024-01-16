@@ -104,7 +104,7 @@ class Source(object):
                     and source_mag.shape[0] == 1):
                 return source_mag.reshape(-1)
             else:
-                return np.array([source_mag])
+                return source_mag
 
     def extended_source_magnitude(self, band):
         """Get the magnitude of the extended source in a specific band.
