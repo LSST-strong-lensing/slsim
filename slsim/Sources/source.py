@@ -99,9 +99,11 @@ class Source(object):
                 )
         else:
             source_mag = self.source_dict[band_string]
-            if (isinstance(source_mag, np.ndarray)
-                    and source_mag.ndim == 2
-                    and source_mag.shape[0] == 1):
+            if (
+                isinstance(source_mag, np.ndarray)
+                and source_mag.ndim == 2
+                and source_mag.shape[0] == 1
+            ):
                 return source_mag.reshape(-1)
             else:
                 return source_mag

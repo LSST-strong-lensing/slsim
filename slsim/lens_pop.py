@@ -134,8 +134,9 @@ class LensPop(LensedPopulationBase):
             )
             self._source_model_type = "point_source"
         elif source_type == "quasar_plus_galaxies":
-            from slsim.Sources.point_plus_extended_sources import \
-                PointPlusExtendedSources
+            from slsim.Sources.point_plus_extended_sources import (
+                PointPlusExtendedSources,
+            )
             from slsim.Sources.QuasarCatalog.quasar_plus_galaxies import (
                 quasar_galaxies_simple,
             )
@@ -153,12 +154,13 @@ class LensPop(LensedPopulationBase):
             )
             self._source_model_type = "point_plus_extended"
         elif source_type == "supernovae_plus_galaxies":
-            from slsim.Sources.point_plus_extended_sources import \
-                PointPlusExtendedSources
+            from slsim.Sources.point_plus_extended_sources import (
+                PointPlusExtendedSources,
+            )
 
-            #currently, we are using precomputed supernovae catlog. Future plan is to 
-            #develop a supernovae class inside the slsim and them here to generate 
-            #supernovae light curves.
+            # currently, we are using precomputed supernovae catlog. Future plan is to
+            # develop a supernovae class inside the slsim and them here to generate
+            # supernovae light curves.
             self.path = os.path.dirname(__file__)
             new_path = self.path + "/Sources/SupernovaeData/supernovae_data.pkl"
             with open(new_path, "rb") as f:
