@@ -42,8 +42,8 @@ class Galaxies(SourcePopBase):
             if "e1" not in column_names or "e2" not in column_names:
                 for table in galaxy_list:
                     new_column_length = len(table)
-                    new_column_1 = Column([-1] * new_column_length, name="e1")
-                    new_column_2 = Column([-1] * new_column_length, name="e2")
+                    new_column_1 = Column([np.float(-1)] * new_column_length, name="e1")
+                    new_column_2 = Column([np.float(-1)] * new_column_length, name="e2")
                     table.add_columns([new_column_1, new_column_2])
             if "n_sersic" not in column_names:
                 for table in galaxy_list:
@@ -77,12 +77,8 @@ class Galaxies(SourcePopBase):
 
         if galaxy["e1"] == -1 or galaxy["e2"] == -1:
             e1, e2 = galaxy_projected_eccentricity(float(galaxy["ellipticity"]))
-            if self.list_type == "astropy_table":
-                galaxy["e1"] = e1
-                galaxy["e2"] = e2
-            else:
-                galaxy["e1"] = [e1]
-                galaxy["e2"] = [e2]
+            galaxy["e1"] = e1
+            galaxy["e2"] = e2
         if galaxy["n_sersic"] == -1:
             galaxy["n_sersic"] = 1  # TODO make a better estimate with scatter
         return galaxy
