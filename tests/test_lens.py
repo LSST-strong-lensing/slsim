@@ -174,7 +174,8 @@ def test_point_source_magnitude_with_lightcurve(supernovae_lens_instance):
     supernovae_lens = supernovae_lens_instance
     mag = supernovae_lens.point_source_magnitude(band="r", lensed=True)
     expected_results = supernovae_lens_instance.source.source_dict["ps_mag_r"]
-    assert np.all(mag) == np.all(expected_results)
+    assert mag[0][0] != expected_results[0][0]
+    assert mag[1][0] != expected_results[0][0]
 
 
 if __name__ == "__main__":

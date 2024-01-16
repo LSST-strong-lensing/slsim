@@ -99,7 +99,12 @@ class Source(object):
                 )
         else:
             source_mag = self.source_dict[band_string]
-            return source_mag
+            if (isinstance(source_mag, np.ndarray)
+                    and source_mag.ndim == 2
+                    and source_mag.shape[0] == 1):
+                return source_mag.reshape(-1)
+            else:
+                return source_mag
 
     def extended_source_magnitude(self, band):
         """Get the magnitude of the extended source in a specific band.

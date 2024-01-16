@@ -39,8 +39,45 @@ class TestSource:
                 "e2",
             ),
         )
+        source_dict2 = Table(
+            [
+                [0.5],
+                [np.array([17, 18, 19, 20, 21])],
+                [18],
+                [16],
+                [23],
+                [24],
+                [22],
+                [0.5],
+                [2],
+                [4],
+                [0.35],
+                [0.8],
+                [0.76],
+            ],
+            names=(
+                "z",
+                "ps_mag_r",
+                "ps_mag_g",
+                "ps_mag_i",
+                "mag_r",
+                "mag_g",
+                "mag_i",
+                "amp",
+                "freq",
+                "n_sersic",
+                "angular_size",
+                "e1",
+                "e2",
+            ),
+        )
         self.source = Source(
             source_dict,
+            variability_model="sinusoidal",
+            kwargs_variability={"amp", "freq"},
+        )
+        self.source2 = Source(
+            source_dict2,
             variability_model="sinusoidal",
             kwargs_variability={"amp", "freq"},
         )
@@ -71,6 +108,10 @@ class TestSource:
     def test_es_magnitude(self):
         result = self.source.extended_source_magnitude("r")
         assert result == [23]
+
+    def test_ps_magnitude_array(self):
+        result = self.source2.point_source_magnitude("r")
+        assert len(result) == 5
 
 
 if __name__ == "__main__":
