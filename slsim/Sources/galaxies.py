@@ -42,8 +42,8 @@ class Galaxies(SourcePopBase):
             if "e1" not in column_names or "e2" not in column_names:
                 for table in galaxy_list:
                     new_column_length = len(table)
-                    new_column_1 = Column([np.float(-1)] * new_column_length, name="e1")
-                    new_column_2 = Column([np.float(-1)] * new_column_length, name="e2")
+                    new_column_1 = Column([-1.0] * new_column_length, name="e1")
+                    new_column_2 = Column([-1.0] * new_column_length, name="e2")
                     table.add_columns([new_column_1, new_column_2])
             if "n_sersic" not in column_names:
                 for table in galaxy_list:
