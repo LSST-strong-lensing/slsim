@@ -45,7 +45,7 @@ setup(
     include_package_data=True,
     keywords="slsim",
     name="slsim",
-    packages=find_packages(include=["slsim", "slsim.*"]),
+    packages=find_packages(include=["slsim", "slsim.*", "data"]),  # TODO: better way to include data
     test_suite="tests",
     tests_require=test_requirements,
     url="https://github.com/LSST-strong-lensing/slsim",
