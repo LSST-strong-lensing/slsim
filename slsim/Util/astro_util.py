@@ -115,7 +115,7 @@ def thin_disk_temperature_profile(
         with the black hole's spin, and negative spin represents retrograde accretion
         flow.
     :param black_hole_mass_exponent: The log of the black hole mass normalized by the mass
-        of the sun. black_hole_mass_exponent = log_10(black_hole_mass / mass_sun).
+        of the sun; black_hole_mass_exponent = log_10(black_hole_mass / mass_sun).
         Typical AGN have an exponent ranging from 6 to 10.
     :param eddington_ratio: The fraction of the eddington limit which the black hole
         is accreting at.
@@ -208,10 +208,10 @@ def create_radial_map(r_out, r_resolution, inclination_angle):
     """
     x_values = np.linspace(-r_out, r_out, 2 * r_resolution)
     y_values = np.linspace(-r_out, r_out, 2 * r_resolution) / np.cos(
-        inclination_angle * np.pi / 180
+        np.radians(inclination_angle)
     )
 
-    X, Y = np.meshgrid(x_values, y_values, indexing="ij")
+    X, Y = np.meshgrid(x_values, y_values)
 
     return (X**2.0 + Y**2.0) ** 0.5
 
@@ -233,10 +233,10 @@ def create_phi_map(r_out, r_resolution, inclination_angle):
     """
     x_values = np.linspace(-r_out, r_out, 2 * r_resolution)
     y_values = np.linspace(-r_out, r_out, 2 * r_resolution) / np.cos(
-        inclination_angle * np.pi / 180
+        np.radians(inclination_angle)
     )
 
-    X, Y = np.meshgrid(x_values, y_values, indexing="ij")
+    X, Y = np.meshgrid(x_values, y_values)
     # must add pi/2 so phi = 0 points towards observer.
     return (np.arctan2(Y, X) + np.pi / 2) % (2 * np.pi)
 
@@ -263,8 +263,8 @@ def calculate_time_delays_on_disk(
     """
     return (
         (radial_map**2.0 + corona_height**2.0) ** 0.5
-        + corona_height * np.cos(inclination_angle)
-        - radial_map * np.cos(phi_map) * np.sin(inclination_angle)
+        + corona_height * np.cos(np.radians(inclination_angle))
+        - radial_map * np.cos(phi_map) * np.sin(np.radians(inclination_angle))
     )
 
 
@@ -434,6 +434,8 @@ def calculate_accretion_disk_response_function(
     temperature_map = thin_disk_temperature_profile(
         radial_map, black_hole_spin, black_hole_mass_exponent, eddington_ratio
     )
+
+    temperature_map *= radial_map < r_out
 
     db_dt_map = planck_law_derivative(
         temperature_map, rest_frame_wavelength_in_nanometers

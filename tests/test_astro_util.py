@@ -172,12 +172,12 @@ def test_create_phi_map():
     radial_map = create_radial_map(100, 100, 45)
     assert np.shape(phi_map) == np.shape(radial_map)
 
-    # Test phi = 0 points towards the observer, the bottom side of the map
-    assert phi_map[100, 0] < 1e-2
+    # Test phi = 0 points towards the compressed side of the map
+    assert radial_map[0, 100] > 100
+    assert phi_map[0, 100] < 1e-2
 
     # Test phi values rotate counter-clockwise
-    assert phi_map[110, 0] > phi_map[100, 0]
-    assert phi_map[-1, -1] > phi_map[-1, 0]
+    assert phi_map[0, 110] > phi_map[0, 100]
 
 
 def test_calculate_time_delays_on_disk():
@@ -192,12 +192,12 @@ def test_calculate_time_delays_on_disk():
     assert np.sum(low_mass_time_delay_map) / (200**2) < (1 * u.s)
 
     # Test maximum time delay points away from observer
-    assert np.argmax(time_delay_map[100, :]) == 199
+    assert np.argmax(time_delay_map[:, 100]) == 199
 
     # Test left- right-side symmetry
-    npt.assert_approx_equal(time_delay_map[0, 25], time_delay_map[-1, 25])
-    npt.assert_approx_equal(time_delay_map[0, 100], time_delay_map[-1, 100])
-    npt.assert_approx_equal(time_delay_map[0, 180], time_delay_map[-1, 180])
+    npt.assert_approx_equal(time_delay_map[25, 0], time_delay_map[25, -1])
+    npt.assert_approx_equal(time_delay_map[100, 0], time_delay_map[100, -1])
+    npt.assert_approx_equal(time_delay_map[180, 0], time_delay_map[180, -1])
 
     # Test single value for a face on disk
     # (light travels back and forth for total of 20 R_g)
@@ -263,9 +263,11 @@ def test_calculate_accretion_disk_response_function():
     temperature_map = thin_disk_temperature_profile(
         radial_map, black_hole_spin, black_hole_mass_exponent, eddington_ratio
     )
+    temperature_map *= radial_map < r_out
     db_dt_map = planck_law_derivative(
         temperature_map, rest_frame_wavelength_in_nanometers
     )
+
     dt_dlx_map = calculate_dt_dlx(radial_map, temperature_map, corona_height)
     weighting_factors = np.nan_to_num(db_dt_map * dt_dlx_map)
     time_delay_map = calculate_time_delays_on_disk(
@@ -278,6 +280,7 @@ def test_calculate_accretion_disk_response_function():
         weights=weighting_factors,
         density=True,
     )[0]
+    response_function_manual /= np.nansum(response_function_manual)
 
     response_function = calculate_accretion_disk_response_function(
         r_out,
