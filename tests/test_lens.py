@@ -54,7 +54,13 @@ class TestLens(object):
     def test_source_magnitude(self):
         band = "g"
         source_magnitude = self.gg_lens.extended_source_magnitude(band)
+        source_magnitude_lensed = self.gg_lens.extended_source_magnitude(
+            band, lensed=True
+        )
+        host_mag = self.gg_lens.extended_source_magnification()
+        expected_lensed_mag = source_magnitude - 2.5 * np.log10(host_mag)
         assert pytest.approx(source_magnitude[0], rel=1e-3) == 30.780194
+        assert source_magnitude_lensed == expected_lensed_mag
 
     def test_image_separation_from_positions(self):
         image_positions = self.gg_lens.image_positions()
@@ -123,7 +129,7 @@ def pes_lens_instance():
             deflector_dict=deflector_dict,
             source_type="point_plus_extended",
             variability_model="sinusoidal",
-            kwargs_variab={"amp", "freq"},
+            kwargs_variability={"amp", "freq"},
             cosmo=cosmo,
         )
         if pes_lens.validity_test():
@@ -136,6 +142,40 @@ def test_point_source_magnitude(pes_lens_instance):
     pes_lens = pes_lens_instance
     mag = pes_lens.point_source_magnitude(band="i", lensed=True)
     assert len(mag) >= 2
+
+
+@pytest.fixture
+def supernovae_lens_instance():
+    path = os.path.dirname(__file__)
+    source_dict = Table.read(
+        os.path.join(path, "TestData/supernovae_source_dict.fits"), format="fits"
+    )
+    deflector_dict = Table.read(
+        os.path.join(path, "TestData/supernovae_deflector_dict.fits"), format="fits"
+    )
+
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    while True:
+        supernovae_lens = Lens(
+            source_dict=source_dict,
+            deflector_dict=deflector_dict,
+            source_type="point_plus_extended",
+            variability_model="light_curve",
+            kwargs_variability={"MJD", "ps_mag_r"},
+            cosmo=cosmo,
+        )
+        if supernovae_lens.validity_test():
+            supernovae_lens = supernovae_lens
+            break
+    return supernovae_lens
+
+
+def test_point_source_magnitude_with_lightcurve(supernovae_lens_instance):
+    supernovae_lens = supernovae_lens_instance
+    mag = supernovae_lens.point_source_magnitude(band="r", lensed=True)
+    expected_results = supernovae_lens_instance.source.source_dict["ps_mag_r"]
+    assert mag[0][0] != expected_results[0][0]
+    assert mag[1][0] != expected_results[0][0]
 
 
 if __name__ == "__main__":

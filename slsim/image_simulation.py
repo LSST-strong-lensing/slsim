@@ -504,6 +504,8 @@ def lens_image(
     exposure_time=None,
     t_obs=None,
     std_gaussian_noise=None,
+    with_source=True,
+    with_deflector=True,
 ):
     """Creates lens image on the basis of given information. It can simulate both static
     lens image and variable lens image.
@@ -521,6 +523,9 @@ def lens_image(
         source. In case of point source, if we do not provide t_obs, considers no
         variability in the lens.
     :param std_gaussian_noise: standard deviation for a gaussian noise
+    :param with_source: If True, simulates image with extended source in lens
+        configuration.
+    :param with_deflector: If True, simulates image with deflector.
     :return: lens image
     """
     delta_pix = transformmatrix_to_pixelscale(transform_pix2angle)
@@ -530,6 +535,8 @@ def lens_image(
         mag_zero_point=mag_zero_point,
         delta_pix=delta_pix,
         num_pix=num_pix,
+        with_source=with_source,
+        with_deflector=with_deflector,
     )
     convolved_deflector_source = convolved_image(
         image=deflector_source, psf_kernel=psf_kernel
@@ -576,6 +583,8 @@ def lens_image_series(
     exposure_time=None,
     t_obs=None,
     std_gaussian_noise=None,
+    with_source=True,
+    with_deflector=True,
 ):
     """Creates lens image on the basis of given information. This function is designed
     to simulate time series images of a lens.
@@ -592,6 +601,9 @@ def lens_image_series(
     :param t_obs: array of image observation time [day] for a lens.
     :param std_gaussian_noise: array of standard deviation for gaussian noise for each
         image
+    :param with_source: If True, simulates image with extended source in lens
+        configuration.
+    :param with_deflector: If True, simulates image with deflector.
     :return: list of series of images of a lens
     """
     image_series = []
@@ -608,6 +620,8 @@ def lens_image_series(
             exposure_time=expo_time,
             t_obs=time,
             std_gaussian_noise=std_gaussian_noise,
+            with_source=with_source,
+            with_deflector=with_deflector,
         )
         image_series.append(image)
 

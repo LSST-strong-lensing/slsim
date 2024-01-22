@@ -20,7 +20,7 @@ class Lens(LensedSystemBase):
         cosmo,
         source_type="extended",
         variability_model=None,
-        kwargs_variab=None,
+        kwargs_variability=None,
         test_area=4 * np.pi,
         mixgauss_means=None,
         mixgauss_stds=None,
@@ -40,7 +40,7 @@ class Lens(LensedSystemBase):
         :param variability_model: keyword for variability model to be used. This is an
          input for the Variability class.
         :type variability_model: str
-        :param kwargs_variab: keyword arguments for the variability of a source.
+        :param kwargs_variability: keyword arguments for the variability of a source.
          This is associated with an input for Variability class.
         :type kwargs_variab: list of str
         :param test_area: area of disk around one lensing galaxies to be investigated
@@ -61,7 +61,7 @@ class Lens(LensedSystemBase):
             cosmo=cosmo,
             test_area=test_area,
             variability_model=variability_model,
-            kwargs_variability=kwargs_variab,
+            kwargs_variability=kwargs_variability,
         )
 
         self.cosmo = cosmo
@@ -70,7 +70,7 @@ class Lens(LensedSystemBase):
         self._mixgauss_stds = mixgauss_stds
         self._mixgauss_weights = mixgauss_weights
         self._magnification_limit = magnification_limit
-        self.kwargs_variab = kwargs_variab
+        self.kwargs_variab = kwargs_variability
 
         if self._source_type == "extended" and self.kwargs_variab is not None:
             warning_msg = (
@@ -384,8 +384,11 @@ class Lens(LensedSystemBase):
                 )
                 return lensed_variable_magnitude
             else:
-                magnified_mag = self.source.point_source_magnitude(band) - magnif_log
-                return magnified_mag
+                source_mag_unlensed = self.source.point_source_magnitude(band)
+                magnified_mag_list = []
+                for i in range(len(magnif_log)):
+                    magnified_mag_list.append(source_mag_unlensed - magnif_log[i])
+                return np.array(magnified_mag_list)
         return self.source.point_source_magnitude(band)
 
     def extended_source_magnitude(self, band, lensed=False):
