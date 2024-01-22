@@ -21,7 +21,7 @@ class Galaxies(SourcePopBase):
         :param cosmo: astropy.cosmology instance
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
-        :param list_type: format of the source catalog file. Currently, it supports a 
+        :param list_type: format of the source catalog file. Currently, it supports a
          single astropy table or a list of astropy tables.
         :type sky_area: `~astropy.units.Quantity`
         """
