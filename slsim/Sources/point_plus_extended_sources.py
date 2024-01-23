@@ -2,17 +2,18 @@ from slsim.Sources.source_pop_base import SourcePopBase
 from slsim.Sources.galaxies import Galaxies
 
 
-class PointPlusExtendedSource(Galaxies, SourcePopBase):
+class PointPlusExtendedSources(Galaxies, SourcePopBase):
     """Class to describe point and extended sources."""
 
     def __init__(
         self,
-        point_plus_extended_source_list,
+        point_plus_extended_sources_list,
         cosmo,
         sky_area,
         kwargs_cut,
         variability_model=None,
         kwargs_variability_model=None,
+        list_type="astropy_table",
     ):
         """
 
@@ -28,9 +29,16 @@ class PointPlusExtendedSource(Galaxies, SourcePopBase):
         :param kwargs_variability_model: keyword arguments for the variability of
          a source. This is a population argument, not the light curve parameter for
          the individual source.
+        :param list_type: format of the source catalog file. Currently, it supports
+         a single astropy table or a list of astropy tables.
         """
         Galaxies.__init__(
-            self, point_plus_extended_source_list, kwargs_cut, cosmo, sky_area
+            self,
+            point_plus_extended_sources_list,
+            kwargs_cut,
+            cosmo,
+            sky_area,
+            list_type=list_type,
         )
         SourcePopBase.__init__(
             self, cosmo, sky_area, variability_model, kwargs_variability_model

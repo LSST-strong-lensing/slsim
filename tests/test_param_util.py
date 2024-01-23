@@ -92,10 +92,15 @@ def test_interpolation_for_sinusoidal():
     # manually calculate expectation snapshots
     expect_image_snapshots = np.zeros((4, 2, 2))
     expect_image_snapshots[:, 0, 0] = np.array(
-        [0.0, 0.0, 0.0, (np.sin(np.pi * np.pi) - 0.0) * 0.5 / (np.pi - 1.0)]
+        [0.0, 0.0, 0.0, abs(np.sin(np.pi * np.pi) - 0.0) * 0.5 / (np.pi - 1.0)]
     )
     expect_image_snapshots[:, 0, 1] = np.array(
-        [0.0, 0.0, 0.0, (2.0 * np.sin(2.0 * np.pi * np.pi) - 0.0) * 0.5 / (np.pi - 1.0)]
+        [
+            0.0,
+            0.0,
+            0.0,
+            abs(2.0 * np.sin(2.0 * np.pi * np.pi) - 0.0) * 0.5 / (np.pi - 1.0),
+        ]
     )
     expect_image_snapshots[:, 1, 0] = np.array([4.0, 3.0, 2.0, 2.0])
     expect_image_snapshots[:, 1, 1] = np.array(
