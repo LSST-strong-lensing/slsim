@@ -13,7 +13,7 @@ class SinusoidalVariability(object):
         self.freq = freq
 
     def magnitude(self, observation_time):
-        """Provides magnitude at a given.
+        """Provides magnitude at a given observation time.
 
         :param observation_time: observation time in [day].
         :return: magnitude for the given time
