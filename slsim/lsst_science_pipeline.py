@@ -745,6 +745,94 @@ def dp0_time_series_images_data(butler, center_coord, radius="0.1", band="i", si
     return table_data
 
 
+def opsim_time_series_images_data(butler, center_coord, radius="0.1", band="i", size=101):
+    """Creates time series data from opsim database.
+
+    :param butler: butler object
+    :param center_coord: A coordinate point around which we need to create time series
+        images.
+    :param radius: radius for query
+    :param band: imaging band
+    :param size: cutout size of images
+    :return: An astropy table containg time series images and other information
+    """
+
+    expo_information = tap_query(center_coords=center_coord, radius=radius, band=band)
+    calexp_image = list_of_calexp(expo_information, butler=butler)
+    radec = dp0_center_radec(calexp_image[0])
+    # Question: is radec_list only for 1 observation? Or can it be a list with multiple ra and decs?
+    # It might be better here to skip the butler and just get ra, dec from center_coord
+    radec_list = [(radec.getRa().asDegrees(), radec.getDec().asDegrees())]
+
+    # Everything in this section below might be better in a separate opsim function
+    # ------------------------------------------------------------------
+    # Users need to have the right branch of opsimsummary installed (Issue#325/proposalTables)
+    # and the opsim database downloaded
+    from opsimsummary import SynOpSim
+
+    opsim_path = '../data/OpSim_database/baseline_v3.0_10yrs.db'
+
+    synopsim = SynOpSim.fromOpSimDB(opsim_path, opsimversion='fbsv2', usePointingTree=True, use_proposal_table=False,
+                                    subset='unique_all')
+
+    gen = synopsim.pointingsEnclosing(radec_list[0], radec_list[1], circRadius=0., pointingRadius=1.75,
+                                      usePointingTree=True)
+    # ------------------------------------------------------------------
+
+    # Collect the next observation sequence from the opsim generator
+    # (if only 1 set of coordinates is supplied then there is only one sequence)
+    seq = next(gen)
+
+    # To do: now, seq still contains all ugrizy bands. We can cut out the ones corresponding to 'band',
+    # but if you'd do this for many bands it would be inefficient and slow (better to initialise opsim summary once)
+
+    # Get the observation times, exposure times and sky brightness from opsim
+    obs_time = np.array(seq['expMJD'])
+    expo_time = np.array(seq['visitExposureTime'])
+    sky_brightness = np.array(seq['filtSkyBrightness'])
+
+    # Get the psf from opsim
+    psf_fwhm = np.array(seq['seeingFwhmGeom'])
+    # To do: make a psf kernel from psf_fwhm (either moffat kernel or match with similar dp0 kernel?)
+    pixels = radec_to_pix(radec, calexp_image)
+    psf_kernel = dp0_psf_kernels(pixels, calexp_image)
+
+    # Get the zero point from opsim
+    m5_depth = np.array(seq['fiveSigmaDepth'])
+    # To do: convert m5_depth to zero point using opsim summary function
+    zero_point_mag = expo_information["zeroPoint"]
+
+    radec_list.extend(radec_list * (len(calexp_image) - 1))
+    cutout_image = calexp_cutout(calexp_image, radec, 450)
+    aligned_image = aligned_calexp(cutout_image)
+    aligned_image_cutout = calexp_cutout(aligned_image, radec, size)
+
+    # To do: replace dp0 cutouts by noise background (using sky_brightness, expo_time, zero_point_mag)
+    dp0_time_series_cutout = []
+    for i in range(len(aligned_image_cutout)):
+        dp0_time_series_cutout.append(aligned_image_cutout[i].image.array)
+
+    table_data = Table(
+        [
+            dp0_time_series_cutout,
+            psf_kernel,
+            obs_time,
+            expo_time,
+            zero_point_mag,
+            radec_list,
+        ],
+        names=(
+            "time_series_images",
+            "psf_kernel",
+            "obs_time",
+            "expo_time",
+            "zero_point",
+            "calexp_center",
+        ),
+    )
+    return table_data
+
+
 def variable_lens_injection(
     lens_class, band, num_pix, transform_pix2angle, exposure_data
 ):
