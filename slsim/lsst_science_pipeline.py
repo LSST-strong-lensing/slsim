@@ -801,16 +801,16 @@ def opsim_time_series_images_data(
     # Get the observation times, exposure times and sky brightness from opsim
     obs_time = np.array(seq["expMJD"])
     expo_time = np.array(seq["visitExposureTime"])
-    sky_brightness = np.array(seq["filtSkyBrightness"])
+    # sky_brightness = np.array(seq["filtSkyBrightness"])
 
     # Get the psf from opsim
-    psf_fwhm = np.array(seq["seeingFwhmGeom"])
+    # psf_fwhm = np.array(seq["seeingFwhmGeom"])
     # To do: make a psf kernel from psf_fwhm (either moffat kernel or match with similar dp0 kernel?)
     pixels = radec_to_pix(radec, calexp_image)
     psf_kernel = dp0_psf_kernels(pixels, calexp_image)
 
     # Get the zero point from opsim
-    m5_depth = np.array(seq["fiveSigmaDepth"])
+    # m5_depth = np.array(seq["fiveSigmaDepth"])
     # To do: convert m5_depth to zero point using opsim summary function
     zero_point_mag = expo_information["zeroPoint"]
 
