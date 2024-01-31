@@ -203,7 +203,7 @@ def create_radial_map(r_out, r_resolution, inclination_angle):
         will be shape (2 * r_resolution), (2 * r_resolution).
     :param inclination_angle: The inclination of the plane of the accretion disk with
         respect to the observer in degrees.
-    :return: A 2-dimensional array of radial positions of shape ((2 * r_resolution), (2
+    :return: A 2D array of radial positions of shape ((2 * r_resolution), (2
         * r_resolution)) in the projected plane of the sky.
     """
     x_values = np.linspace(-r_out, r_out, 2 * r_resolution)
