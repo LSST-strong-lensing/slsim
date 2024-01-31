@@ -356,9 +356,11 @@ def calculate_mean_time_lag(response_function):
     The function np.nansum is used in favor of np.sum to avoid issues with np.nan values.
 
     :param response_function: The input response function (or any array) to calculate the
-        weighted average from. Weighting is in the same units of spacing between values. For
-        response functions generated with this code, these spacings are of units R_g / c
-        by default.
+        weighted average from (e.g. the output of
+        astro_util.calculate_accretion_disk_response_function() which represents the
+        accretion disk's response function). Weighting is in the same units of spacing
+        between values. For response functions generated with this code, these spacings
+        are of units [R_g / c] by default.
     :return: A single value representing the weighted average. Units are equivalent to
         the x-axis spacings of the response_function (or array). For default response
         functions generated with this code, the output has units R_g / c.
