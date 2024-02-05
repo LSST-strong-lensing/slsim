@@ -14,9 +14,7 @@ def spin_to_isco(spin):
     if abs(spin) > 1:
         raise ValueError("Absolute value of spin cannot exceed 1")
     # Calculate intermediate values
-    z1 = 1 + (1 - spin**2) ** (1 / 3) * (
-        (1 + spin) ** (1 / 3) + (1 - spin) ** (1 / 3)
-    )
+    z1 = 1 + (1 - spin**2) ** (1 / 3) * ((1 + spin) ** (1 / 3) + (1 - spin) ** (1 / 3))
     z2 = (3 * spin**2 + z1**2) ** (1 / 2)
 
     # Return ISCO distance in gravitational radii
