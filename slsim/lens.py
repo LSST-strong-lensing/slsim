@@ -619,30 +619,33 @@ class Lens(LensedSystemBase):
         :returns: saves updated .json file in a given path
         """
         kwargs_result_slsim = self.lenstronomy_kwargs(band=band)[1]
-        #remove convergence profile from lens model. Convergence is currently not 
-        #supported by coolest.
+        # remove convergence profile from lens model. Convergence is currently not
+        # supported by coolest.
         kwargs_lens_updated = kwargs_result_slsim["kwargs_lens"][:-1]
-        #convert magnitude to amplitude. lenstronomy coolest interface takes amplitude
+        # convert magnitude to amplitude. lenstronomy coolest interface takes amplitude
         # as kwargs.
         source_amp = magnitude_to_amplitude(
             kwargs_result_slsim["kwargs_source"][0]["magnitude"],
-              mag_zero_point=mag_zero_point)
+            mag_zero_point=mag_zero_point,
+        )
         lens_amp = magnitude_to_amplitude(
             kwargs_result_slsim["kwargs_lens_light"][0]["magnitude"],
-              mag_zero_point=mag_zero_point)
+            mag_zero_point=mag_zero_point,
+        )
         ps_amp = magnitude_to_amplitude(
             kwargs_result_slsim["kwargs_ps"][0]["magnitude"],
-              mag_zero_point=mag_zero_point)
-        #replace magnitudes with amplitudes in lenstronomy kwargs.
+            mag_zero_point=mag_zero_point,
+        )
+        # replace magnitudes with amplitudes in lenstronomy kwargs.
         replacement_mappings = {
-                    'kwargs_source': {'magnitude': 'amp', 'value': source_amp},
-                    'kwargs_lens_light': {'magnitude': 'amp', 'value': lens_amp},
-                    'kwargs_ps': {'magnitude': 'point_amp', 'value': ps_amp}
-                }
+            "kwargs_source": {"magnitude": "amp", "value": source_amp},
+            "kwargs_lens_light": {"magnitude": "amp", "value": lens_amp},
+            "kwargs_ps": {"magnitude": "point_amp", "value": ps_amp},
+        }
         for key, replacement_info in replacement_mappings.items():
             for item in kwargs_result_slsim[key]:
-                item[replacement_info['magnitude']] = replacement_info['value']
-                del item['magnitude']
+                item[replacement_info["magnitude"]] = replacement_info["value"]
+                del item["magnitude"]
         kwargs_result_slsim["kwargs_lens"] = kwargs_lens_updated
         
         update_coolest=update_coolest_from_lenstronomy(path + file_name,
