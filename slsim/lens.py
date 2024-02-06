@@ -4,8 +4,10 @@ from lenstronomy.Util import constants
 from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
+from lenstronomy.Util.coolest_interface import update_coolest_from_lenstronomy
 from slsim.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
 from lenstronomy.Util import util, data_util
+from slsim.Util.param_util import magnitude_to_amplitude
 from slsim.lensed_system_base import LensedSystemBase
 import warnings
 
@@ -604,6 +606,46 @@ class Lens(LensedSystemBase):
         all_source_kwarg_dict["kwargs_source"] = kwargs_source
         all_source_kwarg_dict["kwargs_ps"] = kwargs_ps
         return source_models, all_source_kwarg_dict
+    
+    def update_coolest_from_lenstronomy_slsim(self, path, file_name, band=None, 
+                                              mag_zero_point=27):
+        """this function updates given coolest format .json file using lenstronomy 
+        kwargs of Lens class.
+
+        :param path: path to the .json file that need to be updated
+        :param file_name: name of the .json file without .json extension
+        :returns: saves updated .json file in a given path
+        """
+        kwargs_result_slsim = self.lenstronomy_kwargs(band=band)[1]
+        #remove convergence profile from lens model. Convergence is currently not 
+        #supported by coolest.
+        kwargs_lens_updated = kwargs_result_slsim["kwargs_lens"][:-1]
+        #convert magnitude to amplitude. lenstronomy coolest interface takes amplitude
+        # as kwargs.
+        source_amp = magnitude_to_amplitude(
+            kwargs_result_slsim["kwargs_source"][0]["magnitude"],
+              mag_zero_point=mag_zero_point)
+        lens_amp = magnitude_to_amplitude(
+            kwargs_result_slsim["kwargs_lens_light"][0]["magnitude"],
+              mag_zero_point=mag_zero_point)
+        ps_amp = magnitude_to_amplitude(
+            kwargs_result_slsim["kwargs_ps"][0]["magnitude"],
+              mag_zero_point=mag_zero_point)
+        #replace magnitudes with amplitudes in lenstronomy kwargs.
+        replacement_mappings = {
+                    'kwargs_source': {'magnitude': 'amp', 'value': source_amp},
+                    'kwargs_lens_light': {'magnitude': 'amp', 'value': lens_amp},
+                    'kwargs_ps': {'magnitude': 'point_amp', 'value': ps_amp}
+                }
+        for key, replacement_info in replacement_mappings.items():
+            for item in kwargs_result_slsim[key]:
+                item[replacement_info['magnitude']] = replacement_info['value']
+                del item['magnitude']
+        kwargs_result_slsim["kwargs_lens"] = kwargs_lens_updated
+        
+        update_coolest=update_coolest_from_lenstronomy(path + file_name,
+                            kwargs_result = kwargs_result_slsim, ending="_update")
+        return
 
 
 def image_separation_from_positions(image_positions):
