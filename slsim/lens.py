@@ -610,7 +610,9 @@ class Lens(LensedSystemBase):
     def update_coolest_from_lenstronomy_slsim(self, path, file_name, band=None, 
                                               mag_zero_point=27):
         """this function updates given coolest format .json file using lenstronomy 
-        kwargs of Lens class.
+        kwargs of Lens class. This function needs a .json file of coolest format. So, to
+        generate required template file please use a notebook given in our nootbooks 
+        folder.
 
         :param path: path to the .json file that need to be updated
         :param file_name: name of the .json file without .json extension
@@ -645,7 +647,7 @@ class Lens(LensedSystemBase):
         
         update_coolest=update_coolest_from_lenstronomy(path + file_name,
                             kwargs_result = kwargs_result_slsim, ending="_update")
-        return
+        return update_coolest
 
 
 def image_separation_from_positions(image_positions):
