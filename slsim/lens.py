@@ -606,12 +606,13 @@ class Lens(LensedSystemBase):
         all_source_kwarg_dict["kwargs_source"] = kwargs_source
         all_source_kwarg_dict["kwargs_ps"] = kwargs_ps
         return source_models, all_source_kwarg_dict
-    
-    def update_coolest_from_lenstronomy_slsim(self, path, file_name, band=None, 
-                                              mag_zero_point=27):
-        """this function updates given coolest format .json file using lenstronomy 
+
+    def update_coolest_from_lenstronomy_slsim(
+        self, path, file_name, band=None, mag_zero_point=27
+    ):
+        """This function updates given coolest format .json file using lenstronomy
         kwargs of Lens class. This function needs a .json file of coolest format. So, to
-        generate required template file please use a notebook given in our nootbooks 
+        generate required template file please use a notebook given in our nootbooks
         folder.
 
         :param path: path to the .json file that need to be updated
@@ -647,9 +648,10 @@ class Lens(LensedSystemBase):
                 item[replacement_info["magnitude"]] = replacement_info["value"]
                 del item["magnitude"]
         kwargs_result_slsim["kwargs_lens"] = kwargs_lens_updated
-        
-        update_coolest=update_coolest_from_lenstronomy(path + file_name,
-                            kwargs_result = kwargs_result_slsim, ending="_update")
+
+        update_coolest = update_coolest_from_lenstronomy(
+            path + file_name, kwargs_result=kwargs_result_slsim, ending="_update"
+        )
         return update_coolest
 
 
