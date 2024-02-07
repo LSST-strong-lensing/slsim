@@ -103,28 +103,6 @@ class Lens(LensedSystemBase):
             self._center_lens = np.array([center_x_lens, center_y_lens])
         return self._center_lens
 
-    @property
-    def source_position(self):
-        """Source position, either the center of the extended source or the point
-        source. If not present from the catalog, it is drawn uniformly within the circle
-        of the test area centered on the lens.
-
-        :return: [x_pos, y_pos]
-        """
-        center_lens = self.deflector_position
-
-        if not hasattr(self, "_center_source"):
-            # Define the radius of the test area circle
-            test_area_radius = np.sqrt(self.test_area / np.pi)
-            # Randomly generate a radius within the test area circle
-            r = np.sqrt(np.random.random()) * test_area_radius
-            theta = 2 * np.pi * np.random.random()
-            # Convert polar coordinates to cartesian coordinates
-            center_x_source = center_lens[0] + r * np.cos(theta)
-            center_y_source = center_lens[1] + r * np.sin(theta)
-            self._center_source = np.array([center_x_source, center_y_source])
-        return self._center_source
-
     def extended_source_image_positions(self):
         """Returns extended source image positions by solving the lens equation.
 
