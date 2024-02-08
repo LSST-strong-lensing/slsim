@@ -113,7 +113,8 @@ class Lens(LensedSystemBase):
             lens_model_class = LensModel(lens_model_list=lens_model_list)
             lens_eq_solver = LensEquationSolver(lens_model_class)
             source_pos_x, source_pos_y = self.source.extended_source_position(
-                self.deflector_position, self.test_area)
+                self.deflector_position, self.test_area
+            )
             # TODO: analytical solver possible but currently does not support the
             #  convergence term
             self._image_positions = lens_eq_solver.image_position_from_source(
@@ -126,9 +127,10 @@ class Lens(LensedSystemBase):
                 magnification_limit=self._magnification_limit,
             )
         return self._image_positions
-    
+
     def point_source_image_positions(self):
         """Returns point source image positions by solving the lens equation.
+
         :return: x-pos, y-pos
         """
         if not hasattr(self, "_point_image_positions"):
@@ -136,7 +138,8 @@ class Lens(LensedSystemBase):
             lens_model_class = LensModel(lens_model_list=lens_model_list)
             lens_eq_solver = LensEquationSolver(lens_model_class)
             point_source_pos_x, point_source_pos_y = self.source.point_source_position(
-                self.deflector_position, self.test_area)
+                self.deflector_position, self.test_area
+            )
             # TODO: analytical solver possible but currently does not support the
             #  convergence term
             self._point_image_positions = lens_eq_solver.image_position_from_source(
@@ -181,14 +184,20 @@ class Lens(LensedSystemBase):
         # must be less than or equal to the angular Einstein radius
         # of the lensing configuration (times sqrt(2)).
         if self._source_type == "extended":
-            center_lens, center_source = (self.deflector_position, 
-                        self.source.extended_source_position(self.deflector_position, 
-                                                 self.test_area))
+            center_lens, center_source = (
+                self.deflector_position,
+                self.source.extended_source_position(
+                    self.deflector_position, self.test_area
+                ),
+            )
             image_positions = self.extended_source_image_positions()
         else:
-            center_lens, center_source = (self.deflector_position, 
-                            self.source.point_source_position(self.deflector_position, 
-                                              self.test_area))
+            center_lens, center_source = (
+                self.deflector_position,
+                self.source.point_source_position(
+                    self.deflector_position, self.test_area
+                ),
+            )
             image_positions = self.point_source_image_positions()
 
         if np.sum((center_lens - center_source) ** 2) > self._theta_E_sis**2 * 2:
@@ -445,7 +454,8 @@ class Lens(LensedSystemBase):
             )
             theta_E = self.einstein_radius
             center_source = self.source.extended_source_position(
-                self.deflector_position, self.test_area)
+                self.deflector_position, self.test_area
+            )
 
             kwargs_source_mag = kwargs_params["kwargs_source"]
             kwargs_source_amp = data_util.magnitude2amplitude(
@@ -567,8 +577,9 @@ class Lens(LensedSystemBase):
         """
         source_models = {}
         all_source_kwarg_dict = {}
-        center_source = self.source.extended_source_position(self.deflector_position,
-                                                             self.test_area)
+        center_source = self.source.extended_source_position(
+            self.deflector_position, self.test_area
+        )
         if (
             self._source_type == "extended"
             or self._source_type == "point_plus_extended"
