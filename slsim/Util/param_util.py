@@ -57,6 +57,25 @@ def random_ra_dec(ra_min, ra_max, dec_min, dec_max, n):
     return ra, dec
 
 
+def random_radec_string(ra_min, ra_max, dec_min, dec_max, n):
+    """Generates n number of random "ra, dec" string within given limits.
+
+    :param ra_min: minimum limit for ra
+    :param ra_max: maximum limit for ra
+    :param dec_min: minimum limit for dec
+    :param dec_max: maximum limit for dec
+    :param n: number of random sample
+    :returns: n number of "ra, dec" strings within given limits
+    """
+    ra, dec = random_ra_dec(
+        ra_min=ra_min, ra_max=ra_max, dec_min=dec_min, dec_max=dec_max, n=n
+    )
+    center_coods_list = []
+    for i in range(n):
+        center_coods_list.append(str(ra[i]) + ", " + str(dec[i]))
+    return center_coods_list
+
+
 def convolved_image(image, psf_kernel, convolution_type="fft"):
     """Convolves an image with given psf kernel.
 
@@ -144,3 +163,14 @@ def interpolate_variability(image_series, orig_timestamps, new_timestamps):
     new_time_points = np.meshgrid(new_timestamps, pixel_positions, indexing="ij")
     pixels_resampled = interpolation((new_time_points[0], new_time_points[1]))
     return pixels_to_images(pixels_resampled, np.shape(image_series))
+
+
+def transformmatrix_to_pixelscale(tranform_matrix):
+    """Calculates pixel scale using tranform matrix.
+
+    :param tranform_matrix: transformation matrix (2x2) of pixels into coordinate
+        displacements
+    :return: pixel scale
+    """
+    determinant = np.linalg.det(tranform_matrix)
+    return np.sqrt(determinant)

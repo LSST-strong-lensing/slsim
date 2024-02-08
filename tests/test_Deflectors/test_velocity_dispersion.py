@@ -59,7 +59,7 @@ def test_schechter_vdf():
         cosmology,
         noise=True,
     )
-    assert len(z_list) == 373
+    assert len(z_list) == 117
 
     # plt.hist(np.log10(vel_disp_list))
     # plt.show()

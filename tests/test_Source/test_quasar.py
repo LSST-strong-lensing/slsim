@@ -1,7 +1,7 @@
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
 from slsim.Sources.quasars import Quasars
-from slsim.Sources.quasar_catalog.simple_quasar import quasar_catalog_simple
+from slsim.Sources.QuasarCatalog.simple_quasar import quasar_catalog_simple
 import pytest
 
 

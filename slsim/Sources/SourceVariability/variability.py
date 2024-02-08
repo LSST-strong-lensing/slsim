@@ -1,4 +1,7 @@
-import numpy as np
+from slsim.Sources.SourceVariability.light_curve_interpolation import (
+    LightCurveInterpolation,
+)
+from slsim.Sources.SourceVariability.sinusoidal_variability import SinusoidalVariability
 
 """This class aims to have realistic variability models for AGN and supernovae."""
 
@@ -13,17 +16,19 @@ class Variability(object):
             sinusoidal_variability kwargs are amplitude ('amp') and frequency ('freq').
         :type kwargs_variability_model: dict
         """
-        self.variability_model = variability_model
-        if self.variability_model not in ["sinusoidal"]:
-            raise ValueError(
-                "Given model is not supported. Currently supported model is sinusoidal."
-            )
-        if self.variability_model == "sinusoidal":
-            self._model = sinusoidal_variability
-        else:
-            raise ValueError("Please provide a supported variability model.")
-
         self.kwargs_model = kwargs_variability_model
+        self.variability_model = variability_model
+        if self.variability_model == "sinusoidal":
+            sinusoidal_class = SinusoidalVariability(**self.kwargs_model)
+            self._model = sinusoidal_class.magnitude
+        elif self.variability_model == "light_curve":
+            light_curve_class = LightCurveInterpolation(light_curve=self.kwargs_model)
+            self._model = light_curve_class.magnitude
+        else:
+            raise ValueError(
+                "Given model is not supported. Currently supported models are"
+                "sinusoidal, light_curve."
+            )
 
     def variability_at_time(self, observation_times):
         """Provides variability of a source at given time.
@@ -31,14 +36,4 @@ class Variability(object):
         :param observation_times: image observation time
         :return: variability at given time.
         """
-        return self._model(observation_times, **self.kwargs_model)
-
-
-def sinusoidal_variability(t, amp, freq):
-    """Calculate the sinusoidal variability for a given observation time.
-
-    :param t: observation time in [day].
-    :param kwargs_model: dictionary of variability parameter associated with a source.
-    :return: variability for the given time
-    """
-    return amp * np.sin(2 * np.pi * freq * t)
+        return self._model(observation_times)

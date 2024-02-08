@@ -1,19 +1,19 @@
-sim\_pipeline.Observations package
-==================================
+slsim.Observations package
+==========================
 
 Submodules
 ----------
 
-sim\_pipeline.Observations.image\_quality\_lenstronomy module
--------------------------------------------------------------
+slsim.Observations.image\_quality\_lenstronomy module
+-----------------------------------------------------
 
 .. automodule:: slsim.Observations.image_quality_lenstronomy
    :members:
    :undoc-members:
    :show-inheritance:
 
-sim\_pipeline.Observations.roman\_speclite module
--------------------------------------------------
+slsim.Observations.roman\_speclite module
+-----------------------------------------
 
 .. automodule:: slsim.Observations.roman_speclite
    :members:
