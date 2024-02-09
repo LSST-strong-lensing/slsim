@@ -55,7 +55,9 @@ class LensedSystemBase(ABC):
 
     @abstractmethod
     def point_source_image_positions(self):
-        """Returns point source image positions by solving the lens equation.
+        """Returns point source image positions by solving the lens equation. In the 
+        absence of a point source, this function returns the solution for the center 
+        of the extended source.
 
         :return: x-pos, y-pos
         """

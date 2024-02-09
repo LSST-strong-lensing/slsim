@@ -149,7 +149,8 @@ class Source(object):
 
     def point_source_position(self, center_lens, draw_area):
         """Point source position. point source could be at the center of the extended
-        source or it can be off from center of the extended source.
+        source or it can be off from center of the extended source. In the absence of a
+        point source, this is the center of the extended source.
 
         :param center_lens: center of the deflector.
          Eg: np.array([center_x_lens, center_y_lens])
@@ -162,10 +163,10 @@ class Source(object):
 
         if "ra_off" in self.source_dict.colnames:
             center_x_point_source = (
-                extended_source_center[0] + self.source_dict["ra_off"][0]
+                extended_source_center[0] + float(self.source_dict["ra_off"])
             )
             center_y_point_source = (
-                extended_source_center[1] + self.source_dict["dec_off"][0]
+                extended_source_center[1] + float(self.source_dict["dec_off"])
             )
             self._center_point_source = np.array(
                 [center_x_point_source, center_y_point_source]
