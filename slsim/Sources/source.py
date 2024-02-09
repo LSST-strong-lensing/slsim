@@ -158,9 +158,7 @@ class Source(object):
         :return: [x_pos, y_pos]
         """
 
-        extended_source_center = self.extended_source_position(
-            center_lens, draw_area
-        )
+        extended_source_center = self.extended_source_position(center_lens, draw_area)
 
         if "ra_off" in self.source_dict.colnames:
             center_x_point_source = (
