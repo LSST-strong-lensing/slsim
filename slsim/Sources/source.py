@@ -128,7 +128,7 @@ class Source(object):
         """Extended source position. If not present from the catalog, it is drawn
         uniformly within the circle of the test area centered on the deflector position.
 
-        :param deflector_center: center of the deflector.
+        :param center_lens: center of the deflector.
          Eg: np.array([center_x_lens, center_y_lens])
         :param draw_area: The area of the test region from which we randomly draw a 
          source position. Eg: 0.1 deg^2.
@@ -151,7 +151,7 @@ class Source(object):
         """Point source position. point source could be at the center of the extended
         source or it can be off from center of the extended source.
 
-        :param deflector_center: center of the deflector.
+        :param center_lens: center of the deflector.
          Eg: np.array([center_x_lens, center_y_lens])
         :param draw_area: The area of the test region from which we randomly draw a 
          source position. Eg: 0.1 deg^2.
