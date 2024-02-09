@@ -129,9 +129,9 @@ class Lens(LensedSystemBase):
         return self._image_positions
 
     def point_source_image_positions(self):
-        """Returns point source image positions by solving the lens equation. In the 
-        absence of a point source, this function returns the solution for the center 
-        of the extended source.
+        """Returns point source image positions by solving the lens equation. In the
+        absence of a point source, this function returns the solution for the center of
+        the extended source.
 
         :return: x-pos, y-pos
         """
@@ -186,11 +186,11 @@ class Lens(LensedSystemBase):
         # must be less than or equal to the angular Einstein radius
         # of the lensing configuration (times sqrt(2)).
         center_lens, center_source = (
-                self.deflector_position,
-                self.source.point_source_position(
-                    center_lens=self.deflector_position, draw_area=self.test_area
-                ),
-            )
+            self.deflector_position,
+            self.source.point_source_position(
+                center_lens=self.deflector_position, draw_area=self.test_area
+            ),
+        )
         if np.sum((center_lens - center_source) ** 2) > self._theta_E_sis**2 * 2:
             return False
 
