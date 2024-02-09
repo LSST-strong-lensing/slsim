@@ -123,3 +123,53 @@ class Source(object):
             band_string = "mag_" + band
         source_mag = self.source_dict[band_string]
         return source_mag
+
+    def extended_source_position(self, center_lens, draw_area):
+        """Extended source position. If not present from the catalog, it is drawn
+        uniformly within the circle of the test area centered on the deflector position.
+
+        :param center_lens: center of the deflector.
+         Eg: np.array([center_x_lens, center_y_lens])
+        :param draw_area: The area of the test region from which we randomly draw a
+         source position. Eg: 4*pi.
+        :return: [x_pos, y_pos]
+        """
+
+        if not hasattr(self, "_center_source"):
+            # Define the radius of the test area circle
+            test_area_radius = np.sqrt(draw_area / np.pi)
+            # Randomly generate a radius within the test area circle
+            r = np.sqrt(np.random.random()) * test_area_radius
+            theta = 2 * np.pi * np.random.random()
+            # Convert polar coordinates to cartesian coordinates
+            center_x_source = center_lens[0] + r * np.cos(theta)
+            center_y_source = center_lens[1] + r * np.sin(theta)
+            self._center_source = np.array([center_x_source, center_y_source])
+        return self._center_source
+
+    def point_source_position(self, center_lens, draw_area):
+        """Point source position. point source could be at the center of the extended
+        source or it can be off from center of the extended source. In the absence of a
+        point source, this is the center of the extended source.
+
+        :param center_lens: center of the deflector.
+         Eg: np.array([center_x_lens, center_y_lens])
+        :param draw_area: The area of the test region from which we randomly draw a
+         source position. Eg: 4*pi.
+        :return: [x_pos, y_pos]
+        """
+
+        extended_source_center = self.extended_source_position(center_lens, draw_area)
+
+        if "ra_off" in self.source_dict.colnames:
+            center_x_point_source = extended_source_center[0] + float(
+                self.source_dict["ra_off"]
+            )
+            center_y_point_source = extended_source_center[1] + float(
+                self.source_dict["dec_off"]
+            )
+            self._center_point_source = np.array(
+                [center_x_point_source, center_y_point_source]
+            )
+            return self._center_point_source
+        return extended_source_center
