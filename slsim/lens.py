@@ -26,6 +26,7 @@ class Lens(LensedSystemBase):
         mixgauss_stds=None,
         mixgauss_weights=None,
         magnification_limit=0.01,
+        sersic_profile="single"
     ):
         """
 
@@ -54,6 +55,9 @@ class Lens(LensedSystemBase):
         :param magnification_limit: absolute lensing magnification lower limit to
             register a point source (ignore highly de-magnified images)
         :type magnification_limit: float >= 0
+        :param sersic_profile: keyword for number of sersic profile to use in source 
+         light model
+        :type sersic_profile: str . Either "single" or "double" .
         """
         super().__init__(
             source_dict=source_dict,
