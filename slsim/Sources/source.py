@@ -130,7 +130,7 @@ class Source(object):
 
         :param center_lens: center of the deflector.
          Eg: np.array([center_x_lens, center_y_lens])
-        :param draw_area: The area of the test region from which we randomly draw a 
+        :param draw_area: The area of the test region from which we randomly draw a
          source position. Eg: 0.1 deg^2.
         :return: [x_pos, y_pos]
         """
@@ -153,14 +153,12 @@ class Source(object):
 
         :param center_lens: center of the deflector.
          Eg: np.array([center_x_lens, center_y_lens])
-        :param draw_area: The area of the test region from which we randomly draw a 
+        :param draw_area: The area of the test region from which we randomly draw a
          source position. Eg: 0.1 deg^2.
         :return: [x_pos, y_pos]
         """
 
-        extended_source_center = self.extended_source_position(
-            center_lens, draw_area
-        )
+        extended_source_center = self.extended_source_position(center_lens, draw_area)
 
         if "ra_off" in self.source_dict.colnames:
             center_x_point_source = (

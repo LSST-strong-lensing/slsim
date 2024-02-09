@@ -587,7 +587,8 @@ class Lens(LensedSystemBase):
             else:
                 mag_source = self.extended_source_magnitude(band)
             center_source = self.source.extended_source_position(
-            self.deflector_position, self.test_area)
+                self.deflector_position, self.test_area
+            )
             size_source_arcsec = float(self.source.angular_size) / constants.arcsec
             source_models["source_light_model_list"] = ["SERSIC_ELLIPSE"]
             kwargs_source = [
