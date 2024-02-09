@@ -130,7 +130,7 @@ class Source(object):
 
         :param center_lens: center of the deflector.
          Eg: np.array([center_x_lens, center_y_lens])
-        :param draw_area: The area of the test region from which we randomly draw a 
+        :param draw_area: The area of the test region from which we randomly draw a
          source position. Eg: 4*pi.
         :return: [x_pos, y_pos]
         """
@@ -153,7 +153,7 @@ class Source(object):
 
         :param center_lens: center of the deflector.
          Eg: np.array([center_x_lens, center_y_lens])
-        :param draw_area: The area of the test region from which we randomly draw a 
+        :param draw_area: The area of the test region from which we randomly draw a
          source position. Eg: 4*pi.
         :return: [x_pos, y_pos]
         """
