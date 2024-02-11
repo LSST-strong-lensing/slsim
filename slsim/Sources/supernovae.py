@@ -14,7 +14,7 @@ class Supernova(sncosmo.Model):
         sn_type,
         absolute_mag,
         absolute_mag_band,
-        absolute_mag_zpsys='AB',
+        absolute_mag_zpsys="AB",
     ):
         """
 
@@ -39,7 +39,7 @@ class Supernova(sncosmo.Model):
         self._sn_type = sn_type
         self.set_source_peakabsmag(absolute_mag, absolute_mag_band, absolute_mag_zpsys)
 
-    def get_apparent_magnitude(self,time,band,zpsys='AB'):
+    def get_apparent_magnitude(self, time, band, zpsys="AB"):
         """
 
         :param time: The observer-frame time array to evaluate the model
@@ -50,4 +50,4 @@ class Supernova(sncosmo.Model):
         :type zpsys: str
         """
 
-        return self.bandmag(band,zpsys,time)
+        return self.bandmag(band, zpsys, time)
