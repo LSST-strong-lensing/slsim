@@ -4,7 +4,7 @@ import sncosmo
 from slsim.Util import param_util
 
 
-class Supernovae(sncosmo.Model):
+class Supernova(sncosmo.Model):
     """Class describing elliptical galaxies."""
 
     def __init__(
@@ -14,7 +14,7 @@ class Supernovae(sncosmo.Model):
         sn_type,
         absolute_mag,
         absolute_mag_band,
-        absolute_mag_zpsys,
+        absolute_mag_zpsys='AB',
     ):
         """
 
@@ -30,11 +30,24 @@ class Supernovae(sncosmo.Model):
         :type absolute_mag: float
         :param absolute_mag_band: Band used to normalize to absolute magnitude
         :type absolute_mag_band: str or `~sncosmo.Bandpass`
-        :param absolute_mag_zpsys: AB or Vega
+        :param absolute_mag_zpsys: Optional, AB or Vega (AB default)
         :type absolute_mag_zpsys: str
         """
-        super(Supernovae, self).__init__(source=source)
+        super(Supernova, self).__init__(source=source)
 
         self._parameters[0] = redshift
         self._sn_type = sn_type
         self.set_source_peakabsmag(absolute_mag, absolute_mag_band, absolute_mag_zpsys)
+
+    def get_apparent_magnitude(self,time,band,zpsys='AB'):
+        """
+
+        :param time: The observer-frame time array to evaluate the model
+        :type time: `~np.ndarray` or list
+        :param band: The bandpass to evaluate the model over
+        :type band: str or `~sncosmo.Bandpass`
+        :param zpsys: Optional, AB or Vega (AB default)
+        :type zpsys: str
+        """
+
+        return self.bandmag(band,zpsys,time)
