@@ -63,7 +63,7 @@ class TestLens(object):
         assert source_magnitude_lensed == expected_lensed_mag
 
     def test_image_separation_from_positions(self):
-        image_positions = self.gg_lens.image_positions()
+        image_positions = self.gg_lens.extended_source_image_positions()
         image_separation = image_separation_from_positions(image_positions)
         theta_E_infinity = theta_e_when_source_infinity(
             deflector_dict=self.deflector_dict
