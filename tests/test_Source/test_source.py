@@ -120,7 +120,7 @@ class TestSource:
     def test_extended_source_position(self):
 
         pos = self.source.extended_source_position(
-            deflector_center=np.array([0.002, -0.002]), test_area=4 * np.pi
+            center_lens=np.array([0.002, -0.002]), draw_area=4 * np.pi
         )
         assert len(pos) == 2
         assert isinstance(pos[0], float)
@@ -128,7 +128,7 @@ class TestSource:
 
     def test_point_source_position_without_offset(self):
         pos = self.source.point_source_position(
-            deflector_center=np.array([0.002, -0.002]), test_area=4 * np.pi
+            center_lens=np.array([0.002, -0.002]), draw_area=4 * np.pi
         )
         assert len(pos) == 2
         assert isinstance(pos[0], float)
@@ -136,7 +136,7 @@ class TestSource:
 
     def test_point_source_position_with_offset(self):
         pos = self.source2.point_source_position(
-            deflector_center=np.array([0.002, -0.002]), test_area=4 * np.pi
+            center_lens=np.array([0.002, -0.002]), draw_area=4 * np.pi
         )
         assert len(pos) == 2
         assert isinstance(pos[0], float)
