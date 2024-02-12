@@ -27,6 +27,7 @@ class LensPop(LensedPopulationBase):
         sky_area=None,
         filters=None,
         cosmo=None,
+        source_sersic_profile='single'
     ):
         """
 
@@ -53,6 +54,10 @@ class LensPop(LensedPopulationBase):
         :type sky_area: `~astropy.units.Quantity`
         :param filters: filters for SED integration
         :type filters: list of strings or None
+        :param source_sersic_profile: keyword for number of sersic profile to use in 
+         source light model. It is necessary to recognize quantities given in the source 
+         catalog.
+        :type source_sersic_profile: str . Either "single" or "double" .
         """
         super().__init__(sky_area, cosmo)
         if source_type == "galaxies" and kwargs_variability is not None:
@@ -115,7 +120,7 @@ class LensPop(LensedPopulationBase):
                 pipeline.blue_galaxies,
                 kwargs_cut=kwargs_source_cut,
                 cosmo=cosmo,
-                sky_area=sky_area,
+                sky_area=sky_area, sersic_profile=source_sersic_profile
             )
             self._source_model_type = "extended"
         elif source_type == "quasars":
@@ -151,6 +156,7 @@ class LensPop(LensedPopulationBase):
                 kwargs_cut=kwargs_source_cut,
                 variability_model=variability_model,
                 kwargs_variability_model=kwargs_variability,
+                sersic_profile=source_sersic_profile
             )
             self._source_model_type = "point_plus_extended"
         elif source_type == "supernovae_plus_galaxies":
@@ -172,7 +178,7 @@ class LensPop(LensedPopulationBase):
                 kwargs_cut=kwargs_source_cut,
                 variability_model=variability_model,
                 kwargs_variability_model=kwargs_variability,
-                list_type="list",
+                list_type="list", sersic_profile=source_sersic_profile
             )
             self._source_model_type = "point_plus_extended"
         else:
