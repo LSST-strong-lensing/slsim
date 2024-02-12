@@ -7,6 +7,7 @@ import numpy as np
 from slsim.lensed_population_base import LensedPopulationBase
 import os
 import pickle
+from astropy.table import Table
 
 
 class LensPop(LensedPopulationBase):
@@ -170,11 +171,14 @@ class LensPop(LensedPopulationBase):
             # supernovae light curves.
             self.path = os.path.dirname(__file__)
             if catalog_type == "scotch":
-                new_path = self.path + "/Sources/SupernovaeData/scotch_host_data.pkl"
+                new_path = self.path + "/Sources/SupernovaeData/scotch_host_data.fits"
+                load_supernovae_data=Table.read(
+                    "/Users/narayankhadka/Desktop/strong_lensing/scotch_host_data.fits",
+                    format="fits")
             else:
                 new_path = self.path + "/Sources/SupernovaeData/supernovae_data.pkl"
-            with open(new_path, "rb") as f:
-                load_supernovae_data = pickle.load(f)
+                with open(new_path, "rb") as f:
+                    load_supernovae_data = pickle.load(f)
             self._sources = PointPlusExtendedSources(
                 load_supernovae_data,
                 cosmo=cosmo,
