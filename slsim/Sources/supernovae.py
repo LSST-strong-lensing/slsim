@@ -77,7 +77,7 @@ class Supernova(sncosmo.Model):
             print('Warning, you should use self.set_source_peakabsmag or sefl.set_source_peakmag to set the amplitude.')
 
 
-    def get_apparent_magnitude(self,time,band,zpsys='AB'):
+    def get_apparent_magnitude(self, time, band, zpsys="AB"):
         """
         Function to return apparent magnitude of a SN for a given band and time.
 
@@ -215,14 +215,4 @@ class RandomizedSupernova(Supernova):
 if __name__ == '__main__':
 
     test = RandomizedSupernova('IIP')                             
-
-
-
-
-
-
-
-
-
-
 
