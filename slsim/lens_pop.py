@@ -27,7 +27,8 @@ class LensPop(LensedPopulationBase):
         sky_area=None,
         filters=None,
         cosmo=None,
-        source_sersic_profile='single'
+        source_sersic_profile="single",
+        catalog_type="scotch"
     ):
         """
 
@@ -168,7 +169,10 @@ class LensPop(LensedPopulationBase):
             # develop a supernovae class inside the slsim and them here to generate
             # supernovae light curves.
             self.path = os.path.dirname(__file__)
-            new_path = self.path + "/Sources/SupernovaeData/supernovae_data.pkl"
+            if catalog_type == "scotch":
+                new_path = self.path + "/Sources/SupernovaeData/scotch_host_data.pkl"
+            else:
+                new_path = self.path + "/Sources/SupernovaeData/supernovae_data.pkl"
             with open(new_path, "rb") as f:
                 load_supernovae_data = pickle.load(f)
             self._sources = PointPlusExtendedSources(
