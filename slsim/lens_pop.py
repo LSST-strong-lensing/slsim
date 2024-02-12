@@ -206,6 +206,7 @@ class LensPop(LensedPopulationBase):
                 kwargs_variability=self._sources.kwargs_variability,
                 cosmo=self.cosmo,
                 source_type=self._source_model_type,
+                sersic_profile=self._sources.sersic_profile
             )
             if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens
