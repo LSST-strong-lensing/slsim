@@ -75,6 +75,7 @@ class Lens(LensedSystemBase):
         self._mixgauss_weights = mixgauss_weights
         self._magnification_limit = magnification_limit
         self.kwargs_variab = kwargs_variability
+        self.sersic_profile = sersic_profile
 
         if self._source_type == "extended" and self.kwargs_variab is not None:
             warning_msg = (
@@ -577,27 +578,14 @@ class Lens(LensedSystemBase):
             self._source_type == "extended"
             or self._source_type == "point_plus_extended"
         ):
-            # convert radian to arc seconds
-            if band is None:
-                mag_source = 1
+            
+            if self.sersic_profile == 'single':
+                source_models["source_light_model_list"] = ["SERSIC_ELLIPSE"]
             else:
-                mag_source = self.extended_source_magnitude(band)
-            center_source = self.source.extended_source_position(
-                center_lens=self.deflector_position, draw_area=self.test_area
-            )
-            size_source_arcsec = float(self.source.angular_size) / constants.arcsec
-            source_models["source_light_model_list"] = ["SERSIC_ELLIPSE"]
-            kwargs_source = [
-                {
-                    "magnitude": mag_source,
-                    "R_sersic": size_source_arcsec,
-                    "n_sersic": float(self.source.n_sersic),
-                    "e1": float(self.source.ellipticity[0]),
-                    "e2": float(self.source.ellipticity[1]),
-                    "center_x": center_source[0],
-                    "center_y": center_source[1],
-                }
-            ]
+                source_models["source_light_model_list"] = ["SERSIC_ELLIPSE", 
+                                                            "SERSIC_ELLIPSE"]
+            kwargs_source = self.source.kwargs_extended_source_light(band=band,
+                                            sersic_profile_str=self.sersic_profile)
         else:
             # source_models['source_light_model_list'] = None
             kwargs_source = None

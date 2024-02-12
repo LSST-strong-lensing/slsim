@@ -2,6 +2,7 @@ from slsim.Sources.SourceVariability.variability import (
     Variability,
 )
 import numpy as np
+from lenstronomy.Util import constants
 
 
 class Source(object):
@@ -173,3 +174,67 @@ class Source(object):
             )
             return self._center_point_source
         return extended_source_center
+    
+    def kwargs_extended_source_light(self, band=None, sersic_profile_str="single"):
+        """ Provids dictionary of keywords for the source light model(s).
+
+        :param band: Imaging band
+        :param sersic_profile_str: number of sersic_profile
+        :type sersic_profile_str: str . eg: "single" or "double".
+        :return: dictionary of keywords for the source light model(s)
+        """
+        if band is None:
+            mag_source = 1
+        else:
+            mag_source = self.extended_source_magnitude(band=band)
+        center_source = self.extended_source_position(
+        center_lens=self.deflector_position, draw_area=self.test_area
+                )
+        if sersic_profile_str == "single":
+            size_source_arcsec = float(self.angular_size) / constants.arcsec
+            kwargs_extended_source = [
+                        {
+                            "magnitude": mag_source,
+                            "R_sersic": size_source_arcsec,
+                            "n_sersic": float(self.n_sersic),
+                            "e1": float(self.ellipticity[0]),
+                            "e2": float(self.ellipticity[1]),
+                            "center_x": center_source[0],
+                            "center_y": center_source[1],
+                        }]
+        elif sersic_profile_str == "double":
+            # w0 and w1 are the weight of the n=1 and n=4 sersic component.
+            if ("w0" not in self.source_dict.colnames or 
+                "w1" not in self.source_dict.colnames):
+                w0 = 0.5
+                w1 = 0.5
+            else:
+                w0 = self.source_dict["w0"]
+                w1 = self.source_dict["w1"]
+            size_source_arcsec0 = float(
+                self.source_dict["angular_size0"]) / constants.arcsec
+            size_source_arcsec1 = float(
+                self.source_dict["angular_size1"]) / constants.arcsec
+            ellipticity0_1 = self.source_dict["ellipticity0_1"]
+            ellipticity0_2 = self.source_dict["ellipticity0_2"]
+            ellipticity1_1 = self.source_dict["ellipticity1_1"]
+            ellipticity1_2 = self.source_dict["ellipticity1_2"]
+            kwargs_extended_source = [
+                        {
+                            "magnitude": w0*mag_source,
+                            "R_sersic": size_source_arcsec0,
+                            "n_sersic": float(self.source_dict["n_sersic_0"]),
+                            "e1": float(ellipticity0_1),
+                            "e2": float(ellipticity0_2),
+                            "center_x": center_source[0],
+                            "center_y": center_source[1],
+                        }, {
+                            "magnitude": w1*mag_source,
+                            "R_sersic": size_source_arcsec1,
+                            "n_sersic": float(self.source_dict["n_sersic_1"]),
+                            "e1": float(ellipticity1_1),
+                            "e2": float(ellipticity1_2),
+                            "center_x": center_source[0],
+                            "center_y": center_source[1],
+                        }]
+        return kwargs_extended_source
