@@ -1,7 +1,6 @@
 import numpy as np
 import sncosmo
 from astropy import cosmology
-from slsim.Util import param_util
 
 _ABSOLUTE_MAG_DISTS = {
     'Ia':   [-19.37, 0.47],
@@ -169,7 +168,7 @@ class RandomizedSupernova(Supernova):
 
         if sn_type not in self._accepted_SN_types:
             raise RuntimeError('You passed %s as your SN type, '%sn_type+\
-                'but currently accepted SN types are: '+', '.join(accepted_types))
+                'but currently accepted SN types are: '+', '.join(self._accepted_SN_types))
 
         if sn_type=='Ia':
             self._sncosmo_source = 'salt3-nir'
