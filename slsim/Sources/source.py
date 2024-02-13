@@ -27,7 +27,7 @@ class Source(object):
         if kwargs_variability is not None:
             kwargs_variab_extracted = {}
             if list(kwargs_variability)[0] in ["absolute_magnitude", 
-                                               "apparent_magnitude"]:
+                                               "peak_apparent_magnitude"]:
                 lightcurve_class = FakeLightCurve(cosmo=cosmo)
                 peak_mag=np.random.randint(9, 12)
                 times, magnitudes = lightcurve_class.generate_light_curve(
