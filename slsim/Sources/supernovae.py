@@ -180,8 +180,11 @@ class RandomizedSupernova(Supernova):
         np.random.seed(random_seed)
 
         if sn_type not in self._accepted_SN_types:
-            raise RuntimeError('You passed %s as your SN type, '%sn_type+\
-                'but currently accepted SN types are: '+', '.join(self._accepted_SN_types))
+            raise RuntimeError(
+                "You passed %s as your SN type, " % sn_type
+                + "but currently accepted SN types are: "
+                + ", ".join(self._accepted_SN_types)
+            )
 
         if sn_type == "Ia":
             self._sncosmo_source = "salt3-nir"
