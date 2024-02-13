@@ -31,7 +31,7 @@ class LensedSystemBase(ABC):
 
         """
         # self._source_dict = source_dict
-        self.source = Source(source_dict, variability_model, kwargs_variability)
+        self.source = Source(source_dict, variability_model, kwargs_variability, cosmo)
         self._deflector_dict = deflector_dict
         # TODO: tell them what keys the dictionary should contain
         self.test_area = test_area
