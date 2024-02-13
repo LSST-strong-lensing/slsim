@@ -3,13 +3,14 @@ from slsim.Sources.SourceVariability.variability import (
 )
 import numpy as np
 from lenstronomy.Util import constants
-
+from slsim.Sources.fake_light_curve import FakeLightCurve
 
 class Source(object):
     """This class provides source dictionary and variable magnitude of a individual
     source."""
 
-    def __init__(self, source_dict, variability_model=None, kwargs_variability=None):
+    def __init__(self, source_dict, variability_model=None, kwargs_variability=None, 
+                 cosmo=None):
         """
         :param source_dict: Source properties
         :type source_dict: dict
@@ -25,22 +26,31 @@ class Source(object):
         self.source_dict = source_dict
         if kwargs_variability is not None:
             kwargs_variab_extracted = {}
-            for element in kwargs_variability:
-                if element in self.source_dict.colnames:
-                    if (
-                        isinstance(self.source_dict[element], np.ndarray)
-                        and self.source_dict[element].ndim == 2
-                        and self.source_dict[element].shape[0] == 1
-                    ):
-                        kwargs_variab_extracted[element] = self.source_dict[
-                            element
-                        ].reshape(-1)
+            if list(kwargs_variability)[0] in ["absolute_magnitude", 
+                                               "apparent_magnitude"]:
+                lightcurve_class = FakeLightCurve(cosmo=cosmo)
+                peak_mag=np.random.randint(9, 12)
+                times, magnitudes = lightcurve_class.generate_light_curve(
+                    redshift=self.redshift, peak_magnitude=peak_mag)
+                kwargs_variab_extracted["MJD"]=times
+                kwargs_variab_extracted["ps_mag_r"] = magnitudes
+            else:
+                for element in kwargs_variability:
+                    if element in self.source_dict.colnames:
+                        if (
+                            isinstance(self.source_dict[element], np.ndarray)
+                            and self.source_dict[element].ndim == 2
+                            and self.source_dict[element].shape[0] == 1
+                        ):
+                            kwargs_variab_extracted[element] = self.source_dict[
+                                element
+                            ].reshape(-1)
+                        else:
+                            kwargs_variab_extracted[element] = self.source_dict[element]
                     else:
-                        kwargs_variab_extracted[element] = self.source_dict[element]
-                else:
-                    raise ValueError(
-                        "given keyword %s is not in the source catalog." % element
-                    )
+                        raise ValueError(
+                            "given keyword %s is not in the source catalog." % element
+                        )
             self.variability_class = Variability(
                 variability_model, **kwargs_variab_extracted
             )
