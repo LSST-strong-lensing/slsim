@@ -175,19 +175,28 @@ class LensPop(LensedPopulationBase):
                 load_supernovae_data=Table.read(
                     "/Users/narayankhadka/Desktop/strong_lensing/scotch_host_data.fits",
                     format="fits")
-            else:
-                new_path = self.path + "/Sources/SupernovaeData/supernovae_data.pkl"
-                with open(new_path, "rb") as f:
-                    load_supernovae_data = pickle.load(f)
-            self._sources = PointPlusExtendedSources(
+                self._sources = PointPlusExtendedSources(
                 load_supernovae_data,
                 cosmo=cosmo,
                 sky_area=sky_area,
                 kwargs_cut=kwargs_source_cut,
                 variability_model=variability_model,
                 kwargs_variability_model=kwargs_variability,
-                list_type="list", sersic_profile=source_sersic_profile
+                list_type="astropy_table", sersic_profile=source_sersic_profile
             )
+            else:
+                new_path = self.path + "/Sources/SupernovaeData/supernovae_data.pkl"
+                with open(new_path, "rb") as f:
+                    load_supernovae_data = pickle.load(f)
+                self._sources = PointPlusExtendedSources(
+                    load_supernovae_data,
+                    cosmo=cosmo,
+                    sky_area=sky_area,
+                    kwargs_cut=kwargs_source_cut,
+                    variability_model=variability_model,
+                    kwargs_variability_model=kwargs_variability,
+                    list_type="list", sersic_profile=source_sersic_profile
+                )
             self._source_model_type = "point_plus_extended"
         else:
             raise ValueError("source_type %s is not supported" % source_type)

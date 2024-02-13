@@ -95,7 +95,6 @@ class Galaxies(SourcePopBase):
         self._galaxy_select = deflector_cut(
             galaxy_list, list_type=list_type, **kwargs_cut
         )
-        print(self._galaxy_select[0].colnames)
         self._num_select = len(self._galaxy_select)
         self.list_type = list_type
 
