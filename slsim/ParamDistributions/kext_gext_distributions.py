@@ -2,25 +2,25 @@ import h5py
 import numpy as np
 
 class LineOfSightDistribution:
-    joint_distributions_data = None
-    kg_distributions_data = None
+    correction_data = None
+    no_nonlinear_correction_data = None
 
-    def __init__(self, joint_distributions_path=None, kg_distributions_path=None):
+    def __init__(self, nonlinear_correction_path=None, no_nonlinear_correcction=None):
         """
-        Initialize the DataReader. Load data into class variables if not already loaded.
+        Initialize the Data Reader. Load data into class variables if not already loaded.
 
-        :param joint_distributions_path: Path to the 'joint_distributions.h5' file.
-        :param kg_distributions_path: Path to the 'kg_distributions_nolos.h5' file.
+        :param nonlinear_correction_path: Path to the 'joint_distributions.h5' file.
+        :param no_nonlinear_correcction: Path to the 'kg_distributions_nolos.h5' file.
         """
-        if joint_distributions_path is None:
-            joint_distributions_path = '/Users/tz/Documents/GitHub/slsim/data/glass/joint_distributions.h5'
-        if kg_distributions_path is None:
-            kg_distributions_path = '/Users/tz/Documents/GitHub/slsim/data/glass/kg_distributions_nolos.h5'
-        if LineOfSightDistribution.joint_distributions_data is None and joint_distributions_path is not None:
-            LineOfSightDistribution.joint_distributions_data = self._load_data(joint_distributions_path)
+        if nonlinear_correction_path is None:
+            nonlinear_correction_path = '/Users/tz/Documents/GitHub/slsim/data/glass/joint_distributions.h5'
+        if no_nonlinear_correcction is None:
+            no_nonlinear_correcction = '/Users/tz/Documents/GitHub/slsim/data/glass/no_nonlinear_distributions.h5'
+        if LineOfSightDistribution.correction_data is None and nonlinear_correction_path is not None:
+            LineOfSightDistribution.correction_data = self._load_data(nonlinear_correction_path)
 
-        if LineOfSightDistribution.kg_distributions_data is None and kg_distributions_path is not None:
-            LineOfSightDistribution.kg_distributions_data = self._load_data(kg_distributions_path)
+        if LineOfSightDistribution.no_nonlinear_correction_data is None and no_nonlinear_correcction is not None:
+            LineOfSightDistribution.no_nonlinear_correction_data = self._load_data(no_nonlinear_correcction)
 
     @staticmethod
     def _load_data(file_path):
@@ -62,8 +62,12 @@ class LineOfSightDistribution:
 
         z_source_rounded = self._round_to_nearest_0_1(z_source)
         z_lens_rounded = self._round_to_nearest_0_1(z_lens)
+        if z_lens_rounded == z_source_rounded:
+            z_lens_rounded = z_lens_rounded - 0.1
+            z_lens_rounded = round(z_lens_rounded, 1)
+            #todo： make z_lens_rounded == z_source_rounded worked in file
         dataset_name = f'zs_{z_source_rounded}' if use_kg_nolos else f'zs_{z_source_rounded}_zd_{z_lens_rounded}'
-        data = LineOfSightDistribution.kg_distributions_data if use_kg_nolos else LineOfSightDistribution.joint_distributions_data
+        data = LineOfSightDistribution.no_nonlinear_correction_data if use_kg_nolos else LineOfSightDistribution.correction_data
         if dataset_name in data:
             gamma = np.random.choice(data[dataset_name][:, 1])
             kappa = np.random.choice(data[dataset_name][:, 0])
