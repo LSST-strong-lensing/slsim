@@ -42,7 +42,7 @@ class Source(object):
                 times, magnitudes = lightcurve_class.generate_light_curve(
                     redshift=self.redshift, peak_magnitude=peak_mag)
                 kwargs_variab_extracted["MJD"]=times
-                kwargs_variab_extracted["ps_mag_r"] = magnitudes
+                kwargs_variab_extracted["ps_mag_"+provided_band] = magnitudes
             else:
                 for element in kwargs_variability:
                     if element in self.source_dict.colnames:
