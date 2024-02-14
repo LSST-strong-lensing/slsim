@@ -29,7 +29,7 @@ class LensPop(LensedPopulationBase):
         filters=None,
         cosmo=None,
         source_sersic_profile="single",
-        catalog_type="scotch"
+        catalog_type=None
     ):
         """
 
@@ -60,6 +60,9 @@ class LensPop(LensedPopulationBase):
          source light model. It is necessary to recognize quantities given in the source 
          catalog.
         :type source_sersic_profile: str . Either "single" or "double" .
+        :param catalog_type: type of the catalog. If someone wants to use scotch 
+         catalog, they need to specify it.
+        :type catalog_type: str. eg: "scotch"
         """
         super().__init__(sky_area, cosmo)
         if source_type == "galaxies" and kwargs_variability is not None:

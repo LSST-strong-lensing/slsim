@@ -10,8 +10,8 @@ class Source(object):
     """This class provides source dictionary and variable magnitude of a individual
     source."""
 
-    def __init__(self, source_dict, variability_model=None, kwargs_variability=None, 
-                 cosmo=None):
+    def __init__(self, source_dict, variability_model=None, cosmo=None, 
+                 kwargs_variability=None, kwargs_peak_mag = None):
         """
         :param source_dict: Source properties
         :type source_dict: dict
@@ -23,6 +23,9 @@ class Source(object):
          words, code search for quantities in source_dict with these names and creates
          a dictionary and this dict should be passed to the Variability class.
         :type kwargs_variability: list of str
+        :param kwargs_peak_mag: range of the peak magnitude
+        :type kwargs_peak_mag: dict. eg: kwargs_peak_mag={"peak_mag_min": m_min, 
+         "peak_mag_max": m_max}
         """
         self.source_dict = source_dict
         if kwargs_variability is not None:
@@ -32,7 +35,13 @@ class Source(object):
             if any(element in kwargs_variability_list for
                     element in list(kwargs_variability)):
                 lightcurve_class = FakeLightCurve(cosmo=cosmo)
-                peak_mag=round(np.random.uniform(9, 12), 5)
+                if kwargs_peak_mag is not None:
+                    peak_mag=round(np.random.uniform(kwargs_peak_mag["peak_mag_min"],
+                                                 kwargs_peak_mag["peak_mag_max"]), 5)
+                else:
+                    raise ValueError(
+                            "kwargs_peak_mag is None. Please provide kwargs_peak_mag."
+                        )
                 provided_band = [element for element in 
                             list(kwargs_variability) if element in ['r', 'i', 'g']][0]
                 new_column = Column([float(peak_mag)], name="ps_mag_"+provided_band)
