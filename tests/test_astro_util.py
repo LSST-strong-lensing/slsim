@@ -15,6 +15,10 @@ from slsim.Util.astro_util import (
     create_radial_map,
     create_phi_map,
     calculate_time_delays_on_disk,
+    calculate_geometric_contribution_to_lamppost_model,
+    calculate_dt_dlx,
+    calculate_mean_time_lag,
+    calculate_accretion_disk_response_function,
 )
 
 
@@ -168,24 +172,209 @@ def test_create_phi_map():
     radial_map = create_radial_map(100, 100, 45)
     assert np.shape(phi_map) == np.shape(radial_map)
 
-    # Test phi = 0 points towards the observer, the bottom side of the map
-    assert phi_map[100, 0] < 1e-2
+    # Test phi = 0 points towards the compressed side of the map
+    assert radial_map[0, 100] > 100
+    assert phi_map[0, 100] < 1e-2
 
     # Test phi values rotate counter-clockwise
-    assert phi_map[110, 0] > phi_map[100, 0]
-    assert phi_map[-1, -1] > phi_map[-1, 0]
+    assert phi_map[0, 110] > phi_map[0, 100]
 
 
 def test_calculate_time_delays_on_disk():
+    radial_map = create_radial_map(100, 100, 45)
+    phi_map = create_phi_map(100, 100, 45)
     # Test all time delays are tiny for a very low black hole mass exponent
-    time_delay_map = calculate_time_delays_on_disk(100, 100, 40, 2, 10)
+    time_delay_map = calculate_time_delays_on_disk(radial_map, phi_map, 40, 10)
+    low_mass_time_delay_map = (
+        time_delay_map * calculate_gravitational_radius(2.0) / const.c
+    )
     # the average time delay is the sum of all time delays divided by the number of points.
-    assert np.sum(time_delay_map) / (200**2) < (1 * u.s)
+    assert np.sum(low_mass_time_delay_map) / (200**2) < (1 * u.s)
 
     # Test maximum time delay points away from observer
-    assert np.argmax(time_delay_map[100, :]) == 199
+    assert np.argmax(time_delay_map[:, 100]) == 199
 
     # Test left- right-side symmetry
-    npt.assert_approx_equal(time_delay_map[0, 25].value, time_delay_map[-1, 25].value)
-    npt.assert_approx_equal(time_delay_map[0, 100].value, time_delay_map[-1, 100].value)
-    npt.assert_approx_equal(time_delay_map[0, 180].value, time_delay_map[-1, 180].value)
+    npt.assert_approx_equal(time_delay_map[25, 0], time_delay_map[25, -1])
+    npt.assert_approx_equal(time_delay_map[100, 0], time_delay_map[100, -1])
+    npt.assert_approx_equal(time_delay_map[180, 0], time_delay_map[180, -1])
+
+    # Test single value for a face on disk
+    # (light travels back and forth for total of 20 R_g)
+    radial_map = np.array([[0]])
+    phi_map = np.array([[0]])
+    time_delay_map = calculate_time_delays_on_disk(radial_map, phi_map, 0, 10)
+    npt.assert_equal(time_delay_map, np.array([[20]]))
+
+
+def test_calculate_geometric_contribution_to_lamppost_model():
+    radial_map = create_radial_map(100, 100, 45)
+    # Test that 0 corona height doesn't cause error
+    values_low = calculate_geometric_contribution_to_lamppost_model(radial_map, 0)
+    # Test that a very high X-ray source leads to large suppression
+    values_high = calculate_geometric_contribution_to_lamppost_model(radial_map, 1e8)
+    assert np.sum(values_high) < 1e-5
+    # Test the close corona has a greater impact than far corona
+    assert np.sum(values_low) > np.sum(values_high)
+
+
+def test_calculate_dt_dlx():
+    radial_map = create_radial_map(100, 100, 45)
+    temperature_map = thin_disk_temperature_profile(radial_map, 0.0, 8.0, 0.1)
+    dt_dlx_map = calculate_dt_dlx(radial_map, temperature_map, 10)
+    # Test that the greatest dt_dlx occurs near the center of the disk
+    # (the center of the disk is between points (99, 99) and (100, 100)
+    # additionally, the ISCO leaves a dark region for R < 6 R_g
+    assert abs(np.argmax(dt_dlx_map[:, 100]) - 100) <= 7
+    assert abs(np.argmax(dt_dlx_map[100, :]) - 100) <= 7
+    # Test dt_dlx is suppressed for extremely distant X-ray source
+    # this calculates the average fractional temperature change over the disk
+    dt_dlx_map = calculate_dt_dlx(radial_map, temperature_map, 1e8)
+    mask = temperature_map > 0
+    assert (
+        np.sum(
+            np.nan_to_num(dt_dlx_map / temperature_map * mask) / np.size(radial_map)
+        ).value
+        < 1e-10
+    )
+
+
+def test_calculate_mean_time_lag():
+    # Test a simple case explicitly
+    response_function = [0, 1, 2, 3, 4]
+    expected_value = (0 + 1 + 4 + 9 + 16) / (0 + 1 + 2 + 3 + 4)
+    assert calculate_mean_time_lag(response_function) == expected_value
+
+
+def test_calculate_accretion_disk_response_function():
+    # Test that manual construction of response function with previously
+    # tested functions works exactly the same as this function
+    r_out = 100
+    r_resolution = 100
+    inclination_angle = 45.0
+    rest_frame_wavelength_in_nanometers = 1000.0
+    black_hole_mass_exponent = 8.0
+    black_hole_spin = 0.0
+    corona_height = 10.0
+    eddington_ratio = 0.1
+
+    radial_map = create_radial_map(r_out, r_resolution, inclination_angle)
+    phi_map = create_phi_map(r_out, r_resolution, inclination_angle)
+    temperature_map = thin_disk_temperature_profile(
+        radial_map, black_hole_spin, black_hole_mass_exponent, eddington_ratio
+    )
+    temperature_map *= radial_map < r_out
+    db_dt_map = planck_law_derivative(
+        temperature_map, rest_frame_wavelength_in_nanometers
+    )
+
+    dt_dlx_map = calculate_dt_dlx(radial_map, temperature_map, corona_height)
+    weighting_factors = np.nan_to_num(db_dt_map * dt_dlx_map)
+    time_delay_map = calculate_time_delays_on_disk(
+        radial_map, phi_map, inclination_angle, corona_height
+    )
+    response_function_manual = np.histogram(
+        time_delay_map,
+        range=(0, np.max(time_delay_map) + 1),
+        bins=int(np.max(time_delay_map) + 1),
+        weights=weighting_factors,
+        density=True,
+    )[0]
+    response_function_manual /= np.nansum(response_function_manual)
+
+    response_function = calculate_accretion_disk_response_function(
+        r_out,
+        r_resolution,
+        inclination_angle,
+        rest_frame_wavelength_in_nanometers,
+        black_hole_mass_exponent,
+        black_hole_spin,
+        corona_height,
+        eddington_ratio,
+    )
+    npt.assert_array_almost_equal(
+        response_function.value, response_function_manual.value, 5
+    )
+
+    # Test that an inclined disk produces a "skewed" response function (e.g. it peaks earlier)
+    inclination_angle_face_on = 0.0
+    response_function_face_on = calculate_accretion_disk_response_function(
+        r_out,
+        r_resolution,
+        inclination_angle_face_on,
+        rest_frame_wavelength_in_nanometers,
+        black_hole_mass_exponent,
+        black_hole_spin,
+        corona_height,
+        eddington_ratio,
+    )
+    peak_response_face_on = np.argmax(response_function_face_on)
+    peak_response_inclined = np.argmax(response_function)
+    assert peak_response_inclined < peak_response_face_on
+
+    # Test that inclination does not change the mean response when H_{L_x} = 0
+    # Note I add 0.5 within the function to avoid singularities when the corona
+    # is placed directly on the disk. However there is no contribution with the dark ISCO.
+    corona_height = -0.5
+    response_function_face_on = calculate_accretion_disk_response_function(
+        r_out,
+        r_resolution,
+        inclination_angle_face_on,
+        rest_frame_wavelength_in_nanometers,
+        black_hole_mass_exponent,
+        black_hole_spin,
+        corona_height,
+        eddington_ratio,
+    )
+    response_function_inclined = calculate_accretion_disk_response_function(
+        r_out,
+        r_resolution,
+        inclination_angle,
+        rest_frame_wavelength_in_nanometers,
+        black_hole_mass_exponent,
+        black_hole_spin,
+        corona_height,
+        eddington_ratio,
+    )
+
+    mean_tau_face_on = calculate_mean_time_lag(response_function_face_on)
+    mean_tau_inclined = calculate_mean_time_lag(response_function_inclined)
+
+    npt.assert_equal(mean_tau_face_on, mean_tau_inclined)
+
+    # Test that longer wavelengths produce broader response functions than short
+    # wavelengths (e.g. they peak later and have longer mean time lags)
+    corona_height = 10
+    shorter_wavelength = 200
+    longer_wavelength = 2000
+    response_function_shorter_wavelength = calculate_accretion_disk_response_function(
+        r_out,
+        r_resolution,
+        inclination_angle,
+        shorter_wavelength,
+        black_hole_mass_exponent,
+        black_hole_spin,
+        corona_height,
+        eddington_ratio,
+    )
+    response_function_longer_wavelength = calculate_accretion_disk_response_function(
+        r_out,
+        r_resolution,
+        inclination_angle,
+        longer_wavelength,
+        black_hole_mass_exponent,
+        black_hole_spin,
+        corona_height,
+        eddington_ratio,
+    )
+    mean_tau_shorter_wavelength = calculate_mean_time_lag(
+        response_function_shorter_wavelength
+    )
+    mean_tau_longer_wavelength = calculate_mean_time_lag(
+        response_function_longer_wavelength
+    )
+    peak_response_longer_wavelength = np.argmax(response_function_longer_wavelength)
+    peak_response_shorter_wavelength = np.argmax(response_function_shorter_wavelength)
+
+    assert peak_response_shorter_wavelength < peak_response_longer_wavelength
+    assert mean_tau_shorter_wavelength < mean_tau_longer_wavelength

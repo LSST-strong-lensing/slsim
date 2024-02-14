@@ -103,32 +103,8 @@ class Lens(LensedSystemBase):
             self._center_lens = np.array([center_x_lens, center_y_lens])
         return self._center_lens
 
-    @property
-    def source_position(self):
-        """Source position, either the center of the extended source or the point
-        source. If not present from the catalog, it is drawn uniformly within the circle
-        of the test area centered on the lens.
-
-        :return: [x_pos, y_pos]
-        """
-        center_lens = self.deflector_position
-
-        if not hasattr(self, "_center_source"):
-            # Define the radius of the test area circle
-            test_area_radius = np.sqrt(self.test_area / np.pi)
-            # Randomly generate a radius within the test area circle
-            r = np.sqrt(np.random.random()) * test_area_radius
-            theta = 2 * np.pi * np.random.random()
-            # Convert polar coordinates to cartesian coordinates
-            center_x_source = center_lens[0] + r * np.cos(theta)
-            center_y_source = center_lens[1] + r * np.sin(theta)
-            self._center_source = np.array([center_x_source, center_y_source])
-        return self._center_source
-
-    def image_positions(self):
-        """Return image positions by solving the lens equation. These are either the
-        centers of the extended source, or the point sources in case of (added) point-
-        like sources, such as quasars or SNe.
+    def extended_source_image_positions(self):
+        """Returns extended source image positions by solving the lens equation.
 
         :return: x-pos, y-pos
         """
@@ -136,7 +112,9 @@ class Lens(LensedSystemBase):
             lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
             lens_model_class = LensModel(lens_model_list=lens_model_list)
             lens_eq_solver = LensEquationSolver(lens_model_class)
-            source_pos_x, source_pos_y = self.source_position
+            source_pos_x, source_pos_y = self.source.extended_source_position(
+                center_lens=self.deflector_position, draw_area=self.test_area
+            )
             # TODO: analytical solver possible but currently does not support the
             #  convergence term
             self._image_positions = lens_eq_solver.image_position_from_source(
@@ -149,6 +127,33 @@ class Lens(LensedSystemBase):
                 magnification_limit=self._magnification_limit,
             )
         return self._image_positions
+
+    def point_source_image_positions(self):
+        """Returns point source image positions by solving the lens equation. In the
+        absence of a point source, this function returns the solution for the center of
+        the extended source.
+
+        :return: x-pos, y-pos
+        """
+        if not hasattr(self, "_point_image_positions"):
+            lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
+            lens_model_class = LensModel(lens_model_list=lens_model_list)
+            lens_eq_solver = LensEquationSolver(lens_model_class)
+            point_source_pos_x, point_source_pos_y = self.source.point_source_position(
+                center_lens=self.deflector_position, draw_area=self.test_area
+            )
+            # TODO: analytical solver possible but currently does not support the
+            #  convergence term
+            self._point_image_positions = lens_eq_solver.image_position_from_source(
+                point_source_pos_x,
+                point_source_pos_y,
+                kwargs_lens,
+                solver="lenstronomy",
+                search_window=self.einstein_radius * 6,
+                min_distance=self.einstein_radius * 6 / 200,
+                magnification_limit=self._magnification_limit,
+            )
+        return self._point_image_positions
 
     def validity_test(
         self, min_image_separation=0, max_image_separation=10, mag_arc_limit=None
@@ -180,13 +185,17 @@ class Lens(LensedSystemBase):
         # Criteria 3: The distance between the lens center and the source position
         # must be less than or equal to the angular Einstein radius
         # of the lensing configuration (times sqrt(2)).
-        center_lens, center_source = self.deflector_position, self.source_position
-
+        center_lens, center_source = (
+            self.deflector_position,
+            self.source.point_source_position(
+                center_lens=self.deflector_position, draw_area=self.test_area
+            ),
+        )
         if np.sum((center_lens - center_source) ** 2) > self._theta_E_sis**2 * 2:
             return False
 
         # Criteria 4: The lensing configuration must produce at least two SL images.
-        image_positions = self.image_positions()
+        image_positions = self.point_source_image_positions()
         if len(image_positions[0]) < 2:
             return False
 
@@ -324,7 +333,7 @@ class Lens(LensedSystemBase):
             z_lens=self.deflector_redshift,
             z_source=self.source_redshift,
         )
-        x_image, y_image = self.image_positions()
+        x_image, y_image = self.point_source_image_positions()
         arrival_times = lens_model.arrival_time(
             x_image, y_image, kwargs_lens=kwargs_lens
         )
@@ -417,7 +426,7 @@ class Lens(LensedSystemBase):
         if not hasattr(self, "_ps_magnification"):
             lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
             lensModel = LensModel(lens_model_list=lens_model_list)
-            img_x, img_y = self.image_positions()
+            img_x, img_y = self.point_source_image_positions()
             self._ps_magnification = lensModel.magnification(img_x, img_y, kwargs_lens)
         return self._ps_magnification
 
@@ -436,7 +445,9 @@ class Lens(LensedSystemBase):
                 lens_model_list=kwargs_model.get("lens_model_list", [])
             )
             theta_E = self.einstein_radius
-            center_source = self.source_position
+            center_source = self.source.extended_source_position(
+                center_lens=self.deflector_position, draw_area=self.test_area
+            )
 
             kwargs_source_mag = kwargs_params["kwargs_source"]
             kwargs_source_amp = data_util.magnitude2amplitude(
@@ -558,7 +569,6 @@ class Lens(LensedSystemBase):
         """
         source_models = {}
         all_source_kwarg_dict = {}
-        center_source = self.source_position
         if (
             self._source_type == "extended"
             or self._source_type == "point_plus_extended"
@@ -568,6 +578,9 @@ class Lens(LensedSystemBase):
                 mag_source = 1
             else:
                 mag_source = self.extended_source_magnitude(band)
+            center_source = self.source.extended_source_position(
+                center_lens=self.deflector_position, draw_area=self.test_area
+            )
             size_source_arcsec = float(self.source.angular_size) / constants.arcsec
             source_models["source_light_model_list"] = ["SERSIC_ELLIPSE"]
             kwargs_source = [
@@ -590,7 +603,7 @@ class Lens(LensedSystemBase):
             or self._source_type == "point_plus_extended"
         ):
             source_models["point_source_model_list"] = ["LENSED_POSITION"]
-            img_x, img_y = self.image_positions()
+            img_x, img_y = self.point_source_image_positions()
             if band is None:
                 image_magnitudes = np.abs(self.point_source_magnification())
             else:

@@ -54,6 +54,8 @@ class TestSource:
                 [0.35],
                 [0.8],
                 [0.76],
+                [0.001],
+                [-0.001],
             ],
             names=(
                 "z",
@@ -69,6 +71,8 @@ class TestSource:
                 "angular_size",
                 "e1",
                 "e2",
+                "ra_off",
+                "dec_off",
             ),
         )
         self.source = Source(
@@ -112,6 +116,31 @@ class TestSource:
     def test_ps_magnitude_array(self):
         result = self.source2.point_source_magnitude("r")
         assert len(result) == 5
+
+    def test_extended_source_position(self):
+
+        pos = self.source.extended_source_position(
+            center_lens=np.array([0.002, -0.002]), draw_area=4 * np.pi
+        )
+        assert len(pos) == 2
+        assert isinstance(pos[0], float)
+        assert isinstance(pos[1], float)
+
+    def test_point_source_position_without_offset(self):
+        pos = self.source.point_source_position(
+            center_lens=np.array([0.002, -0.002]), draw_area=4 * np.pi
+        )
+        assert len(pos) == 2
+        assert isinstance(pos[0], float)
+        assert isinstance(pos[1], float)
+
+    def test_point_source_position_with_offset(self):
+        pos = self.source2.point_source_position(
+            center_lens=np.array([0.002, -0.002]), draw_area=4 * np.pi
+        )
+        assert len(pos) == 2
+        assert isinstance(pos[0], float)
+        assert isinstance(pos[1], float)
 
 
 if __name__ == "__main__":
