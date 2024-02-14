@@ -49,7 +49,7 @@ class Source(object):
                 self._source_dict.add_column(new_column)
                 self.source_dict = self._source_dict[0]
                 times, magnitudes = lightcurve_class.generate_light_curve(
-                    redshift=self.redshift, peak_magnitude=peak_mag)
+                    redshift=self.redshift, peak_magnitude=peak_mag, band=provided_band)
                 kwargs_variab_extracted["MJD"]=times
                 kwargs_variab_extracted["ps_mag_"+provided_band] = magnitudes
             else:
