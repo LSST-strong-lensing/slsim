@@ -15,6 +15,7 @@ class LensedSystemBase(ABC):
         test_area=4 * np.pi,
         variability_model=None,
         kwargs_variability=None,
+        peak_mag_limit = None
     ):
         """
         :param source_dict: source properties
@@ -28,10 +29,13 @@ class LensedSystemBase(ABC):
          This is associated with an input for Variability class.
         :param cosmo: astropy.cosmology instance
         :param test_area: area (arc-sec^2) around lensing galaxy to be investigated
+        :param peak_mag_limit: range of peak magnitude for point source (supernovae).
+         eg: {"peak_mag_min": m_min, "peak_mag_max": m_max}
 
         """
         # self._source_dict = source_dict
-        self.source = Source(source_dict, variability_model, kwargs_variability, cosmo)
+        self.source = Source(source_dict, variability_model, kwargs_variability, 
+                             peak_mag_limit, cosmo)
         self._deflector_dict = deflector_dict
         # TODO: tell them what keys the dictionary should contain
         self.test_area = test_area

@@ -8,15 +8,18 @@ class LensedPopulationBase(ABC):
     All object that inherit from Lensed Sample must contain the methods it contains.
     """
 
-    def __init__(self, sky_area=None, cosmo=None):
+    def __init__(self, sky_area=None, cosmo=None, peak_mag_limit=None):
         """
 
         :param sky_area: Sky area (solid angle) over which galaxies are sampled.
         :type sky_area: `~astropy.units.Quantity`
         :param cosmo: cosmology
         :type cosmo: ~astropy.cosmology instance
+        :param peak_mag_limit: range of peak magnitude for point source 
+         (supernovae). eg: {"peak_mag_min": m_min, "peak_mag_max": m_max}
         """
-
+        
+        self.peak_mag_limit = peak_mag_limit
         if sky_area is None:
             from astropy.units import Quantity
 

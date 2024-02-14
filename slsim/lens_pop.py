@@ -29,7 +29,8 @@ class LensPop(LensedPopulationBase):
         filters=None,
         cosmo=None,
         source_sersic_profile="single",
-        catalog_type=None
+        catalog_type=None,
+        peak_mag_limit=None
     ):
         """
 
@@ -63,8 +64,10 @@ class LensPop(LensedPopulationBase):
         :param catalog_type: type of the catalog. If someone wants to use scotch 
          catalog, they need to specify it.
         :type catalog_type: str. eg: "scotch"
+        :param peak_mag_limit: range of peak magnitude for point source 
+         (supernovae). eg: {"peak_mag_min": m_min, "peak_mag_max": m_max}
         """
-        super().__init__(sky_area, cosmo)
+        super().__init__(sky_area, cosmo, peak_mag_limit)
         if source_type == "galaxies" and kwargs_variability is not None:
             raise ValueError(
                 "Galaxies cannot have variability. Either choose"
@@ -226,7 +229,8 @@ class LensPop(LensedPopulationBase):
                 kwargs_variability=self._sources.kwargs_variability,
                 cosmo=self.cosmo,
                 source_type=self._source_model_type,
-                sersic_profile=self._sources.sersic_profile
+                sersic_profile=self._sources.sersic_profile,
+                peak_mag_limit=self.peak_mag_limit
             )
             if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens

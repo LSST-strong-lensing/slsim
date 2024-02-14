@@ -26,7 +26,8 @@ class Lens(LensedSystemBase):
         mixgauss_stds=None,
         mixgauss_weights=None,
         magnification_limit=0.01,
-        sersic_profile="single"
+        sersic_profile="single",
+        peak_mag_limit=None
     ):
         """
 
@@ -58,6 +59,8 @@ class Lens(LensedSystemBase):
         :param sersic_profile: keyword for number of sersic profile to use in source 
          light model
         :type sersic_profile: str . Either "single" or "double" .
+        :param peak_mag_limit: range of peak magnitude for point source (supernovae).
+         eg: {"peak_mag_min": m_min, "peak_mag_max": m_max}
         """
         super().__init__(
             source_dict=source_dict,
@@ -66,6 +69,7 @@ class Lens(LensedSystemBase):
             test_area=test_area,
             variability_model=variability_model,
             kwargs_variability=kwargs_variability,
+            peak_mag_limit = peak_mag_limit
         )
 
         self.cosmo = cosmo

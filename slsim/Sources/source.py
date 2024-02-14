@@ -10,8 +10,8 @@ class Source(object):
     """This class provides source dictionary and variable magnitude of a individual
     source."""
 
-    def __init__(self, source_dict, variability_model=None, cosmo=None, 
-                 kwargs_variability=None, kwargs_peak_mag = None):
+    def __init__(self, source_dict, variability_model=None, 
+                 kwargs_variability=None, kwargs_peak_mag = None, cosmo=None):
         """
         :param source_dict: Source properties
         :type source_dict: dict
