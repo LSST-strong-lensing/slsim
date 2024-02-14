@@ -4,6 +4,7 @@ from slsim.Sources.SourceVariability.variability import (
 import numpy as np
 from lenstronomy.Util import constants
 from slsim.Sources.fake_light_curve import FakeLightCurve
+from astropy.table import Column, Table
 
 class Source(object):
     """This class provides source dictionary and variable magnitude of a individual
@@ -23,13 +24,19 @@ class Source(object):
          a dictionary and this dict should be passed to the Variability class.
         :type kwargs_variability: list of str
         """
-        self.source_dict = source_dict
+        self.source_dict = Table(source_dict)
         if kwargs_variability is not None:
             kwargs_variab_extracted = {}
-            if list(kwargs_variability)[0] in ["absolute_magnitude", 
-                                               "peak_apparent_magnitude"]:
+            kwargs_variability_list = ["absolute_magnitude", "peak_apparent_magnitude", 
+                                       "r", "g", "i"]
+            if any(element in kwargs_variability_list for
+                    element in list(kwargs_variability)):
                 lightcurve_class = FakeLightCurve(cosmo=cosmo)
                 peak_mag=np.random.randint(9, 12)
+                provided_band = [element for element in 
+                            list(kwargs_variability) if element in ['r', 'i', 'g']][0]
+                new_column = Column([float(peak_mag)], name="ps_mag_"+provided_band)
+                self.source_dict.add_column(new_column)
                 times, magnitudes = lightcurve_class.generate_light_curve(
                     redshift=self.redshift, peak_magnitude=peak_mag)
                 kwargs_variab_extracted["MJD"]=times
