@@ -32,7 +32,7 @@ class Source(object):
             if any(element in kwargs_variability_list for
                     element in list(kwargs_variability)):
                 lightcurve_class = FakeLightCurve(cosmo=cosmo)
-                peak_mag=np.random.randint(9, 12)
+                peak_mag=round(np.random.uniform(9, 12), 5)
                 provided_band = [element for element in 
                             list(kwargs_variability) if element in ['r', 'i', 'g']][0]
                 new_column = Column([float(peak_mag)], name="ps_mag_"+provided_band)
