@@ -11,7 +11,8 @@ class Source(object):
     source."""
 
     def __init__(self, source_dict, variability_model=None, 
-                 kwargs_variability=None, kwargs_peak_mag = None, cosmo=None):
+                 kwargs_variability=None, kwargs_peak_mag = None, cosmo=None,
+                 lightcurve_time = None):
         """
         :param source_dict: Source properties
         :type source_dict: dict
@@ -26,6 +27,8 @@ class Source(object):
         :param kwargs_peak_mag: range of the peak magnitude
         :type kwargs_peak_mag: dict. eg: kwargs_peak_mag={"peak_mag_min": m_min, 
          "peak_mag_max": m_max}
+        :param lightcurve_time: time period for lightcurve.
+        :type lightcurve_time: astropy unit object. egs: 10*u.day, 10*u.year.
         """
         self.source_dict = source_dict
         if kwargs_variability is not None:
@@ -49,7 +52,8 @@ class Source(object):
                 self._source_dict.add_column(new_column)
                 self.source_dict = self._source_dict[0]
                 times, magnitudes = lightcurve_class.generate_light_curve(
-                    redshift=self.redshift, peak_magnitude=peak_mag, band=provided_band)
+                    redshift=self.redshift, peak_magnitude=peak_mag, 
+                    lightcurve_time=lightcurve_time, band=provided_band)
                 kwargs_variab_extracted["MJD"]=times
                 kwargs_variab_extracted["ps_mag_"+provided_band] = magnitudes
             else:

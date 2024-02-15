@@ -27,7 +27,8 @@ class Lens(LensedSystemBase):
         mixgauss_weights=None,
         magnification_limit=0.01,
         sersic_profile="single",
-        peak_mag_limit=None
+        peak_mag_limit=None,
+        lightcurve_time = None
     ):
         """
 
@@ -61,6 +62,8 @@ class Lens(LensedSystemBase):
         :type sersic_profile: str . Either "single" or "double" .
         :param peak_mag_limit: range of peak magnitude for point source (supernovae).
          eg: {"peak_mag_min": m_min, "peak_mag_max": m_max}
+        :param lightcurve_time: time period for lightcurve.
+        :type lightcurve_time: astropy unit object. egs: 10*u.day, 10*u.year.
         """
         super().__init__(
             source_dict=source_dict,
@@ -69,7 +72,8 @@ class Lens(LensedSystemBase):
             test_area=test_area,
             variability_model=variability_model,
             kwargs_variability=kwargs_variability,
-            peak_mag_limit = peak_mag_limit
+            peak_mag_limit = peak_mag_limit,
+            lightcurve_time=lightcurve_time
         )
 
         self.cosmo = cosmo

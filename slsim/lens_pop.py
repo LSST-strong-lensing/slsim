@@ -30,7 +30,8 @@ class LensPop(LensedPopulationBase):
         cosmo=None,
         source_sersic_profile="single",
         catalog_type=None,
-        peak_mag_limit=None
+        peak_mag_limit=None,
+        lightcurve_time = None
     ):
         """
 
@@ -66,8 +67,10 @@ class LensPop(LensedPopulationBase):
         :type catalog_type: str. eg: "scotch"
         :param peak_mag_limit: range of peak magnitude for point source 
          (supernovae). eg: {"peak_mag_min": m_min, "peak_mag_max": m_max}
+        :param lightcurve_time: time period for lightcurves.
+        :type lightcurve_time: astropy unit object. egs: 10*u.day, 10*u.year.
         """
-        super().__init__(sky_area, cosmo, peak_mag_limit)
+        super().__init__(sky_area, cosmo, peak_mag_limit, lightcurve_time)
         if source_type == "galaxies" and kwargs_variability is not None:
             raise ValueError(
                 "Galaxies cannot have variability. Either choose"
@@ -230,7 +233,8 @@ class LensPop(LensedPopulationBase):
                 cosmo=self.cosmo,
                 source_type=self._source_model_type,
                 sersic_profile=self._sources.sersic_profile,
-                peak_mag_limit=self.peak_mag_limit
+                peak_mag_limit=self.peak_mag_limit,
+                lightcurve_time=self.lightcurve_time
             )
             if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens

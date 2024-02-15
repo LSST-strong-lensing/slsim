@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.stats import skewnorm
+from astropy import units as u
 """Class to generate fake light curve"""
 
 class FakeLightCurve:
@@ -9,7 +10,7 @@ class FakeLightCurve:
         """
         self.cosmo = cosmo
     def generate_light_curve(self, redshift, peak_magnitude,  num_points=50, 
-                             time_range=(0, 100), band="r"):
+                             lightcurve_time=50*u.day, band="r"):
         """Generates a fake light curve
 
         :param redshift: redshift of an object
@@ -18,7 +19,8 @@ class FakeLightCurve:
         :param time_range: range of time
         :return: lightcurve
         """
-        peak_time=np.random.uniform(20, 45)
+        time_range=(0, lightcurve_time.to(u.day).value)
+        peak_time=np.random.uniform(time_range[0], time_range[1])
         sigma=30
         skewness = 15
         time = np.linspace(time_range[0], time_range[1], num_points)
