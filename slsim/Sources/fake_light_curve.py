@@ -18,12 +18,13 @@ class FakeLightCurve:
         :param time_range: range of time
         :return: lightcurve
         """
-        peak_time=np.random.randint(20, 45)
+        peak_time=np.random.uniform(20, 45)
         sigma=30
         skewness = 15
         time = np.linspace(time_range[0], time_range[1], num_points)
-        apparent_magnitudes_r = 10 + 5 * np.log10(self.cosmo.luminosity_distance(redshift).value / 10) + \
-                              peak_magnitude * skewnorm.pdf(time, skewness, loc=peak_time, scale=sigma)
+        apparent_magnitudes_r = peak_magnitude + 5 * np.log10(
+            self.cosmo.luminosity_distance(redshift).value / 10) + \
+            peak_magnitude * skewnorm.pdf(time, skewness, loc=peak_time, scale=sigma)
         if band=="r":
             apparent_magnitudes=apparent_magnitudes_r
         elif band=="i":
