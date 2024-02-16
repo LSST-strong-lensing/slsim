@@ -20,7 +20,7 @@ class FakeLightCurve:
         :return: lightcurve
         """
         time_range=(0, lightcurve_time.to(u.day).value)
-        peak_time=np.random.uniform(time_range[0], time_range[1])
+        peak_time=np.random.uniform(time_range[0], time_range[1]/2)
         sigma=30
         skewness = 15
         time = np.linspace(time_range[0], time_range[1], num_points)

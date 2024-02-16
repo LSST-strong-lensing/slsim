@@ -207,7 +207,8 @@ class Source(object):
             return self._center_point_source
         return extended_source_center
     
-    def kwargs_extended_source_light(self, band=None, sersic_profile_str="single"):
+    def kwargs_extended_source_light(self, center_lens, draw_area, band=None, 
+                                     sersic_profile_str="single"):
         """ Provids dictionary of keywords for the source light model(s).
 
         :param band: Imaging band
@@ -220,7 +221,7 @@ class Source(object):
         else:
             mag_source = self.extended_source_magnitude(band=band)
         center_source = self.extended_source_position(
-        center_lens=self.deflector_position, draw_area=self.test_area
+        center_lens=center_lens, draw_area=draw_area
                 )
         if sersic_profile_str == "single":
             size_source_arcsec = float(self.angular_size) / constants.arcsec
@@ -247,10 +248,10 @@ class Source(object):
                 self.source_dict["angular_size0"]) / constants.arcsec
             size_source_arcsec1 = float(
                 self.source_dict["angular_size1"]) / constants.arcsec
-            ellipticity0_1 = self.source_dict["ellipticity0_1"]
-            ellipticity0_2 = self.source_dict["ellipticity0_2"]
-            ellipticity1_1 = self.source_dict["ellipticity1_1"]
-            ellipticity1_2 = self.source_dict["ellipticity1_2"]
+            ellipticity0_1 = self.source_dict["e0_1"]
+            ellipticity0_2 = self.source_dict["e0_2"]
+            ellipticity1_1 = self.source_dict["e1_1"]
+            ellipticity1_2 = self.source_dict["e1_2"]
             kwargs_extended_source = [
                         {
                             "magnitude": w0*mag_source,
