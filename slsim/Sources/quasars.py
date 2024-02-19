@@ -12,6 +12,7 @@ class Quasars(SourcePopBase):
         sky_area,
         variability_model=None,
         kwargs_variability_model=None,
+        sersic_profile=None
     ):
         """
 
@@ -27,8 +28,11 @@ class Quasars(SourcePopBase):
         :param kwargs_variability_model: keyword arguments for the variability of
          a source. This is a population argument, not the light curve parameter for
          the individual quasars.
+        :param sersic_profile: keyword for number of sersic profile to use in source
+         light model. Always None for this class.
         """
         self.n = len(quasar_list)
+        self.sersic_profile = sersic_profile
         # make cuts
         self._quasar_select = quasar_list  # can apply a filter here
 
