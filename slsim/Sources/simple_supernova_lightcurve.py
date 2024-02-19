@@ -11,10 +11,10 @@ class SimpleSupernovaLightCurve:
     
     def generate_light_curve(self, redshift, absolute_magnitude, num_points=50, 
                              lightcurve_time=50*u.day, band="r"):
-        """Generates a fake light curve
+        """Generates a simple light curve
 
         :param redshift: redshift of an object
-        :param peak_magnitude: peak magnitude of the light curve
+        :param absolute_magnitude: absolute magnitude of the source
         :param num_points: number of data points in light curve
         :param time_range: range of time
         :return: lightcurve
