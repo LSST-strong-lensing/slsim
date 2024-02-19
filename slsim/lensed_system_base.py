@@ -15,8 +15,8 @@ class LensedSystemBase(ABC):
         test_area=4 * np.pi,
         variability_model=None,
         kwargs_variability=None,
-        peak_mag_limit = None,
-        lightcurve_time = None
+        peak_mag_limit=None,
+        lightcurve_time=None,
     ):
         """
         :param source_dict: source properties
@@ -36,8 +36,14 @@ class LensedSystemBase(ABC):
         :type lightcurve_time: astropy unit object. egs: 10*u.day, 10*u.year.
         """
         # self._source_dict = source_dict
-        self.source = Source(source_dict, variability_model, kwargs_variability, 
-                             peak_mag_limit, cosmo, lightcurve_time)
+        self.source = Source(
+            source_dict,
+            variability_model,
+            kwargs_variability,
+            peak_mag_limit,
+            cosmo,
+            lightcurve_time,
+        )
         self._deflector_dict = deflector_dict
         # TODO: tell them what keys the dictionary should contain
         self.test_area = test_area

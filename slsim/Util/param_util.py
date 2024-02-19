@@ -175,6 +175,7 @@ def transformmatrix_to_pixelscale(tranform_matrix):
     determinant = np.linalg.det(tranform_matrix)
     return np.sqrt(determinant)
 
+
 def average_angular_size(a, b):
     """Computes average angular size using semi major and minor axis.
 
@@ -182,7 +183,8 @@ def average_angular_size(a, b):
     :param b: value of semi minor axis in arcsec
     :return: average angular size in radian
     """
-    return np.sqrt(a*b)*(np.pi/(180*3600))
+    return np.sqrt(a * b) * (np.pi / (180 * 3600))
+
 
 def axis_ratio(a, b):
     """Computes axis ratio using semi major and minor axis.
@@ -191,11 +193,13 @@ def axis_ratio(a, b):
     :param b: value of semi minor
     :return: axis ratio
     """
-    return b/a
+    return b / a
+
 
 def ellipticity(q):
     """Computes ellipticity using axis ratio.
+
     :param q: axis ratio of an object
     :return: ellipticity
     """
-    return (1-q)/(1+q)
+    return (1 - q) / (1 + q)
