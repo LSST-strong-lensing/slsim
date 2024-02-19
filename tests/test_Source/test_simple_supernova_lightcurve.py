@@ -15,7 +15,8 @@ def test_generate_light_curve(simple_light_curve):
     lightcurve_time = 50 * u.day
     band = "r"
 
-    time, mags = simple_light_curve.generate_light_curve(redshift, abs_mag, num_points, lightcurve_time, band)
+    time, mags = simple_light_curve.generate_light_curve(redshift, abs_mag, 
+                                            num_points, lightcurve_time, band)
 
     assert len(time) == num_points
     assert len(mags) == num_points
