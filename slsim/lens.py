@@ -28,7 +28,7 @@ class Lens(LensedSystemBase):
         magnification_limit=0.01,
         sersic_profile="single",
         peak_mag_limit=None,
-        lightcurve_time = None
+        lightcurve_time=None,
     ):
         """
 
@@ -57,7 +57,7 @@ class Lens(LensedSystemBase):
         :param magnification_limit: absolute lensing magnification lower limit to
             register a point source (ignore highly de-magnified images)
         :type magnification_limit: float >= 0
-        :param sersic_profile: keyword for number of sersic profile to use in source 
+        :param sersic_profile: keyword for number of sersic profile to use in source
          light model
         :type sersic_profile: str . Either "single" or "double" .
         :param peak_mag_limit: range of peak magnitude for point source (supernovae).
@@ -72,8 +72,8 @@ class Lens(LensedSystemBase):
             test_area=test_area,
             variability_model=variability_model,
             kwargs_variability=kwargs_variability,
-            peak_mag_limit = peak_mag_limit,
-            lightcurve_time=lightcurve_time
+            peak_mag_limit=peak_mag_limit,
+            lightcurve_time=lightcurve_time,
         )
 
         self.cosmo = cosmo
@@ -586,15 +586,20 @@ class Lens(LensedSystemBase):
             self._source_type == "extended"
             or self._source_type == "point_plus_extended"
         ):
-            
-            if self.sersic_profile == 'single':
+
+            if self.sersic_profile == "single":
                 source_models["source_light_model_list"] = ["SERSIC_ELLIPSE"]
             else:
-                source_models["source_light_model_list"] = ["SERSIC_ELLIPSE", 
-                                                            "SERSIC_ELLIPSE"]
+                source_models["source_light_model_list"] = [
+                    "SERSIC_ELLIPSE",
+                    "SERSIC_ELLIPSE",
+                ]
             kwargs_source = self.source.kwargs_extended_source_light(
-                draw_area=self.test_area,center_lens=self.deflector_position, band=band, 
-                                            sersic_profile_str=self.sersic_profile)
+                draw_area=self.test_area,
+                center_lens=self.deflector_position,
+                band=band,
+                sersic_profile_str=self.sersic_profile,
+            )
         else:
             # source_models['source_light_model_list'] = None
             kwargs_source = None

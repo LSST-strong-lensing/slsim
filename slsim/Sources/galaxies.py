@@ -11,8 +11,13 @@ class Galaxies(SourcePopBase):
     """Class describing elliptical galaxies."""
 
     def __init__(
-        self, galaxy_list, kwargs_cut, cosmo, sky_area, sersic_profile="single", 
-        list_type="astropy_table"
+        self,
+        galaxy_list,
+        kwargs_cut,
+        cosmo,
+        sky_area,
+        sersic_profile="single",
+        list_type="astropy_table",
     ):
         """
 
@@ -23,7 +28,7 @@ class Galaxies(SourcePopBase):
         :param cosmo: astropy.cosmology instance
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
-        :param sersic_profile: keyword for number of sersic profile to use in source 
+        :param sersic_profile: keyword for number of sersic profile to use in source
          light model
         :param list_type: format of the source catalog file. Currently, it supports a
          single astropy table or a list of astropy tables.
@@ -36,44 +41,52 @@ class Galaxies(SourcePopBase):
         if list_type == "astropy_table":
             column_names = galaxy_list.colnames
             for col_name in column_names:
-                if '_host' in col_name:
+                if "_host" in col_name:
                     # Remove '_host' from the column name
-                    new_col_name = col_name.replace('_host', '')
+                    new_col_name = col_name.replace("_host", "")
                     # Rename the column
                     galaxy_list.rename_column(col_name, new_col_name)
-            if self.sersic_profile=='double':
-                if 'n0' in column_names or 'n1' in column_names:
-                    galaxy_list.rename_column('n0', 'n_sersic_0')
-                    galaxy_list.rename_column('n1', 'n_sersic_1')
-                if 'e0' in column_names or 'e1' in column_names:
-                    galaxy_list.rename_column('e0', 'ellipticity0')
-                    galaxy_list.rename_column('e1', 'ellipticity1')
-            if self.sersic_profile == 'single':
-                if 'e' in column_names:
-                    galaxy_list.rename_column('e', 'ellipticity')
+            if self.sersic_profile == "double":
+                if "n0" in column_names or "n1" in column_names:
+                    galaxy_list.rename_column("n0", "n_sersic_0")
+                    galaxy_list.rename_column("n1", "n_sersic_1")
+                if "e0" in column_names or "e1" in column_names:
+                    galaxy_list.rename_column("e0", "ellipticity0")
+                    galaxy_list.rename_column("e1", "ellipticity1")
+            if self.sersic_profile == "single":
+                if "e" in column_names:
+                    galaxy_list.rename_column("e", "ellipticity")
             column_names_update = galaxy_list.colnames
-            if sersic_profile=='single':
+            if sersic_profile == "single":
                 if "e1" not in column_names_update or "e2" not in column_names_update:
                     galaxy_list["e1"] = -np.ones(self.n)
                     galaxy_list["e2"] = -np.ones(self.n)
                 if "n_sersic" not in column_names_update:
                     galaxy_list["n_sersic"] = -np.ones(self.n)
-            if sersic_profile=='double':
+            if sersic_profile == "double":
                 # these are the name convention for double sersic profiles.
-                if ("n_sersic_0" not in column_names_update or 
-                    "n_sersic_1" not in column_names_update):
+                if (
+                    "n_sersic_0" not in column_names_update
+                    or "n_sersic_1" not in column_names_update
+                ):
                     galaxy_list["n_sersic_0"] = -np.ones(self.n)
                     galaxy_list["n_sersic_1"] = -np.ones(self.n)
-                if ("e0_1" not in column_names_update or
-                     "e0_2" not in column_names_update):
+                if (
+                    "e0_1" not in column_names_update
+                    or "e0_2" not in column_names_update
+                ):
                     galaxy_list["e0_1"] = -np.ones(self.n)
                     galaxy_list["e0_2"] = -np.ones(self.n)
-                if ("e1_1" not in column_names_update or
-                     "e1_2" not in column_names_update):
+                if (
+                    "e1_1" not in column_names_update
+                    or "e1_2" not in column_names_update
+                ):
                     galaxy_list["e1_1"] = -np.ones(self.n)
                     galaxy_list["e1_2"] = -np.ones(self.n)
-                if ("angular_size0" not in column_names_update or 
-                    "angular_size1" not in column_names_update):
+                if (
+                    "angular_size0" not in column_names_update
+                    or "angular_size1" not in column_names_update
+                ):
                     galaxy_list["angular_size0"] = -np.ones(self.n)
                     galaxy_list["angular_size1"] = -np.ones(self.n)
         else:
@@ -114,78 +127,89 @@ class Galaxies(SourcePopBase):
 
         index = random.randint(0, self._num_select - 1)
         galaxy = self._galaxy_select[index]
-        if self.sersic_profile == 'single':
+        if self.sersic_profile == "single":
             if "a_rot" in galaxy.colnames:
-                phi_rot=galaxy["a_rot"]
+                phi_rot = galaxy["a_rot"]
             else:
                 phi_rot = None
             if "ellipticity" in galaxy.colnames:
                 if galaxy["e1"] == -1 or galaxy["e2"] == -1:
-                    e1, e2 = galaxy_projected_eccentricity(float(galaxy["ellipticity"]),
-                                                           rotation_angle=phi_rot)
+                    e1, e2 = galaxy_projected_eccentricity(
+                        float(galaxy["ellipticity"]), rotation_angle=phi_rot
+                    )
                     galaxy["e1"] = e1
                     galaxy["e2"] = e2
             else:
                 raise ValueError("required parameters missing in galaxy_list columns")
             if galaxy["n_sersic"] == -1:
                 galaxy["n_sersic"] = 1  # TODO make a better estimate with scatter
-        elif self.sersic_profile == 'double':
+        elif self.sersic_profile == "double":
             if "a_rot" in galaxy.colnames:
-                phi_rot=galaxy["a_rot"]
+                phi_rot = galaxy["a_rot"]
             else:
                 phi_rot = None
             if galaxy["e0_1"] == -1 or galaxy["e0_2"] == -1:
                 if "ellipticity0" in galaxy.colnames:
                     e0_1, e0_2 = galaxy_projected_eccentricity(
-                        float(galaxy["ellipticity0"]), rotation_angle=phi_rot)
+                        float(galaxy["ellipticity0"]), rotation_angle=phi_rot
+                    )
                     galaxy["e0_1"] = e0_1
                     galaxy["e0_2"] = e0_2
                 elif "a0" in galaxy.colnames and "b0" in galaxy.colnames:
                     axis_ratio_0 = axis_ratio(a=galaxy["a0"], b=galaxy["b0"])
                     ellip_0 = ellipticity(q=axis_ratio_0)
                     e0_1, e0_2 = galaxy_projected_eccentricity(
-                            float(ellip_0), rotation_angle=phi_rot)
+                        float(ellip_0), rotation_angle=phi_rot
+                    )
                     galaxy["e0_1"] = e0_1
-                    galaxy["e0_2"] = e0_2    
+                    galaxy["e0_2"] = e0_2
                 else:
-                    raise ValueError("required parameters missing in" 
-                                     "galaxy_list columns")
-            
+                    raise ValueError(
+                        "required parameters missing in" "galaxy_list columns"
+                    )
+
             if galaxy["e1_1"] == -1 or galaxy["e1_2"] == -1:
                 if "ellipticity1" in galaxy.colnames:
                     e1_1, e1_2 = galaxy_projected_eccentricity(
-                        float(galaxy["ellipticity1"]), rotation_angle=phi_rot)
+                        float(galaxy["ellipticity1"]), rotation_angle=phi_rot
+                    )
                     galaxy["e1_1"] = e1_1
                     galaxy["e1_2"] = e1_2
                 elif "a1" in galaxy.colnames and "b1" in galaxy.colnames:
                     axis_ratio_1 = axis_ratio(a=galaxy["a1"], b=galaxy["b1"])
                     ellip_1 = ellipticity(q=axis_ratio_1)
-                    e1_1, e1_2 = galaxy_projected_eccentricity(
-                            float(ellip_1))
+                    e1_1, e1_2 = galaxy_projected_eccentricity(float(ellip_1))
                     galaxy["e1_1"] = e1_1
-                    galaxy["e1_2"] = e1_2    
+                    galaxy["e1_2"] = e1_2
                 else:
-                    raise ValueError("required parameters missing in" 
-                                     "galaxy_list columns")
-            if  galaxy["angular_size0"] == -1 or galaxy["angular_size1"] == -1:
+                    raise ValueError(
+                        "required parameters missing in" "galaxy_list columns"
+                    )
+            if galaxy["angular_size0"] == -1 or galaxy["angular_size1"] == -1:
                 if "a0" in galaxy.colnames and "b0" in galaxy.colnames:
-                    galaxy["angular_size0"] = average_angular_size(a=galaxy["a0"], 
-                                                                    b=galaxy["b0"])
+                    galaxy["angular_size0"] = average_angular_size(
+                        a=galaxy["a0"], b=galaxy["b0"]
+                    )
                 else:
-                    raise ValueError("required parameters missing in" 
-                                     "galaxy_list columns")
+                    raise ValueError(
+                        "required parameters missing in" "galaxy_list columns"
+                    )
                 if "a1" in galaxy.colnames and "b1" in galaxy.colnames:
-                    galaxy["angular_size1"] = average_angular_size(a=galaxy["a1"], 
-                                                                    b=galaxy["b1"])
+                    galaxy["angular_size1"] = average_angular_size(
+                        a=galaxy["a1"], b=galaxy["b1"]
+                    )
                 else:
-                    raise ValueError("required parameters missing in" 
-                                     "galaxy_list columns")
+                    raise ValueError(
+                        "required parameters missing in" "galaxy_list columns"
+                    )
             if galaxy["n_sersic_0"] == -1 or galaxy["n_sersic_1"] == -1:
                 galaxy["n_sersic_0"] = 1
                 galaxy["n_sersic_1"] = 4
         else:
-            raise ValueError("Provided light profile is not supported. It should be" 
-                             "either 'single or 'double' ")
+            raise ValueError(
+                "Provided light profile is not supported. It should be"
+                "either 'single or 'double' "
+            )
         return galaxy
 
 
@@ -200,7 +224,7 @@ def galaxy_projected_eccentricity(ellipticity, rotation_angle=None):
     if rotation_angle is None:
         phi = np.random.uniform(0, np.pi)
     else:
-        phi = rotation_angle * (np.pi/180)
+        phi = rotation_angle * (np.pi / 180)
     e = param_util.epsilon2e(ellipticity)
     e1 = e * np.cos(2 * phi)
     e2 = e * np.sin(2 * phi)

@@ -31,7 +31,7 @@ class LensPop(LensedPopulationBase):
         source_sersic_profile="single",
         catalog_type=None,
         peak_mag_limit=None,
-        lightcurve_time = None
+        lightcurve_time=None,
     ):
         """
 
@@ -58,14 +58,14 @@ class LensPop(LensedPopulationBase):
         :type sky_area: `~astropy.units.Quantity`
         :param filters: filters for SED integration
         :type filters: list of strings or None
-        :param source_sersic_profile: keyword for number of sersic profile to use in 
-         source light model. It is necessary to recognize quantities given in the source 
+        :param source_sersic_profile: keyword for number of sersic profile to use in
+         source light model. It is necessary to recognize quantities given in the source
          catalog.
         :type source_sersic_profile: str . Either "single" or "double" .
-        :param catalog_type: type of the catalog. If someone wants to use scotch 
+        :param catalog_type: type of the catalog. If someone wants to use scotch
          catalog, they need to specify it.
         :type catalog_type: str. eg: "scotch"
-        :param peak_mag_limit: range of peak magnitude for point source 
+        :param peak_mag_limit: range of peak magnitude for point source
          (supernovae). eg: {"peak_mag_min": m_min, "peak_mag_max": m_max}
         :param lightcurve_time: time period for lightcurves.
         :type lightcurve_time: astropy unit object. egs: 10*u.day, 10*u.year.
@@ -131,7 +131,8 @@ class LensPop(LensedPopulationBase):
                 pipeline.blue_galaxies,
                 kwargs_cut=kwargs_source_cut,
                 cosmo=cosmo,
-                sky_area=sky_area, sersic_profile=source_sersic_profile
+                sky_area=sky_area,
+                sersic_profile=source_sersic_profile,
             )
             self._source_model_type = "extended"
         elif source_type == "quasars":
@@ -167,7 +168,7 @@ class LensPop(LensedPopulationBase):
                 kwargs_cut=kwargs_source_cut,
                 variability_model=variability_model,
                 kwargs_variability_model=kwargs_variability,
-                sersic_profile=source_sersic_profile
+                sersic_profile=source_sersic_profile,
             )
             self._source_model_type = "point_plus_extended"
         elif source_type == "supernovae_plus_galaxies":
@@ -181,18 +182,20 @@ class LensPop(LensedPopulationBase):
             self.path = os.path.dirname(__file__)
             if catalog_type == "scotch":
                 new_path = self.path + "/Sources/SupernovaeData/scotch_host_data.fits"
-                load_supernovae_data=Table.read(
+                load_supernovae_data = Table.read(
                     "/Users/narayankhadka/Desktop/strong_lensing/scotch_host_data.fits",
-                    format="fits")
+                    format="fits",
+                )
                 self._sources = PointPlusExtendedSources(
-                load_supernovae_data,
-                cosmo=cosmo,
-                sky_area=sky_area,
-                kwargs_cut=kwargs_source_cut,
-                variability_model=variability_model,
-                kwargs_variability_model=kwargs_variability,
-                list_type="astropy_table", sersic_profile=source_sersic_profile
-            )
+                    load_supernovae_data,
+                    cosmo=cosmo,
+                    sky_area=sky_area,
+                    kwargs_cut=kwargs_source_cut,
+                    variability_model=variability_model,
+                    kwargs_variability_model=kwargs_variability,
+                    list_type="astropy_table",
+                    sersic_profile=source_sersic_profile,
+                )
             else:
                 new_path = self.path + "/Sources/SupernovaeData/supernovae_data.pkl"
                 with open(new_path, "rb") as f:
@@ -204,7 +207,8 @@ class LensPop(LensedPopulationBase):
                     kwargs_cut=kwargs_source_cut,
                     variability_model=variability_model,
                     kwargs_variability_model=kwargs_variability,
-                    list_type="list", sersic_profile=source_sersic_profile
+                    list_type="list",
+                    sersic_profile=source_sersic_profile,
                 )
             self._source_model_type = "point_plus_extended"
         else:
@@ -234,7 +238,7 @@ class LensPop(LensedPopulationBase):
                 source_type=self._source_model_type,
                 sersic_profile=self._sources.sersic_profile,
                 peak_mag_limit=self.peak_mag_limit,
-                lightcurve_time=self.lightcurve_time
+                lightcurve_time=self.lightcurve_time,
             )
             if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens
