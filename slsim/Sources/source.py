@@ -39,7 +39,7 @@ class Source(object):
                     element in list(kwargs_variability)):
                 lightcurve_class = FakeLightCurve(cosmo=cosmo)
                 if kwargs_peak_mag is not None:
-                    peak_mag=round(np.random.uniform(kwargs_peak_mag["peak_mag_min"],
+                    abs_mag=round(np.random.uniform(kwargs_peak_mag["peak_mag_min"],
                                                  kwargs_peak_mag["peak_mag_max"]), 5)
                 else:
                     raise ValueError(
@@ -47,13 +47,13 @@ class Source(object):
                         )
                 provided_band = [element for element in 
                             list(kwargs_variability) if element in ['r', 'i', 'g']][0]
-                new_column = Column([float(peak_mag)], name="ps_mag_"+provided_band)
+                times, magnitudes = lightcurve_class.generate_light_curve(
+                    redshift=self.redshift, absolute_magnitude=abs_mag, 
+                    lightcurve_time=lightcurve_time, band=provided_band)
+                new_column = Column([float(min(magnitudes))], name="ps_mag_"+provided_band)
                 self._source_dict = Table(self.source_dict)
                 self._source_dict.add_column(new_column)
                 self.source_dict = self._source_dict[0]
-                times, magnitudes = lightcurve_class.generate_light_curve(
-                    redshift=self.redshift, peak_magnitude=peak_mag, 
-                    lightcurve_time=lightcurve_time, band=provided_band)
                 kwargs_variab_extracted["MJD"]=times
                 kwargs_variab_extracted["ps_mag_"+provided_band] = magnitudes
             else:

@@ -1,15 +1,15 @@
 import numpy as np
-from scipy.stats import skewnorm
+import sncosmo
 from astropy import units as u
-"""Class to generate fake light curve"""
 
-class FakeLightCurve:
+class SimpleSupernovaLightCurve:
     def __init__(self, cosmo):
         """
         :param cosmo: astropy cosmology object
         """
         self.cosmo = cosmo
-    def generate_light_curve(self, redshift, peak_magnitude,  num_points=50, 
+    
+    def generate_light_curve(self, redshift, absolute_magnitude, num_points=50, 
                              lightcurve_time=50*u.day, band="r"):
         """Generates a fake light curve
 
@@ -19,22 +19,23 @@ class FakeLightCurve:
         :param time_range: range of time
         :return: lightcurve
         """
-        time_range=(0, lightcurve_time.to(u.day).value)
-        peak_time=np.random.uniform(time_range[0], time_range[1]/2)
-        sigma=30
-        skewness = 15
+        time_range = (-20, lightcurve_time.to(u.day).value)
         time = np.linspace(time_range[0], time_range[1], num_points)
-        apparent_magnitudes_r = peak_magnitude + 5 * np.log10(
-            self.cosmo.luminosity_distance(redshift).value / 10) + \
-            peak_magnitude * skewnorm.pdf(time, skewness, loc=peak_time, scale=sigma)
-        if band=="r":
-            apparent_magnitudes=apparent_magnitudes_r
-        elif band=="i":
-            apparent_magnitudes = apparent_magnitudes_r + 0.5
-        elif band=="g":
-            apparent_magnitudes = apparent_magnitudes_r - 0.5
+        
+        model = sncosmo.Model(source='salt2')
+        model.set(z=redshift)
+        model.set_source_peakabsmag(absolute_magnitude, 'bessellr', 'ab')
+        
+        if band == "r":
+            band_name = 'bessellr'
+        elif band == "i":
+            band_name = 'besselli'
+        elif band == "g":
+            band_name = 'bessellg'
         else:
-            raise ValueError(
-                            "Provided band is not supported"
-                        )
+            raise ValueError("Provided band is not supported")
+        
+        flux = model.bandflux(band_name, time)
+        apparent_magnitudes = -2.5 * np.log10(flux)
+        
         return time, apparent_magnitudes
