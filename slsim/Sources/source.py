@@ -270,4 +270,6 @@ class Source(object):
                             "center_x": center_source[0],
                             "center_y": center_source[1],
                         }]
+        else:
+            raise ValueError("Provided sersic profile is not supported.")
         return kwargs_extended_source

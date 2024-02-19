@@ -3,6 +3,7 @@ import numpy as np
 import pytest
 from numpy import testing as npt
 from astropy.table import Table
+from astropy import units as u
 
 
 class TestSource:
@@ -75,6 +76,36 @@ class TestSource:
                 "dec_off",
             ),
         )
+        source_dict3 = Table([[0.5],
+        [1], 
+        [4], 
+        [0.0002],
+        [0.00002],
+        [0.01],
+        [-0.02],
+        [-0.002],
+        [-0.023],
+        [0.5],
+        [0.5],
+        [23],
+        [0.001],
+        [-0.001],
+        ],names=(
+        "z",
+        "n_sersic_0",
+        "n_sersic_1",
+        "angular_size0",
+        "angular_size1",
+        "e0_1",
+        "e0_2",
+        "e1_1",
+        "e1_2",
+        "w0",
+        "w1",
+        "mag_i",
+        "ra_off",
+        "dec_off",
+        ))
         self.source = Source(
             source_dict,
             variability_model="sinusoidal",
@@ -84,6 +115,13 @@ class TestSource:
             source_dict2,
             variability_model="sinusoidal",
             kwargs_variability={"amp", "freq"},
+        )
+        self.source3 = Source(
+            source_dict3,
+            variability_model="light_curve",
+            kwargs_variability={"peak_apparent_magnitude", "i"},
+            kwargs_peak_mag = {"peak_mag_min": -20, "peak_mag_max": -17}, 
+            lightcurve_time = 50*u.day
         )
 
     def test_redshift(self):
@@ -142,6 +180,34 @@ class TestSource:
         assert isinstance(pos[0], float)
         assert isinstance(pos[1], float)
 
+    def test_extended_source_position(self):
+        center_lens = np.array([0, 0])
+        draw_area = 4 * np.pi
+        pos = self.source2.extended_source_position(center_lens, draw_area)
+        # Test if the position is within the drawn area
+        assert np.linalg.norm(pos - center_lens) <= np.sqrt(draw_area / np.pi)
+
+    def test_point_source_position(self):
+        center_lens = np.array([0, 0])
+        draw_area = 4 * np.pi
+        pos = self.source2.point_source_position(center_lens, draw_area)
+        # Test if the position is within the drawn area
+        assert np.linalg.norm(pos - center_lens) <= np.sqrt(draw_area / np.pi)
+
+    def test_kwargs_extended_source_light(self):
+        center_lens = np.array([0, 0])
+        draw_area = 4 * np.pi
+        kwargs = self.source2.kwargs_extended_source_light(center_lens, draw_area, band='r')
+        assert len(kwargs) == 1
+        assert isinstance(kwargs[0], dict)
+
+    def test_kwargs_extended_source_light_double_sersic(self):
+        center_lens = np.array([0, 0])
+        draw_area = 4 * np.pi
+        kwargs = self.source3.kwargs_extended_source_light(center_lens, draw_area, 
+                                                band='i', sersic_profile_str="double")
+        assert len(kwargs) == 2
+        assert all(isinstance(kwargs_item, dict) for kwargs_item in kwargs)
 
 if __name__ == "__main__":
     pytest.main()
