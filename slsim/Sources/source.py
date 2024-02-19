@@ -3,7 +3,7 @@ from slsim.Sources.SourceVariability.variability import (
 )
 import numpy as np
 from lenstronomy.Util import constants
-from slsim.Sources.fake_light_curve import FakeLightCurve
+from slsim.Sources.fake_light_curve import SimpleSupernovaLightCurve
 from astropy.table import Column, Table
 
 class Source(object):
@@ -37,7 +37,7 @@ class Source(object):
                                        "r", "g", "i"]
             if any(element in kwargs_variability_list for
                     element in list(kwargs_variability)):
-                lightcurve_class = FakeLightCurve(cosmo=cosmo)
+                lightcurve_class = SimpleSupernovaLightCurve(cosmo=cosmo)
                 if kwargs_peak_mag is not None:
                     abs_mag=round(np.random.uniform(kwargs_peak_mag["peak_mag_min"],
                                                  kwargs_peak_mag["peak_mag_max"]), 5)
