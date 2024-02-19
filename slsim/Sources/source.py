@@ -3,7 +3,7 @@ from slsim.Sources.SourceVariability.variability import (
 )
 import numpy as np
 from lenstronomy.Util import constants
-from slsim.Sources.fake_light_curve import SimpleSupernovaLightCurve
+from slsim.Sources.simple_supernova_lightcurve import SimpleSupernovaLightCurve
 from astropy.table import Column, Table
 
 class Source(object):
