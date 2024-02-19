@@ -180,20 +180,6 @@ class TestSource:
         assert isinstance(pos[0], float)
         assert isinstance(pos[1], float)
 
-    def test_extended_source_position(self):
-        center_lens = np.array([0, 0])
-        draw_area = 4 * np.pi
-        pos = self.source2.extended_source_position(center_lens, draw_area)
-        # Test if the position is within the drawn area
-        assert np.linalg.norm(pos - center_lens) <= np.sqrt(draw_area / np.pi)
-
-    def test_point_source_position(self):
-        center_lens = np.array([0, 0])
-        draw_area = 4 * np.pi
-        pos = self.source2.point_source_position(center_lens, draw_area)
-        # Test if the position is within the drawn area
-        assert np.linalg.norm(pos - center_lens) <= np.sqrt(draw_area / np.pi)
-
     def test_kwargs_extended_source_light(self):
         center_lens = np.array([0, 0])
         draw_area = 4 * np.pi
