@@ -253,27 +253,27 @@ class TestSource:
         assert all(isinstance(kwargs_item, dict) for kwargs_item in kwargs)
         with pytest.raises(ValueError):
             self.source5.kwargs_extended_source_light(
-            center_lens, draw_area, band="i", sersic_profile_str="double"
-        )
+                center_lens, draw_area, band="i", sersic_profile_str="double"
+            )
         with pytest.raises(ValueError):
             self.source5.kwargs_extended_source_light(
-            center_lens, draw_area, band="i", sersic_profile_str="triple"
-        )
+                center_lens, draw_area, band="i", sersic_profile_str="triple"
+            )
         with pytest.raises(ValueError):
             Source(
-            self.source_dict3,
-            variability_model="light_curve",
-            kwargs_variability={"peak_apparent_magnitude", "i"},
-            kwargs_peak_mag=None,
-            lightcurve_time=50 * u.day,
-        )
+                self.source_dict3,
+                variability_model="light_curve",
+                kwargs_variability={"peak_apparent_magnitude", "i"},
+                kwargs_peak_mag=None,
+                lightcurve_time=50 * u.day,
+            )
         with pytest.raises(ValueError):
             Source(
-            self.source_dict,
-            variability_model="sinusoidal",
-            kwargs_variability={"tmp", "fre"},
-        )
-        
+                self.source_dict,
+                variability_model="sinusoidal",
+                kwargs_variability={"tmp", "fre"},
+            )
+
 
 if __name__ == "__main__":
     pytest.main()
