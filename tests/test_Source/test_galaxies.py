@@ -17,15 +17,9 @@ class TestGalaxies(object):
                 [-15.248975044343094, -15.248975044343094, -15.248975044343094],
                 [0.1492770563596445, 0.1492770563596445, 0.1492770563596445],
                 [4.186996407348755e-08, 4.186996407348755e-08, 4.186996407348755e-08],
-                [23, 23, 23]
+                [23, 23, 23],
             ],
-            names=(
-                "z",
-                "n0",
-                "M",
-                "ellipticity",
-                "mag_i"
-            ),
+            names=("z", "n0", "M", "ellipticity", "mag_i"),
         )
         galaxy_list2 = Table(
             [
@@ -34,16 +28,9 @@ class TestGalaxies(object):
                 [0.1492770563596445, 0.1492770563596445, 0.1492770563596445],
                 [4.186996407348755e-08, 4.186996407348755e-08, 4.186996407348755e-08],
                 [23, 23, 23],
-                [43, 43, 43]
+                [43, 43, 43],
             ],
-            names=(
-                "z",
-                "M",
-                "e",
-                "angular_size",
-                "mag_i",
-                "a_rot"
-            ),
+            names=("z", "M", "e", "angular_size", "mag_i", "a_rot"),
         )
 
         galaxy_list3 = Table(
@@ -52,15 +39,9 @@ class TestGalaxies(object):
                 [-15.248975044343094, -15.248975044343094, -15.248975044343094],
                 [4.186996407348755e-08, 4.186996407348755e-08, 4.186996407348755e-08],
                 [23, 23, 23],
-                [43, 43, 43]
+                [43, 43, 43],
             ],
-            names=(
-                "z",
-                "M",
-                "angular_size",
-                "mag_i",
-                "a_rot"
-            ),
+            names=("z", "M", "angular_size", "mag_i", "a_rot"),
         )
         self.galaxies = Galaxies(
             galaxy_list=galaxy_list,
@@ -141,7 +122,7 @@ class TestGalaxies(object):
                 "mag_i",
                 "ra_off",
                 "dec_off",
-                "a_rot"
+                "a_rot",
             ),
         )
 
@@ -155,15 +136,7 @@ class TestGalaxies(object):
                 [0.2665196551390636, 0.2665196551390636, 0.2665196551390636],
                 [42, 42, 42],
             ],
-            names=(
-                "z",
-                "w0",
-                "w1",
-                "mag_i",
-                "ra_off",
-                "dec_off",
-                "a_rot"
-            ),
+            names=("z", "w0", "w1", "mag_i", "ra_off", "dec_off", "a_rot"),
         )
 
         gal_list4 = Table(
@@ -178,17 +151,7 @@ class TestGalaxies(object):
                 [0.2665196551390636, 0.2665196551390636, 0.2665196551390636],
                 [42, 42, 42],
             ],
-            names=(
-                "z",
-                "a0",
-                "b0",
-                "w0",
-                "w1",
-                "mag_i",
-                "ra_off",
-                "dec_off",
-                "a_rot"
-            ),
+            names=("z", "a0", "b0", "w0", "w1", "mag_i", "ra_off", "dec_off", "a_rot"),
         )
         gal_list5 = Table(
             [
