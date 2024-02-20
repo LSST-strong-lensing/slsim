@@ -28,7 +28,7 @@ class TestGalaxies(object):
                 [0.28254256, 0.28254256, 0.28254256],
                 [0.17744173, 0.17744173, 0.17744173],
                 [0.2091449, 0.2091449, 0.2091449],
-                [0.14535427, 0.14535427, 0.14535427	],
+                [0.14535427, 0.14535427, 0.14535427],
                 [0.1492770563596445, 0.1492770563596445, 0.1492770563596445],
                 [0.0994047812516054, 0.0994047812516054, 0.0994047812516054],
                 [0.9724, 0.9724, 0.9724],
@@ -63,7 +63,7 @@ class TestGalaxies(object):
                 [0.28254256, 0.28254256, 0.28254256],
                 [0.17744173, 0.17744173, 0.17744173],
                 [0.2091449, 0.2091449, 0.2091449],
-                [0.14535427, 0.14535427, 0.14535427	],
+                [0.14535427, 0.14535427, 0.14535427],
                 [0.9724, 0.9724, 0.9724],
                 [0.0276, 0.0276, 0.0276],
                 [23, 23, 23],
@@ -86,21 +86,21 @@ class TestGalaxies(object):
             ),
         )
         self.galaxies2 = Galaxies(
-        galaxy_list=gal_list,
-        kwargs_cut={},
-        cosmo=self.cosmo,
-        sky_area=sky_area,
-        sersic_profile="double",
-        list_type="astropy_table",
-    )
+            galaxy_list=gal_list,
+            kwargs_cut={},
+            cosmo=self.cosmo,
+            sky_area=sky_area,
+            sersic_profile="double",
+            list_type="astropy_table",
+        )
         self.galaxies3 = Galaxies(
-        galaxy_list=gal_list2,
-        kwargs_cut={},
-        cosmo=self.cosmo,
-        sky_area=sky_area,
-        sersic_profile="double",
-        list_type="astropy_table",
-    )
+            galaxy_list=gal_list2,
+            kwargs_cut={},
+            cosmo=self.cosmo,
+            sky_area=sky_area,
+            sersic_profile="double",
+            list_type="astropy_table",
+        )
 
     def test_source_number(self):
         number = self.galaxies.source_number()
@@ -109,7 +109,7 @@ class TestGalaxies(object):
     def test_draw_source(self):
         galaxy = self.galaxies.draw_source()
         assert len(galaxy) > 0
-    
+
     def test_draw_source_double_sersic(self):
         galaxy1 = self.galaxies2.draw_source()
         galaxy2 = self.galaxies3.draw_source()

@@ -12,7 +12,7 @@ class Quasars(SourcePopBase):
         sky_area,
         variability_model=None,
         kwargs_variability_model=None,
-        sersic_profile=None
+        sersic_profile=None,
     ):
         """
 
