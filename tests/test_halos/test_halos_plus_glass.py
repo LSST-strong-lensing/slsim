@@ -7,10 +7,8 @@ from slsim.Halos.halos_plus_glass import (
     generate_meanzero_halos_multiple_times,
     run_halos_without_kde,
     run_halos_without_kde_by_multiprocessing,
-)
-from slsim.Halos.halos_lens import (
-    deg2_to_cone_angle,
-    cone_radius_angle_to_physical_area,
+    run_kappaext_gammaext_kde_by_multiprocessing,
+
 )
 import os
 import numpy as np
@@ -150,3 +148,19 @@ class Testhalosplusglass(object):
             gamma_run_halos_without_kde_by_multiprocessing,
             (list, np.ndarray)
         )
+
+
+    def test_run_kappaext_gammaext_kde_by_multiprocessing(self):
+        kappaext_gammaext_values_total =\
+            run_kappaext_gammaext_kde_by_multiprocessing(
+            n_iterations=1,
+            sky_area=0.0001,
+            samples_number=1,
+            z_max=0.3
+        )
+        for item in kappaext_gammaext_values_total:
+            assert 'zd' in item and isinstance(item['zd'], (float, int))
+            assert 'zs' in item and isinstance(item['zs'], (float, int))
+            assert 'kappa' in item and isinstance(item['kappa'], (float, int))
+            assert 'gamma' in item and isinstance(item['gamma'], (float, int))
+

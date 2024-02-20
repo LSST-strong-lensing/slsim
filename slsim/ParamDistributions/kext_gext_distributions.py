@@ -1,6 +1,7 @@
 import h5py
 import numpy as np
 
+
 class LineOfSightDistribution:
     correction_data = None
     no_nonlinear_correction_data = None
@@ -44,9 +45,9 @@ class LineOfSightDistribution:
         :param value: A floating point number.
         :return: Rounded number to the nearest 0.1.
         """
-        if value>4.9:
+        if value > 4.9:
             return 4.9
-        if value<0.1:
+        if value < 0.1:
             return 0.1
         return round(value * 10) / 10
 
@@ -65,7 +66,7 @@ class LineOfSightDistribution:
         if z_lens_rounded == z_source_rounded:
             z_lens_rounded = z_lens_rounded - 0.1
             z_lens_rounded = round(z_lens_rounded, 1)
-            #todo： make z_lens_rounded == z_source_rounded worked in file
+            # todo： make z_lens_rounded == z_source_rounded worked in file
         dataset_name = f'zs_{z_source_rounded}' if use_kg_nolos else f'zs_{z_source_rounded}_zd_{z_lens_rounded}'
         data = LineOfSightDistribution.no_nonlinear_correction_data if use_kg_nolos else LineOfSightDistribution.correction_data
         if dataset_name in data:

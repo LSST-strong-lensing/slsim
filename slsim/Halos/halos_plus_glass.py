@@ -166,13 +166,16 @@ def generate_maps_kmean_zero_using_halos(
     if (np.all(modified_kappa_halos == 0)
             and np.all(gamma_values_halos == 0)):
         # Return arrays of zeros with the same shape
-        return [0] * renders_numbers, [0] * renders_numbers
+        return np.array([0]*renders_numbers), np.array([0]*renders_numbers)
 
     kernel = stats.gaussian_kde(np.vstack([modified_kappa_halos,
                                            gamma_values_halos]))
     (kappa_random_halos,
      gamma_random_halos) = kernel.resample(renders_numbers)
+    print(type(kappa_random_halos))
+    print(kappa_random_halos)
     return kappa_random_halos, gamma_random_halos
+
     # TODO: make samples_number_for_one_halos & renders_numbers more reasonable (maybe write some function relate them
     #  with bandwidth of kde)
 
@@ -585,8 +588,7 @@ def run_halos_without_kde_by_multiprocessing(
 
     end_time = time.time()  # Note the end time
     print(
-        f"The {n_iterations} halo-lists took {(end_time - 
-                                               start_time)} seconds to run"
+        f"The {n_iterations} halo-lists took {(end_time - start_time)} seconds to run"
     )
     return kappa_values_total, gamma_values_total
 
