@@ -156,16 +156,22 @@ def generate_maps_kmean_zero_using_halos(
         samples_number=samples_number_for_one_halos,
     )
     kappa_gamma_distribution = halos_lens.get_kappa_gamma_distib(gamma_tot=True)
+
     kappa_gamma_distribution = np.array(kappa_gamma_distribution)
     kappa_values_halos = kappa_gamma_distribution[:, 0]
     gamma_values_halos = kappa_gamma_distribution[:, 1]
-
     mean_kappa = np.mean(kappa_values_halos)
     modified_kappa_halos = kappa_values_halos - mean_kappa
+    # Check if the values are all zeros
+    if (np.all(modified_kappa_halos == 0)
+            and np.all(gamma_values_halos == 0)):
+        # Return arrays of zeros with the same shape
+        return [0] * renders_numbers, [0] * renders_numbers
 
-    kernel = stats.gaussian_kde(np.vstack([modified_kappa_halos, gamma_values_halos]))
-    kappa_random_halos, gamma_random_halos = kernel.resample(renders_numbers)
-
+    kernel = stats.gaussian_kde(np.vstack([modified_kappa_halos,
+                                           gamma_values_halos]))
+    (kappa_random_halos,
+     gamma_random_halos) = kernel.resample(renders_numbers)
     return kappa_random_halos, gamma_random_halos
     # TODO: make samples_number_for_one_halos & renders_numbers more reasonable (maybe write some function relate them
     #  with bandwidth of kde)
@@ -226,18 +232,21 @@ def generate_meanzero_halos_multiple_times(
 
     start_time = time.time()
     for _ in n_times_range:
-        kappa_random_halos, gamma_random_halos = generate_maps_kmean_zero_using_halos(
-            skypy_config=skypy_config,
-            skyarea=skyarea,
-            cosmo=cosmo,
-            samples_number_for_one_halos=samples_number_for_one_halos,
-            renders_numbers=renders_numbers,
-            m_min=m_min,
-            m_max=m_max,
-            z_max=z_max,
-        )
+        kappa_random_halos, gamma_random_halos = (
+            generate_maps_kmean_zero_using_halos(
+                skypy_config=skypy_config,
+                skyarea=skyarea,
+                cosmo=cosmo,
+                samples_number_for_one_halos=(
+                    samples_number_for_one_halos),
+                renders_numbers=renders_numbers,
+                m_min=m_min,
+                m_max=m_max,
+                z_max=z_max,
+            ))
         accumulated_kappa_random_halos.extend(kappa_random_halos)
-        accumulated_gamma_random_halos.extend(gamma_random_halos)
+        accumulated_gamma_random_halos.extend(
+            gamma_random_halos)
 
     end_time = time.time()  # Note the end time
     print(f"Elapsed time: {end_time - start_time} seconds")
@@ -248,7 +257,10 @@ def generate_meanzero_halos_multiple_times(
 
 
 def halos_plus_glass(
-        kappa_random_halos, gamma_random_halos, kappa_random_glass, gamma_random_glass
+        kappa_random_halos,
+        gamma_random_halos,
+        kappa_random_glass,
+        gamma_random_glass
 ):
     r"""Combine the kappa and gamma values from Halos and Glass distributions,
     returning the combined values. For Halos kappa, it is suggested to use
@@ -289,13 +301,19 @@ def halos_plus_glass(
         halos}}\gamma_{\text{GLASS}}\cdot \cos(\text{random angle})
     """
     total_kappa = [
-        k_h + k_g for k_h, k_g in zip(kappa_random_halos, kappa_random_glass)
+        k_h + k_g for k_h, k_g in
+        zip(kappa_random_halos, kappa_random_glass)
     ]
-    random_angles = np.random.uniform(0, 2 * np.pi, size=len(gamma_random_halos))
+    random_angles = \
+        np.random.uniform(0,
+                          2 * np.pi,
+                          size=len(gamma_random_halos))
     random_numbers = np.cos(random_angles)
     total_gamma = [
         np.sqrt((g_h ** 2) + (g_g ** 2) + (2 * r * g_h * g_g))
-        for g_h, g_g, r in zip(gamma_random_halos, gamma_random_glass, random_numbers)
+        for g_h, g_g, r in zip(gamma_random_halos,
+                               gamma_random_glass,
+                               random_numbers)
     ]
 
     return total_kappa, total_gamma
@@ -309,7 +327,7 @@ def run_halos_without_kde(
         cosmo=None,
         m_min=None,
         m_max=None,
-        z_max=None,
+        z_max=5.0,
         mass_sheet_correction=True,
         listmean=False,
 ):
@@ -386,9 +404,11 @@ def run_halos_without_kde(
                 z_source=z_max,
             )
 
-            nkappa_gamma_distribution = nhalos_lens.get_kappa_gamma_distib(
-                gamma_tot=True, listmean=listmean
-            )
+            nkappa_gamma_distribution = (
+                nhalos_lens.get_kappa_gamma_distib(
+                    gamma_tot=True,
+                    listmean=listmean
+                ))
             nkappa_gamma_distribution = np.array(
                 nkappa_gamma_distribution
             )  # Convert list of lists to numpy array
@@ -481,7 +501,7 @@ def run_halos_without_kde_by_multiprocessing(
         cosmo=None,
         m_min=None,
         m_max=None,
-        z_max=None,
+        z_max=5.0,
         mass_sheet_correction=True,
         listmean=False,
 ):
@@ -542,13 +562,22 @@ def run_halos_without_kde_by_multiprocessing(
     start_time = time.time()  # Note the start time
 
     args = [
-        (i, sky_area, m_min, m_max, z_max, cosmo, samples_number, mass_sheet_correction, listmean)
+        (i,
+         sky_area,
+         m_min,
+         m_max,
+         z_max,
+         cosmo,
+         samples_number,
+         mass_sheet_correction,
+         listmean)
         for i in range(n_iterations)
     ]
 
     # Use multiprocessing
     with get_context("spawn").Pool() as pool:
-        results = pool.starmap(worker_run_halos_without_kde, args)
+        results = pool.starmap(worker_run_halos_without_kde,
+                               args)
 
     for nkappa, ngamma in results:
         kappa_values_total.extend(nkappa)
@@ -556,7 +585,8 @@ def run_halos_without_kde_by_multiprocessing(
 
     end_time = time.time()  # Note the end time
     print(
-        f"The {n_iterations} halo-lists took {(end_time - start_time)} seconds to run"
+        f"The {n_iterations} halo-lists took {(end_time - 
+                                               start_time)} seconds to run"
     )
     return kappa_values_total, gamma_values_total
 
@@ -568,7 +598,7 @@ def run_kappaext_gammaext_kde_by_multiprocessing(
         cosmo=None,
         m_min=None,
         m_max=None,
-        z_max=None,
+        z_max=5.0,
         mass_sheet_correction=True,
         listmean=False,
         output_format="dict",

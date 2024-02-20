@@ -1,25 +1,55 @@
 import numpy as np
 from slsim.Halos.halos import (
+    colossus_halo_mass_function,
+    get_value_if_quantity,
+    colossus_halo_mass_sampler,
     number_density_at_redshift,
     growth_factor_at_redshift,
     halo_mass_at_z,
     set_defaults,
-    redshift_halos_array_from_comoving_density,
-    mass_first_moment_at_redshift,
-    redshift_mass_sheet_correction_array_from_comoving_density,
     dndz_to_redshifts,
     dv_dz_to_dn_dz,
     dndz_to_N,
     v_per_redshift,
-    number_for_certain_mass
+    redshift_halos_array_from_comoving_density,
+    redshift_mass_sheet_correction_array_from_comoving_density,
+    number_for_certain_mass,
 )
 
 from astropy.cosmology import default_cosmology
+from astropy.units.quantity import Quantity
 from astropy import units
 import pytest
 
 cosmo = default_cosmology.get()
 
+
+def test_colossus_halo_mass_function():
+    m_200 = np.array([1e12, 1e13, 1e14])
+    z = 0.5
+    result = colossus_halo_mass_function(m_200, cosmo, z)
+    assert result.shape == m_200.shape
+
+def test_returns_value_if_quantity():
+    quantity = Quantity(5, unit='Msun')
+
+    result = get_value_if_quantity(quantity)
+
+    assert result == 5
+
+def test_returns_array_of_size_when_all_parameters_valid():
+        # Arrange
+        m_min = 1e12
+        m_max = 1e15
+        resolution = 100
+        z = 0.5
+        size = 10
+
+        result = colossus_halo_mass_sampler(m_min, m_max, resolution, z, cosmo, size)
+
+        assert len(result) == size
+        assert  np.all(result > m_min)
+        assert  np.all(result < m_max)
 
 def test_halo_mass_at_z():
     mass = halo_mass_at_z(z=0.5, resolution=100)
@@ -44,6 +74,9 @@ def test_number_density_at_redshift():
     CDF = number_density_at_redshift(z=z)
     assert len(CDF) == 1
     assert CDF[0] > 0
+
+    CDF = number_density_at_redshift(z=np.array([np.nan]))
+    assert len(CDF) == 1
 
     z2 = np.array([0, 10, 20])
     CDF2 = number_density_at_redshift(z=z2)
@@ -85,19 +118,14 @@ def test_defaults_set():
     (
         m_min,
         m_max,
-        wavenumber,
         resolution,
-        power_spectrum,
         cosmology,
-        collapse_function,
-        params,
     ) = set_defaults()
-    assert m_min == 1e10
+    assert m_min == 1e12
     assert m_max == 1e14
-    assert len(wavenumber) == 100
     assert resolution == 100
-    assert collapse_function.__name__ == "ellipsoidal_collapse_function"
-    assert params == (0.3, 0.7, 0.3, 1.686)
+    from astropy.cosmology import default_cosmology
+    assert cosmology == default_cosmology.get()
 
 
 def test_v_per_redshift():
@@ -146,3 +174,28 @@ def test_dv_dz_to_dn_dz():
     assert len(dn_dz) == 100
     assert dn_dz[0] == dn_dz[10] == 0
     assert dn_dz[60] > 0
+
+
+def test_redshift_halos_array_from_comoving_density():
+    redshift_list = [0.5, 1.0, 1.5]
+    sky_area = 1 * units.deg ** 2
+    cosmology = cosmo
+    m_min = 1e12
+    m_max = 1e15
+    resolution = 100
+    result = redshift_halos_array_from_comoving_density(redshift_list,
+                                                        sky_area,
+                                                        cosmology,
+                                                        m_min,
+                                                        m_max,
+                                                        resolution)
+    assert isinstance(result, np.ndarray)
+    assert len(result) > 1
+
+def test_redshift_mass_sheet_correction_array():
+    redshift_list = [0.1, 0.2]
+    expected_result = np.array([0.025, 0.075, 0.125, 0.175])
+    assert np.allclose(
+        redshift_mass_sheet_correction_array_from_comoving_density(
+            redshift_list),
+        expected_result)

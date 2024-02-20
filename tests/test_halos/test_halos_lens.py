@@ -1,10 +1,37 @@
-from slsim.Halos.halos_lens import concentration_from_mass
+from slsim.Halos.halos_lens import (concentration_from_mass,
+                                    deg2_to_cone_angle,
+                                    cone_radius_angle_to_physical_area,
+                                    compute_kappa)
 import pytest
+import numpy as np
 from astropy.cosmology import FlatLambdaCDM
 from slsim.Halos.halos_lens import HalosLens
 from astropy.table import Table
 from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
+import matplotlib
+
+
+def test_deg2_to_cone_angle():
+    solid_angle_deg2 = 20626.4806247 #2pi steradians in deg^2
+    result = deg2_to_cone_angle(solid_angle_deg2)
+    #  half cone angle of 2pi sky is pi/2
+    assert result == pytest.approx(np.pi/2, rel=1e-6)
+
+
+def test_cone_radius_angle_to_physical_area():
+    radius_rad = 0.1
+    z1 = 0.000001
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    result = cone_radius_angle_to_physical_area(radius_rad, z1, cosmo)
+    result_val = result.to_value("Mpc2")
+    assert result_val < 0.001
+
+    radius_rad2 = 0.2
+    result = cone_radius_angle_to_physical_area(radius_rad2, z1, cosmo)
+    result_val2 = result.to_value("Mpc2")
+    assert result_val2/ result_val == pytest.approx(
+        4, rel=1e-6)
 
 
 def test_single_halo_mass_and_redshift():
@@ -27,7 +54,7 @@ def setup_halos_lens():
     z_correction = [0.5]
     kappa_ext_correction = [-0.1]
     mass_sheet_correction = Table(
-        [z_correction, kappa_ext_correction], names=("z", "kappa_ext")
+        [z_correction, kappa_ext_correction], names=("z", "kappa")
     )
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -39,6 +66,40 @@ def setup_halos_lens():
         samples_number=1,
         mass_sheet=True,
     )
+
+
+@pytest.fixture
+def setup_mass_sheet_false():
+    z = [0.5, 0.6]
+
+    mass = [2058751081954.2866, 1320146153348.6448]
+
+    halos = Table([z, mass], names=("z", "mass"))
+
+    z_correction = [0.5]
+    kappa_ext_correction = [-0.1]
+    mass_sheet_correction = Table(
+        [z_correction, kappa_ext_correction], names=("z", "kappa")
+    )
+
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    return HalosLens(
+        halos_list=halos,
+        mass_correction_list=mass_sheet_correction,
+        sky_area=0.0001,
+        cosmo=cosmo,
+        samples_number=1,
+        mass_sheet=False,
+    )
+
+
+@pytest.fixture(autouse=True)
+def set_matplotlib_backend():
+    original_backend = matplotlib.get_backend()
+    matplotlib.use('Agg')
+    yield
+    matplotlib.use(original_backend)
+    # for test_plot_convergence not to show plot
 
 
 def test_init(setup_halos_lens):
@@ -57,13 +118,27 @@ def test_random_position(setup_halos_lens):
 def test_get_lens_model(setup_halos_lens):
     hl = setup_halos_lens
     lens_model = hl.get_lens_model()
-    assert lens_model.lens_model_list == ["NFW", "NFW", "NFW", "CONVERGENCE"]
+    assert (lens_model.lens_model_list ==
+            ["NFW", "NFW", "NFW", "CONVERGENCE"])
+
+def test_get_lens_model_mass_sheet_false(setup_mass_sheet_false):
+    hl2 = setup_mass_sheet_false
+    lens_model2 = hl2.get_lens_model()
+    assert (lens_model2.lens_model_list ==
+            ["NFW", "NFW"])
 
 
 def test_get_halos_lens_kwargs(setup_halos_lens):
     hl = setup_halos_lens
     kwargs_lens = hl.get_halos_lens_kwargs()
     assert len(kwargs_lens) == 4
+
+
+def test_get_nfw_kwargs(setup_halos_lens):
+    hl = setup_halos_lens
+    Rs_angle, alpha_Rs = hl.get_nfw_kwargs()
+    assert len(Rs_angle) == 3
+    assert len(alpha_Rs) == 3
 
 
 def test_get_convergence_shear(setup_halos_lens):
@@ -83,17 +158,17 @@ def test_get_convergence_shear(setup_halos_lens):
 
 def test_compute_kappa_gamma(setup_halos_lens):
     hl = setup_halos_lens
-    i = 0
+    i = 1
     gamma_tot = False
     diff = 0.0001
     diff_method = "square"
-    results = hl.compute_kappa_gamma(i, hl, gamma_tot, diff, diff_method)
+    results = hl.compute_kappa_gamma(i, gamma_tot, diff, diff_method)
     assert len(results) == 3
     for res in results:
         assert isinstance(res, float)
 
     gamma_tot = True
-    results = hl.compute_kappa_gamma(i, hl, gamma_tot, diff, diff_method)
+    results = hl.compute_kappa_gamma(i, gamma_tot, diff, diff_method)
     assert len(results) == 2
     for res in results:
         assert isinstance(res, float)
@@ -179,16 +254,6 @@ def test_build_lens_data(setup_halos_lens):
     assert isinstance(kwargs_lens, list)
 
 
-def test_build_lens_cosmo_list(setup_halos_lens):
-    hl = setup_halos_lens
-    combined_redshift_list = [0.5, 0.6, 0.7]
-    z_source = 1.0
-    lens_cosmo_list = hl._build_lens_cosmo_list(combined_redshift_list, z_source)
-
-    assert len(lens_cosmo_list) == len(combined_redshift_list)
-    assert all(isinstance(item, LensCosmo) for item in lens_cosmo_list)
-
-
 def test_build_lens_model(setup_halos_lens):
     hl = setup_halos_lens
     combined_redshift_list = [0.5, 0.6, 0.7]
@@ -211,10 +276,29 @@ def test_build_kwargs_lens(setup_halos_lens):
     z_halo = hl.halos_list["z"]
     mass_halo = hl.halos_list["mass"]
     lens_model_list = ["NFW"] * n_halos
-    kappa_ext_list = hl.mass_correction_list["kappa_ext"] if hl.mass_sheet else []
+    kappa_ext_list = hl.mass_correction_list["kappa"] if hl.mass_sheet else []
+    z_mass_correction = hl.mass_correction_list["z"]
+    px_halo = hl.halos_list["px"]
+    py_halo = hl.halos_list["py"]
+    c_200_halos = hl.halos_list["c_200"]
+
+    combined_redshift_list = np.concatenate((z_halo,
+                                             z_mass_correction))
+    lens_cosmo_dict = hl._build_lens_cosmo_dict(combined_redshift_list,
+                                                5.0)
+    lens_cosmo_list = list(lens_cosmo_dict.values())
 
     kwargs_lens = hl._build_kwargs_lens(
-        n_halos, n_mass_correction, z_halo, mass_halo, lens_model_list, kappa_ext_list
+        n_halos,
+        n_mass_correction,
+        z_halo,
+        mass_halo,
+        px_halo,
+        py_halo,
+        c_200_halos,
+        lens_model_list,
+        kappa_ext_list,
+        lens_cosmo_list
     )
 
     assert len(kwargs_lens) == n_halos
@@ -278,3 +362,44 @@ def test_generate_distributions_0to5(setup_halos_lens):
         assert "zs" in entry and isinstance(entry["zs"], float)
         assert "kappa" in entry and isinstance(entry["kappa"], float)
         assert "gamma" in entry and isinstance(entry["gamma"], float)
+
+
+def test_xy_convergence(setup_halos_lens):
+    hl = setup_halos_lens
+    x, y = 0.1, 0.1
+    kappa = hl.xy_convergence(x, y)
+
+    zdzs = (0.5, 1.0)
+    kappa2 = hl.xy_convergence(x, y,zdzs=zdzs)
+
+    assert isinstance(kappa, float)
+    assert isinstance(kappa2, float)
+
+
+def test_plot_convergence(setup_halos_lens):
+    hl = setup_halos_lens
+    try:
+        hl.plot_convergence()
+       # hl.compare_plot_convergence()
+    except Exception as e:
+        pytest.fail(f"plot_convergence failed with an exception: {e}")
+
+
+def test_total_mass(setup_halos_lens):
+    hl = setup_halos_lens
+    mass = hl.total_halo_mass()
+    assert isinstance(mass, float)
+    assert mass == (2058751081954.2866 +
+                   1320146153348.6448+850000000000.0)
+
+
+def test_total_critical_mass(setup_halos_lens):
+    hl = setup_halos_lens
+    mass1 = hl.total_critical_mass(
+        method='differential_comoving_volume')
+    mass2 = hl.total_critical_mass(
+        method='comoving_volume')
+    assert isinstance(mass1, float)
+    assert isinstance(mass2, float)
+    ratio = mass1/mass2
+    assert ratio == pytest.approx(1, rel=0.01)

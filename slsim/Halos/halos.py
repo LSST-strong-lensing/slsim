@@ -130,75 +130,16 @@ def number_density_at_redshift(
                          m_max*cosmology.h,
                          resolution)
     if np.array_equal(z, np.array([np.nan])):
-        return [0] * len(z)
+        warnings.warn("Redshift data lost, instead uses 0.0001")
+        return [0.0001] * len(z)
+    if isinstance(z, float):
+        z = np.array([z])
     cdfs = []
     for zi in z:
             massf = colossus_halo_mass_function(m_200, cosmology, zi)
             total_number_density = number_for_certain_mass(massf,
                                                            m_200,
                                                            dndlnM = True)
-            cdfs.append(total_number_density)
-    return cdfs
-
-def number_density_at_redshift_old(
-        z,
-        m_min=None,
-        m_max=None,
-        resolution=None,
-        cosmology=None,
-):
-    """Function to calculate the cumulative number density of Halos at a given
-    redshift for different growth functions.
-
-    Parameters
-    ----------
-    z : float or array_like
-        The redshift at which to evaluate the number density.
-    m_min : float, optional
-        The minimum halo mass (in M_sol).
-    m_max : float, optional
-        The maximum halo mass (in M_sol).
-    resolution : int, optional
-        The resolution of the mass grid.
-    wavenumber : array_like, optional
-        The wave number array for power spectrum.
-    power_spectrum : function, optional
-        The power spectrum function.
-    cosmology : astropy.cosmology instance, optional
-        The cosmology instance to use.
-    collapse_function : function, optional
-        The halo collapse function.
-    params : tuple, optional
-        The parameters for the collapse function.
-
-    Returns
-    -------
-    list of arrays
-        The list of number_density for each growth function value. (in Mpc-3)
-    """
-    # define default parameters
-    (
-        m_min,
-        m_max,
-        resolution,
-        cosmology,
-        params,
-    ) = set_defaults(
-        m_min,
-        m_max,
-        resolution,
-        cosmology,
-    )
-
-    m = np.geomspace(m_min, m_max, resolution)
-
-    if np.array_equal(z, np.array([np.nan])):
-        return [0] * len(z)
-
-    cdfs = []
-    for zi in z:
-            massf = colossus_halo_mass_function(m, cosmology, zi)
-            total_number_density = number_for_certain_mass(massf, m, dndlnM = True)
             cdfs.append(total_number_density)
     return cdfs
 
@@ -298,6 +239,7 @@ def redshift_halos_array_from_comoving_density(
         cosmology = FlatLambdaCDM(H0=70, Om0=0.3)
 
     dV_dz = v_per_redshift(redshift_list, cosmology, sky_area)
+    # dV_dz is in "Mpc3"
 
     dN_dz = dv_dz_to_dn_dz(dV_dz,
                            redshift_list,
@@ -415,98 +357,12 @@ def halo_mass_at_z(
 def redshift_mass_sheet_correction_array_from_comoving_density(
         redshift_list
 ):
-    """"""
+    """
+    used in yml creating redshift list for mass sheet correction
+    """
     z_max = redshift_list[-1]
     linspace_values = np.arange(0.025, z_max, 0.05)
     return linspace_values
-
-
-def deg2_to_cone_angle(solid_angle_deg2):
-    """Convert solid angle in square degrees to half cone angle in radians.
-
-    Parameters
-    ----------
-    solid_angle_deg2 : float
-        The solid angle in square degrees to be converted.
-
-    Returns
-    -------
-    float
-        The cone angle in radians corresponding to the provided solid angle.
-
-    Notes
-    -----
-    This function calculates the cone angle using the relationship between
-    the solid angle in steradians and the cone's apex angle.
-    """
-    solid_angle_sr = solid_angle_deg2 * (np.pi / 180) ** 2
-    theta = np.arccos(1 - solid_angle_sr / (2 * np.pi))  # rad
-    return theta
-
-
-def cone_radius_angle_to_physical_area(radius_rad, z, cosmo):
-    """Convert cone radius angle to physical area at a given redshift.
-
-    Parameters
-    ----------
-    radius_rad : float
-        The half cone's angle in radians.
-    z : float
-        The redshift at which the physical area is to be calculated.
-    cosmo : astropy.Cosmology instance
-        The cosmology used for the conversion.
-
-    Returns
-    -------
-    float
-        The physical area in Mpc^2 corresponding to the given cone radius and redshift.
-
-    Notes
-    -----
-    The function calculates the physical area of a patch of the sky with
-    a specified cone angle and redshift using the angular diameter distance.
-    """
-    physical_radius = cosmo.angular_diameter_distance(z) * radius_rad  # Mpc
-    area_physical = np.pi * physical_radius ** 2
-    return area_physical  # in Mpc2
-
-
-def redshift_mass_number(
-        redshift_list,
-        sky_area,
-        cosmology,
-        m_min=None,
-        m_max=None,
-        resolution=None,
-):
-    """"""
-    if cosmology is None:
-        warnings.warn(
-            "No cosmology provided, instead uses flat LCDM with default parameters"
-        )
-        from astropy.cosmology import FlatLambdaCDM
-
-        cosmology = FlatLambdaCDM(H0=70, Om0=0.3)
-
-    dV_dz = (cosmology.differential_comoving_volume(redshift_list) * sky_area).to_value(
-        "Mpc3"
-    )
-
-    print('redshift list', redshift_list)
-    print('dv_dz', dV_dz)
-    density = number_density_at_redshift(
-        z=redshift_list,
-        m_min=m_min,
-        m_max=m_max,
-        resolution=resolution,
-        cosmology=cosmology,
-    )
-    print('density', density)
-    dN_dz = density * dV_dz
-    print('dN_dz', dN_dz)
-    # integrate density to get expected number of Halos
-    N = np.trapz(dN_dz, redshift_list)
-    return N, density
 
 
 def determinism_kappa_first_moment_at_redshift(

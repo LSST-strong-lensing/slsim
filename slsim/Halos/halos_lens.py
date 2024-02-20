@@ -186,8 +186,6 @@ class HalosLens(object):
         Filter mass corrections based on redshift conditions.
     _build_lens_data(halos, mass_correction, zd, zs) :
         Constructs lens data based on the provided halos, mass corrections, and redshifts.
-    _build_lens_cosmo_list(combined_redshift_list, z_source) :
-        Constructs a list of LensCosmo instances based on the provided combined redshift list and source redshift.
     _build_lens_model(combined_redshift_list, z_source, n_halos) :
         Constructs a lens model based on the provided combined redshift list, source redshift, and number of halos.
     _build_kwargs_lens(n_halos, n_mass_correction, z_halo, mass_halo, lens_model_list, kappa_ext_list, lens_cosmo_list) :
@@ -390,15 +388,13 @@ class HalosLens(object):
 
         Returns
         -------
-        Rs_angle, alpha_Rs, px, py : np.array
+        Rs_angle, alpha_Rs: <class 'numpy.ndarray'>
             Rs_angle (angle at scale radius) (in units of arcsec)
             alpha_Rs (observed bending angle at the scale radius) (in units of arcsec)
-            Arrays containing Rs_angle, alpha_Rs, and x and y positions of all the Halos.
+            Arrays containing Rs_angle, alpha_Rs of all the Halos.
         """
         # TODO: make for divided
         # TODO: make only computed one
-        # TODO: docstring
-
         if n_halos is None:
             n_halos = self.n_halos
         if n_halos == 0:
@@ -439,7 +435,7 @@ class HalosLens(object):
         Returns
         -------
         kwargs_halos : list of dicts
-            The list of dictionaries containing the keyword arguments for each halo.!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            The list of dictionaries containing the keyword arguments for each halo.!
         """
         if self.mass_sheet and self.n_correction > 0:
             Rs_angle, alpha_Rs = self.get_nfw_kwargs()
@@ -929,7 +925,6 @@ class HalosLens(object):
             kappa_ext_list,
             lens_cosmo_list,
         )
-        # Note: If MASS_MOMENT (moment),this need to be change
         return lens_model, lens_cosmo_list, kwargs_lens
 
     def kappa_ext_for_mass_sheet(self, z, lens_cosmo, first_moment):
@@ -1050,7 +1045,7 @@ class HalosLens(object):
             c_200_halos,
             lens_model_list,
             kappa_ext_list,
-            lens_cosmo_list=None,
+            lens_cosmo_list,
     ):
         """Constructs the lens keyword arguments based on provided input
         parameters.
@@ -1073,14 +1068,20 @@ class HalosLens(object):
         mass_halo : list or array-like
             List of halo masses.
 
+        px_halo : list or array-like
+            List of x positions of halos.
+
+        py_halo : list or array-like
+            List of y positions of halos.
+
         lens_model_list : list of str
             List of lens models ('NFW', 'CONVERGENCE', etc.).
 
         kappa_ext_list : list or array-like
             List of external convergence values.
 
-        lens_cosmo_list : list of LensCosmo objects, optional
-            List containing LensCosmo instances for each redshift value. Defaults to None.
+        lens_cosmo_list : list
+            :List of lens_cosmo instances.
 
         Returns
         -------
@@ -1516,7 +1517,10 @@ class HalosLens(object):
         ), (kwargs_lens_os, lens_model_os)
 
     def get_alot_distib_(self, zd, zs):
-        """Computes the distribution of external convergence (kappa_ext) and
+        """
+        deprecated??????!!!!
+
+        Computes the distribution of external convergence (kappa_ext) and
         external shear (gamma_ext) for given deflector and source redshifts.
 
         Parameters
@@ -1566,7 +1570,10 @@ class HalosLens(object):
         return kappa_gamma_distribution, lens_instance
 
     def compute_kappa_in_bins(self):
-        """Computes the kappa values for each redshift bin."""
+        """
+        For computing a mass sheet correction
+        Computes the kappa values for each redshift bin.
+        """
         # todo: different zd,zs
         bins = np.arange(0, 5.025, 0.05)
         bin_centers = [round((z1 + z2) / 2, 3) for z1, z2 in zip(bins[:-1], bins[1:])]
@@ -1636,6 +1643,10 @@ class HalosLens(object):
         .. math::
             \kappa = \frac{1}{2} (f_{xx} + f_{yy})
         """
+        if lens_model is None:
+            lens_model = self.lens_model
+        if kwargs is None:
+            kwargs = self.get_halos_lens_kwargs()
         if zdzs is not None:
             f_xx, _, _, f_yy = lens_model.hessian_z1z2(
                 z1=zdzs[0],
@@ -1881,8 +1892,7 @@ class HalosLens(object):
                                  diff=0.0000001,
                                  diff_method="square",
                                  kwargs=None,
-                                 lens_model=None,
-                                 zdzs=None):
+                                 lens_model=None,):
         r"""
         Compares and plots the convergence for different configurations of the mass sheet.
 
@@ -1901,9 +1911,6 @@ class HalosLens(object):
             the lens model parameters from the class instance are used.
         lens_model : LensModel instance, optional
             The lens model to use. If not provided, the lens model from the class instance is utilized.
-        zdzs : tuple of float, optional
-            A tuple containing two redshift values (z1, z2). If provided,
-            convergence will be computed based on these redshifts.
 
         Notes
         -----
@@ -1925,7 +1932,6 @@ class HalosLens(object):
                               diff_method=diff_method,
                               kwargs=kwargs,
                               lens_model=lens_model,
-                              zdzs=zdzs,
                               mass_sheet=False,
                               enhance_pos=False
                               )
@@ -1934,7 +1940,6 @@ class HalosLens(object):
                               diff_method=diff_method,
                               kwargs=kwargs,
                               lens_model=lens_model,
-                              zdzs=zdzs,
                               mass_sheet=True,
                               enhance_pos=False)
 
