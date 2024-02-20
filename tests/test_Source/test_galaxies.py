@@ -1,5 +1,4 @@
 from astropy.cosmology import FlatLambdaCDM
-from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 from astropy.units import Quantity
 from slsim.Sources.galaxies import Galaxies
 from slsim.Sources.galaxies import galaxy_projected_eccentricity
@@ -10,8 +9,6 @@ import pytest
 class TestGalaxies(object):
     def setup_method(self):
         sky_area = Quantity(value=0.1, unit="deg2")
-        #pipeline = SkyPyPipeline(skypy_config=None, sky_area=sky_area, filters=None)
-        #self.galaxy_list = pipeline.red_galaxies
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
         galaxy_list = Table(
