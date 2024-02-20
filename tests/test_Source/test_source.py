@@ -8,7 +8,7 @@ from astropy import units as u
 
 class TestSource:
     def setup_method(self):
-        source_dict = Table(
+        self.source_dict = Table(
             [
                 [0.5],
                 [17],
@@ -76,7 +76,7 @@ class TestSource:
                 "dec_off",
             ),
         )
-        source_dict3 = Table(
+        self.source_dict3 = Table(
             [
                 [0.5],
                 [1],
@@ -110,8 +110,38 @@ class TestSource:
                 "dec_off",
             ),
         )
+        self.source_dict4 = Table(
+            [
+                [0.5],
+                [1],
+                [4],
+                [0.0002],
+                [0.00002],
+                [0.01],
+                [-0.02],
+                [-0.002],
+                [-0.023],
+                [23],
+                [0.001],
+                [-0.001],
+            ],
+            names=(
+                "z",
+                "n_sersic_0",
+                "n_sersic_1",
+                "angular_size0",
+                "angular_size1",
+                "e0_1",
+                "e0_2",
+                "e1_1",
+                "e1_2",
+                "mag_i",
+                "ra_off",
+                "dec_off",
+            ),
+        )
         self.source = Source(
-            source_dict,
+            self.source_dict,
             variability_model="sinusoidal",
             kwargs_variability={"amp", "freq"},
         )
@@ -121,7 +151,21 @@ class TestSource:
             kwargs_variability={"amp", "freq"},
         )
         self.source3 = Source(
-            source_dict3,
+            self.source_dict3,
+            variability_model="light_curve",
+            kwargs_variability={"peak_apparent_magnitude", "i"},
+            kwargs_peak_mag={"peak_mag_min": -20, "peak_mag_max": -17},
+            lightcurve_time=50 * u.day,
+        )
+        self.source4 = Source(
+            self.source_dict3,
+            variability_model="light_curve",
+            kwargs_variability=None,
+            kwargs_peak_mag={"peak_mag_min": -20, "peak_mag_max": -17},
+            lightcurve_time=50 * u.day,
+        )
+        self.source5 = Source(
+            self.source_dict4,
             variability_model="light_curve",
             kwargs_variability={"peak_apparent_magnitude", "i"},
             kwargs_peak_mag={"peak_mag_min": -20, "peak_mag_max": -17},
@@ -144,6 +188,10 @@ class TestSource:
     def test_ps_magnitude_no_variability(self):
         result = self.source.point_source_magnitude("r")
         assert result == [17]
+        with pytest.raises(ValueError):
+            self.source.point_source_magnitude("j")
+        with pytest.raises(ValueError):
+            self.source4.point_source_magnitude("r")
 
     def test_ps_magnitude_with_variability(self):
         image_observation_times = np.array([np.pi, np.pi / 2, np.pi / 3])
@@ -154,6 +202,8 @@ class TestSource:
     def test_es_magnitude(self):
         result = self.source.extended_source_magnitude("r")
         assert result == [23]
+        with pytest.raises(ValueError):
+            self.source.extended_source_magnitude("j")
 
     def test_ps_magnitude_array(self):
         result = self.source2.point_source_magnitude("r")
@@ -201,7 +251,29 @@ class TestSource:
         )
         assert len(kwargs) == 2
         assert all(isinstance(kwargs_item, dict) for kwargs_item in kwargs)
-
+        with pytest.raises(ValueError):
+            self.source5.kwargs_extended_source_light(
+            center_lens, draw_area, band="i", sersic_profile_str="double"
+        )
+        with pytest.raises(ValueError):
+            self.source5.kwargs_extended_source_light(
+            center_lens, draw_area, band="i", sersic_profile_str="triple"
+        )
+        with pytest.raises(ValueError):
+            Source(
+            self.source_dict3,
+            variability_model="light_curve",
+            kwargs_variability={"peak_apparent_magnitude", "i"},
+            kwargs_peak_mag=None,
+            lightcurve_time=50 * u.day,
+        )
+        with pytest.raises(ValueError):
+            Source(
+            self.source_dict,
+            variability_model="sinusoidal",
+            kwargs_variability={"tmp", "fre"},
+        )
+        
 
 if __name__ == "__main__":
     pytest.main()

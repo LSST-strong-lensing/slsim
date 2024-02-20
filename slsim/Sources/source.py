@@ -273,7 +273,7 @@ class Source(object):
                 w0 = self.source_dict["w0"]
                 w1 = self.source_dict["w1"]
             else:
-                raise ValueError("weight if the light profile should be provided.")
+                raise ValueError("weight of the light profile should be provided.")
             size_source_arcsec0 = (
                 float(self.source_dict["angular_size0"]) / constants.arcsec
             )
