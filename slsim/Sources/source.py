@@ -267,14 +267,13 @@ class Source(object):
         elif sersic_profile_str == "double":
             # w0 and w1 are the weight of the n=1 and n=4 sersic component.
             if (
-                "w0" not in self.source_dict.colnames
-                or "w1" not in self.source_dict.colnames
+                "w0" in self.source_dict.colnames
+                or "w1" in self.source_dict.colnames
             ):
-                w0 = 0.5
-                w1 = 0.5
-            else:
                 w0 = self.source_dict["w0"]
                 w1 = self.source_dict["w1"]
+            else:
+                raise ValueError("weight if the light profile should be provided.")
             size_source_arcsec0 = (
                 float(self.source_dict["angular_size0"]) / constants.arcsec
             )
