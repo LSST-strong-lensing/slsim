@@ -4,7 +4,7 @@ from slsim.selection import deflector_cut
 from slsim.Util import param_util
 from slsim.Sources.source_pop_base import SourcePopBase
 from astropy.table import Column
-from slsim.Util.param_util import average_angular_size, axis_ratio, ellipticity
+from slsim.Util.param_util import average_angular_size, axis_ratio, eccentricity
 
 
 class Galaxies(SourcePopBase):
@@ -29,7 +29,7 @@ class Galaxies(SourcePopBase):
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
         :param light_profile: keyword for number of sersic profile to use in source
-         light model
+         light model. accepted kewords: "single", "double".
         :param list_type: format of the source catalog file. Currently, it supports a
          single astropy table or a list of astropy tables.
         :type sky_area: `~astropy.units.Quantity`
@@ -157,7 +157,7 @@ class Galaxies(SourcePopBase):
                     galaxy["e0_2"] = e0_2
                 elif "a0" in galaxy.colnames and "b0" in galaxy.colnames:
                     axis_ratio_0 = axis_ratio(a=galaxy["a0"], b=galaxy["b0"])
-                    ellip_0 = ellipticity(q=axis_ratio_0)
+                    ellip_0 = eccentricity(q=axis_ratio_0)
                     e0_1, e0_2 = galaxy_projected_eccentricity(
                         float(ellip_0), rotation_angle=phi_rot
                     )
@@ -178,7 +178,7 @@ class Galaxies(SourcePopBase):
                     galaxy["e1_2"] = e1_2
                 elif "a1" in galaxy.colnames and "b1" in galaxy.colnames:
                     axis_ratio_1 = axis_ratio(a=galaxy["a1"], b=galaxy["b1"])
-                    ellip_1 = ellipticity(q=axis_ratio_1)
+                    ellip_1 = eccentricity(q=axis_ratio_1)
                     e1_1, e1_2 = galaxy_projected_eccentricity(float(ellip_1))
                     galaxy["e1_1"] = e1_1
                     galaxy["e1_2"] = e1_2

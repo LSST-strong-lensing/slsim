@@ -183,7 +183,7 @@ class LensPop(LensedPopulationBase):
             if catalog_type == "scotch":
                 new_path = self.path + "/Sources/SupernovaeData/scotch_host_data.fits"
                 load_supernovae_data = Table.read(
-                    "/Users/narayankhadka/Desktop/strong_lensing/scotch_host_data.fits",
+                    new_path,
                     format="fits",
                 )
                 self._sources = PointPlusExtendedSources(

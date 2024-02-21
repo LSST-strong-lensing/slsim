@@ -30,6 +30,8 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
         :param kwargs_variability_model: keyword arguments for the variability of
          a source. This is a population argument, not the light curve parameter for
          the individual source.
+        :param light_profile: keyword for number of sersic profile to use in source
+         light model. accepted kewords: "single", "double".
         :param list_type: format of the source catalog file. Currently, it supports
          a single astropy table or a list of astropy tables.
         """

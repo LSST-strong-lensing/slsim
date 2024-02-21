@@ -2,8 +2,9 @@ import numpy as np
 import sncosmo
 from astropy import units as u
 
-
 class SimpleSupernovaLightCurve:
+    """Class to generate simple supernovae lightcurves."""
+
     def __init__(self, cosmo):
         """
         :param cosmo: astropy cosmology object
@@ -23,15 +24,16 @@ class SimpleSupernovaLightCurve:
         :param redshift: redshift of an object
         :param absolute_magnitude: absolute magnitude of the source
         :param num_points: number of data points in light curve
-        :param time_range: range of time
-        :return: lightcurve
+        :param lightcurve_time: light curve period. It sould be astropy unit object with
+         unit of time.
+        :return: lightcurve i.e array of apparent magnitudes of supernovae and 
+         corresponding observation time.
         """
         time_range = (-20, lightcurve_time.to(u.day).value)
         time = np.linspace(time_range[0], time_range[1], num_points)
 
         model = sncosmo.Model(source="salt2")
         model.set(z=redshift)
-        model.set_source_peakabsmag(absolute_magnitude, "bessellr", "ab")
 
         if band == "r":
             band_name = "bessellr"
@@ -40,8 +42,10 @@ class SimpleSupernovaLightCurve:
         elif band == "g":
             band_name = "bessellg"
         else:
-            raise ValueError("Provided band is not supported")
-
+            raise ValueError("The input band is %s and is not supported. Supported "
+                              "bands are i, g, and r." %band)
+        
+        model.set_source_peakabsmag(absolute_magnitude, band_name, "ab")
         flux = model.bandflux(band_name, time)
         apparent_magnitudes = -2.5 * np.log10(flux)
 

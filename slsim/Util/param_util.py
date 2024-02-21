@@ -196,10 +196,10 @@ def axis_ratio(a, b):
     return b / a
 
 
-def ellipticity(q):
-    """Computes ellipticity using axis ratio.
+def eccentricity(q):
+    """Computes eccentricity using axis ratio.
 
     :param q: axis ratio of an object
-    :return: ellipticity
+    :return: eccentricity
     """
     return (1 - q) / (1 + q)

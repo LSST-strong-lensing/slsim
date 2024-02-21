@@ -39,6 +39,8 @@ class Source(object):
         """
         self.source_dict = source_dict
         if kwargs_variability is not None:
+            ##Here we prepare variability class on the basis of given 
+            #kwargs_variability. 
             kwargs_variab_extracted = {}
             kwargs_variability_list = [
                 "absolute_magnitude",
@@ -47,6 +49,10 @@ class Source(object):
                 "g",
                 "i",
             ]
+            #With this condition we call lightcure generator class and prepar 
+            #variability class.
+            ## TODO: replace SimpleSupernovaLightCurve class with better lightcure 
+            #generator
             if any(
                 element in kwargs_variability_list
                 for element in list(kwargs_variability)
@@ -84,6 +90,8 @@ class Source(object):
                 kwargs_variab_extracted["MJD"] = times
                 kwargs_variab_extracted["ps_mag_" + provided_band] = magnitudes
             else:
+                #With this condition we extract values for kwargs_variability from the 
+                #given source dict and prepar variability class.
                 for element in kwargs_variability:
                     if element in self.source_dict.colnames:
                         if (
@@ -237,7 +245,8 @@ class Source(object):
     def kwargs_extended_source_light(
         self, center_lens, draw_area, band=None, light_profile_str="single"
     ):
-        """Provids dictionary of keywords for the source light model(s).
+        """Provids dictionary of keywords for the source light model(s). Kewords used 
+        are in lenstronomy conventions.
 
         :param band: Imaging band
         :param light_profile_str: number of light_profile
