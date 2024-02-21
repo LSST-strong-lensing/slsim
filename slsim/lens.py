@@ -26,7 +26,7 @@ class Lens(LensedSystemBase):
         mixgauss_stds=None,
         mixgauss_weights=None,
         magnification_limit=0.01,
-        sersic_profile="single",
+        light_profile="single",
         peak_mag_limit=None,
         lightcurve_time=None,
     ):
@@ -57,9 +57,9 @@ class Lens(LensedSystemBase):
         :param magnification_limit: absolute lensing magnification lower limit to
             register a point source (ignore highly de-magnified images)
         :type magnification_limit: float >= 0
-        :param sersic_profile: keyword for number of sersic profile to use in source
+        :param light_profile: keyword for number of sersic profile to use in source
          light model
-        :type sersic_profile: str . Either "single" or "double" .
+        :type light_profile: str . Either "single" or "double" .
         :param peak_mag_limit: range of peak magnitude for point source (supernovae).
          eg: {"peak_mag_min": m_min, "peak_mag_max": m_max}
         :param lightcurve_time: time period for lightcurve.
@@ -83,7 +83,7 @@ class Lens(LensedSystemBase):
         self._mixgauss_weights = mixgauss_weights
         self._magnification_limit = magnification_limit
         self.kwargs_variab = kwargs_variability
-        self.sersic_profile = sersic_profile
+        self.light_profile = light_profile
 
         if self._source_type == "extended" and self.kwargs_variab is not None:
             warning_msg = (
@@ -587,7 +587,7 @@ class Lens(LensedSystemBase):
             or self._source_type == "point_plus_extended"
         ):
 
-            if self.sersic_profile == "single":
+            if self.light_profile == "single":
                 source_models["source_light_model_list"] = ["SERSIC_ELLIPSE"]
             else:
                 source_models["source_light_model_list"] = [
@@ -598,7 +598,7 @@ class Lens(LensedSystemBase):
                 draw_area=self.test_area,
                 center_lens=self.deflector_position,
                 band=band,
-                sersic_profile_str=self.sersic_profile,
+                light_profile_str=self.light_profile,
             )
         else:
             # source_models['source_light_model_list'] = None

@@ -218,7 +218,7 @@ class TestGalaxies(object):
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            sersic_profile="double",
+            light_profile="double",
             list_type="astropy_table",
         )
         self.galaxies3 = Galaxies(
@@ -226,7 +226,7 @@ class TestGalaxies(object):
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            sersic_profile="double",
+            light_profile="double",
             list_type="astropy_table",
         )
         self.galaxies6 = Galaxies(
@@ -234,7 +234,7 @@ class TestGalaxies(object):
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            sersic_profile="double",
+            light_profile="double",
             list_type="astropy_table",
         )
         self.galaxies7 = Galaxies(
@@ -242,7 +242,7 @@ class TestGalaxies(object):
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            sersic_profile="double",
+            light_profile="double",
             list_type="astropy_table",
         )
         self.galaxies8 = Galaxies(
@@ -250,7 +250,7 @@ class TestGalaxies(object):
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            sersic_profile="double",
+            light_profile="double",
             list_type="astropy_table",
         )
         self.galaxies9 = Galaxies(
@@ -258,7 +258,7 @@ class TestGalaxies(object):
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            sersic_profile="double",
+            light_profile="double",
             list_type="astropy_table",
         )
         self.galaxies10 = Galaxies(
@@ -266,7 +266,7 @@ class TestGalaxies(object):
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            sersic_profile="triple",
+            light_profile="triple",
             list_type="astropy_table",
         )
 

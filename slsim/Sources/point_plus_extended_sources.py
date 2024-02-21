@@ -13,7 +13,7 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
         kwargs_cut,
         variability_model=None,
         kwargs_variability_model=None,
-        sersic_profile="single",
+        light_profile="single",
         list_type="astropy_table",
     ):
         """
@@ -39,7 +39,7 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
             kwargs_cut,
             cosmo,
             sky_area,
-            sersic_profile=sersic_profile,
+            light_profile=light_profile,
             list_type=list_type,
         )
         SourcePopBase.__init__(

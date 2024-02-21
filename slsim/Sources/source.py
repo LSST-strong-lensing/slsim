@@ -235,13 +235,13 @@ class Source(object):
         return extended_source_center
 
     def kwargs_extended_source_light(
-        self, center_lens, draw_area, band=None, sersic_profile_str="single"
+        self, center_lens, draw_area, band=None, light_profile_str="single"
     ):
         """Provids dictionary of keywords for the source light model(s).
 
         :param band: Imaging band
-        :param sersic_profile_str: number of sersic_profile
-        :type sersic_profile_str: str . eg: "single" or "double".
+        :param light_profile_str: number of light_profile
+        :type light_profile_str: str . eg: "single" or "double".
         :return: dictionary of keywords for the source light model(s)
         """
         if band is None:
@@ -251,7 +251,7 @@ class Source(object):
         center_source = self.extended_source_position(
             center_lens=center_lens, draw_area=draw_area
         )
-        if sersic_profile_str == "single":
+        if light_profile_str == "single":
             size_source_arcsec = float(self.angular_size) / constants.arcsec
             kwargs_extended_source = [
                 {
@@ -264,7 +264,7 @@ class Source(object):
                     "center_y": center_source[1],
                 }
             ]
-        elif sersic_profile_str == "double":
+        elif light_profile_str == "double":
             # w0 and w1 are the weight of the n=1 and n=4 sersic component.
             if "w0" in self.source_dict.colnames or "w1" in self.source_dict.colnames:
                 w0 = self.source_dict["w0"]
