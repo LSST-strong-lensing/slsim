@@ -15,7 +15,7 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
         kwargs_variability_model=None,
         light_profile="single",
         list_type="astropy_table",
-        catalog_type=None
+        catalog_type=None,
     ):
         """
 
@@ -47,7 +47,7 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
             sky_area,
             light_profile=light_profile,
             list_type=list_type,
-            catalog_type=catalog_type
+            catalog_type=catalog_type,
         )
         SourcePopBase.__init__(
             self, cosmo, sky_area, variability_model, kwargs_variability_model

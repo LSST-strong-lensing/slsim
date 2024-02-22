@@ -18,7 +18,7 @@ class Galaxies(SourcePopBase):
         sky_area,
         light_profile="single",
         list_type="astropy_table",
-        catalog_type = None
+        catalog_type=None,
     ):
         """
 
@@ -43,8 +43,11 @@ class Galaxies(SourcePopBase):
         self.light_profile = light_profile
         # add missing keywords in astropy.Table object
         if list_type == "astropy_table":
-            galaxy_list =  convert_to_slsim_convention(galaxy_catalog=galaxy_list,
-             light_profile=self.light_profile, input_catalog_type=catalog_type)
+            galaxy_list = convert_to_slsim_convention(
+                galaxy_catalog=galaxy_list,
+                light_profile=self.light_profile,
+                input_catalog_type=catalog_type,
+            )
             column_names_update = galaxy_list.colnames
             if light_profile == "single":
                 if "e1" not in column_names_update or "e2" not in column_names_update:
@@ -150,7 +153,7 @@ class Galaxies(SourcePopBase):
                     galaxy["e0_2"] = e0_2
                 else:
                     raise ValueError(
-                        "ellipticity or semi-major and semi-minor axis are missing for" 
+                        "ellipticity or semi-major and semi-minor axis are missing for"
                         "the first light profile in galaxy_list columns"
                     )
 
@@ -169,7 +172,7 @@ class Galaxies(SourcePopBase):
                     galaxy["e1_2"] = e1_2
                 else:
                     raise ValueError(
-                        "ellipticity or semi-major and semi-minor axis are missing for" 
+                        "ellipticity or semi-major and semi-minor axis are missing for"
                         "the second light profile in galaxy_list columns"
                     )
             if galaxy["angular_size0"] == -1 or galaxy["angular_size1"] == -1:
@@ -179,7 +182,7 @@ class Galaxies(SourcePopBase):
                     )
                 else:
                     raise ValueError(
-                        "semi-major and semi-minor axis are missing for the first light" 
+                        "semi-major and semi-minor axis are missing for the first light"
                         "profile in galaxy_list columns"
                     )
                 if "a1" in galaxy.colnames and "b1" in galaxy.colnames:
@@ -188,7 +191,7 @@ class Galaxies(SourcePopBase):
                     )
                 else:
                     raise ValueError(
-                        "semi-major and semi-minor axis are missing for the second" 
+                        "semi-major and semi-minor axis are missing for the second"
                         "light profile in galaxy_list columns"
                     )
             if galaxy["n_sersic_0"] == -1 or galaxy["n_sersic_1"] == -1:
@@ -208,9 +211,9 @@ def galaxy_projected_eccentricity(ellipticity, rotation_angle=None):
 
     :param ellipticity: eccentricity amplitude
     :type ellipticity: float [0,1)
-    :param rotation_angle: rotation angle of the major axis of elliptical galaxy in 
-     radian. The reference of this rotation angle is +Ra axis i.e towards the East 
-     direction.
+    :param rotation_angle: rotation angle of the major axis of elliptical galaxy in
+        radian. The reference of this rotation angle is +Ra axis i.e towards the East
+        direction.
     :return: e1, e2 eccentricity components
     """
     if rotation_angle is None:
@@ -222,13 +225,15 @@ def galaxy_projected_eccentricity(ellipticity, rotation_angle=None):
     e2 = e * np.sin(2 * phi)
     return e1, e2
 
-def convert_to_slsim_convention(galaxy_catalog, light_profile, 
-input_catalog_type="other"):
+
+def convert_to_slsim_convention(
+    galaxy_catalog, light_profile, input_catalog_type="other"
+):
     """This function converts scotch/catalog to slsim conventions.
-    
+
     :param galaxy_catalog: galaxy catalog in other conventions.
-    :param light_profile: keyword for number of sersic profile to use in source
-     light model. accepted kewords: "single", "double".
+    :param light_profile: keyword for number of sersic profile to use in source light
+        model. accepted kewords: "single", "double".
     :return: galaxy catalog in slsim convension.
     """
     column_names = galaxy_catalog.colnames
