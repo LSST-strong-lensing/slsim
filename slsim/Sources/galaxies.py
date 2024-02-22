@@ -249,5 +249,5 @@ input_catalog_type="other"):
         if "e" in column_names:
             galaxy_catalog.rename_column("e", "ellipticity")
     if input_catalog_type == "scotch":
-        galaxy_catalog['a_rot'] = np.deg2rad(galaxy_catalog['a_rot'])
+        galaxy_catalog["a_rot"] = np.deg2rad(galaxy_catalog["a_rot"])
     return galaxy_catalog
