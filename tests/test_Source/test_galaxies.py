@@ -1,8 +1,10 @@
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
 from slsim.Sources.galaxies import Galaxies
-from slsim.Sources.galaxies import (galaxy_projected_eccentricity, 
-                                    convert_to_slsim_convention)
+from slsim.Sources.galaxies import (
+    galaxy_projected_eccentricity,
+    convert_to_slsim_convention,
+)
 from astropy.table import Table
 import pytest
 import numpy as np
@@ -301,19 +303,30 @@ class TestGalaxies(object):
             self.galaxies9.draw_source()
         with pytest.raises(ValueError):
             self.galaxies10.draw_source()
+
     def test_convert_to_slsim_convention(self):
-        galaxies = convert_to_slsim_convention(galaxy_catalog=self.gal_list, 
-                            light_profile="double", input_catalog_type=None)
-        galaxies2 = convert_to_slsim_convention(galaxy_catalog=self.gal_list2, 
-                            light_profile="double", input_catalog_type="scotch")
-        galaxies3 = convert_to_slsim_convention(galaxy_catalog=self.galaxy_list2, 
-                            light_profile="single", input_catalog_type=None)
+        galaxies = convert_to_slsim_convention(
+            galaxy_catalog=self.gal_list,
+            light_profile="double",
+            input_catalog_type=None,
+        )
+        galaxies2 = convert_to_slsim_convention(
+            galaxy_catalog=self.gal_list2,
+            light_profile="double",
+            input_catalog_type="scotch",
+        )
+        galaxies3 = convert_to_slsim_convention(
+            galaxy_catalog=self.galaxy_list2,
+            light_profile="single",
+            input_catalog_type=None,
+        )
         assert galaxies["z"][0] == 0.5
         assert galaxies["n_sersic_0"][0] == 1
         assert galaxies["ellipticity0"][0] == 0.1492770563596445
         assert galaxies2["a_rot"][0] == np.deg2rad(42)
         assert galaxies3["ellipticity"][0] == 0.1492770563596445
-        
+
+
 def test_galaxy_projected_eccentricity():
     e1, e2 = galaxy_projected_eccentricity(0)
     assert e1 == 0

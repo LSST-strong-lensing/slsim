@@ -38,12 +38,16 @@ def create_image_montage_from_image_list(
 
                 if image_type == "dp0":
                     im = axes[i, j].imshow(
-                        image, origin="lower", cmap="gray", vmin=global_min, 
-                        vmax=global_max
+                        image,
+                        origin="lower",
+                        cmap="gray",
+                        vmin=global_min,
+                        vmax=global_max,
                     )
                 else:
-                    im = axes[i, j].imshow(image, origin="lower", vmin=global_min, 
-                    vmax=global_max)
+                    im = axes[i, j].imshow(
+                        image, origin="lower", vmin=global_min, vmax=global_max
+                    )
                 axes[i, j].axis("off")  # Turn off axis labels
                 if time is not None:
                     axes[i, j].text(
