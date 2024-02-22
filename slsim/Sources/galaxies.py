@@ -127,11 +127,11 @@ class Galaxies(SourcePopBase):
 
         index = random.randint(0, self._num_select - 1)
         galaxy = self._galaxy_select[index]
+        if "a_rot" in galaxy.colnames:
+            phi_rot = galaxy["a_rot"]
+        else:
+            phi_rot = None
         if self.light_profile == "single":
-            if "a_rot" in galaxy.colnames:
-                phi_rot = galaxy["a_rot"]
-            else:
-                phi_rot = None
             if "ellipticity" in galaxy.colnames:
                 if galaxy["e1"] == -1 or galaxy["e2"] == -1:
                     e1, e2 = galaxy_projected_eccentricity(
@@ -144,10 +144,6 @@ class Galaxies(SourcePopBase):
             if galaxy["n_sersic"] == -1:
                 galaxy["n_sersic"] = 1  # TODO make a better estimate with scatter
         elif self.light_profile == "double":
-            if "a_rot" in galaxy.colnames:
-                phi_rot = galaxy["a_rot"]
-            else:
-                phi_rot = None
             if galaxy["e0_1"] == -1 or galaxy["e0_2"] == -1:
                 if "ellipticity0" in galaxy.colnames:
                     e0_1, e0_2 = galaxy_projected_eccentricity(
