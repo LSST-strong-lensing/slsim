@@ -15,6 +15,7 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
         kwargs_variability_model=None,
         light_profile="single",
         list_type="astropy_table",
+        catalog_type=None
     ):
         """
 
@@ -34,6 +35,9 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
          light model. accepted kewords: "single", "double".
         :param list_type: format of the source catalog file. Currently, it supports
          a single astropy table or a list of astropy tables.
+        :param catalog_type: type of the catalog. If someone wants to use scotch
+         catalog, they need to specify it.
+        :type catalog_type: str. eg: "scotch" or None
         """
         Galaxies.__init__(
             self,
@@ -43,6 +47,7 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
             sky_area,
             light_profile=light_profile,
             list_type=list_type,
+            catalog_type=catalog_type
         )
         SourcePopBase.__init__(
             self, cosmo, sky_area, variability_model, kwargs_variability_model

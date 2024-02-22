@@ -195,6 +195,7 @@ class LensPop(LensedPopulationBase):
                     kwargs_variability_model=kwargs_variability,
                     list_type="astropy_table",
                     light_profile=source_light_profile,
+                    catalog_type=catalog_type
                 )
             else:
                 new_path = self.path + "/Sources/SupernovaeData/supernovae_data.pkl"

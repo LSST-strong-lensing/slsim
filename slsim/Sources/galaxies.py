@@ -18,6 +18,7 @@ class Galaxies(SourcePopBase):
         sky_area,
         light_profile="single",
         list_type="astropy_table",
+        catalog_type = None
     ):
         """
 
@@ -33,29 +34,17 @@ class Galaxies(SourcePopBase):
         :param list_type: format of the source catalog file. Currently, it supports a
          single astropy table or a list of astropy tables.
         :type sky_area: `~astropy.units.Quantity`
+        :param catalog_type: type of the catalog. If someone wants to use scotch
+         catalog, they need to specify it.
+        :type catalog_type: str. eg: "scotch" or None
         """
         super(Galaxies, self).__init__(cosmo=cosmo, sky_area=sky_area)
         self.n = len(galaxy_list)
         self.light_profile = light_profile
         # add missing keywords in astropy.Table object
         if list_type == "astropy_table":
-            column_names = galaxy_list.colnames
-            for col_name in column_names:
-                if "_host" in col_name:
-                    # Remove '_host' from the column name
-                    new_col_name = col_name.replace("_host", "")
-                    # Rename the column
-                    galaxy_list.rename_column(col_name, new_col_name)
-            if self.light_profile == "double":
-                if "n0" in column_names or "n1" in column_names:
-                    galaxy_list.rename_column("n0", "n_sersic_0")
-                    galaxy_list.rename_column("n1", "n_sersic_1")
-                if "e0" in column_names or "e1" in column_names:
-                    galaxy_list.rename_column("e0", "ellipticity0")
-                    galaxy_list.rename_column("e1", "ellipticity1")
-            if self.light_profile == "single":
-                if "e" in column_names:
-                    galaxy_list.rename_column("e", "ellipticity")
+            galaxy_list =  convert_to_slsim_convention(galaxy_catalog=galaxy_list,
+             light_profile=self.light_profile, input_catalog_type=catalog_type)
             column_names_update = galaxy_list.colnames
             if light_profile == "single":
                 if "e1" not in column_names_update or "e2" not in column_names_update:
@@ -232,3 +221,33 @@ def galaxy_projected_eccentricity(ellipticity, rotation_angle=None):
     e1 = e * np.cos(2 * phi)
     e2 = e * np.sin(2 * phi)
     return e1, e2
+
+def convert_to_slsim_convention(galaxy_catalog, light_profile, 
+input_catalog_type="other"):
+    """This function converts scotch/catalog to slsim conventions.
+    
+    :param galaxy_catalog: galaxy catalog in other conventions.
+    :param light_profile: keyword for number of sersic profile to use in source
+     light model. accepted kewords: "single", "double".
+    :return: galaxy catalog in slsim convension.
+    """
+    column_names = galaxy_catalog.colnames
+    for col_name in column_names:
+        if "_host" in col_name:
+            # Remove '_host' from the column name
+            new_col_name = col_name.replace("_host", "")
+            # Rename the column
+            galaxy_catalog.rename_column(col_name, new_col_name)
+    if light_profile == "double":
+        if "n0" in column_names or "n1" in column_names:
+            galaxy_catalog.rename_column("n0", "n_sersic_0")
+            galaxy_catalog.rename_column("n1", "n_sersic_1")
+        if "e0" in column_names or "e1" in column_names:
+            galaxy_catalog.rename_column("e0", "ellipticity0")
+            galaxy_catalog.rename_column("e1", "ellipticity1")
+    if light_profile == "single":
+        if "e" in column_names:
+            galaxy_catalog.rename_column("e", "ellipticity")
+    if input_catalog_type == "scotch":
+        galaxy_catalog['a_rot'] = np.deg2rad(galaxy_catalog['a_rot'])
+    return galaxy_catalog
