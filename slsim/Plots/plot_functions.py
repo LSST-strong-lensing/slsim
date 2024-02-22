@@ -37,12 +37,14 @@ def create_image_montage_from_image_list(
                 image = images[i * num_cols + j]
 
                 if image_type == "dp0":
-                    im = axes[i, j].imshow(
-                        image, origin="lower", cmap="gray", vmin=global_min, 
-                        vmax=global_max
+                    zscale = ZScaleInterval()
+                    vmin, vmax = zscale.get_limits(image)
+                    axes[i, j].imshow(
+                        image, origin="lower", cmap="gray", vmin=vmin, 
+                        vmax=vmax
                     )
                 else:
-                    im = axes[i, j].imshow(image, origin="lower", vmin=global_min, 
+                    axes[i, j].imshow(image, origin="lower", vmin=global_min, 
                     vmax=global_max)
                 axes[i, j].axis("off")  # Turn off axis labels
                 if time is not None:
