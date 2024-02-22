@@ -223,6 +223,9 @@ def galaxy_projected_eccentricity(ellipticity, rotation_angle=None):
 
     :param ellipticity: eccentricity amplitude
     :type ellipticity: float [0,1)
+    :param rotation_angle: rotation angle of the major axis of elliptical galaxy in 
+     radian. The reference of this rotation angle is +Ra axis i.e towards the East 
+     direction.
     :return: e1, e2 eccentricity components
     """
     if rotation_angle is None:
