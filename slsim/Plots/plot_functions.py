@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from astropy.visualization import ZScaleInterval
 import random
+import numpy as np
 
 """This module contains various plotting definations."""
 
@@ -19,6 +20,15 @@ def create_image_montage_from_image_list(
     :return: image montage of given images.
     """
 
+    # Collect min and max values from all images
+    all_min = []
+    all_max = []
+    for image in images:
+        all_min.append(np.min(image))
+        all_max.append(np.max(image))
+    global_min = min(all_min)
+    global_max = max(all_max)
+
     fig, axes = plt.subplots(num_rows, num_cols, figsize=(num_cols * 3, num_rows * 3))
 
     for i in range(num_rows):
@@ -27,13 +37,13 @@ def create_image_montage_from_image_list(
                 image = images[i * num_cols + j]
 
                 if image_type == "dp0":
-                    zscale = ZScaleInterval()
-                    vmin, vmax = zscale.get_limits(image)
-                    axes[i, j].imshow(
-                        image, origin="lower", cmap="gray", vmin=vmin, vmax=vmax
+                    im = axes[i, j].imshow(
+                        image, origin="lower", cmap="gray", vmin=global_min, 
+                        vmax=global_max
                     )
                 else:
-                    axes[i, j].imshow(image, origin="lower")
+                    im = axes[i, j].imshow(image, origin="lower", vmin=global_min, 
+                    vmax=global_max)
                 axes[i, j].axis("off")  # Turn off axis labels
                 if time is not None:
                     axes[i, j].text(
@@ -41,6 +51,7 @@ def create_image_montage_from_image_list(
                         0.95,
                         f"Time: {round(time[i * num_cols + j],2)}",
                         fontsize=10,
+                        color="white",
                         verticalalignment="top",
                         horizontalalignment="left",
                         transform=axes[i, j].transAxes,

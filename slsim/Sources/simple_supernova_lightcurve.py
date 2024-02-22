@@ -47,6 +47,7 @@ class SimpleSupernovaLightCurve:
         
         model.set_source_peakabsmag(absolute_magnitude, band_name, "ab")
         flux = model.bandflux(band_name, time)
+        flux[flux<0] = 0
         apparent_magnitudes = -2.5 * np.log10(flux)
 
         return time, apparent_magnitudes
