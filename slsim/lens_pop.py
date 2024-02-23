@@ -30,6 +30,7 @@ class LensPop(LensedPopulationBase):
         cosmo=None,
         source_light_profile="single_sersic",
         catalog_type=None,
+        catalog_path=None,
         peak_mag_limit=None,
         lightcurve_time=None,
     ):
@@ -65,6 +66,10 @@ class LensPop(LensedPopulationBase):
         :param catalog_type: type of the catalog. If someone wants to use scotch
          catalog, they need to specify it.
         :type catalog_type: str. eg: "scotch"
+        :param catalog_path: path to the source catalog. If None, existing source 
+         catalog within the slsim will be used. We have used small subset of scotch 
+         catalog. So, if one wants to use full scotch catalog, they can set path to 
+         their path to local drive.
         :param peak_mag_limit: range of peak magnitude for point source
          (supernovae). eg: {"peak_mag_min": m_min, "peak_mag_max": m_max}
         :param lightcurve_time: time period for lightcurves.
@@ -182,7 +187,10 @@ class LensPop(LensedPopulationBase):
             # supernovae light curves.
             self.path = os.path.dirname(__file__)
             if catalog_type == "scotch":
-                new_path = self.path + "/Sources/SupernovaeData/scotch_host_data.fits"
+                if catalog_path is not None:
+                    new_path = catalog_path
+                else:
+                    new_path = self.path+"/Sources/SupernovaeData/scotch_host_data.fits"
                 load_supernovae_data = Table.read(
                     new_path,
                     format="fits",
