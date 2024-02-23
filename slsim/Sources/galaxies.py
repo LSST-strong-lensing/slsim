@@ -16,7 +16,7 @@ class Galaxies(SourcePopBase):
         kwargs_cut,
         cosmo,
         sky_area,
-        light_profile="single",
+        light_profile="single_sersic",
         list_type="astropy_table",
         catalog_type=None,
     ):
@@ -30,7 +30,7 @@ class Galaxies(SourcePopBase):
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
         :param light_profile: keyword for number of sersic profile to use in source
-         light model. accepted kewords: "single", "double".
+         light model. accepted kewords: "single_sersic", "double_sersic".
         :param list_type: format of the source catalog file. Currently, it supports a
          single astropy table or a list of astropy tables.
         :type sky_area: `~astropy.units.Quantity`
@@ -49,13 +49,13 @@ class Galaxies(SourcePopBase):
                 input_catalog_type=catalog_type,
             )
             column_names_update = galaxy_list.colnames
-            if light_profile == "single":
+            if light_profile == "single_sersic":
                 if "e1" not in column_names_update or "e2" not in column_names_update:
                     galaxy_list["e1"] = -np.ones(self.n)
                     galaxy_list["e2"] = -np.ones(self.n)
                 if "n_sersic" not in column_names_update:
                     galaxy_list["n_sersic"] = -np.ones(self.n)
-            if light_profile == "double":
+            if light_profile == "double_sersic":
                 # these are the name convention for double sersic profiles.
                 if (
                     "n_sersic_0" not in column_names_update
@@ -123,7 +123,7 @@ class Galaxies(SourcePopBase):
             phi_rot = galaxy["a_rot"]
         else:
             phi_rot = None
-        if self.light_profile == "single":
+        if self.light_profile == "single_sersic":
             if "ellipticity" in galaxy.colnames:
                 if galaxy["e1"] == -1 or galaxy["e2"] == -1:
                     e1, e2 = galaxy_projected_eccentricity(
@@ -135,7 +135,7 @@ class Galaxies(SourcePopBase):
                 raise ValueError("ellipticity is missing in galaxy_list columns.")
             if galaxy["n_sersic"] == -1:
                 galaxy["n_sersic"] = 1  # TODO make a better estimate with scatter
-        elif self.light_profile == "double":
+        elif self.light_profile == "double_sersic":
             if galaxy["e0_1"] == -1 or galaxy["e0_2"] == -1:
                 if "ellipticity0" in galaxy.colnames:
                     e0_1, e0_2 = galaxy_projected_eccentricity(
@@ -233,7 +233,7 @@ def convert_to_slsim_convention(
 
     :param galaxy_catalog: galaxy catalog in other conventions.
     :param light_profile: keyword for number of sersic profile to use in source light
-        model. accepted kewords: "single", "double".
+        model. accepted kewords: "single_sersic", "double_sersic".
     :return: galaxy catalog in slsim convension.
     """
     column_names = galaxy_catalog.colnames
@@ -243,14 +243,14 @@ def convert_to_slsim_convention(
             new_col_name = col_name.replace("_host", "")
             # Rename the column
             galaxy_catalog.rename_column(col_name, new_col_name)
-    if light_profile == "double":
+    if light_profile == "double_sersic":
         if "n0" in column_names or "n1" in column_names:
             galaxy_catalog.rename_column("n0", "n_sersic_0")
             galaxy_catalog.rename_column("n1", "n_sersic_1")
         if "e0" in column_names or "e1" in column_names:
             galaxy_catalog.rename_column("e0", "ellipticity0")
             galaxy_catalog.rename_column("e1", "ellipticity1")
-    if light_profile == "single":
+    if light_profile == "single_sersic":
         if "e" in column_names:
             galaxy_catalog.rename_column("e", "ellipticity")
     if input_catalog_type == "scotch":

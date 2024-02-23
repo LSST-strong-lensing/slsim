@@ -222,7 +222,7 @@ class TestGalaxies(object):
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            light_profile="double",
+            light_profile="double_sersic",
             list_type="astropy_table",
         )
         self.galaxies3 = Galaxies(
@@ -230,7 +230,7 @@ class TestGalaxies(object):
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            light_profile="double",
+            light_profile="double_sersic",
             list_type="astropy_table",
         )
         self.galaxies6 = Galaxies(
@@ -238,7 +238,7 @@ class TestGalaxies(object):
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            light_profile="double",
+            light_profile="double_sersic",
             list_type="astropy_table",
         )
         self.galaxies7 = Galaxies(
@@ -246,7 +246,7 @@ class TestGalaxies(object):
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            light_profile="double",
+            light_profile="double_sersic",
             list_type="astropy_table",
         )
         self.galaxies8 = Galaxies(
@@ -254,7 +254,7 @@ class TestGalaxies(object):
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            light_profile="double",
+            light_profile="double_sersic",
             list_type="astropy_table",
         )
         self.galaxies9 = Galaxies(
@@ -262,7 +262,7 @@ class TestGalaxies(object):
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            light_profile="double",
+            light_profile="double_sersic",
             list_type="astropy_table",
         )
         self.galaxies10 = Galaxies(
@@ -307,17 +307,17 @@ class TestGalaxies(object):
     def test_convert_to_slsim_convention(self):
         galaxies = convert_to_slsim_convention(
             galaxy_catalog=self.gal_list,
-            light_profile="double",
+            light_profile="double_sersic",
             input_catalog_type=None,
         )
         galaxies2 = convert_to_slsim_convention(
             galaxy_catalog=self.gal_list2,
-            light_profile="double",
+            light_profile="double_sersic",
             input_catalog_type="scotch",
         )
         galaxies3 = convert_to_slsim_convention(
             galaxy_catalog=self.galaxy_list2,
-            light_profile="single",
+            light_profile="single_sersic",
             input_catalog_type=None,
         )
         assert galaxies["z"][0] == 0.5

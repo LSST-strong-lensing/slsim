@@ -247,13 +247,13 @@ class TestSource:
         center_lens = np.array([0, 0])
         draw_area = 4 * np.pi
         kwargs = self.source3.kwargs_extended_source_light(
-            center_lens, draw_area, band="i", light_profile_str="double"
+            center_lens, draw_area, band="i", light_profile_str="double_sersic"
         )
         assert len(kwargs) == 2
         assert all(isinstance(kwargs_item, dict) for kwargs_item in kwargs)
         with pytest.raises(ValueError):
             self.source5.kwargs_extended_source_light(
-                center_lens, draw_area, band="i", light_profile_str="double"
+                center_lens, draw_area, band="i", light_profile_str="double_sersic"
             )
         with pytest.raises(ValueError):
             self.source5.kwargs_extended_source_light(

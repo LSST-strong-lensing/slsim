@@ -28,7 +28,7 @@ class LensPop(LensedPopulationBase):
         sky_area=None,
         filters=None,
         cosmo=None,
-        source_light_profile="single",
+        source_light_profile="single_sersic",
         catalog_type=None,
         peak_mag_limit=None,
         lightcurve_time=None,
@@ -61,7 +61,7 @@ class LensPop(LensedPopulationBase):
         :param source_light_profile: keyword for number of sersic profile to use in
          source light model. It is necessary to recognize quantities given in the source
          catalog.
-        :type source_light_profile: str . Either "single" or "double" .
+        :type source_light_profile: str . Either "single_sersic" or "double_sersic" .
         :param catalog_type: type of the catalog. If someone wants to use scotch
          catalog, they need to specify it.
         :type catalog_type: str. eg: "scotch"

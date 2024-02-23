@@ -13,7 +13,7 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
         kwargs_cut,
         variability_model=None,
         kwargs_variability_model=None,
-        light_profile="single",
+        light_profile="single_sersic",
         list_type="astropy_table",
         catalog_type=None,
     ):
@@ -32,7 +32,7 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
          a source. This is a population argument, not the light curve parameter for
          the individual source.
         :param light_profile: keyword for number of sersic profile to use in source
-         light model. accepted kewords: "single", "double".
+         light model. accepted kewords: "single_sersic", "double_sersic".
         :param list_type: format of the source catalog file. Currently, it supports
          a single astropy table or a list of astropy tables.
         :param catalog_type: type of the catalog. If someone wants to use scotch

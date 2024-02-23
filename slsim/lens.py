@@ -26,7 +26,7 @@ class Lens(LensedSystemBase):
         mixgauss_stds=None,
         mixgauss_weights=None,
         magnification_limit=0.01,
-        light_profile="single",
+        light_profile="single_sersic",
         peak_mag_limit=None,
         lightcurve_time=None,
     ):
@@ -59,7 +59,7 @@ class Lens(LensedSystemBase):
         :type magnification_limit: float >= 0
         :param light_profile: keyword for number of sersic profile to use in source
          light model
-        :type light_profile: str . Either "single" or "double" .
+        :type light_profile: str . Either "single_sersic" or "double_sersic" .
         :param peak_mag_limit: range of peak magnitude for point source (supernovae).
          eg: {"peak_mag_min": m_min, "peak_mag_max": m_max}
         :param lightcurve_time: time period for lightcurve.
@@ -587,7 +587,7 @@ class Lens(LensedSystemBase):
             or self._source_type == "point_plus_extended"
         ):
 
-            if self.light_profile == "single":
+            if self.light_profile == "single_sersic":
                 source_models["source_light_model_list"] = ["SERSIC_ELLIPSE"]
             else:
                 source_models["source_light_model_list"] = [
