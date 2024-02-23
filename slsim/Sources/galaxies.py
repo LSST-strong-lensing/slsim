@@ -43,7 +43,7 @@ class Galaxies(SourcePopBase):
         self.light_profile = light_profile
         # add missing keywords in astropy.Table object
         if list_type == "astropy_table":
-            galaxy_list = convert_to_slsim_convention(
+            galaxy_list = convert_scotch_to_slsim_convention(
                 galaxy_catalog=galaxy_list,
                 light_profile=self.light_profile,
                 input_catalog_type=catalog_type,
@@ -213,7 +213,8 @@ def galaxy_projected_eccentricity(ellipticity, rotation_angle=None):
     :type ellipticity: float [0,1)
     :param rotation_angle: rotation angle of the major axis of elliptical galaxy in
         radian. The reference of this rotation angle is +Ra axis i.e towards the East
-        direction.
+        direction and it goes from East to North. If it is not provided, it will be 
+        drawn randomly.
     :return: e1, e2 eccentricity components
     """
     if rotation_angle is None:
@@ -226,10 +227,13 @@ def galaxy_projected_eccentricity(ellipticity, rotation_angle=None):
     return e1, e2
 
 
-def convert_to_slsim_convention(
+def convert_scotch_to_slsim_convention(
     galaxy_catalog, light_profile, input_catalog_type="other"
 ):
-    """This function converts scotch/catalog to slsim conventions.
+    """This function converts scotch/catalog to slsim conventions. In slsim, sersic 
+    index are either n_sersic or (n_sersic_0 and n_sersic_1). Ellipticity are either 
+    ellipticity or (ellipticity0 and ellipticity1). These kewords can be read by 
+    Galaxies class.
 
     :param galaxy_catalog: galaxy catalog in other conventions.
     :param light_profile: keyword for number of sersic profile to use in source light
