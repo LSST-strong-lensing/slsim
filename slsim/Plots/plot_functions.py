@@ -40,12 +40,12 @@ def create_image_montage_from_image_list(
                     zscale = ZScaleInterval()
                     vmin, vmax = zscale.get_limits(image)
                     axes[i, j].imshow(
-                        image, origin="lower", cmap="gray", vmin=vmin, 
-                        vmax=vmax
+                        image, origin="lower", cmap="gray", vmin=vmin, vmax=vmax
                     )
                 else:
-                    axes[i, j].imshow(image, origin="lower", vmin=global_min, 
-                    vmax=global_max)
+                    axes[i, j].imshow(
+                        image, origin="lower", vmin=global_min, vmax=global_max
+                    )
                 axes[i, j].axis("off")  # Turn off axis labels
                 if time is not None:
                     axes[i, j].text(
