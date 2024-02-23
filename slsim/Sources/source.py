@@ -279,12 +279,8 @@ class Source(object):
                 w1 = self.source_dict["w1"]
             else:
                 raise ValueError("weight of the light profile should be provided.")
-            size_source_arcsec0 = (
-                float(self.source_dict["angular_size0"])
-            )
-            size_source_arcsec1 = (
-                float(self.source_dict["angular_size1"])
-            )
+            size_source_arcsec0 = float(self.source_dict["angular_size0"])
+            size_source_arcsec1 = float(self.source_dict["angular_size1"])
             ellipticity0_1 = self.source_dict["e0_1"]
             ellipticity0_2 = self.source_dict["e0_2"]
             ellipticity1_1 = self.source_dict["e1_1"]

@@ -36,7 +36,7 @@ class Quasars(SourcePopBase):
         self.light_profile = light_profile
         if self.light_profile is not None:
             warning_msg = (
-                "The provided light profile %s is not used to describe the point " 
+                "The provided light profile %s is not used to describe the point "
                 "source. The relevant light profile is None." % light_profile
             )
             warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
