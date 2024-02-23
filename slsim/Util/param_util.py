@@ -181,9 +181,9 @@ def average_angular_size(a, b):
 
     :param a: value of semi major axis in arcsec
     :param b: value of semi minor axis in arcsec
-    :return: average angular size in radian
+    :return: average angular size in arcsec
     """
-    return np.sqrt(a * b) * (np.pi / (180 * 3600))
+    return np.sqrt(a * b)
 
 
 def axis_ratio(a, b):

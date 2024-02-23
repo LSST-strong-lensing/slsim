@@ -2,7 +2,6 @@ from slsim.Sources.SourceVariability.variability import (
     Variability,
 )
 import numpy as np
-from lenstronomy.Util import constants
 from slsim.Sources.simple_supernova_lightcurve import SimpleSupernovaLightCurve
 from astropy.table import Column, Table
 
@@ -261,7 +260,7 @@ class Source(object):
             center_lens=center_lens, draw_area=draw_area
         )
         if light_profile_str == "single_sersic":
-            size_source_arcsec = float(self.angular_size) / constants.arcsec
+            size_source_arcsec = float(self.angular_size)
             kwargs_extended_source = [
                 {
                     "magnitude": mag_source,
@@ -281,10 +280,10 @@ class Source(object):
             else:
                 raise ValueError("weight of the light profile should be provided.")
             size_source_arcsec0 = (
-                float(self.source_dict["angular_size0"]) / constants.arcsec
+                float(self.source_dict["angular_size0"])
             )
             size_source_arcsec1 = (
-                float(self.source_dict["angular_size1"]) / constants.arcsec
+                float(self.source_dict["angular_size1"])
             )
             ellipticity0_1 = self.source_dict["e0_1"]
             ellipticity0_2 = self.source_dict["e0_2"]

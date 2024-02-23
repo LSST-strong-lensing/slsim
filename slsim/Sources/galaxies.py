@@ -5,6 +5,7 @@ from slsim.Util import param_util
 from slsim.Sources.source_pop_base import SourcePopBase
 from astropy.table import Column
 from slsim.Util.param_util import average_angular_size, axis_ratio, eccentricity
+from lenstronomy.Util import constants
 
 
 class Galaxies(SourcePopBase):
@@ -43,7 +44,7 @@ class Galaxies(SourcePopBase):
         self.light_profile = light_profile
         # add missing keywords in astropy.Table object
         if list_type == "astropy_table":
-            galaxy_list = convert_scotch_to_slsim_convention(
+            galaxy_list = convert_to_slsim_convention(
                 galaxy_catalog=galaxy_list,
                 light_profile=self.light_profile,
                 input_catalog_type=catalog_type,
@@ -227,13 +228,14 @@ def galaxy_projected_eccentricity(ellipticity, rotation_angle=None):
     return e1, e2
 
 
-def convert_scotch_to_slsim_convention(
-    galaxy_catalog, light_profile, input_catalog_type="other"
+def convert_to_slsim_convention(
+    galaxy_catalog, light_profile, input_catalog_type="skypy"
 ):
     """This function converts scotch/catalog to slsim conventions. In slsim, sersic 
     index are either n_sersic or (n_sersic_0 and n_sersic_1). Ellipticity are either 
     ellipticity or (ellipticity0 and ellipticity1). These kewords can be read by 
-    Galaxies class.
+    Galaxies class. This function is written to convert scotch catalog to slsim 
+    convension and to change unit of angular size in skypy source catalog to arcsec.
 
     :param galaxy_catalog: galaxy catalog in other conventions.
     :param light_profile: keyword for number of sersic profile to use in source light
@@ -259,4 +261,7 @@ def convert_scotch_to_slsim_convention(
             galaxy_catalog.rename_column("e", "ellipticity")
     if input_catalog_type == "scotch":
         galaxy_catalog["a_rot"] = np.deg2rad(galaxy_catalog["a_rot"])
+    if input_catalog_type == "skypy":
+        galaxy_catalog["angular_size"] = galaxy_catalog[
+            "angular_size"]/constants.arcsec
     return galaxy_catalog

@@ -318,7 +318,7 @@ class TestGalaxies(object):
         galaxies3 = convert_to_slsim_convention(
             galaxy_catalog=self.galaxy_list2,
             light_profile="single_sersic",
-            input_catalog_type=None,
+            input_catalog_type="skypy",
         )
         assert galaxies["z"][0] == 0.5
         assert galaxies["n_sersic_0"][0] == 1

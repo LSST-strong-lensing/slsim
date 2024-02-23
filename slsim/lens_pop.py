@@ -29,7 +29,7 @@ class LensPop(LensedPopulationBase):
         filters=None,
         cosmo=None,
         source_light_profile="single_sersic",
-        catalog_type=None,
+        catalog_type="skypy",
         catalog_path=None,
         peak_mag_limit=None,
         lightcurve_time=None,
@@ -138,6 +138,7 @@ class LensPop(LensedPopulationBase):
                 cosmo=cosmo,
                 sky_area=sky_area,
                 light_profile=source_light_profile,
+                catalog_type=catalog_type
             )
             self._source_model_type = "extended"
         elif source_type == "quasars":
@@ -175,6 +176,7 @@ class LensPop(LensedPopulationBase):
                 variability_model=variability_model,
                 kwargs_variability_model=kwargs_variability,
                 light_profile=source_light_profile,
+                catalog_type=catalog_type
             )
             self._source_model_type = "point_plus_extended"
         elif source_type == "supernovae_plus_galaxies":
