@@ -1,6 +1,7 @@
 from slsim.Sources.random_supernovae import RandomizedSupernova
 import pytest
 
+
 @pytest.fixture
 def Random_Supernova_Ia_class():
     SN = RandomizedSupernova(sn_type="Ia", redshift=1.0)

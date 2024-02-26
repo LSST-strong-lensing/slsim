@@ -14,19 +14,20 @@ _ABSOLUTE_MAG_DISTS = {
     "Ic-BL": [-18.30, 0.60],
 }
 
+
 def get_accepted_sn_types():
-    """
-    Helper function to get SN types from the SNCosmo source classes.
+    """Helper function to get SN types from the SNCosmo source classes.
 
     :return: dictionary of types and sources, and list of models
     """
-    
+
     all_models = sncosmo.registry._get_registry(sncosmo.Source)
     all_models_type_dict = {
         mod[0]: all_models._loaders[mod][2]["type"].split()[-1]
         for mod in all_models._loaders.keys()
     }
     return all_models_type_dict, list(np.unique(list(all_models_type_dict.values())))
+
 
 class RandomizedSupernova(Supernova):
     """Class for randomizing a supernova."""
@@ -147,7 +148,6 @@ class RandomizedSupernova(Supernova):
         :type absolute_mag_distribution: func
         :param random_seed: Random seed for randomization
         :type random_seed: int
-
         :return: absolute magnitude of the source in the B band
         """
 
