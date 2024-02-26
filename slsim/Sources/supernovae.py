@@ -1,6 +1,7 @@
 import sncosmo
 from astropy import cosmology
 
+
 class Supernova(sncosmo.Model):
     """Class describing a supernova."""
 
@@ -80,4 +81,3 @@ class Supernova(sncosmo.Model):
         """
 
         return self.bandmag(band, zpsys, time)
-
