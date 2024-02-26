@@ -745,104 +745,94 @@ def dp0_time_series_images_data(butler, center_coord, radius="0.1", band="i", si
     return table_data
 
 
-def opsim_time_series_images_data(
-    butler, center_coord, radius="0.1", band="i", size=101
-):
+def opsim_time_series_images_data(ra_list, dec_list, size=101):
     """Creates time series data from opsim database.
 
-    :param butler: butler object
-    :param center_coord: A coordinate point around which we need to create time series
-        images.
-    :param radius: radius for query
-    :param band: imaging band
+    :param ra_list: a list of ra points from objects we want to fetch observations for.
+    :param dec_list: a list of dec points from objects we want to fetch observations for.
     :param size: cutout size of images
     :return: An astropy table containg time series images and other information
     """
 
-    expo_information = tap_query(center_coords=center_coord, radius=radius, band=band)
-    calexp_image = list_of_calexp(expo_information, butler=butler)
-    radec = dp0_center_radec(calexp_image[0])
-    # Question: is radec_list only for 1 observation? Or can it be a list with multiple ra and decs?
-    # It might be better here to skip the butler and just get ra, dec from center_coord
-    radec_list = [(radec.getRa().asDegrees(), radec.getDec().asDegrees())]
-
-    # Everything in this section below might be better in a separate opsim function
-    # ------------------------------------------------------------------
-    # Users need to have the right branch of opsimsummary installed (Issue#325/proposalTables)
-    # and the opsim database downloaded
-    from opsimsummary import SynOpSim
-
-    opsim_path = "../data/OpSim_database/baseline_v3.0_10yrs.db"
-
-    synopsim = SynOpSim.fromOpSimDB(
-        opsim_path,
-        opsimversion="fbsv2",
-        usePointingTree=True,
-        use_proposal_table=False,
-        subset="unique_all",
-    )
-
-    gen = synopsim.pointingsEnclosing(
-        radec_list[0],
-        radec_list[1],
-        circRadius=0.0,
-        pointingRadius=1.75,
-        usePointingTree=True,
-    )
     # ------------------------------------------------------------------
 
-    # Collect the next observation sequence from the opsim generator
-    # (if only 1 set of coordinates is supplied then there is only one sequence)
-    seq = next(gen)
+    # Import opsimsummary
+    try:
+        from opsimsummary import SynOpSim
+    except:
+        raise ImportError("Users need to have the right branch of opsimsummary installed (Issue#325/proposalTables)")
+    # Initialise opsimsummary with opsim database
+    try:
+        opsim_path = "../data/OpSim_database/opsim.db"
 
-    # To do: now, seq still contains all ugrizy bands. We can cut out the ones corresponding to 'band',
-    # but if you'd do this for many bands it would be inefficient and slow (better to initialise opsim summary once)
+        synopsim = SynOpSim.fromOpSimDB(opsim_path, opsimversion="fbsv2", usePointingTree=True,
+                                        use_proposal_table=False, subset="unique_all")
+    except:
+        raise FileNotFoundError("Users need to have an opsim database downloaded at ../data/OpSim_database/opsim.db")
 
-    # Get the observation times, exposure times and sky brightness from opsim
-    obs_time = np.array(seq["expMJD"])
-    expo_time = np.array(seq["visitExposureTime"])
-    # sky_brightness = np.array(seq["filtSkyBrightness"])
+    # Fetch observations that cover the coordinates in ra_list and dec_list
+    gen = synopsim.pointingsEnclosing(ra_list, dec_list, circRadius=0.0, pointingRadius=1.75, usePointingTree=True)
 
-    # Get the psf from opsim
-    # psf_fwhm = np.array(seq["seeingFwhmGeom"])
-    # To do: make a psf kernel from psf_fwhm (either moffat kernel or match with similar dp0 kernel?)
-    pixels = radec_to_pix(radec, calexp_image)
-    psf_kernel = dp0_psf_kernels(pixels, calexp_image)
+    # ------------------------------------------------------------------
 
-    # Get the zero point from opsim
-    # m5_depth = np.array(seq["fiveSigmaDepth"])
-    # To do: convert m5_depth to zero point using opsim summary function
-    zero_point_mag = expo_information["zeroPoint"]
+    table_data_list = []
 
-    radec_list.extend(radec_list * (len(calexp_image) - 1))
-    cutout_image = calexp_cutout(calexp_image, radec, 450)
-    aligned_image = aligned_calexp(cutout_image)
-    aligned_image_cutout = calexp_cutout(aligned_image, radec, size)
+    # Loop through all coordinates and compute the table_data
+    for i in range(len(ra_list)):
 
-    # To do: replace dp0 cutouts by noise background (using sky_brightness, expo_time, zero_point_mag)
-    dp0_time_series_cutout = []
-    for i in range(len(aligned_image_cutout)):
-        dp0_time_series_cutout.append(aligned_image_cutout[i].image.array)
+        radec_list = [(ra_list[i], dec_list[i])]
 
-    table_data = Table(
-        [
-            dp0_time_series_cutout,
-            psf_kernel,
-            obs_time,
-            expo_time,
-            zero_point_mag,
-            radec_list,
-        ],
-        names=(
-            "time_series_images",
-            "psf_kernel",
-            "obs_time",
-            "expo_time",
-            "zero_point",
-            "calexp_center",
-        ),
-    )
-    return table_data
+        # Collect the next observation sequence from the opsim generator
+        seq = next(gen)
+        seq = seq.sort_values(by=['expMJD'])
+
+        # Check if the coordinates are in the opsim LSST footprint
+        opsim_ra = np.mean(seq['fieldRA'])
+        opsim_dec = np.mean(seq['fieldDec'])
+
+        if np.isnan(opsim_ra) or np.isnan(opsim_dec):
+            continue
+            # Should I save some documentation of this, or add a nan entry to the table_data?
+
+        # Get the observation times, exposure times, sky brightness, and bandpass from opsim
+        obs_time = np.array(seq["expMJD"])
+        expo_time = np.array(seq["visitExposureTime"])
+        sky_brightness = np.array(seq["filtSkyBrightness"])
+        bandpass = np.array(seq['filter'])
+
+        # Get the psf from opsim
+        # psf_fwhm = np.array(seq["seeingFwhmGeom"])
+        # To do: make a psf kernel from psf_fwhm (first from moffat kernel)
+        psf_kernel = ...
+
+        # Get the zero point from opsim
+        # m5_depth = np.array(seq["fiveSigmaDepth"])
+        # To do: convert m5_depth to zero point using opsim summary function
+        zero_point_mag = ...
+
+        table_data = Table(
+            [
+                sky_brightness,
+                psf_kernel,
+                obs_time,
+                expo_time,
+                zero_point_mag,
+                radec_list,
+                bandpass,
+            ],
+            names=(
+                "sky_brightness",
+                "psf_kernel",
+                "obs_time",
+                "expo_time",
+                "zero_point",
+                "calexp_center",
+                "band",
+            ),
+        )
+
+        table_data_list.append(table_data)
+    return table_data_list
 
 
 def variable_lens_injection(
