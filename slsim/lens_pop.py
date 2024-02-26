@@ -66,9 +66,9 @@ class LensPop(LensedPopulationBase):
         :param catalog_type: type of the catalog. If someone wants to use scotch
          catalog, they need to specify it.
         :type catalog_type: str. eg: "scotch"
-        :param catalog_path: path to the source catalog. If None, existing source 
-         catalog within the slsim will be used. We have used small subset of scotch 
-         catalog. So, if one wants to use full scotch catalog, they can set path to 
+        :param catalog_path: path to the source catalog. If None, existing source
+         catalog within the slsim will be used. We have used small subset of scotch
+         catalog. So, if one wants to use full scotch catalog, they can set path to
          their path to local drive.
         :param peak_mag_limit: range of peak magnitude for point source
          (supernovae). eg: {"peak_mag_min": m_min, "peak_mag_max": m_max}
@@ -138,7 +138,7 @@ class LensPop(LensedPopulationBase):
                 cosmo=cosmo,
                 sky_area=sky_area,
                 light_profile=source_light_profile,
-                catalog_type=catalog_type
+                catalog_type=catalog_type,
             )
             self._source_model_type = "extended"
         elif source_type == "quasars":
@@ -154,7 +154,7 @@ class LensPop(LensedPopulationBase):
                 sky_area=sky_area,
                 variability_model=variability_model,
                 kwargs_variability_model=kwargs_variability,
-                light_profile=source_light_profile
+                light_profile=source_light_profile,
             )
             self._source_model_type = "point_source"
         elif source_type == "quasar_plus_galaxies":
@@ -176,7 +176,7 @@ class LensPop(LensedPopulationBase):
                 variability_model=variability_model,
                 kwargs_variability_model=kwargs_variability,
                 light_profile=source_light_profile,
-                catalog_type=catalog_type
+                catalog_type=catalog_type,
             )
             self._source_model_type = "point_plus_extended"
         elif source_type == "supernovae_plus_galaxies":
@@ -192,7 +192,9 @@ class LensPop(LensedPopulationBase):
                 if catalog_path is not None:
                     new_path = catalog_path
                 else:
-                    new_path = self.path+"/Sources/SupernovaeData/scotch_host_data.fits"
+                    new_path = (
+                        self.path + "/Sources/SupernovaeData/scotch_host_data.fits"
+                    )
                 load_supernovae_data = Table.read(
                     new_path,
                     format="fits",
