@@ -6,8 +6,6 @@ from slsim.Util.astro_util import (
     generate_signal_from_bending_power_law,
     generate_signal_from_generic_psd,
 )
-
-from numpy import testing as npt
 import pytest
 
 

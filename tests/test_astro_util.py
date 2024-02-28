@@ -1,6 +1,5 @@
 import numpy as np
 from numpy import testing as npt
-import scipy
 import pytest
 from astropy import constants as const
 from astropy import units as u
