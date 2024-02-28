@@ -201,3 +201,9 @@ class TestAccretionDiskReprocessing:
             response_function_amplitudes=[1, 0, 0],
         )
         assert all(reprocessed_signal_shift - magnitude_array == 0)
+        # Assessing that we can only feed in a list of amplitudes, allowing the method to
+        # assume time units in R_g / c.
+        reprocessed_signal_test = reprocessor.reprocess_signal(
+            response_function_amplitudes=1 - np.linspace(-1, 1, 100) ** 2
+        )
+        assert len(reprocessed_signal_test) == len(magnitude_array)
