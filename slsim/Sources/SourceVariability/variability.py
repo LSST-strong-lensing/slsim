@@ -2,10 +2,9 @@ from slsim.Sources.SourceVariability.light_curve_interpolation import (
     LightCurveInterpolation,
 )
 from slsim.Sources.SourceVariability.sinusoidal_variability import SinusoidalVariability
-from slsim.Util.astro_util import (
-    generate_signal_from_bending_power_law,
-    generate_signal_from_generic_psd,
-)
+from slsim.Util.astro_util import generate_signal_from_bending_power_law
+from slsim.Util.astro_util import generate_signal_from_generic_psd
+
 """This class aims to have realistic variability models for AGN and supernovae."""
 
 
