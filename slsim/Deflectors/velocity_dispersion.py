@@ -2,6 +2,7 @@ import numpy as np
 import scipy
 from skypy.galaxies.redshift import redshifts_from_comoving_density
 from skypy.utils.random import schechter
+from slsim.Util import check_params
 
 """
 This module provides functions to compute velocity dispersion using schechter function.
@@ -11,6 +12,7 @@ This module provides functions to compute velocity dispersion using schechter fu
 #  from skypy.galaxies.velocity_dispersion import schechter_vdf
 
 
+@check_params
 def vel_disp_composite_model(r, m_star, rs_star, m_halo, c_halo, cosmo):
     """Computes the luminosity weighted velocity dispersion for a deflector with a
     stellar Hernquist profile and a NFW halo profile, assuming isotropic anisotropy.
