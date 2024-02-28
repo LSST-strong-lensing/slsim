@@ -6,6 +6,7 @@ from slsim.Util.astro_util import (
     generate_signal_from_bending_power_law,
     generate_signal_from_generic_psd,
 )
+
 """This class aims to have realistic variability models for AGN and supernovae."""
 
 

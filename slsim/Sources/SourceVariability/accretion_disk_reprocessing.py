@@ -17,20 +17,18 @@ class AccretionDiskReprocessing(object):
 
         :param reprocessing_model: keyword for the reprocessing model to be used. Only
             supports "lamppost" now.
-        :param kwargs_agn_model: keyword arguments for the variability model.
-            Note that these have default values if they are not input.
-            For the lamppost model, the kwargs are:
-            'r_out', The outer radius of the accretion disk, in gravitational radii [R_g]
-            'r_resolution', the resolution to calculate the disk's response function at in
-                [pixels / r_out]
-            'inclination_angle', the inclination of the accretion disk in [degrees]
-            'black_hole_mass_exponent', the log of the black hole mass normalized by the mass
-                of the sun.
-            'black_hole_spin', the normalized spin of the black hole, ranging from -1 to 1.
-                Negative values represent retrograde orbits around the black hole.
-            'corona_height', the height of the corona in the lamppost geometry in gravitational
-                radii [R_g]
-            'eddington_ratio', the Eddington ratio of the accretion disk
+        :param kwargs_agn_model: keyword arguments for the variability model. Note that
+            these have default values if they are not input. For the lamppost model, the
+            kwargs are: 'r_out', The outer radius of the accretion disk, in
+            gravitational radii [R_g] 'r_resolution', the resolution to calculate the
+            disk's response function at in [pixels / r_out] 'inclination_angle', the
+            inclination of the accretion disk in [degrees] 'black_hole_mass_exponent',
+            the log of the black hole mass normalized by the mass of the sun.
+            'black_hole_spin', the normalized spin of the black hole, ranging from -1 to
+            1. Negative values represent retrograde orbits around the black hole.
+            'corona_height', the height of the corona in the lamppost geometry in
+            gravitational radii [R_g] 'eddington_ratio', the Eddington ratio of the
+            accretion disk
         :type kwargs_agn_model: dict
         """
 
@@ -124,8 +122,8 @@ class AccretionDiskReprocessing(object):
             at each time lag. If response_function_time_lags is None, it will assume to
             have spacings [Rg / c] between values. The amplitudes may have arbitrary
             units.
-        :return: The magnitude_array of the reprocessed signal.
-            Note that this is calculated in the rest frame, not the observer's frame!
+        :return: The magnitude_array of the reprocessed signal. Note that this is
+            calculated in the rest frame, not the observer's frame!
         """
         if self.time_array is None or self.magnitude_array is None:
             raise ValueError(
