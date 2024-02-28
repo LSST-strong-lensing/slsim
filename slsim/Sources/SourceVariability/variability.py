@@ -6,7 +6,6 @@ from slsim.Util.astro_util import (
     generate_signal_from_bending_power_law,
     generate_signal_from_generic_psd,
 )
-
 """This class aims to have realistic variability models for AGN and supernovae."""
 
 
@@ -18,23 +17,13 @@ class Variability(object):
         :type variability_model: str
         :param kwargs_variability_model: Keyword arguments for variability class.
             For sinusoidal_variability kwargs are: amplitude ('amp') and frequency ('freq').
-            For bending_power_law kwargs are:
-                -('length_of_light_curve')
-                -('time_resolution')
-                -('log_breakpoint_frequency')
-                -('low_frequency_slope')
-                -('high_frequency_slope')
-                -('new_mean_amplitude')
-                -('new_standard_deviation')
-                -('seed')
-            For user_defined_psd kwargs are:
-                -('length_of_light_curve')
-                -('time_resolution')
-                -('input_frequencies')
-                -('input_psd')
-                -('new_mean_amplitude')
-                -('new_standard_deviation')
-                -('seed')
+            For bending_power_law kwargs are: ('length_of_light_curve'), ('time_resolution'),
+                ('log_breakpoint_frequency'), ('low_frequency_slope'),
+                ('high_frequency_slope'), ('new_mean_amplitude'),
+                ('new_standard_deviation'), and ('seed')
+            For user_defined_psd kwargs are: ('length_of_light_curve'), ('time_resolution'),
+                ('input_frequencies'), ('input_psd'), ('new_mean_amplitude'),
+                ('new_standard_deviation'), and ('seed')
         :type kwargs_variability_model: dict
         """
         self.kwargs_model = kwargs_variability_model
