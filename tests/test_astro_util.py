@@ -1,5 +1,6 @@
 import numpy as np
 from numpy import testing as npt
+import scipy
 import pytest
 from astropy import constants as const
 from astropy import units as u
@@ -19,6 +20,12 @@ from slsim.Util.astro_util import (
     calculate_dt_dlx,
     calculate_mean_time_lag,
     calculate_accretion_disk_response_function,
+    define_bending_power_law_psd,
+    define_frequencies,
+    normalize_light_curve,
+    generate_signal,
+    generate_signal_from_bending_power_law,
+    generate_signal_from_generic_psd,
 )
 
 
@@ -378,3 +385,177 @@ def test_calculate_accretion_disk_response_function():
 
     assert peak_response_shorter_wavelength < peak_response_longer_wavelength
     assert mean_tau_shorter_wavelength < mean_tau_longer_wavelength
+
+
+def test_define_frequencies():
+    # Test that we can generate 2 points, recall the length will be 10 times the input
+    length = 0.1
+    dt = 1
+    freq = define_frequencies(length, dt)
+    assert len(freq) == 2
+    # Test that we don't get frequencies above the Nyquist frequency defined as 1/(2*dt)
+    # or that we don't get frequencies below the expected contributing range of 1/(10*length)
+    length = 100
+    dt = 1
+    freq = define_frequencies(length, dt)
+    assert np.max(freq) <= 1 / (2 * dt)
+    assert np.min(freq) >= 1 / (10 * length)
+    # Test that frequencies strictly increase (the x-axis cannot be multi-valued)
+    delta_freq = freq[1:] - freq[:-1]
+    assert all(delta_freq > 0)
+    # Test that decreasing dt increases the maximum frequency
+    dt = 0.1
+    higher_freq = define_frequencies(length, dt)
+    assert higher_freq[-1] > freq[-1]
+
+
+def test_define_bending_power_law_psd():
+    length = 100
+    dt = 1
+    frequencies = define_frequencies(length, dt)
+    power_spectrum_density = define_bending_power_law_psd(-1, 1, 3, frequencies)
+    # Test the frequencies and psd have the same size
+    assert power_spectrum_density.size == frequencies.size
+    # Test that the PSD is a decreasing function of frequency
+    test_metric = power_spectrum_density[1:] - power_spectrum_density[:-1]
+    assert all(test_metric <= 0)
+    # Test that the PSD doesn't change if a breakpoint frequency is changed far outside the
+    # frequency range
+    psd1 = define_bending_power_law_psd(15, 1, 3, frequencies)
+    psd2 = define_bending_power_law_psd(25, 1, 3, frequencies)
+    total_diff_12 = np.sum(psd1 - psd2)
+    npt.assert_almost_equal(total_diff_12, 0, 5)
+    psd3 = define_bending_power_law_psd(-25, 0.5, 1, frequencies)
+    psd4 = define_bending_power_law_psd(-20, 0.5, 1, frequencies)
+    total_diff_34 = np.sum(psd3 - psd4)
+    npt.assert_almost_equal(total_diff_34, 0, 5)
+
+
+def test_normalize_light_curve():
+    input_light_curve = [5.0, 7.0, 7.0, 5.0, 4.0, 2.0]
+    new_mean = 0.0
+    new_std = 1.0
+    output_light_curve = normalize_light_curve(input_light_curve, new_mean, new_std)
+    npt.assert_almost_equal(output_light_curve.mean(), new_mean)
+    npt.assert_almost_equal(output_light_curve.std(), new_std)
+    # Test a single value
+    input_light_curve = [3.5]
+    new_mean = 2.0
+    new_std = 0.0
+    output_light_curve = normalize_light_curve(input_light_curve, new_mean, new_std)
+    assert output_light_curve[0] == new_mean
+    # Test a numpy array generated from linspace as the input
+    input_light_curve = np.linspace(0, 100, 101)
+    new_mean = 0.0
+    new_std = 1.0
+    output_light_curve = normalize_light_curve(input_light_curve, new_mean, new_std)
+    npt.assert_almost_equal(output_light_curve.mean(), new_mean)
+    npt.assert_almost_equal(output_light_curve.std(), new_std)
+    # by symmetry, the new center value should be 0
+    assert output_light_curve[50] == 0
+
+
+def test_generate_signal():
+    # Test we can generate a signal with minimal arguments
+    length_of_light_curve = 100
+    dt = 7
+    light_curve = generate_signal(length_of_light_curve, dt)
+    assert len(light_curve) == 100 // 7
+    # Test a smaller dt increases the number of points in the light curve
+    dt = 1
+    light_curve_2 = generate_signal(length_of_light_curve, dt)
+    assert len(light_curve) < len(light_curve_2)
+    # Test that no errors are thrown when reasonable values are entered
+    length_of_light_curve = 1000
+    dt = 2
+    log_bp_freq = -1
+    low_freq_slope = 0.5
+    high_freq_slope = 3.0
+    new_mean_amplitude = 12
+    new_standard_deviation = 10
+    light_curve_3 = generate_signal(
+        length_of_light_curve,
+        dt,
+        log_breakpoint_frequency=log_bp_freq,
+        low_frequency_slope=low_freq_slope,
+        high_frequency_slope=high_freq_slope,
+        new_mean_amplitude=new_mean_amplitude,
+        new_standard_deviation=new_standard_deviation,
+    )
+    npt.assert_almost_equal(
+        np.sum(light_curve_3), new_mean_amplitude * len(light_curve_3)
+    )
+    # Test that a light curve may be generated using a user defined psd
+    chosen_seed = 17
+    input_frequencies = define_frequencies(length_of_light_curve, dt)
+    input_power_spectrum_density = input_frequencies ** (-4.0)
+    light_curve_user_psd = generate_signal(
+        length_of_light_curve,
+        dt,
+        input_freq=input_frequencies,
+        input_psd=input_power_spectrum_density,
+        seed=chosen_seed,
+    )
+    # Compare the light curve is different from the broken power law psd
+    light_curve_bpl_psd = generate_signal(length_of_light_curve, dt, seed=chosen_seed)
+    difference_curve = light_curve_user_psd - light_curve_bpl_psd
+    sum_of_squares = np.sum(difference_curve**2)
+    assert sum_of_squares > 0
+
+
+def test_generate_signal_from_bending_power_law():
+    # Test that this function generates an identical signal to
+    # that created with generate_signal()
+
+    length_of_light_curve = 500
+    time_resolution = 1
+    log_breakpoint_frequency = -2
+    low_frequency_slope = 1
+    high_frequency_slope = 3
+    new_mean_amplitude = 0
+    new_standard_deviation = 1
+    seed = 17
+
+    known_signal = generate_signal(
+        length_of_light_curve,
+        time_resolution,
+        log_breakpoint_frequency=log_breakpoint_frequency,
+        low_frequency_slope=low_frequency_slope,
+        high_frequency_slope=high_frequency_slope,
+        new_mean_amplitude=new_mean_amplitude,
+        new_standard_deviation=new_standard_deviation,
+        seed=seed,
+    )
+    times, new_signal = generate_signal_from_bending_power_law(
+        length_of_light_curve,
+        time_resolution,
+        log_breakpoint_frequency=log_breakpoint_frequency,
+        low_frequency_slope=low_frequency_slope,
+        high_frequency_slope=high_frequency_slope,
+        new_mean_amplitude=new_mean_amplitude,
+        new_standard_deviation=new_standard_deviation,
+        seed=seed,
+    )
+
+    assert all(new_signal == known_signal)
+    assert len(times) == len(new_signal)
+
+
+def test_generate_signal_from_generic_psd():
+    length_of_light_curve = 500
+    time_resolution = 1
+    seed = 112
+    frequencies = define_frequencies(length_of_light_curve, time_resolution)
+    test_psd_smooth = frequencies ** (-4)
+    t1, smooth_signal = generate_signal_from_generic_psd(
+        length_of_light_curve, time_resolution, frequencies, test_psd_smooth, seed=seed
+    )
+
+    test_psd_noisy = frequencies ** (-1)
+    t2, noisy_signal = generate_signal_from_generic_psd(
+        length_of_light_curve, time_resolution, frequencies, test_psd_noisy, seed=seed
+    )
+
+    # Note that smooth signals will deviate much further from the mean
+    # than extremely noisy signals
+    assert noisy_signal.var() < smooth_signal.var()
