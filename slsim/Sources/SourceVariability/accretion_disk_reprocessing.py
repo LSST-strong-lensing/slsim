@@ -19,16 +19,9 @@ class AccretionDiskReprocessing(object):
             supports "lamppost" now.
         :param kwargs_agn_model: keyword arguments for the variability model. Note that
             these have default values if they are not input. For the lamppost model, the
-            kwargs are: 'r_out', The outer radius of the accretion disk, in
-            gravitational radii [R_g] 'r_resolution', the resolution to calculate the
-            disk's response function at in [pixels / r_out] 'inclination_angle', the
-            inclination of the accretion disk in [degrees] 'black_hole_mass_exponent',
-            the log of the black hole mass normalized by the mass of the sun.
-            'black_hole_spin', the normalized spin of the black hole, ranging from -1 to
-            1. Negative values represent retrograde orbits around the black hole.
-            'corona_height', the height of the corona in the lamppost geometry in
-            gravitational radii [R_g] 'eddington_ratio', the Eddington ratio of the
-            accretion disk
+            kwargs are: ('r_out'), ('r_resolution'), ('inclination_angle'),
+            ('black_hole_mass_exponent'), ('black_hole_spin'), ('corona_height'), and
+            ('eddington_ratio').
         :type kwargs_agn_model: dict
         """
 
@@ -53,20 +46,25 @@ class AccretionDiskReprocessing(object):
             }
             for jj in default_lamppost_kwargs:
                 if jj not in self.kwargs_model:
-                    print("keyword " + jj + " is not defined, using default value.")
+                    print(
+                        "keyword "
+                        + jj
+                        + " is not defined, using default value of: "
+                        + str(default_lamppost_kwargs[jj])
+                    )
                     self.kwargs_model[jj] = default_lamppost_kwargs[jj]
 
         self.time_array = None
         self.magnitude_array = None
 
     def define_new_response_function(self, rest_frame_wavelength_in_nanometers):
-        """Define a response function of the agn accretion disk to the corona in the
-        lamppost geometry.
+        """Define a response function of the agn accretion disk to the flaring corona in
+        the lamppost geometry.
 
         :param rest_frame_wavelength_in_nanometers: The rest frame wavelength (not the
             observer's frame!) in [nanometers].
         :return: An array representing the response function of the accretion disk with
-            spacing of [R_g / c].
+            time lag spacing of [R_g / c].
         """
         return self._model(rest_frame_wavelength_in_nanometers, **self.kwargs_model)
 
@@ -76,23 +74,20 @@ class AccretionDiskReprocessing(object):
         arguments will write the signal to the object, while a call with no arguments
         will return the stored signal.
 
-        :param time_array: The times which the light curve is to be sampled at, in
-            [days].
-        :param magnitude_array: The amplitudes of the signal at each timestamp
-        :return: The intrinsic time_array and magnitude_array associated with the
-            Accretion_Disk_Reprocessing object
+        :param time_array: The times which the light curve is sampled at, in [days].
+        :param magnitude_array: The amplitudes of the signal at each time in time_array.
+        :return: The time_array and magnitude_array associated with the
+            AccretionDiskReprocessing() object's intrinsic (driving) signal.
         """
         if time_array is None and magnitude_array is None:
             return self.time_array, self.magnitude_array
-        if (time_array is None and magnitude_array is not None) or (
-            time_array is not None and magnitude_array is None
-        ):
+        if (time_array is None) != (magnitude_array is None):
             raise ValueError(
                 "You must provide both the time_array and the magnitude_array."
             )
         if len(time_array) != len(magnitude_array):
             raise ValueError(
-                "The time_array and magnitude_array must be of equal length."
+                "Input time_array and magnitude_array must be of equal length."
             )
         self.time_array = time_array
         self.magnitude_array = magnitude_array
@@ -115,13 +110,12 @@ class AccretionDiskReprocessing(object):
             the observer's frame!) wavelength to calculate the response function at, in
             [nanometers].
         :param response_function_time_lags: An optional array representing the
-            time_array associated with the response function with units [days]. If None
-            and response_function_amplitudes is given, the time lags will be assumed to
-            be in units [Rg / c].
+            time_array associated with the response function with units [days]. Time
+            lags are defined in the rest frame (not the observer's frame!). If None and
+            response_function_amplitudes is given, the time lags will be assumed to be
+            in units [Rg / c].
         :param response_function_amplitudes: An array representing the response function
-            at each time lag. If response_function_time_lags is None, it will assume to
-            have spacings [Rg / c] between values. The amplitudes may have arbitrary
-            units.
+            at each time lag. The amplitudes may use arbitrary units.
         :return: The magnitude_array of the reprocessed signal. Note that this is
             calculated in the rest frame, not the observer's frame!
         """
@@ -173,7 +167,7 @@ class AccretionDiskReprocessing(object):
             time_lag_axis, response_function, bounds_error=False, fill_value=0
         )
 
-        tau_axis = np.linspace(0, int(time_lag_axis[-1]), int(time_lag_axis[-1]))
+        tau_axis = np.linspace(0, int(time_lag_axis[-1]), int(time_lag_axis[-1]) + 1)
 
         interpolated_response_function = interpolation_of_response_function(tau_axis)
 
@@ -185,7 +179,7 @@ class AccretionDiskReprocessing(object):
         signal_time_axis = np.linspace(
             int(self.time_array[0]),
             int(self.time_array[-1]),
-            int(self.time_array[-1]) - int(self.time_array[0]),
+            int(self.time_array[-1]) - int(self.time_array[0]) + 1,
         )
 
         intrinsic_signal = LightCurveInterpolation(light_curve)
@@ -195,7 +189,7 @@ class AccretionDiskReprocessing(object):
             interpolated_signal, (interpolated_response_function), mode="full"
         ) / np.sum(interpolated_response_function)
 
-        return reprocessed_signal[: 1 - length_in_days]
+        return reprocessed_signal[:-length_in_days]
 
 
 def lamppost_model(

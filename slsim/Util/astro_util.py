@@ -659,7 +659,7 @@ def generate_signal_from_bending_power_law(
     :return: Two arrays, the time_array and the magnitude_array of the variability.
     """
     time_array = np.linspace(
-        0, length_of_light_curve, length_of_light_curve // time_resolution
+        0, length_of_light_curve - 1, length_of_light_curve // time_resolution
     )
     magnitude_array = generate_signal(
         length_of_light_curve,
@@ -701,7 +701,7 @@ def generate_signal_from_generic_psd(
         variability.
     """
     time_array = np.linspace(
-        0, length_of_light_curve, length_of_light_curve // time_resolution
+        0, length_of_light_curve - 1, length_of_light_curve // time_resolution
     )
     magnitude_array = generate_signal(
         length_of_light_curve,

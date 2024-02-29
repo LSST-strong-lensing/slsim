@@ -61,7 +61,7 @@ class TestVariability:
             "seed": None,
         }
         var = Variability("user_defined_psd", **kwargs_model)
-        observation_times = np.linspace(0, 1000, 1000)
+        observation_times = np.linspace(0, 999, 1000)
         results = var.variability_at_time(observation_times)
         assert var.variability_model == "user_defined_psd"
         npt.assert_almost_equal(results.mean(), 50)

@@ -91,7 +91,7 @@ class TestAccretionDiskReprocessing:
 
         with pytest.raises(ValueError) as excinfo:
             reprocessor.define_intrinsic_signal(time_array, magnitude_array)
-        assert ("The time_array and magnitude_array must be of equal length.") in str(
+        assert ("Input time_array and magnitude_array must be of equal length.") in str(
             excinfo.value
         )
 
@@ -183,7 +183,7 @@ class TestAccretionDiskReprocessing:
             rest_frame_wavelength_in_nanometers=2000
         )
 
-        assert len(reprocessed_signal_500) == int(time_array[-1])
+        assert len(reprocessed_signal_500) == len(time_array)
         assert len(reprocessed_signal_1000) == len(reprocessed_signal_500)
         assert len(reprocessed_signal_1000) == len(reprocessed_signal_2000)
         # Assessing the variance of the reprocessed signal, should decrease with wavelength!
@@ -194,11 +194,11 @@ class TestAccretionDiskReprocessing:
             response_function_time_lags=[0, 1, 2, 3, 4, 5],
             response_function_amplitudes=[0, 0, 0, 0, 0, 1],
         )
-        assert all(reprocessed_signal_shift[4:] - magnitude_array[:-4] == 0)
-        # Assessing 'identity' shift. Note the convolution requires at least 3 points in the kernel
+        assert all(reprocessed_signal_shift[5:] - magnitude_array[:-5] == 0)
+        # Assessing 'identity' shift. Note the convolution requires at least 2 points in the kernel
         reprocessed_signal_shift = reprocessor.reprocess_signal(
-            response_function_time_lags=[0, 1, 2],
-            response_function_amplitudes=[1, 0, 0],
+            response_function_time_lags=[0, 1],
+            response_function_amplitudes=[1, 0],
         )
         assert all(reprocessed_signal_shift - magnitude_array == 0)
         # Assessing that we can only feed in a list of amplitudes, allowing the method to
