@@ -1,5 +1,5 @@
 import numpy as np
-import scipy
+from scipy import fft
 from astropy import constants as const
 from astropy import units as u
 
@@ -620,7 +620,7 @@ def generate_signal(
     fourier_transform = np.concatenate(
         (fourier_transform, fourier_transform[-2:0:-1].conjugate())
     )
-    generated_light_curve = scipy.fft.ifft(fourier_transform)[
+    generated_light_curve = fft.ifft(fourier_transform)[
         : length_of_light_curve // time_resolution
     ]
     output_light_curve = normalize_light_curve(

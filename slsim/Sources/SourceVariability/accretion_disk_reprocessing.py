@@ -1,7 +1,7 @@
 import numpy as np
-import scipy
 import astropy.constants as const
 import astropy.units as u
+from scipy import signal, interpolate
 from slsim.Util.astro_util import (
     calculate_gravitational_radius,
     calculate_accretion_disk_response_function,
@@ -163,7 +163,7 @@ class AccretionDiskReprocessing(object):
                 )
                 time_lag_axis = np.linspace(0, length_in_days, len(response_function))
 
-        interpolation_of_response_function = scipy.interpolate.interp1d(
+        interpolation_of_response_function = interpolate.interp1d(
             time_lag_axis, response_function, bounds_error=False, fill_value=0
         )
 
@@ -185,7 +185,7 @@ class AccretionDiskReprocessing(object):
         intrinsic_signal = LightCurveInterpolation(light_curve)
         interpolated_signal = intrinsic_signal.magnitude(signal_time_axis)
 
-        reprocessed_signal = scipy.signal.convolve(
+        reprocessed_signal = signal.convolve(
             interpolated_signal, (interpolated_response_function), mode="full"
         ) / np.sum(interpolated_response_function)
 
