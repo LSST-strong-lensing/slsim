@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import fft
 from astropy import constants as const
 from astropy import units as u
 
@@ -153,8 +154,8 @@ def planck_law(temperature, wavelength_in_nanometers):
 
     B(T, lam) = (2 * h * c^2 / lam^5) * (1 / (e^(h * c / (lam * k_B * T)) - 1))
 
-    :param temperature: Temperature of the black body, in Kelvin
-    :param wavelength_in_nanometers: Emitted wavelength in local rest frame in nanometers
+    :param temperature: Temperature of the black body, in [Kelvin]
+    :param wavelength_in_nanometers: Emitted wavelength in local rest frame in [nanometers]
     :return: The spectral radiance of the black body
     """
     # If wavelength was entered as an int or float, append units
@@ -179,8 +180,8 @@ def planck_law_derivative(temperature, wavelength_in_nanometers):
 
     d(f(x)) ~ lim (delta_x -> 0) (f(x+delta_x) - f(x)) / delta_x
 
-    :param temperature: Temperature of the black body, in Kelvin.
-    :param wavelength_in_nanometers: Emitted wavelength in local rest frame in nanometers.
+    :param temperature: Temperature of the black body, in [Kelvin].
+    :param wavelength_in_nanometers: Emitted wavelength in local rest frame in [nanometers].
     :return: The derivative of the spectral radiance with respect to temperature for a black body.
     """
     if type(temperature) == u.Quantity:
@@ -196,11 +197,12 @@ def create_radial_map(r_out, r_resolution, inclination_angle):
     """This creates a 2-dimentional array of radial positions where the maximum radius
     is defined by r_out, and the radial resolution is defined by r_resolution.
 
-    :param r_out: The maximum radial value. For an accretion disk, this can be 10^3 to 10^5.
+    :param r_out: The maximum radial value in [R_g]. For an accretion disk, this can be 10^3
+        to 10^5.
     :param r_resolution: The number of points between r = 0 and r = r_out. The final map
         will be shape (2 * r_resolution), (2 * r_resolution).
     :param inclination_angle: The inclination of the plane of the accretion disk with
-        respect to the observer in degrees.
+        respect to the observer in [degrees].
     :return: A 2D array of radial positions of shape ((2 * r_resolution), (2
         * r_resolution)) in the projected plane of the sky.
     """
@@ -219,12 +221,12 @@ def create_phi_map(r_out, r_resolution, inclination_angle):
     maximum radius is defined by r_out, and the radial resolution is defined by
     r_resolution.
 
-    :param r_out: The maximum radial value. For an accretion disk, this can be 10^3 to
-        10^5.
+    :param r_out: The maximum radial value in [R_g]. For an accretion disk, this can be
+        10^3 to 10^5.
     :param r_resolution: The number of points between r = 0 and r = r_out. The final map
         will be shape (2 * r_resolution), (2 * r_resolution)
     :param inclination_angle: The inclination of the plane of the accretion disk with
-        respect to the observer in degrees.
+        respect to the observer in [degrees].
     :return: A 2-dimensional array of phi values at radial positions of shape ((2 *
         r_resolution), (2 * r_resolution)) in the projected plane of the sky, such that
         phi = 0 is nearest to the observer.
@@ -251,13 +253,13 @@ def calculate_time_delays_on_disk(
     c * tau(r, phi|h_corona, inclination) = sqrt(h_corona^2 + r^2) +
                                     h_corona * cos(inclination) - r * sin(inclination) * cos(phi)
 
-    :param radial_map: A 2-dimension array of radial values on the accretion disk in units R_g.
-    :param inclination_angle: The tilt of the accretion disk with respect to the observer in degrees.
+    :param radial_map: A 2-dimension array of radial values on the accretion disk in units [R_g].
+    :param inclination_angle: The tilt of the accretion disk with respect to the observer in [degrees].
         Zero degrees is face on, 90 degrees is edge on.
     :param corona_height: The height of the corona in gravitational_radii. Typical choices range
-        from 0 to 100 R_g.
+        from 0 to 100 [R_g].
     :return: A 2-dimensional array of time delays between the corona and the accretion disk in
-        units of R_g / c.
+        units of [R_g / c].
     """
     return (
         (radial_map**2.0 + corona_height**2.0) ** 0.5
@@ -282,10 +284,10 @@ def calculate_geometric_contribution_to_lamppost_model(radial_map, corona_height
     sigma_sb is the Stefan-Boltzmann constant,
     and R_{*} is the distance between the X-ray source and any part of the disk.
 
-    :param radial_map: A 2-dimension array of radial values on the accretion disk in units R_g,
+    :param radial_map: A 2-dimension array of radial values on the accretion disk in units [R_g],
         potentially generated with the create_radial_map function above.
-    :param corona_height: The height of the corona in units R_g. Typical choices range
-        from 0 to 100 gravitational radii.
+    :param corona_height: The height of the corona in units [R_g]. Typical choices range
+        from 0 to 100.
     :return: A 2-dimensional array of multiplicative factors representing the impact of
         geometry between the lamppost source and the accretion disk acting on the fluctuations
         of the X-ray source.
@@ -329,11 +331,11 @@ def calculate_dt_dlx(radial_map, temperature_map, corona_height):
     The fractional change in temperature with respect to flux is approximated
         to be the derivative in (5) as both delta_temp and delta_Lx are assumed to be small.
 
-    :param radial_map: A 2-dimension array of radial values on the accretion disk in units R_g.
+    :param radial_map: A 2-dimension array of radial values on the accretion disk in units [R_g].
     :param temperature_map: A 2-dimensional array of temperature values on the accretion disk
-        in Kelvin.
-    :param corona_height: The height of the corona in units R_g. Typical values range
-        from 0 to 100 gravitational radii.
+        in [Kelvin].
+    :param corona_height: The height of the corona in units [R_. Typical values range
+        from 0 to 100.
     :return: A 2-dimensional map of values representing the change in temperature with
         respect to a change in X-ray flux.
     """
@@ -351,7 +353,7 @@ def calculate_mean_time_lag(response_function):
 
     weighted_average = sum(time_axis * response_function) / sum(response_function)
 
-    The function np.nansum is used in favor of np.sum to avoid issues with np.nan values.
+    The function np.nansum() is used in favor of np.sum() to avoid issues with np.nan values.
 
     :param response_function: The input response function (or any array) to calculate the
         weighted average from (e.g. the output of
@@ -361,7 +363,7 @@ def calculate_mean_time_lag(response_function):
         are of units [R_g / c] by default.
     :return: A single value representing the weighted average. Units are equivalent to
         the x-axis spacings of the response_function (or array). For default response
-        functions generated with this code, the output has units R_g / c.
+        functions generated with this code, the output has units [R_g / c].
     """
     return np.nansum(
         np.linspace(0, len(response_function) - 1, len(response_function))
@@ -398,21 +400,21 @@ def calculate_accretion_disk_response_function(
 
     To use the response function:
     1) Resample the response function at the time resolution of the signal or resample the
-        signal at units R_g / c.
+        signal at units [R_g / c].
     2) The time axis of the response function must then be inverted as these are time lags.
     3) Take the convolution between the driving signal and the response function.
     4) The time axis of the convolution should then be shifted forward in time by the length
         of the response function to remain consistent with respect to the driving signal.
 
     :param r_out: The maximum radial value of the accretion disk. This typically can be chosen
-        as 10^3 to 10^5 R_g.
+        as 10^3 to 10^5 [R_g].
     :param r_resolution: The number of points between r = 0 and r = r_out. The final map will
         be shape (2 * r_resolution), (2 * r_resolution). Higher resolution leads to longer
         calculations but smoother response functions.
     :param inclination_angle: The tilt of the accretion disk with respect to the observer
-        in degrees. Zero degrees is face on, 90 degrees is edge on.
+        in [degrees]. Zero degrees is face on, 90 degrees is edge on.
     :param rest_frame_wavelength_in_nanometers: Wavelength in local rest frame
-        in nanometers.
+        in [nanometers].
     :param black_hole_mass_exponent: The log of the black hole mass normalized by the mass
         of the sun; black_hole_mass_exponent = log_10(black_hole_mass / mass_sun).
         Typical AGN have an exponent ranging from 6 to 10.
@@ -422,11 +424,11 @@ def calculate_accretion_disk_response_function(
         with the black hole's spin, and negative spin represents retrograde accretion
         flow.
     :param corona_height: The height of the corona in gravitational_radii. Typical choices range
-        from 0 to 100 gravitational radii.
+        from 0 to 100 [R_g].
     :param eddington_ratio: The desired Eddington ratio defined as a fraction of bolometric
         luminosity / Eddington luminosity.
     :return: The normalized response of the accretion disk as a function of time lag in
-        units R_g / c.
+        units [R_g / c].
     """
     radial_map = create_radial_map(r_out, r_resolution, inclination_angle)
     phi_map = create_phi_map(r_out, r_resolution, inclination_angle)
@@ -458,3 +460,256 @@ def calculate_accretion_disk_response_function(
     )[0]
 
     return response_function / np.nansum(response_function)
+
+
+def define_bending_power_law_psd(
+    log_breakpoint_frequency, low_frequency_slope, high_frequency_slope, frequencies
+):
+    """This function defines the power spectrum density (PSD) of a bending power law.
+    Note that bending power law is also sometimes referred to as a broken power law.
+
+    :param log_breakpoint_frequency: The log_{10} of the breakpoint frequency where
+        the power law changes slope, in units [1/days]. Typical values range between
+        -3.5 and 1.0.
+    :param low_frequency_slope: The (negative) log-log slope of the PSD for low frequencies when
+        the power is plotted against frequency in units [1/days]. Typically ~1.0, but
+        can range from 0.0 to 2.0.
+    :param high_frequency_slope: the (negative) log-log slope of the PSD for high frequencies when
+        the power is plotted against frequency in units [1/days]. Typically ranges from
+        2.0 to 4.0, and should be a higher power than low_frequency_slope (e.g. it should
+        drop off with frequency rapidly).
+    :param frequencies: A numpy array or list of frequencies to calculate the PSD at.
+        This array is well defined through the define_frequencies() function.
+        Note that define_frequencies() will prepare minimum and maximum frequencies, and
+        there will not be a "bend" in the PSD if the breakpoint frequency does not
+        fall within this range.
+    :return: The PSD of the bending power law defined through the input parameters.
+    """
+
+    breakpoint_frequency = 10**log_breakpoint_frequency
+    bending_power_law_psd = (frequencies**-low_frequency_slope) * (
+        1
+        + (frequencies / breakpoint_frequency)
+        ** (high_frequency_slope - low_frequency_slope)
+    ) ** -1
+    return bending_power_law_psd
+
+
+def define_frequencies(length_of_light_curve, time_resolution):
+    """This function defines the useful frequencies for generating a power spectrum
+    density (PSD). Frequencies below the low frequency limit will not contribute to the
+    light curve. Frequencies above the high frequency limit (the Nyquist frequency) will
+    not be able to be probed with the time_resolution, and will suffer from aliasing.
+
+    :param length_of_light_curve: The total length of the light curve to simulate, in
+        units of [days]. The generated frequencies will have a 10 times lower limit than
+        required, as the function generate_signal_from_psd will generate extended light
+        curves to deal with periodicity issues.
+    :param time_resolution: The time resolution to generate the light curve at, in units
+        of [days]. This parameter defines the high frequency limit. If generating light
+        curves takes too long, consider increasing this parameter to generate fewer
+        frequencies.
+    :return: A numpy array of the frequencies that are probed by the light curve in
+        [1/days].
+    """
+
+    length_of_generated_light_curve = 10 * length_of_light_curve
+    frequencies = np.linspace(
+        1 / length_of_generated_light_curve,
+        1 / (2 * time_resolution),
+        int(length_of_generated_light_curve) + 1,
+    )
+    return frequencies
+
+
+def normalize_light_curve(light_curve, new_mean_amplitude, new_standard_deviation=None):
+    """This function takes in a light curve and redefines its mean and standard
+    deviation. It may also be used to re-normalize any time series.
+
+    :param light_curve: A time series list or array which represents a one-dimensional
+        light curve. This function does not require any specific units or spacings.
+    :param new_mean_amplitude: The new mean value of the light curve. This is done
+        through a simple shifting of the y-axis.
+    :param new_standard_deviation: The new standard deviation of the light curve. Note
+        this only makes sense for a variable signal (e.g. a constant signal cannot be
+        given a new standard_deviation). A negative standard deviation will invert the x
+        and y axis.
+    :return: A rescaled version of the original light curve, with new mean and standard
+        deviation.
+    """
+    light_curve = np.asarray(light_curve)
+    light_curve -= light_curve.mean()
+    if light_curve.std() > 0 and new_standard_deviation is not None:
+        light_curve /= light_curve.std()
+    if new_standard_deviation != 0 and new_standard_deviation is not None:
+        light_curve *= new_standard_deviation
+    light_curve += new_mean_amplitude
+    return light_curve
+
+
+def generate_signal(
+    length_of_light_curve,
+    time_resolution,
+    log_breakpoint_frequency=-2,
+    low_frequency_slope=1,
+    high_frequency_slope=3,
+    new_mean_amplitude=0,
+    new_standard_deviation=1,
+    input_freq=None,
+    input_psd=None,
+    seed=None,
+):
+    """This function creates a stochastic signal to model AGN X-ray variability. This
+    may be used to generate either a bending power law signal, or a signal following any
+    input power spectrum density (psd).
+
+    :param length_of_light_curve: The total length of the light curve to simulate, in units
+        of [days]. The generated signal will be 10 times longer than this to
+        deal with periodicity issues which may arise.
+    :param time_resolution: The time spacing between regularly sampled points in the light curve,
+        in units of [days]. This parameter defines the high frequency limit of the PSD and the
+        number of points defining the light curve. If generating light curves takes too long,
+        consider increasing this parameter to generate fewer frequencies.
+    :param log_breakpoint_frequency: The log_{10} of the breakpoint frequency as defined in
+        the bending power law, in units days^{-1}. Typical values range from -3.5 to 1.0.
+    :param low_frequency_slope: The (negative) log-log slope of the PSD for low frequencies when
+        the power is plotted against frequency in units [1/days]. Typically ~1.0, but
+        can range from 0.0 to 2.0.
+    :param high_frequency_slope: The (negative) log-log slope of the PSD for high frequencies when
+        the power is plotted against frequency in units [1/days]. Typically ranges from
+        2.0 to 4.0, and should be a higher power than low_frequency_slope (e.g. it should
+        drop off with frequency rapidly).
+    :param new_mean_amplitude: The mean value of the light curve to simulate. The
+        PSD will produce a stochastic light curve with some mean and some standard
+        deviation. This parameter will fix the mean value of the output light curve.
+    :param standard_deviation: The desired standard deviation (std) of the light curve's
+        variability.
+    :param input_freq: None or an input array of frequencies in [1/days] to use to overwrite the
+        frequencies generated by astro_util.generate_frequencies(). If none, no action
+        will be taken. If an array of frequencies is input, this array will override
+        the frequencies used o generate the signal. This must be equal length to input_psd.
+        This may be useful for testing.
+    :param input_psd: None or an input array representing the PSD at input_freq. If
+        None, no action will be taken. If an array is input, this must be of equal length
+        to the array input_freq. Then this input_psd will override the bending power law
+        generated using astro_util.define_bending_power_law_psd(). This may be useful
+        for defining more complex power spectrums, or other testing.
+    :param seed: None or value. If a value is provided, the random seed may be defined
+        within this function.
+    """
+    if seed is not None:
+        np.random.seed(seed)
+
+    if input_freq is not None:
+        frequencies = np.asarray(input_freq)
+        assert input_psd is not None
+    else:
+        frequencies = define_frequencies(length_of_light_curve, time_resolution)
+    if input_psd is not None:
+        power_spectrum_density = np.asarray(input_psd)
+        assert len(input_freq) == len(power_spectrum_density)
+    else:
+        power_spectrum_density = define_bending_power_law_psd(
+            log_breakpoint_frequency,
+            low_frequency_slope,
+            high_frequency_slope,
+            frequencies,
+        )
+    random_phases = 2.0 * np.pi * np.random.random(size=len(frequencies))
+    fourier_transform = np.sqrt(power_spectrum_density) * np.exp(1j * random_phases)
+    fourier_transform = np.concatenate(
+        (fourier_transform, fourier_transform[-2:0:-1].conjugate())
+    )
+    generated_light_curve = fft.ifft(fourier_transform)[
+        : length_of_light_curve // time_resolution
+    ]
+    output_light_curve = normalize_light_curve(
+        generated_light_curve, new_mean_amplitude, new_standard_deviation
+    )
+    return output_light_curve.real
+
+
+def generate_signal_from_bending_power_law(
+    length_of_light_curve,
+    time_resolution,
+    log_breakpoint_frequency=-2,
+    low_frequency_slope=1,
+    high_frequency_slope=3,
+    new_mean_amplitude=0,
+    new_standard_deviation=None,
+    seed=None,
+):
+    """Uses astro_util.generate_signal_from_psd() to create an intrinsic bending power
+    law signal to use as a model for X-ray variability. Creates a light curve which can
+    be sampled from using sample_intrinsic_signal().
+
+    :param length_of_light_curve: Total length of desired light curve in [days].
+    :param time_resolution: The time spacing between observations in [days].
+    :param log_breakpoint_frequency: The log_{10} of the characteristic breakpoint
+        frequency in the bending power law. Typically between -3.5 and 1.0.
+    :param low_frequency_slope: The (negative) log-log slope of the power spectrum
+        density on the low frequency side of the breakpoint frequency. Typically between
+        0.0 and 2.0.
+    :param high_frequency_slope: The (negative) log-log slope of the power spectrum
+        density on the high frequency side of the breakpoint frequency. Typically
+        between 2.0 and 4.0, and higher than the low_frequency_slope.
+    :param new_mean_amplitude: The desired mean value of the light curve.
+    :param new_standard_deviation: The desired standard deviation of the light curve.
+    :param seed: The random seed to be input for reproducability.
+    :return: Two arrays, the time_array and the magnitude_array of the variability.
+    """
+    time_array = np.linspace(
+        0, length_of_light_curve - 1, length_of_light_curve // time_resolution
+    )
+    magnitude_array = generate_signal(
+        length_of_light_curve,
+        time_resolution,
+        log_breakpoint_frequency=log_breakpoint_frequency,
+        low_frequency_slope=low_frequency_slope,
+        high_frequency_slope=high_frequency_slope,
+        new_mean_amplitude=new_mean_amplitude,
+        new_standard_deviation=new_standard_deviation,
+        seed=seed,
+    )
+    return time_array, magnitude_array
+
+
+def generate_signal_from_generic_psd(
+    length_of_light_curve,
+    time_resolution,
+    input_frequencies,
+    input_psd,
+    new_mean_amplitude=0,
+    new_standard_deviation=None,
+    seed=None,
+):
+    """Uses astro_util.generate_signal_from_psd() to create an intrinsic signal from any
+    input power spectrum to use as a model for X-ray variability. Creates a light curve
+    which can be sampled from using sample_intrinsic_signal().
+
+    :param length_of_light_curve: Total length of desired light curve in [days].
+    :param time_resolution: The time spacing between observations in [days].
+    :param input_frequencies: The input frequencies that correspond to the input power
+        spectrum in [1/days]. This can be generated using
+        astro_util.define_frequencies().
+    :param input_psd: The input power spectrum. This must be the same size as
+        input_frequencies.
+    :param new_mean_amplitude: The desired mean value of the light curve.
+    :param new_standard_deviation: The desired standard deviation of the light curve.
+    :param seed: The random seed to be input for reproducability.
+    :return: Two arrays, the time_array in [days] and the magnitude_array of the
+        variability.
+    """
+    time_array = np.linspace(
+        0, length_of_light_curve - 1, length_of_light_curve // time_resolution
+    )
+    magnitude_array = generate_signal(
+        length_of_light_curve,
+        time_resolution,
+        input_freq=input_frequencies,
+        input_psd=input_psd,
+        new_mean_amplitude=new_mean_amplitude,
+        new_standard_deviation=new_standard_deviation,
+        seed=seed,
+    )
+    return time_array, magnitude_array
