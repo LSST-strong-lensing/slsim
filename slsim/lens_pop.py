@@ -27,6 +27,9 @@ class LensPop(LensedPopulationBase):
         sky_area=None,
         filters=None,
         cosmo=None,
+        los_bool=True,
+        nonlinear_los_bool=True,
+        return_kext=False,
     ):
         """
 
@@ -53,6 +56,10 @@ class LensPop(LensedPopulationBase):
         :type sky_area: `~astropy.units.Quantity`
         :param filters: filters for SED integration
         :type filters: list of strings or None
+        :param cosmo: cosmology object
+        :type cosmo: `~astropy.cosmology.FLRW`
+        :param los: Boolean to use external convergence/shear.
+        :type los: bool
         """
         super().__init__(sky_area, cosmo)
         if source_type == "galaxies" and kwargs_variability is not None:
@@ -179,6 +186,9 @@ class LensPop(LensedPopulationBase):
             raise ValueError("source_type %s is not supported" % source_type)
         self.cosmo = cosmo
         self.f_sky = sky_area
+        self.los_bool = los_bool
+        self.nonlinear_los_bool = nonlinear_los_bool
+        self.return_kext = return_kext
 
     def select_lens_at_random(self, **kwargs_lens_cut):
         """Draw a random lens within the cuts of the lens and source, with possible
@@ -253,6 +263,7 @@ class LensPop(LensedPopulationBase):
 
         # Initialize an empty list to store the Lens instances
         gg_lens_population = []
+        kappa_ext_origin = []
         # Estimate the number of lensing systems
         num_lenses = self._lens_galaxies.deflector_number()
         # num_sources = self._source_galaxies.galaxies_number()
@@ -277,7 +288,16 @@ class LensPop(LensedPopulationBase):
                         cosmo=self.cosmo,
                         test_area=test_area,
                         source_type=self._source_model_type,
+                        los_bool=self.los_bool,
+                        nonlinear_los_bool=self.nonlinear_los_bool,
                     )
+                    if self.return_kext:
+                        if gg_lens.deflector_redshift >= gg_lens.source_redshift:
+                            pass
+                        elif abs(gg_lens.deflector_redshift - gg_lens.source_redshift) <= 0.1:
+                            pass
+                        else:
+                            kappa_ext_origin.append(gg_lens.external_convergence())
                     # Check the validity of the lens system
                     if gg_lens.validity_test(**kwargs_lens_cuts):
                         gg_lens_population.append(gg_lens)
@@ -288,7 +308,10 @@ class LensPop(LensedPopulationBase):
                         n = num_sources_tested
                     else:
                         n += 1
-        return gg_lens_population
+        if self.return_kext:
+            return gg_lens_population, kappa_ext_origin
+        else:
+            return gg_lens_population
 
 
 def draw_test_area(deflector):

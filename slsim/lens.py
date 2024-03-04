@@ -5,6 +5,7 @@ from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
 from slsim.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
+from slsim.ParamDistributions.kext_gext_distributions import LineOfSightDistribution
 from lenstronomy.Util import util, data_util
 from slsim.lensed_system_base import LensedSystemBase
 import warnings
@@ -25,7 +26,10 @@ class Lens(LensedSystemBase):
         mixgauss_means=None,
         mixgauss_stds=None,
         mixgauss_weights=None,
+        los_bool = True,
+        nonlinear_los_bool=True,
         magnification_limit=0.01,
+        mixgauss_gamma=False,
     ):
         """
 
@@ -64,6 +68,7 @@ class Lens(LensedSystemBase):
             kwargs_variability=kwargs_variability,
         )
 
+        self.los_bool = los_bool
         self.cosmo = cosmo
         self._source_type = source_type
         self._mixgauss_means = mixgauss_means
@@ -71,6 +76,8 @@ class Lens(LensedSystemBase):
         self._mixgauss_weights = mixgauss_weights
         self._magnification_limit = magnification_limit
         self.kwargs_variab = kwargs_variability
+        self.nonlinear_los_bool = nonlinear_los_bool
+        self.mixgauss_gamma = mixgauss_gamma
 
         if self._source_type == "extended" and self.kwargs_variab is not None:
             warning_msg = (
@@ -89,6 +96,15 @@ class Lens(LensedSystemBase):
             self._theta_E_sis = lens_cosmo.sis_sigma_v2theta_E(
                 float(self._deflector_dict["vel_disp"])
             )
+
+    @property
+    def image_number(self):
+        """Number of images in the lensing configuration.
+
+        :return: number of images
+        """
+        return len(self.image_positions()[0])
+
 
     @property
     def deflector_position(self):
@@ -248,6 +264,24 @@ class Lens(LensedSystemBase):
         return self.source.redshift
 
     @property
+    def external_convergence(self):
+        """
+
+        :return: external convergence
+        """
+        _, _, kappa_ext = self.los_linear_distortions()
+        return kappa_ext
+
+    @property
+    def external_shear(self):
+        """
+
+        :return: external shear
+        """
+        gamma1, gamma2, _ = self.los_linear_distortions()
+        return (gamma1**2+gamma2**2)**0.5
+
+    @property
     def einstein_radius(self):
         """Einstein radius, including the SIS + external convergence effect.
 
@@ -290,22 +324,44 @@ class Lens(LensedSystemBase):
         """
         # TODO: more realistic distribution of shear and convergence,
         #  the covariances among them and redshift correlations
-        mixgauss_means = self._mixgauss_means
-        mixgauss_stds = self._mixgauss_stds
-        mixgauss_weights = self._mixgauss_weights
-        if not hasattr(self, "_gamma"):
-            mixture = GaussianMixtureModel(
-                means=mixgauss_means,
-                stds=mixgauss_stds,
-                weights=mixgauss_weights,
-            )
-            gamma = np.abs(mixture.rvs(size=1))[0]
+        if self.los_bool is False:
+            return 0, 0, 0
+        if (self.los_bool is True
+                and self.mixgauss_gamma is True
+                and self.nonlinear_los_bool is False):
+            mixgauss_means = self._mixgauss_means
+            mixgauss_stds = self._mixgauss_stds
+            mixgauss_weights = self._mixgauss_weights
+            if not hasattr(self, "_gamma"):
+                mixture = GaussianMixtureModel(
+                    means=mixgauss_means,
+                    stds=mixgauss_stds,
+                    weights=mixgauss_weights,
+                )
+                gamma = np.abs(mixture.rvs(size=1))[0]
+                phi = 2 * np.pi * np.random.random()
+                gamma1 = gamma * np.cos(2 * phi)
+                gamma2 = gamma * np.sin(2 * phi)
+                self._gamma = [gamma1, gamma2]
+            if not hasattr(self, "_kappa"):
+                 self._kappa = np.random.normal(loc=0, scale=0.05)
+        if (self.los_bool is True
+                and self.mixgauss_gamma is True
+                and self.nonlinear_los_bool is True):
+            raise ValueError("Can only choose one method for external shear and convergence")
+        else:
+            z_source = float(self.source.redshift)
+            z_lens = float(self._deflector_dict["z"])
+            LOS =LineOfSightDistribution()
+            gamma, self._kappa = (
+                    LOS.get_kappa_gamma(
+                        z_source, z_lens,
+                        use_kg_nolos=not self.nonlinear_los_bool))
             phi = 2 * np.pi * np.random.random()
             gamma1 = gamma * np.cos(2 * phi)
             gamma2 = gamma * np.sin(2 * phi)
             self._gamma = [gamma1, gamma2]
-        if not hasattr(self, "_kappa"):
-            self._kappa = np.random.normal(loc=0, scale=0.05)
+
         return self._gamma[0], self._gamma[1], self._kappa
 
     def deflector_magnitude(self, band):

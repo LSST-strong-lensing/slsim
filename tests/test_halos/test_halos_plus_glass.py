@@ -64,14 +64,14 @@ class Testhalosplusglass(object):
     def test_generate_m_h_m_t_and_halos_plus_glass(self):
         kappa_random_glass, gamma_random_glass = (
             generate_meanzero_halos_multiple_times(
-                samples_number_for_one_halos=5,
+                samples_number_for_one_halos=50,
                 n_times=2,
-                renders_numbers=4,
+                renders_numbers=2,
                 skyarea=0.0001,
             ))
 
         assert (len(kappa_random_glass) ==
-                len(gamma_random_glass) == 8)
+                len(gamma_random_glass) == 4)
         assert isinstance(kappa_random_glass, np.ndarray)
         assert isinstance(gamma_random_glass, np.ndarray)
 
@@ -81,7 +81,7 @@ class Testhalosplusglass(object):
             kappa_random_glass,
             gamma_random_glass
         )
-        assert len(kappa_tot) == len(gamma_tot) ==8
+        assert len(kappa_tot) == len(gamma_tot) ==4
         assert isinstance(kappa_tot, (list, np.ndarray))
         assert isinstance(gamma_tot, (list, np.ndarray))
 

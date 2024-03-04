@@ -9,19 +9,31 @@ import os
 from astropy.units.quantity import Quantity
 
 
-def colossus_halo_mass_function(m_200,cosmo,z):
-
+def colossus_halo_mass_function(m_200, cosmo, z, sigma8=0.81, ns=0.96):
     '''
     m in Msun/h
     return dn/dlnM (mpc-3)
     '''
-    colossus_cosmo.setCosmology('planck18');
+
+    params = dict(
+        flat=(cosmo.Ok0 == 0.0),
+        H0=cosmo.H0.value,
+        Om0=cosmo.Om0,
+        Ode0=cosmo.Ode0,
+        Ob0=cosmo.Ob0,
+        Tcmb0=cosmo.Tcmb0.value,
+        Neff=cosmo.Neff,
+        sigma8=sigma8,
+        ns=ns, )
+    colossus_cosmo.setCosmology(cosmo_name='halo_cosmo',
+                                ** params)
     # todo: change cosmology with ...
-    h3 = np.power(cosmo.h,3)
+    h3 = np.power(cosmo.h, 3)
     mfunc_h3_dmpc3 = mass_function.massFunction(m_200, z, mdef='fof', model='bhattacharya11', q_out='dndlnM')
-    #in h^3*Mpc-3
-    massf = mfunc_h3_dmpc3*h3 #in Mpc-3
+    # in h^3*Mpc-3
+    massf = mfunc_h3_dmpc3 * h3  # in Mpc-3
     return massf
+
 
 def get_value_if_quantity(variable):
     if isinstance(variable, Quantity):
@@ -29,29 +41,37 @@ def get_value_if_quantity(variable):
     else:
         return variable
 
+
 def colossus_halo_mass_sampler(
-    m_min,
-    m_max,
-    resolution,
-    z,
-    cosmology,
-    size=None,
+        m_min,
+        m_max,
+        resolution,
+        z,
+        cosmology,
+        sigma8=0.81,
+        ns=0.96,
+        size=None,
 ):
     m_min_value = get_value_if_quantity(m_min)
     m_max_value = get_value_if_quantity(m_max)
     h_value = get_value_if_quantity(cosmology.h)
     resolution_value = get_value_if_quantity(resolution)
 
-    minh= m_min_value*h_value
-    maxh= m_max_value*h_value
+    minh = m_min_value * h_value
+    maxh = m_max_value * h_value
 
     m = np.geomspace(minh, maxh, resolution_value)
-    massf = colossus_halo_mass_function(m, cosmology, z)
+    massf = colossus_halo_mass_function(m,
+                                        cosmology,
+                                        z,
+                                        sigma8,
+                                        ns,
+                                        )
 
     CDF = integrate.cumtrapz(massf, np.log(m), initial=0)
     CDF = CDF / CDF[-1]
     n_uniform = np.random.uniform(size=size)
-    return np.interp(n_uniform, CDF, m)/cosmology.h
+    return np.interp(n_uniform, CDF, m) / cosmology.h
 
 
 def set_defaults(
@@ -114,6 +134,8 @@ def number_density_at_redshift(
         m_max=None,
         resolution=None,
         cosmology=None,
+        sigma8=0.81,
+        ns=0.96,
 ):
     (
         m_min,
@@ -126,8 +148,8 @@ def number_density_at_redshift(
         resolution,
         cosmology,
     )
-    m_200 = np.geomspace(m_min*cosmology.h,
-                         m_max*cosmology.h,
+    m_200 = np.geomspace(m_min * cosmology.h,
+                         m_max * cosmology.h,
                          resolution)
     if np.array_equal(z, np.array([np.nan])):
         warnings.warn("Redshift data lost, instead uses 0.0001")
@@ -136,15 +158,19 @@ def number_density_at_redshift(
         z = np.array([z])
     cdfs = []
     for zi in z:
-            massf = colossus_halo_mass_function(m_200, cosmology, zi)
-            total_number_density = number_for_certain_mass(massf,
-                                                           m_200,
-                                                           dndlnM = True)
-            cdfs.append(total_number_density)
+        massf = colossus_halo_mass_function(m_200,
+                                            cosmology,
+                                            zi,
+                                            sigma8=sigma8,
+                                            ns=ns, )
+        total_number_density = number_for_certain_mass(massf,
+                                                       m_200,
+                                                       dndlnM=True)
+        cdfs.append(total_number_density)
     return cdfs
 
 
-def number_for_certain_mass(massf, m, dndlnM = False):
+def number_for_certain_mass(massf, m, dndlnM=False):
     # massf:Mpc-3 Msun-1
     # output: number per Mpc3 at certain redshift
     if dndlnM:
@@ -246,7 +272,7 @@ def redshift_halos_array_from_comoving_density(
                            m_min=m_min,
                            m_max=m_max,
                            resolution=resolution,
-                           cosmology=cosmology,)
+                           cosmology=cosmology, )
 
     # integrate density to get expected number of Halos
     N = dndz_to_N(dN_dz, redshift_list)
@@ -270,7 +296,7 @@ def dv_dz_to_dn_dz(dV_dz,
         m_max=m_max,
         resolution=resolution,
         cosmology=cosmology,
-    ) # dn/dv at z; Mpc-3
+    )  # dn/dv at z; Mpc-3
     dV_dz *= density
     return dV_dz
 
@@ -313,12 +339,16 @@ def v_per_redshift(redshift_list, cosmology, sky_area):
     )
     return dV_dz
 
+
 def halo_mass_at_z(
         z,
         m_min=None,
         m_max=None,
         resolution=None,
         cosmology=None,
+        sigma8=0.81,
+        ns=0.96,
+
 ):
     """
     """
@@ -349,7 +379,9 @@ def halo_mass_at_z(
             resolution=resolution,
             z=z_val,
             cosmology=cosmology,
-            size=1,)
+            size=1,
+            sigma8=sigma8,
+            ns=ns,)
         )
     return mass
 

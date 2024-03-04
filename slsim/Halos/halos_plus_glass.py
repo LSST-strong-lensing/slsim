@@ -172,8 +172,6 @@ def generate_maps_kmean_zero_using_halos(
                                            gamma_values_halos]))
     (kappa_random_halos,
      gamma_random_halos) = kernel.resample(renders_numbers)
-    print(type(kappa_random_halos))
-    print(kappa_random_halos)
     return kappa_random_halos, gamma_random_halos
 
     # TODO: make samples_number_for_one_halos & renders_numbers more reasonable (maybe write some function relate them

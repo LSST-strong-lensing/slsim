@@ -5,8 +5,7 @@ from slsim.lens_pop import LensPop, draw_test_area
 import numpy as np
 
 
-@pytest.fixture
-def gg_lens_pop_instance():
+def create_lens_pop_instance(return_kext=False):
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     sky_area = Quantity(value=0.1, unit="deg2")
     kwargs_deflector_cut = {"band": "g", "band_max": 28, "z_min": 0.01, "z_max": 2.5}
@@ -16,7 +15,20 @@ def gg_lens_pop_instance():
         cosmo=cosmo,
         kwargs_deflector_cut=kwargs_deflector_cut,
         kwargs_source_cut=kwargs_source_cut,
+        return_kext=return_kext,
     )
+
+
+@pytest.fixture
+def gg_lens_pop_instance():
+    # Create LensPop instance without return_kext
+    return create_lens_pop_instance(return_kext=False)
+
+
+@pytest.fixture
+def lens_pop_instance_return_kext():
+    # Create LensPop instance with return_kext
+    return create_lens_pop_instance(return_kext=True)
 
 
 def test_pes_lens_pop_instance():
@@ -70,7 +82,7 @@ def test_num_lenses_and_sources(gg_lens_pop_instance):
     assert 100 <= num_lenses <= 6600, "Expected num_lenses to be between 5800 and 6600,"
     f"but got {num_lenses}"
     assert (
-        100000 <= num_sources <= 500000
+            100000 <= num_sources <= 500000
     ), "Expected num_sources to be between 1090000 and"
     f"1110000, but got {num_sources}"
     # assert 1 == 0
@@ -80,22 +92,32 @@ def test_num_sources_tested_and_test_area(gg_lens_pop_instance):
     lens = gg_lens_pop_instance._lens_galaxies.draw_deflector()
     test_area = draw_test_area(deflector=lens)
     assert (
-        0.01 < test_area < 100 * np.pi
+            0.01 < test_area < 100 * np.pi
     ), "Expected test_area to be between 0.1 and 100*pi,"
     f"but got {test_area}"
     num_sources_range = gg_lens_pop_instance.get_num_sources_tested(testarea=test_area)
     assert (
-        0 <= num_sources_range <= 50
+            0 <= num_sources_range <= 50
     ), "Expected num_sources_range to be between 0 and 50,"
     f"but got {num_sources_range}"
 
 
-def test_draw_population(gg_lens_pop_instance):
+def test_draw_population(gg_lens_pop_instance
+                         , lens_pop_instance_return_kext):
     kwargs_lens_cuts = {"mag_arc_limit": {"g": 28}}
     gg_lens_population = gg_lens_pop_instance.draw_population(
         kwargs_lens_cuts=kwargs_lens_cuts
     )
     assert isinstance(gg_lens_population, list)
+
+    gg_lens_population2, kappa_ext_origin = (
+        lens_pop_instance_return_kext.draw_population(
+            kwargs_lens_cuts=kwargs_lens_cuts
+        ))
+    assert isinstance(gg_lens_population2, list)
+    assert isinstance(kappa_ext_origin, list)
+    assert len(kappa_ext_origin) >= len(gg_lens_population2)
+    assert isinstance(kappa_ext_origin[0], float)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 import h5py
 import numpy as np
-
+import os
 
 class LineOfSightDistribution:
     correction_data = None
@@ -13,10 +13,19 @@ class LineOfSightDistribution:
         :param nonlinear_correction_path: Path to the 'joint_distributions.h5' file.
         :param no_nonlinear_correcction: Path to the 'kg_distributions_nolos.h5' file.
         """
+        current_script_path = os.path.abspath(__file__)
+        current_directory = os.path.dirname(current_script_path)
+        parent_directory = os.path.dirname(current_directory)
+        parent_parent = os.path.dirname(parent_directory)
+
         if nonlinear_correction_path is None:
-            nonlinear_correction_path = '/Users/tz/Documents/GitHub/slsim/data/glass/joint_distributions.h5'
+            # joint_distributions.h5 is not stored in the package by default.
+            # If joint_distributions is needed, please contact the developers
+            file_path_joint = os.path.join(parent_parent, "data/glass/joint_distributions.h5")
+            nonlinear_correction_path = file_path_joint
         if no_nonlinear_correcction is None:
-            no_nonlinear_correcction = '/Users/tz/Documents/GitHub/slsim/data/glass/no_nonlinear_distributions.h5'
+            file_path_no_nonlinear = os.path.join(parent_parent, "data/glass/no_nonlinear_distributions.h5")
+            no_nonlinear_correcction = file_path_no_nonlinear
         if LineOfSightDistribution.correction_data is None and nonlinear_correction_path is not None:
             LineOfSightDistribution.correction_data = self._load_data(nonlinear_correction_path)
 
@@ -67,8 +76,11 @@ class LineOfSightDistribution:
             z_lens_rounded = z_lens_rounded - 0.1
             z_lens_rounded = round(z_lens_rounded, 1)
             # todo： make z_lens_rounded == z_source_rounded worked in file
-        dataset_name = f'zs_{z_source_rounded}' if use_kg_nolos else f'zs_{z_source_rounded}_zd_{z_lens_rounded}'
-        data = LineOfSightDistribution.no_nonlinear_correction_data if use_kg_nolos else LineOfSightDistribution.correction_data
+        dataset_name = f'zs_{z_source_rounded}' if (
+            use_kg_nolos) else\
+            f'zs_{z_source_rounded}_zd_{z_lens_rounded}'
+        data = LineOfSightDistribution.no_nonlinear_correction_data if\
+            use_kg_nolos else LineOfSightDistribution.correction_data
         if dataset_name in data:
             gamma = np.random.choice(data[dataset_name][:, 1])
             kappa = np.random.choice(data[dataset_name][:, 0])
