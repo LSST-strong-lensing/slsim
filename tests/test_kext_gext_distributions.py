@@ -1,6 +1,4 @@
-import numpy as np
 from slsim.ParamDistributions.kext_gext_distributions import LineOfSightDistribution
-import pytest
 
 def test_initializes_with_default_data_paths():
     line_of_sight = LineOfSightDistribution()

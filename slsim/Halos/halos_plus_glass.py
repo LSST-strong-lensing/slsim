@@ -2,7 +2,6 @@ import numpy as np
 from slsim.Pipelines.halos_pipeline import HalosSkyPyPipeline
 from slsim.Halos.halos_lens import HalosLens
 from astropy.cosmology import FlatLambdaCDM
-import astropy.units as u
 from tqdm.notebook import tqdm
 import time
 from scipy import stats

@@ -28,7 +28,7 @@ class LensPop(LensedPopulationBase):
         filters=None,
         cosmo=None,
         los_bool=True,
-        nonlinear_los_bool=True,
+        nonlinear_los_bool=False,
         return_kext=False,
     ):
         """
@@ -210,6 +210,9 @@ class LensPop(LensedPopulationBase):
                 kwargs_variability=self._sources.kwargs_variability,
                 cosmo=self.cosmo,
                 source_type=self._source_model_type,
+                los_bool=self.los_bool,
+                nonlinear_los_bool=self.nonlinear_los_bool
+
             )
             if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens

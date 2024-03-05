@@ -90,7 +90,7 @@ class TestLens(object):
         assert vdp >= 10
 
     def test_los_linear_distortions(self):
-        losd = self.gg_lens.los_linear_distortions()
+        losd = self.gg_lens.los_linear_distortions
         assert losd != 0
 
     def test_point_source_arrival_times(self):
@@ -108,9 +108,8 @@ class TestLens(object):
         observer_times2 = (
             t_obs2[:, np.newaxis] + arrival_times - np.min(arrival_times)
         ).T
-        npt.assert_almost_equal(dt_days/observer_times,1.0, decimal=1)
-        npt.assert_almost_equal(dt_days2/observer_times2,1.0 , decimal=1)
-
+        npt.assert_almost_equal(dt_days, observer_times, decimal=5)
+        npt.assert_almost_equal(dt_days2, observer_times2, decimal=5)
 
 @pytest.fixture
 def pes_lens_instance():

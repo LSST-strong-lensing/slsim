@@ -27,7 +27,7 @@ class Lens(LensedSystemBase):
         mixgauss_stds=None,
         mixgauss_weights=None,
         los_bool = True,
-        nonlinear_los_bool=True,
+        nonlinear_los_bool=False,
         magnification_limit=0.01,
         mixgauss_gamma=False,
     ):
@@ -78,6 +78,8 @@ class Lens(LensedSystemBase):
         self.kwargs_variab = kwargs_variability
         self.nonlinear_los_bool = nonlinear_los_bool
         self.mixgauss_gamma = mixgauss_gamma
+
+        self._los_linear_distortions_cache = None
 
         if self._source_type == "extended" and self.kwargs_variab is not None:
             warning_msg = (
@@ -269,7 +271,7 @@ class Lens(LensedSystemBase):
 
         :return: external convergence
         """
-        _, _, kappa_ext = self.los_linear_distortions()
+        _, _, kappa_ext = self.los_linear_distortions
         return kappa_ext
 
     @property
@@ -278,7 +280,7 @@ class Lens(LensedSystemBase):
 
         :return: external shear
         """
-        gamma1, gamma2, _ = self.los_linear_distortions()
+        gamma1, gamma2, _ = self.los_linear_distortions
         return (gamma1**2+gamma2**2)**0.5
 
     @property
@@ -287,7 +289,7 @@ class Lens(LensedSystemBase):
 
         :return: Einstein radius [arc seconds]
         """
-        _, _, kappa_ext = self.los_linear_distortions()
+        _, _, kappa_ext = self.los_linear_distortions
         return self._theta_E_sis / (1 - kappa_ext)
 
     def deflector_ellipticity(self):
@@ -317,13 +319,17 @@ class Lens(LensedSystemBase):
         """
         return self._deflector_dict["vel_disp"]
 
+    @property
     def los_linear_distortions(self):
+        if self._los_linear_distortions_cache is None:
+            self._los_linear_distortions_cache = self._calculate_los_linear_distortions()
+        return self._los_linear_distortions_cache
+
+    def _calculate_los_linear_distortions(self):
         """Line-of-sight distortions in shear and convergence.
 
         :return: kappa, gamma1, gamma2
         """
-        # TODO: more realistic distribution of shear and convergence,
-        #  the covariances among them and redshift correlations
         if self.los_bool is False:
             return 0, 0, 0
         if (self.los_bool is True
@@ -572,7 +578,7 @@ class Lens(LensedSystemBase):
         theta_E = self.einstein_radius
         e1_light_lens, e2_light_lens, e1_mass, e2_mass = self.deflector_ellipticity()
         center_lens = self.deflector_position
-        gamma1, gamma2, kappa_ext = self.los_linear_distortions()
+        gamma1, gamma2, kappa_ext = self.los_linear_distortions
         kwargs_lens = [
             {
                 "theta_E": theta_E,

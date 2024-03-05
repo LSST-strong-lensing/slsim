@@ -9,7 +9,6 @@ import math
 import time
 import multiprocessing
 from collections.abc import Iterable
-import matplotlib.pyplot as plt
 
 
 def deg2_to_cone_angle(solid_angle_deg2):
@@ -1748,7 +1747,6 @@ class HalosLens(object):
         import matplotlib.pyplot as plt
 
         original_mass_sheet = self.mass_sheet
-        radial = False
         radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
 
         if kwargs is None:
@@ -2036,49 +2034,6 @@ class HalosLens(object):
         if mass_divide_kcrit_tot>5.0:
             mass_divide_kcrit_tot=5.1
         return kappa_mean, kappa_2sigma, mass, mass_divide_kcrit_tot
-
-    def plot_convergence_test(self,
-                              diff=0.0000001,
-                              num_points=500,
-                              diff_method="square",
-                              kwargs=None,
-                              lens_model=None,
-                              mass_sheet=None,
-                              enhance_pos=True,
-                              ):
-        import matplotlib.pyplot as plt
-        import matplotlib.colors as mcolors
-
-        self.enhance_halos_pos_to0()
-        original_mass_sheet = self.mass_sheet
-        radial = False
-        radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
-        kwargs = self.get_halos_lens_kwargs()
-        try:
-            kappa_image, _ = self.compute_kappa(diff=diff,
-                                                num_points=num_points,
-                                                diff_method=diff_method,
-                                                kwargs=kwargs,
-                                                lens_model=lens_model,
-                                                mass_sheet=mass_sheet,
-                                                enhance_pos=False, )
-
-            colors = [(1, 0, 0, 1)] + [(plt.cm.viridis(i)) for i in range(1, 256)]
-            new_cmap = mcolors.LinearSegmentedColormap.from_list('custom_colormap', colors, N=256)
-
-            plt.imshow(kappa_image, cmap=new_cmap,
-                       extent=[-radius_arcsec, radius_arcsec, -radius_arcsec, radius_arcsec])
-            plt.colorbar(label=r'$\kappa$')
-            plt.title(f'Convergence Plot, radius is {radius_arcsec} arcsec')
-            plt.xlabel('x-coordinate (arcsec)')
-            plt.ylabel('y-coordinate (arcsec)')
-            # plt.legend() # Only include if you have legend elements
-            plt.show()
-
-        finally:
-            self.mass_sheet = original_mass_sheet
-            if enhance_pos:
-                self.enhance_halos_table_random_pos()
 
     def enhance_halos_pos_to0(self):
         n_halos = self.n_halos

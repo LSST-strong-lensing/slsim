@@ -1,11 +1,9 @@
 from scipy import integrate
-from scipy.integrate import cumtrapz
 from colossus.lss import mass_function
 from colossus.cosmology import cosmology as colossus_cosmo
 from hmf.cosmology.growth_factor import GrowthFactor
 import numpy as np
 import warnings
-import os
 from astropy.units.quantity import Quantity
 
 

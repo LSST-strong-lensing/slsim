@@ -1,7 +1,7 @@
 from slsim.Halos.halos_lens import (concentration_from_mass,
                                     deg2_to_cone_angle,
                                     cone_radius_angle_to_physical_area,
-                                    compute_kappa)
+                                    )
 import pytest
 import numpy as np
 from astropy.cosmology import FlatLambdaCDM
