@@ -362,7 +362,7 @@ class Lens(LensedSystemBase):
             gamma, self._kappa = (
                     LOS.get_kappa_gamma(
                         z_source, z_lens,
-                        use_kg_nolos=not self.nonlinear_los_bool))
+                        use_nonlinear_correction=self.nonlinear_los_bool))
             phi = 2 * np.pi * np.random.random()
             gamma1 = gamma * np.cos(2 * phi)
             gamma2 = gamma * np.sin(2 * phi)

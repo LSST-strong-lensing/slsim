@@ -6,12 +6,12 @@ class LineOfSightDistribution:
     correction_data = None
     no_nonlinear_correction_data = None
 
-    def __init__(self, nonlinear_correction_path=None, no_nonlinear_correcction=None):
+    def __init__(self, nonlinear_correction_path=None, no_correction_path=None):
         """
         Initialize the Data Reader. Load data into class variables if not already loaded.
 
         :param nonlinear_correction_path: Path to the 'joint_distributions.h5' file.
-        :param no_nonlinear_correcction: Path to the 'kg_distributions_nolos.h5' file.
+        :param no_correction_path: Path to the 'kg_distributions_nolos.h5' file.
         """
         current_script_path = os.path.abspath(__file__)
         current_directory = os.path.dirname(current_script_path)
@@ -19,18 +19,28 @@ class LineOfSightDistribution:
         parent_parent = os.path.dirname(parent_directory)
 
         if nonlinear_correction_path is None:
-            # joint_distributions.h5 is not stored in the package by default.
-            # If joint_distributions is needed, please contact the developers
             file_path_joint = os.path.join(parent_parent, "data/glass/joint_distributions.h5")
-            nonlinear_correction_path = file_path_joint
-        if no_nonlinear_correcction is None:
+            if os.path.exists(file_path_joint):
+                nonlinear_correction_path = file_path_joint
+            else:
+                nonlinear_correction_path = None
+
+        if no_correction_path is None:
             file_path_no_nonlinear = os.path.join(parent_parent, "data/glass/no_nonlinear_distributions.h5")
-            no_nonlinear_correcction = file_path_no_nonlinear
+            if os.path.exists(file_path_no_nonlinear):
+                no_correction_path = file_path_no_nonlinear
+            else:
+                no_correction_path = None
+
         if LineOfSightDistribution.correction_data is None and nonlinear_correction_path is not None:
             LineOfSightDistribution.correction_data = self._load_data(nonlinear_correction_path)
+        elif nonlinear_correction_path is None:
+            LineOfSightDistribution.correction_data = None
 
-        if LineOfSightDistribution.no_nonlinear_correction_data is None and no_nonlinear_correcction is not None:
-            LineOfSightDistribution.no_nonlinear_correction_data = self._load_data(no_nonlinear_correcction)
+        if LineOfSightDistribution.no_nonlinear_correction_data is None and no_correction_path is not None:
+            LineOfSightDistribution.no_nonlinear_correction_data = self._load_data(no_correction_path)
+        elif no_correction_path is None:
+            LineOfSightDistribution.no_nonlinear_correction_data = None
 
     @staticmethod
     def _load_data(file_path):
@@ -60,13 +70,13 @@ class LineOfSightDistribution:
             return 0.1
         return round(value * 10) / 10
 
-    def get_kappa_gamma(self, z_source, z_lens, use_kg_nolos=False):
+    def get_kappa_gamma(self, z_source, z_lens, use_nonlinear_correction=False):
         """
         Retrieve kappa and gamma values from the loaded data based on source and lens redshifts.
 
         :param z_source: Source redshift (zs).
         :param z_lens: Lens redshift (zd).
-        :param use_kg_nolos: Boolean to use 'kg_distributions_nolos.h5' file.
+        :param use_nonlinear_correction: Boolean to use the nonlinear correction data.
         :return: Tuple of gamma and kappa values.
         """
 
@@ -76,11 +86,11 @@ class LineOfSightDistribution:
             z_lens_rounded = z_lens_rounded - 0.1
             z_lens_rounded = round(z_lens_rounded, 1)
             # todo： make z_lens_rounded == z_source_rounded worked in file
-        dataset_name = f'zs_{z_source_rounded}' if (
-            use_kg_nolos) else\
-            f'zs_{z_source_rounded}_zd_{z_lens_rounded}'
-        data = LineOfSightDistribution.no_nonlinear_correction_data if\
-            use_kg_nolos else LineOfSightDistribution.correction_data
+        dataset_name =  f'zs_{z_source_rounded}_zd_{z_lens_rounded}' if (
+            use_nonlinear_correction) else\
+            f'zs_{z_source_rounded}'
+        data = LineOfSightDistribution.correction_data if\
+            use_nonlinear_correction else LineOfSightDistribution.no_nonlinear_correction_data
         if dataset_name in data:
             gamma = np.random.choice(data[dataset_name][:, 1])
             kappa = np.random.choice(data[dataset_name][:, 0])
