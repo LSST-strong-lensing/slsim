@@ -15,6 +15,16 @@ from slsim.Util.astro_util import (
     create_radial_map,
     create_phi_map,
     calculate_time_delays_on_disk,
+    calculate_geometric_contribution_to_lamppost_model,
+    calculate_dt_dlx,
+    calculate_mean_time_lag,
+    calculate_accretion_disk_response_function,
+    define_bending_power_law_psd,
+    define_frequencies,
+    normalize_light_curve,
+    generate_signal,
+    generate_signal_from_bending_power_law,
+    generate_signal_from_generic_psd,
 )
 
 
@@ -168,24 +178,383 @@ def test_create_phi_map():
     radial_map = create_radial_map(100, 100, 45)
     assert np.shape(phi_map) == np.shape(radial_map)
 
-    # Test phi = 0 points towards the observer, the bottom side of the map
-    assert phi_map[100, 0] < 1e-2
+    # Test phi = 0 points towards the compressed side of the map
+    assert radial_map[0, 100] > 100
+    assert phi_map[0, 100] < 1e-2
 
     # Test phi values rotate counter-clockwise
-    assert phi_map[110, 0] > phi_map[100, 0]
-    assert phi_map[-1, -1] > phi_map[-1, 0]
+    assert phi_map[0, 110] > phi_map[0, 100]
 
 
 def test_calculate_time_delays_on_disk():
+    radial_map = create_radial_map(100, 100, 45)
+    phi_map = create_phi_map(100, 100, 45)
     # Test all time delays are tiny for a very low black hole mass exponent
-    time_delay_map = calculate_time_delays_on_disk(100, 100, 40, 2, 10)
+    time_delay_map = calculate_time_delays_on_disk(radial_map, phi_map, 40, 10)
+    low_mass_time_delay_map = (
+        time_delay_map * calculate_gravitational_radius(2.0) / const.c
+    )
     # the average time delay is the sum of all time delays divided by the number of points.
-    assert np.sum(time_delay_map) / (200**2) < (1 * u.s)
+    assert np.sum(low_mass_time_delay_map) / (200**2) < (1 * u.s)
 
     # Test maximum time delay points away from observer
-    assert np.argmax(time_delay_map[100, :]) == 199
+    assert np.argmax(time_delay_map[:, 100]) == 199
 
     # Test left- right-side symmetry
-    npt.assert_approx_equal(time_delay_map[0, 25].value, time_delay_map[-1, 25].value)
-    npt.assert_approx_equal(time_delay_map[0, 100].value, time_delay_map[-1, 100].value)
-    npt.assert_approx_equal(time_delay_map[0, 180].value, time_delay_map[-1, 180].value)
+    npt.assert_approx_equal(time_delay_map[25, 0], time_delay_map[25, -1])
+    npt.assert_approx_equal(time_delay_map[100, 0], time_delay_map[100, -1])
+    npt.assert_approx_equal(time_delay_map[180, 0], time_delay_map[180, -1])
+
+    # Test single value for a face on disk
+    # (light travels back and forth for total of 20 R_g)
+    radial_map = np.array([[0]])
+    phi_map = np.array([[0]])
+    time_delay_map = calculate_time_delays_on_disk(radial_map, phi_map, 0, 10)
+    npt.assert_equal(time_delay_map, np.array([[20]]))
+
+
+def test_calculate_geometric_contribution_to_lamppost_model():
+    radial_map = create_radial_map(100, 100, 45)
+    # Test that 0 corona height doesn't cause error
+    values_low = calculate_geometric_contribution_to_lamppost_model(radial_map, 0)
+    # Test that a very high X-ray source leads to large suppression
+    values_high = calculate_geometric_contribution_to_lamppost_model(radial_map, 1e8)
+    assert np.sum(values_high) < 1e-5
+    # Test the close corona has a greater impact than far corona
+    assert np.sum(values_low) > np.sum(values_high)
+
+
+def test_calculate_dt_dlx():
+    radial_map = create_radial_map(100, 100, 45)
+    temperature_map = thin_disk_temperature_profile(radial_map, 0.0, 8.0, 0.1)
+    dt_dlx_map = calculate_dt_dlx(radial_map, temperature_map, 10)
+    # Test that the greatest dt_dlx occurs near the center of the disk
+    # (the center of the disk is between points (99, 99) and (100, 100)
+    # additionally, the ISCO leaves a dark region for R < 6 R_g
+    assert abs(np.argmax(dt_dlx_map[:, 100]) - 100) <= 7
+    assert abs(np.argmax(dt_dlx_map[100, :]) - 100) <= 7
+    # Test dt_dlx is suppressed for extremely distant X-ray source
+    # this calculates the average fractional temperature change over the disk
+    dt_dlx_map = calculate_dt_dlx(radial_map, temperature_map, 1e8)
+    mask = temperature_map > 0
+    assert (
+        np.sum(
+            np.nan_to_num(dt_dlx_map / temperature_map * mask) / np.size(radial_map)
+        ).value
+        < 1e-10
+    )
+
+
+def test_calculate_mean_time_lag():
+    # Test a simple case explicitly
+    response_function = [0, 1, 2, 3, 4]
+    expected_value = (0 + 1 + 4 + 9 + 16) / (0 + 1 + 2 + 3 + 4)
+    assert calculate_mean_time_lag(response_function) == expected_value
+
+
+def test_calculate_accretion_disk_response_function():
+    # Test that manual construction of response function with previously
+    # tested functions works exactly the same as this function
+    r_out = 100
+    r_resolution = 100
+    inclination_angle = 45.0
+    rest_frame_wavelength_in_nanometers = 1000.0
+    black_hole_mass_exponent = 8.0
+    black_hole_spin = 0.0
+    corona_height = 10.0
+    eddington_ratio = 0.1
+
+    radial_map = create_radial_map(r_out, r_resolution, inclination_angle)
+    phi_map = create_phi_map(r_out, r_resolution, inclination_angle)
+    temperature_map = thin_disk_temperature_profile(
+        radial_map, black_hole_spin, black_hole_mass_exponent, eddington_ratio
+    )
+    temperature_map *= radial_map < r_out
+    db_dt_map = planck_law_derivative(
+        temperature_map, rest_frame_wavelength_in_nanometers
+    )
+
+    dt_dlx_map = calculate_dt_dlx(radial_map, temperature_map, corona_height)
+    weighting_factors = np.nan_to_num(db_dt_map * dt_dlx_map)
+    time_delay_map = calculate_time_delays_on_disk(
+        radial_map, phi_map, inclination_angle, corona_height
+    )
+    response_function_manual = np.histogram(
+        time_delay_map,
+        range=(0, np.max(time_delay_map) + 1),
+        bins=int(np.max(time_delay_map) + 1),
+        weights=weighting_factors,
+        density=True,
+    )[0]
+    response_function_manual /= np.nansum(response_function_manual)
+
+    response_function = calculate_accretion_disk_response_function(
+        r_out,
+        r_resolution,
+        inclination_angle,
+        rest_frame_wavelength_in_nanometers,
+        black_hole_mass_exponent,
+        black_hole_spin,
+        corona_height,
+        eddington_ratio,
+    )
+    npt.assert_array_almost_equal(
+        response_function.value, response_function_manual.value, 5
+    )
+
+    # Test that an inclined disk produces a "skewed" response function (e.g. it peaks earlier)
+    inclination_angle_face_on = 0.0
+    response_function_face_on = calculate_accretion_disk_response_function(
+        r_out,
+        r_resolution,
+        inclination_angle_face_on,
+        rest_frame_wavelength_in_nanometers,
+        black_hole_mass_exponent,
+        black_hole_spin,
+        corona_height,
+        eddington_ratio,
+    )
+    peak_response_face_on = np.argmax(response_function_face_on)
+    peak_response_inclined = np.argmax(response_function)
+    assert peak_response_inclined < peak_response_face_on
+
+    # Test that inclination does not change the mean response when H_{L_x} = 0
+    # Note I add 0.5 within the function to avoid singularities when the corona
+    # is placed directly on the disk. However there is no contribution with the dark ISCO.
+    corona_height = -0.5
+    response_function_face_on = calculate_accretion_disk_response_function(
+        r_out,
+        r_resolution,
+        inclination_angle_face_on,
+        rest_frame_wavelength_in_nanometers,
+        black_hole_mass_exponent,
+        black_hole_spin,
+        corona_height,
+        eddington_ratio,
+    )
+    response_function_inclined = calculate_accretion_disk_response_function(
+        r_out,
+        r_resolution,
+        inclination_angle,
+        rest_frame_wavelength_in_nanometers,
+        black_hole_mass_exponent,
+        black_hole_spin,
+        corona_height,
+        eddington_ratio,
+    )
+
+    mean_tau_face_on = calculate_mean_time_lag(response_function_face_on)
+    mean_tau_inclined = calculate_mean_time_lag(response_function_inclined)
+
+    npt.assert_equal(mean_tau_face_on, mean_tau_inclined)
+
+    # Test that longer wavelengths produce broader response functions than short
+    # wavelengths (e.g. they peak later and have longer mean time lags)
+    corona_height = 10
+    shorter_wavelength = 200
+    longer_wavelength = 2000
+    response_function_shorter_wavelength = calculate_accretion_disk_response_function(
+        r_out,
+        r_resolution,
+        inclination_angle,
+        shorter_wavelength,
+        black_hole_mass_exponent,
+        black_hole_spin,
+        corona_height,
+        eddington_ratio,
+    )
+    response_function_longer_wavelength = calculate_accretion_disk_response_function(
+        r_out,
+        r_resolution,
+        inclination_angle,
+        longer_wavelength,
+        black_hole_mass_exponent,
+        black_hole_spin,
+        corona_height,
+        eddington_ratio,
+    )
+    mean_tau_shorter_wavelength = calculate_mean_time_lag(
+        response_function_shorter_wavelength
+    )
+    mean_tau_longer_wavelength = calculate_mean_time_lag(
+        response_function_longer_wavelength
+    )
+    peak_response_longer_wavelength = np.argmax(response_function_longer_wavelength)
+    peak_response_shorter_wavelength = np.argmax(response_function_shorter_wavelength)
+
+    assert peak_response_shorter_wavelength < peak_response_longer_wavelength
+    assert mean_tau_shorter_wavelength < mean_tau_longer_wavelength
+
+
+def test_define_frequencies():
+    # Test that we can generate 2 points, recall the length will be 10 times the input
+    length = 0.1
+    dt = 1
+    freq = define_frequencies(length, dt)
+    assert len(freq) == 2
+    # Test that we don't get frequencies above the Nyquist frequency defined as 1/(2*dt)
+    # or that we don't get frequencies below the expected contributing range of 1/(10*length)
+    length = 100
+    dt = 1
+    freq = define_frequencies(length, dt)
+    assert np.max(freq) <= 1 / (2 * dt)
+    assert np.min(freq) >= 1 / (10 * length)
+    # Test that frequencies strictly increase (the x-axis cannot be multi-valued)
+    delta_freq = freq[1:] - freq[:-1]
+    assert all(delta_freq > 0)
+    # Test that decreasing dt increases the maximum frequency
+    dt = 0.1
+    higher_freq = define_frequencies(length, dt)
+    assert higher_freq[-1] > freq[-1]
+
+
+def test_define_bending_power_law_psd():
+    length = 100
+    dt = 1
+    frequencies = define_frequencies(length, dt)
+    power_spectrum_density = define_bending_power_law_psd(-1, 1, 3, frequencies)
+    # Test the frequencies and psd have the same size
+    assert power_spectrum_density.size == frequencies.size
+    # Test that the PSD is a decreasing function of frequency
+    test_metric = power_spectrum_density[1:] - power_spectrum_density[:-1]
+    assert all(test_metric <= 0)
+    # Test that the PSD doesn't change if a breakpoint frequency is changed far outside the
+    # frequency range
+    psd1 = define_bending_power_law_psd(15, 1, 3, frequencies)
+    psd2 = define_bending_power_law_psd(25, 1, 3, frequencies)
+    total_diff_12 = np.sum(psd1 - psd2)
+    npt.assert_almost_equal(total_diff_12, 0, 5)
+    psd3 = define_bending_power_law_psd(-25, 0.5, 1, frequencies)
+    psd4 = define_bending_power_law_psd(-20, 0.5, 1, frequencies)
+    total_diff_34 = np.sum(psd3 - psd4)
+    npt.assert_almost_equal(total_diff_34, 0, 5)
+
+
+def test_normalize_light_curve():
+    input_light_curve = [5.0, 7.0, 7.0, 5.0, 4.0, 2.0]
+    new_mean = 0.0
+    new_std = 1.0
+    output_light_curve = normalize_light_curve(input_light_curve, new_mean, new_std)
+    npt.assert_almost_equal(output_light_curve.mean(), new_mean)
+    npt.assert_almost_equal(output_light_curve.std(), new_std)
+    # Test a single value
+    input_light_curve = [3.5]
+    new_mean = 2.0
+    new_std = 0.0
+    output_light_curve = normalize_light_curve(input_light_curve, new_mean, new_std)
+    assert output_light_curve[0] == new_mean
+    # Test a numpy array generated from linspace as the input
+    input_light_curve = np.linspace(0, 100, 101)
+    new_mean = 0.0
+    new_std = 1.0
+    output_light_curve = normalize_light_curve(input_light_curve, new_mean, new_std)
+    npt.assert_almost_equal(output_light_curve.mean(), new_mean)
+    npt.assert_almost_equal(output_light_curve.std(), new_std)
+    # by symmetry, the new center value should be 0
+    assert output_light_curve[50] == 0
+
+
+def test_generate_signal():
+    # Test we can generate a signal with minimal arguments
+    length_of_light_curve = 100
+    dt = 7
+    light_curve = generate_signal(length_of_light_curve, dt)
+    assert len(light_curve) == 100 // 7
+    # Test a smaller dt increases the number of points in the light curve
+    dt = 1
+    light_curve_2 = generate_signal(length_of_light_curve, dt)
+    assert len(light_curve) < len(light_curve_2)
+    # Test that no errors are thrown when reasonable values are entered
+    length_of_light_curve = 1000
+    dt = 2
+    log_bp_freq = -1
+    low_freq_slope = 0.5
+    high_freq_slope = 3.0
+    new_mean_amplitude = 12
+    new_standard_deviation = 10
+    light_curve_3 = generate_signal(
+        length_of_light_curve,
+        dt,
+        log_breakpoint_frequency=log_bp_freq,
+        low_frequency_slope=low_freq_slope,
+        high_frequency_slope=high_freq_slope,
+        new_mean_amplitude=new_mean_amplitude,
+        new_standard_deviation=new_standard_deviation,
+    )
+    npt.assert_almost_equal(
+        np.sum(light_curve_3), new_mean_amplitude * len(light_curve_3)
+    )
+    # Test that a light curve may be generated using a user defined psd
+    chosen_seed = 17
+    input_frequencies = define_frequencies(length_of_light_curve, dt)
+    input_power_spectrum_density = input_frequencies ** (-4.0)
+    light_curve_user_psd = generate_signal(
+        length_of_light_curve,
+        dt,
+        input_freq=input_frequencies,
+        input_psd=input_power_spectrum_density,
+        seed=chosen_seed,
+    )
+    # Compare the light curve is different from the broken power law psd
+    light_curve_bpl_psd = generate_signal(length_of_light_curve, dt, seed=chosen_seed)
+    difference_curve = light_curve_user_psd - light_curve_bpl_psd
+    sum_of_squares = np.sum(difference_curve**2)
+    assert sum_of_squares > 0
+
+
+def test_generate_signal_from_bending_power_law():
+    # Test that this function generates an identical signal to
+    # that created with generate_signal()
+
+    length_of_light_curve = 500
+    time_resolution = 1
+    log_breakpoint_frequency = -2
+    low_frequency_slope = 1
+    high_frequency_slope = 3
+    new_mean_amplitude = 0
+    new_standard_deviation = 1
+    seed = 17
+
+    known_signal = generate_signal(
+        length_of_light_curve,
+        time_resolution,
+        log_breakpoint_frequency=log_breakpoint_frequency,
+        low_frequency_slope=low_frequency_slope,
+        high_frequency_slope=high_frequency_slope,
+        new_mean_amplitude=new_mean_amplitude,
+        new_standard_deviation=new_standard_deviation,
+        seed=seed,
+    )
+    times, new_signal = generate_signal_from_bending_power_law(
+        length_of_light_curve,
+        time_resolution,
+        log_breakpoint_frequency=log_breakpoint_frequency,
+        low_frequency_slope=low_frequency_slope,
+        high_frequency_slope=high_frequency_slope,
+        new_mean_amplitude=new_mean_amplitude,
+        new_standard_deviation=new_standard_deviation,
+        seed=seed,
+    )
+
+    assert all(new_signal == known_signal)
+    assert len(times) == len(new_signal)
+
+
+def test_generate_signal_from_generic_psd():
+    length_of_light_curve = 500
+    time_resolution = 1
+    seed = 112
+    frequencies = define_frequencies(length_of_light_curve, time_resolution)
+    test_psd_smooth = frequencies ** (-4)
+    t1, smooth_signal = generate_signal_from_generic_psd(
+        length_of_light_curve, time_resolution, frequencies, test_psd_smooth, seed=seed
+    )
+
+    test_psd_noisy = frequencies ** (-1)
+    t2, noisy_signal = generate_signal_from_generic_psd(
+        length_of_light_curve, time_resolution, frequencies, test_psd_noisy, seed=seed
+    )
+
+    # Note that smooth signals will deviate much further from the mean
+    # than extremely noisy signals
+    assert noisy_signal.var() < smooth_signal.var()
