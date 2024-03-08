@@ -768,9 +768,7 @@ def opsim_time_series_images_data(
         from opsimsummary import SynOpSim
     except ImportError:
         raise ImportError("Users need to have the right branch of opsimsummary installed (Issue#325/proposalTables)")
-    except:
-        raise ImportError(
-            "Users need to have the right branch of opsimsummary installed (Issue#325/proposalTables)"
+
     # Initialise opsimsummary with opsim database
     try:
         opsim_path = "../data/OpSim_database/opsim.db"
@@ -778,18 +776,6 @@ def opsim_time_series_images_data(
                                         use_proposal_table=False, subset="unique_all")
     except FileNotFoundError:
         raise FileNotFoundError("Users need to have an opsim database downloaded at ../data/OpSim_database/opsim.db")
-
-        synopsim = SynOpSim.fromOpSimDB(
-            opsim_path,
-            opsimversion="fbsv2",
-            usePointingTree=True,
-            use_proposal_table=False,
-            subset="unique_all",
-        )
-    except:
-        raise FileNotFoundError(
-            "Users need to have an opsim database downloaded at ../data/OpSim_database/opsim.db"
-        )
 
     # Collect observations that cover the coordinates in ra_list and dec_list
     gen = synopsim.pointingsEnclosing(
