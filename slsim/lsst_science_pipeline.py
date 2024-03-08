@@ -9,6 +9,8 @@ from slsim.image_simulation import (
 from slsim.Util.param_util import transformmatrix_to_pixelscale
 from scipy import interpolate
 from slsim.image_simulation import point_source_coordinate_properties
+import lenstronomy.Util.util as util
+import lenstronomy.Util.kernel_util as kernel_util
 
 try:
     import lsst.geom as geom
@@ -745,22 +747,23 @@ def dp0_time_series_images_data(butler, center_coord, radius="0.1", band="i", si
     return table_data
 
 
-def opsim_time_series_images_data(ra_list, dec_list, size=101):
+def opsim_time_series_images_data(ra_list, dec_list, delta_pix, size=101, moffat_beta=3.1):
     """Creates time series data from opsim database.
 
-    :param ra_list: a list of ra points from objects we want to fetch observations for.
-    :param dec_list: a list of dec points from objects we want to fetch observations for.
-    :param size: cutout size of images
-    :return: An astropy table containg time series images and other information
+    :param ra_list: a list of ra points (in degrees) from objects we want to collect observations for
+    :param dec_list: a list of dec points (in degrees) from objects we want to collect observations for
+    :param delta_pix: pixel scale in arcseconds for the psf kernel
+    :param size: cutout size of images (in pixels)
+    :param moffat_beta: power index of the moffat psf kernel
+    :return: a list of astropy tables containing observation information for each coordinate
     """
-
-    # ------------------------------------------------------------------
 
     # Import opsimsummary
     try:
         from opsimsummary import SynOpSim
     except:
         raise ImportError("Users need to have the right branch of opsimsummary installed (Issue#325/proposalTables)")
+
     # Initialise opsimsummary with opsim database
     try:
         opsim_path = "../data/OpSim_database/opsim.db"
@@ -770,10 +773,8 @@ def opsim_time_series_images_data(ra_list, dec_list, size=101):
     except:
         raise FileNotFoundError("Users need to have an opsim database downloaded at ../data/OpSim_database/opsim.db")
 
-    # Fetch observations that cover the coordinates in ra_list and dec_list
+    # Collect observations that cover the coordinates in ra_list and dec_list
     gen = synopsim.pointingsEnclosing(ra_list, dec_list, circRadius=0.0, pointingRadius=1.75, usePointingTree=True)
-
-    # ------------------------------------------------------------------
 
     table_data_list = []
 
@@ -791,24 +792,38 @@ def opsim_time_series_images_data(ra_list, dec_list, size=101):
         opsim_dec = np.mean(seq['fieldDec'])
 
         if np.isnan(opsim_ra) or np.isnan(opsim_dec):
+            print(f"Coordinate ({ra_list[i]}, {dec_list[i]}) is not in the LSST footprint. This entry is skipped.")
             continue
-            # Should I save some documentation of this, or add a nan entry to the table_data?
 
-        # Get the observation times, exposure times, sky brightness, and bandpass from opsim
+        # Get the observation times, exposure times, sky brightness, bandpass, and psf fwhm from opsim
         obs_time = np.array(seq["expMJD"])
         expo_time = np.array(seq["visitExposureTime"])
         sky_brightness = np.array(seq["filtSkyBrightness"])
         bandpass = np.array(seq['filter'])
+        psf_fwhm = np.array(seq["seeingFwhmGeom"])
+        m5_depth = np.array(seq["fiveSigmaDepth"])
+        # Question: use 'FWHMeff' or 'seeingFwhmGeom' for the psf?
 
-        # Get the psf from opsim
-        # psf_fwhm = np.array(seq["seeingFwhmGeom"])
-        # To do: make a psf kernel from psf_fwhm (first from moffat kernel)
-        psf_kernel = ...
+        # Create a Moffat psf kernel
+        psf_kernel = kernel_util.kernel_moffat(num_pix=size, delta_pix=delta_pix, fwhm=psf_fwhm, moffat_beta=moffat_beta)
+        psf_kernel = util.array2image(psf_kernel)
 
-        # Get the zero point from opsim
-        # m5_depth = np.array(seq["fiveSigmaDepth"])
-        # To do: convert m5_depth to zero point using opsim summary function
-        zero_point_mag = ...
+        # Calculate the zero point magnitude
+        # Code from OpSimSummary/opsimsummary/simlib.py/add_simlibCols
+        term1 = 2.0 * m5_depth - sky_brightness  # * pixArea
+        term2 = - (m5_depth - sky_brightness)  # * pixArea
+        area = (1.51 * psf_fwhm) ** 2.
+        opsim_snr = 5.
+        arg = area * opsim_snr * opsim_snr
+        # Background dominated limit assuming counts with system transmission only
+        # is approximately equal to counts with total transmission
+        zpt_approx = term1 + 2.5 * np.log10(arg)
+        val = -0.4 * term2
+        tmp = 10.0 ** val
+        # Additional term to account for photons from the source, again assuming
+        # that counts with system transmission approximately equal counts with total transmission.
+        zpt_cor = 2.5 * np.log10(1.0 + 1.0 / (area * tmp))
+        zero_point_mag = zpt_approx + zpt_cor
 
         table_data = Table(
             [
