@@ -747,15 +747,20 @@ def dp0_time_series_images_data(butler, center_coord, radius="0.1", band="i", si
     return table_data
 
 
-def opsim_time_series_images_data(ra_list, dec_list, delta_pix, size=101, moffat_beta=3.1):
+def opsim_time_series_images_data(
+    ra_list, dec_list, delta_pix, size=101, moffat_beta=3.1
+):
     """Creates time series data from opsim database.
 
-    :param ra_list: a list of ra points (in degrees) from objects we want to collect observations for
-    :param dec_list: a list of dec points (in degrees) from objects we want to collect observations for
+    :param ra_list: a list of ra points (in degrees) from objects we want to collect
+        observations for
+    :param dec_list: a list of dec points (in degrees) from objects we want to collect
+        observations for
     :param delta_pix: pixel scale in arcseconds for the psf kernel
     :param size: cutout size of images (in pixels)
     :param moffat_beta: power index of the moffat psf kernel
-    :return: a list of astropy tables containing observation information for each coordinate
+    :return: a list of astropy tables containing observation information for each
+        coordinate
     """
 
     # Import opsimsummary
@@ -763,18 +768,33 @@ def opsim_time_series_images_data(ra_list, dec_list, delta_pix, size=101, moffat
         from opsimsummary import SynOpSim
     except ImportError:
         raise ImportError("Users need to have the right branch of opsimsummary installed (Issue#325/proposalTables)")
-
+    except:
+        raise ImportError(
+            "Users need to have the right branch of opsimsummary installed (Issue#325/proposalTables)"
     # Initialise opsimsummary with opsim database
     try:
         opsim_path = "../data/OpSim_database/opsim.db"
-
         synopsim = SynOpSim.fromOpSimDB(opsim_path, opsimversion="fbsv2", usePointingTree=True,
                                         use_proposal_table=False, subset="unique_all")
     except FileNotFoundError:
         raise FileNotFoundError("Users need to have an opsim database downloaded at ../data/OpSim_database/opsim.db")
 
+        synopsim = SynOpSim.fromOpSimDB(
+            opsim_path,
+            opsimversion="fbsv2",
+            usePointingTree=True,
+            use_proposal_table=False,
+            subset="unique_all",
+        )
+    except:
+        raise FileNotFoundError(
+            "Users need to have an opsim database downloaded at ../data/OpSim_database/opsim.db"
+        )
+
     # Collect observations that cover the coordinates in ra_list and dec_list
-    gen = synopsim.pointingsEnclosing(ra_list, dec_list, circRadius=0.0, pointingRadius=1.75, usePointingTree=True)
+    gen = synopsim.pointingsEnclosing(
+        ra_list, dec_list, circRadius=0.0, pointingRadius=1.75, usePointingTree=True
+    )
 
     table_data_list = []
 
@@ -785,41 +805,45 @@ def opsim_time_series_images_data(ra_list, dec_list, delta_pix, size=101, moffat
 
         # Collect the next observation sequence from the opsim generator
         seq = next(gen)
-        seq = seq.sort_values(by=['expMJD'])
+        seq = seq.sort_values(by=["expMJD"])
 
         # Check if the coordinates are in the opsim LSST footprint
-        opsim_ra = np.mean(seq['fieldRA'])
-        opsim_dec = np.mean(seq['fieldDec'])
+        opsim_ra = np.mean(seq["fieldRA"])
+        opsim_dec = np.mean(seq["fieldDec"])
 
         if np.isnan(opsim_ra) or np.isnan(opsim_dec):
-            print(f"Coordinate ({ra_list[i]}, {dec_list[i]}) is not in the LSST footprint. This entry is skipped.")
+            print(
+                f"Coordinate ({ra_list[i]}, {dec_list[i]}) is not in the LSST footprint. This entry is skipped."
+            )
             continue
 
         # Get the observation times, exposure times, sky brightness, bandpass, and psf fwhm from opsim
         obs_time = np.array(seq["expMJD"])
         expo_time = np.array(seq["visitExposureTime"])
         sky_brightness = np.array(seq["filtSkyBrightness"])
-        bandpass = np.array(seq['filter'])
+        bandpass = np.array(seq["filter"])
         psf_fwhm = np.array(seq["seeingFwhmGeom"])
         m5_depth = np.array(seq["fiveSigmaDepth"])
         # Question: use 'FWHMeff' or 'seeingFwhmGeom' for the psf?
 
         # Create a Moffat psf kernel
-        psf_kernel = kernel_util.kernel_moffat(num_pix=size, delta_pix=delta_pix, fwhm=psf_fwhm, moffat_beta=moffat_beta)
+        psf_kernel = kernel_util.kernel_moffat(
+            num_pix=size, delta_pix=delta_pix, fwhm=psf_fwhm, moffat_beta=moffat_beta
+        )
         psf_kernel = util.array2image(psf_kernel)
 
         # Calculate the zero point magnitude
         # Code from OpSimSummary/opsimsummary/simlib.py/add_simlibCols
         term1 = 2.0 * m5_depth - sky_brightness  # * pixArea
-        term2 = - (m5_depth - sky_brightness)  # * pixArea
-        area = (1.51 * psf_fwhm) ** 2.
-        opsim_snr = 5.
+        term2 = -(m5_depth - sky_brightness)  # * pixArea
+        area = (1.51 * psf_fwhm) ** 2.0
+        opsim_snr = 5.0
         arg = area * opsim_snr * opsim_snr
         # Background dominated limit assuming counts with system transmission only
         # is approximately equal to counts with total transmission
         zpt_approx = term1 + 2.5 * np.log10(arg)
         val = -0.4 * term2
-        tmp = 10.0 ** val
+        tmp = 10.0**val
         # Additional term to account for photons from the source, again assuming
         # that counts with system transmission approximately equal counts with total transmission.
         zpt_cor = 2.5 * np.log10(1.0 + 1.0 / (area * tmp))
