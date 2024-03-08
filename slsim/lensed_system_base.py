@@ -46,20 +46,18 @@ class LensedSystemBase(ABC):
         pass
 
     @abstractmethod
-    def source_position(self):
-        """Source position, either the center of the extended source or the point
-        source. If not present from the cataloge, it is drawn uniform within the circle
-        of the test area centered on the lens.
+    def extended_source_image_positions(self):
+        """Returns extended source image positions by solving the lens equation.
 
-        :return: [x_pos, y_pos] in arc seconds
+        :return: x-pos, y-pos
         """
         pass
 
     @abstractmethod
-    def image_positions(self):
-        """Returns image positions by solving the lens equation, these are either the
-        centers of the extended source, or the point sources in case of (added) point-
-        like sources, such as quasars or SNe.
+    def point_source_image_positions(self):
+        """Returns point source image positions by solving the lens equation. In the
+        absence of a point source, this function returns the solution for the center of
+        the extended source.
 
         :return: x-pos, y-pos
         """

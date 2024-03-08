@@ -248,7 +248,7 @@ def point_source_coordinate_properties(
     dec_lens_value = lens_center[1]
     lens_pix_coordinate = image_data.map_coord2pix(ra_lens_value, dec_lens_value)
 
-    ps_coordinate = lens_class.image_positions()
+    ps_coordinate = lens_class.point_source_image_positions()
     ra_image_values = ps_coordinate[0]
     dec_image_values = ps_coordinate[1]
     # image_magnitude = lens_class.point_source_magnitude(band=band, lensed=True)
