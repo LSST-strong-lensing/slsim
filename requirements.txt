@@ -3,9 +3,9 @@ lenstronomy>=1.11.2
 astropy>=5.2
 numpy
 scipy
+tqdm
+colossus
 speclite
 pyyaml
 matplotlib
 sncosmo
-tqdm
-colossus
