@@ -111,6 +111,7 @@ class TestLens(object):
         npt.assert_almost_equal(dt_days, observer_times, decimal=5)
         npt.assert_almost_equal(dt_days2, observer_times2, decimal=5)
 
+
 @pytest.fixture
 def pes_lens_instance():
     path = os.path.dirname(__file__)
@@ -196,51 +197,49 @@ class TestDifferenLens(object):
         self.deflector_dict = red_one
 
     def test_different_setting(self):
-            gg_lens = Lens(
+        gg_lens = Lens(
+            source_dict=self.source_dict,
+            deflector_dict=self.deflector_dict,
+            cosmo=self.cosmo,
+            los_bool=True,
+            mixgauss_gamma=True,
+            nonlinear_los_bool=False,
+        )
+        assert gg_lens.external_shear >= 0
+        assert isinstance(gg_lens.external_convergence, float)
+        assert isinstance(gg_lens.external_shear, float)
+
+        gg_lens_2 = Lens(
+            source_dict=self.source_dict,
+            deflector_dict=self.deflector_dict,
+            cosmo=self.cosmo,
+            los_bool=True,
+            mixgauss_gamma=False,
+            nonlinear_los_bool=True,
+        )
+        assert gg_lens_2.external_shear >= 0
+        assert isinstance(gg_lens_2.external_convergence, float)
+        assert isinstance(gg_lens_2.external_shear, float)
+
+        gg_lens_3 = Lens(
+            source_dict=self.source_dict,
+            deflector_dict=self.deflector_dict,
+            cosmo=self.cosmo,
+            los_bool=False,
+        )
+        assert gg_lens_3.external_convergence == 0
+        assert gg_lens_3.external_shear == 0
+
+        with pytest.raises(ValueError):
+            gg_lens_4 = Lens(
                 source_dict=self.source_dict,
                 deflector_dict=self.deflector_dict,
                 cosmo=self.cosmo,
                 los_bool=True,
                 mixgauss_gamma=True,
-                nonlinear_los_bool=False,
-            )
-            assert gg_lens.external_convergence != 0
-            assert gg_lens.external_shear >= 0
-            assert isinstance(gg_lens.external_convergence,float)
-            assert isinstance(gg_lens.external_shear,float)
-
-            gg_lens_2 = Lens(
-                source_dict=self.source_dict,
-                deflector_dict=self.deflector_dict,
-                cosmo=self.cosmo,
-                los_bool=True,
-                mixgauss_gamma=False,
                 nonlinear_los_bool=True,
             )
-            assert gg_lens_2.external_convergence != 0
-            assert gg_lens_2.external_shear >= 0
-            assert isinstance(gg_lens_2.external_convergence, float)
-            assert isinstance(gg_lens_2.external_shear, float)
-
-            gg_lens_3 = Lens(
-                source_dict=self.source_dict,
-                deflector_dict=self.deflector_dict,
-                cosmo=self.cosmo,
-                los_bool=False
-            )
-            assert gg_lens_3.external_convergence == 0
-            assert gg_lens_3.external_shear == 0
-
-            with pytest.raises(ValueError):
-                gg_lens_4 = Lens(
-                    source_dict=self.source_dict,
-                    deflector_dict=self.deflector_dict,
-                    cosmo=self.cosmo,
-                    los_bool=True,
-                    mixgauss_gamma=True,
-                    nonlinear_los_bool=True,
-                )
-                gg_lens_4.external_convergence()
+            gg_lens_4.external_convergence()
 
 
 if __name__ == "__main__":

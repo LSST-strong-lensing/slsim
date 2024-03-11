@@ -26,7 +26,7 @@ class Lens(LensedSystemBase):
         mixgauss_means=None,
         mixgauss_stds=None,
         mixgauss_weights=None,
-        los_bool = True,
+        los_bool=True,
         nonlinear_los_bool=False,
         magnification_limit=0.01,
         mixgauss_gamma=False,
@@ -106,7 +106,6 @@ class Lens(LensedSystemBase):
         :return: number of images
         """
         return len(self.image_positions()[0])
-
 
     @property
     def deflector_position(self):
@@ -281,7 +280,7 @@ class Lens(LensedSystemBase):
         :return: external shear
         """
         gamma1, gamma2, _ = self.los_linear_distortions
-        return (gamma1**2+gamma2**2)**0.5
+        return (gamma1**2 + gamma2**2) ** 0.5
 
     @property
     def einstein_radius(self):
@@ -322,7 +321,9 @@ class Lens(LensedSystemBase):
     @property
     def los_linear_distortions(self):
         if self._los_linear_distortions_cache is None:
-            self._los_linear_distortions_cache = self._calculate_los_linear_distortions()
+            self._los_linear_distortions_cache = (
+                self._calculate_los_linear_distortions()
+            )
         return self._los_linear_distortions_cache
 
     def _calculate_los_linear_distortions(self):
@@ -332,9 +333,11 @@ class Lens(LensedSystemBase):
         """
         if self.los_bool is False:
             return 0, 0, 0
-        if (self.los_bool is True
-                and self.mixgauss_gamma is True
-                and self.nonlinear_los_bool is False):
+        if (
+            self.los_bool is True
+            and self.mixgauss_gamma is True
+            and self.nonlinear_los_bool is False
+        ):
             mixgauss_means = self._mixgauss_means
             mixgauss_stds = self._mixgauss_stds
             mixgauss_weights = self._mixgauss_weights
@@ -350,19 +353,22 @@ class Lens(LensedSystemBase):
                 gamma2 = gamma * np.sin(2 * phi)
                 self._gamma = [gamma1, gamma2]
             if not hasattr(self, "_kappa"):
-                 self._kappa = np.random.normal(loc=0, scale=0.05)
-        if (self.los_bool is True
-                and self.mixgauss_gamma is True
-                and self.nonlinear_los_bool is True):
-            raise ValueError("Can only choose one method for external shear and convergence")
+                self._kappa = np.random.normal(loc=0, scale=0.05)
+        if (
+            self.los_bool is True
+            and self.mixgauss_gamma is True
+            and self.nonlinear_los_bool is True
+        ):
+            raise ValueError(
+                "Can only choose one method for external shear and convergence"
+            )
         else:
             z_source = float(self.source.redshift)
             z_lens = float(self._deflector_dict["z"])
-            LOS =LineOfSightDistribution()
-            gamma, self._kappa = (
-                    LOS.get_kappa_gamma(
-                        z_source, z_lens,
-                        use_nonlinear_correction=self.nonlinear_los_bool))
+            LOS = LineOfSightDistribution()
+            gamma, self._kappa = LOS.get_kappa_gamma(
+                z_source, z_lens, use_nonlinear_correction=self.nonlinear_los_bool
+            )
             phi = 2 * np.pi * np.random.random()
             gamma1 = gamma * np.cos(2 * phi)
             gamma2 = gamma * np.sin(2 * phi)

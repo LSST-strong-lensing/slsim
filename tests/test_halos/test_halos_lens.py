@@ -1,7 +1,8 @@
-from slsim.Halos.halos_lens import (concentration_from_mass,
-                                    deg2_to_cone_angle,
-                                    cone_radius_angle_to_physical_area,
-                                    )
+from slsim.Halos.halos_lens import (
+    concentration_from_mass,
+    deg2_to_cone_angle,
+    cone_radius_angle_to_physical_area,
+)
 import pytest
 import numpy as np
 from astropy.cosmology import FlatLambdaCDM
@@ -13,10 +14,10 @@ import matplotlib
 
 
 def test_deg2_to_cone_angle():
-    solid_angle_deg2 = 20626.4806247 #2pi steradians in deg^2
+    solid_angle_deg2 = 20626.4806247  # 2pi steradians in deg^2
     result = deg2_to_cone_angle(solid_angle_deg2)
     #  half cone angle of 2pi sky is pi/2
-    assert result == pytest.approx(np.pi/2, rel=1e-6)
+    assert result == pytest.approx(np.pi / 2, rel=1e-6)
 
 
 def test_cone_radius_angle_to_physical_area():
@@ -30,8 +31,7 @@ def test_cone_radius_angle_to_physical_area():
     radius_rad2 = 0.2
     result = cone_radius_angle_to_physical_area(radius_rad2, z1, cosmo)
     result_val2 = result.to_value("Mpc2")
-    assert result_val2/ result_val == pytest.approx(
-        4, rel=1e-6)
+    assert result_val2 / result_val == pytest.approx(4, rel=1e-6)
 
 
 def test_single_halo_mass_and_redshift():
@@ -96,7 +96,7 @@ def setup_mass_sheet_false():
 @pytest.fixture(autouse=True)
 def set_matplotlib_backend():
     original_backend = matplotlib.get_backend()
-    matplotlib.use('Agg')
+    matplotlib.use("Agg")
     yield
     matplotlib.use(original_backend)
     # for test_plot_convergence not to show plot
@@ -118,14 +118,13 @@ def test_random_position(setup_halos_lens):
 def test_get_lens_model(setup_halos_lens):
     hl = setup_halos_lens
     lens_model = hl.get_lens_model()
-    assert (lens_model.lens_model_list ==
-            ["NFW", "NFW", "NFW", "CONVERGENCE"])
+    assert lens_model.lens_model_list == ["NFW", "NFW", "NFW", "CONVERGENCE"]
+
 
 def test_get_lens_model_mass_sheet_false(setup_mass_sheet_false):
     hl2 = setup_mass_sheet_false
     lens_model2 = hl2.get_lens_model()
-    assert (lens_model2.lens_model_list ==
-            ["NFW", "NFW"])
+    assert lens_model2.lens_model_list == ["NFW", "NFW"]
 
 
 def test_get_halos_lens_kwargs(setup_halos_lens):
@@ -282,10 +281,8 @@ def test_build_kwargs_lens(setup_halos_lens):
     py_halo = hl.halos_list["py"]
     c_200_halos = hl.halos_list["c_200"]
 
-    combined_redshift_list = np.concatenate((z_halo,
-                                             z_mass_correction))
-    lens_cosmo_dict = hl._build_lens_cosmo_dict(combined_redshift_list,
-                                                5.0)
+    combined_redshift_list = np.concatenate((z_halo, z_mass_correction))
+    lens_cosmo_dict = hl._build_lens_cosmo_dict(combined_redshift_list, 5.0)
     lens_cosmo_list = list(lens_cosmo_dict.values())
 
     kwargs_lens = hl._build_kwargs_lens(
@@ -298,7 +295,7 @@ def test_build_kwargs_lens(setup_halos_lens):
         c_200_halos,
         lens_model_list,
         kappa_ext_list,
-        lens_cosmo_list
+        lens_cosmo_list,
     )
 
     assert len(kwargs_lens) == n_halos
@@ -370,7 +367,7 @@ def test_xy_convergence(setup_halos_lens):
     kappa = hl.xy_convergence(x, y)
 
     zdzs = (0.5, 1.0)
-    kappa2 = hl.xy_convergence(x, y,zdzs=zdzs)
+    kappa2 = hl.xy_convergence(x, y, zdzs=zdzs)
 
     assert isinstance(kappa, float)
     assert isinstance(kappa2, float)
@@ -380,7 +377,7 @@ def test_plot_convergence(setup_halos_lens):
     hl = setup_halos_lens
     try:
         hl.plot_convergence()
-       # hl.compare_plot_convergence()
+    # hl.compare_plot_convergence()
     except Exception as e:
         pytest.fail(f"plot_convergence failed with an exception: {e}")
 
@@ -389,17 +386,14 @@ def test_total_mass(setup_halos_lens):
     hl = setup_halos_lens
     mass = hl.total_halo_mass()
     assert isinstance(mass, float)
-    assert mass == (2058751081954.2866 +
-                   1320146153348.6448+850000000000.0)
+    assert mass == (2058751081954.2866 + 1320146153348.6448 + 850000000000.0)
 
 
 def test_total_critical_mass(setup_halos_lens):
     hl = setup_halos_lens
-    mass1 = hl.total_critical_mass(
-        method='differential_comoving_volume')
-    mass2 = hl.total_critical_mass(
-        method='comoving_volume')
+    mass1 = hl.total_critical_mass(method="differential_comoving_volume")
+    mass2 = hl.total_critical_mass(method="comoving_volume")
     assert isinstance(mass1, float)
     assert isinstance(mass2, float)
-    ratio = mass1/mass2
+    ratio = mass1 / mass2
     assert ratio == pytest.approx(1, rel=0.01)

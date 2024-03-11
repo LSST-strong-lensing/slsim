@@ -8,10 +8,7 @@ from astropy.units.quantity import Quantity
 
 
 def colossus_halo_mass_function(m_200, cosmo, z, sigma8=0.81, ns=0.96):
-    '''
-    m in Msun/h
-    return dn/dlnM (mpc-3)
-    '''
+    """M in Msun/h return dn/dlnM (mpc-3)"""
 
     params = dict(
         flat=(cosmo.Ok0 == 0.0),
@@ -22,12 +19,14 @@ def colossus_halo_mass_function(m_200, cosmo, z, sigma8=0.81, ns=0.96):
         Tcmb0=cosmo.Tcmb0.value,
         Neff=cosmo.Neff,
         sigma8=sigma8,
-        ns=ns, )
-    colossus_cosmo.setCosmology(cosmo_name='halo_cosmo',
-                                ** params)
+        ns=ns,
+    )
+    colossus_cosmo.setCosmology(cosmo_name="halo_cosmo", **params)
     # todo: change cosmology with ...
     h3 = np.power(cosmo.h, 3)
-    mfunc_h3_dmpc3 = mass_function.massFunction(m_200, z, mdef='fof', model='bhattacharya11', q_out='dndlnM')
+    mfunc_h3_dmpc3 = mass_function.massFunction(
+        m_200, z, mdef="fof", model="bhattacharya11", q_out="dndlnM"
+    )
     # in h^3*Mpc-3
     massf = mfunc_h3_dmpc3 * h3  # in Mpc-3
     return massf
@@ -41,14 +40,14 @@ def get_value_if_quantity(variable):
 
 
 def colossus_halo_mass_sampler(
-        m_min,
-        m_max,
-        resolution,
-        z,
-        cosmology,
-        sigma8=0.81,
-        ns=0.96,
-        size=None,
+    m_min,
+    m_max,
+    resolution,
+    z,
+    cosmology,
+    sigma8=0.81,
+    ns=0.96,
+    size=None,
 ):
     m_min_value = get_value_if_quantity(m_min)
     m_max_value = get_value_if_quantity(m_max)
@@ -59,12 +58,13 @@ def colossus_halo_mass_sampler(
     maxh = m_max_value * h_value
 
     m = np.geomspace(minh, maxh, resolution_value)
-    massf = colossus_halo_mass_function(m,
-                                        cosmology,
-                                        z,
-                                        sigma8,
-                                        ns,
-                                        )
+    massf = colossus_halo_mass_function(
+        m,
+        cosmology,
+        z,
+        sigma8,
+        ns,
+    )
 
     CDF = integrate.cumtrapz(massf, np.log(m), initial=0)
     CDF = CDF / CDF[-1]
@@ -73,10 +73,10 @@ def colossus_halo_mass_sampler(
 
 
 def set_defaults(
-        m_min=None,
-        m_max=None,
-        resolution=None,
-        cosmology=None,
+    m_min=None,
+    m_max=None,
+    resolution=None,
+    cosmology=None,
 ):
     """Utility function to set default values for parameters if not provided.
 
@@ -99,11 +99,11 @@ def set_defaults(
 
     # Default values
     if m_min is None:
-        m_min = 1.0E+12
+        m_min = 1.0e12
         warnings.warn("No minimum mass provided, instead uses 1e10 Msun")
 
     if m_max is None:
-        m_max = 1.0E+14
+        m_max = 1.0e14
         warnings.warn("No maximum mass provided, instead uses 1e14 Msun")
 
     if resolution is None:
@@ -127,13 +127,13 @@ def set_defaults(
 
 
 def number_density_at_redshift(
-        z,
-        m_min=None,
-        m_max=None,
-        resolution=None,
-        cosmology=None,
-        sigma8=0.81,
-        ns=0.96,
+    z,
+    m_min=None,
+    m_max=None,
+    resolution=None,
+    cosmology=None,
+    sigma8=0.81,
+    ns=0.96,
 ):
     (
         m_min,
@@ -146,9 +146,7 @@ def number_density_at_redshift(
         resolution,
         cosmology,
     )
-    m_200 = np.geomspace(m_min * cosmology.h,
-                         m_max * cosmology.h,
-                         resolution)
+    m_200 = np.geomspace(m_min * cosmology.h, m_max * cosmology.h, resolution)
     if np.array_equal(z, np.array([np.nan])):
         warnings.warn("Redshift data lost, instead uses 0.0001")
         return [0.0001] * len(z)
@@ -156,14 +154,14 @@ def number_density_at_redshift(
         z = np.array([z])
     cdfs = []
     for zi in z:
-        massf = colossus_halo_mass_function(m_200,
-                                            cosmology,
-                                            zi,
-                                            sigma8=sigma8,
-                                            ns=ns, )
-        total_number_density = number_for_certain_mass(massf,
-                                                       m_200,
-                                                       dndlnM=True)
+        massf = colossus_halo_mass_function(
+            m_200,
+            cosmology,
+            zi,
+            sigma8=sigma8,
+            ns=ns,
+        )
+        total_number_density = number_for_certain_mass(massf, m_200, dndlnM=True)
         cdfs.append(total_number_density)
     return cdfs
 
@@ -210,12 +208,12 @@ def growth_factor_at_redshift(z, cosmology):
 
 
 def redshift_halos_array_from_comoving_density(
-        redshift_list,
-        sky_area,
-        cosmology,
-        m_min=None,
-        m_max=None,
-        resolution=None,
+    redshift_list,
+    sky_area,
+    cosmology,
+    m_min=None,
+    m_max=None,
+    resolution=None,
 ):
     """Calculate an array of halo redshifts from a given comoving density.
 
@@ -265,12 +263,14 @@ def redshift_halos_array_from_comoving_density(
     dV_dz = v_per_redshift(redshift_list, cosmology, sky_area)
     # dV_dz is in "Mpc3"
 
-    dN_dz = dv_dz_to_dn_dz(dV_dz,
-                           redshift_list,
-                           m_min=m_min,
-                           m_max=m_max,
-                           resolution=resolution,
-                           cosmology=cosmology, )
+    dN_dz = dv_dz_to_dn_dz(
+        dV_dz,
+        redshift_list,
+        m_min=m_min,
+        m_max=m_max,
+        resolution=resolution,
+        cosmology=cosmology,
+    )
 
     # integrate density to get expected number of Halos
     N = dndz_to_N(dN_dz, redshift_list)
@@ -281,13 +281,14 @@ def redshift_halos_array_from_comoving_density(
         return dndz_to_redshifts(N, dN_dz, redshift_list)
 
 
-def dv_dz_to_dn_dz(dV_dz,
-                   redshift_list,
-                   m_min=None,
-                   m_max=None,
-                   resolution=None,
-                   cosmology=None,
-                   ):
+def dv_dz_to_dn_dz(
+    dV_dz,
+    redshift_list,
+    m_min=None,
+    m_max=None,
+    resolution=None,
+    cosmology=None,
+):
     density = number_density_at_redshift(
         z=redshift_list,
         m_min=m_min,
@@ -339,17 +340,15 @@ def v_per_redshift(redshift_list, cosmology, sky_area):
 
 
 def halo_mass_at_z(
-        z,
-        m_min=None,
-        m_max=None,
-        resolution=None,
-        cosmology=None,
-        sigma8=0.81,
-        ns=0.96,
-
+    z,
+    m_min=None,
+    m_max=None,
+    resolution=None,
+    cosmology=None,
+    sigma8=0.81,
+    ns=0.96,
 ):
-    """
-    """
+    """"""
 
     (
         m_min,
@@ -371,33 +370,29 @@ def halo_mass_at_z(
     if z is np.array([np.nan]):
         return 0
     for z_val in z:
-        mass.append(colossus_halo_mass_sampler(
-            m_min=m_min,
-            m_max=m_max,
-            resolution=resolution,
-            z=z_val,
-            cosmology=cosmology,
-            size=1,
-            sigma8=sigma8,
-            ns=ns,)
+        mass.append(
+            colossus_halo_mass_sampler(
+                m_min=m_min,
+                m_max=m_max,
+                resolution=resolution,
+                z=z_val,
+                cosmology=cosmology,
+                size=1,
+                sigma8=sigma8,
+                ns=ns,
+            )
         )
     return mass
 
 
-def redshift_mass_sheet_correction_array_from_comoving_density(
-        redshift_list
-):
-    """
-    used in yml creating redshift list for mass sheet correction
-    """
+def redshift_mass_sheet_correction_array_from_comoving_density(redshift_list):
+    """Used in yml creating redshift list for mass sheet correction."""
     z_max = redshift_list[-1]
     linspace_values = np.arange(0.025, z_max, 0.05)
     return linspace_values
 
 
-def determinism_kappa_first_moment_at_redshift(
-        z
-):
+def determinism_kappa_first_moment_at_redshift(z):
     """
     m_min= 1e12
     m_max= 1e16
@@ -424,16 +419,18 @@ def determinism_kappa_first_moment_at_redshift(
     """
     m_ls = []
     for zi in z:
-        m2 = (0.0002390784813232419 +
-              -0.0014658189854554395 * zi +
-              -0.11408175546088226 * (zi ** 2) +
-              0.1858161514337054 * (zi ** 3) +
-              -0.14580188720668946 * (zi ** 4) +
-              0.07179490182290658 * (zi ** 5) +
-              -0.023842218143709567 * (zi ** 6) +
-              0.00534416068166958 * (zi ** 7) +
-              -0.0007728539951923031 * (zi ** 8) +
-              6.484537448337964e-05 * (zi ** 9) +
-              -2.389378848385584e-06 * (zi ** 10))
+        m2 = (
+            0.0002390784813232419
+            + -0.0014658189854554395 * zi
+            + -0.11408175546088226 * (zi**2)
+            + 0.1858161514337054 * (zi**3)
+            + -0.14580188720668946 * (zi**4)
+            + 0.07179490182290658 * (zi**5)
+            + -0.023842218143709567 * (zi**6)
+            + 0.00534416068166958 * (zi**7)
+            + -0.0007728539951923031 * (zi**8)
+            + 6.484537448337964e-05 * (zi**9)
+            + -2.389378848385584e-06 * (zi**10)
+        )
         m_ls.append(m2)
     return m_ls

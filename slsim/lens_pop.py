@@ -211,8 +211,7 @@ class LensPop(LensedPopulationBase):
                 cosmo=self.cosmo,
                 source_type=self._source_model_type,
                 los_bool=self.los_bool,
-                nonlinear_los_bool=self.nonlinear_los_bool
-
+                nonlinear_los_bool=self.nonlinear_los_bool,
             )
             if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens
@@ -297,10 +296,13 @@ class LensPop(LensedPopulationBase):
                     if self.return_kext:
                         if gg_lens.deflector_redshift >= gg_lens.source_redshift:
                             pass
-                        elif abs(gg_lens.deflector_redshift - gg_lens.source_redshift) <= 0.1:
+                        elif (
+                            abs(gg_lens.deflector_redshift - gg_lens.source_redshift)
+                            <= 0.1
+                        ):
                             pass
                         else:
-                            kappa_ext_origin.append(gg_lens.external_convergence())
+                            kappa_ext_origin.append(gg_lens.external_convergence)
                     # Check the validity of the lens system
                     if gg_lens.validity_test(**kwargs_lens_cuts):
                         gg_lens_population.append(gg_lens)

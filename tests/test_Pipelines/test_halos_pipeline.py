@@ -5,11 +5,7 @@ class TestHalosSkyPyPipeline(object):
     def setup_method(self):
         sky_area = 0.001
         self.pipeline = HalosSkyPyPipeline(
-            skypy_config=None,
-            sky_area=sky_area,
-            m_min=1.0e11,
-            m_max=1.0e15,
-            z_max=4.00
+            skypy_config=None, sky_area=sky_area, m_min=1.0e11, m_max=1.0e15, z_max=4.00
         )
 
     def test_halos(self):

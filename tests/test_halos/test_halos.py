@@ -30,31 +30,43 @@ def test_colossus_halo_mass_function():
     result = colossus_halo_mass_function(m_200, cosmo, z)
     assert result.shape == m_200.shape
 
+
 def test_returns_value_if_quantity():
-    quantity = Quantity(5, unit='Msun')
+    quantity = Quantity(5, unit="Msun")
 
     result = get_value_if_quantity(quantity)
 
     assert result == 5
 
+
 def test_returns_array_of_size_when_all_parameters_valid():
-        # Arrange
-        m_min = 1e12
-        m_max = 1e15
-        resolution = 100
-        z = 0.5
-        size = 10
+    # Arrange
+    m_min = 1e12
+    m_max = 1e15
+    resolution = 100
+    z = 0.5
+    size = 10
 
-        result = colossus_halo_mass_sampler(m_min, m_max, resolution, z, cosmo, size)
+    result = colossus_halo_mass_sampler(
+        m_min=m_min,
+        m_max=m_max,
+        resolution=resolution,
+        z=z,
+        cosmology=cosmo,
+        sigma8=0.81,
+        ns=0.96,
+        size=size,
+    )
 
-        assert len(result) == size
-        assert  np.all(result > m_min)
-        assert  np.all(result < m_max)
+    assert len(result) == size
+    assert np.all(result > m_min)
+    assert np.all(result < m_max)
+
 
 def test_halo_mass_at_z():
     mass = halo_mass_at_z(z=0.5, resolution=100)
-    assert mass[0] > 10 ** 10
-    assert mass[0] < 10 ** 16
+    assert mass[0] > 10**10
+    assert mass[0] < 10**16
     assert len(mass) == 1
 
     z_array = np.linspace(0, 1, 100)
@@ -125,18 +137,17 @@ def test_defaults_set():
     assert m_max == 1e14
     assert resolution == 100
     from astropy.cosmology import default_cosmology
+
     assert cosmology == default_cosmology.get()
 
 
 def test_v_per_redshift():
-    sky_area = 41252.96 * units.deg ** 2  # totoal sky
+    sky_area = 41252.96 * units.deg**2  # totoal sky
     z = np.linspace(0, 1, 100)
     v = v_per_redshift(redshift_list=z, cosmology=cosmo, sky_area=sky_area)
     totalv = np.trapz(v, z)
-    v2 = cosmo.comoving_volume(1).to_value(
-        "Mpc3"
-    )
-    sky_area_2 = 0.0 * units.deg ** 2
+    v2 = cosmo.comoving_volume(1).to_value("Mpc3")
+    sky_area_2 = 0.0 * units.deg**2
     z_2 = 1.0
     v_0 = v_per_redshift(redshift_list=z_2, cosmology=cosmo, sky_area=sky_area_2)
     assert len(v) == 100
@@ -178,24 +189,22 @@ def test_dv_dz_to_dn_dz():
 
 def test_redshift_halos_array_from_comoving_density():
     redshift_list = [0.5, 1.0, 1.5]
-    sky_area = 1 * units.deg ** 2
+    sky_area = 1 * units.deg**2
     cosmology = cosmo
     m_min = 1e12
     m_max = 1e15
     resolution = 100
-    result = redshift_halos_array_from_comoving_density(redshift_list,
-                                                        sky_area,
-                                                        cosmology,
-                                                        m_min,
-                                                        m_max,
-                                                        resolution)
+    result = redshift_halos_array_from_comoving_density(
+        redshift_list, sky_area, cosmology, m_min, m_max, resolution
+    )
     assert isinstance(result, np.ndarray)
     assert len(result) > 1
+
 
 def test_redshift_mass_sheet_correction_array():
     redshift_list = [0.1, 0.2]
     expected_result = np.array([0.025, 0.075, 0.125, 0.175])
     assert np.allclose(
-        redshift_mass_sheet_correction_array_from_comoving_density(
-            redshift_list),
-        expected_result)
+        redshift_mass_sheet_correction_array_from_comoving_density(redshift_list),
+        expected_result,
+    )

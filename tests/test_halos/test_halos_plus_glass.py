@@ -8,7 +8,6 @@ from slsim.Halos.halos_plus_glass import (
     run_halos_without_kde,
     run_halos_without_kde_by_multiprocessing,
     run_kappaext_gammaext_kde_by_multiprocessing,
-
 )
 import os
 import numpy as np
@@ -35,132 +34,99 @@ class Testhalosplusglass(object):
         assert self.nside == 128
 
     def test_generate_samples_from_glass(self):
-        kappa_random_glass, gamma_random_glass = (
-            generate_samples_from_glass(
-                self.kappa, self.gamma, 100
-            ))
-        assert (len(kappa_random_glass)
-                == len(gamma_random_glass)
-                == 100)
+        kappa_random_glass, gamma_random_glass = generate_samples_from_glass(
+            self.kappa, self.gamma, 100
+        )
+        assert len(kappa_random_glass) == len(gamma_random_glass) == 100
         assert isinstance(kappa_random_glass, np.ndarray)
         assert isinstance(gamma_random_glass, np.ndarray)
 
     def test_skyarea_form_n(self):
         skyarea = skyarea_form_n(self.nside)
-        assert skyarea == pytest.approx(
-            0.20982341130279172,
-            rel=1e-4)
+        assert skyarea == pytest.approx(0.20982341130279172, rel=1e-4)
 
     def test_generate_maps_kmean_zero_using_halos(self):
-        kappa_random_glass, gamma_random_glass = (
-            generate_maps_kmean_zero_using_halos(
-                samples_number_for_one_halos=50, renders_numbers=50
-            ))
-        assert (len(kappa_random_glass) ==
-                len(gamma_random_glass) == 50)
+        kappa_random_glass, gamma_random_glass = generate_maps_kmean_zero_using_halos(
+            samples_number_for_one_halos=50, renders_numbers=50
+        )
+        assert len(kappa_random_glass) == len(gamma_random_glass) == 50
         assert isinstance(kappa_random_glass, np.ndarray)
         assert isinstance(gamma_random_glass, np.ndarray)
 
     def test_generate_m_h_m_t_and_halos_plus_glass(self):
-        kappa_random_glass, gamma_random_glass = (
-            generate_meanzero_halos_multiple_times(
-                samples_number_for_one_halos=50,
-                n_times=2,
-                renders_numbers=2,
-                skyarea=0.0001,
-            ))
+        kappa_random_glass, gamma_random_glass = generate_meanzero_halos_multiple_times(
+            samples_number_for_one_halos=50,
+            n_times=2,
+            renders_numbers=2,
+            skyarea=0.0001,
+        )
 
-        assert (len(kappa_random_glass) ==
-                len(gamma_random_glass) == 4)
+        assert len(kappa_random_glass) == len(gamma_random_glass) == 4
         assert isinstance(kappa_random_glass, np.ndarray)
         assert isinstance(gamma_random_glass, np.ndarray)
 
         kappa_tot, gamma_tot = halos_plus_glass(
-            self.kappa,
-            self.gamma,
-            kappa_random_glass,
-            gamma_random_glass
+            self.kappa, self.gamma, kappa_random_glass, gamma_random_glass
         )
-        assert len(kappa_tot) == len(gamma_tot) ==4
+        assert len(kappa_tot) == len(gamma_tot) == 4
         assert isinstance(kappa_tot, (list, np.ndarray))
         assert isinstance(gamma_tot, (list, np.ndarray))
 
     def test_generate_m_h_m_t_for_small_area(self):
-        kappa_random_glass, gamma_random_glass = (
-            generate_meanzero_halos_multiple_times(
-                samples_number_for_one_halos=5,
-                n_times=2,
-                renders_numbers=4,
-                skyarea=0.0000001,
-            ))
+        kappa_random_glass, gamma_random_glass = generate_meanzero_halos_multiple_times(
+            samples_number_for_one_halos=5,
+            n_times=2,
+            renders_numbers=4,
+            skyarea=0.0000001,
+        )
 
-        assert (len(kappa_random_glass) ==
-                len(gamma_random_glass) == 8)
+        assert len(kappa_random_glass) == len(gamma_random_glass) == 8
         assert isinstance(kappa_random_glass, np.ndarray)
         assert isinstance(gamma_random_glass, np.ndarray)
 
         kappa_tot, gamma_tot = halos_plus_glass(
-            self.kappa,
-            self.gamma,
-            kappa_random_glass,
-            gamma_random_glass
+            self.kappa, self.gamma, kappa_random_glass, gamma_random_glass
         )
-        assert len(kappa_tot) == len(gamma_tot) ==8
+        assert len(kappa_tot) == len(gamma_tot) == 8
         assert isinstance(kappa_tot, (list, np.ndarray))
         assert isinstance(gamma_tot, (list, np.ndarray))
-
 
     def test_run_halos_without_kde(self):
         (
             kappa_run_halos_without_kde,
             gamma_run_halos_without_kde,
-        ) = run_halos_without_kde(n_iterations=2,
-                                  sky_area=0.00003,
-                                  samples_number=5)
+        ) = run_halos_without_kde(n_iterations=2, sky_area=0.00003, samples_number=5)
         assert (
-                len(kappa_run_halos_without_kde) ==
-                len(gamma_run_halos_without_kde) == 10
+            len(kappa_run_halos_without_kde) == len(gamma_run_halos_without_kde) == 10
         )
-        assert isinstance(kappa_run_halos_without_kde,
-                          (list, np.ndarray))
-        assert isinstance(gamma_run_halos_without_kde,
-                          (list, np.ndarray))
+        assert isinstance(kappa_run_halos_without_kde, (list, np.ndarray))
+        assert isinstance(gamma_run_halos_without_kde, (list, np.ndarray))
 
     def test_run_halos_without_kde_by_multiprocessing(self):
         (
             kappa_run_halos_without_kde_by_multiprocessing,
             gamma_run_halos_without_kde_by_multiprocessing,
         ) = run_halos_without_kde_by_multiprocessing(
-            n_iterations=2,
-            sky_area=0.00003,
-            samples_number=5
+            n_iterations=2, sky_area=0.00003, samples_number=5
         )
         assert (
-                len(kappa_run_halos_without_kde_by_multiprocessing)
-                == len(gamma_run_halos_without_kde_by_multiprocessing)
-                == 10
+            len(kappa_run_halos_without_kde_by_multiprocessing)
+            == len(gamma_run_halos_without_kde_by_multiprocessing)
+            == 10
         )
         assert isinstance(
-            kappa_run_halos_without_kde_by_multiprocessing,
-            (list, np.ndarray)
+            kappa_run_halos_without_kde_by_multiprocessing, (list, np.ndarray)
         )
         assert isinstance(
-            gamma_run_halos_without_kde_by_multiprocessing,
-            (list, np.ndarray)
+            gamma_run_halos_without_kde_by_multiprocessing, (list, np.ndarray)
         )
-
 
     def test_run_kappaext_gammaext_kde_by_multiprocessing(self):
-        kappaext_gammaext_values_total =\
-            run_kappaext_gammaext_kde_by_multiprocessing(
-            n_iterations=1,
-            sky_area=0.0001,
-            samples_number=1,
-            z_max=0.3
+        kappaext_gammaext_values_total = run_kappaext_gammaext_kde_by_multiprocessing(
+            n_iterations=1, sky_area=0.0001, samples_number=1, z_max=0.3
         )
         for item in kappaext_gammaext_values_total:
-            assert 'zd' in item and isinstance(item['zd'], (float, int))
-            assert 'zs' in item and isinstance(item['zs'], (float, int))
-            assert 'kappa' in item and isinstance(item['kappa'], (float, int))
-            assert 'gamma' in item and isinstance(item['gamma'], (float, int))
-
+            assert "zd" in item and isinstance(item["zd"], (float, int))
+            assert "zs" in item and isinstance(item["zs"], (float, int))
+            assert "kappa" in item and isinstance(item["kappa"], (float, int))
+            assert "gamma" in item and isinstance(item["gamma"], (float, int))
