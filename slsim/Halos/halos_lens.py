@@ -11,6 +11,38 @@ import multiprocessing
 from collections.abc import Iterable
 
 
+def compute_kappa(args):
+    """Helper function to compute convergence for a given set of arguments.
+
+    Parameters
+    ----------
+    args : tuple
+        A tuple containing parameters needed to compute the convergence for a specific (i, j) point.
+
+    Returns
+    -------
+    i, j, kappa : tuple
+        Returns the indices (i, j) and the computed convergence value or None if the point lies outside the defined sky area.
+    """
+    i, j, X, Y, mask, instance, kwargs, diff, diff_method, lens_model, zdzs = args
+    if mask[i, j]:
+        return (
+            i,
+            j,
+            instance.xy_convergence(
+                x=X[i, j],
+                y=Y[i, j],
+                kwargs=kwargs,
+                diff=diff,
+                diff_method=diff_method,
+                lens_model=lens_model,
+                zdzs=zdzs,
+            ),
+        )
+    else:
+        return i, j, None
+
+
 def deg2_to_cone_angle(solid_angle_deg2):
     """Convert solid angle in square degrees to half cone angle in radians.
 
@@ -103,38 +135,6 @@ def concentration_from_mass(z, mass, A=75.4, d=-0.422, m=-0.089):
     c_200 = np.maximum(c_200, 1)
     return c_200
     # TODO: Make this able for list
-
-
-def compute_kappa(args):
-    """Helper function to compute convergence for a given set of arguments.
-
-    Parameters
-    ----------
-    args : tuple
-        A tuple containing parameters needed to compute the convergence for a specific (i, j) point.
-
-    Returns
-    -------
-    i, j, kappa : tuple
-        Returns the indices (i, j) and the computed convergence value or None if the point lies outside the defined sky area.
-    """
-    i, j, X, Y, mask, instance, kwargs, diff, diff_method, lens_model, zdzs = args
-    if mask[i, j]:
-        return (
-            i,
-            j,
-            instance.xy_convergence(
-                x=X[i, j],
-                y=Y[i, j],
-                kwargs=kwargs,
-                diff=diff,
-                diff_method=diff_method,
-                lens_model=lens_model,
-                zdzs=zdzs,
-            ),
-        )
-    else:
-        return i, j, None
 
 
 class HalosLens(object):
@@ -232,7 +232,7 @@ class HalosLens(object):
             Table containing details of halos, including their redshifts and masses.
         mass_correction_list : table, optional
             Table for mass correction, containing details like redshifts and external convergences.
-            Defaults to None. Ignored if `mass_sheet` is set to False.
+            Defaults to {}. Ignored if `mass_sheet` is set to False.
         cosmo : astropy.Cosmology instance, optional
             Instance specifying the cosmological parameters for lensing computations.
             If not provided, the default astropy cosmology will be used.
@@ -252,18 +252,22 @@ class HalosLens(object):
         samples_number
         mass_sheet
         """
-        if mass_sheet and mass_correction_list is None:
-            warnings.warn("Mass sheet correction is not applied")
+        if mass_correction_list is None:
+            mass_correction_list = {}
+            if mass_sheet:
+                warnings.warn(
+                    "Mass sheet correction is not applied but mass_sheet is set to True."
+                )
+                mass_sheet = False
         if not mass_sheet:
             mass_correction_list = {}
             self.n_correction = 0
             self.mass_sheet_correction_redshift = mass_correction_list.get("z", [])
             #            self.mass_first_moment = mass_correction_list.get("first_moment", [])
             self.mass_sheet_kappa = mass_correction_list.get("kappa", [])
-        else:
+        if mass_sheet:
             self.n_correction = len(mass_correction_list)
             self.mass_sheet_correction_redshift = mass_correction_list["z"]
-            #            D
             self.mass_sheet_kappa = mass_correction_list["kappa"]
         self.z_source = z_source
         self.halos_list = halos_list
@@ -274,16 +278,15 @@ class HalosLens(object):
         self.halos_redshift_list = halos_list["z"]
         self.mass_list = halos_list["mass"]
         self.samples_number = samples_number
-        self._z_source_convention = (
-            5  # if this need to be changed, change it in the halos.py too
-        )
+        self._z_source_convention = 5
+        # todo: z_source_convention set same with halos.py and yml
         if cosmo is None:
             warnings.warn(
                 "No cosmology provided, instead uses astropy.cosmology import default_cosmology"
             )
-            import astropy.cosmology as default_cosmology
+            import astropy.cosmology as cosmology
 
-            self.cosmo = default_cosmology
+            self.cosmo = cosmology.default_cosmology.get()
         else:
             self.cosmo = cosmo
 
@@ -505,7 +508,7 @@ class HalosLens(object):
         gamma : float
             The computed shear at the origin if gamma12 is False.
         """
-        if self.n_halos == 1:
+        if self.n_halos == 1:  # ?
             is_nan = np.isnan(self.halos_list["z"])
             if is_nan:
                 if gamma12:
@@ -632,10 +635,9 @@ class HalosLens(object):
                 kappa_mean = np.mean(kappa_gamma_distribution[:, 0])
                 kappa_gamma_distribution[:, 0] -= kappa_mean
             else:
-                kappa_mean = np.mean(kappa_gamma_distribution[:, 0, 0])
-                kappa_gamma_distribution[:, 0, 0] -= kappa_mean
+                kappa_mean = np.mean(kappa_gamma_distribution[:, 0])
+                kappa_gamma_distribution[:, 0] -= kappa_mean
         return kappa_gamma_distribution
-        # TODO: Maybe considering a choice between multiprocessing and not multiprocessing.
 
     def get_kappa_gamma_distib_without_multiprocessing(
         self, gamma_tot=False, diff=1.0, diff_method="square", listmean=False
@@ -1840,126 +1842,6 @@ class HalosLens(object):
             if enhance_pos:
                 self.enhance_halos_table_random_pos()
 
-    def azimuthal_average_kappa_dict(
-        self,
-        diff=0.0000001,
-        diff_method="square",
-        kwargs=None,
-        lens_model=None,
-        zdzs=None,
-    ):
-        r"""Computes the azimuthal average of convergence (:math:`\kappa`) values over a
-        set of radii.
-
-        Parameters
-        ----------
-        diff : float, optional
-            The differentiation value used in computing convergence. Default is 1e-7.
-        diff_method : str, optional
-            The method used for differentiation in convergence computation. Default is "square".
-        kwargs : dict, optional
-            Keyword arguments for the lens model. If not provided, the halos lens kwargs of the instance are used.
-        lens_model : LensModel instance, optional
-            The lens model to use. If not provided, the lens model from the class instance is utilized.
-
-        zdzs : tuple of float, optional
-            A tuple containing two redshift values (z1, z2). If provided, convergence will be computed based on these redshifts.
-
-        Returns
-        -------
-        all_kappa_dicts : list of dict
-            A list of dictionaries. Each dictionary maps a radius (rounded to 4 decimal places) to its azimuthally averaged convergence value.
-
-        Notes
-        -----
-        The function calculates convergence values for a series of radii, taken as a linear space over the entire sky area (converted to arcseconds). For each radius, a series of x-values are considered and the convergence is computed for two y-values (using a circle's equation).
-
-        After computation, the results are averaged and stored in a dictionary, which is then added to a list that encompasses all sample runs.
-        """
-        radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
-        radii = np.linspace(0, radius_arcsec, 25)
-
-        all_kappa_dicts = []
-        if lens_model is None:
-            lens_model = self.lens_model
-
-        for _ in range(self.samples_number):
-            self.enhance_halos_table_random_pos()
-            if kwargs is None:
-                kwargs = self.get_halos_lens_kwargs()
-
-            kappa_dict = {}
-
-            for r in radii:
-                x_values = np.linspace(-r, r, 25)
-                kappas = []
-
-                for x in x_values:
-                    y1 = np.sqrt(r**2 - x**2)
-                    y2 = -y1
-
-                    kappas.append(
-                        self.xy_convergence(
-                            x, y1, diff, diff_method, kwargs, lens_model, zdzs
-                        )
-                    )
-                    kappas.append(
-                        self.xy_convergence(
-                            x, y2, diff, diff_method, kwargs, lens_model, zdzs
-                        )
-                    )
-
-                kappa_avg = np.mean(kappas)
-                kappa_dict[round(r, 4)] = kappa_avg
-
-            all_kappa_dicts.append(kappa_dict)
-
-        return all_kappa_dicts
-
-    def compute_azimuthal_kappa_in_bins(self):
-        r"""Computes the azimuthal average of convergence values binned by redshift.
-
-        Returns
-        -------
-        all_kappa_dicts : list of dict
-            A list of dictionaries. Each dictionary maps a bin center redshift to its
-            corresponding azimuthally averaged convergence value or 0 if no halos are present in the bin.
-
-        Notes
-        -----
-        The function is designed for calculating the azimuthal mass sheet value.
-        """
-
-        bins = np.arange(0, 5.025, 0.05)  # todo: different zd,zs
-        bin_centers = [round((z1 + z2) / 2, 3) for z1, z2 in zip(bins[:-1], bins[1:])]
-        all_kappa_dicts = []
-        for _ in range(self.samples_number):
-            self.enhance_halos_table_random_pos()
-            # Iterate over the bins
-            kappa_dict = {}
-            for i in range(len(bins) - 1):
-                # Filter halos in the current redshift bin
-                _, halos_ds, _ = self._filter_halos_by_condition(bins[i], bins[i + 1])
-
-                # Since we want halos between zd and zs (in this case, the current bin upper limit)
-                # we will consider halos from halos_ds as those are the ones between zd and zs
-                if len(halos_ds) > 0:
-                    lens_model, lens_cosmo_list, kwargs_lens = self._build_lens_data(
-                        halos_ds, None, zd=0, zs=5
-                    )
-                    kappa = self.azimuthal_average_kappa_dict(
-                        diff=0.0000001,
-                        diff_method="square",
-                        kwargs=kwargs_lens,
-                        lens_model=lens_model,
-                        zdzs=None,
-                    )
-                    kappa_dict[bin_centers[i]] = kappa
-                else:
-                    kappa_dict[bin_centers[i]] = 0
-            all_kappa_dicts.append(kappa_dict)
-        return all_kappa_dicts
-
     def compare_plot_convergence(
         self,
         diff=0.0000001,
@@ -2086,44 +1968,6 @@ class HalosLens(object):
                 dV * self.cosmo.critical_density(z).to_value("Msun/Mpc3")
             )
         return total_mass  # In Msun
-
-    def get_kappa_mean_range(self, diff=1.0, diff_method="square"):
-        kwargs = self.get_halos_lens_kwargs()
-        lens_model = self.lens_model
-        num_points = 50
-        radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
-        x = np.linspace(-radius_arcsec, radius_arcsec, num_points)
-        y = np.linspace(-radius_arcsec, radius_arcsec, num_points)
-        X, Y = np.meshgrid(x, y)
-        mask_2D = X**2 + Y**2 <= radius_arcsec**2
-        mask_1D = mask_2D.ravel()
-
-        # Use lenstronomy utility to make grid
-        x_grid, y_grid = make_grid(
-            numPix=num_points, deltapix=2 * radius_arcsec / num_points
-        )
-        x_grid, y_grid = x_grid[mask_1D], y_grid[mask_1D]
-
-        # Calculate the kappa values
-        kappa_values = lens_model.kappa(
-            x_grid, y_grid, kwargs, diff=diff, diff_method=diff_method
-        )
-
-        kappa_mean = np.mean(kappa_values)
-        kappa_std = np.std(kappa_values)
-        kappa_2sigma = 2 * kappa_std
-        return kappa_mean, kappa_2sigma
-
-    def get_kappa_mass_relation(self, diff=1.0, diff_method="square"):
-        kappa_mean, kappa_2sigma = self.get_kappa_mean_range(
-            diff=diff, diff_method=diff_method
-        )
-        mass = self.total_halo_mass()
-        mass_divide_kcrit = self.mass_divide_kcrit()
-        mass_divide_kcrit_tot = np.sum(mass_divide_kcrit)
-        if mass_divide_kcrit_tot > 5.0:
-            mass_divide_kcrit_tot = 5.1
-        return kappa_mean, kappa_2sigma, mass, mass_divide_kcrit_tot
 
     def enhance_halos_pos_to0(self):
         n_halos = self.n_halos

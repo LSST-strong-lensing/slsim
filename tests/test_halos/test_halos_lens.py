@@ -69,6 +69,31 @@ def setup_halos_lens():
 
 
 @pytest.fixture
+def setup_no_halos():
+    z = [np.nan]
+
+    mass = [np.nan]
+
+    halos = Table([z, mass], names=("z", "mass"))
+
+    z_correction = [0.5]
+    kappa_ext_correction = [-0.1]
+    mass_sheet_correction = Table(
+        [z_correction, kappa_ext_correction], names=("z", "kappa")
+    )
+
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    return HalosLens(
+        halos_list=halos,
+        mass_correction_list=mass_sheet_correction,
+        sky_area=0.0001,
+        cosmo=cosmo,
+        samples_number=1,
+        mass_sheet=True,
+    )
+
+
+@pytest.fixture
 def setup_mass_sheet_false():
     z = [0.5, 0.6]
 
@@ -102,6 +127,31 @@ def set_matplotlib_backend():
     # for test_plot_convergence not to show plot
 
 
+@pytest.fixture
+def setup_halos_lens_large_sample_number():
+    z = [0.5, 0.7]
+
+    mass = [2058751081954.2866, 850000000000.0]
+
+    halos = Table([z, mass], names=("z", "mass"))
+
+    z_correction = [0.5]
+    kappa_ext_correction = [-0.1]
+    mass_sheet_correction = Table(
+        [z_correction, kappa_ext_correction], names=("z", "kappa")
+    )
+
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    return HalosLens(
+        halos_list=halos,
+        mass_correction_list=mass_sheet_correction,
+        sky_area=0.0001,
+        cosmo=cosmo,
+        samples_number=2500,
+        mass_sheet=True,
+    )
+
+
 def test_init(setup_halos_lens):
     hl = setup_halos_lens
     assert hl.n_halos == 3
@@ -127,10 +177,14 @@ def test_get_lens_model_mass_sheet_false(setup_mass_sheet_false):
     assert lens_model2.lens_model_list == ["NFW", "NFW"]
 
 
-def test_get_halos_lens_kwargs(setup_halos_lens):
+def test_get_halos_lens_kwargs(setup_halos_lens, setup_mass_sheet_false):
     hl = setup_halos_lens
     kwargs_lens = hl.get_halos_lens_kwargs()
     assert len(kwargs_lens) == 4
+
+    hl2 = setup_mass_sheet_false
+    kwargs_lens2 = hl2.get_halos_lens_kwargs()
+    assert len(kwargs_lens2) == 2
 
 
 def test_get_nfw_kwargs(setup_halos_lens):
@@ -140,7 +194,7 @@ def test_get_nfw_kwargs(setup_halos_lens):
     assert len(alpha_Rs) == 3
 
 
-def test_get_convergence_shear(setup_halos_lens):
+def test_get_convergence_shear(setup_halos_lens, setup_no_halos):
     hl = setup_halos_lens
 
     # Testing without gamma12
@@ -153,6 +207,15 @@ def test_get_convergence_shear(setup_halos_lens):
     assert isinstance(kappa, float)
     assert isinstance(gamma1, float)
     assert isinstance(gamma2, float)
+
+    kappa, gamma = setup_no_halos.get_convergence_shear()
+    assert kappa == 0
+    assert gamma == 0
+
+    kappa, gamma1, gamma2 = setup_no_halos.get_convergence_shear(gamma12=True)
+    assert kappa == 0
+    assert gamma1 == 0
+    assert gamma2 == 0
 
 
 def test_compute_kappa_gamma(setup_halos_lens):
@@ -173,7 +236,7 @@ def test_compute_kappa_gamma(setup_halos_lens):
         assert isinstance(res, float)
 
 
-def test_get_kappa_gamma_distib(setup_halos_lens):
+def test_get_kappa_gamma_distib(setup_halos_lens, setup_halos_lens_large_sample_number):
     hl = setup_halos_lens
     results = hl.get_kappa_gamma_distib()
     assert results.shape[0] == hl.samples_number
@@ -183,8 +246,22 @@ def test_get_kappa_gamma_distib(setup_halos_lens):
     assert results.shape[0] == hl.samples_number
     assert results.shape[1] == 2  # kappa, gamma
 
+    results = hl.get_kappa_gamma_distib(gamma_tot=True, listmean=True)
+    assert results.shape[0] == hl.samples_number
+    assert results.shape[1] == 2  # kappa, gamma
 
-def test_get_kappa_gamma_distib_without_multiprocessing(setup_halos_lens):
+    results = hl.get_kappa_gamma_distib(gamma_tot=False, listmean=True)
+    assert results.shape[0] == hl.samples_number
+    assert results.shape[1] == 3  # kappa, gamma1, gamma2
+
+    hl2 = setup_halos_lens_large_sample_number
+    results2 = hl2.get_kappa_gamma_distib()
+    assert len(results2) == 2500
+
+
+def test_get_kappa_gamma_distib_without_multiprocessing(
+    setup_halos_lens, setup_halos_lens_large_sample_number
+):
     hl = setup_halos_lens
     results = hl.get_kappa_gamma_distib_without_multiprocessing()
     assert results.shape[0] == hl.samples_number
@@ -193,6 +270,11 @@ def test_get_kappa_gamma_distib_without_multiprocessing(setup_halos_lens):
     results = hl.get_kappa_gamma_distib_without_multiprocessing(gamma_tot=True)
     assert results.shape[0] == hl.samples_number
     assert results.shape[1] == 2  # kappa, gamma
+
+    hl2 = setup_halos_lens_large_sample_number
+    results2 = hl2.get_kappa_gamma_distib_without_multiprocessing(gamma_tot=True)
+    assert results2.shape[0] == hl2.samples_number
+    assert results2.shape[1] == 2  # kappa, gamma
 
 
 def test_filter_halos_by_redshift(setup_halos_lens):
@@ -211,7 +293,7 @@ def test_filter_halos_by_redshift(setup_halos_lens):
     assert all(isinstance(item, dict) for item in lens_data_ds[2])
 
 
-def test__filter_halos_by_condition(setup_halos_lens):
+def test_filter_halos_by_condition(setup_halos_lens):
     hl = setup_halos_lens
     zd = 0.5
     zs = 1.0
@@ -340,13 +422,23 @@ def test_get_kext_gext_values(setup_halos_lens):
     assert 0 <= gext
 
 
-def test_get_kappaext_gammaext_distib_zdzs(setup_halos_lens):
+def test_get_kappaext_gammaext_distib_zdzs(
+    setup_halos_lens, setup_halos_lens_large_sample_number
+):
     hl = setup_halos_lens
     zd = 0.5
     zs = 1.0
     kappa_gamma_distribution = hl.get_kappaext_gammaext_distib_zdzs(zd, zs)
 
     assert kappa_gamma_distribution.shape == (hl.samples_number, 2)
+
+    hl2 = setup_halos_lens_large_sample_number
+    kappa_gamma_distribution2 = hl2.get_kappaext_gammaext_distib_zdzs(zd, zs)
+    assert kappa_gamma_distribution2.shape == (hl2.samples_number, 2)
+
+    k_g_distribution = hl.get_kappaext_gammaext_distib_zdzs(zd, zs, listmean=True)
+    assert k_g_distribution.shape == (hl.samples_number, 2)
+    assert k_g_distribution[0][0] == 0
 
 
 def test_generate_distributions_0to5(setup_halos_lens):
@@ -359,6 +451,13 @@ def test_generate_distributions_0to5(setup_halos_lens):
         assert "zs" in entry and isinstance(entry["zs"], float)
         assert "kappa" in entry and isinstance(entry["kappa"], float)
         assert "gamma" in entry and isinstance(entry["gamma"], float)
+
+    distributions2 = hl.generate_distributions_0to5(output_format="vector")
+    assert isinstance(distributions2, list)
+
+    pytest.raises(
+        ValueError, hl.generate_distributions_0to5, output_format="wrong_format"
+    )
 
 
 def test_xy_convergence(setup_halos_lens):
@@ -377,7 +476,7 @@ def test_plot_convergence(setup_halos_lens):
     hl = setup_halos_lens
     try:
         hl.plot_convergence()
-    # hl.compare_plot_convergence()
+        hl.compare_plot_convergence()
     except Exception as e:
         pytest.fail(f"plot_convergence failed with an exception: {e}")
 
@@ -397,3 +496,110 @@ def test_total_critical_mass(setup_halos_lens):
     assert isinstance(mass2, float)
     ratio = mass1 / mass2
     assert ratio == pytest.approx(1, rel=0.01)
+
+
+def test_compute_various_kappa_gamma_values(
+    setup_halos_lens, setup_halos_lens_large_sample_number
+):
+    hl = setup_halos_lens
+    zd = 0.5
+    zs = 1.0
+    (
+        kappa_od,
+        kappa_os,
+        gamma_od1,
+        gamma_od2,
+        gamma_os1,
+        gamma_os2,
+        kappa_ds,
+        gamma_ds1,
+        gamma_ds2,
+    ) = hl.compute_various_kappa_gamma_values(zd, zs)
+    assert isinstance(kappa_od, float)
+    assert isinstance(kappa_os, float)
+    assert isinstance(gamma_od1, float)
+    assert isinstance(gamma_od2, float)
+    assert isinstance(gamma_os1, float)
+    assert isinstance(gamma_os2, float)
+    assert isinstance(kappa_ds, float)
+    assert isinstance(gamma_ds1, float)
+    assert isinstance(gamma_ds2, float)
+
+    kappa_gamma_distribution, lens_instance = hl.get_alot_distib_(zd, zs)
+    assert isinstance(kappa_gamma_distribution, np.ndarray)
+    assert isinstance(lens_instance, np.ndarray)
+
+    hl2 = setup_halos_lens_large_sample_number
+    kappa_gamma_distribution2, lens_instance2 = hl2.get_alot_distib_(zd, zs)
+    assert isinstance(kappa_gamma_distribution2, np.ndarray)
+    assert isinstance(lens_instance2, np.ndarray)
+
+    all_kappa_dicts = hl.compute_kappa_in_bins()
+    assert isinstance(all_kappa_dicts, list)
+
+
+def test_compute_kappa(setup_halos_lens, setup_mass_sheet_false):
+    hl1 = setup_halos_lens
+    hl2 = setup_mass_sheet_false
+
+    kappa_image, kappa_values = hl1.compute_kappa()
+    kappa_image2, kappa_values2 = hl2.compute_kappa(enhance_pos=True)
+
+    assert isinstance(kappa_image, np.ndarray)
+    assert isinstance(kappa_values, np.ndarray)
+    assert isinstance(kappa_image2, np.ndarray)
+    assert isinstance(kappa_values2, np.ndarray)
+
+
+def test_setting():
+    z = [0.5, 0.6]
+
+    mass = [2058751081954.2866, 1320146153348.6448]
+
+    halos = Table([z, mass], names=("z", "mass"))
+
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    with pytest.warns(Warning, match=r".*mass_sheet is set to True.*"):
+        HalosLens(
+            halos_list=halos,
+            mass_correction_list=None,
+            sky_area=0.0001,
+            cosmo=cosmo,
+            samples_number=1,
+            mass_sheet=True,
+        )
+    with pytest.warns(Warning, match=r".*default_cosmology*"):
+        HalosLens(
+            halos_list=halos,
+            mass_correction_list=None,
+            sky_area=0.0001,
+            samples_number=1,
+            mass_sheet=False,
+        )
+
+
+def test_sets_halos_coordinates_to_zero():
+    z = [0.5, 0.6, 0.7]
+
+    mass = [2058751081954.2866, 1320146153348.6448, 850000000000.0]
+
+    halos = Table([z, mass], names=("z", "mass"))
+
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    halos_lens = HalosLens(halos_list=halos, cosmo=cosmo)
+    halos_lens.enhance_halos_pos_to0()
+    assert np.all(halos_lens.halos_list["px"] == 0)
+    assert np.all(halos_lens.halos_list["py"] == 0)
+
+
+def test_mass_divide_kcrit():
+    z = [0.5, 0.6, 0.7]
+
+    mass = [2058754.2866, 132013348.6448, 8000000000.0]
+
+    halos = Table([z, mass], names=("z", "mass"))
+
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    halos_lens = HalosLens(halos_list=halos, cosmo=cosmo)
+    mass_divide_kcrit = halos_lens.mass_divide_kcrit()
+    assert len(mass_divide_kcrit) == 3

@@ -80,6 +80,11 @@ def test_halo_mass_at_z():
     mass_list2 = halo_mass_at_z(z=z_list, resolution=100)
     assert len(mass_list2) == 3
 
+    z_list3 = [np.nan, np.nan]
+    mass_list3 = halo_mass_at_z(z=z_list3, resolution=100)
+    assert len(mass_list3) == 2
+    assert mass_list3 == [0, 0]
+
 
 def test_number_density_at_redshift():
     z = 0.5
@@ -94,6 +99,12 @@ def test_number_density_at_redshift():
     CDF2 = number_density_at_redshift(z=z2)
     assert len(CDF2) == 3
     assert CDF2[0] > CDF2[2]
+
+    z3 = np.array([np.nan, np.nan])
+    with pytest.warns(Warning, match=r".*data lost*"):
+        CDF3 = number_density_at_redshift(z=z3)
+    assert len(CDF3) == 2
+    assert CDF3 == [0.0001, 0.0001]
 
 
 def test_growth_factor_at_redshift():
@@ -199,6 +210,16 @@ def test_redshift_halos_array_from_comoving_density():
     )
     assert isinstance(result, np.ndarray)
     assert len(result) > 1
+    with pytest.warns(Warning, match=r".*default*"):
+        redshift_halos_array_from_comoving_density(redshift_list, sky_area)
+    with pytest.warns(Warning, match=r".*No Halos*"):
+        redshift_list_small = [0.1, 0.2, 0.3]
+        sky_area_small = 0.0000001 * units.deg**2
+        m_min_no_h = 1e16
+        m_max_no_h = 1e17
+        redshift_halos_array_from_comoving_density(
+            redshift_list_small, sky_area_small, cosmology, m_min_no_h, m_max_no_h
+        )
 
 
 def test_redshift_mass_sheet_correction_array():
