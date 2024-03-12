@@ -4,7 +4,6 @@ import astropy.units as u
 from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 import warnings
-from tqdm.notebook import tqdm
 import math
 import time
 import multiprocessing
@@ -674,8 +673,6 @@ class HalosLens(object):
         )
 
         loop = range(self.samples_number)
-        if self.samples_number > 999:
-            loop = tqdm(loop)
 
         start_time = time.time()
 
@@ -1357,15 +1354,12 @@ class HalosLens(object):
 
         Notes
         -----
-        The progress is shown with a tqdm progress bar if the number of samples exceeds 999.
         The total elapsed time for computing weak-lensing maps is printed at the end.
         """
 
         kappa_gamma_distribution = np.empty((self.samples_number, 2))
 
         loop = range(self.samples_number)
-        if self.samples_number > 999:
-            loop = tqdm(loop)
 
         start_time = time.time()
 
@@ -1555,7 +1549,6 @@ class HalosLens(object):
 
         Notes
         -----
-        The progress is shown with a tqdm progress bar if the number of samples exceeds 999.
         The total elapsed time for computing weak-lensing maps is printed at the end.
         """
 
@@ -1563,8 +1556,6 @@ class HalosLens(object):
         lens_instance = np.empty((self.samples_number, 2), dtype=object)
 
         loop = range(self.samples_number)
-        if self.samples_number > 999:
-            loop = tqdm(loop)
 
         start_time = time.time()
 
