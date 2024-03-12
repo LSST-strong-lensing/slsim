@@ -12,7 +12,7 @@ from slsim.Halos.halos_plus_glass import (
     run_certain_redshift_lensext_kde_by_multiprocessing,
     run_certain_redshift_many_by_multiprocessing,
     run_total_kappa_by_multiprocessing,
-    run_total_mass_by_multiprocessing
+    run_total_mass_by_multiprocessing,
 )
 import os
 import numpy as np
@@ -107,7 +107,7 @@ class Testhalosplusglass(object):
             gamma_run_halos_without_kde,
         ) = run_halos_without_kde(n_iterations=2, sky_area=0.00003, samples_number=5)
         assert (
-                len(kappa_run_halos_without_kde) == len(gamma_run_halos_without_kde) == 10
+            len(kappa_run_halos_without_kde) == len(gamma_run_halos_without_kde) == 10
         )
         assert isinstance(kappa_run_halos_without_kde, (list, np.ndarray))
         assert isinstance(gamma_run_halos_without_kde, (list, np.ndarray))
@@ -115,12 +115,14 @@ class Testhalosplusglass(object):
         (
             kappa_run_halos_without_kde2,
             gamma_run_halos_without_kde2,
-        ) = run_halos_without_kde(n_iterations=2,
-                                  sky_area=0.00003,
-                                  samples_number=5,
-                                  mass_sheet_correction=False)
+        ) = run_halos_without_kde(
+            n_iterations=2,
+            sky_area=0.00003,
+            samples_number=5,
+            mass_sheet_correction=False,
+        )
         assert (
-                len(kappa_run_halos_without_kde2) == len(gamma_run_halos_without_kde2) == 10
+            len(kappa_run_halos_without_kde2) == len(gamma_run_halos_without_kde2) == 10
         )
 
     def test_run_halos_without_kde_by_multiprocessing(self):
@@ -131,9 +133,9 @@ class Testhalosplusglass(object):
             n_iterations=2, sky_area=0.00003, samples_number=5
         )
         assert (
-                len(kappa_run_halos_without_kde_by_multiprocessing)
-                == len(gamma_run_halos_without_kde_by_multiprocessing)
-                == 10
+            len(kappa_run_halos_without_kde_by_multiprocessing)
+            == len(gamma_run_halos_without_kde_by_multiprocessing)
+            == 10
         )
         assert isinstance(
             kappa_run_halos_without_kde_by_multiprocessing, (list, np.ndarray)

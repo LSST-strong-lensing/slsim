@@ -41,12 +41,16 @@ def read_glass_data(file_name="kgdata.npy"):
     Returns:
         tuple: A tuple containing two numpy arrays for kappa and gamma values and nside of the data.
     """
+
     def read_data_file(file_name):
         try:
             data = np.load(file_name)
             return data
         except FileNotFoundError:
-            raise ValueError(f'Error: The file {file_name} could not be read. Please check the file path and try again.')
+            raise ValueError(
+                f"Error: The file {file_name} could not be read. Please check the file path and try again."
+            )
+
     data_array = read_data_file(file_name)
     kappa_values = data_array[:, 0]
     gamma_values = data_array[:, 1]

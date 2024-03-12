@@ -13,11 +13,15 @@ def test_initializes_with_default_data_paths():
     line_of_sight = LineOfSightDistribution()
     assert line_of_sight.no_nonlinear_correction_data is not None
 
-    get_kappa_gamma = line_of_sight.get_kappa_gamma(0.5, 0.3, use_nonlinear_correction=False)
+    get_kappa_gamma = line_of_sight.get_kappa_gamma(
+        0.5, 0.3, use_nonlinear_correction=False
+    )
     assert isinstance(get_kappa_gamma, tuple)
     assert len(get_kappa_gamma) == 2
 
-    get_kappa_gamma = line_of_sight.get_kappa_gamma(0.5, 0.3, use_nonlinear_correction=True)
+    get_kappa_gamma = line_of_sight.get_kappa_gamma(
+        0.5, 0.3, use_nonlinear_correction=True
+    )
     assert isinstance(get_kappa_gamma, tuple)
     assert len(get_kappa_gamma) == 2
 
@@ -41,19 +45,36 @@ def test_valid_inputs():
     assert isinstance(result[1], float)
 
 
-def test_invaild():
+def test_invalid():
     with pytest.raises(FileNotFoundError):
-        LineOfSightDistribution(nonlinear_correction_path='wrong', no_correction_path='wrong')
+        LineOfSightDistribution(
+            nonlinear_correction_path="wrong", no_correction_path="wrong"
+        )
 
     current_script_path = os.path.abspath(__file__)
     current_directory = os.path.dirname(current_script_path)
     parent_directory = os.path.dirname(current_directory)
     file_path = os.path.join(parent_directory, "tests/TestData/empty_file.h5")
 
-    los2 = LineOfSightDistribution(nonlinear_correction_path=file_path,
-                                   no_correction_path=file_path)
+    los2 = LineOfSightDistribution(
+        nonlinear_correction_path=file_path, no_correction_path=file_path
+    )
     assert los2.correction_data == {}
-    assert (los2.no_nonlinear_correction_data == {})
+    assert los2.no_nonlinear_correction_data == {}
 
     with pytest.raises(ValueError):
         los2.get_kappa_gamma(0.5, 0.3)
+
+    assert los2.correction_data == {}
+    assert los2.no_nonlinear_correction_data == {}
+
+
+@pytest.fixture(autouse=True)
+def reset_line_of_sight():
+    LineOfSightDistribution.correction_data = None
+    LineOfSightDistribution.no_nonlinear_correction_data = None
+
+    yield
+
+    LineOfSightDistribution.correction_data = None
+    LineOfSightDistribution.no_nonlinear_correction_data = None
