@@ -72,7 +72,7 @@ def setup_halos_lens():
 def setup_no_halos():
     z = [np.nan]
 
-    mass = [np.nan]
+    mass = [0]
 
     halos = Table([z, mass], names=("z", "mass"))
 
@@ -193,6 +193,8 @@ def test_get_nfw_kwargs(setup_halos_lens):
     assert len(Rs_angle) == 3
     assert len(alpha_Rs) == 3
 
+    assert ([], []) == hl.get_nfw_kwargs(n_halos=0)
+
 
 def test_get_convergence_shear(setup_halos_lens, setup_no_halos):
     hl = setup_halos_lens
@@ -271,6 +273,16 @@ def test_get_kappa_gamma_distib_without_multiprocessing(
     assert results.shape[0] == hl.samples_number
     assert results.shape[1] == 2  # kappa, gamma
 
+    results2 = hl.get_kappa_gamma_distib_without_multiprocessing(
+        gamma_tot=True, listmean=True
+    )
+    assert results2.shape[0] == hl.samples_number
+
+    results2 = hl.get_kappa_gamma_distib_without_multiprocessing(
+        gamma_tot=False, listmean=True
+    )
+    assert results2.shape[0] == hl.samples_number
+
     hl2 = setup_halos_lens_large_sample_number
     results2 = hl2.get_kappa_gamma_distib_without_multiprocessing(gamma_tot=True)
     assert results2.shape[0] == hl2.samples_number
@@ -292,6 +304,8 @@ def test_filter_halos_by_redshift(setup_halos_lens):
     assert isinstance(lens_data_ds[2], list)
     assert all(isinstance(item, dict) for item in lens_data_ds[2])
 
+    pytest.raises(ValueError, hl.filter_halos_by_redshift, 0.5, 0.4)
+
 
 def test_filter_halos_by_condition(setup_halos_lens):
     hl = setup_halos_lens
@@ -303,7 +317,7 @@ def test_filter_halos_by_condition(setup_halos_lens):
     assert all(h["z"] < zs for h in halos_os)
 
 
-def test_filter_mass_correction_by_condition(setup_halos_lens):
+def test_filter_mass_correction_by_condition(setup_halos_lens, setup_mass_sheet_false):
     hl = setup_halos_lens
     zd = 0.5
     zs = 1.0
@@ -318,6 +332,9 @@ def test_filter_mass_correction_by_condition(setup_halos_lens):
         assert all(zd <= h["z"] < zs for h in mass_correction_ds)
     if mass_correction_os is not None:
         assert all(h["z"] < zs for h in mass_correction_os)
+
+    hl2 = setup_mass_sheet_false
+    assert (None, None, None) == hl2._filter_mass_correction_by_condition(0.5, 1.0)
 
 
 def test_build_lens_data(setup_halos_lens):
@@ -481,11 +498,15 @@ def test_plot_convergence(setup_halos_lens):
         pytest.fail(f"plot_convergence failed with an exception: {e}")
 
 
-def test_total_mass(setup_halos_lens):
+def test_total_mass(setup_halos_lens, setup_no_halos):
     hl = setup_halos_lens
     mass = hl.total_halo_mass()
     assert isinstance(mass, float)
     assert mass == (2058751081954.2866 + 1320146153348.6448 + 850000000000.0)
+
+    hl2 = setup_no_halos
+    mass2 = hl2.total_halo_mass()
+    assert mass2 == 0
 
 
 def test_total_critical_mass(setup_halos_lens):

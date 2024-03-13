@@ -1,4 +1,5 @@
 from slsim.Pipelines.halos_pipeline import HalosSkyPyPipeline
+from astropy.cosmology import default_cosmology
 
 
 class TestHalosSkyPyPipeline(object):
@@ -12,3 +13,11 @@ class TestHalosSkyPyPipeline(object):
         halos = self.pipeline.halos
         assert halos[0]["z"] > 0
         assert halos[0]["mass"] != halos[1]["mass"]
+
+
+def test_cosmology_initialization():
+    sky_area = 0.001
+    galaxy_cosmo0 = default_cosmology.get()
+    pipeline0 = HalosSkyPyPipeline(cosmo=galaxy_cosmo0, sky_area=sky_area)
+    halos0 = pipeline0.halos
+    assert halos0[0]["z"] > 0

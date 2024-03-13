@@ -10,38 +10,6 @@ import multiprocessing
 from collections.abc import Iterable
 
 
-def compute_kappa(args):
-    """Helper function to compute convergence for a given set of arguments.
-
-    Parameters
-    ----------
-    args : tuple
-        A tuple containing parameters needed to compute the convergence for a specific (i, j) point.
-
-    Returns
-    -------
-    i, j, kappa : tuple
-        Returns the indices (i, j) and the computed convergence value or None if the point lies outside the defined sky area.
-    """
-    i, j, X, Y, mask, instance, kwargs, diff, diff_method, lens_model, zdzs = args
-    if mask[i, j]:
-        return (
-            i,
-            j,
-            instance.xy_convergence(
-                x=X[i, j],
-                y=Y[i, j],
-                kwargs=kwargs,
-                diff=diff,
-                diff_method=diff_method,
-                lens_model=lens_model,
-                zdzs=zdzs,
-            ),
-        )
-    else:
-        return i, j, None
-
-
 def deg2_to_cone_angle(solid_angle_deg2):
     """Convert solid angle in square degrees to half cone angle in radians.
 
@@ -272,7 +240,10 @@ class HalosLens(object):
         self.halos_list = halos_list
         self.mass_correction_list = mass_correction_list
         self.mass_sheet = mass_sheet
-        self.n_halos = len(self.halos_list)
+        if np.isnan(halos_list["z"][0]) and len(halos_list) == 1:
+            self.n_halos = 0
+        else:
+            self.n_halos = len(self.halos_list)
         self.sky_area = sky_area
         self.halos_redshift_list = halos_list["z"]
         self.mass_list = halos_list["mass"]
@@ -327,11 +298,14 @@ class HalosLens(object):
 
     def enhance_halos_table_random_pos(self):
         n_halos = self.n_halos
-        px, py = np.array([self.random_position() for _ in range(n_halos)]).T
-
-        # Adding the computed attributes to the halos table
-        self.halos_list["px"] = px
-        self.halos_list["py"] = py
+        if n_halos == 0:
+            self.halos_list["px"] = 0.0
+            self.halos_list["py"] = 0.0
+        else:
+            px, py = np.array([self.random_position() for _ in range(n_halos)]).T
+            # Adding the computed attributes to the halos table
+            self.halos_list["px"] = px
+            self.halos_list["py"] = py
 
     def get_lens_model(self):
         """Create a lens model using provided halos and optional mass sheet correction.
@@ -507,7 +481,7 @@ class HalosLens(object):
         gamma : float
             The computed shear at the origin if gamma12 is False.
         """
-        if self.n_halos == 1:  # ?
+        if self.n_halos == 0:
             is_nan = np.isnan(self.halos_list["z"])
             if is_nan:
                 if gamma12:
@@ -694,8 +668,8 @@ class HalosLens(object):
                 )
                 kappa_gamma_distribution[i] = [kappa, gamma1, gamma2]
             if listmean:
-                kappa_mean = np.mean(kappa_gamma_distribution[:, 0, 0])
-                kappa_gamma_distribution[:, 0, 0] -= kappa_mean
+                kappa_mean = np.mean(kappa_gamma_distribution[:, 0])
+                kappa_gamma_distribution[:, 0] -= kappa_mean
 
         if self.samples_number > 999:
             elapsed_time = time.time() - start_time
@@ -938,32 +912,6 @@ class HalosLens(object):
             lens_cosmo_list,
         )
         return lens_model, lens_cosmo_list, kwargs_lens
-
-    def kappa_ext_for_mass_sheet(self, z, lens_cosmo, first_moment):
-        """Deprecated."""
-        cone_opening_angle = deg2_to_cone_angle(self.sky_area)
-        # TODO: make it possible for other geometry model
-        area = []
-        sigma_crit = []
-        for i in range(len(lens_cosmo)):
-            sigma_crit.append(lens_cosmo[i].sigma_crit)
-
-        for z_val in z:
-            area_val = cone_radius_angle_to_physical_area(
-                cone_opening_angle, z_val, self.cosmo
-            )
-            area.append(area_val)
-        area_values = [a.value for a in area]
-        if isinstance(first_moment[0], np.void):
-            first_moment_values = [entry["first_moment"] for entry in first_moment]
-        else:
-            first_moment_values = first_moment
-        first_moment_d_area = np.divide(
-            np.array(first_moment_values), np.array(area_values)
-        )
-        kappa_ext = np.divide(first_moment_d_area, sigma_crit)
-        assert kappa_ext.ndim == 1
-        return -kappa_ext
 
     def _build_lens_cosmo_dict(self, combined_redshift_list, z_source):
         """Constructs a dictionary mapping each redshift to its corresponding LensCosmo
@@ -1907,9 +1855,11 @@ class HalosLens(object):
         -----
         The total mass is computed by summing up all the entries in the `mass_list` attribute of the class instance.
         """
-
-        mass_list = self.mass_list
-        return np.sum(mass_list)
+        if self.n_halos == 0:
+            return 0.0
+        else:
+            mass_list = self.mass_list
+            return np.sum(mass_list)
 
     def total_critical_mass(self, method="differential_comoving_volume"):
         """Computes the total critical mass within a given sky area up to a redshift of

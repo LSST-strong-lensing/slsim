@@ -13,6 +13,12 @@ from slsim.Halos.halos_plus_glass import (
     run_certain_redshift_many_by_multiprocessing,
     run_total_kappa_by_multiprocessing,
     run_total_mass_by_multiprocessing,
+    worker_run_total_kappa_by_multiprocessing,
+    worker_run_total_mass_by_multiprocessing,
+    worker_certain_redshift_many,
+    worker_certain_redshift_lensext_kde,
+    worker_kappaext_gammaext_kde,
+    worker_run_halos_without_kde,
 )
 import os
 import numpy as np
@@ -144,6 +150,15 @@ class Testhalosplusglass(object):
             gamma_run_halos_without_kde_by_multiprocessing, (list, np.ndarray)
         )
 
+        (
+            kappa2,
+            gamma2,
+        ) = run_halos_without_kde_by_multiprocessing(
+            n_iterations=35, sky_area=0.00003, samples_number=2
+        )
+        assert isinstance(kappa2, (list, np.ndarray))
+        assert isinstance(gamma2, (list, np.ndarray))
+
     def test_run_kappaext_gammaext_kde_by_multiprocessing(self):
         kappaext_gammaext_values_total = run_kappaext_gammaext_kde_by_multiprocessing(
             n_iterations=1, sky_area=0.0001, samples_number=1, z_max=0.3
@@ -188,3 +203,210 @@ def test_convergence_mean_0():
     kappa_data3 = np.array([1, 2, 3, 4, 5])
     adjusted_kappa_data3 = convergence_mean_0(kappa_data3)
     assert isinstance(adjusted_kappa_data3, np.ndarray)
+
+
+def test_worker_run_total_kappa_by_multiprocessing():
+    iter_num = 1
+    sky_area = 0.0001
+    diff = 0.0000001
+    num_points = 500
+    diff_method = "square"
+    m_min = 1.0e12
+    m_max = 1.0e16
+    z_max = 5.0
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+
+    result = worker_run_total_kappa_by_multiprocessing(
+        iter_num,
+        sky_area,
+        diff,
+        num_points,
+        diff_method,
+        m_min,
+        m_max,
+        z_max,
+        cosmo,
+    )
+
+    assert isinstance(result, float)
+
+
+def test_worker_run_total_mass_by_multiprocessing():
+    iter_num = 1
+    sky_area = 0.001
+    m_min = 1e13
+    m_max = 1e15
+    z_max = 5.0
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    total_mass = worker_run_total_mass_by_multiprocessing(
+        iter_num, sky_area, m_min, m_max, z_max, cosmo
+    )
+    assert isinstance(total_mass, float)
+
+
+def test_worker_certain_redshift_many():
+    iter_num = 0
+    sky_area = 0.0001
+    m_min = 1.0e12
+    m_max = 1.0e16
+    z_max = 5.0
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    samples_number = 1
+    zs = 1.5
+    zd = 1.0
+    distributions, lensinstance = worker_certain_redshift_many(
+        iter_num,
+        sky_area,
+        m_min,
+        m_max,
+        z_max,
+        cosmo,
+        samples_number,
+        True,
+        zs,
+        zd,
+    )
+    distributions2, lensinstance2 = worker_certain_redshift_many(
+        iter_num,
+        sky_area,
+        m_min,
+        m_max,
+        z_max,
+        cosmo,
+        samples_number,
+        False,
+        zs,
+        zd,
+    )
+    assert isinstance(distributions, np.ndarray)
+    assert isinstance(lensinstance, np.ndarray)
+    assert isinstance(distributions2, np.ndarray)
+    assert isinstance(lensinstance2, np.ndarray)
+
+
+def test_worker_certain_redshift_lensext_kde():
+    iter_num = 0
+    sky_area = 0.0001
+    m_min = 1.0e12
+    m_max = 1.0e16
+    z_max = 5.0
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    samples_number = 1
+    zs = 1.5
+    zd = 1.0
+    listmean = False
+
+    distributions = worker_certain_redshift_lensext_kde(
+        iter_num,
+        sky_area,
+        m_min,
+        m_max,
+        z_max,
+        cosmo,
+        samples_number,
+        True,
+        zs,
+        zd,
+        listmean,
+    )
+
+    distributions2 = worker_certain_redshift_lensext_kde(
+        iter_num,
+        sky_area,
+        m_min,
+        m_max,
+        z_max,
+        cosmo,
+        samples_number,
+        False,
+        zs,
+        zd,
+        listmean,
+    )
+
+    assert isinstance(distributions, np.ndarray)
+    assert isinstance(distributions2, np.ndarray)
+
+
+def test_worker_kappaext_gammaext_kde():
+    iter_num = 0
+    sky_area = 0.0001
+    m_min = 1.0e15
+    m_max = 1.0e16
+    z_max = 0.3
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    samples_number = 1
+    listmean = False
+    output_format = "dict"
+
+    distributions = worker_kappaext_gammaext_kde(
+        iter_num,
+        sky_area,
+        m_min,
+        m_max,
+        z_max,
+        cosmo,
+        samples_number,
+        True,
+        listmean,
+        output_format,
+    )
+
+    distributions2 = worker_kappaext_gammaext_kde(
+        iter_num,
+        sky_area,
+        m_min,
+        m_max,
+        z_max,
+        cosmo,
+        samples_number,
+        False,
+        listmean,
+        output_format,
+    )
+
+    assert isinstance(distributions, list)
+    assert isinstance(distributions[0], dict)
+
+    assert isinstance(distributions2, list)
+    assert isinstance(distributions2[0], dict)
+
+
+def test_worker_run_halos_without_kde():
+    iter_num = 1
+    sky_area = 0.0001
+    m_min = 1.0e14
+    m_max = 1.0e16
+    z_max = 5.0
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    samples_number = 2
+    listmean = False
+
+    nkappa, ngamma = worker_run_halos_without_kde(
+        iter_num,
+        sky_area,
+        m_min,
+        m_max,
+        z_max,
+        cosmo,
+        samples_number,
+        True,
+        listmean,
+    )
+
+    nkappa2, ngamma2 = worker_run_halos_without_kde(
+        iter_num,
+        sky_area,
+        m_min,
+        m_max,
+        z_max,
+        cosmo,
+        samples_number,
+        False,
+        listmean,
+    )
+    assert isinstance(nkappa, np.ndarray)
+    assert len(nkappa) == samples_number
+    assert isinstance(ngamma, np.ndarray)
+    assert isinstance(nkappa2, np.ndarray)
+    assert isinstance(ngamma2, np.ndarray)

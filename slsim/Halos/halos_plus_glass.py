@@ -1143,31 +1143,3 @@ def worker_run_total_kappa_by_multiprocessing(
     )
     average_kappa = np.mean(total_kappa)
     return average_kappa
-
-
-def compute_total_kappa_for_sky_area(
-    cosmo,
-    n_iterations=200,
-    diff=0.0000001,
-    num_points=50,
-    z_max=None,
-    m_min=None,
-    m_max=None,
-):
-    sky_areas = np.arange(0.0001, 0.00105, 0.00005)
-    average_kappa = {}
-
-    for sky_area in sky_areas:
-        average_kappa_list = run_total_kappa_by_multiprocessing(
-            n_iterations=n_iterations,
-            sky_area=sky_area,
-            diff=diff,
-            num_points=num_points,
-            diff_method="square",
-            cosmo=cosmo,
-            m_min=m_min,
-            m_max=m_max,
-            z_max=z_max,
-        )
-        average_kappa[sky_area] = average_kappa_list
-    return average_kappa

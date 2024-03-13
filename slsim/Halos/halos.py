@@ -48,6 +48,7 @@ def colossus_halo_mass_function(m_200, cosmo, z, sigma8=0.81, ns=0.96):
         sigma8=sigma8,
         ns=ns,
     )
+    # TODO: seems like still not working for other cosmology rather than default
     colossus_cosmo.setCosmology(cosmo_name="halo_cosmo", **params)
     h3 = np.power(cosmo.h, 3)
     mfunc_h3_dmpc3 = mass_function.massFunction(
