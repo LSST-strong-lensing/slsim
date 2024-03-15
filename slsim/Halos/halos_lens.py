@@ -499,13 +499,13 @@ class HalosLens(object):
                 theta_x=0,
                 theta_y=0,
                 kwargs_lens=kwargs,
-                diff=1.0,
+                diff=diff,
             )
         else:
             f_xx, f_xy, f_yx, f_yy = lens_model.hessian(
                 x=0.0, y=0.0, kwargs=kwargs, diff=diff, diff_method=diff_method
             )
-        kappa = 1 / 2.0 * (f_xx + f_yy)
+        kappa = 0.5 * (f_xx + f_yy)
         if gamma12:
             gamma1 = 1.0 / 2 * (f_xx - f_yy)
             gamma2 = f_xy
