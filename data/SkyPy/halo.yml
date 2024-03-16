@@ -9,6 +9,7 @@ z_range: !numpy.linspace
 cosmology: !astropy.cosmology.default_cosmology.get []
 sigma8: 0.81
 ns: 0.96
+omega_m: 0.30966
 
 tables:
   halos:
@@ -19,6 +20,9 @@ tables:
           m_min: $m_min
           m_max: $m_max
           resolution: 500
+          sigma8: $sigma8
+          ns: $ns
+          omega_m: $omega_m
         mass: !slsim.Halos.halos.halo_mass_at_z
           z: $halos.z
           cosmology: $cosmology
@@ -27,6 +31,7 @@ tables:
           resolution: 500
           sigma8: $sigma8
           ns: $ns
+          omega_m: $omega_m
   mass_sheet_correction:
          z: !slsim.Halos.halos.redshift_mass_sheet_correction_array_from_comoving_density
            redshift_list: $z_range

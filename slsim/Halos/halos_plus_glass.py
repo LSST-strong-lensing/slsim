@@ -457,9 +457,15 @@ def worker_run_halos_without_kde(
     mass_sheet_correction,
     listmean,
     sigma_8,
+    omega_m,
 ):
     npipeline = HalosSkyPyPipeline(
-        sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max, sigma_8=sigma_8
+        sky_area=sky_area,
+        m_min=m_min,
+        m_max=m_max,
+        z_max=z_max,
+        sigma_8=sigma_8,
+        omega_m=omega_m,
     )
     nhalos = npipeline.halos
     if mass_sheet_correction:
@@ -505,6 +511,7 @@ def run_halos_without_kde_by_multiprocessing(
     mass_sheet_correction=True,
     listmean=False,
     sigma_8=0.81,
+    omega_m=None,
 ):
     """Under the specified `sky_area`, generate `n_iterations` sets of halo lists. For
     each set, simulate `samples_number` times to obtain the convergence (`kappa`) and
@@ -574,6 +581,7 @@ def run_halos_without_kde_by_multiprocessing(
             mass_sheet_correction,
             listmean,
             sigma_8,
+            omega_m,
         )
         for i in range(n_iterations)
     ]
@@ -794,6 +802,7 @@ def run_certain_redshift_lensext_kde_by_multiprocessing(
     zd=None,
     listmean=False,
     sigma_8=0.81,
+    omega_m=None,
 ):
     if cosmo is None:
         warnings.warn(
@@ -828,6 +837,7 @@ def run_certain_redshift_lensext_kde_by_multiprocessing(
             zd,
             listmean,
             sigma_8,
+            omega_m,
         )
         for i in range(n_iterations)
     ]
@@ -859,6 +869,7 @@ def worker_certain_redshift_lensext_kde(
     zd,
     listmean,
     sigma_8,
+    omega_m,
 ):
     npipeline = HalosSkyPyPipeline(
         sky_area=sky_area,
@@ -866,6 +877,7 @@ def worker_certain_redshift_lensext_kde(
         m_max=m_max,
         z_max=z_max,
         sigma_8=sigma_8,
+        omega_m=omega_m,
     )
     nhalos = npipeline.halos
 

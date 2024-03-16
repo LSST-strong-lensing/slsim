@@ -16,6 +16,7 @@ class HalosSkyPyPipeline:
         cosmo=None,
         sigma_8=0.81,
         n_s=0.96,
+        omega_m=None,
     ):
         """Initialize the class with the given parameters.
 
@@ -45,6 +46,7 @@ class HalosSkyPyPipeline:
             and cosmo is None
             and sigma_8 == 0.81
             and n_s == 0.96
+            and omega_m is None
         ):
             self._pipeline = Pipeline.read(skypy_config)
             self._pipeline.execute()
@@ -79,6 +81,11 @@ class HalosSkyPyPipeline:
             old_ns = "ns: 0.96"
             new_ns = f"ns: {n_s}"
             content = content.replace(old_ns, new_ns)
+
+            if omega_m is not None:
+                old_omega_m = "omega_m: 0.30996"
+                new_omega_m = f"omega_m: {omega_m}"
+                content = content.replace(old_omega_m, new_omega_m)
 
             if cosmo is not None:
                 if cosmo is default_cosmology.get():

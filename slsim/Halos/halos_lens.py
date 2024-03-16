@@ -245,6 +245,10 @@ class HalosLens(object):
         else:
             self.n_halos = len(self.halos_list)
         self.sky_area = sky_area
+        # if self.n_halos == 0:
+        #     self.halos_redshift_list = []
+        # else: (not righting this because of unpleaseant error dealing with redshift nan)
+        #    self.halos_redshift_list = halos_list["z"]
         self.halos_redshift_list = halos_list["z"]
         self.mass_list = halos_list["mass"]
         self.samples_number = samples_number
@@ -326,26 +330,48 @@ class HalosLens(object):
         only the halos' NFW profile is used.
         """
         if self.mass_sheet:
-            lens_model = LensModel(
-                lens_model_list=["NFW"] * self.n_halos
-                + ["CONVERGENCE"] * self.n_correction,
-                lens_redshift_list=self.combined_redshift_list,
-                cosmo=self.cosmo,
-                observed_convention_index=[],
-                multi_plane=True,
-                z_source=self.z_source,
-                z_source_convention=self._z_source_convention,
-            )
+            if self.n_halos == 0:
+                lens_model = LensModel(
+                    lens_model_list=["NFW"] + ["CONVERGENCE"] * self.n_correction,
+                    lens_redshift_list=self.combined_redshift_list,
+                    cosmo=self.cosmo,
+                    observed_convention_index=[],
+                    multi_plane=True,
+                    z_source=self.z_source,
+                    z_source_convention=self._z_source_convention,
+                )
+            else:
+                lens_model = LensModel(
+                    lens_model_list=["NFW"] * self.n_halos
+                    + ["CONVERGENCE"] * self.n_correction,
+                    lens_redshift_list=self.combined_redshift_list,
+                    cosmo=self.cosmo,
+                    observed_convention_index=[],
+                    multi_plane=True,
+                    z_source=self.z_source,
+                    z_source_convention=self._z_source_convention,
+                )
         else:
-            lens_model = LensModel(
-                lens_model_list=["NFW"] * self.n_halos,
-                lens_redshift_list=self.halos_redshift_list,
-                cosmo=self.cosmo,
-                observed_convention_index=[],
-                multi_plane=True,
-                z_source=self.z_source,
-                z_source_convention=self._z_source_convention,
-            )
+            if self.n_halos == 0:
+                lens_model = LensModel(
+                    lens_model_list=["NFW"],
+                    lens_redshift_list=self.halos_redshift_list,
+                    cosmo=self.cosmo,
+                    observed_convention_index=[],
+                    multi_plane=True,
+                    z_source=self.z_source,
+                    z_source_convention=self._z_source_convention,
+                )
+            else:
+                lens_model = LensModel(
+                    lens_model_list=["NFW"] * self.n_halos,
+                    lens_redshift_list=self.halos_redshift_list,
+                    cosmo=self.cosmo,
+                    observed_convention_index=[],
+                    multi_plane=True,
+                    z_source=self.z_source,
+                    z_source_convention=self._z_source_convention,
+                )
         return lens_model
 
     def random_position(self):
@@ -985,6 +1011,8 @@ class HalosLens(object):
                 f"Combined redshift list shorter than number of halos."
                 f"{len(combined_redshift_list)} < {n_halos}"
             )
+        elif n_halos == len(combined_redshift_list) == 0:
+            lens_model_list = ["NFW"] * 1
         else:
             lens_model_list = ["NFW"] * n_halos
         lens_model = LensModel(

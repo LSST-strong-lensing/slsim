@@ -165,10 +165,14 @@ def test_random_position(setup_halos_lens):
     assert isinstance(py, float)
 
 
-def test_get_lens_model(setup_halos_lens):
+def test_get_lens_model(setup_halos_lens, setup_no_halos):
     hl = setup_halos_lens
     lens_model = hl.get_lens_model()
     assert lens_model.lens_model_list == ["NFW", "NFW", "NFW", "CONVERGENCE"]
+
+    hl2 = setup_no_halos
+    lens_model2 = hl2.get_lens_model()
+    assert lens_model2.lens_model_list == ["NFW", "CONVERGENCE"]
 
 
 def test_get_lens_model_mass_sheet_false(setup_mass_sheet_false):

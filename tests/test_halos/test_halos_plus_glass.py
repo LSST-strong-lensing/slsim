@@ -295,6 +295,8 @@ def test_worker_certain_redshift_lensext_kde():
     zs = 1.5
     zd = 1.0
     listmean = False
+    sigma8 = 0.8
+    omega_m = 0.3
 
     distributions = worker_certain_redshift_lensext_kde(
         iter_num,
@@ -308,6 +310,8 @@ def test_worker_certain_redshift_lensext_kde():
         zs,
         zd,
         listmean,
+        sigma8,
+        omega_m,
     )
 
     distributions2 = worker_certain_redshift_lensext_kde(
@@ -322,6 +326,8 @@ def test_worker_certain_redshift_lensext_kde():
         zs,
         zd,
         listmean,
+        sigma8,
+        omega_m,
     )
 
     assert isinstance(distributions, np.ndarray)
@@ -381,6 +387,8 @@ def test_worker_run_halos_without_kde():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     samples_number = 2
     listmean = False
+    sigma8 = 0.8
+    omega_m = 0.30
 
     nkappa, ngamma = worker_run_halos_without_kde(
         iter_num,
@@ -392,6 +400,8 @@ def test_worker_run_halos_without_kde():
         samples_number,
         True,
         listmean,
+        sigma8,
+        omega_m,
     )
 
     nkappa2, ngamma2 = worker_run_halos_without_kde(
@@ -404,6 +414,8 @@ def test_worker_run_halos_without_kde():
         samples_number,
         False,
         listmean,
+        sigma8,
+        omega_m,
     )
     assert isinstance(nkappa, np.ndarray)
     assert len(nkappa) == samples_number

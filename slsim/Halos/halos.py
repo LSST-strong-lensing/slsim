@@ -7,7 +7,7 @@ import warnings
 from astropy.units.quantity import Quantity
 
 
-def colossus_halo_mass_function(m_200, cosmo, z, sigma8=0.81, ns=0.96):
+def colossus_halo_mass_function(m_200, cosmo, z, sigma8=0.81, ns=0.96, omega_m=None):
     """M in Msun/h return dn/dlnM (mpc-3) Calculates the differential halo mass function
     per logarithmic interval in mass at a given redshift.
 
@@ -37,10 +37,17 @@ def colossus_halo_mass_function(m_200, cosmo, z, sigma8=0.81, ns=0.96):
     -----
     The 'bhattacharya11' model is used for the mass function within the Colossus framework.
     """
+    if omega_m is None:
+        omega_m = cosmo.Om0
+    elif isinstance(omega_m, float) or isinstance(omega_m, int):
+        omega_m = omega_m
+    else:
+        print(omega_m, type(omega_m))
+        raise ValueError("omega_m should be a float or int or None")
     params = dict(
         flat=(cosmo.Ok0 == 0.0),
         H0=cosmo.H0.value,
-        Om0=cosmo.Om0,
+        Om0=omega_m,
         Ode0=cosmo.Ode0,
         Ob0=cosmo.Ob0,
         Tcmb0=cosmo.Tcmb0.value,
@@ -75,6 +82,7 @@ def colossus_halo_mass_sampler(
     sigma8=0.81,
     ns=0.96,
     size=None,
+    omega_m=None,
 ):
     """Samples halo masses from a mass function within specified minimum and maximum
     masses.
@@ -131,6 +139,7 @@ def colossus_halo_mass_sampler(
         z,
         sigma8,
         ns,
+        omega_m,
     )
 
     CDF = integrate.cumtrapz(massf, np.log(m), initial=0)
@@ -201,6 +210,7 @@ def number_density_at_redshift(
     cosmology=None,
     sigma8=0.81,
     ns=0.96,
+    omega_m=None,
 ):
     """Calculates the number density of halos at specified redshifts within a given mass
     range.
@@ -225,6 +235,8 @@ def number_density_at_redshift(
         Default is 0.81.
     ns : float, optional
         Default is 0.96.
+    omega_m : float, optional
+        Default is None.(will use the same in cosmology setting)
 
     Returns
     -------
@@ -258,11 +270,7 @@ def number_density_at_redshift(
     cdfs = []
     for zi in z:
         massf = colossus_halo_mass_function(
-            m_200,
-            cosmology,
-            zi,
-            sigma8=sigma8,
-            ns=ns,
+            m_200, cosmology, zi, sigma8=sigma8, ns=ns, omega_m=omega_m
         )
         total_number_density = number_for_certain_mass(massf, m_200, dndlnM=True)
         cdfs.append(total_number_density)
@@ -317,6 +325,9 @@ def redshift_halos_array_from_comoving_density(
     m_min=None,
     m_max=None,
     resolution=None,
+    sigma8=0.81,
+    ns=0.96,
+    omega_m=None,
 ):
     """Calculate an array of halo redshifts from a given comoving density.
 
@@ -363,6 +374,9 @@ def redshift_halos_array_from_comoving_density(
         m_max=m_max,
         resolution=resolution,
         cosmology=cosmology,
+        sigma8=sigma8,
+        ns=ns,
+        omega_m=omega_m,
     )
 
     # integrate density to get expected number of Halos
@@ -381,6 +395,9 @@ def dv_dz_to_dn_dz(
     m_max=None,
     resolution=None,
     cosmology=None,
+    sigma8=0.81,
+    ns=0.96,
+    omega_m=None,
 ):
     """Converts a differential comoving volume element dV/dz to a differential number
     density dn/dz.
@@ -403,6 +420,12 @@ def dv_dz_to_dn_dz(
         The resolution of the grid used in the mass function calculation.
     cosmology : astropy.cosmology instance, optional
         The cosmology instance used for the calculation.
+    sigma8 : float, optional
+        The sigma8 parameter for the power spectrum normalization. Default is 0.81.
+    ns : float, optional
+        The spectral index. Default is 0.96.
+    omega_m : float, optional
+        The omega_m parameter for the cosmology. Default is None.
 
     Returns
     -------
@@ -421,6 +444,9 @@ def dv_dz_to_dn_dz(
         m_max=m_max,
         resolution=resolution,
         cosmology=cosmology,
+        sigma8=sigma8,
+        ns=ns,
+        omega_m=omega_m,
     )  # dn/dv at z; Mpc-3
     dV_dz *= density
     return dV_dz
@@ -504,6 +530,7 @@ def halo_mass_at_z(
     cosmology=None,
     sigma8=0.81,
     ns=0.96,
+    omega_m=None,
 ):
     """"""
 
@@ -537,6 +564,7 @@ def halo_mass_at_z(
                 size=1,
                 sigma8=sigma8,
                 ns=ns,
+                omega_m=omega_m,
             )
         )
     return mass
