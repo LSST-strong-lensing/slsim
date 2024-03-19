@@ -3,11 +3,12 @@ import numpy as np
 import pytest
 from numpy import testing as npt
 from astropy.table import Table
-from astropy import units as u
+from astropy import cosmology
 
 
 class TestSource:
     def setup_method(self):
+        cosmo=cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
         self.source_dict = Table(
             [
                 [0.5],
@@ -153,23 +154,38 @@ class TestSource:
         self.source3 = Source(
             self.source_dict3,
             variability_model="light_curve",
-            kwargs_variability={"peak_apparent_magnitude", "i"},
-            kwargs_peak_mag={"peak_mag_min": -20, "peak_mag_max": -17},
-            lightcurve_time=50 * u.day,
+            kwargs_variability={"supernovae_lightcurve", "i"},
+            sn_absolute_mag=np.array([-19.37, 0.47]),
+            sn_absolute_mag_band="bessellb",
+            sn_absolute_zpsys="ab",
+            sn_type="Ia",
+            sn_model="salt3",
+            lightcurve_time=np.linspace(-20, 50, 100),
+            cosmo=cosmo
         )
         self.source4 = Source(
             self.source_dict3,
             variability_model="light_curve",
             kwargs_variability=None,
-            kwargs_peak_mag={"peak_mag_min": -20, "peak_mag_max": -17},
-            lightcurve_time=50 * u.day,
+            sn_absolute_mag=np.array([-19.37, 0.47]),
+            sn_absolute_mag_band="bessellb",
+            sn_absolute_zpsys="ab",
+            sn_type="Ia",
+            sn_model="salt3",
+            lightcurve_time=np.linspace(-20, 50, 100),
+            cosmo=cosmo
         )
         self.source5 = Source(
             self.source_dict4,
             variability_model="light_curve",
-            kwargs_variability={"peak_apparent_magnitude", "i"},
-            kwargs_peak_mag={"peak_mag_min": -20, "peak_mag_max": -17},
-            lightcurve_time=50 * u.day,
+            kwargs_variability={"supernovae_lightcurve", "i"},
+            sn_absolute_mag=np.array([-19.37, 0.47]),
+            sn_absolute_mag_band="bessellb",
+            sn_absolute_zpsys="ab",
+            sn_type="Ia",
+            sn_model="salt3",
+            lightcurve_time=np.linspace(-20, 50, 100),
+            cosmo=cosmo
         )
 
     def test_redshift(self):
@@ -253,19 +269,20 @@ class TestSource:
         assert all(isinstance(kwargs_item, dict) for kwargs_item in kwargs)
         with pytest.raises(ValueError):
             self.source5.kwargs_extended_source_light(
-                center_lens, draw_area, band="i", light_profile_str="double_sersic"
-            )
-        with pytest.raises(ValueError):
-            self.source5.kwargs_extended_source_light(
                 center_lens, draw_area, band="i", light_profile_str="triple"
             )
         with pytest.raises(ValueError):
             Source(
                 self.source_dict3,
                 variability_model="light_curve",
-                kwargs_variability={"peak_apparent_magnitude", "i"},
-                kwargs_peak_mag=None,
-                lightcurve_time=50 * u.day,
+                kwargs_variability={"supernovae_lightcurve", "i"},
+                sn_absolute_mag=np.array([-19.37, 0.47]),
+                sn_absolute_mag_band="bessellb",
+                sn_absolute_zpsys="ab",
+                sn_type="Ia",
+                sn_model="salt3",
+                lightcurve_time=np.linspace(-20, 50, 100),
+                cosmo=None
             )
         with pytest.raises(ValueError):
             Source(

@@ -65,15 +65,21 @@ class Source(object):
             ):
                 z = self.source_dict["z"]
                 ab_mag = np.random.normal(sn_absolute_mag[0], sn_absolute_mag[1])
-                lightcurve_class = supernovae.Supernova(
-                    source=sn_model,
-                    sn_type=sn_type,
-                    redshift=z,
-                    absolute_mag=ab_mag,
-                    absolute_mag_band=sn_absolute_mag_band,
-                    mag_zpsys=sn_absolute_zpsys,
-                    cosmo=cosmo,
-                )
+                if cosmo is None:
+                    raise ValueError(
+                            "Cosmology cannot be None for Supernova class. Please" 
+                            "provide a suitable astropy cosmology."
+                        )
+                else:
+                    lightcurve_class = supernovae.Supernova(
+                        source=sn_model,
+                        sn_type=sn_type,
+                        redshift=z,
+                        absolute_mag=ab_mag,
+                        absolute_mag_band=sn_absolute_mag_band,
+                        mag_zpsys=sn_absolute_zpsys,
+                        cosmo=cosmo,
+                    )
                 provided_band = [
                     element
                     for element in list(kwargs_variability)
