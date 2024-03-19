@@ -58,7 +58,7 @@ class Lens(LensedSystemBase):
         :type sn_absolute_zpsys: str
         :param sn_absolute_mag: An absolute magnitude of the supernova or a distribution
          of absolute magnitude of a supernovae.
-        :type absolute_mag: float or an array of a mean and corresponding standard 
+        :type absolute_mag: float or an array of a mean and corresponding standard
          deviation
         :param sn_model: The model for the spectral evolution of the source. If a string
          is given, it is used to retrieve a `~sncosmo.Source` from the registry.
@@ -91,7 +91,7 @@ class Lens(LensedSystemBase):
             sn_absolute_mag_band=sn_absolute_mag_band,
             sn_absolute_zpsys=sn_absolute_zpsys,
             sn_absolute_mag=sn_absolute_mag,
-            sn_model=sn_model
+            sn_model=sn_model,
         )
 
         self.cosmo = cosmo

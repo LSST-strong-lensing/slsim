@@ -9,12 +9,15 @@ class LensedPopulationBase(ABC):
     """
 
     def __init__(
-        self, sky_area=None, cosmo=None, lightcurve_time=None, 
+        self,
+        sky_area=None,
+        cosmo=None,
+        lightcurve_time=None,
         sn_type=None,
         sn_absolute_mag_band=None,
         sn_absolute_zpsys=None,
-        sn_absolute_mag = None,
-        sn_model="salt3"
+        sn_absolute_mag=None,
+        sn_model="salt3",
     ):
         """
 
@@ -32,7 +35,7 @@ class LensedPopulationBase(ABC):
         :type sn_absolute_zpsys: str
         :param sn_absolute_mag: An absolute magnitude of the supernova or a distribution
          of absolute magnitude of a supernovae.
-        :type absolute_mag: float or an array of a mean and corresponding standard 
+        :type absolute_mag: float or an array of a mean and corresponding standard
          deviation
         :param sn_model: The model for the spectral evolution of the source. If a string
         """
