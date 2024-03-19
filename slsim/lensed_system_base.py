@@ -15,7 +15,11 @@ class LensedSystemBase(ABC):
         test_area=4 * np.pi,
         variability_model=None,
         kwargs_variability=None,
-        peak_mag_limit=None,
+        sn_type=None,
+        sn_absolute_mag_band=None,
+        sn_absolute_zpsys=None,
+        sn_absolute_mag=None,
+        sn_model="salt3",
         lightcurve_time=None,
     ):
         """
@@ -28,21 +32,34 @@ class LensedSystemBase(ABC):
         :type variability_model: str
         :param kwargs_variability: keyword arguments for the variability of a source.
          This is associated with an input for Variability class.
+        :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
+        :type sn_type: str
+        :param sn_absolute_mag_band: Band used to normalize to absolute magnitude
+        :type sn_absolute_mag_band: str or `~sncosmo.Bandpass`
+        :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
+        :type sn_absolute_zpsys: str
         :param cosmo: astropy.cosmology instance
         :param test_area: area (arc-sec^2) around lensing galaxy to be investigated
-        :param peak_mag_limit: range of peak magnitude for point source (supernovae).
-         eg: {"peak_mag_min": m_min, "peak_mag_max": m_max}
-        :param lightcurve_time: time period for lightcurve.
-        :type lightcurve_time: astropy unit object. egs: 10*u.day, 10*u.year.
+        :param lightcurve_time: observation time array for lightcurve in unit of days.
+        :param sn_absolute_mag: An absolute magnitude of the supernova or a distribution
+         of absolute magnitude of a supernovae.
+        :type absolute_mag: float or an array of a mean and corresponding standard 
+         deviation
+        :param sn_model: The model for the spectral evolution of the source. If a string
+        :type lightcurve_time: array
         """
         # self._source_dict = source_dict
         self.source = Source(
-            source_dict,
-            variability_model,
-            kwargs_variability,
-            peak_mag_limit,
-            cosmo,
-            lightcurve_time,
+            source_dict=source_dict,
+            variability_model=variability_model,
+            kwargs_variability=kwargs_variability,
+            sn_type=sn_type,
+            sn_absolute_mag_band=sn_absolute_mag_band,
+            sn_absolute_zpsys=sn_absolute_zpsys,
+            sn_absolute_mag=sn_absolute_mag,
+            sn_model=sn_model,
+            cosmo=cosmo,
+            lightcurve_time=lightcurve_time,
         )
         self._deflector_dict = deflector_dict
         # TODO: tell them what keys the dictionary should contain

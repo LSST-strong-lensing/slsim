@@ -31,8 +31,12 @@ class LensPop(LensedPopulationBase):
         source_light_profile="single_sersic",
         catalog_type="skypy",
         catalog_path=None,
-        peak_mag_limit=None,
         lightcurve_time=None,
+        sn_type=None,
+        sn_absolute_mag_band=None,
+        sn_absolute_zpsys=None,
+        sn_absolute_mag=None,
+        sn_model=None
     ):
         """
 
@@ -70,12 +74,23 @@ class LensPop(LensedPopulationBase):
          catalog within the slsim will be used. We have used small subset of scotch
          catalog. So, if one wants to use full scotch catalog, they can set path to
          their path to local drive.
-        :param peak_mag_limit: range of peak magnitude for point source
-         (supernovae). eg: {"peak_mag_min": m_min, "peak_mag_max": m_max}
-        :param lightcurve_time: time period for lightcurves.
-        :type lightcurve_time: astropy unit object. egs: 10*u.day, 10*u.year.
+        :param lightcurve_time: observation time array for lightcurve in unit of days.
+        :type lightcurve_time: array
+        :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
+        :type sn_type: str
+        :param sn_absolute_mag_band: Band used to normalize to absolute magnitude
+        :type sn_absolute_mag_band: str or `~sncosmo.Bandpass`
+        :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
+        :type sn_absolute_zpsys: str
+        :param sn_absolute_mag: An absolute magnitude of the supernova or a distribution
+         of absolute magnitude of a supernovae.
+        :type absolute_mag: float or an array of a mean and corresponding standard 
+         deviation
+        :param sn_model: The model for the spectral evolution of the source. If a string
         """
-        super().__init__(sky_area, cosmo, peak_mag_limit, lightcurve_time)
+        super().__init__(sky_area, cosmo, lightcurve_time, sn_type, 
+                         sn_absolute_mag_band, sn_absolute_zpsys, sn_absolute_mag,
+                         sn_model)
         if source_type == "galaxies" and kwargs_variability is not None:
             raise ValueError(
                 "Galaxies cannot have variability. Either choose"
@@ -248,10 +263,14 @@ class LensPop(LensedPopulationBase):
                 source_dict=source,
                 variability_model=self._sources.variability_model,
                 kwargs_variability=self._sources.kwargs_variability,
+                sn_type=self.sn_type,
+                sn_absolute_mag_band=self.sn_absolute_mag_band,
+                sn_absolute_zpsys=self.sn_absolute_zpsys,
+                sn_absolute_mag=self.sn_absolute_mag,
+                sn_model=self.sn_model,
                 cosmo=self.cosmo,
                 source_type=self._source_model_type,
                 light_profile=self._sources.light_profile,
-                peak_mag_limit=self.peak_mag_limit,
                 lightcurve_time=self.lightcurve_time,
             )
             if gg_lens.validity_test(**kwargs_lens_cut):
@@ -325,12 +344,20 @@ class LensPop(LensedPopulationBase):
                 while n < num_sources_tested:
                     source = self._sources.draw_source()
                     gg_lens = Lens(
-                        deflector_dict=lens,
-                        source_dict=source,
-                        cosmo=self.cosmo,
-                        test_area=test_area,
-                        source_type=self._source_model_type,
-                    )
+                    deflector_dict=lens,
+                    source_dict=source,
+                    variability_model=self._sources.variability_model,
+                    kwargs_variability=self._sources.kwargs_variability,
+                    sn_type=self.sn_type,
+                    sn_absolute_mag_band=self.sn_absolute_mag_band,
+                    sn_absolute_zpsys=self.sn_absolute_zpsys,
+                    sn_absolute_mag=self.sn_absolute_mag,
+                    sn_model=self.sn_model,
+                    cosmo=self.cosmo,
+                    source_type=self._source_model_type,
+                    light_profile=self._sources.light_profile,
+                    lightcurve_time=self.lightcurve_time,
+                )
                     # Check the validity of the lens system
                     if gg_lens.validity_test(**kwargs_lens_cuts):
                         gg_lens_population.append(gg_lens)

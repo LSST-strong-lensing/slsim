@@ -21,13 +21,17 @@ class Lens(LensedSystemBase):
         source_type="extended",
         variability_model=None,
         kwargs_variability=None,
+        sn_type=None,
+        sn_absolute_mag_band=None,
+        sn_absolute_zpsys=None,
+        sn_absolute_mag=None,
+        sn_model="salt3",
         test_area=4 * np.pi,
         mixgauss_means=None,
         mixgauss_stds=None,
         mixgauss_weights=None,
         magnification_limit=0.01,
         light_profile="single_sersic",
-        peak_mag_limit=None,
         lightcurve_time=None,
     ):
         """
@@ -45,7 +49,19 @@ class Lens(LensedSystemBase):
         :type variability_model: str
         :param kwargs_variability: keyword arguments for the variability of a source.
          This is associated with an input for Variability class.
-        :type kwargs_variab: list of str
+        :type kwargs_variability: list of str
+        :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
+        :type sn_type: str
+        :param sn_absolute_mag_band: Band used to normalize to absolute magnitude
+        :type sn_absolute_mag_band: str or `~sncosmo.Bandpass`
+        :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
+        :type sn_absolute_zpsys: str
+        :param sn_absolute_mag: An absolute magnitude of the supernova or a distribution
+         of absolute magnitude of a supernovae.
+        :type absolute_mag: float or an array of a mean and corresponding standard 
+         deviation
+        :param sn_model: The model for the spectral evolution of the source. If a string
+         is given, it is used to retrieve a `~sncosmo.Source` from the registry.
         :param test_area: area of disk around one lensing galaxies to be investigated
             on (in arc-seconds^2)
         :param mixgauss_weights: weights of the Gaussian mixture
@@ -60,10 +76,8 @@ class Lens(LensedSystemBase):
         :param light_profile: keyword for number of sersic profile to use in source
          light model
         :type light_profile: str . Either "single_sersic" or "double_sersic" .
-        :param peak_mag_limit: range of peak magnitude for point source (supernovae).
-         eg: {"peak_mag_min": m_min, "peak_mag_max": m_max}
-        :param lightcurve_time: time period for lightcurve.
-        :type lightcurve_time: astropy unit object. egs: 10*u.day, 10*u.year.
+        :param lightcurve_time: observation time array for lightcurve in unit of days.
+        :type lightcurve_time: array
         """
         super().__init__(
             source_dict=source_dict,
@@ -72,8 +86,12 @@ class Lens(LensedSystemBase):
             test_area=test_area,
             variability_model=variability_model,
             kwargs_variability=kwargs_variability,
-            peak_mag_limit=peak_mag_limit,
             lightcurve_time=lightcurve_time,
+            sn_type=sn_type,
+            sn_absolute_mag_band=sn_absolute_mag_band,
+            sn_absolute_zpsys=sn_absolute_zpsys,
+            sn_absolute_mag=sn_absolute_mag,
+            sn_model=sn_model
         )
 
         self.cosmo = cosmo
