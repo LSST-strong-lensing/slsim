@@ -43,7 +43,7 @@ class LensedSystemBase(ABC):
         :param lightcurve_time: observation time array for lightcurve in unit of days.
         :param sn_absolute_mag: An absolute magnitude of the supernova or a distribution
          of absolute magnitude of a supernovae.
-        :type absolute_mag: float or an array of a mean and corresponding standard 
+        :type absolute_mag: float or an array of a mean and corresponding standard
          deviation
         :param sn_model: The model for the spectral evolution of the source. If a string
         :type lightcurve_time: array

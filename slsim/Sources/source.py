@@ -2,7 +2,8 @@ from slsim.Sources.SourceVariability.variability import (
     Variability,
 )
 import numpy as np
-#from slsim.Sources.simple_supernova_lightcurve import SimpleSupernovaLightCurve
+
+# from slsim.Sources.simple_supernova_lightcurve import SimpleSupernovaLightCurve
 from astropy.table import Column, Table
 from slsim.Sources import supernovae
 
@@ -43,7 +44,7 @@ class Source(object):
         :type sn_absolute_zpsys: str
         :param sn_absolute_mag: An absolute magnitude of the supernova or a distribution of
          absolute magnitude of a supernovae.
-        :type absolute_mag: float or an array of a mean and corresponding standard 
+        :type absolute_mag: float or an array of a mean and corresponding standard
          deviation
         :param sn_model: The model for the spectral evolution of the source. If a string
          is given, it is used to retrieve a `~sncosmo.Source` from the registry.
@@ -55,9 +56,7 @@ class Source(object):
             ##Here we prepare variability class on the basis of given
             # kwargs_variability.
             kwargs_variab_extracted = {}
-            kwargs_variability_list = [
-                "supernovae_lightcurve"
-            ]
+            kwargs_variability_list = ["supernovae_lightcurve"]
             # With this condition we call lightcure generator class and prepare
             # variability class.
             if any(
@@ -67,22 +66,23 @@ class Source(object):
                 z = self.source_dict["z"]
                 ab_mag = np.random.normal(sn_absolute_mag[0], sn_absolute_mag[1])
                 lightcurve_class = supernovae.Supernova(
-                source=sn_model,
-                sn_type=sn_type,
-                redshift=z,
-                absolute_mag=ab_mag,
-                absolute_mag_band=sn_absolute_mag_band,
-                mag_zpsys=sn_absolute_zpsys,
-                cosmo=cosmo
-            )
+                    source=sn_model,
+                    sn_type=sn_type,
+                    redshift=z,
+                    absolute_mag=ab_mag,
+                    absolute_mag_band=sn_absolute_mag_band,
+                    mag_zpsys=sn_absolute_zpsys,
+                    cosmo=cosmo,
+                )
                 provided_band = [
                     element
                     for element in list(kwargs_variability)
                     if element in ["r", "i", "g"]
                 ][0]
                 times = lightcurve_time
-                magnitudes = lightcurve_class.get_apparent_magnitude(times, 
-                                    "lsst"+provided_band, zpsys=sn_absolute_zpsys)
+                magnitudes = lightcurve_class.get_apparent_magnitude(
+                    times, "lsst" + provided_band, zpsys=sn_absolute_zpsys
+                )
                 new_column = Column(
                     [float(min(magnitudes))], name="ps_mag_" + provided_band
                 )

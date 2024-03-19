@@ -20,8 +20,11 @@ class LightCurveInterpolation(object):
         }
         magnitude_array = list(magnitude_values.values())[0]
         self.interpolation = interp1d(
-            time_array, magnitude_array, kind="linear", fill_value=(magnitude_array[0]
-                                        , magnitude_array[-1]), bounds_error=False
+            time_array,
+            magnitude_array,
+            kind="linear",
+            fill_value=(magnitude_array[0], magnitude_array[-1]),
+            bounds_error=False,
         )
 
     def magnitude(self, observation_time):

@@ -36,7 +36,7 @@ class LensPop(LensedPopulationBase):
         sn_absolute_mag_band=None,
         sn_absolute_zpsys=None,
         sn_absolute_mag=None,
-        sn_model=None
+        sn_model=None,
     ):
         """
 
@@ -84,13 +84,20 @@ class LensPop(LensedPopulationBase):
         :type sn_absolute_zpsys: str
         :param sn_absolute_mag: An absolute magnitude of the supernova or a distribution
          of absolute magnitude of a supernovae.
-        :type absolute_mag: float or an array of a mean and corresponding standard 
+        :type absolute_mag: float or an array of a mean and corresponding standard
          deviation
         :param sn_model: The model for the spectral evolution of the source. If a string
         """
-        super().__init__(sky_area, cosmo, lightcurve_time, sn_type, 
-                         sn_absolute_mag_band, sn_absolute_zpsys, sn_absolute_mag,
-                         sn_model)
+        super().__init__(
+            sky_area,
+            cosmo,
+            lightcurve_time,
+            sn_type,
+            sn_absolute_mag_band,
+            sn_absolute_zpsys,
+            sn_absolute_mag,
+            sn_model,
+        )
         if source_type == "galaxies" and kwargs_variability is not None:
             raise ValueError(
                 "Galaxies cannot have variability. Either choose"
@@ -344,20 +351,20 @@ class LensPop(LensedPopulationBase):
                 while n < num_sources_tested:
                     source = self._sources.draw_source()
                     gg_lens = Lens(
-                    deflector_dict=lens,
-                    source_dict=source,
-                    variability_model=self._sources.variability_model,
-                    kwargs_variability=self._sources.kwargs_variability,
-                    sn_type=self.sn_type,
-                    sn_absolute_mag_band=self.sn_absolute_mag_band,
-                    sn_absolute_zpsys=self.sn_absolute_zpsys,
-                    sn_absolute_mag=self.sn_absolute_mag,
-                    sn_model=self.sn_model,
-                    cosmo=self.cosmo,
-                    source_type=self._source_model_type,
-                    light_profile=self._sources.light_profile,
-                    lightcurve_time=self.lightcurve_time,
-                )
+                        deflector_dict=lens,
+                        source_dict=source,
+                        variability_model=self._sources.variability_model,
+                        kwargs_variability=self._sources.kwargs_variability,
+                        sn_type=self.sn_type,
+                        sn_absolute_mag_band=self.sn_absolute_mag_band,
+                        sn_absolute_zpsys=self.sn_absolute_zpsys,
+                        sn_absolute_mag=self.sn_absolute_mag,
+                        sn_model=self.sn_model,
+                        cosmo=self.cosmo,
+                        source_type=self._source_model_type,
+                        light_profile=self._sources.light_profile,
+                        lightcurve_time=self.lightcurve_time,
+                    )
                     # Check the validity of the lens system
                     if gg_lens.validity_test(**kwargs_lens_cuts):
                         gg_lens_population.append(gg_lens)
