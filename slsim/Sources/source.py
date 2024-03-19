@@ -67,9 +67,9 @@ class Source(object):
                 ab_mag = np.random.normal(sn_absolute_mag[0], sn_absolute_mag[1])
                 if cosmo is None:
                     raise ValueError(
-                            "Cosmology cannot be None for Supernova class. Please" 
-                            "provide a suitable astropy cosmology."
-                        )
+                        "Cosmology cannot be None for Supernova class. Please"
+                        "provide a suitable astropy cosmology."
+                    )
                 else:
                     lightcurve_class = supernovae.Supernova(
                         source=sn_model,

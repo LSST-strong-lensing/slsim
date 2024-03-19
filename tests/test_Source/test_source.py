@@ -8,7 +8,7 @@ from astropy import cosmology
 
 class TestSource:
     def setup_method(self):
-        cosmo=cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
+        cosmo = cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
         self.source_dict = Table(
             [
                 [0.5],
@@ -161,7 +161,7 @@ class TestSource:
             sn_type="Ia",
             sn_model="salt3",
             lightcurve_time=np.linspace(-20, 50, 100),
-            cosmo=cosmo
+            cosmo=cosmo,
         )
         self.source4 = Source(
             self.source_dict3,
@@ -173,7 +173,7 @@ class TestSource:
             sn_type="Ia",
             sn_model="salt3",
             lightcurve_time=np.linspace(-20, 50, 100),
-            cosmo=cosmo
+            cosmo=cosmo,
         )
         self.source5 = Source(
             self.source_dict4,
@@ -185,7 +185,7 @@ class TestSource:
             sn_type="Ia",
             sn_model="salt3",
             lightcurve_time=np.linspace(-20, 50, 100),
-            cosmo=cosmo
+            cosmo=cosmo,
         )
 
     def test_redshift(self):
@@ -282,7 +282,7 @@ class TestSource:
                 sn_type="Ia",
                 sn_model="salt3",
                 lightcurve_time=np.linspace(-20, 50, 100),
-                cosmo=None
+                cosmo=None,
             )
         with pytest.raises(ValueError):
             Source(
