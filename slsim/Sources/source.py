@@ -283,11 +283,14 @@ class Source(object):
             ]
         elif light_profile_str == "double_sersic":
             # w0 and w1 are the weight of the n=1 and n=4 sersic component.
-            # if "w0" in self.source_dict.colnames or "w1" in self.source_dict.colnames:
-            #    w0 = self.source_dict["w0"]
-            #    w1 = self.source_dict["w1"]
-            # else:
-            #    raise ValueError("weight of the light profile should be provided.")
+            if "w0" in self.source_dict.colnames or "w1" in self.source_dict.colnames:
+                w0 = self.source_dict["w0"]
+                w1 = self.source_dict["w1"]
+            else:
+                raise ValueError("weight of the light profile should be provided.")
+            flux = 10**(-mag_source/2.5)
+            mag_source0 = -2.5*np.log10(w0*flux)
+            mag_source1 = -2.5*np.log10(w1*flux)
             size_source_arcsec0 = float(self.source_dict["angular_size0"])
             size_source_arcsec1 = float(self.source_dict["angular_size1"])
             ellipticity0_1 = self.source_dict["e0_1"]
@@ -296,7 +299,7 @@ class Source(object):
             ellipticity1_2 = self.source_dict["e1_2"]
             kwargs_extended_source = [
                 {
-                    "magnitude": mag_source,
+                    "magnitude": mag_source0,
                     "R_sersic": size_source_arcsec0,
                     "n_sersic": float(self.source_dict["n_sersic_0"]),
                     "e1": float(ellipticity0_1),
@@ -305,7 +308,7 @@ class Source(object):
                     "center_y": center_source[1],
                 },
                 {
-                    "magnitude": mag_source,
+                    "magnitude": mag_source1,
                     "R_sersic": size_source_arcsec1,
                     "n_sersic": float(self.source_dict["n_sersic_1"]),
                     "e1": float(ellipticity1_1),

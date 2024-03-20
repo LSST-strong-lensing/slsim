@@ -272,6 +272,10 @@ class TestSource:
                 center_lens, draw_area, band="i", light_profile_str="triple"
             )
         with pytest.raises(ValueError):
+            self.source5.kwargs_extended_source_light(
+                center_lens, draw_area, band="i", light_profile_str="souble_sersic"
+            )
+        with pytest.raises(ValueError):
             Source(
                 self.source_dict3,
                 variability_model="light_curve",
