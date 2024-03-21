@@ -5,7 +5,7 @@ import numpy as np
 
 # from slsim.Sources.simple_supernova_lightcurve import SimpleSupernovaLightCurve
 from astropy.table import Column, Table
-from slsim.Sources import supernovae, random_supernovae
+from slsim.Sources import random_supernovae
 
 
 class Source(object):
