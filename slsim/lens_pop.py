@@ -35,8 +35,6 @@ class LensPop(LensedPopulationBase):
         sn_type=None,
         sn_absolute_mag_band=None,
         sn_absolute_zpsys=None,
-        sn_absolute_mag=None,
-        sn_model=None,
     ):
         """
 
@@ -82,11 +80,6 @@ class LensPop(LensedPopulationBase):
         :type sn_absolute_mag_band: str or `~sncosmo.Bandpass`
         :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
         :type sn_absolute_zpsys: str
-        :param sn_absolute_mag: An absolute magnitude of the supernova or a distribution
-         of absolute magnitude of a supernovae.
-        :type absolute_mag: float or an array of a mean and corresponding standard
-         deviation
-        :param sn_model: The model for the spectral evolution of the source. If a string
         """
         super().__init__(
             sky_area,
@@ -94,9 +87,7 @@ class LensPop(LensedPopulationBase):
             lightcurve_time,
             sn_type,
             sn_absolute_mag_band,
-            sn_absolute_zpsys,
-            sn_absolute_mag,
-            sn_model,
+            sn_absolute_zpsys
         )
         if source_type == "galaxies" and kwargs_variability is not None:
             raise ValueError(
@@ -273,8 +264,6 @@ class LensPop(LensedPopulationBase):
                 sn_type=self.sn_type,
                 sn_absolute_mag_band=self.sn_absolute_mag_band,
                 sn_absolute_zpsys=self.sn_absolute_zpsys,
-                sn_absolute_mag=self.sn_absolute_mag,
-                sn_model=self.sn_model,
                 cosmo=self.cosmo,
                 source_type=self._source_model_type,
                 light_profile=self._sources.light_profile,
@@ -358,8 +347,6 @@ class LensPop(LensedPopulationBase):
                         sn_type=self.sn_type,
                         sn_absolute_mag_band=self.sn_absolute_mag_band,
                         sn_absolute_zpsys=self.sn_absolute_zpsys,
-                        sn_absolute_mag=self.sn_absolute_mag,
-                        sn_model=self.sn_model,
                         cosmo=self.cosmo,
                         source_type=self._source_model_type,
                         light_profile=self._sources.light_profile,

@@ -5,7 +5,7 @@ import numpy as np
 
 # from slsim.Sources.simple_supernova_lightcurve import SimpleSupernovaLightCurve
 from astropy.table import Column, Table
-from slsim.Sources import supernovae
+from slsim.Sources import supernovae, random_supernovae
 
 
 class Source(object):
@@ -20,8 +20,6 @@ class Source(object):
         sn_type=None,
         sn_absolute_mag_band=None,
         sn_absolute_zpsys=None,
-        sn_absolute_mag=None,
-        sn_model="salt3",
         cosmo=None,
         lightcurve_time=None,
     ):
@@ -42,12 +40,6 @@ class Source(object):
         :type sn_absolute_mag_band: str or `~sncosmo.Bandpass`
         :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
         :type sn_absolute_zpsys: str
-        :param sn_absolute_mag: An absolute magnitude of the supernova or a distribution of
-         absolute magnitude of a supernovae.
-        :type absolute_mag: float or an array of a mean and corresponding standard
-         deviation
-        :param sn_model: The model for the spectral evolution of the source. If a string
-         is given, it is used to retrieve a `~sncosmo.Source` from the registry.
         :param lightcurve_time: observation time array for lightcurve in unit of days.
         :type lightcurve_time: array
         """
@@ -64,21 +56,19 @@ class Source(object):
                 for element in list(kwargs_variability)
             ):
                 z = self.source_dict["z"]
-                ab_mag = np.random.normal(sn_absolute_mag[0], sn_absolute_mag[1])
                 if cosmo is None:
                     raise ValueError(
                         "Cosmology cannot be None for Supernova class. Please"
                         "provide a suitable astropy cosmology."
                     )
                 else:
-                    lightcurve_class = supernovae.Supernova(
-                        source=sn_model,
+                    lightcurve_class = random_supernovae.RandomizedSupernova(
                         sn_type=sn_type,
                         redshift=z,
-                        absolute_mag=ab_mag,
+                        absolute_mag=None,
                         absolute_mag_band=sn_absolute_mag_band,
                         mag_zpsys=sn_absolute_zpsys,
-                        cosmo=cosmo,
+                        cosmo=cosmo
                     )
                 provided_band = [
                     element

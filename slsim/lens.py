@@ -24,8 +24,6 @@ class Lens(LensedSystemBase):
         sn_type=None,
         sn_absolute_mag_band=None,
         sn_absolute_zpsys=None,
-        sn_absolute_mag=None,
-        sn_model="salt3",
         test_area=4 * np.pi,
         mixgauss_means=None,
         mixgauss_stds=None,
@@ -56,12 +54,6 @@ class Lens(LensedSystemBase):
         :type sn_absolute_mag_band: str or `~sncosmo.Bandpass`
         :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
         :type sn_absolute_zpsys: str
-        :param sn_absolute_mag: An absolute magnitude of the supernova or a distribution
-         of absolute magnitude of a supernovae.
-        :type absolute_mag: float or an array of a mean and corresponding standard
-         deviation
-        :param sn_model: The model for the spectral evolution of the source. If a string
-         is given, it is used to retrieve a `~sncosmo.Source` from the registry.
         :param test_area: area of disk around one lensing galaxies to be investigated
             on (in arc-seconds^2)
         :param mixgauss_weights: weights of the Gaussian mixture
@@ -90,8 +82,6 @@ class Lens(LensedSystemBase):
             sn_type=sn_type,
             sn_absolute_mag_band=sn_absolute_mag_band,
             sn_absolute_zpsys=sn_absolute_zpsys,
-            sn_absolute_mag=sn_absolute_mag,
-            sn_model=sn_model,
         )
 
         self.cosmo = cosmo

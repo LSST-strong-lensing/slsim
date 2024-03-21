@@ -18,8 +18,6 @@ class LensedSystemBase(ABC):
         sn_type=None,
         sn_absolute_mag_band=None,
         sn_absolute_zpsys=None,
-        sn_absolute_mag=None,
-        sn_model="salt3",
         lightcurve_time=None,
     ):
         """
@@ -41,11 +39,6 @@ class LensedSystemBase(ABC):
         :param cosmo: astropy.cosmology instance
         :param test_area: area (arc-sec^2) around lensing galaxy to be investigated
         :param lightcurve_time: observation time array for lightcurve in unit of days.
-        :param sn_absolute_mag: An absolute magnitude of the supernova or a distribution
-         of absolute magnitude of a supernovae.
-        :type absolute_mag: float or an array of a mean and corresponding standard
-         deviation
-        :param sn_model: The model for the spectral evolution of the source. If a string
         :type lightcurve_time: array
         """
         # self._source_dict = source_dict
@@ -56,8 +49,6 @@ class LensedSystemBase(ABC):
             sn_type=sn_type,
             sn_absolute_mag_band=sn_absolute_mag_band,
             sn_absolute_zpsys=sn_absolute_zpsys,
-            sn_absolute_mag=sn_absolute_mag,
-            sn_model=sn_model,
             cosmo=cosmo,
             lightcurve_time=lightcurve_time,
         )
