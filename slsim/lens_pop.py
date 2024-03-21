@@ -87,7 +87,7 @@ class LensPop(LensedPopulationBase):
             lightcurve_time,
             sn_type,
             sn_absolute_mag_band,
-            sn_absolute_zpsys
+            sn_absolute_zpsys,
         )
         if source_type == "galaxies" and kwargs_variability is not None:
             raise ValueError(
