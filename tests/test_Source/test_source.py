@@ -155,11 +155,9 @@ class TestSource:
             self.source_dict3,
             variability_model="light_curve",
             kwargs_variability={"supernovae_lightcurve", "i"},
-            sn_absolute_mag=np.array([-19.37, 0.47]),
             sn_absolute_mag_band="bessellb",
             sn_absolute_zpsys="ab",
             sn_type="Ia",
-            sn_model="salt3",
             lightcurve_time=np.linspace(-20, 50, 100),
             cosmo=cosmo,
         )
@@ -167,11 +165,9 @@ class TestSource:
             self.source_dict3,
             variability_model="light_curve",
             kwargs_variability=None,
-            sn_absolute_mag=np.array([-19.37, 0.47]),
             sn_absolute_mag_band="bessellb",
             sn_absolute_zpsys="ab",
             sn_type="Ia",
-            sn_model="salt3",
             lightcurve_time=np.linspace(-20, 50, 100),
             cosmo=cosmo,
         )
@@ -179,11 +175,9 @@ class TestSource:
             self.source_dict4,
             variability_model="light_curve",
             kwargs_variability={"supernovae_lightcurve", "i"},
-            sn_absolute_mag=np.array([-19.37, 0.47]),
             sn_absolute_mag_band="bessellb",
             sn_absolute_zpsys="ab",
             sn_type="Ia",
-            sn_model="salt3",
             lightcurve_time=np.linspace(-20, 50, 100),
             cosmo=cosmo,
         )
@@ -273,18 +267,16 @@ class TestSource:
             )
         with pytest.raises(ValueError):
             self.source5.kwargs_extended_source_light(
-                center_lens, draw_area, band="i", light_profile_str="souble_sersic"
+                center_lens, draw_area, band="i", light_profile_str="double_sersic"
             )
         with pytest.raises(ValueError):
             Source(
                 self.source_dict3,
                 variability_model="light_curve",
                 kwargs_variability={"supernovae_lightcurve", "i"},
-                sn_absolute_mag=np.array([-19.37, 0.47]),
                 sn_absolute_mag_band="bessellb",
                 sn_absolute_zpsys="ab",
                 sn_type="Ia",
-                sn_model="salt3",
                 lightcurve_time=np.linspace(-20, 50, 100),
                 cosmo=None,
             )
