@@ -68,7 +68,7 @@ class Source(object):
                         absolute_mag=None,
                         absolute_mag_band=sn_absolute_mag_band,
                         mag_zpsys=sn_absolute_zpsys,
-                        cosmo=cosmo
+                        cosmo=cosmo,
                     )
                 provided_band = [
                     element
@@ -278,9 +278,9 @@ class Source(object):
                 w1 = self.source_dict["w1"]
             else:
                 raise ValueError("weight of the light profile should be provided.")
-            flux = 10**(-mag_source/2.5)
-            mag_source0 = -2.5*np.log10(w0*flux)
-            mag_source1 = -2.5*np.log10(w1*flux)
+            flux = 10 ** (-mag_source / 2.5)
+            mag_source0 = -2.5 * np.log10(w0 * flux)
+            mag_source1 = -2.5 * np.log10(w1 * flux)
             size_source_arcsec0 = float(self.source_dict["angular_size0"])
             size_source_arcsec1 = float(self.source_dict["angular_size1"])
             ellipticity0_1 = self.source_dict["e0_1"]

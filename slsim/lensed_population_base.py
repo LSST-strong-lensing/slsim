@@ -15,7 +15,7 @@ class LensedPopulationBase(ABC):
         lightcurve_time=None,
         sn_type=None,
         sn_absolute_mag_band=None,
-        sn_absolute_zpsys=None
+        sn_absolute_zpsys=None,
     ):
         """
 
