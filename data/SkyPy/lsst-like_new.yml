@@ -1,0 +1,110 @@
+# These are the luminosity function parameters according to M = a_m * z + b_m
+# and Phi = b_phi * exp(a_phi * z). As in Lopez-Sanjuan the model is given as
+# M = M0 + Q * (z - 0.5) and log10(Phi) = Phi0 + P * (z - 0.5) we have to convert
+# the given parameters as a_m = Q, b_m = M0 - 0.5*Q, a_phi = ln(10) * P and
+# b_phi = 10**(Phi0 - 0.5*P)
+parameters:
+  a_m_SF: -1.03
+  b_m_SF: -20.485
+  a_phi_SF: -0.0230259
+  b_phi_SF: 0.00312608
+  a_m_Q: -0.80
+  b_m_Q: -20.46
+  a_phi_Q: -0.94406
+  b_phi_Q: 0.00278612
+  a_phi-1_SF: -43.42936 #!numpy.divide [1., $a_phi_SF]
+  a_phi-1_Q: -1.05925 #!numpy.divide [1., $a_phi_Q]
+  alpha_SF: -1.29
+  alpha_Q_1: -0.53
+  alpha_Q_2: -1.31
+cosmology: !astropy.cosmology.FlatLambdaCDM
+  H0: 70
+  Om0: 0.3
+mag_lim: 30
+sky_area: 10 deg2
+filters:
+  des: [ decam2014-g, decam2014-r, decam2014-i, decam2014-z ]
+bands: 'griz'
+mag_limits:
+  des: [23.4, 23.2, 22.5, 21.8]
+completeness:
+  des:
+    m95: [23.6, 23.4, 22.9, 22.4]
+    m50: [24.6, 24.2, 23.8, 23.5]
+z_range: !numpy.geomspace [0.01, 3.01, 100]
+tables:
+  SF:
+    z, M_B: !skypy.galaxies.schechter_lf
+      redshift: $z_range
+      M_star: !astropy.modeling.models.Linear1D [$a_m_SF, $b_m_SF]
+      phi_star: !astropy.modeling.models.Exponential1D [$b_phi_SF, $a_phi-1_SF] # astropy function requires 1/tau as second argument
+      alpha: $alpha_SF
+      m_lim: $mag_lim
+      sky_area: $sky_area
+    coeff: !skypy.galaxies.spectrum.dirichlet_coefficients
+      redshift: !numpy.zeros_like [$SF.z]
+      alpha0: [1.9946549, 1.99469164, 1.99461187, 1.9946589, 1.99463069]
+      alpha1: [0, 0, 0, 0, 0]
+      weight: [3.47e+09, 3.31e+06, 2.13e+09, 1.64e+10, 1.01e+09]
+    sm: !skypy.galaxies.spectrum.kcorrect.stellar_mass
+      coefficients: $SF.coeff
+      magnitudes: $SF.M_B
+      filter: bessell-B
+    m_des: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+      redshift: $SF.z
+      coefficients: $SF.coeff
+      stellar_mass: $SF.sm
+      filters: $filters.des
+    m_des_error, sigma: !skypy_x.galaxy_forecast.errors.gaussian_error_rykoff
+      m: $SF.m_des
+      m_lim: $mag_limits.des
+      bands: $bands
+      survey: 'DES'
+    pdet_des: !galaxies_paper.logistic_completeness_function
+      m: $SF.m_des
+      m95: $completeness.des.m95
+      m50: $completeness.des.m50
+  Q:
+    z, M_B: !numpy.vstack
+      -
+!numpy.transpose
+!skypy.galaxies.schechter_lf
+              redshift: $z_range
+              M_star: !astropy.modeling.models.Linear1D [$a_m_Q, $b_m_Q]
+              phi_star: !astropy.modeling.models.Exponential1D [$b_phi_Q, $a_phi-1_Q] # astropy function requires 1/tau as secod argument
+              alpha: $alpha_Q_1
+              m_lim: $mag_lim
+              sky_area: $sky_area
+              cosmology: $cosmology
+!numpy.transpose
+!skypy.galaxies.schechter_lf
+              redshift: $z_range
+              M_star: -17.00
+              phi_star: !astropy.modeling.models.Exponential1D [$b_phi_Q, $a_phi-1_Q] # astropy function requires 1/tau as secod argument
+              alpha: $alpha_Q_2
+              m_lim: $mag_lim
+              sky_area: $sky_area
+              cosmology: $cosmology
+    coeff: !skypy.galaxies.spectrum.dirichlet_coefficients
+      redshift: !numpy.zeros_like [$Q.z]
+      alpha0: [1.62158197, 1.62137391, 1.62175061, 1.62159144, 1.62165971]
+      alpha1: [0, 0, 0, 0, 0]
+      weight: [3.84e+09, 1.57e+06, 3.91e+08, 4.66e+10, 3.03e+07]
+    sm: !skypy.galaxies.spectrum.kcorrect.stellar_mass
+      coefficients: $Q.coeff
+      magnitudes: $Q.M_B
+      filter: bessell-B
+    m_des: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+      redshift: $Q.z
+      coefficients: $Q.coeff
+      stellar_mass: $Q.sm
+      filters: $filters.des
+    m_des_error, sigma: !skypy_x.galaxy_forecast.errors.gaussian_error_rykoff
+      m: $Q.m_des
+      m_lim: $mag_limits.des
+      bands: $bands
+      survey: 'DES'
+    pdet_des: !galaxies_paper.logistic_completeness_function
+      m: $Q.m_des
+      m95: $completeness.des.m95
+      m50: $completeness.des.m50
