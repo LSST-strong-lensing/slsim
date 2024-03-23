@@ -504,7 +504,7 @@ def test_generate_signal():
     # Test using magnitudes as inputs
     chosen_seed = 15
     new_mean_magnitude = -15
-    magnitude_standard_deviation = 1
+    magnitude_standard_deviation = 0.1
 
     with pytest.raises(ValueError):
         generate_signal(
