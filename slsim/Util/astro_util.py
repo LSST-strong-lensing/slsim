@@ -650,7 +650,7 @@ def generate_signal(
             )
         )
 
-        if amplitude_variations > new_mean_amplitude:
+        if amplitude_variations > amplitude_baseline:
             raise ValueError("Warning: Amplitude variations greater than mean flux.")
 
         intermediate_light_curve = normalize_light_curve(
