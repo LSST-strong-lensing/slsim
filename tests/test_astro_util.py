@@ -514,6 +514,13 @@ def test_generate_signal():
             new_standard_deviation=5,
             is_magnitude=True,
         )
+        generate_signal(
+            length_of_light_curve,
+            dt,
+            new_mean_amplitude=5,
+            new_standard_deviation=1,
+            is_magnitude=True,
+        )
     light_curve_without_value_error = generate_signal(
         length_of_light_curve,
         dt,
