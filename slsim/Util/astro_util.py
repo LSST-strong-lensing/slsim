@@ -560,7 +560,7 @@ def generate_signal(
     new_mean_amplitude=0,
     new_standard_deviation=1,
     is_magnitude=False,
-    zero_point_mag=3631,
+    zero_point_mag=0,
     input_freq=None,
     input_psd=None,
     seed=None,
@@ -678,7 +678,7 @@ def generate_signal_from_bending_power_law(
     new_mean_amplitude=0,
     new_standard_deviation=None,
     is_magnitude=False,
-    zero_point_mag=3631,
+    zero_point_mag=0,
     seed=None,
 ):
     """Uses astro_util.generate_signal_from_psd() to create an intrinsic bending power
@@ -731,7 +731,7 @@ def generate_signal_from_generic_psd(
     new_mean_amplitude=0,
     new_standard_deviation=None,
     is_magnitude=False,
-    zero_point_mag=3631,
+    zero_point_mag=0,
     seed=None,
 ):
     """Uses astro_util.generate_signal_from_psd() to create an intrinsic signal from any
