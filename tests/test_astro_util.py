@@ -505,12 +505,13 @@ def test_generate_signal():
     chosen_seed = 15
     new_mean_magnitude = -15
     magnitude_standard_deviation = 1
+
     with pytest.raises(ValueError):
         generate_signal(
             length_of_light_curve,
             dt,
-            new_mean_amplitude=magnitude_standard_deviation,
-            new_standard_deviation=new_mean_magnitude,
+            new_mean_amplitude=5,
+            new_standard_deviation=5,
             is_magnitude=True,
         )
     light_curve_without_value_error = generate_signal(
