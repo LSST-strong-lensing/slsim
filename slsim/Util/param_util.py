@@ -107,6 +107,19 @@ def magnitude_to_amplitude(magnitude, mag_zero_point):
     return counts
 
 
+def amplitude_to_magnitude(amplitude, mag_zero_point):
+    """Converts source amplitude to magnitude.
+
+    The inverse of     magnitude_to_amplitude().
+    :param amplitude: source amplitude in flux
+    :param mag_zero_point: zero point magnitude
+    :returns: source magnitude
+    """
+    delta_m = -np.log10(amplitude) * 2.5
+    magnitude = delta_m + mag_zero_point
+    return magnitude
+
+
 def images_to_pixels(image_series):
     """Converts a series of image snapshots into a list of pixel snapshots.
 
