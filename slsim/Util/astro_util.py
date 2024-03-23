@@ -635,25 +635,26 @@ def generate_signal(
         : length_of_light_curve // time_resolution
     ]
     if is_magnitude:
-        amplitude_variations = np.min(
-            magnitude_to_amplitude(
-                (new_standard_deviation + new_mean_amplitude)
-                - magnitude_to_amplitude(new_mean_amplitude, zero_point_mag),
-                zero_point_mag,
-            ),
-            magnitude_to_amplitude(
-                (new_standard_deviation - new_mean_amplitude)
-                + magnitude_to_amplitude(new_mean_amplitude, zero_point_mag),
-                zero_point_mag,
-            ),
+        amplitude_baseline = magnitude_to_amplitude(new_mean_amplitude, zero_point_mag)
+        amplitude_value_1 = magnitude_to_amplitude(
+            new_standard_deviation + new_mean_amplitude, zero_point_mag
+        )
+        amplitude_value_2 = magnitude_to_amplitude(
+            new_standard_deviation - new_mean_amplitude, zero_point_mag
         )
 
-        desired_amplitude = magnitude_to_amplitude(new_mean_amplitude)
+        amplitude_variations = np.min(
+            (
+                abs(amplitude_value_1 - amplitude_baseline),
+                abs(amplitude_value_2 - amplitude_baseline),
+            )
+        )
+
         if amplitude_variations > new_mean_amplitude:
             raise ValueError("Warning: Amplitude variations greater than mean flux.")
 
         intermediate_light_curve = normalize_light_curve(
-            generated_light_curve, desired_amplitude, amplitude_variations
+            generated_light_curve, amplitude_baseline, amplitude_variations
         )
         if any(intermediate_light_curve < 0):
             raise ValueError("Warning: Amplitude variations greater than mean flux.")
