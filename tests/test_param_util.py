@@ -21,6 +21,8 @@ import pytest
 def test_epsilon2e():
     e = epsilon2e(0)
     assert e == 0
+    with pytest.raises(ValueError):
+        epsilon2e(17)
 
 
 def test_e2epsilon():
