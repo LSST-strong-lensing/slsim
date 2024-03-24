@@ -4,6 +4,7 @@ from lenstronomy.Util import constants
 from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
+from lenstronomy.LensModel.Solver.lens_equation_solver import analytical_lens_model_support
 from slsim.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
 from lenstronomy.Util import util, data_util
 from slsim.lensed_system_base import LensedSystemBase
@@ -42,7 +43,7 @@ class Lens(LensedSystemBase):
         :type variability_model: str
         :param kwargs_variability: keyword arguments for the variability of a source.
          This is associated with an input for Variability class.
-        :type kwargs_variab: list of str
+        :type kwargs_variability: list of str
         :param test_area: area of disk around one lensing galaxies to be investigated
             on (in arc-seconds^2)
         :param mixgauss_weights: weights of the Gaussian mixture
@@ -115,13 +116,15 @@ class Lens(LensedSystemBase):
             source_pos_x, source_pos_y = self.source.extended_source_position(
                 center_lens=self.deflector_position, draw_area=self.test_area
             )
-            # TODO: analytical solver possible but currently does not support the
-            #  convergence term
+            if analytical_lens_model_support(lens_model_list) is True:
+                solver = "analytical"
+            else:
+                solver = "lenstronomy"
             self._image_positions = lens_eq_solver.image_position_from_source(
                 source_pos_x,
                 source_pos_y,
                 kwargs_lens,
-                solver="lenstronomy",
+                solver=solver,
                 search_window=self.einstein_radius * 6,
                 min_distance=self.einstein_radius * 6 / 200,
                 magnification_limit=self._magnification_limit,
@@ -142,13 +145,16 @@ class Lens(LensedSystemBase):
             point_source_pos_x, point_source_pos_y = self.source.point_source_position(
                 center_lens=self.deflector_position, draw_area=self.test_area
             )
-            # TODO: analytical solver possible but currently does not support the
-            #  convergence term
+            # uses analytical lens equation solver in case it is supported by lenstronomy for speed-up
+            if analytical_lens_model_support(lens_model_list) is True:
+                solver = "analytical"
+            else:
+                solver = "lenstronomy"
             self._point_image_positions = lens_eq_solver.image_position_from_source(
                 point_source_pos_x,
                 point_source_pos_y,
                 kwargs_lens,
-                solver="lenstronomy",
+                solver=solver,
                 search_window=self.einstein_radius * 6,
                 min_distance=self.einstein_radius * 6 / 200,
                 magnification_limit=self._magnification_limit,
