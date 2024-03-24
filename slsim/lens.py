@@ -4,7 +4,9 @@ from lenstronomy.Util import constants
 from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
-from lenstronomy.LensModel.Solver.lens_equation_solver import analytical_lens_model_support
+from lenstronomy.LensModel.Solver.lens_equation_solver import (
+    analytical_lens_model_support,
+)
 from slsim.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
 from lenstronomy.Util import util, data_util
 from slsim.lensed_system_base import LensedSystemBase
