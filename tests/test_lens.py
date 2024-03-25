@@ -112,9 +112,7 @@ class TestLens(object):
         npt.assert_almost_equal(dt_days2, observer_times2, decimal=5)
 
     def test_lens_equation_solver(self):
-        """
-        tests analytical and numerical lens equation solver options
-        """
+        """Tests analytical and numerical lens equation solver options."""
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         gg_lens = Lens(
             lens_equation_solver="lenstronomy_default",
@@ -131,7 +129,6 @@ class TestLens(object):
             cosmo=cosmo,
         )
         gg_lens.validity_test()
-
 
 
 @pytest.fixture
