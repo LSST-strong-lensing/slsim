@@ -123,8 +123,10 @@ class Lens(LensedSystemBase):
             source_pos_x, source_pos_y = self.source.extended_source_position(
                 center_lens=self.deflector_position, draw_area=self.test_area
             )
-            if self._lens_equation_solver == "lenstronomy_analytical" and \
-                    analytical_lens_model_support(lens_model_list) is True:
+            if (
+                self._lens_equation_solver == "lenstronomy_analytical"
+                and analytical_lens_model_support(lens_model_list) is True
+            ):
                 solver = "analytical"
             else:
                 solver = "lenstronomy"
@@ -154,8 +156,10 @@ class Lens(LensedSystemBase):
                 center_lens=self.deflector_position, draw_area=self.test_area
             )
             # uses analytical lens equation solver in case it is supported by lenstronomy for speed-up
-            if self._lens_equation_solver == "lenstronomy_analytical" and \
-                    analytical_lens_model_support(lens_model_list) is True:
+            if (
+                self._lens_equation_solver == "lenstronomy_analytical"
+                and analytical_lens_model_support(lens_model_list) is True
+            ):
                 solver = "analytical"
             else:
                 solver = "lenstronomy"
