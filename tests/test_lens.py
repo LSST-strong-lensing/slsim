@@ -32,6 +32,7 @@ class TestLens(object):
             gg_lens = Lens(
                 source_dict=self.source_dict,
                 deflector_dict=self.deflector_dict,
+                lens_equation_solver="lenstronomy_analytical",
                 cosmo=cosmo,
             )
             if gg_lens.validity_test():
