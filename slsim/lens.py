@@ -20,6 +20,7 @@ class Lens(LensedSystemBase):
         deflector_dict,
         cosmo,
         source_type="extended",
+        lens_equation_solver="lenstronomy_analytical",
         variability_model=None,
         kwargs_variability=None,
         test_area=4 * np.pi,
@@ -38,6 +39,9 @@ class Lens(LensedSystemBase):
         :param source_type: type of the source 'extended' or 'point_source' or
          'point_plus_extended' supported
         :type source_type: str
+        :param lens_equation_solver: type of lens equation solver; currently supporting
+         "lenstronomy_analytical" and "lenstronomy_general"
+        :type lens_equation_solver: str
         :param variability_model: keyword for variability model to be used. This is an
          input for the Variability class.
         :type variability_model: str
@@ -67,6 +71,7 @@ class Lens(LensedSystemBase):
 
         self.cosmo = cosmo
         self._source_type = source_type
+        self._lens_equation_solver = lens_equation_solver
         self._mixgauss_means = mixgauss_means
         self._mixgauss_stds = mixgauss_stds
         self._mixgauss_weights = mixgauss_weights
@@ -116,7 +121,8 @@ class Lens(LensedSystemBase):
             source_pos_x, source_pos_y = self.source.extended_source_position(
                 center_lens=self.deflector_position, draw_area=self.test_area
             )
-            if analytical_lens_model_support(lens_model_list) is True:
+            if self._lens_equation_solver == "lenstronomy_analytical" and \
+                    analytical_lens_model_support(lens_model_list) is True:
                 solver = "analytical"
             else:
                 solver = "lenstronomy"
@@ -146,7 +152,8 @@ class Lens(LensedSystemBase):
                 center_lens=self.deflector_position, draw_area=self.test_area
             )
             # uses analytical lens equation solver in case it is supported by lenstronomy for speed-up
-            if analytical_lens_model_support(lens_model_list) is True:
+            if self._lens_equation_solver == "lenstronomy_analytical" and \
+                    analytical_lens_model_support(lens_model_list) is True:
                 solver = "analytical"
             else:
                 solver = "lenstronomy"
