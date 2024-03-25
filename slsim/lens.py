@@ -4,6 +4,9 @@ from lenstronomy.Util import constants
 from lenstronomy.LensModel.lens_model import LensModel
 from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
+from lenstronomy.LensModel.Solver.lens_equation_solver import (
+    analytical_lens_model_support,
+)
 from slsim.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
 from lenstronomy.Util import util, data_util
 from slsim.lensed_system_base import LensedSystemBase
@@ -19,6 +22,7 @@ class Lens(LensedSystemBase):
         deflector_dict,
         cosmo,
         source_type="extended",
+        lens_equation_solver="lenstronomy_analytical",
         variability_model=None,
         kwargs_variability=None,
         test_area=4 * np.pi,
@@ -37,12 +41,15 @@ class Lens(LensedSystemBase):
         :param source_type: type of the source 'extended' or 'point_source' or
          'point_plus_extended' supported
         :type source_type: str
+        :param lens_equation_solver: type of lens equation solver; currently supporting
+         "lenstronomy_analytical" and "lenstronomy_general"
+        :type lens_equation_solver: str
         :param variability_model: keyword for variability model to be used. This is an
          input for the Variability class.
         :type variability_model: str
         :param kwargs_variability: keyword arguments for the variability of a source.
          This is associated with an input for Variability class.
-        :type kwargs_variab: list of str
+        :type kwargs_variability: list of str
         :param test_area: area of disk around one lensing galaxies to be investigated
             on (in arc-seconds^2)
         :param mixgauss_weights: weights of the Gaussian mixture
@@ -66,6 +73,7 @@ class Lens(LensedSystemBase):
 
         self.cosmo = cosmo
         self._source_type = source_type
+        self._lens_equation_solver = lens_equation_solver
         self._mixgauss_means = mixgauss_means
         self._mixgauss_stds = mixgauss_stds
         self._mixgauss_weights = mixgauss_weights
@@ -115,13 +123,18 @@ class Lens(LensedSystemBase):
             source_pos_x, source_pos_y = self.source.extended_source_position(
                 center_lens=self.deflector_position, draw_area=self.test_area
             )
-            # TODO: analytical solver possible but currently does not support the
-            #  convergence term
+            if (
+                self._lens_equation_solver == "lenstronomy_analytical"
+                and analytical_lens_model_support(lens_model_list) is True
+            ):
+                solver = "analytical"
+            else:
+                solver = "lenstronomy"
             self._image_positions = lens_eq_solver.image_position_from_source(
                 source_pos_x,
                 source_pos_y,
                 kwargs_lens,
-                solver="lenstronomy",
+                solver=solver,
                 search_window=self.einstein_radius * 6,
                 min_distance=self.einstein_radius * 6 / 200,
                 magnification_limit=self._magnification_limit,
@@ -142,13 +155,19 @@ class Lens(LensedSystemBase):
             point_source_pos_x, point_source_pos_y = self.source.point_source_position(
                 center_lens=self.deflector_position, draw_area=self.test_area
             )
-            # TODO: analytical solver possible but currently does not support the
-            #  convergence term
+            # uses analytical lens equation solver in case it is supported by lenstronomy for speed-up
+            if (
+                self._lens_equation_solver == "lenstronomy_analytical"
+                and analytical_lens_model_support(lens_model_list) is True
+            ):
+                solver = "analytical"
+            else:
+                solver = "lenstronomy"
             self._point_image_positions = lens_eq_solver.image_position_from_source(
                 point_source_pos_x,
                 point_source_pos_y,
                 kwargs_lens,
-                solver="lenstronomy",
+                solver=solver,
                 search_window=self.einstein_radius * 6,
                 min_distance=self.einstein_radius * 6 / 200,
                 magnification_limit=self._magnification_limit,
