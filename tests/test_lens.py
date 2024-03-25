@@ -122,7 +122,9 @@ class TestLens(object):
             deflector_dict=self.deflector_dict,
             cosmo=cosmo,
         )
-        gg_lens.validity_test()
+        while True:
+            gg_lens.validity_test()
+            break
 
         gg_lens = Lens(
             lens_equation_solver="lenstronomy_analytical",
@@ -130,7 +132,9 @@ class TestLens(object):
             deflector_dict=self.deflector_dict,
             cosmo=cosmo,
         )
-        gg_lens.validity_test()
+        while True:
+            gg_lens.validity_test()
+            break
 
 
 
