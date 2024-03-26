@@ -501,6 +501,39 @@ def test_generate_signal():
     sum_of_squares = np.sum(difference_curve**2)
     assert sum_of_squares > 0
 
+    # Test using magnitudes as inputs
+    chosen_seed = 15
+    new_mean_magnitude = -15
+    magnitude_standard_deviation = 0.1
+
+    with pytest.raises(ValueError):
+        generate_signal(
+            length_of_light_curve,
+            dt,
+            new_mean_amplitude=5,
+            new_standard_deviation=5,
+            is_magnitude=True,
+        )
+        generate_signal(
+            length_of_light_curve,
+            dt,
+            new_mean_amplitude=5,
+            new_standard_deviation=1,
+            is_magnitude=True,
+        )
+    light_curve_without_value_error = generate_signal(
+        length_of_light_curve,
+        dt,
+        new_mean_amplitude=new_mean_magnitude,
+        new_standard_deviation=magnitude_standard_deviation,
+        is_magnitude=True,
+    )
+    assert (
+        np.max(light_curve_without_value_error)
+        - np.min(light_curve_without_value_error)
+        > magnitude_standard_deviation
+    )
+
 
 def test_generate_signal_from_bending_power_law():
     # Test that this function generates an identical signal to
