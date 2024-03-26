@@ -90,7 +90,7 @@ class TestLens(object):
         assert vdp >= 10
 
     def test_los_linear_distortions(self):
-        losd = self.gg_lens.los_linear_distortions()
+        losd = self.gg_lens.los_linear_distortions
         assert losd != 0
 
     def test_point_source_arrival_times(self):
@@ -199,6 +199,70 @@ def test_point_source_magnitude_with_lightcurve(supernovae_lens_instance):
     expected_results = supernovae_lens_instance.source.source_dict["ps_mag_r"]
     assert mag[0][0] != expected_results[0][0]
     assert mag[1][0] != expected_results[0][0]
+
+
+class TestDifferenLens(object):
+    # pytest.fixture(scope='class')
+    def setup_method(self):
+        # path = os.path.dirname(slsim.__file__)
+
+        path = os.path.dirname(__file__)
+        module_path, _ = os.path.split(path)
+        print(path, module_path)
+        blue_one = Table.read(
+            os.path.join(path, "TestData/blue_one_modified.fits"), format="fits"
+        )
+        red_one = Table.read(
+            os.path.join(path, "TestData/red_one_modified.fits"), format="fits"
+        )
+        self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+        self.source_dict = blue_one
+        self.deflector_dict = red_one
+
+    def test_different_setting(self):
+        gg_lens = Lens(
+            source_dict=self.source_dict,
+            deflector_dict=self.deflector_dict,
+            cosmo=self.cosmo,
+            los_bool=True,
+            mixgauss_gamma=True,
+            nonlinear_los_bool=False,
+        )
+        assert gg_lens.external_shear >= 0
+        assert isinstance(gg_lens.external_convergence, float)
+        assert isinstance(gg_lens.external_shear, float)
+
+        gg_lens_2 = Lens(
+            source_dict=self.source_dict,
+            deflector_dict=self.deflector_dict,
+            cosmo=self.cosmo,
+            los_bool=True,
+            mixgauss_gamma=False,
+            nonlinear_los_bool=True,
+        )
+        assert gg_lens_2.external_shear >= 0
+        assert isinstance(gg_lens_2.external_convergence, float)
+        assert isinstance(gg_lens_2.external_shear, float)
+
+        gg_lens_3 = Lens(
+            source_dict=self.source_dict,
+            deflector_dict=self.deflector_dict,
+            cosmo=self.cosmo,
+            los_bool=False,
+        )
+        assert gg_lens_3.external_convergence == 0
+        assert gg_lens_3.external_shear == 0
+
+        with pytest.raises(ValueError):
+            gg_lens_4 = Lens(
+                source_dict=self.source_dict,
+                deflector_dict=self.deflector_dict,
+                cosmo=self.cosmo,
+                los_bool=True,
+                mixgauss_gamma=True,
+                nonlinear_los_bool=True,
+            )
+            gg_lens_4.external_convergence()
 
 
 if __name__ == "__main__":

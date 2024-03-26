@@ -36,3 +36,48 @@ The file contains two tables, one for each of the blue and red galaxies. Each ta
 * angular_size: Angular sizes computed based on physical sizes and redshifts 
 * ellipticity: Ellipticities computed using the beta_ellipticity model
 
+
+# Dark Matter Halo Simulation Configuration File
+This YAML configuration file is used to generate a simulated population of dark matter halos, including their redshifts and masses, using the SkyPy package and a custom pipeline.
+
+## Warning: 
+### The halos pipeline require specific versions of the following packages:
+* skypy halos branch [Skypy-halos-github](https://github.com/skypyproject/skypy/tree/module/halos)
+* hmf
+
+## Parameters
+*  fsky: Sky area in square degrees (default: 0.0001 deg^2) 
+*  z_range: Redshift range for the halos !numpy.linspace 
+*  cosmology: Cosmological model used in the simulation
+*  wavenumber: Wavenumber range for the power spectrum
+*  power_spectrum: Power spectrum model used in the simulation, specifically the Eisenstein & Hu model [SkyPy_power_spectrum_eisenstein_hu](https://skypy.readthedocs.io/en/v0.3/api/skypy.power_spectrum.eisenstein_hu.html#skypy.power_spectrum.eisenstein_hu)
+    * A_s: Amplitude of the primordial power spectrum (2.1982e-09)
+    * n_s: Scalar spectral index (0.969453)
+    * cosmology: !astropy.cosmology.default_cosmology.get []
+*  collapse_function: The function that describes the collapse of dark matter halos [SkyPy_halo_mass_ellipsoidal_collapse_function](https://skypy.readthedocs.io/en/module-halos/api/skypy.halos.mass.ellipsoidal_collapse_function.html#skypy.halos.mass.ellipsoidal_collapse_function)
+
+## Tables
+The file contains a table for dark matter halos. The table computes several properties for the halos, such as redshift and mass, using various functions from the SkyPy package and the custom simulation pipeline.
+
+### Dark Matter Halos
+* z: Redshifts (a array like list) computed using a function from the custom simulation pipeline that generates a redshift distribution for halos from a given comoving density. The function uses the following parameters:
+  - `redshift_list`: The range of redshifts for the halos
+  - `sky_area` : The area of the sky being simulated
+  - `cosmology` : The cosmological model being used
+  - `m_min`: The minimum halo mass (in solar masses, M☉) considered in the simulation.
+  - `m_max`: The maximum halo mass (in solar masses, M☉) considered in the simulation.
+  - `resolution`: 1000
+  - `wavenumber`: The wavenumber for the power spectrum
+  - `power_spectrum`: The power spectrum model being used
+  - `collapse_function`: The function that describes the collapse of dark matter halos
+  - `params`: The parameters for the collapse function [0.3, 0.7, 0.3, 1.686]
+* mass: Halo masses computed using a function from the custom simulation pipeline that generates a mass function for halos at a given redshift. The function uses the same parameters as the redshift function.
+  - `z` : Redshifts where the halo mass is to be calculated. It is derived from the redshifts of the halos calculated in the previous step.
+  - `cosmology` : The cosmological model used for the simulation. It defaults to the current default cosmology in Astropy if not provided.
+  - `m_min` : The minimum halo mass (in solar masses, M☉) considered in the simulation.
+  - `m_max` : The maximum halo mass (in solar masses, M☉) considered in the simulation.
+  - `resolution` : The number of pieces used for trapezoidal integration from log(min mass) to log(max mass) when calculating the halo mass.
+  - `wavenumber` : The array of wavenumbers (in 1/Mpc) at which the power spectrum is calculated.
+  - `power_spectrum` : The power spectrum used in the simulation. Here, it is calculated using the Eisenstein & Hu fitting function.
+  - `collapse_function` : The collapse function used to calculate the halo mass function. The ellipsoidal collapse function is used in this case.
+  - `params` : The parameters for the collapse function [See details in halos-mass](https://github.com/skypyproject/skypy/blob/module/halos/skypy/halos/mass.py)
