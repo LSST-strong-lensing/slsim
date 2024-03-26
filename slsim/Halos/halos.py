@@ -8,34 +8,32 @@ from astropy.units.quantity import Quantity
 
 
 def colossus_halo_mass_function(m_200, cosmo, z, sigma8=0.81, ns=0.96, omega_m=None):
-    """M in Msun/h return dn/dlnM (mpc-3) Calculates the differential halo mass function
-    per logarithmic interval in mass at a given redshift.
+    """Calculate the differential halo mass function per logarithmic mass interval at a
+    given redshift.
 
-    This function uses the Colossus library to calculate the halo mass function, given a mass scale (m_200),
-    a cosmology (cosmo), and a redshift (z). The mass function is defined as dn/dlnM, where n is the number
-    density of halos and M is the halo mass. The function allows for specification of the sigma8 and ns.
+    This function leverages the Colossus library to determine the halo mass function
+    based on a mass scale (m_200), a cosmological model (cosmo), and a redshift (z). The
+    mass function, expressed as dn/dlnM, represents the number density of halos per log
+    mass interval. Parameters sigma8 and ns can be specified to adjust the calculation.
 
-    Parameters
-    ----------
-    m_200 : ndarray
-        Halo mass scale in units of solar mass divided by the Hubble parameter (M_sun/h).
-    cosmo : astropy.cosmology instance
-        The cosmology instance specifying the cosmological parameters.
-    z : float
-        Redshift at which the mass function is evaluated.
-    sigma8 : float, optional
-        Defaults to 0.81.
-    ns : float, optional
-        Defaults to 0.96.
-
-    Returns
-    -------
-    ndarray
-        The differential halo mass function dn/dlnM in units of Mpc^-3.
-
-    Notes
-    -----
-    The 'bhattacharya11' model is used for the mass function within the Colossus framework.
+    :param m_200: Halo mass scale, in solar mass units divided by the Hubble parameter
+        (M_sun/h).
+    :param cosmo: Cosmology instance detailing the cosmological parameters.
+    :param z: Redshift for evaluating the mass function.
+    :param sigma8: Normalization of the power spectrum, defaults to 0.81 if not
+        specified.
+    :param ns: Spectral index, defaults to 0.96 if not specified.
+    :param omega_m: Omega_m in Cosmology, defaults to none which will lead to the same
+        in Cosmology setting.
+    :type m_200: ndarray
+    :type cosmo: astropy.cosmology instance
+    :type z: float
+    :type sigma8: float, optional
+    :type ns: float, optional
+    :type omega_m: float, optional
+    :return: The differential halo mass function dn/dlnM, in units of Mpc^-3.
+    :rtype: ndarray :note: The 'bhattacharya11' model within the Colossus framework is
+        used for the mass function.
     """
     if omega_m is None:
         omega_m = cosmo.Om0
@@ -67,6 +65,20 @@ def colossus_halo_mass_function(m_200, cosmo, z, sigma8=0.81, ns=0.96, omega_m=N
 
 
 def get_value_if_quantity(variable):
+    """Extracts the numerical value from an astropy Quantity object or returns the input
+    if not a Quantity.
+
+    This function checks if the input variable is an instance of an astropy Quantity. If
+    it is, the function extracts and returns the numerical value of the Quantity. If the
+    input is not a Quantity, it returns the input variable unchanged.
+
+    :param variable: The variable to be checked and possibly converted. Can be an
+        astropy Quantity or any other data type.
+    :type variable: Quantity or any
+    :return: The numerical value of the Quantity if the input is a Quantity; otherwise,
+        the input variable itself.
+    :rtype: float or any
+    """
     if isinstance(variable, Quantity):
         return variable.value
     else:
@@ -84,45 +96,31 @@ def colossus_halo_mass_sampler(
     size=None,
     omega_m=None,
 ):
-    """Samples halo masses from a mass function within specified minimum and maximum
-    masses.
+    """Sample halo masses from a mass function within defined mass boundaries.
 
-    This function computes a halo mass function using the Colossus library, then samples
-    halo masses from this distribution. The mass function is computed within a given mass range
-    and at a specific redshift, using a specified cosmology and optional sigma8 and ns parameters
-    for the power spectrum normalization and spectral index, respectively.
+    Utilizes the Colossus library to compute a halo mass function, from which halo masses are sampled. The function calculates the mass function across a specified mass range and redshift, using given cosmological parameters and, optionally, values for sigma8 and ns for power spectrum normalization and spectral index, respectively.
 
-    Parameters
-    ----------
-    m_min : Quantity or float
-        The minimum halo mass (in M_sol/h). If an astropy Quantity, will be converted to its value.
-    m_max : Quantity or float
-        The maximum halo mass (in M_sol/h). If an astropy Quantity, will be converted to its value.
-    resolution : Quantity or int
-        The number of mass bins to use for the mass function calculation. If an astropy Quantity, will be converted to its value.
-    z : float
-        The redshift at which to compute the halo mass function.
-    cosmology : astropy.cosmology instance
-        The cosmology instance to use for calculating the halo mass function.
-    sigma8 : float, optional
-        Sigma8 parameter. Default is 0.81.
-    ns : float, optional
-        ns in colossus cosmo setting. Default is 0.96.
-    size : int or None, optional
-        The number of random samples to draw. If None, a single value is returned.
-
-    Returns
-    -------
-    ndarray or float
-        The sampled halo masses (in M_sol), with the number of samples determined by the `size` parameter.
-        If `size` is None, a single float value is returned.
-
-    Notes
-    -----
-    The halo mass function is computed using the Colossus library, specifically using the
-    'bhattacharya11' model for the mass function. The cosmology parameters used in the calculation
-    are extracted from the provided cosmology instance and used to set a temporary cosmology
-    in Colossus with the name "halo_cosmo".
+    :param m_min: Minimum halo mass, in M_sol/h. Converted to value if specified as an astropy Quantity.
+    :param m_max: Maximum halo mass, in M_sol/h. Converted to value if specified as an astropy Quantity.
+    :param resolution: Number of mass bins for the mass function calculation, converted to value if specified as an astropy Quantity.
+    :param z: Redshift for halo mass function computation.
+    :param cosmology: Cosmology instance for calculating the halo mass function.
+    :param sigma8: Sigma8 parameter, default is 0.81.
+    :param ns: Spectral index in Colossus cosmology settings, default is 0.96.
+    :param size: Number of random samples to draw. Returns a single value if None.
+    :param omega_m: Omega_m in Cosmology, defaults to none which will lead to the same in Cosmology setting.
+    :type m_min: Quantity or float
+    :type m_max: Quantity or float
+    :type resolution: Quantity or int
+    :type z: float
+    :type cosmology: astropy.cosmology instance
+    :type sigma8: float, optional
+    :type ns: float, optional
+    :type size: int or None, optional
+    :type omega_m: float
+    :return: Sampled halo masses in M_sol, the number of samples is determined by the `size` parameter. Returns a single float if `size` is None.
+    :rtype: ndarray or float
+    :note: The Colossus library's 'bhattacharya11' model is used for the mass function. Cosmology parameters from the provided instance are temporarily applied to Colossus as "halo_cosmo".
     """
     m_min_value = get_value_if_quantity(m_min)
     m_max_value = get_value_if_quantity(m_max)
@@ -154,23 +152,26 @@ def set_defaults(
     resolution=None,
     cosmology=None,
 ):
-    """Utility function to set default values for parameters if not provided.
+    """Set default values for parameters if not explicitly provided.
 
-    Parameters
-    ----------
-    m_min : float, optional
-        The minimum halo mass (in M_sol).
-    m_max : float, optional
-        The maximum halo mass (in M_sol).
-    resolution : int, optional
-        The resolution of the grid.
-    cosmology : astropy.cosmology instance, optional
-        The cosmology instance to use.
+    Ensure all parameters have values, setting defaults for any that are unspecified.
+    This utility function aids in initializing simulation or calculation setups where
+    certain parameters might not be critical and can assume default values.
 
-    Returns
-    -------
-    tuple
-        The parameters with default values set where applicable.
+    :param m_min: The minimum halo mass, in solar mass units (M_sol). Defaults to a
+        predetermined value if not specified.
+    :param m_max: The maximum halo mass, in solar mass units (M_sol). Defaults to a
+        predetermined value if not specified.
+    :param resolution: Resolution of the computational grid. Assigned a default value if
+        omitted.
+    :param cosmology: Cosmology model instance to be used in calculations. If not
+        provided, a default cosmology is used.
+    :type m_min: float, optional
+    :type m_max: float, optional
+    :type resolution: int, optional
+    :type cosmology: astropy.cosmology instance, optional
+    :return: A tuple containing the parameters, with defaults applied where necessary.
+    :rtype: tuple
     """
 
     # Default values
@@ -212,43 +213,41 @@ def number_density_at_redshift(
     ns=0.96,
     omega_m=None,
 ):
-    """Calculates the number density of halos at specified redshifts within a given mass
+    """Compute the number density of halos at various redshifts within a specific mass
     range.
 
-    This function computes the number density of halos per comoving volume unit at different redshifts,
-    considering halos within a specified mass range. The number density is obtained by integrating the
-    halo mass function over the mass range.
+    This function integrates the halo mass function over a given mass range to find the
+    number density of halos per unit comoving volume at different redshifts. It's useful
+    for understanding the distribution and evolution of halos across cosmic time.
 
-    Parameters
-    ----------
-    z : float or ndarray
-        Redshift or an array of redshifts at which to calculate the number density.
-    m_min : float, optional
-        The minimum mass of halos to include in the calculation (in M_sol).
-    m_max : float, optional
-        The maximum mass of halos to include in the calculation (in M_sol).
-    resolution : int, optional
-        The number of mass bins to use for the mass function calculation.
-    cosmology : astropy.cosmology instance, optional
-        The cosmology instance to use for calculating the halo mass function.
-    sigma8 : float, optional
-        Default is 0.81.
-    ns : float, optional
-        Default is 0.96.
-    omega_m : float, optional
-        Default is None.(will use the same in cosmology setting)
-
-    Returns
-    -------
-    list or ndarray
-        The number density of halos (in Mpc^-3) at each specified redshift. The output is a list if z is
-        a scalar and an ndarray if z is an array.
-
-    Notes
-    -----
-    If the input redshift(s) contain NaN values, a warning is issued, and a default redshift of 0.0001 is used.
-    The function integrates the halo mass function, obtained from the `colossus_halo_mass_function` function,
-    over the specified mass range to calculate the total number density.
+    :param z: Redshift(s) at which to compute the number density, can be a single value
+        or an array.
+    :param m_min: Minimum halo mass included in the density calculation, in solar masses
+        (M_sol). Optional, with a default value if not provided.
+    :param m_max: Maximum halo mass for the density calculation, in solar masses
+        (M_sol). Optional, with a default value if not provided.
+    :param resolution: Number of mass bins for integrating the mass function. Optional,
+        defaults to a predetermined value.
+    :param cosmology: Cosmology instance for the underlying cosmological model.
+        Optional, defaults to a standard model if not provided.
+    :param sigma8: Normalization of the power spectrum, optional, with a default value
+        if not specified.
+    :param ns: Spectral index for the power spectrum, optional, with a default value if
+        not specified.
+    :param omega_m: Matter density parameter, optional, will use the cosmology setting
+        if not specified.
+    :type z: float or ndarray
+    :type m_min: float, optional
+    :type m_max: float, optional
+    :type resolution: int, optional
+    :type cosmology: astropy.cosmology instance, optional
+    :type sigma8: float, optional
+    :type ns: float, optional
+    :type omega_m: float, optional
+    :return: Number density of halos at each specified redshift, as a list (for scalar
+        z) or ndarray (for array z).
+    :rtype: list or ndarray :note: A warning is issued for NaN values in input
+        redshifts, with a fallback to a default redshift of 0.0001.
     """
     (
         m_min,
@@ -289,24 +288,24 @@ def number_for_certain_mass(massf, m, dndlnM=False):
 
 
 def growth_factor_at_redshift(z, cosmology):
-    """Calculate the growth factor at a given redshift.
+    """Determine the growth factor at specified redshift(s).
 
-    Parameters
-    ----------
-    z : float, array_like, or list
-        The redshift at which to evaluate the growth factor.
-    cosmology : astropy.cosmology instance
-        The cosmology instance to use.
+    Calculates the growth of structure over cosmic time by evaluating the growth factor
+    at given redshift(s). This is crucial for understanding how density fluctuations
+    evolve in the universe.
 
-    Returns
-    -------
-    float or numpy.ndarray
-        The growth factor at redshift z.
-
-    Notes
-    -----
-    Using hmf library to calculate growth factor.
+    :param z: Redshift(s) at which to evaluate the growth factor, can be a single value
+        or an array.
+    :param cosmology: Cosmology instance dictating the universe's expansion history and
+        other relevant parameters.
+    :type z: float, array_like, or list
+    :type cosmology: astropy.cosmology instance
+    :return: Growth factor at the specified redshift(s), as a float (for scalar z) or
+        ndarray (for array z).
+    :rtype: float or numpy.ndarray :note: The growth factor calculation is powered by
+        the hmf library.
     """
+
     # Check if z is a list and convert to numpy array if it is
     if isinstance(z, list):
         z = np.array(z)
@@ -329,35 +328,23 @@ def redshift_halos_array_from_comoving_density(
     ns=0.96,
     omega_m=None,
 ):
-    """Calculate an array of halo redshifts from a given comoving density.
+    """Generate an array of halo redshifts based on a given comoving density.
 
-    The function computes the expected number of Halos at different
-    redshifts using the differential comoving volume
-    and the halo number density then apply the poisson distribution on it.
-    After determining the expected number of Halos, the function produces
-    an array of halo redshifts based on the cumulative distribution
-    function (CDF) of the number density.
+    This function predicts halo redshifts by considering the expected number of halos at different redshifts, calculated from the differential comoving volume and halo number density. It applies a Poisson distribution to these expectations to simulate the actual distribution of halos.
 
-    Parameters
-    ----------
-    redshift_list : array_like
-        A list of redshifts.
-    sky_area : `~astropy.units.Quantity`
-        The area of the sky to consider (in square degrees).
-    cosmology : astropy.cosmology instance, optional
-        The cosmology instance to use.
-    m_min : float, optional
-        The minimum halo mass (in M_sol).
-    m_max : float, optional
-        The maximum halo mass (in M_sol).
-    resolution : int, optional
-        The resolution of the mass grid.
-
-    Returns
-    -------
-    array
-        An array of redshifts of Halos.
+    :param array_like redshift_list: List of redshifts for which to calculate halo distributions.
+    :param `~astropy.units.Quantity` sky_area: Sky area under consideration, specified in square degrees.
+    :param astropy.cosmology instance cosmology: Optional cosmology instance for the calculations. Defaults to a standard model if not provided.
+    :param float m_min: Minimum halo mass for consideration in the calculation, in solar masses (M_sol). Optional.
+    :param float m_max: Maximum halo mass for the calculation, in solar masses (M_sol). Optional.
+    :param int resolution: Resolution of the mass grid for the calculations. Optional.
+    :param float sigma8: Normalization parameter for the power spectrum, default is 0.81.
+    :param float ns: The spectral index defining the tilt of the primordial power spectrum, default is 0.96.
+    :param float omega_m: The matter density parameter of the universe, optional.
+    :return: Array of halo redshifts based on the calculated distributions.
+    :rtype: array
     """
+
     if cosmology is None:
         warnings.warn("No cosmology provided, instead uses default ")
         from astropy.cosmology import default_cosmology
@@ -399,44 +386,54 @@ def dv_dz_to_dn_dz(
     ns=0.96,
     omega_m=None,
 ):
-    """Converts a differential comoving volume element dV/dz to a differential number
-    density dn/dz.
+    """Convert differential comoving volume element to differential number density per
+    redshift interval.
 
-    This function calculates the number density of objects per redshift interval by multiplying the
-    differential comoving volume element dV/dz by the number density of objects per comoving volume
-    at each redshift.
+    This function transitions from the concept of a comoving volume element to the
+    actual number density of objects within that volume per unit redshift. It achieves
+    this by taking the differential comoving volume element dV/dz and multiplying it by
+    the number density of objects within a comoving volume at each redshift point.
 
-    Parameters
-    ----------
-    dV_dz : ndarray
-        Differential comoving volume element as a function of redshift.
-    redshift_list : ndarray
-        List of redshifts corresponding to dV_dz values.
-    m_min : float, optional
-        The minimum mass of halos to consider in the number density calculation.
-    m_max : float, optional
-        The maximum mass of halos to consider in the number density calculation.
-    resolution : int, optional
-        The resolution of the grid used in the mass function calculation.
-    cosmology : astropy.cosmology instance, optional
-        The cosmology instance used for the calculation.
-    sigma8 : float, optional
-        The sigma8 parameter for the power spectrum normalization. Default is 0.81.
-    ns : float, optional
-        The spectral index. Default is 0.96.
-    omega_m : float, optional
-        The omega_m parameter for the cosmology. Default is None.
-
-    Returns
-    -------
-    ndarray
-        The differential number density dn/dz, which represents the number of objects per redshift
-        interval per comoving volume unit.
-
-    Notes
-    -----
-    The function requires the specification of halo mass range (m_min, m_max) and cosmology to compute
-    the number density of objects. These parameters are optional and can be set to default values if not provided.
+    :param dV_dz: Differential comoving volume element as a function of redshift,
+        detailing how volume changes with redshift.
+    :param redshift_list: Array of redshifts corresponding to the dV_dz values, serving
+        as the domain over which the function is defined.
+    :param m_min: Minimum mass threshold for halos included in the number density
+        calculation, in solar masses (M_sol). This parameter is optional, with a default
+        setting if not provided.
+    :param m_max: Maximum mass threshold for halos considered in the number density
+        estimation, in solar masses (M_sol). This parameter is optional, with a default
+        setting if not provided.
+    :param resolution: The granularity of the grid used in the underlying mass function
+        calculation, with a higher resolution offering more detailed insights. This
+        parameter is optional, with a default value if omitted.
+    :param cosmology: The cosmological model applied to the calculation, influencing the
+        interpretation of redshifts and distances. This parameter is optional, with a
+        default cosmology assumed if not specified.
+    :param sigma8: Normalization parameter for the power spectrum, influencing the
+        amplitude of mass density fluctuations. This parameter is optional, with a
+        default value if not specified.
+    :param ns: The spectral index defining the tilt of the primordial power spectrum, a
+        key parameter in cosmological models. This parameter is optional, with a default
+        value if not specified.
+    :param omega_m: The matter density parameter of the universe, critical for
+        understanding the evolution of structure. This parameter is optional and will
+        default to the cosmology's value if not provided.
+    :type dV_dz: ndarray
+    :type redshift_list: ndarray
+    :type m_min: float, optional
+    :type m_max: float, optional
+    :type resolution: int, optional
+    :type cosmology: astropy.cosmology instance, optional
+    :type sigma8: float, optional
+    :type ns: float, optional
+    :type omega_m: float, optional
+    :return: An array representing the differential number density dn/dz, which
+        quantifies the expected number of objects per redshift interval in a unit
+        comoving volume.
+    :rtype: ndarray :note: While the halo mass range and cosmological parameters are
+        optional, specifying them enhances the accuracy and relevance of the calculated
+        number density.
     """
     density = number_density_at_redshift(
         z=redshift_list,
@@ -453,21 +450,24 @@ def dv_dz_to_dn_dz(
 
 
 def dndz_to_N(dN_dz, redshift_list):
-    """Converts a redshift distribution dN/dz into a total number of objects N using
-    Poisson statistics.
+    """Convert redshift distribution to total number of objects using Poisson
+    statistics.
 
-    Parameters
-    ----------
-    dN_dz : ndarray
-        The differential number of objects per redshift interval.
-    redshift_list : ndarray
-        List of redshifts corresponding to the dN_dz values.
+    This function transforms a differential redshift distribution dN/dz into an estimate
+    of the total number of objects N. It applies Poisson statistics to model the
+    inherent stochastic nature of astronomical object distributions, using the integral
+    of dN/dz over the redshift range to set the mean of the Poisson distribution.
 
-    Returns
-    -------
-    int
-        The total number of objects, drawn from a Poisson distribution with the mean set to the integral
-        of dN/dz over the redshift range.
+    :param dN_dz: Differential number of objects per redshift interval, serving as the
+        rate of object occurrence as a function of redshift.
+    :param redshift_list: Array of redshifts corresponding to the dN_dz values,
+        outlining the span over which the distribution is defined.
+    :type dN_dz: ndarray
+    :type redshift_list: ndarray
+    :return: The total number of objects expected within the given redshift
+        distribution, determined by drawing from a Poisson distribution with the mean
+        calculated from the integral of dN/dz.
+    :rtype: int
     """
     N = np.trapz(dN_dz, redshift_list)
     N = np.random.poisson(N)
@@ -475,21 +475,27 @@ def dndz_to_N(dN_dz, redshift_list):
 
 
 def dndz_to_redshifts(N, dN_dz, redshift_list):
-    """Cumulative trapezoidal rule to get redshift CDF.
+    """Generate a cumulative distribution function (CDF) of redshifts using the
+    trapezoidal rule.
 
-    Parameters
-    ----------
-    N : int
-        The number of redshifts to sample.
-    dN_dz : ndarray
-        The differential number of objects per redshift interval.
-    redshift_list : ndarray
-        List of redshifts corresponding to the dN_dz values.
+    This function employs the cumulative trapezoidal rule to integrate a differential
+    number distribution of objects dN/dz over redshift, producing a redshift cumulative
+    distribution function (CDF). This CDF is then used to sample N redshifts, providing
+    a statistical basis for modeling distributions of astronomical objects over
+    redshift.
 
-    Returns
-    -------
-    ndarray
-        An array of N sampled redshifts based on the provided distribution.
+    :param N: The number of redshifts to sample from the cumulative distribution,
+        representing the size of the resultant redshift array.
+    :param dN_dz: Differential number of objects per redshift interval, indicating the
+        rate at which the number of objects changes with redshift.
+    :param redshift_list: Array of redshifts corresponding to the dN_dz values,
+        delineating the domain over which the distribution applies.
+    :type N: int
+    :type dN_dz: ndarray
+    :type redshift_list: ndarray
+    :return: An array of N redshifts sampled according to the cumulative distribution
+        derived from the differential redshift distribution dN/dz.
+    :rtype: ndarray
     """
     assert len(dN_dz) == len(redshift_list)
     cdf = dN_dz  # reuse memory
@@ -500,21 +506,18 @@ def dndz_to_redshifts(N, dN_dz, redshift_list):
 
 
 def v_per_redshift(redshift_list, cosmology, sky_area):
-    """Calculate the volume per redshift.
+    """Calculate comoving volume per unit redshift.
 
-    Parameters
-    ----------
-    redshift_list : array_like
-        A list of redshifts.
-    cosmology : astropy.cosmology instance, optional
-        The cosmology instance to use.
-    sky_area : `~astropy.units.Quantity`
-        The area of the sky to consider (in square degrees) or solid angle.
+    This function computes the comoving volume associated with each redshift in a given list of redshifts. The calculation considers the cosmological model specified and the area of the sky under consideration. This is crucial for understanding the volume over which astronomical surveys operate at different depths (redshifts).
 
-    Returns
-    -------
-    array
-        The volume per redshift in Mpc3.
+    :param redshift_list: Array of redshifts for which to calculate the corresponding comoving volumes, representing the depth of an astronomical survey or observation.
+    :param cosmology: The cosmological model to apply, which defines the universe's geometry and expansion history, influencing the calculation of comoving volumes. This parameter is optional, with a default cosmology used if not specified.
+    :param sky_area: The area of the sky over which the volume calculations are to be applied, expressed in square degrees or as a solid angle, framing the scope of the astronomical observation or survey.
+    :type redshift_list: array_like
+    :type cosmology: astropy.cosmology instance, optional
+    :type sky_area: `~astropy.units.Quantity`
+    :return: An array detailing the comoving volume corresponding to each redshift in the input list, providing a spatial context for the distribution of astronomical objects.
+    :rtype: array
     """
     dV_dz = (cosmology.differential_comoving_volume(redshift_list) * sky_area).to_value(
         "Mpc3"
@@ -532,7 +535,36 @@ def halo_mass_at_z(
     ns=0.96,
     omega_m=None,
 ):
-    """"""
+    """Sample halo masses at given redshift(s) using specified or default cosmological
+    parameters and mass range.
+
+    :param z: Redshift(s) at which to sample halo masses. Can be a single value or an
+        iterable of values.
+    :type z: float or iterable
+    :param m_min: Minimum halo mass in solar masses. Defaults to a predetermined value
+        if not specified.
+    :type m_min: float, optional
+    :param m_max: Maximum halo mass in solar masses. Defaults to a predetermined value
+        if not specified.
+    :type m_max: float, optional
+    :param resolution: Resolution of the computational grid. Defaults to a predetermined
+        value if not specified.
+    :type resolution: int, optional
+    :param cosmology: Cosmology instance to be used in calculations. Defaults to a
+        predetermined cosmology if not specified.
+    :type cosmology: astropy.cosmology instance, optional
+    :param sigma8: Sigma8 parameter for the power spectrum normalization. Defaults to
+        0.81 if not specified.
+    :type sigma8: float, optional
+    :param ns: Spectral index for the power spectrum. Defaults to 0.96 if not specified.
+    :type ns: float, optional
+    :param omega_m: Matter density parameter Omega_m. If not specified, the value from
+        the cosmology instance is used.
+    :type omega_m: float, optional
+    :return: List of sampled halo masses for each provided redshift. Each element
+        corresponds to the mass sampled at the respective redshift in the input.
+    :rtype: list
+    """
 
     (
         m_min,
@@ -571,22 +603,26 @@ def halo_mass_at_z(
 
 
 def redshift_mass_sheet_correction_array_from_comoving_density(redshift_list):
-    """Generates an array of redshift values for use in mass sheet correction
-    calculations.
+    """Create an array of redshifts for mass sheet correction calculations.
 
-    This function creates an array of redshift values starting from 0.025 up to the maximum redshift in the
-    provided redshift_list, with a step of 0.05.
+    This utility function generates a sequence of redshift values beginning at 0.025 and
+    incrementing by 0.05, extending up to the maximum redshift found in the input
+    redshift_list. The generated redshift array is particularly useful for computations
+    related to mass sheet corrections in lensing studies, where discrete redshift values
+    are needed across a specified range.
 
-    Parameters
-    ----------
-    redshift_list : ndarray
-        An array of redshift values, where the maximum value is used to set the range of the output array.
-
-    Returns
-    -------
-    ndarray
-        An array of redshift values starting from 0.025 up to the maximum redshift in redshift_list, with a step of 0.05.
+    :param redshift_list: Array of observed redshifts, the maximum of which determines
+        the upper limit for the generated redshift sequence. This list provides the
+        context or observational range within which the mass sheet correction
+        calculations are relevant.
+    :type redshift_list: ndarray
+    :return: An array of redshift values starting from 0.025 and increasing in steps of
+        0.05, terminating at or just below the maximum value found in redshift_list.
+        This structured approach ensures a consistent set of redshifts for subsequent
+        analytical steps.
+    :rtype: ndarray
     """
+
     z_max = redshift_list[-1]
     linspace_values = np.arange(0.025, z_max, 0.05)
     return linspace_values
@@ -610,12 +646,10 @@ def determinism_kappa_first_moment_at_redshift(z):
         Degree 8: -0.0007728539951923031
         Degree 9: 6.484537448337964e-05
         Degree 10: -2.389378848385584e-06
-    Parameters
-    ----------
-    z
-
-    Returns
-    -------
+    :param z: Redshift(s) at which to calculate the first moment of kappa.
+    :type z: list or np.ndarray
+    :returns: A list of calculated first moments of kappa for each redshift in `z`.
+    :rtype: list
     """
     # todo: almost deprecated, considering change to another mass
     # sheet correction method

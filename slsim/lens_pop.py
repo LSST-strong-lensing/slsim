@@ -29,6 +29,8 @@ class LensPop(LensedPopulationBase):
         cosmo=None,
         los_bool=True,
         nonlinear_los_bool=False,
+        nonlinear_correction_path=None,
+        no_correction_path=None,
         return_kext=False,
     ):
         """
@@ -189,6 +191,8 @@ class LensPop(LensedPopulationBase):
         self.los_bool = los_bool
         self.nonlinear_los_bool = nonlinear_los_bool
         self.return_kext = return_kext
+        self.nonlinear_correction_path = nonlinear_correction_path
+        self.no_correction_path = no_correction_path
 
     def select_lens_at_random(self, **kwargs_lens_cut):
         """Draw a random lens within the cuts of the lens and source, with possible
@@ -292,6 +296,8 @@ class LensPop(LensedPopulationBase):
                         source_type=self._source_model_type,
                         los_bool=self.los_bool,
                         nonlinear_los_bool=self.nonlinear_los_bool,
+                        nonlinear_correction_path=self.nonlinear_correction_path,
+                        no_correction_path=self.no_correction_path,
                     )
                     if self.return_kext:
                         if gg_lens.deflector_redshift >= gg_lens.source_redshift:

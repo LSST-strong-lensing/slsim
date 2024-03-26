@@ -14,12 +14,12 @@ def convergence_mean_0(kappa_data):
     the non-zero values only. Keeps zeros as is. Returns the adjusted data in the same
     format (list or numpy array) as the input.
 
-    Parameters:
-    kappa_data (list or numpy.ndarray): The input kappa data to be adjusted.
-
-    Returns:
-    list or numpy.ndarray: The adjusted kappa data in the same format as the input.
+    :param kappa_data: The input kappa data to be adjusted.
+    :type kappa_data: list or numpy.ndarray
+    :return: The adjusted kappa data in the same format as the input.
+    :rtype: list or numpy.ndarray
     """
+
     input_type = type(kappa_data)
     kappa_array = np.array(kappa_data)
     mean_kappa_non_zero = np.mean(kappa_array[kappa_array != 0])
@@ -33,13 +33,13 @@ def convergence_mean_0(kappa_data):
 
 
 def read_glass_data(file_name="kgdata.npy"):
-    """This function loads a numpy data file and extracts the kappa and gamma vealues.
+    """Loads a numpy data file and extracts the kappa and gamma values.
 
-    Parameters:
-        file_name (str, optional): The name of the file to load. Defaults to "kgdata.npy".
-
-    Returns:
-        tuple: A tuple containing two numpy arrays for kappa and gamma values and nside of the data.
+    :param file_name: The name of the file to load. Defaults to "kgdata.npy".
+    :type file_name: str, optional
+    :returns: A tuple containing two numpy arrays for kappa and gamma values, and nside
+        of the data.
+    :rtype: tuple
     """
 
     def read_data_file(file_name):
@@ -63,16 +63,17 @@ def generate_samples_from_glass(kappa_values, gamma_values, n=10000):
     distribution of kappa and gamma values, and then generates a random sample from this
     distribution.
 
-    Parameters
-    ----------
-        kappa_values (numpy.ndarray): The kappa values.
-        gamma_values (numpy.ndarray): The gamma values.
-        n (int, optional): The number of random numbers to generate. Defaults to 10000.
-
-    Returns
-    -------
-        tuple: A tuple containing two numpy arrays for the randomly resampled kappa and gamma values.
+    :param kappa_values: The kappa values.
+    :type kappa_values: numpy.ndarray
+    :param gamma_values: The gamma values.
+    :type gamma_values: numpy.ndarray
+    :param n: The number of random numbers to generate. Defaults to 10000.
+    :type n: int, optional
+    :returns: A tuple containing two numpy arrays for the randomly resampled kappa and
+        gamma values.
+    :rtype: tuple
     """
+
     kernel = stats.gaussian_kde(np.vstack([kappa_values, gamma_values]))
     kappa_random_glass, gamma_random_glass = kernel.resample(n)
     return kappa_random_glass, gamma_random_glass
@@ -84,16 +85,17 @@ def skyarea_form_n(nside, deg2=True):
     divided into 12 * nside ** 2 equal areas. 4*pi*(180/pi)^2=129600/pi deg^2;
     4*pi*(180/pi)^2*(3600)^2=1679616000000/pi arcsec^2.
 
-    Parameters
-    ----------
-    nside (int): The HEALPix resolution parameter. The total number of pixels is 12 * nside ** 2.
-    deg2 (bool, optional): If True, the sky area is returned in square degrees. If False, the sky area is returned
-    in square arcseconds. Defaults to True.
-
-    Returns
-    -------
-        float: The sky area per pixel in either degree^2 or arcsecond^2, depending on the value of deg2.
+    :param nside: The HEALPix resolution parameter. The total number of pixels is 12 *
+        nside ** 2.
+    :type nside: int
+    :param deg2: If True, the sky area is returned in square degrees. If False, the sky
+        area is returned in square arcseconds. Defaults to True.
+    :type deg2: bool, optional
+    :return: The sky area per pixel in either degree^2 or arcsecond^2, depending on the
+        value of deg2.
+    :rtype: float
     """
+
     if deg2:
         skyarea = 129600 / (12 * np.pi * nside**2)  # sky area in square degrees
     else:
@@ -113,38 +115,36 @@ def generate_maps_kmean_zero_using_halos(
     samples_number_for_one_halos=1000,
     renders_numbers=500,
 ):
-    """Given the specified parameters, this function repeatedly renders same halo list
-    (same z & m) for different positions (`samples_number_for_one_halos`) times and then
-    ensuring that the mean of the kappa values is zero, then get the kde of the weak-
-    lensing distribution for this halo list and resample `renders_numbers` sets of the
-    corresponding convergence (`kappa`) and shear (`gamma`) values for this halo list.
+    """Given the specified parameters, this function repeatedly renders the same halo
+    list (same z & m) for different positions (`samples_number_for_one_halos`) times and
+    then ensures that the mean of the kappa values is zero. It then gets the kde of the
+    weak- lensing distribution for this halo list and resamples `renders_numbers` sets
+    of the corresponding convergence (`kappa`) and shear (`gamma`) values for this halo
+    list.
 
-    Parameters
-    ----------
-    skypy_config: string or None
-        path to SkyPy configuration yaml file. If None, the default skypy configuration file is used.
-    skyarea : float, optional
-        The sky area in square degrees. Default is 0.0001.
-    cosmo : astropy.cosmology.FlatLambdaCDM, optional
-        The cosmological model. If None, a default FlatLambdaCDM model with H0=70 and Om0=0.3 is used.
-    m_min : float or None, optional
-        Minimum halo mass for the pipeline. Default is None.
-    m_max : float or None, optional
-        Maximum halo mass for the pipeline. Default is None.
-    z_max : float or None, optional
-        Maximum redshift for the pipeline. Default is None.
-    samples_number_for_one_halos : int, optional
-        The number of samples for each halo. Default is 1000.
-    renders_numbers : int, optional
-        The number of random numbers to generate. Default is 500.
-
-    Returns
-    -------
-    kappa_random_halos : numpy.ndarray
-        The randomly resampled kappa values.
-    gamma_random_halos : numpy.ndarray
-        The randomly resampled gamma values.
+    :param skypy_config: Path to SkyPy configuration yaml file. If None, the default
+        skypy configuration file is used.
+    :type skypy_config: str or None
+    :param skyarea: The sky area in square degrees. Default is 0.0001.
+    :type skyarea: float, optional
+    :param cosmo: The cosmological model. If None, a default FlatLambdaCDM model with
+        H0=70 and Om0=0.3 is used.
+    :type cosmo: astropy.cosmology.FlatLambdaCDM, optional
+    :param m_min: Minimum halo mass for the pipeline. Default is None.
+    :type m_min: float or None, optional
+    :param m_max: Maximum halo mass for the pipeline. Default is None.
+    :type m_max: float or None, optional
+    :param z_max: Maximum redshift for the pipeline. Default is None.
+    :type z_max: float or None, optional
+    :param samples_number_for_one_halos: The number of samples for each halo. Default is
+        1000.
+    :type samples_number_for_one_halos: int, optional
+    :param renders_numbers: The number of random numbers to generate. Default is 500.
+    :type renders_numbers: int, optional
+    :returns: A tuple containing the randomly resampled kappa values and gamma values.
+    :rtype: (numpy.ndarray, numpy.ndarray)
     """
+
     if cosmo is None:
         from astropy.cosmology import FlatLambdaCDM
 
@@ -203,41 +203,40 @@ def generate_meanzero_halos_multiple_times(
     samples_number_for_one_halos=1000,
     renders_numbers=500,
 ):
-    """Given the specified parameters, this function repeatedly renders same halo list
-    (same z & m) for different positions (`samples_number_for_one_halos`) times and then
-    ensuring that the mean of the kappa values is zero, then get the kde of the weak-
-    lensing distribution for this halo list and resample `renders_numbers` sets of the
-    corresponding convergence (`kappa`) and shear (`gamma`) values for this halo list.
-    This process is repeated `n_times` to accumulate the results.
+    """Given the specified parameters, this function repeatedly renders the same halo
+    list (same z & m) for different positions (`samples_number_for_one_halos`) times and
+    then ensures that the mean of the kappa values is zero. It then gets the kde of the
+    weak- lensing distribution for this halo list and resamples `renders_numbers` sets
+    of the corresponding convergence (`kappa`) and shear (`gamma`) values for this halo
+    list. This process is repeated `n_times` to accumulate the results.
 
-    Parameters
-    ----------
-    n_times: int, optional
-        The number of times to repeat the generation of kappa and gamma values. Default is 20.
-    skypy_config: string or None
-        path to SkyPy configuration yaml file. If None, the default skypy configuration file is used.
-    skyarea : float, optional
-        The sky area in square degrees. Default is 0.0001.
-    cosmo : astropy.cosmology.FlatLambdaCDM, optional
-        The cosmological model. If None, a default FlatLambdaCDM model with H0=70 and Om0=0.3 is used.
-    m_min : float or None, optional
-        Minimum halo mass for the pipeline. Default is None.
-    m_max : float or None, optional
-        Maximum halo mass for the pipeline. Default is None.
-    z_max : float or None, optional
-        Maximum redshift for the pipeline. Default is None.
-    samples_number_for_one_halos : int, optional
-        The number of samples for each halo. Default is 1000.
-    renders_numbers : int, optional
-        The number of random numbers to generate. Default is 500.
-
-    Returns
-    -------
-    kappa_random_halos : numpy.ndarray
-        The accumulated randomly resampled kappa values.
-    gamma_random_halos : numpy.ndarray
-        The accumulated randomly resampled gamma values.
+    :param n_times: The number of times to repeat the generation of kappa and gamma
+        values. Default is 20.
+    :type n_times: int, optional
+    :param skypy_config: Path to SkyPy configuration yaml file. If None, the default
+        skypy configuration file is used.
+    :type skypy_config: string or None
+    :param skyarea: The sky area in square degrees. Default is 0.0001.
+    :type skyarea: float, optional
+    :param cosmo: The cosmological model. If None, a default FlatLambdaCDM model with
+        H0=70 and Om0=0.3 is used.
+    :type cosmo: astropy.cosmology.FlatLambdaCDM, optional
+    :param m_min: Minimum halo mass for the pipeline. Default is None.
+    :type m_min: float or None, optional
+    :param m_max: Maximum halo mass for the pipeline. Default is None.
+    :type m_max: float or None, optional
+    :param z_max: Maximum redshift for the pipeline. Default is None.
+    :type z_max: float or None, optional
+    :param samples_number_for_one_halos: The number of samples for each halo. Default is
+        1000.
+    :type samples_number_for_one_halos: int, optional
+    :param renders_numbers: The number of random numbers to generate. Default is 500.
+    :type renders_numbers: int, optional
+    :returns: A tuple containing the accumulated randomly resampled kappa values and
+        gamma values.
+    :rtype: (numpy.ndarray, numpy.ndarray)
     """
+
     accumulated_kappa_random_halos = []
     accumulated_gamma_random_halos = []
     n_times_range = range(n_times)
@@ -271,40 +270,35 @@ def halos_plus_glass(
     the combined values. For Halos kappa, it is suggested to use modified kappa values
     (i.e., direct kappa minus mean(kappa)).
 
-    Parameters
-    ----------
-    kappa_random_halos : numpy.ndarray
-        The randomly resampled kappa values from the Halos.
-    gamma_random_halos : numpy.ndarray
-        The randomly resampled gamma values from the Halos.
-    kappa_random_glass : numpy.ndarray
-        The randomly resampled kappa values from Glass.
-    gamma_random_glass : numpy.ndarray
-        The randomly resampled gamma values from Glass.
+    :param kappa_random_halos: The randomly resampled kappa values from the Halos.
+    :type kappa_random_halos: numpy.ndarray
+    :param gamma_random_halos: The randomly resampled gamma values from the Halos.
+    :type gamma_random_halos: numpy.ndarray
+    :param kappa_random_glass: The randomly resampled kappa values from Glass.
+    :type kappa_random_glass: numpy.ndarray
+    :param gamma_random_glass: The randomly resampled gamma values from Glass.
+    :type gamma_random_glass: numpy.ndarray
+    :return: A tuple containing two numpy arrays for the combined kappa and gamma values.
+    :rtype: tuple
 
-    Returns
-    -------
-    tuple
-        A tuple containing two list of numpy arrays for the combined kappa and gamma values.
+    .. note::
+        The total shear, :math:`\gamma_{\text{tot}}`, is computed based on the relationships:
 
-    Notes
-    -----
-    The total shear, :math:`\gamma_{\text{tot}}`, is computed based on the relationships:
+        .. math:: \gamma_{\text{tot}} = \sqrt{(\gamma1_{\text{Halos}}  + \gamma1_{\text{GLASS}})^2 + (\gamma2_{\text{
+            Halos}}  + \gamma2_{\text{GLASS}})^2}
 
-    .. math:: \gamma_{\text{tot}} = \sqrt{(\gamma1_{\text{Halos}}  + \gamma1_{\text{GLASS}})^2 + (\gamma2_{\text{
-        Halos}}  + \gamma2_{\text{GLASS}})^2}
+        and
 
-    and
+        .. math:: \gamma_{\text{tot}} = \sqrt{\gamma_{\text{Halos}}^2 + \gamma_{\text{GLASS}}^2 + 2\gamma_{\text{
+            Halos}}\gamma_{\text{GLASS}} \times \cos(\alpha-\beta)}
 
-    .. math:: \gamma_{\text{tot}} = \sqrt{\gamma_{\text{Halos}}^2 + \gamma_{\text{GLASS}}^2 + 2\gamma_{\text{
-        Halos}}\gamma_{\text{GLASS}} \times \cos(\alpha-\beta)}
+        Given that :math:`\alpha` and :math:`\beta` are randomly distributed, and their difference, :math:`\alpha-\beta`,
+        follows a normal distribution, the shear is given by:
 
-    Given that :math:`\alpha` and :math:`\beta` are randomly distributed, and their difference, :math:`\alpha-\beta`,
-    follows a normal distribution, the shear is given by:
-
-    .. math:: \gamma_{\text{tot}}^2 = \gamma_{\text{halos}}^2 + \gamma_{\text{GLASS}}^2 + 2\gamma_{\text{
-        halos}}\gamma_{\text{GLASS}}\cdot \cos(\text{random angle})
+        .. math:: \gamma_{\text{tot}}^2 = \gamma_{\text{halos}}^2 + \gamma_{\text{GLASS}}^2 + 2\gamma_{\text{
+            halos}}\gamma_{\text{GLASS}}\cdot \cos(\text{random angle})
     """
+
     total_kappa = [
         k_h + k_g for k_h, k_g in zip(kappa_random_halos, kappa_random_glass)
     ]
@@ -336,41 +330,37 @@ def run_halos_without_kde(
     additional processing (i.e., without KDE computation, resampling, or subtracting the
     mean kappa value).
 
-    Parameters
-    ----------
-    n_iterations : int, optional
-        Number of iterations or halo lists to generate. Defaults to 1.
-    sky_area : float, optional
-        Total sky area (in steradians) over which Halos are distributed. Defaults to 0.0001 steradians.
-    samples_number : int, optional
-        Number of samples for statistical calculations. Defaults to 1500.
-    cosmo : astropy.cosmology instance, optional
-        Cosmology used for the simulations. If not provided, the default astropy cosmology is used.
-    m_min : float, optional
-        Minimum mass of the Halos to consider. If not provided, no lower limit is set.
-    m_max : float, optional
-        Maximum mass of the Halos to consider. If not provided, no upper limit is set.
-    z_max : float, optional
-        Maximum redshift of the Halos to consider. If not provided, no upper limit is set.
+    :param n_iterations: Number of iterations or halo lists to generate.
+    :type n_iterations: int, optional
+    :param sky_area: Total sky area (in steradians) over which Halos are distributed.
+    :type sky_area: float, optional
+    :param samples_number: Number of samples for statistical calculations.
+    :type samples_number: int, optional
+    :param cosmo: Cosmology used for the simulations. If not provided, the default astropy cosmology is used.
+    :type cosmo: astropy.cosmology instance, optional
+    :param m_min: Minimum mass of the Halos to consider. If not provided, no lower limit is set.
+    :type m_min: float, optional
+    :param m_max: Maximum mass of the Halos to consider. If not provided, no upper limit is set.
+    :type m_max: float, optional
+    :param z_max: Maximum redshift of the Halos to consider. If not provided, no upper limit is set.
+    :type z_max: float, optional
+    :param mass_sheet_correction: Flag to apply mass sheet correction. Defaults to True.
+    :type mass_sheet_correction: bool, optional
+    :param listmean: Flag to subtract the mean kappa value from the results. Defaults to False.
+    :type listmean: bool, optional
+    :returns: A tuple containing two lists; the first list contains the combined convergence (`kappa`) values from all iterations, and the second list contains the combined shear (`gamma`) values from all iterations.
+    :rtype: (list, list)
 
-    Returns
-    -------
-    kappa_values_total : list
-        Combined list of convergence (`kappa`) values from all iterations.
-    gamma_values_total : list
-        Combined list of shear (`gamma`) values from all iterations.
+    .. note::
+        This function initializes a halo distribution pipeline for each iteration, simulates Halos,
+        and then computes the lensing properties (`kappa` and `gamma`). The results from all iterations
+        are concatenated to form the final output lists.
 
-    Notes
-    -----
-    This function initializes a halo distribution pipeline for each iteration, simulates Halos,
-    and then computes the lensing properties (`kappa` and `gamma`). The results from all iterations
-    are concatenated to form the final output lists.
-
-    Warnings
-    --------
-    If no cosmology is provided, the function uses the default astropy cosmology, which is a flat
-    Lambda-CDM model with H0=70 and Om0=0.3.
+    .. warning::
+        If no cosmology is provided, the function uses the default astropy cosmology, which is a flat
+        Lambda-CDM model with H0=70 and Om0=0.3.
     """
+
     if cosmo is None:
         from astropy.cosmology import FlatLambdaCDM
 
@@ -520,45 +510,37 @@ def run_halos_without_kde_by_multiprocessing(
     mean kappa value), the process procedure `n_iterations` generate with
     multiprocessing.
 
-    Parameters
-    ----------
-    listmean
-    n_iterations : int, optional
-        Number of iterations or halo lists to generate. Defaults to 1.
-    sky_area : float, optional
-        Total sky area (in steradians) over which Halos are distributed. Defaults to 0.0001 steradians.
-    samples_number : int, optional
-        Number of samples for statistical calculations. Defaults to 1500.
-    cosmo : astropy.cosmology instance, optional
-        Cosmology used for the simulations. If not provided, the default astropy cosmology is used.
-    m_min : float, optional
-        Minimum mass of the Halos to consider. If not provided, no lower limit is set.
-    m_max : float, optional
-        Maximum mass of the Halos to consider. If not provided, no upper limit is set.
-    z_max : float, optional
-        Maximum redshift of the Halos to consider. If not provided, no upper limit is set.
-    mass_sheet_correction : bool, optional
-        If True, apply mass sheet correction. Defaults to True.
+    :param n_iterations: Number of iterations or halo lists to generate. Defaults to 1.
+    :type n_iterations: int, optional
+    :param sky_area: Total sky area (in steradians) over which Halos are distributed. Defaults to 0.0001 steradians.
+    :type sky_area: float, optional
+    :param samples_number: Number of samples for statistical calculations. Defaults to 1500.
+    :type samples_number: int, optional
+    :param cosmo: Cosmology used for the simulations. If not provided, the default astropy cosmology is used.
+    :type cosmo: astropy.cosmology instance, optional
+    :param m_min: Minimum mass of the Halos to consider. If not provided, no lower limit is set.
+    :type m_min: float, optional
+    :param m_max: Maximum mass of the Halos to consider. If not provided, no upper limit is set.
+    :type m_max: float, optional
+    :param z_max: Maximum redshift of the Halos to consider. If not provided, no upper limit is set.
+    :type z_max: float, optional
+    :param mass_sheet_correction: If True, apply mass sheet correction. Defaults to True.
+    :type mass_sheet_correction: bool, optional
+    :param listmean: If True, subtract the mean kappa value from the results. Defaults to False.
+    :type listmean: bool, optional
+    :returns: A tuple containing two lists; the first list contains the combined convergence (`kappa`) values from all iterations, and the second list contains the combined shear (`gamma`) values from all iterations.
+    :rtype: (list, list)
 
+    .. note::
+        This function initializes a halo distribution pipeline for each iteration, simulates Halos,
+        and then computes the lensing properties (`kappa` and `gamma`). The results from all iterations
+        are concatenated to form the final output lists.
 
-    Returns
-    -------
-    kappa_values_total : list
-        Combined list of convergence (`kappa`) values from all iterations.
-    gamma_values_total : list
-        Combined list of shear (`gamma`) values from all iterations.
-
-    Notes
-    -----
-    This function initializes a halo distribution pipeline for each iteration, simulates Halos,
-    and then computes the lensing properties (`kappa` and `gamma`). The results from all iterations
-    are concatenated to form the final output lists.
-
-    Warnings
-    --------
-    If no cosmology is provided, the function uses the default astropy cosmology, which is a flat
-    Lambda-CDM model with H0=70 and Om0=0.3.
+    .. warning::
+        If no cosmology is provided, the function uses the default astropy cosmology, which is a flat
+        Lambda-CDM model with H0=70 and Om0=0.3.
     """
+
     if cosmo is None:
         warnings.warn(
             "No cosmology provided, instead uses astropy.cosmology default cosmology"
@@ -620,45 +602,32 @@ def run_kappaext_gammaext_kde_by_multiprocessing(
     a worker function (`worker_kappaext_gammaext_kde`). The distributions are generated
     in parallel over the specified number of iterations.
 
-    Parameters
-    ----------
-    n_iterations : int, optional
-        The number of iterations to run the simulation. Defaults to 1.
+    :param n_iterations: The number of iterations to run the simulation. Defaults to 1.
+    :type n_iterations: int, optional
+    :param sky_area: The area of the sky under consideration (in steradians). Defaults to 0.0001.
+    :type sky_area: float, optional
+    :param samples_number: The number of samples to be used. Defaults to 1.
+    :type samples_number: int, optional
+    :param cosmo: The cosmology to be used. If not provided, it defaults to FlatLambdaCDM with H0=70 and Om0=0.3.
+    :type cosmo: astropy.cosmology instance, optional
+    :param m_min: The minimum mass for the simulation. If None, it is decided by the worker function.
+    :type m_min: float, optional
+    :param m_max: The maximum mass for the simulation. If None, it is decided by the worker function.
+    :type m_max: float, optional
+    :param z_max: The maximum redshift for the simulation. If None, it is decided by the worker function.
+    :type z_max: float, optional
+    :param mass_sheet_correction: If True, apply mass sheet correction. Defaults to True.
+    :type mass_sheet_correction: bool, optional
+    :param output_format: The format in which the results should be returned, either as `dict` or `vector`. Defaults to `dict`.
+    :type output_format: str, optional
+    :return: A list of kappa and gamma values across all iterations.
+    :rtype: list
 
-    sky_area : float, optional
-        The area of the sky under consideration (in steradians). Defaults to 0.0001.
-
-    samples_number : int, optional
-        The number of samples to be used. Defaults to 1.
-
-    cosmo : astropy.cosmology instance, optional
-        The cosmology to be used. If not provided, it defaults to FlatLambdaCDM with H0=70 and Om0=0.3.
-
-    m_min : float, optional
-        The minimum mass for the simulation. If None, it is decided by the worker function.
-
-    m_max : float, optional
-        The maximum mass for the simulation. If None, it is decided by the worker function.
-
-    z_max : float, optional
-        The maximum redshift for the simulation. If None, it is decided by the worker function.
-
-    mass_sheet_correction : bool, optional
-        If True, apply mass sheet correction. Defaults to True.
-
-    output_format : str, optional
-        The format in which the results should be returned, either as 'dict' or 'vector'. Defaults to 'dict'.
-
-    Returns
-    -------
-    list
-        A list of kappa and gamma values across all iterations.
-
-    Notes
-    -----
-    The function employs multiprocessing to run simulations in parallel, improving computational efficiency.
-    The elapsed runtime for the simulations is printed to the console.
+    .. note::
+        The function employs multiprocessing to run simulations in parallel, improving computational efficiency.
+        The elapsed runtime for the simulations is printed to the console.
     """
+
     # TODO: BUG
     if cosmo is None:
         warnings.warn(
@@ -718,45 +687,31 @@ def worker_kappaext_gammaext_kde(
     corrections. It then uses these halos (and corrections) to construct a `HalosLens` object and
     generate kappa-gamma distributions.
 
-    Parameters
-    ----------
-    iter_num : int
-        The iteration number, mainly used for tracking in a parallel processing context.
+    :param iter_num: The iteration number, mainly used for tracking in a parallel processing context.
+    :type iter_num: int
+    :param sky_area: The area of the sky under consideration (in steradians).
+    :type sky_area: float
+    :param m_min: The minimum mass for the simulation.
+    :type m_min: float
+    :param m_max: The maximum mass for the simulation.
+    :type m_max: float
+    :param z_max: The maximum redshift for the simulation.
+    :type z_max: float
+    :param cosmo: The cosmology to be used.
+    :type cosmo: astropy.cosmology.FlatLambdaCDM
+    :param samples_number: The number of samples to be used.
+    :type samples_number: int
+    :param mass_sheet_correction: If True, apply mass sheet correction.
+    :type mass_sheet_correction: bool
+    :param output_format: The format in which the results should be returned, either as `dict` or `vector`. Defaults to `dict`.
+    :type output_format: str, optional
+    :returns: A list of kappa and gamma values for the specified parameters.
+    :rtype: list
 
-    sky_area : float
-        The area of the sky under consideration (in steradians).
-
-    m_min : float
-        The minimum mass for the simulation.
-
-    m_max : float
-        The maximum mass for the simulation.
-
-    z_max : float
-        The maximum redshift for the simulation.
-
-    cosmo : astropy.Cosmology instance
-        The cosmology to be used.
-
-    samples_number : int
-        The number of samples to be used.
-
-    mass_sheet_correction : bool
-        If True, apply mass sheet correction.
-
-    output_format : str, optional
-        The format in which the results should be returned, either as 'dict' or 'vector'. Defaults to 'dict'.
-
-    Returns
-    -------
-    list
-        A list of kappa and gamma values for the specified parameters.
-
-    Notes
-    -----
     This function is primarily intended to be used as a worker function in a parallel processing
     framework, where multiple instances of the function can be run simultaneously.
     """
+
     npipeline = HalosSkyPyPipeline(
         sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max
     )
@@ -871,6 +826,38 @@ def worker_certain_redshift_lensext_kde(
     sigma_8,
     omega_m,
 ):
+    """Generates distributions of kappa_ext and gamma_ext for a given redshift and
+    cosmology.
+
+    :param iter_num: Iteration number, used for multiprocessing.
+    :type iter_num: int
+    :param sky_area: Sky area over which halos are sampled.
+    :type sky_area: float
+    :param m_min: Minimum halo mass.
+    :type m_min: float
+    :param m_max: Maximum halo mass.
+    :type m_max: float
+    :param z_max: Maximum redshift value.
+    :type z_max: float
+    :param cosmo: Cosmology used for the calculations.
+    :param samples_number: Number of samples to generate.
+    :type samples_number: int
+    :param mass_sheet_correction: Flag to apply mass sheet correction.
+    :type mass_sheet_correction: bool
+    :param zs: Source redshift.
+    :type zs: float
+    :param zd: Lens redshift.
+    :type zd: float
+    :param listmean: Flag to return the mean of the list.
+    :type listmean: bool
+    :param sigma_8: Sigma_8 parameter for the cosmology.
+    :type sigma_8: float
+    :param omega_m: Omega matter parameter for the cosmology.
+    :type omega_m: float
+    :return: Distributions of kappa_ext and gamma_ext.
+    :rtype: np.ndarray
+    """
+
     npipeline = HalosSkyPyPipeline(
         sky_area=sky_area,
         m_min=m_min,
@@ -919,6 +906,35 @@ def run_certain_redshift_many_by_multiprocessing(
     zs=None,
     zd=None,
 ):
+    """Runs the simulation for a certain redshift range multiple times using
+    multiprocessing.
+
+    :param n_iterations: Number of iterations to run the simulation, defaults to 1
+    :type n_iterations: int, optional
+    :param sky_area: The sky area over which to simulate, defaults to 0.0001
+    :type sky_area: float, optional
+    :param samples_number: Number of samples to generate, defaults to 1
+    :type samples_number: int, optional
+    :param cosmo: Cosmology used for the simulation, defaults to None. If None, uses
+        FlatLambdaCDM with H0=70, Om0=0.3.
+    :type cosmo: astropy.cosmology.FLRW, optional
+    :param m_min: Minimum mass for the halos, defaults to None
+    :type m_min: float, optional
+    :param m_max: Maximum mass for the halos, defaults to None
+    :type m_max: float, optional
+    :param z_max: Maximum redshift for the halos, defaults to None. If None, uses 5.0.
+    :type z_max: float, optional
+    :param mass_sheet_correction: Flag to apply mass sheet correction, defaults to True
+    :type mass_sheet_correction: bool, optional
+    :param zs: Source redshift, defaults to None. If None, uses 1.5.
+    :type zs: float, optional
+    :param zd: Lens redshift, defaults to None. If None, uses 1.0.
+    :type zd: float, optional
+    :return: A tuple containing two lists: kappaext_gammaext_values and
+        lensinstance_values.
+    :rtype: tuple(list, list)
+    """
+
     if cosmo is None:
         warnings.warn(
             "No cosmology provided, instead uses astropy.cosmology default cosmology"
@@ -982,6 +998,31 @@ def worker_certain_redshift_many(
     zs,
     zd,
 ):
+    """
+    :param iter_num: The iteration number.
+    :type iter_num: int
+    :param sky_area: The area of the sky under consideration.
+    :type sky_area: float
+    :param m_min: The minimum mass of halos to consider.
+    :type m_min: float
+    :param m_max: The maximum mass of halos to consider.
+    :type m_max: float
+    :param z_max: The maximum redshift to consider.
+    :type z_max: float
+    :param cosmo: The cosmological model to use.
+    :type cosmo: FlatLambdaCDM
+    :param samples_number: The number of samples to generate.
+    :type samples_number: int
+    :param mass_sheet_correction: Flag to apply mass sheet correction.
+    :type mass_sheet_correction: bool
+    :param zs: The source redshift.
+    :type zs: float
+    :param zd: The lens redshift.
+    :type zd: float
+    :returns: A tuple containing the distributions of parameters and the lens instance.
+    :rtype: tuple
+    """
+
     npipeline = HalosSkyPyPipeline(
         sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max
     )
@@ -1006,7 +1047,7 @@ def worker_certain_redshift_many(
             mass_sheet=False,
             z_source=z_max,
         )
-    distributions, lensinstance = nhalos_lens.get_alot_distib_(zd, zs)
+    distributions, lensinstance = nhalos_lens.get_all_pars_distib(zd, zs)
     return distributions, lensinstance
 
 
@@ -1018,6 +1059,26 @@ def run_total_mass_by_multiprocessing(
     m_max=None,
     z_max=None,
 ):
+    """Calculate the total mass of halos over multiple iterations using multiprocessing.
+
+    :param n_iterations: Number of iterations to run, defaults to 1
+    :type n_iterations: int, optional
+    :param sky_area: The sky area over which to calculate the halo mass, defaults to
+        0.0001
+    :type sky_area: float, optional
+    :param cosmo: The cosmology model to use, defaults to None. If None, uses
+        FlatLambdaCDM with H0=70, Om0=0.3
+    :type cosmo: astropy.cosmology.FlatLambdaCDM, optional
+    :param m_min: The minimum mass of halos to consider, defaults to None
+    :type m_min: float, optional
+    :param m_max: The maximum mass of halos to consider, defaults to None
+    :type m_max: float, optional
+    :param z_max: The maximum redshift to consider, defaults to None. If None, uses 5.0
+    :type z_max: float, optional
+    :return: A list of total mass values for each iteration.
+    :rtype: list
+    """
+
     if cosmo is None:
         warnings.warn(
             "No cosmology provided, instead uses astropy.cosmology default cosmology"
@@ -1063,6 +1124,25 @@ def worker_run_total_mass_by_multiprocessing(
     z_max,
     cosmo,
 ):
+    """Calculate the total mass of halos for a given iteration, sky area, mass range,
+    maximum redshift, and cosmology.
+
+    :param iter_num: Iteration number.
+    :type iter_num: int
+    :param sky_area: Sky area over which Halos are sampled. Must be in units of solid angle.
+    :type sky_area: `~astropy.units.Quantity`
+    :param m_min: Minimum halo mass.
+    :type m_min: float
+    :param m_max: Maximum halo mass.
+    :type m_max: float
+    :param z_max: Maximum redshift value in z_range.
+    :type z_max: float
+    :param cosmo: Cosmology model to use.
+    :type cosmo: astropy.cosmology.FlatLambdaCDM
+    :return: Total mass of halos.
+    :rtype: float
+    """
+
     npipeline = HalosSkyPyPipeline(
         sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max
     )
@@ -1092,6 +1172,33 @@ def run_total_kappa_by_multiprocessing(
     m_max=None,
     z_max=None,
 ):
+    """Runs the total kappa computation in parallel using multiprocessing for a given
+    number of iterations.
+
+    :param n_iterations: The number of iterations to run the computation for.
+    :type n_iterations: int, optional
+    :param sky_area: The sky area over which to compute the total kappa.
+    :type sky_area: float, optional
+    :param diff: The differential to use in the computation.
+    :type diff: float, optional
+    :param num_points: The number of points to use in the computation.
+    :type num_points: int, optional
+    :param diff_method: The method to use for the differential computation.
+    :type diff_method: str, optional
+    :param cosmo: The cosmology model to use. If None, a default FlatLambdaCDM model is
+        used.
+    :type cosmo: astropy.cosmology.FLRW, optional
+    :param m_min: The minimum mass to consider in the halo computation.
+    :type m_min: float, optional
+    :param m_max: The maximum mass to consider in the halo computation.
+    :type m_max: float, optional
+    :param z_max: The maximum redshift to consider. If None, a default value of 5.0 is
+        used.
+    :type z_max: float, optional
+    :return: A list of average kappa values for each iteration.
+    :rtype: list
+    """
+
     if cosmo is None:
         warnings.warn(
             "No cosmology provided, instead uses astropy.cosmology default cosmology"
@@ -1143,6 +1250,32 @@ def worker_run_total_kappa_by_multiprocessing(
     z_max,
     cosmo,
 ):
+    """Computes the average kappa value for a given iteration, sky area, differential,
+    number of points, differential method, minimum and maximum mass, maximum redshift,
+    and cosmology.
+
+    :param iter_num: Iteration number.
+    :type iter_num: int
+    :param sky_area: Sky area over which Halos are sampled.
+    :type sky_area: float
+    :param diff: Differential to use in the computation.
+    :type diff: float
+    :param num_points: Number of points to use in the computation.
+    :type num_points: int
+    :param diff_method: Method to use for the differential computation.
+    :type diff_method: str
+    :param m_min: Minimum halo mass.
+    :type m_min: float
+    :param m_max: Maximum halo mass.
+    :type m_max: float
+    :param z_max: Maximum redshift value in z_range.
+    :type z_max: float
+    :param cosmo: Cosmology model to use.
+    :type cosmo: astropy.cosmology
+    :return: Average kappa value.
+    :rtype: float
+    """
+
     npipeline = HalosSkyPyPipeline(
         sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max
     )

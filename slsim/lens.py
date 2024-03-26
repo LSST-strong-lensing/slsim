@@ -28,6 +28,8 @@ class Lens(LensedSystemBase):
         mixgauss_weights=None,
         los_bool=True,
         nonlinear_los_bool=False,
+        nonlinear_correction_path=None,
+        no_correction_path=None,
         magnification_limit=0.01,
         mixgauss_gamma=False,
     ):
@@ -78,6 +80,8 @@ class Lens(LensedSystemBase):
         self.kwargs_variab = kwargs_variability
         self.nonlinear_los_bool = nonlinear_los_bool
         self.mixgauss_gamma = mixgauss_gamma
+        self.nonlinear_correction_path = nonlinear_correction_path
+        self.no_correction_path = no_correction_path
 
         self._los_linear_distortions_cache = None
 
@@ -365,7 +369,10 @@ class Lens(LensedSystemBase):
         else:
             z_source = float(self.source.redshift)
             z_lens = float(self._deflector_dict["z"])
-            LOS = LineOfSightDistribution()
+            LOS = LineOfSightDistribution(
+                nonlinear_correction_path=self.nonlinear_correction_path,
+                no_correction_path=self.no_correction_path,
+            )
             gamma, self._kappa = LOS.get_kappa_gamma(
                 z_source, z_lens, use_nonlinear_correction=self.nonlinear_los_bool
             )

@@ -550,12 +550,12 @@ def test_compute_various_kappa_gamma_values(
     assert isinstance(gamma_ds1, float)
     assert isinstance(gamma_ds2, float)
 
-    kappa_gamma_distribution, lens_instance = hl.get_alot_distib_(zd, zs)
+    kappa_gamma_distribution, lens_instance = hl.get_all_pars_distib(zd, zs)
     assert isinstance(kappa_gamma_distribution, np.ndarray)
     assert isinstance(lens_instance, np.ndarray)
 
     hl2 = setup_halos_lens_large_sample_number
-    kappa_gamma_distribution2, lens_instance2 = hl2.get_alot_distib_(zd, zs)
+    kappa_gamma_distribution2, lens_instance2 = hl2.get_all_pars_distib(zd, zs)
     assert isinstance(kappa_gamma_distribution2, np.ndarray)
     assert isinstance(lens_instance2, np.ndarray)
 

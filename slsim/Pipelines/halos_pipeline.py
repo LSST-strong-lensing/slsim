@@ -20,19 +20,18 @@ class HalosSkyPyPipeline:
     ):
         """Initialize the class with the given parameters.
 
-        Parameters
-        ----------
-        skypy_config : str or None, optional
-            Path to SkyPy configuration yaml file. If None, the default SkyPy configuration file is used.
-        sky_area : `~astropy.units.Quantity`, optional
-            Sky area over which Halos are sampled. Must be in units of solid angle.
-        m_min : float, optional
-            Minimum halo mass.
-        m_max : float, optional
-            Maximum halo mass.
-        z_max : float, optional
-            Maximum redshift value in z_range.
+        :param skypy_config: Path to SkyPy configuration yaml file. If None, the default SkyPy configuration file is used.
+        :type skypy_config: str or None, optional
+        :param sky_area: Sky area over which Halos are sampled. Must be in units of solid angle.
+        :type sky_area: `~astropy.units.Quantity`, optional
+        :param m_min: Minimum halo mass.
+        :type m_min: float, optional
+        :param m_max: Maximum halo mass.
+        :type m_max: float, optional
+        :param z_max: Maximum redshift value in z_range.
+        :type z_max: float, optional
         """
+
         path = os.path.dirname(slsim.__file__)
         module_path, _ = os.path.split(path)
         if skypy_config is None:
@@ -142,20 +141,18 @@ class HalosSkyPyPipeline:
     def halos(self):
         """SkyPy pipeline for Halos.
 
-        Returns
-        -------
-        list of dict
-            List of halos.
+        :returns: List of halos.
+        :rtype: list of dict
         """
+
         return self._pipeline["halos"]
 
     @property
     def mass_sheet_correction(self):
         """SkyPy pipeline for mass sheet correction.
 
-        Returns
-        -------
-        list of dict
-            List of sheet of mass for correction.
+        :returns: List of sheet of mass for correction.
+        :rtype: list of dict
         """
+
         return self._pipeline["mass_sheet_correction"]
