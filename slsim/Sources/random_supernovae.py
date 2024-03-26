@@ -40,7 +40,6 @@ class RandomizedSupernova(Supernova):
         absolute_mag_band="bessellb",
         mag_zpsys="AB",
         cosmo=cosmology.FlatLambdaCDM(H0=70, Om0=0.3),
-        random_seed=42,
         **kwargs
     ):
         """
@@ -61,8 +60,6 @@ class RandomizedSupernova(Supernova):
         :type random_seed: int
         """
 
-        np.random.seed(random_seed)
-
         all_models, accepted_types = get_accepted_sn_types()
         if sn_type not in accepted_types:
             raise RuntimeError(
@@ -76,12 +73,10 @@ class RandomizedSupernova(Supernova):
         self._type_models = None
         self._absolute_mag_band = absolute_mag_band
 
-        self.set_random_sed_model(self._sn_type, random_seed=random_seed)
+        self.set_random_sed_model(self._sn_type)
 
         if absolute_mag is None:
-            absolute_mag = self.get_absolute_magnitude(
-                self._sn_type, random_seed=random_seed
-            )
+            absolute_mag = self.get_absolute_magnitude(self._sn_type)
 
         super(RandomizedSupernova, self).__init__(
             source=self._sncosmo_source,
@@ -96,7 +91,7 @@ class RandomizedSupernova(Supernova):
         if self._sn_type == "Ia":
             self.set(**{"c": np.random.normal(0, 0.1), "x1": np.random.normal(0, 1)})
 
-    def set_random_sed_model(self, sn_type, random_seed=42):
+    def set_random_sed_model(self, sn_type):
         """Function to set a random SED model for a given SN type.
 
         :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
@@ -106,8 +101,6 @@ class RandomizedSupernova(Supernova):
 
         :return: randomized `~sncosmo.Source` class
         """
-        np.random.seed(random_seed)
-
         if sn_type not in self._accepted_SN_types:
             raise RuntimeError(
                 "You passed %s as your SN type, " % sn_type
@@ -137,9 +130,7 @@ class RandomizedSupernova(Supernova):
         self._sncosmo_source = self._type_models[random_ind]
         return self._sncosmo_source
 
-    def get_absolute_magnitude(
-        self, sn_type, absolute_mag_distribution=None, random_seed=42
-    ):
+    def get_absolute_magnitude(self, sn_type, absolute_mag_distribution=None):
         """Function to get a reasonable absolute mag for a given SN type.
 
         :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
@@ -150,8 +141,6 @@ class RandomizedSupernova(Supernova):
         :type random_seed: int
         :return: absolute magnitude of the source in the B band
         """
-
-        np.random.seed(random_seed)
 
         if absolute_mag_distribution is None:
             mu, sigma = _ABSOLUTE_MAG_DISTS[sn_type]
