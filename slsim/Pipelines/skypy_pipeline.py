@@ -7,7 +7,8 @@ import tempfile
 class SkyPyPipeline:
     """Class for skypy configuration."""
 
-    def __init__(self, skypy_config=None, sky_area=None, filters=None, cosmo=None):
+    def __init__(self, skypy_config=None, sky_area=None, filters=None, cosmo=None,
+                 ):
         """
         :param skypy_config: path to SkyPy configuration yaml file.
                             If None, uses 'data/SkyPy/lsst-like.yml'.
@@ -23,7 +24,9 @@ class SkyPyPipeline:
         """
         path = os.path.dirname(slsim.__file__)
         module_path, _ = os.path.split(path)
-        if skypy_config is None:
+        if skypy_config is None or skypy_config == "lsst_like_new":
+            skypy_config = os.path.join(module_path, "data/SkyPy/lsst-like_new.yml")
+        elif skypy_config == "lsst_like_old":
             skypy_config = os.path.join(module_path, "data/SkyPy/lsst-like.yml")
 
         if sky_area is None and filters is None and cosmo is None:
