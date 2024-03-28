@@ -19,7 +19,7 @@ class ClusterLens(LensedSystemBase):
         self,
         source_dict,  # TODO: change to sources_list with multiple sources
         deflector_dict,
-        subhaloes_list,
+        subhaloes_table,
         cosmo,
         source_type="extended",
         variability_model=None,
@@ -36,8 +36,8 @@ class ClusterLens(LensedSystemBase):
         :type source_dict: dict
         :param deflector_dict: main halo properties
         :type deflector_dict: dict
-        :param subhaloes_list: list with subhaloes properties
-        :type subhaloes_list: list
+        :param subhaloes_table: list with subhaloes properties
+        :type subhaloes_table: astropy.Table
         :param cosmo: astropy.cosmology instance
         :param source_type: type of the source 'extended' or 'point_source' or
          'point_plus_extended' supported
@@ -69,7 +69,7 @@ class ClusterLens(LensedSystemBase):
             kwargs_variability=kwargs_variab,
         )
 
-        self._subhaloes_list = subhaloes_list
+        self._subhaloes_table = subhaloes_table.copy()
         self.cosmo = cosmo
         self._source_type = source_type
         self._mixgauss_means = mixgauss_means
@@ -95,6 +95,8 @@ class ClusterLens(LensedSystemBase):
             self._theta_E_sis = lens_cosmo.sis_sigma_v2theta_E(
                 float(self._deflector_dict["vel_disp"])
             )
+            self._subhaloes_table["theta_E_sis"] = lens_cosmo.sis_sigma_v2theta_E(self._subhaloes_table["vel_disp"])
+            self._subhaloes_table["theta_E"] = self.compute_einstein_radius(self._subhaloes_table["theta_E_sis"])
 
     @property
     def deflector_position(self):
@@ -250,12 +252,11 @@ class ClusterLens(LensedSystemBase):
 
         :return: Einstein radius [arc seconds]
         """
-        _, _, kappa_ext = self.los_linear_distortions()
-        return self._theta_E_sis / (1 - kappa_ext)
+        return self.compute_einstein_radius(self._theta_E_sis)
 
     @property
     def number_subhaloes(self):
-        return len(self._subhaloes_list)
+        return len(self._subhaloes_table)
 
     def deflector_ellipticity(self):
         """
@@ -534,7 +535,7 @@ class ClusterLens(LensedSystemBase):
                 "center_x": s["center_x_light"],
                 "center_y": s["center_y_light"],
             }
-            for s in self._subhaloes_list
+            for s in self._subhaloes_table
         ]
         return lens_light_model_list, kwargs_lens_light
 
@@ -630,7 +631,7 @@ class ClusterLens(LensedSystemBase):
                 "center_x": s["center_x_mass"],
                 "center_y": s["center_y_mass"],
             }
-            for s in self._subhaloes_list
+            for s in self._subhaloes_table
         ]
 
         return lens_mass_model_list, kwargs_lens
@@ -648,3 +649,12 @@ class ClusterLens(LensedSystemBase):
         ]
 
         return lens_mass_model_list, kwargs_lens
+
+    def compute_einstein_radius(self, theta_E_sis):
+        """Compute the Einstein radius of the lensing system.
+
+        :param theta_E_sis: Einstein radius of the SIS model [arc seconds]
+        :return: Einstein radius of the lensing system [arc seconds]
+        """
+        _, _, kappa_ext = self.los_linear_distortions()
+        return theta_E_sis / (1 - kappa_ext)
