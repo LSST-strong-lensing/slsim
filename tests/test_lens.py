@@ -111,6 +111,29 @@ class TestLens(object):
         npt.assert_almost_equal(dt_days, observer_times, decimal=5)
         npt.assert_almost_equal(dt_days2, observer_times2, decimal=5)
 
+    def test_lens_equation_solver(self):
+        """Tests analytical and numerical lens equation solver options."""
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+        gg_lens = Lens(
+            lens_equation_solver="lenstronomy_default",
+            source_dict=self.source_dict,
+            deflector_dict=self.deflector_dict,
+            cosmo=cosmo,
+        )
+        while True:
+            gg_lens.validity_test()
+            break
+
+        gg_lens = Lens(
+            lens_equation_solver="lenstronomy_analytical",
+            source_dict=self.source_dict,
+            deflector_dict=self.deflector_dict,
+            cosmo=cosmo,
+        )
+        while True:
+            gg_lens.validity_test()
+            break
+
 
 @pytest.fixture
 def pes_lens_instance():
