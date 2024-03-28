@@ -8,7 +8,9 @@ class Source(object):
     """This class provides source dictionary and variable magnitude of a individual
     source."""
 
-    def __init__(self, source_dict, variability_model=None, kwargs_variability=None):
+    def __init__(self, source_dict,
+                 variability_model=None,
+                 kwargs_variability=None):
         """
         :param source_dict: Source properties
         :type source_dict: dict
@@ -44,7 +46,7 @@ class Source(object):
                 variability_model, **kwargs_variab_extracted
             )
         else:
-            self._variability_class = None
+            self.variability_class = None
 
     @property
     def redshift(self):

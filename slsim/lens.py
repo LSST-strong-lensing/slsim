@@ -86,16 +86,16 @@ class Lens(LensedSystemBase):
                 "variability information provided by you will not be used."
             )
             warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
-        if self._deflector_dict["z"] >= self.source.redshift:
+        if self.deflector.redshift >= self.source.redshift:
             self._theta_E_sis = 0
         else:
             lens_cosmo = LensCosmo(
-                z_lens=float(self._deflector_dict["z"]),
+                z_lens=float(self.deflector.redshift),
                 z_source=float(self.source.redshift),
                 cosmo=self.cosmo,
             )
             self._theta_E_sis = lens_cosmo.sis_sigma_v2theta_E(
-                float(self._deflector_dict["vel_disp"])
+                float(self.deflector.velocity_dispersion)
             )
 
     @property
@@ -104,12 +104,7 @@ class Lens(LensedSystemBase):
 
         :return: [x_pox, y_pos] in arc seconds
         """
-        if not hasattr(self, "_center_lens"):
-            center_x_lens, center_y_lens = np.random.normal(
-                loc=0, scale=0.1
-            ), np.random.normal(loc=0, scale=0.1)
-            self._center_lens = np.array([center_x_lens, center_y_lens])
-        return self._center_lens
+        return self.deflector.deflector_center
 
     def extended_source_image_positions(self):
         """Returns extended source image positions by solving the lens equation.
@@ -189,7 +184,7 @@ class Lens(LensedSystemBase):
         """
         # Criteria 1:The redshift of the lens (z_lens) must be less than the
         # redshift of the source (z_source).
-        z_lens = self._deflector_dict["z"]
+        z_lens = self.deflector.redshift
         z_source = self.source.redshift
         if z_lens >= z_source:
             return False
@@ -256,7 +251,7 @@ class Lens(LensedSystemBase):
 
         :return: lens redshift
         """
-        return self._deflector_dict["z"]
+        return self.deflector.redshift
 
     @property
     def source_redshift(self):
@@ -280,12 +275,8 @@ class Lens(LensedSystemBase):
 
         :return: e1_light, e2_light, e1_mass, e2_mass
         """
-        e1_light, e2_light = float(self._deflector_dict["e1_light"]), float(
-            self._deflector_dict["e2_light"]
-        )
-        e1_mass, e2_mass = float(self._deflector_dict["e1_mass"]), float(
-            self._deflector_dict["e2_mass"]
-        )
+        e1_light, e2_light = self.deflector.light_ellipticity
+        e1_mass, e2_mass = self.deflector.mass_ellipticity
         return e1_light, e2_light, e1_mass, e2_mass
 
     def deflector_stellar_mass(self):
@@ -293,14 +284,14 @@ class Lens(LensedSystemBase):
 
         :return: stellar mass of deflector
         """
-        return self._deflector_dict["stellar_mass"]
+        return self.deflector.stellar_mass
 
     def deflector_velocity_dispersion(self):
         """
 
         :return: velocity dispersion [km/s]
         """
-        return self._deflector_dict["vel_disp"]
+        return self.deflector.velocity_dispersion
 
     def los_linear_distortions(self):
         """Line-of-sight distortions in shear and convergence.
@@ -334,8 +325,7 @@ class Lens(LensedSystemBase):
         :type band: string
         :return: magnitude of deflector in given band
         """
-        band_string = str("mag_" + band)
-        return self._deflector_dict[band_string]
+        return self.deflector.magnitude(band=band)
 
     def point_source_arrival_times(self):
         """Arrival time of images relative to a straight line without lensing. Negative
@@ -502,7 +492,7 @@ class Lens(LensedSystemBase):
         (
             lens_light_model_list,
             kwargs_lens_light,
-        ) = self.deflector_light_model_lenstronomy(band=band)
+        ) = self.deflector.light_model_lenstronomy(band=band)
 
         kwargs_model = {
             "lens_light_model_list": lens_light_model_list,
@@ -551,34 +541,14 @@ class Lens(LensedSystemBase):
 
         return lens_mass_model_list, kwargs_lens
 
-    def deflector_light_model_lenstronomy(self, band=None):
+    def deflector_light_model_lenstronomy(self, band):
         """Returns lens model instance and parameters in lenstronomy conventions.
 
+        :param band: imaging band
+        :type band: str
         :return: lens_light_model_list, kwargs_lens_light
         """
-        lens_light_model_list = ["SERSIC_ELLIPSE"]
-        center_lens = self.deflector_position
-        e1_light_lens, e2_light_lens, e1_mass, e2_mass = self.deflector_ellipticity()
-        size_lens_arcsec = (
-            self._deflector_dict["angular_size"] / constants.arcsec
-        )  # convert radian to arc seconds
-
-        if band is None:
-            mag_lens = 1
-        else:
-            mag_lens = self.deflector_magnitude(band)
-        kwargs_lens_light = [
-            {
-                "magnitude": mag_lens,
-                "R_sersic": size_lens_arcsec,
-                "n_sersic": float(self._deflector_dict["n_sersic"]),
-                "e1": e1_light_lens,
-                "e2": e2_light_lens,
-                "center_x": center_lens[0],
-                "center_y": center_lens[1],
-            }
-        ]
-        return lens_light_model_list, kwargs_lens_light
+        return self.deflector.light_model_lenstronomy(band=band)
 
     def source_light_model_lenstronomy(self, band=None):
         """Returns source light model instance and parameters in lenstronomy

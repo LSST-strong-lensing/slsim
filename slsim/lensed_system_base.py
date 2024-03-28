@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 from slsim.Sources.source import Source
+from slsim.Deflectors.deflector import Deflector
 
 
 class LensedSystemBase(ABC):
@@ -32,7 +33,7 @@ class LensedSystemBase(ABC):
         """
         # self._source_dict = source_dict
         self.source = Source(source_dict, variability_model, kwargs_variability)
-        self._deflector_dict = deflector_dict
+        self.deflector = Deflector(deflector_dict=deflector_dict)
         # TODO: tell them what keys the dictionary should contain
         self.test_area = test_area
         self.cosmo = cosmo
@@ -172,9 +173,11 @@ class LensedSystemBase(ABC):
         pass
 
     @abstractmethod
-    def deflector_light_model_lenstronomy(self):
+    def deflector_light_model_lenstronomy(self, band):
         """Returns lens model instance and parameters in lenstronomy conventions.
 
+        :param band: imaging band
+        :type band: str
         :return: lens_light_model_list, kwargs_lens_light
         """
         pass
