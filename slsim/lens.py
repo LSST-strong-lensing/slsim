@@ -25,11 +25,16 @@ class Lens(LensedSystemBase):
         lens_equation_solver="lenstronomy_analytical",
         variability_model=None,
         kwargs_variability=None,
+        sn_type=None,
+        sn_absolute_mag_band=None,
+        sn_absolute_zpsys=None,
         test_area=4 * np.pi,
         mixgauss_means=None,
         mixgauss_stds=None,
         mixgauss_weights=None,
         magnification_limit=0.01,
+        light_profile="single_sersic",
+        lightcurve_time=None,
     ):
         """
 
@@ -50,6 +55,12 @@ class Lens(LensedSystemBase):
         :param kwargs_variability: keyword arguments for the variability of a source.
          This is associated with an input for Variability class.
         :type kwargs_variability: list of str
+        :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
+        :type sn_type: str
+        :param sn_absolute_mag_band: Band used to normalize to absolute magnitude
+        :type sn_absolute_mag_band: str or `~sncosmo.Bandpass`
+        :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
+        :type sn_absolute_zpsys: str
         :param test_area: area of disk around one lensing galaxies to be investigated
             on (in arc-seconds^2)
         :param mixgauss_weights: weights of the Gaussian mixture
@@ -61,6 +72,11 @@ class Lens(LensedSystemBase):
         :param magnification_limit: absolute lensing magnification lower limit to
             register a point source (ignore highly de-magnified images)
         :type magnification_limit: float >= 0
+        :param light_profile: keyword for number of sersic profile to use in source
+         light model
+        :type light_profile: str . Either "single_sersic" or "double_sersic" .
+        :param lightcurve_time: observation time array for lightcurve in unit of days.
+        :type lightcurve_time: array
         """
         super().__init__(
             source_dict=source_dict,
@@ -69,6 +85,10 @@ class Lens(LensedSystemBase):
             test_area=test_area,
             variability_model=variability_model,
             kwargs_variability=kwargs_variability,
+            lightcurve_time=lightcurve_time,
+            sn_type=sn_type,
+            sn_absolute_mag_band=sn_absolute_mag_band,
+            sn_absolute_zpsys=sn_absolute_zpsys,
         )
 
         self.cosmo = cosmo
@@ -79,6 +99,7 @@ class Lens(LensedSystemBase):
         self._mixgauss_weights = mixgauss_weights
         self._magnification_limit = magnification_limit
         self.kwargs_variab = kwargs_variability
+        self.light_profile = light_profile
 
         if self._source_type == "extended" and self.kwargs_variab is not None:
             warning_msg = (
@@ -592,27 +613,20 @@ class Lens(LensedSystemBase):
             self._source_type == "extended"
             or self._source_type == "point_plus_extended"
         ):
-            # convert radian to arc seconds
-            if band is None:
-                mag_source = 1
+
+            if self.light_profile == "single_sersic":
+                source_models["source_light_model_list"] = ["SERSIC_ELLIPSE"]
             else:
-                mag_source = self.extended_source_magnitude(band)
-            center_source = self.source.extended_source_position(
-                center_lens=self.deflector_position, draw_area=self.test_area
+                source_models["source_light_model_list"] = [
+                    "SERSIC_ELLIPSE",
+                    "SERSIC_ELLIPSE",
+                ]
+            kwargs_source = self.source.kwargs_extended_source_light(
+                draw_area=self.test_area,
+                center_lens=self.deflector_position,
+                band=band,
+                light_profile_str=self.light_profile,
             )
-            size_source_arcsec = float(self.source.angular_size) / constants.arcsec
-            source_models["source_light_model_list"] = ["SERSIC_ELLIPSE"]
-            kwargs_source = [
-                {
-                    "magnitude": mag_source,
-                    "R_sersic": size_source_arcsec,
-                    "n_sersic": float(self.source.n_sersic),
-                    "e1": float(self.source.ellipticity[0]),
-                    "e2": float(self.source.ellipticity[1]),
-                    "center_x": center_source[0],
-                    "center_y": center_source[1],
-                }
-            ]
         else:
             # source_models['source_light_model_list'] = None
             kwargs_source = None
