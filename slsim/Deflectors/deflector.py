@@ -3,9 +3,9 @@ from lenstronomy.Util import constants
 
 
 class Deflector(object):
-    """
-    class of a single deflector with quantities only related to the deflector (independent of the source)
-    """
+    """Class of a single deflector with quantities only related to the deflector
+    (independent of the source)"""
+
     def __init__(self, deflector_dict):
         """
 
@@ -16,8 +16,7 @@ class Deflector(object):
 
     @property
     def redshift(self):
-        """
-        deflector redshift
+        """Deflector redshift.
 
         :return: redshift
         """
@@ -25,8 +24,7 @@ class Deflector(object):
 
     @property
     def velocity_dispersion(self):
-        """
-        velocity dispersion of deflector
+        """Velocity dispersion of deflector.
 
         :return: velocity dispersion [km/s]
         """
@@ -65,8 +63,7 @@ class Deflector(object):
 
     @property
     def light_ellipticity(self):
-        """
-        light ellipticity
+        """Light ellipticity.
 
         :return: e1_light, e2_light
         """
@@ -77,8 +74,7 @@ class Deflector(object):
 
     @property
     def mass_ellipticity(self):
-        """
-        mass ellipticity
+        """Mass ellipticity.
 
         :return: e1_mass, e2_mass
         """

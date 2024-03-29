@@ -6,9 +6,8 @@ from astropy.table import Table
 
 
 class TestDeflector(object):
-    """
-    testing the Deflector class
-    """
+    """Testing the Deflector class."""
+
     def setup_method(self):
         path = os.path.dirname(__file__)
         module_path, _ = os.path.split(path)
@@ -48,4 +47,4 @@ class TestDeflector(object):
 
     def test_stellar_mass(self):
         stellar_mass = self.deflector.stellar_mass
-        npt.assert_almost_equal(stellar_mass, 6.94160421e+10, decimal=-3)
+        npt.assert_almost_equal(stellar_mass, 6.94160421e10, decimal=-3)
