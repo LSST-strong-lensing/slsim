@@ -3,10 +3,10 @@ import numpy.random as random
 from slsim.selection import deflector_cut
 from slsim.Deflectors.velocity_dispersion import vel_disp_sdss
 from slsim.Util import param_util
-from slsim.Deflectors.deflector_base import DeflectorBase
+from slsim.Deflectors.deflectors_base import DeflectorsBase
 
 
-class EllipticalLensGalaxies(DeflectorBase):
+class EllipticalLensGalaxies(DeflectorsBase):
     """Class describing elliptical galaxies."""
 
     def __init__(self, galaxy_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area):

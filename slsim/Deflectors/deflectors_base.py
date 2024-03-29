@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 
 
-class DeflectorBase(ABC):
-    """Abstract Base Class to create a deflector object.
+class DeflectorsBase(ABC):
+    """Abstract Base Class to create a class that accesses a set of deflectors.
 
     All object that inherit from Lensed System must contain the methods it contains.
     """

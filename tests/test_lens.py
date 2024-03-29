@@ -32,6 +32,7 @@ class TestLens(object):
             gg_lens = Lens(
                 source_dict=self.source_dict,
                 deflector_dict=self.deflector_dict,
+                lens_equation_solver="lenstronomy_analytical",
                 cosmo=cosmo,
             )
             if gg_lens.validity_test():
@@ -54,10 +55,16 @@ class TestLens(object):
     def test_source_magnitude(self):
         band = "g"
         source_magnitude = self.gg_lens.extended_source_magnitude(band)
+        source_magnitude_lensed = self.gg_lens.extended_source_magnitude(
+            band, lensed=True
+        )
+        host_mag = self.gg_lens.extended_source_magnification()
+        expected_lensed_mag = source_magnitude - 2.5 * np.log10(host_mag)
         assert pytest.approx(source_magnitude[0], rel=1e-3) == 30.780194
+        assert source_magnitude_lensed == expected_lensed_mag
 
     def test_image_separation_from_positions(self):
-        image_positions = self.gg_lens.image_positions()
+        image_positions = self.gg_lens.extended_source_image_positions()
         image_separation = image_separation_from_positions(image_positions)
         theta_E_infinity = theta_e_when_source_infinity(
             deflector_dict=self.deflector_dict
@@ -105,6 +112,33 @@ class TestLens(object):
         npt.assert_almost_equal(dt_days, observer_times, decimal=5)
         npt.assert_almost_equal(dt_days2, observer_times2, decimal=5)
 
+    def test_deflector_light_model_lenstronomy(self):
+        kwargs_lens_light = self.gg_lens.deflector_light_model_lenstronomy(band="g")
+        assert len(kwargs_lens_light) >= 1
+
+    def test_lens_equation_solver(self):
+        """Tests analytical and numerical lens equation solver options."""
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+        gg_lens = Lens(
+            lens_equation_solver="lenstronomy_default",
+            source_dict=self.source_dict,
+            deflector_dict=self.deflector_dict,
+            cosmo=cosmo,
+        )
+        while True:
+            gg_lens.validity_test()
+            break
+
+        gg_lens = Lens(
+            lens_equation_solver="lenstronomy_analytical",
+            source_dict=self.source_dict,
+            deflector_dict=self.deflector_dict,
+            cosmo=cosmo,
+        )
+        while True:
+            gg_lens.validity_test()
+            break
+
 
 @pytest.fixture
 def pes_lens_instance():
@@ -123,7 +157,7 @@ def pes_lens_instance():
             deflector_dict=deflector_dict,
             source_type="point_plus_extended",
             variability_model="sinusoidal",
-            kwargs_variab={"amp", "freq"},
+            kwargs_variability={"amp", "freq"},
             cosmo=cosmo,
         )
         if pes_lens.validity_test():
@@ -135,7 +169,43 @@ def pes_lens_instance():
 def test_point_source_magnitude(pes_lens_instance):
     pes_lens = pes_lens_instance
     mag = pes_lens.point_source_magnitude(band="i", lensed=True)
+    mag_unlensed = pes_lens.point_source_magnitude(band="i")
     assert len(mag) >= 2
+    assert len(mag_unlensed) == 1
+
+
+@pytest.fixture
+def supernovae_lens_instance():
+    path = os.path.dirname(__file__)
+    source_dict = Table.read(
+        os.path.join(path, "TestData/supernovae_source_dict.fits"), format="fits"
+    )
+    deflector_dict = Table.read(
+        os.path.join(path, "TestData/supernovae_deflector_dict.fits"), format="fits"
+    )
+
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    while True:
+        supernovae_lens = Lens(
+            source_dict=source_dict,
+            deflector_dict=deflector_dict,
+            source_type="point_plus_extended",
+            variability_model="light_curve",
+            kwargs_variability={"MJD", "ps_mag_r"},
+            cosmo=cosmo,
+        )
+        if supernovae_lens.validity_test():
+            supernovae_lens = supernovae_lens
+            break
+    return supernovae_lens
+
+
+def test_point_source_magnitude_with_lightcurve(supernovae_lens_instance):
+    supernovae_lens = supernovae_lens_instance
+    mag = supernovae_lens.point_source_magnitude(band="r", lensed=True)
+    expected_results = supernovae_lens_instance.source.source_dict["ps_mag_r"]
+    assert mag[0][0] != expected_results[0][0]
+    assert mag[1][0] != expected_results[0][0]
 
 
 if __name__ == "__main__":
