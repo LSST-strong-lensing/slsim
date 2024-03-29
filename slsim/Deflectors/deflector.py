@@ -94,6 +94,8 @@ class Deflector(object):
     def light_model_lenstronomy(self, band=None):
         """Returns lens model instance and parameters in lenstronomy conventions.
 
+        :param band: imaging band
+        :type band: str
         :return: lens_light_model_list, kwargs_lens_light
         """
         lens_light_model_list = ["SERSIC_ELLIPSE"]
