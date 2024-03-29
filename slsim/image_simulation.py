@@ -3,8 +3,11 @@ from lenstronomy.SimulationAPI.sim_api import SimAPI
 from astropy.visualization import make_lupton_rgb
 from lenstronomy.Data.psf import PSF
 from lenstronomy.ImSim.Numerics.point_source_rendering import PointSourceRendering
-from slsim.Util.param_util import magnitude_to_amplitude
-from slsim.Util.param_util import convolved_image
+from slsim.Util.param_util import (
+    magnitude_to_amplitude,
+    convolved_image,
+    transformmatrix_to_pixelscale,
+)
 
 
 def simulate_image(
@@ -245,7 +248,7 @@ def point_source_coordinate_properties(
     dec_lens_value = lens_center[1]
     lens_pix_coordinate = image_data.map_coord2pix(ra_lens_value, dec_lens_value)
 
-    ps_coordinate = lens_class.image_positions()
+    ps_coordinate = lens_class.point_source_image_positions()
     ra_image_values = ps_coordinate[0]
     dec_image_values = ps_coordinate[1]
     # image_magnitude = lens_class.point_source_magnitude(band=band, lensed=True)
@@ -495,12 +498,14 @@ def lens_image(
     lens_class,
     band,
     mag_zero_point,
-    delta_pix,
     num_pix,
     psf_kernel,
     transform_pix2angle,
     exposure_time=None,
     t_obs=None,
+    std_gaussian_noise=None,
+    with_source=True,
+    with_deflector=True,
 ):
     """Creates lens image on the basis of given information. It can simulate both static
     lens image and variable lens image.
@@ -508,7 +513,6 @@ def lens_image(
     :param lens_class: Lens() object
     :param band: imaging band
     :param mag_zero_point: magnitude zero point for the exposure
-    :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
     :param psf_kernels: psf kernel for the exposures being.
     :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
@@ -518,14 +522,21 @@ def lens_image(
     :param t_obs: an observation time [day]. This is applicable only for variable
         source. In case of point source, if we do not provide t_obs, considers no
         variability in the lens.
+    :param std_gaussian_noise: standard deviation for a gaussian noise
+    :param with_source: If True, simulates image with extended source in lens
+        configuration.
+    :param with_deflector: If True, simulates image with deflector.
     :return: lens image
     """
+    delta_pix = transformmatrix_to_pixelscale(transform_pix2angle)
     deflector_source = sharp_image(
         lens_class=lens_class,
         band=band,
         mag_zero_point=mag_zero_point,
         delta_pix=delta_pix,
         num_pix=num_pix,
+        with_source=with_source,
+        with_deflector=with_deflector,
     )
     convolved_deflector_source = convolved_image(
         image=deflector_source, psf_kernel=psf_kernel
@@ -556,7 +567,9 @@ def lens_image(
         final_image = image_plus_poisson_noise(image=image, exposure_time=exposure_time)
     else:
         final_image = image
-
+    if std_gaussian_noise is not None:
+        gaussian_noise = np.random.normal(0, std_gaussian_noise, final_image.shape)
+        return final_image + gaussian_noise
     return final_image
 
 
@@ -564,12 +577,14 @@ def lens_image_series(
     lens_class,
     band,
     mag_zero_point,
-    delta_pix,
     num_pix,
     psf_kernel,
     transform_pix2angle,
     exposure_time=None,
     t_obs=None,
+    std_gaussian_noise=None,
+    with_source=True,
+    with_deflector=True,
 ):
     """Creates lens image on the basis of given information. This function is designed
     to simulate time series images of a lens.
@@ -577,7 +592,6 @@ def lens_image_series(
     :param lens_class: Lens() object
     :param band: imaging band
     :param mag_zero_point: list of magnitude zero point for sqeuence of exposure
-    :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
     :param psf_kernels: list of psf kernel for each exposure.
     :param transform_pix2angle: list of transformation matrix (2x2) of pixels into
@@ -585,6 +599,11 @@ def lens_image_series(
     :param exposure_time: list of exposure time for each exposure. It could be single
         exposure time or a exposure map.
     :param t_obs: array of image observation time [day] for a lens.
+    :param std_gaussian_noise: array of standard deviation for gaussian noise for each
+        image
+    :param with_source: If True, simulates image with extended source in lens
+        configuration.
+    :param with_deflector: If True, simulates image with deflector.
     :return: list of series of images of a lens
     """
     image_series = []
@@ -595,12 +614,14 @@ def lens_image_series(
             lens_class=lens_class,
             band=band,
             mag_zero_point=mag_zero,
-            delta_pix=delta_pix,
             num_pix=num_pix,
             psf_kernel=psf_kern,
             transform_pix2angle=transf_matrix,
             exposure_time=expo_time,
             t_obs=time,
+            std_gaussian_noise=std_gaussian_noise,
+            with_source=with_source,
+            with_deflector=with_deflector,
         )
         image_series.append(image)
 

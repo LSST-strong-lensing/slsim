@@ -8,8 +8,8 @@ def quasar_catalog_simple(
     z_max=5,
     m_min=17,
     m_max=23,
-    amp_min=0.9,
-    amp_max=1.3,
+    amp_min=18,
+    amp_max=23,
     freq_min=0.5,
     freq_max=1.5,
 ):

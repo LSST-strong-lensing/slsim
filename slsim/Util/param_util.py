@@ -163,3 +163,43 @@ def interpolate_variability(image_series, orig_timestamps, new_timestamps):
     new_time_points = np.meshgrid(new_timestamps, pixel_positions, indexing="ij")
     pixels_resampled = interpolation((new_time_points[0], new_time_points[1]))
     return pixels_to_images(pixels_resampled, np.shape(image_series))
+
+
+def transformmatrix_to_pixelscale(tranform_matrix):
+    """Calculates pixel scale using tranform matrix.
+
+    :param tranform_matrix: transformation matrix (2x2) of pixels into coordinate
+        displacements
+    :return: pixel scale
+    """
+    determinant = np.linalg.det(tranform_matrix)
+    return np.sqrt(determinant)
+
+
+def average_angular_size(a, b):
+    """Computes average angular size using semi major and minor axis.
+
+    :param a: value of semi major axis in arcsec
+    :param b: value of semi minor axis in arcsec
+    :return: average angular size in arcsec
+    """
+    return np.sqrt(a * b)
+
+
+def axis_ratio(a, b):
+    """Computes axis ratio using semi major and minor axis.
+
+    :param a: value of semi major
+    :param b: value of semi minor
+    :return: axis ratio
+    """
+    return b / a
+
+
+def eccentricity(q):
+    """Computes eccentricity using axis ratio.
+
+    :param q: axis ratio of an object
+    :return: eccentricity
+    """
+    return (1 - q) / (1 + q)
