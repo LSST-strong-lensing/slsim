@@ -32,6 +32,7 @@ class TestLens(object):
             gg_lens = Lens(
                 source_dict=self.source_dict,
                 deflector_dict=self.deflector_dict,
+                lens_equation_solver="lenstronomy_analytical",
                 cosmo=cosmo,
             )
             if gg_lens.validity_test():
@@ -164,7 +165,9 @@ def pes_lens_instance():
 def test_point_source_magnitude(pes_lens_instance):
     pes_lens = pes_lens_instance
     mag = pes_lens.point_source_magnitude(band="i", lensed=True)
+    mag_unlensed = pes_lens.point_source_magnitude(band="i")
     assert len(mag) >= 2
+    assert len(mag_unlensed) == 1
 
 
 @pytest.fixture
