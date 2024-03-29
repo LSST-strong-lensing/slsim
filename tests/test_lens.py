@@ -111,6 +111,11 @@ class TestLens(object):
         npt.assert_almost_equal(dt_days, observer_times, decimal=5)
         npt.assert_almost_equal(dt_days2, observer_times2, decimal=5)
 
+    def test_deflector_light_model_lenstronomy(self):
+
+        kwargs_deflector = self.gg_lens.deflector_light_model_lenstronomy(band="g")
+        assert len(kwargs_deflector) >= 1
+
     def test_lens_equation_solver(self):
         """Tests analytical and numerical lens equation solver options."""
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
