@@ -55,7 +55,7 @@ class Deflector(object):
     def stellar_mass(self):
         """
 
-        :return: stellar mass of deflector
+        :return: stellar mass of deflector [M_sol]
         """
         return self._deflector_dict["stellar_mass"]
 
