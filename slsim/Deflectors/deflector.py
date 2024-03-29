@@ -1,17 +1,25 @@
 import numpy as np
 from lenstronomy.Util import constants
 
+_SUPPORTED_DEFLECTORS = ["EPL", "NFW_HERNQUIST"]
+
 
 class Deflector(object):
     """Class of a single deflector with quantities only related to the deflector
     (independent of the source)"""
 
-    def __init__(self, deflector_dict):
+    def __init__(self, deflector_type, deflector_dict):
         """
 
+        :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST"
+        :type deflector_type: str
         :param deflector_dict: parameters of the deflector
         :type deflector_dict: dict
         """
+        if deflector_type not in _SUPPORTED_DEFLECTORS:
+            raise ValueError("Deflector type %s not supported. Chose among %s."
+                             % (deflector_type, _SUPPORTED_DEFLECTORS))
+        self._deflector_type = deflector_type
         self._deflector_dict = deflector_dict
 
     @property

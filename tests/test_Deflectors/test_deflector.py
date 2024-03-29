@@ -14,7 +14,7 @@ class TestDeflector(object):
         red_one = Table.read(
             os.path.join(module_path, "TestData/red_one_modified.fits"), format="fits"
         )
-        self.deflector = Deflector(red_one)
+        self.deflector = Deflector(deflector_type="EPL", deflector_dict=red_one)
 
     def test_light_ellipticity(self):
         e1_light, e2_light = self.deflector.light_ellipticity
@@ -25,6 +25,10 @@ class TestDeflector(object):
         e1_mass, e2_mass = self.deflector.mass_ellipticity
         assert pytest.approx(e1_mass, rel=1e-3) == -0.08434700688970058
         assert pytest.approx(e2_mass, rel=1e-3) == 0.09710653297997263
+
+    def test_init(self):
+        with npt.assert_raises(ValueError):
+            Deflector(deflector_type="WRONG_MODEL", deflector_dict={})
 
     def test_magnitude(self):
         band = "g"
