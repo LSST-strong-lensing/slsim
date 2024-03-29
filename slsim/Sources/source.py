@@ -110,7 +110,7 @@ class Source(object):
                 variability_model, **kwargs_variab_extracted
             )
         else:
-            self._variability_class = None
+            self.variability_class = None
 
     @property
     def redshift(self):
