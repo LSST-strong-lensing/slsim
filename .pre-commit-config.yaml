@@ -13,13 +13,13 @@ ci:
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.3.4
+    rev: v0.3.5
     hooks:
       - id: ruff
         exclude: docs/.*
         args: ["--line-length=88"]
   - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.8.4
+    rev: 1.8.5
     hooks:
       - id: nbqa-ruff
         args: ["--line-length=120"]
