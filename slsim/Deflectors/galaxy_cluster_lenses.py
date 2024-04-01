@@ -48,8 +48,7 @@ class GalaxyClusterLenses(DeflectorsBase):
 
 
 def halo_projected_eccentricity(ellipticity, **kwargs):
-    """Projected eccentricity of halo as a function of other deflector
-    parameters.
+    """Projected eccentricity of halo as a function of other deflector parameters.
 
     :param ellipticity: eccentricity amplitude
     :type ellipticity: float [0,1)
@@ -58,5 +57,3 @@ def halo_projected_eccentricity(ellipticity, **kwargs):
     :return: e1_light, e2_light,e1_mass, e2_mass eccentricity components
     """
     pass
-
-

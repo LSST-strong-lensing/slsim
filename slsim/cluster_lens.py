@@ -124,8 +124,12 @@ class ClusterLens(LensedSystemBase):
                 float(self.deflector.velocity_dispersion)
             )
             # TODO: integrate subhaloes in the Deflector interface
-            self._subhaloes_table["theta_E_sis"] = lens_cosmo.sis_sigma_v2theta_E(self._subhaloes_table["vel_disp"])
-            self._subhaloes_table["theta_E"] = self.compute_einstein_radius(self._subhaloes_table["theta_E_sis"])
+            self._subhaloes_table["theta_E_sis"] = lens_cosmo.sis_sigma_v2theta_E(
+                self._subhaloes_table["vel_disp"]
+            )
+            self._subhaloes_table["theta_E"] = self.compute_einstein_radius(
+                self._subhaloes_table["theta_E_sis"]
+            )
 
     @property
     def deflector_position(self):
@@ -148,8 +152,8 @@ class ClusterLens(LensedSystemBase):
                 center_lens=self.deflector_position, draw_area=self.test_area
             )
             if (
-                    self._lens_equation_solver == "lenstronomy_analytical"
-                    and analytical_lens_model_support(lens_model_list) is True
+                self._lens_equation_solver == "lenstronomy_analytical"
+                and analytical_lens_model_support(lens_model_list) is True
             ):
                 solver = "analytical"
             else:
@@ -181,8 +185,8 @@ class ClusterLens(LensedSystemBase):
             )
             # uses analytical lens equation solver in case it is supported by lenstronomy for speed-up
             if (
-                    self._lens_equation_solver == "lenstronomy_analytical"
-                    and analytical_lens_model_support(lens_model_list) is True
+                self._lens_equation_solver == "lenstronomy_analytical"
+                and analytical_lens_model_support(lens_model_list) is True
             ):
                 solver = "analytical"
             else:
@@ -199,7 +203,7 @@ class ClusterLens(LensedSystemBase):
         return self._point_image_positions
 
     def validity_test(
-            self, min_image_separation=0, max_image_separation=10, mag_arc_limit=None
+        self, min_image_separation=0, max_image_separation=10, mag_arc_limit=None
     ):
         """Check whether lensing configuration matches selection and plausibility
         criteria.
@@ -234,7 +238,7 @@ class ClusterLens(LensedSystemBase):
                 center_lens=self.deflector_position, draw_area=self.test_area
             ),
         )
-        if np.sum((center_lens - center_source) ** 2) > self._theta_E_sis ** 2 * 2:
+        if np.sum((center_lens - center_source) ** 2) > self._theta_E_sis**2 * 2:
             return False
 
         # Criteria 4: The lensing configuration must produce at least two SL images.
@@ -430,7 +434,7 @@ class ClusterLens(LensedSystemBase):
                     image_observation_times=image_observed_times,
                 )
                 lensed_variable_magnitude = (
-                        variable_magnitude - magnif_log[:, np.newaxis]
+                    variable_magnitude - magnif_log[:, np.newaxis]
                 )
                 return lensed_variable_magnitude
             else:
@@ -564,7 +568,8 @@ class ClusterLens(LensedSystemBase):
         return lens_mass_model_list, kwargs_lens
 
     def deflector_light_model_lenstronomy(self, band=None):
-        """Returns light model instance and parameters for all subhaloes in lenstronomy conventions.
+        """Returns light model instance and parameters for all subhaloes in lenstronomy
+        conventions.
 
         :return: lens_light_model_list, kwargs_lens_light
         """
@@ -593,8 +598,8 @@ class ClusterLens(LensedSystemBase):
         source_models = {}
         all_source_kwarg_dict = {}
         if (
-                self._source_type == "extended"
-                or self._source_type == "point_plus_extended"
+            self._source_type == "extended"
+            or self._source_type == "point_plus_extended"
         ):
 
             if self.light_profile == "single_sersic":
@@ -615,8 +620,8 @@ class ClusterLens(LensedSystemBase):
             kwargs_source = None
 
         if (
-                self._source_type == "point_source"
-                or self._source_type == "point_plus_extended"
+            self._source_type == "point_source"
+            or self._source_type == "point_plus_extended"
         ):
             source_models["point_source_model_list"] = ["LENSED_POSITION"]
             img_x, img_y = self.point_source_image_positions()
@@ -635,11 +640,14 @@ class ClusterLens(LensedSystemBase):
         return source_models, all_source_kwarg_dict
 
     def halo_mass_model_lenstronomy(self):
-        """Returns lens model instance and parameters for the main halo in lenstronomy conventions.
+        """Returns lens model instance and parameters for the main halo in lenstronomy
+        conventions.
 
         :return: lens_model_list, kwargs_lens
         """
-        lens_mass_model_list = ["EPL"]  # TODO: change to a more adequate model (ex: dPIE)
+        lens_mass_model_list = [
+            "EPL"
+        ]  # TODO: change to a more adequate model (ex: dPIE)
         theta_E = self.einstein_radius
         e1_light_lens, e2_light_lens, e1_mass, e2_mass = self.deflector_ellipticity()
         center_lens = self.deflector_position
@@ -657,14 +665,15 @@ class ClusterLens(LensedSystemBase):
         return lens_mass_model_list, kwargs_lens
 
     def subhalo_mass_model_lenstronomy(self):
-        """Returns lens model instance and parameters for the subhaloes in lenstronomy conventions.
+        """Returns lens model instance and parameters for the subhaloes in lenstronomy
+        conventions.
 
         :return: lens_model_list, kwargs_lens
         """
         lens_mass_model_list = self.number_subhaloes * ["EPL"]
         kwargs_lens = [
             {
-                "theta_E": s['theta_E'],
+                "theta_E": s["theta_E"],
                 "gamma": 2,
                 "e1": s["e1_mass"],
                 "e2": s["e2_mass"],
@@ -677,7 +686,8 @@ class ClusterLens(LensedSystemBase):
         return lens_mass_model_list, kwargs_lens
 
     def external_mass_model_lenstronomy(self):
-        """Returns lens model instance and parameters for the external structure in lenstronomy conventions.
+        """Returns lens model instance and parameters for the external structure in
+        lenstronomy conventions.
 
         :return: lens_model_list, kwargs_lens
         """
