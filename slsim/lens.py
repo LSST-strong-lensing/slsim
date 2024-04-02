@@ -546,11 +546,11 @@ class Lens(LensedSystemBase):
 
         :return: lens_model_list, kwargs_lens
         """
-        lens_mass_model_list = ["EPL", "SHEAR", "CONVERGENCE"]
+        lens_mass_model_list = ["EPL"]
         theta_E = self.einstein_radius
         e1_light_lens, e2_light_lens, e1_mass, e2_mass = self.deflector_ellipticity()
         center_lens = self.deflector_position
-        gamma1, gamma2, kappa_ext = self.los_linear_distortions()
+
         kwargs_lens = [
             {
                 "theta_E": theta_E,
@@ -559,10 +559,13 @@ class Lens(LensedSystemBase):
                 "e2": e2_mass,
                 "center_x": center_lens[0],
                 "center_y": center_lens[1],
-            },
-            {"gamma1": gamma1, "gamma2": gamma2, "ra_0": 0, "dec_0": 0},
-            {"kappa": kappa_ext, "ra_0": 0, "dec_0": 0},
+            }
         ]
+        # adding line-of-sight structure
+        gamma1, gamma2, kappa_ext = self.los_linear_distortions()
+        kwargs_lens.append([{"gamma1": gamma1, "gamma2": gamma2, "ra_0": 0, "dec_0": 0},
+                            {"kappa": kappa_ext, "ra_0": 0, "dec_0": 0}])
+        lens_mass_model_list.append(["SHEAR", "CONVERGENCE"])
 
         return lens_mass_model_list, kwargs_lens
 
