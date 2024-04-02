@@ -28,7 +28,7 @@ You can add other files such as  `joint_distributions_sigma8_0.810.h5` or `no_no
     * `nonlinear_correction_path` or/and `no_correction_path` parameter to the file path of the file you want to use.
     *  For example, if you are trying to use 
     `joint_distributions_sigma8_0.810.h5` and `no_nonlinear_distributions_sigma8_0.810.h5` files in one of the notebook in the `slsim/notebook`, you can set the file path as follows:
-    ```python
+    ```
     import os
     from slsim.lens_pop import LensPop
 

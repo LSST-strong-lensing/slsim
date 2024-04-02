@@ -399,7 +399,7 @@ class Lens(LensedSystemBase):
             )
         else:
             z_source = float(self.source.redshift)
-            z_lens = float(self._deflector_dict["z"])
+            z_lens = float(self.deflector.redshift)
             LOS = LineOfSightDistribution(
                 nonlinear_correction_path=self.nonlinear_correction_path,
                 no_correction_path=self.no_correction_path,

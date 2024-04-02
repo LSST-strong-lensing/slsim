@@ -15,7 +15,6 @@ def create_lens_pop_instance(return_kext=False):
         cosmo=cosmo,
         kwargs_deflector_cut=kwargs_deflector_cut,
         kwargs_source_cut=kwargs_source_cut,
-        return_kext=return_kext,
     )
 
 
@@ -23,12 +22,6 @@ def create_lens_pop_instance(return_kext=False):
 def gg_lens_pop_instance():
     # Create LensPop instance without return_kext
     return create_lens_pop_instance(return_kext=False)
-
-
-@pytest.fixture
-def lens_pop_instance_return_kext():
-    # Create LensPop instance with return_kext
-    return create_lens_pop_instance(return_kext=True)
 
 
 def test_pes_lens_pop_instance():
@@ -102,20 +95,12 @@ def test_num_sources_tested_and_test_area(gg_lens_pop_instance):
     f"but got {num_sources_range}"
 
 
-def test_draw_population(gg_lens_pop_instance, lens_pop_instance_return_kext):
+def test_draw_population(gg_lens_pop_instance):
     kwargs_lens_cuts = {"mag_arc_limit": {"g": 28}}
     gg_lens_population = gg_lens_pop_instance.draw_population(
         kwargs_lens_cuts=kwargs_lens_cuts
     )
     assert isinstance(gg_lens_population, list)
-
-    gg_lens_population2, kappa_ext_origin = (
-        lens_pop_instance_return_kext.draw_population(kwargs_lens_cuts=kwargs_lens_cuts)
-    )
-    assert isinstance(gg_lens_population2, list)
-    assert isinstance(kappa_ext_origin, list)
-    assert len(kappa_ext_origin) >= len(gg_lens_population2)
-    assert isinstance(kappa_ext_origin[0], float)
 
 
 if __name__ == "__main__":
