@@ -14,6 +14,8 @@ from slsim.Halos.halos import (
     redshift_halos_array_from_comoving_density,
     redshift_mass_sheet_correction_array_from_comoving_density,
     number_for_certain_mass,
+    kappa_ext_for_each_sheet,
+    mass_first_moment_at_redshift,
 )
 
 from astropy.cosmology import default_cosmology
@@ -229,3 +231,43 @@ def test_redshift_mass_sheet_correction_array():
         redshift_mass_sheet_correction_array_from_comoving_density(redshift_list),
         expected_result,
     )
+    kappa = kappa_ext_for_each_sheet(
+        redshift_list=redshift_mass_sheet_correction_array_from_comoving_density(
+            redshift_list
+        ),
+        first_moment=0.1,
+        sky_area=0.0000001 * units.deg**2,
+        cosmology=cosmo,
+    )
+    assert len(kappa) == 4
+    assert kappa[0] < 0
+
+
+def test_returns_array_of_kappa_ext():
+    redshift_list = [0.1, 0.2]
+    first_moment = [0.1, 0.2]
+    sky_area = Quantity(value=0.1, unit="deg2")
+    cosmology = cosmo
+
+    result = kappa_ext_for_each_sheet(redshift_list, first_moment, sky_area, cosmology)
+
+    assert isinstance(result, np.ndarray)
+    assert len(result) == len(redshift_list)
+
+
+def test_mass_first_moment_at_redshift():
+    z = [0.025, 0.075]
+    sky_area = 0.001 * units.deg**2
+    m_min = 1e11
+    m_max = 1e13
+    resolution = 50
+    cosmology = cosmo
+    sigma8 = 0.8
+    ns = 0.95
+    omega_m = 0.25
+
+    result = mass_first_moment_at_redshift(
+        z, sky_area, m_min, m_max, resolution, cosmology, sigma8, ns, omega_m
+    )
+
+    assert len(result) == 2

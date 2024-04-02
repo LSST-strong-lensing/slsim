@@ -216,6 +216,8 @@ class LensPop(LensedPopulationBase):
                 source_type=self._source_model_type,
                 los_bool=self.los_bool,
                 nonlinear_los_bool=self.nonlinear_los_bool,
+                nonlinear_correction_path=self.nonlinear_correction_path,
+                no_correction_path=self.no_correction_path,
             )
             if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens

@@ -5,6 +5,11 @@ from hmf.cosmology.growth_factor import GrowthFactor
 import numpy as np
 import warnings
 from astropy.units.quantity import Quantity
+from lenstronomy.Cosmo.lens_cosmo import LensCosmo
+from slsim.Halos.halos_lens import (
+    deg2_to_cone_angle,
+    cone_radius_angle_to_physical_area,
+)
 
 
 def colossus_halo_mass_function(m_200, cosmo, z, sigma8=0.81, ns=0.96, omega_m=None):
@@ -20,14 +25,14 @@ def colossus_halo_mass_function(m_200, cosmo, z, sigma8=0.81, ns=0.96, omega_m=N
         (M_sun/h).
     :param cosmo: Cosmology instance detailing the cosmological parameters.
     :param z: Redshift for evaluating the mass function.
-    :param sigma8: Normalization of the power spectrum, defaults to 0.81 if not
+    :param sigma8: matter density fluctuations on a (8 h-1 Mpc), defaults to 0.81 if not
         specified.
     :param ns: Spectral index, defaults to 0.96 if not specified.
     :param omega_m: Omega_m in Cosmology, defaults to none which will lead to the same
         in Cosmology setting.
     :type m_200: ndarray
-    :type cosmo: astropy.cosmology instance
-    :type z: float
+    :type cosmo: astropy.Cosmology instance
+    :type z: float,
     :type sigma8: float, optional
     :type ns: float, optional
     :type omega_m: float, optional
@@ -112,8 +117,8 @@ def colossus_halo_mass_sampler(
     :type m_min: Quantity or float
     :type m_max: Quantity or float
     :type resolution: Quantity or int
-    :type z: float
-    :type cosmology: astropy.cosmology instance
+    :type z: float,
+    :type cosmology: astropy.Cosmology instance
     :type sigma8: float, optional
     :type ns: float, optional
     :type size: int or None, optional
@@ -240,7 +245,7 @@ def number_density_at_redshift(
     :type m_min: float, optional
     :type m_max: float, optional
     :type resolution: int, optional
-    :type cosmology: astropy.cosmology instance, optional
+    :type cosmology: astropy.Cosmology instance, optional
     :type sigma8: float, optional
     :type ns: float, optional
     :type omega_m: float, optional
@@ -299,7 +304,7 @@ def growth_factor_at_redshift(z, cosmology):
     :param cosmology: Cosmology instance dictating the universe's expansion history and
         other relevant parameters.
     :type z: float, array_like, or list
-    :type cosmology: astropy.cosmology instance
+    :type cosmology: astropy.Cosmology instance
     :return: Growth factor at the specified redshift(s), as a float (for scalar z) or
         ndarray (for array z).
     :rtype: float or numpy.ndarray :note: The growth factor calculation is powered by
@@ -419,12 +424,12 @@ def dv_dz_to_dn_dz(
     :param omega_m: The matter density parameter of the universe, critical for
         understanding the evolution of structure. This parameter is optional and will
         default to the cosmology's value if not provided.
-    :type dV_dz: ndarray
-    :type redshift_list: ndarray
+    :type dV_dz: ndarray,
+    :type redshift_list: ndarray,
     :type m_min: float, optional
     :type m_max: float, optional
     :type resolution: int, optional
-    :type cosmology: astropy.cosmology instance, optional
+    :type cosmology: astropy.Cosmology instance, optional
     :type sigma8: float, optional
     :type ns: float, optional
     :type omega_m: float, optional
@@ -462,8 +467,8 @@ def dndz_to_N(dN_dz, redshift_list):
         rate of object occurrence as a function of redshift.
     :param redshift_list: Array of redshifts corresponding to the dN_dz values,
         outlining the span over which the distribution is defined.
-    :type dN_dz: ndarray
-    :type redshift_list: ndarray
+    :type dN_dz: ndarray,
+    :type redshift_list: ndarray,
     :return: The total number of objects expected within the given redshift
         distribution, determined by drawing from a Poisson distribution with the mean
         calculated from the integral of dN/dz.
@@ -491,8 +496,8 @@ def dndz_to_redshifts(N, dN_dz, redshift_list):
     :param redshift_list: Array of redshifts corresponding to the dN_dz values,
         delineating the domain over which the distribution applies.
     :type N: int
-    :type dN_dz: ndarray
-    :type redshift_list: ndarray
+    :type dN_dz: ndarray,
+    :type redshift_list: ndarray,
     :return: An array of N redshifts sampled according to the cumulative distribution
         derived from the differential redshift distribution dN/dz.
     :rtype: ndarray
@@ -514,7 +519,7 @@ def v_per_redshift(redshift_list, cosmology, sky_area):
     :param cosmology: The cosmological model to apply, which defines the universe's geometry and expansion history, influencing the calculation of comoving volumes. This parameter is optional, with a default cosmology used if not specified.
     :param sky_area: The area of the sky over which the volume calculations are to be applied, expressed in square degrees or as a solid angle, framing the scope of the astronomical observation or survey.
     :type redshift_list: array_like
-    :type cosmology: astropy.cosmology instance, optional
+    :type cosmology: astropy.Cosmology instance, optional
     :type sky_area: `~astropy.units.Quantity`
     :return: An array detailing the comoving volume corresponding to each redshift in the input list, providing a spatial context for the distribution of astronomical objects.
     :rtype: array
@@ -628,45 +633,126 @@ def redshift_mass_sheet_correction_array_from_comoving_density(redshift_list):
     return linspace_values
 
 
-def determinism_kappa_first_moment_at_redshift(z):
+def kappa_ext_for_each_sheet(redshift_list, first_moment, sky_area, cosmology):
+    """Calculate the external convergence (kappa_ext) for lensing sheets at given
+    redshifts.
+
+    The function computes kappa_ext using the first moment of mass, the area under consideration,
+    and the critical surface mass density.
+
+    :param redshift_list: Redshifts of the lens planes for which kappa_ext is calculated.
+    :type redshift_list: list or ndarray
+    :param first_moment: First moment of mass for each redshift in the redshift_list.
+    :type first_moment: list or ndarray
+    :param sky_area: Area of the sky in square degrees under consideration for the lensing calculation.
+    :type sky_area: `~astropy.units.Quantity`
+    :param cosmology: Cosmology instance used for the calculation.
+    :type cosmology: astropy.cosmology instance
+    :return: Array of kappa_ext values for each redshift in the redshift_list.
+    :rtype: ndarray
     """
-    m_min= 1e12
-    m_max= 1e16
-    z=5
-    Intercept: 0.0002390784813232419
-    Coefficients:
-        Degree 0: 0.0
-        Degree 1: -0.0014658189854554395
-        Degree 2: -0.11408175546088226
-        Degree 3: 0.1858161514337054
-        Degree 4: -0.14580188720668946
-        Degree 5: 0.07179490182290658
-        Degree 6: -0.023842218143709567
-        Degree 7: 0.00534416068166958
-        Degree 8: -0.0007728539951923031
-        Degree 9: 6.484537448337964e-05
-        Degree 10: -2.389378848385584e-06
-    :param z: Redshift(s) at which to calculate the first moment of kappa.
-    :type z: list or np.ndarray
-    :returns: A list of calculated first moments of kappa for each redshift in `z`.
+    cone_opening_angle = deg2_to_cone_angle(sky_area.value)
+    # TODO: make it possible for other geometry model
+
+    lens_cosmo = LensCosmo(z_lens=redshift_list, z_source=10, cosmo=cosmology)
+    epsilon_crit = lens_cosmo.sigma_crit
+
+    area = cone_radius_angle_to_physical_area(
+        cone_opening_angle, redshift_list, cosmology
+    )  # mpc2
+    first_moment_d_area = np.divide(np.array(first_moment), np.array(area))
+    kappa_ext = np.divide(first_moment_d_area, epsilon_crit)
+    return -kappa_ext
+
+
+def mass_first_moment_at_redshift(
+    z,
+    sky_area,
+    m_min=None,
+    m_max=None,
+    resolution=None,
+    cosmology=None,
+    sigma8=0.81,
+    ns=0.96,
+    omega_m=None,
+):
+    """Calculate the first moment of mass at given redshift(s) using specified or
+    default cosmological parameters and mass range.
+
+    This function computes the first moment of mass within a given sky area and redshift range by
+    integrating the halo mass function weighted by mass over the specified mass range.
+
+    :param z: Redshift(s) at which to calculate the first moment of mass. Can be a single value or
+        an iterable of values.
+    :type z: float or iterable
+    :param sky_area: Area of the sky in square degrees under consideration for the calculation.
+    :type sky_area: `~astropy.units.Quantity`
+    :param m_min: Minimum halo mass in solar masses for the integration range. Defaults to a
+        predetermined value if not specified.
+    :type m_min: float, optional
+    :param m_max: Maximum halo mass in solar masses for the integration range. Defaults to a
+        predetermined value if not specified.
+    :type m_max: float, optional
+    :param resolution: Resolution of the computational grid for the mass integration. Defaults to a
+        predetermined value if not specified.
+    :type resolution: int, optional
+    :param cosmology: Cosmology instance to be used in calculations. Defaults to a
+        predetermined cosmology if not specified.
+    :type cosmology: astropy.cosmology instance, optional
+    :param sigma8: Sigma8. Defaults to
+        0.81 if not specified.
+    :type sigma8: float, optional
+    :param ns: Spectral index for the power spectrum. Defaults to 0.96 if not specified.
+    :type ns: float, optional
+    :param omega_m: Matter density parameter Omega_m. If not specified, the value from
+        the cosmology instance is used.
+    :type omega_m: float, optional
+    :return: List of first moments of mass for each provided redshift. Each element
+        corresponds to the first moment of mass at the respective redshift in the input.
     :rtype: list
     """
-    # todo: almost deprecated, considering change to another mass
-    # sheet correction method
-    m_ls = []
+    (
+        m_min,
+        m_max,
+        resolution,
+        cosmology,
+    ) = set_defaults(m_min, m_max, resolution, cosmology)
+    m2_list = []
     for zi in z:
-        m2 = (
-            0.0002390784813232419
-            + -0.0014658189854554395 * zi
-            + -0.11408175546088226 * (zi**2)
-            + 0.1858161514337054 * (zi**3)
-            + -0.14580188720668946 * (zi**4)
-            + 0.07179490182290658 * (zi**5)
-            + -0.023842218143709567 * (zi**6)
-            + 0.00534416068166958 * (zi**7)
-            + -0.0007728539951923031 * (zi**8)
-            + 6.484537448337964e-05 * (zi**9)
-            + -2.389378848385584e-06 * (zi**10)
+        redshift_list = np.linspace(zi - 0.025, zi + 0.025, 20)
+        dV_dz = (
+            cosmology.differential_comoving_volume(redshift_list) * sky_area
+        ).to_value("Mpc3")
+        density = number_density_at_redshift(
+            z=redshift_list,
+            m_min=m_min,
+            m_max=m_max,
+            resolution=resolution,
+            cosmology=cosmology,
+            sigma8=sigma8,
+            ns=ns,
+            omega_m=omega_m,
         )
-        m_ls.append(m2)
-    return m_ls
+        assert len(density) == len(redshift_list)
+        dN_dz = density * dV_dz
+        N = np.trapz(dN_dz, redshift_list)
+        m_min_value = get_value_if_quantity(m_min)
+        m_max_value = get_value_if_quantity(m_max)
+        resolution_value = get_value_if_quantity(resolution)
+        m = np.geomspace(m_min_value, m_max_value, resolution_value)
+        massf = colossus_halo_mass_function(
+            m,
+            cosmology,
+            zi,
+            sigma8,
+            ns,
+            omega_m,
+        )
+        # Halo mass function for a given mass array, cosmology and redshift, in
+        # units of Mpc-3 Msun-1
+        norm_factor = integrate.trapz(massf, m)
+        massf_normalized = massf / norm_factor
+        expectation_m_normalized = integrate.trapz(m * massf_normalized, m)
+        m2 = expectation_m_normalized * N
+        m2_list.append(m2)
+    return m2_list

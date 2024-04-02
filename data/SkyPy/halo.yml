@@ -35,5 +35,17 @@ tables:
   mass_sheet_correction:
          z: !slsim.Halos.halos.redshift_mass_sheet_correction_array_from_comoving_density
            redshift_list: $z_range
-         kappa: !slsim.Halos.halos.determinism_kappa_first_moment_at_redshift
-           z: $mass_sheet_correction.z
+         kappa: !slsim.Halos.halos.kappa_ext_for_each_sheet
+            redshift_list: $mass_sheet_correction.z
+            cosmology: $cosmology
+            first_moment: !slsim.Halos.halos.mass_first_moment_at_redshift
+              z: $mass_sheet_correction.z
+              sky_area: $fsky
+              cosmology: $cosmology
+              m_min: $m_min
+              m_max: $m_max
+              resolution: 200
+              sigma8: $sigma8
+              ns: $ns
+              omega_m: $omega_m
+            sky_area: $fsky

@@ -38,46 +38,44 @@ The file contains two tables, one for each of the blue and red galaxies. Each ta
 
 
 # Dark Matter Halo Simulation Configuration File
-This YAML configuration file is used to generate a simulated population of dark matter halos, including their redshifts and masses, using the SkyPy package and a custom pipeline.
+This YAML configuration file is used to generate a simulated population of dark matter halos, including their redshifts and masses, using the colossus package and a custom pipeline.
 
-## Warning: 
-### The halos pipeline require specific versions of the following packages:
-* skypy halos branch [Skypy-halos-github](https://github.com/skypyproject/skypy/tree/module/halos)
+### The halos pipeline require following packages:
+* colossus
 * hmf
+* scipy
 
 ## Parameters
 *  fsky: Sky area in square degrees (default: 0.0001 deg^2) 
+* z_max: Maximum redshift for the halos (default: 5.00)
 *  z_range: Redshift range for the halos !numpy.linspace 
 *  cosmology: Cosmological model used in the simulation
-*  wavenumber: Wavenumber range for the power spectrum
-*  power_spectrum: Power spectrum model used in the simulation, specifically the Eisenstein & Hu model [SkyPy_power_spectrum_eisenstein_hu](https://skypy.readthedocs.io/en/v0.3/api/skypy.power_spectrum.eisenstein_hu.html#skypy.power_spectrum.eisenstein_hu)
-    * A_s: Amplitude of the primordial power spectrum (2.1982e-09)
-    * n_s: Scalar spectral index (0.969453)
-    * cosmology: !astropy.cosmology.default_cosmology.get []
-*  collapse_function: The function that describes the collapse of dark matter halos [SkyPy_halo_mass_ellipsoidal_collapse_function](https://skypy.readthedocs.io/en/module-halos/api/skypy.halos.mass.ellipsoidal_collapse_function.html#skypy.halos.mass.ellipsoidal_collapse_function)
+*  m_min: Minimum halo mass in solar masses (default: 1.0E+12 M☉)
+*  m_max: Maximum halo mass in solar masses (default: 1.0E+16 M☉)
+* sigma8: Cosmological parameter (default: 0.81)
+* ns: Cosmological parameter (default: 0.96)
+* omega_m: Cosmological parameter (default: the same with the one in `cosmology`)
 
 ## Tables
-The file contains a table for dark matter halos. The table computes several properties for the halos, such as redshift and mass, using various functions from the SkyPy package and the custom simulation pipeline.
+The file constructs a table for dark matter halos, computing several key properties such as redshift and mass. 
 
 ### Dark Matter Halos
-* z: Redshifts (a array like list) computed using a function from the custom simulation pipeline that generates a redshift distribution for halos from a given comoving density. The function uses the following parameters:
-  - `redshift_list`: The range of redshifts for the halos
-  - `sky_area` : The area of the sky being simulated
-  - `cosmology` : The cosmological model being used
-  - `m_min`: The minimum halo mass (in solar masses, M☉) considered in the simulation.
-  - `m_max`: The maximum halo mass (in solar masses, M☉) considered in the simulation.
-  - `resolution`: 1000
-  - `wavenumber`: The wavenumber for the power spectrum
-  - `power_spectrum`: The power spectrum model being used
-  - `collapse_function`: The function that describes the collapse of dark matter halos
-  - `params`: The parameters for the collapse function [0.3, 0.7, 0.3, 1.686]
-* mass: Halo masses computed using a function from the custom simulation pipeline that generates a mass function for halos at a given redshift. The function uses the same parameters as the redshift function.
-  - `z` : Redshifts where the halo mass is to be calculated. It is derived from the redshifts of the halos calculated in the previous step.
-  - `cosmology` : The cosmological model used for the simulation. It defaults to the current default cosmology in Astropy if not provided.
-  - `m_min` : The minimum halo mass (in solar masses, M☉) considered in the simulation.
-  - `m_max` : The maximum halo mass (in solar masses, M☉) considered in the simulation.
-  - `resolution` : The number of pieces used for trapezoidal integration from log(min mass) to log(max mass) when calculating the halo mass.
-  - `wavenumber` : The array of wavenumbers (in 1/Mpc) at which the power spectrum is calculated.
-  - `power_spectrum` : The power spectrum used in the simulation. Here, it is calculated using the Eisenstein & Hu fitting function.
-  - `collapse_function` : The collapse function used to calculate the halo mass function. The ellipsoidal collapse function is used in this case.
-  - `params` : The parameters for the collapse function [See details in halos-mass](https://github.com/skypyproject/skypy/blob/module/halos/skypy/halos/mass.py)
+* **`z`**: Redshifts of dark matter halos, generated based on a given comoving density. The computation involves:
+  - `redshift_list`: Array of redshifts ranging from 0 to `z_max=5.00`, divided into 100 intervals.
+  - `sky_area`: The simulated sky area, set to `fsky=0.0001` square degrees.
+  - `cosmology`: The cosmological model used, defaulting to Astropy's current default cosmology.
+  - `m_min`: Minimum halo mass, set to `1.0E+12` solar masses (M☉).
+  - `m_max`: Maximum halo mass, set to `1.0E+16` solar masses (M☉).
+  - `resolution`: Set to 500 for halo redshift calculations.
+  - `sigma8`, `ns`, `omega_m`: Cosmological parameters default set to 0.81, 0.96, and `omega_m` set same with the one in `cosmology` respectively.
+
+* **`mass`**: Halo masses calculated at the generated redshifts, using:
+  - `z`: The redshifts derived from the previous step.
+  - Parameters `cosmology`, `m_min`, `m_max`, `resolution`, `sigma8`, `ns`, `omega_m` are utilized as defined above for `z`.
+
+### Mass Sheet Correction
+* **`z`**: Redshifts for mass sheet correction, calculated from the same comoving density as the halos but potentially with a different `resolution` of 200 for finer granularity in the correction process.
+* **`kappa`**: Negative external convergence (kappa_ext) for each lensing sheet at the specified redshifts, computed using:
+  - `redshift_list`: The redshifts calculated for mass sheet correction.
+  - `first_moment`: The first moment of halo mass at these redshifts, determined through the `mass_first_moment_at_redshift` function with a `resolution` of 200.
+  - Other parameters (`sky_area`, `cosmology`, `m_min`, `m_max`, `sigma8`, `ns`, `omega_m`) are consistent with those used for halo calculations.

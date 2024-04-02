@@ -6,6 +6,8 @@ from astropy.cosmology import default_cosmology
 
 
 class HalosSkyPyPipeline:
+    """Class for halos configuration."""
+
     def __init__(
         self,
         skypy_config=None,
@@ -30,6 +32,14 @@ class HalosSkyPyPipeline:
         :type m_max: float, optional
         :param z_max: Maximum redshift value in z_range.
         :type z_max: float, optional
+        :type sigma_8: float, optional
+        :type n_s: float, optional
+        :type omega_m: float, optional
+        :param sigma_8: matter density fluctuations on a (8 h-1 Mpc), defaults to 0.81 if not
+            specified.
+        :param n_s: Spectral index, defaults to 0.96 if not specified.
+        :param omega_m: Omega_m in Cosmology, defaults to none which will lead to the same
+            in Cosmology setting.
         """
 
         path = os.path.dirname(slsim.__file__)

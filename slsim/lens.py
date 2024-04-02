@@ -117,7 +117,7 @@ class Lens(LensedSystemBase):
 
         :return: number of images
         """
-        return len(self.image_positions()[0])
+        return len(self.point_source_image_positions()[0])
 
     @property
     def deflector_position(self):
