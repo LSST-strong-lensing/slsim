@@ -7,7 +7,7 @@ import numpy as np
 
 def create_lens_pop_instance(return_kext=False):
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-    sky_area = Quantity(value=0.1, unit="deg2")
+    sky_area = Quantity(value=0.05, unit="deg2")
     kwargs_deflector_cut = {"band": "g", "band_max": 28, "z_min": 0.01, "z_max": 2.5}
     kwargs_source_cut = {"band": "g", "band_max": 28, "z_min": 0.1, "z_max": 5.0}
     return LensPop(
@@ -33,7 +33,7 @@ def lens_pop_instance_return_kext():
 
 def test_pes_lens_pop_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-    sky_area = Quantity(value=0.5, unit="deg2")
+    sky_area = Quantity(value=0.05, unit="deg2")
     kwargs_deflector_cut = {"band": "g", "band_max": 23, "z_min": 0.01, "z_max": 2.5}
     kwargs_source_cut = {"band": "g", "band_max": 26, "z_min": 0.1, "z_max": 5.0}
     pes_lens_pop = LensPop(
@@ -55,7 +55,7 @@ def test_pes_lens_pop_instance():
 
 def test_supernovae_plus_galaxies_lens_pop_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-    sky_area = Quantity(value=0.5, unit="deg2")
+    sky_area = Quantity(value=0.05, unit="deg2")
     kwargs_deflector_cut = {"band": "g", "band_max": 23, "z_min": 0.01, "z_max": 2.5}
     kwargs_source_cut = {"band": "g", "band_max": 26, "z_min": 0.1, "z_max": 5.0}
     pes_lens_pop = LensPop(

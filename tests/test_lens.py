@@ -32,6 +32,7 @@ class TestLens(object):
             gg_lens = Lens(
                 source_dict=self.source_dict,
                 deflector_dict=self.deflector_dict,
+                lens_equation_solver="lenstronomy_analytical",
                 cosmo=cosmo,
             )
             if gg_lens.validity_test():
@@ -111,6 +112,10 @@ class TestLens(object):
         npt.assert_almost_equal(dt_days, observer_times, decimal=5)
         npt.assert_almost_equal(dt_days2, observer_times2, decimal=5)
 
+    def test_deflector_light_model_lenstronomy(self):
+        kwargs_lens_light = self.gg_lens.deflector_light_model_lenstronomy(band="g")
+        assert len(kwargs_lens_light) >= 1
+
     def test_lens_equation_solver(self):
         """Tests analytical and numerical lens equation solver options."""
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -164,7 +169,9 @@ def pes_lens_instance():
 def test_point_source_magnitude(pes_lens_instance):
     pes_lens = pes_lens_instance
     mag = pes_lens.point_source_magnitude(band="i", lensed=True)
+    mag_unlensed = pes_lens.point_source_magnitude(band="i")
     assert len(mag) >= 2
+    assert len(mag_unlensed) == 1
 
 
 @pytest.fixture

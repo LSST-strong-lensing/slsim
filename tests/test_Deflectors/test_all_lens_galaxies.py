@@ -12,7 +12,7 @@ import pytest
 
 
 def galaxy_list():
-    sky_area = Quantity(value=0.1, unit="deg2")
+    sky_area = Quantity(value=0.05, unit="deg2")
     pipeline = SkyPyPipeline(skypy_config=None, sky_area=sky_area, filters=None)
     return pipeline.red_galaxies, pipeline.blue_galaxies
 
@@ -24,7 +24,7 @@ def all_lens_galaxies():
     kwargs_deflector_cut = {}
     kwargs_mass2light = {}
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-    sky_area = Quantity(value=0.1, unit="deg2")
+    sky_area = Quantity(value=0.05, unit="deg2")
     return AllLensGalaxies(
         red_galaxies,
         blue_galaxies,
@@ -51,7 +51,7 @@ def test_fill_table():
 
 def test_vel_disp_abundance_matching():
     mock_galaxy_list = galaxy_list()[0]
-    sky_area = Quantity(value=0.1, unit="deg2")
+    sky_area = Quantity(value=0.05, unit="deg2")
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
     f_vel_disp = vel_disp_abundance_matching(
