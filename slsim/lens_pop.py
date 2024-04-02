@@ -28,6 +28,10 @@ class LensPop(LensedPopulationBase):
         sky_area=None,
         filters=None,
         cosmo=None,
+        los_bool=True,
+        nonlinear_los_bool=False,
+        nonlinear_correction_path=None,
+        no_correction_path=None,
         source_light_profile="single_sersic",
         catalog_type="skypy",
         catalog_path=None,
@@ -61,6 +65,10 @@ class LensPop(LensedPopulationBase):
         :type sky_area: `~astropy.units.Quantity`
         :param filters: filters for SED integration
         :type filters: list of strings or None
+        :param cosmo: cosmology object
+        :type cosmo: `~astropy.cosmology.FLRW`
+        :param los: Boolean to use external convergence/shear.
+        :type los: bool
         :param source_light_profile: keyword for number of sersic profile to use in
          source light model. It is necessary to recognize quantities given in the source
          catalog.
@@ -242,6 +250,10 @@ class LensPop(LensedPopulationBase):
             raise ValueError("source_type %s is not supported" % source_type)
         self.cosmo = cosmo
         self.f_sky = sky_area
+        self.los_bool = los_bool
+        self.nonlinear_los_bool = nonlinear_los_bool
+        self.nonlinear_correction_path = nonlinear_correction_path
+        self.no_correction_path = no_correction_path
 
     def select_lens_at_random(self, **kwargs_lens_cut):
         """Draw a random lens within the cuts of the lens and source, with possible
@@ -268,6 +280,10 @@ class LensPop(LensedPopulationBase):
                 source_type=self._source_model_type,
                 light_profile=self._sources.light_profile,
                 lightcurve_time=self.lightcurve_time,
+                los_bool=self.los_bool,
+                nonlinear_los_bool=self.nonlinear_los_bool,
+                nonlinear_correction_path=self.nonlinear_correction_path,
+                no_correction_path=self.no_correction_path,
             )
             if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens
@@ -348,7 +364,12 @@ class LensPop(LensedPopulationBase):
                         sn_absolute_mag_band=self.sn_absolute_mag_band,
                         sn_absolute_zpsys=self.sn_absolute_zpsys,
                         cosmo=self.cosmo,
+                        test_area=test_area,
                         source_type=self._source_model_type,
+                        los_bool=self.los_bool,
+                        nonlinear_los_bool=self.nonlinear_los_bool,
+                        nonlinear_correction_path=self.nonlinear_correction_path,
+                        no_correction_path=self.no_correction_path,
                         light_profile=self._sources.light_profile,
                         lightcurve_time=self.lightcurve_time,
                     )
