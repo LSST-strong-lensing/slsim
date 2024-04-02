@@ -7,6 +7,7 @@ import numpy as np
 from slsim.lensed_population_base import LensedPopulationBase
 import os
 import pickle
+from astropy.table import Table
 
 
 class LensPop(LensedPopulationBase):
@@ -31,7 +32,13 @@ class LensPop(LensedPopulationBase):
         nonlinear_los_bool=False,
         nonlinear_correction_path=None,
         no_correction_path=None,
-        return_kext=False,
+        source_light_profile="single_sersic",
+        catalog_type="skypy",
+        catalog_path=None,
+        lightcurve_time=None,
+        sn_type=None,
+        sn_absolute_mag_band=None,
+        sn_absolute_zpsys=None,
     ):
         """
 
@@ -62,8 +69,34 @@ class LensPop(LensedPopulationBase):
         :type cosmo: `~astropy.cosmology.FLRW`
         :param los: Boolean to use external convergence/shear.
         :type los: bool
+        :param source_light_profile: keyword for number of sersic profile to use in
+         source light model. It is necessary to recognize quantities given in the source
+         catalog.
+        :type source_light_profile: str . Either "single" or "double" .
+        :param catalog_type: type of the catalog. If someone wants to use scotch
+         catalog, they need to specify it.
+        :type catalog_type: str. eg: "scotch"
+        :param catalog_path: path to the source catalog. If None, existing source
+         catalog within the slsim will be used. We have used small subset of scotch
+         catalog. So, if one wants to use full scotch catalog, they can set path to
+         their path to local drive.
+        :param lightcurve_time: observation time array for lightcurve in unit of days.
+        :type lightcurve_time: array
+        :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
+        :type sn_type: str
+        :param sn_absolute_mag_band: Band used to normalize to absolute magnitude
+        :type sn_absolute_mag_band: str or `~sncosmo.Bandpass`
+        :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
+        :type sn_absolute_zpsys: str
         """
-        super().__init__(sky_area, cosmo)
+        super().__init__(
+            sky_area,
+            cosmo,
+            lightcurve_time,
+            sn_type,
+            sn_absolute_mag_band,
+            sn_absolute_zpsys,
+        )
         if source_type == "galaxies" and kwargs_variability is not None:
             raise ValueError(
                 "Galaxies cannot have variability. Either choose"
@@ -125,6 +158,8 @@ class LensPop(LensedPopulationBase):
                 kwargs_cut=kwargs_source_cut,
                 cosmo=cosmo,
                 sky_area=sky_area,
+                light_profile=source_light_profile,
+                catalog_type=catalog_type,
             )
             self._source_model_type = "extended"
         elif source_type == "quasars":
@@ -140,6 +175,7 @@ class LensPop(LensedPopulationBase):
                 sky_area=sky_area,
                 variability_model=variability_model,
                 kwargs_variability_model=kwargs_variability,
+                light_profile=source_light_profile,
             )
             self._source_model_type = "point_source"
         elif source_type == "quasar_plus_galaxies":
@@ -160,6 +196,8 @@ class LensPop(LensedPopulationBase):
                 kwargs_cut=kwargs_source_cut,
                 variability_model=variability_model,
                 kwargs_variability_model=kwargs_variability,
+                light_profile=source_light_profile,
+                catalog_type=catalog_type,
             )
             self._source_model_type = "point_plus_extended"
         elif source_type == "supernovae_plus_galaxies":
@@ -171,18 +209,42 @@ class LensPop(LensedPopulationBase):
             # develop a supernovae class inside the slsim and them here to generate
             # supernovae light curves.
             self.path = os.path.dirname(__file__)
-            new_path = self.path + "/Sources/SupernovaeData/supernovae_data.pkl"
-            with open(new_path, "rb") as f:
-                load_supernovae_data = pickle.load(f)
-            self._sources = PointPlusExtendedSources(
-                load_supernovae_data,
-                cosmo=cosmo,
-                sky_area=sky_area,
-                kwargs_cut=kwargs_source_cut,
-                variability_model=variability_model,
-                kwargs_variability_model=kwargs_variability,
-                list_type="list",
-            )
+            if catalog_type == "scotch":
+                if catalog_path is not None:
+                    new_path = catalog_path
+                else:
+                    new_path = (
+                        self.path + "/Sources/SupernovaeData/scotch_host_data.fits"
+                    )
+                load_supernovae_data = Table.read(
+                    new_path,
+                    format="fits",
+                )
+                self._sources = PointPlusExtendedSources(
+                    load_supernovae_data,
+                    cosmo=cosmo,
+                    sky_area=sky_area,
+                    kwargs_cut=kwargs_source_cut,
+                    variability_model=variability_model,
+                    kwargs_variability_model=kwargs_variability,
+                    list_type="astropy_table",
+                    light_profile=source_light_profile,
+                    catalog_type=catalog_type,
+                )
+            else:
+                new_path = self.path + "/Sources/SupernovaeData/supernovae_data.pkl"
+                with open(new_path, "rb") as f:
+                    load_supernovae_data = pickle.load(f)
+                self._sources = PointPlusExtendedSources(
+                    load_supernovae_data,
+                    cosmo=cosmo,
+                    sky_area=sky_area,
+                    kwargs_cut=kwargs_source_cut,
+                    variability_model=variability_model,
+                    kwargs_variability_model=kwargs_variability,
+                    list_type="list",
+                    light_profile=source_light_profile,
+                )
             self._source_model_type = "point_plus_extended"
         else:
             raise ValueError("source_type %s is not supported" % source_type)
@@ -190,7 +252,6 @@ class LensPop(LensedPopulationBase):
         self.f_sky = sky_area
         self.los_bool = los_bool
         self.nonlinear_los_bool = nonlinear_los_bool
-        self.return_kext = return_kext
         self.nonlinear_correction_path = nonlinear_correction_path
         self.no_correction_path = no_correction_path
 
@@ -212,8 +273,13 @@ class LensPop(LensedPopulationBase):
                 source_dict=source,
                 variability_model=self._sources.variability_model,
                 kwargs_variability=self._sources.kwargs_variability,
+                sn_type=self.sn_type,
+                sn_absolute_mag_band=self.sn_absolute_mag_band,
+                sn_absolute_zpsys=self.sn_absolute_zpsys,
                 cosmo=self.cosmo,
                 source_type=self._source_model_type,
+                light_profile=self._sources.light_profile,
+                lightcurve_time=self.lightcurve_time,
                 los_bool=self.los_bool,
                 nonlinear_los_bool=self.nonlinear_los_bool,
                 nonlinear_correction_path=self.nonlinear_correction_path,
@@ -271,7 +337,6 @@ class LensPop(LensedPopulationBase):
 
         # Initialize an empty list to store the Lens instances
         gg_lens_population = []
-        kappa_ext_origin = []
         # Estimate the number of lensing systems
         num_lenses = self._lens_galaxies.deflector_number()
         # num_sources = self._source_galaxies.galaxies_number()
@@ -293,6 +358,11 @@ class LensPop(LensedPopulationBase):
                     gg_lens = Lens(
                         deflector_dict=lens,
                         source_dict=source,
+                        variability_model=self._sources.variability_model,
+                        kwargs_variability=self._sources.kwargs_variability,
+                        sn_type=self.sn_type,
+                        sn_absolute_mag_band=self.sn_absolute_mag_band,
+                        sn_absolute_zpsys=self.sn_absolute_zpsys,
                         cosmo=self.cosmo,
                         test_area=test_area,
                         source_type=self._source_model_type,
@@ -300,17 +370,9 @@ class LensPop(LensedPopulationBase):
                         nonlinear_los_bool=self.nonlinear_los_bool,
                         nonlinear_correction_path=self.nonlinear_correction_path,
                         no_correction_path=self.no_correction_path,
+                        light_profile=self._sources.light_profile,
+                        lightcurve_time=self.lightcurve_time,
                     )
-                    if self.return_kext:
-                        if gg_lens.deflector_redshift >= gg_lens.source_redshift:
-                            pass
-                        elif (
-                            abs(gg_lens.deflector_redshift - gg_lens.source_redshift)
-                            <= 0.1
-                        ):
-                            pass
-                        else:
-                            kappa_ext_origin.append(gg_lens.external_convergence)
                     # Check the validity of the lens system
                     if gg_lens.validity_test(**kwargs_lens_cuts):
                         gg_lens_population.append(gg_lens)
@@ -321,10 +383,7 @@ class LensPop(LensedPopulationBase):
                         n = num_sources_tested
                     else:
                         n += 1
-        if self.return_kext:
-            return gg_lens_population, kappa_ext_origin
-        else:
-            return gg_lens_population
+        return gg_lens_population
 
 
 def draw_test_area(deflector):
