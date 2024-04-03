@@ -579,7 +579,8 @@ class ClusterLens(LensedSystemBase):
 
         kwargs_lens_light = [
             {
-                "magnitude": s.get(f"mag_{band}", 1),
+                # TODO: replace to 's.get(f"mag_{band}", 1),' after astropy upgrade
+                "magnitude": s[f"mag_{band}"] if f"mag_{band}" in s.colnames else 1,
                 "R_sersic": s["angular_size"] / constants.arcsec,
                 "n_sersic": s["n_sersic"],
                 "e1": s["e1_light"],
