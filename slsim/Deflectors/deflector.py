@@ -91,3 +91,21 @@ class Deflector(object):
         :return: lens_light_model_list, kwargs_lens_light
         """
         return self._deflector.light_model_lenstronomy(band=band)
+
+    @property
+    def angular_size_light(self):
+        """
+        angular size of the light component
+
+        :return: angular size [radian]
+        """
+        return self._deflector.angular_size_light
+
+    @property
+    def halo_properties(self):
+        """
+        properties of the NFW halo
+
+        :return: halo mass M200 [physical M_sol], concentration r200/rs
+        """
+        return self._deflector.halo_properties

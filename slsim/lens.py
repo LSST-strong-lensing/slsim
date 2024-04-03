@@ -282,10 +282,12 @@ class Lens(LensedSystemBase):
         return self.source.redshift
 
     @property
-    def einstein_radius(self):
-        """Einstein radius, from SIS approximation (coming from velocity dispersion) + external convergence effect.
+    def einstein_radius_deflector(self):
+        """
+        Einstein radius, from SIS approximation (coming from velocity dispersion)
+        without line-of-sight correction
 
-        :return: Einstein radius [arc seconds]
+        :return:
         """
         if not hasattr(self, '_theta_E'):
             if self.deflector.redshift >= self.source.redshift:
@@ -301,8 +303,17 @@ class Lens(LensedSystemBase):
                 lens_analysis = LensProfileAnalysis(lens_model=lens_model)
                 self._theta_E = lens_analysis.effective_einstein_radius(kwargs_lens, r_min=1e-3, r_max=2e1,
                                                                         num_points=50)
+        return self._theta_E
+
+    @property
+    def einstein_radius(self):
+        """Einstein radius, from SIS approximation (coming from velocity dispersion) + external convergence effect.
+
+        :return: Einstein radius [arc seconds]
+        """
+        theta_E = self.einstein_radius_deflector
         _, _, kappa_ext = self.los_linear_distortions()
-        return self._theta_E / (1 - kappa_ext)
+        return theta_E / (1 - kappa_ext)
 
     def deflector_ellipticity(self):
         """
@@ -557,7 +568,7 @@ class Lens(LensedSystemBase):
         """
         if self.deflector.deflector_type in ["EPL"]:
             lens_mass_model_list = ["EPL"]
-            theta_E = self.einstein_radius
+            theta_E = self.einstein_radius_deflector
             e1_light_lens, e2_light_lens, e1_mass, e2_mass = self.deflector_ellipticity()
             center_lens = self.deflector_position
 

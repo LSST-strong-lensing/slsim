@@ -67,3 +67,13 @@ class EPLSersic(DeflectorBase):
             }
         ]
         return lens_light_model_list, kwargs_lens_light
+
+    @property
+    def halo_properties(self):
+        """
+        properties of the Halo
+        (no halo is defined here)
+
+        :return: None
+        """
+        return None
