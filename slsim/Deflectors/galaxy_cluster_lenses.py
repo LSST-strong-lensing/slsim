@@ -4,7 +4,9 @@ from slsim.Deflectors.deflectors_base import DeflectorsBase
 class GalaxyClusterLenses(DeflectorsBase):
     """Class describing a population of cluster-scale halos + subhaloes."""
 
-    def __init__(self, halo_list, subhalo_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area):
+    def __init__(
+        self, halo_list, subhalo_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area
+    ):
         """
 
         :param halo_list: list of dictionary with halo parameters
