@@ -110,8 +110,7 @@ class DeflectorBase(ABC):
     @property
     @abstractmethod
     def halo_properties(self):
-        """
-        properties of the NFW halo
+        """Properties of the NFW halo.
 
         :return: halo mass M200 [physical M_sol], concentration r200/rs
         """
