@@ -2,7 +2,6 @@ from slsim.Deflectors.DeflectorTypes.epl_sersic import EPLSersic
 
 
 class TestEPLSersic(object):
-
     """
     required quantities in dictionary:
     - 'velocity_dispersion': SIS equivalent velocity dispersion of the deflector
@@ -15,12 +14,16 @@ class TestEPLSersic(object):
     """
 
     def setup_method(self):
-        self.deflector_dict = {"vel_disp": 200,
-                          "e1_mass": 0.1, "e2_mass": -0.1,
-                          "angular_size": 0.001,
-                          "n_sersic": 1,
-                          "e1_light": -0.1, "e2_light": 0.1,
-                          "z": 0.5}
+        self.deflector_dict = {
+            "vel_disp": 200,
+            "e1_mass": 0.1,
+            "e2_mass": -0.1,
+            "angular_size": 0.001,
+            "n_sersic": 1,
+            "e1_light": -0.1,
+            "e2_light": 0.1,
+            "z": 0.5,
+        }
         self.epl_sersic = EPLSersic(deflector_dict=self.deflector_dict)
 
     def test_redshift(self):

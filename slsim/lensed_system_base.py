@@ -55,8 +55,9 @@ class LensedSystemBase(ABC):
             cosmo=cosmo,
             lightcurve_time=lightcurve_time,
         )
-        self.deflector = Deflector(deflector_type=deflector_type,
-                                   deflector_dict=deflector_dict)
+        self.deflector = Deflector(
+            deflector_type=deflector_type, deflector_dict=deflector_dict
+        )
         # TODO: tell them what keys the dictionary should contain
         self.test_area = test_area
         self.cosmo = cosmo

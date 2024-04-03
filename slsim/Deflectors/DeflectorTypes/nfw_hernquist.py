@@ -5,8 +5,7 @@ from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 
 
 class NFWHernquist(DeflectorBase):
-
-    """Class of a NFW+Hernquist lens model with a Hernquist light mode
+    """Class of a NFW+Hernquist lens model with a Hernquist light mode.
 
     required quantities in dictionary:
     - 'halo_mass': halo mass in physical M_sol
@@ -21,8 +20,8 @@ class NFWHernquist(DeflectorBase):
     """
 
     def velocity_dispersion(self, cosmo=None):
-        """Velocity dispersion of deflector.
-        Simplified assumptions on anisotropy and averaged over the half-light radius
+        """Velocity dispersion of deflector. Simplified assumptions on anisotropy and
+        averaged over the half-light radius.
 
         :param cosmo: cosmology
         :type cosmo: ~astropy.cosmology class
@@ -35,10 +34,15 @@ class NFWHernquist(DeflectorBase):
         # convert angular size to physical size
         lens_cosmo = LensCosmo(z_lens=self.redshift, z_source=10, cosmo=cosmo)
         rs_star = lens_cosmo.dd * self.angular_size_light
-        vel_disp = vel_disp_composite_model(r=size_lens_arcsec,
-                                            m_star=self.stellar_mass,
-                                            rs_star=rs_star, m_halo=m_halo, c_halo=c_halo,
-                                            cosmo=cosmo, z_lens=self.redshift)
+        vel_disp = vel_disp_composite_model(
+            r=size_lens_arcsec,
+            m_star=self.stellar_mass,
+            rs_star=rs_star,
+            m_halo=m_halo,
+            c_halo=c_halo,
+            cosmo=cosmo,
+            z_lens=self.redshift,
+        )
         return vel_disp
 
     def light_model_lenstronomy(self, band=None):
@@ -55,7 +59,7 @@ class NFWHernquist(DeflectorBase):
         center_lens = self.deflector_center
         e1_light_lens, e2_light_lens = self.light_ellipticity
         size_lens_arcsec = (
-                self._deflector_dict["angular_size"] / constants.arcsec
+            self._deflector_dict["angular_size"] / constants.arcsec
         )  # convert radian to arc seconds
 
         lens_light_model_list = ["HERNQUIST_ELLIPSE"]
@@ -73,8 +77,7 @@ class NFWHernquist(DeflectorBase):
 
     @property
     def halo_properties(self):
-        """
-        properties of the NFW halo
+        """Properties of the NFW halo.
 
         :return: halo mass M200 [physical M_sol], concentration r200/rs
         """

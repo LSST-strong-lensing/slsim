@@ -3,8 +3,7 @@ from lenstronomy.Util import constants
 
 
 class EPLSersic(DeflectorBase):
-    """
-    deflector with an elliptical power-law and a Sersic light model
+    """Deflector with an elliptical power-law and a Sersic light model.
 
     required quantities in dictionary:
     - 'vel_disp': SIS equivalent velocity dispersion of the deflector
@@ -52,7 +51,7 @@ class EPLSersic(DeflectorBase):
         center_lens = self.deflector_center
         e1_light_lens, e2_light_lens = self.light_ellipticity
         size_lens_arcsec = (
-                self._deflector_dict["angular_size"] / constants.arcsec
+            self._deflector_dict["angular_size"] / constants.arcsec
         )  # convert radian to arc seconds
         lens_light_model_list = ["SERSIC_ELLIPSE"]
         kwargs_lens_light = [
