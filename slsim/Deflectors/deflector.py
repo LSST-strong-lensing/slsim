@@ -21,8 +21,10 @@ class Deflector(object):
         elif deflector_type in ["NFW_HERNQUIST"]:
             self._deflector = NFWHernquist(deflector_dict=deflector_dict)
         else:
-            raise ValueError("Deflector type %s not supported. Chose among %s."
-                             % (deflector_type, _SUPPORTED_DEFLECTORS))
+            raise ValueError(
+                "Deflector type %s not supported. Chose among %s."
+                % (deflector_type, _SUPPORTED_DEFLECTORS)
+            )
         self.deflector_type = deflector_type
 
     @property

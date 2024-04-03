@@ -101,8 +101,7 @@ class DeflectorBase(ABC):
 
     @property
     def angular_size_light(self):
-        """
-        angular size of the light component
+        """Angular size of the light component.
 
         :return: angular size [radian]
         """

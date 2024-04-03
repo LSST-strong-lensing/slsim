@@ -4,7 +4,6 @@ import numpy.testing as npt
 
 
 class TestNFWHernquist(object):
-
     """
     required quantities in dictionary:
     - 'halo_mass': halo mass in physical M_sol
@@ -19,13 +18,18 @@ class TestNFWHernquist(object):
     """
 
     def setup_method(self):
-        self.deflector_dict = {"halo_mass": 10**13, "concentration": 10,
-                               "e1_mass": 0.1, "e2_mass": -0.1,
-                               "stellar_mass": 10e11,
-                               "angular_size": 0.001,
-                               "e1_light": -0.1, "e2_light": 0.1,
-                               "z": 0.5,
-                               "mag_g": -20}
+        self.deflector_dict = {
+            "halo_mass": 10**13,
+            "concentration": 10,
+            "e1_mass": 0.1,
+            "e2_mass": -0.1,
+            "stellar_mass": 10e11,
+            "angular_size": 0.001,
+            "e1_light": -0.1,
+            "e2_light": 0.1,
+            "z": 0.5,
+            "mag_g": -20,
+        }
         self.nfw_hernquist = NFWHernquist(deflector_dict=self.deflector_dict)
 
     def test_redshift(self):
@@ -43,5 +47,7 @@ class TestNFWHernquist(object):
         npt.assert_almost_equal(vel_disp, 176, decimal=-1)
 
     def test_light_model_lenstronomy(self):
-        lens_light_model_list, kwargs_lens_light = self.nfw_hernquist.light_model_lenstronomy(band="g")
+        lens_light_model_list, kwargs_lens_light = (
+            self.nfw_hernquist.light_model_lenstronomy(band="g")
+        )
         assert len(lens_light_model_list) == 1
