@@ -1,4 +1,3 @@
-
 from slsim.lens import (
     theta_e_when_source_infinity,
 )

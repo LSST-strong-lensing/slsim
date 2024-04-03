@@ -22,9 +22,7 @@ class TestClusterLens(object):
         blue_one = Table.read(
             os.path.join(path, "TestData/blue_one_modified.fits"), format="fits"
         )
-        halo = Table.read(
-            os.path.join(path, "TestData/halo_EPL.fits"), format="fits"
-        )
+        halo = Table.read(os.path.join(path, "TestData/halo_EPL.fits"), format="fits")
         subhaloes_table = Table.read(
             os.path.join(path, "TestData/subhaloes_table.fits"), format="fits"
         )
