@@ -320,6 +320,7 @@ class ClusterLens(LensedSystemBase):
 
         :return: stellar mass of deflector
         """
+        # TODO: stellar mass of each deflector
         return self.deflector.stellar_mass
 
     def deflector_velocity_dispersion(self):
@@ -361,6 +362,7 @@ class ClusterLens(LensedSystemBase):
         :type band: string
         :return: magnitude of deflector in given band
         """
+        # TODO: return the magnitude of each deflector
         return None
 
     def point_source_arrival_times(self):
