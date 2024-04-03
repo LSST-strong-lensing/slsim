@@ -108,14 +108,3 @@ class ClusterLensPop(LensedPopulationBase):
         """
 
         pass
-
-
-def draw_test_area(deflector):
-    """Draw a test area around the deflector.
-
-    :param deflector: deflector dictionary
-    :return: test area in arcsec^2
-    """
-    theta_e_infinity = theta_e_when_source_infinity(deflector)
-    test_area = np.pi * (theta_e_infinity * 2.5) ** 2
-    return test_area
