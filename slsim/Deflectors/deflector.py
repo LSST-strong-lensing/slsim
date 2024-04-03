@@ -33,13 +33,14 @@ class Deflector(object):
         """
         return self._deflector.redshift
 
-    @property
-    def velocity_dispersion(self):
+    def velocity_dispersion(self, cosmo=None):
         """Velocity dispersion of deflector.
 
+        :param cosmo: cosmology
+        :type cosmo: ~astropy.cosmology class
         :return: velocity dispersion [km/s]
         """
-        return self._deflector.velocity_dispersion
+        return self._deflector.velocity_dispersion(cosmo=cosmo)
 
     @property
     def deflector_center(self):

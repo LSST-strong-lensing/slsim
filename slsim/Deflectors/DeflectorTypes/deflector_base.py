@@ -27,11 +27,11 @@ class DeflectorBase(ABC):
         """
         return self._deflector_dict["z"]
 
-    @property
     @abstractmethod
-    def velocity_dispersion(self):
+    def velocity_dispersion(self, cosmo=None):
         """Velocity dispersion of deflector.
 
+        :param cosmo: ~astropy.cosmology class
         :return: velocity dispersion [km/s]
         """
         pass
@@ -98,3 +98,12 @@ class DeflectorBase(ABC):
         :return: lens_light_model_list, kwargs_lens_light
         """
         pass
+
+    @property
+    def angular_size_light(self):
+        """
+        angular size of the light component
+
+        :return: angular size [radian]
+        """
+        return self._deflector_dict["angular_size"]

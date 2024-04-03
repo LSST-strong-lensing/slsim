@@ -5,12 +5,23 @@ from lenstronomy.Util import constants
 class EPLSersic(DeflectorBase):
     """
     deflector with an elliptical power-law and a Sersic light model
+
+    required quantities in dictionary:
+    - 'vel_disp': SIS equivalent velocity dispersion of the deflector
+    - 'e1_mass': eccentricity of NFW profile
+    - 'e2_mass': eccentricity of NFW profile
+    - 'stellar_mass': stellar mass in physical M_sol
+    - 'angular_size': half-light radius of stellar/light profile in radian
+    - 'e1_light': eccentricity of light
+    - 'e2_light': eccentricity of light
+    - 'z': redshift of deflector
     """
 
-    @property
-    def velocity_dispersion(self):
+    def velocity_dispersion(self, cosmo=None):
         """Velocity dispersion of deflector.
 
+        :param cosmo: cosmology
+        :type cosmo: ~astropy.cosmology class
         :return: velocity dispersion [km/s]
         """
 

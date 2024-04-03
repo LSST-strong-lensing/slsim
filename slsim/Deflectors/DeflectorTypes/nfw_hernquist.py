@@ -1,19 +1,45 @@
 from slsim.Deflectors.DeflectorTypes.deflector_base import DeflectorBase
+from slsim.Deflectors.velocity_dispersion import vel_disp_composite_model
 from lenstronomy.Util import constants
+from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 
 
 class NFWHernquist(DeflectorBase):
 
-    """Class of a NFW+Hernquist lens model with a Hernquist light mode"""
+    """Class of a NFW+Hernquist lens model with a Hernquist light mode
 
-    @property
-    def velocity_dispersion(self):
+    required quantities in dictionary:
+    - 'halo_mass': halo mass in physical M_sol
+    - 'concentration': halo concentration
+    - 'e1_mass': eccentricity of NFW profile
+    - 'e2_mass': eccentricity of NFW profile
+    - 'stellar_mass': stellar mass in physical M_sol
+    - 'angular_size': half-light radius of stellar/light profile in radian
+    - 'e1_light': eccentricity of light
+    - 'e2_light': eccentricity of light
+    - 'z': redshift of deflector
+    """
+
+    def velocity_dispersion(self, cosmo=None):
         """Velocity dispersion of deflector.
+        Simplified assumptions on anisotropy and averaged over the half-light radius
 
+        :param cosmo: cosmology
+        :type cosmo: ~astropy.cosmology class
         :return: velocity dispersion [km/s]
         """
-        # TODO implement kinematics calculation averaged over half-light radius
-        raise NotImplementedError()
+        # convert radian to arc seconds
+        size_lens_arcsec = self.angular_size_light / constants.arcsec
+
+        m_halo, c_halo = self.halo_properties
+        # convert angular size to physical size
+        lens_cosmo = LensCosmo(z_lens=self.redshift, z_source=10, cosmo=cosmo)
+        rs_star = lens_cosmo.dd * self.angular_size_light
+        vel_disp = vel_disp_composite_model(r=size_lens_arcsec,
+                                            m_star=self.stellar_mass,
+                                            rs_star=rs_star, m_halo=m_halo, c_halo=c_halo,
+                                            cosmo=cosmo, z_lens=self.redshift)
+        return vel_disp
 
     def light_model_lenstronomy(self, band=None):
         """Returns lens model instance and parameters in lenstronomy conventions.
@@ -44,3 +70,12 @@ class NFWHernquist(DeflectorBase):
             }
         ]
         return lens_light_model_list, kwargs_lens_light
+
+    @property
+    def halo_properties(self):
+        """
+        properties of the NFW halo
+
+        :return: halo mass M200 [physical M_sol], concentration r200/rs
+        """
+        return self._deflector_dict["halo_mass"], self._deflector_dict["concentration"]

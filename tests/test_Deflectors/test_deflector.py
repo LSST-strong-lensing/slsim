@@ -41,7 +41,7 @@ class TestDeflector(object):
         assert pytest.approx(z, rel=1e-3) == 0.9194649297646337
 
     def test_velocity_dispersion(self):
-        sigma_v = self.deflector.velocity_dispersion
+        sigma_v = self.deflector.velocity_dispersion(cosmo=None)
         assert pytest.approx(sigma_v, rel=1e-3) == 191.40371531030243
 
     def test_deflector_center(self):
