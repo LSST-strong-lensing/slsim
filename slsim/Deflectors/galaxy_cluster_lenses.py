@@ -1,8 +1,3 @@
-import numpy as np
-import numpy.random as random
-from slsim.selection import deflector_cut
-from slsim.Deflectors.velocity_dispersion import vel_disp_sdss
-from slsim.Util import param_util
 from slsim.Deflectors.deflectors_base import DeflectorsBase
 
 

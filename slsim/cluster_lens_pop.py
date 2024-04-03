@@ -1,6 +1,5 @@
-from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
+
 from slsim.lens import (
-    Lens,
     theta_e_when_source_infinity,
 )
 import numpy as np
