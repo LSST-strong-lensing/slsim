@@ -283,9 +283,8 @@ class Lens(LensedSystemBase):
 
     @property
     def einstein_radius_deflector(self):
-        """
-        Einstein radius, from SIS approximation (coming from velocity dispersion)
-        without line-of-sight correction
+        """Einstein radius, from SIS approximation (coming from velocity dispersion)
+        without line-of-sight correction.
 
         :return:
         """
@@ -301,13 +300,15 @@ class Lens(LensedSystemBase):
                 lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
                 lens_model = LensModel(lens_model_list=lens_model_list)
                 lens_analysis = LensProfileAnalysis(lens_model=lens_model)
-                self._theta_E = lens_analysis.effective_einstein_radius(kwargs_lens, r_min=1e-3, r_max=2e1,
-                                                                        num_points=50)
+                self._theta_E = lens_analysis.effective_einstein_radius(
+                    kwargs_lens, r_min=1e-3, r_max=2e1, num_points=50
+                )
         return self._theta_E
 
     @property
     def einstein_radius(self):
-        """Einstein radius, from SIS approximation (coming from velocity dispersion) + external convergence effect.
+        """Einstein radius, from SIS approximation (coming from velocity dispersion) +
+        external convergence effect.
 
         :return: Einstein radius [arc seconds]
         """

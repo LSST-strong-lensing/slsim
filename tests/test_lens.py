@@ -48,13 +48,18 @@ class TestLens(object):
             os.path.join(path, "TestData/blue_one_modified.fits"), format="fits"
         )
         source_dict = blue_one
-        deflector_dict = {"halo_mass": 10 ** 13, "concentration": 10,
-                          "e1_mass": 0.1, "e2_mass": -0.1,
-                          "stellar_mass": 10e11,
-                          "angular_size": 0.001,
-                          "e1_light": -0.1, "e2_light": 0.1,
-                          "z": 0.5,
-                          "mag_g": -20}
+        deflector_dict = {
+            "halo_mass": 10**13,
+            "concentration": 10,
+            "e1_mass": 0.1,
+            "e2_mass": -0.1,
+            "stellar_mass": 10e11,
+            "angular_size": 0.001,
+            "e1_light": -0.1,
+            "e2_light": 0.1,
+            "z": 0.5,
+            "mag_g": -20,
+        }
 
         while True:
             gg_lens = Lens(

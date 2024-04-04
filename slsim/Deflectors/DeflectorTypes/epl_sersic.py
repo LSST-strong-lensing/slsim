@@ -69,9 +69,7 @@ class EPLSersic(DeflectorBase):
 
     @property
     def halo_properties(self):
-        """
-        properties of the Halo
-        (no halo is defined here)
+        """Properties of the Halo (no halo is defined here)
 
         :return: None
         """

@@ -96,8 +96,7 @@ class Deflector(object):
 
     @property
     def angular_size_light(self):
-        """
-        angular size of the light component
+        """Angular size of the light component.
 
         :return: angular size [radian]
         """
@@ -105,8 +104,7 @@ class Deflector(object):
 
     @property
     def halo_properties(self):
-        """
-        properties of the NFW halo
+        """Properties of the NFW halo.
 
         :return: halo mass M200 [physical M_sol], concentration r200/rs
         """
