@@ -1,7 +1,3 @@
-from slsim.lens import (
-    theta_e_when_source_infinity,
-)
-import numpy as np
 from slsim.lensed_population_base import LensedPopulationBase
 
 
@@ -106,5 +102,4 @@ class ClusterLensPop(LensedPopulationBase):
             source light.
         :rtype: list
         """
-
         pass
