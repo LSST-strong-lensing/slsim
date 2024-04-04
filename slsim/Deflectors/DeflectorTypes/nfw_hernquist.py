@@ -31,7 +31,7 @@ class NFWHernquist(DeflectorBase):
 
         m_halo, c_halo = self.halo_properties
         # convert angular size to physical size
-        dd = cosmo.angular_diameter_distance(self.redshift)
+        dd = cosmo.angular_diameter_distance(self.redshift).value
         rs_star = dd * self.angular_size_light
         vel_disp = vel_disp_composite_model(
             r=size_lens_arcsec,
