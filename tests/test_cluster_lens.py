@@ -42,6 +42,9 @@ class TestClusterLens(object):
                 self.cg_lens = cg_lens
                 break
 
+    def test_validity_test(self):
+        self.cg_lens.validity_test(mag_arc_limit={"g": 25, "r": 25, "i": 25})
+
     def test_deflector_ellipticity(self):
         e1_light, e2_light, e1_mass, e2_mass = self.cg_lens.deflector_ellipticity()
         assert pytest.approx(e1_light, rel=1e-3) == 0.0
@@ -51,7 +54,7 @@ class TestClusterLens(object):
 
     def test_deflector_magnitude(self):
         # TODO: test magnitude of each subhalo
-        pass
+        self.cg_lens.deflector_magnitude(band='g')
 
     def test_source_magnitude(self):
         band = "g"
@@ -85,7 +88,7 @@ class TestClusterLens(object):
 
     def test_deflector_stellar_mass(self):
         # TODO: test stellar mass of each subhalo
-        pass
+        self.cg_lens.deflector_stellar_mass()
 
     def test_deflector_velocity_dispersion(self):
         vdp = self.cg_lens.deflector_velocity_dispersion()
@@ -109,7 +112,7 @@ class TestClusterLens(object):
         arrival_times = self.cg_lens.point_source_arrival_times()
         observer_times = (t_obs + arrival_times - np.min(arrival_times))[:, np.newaxis]
         observer_times2 = (
-            t_obs2[:, np.newaxis] + arrival_times - np.min(arrival_times)
+                t_obs2[:, np.newaxis] + arrival_times - np.min(arrival_times)
         ).T
         npt.assert_almost_equal(dt_days, observer_times, decimal=5)
         npt.assert_almost_equal(dt_days2, observer_times2, decimal=5)
@@ -176,10 +179,16 @@ def pes_lens_instance():
 
 def test_point_source_magnitude(pes_lens_instance):
     pes_lens = pes_lens_instance
-    mag = pes_lens.point_source_magnitude(band="i", lensed=True)
+    mag = pes_lens.point_source_magnitude(band="i", lensed=True, time=10)
     mag_unlensed = pes_lens.point_source_magnitude(band="i")
     assert len(mag) >= 2
     assert len(mag_unlensed) == 1
+
+
+def test_point_source_light_model_lenstronomy(pes_lens_instance):
+    pes_lens = pes_lens_instance
+    kwargs_source_light = pes_lens.source_light_model_lenstronomy(band="g")
+    assert len(kwargs_source_light) >= 1
 
 
 @pytest.fixture
