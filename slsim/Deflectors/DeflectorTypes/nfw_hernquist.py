@@ -1,7 +1,6 @@
 from slsim.Deflectors.DeflectorTypes.deflector_base import DeflectorBase
 from slsim.Deflectors.velocity_dispersion import vel_disp_composite_model
 from lenstronomy.Util import constants
-from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 
 
 class NFWHernquist(DeflectorBase):
@@ -32,8 +31,8 @@ class NFWHernquist(DeflectorBase):
 
         m_halo, c_halo = self.halo_properties
         # convert angular size to physical size
-        lens_cosmo = LensCosmo(z_lens=self.redshift, z_source=10, cosmo=cosmo)
-        rs_star = lens_cosmo.dd * self.angular_size_light
+        dd = cosmo.angular_diameter_distance(self.redshift)
+        rs_star = dd * self.angular_size_light
         vel_disp = vel_disp_composite_model(
             r=size_lens_arcsec,
             m_star=self.stellar_mass,
