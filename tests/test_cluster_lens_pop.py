@@ -38,7 +38,7 @@ def test_pes_lens_pop_instance():
         cosmo=cosmo,
     )
     kwargs_lens_cut = {}
-    pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
+    pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
     # assert pes_lens_class._source_type == "point_plus_extended"
 
 
@@ -60,13 +60,13 @@ def test_supernovae_plus_galaxies_lens_pop_instance():
         cosmo=cosmo,
     )
     kwargs_lens_cut = {}
-    pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
+    pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
     # assert pes_lens_class._source_type == "point_plus_extended"
 
 
 def test_num_lenses_and_sources(gg_lens_pop_instance):
-    num_lenses = gg_lens_pop_instance.deflector_number()
-    num_sources = gg_lens_pop_instance.source_number()
+    gg_lens_pop_instance.deflector_number()
+    gg_lens_pop_instance.source_number()
     #
     # assert 100 <= num_lenses <= 6600, "Expected num_lenses to be between 5800 and 6600,"
     # f"but got {num_lenses}"
@@ -78,8 +78,8 @@ def test_num_lenses_and_sources(gg_lens_pop_instance):
 
 
 def test_num_sources_tested_and_test_area(gg_lens_pop_instance):
-    num_sources_range = gg_lens_pop_instance.get_num_sources_tested()
-    num_sources_mean = gg_lens_pop_instance.get_num_sources_tested_mean(testarea=None)
+    gg_lens_pop_instance.get_num_sources_tested()
+    gg_lens_pop_instance.get_num_sources_tested_mean(testarea=None)
     # lens = gg_lens_pop_instance._lens_galaxies.draw_deflector()
     # test_area = draw_test_area(deflector=lens)
     # assert (
@@ -96,7 +96,7 @@ def test_num_sources_tested_and_test_area(gg_lens_pop_instance):
 
 def test_draw_population(gg_lens_pop_instance):
     kwargs_lens_cuts = {"mag_arc_limit": {"g": 28}}
-    gg_lens_population = gg_lens_pop_instance.draw_population(
+    gg_lens_pop_instance.draw_population(
         kwargs_lens_cuts=kwargs_lens_cuts
     )
     # assert isinstance(gg_lens_population, list)

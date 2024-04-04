@@ -35,7 +35,7 @@ def test_deflector_number_draw_deflector(galaxy_cluster_lenses):
     galaxy_pop.draw_deflector()
     # deflector = galaxy_pop.draw_deflector()
     # assert deflector["z"] != 0
-    # assert num_deflectors >= 0
+    assert num_deflectors >= 0
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ class TestClusterPipeline(object):
         self.pipeline = ClusterPipeline()
 
     def test_cluster_pipeline_instance(self):
-        pipeline = ClusterPipeline()
+        ClusterPipeline()
 
 
 if __name__ == "__main__":
