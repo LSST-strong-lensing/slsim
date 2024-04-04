@@ -54,7 +54,7 @@ class TestClusterLens(object):
 
     def test_deflector_magnitude(self):
         # TODO: test magnitude of each subhalo
-        self.cg_lens.deflector_magnitude(band='g')
+        self.cg_lens.deflector_magnitude(band="g")
 
     def test_source_magnitude(self):
         band = "g"
@@ -112,7 +112,7 @@ class TestClusterLens(object):
         arrival_times = self.cg_lens.point_source_arrival_times()
         observer_times = (t_obs + arrival_times - np.min(arrival_times))[:, np.newaxis]
         observer_times2 = (
-                t_obs2[:, np.newaxis] + arrival_times - np.min(arrival_times)
+            t_obs2[:, np.newaxis] + arrival_times - np.min(arrival_times)
         ).T
         npt.assert_almost_equal(dt_days, observer_times, decimal=5)
         npt.assert_almost_equal(dt_days2, observer_times2, decimal=5)

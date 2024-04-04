@@ -97,9 +97,7 @@ def test_num_sources_tested_and_test_area(gg_lens_pop_instance):
 
 def test_draw_population(gg_lens_pop_instance):
     kwargs_lens_cuts = {"mag_arc_limit": {"g": 28}}
-    gg_lens_pop_instance.draw_population(
-        kwargs_lens_cuts=kwargs_lens_cuts
-    )
+    gg_lens_pop_instance.draw_population(kwargs_lens_cuts=kwargs_lens_cuts)
     # assert isinstance(gg_lens_population, list)
 
 
