@@ -6,6 +6,7 @@ from slsim.cluster_lens_pop import ClusterLensPop
 
 # TODO: Implement tests for the following methods:
 
+
 @pytest.fixture
 def gg_lens_pop_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
