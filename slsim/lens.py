@@ -26,7 +26,7 @@ class Lens(LensedSystemBase):
         cosmo,
         deflector_type="EPL",
         source_type="extended",
-        lens_equation_solver="lenstronomy_analytical",
+        lens_equation_solver="lenstronomy",
         variability_model=None,
         kwargs_variability=None,
         sn_type=None,
@@ -704,9 +704,6 @@ class Lens(LensedSystemBase):
         :returns: saves updated .json file in a given path
         """
         kwargs_result_slsim = self.lenstronomy_kwargs(band=band)[1]
-        # remove convergence profile from lens model. Convergence is currently not
-        # supported by coolest.
-        kwargs_lens_updated = kwargs_result_slsim["kwargs_lens"][:-1]
         # convert magnitude to amplitude. lenstronomy coolest interface takes amplitude
         # as kwargs.
         source_amp = magnitude_to_amplitude(
@@ -731,8 +728,6 @@ class Lens(LensedSystemBase):
             for item in kwargs_result_slsim[key]:
                 item[replacement_info["magnitude"]] = replacement_info["value"]
                 del item["magnitude"]
-        kwargs_result_slsim["kwargs_lens"] = kwargs_lens_updated
-
         update_coolest = update_coolest_from_lenstronomy(
             path + file_name, kwargs_result=kwargs_result_slsim, ending="_update"
         )
