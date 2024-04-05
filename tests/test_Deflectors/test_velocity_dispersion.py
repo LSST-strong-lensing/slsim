@@ -16,7 +16,10 @@ def test_vel_disp_composite_model():
     c_halo = 10
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     r = 1
-    vel_disp = vel_disp_composite_model(r, m_star, rs_star, m_halo, c_halo, cosmo)
+    z_lens = 0.5
+    vel_disp = vel_disp_composite_model(
+        r, m_star, rs_star, m_halo, c_halo, cosmo, z_lens
+    )
     npt.assert_almost_equal(vel_disp, 200, decimal=-1)
 
 
