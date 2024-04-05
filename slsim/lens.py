@@ -26,7 +26,7 @@ class Lens(LensedSystemBase):
         cosmo,
         deflector_type="EPL",
         source_type="extended",
-        lens_equation_solver="lenstronomy",
+        lens_equation_solver="lenstronomy_analytical",
         variability_model=None,
         kwargs_variability=None,
         sn_type=None,
