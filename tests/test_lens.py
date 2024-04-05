@@ -32,10 +32,45 @@ class TestLens(object):
             gg_lens = Lens(
                 source_dict=self.source_dict,
                 deflector_dict=self.deflector_dict,
+                lens_equation_solver="lenstronomy_analytical",
                 cosmo=cosmo,
             )
             if gg_lens.validity_test():
                 self.gg_lens = gg_lens
+                break
+
+    def test_nfw_hernquist_lens(self):
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+        path = os.path.dirname(__file__)
+        module_path, _ = os.path.split(path)
+        print(path, module_path)
+        blue_one = Table.read(
+            os.path.join(path, "TestData/blue_one_modified.fits"), format="fits"
+        )
+        source_dict = blue_one
+        deflector_dict = {
+            "halo_mass": 10**13,
+            "concentration": 10,
+            "e1_mass": 0.1,
+            "e2_mass": -0.1,
+            "stellar_mass": 10e11,
+            "angular_size": 0.001,
+            "e1_light": -0.1,
+            "e2_light": 0.1,
+            "z": 0.5,
+            "mag_g": -20,
+        }
+
+        while True:
+            gg_lens = Lens(
+                source_dict=source_dict,
+                deflector_dict=deflector_dict,
+                deflector_type="NFW_HERNQUIST",
+                lens_equation_solver="lenstronomy_default",
+                cosmo=cosmo,
+            )
+            if gg_lens.validity_test():
+                # self.gg_lens = gg_lens
                 break
 
     def test_deflector_ellipticity(self):
@@ -63,7 +98,7 @@ class TestLens(object):
         assert source_magnitude_lensed == expected_lensed_mag
 
     def test_image_separation_from_positions(self):
-        image_positions = self.gg_lens.image_positions()
+        image_positions = self.gg_lens.extended_source_image_positions()
         image_separation = image_separation_from_positions(image_positions)
         theta_E_infinity = theta_e_when_source_infinity(
             deflector_dict=self.deflector_dict
@@ -111,6 +146,33 @@ class TestLens(object):
         npt.assert_almost_equal(dt_days, observer_times, decimal=5)
         npt.assert_almost_equal(dt_days2, observer_times2, decimal=5)
 
+    def test_deflector_light_model_lenstronomy(self):
+        kwargs_lens_light = self.gg_lens.deflector_light_model_lenstronomy(band="g")
+        assert len(kwargs_lens_light) >= 1
+
+    def test_lens_equation_solver(self):
+        """Tests analytical and numerical lens equation solver options."""
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+        gg_lens = Lens(
+            lens_equation_solver="lenstronomy_default",
+            source_dict=self.source_dict,
+            deflector_dict=self.deflector_dict,
+            cosmo=cosmo,
+        )
+        while True:
+            gg_lens.validity_test()
+            break
+
+        gg_lens = Lens(
+            lens_equation_solver="lenstronomy_analytical",
+            source_dict=self.source_dict,
+            deflector_dict=self.deflector_dict,
+            cosmo=cosmo,
+        )
+        while True:
+            gg_lens.validity_test()
+            break
+
 
 @pytest.fixture
 def pes_lens_instance():
@@ -141,7 +203,9 @@ def pes_lens_instance():
 def test_point_source_magnitude(pes_lens_instance):
     pes_lens = pes_lens_instance
     mag = pes_lens.point_source_magnitude(band="i", lensed=True)
+    mag_unlensed = pes_lens.point_source_magnitude(band="i")
     assert len(mag) >= 2
+    assert len(mag_unlensed) == 1
 
 
 @pytest.fixture
