@@ -137,6 +137,19 @@ class LensPop(LensedPopulationBase):
                 sky_area=sky_area,
             )
 
+        elif deflector_type == "halo-models":
+            from slsim.Deflectors.compound_lens_halos_galaxies import CompoundLensHalosGalaxies
+
+            halo_galaxy_list = 
+
+            self._lens_galaxies = CompoundLensHalosGalaxies(
+                halo_galaxy_list=red_galaxy_list,
+                kwargs_cut=kwargs_deflector_cut,
+                kwargs_mass2light=kwargs_mass2light,
+                cosmo=cosmo,
+                sky_area=sky_area,
+            )
+
         else:
             raise ValueError("deflector_type %s is not supported" % deflector_type)
 
