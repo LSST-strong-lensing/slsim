@@ -8,7 +8,8 @@ from lenstronomy.LensModel.Solver.lens_equation_solver import (
     analytical_lens_model_support,
 )
 from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
-from lenstronomy.Util.coolest_interface import update_coolest_from_lenstronomy
+from lenstronomy.Util.coolest_interface import (update_coolest_from_lenstronomy, 
+                                                create_lenstronomy_from_coolest)
 from slsim.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
 from lenstronomy.Util import util, data_util
 from slsim.Util.param_util import magnitude_to_amplitude
@@ -703,7 +704,7 @@ class Lens(LensedSystemBase):
         :param file_name: name of the .json file without .json extension
         :returns: saves updated .json file in a given path
         """
-        kwargs_result_slsim = self.lenstronomy_kwargs(band=band)[1]
+        kwargs_result_slsim= self.lenstronomy_kwargs(band=band)[1]
         # convert magnitude to amplitude. lenstronomy coolest interface takes amplitude
         # as kwargs.
         source_amp = magnitude_to_amplitude(
@@ -732,6 +733,20 @@ class Lens(LensedSystemBase):
             path + file_name, kwargs_result=kwargs_result_slsim, ending="_update"
         )
         return update_coolest
+    
+    def create_lenstronomy_slsim_from_coolest(self, path, file_name, mag_zero_point=27):
+        """This function creates an lenstronomy_kwargs from the coolest 
+        standard.
+        
+        :param path: path to the .json file that need to be updated
+        :param file_name: name of the .json file without .json extension
+        :returns: lenstronomy_kwargs for slsim
+        """
+        kwargs_out = create_lenstronomy_from_coolest(
+            path + file_name)
+        lenstronomy_slsim = kwargs_out["kwargs_params"]["source_model"][0],\
+        kwargs_out["kwargs_result"]
+        return lenstronomy_slsim
 
 
 def image_separation_from_positions(image_positions):
