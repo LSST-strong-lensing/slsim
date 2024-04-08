@@ -139,11 +139,17 @@ class LensPop(LensedPopulationBase):
 
         elif deflector_type == "halo-models":
             from slsim.Deflectors.compound_lens_halos_galaxies import CompoundLensHalosGalaxies
+            from slsim.Pipelines.sl_hammocks_pipeline import SLHammocksPipeline
 
-            halo_galaxy_list = 
+
+            halo_galaxy_list = SLHammocksPipeline(
+                slhammocks_config=None,
+                sky_area=sky_area,
+                cosmo=cosmo,
+            )
 
             self._lens_galaxies = CompoundLensHalosGalaxies(
-                halo_galaxy_list=red_galaxy_list,
+                halo_galaxy_list=halo_galaxy_list,
                 kwargs_cut=kwargs_deflector_cut,
                 kwargs_mass2light=kwargs_mass2light,
                 cosmo=cosmo,
