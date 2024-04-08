@@ -69,8 +69,8 @@ class TestAccretionDiskReprocessing:
             "log_breakpoint_frequency": -1,
             "low_frequency_slope": 1,
             "high_frequency_slope": 3,
-            "new_mean_amplitude": 3,
-            "new_standard_deviation": 1,
+            "mean_magnitude": 3,
+            "standard_deviation": 1,
             "seed": 55,
         }
 
