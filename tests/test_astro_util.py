@@ -470,20 +470,18 @@ def test_generate_signal():
     log_bp_freq = -1
     low_freq_slope = 0.5
     high_freq_slope = 3.0
-    new_mean_amplitude = 12
-    new_standard_deviation = 10
+    mean_magnitude = 12
+    standard_deviation = 10
     light_curve_3 = generate_signal(
         length_of_light_curve,
         dt,
         log_breakpoint_frequency=log_bp_freq,
         low_frequency_slope=low_freq_slope,
         high_frequency_slope=high_freq_slope,
-        new_mean_amplitude=new_mean_amplitude,
-        new_standard_deviation=new_standard_deviation,
+        mean_magnitude=mean_magnitude,
+        standard_deviation=standard_deviation,
     )
-    npt.assert_almost_equal(
-        np.sum(light_curve_3), new_mean_amplitude * len(light_curve_3)
-    )
+    npt.assert_almost_equal(np.sum(light_curve_3), mean_magnitude * len(light_curve_3))
     # Test that a light curve may be generated using a user defined psd
     chosen_seed = 17
     input_frequencies = define_frequencies(length_of_light_curve, dt)
@@ -503,30 +501,30 @@ def test_generate_signal():
 
     # Test using magnitudes as inputs
     chosen_seed = 15
-    new_mean_magnitude = -15
+    mean_magnitude = -15
     magnitude_standard_deviation = 0.1
 
     with pytest.raises(ValueError):
         generate_signal(
             length_of_light_curve,
             dt,
-            new_mean_amplitude=5,
-            new_standard_deviation=5,
-            is_magnitude=True,
+            mean_magnitude=5,
+            standard_deviation=5,
+            normal_magnitude_variance=False,
         )
         generate_signal(
             length_of_light_curve,
             dt,
-            new_mean_amplitude=5,
-            new_standard_deviation=1,
-            is_magnitude=True,
+            mean_magnitude=5,
+            standard_deviation=1,
+            normal_magnitude_variance=False,
         )
     light_curve_without_value_error = generate_signal(
         length_of_light_curve,
         dt,
-        new_mean_amplitude=new_mean_magnitude,
-        new_standard_deviation=magnitude_standard_deviation,
-        is_magnitude=True,
+        mean_magnitude=mean_magnitude,
+        standard_deviation=magnitude_standard_deviation,
+        normal_magnitude_variance=False,
     )
     assert (
         np.max(light_curve_without_value_error)
@@ -544,8 +542,8 @@ def test_generate_signal_from_bending_power_law():
     log_breakpoint_frequency = -2
     low_frequency_slope = 1
     high_frequency_slope = 3
-    new_mean_amplitude = 0
-    new_standard_deviation = 1
+    mean_magnitude = 0
+    standard_deviation = 1
     seed = 17
 
     known_signal = generate_signal(
@@ -554,8 +552,8 @@ def test_generate_signal_from_bending_power_law():
         log_breakpoint_frequency=log_breakpoint_frequency,
         low_frequency_slope=low_frequency_slope,
         high_frequency_slope=high_frequency_slope,
-        new_mean_amplitude=new_mean_amplitude,
-        new_standard_deviation=new_standard_deviation,
+        mean_magnitude=mean_magnitude,
+        standard_deviation=standard_deviation,
         seed=seed,
     )
     times, new_signal = generate_signal_from_bending_power_law(
@@ -564,8 +562,8 @@ def test_generate_signal_from_bending_power_law():
         log_breakpoint_frequency=log_breakpoint_frequency,
         low_frequency_slope=low_frequency_slope,
         high_frequency_slope=high_frequency_slope,
-        new_mean_amplitude=new_mean_amplitude,
-        new_standard_deviation=new_standard_deviation,
+        mean_magnitude=mean_magnitude,
+        standard_deviation=standard_deviation,
         seed=seed,
     )
 

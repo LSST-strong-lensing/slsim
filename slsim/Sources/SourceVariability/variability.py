@@ -18,11 +18,11 @@ class Variability(object):
             For sinusoidal_variability kwargs are: amplitude ('amp') and frequency ('freq').
             For bending_power_law kwargs are: ('length_of_light_curve'), ('time_resolution'),
                 ('log_breakpoint_frequency'), ('low_frequency_slope'),
-                ('high_frequency_slope'), ('new_mean_amplitude'),
-                ('new_standard_deviation'), ('is_magnitude'), ('zero_point_mag'), and ('seed')
+                ('high_frequency_slope'), ('mean_amplitude'),
+                ('standard_deviation'), ('normal_magnitude_variance'), ('zero_point_mag'), and ('seed')
             For user_defined_psd kwargs are: ('length_of_light_curve'), ('time_resolution'),
-                ('input_frequencies'), ('input_psd'), ('new_mean_amplitude'),
-                ('new_standard_deviation'), ('is_magnitude'), ('zero_point_mag'), and ('seed')
+                ('input_frequencies'), ('input_psd'), ('mean_amplitude'),
+                ('standard_deviation'), ('normal_magnitude_variance'), ('zero_point_mag'), and ('seed')
         :type kwargs_variability_model: dict
         """
         self.kwargs_model = kwargs_variability_model
