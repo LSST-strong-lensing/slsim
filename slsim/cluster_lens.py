@@ -121,7 +121,7 @@ class ClusterLens(LensedSystemBase):
                 cosmo=self.cosmo,
             )
             self._theta_E_sis = lens_cosmo.sis_sigma_v2theta_E(
-                float(self.deflector.velocity_dispersion)
+                float(self.deflector.velocity_dispersion(cosmo=cosmo))
             )
             # TODO: integrate subhaloes in the Deflector interface
             self._subhaloes_table["theta_E_sis"] = lens_cosmo.sis_sigma_v2theta_E(
@@ -329,7 +329,7 @@ class ClusterLens(LensedSystemBase):
 
         :return: velocity dispersion [km/s]
         """
-        return self.deflector.velocity_dispersion
+        return self.deflector.velocity_dispersion(self.cosmo)
 
     def los_linear_distortions(self):
         """Line-of-sight distortions in shear and convergence.
