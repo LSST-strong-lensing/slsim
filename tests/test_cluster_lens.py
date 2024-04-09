@@ -43,7 +43,7 @@ class TestClusterLens(object):
                 break
 
     def test_validity_test(self):
-        self.cg_lens.validity_test(mag_arc_limit={"g": 25, "r": 25, "i": 25})
+        self.cg_lens.validity_test(mag_arc_limit={"g": 21, "r": 24, "i": 10})
 
     def test_deflector_ellipticity(self):
         e1_light, e2_light, e1_mass, e2_mass = self.cg_lens.deflector_ellipticity()
