@@ -12,7 +12,7 @@ from lenstronomy.Util.coolest_interface import (update_coolest_from_lenstronomy,
                                                 create_lenstronomy_from_coolest)
 from slsim.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
 from lenstronomy.Util import util, data_util
-from slsim.Util.param_util import magnitude_to_amplitude
+from slsim.Util.param_util import magnitude_to_amplitude, amplitude_to_magnitude
 from slsim.lensed_system_base import LensedSystemBase
 import warnings
 
@@ -744,8 +744,34 @@ class Lens(LensedSystemBase):
         """
         kwargs_out = create_lenstronomy_from_coolest(
             path + file_name)
-        lenstronomy_slsim = kwargs_out["kwargs_params"]["source_model"][0],\
-        kwargs_out["kwargs_result"]
+        kwargs_result = kwargs_out["kwargs_result"]
+        source_mag = amplitude_to_magnitude(
+            kwargs_result["kwargs_source"][0]["amp"],
+            mag_zero_point=mag_zero_point,
+        )
+        lens_mag = amplitude_to_magnitude(
+            kwargs_result["kwargs_lens_light"][0]["amp"],
+            mag_zero_point=mag_zero_point,
+        )
+        ps_mag = amplitude_to_magnitude(
+            kwargs_result["kwargs_ps"][0]["point_amp"],
+            mag_zero_point=mag_zero_point,
+        )
+        # replace amplitudes with magnitudes in lenstronomy kwargs.
+        replacement_mappings = {
+            "kwargs_source": {"amp":"magnitude", "value": source_mag},
+            "kwargs_lens_light": {"amp":"magnitude", "value": lens_mag},
+            "kwargs_ps": {"point_amp":"magnitude", "value": ps_mag},
+        }
+        for key, replacement_info in replacement_mappings.items():
+            for keys, values in replacement_info.items():
+                if values == 'magnitude':
+                    key2=keys
+                for item in kwargs_result[key]:
+                    item[replacement_info[key2]] = replacement_info["value"]
+                    if key2 in item:
+                        del item[key2]
+        lenstronomy_slsim = kwargs_out["kwargs_model"], kwargs_result
         return lenstronomy_slsim
 
 
