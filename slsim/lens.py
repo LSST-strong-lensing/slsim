@@ -7,6 +7,7 @@ from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
 from lenstronomy.LensModel.Solver.lens_equation_solver import (
     analytical_lens_model_support,
 )
+from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
 from slsim.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
 from slsim.ParamDistributions.kext_gext_distributions import LineOfSightDistribution
 from lenstronomy.Util import util, data_util
@@ -22,6 +23,7 @@ class Lens(LensedSystemBase):
         source_dict,
         deflector_dict,
         cosmo,
+        deflector_type="EPL",
         source_type="extended",
         lens_equation_solver="lenstronomy_analytical",
         variability_model=None,
@@ -49,6 +51,8 @@ class Lens(LensedSystemBase):
         :param deflector_dict: deflector properties
         :type deflector_dict: dict
         :param cosmo: astropy.cosmology instance
+        :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST"
+        :type deflector_type: str
         :param source_type: type of the source 'extended' or 'point_source' or
          'point_plus_extended' supported
         :type source_type: str
@@ -88,6 +92,7 @@ class Lens(LensedSystemBase):
             source_dict=source_dict,
             deflector_dict=deflector_dict,
             cosmo=cosmo,
+            deflector_type=deflector_type,
             test_area=test_area,
             variability_model=variability_model,
             kwargs_variability=kwargs_variability,
@@ -316,19 +321,44 @@ class Lens(LensedSystemBase):
     def external_shear(self):
         """
 
-        :return: external shear
+        :return: the absolute external shear
         """
         gamma1, gamma2, _ = self.los_linear_distortions
         return (gamma1**2 + gamma2**2) ** 0.5
 
+    def einstein_radius_deflector(self):
+        """Einstein radius, from SIS approximation (coming from velocity dispersion)
+        without line-of-sight correction.
+
+        :return:
+        """
+        if not hasattr(self, "_theta_E"):
+            if self.deflector.redshift >= self.source.redshift:
+                self._theta_E = 0
+            elif self.deflector.deflector_type in ["EPL"]:
+                self._theta_E = self._lens_cosmo.sis_sigma_v2theta_E(
+                    float(self.deflector.velocity_dispersion(cosmo=self.cosmo))
+                )
+            else:
+                # numerical solution for the Einstein radius
+                lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
+                lens_model = LensModel(lens_model_list=lens_model_list)
+                lens_analysis = LensProfileAnalysis(lens_model=lens_model)
+                self._theta_E = lens_analysis.effective_einstein_radius(
+                    kwargs_lens, r_min=1e-3, r_max=2e1, num_points=50
+                )
+        return self._theta_E
+
     @property
     def einstein_radius(self):
-        """Einstein radius, including the SIS + external convergence effect.
+        """Einstein radius, from SIS approximation (coming from velocity dispersion) +
+        external convergence effect.
 
         :return: Einstein radius [arc seconds]
         """
-        _, _, kappa_ext = self.los_linear_distortions
-        return self._theta_E_sis / (1 - kappa_ext)
+        theta_E = self.einstein_radius_deflector
+        _, _, kappa_ext = self.los_linear_distortions()
+        return theta_E / (1 - kappa_ext)
 
     def deflector_ellipticity(self):
         """
@@ -617,23 +647,66 @@ class Lens(LensedSystemBase):
 
         :return: lens_model_list, kwargs_lens
         """
-        lens_mass_model_list = ["EPL", "SHEAR", "CONVERGENCE"]
-        theta_E = self.einstein_radius
-        e1_light_lens, e2_light_lens, e1_mass, e2_mass = self.deflector_ellipticity()
-        center_lens = self.deflector_position
+        if self.deflector.deflector_type in ["EPL"]:
+            lens_mass_model_list = ["EPL"]
+            theta_E = self.einstein_radius_deflector
+            e1_light_lens, e2_light_lens, e1_mass, e2_mass = (
+                self.deflector_ellipticity()
+            )
+            center_lens = self.deflector_position
+
+            kwargs_lens = [
+                {
+                    "theta_E": theta_E,
+                    "gamma": 2,
+                    "e1": e1_mass,
+                    "e2": e2_mass,
+                    "center_x": center_lens[0],
+                    "center_y": center_lens[1],
+                }
+            ]
+        elif self.deflector.deflector_type in ["NFW_HERNQUIST"]:
+            lens_mass_model_list = ["NFW_ELLIPSE_CSE", "HERNQUIST_ELLIPSE_CSE"]
+            e1_light_lens, e2_light_lens, e1_mass, e2_mass = (
+                self.deflector_ellipticity()
+            )
+            center_lens = self.deflector_position
+            rs_phys = self._lens_cosmo.dd * self.deflector.angular_size_light
+            sigma0, rs_light_angle = self._lens_cosmo.hernquist_phys2angular(
+                mass=self.deflector.stellar_mass, rs=rs_phys
+            )
+            # halo mass, concentration, stellar mass
+            m_halo, c_halo = self.deflector.halo_properties
+            rs_halo, alpha_rs = self._lens_cosmo.nfw_physical2angle(M=m_halo, c=c_halo)
+            kwargs_lens = [
+                {
+                    "alpha_Rs": alpha_rs,
+                    "Rs": rs_halo,
+                    "e1": e1_mass,
+                    "e2": e2_mass,
+                    "center_x": center_lens[0],
+                    "center_y": center_lens[1],
+                },
+                {
+                    "Rs": rs_light_angle,
+                    "sigma0": sigma0,
+                    "e1": e1_light_lens,
+                    "e2": e2_light_lens,
+                    "center_x": center_lens[0],
+                    "center_y": center_lens[1],
+                },
+            ]
+        else:
+            raise ValueError(
+                "Deflector model %s not supported for lenstronomy model"
+                % self.deflector.deflector_type
+            )
+        # adding line-of-sight structure
         gamma1, gamma2, kappa_ext = self.los_linear_distortions
-        kwargs_lens = [
-            {
-                "theta_E": theta_E,
-                "gamma": 2,
-                "e1": e1_mass,
-                "e2": e2_mass,
-                "center_x": center_lens[0],
-                "center_y": center_lens[1],
-            },
-            {"gamma1": gamma1, "gamma2": gamma2, "ra_0": 0, "dec_0": 0},
-            {"kappa": kappa_ext, "ra_0": 0, "dec_0": 0},
-        ]
+        kwargs_lens.append({"gamma1": gamma1, "gamma2": gamma2, "ra_0": 0, "dec_0": 0})
+        kwargs_lens.append({"kappa": kappa_ext, "ra_0": 0, "dec_0": 0})
+        lens_mass_model_list.append("SHEAR")
+        lens_mass_model_list.append("CONVERGENCE")
 
         return lens_mass_model_list, kwargs_lens
 
