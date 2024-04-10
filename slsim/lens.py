@@ -326,6 +326,24 @@ class Lens(LensedSystemBase):
         return self._theta_E
 
     @property
+    def external_convergence(self):
+        """
+
+        :return: external convergence
+        """
+        _, _, kappa_ext = self.los_linear_distortions
+        return kappa_ext
+
+    @property
+    def external_shear(self):
+        """
+
+        :return: the absolute external shear
+        """
+        gamma1, gamma2, _ = self.los_linear_distortions
+        return (gamma1 ** 2 + gamma2 ** 2) ** 0.5
+
+    @property
     def einstein_radius_deflector(self):
         """Einstein radius, from SIS approximation (coming from velocity dispersion)
         without line-of-sight correction.
@@ -702,7 +720,7 @@ class Lens(LensedSystemBase):
                 % self.deflector.deflector_type
             )
         # adding line-of-sight structure
-        gamma1, gamma2, kappa_ext = self.los_linear_distortions()
+        gamma1, gamma2, kappa_ext = self.los_linear_distortions
         kwargs_lens.append({"gamma1": gamma1, "gamma2": gamma2, "ra_0": 0, "dec_0": 0})
         kwargs_lens.append({"kappa": kappa_ext, "ra_0": 0, "dec_0": 0})
         lens_mass_model_list.append("SHEAR")
