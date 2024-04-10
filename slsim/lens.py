@@ -112,6 +112,8 @@ class Lens(LensedSystemBase):
                 "variability information provided by you will not be used."
             )
             warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
+
+        print(self.deflector.redshift)
         self._lens_cosmo = LensCosmo(
             z_lens=float(self.deflector.redshift),
             z_source=float(self.source.redshift),

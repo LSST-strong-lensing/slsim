@@ -4,10 +4,11 @@ from slsim.lens import (
     theta_e_when_source_infinity,
 )
 import numpy as np
-from slsim.lensed_population_base import LensedPopulationBase
 import os
 import pickle
 from astropy.table import Table
+import sys
+from slsim.lensed_population_base import LensedPopulationBase
 
 
 class LensPop(LensedPopulationBase):
@@ -141,15 +142,15 @@ class LensPop(LensedPopulationBase):
             from slsim.Deflectors.compound_lens_halos_galaxies import CompoundLensHalosGalaxies
             from slsim.Pipelines.sl_hammocks_pipeline import SLHammocksPipeline
 
-
             halo_galaxy_list = SLHammocksPipeline(
                 slhammocks_config=None,
                 sky_area=sky_area,
                 cosmo=cosmo,
             )
+            # print(halo_galaxy_list._pipeline)
 
             self._lens_galaxies = CompoundLensHalosGalaxies(
-                halo_galaxy_list=halo_galaxy_list,
+                halo_galaxy_list=halo_galaxy_list._pipeline,
                 kwargs_cut=kwargs_deflector_cut,
                 kwargs_mass2light=kwargs_mass2light,
                 cosmo=cosmo,
