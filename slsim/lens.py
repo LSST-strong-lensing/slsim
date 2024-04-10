@@ -125,17 +125,11 @@ class Lens(LensedSystemBase):
                 "variability information provided by you will not be used."
             )
             warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
-        if self.deflector.redshift >= self.source.redshift:
-            self._theta_E_sis = 0
-        else:
-            lens_cosmo = LensCosmo(
-                z_lens=float(self.deflector.redshift),
-                z_source=float(self.source.redshift),
-                cosmo=self.cosmo,
-            )
-            self._theta_E_sis = lens_cosmo.sis_sigma_v2theta_E(
-                float(self.deflector.velocity_dispersion)
-            )
+        self._lens_cosmo = LensCosmo(
+            z_lens=float(self.deflector.redshift),
+            z_source=float(self.source.redshift),
+            cosmo=self.cosmo,
+        )
 
     @property
     def image_number(self):
@@ -240,7 +234,7 @@ class Lens(LensedSystemBase):
         # times 2 must be greater than or equal to the minimum image separation
         # (min_image_separation) and less than or equal to the maximum image
         # separation (max_image_separation).
-        if not min_image_separation <= 2 * self._theta_E_sis <= max_image_separation:
+        if not min_image_separation <= 2 * self.einstein_radius <= max_image_separation:
             return False
 
         # Criteria 3: The distance between the lens center and the source position
@@ -252,7 +246,7 @@ class Lens(LensedSystemBase):
                 center_lens=self.deflector_position, draw_area=self.test_area
             ),
         )
-        if np.sum((center_lens - center_source) ** 2) > self._theta_E_sis**2 * 2:
+        if np.sum((center_lens - center_source) ** 2) > self.einstein_radius**2 * 2:
             return False
 
         # Criteria 4: The lensing configuration must produce at least two SL images.
@@ -332,6 +326,30 @@ class Lens(LensedSystemBase):
         return self._theta_E
 
     @property
+    def einstein_radius_deflector(self):
+        """Einstein radius, from SIS approximation (coming from velocity dispersion)
+        without line-of-sight correction.
+
+        :return:
+        """
+        if not hasattr(self, "_theta_E"):
+            if self.deflector.redshift >= self.source.redshift:
+                self._theta_E = 0
+            elif self.deflector.deflector_type in ["EPL"]:
+                self._theta_E = self._lens_cosmo.sis_sigma_v2theta_E(
+                    float(self.deflector.velocity_dispersion(cosmo=self.cosmo))
+                )
+            else:
+                # numerical solution for the Einstein radius
+                lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
+                lens_model = LensModel(lens_model_list=lens_model_list)
+                lens_analysis = LensProfileAnalysis(lens_model=lens_model)
+                self._theta_E = lens_analysis.effective_einstein_radius(
+                    kwargs_lens, r_min=1e-3, r_max=2e1, num_points=50
+                )
+        return self._theta_E
+
+    @property
     def einstein_radius(self):
         """Einstein radius, from SIS approximation (coming from velocity dispersion) +
         external convergence effect.
@@ -363,7 +381,7 @@ class Lens(LensedSystemBase):
 
         :return: velocity dispersion [km/s]
         """
-        return self.deflector.velocity_dispersion
+        return self.deflector.velocity_dispersion(cosmo=self.cosmo)
 
     @property
     def los_linear_distortions(self):
@@ -465,7 +483,7 @@ class Lens(LensedSystemBase):
             or an array of observation time.
         :return: time of the source when seen in the different images (without redshift
             correction)
-        :rtype: numpy array. Each element of the array corresponds to diffrent image
+        :rtype: numpy array. Each element of the array corresponds to different image
             observation times.
         """
         arrival_times = self.point_source_arrival_times()

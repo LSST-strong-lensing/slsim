@@ -39,6 +39,40 @@ class TestLens(object):
                 self.gg_lens = gg_lens
                 break
 
+    def test_nfw_hernquist_lens(self):
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+        path = os.path.dirname(__file__)
+        module_path, _ = os.path.split(path)
+        print(path, module_path)
+        blue_one = Table.read(
+            os.path.join(path, "TestData/blue_one_modified.fits"), format="fits"
+        )
+        source_dict = blue_one
+        deflector_dict = {
+            "halo_mass": 10**13,
+            "concentration": 10,
+            "e1_mass": 0.1,
+            "e2_mass": -0.1,
+            "stellar_mass": 10e11,
+            "angular_size": 0.001,
+            "e1_light": -0.1,
+            "e2_light": 0.1,
+            "z": 0.5,
+            "mag_g": -20,
+        }
+
+        while True:
+            gg_lens = Lens(
+                source_dict=source_dict,
+                deflector_dict=deflector_dict,
+                deflector_type="NFW_HERNQUIST",
+                lens_equation_solver="lenstronomy_default",
+                cosmo=cosmo,
+            )
+            if gg_lens.validity_test():
+                # self.gg_lens = gg_lens
+                break
+
     def test_deflector_ellipticity(self):
         e1_light, e2_light, e1_mass, e2_mass = self.gg_lens.deflector_ellipticity()
         assert pytest.approx(e1_light, rel=1e-3) == -0.05661955320450283
