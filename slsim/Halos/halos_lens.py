@@ -8,55 +8,8 @@ import math
 import time
 import multiprocessing
 from collections.abc import Iterable
-
-
-def deg2_to_cone_angle(solid_angle_deg2):
-    """Convert solid angle from square degrees to half cone angle in radians.
-
-    This function translates a solid angle, specified in square degrees, into the
-    corresponding half cone angle expressed in radians. This conversion is essential for
-    applications involving angular measurements in astronomy, particularly in lensing
-    calculations where the geometry of observations is defined in terms of cone angles.
-
-    :param solid_angle_deg2: Solid angle in square degrees to be converted.
-    :type solid_angle_deg2: float
-    :return: The half cone angle in radians equivalent to the input solid angle.
-    :rtype: float :note: The conversion utilizes the relationship between solid angles
-        in steradians and the apex angle of a cone, facilitating a direct transition
-        from square degrees to radians.
-    """
-
-    solid_angle_sr = solid_angle_deg2 * (np.pi / 180) ** 2
-    theta = np.arccos(1 - solid_angle_sr / (2 * np.pi))  # rad
-    return theta
-
-
-def cone_radius_angle_to_physical_area(radius_rad, z, cosmo):
-    """Convert cone radius angle to physical area at a specified redshift.
-
-    This function computes the physical area, in square megaparsecs (Mpc^2),
-    corresponding to a specified cone radius angle at a given redshift. The calculation
-    is based on the angular diameter distance, which is dependent on the adopted
-    cosmological model. This is particularly useful in cosmological simulations and
-    observations where the physical scale of structures is inferred from angular
-    measurements.
-
-    :param radius_rad: The half cone angle in radians.
-    :param z: The redshift at which the physical area is calculated.
-    :param cosmo: The cosmology instance used for the conversion.
-    :type radius_rad: float
-    :type z: float
-    :type cosmo: astropy.cosmology instance
-    :return: The physical area in square megaparsecs (Mpc^2) for the given cone radius
-        and redshift.
-    :rtype: float :note: The calculation incorporates the angular diameter distance,
-        highlighting the interplay between angular measurements and physical scales in
-        an expanding universe.
-    """
-
-    physical_radius = cosmo.angular_diameter_distance(z) * radius_rad  # Mpc
-    area_physical = np.pi * physical_radius**2
-    return area_physical  # in Mpc2
+from slsim.Util.astro_util import cone_radius_angle_to_physical_area
+from slsim.Util.param_util import deg2_to_cone_angle
 
 
 def concentration_from_mass(z, mass, A=75.4, d=-0.422, m=-0.089):
@@ -117,7 +70,7 @@ class HalosLens(object):
     :ivar halos_redshift_list: Redshifts of the Halos.
     :ivar mass_list: Masses of the Halos in solar masses.
     :ivar cosmo: Cosmology used for computations.
-    :ivar lens_model: LensModel with a NFW profile for each halo.
+    :ivar param_lens_model: LensModel with a NFW profile for each halo.
 
     :raises ValueError: If the input parameters are out of expected ranges.
 
@@ -126,12 +79,6 @@ class HalosLens(object):
 
     Methods
     -------
-    deg2_to_cone_angle(solid_angle_deg2)
-        Converts solid angle from square degrees to half cone angle in radians.
-
-    cone_radius_angle_to_physical_area(radius_rad, z, cosmo)
-        Converts cone radius angle to physical area at a specified redshift.
-
     concentration_from_mass(z, mass, A=75.4, d=-0.422, m=-0.089)
         Determines halo concentration from mass using Childs et al. 2018 model.
 
@@ -144,13 +91,13 @@ class HalosLens(object):
     random_position()
         Generates and returns random positions in the sky using a uniform distribution.
 
-    get_nfw_kwargs(z=None, mass=None, n_halos=None, lens_cosmo=None, c=None)
+    get_nfw_kwargs(z=None, mass=None, n_halos=None, param_lens_cosmo=None, c=None)
         Returns the angle at scale radius and observed bending angle at the scale radius for NFW profile.
 
     get_halos_lens_kwargs()
         Constructs and returns the list of keyword arguments for each halo in the lens model.
 
-    get_convergence_shear(gamma12=False, diff=1.0, diff_method='square`, kwargs=None, lens_model=None, zdzs=None)
+    get_convergence_shear(gamma12=False, diff=1.0, diff_method='square`, kwargs=None, param_lens_model=None, zdzs=None)
         Computes the convergence and shear at the origin due to all Halos.
 
     compute_kappa_gamma(i, gamma_tot, diff, diff_method)
@@ -207,16 +154,16 @@ class HalosLens(object):
     compute_kappa_in_bins()
         For computing a mass sheet correction. Computes the kappa values for each redshift bin.
 
-    xy_convergence(x, y, diff=0.0000001, diff_method='square`, kwargs=None, lens_model=None, zdzs=None)
+    xy_convergence(x, y, diff=0.0000001, diff_method='square`, kwargs=None, param_lens_model=None, zdzs=None)
         Computes the convergence (kappa) at given (x, y) coordinates.
 
-    compute_kappa(diff=0.0000001, num_points=500, diff_method='square`, kwargs=None, lens_model=None, mass_sheet=None, enhance_pos=False)
+    compute_kappa(diff=0.0000001, num_points=500, diff_method='square`, kwargs=None, param_lens_model=None, mass_sheet=None, enhance_pos=False)
         Computes the convergence (kappa) values over a grid and returns both the 2D kappa image and the 1D array of kappa values.
 
-    plot_convergence(diff=0.0000001, num_points=500, diff_method='square`, kwargs=None, lens_model=None, mass_sheet=None, enhance_pos=True)
+    plot_convergence(diff=0.0000001, num_points=500, diff_method='square`, kwargs=None, param_lens_model=None, mass_sheet=None, enhance_pos=True)
         Plots the convergence (:math:`\kappa`) across the lensed sky area.
 
-    compare_plot_convergence(diff=0.0000001, diff_method='square`, kwargs=None, lens_model=None)
+    compare_plot_convergence(diff=0.0000001, diff_method='square`, kwargs=None, param_lens_model=None)
         Compares and plots the convergence for different configurations of the mass sheet.
 
     total_halo_mass()
@@ -231,7 +178,7 @@ class HalosLens(object):
     mass_divide_kcrit()
         Divides the mass of each halo by the critical density to compute kappa_ext.
 
-    kappa_divergence(diff=0.0000001, num_points=500, diff_method='square`, kwargs=None, lens_model=None, mass_sheet=None)
+    kappa_divergence(diff=0.0000001, num_points=500, diff_method='square`, kwargs=None, param_lens_model=None, mass_sheet=None)
         Calculates the divergence of kappa values across a specified sky area.
     """
 
@@ -324,8 +271,8 @@ class HalosLens(object):
         # TODO: Set z_source as an input parameter or other way
 
     @property
-    def lens_cosmo(self):
-        """Lazy-load lens_cosmo."""
+    def param_lens_cosmo(self):
+        """Lazy-load param_lens_cosmo."""
         if self._lens_cosmo is None:
             self._lens_cosmo = [
                 LensCosmo(
@@ -338,8 +285,8 @@ class HalosLens(object):
         return self._lens_cosmo
 
     @property
-    def lens_model(self):
-        """Lazy-load lens_model."""
+    def param_lens_model(self):
+        """Lazy-load param_lens_model."""
         if self._lens_model is None:  # Only compute if not already done
             self._lens_model = self.get_lens_model()
         return self._lens_model
@@ -451,7 +398,7 @@ class HalosLens(object):
             mass = self.mass_list
         assert len(z) == len(mass)
         if lens_cosmo is None:
-            lens_cosmo = self.lens_cosmo
+            lens_cosmo = self.param_lens_cosmo
         if c is None:
             c = self.halos_list["c_200"]
         for h in range(n_halos):
@@ -482,7 +429,7 @@ class HalosLens(object):
             Rs_angle, alpha_Rs = self.get_nfw_kwargs()
             #    first_moment = self.mass_first_moment
             #    kappa = self.kappa_ext_for_mass_sheet(self.mass_sheet_correction_redshift,
-            #                                          self.lens_cosmo[-self.n_correction:], first_moment)
+            #                                          self.param_lens_cosmo[-self.n_correction:], first_moment)
             kappa = self.mass_sheet_kappa
             ra_0 = [0] * self.n_correction
             dec_0 = [0] * self.n_correction
@@ -548,7 +495,7 @@ class HalosLens(object):
         if kwargs is None:
             kwargs = self.get_halos_lens_kwargs()
         if lens_model is None:
-            lens_model = self.lens_model
+            lens_model = self.param_lens_model
         if zdzs is not None:
             f_xx, f_xy, f_yx, f_yy = lens_model.hessian_z1z2(
                 z1=zdzs[0],
@@ -1019,7 +966,7 @@ class HalosLens(object):
         :type lens_model_list: list of str
         :param kappa_ext_list: List of external convergence values.
         :type kappa_ext_list: list or array-like
-        :param lens_cosmo_list: List of lens_cosmo instances.
+        :param lens_cosmo_list: List of param_lens_cosmo instances.
         :type lens_cosmo_list: list
 
         :returns: A list of dictionaries, each containing the keyword arguments for each lens model.
@@ -1046,7 +993,7 @@ class HalosLens(object):
             lens_cosmo=lens_cosmo_list[:n_halos],
             c=c_200_halos,
         )
-        # TODO: different lens_cosmo ( for halos and sheet )
+        # TODO: different param_lens_cosmo ( for halos and sheet )
 
         if "CONVERGENCE" in lens_model_list:
             return [
@@ -1085,14 +1032,14 @@ class HalosLens(object):
         :param zs: The source redshift. It defines the upper bound of the redshift range.
         :type zs: float
         :return: A dictionary with three keys: `ds`, `od`, and `os`. Each key maps to a sub-dictionary containing:
-                 - `lens_model`: The lens model for the corresponding category.
-                 - `lens_cosmo`: The lens cosmology for the corresponding category.
+                 - `param_lens_model`: The lens model for the corresponding category.
+                 - `param_lens_cosmo`: The lens cosmology for the corresponding category.
                  - `kwargs_lens`: The lens keyword arguments for the corresponding category.
         :rtype: dict
 
         .. note::
-            lens_model_ds = lens_data['ds`]['lens_model`]
-            lens_cosmo_ds = lens_data['ds`]['lens_cosmo`]
+            lens_model_ds = lens_data['ds`]['param_lens_model`]
+            lens_cosmo_ds = lens_data['ds`]['param_lens_cosmo`]
             kwargs_lens_ds = lens_data['ds`]['kwargs_lens`]
              ... and similarly for `od` and `os` data
         """
@@ -1105,18 +1052,18 @@ class HalosLens(object):
 
         return {
             "ds": {
-                "lens_model": lens_model_ds,
-                "lens_cosmo": lens_cosmo_ds,
+                "param_lens_model": lens_model_ds,
+                "param_lens_cosmo": lens_cosmo_ds,
                 "kwargs_lens": kwargs_lens_ds,
             },
             "od": {
-                "lens_model": lens_model_od,
-                "lens_cosmo": lens_cosmo_od,
+                "param_lens_model": lens_model_od,
+                "param_lens_cosmo": lens_cosmo_od,
                 "kwargs_lens": kwargs_lens_od,
             },
             "os": {
-                "lens_model": lens_model_os,
-                "lens_cosmo": lens_cosmo_os,
+                "param_lens_model": lens_model_os,
+                "param_lens_cosmo": lens_cosmo_os,
                 "kwargs_lens": kwargs_lens_os,
             },
         }
@@ -1141,13 +1088,13 @@ class HalosLens(object):
         lens_data = self.get_lens_data_by_redshift(zd, zs)
 
         # Extracting lens model and kwargs for 'od' and 'os'
-        lens_model_od = lens_data["od"]["lens_model"]
+        lens_model_od = lens_data["od"]["param_lens_model"]
         kwargs_lens_od = lens_data["od"]["kwargs_lens"]
 
-        lens_model_os = lens_data["os"]["lens_model"]
+        lens_model_os = lens_data["os"]["param_lens_model"]
         kwargs_lens_os = lens_data["os"]["kwargs_lens"]
 
-        lens_model_ds = lens_data["ds"]["lens_model"]
+        lens_model_ds = lens_data["ds"]["param_lens_model"]
         kwargs_lens_ds = lens_data["ds"]["kwargs_lens"]
         kappa_od, gamma_od1, gamma_od2 = self.get_convergence_shear(
             gamma12=True, kwargs=kwargs_lens_od, lens_model=lens_model_od
@@ -1334,13 +1281,13 @@ class HalosLens(object):
         lens_data = self.get_lens_data_by_redshift(zd, zs)
 
         # Extracting lens model and kwargs for 'od' and 'os'
-        lens_model_od = lens_data["od"]["lens_model"]
+        lens_model_od = lens_data["od"]["param_lens_model"]
         kwargs_lens_od = lens_data["od"]["kwargs_lens"]
 
-        lens_model_os = lens_data["os"]["lens_model"]
+        lens_model_os = lens_data["os"]["param_lens_model"]
         kwargs_lens_os = lens_data["os"]["kwargs_lens"]
 
-        lens_model_ds = lens_data["ds"]["lens_model"]
+        lens_model_ds = lens_data["ds"]["param_lens_model"]
         kwargs_lens_ds = lens_data["ds"]["kwargs_lens"]
 
         kappa_od, gamma_od1, gamma_od2 = self.get_convergence_shear(
@@ -1528,7 +1475,7 @@ class HalosLens(object):
         """
 
         if lens_model is None:
-            lens_model = self.lens_model
+            lens_model = self.param_lens_model
         if kwargs is None:
             kwargs = self.get_halos_lens_kwargs()
         if zdzs is not None:
@@ -1569,7 +1516,7 @@ class HalosLens(object):
         :type diff_method: str, optional
         :param kwargs: The keyword arguments for the lens model. If None, it will use the class method `get_halos_lens_kwargs` to generate them. Defaults to None.
         :type kwargs: dict, optional
-        :param lens_model: The lens model to use. If None, it will use the class attribute `lens_model`. Defaults to None.
+        :param lens_model: The lens model to use. If None, it will use the class attribute `param_lens_model`. Defaults to None.
         :type lens_model: LensModel, optional
         :param mass_sheet: Specifies if the mass sheet correction should be applied. If not None, it will update the class attribute `mass_sheet`. Defaults to None.
         :type mass_sheet: bool, optional
@@ -1585,7 +1532,7 @@ class HalosLens(object):
         if kwargs is None:
             kwargs = self.get_halos_lens_kwargs()
         if lens_model is None:
-            lens_model = self.lens_model
+            lens_model = self.param_lens_model
 
         radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
         x = np.linspace(-radius_arcsec, radius_arcsec, num_points)
@@ -1821,7 +1768,7 @@ class HalosLens(object):
         # TODO: make it possible for other geometry model
         area = []
         sigma_crit = []
-        lens_cosmo = self.lens_cosmo[: self.n_halos]
+        lens_cosmo = self.param_lens_cosmo[: self.n_halos]
         for i in range(len(lens_cosmo)):
             sigma_crit.append(lens_cosmo[i].sigma_crit)
         for z_val in z:
@@ -1869,7 +1816,7 @@ class HalosLens(object):
         if kwargs is None:
             kwargs = self.get_halos_lens_kwargs()
         if lens_model is None:
-            lens_model = self.lens_model
+            lens_model = self.param_lens_model
 
         radius_arcsec = deg2_to_cone_angle(self.sky_area) * 206264.806
         x = np.linspace(-radius_arcsec / 2.0, radius_arcsec / 2.0, num_points)

@@ -412,21 +412,25 @@ def test_get_lens_data_by_redshift(setup_halos_lens):
     zs = 1.0
     lens_data = hl.get_lens_data_by_redshift(zd, zs)
     assert "ds" in lens_data
-    assert isinstance(lens_data["ds"]["lens_model"], LensModel)
-    assert isinstance(lens_data["ds"]["lens_cosmo"], list)
-    assert all(isinstance(item, LensCosmo) for item in lens_data["ds"]["lens_cosmo"])
+    assert isinstance(lens_data["ds"]["param_lens_model"], LensModel)
+    assert isinstance(lens_data["ds"]["param_lens_cosmo"], list)
+    assert all(
+        isinstance(item, LensCosmo) for item in lens_data["ds"]["param_lens_cosmo"]
+    )
     assert isinstance(lens_data["ds"]["kwargs_lens"], list)
     assert all(isinstance(item, dict) for item in lens_data["ds"]["kwargs_lens"])
 
     assert "od" in lens_data
-    assert lens_data["od"]["lens_model"] is None
-    assert lens_data["od"]["lens_cosmo"] is None
+    assert lens_data["od"]["param_lens_model"] is None
+    assert lens_data["od"]["param_lens_cosmo"] is None
     assert lens_data["od"]["kwargs_lens"] is None
 
     assert "os" in lens_data
-    assert isinstance(lens_data["os"]["lens_model"], LensModel)
-    assert isinstance(lens_data["os"]["lens_cosmo"], list)
-    assert all(isinstance(item, LensCosmo) for item in lens_data["os"]["lens_cosmo"])
+    assert isinstance(lens_data["os"]["param_lens_model"], LensModel)
+    assert isinstance(lens_data["os"]["param_lens_cosmo"], list)
+    assert all(
+        isinstance(item, LensCosmo) for item in lens_data["os"]["param_lens_cosmo"]
+    )
     assert isinstance(lens_data["os"]["kwargs_lens"], list)
     assert all(isinstance(item, dict) for item in lens_data["os"]["kwargs_lens"])
 

@@ -5,6 +5,13 @@ import warnings
 
 
 class LineOfSightDistribution:
+    """Class to read the joint and no nonlinear distributions from the H5 files.
+
+    From the H5 files, the class can retrieve kappa and gamma values from the H5 files
+    based on the source and lens redshifts for the resample of external convergence and
+    shear.
+    """
+
     correction_data = None
     no_nonlinear_correction_data = None
 

@@ -6,14 +6,14 @@ from slsim.Halos.halos import (
     number_density_at_redshift,
     growth_factor_at_redshift,
     halo_mass_at_z,
-    set_defaults,
+    set_defaults_halos,
     dndz_to_redshifts,
     dv_dz_to_dn_dz,
     dndz_to_N,
     v_per_redshift,
     redshift_halos_array_from_comoving_density,
     redshift_mass_sheet_correction_array_from_comoving_density,
-    number_for_certain_mass,
+    number_density_for_massf,
     kappa_ext_for_each_sheet,
     mass_first_moment_at_redshift,
 )
@@ -131,9 +131,9 @@ def test_growth_factor_at_redshift():
 def test_number_for_certain_mass():
     m = np.geomspace(1e12, 1e16, 200)
     massf = np.array([1] * 200)
-    cdf = number_for_certain_mass(massf, m)
+    cdf = number_density_for_massf(massf, m)
     massf2 = 2 * m
-    cdf2 = number_for_certain_mass(massf2, m)
+    cdf2 = number_density_for_massf(massf2, m)
     s = (1e16 - 1e12) * (1e16 + 1e12)
     assert cdf == pytest.approx(1e16 - 1e12, rel=0.001)
     assert cdf2 == pytest.approx(s, rel=0.001)
@@ -145,7 +145,7 @@ def test_defaults_set():
         m_max,
         resolution,
         cosmology,
-    ) = set_defaults()
+    ) = set_defaults_halos()
     assert m_min == 1e12
     assert m_max == 1e14
     assert resolution == 100

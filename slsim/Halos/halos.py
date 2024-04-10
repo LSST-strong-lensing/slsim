@@ -4,10 +4,10 @@ from colossus.cosmology import cosmology as colossus_cosmo
 from hmf.cosmology.growth_factor import GrowthFactor
 import numpy as np
 import warnings
-from astropy.units.quantity import Quantity
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
-from slsim.Halos.halos_lens import (
-    deg2_to_cone_angle,
+from slsim.Util.param_util import deg2_to_cone_angle
+from slsim.Util.astro_util import (
+    get_value_if_quantity,
     cone_radius_angle_to_physical_area,
 )
 
@@ -21,9 +21,9 @@ def colossus_halo_mass_function(m_200, cosmo, z, sigma8=0.81, ns=0.96, omega_m=N
     mass function, expressed as dn/dlnM, represents the number density of halos per log
     mass interval. Parameters sigma8 and ns can be specified to adjust the calculation.
 
-    :param m_200: Halo mass scale, in solar mass units divided by the Hubble parameter
+    :param m_200: Halo mass range, in solar mass units divided by the Hubble parameter
         (M_sun/h).
-    :param cosmo: Cosmology instance detailing the cosmological parameters.
+    :param cosmo: astropy.cosmology instance detailing the cosmological parameters.
     :param z: Redshift for evaluating the mass function.
     :param sigma8: matter density fluctuations on a (8 h-1 Mpc), defaults to 0.81 if not
         specified.
@@ -67,27 +67,6 @@ def colossus_halo_mass_function(m_200, cosmo, z, sigma8=0.81, ns=0.96, omega_m=N
     # in h^3*Mpc-3
     massf = mfunc_h3_dmpc3 * h3  # in Mpc-3
     return massf
-
-
-def get_value_if_quantity(variable):
-    """Extracts the numerical value from an astropy Quantity object or returns the input
-    if not a Quantity.
-
-    This function checks if the input variable is an instance of an astropy Quantity. If
-    it is, the function extracts and returns the numerical value of the Quantity. If the
-    input is not a Quantity, it returns the input variable unchanged.
-
-    :param variable: The variable to be checked and possibly converted. Can be an
-        astropy Quantity or any other data type.
-    :type variable: Quantity or any
-    :return: The numerical value of the Quantity if the input is a Quantity; otherwise,
-        the input variable itself.
-    :rtype: float or any
-    """
-    if isinstance(variable, Quantity):
-        return variable.value
-    else:
-        return variable
 
 
 def colossus_halo_mass_sampler(
@@ -151,7 +130,7 @@ def colossus_halo_mass_sampler(
     return np.interp(n_uniform, CDF, m) / cosmology.h
 
 
-def set_defaults(
+def set_defaults_halos(
     m_min=None,
     m_max=None,
     resolution=None,
@@ -233,7 +212,7 @@ def number_density_at_redshift(
         (M_sol). Optional, with a default value if not provided.
     :param resolution: Number of mass bins for integrating the mass function. Optional,
         defaults to a predetermined value.
-    :param cosmology: Cosmology instance for the underlying cosmological model.
+    :param cosmology: astropy.cosmology instance for the underlying cosmological model.
         Optional, defaults to a standard model if not provided.
     :param sigma8: Normalization of the power spectrum, optional, with a default value
         if not specified.
@@ -259,7 +238,7 @@ def number_density_at_redshift(
         m_max,
         resolution,
         cosmology,
-    ) = set_defaults(
+    ) = set_defaults_halos(
         m_min,
         m_max,
         resolution,
@@ -276,17 +255,34 @@ def number_density_at_redshift(
         massf = colossus_halo_mass_function(
             m_200, cosmology, zi, sigma8=sigma8, ns=ns, omega_m=omega_m
         )
-        total_number_density = number_for_certain_mass(massf, m_200, dndlnM=True)
+        total_number_density = number_density_for_massf(massf, m_200, dndlnM=True)
         cdfs.append(total_number_density)
     return cdfs
 
 
-def number_for_certain_mass(massf, m, dndlnM=False):
-    # massf:Mpc-3 Msun-1
-    # output: number per Mpc3 at certain redshift
+def number_density_for_massf(massf, m, dndlnM=False):
+    """Calculate the total number density of halos per cubic megaparsec (Mpc^3) at a
+    certain redshift.
+
+    This function integrates the mass function (massf) over a given mass range (m) to compute the total
+    number density of halos. It can operate in two modes depending on the `dndlnM` flag: when `dndlnM` is
+    True, it assumes `massf` represents the differential number density dN/dlnM; otherwise, it treats
+    `massf` as the differential number density dN/dM.
+
+    :param massf: The halo mass function, representing either dN/dM or dN/dlnM, depending on the
+        value of `dndlnM`. Units are Mpc^-3 Msun^-1.
+    :type massf: ndarray
+    :param m: Array of halo masses (M_sun) over which to integrate the mass function. Must be the
+        same length as `massf`.
+    :type m: ndarray
+    :param dndlnM: Flag indicating whether `massf` is given as dN/dlnM (True) or dN/dM (False).
+        Optional, defaults to False.
+    :type dndlnM: bool, optional
+
+    :return: The total number density of halos per cubic megaparsec (Mpc^3) at the specified redshift.
+    :rtype: float
+    """
     if dndlnM:
-        # massf: dm/dlnM200 Mpc-3
-        # output: number per Mpc3 at certain redshift
         return integrate.trapz(massf, np.log(m))
     else:
         return integrate.trapz(massf * m, np.log(m))
@@ -295,14 +291,12 @@ def number_for_certain_mass(massf, m, dndlnM=False):
 def growth_factor_at_redshift(z, cosmology):
     """Determine the growth factor at specified redshift(s).
 
-    Calculates the growth of structure over cosmic time by evaluating the growth factor
-    at given redshift(s). This is crucial for understanding how density fluctuations
-    evolve in the universe.
+    Calculates the  growth factor at given redshift(s).
 
     :param z: Redshift(s) at which to evaluate the growth factor, can be a single value
         or an array.
-    :param cosmology: Cosmology instance dictating the universe's expansion history and
-        other relevant parameters.
+    :param cosmology: astropy.cosmology instance dictating the universe's expansion
+        history and other relevant parameters.
     :type z: float, array_like, or list
     :type cosmology: astropy.Cosmology instance
     :return: Growth factor at the specified redshift(s), as a float (for scalar z) or
@@ -412,7 +406,7 @@ def dv_dz_to_dn_dz(
     :param resolution: The granularity of the grid used in the underlying mass function
         calculation, with a higher resolution offering more detailed insights. This
         parameter is optional, with a default value if omitted.
-    :param cosmology: The cosmological model applied to the calculation, influencing the
+    :param cosmology: The astropy.cosmology model applied to the calculation, influencing the
         interpretation of redshifts and distances. This parameter is optional, with a
         default cosmology assumed if not specified.
     :param sigma8: Normalization parameter for the power spectrum, influencing the
@@ -516,7 +510,7 @@ def v_per_redshift(redshift_list, cosmology, sky_area):
     This function computes the comoving volume associated with each redshift in a given list of redshifts. The calculation considers the cosmological model specified and the area of the sky under consideration. This is crucial for understanding the volume over which astronomical surveys operate at different depths (redshifts).
 
     :param redshift_list: Array of redshifts for which to calculate the corresponding comoving volumes, representing the depth of an astronomical survey or observation.
-    :param cosmology: The cosmological model to apply, which defines the universe's geometry and expansion history, influencing the calculation of comoving volumes. This parameter is optional, with a default cosmology used if not specified.
+    :param cosmology: The astropy.cosmology model to apply, which defines the universe's geometry and expansion history, influencing the calculation of comoving volumes. This parameter is optional, with a default cosmology used if not specified.
     :param sky_area: The area of the sky over which the volume calculations are to be applied, expressed in square degrees or as a solid angle, framing the scope of the astronomical observation or survey.
     :type redshift_list: array_like
     :type cosmology: astropy.Cosmology instance, optional
@@ -555,7 +549,7 @@ def halo_mass_at_z(
     :param resolution: Resolution of the computational grid. Defaults to a predetermined
         value if not specified.
     :type resolution: int, optional
-    :param cosmology: Cosmology instance to be used in calculations. Defaults to a
+    :param cosmology: astropy.cosmology instance to be used in calculations. Defaults to a
         predetermined cosmology if not specified.
     :type cosmology: astropy.cosmology instance, optional
     :param sigma8: Sigma8 parameter for the power spectrum normalization. Defaults to
@@ -576,7 +570,7 @@ def halo_mass_at_z(
         m_max,
         resolution,
         cosmology,
-    ) = set_defaults(
+    ) = set_defaults_halos(
         m_min,
         m_max,
         resolution,
@@ -642,11 +636,11 @@ def kappa_ext_for_each_sheet(redshift_list, first_moment, sky_area, cosmology):
 
     :param redshift_list: Redshifts of the lens planes for which kappa_ext is calculated.
     :type redshift_list: list or ndarray
-    :param first_moment: First moment of mass for each redshift in the redshift_list.
+    :param first_moment: First moment (expected value) of mass for each redshift in the redshift_list.
     :type first_moment: list or ndarray
     :param sky_area: Area of the sky in square degrees under consideration for the lensing calculation.
     :type sky_area: `~astropy.units.Quantity`
-    :param cosmology: Cosmology instance used for the calculation.
+    :param cosmology: astropy.cosmology instance used for the calculation.
     :type cosmology: astropy.cosmology instance
     :return: Array of kappa_ext values for each redshift in the redshift_list.
     :rtype: ndarray
@@ -696,7 +690,7 @@ def mass_first_moment_at_redshift(
     :param resolution: Resolution of the computational grid for the mass integration. Defaults to a
         predetermined value if not specified.
     :type resolution: int, optional
-    :param cosmology: Cosmology instance to be used in calculations. Defaults to a
+    :param cosmology: astropy.cosmology instance to be used in calculations. Defaults to a
         predetermined cosmology if not specified.
     :type cosmology: astropy.cosmology instance, optional
     :param sigma8: Sigma8. Defaults to
@@ -716,7 +710,7 @@ def mass_first_moment_at_redshift(
         m_max,
         resolution,
         cosmology,
-    ) = set_defaults(m_min, m_max, resolution, cosmology)
+    ) = set_defaults_halos(m_min, m_max, resolution, cosmology)
     m2_list = []
     for zi in z:
         redshift_list = np.linspace(zi - 0.025, zi + 0.025, 20)
