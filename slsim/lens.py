@@ -689,6 +689,7 @@ class Lens(LensedSystemBase):
         all_source_kwarg_dict["kwargs_ps"] = kwargs_ps
         return source_models, all_source_kwarg_dict
 
+
 def image_separation_from_positions(image_positions):
     """Calculate image separation in arc-seconds; if there are only two images, the
     separation between them is returned; if there are more than 2 images, the maximum
