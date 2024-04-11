@@ -20,7 +20,7 @@ def test_update_coolest_from_lenstronomy_slsim():
     result = update_coolest_from_lenstronomy_slsim(
         lens_class, test_path, test_file_name, test_band, test_mag_zero_point
     )
-    assert result == None
+    assert result is None
 
 
 def test_create_lenstronomy_slsim_from_coolest():
