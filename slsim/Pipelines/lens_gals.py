@@ -1,7 +1,6 @@
 import numpy as np
 from colossus.halo import mass_so
 from collections import OrderedDict
-import gen_mock_halo
 import solve_lenseq
 
 class GalaxySizeModel():
@@ -297,13 +296,3 @@ def stellarmass_halomass(Mh, z, pa, frac_SM_IMF=1.715):
     return 10**stellarm*frac_SM_IMF
 
 
-#
-# for checks
-#
-if __name__ == '__main__':
-    cosmo = gen_mock_halo.init_cosmo()
-    mh = 1e14
-    z = 0.5
-    paramc, params = gals_init(TYPE_SMHM="true")
-    mcen = stellarmass_halomass(mh, z, paramc, 1.715)
-    print(galaxy_size(mh, mcen, z, cosmo, model="vdW23", q_out="tb"))

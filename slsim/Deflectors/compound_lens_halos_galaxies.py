@@ -87,7 +87,7 @@ class CompoundLensHalosGalaxies(DeflectorsBase):
             reff = (theta_eff*cosmo.angular_diameter_distance(deflector['z'])*constants.arcsec).value  # physical Mpc
             hubble = cosmo.H0.value/100.
             vel_disp = vel_disp_composite_model(
-                theta_eff, deflector['m_gal']/(hubble), reff, max(deflector['m_halo'],deflector['m_acc'])/(hubble),deflector['con'], cosmo,  deflector['z'])
+                theta_eff, deflector['stellar_mass']/(hubble), reff, max(deflector['halo_mass'],deflector['m_acc'])/(hubble),deflector['concentration'], cosmo,  deflector['z'])
             deflector["vel_disp"] = vel_disp
         if deflector["mag_g"] == -1 or deflector["mag_r"] or  deflector["mag_i"] == -1 or deflector["mag_z"] or deflector["mag_Y"] == -1:
             mag_g, mag_r, mag_i, mag_z, mag_Y = 0,0,0,0,0 # TODO: make function if needed
@@ -102,7 +102,7 @@ class CompoundLensHalosGalaxies(DeflectorsBase):
         return deflector
 
 
-def elliptical_projected_eccentricity_galaxy(elip_lens_gal, **kwargs): #TODO: add row of elip_lens_gal if needed
+def elliptical_projected_eccentricity_galaxy(e_g, **kwargs): #TODO: add row of e_gal if needed
     """Projected eccentricity of elliptical galaxies as a function of other deflector
     parameters.
 
@@ -112,7 +112,7 @@ def elliptical_projected_eccentricity_galaxy(elip_lens_gal, **kwargs): #TODO: ad
     :type kwargs: dict
     :return: e1_light, e2_light,e1_mass, e2_mass eccentricity components
     """
-    ellipticity = elip_lens_gal
+    ellipticity = e_g
     e_light = param_util.epsilon2e(ellipticity)
     phi_light = np.random.uniform(0, np.pi)
     e1_light = e_light * np.cos(phi_light)

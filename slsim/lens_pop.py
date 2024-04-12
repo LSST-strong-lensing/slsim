@@ -26,6 +26,7 @@ class LensPop(LensedPopulationBase):
         kwargs_variability=None,
         kwargs_mass2light=None,
         skypy_config=None,
+        slhammocks_config=None, #by KTA
         sky_area=None,
         filters=None,
         cosmo=None,
@@ -143,9 +144,9 @@ class LensPop(LensedPopulationBase):
             from slsim.Pipelines.sl_hammocks_pipeline import SLHammocksPipeline
 
             halo_galaxy_list = SLHammocksPipeline(
-                slhammocks_config=None,
+                slhammocks_config=slhammocks_config,
                 sky_area=sky_area,
-                cosmo=cosmo,
+                cosmo=cosmo
             )
             # print(halo_galaxy_list._pipeline)
 

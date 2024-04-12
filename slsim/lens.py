@@ -113,9 +113,8 @@ class Lens(LensedSystemBase):
             )
             warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
 
-        print(self.deflector.redshift)
         self._lens_cosmo = LensCosmo(
-            z_lens=float(self.deflector.redshift),
+            z_lens=float(self.deflector.redshift), # TODO check KTA
             z_source=float(self.source.redshift),
             cosmo=self.cosmo,
         )

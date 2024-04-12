@@ -1,72 +1,6 @@
 import numpy as np
 import scipy.stats as st
-import gen_mock_halo
-import solve_lenseq_glafic
-import global_value as g
 # import solve_lenseq_lenstronomy
-
-def calc_image(lens_par, srcs_par, ein, rt_range, flag_mag, cosmo):
-    """
-    This function calculates various parameters related to an image.
-
-    Parameters:
-    - lens_par (list): List containing lens parameters
-    - srcs_par (list): List containing source parameters
-    - ein: Value of Einstein radius in units of [arcsec]
-    - rt_range: ratio that means the margin of the calculation area
-    - flag_mag: Flag for magnitude
-    - cosmo: Cosmological model in Colossus
-
-    Returns:
-    - out_img (ndarray): return of the ``point_solve" function in glafic
-    - nim: Number of images
-    - sep: maximum separation between images in units of [arcsec]
-    - mag: magnitude of the first arrival image
-    - mag_max: maximum magnitude
-    - fr: Ratio of flux for 2-, 3- imgs lens
-    - kapgam (list): convergence, external shear, and stellar convergence
-    """
-
-    out_img, kapgam = solve_lenseq_glafic.solve_lenseq_glafic(
-        lens_par, srcs_par, ein, rt_range, cosmo)
-
-    nim = len(out_img)
-
-    if nim == 1:
-        n = 0.0
-        a = []
-        return out_img, nim, n, out_img[0][2], out_img[0][2], n, kapgam
-    if nim < 1:
-        n = 0.0
-        a = []
-        return out_img, nim, n, n, n, n, a
-
-    xi, yi, mi = [], [], []
-    for i in range(nim):
-        xi.append(out_img[i][0])
-        yi.append(out_img[i][1])
-        mi.append(abs(out_img[i][2]))
-
-    mi.sort(reverse=True)
-    mag_tot = sum(mi)
-    mag_max = max(mi)
-
-    si = []
-    for i in range(nim - 1):
-        for j in range(i + 1, nim):
-            si.append(((xi[i] - xi[j]) ** 2) + ((yi[i] - yi[j]) ** 2))
-    sep = np.sqrt(max(si))
-
-    if flag_mag > 0:
-        ii = min(flag_mag, nim-1)
-        ii = max(ii, 2)
-        mag = mi[ii - 1]
-    else:
-        mag = mag_tot
-
-    fr = mi[1] / mi[0] if nim in [2, 3] else 1.0
-
-    return out_img, nim, sep, mag, mag_max, fr, kapgam
 
 
 def gene_e(n):
@@ -124,11 +58,3 @@ def set_shear(z):
     tgg = gene_ang(1)[0]
     return gg, tgg
 
-
-#
-# for checks
-#
-if __name__ == '__main__':
-    cosmo = gen_mock_halo.init_cosmo()
-    print(cosmo.Om0, round(1.0+g.nonflat-cosmo.Om0, 5),
-          g.cosmo_weos, round(cosmo.H0/100., 5))

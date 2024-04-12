@@ -17,32 +17,15 @@ class NFWHernquist(DeflectorBase):
     - 'e2_light': eccentricity of light
     - 'z': redshift of deflector
     """
-
     def velocity_dispersion(self, cosmo=None):
-        """Velocity dispersion of deflector. Simplified assumptions on anisotropy and
-        averaged over the half-light radius.
+        """Velocity dispersion of deflector.
 
         :param cosmo: cosmology
         :type cosmo: ~astropy.cosmology class
         :return: velocity dispersion [km/s]
         """
-        # convert radian to arc seconds
-        size_lens_arcsec = self.angular_size_light / constants.arcsec
 
-        m_halo, c_halo = self.halo_properties
-        # convert angular size to physical size
-        dd = cosmo.angular_diameter_distance(self.redshift).value
-        rs_star = dd * self.angular_size_light
-        vel_disp = vel_disp_composite_model(
-            r=size_lens_arcsec,
-            m_star=self.stellar_mass,
-            rs_star=rs_star,
-            m_halo=m_halo,
-            c_halo=c_halo,
-            cosmo=cosmo,
-            z_lens=self.redshift,
-        )
-        return vel_disp
+        return self._deflector_dict["vel_disp"]
 
     def light_model_lenstronomy(self, band=None):
         """Returns lens model instance and parameters in lenstronomy conventions.
@@ -78,6 +61,7 @@ class NFWHernquist(DeflectorBase):
     def halo_properties(self):
         """Properties of the NFW halo.
 
-        :return: halo mass M200 [physical M_sol], concentration r200/rs
+        :return: halo virial mass Mvir [physical M_sol], concentration rvir/rs
+        (In SL-hammock code, we now adopt the FOF mass definition, but treat it as the virial mass)
         """
         return self._deflector_dict["halo_mass"], self._deflector_dict["concentration"]

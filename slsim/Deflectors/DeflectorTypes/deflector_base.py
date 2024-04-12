@@ -37,7 +37,7 @@ class DeflectorBase(ABC):
         pass
 
     @property
-    def deflector_center(self):
+    def deflector_center(self): # TODO check
         """Center of the deflector position.
 
         :return: [x_pox, y_pos] in arc seconds
