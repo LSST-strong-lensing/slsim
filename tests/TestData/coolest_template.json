@@ -4,7 +4,7 @@
     "ra": "00h00m00s"
   },
   "cosmology": {
-    "H0": 78.0,
+    "H0": 70.0,
     "Om0": 0.3,
     "astropy_name": "FlatLambdaCDM"
   },
