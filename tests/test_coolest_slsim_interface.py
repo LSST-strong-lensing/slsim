@@ -30,7 +30,7 @@ def supernovae_lens_instance():
                 sn_absolute_mag_band="bessellb",
                 sn_absolute_zpsys="ab",
                 cosmo=cosmo,
-                source_type="supernovae_plus_galaxies",
+                source_type="point_plus_extended",
                 light_profile="double_sersic",
                 lightcurve_time=np.linspace(
         -20, 100, 1000
