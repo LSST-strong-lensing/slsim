@@ -4,6 +4,7 @@ from lenstronomy.Util.coolest_interface import (
 )
 from slsim.Util.param_util import magnitude_to_amplitude, amplitude_to_magnitude
 
+
 def update_coolest_from_slsim(
     lens_class, path, file_name, band=None, mag_zero_point=27, ending="_update"
 ):
@@ -68,8 +69,8 @@ def create_slsim_from_coolest(path, file_name, mag_zero_point=27):
 
     :param path: path to the .json file that need to be updated
     :param file_name: name of the .json file without .json extension
-    :return: dictionary of lenstronomy_kwargs for slsim. It contains lens_light_model, 
-     lens_mass_model, source_light_model, point_source_model.
+    :return: dictionary of lenstronomy_kwargs for slsim. It contains lens_light_model,
+        lens_mass_model, source_light_model, point_source_model.
     """
     kwargs_out = create_lenstronomy_from_coolest(path + file_name)
     kwargs_result = kwargs_out["kwargs_result"]
