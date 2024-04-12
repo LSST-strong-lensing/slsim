@@ -6,7 +6,6 @@ from slsim.Util import param_util
 from slsim.Deflectors.deflectors_base import DeflectorsBase
 from lenstronomy.Util import constants
 
-
 class CompoundLensHalosGalaxies(DeflectorsBase):
     """Class describing compound lens model based on the halo model."""
 
@@ -51,10 +50,6 @@ class CompoundLensHalosGalaxies(DeflectorsBase):
         if "e1_mass" not in column_names or "e2_mass" not in column_names:
             halo_galaxy_list["e1_mass"] = -np.ones(n)
             halo_galaxy_list["e2_mass"] = -np.ones(n)
-        # TODO: check
-
-        # num_total = len(halo_galaxy_list)
-        # z_min, z_max = 0, np.max(halo_galaxy_list["z"])
 
         self._galaxy_select = deflector_cut(halo_galaxy_list, **kwargs_cut)
         # Currently only supporting redshift cut
@@ -80,21 +75,20 @@ class CompoundLensHalosGalaxies(DeflectorsBase):
 
         cosmo = self._cosmo
         index = random.randint(0, self._num_select - 1)
-        deflector_ori = self._galaxy_select.iloc[index]
-        deflector = deflector_ori.copy()
+        deflector = self._galaxy_select[index]
         if deflector["vel_disp"] == -1:
             theta_eff = deflector['tb']/0.551 # [arcsec]
             reff = (theta_eff*cosmo.angular_diameter_distance(deflector['z'])*constants.arcsec).value  # physical Mpc
             hubble = cosmo.H0.value/100.
             vel_disp = vel_disp_composite_model(
-                theta_eff, deflector['stellar_mass']/(hubble), reff, max(deflector['halo_mass'],deflector['m_acc'])/(hubble),deflector['concentration'], cosmo,  deflector['z'])
+                theta_eff, deflector['stellar_mass']/(hubble), reff, max(deflector['halo_mass'],deflector['halo_mass_acc'])/(hubble),deflector['concentration'], cosmo,  deflector['z'])
             deflector["vel_disp"] = vel_disp
         if deflector["mag_g"] == -1 or deflector["mag_r"] or  deflector["mag_i"] == -1 or deflector["mag_z"] or deflector["mag_Y"] == -1:
             mag_g, mag_r, mag_i, mag_z, mag_Y = 0,0,0,0,0 # TODO: make function if needed
         if deflector["e1_light"] == -1 or deflector["e2_light"] == -1:
             e1_light, e2_light, e1_mass, e2_mass = elliptical_projected_eccentricity_galaxy(
                 **deflector
-            ) # TODO: make function if needed
+            ) # TODO: check
             deflector["e1_light"] = e1_light
             deflector["e2_light"] = e2_light
             deflector["e1_mass"] = e1_mass
@@ -102,12 +96,12 @@ class CompoundLensHalosGalaxies(DeflectorsBase):
         return deflector
 
 
-def elliptical_projected_eccentricity_galaxy(e_g, **kwargs): #TODO: add row of e_gal if needed
+def elliptical_projected_eccentricity_galaxy(e_g, **kwargs):
     """Projected eccentricity of elliptical galaxies as a function of other deflector
     parameters.
 
-    :param ellipticity: eccentricity amplitude
-    :type ellipticity: float [0,1)
+    :param e_g: eccentricity amplitude of galaxy
+    :type e_g: float [0,1)
     :param kwargs: deflector properties
     :type kwargs: dict
     :return: e1_light, e2_light,e1_mass, e2_mass eccentricity components

@@ -26,7 +26,7 @@ class LensPop(LensedPopulationBase):
         kwargs_variability=None,
         kwargs_mass2light=None,
         skypy_config=None,
-        slhammocks_config=None, #by KTA
+        slhammocks_config=None,
         sky_area=None,
         filters=None,
         cosmo=None,
@@ -58,6 +58,8 @@ class LensPop(LensedPopulationBase):
         :type kwargs_variability: list of str
         :param skypy_config: path to SkyPy configuration yaml file
         :type skypy_config: string
+        :param slhammocks_config: path to the deflector population csv file for 'halo-model'
+        :type slhammocks_config: string
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
         :type sky_area: `~astropy.units.Quantity`
@@ -148,7 +150,6 @@ class LensPop(LensedPopulationBase):
                 sky_area=sky_area,
                 cosmo=cosmo
             )
-            # print(halo_galaxy_list._pipeline)
 
             self._lens_galaxies = CompoundLensHalosGalaxies(
                 halo_galaxy_list=halo_galaxy_list._pipeline,

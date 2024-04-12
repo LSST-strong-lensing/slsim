@@ -1,5 +1,5 @@
 import os
-import pandas as pd
+from astropy.table import Table
 import numpy as np
 from lenstronomy.Util import constants
 
@@ -14,9 +14,9 @@ class SLHammocksPipeline:
 
     def __init__(self, slhammocks_config=None, sky_area=None, cosmo=None):
         """
-        :param slhammmocks_config: path to SkyPy configuration yaml file.
-                            If None, uses 'data/SkyPy/lsst-like.yml'.
-        :type slhammmocks_config: string or None
+        :param slhammocks_config: path to the deflector population csv file for 'halo-model'
+                            If None, generate the population. Not supported at this time.
+        :type slhammocks_config: string or None
         :type sky_area: `~astropy.units.Quantity`
         :param sky_area: Sky area over which galaxies are sampled.
                                 Must be in units of solid angle.
@@ -26,35 +26,28 @@ class SLHammocksPipeline:
                         (e.g., FlatLambdaCDM(H0=70, Om0=0.3)).
         :type cosmo: astropy.cosmology instance or None
         """
-        if slhammocks_config!=None:
-            # path = os.getcwd()
-            # if slhammocks_config is None:
-            #     slhammocks_config = os.path.join(path, "../data/SL-Hammocks/gal_pop_Salpeter_10deg2_zl2.csv")
-
-            df = pd.read_csv(slhammocks_config)
-            # mlens_halo = np.where(df["mass_sh"]==-1, df["mass_hh"], df["mass_sh"])
-            # mlens_gal = np.where(df["mass_sh"]==-1, df["mass_cen"], df["mass_sat"])
-            # lens_con = np.where(df["mass_sh"]==-1, df["param1_hh"], df["param1_sh"])
-            # lens_tb = np.where(df["mass_sh"]==-1, df["param1_cen"], df["param1_sat"])
-            # elip_lens_gal = np.where(df["mass_sh"]==-1, df["elip_cen"], df["elip_sat"])
-            # df["mlens_halo"]=mlens_halo
-            # df["mlens_gal"]=mlens_gal
-            # df["lens_tb"]=lens_tb
-            # df["lens_con"]=lens_con
-            # df["elip_lens_gal"] = elip_lens_gal
-            # df = df.rename(columns={'zl_hh': 'z'})
-            df = df.rename(columns={'zl': 'z'})
-            df = df.rename(columns={'con': 'concentration'})
-            df = df.rename(columns={'m_g': 'stellar_mass'})
-            df = df.rename(columns={'m_h': 'halo_mass'})
-            df['angular_size']=df['tb']/0.551*constants.arcsec
+        if slhammocks_config is not None:
+            table = Table.read(slhammocks_config, format='csv')
+            table.rename_column('zl', 'z')
+            table.rename_column('con', 'concentration')
+            table.rename_column('m_g', 'stellar_mass')
+            table.rename_column('m_h', 'halo_mass')
+            table.rename_column('m_acc', 'halo_mass_acc')
+            angular_size_in_deg = table['tb']/0.551*constants.arcsec
+            table.add_column(angular_size_in_deg, name='angular_size')
+            # df = pd.read_csv(slhammocks_config)
+            # df = df.rename(columns={'zl': 'z'})
+            # df = df.rename(columns={'con': 'concentration'})
+            # df = df.rename(columns={'m_g': 'stellar_mass'})
+            # df = df.rename(columns={'m_h': 'halo_mass'})
+            # df['angular_size']=df['tb']/0.551*constants.arcsec
 
             data_area = 10.0 #deg2
             if(sky_area.value>10.0):
                 print("Now sky_area should be lower than 10. Now we set sky_area=10.0.")
             thinp = int((data_area/sky_area).value)
 
-            self._pipeline = df[::thinp]
+            self._pipeline = table[::thinp]
         else:
             kwargs_population_base = {
                 'z_min': 0.01,
@@ -75,38 +68,9 @@ class SLHammocksPipeline:
                 'switch_sub': False
                 }
             from colossus.cosmology import cosmology
-            # kwargs_population = update_dict_values(kwargs_population_base, **kwargs_population)
             cosmo_col = cosmology.setCosmology('planck18')
 
-            # population_dict = compound_model_population_dictionary(kwargs_population)
             self._pipeline = halo_galaxy_population(sky_area,cosmo_col,**kwargs_population_base)
-
-    # @property
-    # def central_galaxies(self):
-
-    #     """Skypy pipeline for blue galaxies.
-
-    #     :return: list of blue galaxies
-    #     :rtype: list of dict
-    #     """
-    #     return self._pipeline[self._pipeline["mass_sh"]==-1]
-
-    # @property
-    # def satellite_galaxies(self):
-    #     """Skypy pipeline for red galaxies.
-
-    #     :return: list of red galaxies
-    #     :rtype: list of dict
-    #     """
-    #     return self._pipeline[self._pipeline["mass_sh"]!=-1]
-
-def update_dict_values(original_dict, **kwargs):
-    for key, value in kwargs.items():
-        if key in original_dict:
-            original_dict[key] = value
-        else:
-            print(f"Key '{key}' not found in the dictionary")
-    return original_dict
 
 def halo_galaxy_population(sky_area,cosmo_col,z_min,z_max,log10host_halo_mass_min,log10host_halo_mass_max,
                            log10subhalo_mass_min, sigma_host_halo_concentration, sigma_subhalo_concentration,
@@ -161,8 +125,8 @@ def halo_galaxy_population(sky_area,cosmo_col,z_min,z_max,log10host_halo_mass_mi
         halo_gal_pop_array = np.append(halo_gal_pop_array, halogal_par_mat, axis=0)
 
         halo_gal_pop_array = np.append(halo_gal_pop_array, halogal_par_mat, axis=0)
-    columns_pop = ["z", "halo_mass", "halo_mass_acc", "e_h" , "p_h", "concentration", "stellar_mass", "e_g", "p_g", "tb"]
-    data_frame_pop = pd.DataFrame(halo_gal_pop_array)
-    data_frame_pop.columns =columns_pop
 
-    return data_frame_pop
+    columns_pop = ["z", "halo_mass", "halo_mass_acc", "e_h" , "p_h", "concentration", "stellar_mass", "e_g", "p_g", "tb"]
+    table_pop = Table(halo_gal_pop_array, names=columns_pop)
+
+    return table_pop

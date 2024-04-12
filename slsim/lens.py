@@ -114,7 +114,7 @@ class Lens(LensedSystemBase):
             warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
 
         self._lens_cosmo = LensCosmo(
-            z_lens=float(self.deflector.redshift), # TODO check KTA
+            z_lens=float(self.deflector.redshift),
             z_source=float(self.source.redshift),
             cosmo=self.cosmo,
         )
@@ -297,7 +297,7 @@ class Lens(LensedSystemBase):
                     float(self.deflector.velocity_dispersion(cosmo=self.cosmo))
                 )
             else:
-                # numerical solution for the Einstein radius
+                # numerical solution for the Einstein radius #TODO check
                 lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
                 lens_model = LensModel(lens_model_list=lens_model_list)
                 lens_analysis = LensProfileAnalysis(lens_model=lens_model)
