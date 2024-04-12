@@ -52,7 +52,7 @@ class SLHammocksPipeline:
             kwargs_population_base = {
                 'z_min': 0.01,
                 'z_max': 5.0,
-                'log10host_halo_mass_min': 11.,
+                'log10host_halo_mass_min': 11.0,
                 'log10host_halo_mass_max': 16.,
                 'log10subhalo_mass_min' : 10.,
                 # Intrinsic scatter (https://arxiv.org/abs/astro-ph/0608157)
@@ -70,7 +70,11 @@ class SLHammocksPipeline:
             from colossus.cosmology import cosmology
             cosmo_col = cosmology.setCosmology('planck18')
 
-            self._pipeline = halo_galaxy_population(sky_area,cosmo_col,**kwargs_population_base)
+            table = halo_galaxy_population(sky_area,cosmo_col,**kwargs_population_base)
+            angular_size_in_deg = table['tb']/0.551*constants.arcsec
+            table.add_column(angular_size_in_deg, name='angular_size')
+            self._pipeline = table
+
 
 def halo_galaxy_population(sky_area,cosmo_col,z_min,z_max,log10host_halo_mass_min,log10host_halo_mass_max,
                            log10subhalo_mass_min, sigma_host_halo_concentration, sigma_subhalo_concentration,
@@ -121,8 +125,6 @@ def halo_galaxy_population(sky_area,cosmo_col,z_min,z_max,log10host_halo_mass_mi
         tb_cen = lens_gals.galaxy_size(Mhosthl_tab_re, Mcenl_tab/frac_SM_IMF, zl_tab, cosmo_col, model=TYPE_GAL_SIZE, scatter=True, sig_tb=sig_tb)
         halogal_par_mat = np.hstack((zl_tab.reshape(-1, 1), Mhosthl_tab_re.reshape(-1, 1), np.zeros_like(Mhosthl_tab).reshape(-1, 1), eliphl_tab.reshape(-1, 1), polarhl_tab.reshape(-1, 1), conhl_tab.reshape(-1, 1),
                                         Mcenl_tab.reshape(-1, 1), elipcenl.reshape(-1, 1), polarcenl.reshape(-1, 1), tb_cen.reshape(-1, 1)))
-
-        halo_gal_pop_array = np.append(halo_gal_pop_array, halogal_par_mat, axis=0)
 
         halo_gal_pop_array = np.append(halo_gal_pop_array, halogal_par_mat, axis=0)
 
