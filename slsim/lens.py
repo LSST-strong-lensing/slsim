@@ -361,7 +361,7 @@ class Lens(LensedSystemBase):
             gamma2 = gamma * np.sin(2 * phi)
             self._gamma = [gamma1, gamma2]
         if not hasattr(self, "_kappa"):
-            self._kappa = np.random.normal(loc=0, scale=0.05)
+            self._kappa = abs(np.random.normal(loc=0, scale=0.05))
         return self._gamma[0], self._gamma[1], self._kappa
 
     def deflector_magnitude(self, band):
