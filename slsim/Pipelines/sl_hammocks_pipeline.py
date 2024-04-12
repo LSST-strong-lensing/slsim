@@ -6,6 +6,7 @@ from lenstronomy.Util import constants
 import solve_lenseq
 import lens_gals
 import lens_halo
+from colossus.cosmology import cosmology
 # import lens_subhalo
 
 
@@ -35,12 +36,6 @@ class SLHammocksPipeline:
             table.rename_column('m_acc', 'halo_mass_acc')
             angular_size_in_deg = table['tb']/0.551*constants.arcsec
             table.add_column(angular_size_in_deg, name='angular_size')
-            # df = pd.read_csv(slhammocks_config)
-            # df = df.rename(columns={'zl': 'z'})
-            # df = df.rename(columns={'con': 'concentration'})
-            # df = df.rename(columns={'m_g': 'stellar_mass'})
-            # df = df.rename(columns={'m_h': 'halo_mass'})
-            # df['angular_size']=df['tb']/0.551*constants.arcsec
 
             data_area = 10.0 #deg2
             if(sky_area.value>10.0):
@@ -67,16 +62,14 @@ class SLHammocksPipeline:
                 'TYPE_SMHM': 'true',
                 'switch_sub': False
                 }
-            from colossus.cosmology import cosmology
-            cosmo_col = cosmology.setCosmology('planck18')
 
-            table = halo_galaxy_population(sky_area,cosmo_col,**kwargs_population_base)
+            table = halo_galaxy_population(sky_area,cosmo,**kwargs_population_base)
             angular_size_in_deg = table['tb']/0.551*constants.arcsec
             table.add_column(angular_size_in_deg, name='angular_size')
             self._pipeline = table
 
 
-def halo_galaxy_population(sky_area,cosmo_col,z_min,z_max,log10host_halo_mass_min,log10host_halo_mass_max,
+def halo_galaxy_population(sky_area,cosmo,z_min,z_max,log10host_halo_mass_min,log10host_halo_mass_max,
                            log10subhalo_mass_min, sigma_host_halo_concentration, sigma_subhalo_concentration,
                            sigma_central_galaxy_mass, sigma_satellite_galaxy_mass, sig_tb,
                            TYPE_GAL_SIZE,frac_SM_IMF, TYPE_SMHM, switch_sub,**kwargs):
@@ -98,6 +91,7 @@ def halo_galaxy_population(sky_area,cosmo_col,z_min,z_max,log10host_halo_mass_mi
     sig_csh = sigma_subhalo_concentration
     sig_mcen = sigma_central_galaxy_mass
     sig_msat = sigma_satellite_galaxy_mass
+    cosmo_col = cosmology.setCosmology('myCosmo', params = cosmology.cosmologies['planck18'], Om0 = cosmo.Om0, H0 = cosmo.H0.value)
 
     for z in zz:
         zz2 = np.full(len(MMh), z)
@@ -116,8 +110,9 @@ def halo_galaxy_population(sky_area,cosmo_col,z_min,z_max,log10host_halo_mass_mi
 
         mshsat_tot = 0
         Mhosthl_tab_re = Mhosthl_tab
+        hubble = cosmo_col.H0 / 100.
 
-        Mcenl_ave = lens_gals.stellarmass_halomass(Mhosthl_tab_re / (cosmo_col.H0 / 100.), zl_tab, paramc, frac_SM_IMF) * (cosmo_col.H0 / 100.)
+        Mcenl_ave = lens_gals.stellarmass_halomass(Mhosthl_tab_re / (hubble), zl_tab, paramc, frac_SM_IMF) * (hubble)
         Mcenl_scat = np.random.lognormal(0.0, sig_mcen, size=Mhosthl_tab_re.shape)
         Mcenl_tab = Mcenl_ave * Mcenl_scat
 

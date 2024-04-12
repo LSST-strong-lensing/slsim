@@ -44,7 +44,7 @@ models['karmakar23'].sc_mhalo_dependence = True
 models['karmakar23'].sc_z_dependence = True
 
 
-def galaxy_size(mh, mstar, z, cosmo, q_out='tb', model='oguri20', scatter=False, sig_tb=0.1):
+def galaxy_size(mh, mstar, z, cosmo_col, q_out='tb', model='oguri20', scatter=False, sig_tb=0.1):
 
     # Check that the model exists
     if not model in models.keys():
@@ -64,7 +64,7 @@ def galaxy_size(mh, mstar, z, cosmo, q_out='tb', model='oguri20', scatter=False,
     rb = model_props.func(*args)
 
     if q_out == 'tb':
-        convert_t = 1./cosmo.angularDiameterDistance(z)*206264.8
+        convert_t = 1./cosmo_col.angularDiameterDistance(z)*206264.8
         gal_size = rb*convert_t
     elif q_out == 'rb':
         gal_size = rb
