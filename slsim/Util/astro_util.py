@@ -7,6 +7,11 @@ from slsim.Util.param_util import (
     magnitude_to_amplitude,
 )
 
+from speclite.filters import (
+    load_filter,
+    FilterResponse,
+)
+
 
 def spin_to_isco(spin):
     """Converts dimensionless spin parameter of a black hole to the innermost stable
@@ -779,3 +784,116 @@ def generate_signal_from_generic_psd(
         seed=seed,
     )
     return time_array, magnitude_array
+
+
+def downsample_passband(
+    passband,
+    output_delta_wavelength,
+    wavelength_unit_input=u.angstrom,
+    wavelength_unit_output=u.angstrom,
+):
+    """Takes in a throughput at one resolution and outputs a throughput at a downsampled
+    resolution. This will speed up calculations which must be done for multiple
+    wavelengths, especially for objects which do not have significant changes in signal
+    over short wavelength steps.
+
+    :param passband: Str or List representing passband data. Either from speclite or a user
+        defined passband represented as a list of lists or arrays. The first must be wavelengths,
+        and the second must be the throughput of signature: [wavelength, throughput].
+    :param output_delta_wavelength: Int, this represents the desired spacing between wavelengths
+        of the output passband.
+    :param wavelength_unit_input: Astropy unit representing the input wavelength units.
+        Speclite filters default to units of angstroms.
+    :param wavelength_unit_output: Astropy unit representing the output wavelength units.
+    :return: List of numpy arrays representing the downsampled passband with signature
+        [wavelength, throughput].
+    """
+    if isinstance(passband, str):
+        passband = load_filter(passband)
+    if isinstance(passband, FilterResponse):
+        if wavelength_unit_input != passband.effective_wavelength.unit:
+            print("Changing input unit to match speclite filter unit")
+            wavelength_unit_input = passband.effective_wavelength.unit
+        passband = [passband.wavelength, passband.response]
+    if not isinstance(passband, list):
+        raise ValueError(
+            "Throughput must be a speclite filter or a list of throughputs."
+        )
+    assert output_delta_wavelength < len(passband[0])
+    # Convert to desired output wavelength units
+    wavelength_ratio = wavelength_unit_input.to(wavelength_unit_output)
+    passband[0] = np.asarray(passband[0][:]) * wavelength_ratio
+    # Determine bins
+    min_wavelength = np.min(passband[0][:])
+    max_wavelength = np.max(passband[0][:])
+    filter_total_wavelength_coverage = max_wavelength - min_wavelength
+    nbins = int(
+        round(1 + filter_total_wavelength_coverage / output_delta_wavelength, 0)
+    )
+    bin_edges = np.linspace(min_wavelength, max_wavelength, nbins)
+    # Make throughput
+    objects_per_bin = np.histogram(passband[0], bins=bin_edges)[0]
+    output_wavelengths = (bin_edges[:-1] + bin_edges[1:]) / 2
+    weighted_throughput = np.histogram(
+        passband[0], bins=bin_edges, weights=passband[1]
+    )[0]
+    normalized_throughput = weighted_throughput / objects_per_bin
+    return [output_wavelengths, normalized_throughput]
+
+
+def bring_passband_to_source_plane(
+    passband,
+    redshift,
+):
+    """Takes in a passband and converts the wavelengths from the observer to source
+    plane.
+
+    :param passband: Str or List representing passband data. Either from speclite or a user
+        defined passband represented as a list of lists or arrays. The first must be wavelengths,
+        and the second must be the throughput of signature: [wavelength, throughput].
+    :param redshift: Redshift of the source.
+    :return: List of numpy arrays representing the passband in the source plane.
+    """
+    if isinstance(passband, str):
+        passband = load_filter(passband)
+
+    if isinstance(passband, FilterResponse):
+        passband = [passband.wavelength, passband.response]
+    if not isinstance(passband, list):
+        raise ValueError(
+            "Throughput must be a speclite filter or a list of throughputs."
+        )
+    assert redshift >= 0
+    new_wavelengths = np.asarray(passband[0]) / (1 + redshift)
+    return [new_wavelengths, np.asarray(passband[1])]
+
+
+def convert_passband_to_nm(
+    passband,
+    wavelength_unit_input=u.angstrom,
+):
+    """Takes in a passband and converts the wavelengths to nanometers.
+
+    :param passband: Str or List representing passband data. Either from speclite or a user
+        defined passband represented as a list of lists or arrays. The first must be wavelengths,
+        and the second must be the throughput of signature: [wavelength, throughput].
+    :param wavelength_unit_input: Astropy unit representing the input wavelength units.
+        Speclite passbands are typically in angstroms, but a user defined passband may have
+        any unit convenient for their purposes.
+    :return: List of numpy arrays representing the passband with units of nanometers.
+    """
+    if isinstance(passband, str):
+        passband = load_filter(passband)
+    if isinstance(passband, FilterResponse):
+        if wavelength_unit_input != passband.effective_wavelength.unit:
+            print("Changing input unit to match speclite filter unit")
+            wavelength_unit_input = passband.effective_wavelength.unit
+        passband = [passband.wavelength, passband.response]
+    if not isinstance(passband, list):
+        raise ValueError(
+            "Throughput must be a speclite filter or a list of throughputs."
+        )
+    wavelength_ratio = wavelength_unit_input.to(u.nm)
+    output_passband = passband.copy()
+    output_passband[0] = np.asarray(passband[0][:]) * wavelength_ratio
+    return output_passband

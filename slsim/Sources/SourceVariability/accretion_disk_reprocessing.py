@@ -5,6 +5,9 @@ from scipy import signal, interpolate
 from slsim.Util.astro_util import (
     calculate_gravitational_radius,
     calculate_accretion_disk_response_function,
+    downsample_passband,
+    bring_passband_to_source_plane,
+    convert_passband_to_nm,
 )
 from slsim.Sources.SourceVariability.light_curve_interpolation import (
     LightCurveInterpolation,
@@ -67,6 +70,61 @@ class AccretionDiskReprocessing(object):
             time lag spacing of [R_g / c].
         """
         return self._model(rest_frame_wavelength_in_nanometers, **self.kwargs_model)
+
+    def define_passband_response_function(
+        self,
+        passband,
+        redshift=0,
+        delta_wavelength=10,
+        passband_wavelength_unit=u.angstrom,
+    ):
+        """Calculates the response function of the agn accretion disk to the flaring
+        corona in the lamppost geometry for an input passband.
+
+        :param passband: Str or List representing passband data. Either from speclite or
+            a user defined passband represented as a list of lists or arrays. The first
+            must be wavelengths, and the second must be the throughput of
+            signature: [wavelength, throughput].
+        :param redshift: Float value of source redshift. Used to convert wavelengths of
+            the passband into emitted wavelengths.
+        :param delta_wavelength: Desired wavelength spacing in passband in [nanometers].
+            The passband will be resampled to allow for faster calculations.
+        :param passband_wavelength_unit: Astropy unit representing the wavelength units
+            used to define the original passband. Speclite filters typically use angstroms.
+        :return: An array representing the response function of the accretion disk with
+            time lag spacing of [R_g / c].
+        """
+        passband_in_nm = convert_passband_to_nm(
+            passband, wavelength_unit_input=passband_wavelength_unit
+        )
+        passband_in_source_plane = bring_passband_to_source_plane(
+            passband_in_nm, redshift
+        )
+        passband_to_use = downsample_passband(
+            passband_in_source_plane,
+            delta_wavelength,
+            wavelength_unit_input=u.nm,
+            wavelength_unit_output=u.nm,
+        )
+        if len(passband_to_use[0]) > 100:
+            print("Warning, over 100 wavelengths to calculate.")
+        total_weighting = np.sum(passband_to_use[1])
+        total_response_function = (
+            self.define_new_response_function(passband_to_use[0][0])
+            * passband_to_use[1][0]
+            / total_weighting
+        )
+
+        for jj in range(len(passband_to_use[0]) - 1):
+            if passband_to_use[1][1 + jj] > 0:
+                response_function = (
+                    self.define_new_response_function(passband_to_use[0][1 + jj])
+                    * passband_to_use[1][1 + jj]
+                    / total_weighting
+                )
+                total_response_function += response_function
+
+        return total_response_function
 
     def define_intrinsic_signal(self, time_array=None, magnitude_array=None):
         """Multi-purpose method to define an intrinsic signal of the

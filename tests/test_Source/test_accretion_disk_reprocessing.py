@@ -7,6 +7,7 @@ from slsim.Util.astro_util import (
     generate_signal_from_generic_psd,
 )
 import pytest
+import astropy.units as u
 
 
 class TestAccretionDiskReprocessing:
@@ -207,3 +208,19 @@ class TestAccretionDiskReprocessing:
             response_function_amplitudes=1 - np.linspace(-1, 1, 100) ** 2
         )
         assert len(reprocessed_signal_test) == len(magnitude_array)
+
+    def test_define_passband_response_function(self):
+        kwargs_agn_model = {"black_hole_mass_exponent": 9.5}
+        reprocessor = AccretionDiskReprocessing("lamppost", **kwargs_agn_model)
+        lsst_filter = "lsst2016-r"
+        filter_response = reprocessor.define_passband_response_function(
+            lsst_filter,
+            redshift=0,
+            delta_wavelength=50,
+            passband_wavelength_unit=u.angstrom,
+        )
+        wavelength_in_nm = 500
+        wavelength_response = reprocessor.define_new_response_function(
+            wavelength_in_nm,
+        )
+        assert len(wavelength_response) == len(filter_response)
