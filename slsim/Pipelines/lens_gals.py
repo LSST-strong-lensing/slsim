@@ -1,7 +1,7 @@
 import numpy as np
 from colossus.halo import mass_so
 from collections import OrderedDict
-import solve_lenseq
+import scipy.stats as st
 
 class GalaxySizeModel():
     def __init__(self):
@@ -245,8 +245,8 @@ class p_smhm:
 
 def set_gals_param(pol_halo):
     n = len(pol_halo)
-    elip_gal = solve_lenseq.gene_e(n)
-    polar_gal = solve_lenseq.gene_ang_gal(pol_halo)
+    elip_gal = gene_e(n)
+    polar_gal = gene_ang_gal(pol_halo)
     return elip_gal, polar_gal
 
 
@@ -294,5 +294,22 @@ def stellarmass_halomass(Mh, z, pa, frac_SM_IMF=1.715):
         np.log10(10.**(-alpha*x) + 10.**(-beta*x)) + \
         gamma*np.exp(-0.5*(x_del**2))
     return 10**stellarm*frac_SM_IMF
+
+def gene_e(n):
+    em = 0.3
+    se = 0.16
+    e = st.truncnorm.rvs((0.0 - em) / se, (0.9 - em) /
+                         se, loc=em, scale=se, size=n)
+    return e
+
+def gene_ang(n):
+    return (np.random.rand(n) - 0.5) * 360.0
+
+
+def gene_ang_gal(pol_h):
+    n = len(pol_h)
+    sig = 35.4  # Okumura + 2009
+    pol_gal = np.random.normal(loc=pol_h, scale=sig,size=n)
+    return pol_gal
 
 

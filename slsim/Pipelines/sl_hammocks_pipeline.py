@@ -1,13 +1,10 @@
-import os
-from astropy.table import Table
 import numpy as np
 from lenstronomy.Util import constants
+from astropy.table import Table
 
-import solve_lenseq
 import lens_gals
 import lens_halo
 from colossus.cosmology import cosmology
-# import lens_subhalo
 
 
 class SLHammocksPipeline:
@@ -37,9 +34,9 @@ class SLHammocksPipeline:
             angular_size_in_deg = table['tb']/0.551*constants.arcsec
             table.add_column(angular_size_in_deg, name='angular_size')
 
-            data_area = 10.0 #deg2
-            if(sky_area.value>10.0):
-                print("Now sky_area should be lower than 10. Now we set sky_area=10.0.")
+            data_area = 1.0 #deg2
+            if(sky_area.value>data_area):
+                print("Now sky_area should be lower than %d. Now we set sky_area=%d.",(data_area,data_area))
             thinp = int((data_area/sky_area).value)
 
             self._pipeline = table[::thinp]
@@ -49,18 +46,18 @@ class SLHammocksPipeline:
                 'z_max': 5.0,
                 'log10host_halo_mass_min': 11.0,
                 'log10host_halo_mass_max': 16.,
-                'log10subhalo_mass_min' : 10.,
-                # Intrinsic scatter (https://arxiv.org/abs/astro-ph/0608157)
+                # Intrinsic scatter of concentration parameters for dark matter halos (https://arxiv.org/abs/astro-ph/0608157)
                 'sigma_host_halo_concentration' : 0.33,
-                'sigma_subhalo_concentration' : 0.33,
-                # Intrinsic scatter (https://iopscience.iop.org/article/10.3847/1538-4357/ac4cb4/pdf)
+                # Intrinsic scatter of stellar mass (https://iopscience.iop.org/article/10.3847/1538-4357/ac4cb4/pdf)
                 'sigma_central_galaxy_mass' : 0.2,
-                'sigma_satellite_galaxy_mass' : 0.2,
-                'sig_tb': 0.46,
+                # type of galaxy size relation. Now we have three options, ['vdw23', 'oguri20', 'karmakar23']
                 'TYPE_GAL_SIZE': 'vdW23',
+                # scatter of galaxy size only used for 'oguri20' model
+                'sig_tb': 0.46,
+                # fraction of M/L ratio against Chabrier IMF, e.g., 1 for Chabrier IMF and 1.715 for Salpeter IMF
                 'frac_SM_IMF': 1.715,
+                # type of stellar-mass-halo-mass fitting function, see Behroozi et al. 2019 for detail
                 'TYPE_SMHM': 'true',
-                'switch_sub': False
                 }
 
             table = halo_galaxy_population(sky_area,cosmo,**kwargs_population_base)
@@ -70,9 +67,8 @@ class SLHammocksPipeline:
 
 
 def halo_galaxy_population(sky_area,cosmo,z_min,z_max,log10host_halo_mass_min,log10host_halo_mass_max,
-                           log10subhalo_mass_min, sigma_host_halo_concentration, sigma_subhalo_concentration,
-                           sigma_central_galaxy_mass, sigma_satellite_galaxy_mass, sig_tb,
-                           TYPE_GAL_SIZE,frac_SM_IMF, TYPE_SMHM, switch_sub,**kwargs):
+                           sigma_host_halo_concentration, sigma_central_galaxy_mass, sig_tb,
+                           TYPE_GAL_SIZE,frac_SM_IMF, TYPE_SMHM, **kwargs):
     dz = 0.001
     dlogMh = 0.001
     dlnMh = np.log(10**dlogMh)
@@ -85,12 +81,9 @@ def halo_galaxy_population(sky_area,cosmo,z_min,z_max,log10host_halo_mass_min,lo
     Mh_max = 10**log10host_halo_mass_max
     MMh = 10**np.arange(np.log10(Mh_min),
                         np.log10(Mh_max), dlogMh)
-    min_Msh =10**log10subhalo_mass_min
     paramc, params = lens_gals.gals_init(TYPE_SMHM)
     sig_c = sigma_host_halo_concentration
-    sig_csh = sigma_subhalo_concentration
     sig_mcen = sigma_central_galaxy_mass
-    sig_msat = sigma_satellite_galaxy_mass
     cosmo_col = cosmology.setCosmology('myCosmo', params = cosmology.cosmologies['planck18'], Om0 = cosmo.Om0, H0 = cosmo.H0.value)
 
     for z in zz:
@@ -106,7 +99,7 @@ def halo_galaxy_population(sky_area,cosmo,z_min,z_max,log10host_halo_mass_min,lo
         Mhosthl_tab  = np.repeat(MMh[indices], Nh[indices])
         conhl_tab = lens_halo.concent_m_w_scatter(Mhosthl_tab, z, sig_c)
         # in physical [Mpc/h]
-        eliphl_tab, polarhl_tab = solve_lenseq.gene_e_ang_halo(Mhosthl_tab)
+        eliphl_tab, polarhl_tab = lens_halo.gene_e_ang_halo(Mhosthl_tab)
 
         mshsat_tot = 0
         Mhosthl_tab_re = Mhosthl_tab
