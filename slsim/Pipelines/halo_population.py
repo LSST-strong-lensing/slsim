@@ -15,9 +15,36 @@ def gene_e_ang_halo(Mh):
     return e, p
 
 def gene_ang(n):
+    """
+    Position angle of the halo
+
+    Parameters
+    -----------------------------------------------------------------------------------------------
+    :param n: length of halo mass nd.array
+    :type  n: int
+
+    Returns
+    -----------------------------------------------------------------------------------------------
+    pol_halo: ndarray
+        position angle of halos
+    """
     return (np.random.rand(n) - 0.5) * 360.0
 
 def gene_e_halo(Mh):
+    """
+    ellipticity of halos in T. Okabe et al. 2020
+    arxiv: 2005.11469
+
+    Parameters
+    -----------------------------------------------------------------------------------------------
+    :param  Mh: halo mass
+    :type   Mh:  nd.array
+
+    Returns
+    -----------------------------------------------------------------------------------------------
+    e_halo: ndarray
+        ellipticity of halos
+    """
     log10Mh = np.log10(Mh)  # log10([Modot/h])
     elip_fit = 0.09427281271709388*log10Mh - \
         0.9477721865885471  # T. Okabe 2020 Table 3
@@ -30,6 +57,21 @@ def gene_e_halo(Mh):
 
 
 def calc_vol(z, cosmo_col):
+    """
+    volume appeared in cosmological 3D integral
+
+    Parameters
+    -----------------------------------------------------------------------------------------------
+    :param z: redshift
+    :type z : float
+    :param cosmo_col: An instance of an colossus cosmology model
+    :type cosmo_col: colossus.cosmology instance
+
+    Returns
+    -----------------------------------------------------------------------------------------------
+    volume: float
+
+    """
     dis = cosmo_col.angularDiameterDistance(z) / (cosmo_col.H0 / 100.0)
     drdz = (2997.92458 / ((1.0 + z) * cosmo_col.Ez(z))) / (cosmo_col.H0 / 100.0)
 
@@ -37,7 +79,21 @@ def calc_vol(z, cosmo_col):
     # multiply fov[deg^2] to obtain the expected number to be observed after by KA
     return (dis * dis / 3282.806350011744) * drdz * (1.0 + z) * (1.0 + z) * (1.0 + z)
 
-def dNhalodzdlnM_lens(M, z, cosmo_col):#cosmo in lenstronomy
+def dNhalodzdlnM_lens(M, z, cosmo_col):
+    """
+    ellipticity of halos in T. Okabe et al. 2020
+    arxiv: 2005.11469
+
+    Parameters
+    -----------------------------------------------------------------------------------------------
+    Mh: nd.array
+        halo mass
+
+    Returns
+    -----------------------------------------------------------------------------------------------
+    e_halo: ndarray
+        ellipticity of halos
+    """
     dvoldzdO = calc_vol(z, cosmo_col)
     hhh = (cosmo_col.H0 / 100.0)**3
     mfunc_so = mass_function.massFunction(
@@ -46,6 +102,24 @@ def dNhalodzdlnM_lens(M, z, cosmo_col):#cosmo in lenstronomy
 
 
 def concent_m_w_scatter(m, z, sig):
+    """
+    concentration parameter of halos in B. Diemer and A. V. Kravtsov, 2015
+    arXiv:1407.4730 [astro-ph.CO].
+
+    Parameters
+    -----------------------------------------------------------------------------------------------
+    :param m: halo mass
+    :type  m: nd.array
+    :param z: redshift
+    :type  z: float
+    :param sig: intrinsic scatter of logarithmic concentration parameter
+    :type  sig: float
+
+    Returns
+    -----------------------------------------------------------------------------------------------
+    con_halo: ndarray
+        concentration parameter of halos
+    """
     con = concentration.concentration(m, 'vir', z, model='diemer15')
     sca = np.random.lognormal(0.0, sig, len(m))
     return con*sca

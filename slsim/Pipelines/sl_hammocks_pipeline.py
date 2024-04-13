@@ -8,7 +8,7 @@ from colossus.cosmology import cosmology
 
 
 class SLHammocksPipeline:
-    """Class for skypy configuration."""
+    """Class for slhammocks configuration."""
 
     def __init__(self, slhammocks_config=None, sky_area=None, cosmo=None):
         """
@@ -50,13 +50,13 @@ class SLHammocksPipeline:
                 'sigma_host_halo_concentration' : 0.33,
                 # Intrinsic scatter of stellar mass (https://iopscience.iop.org/article/10.3847/1538-4357/ac4cb4/pdf)
                 'sigma_central_galaxy_mass' : 0.2,
-                # type of galaxy size relation. Now we have three options, ['vdw23', 'oguri20', 'karmakar23']
+                # type of galaxy size relation for quiescent galaxies. Now we have three options, ['vdw23', 'oguri20', 'karmakar23']
                 'TYPE_GAL_SIZE': 'vdW23',
                 # scatter of galaxy size only used for 'oguri20' model
                 'sig_tb': 0.46,
                 # fraction of M/L ratio against Chabrier IMF, e.g., 1 for Chabrier IMF and 1.715 for Salpeter IMF
                 'frac_SM_IMF': 1.715,
-                # type of stellar-mass-halo-mass fitting function, see Behroozi et al. 2019 for detail
+                # type of stellar-mass-halo-mass fitting function for quiescent galaxies, see Behroozi et al. 2019 for detail
                 'TYPE_SMHM': 'true',
                 }
 

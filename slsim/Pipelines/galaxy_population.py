@@ -256,6 +256,20 @@ def set_param_smhm(data):
 
 
 def gals_init(TYPE_SMHM="true"):
+    """
+    The fitting parameters for calculating stellar-mass-halo-mass function of P. Behroozi et al. 2019.
+    arXiv: 1806.07893
+
+    Parameters
+    -----------------------------------------------------------------------------------------------
+    TYPE_SMHM: str in ["true", "obs", "true_all"]
+               "true" and "obs" are for quiescent galaxies but "true_all" is for all galaxies
+
+    Returns
+    -----------------------------------------------------------------------------------------------
+    paramc, params: list
+        The fitting parameters for central galaxies and satellite galaxies
+    """
 
     if (TYPE_SMHM == "true"):
         p_smhm_cen = [-1.462, -0.732, -1.273, 0.302, 12.072, 3.581, 3.665, -0.634,
@@ -279,6 +293,27 @@ def gals_init(TYPE_SMHM="true"):
 
 
 def stellarmass_halomass(Mh, z, pa, frac_SM_IMF=1.715):
+    """
+    Stellar mass calculated from the stellar-mass-halo-mass fitting function of P. Behroozi et al. 2019.
+    arXiv: 1806.07893
+
+    Parameters
+    -----------------------------------------------------------------------------------------------
+    Mh: ndarray or a number
+        physical halo peak mass [Msun]
+    z:  float
+        redshift
+    pa: list
+        fitting parameters
+    frac_SM_IMF: float
+        fraction of M/L ratio against the one of Chabrier IMF
+        1.715 is for Salpeter IMF
+
+    Returns
+    -----------------------------------------------------------------------------------------------
+    M*: ndarray or a number
+        physical stellar mass, has the dimensions as Msun.
+    """
     a = 1./(1.+z)
     a1 = a-1.
     lna = np.log(a)
@@ -296,19 +331,44 @@ def stellarmass_halomass(Mh, z, pa, frac_SM_IMF=1.715):
     return 10**stellarm*frac_SM_IMF
 
 def gene_e(n):
+    """
+    ellipticity of galaxy in M. Oguri et al. 2008
+    arXiv: 0708.0825
+
+    Parameters
+    -----------------------------------------------------------------------------------------------
+    n:  int
+        length of halo mass nd.array
+
+    Returns
+    -----------------------------------------------------------------------------------------------
+    e_gal: ndarray
+        ellipticity of galaxy
+    """
     em = 0.3
     se = 0.16
     e = st.truncnorm.rvs((0.0 - em) / se, (0.9 - em) /
                          se, loc=em, scale=se, size=n)
     return e
 
-def gene_ang(n):
-    return (np.random.rand(n) - 0.5) * 360.0
-
 
 def gene_ang_gal(pol_h):
+    """
+    Position angle of the galaxies relative to the major axis of the  halos in T. Okumura et al. 2009
+    arXiv: 0809.3790
+
+    Parameters
+    -----------------------------------------------------------------------------------------------
+    pol_h: nd.array
+        position angle of halos
+
+    Returns
+    -----------------------------------------------------------------------------------------------
+    pol_gal: ndarray
+        position angle of galaxies
+    """
     n = len(pol_h)
-    sig = 35.4  # Okumura + 2009
+    sig = 35.4
     pol_gal = np.random.normal(loc=pol_h, scale=sig,size=n)
     return pol_gal
 
