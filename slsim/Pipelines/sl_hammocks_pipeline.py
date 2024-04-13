@@ -2,8 +2,8 @@ import numpy as np
 from lenstronomy.Util import constants
 from astropy.table import Table
 
-import lens_gals
-import lens_halo
+import slsim.Pipelines.galaxy_population as galaxy_population
+import slsim.Pipelines.halo_population as halo_population
 from colossus.cosmology import cosmology
 
 
@@ -81,7 +81,7 @@ def halo_galaxy_population(sky_area,cosmo,z_min,z_max,log10host_halo_mass_min,lo
     Mh_max = 10**log10host_halo_mass_max
     MMh = 10**np.arange(np.log10(Mh_min),
                         np.log10(Mh_max), dlogMh)
-    paramc, params = lens_gals.gals_init(TYPE_SMHM)
+    paramc, params = galaxy_population.gals_init(TYPE_SMHM)
     sig_c = sigma_host_halo_concentration
     sig_mcen = sigma_central_galaxy_mass
     cosmo_col = cosmology.setCosmology('myCosmo', params = cosmology.cosmologies['planck18'], Om0 = cosmo.Om0, H0 = cosmo.H0.value)
@@ -89,7 +89,7 @@ def halo_galaxy_population(sky_area,cosmo,z_min,z_max,log10host_halo_mass_min,lo
     for z in zz:
         zz2 = np.full(len(MMh), z)
         NNh = area * \
-            lens_halo.dNhalodzdlnM_lens(MMh, zz2, cosmo_col) * dlnMh * dz
+            halo_population.dNhalodzdlnM_lens(MMh, zz2, cosmo_col) * dlnMh * dz
         Nh = np.random.poisson(NNh)
         indices = np.nonzero(Nh)[0]
         if len(indices) == 0:
@@ -97,20 +97,20 @@ def halo_galaxy_population(sky_area,cosmo,z_min,z_max,log10host_halo_mass_min,lo
 
         zl_tab = np.repeat(zz2[indices], Nh[indices])
         Mhosthl_tab  = np.repeat(MMh[indices], Nh[indices])
-        conhl_tab = lens_halo.concent_m_w_scatter(Mhosthl_tab, z, sig_c)
+        conhl_tab = halo_population.concent_m_w_scatter(Mhosthl_tab, z, sig_c)
         # in physical [Mpc/h]
-        eliphl_tab, polarhl_tab = lens_halo.gene_e_ang_halo(Mhosthl_tab)
+        eliphl_tab, polarhl_tab = halo_population.gene_e_ang_halo(Mhosthl_tab)
 
         mshsat_tot = 0
         Mhosthl_tab_re = Mhosthl_tab
         hubble = cosmo_col.H0 / 100.
 
-        Mcenl_ave = lens_gals.stellarmass_halomass(Mhosthl_tab_re / (hubble), zl_tab, paramc, frac_SM_IMF) * (hubble)
+        Mcenl_ave = galaxy_population.stellarmass_halomass(Mhosthl_tab_re / (hubble), zl_tab, paramc, frac_SM_IMF) * (hubble)
         Mcenl_scat = np.random.lognormal(0.0, sig_mcen, size=Mhosthl_tab_re.shape)
         Mcenl_tab = Mcenl_ave * Mcenl_scat
 
-        elipcenl, polarcenl = lens_gals.set_gals_param(polarhl_tab)
-        tb_cen = lens_gals.galaxy_size(Mhosthl_tab_re, Mcenl_tab/frac_SM_IMF, zl_tab, cosmo_col, model=TYPE_GAL_SIZE, scatter=True, sig_tb=sig_tb)
+        elipcenl, polarcenl = galaxy_population.set_gals_param(polarhl_tab)
+        tb_cen = galaxy_population.galaxy_size(Mhosthl_tab_re, Mcenl_tab/frac_SM_IMF, zl_tab, cosmo_col, model=TYPE_GAL_SIZE, scatter=True, sig_tb=sig_tb)
         halogal_par_mat = np.hstack((zl_tab.reshape(-1, 1), Mhosthl_tab_re.reshape(-1, 1), np.zeros_like(Mhosthl_tab).reshape(-1, 1), eliphl_tab.reshape(-1, 1), polarhl_tab.reshape(-1, 1), conhl_tab.reshape(-1, 1),
                                         Mcenl_tab.reshape(-1, 1), elipcenl.reshape(-1, 1), polarcenl.reshape(-1, 1), tb_cen.reshape(-1, 1)))
 
