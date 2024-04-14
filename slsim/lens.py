@@ -79,6 +79,8 @@ class Lens(LensedSystemBase):
         :type mixgauss_weights: list of float
         :type mixgauss_stds: list of float
         :type mixgauss_means: list of float
+        :param los_bool: boolean to include line-of-sight distortions
+        :type los_bool: bool
         :param magnification_limit: absolute lensing magnification lower limit to
             register a point source (ignore highly de-magnified images)
         :type magnification_limit: float >= 0

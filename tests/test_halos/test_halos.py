@@ -235,7 +235,7 @@ def test_redshift_mass_sheet_correction_array():
         redshift_list=redshift_mass_sheet_correction_array_from_comoving_density(
             redshift_list
         ),
-        first_moment=0.1,
+        first_moment=[0.1, 0.2, 0.3, 0.4],
         sky_area=0.0000001 * units.deg**2,
         cosmology=cosmo,
     )

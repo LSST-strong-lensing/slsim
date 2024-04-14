@@ -305,6 +305,18 @@ class TestDifferenLens(object):
             )
             gg_lens_4.external_convergence()
 
+    def test_image_number(self):
+        gg_lens_number = Lens(
+            source_dict=self.source_dict,
+            deflector_dict=self.deflector_dict,
+            cosmo=self.cosmo,
+            los_bool=True,
+            mixgauss_gamma=True,
+            nonlinear_los_bool=False,
+        )
+        image_number = gg_lens_number.image_number
+        assert (image_number == 4) or (image_number == 2) or (image_number == 1)
+
 
 if __name__ == "__main__":
     pytest.main()

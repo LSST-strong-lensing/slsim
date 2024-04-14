@@ -645,10 +645,11 @@ def kappa_ext_for_each_sheet(redshift_list, first_moment, sky_area, cosmology):
     :return: Array of kappa_ext values for each redshift in the redshift_list.
     :rtype: ndarray
     """
+    assert len(redshift_list) == len(first_moment)
     cone_opening_angle = deg2_to_cone_angle(sky_area.value)
     # TODO: make it possible for other geometry model
 
-    lens_cosmo = LensCosmo(z_lens=redshift_list, z_source=10, cosmo=cosmology)
+    lens_cosmo = LensCosmo(z_lens=redshift_list, z_source=5, cosmo=cosmology)
     epsilon_crit = lens_cosmo.sigma_crit
 
     area = cone_radius_angle_to_physical_area(

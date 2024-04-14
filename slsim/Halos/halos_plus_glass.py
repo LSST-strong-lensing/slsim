@@ -1,35 +1,14 @@
 import numpy as np
 from slsim.Pipelines.halos_pipeline import HalosSkyPyPipeline
-from slsim.Halos.halos_lens import HalosLens
+from slsim.Halos.halos_lens_base import HalosLensBase
+from slsim.Halos.halos_statistics import HalosStatistics
 from astropy.cosmology import FlatLambdaCDM
 from tqdm.notebook import tqdm
 import time
 from scipy import stats
 import warnings
 from multiprocessing import get_context
-
-
-def convergence_mean_0(kappa_data):
-    """Adjusts the input kappa data by subtracting the mean of non-zero elements from
-    the non-zero values only. Keeps zeros as is. Returns the adjusted data in the same
-    format (list or numpy array) as the input.
-
-    :param kappa_data: The input kappa data to be adjusted.
-    :type kappa_data: list or numpy.ndarray
-    :return: The adjusted kappa data in the same format as the input.
-    :rtype: list or numpy.ndarray
-    """
-
-    input_type = type(kappa_data)
-    kappa_array = np.array(kappa_data)
-    mean_kappa_non_zero = np.mean(kappa_array[kappa_array != 0])
-    adjusted_kappa_array = np.where(
-        kappa_array != 0, kappa_array - mean_kappa_non_zero, 0
-    )
-    if input_type is list:
-        return adjusted_kappa_array.tolist()
-    else:
-        return adjusted_kappa_array
+from slsim.Halos.halos_util import convergence_mean_0
 
 
 def read_glass_data(file_name="kgdata.npy"):
@@ -165,7 +144,7 @@ def generate_maps_kmean_zero_using_halos(
     halos = pipeline.halos
     mass_sheet_correction = pipeline.mass_sheet_correction
 
-    halos_lens = HalosLens(
+    halos_lens = HalosStatistics(
         halos_list=halos,
         mass_correction_list=mass_sheet_correction,
         sky_area=sky_area,
@@ -177,8 +156,8 @@ def generate_maps_kmean_zero_using_halos(
     kappa_gamma_distribution = np.array(kappa_gamma_distribution)
     kappa_values_halos = kappa_gamma_distribution[:, 0]
     gamma_values_halos = kappa_gamma_distribution[:, 1]
-    mean_kappa = np.mean(kappa_values_halos)
-    modified_kappa_halos = kappa_values_halos - mean_kappa
+    modified_kappa_halos = convergence_mean_0(kappa_values_halos)
+
     # Check if the values are all zeros
     if np.all(modified_kappa_halos == 0) and np.all(gamma_values_halos == 0):
         # Return arrays of zeros with the same shape
@@ -383,7 +362,7 @@ def run_halos_without_kde(
         nhalos = npipeline.halos
         if mass_sheet_correction:
             mass_sheet_correction_list = npipeline.mass_sheet_correction
-            nhalos_lens = HalosLens(
+            nhalos_lens = HalosStatistics(
                 halos_list=nhalos,
                 mass_correction_list=mass_sheet_correction_list,
                 sky_area=sky_area,
@@ -406,7 +385,7 @@ def run_halos_without_kde(
             kappa_values_total.extend(nkappa_values_halos)
             gamma_values_total.extend(ngamma_values_halos)
         else:
-            nhalos_lens = HalosLens(
+            nhalos_lens = HalosStatistics(
                 halos_list=nhalos,
                 sky_area=sky_area,
                 cosmo=cosmo,
@@ -460,7 +439,7 @@ def worker_run_halos_without_kde(
     nhalos = npipeline.halos
     if mass_sheet_correction:
         mass_sheet_correction_list = npipeline.mass_sheet_correction
-        nhalos_lens = HalosLens(
+        nhalos_lens = HalosStatistics(
             halos_list=nhalos,
             mass_correction_list=mass_sheet_correction_list,
             sky_area=sky_area,
@@ -469,7 +448,7 @@ def worker_run_halos_without_kde(
             z_source=z_max,
         )
     else:
-        nhalos_lens = HalosLens(
+        nhalos_lens = HalosStatistics(
             halos_list=nhalos,
             sky_area=sky_area,
             cosmo=cosmo,
@@ -719,7 +698,7 @@ def worker_kappaext_gammaext_kde(
 
     if mass_sheet_correction:
         nmass_sheet_correction = npipeline.mass_sheet_correction
-        nhalos_lens = HalosLens(
+        nhalos_lens = HalosStatistics(
             halos_list=nhalos,
             mass_correction_list=nmass_sheet_correction,
             sky_area=sky_area,
@@ -728,7 +707,7 @@ def worker_kappaext_gammaext_kde(
             z_source=z_max,
         )
     else:
-        nhalos_lens = HalosLens(
+        nhalos_lens = HalosStatistics(
             halos_list=nhalos,
             sky_area=sky_area,
             cosmo=cosmo,
@@ -870,7 +849,7 @@ def worker_certain_redshift_lensext_kde(
 
     if mass_sheet_correction:
         nmass_sheet_correction = npipeline.mass_sheet_correction
-        nhalos_lens = HalosLens(
+        nhalos_lens = HalosStatistics(
             halos_list=nhalos,
             mass_correction_list=nmass_sheet_correction,
             sky_area=sky_area,
@@ -880,7 +859,7 @@ def worker_certain_redshift_lensext_kde(
             mass_sheet=True,
         )
     else:
-        nhalos_lens = HalosLens(
+        nhalos_lens = HalosStatistics(
             halos_list=nhalos,
             sky_area=sky_area,
             cosmo=cosmo,
@@ -1030,7 +1009,7 @@ def worker_certain_redshift_many(
 
     if mass_sheet_correction:
         nmass_sheet_correction = npipeline.mass_sheet_correction
-        nhalos_lens = HalosLens(
+        nhalos_lens = HalosStatistics(
             halos_list=nhalos,
             mass_correction_list=nmass_sheet_correction,
             sky_area=sky_area,
@@ -1039,7 +1018,7 @@ def worker_certain_redshift_many(
             z_source=z_max,
         )
     else:
-        nhalos_lens = HalosLens(
+        nhalos_lens = HalosStatistics(
             halos_list=nhalos,
             sky_area=sky_area,
             cosmo=cosmo,
@@ -1148,7 +1127,7 @@ def worker_run_total_mass_by_multiprocessing(
     )
     nhalos = npipeline.halos
 
-    nhalos_lens = HalosLens(
+    nhalos_lens = HalosStatistics(
         halos_list=nhalos,
         sky_area=sky_area,
         cosmo=cosmo,
@@ -1281,7 +1260,7 @@ def worker_run_total_kappa_by_multiprocessing(
     )
     nhalos = npipeline.halos
 
-    nhalos_lens = HalosLens(
+    nhalos_lens = HalosLensBase(
         halos_list=nhalos,
         sky_area=sky_area,
         cosmo=cosmo,
@@ -1290,7 +1269,7 @@ def worker_run_total_kappa_by_multiprocessing(
         mass_sheet=False,
     )
 
-    _, total_kappa = nhalos_lens.compute_kappa(
+    _, total_kappa = nhalos_lens.halos_compute_kappa(
         diff=diff,
         num_points=num_points,
         diff_method=diff_method,
