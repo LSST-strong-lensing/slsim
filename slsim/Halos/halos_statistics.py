@@ -11,7 +11,34 @@ from slsim.Halos.halos_util import convergence_mean_0
 
 
 class HalosStatistics(HalosLensBase):
-    r"""A class for computing statistics rendering."""
+    """A class for computing statistical distributions of lensing properties such as
+    external convergence (kappa_ext) and external shear (gamma_ext) across multiple
+    samples of halo configurations.
+
+    This class extends `HalosLensBase` to include statistical methods that allow for the computation of lensing effects over a range of redshifts and configurations, providing tools to analyze the statistical properties of lensing in cosmological simulations.
+
+    Attributes:
+        samples_number (int): Number of samples for statistical calculations.
+        halos_list (astropy.Table): Table containing details of halos, including their redshifts and masses.
+        mass_correction_list (astropy.Table, optional): Table for mass correction, containing details like redshifts and external convergences.
+        cosmo (astropy.Cosmology): Cosmology used for lensing computations.
+        sky_area (float): Total sky area (in steradians) over which Halos are distributed. Defaults to full sky (4pi steradians). Optional.
+        mass_sheet (bool): Flag to decide whether to use the mass_sheet correction.
+
+    Methods:
+        get_kappaext_gammaext_distib_zdzs: Computes the distribution of external convergence and shear for given deflector and source redshifts.
+        generate_distributions_0to5: Generates distributions of external convergence and shear for a range of deflector and source redshifts from 0 to 5.
+        compute_various_kappa_gamma_values_new: Computes various convergence and shear values for given deflector and source redshifts.
+        get_all_pars_distib: Computes the distribution of various lensing parameters for given deflector and source redshifts.
+        compute_kappa_in_bins: Computes the kappa values for each redshift bin for mass sheet correction.
+        total_halo_mass: Calculates the total mass of all halos.
+        total_critical_mass: Computes the total critical mass within a given sky area up to a redshift of 5.
+        mass_divide_kcrit: Computes the external convergence by dividing the mass of each halo by the critical surface density.
+        kappa_divergence: Calculates the divergence of kappa values across a specified sky area.
+        compute_kappa_gamma: Compute the convergence and shear values for a given index, designed for use with multiprocessing.
+        get_kappa_gamma_distib: Computes and returns the distribution of convergence and shear values using multiprocessing.
+        get_kappa_gamma_distib_without_multiprocessing: Computes and returns the distribution of convergence and shear values without using multiprocessing.
+    """
 
     def __init__(
         self,
@@ -388,10 +415,16 @@ class HalosStatistics(HalosLensBase):
         return total_mass  # In Msun
 
     def mass_divide_kcrit(self):
+        """Computes the external convergence (kappa_ext) by dividing the mass of each
+        halo by the critical surface density and the physical area corresponding to the
+        cone opening angle at each halo's redshift.
+
+        :returns: An array of kappa_ext values for each halo.
+        :rtype: numpy.ndarray
+        """
         mass_list = self.mass_list
         z = self.halos_redshift_list
         cone_opening_angle = deg2_to_cone_angle(self.sky_area)
-        # TODO: make it possible for other geometry model
         area = []
         sigma_crit = []
         lens_cosmo = self.param_lens_cosmo[: self.n_halos]

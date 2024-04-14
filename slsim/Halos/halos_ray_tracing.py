@@ -5,7 +5,35 @@ from slsim.Util.param_util import deg2_to_cone_angle
 
 
 class HalosRayTracing(object):
+    """A class for performing ray tracing computations in gravitational lensing
+    scenarios involving multiple halos.
+
+    This class provides methods to compute various lensing quantities such as convergence (kappa), shear (gamma),
+    and their non-linear corrections across different redshifts and sky areas.
+
+    Attributes:
+        ray_halo (list): A list to store halo-related data during computations.
+        lens_kwargs (dict): Keyword arguments for the lens model that describe the lensing scenario.
+        lens_model (LensModel): An instance of a lens model used for the ray tracing computations.
+
+    Methods:
+        get_convergence_shear: Computes the convergence and shear at the origin due to all Halos.
+        nonlinear_correction_kappa_gamma_values: Computes various kappa and gamma values for given deflector and source redshifts.
+        get_kext_gext_values: Computes the external convergence and shear for given deflector and source redshifts.
+        various_halos_data: Computes various convergence and shear values for given deflector and source redshifts.
+        compute_kappa: Computes the convergence values over a grid and returns both the 2D kappa image and the 1D array of kappa values.
+        plot_convergence: Plots the convergence across the lensed sky area.
+    """
+
     def __init__(self, lens_kwargs, lens_model):
+        """Initializes the HalosRayTracing class with specified lens model and keyword
+        arguments.
+
+        :param lens_kwargs: Keyword arguments for the lens model.
+        :type lens_kwargs: dict
+        :param lens_model: An instance of a lens model.
+        :type lens_model: LensModel
+        """
         self.ray_halo = []
         self.lens_kwargs = lens_kwargs
         self.lens_model = lens_model
@@ -24,6 +52,8 @@ class HalosRayTracing(object):
 
         :param gamma12: If True, returns gamma1 and gamma2 in addition to kappa. If False, returns total shear gamma along with kappa.
         :type gamma12: bool, optional
+        :param same_from_class: If True and kwargs, lens_model is none uses the class's lens model and lens kwargs. If False, uses the provided lens model and kwargs. Specify for the when the 'None' type kwargs
+        :type same_from_class: bool, optional
         :param diff: The differential used in the computation of the Hessian matrix. Default is 1.0.
         :type diff: float, optional
         :param diff_method: The method used to compute the differential. Default is "square".
@@ -82,7 +112,7 @@ class HalosRayTracing(object):
                   1. Between deflector and source redshift (ds).
                   2. From zero to deflector redshift (od).
                   3. From zero to source redshift (os).
-        :type lens_data: tuple
+        :type lens_data: dict
         :param zd: The deflector redshift.
         :type zd: float
         :param zs: The source redshift.
@@ -139,11 +169,11 @@ class HalosRayTracing(object):
         r"""Computes the external convergence (kappa_ext) and external shear (gamma_ext)
         for given deflector and source redshifts.
 
-        :param lens_data: A tuple containing lens data for three different conditions:
+        :param lens_data: A dict containing lens data for three different conditions:
                   1. Between deflector and source redshift (ds).
                   2. From zero to deflector redshift (od).
                   3. From zero to source redshift (os).
-        :type lens_data: tuple
+        :type lens_data: dict
         :param zd: The deflector redshift.
         :type zd: float
         :param zs: The source redshift.
@@ -189,11 +219,11 @@ class HalosRayTracing(object):
         This function extracts the lens model and its keyword arguments for different redshift combinations
         ('od`, `os`, and `ds`). It then computes the convergence and shear values for each of these combinations.
 
-        :param lens_data: A tuple containing lens data for three different conditions:
+        :param lens_data: A dict tuple containing lens data for three different conditions:
                   1. Between deflector and source redshift (ds).
                   2. From zero to deflector redshift (od).
                   3. From zero to source redshift (os).
-        :type lens_data: tuple
+        :type lens_data: dict
         :param zd: The deflector redshift.
         :type zd: float
         :param zs: The source redshift.
