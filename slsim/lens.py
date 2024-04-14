@@ -10,6 +10,7 @@ from lenstronomy.LensModel.Solver.lens_equation_solver import (
 from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
 from slsim.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
 from slsim.ParamDistributions.kext_gext_distributions import LineOfSightDistribution
+from slsim.ParamDistributions.los_config import LOSConfig
 from lenstronomy.Util import util, data_util
 from slsim.lensed_system_base import LensedSystemBase
 import warnings
@@ -32,17 +33,10 @@ class Lens(LensedSystemBase):
         sn_absolute_mag_band=None,
         sn_absolute_zpsys=None,
         test_area=4 * np.pi,
-        mixgauss_means=None,
-        mixgauss_stds=None,
-        mixgauss_weights=None,
-        los_bool=True,
-        nonlinear_los_bool=False,
-        nonlinear_correction_path=None,
-        no_correction_path=None,
         magnification_limit=0.01,
-        mixgauss_gamma=False,
         light_profile="single_sersic",
         lightcurve_time=None,
+        los_config=None,
     ):
         """
 
@@ -73,14 +67,6 @@ class Lens(LensedSystemBase):
         :type sn_absolute_zpsys: str
         :param test_area: area of disk around one lensing galaxies to be investigated
             on (in arc-seconds^2)
-        :param mixgauss_weights: weights of the Gaussian mixture
-        :param mixgauss_stds: standard deviations of the Gaussian mixture
-        :param mixgauss_means: means of the Gaussian mixture
-        :type mixgauss_weights: list of float
-        :type mixgauss_stds: list of float
-        :type mixgauss_means: list of float
-        :param los_bool: boolean to include line-of-sight distortions
-        :type los_bool: bool
         :param magnification_limit: absolute lensing magnification lower limit to
             register a point source (ignore highly de-magnified images)
         :type magnification_limit: float >= 0
@@ -89,6 +75,8 @@ class Lens(LensedSystemBase):
         :type light_profile: str . Either "single_sersic" or "double_sersic" .
         :param lightcurve_time: observation time array for lightcurve in unit of days.
         :type lightcurve_time: array
+        :param los_config: Line of sight configuration
+        :type los_config: LOSConfig instance
         """
         super().__init__(
             source_dict=source_dict,
@@ -104,19 +92,13 @@ class Lens(LensedSystemBase):
             sn_absolute_zpsys=sn_absolute_zpsys,
         )
 
-        self.los_bool = los_bool
         self.cosmo = cosmo
         self._source_type = source_type
         self._lens_equation_solver = lens_equation_solver
-        self._mixgauss_means = mixgauss_means
-        self._mixgauss_stds = mixgauss_stds
-        self._mixgauss_weights = mixgauss_weights
         self._magnification_limit = magnification_limit
         self.kwargs_variab = kwargs_variability
-        self.nonlinear_los_bool = nonlinear_los_bool
-        self.mixgauss_gamma = mixgauss_gamma
-        self.nonlinear_correction_path = nonlinear_correction_path
-        self.no_correction_path = no_correction_path
+        if los_config is None:
+            self.los_config = LOSConfig()
 
         self._los_linear_distortions_cache = None
         self.light_profile = light_profile
@@ -393,16 +375,16 @@ class Lens(LensedSystemBase):
 
         :return: kappa, gamma1, gamma2
         """
-        if self.los_bool is False:
+        if self.los_config.los_bool is False:
             return 0, 0, 0
         if (
-            self.los_bool is True
-            and self.mixgauss_gamma is True
-            and self.nonlinear_los_bool is False
+            self.los_config.los_bool is True
+            and self.los_config.mixgauss_gamma is True
+            and self.los_config.nonlinear_los_bool is False
         ):
-            mixgauss_means = self._mixgauss_means
-            mixgauss_stds = self._mixgauss_stds
-            mixgauss_weights = self._mixgauss_weights
+            mixgauss_means = self.los_config.mixgauss_means
+            mixgauss_stds = self.los_config.mixgauss_stds
+            mixgauss_weights = self.los_config.mixgauss_weights
             if not hasattr(self, "_gamma"):
                 mixture = GaussianMixtureModel(
                     means=mixgauss_means,
@@ -417,9 +399,9 @@ class Lens(LensedSystemBase):
             if not hasattr(self, "_kappa"):
                 self._kappa = np.random.normal(loc=0, scale=0.05)
         if (
-            self.los_bool is True
-            and self.mixgauss_gamma is True
-            and self.nonlinear_los_bool is True
+            self.los_config.los_bool is True
+            and self.los_config.mixgauss_gamma is True
+            and self.los_config.nonlinear_los_bool is True
         ):
             raise ValueError(
                 "Can only choose one method for external shear and convergence"
@@ -428,11 +410,13 @@ class Lens(LensedSystemBase):
             z_source = float(self.source.redshift)
             z_lens = float(self.deflector.redshift)
             LOS = LineOfSightDistribution(
-                nonlinear_correction_path=self.nonlinear_correction_path,
-                no_correction_path=self.no_correction_path,
+                nonlinear_correction_path=self.los_config.nonlinear_correction_path,
+                no_correction_path=self.los_config.no_correction_path,
             )
             gamma, self._kappa = LOS.get_kappa_gamma(
-                z_source, z_lens, use_nonlinear_correction=self.nonlinear_los_bool
+                z_source,
+                z_lens,
+                use_nonlinear_correction=self.los_config.nonlinear_los_bool,
             )
             phi = 2 * np.pi * np.random.random()
             gamma1 = gamma * np.cos(2 * phi)
