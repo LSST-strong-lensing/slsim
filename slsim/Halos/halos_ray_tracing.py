@@ -11,15 +11,14 @@ class HalosRayTracing(object):
         self.lens_model = lens_model
 
     def get_convergence_shear(
-            self,
-            kwargs=None,
-            lens_model=None,
-            same_from_class=True,
-            gamma12=False,
-            diff=1.0,
-            diff_method="square",
-
-            zdzs=None,
+        self,
+        kwargs=None,
+        lens_model=None,
+        same_from_class=True,
+        gamma12=False,
+        diff=1.0,
+        diff_method="square",
+        zdzs=None,
     ):
         """Computes the convergence and shear at the origin due to all Halos.
 
@@ -46,9 +45,9 @@ class HalosRayTracing(object):
         if lens_model is None:
             assert kwargs is None
             if gamma12:
-                return 0.0,0.0,0.0
+                return 0.0, 0.0, 0.0
             else:
-                return 0.0,0.0
+                return 0.0, 0.0
         if zdzs is not None:
             f_xx, f_xy, f_yx, f_yy = lens_model.hessian_z1z2(
                 z1=zdzs[0],
@@ -68,7 +67,7 @@ class HalosRayTracing(object):
             gamma2 = f_xy
             return kappa, gamma1, gamma2
         else:
-            gamma = np.sqrt(f_xy ** 2 + 0.25 * (f_xx - f_yy) ** 2)
+            gamma = np.sqrt(f_xy**2 + 0.25 * (f_xx - f_yy) ** 2)
             return kappa, gamma
 
     def nonlinear_correction_kappa_gamma_values(self, lens_data, zd, zs):
@@ -104,14 +103,24 @@ class HalosRayTracing(object):
         kwargs_lens_ds = lens_data["ds"]["kwargs_lens"]
 
         kappa_od, gamma_od1, gamma_od2 = self.get_convergence_shear(
-            gamma12=True, kwargs=kwargs_lens_od, lens_model=lens_model_od, same_from_class=False
+            gamma12=True,
+            kwargs=kwargs_lens_od,
+            lens_model=lens_model_od,
+            same_from_class=False,
         )
 
         kappa_os, gamma_os1, gamma_os2 = self.get_convergence_shear(
-            gamma12=True, kwargs=kwargs_lens_os, lens_model=lens_model_os, same_from_class=False
+            gamma12=True,
+            kwargs=kwargs_lens_os,
+            lens_model=lens_model_os,
+            same_from_class=False,
         )
         kappa_ds, gamma_ds1, gamma_ds2 = self.get_convergence_shear(
-            gamma12=True, kwargs=kwargs_lens_ds, lens_model=lens_model_ds, zdzs=(zd, zs), same_from_class=False
+            gamma12=True,
+            kwargs=kwargs_lens_ds,
+            lens_model=lens_model_ds,
+            zdzs=(zd, zs),
+            same_from_class=False,
         )
 
         return (
@@ -223,19 +232,33 @@ class HalosRayTracing(object):
         kwargs_lens_ds = lens_data["ds"]["kwargs_lens"]
 
         kappa_od, gamma_od1, gamma_od2 = self.get_convergence_shear(
-            gamma12=True, kwargs=kwargs_lens_od, lens_model=lens_model_od, same_from_class=False
+            gamma12=True,
+            kwargs=kwargs_lens_od,
+            lens_model=lens_model_od,
+            same_from_class=False,
         )
 
         kappa_os, gamma_os1, gamma_os2 = self.get_convergence_shear(
-            gamma12=True, kwargs=kwargs_lens_os, lens_model=lens_model_os, same_from_class=False
+            gamma12=True,
+            kwargs=kwargs_lens_os,
+            lens_model=lens_model_os,
+            same_from_class=False,
         )
 
         kappa_os2, gamma_os12, gamma_os22 = self.get_convergence_shear(
-            gamma12=True, kwargs=kwargs_lens_os, lens_model=lens_model_os, zdzs=(0, zs), same_from_class=False
+            gamma12=True,
+            kwargs=kwargs_lens_os,
+            lens_model=lens_model_os,
+            zdzs=(0, zs),
+            same_from_class=False,
         )
 
         kappa_ds, gamma_ds1, gamma_ds2 = self.get_convergence_shear(
-            gamma12=True, kwargs=kwargs_lens_ds, lens_model=lens_model_ds, zdzs=(zd, zs), same_from_class=False
+            gamma12=True,
+            kwargs=kwargs_lens_ds,
+            lens_model=lens_model_ds,
+            zdzs=(zd, zs),
+            same_from_class=False,
         )
 
         kext = 1 - (1 - kappa_od) * (1 - kappa_os) / (1 - kappa_ds)
@@ -262,13 +285,13 @@ class HalosRayTracing(object):
         ), (kwargs_lens_os, lens_model_os)
 
     def compute_kappa(
-            self,
-            sky_area,
-            diff=0.0000001,
-            num_points=500,
-            diff_method="square",
-            kwargs=None,
-            lens_model=None,
+        self,
+        sky_area,
+        diff=0.0000001,
+        num_points=500,
+        diff_method="square",
+        kwargs=None,
+        lens_model=None,
     ):
         # can out as single
         """Computes the convergence (kappa) values over a grid and returns both the 2D
@@ -299,7 +322,7 @@ class HalosRayTracing(object):
         x = np.linspace(-radius_arcsec, radius_arcsec, num_points)
         y = np.linspace(-radius_arcsec, radius_arcsec, num_points)
         X, Y = np.meshgrid(x, y)
-        mask_2D = X ** 2 + Y ** 2 <= radius_arcsec ** 2
+        mask_2D = X**2 + Y**2 <= radius_arcsec**2
         mask_1D = mask_2D.ravel()
 
         # Use lenstronomy utility to make grid
@@ -317,13 +340,13 @@ class HalosRayTracing(object):
         return kappa_image, kappa_values
 
     def plot_convergence(
-            self,
-            sky_area,
-            diff=0.0000001,
-            num_points=500,
-            diff_method="square",
-            kwargs=None,
-            lens_model=None,
+        self,
+        sky_area,
+        diff=0.0000001,
+        num_points=500,
+        diff_method="square",
+        kwargs=None,
+        lens_model=None,
     ):
         # can out
         r"""Plots the convegence (:math:`\kappa`) across the lensed sky area.

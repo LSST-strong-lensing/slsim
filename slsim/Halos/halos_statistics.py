@@ -11,26 +11,27 @@ from slsim.Halos.halos_util import convergence_mean_0
 
 
 class HalosStatistics(HalosLensBase):
-    r"""A class for computing statistics rendering.
+    r"""A class for computing statistics rendering."""
 
-
-    """
-    def __init__(self,
-                 halos_list,
-                 mass_correction_list=None,
-                 cosmo=None,
-                 sky_area=0.004 * np.pi,
-                 samples_number=1000,
-                 mass_sheet=True,
-                 z_source=5,
-                 ):
-        super().__init__(halos_list,
-                         mass_correction_list,
-                         cosmo,
-                         sky_area,
-                         samples_number,
-                         mass_sheet,
-                         z_source, )
+    def __init__(
+        self,
+        halos_list,
+        mass_correction_list=None,
+        cosmo=None,
+        sky_area=0.004 * np.pi,
+        samples_number=1000,
+        mass_sheet=True,
+        z_source=5,
+    ):
+        super().__init__(
+            halos_list,
+            mass_correction_list,
+            cosmo,
+            sky_area,
+            samples_number,
+            mass_sheet,
+            z_source,
+        )
         self.samples_number = samples_number
 
     def get_kappaext_gammaext_distib_zdzs(self, zd, zs, listmean=False):
@@ -67,7 +68,9 @@ class HalosStatistics(HalosLensBase):
                 f"For this halos lists, zd,zs, elapsed time for computing weak-lensing maps: {elapsed_time} seconds"
             )
         if listmean:
-            kappa_gamma_distribution[:, 0] = convergence_mean_0(kappa_gamma_distribution[:, 0])
+            kappa_gamma_distribution[:, 0] = convergence_mean_0(
+                kappa_gamma_distribution[:, 0]
+            )
 
         return kappa_gamma_distribution
 
@@ -162,19 +165,33 @@ class HalosStatistics(HalosLensBase):
         kwargs_lens_ds = lens_data["ds"]["kwargs_lens"]
 
         kappa_od, gamma_od1, gamma_od2 = self.halos_get_convergence_shear(
-            gamma12=True, kwargs=kwargs_lens_od, lens_model=lens_model_od, same_from_class=False
+            gamma12=True,
+            kwargs=kwargs_lens_od,
+            lens_model=lens_model_od,
+            same_from_class=False,
         )
 
         kappa_os, gamma_os1, gamma_os2 = self.halos_get_convergence_shear(
-            gamma12=True, kwargs=kwargs_lens_os, lens_model=lens_model_os, same_from_class=False
+            gamma12=True,
+            kwargs=kwargs_lens_os,
+            lens_model=lens_model_os,
+            same_from_class=False,
         )
 
         kappa_os2, gamma_os12, gamma_os22 = self.halos_get_convergence_shear(
-            gamma12=True, kwargs=kwargs_lens_os, lens_model=lens_model_os, zdzs=(0, zs), same_from_class=False
+            gamma12=True,
+            kwargs=kwargs_lens_os,
+            lens_model=lens_model_os,
+            zdzs=(0, zs),
+            same_from_class=False,
         )
 
         kappa_ds, gamma_ds1, gamma_ds2 = self.halos_get_convergence_shear(
-            gamma12=True, kwargs=kwargs_lens_ds, lens_model=lens_model_ds, zdzs=(zd, zs), same_from_class=False
+            gamma12=True,
+            kwargs=kwargs_lens_ds,
+            lens_model=lens_model_ds,
+            zdzs=(zd, zs),
+            same_from_class=False,
         )
 
         kext = 1 - (1 - kappa_od) * (1 - kappa_os) / (1 - kappa_ds)
@@ -299,7 +316,7 @@ class HalosStatistics(HalosLensBase):
                     kappa, _ = self.halos_get_convergence_shear(
                         lens_model=lens_model,
                         kwargs=kwargs_lens,
-                        same_from_class = False,
+                        same_from_class=False,
                         gamma12=False,
                         zdzs=(0, 5),
                     )
@@ -352,17 +369,17 @@ class HalosStatistics(HalosLensBase):
                 )
                 # Compute differential comoving volume for this redshift slice
                 dVc = (
-                        (
-                                self.cosmo.comoving_volume(z[i])
-                                - self.cosmo.comoving_volume(z[i - 1])
-                        )
-                        * v_ratio
+                    (
+                        self.cosmo.comoving_volume(z[i])
+                        - self.cosmo.comoving_volume(z[i - 1])
+                    )
+                    * v_ratio
                 ).value
                 total_mass += dVc * critical_density_z
         if method == "differential_comoving_volume":
             dV_dz = (
-                    self.cosmo.differential_comoving_volume(z)
-                    * (self.sky_area * (u.deg ** 2))
+                self.cosmo.differential_comoving_volume(z)
+                * (self.sky_area * (u.deg**2))
             ).to_value("Mpc3")
             dV = dV_dz * ((5 - 0) / len(z))
             total_mass = np.sum(
@@ -485,7 +502,6 @@ class HalosStatistics(HalosLensBase):
             )
             return [kappa, gamma1, gamma2]
 
-
     def get_kappa_gamma_distib(
         self, gamma_tot=False, diff=1.0, diff_method="square", listmean=False
     ):
@@ -530,9 +546,10 @@ class HalosStatistics(HalosLensBase):
                 f"For this Halos list, elapsed time for computing weak-lensing maps: {elapsed_time} seconds"
             )
         if listmean:
-            kappa_gamma_distribution[:, 0] = convergence_mean_0(kappa_gamma_distribution[:, 0])
+            kappa_gamma_distribution[:, 0] = convergence_mean_0(
+                kappa_gamma_distribution[:, 0]
+            )
         return kappa_gamma_distribution
-
 
     def get_kappa_gamma_distib_without_multiprocessing(
         self, gamma_tot=False, diff=1.0, diff_method="square", listmean=False
@@ -589,4 +606,3 @@ class HalosStatistics(HalosLensBase):
             )
 
         return kappa_gamma_distribution
-

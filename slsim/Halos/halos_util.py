@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def convergence_mean_0(kappa_data):
     """Adjusts the input kappa data by subtracting the mean of non-zero elements from
     the non-zero values only. Keeps zeros as is. Returns the adjusted data in the same

@@ -38,7 +38,7 @@ def concentration_from_mass(z, mass, A=75.4, d=-0.422, m=-0.089):
 
     if isinstance(mass, (list, np.ndarray)) and len(mass) == 1:
         mass = mass[0]
-    c_200 = A * ((1 + z) ** d) * (mass ** m)
+    c_200 = A * ((1 + z) ** d) * (mass**m)
     c_200 = np.maximum(c_200, 1)
     return c_200
     # TODO: Make this able for list
@@ -136,21 +136,19 @@ class HalosLensBase(object):
 
     halos_various_halos_data(zd, zs)
         Computes various convergence (kappa) and shear (gamma) values for given deflector and source redshifts
-
-
     """
 
     # TODO: ADD test functions
     # TODO: Add documentation for all methods, CHANGE the documentation for all methods
     def __init__(
-            self,
-            halos_list,
-            mass_correction_list=None,
-            cosmo=None,
-            sky_area=0.004 * np.pi,
-            samples_number=1000,
-            mass_sheet=True,
-            z_source=5,
+        self,
+        halos_list,
+        mass_correction_list=None,
+        cosmo=None,
+        sky_area=0.004 * np.pi,
+        samples_number=1000,
+        mass_sheet=True,
+        z_source=5,
     ):
         """Initialize the HalosLens class.
 
@@ -250,9 +248,7 @@ class HalosLensBase(object):
         return self._lens_model
 
     def enhance_halos_table_random_pos(self):
-        """
-        put halos in random positions in the sky
-        """
+        """Put halos in random positions in the sky."""
         n_halos = self.n_halos
         if n_halos == 0:
             self.halos_list["px"] = 0.0
@@ -289,7 +285,7 @@ class HalosLensBase(object):
             else:
                 lens_model = LensModel(
                     lens_model_list=["NFW"] * self.n_halos
-                                    + ["CONVERGENCE"] * self.n_correction,
+                    + ["CONVERGENCE"] * self.n_correction,
                     lens_redshift_list=self.combined_redshift_list,
                     cosmo=self.cosmo,
                     observed_convention_index=[],
@@ -392,17 +388,17 @@ class HalosLensBase(object):
             ra_0 = [0] * self.n_correction
             dec_0 = [0] * self.n_correction
             kwargs_lens = [
-                              {
-                                  "Rs": Rs_angle[h],
-                                  "alpha_Rs": alpha_Rs[h],
-                                  "center_x": self.halos_list["px"][h],
-                                  "center_y": self.halos_list["py"][h],
-                              }
-                              for h in range(self.n_halos)
-                          ] + [
-                              {"kappa": kappa[h], "ra_0": ra_0[h], "dec_0": dec_0[h]}
-                              for h in range(self.n_correction)
-                          ]
+                {
+                    "Rs": Rs_angle[h],
+                    "alpha_Rs": alpha_Rs[h],
+                    "center_x": self.halos_list["px"][h],
+                    "center_y": self.halos_list["py"][h],
+                }
+                for h in range(self.n_halos)
+            ] + [
+                {"kappa": kappa[h], "ra_0": ra_0[h], "dec_0": dec_0[h]}
+                for h in range(self.n_correction)
+            ]
         else:
             Rs_angle, alpha_Rs = self.get_nfw_kwargs()
             kwargs_lens = [
@@ -478,7 +474,7 @@ class HalosLensBase(object):
 
         halos_ds = self.halos_list[
             (self.halos_list["z"] >= zd) & (self.halos_list["z"] < zs)
-            ]
+        ]
         halos_od = self.halos_list[self.halos_list["z"] < zd]
         halos_os = self.halos_list[self.halos_list["z"] < zs]
         return halos_od, halos_ds, halos_os
@@ -510,13 +506,13 @@ class HalosLensBase(object):
         mass_correction_ds = self.mass_correction_list[
             (self.mass_correction_list["z"] >= zd)
             & (self.mass_correction_list["z"] < zs)
-            ]
+        ]
         mass_correction_od = self.mass_correction_list[
             self.mass_correction_list["z"] < zd
-            ]
+        ]
         mass_correction_os = self.mass_correction_list[
             self.mass_correction_list["z"] < zs
-            ]
+        ]
         return mass_correction_od, mass_correction_ds, mass_correction_os
 
     def _build_lens_data(self, halos, mass_correction, zd, zs):
@@ -554,9 +550,9 @@ class HalosLensBase(object):
         c_200_halos = halos["c_200"]
 
         if (
-                (mass_correction is not None)
-                and (len(mass_correction) > 0)
-                and self.mass_sheet
+            (mass_correction is not None)
+            and (len(mass_correction) > 0)
+            and self.mass_sheet
         ):  # check
             z_mass_correction = mass_correction["z"]
             #    mass_first_moment = mass_correction["first_moment"]
@@ -594,7 +590,7 @@ class HalosLensBase(object):
         )
 
         if (
-                mass_correction is not None and len(mass_correction) > 0 and self.mass_sheet
+            mass_correction is not None and len(mass_correction) > 0 and self.mass_sheet
         ):  # check
             #    kappa_ext_list = self.kappa_ext_for_mass_sheet(
             #        z_mass_correction, relevant_lens_cosmo_list, mass_first_moment
@@ -666,7 +662,7 @@ class HalosLensBase(object):
 
         if len(combined_redshift_list) - n_halos > 0:
             lens_model_list = ["NFW"] * n_halos + ["CONVERGENCE"] * (
-                    len(combined_redshift_list) - n_halos
+                len(combined_redshift_list) - n_halos
             )
         elif len(combined_redshift_list) - n_halos < 0:
             raise ValueError(
@@ -688,17 +684,17 @@ class HalosLensBase(object):
         return lens_model, lens_model_list
 
     def _build_kwargs_lens(
-            self,
-            n_halos,
-            n_mass_correction,
-            z_halo,
-            mass_halo,
-            px_halo,
-            py_halo,
-            c_200_halos,
-            lens_model_list,
-            kappa_ext_list,
-            lens_cosmo_list,
+        self,
+        n_halos,
+        n_mass_correction,
+        z_halo,
+        mass_halo,
+        px_halo,
+        py_halo,
+        c_200_halos,
+        lens_model_list,
+        kappa_ext_list,
+        lens_cosmo_list,
     ):
         """Constructs the lens keyword arguments based on provided input parameters.
 
@@ -824,14 +820,16 @@ class HalosLensBase(object):
             },
         }
 
-    def halos_get_convergence_shear(self,
-                                    same_from_class=True,
-                                    gamma12=False,
-                                    diff=1.0,
-                                    diff_method="square",
-                                    kwargs=None,
-                                    lens_model=None,
-                                    zdzs=None, ):
+    def halos_get_convergence_shear(
+        self,
+        same_from_class=True,
+        gamma12=False,
+        diff=1.0,
+        diff_method="square",
+        kwargs=None,
+        lens_model=None,
+        zdzs=None,
+    ):
         if self.n_halos == 0:
             is_nan = np.isnan(self.halos_list["z"])
             if is_nan:
@@ -844,13 +842,15 @@ class HalosLensBase(object):
         if lens_model is None:
             lens_model = self.param_lens_model
         HRT = HalosRayTracing(lens_model, kwargs)
-        return HRT.get_convergence_shear(gamma12=gamma12,
-                                         diff=diff,
-                                         diff_method=diff_method,
-                                         kwargs=kwargs,
-                                         lens_model=lens_model,
-                                         zdzs=zdzs,
-                                         same_from_class=same_from_class)
+        return HRT.get_convergence_shear(
+            gamma12=gamma12,
+            diff=diff,
+            diff_method=diff_method,
+            kwargs=kwargs,
+            lens_model=lens_model,
+            zdzs=zdzs,
+            same_from_class=same_from_class,
+        )
 
     def compute_various_kappa_gamma_values(self, zd, zs):
         if self.n_halos == 0:
@@ -859,19 +859,24 @@ class HalosLensBase(object):
                 return 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
 
         lens_data = self.get_lens_data_by_redshift(zd, zs)
-        HRT = HalosRayTracing(lens_kwargs=None,lens_model=None)
-        return HRT.nonlinear_correction_kappa_gamma_values(lens_data=lens_data, zd=zd, zs=zs)
+        HRT = HalosRayTracing(lens_kwargs=None, lens_model=None)
+        return HRT.nonlinear_correction_kappa_gamma_values(
+            lens_data=lens_data, zd=zd, zs=zs
+        )
 
     def halos_get_kext_gext_values(self, zd, zs):
         lens_data = self.get_lens_data_by_redshift(zd, zs)
-        HRT = HalosRayTracing(lens_kwargs=None,lens_model=None)
+        HRT = HalosRayTracing(lens_kwargs=None, lens_model=None)
         return HRT.get_kext_gext_values(lens_data=lens_data, zd=zd, zs=zs)
 
-    def halos_compute_kappa(self, diff=0.0000001,
-                            num_points=500,
-                            diff_method="square",
-                            mass_sheet_bool=None,
-                            enhance_pos=False, ):
+    def halos_compute_kappa(
+        self,
+        diff=0.0000001,
+        num_points=500,
+        diff_method="square",
+        mass_sheet_bool=None,
+        enhance_pos=False,
+    ):
 
         sky_area = self.sky_area
         kwargs = self.get_halos_lens_kwargs()
@@ -892,12 +897,14 @@ class HalosLensBase(object):
             self.enhance_halos_table_random_pos()
         return kappa_image, kappa_values
 
-    def plot_halos_convergence(self,
-                               diff=0.0000001,
-                               num_points=500,
-                               diff_method="square",
-                               mass_sheet=None,
-                               enhance_pos=True, ):
+    def plot_halos_convergence(
+        self,
+        diff=0.0000001,
+        num_points=500,
+        diff_method="square",
+        mass_sheet=None,
+        enhance_pos=True,
+    ):
 
         sky_area = self.sky_area
         original_mass_sheet = self.mass_sheet
@@ -909,15 +916,24 @@ class HalosLensBase(object):
             self._lens_model = None
             lens_model = self.param_lens_model
             HRT = HalosRayTracing(lens_model, kwargs)
-            HRT.plot_convergence(sky_area=sky_area, diff=diff, num_points=num_points, diff_method=diff_method,
-                                 kwargs=kwargs, lens_model=lens_model)
+            HRT.plot_convergence(
+                sky_area=sky_area,
+                diff=diff,
+                num_points=num_points,
+                diff_method=diff_method,
+                kwargs=kwargs,
+                lens_model=lens_model,
+            )
         finally:
             self.mass_sheet = original_mass_sheet
             if enhance_pos:
                 self.enhance_halos_table_random_pos()
 
-    def halos_compare_plot_convergence(self, diff=0.0000001,
-                                       diff_method="square", ):
+    def halos_compare_plot_convergence(
+        self,
+        diff=0.0000001,
+        diff_method="square",
+    ):
 
         print("mass_sheet=False")
 
@@ -946,5 +962,5 @@ class HalosLensBase(object):
 
     def halos_various_halos_data(self, zd, zs):
         lens_data = self.get_lens_data_by_redshift(zd, zs)
-        HRT = HalosRayTracing(lens_kwargs=[],lens_model=[])
+        HRT = HalosRayTracing(lens_kwargs=[], lens_model=[])
         return HRT.various_halos_data(lens_data=lens_data, zd=zd, zs=zs)
