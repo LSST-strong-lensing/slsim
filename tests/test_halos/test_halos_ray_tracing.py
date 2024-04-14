@@ -26,7 +26,6 @@ def setup_halos_hrt():
         mass_correction_list=mass_sheet_correction,
         sky_area=0.0001,
         cosmo=cosmo,
-        samples_number=1,
         mass_sheet=True,
     )
     zd = 0.5

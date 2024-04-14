@@ -63,7 +63,6 @@ def setup_halos_lens():
         mass_correction_list=mass_sheet_correction,
         sky_area=0.0001,
         cosmo=cosmo,
-        samples_number=1,
         mass_sheet=True,
     )
 
@@ -88,7 +87,6 @@ def setup_no_halos():
         mass_correction_list=mass_sheet_correction,
         sky_area=0.0001,
         cosmo=cosmo,
-        samples_number=1,
         mass_sheet=True,
     )
 
@@ -113,7 +111,6 @@ def setup_mass_sheet_false():
         mass_correction_list=mass_sheet_correction,
         sky_area=0.0001,
         cosmo=cosmo,
-        samples_number=1,
         mass_sheet=False,
     )
 
@@ -147,7 +144,6 @@ def setup_halos_lens_large_sample_number():
         mass_correction_list=mass_sheet_correction,
         sky_area=0.0001,
         cosmo=cosmo,
-        samples_number=2500,
         mass_sheet=True,
     )
 
@@ -432,7 +428,6 @@ def test_setting():
             mass_correction_list=None,
             sky_area=0.0001,
             cosmo=cosmo,
-            samples_number=1,
             mass_sheet=True,
         )
     with pytest.warns(Warning, match=r".*default_cosmology*"):
@@ -440,6 +435,5 @@ def test_setting():
             halos_list=halos,
             mass_correction_list=None,
             sky_area=0.0001,
-            samples_number=1,
             mass_sheet=False,
         )

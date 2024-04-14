@@ -1264,7 +1264,6 @@ def worker_run_total_kappa_by_multiprocessing(
         halos_list=nhalos,
         sky_area=sky_area,
         cosmo=cosmo,
-        samples_number=1,
         z_source=z_max,
         mass_sheet=False,
     )

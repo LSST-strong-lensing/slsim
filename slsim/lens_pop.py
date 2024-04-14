@@ -5,6 +5,7 @@ from slsim.lens import (
 )
 import numpy as np
 from slsim.lensed_population_base import LensedPopulationBase
+from slsim.ParamDistributions.los_config import LOSConfig
 import os
 import pickle
 from astropy.table import Table
@@ -28,10 +29,6 @@ class LensPop(LensedPopulationBase):
         sky_area=None,
         filters=None,
         cosmo=None,
-        los_bool=True,
-        nonlinear_los_bool=False,
-        nonlinear_correction_path=None,
-        no_correction_path=None,
         source_light_profile="single_sersic",
         catalog_type="skypy",
         catalog_path=None,
@@ -39,6 +36,7 @@ class LensPop(LensedPopulationBase):
         sn_type=None,
         sn_absolute_mag_band=None,
         sn_absolute_zpsys=None,
+        los_config=None,
     ):
         """
 
@@ -67,8 +65,6 @@ class LensPop(LensedPopulationBase):
         :type filters: list of strings or None
         :param cosmo: cosmology object
         :type cosmo: `~astropy.cosmology.FLRW`
-        :param los: Boolean to use external convergence/shear.
-        :type los: bool
         :param source_light_profile: keyword for number of sersic profile to use in
          source light model. It is necessary to recognize quantities given in the source
          catalog.
@@ -88,6 +84,8 @@ class LensPop(LensedPopulationBase):
         :type sn_absolute_mag_band: str or `~sncosmo.Bandpass`
         :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
         :type sn_absolute_zpsys: str
+        :param los_config: configuration for line of sight distribution
+        :type los_config: LOSConfig instance
         """
         super().__init__(
             sky_area,
@@ -250,10 +248,10 @@ class LensPop(LensedPopulationBase):
             raise ValueError("source_type %s is not supported" % source_type)
         self.cosmo = cosmo
         self.f_sky = sky_area
-        self.los_bool = los_bool
-        self.nonlinear_los_bool = nonlinear_los_bool
-        self.nonlinear_correction_path = nonlinear_correction_path
-        self.no_correction_path = no_correction_path
+
+        self.los_config = los_config
+        if self.los_config is None:
+            los_config = LOSConfig()
 
     def select_lens_at_random(self, **kwargs_lens_cut):
         """Draw a random lens within the cuts of the lens and source, with possible
@@ -280,10 +278,7 @@ class LensPop(LensedPopulationBase):
                 source_type=self._source_model_type,
                 light_profile=self._sources.light_profile,
                 lightcurve_time=self.lightcurve_time,
-                los_bool=self.los_bool,
-                nonlinear_los_bool=self.nonlinear_los_bool,
-                nonlinear_correction_path=self.nonlinear_correction_path,
-                no_correction_path=self.no_correction_path,
+                los_config=self.los_config,
             )
             if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens
@@ -366,10 +361,7 @@ class LensPop(LensedPopulationBase):
                         cosmo=self.cosmo,
                         test_area=test_area,
                         source_type=self._source_model_type,
-                        los_bool=self.los_bool,
-                        nonlinear_los_bool=self.nonlinear_los_bool,
-                        nonlinear_correction_path=self.nonlinear_correction_path,
-                        no_correction_path=self.no_correction_path,
+                        los_config=self.los_config,
                         light_profile=self._sources.light_profile,
                         lightcurve_time=self.lightcurve_time,
                     )

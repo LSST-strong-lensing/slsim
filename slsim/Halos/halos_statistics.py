@@ -55,7 +55,6 @@ class HalosStatistics(HalosLensBase):
             mass_correction_list,
             cosmo,
             sky_area,
-            samples_number,
             mass_sheet,
             z_source,
         )

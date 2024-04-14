@@ -97,7 +97,8 @@ class Lens(LensedSystemBase):
         self._lens_equation_solver = lens_equation_solver
         self._magnification_limit = magnification_limit
         self.kwargs_variab = kwargs_variability
-        if los_config is None:
+        self.los_config = los_config
+        if self.los_config is None:
             self.los_config = LOSConfig()
 
         self._los_linear_distortions_cache = None
