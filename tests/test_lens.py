@@ -50,7 +50,7 @@ class TestLens(object):
         )
         source_dict = blue_one
         deflector_dict = {
-            "halo_mass": 10 ** 13,
+            "halo_mass": 10**13,
             "concentration": 10,
             "e1_mass": 0.1,
             "e2_mass": -0.1,
@@ -119,7 +119,7 @@ class TestLens(object):
 
     def test_deflector_stellar_mass(self):
         s_mass = self.gg_lens.deflector_stellar_mass()
-        assert s_mass >= 10 ** 5
+        assert s_mass >= 10**5
 
     def test_deflector_velocity_dispersion(self):
         vdp = self.gg_lens.deflector_velocity_dispersion()
@@ -142,7 +142,7 @@ class TestLens(object):
         arrival_times = self.gg_lens.point_source_arrival_times()
         observer_times = (t_obs + arrival_times - np.min(arrival_times))[:, np.newaxis]
         observer_times2 = (
-                t_obs2[:, np.newaxis] + arrival_times - np.min(arrival_times)
+            t_obs2[:, np.newaxis] + arrival_times - np.min(arrival_times)
         ).T
         npt.assert_almost_equal(dt_days, observer_times, decimal=5)
         npt.assert_almost_equal(dt_days2, observer_times2, decimal=5)
@@ -262,9 +262,11 @@ class TestDifferenLens(object):
         self.deflector_dict = red_one
 
     def test_different_setting(self):
-        los1 = LOSConfig(los_bool=True,
-                         mixgauss_gamma=True,
-                         nonlinear_los_bool=False, )
+        los1 = LOSConfig(
+            los_bool=True,
+            mixgauss_gamma=True,
+            nonlinear_los_bool=False,
+        )
         gg_lens = Lens(
             source_dict=self.source_dict,
             deflector_dict=self.deflector_dict,
@@ -275,9 +277,11 @@ class TestDifferenLens(object):
         assert isinstance(gg_lens.external_convergence, float)
         assert isinstance(gg_lens.external_shear, float)
 
-        los2 = LOSConfig(los_bool=True,
-                         mixgauss_gamma=False,
-                         nonlinear_los_bool=True, )
+        los2 = LOSConfig(
+            los_bool=True,
+            mixgauss_gamma=False,
+            nonlinear_los_bool=True,
+        )
 
         gg_lens_2 = Lens(
             source_dict=self.source_dict,
@@ -299,9 +303,11 @@ class TestDifferenLens(object):
         assert gg_lens_3.external_convergence == 0
         assert gg_lens_3.external_shear == 0
 
-        los4 = LOSConfig(los_bool=True,
-                         mixgauss_gamma=True,
-                         nonlinear_los_bool=True, )
+        los4 = LOSConfig(
+            los_bool=True,
+            mixgauss_gamma=True,
+            nonlinear_los_bool=True,
+        )
         with pytest.raises(ValueError):
             gg_lens_4 = Lens(
                 source_dict=self.source_dict,
@@ -312,9 +318,11 @@ class TestDifferenLens(object):
             gg_lens_4.external_convergence()
 
     def test_image_number(self):
-        los=LOSConfig(los_bool=True,
-                      mixgauss_gamma=True,
-                      nonlinear_los_bool=False, )
+        los = LOSConfig(
+            los_bool=True,
+            mixgauss_gamma=True,
+            nonlinear_los_bool=False,
+        )
         gg_lens_number = Lens(
             source_dict=self.source_dict,
             deflector_dict=self.deflector_dict,
