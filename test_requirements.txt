@@ -1,1 +1,0 @@
-git+https://github.com/aymgal/coolest@main#egg=coolest
