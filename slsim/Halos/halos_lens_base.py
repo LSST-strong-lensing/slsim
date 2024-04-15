@@ -73,7 +73,7 @@ class HalosLensBase(object):
          filter_halos_by_redshift(): Filters halos and mass corrections by redshift conditions and constructs lens data.
          get_lens_data_by_redshift(): Retrieves lens data filtered by the specified redshift range.
          halos_get_convergence_shear(): Computes the convergence and shear at the origin due to all Halos.
-         compute_various_kappa_gamma_values(): Compute the various convergence and shear values from the non-linear correction numbers.
+         compute_halos_various_kappa_gamma_values(): Compute the various convergence and shear values from the non-linear correction numbers.
          halos_get_kext_gext_values(): Compute the non-linear external convergence and shear values from the Halos.
          halos_compute_kappa(): Computes the convergence across the lensed sky area.
          plot_halos_convergence(): Compares and plots the convergence for different configurations of the mass sheet.
@@ -376,9 +376,9 @@ class HalosLensBase(object):
             mass_correction_os,
         ) = self._filter_mass_correction_by_condition(zd, zs)
         return (
-            self._build_lens_data(halos_ds, mass_correction_ds, zd=zd, zs=zs),
-            self._build_lens_data(halos_od, mass_correction_od, zd=0, zs=zd),
-            self._build_lens_data(halos_os, mass_correction_os, zd=0, zs=zs),
+            self._build_lens_data(halos_ds, mass_correction_ds, z1=zd, z2=zs),
+            self._build_lens_data(halos_od, mass_correction_od, z1=0, z2=zd),
+            self._build_lens_data(halos_os, mass_correction_os, z1=0, z2=zs),
         )
 
     def _filter_halos_by_condition(self, zd, zs):
@@ -447,7 +447,7 @@ class HalosLensBase(object):
         ]
         return mass_correction_od, mass_correction_ds, mass_correction_os
 
-    def _build_lens_data(self, halos, mass_correction, zd, zs):
+    def _build_lens_data(self, halos, mass_correction, z1, z2):
         """Constructs lens data based on the provided halos, mass corrections, and
         redshifts.
 
@@ -455,10 +455,10 @@ class HalosLensBase(object):
         :type halos: DataFrame
         :param mass_correction: Contains information about the mass correction, including redshift ('z`) and kappa_ext ('kappa_ext`). If there's no mass correction, this can be None.
         :type mass_correction: DataFrame or None
-        :param zd: Begin redshift.
-        :type zd: float
-        :param zs: End redshift.
-        :type zs: float
+        :param z1: Begin redshift.
+        :type z1: float
+        :param z2: End redshift.
+        :type z2: float
         :returns: A tuple containing the constructed lens model based on the provided data, the list of lens cosmologies constructed from the combined redshift list, and the list of keyword arguments to define the lens model.
         :rtype: (object, list, list)
         :raises ValueError: - If source redshift (zs) is less than deflector redshift (zd).
@@ -487,7 +487,6 @@ class HalosLensBase(object):
             and self.mass_sheet
         ):  # check
             z_mass_correction = mass_correction["z"]
-            #    mass_first_moment = mass_correction["first_moment"]
             mass_correction_kappa = mass_correction["kappa"]
         else:
             z_mass_correction = []
@@ -498,27 +497,27 @@ class HalosLensBase(object):
         # including the lens_cosmo_dict one since it assume halos is in front of mass sheet
         if not combined_redshift_list.size:
             warnings.warn(
-                f"No halos OR mass correction in the given redshift range from zd={zd} to zs={zs}."
+                f"No halos OR mass correction in the given redshift range from z1={z1} to z2={z2}."
             )
             return None, None, None
-        if zs < zd:
+        if z2 < z1:
             raise ValueError(
-                f"Source redshift {zs} cannot be less than deflector redshift {zd}."
+                f"Source redshift {z2} cannot be less than deflector redshift {z1}."
             )
-        if min(combined_redshift_list) < zd:
+        if min(combined_redshift_list) < z1:
             raise ValueError(
                 f"Redshift of the farthest {min(combined_redshift_list)}"
-                f" halo cannot be smaller than deflector redshift{zd}."
+                f" halo cannot be smaller than deflector redshift{z1}."
             )
-        if max(combined_redshift_list) > zs:
+        if max(combined_redshift_list) > z2:
             raise ValueError(
                 f"Redshift of the closet halo {max(combined_redshift_list)} "
-                f"cannot be larger than source redshift {zs}."
+                f"cannot be larger than source redshift {z2}."
             )
 
-        lens_cosmo_dict = self._build_lens_cosmo_dict(combined_redshift_list, zs)
+        lens_cosmo_dict = self._build_lens_cosmo_dict(combined_redshift_list, z2)
         lens_model, lens_model_list = self._build_lens_model(
-            combined_redshift_list, zs, n_halos
+            combined_redshift_list, z2, n_halos
         )
 
         if mass_correction is not None and len(mass_correction) > 0 and self.mass_sheet:
@@ -779,7 +778,7 @@ class HalosLensBase(object):
             same_from_class=same_from_class,
         )
 
-    def compute_various_kappa_gamma_values(self, zd, zs):
+    def compute_halos_various_kappa_gamma_values(self, zd, zs):
         """Compute various kappa and gamma values for the given lens data.
 
         :param zd: Deflector redshift.

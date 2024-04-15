@@ -28,7 +28,7 @@ class HalosStatistics(HalosLensBase):
     Methods:
         get_kappaext_gammaext_distib_zdzs: Computes the distribution of external convergence and shear for given deflector and source redshifts.
         generate_distributions_0to5: Generates distributions of external convergence and shear for a range of deflector and source redshifts from 0 to 5.
-        compute_various_kappa_gamma_values_new: Computes various convergence and shear values for given deflector and source redshifts.
+        compute_various_k_g_lens_values: Computes various convergence and shear values for given deflector and source redshifts.
         get_all_pars_distib: Computes the distribution of various lensing parameters for given deflector and source redshifts.
         compute_kappa_in_bins: Computes the kappa values for each redshift bin for mass sheet correction.
         total_halo_mass: Calculates the total mass of all halos.
@@ -144,9 +144,9 @@ class HalosStatistics(HalosLensBase):
 
         return distributions
 
-    def compute_various_kappa_gamma_values_new(self, zd, zs):
+    def compute_various_k_g_lens_values(self, zd, zs):
         r"""Computes various convergence (kappa) and shear (gamma) values for given
-        deflector and source redshifts.
+        deflector and source redshifts and the lens kwargs and lens model.
 
         This function extracts the lens model and its keyword arguments for different redshift combinations
         ('od`, `os`, and `ds`). It then computes the convergence and shear values for each of these combinations.
@@ -337,7 +337,7 @@ class HalosStatistics(HalosLensBase):
                 # we will consider halos from halos_ds as those are the ones between zd and zs
                 if len(halos_ds) > 0:
                     lens_model, lens_cosmo_list, kwargs_lens = self._build_lens_data(
-                        halos_ds, None, zd=0, zs=5
+                        halos_ds, None, z1=0, z2=5
                     )
                     kappa, _ = self.halos_get_convergence_shear(
                         lens_model=lens_model,

@@ -87,7 +87,7 @@ def test_generate_distributions_0to5(setup_halos_hs):
     )
 
 
-def test_compute_various_kappa_gamma_values(setup_halos_hs):
+def test_compute_various_kappa_gamma_values(setup_halos_hs, setup_no_halos):
     hs = setup_halos_hs
     zd = 0.5
     zs = 1.0
@@ -101,7 +101,7 @@ def test_compute_various_kappa_gamma_values(setup_halos_hs):
         kappa_ds,
         gamma_ds1,
         gamma_ds2,
-    ) = hs.compute_various_kappa_gamma_values(zd, zs)
+    ) = hs.compute_halos_various_kappa_gamma_values(zd, zs)
     assert isinstance(kappa_od, float)
     assert isinstance(kappa_os, float)
     assert isinstance(gamma_od1, float)
@@ -118,6 +118,27 @@ def test_compute_various_kappa_gamma_values(setup_halos_hs):
 
     all_kappa_dicts = hs.compute_kappa_in_bins()
     assert isinstance(all_kappa_dicts, list)
+
+    hs2 = setup_no_halos
+    (
+        kappa_od2,
+        kappa_os2,
+        gamma_od12,
+        gamma_od22,
+        gamma_os12,
+        gamma_os22,
+        kappa_ds2,
+        gamma_ds12,
+        gamma_ds22,
+    ) = hs2.compute_halos_various_kappa_gamma_values(zd, zs)
+    assert kappa_od2 == 0
+    assert kappa_os2 == 0
+    assert gamma_od12 == 0
+    assert gamma_od22 == 0
+    assert gamma_os12 == 0
+    assert gamma_os22 == 0
+    assert gamma_ds12 == 0
+    assert gamma_ds22 == 0
 
 
 def test_total_mass(setup_halos_hs, setup_no_halos):
@@ -171,3 +192,84 @@ def test_kappa_divergence(setup_halos_hs):
     hl = setup_halos_hs
     kappa_div = hl.kappa_divergence()
     assert isinstance(kappa_div, float)
+
+
+def test_compute_various_k_g_lens_values(setup_halos_hs):
+    hs = setup_halos_hs
+    zd = 0.5
+    zs = 1.0
+    (
+        kappa_od,
+        kappa_os,
+        gamma_od1,
+        gamma_od2,
+        gamma_os1,
+        gamma_os2,
+        kappa_ds,
+        gamma_ds1,
+        gamma_ds2,
+        kappa_os2,
+        gamma_os12,
+        gamma_os22,
+        kext,
+        gext,
+    ), (kwargs_lens_os, lens_model_os) = hs.compute_various_k_g_lens_values(zd, zs)
+    assert isinstance(kappa_od, float)
+    assert isinstance(kappa_os, float)
+    assert isinstance(gamma_od1, float)
+    assert isinstance(gamma_od2, float)
+    assert isinstance(gamma_os1, float)
+    assert isinstance(gamma_os2, float)
+    assert isinstance(kappa_ds, float)
+    assert isinstance(gamma_ds1, float)
+    assert isinstance(gamma_ds2, float)
+    assert isinstance(kwargs_lens_os, list)
+    assert isinstance(kext, float)
+    assert isinstance(gext, float)
+    assert isinstance(gamma_os12, float)
+    assert isinstance(gamma_os22, float)
+    assert isinstance(kappa_os2, float)
+
+
+def test_mass_divide_kcrit(setup_halos_hs):
+    hs = setup_halos_hs
+    mass_divide_kcrit = hs.mass_divide_kcrit()
+    assert isinstance(mass_divide_kcrit, np.ndarray)
+    assert isinstance(mass_divide_kcrit[0], float)
+
+
+def test_compute_kappa_gamma(setup_halos_hs):
+    hs = setup_halos_hs
+    i = 1
+    gamma_tot = False
+    diff = 0.0001
+    diff_method = "square"
+    results = hs.compute_kappa_gamma(i, gamma_tot, diff, diff_method)
+    assert len(results) == 3
+    for res in results:
+        assert isinstance(res, float)
+
+    gamma_tot = True
+    results = hs.compute_kappa_gamma(i, gamma_tot, diff, diff_method)
+    assert len(results) == 2
+    for res in results:
+        assert isinstance(res, float)
+
+
+def test_get_kappa_gamma_distib(setup_halos_hs):
+    hl = setup_halos_hs
+    results = hl.get_kappa_gamma_distib()
+    assert results.shape[0] == hl.samples_number
+    assert results.shape[1] == 3  # kappa, gamma1, gamma2
+
+    results = hl.get_kappa_gamma_distib(gamma_tot=True)
+    assert results.shape[0] == hl.samples_number
+    assert results.shape[1] == 2  # kappa, gamma
+
+    results = hl.get_kappa_gamma_distib(gamma_tot=True, listmean=True)
+    assert results.shape[0] == hl.samples_number
+    assert results.shape[1] == 2  # kappa, gamma
+
+    results = hl.get_kappa_gamma_distib(gamma_tot=False, listmean=True)
+    assert results.shape[0] == hl.samples_number
+    assert results.shape[1] == 3  # kappa, gamma1, gamma2

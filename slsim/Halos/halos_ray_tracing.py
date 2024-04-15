@@ -72,8 +72,7 @@ class HalosRayTracing(object):
                 lens_model = self.lens_model
             if kwargs is None:
                 kwargs = self.lens_kwargs
-        if lens_model is None:
-            assert kwargs is None
+        if kwargs is None:
             if gamma12:
                 return 0.0, 0.0, 0.0
             else:

@@ -92,6 +92,30 @@ def setup_no_halos():
 
 
 @pytest.fixture
+def setup_no_halos_mass_sheet_false():
+    z = [np.nan]
+
+    mass = [0]
+
+    halos = Table([z, mass], names=("z", "mass"))
+
+    z_correction = [0.5]
+    kappa_ext_correction = [-0.1]
+    mass_sheet_correction = Table(
+        [z_correction, kappa_ext_correction], names=("z", "kappa")
+    )
+
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    return HalosLensBase(
+        halos_list=halos,
+        mass_correction_list=mass_sheet_correction,
+        sky_area=0.0001,
+        cosmo=cosmo,
+        mass_sheet=False,
+    )
+
+
+@pytest.fixture
 def setup_mass_sheet_false():
     z = [0.5, 0.6]
 
@@ -161,7 +185,9 @@ def test_random_position(setup_halos_lens):
     assert isinstance(py, float)
 
 
-def test_get_lens_model(setup_halos_lens, setup_no_halos):
+def test_get_lens_model(
+    setup_halos_lens, setup_no_halos, setup_no_halos_mass_sheet_false
+):
     hl = setup_halos_lens
     lens_model = hl.get_lens_model()
     assert lens_model.lens_model_list == ["NFW", "NFW", "NFW", "CONVERGENCE"]
@@ -169,6 +195,10 @@ def test_get_lens_model(setup_halos_lens, setup_no_halos):
     hl2 = setup_no_halos
     lens_model2 = hl2.get_lens_model()
     assert lens_model2.lens_model_list == ["NFW", "CONVERGENCE"]
+
+    hl3 = setup_no_halos_mass_sheet_false
+    lens_model3 = hl3.get_lens_model()
+    assert lens_model3.lens_model_list == ["NFW"]
 
 
 def test_get_lens_model_mass_sheet_false(setup_mass_sheet_false):
@@ -282,8 +312,12 @@ def test_build_lens_data(setup_halos_lens):
     assert all(isinstance(item, LensCosmo) for item in lens_cosmo_list)
     assert isinstance(kwargs_lens, list)
 
+    pytest.raises(ValueError, hl._build_lens_data, halos, mass_correction, 0.5, 0.4)
+    pytest.raises(ValueError, hl._build_lens_data, halos, mass_correction, 1.0, 1.1)
+    pytest.raises(ValueError, hl._build_lens_data, halos, mass_correction, 0.5, 0.6)
 
-def test_build_lens_model(setup_halos_lens):
+
+def test_build_lens_model(setup_halos_lens, setup_mass_sheet_false, setup_no_halos):
     hl = setup_halos_lens
     combined_redshift_list = [0.5, 0.6, 0.7]
     z_source = 1.0
@@ -297,8 +331,24 @@ def test_build_lens_model(setup_halos_lens):
     assert len(lens_model_list) == len(combined_redshift_list)
     assert all(isinstance(model_type, str) for model_type in lens_model_list)
 
+    hl2 = setup_mass_sheet_false
+    hl2z = [0.5, 0.6]
+    n_halos2 = len(hl2z)
+    lens_model2, lens_model_list2 = hl2._build_lens_model(hl2z, z_source, n_halos2)
+    assert isinstance(lens_model2, LensModel)
+    assert len(lens_model_list2) == len(hl2z)
+    assert all(isinstance(model_type, str) for model_type in lens_model_list2)
 
-def test_build_kwargs_lens(setup_halos_lens):
+    hl3 = setup_no_halos
+    hl3z = [0.0]
+    n_halos3 = len(hl3z)
+    lens_model3, lens_model_list3 = hl3._build_lens_model(hl3z, z_source, n_halos3)
+    assert isinstance(lens_model3, LensModel)
+    assert len(lens_model_list3) == len(hl3z)
+    assert all(isinstance(model_type, str) for model_type in lens_model_list3)
+
+
+def test_build_kwargs_lens(setup_halos_lens, setup_no_halos):
     hl = setup_halos_lens
     n_halos = len(hl.halos_list)
     n_mass_correction = len(hl.mass_correction_list)
@@ -330,6 +380,39 @@ def test_build_kwargs_lens(setup_halos_lens):
 
     assert len(kwargs_lens) == n_halos
     for kwargs in kwargs_lens:
+        assert isinstance(kwargs, dict)
+
+    hl2 = setup_no_halos
+    n_halos2 = len(hl2.halos_list)
+    n_mass_correction2 = len(hl2.mass_correction_list)
+    z_halo2 = hl2.halos_list["z"]
+    mass_halo2 = hl2.halos_list["mass"]
+    lens_model_list2 = ["NFW"] * n_halos2
+    kappa_ext_list2 = hl2.mass_correction_list["kappa"] if hl2.mass_sheet else []
+    z_mass_correction2 = hl2.mass_correction_list["z"]
+    px_halo2 = hl2.halos_list["px"]
+    py_halo2 = hl2.halos_list["py"]
+    c_200_halos2 = hl2.halos_list["c_200"]
+
+    combined_redshift_list2 = np.concatenate((z_halo2, z_mass_correction2))
+    lens_cosmo_dict2 = hl2._build_lens_cosmo_dict(combined_redshift_list2, 5.0)
+    lens_cosmo_list2 = list(lens_cosmo_dict2.values())
+
+    kwargs_lens2 = hl2._build_kwargs_lens(
+        n_halos2,
+        n_mass_correction2,
+        z_halo2,
+        mass_halo2,
+        px_halo2,
+        py_halo2,
+        c_200_halos2,
+        lens_model_list2,
+        kappa_ext_list2,
+        lens_cosmo_list2,
+    )
+
+    assert len(kwargs_lens2) == n_halos2
+    for kwargs in kwargs_lens2:
         assert isinstance(kwargs, dict)
 
 
@@ -389,7 +472,7 @@ def test_compute_various_kappa_gamma_values(
         kappa_ds,
         gamma_ds1,
         gamma_ds2,
-    ) = hl.compute_various_kappa_gamma_values(zd, zs)
+    ) = hl.compute_halos_various_kappa_gamma_values(zd, zs)
     assert isinstance(kappa_od, float)
     assert isinstance(kappa_os, float)
     assert isinstance(gamma_od1, float)
@@ -407,11 +490,23 @@ def test_compute_kappa(setup_halos_lens, setup_mass_sheet_false):
 
     kappa_image, kappa_values = hl1.halos_compute_kappa()
     kappa_image2, kappa_values2 = hl2.halos_compute_kappa(enhance_pos=True)
+    kappa_image3, kappa_values3 = hl2.halos_compute_kappa(
+        enhance_pos=False, mass_sheet_bool=False
+    )
 
     assert isinstance(kappa_image, np.ndarray)
     assert isinstance(kappa_values, np.ndarray)
     assert isinstance(kappa_image2, np.ndarray)
     assert isinstance(kappa_values2, np.ndarray)
+
+
+def test_enhance_halos_pos_to0(setup_halos_lens):
+    hl = setup_halos_lens
+    hl.enhance_halos_pos_to0()
+    px_halo0 = hl.halos_list["px"]
+    py_halo0 = hl.halos_list["py"]
+    assert px_halo0[0] == 0
+    assert py_halo0[0] == 0
 
 
 def test_setting():

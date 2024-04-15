@@ -3,7 +3,6 @@ from slsim.Pipelines.halos_pipeline import HalosSkyPyPipeline
 from slsim.Halos.halos_lens_base import HalosLensBase
 from slsim.Halos.halos_statistics import HalosStatistics
 from astropy.cosmology import FlatLambdaCDM
-from tqdm.notebook import tqdm
 import time
 from scipy import stats
 import warnings
@@ -351,8 +350,6 @@ def run_halos_without_kde(
     gamma_values_total = []
     # Show progress only when n_iterations > 30
     iter_range = range(n_iterations)
-    if n_iterations > 30:
-        iter_range = tqdm(iter_range, desc="Processing halo-lists iterations")
 
     start_time = time.time()  # Note the start time
     for _ in iter_range:
@@ -507,6 +504,10 @@ def run_halos_without_kde_by_multiprocessing(
     :type mass_sheet_correction: bool, optional
     :param listmean: If True, subtract the mean kappa value from the results. Defaults to False.
     :type listmean: bool, optional
+    :param sigma_8: The value of sigma_8 for the cosmology. Defaults to 0.81.
+    :type sigma_8: float, optional
+    :param omega_m: The value of omega_m for the cosmology. If None, the default value is used.
+    :type omega_m: float, optional
     :returns: A tuple containing two lists; the first list contains the combined convergence (`kappa`) values from all iterations, and the second list contains the combined shear (`gamma`) values from all iterations.
     :rtype: (list, list)
 

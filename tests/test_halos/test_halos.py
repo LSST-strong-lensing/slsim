@@ -31,6 +31,8 @@ def test_colossus_halo_mass_function():
     z = 0.5
     result = colossus_halo_mass_function(m_200, cosmo, z)
     assert result.shape == m_200.shape
+    with pytest.raises(ValueError):
+        colossus_halo_mass_function(m_200, cosmo, z, omega_m="wrong")
 
 
 def test_returns_value_if_quantity():

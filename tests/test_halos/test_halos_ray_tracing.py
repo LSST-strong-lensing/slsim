@@ -37,7 +37,31 @@ def setup_halos_hrt():
     )
 
 
-def test_get_convergence_shear(setup_halos_hrt):
+@pytest.fixture
+def setup_no_halos_no_sheet():
+    z = [np.nan]
+
+    mass = [0]
+
+    halos = Table([z, mass], names=("z", "mass"))
+
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    HL2 = HalosLensBase(
+        halos_list=halos,
+        sky_area=0.0001,
+        cosmo=cosmo,
+        mass_sheet=False,
+    )
+    zd = 0.4
+    zs = 1.0
+    kwargs_lens = HL2.get_halos_lens_kwargs()
+    lens_model = HL2.param_lens_model
+    return HalosRayTracing(kwargs_lens, lens_model), HL2.get_lens_data_by_redshift(
+        zd, zs
+    )
+
+
+def test_get_convergence_shear(setup_halos_hrt, setup_no_halos_no_sheet):
     hrt, _ = setup_halos_hrt
 
     # Testing without gamma12
@@ -50,6 +74,16 @@ def test_get_convergence_shear(setup_halos_hrt):
     assert isinstance(kappa, float)
     assert isinstance(gamma1, float)
     assert isinstance(gamma2, float)
+
+    hrt2, _ = setup_no_halos_no_sheet
+    kappa2, gamm2 = hrt2.get_convergence_shear()
+    assert kappa2 == 0
+    assert gamm2 == 0
+
+    kappa3, gamma13, gamma23 = hrt2.get_convergence_shear(gamma12=True)
+    assert kappa3 == 0
+    assert gamma13 == 0
+    assert gamma23 == 0
 
 
 def test_nonlinear_correction_kappa_gamma_values(setup_halos_hrt):
