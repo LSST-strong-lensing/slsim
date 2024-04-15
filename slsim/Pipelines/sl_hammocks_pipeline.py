@@ -34,9 +34,10 @@ class SLHammocksPipeline:
             angular_size_in_deg = table['tb']/0.551*constants.arcsec
             table.add_column(angular_size_in_deg, name='angular_size')
 
-            data_area = 0.01 #deg2
+            data_area = 0.001 #deg2
             if(sky_area.value>data_area):
                 print("Now sky_area should be lower than", data_area,". Now we set sky_area_for_lens=", data_area)
+                print("Please check https://github.com/LSST-strong-lensing/data_public for the full data file")
                 thinp = 1
             else:
                 thinp = int((data_area/sky_area).value)
