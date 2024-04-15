@@ -115,4 +115,3 @@ def test_update_coolest_from_slsim_and_create_slsim_from_coolest(
     )
 
     os.remove(test_path + "coolest_template_update.json")
-
