@@ -1,1 +1,5 @@
-git+https://github.com/aymgal/coolest@main#egg=coolest
+git+https://github.com/aymgal/coolest@main#egg=coolestpip
+hmf
+pytest
+scipy
+tqdm
