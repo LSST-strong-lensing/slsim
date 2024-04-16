@@ -1277,3 +1277,96 @@ def worker_run_total_kappa_by_multiprocessing(
     )
     average_kappa = np.mean(total_kappa)
     return average_kappa
+
+
+def run_average_mass_by_multiprocessing(
+    n_iterations=1,
+    sky_area=0.0001,
+    m_min=None,
+    m_max=None,
+    z_max=None,
+):
+    """Calculate the average mass of halos over multiple iterations using
+    multiprocessing. This method was built for verify the mass_first_moment_at_redshift
+    in halos.py.
+
+    :param n_iterations: Number of iterations to run, defaults to 1
+    :type n_iterations: int, optional
+    :param sky_area: The sky area over which to calculate the halo mass, defaults to
+        0.0001
+    :type sky_area: float, optional
+    :param m_min: The minimum mass of halos to consider, defaults to None
+    :type m_min: float, optional
+    :param m_max: The maximum mass of halos to consider, defaults to None
+    :type m_max: float, optional
+    :param z_max: The maximum redshift to consider, defaults to None. If None, uses 5.0
+    :type z_max: float, optional
+    :return: A list of average mass values for each iteration
+    :rtype: list
+    """
+    if z_max is None:
+        z_max = 5.0
+        warnings.warn("No maximum redshift provided, using default 5.0")
+
+    z_bins = np.arange(0, z_max + 0.05, 0.05)
+    total_mass_sums = np.zeros(len(z_bins) - 1)
+
+    start_time = time.time()
+
+    args = [(i, sky_area, m_min, m_max, z_max) for i in range(n_iterations)]
+
+    with get_context("spawn").Pool() as pool:
+        results = pool.starmap(worker_run_average_mass_by_multiprocessing, args)
+        for result in results:
+            total_mass_sums += (
+                result  # Sum up the mass for each bin across all iterations
+            )
+
+    average_masses = total_mass_sums / n_iterations
+
+    end_time = time.time()
+    print(
+        f"The {n_iterations} iterations took {(end_time - start_time):.2f} seconds to run"
+    )
+    return average_masses
+
+
+def worker_run_average_mass_by_multiprocessing(
+    iter_num,
+    sky_area,
+    m_min,
+    m_max,
+    z_max,
+):
+    """Worker function for Calculate the average mass of halos for each redshift bin.
+
+    :param iter_num: The iteration number.
+    :type iter_num: int
+    :param sky_area: The sky area over which Halos are sampled.
+    :type sky_area: float
+    :param m_min: The minimum mass of the Halos to consider.
+    :type m_min: float
+    :param m_max: The maximum mass of the Halos to consider.
+    :type m_max: float
+    :param z_max: The maximum redshift of the Halos to consider.
+    :type z_max: float
+    :returns: The total mass of Halos for each redshift bin.
+    :rtype: np.ndarray
+    """
+    npipeline = HalosSkyPyPipeline(
+        sky_area=sky_area, m_min=m_min, m_max=m_max, z_max=z_max
+    )
+    halos = npipeline.halos
+    z_halos = halos["z"]
+    mass_halos = halos["mass"]
+
+    z_bins = np.arange(0, z_max + 0.05, 0.05)
+    digitized = np.digitize(z_halos, z_bins) - 1
+    bin_mass_sums = np.array(
+        [
+            mass_halos[digitized == i].sum() if np.any(digitized == i) else 0
+            for i in range(len(z_bins) - 1)
+        ]
+    )
+
+    return bin_mass_sums

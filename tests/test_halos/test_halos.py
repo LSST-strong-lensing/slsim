@@ -16,6 +16,8 @@ from slsim.Halos.halos import (
     number_density_for_massf,
     kappa_ext_for_each_sheet,
     mass_first_moment_at_redshift,
+    colossus_halo_mass_first_moment_sampler,
+    colossus_halo_number_first_moment_certain_bin,
 )
 
 from astropy.cosmology import default_cosmology
@@ -273,3 +275,75 @@ def test_mass_first_moment_at_redshift():
     )
 
     assert len(result) == 2
+
+
+def test_returns_float_with_valid_input_values():
+    m_min = 1e12
+    m_max = 1e15
+    resolution = 100
+    z = 0.5
+    cosmology = cosmo
+
+    result = colossus_halo_mass_first_moment_sampler(
+        m_min,
+        m_max,
+        resolution,
+        z,
+        cosmology,
+        sigma8=0.81,
+        ns=0.96,
+    )
+
+    assert isinstance(result, float)
+
+
+def test_colossus_halo_number_first_moment_certain_bin():
+    z_c = 1.0
+    dz = 0.1
+    sky_area = 0.0001 * units.deg**2  # totoal sky
+    m_min = 1e11
+    m_max = 1e15
+    resolution = 100
+    cosmology = cosmo
+
+    result = colossus_halo_number_first_moment_certain_bin(
+        z_c,
+        dz,
+        sky_area,
+        m_min=m_min,
+        m_max=m_max,
+        resolution=resolution,
+        cosmology=cosmology,
+        sigma8=0.81,
+        ns=0.96,
+    )
+
+    assert isinstance(result, float)
+    assert result > 0
+
+    dz2 = 0.3
+    result2 = colossus_halo_number_first_moment_certain_bin(
+        z_c,
+        dz2,
+        sky_area,
+        m_min=m_min,
+        m_max=m_max,
+        resolution=resolution,
+        cosmology=cosmology,
+        sigma8=0.81,
+        ns=0.96,
+    )
+    assert result2 > result
+
+    result3 = colossus_halo_number_first_moment_certain_bin(
+        z_c=0.0001,
+        dz=0.00005,
+        sky_area=0.0001 * units.deg**2,
+        m_min=m_min,
+        m_max=m_max,
+        resolution=resolution,
+        cosmology=cosmology,
+        sigma8=0.81,
+        ns=0.96,
+    )
+    assert result3 == pytest.approx(expected=0.0, abs=1e-2)

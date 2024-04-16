@@ -19,6 +19,8 @@ from slsim.Halos.halos_plus_glass import (
     worker_certain_redshift_lensext_kde,
     worker_kappaext_gammaext_kde,
     worker_run_halos_without_kde,
+    run_average_mass_by_multiprocessing,
+    worker_run_average_mass_by_multiprocessing,
 )
 import os
 import numpy as np
@@ -422,3 +424,35 @@ def test_worker_run_halos_without_kde():
     assert isinstance(ngamma, np.ndarray)
     assert isinstance(nkappa2, np.ndarray)
     assert isinstance(ngamma2, np.ndarray)
+
+
+def test_run_average_mass_by_multiprocessing():
+    iter_num = 5
+    sky_area = 0.0001
+    m_min = 1.0e11
+    m_max = 1.0e16
+    z_max = 5.0
+
+    average_masses = run_average_mass_by_multiprocessing(
+        n_iterations=iter_num,
+        sky_area=sky_area,
+        m_min=m_min,
+        m_max=m_max,
+        z_max=z_max,
+    )
+
+    assert isinstance(average_masses, np.ndarray)
+
+    iter_num = 1
+
+    average_masses_run = worker_run_average_mass_by_multiprocessing(
+        iter_num=iter_num,
+        sky_area=sky_area,
+        m_min=m_min,
+        m_max=m_max,
+        z_max=z_max,
+    )
+
+    assert isinstance(average_masses_run, np.ndarray)
+
+    assert len(average_masses) == len(average_masses_run)
