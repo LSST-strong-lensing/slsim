@@ -10,6 +10,7 @@ from astropy.table import Table
 import pytest
 from numpy import testing as npt
 
+
 @pytest.fixture
 def supernovae_lens_instance():
     path = os.path.dirname(__file__)
@@ -23,27 +24,27 @@ def supernovae_lens_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
         supernovae_lens = Lens(
-                deflector_dict=deflector_dict,
-                source_dict=source_dict,
-                variability_model="light_curve",
-                kwargs_variability= {"supernovae_lightcurve", "i"},
-                sn_type="Ia",
-                sn_absolute_mag_band="bessellb",
-                sn_absolute_zpsys="ab",
-                cosmo=cosmo,
-                source_type="point_plus_extended",
-                light_profile="double_sersic",
-                lightcurve_time=np.linspace(
-        -20, 100, 1000
-    ),
-            )
+            deflector_dict=deflector_dict,
+            source_dict=source_dict,
+            variability_model="light_curve",
+            kwargs_variability={"supernovae_lightcurve", "i"},
+            sn_type="Ia",
+            sn_absolute_mag_band="bessellb",
+            sn_absolute_zpsys="ab",
+            cosmo=cosmo,
+            source_type="point_plus_extended",
+            light_profile="double_sersic",
+            lightcurve_time=np.linspace(-20, 100, 1000),
+        )
         if supernovae_lens.validity_test():
             supernovae_lens = supernovae_lens
             break
     return supernovae_lens
 
+
 def test_update_coolest_from_slsim_and_create_slsim_from_coolest(
-        supernovae_lens_instance):
+    supernovae_lens_instance,
+):
     # Define test data
     path = os.path.dirname(__file__)
     lens_class = supernovae_lens_instance
@@ -68,30 +69,49 @@ def test_update_coolest_from_slsim_and_create_slsim_from_coolest(
         == expected_result[1]["kwargs_lens"][0]["theta_E"]
     )
     assert np.all(slsim_from_updated_coolest[0] == expected_result[0])
-    assert slsim_from_updated_coolest[1]["kwargs_lens"][0]["theta_E"] == \
-        expected_result[1]["kwargs_lens"][0]["theta_E"]
-    npt.assert_almost_equal(slsim_from_updated_coolest[1]["kwargs_lens"][0]["gamma"],
-                             expected_result[1]["kwargs_lens"][0]["gamma"])
-    npt.assert_almost_equal(slsim_from_updated_coolest[1]["kwargs_lens"][0]["e1"],
-                             expected_result[1]["kwargs_lens"][0]["e1"])
-    npt.assert_almost_equal(slsim_from_updated_coolest[1]["kwargs_lens"][0]["e2"],
-                             expected_result[1]["kwargs_lens"][0]["e2"])
-    assert slsim_from_updated_coolest[1]["kwargs_lens"][0]["center_x"]==\
-          expected_result[1]["kwargs_lens"][0]["center_x"]
-    assert slsim_from_updated_coolest[1]["kwargs_lens"][0]["center_y"]==\
-          expected_result[1]["kwargs_lens"][0]["center_y"]
-    npt.assert_almost_equal(slsim_from_updated_coolest[1]["kwargs_lens"][1]["gamma1"],
-                             expected_result[1]["kwargs_lens"][1]["gamma1"])
-    npt.assert_almost_equal(slsim_from_updated_coolest[1]["kwargs_lens"][2]["kappa"],
-                            expected_result[1]["kwargs_lens"][2]["kappa"])
+    assert (
+        slsim_from_updated_coolest[1]["kwargs_lens"][0]["theta_E"]
+        == expected_result[1]["kwargs_lens"][0]["theta_E"]
+    )
     npt.assert_almost_equal(
-        slsim_from_updated_coolest[1]["kwargs_source"][0]["magnitude"], 
-                            expected_result[1]["kwargs_source"][0]["magnitude"])
+        slsim_from_updated_coolest[1]["kwargs_lens"][0]["gamma"],
+        expected_result[1]["kwargs_lens"][0]["gamma"],
+    )
     npt.assert_almost_equal(
-        slsim_from_updated_coolest[1]["kwargs_source"][1]["magnitude"], 
-                            expected_result[1]["kwargs_source"][1]["magnitude"])
+        slsim_from_updated_coolest[1]["kwargs_lens"][0]["e1"],
+        expected_result[1]["kwargs_lens"][0]["e1"],
+    )
     npt.assert_almost_equal(
-        slsim_from_updated_coolest[1]["kwargs_ps"][0]["magnitude"], 
-                            expected_result[1]["kwargs_ps"][0]["magnitude"])
-    
+        slsim_from_updated_coolest[1]["kwargs_lens"][0]["e2"],
+        expected_result[1]["kwargs_lens"][0]["e2"],
+    )
+    assert (
+        slsim_from_updated_coolest[1]["kwargs_lens"][0]["center_x"]
+        == expected_result[1]["kwargs_lens"][0]["center_x"]
+    )
+    assert (
+        slsim_from_updated_coolest[1]["kwargs_lens"][0]["center_y"]
+        == expected_result[1]["kwargs_lens"][0]["center_y"]
+    )
+    npt.assert_almost_equal(
+        slsim_from_updated_coolest[1]["kwargs_lens"][1]["gamma1"],
+        expected_result[1]["kwargs_lens"][1]["gamma1"],
+    )
+    npt.assert_almost_equal(
+        slsim_from_updated_coolest[1]["kwargs_lens"][2]["kappa"],
+        expected_result[1]["kwargs_lens"][2]["kappa"],
+    )
+    npt.assert_almost_equal(
+        slsim_from_updated_coolest[1]["kwargs_source"][0]["magnitude"],
+        expected_result[1]["kwargs_source"][0]["magnitude"],
+    )
+    npt.assert_almost_equal(
+        slsim_from_updated_coolest[1]["kwargs_source"][1]["magnitude"],
+        expected_result[1]["kwargs_source"][1]["magnitude"],
+    )
+    npt.assert_almost_equal(
+        slsim_from_updated_coolest[1]["kwargs_ps"][0]["magnitude"],
+        expected_result[1]["kwargs_ps"][0]["magnitude"],
+    )
+
     os.remove(test_path + "coolest_template_update.json")
