@@ -26,7 +26,9 @@ class NFWHernquist(DeflectorBase):
         :type cosmo: ~astropy.cosmology class
         :return: velocity dispersion [km/s]
         """
-        if (("vel_disp" in self._deflector_dict) and (self._deflector_dict['vel_disp'] != -1)):
+        if ("vel_disp" in self._deflector_dict) and (
+            self._deflector_dict["vel_disp"] != -1
+        ):
             return self._deflector_dict["vel_disp"]
 
         else:
@@ -48,8 +50,8 @@ class NFWHernquist(DeflectorBase):
                 cosmo=cosmo,
                 z_lens=self.redshift,
             )
-            self._deflector_dict['vel_disp'] = vel_disp
-            return self._deflector_dict['vel_disp']
+            self._deflector_dict["vel_disp"] = vel_disp
+            return self._deflector_dict["vel_disp"]
 
     def light_model_lenstronomy(self, band=None):
         """Returns lens model instance and parameters in lenstronomy conventions.

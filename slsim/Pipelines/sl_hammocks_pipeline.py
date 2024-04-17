@@ -32,9 +32,15 @@ class SLHammocksPipeline:
             table.rename_column("m_h", "halo_mass")
             table.rename_column("m_acc", "halo_mass_acc")
             hubble = cosmo.H0.value / 100.0
-            table['halo_mass'] = table['halo_mass']/ hubble #convert to Msun/h to physical Msun
-            table['halo_mass_acc'] = table['halo_mass_acc']/ hubble #convert to Msun/h to physical Msun
-            table['stellar_mass'] = table['stellar_mass']/ hubble #convert to Msun/h to physical Msun
+            table["halo_mass"] = (
+                table["halo_mass"] / hubble
+            )  # convert to Msun/h to physical Msun
+            table["halo_mass_acc"] = (
+                table["halo_mass_acc"] / hubble
+            )  # convert to Msun/h to physical Msun
+            table["stellar_mass"] = (
+                table["stellar_mass"] / hubble
+            )  # convert to Msun/h to physical Msun
             angular_size_in_deg = table["tb"] / 0.551 * constants.arcsec
             table.add_column(angular_size_in_deg, name="angular_size")
 
@@ -76,9 +82,15 @@ class SLHammocksPipeline:
 
             table = halo_galaxy_population(sky_area, cosmo, **kwargs_population_base)
             hubble = cosmo.H0.value / 100.0
-            table['halo_mass'] = table['halo_mass']/ hubble #convert to Msun/h to physical Msun
-            table['halo_mass_acc'] = table['halo_mass_acc']/ hubble #convert to Msun/h to physical Msun
-            table['stellar_mass'] = table['stellar_mass']/ hubble #convert to Msun/h to physical Msun
+            table["halo_mass"] = (
+                table["halo_mass"] / hubble
+            )  # convert to Msun/h to physical Msun
+            table["halo_mass_acc"] = (
+                table["halo_mass_acc"] / hubble
+            )  # convert to Msun/h to physical Msun
+            table["stellar_mass"] = (
+                table["stellar_mass"] / hubble
+            )  # convert to Msun/h to physical Msun
             angular_size_in_deg = table["tb"] / 0.551 * constants.arcsec
             table.add_column(angular_size_in_deg, name="angular_size")
             self._pipeline = table
