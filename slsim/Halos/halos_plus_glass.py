@@ -685,6 +685,8 @@ def worker_kappaext_gammaext_kde(
     :type mass_sheet_correction: bool
     :param output_format: The format in which the results should be returned, either as `dict` or `vector`. Defaults to `dict`.
     :type output_format: str, optional
+    :param listmean: If True, subtract the mean kappa value from the results.
+    :type listmean: bool
     :returns: A list of kappa and gamma values for the specified parameters.
     :rtype: list
 
@@ -739,6 +741,37 @@ def run_certain_redshift_lensext_kde_by_multiprocessing(
     sigma_8=0.81,
     omega_m=None,
 ):
+    """Generates distributions of kappa_ext and gamma_ext for a given redshift and
+    cosmology.
+
+    :param n_iterations: Number of iterations for multiprocessing to run the simulation.
+    :type n_iterations: int
+    :param sky_area: Sky area over which halos are sampled.
+    :type sky_area: float
+    :param m_min: Minimum halo mass.
+    :type m_min: float
+    :param m_max: Maximum halo mass.
+    :type m_max: float
+    :param z_max: Maximum redshift value.
+    :type z_max: float
+    :param cosmo: Cosmology used for the calculations.
+    :param samples_number: Number of samples to generate.
+    :type samples_number: int
+    :param mass_sheet_correction: Flag to apply mass sheet correction.
+    :type mass_sheet_correction: bool
+    :param zs: Source redshift.
+    :type zs: float
+    :param zd: Lens redshift.
+    :type zd: float
+    :param listmean: Flag to return the mean of the list.
+    :type listmean: bool
+    :param sigma_8: Sigma_8 parameter for the cosmology.
+    :type sigma_8: float
+    :param omega_m: Omega matter parameter for the cosmology.
+    :type omega_m: float
+    :return: Distributions of kappa_ext and gamma_ext.
+    :rtype: np.ndarray
+    """
     if cosmo is None:
         warnings.warn(
             "No cosmology provided, instead uses astropy.cosmology default cosmology"
@@ -1287,8 +1320,8 @@ def run_average_mass_by_multiprocessing(
     z_max=None,
 ):
     """Calculate the average mass of halos over multiple iterations using
-    multiprocessing. This method was built for verify the mass_first_moment_at_redshift
-    in halos.py.
+    multiprocessing. This method was built for verify the expected_mass_at_redshift in
+    halos.py.
 
     :param n_iterations: Number of iterations to run, defaults to 1
     :type n_iterations: int, optional

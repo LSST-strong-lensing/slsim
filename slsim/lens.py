@@ -8,8 +8,6 @@ from lenstronomy.LensModel.Solver.lens_equation_solver import (
     analytical_lens_model_support,
 )
 from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
-from slsim.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
-from slsim.ParamDistributions.kext_gext_distributions import LineOfSightDistribution
 from slsim.ParamDistributions.los_config import LOSConfig
 from lenstronomy.Util import util, data_util
 from slsim.lensed_system_base import LensedSystemBase
@@ -97,11 +95,6 @@ class Lens(LensedSystemBase):
         self._lens_equation_solver = lens_equation_solver
         self._magnification_limit = magnification_limit
         self.kwargs_variab = kwargs_variability
-        self.los_config = los_config
-        if self.los_config is None:
-            self.los_config = LOSConfig()
-
-        self._los_linear_distortions_cache = None
         self.light_profile = light_profile
 
         if self._source_type == "extended" and self.kwargs_variab is not None:
@@ -115,6 +108,11 @@ class Lens(LensedSystemBase):
             z_source=float(self.source.redshift),
             cosmo=self.cosmo,
         )
+
+        self._los_linear_distortions_cache = None
+        self.los_config = los_config
+        if self.los_config is None:
+            self.los_config = LOSConfig()
 
     @property
     def image_number(self):
@@ -376,55 +374,7 @@ class Lens(LensedSystemBase):
 
         :return: kappa, gamma1, gamma2
         """
-        if self.los_config.los_bool is False:
-            return 0, 0, 0
-        if (
-            self.los_config.los_bool is True
-            and self.los_config.mixgauss_gamma is True
-            and self.los_config.nonlinear_los_bool is False
-        ):
-            mixgauss_means = self.los_config.mixgauss_means
-            mixgauss_stds = self.los_config.mixgauss_stds
-            mixgauss_weights = self.los_config.mixgauss_weights
-            if not hasattr(self, "_gamma"):
-                mixture = GaussianMixtureModel(
-                    means=mixgauss_means,
-                    stds=mixgauss_stds,
-                    weights=mixgauss_weights,
-                )
-                gamma = np.abs(mixture.rvs(size=1))[0]
-                phi = 2 * np.pi * np.random.random()
-                gamma1 = gamma * np.cos(2 * phi)
-                gamma2 = gamma * np.sin(2 * phi)
-                self._gamma = [gamma1, gamma2]
-            if not hasattr(self, "_kappa"):
-                self._kappa = np.random.normal(loc=0, scale=0.05)
-        if (
-            self.los_config.los_bool is True
-            and self.los_config.mixgauss_gamma is True
-            and self.los_config.nonlinear_los_bool is True
-        ):
-            raise ValueError(
-                "Can only choose one method for external shear and convergence"
-            )
-        else:
-            z_source = float(self.source.redshift)
-            z_lens = float(self.deflector.redshift)
-            LOS = LineOfSightDistribution(
-                nonlinear_correction_path=self.los_config.nonlinear_correction_path,
-                no_correction_path=self.los_config.no_correction_path,
-            )
-            gamma, self._kappa = LOS.get_kappa_gamma(
-                z_source,
-                z_lens,
-                use_nonlinear_correction=self.los_config.nonlinear_los_bool,
-            )
-            phi = 2 * np.pi * np.random.random()
-            gamma1 = gamma * np.cos(2 * phi)
-            gamma2 = gamma * np.sin(2 * phi)
-            self._gamma = [gamma1, gamma2]
-
-        return self._gamma[0], self._gamma[1], self._kappa
+        return self.los_config.calculate_los_linear_distortions(source_redshift=self.source_redshift, deflector_redshift=self.deflector_redshift)
 
     def deflector_magnitude(self, band):
         """Apparent magnitude of the deflector for a given band.

@@ -15,9 +15,9 @@ from slsim.Halos.halos import (
     redshift_mass_sheet_correction_array_from_comoving_density,
     number_density_for_massf,
     kappa_ext_for_each_sheet,
-    mass_first_moment_at_redshift,
-    colossus_halo_mass_first_moment_sampler,
-    colossus_halo_number_first_moment_certain_bin,
+    expected_mass_at_redshift,
+    colossus_halo_expected_mass_sampler,
+    colossus_halo_expected_number_certain_bin,
 )
 
 from astropy.cosmology import default_cosmology
@@ -270,7 +270,7 @@ def test_mass_first_moment_at_redshift():
     ns = 0.95
     omega_m = 0.25
 
-    result = mass_first_moment_at_redshift(
+    result = expected_mass_at_redshift(
         z, sky_area, m_min, m_max, resolution, cosmology, sigma8, ns, omega_m
     )
 
@@ -284,7 +284,7 @@ def test_returns_float_with_valid_input_values():
     z = 0.5
     cosmology = cosmo
 
-    result = colossus_halo_mass_first_moment_sampler(
+    result = colossus_halo_expected_mass_sampler(
         m_min,
         m_max,
         resolution,
@@ -306,7 +306,7 @@ def test_colossus_halo_number_first_moment_certain_bin():
     resolution = 100
     cosmology = cosmo
 
-    result = colossus_halo_number_first_moment_certain_bin(
+    result = colossus_halo_expected_number_certain_bin(
         z_c,
         dz,
         sky_area,
@@ -322,7 +322,7 @@ def test_colossus_halo_number_first_moment_certain_bin():
     assert result > 0
 
     dz2 = 0.3
-    result2 = colossus_halo_number_first_moment_certain_bin(
+    result2 = colossus_halo_expected_number_certain_bin(
         z_c,
         dz2,
         sky_area,
@@ -335,7 +335,7 @@ def test_colossus_halo_number_first_moment_certain_bin():
     )
     assert result2 > result
 
-    result3 = colossus_halo_number_first_moment_certain_bin(
+    result3 = colossus_halo_expected_number_certain_bin(
         z_c=0.0001,
         dz=0.00005,
         sky_area=0.0001 * units.deg**2,

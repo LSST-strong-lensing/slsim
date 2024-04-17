@@ -3,7 +3,6 @@ lenstronomy>=1.11.9
 astropy>=5.2
 numpy
 scipy
-tqdm
 colossus
 speclite
 pyyaml

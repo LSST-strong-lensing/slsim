@@ -101,7 +101,7 @@ def test_compute_various_kappa_gamma_values(setup_halos_hs, setup_no_halos):
         kappa_ds,
         gamma_ds1,
         gamma_ds2,
-    ) = hs.compute_halos_various_kappa_gamma_values(zd, zs)
+    ) = hs.compute_halos_nonlinear_correction_kappa_gamma_values(zd, zs)
     assert isinstance(kappa_od, float)
     assert isinstance(kappa_os, float)
     assert isinstance(gamma_od1, float)
@@ -130,7 +130,7 @@ def test_compute_various_kappa_gamma_values(setup_halos_hs, setup_no_halos):
         kappa_ds2,
         gamma_ds12,
         gamma_ds22,
-    ) = hs2.compute_halos_various_kappa_gamma_values(zd, zs)
+    ) = hs2.compute_halos_nonlinear_correction_kappa_gamma_values(zd, zs)
     assert kappa_od2 == 0
     assert kappa_os2 == 0
     assert gamma_od12 == 0

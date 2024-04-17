@@ -73,7 +73,7 @@ class HalosLensBase(object):
          filter_halos_by_redshift(): Filters halos and mass corrections by redshift conditions and constructs lens data.
          get_lens_data_by_redshift(): Retrieves lens data filtered by the specified redshift range.
          halos_get_convergence_shear(): Computes the convergence and shear at the origin due to all Halos.
-         compute_halos_various_kappa_gamma_values(): Compute the various convergence and shear values from the non-linear correction numbers.
+         compute_halos_nonlinear_correction_kappa_gamma_values(): Compute the various convergence and shear values from the non-linear correction numbers.
          halos_get_kext_gext_values(): Compute the non-linear external convergence and shear values from the Halos.
          halos_compute_kappa(): Computes the convergence across the lensed sky area.
          plot_halos_convergence(): Compares and plots the convergence for different configurations of the mass sheet.
@@ -160,7 +160,20 @@ class HalosLensBase(object):
 
     @property
     def param_lens_cosmo(self):
-        """Lazy-load param_lens_cosmo."""
+        """Lazy-load param_lens_cosmo.
+
+        Each instance of LensCosmo in the list is created with specific redshift parameters:
+        - `z_lens`: the redshift of the lens, which is taken from the `combined_redshift_list`.
+        - `z_source`: the source redshift, which is common for all instances and defined as `self.z_source`.
+        - `cosmo`: the cosmological model being used, specified as `self.cosmo`.
+
+        This property ensures that the LensCosmo instances are created only once and stored for
+        repeated access, enhancing performance by avoiding redundant calculations.
+
+        Returns:
+            list of LensCosmo: A list containing a LensCosmo instance for each combination of
+                               halo and any additional corrections, up to `self.n_halos + self.n_correction`.
+        """
         if self._lens_cosmo is None:
             self._lens_cosmo = [
                 LensCosmo(
@@ -174,7 +187,12 @@ class HalosLensBase(object):
 
     @property
     def param_lens_model(self):
-        """Lazy-load param_lens_model."""
+        """Lazy-load param_lens_model.
+
+        This property ensures that the lens model is computed only once and stored for
+        repeated access. This is achieved by checking if the `_lens_model` attribute is already set;
+        if not, it calculates the lens model by calling `self.get_lens_model()`.
+        """
         if self._lens_model is None:  # Only compute if not already done
             self._lens_model = self.get_lens_model()
         return self._lens_model
@@ -203,49 +221,23 @@ class HalosLensBase(object):
             such as deflection angles, shear, and magnification.
         :rtype: LensModel :note:
         """
+        lens_model_list = ["NFW"] * (self.n_halos if self.n_halos > 0 else 1)
         if self.mass_sheet:
-            if self.n_halos == 0:
-                lens_model = LensModel(
-                    lens_model_list=["NFW"] + ["CONVERGENCE"] * self.n_correction,
-                    lens_redshift_list=self.combined_redshift_list,
-                    cosmo=self.cosmo,
-                    observed_convention_index=[],
-                    multi_plane=True,
-                    z_source=self.z_source,
-                    z_source_convention=self._z_source_convention,
-                )
-            else:
-                lens_model = LensModel(
-                    lens_model_list=["NFW"] * self.n_halos
-                    + ["CONVERGENCE"] * self.n_correction,
-                    lens_redshift_list=self.combined_redshift_list,
-                    cosmo=self.cosmo,
-                    observed_convention_index=[],
-                    multi_plane=True,
-                    z_source=self.z_source,
-                    z_source_convention=self._z_source_convention,
-                )
-        else:
-            if self.n_halos == 0:
-                lens_model = LensModel(
-                    lens_model_list=["NFW"],
-                    lens_redshift_list=self.halos_redshift_list,
-                    cosmo=self.cosmo,
-                    observed_convention_index=[],
-                    multi_plane=True,
-                    z_source=self.z_source,
-                    z_source_convention=self._z_source_convention,
-                )
-            else:
-                lens_model = LensModel(
-                    lens_model_list=["NFW"] * self.n_halos,
-                    lens_redshift_list=self.halos_redshift_list,
-                    cosmo=self.cosmo,
-                    observed_convention_index=[],
-                    multi_plane=True,
-                    z_source=self.z_source,
-                    z_source_convention=self._z_source_convention,
-                )
+            lens_model_list += ["CONVERGENCE"] * self.n_correction
+
+        lens_redshift_list = (
+            self.combined_redshift_list if self.mass_sheet else self.halos_redshift_list
+        )
+
+        lens_model = LensModel(
+            lens_model_list=lens_model_list,
+            lens_redshift_list=lens_redshift_list,
+            cosmo=self.cosmo,
+            observed_convention_index=[],
+            multi_plane=True,
+            z_source=self.z_source,
+            z_source_convention=self._z_source_convention,
+        )
         return lens_model
 
     def random_position(self):
@@ -756,6 +748,26 @@ class HalosLensBase(object):
         lens_model=None,
         zdzs=None,
     ):
+        """Computes the convergence and shear at the origin due to all Halos. return all
+        0 if no halos.
+
+        :param gamma12: If True, returns gamma1 and gamma2 in addition to kappa. If False, returns total shear gamma along with kappa.
+        :type gamma12: bool, optional
+        :param same_from_class: If True and kwargs, lens_model is none uses the class's lens model and lens kwargs. If False, uses the provided lens model and kwargs. Specify for the when the 'None' type kwargs
+        :type same_from_class: bool, optional
+        :param diff: The differential used in the computation of the Hessian matrix. Default is 1.0.
+        :type diff: float, optional
+        :param diff_method: The method used to compute the differential. Default is "square".
+        :type diff_method: str, optional
+        :param kwargs: Keyword arguments for the lens model. If None, uses the class method to generate them.
+        :type kwargs: dict, optional
+        :param lens_model: The lens model instance to use. If None, uses the class's lens model.
+        :type lens_model: LensModel, optional
+        :param zdzs: A tuple of deflector and source redshifts (zd, zs). If provided, uses `hessian_z1z2` method of the lens model.
+        :type zdzs: tuple, optional
+        :returns: Depending on `gamma12`, either (kappa, gamma) or (kappa, gamma1, gamma2). Kappa is the convergence, gamma is the total shear, and gamma1 and gamma2 are the shear components.
+        :rtype: tuple
+        """
         if self.n_halos == 0:
             is_nan = np.isnan(self.halos_list["z"])
             if is_nan:
@@ -778,8 +790,21 @@ class HalosLensBase(object):
             same_from_class=same_from_class,
         )
 
-    def compute_halos_various_kappa_gamma_values(self, zd, zs):
+    def compute_halos_nonlinear_correction_kappa_gamma_values(self, zd, zs):
         """Compute various kappa and gamma values for the given lens data.
+                This function retrieves the lens data based on the input redshifts and computes the convergence
+        and shear for three categories: `od`, `os`, and `ds`. The gamma values are computed for
+        both components, gamma1 and gamma2.
+
+            kappa_od,
+            kappa_os,
+            gamma_od1,
+            gamma_od2,
+            gamma_os1,
+            gamma_os2,
+            kappa_ds,r
+            gamma_ds1,
+            gamma_ds2,
 
         :param zd: Deflector redshift.
         :type zd: float
@@ -871,7 +896,41 @@ class HalosLensBase(object):
         mass_sheet=None,
         enhance_pos=True,
     ):
+        """Plots the convergence map for a field with the influence of halos using a
+        specified lens model.
 
+        This method adjusts the mass sheet if provided, recalculates the lens model parameters, and uses
+        these parameters to plot the convergence. It encapsulates handling of the lens model and temporary
+        changes to instance attributes, ensuring they are reset after the plotting operation.
+
+        :param diff: The differentiation value used for computing the Hessian matrix which
+                     influences how the convergence is calculated. Default is 1e-7.
+        :type diff: float, optional
+        :param num_points: Number of points along each axis for which convergence is computed.
+                           Default is 500.
+        :type num_points: int, optional
+        :param diff_method: Method to use for differentiation when computing the Hessian.
+                            Default is "square".
+        :type diff_method: str, optional
+        :param mass_sheet: A temporary adjustment to the mass sheet parameter of the lens model.
+                           If specified, this value is used during the convergence calculation
+                           and then reverted.
+        :type mass_sheet: float, optional
+        :param enhance_pos: A flag to determine whether to enhance the positions of halos
+                            after plotting by adjusting their table positions randomly.
+                            Default is True.
+        :type enhance_pos: bool, optional
+
+        :return: None. This method directly plots the convergence map using matplotlib and manages
+                 internal state without returning data.
+        :rtype: None
+
+        Notes:
+            The method temporarily modifies the instance's mass_sheet to a user-provided value,
+            if given, and restores it afterward. This ensures that other operations are not affected
+            by temporary changes made specifically for this plot. If `enhance_pos` is True, it
+            also calls `self.enhance_halos_table_random_pos()` to adjust halo positions after plotting.
+        """
         sky_area = self.sky_area
         original_mass_sheet = self.mass_sheet
 
@@ -901,10 +960,13 @@ class HalosLensBase(object):
         diff_method="square",
     ):
         """Compare the convergence plot with and without the mass sheet correction.
+
         :param diff: The differential used in the computation of the convergence.
-        Defaults to 0.0000001. :type diff: float, optional :param diff_method: The
-        method used to compute the differential. Defaults to "square". :type
-        diff_method: str, optional.
+        Defaults to 0.0000001.
+        :type diff: float, optional
+        :param diff_method: The
+        method used to compute the differential. Defaults to "square".
+        :type diff_method: str, optional.
 
         .. note::
             The method plots the convergence for two cases: with and without the mass sheet correction.
@@ -937,8 +999,13 @@ class HalosLensBase(object):
         self.halos_list["py"] = py
 
     def halos_various_halos_data(self, zd, zs):
-        """Computes various convergence (kappa) and shear (gamma) values for given
-        deflector and source redshifts.
+        """Computes (kappa_od, kappa_os, gamma_od1, gamma_od2, gamma_os1, gamma_os2,
+        kappa_ds, gamma_ds1, gamma_ds2, kappa_os2, gamma_os12, gamma_os22, kext, gext,),
+        (kwargs_lens_os, lens_model_os)  convergence (kappa) and shear (gamma) values
+        for given deflector and source redshifts.
+
+        This function extracts the lens model and its keyword arguments for different redshift combinations
+        ('od`, `os`, and `ds`). It then computes the convergence and shear values for each of these combinations.
 
         :param zd: The deflector redshift.
         :type zd: float

@@ -12,12 +12,6 @@ BUILDDIR      = _build
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-test:
-	py.test
-
-test-all:
-	tox
-
 .PHONY: help Makefile
 
 # Catch-all target: route all unknown targets to Sphinx using the new

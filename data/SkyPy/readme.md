@@ -77,5 +77,5 @@ The file constructs a table for dark matter halos, computing several key propert
 * **`z`**: Redshifts for mass sheet correction, calculated from the same comoving density as the halos but potentially with a different `resolution` of 200 for finer granularity in the correction process.
 * **`kappa`**: Negative external convergence (kappa_ext) for each lensing sheet at the specified redshifts, computed using:
   - `redshift_list`: The redshifts calculated for mass sheet correction.
-  - `first_moment`: The first moment of halo mass at these redshifts, determined through the `mass_first_moment_at_redshift` function with a `resolution` of 200.
+  - `first_moment`: The first moment of halo mass at these redshifts, determined through the `expected_mass_at_redshift` function with a `resolution` of 200.
   - Other parameters (`sky_area`, `cosmology`, `m_min`, `m_max`, `sigma8`, `ns`, `omega_m`) are consistent with those used for halo calculations.

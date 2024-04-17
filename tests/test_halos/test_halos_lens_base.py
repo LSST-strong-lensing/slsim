@@ -472,7 +472,7 @@ def test_compute_various_kappa_gamma_values(
         kappa_ds,
         gamma_ds1,
         gamma_ds2,
-    ) = hl.compute_halos_various_kappa_gamma_values(zd, zs)
+    ) = hl.compute_halos_nonlinear_correction_kappa_gamma_values(zd, zs)
     assert isinstance(kappa_od, float)
     assert isinstance(kappa_os, float)
     assert isinstance(gamma_od1, float)

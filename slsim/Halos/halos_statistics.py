@@ -541,8 +541,8 @@ class HalosStatistics(HalosLensBase):
 
         This method uses multiprocessing to compute the convergence and shear values for multiple samples in parallel.
 
-        :param listmean:
-        :type listmean:
+        :param listmean: The boolean if average convergence (kappa) to 0.
+        :type listmean: bool
         :param gamma_tot: If True, the function will return total shear gamma values. If False, it will return gamma1 and gamma2 values.
                           Default is False.
         :type gamma_tot: bool, optional

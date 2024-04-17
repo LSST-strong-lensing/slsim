@@ -48,7 +48,7 @@ class HalosRayTracing(object):
         diff_method="square",
         zdzs=None,
     ):
-        """Computes the convergence and shear at the origin due to all Halos.
+        """Computes the convergence and shear.
 
         :param gamma12: If True, returns gamma1 and gamma2 in addition to kappa. If False, returns total shear gamma along with kappa.
         :type gamma12: bool, optional
@@ -212,8 +212,10 @@ class HalosRayTracing(object):
         return kext, gext
 
     def various_halos_data(self, lens_data, zd, zs):
-        r"""Computes various convergence (kappa) and shear (gamma) values for given
-        deflector and source redshifts.
+        r"""Computes (kappa_od, kappa_os, gamma_od1, gamma_od2, gamma_os1, gamma_os2,
+        kappa_ds, gamma_ds1, gamma_ds2, kappa_os2, gamma_os12, gamma_os22, kext, gext,),
+        (kwargs_lens_os, lens_model_os)  convergence (kappa) and shear (gamma) values
+        for given deflector and source redshifts.
 
         This function extracts the lens model and its keyword arguments for different redshift combinations
         ('od`, `os`, and `ds`). It then computes the convergence and shear values for each of these combinations.
@@ -380,7 +382,7 @@ class HalosRayTracing(object):
         # can out
         r"""Plots the convegence (:math:`\kappa`) across the lensed sky area.
 
-        :param sky_area: Total sky area in steradians over which halos are distributed. Defaults to full sky (4π steradians).
+        :param sky_area: Total sky area in steradians. Defaults to full sky (4π steradians).
         :type sky_area: float, optional
         :param diff: The differentiation value used for computing the hessian. Default is 1e-7.
         :type diff: float, optional
