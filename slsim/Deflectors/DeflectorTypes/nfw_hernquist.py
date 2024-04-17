@@ -17,6 +17,7 @@ class NFWHernquist(DeflectorBase):
     - 'e2_light': eccentricity of light
     - 'z': redshift of deflector
     """
+
     def velocity_dispersion(self, cosmo=None):
         """Velocity dispersion of deflector. Simplified assumptions on anisotropy and
         averaged over the half-light radius.
@@ -33,7 +34,7 @@ class NFWHernquist(DeflectorBase):
             size_lens_arcsec = self.angular_size_light / constants.arcsec
 
             m_halo, c_halo = self.halo_properties
-            m_halo_acc = self._deflector_dict['halo_mass_acc']
+            m_halo_acc = self._deflector_dict["halo_mass_acc"]
             m_halo = max(m_halo, m_halo_acc)
             # convert angular size to physical size
             dd = cosmo.angular_diameter_distance(self.redshift).value
@@ -83,7 +84,8 @@ class NFWHernquist(DeflectorBase):
     def halo_properties(self):
         """Properties of the NFW halo.
 
-        :return: halo virial mass Mvir [physical M_sol], concentration rvir/rs
-        (In SL-hammock code, we now adopt the FOF mass definition, but treat it as the virial mass)
+        :return: halo virial mass Mvir [physical M_sol], concentration rvir/rs (In SL-
+            hammock code, we now adopt the FOF mass definition, but treat it as the
+            virial mass)
         """
         return self._deflector_dict["halo_mass"], self._deflector_dict["concentration"]
