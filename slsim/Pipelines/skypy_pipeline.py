@@ -29,8 +29,9 @@ class SkyPyPipeline:
         """
         path = os.path.dirname(slsim.__file__)
         module_path, _ = os.path.split(path)
-        if skypy_config is None or skypy_config == "lsst_like_new":
-            skypy_config = os.path.join(module_path, "data/SkyPy/lsst-like_new.yml")
+        if skypy_config is None or skypy_config == "lsst_like_triple_SF":
+            skypy_config = os.path.join(module_path, 
+                                        "data/SkyPy/lsst-like_triple_SF.yml")
         elif skypy_config == "lsst_like_old":
             skypy_config = os.path.join(module_path, "data/SkyPy/lsst-like.yml")
 

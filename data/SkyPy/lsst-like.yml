@@ -1,7 +1,7 @@
 # See the ReadMe file for parameter definitions
 mag_lim: 30
 fsky: 1 deg2
-z_range: !numpy.arange [0, 5.01, 0.04]
+z_range: !numpy.arange [0, 5.01, 0.01]
 M_star_blue: !astropy.modeling.models.Linear1D [-1.03, -20.485]
 phi_star_blue: !astropy.modeling.models.Exponential1D [0.00312608, -43.42936]
 alpha_blue: -1.29
