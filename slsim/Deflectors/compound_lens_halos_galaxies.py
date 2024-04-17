@@ -85,12 +85,11 @@ class CompoundLensHalosGalaxies(DeflectorsBase):
                 * cosmo.angular_diameter_distance(deflector["z"])
                 * constants.arcsec
             ).value  # physical Mpc
-            hubble = cosmo.H0.value / 100.0
             vel_disp = vel_disp_composite_model(
                 theta_eff,
-                deflector["stellar_mass"] / (hubble),
+                deflector["stellar_mass"],
                 reff,
-                max(deflector["halo_mass"], deflector["halo_mass_acc"]) / (hubble),
+                max(deflector["halo_mass"], deflector["halo_mass_acc"]),
                 deflector["concentration"],
                 cosmo,
                 deflector["z"],

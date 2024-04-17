@@ -31,7 +31,7 @@ This section details what each column in the CSV file represents. Below is a lis
 
 7. **con**: concentration parameter of dark matter halo
 
-8. **m_g**: mass of galaxy(stellar) component
+8. **m_g**: mass of galaxy(stellar) component in units of Msun/h
 
 9. **e_g**: ellipticily of galaxy
 
