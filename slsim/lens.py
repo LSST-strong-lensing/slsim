@@ -374,7 +374,10 @@ class Lens(LensedSystemBase):
 
         :return: kappa, gamma1, gamma2
         """
-        return self.los_config.calculate_los_linear_distortions(source_redshift=self.source_redshift, deflector_redshift=self.deflector_redshift)
+        return self.los_config.calculate_los_linear_distortions(
+            source_redshift=self.source_redshift,
+            deflector_redshift=self.deflector_redshift,
+        )
 
     def deflector_magnitude(self, band):
         """Apparent magnitude of the deflector for a given band.

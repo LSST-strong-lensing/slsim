@@ -73,7 +73,7 @@ class LOSConfig(object):
     def calculate_los_linear_distortions(self, source_redshift, deflector_redshift):
         """Calculate line-of-sight distortions in shear and convergence.
 
-        :param source_redshift:  redshift of the source galaxy object.
+        :param source_redshift: redshift of the source galaxy object.
         :type source_redshift: float
         :param deflector_redshift: redshift of the deflector galaxy object.
         :type deflector_redshift: float

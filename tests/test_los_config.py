@@ -1,10 +1,7 @@
 from slsim.ParamDistributions.los_config import LOSConfig
 import os
-from astropy.table import Table
 from astropy.cosmology import FlatLambdaCDM
 import pytest
-from slsim.Sources.source import Source
-from slsim.Deflectors.deflector import Deflector
 
 
 path = os.path.dirname(__file__)
