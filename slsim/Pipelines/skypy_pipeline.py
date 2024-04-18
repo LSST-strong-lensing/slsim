@@ -29,11 +29,13 @@ class SkyPyPipeline:
         """
         path = os.path.dirname(slsim.__file__)
         module_path, _ = os.path.split(path)
-        if skypy_config is None or skypy_config == "lsst_like_triple_SF":
+        if skypy_config is None:
             skypy_config = os.path.join(module_path, 
                                         "data/SkyPy/lsst-like_triple_SF.yml")
         elif skypy_config == "lsst_like_old":
             skypy_config = os.path.join(module_path, "data/SkyPy/lsst-like.yml")
+        else:
+            skypy_config = skypy_config
 
         if sky_area is None and filters is None and cosmo is None:
             self._pipeline = Pipeline.read(skypy_config)
