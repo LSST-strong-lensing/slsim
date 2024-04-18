@@ -839,7 +839,7 @@ def multiple_variable_lens_injection(
 
 def measure_noise_level_in_RSP_coadd(
         RSP_coadd,
-        N_central_pixels,
+        N_pixels,
         plot=False
 ):
     np.random.seed(1)
@@ -869,7 +869,7 @@ def measure_noise_level_in_RSP_coadd(
         plt.legend()
         plt.show()
     #Generate 1e+4 realisations of the noise level in the central aperture, and find the summed aperture flux in each:
-    rand_norm_array = norm(halfnorm0,halfnorm1).rvs(size=(N_central_pixels,N_central_pixels,10000)).sum(axis=0).sum(axis=0)
+    rand_norm_array = norm(halfnorm0,halfnorm1).rvs(size=(N_pixels,N_pixels,10000)).sum(axis=0).sum(axis=0)
     #Returns the 2-sigma limit of the aperture fluxes in these realisations:
     return np.mean(rand_norm_array)+2*np.std(rand_norm_array)
 
