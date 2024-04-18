@@ -836,6 +836,7 @@ def multiple_variable_lens_injection(
         )
     return final_images_catalog
 
+
 def measure_noise_level_in_RSP_coadd(RSP_coadd, N_pixels, plot=False):
     np.random.seed(1)
     """Function to measure the noise level within a central square aperture of
@@ -858,30 +859,58 @@ def measure_noise_level_in_RSP_coadd(RSP_coadd, N_pixels, plot=False):
         image is said to contain a central source.
     """
     # Select the negative pixel values from the coadd (positive values are excluded to remove the effect of bright sources):
-    negative_values = -RSP_coadd.flatten()[RSP_coadd.flatten()<0]
+    negative_values = -RSP_coadd.flatten()[RSP_coadd.flatten() < 0]
     # Fitting a half-norm distribution to these pixel values:
-    halfnorm0,halfnorm1 = halfnorm.fit(negative_values)
+    halfnorm0, halfnorm1 = halfnorm.fit(negative_values)
     if plot:
-        X_plot = np.linspace(0.2,0,100)
-        X_plot_full = np.linspace(-0.2,0.2,100)
-        plt.hist(RSP_coadd.flatten(),density=True,bins=np.linspace(-0.2,0.2,100),label='Coadd pixel values')
-        plt.plot(-X_plot,0.5*halfnorm.pdf(X_plot,halfnorm0,halfnorm1),label='Half Gaussian')
-        plt.plot(X_plot_full,norm.pdf(X_plot_full,halfnorm0,halfnorm1),label='Full Gaussian')
+        X_plot = np.linspace(0.2, 0, 100)
+        X_plot_full = np.linspace(-0.2, 0.2, 100)
+        plt.hist(
+            RSP_coadd.flatten(),
+            density=True,
+            bins=np.linspace(-0.2, 0.2, 100),
+            label="Coadd pixel values",
+        )
+        plt.plot(
+            -X_plot,
+            0.5 * halfnorm.pdf(X_plot, halfnorm0, halfnorm1),
+            label="Half Gaussian",
+        )
+        plt.plot(
+            X_plot_full,
+            norm.pdf(X_plot_full, halfnorm0, halfnorm1),
+            label="Full Gaussian",
+        )
         plt.legend()
         plt.show()
     # Generate 1e+4 realisations of the noise level in the central aperture, and find the summed aperture flux in each:
-    rand_norm_array = norm(halfnorm0,halfnorm1).rvs(size=(N_pixels,N_pixels,10000)).sum(axis=0).sum(axis=0)
+    rand_norm_array = (
+        norm(halfnorm0, halfnorm1)
+        .rvs(size=(N_pixels, N_pixels, 10000))
+        .sum(axis=0)
+        .sum(axis=0)
+    )
     # Returns the 2-sigma limit of the aperture fluxes in these realisations:
-    return np.mean(rand_norm_array)+2*np.std(rand_norm_array)
+    return np.mean(rand_norm_array) + 2 * np.std(rand_norm_array)
 
-class retrieve_DP0_coadds_from_Rubin_Science_Platform():
+
+class retrieve_DP0_coadds_from_Rubin_Science_Platform:
     """Class to retrieve cutouts of DP0.2 coadds, variance maps, PSF arrays and
     exposure maps from the Rubin Science Platform.
 
     Cutouts of size cutout_size are generated, with the number of
     cutouts per coadd specified by n_im_per_coadd.
     """
-    def __init__(self,butler,cutout_size=201,n_im_per_coadd = 10,good_seeing_only=False,ra=None,dec=None):
+
+    def __init__(
+        self,
+        butler,
+        cutout_size=201,
+        n_im_per_coadd=10,
+        good_seeing_only=False,
+        ra=None,
+        dec=None,
+    ):
         """
         :param butler: butler object
         :param cutout_size: int, size of the cutout (in pixels) to be generated
@@ -891,12 +920,14 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform():
         :param ra (optional): float, RA of the central point of the cutout
         :param dec (optional): float, Dec of the central point of the cutout
         """
-        assert (ra is None and dec is None) or (ra is not None and dec is not None) # Either both ra and dec must be specified or neither.
+        assert (ra is None and dec is None) or (
+            ra is not None and dec is not None
+        )  # Either both ra and dec must be specified or neither.
         if ra is None or dec is None:
-            ra_dec_list = random_ra_dec(55,70,-43,-30,1) # Retrieve random RA/Dec
+            ra_dec_list = random_ra_dec(55, 70, -43, -30, 1)  # Retrieve random RA/Dec
             self.ra = ra_dec_list[0]
             self.dec = ra_dec_list[1]
-        else: 
+        else:
             self.ra = ra
             self.dec = dec
         self.butler = butler
@@ -905,16 +936,16 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform():
         self.n_im_per_coadd = n_im_per_coadd
         self.good_seeing_only = good_seeing_only
 
-    def crop_center(self,img,cropx,cropy):
+    def crop_center(self, img, cropx, cropy):
         """Function to crop to the center of an image to specified size
         cropy,cropx :param img: 2D numpy array, the image to be cropped :param
         cropx: int, size of the cropped image in the x-direction :param cropy:
         int, size of the cropped image in the y-direction :return: 2D numpy
         array, the cropped image."""
-        y,x = img.shape
-        startx = x//2-(cropx//2)
-        starty = y//2-(cropy//2)    
-        return img[starty:starty+cropy,startx:startx+cropx]
+        y, x = img.shape
+        startx = x // 2 - (cropx // 2)
+        starty = y // 2 - (cropy // 2)
+        return img[starty : starty + cropy, startx : startx + cropx]
 
     def retrieve_tract_patch(self):
         """Adapted from DC2_cutout (above) Retrieves the tract & patch
@@ -925,7 +956,7 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform():
         patchInfo = self.tractInfo.findPatch(self.point)
         self.tract = self.tractInfo.tract_id
         self.patch = patchInfo.getSequentialIndex()
-    
+
     def retrieve_coadd_files(self):
         """Adapted from lens_inejection_fast (above) This generates cutouts of
         the coadd, exposure and variance maps.
@@ -939,7 +970,7 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform():
         coaddId_i = {"tract": self.tract, "patch": self.patch, "band": "i"}
         if self.good_seeing_only:
             coadd_i = self.butler.get("goodSeeingCoadd", dataId=coaddId_i)
-            coadd_exp_i = self.butler.get("goodSeeingCoadd_nImage", dataId=coaddId_i)    
+            coadd_exp_i = self.butler.get("goodSeeingCoadd_nImage", dataId=coaddId_i)
         else:
             coadd_i = self.butler.get("deepCoadd", dataId=coaddId_i)
             coadd_exp_i = self.butler.get("deepCoadd_nImage", dataId=coaddId_i)
@@ -958,13 +989,16 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform():
         cutout_center_list = []
         for n_cutouts in range(len(x_center)):
             bbox_cutout_i = geom.Box2I(
-                                geom.Point2I(xbox_min[n_cutouts], ybox_min[n_cutouts]),
-                                geom.Point2I(xbox_max[n_cutouts], ybox_max[n_cutouts]))
-            cutout_centre_i = geom.Point2D(0.5*(xbox_min[n_cutouts]+xbox_max[n_cutouts]),
-                                           0.5*(ybox_min[n_cutouts]+ybox_max[n_cutouts]))
+                geom.Point2I(xbox_min[n_cutouts], ybox_min[n_cutouts]),
+                geom.Point2I(xbox_max[n_cutouts], ybox_max[n_cutouts]),
+            )
+            cutout_centre_i = geom.Point2D(
+                0.5 * (xbox_min[n_cutouts] + xbox_max[n_cutouts]),
+                0.5 * (ybox_min[n_cutouts] + ybox_max[n_cutouts]),
+            )
             bbox_cutout_list.append(bbox_cutout_i)
             cutout_center_list.append(cutout_centre_i)
-        return coadd_i,coadd_exp_i,coadd_var_i,bbox_cutout_list,cutout_center_list
+        return coadd_i, coadd_exp_i, coadd_var_i, bbox_cutout_list, cutout_center_list
 
     def retrieve_arrays(self):
         """Adapted from cutout_image_psf_kernel (above) This function retrieves
@@ -978,7 +1012,9 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform():
             image, 6) uncropped variance map
         """
         self.retrieve_tract_patch()
-        coadd_im, coadd_exp, var_im, bbox_cutout_list, cutout_center_list = self.retrieve_coadd_files()
+        coadd_im, coadd_exp, var_im, bbox_cutout_list, cutout_center_list = (
+            self.retrieve_coadd_files()
+        )
         psf = coadd_im.getPsf()
         bbox = coadd_im.getBBox()
         xmin, ymin = bbox.getBegin()
@@ -987,7 +1023,7 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform():
         psf_list = []
         cutout_list = []
         cutout_exp_list = []
-        cutout_var_list=[]
+        cutout_var_list = []
         # Cropping the arrays to specified size:
         for n_cutouts in range(len(bbox_cutout_list)):
             bbox_cutout_i = bbox_cutout_list[n_cutouts]
@@ -996,8 +1032,8 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform():
             cutout_exp = coadd_exp[bbox_cutout_i]
             cutout_var = var_im[bbox_cutout_i]
             psfArr = psf.computeKernelImage(spt_cutout_i).array
-            if psfArr.shape!=(57,57):
-                psfArr=self.crop_center(psfArr,57,57)
+            if psfArr.shape != (57, 57):
+                psfArr = self.crop_center(psfArr, 57, 57)
             # Not currently applying an aperture correction to the PSF.
             # apCorr = psf.computeApertureFlux(calibFluxRadius, spt_cutout_i)
             # psfArr /= apCorr
@@ -1005,9 +1041,9 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform():
             cutout_list.append(cutout_image.image.array)
             cutout_exp_list.append(cutout_exp.array)
             cutout_var_list.append(cutout_var.array)
-        return cutout_list,cutout_exp_list,psf_list,cutout_var_list,coadd_im,var_im
+        return cutout_list, cutout_exp_list, psf_list, cutout_var_list, coadd_im, var_im
 
-    def save_arrays(self,foldername,prefix):
+    def save_arrays(self, foldername, prefix):
         """The generated cutouts are then saved as .h5 files.
 
         The cutouts are saved as 3D arrays, with the first dimension
@@ -1020,7 +1056,14 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform():
             of PSF arrays, 4) list of variance maps, 5) uncropped coadd
             image, 6) uncropped variance map
         """
-        cutout_list,cutout_exp_list,psf_list,cutout_var_list,full_coadd,full_var = self.retrieve_arrays()
+        (
+            cutout_list,
+            cutout_exp_list,
+            psf_list,
+            cutout_var_list,
+            full_coadd,
+            full_var,
+        ) = self.retrieve_arrays()
         cutout_list = np.array(cutout_list)
         cutout_exp_list = np.array(cutout_exp_list)
         cutout_var_list = np.array(cutout_var_list)
@@ -1028,12 +1071,39 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform():
         # Generates the folder if it does not exist:
         # if not os.path.isdir(foldername):
         #     os.mkdir(foldername)
-        with h5py.File(foldername+f'/{prefix}_image_data.h5', 'w') as hf:
-            hf.create_dataset("data", data=cutout_list,compression="gzip", maxshape=(None,cutout_list.shape[1],cutout_list.shape[2])) 
-        with h5py.File(foldername+f'/{prefix}_var_data.h5', 'w') as hf:
-            hf.create_dataset("data", data=cutout_var_list,compression="gzip", maxshape=(None,cutout_var_list.shape[1],cutout_var_list.shape[2])) 
-        with h5py.File(foldername+f'/{prefix}_Nexp_data.h5', 'w') as hf:
-            hf.create_dataset("data", data=cutout_exp_list,compression="gzip", maxshape=(None,cutout_exp_list.shape[1],cutout_exp_list.shape[2])) 
-        with h5py.File(foldername+f'/{prefix}_psf_data.h5', 'w') as hf:
-            hf.create_dataset("data", data=psf_list,compression="gzip", maxshape=(None,psf_list.shape[1],psf_list.shape[2])) 
-        return cutout_list,cutout_exp_list,psf_list,cutout_var_list,full_coadd.image.array,full_var.array
+        with h5py.File(foldername + f"/{prefix}_image_data.h5", "w") as hf:
+            hf.create_dataset(
+                "data",
+                data=cutout_list,
+                compression="gzip",
+                maxshape=(None, cutout_list.shape[1], cutout_list.shape[2]),
+            )
+        with h5py.File(foldername + f"/{prefix}_var_data.h5", "w") as hf:
+            hf.create_dataset(
+                "data",
+                data=cutout_var_list,
+                compression="gzip",
+                maxshape=(None, cutout_var_list.shape[1], cutout_var_list.shape[2]),
+            )
+        with h5py.File(foldername + f"/{prefix}_Nexp_data.h5", "w") as hf:
+            hf.create_dataset(
+                "data",
+                data=cutout_exp_list,
+                compression="gzip",
+                maxshape=(None, cutout_exp_list.shape[1], cutout_exp_list.shape[2]),
+            )
+        with h5py.File(foldername + f"/{prefix}_psf_data.h5", "w") as hf:
+            hf.create_dataset(
+                "data",
+                data=psf_list,
+                compression="gzip",
+                maxshape=(None, psf_list.shape[1], psf_list.shape[2]),
+            )
+        return (
+            cutout_list,
+            cutout_exp_list,
+            psf_list,
+            cutout_var_list,
+            full_coadd.image.array,
+            full_var.array,
+        )
