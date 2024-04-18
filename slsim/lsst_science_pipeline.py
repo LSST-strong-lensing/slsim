@@ -11,7 +11,7 @@ from scipy import interpolate
 from scipy.stats import norm,halfnorm
 import matplotlib.pyplot as plt
 from slsim.image_simulation import point_source_coordinate_properties
-from slsim.Util.param_util import random_ra_dec,random_radec_string
+from slsim.Util.param_util import random_ra_dec
 import h5py
 import os
 try:
@@ -976,10 +976,9 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform():
         wcs = coadd_im.getWcs()
         psf = coadd_im.getPsf()
         bbox = coadd_im.getBBox()
-        pixscale = wcs.getPixelScale(bbox.getCenter()).asArcseconds()
         xmin, ymin = bbox.getBegin()
         xmax, ymax = bbox.getEnd()
-        calibFluxRadius = 12
+        # calibFluxRadius = 12
         psf_list = [];cutout_list = [];cutout_exp_list = [];cutout_var_list=[]
         #Cropping the arrays to specified size:
         for n_cutouts in range(len(bbox_cutout_list)):
