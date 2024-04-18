@@ -1015,8 +1015,8 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform():
         cutout_var_list = np.array(cutout_var_list)
         psf_list = np.array(psf_list)
         #Generates the folder if it does not exist:
-        if not os.path.isdir(foldername):
-            os.mkdir(foldername)
+        # if not os.path.isdir(foldername):
+        #     os.mkdir(foldername)
         with h5py.File(foldername+f'/{prefix}_image_data.h5', 'w') as hf:
             hf.create_dataset("data", data=cutout_list,compression="gzip", maxshape=(None,cutout_list.shape[1],cutout_list.shape[2])) 
         with h5py.File(foldername+f'/{prefix}_var_data.h5', 'w') as hf:
