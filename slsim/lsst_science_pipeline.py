@@ -953,7 +953,8 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform():
         xbox_max = x_center + ((self.cutout_size - 1) / 2)
         ybox_min = y_center - ((self.cutout_size - 1) / 2)
         ybox_max = y_center + ((self.cutout_size - 1) / 2)
-        bbox_cutout_list = [];cutout_center_list = []
+        bbox_cutout_list = []
+        cutout_center_list = []
         for n_cutouts in range(len(x_center)):
             bbox_cutout_i = geom.Box2I(
                                 geom.Point2I(xbox_min[n_cutouts], ybox_min[n_cutouts]),
@@ -973,13 +974,15 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform():
         '''
         self.retrieve_tract_patch()
         coadd_im, coadd_exp, var_im, bbox_cutout_list, cutout_center_list = self.retrieve_coadd_files()
-        wcs = coadd_im.getWcs()
         psf = coadd_im.getPsf()
         bbox = coadd_im.getBBox()
         xmin, ymin = bbox.getBegin()
         xmax, ymax = bbox.getEnd()
         # calibFluxRadius = 12
-        psf_list = [];cutout_list = [];cutout_exp_list = [];cutout_var_list=[]
+        psf_list = []
+        cutout_list = []
+        cutout_exp_list = []
+        cutout_var_list=[]
         #Cropping the arrays to specified size:
         for n_cutouts in range(len(bbox_cutout_list)):
             bbox_cutout_i = bbox_cutout_list[n_cutouts]
