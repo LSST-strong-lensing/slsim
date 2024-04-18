@@ -11,7 +11,7 @@ from scipy import interpolate
 from scipy.stats import norm,halfnorm
 import matplotlib.pyplot as plt
 from slsim.image_simulation import point_source_coordinate_properties
-from Util.param_util import random_ra_dec,random_radec_string
+from slsim.Util.param_util import random_ra_dec,random_radec_string
 import h5py
 import os
 try:
@@ -863,7 +863,7 @@ def measure_noise_level_in_RSP_coadd(
     if plot:
         X_plot = np.linspace(0.2,0,100)
         X_plot_full = np.linspace(-0.2,0.2,100)
-        plt.hist((RSP_coadd.flatten()),density=True,bins=np.linspace(-0.2,0.2,100),label='Coadd pixel values')
+        plt.hist(RSP_coadd.flatten(),density=True,bins=np.linspace(-0.2,0.2,100),label='Coadd pixel values')
         plt.plot(-X_plot,0.5*halfnorm.pdf(X_plot,halfnorm0,halfnorm1),label='Half Gaussian')
         plt.plot(X_plot_full,norm.pdf(X_plot_full,halfnorm0,halfnorm1),label='Full Gaussian')
         plt.legend()
