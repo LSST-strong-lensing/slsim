@@ -845,6 +845,7 @@ def measure_noise_level_in_RSP_coadd(
     np.random.seed(1)
     '''
     Function to measure the noise level within a central square aperture of an RSP coadd.
+    The noise level could vary between coadds so this should be measured on a coadd-by-coadd basis. 
     This is done by fitting a half-norm distribution to the negative values 
     in the coadd and then generating a large number of random noise realisations from this distribution. 
     The maximum flux level (i.e. the aperture flux above which the image is said to contain a central source) is
