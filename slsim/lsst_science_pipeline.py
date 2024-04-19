@@ -13,7 +13,6 @@ import matplotlib.pyplot as plt
 from slsim.image_simulation import point_source_coordinate_properties
 from slsim.Util.param_util import random_ra_dec
 import h5py
-# import os
 try:
     import lsst.geom as geom
     from lsst.pipe.tasks.insertFakes import _add_fake_sources
