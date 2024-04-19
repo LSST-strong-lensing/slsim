@@ -99,20 +99,20 @@ class CompoundLensHalosGalaxies(DeflectorsBase):
                 deflector["z"],
             )
             deflector["vel_disp"] = vel_disp
-        if (
-            deflector["mag_g"] == -1
-            or deflector["mag_r"]
-            or deflector["mag_i"] == -1
-            or deflector["mag_z"]
-            or deflector["mag_Y"] == -1
-        ):
-            # mag_g, mag_r, mag_i, mag_z, mag_Y = (
-            #     0,
-            #     0,
-            #     0,
-            #     0,
-            #     0,
-            # )  # TODO: make function if needed
+        # if (
+        #     deflector["mag_g"] == -1
+        #     or deflector["mag_r"]
+        #     or deflector["mag_i"] == -1
+        #     or deflector["mag_z"]
+        #     or deflector["mag_Y"] == -1
+        # ):
+        #     mag_g, mag_r, mag_i, mag_z, mag_Y = (
+        #         0,
+        #         0,
+        #         0,
+        #         0,
+        #         0,
+        #     )  # TODO: make function if needed
         if deflector["e1_light"] == -1 or deflector["e2_light"] == -1:
             e1_light, e2_light, e1_mass, e2_mass = (
                 elliptical_projected_eccentricity_galaxy(**deflector)
