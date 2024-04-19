@@ -112,41 +112,41 @@ def halo_galaxy_population(
     **kwargs
 ):
     """
-        :param sky_area: Sky area over which galaxies are sampled.
-                                Must be in units of solid angle.
-        :type sky_area: `~astropy.units.Quantity`
-        :param cosmo: An instance of an astropy cosmology model
-                        (e.g., FlatLambdaCDM(H0=70, Om0=0.3)).
-        :type cosmo: astropy.cosmology instance or None
-        :param z_min: Lower limit of the redshift range when generating delector population.
-        :type z_min: float
-        :param z_max: Upper limit of the redshift range when generating delector population.
-        :type z_max: float
-        :param log10host_halo_mass_min: Lower limit of host halo mass (in log10 scale).
-        :type log10host_halo_mass_min: float
-        :param log10host_halo_mass_max: Upper limit of host halo mass (in log10 scale).
-        :type log10host_halo_mass_max: float
-        :param sigma_host_halo_concentration: Intrinsic scatter of the concentration parameter.
-                        Represents the variance value in a log-normal distribution.
-        :type sigma_host_halo_concentration: float
-        :param sigma_central_galaxy_mass: Intrinsic scatter of the stellar-mass-halo-mass relation.
-                        Represents the variance value in a log-normal distribution.
-        :type sigma_central_galaxy_mass: float
-        :param sig_tb: Scatter of the galaxy-mass-size relation only used when you set 'oguri20' in "TYPE_GAL_SIZE".
-                        Represents the variance value in a log-normal distribution.
-        :type sig_tb: float
-        :param TYPE_GAL_SIZE: Type of galaxy size model to use.
-                        (Now three available options ['vdw23', 'oguri20', 'karmakar23'])
-        :type TYPE_GAL_SIZE: str
-        :param frac_SM_IMF: Fraction of stellar M/L ratio against the Chabrier initial mass function(IMF).
-                        (e.g., 1.0 for Chabrier IMF, 1.715 for Salpeter IMF)
-        :type frac_SM_IMF: float
-        :param TYPE_SMHM: Type of fitting function for the stellar-mass-halo-mass relation for quiescent galaxies, see Behroozi et al. 2019 for detail
-                        (Currently three options ['true', 'obs', 'true_all'])
-        :type TYPE_SMHM: str
-        :param kwargs: keyword arguments
-        :type kwargs: dict
-        """
+    :param sky_area: Sky area over which galaxies are sampled.
+                            Must be in units of solid angle.
+    :type sky_area: `~astropy.units.Quantity`
+    :param cosmo: An instance of an astropy cosmology model
+                    (e.g., FlatLambdaCDM(H0=70, Om0=0.3)).
+    :type cosmo: astropy.cosmology instance or None
+    :param z_min: Lower limit of the redshift range when generating delector population.
+    :type z_min: float
+    :param z_max: Upper limit of the redshift range when generating delector population.
+    :type z_max: float
+    :param log10host_halo_mass_min: Lower limit of host halo mass (in log10 scale).
+    :type log10host_halo_mass_min: float
+    :param log10host_halo_mass_max: Upper limit of host halo mass (in log10 scale).
+    :type log10host_halo_mass_max: float
+    :param sigma_host_halo_concentration: Intrinsic scatter of the concentration parameter.
+                    Represents the variance value in a log-normal distribution.
+    :type sigma_host_halo_concentration: float
+    :param sigma_central_galaxy_mass: Intrinsic scatter of the stellar-mass-halo-mass relation.
+                    Represents the variance value in a log-normal distribution.
+    :type sigma_central_galaxy_mass: float
+    :param sig_tb: Scatter of the galaxy-mass-size relation only used when you set 'oguri20' in "TYPE_GAL_SIZE".
+                    Represents the variance value in a log-normal distribution.
+    :type sig_tb: float
+    :param TYPE_GAL_SIZE: Type of galaxy size model to use.
+                    (Now three available options ['vdw23', 'oguri20', 'karmakar23'])
+    :type TYPE_GAL_SIZE: str
+    :param frac_SM_IMF: Fraction of stellar M/L ratio against the Chabrier initial mass function(IMF).
+                    (e.g., 1.0 for Chabrier IMF, 1.715 for Salpeter IMF)
+    :type frac_SM_IMF: float
+    :param TYPE_SMHM: Type of fitting function for the stellar-mass-halo-mass relation for quiescent galaxies, see Behroozi et al. 2019 for detail
+                    (Currently three options ['true', 'obs', 'true_all'])
+    :type TYPE_SMHM: str
+    :param kwargs: keyword arguments
+    :type kwargs: dict
+    """
 
     dz = 0.001
     dlogMh = 0.001
