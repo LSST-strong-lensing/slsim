@@ -8,7 +8,7 @@ This README file provides an overview of the CSV file located in the `data/SL-Ha
 
 ### `pop_salp_a0001_zl001_to_5_wo_sub.csv`
 
-- **Purpose**: This file provides the deflector population of compound lens model. We set "sky_area= 0.001 [deg^2]", "z_min=0.01", and "z_max=0.05" to generate this population.
+- **Purpose**: This file provides the deflector population of compound lens model. We set "sky_area= 0.001 [deg^2]", "z_min=0.01", and "z_max=5.0" to generate this population.
   
 - **Source**: [SL-Hammocks](https://github.com/kta-cosmo/SL-Hammocks) Currently, this is private project
 
@@ -25,17 +25,17 @@ This section details what each column in the CSV file represents. Below is a lis
 
 4. **m_acc**: mass of subhalo component at the accretion time in units of Msun/h. For host halos, this value becomes 0. Currently, this file does not include subhalos.
 
-5. **e_h**: ellipticily of dark matter halo
+5. **e_h**: ellipticily of dark matter halo, which is defined by e=1-b/a, where a,b are major and minor axis of dark matter halo.
 
-6. **p_h**: position angle of dark matter halo
+6. **p_h**: position angle of dark matter halo in units of [deg]
 
 7. **con**: concentration parameter of dark matter halo
 
 8. **m_g**: mass of galaxy(stellar) component in units of Msun/h
 
-9. **e_g**: ellipticily of galaxy
+9. **e_g**: ellipticily of galaxy, which is defined by e=1-b/a, where	a,b are	major and minor	axis of galaxy.
 
-10. **p_g**: position angle of galaxy
+10. **p_g**: position angle of galaxy in units of [deg]
 
 11. **tb**: the scale radius appreared in Hernquist profile in units of arcsec. This parameter relates to the commonly used galaxy effective (half-mass) radius by t_b = 0.551*theta_eff.
 
