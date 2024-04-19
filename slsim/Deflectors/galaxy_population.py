@@ -16,8 +16,6 @@ class GalaxySizeModel:
         self.sc_mstar_dependence = False
         self.sc_mhalo_dependence = False
         self.sc_z_dependence = False
-        return
-
 
 ###################################################################################################
 

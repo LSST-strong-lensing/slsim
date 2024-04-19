@@ -10,9 +10,8 @@ from lenstronomy.Util import constants
 class CompoundLensHalosGalaxies(DeflectorsBase):
     """Class describing compound lens model in which the mass distribution of individual
     lens objects is described by a superposition of dark matter and stellar
-    components."""
-
-    """This class is called by setting deflector_type == "halo-models" in LensPop."""
+    components.
+    This class is called by setting deflector_type == "halo-models" in LensPop."""
 
     def __init__(
         self, halo_galaxy_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area

@@ -87,8 +87,6 @@ class NFWHernquist(DeflectorBase):
     def halo_properties(self):
         """Properties of the NFW halo.
 
-        :return: halo virial mass Mvir [physical M_sol], concentration rvir/rs (In SL-
-            hammock code, we now adopt the FOF mass definition, but treat it as the
-            virial mass)
+        :return: halo mass M200 [physical M_sol], concentration r200/rs
         """
         return self._deflector_dict["halo_mass"], self._deflector_dict["concentration"]

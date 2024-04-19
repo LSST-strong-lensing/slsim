@@ -9,9 +9,7 @@ This README file provides an overview of the CSV file located in the `data/SL-Ha
 ### `pop_salp_a0001_zl001_to_5_wo_sub.csv`
 
 - **Purpose**: This file provides the deflector population of compound lens model. We set "sky_area= 0.001 [deg^2]", "z_min=0.01", and "z_max=5.0" to generate this population.
-  
 - **Source**: [SL-Hammocks](https://github.com/kta-cosmo/SL-Hammocks) Currently, this is private project
-
 
 ## Column Descriptions
 
@@ -27,20 +25,20 @@ This section details what each column in the CSV file represents. Below is a lis
 
 5. **e_h**: ellipticily of dark matter halo, which is defined by e=1-b/a, where a,b are major and minor axis of dark matter halo.
 
-6. **p_h**: position angle of dark matter halo in units of [deg]
+6. **p_h**: position angle of dark matter halo in units of degree
 
 7. **con**: concentration parameter of dark matter halo
 
 8. **m_g**: mass of galaxy(stellar) component in units of Msun/h
 
-9. **e_g**: ellipticily of galaxy, which is defined by e=1-b/a, where	a,b are	major and minor	axis of galaxy.
+9. **e_g**: ellipticily of galaxy, which is defined by e=1-b/a, where a,b are major and minor axis of galaxy.
 
-10. **p_g**: position angle of galaxy in units of [deg]
+10. **p_g**: position angle of galaxy in units of degree
 
-11. **tb**: the scale radius appreared in Hernquist profile in units of arcsec. This parameter relates to the commonly used galaxy effective (half-mass) radius by t_b = 0.551*theta_eff.
+11. **tb**: the scale radius appreared in Hernquist profile in units of arcsec. This parameter relates to the commonly used galaxy effective (half-mass) radius by t_b = 0.551\*theta_eff.
 
 12. **vel_disp**: the luminosity-weighted averaged value of the line-of-sight
-velocity dispersion within the galaxy effective radius
+    velocity dispersion within the galaxy effective radius
 
 ## Usage
 
@@ -50,7 +48,7 @@ velocity dispersion within the galaxy effective radius
   from astropy.cosmology import FlatLambdaCDM
   from astropy.units import Quantity
   from slsim.lens_pop import LensPop
-  
+
   cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
   sky_area = Quantity(value=0.001, unit="deg2")
   kwargs_deflector_cut ={"z_min": 0.01, "z_max": 2.0}
@@ -69,3 +67,4 @@ velocity dispersion within the galaxy effective radius
     sky_area=sky_area,
     cosmo=cosmo,
   )
+  ```
