@@ -7,7 +7,6 @@ import numpy as np
 import os
 import pickle
 from astropy.table import Table
-import sys
 from slsim.lensed_population_base import LensedPopulationBase
 
 

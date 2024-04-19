@@ -257,7 +257,7 @@ def halo_galaxy_population(
         # in physical [Mpc/h]
         eliphl_tab, polarhl_tab = halo_population.gene_e_ang_halo(Mhosthl_tab)
 
-        mshsat_tot = 0
+        # mshsat_tot = 0
         Mhosthl_tab_re = Mhosthl_tab
         hubble = cosmo_col.H0 / 100.0
 

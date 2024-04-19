@@ -49,7 +49,7 @@ def galaxy_size(
 ):
 
     # Check that the model exists
-    if not model in models.keys():
+    if model not in models.keys():
         raise Exception("Unknown model, %s." % (model))
 
     model_props = models[model]
@@ -73,7 +73,7 @@ def galaxy_size(
     else:
         raise Exception("Unknown model, %s." % (q_out))
 
-    if scatter == True:
+    if scatter:
         args = ()
         if model_props.sc_sigtb_dependence:
             args += (sig_tb,)
