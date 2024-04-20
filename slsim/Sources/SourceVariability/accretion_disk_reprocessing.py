@@ -220,6 +220,9 @@ class AccretionDiskReprocessing(object):
                     len(response_function) * gravitational_radius_in_days
                 )
                 time_lag_axis = np.linspace(0, length_in_days, len(response_function))
+        if length_in_days == 0:
+            length_in_days += 1
+            time_lag_axis = np.linspace(0, length_in_days, len(response_function))
 
         interpolation_of_response_function = interpolate.interp1d(
             time_lag_axis, response_function, bounds_error=False, fill_value=0
@@ -247,7 +250,7 @@ class AccretionDiskReprocessing(object):
             interpolated_signal, (interpolated_response_function), mode="full"
         ) / np.sum(interpolated_response_function)
 
-        return reprocessed_signal[:-length_in_days]
+        return reprocessed_signal[1 : -length_in_days + 1]
 
 
 def lamppost_model(
