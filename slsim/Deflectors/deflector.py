@@ -72,6 +72,13 @@ class Deflector(object):
     @property
     def light_ellipticity(self):
         """Light ellipticity.
+        Defined as:
+
+        .. math::
+            e1 = \\frac{1-q}{1+q} * cos(2 \\phi)
+            e2 = \\frac{1-q}{1+q} * sin(2 \\phi)
+
+        with q being the minor-to-major axis ratio.
 
         :return: e1_light, e2_light
         """
@@ -79,7 +86,14 @@ class Deflector(object):
 
     @property
     def mass_ellipticity(self):
-        """Mass ellipticity.
+        """Mass ellipticity
+        Defined as:
+
+        .. math::
+            e1 = \\frac{1-q}{1+q} * cos(2 \\phi)
+            e2 = \\frac{1-q}{1+q} * sin(2 \\phi)
+
+        with q being the minor-to-major axis ratio.
 
         :return: e1_mass, e2_mass
         """

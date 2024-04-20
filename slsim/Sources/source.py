@@ -132,7 +132,15 @@ class Source(object):
 
     @property
     def ellipticity(self):
-        """Returns ellipticity components of source."""
+        """Returns ellipticity components of source.
+        Defined as:
+
+        .. math::
+            e1 = \\frac{1-q}{1+q} * cos(2 \\phi)
+            e2 = \\frac{1-q}{1+q} * sin(2 \\phi)
+
+        with q being the minor-to-major axis ratio.
+        """
 
         return self.source_dict["e1"], self.source_dict["e2"]
 
