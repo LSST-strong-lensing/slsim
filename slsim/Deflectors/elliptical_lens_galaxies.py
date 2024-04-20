@@ -102,16 +102,24 @@ class EllipticalLensGalaxies(DeflectorsBase):
         return deflector
 
 
-def elliptical_projected_eccentricity(ellipticity, light2mass_e_scaling=1, light2mass_e_scatter=0.1,
-                                      light2mass_angle_scatter=0.1, **kwargs):
+def elliptical_projected_eccentricity(
+    ellipticity,
+    light2mass_e_scaling=1,
+    light2mass_e_scatter=0.1,
+    light2mass_angle_scatter=0.1,
+    **kwargs
+):
     """Projected eccentricity of elliptical galaxies as a function of other deflector
     parameters.
 
     :param ellipticity: eccentricity amplitude (1-q^2)/(1+q^2)
     :type ellipticity: float [0,1)
-    :param light2mass_e_scaling: scaling factor of mass eccentricity / light eccentricity
-    :param light2mass_e_scatter: scatter in light and mass eccentricities from the scaling relation
-    :param light2mass_angle_scatter: scatter in orientation angle between light and mass eccentricity
+    :param light2mass_e_scaling: scaling factor of mass eccentricity / light
+        eccentricity
+    :param light2mass_e_scatter: scatter in light and mass eccentricities from the
+        scaling relation
+    :param light2mass_angle_scatter: scatter in orientation angle between light and mass
+        eccentricity
     :param kwargs: deflector properties
     :type kwargs: dict
     :return: e1_light, e2_light,e1_mass, e2_mass eccentricity components
@@ -120,7 +128,9 @@ def elliptical_projected_eccentricity(ellipticity, light2mass_e_scaling=1, light
     phi_light = np.random.uniform(0, np.pi)
     e1_light = e_light * np.cos(2 * phi_light)
     e2_light = e_light * np.sin(2 * phi_light)
-    e_mass = light2mass_e_scaling * ellipticity + np.random.normal(loc=0, scale=light2mass_e_scatter)
+    e_mass = light2mass_e_scaling * ellipticity + np.random.normal(
+        loc=0, scale=light2mass_e_scatter
+    )
     phi_mass = phi_light + np.random.normal(loc=0, scale=light2mass_angle_scatter)
     e1_mass = e_mass * np.cos(2 * phi_mass)
     e2_mass = e_mass * np.sin(2 * phi_mass)
