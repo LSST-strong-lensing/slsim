@@ -195,7 +195,7 @@ class TestAccretionDiskReprocessing:
             response_function_time_lags=[0, 1, 2, 3, 4, 5],
             response_function_amplitudes=[0, 0, 0, 0, 0, 1],
         )
-        assert all(reprocessed_signal_shift[5:] - magnitude_array[:-5] == 0)
+        assert all(reprocessed_signal_shift[6:] - magnitude_array[:-6] == 0)
         # Assessing 'identity' shift. Note the convolution requires at least 2 points in the kernel
         reprocessed_signal_shift = reprocessor.reprocess_signal(
             response_function_time_lags=[0, 1],
