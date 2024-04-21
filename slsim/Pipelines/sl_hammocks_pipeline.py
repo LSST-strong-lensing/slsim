@@ -120,11 +120,11 @@ def table_translator_for_slsim(table, cosmo):
         - 'halo_mass': M200 of the halo components in units of M_sol
         - 'halo_mass_acc': M200 of subhalo component at the accretion time in units of M_sol.
             For host halos, this value becomes 0. Currently, this table does not include subhalos.
-        - 'e_h': ellipticily of dark matter halo, which is defined by e=1-b/a, where a,b are major and minor axis of dark matter halo, respectively.
+        - 'e_h': ellipticily of dark matter halo, which is defined by epsilon=(1-q^2)/(1+q^2), where q=b/a and a, b are major and minor axis of dark matter halo, respectively.
         - 'p_h': posiiton angle of the halo in units of degree
         - 'concentration': Concentration parameter of the halo
         - 'stellar_mass': Mass of stars in the object
-        - 'e_g': ellipticity of the galaxy, which is defined by e=1-b/a, where a,b are major and minor axis of galaxy, respectively
+        - 'e_g': ellipticity of the galaxy, which is defined by epsilon=(1-q^2)/(1+q^2), where q=b/a and a, b are major and minor axis of galaxy, respectively
         - 'p_g': posiiton angle of the galaxy in units of degree
         - 'tb': the scale radius appreared in Hernquist profile in units of arcsec.
             This parameter relates to the commonly used galaxy effective (half-mass) radius by t_b = 0.551\*theta_eff.
@@ -166,6 +166,10 @@ def table_translator_for_slsim(table, cosmo):
     table["stellar_mass"] = (
         table["stellar_mass"] / hubble
     )  # convert to stellar mass [M_sol/h] to physical stellar mass [M_sol]
+
+    table["e_h"] = ellip_from_axis_ratio2epsilon(table["e_h"]) #convert from 1-q to (1-q^2)/(1+q^2)
+    table["e_g"] = ellip_from_axis_ratio2epsilon(table["e_g"]) #convert from 1-q to (1-q^2)/(1+q^2)
+
     return table
 
 
@@ -309,3 +313,20 @@ def halo_galaxy_population(
     table_pop = Table(halo_gal_pop_array, names=columns_pop)
 
     return table_pop
+
+
+def ellip_from_axis_ratio2epsilon(ellipticity):
+    """Translates ellipticity definitions from.
+
+    .. math::
+        ellipticity = \\equic \\1 - q
+
+    where q is axis ratio to ellipticity in slsim
+
+    .. math::
+        epsilon = \\equic \\frac{1 - q^2}{1 + q^2}
+
+    :param epsilon: ellipticity
+    :return: ellipticity
+    """
+    return (1. - (1. - ellipticity)**2) / (1. + (1. - ellipticity)**2)
