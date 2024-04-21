@@ -248,9 +248,14 @@ class AccretionDiskReprocessing(object):
 
         reprocessed_signal = signal.convolve(
             interpolated_signal, (interpolated_response_function), mode="full"
-        ) / np.sum(interpolated_response_function)
+        )
+        normalization = np.nansum(interpolated_response_function)
+        if normalization == 0:
+            reprocessed_signal = interpolated_signal
+        else:
+            reprocessed_signal /= normalization
 
-        return reprocessed_signal[1 : -length_in_days + 1]
+        return reprocessed_signal[: len(self.time_array)]
 
 
 def lamppost_model(

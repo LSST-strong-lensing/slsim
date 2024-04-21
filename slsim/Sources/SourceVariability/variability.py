@@ -128,8 +128,8 @@ class Variability(object):
                 if "time_array" not in signal_kwargs:
 
                     signal_kwargs["time_array"] = linspace(
-                        1,
-                        driving_signal_kwargs["length_of_light_curve"],
+                        0,
+                        driving_signal_kwargs["length_of_light_curve"] - 1,
                         driving_signal_kwargs["length_of_light_curve"],
                     )
 
