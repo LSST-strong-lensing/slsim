@@ -167,8 +167,12 @@ def table_translator_for_slsim(table, cosmo):
         table["stellar_mass"] / hubble
     )  # convert to stellar mass [M_sol/h] to physical stellar mass [M_sol]
 
-    table["e_h"] = ellip_from_axis_ratio2epsilon(table["e_h"]) #convert from 1-q to (1-q^2)/(1+q^2)
-    table["e_g"] = ellip_from_axis_ratio2epsilon(table["e_g"]) #convert from 1-q to (1-q^2)/(1+q^2)
+    table["e_h"] = ellip_from_axis_ratio2epsilon(
+        table["e_h"]
+    )  # convert from 1-q to (1-q^2)/(1+q^2)
+    table["e_g"] = ellip_from_axis_ratio2epsilon(
+        table["e_g"]
+    )  # convert from 1-q to (1-q^2)/(1+q^2)
 
     return table
 
@@ -329,4 +333,4 @@ def ellip_from_axis_ratio2epsilon(ellipticity):
     :param epsilon: ellipticity
     :return: ellipticity
     """
-    return (1. - (1. - ellipticity)**2) / (1. + (1. - ellipticity)**2)
+    return (1.0 - (1.0 - ellipticity) ** 2) / (1.0 + (1.0 - ellipticity) ** 2)
