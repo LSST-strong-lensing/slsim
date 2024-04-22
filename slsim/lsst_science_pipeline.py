@@ -837,24 +837,22 @@ def multiple_variable_lens_injection(
 
 def measure_noise_level_in_RSP_coadd(RSP_coadd, N_pixels, plot=False):
     np.random.seed(1)
-    """Function to measure the noise level within a central square aperture of
-    an RSP coadd. The noise level could vary between coadds so this should be
-    measured on a coadd-by-coadd basis. This is done by fitting a half-norm
-    distribution to the negative values in the coadd and then generating a
-    large number of random noise realisations from this distribution. The
-    maximum flux level (i.e. the aperture flux above which the image is said to
-    contain a central source) is then calculated as the 2-sigma limit of the
-    sum of the aperture flux in these realisations.
-
-    :param RSP_coadd: .npy array, the RSP coadd image (this should be
-        large to ensure the noise level is accurately measured). This
-        could also be a 3D array of many individual (random) cutouts.
-    :param N_central_pixels: int, size of (square) aperture within which
-        to determine the presence/absence of a central source.
-    :param plot: bool: Whether to plot the gaussian fits to the noise
-        level
-    :return: float, 2-sigma flux level in the aperture above which the
-        image is said to contain a central source.
+    """Function to measure the noise level within a central square aperture of an RSP
+	coadd. The noise level could vary between coadds so this should be measured on a
+	coadd-by-coadd basis. This is done by fitting a half-norm distribution to the
+	negative values in the coadd and then generating a large number of random noise
+	realisations from this distribution. The maximum flux level (i.e. the aperture flux
+	above which the image is said to contain a central source) is then calculated as the
+	2-sigma limit of the sum of the aperture flux in these realisations.
+	
+	:param RSP_coadd: .npy array, the RSP coadd image (this should be large to ensure
+	    the noise level is accurately measured). This could also be a 3D array of many
+	    individual (random) cutouts.
+	:param N_central_pixels: int, size of (square) aperture within which to determine
+	    the presence/absence of a central source.
+	:param plot: bool: Whether to plot the gaussian fits to the noise level
+	:return: float, 2-sigma flux level in the aperture above which the image is said to
+	    contain a central source.
     """
     # Select the negative pixel values from the coadd (positive values are excluded to remove the effect of bright sources):
     negative_values = -RSP_coadd.flatten()[RSP_coadd.flatten() < 0]
@@ -893,11 +891,11 @@ def measure_noise_level_in_RSP_coadd(RSP_coadd, N_pixels, plot=False):
 
 
 class retrieve_DP0_coadds_from_Rubin_Science_Platform:
-    """Class to retrieve cutouts of DP0.2 coadds, variance maps, PSF arrays and
-    exposure maps from the Rubin Science Platform.
+    """Class to retrieve cutouts of DP0.2 coadds, variance maps, PSF arrays and exposure
+    maps from the Rubin Science Platform.
 
-    Cutouts of size cutout_size are generated, with the number of
-    cutouts per coadd specified by n_im_per_coadd.
+    Cutouts of size cutout_size are generated, with the number of cutouts per coadd
+    specified by n_im_per_coadd.
     """
 
     def __init__(
@@ -946,8 +944,8 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform:
         return img[starty : starty + cropy, startx : startx + cropx]
 
     def retrieve_tract_patch(self):
-        """Adapted from DC2_cutout (above) Retrieves the tract & patch
-        information of the coadd image."""
+        """Adapted from DC2_cutout (above) Retrieves the tract & patch information of
+        the coadd image."""
         self.point = geom.SpherePoint(self.ra, self.dec, geom.degrees)
         self.cutoutSize = geom.ExtentI(self.cutout_size, self.cutout_size)
         self.tractInfo = self.skymap.findTract(self.point)
@@ -956,14 +954,13 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform:
         self.patch = patchInfo.getSequentialIndex()
 
     def retrieve_coadd_files(self):
-        """Adapted from lens_inejection_fast (above) This generates cutouts of
-        the coadd, exposure and variance maps.
+        """Adapted from lens_inejection_fast (above) This generates cutouts of the
+	    coadd, exposure and variance maps.
 
-        The cutout size is specified by cutout_size during
-        initialisation.
-        :return: 1) Full coadd image, 2) full exposure map image (in
-            units of N. exposures), 3) full variance map image 4) list
-            of cutout bounding boxes, 5) list of cutout centres
+	    The cutout size is specified by cutout_size during initialisation.
+	    :return: 1) Full coadd image, 2) full exposure map image (in units of N.
+	        exposures), 3) full variance map image 4) list of cutout bounding boxes, 5)
+	        list of cutout centres
         """
         coaddId_i = {"tract": self.tract, "patch": self.patch, "band": "i"}
         if self.good_seeing_only:
@@ -999,15 +996,14 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform:
         return coadd_i, coadd_exp_i, coadd_var_i, bbox_cutout_list, cutout_center_list
 
     def retrieve_arrays(self):
-        """Adapted from cutout_image_psf_kernel (above) This function retrieves
-        the coadd images, exposure maps, PSF arrays and variance maps for the
-        specified position.
+        """Adapted from cutout_image_psf_kernel (above) This function retrieves the
+	    coadd images, exposure maps, PSF arrays and variance maps for the specified
+	    position.
 
-        These arrays are cropped to the specified size, with the
-        exception of the PSF array, which is always 57x57.
-        :return: 1) list of cutouts, 2) list of exposure maps, 3) list
-            of PSF arrays, 4) list of variance maps, 5) uncropped coadd
-            image, 6) uncropped variance map
+	    These arrays are cropped to the specified size, with the exception of the PSF
+	    array, which is always 57x57.
+	    :return: 1) list of cutouts, 2) list of exposure maps, 3) list of PSF arrays, 4)
+	        list of variance maps, 5) uncropped coadd image, 6) uncropped variance map
         """
         self.retrieve_tract_patch()
         coadd_im, coadd_exp, var_im, bbox_cutout_list, cutout_center_list = (
@@ -1044,15 +1040,14 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform:
     def save_arrays(self, foldername, prefix):
         """The generated cutouts are then saved as .h5 files.
 
-        The cutouts are saved as 3D arrays, with the first dimension
-        corresponding to the number of cutouts.
-        :param foldername: str, name of the folder in which to save the
-            files. The folder is generatred if it doesn't exist already.
-        :param prefix: str, prefix for the file names (e.g. 0,1,2,3 if
-            generating sets of cutouts from different coadds)
-        :return: 1) list of cutouts, 2) list of exposure maps, 3) list
-            of PSF arrays, 4) list of variance maps, 5) uncropped coadd
-            image, 6) uncropped variance map
+        The cutouts are saved as 3D arrays, with the first dimension corresponding to
+	    the number of cutouts.
+	    :param foldername: str, name of the folder in which to save the files. The
+	        folder is generatred if it doesn't exist already.
+	    :param prefix: str, prefix for the file names (e.g. 0,1,2,3 if generating sets
+	        of cutouts from different coadds)
+	    :return: 1) list of cutouts, 2) list of exposure maps, 3) list of PSF arrays, 4)
+	        list of variance maps, 5) uncropped coadd image, 6) uncropped variance map
         """
         (
             cutout_list,
