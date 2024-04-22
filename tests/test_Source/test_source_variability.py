@@ -108,15 +108,27 @@ class TestVariability:
             "seed": 17,
             "driving_variability_model": "user_defined_psd",
         }
+        user_transfer_function_1 = [0, 0, 0, 5, 5, 5, 3, 3, 3]
+        user_transfer_function_2 = 10 - np.linspace(10, 0, 50)
+        badly_defined_transfer_function = [[[0, 1, 2], [1, 2, 3], [2, 3]]]
+        user_time_lags = np.linspace(0, 50, 9)
         reprocessing_kwargs = {
             "obs_frame_wavelength_in_nm": 50,
             "rest_frame_wavelength_in_nm": 300,
             "speclite_filter": "lsst2016-r",
+            "response_function": [user_time_lags, user_transfer_function_1],
         }
         multi_reprocessing_kwargs = {
             "obs_frame_wavelength_in_nm": [50, 100],
             "rest_frame_wavelength_in_nm": [300, 20],
             "speclite_filter": ["lsst2016-r", "lsst2016-g"],
+            "response_function": [
+                [user_time_lags, user_transfer_function_1],
+                [user_transfer_function_2],
+            ],
+        }
+        error_reprocessing_kwargs = {
+            "response_function": badly_defined_transfer_function
         }
         other_kwargs = {
             "redshift": 1.0,
@@ -155,9 +167,21 @@ class TestVariability:
         ]:
             for key in dictionary:
                 full_kwargs_3[key] = dictionary[key]
+        full_error_kwargs = {}
+        for dictionary in [
+            agn_kwargs,
+            user_def_signal_kwargs,
+            error_reprocessing_kwargs,
+            other_kwargs,
+        ]:
+            for key in dictionary:
+                full_error_kwargs[key] = dictionary[key]
+
         Variability("lamppost_reprocessed", **full_kwargs_1)
         Variability("lamppost_reprocessed", **full_kwargs_2)
         Variability("lamppost_reprocessed", **full_kwargs_3)
+        with pytest.raises(ValueError):
+            Variability("lamppost_reprocessed", **full_error_kwargs)
         # Test minimum case of a fully defined response
         time_array = np.linspace(0, 10, 10)
         magnitude_array = (10 - time_array) * time_array

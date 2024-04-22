@@ -7,7 +7,7 @@ from slsim.Sources.SourceVariability.accretion_disk_reprocessing import (
 )
 from slsim.Util.astro_util import generate_signal_from_bending_power_law
 from slsim.Util.astro_util import generate_signal_from_generic_psd
-from numpy import linspace
+import numpy as np
 
 """This class aims to have realistic variability models for AGN and supernovae."""
 
@@ -38,6 +38,7 @@ class Variability(object):
                 - ('obs_frame_wavelength_in_nm') list of observer frame wavelengths in nm
                 - ('rest_frame_wavelength_in_nm') list of rest frame wavelengths in nm
                 - ('speclite_filter') list of speclite filter names to use
+                - ('response_function') list of response functions to use (see notebook for samples)
 
         :type kwargs_variability_model: dict
         """
@@ -127,7 +128,7 @@ class Variability(object):
                 )
                 if "time_array" not in signal_kwargs:
 
-                    signal_kwargs["time_array"] = linspace(
+                    signal_kwargs["time_array"] = np.linspace(
                         0,
                         driving_signal_kwargs["length_of_light_curve"] - 1,
                         driving_signal_kwargs["length_of_light_curve"],
@@ -139,11 +140,10 @@ class Variability(object):
                 accretion_disk_reprocessor.define_intrinsic_signal(**signal_kwargs)
 
             reprocessed_signals = {}
+            counter = 1
             for kwarg in reprocessing_kwargs:
                 if kwarg == "obs_frame_wavelength_in_nm":
-                    if isinstance(reprocessing_kwargs[kwarg], float) or isinstance(
-                        reprocessing_kwargs[kwarg], int
-                    ):
+                    if not isinstance(reprocessing_kwargs[kwarg], list):
                         reprocessing_kwargs[kwarg] = [reprocessing_kwargs[kwarg]]
                     for wavelength in reprocessing_kwargs[kwarg]:
                         rest_wavelength = wavelength / (1 + self.redshift)
@@ -154,9 +154,7 @@ class Variability(object):
                         )
 
                 elif kwarg == "rest_frame_wavelength_in_nm":
-                    if isinstance(reprocessing_kwargs[kwarg], float) or isinstance(
-                        reprocessing_kwargs[kwarg], int
-                    ):
+                    if not isinstance(reprocessing_kwargs[kwarg], list):
                         reprocessing_kwargs[kwarg] = [reprocessing_kwargs[kwarg]]
                     for rest_wavelength in reprocessing_kwargs[kwarg]:
                         reprocessed_signals[
@@ -166,7 +164,7 @@ class Variability(object):
                         )
 
                 elif kwarg == "speclite_filter":
-                    if isinstance(reprocessing_kwargs[kwarg], str):
+                    if not isinstance(reprocessing_kwargs[kwarg], list):
                         reprocessing_kwargs[kwarg] = [reprocessing_kwargs[kwarg]]
 
                     for speclite_filter in reprocessing_kwargs[kwarg]:
@@ -180,6 +178,39 @@ class Variability(object):
                                 response_function_amplitudes=response_function
                             )
                         )
+
+                elif kwarg == "response_function":
+                    if not isinstance(
+                        reprocessing_kwargs[kwarg][0], list
+                    ) and not isinstance(reprocessing_kwargs[kwarg][0], np.ndarray):
+                        reprocessing_kwargs[kwarg] = [reprocessing_kwargs[kwarg]]
+
+                    if not isinstance(
+                        reprocessing_kwargs[kwarg][0][0], list
+                    ) and not isinstance(reprocessing_kwargs[kwarg][0][0], np.ndarray):
+                        reprocessing_kwargs[kwarg] = [reprocessing_kwargs[kwarg]]
+
+                    for response in reprocessing_kwargs[kwarg]:
+                        if len(response) == 1:
+                            reprocessed_signals[kwarg + "_" + str(counter)] = (
+                                accretion_disk_reprocessor.reprocess_signal(
+                                    response_function_amplitudes=response[0]
+                                )
+                            )
+                            counter += 1
+                        elif len(response) == 2:
+                            reprocessed_signals[kwarg + "_" + str(counter)] = (
+                                accretion_disk_reprocessor.reprocess_signal(
+                                    response_function_time_lags=response[0],
+                                    response_function_amplitudes=response[1],
+                                )
+                            )
+                            counter += 1
+                        else:
+                            raise ValueError(
+                                "response function must be defined by "
+                                "one or two lists / arrays. Not more!"
+                            )
 
             self._model = []
             for key, signal in reprocessed_signals.items():
