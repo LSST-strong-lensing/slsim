@@ -1039,7 +1039,6 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform:
 
     def save_arrays(self, foldername, prefix):
         """The generated cutouts are then saved as .h5 files.
-    
         The cutouts are saved as 3D arrays, with the first dimension corresponding to
         the number of cutouts.
         :param foldername: str, name of the folder in which to save the files. The
