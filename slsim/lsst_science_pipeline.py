@@ -846,7 +846,7 @@ def measure_noise_level_in_RSP_coadd(RSP_coadd, N_pixels, plot=False):
     realisations from this distribution. The maximum flux level (i.e. the aperture flux
     above which the image is said to contain a central source) is then calculated as the
     2-sigma limit of the sum of the aperture flux in these realisations.
-    
+
     :param RSP_coadd: .npy array, the RSP coadd image (this should be large to ensure
         the noise level is accurately measured). This could also be a 3D array of many
         individual (random) cutouts.
@@ -1041,6 +1041,7 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform:
 
     def save_arrays(self, foldername, prefix):
         """The generated cutouts are then saved as .h5 files.
+
         The cutouts are saved as 3D arrays, with the first dimension corresponding to
         the number of cutouts.
         :param foldername: str, name of the folder in which to save the files. The
