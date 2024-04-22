@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 from slsim.image_simulation import point_source_coordinate_properties
 from slsim.Util.param_util import random_ra_dec
 import h5py
+
 try:
     import lsst.geom as geom
     from lsst.pipe.tasks.insertFakes import _add_fake_sources
@@ -28,11 +29,11 @@ This module provides necessary functions to inject lenses to the dp0 data. For t
 uses some of the packages provided by the LSST Science Pipeline.
 """
 
+
 def DC2_cutout(ra, dec, num_pix, butler, band):
     """Draws a cutout from the DC2 data based on the given ra, dec pair. For this, one
     needs to provide a butler to this function. To initiate Butler, you need to specify
     data configuration and collection of the data.
-
     :param ra: ra for the cutout
     :param dec: dec for the cutout
     :param num_pix: number of pixel for the cutout
