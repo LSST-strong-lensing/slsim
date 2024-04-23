@@ -600,6 +600,8 @@ def test_downsample_passband():
     with pytest.raises(ValueError):
         downsample_passband("yellow", delta_wavelength)
         downsample_passband((32, 12), delta_wavelength)
+    with pytest.raises(ValueError):
+        downsample_passband((1), delta_wavelength)
     passband_wavelengths = np.linspace(100, 200, 50)
     passband_throughputs = np.linspace(0, 1, 50) * np.linspace(1, 0, 50)
     passband = [passband_wavelengths, passband_throughputs]
@@ -640,6 +642,8 @@ def test_bring_passband_to_source_plane():
     with pytest.raises(ValueError):
         bring_passband_to_source_plane("yellow", 10)
         bring_passband_to_source_plane((32, 12), 4)
+    with pytest.raises(ValueError):
+        bring_passband_to_source_plane(1, 1)
     # Test function
     speclite_filter = "lsst2016-z"
     redshift_zero = 0
@@ -664,10 +668,13 @@ def test_convert_passband_to_nm():
     with pytest.raises(ValueError):
         convert_passband_to_nm("yellow", 10)
         convert_passband_to_nm((32, 12), u.m)
+    with pytest.raises(ValueError):
+        convert_passband_to_nm(1)
     # Test function
     speclite_filter = "wise2010-W1"
     orig_filter = bring_passband_to_source_plane(speclite_filter, 0)
     filter_in_nm = convert_passband_to_nm(speclite_filter)
+    convert_passband_to_nm(speclite_filter, wavelength_unit_input=u.m)
     npt.assert_almost_equal(orig_filter[0] / 10, filter_in_nm[0])
     new_bandpass = [np.asarray([100, 150, 200]), np.asarray([0.5, 1.0, 0.5])]
     wavelength_units = u.m

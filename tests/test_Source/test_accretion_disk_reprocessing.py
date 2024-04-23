@@ -23,6 +23,8 @@ class TestAccretionDiskReprocessing:
         }
         reprocessor = AccretionDiskReprocessing("lamppost", **kwargs_agn_model)
         assert reprocessor.reprocessing_model == "lamppost"
+        with pytest.raises(ValueError):
+            AccretionDiskReprocessing("other", **kwargs_agn_model)
 
     def test_initialization_invalid_model(self):
         kwargs_agn_model = {
@@ -158,7 +160,11 @@ class TestAccretionDiskReprocessing:
 
     def test_reprocessing_a_signal(self):
         kwargs_agn_model = {"black_hole_mass_exponent": 9.5}
+        kwargs_small_agn_model = {"black_hole_mass_exponent": 4.0}
         reprocessor = AccretionDiskReprocessing("lamppost", **kwargs_agn_model)
+        small_reprocessor = AccretionDiskReprocessing(
+            "lamppost", **kwargs_small_agn_model
+        )
 
         input_freq = np.linspace(1 / 100, 1 / 2, 100)
         input_psd = input_freq ** (-2)
@@ -173,6 +179,7 @@ class TestAccretionDiskReprocessing:
 
         time_array, magnitude_array = generate_signal_from_generic_psd(**kwargs_signal)
         reprocessor.define_intrinsic_signal(time_array, magnitude_array)
+        small_reprocessor.define_intrinsic_signal(time_array, magnitude_array)
 
         reprocessed_signal_500 = reprocessor.reprocess_signal(
             rest_frame_wavelength_in_nanometers=500
@@ -183,6 +190,7 @@ class TestAccretionDiskReprocessing:
         reprocessed_signal_2000 = reprocessor.reprocess_signal(
             rest_frame_wavelength_in_nanometers=2000
         )
+        small_reprocessor.reprocess_signal(rest_frame_wavelength_in_nanometers=500)
 
         assert len(reprocessed_signal_500) == len(time_array)
         assert len(reprocessed_signal_1000) == len(reprocessed_signal_500)
@@ -208,6 +216,9 @@ class TestAccretionDiskReprocessing:
             response_function_amplitudes=1 - np.linspace(-1, 1, 100) ** 2
         )
         assert len(reprocessed_signal_test) == len(magnitude_array)
+        small_reprocessor.reprocess_signal(
+            response_function_amplitudes=1 - np.linspace(-1, 1, 100) ** 2
+        )
 
     def test_define_passband_response_function(self):
         kwargs_agn_model = {"black_hole_mass_exponent": 9.5}
@@ -224,3 +235,10 @@ class TestAccretionDiskReprocessing:
             wavelength_in_nm,
         )
         assert len(wavelength_response) == len(filter_response)
+
+        reprocessor.define_passband_response_function(
+            lsst_filter,
+            redshift=0,
+            delta_wavelength=5,
+            passband_wavelength_unit=u.angstrom,
+        )

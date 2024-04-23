@@ -109,8 +109,9 @@ class TestVariability:
             "driving_variability_model": "user_defined_psd",
         }
         user_transfer_function_1 = [0, 0, 0, 5, 5, 5, 3, 3, 3]
-        user_transfer_function_2 = 10 - np.linspace(10, 0, 50)
+        user_transfer_function_2 = 10 - np.linspace(10, 0, 5)
         badly_defined_transfer_function = [[[0, 1, 2], [1, 2, 3], [2, 3]]]
+        single_transfer_function = [0, 1, 2, 3, 4]
         user_time_lags = np.linspace(0, 50, 9)
         reprocessing_kwargs = {
             "obs_frame_wavelength_in_nm": 50,
@@ -130,6 +131,7 @@ class TestVariability:
         error_reprocessing_kwargs = {
             "response_function": badly_defined_transfer_function
         }
+        single_reprocessing_kwargs = {"response_function": single_transfer_function}
         other_kwargs = {
             "redshift": 1.0,
             "delta_wavelength": 100,
@@ -176,10 +178,20 @@ class TestVariability:
         ]:
             for key in dictionary:
                 full_error_kwargs[key] = dictionary[key]
+        single_response_kwargs = {}
+        for dictionary in [
+            agn_kwargs,
+            user_def_signal_kwargs,
+            single_reprocessing_kwargs,
+            other_kwargs,
+        ]:
+            for key in dictionary:
+                single_response_kwargs[key] = dictionary[key]
 
         Variability("lamppost_reprocessed", **full_kwargs_1)
-        Variability("lamppost_reprocessed", **full_kwargs_2)
+        var_2 = Variability("lamppost_reprocessed", **full_kwargs_2)
         Variability("lamppost_reprocessed", **full_kwargs_3)
+        Variability("lamppost_reprocessed", **single_response_kwargs)
         with pytest.raises(ValueError):
             Variability("lamppost_reprocessed", **full_error_kwargs)
         # Test minimum case of a fully defined response
@@ -187,6 +199,8 @@ class TestVariability:
         magnitude_array = (10 - time_array) * time_array
         min_kwargs = {"time_array": time_array, "magnitude_array": magnitude_array}
         Variability("lamppost_reprocessed", **min_kwargs)
+
+        var_2.variability_at_time([0, 10, 15, 20])
 
 
 if __name__ == "__main__":

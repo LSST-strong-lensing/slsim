@@ -106,8 +106,8 @@ class AccretionDiskReprocessing(object):
             wavelength_unit_input=u.nm,
             wavelength_unit_output=u.nm,
         )
-        if len(passband_to_use[0]) > 100:
-            print("Warning, over 100 wavelengths to calculate.")
+        if len(passband_to_use[0]) > 20:
+            print("Warning, over 20 wavelengths to calculate.")
         total_weighting = np.sum(passband_to_use[1])
         total_response_function = (
             self.define_new_response_function(passband_to_use[0][0])
