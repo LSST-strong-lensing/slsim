@@ -76,7 +76,12 @@ def test_get_convergence_shear(setup_halos_hrt, setup_no_halos_no_sheet):
     assert isinstance(gamma2, float)
 
     hrt2, _ = setup_no_halos_no_sheet
-    kappa2, gamm2 = hrt2.get_convergence_shear(gamma12=False)
+    kappa2, gamm2 = hrt2.get_convergence_shear(same_from_class=False, gamma12=False)
+    assert kappa2 == 0
+    assert gamm2 == 0
+
+    hrt2, _ = setup_no_halos_no_sheet
+    kappa2, gamm2 = hrt2.get_convergence_shear(same_from_class=True, gamma12=False)
     assert kappa2 == 0
     assert gamm2 == 0
 

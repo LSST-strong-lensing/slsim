@@ -576,27 +576,34 @@ class HalosLensBase(object):
             to any additional redshifts present in `combined_redshift_list`.
         """
 
-        n_halos = n_halos
+        _n_halos = n_halos
 
-        if len(combined_redshift_list) - n_halos > 0:
-            lens_model_list = ["NFW"] * n_halos + ["CONVERGENCE"] * (
-                len(combined_redshift_list) - n_halos
+        if len(combined_redshift_list) - _n_halos > 0:
+            lens_model_list = ["NFW"] * _n_halos + ["CONVERGENCE"] * (
+                len(combined_redshift_list) - _n_halos
             )
             lens_model_not_empty = True
-        elif len(combined_redshift_list) - n_halos < 0:
+        elif len(combined_redshift_list) - _n_halos < 0:
             raise ValueError(
                 f"Combined redshift list shorter than number of halos."
-                f"{len(combined_redshift_list)} < {n_halos}"
+                f"{len(combined_redshift_list)} < {_n_halos}"
             )
-        elif n_halos == len(combined_redshift_list) == 0:
+        elif _n_halos == len(combined_redshift_list) == 0:
             lens_model_list = []
             lens_model_not_empty = False
         else:
-            lens_model_list = ["NFW"] * n_halos
+            lens_model_list = ["NFW"] * _n_halos
             lens_model_not_empty = True
 
         if not lens_model_not_empty:
-            return LensModel(), []
+            return LensModel(
+                lens_model_list=["CONVERGENCE"],
+                lens_redshift_list=[0],
+                cosmo=self.cosmo,
+                multi_plane=True,
+                z_source=z_source,
+                z_source_convention=self._z_source_convention,
+            ), ["CONVERGENCE"]
         else:
             lens_model = LensModel(
                 lens_model_list=lens_model_list,

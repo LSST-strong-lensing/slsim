@@ -29,3 +29,9 @@ def test_cosmology_initialization():
     pipeline0 = HalosSkyPyPipeline(cosmo=galaxy_cosmo0, sky_area=sky_area)
     halos0 = pipeline0.halos
     assert halos0[0]["z"] > 0
+
+
+def test_default_pipeline():
+    pipeline0 = HalosSkyPyPipeline()
+    halos0 = pipeline0.halos
+    assert halos0[0]["z"] > 0

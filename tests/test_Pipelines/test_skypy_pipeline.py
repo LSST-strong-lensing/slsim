@@ -9,6 +9,11 @@ class TestSkyPyPipeline(object):
         sky_area = Quantity(value=0.05, unit="deg2")
         self.pipeline = SkyPyPipeline(skypy_config=None, sky_area=sky_area)
 
+    def test_default_pipeline(self):
+        pipeline_default = SkyPyPipeline()
+        blue_galaxies = pipeline_default.blue_galaxies
+        assert blue_galaxies[0]["z"] > 0
+
     def test_cosmology_initialization(self):
         galaxy_cosmo0 = LambdaCDM(H0=70, Om0=0.01, Ode0=0.99)
         pipeline0 = SkyPyPipeline(cosmo=galaxy_cosmo0)

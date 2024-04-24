@@ -56,6 +56,8 @@ def test_invalid():
         LineOfSightDistribution(
             nonlinear_correction_path="wrong", no_correction_path="wrong"
         )
+    with pytest.raises(FileNotFoundError):
+        LineOfSightDistribution(no_correction_path="wrong")
 
     current_script_path = os.path.abspath(__file__)
     current_directory = os.path.dirname(current_script_path)

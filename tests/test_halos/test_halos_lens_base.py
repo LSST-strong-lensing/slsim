@@ -331,6 +331,21 @@ def test_build_lens_model(setup_halos_lens, setup_mass_sheet_false, setup_no_hal
     assert len(lens_model_list) == len(combined_redshift_list)
     assert all(isinstance(model_type, str) for model_type in lens_model_list)
 
+    combined_redshift_list2 = [0.5, 0.6, 0.7, 0.8]
+    z_source = 1.0
+    n_halos_mistake = len(combined_redshift_list2) + 1
+
+    with pytest.raises(ValueError):
+        hl._build_lens_model(combined_redshift_list2, z_source, n_halos_mistake)
+
+    combined_redshift_list3 = []
+    z_source = 1.0
+    n_halos_none = 0
+    lens_model_none, lens_model_list_none = hl._build_lens_model(
+        combined_redshift_list3, z_source, n_halos_none
+    )
+    assert len(lens_model_list_none) == 1
+
     hl2 = setup_mass_sheet_false
     hl2z = [0.5, 0.6]
     n_halos2 = len(hl2z)
