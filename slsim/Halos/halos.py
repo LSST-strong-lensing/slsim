@@ -9,6 +9,7 @@ from slsim.Util.astro_util import (
     get_value_if_quantity,
     cone_radius_angle_to_physical_area,
 )
+from scipy.optimize import bisect
 
 
 def colossus_halo_mass_function(m_200, cosmo, z, sigma8=0.81, ns=0.96, omega_m=None):
@@ -58,7 +59,7 @@ def colossus_halo_mass_function(m_200, cosmo, z, sigma8=0.81, ns=0.96, omega_m=N
         sigma8=sigma8,
         ns=ns,
     )
-    # TODO: seems like still not working for other cosmology rather than default
+    # TODO: not stable for other cosmologies, problems like m_nu from yml pipline exist
     colossus_cosmo.setCosmology(cosmo_name="halo_cosmo", **params)
     h3 = np.power(cosmo.h, 3)
     mfunc_h3_dmpc3 = mass_function.massFunction(
@@ -641,7 +642,9 @@ def redshift_mass_sheet_correction_array_from_comoving_density(redshift_list):
     return linspace_values
 
 
-def kappa_ext_for_each_sheet(redshift_list, first_moment, sky_area, cosmology):
+def kappa_ext_for_each_sheet(
+    redshift_list, first_moment, sky_area, cosmology, z_sigma_crit_source=10.0
+):
     """Calculate the external convergence (kappa_ext) for lensing sheets at given
     redshifts.
 
@@ -653,15 +656,21 @@ def kappa_ext_for_each_sheet(redshift_list, first_moment, sky_area, cosmology):
     :param first_moment: First moment (expected value) of mass for each redshift in the redshift_list.
     :type first_moment: list or ndarray
     :param sky_area: Area of the sky in square degrees under consideration for the lensing calculation.
-    :type sky_area: `~astropy.units.Quantity`:param cosmology: astropy.cosmology instance used for the calculation.
-    :type cosmology: astropy.cosmology instance:return: Array of kappa_ext values for each redshift in the redshift_list.
+    :type sky_area: `~astropy.units.Quantity`
+    :param cosmology: astropy.Cosmology instance used for the calculation.
+    :type cosmology: astropy.cosmology instance
+    :param z_sigma_crit_source: Redshift of the source plane for the critical surface mass density calculation.
+    :type z_sigma_crit_source: float, optional
+    :return: Array of kappa_ext values for each redshift in the redshift_list.
     :rtype: ndarray
     """
     assert len(redshift_list) == len(first_moment)
     cone_opening_angle = deg2_to_cone_angle(sky_area.value)
     # TODO: make it possible for other geometry model
     # TODO: hard code z_souce here
-    lens_cosmo = LensCosmo(z_lens=redshift_list, z_source=10, cosmo=cosmology)
+    lens_cosmo = LensCosmo(
+        z_lens=redshift_list, z_source=z_sigma_crit_source, cosmo=cosmology
+    )
     epsilon_crit = lens_cosmo.sigma_crit
 
     area = cone_radius_angle_to_physical_area(
@@ -879,3 +888,124 @@ def colossus_halo_expected_number_certain_bin(
     dN_dz = density * dV_dz
     N = np.trapz(dN_dz, redshift_list)
     return N
+
+
+def colossus_halo_expected_number(
+    zmax,
+    sky_area,
+    m_min=None,
+    m_max=None,
+    resolution=None,
+    cosmology=None,
+    sigma8=0.81,
+    ns=0.96,
+    omega_m=None,
+):
+    """Calculate the first moment of mass at given redshift(s) using specified or
+    default cosmological parameters and mass range.
+
+    This function computes the first moment of mass within a given sky area and redshift range by
+    integrating the halo mass function weighted by mass over the specified mass range.
+    :param zmax: maximum-redshift
+    :type zmax: float
+    :param sky_area: Area of the sky in square degrees under consideration for the calculation.
+    :type sky_area: `~astropy.units.Quantity`
+    :param m_min: Minimum halo mass, in M_sol/h. Converted to value if specified as an astropy Quantity.
+    :param m_max: Maximum halo mass, in M_sol/h. Converted to value if specified as an astropy Quantity.
+    :param resolution: Number of mass bins for the mass function calculation, converted to value if specified as an astropy Quantity.
+    :param cosmology: Cosmology instance for calculating the halo mass function.
+    :param sigma8: Sigma8 parameter, default is 0.81.
+    :param ns: Spectral index in Colossus cosmology settings, default is 0.96.
+    :param omega_m: Omega_m in Cosmology, defaults to none which will lead to the same in Cosmology setting.
+    :type m_min: Quantity or float
+    :type m_max: Quantity or float
+    :type resolution: Quantity or int
+    :type cosmology: astropy.Cosmology instance
+    :type sigma8: float, optional
+    :type ns: float, optional
+    :type omega_m: float:return: first moment of number of halo in the bin
+    :rtype: float
+    """
+    (
+        m_min,
+        m_max,
+        resolution,
+        cosmology,
+    ) = set_defaults_halos(m_min, m_max, resolution, cosmology)
+    redshift_list = np.linspace(0, zmax, 100)
+
+    dV_dz = v_per_redshift(redshift_list, cosmology, sky_area)
+    density = number_density_at_redshift(
+        z=redshift_list,
+        m_min=m_min,
+        m_max=m_max,
+        resolution=resolution,
+        cosmology=cosmology,
+        sigma8=sigma8,
+        ns=ns,
+        omega_m=omega_m,
+    )
+    assert len(density) == len(redshift_list)
+    dN_dz = density * dV_dz
+    N = np.trapz(dN_dz, redshift_list)
+    return N
+
+
+def optimize_min_mass_based_on_number(
+    target_n_halos,
+    zmax,
+    sky_area,
+    m_max=None,
+    resolution=None,
+    cosmology=None,
+    sigma8=0.81,
+    ns=0.96,
+    omega_m=None,
+):
+    """Calculate the excepted minimum mass based on the target number of halos.
+
+    :param zmax: maximum-redshift
+    :type zmax: float
+    :param target_n_halos: target number of halos
+    :type target_n_halos: float
+    :param sky_area: Area of the sky in square degrees under consideration for the calculation.
+    :type sky_area: `~astropy.units.Quantity`
+    :param m_max: Maximum halo mass, in M_sol/h. Converted to value if specified as an astropy Quantity.
+    :param resolution: Number of mass bins for the mass function calculation, converted to value if specified as an astropy Quantity.
+    :param cosmology: Cosmology instance for calculating the halo mass function.
+    :param sigma8: Sigma8 parameter, default is 0.81.
+    :param ns: Spectral index in Colossus cosmology settings, default is 0.96.
+    :param omega_m: Omega_m in Cosmology, defaults to none which will lead to the same in Cosmology setting.
+    :type resolution: Quantity or int
+    :type cosmology: astropy.Cosmology instance
+    :type sigma8: float, optional
+    :type ns: float, optional
+    :type omega_m: float:return: first moment of number of halo in the bin
+    :rtype: float
+    """
+    (
+        _,
+        m_max,
+        resolution,
+        cosmology,
+    ) = set_defaults_halos(None, m_max, resolution, cosmology)
+
+    def _difference(m_min):
+        n_halos = colossus_halo_expected_number(
+            zmax=zmax,
+            sky_area=sky_area,
+            m_min=m_min,
+            m_max=m_max,
+            resolution=resolution,
+            cosmology=cosmology,
+            sigma8=sigma8,
+            ns=ns,
+            omega_m=omega_m,
+        )
+        return n_halos - target_n_halos
+
+    try:
+        result_m_min = bisect(_difference, 1e9, 1e14, xtol=1e6)
+        return result_m_min
+    except Exception:
+        return 1e9
