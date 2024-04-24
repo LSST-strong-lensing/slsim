@@ -76,7 +76,7 @@ def test_get_convergence_shear(setup_halos_hrt, setup_no_halos_no_sheet):
     assert isinstance(gamma2, float)
 
     hrt2, _ = setup_no_halos_no_sheet
-    kappa2, gamm2 = hrt2.get_convergence_shear()
+    kappa2, gamm2 = hrt2.get_convergence_shear(gamma12=False)
     assert kappa2 == 0
     assert gamm2 == 0
 
@@ -126,22 +126,19 @@ def test_various_halos_data(setup_halos_hrt):
     hrt, lens_data = setup_halos_hrt
     zd = 0.5
     zs = 1.0
-    (
-        kappa_od,
-        kappa_os,
-        gamma_od1,
-        gamma_od2,
-        gamma_os1,
-        gamma_os2,
-        kappa_ds,
-        gamma_ds1,
-        gamma_ds2,
-        kappa_os2,
-        gamma_os12,
-        gamma_os22,
-        kext,
-        gext,
-    ), (kwargs_lens_os, lens_model_os) = hrt.various_halos_data(lens_data, zd, zs)
+    results, lens_model_data = hrt.various_halos_data(lens_data, zd, zs)
+    kappa_od = results["kappa_od"]
+    kappa_os = results["kappa_os"]
+    gamma_od1 = results["gamma_od1"]
+    gamma_od2 = results["gamma_od2"]
+    gamma_os1 = results["gamma_os1"]
+    gamma_os2 = results["gamma_os2"]
+    kappa_ds = results["kappa_ds"]
+    gamma_ds1 = results["gamma_ds1"]
+    gamma_ds2 = results["gamma_ds2"]
+
+    kwargs_lens_os = lens_model_data["kwargs_lens_os"]
+
     assert isinstance(kappa_od, float)
     assert isinstance(kappa_os, float)
     assert isinstance(gamma_od1, float)

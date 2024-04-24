@@ -582,24 +582,31 @@ class HalosLensBase(object):
             lens_model_list = ["NFW"] * n_halos + ["CONVERGENCE"] * (
                 len(combined_redshift_list) - n_halos
             )
+            lens_model_not_empty = True
         elif len(combined_redshift_list) - n_halos < 0:
             raise ValueError(
                 f"Combined redshift list shorter than number of halos."
                 f"{len(combined_redshift_list)} < {n_halos}"
             )
         elif n_halos == len(combined_redshift_list) == 0:
-            lens_model_list = ["NFW"] * 1
+            lens_model_list = []
+            lens_model_not_empty = False
         else:
             lens_model_list = ["NFW"] * n_halos
-        lens_model = LensModel(
-            lens_model_list=lens_model_list,
-            lens_redshift_list=combined_redshift_list,
-            cosmo=self.cosmo,
-            multi_plane=True,
-            z_source=z_source,
-            z_source_convention=self._z_source_convention,
-        )
-        return lens_model, lens_model_list
+            lens_model_not_empty = True
+
+        if not lens_model_not_empty:
+            return LensModel(), []
+        else:
+            lens_model = LensModel(
+                lens_model_list=lens_model_list,
+                lens_redshift_list=combined_redshift_list,
+                cosmo=self.cosmo,
+                multi_plane=True,
+                z_source=z_source,
+                z_source_convention=self._z_source_convention,
+            )
+            return lens_model, lens_model_list
 
     def _build_kwargs_lens(
         self,

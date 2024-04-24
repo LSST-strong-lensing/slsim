@@ -38,6 +38,7 @@ tables:
          kappa: !slsim.Halos.halos.kappa_ext_for_each_sheet
             redshift_list: $mass_sheet_correction.z
             cosmology: $cosmology
+            z_sigma_crit_source: $z_max
             first_moment: !slsim.Halos.halos.expected_mass_at_redshift
               z: $mass_sheet_correction.z
               sky_area: $fsky

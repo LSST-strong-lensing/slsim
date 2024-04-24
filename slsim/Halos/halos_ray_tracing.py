@@ -298,22 +298,29 @@ class HalosRayTracing(object):
             + (gamma_od2 + gamma_os2 - gamma_ds2) ** 2
         )
 
-        return (
-            kappa_od,
-            kappa_os,
-            gamma_od1,
-            gamma_od2,
-            gamma_os1,
-            gamma_os2,
-            kappa_ds,
-            gamma_ds1,
-            gamma_ds2,
-            kappa_os2,
-            gamma_os12,
-            gamma_os22,
-            kext,
-            gext,
-        ), (kwargs_lens_os, lens_model_os)
+        results_dict = {
+            "kappa_od": kappa_od,
+            "kappa_os": kappa_os,
+            "gamma_od1": gamma_od1,
+            "gamma_od2": gamma_od2,
+            "gamma_os1": gamma_os1,
+            "gamma_os2": gamma_os2,
+            "kappa_ds": kappa_ds,
+            "gamma_ds1": gamma_ds1,
+            "gamma_ds2": gamma_ds2,
+            "kappa_os2": kappa_os2,
+            "gamma_os12": gamma_os12,
+            "gamma_os22": gamma_os22,
+            "kext": kext,
+            "gext": gext,
+        }
+
+        lens_model_data = {
+            "kwargs_lens_os": kwargs_lens_os,
+            "lens_model_os": lens_model_os,
+        }
+
+        return results_dict, lens_model_data
 
     def compute_kappa(
         self,

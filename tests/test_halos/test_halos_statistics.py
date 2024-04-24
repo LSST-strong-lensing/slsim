@@ -55,7 +55,34 @@ def setup_no_halos():
     )
 
 
-def test_get_kappaext_gammaext_distib_zdzs(setup_halos_hs):
+@pytest.fixture
+def setup_no_halos_large_samples_number():
+    z = [np.nan]
+
+    mass = [0]
+
+    halos = Table([z, mass], names=("z", "mass"))
+
+    z_correction = [0.5]
+    kappa_ext_correction = [-0.1]
+    mass_sheet_correction = Table(
+        [z_correction, kappa_ext_correction], names=("z", "kappa")
+    )
+
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    return HalosStatistics(
+        halos_list=halos,
+        mass_correction_list=mass_sheet_correction,
+        sky_area=0.0001,
+        cosmo=cosmo,
+        samples_number=1111,
+        mass_sheet=True,
+    )
+
+
+def test_get_kappaext_gammaext_distib_zdzs(
+    setup_halos_hs, setup_no_halos_large_samples_number
+):
     hs = setup_halos_hs
     zd = 0.5
     zs = 1.0
@@ -66,6 +93,10 @@ def test_get_kappaext_gammaext_distib_zdzs(setup_halos_hs):
     k_g_distribution = hs.get_kappaext_gammaext_distib_zdzs(zd, zs, listmean=True)
     assert k_g_distribution.shape == (hs.samples_number, 2)
     assert np.mean(k_g_distribution[:, 0]) == pytest.approx(0, abs=1e-6)
+
+    hs2 = setup_no_halos_large_samples_number
+    kappa_gamma_distribution2 = hs2.get_kappaext_gammaext_distib_zdzs(zd, zs)
+    assert kappa_gamma_distribution2.shape == (hs2.samples_number, 2)
 
 
 def test_generate_distributions_0to5(setup_halos_hs):
@@ -87,7 +118,9 @@ def test_generate_distributions_0to5(setup_halos_hs):
     )
 
 
-def test_compute_various_kappa_gamma_values(setup_halos_hs, setup_no_halos):
+def test_compute_various_kappa_gamma_values(
+    setup_halos_hs, setup_no_halos, setup_no_halos_large_samples_number
+):
     hs = setup_halos_hs
     zd = 0.5
     zs = 1.0
@@ -140,6 +173,31 @@ def test_compute_various_kappa_gamma_values(setup_halos_hs, setup_no_halos):
     assert gamma_ds12 == 0
     assert gamma_ds22 == 0
 
+    hl3 = setup_no_halos_large_samples_number
+    (
+        kappa_od3,
+        kappa_os3,
+        gamma_od13,
+        gamma_od23,
+        gamma_os13,
+        gamma_os23,
+        kappa_ds3,
+        gamma_ds13,
+        gamma_ds23,
+    ) = hl3.compute_halos_nonlinear_correction_kappa_gamma_values(zd, zs)
+    assert kappa_od3 == 0
+    assert kappa_os3 == 0
+    assert gamma_od13 == 0
+    assert gamma_od23 == 0
+    assert gamma_os13 == 0
+    assert gamma_os23 == 0
+    assert gamma_ds13 == 0
+    assert gamma_ds23 == 0
+
+    kappa_gamma_distribution, lens_instance = hl3.get_all_pars_distib(zd, zs)
+    assert isinstance(kappa_gamma_distribution, np.ndarray)
+    assert isinstance(lens_instance, np.ndarray)
+
 
 def test_total_mass(setup_halos_hs, setup_no_halos):
     hs = setup_halos_hs
@@ -162,7 +220,9 @@ def test_total_critical_mass(setup_halos_hs, setup_no_halos):
     assert ratio == pytest.approx(1, rel=0.01)
 
 
-def test_get_kappa_gamma_distib_without_multiprocessing(setup_halos_hs, setup_no_halos):
+def test_get_kappa_gamma_distib_without_multiprocessing(
+    setup_halos_hs, setup_no_halos, setup_no_halos_large_samples_number
+):
     hl = setup_halos_hs
     results = hl.get_kappa_gamma_distib_without_multiprocessing()
     assert results.shape[0] == hl.samples_number
@@ -186,6 +246,11 @@ def test_get_kappa_gamma_distib_without_multiprocessing(setup_halos_hs, setup_no
     results2 = hl2.get_kappa_gamma_distib_without_multiprocessing(gamma_tot=True)
     assert results2.shape[0] == hl2.samples_number
     assert results2.shape[1] == 2  # kappa, gamma
+
+    hl3 = setup_no_halos_large_samples_number
+    results3 = hl3.get_kappa_gamma_distib_without_multiprocessing(gamma_tot=True)
+    assert results3.shape[0] == hl3.samples_number
+    assert results3.shape[1] == 2  # kappa, gamma
 
 
 def test_kappa_divergence(setup_halos_hs):

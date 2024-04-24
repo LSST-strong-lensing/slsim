@@ -18,6 +18,8 @@ from slsim.Halos.halos import (
     expected_mass_at_redshift,
     colossus_halo_expected_mass_sampler,
     colossus_halo_expected_number_certain_bin,
+    colossus_halo_expected_number,
+    optimize_min_mass_based_on_number,
 )
 
 from astropy.cosmology import default_cosmology
@@ -243,8 +245,20 @@ def test_redshift_mass_sheet_correction_array():
         sky_area=0.0000001 * units.deg**2,
         cosmology=cosmo,
     )
+    kappa2 = kappa_ext_for_each_sheet(
+        redshift_list=redshift_mass_sheet_correction_array_from_comoving_density(
+            redshift_list
+        ),
+        first_moment=[0.1, 0.2, 0.3, 0.4],
+        sky_area=0.0000001 * units.deg**2,
+        cosmology=cosmo,
+        z_sigma_crit_source=1.0,
+    )
     assert len(kappa) == 4
     assert kappa[0] < 0
+    assert len(kappa2) == 4
+    assert kappa2[0] < 0
+    assert kappa2[1] != kappa[1]
 
 
 def test_returns_array_of_kappa_ext():
@@ -300,7 +314,7 @@ def test_returns_float_with_valid_input_values():
 def test_colossus_halo_number_first_moment_certain_bin():
     z_c = 1.0
     dz = 0.1
-    sky_area = 0.0001 * units.deg**2  # totoal sky
+    sky_area = 0.0001 * units.deg**2
     m_min = 1e11
     m_max = 1e15
     resolution = 100
@@ -347,3 +361,73 @@ def test_colossus_halo_number_first_moment_certain_bin():
         ns=0.96,
     )
     assert result3 == pytest.approx(expected=0.0, abs=1e-2)
+
+
+def test_colossus_halo_expected_number():
+    z = 5.0
+    sky_area = 0.0001 * units.deg**2
+    m_min = 1e11
+    m_max = 1e15
+    resolution = 100
+    cosmology = cosmo
+
+    result = colossus_halo_expected_number(
+        zmax=z,
+        sky_area=sky_area,
+        m_min=m_min,
+        m_max=m_max,
+        resolution=resolution,
+        cosmology=cosmology,
+        sigma8=0.81,
+        ns=0.96,
+    )
+
+    assert isinstance(result, float)
+    assert result > 0
+
+    result_other = colossus_halo_expected_number_certain_bin(
+        z_c=2.5,
+        dz=5.0,
+        sky_area=sky_area,
+        m_min=m_min,
+        m_max=m_max,
+        resolution=resolution,
+        cosmology=cosmology,
+        sigma8=0.81,
+        ns=0.96,
+    )
+    assert result_other == pytest.approx(result, abs=1e-2)
+
+
+def test_optimize_min_mass_based_on_number():
+    z = 5.0
+    sky_area = 0.0001 * units.deg**2
+    m_max = 1e15
+    resolution = 100
+    cosmology = cosmo
+    number = 100
+    result = optimize_min_mass_based_on_number(
+        target_n_halos=number,
+        zmax=z,
+        sky_area=sky_area,
+        m_max=m_max,
+        resolution=resolution,
+        cosmology=cosmology,
+        sigma8=0.81,
+        ns=0.96,
+    )
+    assert isinstance(result, float)
+    assert result < m_max
+    assert result >= 1e9
+
+    result2 = optimize_min_mass_based_on_number(
+        target_n_halos=100,
+        zmax=0.00001,
+        sky_area=sky_area,
+        m_max=m_max,
+        resolution=resolution,
+        cosmology=cosmology,
+        sigma8=0.81,
+        ns=0.96,
+    )
+    assert result2 == 1e9

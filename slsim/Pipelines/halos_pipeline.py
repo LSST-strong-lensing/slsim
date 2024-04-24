@@ -126,6 +126,9 @@ class HalosSkyPyPipeline:
                     for key, value in cosmology_dict.items():
                         if hasattr(value, "value"):
                             value = value.value
+                        if key == "m_nu":
+                            # Reason: From Astropy: m_nu will be out like [0.06, 0.06, 0.06]
+                            value = value[0]
                         cosmology_params_list.append(f"    {key}: {value}")
 
                     cosmology_params_str = "\n".join(cosmology_params_list)

@@ -267,27 +267,24 @@ class HalosStatistics(HalosLensBase):
 
         for i in loop:
             self.enhance_halos_table_random_pos()
-            (
-                kappa_od,
-                kappa_os,
-                gamma_od1,
-                gamma_od2,
-                gamma_os1,
-                gamma_os2,
-                kappa_ds,
-                gamma_ds1,
-                gamma_ds2,
-                kappa_os2,
-                gamma_os12,
-                gamma_os22,
-                kext,
-                gext,
-            ), (
-                kwargs_lens_os,
-                lens_model_os,
-            ) = self.halos_various_halos_data(
-                zd=zd, zs=zs
-            )
+            results, lens_model_data = self.halos_various_halos_data(zd=zd, zs=zs)
+            kappa_od = results["kappa_od"]
+            kappa_os = results["kappa_os"]
+            gamma_od1 = results["gamma_od1"]
+            gamma_od2 = results["gamma_od2"]
+            gamma_os1 = results["gamma_os1"]
+            gamma_os2 = results["gamma_os2"]
+            kappa_ds = results["kappa_ds"]
+            gamma_ds1 = results["gamma_ds1"]
+            gamma_ds2 = results["gamma_ds2"]
+            kappa_os2 = results["kappa_os2"]
+            gamma_os12 = results["gamma_os12"]
+            gamma_os22 = results["gamma_os22"]
+            kext = results["kext"]
+            gext = results["gext"]
+
+            kwargs_lens_os = lens_model_data["kwargs_lens_os"]
+            lens_model_os = lens_model_data["lens_model_os"]
             kappa_gamma_distribution[i] = [
                 kappa_od,
                 kappa_os,
