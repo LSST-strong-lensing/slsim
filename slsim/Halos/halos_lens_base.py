@@ -617,7 +617,7 @@ class HalosLensBase(object):
                 cosmo=self.cosmo,
                 observed_convention_index=[],
                 multi_plane=True,
-                z_source=self.z_source,
+                z_source=z_source,
                 z_source_convention=self._z_source_convention,
             )
             return lens_model, lens_model_list
@@ -669,7 +669,7 @@ class HalosLensBase(object):
         """
 
         if n_halos == 0 and ("CONVERGENCE" not in lens_model_list):
-            return None
+            return []
         elif n_halos == 0 and ("CONVERGENCE" in lens_model_list):
             return [
                 {"kappa": kappa_ext_list[h], "ra_0": 0, "dec_0": 0}

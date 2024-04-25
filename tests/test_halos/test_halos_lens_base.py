@@ -363,7 +363,9 @@ def test_build_lens_model(setup_halos_lens, setup_mass_sheet_false, setup_no_hal
     assert all(isinstance(model_type, str) for model_type in lens_model_list3)
 
 
-def test_build_kwargs_lens(setup_halos_lens, setup_no_halos):
+def test_build_kwargs_lens(
+    setup_halos_lens, setup_no_halos, setup_no_halos_mass_sheet_false
+):
     hl = setup_halos_lens
     n_halos = len(hl.halos_list)
     n_mass_correction = len(hl.mass_correction_list)
@@ -429,6 +431,24 @@ def test_build_kwargs_lens(setup_halos_lens, setup_no_halos):
     assert len(kwargs_lens2) == n_halos2
     for kwargs in kwargs_lens2:
         assert isinstance(kwargs, dict)
+
+    hl3 = setup_no_halos_mass_sheet_false
+    n_halos3 = 0
+    n_mass_correction3 = len(hl3.mass_correction_list)
+
+    empty_result = hl3._build_kwargs_lens(
+        n_halos3,
+        n_mass_correction3,
+        z_halo2,
+        mass_halo2,
+        px_halo2,
+        py_halo2,
+        c_200_halos2,
+        lens_model_list2,
+        kappa_ext_list2,
+        lens_cosmo_list2,
+    )
+    assert empty_result == []
 
 
 def test_get_lens_data_by_redshift(setup_halos_lens):
