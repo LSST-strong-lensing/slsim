@@ -194,11 +194,11 @@ def test_get_lens_model(
 
     hl2 = setup_no_halos
     lens_model2 = hl2.get_lens_model()
-    assert lens_model2.lens_model_list == ["NFW", "CONVERGENCE"]
+    assert lens_model2.lens_model_list == ["CONVERGENCE"]
 
     hl3 = setup_no_halos_mass_sheet_false
     lens_model3 = hl3.get_lens_model()
-    assert lens_model3.lens_model_list == ["NFW"]
+    assert lens_model3.lens_model_list == []
 
 
 def test_get_lens_model_mass_sheet_false(setup_mass_sheet_false):
@@ -344,7 +344,7 @@ def test_build_lens_model(setup_halos_lens, setup_mass_sheet_false, setup_no_hal
     lens_model_none, lens_model_list_none = hl._build_lens_model(
         combined_redshift_list3, z_source, n_halos_none
     )
-    assert len(lens_model_list_none) == 1
+    assert len(lens_model_list_none) == 0
 
     hl2 = setup_mass_sheet_false
     hl2z = [0.5, 0.6]

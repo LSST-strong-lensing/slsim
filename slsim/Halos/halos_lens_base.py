@@ -221,14 +221,22 @@ class HalosLensBase(object):
             such as deflection angles, shear, and magnification.
         :rtype: LensModel :note:
         """
-        lens_model_list = ["NFW"] * (self.n_halos if self.n_halos > 0 else 1)
+        if self.n_halos == 0 and self.n_correction == 0:
+            lens_model_list = []
+            lens_model = LensModel(
+                lens_model_list=lens_model_list,
+            )
+            return lens_model
+        lens_model_list = ["NFW"] * self.n_halos
         if self.mass_sheet:
             lens_model_list += ["CONVERGENCE"] * self.n_correction
 
         lens_redshift_list = (
             self.combined_redshift_list if self.mass_sheet else self.halos_redshift_list
         )
-
+        if self.n_halos == 0:
+            nan_index = np.where(np.isnan(lens_redshift_list))[0]
+            lens_redshift_list = np.delete(lens_redshift_list, nan_index)
         lens_model = LensModel(
             lens_model_list=lens_model_list,
             lens_redshift_list=lens_redshift_list,
@@ -596,21 +604,20 @@ class HalosLensBase(object):
             lens_model_not_empty = True
 
         if not lens_model_not_empty:
-            return LensModel(
-                lens_model_list=["CONVERGENCE"],
-                lens_redshift_list=[0],
-                cosmo=self.cosmo,
-                multi_plane=True,
-                z_source=z_source,
-                z_source_convention=self._z_source_convention,
-            ), ["CONVERGENCE"]
+            return (
+                LensModel(
+                    lens_model_list=[],
+                ),
+                [],
+            )
         else:
             lens_model = LensModel(
                 lens_model_list=lens_model_list,
                 lens_redshift_list=combined_redshift_list,
                 cosmo=self.cosmo,
+                observed_convention_index=[],
                 multi_plane=True,
-                z_source=z_source,
+                z_source=self.z_source,
                 z_source_convention=self._z_source_convention,
             )
             return lens_model, lens_model_list

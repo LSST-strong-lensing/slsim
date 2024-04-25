@@ -988,7 +988,7 @@ def optimize_min_mass_based_on_number(
         m_max,
         resolution,
         cosmology,
-    ) = set_defaults_halos(None, m_max, resolution, cosmology)
+    ) = set_defaults_halos(1e10, m_max, resolution, cosmology)
 
     def _difference(m_min):
         n_halos = colossus_halo_expected_number(
