@@ -528,25 +528,13 @@ def lens_image(
     :param with_deflector: If True, simulates image with deflector.
     :return: lens image
     """
-    delta_pix = transformmatrix_to_pixelscale(transform_pix2angle)
-    deflector_source = sharp_image(
-        lens_class=lens_class,
-        band=band,
-        mag_zero_point=mag_zero_point,
-        delta_pix=delta_pix,
-        num_pix=num_pix,
-        with_source=with_source,
-        with_deflector=with_deflector,
-    )
-    convolved_deflector_source = convolved_image(
-        image=deflector_source, psf_kernel=psf_kernel
-    )
+    delta_pix_image = transformmatrix_to_pixelscale(transform_pix2angle)
     if t_obs is None:
         image_ps = point_source_image_without_variability(
             lens_class=lens_class,
             band=band,
             mag_zero_point=mag_zero_point,
-            delta_pix=delta_pix,
+            delta_pix=delta_pix_image,
             num_pix=num_pix,
             psf_kernel=psf_kernel,
             transform_pix2angle=transform_pix2angle,
@@ -556,17 +544,30 @@ def lens_image(
             lens_class=lens_class,
             band=band,
             mag_zero_point=mag_zero_point,
-            delta_pix=delta_pix,
+            delta_pix=delta_pix_image,
             num_pix=num_pix,
             psf_kernel=psf_kernel,
             transform_pix2angle=transform_pix2angle,
             time=t_obs,
         )
-    image = convolved_deflector_source + image_ps
+    deflector_source = sharp_image(
+        lens_class=lens_class,
+        band=band,
+        mag_zero_point=mag_zero_point,
+        delta_pix=delta_pix_image,
+        num_pix=num_pix,
+        with_source=with_source,
+        with_deflector=with_deflector,
+    )
+    convolved_deflector_source = convolved_image(
+        image=deflector_source, psf_kernel=psf_kernel
+    )
+    combined_image = convolved_deflector_source + image_ps
     if exposure_time is not None:
-        final_image = image_plus_poisson_noise(image=image, exposure_time=exposure_time)
+        final_image = image_plus_poisson_noise(image=combined_image, 
+                                               exposure_time=exposure_time)
     else:
-        final_image = image
+        final_image = combined_image
     if std_gaussian_noise is not None:
         gaussian_noise = np.random.normal(0, std_gaussian_noise, final_image.shape)
         return final_image + gaussian_noise
