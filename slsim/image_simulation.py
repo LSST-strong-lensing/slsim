@@ -564,8 +564,9 @@ def lens_image(
     )
     combined_image = convolved_deflector_source + image_ps
     if exposure_time is not None:
-        final_image = image_plus_poisson_noise(image=combined_image, 
-                                               exposure_time=exposure_time)
+        final_image = image_plus_poisson_noise(
+            image=combined_image, exposure_time=exposure_time
+        )
     else:
         final_image = combined_image
     if std_gaussian_noise is not None:
