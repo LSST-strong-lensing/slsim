@@ -36,9 +36,9 @@ def test_deflector_number_draw_deflector(compound_lens_halos_galaxies):
     halo_galaxy_pop = compound_lens_halos_galaxies  # Example subset
     num_deflectors = halo_galaxy_pop.deflector_number()
     deflector = halo_galaxy_pop.draw_deflector()
-    assert deflector["z"] != 0
+    assert deflector["z"] > 0
     assert num_deflectors >= 0
-    assert deflector["vel_disp"] != -1
+    assert deflector["vel_disp"] > 0
     assert deflector["e1_light"] != -1
     assert deflector["e2_light"] != -1
     assert deflector["e1_mass"] != -1
