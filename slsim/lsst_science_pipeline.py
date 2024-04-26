@@ -8,7 +8,11 @@ from slsim.image_simulation import (
 )
 from slsim.Util.param_util import transformmatrix_to_pixelscale
 from scipy import interpolate
+from scipy.stats import norm, halfnorm
+import matplotlib.pyplot as plt
 from slsim.image_simulation import point_source_coordinate_properties
+from slsim.Util.param_util import random_ra_dec
+import h5py
 
 try:
     import lsst.geom as geom
@@ -27,10 +31,10 @@ uses some of the packages provided by the LSST Science Pipeline.
 
 
 def DC2_cutout(ra, dec, num_pix, butler, band):
-    """Draws a cutout from the DC2 data based on the given ra, dec pair. For this, one
-    needs to provide a butler to this function. To initiate Butler, you need to specify
-    data configuration and collection of the data.
+    """Draws a cutout from the DC2 data based on the given ra, dec pair.
 
+    For this, one needs to provide a butler to this function. To initiate Butler, you
+    need to specify data configuration and collection of the data.
     :param ra: ra for the cutout
     :param dec: dec for the cutout
     :param num_pix: number of pixel for the cutout
@@ -831,3 +835,270 @@ def multiple_variable_lens_injection(
             )
         )
     return final_images_catalog
+
+
+def measure_noise_level_in_RSP_coadd(RSP_coadd, N_pixels, plot=False):
+    np.random.seed(1)
+    """Function to measure the noise level within a central square aperture of an RSP
+    coadd. The noise level could vary between coadds so this should be measured on a
+    coadd-by-coadd basis. This is done by fitting a half-norm distribution to the
+    negative values in the coadd and then generating a large number of random noise
+    realisations from this distribution. The maximum flux level (i.e. the aperture flux
+    above which the image is said to contain a central source) is then calculated as the
+    2-sigma limit of the sum of the aperture flux in these realisations.
+
+    :param RSP_coadd: .npy array, the RSP coadd image (this should be large to ensure
+        the noise level is accurately measured). This could also be a 3D array of many
+        individual (random) cutouts.
+    :param N_central_pixels: int, size of (square) aperture within which to determine
+        the presence/absence of a central source.
+    :param plot: bool: Whether to plot the gaussian fits to the noise level
+    :return: float, 2-sigma flux level in the aperture above which the image is said to
+        contain a central source.
+    """
+    # Select the negative pixel values from the coadd (positive values are excluded to remove the effect of bright sources):
+    negative_values = -RSP_coadd.flatten()[RSP_coadd.flatten() < 0]
+    # Fitting a half-norm distribution to these pixel values:
+    halfnorm0, halfnorm1 = halfnorm.fit(negative_values)
+    if plot:
+        X_plot = np.linspace(0.2, 0, 100)
+        X_plot_full = np.linspace(-0.2, 0.2, 100)
+        plt.hist(
+            RSP_coadd.flatten(),
+            density=True,
+            bins=np.linspace(-0.2, 0.2, 100),
+            label="Coadd pixel values",
+        )
+        plt.plot(
+            -X_plot,
+            0.5 * halfnorm.pdf(X_plot, halfnorm0, halfnorm1),
+            label="Half Gaussian",
+        )
+        plt.plot(
+            X_plot_full,
+            norm.pdf(X_plot_full, halfnorm0, halfnorm1),
+            label="Full Gaussian",
+        )
+        plt.legend()
+        plt.show()
+    # Generate 1e+4 realisations of the noise level in the central aperture, and find the summed aperture flux in each:
+    rand_norm_array = (
+        norm(halfnorm0, halfnorm1)
+        .rvs(size=(N_pixels, N_pixels, 10000))
+        .sum(axis=0)
+        .sum(axis=0)
+    )
+    # Returns the 2-sigma limit of the aperture fluxes in these realisations:
+    return np.mean(rand_norm_array) + 2 * np.std(rand_norm_array)
+
+
+class retrieve_DP0_coadds_from_Rubin_Science_Platform:
+    """Class to retrieve cutouts of DP0.2 coadds, variance maps, PSF arrays and exposure
+    maps from the Rubin Science Platform.
+
+    Cutouts of size cutout_size are generated, with the number of cutouts per coadd
+    specified by n_im_per_coadd.
+    """
+
+    def __init__(
+        self,
+        butler,
+        cutout_size=201,
+        n_im_per_coadd=10,
+        good_seeing_only=False,
+        ra=None,
+        dec=None,
+    ):
+        """
+        :param butler: butler object
+        :param cutout_size: int, size of the cutout (in pixels) to be generated
+        :param n_im_per_coadd: int, number of cutouts to be generated per coadd
+        :param plot: bool, whether to plot the cutouts
+        :param good_seeing_only: bool, whether to use the goodSeeingCoadd (True) or deepCoadd (False) data products. The goodSeeingCoadd only use the  top one-third best seeing exposures, whereas deepCoadd uses all of them.
+        :param ra (optional): float, RA of the central point of the cutout
+        :param dec (optional): float, Dec of the central point of the cutout
+        """
+        assert (ra is None and dec is None) or (
+            ra is not None and dec is not None
+        )  # Either both ra and dec must be specified or neither.
+        if ra is None or dec is None:
+            ra_dec_list = random_ra_dec(55, 70, -43, -30, 1)  # Retrieve random RA/Dec
+            self.ra = ra_dec_list[0]
+            self.dec = ra_dec_list[1]
+        else:
+            self.ra = ra
+            self.dec = dec
+        self.butler = butler
+        self.skymap = self.butler.get("skyMap")
+        self.cutout_size = cutout_size
+        self.n_im_per_coadd = n_im_per_coadd
+        self.good_seeing_only = good_seeing_only
+
+    def crop_center(self, img, cropx, cropy):
+        """Function to crop to the center of an image to specified size
+        cropy,cropx :param img: 2D numpy array, the image to be cropped :param
+        cropx: int, size of the cropped image in the x-direction :param cropy:
+        int, size of the cropped image in the y-direction :return: 2D numpy
+        array, the cropped image."""
+        y, x = img.shape
+        startx = x // 2 - (cropx // 2)
+        starty = y // 2 - (cropy // 2)
+        return img[starty : starty + cropy, startx : startx + cropx]
+
+    def retrieve_tract_patch(self):
+        """Adapted from DC2_cutout (above) Retrieves the tract & patch information of
+        the coadd image."""
+        self.point = geom.SpherePoint(self.ra, self.dec, geom.degrees)
+        self.cutoutSize = geom.ExtentI(self.cutout_size, self.cutout_size)
+        self.tractInfo = self.skymap.findTract(self.point)
+        patchInfo = self.tractInfo.findPatch(self.point)
+        self.tract = self.tractInfo.tract_id
+        self.patch = patchInfo.getSequentialIndex()
+
+    def retrieve_coadd_files(self):
+        """Adapted from lens_inejection_fast (above) This generates cutouts of the
+        coadd, exposure and variance maps.
+
+        The cutout size is specified by cutout_size during initialisation.
+        :return: 1) Full coadd image, 2) full exposure map image (in units of N.
+            exposures), 3) full variance map image 4) list of cutout bounding boxes, 5)
+            list of cutout centres
+        """
+        coaddId_i = {"tract": self.tract, "patch": self.patch, "band": "i"}
+        if self.good_seeing_only:
+            coadd_i = self.butler.get("goodSeeingCoadd", dataId=coaddId_i)
+            coadd_exp_i = self.butler.get("goodSeeingCoadd_nImage", dataId=coaddId_i)
+        else:
+            coadd_i = self.butler.get("deepCoadd", dataId=coaddId_i)
+            coadd_exp_i = self.butler.get("deepCoadd_nImage", dataId=coaddId_i)
+        coadd_var_i = coadd_i.getVariance()
+        bbox_coadd = coadd_i.getBBox()
+        xmin, ymin = bbox_coadd.getBegin()
+        xmax, ymax = bbox_coadd.getEnd()
+        # Not centering the cutout on pixels close to the edge of the coadd:
+        x_center = np.random.randint(xmin + 150, xmax - 150, self.n_im_per_coadd)
+        y_center = np.random.randint(ymin + 150, ymax - 150, self.n_im_per_coadd)
+        xbox_min = x_center - ((self.cutout_size - 1) / 2)
+        xbox_max = x_center + ((self.cutout_size - 1) / 2)
+        ybox_min = y_center - ((self.cutout_size - 1) / 2)
+        ybox_max = y_center + ((self.cutout_size - 1) / 2)
+        bbox_cutout_list = []
+        cutout_center_list = []
+        for n_cutouts in range(len(x_center)):
+            bbox_cutout_i = geom.Box2I(
+                geom.Point2I(xbox_min[n_cutouts], ybox_min[n_cutouts]),
+                geom.Point2I(xbox_max[n_cutouts], ybox_max[n_cutouts]),
+            )
+            cutout_centre_i = geom.Point2D(
+                0.5 * (xbox_min[n_cutouts] + xbox_max[n_cutouts]),
+                0.5 * (ybox_min[n_cutouts] + ybox_max[n_cutouts]),
+            )
+            bbox_cutout_list.append(bbox_cutout_i)
+            cutout_center_list.append(cutout_centre_i)
+        return coadd_i, coadd_exp_i, coadd_var_i, bbox_cutout_list, cutout_center_list
+
+    def retrieve_arrays(self):
+        """Adapted from cutout_image_psf_kernel (above) This function retrieves the
+        coadd images, exposure maps, PSF arrays and variance maps for the specified
+        position.
+
+        These arrays are cropped to the specified size, with the exception of the PSF
+        array, which is always 57x57.
+        :return: 1) list of cutouts, 2) list of exposure maps, 3) list of PSF arrays, 4)
+            list of variance maps, 5) uncropped coadd image, 6) uncropped variance map
+        """
+        self.retrieve_tract_patch()
+        coadd_im, coadd_exp, var_im, bbox_cutout_list, cutout_center_list = (
+            self.retrieve_coadd_files()
+        )
+        psf = coadd_im.getPsf()
+        bbox = coadd_im.getBBox()
+        xmin, ymin = bbox.getBegin()
+        xmax, ymax = bbox.getEnd()
+        # calibFluxRadius = 12
+        psf_list = []
+        cutout_list = []
+        cutout_exp_list = []
+        cutout_var_list = []
+        # Cropping the arrays to specified size:
+        for n_cutouts in range(len(bbox_cutout_list)):
+            bbox_cutout_i = bbox_cutout_list[n_cutouts]
+            spt_cutout_i = cutout_center_list[n_cutouts]
+            cutout_image = coadd_im[bbox_cutout_i]
+            cutout_exp = coadd_exp[bbox_cutout_i]
+            cutout_var = var_im[bbox_cutout_i]
+            psfArr = psf.computeKernelImage(spt_cutout_i).array
+            if psfArr.shape != (57, 57):
+                psfArr = self.crop_center(psfArr, 57, 57)
+            # Not currently applying an aperture correction to the PSF.
+            # apCorr = psf.computeApertureFlux(calibFluxRadius, spt_cutout_i)
+            # psfArr /= apCorr
+            psf_list.append(psfArr)
+            cutout_list.append(cutout_image.image.array)
+            cutout_exp_list.append(cutout_exp.array)
+            cutout_var_list.append(cutout_var.array)
+        return cutout_list, cutout_exp_list, psf_list, cutout_var_list, coadd_im, var_im
+
+    def save_arrays(self, foldername, prefix):
+        """The generated cutouts are then saved as .h5 files.
+
+        The cutouts are saved as 3D arrays, with the first dimension corresponding to
+        the number of cutouts.
+        :param foldername: str, name of the folder in which to save the files. The
+            folder is generatred if it doesn't exist already.
+        :param prefix: str, prefix for the file names (e.g. 0,1,2,3 if generating sets
+            of cutouts from different coadds)
+        :return: 1) list of cutouts, 2) list of exposure maps, 3) list of PSF arrays, 4)
+            list of variance maps, 5) uncropped coadd image, 6) uncropped variance map
+        """
+        (
+            cutout_list,
+            cutout_exp_list,
+            psf_list,
+            cutout_var_list,
+            full_coadd,
+            full_var,
+        ) = self.retrieve_arrays()
+        cutout_list = np.array(cutout_list)
+        cutout_exp_list = np.array(cutout_exp_list)
+        cutout_var_list = np.array(cutout_var_list)
+        psf_list = np.array(psf_list)
+        # Generates the folder if it does not exist:
+        # if not os.path.isdir(foldername):
+        #     os.mkdir(foldername)
+        with h5py.File(foldername + f"/{prefix}_image_data.h5", "w") as hf:
+            hf.create_dataset(
+                "data",
+                data=cutout_list,
+                compression="gzip",
+                maxshape=(None, cutout_list.shape[1], cutout_list.shape[2]),
+            )
+        with h5py.File(foldername + f"/{prefix}_var_data.h5", "w") as hf:
+            hf.create_dataset(
+                "data",
+                data=cutout_var_list,
+                compression="gzip",
+                maxshape=(None, cutout_var_list.shape[1], cutout_var_list.shape[2]),
+            )
+        with h5py.File(foldername + f"/{prefix}_Nexp_data.h5", "w") as hf:
+            hf.create_dataset(
+                "data",
+                data=cutout_exp_list,
+                compression="gzip",
+                maxshape=(None, cutout_exp_list.shape[1], cutout_exp_list.shape[2]),
+            )
+        with h5py.File(foldername + f"/{prefix}_psf_data.h5", "w") as hf:
+            hf.create_dataset(
+                "data",
+                data=psf_list,
+                compression="gzip",
+                maxshape=(None, psf_list.shape[1], psf_list.shape[2]),
+            )
+        return (
+            cutout_list,
+            cutout_exp_list,
+            psf_list,
+            cutout_var_list,
+            full_coadd.image.array,
+            full_var.array,
+        )

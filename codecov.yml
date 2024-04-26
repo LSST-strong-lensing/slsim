@@ -1,3 +1,5 @@
+codecov: 
+ token: b297bdac-173f-4244-8986-433e435fee61
 comment:                  # this is a top-level key
   layout: " diff, flags, files"
   behavior: default

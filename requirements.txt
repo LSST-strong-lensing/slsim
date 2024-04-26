@@ -1,8 +1,9 @@
 skypy
-lenstronomy>=1.11.2
+lenstronomy>=1.11.9
 astropy>=5.2
 numpy
 scipy
 speclite
 pyyaml
 matplotlib
+sncosmo
