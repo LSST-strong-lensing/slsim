@@ -20,6 +20,7 @@ class TestNFWHernquist(object):
     def setup_method(self):
         self.deflector_dict = {
             "halo_mass": 10**13,
+            "halo_mass_acc": 0.0,
             "concentration": 10,
             "e1_mass": 0.1,
             "e2_mass": -0.1,
