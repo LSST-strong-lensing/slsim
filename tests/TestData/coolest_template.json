@@ -1,0 +1,460 @@
+{
+  "coordinates_origin": {
+    "dec": "+00d00m00s",
+    "ra": "00h00m00s"
+  },
+  "cosmology": {
+    "H0": 70.0,
+    "Om0": 0.3,
+    "astropy_name": "FlatLambdaCDM"
+  },
+  "instrument": {
+    "band": "F160W",
+    "name": "some instrument",
+    "pixel_size": 0.08,
+    "psf": {
+      "description": null,
+      "pixels": {
+        "field_of_view_x": [
+          0,
+          0
+        ],
+        "field_of_view_y": [
+          0,
+          0
+        ],
+        "fits_file": {
+          "path": "test_image.fits"
+        },
+        "num_pix_x": 100,
+        "num_pix_y": 100
+      },
+      "type": "PixelatedPSF"
+    },
+    "readout_noise": 4
+  },
+  "lensing_entities": [
+    {
+      "light_model": [
+        {
+          "id": "0-galaxy-light-0-Sersic",
+          "parameters": {
+            "I_eff": {
+              "id": "0-galaxy-light-0-Sersic-I_eff",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "center_x": {
+              "id": "0-galaxy-light-0-Sersic-center_x",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "center_y": {
+              "id": "0-galaxy-light-0-Sersic-center_y",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "n": {
+              "id": "0-galaxy-light-0-Sersic-n",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "phi": {
+              "id": "0-galaxy-light-0-Sersic-phi",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "q": {
+              "id": "0-galaxy-light-0-Sersic-q",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "theta_eff": {
+              "id": "0-galaxy-light-0-Sersic-theta_eff",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            }
+          },
+          "type": "Sersic"
+        }
+      ],
+      "mass_model": [
+        {
+          "id": "0-galaxy-mass-0-PEMD",
+          "parameters": {
+            "center_x": {
+              "id": "0-galaxy-mass-0-PEMD-center_x",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "center_y": {
+              "id": "0-galaxy-mass-0-PEMD-center_y",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "gamma": {
+              "id": "0-galaxy-mass-0-PEMD-gamma",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "phi": {
+              "id": "0-galaxy-mass-0-PEMD-phi",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "q": {
+              "id": "0-galaxy-mass-0-PEMD-q",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "theta_E": {
+              "id": "0-galaxy-mass-0-PEMD-theta_E",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            }
+          },
+          "type": "PEMD"
+        }
+      ],
+      "name": "a lens galaxy",
+      "redshift": 0.5,
+      "type": "Galaxy"
+    },
+    {
+      "mass_model": [
+        {
+          "id": "1-massfield-mass-0-ExternalShear",
+          "parameters": {
+            "gamma_ext": {
+              "id": "1-massfield-mass-0-ExternalShear-gamma_ext",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "phi_ext": {
+              "id": "1-massfield-mass-0-ExternalShear-phi_ext",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            }
+          },
+          "type": "ExternalShear"
+        }
+      ],
+      "name": "external shear",
+      "redshift": 0.5,
+      "type": "MassField"
+    },
+    {
+      "mass_model": [
+        {
+          "id": "2-massfield-mass-0-ConvergenceSheet",
+          "parameters": {
+            "kappa_s": {
+              "id": "2-massfield-mass-0-ConvergenceSheet-kappa_s",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            }
+          },
+          "type": "ConvergenceSheet"
+        }
+      ],
+      "name": "convergence sheet",
+      "redshift": 0.5,
+      "type": "MassField"
+    },
+    {
+      "light_model": [
+        {
+          "id": "3-galaxy-light-0-Sersic",
+          "parameters": {
+            "I_eff": {
+              "id": "3-galaxy-light-0-Sersic-I_eff",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "center_x": {
+              "id": "3-galaxy-light-0-Sersic-center_x",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "center_y": {
+              "id": "3-galaxy-light-0-Sersic-center_y",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "n": {
+              "id": "3-galaxy-light-0-Sersic-n",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "phi": {
+              "id": "3-galaxy-light-0-Sersic-phi",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "q": {
+              "id": "3-galaxy-light-0-Sersic-q",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "theta_eff": {
+              "id": "3-galaxy-light-0-Sersic-theta_eff",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            }
+          },
+          "type": "Sersic"
+        },
+        {
+          "id": "3-galaxy-light-1-Sersic",
+          "parameters": {
+            "I_eff": {
+              "id": "3-galaxy-light-1-Sersic-I_eff",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "center_x": {
+              "id": "3-galaxy-light-1-Sersic-center_x",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "center_y": {
+              "id": "3-galaxy-light-1-Sersic-center_y",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "n": {
+              "id": "3-galaxy-light-1-Sersic-n",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "phi": {
+              "id": "3-galaxy-light-1-Sersic-phi",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "q": {
+              "id": "3-galaxy-light-1-Sersic-q",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "theta_eff": {
+              "id": "3-galaxy-light-1-Sersic-theta_eff",
+              "point_estimate": {
+                "value": null
+              },
+              "prior": {
+                "type": null
+              }
+            }
+          },
+          "type": "Sersic"
+        }
+      ],
+      "mass_model": [],
+      "name": "a source galaxy",
+      "redshift": 2.0,
+      "type": "Galaxy"
+    },
+    {
+      "light_model": [
+        {
+          "id": "4-galaxy-light-0-LensedPS",
+          "parameters": {
+            "amps": {
+              "id": "4-galaxy-light-0-LensedPS-amps",
+              "num_values": 0,
+              "point_estimate": {
+                "value": []
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "dec_list": {
+              "id": "4-galaxy-light-0-LensedPS-dec_list",
+              "num_values": 0,
+              "point_estimate": {
+                "value": []
+              },
+              "prior": {
+                "type": null
+              }
+            },
+            "ra_list": {
+              "id": "4-galaxy-light-0-LensedPS-ra_list",
+              "num_values": 0,
+              "point_estimate": {
+                "value": []
+              },
+              "prior": {
+                "type": null
+              }
+            }
+          },
+          "type": "LensedPS"
+        }
+      ],
+      "mass_model": [],
+      "name": "a point source",
+      "redshift": 2.0,
+      "type": "Galaxy"
+    }
+  ],
+  "meta": {},
+  "mode": "MOCK",
+  "observation": {
+    "exposure_time": null,
+    "mag_sky_brightness": null,
+    "mag_zero_point": 27,
+    "noise": {
+      "noise_map": {
+        "field_of_view_x": [
+          0,
+          0
+        ],
+        "field_of_view_y": [
+          0,
+          0
+        ],
+        "fits_file": {
+          "path": "test_image.fits"
+        },
+        "num_pix_x": 100,
+        "num_pix_y": 100
+      },
+      "type": "NoiseMap"
+    },
+    "pixels": {
+      "field_of_view_x": [
+        0,
+        0
+      ],
+      "field_of_view_y": [
+        0,
+        0
+      ],
+      "fits_file": {
+        "path": "test_image.fits"
+      },
+      "num_pix_x": 100,
+      "num_pix_y": 100
+    }
+  },
+  "standard": "COOLEST"
+}
