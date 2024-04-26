@@ -32,7 +32,7 @@ from slsim.Util.astro_util import (
 
 
 def test_spin_to_isco():
-    # Check all special cases of
+    # Check all special cases of:
     # spin = 0, the Schwarzschild black hole
     # spin = 1, maximum prograde Kerr black hole
     # spin = -1, maximum retrograde Kerr black hole
