@@ -107,8 +107,11 @@ def dNhalodzdlnM_lens(M, z, cosmo_col):
 
 
 def concent_m_w_scatter(m, z, sig):
-    """Concentration parameter of halos in B. Diemer and A. V. Kravtsov, 2015
+    """Concentration parameter of halos in B. Diemer and A. V. Kravtsov, 2015 
+    with updated parameters of  Diemer & Joyce 2019
     arXiv:1407.4730 [astro-ph.CO].
+    arXiv:1809.07326 [astro-ph.CO].
+
 
     Parameters
     -----------------------------------------------------------------------------------------------
