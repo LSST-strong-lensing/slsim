@@ -124,6 +124,6 @@ def concent_m_w_scatter(m, z, sig):
     con_halo: ndarray
         concentration parameter of halos
     """
-    con = concentration.concentration(m, "vir", z, model="diemer15")
+    con = concentration.concentration(m, "vir", z, model="diemer19")
     sca = np.random.lognormal(0.0, sig, len(m))
     return con * sca
