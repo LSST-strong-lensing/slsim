@@ -93,7 +93,7 @@ class SLHammocksPipeline:
                 "frac_SM_IMF": 1.715,
                 "TYPE_SMHM": "true",
                 "sigma8": 0.8102,
-                "ns": 0.9660499
+                "ns": 0.9660499,
             }
 
             table = halo_galaxy_population(sky_area, cosmo, **kwargs_population_base)
@@ -258,7 +258,7 @@ def halo_galaxy_population(
     paramc, params = galaxy_population.gals_init(TYPE_SMHM)
     sig_c = sigma_host_halo_concentration
     sig_mcen = sigma_central_galaxy_mass
-    cosmo_col = cosmology.fromAstropy(cosmo, sigma8, ns, cosmo_name = 'my_cosmo')
+    cosmo_col = cosmology.fromAstropy(cosmo, sigma8, ns, cosmo_name="my_cosmo")
 
     for z in zz:
         zz2 = np.full(len(MMh), z)
