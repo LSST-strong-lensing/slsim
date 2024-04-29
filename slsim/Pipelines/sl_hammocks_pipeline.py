@@ -75,6 +75,11 @@ class SLHammocksPipeline:
             :param TYPE_SMHM: Type of fitting function for the stellar-mass-halo-mass relation for quiescent galaxies, see Behroozi et al. 2019 for detail
                             (Currently three options ['true', 'obs', 'true_all'])
             :type TYPE_SMHM: str
+            :param sigma8: The normalization of the power spectrum, i.e. the variance when the field is filtered with a top hat filter of radius 8 Mpc/h.
+                            This parameter is required to convert from astropy.cosmology to colossus.cosmology
+            :type sigma8: float
+            :param ns: The tilt of the primordial power spectrum. This parameter is required to convert from astropy.cosmology to colossus.cosmology
+            :type ns: float
             """
             kwargs_population_base = {
                 "z_min": 0.01,
@@ -87,6 +92,8 @@ class SLHammocksPipeline:
                 "sig_tb": 0.46,
                 "frac_SM_IMF": 1.715,
                 "TYPE_SMHM": "true",
+                "sigma8": 0.8102,
+                "ns": 0.9660499
             }
 
             table = halo_galaxy_population(sky_area, cosmo, **kwargs_population_base)
@@ -189,6 +196,8 @@ def halo_galaxy_population(
     sig_tb,
     TYPE_GAL_SIZE,
     frac_SM_IMF,
+    sigma8,
+    ns,
     TYPE_SMHM,
     **kwargs
 ):
@@ -226,6 +235,11 @@ def halo_galaxy_population(
     :param TYPE_SMHM: Type of fitting function for the stellar-mass-halo-mass relation for quiescent galaxies, see Behroozi et al. 2019 for detail
                     (Currently three options ['true', 'obs', 'true_all'])
     :type TYPE_SMHM: str
+    :param sigma8: The normalization of the power spectrum, i.e. the variance when the field is filtered with a top hat filter of radius 8 Mpc/h.
+                            This parameter is required to convert from astropy.cosmology to colossus.cosmology
+    :type sigma8: float
+    :param ns: The tilt of the primordial power spectrum. This parameter is required to convert from astropy.cosmology to colossus.cosmology
+    :type ns: float
     :param kwargs: keyword arguments
     :type kwargs: dict
     """
@@ -244,12 +258,7 @@ def halo_galaxy_population(
     paramc, params = galaxy_population.gals_init(TYPE_SMHM)
     sig_c = sigma_host_halo_concentration
     sig_mcen = sigma_central_galaxy_mass
-    cosmo_col = cosmology.setCosmology(
-        "myCosmo",
-        params=cosmology.cosmologies["planck18"],
-        Om0=cosmo.Om0,
-        H0=cosmo.H0.value,
-    )
+    cosmo_col = cosmology.fromAstropy(cosmo, sigma8, ns, cosmo_name = 'my_cosmo')
 
     for z in zz:
         zz2 = np.full(len(MMh), z)
