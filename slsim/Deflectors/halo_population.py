@@ -127,6 +127,6 @@ def concent_m_w_scatter(m, z, sig):
     """
     con_mean = concentration.concentration(m, "vir", z, model="diemer19")
     sca = np.random.lognormal(0.0, sig, len(m))
-    con = con_mean*sca
-    con[con<1.0] = 1.0 #TODO check
+    con = con_mean * sca
+    con[con < 1.0] = 1.0  # TODO check
     return con
