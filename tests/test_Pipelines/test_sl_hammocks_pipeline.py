@@ -1,5 +1,5 @@
 ﻿from slsim.Pipelines.sl_hammocks_pipeline import SLHammocksPipeline
-from astropy.cosmology import LambdaCDM,w0waCDM
+from astropy.cosmology import LambdaCDM, w0waCDM
 import pytest
 
 
