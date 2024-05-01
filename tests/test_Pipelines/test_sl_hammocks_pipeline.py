@@ -3,15 +3,18 @@ from astropy.cosmology import LambdaCDM, w0waCDM
 import pytest
 
 
+
 class TestSkyPyPipeline(object):
     def setup_method(self):
         from astropy.units import Quantity
+        import os
 
         self.sky_area = Quantity(value=0.001, unit="deg2")
         self.cosmo = LambdaCDM(H0=70, Om0=0.3, Ob0=0.05, Ode0=0.7, Tcmb0=2.725)
-        slhammocks_config = "../../data/SL-Hammocks/gal_pop_Salpeter_10deg2_zl2.csv"
+        current_dir = os.path.dirname(__file__)
+        self.slhammocks_config = os.path.join(current_dir, '../../data/SL-Hammocks', 'pop_salp_a0001_zl001_to_5_wo_sub.csv')
         self.pipeline = SLHammocksPipeline(
-            slhammocks_config=slhammocks_config,
+            slhammocks_config=self.slhammocks_config,
             sky_area=self.sky_area,
             cosmo=self.cosmo,
         )
@@ -44,12 +47,10 @@ class TestSkyPyPipeline(object):
 
     def test_setting_too_wide_sky_area(self):
         from astropy.units import Quantity
-
-        slhammocks_config = "../../data/SL-Hammocks/gal_pop_Salpeter_10deg2_zl2.csv"
         large_sky_area = Quantity(value=1000, unit="deg2")
         with pytest.raises(Exception) as excinfo:
             SLHammocksPipeline(
-                slhammocks_config=slhammocks_config,
+                slhammocks_config=self.slhammocks_config,
                 sky_area=large_sky_area,
                 cosmo=self.cosmo,
             )
