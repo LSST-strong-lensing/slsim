@@ -46,6 +46,7 @@ class TestNFWHernquist(object):
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         vel_disp = self.nfw_hernquist.velocity_dispersion(cosmo=cosmo)
         npt.assert_almost_equal(vel_disp, 176, decimal=-1)
+        assert self.nfw_hernquist.velocity_dispersion(cosmo=cosmo)== vel_disp
 
     def test_light_model_lenstronomy(self):
         lens_light_model_list, kwargs_lens_light = (

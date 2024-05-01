@@ -31,16 +31,7 @@ class SLHammocksPipeline:
 
             data_area = 0.001  # deg2
             if sky_area.value > data_area:
-                print(
-                    "Now sky_area should be lower than",
-                    data_area,
-                    ". Now we set sky_area_for_lens=",
-                    data_area,
-                )
-                print(
-                    "Please check https://github.com/LSST-strong-lensing/data_public for the full data file"
-                )
-                thinp = 1
+                raise ValueError("Now sky_area should be lower than the sky_area size of prepared data file")
             else:
                 thinp = int((data_area / sky_area).value)
 
@@ -137,6 +128,10 @@ def table_translator_for_slsim(table, cosmo):
             This parameter relates to the commonly used galaxy effective (half-mass) radius by t_b = 0.551*theta_eff.
         - 'angular_size': galaxy effective radius in units of radian
     """
+    sigma8 = 0.8102
+    ns = 0.9660499
+    cosmo_col = cosmology.fromAstropy(cosmo, sigma8, ns, cosmo_name="my_cosmo")
+
     if "z" not in table.colnames:
         table.rename_column("zl", "z")
     if "concentration" not in table.colnames:
@@ -164,7 +159,7 @@ def table_translator_for_slsim(table, cosmo):
     M200_array = np.array(M200_array)
     c200_array = np.array(c200_array)
 
-    hubble = cosmo.H0.value / 100.0
+    hubble = cosmo_col.H0 / 100.0
     table["halo_mass"] = (
         M200_array / hubble
     )  # convert to Mvir [M_sol/h] to physical M200c [M_sol]

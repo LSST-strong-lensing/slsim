@@ -50,6 +50,8 @@ def galaxy_size(
     # Check that the model exists
     if model not in models.keys():
         raise Exception("Unknown model, %s." % (model))
+    if not isinstance(mh, (float,np.ndarray, list)):
+        raise ValueError("type(mh) should be float, ndarray or list.")
 
     model_props = models[model]
 
@@ -70,7 +72,7 @@ def galaxy_size(
     elif q_out == "rb":
         gal_size = rb
     else:
-        raise Exception("Unknown model, %s." % (q_out))
+        raise Exception("Unknown output, %s." % (q_out))
 
     if scatter:
         args = ()
@@ -87,12 +89,11 @@ def galaxy_size(
             scat = model_props.func_scat(*args)
             #             gal_size = gal_size*np.random.lognormal(0.0, sig_tb)
             gal_size = gal_size * scat[0]
-        elif isinstance(mh, (np.ndarray, list)):
+        else:
             args += (len(mh),)
             scat = model_props.func_scat(*args)
             gal_size = gal_size * scat
-        else:
-            raise ValueError("type(mh) should be float, ndarray or list.")
+
 
     return gal_size
 
@@ -272,11 +273,6 @@ def set_gals_param(pol_halo):
     elip_gal = gene_e(n)
     polar_gal = gene_ang_gal(pol_halo)
     return elip_gal, polar_gal
-
-
-def set_param_smhm(data):
-    p_smhm = {"ep0": data[0], "epa": data[1], "eplna": data[2], "epz": data[3]}
-    return p_smhm
 
 
 def gals_init(TYPE_SMHM="true"):
