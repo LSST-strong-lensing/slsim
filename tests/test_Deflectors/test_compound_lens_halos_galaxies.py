@@ -17,7 +17,7 @@ def galaxy_list(sky_area, cosmo):
 @pytest.fixture
 def compound_lens_halos_galaxies():
     sky_area = Quantity(value=0.05, unit="deg2")
-    cosmo = FlatLambdaCDM(H0=70, Om0=0.3, Ob0 = 0.05, Tcmb0 = 2.725)
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3, Ob0=0.05, Tcmb0=2.725)
     halos_galaxies = galaxy_list(sky_area, cosmo)
     kwargs_deflector_cut = {}
     kwargs_mass2light = {}
