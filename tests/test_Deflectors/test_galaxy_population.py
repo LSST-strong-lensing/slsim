@@ -57,14 +57,12 @@ def test_galaxy_size():
         excinfo.value
     ), "An exception with 'Unknown model' message should be raised for unknown models."
 
-
     # test_galaxy_size_unknown_model
     with pytest.raises(Exception) as excinfo:
-        galaxy_size(1e12, 1e11, 0.3, cosmo, q_out = "unknown_output")
+        galaxy_size(1e12, 1e11, 0.3, cosmo, q_out="unknown_output")
     assert "Unknown output" in str(
         excinfo.value
     ), "An exception with 'Unknown model' message should be raised for unknown output"
-
 
     # test_mh_is_not_float/list/nd.array_case
     with pytest.raises(Exception) as excinfo:
@@ -97,12 +95,13 @@ def test_modelscLognormal():
     lnsig = 0.1
     n = 1
     random = modelscLognormal(lnsig, n)
-    assert 0<random<np.exp(lnsig*5)
+    assert 0 < random < np.exp(lnsig * 5)
+
 
 def test_stellarmass_halomass():
     mh_ar = np.logspace(10, 16, 100)  # in units of M_sol/h
     z = 0.5
-    #TYPE_SMHM="true"
+    # TYPE_SMHM="true"
     paramc, params = gals_init()
     stellar_masses = stellarmass_halomass(mh_ar, z, paramc)  # in units of M_sol/h
     ratio_SMHM = stellar_masses / mh_ar
@@ -115,7 +114,7 @@ def test_stellarmass_halomass():
         0 <= r <= 0.1 for r in ratio_SMHM
     ), "The SMHM conversion rate should be at most 10%"
 
-    #TYPE_SMHM="obs"
+    # TYPE_SMHM="obs"
     paramc, params = gals_init(TYPE_SMHM="obs")
     stellar_masses = stellarmass_halomass(mh_ar, z, paramc)  # in units of M_sol/h
     ratio_SMHM = stellar_masses / mh_ar
@@ -128,7 +127,7 @@ def test_stellarmass_halomass():
         0 <= r <= 0.1 for r in ratio_SMHM
     ), "The SMHM conversion rate should be at most 10%"
 
-    #TYPE_SMHM="true_all"
+    # TYPE_SMHM="true_all"
     paramc, params = gals_init(TYPE_SMHM="true_all")
     stellar_masses = stellarmass_halomass(mh_ar, z, paramc)  # in units of M_sol/h
     ratio_SMHM = stellar_masses / mh_ar

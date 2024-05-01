@@ -50,7 +50,7 @@ def galaxy_size(
     # Check that the model exists
     if model not in models.keys():
         raise Exception("Unknown model, %s." % (model))
-    if not isinstance(mh, (float,np.ndarray, list)):
+    if not isinstance(mh, (float, np.ndarray, list)):
         raise ValueError("type(mh) should be float, ndarray or list.")
 
     model_props = models[model]
@@ -93,7 +93,6 @@ def galaxy_size(
             args += (len(mh),)
             scat = model_props.func_scat(*args)
             gal_size = gal_size * scat
-
 
     return gal_size
 

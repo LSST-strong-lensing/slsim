@@ -31,7 +31,9 @@ class SLHammocksPipeline:
 
             data_area = 0.001  # deg2
             if sky_area.value > data_area:
-                raise ValueError("Now sky_area should be lower than the sky_area size of prepared data file")
+                raise ValueError(
+                    "Now sky_area should be lower than the sky_area size of prepared data file"
+                )
             else:
                 thinp = int((data_area / sky_area).value)
 

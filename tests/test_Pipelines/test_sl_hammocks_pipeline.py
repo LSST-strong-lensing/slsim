@@ -2,6 +2,7 @@
 from astropy.cosmology import LambdaCDM
 import pytest
 
+
 class TestSkyPyPipeline(object):
     def setup_method(self):
         from astropy.units import Quantity
@@ -9,7 +10,11 @@ class TestSkyPyPipeline(object):
         self.sky_area = Quantity(value=0.001, unit="deg2")
         self.cosmo = LambdaCDM(H0=70, Om0=0.3, Ob0=0.05, Ode0=0.7, Tcmb0=2.725)
         slhammocks_config = "../../data/SL-Hammocks/gal_pop_Salpeter_10deg2_zl2.csv"
-        self.pipeline = SLHammocksPipeline(slhammocks_config=slhammocks_config,sky_area=self.sky_area, cosmo=self.cosmo)
+        self.pipeline = SLHammocksPipeline(
+            slhammocks_config=slhammocks_config,
+            sky_area=self.sky_area,
+            cosmo=self.cosmo,
+        )
 
     def test_cosmology_initialization(self):
 
@@ -39,15 +44,19 @@ class TestSkyPyPipeline(object):
 
     def test_setting_too_wide_sky_area(self):
         from astropy.units import Quantity
+
         slhammocks_config = "../../data/SL-Hammocks/gal_pop_Salpeter_10deg2_zl2.csv"
         large_sky_area = Quantity(value=1000, unit="deg2")
         with pytest.raises(Exception) as excinfo:
-            SLHammocksPipeline(slhammocks_config=slhammocks_config,sky_area=large_sky_area, cosmo=self.cosmo)
+            SLHammocksPipeline(
+                slhammocks_config=slhammocks_config,
+                sky_area=large_sky_area,
+                cosmo=self.cosmo,
+            )
         # Check the output
         assert "Now sky_area should be lower than" in str(
-        excinfo.value
+            excinfo.value
         ), "An exception with sky_area' message should be raised for too large sky_area"
-
 
     def test_ellip_from_axis_ratio2epsilon(self):
         # Translates ellipticity definitions from.
