@@ -147,6 +147,8 @@ def table_translator_for_slsim(table, cosmo):
         table.rename_column("m_h", "halo_mass")
     if "halo_mass_acc" not in table.colnames:
         table.rename_column("m_acc", "halo_mass_acc")
+    if "ellipticity" not in table.colnames:
+        table.rename_column("e_g", "ellipticity")
     if "angular_size" not in table.colnames:
         angular_size_in_deg = table["tb"] / 0.551 * constants.arcsec
         table.add_column(angular_size_in_deg, name="angular_size")
@@ -177,8 +179,8 @@ def table_translator_for_slsim(table, cosmo):
     table["e_h"] = ellip_from_axis_ratio2epsilon(
         table["e_h"]
     )  # convert from 1-q to (1-q^2)/(1+q^2)
-    table["e_g"] = ellip_from_axis_ratio2epsilon(
-        table["e_g"]
+    table["ellipticity"] = ellip_from_axis_ratio2epsilon(
+        table["ellipticity"]
     )  # convert from 1-q to (1-q^2)/(1+q^2)
 
     return table
@@ -319,7 +321,7 @@ def halo_galaxy_population(
         "p_h",
         "concentration",
         "stellar_mass",
-        "e_g",
+        "ellipticity",
         "p_g",
         "tb",
     ]

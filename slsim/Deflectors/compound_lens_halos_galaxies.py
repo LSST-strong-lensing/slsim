@@ -2,9 +2,9 @@ import numpy as np
 import numpy.random as random
 from slsim.selection import deflector_cut
 from slsim.Deflectors.velocity_dispersion import vel_disp_composite_model
-from slsim.Util import param_util
 from slsim.Deflectors.deflectors_base import DeflectorsBase
 from lenstronomy.Util import constants
+from slsim.Deflectors.elliptical_lens_galaxies import elliptical_projected_eccentricity
 
 
 class CompoundLensHalosGalaxies(DeflectorsBase):
@@ -115,32 +115,10 @@ class CompoundLensHalosGalaxies(DeflectorsBase):
         #     )  # TODO: make function if needed
         if deflector["e1_light"] == -1 or deflector["e2_light"] == -1:
             e1_light, e2_light, e1_mass, e2_mass = (
-                elliptical_projected_eccentricity_galaxy(**deflector)
+                elliptical_projected_eccentricity(**deflector)
             )  # TODO: check
             deflector["e1_light"] = e1_light
             deflector["e2_light"] = e2_light
             deflector["e1_mass"] = e1_mass
             deflector["e2_mass"] = e2_mass
         return deflector
-
-
-def elliptical_projected_eccentricity_galaxy(e_g, **kwargs):
-    """Projected eccentricity of elliptical galaxies as a function of other deflector
-    parameters.
-
-    :param e_g: eccentricity amplitude of galaxy
-    :type e_g: float [0,1)
-    :param kwargs: deflector properties
-    :type kwargs: dict
-    :return: e1_light, e2_light,e1_mass, e2_mass eccentricity components
-    """
-    ellipticity = e_g
-    e_light = param_util.epsilon2e(ellipticity)
-    phi_light = np.random.uniform(0, np.pi)
-    e1_light = e_light * np.cos(phi_light)
-    e2_light = e_light * np.sin(phi_light)
-    e_mass = 0.5 * ellipticity + np.random.normal(loc=0, scale=0.1)
-    phi_mass = phi_light + np.random.normal(loc=0, scale=0.1)
-    e1_mass = e_mass * np.cos(phi_mass)
-    e2_mass = e_mass * np.sin(phi_mass)
-    return e1_light, e2_light, e1_mass, e2_mass
