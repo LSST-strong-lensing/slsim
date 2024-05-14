@@ -37,6 +37,31 @@ class EPLSersic(DeflectorBase):
         )
         return e1_light, e2_light
 
+    def mass_model_lenstronomy(self, lens_cosmo):
+        """Returns lens model instance and parameters in lenstronomy conventions.
+
+        :param lens_cosmo: lens cosmology model
+        :type lens_cosmo: LensCosmo class
+        :return: lens_mass_model_list, kwargs_lens_mass
+        """
+        lens_mass_model_list = ["EPL"]
+        if lens_cosmo.z_lens >= lens_cosmo.z_source:
+            theta_E = 0.
+        else:
+            theta_E = lens_cosmo.sis_sigma_v2theta_E(self.velocity_dispersion(cosmo=lens_cosmo.background.cosmo))
+        e1_mass, e2_mass = self.mass_ellipticity()
+        kwargs_lens_mass = [
+            {
+                "theta_E": theta_E,
+                "gamma": 2,
+                "e1": e1_mass,
+                "e2": e2_mass,
+                "center_x": self.deflector_center[0],
+                "center_y": self.deflector_center[1],
+            }
+        ]
+        return lens_mass_model_list, kwargs_lens_mass
+
     def light_model_lenstronomy(self, band=None):
         """Returns lens model instance and parameters in lenstronomy conventions.
 
