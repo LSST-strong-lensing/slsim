@@ -104,38 +104,6 @@ def vel_disp_nfw_3d(r, m_halo, c_halo, cosmo, z_lens):
     return np.sqrt(vel_disp2)
 
 
-def vel_disp_nfw_los(r, m_halo, c_halo, cosmo, z_lens):
-    """Computes the line-of-sight (LOS) velocity dispersion at r for a deflector with a
-    NFW halo profile, assuming isotropic anisotropy (beta = 0).
-
-    Based on equation (44) of Lokas & Mamon 2001 (https://arxiv.org/abs/astro-ph/0002395)
-
-    :param r: radius of the LOS velocity dispersion [arcsec]
-    :param m_halo: Halo mass [physical M_sun]
-    :param c_halo: halo concentration
-    :param cosmo: cosmology
-    :type cosmo: ~astropy.cosmology class
-    :param z_lens: redshift of the deflector
-    :return: velocity dispersion [km/s]
-    """
-
-    from lenstronomy.Cosmo.lens_cosmo import LensCosmo
-    from lenstronomy.LensModel.Profiles.nfw import NFW
-
-    lens_cosmo = LensCosmo(z_lens=z_lens, z_source=10, cosmo=cosmo)
-    rs, alpha_rs = lens_cosmo.nfw_physical2angle(m_halo, c_halo)
-    rmax = 1e3 * rs
-    nfw = NFW()
-    rho0 = nfw.alpha2rho0(alpha_rs, rs)
-    dens_2d_r = nfw.density_2d(r, 0, rs, rho0)
-    int1 = _log_integrate(
-        lambda r_: vel_disp_nfw_3d(r_, m_halo, c_halo, cosmo, z_lens) ** 2 * nfw.density(r_, rs, rho0) * r_ / np.sqrt(
-            r_ ** 2 - r ** 2),
-        r, rmax, n_grid=100)
-    vel_disp2 = 2 * int1 / dens_2d_r
-    return np.sqrt(vel_disp2)
-
-
 def vel_disp_nfw_aperture(r, m_halo, c_halo, cosmo, z_lens):
     """Computes the average line-of-sight velocity dispersion in an aperture r for a deflector with a
     NFW halo profile, assuming isotropic anisotropy (beta = 0).
@@ -152,6 +120,20 @@ def vel_disp_nfw_aperture(r, m_halo, c_halo, cosmo, z_lens):
     """
     from lenstronomy.Cosmo.lens_cosmo import LensCosmo
     from lenstronomy.LensModel.Profiles.nfw import NFW
+
+    def _log_integrate(func, xmin, xmax, n_grid=200):
+        min_log = np.log(xmin)
+        max_log = np.log(xmax)
+        dlogx = (max_log - min_log) / (n_grid - 1)
+        x = np.logspace(
+            min_log + dlogx / 2.0,
+            max_log + dlogx / 2.0,
+            n_grid,
+            base=np.e,
+        )
+        dlog_x = np.log(x[2]) - np.log(x[1])
+        y = func(x)
+        return np.sum(y * dlog_x * x)
 
     lens_cosmo = LensCosmo(z_lens=z_lens, z_source=10, cosmo=cosmo)
 
@@ -473,18 +455,3 @@ def schechter_velocity_dispersion_function(
     samples = samples ** (1 / beta) * vd_star
 
     return samples
-
-
-def _log_integrate(func, xmin, xmax, n_grid=200):
-    min_log = np.log(xmin)
-    max_log = np.log(xmax)
-    dlogx = (max_log - min_log) / (n_grid - 1)
-    x = np.logspace(
-        min_log + dlogx / 2.0,
-        max_log + dlogx / 2.0,
-        n_grid,
-        base=np.e,
-    )
-    dlog_x = np.log(x[2]) - np.log(x[1])
-    y = func(x)
-    return np.sum(y * dlog_x * x)
