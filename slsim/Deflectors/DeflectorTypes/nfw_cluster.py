@@ -4,7 +4,7 @@ from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 
 
 class NFWCluster(DeflectorBase):
-    """Class of a NFW halo lens model with subhaloes.
+    """Class of a NFW halo lens model with subhalos.
     Each subhalo is a Deflector instance with its own mass and light.
 
     required quantities in dictionary:
@@ -15,9 +15,9 @@ class NFWCluster(DeflectorBase):
     - 'z': redshift of deflector
     """
 
-    def __init__(self, deflector_dict, subhaloes_list):
+    def __init__(self, deflector_dict, subhalos_list):
         super(NFWCluster, self).__init__(deflector_dict)
-        self._subhaloes = subhaloes_list
+        self._subhalos = subhalos_list
 
     def velocity_dispersion(self, cosmo=None):
         """Velocity dispersion of deflector. Simplified assumptions on anisotropy and
@@ -49,7 +49,7 @@ class NFWCluster(DeflectorBase):
         :return: lens_light_model_list, kwargs_lens_light
         """
         lens_light_model_list, kwargs_lens_light = [], []
-        for subhalo in self._subhaloes:
+        for subhalo in self._subhalos:
             lens_light_model_list_i, kwargs_lens_light_i = subhalo.light_model_lenstronomy(band=band)
             lens_light_model_list += lens_light_model_list_i
             kwargs_lens_light += kwargs_lens_light_i
