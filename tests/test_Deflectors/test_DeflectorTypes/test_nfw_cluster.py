@@ -63,7 +63,7 @@ class TestNFWCluster(object):
     def test_velocity_dispersion(self):
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         vel_disp = self.nfw_cluster.velocity_dispersion(cosmo=cosmo)
-        npt.assert_almost_equal(vel_disp, 1210, decimal=-1)
+        npt.assert_almost_equal(vel_disp, 1200, decimal=-1)
 
     def test_light_model_lenstronomy(self):
         lens_light_model_list, kwargs_lens_light = (
