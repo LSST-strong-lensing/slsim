@@ -4,8 +4,8 @@ from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 
 
 class NFWCluster(DeflectorBase):
-    """Class of a NFW halo lens model with subhalos.
-    Each subhalo is a Deflector instance with its own mass and light.
+    """Class of a NFW halo lens model with subhalos. Each subhalo is a Deflector
+    instance with its own mass and light.
 
     required quantities in dictionary:
     - 'halo_mass': halo mass in physical M_sol
@@ -50,7 +50,9 @@ class NFWCluster(DeflectorBase):
         """
         lens_light_model_list, kwargs_lens_light = [], []
         for subhalo in self._subhalos:
-            lens_light_model_list_i, kwargs_lens_light_i = subhalo.light_model_lenstronomy(band=band)
+            lens_light_model_list_i, kwargs_lens_light_i = (
+                subhalo.light_model_lenstronomy(band=band)
+            )
             lens_light_model_list += lens_light_model_list_i
             kwargs_lens_light += kwargs_lens_light_i
         return lens_light_model_list, kwargs_lens_light
@@ -62,4 +64,3 @@ class NFWCluster(DeflectorBase):
         :return: halo mass M200 [physical M_sol], concentration r200/rs
         """
         return self._deflector_dict["halo_mass"], self._deflector_dict["concentration"]
-

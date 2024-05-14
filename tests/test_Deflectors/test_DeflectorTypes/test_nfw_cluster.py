@@ -24,32 +24,39 @@ class TestNFWCluster(object):
             "z": 0.5,
         }
         subhalos_list = [
-            Deflector(deflector_type="EPL",
-                      deflector_dict={
-                          "vel_disp": 200,
-                          "e1_mass": 0.1,
-                          "e2_mass": -0.1,
-                          "angular_size": 0.001,
-                          "n_sersic": 1,
-                          "e1_light": -0.1,
-                          "e2_light": 0.1,
-                          "z": 0.5,
-                          "mag_g": -18}),
-            Deflector(deflector_type="NFW_HERNQUIST",
-                      deflector_dict={
-                          "halo_mass": 10 ** 13,
-                          "concentration": 10,
-                          "e1_mass": 0.1,
-                          "e2_mass": -0.1,
-                          "stellar_mass": 10e11,
-                          "angular_size": 0.001,
-                          "e1_light": -0.1,
-                          "e2_light": 0.1,
-                          "z": 0.5,
-                          "mag_g": -20})
+            Deflector(
+                deflector_type="EPL",
+                deflector_dict={
+                    "vel_disp": 200,
+                    "e1_mass": 0.1,
+                    "e2_mass": -0.1,
+                    "angular_size": 0.001,
+                    "n_sersic": 1,
+                    "e1_light": -0.1,
+                    "e2_light": 0.1,
+                    "z": 0.5,
+                    "mag_g": -18,
+                },
+            ),
+            Deflector(
+                deflector_type="NFW_HERNQUIST",
+                deflector_dict={
+                    "halo_mass": 10**13,
+                    "concentration": 10,
+                    "e1_mass": 0.1,
+                    "e2_mass": -0.1,
+                    "stellar_mass": 10e11,
+                    "angular_size": 0.001,
+                    "e1_light": -0.1,
+                    "e2_light": 0.1,
+                    "z": 0.5,
+                    "mag_g": -20,
+                },
+            ),
         ]
-        self.nfw_cluster = NFWCluster(deflector_dict=self.deflector_dict,
-                                      subhalos_list=subhalos_list)
+        self.nfw_cluster = NFWCluster(
+            deflector_dict=self.deflector_dict, subhalos_list=subhalos_list
+        )
 
     def test_redshift(self):
         z = self.nfw_cluster.redshift
