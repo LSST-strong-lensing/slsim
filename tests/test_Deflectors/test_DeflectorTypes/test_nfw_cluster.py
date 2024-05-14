@@ -29,10 +29,7 @@ class TestNFWCluster(object):
             os.path.join(module_path, "TestData/subhalos_table.fits"), format="fits"
         )
         subhalos_list = [
-            Deflector(
-                deflector_type="EPL",
-                deflector_dict=subhalo
-            )
+            Deflector(deflector_type="EPL", deflector_dict=subhalo)
             for subhalo in subhalos_table
         ]
         self.nfw_cluster = NFWCluster(
