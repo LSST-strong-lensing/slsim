@@ -68,6 +68,118 @@ def vel_disp_composite_model(r, m_star, rs_star, m_halo, c_halo, cosmo, z_lens):
     return vel_disp
 
 
+def vel_disp_nfw_3d(r, m_halo, c_halo, cosmo, z_lens):
+    """Computes the unweighted velocity dispersion at 3D radius r for a deflector with a
+    NFW halo profile, assuming isotropic anisotropy (beta = 0).
+
+    Based on equation (14) of Lokas and Mamon 2001 (
+    https://arxiv.org/abs/astro-ph/0002395)
+
+    :param r: radius of the unweighted velocity dispersion [arcsec]
+    :param m_halo: Halo mass [physical M_sun]
+    :param c_halo: halo concentration
+    :param cosmo: cosmology
+    :type cosmo: ~astropy.cosmology class
+    :param z_lens: redshift of the deflector
+    :return: velocity dispersion [km/s]
+    """
+
+    from scipy.special import spence
+    from lenstronomy.Cosmo.lens_cosmo import LensCosmo
+    from astropy.constants import G
+    from lenstronomy.Util.constants import arcsec
+
+    lens_cosmo = LensCosmo(z_lens=z_lens, z_source=10, cosmo=cosmo)
+    r_halo = lens_cosmo.nfw_M_theta_r200(m_halo)
+    s = r / r_halo
+    vel2 = (
+        G.to("km2 Mpc / M_sun s2").value * m_halo / (r_halo * arcsec * lens_cosmo.dd)
+    )  # km^2 / s^2
+    cs = c_halo * s
+    g_c = 1 / (np.log(1 + c_halo) - c_halo / (1 + c_halo))
+    vel_disp2 = vel2 * (
+        1
+        / 2
+        * c_halo**2
+        * g_c
+        * s
+        * (1 + cs) ** 2
+        * (
+            np.pi**2
+            - np.log(cs)
+            - 1 / cs
+            - 1 / (1 + cs) ** 2
+            - 6 / (1 + cs)
+            + (1 + 1 / cs**2 - 4 / cs - 2 / (1 + cs)) * np.log(1 + cs)
+            + 3 * np.log(1 + cs) ** 2
+            + 6 * spence(1 + cs)
+        )
+    )
+    return np.sqrt(vel_disp2)
+
+
+def vel_disp_nfw_aperture(r, m_halo, c_halo, cosmo, z_lens):
+    """Computes the average line-of-sight velocity dispersion in an aperture r for a
+    deflector with a NFW halo profile, assuming isotropic anisotropy (beta = 0).
+
+    Based on equation (48) of Lokas & Mamon 2001 (
+    https://arxiv.org/abs/astro-ph/0002395)
+
+    :param r: radius of the aperture for the velocity dispersion [arcsec]
+    :param m_halo: Halo mass [physical M_sun]
+    :param c_halo: halo concentration
+    :param cosmo: cosmology
+    :type cosmo: ~astropy.cosmology class
+    :param z_lens: redshift of the deflector
+    :return: velocity dispersion [km/s]
+    """
+    from lenstronomy.Cosmo.lens_cosmo import LensCosmo
+    from lenstronomy.LensModel.Profiles.nfw import NFW
+
+    def _log_integrate(func, xmin, xmax, n_grid=200):
+        min_log = np.log(xmin)
+        max_log = np.log(xmax)
+        dlogx = (max_log - min_log) / (n_grid - 1)
+        x = np.logspace(
+            min_log + dlogx / 2.0,
+            max_log + dlogx / 2.0,
+            n_grid,
+            base=np.e,
+        )
+        dlog_x = np.log(x[2]) - np.log(x[1])
+        y = func(x)
+        return np.sum(y * dlog_x * x)
+
+    lens_cosmo = LensCosmo(z_lens=z_lens, z_source=10, cosmo=cosmo)
+
+    g_c = 1 / (np.log(1 + c_halo) - c_halo / (1 + c_halo))
+    rs, alpha_rs = lens_cosmo.nfw_physical2angle(m_halo, c_halo)
+    r_halo = rs * c_halo
+    rmin = 1e-3 * rs
+    rmax = 1e3 * rs
+    nfw = NFW()
+    m_2d_r = nfw.mass_2d_lens(r, rs, alpha_rs) * lens_cosmo.sigma_crit_angle
+    int1 = _log_integrate(
+        lambda r_: vel_disp_nfw_3d(r_, m_halo, c_halo, cosmo, z_lens) ** 2
+        * r_
+        / r_halo
+        / (1 + c_halo * r_ / r_halo) ** 2,
+        rmin,
+        rmax,
+    )
+    int2 = _log_integrate(
+        lambda r_: (
+            vel_disp_nfw_3d(r_, m_halo, c_halo, cosmo, z_lens) ** 2
+            / (1 + c_halo * r_ / r_halo) ** 2
+            * np.sqrt((r_ / r_halo) ** 2 - (r / r_halo) ** 2)
+        ),
+        r,
+        rmax,
+    )
+    vel_disp2 = c_halo**2 * g_c * m_halo / m_2d_r * (int1 - int2) / r_halo
+    return np.sqrt(vel_disp2)
+
+
 def vel_disp_sdss(sky_area, redshift, vd_min, vd_max, cosmology, noise=True):
     """Velocity dispersion function in a cone matched by SDSS measurements.
 
