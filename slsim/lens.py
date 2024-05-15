@@ -569,10 +569,7 @@ class Lens(LensedSystemBase):
         """
         if self.deflector.deflector_type in ["EPL"]:
             gamma = 2  # TODO: option for different power-law slopes to be implemented
-            if gamma == 2:
-                lens_mass_model_list = ["SIE"]
-            else:
-                lens_mass_model_list = ["EPL"]
+
             theta_E = self.einstein_radius_deflector
             e1_light_lens, e2_light_lens, e1_mass, e2_mass = (
                 self.deflector_ellipticity()
@@ -589,6 +586,12 @@ class Lens(LensedSystemBase):
                     "center_y": center_lens[1],
                 }
             ]
+            if gamma == 2:
+                lens_mass_model_list = ["SIE"]
+                kwargs_lens[0].pop("gamma")
+            else:
+                lens_mass_model_list = ["EPL"]
+
         elif self.deflector.deflector_type in ["NFW_HERNQUIST"]:
             lens_mass_model_list = ["NFW_ELLIPSE_CSE", "HERNQUIST_ELLIPSE_CSE"]
             e1_light_lens, e2_light_lens, e1_mass, e2_mass = (
