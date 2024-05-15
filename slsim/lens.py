@@ -568,7 +568,11 @@ class Lens(LensedSystemBase):
         :return: lens_model_list, kwargs_lens
         """
         if self.deflector.deflector_type in ["EPL"]:
-            lens_mass_model_list = ["EPL"]
+            gamma = 2  # TODO: option for different power-law slopes to be implemented
+            if gamma == 2:
+                lens_mass_model_list = ["SIE"]
+            else:
+                lens_mass_model_list = ["EPL"]
             theta_E = self.einstein_radius_deflector
             e1_light_lens, e2_light_lens, e1_mass, e2_mass = (
                 self.deflector_ellipticity()
@@ -578,7 +582,7 @@ class Lens(LensedSystemBase):
             kwargs_lens = [
                 {
                     "theta_E": theta_E,
-                    "gamma": 2,
+                    "gamma": gamma,
                     "e1": e1_mass,
                     "e2": e2_mass,
                     "center_x": center_lens[0],
