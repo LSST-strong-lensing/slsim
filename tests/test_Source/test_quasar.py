@@ -36,6 +36,11 @@ def test_draw_source(Quasar_class):
     assert len(quasar) > 0
 
 
+def test_source_number_selected(Quasar_class):
+    num = Quasar_class.source_number_selected
+    assert num > 0
+
+
 def test_variability_model(Quasar_class):
     kwargs_variab = Quasar_class.variability_model
     assert kwargs_variab == "sinusoidal"
