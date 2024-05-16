@@ -69,8 +69,11 @@ class EPLSersic(DeflectorBase):
 
     @property
     def halo_properties(self):
-        """Properties of the Halo (no halo is defined here)
+        """mass density logarithmic slope
 
-        :return: None
+        :return: gamma (with =2 is isothermal)
         """
-        return None
+        try:
+            return float(self._deflector_dict["gamma_pl"])
+        except:
+            return 2
