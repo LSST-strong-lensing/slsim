@@ -64,13 +64,13 @@ def test_supernovae_plus_galaxies_lens_pop_instance():
 
 
 def test_num_lenses_and_sources(gg_lens_pop_instance):
-    num_lenses = gg_lens_pop_instance.deflector_number()
-    num_sources = gg_lens_pop_instance.source_number()
+    num_lenses = gg_lens_pop_instance.deflector_number
+    num_sources = gg_lens_pop_instance.source_number
 
     assert 100 <= num_lenses <= 6600, "Expected num_lenses to be between 5800 and 6600,"
     f"but got {num_lenses}"
     assert (
-        100000 <= num_sources <= 500000
+        10000 <= num_sources <= 100000
     ), "Expected num_sources to be between 1090000 and"
     f"1110000, but got {num_sources}"
     # assert 1 == 0

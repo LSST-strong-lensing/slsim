@@ -27,7 +27,7 @@ def Quasar_class():
 
 
 def test_source_number(Quasar_class):
-    number = Quasar_class.source_number()
+    number = Quasar_class.source_number
     assert number > 0
 
 

@@ -272,6 +272,7 @@ class LensPop(LensedPopulationBase):
             if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens
 
+    @property
     def deflector_number(self):
         """Number of potential deflectors (meaning all objects with mass that are being
         considered to have potential sources behind them)
@@ -280,13 +281,14 @@ class LensPop(LensedPopulationBase):
         """
         return self._lens_galaxies.deflector_number()
 
+    @property
     def source_number(self):
         """Number of sources that are being considered to be placed in the sky area
         potentially aligned behind deflectors.
 
         :return: number of potential sources
         """
-        return self._sources.source_number()
+        return self._sources.source_number_selected
 
     def get_num_sources_tested_mean(self, testarea):
         """Compute the mean of source galaxies needed to be tested within the test area.
@@ -294,7 +296,7 @@ class LensPop(LensedPopulationBase):
         num_sources_tested_mean/ testarea = num_sources/ f_sky; testarea is in units of
         arcsec^2, f_sky is in units of deg^2. 1 deg^2 = 12960000 arcsec^2
         """
-        num_sources = self._sources.source_number()
+        num_sources = self._sources.source_number_selected
         num_sources_tested_mean = (testarea * num_sources) / (
             12960000 * self.f_sky.to_value("deg2")
         )
