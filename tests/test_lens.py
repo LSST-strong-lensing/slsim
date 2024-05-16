@@ -28,6 +28,10 @@ class TestLens(object):
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         self.source_dict = blue_one
         self.deflector_dict = red_one
+
+        print(blue_one)
+        blue_one["gamma_pl"] = 2.1
+
         while True:
             gg_lens = Lens(
                 source_dict=self.source_dict,

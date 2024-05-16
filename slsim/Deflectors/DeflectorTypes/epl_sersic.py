@@ -73,7 +73,8 @@ class EPLSersic(DeflectorBase):
 
         :return: gamma (with =2 is isothermal)
         """
+
         try:
             return float(self._deflector_dict["gamma_pl"])
-        except:
+        except KeyError:
             return 2
