@@ -69,7 +69,7 @@ class EPLSersic(DeflectorBase):
 
     @property
     def halo_properties(self):
-        """mass density logarithmic slope
+        """Mass density logarithmic slope.
 
         :return: gamma (with =2 is isothermal)
         """
