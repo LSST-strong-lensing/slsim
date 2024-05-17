@@ -111,11 +111,15 @@ class TestVariability:
         user_transfer_function_amplitudes = [0, 0, 0, 5, 5, 5, 3, 3, 3]
         badly_defined_transfer_function_amplitudes = [[[0, 1, 2], [1, 2, 3], [2, 3]]]
         single_transfer_function_amplitudes = [0, 1, 2, 3, 4]
-        reprocessing_kwargs = {
+        reprocessing_kwargs_1 = {
             "obs_frame_wavelength_in_nm": 50,
+        }
+        reprocessing_kwargs_2 = {
             "rest_frame_wavelength_in_nm": 300,
-            "speclite_filter": "lsst2016-r",
-            "response_function_amplitudes": user_transfer_function_amplitudes,
+        }
+        reprocessing_kwargs_3 = {"speclite_filter": "lsst2016-r"}
+        reprocessing_kwargs_4 = {
+            "response_function_amplitudes": user_transfer_function_amplitudes
         }
         error_reprocessing_kwargs = {
             "response_function_amplitudes": badly_defined_transfer_function_amplitudes
@@ -132,13 +136,13 @@ class TestVariability:
             Variability("lamppost_reprocessed", **agn_kwargs)
         with pytest.raises(ValueError):
             Variability("lamppost_reprocessed", **signal_kwargs)
-            Variability("lamppost_reprocessed", **reprocessing_kwargs)
+            Variability("lamppost_reprocessed", **reprocessing_kwargs_1)
         # Test three different types of fully defined responses
         full_kwargs_1 = {}
         for dictionary in [
             agn_kwargs,
             signal_kwargs,
-            reprocessing_kwargs,
+            reprocessing_kwargs_1,
             other_kwargs,
         ]:
             for key in dictionary:
@@ -147,11 +151,29 @@ class TestVariability:
         for dictionary in [
             agn_kwargs,
             bpl_kwargs,
-            reprocessing_kwargs,
+            reprocessing_kwargs_2,
             other_kwargs,
         ]:
             for key in dictionary:
                 full_kwargs_2[key] = dictionary[key]
+        full_kwargs_3 = {}
+        for dictionary in [
+            agn_kwargs,
+            signal_kwargs,
+            reprocessing_kwargs_3,
+            other_kwargs,
+        ]:
+            for key in dictionary:
+                full_kwargs_3[key] = dictionary[key]
+        full_kwargs_4 = {}
+        for dictionary in [
+            agn_kwargs,
+            bpl_kwargs,
+            reprocessing_kwargs_4,
+            other_kwargs,
+        ]:
+            for key in dictionary:
+                full_kwargs_4[key] = dictionary[key]
         full_error_kwargs = {}
         for dictionary in [
             agn_kwargs,
@@ -173,6 +195,8 @@ class TestVariability:
 
         Variability("lamppost_reprocessed", **full_kwargs_1)
         var_2 = Variability("lamppost_reprocessed", **full_kwargs_2)
+        Variability("lamppost_reprocessed", **full_kwargs_3)
+        Variability("lamppost_reprocessed", **full_kwargs_4)
         Variability("lamppost_reprocessed", **single_response_kwargs)
         with pytest.raises(ValueError):
             Variability("lamppost_reprocessed", **full_error_kwargs)
