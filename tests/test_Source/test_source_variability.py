@@ -108,37 +108,29 @@ class TestVariability:
             "seed": 17,
             "driving_variability_model": "user_defined_psd",
         }
-        user_transfer_function_1 = [0, 0, 0, 5, 5, 5, 3, 3, 3]
-        user_transfer_function_2 = 10 - np.linspace(10, 0, 5)
-        badly_defined_transfer_function = [[[0, 1, 2], [1, 2, 3], [2, 3]]]
-        single_transfer_function = [0, 1, 2, 3, 4]
-        user_time_lags = np.linspace(0, 50, 9)
+        user_transfer_function_amplitudes = [0, 0, 0, 5, 5, 5, 3, 3, 3]
+        badly_defined_transfer_function_amplitudes = [[[0, 1, 2], [1, 2, 3], [2, 3]]]
+        single_transfer_function_amplitudes = [0, 1, 2, 3, 4]
         reprocessing_kwargs = {
             "obs_frame_wavelength_in_nm": 50,
             "rest_frame_wavelength_in_nm": 300,
             "speclite_filter": "lsst2016-r",
-            "response_function": [user_time_lags, user_transfer_function_1],
-        }
-        multi_reprocessing_kwargs = {
-            "obs_frame_wavelength_in_nm": [50, 100],
-            "rest_frame_wavelength_in_nm": [300, 20],
-            "speclite_filter": ["lsst2016-r", "lsst2016-g"],
-            "response_function": [
-                [user_time_lags, user_transfer_function_1],
-                [user_transfer_function_2],
-            ],
+            "response_function_amplitudes": user_transfer_function_amplitudes,
         }
         error_reprocessing_kwargs = {
-            "response_function": badly_defined_transfer_function
+            "response_function_amplitudes": badly_defined_transfer_function_amplitudes
         }
-        single_reprocessing_kwargs = {"response_function": single_transfer_function}
+        single_reprocessing_kwargs = {
+            "response_function_amplitudes": single_transfer_function_amplitudes
+        }
         other_kwargs = {
             "redshift": 1.0,
             "delta_wavelength": 100,
         }
-        with pytest.raises(ValueError):
+        with pytest.raises(KeyError):
             Variability("lamppost_reprocessed", **{})
             Variability("lamppost_reprocessed", **agn_kwargs)
+        with pytest.raises(ValueError):
             Variability("lamppost_reprocessed", **signal_kwargs)
             Variability("lamppost_reprocessed", **reprocessing_kwargs)
         # Test three different types of fully defined responses
@@ -155,20 +147,11 @@ class TestVariability:
         for dictionary in [
             agn_kwargs,
             bpl_kwargs,
-            multi_reprocessing_kwargs,
+            reprocessing_kwargs,
             other_kwargs,
         ]:
             for key in dictionary:
                 full_kwargs_2[key] = dictionary[key]
-        full_kwargs_3 = {}
-        for dictionary in [
-            agn_kwargs,
-            user_def_signal_kwargs,
-            multi_reprocessing_kwargs,
-            other_kwargs,
-        ]:
-            for key in dictionary:
-                full_kwargs_3[key] = dictionary[key]
         full_error_kwargs = {}
         for dictionary in [
             agn_kwargs,
@@ -190,14 +173,18 @@ class TestVariability:
 
         Variability("lamppost_reprocessed", **full_kwargs_1)
         var_2 = Variability("lamppost_reprocessed", **full_kwargs_2)
-        Variability("lamppost_reprocessed", **full_kwargs_3)
         Variability("lamppost_reprocessed", **single_response_kwargs)
         with pytest.raises(ValueError):
             Variability("lamppost_reprocessed", **full_error_kwargs)
         # Test minimum case of a fully defined response
-        time_array = np.linspace(0, 10, 10)
-        magnitude_array = (10 - time_array) * time_array
-        min_kwargs = {"time_array": time_array, "magnitude_array": magnitude_array}
+        time_lags = np.linspace(0, 10, 10)
+        response_amplitudes = (10 - time_lags) * time_lags
+        min_kwargs = {
+            "time_array": [0, 1, 2, 3, 4, 5, 6, 7],
+            "magnitude_array": [5, 3, 1, 3, 6, 9, 12, 10],
+            "response_function_time_lags": time_lags,
+            "response_function_amplitudes": response_amplitudes,
+        }
         Variability("lamppost_reprocessed", **min_kwargs)
 
         var_2.variability_at_time([0, 10, 15, 20])

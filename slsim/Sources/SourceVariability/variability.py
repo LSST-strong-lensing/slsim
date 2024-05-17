@@ -69,157 +69,41 @@ class Variability(object):
             self._model = light_curve_class.magnitude
 
         elif self.variability_model == "lamppost_reprocessed":
-            agn_kwargs = {}
-            driving_signal_kwargs = {}
-            reprocessing_kwargs = {}
-            signal_kwargs = {}
-            driving_variability_model = ""
-            self.redshift = 0
-            self.delta_wavelength = 50
-            for kwarg in self.kwargs_model:
-                if kwarg in [
-                    "r_out",
-                    "corona_height",
-                    "r_resolution",
-                    "inclination_angle",
-                    "black_hole_mass_exponent",
-                    "black_hole_spin",
-                    "eddington_ratio",
-                ]:
-                    agn_kwargs[kwarg] = self.kwargs_model[kwarg]
-                elif kwarg in ["time_array", "magnitude_array"]:
-                    signal_kwargs[kwarg] = self.kwargs_model[kwarg]
-                elif kwarg in [
-                    "length_of_light_curve",
-                    "time_resolution",
-                    "log_breakpoint_frequency",
-                    "low_frequency_slope",
-                    "high_frequency_slope",
-                    "mean_magnitude",
-                    "standard_deviation",
-                    "normal_magnitude_variance",
-                    "zero_point_mag",
-                    "input_frequencies",
-                    "input_psd",
-                    "light_curve",
-                    "seed",
-                    "amp",
-                    "freq",
-                ]:
-                    driving_signal_kwargs[kwarg] = self.kwargs_model[kwarg]
-                elif kwarg in ["redshift"]:
-                    self.redshift = self.kwargs_model[kwarg]
-                elif kwarg in ["delta_wavelength"]:
-                    self.delta_wavelength = self.kwargs_model[kwarg]
-                elif kwarg in ["driving_variability_model"]:
-                    driving_variability_model = self.kwargs_model[kwarg]
-                else:
-                    reprocessing_kwargs[kwarg] = self.kwargs_model[kwarg]
+            self.parse_kwargs_for_lamppost_reprocessed_model()
 
-            accretion_disk_reprocessor = AccretionDiskReprocessing(
-                "lamppost", **agn_kwargs
+            self.accretion_disk_reprocessor = AccretionDiskReprocessing(
+                "lamppost", **self.agn_kwargs
             )
 
-            if "time_array" in signal_kwargs and "magnitude_array" in signal_kwargs:
-                accretion_disk_reprocessor.define_intrinsic_signal(**signal_kwargs)
+            if (
+                "time_array" in self.signal_kwargs
+                and "magnitude_array" in self.signal_kwargs
+            ):
+                self.accretion_disk_reprocessor.define_intrinsic_signal(
+                    **self.signal_kwargs
+                )
             else:
                 driving_signal = Variability(
-                    driving_variability_model, **driving_signal_kwargs
+                    self.kwargs_model["driving_variability_model"],
+                    **self.driving_signal_kwargs
                 )
-                if "time_array" not in signal_kwargs:
-
-                    signal_kwargs["time_array"] = np.linspace(
+                if "time_array" not in self.signal_kwargs:
+                    self.signal_kwargs["time_array"] = np.linspace(
                         0,
-                        driving_signal_kwargs["length_of_light_curve"] - 1,
-                        driving_signal_kwargs["length_of_light_curve"],
+                        self.driving_signal_kwargs["length_of_light_curve"] - 1,
+                        self.driving_signal_kwargs["length_of_light_curve"],
                     )
 
-                signal_kwargs["magnitude_array"] = driving_signal.variability_at_time(
-                    signal_kwargs["time_array"]
+                self.signal_kwargs["magnitude_array"] = (
+                    driving_signal.variability_at_time(self.signal_kwargs["time_array"])
                 )
-                accretion_disk_reprocessor.define_intrinsic_signal(**signal_kwargs)
+                self.accretion_disk_reprocessor.define_intrinsic_signal(
+                    **self.signal_kwargs
+                )
 
-            reprocessed_signals = {}
-            counter = 1
-            for kwarg in reprocessing_kwargs:
-                if kwarg == "obs_frame_wavelength_in_nm":
-                    if not isinstance(reprocessing_kwargs[kwarg], list):
-                        reprocessing_kwargs[kwarg] = [reprocessing_kwargs[kwarg]]
-                    for wavelength in reprocessing_kwargs[kwarg]:
-                        rest_wavelength = wavelength / (1 + self.redshift)
-                        reprocessed_signals[
-                            "obs_wavelength_" + str(wavelength)[:6] + str("_nm")
-                        ] = accretion_disk_reprocessor.reprocess_signal(
-                            rest_frame_wavelength_in_nanometers=rest_wavelength
-                        )
-
-                elif kwarg == "rest_frame_wavelength_in_nm":
-                    if not isinstance(reprocessing_kwargs[kwarg], list):
-                        reprocessing_kwargs[kwarg] = [reprocessing_kwargs[kwarg]]
-                    for rest_wavelength in reprocessing_kwargs[kwarg]:
-                        reprocessed_signals[
-                            "rest_wavelength_" + str(rest_wavelength)[:6] + str("_nm")
-                        ] = accretion_disk_reprocessor.reprocess_signal(
-                            rest_frame_wavelength_in_nanometers=rest_wavelength
-                        )
-
-                elif kwarg == "speclite_filter":
-                    if not isinstance(reprocessing_kwargs[kwarg], list):
-                        reprocessing_kwargs[kwarg] = [reprocessing_kwargs[kwarg]]
-
-                    for speclite_filter in reprocessing_kwargs[kwarg]:
-                        response_function = accretion_disk_reprocessor.define_passband_response_function(
-                            speclite_filter,
-                            redshift=self.redshift,
-                            delta_wavelength=self.delta_wavelength,
-                        )
-                        reprocessed_signals[speclite_filter] = (
-                            accretion_disk_reprocessor.reprocess_signal(
-                                response_function_amplitudes=response_function
-                            )
-                        )
-
-                elif kwarg == "response_function":
-                    if not isinstance(
-                        reprocessing_kwargs[kwarg][0], list
-                    ) and not isinstance(reprocessing_kwargs[kwarg][0], np.ndarray):
-                        reprocessing_kwargs[kwarg] = [reprocessing_kwargs[kwarg]]
-
-                    if not isinstance(
-                        reprocessing_kwargs[kwarg][0][0], list
-                    ) and not isinstance(reprocessing_kwargs[kwarg][0][0], np.ndarray):
-                        reprocessing_kwargs[kwarg] = [reprocessing_kwargs[kwarg]]
-
-                    for response in reprocessing_kwargs[kwarg]:
-                        if len(response) == 1:
-                            reprocessed_signals[kwarg + "_" + str(counter)] = (
-                                accretion_disk_reprocessor.reprocess_signal(
-                                    response_function_amplitudes=response[0]
-                                )
-                            )
-                            counter += 1
-                        elif len(response) == 2:
-                            reprocessed_signals[kwarg + "_" + str(counter)] = (
-                                accretion_disk_reprocessor.reprocess_signal(
-                                    response_function_time_lags=response[0],
-                                    response_function_amplitudes=response[1],
-                                )
-                            )
-                            counter += 1
-                        else:
-                            raise ValueError(
-                                "response function must be defined by "
-                                "one or two lists / arrays. Not more!"
-                            )
-
-            self._model = []
-            for key, signal in reprocessed_signals.items():
-                light_curve = {
-                    "MJD": accretion_disk_reprocessor.time_array,
-                    "ps_mag_" + key: signal,
-                }
-                light_curve_class = LightCurveInterpolation(light_curve)
-                self._model.append([key, light_curve_class.magnitude])
+            light_curve = self.reprocess_with_lamppost_model()
+            light_curve_class = LightCurveInterpolation(light_curve=light_curve)
+            self._model = light_curve_class.magnitude
 
         else:
             raise ValueError(
@@ -234,10 +118,131 @@ class Variability(object):
         :param observation_times: image observation time
         :return: variability at given time.
         """
-        if isinstance(self._model, list):
-            signal_dict = {}
-            for light_curve in self._model:
-                label = light_curve[0]
-                signal_dict[label] = light_curve[1](observation_times)
-            return signal_dict
         return self._model(observation_times)
+
+    def parse_kwargs_for_lamppost_reprocessed_model(self):
+        """Separates categories of self.kwargs for lamppost reprocessing.
+
+        :return: Dictionaries for:
+            - agn kwargs
+            - driving signal kwargs
+            - reprocessing kwargs
+            - signal kwargs
+        """
+        self.agn_kwargs = {}
+        self.driving_signal_kwargs = {}
+        self.reprocessing_kwargs = {}
+        self.signal_kwargs = {}
+
+        self.redshift = 0
+        self.delta_wavelength = 50
+
+        for kwarg in self.kwargs_model:
+            if kwarg in [
+                "r_out",
+                "corona_height",
+                "r_resolution",
+                "inclination_angle",
+                "black_hole_mass_exponent",
+                "black_hole_spin",
+                "eddington_ratio",
+            ]:
+                self.agn_kwargs[kwarg] = self.kwargs_model[kwarg]
+
+            elif kwarg in ["time_array", "magnitude_array"]:
+                self.signal_kwargs[kwarg] = self.kwargs_model[kwarg]
+
+            elif kwarg in [
+                "length_of_light_curve",
+                "time_resolution",
+                "log_breakpoint_frequency",
+                "low_frequency_slope",
+                "high_frequency_slope",
+                "mean_magnitude",
+                "standard_deviation",
+                "normal_magnitude_variance",
+                "zero_point_mag",
+                "input_frequencies",
+                "input_psd",
+                "light_curve",
+                "seed",
+                "amp",
+                "freq",
+            ]:
+                self.driving_signal_kwargs[kwarg] = self.kwargs_model[kwarg]
+
+            elif kwarg in ["redshift"]:
+                self.redshift = self.kwargs_model[kwarg]
+            elif kwarg in ["delta_wavelength"]:
+                self.delta_wavelength = self.kwargs_model[kwarg]
+            else:
+                self.reprocessing_kwargs[kwarg] = self.kwargs_model[kwarg]
+
+    def reprocess_with_lamppost_model(self):
+        """Reprocesses the signal based on the type of accretion disk reprocessor.
+
+        :return: dict containing a light curve object parameters
+        """
+
+        if "obs_frame_wavelength_in_nm" in self.reprocessing_kwargs:
+            wavelength = self.reprocessing_kwargs["obs_frame_wavelength_in_nm"]
+            rest_wavelength = wavelength / (1 + self.redshift)
+
+            reprocessed_signal = self.accretion_disk_reprocessor.reprocess_signal(
+                rest_frame_wavelength_in_nanometers=rest_wavelength
+            )
+            light_curve = {
+                "MJD": self.signal_kwargs["time_array"],
+                "ps_mag_" + str(wavelength)[:5]: reprocessed_signal,
+            }
+
+        elif "rest_frame_wavelength_in_nm" in self.reprocessing_kwargs:
+            rest_wavelength = self.reprocessing_kwargs["rest_frame_wavelength_in_nm"]
+            reprocessed_signal = self.accretion_disk_reprocessor.reprocess_signal(
+                rest_frame_wavelength_in_nanometers=rest_wavelength
+            )
+            light_curve = {
+                "MJD": self.signal_kwargs["time_array"],
+                "ps_mag_" + str(rest_wavelength)[:5]: reprocessed_signal,
+            }
+
+        elif "speclite_filter" in self.reprocessing_kwargs:
+            speclite_filter = self.reprocessing_kwargs["speclite_filter"]
+            response_function = (
+                self.accretion_disk_reprocessor.define_passband_response_function(
+                    speclite_filter,
+                    redshift=self.redshift,
+                    delta_wavelength=self.delta_wavelength,
+                )
+            )
+            reprocessed_signal = self.accretion_disk_reprocessor.reprocess_signal(
+                response_function_amplitudes=response_function
+            )
+            light_curve = {
+                "MJD": self.signal_kwargs["time_array"],
+                "ps_mag_" + str(speclite_filter): reprocessed_signal,
+            }
+        elif "response_function_amplitudes" in self.reprocessing_kwargs:
+            if "response_function_time_lags" not in self.reprocessing_kwargs:
+                reprocessed_signal = self.accretion_disk_reprocessor.reprocess_signal(
+                    response_function_amplitudes=self.reprocessing_kwargs[
+                        "response_function_amplitudes"
+                    ]
+                )
+            else:
+                reprocessed_signal = self.accretion_disk_reprocessor.reprocess_signal(
+                    response_function_amplitudes=self.reprocessing_kwargs[
+                        "response_function_amplitudes"
+                    ],
+                    response_function_time_lags=self.reprocessing_kwargs[
+                        "response_function_time_lags"
+                    ],
+                )
+            light_curve = {
+                "MJD": self.signal_kwargs["time_array"],
+                "ps_mag_user": reprocessed_signal,
+            }
+        else:
+            raise ValueError("Please provide a reprocessing method")
+
+        return light_curve
