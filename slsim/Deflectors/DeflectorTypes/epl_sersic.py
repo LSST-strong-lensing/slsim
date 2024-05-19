@@ -47,7 +47,9 @@ class EPLSersic(DeflectorBase):
         if lens_cosmo.z_lens >= lens_cosmo.z_source:
             theta_E = 0.
         else:
-            theta_E = lens_cosmo.sis_sigma_v2theta_E(self.velocity_dispersion(cosmo=lens_cosmo.background.cosmo))
+            theta_E = lens_cosmo.sis_sigma_v2theta_E(
+                float(self.velocity_dispersion(cosmo=lens_cosmo.background.cosmo))
+            )
         gamma = self.halo_properties
         e1_mass, e2_mass = self.mass_ellipticity
         kwargs_lens_mass = [

@@ -48,6 +48,20 @@ class NFWCluster(DeflectorBase):
         )
         return vel_disp
 
+    def mass_model_lenstronomy(self, lens_cosmo):
+        """Returns lens model instance and parameters in lenstronomy conventions.
+
+        :param lens_cosmo: lens cosmology model
+        :type lens_cosmo: LensCosmo class
+        :return: lens_mass_model_list, kwargs_lens_mass
+        """
+        lens_mass_model_list, kwargs_lens_mass = self._halo_mass_model_lenstronomy(lens_cosmo=lens_cosmo)
+        for subhalo in self._subhalos:
+            lens_mass_model_list_i, kwargs_lens_mass_i = subhalo.mass_model_lenstronomy(lens_cosmo=lens_cosmo)
+            lens_mass_model_list += lens_mass_model_list_i
+            kwargs_lens_mass += kwargs_lens_mass_i
+        return lens_mass_model_list, kwargs_lens_mass
+
     def _halo_mass_model_lenstronomy(self, lens_cosmo):
         """Returns lens model instance and parameters in lenstronomy conventions for the main halo.
 
