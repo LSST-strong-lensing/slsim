@@ -54,6 +54,9 @@ def test_update_coolest_from_slsim_and_create_slsim_from_coolest(
     test_band = "i"
     test_mag_zero_point = 27
     expected_result = lens_class.lenstronomy_kwargs(band="i")
+    # current default is gamma=2 and hence an SIE profile is modeled instead
+    expected_result[0]["lens_model_list"][0] = "EPL"
+    expected_result[1]["kwargs_lens"][0]["gamma"] = 2
     # Call the function (this updates coolest file and saves in TestData)
     updated_coolest = update_coolest_from_slsim(
         lens_class, test_path, test_file_name, test_band, test_mag_zero_point
