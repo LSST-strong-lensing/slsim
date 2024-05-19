@@ -49,7 +49,7 @@ class EPLSersic(DeflectorBase):
         else:
             theta_E = lens_cosmo.sis_sigma_v2theta_E(self.velocity_dispersion(cosmo=lens_cosmo.background.cosmo))
         gamma = self.halo_properties
-        e1_mass, e2_mass = self.mass_ellipticity()
+        e1_mass, e2_mass = self.mass_ellipticity
         kwargs_lens_mass = [
             {
                 "theta_E": theta_E,

@@ -52,8 +52,8 @@ class NFWHernquist(DeflectorBase):
         :return: lens_mass_model_list, kwargs_lens_mass
         """
         lens_mass_model_list = ["NFW_ELLIPSE_CSE", "HERNQUIST_ELLIPSE_CSE"]
-        e1_light_lens, e2_light_lens = self.light_ellipticity()
-        e1_mass, e2_mass = self.mass_ellipticity()
+        e1_light_lens, e2_light_lens = self.light_ellipticity
+        e1_mass, e2_mass = self.mass_ellipticity
         rs_phys = lens_cosmo.dd * self.angular_size_light
         sigma0, rs_light_angle = lens_cosmo.hernquist_phys2angular(
             mass=self.stellar_mass, rs=rs_phys

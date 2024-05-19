@@ -48,6 +48,30 @@ class NFWCluster(DeflectorBase):
         )
         return vel_disp
 
+    def _halo_mass_model_lenstronomy(self, lens_cosmo):
+        """Returns lens model instance and parameters in lenstronomy conventions for the main halo.
+
+        :param lens_cosmo: lens cosmology model
+        :type lens_cosmo: LensCosmo class
+        :return: lens_mass_model_list, kwargs_lens_mass
+        """
+        lens_mass_model_list = ["NFW_ELLIPSE_CSE"]
+        e1_mass, e2_mass = self.mass_ellipticity
+        center_lens = self.deflector_center
+        m_halo, c_halo = self.halo_properties
+        rs_halo, alpha_rs = lens_cosmo.nfw_physical2angle(M=m_halo, c=c_halo)
+        kwargs_lens_mass = [
+            {
+                "alpha_Rs": alpha_rs,
+                "Rs": rs_halo,
+                "e1": e1_mass,
+                "e2": e2_mass,
+                "center_x": center_lens[0],
+                "center_y": center_lens[1],
+            },
+        ]
+        return lens_mass_model_list, kwargs_lens_mass
+
     def light_model_lenstronomy(self, band=None):
         """Returns lens model instance and parameters in lenstronomy conventions.
 
