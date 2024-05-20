@@ -17,7 +17,8 @@ class PointSources(SourcePopBase):
     ):
         """
 
-        :param point_source_list: list of dictionary with quasar parameters
+        :param point_source_list: list of dictionary with quasar parameters or astropy
+         table.
         :param cosmo: cosmology
         :type cosmo: ~astropy.cosmology class
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
