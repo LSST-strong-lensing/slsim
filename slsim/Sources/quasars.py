@@ -51,6 +51,7 @@ class Quasars(SourcePopBase):
             kwargs_variability_model=kwargs_variability_model,
         )
 
+    @property
     def source_number(self):
         """Number of sources registered (within given area on the sky)
 
@@ -59,8 +60,16 @@ class Quasars(SourcePopBase):
         number = self.n
         return number
 
+    @property
+    def source_number_selected(self):
+        """Number of sources selected (within given area on the sky)
+
+        :return: number of sources passing the selection criteria
+        """
+        return self._num_select
+
     def draw_source(self):
-        """Choose source at random.
+        """Choose source at random with the selected range.
 
         :return: dictionary of source
         """
