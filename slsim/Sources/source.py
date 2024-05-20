@@ -70,23 +70,27 @@ class Source(object):
                         mag_zpsys=sn_absolute_zpsys,
                         cosmo=cosmo,
                     )
-                provided_band = [
-                    element
-                    for element in list(kwargs_variability)
-                    if element in ["r", "i", "g"]
-                ][0]
+                for element in list(kwargs_variability):
+                    # if lsst filter is being used
+                    if element in ["r", "i", "g"]:
+                        provided_band = "lsst" + element
+                        name = "ps_mag_" + element
+                    # if roman filter is being used
+                    elif element in ["F062", "F087", "F106", "F129", "F158", "F184", "F146", "F213"]:
+                        provided_band = element
+                        name = "ps_mag_"+ element
                 times = lightcurve_time
                 magnitudes = lightcurve_class.get_apparent_magnitude(
-                    times, "lsst" + provided_band, zpsys=sn_absolute_zpsys
+                    time=times, band=provided_band, zpsys=sn_absolute_zpsys
                 )
                 new_column = Column(
-                    [float(min(magnitudes))], name="ps_mag_" + provided_band
+                    [float(min(magnitudes))], name=name
                 )
                 self._source_dict = Table(self.source_dict)
                 self._source_dict.add_column(new_column)
                 self.source_dict = self._source_dict[0]
                 kwargs_variab_extracted["MJD"] = times
-                kwargs_variab_extracted["ps_mag_" + provided_band] = magnitudes
+                kwargs_variab_extracted[name] = magnitudes
             else:
                 # With this condition we extract values for kwargs_variability from the
                 # given source dict and prepar variability class.
