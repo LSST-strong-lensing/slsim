@@ -76,16 +76,23 @@ class Source(object):
                         provided_band = "lsst" + element
                         name = "ps_mag_" + element
                     # if roman filter is being used
-                    elif element in ["F062", "F087", "F106", "F129", "F158", "F184", "F146", "F213"]:
+                    elif element in [
+                        "F062",
+                        "F087",
+                        "F106",
+                        "F129",
+                        "F158",
+                        "F184",
+                        "F146",
+                        "F213",
+                    ]:
                         provided_band = element
-                        name = "ps_mag_"+ element
+                        name = "ps_mag_" + element
                 times = lightcurve_time
                 magnitudes = lightcurve_class.get_apparent_magnitude(
                     time=times, band=provided_band, zpsys=sn_absolute_zpsys
                 )
-                new_column = Column(
-                    [float(min(magnitudes))], name=name
-                )
+                new_column = Column([float(min(magnitudes))], name=name)
                 self._source_dict = Table(self.source_dict)
                 self._source_dict.add_column(new_column)
                 self.source_dict = self._source_dict[0]
