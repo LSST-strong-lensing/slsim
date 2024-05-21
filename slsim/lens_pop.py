@@ -224,9 +224,8 @@ class LensPop(LensedPopulationBase):
                     catalog_type=catalog_type,
                 )
             else:
-                new_path = self.path + "/Sources/SupernovaeData/supernovae_data.pkl"
-                with open(new_path, "rb") as f:
-                    load_supernovae_data = pickle.load(f)
+                new_path = self.path + "/Sources/SupernovaeData/supernovae_data.ecsv"
+                load_supernovae_data = Table.read(new_path)
                 self._sources = PointPlusExtendedSources(
                     load_supernovae_data,
                     cosmo=cosmo,
@@ -234,7 +233,7 @@ class LensPop(LensedPopulationBase):
                     kwargs_cut=kwargs_source_cut,
                     variability_model=variability_model,
                     kwargs_variability_model=kwargs_variability,
-                    list_type="list",
+                    list_type="astropy_table",
                     light_profile=source_light_profile,
                 )
             self._source_model_type = "point_plus_extended"
