@@ -1,6 +1,7 @@
 from astropy.table import Table, hstack
 from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 from slsim.Sources import random_supernovae
+import numpy as np
 
 class SupernovaeCatalog(object):
     """class to generate a supernovae catalog"""
@@ -77,8 +78,10 @@ class SupernovaeCatalog(object):
                             self.lightcurve_time, band_string, zpsys=self.mag_zpsys
                         ))
         if host_galaxy is True:
-            lightcurve_table= Table([time, magnitude], 
-            names=("MJD", "ps_mag_"+self.band))
+            ra_off = np.random.uniform(-5, 5, len(host_galaxies['z']))
+            dec_off = np.random.uniform(-5, 5, len(host_galaxies['z']))
+            lightcurve_table= Table([time, magnitude, ra_off, dec_off], 
+            names=("MJD", "ps_mag_"+self.band, "ra_off", "dec_off"))
             supernovae_table = hstack([lightcurve_table, host_galaxies])
         else:
             supernovae_table= Table([host_galaxies['z'], time, magnitude],
