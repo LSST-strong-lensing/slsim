@@ -142,35 +142,6 @@ class TestSource:
             ),
         )
 
-        self.source_dict5 = Table(
-            [
-                [0.5],
-                [1],
-                [4],
-                [0.0002],
-                [0.00002],
-                [0.01],
-                [-0.02],
-                [-0.002],
-                [-0.023],
-                [0.001],
-                [-0.001],
-            ],
-            names=(
-                "z",
-                "n_sersic_0",
-                "n_sersic_1",
-                "angular_size0",
-                "angular_size1",
-                "e0_1",
-                "e0_2",
-                "e1_1",
-                "e1_2",
-                "ra_off",
-                "dec_off",
-            ),
-        )
-
         self.source = Source(
             self.source_dict,
             variability_model="sinusoidal",
