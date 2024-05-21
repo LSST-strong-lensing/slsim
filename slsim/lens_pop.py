@@ -196,22 +196,27 @@ class LensPop(LensedPopulationBase):
             from slsim.Sources.point_sources import (
                 PointSources,
             )
-            from slsim.Sources.SupernovaeCatalog.supernovae_sample import \
-                    SupernovaeCatalog
+            from slsim.Sources.SupernovaeCatalog.supernovae_sample import (
+                SupernovaeCatalog,
+            )
+
             for key in kwargs_variability:
                 if key.startswith("ps_mag_"):
-                    suffix=key.split("ps_mag_")[1]
-            supernovae_catalog_class = SupernovaeCatalog(sn_type=sn_type, 
-                        band=suffix, 
-                        lightcurve_time=lightcurve_time, 
-                        absolute_mag=None, 
-                        absolute_mag_band=sn_absolute_mag_band, 
-                        mag_zpsys=sn_absolute_zpsys, 
-                        cosmo=cosmo, 
-                        skypy_config=skypy_config, 
-                        sky_area=sky_area)
-            supernovae_sample=supernovae_catalog_class.supernovae_catalog(host_galaxy=
-                                                                          False)
+                    suffix = key.split("ps_mag_")[1]
+            supernovae_catalog_class = SupernovaeCatalog(
+                sn_type=sn_type,
+                band=suffix,
+                lightcurve_time=lightcurve_time,
+                absolute_mag=None,
+                absolute_mag_band=sn_absolute_mag_band,
+                mag_zpsys=sn_absolute_zpsys,
+                cosmo=cosmo,
+                skypy_config=skypy_config,
+                sky_area=sky_area,
+            )
+            supernovae_sample = supernovae_catalog_class.supernovae_catalog(
+                host_galaxy=False
+            )
             self._sources = PointSources(
                 supernovae_sample,
                 cosmo=cosmo,
@@ -266,21 +271,25 @@ class LensPop(LensedPopulationBase):
                     light_profile=source_light_profile,
                 )
             else:
-                from slsim.Sources.SupernovaeCatalog.supernovae_sample import \
-                    SupernovaeCatalog
+                from slsim.Sources.SupernovaeCatalog.supernovae_sample import (
+                    SupernovaeCatalog,
+                )
+
                 for key in kwargs_variability:
                     if key.startswith("ps_mag_"):
-                        suffix=key.split("ps_mag_")[1]
-                supernovae_catalog_class = SupernovaeCatalog(sn_type=sn_type, 
-                            band=suffix, 
-                            lightcurve_time=lightcurve_time, 
-                            absolute_mag=None, 
-                            absolute_mag_band=sn_absolute_mag_band, 
-                            mag_zpsys=sn_absolute_zpsys, 
-                            cosmo=cosmo, 
-                            skypy_config=skypy_config, 
-                            sky_area=sky_area)
-                supernovae_sample=supernovae_catalog_class.supernovae_catalog()
+                        suffix = key.split("ps_mag_")[1]
+                supernovae_catalog_class = SupernovaeCatalog(
+                    sn_type=sn_type,
+                    band=suffix,
+                    lightcurve_time=lightcurve_time,
+                    absolute_mag=None,
+                    absolute_mag_band=sn_absolute_mag_band,
+                    mag_zpsys=sn_absolute_zpsys,
+                    cosmo=cosmo,
+                    skypy_config=skypy_config,
+                    sky_area=sky_area,
+                )
+                supernovae_sample = supernovae_catalog_class.supernovae_catalog()
                 self._sources = PointPlusExtendedSources(
                     supernovae_sample,
                     cosmo=cosmo,
@@ -290,7 +299,7 @@ class LensPop(LensedPopulationBase):
                     kwargs_variability_model=kwargs_variability,
                     list_type="astropy_table",
                     light_profile=source_light_profile,
-                )    
+                )
             self._source_model_type = "point_plus_extended"
         else:
             raise ValueError("source_type %s is not supported" % source_type)

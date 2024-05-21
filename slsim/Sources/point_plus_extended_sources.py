@@ -19,7 +19,7 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
     ):
         """
 
-        :param point_plus_extended_sources_list: list of dictionary with point and 
+        :param point_plus_extended_sources_list: list of dictionary with point and
          extended source parameters or astropy table of sources.
         :param cosmo: cosmology
         :type cosmo: ~astropy.cosmology class
