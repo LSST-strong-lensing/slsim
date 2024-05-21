@@ -141,7 +141,7 @@ class TestSource:
                 "dec_off",
             ),
         )
-        
+
         self.source_dict5 = Table(
             [
                 [0.5],
@@ -170,7 +170,7 @@ class TestSource:
                 "dec_off",
             ),
         )
-        
+
         self.source = Source(
             self.source_dict,
             variability_model="sinusoidal",
@@ -211,7 +211,7 @@ class TestSource:
             lightcurve_time=np.linspace(-20, 50, 100),
             cosmo=cosmo,
         )
-        
+
         self.source6 = Source(
             self.source_dict4,
             variability_model="light_curve",
@@ -222,7 +222,6 @@ class TestSource:
             lightcurve_time=np.linspace(-20, 50, 100),
             cosmo=cosmo,
         )
-        
 
     def test_redshift(self):
         assert self.source.redshift == [0.5]
@@ -244,10 +243,9 @@ class TestSource:
             self.source.point_source_magnitude("j")
         with pytest.raises(ValueError):
             self.source4.point_source_magnitude("r")
-        
+
         result2 = self.source6.point_source_magnitude("F146")
         assert result2 == [self.source6.source_dict["ps_mag_F146"]]
-        
 
     def test_ps_magnitude_with_variability(self):
         image_observation_times = np.array([np.pi, np.pi / 2, np.pi / 3])
@@ -255,11 +253,11 @@ class TestSource:
         result_comp = np.array([0.48917028, 0.38842661, 0.27946793])
         npt.assert_almost_equal(result, result_comp, decimal=5)
 
-        image_observation_times2=np.array([20,50,80])
-        result2 = self.source6.point_source_magnitude(
-            "F146", image_observation_times2)
+        image_observation_times2 = np.array([20, 50, 80])
+        result2 = self.source6.point_source_magnitude("F146", image_observation_times2)
         result_comp2 = self.source6.variability_class.variability_at_time(
-            image_observation_times2)
+            image_observation_times2
+        )
         npt.assert_almost_equal(result2, result_comp2, decimal=5)
 
     def test_es_magnitude(self):
