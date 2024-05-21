@@ -181,6 +181,16 @@ class TestSource:
             lightcurve_time=np.linspace(-20, 50, 100),
             cosmo=cosmo,
         )
+        self.source6 = Source(
+            self.source_dict4,
+            variability_model="light_curve",
+            kwargs_variability={"supernovae_lightcurve", "F146"},
+            sn_absolute_mag_band="bessellb",
+            sn_absolute_zpsys="ab",
+            sn_type="Ia",
+            lightcurve_time=np.linspace(-20, 50, 100),
+            cosmo=cosmo,
+        )
 
     def test_redshift(self):
         assert self.source.redshift == [0.5]
