@@ -56,6 +56,7 @@ def test_supernovae_plus_galaxies_lens_pop_instance():
         kwargs_mass2light=None,
         skypy_config=None,
         sky_area=sky_area,
+        catalog_type="supernovae_sample",
         cosmo=cosmo,
     )
     kwargs_lens_cut = {}
