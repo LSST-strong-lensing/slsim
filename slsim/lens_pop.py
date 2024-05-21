@@ -206,7 +206,7 @@ class LensPop(LensedPopulationBase):
                     new_path = catalog_path
                 else:
                     new_path = (
-                        self.path + "/Sources/SupernovaeData/scotch_host_data.fits"
+                        self.path + "/Sources/SupernovaeCatalog/scotch_host_data.fits"
                     )
                 load_supernovae_data = Table.read(
                     new_path,
@@ -223,8 +223,8 @@ class LensPop(LensedPopulationBase):
                     light_profile=source_light_profile,
                     catalog_type=catalog_type,
                 )
-            else:
-                new_path = self.path + "/Sources/SupernovaeData/supernovae_data.ecsv"
+            elif catalog_type == "supernovae_sample":
+                new_path = self.path + "/Sources/SupernovaeCatalog/supernovae_data.ecsv"
                 load_supernovae_data = Table.read(new_path)
                 self._sources = PointPlusExtendedSources(
                     load_supernovae_data,
@@ -236,6 +236,8 @@ class LensPop(LensedPopulationBase):
                     list_type="astropy_table",
                     light_profile=source_light_profile,
                 )
+            else:
+                print("work in progress.")
             self._source_model_type = "point_plus_extended"
         else:
             raise ValueError("source_type %s is not supported" % source_type)
