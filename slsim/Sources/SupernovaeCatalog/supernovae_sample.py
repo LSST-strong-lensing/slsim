@@ -3,13 +3,24 @@ from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 from slsim.Sources import random_supernovae
 import numpy as np
 
+
 class SupernovaeCatalog(object):
-    """class to generate a supernovae catalog"""
-    def __init__(self, sn_type, band, lightcurve_time, 
-                      absolute_mag_band, mag_zpsys, cosmo, 
-                      skypy_config, sky_area, absolute_mag):
+    """Class to generate a supernovae catalog."""
+
+    def __init__(
+        self,
+        sn_type,
+        band,
+        lightcurve_time,
+        absolute_mag_band,
+        mag_zpsys,
+        cosmo,
+        skypy_config,
+        sky_area,
+        absolute_mag,
+    ):
         """
-        
+
         :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
         :type sn_type: str
         :param band: observation band
@@ -38,8 +49,8 @@ class SupernovaeCatalog(object):
         self.sky_area = sky_area
 
     def host_galaxy_catalog(self):
-        """ Generates galaxy catalog and those galaxies can be used as supernovae host 
-        galaxies. 
+        """Generates galaxy catalog and those galaxies can be used as supernovae host
+        galaxies.
 
         :return: supernovae host galaxy catalog
         """
@@ -49,41 +60,47 @@ class SupernovaeCatalog(object):
             filters=None,
             cosmo=self.cosmo,
         )
-        galaxy_table=pipeline.blue_galaxies
-        galaxy_table_cut=galaxy_table[galaxy_table['z'] <= 0.9329]
+        galaxy_table = pipeline.blue_galaxies
+        galaxy_table_cut = galaxy_table[galaxy_table["z"] <= 0.9329]
         return galaxy_table_cut
 
     def supernovae_catalog(self, host_galaxy=True):
-        """ Generates supernovae lightcurves for each host galaxies.
+        """Generates supernovae lightcurves for each host galaxies.
 
-        :param host_galaxy: kwargs to decide whether catalog should include host 
-         galaxies or not.
+        :param host_galaxy: kwargs to decide whether catalog should include host
+            galaxies or not.
         :return: supernovae catalog
         """
-        band_string="lsst"+self.band
+        band_string = "lsst" + self.band
         host_galaxies = self.host_galaxy_catalog()
         time = []
         magnitude = []
-        for z in host_galaxies['z']:
+        for z in host_galaxies["z"]:
             lightcurve_class = random_supernovae.RandomizedSupernova(
-                                self.sn_type,
-                                z,
-                                self.absolute_mag,
-                                self.absolute_mag_band,
-                                self.mag_zpsys,
-                                self.cosmo,
-                            )
-            time.append(self.lightcurve_time) 
-            magnitude.append(lightcurve_class.get_apparent_magnitude(
-                            self.lightcurve_time, band_string, zpsys=self.mag_zpsys
-                        ))
+                self.sn_type,
+                z,
+                self.absolute_mag,
+                self.absolute_mag_band,
+                self.mag_zpsys,
+                self.cosmo,
+            )
+            time.append(self.lightcurve_time)
+            magnitude.append(
+                lightcurve_class.get_apparent_magnitude(
+                    self.lightcurve_time, band_string, zpsys=self.mag_zpsys
+                )
+            )
         if host_galaxy is True:
-            ra_off = np.random.uniform(-5, 5, len(host_galaxies['z']))
-            dec_off = np.random.uniform(-5, 5, len(host_galaxies['z']))
-            lightcurve_table= Table([time, magnitude, ra_off, dec_off], 
-            names=("MJD", "ps_mag_"+self.band, "ra_off", "dec_off"))
+            ra_off = np.random.uniform(-5, 5, len(host_galaxies["z"]))
+            dec_off = np.random.uniform(-5, 5, len(host_galaxies["z"]))
+            lightcurve_table = Table(
+                [time, magnitude, ra_off, dec_off],
+                names=("MJD", "ps_mag_" + self.band, "ra_off", "dec_off"),
+            )
             supernovae_table = hstack([lightcurve_table, host_galaxies])
         else:
-            supernovae_table= Table([host_galaxies['z'], time, magnitude],
-             names=('z', "MJD", "ps_mag_"+self.band))
+            supernovae_table = Table(
+                [host_galaxies["z"], time, magnitude],
+                names=("z", "MJD", "ps_mag_" + self.band),
+            )
         return supernovae_table
