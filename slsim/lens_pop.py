@@ -6,6 +6,7 @@ from slsim.lens import (
 import numpy as np
 from slsim.lensed_population_base import LensedPopulationBase
 import os
+import pickle
 from astropy.table import Table
 
 
@@ -257,8 +258,9 @@ class LensPop(LensedPopulationBase):
                     catalog_type=catalog_type,
                 )
             elif catalog_type == "supernovae_sample":
-                new_path = self.path + "/Sources/SupernovaeCatalog/supernovae_data.ecsv"
-                load_supernovae_data = Table.read(new_path)
+                new_path = self.path + "/Sources/SupernovaeData/supernovae_data.pkl"
+                with open(new_path, "rb") as f:
+                    load_supernovae_data = pickle.load(f)
                 self._sources = PointPlusExtendedSources(
                     load_supernovae_data,
                     cosmo=cosmo,
@@ -266,7 +268,7 @@ class LensPop(LensedPopulationBase):
                     kwargs_cut=kwargs_source_cut,
                     variability_model=variability_model,
                     kwargs_variability_model=kwargs_variability,
-                    list_type="astropy_table",
+                    list_type="list",
                     light_profile=source_light_profile,
                 )
             else:
