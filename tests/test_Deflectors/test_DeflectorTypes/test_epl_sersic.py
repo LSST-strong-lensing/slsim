@@ -38,9 +38,11 @@ class TestEPLSersic(object):
 
     def test_mass_model_lenstronomy(self):
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-        lens_cosmo = LensCosmo(cosmo=cosmo, z_lens=self.deflector_dict["z"], z_source=2.0)
-        lens_mass_model_list, kwargs_lens_mass = (
-            self.epl_sersic.mass_model_lenstronomy(lens_cosmo=lens_cosmo)
+        lens_cosmo = LensCosmo(
+            cosmo=cosmo, z_lens=self.deflector_dict["z"], z_source=2.0
+        )
+        lens_mass_model_list, kwargs_lens_mass = self.epl_sersic.mass_model_lenstronomy(
+            lens_cosmo=lens_cosmo
         )
         assert len(lens_mass_model_list) == 1
 
