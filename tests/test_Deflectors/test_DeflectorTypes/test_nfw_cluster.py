@@ -1,6 +1,8 @@
 from slsim.Deflectors.DeflectorTypes.nfw_cluster import NFWCluster
 from slsim.Deflectors.deflector import Deflector
 from astropy.cosmology import FlatLambdaCDM
+from astropy.table import Table
+import os
 import numpy.testing as npt
 
 
@@ -16,56 +18,32 @@ class TestNFWCluster(object):
     """
 
     def setup_method(self):
-        self.deflector_dict = {
-            "halo_mass": 10**15,
-            "concentration": 10,
-            "e1_mass": 0.1,
-            "e2_mass": -0.1,
-            "z": 0.5,
-        }
+        path = os.path.dirname(__file__)
+        module_path = os.path.dirname(os.path.dirname(path))
+        # a table with the dictionary for a single dark matter halo
+        self.halo_dict = Table.read(
+            os.path.join(module_path, "TestData/halo_NFW.fits"), format="fits"
+        )
+        # a table with the dictionary for 10 EPL+Sersic subhalos
+        subhalos_table = Table.read(
+            os.path.join(module_path, "TestData/subhalos_table.fits"), format="fits"
+        )
         subhalos_list = [
-            Deflector(
-                deflector_type="EPL",
-                deflector_dict={
-                    "vel_disp": 200,
-                    "e1_mass": 0.1,
-                    "e2_mass": -0.1,
-                    "angular_size": 0.001,
-                    "n_sersic": 1,
-                    "e1_light": -0.1,
-                    "e2_light": 0.1,
-                    "z": 0.5,
-                    "mag_g": -18,
-                },
-            ),
-            Deflector(
-                deflector_type="NFW_HERNQUIST",
-                deflector_dict={
-                    "halo_mass": 10**13,
-                    "concentration": 10,
-                    "e1_mass": 0.1,
-                    "e2_mass": -0.1,
-                    "stellar_mass": 10e11,
-                    "angular_size": 0.001,
-                    "e1_light": -0.1,
-                    "e2_light": 0.1,
-                    "z": 0.5,
-                    "mag_g": -20,
-                },
-            ),
+            Deflector(deflector_type="EPL", deflector_dict=subhalo)
+            for subhalo in subhalos_table
         ]
         self.nfw_cluster = NFWCluster(
-            deflector_dict=self.deflector_dict, subhalos_list=subhalos_list
+            deflector_dict=self.halo_dict, subhalos_list=subhalos_list
         )
 
     def test_redshift(self):
         z = self.nfw_cluster.redshift
-        assert self.deflector_dict["z"] == z
+        assert self.halo_dict["z"] == z
 
     def test_halo_properties(self):
         m_halo, c = self.nfw_cluster.halo_properties
-        assert m_halo == self.deflector_dict["halo_mass"]
-        assert c == self.deflector_dict["concentration"]
+        assert m_halo == self.halo_dict["halo_mass"]
+        assert c == self.halo_dict["concentration"]
 
     def test_velocity_dispersion(self):
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -76,5 +54,6 @@ class TestNFWCluster(object):
         lens_light_model_list, kwargs_lens_light = (
             self.nfw_cluster.light_model_lenstronomy(band="g")
         )
-        assert len(lens_light_model_list) == 2
-        assert len(kwargs_lens_light) == 2
+        # one for each subhalo
+        assert len(lens_light_model_list) == 10
+        assert len(kwargs_lens_light) == 10

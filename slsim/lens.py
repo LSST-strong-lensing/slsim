@@ -568,7 +568,7 @@ class Lens(LensedSystemBase):
         :return: lens_model_list, kwargs_lens
         """
         if self.deflector.deflector_type in ["EPL"]:
-            lens_mass_model_list = ["EPL"]
+            gamma = self.deflector.halo_properties
             theta_E = self.einstein_radius_deflector
             e1_light_lens, e2_light_lens, e1_mass, e2_mass = (
                 self.deflector_ellipticity()
@@ -578,13 +578,19 @@ class Lens(LensedSystemBase):
             kwargs_lens = [
                 {
                     "theta_E": theta_E,
-                    "gamma": 2,
+                    "gamma": gamma,
                     "e1": e1_mass,
                     "e2": e2_mass,
                     "center_x": center_lens[0],
                     "center_y": center_lens[1],
                 }
             ]
+            if gamma == 2:
+                lens_mass_model_list = ["SIE"]
+                kwargs_lens[0].pop("gamma")
+            else:
+                lens_mass_model_list = ["EPL"]
+
         elif self.deflector.deflector_type in ["NFW_HERNQUIST"]:
             lens_mass_model_list = ["NFW_ELLIPSE_CSE", "HERNQUIST_ELLIPSE_CSE"]
             e1_light_lens, e2_light_lens, e1_mass, e2_mass = (

@@ -16,6 +16,13 @@ class NFWCluster(DeflectorBase):
     """
 
     def __init__(self, deflector_dict, subhalos_list):
+        """
+
+        :param deflector_dict:  parameters of the cluster halo
+        :type deflector_dict: dict
+        :param subhalos_list: list with Deflector instances as cluster subhalos
+        :type subhalos_list: list[Deflector]
+        """
         super(NFWCluster, self).__init__(deflector_dict)
         self._subhalos = subhalos_list
 
