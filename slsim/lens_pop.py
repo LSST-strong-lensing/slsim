@@ -258,7 +258,7 @@ class LensPop(LensedPopulationBase):
                     catalog_type=catalog_type,
                 )
             elif catalog_type == "supernovae_sample":
-                new_path = self.path + "/Sources/SupernovaeData/supernovae_data.pkl"
+                new_path = self.path + "/Sources/SupernovaeCatalog/supernovae_data.pkl"
                 with open(new_path, "rb") as f:
                     load_supernovae_data = pickle.load(f)
                 self._sources = PointPlusExtendedSources(
