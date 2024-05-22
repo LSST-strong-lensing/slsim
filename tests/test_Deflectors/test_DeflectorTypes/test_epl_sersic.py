@@ -59,7 +59,7 @@ class TestEPLSersic(object):
         lens_mass_model_list, kwargs_lens_mass = self.epl_sersic.mass_model_lenstronomy(
             lens_cosmo=lens_cosmo
         )
-        assert kwargs_lens_mass[0]['theta_E'] == 0.0
+        assert kwargs_lens_mass[0]["theta_E"] == 0.0
 
     def test_halo_porperties(self):
         gamma = self.epl_sersic.halo_properties
@@ -86,9 +86,7 @@ def test_mass_model_lenstronomy_gamma(gamma_epl_sersic_instance):
     # case when gamma != 2
     gamma_epl_sersic = gamma_epl_sersic_instance
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-    lens_cosmo = LensCosmo(
-        cosmo=cosmo, z_lens=gamma_epl_sersic.redshift, z_source=2.0
-    )
+    lens_cosmo = LensCosmo(cosmo=cosmo, z_lens=gamma_epl_sersic.redshift, z_source=2.0)
     lens_mass_model_list, kwargs_lens_mass = gamma_epl_sersic.mass_model_lenstronomy(
         lens_cosmo=lens_cosmo
     )
