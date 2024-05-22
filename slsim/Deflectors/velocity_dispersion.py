@@ -72,8 +72,8 @@ def vel_disp_nfw_3d(r, m_halo, c_halo, cosmo, z_lens):
     """Computes the unweighted velocity dispersion at 3D radius r for a deflector with a
     NFW halo profile, assuming isotropic anisotropy (beta = 0).
 
-    Based on equation (14) of Lokas and Mamon 2001 (
-    https://arxiv.org/abs/astro-ph/0002395)
+    Based on equation (14) of Lokas and Mamon 2001
+    (https://arxiv.org/abs/astro-ph/0002395)
 
     :param r: radius of the unweighted velocity dispersion [arcsec]
     :param m_halo: Halo mass [physical M_sun]
@@ -122,8 +122,8 @@ def vel_disp_nfw_aperture(r, m_halo, c_halo, cosmo, z_lens):
     """Computes the average line-of-sight velocity dispersion in an aperture r for a
     deflector with a NFW halo profile, assuming isotropic anisotropy (beta = 0).
 
-    Based on equation (48) of Lokas & Mamon 2001 (
-    https://arxiv.org/abs/astro-ph/0002395)
+    Based on equation (48) of Lokas & Mamon 2001
+    (https://arxiv.org/abs/astro-ph/0002395)
 
     :param r: radius of the aperture for the velocity dispersion [arcsec]
     :param m_halo: Halo mass [physical M_sun]
