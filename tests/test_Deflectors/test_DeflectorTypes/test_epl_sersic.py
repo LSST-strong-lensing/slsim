@@ -1,4 +1,6 @@
 from slsim.Deflectors.DeflectorTypes.epl_sersic import EPLSersic
+from astropy.cosmology import FlatLambdaCDM
+from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 
 
 class TestEPLSersic(object):
@@ -33,6 +35,14 @@ class TestEPLSersic(object):
     def test_velocity_dispersion(self):
         vel_disp = self.epl_sersic.velocity_dispersion()
         assert vel_disp == self.deflector_dict["vel_disp"]
+
+    def test_mass_model_lenstronomy(self):
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+        lens_cosmo = LensCosmo(cosmo=cosmo, z_lens=self.deflector_dict["z"], z_source=2.0)
+        lens_mass_model_list, kwargs_lens_mass = (
+            self.epl_sersic.mass_model_lenstronomy(lens_cosmo=lens_cosmo)
+        )
+        assert len(lens_mass_model_list) == 1
 
     def test_halo_porperties(self):
         gamma = self.epl_sersic.halo_properties
