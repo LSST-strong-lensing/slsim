@@ -87,8 +87,8 @@ class SupernovaeCatalog(object):
             lightcurve_data['ps_mag_'+band] = getattr(self, f'magnitude_{band}')
         lightcurve_table = Table(lightcurve_data)
         if host_galaxy is True:
-            ra_off = np.random.uniform(-5, 5, len(host_galaxies["z"]))
-            dec_off = np.random.uniform(-5, 5, len(host_galaxies["z"]))
+            ra_off, dec_off = self.supernovae_host_galaxy_offset(
+                len(host_galaxies["z"]))
             lightcurve_table["ra_off"] = ra_off
             lightcurve_table["dec_off"] = dec_off
             supernovae_table = hstack([lightcurve_table, host_galaxies])
@@ -96,3 +96,19 @@ class SupernovaeCatalog(object):
             lightcurve_table["z"] = host_galaxies['z']
             supernovae_table = lightcurve_table
         return supernovae_table
+    
+    def supernovae_host_galaxy_offset(self, supernovae_number):
+        """ This function generates random supernovae offsets from their host galaxy 
+         center.
+
+        # TODO: use supernovae and host galaxy parameters to compute more realistic 
+        offset.
+
+        :param supernovae_number: number of supernovae
+        :return: random ra_off and dec_off for each supernovae.
+        """
+        ## limits used here are mostly arbitrary. more realistic supernovae-host galaxy 
+        #offset is needed.
+        ra_off = np.random.uniform(-5, 5, supernovae_number)
+        dec_off = np.random.uniform(-5, 5, supernovae_number)
+        return ra_off, dec_off
