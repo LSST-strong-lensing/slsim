@@ -106,7 +106,7 @@ class Deflector(object):
         """Returns lens model instance and parameters in lenstronomy conventions.
 
         :param lens_cosmo: lens cosmology model
-        :type lens_cosmo: LensCosmo class
+        :type lens_cosmo: ~lenstronomy.Cosmo.LensCosmo instance
         :return: lens_mass_model_list, kwargs_lens_mass
         """
         return self._deflector.mass_model_lenstronomy(lens_cosmo=lens_cosmo)
