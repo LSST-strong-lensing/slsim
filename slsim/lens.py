@@ -567,61 +567,10 @@ class Lens(LensedSystemBase):
 
         :return: lens_model_list, kwargs_lens
         """
-        if self.deflector.deflector_type in ["EPL"]:
-            gamma = self.deflector.halo_properties
-            theta_E = self.einstein_radius_deflector
-            e1_light_lens, e2_light_lens, e1_mass, e2_mass = (
-                self.deflector_ellipticity()
+        if self.deflector.deflector_type in ["EPL", "NFW_HERNQUIST"]:
+            lens_mass_model_list, kwargs_lens = self.deflector.mass_model_lenstronomy(
+                lens_cosmo=self._lens_cosmo
             )
-            center_lens = self.deflector_position
-
-            kwargs_lens = [
-                {
-                    "theta_E": theta_E,
-                    "gamma": gamma,
-                    "e1": e1_mass,
-                    "e2": e2_mass,
-                    "center_x": center_lens[0],
-                    "center_y": center_lens[1],
-                }
-            ]
-            if gamma == 2:
-                lens_mass_model_list = ["SIE"]
-                kwargs_lens[0].pop("gamma")
-            else:
-                lens_mass_model_list = ["EPL"]
-
-        elif self.deflector.deflector_type in ["NFW_HERNQUIST"]:
-            lens_mass_model_list = ["NFW_ELLIPSE_CSE", "HERNQUIST_ELLIPSE_CSE"]
-            e1_light_lens, e2_light_lens, e1_mass, e2_mass = (
-                self.deflector_ellipticity()
-            )
-            center_lens = self.deflector_position
-            rs_phys = self._lens_cosmo.dd * self.deflector.angular_size_light
-            sigma0, rs_light_angle = self._lens_cosmo.hernquist_phys2angular(
-                mass=self.deflector.stellar_mass, rs=rs_phys
-            )
-            # halo mass, concentration, stellar mass
-            m_halo, c_halo = self.deflector.halo_properties
-            rs_halo, alpha_rs = self._lens_cosmo.nfw_physical2angle(M=m_halo, c=c_halo)
-            kwargs_lens = [
-                {
-                    "alpha_Rs": alpha_rs,
-                    "Rs": rs_halo,
-                    "e1": e1_mass,
-                    "e2": e2_mass,
-                    "center_x": center_lens[0],
-                    "center_y": center_lens[1],
-                },
-                {
-                    "Rs": rs_light_angle,
-                    "sigma0": sigma0,
-                    "e1": e1_light_lens,
-                    "e2": e2_light_lens,
-                    "center_x": center_lens[0],
-                    "center_y": center_lens[1],
-                },
-            ]
         else:
             raise ValueError(
                 "Deflector model %s not supported for lenstronomy model"

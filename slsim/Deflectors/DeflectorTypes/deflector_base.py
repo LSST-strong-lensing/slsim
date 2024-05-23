@@ -90,6 +90,16 @@ class DeflectorBase(ABC):
         return e1_mass, e2_mass
 
     @abstractmethod
+    def mass_model_lenstronomy(self, lens_cosmo):
+        """Returns lens model instance and parameters in lenstronomy conventions.
+
+        :param lens_cosmo: lens cosmology model
+        :type lens_cosmo: ~lenstronomy.Cosmo.LensCosmo instance
+        :return: lens_mass_model_list, kwargs_lens_mass
+        """
+        pass
+
+    @abstractmethod
     def light_model_lenstronomy(self, band=None):
         """Returns lens model instance and parameters in lenstronomy conventions.
 

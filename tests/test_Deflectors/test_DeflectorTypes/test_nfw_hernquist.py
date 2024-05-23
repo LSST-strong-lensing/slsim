@@ -1,6 +1,7 @@
 from slsim.Deflectors.DeflectorTypes.nfw_hernquist import NFWHernquist
 from astropy.cosmology import FlatLambdaCDM
 import numpy.testing as npt
+from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 
 
 class TestNFWHernquist(object):
@@ -51,3 +52,13 @@ class TestNFWHernquist(object):
             self.nfw_hernquist.light_model_lenstronomy(band="g")
         )
         assert len(lens_light_model_list) == 1
+
+    def test_mass_model_lenstronomy(self):
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+        lens_cosmo = LensCosmo(
+            cosmo=cosmo, z_lens=self.deflector_dict["z"], z_source=2.0
+        )
+        lens_mass_model_list, kwargs_lens_mass = (
+            self.nfw_hernquist.mass_model_lenstronomy(lens_cosmo=lens_cosmo)
+        )
+        assert len(lens_mass_model_list) == 2

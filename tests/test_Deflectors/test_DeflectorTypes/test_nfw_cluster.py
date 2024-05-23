@@ -4,6 +4,7 @@ from astropy.cosmology import FlatLambdaCDM
 from astropy.table import Table
 import os
 import numpy.testing as npt
+from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 
 
 class TestNFWCluster(object):
@@ -57,3 +58,11 @@ class TestNFWCluster(object):
         # one for each subhalo
         assert len(lens_light_model_list) == 10
         assert len(kwargs_lens_light) == 10
+
+    def test_mass_model_lenstronomy(self):
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+        lens_cosmo = LensCosmo(cosmo=cosmo, z_lens=self.halo_dict["z"], z_source=2.0)
+        lens_mass_model_list, kwargs_lens_mass = (
+            self.nfw_cluster.mass_model_lenstronomy(lens_cosmo=lens_cosmo)
+        )
+        assert len(lens_mass_model_list) == 11

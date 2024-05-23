@@ -99,6 +99,15 @@ class Deflector(object):
         """
         return self._deflector.mass_ellipticity
 
+    def mass_model_lenstronomy(self, lens_cosmo):
+        """Returns lens model instance and parameters in lenstronomy conventions.
+
+        :param lens_cosmo: lens cosmology model
+        :type lens_cosmo: ~lenstronomy.Cosmo.LensCosmo instance
+        :return: lens_mass_model_list, kwargs_lens_mass
+        """
+        return self._deflector.mass_model_lenstronomy(lens_cosmo=lens_cosmo)
+
     def light_model_lenstronomy(self, band=None):
         """Returns lens model instance and parameters in lenstronomy conventions.
 

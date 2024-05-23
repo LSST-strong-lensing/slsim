@@ -1,4 +1,8 @@
+import pytest
+
 from slsim.Deflectors.DeflectorTypes.epl_sersic import EPLSersic
+from astropy.cosmology import FlatLambdaCDM
+from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 
 
 class TestEPLSersic(object):
@@ -34,6 +38,61 @@ class TestEPLSersic(object):
         vel_disp = self.epl_sersic.velocity_dispersion()
         assert vel_disp == self.deflector_dict["vel_disp"]
 
+    def test_mass_model_lenstronomy_sie(self):
+        # Should yeld SIE model as gamma = 2
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+        lens_cosmo = LensCosmo(
+            cosmo=cosmo, z_lens=self.epl_sersic.redshift, z_source=2.0
+        )
+        lens_mass_model_list, kwargs_lens_mass = self.epl_sersic.mass_model_lenstronomy(
+            lens_cosmo=lens_cosmo
+        )
+        assert len(lens_mass_model_list) == 1
+        assert lens_mass_model_list[0] == "SIE"
+
+    def test_mass_model_no_lensing(self):
+        # case when z_source < z_lens
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+        lens_cosmo = LensCosmo(
+            cosmo=cosmo, z_lens=self.epl_sersic.redshift, z_source=0.2
+        )
+        lens_mass_model_list, kwargs_lens_mass = self.epl_sersic.mass_model_lenstronomy(
+            lens_cosmo=lens_cosmo
+        )
+        assert kwargs_lens_mass[0]["theta_E"] == 0.0
+
     def test_halo_porperties(self):
         gamma = self.epl_sersic.halo_properties
-        assert gamma == 2
+        assert gamma == 2.0
+
+
+@pytest.fixture
+def gamma_epl_sersic_instance():
+    deflector_dict = {
+        "vel_disp": 200,
+        "gamma_pl": 1.9,
+        "e1_mass": 0.1,
+        "e2_mass": -0.1,
+        "angular_size": 0.001,
+        "n_sersic": 1,
+        "e1_light": -0.1,
+        "e2_light": 0.1,
+        "z": 0.5,
+    }
+    return EPLSersic(deflector_dict=deflector_dict)
+
+
+def test_mass_model_lenstronomy_gamma(gamma_epl_sersic_instance):
+    # case when gamma != 2
+    gamma_epl_sersic = gamma_epl_sersic_instance
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    lens_cosmo = LensCosmo(cosmo=cosmo, z_lens=gamma_epl_sersic.redshift, z_source=2.0)
+    lens_mass_model_list, kwargs_lens_mass = gamma_epl_sersic.mass_model_lenstronomy(
+        lens_cosmo=lens_cosmo
+    )
+    assert len(lens_mass_model_list) == 1
+    assert lens_mass_model_list[0] == "EPL"
+
+
+if __name__ == "__main__":
+    pytest.main()
