@@ -5,7 +5,7 @@ from astropy.cosmology import FlatLambdaCDM
 from slsim.Sources.SupernovaeCatalog.supernovae_sample import SupernovaeCatalog
 
 sn_type = "Ia"
-band = "r"
+band_list = ["r"]
 lightcurve_time = np.linspace(-20, 100, 500)
 absolute_mag_band = "bessellb"
 mag_zpsys = "AB"
@@ -20,7 +20,7 @@ class TestSupernovaeCatalog:
     def setup(self):
         self.supernovae_catalog = SupernovaeCatalog(
             sn_type=sn_type,
-            band=band,
+            band_list=band_list,
             lightcurve_time=lightcurve_time,
             absolute_mag_band=absolute_mag_band,
             mag_zpsys=mag_zpsys,
