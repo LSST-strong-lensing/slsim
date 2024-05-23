@@ -162,11 +162,14 @@ class Source(object):
             band_string = "ps_mag_" + band
 
         if self.kwargs_variab_extracted is not None:
-            kwargs_variab_band = {"MJD":self.kwargs_variab_extracted["MJD"],
-                     "ps_mag_"+band: self.kwargs_variab_extracted["ps_mag_"+band]}
+            if "MJD" in self.kwargs_variab_extracted:
+                kwargs_variab_band = {"MJD":self.kwargs_variab_extracted["MJD"],
+                        "ps_mag_"+band: self.kwargs_variab_extracted["ps_mag_"+band]}
+            else:
+                kwargs_variab_band = self.kwargs_variab_extracted
             variability_class = Variability(
-                self.variability_model, **kwargs_variab_band
-            )
+                    self.variability_model, **kwargs_variab_band
+                )
         else:
             variability_class = None
         if image_observation_times is not None:
