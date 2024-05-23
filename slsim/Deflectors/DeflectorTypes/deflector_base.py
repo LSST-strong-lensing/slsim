@@ -94,7 +94,7 @@ class DeflectorBase(ABC):
         """Returns lens model instance and parameters in lenstronomy conventions.
 
         :param lens_cosmo: lens cosmology model
-        :type lens_cosmo: LensCosmo class
+        :type lens_cosmo: ~lenstronomy.Cosmo.LensCosmo instance
         :return: lens_mass_model_list, kwargs_lens_mass
         """
         pass
