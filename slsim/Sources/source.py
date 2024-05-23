@@ -97,8 +97,8 @@ class Source(object):
                 self._source_dict = Table(self.source_dict)
                 self._source_dict.add_column(new_column)
                 self.source_dict = self._source_dict[0]
-                kwargs_variab_extracted["MJD"] = times
-                kwargs_variab_extracted[name] = magnitudes
+                self.kwargs_variab_extracted["MJD"] = times
+                self.kwargs_variab_extracted[name] = magnitudes
             else:
                 # With this condition we extract values for kwargs_variability from the
                 # given source dict and prepar variability class.
@@ -118,9 +118,6 @@ class Source(object):
                         raise ValueError(
                             "given keyword %s is not in the source catalog." % element
                         )
-            """self.variability_class = Variability(
-                variability_model, **kwargs_variab_extracted
-            )"""
         else:
             #self.variability_class = None
             self.kwargs_variab_extracted = None
