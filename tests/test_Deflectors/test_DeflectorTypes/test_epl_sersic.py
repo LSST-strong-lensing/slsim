@@ -33,3 +33,7 @@ class TestEPLSersic(object):
     def test_velocity_dispersion(self):
         vel_disp = self.epl_sersic.velocity_dispersion()
         assert vel_disp == self.deflector_dict["vel_disp"]
+
+    def test_halo_porperties(self):
+        gamma = self.epl_sersic.halo_properties
+        assert gamma == 2

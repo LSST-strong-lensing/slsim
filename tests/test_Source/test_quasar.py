@@ -27,13 +27,18 @@ def Quasar_class():
 
 
 def test_source_number(Quasar_class):
-    number = Quasar_class.source_number()
+    number = Quasar_class.source_number
     assert number > 0
 
 
 def test_draw_source(Quasar_class):
     quasar = Quasar_class.draw_source()
     assert len(quasar) > 0
+
+
+def test_source_number_selected(Quasar_class):
+    num = Quasar_class.source_number_selected
+    assert num > 0
 
 
 def test_variability_model(Quasar_class):

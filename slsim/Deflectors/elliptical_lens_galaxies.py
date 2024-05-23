@@ -41,6 +41,8 @@ class EllipticalLensGalaxies(DeflectorsBase):
             galaxy_list["e2_mass"] = -np.ones(n)
         if "n_sersic" not in column_names:
             galaxy_list["n_sersic"] = -np.ones(n)
+        if "gamma_pl" not in column_names:
+            galaxy_list["gamma_pl"] = np.ones(n) * 2
 
         num_total = len(galaxy_list)
         z_min, z_max = 0, np.max(galaxy_list["z"])
