@@ -42,7 +42,7 @@ class TestSupernovaeCatalog:
         assert "ps_mag_r" in result.colnames
         assert "z" in result.colnames
         assert len(result2.colnames) == 3
-    
+
     def test_supernovae_host_galaxy_offset(self):
         ra_off, dec_off = self.supernovae_catalog.supernovae_host_galaxy_offset(5)
         assert max(ra_off) <= 5

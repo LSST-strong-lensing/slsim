@@ -113,13 +113,15 @@ class Source(object):
                                 element
                             ].reshape(-1)
                         else:
-                            self.kwargs_variab_extracted[element] = self.source_dict[element]
+                            self.kwargs_variab_extracted[element] = self.source_dict[
+                                element
+                            ]
                     else:
                         raise ValueError(
                             "given keyword %s is not in the source catalog." % element
                         )
         else:
-            #self.variability_class = None
+            # self.variability_class = None
             self.kwargs_variab_extracted = None
 
     @property
@@ -171,13 +173,15 @@ class Source(object):
 
         if self.kwargs_variab_extracted is not None:
             if "MJD" in self.kwargs_variab_extracted:
-                kwargs_variab_band = {"MJD":self.kwargs_variab_extracted["MJD"],
-                        "ps_mag_"+band: self.kwargs_variab_extracted["ps_mag_"+band]}
+                kwargs_variab_band = {
+                    "MJD": self.kwargs_variab_extracted["MJD"],
+                    "ps_mag_" + band: self.kwargs_variab_extracted["ps_mag_" + band],
+                }
             else:
                 kwargs_variab_band = self.kwargs_variab_extracted
             self.variability_class = Variability(
-                    self.variability_model, **kwargs_variab_band
-                )
+                self.variability_model, **kwargs_variab_band
+            )
         else:
             self.variability_class = None
         if image_observation_times is not None:

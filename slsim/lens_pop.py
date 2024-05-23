@@ -245,7 +245,7 @@ class LensPop(LensedPopulationBase):
                     SupernovaeCatalog,
                 )
 
-                suffixes=[]
+                suffixes = []
                 for key in kwargs_variability:
                     if key.startswith("ps_mag_"):
                         suffixes.append(key.split("ps_mag_")[1])
@@ -260,7 +260,7 @@ class LensPop(LensedPopulationBase):
                     skypy_config=skypy_config,
                     sky_area=sky_area,
                 )
-                if source_type=="supernovae":
+                if source_type == "supernovae":
                     supernovae_sample = supernovae_catalog_class.supernovae_catalog(
                         host_galaxy=False
                     )
@@ -284,7 +284,7 @@ class LensPop(LensedPopulationBase):
                         list_type="astropy_table",
                         light_profile=source_light_profile,
                     )
-            if source_type=="supernovae":
+            if source_type == "supernovae":
                 self._source_model_type = "point_source"
             else:
                 self._source_model_type = "point_plus_extended"

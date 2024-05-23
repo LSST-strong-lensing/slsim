@@ -84,8 +84,8 @@ def test_supernovae_plus_galaxies_lens_pop_instance_2():
         skypy_config=None,
         sky_area=sky_area,
         cosmo=cosmo,
-        lightcurve_time=time_range
-)
+        lightcurve_time=time_range,
+    )
     kwargs_lens_cut = {}
     pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
     assert pes_lens_class._source_type == "point_plus_extended"
@@ -113,8 +113,8 @@ def test_supernovae_lens_pop_instance():
         skypy_config=None,
         sky_area=sky_area,
         cosmo=cosmo,
-        lightcurve_time=time_range
-)
+        lightcurve_time=time_range,
+    )
     kwargs_lens_cut = {}
     pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
     assert pes_lens_class._source_type == "point_source"
