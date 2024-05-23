@@ -44,12 +44,13 @@ class Source(object):
         :type lightcurve_time: array
         """
         self.source_dict = source_dict
+        self.variability_model = variability_model
         if kwargs_variability is not None:
             ##Here we prepare variability class on the basis of given
             # kwargs_variability.
-            kwargs_variab_extracted = {}
+            self.kwargs_variab_extracted = {}
             kwargs_variability_list = ["supernovae_lightcurve"]
-            # With this condition we call lightcure generator class and prepare
+            # With this condition we call lightcurve generator class and prepare
             # variability class.
             if any(
                 element in kwargs_variability_list
@@ -85,8 +86,8 @@ class Source(object):
                 self._source_dict = Table(self.source_dict)
                 self._source_dict.add_column(new_column)
                 self.source_dict = self._source_dict[0]
-                kwargs_variab_extracted["MJD"] = times
-                kwargs_variab_extracted["ps_mag_" + provided_band] = magnitudes
+                self.kwargs_variab_extracted["MJD"] = times
+                self.kwargs_variab_extracted["ps_mag_" + provided_band] = magnitudes
             else:
                 # With this condition we extract values for kwargs_variability from the
                 # given source dict and prepar variability class.
@@ -97,20 +98,21 @@ class Source(object):
                             and self.source_dict[element].ndim == 2
                             and self.source_dict[element].shape[0] == 1
                         ):
-                            kwargs_variab_extracted[element] = self.source_dict[
+                            self.kwargs_variab_extracted[element] = self.source_dict[
                                 element
                             ].reshape(-1)
                         else:
-                            kwargs_variab_extracted[element] = self.source_dict[element]
+                            self.kwargs_variab_extracted[element] = self.source_dict[element]
                     else:
                         raise ValueError(
                             "given keyword %s is not in the source catalog." % element
                         )
-            self.variability_class = Variability(
+            """self.variability_class = Variability(
                 variability_model, **kwargs_variab_extracted
-            )
+            )"""
         else:
-            self.variability_class = None
+            #self.variability_class = None
+            self.kwargs_variab_extracted = None
 
     @property
     def redshift(self):
@@ -159,10 +161,17 @@ class Source(object):
         else:
             band_string = "ps_mag_" + band
 
-        # source_mag = self.source_dict[band_string]
+        if self.kwargs_variab_extracted is not None:
+            kwargs_variab_band = {"MJD":self.kwargs_variab_extracted["MJD"],
+                     "ps_mag_"+band: self.kwargs_variab_extracted["ps_mag_"+band]}
+            variability_class = Variability(
+                self.variability_model, **kwargs_variab_band
+            )
+        else:
+            variability_class = None
         if image_observation_times is not None:
-            if self.variability_class is not None:
-                variable_mag = self.variability_class.variability_at_time(
+            if variability_class is not None:
+                variable_mag = variability_class.variability_at_time(
                     image_observation_times
                 )
                 return variable_mag

@@ -276,12 +276,13 @@ class LensPop(LensedPopulationBase):
                     SupernovaeCatalog,
                 )
 
+                suffixes=[]
                 for key in kwargs_variability:
                     if key.startswith("ps_mag_"):
-                        suffix = key.split("ps_mag_")[1]
+                        suffixes.append(key.split("ps_mag_")[1])
                 supernovae_catalog_class = SupernovaeCatalog(
                     sn_type=sn_type,
-                    band=suffix,
+                    band_list=suffixes,
                     lightcurve_time=lightcurve_time,
                     absolute_mag=None,
                     absolute_mag_band=sn_absolute_mag_band,
