@@ -175,14 +175,14 @@ class Source(object):
                         "ps_mag_"+band: self.kwargs_variab_extracted["ps_mag_"+band]}
             else:
                 kwargs_variab_band = self.kwargs_variab_extracted
-            variability_class = Variability(
+            self.variability_class = Variability(
                     self.variability_model, **kwargs_variab_band
                 )
         else:
-            variability_class = None
+            self.variability_class = None
         if image_observation_times is not None:
-            if variability_class is not None:
-                variable_mag = variability_class.variability_at_time(
+            if self.variability_class is not None:
+                variable_mag = self.variability_class.variability_at_time(
                     image_observation_times
                 )
                 return variable_mag
