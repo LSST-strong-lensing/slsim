@@ -428,7 +428,7 @@ class Lens(LensedSystemBase):
         :type band: string
         :param lensed: if True, returns the lensed magnified magnitude
         :type lensed: bool
-        :param time: time is a image observation time in units of days. If None,
+        :param time: time is an image observation time in units of days. If None,
             provides magnitude without variability.
         :param molet: if using MOLET to produce the lensed magnification
         :type molet: bool
@@ -436,6 +436,8 @@ class Lens(LensedSystemBase):
         """
         # TODO: might have to change conventions between extended and point source
         if lensed:
+            if molet:
+                return self.point_source_magnitude_molet(band=band, time=time)
             magnif = self.point_source_magnification()
             magnif_log = 2.5 * np.log10(abs(magnif))
             if time is not None:
@@ -457,22 +459,40 @@ class Lens(LensedSystemBase):
                 return np.array(magnified_mag_list)
         return self.source.point_source_magnitude(band)
 
-    def point_source_magnitude_molet(self, band, time):
+    def point_source_magnitude_molet(self, band, time, **kwargs_molet):
         """
         return image magnitudes at a given observer time
 
         :param band: imaging band
         :type band: string
-        :param time: time is a image observation time in units of days. If None,
+        :param time: time is an image observation time in units of days. If None,
             provides magnitude without variability.
         :return: point source magnitude (lensed (incl. micro-lensing)
         """
         # coolest convention of lens model (or kappa, gamma, kappa_star)
+        lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
+        lens_model = LensModel(lens_model_list=lens_model_list)
+        x, y = self.point_source_image_positions()
+        f_xx, f_xy, f_yx, f_yy = lens_model.hessian(x=x, y=y, kwargs=kwargs_lens)
+        kappa = 1/2. * (f_xx + f_yy)
+        gamma1 = 1.0 / 2 * (f_xx - f_yy)
+        gamma2 = f_xy
+        gamma = np.sqrt(gamma1**2 + gamma2**2)
+
         # observation times (i.e. macro-model time delays)
         # image positions
         # quasar disk model at given time(s) (either time-variable or static
 
+        # ===============
+        # call MOLET with
+        # kappa: lensing convergence at image position
+        # gamma: shear strength at image position
+        # kappa_star: stellar convergence at image position
+        # kwargs_molet: additional (optional) dictionary of settings required by molet that do not depend on
+        # the Lens() class
+
         # TODO: do we create full light curves (and save it in cache) or call it each time
+        return 0
 
 
 
@@ -616,10 +636,14 @@ class Lens(LensedSystemBase):
         """
         return self.deflector.light_model_lenstronomy(band=band)
 
-    def source_light_model_lenstronomy(self, band=None):
+    def source_light_model_lenstronomy(self, band=None, molet=False):
         """Returns source light model instance and parameters in lenstronomy
-        conventions.
+        conventions, which includes extended sources and point sources
 
+        :param band: imaging band
+        :type band: string
+        :param molet: if using MOLET to produce the lensed magnification
+        :type molet: bool
         :return: source_light_model_list, kwargs_source_light
         """
         source_models = {}
@@ -655,7 +679,7 @@ class Lens(LensedSystemBase):
             if band is None:
                 image_magnitudes = np.abs(self.point_source_magnification())
             else:
-                image_magnitudes = self.point_source_magnitude(band=band, lensed=True)
+                image_magnitudes = self.point_source_magnitude(band=band, lensed=True, molet=molet)
             kwargs_ps = [
                 {"ra_image": img_x, "dec_image": img_y, "magnitude": image_magnitudes}
             ]
