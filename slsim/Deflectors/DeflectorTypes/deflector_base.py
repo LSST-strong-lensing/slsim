@@ -44,10 +44,13 @@ class DeflectorBase(ABC):
         """
         if not hasattr(self, "_center_lens"):
 
-            if "center_x" in self._deflector_dict.keys() and "center_y" in self._deflector_dict.keys():
-                center_x_lens, center_y_lens = float(self._deflector_dict["center_x"]), float(
-                    self._deflector_dict["center_y"]
-                )
+            if (
+                "center_x" in self._deflector_dict.keys()
+                and "center_y" in self._deflector_dict.keys()
+            ):
+                center_x_lens, center_y_lens = float(
+                    self._deflector_dict["center_x"]
+                ), float(self._deflector_dict["center_y"])
             else:
                 center_x_lens, center_y_lens = np.random.normal(
                     loc=0, scale=0.1

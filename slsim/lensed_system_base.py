@@ -61,7 +61,9 @@ class LensedSystemBase(ABC):
         if deflector_kwargs is None:
             deflector_kwargs = {}
         self.deflector = Deflector(
-            deflector_type=deflector_type, deflector_dict=deflector_dict, **deflector_kwargs
+            deflector_type=deflector_type,
+            deflector_dict=deflector_dict,
+            **deflector_kwargs
         )
         # TODO: tell them what keys the dictionary should contain
         self.test_area = test_area

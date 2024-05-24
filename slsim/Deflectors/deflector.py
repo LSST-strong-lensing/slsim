@@ -22,7 +22,9 @@ class Deflector(object):
         elif deflector_type in ["NFW_HERNQUIST"]:
             self._deflector = NFWHernquist(deflector_dict=deflector_dict)
         elif deflector_type in ["NFW_CLUSTER"]:
-            self._deflector = NFWCluster(deflector_dict=deflector_dict, **deflector_kwargs)
+            self._deflector = NFWCluster(
+                deflector_dict=deflector_dict, **deflector_kwargs
+            )
         else:
             raise ValueError(
                 "Deflector type %s not supported. Chose among %s."
