@@ -29,10 +29,10 @@ slsim.Sources.point\_plus\_extended\_source module
    :undoc-members:
    :show-inheritance:
 
-slsim.Sources.quasars module
+slsim.Sources.point_sources module
 ----------------------------
 
-.. automodule:: slsim.Sources.quasars
+.. automodule:: slsim.Sources.point_sources
    :members:
    :undoc-members:
    :show-inheritance:

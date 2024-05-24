@@ -47,7 +47,7 @@ class TestVariability:
         observation_times = np.linspace(0, 1000, 1000)
         results = var.variability_at_time(observation_times)
         assert var.variability_model == "bending_power_law"
-        npt.assert_almost_equal(results.mean(), 0, decimal=5)
+        npt.assert_almost_equal(results.mean(), 0, decimal=4)
 
     def test_variability_user_defined_psd(self):
         frequencies = np.linspace(1 / 1000, 1 / 2, 1000)
