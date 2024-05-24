@@ -418,7 +418,7 @@ class Lens(LensedSystemBase):
 
         return observer_times
 
-    def point_source_magnitude(self, band, lensed=False, time=None):
+    def point_source_magnitude(self, band, lensed=False, time=None, molet=False):
         """Point source magnitude, either unlensed (single value) or lensed (array) with
         macro-model magnifications.
 
@@ -430,6 +430,8 @@ class Lens(LensedSystemBase):
         :type lensed: bool
         :param time: time is a image observation time in units of days. If None,
             provides magnitude without variability.
+        :param molet: if using MOLET to produce the lensed magnification
+        :type molet: bool
         :return: point source magnitude
         """
         # TODO: might have to change conventions between extended and point source
@@ -454,6 +456,26 @@ class Lens(LensedSystemBase):
                     magnified_mag_list.append(source_mag_unlensed - magnif_log[i])
                 return np.array(magnified_mag_list)
         return self.source.point_source_magnitude(band)
+
+    def point_source_magnitude_molet(self, band, time):
+        """
+        return image magnitudes at a given observer time
+
+        :param band: imaging band
+        :type band: string
+        :param time: time is a image observation time in units of days. If None,
+            provides magnitude without variability.
+        :return: point source magnitude (lensed (incl. micro-lensing)
+        """
+        # coolest convention of lens model (or kappa, gamma, kappa_star)
+        # observation times (i.e. macro-model time delays)
+        # image positions
+        # quasar disk model at given time(s) (either time-variable or static
+
+        # TODO: do we create full light curves (and save it in cache) or call it each time
+
+
+
 
     def extended_source_magnitude(self, band, lensed=False):
         """Unlensed apparent magnitude of the extended source for a given band (assumes
