@@ -645,7 +645,8 @@ class Lens(LensedSystemBase):
         return source_models, all_source_kwarg_dict
 
     def kappa_star(self, ra, dec):
-        """computes the stellar surface density at location (ra, dec) in units of lensing convergence
+        """Computes the stellar surface density at location (ra, dec) in units of
+        lensing convergence.
 
         :param ra: position in the image plane
         :param dec: position in the image plane
@@ -662,8 +663,12 @@ class Lens(LensedSystemBase):
         )
 
         total_flux = lightModel.total_flux(kwargs_lens_light_amp)  # integrated flux
-        flux_local = lightModel.surface_brightness(ra, dec, kwargs_lens_light_amp)  # surface brightness per arcsecond square
-        kappa_star = flux_local / total_flux * stellar_mass / self._lens_cosmo.sigma_crit_angle
+        flux_local = lightModel.surface_brightness(
+            ra, dec, kwargs_lens_light_amp
+        )  # surface brightness per arcsecond square
+        kappa_star = (
+            flux_local / total_flux * stellar_mass / self._lens_cosmo.sigma_crit_angle
+        )
         return kappa_star
 
 

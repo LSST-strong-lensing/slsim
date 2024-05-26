@@ -150,10 +150,15 @@ class TestLens(object):
         delta_pix = 0.05
         x, y = make_grid(numPix=200, deltapix=delta_pix)
         kappa_star = self.gg_lens.kappa_star(x, y)
-        stellar_mass_from_kappa_star = np.sum(kappa_star) * delta_pix**2 * self.gg_lens._lens_cosmo.sigma_crit_angle
+        stellar_mass_from_kappa_star = (
+            np.sum(kappa_star)
+            * delta_pix**2
+            * self.gg_lens._lens_cosmo.sigma_crit_angle
+        )
         stellar_mass = self.gg_lens.deflector_stellar_mass()
-        npt.assert_almost_equal(stellar_mass_from_kappa_star / stellar_mass, 1, decimal=1)
-
+        npt.assert_almost_equal(
+            stellar_mass_from_kappa_star / stellar_mass, 1, decimal=1
+        )
 
 
 @pytest.fixture
