@@ -143,7 +143,6 @@ class TestLens(object):
             gg_lens.validity_test()
             break
 
-
         # and here for NFW-Hernquist model
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         path = os.path.dirname(__file__)
@@ -154,7 +153,7 @@ class TestLens(object):
         )
         source_dict = blue_one
         deflector_dict = {
-            "halo_mass": 10 ** 13.8,
+            "halo_mass": 10**13.8,
             "concentration": 10,
             "e1_mass": 0.1,
             "e2_mass": -0.1,
@@ -181,6 +180,7 @@ class TestLens(object):
     def test_kappa_star(self):
 
         from lenstronomy.Util.util import make_grid
+
         delta_pix = 0.05
         x, y = make_grid(numPix=200, deltapix=delta_pix)
         kappa_star = self.gg_lens.kappa_star(x, y)
