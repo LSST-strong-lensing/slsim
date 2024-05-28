@@ -467,7 +467,7 @@ class Lens(LensedSystemBase):
         :type band: string
         :param time: time is an image observation time in units of days. If None,
             provides magnitude without variability.
-        :return: point source magnitude (lensed (incl. micro-lensing)
+        :return: point source magnitude (lensed (incl. micro-lensing))
         """
         # coolest convention of lens model (or kappa, gamma, kappa_star)
         lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
@@ -478,9 +478,10 @@ class Lens(LensedSystemBase):
         gamma1 = 1.0 / 2 * (f_xx - f_yy)
         gamma2 = f_xy
         gamma = np.sqrt(gamma1**2 + gamma2**2)
+        ra_image, dec_image = self.point_source_image_positions()
+        kappa_star = self.kappa_star(ra=ra_image, dec=dec_image)
+        image_observed_times = self.image_observer_times(time)
 
-        # observation times (i.e. macro-model time delays)
-        # image positions
         # quasar disk model at given time(s) (either time-variable or static
 
         # ===============
@@ -488,9 +489,14 @@ class Lens(LensedSystemBase):
         # kappa: lensing convergence at image position
         # gamma: shear strength at image position
         # kappa_star: stellar convergence at image position
+        # image_observed_times: time of the source at the different images, not correcting for
+        #         redshifts, but for time delays. The time is relative to the first arriving
+        #         image.
         # kwargs_molet: additional (optional) dictionary of settings required by molet that do not depend on
-        # the Lens() class
+        #         the Lens() class
+        # ===============
 
+        # TODO: in what format should be the 2d source profile be stored (as it is time- and wavelength dependent)
         # TODO: do we create full light curves (and save it in cache) or call it each time
         return 0
 
