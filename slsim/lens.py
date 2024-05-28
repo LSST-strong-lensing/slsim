@@ -504,9 +504,6 @@ class Lens(LensedSystemBase):
         # TODO: do we create full light curves (and save it in cache) or call it each time
         return 0
 
-
-
-
     def extended_source_magnitude(self, band, lensed=False):
         """Unlensed apparent magnitude of the extended source for a given band (assumes
         that size is the same for different bands)
