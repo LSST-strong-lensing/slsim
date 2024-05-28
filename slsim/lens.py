@@ -23,6 +23,7 @@ class Lens(LensedSystemBase):
         deflector_dict,
         cosmo,
         deflector_type="EPL",
+        deflector_kwargs=None,
         source_type="extended",
         lens_equation_solver="lenstronomy_analytical",
         variability_model=None,
@@ -45,8 +46,10 @@ class Lens(LensedSystemBase):
         :param deflector_dict: deflector properties
         :type deflector_dict: dict
         :param cosmo: astropy.cosmology instance
-        :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST"
+        :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST", "NFW_CLUSTER"
         :type deflector_type: str
+        :param deflector_kwargs: additional deflector properties
+        :type deflector_kwargs: dict
         :param source_type: type of the source 'extended' or 'point_source' or
          'point_plus_extended' supported
         :type source_type: str
@@ -87,6 +90,7 @@ class Lens(LensedSystemBase):
             deflector_dict=deflector_dict,
             cosmo=cosmo,
             deflector_type=deflector_type,
+            deflector_kwargs=deflector_kwargs,
             test_area=test_area,
             variability_model=variability_model,
             kwargs_variability=kwargs_variability,
@@ -301,7 +305,7 @@ class Lens(LensedSystemBase):
                 lens_model = LensModel(lens_model_list=lens_model_list)
                 lens_analysis = LensProfileAnalysis(lens_model=lens_model)
                 self._theta_E = lens_analysis.effective_einstein_radius(
-                    kwargs_lens, r_min=1e-3, r_max=2e1, num_points=50
+                    kwargs_lens, r_min=1e-3, r_max=5e1, num_points=50
                 )
         return self._theta_E
 
@@ -428,7 +432,7 @@ class Lens(LensedSystemBase):
         :type band: string
         :param lensed: if True, returns the lensed magnified magnitude
         :type lensed: bool
-        :param time: time is a image observation time in units of days. If None,
+        :param time: time is an image observation time in units of days. If None,
             provides magnitude without variability.
         :param molet: if using MOLET to produce the lensed magnification
         :type molet: bool
@@ -436,6 +440,8 @@ class Lens(LensedSystemBase):
         """
         # TODO: might have to change conventions between extended and point source
         if lensed:
+            if molet:
+                return self.point_source_magnitude_molet(band=band, time=time)
             magnif = self.point_source_magnification()
             magnif_log = 2.5 * np.log10(abs(magnif))
             if time is not None:
@@ -457,25 +463,45 @@ class Lens(LensedSystemBase):
                 return np.array(magnified_mag_list)
         return self.source.point_source_magnitude(band)
 
-    def point_source_magnitude_molet(self, band, time):
-        """
-        return image magnitudes at a given observer time
+    def point_source_magnitude_molet(self, band, time, **kwargs_molet):
+        """Return image magnitudes at a given observer time.
 
         :param band: imaging band
         :type band: string
-        :param time: time is a image observation time in units of days. If None,
+        :param time: time is an image observation time in units of days. If None,
             provides magnitude without variability.
-        :return: point source magnitude (lensed (incl. micro-lensing)
+        :return: point source magnitude (lensed (incl. micro-lensing))
         """
         # coolest convention of lens model (or kappa, gamma, kappa_star)
-        # observation times (i.e. macro-model time delays)
-        # image positions
+        lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
+        lens_model = LensModel(lens_model_list=lens_model_list)
+        x, y = self.point_source_image_positions()
+        f_xx, f_xy, f_yx, f_yy = lens_model.hessian(x=x, y=y, kwargs=kwargs_lens)
+        kappa = 1 / 2.0 * (f_xx + f_yy)
+        gamma1 = 1.0 / 2 * (f_xx - f_yy)
+        gamma2 = f_xy
+        gamma = np.sqrt(gamma1**2 + gamma2**2)
+        ra_image, dec_image = self.point_source_image_positions()
+        kappa_star = self.kappa_star(ra=ra_image, dec=dec_image)
+        image_observed_times = self.image_observer_times(time)
+
         # quasar disk model at given time(s) (either time-variable or static
 
+        # ===============
+        # call MOLET with
+        # kappa: lensing convergence at image position
+        # gamma: shear strength at image position
+        # kappa_star: stellar convergence at image position
+        # image_observed_times: time of the source at the different images, not correcting for
+        #         redshifts, but for time delays. The time is relative to the first arriving
+        #         image.
+        # kwargs_molet: additional (optional) dictionary of settings required by molet that do not depend on
+        #         the Lens() class
+        # ===============
+
+        # TODO: in what format should be the 2d source profile be stored (as it is time- and wavelength dependent)
         # TODO: do we create full light curves (and save it in cache) or call it each time
-
-
-
+        return 0
 
     def extended_source_magnitude(self, band, lensed=False):
         """Unlensed apparent magnitude of the extended source for a given band (assumes
@@ -533,7 +559,7 @@ class Lens(LensedSystemBase):
 
             num_pix = 200
             delta_pix = theta_E * 4 / num_pix
-            x, y = util.make_grid(numPix=200, deltapix=delta_pix)
+            x, y = util.make_grid(numPix=num_pix, deltapix=delta_pix)
             x += center_source[0]
             y += center_source[1]
             beta_x, beta_y = lensModel.ray_shooting(x, y, kwargs_params["kwargs_lens"])
@@ -589,7 +615,7 @@ class Lens(LensedSystemBase):
 
         :return: lens_model_list, kwargs_lens
         """
-        if self.deflector.deflector_type in ["EPL", "NFW_HERNQUIST"]:
+        if self.deflector.deflector_type in ["EPL", "NFW_HERNQUIST", "NFW_CLUSTER"]:
             lens_mass_model_list, kwargs_lens = self.deflector.mass_model_lenstronomy(
                 lens_cosmo=self._lens_cosmo
             )
@@ -616,10 +642,14 @@ class Lens(LensedSystemBase):
         """
         return self.deflector.light_model_lenstronomy(band=band)
 
-    def source_light_model_lenstronomy(self, band=None):
+    def source_light_model_lenstronomy(self, band=None, molet=False):
         """Returns source light model instance and parameters in lenstronomy
-        conventions.
+        conventions, which includes extended sources and point sources.
 
+        :param band: imaging band
+        :type band: string
+        :param molet: if using MOLET to produce the lensed magnification
+        :type molet: bool
         :return: source_light_model_list, kwargs_source_light
         """
         source_models = {}
@@ -655,7 +685,9 @@ class Lens(LensedSystemBase):
             if band is None:
                 image_magnitudes = np.abs(self.point_source_magnification())
             else:
-                image_magnitudes = self.point_source_magnitude(band=band, lensed=True)
+                image_magnitudes = self.point_source_magnitude(
+                    band=band, lensed=True, molet=molet
+                )
             kwargs_ps = [
                 {"ra_image": img_x, "dec_image": img_y, "magnitude": image_magnitudes}
             ]
@@ -665,6 +697,33 @@ class Lens(LensedSystemBase):
         all_source_kwarg_dict["kwargs_source"] = kwargs_source
         all_source_kwarg_dict["kwargs_ps"] = kwargs_ps
         return source_models, all_source_kwarg_dict
+
+    def kappa_star(self, ra, dec):
+        """Computes the stellar surface density at location (ra, dec) in units of
+        lensing convergence.
+
+        :param ra: position in the image plane
+        :param dec: position in the image plane
+        :return: kappa_star
+        """
+        stellar_mass = self.deflector_stellar_mass()
+        kwargs_model, kwargs_params = self.lenstronomy_kwargs(band=None)
+        lightModel = LightModel(
+            light_model_list=kwargs_model.get("lens_light_model_list", [])
+        )
+        kwargs_lens_light_mag = kwargs_params["kwargs_lens_light"]
+        kwargs_lens_light_amp = data_util.magnitude2amplitude(
+            lightModel, kwargs_lens_light_mag, magnitude_zero_point=0
+        )
+
+        total_flux = lightModel.total_flux(kwargs_lens_light_amp)  # integrated flux
+        flux_local = lightModel.surface_brightness(
+            ra, dec, kwargs_lens_light_amp
+        )  # surface brightness per arcsecond square
+        kappa_star = (
+            flux_local / total_flux * stellar_mass / self._lens_cosmo.sigma_crit_angle
+        )
+        return kappa_star
 
 
 def image_separation_from_positions(image_positions):
