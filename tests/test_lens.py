@@ -44,78 +44,6 @@ class TestLens(object):
                 self.gg_lens = gg_lens
                 break
 
-    def test_nfw_hernquist_lens(self):
-        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-        path = os.path.dirname(__file__)
-        module_path, _ = os.path.split(path)
-        print(path, module_path)
-        blue_one = Table.read(
-            os.path.join(path, "TestData/blue_one_modified.fits"), format="fits"
-        )
-        source_dict = blue_one
-        deflector_dict = {
-            "halo_mass": 10**13,
-            "concentration": 10,
-            "e1_mass": 0.1,
-            "e2_mass": -0.1,
-            "stellar_mass": 10e11,
-            "angular_size": 0.001,
-            "e1_light": -0.1,
-            "e2_light": 0.1,
-            "z": 0.5,
-            "mag_g": -20,
-        }
-
-        while True:
-            gg_lens = Lens(
-                source_dict=source_dict,
-                deflector_dict=deflector_dict,
-                deflector_type="NFW_HERNQUIST",
-                lens_equation_solver="lenstronomy_default",
-                cosmo=cosmo,
-            )
-            if gg_lens.validity_test():
-                # self.gg_lens = gg_lens
-                break
-
-    def test_nfw_cluster_lens(self):
-        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-        path = os.path.dirname(__file__)
-        module_path, _ = os.path.split(path)
-        blue_one = Table.read(
-            os.path.join(path, "TestData/blue_one_modified.fits"), format="fits"
-        )
-        subhalos_table = Table.read(
-            os.path.join(path, "TestData/subhalos_table.fits"), format="fits"
-        )
-        subhalos_list = [
-            Deflector(deflector_type="EPL", deflector_dict=subhalo)
-            for subhalo in subhalos_table
-        ]
-        source_dict = blue_one
-        deflector_dict = {
-            "halo_mass": 10**14,
-            "concentration": 5,
-            "e1_mass": 0.1,
-            "e2_mass": -0.1,
-            "z": 0.42,
-        }
-        i = 0
-        while i < 100:
-            gg_lens = Lens(
-                source_dict=source_dict,
-                deflector_dict=deflector_dict,
-                deflector_kwargs={"subhalos_list": subhalos_list},
-                deflector_type="NFW_CLUSTER",
-                lens_equation_solver="lenstronomy_default",
-                cosmo=cosmo,
-            )
-            i += 1
-            if gg_lens.validity_test(max_image_separation=50.0):
-                # self.gg_lens = gg_lens
-                return
-        raise ValueError("Could not create a valid NFW_CLUSTER lens")
-
     def test_deflector_ellipticity(self):
         e1_light, e2_light, e1_mass, e2_mass = self.gg_lens.deflector_ellipticity()
         assert pytest.approx(e1_light, rel=1e-3) == -0.05661955320450283
@@ -215,6 +143,85 @@ class TestLens(object):
         while True:
             gg_lens.validity_test()
             break
+
+        # and here for NFW-Hernquist model
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+        path = os.path.dirname(__file__)
+        module_path, _ = os.path.split(path)
+        print(path, module_path)
+        blue_one = Table.read(
+            os.path.join(path, "TestData/blue_one_modified.fits"), format="fits"
+        )
+        source_dict = blue_one
+        deflector_dict = {
+            "halo_mass": 10**13.8,
+            "concentration": 10,
+            "e1_mass": 0.1,
+            "e2_mass": -0.1,
+            "stellar_mass": 10.5e11,
+            "angular_size": 0.001,
+            "e1_light": -0.1,
+            "e2_light": 0.1,
+            "z": 0.5,
+            "mag_g": -20,
+        }
+
+        while True:
+            gg_lens = Lens(
+                source_dict=source_dict,
+                deflector_dict=deflector_dict,
+                deflector_type="NFW_HERNQUIST",
+                lens_equation_solver="lenstronomy_default",
+                cosmo=cosmo,
+            )
+            if gg_lens.validity_test():
+                # self.gg_lens = gg_lens
+                break
+
+        # here for NFW-Cluster model
+        subhalos_table = Table.read(
+            os.path.join(path, "TestData/subhalos_table.fits"), format="fits"
+        )
+        subhalos_list = [
+            Deflector(deflector_type="EPL", deflector_dict=subhalo)
+            for subhalo in subhalos_table
+        ]
+        source_dict = blue_one
+        deflector_dict = {
+            "halo_mass": 10**14,
+            "concentration": 5,
+            "e1_mass": 0.1,
+            "e2_mass": -0.1,
+            "z": 0.42,
+        }
+        while True:
+            cg_lens = Lens(
+                source_dict=source_dict,
+                deflector_dict=deflector_dict,
+                deflector_kwargs={"subhalos_list": subhalos_list},
+                deflector_type="NFW_CLUSTER",
+                lens_equation_solver="lenstronomy_default",
+                cosmo=cosmo,
+            )
+            if cg_lens.validity_test(max_image_separation=50.0):
+                break
+
+    def test_kappa_star(self):
+
+        from lenstronomy.Util.util import make_grid
+
+        delta_pix = 0.05
+        x, y = make_grid(numPix=200, deltapix=delta_pix)
+        kappa_star = self.gg_lens.kappa_star(x, y)
+        stellar_mass_from_kappa_star = (
+            np.sum(kappa_star)
+            * delta_pix**2
+            * self.gg_lens._lens_cosmo.sigma_crit_angle
+        )
+        stellar_mass = self.gg_lens.deflector_stellar_mass()
+        npt.assert_almost_equal(
+            stellar_mass_from_kappa_star / stellar_mass, 1, decimal=1
+        )
 
 
 @pytest.fixture
