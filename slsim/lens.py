@@ -23,6 +23,7 @@ class Lens(LensedSystemBase):
         deflector_dict,
         cosmo,
         deflector_type="EPL",
+        deflector_kwargs=None,
         source_type="extended",
         lens_equation_solver="lenstronomy_analytical",
         variability_model=None,
@@ -45,8 +46,10 @@ class Lens(LensedSystemBase):
         :param deflector_dict: deflector properties
         :type deflector_dict: dict
         :param cosmo: astropy.cosmology instance
-        :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST"
+        :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST", "NFW_CLUSTER"
         :type deflector_type: str
+        :param deflector_kwargs: additional deflector properties
+        :type deflector_kwargs: dict
         :param source_type: type of the source 'extended' or 'point_source' or
          'point_plus_extended' supported
         :type source_type: str
@@ -87,6 +90,7 @@ class Lens(LensedSystemBase):
             deflector_dict=deflector_dict,
             cosmo=cosmo,
             deflector_type=deflector_type,
+            deflector_kwargs=deflector_kwargs,
             test_area=test_area,
             variability_model=variability_model,
             kwargs_variability=kwargs_variability,
@@ -301,7 +305,7 @@ class Lens(LensedSystemBase):
                 lens_model = LensModel(lens_model_list=lens_model_list)
                 lens_analysis = LensProfileAnalysis(lens_model=lens_model)
                 self._theta_E = lens_analysis.effective_einstein_radius(
-                    kwargs_lens, r_min=1e-3, r_max=2e1, num_points=50
+                    kwargs_lens, r_min=1e-3, r_max=5e1, num_points=50
                 )
         return self._theta_E
 
@@ -615,7 +619,7 @@ class Lens(LensedSystemBase):
 
         :return: lens_model_list, kwargs_lens
         """
-        if self.deflector.deflector_type in ["EPL", "NFW_HERNQUIST"]:
+        if self.deflector.deflector_type in ["EPL", "NFW_HERNQUIST", "NFW_CLUSTER"]:
             lens_mass_model_list, kwargs_lens = self.deflector.mass_model_lenstronomy(
                 lens_cosmo=self._lens_cosmo
             )

@@ -3,6 +3,7 @@ import numpy as np
 from numpy import testing as npt
 from astropy.cosmology import FlatLambdaCDM
 from astropy.table import Table
+from slsim.Deflectors.deflector import Deflector
 from slsim.lens import (
     Lens,
     image_separation_from_positions,
@@ -143,7 +144,6 @@ class TestLens(object):
             gg_lens.validity_test()
             break
 
-
         # and here for NFW-Hernquist model
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         path = os.path.dirname(__file__)
@@ -154,7 +154,7 @@ class TestLens(object):
         )
         source_dict = blue_one
         deflector_dict = {
-            "halo_mass": 10 ** 13.8,
+            "halo_mass": 10**13.8,
             "concentration": 10,
             "e1_mass": 0.1,
             "e2_mass": -0.1,
@@ -178,9 +178,38 @@ class TestLens(object):
                 # self.gg_lens = gg_lens
                 break
 
+        # here for NFW-Cluster model
+        subhalos_table = Table.read(
+            os.path.join(path, "TestData/subhalos_table.fits"), format="fits"
+        )
+        subhalos_list = [
+            Deflector(deflector_type="EPL", deflector_dict=subhalo)
+            for subhalo in subhalos_table
+        ]
+        source_dict = blue_one
+        deflector_dict = {
+            "halo_mass": 10**14,
+            "concentration": 5,
+            "e1_mass": 0.1,
+            "e2_mass": -0.1,
+            "z": 0.42,
+        }
+        while True:
+            cg_lens = Lens(
+                source_dict=source_dict,
+                deflector_dict=deflector_dict,
+                deflector_kwargs={"subhalos_list": subhalos_list},
+                deflector_type="NFW_CLUSTER",
+                lens_equation_solver="lenstronomy_default",
+                cosmo=cosmo,
+            )
+            if cg_lens.validity_test(max_image_separation=50.0):
+                break
+
     def test_kappa_star(self):
 
         from lenstronomy.Util.util import make_grid
+
         delta_pix = 0.05
         x, y = make_grid(numPix=200, deltapix=delta_pix)
         kappa_star = self.gg_lens.kappa_star(x, y)
