@@ -464,8 +464,7 @@ class Lens(LensedSystemBase):
         return self.source.point_source_magnitude(band)
 
     def point_source_magnitude_molet(self, band, time, **kwargs_molet):
-        """
-        return image magnitudes at a given observer time
+        """Return image magnitudes at a given observer time.
 
         :param band: imaging band
         :type band: string
@@ -478,7 +477,7 @@ class Lens(LensedSystemBase):
         lens_model = LensModel(lens_model_list=lens_model_list)
         x, y = self.point_source_image_positions()
         f_xx, f_xy, f_yx, f_yy = lens_model.hessian(x=x, y=y, kwargs=kwargs_lens)
-        kappa = 1/2. * (f_xx + f_yy)
+        kappa = 1 / 2.0 * (f_xx + f_yy)
         gamma1 = 1.0 / 2 * (f_xx - f_yy)
         gamma2 = f_xy
         gamma = np.sqrt(gamma1**2 + gamma2**2)
@@ -645,7 +644,7 @@ class Lens(LensedSystemBase):
 
     def source_light_model_lenstronomy(self, band=None, molet=False):
         """Returns source light model instance and parameters in lenstronomy
-        conventions, which includes extended sources and point sources
+        conventions, which includes extended sources and point sources.
 
         :param band: imaging band
         :type band: string
@@ -686,7 +685,9 @@ class Lens(LensedSystemBase):
             if band is None:
                 image_magnitudes = np.abs(self.point_source_magnification())
             else:
-                image_magnitudes = self.point_source_magnitude(band=band, lensed=True, molet=molet)
+                image_magnitudes = self.point_source_magnitude(
+                    band=band, lensed=True, molet=molet
+                )
             kwargs_ps = [
                 {"ra_image": img_x, "dec_image": img_y, "magnitude": image_magnitudes}
             ]
