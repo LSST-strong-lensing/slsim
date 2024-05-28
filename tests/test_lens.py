@@ -188,7 +188,7 @@ class TestLens(object):
         ]
         source_dict = blue_one
         deflector_dict = {
-            "halo_mass": 10 ** 14,
+            "halo_mass": 10**14,
             "concentration": 5,
             "e1_mass": 0.1,
             "e2_mass": -0.1,
