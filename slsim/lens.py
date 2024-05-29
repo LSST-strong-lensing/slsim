@@ -495,6 +495,7 @@ class Lens(LensedSystemBase):
         # image_observed_times: time of the source at the different images, not correcting for
         #         redshifts, but for time delays. The time is relative to the first arriving
         #         image.
+        # band: photometric band, potentially changing to transmission curve
         # kwargs_molet: additional (optional) dictionary of settings required by molet that do not depend on
         #         the Lens() class
         # ===============
