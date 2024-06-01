@@ -6,16 +6,14 @@ from colossus.halo import mass_so
 
 
 class GalaxySizeModel:
-    """
-        Characteristics of galaxy effective radius models.
+    """Characteristics of galaxy effective radius models.
 
         This object contains certain characteristics of a galaxy effective radius model.
     The :data:`models` dictionary contains one item of this class for each available model.
     """
 
     def __init__(self):
-        """
-        Initialize a new instance of the GalaxySizeModel class.
+        """Initialize a new instance of the GalaxySizeModel class.
 
         Parameters
         ----------
@@ -82,9 +80,11 @@ models["karmakar23"].sc_mhalo_dependence = True
 models["karmakar23"].sc_z_dependence = True
 
 
-def galaxy_size(mh, mstar, z, cosmo_col, q_out="tb", model="oguri20", scatter=False, sig_tb=0.1):
-    """
-    Calculate the size of a galaxy based on halo mass, stellar mass, redshift, and cosmology, optionally including scatter.
+def galaxy_size(
+    mh, mstar, z, cosmo_col, q_out="tb", model="oguri20", scatter=False, sig_tb=0.1
+):
+    """Calculate the size of a galaxy based on halo mass, stellar mass, redshift, and
+    cosmology, optionally including scatter.
 
     Parameters
     -----------------------------------------------------------------------------------------------
@@ -184,8 +184,7 @@ def galaxy_size(mh, mstar, z, cosmo_col, q_out="tb", model="oguri20", scatter=Fa
 
 
 def modelOguri20(mh, z):
-    """
-    The galaxy-size model of Oguri&Takahashi et al 2020.
+    """The galaxy-size model of Oguri&Takahashi et al 2020.
 
     Parameters
     -----------------------------------------------------------------------------------------------
@@ -207,8 +206,8 @@ def modelOguri20(mh, z):
 
 
 def modelscLognormal(sig_tb, n):
-    """
-    Generate samples from a lognormal distribution with specified standard deviation and number of samples.
+    """Generate samples from a lognormal distribution with specified standard deviation
+    and number of samples.
 
     Parameters
     -----------------------------------------------------------------------------------------------
@@ -255,22 +254,45 @@ def modelVanderwel23(mstar, z):
     rb: ndarray or a number
         The galaxy size, has the dimensions as 1.0e-3 * mass_so.M_to_R(mh, z, 'vir') i.e. [Mpc/h].
     """
-    c_vdW50 = [0.58302746, -0.06713236, 1.1363604, 10.81504371]  # [\Gamma, \alpha, \beta, \delta]
-    re_wo_zdepend = 10 ** log10Re_log10Mstar_vdW(np.log10(mstar), c_vdW50[0], c_vdW50[1], c_vdW50[2], c_vdW50[3]) / 1e3  # [Mpc/h]
+    c_vdW50 = [
+        0.58302746,
+        -0.06713236,
+        1.1363604,
+        10.81504371,
+    ]  # [\Gamma, \alpha, \beta, \delta]
+    re_wo_zdepend = (
+        10
+        ** log10Re_log10Mstar_vdW(
+            np.log10(mstar), c_vdW50[0], c_vdW50[1], c_vdW50[2], c_vdW50[3]
+        )
+        / 1e3
+    )  # [Mpc/h]
     omega = -1.72  # np.where(np.log10(mstar) < c_vdW50[3], -0.412, -1.72)
     zbin = (0.5 + 1.0) / 2.0
-    zdepend = np.where(z > 2.5, ((1.0 + 2.5) / (1.0 + zbin)) ** omega, ((1.0 + z) / (1.0 + zbin)) ** omega)
+    zdepend = np.where(
+        z > 2.5,
+        ((1.0 + 2.5) / (1.0 + zbin)) ** omega,
+        ((1.0 + z) / (1.0 + zbin)) ** omega,
+    )
     log10ms_switch = 10.5
-    re_lowmass_wo_zdepend = 10 ** log10Re_log10Mstar_vdW(log10ms_switch, c_vdW50[0], c_vdW50[1], c_vdW50[2], c_vdW50[3]) / 1e3  # [Mpc/h]
-    re_lowconst_wo_zdepend = np.where(np.log10(mstar) > log10ms_switch, re_wo_zdepend, re_lowmass_wo_zdepend)
+    re_lowmass_wo_zdepend = (
+        10
+        ** log10Re_log10Mstar_vdW(
+            log10ms_switch, c_vdW50[0], c_vdW50[1], c_vdW50[2], c_vdW50[3]
+        )
+        / 1e3
+    )  # [Mpc/h]
+    re_lowconst_wo_zdepend = np.where(
+        np.log10(mstar) > log10ms_switch, re_wo_zdepend, re_lowmass_wo_zdepend
+    )
     re = re_lowconst_wo_zdepend * zdepend
     rb = 0.551 * re
     return rb
 
 
 def modelscVanderwel23(mstar, n):
-    """
-    Generate samples of effective radii for galaxies based on a lognormal distribution using parameters from van der Wel et al.(2023).
+    """Generate samples of effective radii for galaxies based on a lognormal
+    distribution using parameters from van der Wel et al.(2023).
 
     \\sigma_\\log(r_e) is calculated as follows
 
@@ -295,16 +317,34 @@ def modelscVanderwel23(mstar, n):
     :return: Scatters of galaxy effective radii from the lognormal distribution.
     :rtype: np.ndarray
     """
-    c_vdW84 = [0.64141456, -0.05489086, 1.02386427, 10.79889608]  # [\Gamma, \alpha, \beta, \delta]
-    c_vdW16 = [0.77059797, -0.1087621, 1.18547984, 10.68959868]  # [\Gamma, \alpha, \beta, \delta]
+    c_vdW84 = [
+        0.64141456,
+        -0.05489086,
+        1.02386427,
+        10.79889608,
+    ]  # [\Gamma, \alpha, \beta, \delta]
+    c_vdW16 = [
+        0.77059797,
+        -0.1087621,
+        1.18547984,
+        10.68959868,
+    ]  # [\Gamma, \alpha, \beta, \delta]
     mstar_cor = np.where(
         mstar > 10**11.43033199, 10**11.43033199, mstar
     )  # to prevent the scatter from becoming too small or negative at the high mass end
-    log10Re_vdW84_pre = log10Re_log10Mstar_vdW(np.log10(mstar_cor), c_vdW84[0], c_vdW84[1], c_vdW84[2], c_vdW84[3])
-    log10Re_vdW16_pre = log10Re_log10Mstar_vdW(np.log10(mstar_cor), c_vdW16[0], c_vdW16[1], c_vdW16[2], c_vdW16[3])
+    log10Re_vdW84_pre = log10Re_log10Mstar_vdW(
+        np.log10(mstar_cor), c_vdW84[0], c_vdW84[1], c_vdW84[2], c_vdW84[3]
+    )
+    log10Re_vdW16_pre = log10Re_log10Mstar_vdW(
+        np.log10(mstar_cor), c_vdW16[0], c_vdW16[1], c_vdW16[2], c_vdW16[3]
+    )
 
-    log10Re_vdW84_lowmass = log10Re_log10Mstar_vdW(c_vdW84[3], c_vdW84[0], c_vdW84[1], c_vdW84[2], c_vdW84[3])
-    log10Re_vdW16_lowmass = log10Re_log10Mstar_vdW(c_vdW16[3], c_vdW16[0], c_vdW16[1], c_vdW16[2], c_vdW16[3])
+    log10Re_vdW84_lowmass = log10Re_log10Mstar_vdW(
+        c_vdW84[3], c_vdW84[0], c_vdW84[1], c_vdW84[2], c_vdW84[3]
+    )
+    log10Re_vdW16_lowmass = log10Re_log10Mstar_vdW(
+        c_vdW16[3], c_vdW16[0], c_vdW16[1], c_vdW16[2], c_vdW16[3]
+    )
 
     log10Re_vdW16 = np.where(
         np.log10(mstar_cor) > c_vdW16[3],
@@ -350,8 +390,8 @@ def modelKarmakar23(mh, z):
 
 
 def modelscKarmakar23(mh, z, n):
-    """
-    Generate a log-normal distribution of the scaling relation parameter based on halo mass and redshift.
+    """Generate a log-normal distribution of the scaling relation parameter based on
+    halo mass and redshift.
 
     Parameters
     -----------------------------------------------------------------------------------------------
@@ -393,9 +433,8 @@ models["karmakar23"].func_scat = modelscKarmakar23
 
 
 def log10Re_log10Mstar_vdW(log10M, a, b, c, d):
-    """
-    Function to calculate the logarithm of the effective radius as a function of the logarithm of the stellar mass
-    used in vdw23 model.
+    """Function to calculate the logarithm of the effective radius as a function of the
+    logarithm of the stellar mass used in vdw23 model.
 
     Parameters
     -----------------------------------------------------------------------------------------------
@@ -426,9 +465,7 @@ def log10Re_log10Mstar_vdW(log10M, a, b, c, d):
 
 
 class p_smhm:
-    """
-    Characteristics of stellar mass halo mass relation models.
-    """
+    """Characteristics of stellar mass halo mass relation models."""
 
     def __init__(self, data):
         """
@@ -466,8 +503,7 @@ class p_smhm:
 
 
 def set_gals_param(pol_halo):
-    """
-    Set the galaxy parameters based on the halo position angle
+    """Set the galaxy parameters based on the halo position angle.
 
     Parameters
     -----------------------------------------------------------------------------------------------
@@ -675,7 +711,11 @@ def stellarmass_halomass(Mh, z, pa, frac_SM_IMF=1.715):
     gamma = 10.0 ** (pa.gamma0 + a1 * pa.gammaa + z * pa.gammaz)
     x = np.log10(Mh) - m_1
     x_del = x / delta
-    stellarm = stellarm_0 - np.log10(10.0 ** (-alpha * x) + 10.0 ** (-beta * x)) + gamma * np.exp(-0.5 * (x_del**2))
+    stellarm = (
+        stellarm_0
+        - np.log10(10.0 ** (-alpha * x) + 10.0 ** (-beta * x))
+        + gamma * np.exp(-0.5 * (x_del**2))
+    )
     return 10**stellarm * frac_SM_IMF
 
 

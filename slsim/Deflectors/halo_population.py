@@ -4,9 +4,9 @@ import scipy.stats as st
 from colossus.lss import mass_function
 from colossus.halo import concentration
 
+
 def gene_e_ang_halo(Mh):
-    """
-     Ellipticity
+    """Ellipticity.
 
      .. math::
         ellipticity = \\equic \\1 - q
@@ -49,8 +49,7 @@ def gene_ang(n):
 
 
 def gene_e_halo(Mh):
-    """
-    Ellipticity
+    """Ellipticity.
 
      .. math::
         ellipticity = \\equic \\1 - q
