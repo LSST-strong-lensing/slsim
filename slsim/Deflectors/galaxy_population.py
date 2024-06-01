@@ -1,11 +1,49 @@
-import numpy as np
-from colossus.halo import mass_so
 from collections import OrderedDict
+
+import numpy as np
 import scipy.stats as st
+from colossus.halo import mass_so
 
 
 class GalaxySizeModel:
+    """
+        Characteristics of galaxy effective radius models.
+
+        This object contains certain characteristics of a galaxy effective radius model.
+    The :data:`models` dictionary contains one item of this class for each available model.
+    """
+
     def __init__(self):
+        """
+        Initialize a new instance of the GalaxySizeModel class.
+
+        Parameters
+        ----------
+        None
+
+        Attributes
+        ----------
+        func : callable or None
+            The primary function that defines the model.
+        func_scat : callable or None
+            An optional function to add scatter to the model.
+        mhalo_dependence : bool
+            A flag indicating if there is a dependence on halo mass.
+        mstar_dependence : bool
+            A flag indicating if there is a dependence on stellar mass.
+        z_dependence : bool
+            A flag indicating if there is a redshift dependence.
+        scatter : bool
+            A flag indicating if scatter should be included in the model.
+        sc_sigtb_dependence : bool
+            A flag indicating if there is a dependence on sigma_tb for scatter.
+        sc_mstar_dependence : bool
+            A flag indicating if there is a stellar mass dependence for scatter.
+        sc_mhalo_dependence : bool
+            A flag indicating if there is a halo mass dependence for scatter.
+        sc_z_dependence : bool
+            A flag indicating if there is a redshift dependence for scatter.
+        """
         self.func = None
         self.func_scat = None
         self.mhalo_dependence = False
@@ -44,9 +82,54 @@ models["karmakar23"].sc_mhalo_dependence = True
 models["karmakar23"].sc_z_dependence = True
 
 
-def galaxy_size(
-    mh, mstar, z, cosmo_col, q_out="tb", model="oguri20", scatter=False, sig_tb=0.1
-):
+def galaxy_size(mh, mstar, z, cosmo_col, q_out="tb", model="oguri20", scatter=False, sig_tb=0.1):
+    """
+    Calculate the size of a galaxy based on halo mass, stellar mass, redshift, and cosmology, optionally including scatter.
+
+    Parameters
+    -----------------------------------------------------------------------------------------------
+    :param mh: The halo mass or masses at which to compute the galaxy size in units of M_sol/h
+    :type  mh: float, np.ndarray, list
+
+    :param mstar: The stellar mass or masses in units of M_sol/h
+    :type  mstar: float, np.ndarray, list
+
+    :param z: The redshift at which to compute the galaxy size.
+    :type  z: float
+
+    :param cosmo_col: An instance of a cosmology class to calculate angular diameter distances.
+    :type  cosmo_col: Class (e.g., colossus.cosmology)
+
+    :param q_out: The desired output quantity ('tb' for theta_b in arcsec or 'rb' for r_b in kpc/h).
+    :type  q_out: str
+
+    :param model: The name of the model used to calculate galaxy size ('oguri20' is default).
+    :type  model: str
+
+    :param scatter: Whether to include scatter in the galaxy size calculation.
+    :type  scatter: bool
+
+    :param sig_tb: The standard deviation of lognormal scatter if scatter is included for oguri20 model
+    :type  sig_tb: float
+
+    Returns
+    -----------------------------------------------------------------------------------------------
+    :return: Galaxy effective radius calculated according to the specified model and parameters.
+             Units are either in arcseconds (if q_out='tb') or kpc/h (if q_out='rb').
+    :rtype: np.ndarray or float
+
+    Raises
+    -----------------------------------------------------------------------------------------------
+    Exception: If an unknown model or output type is specified.
+
+    ValueError: If the input type of mh is not float, ndarray, or list.
+
+    Notes
+    -----------------------------------------------------------------------------------------------
+    This function supports multiple galaxy size models which may depend on different combinations
+    of halo mass, stellar mass, and redshift. It can also apply lognormal scatter to the sizes.
+    """
+
     # Check that the model exists
     if model not in models.keys():
         raise Exception("Unknown model, %s." % (model))
@@ -101,18 +184,20 @@ def galaxy_size(
 
 
 def modelOguri20(mh, z):
-    """The galaxy-size model of Oguri&Takahashi et al 2020.
+    """
+    The galaxy-size model of Oguri&Takahashi et al 2020.
 
     Parameters
     -----------------------------------------------------------------------------------------------
-    mh: ndarray
-        (sub)halo mass [Msun/h]; can be a number or a numpy array.
-    z:  ndarray
-        redshift; can be a number or a numpy array.
+    :param mh: The mass of the halo in units of M_sol/h
+    :type  mh: ndarray
+
+    :param z: The redshift
+    :type  z: float
 
     Returns
     -----------------------------------------------------------------------------------------------
-    rb: ndarray or a number
+    rb: float
         The galaxy size, has the dimensions as 1.0e-3 * mass_so.M_to_R(mh, z, 'vir') i.e. [Mpc].
     """
     re = 0.006 * 1.0e-3 * mass_so.M_to_R(mh, 0.0, "vir") / (1.0 + z)
@@ -122,6 +207,22 @@ def modelOguri20(mh, z):
 
 
 def modelscLognormal(sig_tb, n):
+    """
+    Generate samples from a lognormal distribution with specified standard deviation and number of samples.
+
+    Parameters
+    -----------------------------------------------------------------------------------------------
+    :param sig_tb: The standard deviation of the lognormal distribution.
+    :type  sig_tb: float
+
+    :param n: The number of samples to generate.
+    :type  n: int
+
+    Returns
+    -----------------------------------------------------------------------------------------------
+    :return: Samples from a lognormal distribution.
+    :rtype: np.ndarray
+    """
     return np.random.lognormal(0.0, sig_tb, n)
 
 
@@ -131,55 +232,89 @@ def modelVanderwel23(mstar, z):
     arXiv: 2307.03264
     re: effective (half-mass) radius
 
+    re is calculated as follows
+
+    .. math::
+
+        \\log_{10}(r_e/(h^{-1}\\mathrm{kpc}))= \\Gamma + \alpha \\log_{10}(M_\\mathrm{cen}/M_\\odot) \\
+            + (\beta-\alpha)\\log_{10}(1+10^{\\log_{10}(M_\\mathrm{cen}/M_\\odot)-\\delta} - \\omega \\log_{10}((1+z)/(1+z_\\mathrm{data}))
+
+    where z_data= 0.75
+
     Parameters
     -----------------------------------------------------------------------------------------------
-    mstar: ndarray
-        satellite or central galaxy mass [Msun/h]; can be a number or a numpy array.
-        NOTICE: this mstar is based on Chabrier IMF. Then we use mstar_cor = mstar_chab/frac_SM_IMF as an input param
-    z:  ndarray
-        redshift; can be a number or a numpy array.
+    :param mstar: satellite or central galaxy mass [Msun/h]; can be a number or a numpy array.
+                NOTICE: this mstar is based on Chabrier IMF. Then we use mstar_cor = mstar_chab/frac_SM_IMF as an input param
+    :type  mstar: ndarray
+
+    :param z: redshift; can be a number or a numpy array.
+    :type  z: float
 
     Returns
     -----------------------------------------------------------------------------------------------
     rb: ndarray or a number
-        The galaxy size, has the dimensions as 1.0e-3 * mass_so.M_to_R(mh, z, 'vir') i.e. [Mpc].
+        The galaxy size, has the dimensions as 1.0e-3 * mass_so.M_to_R(mh, z, 'vir') i.e. [Mpc/h].
     """
-    c_vdW50 = [
-        0.58302746,
-        -0.06713236,
-        1.1363604,
-        10.81504371,
-    ]  # for [Msun/h] -> log10[kpc/h]
-    re_wo_zdepend = (
-        10
-        ** log10Re_log10Mh_vdW(
-            np.log10(mstar), c_vdW50[0], c_vdW50[1], c_vdW50[2], c_vdW50[3]
-        )
-        / 1e3
-    )  # [Mpc/h]
-    alpha = np.where(np.log10(mstar) < c_vdW50[3], -0.412, -1.72)
+    c_vdW50 = [0.58302746, -0.06713236, 1.1363604, 10.81504371]  # [\Gamma, \alpha, \beta, \delta]
+    re_wo_zdepend = 10 ** log10Re_log10Mstar_vdW(np.log10(mstar), c_vdW50[0], c_vdW50[1], c_vdW50[2], c_vdW50[3]) / 1e3  # [Mpc/h]
+    omega = -1.72  # np.where(np.log10(mstar) < c_vdW50[3], -0.412, -1.72)
     zbin = (0.5 + 1.0) / 2.0
-    zdepend = np.where(
-        z > 2.5,
-        ((1.0 + 2.5) / (1.0 + zbin)) ** alpha,
-        ((1.0 + z) / (1.0 + zbin)) ** alpha,
-    )
-    re = re_wo_zdepend * zdepend
+    zdepend = np.where(z > 2.5, ((1.0 + 2.5) / (1.0 + zbin)) ** omega, ((1.0 + z) / (1.0 + zbin)) ** omega)
+    log10ms_switch = 10.5
+    re_lowmass_wo_zdepend = 10 ** log10Re_log10Mstar_vdW(log10ms_switch, c_vdW50[0], c_vdW50[1], c_vdW50[2], c_vdW50[3]) / 1e3  # [Mpc/h]
+    re_lowconst_wo_zdepend = np.where(np.log10(mstar) > log10ms_switch, re_wo_zdepend, re_lowmass_wo_zdepend)
+    re = re_lowconst_wo_zdepend * zdepend
     rb = 0.551 * re
     return rb
 
 
 def modelscVanderwel23(mstar, n):
-    c_vdW84 = [0.64141456, -0.05489086, 1.02386427, 10.79889608]
-    c_vdW16 = [0.77059797, -0.1087621, 1.18547984, 10.68959868]
+    """
+    Generate samples of effective radii for galaxies based on a lognormal distribution using parameters from van der Wel et al.(2023).
+
+    \\sigma_\\log(r_e) is calculated as follows
+
+    .. math::
+        \\sigma_\\log(r_e) = \\frac{\\log(r_e^{84}(z_\\mathrm{data}))-\\log(r_e^{16}(z_\\mathrm{data}))}{2}
+    where
+        \\log_{10}(r_e/(h^{-1}\\mathrm{kpc}))= \\Gamma + \alpha \\log_{10}(M_\\mathrm{cen}/M_\\odot) \\
+            + (\beta-\alpha)\\log_{10}(1+10^{\\log_{10}(M_\\mathrm{cen}/M_\\odot)-\\delta}
+
+    where z_data= 0.75, r_e^{84} and r_e^{16} are the values of effective radii of the 16\\%th and 84\\%th percentiles
+
+    Parameters
+    -----------------------------------------------------------------------------------------------
+    :param mstar: Stellar mass of galaxies for which to generate the effective radius in units of M_sol/h
+    :type  mstar: np.ndarray
+
+    :param n: The number of samples
+    :type  n: int
+
+    Returns
+    -----------------------------------------------------------------------------------------------
+    :return: Scatters of galaxy effective radii from the lognormal distribution.
+    :rtype: np.ndarray
+    """
+    c_vdW84 = [0.64141456, -0.05489086, 1.02386427, 10.79889608]  # [\Gamma, \alpha, \beta, \delta]
+    c_vdW16 = [0.77059797, -0.1087621, 1.18547984, 10.68959868]  # [\Gamma, \alpha, \beta, \delta]
     mstar_cor = np.where(
         mstar > 10**11.43033199, 10**11.43033199, mstar
     )  # to prevent the scatter from becoming too small or negative at the high mass end
-    log10Re_vdW84 = log10Re_log10Mh_vdW(
-        np.log10(mstar_cor), c_vdW84[0], c_vdW84[1], c_vdW84[2], c_vdW84[3]
+    log10Re_vdW84_pre = log10Re_log10Mstar_vdW(np.log10(mstar_cor), c_vdW84[0], c_vdW84[1], c_vdW84[2], c_vdW84[3])
+    log10Re_vdW16_pre = log10Re_log10Mstar_vdW(np.log10(mstar_cor), c_vdW16[0], c_vdW16[1], c_vdW16[2], c_vdW16[3])
+
+    log10Re_vdW84_lowmass = log10Re_log10Mstar_vdW(c_vdW84[3], c_vdW84[0], c_vdW84[1], c_vdW84[2], c_vdW84[3])
+    log10Re_vdW16_lowmass = log10Re_log10Mstar_vdW(c_vdW16[3], c_vdW16[0], c_vdW16[1], c_vdW16[2], c_vdW16[3])
+
+    log10Re_vdW16 = np.where(
+        np.log10(mstar_cor) > c_vdW16[3],
+        log10Re_vdW16_pre,
+        log10Re_vdW16_lowmass,
     )
-    log10Re_vdW16 = log10Re_log10Mh_vdW(
-        np.log10(mstar_cor), c_vdW16[0], c_vdW16[1], c_vdW16[2], c_vdW16[3]
+    log10Re_vdW84 = np.where(
+        np.log10(mstar_cor) > c_vdW84[3],
+        log10Re_vdW84_pre,
+        log10Re_vdW84_lowmass,
     )
     ave_1sigma = (log10Re_vdW84 - log10Re_vdW16) / 2.0 * np.log(10)
     return np.random.lognormal(0.0, ave_1sigma, n)
@@ -192,15 +327,16 @@ def modelKarmakar23(mh, z):
 
     Parameters
     -----------------------------------------------------------------------------------------------
-    mh: ndarray
-        (sub)halo mass [Msun/h]; can be a number or a numpy array.
-    z:  ndarray
-        redshift; can be a number or a numpy array.
+    :param mh: (sub)halo mass [Msun/h]; can be a number or a numpy array.
+    :type  mh: ndarray
+
+    :param z: redshift; can be a number or a numpy array.
+    :type  z: ndarray
 
     Returns
     -----------------------------------------------------------------------------------------------
-    rb: ndarray or a number
-        The galaxy size, has the dimensions as 1.0e-3 * mass_so.M_to_R(mh, z, 'vir') i.e. [Mpc].
+    :param rb: The galaxy size, has the dimensions as 1.0e-3 * mass_so.M_to_R(mh, z, 'vir') i.e. [Mpc].
+    :type  rb: ndarray or a number
     """
     a_z = -0.00135984 * z + 0.01667855
     b_z = -0.07948921 * z - 0.23212207
@@ -214,6 +350,25 @@ def modelKarmakar23(mh, z):
 
 
 def modelscKarmakar23(mh, z, n):
+    """
+    Generate a log-normal distribution of the scaling relation parameter based on halo mass and redshift.
+
+    Parameters
+    -----------------------------------------------------------------------------------------------
+    :param mh: The halo mass or masses used in the scaling relation in units of M_sol/h
+    :type  mh: float or np.ndarray
+
+    :param z: The redshift value used in the scaling relation.
+    :type  z: float
+
+    :param n: The number of samples to draw from the distribution.
+    :type  n: int
+
+    Returns
+    -----------------------------------------------------------------------------------------------
+    :return: An array of values drawn from a log-normal distribution defined by the scaling relation.
+    :rtype: np.ndarray
+    """
     a_z = 0.03461388 * z + 0.16207918
     b_z = -0.00304315 * z + 0.0265449
     c_z = -0.06415788 * z - 0.20405057
@@ -237,7 +392,33 @@ models["karmakar23"].func = modelKarmakar23
 models["karmakar23"].func_scat = modelscKarmakar23
 
 
-def log10Re_log10Mh_vdW(log10M, a, b, c, d):
+def log10Re_log10Mstar_vdW(log10M, a, b, c, d):
+    """
+    Function to calculate the logarithm of the effective radius as a function of the logarithm of the stellar mass
+    used in vdw23 model.
+
+    Parameters
+    -----------------------------------------------------------------------------------------------
+    :param log10M: The logarithm (base 10) of the stellar mass.
+    :type  log10M: float
+
+    :param a: Coefficient for the constant term in the relation.
+    :type  a: float
+
+    :param b: Coefficient for the linear term in the relation.
+    :type  b: float
+
+    :param c: Coefficient defining the curvature of the relation.
+    :type  c: float
+
+    :param d: Characteristic mass where the curvature changes.
+    :type  d: float
+
+    Returns
+    -----------------------------------------------------------------------------------------------
+    log10Re: float
+        The logarithm (base 10) of the effective radius computed using the given parameters.
+    """
     return a + b * log10M + (c - b) * np.log10(1 + 10 ** (log10M - d)) ** (c - b)
 
 
@@ -245,7 +426,24 @@ def log10Re_log10Mh_vdW(log10M, a, b, c, d):
 
 
 class p_smhm:
+    """
+    Characteristics of stellar mass halo mass relation models.
+    """
+
     def __init__(self, data):
+        """
+        Initialize the p_smhm class with parameters for stellar mass - halo mass relation.
+
+        Parameters
+        -----------------------------------------------------------------------------------------------
+        :param data: A list or array containing the values of the parameters that define the stellar mass-halo mass relation.
+        :type  data: list or numpy.array
+
+        Attributes
+        -----------------------------------------------------------------------------------------------
+        see P. Behroozi et al. 2019 for detail.
+        arXiv: 1806.07893
+        """
         self.ep0 = data[0]
         self.epa = data[1]
         self.eplna = data[2]
@@ -268,6 +466,20 @@ class p_smhm:
 
 
 def set_gals_param(pol_halo):
+    """
+    Set the galaxy parameters based on the halo position angle
+
+    Parameters
+    -----------------------------------------------------------------------------------------------
+    :param pol_halo: Array or list of halo position angle values.
+    :type  pol_halo: list or numpy.array
+
+    Returns
+    -----------------------------------------------------------------------------------------------
+    tuple containing:
+        - elip_gal: An array of galaxy ellipticities generated for each halo.
+        - polar_gal: An array of galaxy position anglen angles derived from the halo position angle
+    """
     n = len(pol_halo)
     elip_gal = gene_e(n)
     polar_gal = gene_ang_gal(pol_halo)
@@ -281,8 +493,9 @@ def gals_init(TYPE_SMHM="true"):
 
     Parameters
     -----------------------------------------------------------------------------------------------
-    TYPE_SMHM: str in ["true", "obs", "true_all"]
-               "true" and "obs" are for quiescent galaxies but "true_all" is for all galaxies
+    :param TYPE_SMHM: "true" and "obs" are for quiescent galaxies but "true_all" is for all galaxies
+                    in ["true", "obs", "true_all"]
+    :type  TYPE_SMHM:  str
 
     Returns
     -----------------------------------------------------------------------------------------------
@@ -427,25 +640,29 @@ def gals_init(TYPE_SMHM="true"):
 
 def stellarmass_halomass(Mh, z, pa, frac_SM_IMF=1.715):
     """
-    Stellar mass calculated from the stellar-mass-halo-mass fitting function of P. Behroozi et al. 2019.
+    Calculate the stellar mass of a galaxy from its halo mass using an empirical relation.
+    see P. Behroozi et al. 2019. for detail
     arXiv: 1806.07893
 
     Parameters
     -----------------------------------------------------------------------------------------------
-    Mh: ndarray or a number
-        physical halo peak mass [Msun]
-    z:  float
-        redshift
-    pa: list
-        fitting parameters
-    frac_SM_IMF: float
-        fraction of M/L ratio against the one of Chabrier IMF
-        1.715 is for Salpeter IMF
+    :param Mh: Halo mass of the galaxy in units of M_sol/h
+    :type  Mh: float
+
+    :param z: The redshift at which the stellar mass is calculated.
+    :type  z: float
+
+    :param pa: Parameter set for the stellar-mass halo-mass relation.
+    :type  pa: object
+
+    :param frac_SM_IMF: Fraction of the stellar mass due to the initial mass function (IMF) against Chabrier IMF.
+                        Default value is set to 1.715, coming from Salpeter IMF. (set to 1.0 for Chabrier IMF)
+    :type  frac_SM_IMF: float
 
     Returns
     -----------------------------------------------------------------------------------------------
-    M*: ndarray or a number
-        physical stellar mass, has the dimensions as Msun.
+    stellar_mass: float
+        The estimated stellar mass of the galaxy in units of M_sol/h
     """
     a = 1.0 / (1.0 + z)
     a1 = a - 1.0
@@ -458,29 +675,26 @@ def stellarmass_halomass(Mh, z, pa, frac_SM_IMF=1.715):
     gamma = 10.0 ** (pa.gamma0 + a1 * pa.gammaa + z * pa.gammaz)
     x = np.log10(Mh) - m_1
     x_del = x / delta
-    stellarm = (
-        stellarm_0
-        - np.log10(10.0 ** (-alpha * x) + 10.0 ** (-beta * x))
-        + gamma * np.exp(-0.5 * (x_del**2))
-    )
+    stellarm = stellarm_0 - np.log10(10.0 ** (-alpha * x) + 10.0 ** (-beta * x)) + gamma * np.exp(-0.5 * (x_del**2))
     return 10**stellarm * frac_SM_IMF
 
 
 def gene_e(n):
     """
-    ellipticity of galaxy in M. Oguri et al. 2008
+    Generate an ellipticity distribution for a sample of galaxies in M. Oguri et al. 2008
     arXiv: 0708.0825
 
     Parameters
     -----------------------------------------------------------------------------------------------
-    n:  int
-        length of halo mass nd.array
+    :param n: Number of galaxies in the sample for which to generate ellipticities.
+    :type  n: int
 
     Returns
     -----------------------------------------------------------------------------------------------
-    e_gal: ndarray
-        ellipticity of galaxy
+    e: ndarray
+        An array of galaxy ellipticities drawn from a truncated normal distribution.
     """
+
     em = 0.3
     se = 0.16
     e = st.truncnorm.rvs((0.0 - em) / se, (0.9 - em) / se, loc=em, scale=se, size=n)
@@ -494,8 +708,8 @@ def gene_ang_gal(pol_h):
 
     Parameters
     -----------------------------------------------------------------------------------------------
-    pol_h: nd.array
-        position angle of halos
+    :param pol_h: position angles of halos
+    :type  pol_h: ndarray
 
     Returns
     -----------------------------------------------------------------------------------------------
@@ -506,3 +720,10 @@ def gene_ang_gal(pol_h):
     sig = 35.4
     pol_gal = np.random.normal(loc=pol_h, scale=sig, size=n)
     return pol_gal
+
+
+#
+# for checks
+#
+if __name__ == "__main__":
+    print(modelVanderwel23.__doc__)

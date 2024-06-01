@@ -4,12 +4,28 @@ import scipy.stats as st
 from colossus.lss import mass_function
 from colossus.halo import concentration
 
-#
-# number counts and properties of lens halo
-#
-
-
 def gene_e_ang_halo(Mh):
+    """
+     Ellipticity
+
+     .. math::
+        ellipticity = \\equic \\1 - q
+
+    where q is axis ratio
+    and Position angle of the halo.
+
+    Parameters
+    -----------------------------------------------------------------------------------------------
+    :param Mh: halo mass
+    :type  Mh: ndarray
+
+    Returns
+    -----------------------------------------------------------------------------------------------
+    axis ratio: ndarray
+        axis ratio of halos
+    pol_halo: ndarray
+        position angle of halos
+    """
     n = len(Mh)
     e = gene_e_halo(Mh)
     p = gene_ang(n)
@@ -34,7 +50,12 @@ def gene_ang(n):
 
 def gene_e_halo(Mh):
     """
-    ellipticity of halos in T. Okabe et al. 2020
+    Ellipticity
+
+     .. math::
+        ellipticity = \\equic \\1 - q
+
+    of halos in T. Okabe et al. 2020
     arxiv: 2005.11469
 
     Parameters
