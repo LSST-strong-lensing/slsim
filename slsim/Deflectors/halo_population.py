@@ -5,8 +5,7 @@ from colossus.lss import mass_function
 
 
 def gene_e_ang_halo(Mh):
-    """
-    Ellipticity
+    """Ellipticity.
 
      .. math::
         ellipticity = \\equic \\1 - q
@@ -25,8 +24,7 @@ def gene_e_ang_halo(Mh):
 
 
 def gene_ang(n):
-    """
-    Position angle of the halo
+    """Position angle of the halo.
 
     :param n: length of halo mass nd.array
     :type  n: int
@@ -36,8 +34,7 @@ def gene_ang(n):
 
 
 def gene_e_halo(Mh):
-    """
-    Ellipticity.
+    """Ellipticity.
 
      .. math::
         ellipticity = \\equic \\1 - q
@@ -50,11 +47,15 @@ def gene_e_halo(Mh):
     :return: ellipticity of halos
     """
     log10Mh = np.log10(Mh)  # log10([Modot/h])
-    elip_fit = 0.09427281271709388 * log10Mh - 0.9477721865885471  # T. Okabe 2020 Table 3
+    elip_fit = (
+        0.09427281271709388 * log10Mh - 0.9477721865885471
+    )  # T. Okabe 2020 Table 3
     se = 0.13  # T. Okabe 2020 Figure 9
     n = len(Mh)
     elip_fit[elip_fit < 0.233] = 0.233
-    elip = st.truncnorm.rvs((0.0 - elip_fit) / se, (0.9 - elip_fit) / se, loc=elip_fit, scale=se, size=n)
+    elip = st.truncnorm.rvs(
+        (0.0 - elip_fit) / se, (0.9 - elip_fit) / se, loc=elip_fit, scale=se, size=n
+    )
     return elip
 
 
@@ -81,8 +82,8 @@ def calc_vol(z, cosmo_col):
 
 
 def dNhalodzdlnM_lens(M, z, cosmo_col):
-    """
-    Compute the differential number density of halos with respect to redshift and log halo mass, per a unit of solid angle [deg^2]
+    """Compute the differential number density of halos with respect to redshift and log
+    halo mass, per a unit of solid angle [deg^2]
 
     :param M: The masses of the dark matter halos.
     :type  M: ndarray, float
@@ -95,7 +96,10 @@ def dNhalodzdlnM_lens(M, z, cosmo_col):
     """
     dvoldzdO = calc_vol(z, cosmo_col)
     hhh = (cosmo_col.H0 / 100.0) ** 3
-    mfunc_so = mass_function.massFunction(M, z, mdef="fof", model="sheth99", q_out="dndlnM") * hhh
+    mfunc_so = (
+        mass_function.massFunction(M, z, mdef="fof", model="sheth99", q_out="dndlnM")
+        * hhh
+    )
     return dvoldzdO * mfunc_so
 
 
