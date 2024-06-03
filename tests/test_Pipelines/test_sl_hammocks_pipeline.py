@@ -42,7 +42,9 @@ class TestSkyPyPipeline(object):
         assert len(halos_galaxies) > cosmo0_halo_number
 
         # check w0waCDM model
-        cosmo3 = w0waCDM(H0=70, Om0=0.3, Ob0=0.05, Ode0=0.7, w0=-1.0, wa=0.0, Tcmb0=2.725)
+        cosmo3 = w0waCDM(
+            H0=70, Om0=0.3, Ob0=0.05, Ode0=0.7, w0=-1.0, wa=0.0, Tcmb0=2.725
+        )
         pipeline3 = SLHammocksPipeline(sky_area=sky_area, cosmo=cosmo3)
         halos_galaxies = pipeline3._pipeline
         # we expect the pipeline works:
