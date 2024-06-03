@@ -14,17 +14,9 @@ def gene_e_ang_halo(Mh):
     where q is axis ratio
     and Position angle of the halo.
 
-    Parameters
-    -----------------------------------------------------------------------------------------------
     :param Mh: halo mass
     :type  Mh: ndarray
-
-    Returns
-    -----------------------------------------------------------------------------------------------
-    axis ratio: ndarray
-        axis ratio of halos
-    pol_halo: ndarray
-        position angle of halos in units of degree
+    :return:  e, p, ellipticity of 1-q, where q is axis ratio and position angle of halos.
     """
     n = len(Mh)
     e = gene_e_halo(Mh)
@@ -36,15 +28,9 @@ def gene_ang(n):
     """
     Position angle of the halo
 
-    Parameters
-    -----------------------------------------------------------------------------------------------
     :param n: length of halo mass nd.array
     :type  n: int
-
-    Returns
-    -----------------------------------------------------------------------------------------------
-    pol_halo: ndarray
-        position angle of halos in units of degree
+    :return: position angle of halos in units of degree
     """
     return (np.random.rand(n) - 0.5) * 360.0
 
@@ -59,15 +45,9 @@ def gene_e_halo(Mh):
     of halos in T. Okabe et al. 2020
     arxiv: 2005.11469
 
-    Parameters
-    -----------------------------------------------------------------------------------------------
     :param Mh: halo mass
-    :type  Mh:  nd.array
-
-    Returns
-    -----------------------------------------------------------------------------------------------
-    e_halo: ndarray
-        ellipticity of halos
+    :type  Mh:  ndarray
+    :return: ellipticity of halos
     """
     log10Mh = np.log10(Mh)  # log10([Modot/h])
     elip_fit = 0.09427281271709388 * log10Mh - 0.9477721865885471  # T. Okabe 2020 Table 3
@@ -104,21 +84,13 @@ def dNhalodzdlnM_lens(M, z, cosmo_col):
     """
     Compute the differential number density of halos with respect to redshift and log halo mass, per a unit of solid angle [deg^2]
 
-    Parameters
-    -----------------------------------------------------------------------------------------------
     :param M: The masses of the dark matter halos.
     :type  M: ndarray, float
-
     :param z: The redshift at which to compute the differential number density.
     :type  z: float
-
     :param cosmo_col: An instance of an colossus cosmology model
     :type cosmo_col: colossus.cosmology instance
-
-    Returns
-    -----------------------------------------------------------------------------------------------
-    dNhalodzdlnM: float
-        The differential number density of halos per unit redshift per natural log mass interval per unit area
+    :return: dNhalodzdlnM,  The differential number density of halos per unit redshift per natural log mass interval per unit area
         in units of #/deg^2/dlnM[M_sol/h].
     """
     dvoldzdO = calc_vol(z, cosmo_col)
@@ -132,19 +104,13 @@ def concent_m_w_scatter(m, z, sig):
     updated parameters of  Diemer & Joyce 2019 arXiv:1407.4730 [astro-ph.CO].
     arXiv:1809.07326 [astro-ph.CO].
 
-    Parameters
-    -----------------------------------------------------------------------------------------------
     :param m: halo mass
     :type  m: nd.array
     :param z: redshift
     :type  z: float
     :param sig: intrinsic scatter of logarithmic concentration parameter
     :type  sig: float
-
-    Returns
-    -----------------------------------------------------------------------------------------------
-    con_halo: ndarray
-        concentration parameter of halos
+    :return: con_halo: ndarray, concentration parameter of halos
     """
     con_mean = concentration.concentration(m, "vir", z, model="diemer19")
     sca = np.random.lognormal(0.0, sig, len(m))
