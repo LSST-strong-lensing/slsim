@@ -80,9 +80,7 @@ models["karmakar23"].sc_mhalo_dependence = True
 models["karmakar23"].sc_z_dependence = True
 
 
-def galaxy_size(
-    mh, mstar, z, cosmo_col, q_out="tb", model="oguri20", scatter=False, sig_tb=0.1
-):
+def galaxy_size(mh, mstar, z, cosmo_col, q_out="tb", model="oguri20", scatter=False, sig_tb=0.1):
     """Calculate the size of a galaxy based on halo mass, stellar mass, redshift, and
     cosmology, optionally including scatter.
 
@@ -227,7 +225,7 @@ def modelscLognormal(sig_tb, n):
 
 def modelVanderwel23(mstar, z):
     """
-    The galaxy-size model of A. Van Der Wel et al 2023.
+    The galaxy-size model of van der Wel et al 2023.
     arXiv: 2307.03264
     re: effective (half-mass) radius
 
@@ -253,6 +251,12 @@ def modelVanderwel23(mstar, z):
     -----------------------------------------------------------------------------------------------
     rb: ndarray or a number
         The galaxy size, has the dimensions as 1.0e-3 * mass_so.M_to_R(mh, z, 'vir') i.e. [Mpc/h].
+
+    Notes
+    -----------------------------------------------------------------------------------------------
+    The following values of [\\Gamma, \alpha, \beta, \\delta] in c_vdW84 and c_vdW16 are determined
+    by applying the curve_fit function in scipy.optimize to the stellar half-mass radii data in Table 5
+    of van der Wel et al. 2023 (arXiv: 2307.03264), which is for quiescent galaxies at 0.5 < z < 1.0.
     """
     c_vdW50 = [
         0.58302746,
@@ -260,13 +264,7 @@ def modelVanderwel23(mstar, z):
         1.1363604,
         10.81504371,
     ]  # [\Gamma, \alpha, \beta, \delta]
-    re_wo_zdepend = (
-        10
-        ** log10Re_log10Mstar_vdW(
-            np.log10(mstar), c_vdW50[0], c_vdW50[1], c_vdW50[2], c_vdW50[3]
-        )
-        / 1e3
-    )  # [Mpc/h]
+    re_wo_zdepend = 10 ** log10Re_log10Mstar_vdW(np.log10(mstar), c_vdW50[0], c_vdW50[1], c_vdW50[2], c_vdW50[3]) / 1e3  # [Mpc/h]
     omega = -1.72  # np.where(np.log10(mstar) < c_vdW50[3], -0.412, -1.72)
     zbin = (0.5 + 1.0) / 2.0
     zdepend = np.where(
@@ -275,16 +273,8 @@ def modelVanderwel23(mstar, z):
         ((1.0 + z) / (1.0 + zbin)) ** omega,
     )
     log10ms_switch = 10.5
-    re_lowmass_wo_zdepend = (
-        10
-        ** log10Re_log10Mstar_vdW(
-            log10ms_switch, c_vdW50[0], c_vdW50[1], c_vdW50[2], c_vdW50[3]
-        )
-        / 1e3
-    )  # [Mpc/h]
-    re_lowconst_wo_zdepend = np.where(
-        np.log10(mstar) > log10ms_switch, re_wo_zdepend, re_lowmass_wo_zdepend
-    )
+    re_lowmass_wo_zdepend = 10 ** log10Re_log10Mstar_vdW(log10ms_switch, c_vdW50[0], c_vdW50[1], c_vdW50[2], c_vdW50[3]) / 1e3  # [Mpc/h]
+    re_lowconst_wo_zdepend = np.where(np.log10(mstar) > log10ms_switch, re_wo_zdepend, re_lowmass_wo_zdepend)
     re = re_lowconst_wo_zdepend * zdepend
     rb = 0.551 * re
     return rb
@@ -316,6 +306,12 @@ def modelscVanderwel23(mstar, n):
     -----------------------------------------------------------------------------------------------
     :return: Scatters of galaxy effective radii from the lognormal distribution.
     :rtype: np.ndarray
+
+    Notes
+    -----------------------------------------------------------------------------------------------
+    The following values of [\\Gamma, \alpha, \beta, \\delta] in c_vdW84 and c_vdW16 are determined
+    by applying the curve_fit function in scipy.optimize to the stellar half-mass radii data in Table 5
+    of van der Wel et al. 2023 (arXiv: 2307.03264), which is for quiescent galaxies at 0.5 < z < 1.0.
     """
     c_vdW84 = [
         0.64141456,
@@ -330,21 +326,13 @@ def modelscVanderwel23(mstar, n):
         10.68959868,
     ]  # [\Gamma, \alpha, \beta, \delta]
     mstar_cor = np.where(
-        mstar > 10**11.43033199, 10**11.43033199, mstar
+        mstar > 10**11.4, 10**11.4, mstar
     )  # to prevent the scatter from becoming too small or negative at the high mass end
-    log10Re_vdW84_pre = log10Re_log10Mstar_vdW(
-        np.log10(mstar_cor), c_vdW84[0], c_vdW84[1], c_vdW84[2], c_vdW84[3]
-    )
-    log10Re_vdW16_pre = log10Re_log10Mstar_vdW(
-        np.log10(mstar_cor), c_vdW16[0], c_vdW16[1], c_vdW16[2], c_vdW16[3]
-    )
+    log10Re_vdW84_pre = log10Re_log10Mstar_vdW(np.log10(mstar_cor), c_vdW84[0], c_vdW84[1], c_vdW84[2], c_vdW84[3])
+    log10Re_vdW16_pre = log10Re_log10Mstar_vdW(np.log10(mstar_cor), c_vdW16[0], c_vdW16[1], c_vdW16[2], c_vdW16[3])
 
-    log10Re_vdW84_lowmass = log10Re_log10Mstar_vdW(
-        c_vdW84[3], c_vdW84[0], c_vdW84[1], c_vdW84[2], c_vdW84[3]
-    )
-    log10Re_vdW16_lowmass = log10Re_log10Mstar_vdW(
-        c_vdW16[3], c_vdW16[0], c_vdW16[1], c_vdW16[2], c_vdW16[3]
-    )
+    log10Re_vdW84_lowmass = log10Re_log10Mstar_vdW(c_vdW84[3], c_vdW84[0], c_vdW84[1], c_vdW84[2], c_vdW84[3])
+    log10Re_vdW16_lowmass = log10Re_log10Mstar_vdW(c_vdW16[3], c_vdW16[0], c_vdW16[1], c_vdW16[2], c_vdW16[3])
 
     log10Re_vdW16 = np.where(
         np.log10(mstar_cor) > c_vdW16[3],
@@ -377,6 +365,11 @@ def modelKarmakar23(mh, z):
     -----------------------------------------------------------------------------------------------
     :param rb: The galaxy size, has the dimensions as 1.0e-3 * mass_so.M_to_R(mh, z, 'vir') i.e. [Mpc].
     :type  rb: ndarray or a number
+
+    Notes
+    -----------------------------------------------------------------------------------------------
+    The following values of a_z, b_z, c_z, and d_z are determined
+    by applying the curve_fit function in scipy.optimize to the stellar half-mass radii data
     """
     a_z = -0.00135984 * z + 0.01667855
     b_z = -0.07948921 * z - 0.23212207
@@ -461,11 +454,11 @@ def log10Re_log10Mstar_vdW(log10M, a, b, c, d):
     return a + b * log10M + (c - b) * np.log10(1 + 10 ** (log10M - d)) ** (c - b)
 
 
-# ### Stellar mass - Halo mass relation from Behroozi+ 2019
-
-
 class p_smhm:
-    """Characteristics of stellar mass halo mass relation models."""
+    """
+    Characteristics of stellar mass halo mass relation models.
+    based on the fitting function for the stellar mass - halo mass relation in Behroozi+ 2019
+    """
 
     def __init__(self, data):
         """
@@ -476,10 +469,49 @@ class p_smhm:
         :param data: A list or array containing the values of the parameters that define the stellar mass-halo mass relation.
         :type  data: list or numpy.array
 
-        Attributes
+        Notes
         -----------------------------------------------------------------------------------------------
-        see P. Behroozi et al. 2019 for detail.
-        arXiv: 1806.07893
+        The following parameters are fitting parameters of the stellar-mass halo-mass relation in Behroozi et al. 2019 (arXiv: 1806.07893),
+        which include:
+
+        ep0: epsilon_0, constant term in the epsilon parameter evolution equation.
+        epa: epsilon_a, scale factor dependent term in the epsilon parameter evolution equation.
+        eplna: epsilon_{lna}, natural log of the scale factor term in the epsilon parameter evolution equation.
+        epz: epsilon_z, redshift dependent term in the epsilon parameter evolution equation.
+
+        M0: M_0, constant term in the logarithm base 10 of M1 over solar mass equation.
+        Ma: M_a, scale factor dependent term in the logarithm base 10 of M1 over solar mass equation.
+        Mlna: M_{lna}, natural log of the scale factor term in the logarithm base 10 of M1 over solar mass equation.
+        Mz: M_z, redshift dependent term in the logarithm base 10 of M1 over solar mass equation.
+
+        alpha0: alpha_0, constant term in the alpha parameter evolution equation.
+        alphaa: alpha_a, scale factor dependent term in the alpha parameter evolution equation.
+        alphalna: alpha_{lna}, natural log of the scale factor term in the alpha parameter evolution equation.
+        alphaz: alpha_z, redshift dependent term in the alpha parameter evolution equation.
+
+        beta0: beta_0, constant term in the beta parameter evolution equation.
+        betaa: beta_a, scale factor dependent term in the beta parameter evolution equation.
+        betaz: beta_z, redshift dependent term in the beta parameter evolution equation.
+
+        delta0: delta_0, constant term representing the delta parameter, which is assumed to be constant.
+
+        gamma0: gamma_0, constant term in the logarithm base 10 of the gamma parameter evolution equation.
+        gammaa: gamma_a, scale factor dependent term in the logarithm base 10 of the gamma parameter evolution equation.
+        gammaz: gamma_z, redshift dependent term in the logarithm base 10 of the gamma parameter evolution equation.
+
+        The equations represented by these parameters are as follows:
+
+        .. math::
+            \\log _{10}\\left(\frac{M_*}{M_1}\right)= & \\epsilon-\\log _{10}\\left(10^{-\alpha x}+10^{-\beta x}\right)
+            +\\gamma \\exp \\left[-0.5\\left(\frac{x}{\\delta}\right)^2\right],\\
+            \\(\\log _{10}\\left(\frac{M_1}{M_{\\odot}}\right) = M_0 + M_a(a - 1) - M_{\\ln a} \\ln(a) + M_z z,\\)\\
+            \\(\\epsilon = \\epsilon_0 + \\epsilon_a(a - 1) - \\epsilon_{\\ln a} \\ln(a) + \\epsilon_z z,\\)\\
+            \\(\alpha = \alpha_0 + \alpha_a(a - 1) - \alpha_{\\ln a} \\ln(a) + \alpha_z z,\\)\\
+            \\(\beta = beta_0 + beta_a(a - 1) + beta_z z,\\)\\
+            \\(\\delta = delta_0,\\)\\
+            \\(\\log _{10}(\\gamma) = gamma_0 + gamma_a(a - 1) + gamma_z z.\\)\\
+
+        where M_* is the stellar mass with the Chabrier initial mass function.
         """
         self.ep0 = data[0]
         self.epa = data[1]
@@ -711,11 +743,7 @@ def stellarmass_halomass(Mh, z, pa, frac_SM_IMF=1.715):
     gamma = 10.0 ** (pa.gamma0 + a1 * pa.gammaa + z * pa.gammaz)
     x = np.log10(Mh) - m_1
     x_del = x / delta
-    stellarm = (
-        stellarm_0
-        - np.log10(10.0 ** (-alpha * x) + 10.0 ** (-beta * x))
-        + gamma * np.exp(-0.5 * (x_del**2))
-    )
+    stellarm = stellarm_0 - np.log10(10.0 ** (-alpha * x) + 10.0 ** (-beta * x)) + gamma * np.exp(-0.5 * (x_del**2))
     return 10**stellarm * frac_SM_IMF
 
 
@@ -766,4 +794,4 @@ def gene_ang_gal(pol_h):
 # for checks
 #
 if __name__ == "__main__":
-    print(modelVanderwel23.__doc__)
+    print(p_smhm.__init__.__doc__)
