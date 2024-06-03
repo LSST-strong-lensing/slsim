@@ -31,9 +31,7 @@ class SLHammocksPipeline:
 
             data_area = 0.001  # deg2 #TODO prepare the data with larger sky area
             if sky_area.value > data_area:
-                raise ValueError(
-                    "Now sky_area should be lower than the sky_area size of prepared data file"
-                )
+                raise ValueError("Now sky_area should be lower than the sky_area size of prepared data file")
             else:
                 thinp = int((data_area / sky_area).value)
 
@@ -133,9 +131,7 @@ def table_translator_for_slsim(table, cosmo):
     M200_array, r200_array, c200_array = zip(
         *[
             mass_defs.changeMassDefinition(Mvir, cvir, z, "vir", "200c")
-            for Mvir, cvir, z in zip(
-                table["halo_mass"], table["concentration"], table["z"], strict=False
-            )
+            for Mvir, cvir, z in zip(table["halo_mass"], table["concentration"], table["z"], strict=False)
         ],
         strict=False,
     )
@@ -143,23 +139,13 @@ def table_translator_for_slsim(table, cosmo):
     c200_array = np.array(c200_array)
 
     hubble = cosmo_col.H0 / 100.0
-    table["halo_mass"] = (
-        M200_array / hubble
-    )  # convert to Mvir [M_sol/h] to physical M200c [M_sol]
-    table["halo_mass_acc"] = (
-        table["halo_mass_acc"] / hubble
-    )  # convert to Mvir [M_sol/h] to physical M200c[M_sol] Currently not supported
+    table["halo_mass"] = M200_array / hubble  # convert to Mvir [M_sol/h] to physical M200c [M_sol]
+    table["halo_mass_acc"] = table["halo_mass_acc"] / hubble  # convert to Mvir [M_sol/h] to physical M200c[M_sol] Currently not supported
     table["concentration"] = c200_array
-    table["stellar_mass"] = (
-        table["stellar_mass"] / hubble
-    )  # convert to stellar mass [M_sol/h] to physical stellar mass [M_sol]
+    table["stellar_mass"] = table["stellar_mass"] / hubble  # convert to stellar mass [M_sol/h] to physical stellar mass [M_sol]
 
-    table["e_h"] = ellip_from_axis_ratio2epsilon(
-        table["e_h"]
-    )  # convert from 1-q to (1-q^2)/(1+q^2)
-    table["ellipticity"] = ellip_from_axis_ratio2epsilon(
-        table["ellipticity"]
-    )  # convert from 1-q to (1-q^2)/(1+q^2)
+    table["e_h"] = ellip_from_axis_ratio2epsilon(table["e_h"])  # convert from 1-q to (1-q^2)/(1+q^2)
+    table["ellipticity"] = ellip_from_axis_ratio2epsilon(table["ellipticity"])  # convert from 1-q to (1-q^2)/(1+q^2)
 
     return table
 
@@ -271,9 +257,7 @@ def halo_galaxy_population(
         Mhosthl_tab_re = Mhosthl_tab
         hubble = cosmo_col.H0 / 100.0
 
-        Mcenl_ave = galaxy_population.stellarmass_halomass(
-            Mhosthl_tab_re / (hubble), zl_tab, paramc, frac_SM_IMF
-        ) * (hubble)
+        Mcenl_ave = galaxy_population.stellarmass_halomass(Mhosthl_tab_re / (hubble), zl_tab, paramc, frac_SM_IMF) * (hubble)
         Mcenl_scat = np.random.lognormal(0.0, sig_mcen, size=Mhosthl_tab_re.shape)
         Mcenl_tab = Mcenl_ave * Mcenl_scat
 
@@ -322,7 +306,7 @@ def halo_galaxy_population(
 
 
 def ellip_from_axis_ratio2epsilon(ellipticity):
-    """Translates ellipticity definitions from.
+    """Translates ellipticity definitions from
 
     .. math::
         ellipticity = \\equic \\1 - q
@@ -334,7 +318,6 @@ def ellip_from_axis_ratio2epsilon(ellipticity):
 
     :param ellipticity: ellipticity defined as 1-q, where q is axis ratio
     :type  ellipticity: ndarray or float
-
     :return: ellipticity. ellipticity in slsim defined as (1-q^2)/(1+q^2), where q is axis ratio
     """
     return (1.0 - (1.0 - ellipticity) ** 2) / (1.0 + (1.0 - ellipticity) ** 2)
