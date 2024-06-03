@@ -6,6 +6,7 @@ from lenstronomy.Util import constants
 
 import slsim.Deflectors.galaxy_population as galaxy_population
 import slsim.Deflectors.halo_population as halo_population
+import slsim.Util.param_util as util
 
 
 class SLHammocksPipeline:
@@ -144,8 +145,8 @@ def table_translator_for_slsim(table, cosmo):
     table["concentration"] = c200_array
     table["stellar_mass"] = table["stellar_mass"] / hubble  # convert to stellar mass [M_sol/h] to physical stellar mass [M_sol]
 
-    table["e_h"] = ellip_from_axis_ratio2epsilon(table["e_h"])  # convert from 1-q to (1-q^2)/(1+q^2)
-    table["ellipticity"] = ellip_from_axis_ratio2epsilon(table["ellipticity"])  # convert from 1-q to (1-q^2)/(1+q^2)
+    table["e_h"] = util.ellip_from_axis_ratio2epsilon(table["e_h"])  # convert from 1-q to (1-q^2)/(1+q^2)
+    table["ellipticity"] = util.ellip_from_axis_ratio2epsilon(table["ellipticity"])  # convert from 1-q to (1-q^2)/(1+q^2)
 
     return table
 
@@ -303,21 +304,3 @@ def halo_galaxy_population(
     table_pop = Table(halo_gal_pop_array, names=columns_pop)
 
     return table_pop
-
-
-def ellip_from_axis_ratio2epsilon(ellipticity):
-    """Translates ellipticity definitions from
-
-    .. math::
-        ellipticity = \\equic \\1 - q
-
-    where q is axis ratio, to ellipticity in slsim,
-
-    .. math::
-        epsilon = \\equic \\frac{1 - q^2}{1 + q^2}
-
-    :param ellipticity: ellipticity defined as 1-q, where q is axis ratio
-    :type  ellipticity: ndarray or float
-    :return: ellipticity. ellipticity in slsim defined as (1-q^2)/(1+q^2), where q is axis ratio
-    """
-    return (1.0 - (1.0 - ellipticity) ** 2) / (1.0 + (1.0 - ellipticity) ** 2)
