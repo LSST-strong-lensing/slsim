@@ -65,9 +65,7 @@ models["karmakar23"].sc_mhalo_dependence = True
 models["karmakar23"].sc_z_dependence = True
 
 
-def galaxy_size(
-    mh, mstar, z, cosmo_col, q_out="tb", model="oguri20", scatter=False, sig_tb=0.1
-):
+def galaxy_size(mh, mstar, z, cosmo_col, q_out="tb", model="oguri20", scatter=False, sig_tb=0.1):
     """Calculate the size of a galaxy based on halo mass, stellar mass, redshift, and
     cosmology, optionally including scatter.
 
@@ -216,13 +214,7 @@ def modelVanderwel23(mstar, z):
         1.1363604,
         10.81504371,
     ]  # [\Gamma, \alpha, \beta, \delta]
-    re_wo_zdepend = (
-        10
-        ** log10Re_log10Mstar_vdW(
-            np.log10(mstar), c_vdW50[0], c_vdW50[1], c_vdW50[2], c_vdW50[3]
-        )
-        / 1e3
-    )  # [Mpc/h]
+    re_wo_zdepend = 10 ** log10Re_log10Mstar_vdW(np.log10(mstar), c_vdW50[0], c_vdW50[1], c_vdW50[2], c_vdW50[3]) / 1e3  # [Mpc/h]
     omega = -1.72  # np.where(np.log10(mstar) < c_vdW50[3], -0.412, -1.72)
     zbin = (0.5 + 1.0) / 2.0
     zdepend = np.where(
@@ -231,16 +223,8 @@ def modelVanderwel23(mstar, z):
         ((1.0 + z) / (1.0 + zbin)) ** omega,
     )
     log10ms_switch = 10.5
-    re_lowmass_wo_zdepend = (
-        10
-        ** log10Re_log10Mstar_vdW(
-            log10ms_switch, c_vdW50[0], c_vdW50[1], c_vdW50[2], c_vdW50[3]
-        )
-        / 1e3
-    )  # [Mpc/h]
-    re_lowconst_wo_zdepend = np.where(
-        np.log10(mstar) > log10ms_switch, re_wo_zdepend, re_lowmass_wo_zdepend
-    )
+    re_lowmass_wo_zdepend = 10 ** log10Re_log10Mstar_vdW(log10ms_switch, c_vdW50[0], c_vdW50[1], c_vdW50[2], c_vdW50[3]) / 1e3  # [Mpc/h]
+    re_lowconst_wo_zdepend = np.where(np.log10(mstar) > log10ms_switch, re_wo_zdepend, re_lowmass_wo_zdepend)
     re = re_lowconst_wo_zdepend * zdepend
     rb = 0.551 * re
     return rb
@@ -291,19 +275,11 @@ def modelscVanderwel23(mstar, n):
     mstar_cor = np.where(
         mstar > 10**11.4, 10**11.4, mstar
     )  # to prevent the scatter from becoming too small or negative at the high mass end
-    log10Re_vdW84_pre = log10Re_log10Mstar_vdW(
-        np.log10(mstar_cor), c_vdW84[0], c_vdW84[1], c_vdW84[2], c_vdW84[3]
-    )
-    log10Re_vdW16_pre = log10Re_log10Mstar_vdW(
-        np.log10(mstar_cor), c_vdW16[0], c_vdW16[1], c_vdW16[2], c_vdW16[3]
-    )
+    log10Re_vdW84_pre = log10Re_log10Mstar_vdW(np.log10(mstar_cor), c_vdW84[0], c_vdW84[1], c_vdW84[2], c_vdW84[3])
+    log10Re_vdW16_pre = log10Re_log10Mstar_vdW(np.log10(mstar_cor), c_vdW16[0], c_vdW16[1], c_vdW16[2], c_vdW16[3])
 
-    log10Re_vdW84_lowmass = log10Re_log10Mstar_vdW(
-        c_vdW84[3], c_vdW84[0], c_vdW84[1], c_vdW84[2], c_vdW84[3]
-    )
-    log10Re_vdW16_lowmass = log10Re_log10Mstar_vdW(
-        c_vdW16[3], c_vdW16[0], c_vdW16[1], c_vdW16[2], c_vdW16[3]
-    )
+    log10Re_vdW84_lowmass = log10Re_log10Mstar_vdW(c_vdW84[3], c_vdW84[0], c_vdW84[1], c_vdW84[2], c_vdW84[3])
+    log10Re_vdW16_lowmass = log10Re_log10Mstar_vdW(c_vdW16[3], c_vdW16[0], c_vdW16[1], c_vdW16[2], c_vdW16[3])
 
     log10Re_vdW16 = np.where(
         np.log10(mstar_cor) > c_vdW16[3],
@@ -698,11 +674,7 @@ def stellarmass_halomass(Mh, z, pa, frac_SM_IMF=1.715):
     gamma = 10.0 ** (pa.gamma0 + a1 * pa.gammaa + z * pa.gammaz)
     x = np.log10(Mh) - m_1
     x_del = x / delta
-    stellarm = (
-        stellarm_0
-        - np.log10(10.0 ** (-alpha * x) + 10.0 ** (-beta * x))
-        + gamma * np.exp(-0.5 * (x_del**2))
-    )
+    stellarm = stellarm_0 - np.log10(10.0 ** (-alpha * x) + 10.0 ** (-beta * x)) + gamma * np.exp(-0.5 * (x_del**2))
     return 10**stellarm * frac_SM_IMF
 
 
