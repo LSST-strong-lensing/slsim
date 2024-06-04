@@ -81,6 +81,18 @@ def sharp_image(
     :return: 2d array unblurred image
     """
     kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band)
+    rotation_angle = 2.4435  # rotation angle in North to West in radian
+    scale1_1 = delta_pix * np.cos(rotation_angle)
+    scale1_2 = -delta_pix * np.sin(rotation_angle)
+    scale2_1 = delta_pix * np.sin(rotation_angle)
+    scale2_2 = delta_pix * np.cos(rotation_angle)
+    ra_at_xy_0_original = (num_pix - 1)/2
+    dec_at_xy_0_original = (num_pix - 1)/2
+    pix2angle_transform_rot = np.array([[scale1_1, scale1_2], [scale2_1, scale2_2]])
+    ra_at_xy_0, dec_at_xy_0 = pix2angle_transform_rot.dot([-ra_at_xy_0_original,
+                                                        -dec_at_xy_0_original]).T
+    kwargs_pixel_grid = {"ra_at_xy_0": ra_at_xy_0, "dec_at_xy_0": dec_at_xy_0, 
+                          "transform_pix2angle": pix2angle_transform_rot}
     kwargs_band = {
         "pixel_scale": delta_pix,
         "magnitude_zero_point": mag_zero_point,
@@ -89,6 +101,7 @@ def sharp_image(
         "psf_type": "NONE",  # these are keywords not being used but need to be set
         ##in SimAPI
         "exposure_time": 1,
+        "kwargs_pixel_grid": kwargs_pixel_grid
     }  # these are keywords not being used but need to be set in
     ##SimAPI
     sim_api = SimAPI(
@@ -175,17 +188,25 @@ def centered_coordinate_system(num_pix, transform_pix2angle):
     :return: dict with ra_at_xy_0, dec_at_xy_0, transfrom_pix2angle
     """
     pix_center = (num_pix - 1) / 2
-    ra_center = (
+    """ra_center = (
         pix_center * transform_pix2angle[0, 0] + pix_center * transform_pix2angle[1, 0]
     )
     dec_center = (
         pix_center * transform_pix2angle[0, 1] + pix_center * transform_pix2angle[1, 1]
-    )
-
+    )"""
+    rotation_angle = 2.4435  # rotation angle in North to West in radian
+    scale1_1 = np.cos(rotation_angle)
+    scale1_2 = -np.sin(rotation_angle)
+    scale2_1 = np.sin(rotation_angle)
+    scale2_2 = np.cos(rotation_angle)
+    rot_matrix = np.array([[scale1_1, scale1_2], [scale2_1, scale2_2]])
+    pix2angle_transform_rot = rot_matrix.dot(transform_pix2angle)
+    ra_at_xy_0, dec_at_xy_0 = pix2angle_transform_rot.dot([-pix_center,
+                                                        -pix_center]).T
     kwargs_grid = {
-        "ra_at_xy_0": -ra_center,
-        "dec_at_xy_0": -dec_center,
-        "transform_pix2angle": transform_pix2angle,
+        "ra_at_xy_0": ra_at_xy_0,
+        "dec_at_xy_0": dec_at_xy_0,
+        "transform_pix2angle": pix2angle_transform_rot,
     }
     return kwargs_grid
 
