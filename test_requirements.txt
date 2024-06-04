@@ -1,2 +1,2 @@
 # git+https://github.com/aymgal/coolest@main#egg=coolest
-coolest==v0.1.8
+coolest==0.1.8
