@@ -43,22 +43,22 @@ def e2epsilon(e):
     return 2 * e / (1 + e**2)
 
 
-def ellip_from_axis_ratio2epsilon(ellipticity):
+def ellip_from_axis_ratio2epsilon(ellip):
     """Translates ellipticity definitions from.
 
     .. math::
-        ellipticity = \\equic \\1 - q
+        ellip = \\equic \\1 - q
 
-    where q is axis ratio, to ellipticity in slsim,
+    to
 
     .. math::
         epsilon = \\equic \\frac{1 - q^2}{1 + q^2}
 
-    :param ellipticity: ellipticity defined as 1-q, where q is axis ratio
-    :type  ellipticity: ndarray or float
-    :return: ellipticity. ellipticity in slsim defined as (1-q^2)/(1+q^2), where q is axis ratio
+    :param ellip: ellipticity in SL-Hammocks
+    :type  ellip: ndarray or float
+    :return: epsilon. ellipticity in slsim
     """
-    return (1.0 - (1.0 - ellipticity) ** 2) / (1.0 + (1.0 - ellipticity) ** 2)
+    return (1.0 - (1.0 - ellip) ** 2) / (1.0 + (1.0 - ellip) ** 2)
 
 
 def random_ra_dec(ra_min, ra_max, dec_min, dec_max, n):
@@ -86,9 +86,7 @@ def random_radec_string(ra_min, ra_max, dec_min, dec_max, n):
     :param n: number of random sample
     :returns: n number of "ra, dec" strings within given limits
     """
-    ra, dec = random_ra_dec(
-        ra_min=ra_min, ra_max=ra_max, dec_min=dec_min, dec_max=dec_max, n=n
-    )
+    ra, dec = random_ra_dec(ra_min=ra_min, ra_max=ra_max, dec_min=dec_min, dec_max=dec_max, n=n)
     center_coods_list = []
     for i in range(n):
         center_coods_list.append(str(ra[i]) + ", " + str(dec[i]))
@@ -109,9 +107,7 @@ def convolved_image(image, psf_kernel, convolution_type="fft"):
     if convolution_type == "fft":
         return fftconvolve(image, psf_kernel, mode="same")
     if convolution_type == "grid":
-        return convolve2d(
-            image, psf_kernel, mode="same", boundary="symm", fillvalue=0.0
-        )
+        return convolve2d(image, psf_kernel, mode="same", boundary="symm", fillvalue=0.0)
 
 
 def magnitude_to_amplitude(magnitude, mag_zero_point):
@@ -160,9 +156,7 @@ def pixels_to_images(pixels, original_shape):
         [tuple]
     :return: Series of image snapshots
     """
-    return np.reshape(
-        pixels, (np.size(pixels, 0), original_shape[1], original_shape[2])
-    )
+    return np.reshape(pixels, (np.size(pixels, 0), original_shape[1], original_shape[2]))
 
 
 def interpolate_variability(image_series, orig_timestamps, new_timestamps):
