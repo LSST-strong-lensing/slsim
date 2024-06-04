@@ -23,6 +23,7 @@ class Lens(LensedSystemBase):
         deflector_dict,
         cosmo,
         deflector_type="EPL",
+        deflector_kwargs=None,
         source_type="extended",
         lens_equation_solver="lenstronomy_analytical",
         variability_model=None,
@@ -45,8 +46,10 @@ class Lens(LensedSystemBase):
         :param deflector_dict: deflector properties
         :type deflector_dict: dict
         :param cosmo: astropy.cosmology instance
-        :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST"
+        :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST", "NFW_CLUSTER"
         :type deflector_type: str
+        :param deflector_kwargs: additional deflector properties
+        :type deflector_kwargs: dict
         :param source_type: type of the source 'extended' or 'point_source' or
          'point_plus_extended' supported
         :type source_type: str
@@ -87,6 +90,7 @@ class Lens(LensedSystemBase):
             deflector_dict=deflector_dict,
             cosmo=cosmo,
             deflector_type=deflector_type,
+            deflector_kwargs=deflector_kwargs,
             test_area=test_area,
             variability_model=variability_model,
             kwargs_variability=kwargs_variability,
@@ -302,7 +306,7 @@ class Lens(LensedSystemBase):
                 lens_model = LensModel(lens_model_list=lens_model_list)
                 lens_analysis = LensProfileAnalysis(lens_model=lens_model)
                 self._theta_E = lens_analysis.effective_einstein_radius(
-                    kwargs_lens, r_min=1e-3, r_max=2e1, num_points=50
+                    kwargs_lens, r_min=1e-3, r_max=5e1, num_points=50
                 )
         return self._theta_E
 
@@ -512,7 +516,7 @@ class Lens(LensedSystemBase):
 
             num_pix = 200
             delta_pix = theta_E * 4 / num_pix
-            x, y = util.make_grid(numPix=200, deltapix=delta_pix)
+            x, y = util.make_grid(numPix=num_pix, deltapix=delta_pix)
             x += center_source[0]
             y += center_source[1]
             beta_x, beta_y = lensModel.ray_shooting(x, y, kwargs_params["kwargs_lens"])
@@ -568,7 +572,7 @@ class Lens(LensedSystemBase):
 
         :return: lens_model_list, kwargs_lens
         """
-        if self.deflector.deflector_type in ["EPL", "NFW_HERNQUIST"]:
+        if self.deflector.deflector_type in ["EPL", "NFW_HERNQUIST", "NFW_CLUSTER"]:
             lens_mass_model_list, kwargs_lens = self.deflector.mass_model_lenstronomy(
                 lens_cosmo=self._lens_cosmo
             )
@@ -644,6 +648,33 @@ class Lens(LensedSystemBase):
         all_source_kwarg_dict["kwargs_source"] = kwargs_source
         all_source_kwarg_dict["kwargs_ps"] = kwargs_ps
         return source_models, all_source_kwarg_dict
+
+    def kappa_star(self, ra, dec):
+        """Computes the stellar surface density at location (ra, dec) in units of
+        lensing convergence.
+
+        :param ra: position in the image plane
+        :param dec: position in the image plane
+        :return: kappa_star
+        """
+        stellar_mass = self.deflector_stellar_mass()
+        kwargs_model, kwargs_params = self.lenstronomy_kwargs(band=None)
+        lightModel = LightModel(
+            light_model_list=kwargs_model.get("lens_light_model_list", [])
+        )
+        kwargs_lens_light_mag = kwargs_params["kwargs_lens_light"]
+        kwargs_lens_light_amp = data_util.magnitude2amplitude(
+            lightModel, kwargs_lens_light_mag, magnitude_zero_point=0
+        )
+
+        total_flux = lightModel.total_flux(kwargs_lens_light_amp)  # integrated flux
+        flux_local = lightModel.surface_brightness(
+            ra, dec, kwargs_lens_light_amp
+        )  # surface brightness per arcsecond square
+        kappa_star = (
+            flux_local / total_flux * stellar_mass / self._lens_cosmo.sigma_crit_angle
+        )
+        return kappa_star
 
 
 def image_separation_from_positions(image_positions):

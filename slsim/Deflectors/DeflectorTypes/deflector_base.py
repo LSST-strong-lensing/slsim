@@ -43,9 +43,18 @@ class DeflectorBase(ABC):
         :return: [x_pox, y_pos] in arc seconds
         """
         if not hasattr(self, "_center_lens"):
-            center_x_lens, center_y_lens = np.random.normal(
-                loc=0, scale=0.1
-            ), np.random.normal(loc=0, scale=0.1)
+
+            if (
+                "center_x" in self._deflector_dict.keys()
+                and "center_y" in self._deflector_dict.keys()
+            ):
+                center_x_lens, center_y_lens = float(
+                    self._deflector_dict["center_x"]
+                ), float(self._deflector_dict["center_y"])
+            else:
+                center_x_lens, center_y_lens = np.random.normal(
+                    loc=0, scale=0.1
+                ), np.random.normal(loc=0, scale=0.1)
             self._center_lens = np.array([center_x_lens, center_y_lens])
         return self._center_lens
 
