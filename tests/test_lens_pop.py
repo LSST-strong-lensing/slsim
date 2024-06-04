@@ -151,7 +151,9 @@ def test_num_lenses_and_sources(gg_lens_pop_instance):
 
     assert 100 <= num_lenses <= 6600, "Expected num_lenses to be between 5800 and 6600,"
     f"but got {num_lenses}"
-    assert 10000 <= num_sources <= 100000, "Expected num_sources to be between 1090000 and"
+    assert (
+        10000 <= num_sources <= 100000
+    ), "Expected num_sources to be between 1090000 and"
     f"1110000, but got {num_sources}"
     # assert 1 == 0
 
@@ -159,16 +161,22 @@ def test_num_lenses_and_sources(gg_lens_pop_instance):
 def test_num_sources_tested_and_test_area(gg_lens_pop_instance):
     lens = gg_lens_pop_instance._lens_galaxies.draw_deflector()
     test_area = draw_test_area(deflector=lens)
-    assert 0.01 < test_area < 100 * np.pi, "Expected test_area to be between 0.1 and 100*pi,"
+    assert (
+        0.01 < test_area < 100 * np.pi
+    ), "Expected test_area to be between 0.1 and 100*pi,"
     f"but got {test_area}"
     num_sources_range = gg_lens_pop_instance.get_num_sources_tested(testarea=test_area)
-    assert 0 <= num_sources_range <= 50, "Expected num_sources_range to be between 0 and 50,"
+    assert (
+        0 <= num_sources_range <= 50
+    ), "Expected num_sources_range to be between 0 and 50,"
     f"but got {num_sources_range}"
 
 
 def test_draw_population(gg_lens_pop_instance):
     kwargs_lens_cuts = {"mag_arc_limit": {"g": 28}}
-    gg_lens_population = gg_lens_pop_instance.draw_population(kwargs_lens_cuts=kwargs_lens_cuts)
+    gg_lens_population = gg_lens_pop_instance.draw_population(
+        kwargs_lens_cuts=kwargs_lens_cuts
+    )
     assert isinstance(gg_lens_population, list)
 
 
