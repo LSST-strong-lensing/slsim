@@ -11,14 +11,10 @@ Richards et al. 2006: DOI: 10.1086/503559
 Oguri & Marshall (2010): DOI: 10.1111/j.1365-2966.2010.16639.x.
 """
 
-def M_star(
-        z_value, 
-        h=0.72, 
-        zeta=2.98, 
-        xi=4.05, 
-        z_star=1.60
-):
-    """ Calculates M_star for a given redshift according to Eq (11) in Oguri & Marshall (2010)
+
+def M_star(z_value, h=0.72, zeta=2.98, xi=4.05, z_star=1.60):
+    """Calculates M_star for a given redshift according to Eq (11) in Oguri & Marshall
+    (2010)
 
     Parameters:
     :param z_value: Redshift value.
@@ -27,32 +23,37 @@ def M_star(
     :param zeta: (1) Best fit value of the observed evolution of the quasar luminosity function from SDSS DR3 survery (Richards et al. 2006)
     :param xi: (2) Best fit value of the observed evolution of the quasar luminosity function from SDSS DR3 survery (Richards et al. 2006)
     :param z_star: (3) Best fit value of the observed evolution of the quasar luminosity function from SDSS DR3 survery (Richards et al. 2006)
-    :Note: You can adjust these values if needed 
+    :Note: You can adjust these values if needed
 
     Returns:
     :rtype: float
     :return: M_star value.
     """
 
-    denominator = (np.sqrt(np.exp(xi * z_value)) + np.sqrt(np.exp(xi * z_star)))**2
+    denominator = (np.sqrt(np.exp(xi * z_value)) + np.sqrt(np.exp(xi * z_star))) ** 2
     if denominator <= 0:
         return np.nan  # or any other suitable value to indicate an error
     else:
-        return -20.90 + (5 * np.log10(h)) - (2.5 * np.log10(np.exp(zeta * z_value) * (1 + np.exp(xi * z_star)) / denominator))
+        return (
+            -20.90
+            + (5 * np.log10(h))
+            - (
+                2.5
+                * np.log10(
+                    np.exp(zeta * z_value) * (1 + np.exp(xi * z_star)) / denominator
+                )
+            )
+        )
 
-def dPhi_dM(
-        M, 
-        z_value, 
-        alpha=-3.31, 
-        beta=-1.45, 
-        phi_star= 5.34e-6 * (0.72**3)
-):
-    """ Calculates dPhi_dM for a given M and redshift according to Eq (10) in Oguri & Marshall (2010).
+
+def dPhi_dM(M, z_value, alpha=-3.31, beta=-1.45, phi_star=5.34e-6 * (0.72**3)):
+    """Calculates dPhi_dM for a given M and redshift according to Eq (10) in Oguri &
+    Marshall (2010).
 
     Parameters:
     :param M: Absolute i-band magnitude.
     :type M: float
-    :param alpha: Bright end slope of quasar luminosity density profile obtained from SDSS DR3 and 2dF surveys (Richards et al. 2005) 
+    :param alpha: Bright end slope of quasar luminosity density profile obtained from SDSS DR3 and 2dF surveys (Richards et al. 2005)
     :param beta: Faint end slope of quasar luminosity density profile obtained from SDSS DR3 and 2dF surveys (Richards et al. 2005)
     :param phi_star: Function to calculate the renormalization of the quasar luminosity function for a given h.
 
@@ -60,7 +61,7 @@ def dPhi_dM(
     :rtype: float
     :return: dPhi_dM value.
     """
-   
+
     if z_value > 3:
         # Adjust the bright end slope for redshifts greater than 3 based on observations.
         alpha_val = -2.58
@@ -70,13 +71,16 @@ def dPhi_dM(
 
     M_star_value = M_star(z_value)
 
-    denominator_dphi_dm = (10**(0.4 * (alpha_val + 1) * (M - M_star_value))) + (10**(0.4 * (beta + 1) * (M - M_star_value)))
+    denominator_dphi_dm = (10 ** (0.4 * (alpha_val + 1) * (M - M_star_value))) + (
+        10 ** (0.4 * (beta + 1) * (M - M_star_value))
+    )
     if denominator_dphi_dm == 0:
         return np.nan  # or any other suitable value to indicate an error
 
     term1 = phi_star / denominator_dphi_dm
 
     return term1
+
 
 def cdf_fits_for_redshifts(M_values, random_redshift_values):
     """Creates Cumulative Distribution Functions (CDF) plots for each randomly generated
@@ -193,23 +197,23 @@ def generate_redshift_table(random_redshift_values, inverse_cdf_dict, seed=42):
     return table
 
 
-# Overall test code usage 
+# Overall test code usage
 np.random.seed(42)
 random_redshift = int(input("Enter the number of redshift values to generate: "))
 random_redshift_values = np.random.uniform(0, 5, random_redshift)
 M_values = np.linspace(-28, -24, 100)
 
- # Plot dPhi/dM vs. M for each redshift
+# Plot dPhi/dM vs. M for each redshift
 plt.figure(figsize=(10, 6))
 for z in random_redshift_values:
     dphi_dm_values = [dPhi_dM(M, z) for M in M_values]
-    plt.plot(M_values, dphi_dm_values, label=f'z={z}')
+    plt.plot(M_values, dphi_dm_values, label=f"z={z}")
 
-plt.xlabel('Absolute i-band Magnitude (M)')
-plt.ylabel(r'$\frac{d\Phi_{QSO}}{dM}$ [mag$^{-1}$ Mpc$^{-3}$]')
-plt.title(r'$\frac{d\Phi_{QSO}}{dM}$ vs. M')
+plt.xlabel("Absolute i-band Magnitude (M)")
+plt.ylabel(r"$\frac{d\Phi_{QSO}}{dM}$ [mag$^{-1}$ Mpc$^{-3}$]")
+plt.title(r"$\frac{d\Phi_{QSO}}{dM}$ vs. M")
 plt.xlim(-24, -28)
-plt.yscale('log')
+plt.yscale("log")
 plt.legend()
 plt.grid(True)
 plt.show()
@@ -217,9 +221,9 @@ plt.show()
 # Plot the CDFs for each redshift
 plt.figure(figsize=(10, 6))
 legend_handles_cdf = cdf_fits_for_redshifts(M_values, random_redshift_values)
-plt.xlabel('Absolute i-band Magnitude (M)')
-plt.ylabel('CDF')
-plt.title('CDF vs. M')
+plt.xlabel("Absolute i-band Magnitude (M)")
+plt.ylabel("CDF")
+plt.title("CDF vs. M")
 plt.legend(handles=legend_handles_cdf)
 plt.grid(True)
 plt.show()
@@ -231,12 +235,14 @@ inverse_cdf_dict = inverse_cdf_fits_for_redshifts(M_values, random_redshift_valu
 for z in random_redshift_values:
     cdf_values = np.linspace(0, 1, 1000)
     M_values_given_cdf = inverse_cdf_dict[z](cdf_values)
-    plt.plot(cdf_values, M_values_given_cdf, label=f'z={z}')
-    inverse_cdf_legend_handles.append(Line2D([0], [0], color='b', linewidth=2, label=f'z={z}'))
+    plt.plot(cdf_values, M_values_given_cdf, label=f"z={z}")
+    inverse_cdf_legend_handles.append(
+        Line2D([0], [0], color="b", linewidth=2, label=f"z={z}")
+    )
 
-plt.xlabel('Inverse CDF')
-plt.ylabel('Absolute i-band Magnitude M')
-plt.title('Inverse CDF vs. M')
+plt.xlabel("Inverse CDF")
+plt.ylabel("Absolute i-band Magnitude M")
+plt.title("Inverse CDF vs. M")
 plt.legend(handles=inverse_cdf_legend_handles)
 plt.grid(True)
 plt.show()
