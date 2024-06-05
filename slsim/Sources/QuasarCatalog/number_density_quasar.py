@@ -249,7 +249,7 @@ def main():
     plt.show()
 
     # Generate the table with random redshift values
-    table = generate_redshift_table(random_redshift_values, inverse_cdf_dict)
+    generate_redshift_table(random_redshift_values, inverse_cdf_dict)
 
 
 if __name__ == "__main__":
