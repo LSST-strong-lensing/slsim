@@ -81,7 +81,7 @@ def sharp_image(
     :return: 2d array unblurred image
     """
     kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band)
-    rotation_angle = 2.4435  # rotation angle in North to West in radian
+    rotation_angle = 140*np.pi/180  # rotation angle in North to West in radian
     scale1_1 = delta_pix * np.cos(rotation_angle)
     scale1_2 = -delta_pix * np.sin(rotation_angle)
     scale2_1 = delta_pix * np.sin(rotation_angle)
@@ -112,7 +112,7 @@ def sharp_image(
         kwargs_source_mag=kwargs_params.get("kwargs_source", None),
         kwargs_ps_mag=kwargs_params.get("kwargs_ps", None),
     )
-    kwargs_numerics = {"supersampling_factor": 1}
+    kwargs_numerics = {"supersampling_factor": 5}
     image_model = sim_api.image_model_class(kwargs_numerics)
     kwargs_lens = kwargs_params.get("kwargs_lens", None)
     image = image_model.image(
@@ -194,7 +194,7 @@ def centered_coordinate_system(num_pix, transform_pix2angle):
     dec_center = (
         pix_center * transform_pix2angle[0, 1] + pix_center * transform_pix2angle[1, 1]
     )"""
-    rotation_angle = 2.4435  # rotation angle in North to West in radian
+    rotation_angle = 140*np.pi/180  # rotation angle in North to West in radian
     scale1_1 = np.cos(rotation_angle)
     scale1_2 = -np.sin(rotation_angle)
     scale2_1 = np.sin(rotation_angle)
