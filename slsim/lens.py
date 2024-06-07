@@ -1,17 +1,20 @@
+import warnings
+
 import numpy as np
+from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
-from lenstronomy.Util import constants
 from lenstronomy.LensModel.lens_model import LensModel
-from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
 from lenstronomy.LensModel.Solver.lens_equation_solver import (
     analytical_lens_model_support,
 )
-from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
-from slsim.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
-from lenstronomy.Util import util, data_util
+from lenstronomy.LightModel.light_model import LightModel
+from lenstronomy.Util import constants
+from lenstronomy.Util import data_util
+from lenstronomy.Util import util
+
 from slsim.lensed_system_base import LensedSystemBase
-import warnings
+from slsim.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
 
 
 class Lens(LensedSystemBase):
@@ -116,6 +119,7 @@ class Lens(LensedSystemBase):
                 "variability information provided by you will not be used."
             )
             warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
+
         self._lens_cosmo = LensCosmo(
             z_lens=float(self.deflector.redshift),
             z_source=float(self.source.redshift),
@@ -610,7 +614,6 @@ class Lens(LensedSystemBase):
             self._source_type == "extended"
             or self._source_type == "point_plus_extended"
         ):
-
             if self.light_profile == "single_sersic":
                 source_models["source_light_model_list"] = ["SERSIC_ELLIPSE"]
             else:

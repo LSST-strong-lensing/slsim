@@ -1,6 +1,7 @@
 import numpy as np
-from scipy.signal import convolve2d, fftconvolve
 import scipy
+from scipy.signal import convolve2d
+from scipy.signal import fftconvolve
 
 
 def epsilon2e(epsilon):
@@ -40,6 +41,24 @@ def e2epsilon(e):
     :return: ellipticity
     """
     return 2 * e / (1 + e**2)
+
+
+def ellip_from_axis_ratio2epsilon(ellip):
+    """Translates ellipticity definitions from.
+
+    .. math::
+        ellip = \\equic \\1 - q
+
+    to
+
+    .. math::
+        epsilon = \\equic \\frac{1 - q^2}{1 + q^2}
+
+    :param ellip: ellipticity in SL-Hammocks
+    :type  ellip: ndarray or float
+    :return: epsilon. ellipticity in slsim
+    """
+    return (1.0 - (1.0 - ellip) ** 2) / (1.0 + (1.0 - ellip) ** 2)
 
 
 def random_ra_dec(ra_min, ra_max, dec_min, dec_max, n):

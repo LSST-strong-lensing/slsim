@@ -26,23 +26,32 @@ class NFWHernquist(DeflectorBase):
         :type cosmo: ~astropy.cosmology class
         :return: velocity dispersion [km/s]
         """
-        # convert radian to arc seconds
-        size_lens_arcsec = self.angular_size_light / constants.arcsec
+        if ("vel_disp" in self._deflector_dict) and (
+            self._deflector_dict["vel_disp"] != -1
+        ):
+            return self._deflector_dict["vel_disp"]
 
-        m_halo, c_halo = self.halo_properties
-        # convert angular size to physical size
-        dd = cosmo.angular_diameter_distance(self.redshift).value
-        rs_star = dd * self.angular_size_light
-        vel_disp = vel_disp_composite_model(
-            r=size_lens_arcsec,
-            m_star=self.stellar_mass,
-            rs_star=rs_star,
-            m_halo=m_halo,
-            c_halo=c_halo,
-            cosmo=cosmo,
-            z_lens=self.redshift,
-        )
-        return vel_disp
+        else:
+            # convert radian to arc seconds
+            size_lens_arcsec = self.angular_size_light / constants.arcsec
+
+            m_halo, c_halo = self.halo_properties
+            m_halo_acc = self._deflector_dict["halo_mass_acc"]
+            m_halo = max(m_halo, m_halo_acc)
+            # convert angular size to physical size
+            dd = cosmo.angular_diameter_distance(self.redshift).value
+            rs_star = dd * self.angular_size_light
+            vel_disp = vel_disp_composite_model(
+                r=size_lens_arcsec,
+                m_star=self.stellar_mass,
+                rs_star=rs_star,
+                m_halo=m_halo,
+                c_halo=c_halo,
+                cosmo=cosmo,
+                z_lens=self.redshift,
+            )
+            self._deflector_dict["vel_disp"] = vel_disp
+            return self._deflector_dict["vel_disp"]
 
     def mass_model_lenstronomy(self, lens_cosmo):
         """Returns lens model instance and parameters in lenstronomy conventions.

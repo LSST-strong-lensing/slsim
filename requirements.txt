@@ -7,3 +7,4 @@ speclite
 pyyaml
 matplotlib
 sncosmo
+colossus
