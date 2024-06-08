@@ -3,12 +3,12 @@ from slsim.Sources.source_pop_base import SourcePopBase
 import warnings
 
 
-class Quasars(SourcePopBase):
-    """Class to describe quasars as sources."""
+class PointSources(SourcePopBase):
+    """Class to describe point sources."""
 
     def __init__(
         self,
-        quasar_list,
+        point_source_list,
         cosmo,
         sky_area,
         variability_model=None,
@@ -17,7 +17,8 @@ class Quasars(SourcePopBase):
     ):
         """
 
-        :param quasar_list: list of dictionary with quasar parameters
+        :param point_source_list: list of dictionary with quasar parameters or astropy
+         table.
         :param cosmo: cosmology
         :type cosmo: ~astropy.cosmology class
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
@@ -25,14 +26,14 @@ class Quasars(SourcePopBase):
         :type sky_area: `~astropy.units.Quantity`
         :param variability_model: keyword for the variability model to be used. This is
          a population argument, not the light curve parameter for the individual
-         quasars.
+         point source.
         :param kwargs_variability_model: keyword arguments for the variability of
          a source. This is a population argument, not the light curve parameter for
-         the individual quasars.
+         the individual point_source.
         :param light_profile: keyword for number of sersic profile to use in source
          light model. Always None for this class.
         """
-        self.n = len(quasar_list)
+        self.n = len(point_source_list)
         self.light_profile = light_profile
         if self.light_profile is not None:
             warning_msg = (
@@ -41,10 +42,10 @@ class Quasars(SourcePopBase):
             )
             warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
         # make cuts
-        self._quasar_select = quasar_list  # can apply a filter here
+        self._point_source_select = point_source_list  # can apply a filter here
 
-        self._num_select = len(self._quasar_select)
-        super(Quasars, self).__init__(
+        self._num_select = len(self._point_source_select)
+        super(PointSources, self).__init__(
             cosmo=cosmo,
             sky_area=sky_area,
             variability_model=variability_model,
@@ -75,6 +76,6 @@ class Quasars(SourcePopBase):
         """
 
         index = random.randint(0, self._num_select - 1)
-        quasar = self._quasar_select[index]
+        point_source = self._point_source_select[index]
 
-        return quasar
+        return point_source

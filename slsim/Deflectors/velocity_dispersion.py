@@ -210,11 +210,10 @@ def vel_disp_sdss(sky_area, redshift, vd_min, vd_max, cosmology, noise=True):
     :math:`\\sigma` can be described by a Schechter function (see eq. (4) in [1]_)
 
     .. math::
-
         \\phi = \\phi_* \\left(\\frac{\\sigma}{\\sigma_*}\\right)^\\alpha
-            \\exp\\left[-\\left( \\frac{\\sigma}{\\sigma_*} \\right)^\\beta\\right]
-            \\frac{\\beta}{\\Gamma(\\alpha/\\beta)} \frac{1}{\\sigma}
-            \\mathrm{d}\\sigma \\;.
+        \\exp\\left[-\\left( \\frac{\\sigma}{\\sigma_*} \\right)^\\beta\\right]
+        \\frac{\\beta}{\\Gamma(\\alpha/\\beta)} \frac{1}{\\sigma}
+        \\mathrm{d}\\sigma \\;.
 
     where :math:`\\Gamma` is the gamma function, :math:`\\sigma_*` is the
     characteristic velocity dispersion, :math:`\\phi_*` is

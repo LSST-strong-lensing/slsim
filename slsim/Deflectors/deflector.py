@@ -1,17 +1,18 @@
 from slsim.Deflectors.DeflectorTypes.epl_sersic import EPLSersic
 from slsim.Deflectors.DeflectorTypes.nfw_hernquist import NFWHernquist
+from slsim.Deflectors.DeflectorTypes.nfw_cluster import NFWCluster
 
-_SUPPORTED_DEFLECTORS = ["EPL", "NFW_HERNQUIST"]
+_SUPPORTED_DEFLECTORS = ["EPL", "NFW_HERNQUIST", "NFW_CLUSTER"]
 
 
 class Deflector(object):
     """Class of a single deflector with quantities only related to the deflector
     (independent of the source)"""
 
-    def __init__(self, deflector_type, deflector_dict):
+    def __init__(self, deflector_type, deflector_dict, **deflector_kwargs):
         """
 
-        :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST"
+        :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST", "NFW_CLUSTER"
         :type deflector_type: str
         :param deflector_dict: parameters of the deflector
         :type deflector_dict: dict
@@ -20,6 +21,10 @@ class Deflector(object):
             self._deflector = EPLSersic(deflector_dict=deflector_dict)
         elif deflector_type in ["NFW_HERNQUIST"]:
             self._deflector = NFWHernquist(deflector_dict=deflector_dict)
+        elif deflector_type in ["NFW_CLUSTER"]:
+            self._deflector = NFWCluster(
+                deflector_dict=deflector_dict, **deflector_kwargs
+            )
         else:
             raise ValueError(
                 "Deflector type %s not supported. Chose among %s."
@@ -98,6 +103,15 @@ class Deflector(object):
         :return: e1_mass, e2_mass
         """
         return self._deflector.mass_ellipticity
+
+    def mass_model_lenstronomy(self, lens_cosmo):
+        """Returns lens model instance and parameters in lenstronomy conventions.
+
+        :param lens_cosmo: lens cosmology model
+        :type lens_cosmo: ~lenstronomy.Cosmo.LensCosmo instance
+        :return: lens_mass_model_list, kwargs_lens_mass
+        """
+        return self._deflector.mass_model_lenstronomy(lens_cosmo=lens_cosmo)
 
     def light_model_lenstronomy(self, band=None):
         """Returns lens model instance and parameters in lenstronomy conventions.
