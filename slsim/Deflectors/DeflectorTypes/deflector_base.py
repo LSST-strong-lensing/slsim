@@ -43,9 +43,18 @@ class DeflectorBase(ABC):
         :return: [x_pox, y_pos] in arc seconds
         """
         if not hasattr(self, "_center_lens"):
-            center_x_lens, center_y_lens = np.random.normal(
-                loc=0, scale=0.1
-            ), np.random.normal(loc=0, scale=0.1)
+
+            if (
+                "center_x" in self._deflector_dict.keys()
+                and "center_y" in self._deflector_dict.keys()
+            ):
+                center_x_lens, center_y_lens = float(
+                    self._deflector_dict["center_x"]
+                ), float(self._deflector_dict["center_y"])
+            else:
+                center_x_lens, center_y_lens = np.random.normal(
+                    loc=0, scale=0.1
+                ), np.random.normal(loc=0, scale=0.1)
             self._center_lens = np.array([center_x_lens, center_y_lens])
         return self._center_lens
 
@@ -88,6 +97,16 @@ class DeflectorBase(ABC):
             self._deflector_dict["e2_mass"]
         )
         return e1_mass, e2_mass
+
+    @abstractmethod
+    def mass_model_lenstronomy(self, lens_cosmo):
+        """Returns lens model instance and parameters in lenstronomy conventions.
+
+        :param lens_cosmo: lens cosmology model
+        :type lens_cosmo: ~lenstronomy.Cosmo.LensCosmo instance
+        :return: lens_mass_model_list, kwargs_lens_mass
+        """
+        pass
 
     @abstractmethod
     def light_model_lenstronomy(self, band=None):

@@ -1,8 +1,10 @@
+import numpy as np
 import pytest
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
-from slsim.lens_pop import LensPop, draw_test_area
-import numpy as np
+
+from slsim.lens_pop import LensPop
+from slsim.lens_pop import draw_test_area
 
 
 def create_lens_pop_instance(return_kext=False):
@@ -26,7 +28,7 @@ def gg_lens_pop_instance():
 
 def test_pes_lens_pop_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-    sky_area = Quantity(value=0.05, unit="deg2")
+    sky_area = Quantity(value=0.001, unit="deg2")
     kwargs_deflector_cut = {"band": "g", "band_max": 23, "z_min": 0.01, "z_max": 2.5}
     kwargs_source_cut = {"band": "g", "band_max": 26, "z_min": 0.1, "z_max": 5.0}
     pes_lens_pop = LensPop(
@@ -46,9 +48,30 @@ def test_pes_lens_pop_instance():
     assert pes_lens_class._source_type == "point_plus_extended"
 
 
+def test_galaxies_lens_pop_halo_model_instance():
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3, Ob0=0.05)
+    sky_area = Quantity(value=0.001, unit="deg2")
+
+    kwargs_deflector_cut = {"z_min": 0.01, "z_max": 2.5}
+    kwargs_source_cut = {"band": "g", "band_max": 28, "z_min": 0.1, "z_max": 5.0}
+
+    g_lens_halo_model_pop = LensPop(
+        deflector_type="halo-models",
+        source_type="galaxies",
+        kwargs_deflector_cut=kwargs_deflector_cut,
+        kwargs_source_cut=kwargs_source_cut,
+        kwargs_mass2light=None,
+        skypy_config=None,
+        slhammocks_config=None,
+        sky_area=sky_area,
+        cosmo=cosmo,
+    )
+    assert g_lens_halo_model_pop._lens_galaxies.draw_deflector()["halo_mass"] != 0
+
+
 def test_supernovae_plus_galaxies_lens_pop_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-    sky_area = Quantity(value=0.05, unit="deg2")
+    sky_area = Quantity(value=0.001, unit="deg2")
     kwargs_deflector_cut = {"band": "g", "band_max": 23, "z_min": 0.01, "z_max": 2.5}
     kwargs_source_cut = {"band": "g", "band_max": 26, "z_min": 0.1, "z_max": 5.0}
     pes_lens_pop = LensPop(
@@ -61,11 +84,70 @@ def test_supernovae_plus_galaxies_lens_pop_instance():
         kwargs_mass2light=None,
         skypy_config=None,
         sky_area=sky_area,
+        catalog_type="supernovae_sample",
         cosmo=cosmo,
     )
     kwargs_lens_cut = {}
     pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
     assert pes_lens_class._source_type == "point_plus_extended"
+
+
+def test_supernovae_plus_galaxies_lens_pop_instance_2():
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    sky_area = Quantity(value=0.001, unit="deg2")
+    kwargs_deflector_cut = {"band": "g", "band_max": 23, "z_min": 0.01, "z_max": 2.5}
+    kwargs_source_cut = {"band": "g", "band_max": 26, "z_min": 0.1, "z_max": 5.0}
+    time_range = np.linspace(-20, 50, 500)
+    pes_lens_pop = LensPop(
+        deflector_type="all-galaxies",
+        source_type="supernovae_plus_galaxies",
+        kwargs_deflector_cut=kwargs_deflector_cut,
+        kwargs_source_cut=kwargs_source_cut,
+        variability_model="light_curve",
+        kwargs_variability={"MJD", "ps_mag_r"},
+        sn_type="Ia",
+        sn_absolute_mag_band="bessellb",
+        sn_absolute_zpsys="ab",
+        kwargs_mass2light=None,
+        skypy_config=None,
+        sky_area=sky_area,
+        cosmo=cosmo,
+        lightcurve_time=time_range,
+    )
+    kwargs_lens_cut = {}
+    pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
+    assert pes_lens_class._source_type == "point_plus_extended"
+    assert "MJD" in pes_lens_class.source.source_dict.colnames
+    assert len(pes_lens_class.source.source_dict["MJD"]) == len(time_range)
+
+
+def test_supernovae_lens_pop_instance():
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    sky_area = Quantity(value=0.001, unit="deg2")
+    kwargs_deflector_cut = {"band": "g", "band_max": 23, "z_min": 0.01, "z_max": 2.5}
+    kwargs_source_cut = {"band": "g", "band_max": 26, "z_min": 0.1, "z_max": 5.0}
+    time_range = np.linspace(-20, 50, 500)
+    pes_lens_pop = LensPop(
+        deflector_type="all-galaxies",
+        source_type="supernovae",
+        kwargs_deflector_cut=kwargs_deflector_cut,
+        kwargs_source_cut=kwargs_source_cut,
+        variability_model="light_curve",
+        kwargs_variability={"MJD", "ps_mag_r"},
+        sn_type="Ia",
+        sn_absolute_mag_band="bessellb",
+        sn_absolute_zpsys="ab",
+        kwargs_mass2light=None,
+        skypy_config=None,
+        sky_area=sky_area,
+        cosmo=cosmo,
+        lightcurve_time=time_range,
+    )
+    kwargs_lens_cut = {}
+    pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
+    assert pes_lens_class._source_type == "point_source"
+    assert "MJD" in pes_lens_class.source.source_dict.colnames
+    assert len(pes_lens_class.source.source_dict) == 3
 
 
 def test_num_lenses_and_sources(gg_lens_pop_instance):

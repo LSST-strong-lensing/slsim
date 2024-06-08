@@ -19,7 +19,8 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
     ):
         """
 
-        :param pes_list: list of dictionary with point and extended source parameters
+        :param point_plus_extended_sources_list: list of dictionary with point and
+         extended source parameters or astropy table of sources.
         :param cosmo: cosmology
         :type cosmo: ~astropy.cosmology class
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of

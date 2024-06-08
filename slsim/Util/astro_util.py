@@ -334,12 +334,12 @@ def calculate_dt_dlx(radial_map, temperature_map, corona_height):
     Terms are expanded and temp_disk^4 is reconstructed on right hand side of equation in (3).
     Terms are collected in (4), higher order terms are discarded.
     The fractional change in temperature with respect to flux is approximated
-        to be the derivative in (5) as both delta_temp and delta_Lx are assumed to be small.
+    to be the derivative in (5) as both delta_temp and delta_Lx are assumed to be small.
 
     :param radial_map: A 2-dimension array of radial values on the accretion disk in units [R_g].
     :param temperature_map: A 2-dimensional array of temperature values on the accretion disk
         in [Kelvin].
-    :param corona_height: The height of the corona in units [R_. Typical values range
+    :param corona_height: The height of the corona in units [R]. Typical values range
         from 0 to 100.
     :return: A 2-dimensional map of values representing the change in temperature with
         respect to a change in X-ray flux.
@@ -405,11 +405,11 @@ def calculate_accretion_disk_response_function(
 
     To use the response function:
     1) Resample the response function at the time resolution of the signal or resample the
-        signal at units [R_g / c].
+    signal at units [R_g / c].
     2) The time axis of the response function must then be inverted as these are time lags.
     3) Take the convolution between the driving signal and the response function.
     4) The time axis of the convolution should then be shifted forward in time by the length
-        of the response function to remain consistent with respect to the driving signal.
+    of the response function to remain consistent with respect to the driving signal.
 
     :param r_out: The maximum radial value of the accretion disk. This typically can be chosen
         as 10^3 to 10^5 [R_g].
