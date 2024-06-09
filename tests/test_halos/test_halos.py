@@ -4,7 +4,6 @@ from slsim.Halos.halos import (
     get_value_if_quantity,
     colossus_halo_mass_sampler,
     number_density_at_redshift,
-    growth_factor_at_redshift,
     halo_mass_at_z,
     set_defaults_halos,
     dndz_to_redshifts,
