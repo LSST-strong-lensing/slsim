@@ -115,25 +115,6 @@ def test_number_density_at_redshift():
     assert CDF3 == [0.0001, 0.0001]
 
 
-def test_growth_factor_at_redshift():
-    growth_factor = growth_factor_at_redshift(z=0, cosmology=cosmo)
-    assert isinstance(growth_factor, list)
-    assert np.isfinite(growth_factor)
-    assert growth_factor == [1.0]
-
-    z_array = np.linspace(0, 1, 100)
-    growth_factor = growth_factor_at_redshift(z=z_array, cosmology=cosmo)
-
-    assert len(growth_factor) == 100
-    assert growth_factor[0] == 1.0
-
-    z_list = [0, 1, 2]
-    growth_factor2 = growth_factor_at_redshift(z=z_list, cosmology=cosmo)
-    assert len(growth_factor2) == 3
-    assert growth_factor2[0] == 1.0
-    assert growth_factor2[1] < growth_factor2[0]
-
-
 def test_number_for_certain_mass():
     m = np.geomspace(1e12, 1e16, 200)
     massf = np.array([1] * 200)

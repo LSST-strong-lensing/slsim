@@ -289,36 +289,6 @@ def number_density_for_massf(massf, m, dndlnM=False):
         return integrate.trapz(massf * m, np.log(m))
 
 
-def growth_factor_at_redshift(z, cosmology):
-    """Determine the growth factor at specified redshift(s).
-
-    Calculates the  growth factor at given redshift(s).
-
-    :param z: Redshift(s) at which to evaluate the growth factor, can be a single value
-        or an array.
-    :type z: float, array_like, or list
-    :param cosmology: astropy.cosmology instance dictating the universe's expansion
-        history and other relevant parameters.
-    :type cosmology: astropy.Cosmology instance
-    :return: Growth factor at the specified redshift(s), as a float (for scalar z) or
-        ndarray (for array z).
-    :rtype: float or numpy.ndarray :note: The growth factor calculation is powered by
-        the hmf library.
-    """
-
-    # Check if z is a list and convert to numpy array if it is
-    from hmf.cosmology.growth_factor import GrowthFactor
-
-    if isinstance(z, list):
-        z = np.array(z)
-
-    gf = GrowthFactor(cosmo=cosmology)
-    growth_function = gf.growth_factor(z)
-    if not isinstance(growth_function, (list, np.ndarray)):
-        growth_function = [growth_function]
-    return growth_function
-
-
 def redshift_halos_array_from_comoving_density(
     redshift_list,
     sky_area,
