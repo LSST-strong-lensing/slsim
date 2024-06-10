@@ -235,3 +235,24 @@ def eccentricity(q):
     :return: eccentricity
     """
     return (1 - q) / (1 + q)
+
+
+def deg2_to_cone_angle(solid_angle_deg2):
+    """Convert solid angle from square degrees to half cone angle in radians.
+
+    This function translates a solid angle, specified in square degrees, into the
+    corresponding half cone angle expressed in radians. This conversion is essential for
+    applications involving angular measurements in astronomy, particularly in lensing
+    calculations where the geometry of observations is defined in terms of cone angles.
+
+    :param solid_angle_deg2: Solid angle in square degrees to be converted.
+    :type solid_angle_deg2: float
+    :return: The half cone angle in radians equivalent to the input solid angle.
+    :rtype: float :note: The conversion utilizes the relationship between solid angles
+        in steradians and the apex angle of a cone, facilitating a direct transition
+        from square degrees to radians.
+    """
+
+    solid_angle_sr = solid_angle_deg2 * (np.pi / 180) ** 2
+    theta = np.arccos(1 - solid_angle_sr / (2 * np.pi))  # rad
+    return theta

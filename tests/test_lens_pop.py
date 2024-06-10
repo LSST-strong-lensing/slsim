@@ -7,8 +7,7 @@ from slsim.lens_pop import LensPop
 from slsim.lens_pop import draw_test_area
 
 
-@pytest.fixture
-def gg_lens_pop_instance():
+def create_lens_pop_instance(return_kext=False):
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     sky_area = Quantity(value=0.05, unit="deg2")
     kwargs_deflector_cut = {"band": "g", "band_max": 28, "z_min": 0.01, "z_max": 2.5}
@@ -19,6 +18,12 @@ def gg_lens_pop_instance():
         kwargs_deflector_cut=kwargs_deflector_cut,
         kwargs_source_cut=kwargs_source_cut,
     )
+
+
+@pytest.fixture
+def gg_lens_pop_instance():
+    # Create LensPop instance without return_kext
+    return create_lens_pop_instance(return_kext=False)
 
 
 def test_pes_lens_pop_instance():

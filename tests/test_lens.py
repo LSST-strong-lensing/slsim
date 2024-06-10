@@ -9,6 +9,7 @@ from slsim.lens import (
     image_separation_from_positions,
     theta_e_when_source_infinity,
 )
+from slsim.ParamDistributions.los_config import LOSConfig
 import os
 
 
@@ -96,7 +97,7 @@ class TestLens(object):
         assert vdp >= 10
 
     def test_los_linear_distortions(self):
-        losd = self.gg_lens.los_linear_distortions()
+        losd = self.gg_lens.los_linear_distortions
         assert losd != 0
 
     def test_point_source_arrival_times(self):
@@ -290,6 +291,96 @@ def test_point_source_magnitude_with_lightcurve(supernovae_lens_instance):
     expected_results = supernovae_lens_instance.source.source_dict["ps_mag_r"]
     assert mag[0][0] != expected_results[0][0]
     assert mag[1][0] != expected_results[0][0]
+
+
+class TestDifferenLens(object):
+    # pytest.fixture(scope='class')
+    def setup_method(self):
+        # path = os.path.dirname(slsim.__file__)
+
+        path = os.path.dirname(__file__)
+        module_path, _ = os.path.split(path)
+        print(path, module_path)
+        blue_one = Table.read(
+            os.path.join(path, "TestData/blue_one_modified.fits"), format="fits"
+        )
+        red_one = Table.read(
+            os.path.join(path, "TestData/red_one_modified.fits"), format="fits"
+        )
+        self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+        self.source_dict = blue_one
+        self.deflector_dict = red_one
+
+    def test_different_setting(self):
+        los1 = LOSConfig(
+            los_bool=True,
+            mixgauss_gamma=True,
+            nonlinear_los_bool=False,
+        )
+        gg_lens = Lens(
+            source_dict=self.source_dict,
+            deflector_dict=self.deflector_dict,
+            cosmo=self.cosmo,
+            los_config=los1,
+        )
+        assert gg_lens.external_shear >= 0
+        assert isinstance(gg_lens.external_convergence, float)
+        assert isinstance(gg_lens.external_shear, float)
+
+        los2 = LOSConfig(
+            los_bool=True,
+            mixgauss_gamma=False,
+            nonlinear_los_bool=True,
+        )
+
+        gg_lens_2 = Lens(
+            source_dict=self.source_dict,
+            deflector_dict=self.deflector_dict,
+            cosmo=self.cosmo,
+            los_config=los2,
+        )
+        assert gg_lens_2.external_shear >= 0
+        assert isinstance(gg_lens_2.external_convergence, float)
+        assert isinstance(gg_lens_2.external_shear, float)
+
+        los3 = LOSConfig(los_bool=False)
+        gg_lens_3 = Lens(
+            source_dict=self.source_dict,
+            deflector_dict=self.deflector_dict,
+            cosmo=self.cosmo,
+            los_config=los3,
+        )
+        assert gg_lens_3.external_convergence == 0
+        assert gg_lens_3.external_shear == 0
+
+        los4 = LOSConfig(
+            los_bool=True,
+            mixgauss_gamma=True,
+            nonlinear_los_bool=True,
+        )
+        with pytest.raises(ValueError):
+            gg_lens_4 = Lens(
+                source_dict=self.source_dict,
+                deflector_dict=self.deflector_dict,
+                cosmo=self.cosmo,
+                los_config=los4,
+            )
+            gg_lens_4.external_convergence()
+
+    def test_image_number(self):
+        los = LOSConfig(
+            los_bool=True,
+            mixgauss_gamma=True,
+            nonlinear_los_bool=False,
+        )
+        gg_lens_number = Lens(
+            source_dict=self.source_dict,
+            deflector_dict=self.deflector_dict,
+            cosmo=self.cosmo,
+            los_config=los,
+        )
+        image_number = gg_lens_number.image_number
+        assert (image_number == 4) or (image_number == 2) or (image_number == 1)
 
 
 if __name__ == "__main__":
