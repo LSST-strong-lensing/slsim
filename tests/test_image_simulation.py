@@ -174,8 +174,9 @@ def test_centered_coordinate_system():
 
     assert grid["ra_at_xy_0"] == -10
     assert grid["dec_at_xy_0"] == -10
-    npt.assert_almost_equal(np.shape(grid["transform_pix2angle"]), 
-                            np.shape(transform_matrix), decimal=10)
+    npt.assert_almost_equal(
+        np.shape(grid["transform_pix2angle"]), np.shape(transform_matrix), decimal=10
+    )
 
 
 def test_image_data_class(pes_lens_instance):
