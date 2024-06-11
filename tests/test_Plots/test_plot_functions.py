@@ -47,8 +47,17 @@ def test_create_image_montage_from_image_list(quasar_lens_pop_instance):
     fig = create_image_montage_from_image_list(
         num_rows=num_rows, num_cols=num_cols, images=image_list, time=t
     )
+    fig2 = create_image_montage_from_image_list(
+        num_rows=num_rows,
+        num_cols=num_cols,
+        images=image_list,
+        time=t,
+        image_type="dp0",
+    )
     assert isinstance(fig, plt.Figure)
     assert fig.get_size_inches()[0] == np.array([num_cols * 3, num_rows * 3])[0]
+    assert isinstance(fig2, plt.Figure)
+    assert fig2.get_size_inches()[0] == np.array([num_cols * 3, num_rows * 3])[0]
 
 
 def test_plot_montage_of_random_injected_lens(quasar_lens_pop_instance):

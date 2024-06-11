@@ -8,11 +8,11 @@ from slsim.Deflectors.velocity_dispersion import vel_disp_sdss
 from slsim.Deflectors.elliptical_lens_galaxies import (
     elliptical_projected_eccentricity,
 )
-from slsim.Deflectors.deflector_base import DeflectorBase
+from slsim.Deflectors.deflectors_base import DeflectorsBase
 from astropy.table import vstack
 
 
-class AllLensGalaxies(DeflectorBase):
+class AllLensGalaxies(DeflectorsBase):
     """Class describing all-type galaxies."""
 
     def __init__(

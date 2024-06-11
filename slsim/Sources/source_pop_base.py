@@ -27,11 +27,21 @@ class SourcePopBase(ABC):
         self._variab_model = variability_model
         self._kwargs_variab_model = kwargs_variability_model
 
+    @property
     @abstractmethod
     def source_number(self):
         """Number of sources registered (within given area on the sky)
 
         :return: number of sources
+        """
+        pass
+
+    @property
+    @abstractmethod
+    def source_number_selected(self):
+        """Number of sources selected (within given area on the sky)
+
+        :return: number of sources passing the selection criteria
         """
         pass
 
