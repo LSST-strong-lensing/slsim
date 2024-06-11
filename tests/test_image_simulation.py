@@ -176,6 +176,7 @@ def test_centered_coordinate_system():
     npt.assert_almost_equal(grid["dec_at_xy_0"], -10, decimal=10)
     assert np.shape(grid["transform_pix2angle"]) == np.shape(transform_matrix)
 
+
 def test_image_data_class(pes_lens_instance):
     trans_matrix_1 = np.array([[0.2, 0], [0, 0.2]])
     lens_class = pes_lens_instance
