@@ -172,12 +172,9 @@ def test_centered_coordinate_system():
     transform_matrix = np.array([[0.2, 0], [0, 0.2]])
     grid = centered_coordinate_system(101, transform_pix2angle=transform_matrix)
 
-    assert grid["ra_at_xy_0"] == -10
-    assert grid["dec_at_xy_0"] == -10
-    npt.assert_almost_equal(
-        np.shape(grid["transform_pix2angle"]), np.shape(transform_matrix), decimal=10
-    )
-
+    npt.assert_almost_equal(grid["ra_at_xy_0"], -10, decimal=10)
+    npt.assert_almost_equal(grid["dec_at_xy_0"], -10, decimal=10)
+    assert np.shape(grid["transform_pix2angle"]) == np.shape(transform_matrix)
 
 def test_image_data_class(pes_lens_instance):
     trans_matrix_1 = np.array([[0.2, 0], [0, 0.2]])
