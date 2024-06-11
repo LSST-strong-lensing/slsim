@@ -5,7 +5,6 @@ from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
 from lenstronomy.Util import util, data_util
 from slsim.lensed_system_base import LensedSystemBase
-import lenstronomy.Util.constants as const
 from slsim.Util.param_util import image_separation_from_positions
 
 
@@ -18,7 +17,8 @@ class OM10LensSystem(LensedSystemBase):
         deflector_dict,
         cosmo,
         test_area=4 * np.pi,
-        magnification_limit=0.01,
+        magnification_limit=0.001,
+        gamma=2,
     ):
         """
 
@@ -41,21 +41,22 @@ class OM10LensSystem(LensedSystemBase):
         self._source_dict = source_dict
 
         self._magnification_limit = magnification_limit
-        if self._deflector_dict["ZLENS"] > self._source_dict["om10z"]:
+        if self._deflector_dict["ZLENS"] > self._source_dict["redshift"]:
             self._theta_E_sis = 0
         else:
-            self._theta_E_sis = (
-                (
-                    4
-                    * np.pi
-                    * (self._deflector_dict["VELDISP"] ** 2)
-                    * self._deflector_dict["DDS"]
-                )
-                / ((3e5) ** 2 * self._deflector_dict["DS"])
-                / const.arcsec
-            )
+            self._theta_E_sis = self._deflector_dict["EINSTEIN"]
         # self._theta_E_pemd
-        self.lens_params = ["theta_E", "gamma", "e1", "e2", "center_x", "center_y"]
+        self.lens_params = [
+            "theta_E",
+            "gamma",
+            "e1",
+            "e2",
+            "gamma1",
+            "gamma2",
+            "center_x",
+            "center_y",
+        ]
+        self.gamma = gamma
 
     @property
     def deflector_position(self):
@@ -74,7 +75,8 @@ class OM10LensSystem(LensedSystemBase):
         # center_y_lens = center_source[1] - r * np.sin(theta)
         # self._center_lens = np.array([center_x_lens, center_y_lens])
         # return self._center_lens
-        return np.random.normal(loc=0, scale=0.01, size=2)
+        # return np.random.normal(loc=0, scale=0.01, size=2)
+        return np.array([0, 0])
 
     @property
     def source_position(self):
@@ -85,7 +87,7 @@ class OM10LensSystem(LensedSystemBase):
         :return: [x_pos, y_pos]
         """
         self._center_source = np.array(
-            [self._deflector_dict["XSRC"], self._deflector_dict["YSRC"]]
+            [self._source_dict["XSRC"], self._source_dict["YSRC"]]
         )
         return self._center_source
 
@@ -102,17 +104,16 @@ class OM10LensSystem(LensedSystemBase):
             lens_model_class = LensModel(lens_model_list=lens_model_list)
             lens_eq_solver = LensEquationSolver(lens_model_class)
             source_pos_x, source_pos_y = self.source_position
-            # TODO: analytical solver possible but currently does not support the
-            #  convergence term
             self._image_positions = lens_eq_solver.image_position_from_source(
                 source_pos_x,
                 source_pos_y,
                 kwargs_lens,
                 solver="lenstronomy",
-                search_window=self.einstein_radius * 6,  # CHECK WITH SIMON #
-                min_distance=self.einstein_radius * 6 / 100,  # CHECK WITH SIMON
-                magnification_limit=self._magnification_limit,  # CHECK WITH SIMON #0.01
+                search_window=self.einstein_radius * 6,
+                min_distance=self.einstein_radius * 6 / 200,
+                magnification_limit=self._magnification_limit,
             )
+        # print(self._image_positions)
         return self._image_positions
 
     def validity_test(
@@ -198,7 +199,7 @@ class OM10LensSystem(LensedSystemBase):
 
         :return: source redshift
         """
-        return self._source_dict["om10z"]
+        return self._source_dict["ZSRC"]
 
     @property
     def einstein_radius(self):
@@ -221,6 +222,12 @@ class OM10LensSystem(LensedSystemBase):
             self._deflector_dict["e2_mass"]
         )
         return e1_light, e2_light, e1_mass, e2_mass
+
+    def source_ellipticity(self):
+        e1_light, e2_light = float(self._source_dict["e1_light"]), float(
+            self._source_dict["e2_light"]
+        )
+        return e1_light, e2_light
 
     def deflector_stellar_mass(self):
         """
@@ -262,6 +269,9 @@ class OM10LensSystem(LensedSystemBase):
         """
 
         return self._deflector_dict["APMAG_I"]
+
+    def deflector_density_power_law_slope(self):
+        return self._deflector_dict["gamma_lens"]
 
     def point_source_arrival_times(self):
         """Arrival time of images relative to a straight line without lensing. Negative
@@ -355,16 +365,15 @@ class OM10LensSystem(LensedSystemBase):
 
         :return: integrated magnification factor of host magnitude
         """
-        self._extended_source_magnification = self._source_dict["magnification"]
+        # self._extended_source_magnification = self._source_dict["magnification"]
         if not hasattr(self, "_extended_source_magnification"):
-            kwargs_model, kwargs_params = self.lenstronomy_kwargs(band=None)
+            kwargs_model, kwargs_params = self.lenstronomy_kwargs(band="i")
             lightModel = LightModel(
                 light_model_list=kwargs_model.get("source_light_model_list", [])
             )
             lensModel = LensModel(
                 lens_model_list=kwargs_model.get("lens_model_list", [])
             )
-            theta_E = self.einstein_radius
             center_source = self.source_position
 
             kwargs_source_mag = kwargs_params["kwargs_source"]
@@ -372,9 +381,9 @@ class OM10LensSystem(LensedSystemBase):
                 lightModel, kwargs_source_mag, magnitude_zero_point=27
             )
 
-            num_pix = 200
-            delta_pix = theta_E * 4 / num_pix
-            x, y = util.make_grid(numPix=200, deltapix=delta_pix)
+            num_pix = 33
+            delta_pix = 0.2
+            x, y = util.make_grid(numPix=num_pix, deltapix=delta_pix)
             x += center_source[0]
             y += center_source[1]
             beta_x, beta_y = lensModel.ray_shooting(x, y, kwargs_params["kwargs_lens"])
@@ -435,19 +444,20 @@ class OM10LensSystem(LensedSystemBase):
         theta_E = self.einstein_radius
         e1_light_lens, e2_light_lens, e1_mass, e2_mass = self.deflector_ellipticity()
         center_lens = self.deflector_position
+        gamma_lens = self.deflector_density_power_law_slope()
         gamma1, gamma2, kappa_ext = self.los_linear_distortions()
         kwargs_lens = [
             {
                 "theta_E": theta_E,
-                "gamma": 2,
-                # "gamma": np.random.normal(loc=2.05, scale=0.15),
+                # "gamma": self.gamma,
+                "gamma": gamma_lens,
                 "e1": e1_mass,
                 "e2": e2_mass,
                 "center_x": center_lens[0],
                 "center_y": center_lens[1],
             },
-            {"gamma1": gamma1, "gamma2": gamma2, "ra_0": 0, "dec_0": 0},
-            {"kappa": kappa_ext, "ra_0": 0, "dec_0": 0},
+            {"gamma1": gamma1, "gamma2": gamma2},
+            {"kappa": kappa_ext},
         ]
 
         return lens_mass_model_list, kwargs_lens
@@ -489,7 +499,7 @@ class OM10LensSystem(LensedSystemBase):
         source_models = {}
         all_source_kwarg_dict = {}
         center_source = self.source_position
-
+        e1_light_source, e2_light_source = self.source_ellipticity()
         if band is None:
             mag_source = 1
         else:
@@ -501,8 +511,8 @@ class OM10LensSystem(LensedSystemBase):
                 "magnitude": mag_source,
                 "R_sersic": size_source_arcsec,
                 "n_sersic": float(self._source_dict["sersic_bulge"]),
-                "e1": float(self._source_dict["e1"]),
-                "e2": float(self._source_dict["e2"]),
+                "e1": e1_light_source,
+                "e2": e2_light_source,
                 "center_x": center_source[0],
                 "center_y": center_source[1],
             }

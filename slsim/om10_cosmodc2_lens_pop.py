@@ -12,7 +12,7 @@ class OM10LensPop(LensedPopulationBase):
     All object that inherit from Lensed Sample must contain the methods it contains.
     """
 
-    def __init__(self, sky_area=None, cosmo=None, catalog_config="data/OM10"):
+    def __init__(self, sky_area=None, cosmo=None, catalog_config="data/OM10", gamma=2):
         """
         :param source_type: type of the source
         :type source_type: string
@@ -41,6 +41,7 @@ class OM10LensPop(LensedPopulationBase):
             source_input=self._pipeline.sources, cosmo=cosmo, sky_area=sky_area
         )
         self.cosmo = cosmo
+        self.gamma = gamma
 
     def select_lens_at_random(self):
         """Draw a random lens within the cuts of the lens and source, with possible
@@ -73,9 +74,7 @@ class OM10LensPop(LensedPopulationBase):
         source = self._source_quasars.draw_source(index)
         lens = self._lens_galaxies.draw_deflector(index)
         lens_system = OM10LensSystem(
-            deflector_dict=lens,
-            source_dict=source,
-            cosmo=self.cosmo,
+            deflector_dict=lens, source_dict=source, cosmo=self.cosmo, gamma=self.gamma
         )
         return lens_system
 

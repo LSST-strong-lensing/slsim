@@ -14,11 +14,9 @@ class catalogPipeline:
         path = os.path.dirname(slsim.__file__)
         module_path, _ = os.path.split(path)
         folder = os.path.join(module_path, catalog_config)
-        self._sources = pd.read_csv(
-            os.path.join(folder, "source_dict.csv"), index_col=0
-        )
+        self._sources = pd.read_csv(os.path.join(folder, "sources.csv"), index_col=0)
         self._deflectors = pd.read_csv(
-            os.path.join(folder, "deflector_dict.csv"), index_col=0
+            os.path.join(folder, "deflectors.csv"), index_col=0
         )
 
     @property

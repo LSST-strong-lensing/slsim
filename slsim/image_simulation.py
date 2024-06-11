@@ -152,6 +152,7 @@ def quasar_image(
     with_deflector=True,
     unconvolved=False,
     add_noise=True,
+    bg_noise=True,
 ):
     """
     :param lens_class: Lens() object
@@ -167,7 +168,6 @@ def quasar_image(
     :param add_noise: bool, if True add noise
     :return: 2d array of image
     """
-    # print(with_ps, with_deflector)
     kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band)
     kwargs_band = kwargs_band
     sim_api = SimAPI(
@@ -192,7 +192,7 @@ def quasar_image(
         point_source_add=with_ps,
     )
     if add_noise:
-        image += sim_api.noise_for_model(model=image, background_noise=False)
+        image += sim_api.noise_for_model(model=image, background_noise=bg_noise)
 
     return (
         image,

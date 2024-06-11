@@ -1,5 +1,4 @@
 from slsim.Deflectors.deflector_base import DeflectorBase
-import numpy as np
 
 
 class OM10Lens(DeflectorBase):
@@ -29,25 +28,4 @@ class OM10Lens(DeflectorBase):
         :return: dictionary of complete parameterization of deflector
         """
         self._chosen_deflector = dict(self.deflector_table.loc[index])
-        self._mass_eccentricity = self._chosen_deflector["ELLIP"]
-        # self._mass_eccentricity = param_util.epsilon2e(self._mass_ellipticity)
-        self._mass_phi_e = self._chosen_deflector["PHIE"] * np.pi / 180
-        self._chosen_deflector["e1_mass"] = self._mass_eccentricity * np.cos(
-            2 * self._mass_phi_e
-        )
-        self._chosen_deflector["e2_mass"] = self._mass_eccentricity * np.sin(
-            2 * self._mass_phi_e
-        )
-
-        # self._light_eccentricity = param_util.epsilon2e(self._chosen_deflector["ellipticity_true"]
-        # )
-        self._light_eccentricity = self._chosen_deflector["ellipticity_true"]
-        self._light_phi_e = self._chosen_deflector["PHIE"] * np.pi / 180
-        self._chosen_deflector["e1_light"] = self._light_eccentricity * np.cos(
-            2 * self._light_phi_e
-        )
-        self._chosen_deflector["e2_light"] = self._light_eccentricity * np.sin(
-            2 * self._light_phi_e
-        )
-        self._chosen_deflector["n_sersic"] = np.random.normal(loc=4, scale=0.001)
         return self._chosen_deflector

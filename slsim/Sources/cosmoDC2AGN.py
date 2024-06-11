@@ -1,5 +1,4 @@
 from slsim.Sources.source_pop_base import SourcePopBase
-import numpy as np
 
 
 class cosmoDC2AGN(SourcePopBase):
@@ -27,10 +26,8 @@ class cosmoDC2AGN(SourcePopBase):
         :return: dictionary of source
         """
         self._chosen_source = dict(self.source_table.loc[index])
+        self._chosen_source["e1_light"] = self._chosen_source["ellipticity_1_true"]
+        self._chosen_source["e2_light"] = self._chosen_source["ellipticity_2_true"]
 
-        self._light_eccentricity = self._chosen_source["ellipticity_true"]
-        self._light_phi_e = self._chosen_source["phi"]
-        self._chosen_source["e1"] = self._light_eccentricity * np.cos(self._light_phi_e)
-        self._chosen_source["e2"] = self._light_eccentricity * np.sin(self._light_phi_e)
-        self._chosen_source["n_sersic"] = np.random.normal(loc=4, scale=0.001)
+        # self._chosen_source["n_sersic"] = np.random.normal(loc=4, scale=0.001)
         return self._chosen_source
