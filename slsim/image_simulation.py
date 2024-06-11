@@ -67,7 +67,7 @@ def sharp_image(
     num_pix,
     with_source=True,
     with_deflector=True,
-    angle_rot=90
+    angle_rot=90,
 ):
     """Creates an unconvolved image of a selected lens. Point source image is not
     included in this function.
@@ -83,18 +83,24 @@ def sharp_image(
     :return: 2d array unblurred image
     """
     kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band)
-    rotation_angle = angle_rot*np.pi/180  # rotation angle in North to West in radian
+    rotation_angle = (
+        angle_rot * np.pi / 180
+    )  # rotation angle in North to West in radian
     scale1_1 = -delta_pix * np.cos(rotation_angle)
     scale1_2 = delta_pix * np.sin(rotation_angle)
     scale2_1 = delta_pix * np.sin(rotation_angle)
     scale2_2 = delta_pix * np.cos(rotation_angle)
-    ra_at_xy_0_original = (num_pix -1)/2
-    dec_at_xy_0_original = (num_pix -1)/2
+    ra_at_xy_0_original = (num_pix - 1) / 2
+    dec_at_xy_0_original = (num_pix - 1) / 2
     pix2angle_transform_rot = np.array([[scale1_1, scale1_2], [scale2_1, scale2_2]])
-    ra_at_xy_0, dec_at_xy_0 = pix2angle_transform_rot.dot([-ra_at_xy_0_original,
-                                                        -dec_at_xy_0_original]).T
-    kwargs_pixel_grid = {"ra_at_xy_0": ra_at_xy_0, "dec_at_xy_0": dec_at_xy_0, 
-                          "transform_pix2angle": pix2angle_transform_rot}
+    ra_at_xy_0, dec_at_xy_0 = pix2angle_transform_rot.dot(
+        [-ra_at_xy_0_original, -dec_at_xy_0_original]
+    ).T
+    kwargs_pixel_grid = {
+        "ra_at_xy_0": ra_at_xy_0,
+        "dec_at_xy_0": dec_at_xy_0,
+        "transform_pix2angle": pix2angle_transform_rot,
+    }
     kwargs_band = {
         "pixel_scale": delta_pix,
         "magnitude_zero_point": mag_zero_point,
@@ -103,7 +109,7 @@ def sharp_image(
         "psf_type": "NONE",  # these are keywords not being used but need to be set
         ##in SimAPI
         "exposure_time": 1,
-        "kwargs_pixel_grid": kwargs_pixel_grid
+        "kwargs_pixel_grid": kwargs_pixel_grid,
     }  # these are keywords not being used but need to be set in
     ##SimAPI
     sim_api = SimAPI(
@@ -191,15 +197,16 @@ def centered_coordinate_system(num_pix, transform_pix2angle, angle_rot=90):
     :return: dict with ra_at_xy_0, dec_at_xy_0, transfrom_pix2angle
     """
     pix_center = (num_pix - 1) / 2
-    rotation_angle = angle_rot*np.pi/180  # rotation angle in North to West in radian
+    rotation_angle = (
+        angle_rot * np.pi / 180
+    )  # rotation angle in North to West in radian
     scale1_1 = -np.cos(rotation_angle)
     scale1_2 = np.sin(rotation_angle)
     scale2_1 = np.sin(rotation_angle)
     scale2_2 = np.cos(rotation_angle)
     rot_matrix = np.array([[scale1_1, scale1_2], [scale2_1, scale2_2]])
     pix2angle_transform_rot = rot_matrix.dot(transform_pix2angle)
-    ra_at_xy_0, dec_at_xy_0 = pix2angle_transform_rot.dot([-pix_center,
-                                                        -pix_center]).T
+    ra_at_xy_0, dec_at_xy_0 = pix2angle_transform_rot.dot([-pix_center, -pix_center]).T
     kwargs_grid = {
         "ra_at_xy_0": ra_at_xy_0,
         "dec_at_xy_0": dec_at_xy_0,
@@ -209,8 +216,14 @@ def centered_coordinate_system(num_pix, transform_pix2angle, angle_rot=90):
 
 
 def image_data_class(
-    lens_class, band, mag_zero_point, delta_pix, num_pix, transform_pix2angle,
-angle_rot=90):
+    lens_class,
+    band,
+    mag_zero_point,
+    delta_pix,
+    num_pix,
+    transform_pix2angle,
+    angle_rot=90,
+):
     """Provides data class for image.
 
     :param lens_class: Lens() object
@@ -231,8 +244,9 @@ angle_rot=90):
         "background_noise": 0,
         "psf_type": "NONE",
         "exposure_time": 1,
-        "kwargs_pixel_grid": centered_coordinate_system(num_pix, transform_pix2angle,
-                                                        angle_rot=angle_rot),
+        "kwargs_pixel_grid": centered_coordinate_system(
+            num_pix, transform_pix2angle, angle_rot=angle_rot
+        ),
     }
     sim_api = SimAPI(
         numpix=num_pix, kwargs_single_band=kwargs_band, kwargs_model=kwargs_model
@@ -243,8 +257,14 @@ angle_rot=90):
 
 
 def point_source_coordinate_properties(
-    lens_class, band, mag_zero_point, delta_pix, num_pix, transform_pix2angle,
-angle_rot=90):
+    lens_class,
+    band,
+    mag_zero_point,
+    delta_pix,
+    num_pix,
+    transform_pix2angle,
+    angle_rot=90,
+):
     """Provides pixel coordinates for deflector and images. Currently, this function
     only works for point source.
 
@@ -261,8 +281,13 @@ angle_rot=90):
     """
 
     image_data = image_data_class(
-        lens_class, band, mag_zero_point, delta_pix, num_pix, transform_pix2angle,
-        angle_rot=angle_rot
+        lens_class,
+        band,
+        mag_zero_point,
+        delta_pix,
+        num_pix,
+        transform_pix2angle,
+        angle_rot=angle_rot,
     )
 
     lens_center = lens_class.deflector_position
@@ -295,7 +320,7 @@ def point_source_image_without_variability(
     num_pix,
     psf_kernel,
     transform_pix2angle,
-    angle_rot=90
+    angle_rot=90,
 ):
     """Creates lensed point source images without variability on the basis of given
     information.
@@ -315,8 +340,13 @@ def point_source_image_without_variability(
     kwargs_ps = kwargs_params["kwargs_ps"]
 
     data_class = image_data_class(
-        lens_class, band, mag_zero_point, delta_pix, num_pix, transform_pix2angle,
-        angle_rot=angle_rot
+        lens_class,
+        band,
+        mag_zero_point,
+        delta_pix,
+        num_pix,
+        transform_pix2angle,
+        angle_rot=angle_rot,
     )
 
     psf_class = PSF(psf_type="PIXEL", kernel_point_source=psf_kernel)
@@ -328,7 +358,7 @@ def point_source_image_without_variability(
             delta_pix=delta_pix,
             num_pix=num_pix,
             transform_pix2angle=transform_pix2angle,
-            angle_rot=angle_rot
+            angle_rot=angle_rot,
         )
         ra_image_values = image_data["ra_image"]
         dec_image_values = image_data["dec_image"]
@@ -360,7 +390,7 @@ def point_source_image_at_time(
     psf_kernel,
     transform_pix2angle,
     time,
-    angle_rot=90
+    angle_rot=90,
 ):
     """Creates lensed point source images with variability at a given time on the basis
     of given information.
@@ -381,8 +411,13 @@ def point_source_image_at_time(
     kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band=band)
     kwargs_ps = kwargs_params["kwargs_ps"]
     data_class = image_data_class(
-        lens_class, band, mag_zero_point, delta_pix, num_pix, transform_pix2angle,
-        angle_rot=angle_rot
+        lens_class,
+        band,
+        mag_zero_point,
+        delta_pix,
+        num_pix,
+        transform_pix2angle,
+        angle_rot=angle_rot,
     )
 
     psf_class = PSF(psf_type="PIXEL", kernel_point_source=psf_kernel)
@@ -395,7 +430,7 @@ def point_source_image_at_time(
             delta_pix=delta_pix,
             num_pix=num_pix,
             transform_pix2angle=transform_pix2angle,
-            angle_rot=angle_rot
+            angle_rot=angle_rot,
         )
         ra_image_values = image_data["ra_image"]
         dec_image_values = image_data["dec_image"]
@@ -429,7 +464,7 @@ def point_source_image_with_variability(
     psf_kernels,
     transform_pix2angle,
     t_obs,
-    angle_rot=90
+    angle_rot=90,
 ):
     """Creates lensed point source images with variability for series of time on the
     basis of given information.
@@ -459,7 +494,7 @@ def point_source_image_with_variability(
             psf_kernel=psf_kernel,
             transform_pix2angle=transf_matrix,
             time=time,
-            angle_rot=angle_rot
+            angle_rot=angle_rot,
         )
         all_image.append(image_test)
     variab_images = [list(x) for x in zip(*all_image)]
@@ -497,7 +532,7 @@ def deflector_images_with_different_zeropoint(
                 mag_zero_point=mag_zero,
                 delta_pix=delta_pix,
                 num_pix=num_pix,
-                angle_rot=angle_rot
+                angle_rot=angle_rot,
             )
         )
     return image
@@ -541,7 +576,7 @@ def lens_image(
     std_gaussian_noise=None,
     with_source=True,
     with_deflector=True,
-    angle_rot=90
+    angle_rot=90,
 ):
     """Creates lens image on the basis of given information. It can simulate both static
     lens image and variable lens image.
@@ -575,7 +610,7 @@ def lens_image(
             num_pix=num_pix,
             psf_kernel=psf_kernel,
             transform_pix2angle=transform_pix2angle,
-            angle_rot=angle_rot
+            angle_rot=angle_rot,
         )
     else:
         image_ps = point_source_image_at_time(
@@ -587,7 +622,7 @@ def lens_image(
             psf_kernel=psf_kernel,
             transform_pix2angle=transform_pix2angle,
             time=t_obs,
-            angle_rot=angle_rot
+            angle_rot=angle_rot,
         )
     deflector_source = sharp_image(
         lens_class=lens_class,
@@ -597,7 +632,7 @@ def lens_image(
         num_pix=num_pix,
         with_source=with_source,
         with_deflector=with_deflector,
-        angle_rot=angle_rot
+        angle_rot=angle_rot,
     )
     convolved_deflector_source = convolved_image(
         image=deflector_source, psf_kernel=psf_kernel
@@ -627,7 +662,7 @@ def lens_image_series(
     std_gaussian_noise=None,
     with_source=True,
     with_deflector=True,
-    angle_rot=90
+    angle_rot=90,
 ):
     """Creates lens image on the basis of given information. This function is designed
     to simulate time series images of a lens.
@@ -666,7 +701,7 @@ def lens_image_series(
             std_gaussian_noise=std_gaussian_noise,
             with_source=with_source,
             with_deflector=with_deflector,
-            angle_rot=angle_rot
+            angle_rot=angle_rot,
         )
         image_series.append(image)
 
