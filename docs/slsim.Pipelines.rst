@@ -1,0 +1,21 @@
+slsim.Pipelines package
+=======================
+
+Submodules
+----------
+
+slsim.Pipelines.skypy\_pipeline module
+--------------------------------------
+
+.. automodule:: slsim.Pipelines.skypy_pipeline
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: slsim.Pipelines
+   :members:
+   :undoc-members:
+   :show-inheritance:

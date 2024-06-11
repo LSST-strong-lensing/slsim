@@ -1,5 +1,5 @@
 ﻿from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
-from astropy.cosmology import LambdaCDM, FlatwCDM, w0waCDM
+from astropy.cosmology import LambdaCDM, FlatwCDM, w0waCDM, default_cosmology
 
 
 class TestSkyPyPipeline(object):
@@ -8,6 +8,11 @@ class TestSkyPyPipeline(object):
 
         sky_area = Quantity(value=0.05, unit="deg2")
         self.pipeline = SkyPyPipeline(skypy_config=None, sky_area=sky_area)
+
+    def test_default_pipeline(self):
+        pipeline_default = SkyPyPipeline()
+        blue_galaxies = pipeline_default.blue_galaxies
+        assert blue_galaxies[0]["z"] > 0
 
     def test_cosmology_initialization(self):
         galaxy_cosmo0 = LambdaCDM(H0=70, Om0=0.01, Ode0=0.99)
@@ -42,6 +47,11 @@ class TestSkyPyPipeline(object):
         pipeline4 = SkyPyPipeline(cosmo=cosmo4)
         blue_galaxies = pipeline4.blue_galaxies
         assert blue_galaxies[0]["z"] > 0
+
+        galaxy_cosmo5 = default_cosmology.get()
+        pipeline5 = SkyPyPipeline(cosmo=galaxy_cosmo5)
+        blue_galaxies5 = pipeline5.blue_galaxies
+        assert blue_galaxies5[0]["z"] > 0
 
     def test_blue_galaxies(self):
         blue_galaxies = self.pipeline.blue_galaxies

@@ -1,4 +1,4 @@
-from slsim.Sources.quasar_catalog import simple_quasar
+from slsim.Sources.QuasarCatalog import simple_quasar
 import pytest
 
 
@@ -15,7 +15,7 @@ def test_simple_quasar():
         "freq_max": 1.5,
     }
     catalog = simple_quasar.quasar_catalog_simple(**kwargs_quasars)
-    column_names = ["z", "mag_r", "mag_g", "mag_i"]
+    column_names = ["z", "ps_mag_r", "ps_mag_g", "ps_mag_i"]
     assert catalog.colnames[0] == column_names[0]
     assert catalog.colnames[1] == column_names[1]
     assert catalog.colnames[2] == column_names[2]
