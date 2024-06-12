@@ -22,6 +22,8 @@ def update_coolest_from_slsim(
     :returns: saves updated .json file in a given path
     """
     kwargs_result_slsim = lens_class.lenstronomy_kwargs(band=band)[1]
+    # added gamma back as in simple version, a SIE is produced
+    kwargs_result_slsim["kwargs_lens"][0]["gamma"] = 2
 
     # Iterate over sources to extract magnitudes and convert to amplitudes
     source_amps = []
