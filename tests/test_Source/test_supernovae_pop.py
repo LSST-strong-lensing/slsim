@@ -22,7 +22,7 @@ def test_delay_time_distribution():
     t_d = -1
     npt.assert_equal(delay_time_distribution(t_d), np.nan)
     t_d = 5
-    npt.assert_almost_equal(delay_time_distribution(t_d), 5**(-1.08), decimal=4)
+    npt.assert_almost_equal(delay_time_distribution(t_d), 5 ** (-1.08), decimal=4)
 
 
 def test_z_from_time():
@@ -53,9 +53,7 @@ def test_numerator_integrand():
     t_d, t = 1, -1
     npt.assert_equal(sne_rate._numerator_integrand(t_d, t), np.nan)
     t_d, t = 1, 1
-    npt.assert_almost_equal(
-        sne_rate._numerator_integrand(t_d, t), 0.0002559, decimal=4
-    )
+    npt.assert_almost_equal(sne_rate._numerator_integrand(t_d, t), 0.0002559, decimal=4)
 
 
 def test_calculate_SNIa_rate():
