@@ -1,12 +1,13 @@
+import numpy as np
 import pytest
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
-from slsim.lens_pop import LensPop, draw_test_area
-import numpy as np
+
+from slsim.lens_pop import LensPop
+from slsim.lens_pop import draw_test_area
 
 
-@pytest.fixture
-def gg_lens_pop_instance():
+def create_lens_pop_instance(return_kext=False):
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     sky_area = Quantity(value=0.05, unit="deg2")
     kwargs_deflector_cut = {"band": "g", "band_max": 28, "z_min": 0.01, "z_max": 2.5}
@@ -17,6 +18,12 @@ def gg_lens_pop_instance():
         kwargs_deflector_cut=kwargs_deflector_cut,
         kwargs_source_cut=kwargs_source_cut,
     )
+
+
+@pytest.fixture
+def gg_lens_pop_instance():
+    # Create LensPop instance without return_kext
+    return create_lens_pop_instance(return_kext=False)
 
 
 def test_pes_lens_pop_instance():
@@ -39,6 +46,27 @@ def test_pes_lens_pop_instance():
     kwargs_lens_cut = {}
     pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
     assert pes_lens_class._source_type == "point_plus_extended"
+
+
+def test_galaxies_lens_pop_halo_model_instance():
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3, Ob0=0.05)
+    sky_area = Quantity(value=0.001, unit="deg2")
+
+    kwargs_deflector_cut = {"z_min": 0.01, "z_max": 2.5}
+    kwargs_source_cut = {"band": "g", "band_max": 28, "z_min": 0.1, "z_max": 5.0}
+
+    g_lens_halo_model_pop = LensPop(
+        deflector_type="halo-models",
+        source_type="galaxies",
+        kwargs_deflector_cut=kwargs_deflector_cut,
+        kwargs_source_cut=kwargs_source_cut,
+        kwargs_mass2light=None,
+        skypy_config=None,
+        slhammocks_config=None,
+        sky_area=sky_area,
+        cosmo=cosmo,
+    )
+    assert g_lens_halo_model_pop._lens_galaxies.draw_deflector()["halo_mass"] != 0
 
 
 def test_supernovae_plus_galaxies_lens_pop_instance():

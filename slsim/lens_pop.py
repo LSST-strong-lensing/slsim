@@ -1,13 +1,14 @@
-from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
-from slsim.lens import (
-    Lens,
-    theta_e_when_source_infinity,
-)
-import numpy as np
-from slsim.lensed_population_base import LensedPopulationBase
+from slsim.ParamDistributions.los_config import LOSConfig
 import os
 import pickle
+
+import numpy as np
 from astropy.table import Table
+
+from slsim.lens import Lens
+from slsim.lens import theta_e_when_source_infinity
+from slsim.lensed_population_base import LensedPopulationBase
+from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 
 
 class LensPop(LensedPopulationBase):
@@ -25,6 +26,7 @@ class LensPop(LensedPopulationBase):
         kwargs_variability=None,
         kwargs_mass2light=None,
         skypy_config=None,
+        slhammocks_config=None,
         sky_area=None,
         filters=None,
         cosmo=None,
@@ -35,6 +37,7 @@ class LensPop(LensedPopulationBase):
         sn_type=None,
         sn_absolute_mag_band=None,
         sn_absolute_zpsys=None,
+        los_config=None,
     ):
         """
 
@@ -56,11 +59,15 @@ class LensPop(LensedPopulationBase):
         :type kwargs_variability: list of str
         :param skypy_config: path to SkyPy configuration yaml file
         :type skypy_config: string
+        :param slhammocks_config: path to the deflector population csv file for 'halo-model'
+        :type slhammocks_config: string
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
         :type sky_area: `~astropy.units.Quantity`
         :param filters: filters for SED integration
         :type filters: list of strings or None
+        :param cosmo: cosmology object
+        :type cosmo: `~astropy.cosmology.FLRW`
         :param source_light_profile: keyword for number of sersic profile to use in
          source light model. It is necessary to recognize quantities given in the source
          catalog.
@@ -80,6 +87,8 @@ class LensPop(LensedPopulationBase):
         :type sn_absolute_mag_band: str or `~sncosmo.Bandpass`
         :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
         :type sn_absolute_zpsys: str
+        :param los_config: configuration for line of sight distribution
+        :type los_config: LOSConfig instance
         """
         super().__init__(
             sky_area,
@@ -110,9 +119,7 @@ class LensPop(LensedPopulationBase):
             kwargs_mass2light = {}
 
         if deflector_type == "elliptical":
-            from slsim.Deflectors.elliptical_lens_galaxies import (
-                EllipticalLensGalaxies,
-            )
+            from slsim.Deflectors.elliptical_lens_galaxies import EllipticalLensGalaxies
 
             self._lens_galaxies = EllipticalLensGalaxies(
                 pipeline.red_galaxies,
@@ -131,6 +138,24 @@ class LensPop(LensedPopulationBase):
             self._lens_galaxies = AllLensGalaxies(
                 red_galaxy_list=red_galaxy_list,
                 blue_galaxy_list=blue_galaxy_list,
+                kwargs_cut=kwargs_deflector_cut,
+                kwargs_mass2light=kwargs_mass2light,
+                cosmo=cosmo,
+                sky_area=sky_area,
+            )
+
+        elif deflector_type == "halo-models":
+            from slsim.Deflectors.compound_lens_halos_galaxies import (
+                CompoundLensHalosGalaxies,
+            )
+            from slsim.Pipelines.sl_hammocks_pipeline import SLHammocksPipeline
+
+            halo_galaxy_list = SLHammocksPipeline(
+                slhammocks_config=slhammocks_config, sky_area=sky_area, cosmo=cosmo
+            )
+
+            self._lens_galaxies = CompoundLensHalosGalaxies(
+                halo_galaxy_list=halo_galaxy_list._pipeline,
                 kwargs_cut=kwargs_deflector_cut,
                 kwargs_mass2light=kwargs_mass2light,
                 cosmo=cosmo,
@@ -196,9 +221,7 @@ class LensPop(LensedPopulationBase):
             from slsim.Sources.point_plus_extended_sources import (
                 PointPlusExtendedSources,
             )
-            from slsim.Sources.point_sources import (
-                PointSources,
-            )
+            from slsim.Sources.point_sources import PointSources
 
             # currently, we are using precomputed supernovae catlog. Future plan is to
             # develop a supernovae class inside the slsim and them here to generate
@@ -293,6 +316,10 @@ class LensPop(LensedPopulationBase):
         self.cosmo = cosmo
         self.f_sky = sky_area
 
+        self.los_config = los_config
+        if self.los_config is None:
+            los_config = LOSConfig()
+
     def select_lens_at_random(self, **kwargs_lens_cut):
         """Draw a random lens within the cuts of the lens and source, with possible
         additional cut in the lensing configuration.
@@ -318,6 +345,7 @@ class LensPop(LensedPopulationBase):
                 source_type=self._source_model_type,
                 light_profile=self._sources.light_profile,
                 lightcurve_time=self.lightcurve_time,
+                los_config=self.los_config,
             )
             if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens
@@ -400,7 +428,9 @@ class LensPop(LensedPopulationBase):
                         sn_absolute_mag_band=self.sn_absolute_mag_band,
                         sn_absolute_zpsys=self.sn_absolute_zpsys,
                         cosmo=self.cosmo,
+                        test_area=test_area,
                         source_type=self._source_model_type,
+                        los_config=self.los_config,
                         light_profile=self._sources.light_profile,
                         lightcurve_time=self.lightcurve_time,
                     )
