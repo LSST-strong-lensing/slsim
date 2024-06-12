@@ -9,13 +9,15 @@ class TestSkyPyPipeline(object):
 
         self.sky_area = Quantity(value=0.001, unit="deg2")
         self.pipeline = SkyPyPipeline(skypy_config=None, sky_area=self.sky_area)
-        self.pipeline2 = SkyPyPipeline(skypy_config="lsst_like_old", 
-                                       sky_area=self.sky_area)
-        
+        self.pipeline2 = SkyPyPipeline(
+            skypy_config="lsst_like_old", sky_area=self.sky_area
+        )
+
         path = os.path.dirname(__file__)
-        new_path = path.replace("test_Pipelines", 'TestData/')
-        self.pipeline3 = SkyPyPipeline(skypy_config=new_path+"lsst_like_test_1.yml", 
-                                       sky_area=self.sky_area)
+        new_path = path.replace("test_Pipelines", "TestData/")
+        self.pipeline3 = SkyPyPipeline(
+            skypy_config=new_path + "lsst_like_test_1.yml", sky_area=self.sky_area
+        )
 
     def test_default_pipeline(self):
         pipeline_default = SkyPyPipeline(sky_area=self.sky_area)
@@ -69,5 +71,5 @@ class TestSkyPyPipeline(object):
         red_galaxies = self.pipeline.red_galaxies
         assert red_galaxies[0]["z"] > 0
         assert len(self.pipeline2.red_galaxies["z"]) > len(
-           self.pipeline3.red_galaxies["z"]
+            self.pipeline3.red_galaxies["z"]
         )
