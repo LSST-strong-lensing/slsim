@@ -1,5 +1,6 @@
 ﻿from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 from astropy.cosmology import LambdaCDM, FlatwCDM, w0waCDM, default_cosmology
+import os
 
 
 class TestSkyPyPipeline(object):
@@ -10,9 +11,14 @@ class TestSkyPyPipeline(object):
         self.pipeline = SkyPyPipeline(skypy_config=None, sky_area=self.sky_area)
         self.pipeline2 = SkyPyPipeline(skypy_config="lsst_like_old", 
                                        sky_area=self.sky_area)
+        
+        path = os.path.dirname(__file__)
+        new_path = path.replace("test_Pipelines", 'TestData/')
+        self.pipeline3 = SkyPyPipeline(skypy_config=new_path+"lsst_like_test_1.yml", 
+                                       sky_area=self.sky_area)
 
     def test_default_pipeline(self):
-        pipeline_default = SkyPyPipeline()
+        pipeline_default = SkyPyPipeline(sky_area=self.sky_area)
         blue_galaxies = pipeline_default.blue_galaxies
         assert blue_galaxies[0]["z"] > 0
 
@@ -62,5 +68,5 @@ class TestSkyPyPipeline(object):
     def test_red_galaxies(self):
         red_galaxies = self.pipeline.red_galaxies
         assert red_galaxies[0]["z"] > 0
-        assert len(self.pipeline2.red_galaxies["z"]) < \
-            len(self.pipeline2.blue_galaxies["z"])
+        assert len(self.pipeline2.red_galaxies["z"]) > \
+           len(self.pipeline3.red_galaxies["z"])
