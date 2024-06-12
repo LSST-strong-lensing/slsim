@@ -14,7 +14,7 @@ def calculate_star_formation_rate(z):
     :return: cosmic star formation rate in [(h)yr^(-1)Mpc^(-3)]
     """
     if z >= 0:
-        star_formation_rate = (0.0118+0.08*z)/(1+(z/3.3)**5.2)
+        star_formation_rate = (0.0118 + 0.08 * z) / (1 + (z / 3.3) ** 5.2)
         return star_formation_rate
     else:
         return np.nan
@@ -27,16 +27,15 @@ def t_d_power(t_d):
     :return: constrained time delay
     """
     if t_d > 0:
-        ft_d = (t_d)**(-1.08)
+        ft_d = (t_d) ** (-1.08)
         return ft_d
     else:
         return np.nan
 
 
 class SNIaRate(object):
-    """
-    Class to calculate supernovae rates.
-    """
+    """Class to calculate supernovae rates."""
+
     def __init__(self, cosmo):
         """
         :param cosmo: cosmology object
@@ -74,8 +73,8 @@ class SNIaRate(object):
             return np.nan
         else:
             ft_d = t_d_power(t_d)
-            z_t = self.z_from_time(t-t_d)
-            return calculate_star_formation_rate(z_t)*ft_d
+            z_t = self.z_from_time(t - t_d)
+            return calculate_star_formation_rate(z_t) * ft_d
 
     def calculate_SNIa_rate(self, z, eta=0.04):
         """Calculates the rate of SN Ia. (Eq 15 - Oguri and Marshall 2010)
@@ -93,10 +92,14 @@ class SNIaRate(object):
 
             t_z = self._cosmo.age(z).to_value()  # Time at given redshift z
             t_0 = self._cosmo.age(0).to_value()  # Time at redshift z = 0
-            t = self._cosmo.lookback_time(z).to_value()  # Lookback time at given redshift z
+            t = self._cosmo.lookback_time(
+                z
+            ).to_value()  # Lookback time at given redshift z
 
-            numerator = integrate.quad(lambda t_d: self._numerator_integrand(t_d, t), 0.1, t_z)
+            numerator = integrate.quad(
+                lambda t_d: self._numerator_integrand(t_d, t), 0.1, t_z
+            )
             denominator = integrate.quad(lambda t_d: t_d_power(t_d), 0.1, t_0)
 
-            SNIa_rate = eta*C_Ia*(numerator[0]/denominator[0])
+            SNIa_rate = eta * C_Ia * (numerator[0] / denominator[0])
             return SNIa_rate

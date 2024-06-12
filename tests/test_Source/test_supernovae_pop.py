@@ -1,4 +1,7 @@
-from slsim.Sources.Supernovae.supernovae_pop import calculate_star_formation_rate, t_d_power
+from slsim.Sources.Supernovae.supernovae_pop import (
+    calculate_star_formation_rate,
+    t_d_power,
+)
 from slsim.Sources.Supernovae.supernovae_pop import SNIaRate
 from astropy.cosmology import FlatLambdaCDM
 import numpy as np
@@ -37,7 +40,9 @@ def test_numerator_integrand():
     t_d, t = 1, -1
     npt.assert_equal(sne_rate._numerator_integrand(t_d, t), np.nan)
     t_d, t = 1, 1
-    npt.assert_almost_equal(sne_rate._numerator_integrand(t_d, t), 8.9363e-12, decimal=4)
+    npt.assert_almost_equal(
+        sne_rate._numerator_integrand(t_d, t), 8.9363e-12, decimal=4
+    )
 
 
 def test_calculate_SNIa_rate():
