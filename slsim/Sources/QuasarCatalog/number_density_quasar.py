@@ -10,6 +10,7 @@ Richards et al. 2006
 Oguri & Marshall (2010)
 """
 
+
 def M_star(z_value, h=0.72, zeta=2.98, xi=4.05, z_star=1.60):
     """Calculates the break absolute magnitude of quasars for a given redshift according
     to Eq. (11) in Oguri & Marshall (2010): DOI: 10.1111/j.1365-2966.2010.16639.x.
@@ -30,23 +31,22 @@ def M_star(z_value, h=0.72, zeta=2.98, xi=4.05, z_star=1.60):
     """
     # Convert z_value to a numpy array if it isn't already
     z_value = np.atleast_1d(z_value)
-    
+
     denominator = (np.sqrt(np.exp(xi * z_value)) + np.sqrt(np.exp(xi * z_star))) ** 2
     result = (
         -20.90
         + (5 * np.log10(h))
         - (
             2.5
-            * np.log10(
-                np.exp(zeta * z_value) * (1 + np.exp(xi * z_star)) / denominator
-            )
+            * np.log10(np.exp(zeta * z_value) * (1 + np.exp(xi * z_star)) / denominator)
         )
     )
-    
+
     # Handle zero denominator cases
     result[denominator == 0] = np.nan
-    
+
     return result if result.size > 1 else result.item()
+
 
 def dPhi_dM(M, z_value, alpha=-3.31, beta=-1.45, phi_star=5.34e-6 * (0.72**3)):
     """Calculates dPhi_dM for a given M and redshift according to Eq (10) in Oguri &
@@ -67,12 +67,12 @@ def dPhi_dM(M, z_value, alpha=-3.31, beta=-1.45, phi_star=5.34e-6 * (0.72**3)):
     # Convert inputs to numpy arrays if they are not already
     M = np.atleast_1d(M)
     z_value = np.atleast_1d(z_value)
-    
+
     if z_value.shape == ():
         z_value = np.full_like(M, z_value)
     if M.shape == ():
         M = np.full_like(z_value, M)
-    
+
     # Adjust the bright end slope for redshifts greater than 3 based on observations.
     alpha_val = np.where(z_value > 3, -2.58, alpha)
 
@@ -82,9 +82,15 @@ def dPhi_dM(M, z_value, alpha=-3.31, beta=-1.45, phi_star=5.34e-6 * (0.72**3)):
     denominator_dphi_dm = (10 ** (0.4 * (alpha_val + 1) * (M - M_star_value))) + (
         10 ** (0.4 * (beta + 1) * (M - M_star_value))
     )
-    term1 = np.divide(phi_star, denominator_dphi_dm, out=np.full_like(denominator_dphi_dm, np.nan), where=denominator_dphi_dm != 0)
-    
+    term1 = np.divide(
+        phi_star,
+        denominator_dphi_dm,
+        out=np.full_like(denominator_dphi_dm, np.nan),
+        where=denominator_dphi_dm != 0,
+    )
+
     return term1 if term1.size > 1 else term1.item()
+
 
 def compute_cdf_data(M_values, random_redshift_values):
     """Computes the CDF data for each randomly generated redshift.
@@ -110,8 +116,10 @@ def compute_cdf_data(M_values, random_redshift_values):
 
     return cdf_data_dict
 
+
 def cdf_fits_for_redshifts(M_values, random_redshift_values):
-    """Creates Cumulative Distribution Functions (CDF) plots for each randomly generated redshift.
+    """Creates Cumulative Distribution Functions (CDF) plots for each randomly generated
+    redshift.
 
     Parameters:
     :param M_values: Array of absolute i-band magnitudes.
@@ -131,13 +139,17 @@ def cdf_fits_for_redshifts(M_values, random_redshift_values):
 
     # Plot the CDF vs. M curve for each randomly generated redshift
     for random_redshift, (sorted_M_values, cumulative_prob_norm) in cdf_data.items():
-        line, = plt.plot(sorted_M_values, cumulative_prob_norm, label=f'z={random_redshift}')
+        (line,) = plt.plot(
+            sorted_M_values, cumulative_prob_norm, label=f"z={random_redshift}"
+        )
         legend_handles_cdf.append(line)
 
     return legend_handles_cdf
 
+
 def inverse_cdf_fits_for_redshifts(M_values, random_redshift_values):
-    """Creates inverse Cumulative Distribution Function (CDF) fits for each randomly generated redshift.
+    """Creates inverse Cumulative Distribution Function (CDF) fits for each randomly
+    generated redshift.
 
     Parameters:
     :param M_values: Array of absolute i-band magnitudes.
@@ -156,10 +168,16 @@ def inverse_cdf_fits_for_redshifts(M_values, random_redshift_values):
 
     for random_redshift, (sorted_M_values, cumulative_prob_norm) in cdf_data.items():
         # Interpolate the inverse CDF function
-        inverse_cdf = interp1d(cumulative_prob_norm, sorted_M_values, kind='linear', fill_value='extrapolate')
+        inverse_cdf = interp1d(
+            cumulative_prob_norm,
+            sorted_M_values,
+            kind="linear",
+            fill_value="extrapolate",
+        )
         inverse_cdf_dict[random_redshift] = inverse_cdf
 
     return inverse_cdf_dict
+
 
 def generate_redshift_table(random_redshift_values, inverse_cdf_dict, seed=42):
     """Generates random redshift values, associated inverse CDF values, and M values.
@@ -182,7 +200,7 @@ def generate_redshift_table(random_redshift_values, inverse_cdf_dict, seed=42):
     np.random.seed(seed)
 
     # Create an empty list to collect data for the table
-    table_data = {'Redshift': [], 'Inverse_CDF_Value': [], 'Associated_M': []}
+    table_data = {"Redshift": [], "Inverse_CDF_Value": [], "Associated_M": []}
 
     # Generate random Inverse CDF value and associated M value for each redshift
     for random_redshift in random_redshift_values:
@@ -196,9 +214,9 @@ def generate_redshift_table(random_redshift_values, inverse_cdf_dict, seed=42):
         random_M_value = inverse_cdf(random_inverse_cdf_value)
 
         # Append the data to the table
-        table_data['Redshift'].append(random_redshift)
-        table_data['Inverse_CDF_Value'].append(random_inverse_cdf_value)
-        table_data['Associated_M'].append(random_M_value)
+        table_data["Redshift"].append(random_redshift)
+        table_data["Inverse_CDF_Value"].append(random_inverse_cdf_value)
+        table_data["Associated_M"].append(random_M_value)
 
     # Create the Astropy table
     table = Table(table_data)

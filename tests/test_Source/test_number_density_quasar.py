@@ -62,6 +62,7 @@ def test_dPhi_dM():
     else:
         np.testing.assert_almost_equal(dphi_dm_calc, expected_value, decimal=3)
 
+
 def test_compute_cdf_data():
     # Generate test data
     M_values = np.linspace(-30, -20, 100)  # Example range of magnitudes
@@ -72,19 +73,32 @@ def test_compute_cdf_data():
 
     # Verify the output format
     assert isinstance(cdf_data, dict), "Output should be a dictionary"
-    assert set(cdf_data.keys()) == set(random_redshift_values), "Keys should match the input redshift values"
+    assert set(cdf_data.keys()) == set(
+        random_redshift_values
+    ), "Keys should match the input redshift values"
 
     for redshift, (sorted_M_values, cumulative_prob_norm) in cdf_data.items():
         # Check that sorted_M_values is a sorted version of M_values
-        assert np.array_equal(sorted_M_values, np.sort(M_values)), "M values should be sorted"
+        assert np.array_equal(
+            sorted_M_values, np.sort(M_values)
+        ), "M values should be sorted"
 
         # Check that cumulative_prob_norm is a proper cumulative distribution
-        assert np.all(cumulative_prob_norm >= 0) and np.all(cumulative_prob_norm <= 1), "Cumulative probabilities should be between 0 and 1"
-        assert np.isclose(cumulative_prob_norm[-1], 1.0), "Cumulative probabilities should end at 1"
+        assert np.all(cumulative_prob_norm >= 0) and np.all(
+            cumulative_prob_norm <= 1
+        ), "Cumulative probabilities should be between 0 and 1"
+        assert np.isclose(
+            cumulative_prob_norm[-1], 1.0
+        ), "Cumulative probabilities should end at 1"
 
         # Check that the length of the arrays match
-        assert len(sorted_M_values) == len(M_values), "Sorted M values should have the same length as input M values"
-        assert len(cumulative_prob_norm) == len(M_values), "Cumulative probabilities should have the same length as input M values"
+        assert len(sorted_M_values) == len(
+            M_values
+        ), "Sorted M values should have the same length as input M values"
+        assert len(cumulative_prob_norm) == len(
+            M_values
+        ), "Cumulative probabilities should have the same length as input M values"
+
 
 def test_inverse_cdf_fits_for_redshifts():
     # Generate some random redshift values and M values
