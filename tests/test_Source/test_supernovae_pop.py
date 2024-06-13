@@ -53,7 +53,9 @@ class test_SNIaRate:
         t_d, t = 1, -1
         npt.assert_equal(sne_rate._numerator_integrand(t_d, t), np.nan)
         t_d, t = 1, 1
-        npt.assert_almost_equal(sne_rate._numerator_integrand(t_d, t), 0.0002559, decimal=4)
+        npt.assert_almost_equal(
+            sne_rate._numerator_integrand(t_d, t), 0.0002559, decimal=4
+        )
 
     def test_calculate_SNIa_rate():
         z = -1
