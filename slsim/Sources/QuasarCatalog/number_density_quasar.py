@@ -183,11 +183,11 @@ def generate_redshift_table(random_redshift_values, inverse_cdf_dict, seed=42):
 
     return table
 
+# Overall test code usage 
 
-# Overall test code usage
+# Generate 3 random redshift values between 0 and 5
 np.random.seed(42)
-random_redshift = int(input("Enter the number of redshift values to generate: "))
-random_redshift_values = np.random.uniform(0, 5, random_redshift)
+random_redshift_values = np.random.uniform(0, 5, 3)
 M_values = np.linspace(-28, -24, 100)
 
 # Plot dPhi/dM vs. M for each redshift
@@ -236,3 +236,4 @@ plt.show()
 
 # Generate the table with random redshift values
 generate_redshift_table(random_redshift_values, inverse_cdf_dict)
+
