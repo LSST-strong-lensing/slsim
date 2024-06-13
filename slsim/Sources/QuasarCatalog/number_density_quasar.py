@@ -190,7 +190,8 @@ def generate_redshift_table(random_redshift_values, inverse_cdf_dict, seed=42):
 
     return table
 
-# Overall test code usage 
+
+# Overall test code usage
 
 # Generate 3 random redshift values between 0 and 5
 np.random.seed(42)
@@ -243,4 +244,3 @@ plt.show()
 
 # Generate the table with random redshift values
 generate_redshift_table(random_redshift_values, inverse_cdf_dict)
-
