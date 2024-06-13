@@ -22,7 +22,7 @@ def test_delay_time_distribution():
     npt.assert_almost_equal(delay_time_distribution(t_d), 5 ** (-1.08), decimal=4)
 
 
-class TestSNIaRate():
+class TestSNIaRate:
     def setup_method(self):
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         self.z_max = 10
@@ -67,10 +67,18 @@ class TestSNIaRate():
         npt.assert_equal(self.sne_rate.calculate_SNIa_rate(z), np.nan)
         # (Fig 2 - Oguri and Marshall 2010)
         z = 0
-        npt.assert_almost_equal(self.sne_rate.calculate_SNIa_rate(z), 0.000041006, decimal=3)
+        npt.assert_almost_equal(
+            self.sne_rate.calculate_SNIa_rate(z), 0.000041006, decimal=3
+        )
         z = 1
-        npt.assert_almost_equal(self.sne_rate.calculate_SNIa_rate(z), 0.0001191, decimal=3)
+        npt.assert_almost_equal(
+            self.sne_rate.calculate_SNIa_rate(z), 0.0001191, decimal=3
+        )
         z = 2
-        npt.assert_almost_equal(self.sne_rate.calculate_SNIa_rate(z), 0.0001349, decimal=3)
+        npt.assert_almost_equal(
+            self.sne_rate.calculate_SNIa_rate(z), 0.0001349, decimal=3
+        )
         z = 3
-        npt.assert_almost_equal(self.sne_rate.calculate_SNIa_rate(z), 0.00008008, decimal=3)
+        npt.assert_almost_equal(
+            self.sne_rate.calculate_SNIa_rate(z), 0.00008008, decimal=3
+        )
