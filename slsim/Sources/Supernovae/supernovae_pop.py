@@ -11,7 +11,7 @@ def calculate_star_formation_rate(z):
     """Calculates the cosmic star formation rate. (Eq 13 - Oguri and Marshall 2010)
 
     :param z: redshift (z>=0)
-    :return: cosmic star formation rate in [(h)yr^(-1)Mpc^(-3)]
+    :return: cosmic star formation rate in [(h)(M_sol)yr^(-1)Mpc^(-3)]
     """
     star_formation_rate = (0.0118 + 0.08 * z) / (1 + (z / 3.3) ** 5.2)
     return star_formation_rate
