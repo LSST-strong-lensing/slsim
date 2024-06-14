@@ -21,6 +21,7 @@ class TestNFWHernquist(object):
     def setup_method(self):
         self.deflector_dict = {
             "halo_mass": 10**13,
+            "halo_mass_acc": 0.0,
             "concentration": 10,
             "e1_mass": 0.1,
             "e2_mass": -0.1,
@@ -46,6 +47,7 @@ class TestNFWHernquist(object):
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         vel_disp = self.nfw_hernquist.velocity_dispersion(cosmo=cosmo)
         npt.assert_almost_equal(vel_disp, 176, decimal=-1)
+        assert self.nfw_hernquist.velocity_dispersion(cosmo=cosmo) == vel_disp
 
     def test_light_model_lenstronomy(self):
         lens_light_model_list, kwargs_lens_light = (
