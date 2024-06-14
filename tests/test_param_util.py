@@ -13,6 +13,7 @@ from slsim.Util.param_util import (
     transformmatrix_to_pixelscale,
     magnitude_to_amplitude,
     amplitude_to_magnitude,
+    coordinate_rotation
 )
 from slsim.Sources.SourceVariability.variability import Variability
 import pytest
@@ -160,6 +161,11 @@ def test_magnitude_to_amplitude():
     new_high_mag = amplitude_to_magnitude(high_flux, zero_point)
     assert low_mag == new_low_mag
     assert high_mag == new_high_mag
+
+def test_coordinate_rotation():
+    matrix = coordinate_rotation(1, 0)
+    expected_matrix = np.array([[1, 0], [0, 1]])
+    assert np.all(matrix == expected_matrix)
 
 
 if __name__ == "__main__":
