@@ -80,7 +80,7 @@ def sharp_image(
     :param num_pix: number of pixels per axis
     :param with_source: bool, if True computes source
     :param with_deflector: bool, if True includes deflector light
-    :param angle_rot: rotation angle of the coordinate system
+    :param angle_rot: rotation angle of the coordinate system in degree
     :return: 2d array unblurred image
     """
     kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band)
@@ -190,7 +190,7 @@ def centered_coordinate_system(num_pix, transform_pix2angle, angle_rot=0):
     :type num_pix: int
     :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
         displacements
-    :param angle_rot: rotation angle of the coordinate system
+    :param angle_rot: rotation angle of the coordinate system in degree
     :return: dict with ra_at_xy_0, dec_at_xy_0, transfrom_pix2angle
     """
     pix_center = (num_pix - 1) / 2
@@ -227,7 +227,7 @@ def image_data_class(
     :param num_pix: number of pixels per axis
     :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
         displacements
-    :param angle_rot: rotation angle of the coordinate system
+    :param angle_rot: rotation angle of the coordinate system in degree
     :return: image data class
     """
 
@@ -269,7 +269,7 @@ def point_source_coordinate_properties(
     :param num_pix: number of pixels per axis
     :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
         displacements
-    :param angle_rot: rotation angle of the coordinate system
+    :param angle_rot: rotation angle of the coordinate system in degree
     :return: Dictionary of deflector and image coordinate in pixel unit and other
         coordinate properties.
     """
@@ -327,7 +327,7 @@ def point_source_image_without_variability(
     :param psf_kernel: psf kernel for an image.
     :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
         displacements
-    :param angle_rot: rotation angle of the coordinate system
+    :param angle_rot: rotation angle of the coordinate system in degree
     :return: point source images
     """
     kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band=band)
@@ -398,7 +398,7 @@ def point_source_image_at_time(
     :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
         displacements
     :param time: time is an image observation time [day].
-    :param angle_rot: rotation angle of the coordinate system
+    :param angle_rot: rotation angle of the coordinate system in degree
     :return: point source images with variability
     """
 
@@ -472,7 +472,7 @@ def point_source_image_with_variability(
     :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
         displacements
     :param t_obs: array of image observation time [day].
-    :param angle_rot: rotation angle of the coordinate system
+    :param angle_rot: rotation angle of the coordinate system in degree
     :return: array of point source images with variability
     """
     all_image = []
@@ -514,7 +514,7 @@ def deflector_images_with_different_zeropoint(
     :param mag_zero_point: list of magnitude zero point in band for sequence of exposure
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
-    :param angle_rot: rotation angle of the coordinate system
+    :param angle_rot: rotation angle of the coordinate system in degree
     :returns: list of deflector images with different zero point
     """
     image = []
@@ -591,7 +591,7 @@ def lens_image(
     :param with_source: If True, simulates image with extended source in lens
         configuration.
     :param with_deflector: If True, simulates image with deflector.
-    :param angle_rot: rotation angle of the coordinate system
+    :param angle_rot: rotation angle of the coordinate system in degree
     :return: lens image
     """
     delta_pix_image = transformmatrix_to_pixelscale(transform_pix2angle)
@@ -676,7 +676,7 @@ def lens_image_series(
     :param with_source: If True, simulates image with extended source in lens
         configuration.
     :param with_deflector: If True, simulates image with deflector.
-    :param angle_rot: rotation angle of the coordinate system
+    :param angle_rot: rotation angle of the coordinate system in degree
     :return: list of series of images of a lens
     """
     image_series = []
