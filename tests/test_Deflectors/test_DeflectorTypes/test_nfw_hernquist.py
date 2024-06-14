@@ -1,6 +1,7 @@
 from slsim.Deflectors.DeflectorTypes.nfw_hernquist import NFWHernquist
 from astropy.cosmology import FlatLambdaCDM
 import numpy.testing as npt
+from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 
 
 class TestNFWHernquist(object):
@@ -20,6 +21,7 @@ class TestNFWHernquist(object):
     def setup_method(self):
         self.deflector_dict = {
             "halo_mass": 10**13,
+            "halo_mass_acc": 0.0,
             "concentration": 10,
             "e1_mass": 0.1,
             "e2_mass": -0.1,
@@ -45,9 +47,20 @@ class TestNFWHernquist(object):
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         vel_disp = self.nfw_hernquist.velocity_dispersion(cosmo=cosmo)
         npt.assert_almost_equal(vel_disp, 176, decimal=-1)
+        assert self.nfw_hernquist.velocity_dispersion(cosmo=cosmo) == vel_disp
 
     def test_light_model_lenstronomy(self):
         lens_light_model_list, kwargs_lens_light = (
             self.nfw_hernquist.light_model_lenstronomy(band="g")
         )
         assert len(lens_light_model_list) == 1
+
+    def test_mass_model_lenstronomy(self):
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+        lens_cosmo = LensCosmo(
+            cosmo=cosmo, z_lens=self.deflector_dict["z"], z_source=2.0
+        )
+        lens_mass_model_list, kwargs_lens_mass = (
+            self.nfw_hernquist.mass_model_lenstronomy(lens_cosmo=lens_cosmo)
+        )
+        assert len(lens_mass_model_list) == 2

@@ -24,7 +24,7 @@ class TestPointPlusExtendedSources(object):
         )
 
     def test_source_number(self):
-        number = self.pe_source.source_number()
+        number = self.pe_source.source_number
         assert number > 0
 
     def test_draw_source(self):
