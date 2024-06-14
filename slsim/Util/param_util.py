@@ -216,3 +216,17 @@ def eccentricity(q):
     :return: eccentricity
     """
     return (1 - q) / (1 + q)
+
+def coordinate_rotation(delta_pix, rotation_angle): 
+    """Rotates a coordinate by given angle in north to west direction.
+    
+    :param delta_pix: pixel scale of an image grid.
+    :param rotation_angle: rotation angle in radian.
+    :return: rotated pixel to angle transform matrix.
+    """
+    scale1_1 = delta_pix * np.cos(rotation_angle)
+    scale1_2 = delta_pix * np.sin(rotation_angle)
+    scale2_1 = -delta_pix * np.sin(rotation_angle)
+    scale2_2 = delta_pix * np.cos(rotation_angle)
+    pix2angle_transform_rot = np.array([[scale1_1, scale1_2], [scale2_1, scale2_2]])
+    return pix2angle_transform_rot

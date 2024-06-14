@@ -7,6 +7,7 @@ from slsim.Util.param_util import (
     magnitude_to_amplitude,
     convolved_image,
     transformmatrix_to_pixelscale,
+    coordinate_rotation
 )
 
 
@@ -67,7 +68,7 @@ def sharp_image(
     num_pix,
     with_source=True,
     with_deflector=True,
-    angle_rot=90,
+    angle_rot=0,
 ):
     """Creates an unconvolved image of a selected lens. Point source image is not
     included in this function.
@@ -86,20 +87,16 @@ def sharp_image(
     rotation_angle = (
         angle_rot * np.pi / 180
     )  # rotation angle in North to West in radian
-    scale1_1 = -delta_pix * np.cos(rotation_angle)
-    scale1_2 = delta_pix * np.sin(rotation_angle)
-    scale2_1 = delta_pix * np.sin(rotation_angle)
-    scale2_2 = delta_pix * np.cos(rotation_angle)
+    pix2angle_transform_matrix = coordinate_rotation(delta_pix, rotation_angle)
     ra_at_xy_0_original = (num_pix - 1) / 2
     dec_at_xy_0_original = (num_pix - 1) / 2
-    pix2angle_transform_rot = np.array([[scale1_1, scale1_2], [scale2_1, scale2_2]])
-    ra_at_xy_0, dec_at_xy_0 = pix2angle_transform_rot.dot(
+    ra_at_xy_0, dec_at_xy_0 = pix2angle_transform_matrix.dot(
         [-ra_at_xy_0_original, -dec_at_xy_0_original]
     ).T
     kwargs_pixel_grid = {
         "ra_at_xy_0": ra_at_xy_0,
         "dec_at_xy_0": dec_at_xy_0,
-        "transform_pix2angle": pix2angle_transform_rot,
+        "transform_pix2angle": pix2angle_transform_matrix,
     }
     kwargs_band = {
         "pixel_scale": delta_pix,
@@ -185,7 +182,7 @@ def rgb_image_from_image_list(image_list, stretch):
     return image_rgb
 
 
-def centered_coordinate_system(num_pix, transform_pix2angle, angle_rot=90):
+def centered_coordinate_system(num_pix, transform_pix2angle, angle_rot=0):
     """Returns dictionary for Coordinate Grid such that (0,0) is centered with given
     input orientation coordinate transformation matrix.
 
@@ -200,11 +197,8 @@ def centered_coordinate_system(num_pix, transform_pix2angle, angle_rot=90):
     rotation_angle = (
         angle_rot * np.pi / 180
     )  # rotation angle in North to West in radian
-    scale1_1 = -np.cos(rotation_angle)
-    scale1_2 = np.sin(rotation_angle)
-    scale2_1 = np.sin(rotation_angle)
-    scale2_2 = np.cos(rotation_angle)
-    rot_matrix = np.array([[scale1_1, scale1_2], [scale2_1, scale2_2]])
+    rot_matrix = coordinate_rotation(1, rotation_angle) # here we don't have pixel scale
+    #so, we use delta_pix = 1 to get riotation matrix without pixel scale.
     pix2angle_transform_rot = rot_matrix.dot(transform_pix2angle)
     ra_at_xy_0, dec_at_xy_0 = pix2angle_transform_rot.dot([-pix_center, -pix_center]).T
     kwargs_grid = {
@@ -222,7 +216,7 @@ def image_data_class(
     delta_pix,
     num_pix,
     transform_pix2angle,
-    angle_rot=90,
+    angle_rot=0,
 ):
     """Provides data class for image.
 
@@ -263,7 +257,7 @@ def point_source_coordinate_properties(
     delta_pix,
     num_pix,
     transform_pix2angle,
-    angle_rot=90,
+    angle_rot=0,
 ):
     """Provides pixel coordinates for deflector and images. Currently, this function
     only works for point source.
@@ -320,7 +314,7 @@ def point_source_image_without_variability(
     num_pix,
     psf_kernel,
     transform_pix2angle,
-    angle_rot=90,
+    angle_rot=0,
 ):
     """Creates lensed point source images without variability on the basis of given
     information.
@@ -390,7 +384,7 @@ def point_source_image_at_time(
     psf_kernel,
     transform_pix2angle,
     time,
-    angle_rot=90,
+    angle_rot=0,
 ):
     """Creates lensed point source images with variability at a given time on the basis
     of given information.
@@ -464,7 +458,7 @@ def point_source_image_with_variability(
     psf_kernels,
     transform_pix2angle,
     t_obs,
-    angle_rot=90,
+    angle_rot=0,
 ):
     """Creates lensed point source images with variability for series of time on the
     basis of given information.
@@ -508,7 +502,7 @@ def point_source_image_with_variability(
 
 
 def deflector_images_with_different_zeropoint(
-    lens_class, band, mag_zero_point, delta_pix, num_pix, angle_rot=90
+    lens_class, band, mag_zero_point, delta_pix, num_pix, angle_rot=0
 ):
     """Creates deflector images with different magnitude zero point. This function is
     useful when one wants to simulate variable lens images. For this, we need to
@@ -576,7 +570,7 @@ def lens_image(
     std_gaussian_noise=None,
     with_source=True,
     with_deflector=True,
-    angle_rot=90,
+    angle_rot=0,
 ):
     """Creates lens image on the basis of given information. It can simulate both static
     lens image and variable lens image.
@@ -662,7 +656,7 @@ def lens_image_series(
     std_gaussian_noise=None,
     with_source=True,
     with_deflector=True,
-    angle_rot=90,
+    angle_rot=0,
 ):
     """Creates lens image on the basis of given information. This function is designed
     to simulate time series images of a lens.
