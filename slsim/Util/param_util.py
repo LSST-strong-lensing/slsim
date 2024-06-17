@@ -236,22 +236,6 @@ def eccentricity(q):
     """
     return (1 - q) / (1 + q)
 
-
-def coordinate_rotation(delta_pix, rotation_angle):
-    """Rotates a coordinate by given angle in north to west direction.
-
-    :param delta_pix: pixel scale of an image grid.
-    :param rotation_angle: rotation angle in radian.
-    :return: rotated pixel to angle transform matrix.
-    """
-    scale1_1 = delta_pix * np.cos(rotation_angle)
-    scale1_2 = delta_pix * np.sin(rotation_angle)
-    scale2_1 = -delta_pix * np.sin(rotation_angle)
-    scale2_2 = delta_pix * np.cos(rotation_angle)
-    pix2angle_transform_rot = np.array([[scale1_1, scale1_2], [scale2_1, scale2_2]])
-    return pix2angle_transform_rot
-
-
 def deg2_to_cone_angle(solid_angle_deg2):
     """Convert solid angle from square degrees to half cone angle in radians.
 
@@ -271,3 +255,15 @@ def deg2_to_cone_angle(solid_angle_deg2):
     solid_angle_sr = solid_angle_deg2 * (np.pi / 180) ** 2
     theta = np.arccos(1 - solid_angle_sr / (2 * np.pi))  # rad
     return theta
+
+def ellipticity_slsim_to_lenstronomy(e1_slsim, e2_slsim):
+    """converts ellipticity component from slsim convension to lenstronomy convention.
+    
+    :param e1_slsim: first component of the ellipticity in slsim convension i.e position 
+     angle from north to east.
+    :param e2_slsim: second component of the ellipticity in slsim convention.
+    return: ellipticity components in lenstronomy convention. 
+    """
+
+    return -e1_slsim, e2_slsim
+

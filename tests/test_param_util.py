@@ -13,7 +13,7 @@ from slsim.Util.param_util import (
     transformmatrix_to_pixelscale,
     magnitude_to_amplitude,
     amplitude_to_magnitude,
-    coordinate_rotation,
+    ellipticity_slsim_to_lenstronomy,
 )
 from slsim.Sources.SourceVariability.variability import Variability
 import pytest
@@ -163,10 +163,10 @@ def test_magnitude_to_amplitude():
     assert high_mag == new_high_mag
 
 
-def test_coordinate_rotation():
-    matrix = coordinate_rotation(1, 0)
-    expected_matrix = np.array([[1, 0], [0, 1]])
-    assert np.all(matrix == expected_matrix)
+def test_ellipricity_slsim_to_lenstronomy():
+    result = ellipticity_slsim_to_lenstronomy(-0.17, 0.05)
+    assert result[0] == 0.17
+    assert result[1] == 0.05
 
 
 if __name__ == "__main__":
