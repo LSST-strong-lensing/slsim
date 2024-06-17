@@ -32,7 +32,7 @@ class EPLSersic(DeflectorBase):
 
         :return: e1_light, e2_light
         """
-        e1_light, e2_light = float(self._deflector_dict["e1_light"]), float(
+        e1_light, e2_light = -float(self._deflector_dict["e1_light"]), float(
             self._deflector_dict["e2_light"]
         )
         return e1_light, e2_light

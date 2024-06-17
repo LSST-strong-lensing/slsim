@@ -154,7 +154,7 @@ class Source(object):
         with q being the minor-to-major axis ratio.
         """
 
-        return self.source_dict["e1"], self.source_dict["e2"]
+        return -float(self.source_dict["e1"]), float(self.source_dict["e2"])
 
     def point_source_magnitude(self, band, image_observation_times=None):
         """Get the magnitude of the point source in a specific band.
@@ -297,8 +297,8 @@ class Source(object):
                     "magnitude": mag_source,
                     "R_sersic": size_source_arcsec,
                     "n_sersic": float(self.n_sersic),
-                    "e1": float(self.ellipticity[0]),
-                    "e2": float(self.ellipticity[1]),
+                    "e1": self.ellipticity[0],
+                    "e2": self.ellipticity[1],
                     "center_x": center_source[0],
                     "center_y": center_source[1],
                 }
@@ -315,17 +315,17 @@ class Source(object):
             mag_source1 = -2.5 * np.log10(w1 * flux)
             size_source_arcsec0 = float(self.source_dict["angular_size0"])
             size_source_arcsec1 = float(self.source_dict["angular_size1"])
-            ellipticity0_1 = self.source_dict["e0_1"]
-            ellipticity0_2 = self.source_dict["e0_2"]
-            ellipticity1_1 = self.source_dict["e1_1"]
-            ellipticity1_2 = self.source_dict["e1_2"]
+            ellipticity0_1 = -float(self.source_dict["e0_1"])
+            ellipticity0_2 = float(self.source_dict["e0_2"])
+            ellipticity1_1 = -float(self.source_dict["e1_1"])
+            ellipticity1_2 = float(self.source_dict["e1_2"])
             kwargs_extended_source = [
                 {
                     "magnitude": mag_source0,
                     "R_sersic": size_source_arcsec0,
                     "n_sersic": float(self.source_dict["n_sersic_0"]),
-                    "e1": float(ellipticity0_1),
-                    "e2": float(ellipticity0_2),
+                    "e1": ellipticity0_1,
+                    "e2": ellipticity0_2,
                     "center_x": center_source[0],
                     "center_y": center_source[1],
                 },
@@ -333,8 +333,8 @@ class Source(object):
                     "magnitude": mag_source1,
                     "R_sersic": size_source_arcsec1,
                     "n_sersic": float(self.source_dict["n_sersic_1"]),
-                    "e1": float(ellipticity1_1),
-                    "e2": float(ellipticity1_2),
+                    "e1": ellipticity1_1,
+                    "e2": ellipticity1_2,
                     "center_x": center_source[0],
                     "center_y": center_source[1],
                 },
