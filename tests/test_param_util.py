@@ -13,6 +13,7 @@ from slsim.Util.param_util import (
     transformmatrix_to_pixelscale,
     magnitude_to_amplitude,
     amplitude_to_magnitude,
+    ellipticity_slsim_to_lenstronomy,
 )
 from slsim.Sources.SourceVariability.variability import Variability
 import pytest
@@ -160,6 +161,12 @@ def test_magnitude_to_amplitude():
     new_high_mag = amplitude_to_magnitude(high_flux, zero_point)
     assert low_mag == new_low_mag
     assert high_mag == new_high_mag
+
+
+def test_ellipricity_slsim_to_lenstronomy():
+    result = ellipticity_slsim_to_lenstronomy(-0.17, 0.05)
+    assert result[0] == 0.17
+    assert result[1] == 0.05
 
 
 if __name__ == "__main__":
