@@ -260,6 +260,8 @@ def deg2_to_cone_angle(solid_angle_deg2):
 
 def ellipticity_slsim_to_lenstronomy(e1_slsim, e2_slsim):
     """Converts ellipticity component from slsim convension to lenstronomy convention.
+    In slsim, position angle goes from North to East. In lenstronomy, position angle 
+    goes from East to North.
 
     :param e1_slsim: first component of the ellipticity in slsim convension i.e position
      angle from north to east.
