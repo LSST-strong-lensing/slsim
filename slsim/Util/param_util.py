@@ -236,9 +236,10 @@ def eccentricity(q):
     """
     return (1 - q) / (1 + q)
 
-def coordinate_rotation(delta_pix, rotation_angle): 
+
+def coordinate_rotation(delta_pix, rotation_angle):
     """Rotates a coordinate by given angle in north to west direction.
-    
+
     :param delta_pix: pixel scale of an image grid.
     :param rotation_angle: rotation angle in radian.
     :return: rotated pixel to angle transform matrix.
@@ -249,6 +250,7 @@ def coordinate_rotation(delta_pix, rotation_angle):
     scale2_2 = delta_pix * np.cos(rotation_angle)
     pix2angle_transform_rot = np.array([[scale1_1, scale1_2], [scale2_1, scale2_2]])
     return pix2angle_transform_rot
+
 
 def deg2_to_cone_angle(solid_angle_deg2):
     """Convert solid angle from square degrees to half cone angle in radians.

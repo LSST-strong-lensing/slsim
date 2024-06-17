@@ -7,7 +7,7 @@ from slsim.Util.param_util import (
     magnitude_to_amplitude,
     convolved_image,
     transformmatrix_to_pixelscale,
-    coordinate_rotation
+    coordinate_rotation,
 )
 
 
@@ -197,8 +197,10 @@ def centered_coordinate_system(num_pix, transform_pix2angle, angle_rot=0):
     rotation_angle = (
         angle_rot * np.pi / 180
     )  # rotation angle in North to West in radian
-    rot_matrix = coordinate_rotation(1, rotation_angle) # here we don't have pixel scale
-    #so, we use delta_pix = 1 to get riotation matrix without pixel scale.
+    rot_matrix = coordinate_rotation(
+        1, rotation_angle
+    )  # here we don't have pixel scale
+    # so, we use delta_pix = 1 to get riotation matrix without pixel scale.
     pix2angle_transform_rot = rot_matrix.dot(transform_pix2angle)
     ra_at_xy_0, dec_at_xy_0 = pix2angle_transform_rot.dot([-pix_center, -pix_center]).T
     kwargs_grid = {
