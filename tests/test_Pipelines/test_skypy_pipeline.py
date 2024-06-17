@@ -70,5 +70,5 @@ class TestSkyPyPipeline(object):
     def test_red_galaxies(self):
         red_galaxies = self.pipeline.red_galaxies
         assert red_galaxies[0]["z"] > 0
-        assert len(self.pipeline2.red_galaxies["z"]) > 0 
+        assert len(self.pipeline2.red_galaxies["z"]) > 0
         assert len(self.pipeline3.red_galaxies["z"]) > 0
