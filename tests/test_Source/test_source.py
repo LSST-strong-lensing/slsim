@@ -204,7 +204,7 @@ class TestSource:
         assert self.source.angular_size == [0.35]
 
     def test_ellipticity(self):
-        assert self.source.ellipticity[0] == -0.8
+        assert self.source.ellipticity[0] == 0.8
         assert self.source.ellipticity[1] == 0.76
 
     def test_ps_magnitude_no_variability(self):

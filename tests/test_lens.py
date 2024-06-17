@@ -47,9 +47,9 @@ class TestLens(object):
 
     def test_deflector_ellipticity(self):
         e1_light, e2_light, e1_mass, e2_mass = self.gg_lens.deflector_ellipticity()
-        assert pytest.approx(e1_light, rel=1e-3) == 0.05661955320450283
+        assert pytest.approx(e1_light, rel=1e-3) == -0.05661955320450283
         assert pytest.approx(e2_light, rel=1e-3) == 0.08738390223219591
-        assert pytest.approx(e1_mass, rel=1e-3) == 0.08434700688970058
+        assert pytest.approx(e1_mass, rel=1e-3) == -0.08434700688970058
         assert pytest.approx(e2_mass, rel=1e-3) == 0.09710653297997263
 
     def test_deflector_magnitude(self):

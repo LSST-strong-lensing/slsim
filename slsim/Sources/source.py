@@ -154,7 +154,7 @@ class Source(object):
         with q being the minor-to-major axis ratio.
         """
 
-        return -float(self.source_dict["e1"]), float(self.source_dict["e2"])
+        return float(self.source_dict["e1"]), float(self.source_dict["e2"])
 
     def point_source_magnitude(self, band, image_observation_times=None):
         """Get the magnitude of the point source in a specific band.
@@ -297,7 +297,7 @@ class Source(object):
                     "magnitude": mag_source,
                     "R_sersic": size_source_arcsec,
                     "n_sersic": float(self.n_sersic),
-                    "e1": self.ellipticity[0],
+                    "e1": -self.ellipticity[0],
                     "e2": self.ellipticity[1],
                     "center_x": center_source[0],
                     "center_y": center_source[1],
