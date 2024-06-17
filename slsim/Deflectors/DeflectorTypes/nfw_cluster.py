@@ -1,5 +1,6 @@
 from slsim.Deflectors.DeflectorTypes.deflector_base import DeflectorBase
 from slsim.Deflectors.velocity_dispersion import vel_disp_nfw_aperture
+from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 
 
@@ -76,6 +77,9 @@ class NFWCluster(DeflectorBase):
         """
         lens_mass_model_list = ["NFW_ELLIPSE_CSE"]
         e1_mass, e2_mass = self.mass_ellipticity
+        e1_mass_lenstronomy, e2_mass_lenstronomy = ellipticity_slsim_to_lenstronomy(
+            e1_slsim=e1_mass, e2_slsim=e2_mass
+        )
         center_lens = self.deflector_center
         m_halo, c_halo = self.halo_properties
         rs_halo, alpha_rs = lens_cosmo.nfw_physical2angle(M=m_halo, c=c_halo)
@@ -83,8 +87,8 @@ class NFWCluster(DeflectorBase):
             {
                 "alpha_Rs": alpha_rs,
                 "Rs": rs_halo,
-                "e1": e1_mass,
-                "e2": e2_mass,
+                "e1": e1_mass_lenstronomy,
+                "e2": e2_mass_lenstronomy,
                 "center_x": center_lens[0],
                 "center_y": center_lens[1],
             },
