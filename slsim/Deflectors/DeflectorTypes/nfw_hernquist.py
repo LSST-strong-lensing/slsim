@@ -63,12 +63,15 @@ class NFWHernquist(DeflectorBase):
         """
         lens_mass_model_list = ["NFW_ELLIPSE_CSE", "HERNQUIST_ELLIPSE_CSE"]
         e1_light_lens, e2_light_lens = self.light_ellipticity
-        e1_light_lens_lenstronomy, e2_light_lens_lenstronomy = \
+        e1_light_lens_lenstronomy, e2_light_lens_lenstronomy = (
             ellipticity_slsim_to_lenstronomy(
-            e1_slsim=e1_light_lens, e2_slsim=e2_light_lens)
+                e1_slsim=e1_light_lens, e2_slsim=e2_light_lens
+            )
+        )
         e1_mass, e2_mass = self.mass_ellipticity
         e1_mass_lenstronomy, e2_mass_lenstronomy = ellipticity_slsim_to_lenstronomy(
-            e1_slsim=e1_mass, e2_slsim=e2_mass)
+            e1_slsim=e1_mass, e2_slsim=e2_mass
+        )
         rs_phys = lens_cosmo.dd * self.angular_size_light
         sigma0, rs_light_angle = lens_cosmo.hernquist_phys2angular(
             mass=self.stellar_mass, rs=rs_phys
@@ -109,9 +112,11 @@ class NFWHernquist(DeflectorBase):
             mag_lens = self.magnitude(band)
         center_lens = self.deflector_center
         e1_light_lens, e2_light_lens = self.light_ellipticity
-        e1_light_lens_lenstronomy, e2_light_lens_lenstronomy = \
+        e1_light_lens_lenstronomy, e2_light_lens_lenstronomy = (
             ellipticity_slsim_to_lenstronomy(
-            e1_slsim=e1_light_lens, e2_slsim=e2_light_lens)
+                e1_slsim=e1_light_lens, e2_slsim=e2_light_lens
+            )
+        )
         size_lens_arcsec = (
             self._deflector_dict["angular_size"] / constants.arcsec
         )  # convert radian to arc seconds

@@ -293,9 +293,11 @@ class Source(object):
         )
         if light_profile_str == "single_sersic":
             size_source_arcsec = float(self.angular_size)
-            e1_light_source_lenstronomy, e2_light_source_lenstronomy = \
-            ellipticity_slsim_to_lenstronomy(
-            e1_slsim=self.ellipticity[0], e2_slsim=self.ellipticity[1])
+            e1_light_source_lenstronomy, e2_light_source_lenstronomy = (
+                ellipticity_slsim_to_lenstronomy(
+                    e1_slsim=self.ellipticity[0], e2_slsim=self.ellipticity[1]
+                )
+            )
             kwargs_extended_source = [
                 {
                     "magnitude": mag_source,
@@ -319,14 +321,18 @@ class Source(object):
             mag_source1 = -2.5 * np.log10(w1 * flux)
             size_source_arcsec0 = float(self.source_dict["angular_size0"])
             size_source_arcsec1 = float(self.source_dict["angular_size1"])
-            e1_light_source_1_lenstronomy, e2_light_source_1_lenstronomy = \
-            ellipticity_slsim_to_lenstronomy(
-                 e1_slsim=float(self.source_dict["e0_1"]), 
-                 e2_slsim=float(self.source_dict["e0_2"]))
-            e1_light_source_2_lenstronomy, e2_light_source_2_lenstronomy = \
-            ellipticity_slsim_to_lenstronomy(
-                 e1_slsim=float(self.source_dict["e1_1"]), 
-                 e2_slsim=float(self.source_dict["e1_2"]))
+            e1_light_source_1_lenstronomy, e2_light_source_1_lenstronomy = (
+                ellipticity_slsim_to_lenstronomy(
+                    e1_slsim=float(self.source_dict["e0_1"]),
+                    e2_slsim=float(self.source_dict["e0_2"]),
+                )
+            )
+            e1_light_source_2_lenstronomy, e2_light_source_2_lenstronomy = (
+                ellipticity_slsim_to_lenstronomy(
+                    e1_slsim=float(self.source_dict["e1_1"]),
+                    e2_slsim=float(self.source_dict["e1_2"]),
+                )
+            )
             kwargs_extended_source = [
                 {
                     "magnitude": mag_source0,
