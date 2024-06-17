@@ -236,6 +236,7 @@ def eccentricity(q):
     """
     return (1 - q) / (1 + q)
 
+
 def deg2_to_cone_angle(solid_angle_deg2):
     """Convert solid angle from square degrees to half cone angle in radians.
 
@@ -256,14 +257,14 @@ def deg2_to_cone_angle(solid_angle_deg2):
     theta = np.arccos(1 - solid_angle_sr / (2 * np.pi))  # rad
     return theta
 
+
 def ellipticity_slsim_to_lenstronomy(e1_slsim, e2_slsim):
-    """converts ellipticity component from slsim convension to lenstronomy convention.
-    
-    :param e1_slsim: first component of the ellipticity in slsim convension i.e position 
+    """Converts ellipticity component from slsim convension to lenstronomy convention.
+
+    :param e1_slsim: first component of the ellipticity in slsim convension i.e position
      angle from north to east.
     :param e2_slsim: second component of the ellipticity in slsim convention.
-    return: ellipticity components in lenstronomy convention. 
+    return: ellipticity components in lenstronomy convention.
     """
 
     return -e1_slsim, e2_slsim
-
