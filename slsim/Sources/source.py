@@ -6,6 +6,7 @@ import numpy as np
 # from slsim.Sources.simple_supernova_lightcurve import SimpleSupernovaLightCurve
 from astropy.table import Column, Table
 from slsim.Sources import random_supernovae
+from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 
 
 class Source(object):
@@ -292,13 +293,16 @@ class Source(object):
         )
         if light_profile_str == "single_sersic":
             size_source_arcsec = float(self.angular_size)
+            e1_light_source_lenstronomy, e2_light_source_lenstronomy = \
+            ellipticity_slsim_to_lenstronomy(
+            e1_slsim=self.ellipticity[0], e2_slsim=self.ellipticity[1])
             kwargs_extended_source = [
                 {
                     "magnitude": mag_source,
                     "R_sersic": size_source_arcsec,
                     "n_sersic": float(self.n_sersic),
-                    "e1": -self.ellipticity[0],
-                    "e2": self.ellipticity[1],
+                    "e1": e1_light_source_lenstronomy,
+                    "e2": e2_light_source_lenstronomy,
                     "center_x": center_source[0],
                     "center_y": center_source[1],
                 }
@@ -315,17 +319,21 @@ class Source(object):
             mag_source1 = -2.5 * np.log10(w1 * flux)
             size_source_arcsec0 = float(self.source_dict["angular_size0"])
             size_source_arcsec1 = float(self.source_dict["angular_size1"])
-            ellipticity0_1 = -float(self.source_dict["e0_1"])
-            ellipticity0_2 = float(self.source_dict["e0_2"])
-            ellipticity1_1 = -float(self.source_dict["e1_1"])
-            ellipticity1_2 = float(self.source_dict["e1_2"])
+            e1_light_source_1_lenstronomy, e2_light_source_1_lenstronomy = \
+            ellipticity_slsim_to_lenstronomy(
+                 e1_slsim=float(self.source_dict["e0_1"]), 
+                 e2_slsim=float(self.source_dict["e0_2"]))
+            e1_light_source_2_lenstronomy, e2_light_source_2_lenstronomy = \
+            ellipticity_slsim_to_lenstronomy(
+                 e1_slsim=float(self.source_dict["e1_1"]), 
+                 e2_slsim=float(self.source_dict["e1_2"]))
             kwargs_extended_source = [
                 {
                     "magnitude": mag_source0,
                     "R_sersic": size_source_arcsec0,
                     "n_sersic": float(self.source_dict["n_sersic_0"]),
-                    "e1": ellipticity0_1,
-                    "e2": ellipticity0_2,
+                    "e1": e1_light_source_1_lenstronomy,
+                    "e2": e2_light_source_1_lenstronomy,
                     "center_x": center_source[0],
                     "center_y": center_source[1],
                 },
@@ -333,8 +341,8 @@ class Source(object):
                     "magnitude": mag_source1,
                     "R_sersic": size_source_arcsec1,
                     "n_sersic": float(self.source_dict["n_sersic_1"]),
-                    "e1": ellipticity1_1,
-                    "e2": ellipticity1_2,
+                    "e1": e1_light_source_2_lenstronomy,
+                    "e2": e2_light_source_2_lenstronomy,
                     "center_x": center_source[0],
                     "center_y": center_source[1],
                 },
