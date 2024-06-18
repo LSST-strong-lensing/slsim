@@ -134,7 +134,6 @@ class Supernova(sncosmo.Model):
         :type mag_zpsys: str
 
         :return: Nothing is returned. The source's amplitude parameter is modified in place.
-        
         """
         if absmag is not None:
             if abs_mag_band is None:
