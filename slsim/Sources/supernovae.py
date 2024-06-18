@@ -27,13 +27,13 @@ class Supernova(sncosmo.Model):
         source,
         redshift,
         sn_type,
-        modeldir=None,
         absolute_mag=None,
         absolute_mag_band=None,
         peak_apparent_mag=None,
         peak_apparent_mag_band=None,
         mag_zpsys="AB",
         cosmo=cosmology.FlatLambdaCDM(H0=70, Om0=0.3),
+        modeldir=None,
         **kwargs
     ):
         """

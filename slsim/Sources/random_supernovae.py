@@ -62,8 +62,8 @@ class RandomizedSupernova(Supernova):
         absolute_mag=None,
         absolute_mag_band="bessellb",
         mag_zpsys="AB",
-        modeldir=None,
         cosmo=cosmology.FlatLambdaCDM(H0=70, Om0=0.3),
+        modeldir=None,
         **kwargs
     ):
         """
