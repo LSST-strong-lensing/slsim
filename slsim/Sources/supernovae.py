@@ -86,7 +86,7 @@ class Supernova(sncosmo.Model):
             peak_apparent_mag,
             peak_apparent_mag_band,
             mag_zpsys,
-            cosmo,
+            cosmo=cosmo,
         )
 
     def get_apparent_magnitude(self, time, band, zpsys="AB"):
@@ -111,7 +111,7 @@ class Supernova(sncosmo.Model):
         peak_apparent_mag,
         peak_apparent_mag_band,
         magsys,
-        cosmo,
+        cosmo=cosmology.FlatLambdaCDM(H0=70, Om0=0.3),
     ):
         """Sets the amplitude of the source component of the model according to the
         desired absolute magnitude in the specified band.
