@@ -1,30 +1,26 @@
 import os, sncosmo
 from astropy import cosmology
 
-class Supernova(sncosmo.Model):
 
-    """
-    Class for initializing a supernova of the type sn_type specified by the user.
-    If modeldir is provided by the user and sn_type is Ia, the sncosmo.SALT3Source
-    class is first used to model the supernova. In this case, modeldir is the path
-    to the directory containing files needed to initialize this class. For example,
-    modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'
-    Afterwards, this sncosmo.SALT3Source class is passed into the sncosmo.Model
-    class.
-    If modeldir is provided by the user and sn_type is other than Ia, the
-    sncosmo.TimeSeriesSource class is used to model the supernova.
-    In this case, modeldir is the path to the full list of models. For example,
-    modeldir = 'C:/Users/username/Documents/NON1ASED.V19_CC+HostXT_WAVEEXT
+class Supernova(sncosmo.Model):
+    """Class for initializing a supernova of the type sn_type specified by the user. If
+    modeldir is provided by the user and sn_type is Ia, the sncosmo.SALT3Source class is
+    first used to model the supernova. In this case, modeldir is the path to the
+    directory containing files needed to initialize this class. For example, modeldir =
+    'C:/Users/username/Documents/SALT3.NIR_WAVEEXT' Afterwards, this sncosmo.SALT3Source
+    class is passed into the sncosmo.Model class. If modeldir is provided by the user
+    and sn_type is other than Ia, the sncosmo.TimeSeriesSource class is used to model
+    the supernova. In this case, modeldir is the path to the full list of models. For
+    example, modeldir = 'C:/Users/username/Documents/NON1ASED.V19_CC+HostXT_WAVEEXT
     Afterwards, this sncosmo.TimeSeriesSource class is passed into the sncomsmo.Model
     class.
-    
-    These files can be found in https://github.com/LSST-strong-lensing/data_public
-    If modeldir is not provided by the user, the sncosmo.Models class
-    is directly used to model the supernova by retrieving the specified sn model
-    from sncosmo's list of built-in models, which can be found here:
+
+    These files can be found in https://github.com/LSST-strong-lensing/data_public If
+    modeldir is not provided by the user, the sncosmo.Models class is directly used to
+    model the supernova by retrieving the specified sn model from sncosmo's list of
+    built-in models, which can be found here:
     https://sncosmo.readthedocs.io/en/stable/source-list.html
     """
-
 
     def __init__(
         self,
@@ -63,7 +59,7 @@ class Supernova(sncosmo.Model):
         :type mag_zpsys: str
         :param cosmo: Cosmology for absolute magnitude
         :type cosmo: `~astropy.cosmology
-        """        
+        """
 
         self._sn_type = sn_type
         if modeldir is not None:
@@ -72,7 +68,7 @@ class Supernova(sncosmo.Model):
                     modeldir=modeldir,
                 )
             else:
-                modeldir = os.path.join(modeldir, sn_type, source) + '.SED'
+                modeldir = os.path.join(modeldir, sn_type, source) + ".SED"
                 phase, wave, flux = sncosmo.read_griddata_ascii(modeldir)
                 source = sncosmo.TimeSeriesSource(
                     phase=phase,
@@ -82,8 +78,15 @@ class Supernova(sncosmo.Model):
 
         super(Supernova, self).__init__(source=source, **kwargs)
         self._parameters[0] = redshift
-        self.set_magnitudes(absolute_mag, absolute_mag_band, peak_apparent_mag, peak_apparent_mag_band, mag_zpsys, cosmo)
-        
+        self.set_magnitudes(
+            absolute_mag,
+            absolute_mag_band,
+            peak_apparent_mag,
+            peak_apparent_mag_band,
+            mag_zpsys,
+            cosmo,
+        )
+
     def get_apparent_magnitude(self, time, band, zpsys="AB"):
         """Function to return apparent magnitude of a SN for a given band and time.
 
@@ -98,25 +101,29 @@ class Supernova(sncosmo.Model):
         """
 
         return self.bandmag(band, zpsys, time)
-    
-    def set_magnitudes(self, absmag, abs_mag_band, peak_apparent_mag, peak_apparent_mag_band, magsys, cosmo):
+
+    def set_magnitudes(
+        self,
+        absmag,
+        abs_mag_band,
+        peak_apparent_mag,
+        peak_apparent_mag_band,
+        magsys,
+        cosmo,
+    ):
         if absmag is not None:
             if abs_mag_band is None:
                 print(
                     "Must set absolute_mag_band when attempting to set an absolute magnitude."
                 )
             else:
-                self.set_source_peakabsmag(
-                    absmag, abs_mag_band, magsys, cosmo=cosmo
-                )
+                self.set_source_peakabsmag(absmag, abs_mag_band, magsys, cosmo=cosmo)
                 if peak_apparent_mag is not None:
                     print(
                         "Both peak_apparent_mag and absolute_mag were given, choosing absolute_mag."
                     )
         elif peak_apparent_mag is not None:
-            self.set_source_peakmag(
-                peak_apparent_mag, peak_apparent_mag_band, magsys
-            )
+            self.set_source_peakmag(peak_apparent_mag, peak_apparent_mag_band, magsys)
         else:
             print(
                 "Warning, you should use self.set_source_peakabsmag or sefl.set_peakmag to set the amplitude."

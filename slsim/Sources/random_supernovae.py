@@ -33,8 +33,7 @@ def get_accepted_sn_types():
 
 
 class RandomizedSupernova(Supernova):
-    """
-    Class for randomizing a supernova of the type sn_type specified by the user.
+    """Class for randomizing a supernova of the type sn_type specified by the user.
 
     If modeldir is not provided by the user, and sn_type is Ia, the sn_model is
     chosen to be salt3-nir.
@@ -104,9 +103,11 @@ class RandomizedSupernova(Supernova):
             self._type_models = None
             self.set_random_sed_model(self._sn_type)
         elif sn_type == "Ia":
-            self._sncosmo_source = 'salt3'
+            self._sncosmo_source = "salt3"
         else:
-            self._sncosmo_source = str(random.choice(os.listdir(os.path.join(modeldir, sn_type))))[:-4]
+            self._sncosmo_source = str(
+                random.choice(os.listdir(os.path.join(modeldir, sn_type)))
+            )[:-4]
 
         Supernova.__init__(
             self,
@@ -121,9 +122,8 @@ class RandomizedSupernova(Supernova):
             **kwargs
         )
 
-        if self._sn_type == 'Ia':
+        if self._sn_type == "Ia":
             self.set(**{"c": np.random.normal(0, 0.1), "x1": np.random.normal(0, 1)})
-
 
     def set_random_sed_model(self, sn_type):
         """Function to set a random SED model for a given SN type.
