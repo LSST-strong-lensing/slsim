@@ -464,7 +464,8 @@ class Lens(LensedSystemBase):
                 raise ValueError("The input variable lensed cannot be False while the"
                                   "the input variable micro_lensing is True.")
             else:
-                return self.point_source_magnitude_molet(band=band, time=time)
+                return self.point_source_magnitude_with_micro_lensing(band=band,
+                                                                       time=time)
         else:
             return self._point_source_magnitude(self, band, lensed=False, time=None)
         
