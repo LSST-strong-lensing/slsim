@@ -1,4 +1,5 @@
-import os, sncosmo
+import os
+import sncosmo
 from astropy import cosmology
 
 
