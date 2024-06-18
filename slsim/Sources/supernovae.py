@@ -1,4 +1,5 @@
 import os
+from warnings import warn
 import sncosmo
 from astropy import cosmology
 
@@ -59,7 +60,7 @@ class Supernova(sncosmo.Model):
         :param mag_zpsys: Optional, AB or Vega (AB default)
         :type mag_zpsys: str
         :param cosmo: Cosmology for absolute magnitude
-        :type cosmo: `~astropy.cosmology
+        :type cosmo: `~astropy.cosmology'
         """
 
         self._sn_type = sn_type
@@ -112,9 +113,19 @@ class Supernova(sncosmo.Model):
         magsys,
         cosmo,
     ):
+        """
+        Sets the amplitude of the source component of the model according to
+        the desired absolute magnitude in the specified band.
+
+        If the absolute magnitude is not given, then sets the amplitude of the
+        source component of the model according to a peak apparent magnitude.
+
+        If neither the absolute magnitude nor apparent magnitude are given,
+        a warning message is displayed.
+        """
         if absmag is not None:
             if abs_mag_band is None:
-                print(
+                raise Exception(
                     "Must set absolute_mag_band when attempting to set an absolute magnitude."
                 )
             else:
@@ -126,6 +137,6 @@ class Supernova(sncosmo.Model):
         elif peak_apparent_mag is not None:
             self.set_source_peakmag(peak_apparent_mag, peak_apparent_mag_band, magsys)
         else:
-            print(
-                "Warning, you should use self.set_source_peakabsmag or sefl.set_peakmag to set the amplitude."
+            warn(
+                "Use self.set_source_peakabsmag or sefl.set_peakmag to set the amplitude."
             )

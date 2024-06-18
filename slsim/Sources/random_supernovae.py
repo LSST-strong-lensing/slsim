@@ -1,5 +1,4 @@
 import os
-import random
 import numpy as np
 import sncosmo
 from astropy import cosmology
@@ -65,6 +64,7 @@ class RandomizedSupernova(Supernova):
         mag_zpsys="AB",
         cosmo=cosmology.FlatLambdaCDM(H0=70, Om0=0.3),
         modeldir=None,
+        random_seed=None,
         **kwargs
     ):
         """
@@ -79,12 +79,16 @@ class RandomizedSupernova(Supernova):
         :type absolute_mag_band: str or `~sncosmo.Bandpass`
         :param mag_zpsys: Optional, AB or Vega (AB default)
         :type mag_zpsys: str
-        :param modeldir: Path to the directory containing supernova files
-        :type modeldir: str
         :param cosmo: Cosmology for absolute magnitude
         :type cosmo: `~astropy.cosmology`
+        :param modeldir: Path to the directory containing supernova files
+        :type modeldir: str
+        :param random_seed: Random seed for randomization
+        :type random_seed: int or None
         """
-
+        if random_seed is not None:
+            np.random.seed(random_seed)
+            
         all_models, accepted_types = get_accepted_sn_types()
         if sn_type not in accepted_types:
             raise RuntimeError(
@@ -106,9 +110,9 @@ class RandomizedSupernova(Supernova):
         elif sn_type == "Ia":
             self._sncosmo_source = "salt3"
         else:
-            self._sncosmo_source = str(
-                random.choice(os.listdir(os.path.join(modeldir, sn_type)))
-            )[:-4]
+            source_list = [source for source in os.listdir(os.path.join(modeldir, sn_type))]
+            random_source = source_list[np.random.randint(0, len(source_list))]
+            self._sncosmo_source = str(random_source)[:-4]
 
         Supernova.__init__(
             self,
