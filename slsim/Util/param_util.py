@@ -256,3 +256,17 @@ def deg2_to_cone_angle(solid_angle_deg2):
     solid_angle_sr = solid_angle_deg2 * (np.pi / 180) ** 2
     theta = np.arccos(1 - solid_angle_sr / (2 * np.pi))  # rad
     return theta
+
+
+def ellipticity_slsim_to_lenstronomy(e1_slsim, e2_slsim):
+    """Converts ellipticity component from slsim convension to lenstronomy convention.
+    In slsim, position angle goes from North to East. In lenstronomy, position angle
+    goes from East to North.
+
+    :param e1_slsim: first component of the ellipticity in slsim convension i.e position
+     angle from north to east.
+    :param e2_slsim: second component of the ellipticity in slsim convention.
+    return: ellipticity components in lenstronomy convention.
+    """
+
+    return -e1_slsim, e2_slsim
