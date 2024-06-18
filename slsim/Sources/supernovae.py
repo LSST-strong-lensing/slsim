@@ -80,7 +80,7 @@ class Supernova(sncosmo.Model):
 
         super(Supernova, self).__init__(source=source, **kwargs)
         self._parameters[0] = redshift
-        self.set_magnitudes(
+        self.set_source_amplitude(
             absolute_mag,
             absolute_mag_band,
             peak_apparent_mag,
@@ -104,14 +104,14 @@ class Supernova(sncosmo.Model):
 
         return self.bandmag(band, zpsys, time)
 
-    def set_magnitudes(
+    def set_source_amplitude(
         self,
         absmag,
         abs_mag_band,
         peak_apparent_mag,
         peak_apparent_mag_band,
         magsys,
-        cosmo=cosmology.FlatLambdaCDM(H0=70, Om0=0.3),
+        cosmo,
     ):
         """Sets the amplitude of the source component of the model according to the
         desired absolute magnitude in the specified band.
@@ -121,6 +121,20 @@ class Supernova(sncosmo.Model):
 
         If neither the absolute magnitude nor apparent magnitude are given, a warning
         message is displayed.
+
+        :param absolute_mag: Absolute magnitude of the supernova
+        :type absolute_mag: float
+        :param absolute_mag_band: Band used to normalize to absolute magnitude
+        :type absolute_mag_band: str or `~sncosmo.Bandpass`
+        :param peak_apparent_mag: Peak apparent mag of the supernova
+        :type peak_apparent_mag: str or `~sncosmo.Bandpass`
+        :param peak_apparent_mag_band: Band used to normalize to apparent magnitude
+        :type peak_apparent_mag_band: str or `~sncosmo.Bandpass`
+        :param mag_zpsys: Optional, AB or Vega (AB default)
+        :type mag_zpsys: str
+
+        :return: Nothing is returned. The source's amplitude parameter is modified in place.
+        
         """
         if absmag is not None:
             if abs_mag_band is None:
