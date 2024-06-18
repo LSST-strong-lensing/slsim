@@ -88,7 +88,7 @@ class RandomizedSupernova(Supernova):
         """
         if random_seed is not None:
             np.random.seed(random_seed)
-            
+
         all_models, accepted_types = get_accepted_sn_types()
         if sn_type not in accepted_types:
             raise RuntimeError(
@@ -110,7 +110,9 @@ class RandomizedSupernova(Supernova):
         elif sn_type == "Ia":
             self._sncosmo_source = "salt3"
         else:
-            source_list = [source for source in os.listdir(os.path.join(modeldir, sn_type))]
+            source_list = [
+                source for source in os.listdir(os.path.join(modeldir, sn_type))
+            ]
             random_source = source_list[np.random.randint(0, len(source_list))]
             self._sncosmo_source = str(random_source)[:-4]
 

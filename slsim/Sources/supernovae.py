@@ -113,15 +113,14 @@ class Supernova(sncosmo.Model):
         magsys,
         cosmo,
     ):
-        """
-        Sets the amplitude of the source component of the model according to
-        the desired absolute magnitude in the specified band.
+        """Sets the amplitude of the source component of the model according to the
+        desired absolute magnitude in the specified band.
 
-        If the absolute magnitude is not given, then sets the amplitude of the
-        source component of the model according to a peak apparent magnitude.
+        If the absolute magnitude is not given, then sets the amplitude of the source
+        component of the model according to a peak apparent magnitude.
 
-        If neither the absolute magnitude nor apparent magnitude are given,
-        a warning message is displayed.
+        If neither the absolute magnitude nor apparent magnitude are given, a warning
+        message is displayed.
         """
         if absmag is not None:
             if abs_mag_band is None:
