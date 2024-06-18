@@ -92,7 +92,9 @@ class Source(object):
                         name = "ps_mag_" + element
                 self.lightcurve_time = lightcurve_time
                 magnitudes = lightcurve_class.get_apparent_magnitude(
-                    time=self.lightcurve_time, band=provided_band, zpsys=sn_absolute_zpsys
+                    time=self.lightcurve_time,
+                    band=provided_band,
+                    zpsys=sn_absolute_zpsys,
                 )
                 new_column = Column([float(min(magnitudes))], name=name)
                 self._source_dict = Table(self.source_dict)
