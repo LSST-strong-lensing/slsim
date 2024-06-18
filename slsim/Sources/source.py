@@ -90,15 +90,15 @@ class Source(object):
                     ]:
                         provided_band = element
                         name = "ps_mag_" + element
-                times = lightcurve_time
+                self.lightcurve_time = lightcurve_time
                 magnitudes = lightcurve_class.get_apparent_magnitude(
-                    time=times, band=provided_band, zpsys=sn_absolute_zpsys
+                    time=self.lightcurve_time, band=provided_band, zpsys=sn_absolute_zpsys
                 )
                 new_column = Column([float(min(magnitudes))], name=name)
                 self._source_dict = Table(self.source_dict)
                 self._source_dict.add_column(new_column)
                 self.source_dict = self._source_dict[0]
-                self.kwargs_variab_extracted["MJD"] = times
+                self.kwargs_variab_extracted["MJD"] = self.lightcurve_time
                 self.kwargs_variab_extracted[name] = magnitudes
             else:
                 # With this condition we extract values for kwargs_variability from the
