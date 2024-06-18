@@ -42,8 +42,8 @@ class Supernova(sncosmo.Model):
     ):
         """
         :param source: The model for the spectral evolution of the source. If a string
-        is given, it is used to retrieve a `~sncosmo.Source` from
-        the registry.
+            is given, it is used to retrieve a `~sncosmo.Source` from
+            the registry.
         :type source: `~sncosmo.Source` or str
         :param redshift: The redshift of the source.
         :type redshift: float
