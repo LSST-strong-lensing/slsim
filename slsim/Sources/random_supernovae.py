@@ -1,3 +1,4 @@
+import os, random
 import numpy as np
 import sncosmo
 from astropy import cosmology
@@ -17,6 +18,8 @@ _ABSOLUTE_MAG_DISTS = {
 
 def get_accepted_sn_types():
     """Helper function to get SN types from the SNCosmo source classes.
+    The accepted sn_types are:
+    [II, II-pec, IIL, IIL/P, IIP, IIb, IIn, Ia, Ib, Ib/c, Ic, Ic-BL, PopIII]
 
     :return: dictionary of types and sources, and list of models
     """
@@ -30,7 +33,28 @@ def get_accepted_sn_types():
 
 
 class RandomizedSupernova(Supernova):
-    """Class for randomizing a supernova."""
+    """
+    Class for randomizing a supernova of the type sn_type specified by the user.
+
+    If modeldir is not provided by the user, and sn_type is Ia, the sn_model is
+    chosen to be salt3-nir.
+    If modeldir is not provided by the user and sn_type is other than Ia, the
+    sn_model is picked randomly from a list of built-in models with the same sn_type
+
+    If modeldir is provided by the user and sn_type is Ia, the sn_model is
+    chosen to be salt3. In this case, modeldir is the path to the directory
+    containing files needed to initialize the sncosmo.SALT3Source class.
+    For example, modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'
+
+    If modeldir is provided by the user and sn_type is other than Ia, the
+    sn_model is picked randomly from the list of models located in modeldir.
+    In this case, modeldir is the path to the full list of models. For example,
+    modeldir = 'C:/Users/username/Documents/NON1ASED.V19_CC+HostXT_WAVEEXT
+    If the specified sn_type is Ic, then a supernova of type Ic will be picked
+    at random.
+
+    These files can be found in https://github.com/LSST-strong-lensing/data_public
+    """
 
     def __init__(
         self,
@@ -39,6 +63,7 @@ class RandomizedSupernova(Supernova):
         absolute_mag=None,
         absolute_mag_band="bessellb",
         mag_zpsys="AB",
+        modeldir=None,
         cosmo=cosmology.FlatLambdaCDM(H0=70, Om0=0.3),
         **kwargs
     ):
@@ -54,10 +79,10 @@ class RandomizedSupernova(Supernova):
         :type absolute_mag_band: str or `~sncosmo.Bandpass`
         :param mag_zpsys: Optional, AB or Vega (AB default)
         :type mag_zpsys: str
+        :param modeldir: Path to the directory containing supernova files
+        :type modeldir: str
         :param cosmo: Cosmology for absolute magnitude
         :type cosmo: `~astropy.cosmology`
-        :param random_seed: Random seed for randomization
-        :type random_seed: int
         """
 
         all_models, accepted_types = get_accepted_sn_types()
@@ -68,17 +93,23 @@ class RandomizedSupernova(Supernova):
                 + ", ".join(accepted_types)
             )
         self._sn_type = sn_type
-        self._accepted_SN_types = accepted_types
-        self._all_sncosmo_models = all_models
-        self._type_models = None
         self._absolute_mag_band = absolute_mag_band
-
-        self.set_random_sed_model(self._sn_type)
 
         if absolute_mag is None:
             absolute_mag = self.get_absolute_magnitude(self._sn_type)
 
-        super(RandomizedSupernova, self).__init__(
+        if modeldir is None:
+            self._accepted_SN_types = accepted_types
+            self._all_sncosmo_models = all_models
+            self._type_models = None
+            self.set_random_sed_model(self._sn_type)
+        elif sn_type == "Ia":
+            self._sncosmo_source = 'salt3'
+        else:
+            self._sncosmo_source = str(random.choice(os.listdir(os.path.join(modeldir, sn_type))))[:-4]
+
+        Supernova.__init__(
+            self,
             source=self._sncosmo_source,
             redshift=redshift,
             sn_type=self._sn_type,
@@ -86,10 +117,13 @@ class RandomizedSupernova(Supernova):
             absolute_mag_band=absolute_mag_band,
             mag_zpsys=mag_zpsys,
             cosmo=cosmo,
+            modeldir=modeldir,
             **kwargs
         )
-        if self._sn_type == "Ia":
+
+        if self._sn_type == 'Ia':
             self.set(**{"c": np.random.normal(0, 0.1), "x1": np.random.normal(0, 1)})
+
 
     def set_random_sed_model(self, sn_type):
         """Function to set a random SED model for a given SN type.
