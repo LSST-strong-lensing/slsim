@@ -11,8 +11,9 @@ from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
 from slsim.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
 from lenstronomy.Util import util, data_util
 from slsim.lensed_system_base import LensedSystemBase
-from slsim.Sources.SourceVariability.light_curve_interpolation import \
-    LightCurveInterpolation
+from slsim.Sources.SourceVariability.light_curve_interpolation import (
+    LightCurveInterpolation,
+)
 import warnings
 
 
@@ -424,31 +425,36 @@ class Lens(LensedSystemBase):
 
         return observer_times
 
-    def point_source_magnitude(self, band, lensed=False, time=None, 
-                               micro_lensing=False):
+    def point_source_magnitude(
+        self, band, lensed=False, time=None, micro_lensing=False
+    ):
         """Point source magnitude, either unlensed (single value) or lensed (array) with
         macro- and micro model magnifications.
+
         :param band: imaging band
         :type band: string
         :param lensed: if True, returns the lensed magnified magnitude
         :type lensed: bool
         :param time: time is an image observation time in units of days. If None,
             provides magnitude without variability.
-        :param micro_lensing: if using micro-lensing code to produce the lensed 
-         magnification
+        :param micro_lensing: if using micro-lensing code to produce the lensed
+            magnification
         :type micro_lensing: bool
         :return: point source magnitude
         """
         if micro_lensing is True:
             if lensed is False:
-                raise ValueError("The input variable lensed cannot be False while the"
-                                  "the input variable micro_lensing is True.")
+                raise ValueError(
+                    "The input variable lensed cannot be False while the"
+                    "the input variable micro_lensing is True."
+                )
             else:
-                return self.point_source_magnitude_with_micro_lensing(band=band,
-                                                                       time=time)
+                return self.point_source_magnitude_with_micro_lensing(
+                    band=band, time=time
+                )
         else:
             return self._point_source_magnitude(self, band, lensed=False, time=None)
-        
+
     def _point_source_magnitude(self, band, lensed=False, time=None):
         """Point source magnitude, either unlensed (single value) or lensed (array) with
         macro-model magnifications.
@@ -525,21 +531,23 @@ class Lens(LensedSystemBase):
 
         # TODO: in what format should be the 2d source profile be stored (as it is time- and wavelength dependent)
         # TODO: do we create full light curves (and save it in cache) or call it each time
-        
-        magnitude_without_microlensing = self._point_source_magnitude(band=band, 
-                                    lensed=True, time=self.source.lightcurve_time)
-        #list of interpolated lightcurves. 1st lightcurve corresponds to the first 
-        # ariving image, 2nd lightcurve corresponds to the second ariving image and 
+
+        magnitude_without_microlensing = self._point_source_magnitude(
+            band=band, lensed=True, time=self.source.lightcurve_time
+        )
+        # list of interpolated lightcurves. 1st lightcurve corresponds to the first
+        # ariving image, 2nd lightcurve corresponds to the second ariving image and
         # so on.
         interpolated_lightcurves = []
         for i in range(len(magnitude_without_microlensing)):
             light_curve_image = {
                 "MJD": self.source.lightcurve_time,
-                f"ps_mag_image{i}": magnitude_without_microlensing[i]
+                f"ps_mag_image{i}": magnitude_without_microlensing[i],
             }
             # Create the interpolated lightcurve and add it to the list
             interpolated_lightcurves.append(
-                LightCurveInterpolation(light_curve_image).interpolation)
+                LightCurveInterpolation(light_curve_image).interpolation
+            )
         return 0
 
     def extended_source_magnitude(self, band, lensed=False):
