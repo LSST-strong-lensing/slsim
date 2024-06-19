@@ -72,9 +72,9 @@ class SupernovaeCatalog(object):
             galaxies or not. True or False.
         :return: Astropy Table of supernovae catalog containg redshift, lightcurves,
             ra_off, dec_off, and host galaxy properties. If host_galaxy is set to False,
-            it returns catalog without host galaxy properties. Light curves are 
-            generated using RandomizedSupernova class. Light curves are saved as an 
-            array of observation time and array of corresponding magnitudes in specified 
+            it returns catalog without host galaxy properties. Light curves are
+            generated using RandomizedSupernova class. Light curves are saved as an
+            array of observation time and array of corresponding magnitudes in specified
             bands in different columns of the Table.
         """
         if host_galaxy is True:
