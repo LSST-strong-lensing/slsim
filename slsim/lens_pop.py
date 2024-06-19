@@ -284,7 +284,10 @@ class LensPop(LensedPopulationBase):
                     sky_area=sky_area,
                 )
                 if source_type == "supernovae":
+                    redshift_sample = supernovae_catalog_class.host_galaxy_catalog(
+                    )["z"]
                     supernovae_sample = supernovae_catalog_class.supernovae_catalog(
+                        redshift=redshift_sample,
                         host_galaxy=False
                     )
                     self._sources = PointSources(
