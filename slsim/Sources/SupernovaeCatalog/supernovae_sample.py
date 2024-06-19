@@ -64,15 +64,15 @@ class SupernovaeCatalog(object):
         galaxy_table_cut = galaxy_table[galaxy_table["z"] <= 0.9329]
         return galaxy_table_cut
 
-    def supernovae_catalog(self, redshift= None, host_galaxy=True):
-        """Generates supernovae lightcurves for given redshifts or from host galaxy 
-         redshift.
+    def supernovae_catalog(self, redshift=None, host_galaxy=True):
+        """Generates supernovae lightcurves for given redshifts or from host galaxy
+        redshift.
 
         :param host_galaxy: kwargs to decide whether catalog should include host
             galaxies or not. True or False.
-        :return: Astropy Table of supernovae catalog containg redshift, lightcurves, 
-         ra_off, dec_off, and host galaxy properties. If host_galaxy is set to False, 
-         it returns catalog without host galaxy properties.
+        :return: Astropy Table of supernovae catalog containg redshift, lightcurves,
+            ra_off, dec_off, and host galaxy properties. If host_galaxy is set to False,
+            it returns catalog without host galaxy properties.
         """
         if host_galaxy is True:
             host_galaxies = self.host_galaxy_catalog()
@@ -86,8 +86,10 @@ class SupernovaeCatalog(object):
             if host_galaxy is True:
                 supernovae_redshift = host_galaxies["z"]
             else:
-                raise ValueError("host_galaxy should be True while redshift is None." 
-                        "Either set host_galaxy to True or provide redshift list")
+                raise ValueError(
+                    "host_galaxy should be True while redshift is None."
+                    "Either set host_galaxy to True or provide redshift list"
+                )
         else:
             supernovae_redshift = redshift
         # generate lightcurve for each supernovae.
