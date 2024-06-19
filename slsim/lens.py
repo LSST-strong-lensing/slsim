@@ -447,7 +447,7 @@ class Lens(LensedSystemBase):
                 return self.point_source_magnitude_with_micro_lensing(band=band,
                                                                        time=time)
         else:
-            return self._point_source_magnitude(self, band, lensed=False, time=None)
+            return self._point_source_magnitude(self, band, lensed=lensed, time=time)
         
     def _point_source_magnitude(self, band, lensed=False, time=None):
         """Point source magnitude, either unlensed (single value) or lensed (array) with
@@ -484,7 +484,7 @@ class Lens(LensedSystemBase):
                 for i in range(len(magnif_log)):
                     magnified_mag_list.append(source_mag_unlensed - magnif_log[i])
                 return np.array(magnified_mag_list)
-        return self.source.point_source_magnitude(band)
+        return self.source.point_source_magnitude(band, image_observation_times=time)
 
     def point_source_magnitude_with_micro_lensing(self, band, time, **kwargs_molet):
         """Return image magnitudes at a given observer time.
@@ -526,8 +526,8 @@ class Lens(LensedSystemBase):
         # TODO: in what format should be the 2d source profile be stored (as it is time- and wavelength dependent)
         # TODO: do we create full light curves (and save it in cache) or call it each time
         
-        magnitude_without_microlensing = self._point_source_magnitude(band=band, 
-                                    lensed=True, time=self.source.lightcurve_time)
+        intrinsic_lightcurve = self._point_source_magnitude(band=band, 
+                                    lensed=False, time=self.source.lightcurve_time)
         #list of interpolated lightcurves. 1st lightcurve corresponds to the first 
         # ariving image, 2nd lightcurve corresponds to the second ariving image and 
         # so on.
