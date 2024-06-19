@@ -54,7 +54,7 @@ class TestSNeLightcone:
 
     def test_return_supernovae_sample(self):
         # Observed SN Ia redshift locations using return_supernovae_sample()
-        sample_output = self.sne_lightcone.return_supernovae_sample()
+        sample_output = self.sne_lightcone.supernovae_sample()
 
         # Observed counts using Lightcone()
         observed_counts, bin_edges = np.histogram(
@@ -84,9 +84,7 @@ class TestSNeLightcone:
         assert p_value > 0.05, f"KS Test failed: p-value = {p_value}"
 
     def test_redshift_table(self):
-        random_redshift_array = np.random.uniform(0, 10, 10)
-
-        table = self.sne_lightcone.redshift_table(random_redshift_array)
+        table = self.sne_lightcone.redshift_table()
         assert isinstance(table, Table), "Generated table is not an Astropy Table"
 
 

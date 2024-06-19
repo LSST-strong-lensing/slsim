@@ -43,7 +43,7 @@ class SNeLightcone(object):
         converted_density = density / time_conversion * self._time_interval.value
         return converted_density.value
 
-    def return_supernovae_sample(self):
+    def supernovae_sample(self):
         """Integrates SNe comoving density in light cone.
 
         :return: sampled redshifts such that the comoving number density of galaxies
@@ -59,16 +59,14 @@ class SNeLightcone(object):
         )
         return redshift_list
 
-    def redshift_table(self, redshift_list):
+    def redshift_table(self):
         """Generates table with redshift locations of supernovae.
-
-        :param redshift_list: list of redshift locations of supernovae
-        :type redshift_lists: numpy.ndarray
 
         :return: astropy table with redshift locations of supernovae
         :return type: `~astropy.table.Table`
         """
         # Once lightcurve implementation is complete, it will be included here in the table
+        redshift_list = self.supernovae_sample()
         redshift_table = {"Redshift": []}
         redshift_table["Redshift"].append(redshift_list)
         return Table(redshift_table)
