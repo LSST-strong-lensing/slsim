@@ -54,7 +54,6 @@ class SNIaRate(object):
         """Calculates redshift given cosmic time.
 
         :param t: cosmic time since big bang in [Gy]
-
         :return: redshift at time t [float]
         """
         if not hasattr(self, "_age_inv"):

@@ -9,7 +9,7 @@ import numpy.testing as npt
 import pytest
 
 
-class TestSNeLightcone():
+class TestSNeLightcone:
     def setup_method(self):
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         self.redshifts = np.linspace(0, 5, 20)
@@ -22,7 +22,7 @@ class TestSNeLightcone():
             redshifts=self.redshifts,
             sky_area=self.sky_area,
             noise=self.noise,
-            time_interval=self.time_interval
+            time_interval=self.time_interval,
         )
 
     def test_convert_density(self):
@@ -34,10 +34,12 @@ class TestSNeLightcone():
             redshifts=self.redshifts,
             sky_area=self.sky_area,
             noise=self.noise,
-            time_interval=self.time_interval
+            time_interval=self.time_interval,
         )
         test_density = self.sne_lightcone.density[0]
-        npt.assert_almost_equal(test_density, ((4.10996270e-05/365.25)*2), decimal=4)
+        npt.assert_almost_equal(
+            test_density, ((4.10996270e-05 / 365.25) * 2), decimal=4
+        )
 
         self.time_interval = 1 * units.year
         self.sne_lightcone = SNeLightcone(
@@ -45,7 +47,7 @@ class TestSNeLightcone():
             redshifts=self.redshifts,
             sky_area=self.sky_area,
             noise=self.noise,
-            time_interval=self.time_interval
+            time_interval=self.time_interval,
         )
         test_density = self.sne_lightcone.density[0]
         npt.assert_almost_equal(test_density, 4.1099626976289775e-05, decimal=4)
@@ -55,12 +57,14 @@ class TestSNeLightcone():
         sample_output = self.sne_lightcone.return_supernovae_sample()
 
         # Observed counts using Lightcone()
-        observed_counts, bin_edges = np.histogram(sample_output, bins=self.redshifts, density=True)
+        observed_counts, bin_edges = np.histogram(
+            sample_output, bins=self.redshifts, density=True
+        )
 
         # Expected counts based SN Ia comoving density
         dN_dz = (
             self.cosmo.differential_comoving_volume(self.redshifts) * self.sky_area
-        ).to_value('Mpc3')
+        ).to_value("Mpc3")
         dN_dz *= self.sne_lightcone.density
         bin_widths = np.diff(self.redshifts)
         expected_counts = dN_dz[:-1] * bin_widths

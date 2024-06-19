@@ -27,15 +27,17 @@ class SNeLightcone(object):
         self._time_interval = time_interval
 
         sne_rate = SNIaRate(self._cosmo, self._redshifts[-1])
-        self.density = self.convert_density(sne_rate.calculate_SNIa_rate(self._redshifts))
+        self.density = self.convert_density(
+            sne_rate.calculate_SNIa_rate(self._redshifts)
+        )
 
     def convert_density(self, density):
-        """Converts SN Ia comoving densities from [yr^(-1)Mpc^(-3)] to have the desired time unit.
+        """Converts SN Ia comoving densities from [yr^(-1)Mpc^(-3)] to have the desired
+        time unit.
 
         :param density: initial comoving density of SN Ia [yr^(-1)Mpc^(-3)]
-
-        :return: SN Ia comoving density with the desired time unit
-        [day^(-1)Mpc^(-3), hr^(-1)Mpc^(-3), etc.]
+        :return: SN Ia comoving density with the desired time unit [day^(-1)Mpc^(-3),
+            hr^(-1)Mpc^(-3), etc.]
         """
         time_conversion = (1 * units.year).to(self._time_interval.unit)
         converted_density = density / time_conversion * self._time_interval.value
@@ -44,8 +46,8 @@ class SNeLightcone(object):
     def return_supernovae_sample(self):
         """Integrates SNe comoving density in light cone.
 
-        :return: sampled redshifts such that the comoving number density of galaxies corresponds to
-        the input distribution
+        :return: sampled redshifts such that the comoving number density of galaxies
+            corresponds to the input distribution
         :return type: numpy.ndarray
         """
         redshift_list = redshifts_from_comoving_density(
@@ -67,6 +69,6 @@ class SNeLightcone(object):
         :return type: `~astropy.table.Table`
         """
         # Once lightcurve implementation is complete, it will be included here in the table
-        redshift_table = {'Redshift': []}
-        redshift_table['Redshift'].append(redshift_list)
+        redshift_table = {"Redshift": []}
+        redshift_table["Redshift"].append(redshift_list)
         return Table(redshift_table)
