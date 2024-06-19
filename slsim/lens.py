@@ -425,7 +425,7 @@ class Lens(LensedSystemBase):
         return observer_times
 
     def point_source_magnitude(self, band, lensed=False, time=None, 
-                               micro_lensing=False):
+                               molet=False):
         """Point source magnitude, either unlensed (single value) or lensed (array) with
         macro- and micro model magnifications.
         :param band: imaging band
@@ -434,17 +434,17 @@ class Lens(LensedSystemBase):
         :type lensed: bool
         :param time: time is an image observation time in units of days. If None,
             provides magnitude without variability.
-        :param micro_lensing: if using micro-lensing code to produce the lensed 
+        :param molet: if using molet to produce the lensed 
          magnification
-        :type micro_lensing: bool
+        :type molet: bool
         :return: point source magnitude
         """
-        if micro_lensing is True:
+        if molet is True:
             if lensed is False:
                 raise ValueError("The input variable lensed cannot be False while the"
                                   "the input variable micro_lensing is True.")
             else:
-                return self.point_source_magnitude_with_micro_lensing(band=band,
+                return self.point_source_magnitude_molet(band=band,
                                                                        time=time)
         else:
             return self._point_source_magnitude(self, band, lensed=lensed, time=time)
@@ -486,7 +486,7 @@ class Lens(LensedSystemBase):
                 return np.array(magnified_mag_list)
         return self.source.point_source_magnitude(band, image_observation_times=time)
 
-    def point_source_magnitude_with_micro_lensing(self, band, time, **kwargs_molet):
+    def point_source_magnitude_molet(self, band, time, **kwargs_molet):
         """Return image magnitudes at a given observer time.
 
         :param band: imaging band
@@ -526,6 +526,7 @@ class Lens(LensedSystemBase):
         # TODO: in what format should be the 2d source profile be stored (as it is time- and wavelength dependent)
         # TODO: do we create full light curves (and save it in cache) or call it each time
         
+        #we can use to get intrinsic brightness of a source at image observation time.
         intrinsic_lightcurve = self._point_source_magnitude(band=band, 
                                     lensed=False, time=self.source.lightcurve_time)
         #list of interpolated lightcurves. 1st lightcurve corresponds to the first 
