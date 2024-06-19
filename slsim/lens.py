@@ -526,21 +526,12 @@ class Lens(LensedSystemBase):
         # TODO: in what format should be the 2d source profile be stored (as it is time- and wavelength dependent)
         # TODO: do we create full light curves (and save it in cache) or call it each time
         
-        #we can use to get intrinsic brightness of a source at image observation time.
-        intrinsic_lightcurve = self._point_source_magnitude(band=band, 
-                                    lensed=False, time=self.source.lightcurve_time)
-        #list of interpolated lightcurves. 1st lightcurve corresponds to the first 
-        # ariving image, 2nd lightcurve corresponds to the second ariving image and 
-        # so on.
-        interpolated_lightcurves = []
-        for i in range(len(magnitude_without_microlensing)):
-            light_curve_image = {
-                "MJD": self.source.lightcurve_time,
-                f"ps_mag_image{i}": magnitude_without_microlensing[i]
-            }
-            # Create the interpolated lightcurve and add it to the list
-            interpolated_lightcurves.append(
-                LightCurveInterpolation(light_curve_image).interpolation)
+        #we can use this to get intrinsic brightness of a source at image observation 
+        # time.
+        source_profile = {"time":self.source.lightcurve_time, 
+                          "magnitude":self._point_source_magnitude(band=band, 
+                                    lensed=False, time=self.source.lightcurve_time)}
+        #using source profile, kappa, gamma, kappa_star, image_observed_time produce 
         return 0
 
     def extended_source_magnitude(self, band, lensed=False):
