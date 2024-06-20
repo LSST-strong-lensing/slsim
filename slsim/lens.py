@@ -11,8 +11,9 @@ from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
 from slsim.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
 from lenstronomy.Util import util, data_util
 from slsim.lensed_system_base import LensedSystemBase
-from slsim.Sources.SourceVariability.light_curve_interpolation import \
-    LightCurveInterpolation
+from slsim.Sources.SourceVariability.light_curve_interpolation import (
+    LightCurveInterpolation,
+)
 from slsim.Util.param_util import function_or_dictionary
 import warnings
 
@@ -425,8 +426,7 @@ class Lens(LensedSystemBase):
 
         return observer_times
 
-    def point_source_magnitude(self, band, lensed=False, time=None, 
-                               molet=False):
+    def point_source_magnitude(self, band, lensed=False, time=None, molet=False):
         """Point source magnitude, either unlensed (single value) or lensed (array) with
         macro- and micro model magnifications.
 
@@ -436,20 +436,21 @@ class Lens(LensedSystemBase):
         :type lensed: bool
         :param time: time is an image observation time in units of days. If None,
             provides magnitude without variability.
-        :param molet: if using molet to produce the lensed 
-         magnification
+        :param molet: if using molet to produce the lensed magnification
         :type molet: bool
         :return: point source magnitude
         """
         if molet is True:
             if lensed is False:
-                raise ValueError("The input variable lensed cannot be False while the"
-                                  "the input variable molet is True.")
+                raise ValueError(
+                    "The input variable lensed cannot be False while the"
+                    "the input variable molet is True."
+                )
             else:
                 return self.point_source_magnitude_molet(band=band, time=time)
         else:
             return self._point_source_magnitude(band=band, lensed=lensed, time=time)
-        
+
     def _point_source_magnitude(self, band, lensed=False, time=None):
         """Point source magnitude, either unlensed (single value) or lensed (array) with
         macro-model magnifications.
@@ -526,37 +527,48 @@ class Lens(LensedSystemBase):
 
         # TODO: in what format should be the 2d source profile be stored (as it is time- and wavelength dependent)
         # TODO: do we create full light curves (and save it in cache) or call it each time
-        
-        #we can use this to get intrinsic brightness of a source at image observation 
-        # time. Here, we are storing source profile as dictionary of observation time 
+
+        # we can use this to get intrinsic brightness of a source at image observation
+        # time. Here, we are storing source profile as dictionary of observation time
         # and magnitude but need to decide what format molet needs. I checked with molet
         #  and it says format should be in the form given below.
-        source_profile = [{"time":list(self.source.lightcurve_time), 
-                          "signal":list(self._point_source_magnitude(band=band, 
-                                    lensed=False, time=self.source.lightcurve_time))}]
-        #using source profile, kappa, gamma, kappa_star, image_observed_time molet 
-        # should return lightcurve of each images. The lightcurve can be a interpolated 
-        # function or a dictionary of observation time and magnitudes in specified band 
+        source_profile = [
+            {
+                "time": list(self.source.lightcurve_time),
+                "signal": list(
+                    self._point_source_magnitude(
+                        band=band, lensed=False, time=self.source.lightcurve_time
+                    )
+                ),
+            }
+        ]
+        # using source profile, kappa, gamma, kappa_star, image_observed_time molet
+        # should return lightcurve of each images. The lightcurve can be a interpolated
+        # function or a dictionary of observation time and magnitudes in specified band
         # as given below.
-        #This molet_output is temporary. Once we call molet, this will be actual molet 
+        # This molet_output is temporary. Once we call molet, this will be actual molet
         # output.
-        molet_output = [{"time": list(self.source.lightcurve_time),
-                         "magnitude": np.lnspace(
-                             23, 34, len(self.source.lightcurve_time))}, 
-                         {"time": list(self.source.lightcurve_time),
-                         "magnitude": np.lnspace(
-                             24, 36, len(self.source.lightcurve_time))}]
-        # molet_output can be molet_output = [interp_lightcurve_image1, 
+        molet_output = [
+            {
+                "time": list(self.source.lightcurve_time),
+                "magnitude": np.lnspace(23, 34, len(self.source.lightcurve_time)),
+            },
+            {
+                "time": list(self.source.lightcurve_time),
+                "magnitude": np.lnspace(24, 36, len(self.source.lightcurve_time)),
+            },
+        ]
+        # molet_output can be molet_output = [interp_lightcurve_image1,
         # interp_lightcurve_image2]
-        
-        #calls interpolated functions for each images and saves magnitudes at given
+
+        # calls interpolated functions for each images and saves magnitudes at given
         # observation time.
         variable_magnitudes = []
         for i in range(len(molet_output)):
-            variable_magnitudes.append(function_or_dictionary(molet_output[i])(
-                image_observed_times[i]))
+            variable_magnitudes.append(
+                function_or_dictionary(molet_output[i])(image_observed_times[i])
+            )
         return np.array(variable_magnitudes)
-        
 
     def extended_source_magnitude(self, band, lensed=False):
         """Unlensed apparent magnitude of the extended source for a given band (assumes
