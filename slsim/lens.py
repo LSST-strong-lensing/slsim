@@ -13,7 +13,7 @@ from lenstronomy.Util import util, data_util
 from slsim.lensed_system_base import LensedSystemBase
 from slsim.Sources.SourceVariability.light_curve_interpolation import \
     LightCurveInterpolation
-from slsim.Util.param_util import check_quantity
+from slsim.Util.param_util import function_or_dictionary
 import warnings
 
 
@@ -553,7 +553,7 @@ class Lens(LensedSystemBase):
         # observation time.
         variable_magnitudes = []
         for i in range(len(molet_output)):
-            variable_magnitudes.append(check_quantity(molet_output[i])(
+            variable_magnitudes.append(function_or_dictionary(molet_output[i])(
                 image_observed_times[i]))
         return np.array(variable_magnitudes)
         
