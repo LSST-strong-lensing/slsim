@@ -833,6 +833,55 @@ def generate_signal_from_generic_psd(
     return time_array, magnitude_array
 
 
+def get_value_if_quantity(variable):
+    """Extracts the numerical value from an astropy Quantity object or returns the input
+    if not a Quantity.
+
+    This function checks if the input variable is an instance of an astropy Quantity. If
+    it is, the function extracts and returns the numerical value of the Quantity. If the
+    input is not a Quantity, it returns the input variable unchanged.
+
+    :param variable: The variable to be checked and possibly converted. Can be an
+        astropy Quantity or any other data type.
+    :type variable: Quantity or any
+    :return: The numerical value of the Quantity if the input is a Quantity; otherwise,
+        the input variable itself.
+    :rtype: float or any
+    """
+    if isinstance(variable, Quantity):
+        return variable.value
+    else:
+        return variable
+
+
+def cone_radius_angle_to_physical_area(radius_rad, z, cosmo):
+    """Convert cone radius angle to physical area at a specified redshift.
+
+    This function computes the physical area, in square megaparsecs (Mpc^2),
+    corresponding to a specified cone radius angle at a given redshift. The calculation
+    is based on the angular diameter distance, which is dependent on the adopted
+    cosmological model. This is particularly useful in cosmological simulations and
+    observations where the physical scale of structures is inferred from angular
+    measurements.
+
+    :param radius_rad: The half cone angle in radians.
+    :param z: The redshift at which the physical area is calculated.
+    :param cosmo: The astropy cosmology instance used for the conversion.
+    :type radius_rad: float
+    :type z: float
+    :type cosmo: astropy.cosmology instance
+    :return: The physical area in square megaparsecs (Mpc^2) for the given cone radius
+        and redshift.
+    :rtype: float :note: The calculation incorporates the angular diameter distance,
+        highlighting the interplay between angular measurements and physical scales in
+        an expanding universe.
+    """
+
+    physical_radius = cosmo.angular_diameter_distance(z) * radius_rad  # Mpc
+    area_physical = np.pi * physical_radius**2
+    return area_physical  # in Mpc2
+
+
 def downsample_passband(
     passband,
     output_delta_wavelength,
@@ -944,52 +993,3 @@ def convert_passband_to_nm(
     output_passband = passband.copy()
     output_passband[0] = np.asarray(passband[0][:]) * wavelength_ratio
     return output_passband
-
-
-def get_value_if_quantity(variable):
-    """Extracts the numerical value from an astropy Quantity object or returns the input
-    if not a Quantity.
-
-    This function checks if the input variable is an instance of an astropy Quantity. If
-    it is, the function extracts and returns the numerical value of the Quantity. If the
-    input is not a Quantity, it returns the input variable unchanged.
-
-    :param variable: The variable to be checked and possibly converted. Can be an
-        astropy Quantity or any other data type.
-    :type variable: Quantity or any
-    :return: The numerical value of the Quantity if the input is a Quantity; otherwise,
-        the input variable itself.
-    :rtype: float or any
-    """
-    if isinstance(variable, Quantity):
-        return variable.value
-    else:
-        return variable
-
-
-def cone_radius_angle_to_physical_area(radius_rad, z, cosmo):
-    """Convert cone radius angle to physical area at a specified redshift.
-
-    This function computes the physical area, in square megaparsecs (Mpc^2),
-    corresponding to a specified cone radius angle at a given redshift. The calculation
-    is based on the angular diameter distance, which is dependent on the adopted
-    cosmological model. This is particularly useful in cosmological simulations and
-    observations where the physical scale of structures is inferred from angular
-    measurements.
-
-    :param radius_rad: The half cone angle in radians.
-    :param z: The redshift at which the physical area is calculated.
-    :param cosmo: The astropy cosmology instance used for the conversion.
-    :type radius_rad: float
-    :type z: float
-    :type cosmo: astropy.cosmology instance
-    :return: The physical area in square megaparsecs (Mpc^2) for the given cone radius
-        and redshift.
-    :rtype: float :note: The calculation incorporates the angular diameter distance,
-        highlighting the interplay between angular measurements and physical scales in
-        an expanding universe.
-    """
-
-    physical_radius = cosmo.angular_diameter_distance(z) * radius_rad  # Mpc
-    area_physical = np.pi * physical_radius**2
-    return area_physical  # in Mpc2
