@@ -27,20 +27,19 @@ class SNeLightcone(object):
         self._time_interval = time_interval
 
         sne_rate = SNIaRate(self._cosmo, self._input_redshifts[-1])
-        h = (self._cosmo.H(0).to_value()/100)
+        h = self._cosmo.H(0).to_value() / 100
 
         self.density = (
             self.convert_density(sne_rate.calculate_SNIa_rate(self._input_redshifts))
-            ) / h
+        ) / h
 
     def convert_density(self, density):
         """Converts SN Ia comoving densities from [yr^(-1)Mpc^(-3)] to have the desired
         time unit.
 
         :param density: initial comoving density of SN Ia [yr^(-1)Mpc^(-3)]
-
         :return: SN Ia comoving density with the desired time unit [day^(-1)Mpc^(-3),
-        hr^(-1)Mpc^(-3), etc.]
+            hr^(-1)Mpc^(-3), etc.]
         """
         time_conversion = (1 * units.year).to(self._time_interval.unit)
         converted_density = density / time_conversion * self._time_interval.value
