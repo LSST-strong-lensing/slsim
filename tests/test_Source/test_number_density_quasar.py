@@ -1,4 +1,4 @@
-from slsim.Sources.QuasarCatalog.number_density_quasar import QuasarRate  
+from slsim.Sources.QuasarCatalog.number_density_quasar import QuasarRate
 import numpy as np
 from scipy.interpolate import interp1d
 from scipy.stats import ks_2samp
@@ -6,12 +6,21 @@ import matplotlib.pyplot as plt
 from astropy.table import Table
 import pytest
 
+
 class TestQuasarRate:
     """Class to test the QuasarRate class."""
 
     def setup_method(self):
         """Setup the QuasarRate instance before each test method."""
-        self.quasar_rate = QuasarRate(h=0.70, zeta=2.98, xi=4.05, z_star=1.60, alpha=-3.31, beta=-1.45, phi_star=5.34e-6 * (0.70**3))  # Ensure parameters match those used in tests
+        self.quasar_rate = QuasarRate(
+            h=0.70,
+            zeta=2.98,
+            xi=4.05,
+            z_star=1.60,
+            alpha=-3.31,
+            beta=-1.45,
+            phi_star=5.34e-6 * (0.70**3),
+        )  # Ensure parameters match those used in tests
 
     def test_M_star(self):
         # Test case 1: Regular case
@@ -21,8 +30,13 @@ class TestQuasarRate:
         np.testing.assert_almost_equal(m_star_calc, expected_value, decimal=3)
 
         # Test case 2: Edge case where the denominator should be zero
-        self.quasar_rate.xi = -1000  # Using a large negative value for xi to ensure the denominator is zero
-        with pytest.raises(ValueError, match="Encountered zero denominator in M_star calculation. Check input values."):
+        self.quasar_rate.xi = (
+            -1000
+        )  # Using a large negative value for xi to ensure the denominator is zero
+        with pytest.raises(
+            ValueError,
+            match="Encountered zero denominator in M_star calculation. Check input values.",
+        ):
             self.quasar_rate.M_star(z_value)
 
     def test_dPhi_dM(self):
@@ -73,19 +87,31 @@ class TestQuasarRate:
 
         # Verify the output format
         assert isinstance(cdf_data, dict), "Output should be a dictionary"
-        assert set(cdf_data.keys()) == set(random_redshift_values), "Keys should match the input redshift values"
+        assert set(cdf_data.keys()) == set(
+            random_redshift_values
+        ), "Keys should match the input redshift values"
 
         for redshift, (sorted_M_values, cumulative_prob_norm) in cdf_data.items():
             # Check that sorted_M_values is a sorted version of M_values
-            assert np.array_equal(sorted_M_values, np.sort(M_values)), "M values should be sorted"
+            assert np.array_equal(
+                sorted_M_values, np.sort(M_values)
+            ), "M values should be sorted"
 
             # Check that cumulative_prob_norm is a proper cumulative distribution
-            assert np.all(cumulative_prob_norm >= 0) and np.all(cumulative_prob_norm <= 1), "Cumulative probabilities should be between 0 and 1"
-            assert np.isclose(cumulative_prob_norm[-1], 1.0), "Cumulative probabilities should end at 1"
+            assert np.all(cumulative_prob_norm >= 0) and np.all(
+                cumulative_prob_norm <= 1
+            ), "Cumulative probabilities should be between 0 and 1"
+            assert np.isclose(
+                cumulative_prob_norm[-1], 1.0
+            ), "Cumulative probabilities should end at 1"
 
             # Check that the length of the arrays match
-            assert len(sorted_M_values) == len(M_values), "Sorted M values should have the same length as input M values"
-            assert len(cumulative_prob_norm) == len(M_values), "Cumulative probabilities should have the same length as input M values"
+            assert len(sorted_M_values) == len(
+                M_values
+            ), "Sorted M values should have the same length as input M values"
+            assert len(cumulative_prob_norm) == len(
+                M_values
+            ), "Cumulative probabilities should have the same length as input M values"
 
     def test_inverse_cdf_fits_for_redshifts(self):
         # Generate some random redshift values and M values
@@ -94,7 +120,9 @@ class TestQuasarRate:
         M_values = np.random.uniform(-30, -20, size=1000)
 
         # Generate inverse CDF functions for the random redshifts
-        inverse_cdf_dict = self.quasar_rate.inverse_cdf_fits_for_redshifts(M_values, random_redshift_values)
+        inverse_cdf_dict = self.quasar_rate.inverse_cdf_fits_for_redshifts(
+            M_values, random_redshift_values
+        )
 
         # Draw samples from each inverse CDF and create histograms
         num_samples = 10000
@@ -114,22 +142,35 @@ class TestQuasarRate:
 
             # Plot the CDF
             M_values_sorted = np.sort(M_values)
-            cumulative_probabilities = np.cumsum([self.quasar_rate.dPhi_dM(M, z_value) for M in M_values_sorted])
-            cumulative_prob_norm = cumulative_probabilities / max(cumulative_probabilities)
-            axs[i, 1].plot(M_values_sorted, cumulative_prob_norm, label=f"CDF for z={z_value}", color="r")
+            cumulative_probabilities = np.cumsum(
+                [self.quasar_rate.dPhi_dM(M, z_value) for M in M_values_sorted]
+            )
+            cumulative_prob_norm = cumulative_probabilities / max(
+                cumulative_probabilities
+            )
+            axs[i, 1].plot(
+                M_values_sorted,
+                cumulative_prob_norm,
+                label=f"CDF for z={z_value}",
+                color="r",
+            )
             axs[i, 1].legend(loc="lower right")
             axs[i, 1].set_title(f"CDF plot for z={z_value}")
 
             # Perform KS test to compare histogram with CDF
             _, p_value = ks_2samp(sample_results[z_value], cumulative_prob_norm)
-            assert p_value < 0.05, f"KS Test failed for z={z_value}: p-value = {p_value}"
+            assert (
+                p_value < 0.05
+            ), f"KS Test failed for z={z_value}: p-value = {p_value}"
 
     def test_quasar_sample(self):
         # Generate some random redshift values and inverse CDF functions
         np.random.seed(42)
         random_redshift_values = np.random.uniform(0.1, 5.0, size=5)
         M_values = np.random.uniform(-30, -20, size=1000)
-        inverse_cdf_dict = self.quasar_rate.inverse_cdf_fits_for_redshifts(M_values, random_redshift_values)
+        inverse_cdf_dict = self.quasar_rate.inverse_cdf_fits_for_redshifts(
+            M_values, random_redshift_values
+        )
 
         # Call the function under test
         table = self.quasar_rate.quasar_sample(random_redshift_values, M_values)
