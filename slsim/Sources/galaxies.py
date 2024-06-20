@@ -104,13 +104,21 @@ class Galaxies(SourcePopBase):
         self._num_select = len(self._galaxy_select)
         self.list_type = list_type
 
+    @property
     def source_number(self):
         """Number of sources registered (within given area on the sky)
 
         :return: number of sources
         """
-        number = self.n
-        return number
+        return self.n
+
+    @property
+    def source_number_selected(self):
+        """Number of sources selected (within given area on the sky)
+
+        :return: number of sources passing the selection criteria
+        """
+        return self._num_select
 
     def draw_source(self):
         """Choose source at random.

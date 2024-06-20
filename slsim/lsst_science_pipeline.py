@@ -960,6 +960,7 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform:
         coadd, exposure and variance maps.
 
         The cutout size is specified by cutout_size during initialisation.
+
         :return: 1) Full coadd image, 2) full exposure map image (in units of N.
             exposures), 3) full variance map image 4) list of cutout bounding boxes, 5)
             list of cutout centres
@@ -1004,6 +1005,7 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform:
 
         These arrays are cropped to the specified size, with the exception of the PSF
         array, which is always 57x57.
+
         :return: 1) list of cutouts, 2) list of exposure maps, 3) list of PSF arrays, 4)
             list of variance maps, 5) uncropped coadd image, 6) uncropped variance map
         """
@@ -1044,6 +1046,7 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform:
 
         The cutouts are saved as 3D arrays, with the first dimension corresponding to
         the number of cutouts.
+
         :param foldername: str, name of the folder in which to save the files. The
             folder is generatred if it doesn't exist already.
         :param prefix: str, prefix for the file names (e.g. 0,1,2,3 if generating sets

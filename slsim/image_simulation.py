@@ -99,7 +99,7 @@ def sharp_image(
         kwargs_source_mag=kwargs_params.get("kwargs_source", None),
         kwargs_ps_mag=kwargs_params.get("kwargs_ps", None),
     )
-    kwargs_numerics = {"supersampling_factor": 1}
+    kwargs_numerics = {"supersampling_factor": 5}
     image_model = sim_api.image_model_class(kwargs_numerics)
     kwargs_lens = kwargs_params.get("kwargs_lens", None)
     image = image_model.image(

@@ -2,6 +2,7 @@ from slsim.Deflectors.velocity_dispersion import (
     schechter_vel_disp,
     schechter_velocity_dispersion_function,
     vel_disp_composite_model,
+    vel_disp_nfw_aperture,
 )
 import numpy as np
 import numpy.testing as npt
@@ -21,6 +22,22 @@ def test_vel_disp_composite_model():
         r, m_star, rs_star, m_halo, c_halo, cosmo, z_lens
     )
     npt.assert_almost_equal(vel_disp, 200, decimal=-1)
+
+
+def test_vel_disp_nfw_aperture():
+    m_halo = 10**15  # M_sun
+    c_halo = 5
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    r = 10
+    z_lens = 0.5
+    vel_disp = vel_disp_nfw_aperture(
+        r=r,
+        m_halo=m_halo,
+        c_halo=c_halo,
+        cosmo=cosmo,
+        z_lens=z_lens,
+    )
+    npt.assert_almost_equal(vel_disp, 1000, decimal=-1)
 
 
 def test_schechter_vdf():

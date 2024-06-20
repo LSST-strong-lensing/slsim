@@ -1,0 +1,52 @@
+fsky: 0.0001 deg2
+z_max: 5.00
+m_min: 1.0E+12
+m_max: 1.0E+16
+z_range: !numpy.linspace
+  start: 0
+  stop: $z_max
+  num: 100
+cosmology: !astropy.cosmology.default_cosmology.get []
+sigma8: 0.81
+ns: 0.96
+omega_m: 0.30966
+
+tables:
+  halos:
+        z: !slsim.Halos.halos.redshift_halos_array_from_comoving_density
+          redshift_list: $z_range
+          sky_area: $fsky
+          cosmology: $cosmology
+          m_min: $m_min
+          m_max: $m_max
+          resolution: 500
+          sigma8: $sigma8
+          ns: $ns
+          omega_m: $omega_m
+        mass: !slsim.Halos.halos.halo_mass_at_z
+          z: $halos.z
+          cosmology: $cosmology
+          m_min: $m_min
+          m_max: $m_max
+          resolution: 500
+          sigma8: $sigma8
+          ns: $ns
+          omega_m: $omega_m
+  mass_sheet_correction:
+         z: !slsim.Halos.halos.redshift_mass_sheet_correction_array_from_comoving_density
+           redshift_list: $z_range
+         kappa: !slsim.Halos.halos.kappa_ext_for_each_sheet
+            redshift_list: $mass_sheet_correction.z
+            cosmology: $cosmology
+            z_sigma_crit_source: $z_max
+            first_moment: !slsim.Halos.halos.expected_mass_at_redshift
+              z: $mass_sheet_correction.z
+              sky_area: $fsky
+              cosmology: $cosmology
+              m_min: $m_min
+              m_max: $m_max
+              resolution: 200
+              sigma8: $sigma8
+              ns: $ns
+              omega_m: $omega_m
+            sky_area: $fsky

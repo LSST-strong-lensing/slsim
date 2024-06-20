@@ -2,12 +2,19 @@ import os
 from skypy.pipeline import Pipeline
 import slsim
 import tempfile
+from astropy.cosmology import default_cosmology
 
 
 class SkyPyPipeline:
     """Class for skypy configuration."""
 
-    def __init__(self, skypy_config=None, sky_area=None, filters=None, cosmo=None):
+    def __init__(
+        self,
+        skypy_config=None,
+        sky_area=None,
+        filters=None,
+        cosmo=None,
+    ):
         """
         :param skypy_config: path to SkyPy configuration yaml file.
                             If None, uses 'data/SkyPy/lsst-like.yml'.
@@ -24,7 +31,13 @@ class SkyPyPipeline:
         path = os.path.dirname(slsim.__file__)
         module_path, _ = os.path.split(path)
         if skypy_config is None:
+            skypy_config = os.path.join(
+                module_path, "data/SkyPy/lsst-like_triple_SF.yml"
+            )
+        elif skypy_config == "lsst_like_old":
             skypy_config = os.path.join(module_path, "data/SkyPy/lsst-like.yml")
+        else:
+            skypy_config = skypy_config
 
         if sky_area is None and filters is None and cosmo is None:
             self._pipeline = Pipeline.read(skypy_config)
@@ -39,39 +52,44 @@ class SkyPyPipeline:
                 content = content.replace(old_fsky, new_fsky)
 
             if cosmo is not None:
-                cosmology_dict = cosmo.to_format("mapping")
+                if cosmo is default_cosmology.get():
+                    pass
+                else:
+                    cosmology_dict = cosmo.to_format("mapping")
 
-                cosmology_class = str(cosmology_dict.pop("cosmology", None))
-                cosmology_class_str = cosmology_class.replace("<class '", "").replace(
-                    "'>", ""
-                )
+                    cosmology_class = str(cosmology_dict.pop("cosmology", None))
+                    cosmology_class_str = cosmology_class.replace(
+                        "<class '", ""
+                    ).replace("'>", "")
 
-                cosmology_dict.pop("cosmology", None)
+                    cosmology_dict.pop("cosmology", None)
 
-                if "meta" in cosmology_dict and cosmology_dict["meta"] not in [
-                    "mapping",
-                    None,
-                ]:
-                    cosmology_dict.pop("meta", None)
-                # Reason: From Astropy:'meta:mapping or None (optional, keyword-only)'
-                # However, the dict will read out as meta: OrderedDict()
-                # which may raised error.
+                    if "meta" in cosmology_dict and cosmology_dict["meta"] not in [
+                        "mapping",
+                        None,
+                    ]:
+                        cosmology_dict.pop("meta", None)
+                    # Reason: From Astropy:'meta:mapping or None (optional, keyword-only)'
+                    # However, the dict will read out as meta: OrderedDict()
+                    # which may raised error.
 
-                cosmology_dict = {
-                    k: v for k, v in cosmology_dict.items() if v is not None
-                }
+                    cosmology_dict = {
+                        k: v for k, v in cosmology_dict.items() if v is not None
+                    }
 
-                cosmology_params_list = []
-                for key, value in cosmology_dict.items():
-                    if hasattr(value, "value"):
-                        value = value.value
-                    cosmology_params_list.append(f"    {key}: {value}")
+                    cosmology_params_list = []
+                    for key, value in cosmology_dict.items():
+                        if hasattr(value, "value"):
+                            value = value.value
+                        cosmology_params_list.append(f"    {key}: {value}")
 
-                cosmology_params_str = "\n".join(cosmology_params_list)
+                    cosmology_params_str = "\n".join(cosmology_params_list)
 
-                old_cosmo = "cosmology: !astropy.cosmology.default_cosmology.get []"
-                new_cosmo = f"cosmology: !{cosmology_class_str}\n{cosmology_params_str}"
-                content = content.replace(old_cosmo, new_cosmo)
+                    old_cosmo = "cosmology: !astropy.cosmology.default_cosmology.get []"
+                    new_cosmo = (
+                        f"cosmology: !{cosmology_class_str}\n{cosmology_params_str}"
+                    )
+                    content = content.replace(old_cosmo, new_cosmo)
 
             with tempfile.NamedTemporaryFile(
                 mode="w", delete=False, suffix=".yml"
