@@ -445,10 +445,9 @@ class Lens(LensedSystemBase):
                 raise ValueError("The input variable lensed cannot be False while the"
                                   "the input variable molet is True.")
             else:
-                return self.point_source_magnitude_molet(band=band,
-                                                                       time=time)
+                return self.point_source_magnitude_molet(band=band, time=time)
         else:
-            return self._point_source_magnitude(self, band, lensed=lensed, time=time)
+            return self._point_source_magnitude(band=band, lensed=lensed, time=time)
         
     def _point_source_magnitude(self, band, lensed=False, time=None):
         """Point source magnitude, either unlensed (single value) or lensed (array) with
