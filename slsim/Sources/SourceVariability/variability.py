@@ -73,7 +73,7 @@ class Variability(object):
             self._model = light_curve_class.magnitude
 
         elif self.variability_model == "lamppost_reprocessed":
-            self.parse_kwargs_for_lamppost_reprocessed_model()
+            parse_kwargs_for_lamppost_reprocessed_model(self)
 
             self.accretion_disk_reprocessor = AccretionDiskReprocessing(
                 "lamppost", **self.agn_kwargs
@@ -105,7 +105,7 @@ class Variability(object):
                     **self.signal_kwargs
                 )
 
-            light_curve = self.reprocess_with_lamppost_model()
+            light_curve = reprocess_with_lamppost_model(self)
             light_curve_class = LightCurveInterpolation(light_curve=light_curve)
             self._model = light_curve_class.magnitude
 
