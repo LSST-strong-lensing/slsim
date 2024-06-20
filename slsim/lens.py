@@ -11,8 +11,6 @@ from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
 from slsim.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
 from lenstronomy.Util import util, data_util
 from slsim.lensed_system_base import LensedSystemBase
-from slsim.Sources.SourceVariability.light_curve_interpolation import \
-    LightCurveInterpolation
 from slsim.Util.param_util import function_or_dictionary
 import warnings
 
