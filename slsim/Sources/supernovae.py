@@ -103,9 +103,9 @@ class Supernova(sncosmo.Model):
         :return: magnitude of source
         """
         minphase = self.source.minphase()
-        """
-        mag_at_minphase = self.bandmag(band, zpsys, minphase)
-        time = np.atleast_1d(time)
+        """mag_at_minphase = self.bandmag(band, zpsys, minphase) time =
+        np.atleast_1d(time)
+
         for i in range(np.size(time)):
             if time[i] < minphase - 20:
                 time[i] = minphase - 20
