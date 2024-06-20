@@ -61,7 +61,7 @@ class Supernova(sncosmo.Model):
         :param mag_zpsys: Optional, AB or Vega (AB default)
         :type mag_zpsys: str
         :param cosmo: Cosmology for absolute magnitude
-        :type cosmo: `~astropy.cosmology'
+        :type cosmo: `~astropy.cosmology`
         """
 
         self._sn_type = sn_type
