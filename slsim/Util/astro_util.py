@@ -6,6 +6,7 @@ from slsim.Util.param_util import (
     amplitude_to_magnitude,
     magnitude_to_amplitude,
 )
+from astropy.units.quantity import Quantity
 
 from speclite.filters import (
     load_filter,
@@ -378,6 +379,52 @@ def calculate_mean_time_lag(response_function):
         np.linspace(0, len(response_function) - 1, len(response_function))
         * response_function
     ) / np.nansum(response_function)
+
+
+def calculate_accretion_disk_emission(
+    r_out,
+    r_resolution,
+    inclination_angle,
+    rest_frame_wavelength_in_nanometers,
+    black_hole_mass_exponent,
+    black_hole_spin,
+    eddington_ratio,
+):
+    """This calculates the emission of the accretion disk due to black body radiation.
+    This emission is calculated by summing over all individual pixels.
+
+    :param r_out: The maximum radial value of the accretion disk. This typically can be
+        chosen as 10^3 to 10^5 [R_g].
+    :param r_resolution: The number of points between r = 0 and r = r_out. The final map
+        will be shape (2 * r_resolution), (2 * r_resolution). Higher resolution leads to
+        longer calculations but smoother response functions.
+    :param inclination_angle: The tilt of the accretion disk with respect to the
+        observer in [degrees]. Zero degrees is face on, 90 degrees is edge on.
+    :param rest_frame_wavelength_in_nanometers: Wavelength in local rest frame in
+        [nanometers].
+    :param black_hole_mass_exponent: The log of the black hole mass normalized by the
+        mass of the sun; black_hole_mass_exponent = log_10(black_hole_mass / mass_sun).
+        Typical AGN have an exponent ranging from 6 to 10.
+    :param black_hole_spin: The dimensionless spin parameter of the black hole, where
+        the spinless case (spin = 0) corresponds to a Schwarzschild black hole. Positive
+        spin represents the accretion disk's angular momentum is aligned with the black
+        hole's spin, and negative spin represents retrograde accretion flow.
+    :param eddington_ratio: The desired Eddington ratio defined as a fraction of
+        bolometric luminosity / Eddington luminosity.
+    :return: The normalized response of the accretion disk as a function of time lag in
+        units [R_g / c].
+    """
+    radial_map = create_radial_map(r_out, r_resolution, inclination_angle)
+
+    temperature_map = thin_disk_temperature_profile(
+        radial_map, black_hole_spin, black_hole_mass_exponent, eddington_ratio
+    )
+
+    temperature_map *= radial_map < r_out
+
+    emission_map = planck_law(temperature_map, rest_frame_wavelength_in_nanometers)
+
+    return np.nansum(emission_map)
 
 
 def calculate_accretion_disk_response_function(
@@ -897,3 +944,52 @@ def convert_passband_to_nm(
     output_passband = passband.copy()
     output_passband[0] = np.asarray(passband[0][:]) * wavelength_ratio
     return output_passband
+
+
+def get_value_if_quantity(variable):
+    """Extracts the numerical value from an astropy Quantity object or returns the input
+    if not a Quantity.
+
+    This function checks if the input variable is an instance of an astropy Quantity. If
+    it is, the function extracts and returns the numerical value of the Quantity. If the
+    input is not a Quantity, it returns the input variable unchanged.
+
+    :param variable: The variable to be checked and possibly converted. Can be an
+        astropy Quantity or any other data type.
+    :type variable: Quantity or any
+    :return: The numerical value of the Quantity if the input is a Quantity; otherwise,
+        the input variable itself.
+    :rtype: float or any
+    """
+    if isinstance(variable, Quantity):
+        return variable.value
+    else:
+        return variable
+
+
+def cone_radius_angle_to_physical_area(radius_rad, z, cosmo):
+    """Convert cone radius angle to physical area at a specified redshift.
+
+    This function computes the physical area, in square megaparsecs (Mpc^2),
+    corresponding to a specified cone radius angle at a given redshift. The calculation
+    is based on the angular diameter distance, which is dependent on the adopted
+    cosmological model. This is particularly useful in cosmological simulations and
+    observations where the physical scale of structures is inferred from angular
+    measurements.
+
+    :param radius_rad: The half cone angle in radians.
+    :param z: The redshift at which the physical area is calculated.
+    :param cosmo: The astropy cosmology instance used for the conversion.
+    :type radius_rad: float
+    :type z: float
+    :type cosmo: astropy.cosmology instance
+    :return: The physical area in square megaparsecs (Mpc^2) for the given cone radius
+        and redshift.
+    :rtype: float :note: The calculation incorporates the angular diameter distance,
+        highlighting the interplay between angular measurements and physical scales in
+        an expanding universe.
+    """
+
+    physical_radius = cosmo.angular_diameter_distance(z) * radius_rad  # Mpc
+    area_physical = np.pi * physical_radius**2
+    return area_physical  # in Mpc2

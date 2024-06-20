@@ -18,6 +18,7 @@ from slsim.Util.astro_util import (
     calculate_geometric_contribution_to_lamppost_model,
     calculate_dt_dlx,
     calculate_mean_time_lag,
+    calculate_accretion_disk_emission,
     calculate_accretion_disk_response_function,
     define_bending_power_law_psd,
     define_frequencies,
@@ -253,6 +254,50 @@ def test_calculate_mean_time_lag():
     response_function = [0, 1, 2, 3, 4]
     expected_value = (0 + 1 + 4 + 9 + 16) / (0 + 1 + 2 + 3 + 4)
     assert calculate_mean_time_lag(response_function) == expected_value
+
+
+def test_calculate_accretion_disk_emission():
+    # define some simple accretion disk parameters
+    r_out = 100
+    r_resolution = 100
+    inclination_angle = 10
+    rest_frame_wavelength_in_nm = 400
+    black_hole_mass_exponent = 7.0
+    black_hole_spin = 0.7
+    eddington_ratio = 0.05
+
+    emission_1 = calculate_accretion_disk_emission(
+        r_out,
+        r_resolution,
+        inclination_angle,
+        rest_frame_wavelength_in_nm,
+        black_hole_mass_exponent,
+        black_hole_spin,
+        eddington_ratio,
+    )
+    emission_2 = calculate_accretion_disk_emission(
+        r_out,
+        r_resolution,
+        inclination_angle,
+        rest_frame_wavelength_in_nm,
+        black_hole_mass_exponent,
+        black_hole_spin,
+        eddington_ratio * 2,
+    )
+    emission_3 = calculate_accretion_disk_emission(
+        r_out * 2,
+        r_resolution * 2,
+        inclination_angle,
+        rest_frame_wavelength_in_nm,
+        black_hole_mass_exponent,
+        black_hole_spin,
+        eddington_ratio,
+    )
+
+    # assert that higher eddington ratio = more emission
+    assert emission_2 > emission_1
+    # assert that larger accretion disk = more emission
+    assert emission_3 > emission_1
 
 
 def test_calculate_accretion_disk_response_function():

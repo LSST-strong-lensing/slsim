@@ -1,6 +1,7 @@
 import numpy as np
 import astropy.constants as const
 import astropy.units as u
+from astropy import cosmology
 from scipy import signal, interpolate
 from slsim.Util.astro_util import (
     calculate_gravitational_radius,
@@ -8,9 +9,17 @@ from slsim.Util.astro_util import (
     downsample_passband,
     bring_passband_to_source_plane,
     convert_passband_to_nm,
+    calculate_accretion_disk_emission,
 )
 from slsim.Sources.SourceVariability.light_curve_interpolation import (
     LightCurveInterpolation,
+)
+from speclite.filters import (
+    load_filter,
+)
+from slsim.Util.param_util import (
+    magnitude_to_amplitude,
+    amplitude_to_magnitude,
 )
 
 
@@ -256,6 +265,79 @@ class AccretionDiskReprocessing(object):
             reprocessed_signal /= normalization
 
         return reprocessed_signal[: len(self.time_array)]
+
+    def determine_agn_luminosity_from_i_band_luminosity(
+        self,
+        i_band_magnitude,
+        redshift,
+        mag_zero_point,
+        cosmo=cosmology.FlatLambdaCDM(H0=70, Om0=0.3),
+        band=None,
+        observer_frame_wavelength_in_nm=None,
+    ):
+        """Takes in the i band luminosity of the AGN and defines the expected magnitude
+        at other bands or wavelengths based on black body radiation. Speclite bands will
+        be calculated at their effective wavelength.
+
+        :param i_band_magnitude: Float representing magnitude of i band
+        :param redshift: Float representing redshift of AGN
+        :param cosmo: Astropy cosmology object used to calculate distances
+        :param bands: Float representing a speclite filter
+        :param wavelengths: Float representing wavlength in nm.
+        """
+        i_band_filter = load_filter("lsst2023-i")
+        i_band_wavelength = (i_band_filter.effective_wavelength).to(u.nm)
+        source_plane_i_band_wavelength = i_band_wavelength / (1 + redshift)
+        luminosity_distance = cosmo.luminosity_distance(redshift)
+        obs_plane_i_band_flux = magnitude_to_amplitude(i_band_magnitude, mag_zero_point)
+        source_plane_i_band_flux = luminosity_distance**2 * obs_plane_i_band_flux
+        theoretical_i_band_flux = calculate_accretion_disk_emission(
+            self.kwargs_model["r_out"],
+            self.kwargs_model["r_resolution"],
+            self.kwargs_model["inclination_angle"],
+            source_plane_i_band_wavelength,
+            self.kwargs_model["black_hole_mass_exponent"],
+            self.kwargs_model["black_hole_spin"],
+            self.kwargs_model["eddington_ratio"],
+        )
+        flux_adjustment_ratio = source_plane_i_band_flux / theoretical_i_band_flux
+        if band is not None:
+            band_wavelength = (load_filter(band).effective_wavelength).to(u.nm) / (
+                1 + redshift
+            )
+            cur_theoretical_flux = (
+                calculate_accretion_disk_emission(
+                    self.kwargs_model["r_out"],
+                    self.kwargs_model["r_resolution"],
+                    self.kwargs_model["inclination_angle"],
+                    band_wavelength,
+                    self.kwargs_model["black_hole_mass_exponent"],
+                    self.kwargs_model["black_hole_spin"],
+                    self.kwargs_model["eddington_ratio"],
+                )
+                * flux_adjustment_ratio
+            )
+            cur_obs_flux = cur_theoretical_flux / luminosity_distance**2
+            output_magnitude = amplitude_to_magnitude(cur_obs_flux, mag_zero_point)
+        elif observer_frame_wavelength_in_nm is not None:
+            source_plane_wavelength = observer_frame_wavelength_in_nm / (1 + redshift)
+            cur_theoretical_flux = (
+                calculate_accretion_disk_emission(
+                    self.kwargs_model["r_out"],
+                    self.kwargs_model["r_resolution"],
+                    self.kwargs_model["inclination_angle"],
+                    source_plane_wavelength,
+                    self.kwargs_model["black_hole_mass_exponent"],
+                    self.kwargs_model["black_hole_spin"],
+                    self.kwargs_model["eddington_ratio"],
+                )
+                * flux_adjustment_ratio
+            )
+            cur_obs_flux = cur_theoretical_flux / luminosity_distance**2
+            output_magnitude = amplitude_to_magnitude(cur_obs_flux, mag_zero_point)
+        else:
+            raise ValueError("Please define a band or wavelength")
+        return output_magnitude
 
 
 def lamppost_model(

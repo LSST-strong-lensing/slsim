@@ -242,3 +242,35 @@ class TestAccretionDiskReprocessing:
             delta_wavelength=5,
             passband_wavelength_unit=u.angstrom,
         )
+
+    def test_determine_agn_luminosity_from_i_band_luminosity(self):
+        kwargs_agn_model = {"black_hole_mass_exponent": 9.5}
+        reprocessor = AccretionDiskReprocessing("lamppost", **kwargs_agn_model)
+
+        i_band_magnitude = 20
+        redshift = 1
+        mag_zero_point = 0
+        band = "lsst2023-r"
+        wavelength = 700
+
+        reprocessor.determine_agn_luminosity_from_i_band_luminosity(
+            i_band_magnitude, redshift, mag_zero_point, band=band
+        )
+        reprocessor.determine_agn_luminosity_from_i_band_luminosity(
+            i_band_magnitude,
+            redshift,
+            mag_zero_point,
+            observer_frame_wavelength_in_nm=wavelength,
+        )
+
+        # test identiy
+        i_band_mag = reprocessor.determine_agn_luminosity_from_i_band_luminosity(
+            i_band_magnitude, redshift, mag_zero_point, band="lsst2023-i"
+        )
+        assert i_band_mag == 20
+
+        # test error
+        with pytest.raises(ValueError):
+            reprocessor.determine_agn_luminosity_from_i_band_luminosity(
+                i_band_magnitude, redshift, mag_zero_point
+            )
