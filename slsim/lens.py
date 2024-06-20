@@ -13,6 +13,7 @@ from lenstronomy.Util import util, data_util
 from slsim.lensed_system_base import LensedSystemBase
 from slsim.Sources.SourceVariability.light_curve_interpolation import \
     LightCurveInterpolation
+from slsim.Util.param_util import check_quantity
 import warnings
 
 
@@ -527,12 +528,35 @@ class Lens(LensedSystemBase):
         # TODO: do we create full light curves (and save it in cache) or call it each time
         
         #we can use this to get intrinsic brightness of a source at image observation 
-        # time.
-        source_profile = {"time":self.source.lightcurve_time, 
-                          "magnitude":self._point_source_magnitude(band=band, 
-                                    lensed=False, time=self.source.lightcurve_time)}
-        #using source profile, kappa, gamma, kappa_star, image_observed_time produce 
-        return 0
+        # time. Here, we are storing source profile as dictionary of observation time 
+        # and magnitude but need to decide what format molet needs. I checked with molet
+        #  and it says format should be in the form given below.
+        source_profile = [{"time":list(self.source.lightcurve_time), 
+                          "signal":list(self._point_source_magnitude(band=band, 
+                                    lensed=False, time=self.source.lightcurve_time))}]
+        #using source profile, kappa, gamma, kappa_star, image_observed_time molet 
+        # should return lightcurve of each images. The lightcurve can be a interpolated 
+        # function or a dictionary of observation time and magnitudes in specified band 
+        # as given below.
+        #This molet_output is temporary. Once we call molet, this will be actual molet 
+        # output.
+        molet_output = [{"time": list(self.source.lightcurve_time),
+                         "magnitude": np.lnspace(
+                             23, 34, len(self.source.lightcurve_time))}, 
+                         {"time": list(self.source.lightcurve_time),
+                         "magnitude": np.lnspace(
+                             24, 36, len(self.source.lightcurve_time))}]
+        # molet_output can be molet_output = [interp_lightcurve_image1, 
+        # interp_lightcurve_image2]
+        
+        #calls interpolated functions for each images and saves magnitudes at given
+        # observation time.
+        variable_magnitudes = []
+        for i in range(len(molet_output)):
+            variable_magnitudes.append(check_quantity(molet_output[i])(
+                image_observed_times[i]))
+        return np.array(variable_magnitudes)
+        
 
     def extended_source_magnitude(self, band, lensed=False):
         """Unlensed apparent magnitude of the extended source for a given band (assumes
