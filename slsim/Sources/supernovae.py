@@ -103,22 +103,10 @@ class Supernova(sncosmo.Model):
         :return: magnitude of source
         """
         minphase = self.source.minphase()
-        """
-        mag_at_minphase = self.bandmag(band, zpsys, minphase)
-        time = np.atleast_1d(time)
-        for i in range(np.size(time)):
-            if time[i] < minphase - 20:
-                time[i] = minphase - 20
-
-        x = np.array([time[0], minphase])
-        y = np.array([mag_at_minphase + 10, mag_at_minphase])
-        xnew = np.linspace(minphase - 20, minphase, 1000)
-        ynew = np.interp(xnew, x, y)
-        """
         if self._sn_type == "Ia":
             return self.bandmag(band, zpsys, time)
         else:
-            # This line is needed because type II supernovae lightcurves do not drop to
+            # This line is needed because non type Ia supernovae lightcurves do not drop to
             # zero flux as they should
             return np.where(time > minphase, self.bandmag(band, zpsys, time), 10**8)
 
