@@ -429,6 +429,7 @@ class Lens(LensedSystemBase):
                                molet=False):
         """Point source magnitude, either unlensed (single value) or lensed (array) with
         macro- and micro model magnifications.
+
         :param band: imaging band
         :type band: string
         :param lensed: if True, returns the lensed magnified magnitude
