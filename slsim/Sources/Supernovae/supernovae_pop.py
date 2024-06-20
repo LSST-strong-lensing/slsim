@@ -21,7 +21,7 @@ def calculate_star_formation_rate(z):
 def delay_time_distribution(t_d):
     """Calculates the power-law constraint on time delay. (Eq 14 - Oguri and Marshall 2010)
 
-    :param t_d: time delay (t_d>=0)
+    :param t_d: time delay (t_d>=0) in [Gyr]
 
     :return: constrained time delay
     """
