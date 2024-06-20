@@ -219,7 +219,7 @@ def eccentricity(q):
     return (1 - q) / (1 + q)
 
 
-def check_quantity(quantity):
+def function_or_dictionary(quantity):
     """This function checks whether a quantity is a interpolated function or a 
      dictionary. If the quantity is an interpolated function, it returns the quantity 
      and if it is a dictionary, it creates a interpolated function between two 
