@@ -881,6 +881,7 @@ def cone_radius_angle_to_physical_area(radius_rad, z, cosmo):
     area_physical = np.pi * physical_radius**2
     return area_physical  # in Mpc2
 
+
 def downsample_passband(
     passband,
     output_delta_wavelength,
