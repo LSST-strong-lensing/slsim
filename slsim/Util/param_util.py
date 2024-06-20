@@ -220,15 +220,15 @@ def eccentricity(q):
 
 
 def function_or_dictionary(quantity):
-    """This function checks whether a quantity is a interpolated function or a 
-     dictionary. If the quantity is an interpolated function, it returns the quantity 
-     and if it is a dictionary, it creates a interpolated function between two 
-     different element of the dictionary.
+    """This function checks whether a quantity is a interpolated function or a
+    dictionary. If the quantity is an interpolated function, it returns the quantity and
+    if it is a dictionary, it creates a interpolated function between two different
+    element of the dictionary.
 
-     :param quantity: quantity that needs to be checked.
-     :return: interpolated function. If given quantity is a dictionary, first key is the
-       x-axis of the interpolation function and second key is the y-axis of the 
-       interpolation function.
+    :param quantity: quantity that needs to be checked.
+    :return: interpolated function. If given quantity is a dictionary, first key is the
+        x-axis of the interpolation function and second key is the y-axis of the
+        interpolation function.
     """
     if callable(quantity):
         interpolation_function = quantity
@@ -236,10 +236,11 @@ def function_or_dictionary(quantity):
         keys = list(quantity.keys())
         term1 = quantity[keys[0]]
         term2 = quantity[keys[1]]
-        if isinstance(term1, (list, np.ndarray)) and isinstance(term2,
-                                                        (list, np.ndarray)):
+        if isinstance(term1, (list, np.ndarray)) and isinstance(
+            term2, (list, np.ndarray)
+        ):
             if len(term1) == len(term2):
-                interpolation_function=interp1d(
+                interpolation_function = interp1d(
                     term1,
                     term2,
                     kind="linear",
@@ -247,9 +248,11 @@ def function_or_dictionary(quantity):
                     bounds_error=False,
                 )
             else:
-                raise ValueError(f"Length of {keys[0]} and {keys[1]} must be"
-                                 " the same.")
+                raise ValueError(
+                    f"Length of {keys[0]} and {keys[1]} must be" " the same."
+                )
     else:
-        raise ValueError("Input must be a callable or a dictionary with at list 2" 
-                         " specified keys")
+        raise ValueError(
+            "Input must be a callable or a dictionary with at list 2" " specified keys"
+        )
     return interpolation_function

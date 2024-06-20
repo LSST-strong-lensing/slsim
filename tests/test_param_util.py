@@ -14,7 +14,7 @@ from slsim.Util.param_util import (
     transformmatrix_to_pixelscale,
     magnitude_to_amplitude,
     amplitude_to_magnitude,
-    function_or_dictionary
+    function_or_dictionary,
 )
 from slsim.Sources.SourceVariability.variability import Variability
 import pytest
@@ -163,12 +163,14 @@ def test_magnitude_to_amplitude():
     assert low_mag == new_low_mag
     assert high_mag == new_high_mag
 
+
 def test_function_or_dictionary():
-    quantity = {"time": np.linspace(-20, 50, 100),
-                         "magnitude": np.linspace(
-                             23, 34, 100)}
-    x=np.linspace(10, 15, 100)
-    y=np.linspace(30, 40, 100)
+    quantity = {
+        "time": np.linspace(-20, 50, 100),
+        "magnitude": np.linspace(23, 34, 100),
+    }
+    x = np.linspace(10, 15, 100)
+    y = np.linspace(30, 40, 100)
     interpolation_function = interp1d(x, y)
     result = function_or_dictionary(quantity)
     result2 = function_or_dictionary(interpolation_function)
