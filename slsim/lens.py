@@ -545,7 +545,7 @@ class Lens(LensedSystemBase):
         # as given below.
         # This molet_output is temporary. Once we call molet, this will be actual molet
         # output.
-        molet_output = [
+        self.molet_output = [
             {
                 "time": list(self.source.lightcurve_time),
                 "magnitude": np.lnspace(23, 34, len(self.source.lightcurve_time)),
@@ -561,9 +561,11 @@ class Lens(LensedSystemBase):
         # calls interpolated functions for each images and saves magnitudes at given
         # observation time.
         variable_magnitudes = []
-        for i in range(len(molet_output)):
+        # This is iteration through all images. Inside this, it checks whether 
+        # molet_output is a interpolated function or a dictionary.
+        for i in range(len(self.molet_output)):
             variable_magnitudes.append(
-                function_or_dictionary(molet_output[i])(image_observed_times[i])
+                function_or_dictionary(self.molet_output[i])(image_observed_times[i])
             )
         return np.array(variable_magnitudes)
 
