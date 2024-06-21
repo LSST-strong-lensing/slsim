@@ -64,20 +64,39 @@ class SupernovaeCatalog(object):
         galaxy_table_cut = galaxy_table[galaxy_table["z"] <= 0.9329]
         return galaxy_table_cut
 
-    def supernovae_catalog(self, host_galaxy=True):
-        """Generates supernovae lightcurves for each host galaxies.
+    def supernovae_catalog(self, redshift=None, host_galaxy=True):
+        """Generates supernovae lightcurves for given redshifts or from host galaxy
+        redshift.
 
         :param host_galaxy: kwargs to decide whether catalog should include host
-            galaxies or not.
-        :return: supernovae catalog
+            galaxies or not. True or False.
+        :return: Astropy Table of supernovae catalog containg redshift, lightcurves,
+            ra_off, dec_off, and host galaxy properties. If host_galaxy is set to False,
+            it returns catalog without host galaxy properties. Light curves are
+            generated using RandomizedSupernova class. Light curves are saved as an
+            array of observation time and array of corresponding magnitudes in specified
+            bands in different columns of the Table.
         """
-        host_galaxies = self.host_galaxy_catalog()
+        if host_galaxy is True:
+            host_galaxies = self.host_galaxy_catalog()
+        else:
+            host_galaxies = None
         time = []
         # Initialize a list attribute for each band in self.band_list
         for band in self.band_list:
             setattr(self, f"magnitude_{band}", [])
-
-        for z in host_galaxies["z"]:
+        if redshift is None:
+            if host_galaxy is True:
+                supernovae_redshift = host_galaxies["z"]
+            else:
+                raise ValueError(
+                    "host_galaxy should be True while redshift is None."
+                    "Either set host_galaxy to True or provide redshift list"
+                )
+        else:
+            supernovae_redshift = redshift
+        # generate lightcurve for each supernovae.
+        for z in supernovae_redshift:
             lightcurve_class = random_supernovae.RandomizedSupernova(
                 self.sn_type,
                 z,
@@ -95,7 +114,9 @@ class SupernovaeCatalog(object):
         lightcurve_data = {"MJD": time}
         for band in self.band_list:
             lightcurve_data["ps_mag_" + band] = getattr(self, f"magnitude_{band}")
+        # astropy table of supernovae lightcurves
         lightcurve_table = Table(lightcurve_data)
+        ## get ra_off and dec_off if host galaxy is true.
         if host_galaxy is True:
             ra_off, dec_off = self.supernovae_host_galaxy_offset(
                 len(host_galaxies["z"])
@@ -103,8 +124,9 @@ class SupernovaeCatalog(object):
             lightcurve_table["ra_off"] = ra_off
             lightcurve_table["dec_off"] = dec_off
             supernovae_table = hstack([lightcurve_table, host_galaxies])
+        ## only saves supernovae redshift and corresponding lightcurves
         else:
-            lightcurve_table["z"] = host_galaxies["z"]
+            lightcurve_table["z"] = redshift
             supernovae_table = lightcurve_table
         return supernovae_table
 

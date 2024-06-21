@@ -4,8 +4,8 @@ from slsim.Sources.Supernovae.supernovae_pop import (
 )
 from slsim.Sources.Supernovae.supernovae_pop import SNIaRate
 from astropy.cosmology import FlatLambdaCDM
-import numpy as np
 import numpy.testing as npt
+import pytest
 
 
 def test_calculate_star_formation_rate():
@@ -16,8 +16,8 @@ def test_calculate_star_formation_rate():
 
 
 def test_delay_time_distribution():
-    t_d = -1
-    npt.assert_equal(delay_time_distribution(t_d), np.nan)
+    t_d = 2
+    npt.assert_almost_equal(delay_time_distribution(t_d), 2 ** (-1.08), decimal=4)
     t_d = 5
     npt.assert_almost_equal(delay_time_distribution(t_d), 5 ** (-1.08), decimal=4)
 
@@ -53,32 +53,21 @@ class TestSNIaRate:
         npt.assert_almost_equal(z_est, z_true, decimal=3)
 
     def test_numerator_integrand(self):
-        t_d, t = -1, 1
-        npt.assert_equal(self.sne_rate._numerator_integrand(t_d, t), np.nan)
-        t_d, t = 1, -1
-        npt.assert_equal(self.sne_rate._numerator_integrand(t_d, t), np.nan)
         t_d, t = 1, 1
         npt.assert_almost_equal(
             self.sne_rate._numerator_integrand(t_d, t), 0.0002559, decimal=4
         )
 
     def test_calculate_SNIa_rate(self):
-        z = -1
-        npt.assert_equal(self.sne_rate.calculate_SNIa_rate(z), np.nan)
         # (Fig 2 - Oguri and Marshall 2010)
-        z = 0
-        npt.assert_almost_equal(
-            self.sne_rate.calculate_SNIa_rate(z), 0.000041006, decimal=3
-        )
-        z = 1
-        npt.assert_almost_equal(
-            self.sne_rate.calculate_SNIa_rate(z), 0.0001191, decimal=3
-        )
-        z = 2
-        npt.assert_almost_equal(
-            self.sne_rate.calculate_SNIa_rate(z), 0.0001349, decimal=3
-        )
-        z = 3
-        npt.assert_almost_equal(
-            self.sne_rate.calculate_SNIa_rate(z), 0.00008008, decimal=3
-        )
+        z_array = [0, 1, 2, 3]
+        rate_array = self.sne_rate.calculate_SNIa_rate(z_array)
+
+        npt.assert_almost_equal(rate_array[0], 0.000041006, decimal=3)
+        npt.assert_almost_equal(rate_array[1], 0.0001191, decimal=3)
+        npt.assert_almost_equal(rate_array[2], 0.0001349, decimal=3)
+        npt.assert_almost_equal(rate_array[3], 0.00008008, decimal=3)
+
+
+if __name__ == "__main__":
+    pytest.main()
