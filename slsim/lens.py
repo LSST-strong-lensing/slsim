@@ -561,7 +561,7 @@ class Lens(LensedSystemBase):
         # calls interpolated functions for each images and saves magnitudes at given
         # observation time.
         variable_magnitudes = []
-        # This is iteration through all images. Inside this, it checks whether 
+        # This is iteration through all images. Inside this, it checks whether
         # molet_output is a interpolated function or a dictionary.
         for i in range(len(self.molet_output)):
             variable_magnitudes.append(
