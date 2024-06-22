@@ -52,7 +52,7 @@ class TestSNeLightcone:
         test_density = self.sne_lightcone.density[0]
         npt.assert_almost_equal(test_density, 5.87137528e-05, decimal=4)
 
-    def test_return_supernovae_sample(self):
+    def test_supernovae_sample(self):
         # Observed SN Ia redshift locations using return_supernovae_sample()
         sample_output = self.sne_lightcone.supernovae_sample()
 
