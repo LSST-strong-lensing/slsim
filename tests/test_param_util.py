@@ -1,6 +1,7 @@
 import numpy as np
 import os
 from numpy import testing as npt
+from scipy.interpolate import interp1d
 from slsim.Util.param_util import (
     epsilon2e,
     e2epsilon,
@@ -13,6 +14,7 @@ from slsim.Util.param_util import (
     transformmatrix_to_pixelscale,
     magnitude_to_amplitude,
     amplitude_to_magnitude,
+    function_or_dictionary,
 )
 from slsim.Sources.SourceVariability.variability import Variability
 import pytest
@@ -160,6 +162,21 @@ def test_magnitude_to_amplitude():
     new_high_mag = amplitude_to_magnitude(high_flux, zero_point)
     assert low_mag == new_low_mag
     assert high_mag == new_high_mag
+
+
+def test_function_or_dictionary():
+    quantity = {
+        "time": np.linspace(-20, 50, 100),
+        "magnitude": np.linspace(23, 34, 100),
+    }
+    x = np.linspace(10, 15, 100)
+    y = np.linspace(30, 40, 100)
+    interpolation_function = interp1d(x, y)
+    result = function_or_dictionary(quantity)
+    result2 = function_or_dictionary(interpolation_function)
+    assert result(-20) == 23
+    assert result(50) == 34
+    assert result2(12) == interpolation_function(12)
 
 
 if __name__ == "__main__":
