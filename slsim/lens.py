@@ -496,20 +496,20 @@ class Lens(LensedSystemBase):
         """
         # Get image observed times
         image_observed_times = self.image_observer_times(time)
-        if not hasattr(self, '_molet_output'):
+        if not hasattr(self, "_molet_output"):
             self._molet_output = self._generate_molet_output(band, time, **kwargs_molet)
 
         # calls interpolated functions for each images and saves magnitudes at given
         # observation time.
         variable_magnitudes = []
-        # This is the iteration through all images. Inside this, it checks whether 
+        # This is the iteration through all images. Inside this, it checks whether
         # self._molet_output is an interpolated function or a dictionary.
         for i in range(len(self._molet_output)):
             variable_magnitudes.append(
                 function_or_dictionary(self._molet_output[i])(image_observed_times[i])
             )
         return np.array(variable_magnitudes)
-    
+
     def _generate_molet_output(self, band, time, **kwargs_molet):
         # coolest convention of lens model (or kappa, gamma, kappa_star)
         lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
@@ -531,17 +531,17 @@ class Lens(LensedSystemBase):
         # kappa: lensing convergence at image position
         # gamma: shear strength at image position
         # kappa_star: stellar convergence at image position
-        # image_observed_times: time of the source at the different images, not 
-        # correcting for redshifts, but for time delays. The time is relative to the 
+        # image_observed_times: time of the source at the different images, not
+        # correcting for redshifts, but for time delays. The time is relative to the
         # first arriving image.
         # band: photometric band, potentially changing to transmission curve
-        # kwargs_molet: additional (optional) dictionary of settings required by molet 
+        # kwargs_molet: additional (optional) dictionary of settings required by molet
         # that do not depend on the Lens() class
         # ===============
 
-        # TODO: in what format should be the 2d source profile be stored (as it is 
+        # TODO: in what format should be the 2d source profile be stored (as it is
         # time- and wavelength dependent)
-        # TODO: do we create full light curves (and save it in cache) or call it each 
+        # TODO: do we create full light curves (and save it in cache) or call it each
         # time
 
         # we can use this to get intrinsic brightness of a source at image observation
@@ -562,7 +562,7 @@ class Lens(LensedSystemBase):
         # should return lightcurve of each images. The lightcurve can be a interpolated
         # function or a dictionary of observation time and magnitudes in specified band
         # as given below.
-        # This molet_output is temporary. Once we call molet, this will be an actual 
+        # This molet_output is temporary. Once we call molet, this will be an actual
         # molet output.
         image_lightcurve_list = [
             {
