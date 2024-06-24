@@ -162,20 +162,14 @@ def set_defaults_halos(
     # Default values
     if m_min is None:
         m_min = 1.0e12
-        warnings.warn("No minimum mass provided, instead uses 1e10 Msun")
 
     if m_max is None:
         m_max = 1.0e14
-        warnings.warn("No maximum mass provided, instead uses 1e14 Msun")
 
     if resolution is None:
         resolution = 100
-        warnings.warn("No resolution provided, instead uses 100")
 
     if cosmology is None:
-        warnings.warn(
-            "No cosmology provided, instead uses astropy.cosmology import default_cosmology"
-        )
         from astropy.cosmology import default_cosmology
 
         cosmology = default_cosmology.get()
