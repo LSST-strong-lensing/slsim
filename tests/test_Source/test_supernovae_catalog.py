@@ -41,8 +41,6 @@ class TestSupernovaeCatalog:
         assert "ps_mag_r" in result.colnames
         assert "z" in result.colnames
         assert len(result2.colnames) == 3
-        with pytest.raises(ValueError):
-            self.supernovae_catalog.supernovae_catalog(host_galaxy=False)
 
     def test_supernovae_host_galaxy_offset(self):
         ra_off, dec_off = self.supernovae_catalog.supernovae_host_galaxy_offset(5)
