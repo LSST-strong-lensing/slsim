@@ -42,6 +42,7 @@ class Lens(LensedSystemBase):
         light_profile="single_sersic",
         lightcurve_time=None,
         los_config=None,
+        sn_modeldir=None,
     ):
         """
 
@@ -82,6 +83,8 @@ class Lens(LensedSystemBase):
         :type light_profile: str . Either "single_sersic" or "double_sersic" .
         :param lightcurve_time: observation time array for lightcurve in unit of days.
         :type lightcurve_time: array
+        :param sn_modeldir: Path to the directory containing supernova files
+        :type modeldir: str
         """
         super().__init__(
             source_dict=source_dict,
@@ -96,6 +99,7 @@ class Lens(LensedSystemBase):
             sn_type=sn_type,
             sn_absolute_mag_band=sn_absolute_mag_band,
             sn_absolute_zpsys=sn_absolute_zpsys,
+            sn_modeldir=sn_modeldir
         )
 
         self.cosmo = cosmo

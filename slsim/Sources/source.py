@@ -23,6 +23,7 @@ class Source(object):
         sn_absolute_zpsys=None,
         cosmo=None,
         lightcurve_time=None,
+        sn_modeldir = None
     ):
         """
         :param source_dict: Source properties
@@ -43,6 +44,8 @@ class Source(object):
         :type sn_absolute_zpsys: str
         :param lightcurve_time: observation time array for lightcurve in unit of days.
         :type lightcurve_time: array
+        :param sn_modeldir: Path to the directory containing supernova files
+        :type modeldir: str
         """
         self.source_dict = source_dict
         self.variability_model = variability_model
@@ -71,6 +74,7 @@ class Source(object):
                         absolute_mag_band=sn_absolute_mag_band,
                         mag_zpsys=sn_absolute_zpsys,
                         cosmo=cosmo,
+                        modeldir=sn_modeldir
                     )
                 for element in list(kwargs_variability):
                     # if lsst filter is being used
@@ -91,9 +95,8 @@ class Source(object):
                         provided_band = element
                         name = "ps_mag_" + element
                 times = lightcurve_time
-                magnitudes = lightcurve_class.get_apparent_magnitude(
-                    time=times, band=provided_band, zpsys=sn_absolute_zpsys
-                )
+                magnitudes = lightcurve_class.get_apparent_magnitude(time=times, 
+                                                                    band=provided_band)
                 new_column = Column([float(min(magnitudes))], name=name)
                 self._source_dict = Table(self.source_dict)
                 self._source_dict.add_column(new_column)
