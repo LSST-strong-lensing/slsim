@@ -38,7 +38,6 @@ class LensPop(LensedPopulationBase):
         sn_absolute_mag_band=None,
         sn_absolute_zpsys=None,
         los_config=None,
-        sn_modeldir=None
     ):
         """
 
@@ -90,8 +89,6 @@ class LensPop(LensedPopulationBase):
         :type sn_absolute_zpsys: str
         :param los_config: configuration for line of sight distribution
         :type los_config: LOSConfig instance
-        :param sn_modeldir: Path to the directory containing supernova files
-        :type modeldir: str
         """
         super().__init__(
             sky_area,
@@ -100,8 +97,6 @@ class LensPop(LensedPopulationBase):
             sn_type,
             sn_absolute_mag_band,
             sn_absolute_zpsys,
-            sn_modeldir
-            
         )
         if source_type == "galaxies" and kwargs_variability is not None:
             raise ValueError(
@@ -354,7 +349,6 @@ class LensPop(LensedPopulationBase):
                 light_profile=self._sources.light_profile,
                 lightcurve_time=self.lightcurve_time,
                 los_config=self.los_config,
-                sn_modeldir=self.sn_modeldir
             )
             if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens
@@ -442,7 +436,6 @@ class LensPop(LensedPopulationBase):
                         los_config=self.los_config,
                         light_profile=self._sources.light_profile,
                         lightcurve_time=self.lightcurve_time,
-                        sn_modeldir=self.sn_modeldir
                     )
                     # Check the validity of the lens system
                     if gg_lens.validity_test(**kwargs_lens_cuts):
