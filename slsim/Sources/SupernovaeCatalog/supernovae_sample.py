@@ -109,7 +109,6 @@ class SupernovaeCatalog(object):
                 self.absolute_mag_band,
                 self.mag_zpsys,
                 self.cosmo,
-                modeldir="C:/Users/Carly/Downloads/SALT3.NIR_WAVEEXT/",
             )
             time.append(self.lightcurve_time)
             for band in self.band_list:
