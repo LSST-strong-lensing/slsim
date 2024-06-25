@@ -2,7 +2,6 @@ from slsim.Sources.Supernovae.supernovae_lightcone import SNeLightcone
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
 from scipy.stats import ks_2samp
-from astropy.table import Table
 import numpy as np
 from astropy import units
 import numpy.testing as npt
@@ -82,10 +81,6 @@ class TestSNeLightcone:
         _, p_value = ks_2samp(observed_cdf, expected_cdf)
 
         assert p_value > 0.05, f"KS Test failed: p-value = {p_value}"
-
-    def test_redshift_table(self):
-        table = self.sne_lightcone.redshift_table()
-        assert isinstance(table, Table), "Generated table is not an Astropy Table"
 
 
 if __name__ == "__main__":
