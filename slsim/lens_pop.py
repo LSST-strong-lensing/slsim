@@ -91,7 +91,7 @@ class LensPop(LensedPopulationBase):
         :param los_config: configuration for line of sight distribution
         :type los_config: LOSConfig instance
         :param sn_modeldir: Path to the directory containing supernova files
-        :type modeldir: str
+        :type sn_modeldir: str
         """
         super().__init__(
             sky_area,
@@ -277,6 +277,8 @@ class LensPop(LensedPopulationBase):
                 for key in kwargs_variability:
                     if key.startswith("ps_mag_"):
                         suffixes.append(key.split("ps_mag_")[1])
+                    elif len(key) == 1:
+                        suffixes.append(key)
                 supernovae_catalog_class = SupernovaeCatalog(
                     sn_type=sn_type,
                     band_list=suffixes,
@@ -287,13 +289,14 @@ class LensPop(LensedPopulationBase):
                     cosmo=cosmo,
                     skypy_config=skypy_config,
                     sky_area=sky_area,
+                    sn_modeldir=sn_modeldir
                 )
                 if source_type == "supernovae":
                     redshift_sample = supernovae_catalog_class.host_galaxy_catalog()[
                         "z"
                     ]
                     supernovae_sample = supernovae_catalog_class.supernovae_catalog(
-                        redshift=redshift_sample, host_galaxy=False
+                        redshift=redshift_sample, host_galaxy=False, lightcurve=False
                     )
                     self._sources = PointSources(
                         supernovae_sample,
@@ -304,7 +307,8 @@ class LensPop(LensedPopulationBase):
                         light_profile=source_light_profile,
                     )
                 else:
-                    supernovae_sample = supernovae_catalog_class.supernovae_catalog()
+                    supernovae_sample = supernovae_catalog_class.supernovae_catalog(
+                        lightcurve=False)
                     self._sources = PointPlusExtendedSources(
                         supernovae_sample,
                         cosmo=cosmo,

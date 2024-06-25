@@ -104,7 +104,7 @@ def test_supernovae_plus_galaxies_lens_pop_instance_2():
         kwargs_deflector_cut=kwargs_deflector_cut,
         kwargs_source_cut=kwargs_source_cut,
         variability_model="light_curve",
-        kwargs_variability={"MJD", "ps_mag_r"},
+        kwargs_variability={"supernovae_lightcurve", "r"},
         sn_type="Ia",
         sn_absolute_mag_band="bessellb",
         sn_absolute_zpsys="ab",
@@ -117,8 +117,9 @@ def test_supernovae_plus_galaxies_lens_pop_instance_2():
     kwargs_lens_cut = {}
     pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
     assert pes_lens_class._source_type == "point_plus_extended"
-    assert "MJD" in pes_lens_class.source.source_dict.colnames
-    assert len(pes_lens_class.source.source_dict["MJD"]) == len(time_range)
+    assert "ps_mag_r" in pes_lens_class.source.source_dict.colnames
+    assert len(pes_lens_class.source.kwargs_variab_extracted["ps_mag_r"]) == \
+        len(time_range)
 
 
 def test_supernovae_lens_pop_instance():
@@ -133,7 +134,7 @@ def test_supernovae_lens_pop_instance():
         kwargs_deflector_cut=kwargs_deflector_cut,
         kwargs_source_cut=kwargs_source_cut,
         variability_model="light_curve",
-        kwargs_variability={"MJD", "ps_mag_r"},
+        kwargs_variability={"supernovae_lightcurve", "r"},
         sn_type="Ia",
         sn_absolute_mag_band="bessellb",
         sn_absolute_zpsys="ab",
@@ -146,8 +147,8 @@ def test_supernovae_lens_pop_instance():
     kwargs_lens_cut = {}
     pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
     assert pes_lens_class._source_type == "point_source"
-    assert "MJD" in pes_lens_class.source.source_dict.colnames
-    assert len(pes_lens_class.source.source_dict) == 3
+    assert "ps_mag_r" in pes_lens_class.source.source_dict.colnames
+    assert len(pes_lens_class.source.source_dict) == 2
 
 
 def test_num_lenses_and_sources(gg_lens_pop_instance):
