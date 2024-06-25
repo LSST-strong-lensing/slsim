@@ -84,7 +84,7 @@ class Lens(LensedSystemBase):
         :param lightcurve_time: observation time array for lightcurve in unit of days.
         :type lightcurve_time: array
         :param sn_modeldir: Path to the directory containing supernova files
-        :type modeldir: str
+        :type sn_modeldir: str
         """
         super().__init__(
             source_dict=source_dict,

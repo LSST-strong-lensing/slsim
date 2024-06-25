@@ -33,7 +33,7 @@ class LensedPopulationBase(ABC):
         :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
         :type sn_absolute_zpsys: str
         :param sn_modeldir: Path to the directory containing supernova files
-        :type modeldir: str
+        :type sn_modeldir: str
         """
 
         self.lightcurve_time = lightcurve_time

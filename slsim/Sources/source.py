@@ -45,7 +45,7 @@ class Source(object):
         :param lightcurve_time: observation time array for lightcurve in unit of days.
         :type lightcurve_time: array
         :param sn_modeldir: Path to the directory containing supernova files
-        :type modeldir: str
+        :type sn_modeldir: str
         """
         self.source_dict = source_dict
         self.variability_model = variability_model
