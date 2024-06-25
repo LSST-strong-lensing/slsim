@@ -238,8 +238,12 @@ class TestSource:
     def test_ps_magnitude_no_variability(self):
         result = self.source.point_source_magnitude("r")
         assert result == [17]
+        with pytest.raises(ValueError):
+            self.source.point_source_magnitude("j")
+        with pytest.raises(ValueError):
+            self.source4.point_source_magnitude("r")
         result2 = self.source6.point_source_magnitude("F146")
-        """assert result2 == [self.source6.source_dict["ps_mag_F146"]]"""
+        assert result2 == [self.source6.source_dict["ps_mag_F146"]]
 
     def test_ps_magnitude_with_variability(self):
         image_observation_times = np.array([np.pi, np.pi / 2, np.pi / 3])
