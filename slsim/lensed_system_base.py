@@ -22,7 +22,7 @@ class LensedSystemBase(ABC):
         sn_absolute_mag_band=None,
         sn_absolute_zpsys=None,
         lightcurve_time=None,
-        sn_modeldir = None
+        sn_modeldir=None,
     ):
         """
         :param source_dict: source properties
@@ -60,7 +60,7 @@ class LensedSystemBase(ABC):
             sn_absolute_zpsys=sn_absolute_zpsys,
             cosmo=cosmo,
             lightcurve_time=lightcurve_time,
-            sn_modeldir=sn_modeldir
+            sn_modeldir=sn_modeldir,
         )
         if deflector_kwargs is None:
             deflector_kwargs = {}

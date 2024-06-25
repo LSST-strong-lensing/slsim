@@ -24,7 +24,7 @@ class TestSource:
                 [0.35],
                 [0.8],
                 [0.76],
-                [20]
+                [20],
             ],
             names=(
                 "z",
@@ -40,7 +40,7 @@ class TestSource:
                 "angular_size",
                 "e1",
                 "e2",
-                "MJD"
+                "MJD",
             ),
         )
         source_dict2 = Table(
@@ -207,20 +207,20 @@ class TestSource:
             kwargs_variability={"MJD", "ps_mag_z"},
         )
         self.source9 = Source(
-                self.source_dict,
-                variability_model="sinusoidal",
-                kwargs_variability={"tmp", "fre"},
-            )
+            self.source_dict,
+            variability_model="sinusoidal",
+            kwargs_variability={"tmp", "fre"},
+        )
         self.source10 = Source(
-                self.source_dict3,
-                variability_model="light_curve",
-                kwargs_variability={"supernovae_lightcurve", "i"},
-                sn_absolute_mag_band="bessellb",
-                sn_absolute_zpsys="ab",
-                sn_type="Ia",
-                lightcurve_time=np.linspace(-20, 50, 100),
-                cosmo=None,
-            )
+            self.source_dict3,
+            variability_model="light_curve",
+            kwargs_variability={"supernovae_lightcurve", "i"},
+            sn_absolute_mag_band="bessellb",
+            sn_absolute_zpsys="ab",
+            sn_type="Ia",
+            lightcurve_time=np.linspace(-20, 50, 100),
+            cosmo=None,
+        )
 
     def test_redshift(self):
         assert self.source.redshift == [0.5]

@@ -23,7 +23,7 @@ class Source(object):
         sn_absolute_zpsys=None,
         cosmo=None,
         lightcurve_time=None,
-        sn_modeldir = None
+        sn_modeldir=None,
     ):
         """
         :param source_dict: Source properties
@@ -56,6 +56,7 @@ class Source(object):
         self.cosmo = cosmo
         self.lightcurve_time = lightcurve_time
         self.sn_modeldir = sn_modeldir
+
     @property
     def kwargs_variability_extracted(self):
         if self.kwargs_variability is not None:
@@ -83,12 +84,23 @@ class Source(object):
                         absolute_mag_band=self.sn_absolute_mag_band,
                         mag_zpsys=self.sn_absolute_zpsys,
                         cosmo=self.cosmo,
-                        modeldir=self.sn_modeldir
+                        modeldir=self.sn_modeldir,
                     )
                 for element in list(self.kwargs_variability):
                     # if lsst filter is being used
-                    if element in ["r", "i", "g", "F062","F087","F106","F129","F158",
-                                "F184","F146","F213"]:
+                    if element in [
+                        "r",
+                        "i",
+                        "g",
+                        "F062",
+                        "F087",
+                        "F106",
+                        "F129",
+                        "F158",
+                        "F184",
+                        "F146",
+                        "F213",
+                    ]:
                         if element in ["r", "i", "g"]:
                             provided_band = "lsst" + element
                         else:
@@ -96,18 +108,20 @@ class Source(object):
                         name = "ps_mag_" + element
                         times = self.lightcurve_time
                         magnitudes = lightcurve_class.get_apparent_magnitude(
-                            time=times, band=provided_band, 
-                            zpsys=self.sn_absolute_zpsys)
+                            time=times, band=provided_band, zpsys=self.sn_absolute_zpsys
+                        )
                         new_column = Column([float(min(magnitudes))], name=name)
                         self._source_dict = Table(self.source_dict)
                         self._source_dict.add_column(new_column)
                         self.source_dict = self._source_dict[0]
-                        kwargs_variab_extracted[element] = {"MJD": times,
-                                                        name: magnitudes}
+                        kwargs_variab_extracted[element] = {
+                            "MJD": times,
+                            name: magnitudes,
+                        }
             elif "MJD" in self.kwargs_variability:
                 # With this condition we extract values for kwargs_variability from the
-                # given source dict and prepar variability class. Here, we expect 
-                # lightcurve in a source catalog and kwargs_variability should contain 
+                # given source dict and prepar variability class. Here, we expect
+                # lightcurve in a source catalog and kwargs_variability should contain
                 # "MJD" and "ps_mag_" + band as key.
                 mag_key = []
                 time_key = []
@@ -126,11 +140,13 @@ class Source(object):
                         ):
                             kwargs_variab_extracted[suffix] = {
                                 time_key[0]: self.source_dict[time_key[0]].reshape(-1),
-                                element:self.source_dict[element].reshape(-1)}
+                                element: self.source_dict[element].reshape(-1),
+                            }
                         else:
                             kwargs_variab_extracted[suffix] = {
                                 time_key[0]: self.source_dict[time_key[0]],
-                                element:self.source_dict[element]}
+                                element: self.source_dict[element],
+                            }
                     else:
                         raise ValueError(
                             "given keyword %s is not in the source catalog." % element
@@ -138,9 +154,7 @@ class Source(object):
             else:
                 for element in self.kwargs_variability:
                     if element in self.source_dict.colnames:
-                        kwargs_variab_extracted[element] = self.source_dict[
-                                element
-                            ]
+                        kwargs_variab_extracted[element] = self.source_dict[element]
                     else:
                         raise ValueError(
                             "given keyword %s is not in the source catalog." % element

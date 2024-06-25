@@ -38,7 +38,7 @@ class LensPop(LensedPopulationBase):
         sn_absolute_mag_band=None,
         sn_absolute_zpsys=None,
         los_config=None,
-        sn_modeldir=None
+        sn_modeldir=None,
     ):
         """
 
@@ -100,8 +100,7 @@ class LensPop(LensedPopulationBase):
             sn_type,
             sn_absolute_mag_band,
             sn_absolute_zpsys,
-            sn_modeldir
-            
+            sn_modeldir,
         )
         if source_type == "galaxies" and kwargs_variability is not None:
             raise ValueError(
@@ -289,7 +288,7 @@ class LensPop(LensedPopulationBase):
                     cosmo=cosmo,
                     skypy_config=skypy_config,
                     sky_area=sky_area,
-                    sn_modeldir=sn_modeldir
+                    sn_modeldir=sn_modeldir,
                 )
                 if source_type == "supernovae":
                     redshift_sample = supernovae_catalog_class.host_galaxy_catalog()[
@@ -308,7 +307,8 @@ class LensPop(LensedPopulationBase):
                     )
                 else:
                     supernovae_sample = supernovae_catalog_class.supernovae_catalog(
-                        lightcurve=False)
+                        lightcurve=False
+                    )
                     self._sources = PointPlusExtendedSources(
                         supernovae_sample,
                         cosmo=cosmo,
@@ -358,7 +358,7 @@ class LensPop(LensedPopulationBase):
                 light_profile=self._sources.light_profile,
                 lightcurve_time=self.lightcurve_time,
                 los_config=self.los_config,
-                sn_modeldir=self.sn_modeldir
+                sn_modeldir=self.sn_modeldir,
             )
             if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens
@@ -446,7 +446,7 @@ class LensPop(LensedPopulationBase):
                         los_config=self.los_config,
                         light_profile=self._sources.light_profile,
                         lightcurve_time=self.lightcurve_time,
-                        sn_modeldir=self.sn_modeldir
+                        sn_modeldir=self.sn_modeldir,
                     )
                     # Check the validity of the lens system
                     if gg_lens.validity_test(**kwargs_lens_cuts):
