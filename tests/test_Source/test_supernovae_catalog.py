@@ -36,9 +36,7 @@ class TestSupernovaeCatalog:
 
     def test_supernovae_catalog(self):
         result = self.supernovae_catalog.supernovae_catalog()
-        result2 = self.supernovae_catalog.supernovae_catalog(
-            host_galaxy=False
-        )
+        result2 = self.supernovae_catalog.supernovae_catalog(host_galaxy=False)
         assert "MJD" in result.colnames
         assert "ps_mag_r" in result.colnames
         assert "z" in result.colnames
