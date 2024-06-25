@@ -117,8 +117,8 @@ def test_supernovae_plus_galaxies_lens_pop_instance_2():
     kwargs_lens_cut = {}
     pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
     assert pes_lens_class._source_type == "point_plus_extended"
-    assert "ps_mag_r" in pes_lens_class.source.source_dict.colnames
-    assert len(pes_lens_class.source.kwargs_variab_extracted["ps_mag_r"]) == \
+    assert "ra_off" in pes_lens_class.source.source_dict.colnames
+    assert len(pes_lens_class.source.kwargs_variability_extracted["r"]["ps_mag_r"]) == \
         len(time_range)
 
 
@@ -147,8 +147,8 @@ def test_supernovae_lens_pop_instance():
     kwargs_lens_cut = {}
     pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
     assert pes_lens_class._source_type == "point_source"
-    assert "ps_mag_r" in pes_lens_class.source.source_dict.colnames
-    assert len(pes_lens_class.source.source_dict) == 2
+    assert "z" in pes_lens_class.source.source_dict.colnames
+    assert len(pes_lens_class.source.source_dict) == 1
 
 
 def test_num_lenses_and_sources(gg_lens_pop_instance):
