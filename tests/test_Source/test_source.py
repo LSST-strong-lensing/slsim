@@ -24,6 +24,7 @@ class TestSource:
                 [0.35],
                 [0.8],
                 [0.76],
+                [20]
             ],
             names=(
                 "z",
@@ -39,6 +40,7 @@ class TestSource:
                 "angular_size",
                 "e1",
                 "e2",
+                "MJD"
             ),
         )
         source_dict2 = Table(
@@ -194,6 +196,12 @@ class TestSource:
             cosmo=cosmo,
         )
 
+        self.source7 = Source(
+            self.source_dict,
+            variability_model="light_curve",
+            kwargs_variability={"MJD", "ps_mag_r"},
+        )
+
     def test_redshift(self):
         assert self.source.redshift == [0.5]
 
@@ -308,6 +316,14 @@ class TestSource:
                 variability_model="sinusoidal",
                 kwargs_variability={"tmp", "fre"},
             )
+        with pytest.raises(ValueError):
+            Source(
+            self.source_dict,
+            variability_model="light_curve",
+            kwargs_variability={"MJD", "ps_mag_z"},
+        )
+        assert self.source7.kwargs_variab_extracted["r"]["ps_mag_r"] == 17
+        assert self.source7.kwargs_variab_extracted["r"]["MJD"] == 20
 
 
 if __name__ == "__main__":

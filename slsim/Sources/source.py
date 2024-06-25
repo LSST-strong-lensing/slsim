@@ -78,46 +78,57 @@ class Source(object):
                     )
                 for element in list(kwargs_variability):
                     # if lsst filter is being used
-                    if element in ["r", "i", "g"]:
-                        provided_band = "lsst" + element
+                    if element in ["r", "i", "g", "F062","F087","F106","F129","F158",
+                                   "F184","F146","F213"]:
+                        if element in ["r", "i", "g"]:
+                            provided_band = "lsst" + element
+                        else:
+                            provided_band = element
                         name = "ps_mag_" + element
-                    # if roman filter is being used
-                    elif element in [
-                        "F062",
-                        "F087",
-                        "F106",
-                        "F129",
-                        "F158",
-                        "F184",
-                        "F146",
-                        "F213",
-                    ]:
-                        provided_band = element
-                        name = "ps_mag_" + element
-                times = lightcurve_time
-                magnitudes = lightcurve_class.get_apparent_magnitude(time=times, 
-                                                                    band=provided_band)
-                new_column = Column([float(min(magnitudes))], name=name)
-                self._source_dict = Table(self.source_dict)
-                self._source_dict.add_column(new_column)
-                self.source_dict = self._source_dict[0]
-                self.kwargs_variab_extracted["MJD"] = times
-                self.kwargs_variab_extracted[name] = magnitudes
-            else:
+                        times = lightcurve_time
+                        magnitudes = lightcurve_class.get_apparent_magnitude(time=times, 
+                                                                band=provided_band)
+                        new_column = Column([float(min(magnitudes))], name=name)
+                        self._source_dict = Table(self.source_dict)
+                        self._source_dict.add_column(new_column)
+                        self.source_dict = self._source_dict[0]
+                        self.kwargs_variab_extracted[element] = {"MJD": times,
+                                                        name: magnitudes}
+            elif "MJD" in kwargs_variability:
                 # With this condition we extract values for kwargs_variability from the
-                # given source dict and prepar variability class.
-                for element in kwargs_variability:
+                # given source dict and prepar variability class. Here, we expect 
+                # lightcurve in a source catalog and kwargs_variability should contain 
+                # "MJD" and "ps_mag_" + band as key.
+                mag_key = []
+                time_key = []
+                for key in kwargs_variability:
+                    if key.startswith("ps_mag_"):
+                        mag_key.append(key)
+                    else:
+                        time_key.append(key)
+                for element in mag_key:
+                    suffix = element.split("ps_mag_")[1]
                     if element in self.source_dict.colnames:
                         if (
                             isinstance(self.source_dict[element], np.ndarray)
                             and self.source_dict[element].ndim == 2
                             and self.source_dict[element].shape[0] == 1
                         ):
-                            self.kwargs_variab_extracted[element] = self.source_dict[
-                                element
-                            ].reshape(-1)
+                            self.kwargs_variab_extracted[suffix] = {
+                                time_key[0]: self.source_dict[time_key[0]].reshape(-1),
+                                element:self.source_dict[element].reshape(-1)}
                         else:
-                            self.kwargs_variab_extracted[element] = self.source_dict[
+                            self.kwargs_variab_extracted[suffix] = {
+                                time_key[0]: self.source_dict[time_key[0]],
+                                element:self.source_dict[element]}
+                    else:
+                        raise ValueError(
+                            "given keyword %s is not in the source catalog." % element
+                        )
+            else:
+                for element in kwargs_variability:
+                    if element in self.source_dict.colnames:
+                        self.kwargs_variab_extracted[element] = self.source_dict[
                                 element
                             ]
                     else:
@@ -176,11 +187,8 @@ class Source(object):
             band_string = "ps_mag_" + band
 
         if self.kwargs_variab_extracted is not None:
-            if "MJD" in self.kwargs_variab_extracted:
-                kwargs_variab_band = {
-                    "MJD": self.kwargs_variab_extracted["MJD"],
-                    "ps_mag_" + band: self.kwargs_variab_extracted["ps_mag_" + band],
-                }
+            if band in self.kwargs_variab_extracted.keys():
+                kwargs_variab_band = self.kwargs_variab_extracted[band]
             else:
                 kwargs_variab_band = self.kwargs_variab_extracted
             self.variability_class = Variability(
