@@ -773,13 +773,19 @@ def run_certain_redshift_lensext_kde_by_multiprocessing(
     :rtype: np.ndarray
     """
     if cosmo is None:
+        warnings.warn(
+            "No cosmology provided, instead uses astropy.cosmology default cosmology"
+        )
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     if zs is None:
         zs = 1.5
+        warnings.warn("No source redshift provided, instead uses 1.5")
     if zd is None:
         zd = 1.0
+        warnings.warn("No lens redshift provided, instead uses 1.0")
     if z_max is None:
         z_max = 5.0
+        warnings.warn("No maximum redshift provided, instead uses 5.0")
 
     kappaext_gammaext_values = []
 
@@ -943,13 +949,19 @@ def run_certain_redshift_many_by_multiprocessing(
     """
 
     if cosmo is None:
+        warnings.warn(
+            "No cosmology provided, instead uses astropy.cosmology default cosmology"
+        )
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     if zs is None:
         zs = 1.5
+        warnings.warn("No source redshift provided, instead uses 1.5")
     if zd is None:
         zd = 1.0
+        warnings.warn("No lens redshift provided, instead uses 1.0")
     if z_max is None:
         z_max = 5.0
+        warnings.warn("No maximum redshift provided, instead uses 5.0")
 
     kappaext_gammaext_values = []
     lensinstance_values = []
@@ -1201,9 +1213,13 @@ def run_total_kappa_by_multiprocessing(
     """
 
     if cosmo is None:
+        warnings.warn(
+            "No cosmology provided, instead uses astropy.cosmology default cosmology"
+        )
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     if z_max is None:
         z_max = 5.0
+        warnings.warn("No maximum redshift provided, instead uses 5.0")
 
     average_kappa_list = []
 
