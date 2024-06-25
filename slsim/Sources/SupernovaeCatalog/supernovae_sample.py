@@ -94,7 +94,7 @@ class SupernovaeCatalog(object):
         else:
             sne_lightcone = SNeLightcone(
                 self.cosmo,
-                redshifts=np.linspace(0, 5.01, 10),
+                redshifts=np.linspace(0, 0.9329, 50),
                 sky_area=self.sky_area,
                 noise=True,
                 time_interval=1*units.year
@@ -110,6 +110,7 @@ class SupernovaeCatalog(object):
                 self.absolute_mag_band,
                 self.mag_zpsys,
                 self.cosmo,
+                modeldir="C:/Users/Carly/Downloads/SALT3.NIR_WAVEEXT/"
             )
             time.append(self.lightcurve_time)
             for band in self.band_list:
