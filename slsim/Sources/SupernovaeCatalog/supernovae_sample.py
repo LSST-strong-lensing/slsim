@@ -72,7 +72,6 @@ class SupernovaeCatalog(object):
 
         :param host_galaxy: kwargs to decide whether catalog should include host
             galaxies or not. True or False.
-
         :return: Astropy Table of supernovae catalog containg redshift, lightcurves,
             ra_off, dec_off, and host galaxy properties. If host_galaxy is set to False,
             it returns catalog without host galaxy properties. Light curves are
@@ -97,7 +96,7 @@ class SupernovaeCatalog(object):
                 redshifts=np.linspace(0, 0.9329, 50),
                 sky_area=self.sky_area,
                 noise=True,
-                time_interval=1*units.year
+                time_interval=1 * units.year,
             )
             supernovae_redshift = sne_lightcone.supernovae_sample()
 
@@ -110,7 +109,7 @@ class SupernovaeCatalog(object):
                 self.absolute_mag_band,
                 self.mag_zpsys,
                 self.cosmo,
-                modeldir="C:/Users/Carly/Downloads/SALT3.NIR_WAVEEXT/"
+                modeldir="C:/Users/Carly/Downloads/SALT3.NIR_WAVEEXT/",
             )
             time.append(self.lightcurve_time)
             for band in self.band_list:
@@ -148,7 +147,6 @@ class SupernovaeCatalog(object):
         offset.
 
         :param supernovae_number: number of supernovae
-
         :return: random ra_off and dec_off for each supernovae.
         """
         # Limits used here are mostly arbitrary. More realistic supernovae-host galaxy
