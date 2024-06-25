@@ -18,7 +18,7 @@ class SupernovaeCatalog(object):
         skypy_config,
         sky_area,
         absolute_mag,
-        sn_modeldir=None
+        sn_modeldir=None,
     ):
         """
 
@@ -74,8 +74,8 @@ class SupernovaeCatalog(object):
 
         :param host_galaxy: kwargs to decide whether catalog should include host
             galaxies or not. True or False.
-        :param lightcurve: kwargs for the lightcurve, if lightcurve is True, it returns 
-         extracts lightcurve for each supernovae redshift.
+        :param lightcurve: kwargs for the lightcurve, if lightcurve is True, it returns
+            extracts lightcurve for each supernovae redshift.
         :return: Astropy Table of supernovae catalog containg redshift, lightcurves,
             ra_off, dec_off, and host galaxy properties. If host_galaxy is set to False,
             it returns catalog without host galaxy properties. Light curves are
@@ -115,7 +115,7 @@ class SupernovaeCatalog(object):
                     self.absolute_mag_band,
                     self.mag_zpsys,
                     self.cosmo,
-                    self.sn_modeldir
+                    self.sn_modeldir,
                 )
                 time.append(self.lightcurve_time)
                 for band in self.band_list:

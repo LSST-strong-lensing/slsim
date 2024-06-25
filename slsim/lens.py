@@ -99,7 +99,7 @@ class Lens(LensedSystemBase):
             sn_type=sn_type,
             sn_absolute_mag_band=sn_absolute_mag_band,
             sn_absolute_zpsys=sn_absolute_zpsys,
-            sn_modeldir=sn_modeldir
+            sn_modeldir=sn_modeldir,
         )
 
         self.cosmo = cosmo
