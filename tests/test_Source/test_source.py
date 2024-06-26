@@ -24,6 +24,7 @@ class TestSource:
                 [0.35],
                 [0.8],
                 [0.76],
+                [20],
             ],
             names=(
                 "z",
@@ -39,6 +40,7 @@ class TestSource:
                 "angular_size",
                 "e1",
                 "e2",
+                "MJD",
             ),
         )
         source_dict2 = Table(
@@ -194,6 +196,32 @@ class TestSource:
             cosmo=cosmo,
         )
 
+        self.source7 = Source(
+            self.source_dict,
+            variability_model="light_curve",
+            kwargs_variability={"MJD", "ps_mag_r"},
+        )
+        self.source8 = Source(
+            self.source_dict,
+            variability_model="light_curve",
+            kwargs_variability={"MJD", "ps_mag_z"},
+        )
+        self.source9 = Source(
+            self.source_dict,
+            variability_model="sinusoidal",
+            kwargs_variability={"tmp", "fre"},
+        )
+        self.source10 = Source(
+            self.source_dict3,
+            variability_model="light_curve",
+            kwargs_variability={"supernovae_lightcurve", "i"},
+            sn_absolute_mag_band="bessellb",
+            sn_absolute_zpsys="ab",
+            sn_type="Ia",
+            lightcurve_time=np.linspace(-20, 50, 100),
+            cosmo=None,
+        )
+
     def test_redshift(self):
         assert self.source.redshift == [0.5]
 
@@ -214,7 +242,6 @@ class TestSource:
             self.source.point_source_magnitude("j")
         with pytest.raises(ValueError):
             self.source4.point_source_magnitude("r")
-
         result2 = self.source6.point_source_magnitude("F146")
         assert result2 == [self.source6.source_dict["ps_mag_F146"]]
 
@@ -292,22 +319,13 @@ class TestSource:
                 center_lens, draw_area, band="i", light_profile_str="double_sersic"
             )
         with pytest.raises(ValueError):
-            Source(
-                self.source_dict3,
-                variability_model="light_curve",
-                kwargs_variability={"supernovae_lightcurve", "i"},
-                sn_absolute_mag_band="bessellb",
-                sn_absolute_zpsys="ab",
-                sn_type="Ia",
-                lightcurve_time=np.linspace(-20, 50, 100),
-                cosmo=None,
-            )
+            self.source10.kwargs_variability_extracted
         with pytest.raises(ValueError):
-            Source(
-                self.source_dict,
-                variability_model="sinusoidal",
-                kwargs_variability={"tmp", "fre"},
-            )
+            self.source9.kwargs_variability_extracted
+        with pytest.raises(ValueError):
+            self.source8.kwargs_variability_extracted
+        assert self.source7.kwargs_variability_extracted["r"]["ps_mag_r"] == 17
+        assert self.source7.kwargs_variability_extracted["r"]["MJD"] == 20
 
 
 if __name__ == "__main__":

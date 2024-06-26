@@ -16,6 +16,7 @@ class LensedPopulationBase(ABC):
         sn_type=None,
         sn_absolute_mag_band=None,
         sn_absolute_zpsys=None,
+        sn_modeldir=None,
     ):
         """
 
@@ -31,12 +32,20 @@ class LensedPopulationBase(ABC):
         :type sn_absolute_mag_band: str or `~sncosmo.Bandpass`
         :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
         :type sn_absolute_zpsys: str
+        :param sn_modeldir: sn_modeldir is the path to the directory containing files
+         needed to initialize the sncosmo.model class. For example,
+         sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can
+         be downloaded from https://github.com/LSST-strong-lensing/data_public .
+         For more detail, please look at the documentation of RandomizedSupernovae
+         class.
+        :type sn_modeldir: str
         """
 
         self.lightcurve_time = lightcurve_time
         self.sn_type = sn_type
         self.sn_absolute_mag_band = sn_absolute_mag_band
         self.sn_absolute_zpsys = sn_absolute_zpsys
+        self.sn_modeldir = sn_modeldir
         if sky_area is None:
             from astropy.units import Quantity
 

@@ -23,6 +23,7 @@ class Source(object):
         sn_absolute_zpsys=None,
         cosmo=None,
         lightcurve_time=None,
+        sn_modeldir=None,
     ):
         """
         :param source_dict: Source properties
@@ -43,42 +44,59 @@ class Source(object):
         :type sn_absolute_zpsys: str
         :param lightcurve_time: observation time array for lightcurve in unit of days.
         :type lightcurve_time: array
+        :param sn_modeldir: sn_modeldir is the path to the directory containing files
+         needed to initialize the sncosmo.model class. For example,
+         sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can
+         be downloaded from https://github.com/LSST-strong-lensing/data_public .
+         For more detail, please look at the documentation of RandomizedSupernovae
+         class.
+        :type sn_modeldir: str
         """
         self.source_dict = source_dict
         self.variability_model = variability_model
-        if kwargs_variability is not None:
+        self.kwargs_variability = kwargs_variability
+        self.sn_type = sn_type
+        self.sn_absolute_mag_band = sn_absolute_mag_band
+        self.sn_absolute_zpsys = sn_absolute_zpsys
+        self.cosmo = cosmo
+        self.lightcurve_time = lightcurve_time
+        self.sn_modeldir = sn_modeldir
+
+    @property
+    def kwargs_variability_extracted(self):
+        if self.kwargs_variability is not None:
             ##Here we prepare variability class on the basis of given
             # kwargs_variability.
-            self.kwargs_variab_extracted = {}
+            kwargs_variab_extracted = {}
             kwargs_variability_list = ["supernovae_lightcurve"]
             # With this condition we call lightcurve generator class and prepare
             # variability class.
             if any(
                 element in kwargs_variability_list
-                for element in list(kwargs_variability)
+                for element in list(self.kwargs_variability)
             ):
                 z = self.source_dict["z"]
-                if cosmo is None:
+                if self.cosmo is None:
                     raise ValueError(
                         "Cosmology cannot be None for Supernova class. Please"
                         "provide a suitable astropy cosmology."
                     )
                 else:
                     lightcurve_class = random_supernovae.RandomizedSupernova(
-                        sn_type=sn_type,
+                        sn_type=self.sn_type,
                         redshift=z,
                         absolute_mag=None,
-                        absolute_mag_band=sn_absolute_mag_band,
-                        mag_zpsys=sn_absolute_zpsys,
-                        cosmo=cosmo,
+                        absolute_mag_band=self.sn_absolute_mag_band,
+                        mag_zpsys=self.sn_absolute_zpsys,
+                        cosmo=self.cosmo,
+                        modeldir=self.sn_modeldir,
                     )
-                for element in list(kwargs_variability):
+                for element in list(self.kwargs_variability):
                     # if lsst filter is being used
-                    if element in ["r", "i", "g"]:
-                        provided_band = "lsst" + element
-                        name = "ps_mag_" + element
-                    # if roman filter is being used
-                    elif element in [
+                    if element in [
+                        "r",
+                        "i",
+                        "g",
                         "F062",
                         "F087",
                         "F106",
@@ -88,42 +106,68 @@ class Source(object):
                         "F146",
                         "F213",
                     ]:
-                        provided_band = element
+                        if element in ["r", "i", "g"]:
+                            provided_band = "lsst" + element
+                        else:
+                            provided_band = element
                         name = "ps_mag_" + element
-                times = lightcurve_time
-                magnitudes = lightcurve_class.get_apparent_magnitude(
-                    time=times, band=provided_band, zpsys=sn_absolute_zpsys
-                )
-                new_column = Column([float(min(magnitudes))], name=name)
-                self._source_dict = Table(self.source_dict)
-                self._source_dict.add_column(new_column)
-                self.source_dict = self._source_dict[0]
-                self.kwargs_variab_extracted["MJD"] = times
-                self.kwargs_variab_extracted[name] = magnitudes
-            else:
+                        times = self.lightcurve_time
+                        magnitudes = lightcurve_class.get_apparent_magnitude(
+                            time=times, band=provided_band, zpsys=self.sn_absolute_zpsys
+                        )
+                        new_column = Column([float(min(magnitudes))], name=name)
+                        self._source_dict = Table(self.source_dict)
+                        self._source_dict.add_column(new_column)
+                        self.source_dict = self._source_dict[0]
+                        kwargs_variab_extracted[element] = {
+                            "MJD": times,
+                            name: magnitudes,
+                        }
+            elif "MJD" in self.kwargs_variability:
                 # With this condition we extract values for kwargs_variability from the
-                # given source dict and prepar variability class.
-                for element in kwargs_variability:
+                # given source dict and prepar variability class. Here, we expect
+                # lightcurve in a source catalog and kwargs_variability should contain
+                # "MJD" and "ps_mag_" + band as key.
+                mag_key = []
+                time_key = []
+                for key in self.kwargs_variability:
+                    if key.startswith("ps_mag_"):
+                        mag_key.append(key)
+                    else:
+                        time_key.append(key)
+                for element in mag_key:
+                    suffix = element.split("ps_mag_")[1]
                     if element in self.source_dict.colnames:
                         if (
                             isinstance(self.source_dict[element], np.ndarray)
                             and self.source_dict[element].ndim == 2
                             and self.source_dict[element].shape[0] == 1
                         ):
-                            self.kwargs_variab_extracted[element] = self.source_dict[
-                                element
-                            ].reshape(-1)
+                            kwargs_variab_extracted[suffix] = {
+                                time_key[0]: self.source_dict[time_key[0]].reshape(-1),
+                                element: self.source_dict[element].reshape(-1),
+                            }
                         else:
-                            self.kwargs_variab_extracted[element] = self.source_dict[
-                                element
-                            ]
+                            kwargs_variab_extracted[suffix] = {
+                                time_key[0]: self.source_dict[time_key[0]],
+                                element: self.source_dict[element],
+                            }
+                    else:
+                        raise ValueError(
+                            "given keyword %s is not in the source catalog." % element
+                        )
+            else:
+                for element in self.kwargs_variability:
+                    if element in self.source_dict.colnames:
+                        kwargs_variab_extracted[element] = self.source_dict[element]
                     else:
                         raise ValueError(
                             "given keyword %s is not in the source catalog." % element
                         )
         else:
             # self.variability_class = None
-            self.kwargs_variab_extracted = None
+            kwargs_variab_extracted = None
+        return kwargs_variab_extracted
 
     @property
     def redshift(self):
@@ -166,20 +210,18 @@ class Source(object):
         :return: Magnitude of the point source in the specified band
         :rtype: float
         """
+        if not hasattr(self, "kwargs_variab_dict"):
+            self.kwargs_variab_dict = self.kwargs_variability_extracted
         column_names = self.source_dict.colnames
         if "ps_mag_" + band not in column_names:
             raise ValueError("required parameter is missing in the source dictionary.")
         else:
             band_string = "ps_mag_" + band
-
-        if self.kwargs_variab_extracted is not None:
-            if "MJD" in self.kwargs_variab_extracted:
-                kwargs_variab_band = {
-                    "MJD": self.kwargs_variab_extracted["MJD"],
-                    "ps_mag_" + band: self.kwargs_variab_extracted["ps_mag_" + band],
-                }
+        if self.kwargs_variab_dict is not None:
+            if band in self.kwargs_variab_dict.keys():
+                kwargs_variab_band = self.kwargs_variab_dict[band]
             else:
-                kwargs_variab_band = self.kwargs_variab_extracted
+                kwargs_variab_band = self.kwargs_variab_dict
             self.variability_class = Variability(
                 self.variability_model, **kwargs_variab_band
             )
