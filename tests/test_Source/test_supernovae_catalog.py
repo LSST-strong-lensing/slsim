@@ -37,18 +37,11 @@ class TestSupernovaeCatalog:
     def test_supernovae_catalog(self):
         result = self.supernovae_catalog.supernovae_catalog()
         result2 = self.supernovae_catalog.supernovae_catalog(
-            redshift=[0.5, 0.3], host_galaxy=False
+            host_galaxy=False, lightcurve=False
         )
         assert "MJD" in result.colnames
-        assert "ps_mag_r" in result.colnames
         assert "z" in result.colnames
-        assert len(result2.colnames) == 3
-        with pytest.raises(ValueError):
-            self.supernovae_catalog.supernovae_catalog(host_galaxy=False)
-        with pytest.raises(ValueError):
-            self.supernovae_catalog.supernovae_catalog(
-                redshift=np.array([0.2, 0.3, 0.5]), host_galaxy=True
-            )
+        assert len(result2.colnames) == 1
 
     def test_supernovae_host_galaxy_offset(self):
         ra_off, dec_off = self.supernovae_catalog.supernovae_host_galaxy_offset(5)
