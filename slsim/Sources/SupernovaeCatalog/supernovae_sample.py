@@ -113,7 +113,7 @@ class SupernovaeCatalog(object):
 
         # Generate lightcurve for each supernovae.
         if lightcurve is True:
-              for z in supernovae_redshift:
+            for z in supernovae_redshift:
                 lightcurve_class = random_supernovae.RandomizedSupernova(
                     self.sn_type,
                     z,
@@ -133,7 +133,7 @@ class SupernovaeCatalog(object):
             for band in self.band_list:
                 lightcurve_data["ps_mag_" + band] = getattr(self, f"magnitude_{band}")
         else:
-          lightcurve_data = {}
+            lightcurve_data = {}
 
         # Get ra_off and dec_off if host galaxy is true.
         if host_galaxy is True:
