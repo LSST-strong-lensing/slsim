@@ -92,24 +92,23 @@ class SupernovaeCatalog(object):
         """
         if host_galaxy is True:
             host_galaxies = self.host_galaxy_catalog()
-        else:
-            host_galaxies = None
-        time = []
-
-        # Initialize a list attribute for each band in self.band_list
-        for band in self.band_list:
-            setattr(self, f"magnitude_{band}", [])
-        if host_galaxy is True:
             supernovae_redshift = host_galaxies["z"]
         else:
+            host_galaxies = None
+
             sne_lightcone = SNeLightcone(
                 self.cosmo,
-                redshifts=np.linspace(0, 0.9329, 50),
+                redshifts=np.linspace(0, 5.01, 50),
                 sky_area=self.sky_area,
                 noise=True,
                 time_interval=1 * units.year,
             )
             supernovae_redshift = sne_lightcone.supernovae_sample()
+        time = []
+
+        # Initialize a list attribute for each band in self.band_list
+        for band in self.band_list:
+            setattr(self, f"magnitude_{band}", [])
 
         # Generate lightcurve for each supernovae.
         if lightcurve is True:
@@ -147,8 +146,8 @@ class SupernovaeCatalog(object):
 
         # Only saves supernovae redshift and corresponding lightcurves
         else:
-            lightcurve_table["z"] = supernovae_redshift
-            supernovae_table = lightcurve_table
+            lightcurve_data["z"] = supernovae_redshift
+            supernovae_table = Table(lightcurve_data)
         return supernovae_table
 
     def supernovae_host_galaxy_offset(self, supernovae_number):
