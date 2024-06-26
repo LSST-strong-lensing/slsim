@@ -32,10 +32,10 @@ class LensedPopulationBase(ABC):
         :type sn_absolute_mag_band: str or `~sncosmo.Bandpass`
         :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
         :type sn_absolute_zpsys: str
-        :param sn_modeldir: sn_modeldir is the path to the directory containing files 
-         needed to initialize the sncosmo.model class. For example, 
-         sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can 
-         be downloaded from https://github.com/LSST-strong-lensing/data_public . 
+        :param sn_modeldir: sn_modeldir is the path to the directory containing files
+         needed to initialize the sncosmo.model class. For example,
+         sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can
+         be downloaded from https://github.com/LSST-strong-lensing/data_public .
          For more detail, please look at the documentation of RandomizedSupernovae
          class.
         :type sn_modeldir: str
