@@ -38,7 +38,12 @@ class SupernovaeCatalog(object):
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
         :type sky_area: `~astropy.units.Quantity`
-        :param sn_modeldir: Path to the directory containing supernova files
+        :param sn_modeldir: sn_modeldir is the path to the directory containing files 
+         needed to initialize the sncosmo.model class. For example, 
+         sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can 
+         be downloaded from https://github.com/LSST-strong-lensing/data_public . 
+         For more detail, please look at the documentation of RandomizedSupernovae
+         class.
         :type sn_modeldir: str
         """
         self.sn_type = sn_type
