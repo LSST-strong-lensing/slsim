@@ -47,7 +47,8 @@ class TestSupernovaeCatalog:
             self.supernovae_catalog.supernovae_catalog(host_galaxy=False)
         with pytest.raises(ValueError):
             self.supernovae_catalog.supernovae_catalog(
-                redshift= np.array([0.2, 0.3, 0.5]),host_galaxy=True)
+                redshift=np.array([0.2, 0.3, 0.5]), host_galaxy=True
+            )
 
     def test_supernovae_host_galaxy_offset(self):
         ra_off, dec_off = self.supernovae_catalog.supernovae_host_galaxy_offset(5)
