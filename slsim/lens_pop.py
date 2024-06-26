@@ -38,6 +38,7 @@ class LensPop(LensedPopulationBase):
         sn_absolute_mag_band=None,
         sn_absolute_zpsys=None,
         los_config=None,
+        sn_modeldir=None,
     ):
         """
 
@@ -89,6 +90,13 @@ class LensPop(LensedPopulationBase):
         :type sn_absolute_zpsys: str
         :param los_config: configuration for line of sight distribution
         :type los_config: LOSConfig instance
+        :param sn_modeldir: sn_modeldir is the path to the directory containing files
+         needed to initialize the sncosmo.model class. For example,
+         sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can
+         be downloaded from https://github.com/LSST-strong-lensing/data_public .
+         For more detail, please look at the documentation of RandomizedSupernovae
+         class.
+        :type sn_modeldir: str
         """
         super().__init__(
             sky_area,
@@ -97,6 +105,7 @@ class LensPop(LensedPopulationBase):
             sn_type,
             sn_absolute_mag_band,
             sn_absolute_zpsys,
+            sn_modeldir,
         )
         if source_type == "galaxies" and kwargs_variability is not None:
             raise ValueError(
@@ -272,6 +281,8 @@ class LensPop(LensedPopulationBase):
                 for key in kwargs_variability:
                     if key.startswith("ps_mag_"):
                         suffixes.append(key.split("ps_mag_")[1])
+                    elif len(key) == 1:
+                        suffixes.append(key)
                 supernovae_catalog_class = SupernovaeCatalog(
                     sn_type=sn_type,
                     band_list=suffixes,
@@ -282,10 +293,11 @@ class LensPop(LensedPopulationBase):
                     cosmo=cosmo,
                     skypy_config=skypy_config,
                     sky_area=sky_area,
+                    sn_modeldir=sn_modeldir,
                 )
                 if source_type == "supernovae":
                     supernovae_sample = supernovae_catalog_class.supernovae_catalog(
-                        host_galaxy=False,
+                        host_galaxy=False, lightcurve=False
                     )
                     self._sources = PointSources(
                         supernovae_sample,
@@ -296,7 +308,9 @@ class LensPop(LensedPopulationBase):
                         light_profile=source_light_profile,
                     )
                 else:
-                    supernovae_sample = supernovae_catalog_class.supernovae_catalog()
+                    supernovae_sample = supernovae_catalog_class.supernovae_catalog(
+                        lightcurve=False
+                    )
                     self._sources = PointPlusExtendedSources(
                         supernovae_sample,
                         cosmo=cosmo,
@@ -346,6 +360,7 @@ class LensPop(LensedPopulationBase):
                 light_profile=self._sources.light_profile,
                 lightcurve_time=self.lightcurve_time,
                 los_config=self.los_config,
+                sn_modeldir=self.sn_modeldir,
             )
             if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens
@@ -433,6 +448,7 @@ class LensPop(LensedPopulationBase):
                         los_config=self.los_config,
                         light_profile=self._sources.light_profile,
                         lightcurve_time=self.lightcurve_time,
+                        sn_modeldir=self.sn_modeldir,
                     )
                     # Check the validity of the lens system
                     if gg_lens.validity_test(**kwargs_lens_cuts):
