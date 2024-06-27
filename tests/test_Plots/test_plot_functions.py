@@ -14,7 +14,7 @@ import pytest
 @pytest.fixture
 def quasar_lens_pop_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-    sky_area = Quantity(value=0.1, unit="deg2")
+    sky_area = Quantity(value=0.001, unit="deg2")
     return LensPop(
         deflector_type="all-galaxies",
         source_type="quasars",
@@ -22,7 +22,8 @@ def quasar_lens_pop_instance():
         kwargs_source_cut=None,
         kwargs_mass2light=None,
         skypy_config=None,
-        sky_area=sky_area,
+        source_sky_area=sky_area,
+        deflector_sky_area=sky_area,
         cosmo=cosmo,
     )
 

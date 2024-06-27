@@ -48,16 +48,6 @@ class LensedPopulationBase(ABC):
         self.sn_absolute_mag_band = sn_absolute_mag_band
         self.sn_absolute_zpsys = sn_absolute_zpsys
         self.sn_modeldir = sn_modeldir
-        if source_sky_area is None:
-            from astropy.units import Quantity
-
-            self.source_sky_area = Quantity(value=0.1, unit="deg2")
-            warnings.warn("No source sky area provided, instead uses 0.1 deg2")
-        if deflector_sky_area is None:
-            from astropy.units import Quantity
-
-            self.deflector_sky_area = Quantity(value=0.1, unit="deg2")
-            warnings.warn("No deflector sky area provided, instead uses 0.1 deg2")
         if cosmo is None:
             warnings.warn(
                 "No cosmology provided, instead uses flat LCDM with default parameters"
