@@ -27,8 +27,9 @@ class LensPop(LensedPopulationBase):
         kwargs_mass2light=None,
         skypy_config=None,
         slhammocks_config=None,
-        sky_area=None,
-        large_skyarea=None,
+        source_sky_area=None,
+        deflector_sky_area=None,
+        full_sky_area=None,
         filters=None,
         cosmo=None,
         source_light_profile="single_sersic",
@@ -106,7 +107,9 @@ class LensPop(LensedPopulationBase):
         :type sn_modeldir: str
         """
         super().__init__(
-            sky_area,
+            source_sky_area,
+            deflector_sky_area,
+            full_sky_area,
             cosmo,
             lightcurve_time,
             sn_type,
