@@ -335,14 +335,12 @@ class LensPop(LensedPopulationBase):
         else:
             raise ValueError("source_type %s is not supported" % source_type)
         self.cosmo = cosmo
-        self.f_sky = sky_area
-        self.large_skyarea = large_skyarea
-        if self.large_skyarea is None:
+        if large_skyarea is None:
             self.factor = 1
         else:
             self.factor = (
-                self.large_skyarea.to_value("deg2")/self.f_sky.to_value("deg2"))
-
+                large_skyarea.to_value("deg2")/sky_area.to_value("deg2"))
+        self.f_sky = self.factor*sky_area
         self.los_config = los_config
         if self.los_config is None:
             los_config = LOSConfig()
@@ -404,7 +402,7 @@ class LensPop(LensedPopulationBase):
         """
         num_sources = self.source_number
         num_sources_tested_mean = (testarea * num_sources) / (
-            12960000 * self.factor*self.f_sky.to_value("deg2")
+            12960000 * self.f_sky.to_value("deg2")
         )
         return num_sources_tested_mean
 

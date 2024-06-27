@@ -10,10 +10,12 @@ from slsim.lens_pop import draw_test_area
 def create_lens_pop_instance(return_kext=False):
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     sky_area = Quantity(value=0.05, unit="deg2")
+    large_skyarea = Quantity(value=0.05, unit="deg2")
     kwargs_deflector_cut = {"band": "g", "band_max": 28, "z_min": 0.01, "z_max": 2.5}
     kwargs_source_cut = {"band": "g", "band_max": 28, "z_min": 0.1, "z_max": 5.0}
     return LensPop(
         sky_area=sky_area,
+        large_skyarea=large_skyarea,
         cosmo=cosmo,
         kwargs_deflector_cut=kwargs_deflector_cut,
         kwargs_source_cut=kwargs_source_cut,
@@ -150,6 +152,7 @@ def test_supernovae_lens_pop_instance():
     assert pes_lens_class._source_type == "point_source"
     assert "z" in pes_lens_class.source.source_dict.colnames
     assert len(pes_lens_class.source.source_dict) == 1
+    assert pes_lens_pop.factor == 1
 
 
 def test_num_lenses_and_sources(gg_lens_pop_instance):
