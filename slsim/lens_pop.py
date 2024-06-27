@@ -64,19 +64,19 @@ class LensPop(LensedPopulationBase):
         :type skypy_config: string
         :param slhammocks_config: path to the deflector population csv file for 'halo-model'
         :type slhammocks_config: string
-        :param source_sky_area: Sky area over which sources are sampled. Must be in 
+        :param source_sky_area: Sky area over which sources are sampled. Must be in
          units of solid angle.
         :type source_sky_area: `~astropy.units.Quantity`
-        :param deflector_sky_area: Sky area over which deflectors are sampled. Must be 
+        :param deflector_sky_area: Sky area over which deflectors are sampled. Must be
          in units of solid angle.
         :type deflector_sky_area: `~astropy.units.Quantity`
-        :param full_sky_area: Sky area over which lens population will be simulated. 
-         If None, only source_sky_area and deflector_sky_area will be used. If 
+        :param full_sky_area: Sky area over which lens population will be simulated.
+         If None, only source_sky_area and deflector_sky_area will be used. If
          full_sky_area is not None, number of source sample and dflector sample within a
-         source_sky_area and deflector_sky_area will be scaled to the full_sky_area. 
-         This will allow us to simulate lens population over a large sky area without 
-         further significant computational cost. If the full_sky_area is not None, 
-         source_sky_area and deflector_sky_area should be reasonably large to 
+         source_sky_area and deflector_sky_area will be scaled to the full_sky_area.
+         This will allow us to simulate lens population over a large sky area without
+         further significant computational cost. If the full_sky_area is not None,
+         source_sky_area and deflector_sky_area should be reasonably large to
          approximate true source and deflector distributions.
         :type full_sky_area: `~astropy.units.Quantity`
         :param filters: filters for SED integration
@@ -182,8 +182,9 @@ class LensPop(LensedPopulationBase):
             from slsim.Pipelines.sl_hammocks_pipeline import SLHammocksPipeline
 
             halo_galaxy_list = SLHammocksPipeline(
-                slhammocks_config=slhammocks_config, sky_area=deflector_sky_area, 
-                cosmo=cosmo
+                slhammocks_config=slhammocks_config,
+                sky_area=deflector_sky_area,
+                cosmo=cosmo,
             )
 
             self._lens_galaxies = CompoundLensHalosGalaxies(
@@ -358,10 +359,12 @@ class LensPop(LensedPopulationBase):
             self.factor_source = 1
             self.factor_deflector = 1
         else:
-            self.factor_source = (
-                self.f_sky.to_value("deg2")/self.source_sky_area.to_value("deg2"))
-            self.factor_deflector = (
-                self.f_sky.to_value("deg2")/self.deflector_sky_area.to_value("deg2"))
+            self.factor_source = self.f_sky.to_value(
+                "deg2"
+            ) / self.source_sky_area.to_value("deg2")
+            self.factor_deflector = self.f_sky.to_value(
+                "deg2"
+            ) / self.deflector_sky_area.to_value("deg2")
         self.los_config = los_config
         if self.los_config is None:
             los_config = LOSConfig()
