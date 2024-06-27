@@ -58,8 +58,6 @@ class LensedPopulationBase(ABC):
 
             self.deflector_sky_area = Quantity(value=0.1, unit="deg2")
             warnings.warn("No deflector sky area provided, instead uses 0.1 deg2")
-        self.f_sky = full_sky_area
-
         if cosmo is None:
             warnings.warn(
                 "No cosmology provided, instead uses flat LCDM with default parameters"

@@ -13,7 +13,8 @@ def create_lens_pop_instance(return_kext=False):
     kwargs_deflector_cut = {"band": "g", "band_max": 28, "z_min": 0.01, "z_max": 2.5}
     kwargs_source_cut = {"band": "g", "band_max": 28, "z_min": 0.1, "z_max": 5.0}
     return LensPop(
-        sky_area=sky_area,
+        source_sky_area=sky_area,
+        deflector_sky_area=sky_area,
         cosmo=cosmo,
         kwargs_deflector_cut=kwargs_deflector_cut,
         kwargs_source_cut=kwargs_source_cut,
@@ -40,7 +41,8 @@ def test_pes_lens_pop_instance():
         kwargs_variability={"amp", "freq"},
         kwargs_mass2light=None,
         skypy_config=None,
-        sky_area=sky_area,
+        source_sky_area=sky_area,
+        deflector_sky_area=sky_area,
         cosmo=cosmo,
     )
     kwargs_lens_cut = {}
@@ -52,7 +54,7 @@ def test_galaxies_lens_pop_halo_model_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3, Ob0=0.05)
     sky_area = Quantity(value=0.001, unit="deg2")
 
-    kwargs_deflector_cut = {"z_min": 0.01, "z_max": 2.5}
+    kwargs_deflector_cut = {"z_min": 0.001, "z_max": 2.5}
     kwargs_source_cut = {"band": "g", "band_max": 28, "z_min": 0.1, "z_max": 5.0}
 
     g_lens_halo_model_pop = LensPop(
@@ -63,7 +65,8 @@ def test_galaxies_lens_pop_halo_model_instance():
         kwargs_mass2light=None,
         skypy_config=None,
         slhammocks_config=None,
-        sky_area=sky_area,
+        source_sky_area=sky_area,
+        deflector_sky_area=sky_area,
         cosmo=cosmo,
     )
     assert g_lens_halo_model_pop._lens_galaxies.draw_deflector()["halo_mass"] != 0
@@ -83,7 +86,8 @@ def test_supernovae_plus_galaxies_lens_pop_instance():
         kwargs_variability={"MJD", "ps_mag_r"},
         kwargs_mass2light=None,
         skypy_config=None,
-        sky_area=sky_area,
+        source_sky_area=sky_area,
+        deflector_sky_area=sky_area,
         catalog_type="supernovae_sample",
         cosmo=cosmo,
     )
@@ -110,7 +114,8 @@ def test_supernovae_plus_galaxies_lens_pop_instance_2():
         sn_absolute_zpsys="ab",
         kwargs_mass2light=None,
         skypy_config=None,
-        sky_area=sky_area,
+        source_sky_area=sky_area,
+        deflector_sky_area=sky_area,
         cosmo=cosmo,
         lightcurve_time=time_range,
     )
@@ -142,7 +147,8 @@ def test_supernovae_lens_pop_instance():
         sn_absolute_zpsys="ab",
         kwargs_mass2light=None,
         skypy_config=None,
-        sky_area=sky_area,
+        source_sky_area=sky_area,
+        deflector_sky_area=sky_area,
         cosmo=cosmo,
         lightcurve_time=time_range,
     )
@@ -159,8 +165,9 @@ def test_supernovae_lens_pop_instance():
         sn_absolute_zpsys="ab",
         kwargs_mass2light=None,
         skypy_config=None,
-        sky_area=sky_area2,
-        large_skyarea=large_skyarea,
+        source_sky_area=sky_area2,
+        deflector_sky_area=sky_area2,
+        full_sky_area=large_skyarea,
         cosmo=cosmo,
         lightcurve_time=time_range,
     )
@@ -175,7 +182,7 @@ def test_supernovae_lens_pop_instance():
     assert pes_lens_class._source_type == "point_source"
     assert "z" in pes_lens_class.source.source_dict.colnames
     assert len(pes_lens_class.source.source_dict) == 1
-    assert pes_lens_pop.factor == 1
+    assert pes_lens_pop.factor_source == 1
     assert abs(len(pes_lens_population)-len(pes_lens_population2)) <= 10
 
 
