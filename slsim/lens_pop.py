@@ -78,6 +78,7 @@ class LensPop(LensedPopulationBase):
          further significant computational cost. If the full_sky_area is not None, 
          source_sky_area and deflector_sky_area should be reasonably large to 
          approximate true source and deflector distributions.
+        :type full_sky_area: `~astropy.units.Quantity`
         :param filters: filters for SED integration
         :type filters: list of strings or None
         :param cosmo: cosmology object
