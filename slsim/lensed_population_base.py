@@ -51,15 +51,13 @@ class LensedPopulationBase(ABC):
         if source_sky_area is None:
             from astropy.units import Quantity
 
-            source_sky_area = Quantity(value=0.1, unit="deg2")
+            self.source_sky_area = Quantity(value=0.1, unit="deg2")
             warnings.warn("No source sky area provided, instead uses 0.1 deg2")
         if deflector_sky_area is None:
             from astropy.units import Quantity
 
-            deflector_sky_area = Quantity(value=0.1, unit="deg2")
+            self.deflector_sky_area = Quantity(value=0.1, unit="deg2")
             warnings.warn("No deflector sky area provided, instead uses 0.1 deg2")
-        if full_sky_area is None:
-            full_sky_area = deflector_sky_area
         self.f_sky = full_sky_area
 
         if cosmo is None:
