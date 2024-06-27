@@ -66,11 +66,11 @@ class LensPop(LensedPopulationBase):
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
         :type sky_area: `~astropy.units.Quantity`
-        :param large_skyarea: Large sky area over which lens population will be 
-         simulated. If None, only sky_area will be used. If large_sky area is not None, 
+        :param large_skyarea: Large sky area over which lens population will be
+         simulated. If None, only sky_area will be used. If large_sky area is not None,
          number of galaxy sample within a sky_area will be scaled to large_skyarea. This
-         will allow us to simulate lens population over a large sky_area without further 
-         significant computational cost. If the large_skyarea is not None, sky_area 
+         will allow us to simulate lens population over a large sky_area without further
+         significant computational cost. If the large_skyarea is not None, sky_area
          should be reasonably large to approximate true galaxy distribution.
         :param filters: filters for SED integration
         :type filters: list of strings or None
@@ -340,8 +340,9 @@ class LensPop(LensedPopulationBase):
         if self.large_skyarea is None:
             self.factor = 1
         else:
-            self.factor = (
-                self.large_skyarea.to_value("deg2")/self.f_sky.to_value("deg2"))
+            self.factor = self.large_skyarea.to_value("deg2") / self.f_sky.to_value(
+                "deg2"
+            )
 
         self.los_config = los_config
         if self.los_config is None:
@@ -385,7 +386,7 @@ class LensPop(LensedPopulationBase):
 
         :return: number of potential deflectors
         """
-        return round(self.factor*self._lens_galaxies.deflector_number())
+        return round(self.factor * self._lens_galaxies.deflector_number())
 
     @property
     def source_number(self):
@@ -394,7 +395,7 @@ class LensPop(LensedPopulationBase):
 
         :return: number of potential sources
         """
-        return round(self.factor*self._sources.source_number_selected)
+        return round(self.factor * self._sources.source_number_selected)
 
     def get_num_sources_tested_mean(self, testarea):
         """Compute the mean of source galaxies needed to be tested within the test area.
@@ -404,7 +405,7 @@ class LensPop(LensedPopulationBase):
         """
         num_sources = self.source_number
         num_sources_tested_mean = (testarea * num_sources) / (
-            12960000 * self.factor*self.f_sky.to_value("deg2")
+            12960000 * self.factor * self.f_sky.to_value("deg2")
         )
         return num_sources_tested_mean
 
