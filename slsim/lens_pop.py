@@ -66,6 +66,12 @@ class LensPop(LensedPopulationBase):
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
         :type sky_area: `~astropy.units.Quantity`
+        :param large_skyarea: Large sky area over which lens population will be 
+         simulated. If None, only sky_area will be used. If large_sky area is not None, 
+         number of galaxy sample within a sky_area will be scaled to large_skyarea. This
+         will allow us to simulate lens population over a large sky_area without further 
+         significant computational cost. If the large_skyarea is not None, sky_area 
+         should be reasonably large to approximate true galaxy distribution.
         :param filters: filters for SED integration
         :type filters: list of strings or None
         :param cosmo: cosmology object
@@ -334,7 +340,8 @@ class LensPop(LensedPopulationBase):
         if self.large_skyarea is None:
             self.factor = 1
         else:
-            self.factor = (self.large_skyarea/self.f_sky)
+            self.factor = (
+                self.large_skyarea.to_value("deg2")/self.f_sky.to_value("deg2"))
 
         self.los_config = los_config
         if self.los_config is None:
@@ -378,7 +385,7 @@ class LensPop(LensedPopulationBase):
 
         :return: number of potential deflectors
         """
-        return int(self.factor*self._lens_galaxies.deflector_number())
+        return round(self.factor*self._lens_galaxies.deflector_number())
 
     @property
     def source_number(self):
@@ -387,7 +394,7 @@ class LensPop(LensedPopulationBase):
 
         :return: number of potential sources
         """
-        return int(self.factor*self._sources.source_number_selected)
+        return round(self.factor*self._sources.source_number_selected)
 
     def get_num_sources_tested_mean(self, testarea):
         """Compute the mean of source galaxies needed to be tested within the test area.
@@ -423,7 +430,7 @@ class LensPop(LensedPopulationBase):
         # Initialize an empty list to store the Lens instances
         gg_lens_population = []
         # Estimate the number of lensing systems
-        num_lenses = self._lens_galaxies.deflector_number()
+        num_lenses = self.deflector_number
         # num_sources = self._source_galaxies.galaxies_number()
         #        print(num_sources_tested_mean)
         #        print("num_lenses is " + str(num_lenses))
