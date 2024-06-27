@@ -338,9 +338,8 @@ class LensPop(LensedPopulationBase):
         if large_skyarea is None:
             self.factor = 1
         else:
-            self.factor = (
-                large_skyarea.to_value("deg2")/sky_area.to_value("deg2"))
-        self.f_sky = self.factor*sky_area
+            self.factor = large_skyarea.to_value("deg2") / sky_area.to_value("deg2")
+        self.f_sky = self.factor * sky_area
         self.los_config = los_config
         if self.los_config is None:
             los_config = LOSConfig()
