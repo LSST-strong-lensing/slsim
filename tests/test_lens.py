@@ -33,15 +33,17 @@ class TestLens(object):
 
         print(blue_one)
         blue_one["gamma_pl"] = 2.1
-
+        mag_arc_limit = {"i": 35, "g": 35, "r": 35}
         while True:
             gg_lens = Lens(
                 source_dict=self.source_dict,
                 deflector_dict=self.deflector_dict,
                 lens_equation_solver="lenstronomy_analytical",
+                kwargs_variability={"MJD", "ps_mag_i"},  # This line will not be used in
+                # the testing but at least code go through this warning message.
                 cosmo=cosmo,
             )
-            if gg_lens.validity_test():
+            if gg_lens.validity_test(mag_arc_limit=mag_arc_limit):
                 self.gg_lens = gg_lens
                 break
 

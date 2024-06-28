@@ -1,6 +1,5 @@
 from skypy.galaxies.redshift import redshifts_from_comoving_density
 from slsim.Sources.Supernovae.supernovae_pop import SNIaRate
-from astropy.table import Table
 from astropy import units
 
 
@@ -61,15 +60,3 @@ class SNeLightcone(object):
                 noise=self._noise,
             )
         return self._output_redshifts
-
-    def redshift_table(self):
-        """Generates table with redshift locations of supernovae.
-
-        :return: astropy table with redshift locations of supernovae
-        :return type: `~astropy.table.Table`
-        """
-        # Once lightcurve implementation is complete, it will be included here in the table
-        redshift_list = self.supernovae_sample()
-        redshift_table = {"Redshift": []}
-        redshift_table["Redshift"].append(redshift_list)
-        return Table(redshift_table)
