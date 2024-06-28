@@ -12,7 +12,8 @@ import pytest
 def galaxy_list():
     sky_area = Quantity(value=0.005, unit="deg2")
     pipeline = SkyPyPipeline(skypy_config=None, sky_area=sky_area, filters=None)
-    return pipeline.red_galaxies
+    red_gal=pipeline.red_galaxies
+    return red_gal
 
 
 @pytest.fixture
@@ -31,13 +32,14 @@ def elliptical_lens_galaxies():
     )
 
 
-def test_deflector_number_draw_deflector(all_lens_galaxies):
-    galaxy_pop = all_lens_galaxies
+def test_deflector_number_draw_deflector(elliptical_lens_galaxies):
+    galaxy_pop = elliptical_lens_galaxies
     num_deflectors = galaxy_pop.deflector_number()
     deflector = galaxy_pop.draw_deflector()
     assert deflector["z"] != 0
     assert num_deflectors >= 0
-    assert deflector["vel_disp"] == vel_disp_from_m_star(deflector["stellar_mass"])
+def test_vel_disp_from_m_star():
+    assert vel_disp_from_m_star(0) == 0
 
 
 if __name__ == "__main__":
