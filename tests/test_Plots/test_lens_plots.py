@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 def gg_lens_pop_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     sky_area = Quantity(value=0.001, unit="deg2")
-    return LensPop(source_sky_area=sky_area, deflector_sky_area=sky_area, cosmo=cosmo)
+    return LensPop(sky_area=sky_area, cosmo=cosmo)
 
 
 def test_rgb_image(gg_lens_pop_instance):

@@ -27,9 +27,9 @@ class LensPop(LensedPopulationBase):
         kwargs_mass2light=None,
         skypy_config=None,
         slhammocks_config=None,
+        sky_area=None,
         source_sky_area=None,
         deflector_sky_area=None,
-        full_sky_area=None,
         filters=None,
         cosmo=None,
         source_light_profile="single_sersic",
@@ -64,20 +64,17 @@ class LensPop(LensedPopulationBase):
         :type skypy_config: string
         :param slhammocks_config: path to the deflector population csv file for 'halo-model'
         :type slhammocks_config: string
+        :param sky_area: Sky area over which lens population will be simulated. If 
+         sky_area is not None, number of source sample and deflector sample within a
+         source_sky_area and deflector_sky_area will be scaled to the sky_area. 
+         This will allow us to simulate lens population over a large sky area without 
+         further significant computational cost.
         :param source_sky_area: Sky area over which sources are sampled. Must be in 
-         units of solid angle.
+         units of solid angle. If None, source_sky_area will be equal to sky_area.
         :type source_sky_area: `~astropy.units.Quantity`
         :param deflector_sky_area: Sky area over which deflectors are sampled. Must be 
-         in units of solid angle.
+         in units of solid angle. If None, deflcetor_sky_area will be equal to sky_area.
         :type deflector_sky_area: `~astropy.units.Quantity`
-        :param full_sky_area: Sky area over which lens population will be simulated. 
-         If None, only source_sky_area and deflector_sky_area will be used. If 
-         full_sky_area is not None, number of source sample and dflector sample within a
-         source_sky_area and deflector_sky_area will be scaled to the full_sky_area. 
-         This will allow us to simulate lens population over a large sky area without 
-         further significant computational cost. If the full_sky_area is not None, 
-         source_sky_area and deflector_sky_area should be reasonably large to 
-         approximate true source and deflector distributions.
         :type full_sky_area: `~astropy.units.Quantity`
         :param filters: filters for SED integration
         :type filters: list of strings or None
@@ -113,9 +110,7 @@ class LensPop(LensedPopulationBase):
         :type sn_modeldir: str
         """
         super().__init__(
-            source_sky_area,
-            deflector_sky_area,
-            full_sky_area,
+            sky_area,
             cosmo,
             lightcurve_time,
             sn_type,
@@ -123,6 +118,15 @@ class LensPop(LensedPopulationBase):
             sn_absolute_zpsys,
             sn_modeldir,
         )
+        self.cosmo = cosmo
+        if source_sky_area is None:
+            self.source_sky_area = self.f_sky
+        else:
+            self.source_sky_area = source_sky_area
+        if deflector_sky_area is None:
+            self.deflector_sky_area = self.f_sky
+        else:
+            self.deflector_sky_area = deflector_sky_area
         if source_type == "galaxies" and kwargs_variability is not None:
             raise ValueError(
                 "Galaxies cannot have variability. Either choose"
@@ -134,13 +138,16 @@ class LensPop(LensedPopulationBase):
         ]:
             pipeline_deflector = SkyPyPipeline(
                 skypy_config=skypy_config,
-                sky_area=deflector_sky_area,
+                sky_area=self.deflector_sky_area,
                 filters=filters,
                 cosmo=cosmo,
             )
-            pipeline_source = SkyPyPipeline(
+            if self.source_sky_area == self.deflector_sky_area:
+                pipeline_source = pipeline_deflector
+            else:
+                pipeline_source = SkyPyPipeline(
                 skypy_config=skypy_config,
-                sky_area=source_sky_area,
+                sky_area=self.source_sky_area,
                 filters=filters,
                 cosmo=cosmo,
             )
@@ -157,7 +164,7 @@ class LensPop(LensedPopulationBase):
                 kwargs_cut=kwargs_deflector_cut,
                 kwargs_mass2light=kwargs_mass2light,
                 cosmo=cosmo,
-                sky_area=deflector_sky_area,
+                sky_area=self.deflector_sky_area,
             )
 
         elif deflector_type == "all-galaxies":
@@ -172,7 +179,7 @@ class LensPop(LensedPopulationBase):
                 kwargs_cut=kwargs_deflector_cut,
                 kwargs_mass2light=kwargs_mass2light,
                 cosmo=cosmo,
-                sky_area=deflector_sky_area,
+                sky_area=self.deflector_sky_area,
             )
 
         elif deflector_type == "halo-models":
@@ -182,7 +189,7 @@ class LensPop(LensedPopulationBase):
             from slsim.Pipelines.sl_hammocks_pipeline import SLHammocksPipeline
 
             halo_galaxy_list = SLHammocksPipeline(
-                slhammocks_config=slhammocks_config, sky_area=deflector_sky_area, 
+                slhammocks_config=slhammocks_config, sky_area=self.deflector_sky_area, 
                 cosmo=cosmo
             )
 
@@ -191,7 +198,7 @@ class LensPop(LensedPopulationBase):
                 kwargs_cut=kwargs_deflector_cut,
                 kwargs_mass2light=kwargs_mass2light,
                 cosmo=cosmo,
-                sky_area=deflector_sky_area,
+                sky_area=self.deflector_sky_area,
             )
 
         else:
@@ -206,7 +213,7 @@ class LensPop(LensedPopulationBase):
                 pipeline_source.blue_galaxies,
                 kwargs_cut=kwargs_source_cut,
                 cosmo=cosmo,
-                sky_area=source_sky_area,
+                sky_area=self.source_sky_area,
                 light_profile=source_light_profile,
                 catalog_type=catalog_type,
             )
@@ -221,7 +228,7 @@ class LensPop(LensedPopulationBase):
             self._sources = PointSources(
                 quasar_source,
                 cosmo=cosmo,
-                sky_area=source_sky_area,
+                sky_area=self.source_sky_area,
                 variability_model=variability_model,
                 kwargs_variability_model=kwargs_variability,
                 light_profile=source_light_profile,
@@ -241,7 +248,7 @@ class LensPop(LensedPopulationBase):
             self._sources = PointPlusExtendedSources(
                 quasar_galaxy_source,
                 cosmo=cosmo,
-                sky_area=source_sky_area,
+                sky_area=self.source_sky_area,
                 kwargs_cut=kwargs_source_cut,
                 variability_model=variability_model,
                 kwargs_variability_model=kwargs_variability,
@@ -273,7 +280,7 @@ class LensPop(LensedPopulationBase):
                 self._sources = PointPlusExtendedSources(
                     load_supernovae_data,
                     cosmo=cosmo,
-                    sky_area=source_sky_area,
+                    sky_area=self.source_sky_area,
                     kwargs_cut=kwargs_source_cut,
                     variability_model=variability_model,
                     kwargs_variability_model=kwargs_variability,
@@ -288,7 +295,7 @@ class LensPop(LensedPopulationBase):
                 self._sources = PointPlusExtendedSources(
                     load_supernovae_data,
                     cosmo=cosmo,
-                    sky_area=source_sky_area,
+                    sky_area=self.source_sky_area,
                     kwargs_cut=kwargs_source_cut,
                     variability_model=variability_model,
                     kwargs_variability_model=kwargs_variability,
@@ -315,7 +322,7 @@ class LensPop(LensedPopulationBase):
                     mag_zpsys=sn_absolute_zpsys,
                     cosmo=cosmo,
                     skypy_config=skypy_config,
-                    sky_area=source_sky_area,
+                    sky_area=self.source_sky_area,
                     sn_modeldir=sn_modeldir,
                 )
                 if source_type == "supernovae":
@@ -325,7 +332,7 @@ class LensPop(LensedPopulationBase):
                     self._sources = PointSources(
                         supernovae_sample,
                         cosmo=cosmo,
-                        sky_area=source_sky_area,
+                        sky_area=self.source_sky_area,
                         variability_model=variability_model,
                         kwargs_variability_model=kwargs_variability,
                         light_profile=source_light_profile,
@@ -337,7 +344,7 @@ class LensPop(LensedPopulationBase):
                     self._sources = PointPlusExtendedSources(
                         supernovae_sample,
                         cosmo=cosmo,
-                        sky_area=source_sky_area,
+                        sky_area=self.source_sky_area,
                         kwargs_cut=kwargs_source_cut,
                         variability_model=variability_model,
                         kwargs_variability_model=kwargs_variability,
@@ -350,18 +357,11 @@ class LensPop(LensedPopulationBase):
                 self._source_model_type = "point_plus_extended"
         else:
             raise ValueError("source_type %s is not supported" % source_type)
-        self.cosmo = cosmo
-        self.source_sky_area = source_sky_area
-        self.deflector_sky_area = deflector_sky_area
-        self.f_sky = full_sky_area
-        if full_sky_area is None:
-            self.factor_source = 1
-            self.factor_deflector = 1
-        else:
-            self.factor_source = (
-                self.f_sky.to_value("deg2")/self.source_sky_area.to_value("deg2"))
-            self.factor_deflector = (
-                self.f_sky.to_value("deg2")/self.deflector_sky_area.to_value("deg2"))
+
+        self._factor_source = (
+            self.f_sky.to_value("deg2")/self.source_sky_area.to_value("deg2"))
+        self._factor_deflector = (
+            self.f_sky.to_value("deg2")/self.deflector_sky_area.to_value("deg2"))
         self.los_config = los_config
         if self.los_config is None:
             los_config = LOSConfig()
@@ -404,7 +404,7 @@ class LensPop(LensedPopulationBase):
 
         :return: number of potential deflectors
         """
-        return round(self.factor_deflector * self._lens_galaxies.deflector_number())
+        return round(self._factor_deflector * self._lens_galaxies.deflector_number())
 
     @property
     def source_number(self):
@@ -413,7 +413,7 @@ class LensPop(LensedPopulationBase):
 
         :return: number of potential sources
         """
-        return round(self.factor_source * self._sources.source_number_selected)
+        return round(self._factor_source * self._sources.source_number_selected)
 
     def get_num_sources_tested_mean(self, testarea):
         """Compute the mean of source galaxies needed to be tested within the test area.
@@ -423,7 +423,7 @@ class LensPop(LensedPopulationBase):
         """
         num_sources = self.source_number
         num_sources_tested_mean = (testarea * num_sources) / (
-            12960000 * self.factor_source * self.source_sky_area.to_value("deg2")
+            12960000 * self._factor_source * self.source_sky_area.to_value("deg2")
         )
         return num_sources_tested_mean
 

@@ -22,8 +22,7 @@ def quasar_lens_pop_instance():
         kwargs_source_cut=None,
         kwargs_mass2light=None,
         skypy_config=None,
-        source_sky_area=sky_area,
-        deflector_sky_area=sky_area,
+        sky_area=sky_area,
         cosmo=cosmo,
     )
 

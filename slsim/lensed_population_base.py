@@ -10,9 +10,7 @@ class LensedPopulationBase(ABC):
 
     def __init__(
         self,
-        source_sky_area=None,
-        deflector_sky_area=None,
-        full_sky_area=None,
+        sky_area=None,
         cosmo=None,
         lightcurve_time=None,
         sn_type=None,
@@ -48,6 +46,13 @@ class LensedPopulationBase(ABC):
         self.sn_absolute_mag_band = sn_absolute_mag_band
         self.sn_absolute_zpsys = sn_absolute_zpsys
         self.sn_modeldir = sn_modeldir
+        if sky_area is None:
+            from astropy.units import Quantity
+
+            sky_area = Quantity(value=0.1, unit="deg2")
+            warnings.warn("No sky area provided, instead uses 0.1 deg2")
+        self.f_sky = sky_area
+     
         if cosmo is None:
             warnings.warn(
                 "No cosmology provided, instead uses flat LCDM with default parameters"
