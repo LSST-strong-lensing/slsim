@@ -33,7 +33,7 @@ class TestLens(object):
 
         print(blue_one)
         blue_one["gamma_pl"] = 2.1
-        mag_arc_limit = {"i": 35, "g": 35}
+        mag_arc_limit = {"i": 35, "g": 35, "r": 35}
         while True:
             gg_lens = Lens(
                 source_dict=self.source_dict,
