@@ -64,15 +64,15 @@ class LensPop(LensedPopulationBase):
         :type skypy_config: string
         :param slhammocks_config: path to the deflector population csv file for 'halo-model'
         :type slhammocks_config: string
-        :param sky_area: Sky area over which lens population will be simulated. If 
+        :param sky_area: Sky area over which lens population will be simulated. If
          sky_area is not None, number of source sample and deflector sample within a
-         source_sky_area and deflector_sky_area will be scaled to the sky_area. 
-         This will allow us to simulate lens population over a large sky area without 
+         source_sky_area and deflector_sky_area will be scaled to the sky_area.
+         This will allow us to simulate lens population over a large sky area without
          further significant computational cost.
-        :param source_sky_area: Sky area over which sources are sampled. Must be in 
+        :param source_sky_area: Sky area over which sources are sampled. Must be in
          units of solid angle. If None, source_sky_area will be equal to sky_area.
         :type source_sky_area: `~astropy.units.Quantity`
-        :param deflector_sky_area: Sky area over which deflectors are sampled. Must be 
+        :param deflector_sky_area: Sky area over which deflectors are sampled. Must be
          in units of solid angle. If None, deflcetor_sky_area will be equal to sky_area.
         :type deflector_sky_area: `~astropy.units.Quantity`
         :type full_sky_area: `~astropy.units.Quantity`
@@ -146,11 +146,11 @@ class LensPop(LensedPopulationBase):
                 pipeline_source = pipeline_deflector
             else:
                 pipeline_source = SkyPyPipeline(
-                skypy_config=skypy_config,
-                sky_area=self.source_sky_area,
-                filters=filters,
-                cosmo=cosmo,
-            )
+                    skypy_config=skypy_config,
+                    sky_area=self.source_sky_area,
+                    filters=filters,
+                    cosmo=cosmo,
+                )
         if kwargs_deflector_cut is None:
             kwargs_deflector_cut = {}
         if kwargs_mass2light is None:
@@ -189,8 +189,9 @@ class LensPop(LensedPopulationBase):
             from slsim.Pipelines.sl_hammocks_pipeline import SLHammocksPipeline
 
             halo_galaxy_list = SLHammocksPipeline(
-                slhammocks_config=slhammocks_config, sky_area=self.deflector_sky_area, 
-                cosmo=cosmo
+                slhammocks_config=slhammocks_config,
+                sky_area=self.deflector_sky_area,
+                cosmo=cosmo,
             )
 
             self._lens_galaxies = CompoundLensHalosGalaxies(
@@ -358,10 +359,12 @@ class LensPop(LensedPopulationBase):
         else:
             raise ValueError("source_type %s is not supported" % source_type)
 
-        self._factor_source = (
-            self.f_sky.to_value("deg2")/self.source_sky_area.to_value("deg2"))
-        self._factor_deflector = (
-            self.f_sky.to_value("deg2")/self.deflector_sky_area.to_value("deg2"))
+        self._factor_source = self.f_sky.to_value(
+            "deg2"
+        ) / self.source_sky_area.to_value("deg2")
+        self._factor_deflector = self.f_sky.to_value(
+            "deg2"
+        ) / self.deflector_sky_area.to_value("deg2")
         self.los_config = los_config
         if self.los_config is None:
             los_config = LOSConfig()
