@@ -151,7 +151,7 @@ def test_supernovae_lens_pop_instance():
         cosmo=cosmo,
         lightcurve_time=time_range,
     )
-    large_skyarea=Quantity(value=2, unit="deg2")
+    large_skyarea = Quantity(value=2, unit="deg2")
     pes_lens_pop2 = LensPop(
         deflector_type="elliptical",
         source_type="supernovae",
@@ -173,9 +173,11 @@ def test_supernovae_lens_pop_instance():
     kwargs_lens_cuts = {}
     # drawing population
     pes_lens_population = pes_lens_pop.draw_population(
-    kwargs_lens_cuts=kwargs_lens_cuts)
+        kwargs_lens_cuts=kwargs_lens_cuts
+    )
     pes_lens_population2 = pes_lens_pop2.draw_population(
-    kwargs_lens_cuts=kwargs_lens_cuts)
+        kwargs_lens_cuts=kwargs_lens_cuts
+    )
     kwargs_lens_cut = {}
     pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
     assert pes_lens_class._source_type == "point_source"
@@ -209,6 +211,7 @@ def test_num_sources_tested_and_test_area(gg_lens_pop_instance):
         0 <= num_sources_range <= 50
     ), "Expected num_sources_range to be between 0 and 50,"
     f"but got {num_sources_range}"
+
 
 if __name__ == "__main__":
     pytest.main()
