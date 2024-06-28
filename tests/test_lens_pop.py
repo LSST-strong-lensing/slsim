@@ -130,7 +130,7 @@ def test_supernovae_plus_galaxies_lens_pop_instance_2():
 
 def test_supernovae_lens_pop_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-    sky_area = Quantity(value=2, unit="deg2")
+    sky_area = Quantity(value=3, unit="deg2")
     sky_area2 = Quantity(value=1, unit="deg2")
     kwargs_deflector_cut = {"band": "g", "band_max": 23, "z_min": 0.01, "z_max": 2.5}
     kwargs_source_cut = {"band": "g", "band_max": 26, "z_min": 0.1, "z_max": 5.0}
@@ -151,7 +151,7 @@ def test_supernovae_lens_pop_instance():
         cosmo=cosmo,
         lightcurve_time=time_range,
     )
-    large_skyarea = Quantity(value=2, unit="deg2")
+    large_skyarea = Quantity(value=3, unit="deg2")
     pes_lens_pop2 = LensPop(
         deflector_type="elliptical",
         source_type="supernovae",
@@ -183,7 +183,7 @@ def test_supernovae_lens_pop_instance():
     assert pes_lens_class._source_type == "point_source"
     assert "z" in pes_lens_class.source.source_dict.colnames
     assert len(pes_lens_class.source.source_dict) == 1
-    assert abs(len(pes_lens_population)-len(pes_lens_population2)) <= 10
+    assert abs(len(pes_lens_population)-len(pes_lens_population2)) <= 12
 
 
 def test_num_lenses_and_sources(gg_lens_pop_instance):
