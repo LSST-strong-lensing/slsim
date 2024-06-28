@@ -183,7 +183,7 @@ def test_supernovae_lens_pop_instance():
     assert pes_lens_class._source_type == "point_source"
     assert "z" in pes_lens_class.source.source_dict.colnames
     assert len(pes_lens_class.source.source_dict) == 1
-    assert abs(len(pes_lens_population)-len(pes_lens_population2)) <= 12
+    assert abs(len(pes_lens_population) - len(pes_lens_population2)) <= 12
 
 
 def test_num_lenses_and_sources(gg_lens_pop_instance):
