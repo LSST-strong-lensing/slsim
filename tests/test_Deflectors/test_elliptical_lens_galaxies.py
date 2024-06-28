@@ -1,6 +1,7 @@
 from astropy.cosmology import FlatLambdaCDM
 from slsim.Deflectors.elliptical_lens_galaxies import (
-    EllipticalLensGalaxies, vel_disp_from_m_star
+    EllipticalLensGalaxies,
+    vel_disp_from_m_star,
 )
 from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 from astropy.units import Quantity
@@ -10,7 +11,7 @@ import pytest
 def galaxy_list():
     sky_area = Quantity(value=0.005, unit="deg2")
     pipeline = SkyPyPipeline(skypy_config=None, sky_area=sky_area, filters=None)
-    red_gal=pipeline.red_galaxies
+    red_gal = pipeline.red_galaxies
     return red_gal
 
 
@@ -36,6 +37,8 @@ def test_deflector_number_draw_deflector(elliptical_lens_galaxies):
     deflector = galaxy_pop.draw_deflector()
     assert deflector["z"] != 0
     assert num_deflectors >= 0
+
+
 def test_vel_disp_from_m_star():
     assert vel_disp_from_m_star(0) == 0
 

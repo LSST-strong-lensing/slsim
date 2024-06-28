@@ -39,8 +39,8 @@ class TestLens(object):
                 source_dict=self.source_dict,
                 deflector_dict=self.deflector_dict,
                 lens_equation_solver="lenstronomy_analytical",
-                kwargs_variability={"MJD", "ps_mag_i"}, # This line will not be used in 
-                #the testing but at least code go through this warning message. 
+                kwargs_variability={"MJD", "ps_mag_i"},  # This line will not be used in
+                # the testing but at least code go through this warning message.
                 cosmo=cosmo,
             )
             if gg_lens.validity_test(mag_arc_limit=mag_arc_limit):
