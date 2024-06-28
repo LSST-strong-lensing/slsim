@@ -4,8 +4,6 @@ from slsim.Deflectors.elliptical_lens_galaxies import (
 )
 from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 from astropy.units import Quantity
-from astropy.table import Table
-import numpy as np
 import pytest
 
 
