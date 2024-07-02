@@ -144,7 +144,6 @@ class TestQuasarRate:
                 test_magnitudes[0], test_redshifts[0], conversion="invalid_conversion"
             )
 
-    
     def test_n_comoving(self):
         # Test data
         m_min = 15
@@ -158,12 +157,18 @@ class TestQuasarRate:
         for z, expected_n in zip(test_redshifts, expected_n_comoving):
             # Test n_comoving method
             n_comoving = self.quasar_rate.n_comoving(m_min, m_max, z)
-            assert isinstance(n_comoving, float), f"For scalar input, expected float, got {type(n_comoving)}"
+            assert isinstance(
+                n_comoving, float
+            ), f"For scalar input, expected float, got {type(n_comoving)}"
             np.testing.assert_almost_equal(n_comoving, expected_n, decimal=4)
 
             # Test case #2: Direct integration and handling of invalid integrals
-            M_min = self.quasar_rate.convert_magnitude(m_min, z, conversion="apparent_to_absolute")
-            M_max = self.quasar_rate.convert_magnitude(m_max, z, conversion="apparent_to_absolute")
+            M_min = self.quasar_rate.convert_magnitude(
+                m_min, z, conversion="apparent_to_absolute"
+            )
+            M_max = self.quasar_rate.convert_magnitude(
+                m_max, z, conversion="apparent_to_absolute"
+            )
             integral, _ = quad(self.quasar_rate.dPhi_dM, M_min, M_max, args=(z,))
             if integral < 0 or np.isnan(integral):
                 print(f"Invalid integral value: {integral} for z = {z}")
@@ -172,8 +177,12 @@ class TestQuasarRate:
         # Test case #3: Array of redshift values
         for z in test_redshift_array:
             # Test direct integration and handling of invalid integrals
-            M_min = self.quasar_rate.convert_magnitude(m_min, z, conversion="apparent_to_absolute")
-            M_max = self.quasar_rate.convert_magnitude(m_max, z, conversion="apparent_to_absolute")
+            M_min = self.quasar_rate.convert_magnitude(
+                m_min, z, conversion="apparent_to_absolute"
+            )
+            M_max = self.quasar_rate.convert_magnitude(
+                m_max, z, conversion="apparent_to_absolute"
+            )
             integral, _ = quad(self.quasar_rate.dPhi_dM, M_min, M_max, args=(z,))
             if integral < 0 or np.isnan(integral):
                 print(f"Invalid integral value: {integral} for z = {z}")
