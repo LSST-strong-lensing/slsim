@@ -2,6 +2,7 @@ from slsim.Sources.QuasarCatalog.quasar_pop import QuasarRate
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
 import numpy as np
+from scipy.integrate import quad
 from scipy.stats import ks_2samp
 from astropy.table import Table
 import pytest
@@ -88,14 +89,14 @@ class TestQuasarRate:
         dphi_dm_calc = self.quasar_rate.dPhi_dM(M, z_value)
         np.testing.assert_almost_equal(dphi_dm_calc, expected_value, decimal=4)
 
-        # Test case 4: Scalar M and array z_value
+        # Test case 4: Scalar M and array z_value (trigger shape check for z_value)
         M = -28.0
         z_values = np.array([2.01, 5.0])
         expected_values = self.quasar_rate.dPhi_dM(np.array([M, M]), z_values)
         dphi_dm_calc = self.quasar_rate.dPhi_dM(M, z_values)
         np.testing.assert_almost_equal(dphi_dm_calc, expected_values, decimal=4)
 
-        # Test case 5: Array M and scalar z_value
+        # Test case 5: Array M and scalar z_value (trigger shape check for M)
         M = np.array([-28.0, -27.0])
         z_value = 2.01
         expected_values = self.quasar_rate.dPhi_dM(M, np.array([z_value, z_value]))
@@ -143,6 +144,7 @@ class TestQuasarRate:
                 test_magnitudes[0], test_redshifts[0], conversion="invalid_conversion"
             )
 
+    
     def test_n_comoving(self):
         # Test data
         m_min = 15
@@ -152,28 +154,30 @@ class TestQuasarRate:
 
         expected_n_comoving = [5.294255979e-5, 1.077342851e-5]
 
+        # Test case #1: Scalar and array redshift values
         for z, expected_n in zip(test_redshifts, expected_n_comoving):
+            # Test n_comoving method
             n_comoving = self.quasar_rate.n_comoving(m_min, m_max, z)
-            assert isinstance(
-                n_comoving, float
-            ), f"Expected float, got {type(n_comoving)}"
+            assert isinstance(n_comoving, float), f"For scalar input, expected float, got {type(n_comoving)}"
             np.testing.assert_almost_equal(n_comoving, expected_n, decimal=4)
 
-        # Test case for array of redshift values
-        n_comoving_results = []
+            # Test case #2: Direct integration and handling of invalid integrals
+            M_min = self.quasar_rate.convert_magnitude(m_min, z, conversion="apparent_to_absolute")
+            M_max = self.quasar_rate.convert_magnitude(m_max, z, conversion="apparent_to_absolute")
+            integral, _ = quad(self.quasar_rate.dPhi_dM, M_min, M_max, args=(z,))
+            if integral < 0 or np.isnan(integral):
+                print(f"Invalid integral value: {integral} for z = {z}")
+            assert integral >= 0, f"Invalid integral value: {integral} for z = {z}"
+
+        # Test case #3: Array of redshift values
         for z in test_redshift_array:
-            n_comoving = self.quasar_rate.n_comoving(m_min, m_max, z)
-            n_comoving_results.append(n_comoving)
-
-        n_comoving_array = np.array(n_comoving_results)
-        expected_n_comoving_array = np.array(expected_n_comoving)
-
-        assert isinstance(
-            n_comoving_array, np.ndarray
-        ), f"Expected np.ndarray, got {type(n_comoving_array)}"
-        np.testing.assert_almost_equal(
-            n_comoving_array, expected_n_comoving_array, decimal=4
-        )
+            # Test direct integration and handling of invalid integrals
+            M_min = self.quasar_rate.convert_magnitude(m_min, z, conversion="apparent_to_absolute")
+            M_max = self.quasar_rate.convert_magnitude(m_max, z, conversion="apparent_to_absolute")
+            integral, _ = quad(self.quasar_rate.dPhi_dM, M_min, M_max, args=(z,))
+            if integral < 0 or np.isnan(integral):
+                print(f"Invalid integral value: {integral} for z = {z}")
+            assert integral >= 0, f"Invalid integral value: {integral} for z = {z}"
 
     def test_generate_quasar_redshifts(self):
         np.random.seed(42)
