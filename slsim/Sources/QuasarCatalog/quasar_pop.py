@@ -80,14 +80,24 @@ class QuasarRate(object):
         :param z_value: Redshift value.
         :type z_value: float or np.ndarray
         :return: M_star value.
-        :rtype: float or np.ndarray 
-        :unit: mag
+        :rtype: float or np.ndarray :unit: mag
         """
         z_value = np.atleast_1d(z_value)
         denominator = (
             np.sqrt(np.exp(self.xi * z_value)) + np.sqrt(np.exp(self.xi * self.z_star))
         ) ** 2
-        result = (-20.90 + (5 * np.log10(self.h))- (2.5 * np.log10(np.exp(self.zeta * z_value) * (1 + np.exp(self.xi * self.z_star)) / denominator)))
+        result = (
+            -20.90
+            + (5 * np.log10(self.h))
+            - (
+                2.5
+                * np.log10(
+                    np.exp(self.zeta * z_value)
+                    * (1 + np.exp(self.xi * self.z_star))
+                    / denominator
+                )
+            )
+        )
 
         if np.any(denominator == 0):
             raise ValueError(
@@ -105,8 +115,7 @@ class QuasarRate(object):
         :param z_value: Redshift value.
         :type z_value: float or numpy.ndarray
         :return: dPhi_dM value.
-        :rtype: float or np.ndarray 
-        :unit: mag^-1 Mpc^-3
+        :rtype: float or np.ndarray :unit: mag^-1 Mpc^-3
         """
         M = np.atleast_1d(M)
         z_value = np.atleast_1d(z_value)
@@ -145,8 +154,7 @@ class QuasarRate(object):
             'absolute_to_apparent'.
         :type conversion: str
         :return: Converted magnitude.
-        :rtype: float or np.ndarray 
-        :unit: mag
+        :rtype: float or np.ndarray :unit: mag
         """
         # Load the data from the text file as relative path
         file_path = "tests/TestData/quasar_i_band_K_corrections_Richards_et_al_2006.txt"
@@ -186,11 +194,14 @@ class QuasarRate(object):
         :param z_value: Redshift value.
         :type z_value: float or np.ndarray
         :return: Comoving number density of quasars.
-        :rtype: float or np.ndarray 
-        :unit: Mpc^-3
+        :rtype: float or np.ndarray :unit: Mpc^-3
         """
-        M_min = self.convert_magnitude(m_min, z_value, conversion="apparent_to_absolute")
-        M_max = self.convert_magnitude(m_max, z_value, conversion="apparent_to_absolute")
+        M_min = self.convert_magnitude(
+            m_min, z_value, conversion="apparent_to_absolute"
+        )
+        M_max = self.convert_magnitude(
+            m_max, z_value, conversion="apparent_to_absolute"
+        )
 
         if isinstance(z_value, np.ndarray):
             integrals = []

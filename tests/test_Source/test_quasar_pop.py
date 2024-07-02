@@ -135,8 +135,13 @@ class TestQuasarRate:
             np.testing.assert_almost_equal(app_mag, expected_app_mag, decimal=4)
 
         # Test case #3: Invalid Conversion Type
-        with pytest.raises(ValueError, match="Conversion must be either 'apparent_to_absolute' or 'absolute_to_apparent'"):
-            self.quasar_rate.convert_magnitude(test_magnitudes[0], test_redshifts[0], conversion="invalid_conversion")
+        with pytest.raises(
+            ValueError,
+            match="Conversion must be either 'apparent_to_absolute' or 'absolute_to_apparent'",
+        ):
+            self.quasar_rate.convert_magnitude(
+                test_magnitudes[0], test_redshifts[0], conversion="invalid_conversion"
+            )
 
     def test_n_comoving(self):
         # Test data
@@ -144,12 +149,14 @@ class TestQuasarRate:
         m_max = 25
         test_redshifts = [1.199, 3.151]
         test_redshift_array = np.array([1.199, 3.151])
-    
+
         expected_n_comoving = [5.294255979e-5, 1.077342851e-5]
 
         for z, expected_n in zip(test_redshifts, expected_n_comoving):
             n_comoving = self.quasar_rate.n_comoving(m_min, m_max, z)
-            assert isinstance(n_comoving, float), f"Expected float, got {type(n_comoving)}"
+            assert isinstance(
+                n_comoving, float
+            ), f"Expected float, got {type(n_comoving)}"
             np.testing.assert_almost_equal(n_comoving, expected_n, decimal=4)
 
         # Test case for array of redshift values
@@ -157,18 +164,23 @@ class TestQuasarRate:
         for z in test_redshift_array:
             n_comoving = self.quasar_rate.n_comoving(m_min, m_max, z)
             n_comoving_results.append(n_comoving)
-        
+
         n_comoving_array = np.array(n_comoving_results)
         expected_n_comoving_array = np.array(expected_n_comoving)
-        
-        assert isinstance(n_comoving_array, np.ndarray), f"Expected np.ndarray, got {type(n_comoving_array)}"
-        np.testing.assert_almost_equal(n_comoving_array, expected_n_comoving_array, decimal=4)
 
-    
+        assert isinstance(
+            n_comoving_array, np.ndarray
+        ), f"Expected np.ndarray, got {type(n_comoving_array)}"
+        np.testing.assert_almost_equal(
+            n_comoving_array, expected_n_comoving_array, decimal=4
+        )
+
     def test_generate_quasar_redshifts(self):
         np.random.seed(42)
 
-        sampled_redshifts = self.quasar_rate.generate_quasar_redshifts(m_min=15, m_max=25)
+        sampled_redshifts = self.quasar_rate.generate_quasar_redshifts(
+            m_min=15, m_max=25
+        )
         assert isinstance(
             sampled_redshifts, np.ndarray
         ), f"Returned object is not a numpy array, got {type(sampled_redshifts)} instead."
@@ -249,7 +261,9 @@ class TestQuasarRate:
         ), f"Returned object is not an Astropy Table. Type: {type(table)}"
 
         assert "Redshift" in table.colnames, "Table does not contain 'Redshift' column."
-        assert "Apparent_i_mag" in table.colnames, "Table does not contain 'Apparent_i_mag' column."
+        assert (
+            "Apparent_i_mag" in table.colnames
+        ), "Table does not contain 'Apparent_i_mag' column."
         assert len(table) > 0, "The table is empty."
 
 
