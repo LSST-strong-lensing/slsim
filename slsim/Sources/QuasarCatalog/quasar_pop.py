@@ -80,24 +80,14 @@ class QuasarRate(object):
         :param z_value: Redshift value.
         :type z_value: float or np.ndarray
         :return: M_star value.
-        :rtype: float or np.ndarray :unit: magnitudes (mag)
+        :rtype: float or np.ndarray 
+        :unit: mag
         """
         z_value = np.atleast_1d(z_value)
         denominator = (
             np.sqrt(np.exp(self.xi * z_value)) + np.sqrt(np.exp(self.xi * self.z_star))
         ) ** 2
-        result = (
-            -20.90
-            + (5 * np.log10(self.h))
-            - (
-                2.5
-                * np.log10(
-                    np.exp(self.zeta * z_value)
-                    * (1 + np.exp(self.xi * self.z_star))
-                    / denominator
-                )
-            )
-        )
+        result = (-20.90 + (5 * np.log10(self.h))- (2.5 * np.log10(np.exp(self.zeta * z_value) * (1 + np.exp(self.xi * self.z_star)) / denominator)))
 
         if np.any(denominator == 0):
             raise ValueError(
@@ -115,7 +105,8 @@ class QuasarRate(object):
         :param z_value: Redshift value.
         :type z_value: float or numpy.ndarray
         :return: dPhi_dM value.
-        :rtype: float or np.ndarray :unit: mag^-1 Mpc^-3
+        :rtype: float or np.ndarray 
+        :unit: mag^-1 Mpc^-3
         """
         M = np.atleast_1d(M)
         z_value = np.atleast_1d(z_value)
@@ -154,7 +145,8 @@ class QuasarRate(object):
             'absolute_to_apparent'.
         :type conversion: str
         :return: Converted magnitude.
-        :rtype: float or np.ndarray :unit: mag
+        :rtype: float or np.ndarray 
+        :unit: mag
         """
         # Load the data from the text file as relative path
         file_path = "tests/TestData/quasar_i_band_K_corrections_Richards_et_al_2006.txt"
@@ -194,45 +186,35 @@ class QuasarRate(object):
         :param z_value: Redshift value.
         :type z_value: float or np.ndarray
         :return: Comoving number density of quasars.
-        :rtype: float or np.ndarray :unit: Mpc^-3
+        :rtype: float or np.ndarray 
+        :unit: Mpc^-3
         """
-        M_min = self.convert_magnitude(
-            m_min, z_value, conversion="apparent_to_absolute"
-        )
-        M_max = self.convert_magnitude(
-            m_max, z_value, conversion="apparent_to_absolute"
-        )
+        M_min = self.convert_magnitude(m_min, z_value, conversion="apparent_to_absolute")
+        M_max = self.convert_magnitude(m_max, z_value, conversion="apparent_to_absolute")
 
-        def integrand(M, z):
-            return self.dPhi_dM(M, z)
-
-        # If z_value is an array, apply integration for each element
         if isinstance(z_value, np.ndarray):
             integrals = []
             for z in z_value:
-                integral, _ = quad(integrand, M_min, M_max, args=(z,))
+                integral, _ = quad(self.dPhi_dM, M_min, M_max, args=(z,))
                 if integral < 0 or np.isnan(integral):
                     print(f"Invalid integral value: {integral} for z = {z}")
                 integrals.append(integral)
             return np.array(integrals)
         else:
-            integral, _ = quad(integrand, M_min, M_max, args=(z_value,))
+            integral, _ = quad(self.dPhi_dM, M_min, M_max, args=(z_value,))
             if integral < 0 or np.isnan(integral):
                 print(f"Invalid integral value: {integral} for z = {z_value}")
             return integral
 
-    def generate_quasar_redshifts(self, m_min, m_max, return_single=False):
+    def generate_quasar_redshifts(self, m_min, m_max):
         """Generates redshift locations of quasars using a light cone formulation.
 
         :param m_min: Minimum apparent magnitude.
         :type m_min: float
         :param m_max: Maximum apparent magnitude.
         :type m_max: float
-        :param return_single: If True, return a single redshift value instead of an
-            array.
-        :type return_single: bool
         :return: Redshift locations of quasars.
-        :rtype: float or np.ndarray
+        :rtype: np.ndarray
         """
         n_comoving_values = np.array(
             [self.n_comoving(m_min, m_max, z) for z in self.redshifts]
@@ -248,9 +230,6 @@ class QuasarRate(object):
 
         # Ensure redshifts are stored as numpy array
         sampled_redshifts = np.array(sampled_redshifts, dtype=float)
-
-        if return_single:
-            return np.random.choice(sampled_redshifts)
 
         return sampled_redshifts
 
@@ -315,7 +294,7 @@ class QuasarRate(object):
 
         return inverse_cdf_dict
 
-    def quasar_sample(self, m_min, m_max, quasar_redshifts, seed=42):
+    def quasar_sample(self, m_min, m_max, seed=42):
         """Generates random redshift values and associated apparent i-band magnitude
         values for quasar samples.
 
@@ -323,14 +302,13 @@ class QuasarRate(object):
         :type m_min: float
         :param m_max: Maximum apparent magnitude.
         :type m_max: float
-        :param quasar_redshifts: Redshift values generated from `generate_quasar_redshifts`.
-        :type quasar_redshifts: array-like
         :param seed: Random seed for reproducibility.
         :type seed: int
         :return: astropy Table with redshift and associated apparent i-band magnitude values.
         :rtype: `~astropy.table.Table`
         """
         np.random.seed(seed)
+        quasar_redshifts = self.generate_quasar_redshifts(m_min=m_min, m_max=m_max)
         inverse_cdf_dict = self.inverse_cdf_fits_for_redshifts(
             m_min, m_max, quasar_redshifts
         )
@@ -351,5 +329,4 @@ class QuasarRate(object):
 
         # Create an Astropy Table from the collected data
         table = Table(table_data)
-
         return table

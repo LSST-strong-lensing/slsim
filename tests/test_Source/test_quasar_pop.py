@@ -81,6 +81,27 @@ class TestQuasarRate:
         else:
             np.testing.assert_almost_equal(dphi_dm_calc, expected_value, decimal=4)
 
+        # Test case 3: Scalar M and z_value
+        M = -28.0
+        z_value = 2.01
+        expected_value = self.quasar_rate.dPhi_dM(np.array([M]), np.array([z_value]))[0]
+        dphi_dm_calc = self.quasar_rate.dPhi_dM(M, z_value)
+        np.testing.assert_almost_equal(dphi_dm_calc, expected_value, decimal=4)
+
+        # Test case 4: Scalar M and array z_value
+        M = -28.0
+        z_values = np.array([2.01, 5.0])
+        expected_values = self.quasar_rate.dPhi_dM(np.array([M, M]), z_values)
+        dphi_dm_calc = self.quasar_rate.dPhi_dM(M, z_values)
+        np.testing.assert_almost_equal(dphi_dm_calc, expected_values, decimal=4)
+
+        # Test case 5: Array M and scalar z_value
+        M = np.array([-28.0, -27.0])
+        z_value = 2.01
+        expected_values = self.quasar_rate.dPhi_dM(M, np.array([z_value, z_value]))
+        dphi_dm_calc = self.quasar_rate.dPhi_dM(M, z_value)
+        np.testing.assert_almost_equal(dphi_dm_calc, expected_values, decimal=4)
+
     def test_convert_magnitude(self):
         # Test data: Example numbers taken directly from Table 5 of Richards et al. 2006: DOI: 10.1086/503559
         test_redshifts = [1.199, 2.240, 0.460, 0.949, 0.989]
@@ -113,36 +134,44 @@ class TestQuasarRate:
             )
             np.testing.assert_almost_equal(app_mag, expected_app_mag, decimal=4)
 
+        # Test case #3: Invalid Conversion Type
+        with pytest.raises(ValueError, match="Conversion must be either 'apparent_to_absolute' or 'absolute_to_apparent'"):
+            self.quasar_rate.convert_magnitude(test_magnitudes[0], test_redshifts[0], conversion="invalid_conversion")
+
     def test_n_comoving(self):
         # Test data
         m_min = 15
         m_max = 25
         test_redshifts = [1.199, 3.151]
-
-        # Test case #1: z_value <= 3
-        # Test case 2: z_value > 3 (to account for the change in alpha in 'dPhi_dM()')
+        test_redshift_array = np.array([1.199, 3.151])
+    
         expected_n_comoving = [5.294255979e-5, 1.077342851e-5]
 
         for z, expected_n in zip(test_redshifts, expected_n_comoving):
             n_comoving = self.quasar_rate.n_comoving(m_min, m_max, z)
+            assert isinstance(n_comoving, float), f"Expected float, got {type(n_comoving)}"
             np.testing.assert_almost_equal(n_comoving, expected_n, decimal=4)
 
+        # Test case for array of redshift values
+        n_comoving_results = []
+        for z in test_redshift_array:
+            n_comoving = self.quasar_rate.n_comoving(m_min, m_max, z)
+            n_comoving_results.append(n_comoving)
+        
+        n_comoving_array = np.array(n_comoving_results)
+        expected_n_comoving_array = np.array(expected_n_comoving)
+        
+        assert isinstance(n_comoving_array, np.ndarray), f"Expected np.ndarray, got {type(n_comoving_array)}"
+        np.testing.assert_almost_equal(n_comoving_array, expected_n_comoving_array, decimal=4)
+
+    
     def test_generate_quasar_redshifts(self):
         np.random.seed(42)
 
-        sampled_redshifts = self.quasar_rate.generate_quasar_redshifts(
-            m_min=15, m_max=25
-        )
+        sampled_redshifts = self.quasar_rate.generate_quasar_redshifts(m_min=15, m_max=25)
         assert isinstance(
             sampled_redshifts, np.ndarray
         ), f"Returned object is not a numpy array, got {type(sampled_redshifts)} instead."
-
-        single_redshift = self.quasar_rate.generate_quasar_redshifts(
-            m_min=15, m_max=25, return_single=True
-        )
-        assert isinstance(
-            single_redshift, float
-        ), f"Returned object is not a float, got {type(single_redshift)} instead."
 
         assert sampled_redshifts.size > 0, "No redshifts were generated."
 
@@ -177,7 +206,7 @@ class TestQuasarRate:
                 cumulative_prob_norm
             ), "Lengths of sorted M values and cumulative probabilities should match."
 
-    def test_inverse_cdf_fits_for_redshifts_ks(self):
+    def test_inverse_cdf_fits_for_redshifts(self):
         # Test data
         np.random.seed(42)
         m_min = 15
@@ -213,12 +242,15 @@ class TestQuasarRate:
         # Test data
         m_min = 15
         m_max = 25
-        quasar_redshifts = self.quasar_rate.redshifts
 
-        table = self.quasar_rate.quasar_sample(m_min, m_max, quasar_redshifts)
+        table = self.quasar_rate.quasar_sample(m_min, m_max)
         assert isinstance(
             table, Table
         ), f"Returned object is not an Astropy Table. Type: {type(table)}"
+
+        assert "Redshift" in table.colnames, "Table does not contain 'Redshift' column."
+        assert "Apparent_i_mag" in table.colnames, "Table does not contain 'Apparent_i_mag' column."
+        assert len(table) > 0, "The table is empty."
 
 
 # Running the tests with pytest
