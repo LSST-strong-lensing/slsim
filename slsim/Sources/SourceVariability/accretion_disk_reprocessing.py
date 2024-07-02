@@ -1,13 +1,25 @@
 import numpy as np
 import astropy.constants as const
 import astropy.units as u
+from astropy import cosmology
 from scipy import signal, interpolate
 from slsim.Util.astro_util import (
     calculate_gravitational_radius,
     calculate_accretion_disk_response_function,
+    downsample_passband,
+    bring_passband_to_source_plane,
+    convert_passband_to_nm,
+    calculate_accretion_disk_emission,
 )
 from slsim.Sources.SourceVariability.light_curve_interpolation import (
     LightCurveInterpolation,
+)
+from speclite.filters import (
+    load_filter,
+)
+from slsim.Util.param_util import (
+    magnitude_to_amplitude,
+    amplitude_to_magnitude,
 )
 
 
@@ -67,6 +79,61 @@ class AccretionDiskReprocessing(object):
             time lag spacing of [R_g / c].
         """
         return self._model(rest_frame_wavelength_in_nanometers, **self.kwargs_model)
+
+    def define_passband_response_function(
+        self,
+        passband,
+        redshift=0,
+        delta_wavelength=10,
+        passband_wavelength_unit=u.angstrom,
+    ):
+        """Calculates the response function of the agn accretion disk to the flaring
+        corona in the lamppost geometry for an input passband.
+
+        :param passband: Str or List representing passband data. Either from speclite or
+            a user defined passband represented as a list of lists or arrays. The first
+            must be wavelengths, and the second must be the throughput of
+            signature: [wavelength, throughput].
+        :param redshift: Float value of source redshift. Used to convert wavelengths of
+            the passband into emitted wavelengths.
+        :param delta_wavelength: Desired wavelength spacing in passband in [nanometers].
+            The passband will be resampled to allow for faster calculations.
+        :param passband_wavelength_unit: Astropy unit representing the wavelength units
+            used to define the original passband. Speclite filters typically use angstroms.
+        :return: An array representing the response function of the accretion disk with
+            time lag spacing of [R_g / c].
+        """
+        passband_in_nm = convert_passband_to_nm(
+            passband, wavelength_unit_input=passband_wavelength_unit
+        )
+        passband_in_source_plane = bring_passband_to_source_plane(
+            passband_in_nm, redshift
+        )
+        passband_to_use = downsample_passband(
+            passband_in_source_plane,
+            delta_wavelength,
+            wavelength_unit_input=u.nm,
+            wavelength_unit_output=u.nm,
+        )
+        if len(passband_to_use[0]) > 20:
+            print("Warning, over 20 wavelengths to calculate.")
+        total_weighting = np.sum(passband_to_use[1])
+        total_response_function = (
+            self.define_new_response_function(passband_to_use[0][0])
+            * passband_to_use[1][0]
+            / total_weighting
+        )
+
+        for jj in range(len(passband_to_use[0]) - 1):
+            if passband_to_use[1][1 + jj] > 0:
+                response_function = (
+                    self.define_new_response_function(passband_to_use[0][1 + jj])
+                    * passband_to_use[1][1 + jj]
+                    / total_weighting
+                )
+                total_response_function += response_function
+
+        return total_response_function
 
     def define_intrinsic_signal(self, time_array=None, magnitude_array=None):
         """Multi-purpose method to define an intrinsic signal of the
@@ -162,6 +229,9 @@ class AccretionDiskReprocessing(object):
                     len(response_function) * gravitational_radius_in_days
                 )
                 time_lag_axis = np.linspace(0, length_in_days, len(response_function))
+        if length_in_days == 0:
+            length_in_days += 1
+            time_lag_axis = np.linspace(0, length_in_days, len(response_function))
 
         interpolation_of_response_function = interpolate.interp1d(
             time_lag_axis, response_function, bounds_error=False, fill_value=0
@@ -187,9 +257,87 @@ class AccretionDiskReprocessing(object):
 
         reprocessed_signal = signal.convolve(
             interpolated_signal, (interpolated_response_function), mode="full"
-        ) / np.sum(interpolated_response_function)
+        )
+        normalization = np.nansum(interpolated_response_function)
+        if normalization == 0:
+            reprocessed_signal = interpolated_signal
+        else:
+            reprocessed_signal /= normalization
 
-        return reprocessed_signal[:-length_in_days]
+        return reprocessed_signal[: len(self.time_array)]
+
+    def determine_agn_luminosity_from_i_band_luminosity(
+        self,
+        i_band_magnitude,
+        redshift,
+        mag_zero_point,
+        cosmo=cosmology.FlatLambdaCDM(H0=70, Om0=0.3),
+        band=None,
+        observer_frame_wavelength_in_nm=None,
+    ):
+        """Takes in the i band luminosity of the AGN and defines the expected magnitude
+        at other bands or wavelengths based on black body radiation. Speclite bands will
+        be calculated at their effective wavelength.
+
+        :param i_band_magnitude: Float representing magnitude of i band
+        :param redshift: Float representing redshift of AGN
+        :param cosmo: Astropy cosmology object used to calculate distances
+        :param bands: Float representing a speclite filter
+        :param wavelengths: Float representing wavlength in nm.
+        """
+        i_band_filter = load_filter("lsst2023-i")
+        i_band_wavelength = (i_band_filter.effective_wavelength).to(u.nm)
+        source_plane_i_band_wavelength = i_band_wavelength / (1 + redshift)
+        luminosity_distance = cosmo.luminosity_distance(redshift)
+        obs_plane_i_band_flux = magnitude_to_amplitude(i_band_magnitude, mag_zero_point)
+        source_plane_i_band_flux = luminosity_distance**2 * obs_plane_i_band_flux
+        theoretical_i_band_flux = calculate_accretion_disk_emission(
+            self.kwargs_model["r_out"],
+            self.kwargs_model["r_resolution"],
+            self.kwargs_model["inclination_angle"],
+            source_plane_i_band_wavelength,
+            self.kwargs_model["black_hole_mass_exponent"],
+            self.kwargs_model["black_hole_spin"],
+            self.kwargs_model["eddington_ratio"],
+        )
+        flux_adjustment_ratio = source_plane_i_band_flux / theoretical_i_band_flux
+        if band is not None:
+            band_wavelength = (load_filter(band).effective_wavelength).to(u.nm) / (
+                1 + redshift
+            )
+            cur_theoretical_flux = (
+                calculate_accretion_disk_emission(
+                    self.kwargs_model["r_out"],
+                    self.kwargs_model["r_resolution"],
+                    self.kwargs_model["inclination_angle"],
+                    band_wavelength,
+                    self.kwargs_model["black_hole_mass_exponent"],
+                    self.kwargs_model["black_hole_spin"],
+                    self.kwargs_model["eddington_ratio"],
+                )
+                * flux_adjustment_ratio
+            )
+            cur_obs_flux = cur_theoretical_flux / luminosity_distance**2
+            output_magnitude = amplitude_to_magnitude(cur_obs_flux, mag_zero_point)
+        elif observer_frame_wavelength_in_nm is not None:
+            source_plane_wavelength = observer_frame_wavelength_in_nm / (1 + redshift)
+            cur_theoretical_flux = (
+                calculate_accretion_disk_emission(
+                    self.kwargs_model["r_out"],
+                    self.kwargs_model["r_resolution"],
+                    self.kwargs_model["inclination_angle"],
+                    source_plane_wavelength,
+                    self.kwargs_model["black_hole_mass_exponent"],
+                    self.kwargs_model["black_hole_spin"],
+                    self.kwargs_model["eddington_ratio"],
+                )
+                * flux_adjustment_ratio
+            )
+            cur_obs_flux = cur_theoretical_flux / luminosity_distance**2
+            output_magnitude = amplitude_to_magnitude(cur_obs_flux, mag_zero_point)
+        else:
+            raise ValueError("Please define a band or wavelength")
+        return output_magnitude
 
 
 def lamppost_model(

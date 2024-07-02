@@ -6,7 +6,7 @@ class LightCurveInterpolation(object):
 
     def __init__(self, light_curve):
         """
-        :param light_cureve: dictionary containg observation time and magnitude of a
+        :param light_curve: dictionary containg observation time and magnitude of a
          point source. Eg: light_curve = {"MJD": np.array([20, 30, 40, 50, 60, 70, 80]),
          "ps_mag_i": np.array([25, 24, 23, 20, 21, 23, 30])}
         """
