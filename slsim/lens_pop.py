@@ -75,7 +75,7 @@ class LensPop(LensedPopulationBase):
         :param deflector_sky_area: Sky area over which deflectors are sampled. Must be
          in units of solid angle. If None, deflcetor_sky_area will be equal to sky_area.
         :type deflector_sky_area: `~astropy.units.Quantity`
-        :type full_sky_area: `~astropy.units.Quantity`
+        :type sky_area: `~astropy.units.Quantity`
         :param filters: filters for SED integration
         :type filters: list of strings or None
         :param cosmo: cosmology object
