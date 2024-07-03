@@ -221,11 +221,17 @@ class LensPop(LensedPopulationBase):
             self._source_model_type = "extended"
         elif source_type == "quasars":
             from slsim.Sources.point_sources import PointSources
-            from slsim.Sources.QuasarCatalog.simple_quasar import quasar_catalog_simple
+            from slsim.Sources.QuasarCatalog.quasar_pop import QuasarRate
 
             if kwargs_quasars is None:
                 kwargs_quasars = {}
-            quasar_source = quasar_catalog_simple(**kwargs_quasars)
+            quasar_class = QuasarRate(
+                cosmo=cosmo,
+                sky_area=self.source_sky_area,
+                noise=True,
+                redshifts=np.linspace(0.001, 5.01, 100),
+            )
+            quasar_source = quasar_class.quasar_sample(m_min=15, m_max=30)
             self._sources = PointSources(
                 quasar_source,
                 cosmo=cosmo,
