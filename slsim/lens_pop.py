@@ -444,13 +444,13 @@ class LensPop(LensedPopulationBase):
         num_sources_range = np.random.poisson(lam=num_sources_tested_mean)
         return num_sources_range
 
-    def draw_population(self, speed_factor, kwargs_lens_cuts):
+    def draw_population(self, kwargs_lens_cuts, speed_factor=1):
         """Return full population list of all lenses within the area # TODO: need to
         implement a version of it. (improve the algorithm)
 
         :param kwargs_lens_cuts: validity test keywords
         :param speed_factor: factor by which the number of deflectors is decreased to
-            speed up the calculations
+            speed up the calculations.
         :type kwargs_lens_cuts: dict
         :return: List of Lens instances with parameters of the deflectors and lens and
             source light.
