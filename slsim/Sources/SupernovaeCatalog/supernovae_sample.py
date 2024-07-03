@@ -98,7 +98,7 @@ class SupernovaeCatalog(object):
 
             sne_lightcone = SNeLightcone(
                 self.cosmo,
-                redshifts=np.linspace(0, 5.01, 50),
+                redshifts=np.linspace(0, 2.379, 50),
                 sky_area=self.sky_area,
                 noise=True,
                 time_interval=1 * units.year,
