@@ -367,7 +367,7 @@ class LensPop(LensedPopulationBase):
         ) / self.deflector_sky_area.to_value("deg2")
         self.los_config = los_config
         if self.los_config is None:
-            los_config = LOSConfig()
+            self.los_config = LOSConfig()
 
     def select_lens_at_random(self, **kwargs_lens_cut):
         """Draw a random lens within the cuts of the lens and source, with possible

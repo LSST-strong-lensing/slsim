@@ -45,10 +45,6 @@ class EllipticalLensGalaxies(DeflectorsBase):
         if "gamma_pl" not in column_names:
             galaxy_list["gamma_pl"] = np.ones(n) * 2
 
-        num_total = len(galaxy_list)
-        z_min, z_max = 0, np.max(galaxy_list["z"])
-        redshift = np.arange(z_min, z_max, 0.1)
-
         self._f_vel_disp = vel_disp_abundance_matching(
             galaxy_list, z_max=0.5, sky_area=sky_area, cosmo=cosmo
         )
@@ -59,26 +55,6 @@ class EllipticalLensGalaxies(DeflectorsBase):
             np.log10(self._galaxy_select["stellar_mass"])
         )
 
-        #z_list, vel_disp_list = vel_disp_sdss(
-        #    sky_area, redshift, vd_min=100, vd_max=500, cosmology=cosmo, noise=True
-        #)
-        # sort for stellar masses in decreasing manner
-        #galaxy_list.sort("stellar_mass")
-        #galaxy_list.reverse()
-        # sort velocity dispersion, largest values first
-        #vel_disp_list = np.flip(np.sort(vel_disp_list))
-        #num_vel_disp = len(vel_disp_list)
-        # abundance match velocity dispersion with elliptical galaxy catalogue
-        #if num_vel_disp >= num_total:
-        #    galaxy_list["vel_disp"] = vel_disp_list[:num_total]
-            # randomly select
-        #else:
-        #    galaxy_list = galaxy_list[:num_vel_disp]
-        #    galaxy_list["vel_disp"] = vel_disp_list
-        #    num_total = num_vel_disp
-
-        #self._galaxy_select = deflector_cut(galaxy_list, **kwargs_cut)
-        #self._num_select = len(self._galaxy_select)
         self._kwargs_mass2light = kwargs_mass2light
 
         # TODO: random reshuffle of matched list
