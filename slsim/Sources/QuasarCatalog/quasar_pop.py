@@ -76,7 +76,7 @@ class QuasarRate(object):
         # Construct the dynamic path to the data file
         base_path = os.path.dirname(os.path.abspath("__file__"))
         file_path = os.path.join(
-            base_path, "data", "Quasar K-Corrections", "i_band_Richards_et_al_2006.txt"
+            base_path, "data", "Quasar_K_Corrections", "i_band_Richards_et_al_2006.txt"
         )
         data = np.loadtxt(file_path)
 
