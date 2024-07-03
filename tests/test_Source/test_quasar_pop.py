@@ -257,10 +257,10 @@ class TestQuasarRate:
             table, Table
         ), f"Returned object is not an Astropy Table. Type: {type(table)}"
 
-        assert "Redshift" in table.colnames, "Table does not contain 'Redshift' column."
+        assert "z" in table.colnames, "Table does not contain 'z' column."
         assert (
-            "Apparent_i_mag" in table.colnames
-        ), "Table does not contain 'Apparent_i_mag' column."
+            "ps_mag_i" in table.colnames
+        ), "Table does not contain 'ps_mag_i' column."
         assert len(table) > 0, "The table is empty."
 
 
