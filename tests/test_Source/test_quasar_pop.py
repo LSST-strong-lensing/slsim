@@ -102,7 +102,7 @@ class TestQuasarRate:
         expected_values = self.quasar_rate.dPhi_dM(M, np.array([z_value, z_value]))
         dphi_dm_calc = self.quasar_rate.dPhi_dM(M, z_value)
         np.testing.assert_almost_equal(dphi_dm_calc, expected_values, decimal=4)
-
+        
     def test_convert_magnitude(self):
         # Test data: Example numbers taken directly from Table 5 of Richards et al. 2006: DOI: 10.1086/503559
         test_redshifts = [1.199, 2.240, 0.460, 0.949, 0.989]
@@ -143,50 +143,36 @@ class TestQuasarRate:
             self.quasar_rate.convert_magnitude(
                 test_magnitudes[0], test_redshifts[0], conversion="invalid_conversion"
             )
-
+    
     def test_n_comoving(self):
         # Test data
-        m_min = 15
-        m_max = 25
-        test_redshifts = [1.199, 3.151]
-        test_redshift_array = np.array([1.199, 3.151])
+            m_min = 15
+            m_max = 25
+            test_redshifts = [1.199, 3.151]
+            expected_n_comoving = [5.294255979e-5, 1.077342851e-5]
 
-        expected_n_comoving = [5.294255979e-5, 1.077342851e-5]
+            # Test case #1: Scalar redshift values
+            for z, expected_n in zip(test_redshifts, expected_n_comoving):
+                # Test n_comoving method
+                n_comoving = self.quasar_rate.n_comoving(m_min, m_max, z)
+                assert isinstance(
+                    n_comoving, float
+                ), f"For scalar input, expected float, got {type(n_comoving)}"
+                np.testing.assert_almost_equal(n_comoving, expected_n, decimal=4)
 
-        # Test case #1: Scalar and array redshift values
-        for z, expected_n in zip(test_redshifts, expected_n_comoving):
-            # Test n_comoving method
-            n_comoving = self.quasar_rate.n_comoving(m_min, m_max, z)
+        # Test data
+            m_min = np.array([15, 16])
+            m_max = np.array([25, 26])
+            test_redshifts = np.array([1.199, 3.151])
+            expected_n_comoving = np.array([5.294255979e-5, 1.077342851e-5])
+
+        # Test case #2: Array of redshift values
+            n_comoving_array = self.quasar_rate.n_comoving(m_min, m_max, test_redshifts)
             assert isinstance(
-                n_comoving, float
-            ), f"For scalar input, expected float, got {type(n_comoving)}"
-            np.testing.assert_almost_equal(n_comoving, expected_n, decimal=4)
+                n_comoving_array, np.ndarray
+            ), f"For array input, expected numpy.ndarray, got {type(n_comoving_array)}"
+            np.testing.assert_almost_equal(n_comoving_array, expected_n_comoving, decimal=4)
 
-            # Test case #2: Direct integration and handling of invalid integrals
-            M_min = self.quasar_rate.convert_magnitude(
-                m_min, z, conversion="apparent_to_absolute"
-            )
-            M_max = self.quasar_rate.convert_magnitude(
-                m_max, z, conversion="apparent_to_absolute"
-            )
-            integral, _ = quad(self.quasar_rate.dPhi_dM, M_min, M_max, args=(z,))
-            if integral < 0 or np.isnan(integral):
-                print(f"Invalid integral value: {integral} for z = {z}")
-            assert integral >= 0, f"Invalid integral value: {integral} for z = {z}"
-
-        # Test case #3: Array of redshift values
-        for z in test_redshift_array:
-            # Test direct integration and handling of invalid integrals
-            M_min = self.quasar_rate.convert_magnitude(
-                m_min, z, conversion="apparent_to_absolute"
-            )
-            M_max = self.quasar_rate.convert_magnitude(
-                m_max, z, conversion="apparent_to_absolute"
-            )
-            integral, _ = quad(self.quasar_rate.dPhi_dM, M_min, M_max, args=(z,))
-            if integral < 0 or np.isnan(integral):
-                print(f"Invalid integral value: {integral} for z = {z}")
-            assert integral >= 0, f"Invalid integral value: {integral} for z = {z}"
 
     def test_generate_quasar_redshifts(self):
         np.random.seed(42)

@@ -5,6 +5,7 @@ from scipy.integrate import quad
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
 from astropy.table import Table
+import os
 
 """ 
 References: 
@@ -70,6 +71,20 @@ class QuasarRate(object):
         self.noise = noise
         self.redshifts = (
             np.array(redshifts) if redshifts is not None else np.linspace(0.1, 5.0, 100)
+        )
+
+        # Construct the dynamic path to the data file
+        base_path = os.path.dirname(os.path.abspath("__file__"))
+        file_path = os.path.join(base_path, 'data', 'Quasar K-Corrections', 'i_band_Richards_et_al_2006.txt')
+        data = np.loadtxt(file_path)
+
+        # The data is assumed to be in two columns: redshift and K-correction
+        self.redshifts_kcorr = data[:, 0]
+        self.K_corrections = data[:, 1]
+        
+        # Precompute the interpolation function
+        self.K_corr_interp = interp1d(
+            self.redshifts_kcorr, self.K_corrections, kind="linear", fill_value="extrapolate"
         )
 
     def M_star(self, z_value):
@@ -156,33 +171,19 @@ class QuasarRate(object):
         :return: Converted magnitude.
         :rtype: float or np.ndarray :unit: mag
         """
-        # Load the data from the text file as relative path
-        file_path = "tests/TestData/quasar_i_band_K_corrections_Richards_et_al_2006.txt"
-        data = np.loadtxt(file_path)
 
-        # The data is assumed to be in two columns: redshift and K-correction
-        redshifts = data[:, 0]
-        K_corrections = data[:, 1]
-
-        K_corr_interp = interp1d(
-            redshifts, K_corrections, kind="linear", fill_value="extrapolate"
-        )
         DM = self.cosmo.distmod(z).value
-        K_corr = K_corr_interp(z)
+        K_corr = self.K_corr_interp(z)
 
         if conversion == "apparent_to_absolute":
-            # Calculate the absolute magnitude
             converted_magnitude = magnitude - DM - K_corr
         elif conversion == "absolute_to_apparent":
-            # Calculate the apparent magnitude
             converted_magnitude = magnitude + DM + K_corr
         else:
-            raise ValueError(
-                "Conversion must be either 'apparent_to_absolute' or 'absolute_to_apparent'"
-            )
+            raise ValueError("Conversion must be either 'apparent_to_absolute' or 'absolute_to_apparent'")
 
         return converted_magnitude
-
+    
     def n_comoving(self, m_min, m_max, z_value):
         """Calculates the comoving number density of quasars for a given redshift by
         integrating dPhi/dM over the range of apparent magnitudes.
@@ -196,25 +197,17 @@ class QuasarRate(object):
         :return: Comoving number density of quasars.
         :rtype: float or np.ndarray :unit: Mpc^-3
         """
-        M_min = self.convert_magnitude(
-            m_min, z_value, conversion="apparent_to_absolute"
-        )
-        M_max = self.convert_magnitude(
-            m_max, z_value, conversion="apparent_to_absolute"
-        )
+        M_min = self.convert_magnitude(m_min, z_value, conversion="apparent_to_absolute")
+        M_max = self.convert_magnitude(m_max, z_value, conversion="apparent_to_absolute")
 
         if isinstance(z_value, np.ndarray):
-            integrals = []
-            for z in z_value:
-                integral, _ = quad(self.dPhi_dM, M_min, M_max, args=(z,))
-                if integral < 0 or np.isnan(integral):
-                    print(f"Invalid integral value: {integral} for z = {z}")
-                integrals.append(integral)
-            return np.array(integrals)
+            integrals = np.zeros_like(z_value)
+            for i, z in enumerate(z_value):
+                integral, _ = quad(self.dPhi_dM, M_min[i], M_max[i], args=(z,))
+                integrals[i] = integral
+            return integrals
         else:
             integral, _ = quad(self.dPhi_dM, M_min, M_max, args=(z_value,))
-            if integral < 0 or np.isnan(integral):
-                print(f"Invalid integral value: {integral} for z = {z_value}")
             return integral
 
     def generate_quasar_redshifts(self, m_min, m_max):
