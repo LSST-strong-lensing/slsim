@@ -75,7 +75,7 @@ class LensPop(LensedPopulationBase):
         :param deflector_sky_area: Sky area over which deflectors are sampled. Must be
          in units of solid angle. If None, deflcetor_sky_area will be equal to sky_area.
         :type deflector_sky_area: `~astropy.units.Quantity`
-        :type full_sky_area: `~astropy.units.Quantity`
+        :type sky_area: `~astropy.units.Quantity`
         :param filters: filters for SED integration
         :type filters: list of strings or None
         :param cosmo: cosmology object
@@ -373,7 +373,7 @@ class LensPop(LensedPopulationBase):
         ) / self.deflector_sky_area.to_value("deg2")
         self.los_config = los_config
         if self.los_config is None:
-            los_config = LOSConfig()
+            self.los_config = LOSConfig()
 
     def select_lens_at_random(self, **kwargs_lens_cut):
         """Draw a random lens within the cuts of the lens and source, with possible
@@ -444,11 +444,13 @@ class LensPop(LensedPopulationBase):
         num_sources_range = np.random.poisson(lam=num_sources_tested_mean)
         return num_sources_range
 
-    def draw_population(self, kwargs_lens_cuts):
+    def draw_population(self, speed_factor, kwargs_lens_cuts):
         """Return full population list of all lenses within the area # TODO: need to
         implement a version of it. (improve the algorithm)
 
         :param kwargs_lens_cuts: validity test keywords
+        :param speed_factor: factor by which the number of deflectors is decreased to
+            speed up the calculations
         :type kwargs_lens_cuts: dict
         :return: List of Lens instances with parameters of the deflectors and lens and
             source light.
@@ -466,10 +468,12 @@ class LensPop(LensedPopulationBase):
         #        print(np.int(num_lenses * num_sources_tested_mean))
 
         # Draw a population of galaxy-galaxy lenses within the area.
-        for _ in range(num_lenses):
+        for _ in range(int(num_lenses / speed_factor)):
             lens = self._lens_galaxies.draw_deflector()
             test_area = draw_test_area(deflector=lens)
-            num_sources_tested = self.get_num_sources_tested(testarea=test_area)
+            num_sources_tested = self.get_num_sources_tested(
+                testarea=test_area * speed_factor
+            )
             # TODO: to implement this for a multi-source plane lens system
             if num_sources_tested > 0:
                 n = 0

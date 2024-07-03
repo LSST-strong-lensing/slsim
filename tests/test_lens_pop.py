@@ -173,10 +173,16 @@ def test_supernovae_lens_pop_instance():
     kwargs_lens_cuts = {}
     # drawing population
     pes_lens_population = pes_lens_pop.draw_population(
-        kwargs_lens_cuts=kwargs_lens_cuts
+        1, kwargs_lens_cuts=kwargs_lens_cuts
+    )
+    pes_lens_population_speed = pes_lens_pop.draw_population(
+        10, kwargs_lens_cuts=kwargs_lens_cuts
     )
     pes_lens_population2 = pes_lens_pop2.draw_population(
-        kwargs_lens_cuts=kwargs_lens_cuts
+        1, kwargs_lens_cuts=kwargs_lens_cuts
+    )
+    pes_lens_population2_speed = pes_lens_pop2.draw_population(
+        100, kwargs_lens_cuts=kwargs_lens_cuts
     )
     kwargs_lens_cut = {}
     pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
@@ -184,6 +190,7 @@ def test_supernovae_lens_pop_instance():
     assert "z" in pes_lens_class.source.source_dict.colnames
     assert len(pes_lens_class.source.source_dict) == 1
     assert abs(len(pes_lens_population) - len(pes_lens_population2)) <= 12
+    assert abs(len(pes_lens_population_speed) - len(pes_lens_population2_speed)) <= 12
 
 
 def test_num_lenses_and_sources(gg_lens_pop_instance):
