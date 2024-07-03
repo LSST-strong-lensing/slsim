@@ -484,9 +484,10 @@ def schechter_velocity_dispersion_function(
 
 
 def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
-    """Calculates the velocity dispersion from the steller mass. The routine uses abundance matching between
-    stellar mass and velocity dispersion taking the sample drawn from z=0 to z_max (which can be still at low redshift
-    where there is data on the velocity dispersion function)
+    """Calculates the velocity dispersion from the steller mass. The routine uses
+    abundance matching between stellar mass and velocity dispersion taking the sample
+    drawn from z=0 to z_max (which can be still at low redshift where there is data on
+    the velocity dispersion function)
 
     :param galaxy_list: list of galaxies with stellar masses given
     :type galaxy_list: ~astropy.Table object
