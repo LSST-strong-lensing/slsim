@@ -74,10 +74,9 @@ class QuasarRate(object):
         )
 
         # Construct the dynamic path to the data file
-        base_path = os.path.dirname(os.path.abspath("__file__"))
-        file_path = os.path.join(
-            base_path, "data", "Quasar_K_Corrections", "i_band_Richards_et_al_2006.txt"
-        )
+        base_path = os.path.dirname(__file__)
+        file_path = base_path.replace("slsim/Sources/QuasarCatalog",
+                         "data/Quasar_K_Corrections/i_band_Richards_et_al_2006.txt")
         data = np.loadtxt(file_path)
 
         # The data is assumed to be in two columns: redshift and K-correction
@@ -327,7 +326,7 @@ class QuasarRate(object):
         inverse_cdf_dict = self.inverse_cdf_fits_for_redshifts(
             m_min, m_max, quasar_redshifts
         )
-        table_data = {"Redshift": [], "Apparent_i_mag": []}
+        table_data = {"z": [], "ps_mag_i": []}
 
         for redshift in quasar_redshifts:
             inverse_cdf = inverse_cdf_dict[redshift]
@@ -339,8 +338,8 @@ class QuasarRate(object):
                 random_abs_M_value, redshift, conversion="absolute_to_apparent"
             )
 
-            table_data["Redshift"].append(redshift)
-            table_data["Apparent_i_mag"].append(apparent_i_mag)
+            table_data["z"].append(redshift)
+            table_data["ps_mag_i"].append(apparent_i_mag)
 
         # Create an Astropy Table from the collected data
         table = Table(table_data)
