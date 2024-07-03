@@ -75,8 +75,10 @@ class QuasarRate(object):
 
         # Construct the dynamic path to the data file
         base_path = os.path.dirname(__file__)
-        file_path = base_path.replace("slsim/Sources/QuasarCatalog",
-                         "data/Quasar_K_Corrections/i_band_Richards_et_al_2006.txt")
+        file_path = base_path.replace(
+            "slsim/Sources/QuasarCatalog",
+            "data/Quasar_K_Corrections/i_band_Richards_et_al_2006.txt",
+        )
         data = np.loadtxt(file_path)
 
         # The data is assumed to be in two columns: redshift and K-correction
