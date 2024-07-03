@@ -75,7 +75,7 @@ class LensPop(LensedPopulationBase):
         :param deflector_sky_area: Sky area over which deflectors are sampled. Must be
          in units of solid angle. If None, deflcetor_sky_area will be equal to sky_area.
         :type deflector_sky_area: `~astropy.units.Quantity`
-        :type full_sky_area: `~astropy.units.Quantity`
+        :type sky_area: `~astropy.units.Quantity`
         :param filters: filters for SED integration
         :type filters: list of strings or None
         :param cosmo: cosmology object
@@ -367,7 +367,7 @@ class LensPop(LensedPopulationBase):
         ) / self.deflector_sky_area.to_value("deg2")
         self.los_config = los_config
         if self.los_config is None:
-            los_config = LOSConfig()
+            self.los_config = LOSConfig()
 
     def select_lens_at_random(self, **kwargs_lens_cut):
         """Draw a random lens within the cuts of the lens and source, with possible
