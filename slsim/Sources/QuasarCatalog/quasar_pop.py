@@ -75,16 +75,21 @@ class QuasarRate(object):
 
         # Construct the dynamic path to the data file
         base_path = os.path.dirname(os.path.abspath("__file__"))
-        file_path = os.path.join(base_path, 'data', 'Quasar K-Corrections', 'i_band_Richards_et_al_2006.txt')
+        file_path = os.path.join(
+            base_path, "data", "Quasar K-Corrections", "i_band_Richards_et_al_2006.txt"
+        )
         data = np.loadtxt(file_path)
 
         # The data is assumed to be in two columns: redshift and K-correction
         self.redshifts_kcorr = data[:, 0]
         self.K_corrections = data[:, 1]
-        
+
         # Precompute the interpolation function
         self.K_corr_interp = interp1d(
-            self.redshifts_kcorr, self.K_corrections, kind="linear", fill_value="extrapolate"
+            self.redshifts_kcorr,
+            self.K_corrections,
+            kind="linear",
+            fill_value="extrapolate",
         )
 
     def M_star(self, z_value):
@@ -180,10 +185,12 @@ class QuasarRate(object):
         elif conversion == "absolute_to_apparent":
             converted_magnitude = magnitude + DM + K_corr
         else:
-            raise ValueError("Conversion must be either 'apparent_to_absolute' or 'absolute_to_apparent'")
+            raise ValueError(
+                "Conversion must be either 'apparent_to_absolute' or 'absolute_to_apparent'"
+            )
 
         return converted_magnitude
-    
+
     def n_comoving(self, m_min, m_max, z_value):
         """Calculates the comoving number density of quasars for a given redshift by
         integrating dPhi/dM over the range of apparent magnitudes.
@@ -197,8 +204,12 @@ class QuasarRate(object):
         :return: Comoving number density of quasars.
         :rtype: float or np.ndarray :unit: Mpc^-3
         """
-        M_min = self.convert_magnitude(m_min, z_value, conversion="apparent_to_absolute")
-        M_max = self.convert_magnitude(m_max, z_value, conversion="apparent_to_absolute")
+        M_min = self.convert_magnitude(
+            m_min, z_value, conversion="apparent_to_absolute"
+        )
+        M_max = self.convert_magnitude(
+            m_max, z_value, conversion="apparent_to_absolute"
+        )
 
         if isinstance(z_value, np.ndarray):
             integrals = np.zeros_like(z_value)
