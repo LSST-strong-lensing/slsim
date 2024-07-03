@@ -229,9 +229,12 @@ class LensPop(LensedPopulationBase):
                 cosmo=cosmo,
                 sky_area=self.source_sky_area,
                 noise=True,
-                redshifts=np.linspace(0.001, 5.01, 100),
+                redshifts=np.linspace(0.001, 5.01, 100), # these redshifts are provided 
+                #to match general slsim redshift range in skypy pipeline.
             )
-            quasar_source = quasar_class.quasar_sample(m_min=15, m_max=30)
+            quasar_source = quasar_class.quasar_sample(m_min=15, m_max=30) # this range 
+            #of m_min and m_max covers all quasars. If needed one can apply magnitude 
+            # cuts after getting all the lenses.
             self._sources = PointSources(
                 quasar_source,
                 cosmo=cosmo,
