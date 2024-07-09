@@ -173,16 +173,16 @@ def test_supernovae_lens_pop_instance():
     kwargs_lens_cuts = {}
     # drawing population
     pes_lens_population = pes_lens_pop.draw_population(
-        1, kwargs_lens_cuts=kwargs_lens_cuts
+        speed_factor=1, kwargs_lens_cuts=kwargs_lens_cuts
     )
     pes_lens_population_speed = pes_lens_pop.draw_population(
-        10, kwargs_lens_cuts=kwargs_lens_cuts
+        speed_factor=10, kwargs_lens_cuts=kwargs_lens_cuts
     )
     pes_lens_population2 = pes_lens_pop2.draw_population(
-        1, kwargs_lens_cuts=kwargs_lens_cuts
+        speed_factor=1, kwargs_lens_cuts=kwargs_lens_cuts
     )
     pes_lens_population2_speed = pes_lens_pop2.draw_population(
-        100, kwargs_lens_cuts=kwargs_lens_cuts
+        speed_factor=100, kwargs_lens_cuts=kwargs_lens_cuts
     )
     kwargs_lens_cut = {}
     pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)

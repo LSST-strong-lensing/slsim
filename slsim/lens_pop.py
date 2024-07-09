@@ -221,11 +221,20 @@ class LensPop(LensedPopulationBase):
             self._source_model_type = "extended"
         elif source_type == "quasars":
             from slsim.Sources.point_sources import PointSources
-            from slsim.Sources.QuasarCatalog.simple_quasar import quasar_catalog_simple
+            from slsim.Sources.QuasarCatalog.quasar_pop import QuasarRate
 
             if kwargs_quasars is None:
                 kwargs_quasars = {}
-            quasar_source = quasar_catalog_simple(**kwargs_quasars)
+            quasar_class = QuasarRate(
+                cosmo=cosmo,
+                sky_area=self.source_sky_area,
+                noise=True,
+                redshifts=np.linspace(0.001, 5.01, 100),  # these redshifts are provided
+                # to match general slsim redshift range in skypy pipeline.
+            )
+            quasar_source = quasar_class.quasar_sample(m_min=15, m_max=30)  # this range
+            # of m_min and m_max covers all quasars. If needed one can apply magnitude
+            # cuts after getting all the lenses.
             self._sources = PointSources(
                 quasar_source,
                 cosmo=cosmo,
@@ -434,13 +443,13 @@ class LensPop(LensedPopulationBase):
         num_sources_range = np.random.poisson(lam=num_sources_tested_mean)
         return num_sources_range
 
-    def draw_population(self, speed_factor, kwargs_lens_cuts):
+    def draw_population(self, kwargs_lens_cuts, speed_factor=1):
         """Return full population list of all lenses within the area # TODO: need to
         implement a version of it. (improve the algorithm)
 
         :param kwargs_lens_cuts: validity test keywords
         :param speed_factor: factor by which the number of deflectors is decreased to
-            speed up the calculations
+            speed up the calculations.
         :type kwargs_lens_cuts: dict
         :return: List of Lens instances with parameters of the deflectors and lens and
             source light.
