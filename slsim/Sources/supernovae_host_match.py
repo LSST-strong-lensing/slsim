@@ -74,7 +74,7 @@ class SupernovaeHostMatch:
 
             # Calculate the weights based on stellar mass.
             log_stellar_mass_weights = 10 ** (
-                (np.log(host_galaxy_candidates["stellar_mass"])) * 0.74
+                (np.log10(host_galaxy_candidates["stellar_mass"])) * 0.74
             )
 
             # Select the host candidate based on weighting and convert to an astropy Table.
