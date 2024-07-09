@@ -5,12 +5,7 @@ import numpy as np
 class GalaxyCatalog(object):
     """Class to generate a galaxy catalog."""
 
-    def __init__(
-        self,
-        cosmo,
-        skypy_config,
-        sky_area
-    ):
+    def __init__(self, cosmo, skypy_config, sky_area):
         """
 
         :param cosmo: astropy.cosmology instance

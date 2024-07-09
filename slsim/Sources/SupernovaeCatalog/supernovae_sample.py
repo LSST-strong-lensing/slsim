@@ -85,14 +85,12 @@ class SupernovaeCatalog(object):
 
         if host_galaxy is True:
             galaxy_catalog = GalaxyCatalog(
-                cosmo=self.cosmo,
-                skypy_config=self.skypy_config,
-                sky_area=self.sky_area
+                cosmo=self.cosmo, skypy_config=self.skypy_config, sky_area=self.sky_area
             )
             host_galaxy_catalog = galaxy_catalog.galaxy_catalog()
             matching_catalogs = SupernovaeHostMatch(
                 supernovae_catalog=supernovae_redshift,
-                galaxy_catalog=host_galaxy_catalog
+                galaxy_catalog=host_galaxy_catalog,
             )
             matched_table = matching_catalogs.match()
 

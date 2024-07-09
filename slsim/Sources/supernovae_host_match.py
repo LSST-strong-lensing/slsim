@@ -2,7 +2,6 @@ import numpy as np
 from astropy.table import Table
 import random
 
-
 """References:
 Sullivan et al. 2006
 """
@@ -27,54 +26,60 @@ class SupernovaeHostMatch:
         self.galaxy_catalog = galaxy_catalog
 
     def match(self):
-        """Generates catalog in which supernovae are matched with host galaxies. (Fig 8 -
-        Sullivan et al. 2006)
+        """Generates catalog in which supernovae are matched with host galaxies. (Fig 8
+        - Sullivan et al. 2006)
 
         :return: catalog with supernovae redshifts and their corresponding host galaxies
         :return type: dict
         """
-        matched_catalog = Table(names=(
-                    'z',
-                    'M',
-                    'coeff',
-                    'ellipticity',
-                    'physical_size',
-                    'stellar_mass',
-                    'angular_size',
-                    'mag_g',
-                    'mag_r',
-                    'mag_i',
-                    'mag_z',
-                    'mag_Y'), dtype=('float64',
-                                    'float64',
-                                    'object',
-                                    'float64',
-                                    'float64',
-                                    'float64',
-                                    'float64',
-                                    'float64',
-                                    'float64',
-                                    'float64',
-                                    'float64',
-                                    'float64'))
+        matched_catalog = Table(
+            names=(
+                "z",
+                "M",
+                "coeff",
+                "ellipticity",
+                "physical_size",
+                "stellar_mass",
+                "angular_size",
+                "mag_g",
+                "mag_r",
+                "mag_i",
+                "mag_z",
+                "mag_Y",
+            ),
+            dtype=(
+                "float64",
+                "float64",
+                "object",
+                "float64",
+                "float64",
+                "float64",
+                "float64",
+                "float64",
+                "float64",
+                "float64",
+                "float64",
+                "float64",
+            ),
+        )
 
         # Iterate through the redshifts in the SNe catalog.
         for redshift in self.supernovae_catalog:
 
             # Select host galaxy candidates in the specified redshift range.
             host_galaxy_candidates = self.galaxy_catalog[
-                (self.galaxy_catalog['z'] >= (redshift-0.1)) &
-                (self.galaxy_catalog['z'] <= redshift+0.1)
+                (self.galaxy_catalog["z"] >= (redshift - 0.1))
+                & (self.galaxy_catalog["z"] <= redshift + 0.1)
             ]
 
             # Calculate the weights based on stellar mass.
-            log_stellar_mass_weights = 10**((np.log(host_galaxy_candidates['stellar_mass']))*0.74)
+            log_stellar_mass_weights = 10 ** (
+                (np.log(host_galaxy_candidates["stellar_mass"])) * 0.74
+            )
 
             # Select the host candidate based on weighting and convert to an astropy Table.
             host_galaxy = random.choices(
-                    host_galaxy_candidates,
-                    weights=log_stellar_mass_weights,
-                    k=1
+                host_galaxy_candidates, weights=log_stellar_mass_weights, k=1
             )
 
             # Append host galaxy to the matched catalog.

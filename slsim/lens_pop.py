@@ -271,6 +271,7 @@ class LensPop(LensedPopulationBase):
                 PointPlusExtendedSources,
             )
             from slsim.Sources.point_sources import PointSources
+
             self.path = os.path.dirname(__file__)
             if catalog_type == "scotch":
                 if catalog_path is not None:
