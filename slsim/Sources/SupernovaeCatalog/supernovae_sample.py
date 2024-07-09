@@ -85,11 +85,11 @@ class SupernovaeCatalog(object):
         supernovae_redshift = sne_lightcone.supernovae_sample()
 
         if host_galaxy is True:
-            # Determine the appropriate sky area for galaxy catalog to ensure a large 
+            # Determine the appropriate sky area for galaxy catalog to ensure a large
             # enough host galaxy candidate catalog is supplied:
-            #if self.sky_area < 10:
+            # if self.sky_area < 10:
             #    galaxy_sky_area = Quantity(value=0.1, unit="deg2")
-            #else:
+            # else:
             #    galaxy_sky_area = Quantity(value=((self.sky_area.value)/100), unit="deg2")
 
             galaxy_catalog = GalaxyCatalog(
