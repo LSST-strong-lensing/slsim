@@ -1,7 +1,8 @@
 from astropy.table import Table, hstack
-from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 from slsim.Sources import random_supernovae
 from slsim.Sources.Supernovae.supernovae_lightcone import SNeLightcone
+from slsim.Sources.galaxy_catalog import GalaxyCatalog
+from slsim.Sources.supernovae_host_match import SupernovaeHostMatch
 import numpy as np
 from astropy import units
 
@@ -59,25 +60,8 @@ class SupernovaeCatalog(object):
         self.sky_area = sky_area
         self.sn_modeldir = sn_modeldir
 
-    def host_galaxy_catalog(self):
-        """Generates galaxy catalog and those galaxies can be used as supernovae host
-        galaxies.
-
-        :return: supernovae host galaxy catalog
-        """
-        pipeline = SkyPyPipeline(
-            skypy_config=self.skypy_config,
-            sky_area=self.sky_area,
-            filters=None,
-            cosmo=self.cosmo,
-        )
-        galaxy_table = pipeline.blue_galaxies
-        galaxy_table_cut = galaxy_table[galaxy_table["z"] <= 0.9329]
-        return galaxy_table_cut
-
     def supernovae_catalog(self, host_galaxy=True, lightcurve=True):
-        """Generates supernovae lightcurves for given redshifts or from host galaxy
-        redshift.
+        """Generates supernovae catalog for given redshifts.
 
         :param host_galaxy: kwargs to decide whether catalog should include host
             galaxies or not. True or False.
@@ -90,22 +74,29 @@ class SupernovaeCatalog(object):
             array of observation time and array of corresponding magnitudes in specified
             bands in different columns of the Table.
         """
+        sne_lightcone = SNeLightcone(
+            self.cosmo,
+            redshifts=np.linspace(0, 2.379, 50),
+            sky_area=self.sky_area,
+            noise=True,
+            time_interval=1 * units.year,
+        )
+        supernovae_redshift = sne_lightcone.supernovae_sample()
+
         if host_galaxy is True:
-            host_galaxies = self.host_galaxy_catalog()
-            supernovae_redshift = host_galaxies["z"]
-        else:
-            host_galaxies = None
-
-            sne_lightcone = SNeLightcone(
-                self.cosmo,
-                redshifts=np.linspace(0, 5.01, 50),
-                sky_area=self.sky_area,
-                noise=True,
-                time_interval=1 * units.year,
+            galaxy_catalog = GalaxyCatalog(
+                cosmo=self.cosmo,
+                skypy_config=self.skypy_config,
+                sky_area=self.sky_area
             )
-            supernovae_redshift = sne_lightcone.supernovae_sample()
-        time = []
+            host_galaxy_catalog = galaxy_catalog.galaxy_catalog()
+            matching_catalogs = SupernovaeHostMatch(
+                supernovae_catalog=supernovae_redshift,
+                galaxy_catalog=host_galaxy_catalog
+            )
+            matched_table = matching_catalogs.match()
 
+        time = []
         # Initialize a list attribute for each band in self.band_list
         for band in self.band_list:
             setattr(self, f"magnitude_{band}", [])
@@ -136,32 +127,17 @@ class SupernovaeCatalog(object):
 
         # Get ra_off and dec_off if host galaxy is true.
         if host_galaxy is True:
-            ra_off, dec_off = self.supernovae_host_galaxy_offset(
-                len(host_galaxies["z"])
+            ra_off, dec_off = galaxy_catalog.supernovae_host_galaxy_offset(
+                len(supernovae_redshift)
             )
             lightcurve_data["ra_off"] = ra_off
             lightcurve_data["dec_off"] = dec_off
             lightcurve_table = Table(lightcurve_data)
-            supernovae_table = hstack([lightcurve_table, host_galaxies])
+            supernovae_table = hstack([lightcurve_table, matched_table])
 
         # Only saves supernovae redshift and corresponding lightcurves
         else:
             lightcurve_data["z"] = supernovae_redshift
             supernovae_table = Table(lightcurve_data)
+
         return supernovae_table
-
-    def supernovae_host_galaxy_offset(self, supernovae_number):
-        """This function generates random supernovae offsets from their host galaxy
-        center.
-
-        # TODO: use supernovae and host galaxy parameters to compute more realistic
-        offset.
-
-        :param supernovae_number: number of supernovae
-        :return: random ra_off and dec_off for each supernovae.
-        """
-        # Limits used here are mostly arbitrary. More realistic supernovae-host galaxy
-        # offset is needed.
-        ra_off = np.random.uniform(-5, 5, supernovae_number)
-        dec_off = np.random.uniform(-5, 5, supernovae_number)
-        return ra_off, dec_off
