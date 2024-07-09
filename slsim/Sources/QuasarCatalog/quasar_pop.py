@@ -37,13 +37,13 @@ class QuasarRate(object):
 
         :param h: Hubble constant parameter H0/100, where H0 = 70 km s^-1 Mpc^-1.
         :type h: float
-        :param zeta: (1) Best fit value of the observed evolution of the quasar luminosity function 
+        :param zeta: (1) Best fit value of the observed evolution of the quasar luminosity function
         from SDSS DR3 survey (Richards et al. 2006: DOI: 10.1086/503559)
         :type zeta: float
-        :param xi: (2) Best fit value of the observed evolution of the quasar luminosity function 
+        :param xi: (2) Best fit value of the observed evolution of the quasar luminosity function
         from SDSS DR3 survey (Richards et al. 2006: DOI: 10.1086/503559)
         :type xi: float
-        :param z_star: (3) Best fit value of the observed evolution of the quasar luminosity 
+        :param z_star: (3) Best fit value of the observed evolution of the quasar luminosity
         function from SDSS DR3 survey (Richards et al. 2006: DOI: 10.1086/503559)
         :type z_star: float
         :param alpha: Bright end slope of quasar luminosity density profile.
