@@ -366,7 +366,7 @@ def test_calculate_accretion_disk_response_function():
     peak_response_inclined = np.argmax(response_function)
     assert peak_response_inclined < peak_response_face_on
 
-    # Test that inclination does not change the mean response when H_{L_x} = 0
+    # Test that inclination does not change the mean response when H_{Lx} = 0
     # Note I add 0.5 within the function to avoid singularities when the corona
     # is placed directly on the disk. However there is no contribution with the dark ISCO.
     corona_height = -0.5
