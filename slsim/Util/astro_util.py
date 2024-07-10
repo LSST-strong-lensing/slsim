@@ -879,7 +879,8 @@ def cone_radius_angle_to_physical_area(radius_rad, z, cosmo):
     physical_radius = cosmo.angular_diameter_distance(z) * radius_rad  # Mpc
     area_physical = np.pi * physical_radius**2
     return area_physical  # in Mpc2
-  
+
+
 def downsample_passband(
     passband,
     output_delta_wavelength,
@@ -991,4 +992,3 @@ def convert_passband_to_nm(
     output_passband = passband.copy()
     output_passband[0] = np.asarray(passband[0][:]) * wavelength_ratio
     return output_passband
-
