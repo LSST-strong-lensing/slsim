@@ -14,6 +14,7 @@ class LensedSystemBase(ABC):
         deflector_dict,
         cosmo,
         deflector_type="EPL",
+        deflector_kwargs=None,
         test_area=4 * np.pi,
         variability_model=None,
         kwargs_variability=None,
@@ -21,6 +22,7 @@ class LensedSystemBase(ABC):
         sn_absolute_mag_band=None,
         sn_absolute_zpsys=None,
         lightcurve_time=None,
+        sn_modeldir=None,
     ):
         """
         :param source_dict: source properties
@@ -29,6 +31,8 @@ class LensedSystemBase(ABC):
         :type deflector_dict: dict
         :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST"
         :type deflector_type: str
+        :param deflector_kwargs: additional keyword arguments for the deflector
+        :type deflector_kwargs: dict
         :param variability_model: keyword for variability model to be used. This is an
          input for the Variability class.
         :type variability_model: str
@@ -44,6 +48,13 @@ class LensedSystemBase(ABC):
         :param test_area: area (arc-sec^2) around lensing galaxy to be investigated
         :param lightcurve_time: observation time array for lightcurve in unit of days.
         :type lightcurve_time: array
+        :param sn_modeldir: sn_modeldir is the path to the directory containing files
+         needed to initialize the sncosmo.model class. For example,
+         sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can
+         be downloaded from https://github.com/LSST-strong-lensing/data_public .
+         For more detail, please look at the documentation of RandomizedSupernovae
+         class.
+        :type sn_modeldir: str
         """
         self.source = Source(
             source_dict=source_dict,
@@ -54,9 +65,14 @@ class LensedSystemBase(ABC):
             sn_absolute_zpsys=sn_absolute_zpsys,
             cosmo=cosmo,
             lightcurve_time=lightcurve_time,
+            sn_modeldir=sn_modeldir,
         )
+        if deflector_kwargs is None:
+            deflector_kwargs = {}
         self.deflector = Deflector(
-            deflector_type=deflector_type, deflector_dict=deflector_dict
+            deflector_type=deflector_type,
+            deflector_dict=deflector_dict,
+            **deflector_kwargs
         )
         # TODO: tell them what keys the dictionary should contain
         self.test_area = test_area

@@ -1,17 +1,20 @@
+import warnings
+
 import numpy as np
+from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
-from lenstronomy.Util import constants
 from lenstronomy.LensModel.lens_model import LensModel
-from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
 from lenstronomy.LensModel.Solver.lens_equation_solver import (
     analytical_lens_model_support,
 )
-from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
-from slsim.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
-from lenstronomy.Util import util, data_util
+from slsim.ParamDistributions.los_config import LOSConfig
+from lenstronomy.LightModel.light_model import LightModel
+from lenstronomy.Util import constants
+from lenstronomy.Util import data_util
+from lenstronomy.Util import util
+
 from slsim.lensed_system_base import LensedSystemBase
-import warnings
 
 
 class Lens(LensedSystemBase):
@@ -23,6 +26,7 @@ class Lens(LensedSystemBase):
         deflector_dict,
         cosmo,
         deflector_type="EPL",
+        deflector_kwargs=None,
         source_type="extended",
         lens_equation_solver="lenstronomy_analytical",
         variability_model=None,
@@ -37,6 +41,8 @@ class Lens(LensedSystemBase):
         magnification_limit=0.01,
         light_profile="single_sersic",
         lightcurve_time=None,
+        los_config=None,
+        sn_modeldir=None,
     ):
         """
 
@@ -45,8 +51,10 @@ class Lens(LensedSystemBase):
         :param deflector_dict: deflector properties
         :type deflector_dict: dict
         :param cosmo: astropy.cosmology instance
-        :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST"
+        :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST", "NFW_CLUSTER"
         :type deflector_type: str
+        :param deflector_kwargs: additional deflector properties
+        :type deflector_kwargs: dict
         :param source_type: type of the source 'extended' or 'point_source' or
          'point_plus_extended' supported
         :type source_type: str
@@ -67,12 +75,6 @@ class Lens(LensedSystemBase):
         :type sn_absolute_zpsys: str
         :param test_area: area of disk around one lensing galaxies to be investigated
             on (in arc-seconds^2)
-        :param mixgauss_weights: weights of the Gaussian mixture
-        :param mixgauss_stds: standard deviations of the Gaussian mixture
-        :param mixgauss_means: means of the Gaussian mixture
-        :type mixgauss_weights: list of float
-        :type mixgauss_stds: list of float
-        :type mixgauss_means: list of float
         :param magnification_limit: absolute lensing magnification lower limit to
             register a point source (ignore highly de-magnified images)
         :type magnification_limit: float >= 0
@@ -81,12 +83,20 @@ class Lens(LensedSystemBase):
         :type light_profile: str . Either "single_sersic" or "double_sersic" .
         :param lightcurve_time: observation time array for lightcurve in unit of days.
         :type lightcurve_time: array
+        :param sn_modeldir: sn_modeldir is the path to the directory containing files
+         needed to initialize the sncosmo.model class. For example,
+         sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can
+         be downloaded from https://github.com/LSST-strong-lensing/data_public .
+         For more detail, please look at the documentation of RandomizedSupernovae
+         class.
+        :type sn_modeldir: str
         """
         super().__init__(
             source_dict=source_dict,
             deflector_dict=deflector_dict,
             cosmo=cosmo,
             deflector_type=deflector_type,
+            deflector_kwargs=deflector_kwargs,
             test_area=test_area,
             variability_model=variability_model,
             kwargs_variability=kwargs_variability,
@@ -94,14 +104,12 @@ class Lens(LensedSystemBase):
             sn_type=sn_type,
             sn_absolute_mag_band=sn_absolute_mag_band,
             sn_absolute_zpsys=sn_absolute_zpsys,
+            sn_modeldir=sn_modeldir,
         )
 
         self.cosmo = cosmo
         self._source_type = source_type
         self._lens_equation_solver = lens_equation_solver
-        self._mixgauss_means = mixgauss_means
-        self._mixgauss_stds = mixgauss_stds
-        self._mixgauss_weights = mixgauss_weights
         self._magnification_limit = magnification_limit
         self.kwargs_variab = kwargs_variability
         self.light_profile = light_profile
@@ -112,11 +120,25 @@ class Lens(LensedSystemBase):
                 "variability information provided by you will not be used."
             )
             warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
+
         self._lens_cosmo = LensCosmo(
             z_lens=float(self.deflector.redshift),
             z_source=float(self.source.redshift),
             cosmo=self.cosmo,
         )
+
+        self._los_linear_distortions_cache = None
+        self.los_config = los_config
+        if self.los_config is None:
+            self.los_config = LOSConfig()
+
+    @property
+    def image_number(self):
+        """Number of images in the lensing configuration.
+
+        :return: number of images
+        """
+        return len(self.point_source_image_positions()[0])
 
     @property
     def deflector_position(self):
@@ -282,6 +304,24 @@ class Lens(LensedSystemBase):
         return self.source.redshift
 
     @property
+    def external_convergence(self):
+        """
+
+        :return: external convergence
+        """
+        _, _, kappa_ext = self.los_linear_distortions
+        return kappa_ext
+
+    @property
+    def external_shear(self):
+        """
+
+        :return: the absolute external shear
+        """
+        gamma1, gamma2, _ = self.los_linear_distortions
+        return (gamma1**2 + gamma2**2) ** 0.5
+
+    @property
     def einstein_radius_deflector(self):
         """Einstein radius, from SIS approximation (coming from velocity dispersion)
         without line-of-sight correction.
@@ -301,7 +341,7 @@ class Lens(LensedSystemBase):
                 lens_model = LensModel(lens_model_list=lens_model_list)
                 lens_analysis = LensProfileAnalysis(lens_model=lens_model)
                 self._theta_E = lens_analysis.effective_einstein_radius(
-                    kwargs_lens, r_min=1e-3, r_max=2e1, num_points=50
+                    kwargs_lens, r_min=1e-3, r_max=5e1, num_points=50
                 )
         return self._theta_E
 
@@ -313,7 +353,7 @@ class Lens(LensedSystemBase):
         :return: Einstein radius [arc seconds]
         """
         theta_E = self.einstein_radius_deflector
-        _, _, kappa_ext = self.los_linear_distortions()
+        _, _, kappa_ext = self.los_linear_distortions
         return theta_E / (1 - kappa_ext)
 
     def deflector_ellipticity(self):
@@ -339,30 +379,23 @@ class Lens(LensedSystemBase):
         """
         return self.deflector.velocity_dispersion(cosmo=self.cosmo)
 
+    @property
     def los_linear_distortions(self):
+        if self._los_linear_distortions_cache is None:
+            self._los_linear_distortions_cache = (
+                self._calculate_los_linear_distortions()
+            )
+        return self._los_linear_distortions_cache
+
+    def _calculate_los_linear_distortions(self):
         """Line-of-sight distortions in shear and convergence.
 
         :return: kappa, gamma1, gamma2
         """
-        # TODO: more realistic distribution of shear and convergence,
-        #  the covariances among them and redshift correlations
-        mixgauss_means = self._mixgauss_means
-        mixgauss_stds = self._mixgauss_stds
-        mixgauss_weights = self._mixgauss_weights
-        if not hasattr(self, "_gamma"):
-            mixture = GaussianMixtureModel(
-                means=mixgauss_means,
-                stds=mixgauss_stds,
-                weights=mixgauss_weights,
-            )
-            gamma = np.abs(mixture.rvs(size=1))[0]
-            phi = 2 * np.pi * np.random.random()
-            gamma1 = gamma * np.cos(2 * phi)
-            gamma2 = gamma * np.sin(2 * phi)
-            self._gamma = [gamma1, gamma2]
-        if not hasattr(self, "_kappa"):
-            self._kappa = np.random.normal(loc=0, scale=0.05)
-        return self._gamma[0], self._gamma[1], self._kappa
+        return self.los_config.calculate_los_linear_distortions(
+            source_redshift=self.source_redshift,
+            deflector_redshift=self.deflector_redshift,
+        )
 
     def deflector_magnitude(self, band):
         """Apparent magnitude of the deflector for a given band.
@@ -511,7 +544,7 @@ class Lens(LensedSystemBase):
 
             num_pix = 200
             delta_pix = theta_E * 4 / num_pix
-            x, y = util.make_grid(numPix=200, deltapix=delta_pix)
+            x, y = util.make_grid(numPix=num_pix, deltapix=delta_pix)
             x += center_source[0]
             y += center_source[1]
             beta_x, beta_y = lensModel.ray_shooting(x, y, kwargs_params["kwargs_lens"])
@@ -567,62 +600,17 @@ class Lens(LensedSystemBase):
 
         :return: lens_model_list, kwargs_lens
         """
-        if self.deflector.deflector_type in ["EPL"]:
-            lens_mass_model_list = ["EPL"]
-            theta_E = self.einstein_radius_deflector
-            e1_light_lens, e2_light_lens, e1_mass, e2_mass = (
-                self.deflector_ellipticity()
+        if self.deflector.deflector_type in ["EPL", "NFW_HERNQUIST", "NFW_CLUSTER"]:
+            lens_mass_model_list, kwargs_lens = self.deflector.mass_model_lenstronomy(
+                lens_cosmo=self._lens_cosmo
             )
-            center_lens = self.deflector_position
-
-            kwargs_lens = [
-                {
-                    "theta_E": theta_E,
-                    "gamma": 2,
-                    "e1": e1_mass,
-                    "e2": e2_mass,
-                    "center_x": center_lens[0],
-                    "center_y": center_lens[1],
-                }
-            ]
-        elif self.deflector.deflector_type in ["NFW_HERNQUIST"]:
-            lens_mass_model_list = ["NFW_ELLIPSE_CSE", "HERNQUIST_ELLIPSE_CSE"]
-            e1_light_lens, e2_light_lens, e1_mass, e2_mass = (
-                self.deflector_ellipticity()
-            )
-            center_lens = self.deflector_position
-            rs_phys = self._lens_cosmo.dd * self.deflector.angular_size_light
-            sigma0, rs_light_angle = self._lens_cosmo.hernquist_phys2angular(
-                mass=self.deflector.stellar_mass, rs=rs_phys
-            )
-            # halo mass, concentration, stellar mass
-            m_halo, c_halo = self.deflector.halo_properties
-            rs_halo, alpha_rs = self._lens_cosmo.nfw_physical2angle(M=m_halo, c=c_halo)
-            kwargs_lens = [
-                {
-                    "alpha_Rs": alpha_rs,
-                    "Rs": rs_halo,
-                    "e1": e1_mass,
-                    "e2": e2_mass,
-                    "center_x": center_lens[0],
-                    "center_y": center_lens[1],
-                },
-                {
-                    "Rs": rs_light_angle,
-                    "sigma0": sigma0,
-                    "e1": e1_light_lens,
-                    "e2": e2_light_lens,
-                    "center_x": center_lens[0],
-                    "center_y": center_lens[1],
-                },
-            ]
         else:
             raise ValueError(
                 "Deflector model %s not supported for lenstronomy model"
                 % self.deflector.deflector_type
             )
         # adding line-of-sight structure
-        gamma1, gamma2, kappa_ext = self.los_linear_distortions()
+        gamma1, gamma2, kappa_ext = self.los_linear_distortions
         kwargs_lens.append({"gamma1": gamma1, "gamma2": gamma2, "ra_0": 0, "dec_0": 0})
         kwargs_lens.append({"kappa": kappa_ext, "ra_0": 0, "dec_0": 0})
         lens_mass_model_list.append("SHEAR")
@@ -651,7 +639,6 @@ class Lens(LensedSystemBase):
             self._source_type == "extended"
             or self._source_type == "point_plus_extended"
         ):
-
             if self.light_profile == "single_sersic":
                 source_models["source_light_model_list"] = ["SERSIC_ELLIPSE"]
             else:
@@ -688,6 +675,33 @@ class Lens(LensedSystemBase):
         all_source_kwarg_dict["kwargs_source"] = kwargs_source
         all_source_kwarg_dict["kwargs_ps"] = kwargs_ps
         return source_models, all_source_kwarg_dict
+
+    def kappa_star(self, ra, dec):
+        """Computes the stellar surface density at location (ra, dec) in units of
+        lensing convergence.
+
+        :param ra: position in the image plane
+        :param dec: position in the image plane
+        :return: kappa_star
+        """
+        stellar_mass = self.deflector_stellar_mass()
+        kwargs_model, kwargs_params = self.lenstronomy_kwargs(band=None)
+        lightModel = LightModel(
+            light_model_list=kwargs_model.get("lens_light_model_list", [])
+        )
+        kwargs_lens_light_mag = kwargs_params["kwargs_lens_light"]
+        kwargs_lens_light_amp = data_util.magnitude2amplitude(
+            lightModel, kwargs_lens_light_mag, magnitude_zero_point=0
+        )
+
+        total_flux = lightModel.total_flux(kwargs_lens_light_amp)  # integrated flux
+        flux_local = lightModel.surface_brightness(
+            ra, dec, kwargs_lens_light_amp
+        )  # surface brightness per arcsecond square
+        kappa_star = (
+            flux_local / total_flux * stellar_mass / self._lens_cosmo.sigma_crit_angle
+        )
+        return kappa_star
 
 
 def image_separation_from_positions(image_positions):

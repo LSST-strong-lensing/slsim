@@ -1,10 +1,7 @@
-import copy
-
 import numpy as np
-from scipy import interpolate
 import numpy.random as random
 from slsim.selection import deflector_cut
-from slsim.Deflectors.velocity_dispersion import vel_disp_sdss
+from slsim.Deflectors.velocity_dispersion import vel_disp_abundance_matching
 from slsim.Deflectors.elliptical_lens_galaxies import (
     elliptical_projected_eccentricity,
 )
@@ -71,7 +68,6 @@ class AllLensGalaxies(DeflectorsBase):
             galaxy_list["n_sersic"] = -np.ones(n)
 
         galaxy_list = fill_table(galaxy_list)
-
         self._f_vel_disp = vel_disp_abundance_matching(
             galaxy_list, z_max=0.5, sky_area=sky_area, cosmo=cosmo
         )
@@ -131,59 +127,3 @@ def fill_table(galaxy_list):
     if "n_sersic" not in column_names:
         galaxy_list["n_sersic"] = -np.ones(n)
     return galaxy_list
-
-
-def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
-    """Calculates the velocity dispersion from the steller mass.
-
-    :param galaxy_list: list of galaxies with stellar masses given
-    :type galaxy_list: ~astropy.Table object
-    :param z_max: maximum redshift to which the abundance matching with the SDSS
-        velocity dispersion function is valid
-    :param cosmo: astropy.cosmology instance
-    :type sky_area: `~astropy.units.Quantity`
-    :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid
-        angle.
-    :return: interpolation function f; f(stellar_mass) -> vel_disp
-    """
-
-    # selects galaxies with redshift below maximum redshift (z_max)
-    bool_cut = galaxy_list["z"] < z_max
-    galaxy_list_zmax = copy.deepcopy(galaxy_list[bool_cut])
-
-    # number of selected galaxies
-    num_select = len(galaxy_list_zmax)
-
-    redshift = np.arange(0, z_max + 0.001, 0.1)
-    z_list, vel_disp_list = vel_disp_sdss(
-        sky_area, redshift, vd_min=50, vd_max=500, cosmology=cosmo, noise=True
-    )
-
-    # sort for stellar masses, largest values first
-    galaxy_list_zmax.sort("stellar_mass", reverse=True)
-
-    # sort velocity dispersion, largest values first
-    vel_disp_list = np.flip(np.sort(vel_disp_list))
-    num_vel_disp = len(vel_disp_list)
-    # abundance match velocity dispersion with elliptical galaxy catalogue
-    # abundance match velocity dispersion with elliptical galaxy catalogue
-    if num_vel_disp >= num_select:
-        galaxy_list_zmax["vel_disp"] = vel_disp_list[:num_select]
-        # randomly select
-    else:
-        galaxy_list_zmax = galaxy_list_zmax[:num_vel_disp]
-        galaxy_list_zmax["vel_disp"] = vel_disp_list
-    # interpolate relationship between stellar mass and velocity dispersion
-    stellar_mass = np.asarray(galaxy_list_zmax["stellar_mass"])
-    vel_disp = np.asarray(galaxy_list_zmax["vel_disp"])
-
-    # here we make sure we interpolate to low stellar masses
-    stellar_mass = np.append(stellar_mass, 10**5)
-    vel_disp = np.append(vel_disp, 10)
-    f = interpolate.interp1d(
-        x=np.log10(stellar_mass),
-        y=vel_disp,
-        fill_value=(0, np.max(galaxy_list_zmax["vel_disp"])),
-        bounds_error=False,
-    )
-    return f

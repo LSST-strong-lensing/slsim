@@ -3,11 +3,13 @@ import numpy as np
 from numpy import testing as npt
 from astropy.cosmology import FlatLambdaCDM
 from astropy.table import Table
+from slsim.Deflectors.deflector import Deflector
 from slsim.lens import (
     Lens,
     image_separation_from_positions,
     theta_e_when_source_infinity,
 )
+from slsim.ParamDistributions.los_config import LOSConfig
 import os
 
 
@@ -28,49 +30,21 @@ class TestLens(object):
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         self.source_dict = blue_one
         self.deflector_dict = red_one
+
+        print(blue_one)
+        blue_one["gamma_pl"] = 2.1
+        mag_arc_limit = {"i": 35, "g": 35, "r": 35}
         while True:
             gg_lens = Lens(
                 source_dict=self.source_dict,
                 deflector_dict=self.deflector_dict,
                 lens_equation_solver="lenstronomy_analytical",
+                kwargs_variability={"MJD", "ps_mag_i"},  # This line will not be used in
+                # the testing but at least code go through this warning message.
                 cosmo=cosmo,
             )
-            if gg_lens.validity_test():
+            if gg_lens.validity_test(mag_arc_limit=mag_arc_limit):
                 self.gg_lens = gg_lens
-                break
-
-    def test_nfw_hernquist_lens(self):
-        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-        path = os.path.dirname(__file__)
-        module_path, _ = os.path.split(path)
-        print(path, module_path)
-        blue_one = Table.read(
-            os.path.join(path, "TestData/blue_one_modified.fits"), format="fits"
-        )
-        source_dict = blue_one
-        deflector_dict = {
-            "halo_mass": 10**13,
-            "concentration": 10,
-            "e1_mass": 0.1,
-            "e2_mass": -0.1,
-            "stellar_mass": 10e11,
-            "angular_size": 0.001,
-            "e1_light": -0.1,
-            "e2_light": 0.1,
-            "z": 0.5,
-            "mag_g": -20,
-        }
-
-        while True:
-            gg_lens = Lens(
-                source_dict=source_dict,
-                deflector_dict=deflector_dict,
-                deflector_type="NFW_HERNQUIST",
-                lens_equation_solver="lenstronomy_default",
-                cosmo=cosmo,
-            )
-            if gg_lens.validity_test():
-                # self.gg_lens = gg_lens
                 break
 
     def test_deflector_ellipticity(self):
@@ -125,7 +99,7 @@ class TestLens(object):
         assert vdp >= 10
 
     def test_los_linear_distortions(self):
-        losd = self.gg_lens.los_linear_distortions()
+        losd = self.gg_lens.los_linear_distortions
         assert losd != 0
 
     def test_point_source_arrival_times(self):
@@ -172,6 +146,85 @@ class TestLens(object):
         while True:
             gg_lens.validity_test()
             break
+
+        # and here for NFW-Hernquist model
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+        path = os.path.dirname(__file__)
+        module_path, _ = os.path.split(path)
+        print(path, module_path)
+        blue_one = Table.read(
+            os.path.join(path, "TestData/blue_one_modified.fits"), format="fits"
+        )
+        source_dict = blue_one
+        deflector_dict = {
+            "halo_mass": 10**13.8,
+            "concentration": 10,
+            "e1_mass": 0.1,
+            "e2_mass": -0.1,
+            "stellar_mass": 10.5e11,
+            "angular_size": 0.001,
+            "e1_light": -0.1,
+            "e2_light": 0.1,
+            "z": 0.5,
+            "mag_g": -20,
+        }
+
+        while True:
+            gg_lens = Lens(
+                source_dict=source_dict,
+                deflector_dict=deflector_dict,
+                deflector_type="NFW_HERNQUIST",
+                lens_equation_solver="lenstronomy_default",
+                cosmo=cosmo,
+            )
+            if gg_lens.validity_test():
+                # self.gg_lens = gg_lens
+                break
+
+        # here for NFW-Cluster model
+        subhalos_table = Table.read(
+            os.path.join(path, "TestData/subhalos_table.fits"), format="fits"
+        )
+        subhalos_list = [
+            Deflector(deflector_type="EPL", deflector_dict=subhalo)
+            for subhalo in subhalos_table
+        ]
+        source_dict = blue_one
+        deflector_dict = {
+            "halo_mass": 10**14,
+            "concentration": 5,
+            "e1_mass": 0.1,
+            "e2_mass": -0.1,
+            "z": 0.42,
+        }
+        while True:
+            cg_lens = Lens(
+                source_dict=source_dict,
+                deflector_dict=deflector_dict,
+                deflector_kwargs={"subhalos_list": subhalos_list},
+                deflector_type="NFW_CLUSTER",
+                lens_equation_solver="lenstronomy_default",
+                cosmo=cosmo,
+            )
+            if cg_lens.validity_test(max_image_separation=50.0):
+                break
+
+    def test_kappa_star(self):
+
+        from lenstronomy.Util.util import make_grid
+
+        delta_pix = 0.05
+        x, y = make_grid(numPix=200, deltapix=delta_pix)
+        kappa_star = self.gg_lens.kappa_star(x, y)
+        stellar_mass_from_kappa_star = (
+            np.sum(kappa_star)
+            * delta_pix**2
+            * self.gg_lens._lens_cosmo.sigma_crit_angle
+        )
+        stellar_mass = self.gg_lens.deflector_stellar_mass()
+        npt.assert_almost_equal(
+            stellar_mass_from_kappa_star / stellar_mass, 1, decimal=1
+        )
 
 
 @pytest.fixture
@@ -240,6 +293,96 @@ def test_point_source_magnitude_with_lightcurve(supernovae_lens_instance):
     expected_results = supernovae_lens_instance.source.source_dict["ps_mag_r"]
     assert mag[0][0] != expected_results[0][0]
     assert mag[1][0] != expected_results[0][0]
+
+
+class TestDifferenLens(object):
+    # pytest.fixture(scope='class')
+    def setup_method(self):
+        # path = os.path.dirname(slsim.__file__)
+
+        path = os.path.dirname(__file__)
+        module_path, _ = os.path.split(path)
+        print(path, module_path)
+        blue_one = Table.read(
+            os.path.join(path, "TestData/blue_one_modified.fits"), format="fits"
+        )
+        red_one = Table.read(
+            os.path.join(path, "TestData/red_one_modified.fits"), format="fits"
+        )
+        self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+        self.source_dict = blue_one
+        self.deflector_dict = red_one
+
+    def test_different_setting(self):
+        los1 = LOSConfig(
+            los_bool=True,
+            mixgauss_gamma=True,
+            nonlinear_los_bool=False,
+        )
+        gg_lens = Lens(
+            source_dict=self.source_dict,
+            deflector_dict=self.deflector_dict,
+            cosmo=self.cosmo,
+            los_config=los1,
+        )
+        assert gg_lens.external_shear >= 0
+        assert isinstance(gg_lens.external_convergence, float)
+        assert isinstance(gg_lens.external_shear, float)
+
+        los2 = LOSConfig(
+            los_bool=True,
+            mixgauss_gamma=False,
+            nonlinear_los_bool=True,
+        )
+
+        gg_lens_2 = Lens(
+            source_dict=self.source_dict,
+            deflector_dict=self.deflector_dict,
+            cosmo=self.cosmo,
+            los_config=los2,
+        )
+        assert gg_lens_2.external_shear >= 0
+        assert isinstance(gg_lens_2.external_convergence, float)
+        assert isinstance(gg_lens_2.external_shear, float)
+
+        los3 = LOSConfig(los_bool=False)
+        gg_lens_3 = Lens(
+            source_dict=self.source_dict,
+            deflector_dict=self.deflector_dict,
+            cosmo=self.cosmo,
+            los_config=los3,
+        )
+        assert gg_lens_3.external_convergence == 0
+        assert gg_lens_3.external_shear == 0
+
+        los4 = LOSConfig(
+            los_bool=True,
+            mixgauss_gamma=True,
+            nonlinear_los_bool=True,
+        )
+        with pytest.raises(ValueError):
+            gg_lens_4 = Lens(
+                source_dict=self.source_dict,
+                deflector_dict=self.deflector_dict,
+                cosmo=self.cosmo,
+                los_config=los4,
+            )
+            gg_lens_4.external_convergence()
+
+    def test_image_number(self):
+        los = LOSConfig(
+            los_bool=True,
+            mixgauss_gamma=True,
+            nonlinear_los_bool=False,
+        )
+        gg_lens_number = Lens(
+            source_dict=self.source_dict,
+            deflector_dict=self.deflector_dict,
+            cosmo=self.cosmo,
+            los_config=los,
+        )
+        image_number = gg_lens_number.image_number
+        assert (image_number == 4) or (image_number == 2) or (image_number == 1)
 
 
 if __name__ == "__main__":
