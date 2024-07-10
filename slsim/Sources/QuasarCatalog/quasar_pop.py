@@ -6,9 +6,10 @@ from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
 from astropy.table import Table
 import os
+from pathlib import Path
 
-""" 
-References: 
+"""
+References:
 Richards et al. 2005
 Richards et al. 2006
 Oguri & Marshall (2010)
@@ -36,11 +37,14 @@ class QuasarRate(object):
 
         :param h: Hubble constant parameter H0/100, where H0 = 70 km s^-1 Mpc^-1.
         :type h: float
-        :param zeta: (1) Best fit value of the observed evolution of the quasar luminosity function from SDSS DR3 survey (Richards et al. 2006: DOI: 10.1086/503559)
+        :param zeta: (1) Best fit value of the observed evolution of the quasar luminosity function
+        from SDSS DR3 survey (Richards et al. 2006: DOI: 10.1086/503559)
         :type zeta: float
-        :param xi: (2) Best fit value of the observed evolution of the quasar luminosity function from SDSS DR3 survey (Richards et al. 2006: DOI: 10.1086/503559)
+        :param xi: (2) Best fit value of the observed evolution of the quasar luminosity function
+        from SDSS DR3 survey (Richards et al. 2006: DOI: 10.1086/503559)
         :type xi: float
-        :param z_star: (3) Best fit value of the observed evolution of the quasar luminosity function from SDSS DR3 survey (Richards et al. 2006: DOI: 10.1086/503559)
+        :param z_star: (3) Best fit value of the observed evolution of the quasar luminosity
+        function from SDSS DR3 survey (Richards et al. 2006: DOI: 10.1086/503559)
         :type z_star: float
         :param alpha: Bright end slope of quasar luminosity density profile.
         :type alpha: float
@@ -74,11 +78,9 @@ class QuasarRate(object):
         )
 
         # Construct the dynamic path to the data file
-        base_path = os.path.dirname(__file__)
-        file_path = base_path.replace(
-            "slsim/Sources/QuasarCatalog",
-            "data/Quasar_K_Corrections/i_band_Richards_et_al_2006.txt",
-        )
+        base_path = Path(os.path.dirname(__file__))
+        file_path = base_path / "i_band_Richards_et_al_2006.txt"
+
         data = np.loadtxt(file_path)
 
         # The data is assumed to be in two columns: redshift and K-correction
