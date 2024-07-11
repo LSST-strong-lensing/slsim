@@ -88,10 +88,12 @@ class SupernovaeCatalog(object):
             # Determine the appropriate sky area for galaxy catalog to ensure a ~2x larger
             # host galaxy candidate catalog is supplied than the given supernovae catalog:
 
-            galaxy_sky_area = Quantity(value=self.sky_area.value*0.005, unit="deg2")
+            galaxy_sky_area = Quantity(value=self.sky_area.value * 0.005, unit="deg2")
 
             galaxy_catalog = GalaxyCatalog(
-                cosmo=self.cosmo, skypy_config=self.skypy_config, sky_area=galaxy_sky_area
+                cosmo=self.cosmo,
+                skypy_config=self.skypy_config,
+                sky_area=galaxy_sky_area,
             )
             host_galaxy_catalog = galaxy_catalog.galaxy_catalog()
             matching_catalogs = SupernovaeHostMatch(
