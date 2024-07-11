@@ -10,7 +10,7 @@ lightcurve_time = np.linspace(-20, 100, 500)
 absolute_mag_band = "bessellb"
 mag_zpsys = "AB"
 skypy_config = None
-sky_area = Quantity(0.001, unit="deg2")
+sky_area = Quantity(0.01, unit="deg2")
 absolute_mag = None
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 

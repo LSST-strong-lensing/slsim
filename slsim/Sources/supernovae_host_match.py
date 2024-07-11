@@ -67,6 +67,7 @@ class SupernovaeHostMatch:
         for redshift in self.supernovae_catalog:
 
             # Select host galaxy candidates in the specified redshift range.
+            # +/- 0.1 range ensures reasonable host selection size (depending on sky area).
             host_galaxy_candidates = self.galaxy_catalog[
                 (self.galaxy_catalog["z"] >= (redshift - 0.1))
                 & (self.galaxy_catalog["z"] <= redshift + 0.1)
