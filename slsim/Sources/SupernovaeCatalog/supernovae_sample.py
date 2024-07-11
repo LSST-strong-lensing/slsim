@@ -5,7 +5,6 @@ from slsim.Sources.galaxy_catalog import GalaxyCatalog
 from slsim.Sources.supernovae_host_match import SupernovaeHostMatch
 import numpy as np
 from astropy import units
-from astropy.units import Quantity
 
 
 class SupernovaeCatalog(object):
@@ -85,15 +84,11 @@ class SupernovaeCatalog(object):
         supernovae_redshift = sne_lightcone.supernovae_sample()
 
         if host_galaxy is True:
-            # Determine the appropriate sky area for galaxy catalog to ensure a ~2x larger
-            # host galaxy candidate catalog is supplied than the given supernovae catalog:
-
-            galaxy_sky_area = Quantity(value=self.sky_area.value * 0.005, unit="deg2")
 
             galaxy_catalog = GalaxyCatalog(
                 cosmo=self.cosmo,
                 skypy_config=self.skypy_config,
-                sky_area=galaxy_sky_area,
+                sky_area=self.sky_area,
             )
             host_galaxy_catalog = galaxy_catalog.galaxy_catalog()
             matching_catalogs = SupernovaeHostMatch(

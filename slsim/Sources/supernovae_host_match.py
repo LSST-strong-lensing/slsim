@@ -62,15 +62,20 @@ class SupernovaeHostMatch:
                 "float64",
             ),
         )
+        # Specify appropriate redshift range based on galaxy catalog sky area (1 deg^2 ~ 1e6
+        # galaxies).
+        if len(self.galaxy_catalog) < 1e6:
+            range = 0.05
+        else:
+            range = 0.1
 
         # Iterate through the redshifts in the SNe catalog.
         for redshift in self.supernovae_catalog:
 
             # Select host galaxy candidates in the specified redshift range.
-            # +/- 0.1 range ensures reasonable host selection size (depending on sky area).
             host_galaxy_candidates = self.galaxy_catalog[
-                (self.galaxy_catalog["z"] >= (redshift - 0.1))
-                & (self.galaxy_catalog["z"] <= redshift + 0.1)
+                (self.galaxy_catalog["z"] >= (redshift - range))
+                & (self.galaxy_catalog["z"] <= redshift + range)
             ]
 
             # Calculate the weights based on stellar mass.
