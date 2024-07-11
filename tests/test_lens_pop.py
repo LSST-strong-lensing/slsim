@@ -106,7 +106,7 @@ def test_supernovae_plus_galaxies_lens_pop_instance_2():
         kwargs_deflector_cut=kwargs_deflector_cut,
         kwargs_source_cut=kwargs_source_cut,
         variability_model="light_curve",
-        kwargs_variability={"supernovae_lightcurve", "r"},
+        kwargs_variability={"supernovae_lightcurve", "i"},
         sn_type="Ia",
         sn_absolute_mag_band="bessellb",
         sn_absolute_zpsys="ab",
@@ -123,7 +123,7 @@ def test_supernovae_plus_galaxies_lens_pop_instance_2():
     assert pes_lens_class._source_type == "point_plus_extended"
     assert "ra_off" in pes_lens_class.source.source_dict.colnames
     assert len(
-        pes_lens_class.source.kwargs_variability_extracted["r"]["ps_mag_r"]
+        pes_lens_class.source.kwargs_variability_extracted["i"]["ps_mag_i"]
     ) == len(time_range)
     assert pes_lens_pop.source_sky_area != pes_lens_pop.deflector_sky_area
 
