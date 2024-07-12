@@ -10,7 +10,7 @@ lightcurve_time = np.linspace(-20, 100, 500)
 absolute_mag_band = "bessellb"
 mag_zpsys = "AB"
 skypy_config = None
-sky_area = Quantity(0.0001, unit="deg2")
+sky_area = Quantity(0.001, unit="deg2")
 absolute_mag = None
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
@@ -36,12 +36,12 @@ class TestSupernovaeCatalog:
 
     def test_supernovae_catalog(self):
         result = self.supernovae_catalog.supernovae_catalog()
-        result2 = self.supernovae_catalog.supernovae_catalog(host_galaxy=False)
-
+        result2 = self.supernovae_catalog.supernovae_catalog(
+            host_galaxy=False, lightcurve=False
+        )
         assert "MJD" in result.colnames
-        assert "ps_mag_r" in result.colnames
         assert "z" in result.colnames
-        assert len(result2.colnames) == 3
+        assert len(result2.colnames) == 1
 
     def test_supernovae_host_galaxy_offset(self):
         ra_off, dec_off = self.supernovae_catalog.supernovae_host_galaxy_offset(5)

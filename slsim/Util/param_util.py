@@ -1,6 +1,7 @@
 import numpy as np
-from scipy.signal import convolve2d, fftconvolve
 import scipy
+from scipy.signal import convolve2d
+from scipy.signal import fftconvolve
 
 
 def epsilon2e(epsilon):
@@ -40,6 +41,24 @@ def e2epsilon(e):
     :return: ellipticity
     """
     return 2 * e / (1 + e**2)
+
+
+def ellip_from_axis_ratio2epsilon(ellip):
+    """Translates ellipticity definitions from.
+
+    .. math::
+        ellip = \\equic \\1 - q
+
+    to
+
+    .. math::
+        epsilon = \\equic \\frac{1 - q^2}{1 + q^2}
+
+    :param ellip: ellipticity in SL-Hammocks
+    :type  ellip: ndarray or float
+    :return: epsilon. ellipticity in slsim
+    """
+    return (1.0 - (1.0 - ellip) ** 2) / (1.0 + (1.0 - ellip) ** 2)
 
 
 def random_ra_dec(ra_min, ra_max, dec_min, dec_max, n):
@@ -216,3 +235,38 @@ def eccentricity(q):
     :return: eccentricity
     """
     return (1 - q) / (1 + q)
+
+
+def deg2_to_cone_angle(solid_angle_deg2):
+    """Convert solid angle from square degrees to half cone angle in radians.
+
+    This function translates a solid angle, specified in square degrees, into the
+    corresponding half cone angle expressed in radians. This conversion is essential for
+    applications involving angular measurements in astronomy, particularly in lensing
+    calculations where the geometry of observations is defined in terms of cone angles.
+
+    :param solid_angle_deg2: Solid angle in square degrees to be converted.
+    :type solid_angle_deg2: float
+    :return: The half cone angle in radians equivalent to the input solid angle.
+    :rtype: float :note: The conversion utilizes the relationship between solid angles
+        in steradians and the apex angle of a cone, facilitating a direct transition
+        from square degrees to radians.
+    """
+
+    solid_angle_sr = solid_angle_deg2 * (np.pi / 180) ** 2
+    theta = np.arccos(1 - solid_angle_sr / (2 * np.pi))  # rad
+    return theta
+
+
+def ellipticity_slsim_to_lenstronomy(e1_slsim, e2_slsim):
+    """Converts ellipticity component from slsim convension to lenstronomy convention.
+    In slsim, position angle goes from North to East. In lenstronomy, position angle
+    goes from East to North.
+
+    :param e1_slsim: first component of the ellipticity in slsim convension i.e position
+     angle from north to east.
+    :param e2_slsim: second component of the ellipticity in slsim convention.
+    return: ellipticity components in lenstronomy convention.
+    """
+
+    return -e1_slsim, e2_slsim

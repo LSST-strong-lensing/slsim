@@ -21,18 +21,26 @@ slsim.Sources.galaxies module
    :undoc-members:
    :show-inheritance:
 
-slsim.Sources.point\_plus\_extended\_source module
---------------------------------------------------
+slsim.Sources.point\_plus\_extended\_sources module
+---------------------------------------------------
 
 .. automodule:: slsim.Sources.point_plus_extended_sources
    :members:
    :undoc-members:
    :show-inheritance:
 
-slsim.Sources.point_sources module
-----------------------------
+slsim.Sources.point\_sources module
+-----------------------------------
 
 .. automodule:: slsim.Sources.point_sources
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+slsim.Sources.random\_supernovae module
+---------------------------------------
+
+.. automodule:: slsim.Sources.random_supernovae
    :members:
    :undoc-members:
    :show-inheritance:
@@ -49,6 +57,14 @@ slsim.Sources.source\_pop\_base module
 --------------------------------------
 
 .. automodule:: slsim.Sources.source_pop_base
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+slsim.Sources.supernovae module
+-------------------------------
+
+.. automodule:: slsim.Sources.supernovae
    :members:
    :undoc-members:
    :show-inheritance:
