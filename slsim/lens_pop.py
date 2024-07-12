@@ -343,6 +343,7 @@ class LensPop(LensedPopulationBase):
                         supernovae_sample,
                         cosmo=cosmo,
                         sky_area=self.source_sky_area,
+                        kwargs_cut=kwargs_source_cut,
                         variability_model=variability_model,
                         kwargs_variability_model=kwargs_variability,
                         light_profile=source_light_profile,
