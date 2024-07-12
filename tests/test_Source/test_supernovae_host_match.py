@@ -41,10 +41,10 @@ class TestSupernovaeHostMatch:
         result = self.match.match()
         result2 = self.match2.match()
         assert len(result["stellar_mass"]) == 20
-        assert supernovae_catalog[5] <= (result["z"][5] + 0.05)
-        assert supernovae_catalog[5] >= (result["z"][5] - 0.05)
-        assert supernovae_catalog[5] <= (result2["z"][5] + 0.1)
-        assert supernovae_catalog[5] >= (result2["z"][5] - 0.1)
+        assert supernovae_catalog[5] <= (result["z"][5] + 0.1)
+        assert supernovae_catalog[5] >= (result["z"][5] - 0.1)
+        assert supernovae_catalog[5] <= (result2["z"][5] + 0.05)
+        assert supernovae_catalog[5] >= (result2["z"][5] - 0.05)
 
 
 if __name__ == "__main__":
