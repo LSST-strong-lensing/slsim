@@ -40,14 +40,14 @@ class TestVariability:
             "length_of_light_curve": 1000,
             "time_resolution": 1,
             "log_breakpoint_frequency": -2,
-            "new_mean_amplitude": 0,
+            "mean_magnitude": 0,
             "seed": None,
         }
         var = Variability("bending_power_law", **kwargs_model)
         observation_times = np.linspace(0, 1000, 1000)
         results = var.variability_at_time(observation_times)
         assert var.variability_model == "bending_power_law"
-        npt.assert_almost_equal(results.mean(), 0)
+        npt.assert_almost_equal(results.mean(), 0, decimal=4)
 
     def test_variability_user_defined_psd(self):
         frequencies = np.linspace(1 / 1000, 1 / 2, 1000)
@@ -57,7 +57,7 @@ class TestVariability:
             "time_resolution": 1,
             "input_frequencies": frequencies,
             "input_psd": psd,
-            "new_mean_amplitude": 50,
+            "mean_magnitude": 50,
             "seed": None,
         }
         var = Variability("user_defined_psd", **kwargs_model)

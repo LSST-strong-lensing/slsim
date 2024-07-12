@@ -1,7 +1,12 @@
 import numpy as np
-from scipy import fft
+from scipy.fftpack import ifft
 from astropy import constants as const
 from astropy import units as u
+from slsim.Util.param_util import (
+    amplitude_to_magnitude,
+    magnitude_to_amplitude,
+)
+from astropy.units.quantity import Quantity
 
 
 def spin_to_isco(spin):
@@ -329,12 +334,12 @@ def calculate_dt_dlx(radial_map, temperature_map, corona_height):
     Terms are expanded and temp_disk^4 is reconstructed on right hand side of equation in (3).
     Terms are collected in (4), higher order terms are discarded.
     The fractional change in temperature with respect to flux is approximated
-        to be the derivative in (5) as both delta_temp and delta_Lx are assumed to be small.
+    to be the derivative in (5) as both delta_temp and delta_Lx are assumed to be small.
 
     :param radial_map: A 2-dimension array of radial values on the accretion disk in units [R_g].
     :param temperature_map: A 2-dimensional array of temperature values on the accretion disk
         in [Kelvin].
-    :param corona_height: The height of the corona in units [R_. Typical values range
+    :param corona_height: The height of the corona in units [R]. Typical values range
         from 0 to 100.
     :return: A 2-dimensional map of values representing the change in temperature with
         respect to a change in X-ray flux.
@@ -400,11 +405,11 @@ def calculate_accretion_disk_response_function(
 
     To use the response function:
     1) Resample the response function at the time resolution of the signal or resample the
-        signal at units [R_g / c].
+    signal at units [R_g / c].
     2) The time axis of the response function must then be inverted as these are time lags.
     3) Take the convolution between the driving signal and the response function.
     4) The time axis of the convolution should then be shifted forward in time by the length
-        of the response function to remain consistent with respect to the driving signal.
+    of the response function to remain consistent with respect to the driving signal.
 
     :param r_out: The maximum radial value of the accretion disk. This typically can be chosen
         as 10^3 to 10^5 [R_g].
@@ -522,28 +527,28 @@ def define_frequencies(length_of_light_curve, time_resolution):
     return frequencies
 
 
-def normalize_light_curve(light_curve, new_mean_amplitude, new_standard_deviation=None):
+def normalize_light_curve(light_curve, mean_magnitude, standard_deviation=None):
     """This function takes in a light curve and redefines its mean and standard
     deviation. It may also be used to re-normalize any time series.
 
     :param light_curve: A time series list or array which represents a one-dimensional
         light curve. This function does not require any specific units or spacings.
-    :param new_mean_amplitude: The new mean value of the light curve. This is done
-        through a simple shifting of the y-axis.
-    :param new_standard_deviation: The new standard deviation of the light curve. Note
-        this only makes sense for a variable signal (e.g. a constant signal cannot be
-        given a new standard_deviation). A negative standard deviation will invert the x
-        and y axis.
+    :param mean_magnitude: The new mean value of the light curve. This is done through a
+        simple shifting of the y-axis.
+    :param standard_deviation: The new standard deviation of the light curve. Note this
+        only makes sense for a variable signal (e.g. a constant signal cannot be given a
+        new standard_deviation). A negative standard deviation will invert the x and y
+        axis.
     :return: A rescaled version of the original light curve, with new mean and standard
         deviation.
     """
     light_curve = np.asarray(light_curve)
     light_curve -= light_curve.mean()
-    if light_curve.std() > 0 and new_standard_deviation is not None:
+    if light_curve.std() > 0 and standard_deviation is not None:
         light_curve /= light_curve.std()
-    if new_standard_deviation != 0 and new_standard_deviation is not None:
-        light_curve *= new_standard_deviation
-    light_curve += new_mean_amplitude
+    if standard_deviation != 0 and standard_deviation is not None:
+        light_curve *= standard_deviation
+    light_curve += mean_magnitude
     return light_curve
 
 
@@ -553,8 +558,10 @@ def generate_signal(
     log_breakpoint_frequency=-2,
     low_frequency_slope=1,
     high_frequency_slope=3,
-    new_mean_amplitude=0,
-    new_standard_deviation=1,
+    mean_magnitude=0,
+    standard_deviation=0.1,
+    normal_magnitude_variance=True,
+    zero_point_mag=0,
     input_freq=None,
     input_psd=None,
     seed=None,
@@ -579,11 +586,19 @@ def generate_signal(
         the power is plotted against frequency in units [1/days]. Typically ranges from
         2.0 to 4.0, and should be a higher power than low_frequency_slope (e.g. it should
         drop off with frequency rapidly).
-    :param new_mean_amplitude: The mean value of the light curve to simulate. The
+    :param mean_magnitude: The mean value of the light curve to simulate. The
         PSD will produce a stochastic light curve with some mean and some standard
         deviation. This parameter will fix the mean value of the output light curve.
     :param standard_deviation: The desired standard deviation (std) of the light curve's
         variability.
+    :param normal_magnitude_variance: Bool, a toggle between whether variability is calculated in
+        magnitude or flux units. If True, variability will be assumed to have the given standard
+        deviation in magnitude. If False, variability will assume to have the given standard
+        deviation in flux. Note that if False, "negative flux" becomes likely for standard
+        deviation > 0.5 mag, and will return a ValueError.
+        If everything is assumed to be in flux units, simply insert your mean flux for
+        "mean_magnitude" and define "normal_magnitude_variance" = True.
+    :param zero_point_mag: The reference amplitude to calculate the zero point magnitude.
     :param input_freq: None or an input array of frequencies in [1/days] to use to overwrite the
         frequencies generated by astro_util.generate_frequencies(). If none, no action
         will be taken. If an array of frequencies is input, this array will override
@@ -620,12 +635,39 @@ def generate_signal(
     fourier_transform = np.concatenate(
         (fourier_transform, fourier_transform[-2:0:-1].conjugate())
     )
-    generated_light_curve = fft.ifft(fourier_transform)[
+    generated_light_curve = ifft(fourier_transform)[
         : length_of_light_curve // time_resolution
     ]
-    output_light_curve = normalize_light_curve(
-        generated_light_curve, new_mean_amplitude, new_standard_deviation
-    )
+    if normal_magnitude_variance is False:
+        amplitude_baseline = magnitude_to_amplitude(mean_magnitude, zero_point_mag)
+        amplitude_value_1 = magnitude_to_amplitude(
+            mean_magnitude + standard_deviation, zero_point_mag
+        )
+        amplitude_value_2 = magnitude_to_amplitude(
+            mean_magnitude - standard_deviation, zero_point_mag
+        )
+
+        amplitude_variations = np.min(
+            (
+                abs(amplitude_value_1 - amplitude_baseline),
+                abs(amplitude_value_2 - amplitude_baseline),
+            )
+        )
+
+        intermediate_light_curve = normalize_light_curve(
+            generated_light_curve, amplitude_baseline, amplitude_variations
+        )
+        if any(intermediate_light_curve < 0):
+            raise ValueError("Warning: Amplitude variations greater than mean flux.")
+
+        output_light_curve = amplitude_to_magnitude(
+            intermediate_light_curve, zero_point_mag
+        )
+
+    else:
+        output_light_curve = normalize_light_curve(
+            generated_light_curve, mean_magnitude, standard_deviation
+        )
     return output_light_curve.real
 
 
@@ -635,8 +677,10 @@ def generate_signal_from_bending_power_law(
     log_breakpoint_frequency=-2,
     low_frequency_slope=1,
     high_frequency_slope=3,
-    new_mean_amplitude=0,
-    new_standard_deviation=None,
+    mean_magnitude=0,
+    standard_deviation=None,
+    normal_magnitude_variance=True,
+    zero_point_mag=0,
     seed=None,
 ):
     """Uses astro_util.generate_signal_from_psd() to create an intrinsic bending power
@@ -653,8 +697,16 @@ def generate_signal_from_bending_power_law(
     :param high_frequency_slope: The (negative) log-log slope of the power spectrum
         density on the high frequency side of the breakpoint frequency. Typically
         between 2.0 and 4.0, and higher than the low_frequency_slope.
-    :param new_mean_amplitude: The desired mean value of the light curve.
-    :param new_standard_deviation: The desired standard deviation of the light curve.
+    :param mean_magnitude: The desired mean value of the light curve.
+    :param standard_deviation: The desired standard deviation of the light curve.
+    :param normal_magnitude_variance: Bool, a toggle between whether variability is calculated in
+        magnitude or flux units. If True, variability will be assumed to have the given standard
+        deviation in magnitude. If False, variability will assume to have the given standard
+        deviation in flux. Note that if False, "negative flux" becomes likely for standard
+        deviation > 0.5 mag, and will return a ValueError.
+        If everything is assumed to be in flux units, simply insert your mean flux for
+        "mean_magnitude" and define "normal_magnitude_variance" = True.
+    :param zero_point_mag: The reference amplitude to calculate the zero point magnitude.
     :param seed: The random seed to be input for reproducability.
     :return: Two arrays, the time_array and the magnitude_array of the variability.
     """
@@ -667,8 +719,10 @@ def generate_signal_from_bending_power_law(
         log_breakpoint_frequency=log_breakpoint_frequency,
         low_frequency_slope=low_frequency_slope,
         high_frequency_slope=high_frequency_slope,
-        new_mean_amplitude=new_mean_amplitude,
-        new_standard_deviation=new_standard_deviation,
+        mean_magnitude=mean_magnitude,
+        standard_deviation=standard_deviation,
+        normal_magnitude_variance=normal_magnitude_variance,
+        zero_point_mag=zero_point_mag,
         seed=seed,
     )
     return time_array, magnitude_array
@@ -679,8 +733,10 @@ def generate_signal_from_generic_psd(
     time_resolution,
     input_frequencies,
     input_psd,
-    new_mean_amplitude=0,
-    new_standard_deviation=None,
+    mean_magnitude=0,
+    standard_deviation=None,
+    normal_magnitude_variance=True,
+    zero_point_mag=0,
     seed=None,
 ):
     """Uses astro_util.generate_signal_from_psd() to create an intrinsic signal from any
@@ -694,8 +750,17 @@ def generate_signal_from_generic_psd(
         astro_util.define_frequencies().
     :param input_psd: The input power spectrum. This must be the same size as
         input_frequencies.
-    :param new_mean_amplitude: The desired mean value of the light curve.
-    :param new_standard_deviation: The desired standard deviation of the light curve.
+    :param mean_magnitude: The desired mean value of the light curve.
+    :param standard_deviation: The desired standard deviation of the light curve.
+    :param normal_magnitude_variance: Bool, a toggle between whether variability is
+        calculated in magnitude or flux units. If True, variability will be assumed to
+        have the given standard deviation in magnitude. If False, variability will
+        assume to have the given standard deviation in flux. Note that if False,
+        "negative flux" becomes likely for standard deviation > 0.5 mag, and will return
+        a ValueError. If everything is assumed to be in flux units, simply insert your
+        mean flux for "mean_magnitude" and define "normal_magnitude_variance" = True.
+    :param zero_point_mag: The reference amplitude to calculate the zero point
+        magnitude.
     :param seed: The random seed to be input for reproducability.
     :return: Two arrays, the time_array in [days] and the magnitude_array of the
         variability.
@@ -708,8 +773,59 @@ def generate_signal_from_generic_psd(
         time_resolution,
         input_freq=input_frequencies,
         input_psd=input_psd,
-        new_mean_amplitude=new_mean_amplitude,
-        new_standard_deviation=new_standard_deviation,
+        mean_magnitude=mean_magnitude,
+        standard_deviation=standard_deviation,
+        normal_magnitude_variance=normal_magnitude_variance,
+        zero_point_mag=zero_point_mag,
         seed=seed,
     )
     return time_array, magnitude_array
+
+
+def get_value_if_quantity(variable):
+    """Extracts the numerical value from an astropy Quantity object or returns the input
+    if not a Quantity.
+
+    This function checks if the input variable is an instance of an astropy Quantity. If
+    it is, the function extracts and returns the numerical value of the Quantity. If the
+    input is not a Quantity, it returns the input variable unchanged.
+
+    :param variable: The variable to be checked and possibly converted. Can be an
+        astropy Quantity or any other data type.
+    :type variable: Quantity or any
+    :return: The numerical value of the Quantity if the input is a Quantity; otherwise,
+        the input variable itself.
+    :rtype: float or any
+    """
+    if isinstance(variable, Quantity):
+        return variable.value
+    else:
+        return variable
+
+
+def cone_radius_angle_to_physical_area(radius_rad, z, cosmo):
+    """Convert cone radius angle to physical area at a specified redshift.
+
+    This function computes the physical area, in square megaparsecs (Mpc^2),
+    corresponding to a specified cone radius angle at a given redshift. The calculation
+    is based on the angular diameter distance, which is dependent on the adopted
+    cosmological model. This is particularly useful in cosmological simulations and
+    observations where the physical scale of structures is inferred from angular
+    measurements.
+
+    :param radius_rad: The half cone angle in radians.
+    :param z: The redshift at which the physical area is calculated.
+    :param cosmo: The astropy cosmology instance used for the conversion.
+    :type radius_rad: float
+    :type z: float
+    :type cosmo: astropy.cosmology instance
+    :return: The physical area in square megaparsecs (Mpc^2) for the given cone radius
+        and redshift.
+    :rtype: float :note: The calculation incorporates the angular diameter distance,
+        highlighting the interplay between angular measurements and physical scales in
+        an expanding universe.
+    """
+
+    physical_radius = cosmo.angular_diameter_distance(z) * radius_rad  # Mpc
+    area_physical = np.pi * physical_radius**2
+    return area_physical  # in Mpc2
