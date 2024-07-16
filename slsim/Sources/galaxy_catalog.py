@@ -10,21 +10,20 @@ Wang et al. 2013
 
 
 def supernovae_host_galaxy_offset(host_galaxy_catalog):
-    """This function generates random supernovae offsets from their host galaxy
-    center based on observed data. (Wang et al. 2013)
+    """This function generates random supernovae offsets from their host galaxy center
+    based on observed data. (Wang et al. 2013)
 
-    :param host_galaxy_catalog: catalog of host galaxies matched with supernovae
-    (must have 'angular_size' column)
+    :param host_galaxy_catalog: catalog of host galaxies matched with supernovae (must
+        have 'angular_size' column)
     :type host_galaxy_catalog: astropy Table
-
     :return: random ra_off and dec_off for each supernovae
     """
     # Select offset ratios based on observed offset distribution (Wang et al. 2013)
-    offset_ratios = list(stats.lognorm.rvs(
-                0.764609,
-                loc=-0.0284546,
-                scale=0.450885,
-                size=len(host_galaxy_catalog)))
+    offset_ratios = list(
+        stats.lognorm.rvs(
+            0.764609, loc=-0.0284546, scale=0.450885, size=len(host_galaxy_catalog)
+        )
+    )
 
     offsets = []
     position_angle = []
@@ -32,15 +31,13 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
     for i in range(len(host_galaxy_catalog)):
         while offset_ratios[i] > 3:
             offset_ratios[i] = stats.lognorm.rvs(
-                0.764609,
-                loc=-0.0284546,
-                scale=0.450885,
-                size=1)[0]
+                0.764609, loc=-0.0284546, scale=0.450885, size=1
+            )[0]
 
-        offsets.append(offset_ratios[i] * list(host_galaxy_catalog['angular_size'])[i])
+        offsets.append(offset_ratios[i] * list(host_galaxy_catalog["angular_size"])[i])
         position_angle.append(np.random.uniform(0, 360))
 
-    host_center = SkyCoord(1*units.deg, 1*units.deg, frame='icrs')
+    host_center = SkyCoord(1 * units.deg, 1 * units.deg, frame="icrs")
     offsets = host_center.directional_offset_by(position_angle, offsets)
 
     ra_off = offsets.ra

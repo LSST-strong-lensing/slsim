@@ -12,16 +12,16 @@ cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
 def test_supernovae_host_galaxy_offset():
     galaxy_catalog = GalaxyCatalog(
-            cosmo=cosmo,
-            skypy_config=skypy_config,
-            sky_area=sky_area,
-        )
+        cosmo=cosmo,
+        skypy_config=skypy_config,
+        sky_area=sky_area,
+    )
     host_catalog = galaxy_catalog.galaxy_catalog()
     ra_off, dec_off = supernovae_host_galaxy_offset(host_catalog)
 
     ra_within_mean_radius = 0
     dec_within_mean_radius = 0
-    mean_radius = np.rad2deg(np.mean(host_catalog['angular_size']))
+    mean_radius = np.rad2deg(np.mean(host_catalog["angular_size"]))
 
     for i in range(len(ra_off)):
         if np.abs(ra_off[i].value) <= mean_radius:
@@ -29,8 +29,8 @@ def test_supernovae_host_galaxy_offset():
         if np.abs(dec_off[i].value) <= mean_radius:
             dec_within_mean_radius += 1
 
-    assert ra_within_mean_radius >= (2/3)*len(ra_off)
-    assert dec_within_mean_radius >= (2/3)*len(dec_off)
+    assert ra_within_mean_radius >= (2 / 3) * len(ra_off)
+    assert dec_within_mean_radius >= (2 / 3) * len(dec_off)
 
 
 class TestGalaxyCatalog:
