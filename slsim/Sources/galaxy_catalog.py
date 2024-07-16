@@ -1,5 +1,54 @@
 from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 import numpy as np
+from scipy import stats
+import astropy.units as units
+from astropy.coordinates import SkyCoord
+
+"""References:
+Wang et al. 2013
+"""
+
+
+def supernovae_host_galaxy_offset(host_galaxy_catalog):
+    """This function generates random supernovae offsets from their host galaxy
+    center based on observed data. (Wang et al. 2013)
+
+    :param host_galaxy_catalog: catalog of host galaxies matched with supernovae
+    (must have 'angular_size' column)
+    :type host_galaxy_catalog: astropy Table
+
+    :return: random ra_off and dec_off for each supernovae
+    """
+    # Select offset ratios based on observed offset distribution (Wang et al. 2013)
+    offset_ratios = list(stats.lognorm.rvs(
+                0.764609,
+                loc=-0.0284546,
+                scale=0.450885,
+                size=len(host_galaxy_catalog)))
+
+    offsets = []
+    position_angle = []
+
+    for i in range(len(host_galaxy_catalog)):
+        while offset_ratios[i] > 3:
+            offset_ratios[i] = stats.lognorm.rvs(
+                0.764609,
+                loc=-0.0284546,
+                scale=0.450885,
+                size=1)[0]
+
+        offsets.append(offset_ratios[i] * list(host_galaxy_catalog['angular_size'])[i])
+        position_angle.append(np.random.uniform(0, 360))
+
+    host_center = SkyCoord(1*units.deg, 1*units.deg, frame='icrs')
+    offsets = host_center.directional_offset_by(position_angle, offsets)
+
+    ra_off = offsets.ra
+    ra_off = ra_off - 1 * units.deg
+    dec_off = offsets.dec
+    dec_off = dec_off - 1 * units.deg
+
+    return ra_off, dec_off
 
 
 class GalaxyCatalog(object):
@@ -35,19 +84,3 @@ class GalaxyCatalog(object):
         galaxy_table = pipeline.blue_galaxies
         galaxy_table_cut = galaxy_table[galaxy_table["z"] <= 2.379]
         return galaxy_table_cut
-
-    def supernovae_host_galaxy_offset(self, supernovae_number):
-        """This function generates random supernovae offsets from their host galaxy
-        center.
-
-        # TODO: use supernovae and host galaxy parameters to compute more realistic
-        offset.
-
-        :param supernovae_number: number of supernovae
-        :return: random ra_off and dec_off for each supernovae.
-        """
-        # Limits used here are mostly arbitrary. More realistic supernovae-host galaxy
-        # offset is needed.
-        ra_off = np.random.uniform(-5, 5, supernovae_number)
-        dec_off = np.random.uniform(-5, 5, supernovae_number)
-        return ra_off, dec_off

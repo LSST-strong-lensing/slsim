@@ -2,6 +2,7 @@ from astropy.table import Table, hstack
 from slsim.Sources import random_supernovae
 from slsim.Sources.Supernovae.supernovae_lightcone import SNeLightcone
 from slsim.Sources.galaxy_catalog import GalaxyCatalog
+from slsim.Sources.galaxy_catalog import supernovae_host_galaxy_offset
 from slsim.Sources.supernovae_host_match import SupernovaeHostMatch
 import numpy as np
 from astropy import units
@@ -128,9 +129,7 @@ class SupernovaeCatalog(object):
 
         # Get ra_off and dec_off if host galaxy is true.
         if host_galaxy is True:
-            ra_off, dec_off = galaxy_catalog.supernovae_host_galaxy_offset(
-                len(supernovae_redshift)
-            )
+            ra_off, dec_off = supernovae_host_galaxy_offset(matched_table)
             lightcurve_data["ra_off"] = ra_off
             lightcurve_data["dec_off"] = dec_off
             lightcurve_table = Table(lightcurve_data)
