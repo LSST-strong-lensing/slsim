@@ -2,10 +2,55 @@ from astropy.table import Table, hstack
 from slsim.Sources import random_supernovae
 from slsim.Sources.Supernovae.supernovae_lightcone import SNeLightcone
 from slsim.Sources.galaxy_catalog import GalaxyCatalog
-from slsim.Sources.galaxy_catalog import supernovae_host_galaxy_offset
 from slsim.Sources.supernovae_host_match import SupernovaeHostMatch
 import numpy as np
 from astropy import units
+from scipy import stats
+from astropy.coordinates import SkyCoord
+
+
+def supernovae_host_galaxy_offset(host_galaxy_catalog):
+    """This function generates random supernovae offsets from their host galaxy center
+    based on observed data. (Wang et al. 2013)
+
+    :param host_galaxy_catalog: catalog of host galaxies matched with supernovae (must
+        have 'angular_size' column)
+    :type host_galaxy_catalog: astropy Table
+
+    :return: ra_off [deg] and dec_off [deg] selected for each supernovae based on observed
+    distribution
+    """
+    # Select offset ratios based on observed offset distribution (Wang et al. 2013)
+    offset_ratios = list(
+
+        # Parameters (s, loc, and scale) obtained from fitting the observed data (Wang et al. 2013)
+        # to lognorm distribution with distfit
+        stats.lognorm.rvs(
+            0.764609, loc=-0.0284546, scale=0.450885, size=len(host_galaxy_catalog)
+        )
+    )
+
+    offsets = []
+    position_angle = []
+
+    for i in range(len(host_galaxy_catalog)):
+        while offset_ratios[i] > 3:
+            offset_ratios[i] = stats.lognorm.rvs(
+                0.764609, loc=-0.0284546, scale=0.450885, size=1
+            )[0]
+
+        offsets.append(offset_ratios[i] * list(host_galaxy_catalog["angular_size"])[i])
+        position_angle.append(np.random.uniform(0, 360))
+
+    host_center = SkyCoord(1 * units.deg, 1 * units.deg, frame="icrs")
+    offsets = host_center.directional_offset_by(position_angle, offsets)
+
+    ra_off = offsets.ra
+    ra_off = ra_off - 1 * units.deg
+    dec_off = offsets.dec
+    dec_off = dec_off - 1 * units.deg
+
+    return ra_off.value, dec_off.value
 
 
 class SupernovaeCatalog(object):
