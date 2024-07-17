@@ -33,9 +33,9 @@ def test_supernovae_host_galaxy_offset():
     mean_radius = np.rad2deg(np.mean(host_catalog["angular_size"]))
 
     for i in range(len(ra_off)):
-        if np.abs(ra_off[i].value) <= mean_radius:
+        if np.abs(ra_off[i]) <= mean_radius:
             ra_within_mean_radius += 1
-        if np.abs(dec_off[i].value) <= mean_radius:
+        if np.abs(dec_off[i]) <= mean_radius:
             dec_within_mean_radius += 1
 
     assert ra_within_mean_radius >= (2 / 3) * len(ra_off)
