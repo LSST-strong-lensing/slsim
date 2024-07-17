@@ -16,7 +16,7 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
     :param host_galaxy_catalog: catalog of host galaxies matched with supernovae (must
         have 'angular_size' column)
     :type host_galaxy_catalog: astropy Table
-    :return: ra_off [deg] and dec_off [deg] selected for each supernovae based on
+    :return: ra_off [arcsec] and dec_off [arcsec] selected for each supernovae based on
         observed distribution
     """
     # Select offset ratios based on observed offset distribution (Wang et al. 2013)
@@ -45,10 +45,10 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
         position_angle * units.deg, offsets * units.rad
     )
 
-    ra_off = offsets.ra
-    ra_off = ra_off - 1 * units.deg
-    dec_off = offsets.dec
-    dec_off = dec_off - 1 * units.deg
+    ra_off = offsets.ra - 1 * units.deg
+    ra_off = ra_off * units.arcsec
+    dec_off = offsets.dec - 1 * units.deg
+    dec_off = dec_off * units.arcsec
 
     return ra_off.value, dec_off.value
 

@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 from astropy.units import Quantity
+from astropy import units
 from astropy.cosmology import FlatLambdaCDM
 from slsim.Sources.SupernovaeCatalog.supernovae_sample import SupernovaeCatalog
 from slsim.Sources.galaxy_catalog import GalaxyCatalog
@@ -30,12 +31,12 @@ def test_supernovae_host_galaxy_offset():
 
     ra_within_mean_radius = 0
     dec_within_mean_radius = 0
-    mean_radius = np.rad2deg(np.mean(host_catalog["angular_size"]))
+    mean_radius = np.rad2deg(np.mean(host_catalog["angular_size"])) * units.arcsec
 
     for i in range(len(ra_off)):
-        if np.abs(ra_off[i]) <= mean_radius:
+        if np.abs(ra_off[i]) <= mean_radius.value:
             ra_within_mean_radius += 1
-        if np.abs(dec_off[i]) <= mean_radius:
+        if np.abs(dec_off[i]) <= mean_radius.value:
             dec_within_mean_radius += 1
 
     assert ra_within_mean_radius >= (2 / 3) * len(ra_off)
