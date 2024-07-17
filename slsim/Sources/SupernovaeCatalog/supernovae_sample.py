@@ -46,9 +46,9 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
     )
 
     ra_off = offsets.ra - 1 * units.deg
-    ra_off = ra_off * units.arcsec
+    ra_off = ra_off.to(units.arcsec)
     dec_off = offsets.dec - 1 * units.deg
-    dec_off = dec_off * units.arcsec
+    dec_off = dec_off.to(units.arcsec)
 
     return ra_off.value, dec_off.value
 
