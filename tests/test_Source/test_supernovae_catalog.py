@@ -4,7 +4,9 @@ from astropy.units import Quantity
 from astropy.cosmology import FlatLambdaCDM
 from slsim.Sources.SupernovaeCatalog.supernovae_sample import SupernovaeCatalog
 from slsim.Sources.galaxy_catalog import GalaxyCatalog
-from slsim.Sources.SupernovaeCatalog.supernovae_sample import supernovae_host_galaxy_offset
+from slsim.Sources.SupernovaeCatalog.supernovae_sample import (
+    supernovae_host_galaxy_offset,
+)
 
 sn_type = "Ia"
 band_list = ["i"]
