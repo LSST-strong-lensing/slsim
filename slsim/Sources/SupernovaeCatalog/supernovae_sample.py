@@ -41,7 +41,9 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
         position_angle.append(np.random.uniform(0, 360))
 
     host_center = SkyCoord(1 * units.deg, 1 * units.deg, frame="icrs")
-    offsets = host_center.directional_offset_by(position_angle * units.deg, offsets * units.rad)
+    offsets = host_center.directional_offset_by(
+        position_angle * units.deg, offsets * units.rad
+    )
 
     ra_off = offsets.ra
     ra_off = ra_off - 1 * units.deg
