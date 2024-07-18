@@ -18,7 +18,6 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
     :param host_galaxy_catalog: catalog of host galaxies matched with supernovae (must
         have 'angular_size' column)
     :type host_galaxy_catalog: astropy Table
-
     :return: ra_off [arcsec] and dec_off [arcsec] selected for each supernovae based on
         observed distribution
     :return type: list
@@ -27,10 +26,10 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
     offset_ratios = list(
         # Parameters (s, loc, and scale) obtained from fitting the observed data (Wang et al. 2013)
         # to lognorm distribution with distfit
-        stats. lognorm.rvs(
+        stats.lognorm.rvs(
             0.764609, loc=-0.0284546, scale=0.450885, size=len(host_galaxy_catalog)
-            )
         )
+    )
 
     offsets = []
     position_angle = []
@@ -52,7 +51,9 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
         position_angle.append(np.random.uniform(0, 360))
 
         # Calculate projected eccentricities
-        temp_e1, temp_e2 = galaxy_projected_eccentricity(host_galaxy_catalog["ellipticity"][i])
+        temp_e1, temp_e2 = galaxy_projected_eccentricity(
+            host_galaxy_catalog["ellipticity"][i]
+        )
         e1.append(temp_e1)
         e2.append(temp_e2)
 
@@ -75,7 +76,7 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
             e1[i],
             e2[i],
             0 * units.deg,
-            0 * units.deg
+            0 * units.deg,
         )
         transformed_ra_off.append(ra_off.value)
         transformed_dec_off.append(dec_off.value)
