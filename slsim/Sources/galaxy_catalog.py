@@ -1,5 +1,8 @@
 from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
-import numpy as np
+
+"""References:
+Wang et al. 2013
+"""
 
 
 class GalaxyCatalog(object):
@@ -35,19 +38,3 @@ class GalaxyCatalog(object):
         galaxy_table = pipeline.blue_galaxies
         galaxy_table_cut = galaxy_table[galaxy_table["z"] <= 2.379]
         return galaxy_table_cut
-
-    def supernovae_host_galaxy_offset(self, supernovae_number):
-        """This function generates random supernovae offsets from their host galaxy
-        center.
-
-        # TODO: use supernovae and host galaxy parameters to compute more realistic
-        offset.
-
-        :param supernovae_number: number of supernovae
-        :return: random ra_off and dec_off for each supernovae.
-        """
-        # Limits used here are mostly arbitrary. More realistic supernovae-host galaxy
-        # offset is needed.
-        ra_off = np.random.uniform(-5, 5, supernovae_number)
-        dec_off = np.random.uniform(-5, 5, supernovae_number)
-        return ra_off, dec_off

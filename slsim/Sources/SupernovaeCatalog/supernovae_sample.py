@@ -5,6 +5,52 @@ from slsim.Sources.galaxy_catalog import GalaxyCatalog
 from slsim.Sources.supernovae_host_match import SupernovaeHostMatch
 import numpy as np
 from astropy import units
+from scipy import stats
+from astropy.coordinates import SkyCoord
+
+
+def supernovae_host_galaxy_offset(host_galaxy_catalog):
+    """This function generates random supernovae offsets from their host galaxy center
+    based on observed data. (Wang et al. 2013)
+
+    :param host_galaxy_catalog: catalog of host galaxies matched with supernovae (must
+        have 'angular_size' column)
+    :type host_galaxy_catalog: astropy Table
+    :return: ra_off [arcsec] and dec_off [arcsec] selected for each supernovae based on
+        observed distribution
+    """
+    # Select offset ratios based on observed offset distribution (Wang et al. 2013)
+    offset_ratios = list(
+        # Parameters (s, loc, and scale) obtained from fitting the observed data (Wang et al. 2013)
+        # to lognorm distribution with distfit
+        stats.lognorm.rvs(
+            0.764609, loc=-0.0284546, scale=0.450885, size=len(host_galaxy_catalog)
+        )
+    )
+
+    offsets = []
+    position_angle = []
+
+    for i in range(len(host_galaxy_catalog)):
+        while offset_ratios[i] > 3:
+            offset_ratios[i] = stats.lognorm.rvs(
+                0.764609, loc=-0.0284546, scale=0.450885, size=1
+            )[0]
+
+        offsets.append(offset_ratios[i] * list(host_galaxy_catalog["angular_size"])[i])
+        position_angle.append(np.random.uniform(0, 360))
+
+    host_center = SkyCoord(1 * units.deg, 1 * units.deg, frame="icrs")
+    offsets = host_center.directional_offset_by(
+        position_angle * units.deg, offsets * units.rad
+    )
+
+    ra_off = offsets.ra - 1 * units.deg
+    ra_off = ra_off.to(units.arcsec)
+    dec_off = offsets.dec - 1 * units.deg
+    dec_off = dec_off.to(units.arcsec)
+
+    return ra_off.value, dec_off.value
 
 
 class SupernovaeCatalog(object):
@@ -128,9 +174,7 @@ class SupernovaeCatalog(object):
 
         # Get ra_off and dec_off if host galaxy is true.
         if host_galaxy is True:
-            ra_off, dec_off = galaxy_catalog.supernovae_host_galaxy_offset(
-                len(supernovae_redshift)
-            )
+            ra_off, dec_off = supernovae_host_galaxy_offset(matched_table)
             lightcurve_data["ra_off"] = ra_off
             lightcurve_data["dec_off"] = dec_off
             lightcurve_table = Table(lightcurve_data)
