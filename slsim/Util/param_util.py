@@ -263,9 +263,13 @@ def ellipticity_slsim_to_lenstronomy(e1_slsim, e2_slsim):
     In slsim, position angle goes from North to East. In lenstronomy, position angle
     goes from East to North.
 
-    :param e1_slsim: first component of the ellipticity in slsim convension i.e position
-     angle from north to east.
-    :param e2_slsim: second component of the ellipticity in slsim convention.
+    :param e1_slsim:
+        first component of the ellipticity in slsim convension i.e position
+        angle from north to east.
+
+    :param e2_slsim:
+        second component of the ellipticity in slsim convention.
+
     return: ellipticity components in lenstronomy convention.
     """
 
