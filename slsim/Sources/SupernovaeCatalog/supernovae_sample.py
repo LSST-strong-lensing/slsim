@@ -9,6 +9,7 @@ from scipy import stats
 from astropy.coordinates import SkyCoord
 from slsim.Sources.galaxies import galaxy_projected_eccentricity
 from lenstronomy.Util.param_util import transform_e1e2_product_average
+from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 
 
 def supernovae_host_galaxy_offset(host_galaxy_catalog):
@@ -18,9 +19,12 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
     :param host_galaxy_catalog: catalog of host galaxies matched with supernovae (must
         have 'angular_size' column)
     :type host_galaxy_catalog: astropy Table
+
     :return: ra_off [arcsec] and dec_off [arcsec] selected for each supernovae based on
         observed distribution
     :return type: list
+    :return e1 and e2 projected eccentricities calculated for each host galaxy
+    :return type: float
     """
     # Select offset ratios based on observed offset distribution (Wang et al. 2013)
     offset_ratios = list(
@@ -67,21 +71,27 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
 
     transformed_ra_off = []
     transformed_dec_off = []
+    lenstronomy_e1 = []
+    lenstronomy_e2 = []
 
     # Transform the offset coordinates with eccentricities e1, e2 into elliptical coordinate system
     for i in range(len(host_galaxy_catalog)):
+        temp_e1, temp_e2 = ellipticity_slsim_to_lenstronomy(e1[i], e2[i])
+        lenstronomy_e1.append(temp_e1)
+        lenstronomy_e2.append(temp_e2)
+
         ra_off, dec_off = transform_e1e2_product_average(
             original_ra_off[i],
             original_dec_off[i],
-            e1[i],
-            e2[i],
+            lenstronomy_e1[i],
+            lenstronomy_e2[i],
             0 * units.deg,
             0 * units.deg,
         )
         transformed_ra_off.append(ra_off.value)
         transformed_dec_off.append(dec_off.value)
 
-    return transformed_ra_off, transformed_dec_off
+    return transformed_ra_off, transformed_dec_off, e1, e2
 
 
 class SupernovaeCatalog(object):
@@ -205,9 +215,11 @@ class SupernovaeCatalog(object):
 
         # Get ra_off and dec_off if host galaxy is true.
         if host_galaxy is True:
-            ra_off, dec_off = supernovae_host_galaxy_offset(matched_table)
+            ra_off, dec_off, e1, e2 = supernovae_host_galaxy_offset(matched_table)
             lightcurve_data["ra_off"] = ra_off
             lightcurve_data["dec_off"] = dec_off
+            matched_table["e1"] = e1
+            matched_table["e2"] = e2
             lightcurve_table = Table(lightcurve_data)
             supernovae_table = hstack([lightcurve_table, matched_table])
 
