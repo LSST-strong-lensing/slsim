@@ -19,11 +19,10 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
     :param host_galaxy_catalog: catalog of host galaxies matched with supernovae (must
         have 'angular_size' column)
     :type host_galaxy_catalog: astropy Table
-
     :return: ra_off [arcsec] and dec_off [arcsec] selected for each supernovae based on
         observed distribution
-    :return type: list
-    :return e1 and e2 projected eccentricities calculated for each host galaxy
+    :return type: list :return e1 and e2 projected eccentricities calculated for each
+        host galaxy
     :return type: float
     """
     # Select offset ratios based on observed offset distribution (Wang et al. 2013)
