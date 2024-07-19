@@ -19,11 +19,11 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
     :param host_galaxy_catalog: catalog of host galaxies matched with supernovae (must
         have 'angular_size' column)
     :type host_galaxy_catalog: astropy Table
+
     :return: ra_off [arcsec] and dec_off [arcsec] selected for each supernovae based on
-        observed distribution
-    :return type: list :return e1 and e2 projected eccentricities calculated for each
+        observed distribution; e1 and e2 projected eccentricities calculated for each
         host galaxy
-    :return type: float
+    :return type: list; float
     """
     # Select offset ratios based on observed offset distribution (Wang et al. 2013)
     offset_ratios = list(
@@ -70,20 +70,18 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
 
     transformed_ra_off = []
     transformed_dec_off = []
-    lenstronomy_e1 = []
-    lenstronomy_e2 = []
 
     # Transform the offset coordinates with eccentricities e1, e2 into elliptical coordinate system
     for i in range(len(host_galaxy_catalog)):
-        temp_e1, temp_e2 = ellipticity_slsim_to_lenstronomy(e1[i], e2[i])
-        lenstronomy_e1.append(temp_e1)
-        lenstronomy_e2.append(temp_e2)
+
+        # Conversion of slsim e1, e2 to lenstronomy e1, e2
+        lenstronomy_e1, lenstronomy_e2 = ellipticity_slsim_to_lenstronomy(e1[i], e2[i])
 
         ra_off, dec_off = transform_e1e2_product_average(
             original_ra_off[i],
             original_dec_off[i],
-            lenstronomy_e1[i],
-            lenstronomy_e2[i],
+            lenstronomy_e1,
+            lenstronomy_e2,
             0 * units.deg,
             0 * units.deg,
         )
