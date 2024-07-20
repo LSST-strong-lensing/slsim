@@ -176,10 +176,10 @@ def get_velocity_dispersion(
         the B-band luminosity function evolves such that characteristic magnitude MBstar
         decline by 1.5 magnitudes from z=0.0 to z=1.0. We use the same assumption here;
 
-        Hence, MBstar and zz should follow the relation, i.e.,
-        MBstar = MBstar0-(zz)*1.5. where MBstar0 = MBstar(at zz=0). In our case, MBstar0
-        = -19.31 has been estimated from the mean value of the MBstar0, from Table 1,
-        Bell et al 2004.
+        Hence, MBstar and zz should follow the relation, i.e., MBstar =
+        MBstar0-(zz)*1.5. where MBstar0 = MBstar(at zz=0). In our case, MBstar0 = -19.31
+        has been estimated from the mean value of the MBstar0, from Table 1, Bell et al
+        2004.
         """
         # define a 1D line model for MBstar evolution with redshift.
         MBstar_func = Linear1D(-1.5, -19.31)
@@ -189,12 +189,10 @@ def get_velocity_dispersion(
 
         # Calculate L/L* using the magnitude-luminosity relation
         LbyLstar = 10.0 ** (-0.4 * (MabsB - MBstar))
-        """
-        Now use the L-sigma relation for the elliptical galaxies i.e., the Faber Jackson relation, 
-                            sigma/sigma_star = (L/Lstar)**(1/alpha)
-        and taking the sigma* and alpha value from Choi et al 2007, derived for
-        early type galaxies, calculate the the velocity dispersion sigma.
-        """
+        """Now use the L-sigma relation for the elliptical galaxies i.e., the Faber
+        Jackson relation, sigma/sigma_star = (L/Lstar)**(1/alpha) and taking the sigma*
+        and alpha value from Choi et al 2007, derived for early type galaxies, calculate
+        the the velocity dispersion sigma."""
         sigma_star, alpha = ufloat(161, 5), 2.32  # Choi et al 2007
 
         # Use sigma_star and alpha values to calculate the stellar velocity dispersion sigma
@@ -204,8 +202,8 @@ def get_velocity_dispersion(
         """We assume the same assumption here (from Bell et al 2004) for decline of
         characteristic magnitude Mrstar for r'-band,
 
-        Hence, Mrstar and zz should follow the relation, i.e.,
-        MBstar = MBstar0-(zz-0.1)*1.5. where Mrstar0 = MBstar(at zz=0.1).
+        Hence, Mrstar and zz should follow the relation, i.e., MBstar =
+        MBstar0-(zz-0.1)*1.5. where Mrstar0 = MBstar(at zz=0.1).
 
         In our case, Mrstar0 = -20.44 has been estimated from Table 2, Blanton et al
         2003.
@@ -221,10 +219,9 @@ def get_velocity_dispersion(
 
         # Calculate L/L* using the magnitude-luminosity relation
         LbyLstar = 10.0 ** (-0.4 * (Mabsr - Mrstar))
-        """
-        Now use the L-sigma relation and taking the sigma_star and alpha value from Parker et al 2007, 
-        derived using weak-lensing measurements, calculate the the velocity dispersion sigma.
-        """
+        """Now use the L-sigma relation and taking the sigma_star and alpha value from
+        Parker et al 2007, derived using weak-lensing measurements, calculate the the
+        velocity dispersion sigma."""
         # sigma_star, alpha = ufloat(142,18), 3      # Parker et al 2007
 
         sigma_star_nominal = np.ones(len(LbyLstar)) * 142
