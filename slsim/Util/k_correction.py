@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import numpy as np
 import kcorrect.kcorrect
-from uncertainties import ufloat
 from uncertainties import unumpy
 
 
