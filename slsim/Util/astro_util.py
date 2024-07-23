@@ -168,9 +168,9 @@ def planck_law(temperature, wavelength_in_nanometers):
     :return: The spectral radiance of the black body
     """
     # If wavelength was entered as an int or float, append units
-    if type(wavelength_in_nanometers) != u.Quantity:
+    if type(wavelength_in_nanometers) is not u.Quantity:
         wavelength_in_nanometers *= u.nm
-    if type(temperature) != u.Quantity:
+    if type(temperature) is not u.Quantity:
         temperature *= u.K
 
     e_exponent = (
@@ -193,7 +193,7 @@ def planck_law_derivative(temperature, wavelength_in_nanometers):
     :param wavelength_in_nanometers: Emitted wavelength in local rest frame in [nanometers].
     :return: The derivative of the spectral radiance with respect to temperature for a black body.
     """
-    if type(temperature) == u.Quantity:
+    if type(temperature) is u.Quantity:
         temperature = temperature.value
 
     return (
