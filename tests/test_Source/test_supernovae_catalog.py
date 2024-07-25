@@ -45,10 +45,10 @@ def test_supernovae_host_galaxy_offset():
 
     assert ra_within_mean_radius >= (2 / 3) * len(ra_off)
     assert dec_within_mean_radius >= (2 / 3) * len(dec_off)
-    assert min(e1) > 0
-    assert min(e2) > 0
-    assert max(e1) < 1
-    assert max(e2) < 1
+    assert min(np.abs(e1)) > 0
+    assert min(np.abs(e2)) > 0
+    assert max(np.abs(e1)) < 1
+    assert max(np.abs(e2)) < 1
 
 
 class TestSupernovaeCatalog:
