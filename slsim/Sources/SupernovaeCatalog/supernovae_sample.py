@@ -51,15 +51,14 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
 
         # Calculate projected eccentricities
         temp_e1, temp_e2 = galaxy_projected_eccentricity(
-            host_galaxy_catalog["ellipticity"][i],
-            position_angle[i] * units.deg
+            host_galaxy_catalog["ellipticity"][i], position_angle[i] * units.deg
         )
         e1.append(temp_e1)
         e2.append(temp_e2)
 
     # Calculate the x and y coordinates of the offset [arcsec]
-    original_x_off = (np.cos(position_angle)*(offsets * units.rad)).to(units.arcsec)
-    original_y_off = (np.sin(position_angle)*(offsets * units.rad)).to(units.arcsec)
+    original_x_off = (np.cos(position_angle) * (offsets * units.rad)).to(units.arcsec)
+    original_y_off = (np.sin(position_angle) * (offsets * units.rad)).to(units.arcsec)
 
     transformed_x_off = []
     transformed_y_off = []
@@ -79,7 +78,7 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
             lenstronomy_e1[i],
             lenstronomy_e2[i],
             0 * units.deg,
-            0 * units.deg
+            0 * units.deg,
         )
         transformed_x_off.append(x_off.value)
         transformed_y_off.append(y_off.value)
