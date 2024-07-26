@@ -57,20 +57,23 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
         offsets.append(offset)
 
         galaxy_angle = np.random.uniform(0, np.pi)
-        supernova_angle = np.random.uniform(0, 2*np.pi)
+        supernova_angle = np.random.uniform(0, 2 * np.pi)
         position_angle_galaxy.append(galaxy_angle)
         position_angle_supernovae.append(supernova_angle)
 
         # Calculate the x and y coordinates of the offset [arcsec]
-        x_off = ((np.cos(supernova_angle * units.rad))*(offset * units.rad)).to(units.arcsec)
-        y_off = ((np.sin(supernova_angle * units.rad))*(offset * units.rad)).to(units.arcsec)
+        x_off = ((np.cos(supernova_angle * units.rad)) * (offset * units.rad)).to(
+            units.arcsec
+        )
+        y_off = ((np.sin(supernova_angle * units.rad)) * (offset * units.rad)).to(
+            units.arcsec
+        )
         original_x_off.append(x_off)
         original_y_off.append(y_off)
 
         # Calculate projected eccentricities
         slsim_e1, slsim_e2 = galaxy_projected_eccentricity(
-            host_galaxy_catalog["ellipticity"][i],
-            galaxy_angle * units.rad
+            host_galaxy_catalog["ellipticity"][i], galaxy_angle * units.rad
         )
         e1.append(slsim_e1)
         e2.append(slsim_e2)
@@ -82,12 +85,7 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
         lenstronomy_e2.append(lens_e2)
 
         transform_x_off, transform_y_off = transform_e1e2_product_average(
-            x_off.value,
-            y_off.value,
-            lens_e1,
-            lens_e2,
-            0,
-            0
+            x_off.value, y_off.value, lens_e1, lens_e2, 0, 0
         )
         transformed_x_off.append(transform_x_off)
         transformed_y_off.append(transform_y_off)
