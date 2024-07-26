@@ -33,9 +33,16 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
     )
 
     offsets = []
-    position_angle = []
+    position_angle_galaxy = []
+    position_angle_supernovae = []
+    original_x_off = []
+    original_y_off = []
     e1 = []
     e2 = []
+    transformed_x_off = []
+    transformed_y_off = []
+    lenstronomy_e1 = []
+    lenstronomy_e2 = []
 
     for i in range(len(host_galaxy_catalog)):
 
@@ -46,43 +53,46 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
             )[0]
 
         # Calculate offsets [rad]
-        offsets.append(offset_ratios[i] * list(host_galaxy_catalog["angular_size"])[i])
-        position_angle.append(np.random.uniform(0, 360))
+        offset = offset_ratios[i] * list(host_galaxy_catalog["angular_size"])[i]
+        offsets.append(offset)
+
+        galaxy_angle = np.random.uniform(0, np.pi)
+        supernova_angle = np.random.uniform(0, 2*np.pi)
+        position_angle_galaxy.append(galaxy_angle)
+        position_angle_supernovae.append(supernova_angle)
+
+        # Calculate the x and y coordinates of the offset [arcsec]
+        x_off = ((np.cos(supernova_angle * units.rad))*(offset * units.rad)).to(units.arcsec)
+        y_off = ((np.sin(supernova_angle * units.rad))*(offset * units.rad)).to(units.arcsec)
+        original_x_off.append(x_off)
+        original_y_off.append(y_off)
 
         # Calculate projected eccentricities
-        temp_e1, temp_e2 = galaxy_projected_eccentricity(
-            host_galaxy_catalog["ellipticity"][i], position_angle[i] * units.deg
+        slsim_e1, slsim_e2 = galaxy_projected_eccentricity(
+            host_galaxy_catalog["ellipticity"][i],
+            galaxy_angle * units.rad
         )
-        e1.append(temp_e1)
-        e2.append(temp_e2)
+        e1.append(slsim_e1)
+        e2.append(slsim_e2)
 
-    # Calculate the x and y coordinates of the offset [arcsec]
-    original_x_off = (np.cos(position_angle) * (offsets * units.rad)).to(units.arcsec)
-    original_y_off = (np.sin(position_angle) * (offsets * units.rad)).to(units.arcsec)
+        # Transform the offset coordinates with eccentricities e1, e2 into elliptical coordinate
+        # system
+        lens_e1, lens_e2 = ellipticity_slsim_to_lenstronomy(slsim_e1, slsim_e2)
+        lenstronomy_e1.append(lens_e1)
+        lenstronomy_e2.append(lens_e2)
 
-    transformed_x_off = []
-    transformed_y_off = []
-    lenstronomy_e1 = []
-    lenstronomy_e2 = []
-
-    # Transform the offset coordinates with eccentricities e1, e2 into elliptical coordinate system
-    for i in range(len(host_galaxy_catalog)):
-
-        temp_e1, temp_e2 = ellipticity_slsim_to_lenstronomy(e1[i], e2[i])
-        lenstronomy_e1.append(temp_e1)
-        lenstronomy_e2.append(temp_e2)
-
-        x_off, y_off = transform_e1e2_product_average(
-            original_x_off[i],
-            original_y_off[i],
-            lenstronomy_e1[i],
-            lenstronomy_e2[i],
-            0 * units.deg,
-            0 * units.deg,
+        transform_x_off, transform_y_off = transform_e1e2_product_average(
+            x_off.value,
+            y_off.value,
+            lens_e1,
+            lens_e2,
+            0,
+            0
         )
-        transformed_x_off.append(x_off.value)
-        transformed_y_off.append(y_off.value)
-        return transformed_x_off, transformed_y_off, e1, e2
+        transformed_x_off.append(transform_x_off)
+        transformed_y_off.append(transform_y_off)
+
+    return transformed_x_off, transformed_y_off, e1, e2
 
 
 class SupernovaeCatalog(object):
