@@ -11,8 +11,9 @@ from scipy import interpolate
 from scipy.stats import norm, halfnorm
 import matplotlib.pyplot as plt
 from slsim.image_simulation import point_source_coordinate_properties
-from slsim.Util.param_util import random_ra_dec
+from slsim.Util.param_util import random_ra_dec, fits_append_table
 import h5py
+import os
 
 try:
     import lsst.geom as geom
@@ -349,6 +350,7 @@ def multiple_lens_injection_fast(
     num_cutout_per_patch=10,
     lens_cut=None,
     noise=True,
+    output_file=None
 ):
     """Injects random lenses from the lens population to multiple DC2 cutout images
     using lens_inejection_fast function. For this one needs to provide a butler to this
@@ -365,14 +367,15 @@ def multiple_lens_injection_fast(
     :param dec: dec for a cutout
     :param noise: poisson noise to be added to an image. If True, poisson noise will be
         added to the image based on exposure time.
+    :param output_file: path to the output FITS file where data will be saved
     :returns: An astropy table containing Injected lenses in r-band, DC2 cutout images
         in r-band, cutout images with injected lens in r, g , and i band for a given set
         of ra and dec
     """
     injected_images = []
+    first_table = not os.path.exists(output_file)
     for i in range(len(ra)):
-        injected_images.append(
-            lens_inejection_fast(
+        injected_image = lens_inejection_fast(
                 lens_pop,
                 num_pix,
                 mag_zero_point,
@@ -384,9 +387,18 @@ def multiple_lens_injection_fast(
                 lens_cut=lens_cut,
                 noise=noise,
             )
-        )
-    injected_image_catalog = vstack(injected_images)
-    return injected_image_catalog
+        if output_file is None:
+            injected_images.append(injected_image)
+        else:
+            if first_table:
+                injected_image.write(output_file, overwrite=True)
+                first_table = False
+            else:
+                fits_append_table(output_file, injected_image)
+    if len(injected_images) > 1:
+        injected_image_catalog = vstack(injected_images)
+        return injected_image_catalog
+    return None
 
 
 def add_object(
