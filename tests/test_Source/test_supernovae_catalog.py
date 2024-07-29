@@ -43,8 +43,8 @@ def test_supernovae_host_galaxy_offset():
         e1[i] = abs(e1[i])
         e2[i] = abs(e2[i])
 
-    assert x_within_mean_radius >= (1 / 3) * len(x_off)
-    assert y_within_mean_radius >= (1 / 3) * len(y_off)
+    assert x_within_mean_radius >= (2 / 3) * len(x_off)
+    assert y_within_mean_radius >= (2 / 3) * len(y_off)
     assert min(np.abs(e1)) > 0
     assert min(np.abs(e2)) > 0
     assert max(np.abs(e1)) < 1

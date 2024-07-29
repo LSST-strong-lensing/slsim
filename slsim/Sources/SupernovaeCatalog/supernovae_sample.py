@@ -8,7 +8,40 @@ from astropy import units
 from scipy import stats
 from slsim.Sources.galaxies import galaxy_projected_eccentricity
 from lenstronomy.Util.param_util import transform_e1e2_product_average
+from lenstronomy.Util.param_util import ellipticity2phi_q
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
+
+
+def elliptical_distortion_product_average(x, y, e1, e2, center_x, center_y):
+    """Maps the coordinates x, y with eccentricities e1, e2 into a new elliptical
+    coordinate system with same coordinate orientation
+
+    # TODO: Remove function after it is included in Lenstronomy
+
+    :param x: x-coordinate
+    :param y: y-coordinate
+    :param e1: eccentricity
+    :param e2: eccentricity
+    :param center_x: center of distortion
+    :param center_y: center of distortion
+
+    :return: distorted coordinates x', y'
+    """
+    x_, y_ = transform_e1e2_product_average(x, y, e1, e2, center_x, center_y)
+
+    # Rotate back
+    phi_g, q = ellipticity2phi_q(e1, e2)
+    cos_phi = np.cos(-phi_g)
+    sin_phi = np.sin(-phi_g)
+
+    x__ = cos_phi * x_ + sin_phi * y_
+    y__ = -sin_phi * x_ + cos_phi * y_
+
+    # Shift
+    x___ = x__ + center_x
+    y___ = y__ + center_y
+
+    return x___, y___
 
 
 def supernovae_host_galaxy_offset(host_galaxy_catalog):
@@ -16,9 +49,10 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
     based on observed data. (Wang et al. 2013)
 
     :param host_galaxy_catalog: catalog of host galaxies matched with supernovae (must
-        have 'angular_size' column)
+        have 'angular_size' and 'ellipticity' columns)
     :type host_galaxy_catalog: astropy Table
-    :return: ra_off [arcsec] and dec_off [arcsec] selected for each supernovae based on
+
+    :return: offsets x and y [arcsec] selected for each supernovae based on
         observed distribution; e1 and e2 projected eccentricities calculated for each
         host galaxy
     :return type: list; float
@@ -84,7 +118,7 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
         lenstronomy_e1.append(lens_e1)
         lenstronomy_e2.append(lens_e2)
 
-        transform_x_off, transform_y_off = transform_e1e2_product_average(
+        transform_x_off, transform_y_off = elliptical_distortion_product_average(
             x_off.value, y_off.value, lens_e1, lens_e2, 0, 0
         )
         transformed_x_off.append(transform_x_off)
@@ -153,6 +187,7 @@ class SupernovaeCatalog(object):
             galaxies or not. True or False.
         :param lightcurve: kwargs for the lightcurve, if lightcurve is True, it returns
             extracts lightcurve for each supernovae redshift.
+
         :return: Astropy Table of supernovae catalog containg redshift, lightcurves,
             ra_off, dec_off, and host galaxy properties. If host_galaxy is set to False,
             it returns catalog without host galaxy properties. Light curves are
