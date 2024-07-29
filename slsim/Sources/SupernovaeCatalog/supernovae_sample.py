@@ -14,7 +14,7 @@ from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 
 def elliptical_distortion_product_average(x, y, e1, e2, center_x, center_y):
     """Maps the coordinates x, y with eccentricities e1, e2 into a new elliptical
-    coordinate system with same coordinate orientation
+    coordinate system with same coordinate orientation.
 
     # TODO: Remove function after it is included in Lenstronomy
 
@@ -24,7 +24,6 @@ def elliptical_distortion_product_average(x, y, e1, e2, center_x, center_y):
     :param e2: eccentricity
     :param center_x: center of distortion
     :param center_y: center of distortion
-
     :return: distorted coordinates x', y'
     """
     x_, y_ = transform_e1e2_product_average(x, y, e1, e2, center_x, center_y)
@@ -51,10 +50,8 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
     :param host_galaxy_catalog: catalog of host galaxies matched with supernovae (must
         have 'angular_size' and 'ellipticity' columns)
     :type host_galaxy_catalog: astropy Table
-
-    :return: offsets x and y [arcsec] selected for each supernovae based on
-        observed distribution; e1 and e2 projected eccentricities calculated for each
-        host galaxy
+    :return: offsets x and y [arcsec] selected for each supernovae based on observed
+        distribution; e1 and e2 projected eccentricities calculated for each host galaxy
     :return type: list; float
     """
     # Select offset ratios based on observed offset distribution (Wang et al. 2013)
@@ -187,7 +184,6 @@ class SupernovaeCatalog(object):
             galaxies or not. True or False.
         :param lightcurve: kwargs for the lightcurve, if lightcurve is True, it returns
             extracts lightcurve for each supernovae redshift.
-
         :return: Astropy Table of supernovae catalog containg redshift, lightcurves,
             ra_off, dec_off, and host galaxy properties. If host_galaxy is set to False,
             it returns catalog without host galaxy properties. Light curves are
