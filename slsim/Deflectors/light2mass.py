@@ -234,6 +234,9 @@ def get_velocity_dispersion(
         # Use sigma_star and alpha values to calculate the stellar velocity dispersion sigma
         sigma = sigma_star * LbyLstar ** (1 / alpha)
 
+    else:
+        raise KeyError("scaling_relations: Invalid input.")
+
     # returns the calculated sigma
     # type: a 1D array of uncertainties.core.Variable
     ##   to extract the nomianl values and the uncertainities in separate arrays,
