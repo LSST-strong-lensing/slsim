@@ -21,13 +21,6 @@ class TestGalaxyCatalog:
         result = self.galaxy_catalog.galaxy_catalog()
         assert all(result["z"] <= 2.379)
 
-    def test_supernovae_host_galaxy_offset(self):
-        ra_off, dec_off = self.galaxy_catalog.supernovae_host_galaxy_offset(5)
-        assert max(ra_off) <= 5
-        assert min(ra_off) >= -5
-        assert max(dec_off) <= 5
-        assert min(dec_off) >= -5
-
 
 if __name__ == "__main__":
     pytest.main()

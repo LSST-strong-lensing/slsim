@@ -30,7 +30,7 @@ class SupernovaeHostMatch:
         - Sullivan et al. 2006)
 
         :return: catalog with supernovae redshifts and their corresponding host galaxies
-        :return type: dict
+        :return type: astropy Table
         """
         matched_catalog = Table(
             names=(
