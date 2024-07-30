@@ -753,8 +753,15 @@ def dp0_time_series_images_data(butler, center_coord, radius="0.1", band="i", si
 
 
 def opsim_time_series_images_data(
-        ra_list, dec_list, obs_strategy, MJD_min=60000, MJD_max=64000, size=101, moffat_beta=3.1,
-        readout_noise=10, delta_pix=0.2
+    ra_list,
+    dec_list,
+    obs_strategy,
+    MJD_min=60000,
+    MJD_max=64000,
+    size=101,
+    moffat_beta=3.1,
+    readout_noise=10,
+    delta_pix=0.2,
 ):
     """Creates time series data from opsim database.
 
@@ -788,7 +795,9 @@ def opsim_time_series_images_data(
         OpSimSurv = op.OpSimSurvey(opsim_path)
     except FileNotFoundError:
         raise FileNotFoundError(
-            "File not found: " + opsim_path + ". Input variable 'obs_strategy' should correspond to the name of an opsim database saved in the folder ../data/OpSim_database"
+            "File not found: "
+            + opsim_path
+            + ". Input variable 'obs_strategy' should correspond to the name of an opsim database saved in the folder ../data/OpSim_database"
         )
 
     # Collect observations that cover the coordinates in ra_list and dec_list
@@ -844,12 +853,16 @@ def opsim_time_series_images_data(
         psf_kernels = np.array(psf_kernels)
 
         # Calculate background noise
-        bkg_noise = data_util.bkg_noise(readout_noise, expo_time, sky_brightness, delta_pix, num_exposures=1)
+        bkg_noise = data_util.bkg_noise(
+            readout_noise, expo_time, sky_brightness, delta_pix, num_exposures=1
+        )
 
         # Calculate the zero point magnitude
         # Code from OpSimSummary/opsimsummary/simlib.py/add_simlibCols
         # need to work in nvariance in photon electrons
-        term1 = 2.0 * m5_depth - sky_brightness  # * pixArea   whata units is sky birghtness? counts or photo electrons?
+        term1 = (
+            2.0 * m5_depth - sky_brightness
+        )  # * pixArea   whata units is sky birghtness? counts or photo electrons?
         # per pixel or arcsec?
         term2 = -(m5_depth - sky_brightness)  # * pixArea
         area = (1.51 * psf_fwhm) ** 2.0  # area = 1 / int(psf^2)
@@ -859,7 +872,7 @@ def opsim_time_series_images_data(
         # is approximately equal to counts with total transmission
         zpt_approx = term1 + 2.5 * np.log10(arg)
         val = -0.4 * term2
-        tmp = 10.0 ** val
+        tmp = 10.0**val
         # Additional term to account for photons from the source, again assuming
         # that counts with system transmission approximately equal counts with total transmission.
         zpt_cor = 2.5 * np.log10(1.0 + 1.0 / (area * tmp))
@@ -891,7 +904,7 @@ def opsim_time_series_images_data(
 
 
 def opsim_variable_lens_injection(
-        lens_class, bands, num_pix, transform_pix2angle, exposure_data
+    lens_class, bands, num_pix, transform_pix2angle, exposure_data
 ):
     """Injects variable lens to the OpSim time series data (1 object).
 
@@ -900,20 +913,19 @@ def opsim_variable_lens_injection(
     :param num_pix: number of pixels per axis
     :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
         displacements
-    :param exposure_data: An astropy table of exposure data. One entry of table_list_data
-        generated from the opsim_time_series_images_data function. It must contain the rms of
-        background noise fluctuations (column name should be "bkg_noise"), psf kernel for
-        each exposure (column name should be "psf_kernel", these are pixel psf kernel
-        for each single exposure images in time series image), observation time
-        (column name should be "obs_time", these are observation time in days for each
-        single exposure images in time series images), exposure time (column name should
-        be "expo_time", these are exposure time for each single exposure images in time
-        series images), magnitude zero point (column name should be "zero_point", these
-        are zero point magnitudes for each single exposure images in time series image),
-        coordinates of the object (column name should be "calexp_center"), these are
-        the coordinates in (ra, dec), and the band in which the observation is taken
-        (column name should be "band").
-
+    :param exposure_data: An astropy table of exposure data. One entry of
+        table_list_data generated from the opsim_time_series_images_data function. It
+        must contain the rms of background noise fluctuations (column name should be
+        "bkg_noise"), psf kernel for each exposure (column name should be "psf_kernel",
+        these are pixel psf kernel for each single exposure images in time series
+        image), observation time (column name should be "obs_time", these are
+        observation time in days for each single exposure images in time series images),
+        exposure time (column name should be "expo_time", these are exposure time for
+        each single exposure images in time series images), magnitude zero point (column
+        name should be "zero_point", these are zero point magnitudes for each single
+        exposure images in time series image), coordinates of the object (column name
+        should be "calexp_center"), these are the coordinates in (ra, dec), and the band
+        in which the observation is taken (column name should be "band").
     :return: Astropy table of injected lenses and exposure information of dp0 data
     """
 
@@ -940,7 +952,7 @@ def opsim_variable_lens_injection(
             transform_pix2angle=transform_pix2angle,
             exposure_time=exposure_data_obs["expo_time"],
             t_obs=exposure_data_obs["obs_time"],
-            std_gaussian_noise=std_gaussian_noise
+            std_gaussian_noise=std_gaussian_noise,
         )
 
         final_image.append(lens_images)
@@ -949,7 +961,7 @@ def opsim_variable_lens_injection(
     final_image_col = Column(name="injected_lens", data=final_image)
 
     # Create a new Table with only the bands of interest
-    mask = np.isin(exposure_data['band'], bands)
+    mask = np.isin(exposure_data["band"], bands)
     exposure_data_new = exposure_data[mask]
     exposure_data_new.add_columns([lens_col, final_image_col])
     return exposure_data_new
