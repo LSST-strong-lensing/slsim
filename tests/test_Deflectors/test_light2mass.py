@@ -3,7 +3,7 @@ import numpy as np
 from slsim.Deflectors.light2mass import get_velocity_dispersion
 from astropy.cosmology import FlatLambdaCDM
 from slsim.Util.mag2errors import get_errors_Poisson
-
+import pytest
 
 def test_get_velocity_dispersion():
 
@@ -93,5 +93,30 @@ def test_get_velocity_dispersion():
     np.testing.assert_almost_equal(vel_disp_wl[0].nominal_value, 143, decimal=-1)
 
 
+def test_invalid_deflector_type():
+
+    with pytest.raises(KeyError, match="The module currently supports only elliptical galaxies."):
+        get_velocity_dispersion(deflector_type="galaxy-spiral",
+                                lsst_mags=np.array([17.636, 16.674, 16.204]).reshape(1, 3),
+                                lsst_errs=np.array([0.007, 0.005, 0.005]).reshape(1, 3),
+                                zz=np.array([0.08496]),
+                                cosmo=FlatLambdaCDM(H0=72, Om0=0.26),
+                                scaling_relation="spectroscopic")
+
+
+def test_invalid_scaling_relations():
+    
+    with pytest.raises(KeyError, match="Invalid input for scaling relations."):
+
+        get_velocity_dispersion(deflector_type="galaxy-elliptical",
+                                lsst_mags=np.array([17.636, 16.674, 16.204]).reshape(1, 3),
+                                lsst_errs=np.array([0.007, 0.005, 0.005]).reshape(1, 3),
+                                zz=np.array([0.08496]),
+                                cosmo=FlatLambdaCDM(H0=72, Om0=0.26),
+                                scaling_relation="xyz")
+
+
 if __name__ == "__main__":
     test_get_velocity_dispersion()
+    test_invalid_deflector_type()
+    test_invalid_scaling_relations()
