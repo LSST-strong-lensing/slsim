@@ -10,17 +10,19 @@ def test_get_velocity_dispersion():
     cosmo = FlatLambdaCDM(H0=72, Om0=0.26)
     deflector_type = "galaxy-elliptical"
     lsst_mags = np.array([17.636, 16.674, 16.204]).reshape(1, 3)  # g,,r,i mags
-    #lsst_errs = np.array([0.007, 0.005, 0.005]).reshape(1, 3)  # g,r,i errors, if known
-    
+    # lsst_errs = np.array([0.007, 0.005, 0.005]).reshape(1, 3)  # g,r,i errors, if known
+
     # extract errors (due to Poisson noise only) if the errors are not known
     zeropoint_g, exptime_g = 28.51, 15
     zeropoint_r, exptime_r = 28.36, 15
     zeropoint_i, exptime_i = 28.17, 15
-    lsst_errs = lsst_errs = np.array([
-        get_errors_Poisson(lsst_mags[:,0], zeropoint_g, exptime_g),
-        get_errors_Poisson(lsst_mags[:,1], zeropoint_r, exptime_r),
-        get_errors_Poisson(lsst_mags[:,2], zeropoint_i, exptime_i),
-    ]).T
+    lsst_errs = lsst_errs = np.array(
+        [
+            get_errors_Poisson(lsst_mags[:, 0], zeropoint_g, exptime_g),
+            get_errors_Poisson(lsst_mags[:, 1], zeropoint_r, exptime_r),
+            get_errors_Poisson(lsst_mags[:, 2], zeropoint_i, exptime_i),
+        ]
+    ).T
     redshifts = np.array([0.08496])  # redshift
 
     coefficients = [
