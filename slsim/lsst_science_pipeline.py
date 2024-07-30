@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 from slsim.image_simulation import point_source_coordinate_properties
 import lenstronomy.Util.util as util
 import lenstronomy.Util.kernel_util as kernel_util
+import lenstronomy.Util.data_util as data_util
 from slsim.Util.param_util import random_ra_dec
 import h5py
 
@@ -752,7 +753,8 @@ def dp0_time_series_images_data(butler, center_coord, radius="0.1", band="i", si
 
 
 def opsim_time_series_images_data(
-    ra_list, dec_list, delta_pix, size=101, moffat_beta=3.1
+        ra_list, dec_list, obs_strategy, MJD_min=60000, MJD_max=64000, size=101, moffat_beta=3.1,
+        readout_noise=10, delta_pix=0.2
 ):
     """Creates time series data from opsim database.
 
@@ -760,51 +762,46 @@ def opsim_time_series_images_data(
         observations for
     :param dec_list: a list of dec points (in degrees) from objects we want to collect
         observations for
-    :param delta_pix: pixel scale in arcseconds for the psf kernel
+    :param obs_strategy: version of observing strategy corresponding to opsim database.
+        for example "baseline_v3.0_10yrs" (string)
+    :param MJD_min: minimum MJD for the observations
+    :param MJD_max: maximum MJD for the observations
     :param size: cutout size of images (in pixels)
     :param moffat_beta: power index of the moffat psf kernel
+    :param readout_noise: noise added per readout
+    :param delta_pix: size of pixel in units arcseonds
     :return: a list of astropy tables containing observation information for each
         coordinate
     """
 
-    # Import opsimsummary
+    # Import OpSimSummaryV2
     try:
-        from opsimsummary import SynOpSim
+        import opsimsummaryv2 as op
     except ImportError:
         raise ImportError(
-            "Users need to have the right branch of opsimsummary installed (Issue#325/proposalTables)"
+            "Users need to have OpSimSummaryV2 installed (https://github.com/bastiencarreres/OpSimSummaryV2)"
         )
 
-    # Initialise opsimsummary with opsim database
+    # Initialise OpSimSummaryV2 with opsim database
     try:
-        opsim_path = "../data/OpSim_database/opsim.db"
-        synopsim = SynOpSim.fromOpSimDB(
-            opsim_path,
-            opsimversion="fbsv2",
-            usePointingTree=True,
-            use_proposal_table=False,
-            subset="unique_all",
-        )
+        opsim_path = "../data/OpSim_database/" + obs_strategy + ".db"
+        OpSimSurv = op.OpSimSurvey(opsim_path)
     except FileNotFoundError:
         raise FileNotFoundError(
-            "Users need to have an opsim database downloaded at ../data/OpSim_database/opsim.db"
+            "File not found: " + opsim_path + ". Input variable 'obs_strategy' should correspond to the name of an opsim database saved in the folder ../data/OpSim_database"
         )
 
     # Collect observations that cover the coordinates in ra_list and dec_list
-    gen = synopsim.pointingsEnclosing(
-        ra_list, dec_list, circRadius=0.0, pointingRadius=1.75, usePointingTree=True
-    )
+    gen = OpSimSurv.get_obs_from_coords(ra_list, dec_list, is_deg=True)
 
     table_data_list = []
 
     # Loop through all coordinates and compute the table_data
     for i in range(len(ra_list)):
 
-        radec_list = [(ra_list[i], dec_list[i])]
-
         # Collect the next observation sequence from the opsim generator
         seq = next(gen)
-        seq = seq.sort_values(by=["expMJD"])
+        seq = seq.sort_values(by=["observationStartMJD"])
 
         # Check if the coordinates are in the opsim LSST footprint
         opsim_ra = np.mean(seq["fieldRA"])
@@ -816,33 +813,53 @@ def opsim_time_series_images_data(
             )
             continue
 
-        # Get the observation times, exposure times, sky brightness, bandpass, and psf fwhm from opsim
-        obs_time = np.array(seq["expMJD"])
-        expo_time = np.array(seq["visitExposureTime"])
-        sky_brightness = np.array(seq["filtSkyBrightness"])
-        bandpass = np.array(seq["filter"])
-        psf_fwhm = np.array(seq["seeingFwhmGeom"])
-        m5_depth = np.array(seq["fiveSigmaDepth"])
+        # Get the relevant properties from opsim
+        obs_time = np.array(seq["observationStartMJD"])
+
+        # Only give the observations between MJD_min and MJD_max
+        mask = (obs_time > MJD_min) & (obs_time < MJD_max)
+        obs_time = obs_time[mask]
+
+        expo_time = np.array(seq["visitExposureTime"])[mask]
+        sky_brightness = np.array(seq["skyBrightness"])[mask]
+        bandpass = np.array(seq["filter"])[mask]
+        psf_fwhm = np.array(seq["seeingFwhmGeom"])[mask]
+        m5_depth = np.array(seq["fiveSigmaDepth"])[mask]
         # Question: use 'FWHMeff' or 'seeingFwhmGeom' for the psf?
 
-        # Create a Moffat psf kernel
-        psf_kernel = kernel_util.kernel_moffat(
-            num_pix=size, delta_pix=delta_pix, fwhm=psf_fwhm, moffat_beta=moffat_beta
-        )
-        psf_kernel = util.array2image(psf_kernel)
+        radec_list = [(ra_list[i], dec_list[i])] * len(obs_time)
+
+        # Create a Moffat psf kernel for each epoch
+
+        psf_kernels = []
+
+        for psf in psf_fwhm:
+            psf_kernel = kernel_util.kernel_moffat(
+                num_pix=size, delta_pix=delta_pix, fwhm=psf, moffat_beta=moffat_beta
+            )
+            psf_kernel = util.array2image(psf_kernel)
+
+            psf_kernels.append(psf_kernel)
+
+        psf_kernels = np.array(psf_kernels)
+
+        # Calculate background noise
+        bkg_noise = data_util.bkg_noise(readout_noise, expo_time, sky_brightness, delta_pix, num_exposures=1)
 
         # Calculate the zero point magnitude
         # Code from OpSimSummary/opsimsummary/simlib.py/add_simlibCols
-        term1 = 2.0 * m5_depth - sky_brightness  # * pixArea
+        # need to work in nvariance in photon electrons
+        term1 = 2.0 * m5_depth - sky_brightness  # * pixArea   whata units is sky birghtness? counts or photo electrons?
+        # per pixel or arcsec?
         term2 = -(m5_depth - sky_brightness)  # * pixArea
-        area = (1.51 * psf_fwhm) ** 2.0
+        area = (1.51 * psf_fwhm) ** 2.0  # area = 1 / int(psf^2)
         opsim_snr = 5.0
         arg = area * opsim_snr * opsim_snr
         # Background dominated limit assuming counts with system transmission only
         # is approximately equal to counts with total transmission
         zpt_approx = term1 + 2.5 * np.log10(arg)
         val = -0.4 * term2
-        tmp = 10.0**val
+        tmp = 10.0 ** val
         # Additional term to account for photons from the source, again assuming
         # that counts with system transmission approximately equal counts with total transmission.
         zpt_cor = 2.5 * np.log10(1.0 + 1.0 / (area * tmp))
@@ -850,8 +867,8 @@ def opsim_time_series_images_data(
 
         table_data = Table(
             [
-                sky_brightness,
-                psf_kernel,
+                bkg_noise,
+                psf_kernels,
                 obs_time,
                 expo_time,
                 zero_point_mag,
@@ -859,7 +876,7 @@ def opsim_time_series_images_data(
                 bandpass,
             ],
             names=(
-                "sky_brightness",
+                "bkg_noise",
                 "psf_kernel",
                 "obs_time",
                 "expo_time",
@@ -871,6 +888,71 @@ def opsim_time_series_images_data(
 
         table_data_list.append(table_data)
     return table_data_list
+
+
+def opsim_variable_lens_injection(
+        lens_class, bands, num_pix, transform_pix2angle, exposure_data
+):
+    """Injects variable lens to the OpSim time series data (1 object).
+
+    :param lens_class: Lens() object
+    :param bands: list of imaging bands of interest
+    :param num_pix: number of pixels per axis
+    :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
+        displacements
+    :param exposure_data: An astropy table of exposure data. One entry of table_list_data
+        generated from the opsim_time_series_images_data function. It must contain the rms of
+        background noise fluctuations (column name should be "bkg_noise"), psf kernel for
+        each exposure (column name should be "psf_kernel", these are pixel psf kernel
+        for each single exposure images in time series image), observation time
+        (column name should be "obs_time", these are observation time in days for each
+        single exposure images in time series images), exposure time (column name should
+        be "expo_time", these are exposure time for each single exposure images in time
+        series images), magnitude zero point (column name should be "zero_point", these
+        are zero point magnitudes for each single exposure images in time series image),
+        coordinates of the object (column name should be "calexp_center"), these are
+        the coordinates in (ra, dec), and the band in which the observation is taken
+        (column name should be "band").
+
+    :return: Astropy table of injected lenses and exposure information of dp0 data
+    """
+
+    final_image = []
+
+    for obs in range(len(exposure_data["obs_time"])):
+
+        exposure_data_obs = exposure_data[obs]
+
+        if exposure_data_obs["band"] not in bands:
+            continue
+
+        if "bkg_noise" in exposure_data_obs.keys():
+            std_gaussian_noise = exposure_data_obs["bkg_noise"]
+        else:
+            std_gaussian_noise = None
+
+        lens_images = lens_image(
+            lens_class,
+            band=exposure_data_obs["band"],
+            mag_zero_point=exposure_data_obs["zero_point"],
+            num_pix=num_pix,
+            psf_kernel=exposure_data_obs["psf_kernel"],
+            transform_pix2angle=transform_pix2angle,
+            exposure_time=exposure_data_obs["expo_time"],
+            t_obs=exposure_data_obs["obs_time"],
+            std_gaussian_noise=std_gaussian_noise
+        )
+
+        final_image.append(lens_images)
+
+    lens_col = Column(name="lens", data=final_image)
+    final_image_col = Column(name="injected_lens", data=final_image)
+
+    # Create a new Table with only the bands of interest
+    mask = np.isin(exposure_data['band'], bands)
+    exposure_data_new = exposure_data[mask]
+    exposure_data_new.add_columns([lens_col, final_image_col])
+    return exposure_data_new
 
 
 def variable_lens_injection(
