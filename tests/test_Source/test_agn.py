@@ -1,4 +1,4 @@
-from slsim.slsim.Sources.agn import Agn
+from slsim.Sources.agn import Agn
 from astropy import cosmology
 import pytest
 
