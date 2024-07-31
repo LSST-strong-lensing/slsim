@@ -1,4 +1,3 @@
-import numpy as np
 from astropy import cosmology
 from slsim.Sources.SourceVariability.accretion_disk_reprocessing import (
     AccretionDiskReprocessing,

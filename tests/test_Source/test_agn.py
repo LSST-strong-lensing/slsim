@@ -1,8 +1,5 @@
-import numpy as np
 from slsim.slsim.Sources.agn import Agn
 from astropy import cosmology
-from astropy import units as u
-from astropy import constants as const
 import pytest
 
 
