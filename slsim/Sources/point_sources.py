@@ -29,7 +29,9 @@ class PointSources(SourcePopBase):
         :type sky_area: `~astropy.units.Quantity`
         :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max. These are 
          the arguments that go into the deflector_cut() definition which is a general 
-         defination for performing given cuts in given catalog.
+         defination for performing given cuts in given catalog. For the supernovae 
+         sample, we can only apply redshift cuts because supernovae sample contains only
+         redshift in this stage.
         :type kwargs_cut: dict
         :param variability_model: keyword for the variability model to be used. This is
          a population argument, not the light curve parameter for the individual
