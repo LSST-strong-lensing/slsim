@@ -1,4 +1,4 @@
-from slsim.Sources.agn import Agn
+from slsim.slsim.Sources.agn import Agn
 from astropy import cosmology
 import pytest
 
@@ -31,8 +31,9 @@ def test_agn_init():
 
         Agn(i_band_mag, redshift, cosmo=cosmo, **less_params)
 
+    with pytest.raises(ValueError):
         unsupported_disk_kwargs = {
-            "accretion_disk": "MHD_disk",
+            "accretion_disk": "unsupported_disk",
             "black_hole_mass_exponent": 8.0,
             "black_hole_spin": 0.5,
             "inclination_angle": 0,
