@@ -715,7 +715,7 @@ def dp0_psf_kernels(pixel_coord, dp0_image):
 
 
 def dp0_time_series_images_data(butler, center_coord, radius="0.1", band="i", size=101):
-    """Creates time series data from dp0 data.
+    """Creates time series cutouts and associated metadata from dp0 data.
 
     :param butler: butler object
     :param center_coord: A coordinate point around which we need to create time series
@@ -765,8 +765,11 @@ def dp0_time_series_images_data(butler, center_coord, radius="0.1", band="i", si
 def multiple_dp0_time_series_images_data(
     butler, center_coords_list, radius="0.034", band="i", size=101, output_file=None
 ):
-    """Creates multiple time series data from dp0 data.
-
+    """Creates multiple time series cutouts and associated meta data from dp0 data.
+     Here, multiple means time series cutouts at multiple sky location. Using this 
+     function one can produce more than one time series cutout based on how many
+     variable lenses he/she want to inject.
+     
     :param butler: butler object
     :param center_coord: list of coordinate point around which we need to create time
         series images.
@@ -819,7 +822,7 @@ def variable_lens_injection(
         in days for each single exposure images in time series images)
     :return: Astropy table of injected lenses and exposure information of dp0 data
     """
-    ##the range of observation time of single exposure images might be outside of the
+    # the range of observation time of single exposure images might be outside of the
     # lightcurve time. So, we use random observation time from the lens class lightcurve
     # time to ensure simulation of reasonable images.
     observation_time = np.random.uniform(
