@@ -29,7 +29,7 @@ def pes_lens_instance():
             variability_model="sinusoidal",
             kwargs_variability={"amp", "freq"},
             cosmo=cosmo,
-            lightcurve_time=np.linspace(0, np.pi, 100)
+            lightcurve_time=np.linspace(0, np.pi, 100),
         )
         if pes_lens.validity_test():
             pes_lens = pes_lens
