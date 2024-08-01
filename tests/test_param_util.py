@@ -172,10 +172,11 @@ def test_ellipricity_slsim_to_lenstronomy():
     assert result[0] == 0.17
     assert result[1] == 0.05
 
+
 @pytest.fixture
 def temp_fits_file():
     # Create a temporary FITS file
-    temp_file = tempfile.NamedTemporaryFile(suffix='.fits', delete=False)
+    temp_file = tempfile.NamedTemporaryFile(suffix=".fits", delete=False)
     temp_file.close()
 
     # Create an initial empty FITS file
@@ -188,13 +189,12 @@ def temp_fits_file():
     # Cleanup: Remove the temporary FITS file
     os.remove(temp_file.name)
 
+
 @pytest.fixture
 def sample_table():
     # Create a sample Astropy Table
-    return Table(
-        {'col1': [1, 2, 3], 'col2': ['a', 'b', 'c']},
-        names=['col1', 'col2']
-    )
+    return Table({"col1": [1, 2, 3], "col2": ["a", "b", "c"]}, names=["col1", "col2"])
+
 
 def test_append_table(temp_fits_file, sample_table):
     # Append the sample table to the FITS file
@@ -208,8 +208,9 @@ def test_append_table(temp_fits_file, sample_table):
         # Verify the content of the appended table
         appended_table_data = hdul[1].data
         for i in range(len(sample_table)):
-            assert appended_table_data['col1'][i] == sample_table['col1'][i]
-            assert appended_table_data['col2'][i] == sample_table['col2'][i]
+            assert appended_table_data["col1"][i] == sample_table["col1"][i]
+            assert appended_table_data["col2"][i] == sample_table["col2"][i]
+
 
 if __name__ == "__main__":
     pytest.main()
