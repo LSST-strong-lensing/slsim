@@ -39,7 +39,7 @@ class PointSources(SourcePopBase):
          the individual point_source.
         :param light_profile: keyword for number of sersic profile to use in source
          light model. Always None for this class.
-        :param list_type: type of the format of the source catalog. It should be either 
+        :param list_type: type of the format of the source catalog. It should be either
          astropy_table or list of astropy table.
         """
         self.n = len(point_source_list)
