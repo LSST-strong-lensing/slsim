@@ -350,7 +350,7 @@ def multiple_lens_injection_fast(
     num_cutout_per_patch=10,
     lens_cut=None,
     noise=True,
-    output_file=None
+    output_file=None,
 ):
     """Injects random lenses from the lens population to multiple DC2 cutout images
     using lens_inejection_fast function. For this one needs to provide a butler to this
@@ -370,23 +370,23 @@ def multiple_lens_injection_fast(
     :param output_file: path to the output FITS file where data will be saved
     :returns: An astropy table containing Injected lenses in r-band, DC2 cutout images
         in r-band, cutout images with injected lens in r, g , and i band for a given set
-        of ra and dec. If output_file path is provided, it saves this astropy 
-        table in fits file with the given name.
+        of ra and dec. If output_file path is provided, it saves this astropy table in
+        fits file with the given name.
     """
     injected_images = []
     for i in range(len(ra)):
         injected_image = lens_inejection_fast(
-                lens_pop,
-                num_pix,
-                mag_zero_point,
-                transform_pix2angle,
-                butler,
-                ra[i],
-                dec[i],
-                num_cutout_per_patch,
-                lens_cut=lens_cut,
-                noise=noise,
-            )
+            lens_pop,
+            num_pix,
+            mag_zero_point,
+            transform_pix2angle,
+            butler,
+            ra[i],
+            dec[i],
+            num_cutout_per_patch,
+            lens_cut=lens_cut,
+            noise=noise,
+        )
         if output_file is None:
             injected_images.append(injected_image)
         else:
@@ -761,24 +761,27 @@ def dp0_time_series_images_data(butler, center_coord, radius="0.1", band="i", si
     )
     return table_data
 
-def multiple_dp0_time_series_images_data(butler, center_coords_list,
-                radius="0.034", band="i", size=101,output_file=None):
+
+def multiple_dp0_time_series_images_data(
+    butler, center_coords_list, radius="0.034", band="i", size=101, output_file=None
+):
     """Creates multiple time series data from dp0 data.
 
     :param butler: butler object
-    :param center_coord: list of coordinate point around which we need to create time series
-        images.
+    :param center_coord: list of coordinate point around which we need to create time
+        series images.
     :param radius: radius for query
     :param band: imaging band
     :param size: cutout size of images
-    :return: List of astropy table containg time series images and other information. If output_file 
-     path is provided, it saves list of these astropy table in fits file with the given name.
+    :return: List of astropy table containg time series images and other information. If
+        output_file path is provided, it saves list of these astropy table in fits file
+        with the given name.
     """
     expo_data_list = []
     for center_coords in center_coords_list:
-        time_series_data=dp0_time_series_images_data(
-                butler, center_coords, radius=radius, band=band, size=size
-            )
+        time_series_data = dp0_time_series_images_data(
+            butler, center_coords, radius=radius, band=band, size=size
+        )
         if output_file is None:
             expo_data_list.append(time_series_data)
         else:
@@ -791,6 +794,7 @@ def multiple_dp0_time_series_images_data(butler, center_coords_list,
     if len(time_series_data) > 1:
         return expo_data_list
     return None
+
 
 def variable_lens_injection(
     lens_class, band, num_pix, transform_pix2angle, exposure_data
@@ -816,14 +820,16 @@ def variable_lens_injection(
     :return: Astropy table of injected lenses and exposure information of dp0 data
     """
     ##the range of observation time of single exposure images might be outside of the
-    #lightcurve time. So, we use random observation time from the lens class lightcurve
+    # lightcurve time. So, we use random observation time from the lens class lightcurve
     # time to ensure simulation of reasonable images.
-    observation_time = np.random.uniform(min(lens_class.source.lightcurve_time),
-                                         max(lens_class.source.lightcurve_time),
-                                         size=len(exposure_data["obs_time"]))
+    observation_time = np.random.uniform(
+        min(lens_class.source.lightcurve_time),
+        max(lens_class.source.lightcurve_time),
+        size=len(exposure_data["obs_time"]),
+    )
     observation_time.sort()
     new_obs_time = Column(name="obs_time", data=observation_time)
-    exposure_data.replace_column('obs_time', new_obs_time)
+    exposure_data.replace_column("obs_time", new_obs_time)
     lens_images = lens_image_series(
         lens_class,
         band=band,
@@ -840,12 +846,12 @@ def variable_lens_injection(
         final_image.append(exposure_data["time_series_images"][i] + lens_images[i])
     lens_col = Column(name="lens", data=lens_images)
     final_image_col = Column(name="injected_lens", data=final_image)
-    if 'lens' in exposure_data.colnames:
-        exposure_data.replace_column('lens', lens_col)
+    if "lens" in exposure_data.colnames:
+        exposure_data.replace_column("lens", lens_col)
     else:
         exposure_data.add_column(lens_col)
-    if 'injected_lens' in exposure_data.colnames:
-        exposure_data.replace_column('injected_lens', final_image_col)
+    if "injected_lens" in exposure_data.colnames:
+        exposure_data.replace_column("injected_lens", final_image_col)
     else:
         exposure_data.add_column(final_image_col)
     return exposure_data
@@ -857,7 +863,7 @@ def multiple_variable_lens_injection(
     num_pix,
     transform_matrices_list,
     exposure_data_list,
-    output_file=None
+    output_file=None,
 ):
     """Injects multiple variable lenses to multiple dp0 time series data.
 
@@ -879,20 +885,20 @@ def multiple_variable_lens_injection(
         observation time in days for each single exposure images in time series images)
     :param output_file: path to the output FITS file where data will be saved
     :return: list of astropy table of injected lenses and exposure information of dp0
-        data for each time series lenses. If output_file path is provided, it saves 
-        list of these astropy table in fits file with the given name.
+        data for each time series lenses. If output_file path is provided, it saves list
+        of these astropy table in fits file with the given name.
     """
     final_images_catalog = []
     for lens_class, transform_matrices, expo_data in zip(
         lens_class_list, transform_matrices_list, exposure_data_list
     ):
         variable_injected_image = variable_lens_injection(
-                lens_class,
-                band=band,
-                num_pix=num_pix,
-                transform_pix2angle=transform_matrices,
-                exposure_data=expo_data,
-            )
+            lens_class,
+            band=band,
+            num_pix=num_pix,
+            transform_pix2angle=transform_matrices,
+            exposure_data=expo_data,
+        )
         if output_file is None:
             final_images_catalog.append(variable_injected_image)
         else:
@@ -905,6 +911,7 @@ def multiple_variable_lens_injection(
     if len(final_images_catalog) > 1:
         return final_images_catalog
     return None
+
 
 def measure_noise_level_in_RSP_coadd(RSP_coadd, N_pixels, plot=False):
     np.random.seed(1)

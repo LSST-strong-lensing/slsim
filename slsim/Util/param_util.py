@@ -276,13 +276,14 @@ def ellipticity_slsim_to_lenstronomy(e1_slsim, e2_slsim):
 
     return -e1_slsim, e2_slsim
 
+
 def fits_append_table(filename, table):
     """Append an Astropy Table to an existing FITS file.
 
     :param filename: Name of the FITS file to append to
     :param table: Astropy Table object to append
     """
-    hdulist = fits.open(filename, mode='append')
+    hdulist = fits.open(filename, mode="append")
     hdulist.append(fits.BinTableHDU(table))
     hdulist.writeto(filename, overwrite=True)
     hdulist.close()
