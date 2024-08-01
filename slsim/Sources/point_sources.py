@@ -27,8 +27,8 @@ class PointSources(SourcePopBase):
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
         :type sky_area: `~astropy.units.Quantity`
-        :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max. These are 
-         the arguments that go into the deflector_cut() definition which is a general 
+        :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max. These are
+         the arguments that go into the deflector_cut() definition which is a general
          defination for performing given cuts in given catalog.
         :type kwargs_cut: dict
         :param variability_model: keyword for the variability model to be used. This is
