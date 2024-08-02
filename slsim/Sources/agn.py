@@ -3,6 +3,7 @@ from slsim.Sources.SourceVariability.accretion_disk_reprocessing import (
     AccretionDiskReprocessing,
 )
 from speclite.filters import load_filters
+from numpy import random
 
 
 class Agn:
@@ -43,7 +44,6 @@ class Agn:
             "black_hole_spin",
             "inclination_angle",
             "r_out",
-            "r_resolution",
             "eddington_ratio",
         ]
         for kwarg in thin_disk_params:
@@ -84,3 +84,64 @@ class Agn:
                 )
             )
         return magnitudes
+
+# Include functionality to change the bounds selected from
+agn_bounds_dict = {
+    'black_hole_mass_exponent_bounds' : [6.0, 11.0],
+    'black_hole_spin_bounds' : [-0.999, 0.999],
+    'inclination_angle_bounds' : [0, 90],
+    'r_out_bounds' : [1000, 1000],
+    'eddington_ratio_bounds' : [0.01, 0.3],
+    'supported_disk_models' : ['thin_disk']
+}
+
+def RandomAgn(
+    i_band_mag,
+    redshift,
+    cosmo=cosmology.FlatLambdaCDM(H0=70, Om0=0.3),
+    seed=None,
+    **kwargs_agn_model
+):
+    """Generate a random agn. Does not do any special parameter weighting for now,
+    but this can be implimented later.
+    :param i_band_mag: magnitude of the AGN in the i band
+    :param redshift: redshift of the AGN
+    :param cosmo: Astropy cosmology to use
+    :param kwargs_agn_model: Dictionary containing any fixed agn parameters. This will populate
+        random agn parameters for keywords not given.
+    """
+    if seed:
+        random.seed(seed)
+        
+    required_agn_kwargs = [
+        "black_hole_mass_exponent",
+        "black_hole_spin",
+        "inclination_angle",
+        "r_out",
+        "eddington_ratio",
+    ]
+    for kwarg in required_agn_kwargs:
+        if kwarg not in kwargs_agn_model:
+            kwargs_agn_model[kwarg] = random.uniform(
+                low = agn_bounds_dict[kwarg+"_bounds"][0],
+                high = agn_bounds_dict[kwarg+"_bounds"][1]
+            )
+    if 'accretion_disk' not in kwargs_agn_model.keys():
+        kwargs_agn_model['accretion_disk'] = None
+    if kwargs_agn_model['accretion_disk'] not in agn_bounds_dict['supported_disk_models']:
+        random_disk_type = random.uniform(
+            low = 0,
+            high = len(agn_bounds_dict['supported_disk_models'])
+        )
+        kwargs_agn_model['accretion_disk'] = agn_bounds_dict['supported_disk_models'][int(random_disk_type)]
+
+    new_agn = Agn(
+        i_band_mag,
+        redshift,
+        cosmo=cosmo,
+        **kwargs_agn_model,
+    )
+    return new_agn
+                
+
+
