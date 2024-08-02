@@ -8,7 +8,7 @@ import pytest
 def test_get_velocity_dispersion():
 
     cosmo = FlatLambdaCDM(H0=72, Om0=0.26)
-    deflector_type = "galaxy-elliptical"
+    deflector_type = "elliptical"
     lsst_mags = np.array([17.636, 16.674, 16.204]).reshape(1, 3)  # g,,r,i mags
     # lsst_errs = np.array([0.007, 0.005, 0.005]).reshape(1, 3)  # g,r,i errors, if known
 
@@ -46,7 +46,7 @@ def test_get_velocity_dispersion():
         deflector_type,
         lsst_mags,
         lsst_errs,
-        zz=redshifts,
+        redshift=redshifts,
         cosmo=cosmo,
         bands=["g", "r", "i"],
         c1=coefficients[0],
@@ -73,7 +73,7 @@ def test_get_velocity_dispersion():
         deflector_type,
         lsst_mags,
         lsst_errs,
-        zz=redshifts,
+        redshift=redshifts,
         cosmo=cosmo,
         bands=["g", "r", "i"],
         c1=coefficients[0],
@@ -98,10 +98,10 @@ def test_get_velocity_dispersion():
 def test_invalid_deflector_type():
 
     with pytest.raises(KeyError, match="The module currently supports only elliptical galaxies."):
-        get_velocity_dispersion(deflector_type="galaxy-spiral",
+        get_velocity_dispersion(deflector_type="spiral",
                                 lsst_mags=np.array([17.636, 16.674, 16.204]).reshape(1, 3),
                                 lsst_errs=np.array([0.007, 0.005, 0.005]).reshape(1, 3),
-                                zz=np.array([0.08496]),
+                                redshift=np.array([0.08496]),
                                 cosmo=FlatLambdaCDM(H0=72, Om0=0.26),
                                 scaling_relation="spectroscopic")
 
@@ -110,10 +110,10 @@ def test_invalid_scaling_relations():
     
     with pytest.raises(KeyError, match="Invalid input for scaling relations."):
 
-        get_velocity_dispersion(deflector_type="galaxy-elliptical",
+        get_velocity_dispersion(deflector_type="elliptical",
                                 lsst_mags=np.array([17.636, 16.674, 16.204]).reshape(1, 3),
                                 lsst_errs=np.array([0.007, 0.005, 0.005]).reshape(1, 3),
-                                zz=np.array([0.08496]),
+                                redshift=np.array([0.08496]),
                                 cosmo=FlatLambdaCDM(H0=72, Om0=0.26),
                                 scaling_relation="xyz")
 
