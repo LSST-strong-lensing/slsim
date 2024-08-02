@@ -135,7 +135,7 @@ def get_velocity_dispersion(
             responses=sdss_responses,
             responses_out=sdss_responses,
             band_shift=0.0,
-            redshift_range = [0,2]
+            redshift_range=[0, 2],
         )
 
         # Apply the K-correction on the SDSS magnitudes
@@ -158,8 +158,6 @@ def get_velocity_dispersion(
         # Convert the apparent B-band magnitude to the absolute B-band magnitude using the redshift and cosmology defined
         # Note that the 25 here comes since Dlum is in Mpc
         MabsB = mag_B - 5.0 * np.log10(Dlum) - 25.0
-
-
         """
         Now using the data from DEEP2 and COMBO-17 surveys, Bell et 2004 found that
         the B-band luminosity function evolves such that characteristic magnitude MBstar
@@ -178,7 +176,6 @@ def get_velocity_dispersion(
 
         # Calculate L/L* using the magnitude-luminosity relation
         LbyLstar = 10.0 ** (-0.4 * (MabsB - MBstar))
-
         """
         Now use the L-sigma relation for the elliptical galaxies i.e., the Faber
         Jackson relation, sigma/sigma_star = (L/Lstar)**(1/alpha) and taking the sigma*
@@ -199,7 +196,7 @@ def get_velocity_dispersion(
             responses=sdss_responses,
             responses_out=sdss_responses,
             band_shift=0.1,
-            redshift_range = [0,2]
+            redshift_range=[0, 2],
         )
 
         # Apply the K-correction on the SDSS magnitudes
@@ -212,7 +209,6 @@ def get_velocity_dispersion(
 
         # Convert the apparent r-band magnitudes to the absolute r
         Mabsr = mrSDSS - 5.0 * np.log10(Dlum) - 25.0
-
         """
         We assume the same assumption here (from Bell et al 2004) for decline of
         characteristic magnitude Mrstar for r'-band,
@@ -234,7 +230,6 @@ def get_velocity_dispersion(
 
         # Calculate L/L* using the magnitude-luminosity relation
         LbyLstar = 10.0 ** (-0.4 * (Mabsr - Mrstar))
-        
         """
         Now use the L-sigma relation and taking the sigma_star and alpha value from
         Parker et al 2007, derived using weak-lensing measurements, calculate the the
@@ -253,7 +248,6 @@ def get_velocity_dispersion(
 
     else:
         raise KeyError("Invalid input for scaling relations.")
-
 
     # returns the calculated sigma
     # type: a 1D array of uncertainties.core.Variable
