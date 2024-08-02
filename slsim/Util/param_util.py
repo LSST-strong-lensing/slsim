@@ -288,7 +288,6 @@ def elliptical_distortion_product_average(x, y, e1, e2, center_x, center_y):
     :param e2: eccentricity
     :param center_x: center of distortion
     :param center_y: center of distortion
-
     :return: distorted coordinates x', y'
     """
     x_, y_ = transform_e1e2_product_average(x, y, e1, e2, center_x, center_y)
