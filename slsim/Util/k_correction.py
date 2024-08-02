@@ -15,6 +15,7 @@ def kcorr_sdss(
     responses=["sdss_u0", "sdss_g0", "sdss_r0", "sdss_i0", "sdss_z0"],
     responses_out=["sdss_u0", "sdss_g0", "sdss_r0", "sdss_i0", "sdss_z0"],
     band_shift=0.0,
+    redshift_range = [0,2]
 ):
     """Computes the astronomical K correction for galaxies on the SDSS broadband filters
     using the kcorrect module based on Blanton and Roweis 2007.
@@ -26,7 +27,7 @@ def kcorr_sdss(
             If your magnitude is m1 and associated error is e1,
             uncertainties.core.Variable should be : ufloat(m1,e1).
 
-    redshift:   an array of the redshifts of the targets
+    redshift:   an array of the redshifts of the deflectors
     type:       a 1D array fo floats.
 
     responses: the sdss bands for which the magnitude is provided
@@ -54,7 +55,7 @@ def kcorr_sdss(
     b0 = all_b0[indices]
 
     kc = kcorrect.kcorrect.Kcorrect(
-        responses=responses, responses_out=responses_out, redshift_range=[0, 2]
+        responses=responses, responses_out=responses_out, redshift_range=redshift_range
     )
 
     # convert the magnitudes and errors to maggies and inverse_maggies
