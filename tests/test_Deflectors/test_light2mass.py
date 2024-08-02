@@ -121,7 +121,7 @@ def test_invalid_scaling_relations():
             lsst_errs=np.array([0.007, 0.005, 0.005]).reshape(1, 3),
             redshift=np.array([0.08496]),
             cosmo=FlatLambdaCDM(H0=72, Om0=0.26),
-            scaling_relation="xyz",
+            scaling_relation="something else",
         )
 
 
