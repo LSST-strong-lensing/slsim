@@ -18,6 +18,7 @@ from slsim.Util.astro_util import (
     calculate_geometric_contribution_to_lamppost_model,
     calculate_dt_dlx,
     calculate_mean_time_lag,
+    calculate_accretion_disk_emission,
     calculate_accretion_disk_response_function,
     define_bending_power_law_psd,
     define_frequencies,
@@ -25,11 +26,14 @@ from slsim.Util.astro_util import (
     generate_signal,
     generate_signal_from_bending_power_law,
     generate_signal_from_generic_psd,
+    downsample_passband,
+    bring_passband_to_source_plane,
+    convert_passband_to_nm,
 )
 
 
 def test_spin_to_isco():
-    # Check all special cases of
+    # Check all special cases of:
     # spin = 0, the Schwarzschild black hole
     # spin = 1, maximum prograde Kerr black hole
     # spin = -1, maximum retrograde Kerr black hole
@@ -252,6 +256,50 @@ def test_calculate_mean_time_lag():
     assert calculate_mean_time_lag(response_function) == expected_value
 
 
+def test_calculate_accretion_disk_emission():
+    # define some simple accretion disk parameters
+    r_out = 100
+    r_resolution = 100
+    inclination_angle = 10
+    rest_frame_wavelength_in_nm = 400
+    black_hole_mass_exponent = 7.0
+    black_hole_spin = 0.7
+    eddington_ratio = 0.05
+
+    emission_1 = calculate_accretion_disk_emission(
+        r_out,
+        r_resolution,
+        inclination_angle,
+        rest_frame_wavelength_in_nm,
+        black_hole_mass_exponent,
+        black_hole_spin,
+        eddington_ratio,
+    )
+    emission_2 = calculate_accretion_disk_emission(
+        r_out,
+        r_resolution,
+        inclination_angle,
+        rest_frame_wavelength_in_nm,
+        black_hole_mass_exponent,
+        black_hole_spin,
+        eddington_ratio * 2,
+    )
+    emission_3 = calculate_accretion_disk_emission(
+        r_out * 2,
+        r_resolution * 2,
+        inclination_angle,
+        rest_frame_wavelength_in_nm,
+        black_hole_mass_exponent,
+        black_hole_spin,
+        eddington_ratio,
+    )
+
+    # assert that higher eddington ratio = more emission
+    assert emission_2 > emission_1
+    # assert that larger accretion disk = more emission
+    assert emission_3 > emission_1
+
+
 def test_calculate_accretion_disk_response_function():
     # Test that manual construction of response function with previously
     # tested functions works exactly the same as this function
@@ -318,7 +366,7 @@ def test_calculate_accretion_disk_response_function():
     peak_response_inclined = np.argmax(response_function)
     assert peak_response_inclined < peak_response_face_on
 
-    # Test that inclination does not change the mean response when H_{L_x} = 0
+    # Test that inclination does not change the mean response when H_{Lx} = 0
     # Note I add 0.5 within the function to avoid singularities when the corona
     # is placed directly on the disk. However there is no contribution with the dark ISCO.
     corona_height = -0.5
@@ -589,3 +637,94 @@ def test_generate_signal_from_generic_psd():
     # Note that smooth signals will deviate much further from the mean
     # than extremely noisy signals
     assert noisy_signal.var() < smooth_signal.var()
+
+
+def test_downsample_passband():
+    delta_wavelength = 10
+    # Test errors
+    with pytest.raises(ValueError):
+        downsample_passband("yellow", delta_wavelength)
+        downsample_passband((32, 12), delta_wavelength)
+    with pytest.raises(ValueError):
+        downsample_passband((1), delta_wavelength)
+    passband_wavelengths = np.linspace(100, 200, 50)
+    passband_throughputs = np.linspace(0, 1, 50) * np.linspace(1, 0, 50)
+    passband = [passband_wavelengths, passband_throughputs]
+    new_passband_0 = downsample_passband(passband, delta_wavelength)
+    assert len(new_passband_0[0] == 10)
+    # Test unit conversion
+    speclite_filter = "lsst2016-u"
+    new_passband_1 = downsample_passband(
+        speclite_filter, delta_wavelength, wavelength_unit_output=u.nm
+    )
+    # new_passband_2 should be ~10 times in length
+    new_passband_2 = downsample_passband(
+        speclite_filter, delta_wavelength, wavelength_unit_output=u.angstrom
+    )
+    assert len(new_passband_1[0]) / len(new_passband_2[0]) < 1
+    # Test erroneous input wavelength
+    # This should auto-adjust u.nm to u.angstrom
+    new_passband_3 = downsample_passband(
+        speclite_filter, delta_wavelength, wavelength_unit_input=u.nm
+    )
+    assert len(new_passband_3[0]) == len(new_passband_2[0])
+    # Test that there is no change in throughput values (besides rounding)
+    tophat_throughput = np.ones(len(passband_wavelengths))
+    tophat_passband = [passband_wavelengths, tophat_throughput]
+    new_passband_4 = downsample_passband(tophat_passband, delta_wavelength)
+    new_passband_5 = downsample_passband(
+        tophat_passband,
+        delta_wavelength,
+        wavelength_unit_input=u.nm,
+        wavelength_unit_output=u.mm,
+    )
+    assert all(new_passband_4[1] == 1)
+    assert all(new_passband_5[1] == 1)
+
+
+def test_bring_passband_to_source_plane():
+    # Test errors
+    with pytest.raises(ValueError):
+        bring_passband_to_source_plane("yellow", 10)
+        bring_passband_to_source_plane((32, 12), 4)
+    with pytest.raises(ValueError):
+        bring_passband_to_source_plane(1, 1)
+    # Test function
+    speclite_filter = "lsst2016-z"
+    redshift_zero = 0
+    zero_redshift_passband = bring_passband_to_source_plane(
+        speclite_filter, redshift_zero
+    )
+    redshift_one = 1
+    one_redshift_passband = bring_passband_to_source_plane(
+        speclite_filter, redshift_one
+    )
+    assert all(one_redshift_passband[0] == zero_redshift_passband[0] / 2)
+    assert all(one_redshift_passband[1] == zero_redshift_passband[1])
+    test_passband = [[100, 200], [0.8, 1.0]]
+    redshifted_test_passband = bring_passband_to_source_plane(
+        test_passband, redshift_one
+    )
+    assert all(redshifted_test_passband[0] == np.asarray([50, 100]))
+
+
+def test_convert_passband_to_nm():
+    # Test errors
+    with pytest.raises(ValueError):
+        convert_passband_to_nm("yellow", 10)
+        convert_passband_to_nm((32, 12), u.m)
+    with pytest.raises(ValueError):
+        convert_passband_to_nm(1)
+    # Test function
+    speclite_filter = "wise2010-W1"
+    orig_filter = bring_passband_to_source_plane(speclite_filter, 0)
+    filter_in_nm = convert_passband_to_nm(speclite_filter)
+    convert_passband_to_nm(speclite_filter, wavelength_unit_input=u.m)
+    npt.assert_almost_equal(orig_filter[0] / 10, filter_in_nm[0])
+    new_bandpass = [np.asarray([100, 150, 200]), np.asarray([0.5, 1.0, 0.5])]
+    wavelength_units = u.m
+    new_bandpass_in_nm = convert_passband_to_nm(
+        new_bandpass, wavelength_unit_input=wavelength_units
+    )
+    npt.assert_almost_equal(new_bandpass[0] * u.m.to(u.nm), new_bandpass_in_nm[0])
+    npt.assert_almost_equal(new_bandpass[1], new_bandpass_in_nm[1])

@@ -27,6 +27,7 @@ def vel_disp_composite_model(r, m_star, rs_star, m_halo, c_halo, cosmo, z_lens):
     :param z_lens: redshift of the deflector
     :return: velocity dispersion [km/s]
     """
+
     kwargs_model = {
         "mass_profile_list": ["HERNQUIST", "NFW"],
         "light_profile_list": ["HERNQUIST"],

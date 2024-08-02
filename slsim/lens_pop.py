@@ -239,6 +239,7 @@ class LensPop(LensedPopulationBase):
                 quasar_source,
                 cosmo=cosmo,
                 sky_area=self.source_sky_area,
+                kwargs_cut=kwargs_source_cut,
                 variability_model=variability_model,
                 kwargs_variability_model=kwargs_variability,
                 light_profile=source_light_profile,
@@ -272,9 +273,6 @@ class LensPop(LensedPopulationBase):
             )
             from slsim.Sources.point_sources import PointSources
 
-            # currently, we are using precomputed supernovae catlog. Future plan is to
-            # develop a supernovae class inside the slsim and them here to generate
-            # supernovae light curves.
             self.path = os.path.dirname(__file__)
             if catalog_type == "scotch":
                 if catalog_path is not None:
@@ -343,13 +341,14 @@ class LensPop(LensedPopulationBase):
                         supernovae_sample,
                         cosmo=cosmo,
                         sky_area=self.source_sky_area,
+                        kwargs_cut=kwargs_source_cut,
                         variability_model=variability_model,
                         kwargs_variability_model=kwargs_variability,
                         light_profile=source_light_profile,
                     )
                 else:
                     supernovae_sample = supernovae_catalog_class.supernovae_catalog(
-                        lightcurve=False
+                        host_galaxy=True, lightcurve=False
                     )
                     self._sources = PointPlusExtendedSources(
                         supernovae_sample,

@@ -10,9 +10,8 @@ Contents:
    installation
    contributing
    onboarding
-   usage
+   tutorial
    citation
    modules
    authors
    history
-
