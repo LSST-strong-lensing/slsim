@@ -752,8 +752,17 @@ def dp0_time_series_images_data(butler, center_coord, radius="0.1", band="i", si
     return table_data
 
 
-def opsim_time_series_images_data(ra_list, dec_list, obs_strategy, MJD_min=60000, MJD_max=64000, size=101, moffat_beta=3.1,
-        readout_noise=10, delta_pix=0.2, print_warning=True
+def opsim_time_series_images_data(
+    ra_list,
+    dec_list,
+    obs_strategy,
+    MJD_min=60000,
+    MJD_max=64000,
+    size=101,
+    moffat_beta=3.1,
+    readout_noise=10,
+    delta_pix=0.2,
+    print_warning=True,
 ):
     """Creates time series data from opsim database.
 
@@ -769,7 +778,8 @@ def opsim_time_series_images_data(ra_list, dec_list, obs_strategy, MJD_min=60000
     :param moffat_beta: power index of the moffat psf kernel
     :param readout_noise: noise added per readout
     :param delta_pix: size of pixel in units arcseonds
-    :param print_warning: if True, prints a warning of coordinates outside of the LSST footprint
+    :param print_warning: if True, prints a warning of coordinates outside of the LSST
+        footprint
     :return: a list of astropy tables containing observation information for each
         coordinate
     """
