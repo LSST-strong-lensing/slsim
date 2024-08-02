@@ -15,7 +15,7 @@ def kcorr_sdss(
     responses=["sdss_u0", "sdss_g0", "sdss_r0", "sdss_i0", "sdss_z0"],
     responses_out=["sdss_u0", "sdss_g0", "sdss_r0", "sdss_i0", "sdss_z0"],
     band_shift=0.0,
-    redshift_range = [0,2]
+    redshift_range=[0, 2],
 ):
     """Computes the astronomical K correction for galaxies on the SDSS broadband filters
     using the kcorrect module based on Blanton and Roweis 2007.
