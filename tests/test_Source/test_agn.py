@@ -1,7 +1,4 @@
-from slsim.Sources.agn import (
-    Agn,
-    RandomAgn
-)
+from slsim.Sources.agn import Agn, RandomAgn
 from astropy import cosmology
 import pytest
 
@@ -63,34 +60,27 @@ def test_mean_mags():
 
 
 def test_random_agn():
-    
+
     random_agn_1 = RandomAgn(
         i_band_mag,
         redshift,
         seed=1,
     )
-    
+
     # Make sure the returned AGN has expected method
-    lsst_mags_1 = random_agn_1.get_mean_mags('lsst')
+    lsst_mags_1 = random_agn_1.get_mean_mags("lsst")
 
     partial_kwargs = {
         "black_hole_mass_exponent": 7.5,
         "eddington_ratio": 0.1,
     }
 
-    random_agn_2 = RandomAgn(
-        i_band_mag,
-        redshift,
-        seed=2,
-        **partial_kwargs
-    )
-    lsst_mags_2 = random_agn_2.get_mean_mags('lsst')
+    random_agn_2 = RandomAgn(i_band_mag, redshift, seed=2, **partial_kwargs)
+    lsst_mags_2 = random_agn_2.get_mean_mags("lsst")
 
     # Make sure the returned mean mags are different (except for i band)
     assert lsst_mags_1[3] == lsst_mags_2[3]
     for jj in range(3):
         assert lsst_mags_1[jj] != lsst_mags_2[jj]
     for jj in range(2):
-        assert lsst_mags_1[jj+4] != lsst_mags_2[jj+4]
-
-    
+        assert lsst_mags_1[jj + 4] != lsst_mags_2[jj + 4]
