@@ -5,6 +5,7 @@ from uncertainties import unumpy
 from astropy.modeling.models import Linear1D
 from slsim.Util.k_correction import kcorr_sdss
 from astropy.cosmology import FlatLambdaCDM
+
 """
 This module provides function to calculate the central stellar velocity dispersion of the deflector 
 (elliptical galaxies) using LSST broadband magnitudes and the redshift. It assumes the evolution of 
@@ -123,8 +124,10 @@ def get_velocity_dispersion(
         + (c9 * (lsst["r"] - lsst["i"]) ** 2)
     )
 
-    # Find out the K-correction factor using the kcorrect module by Blanton
+
+
     if scaling_relation == "spectroscopic":
+        # Find out the K-correction factor using the kcorrect module by Blanton
         # k-correct upto redshift z=0 only
         k_corrections = kcorr_sdss(
             np.array([mgSDSS, mrSDSS, miSDSS]),
@@ -186,6 +189,7 @@ def get_velocity_dispersion(
 
         # Use sigma_star and alpha values to calculate the stellar velocity dispersion sigma
         sigma = sigma_star * LbyLstar ** (1 / alpha)
+
 
     elif scaling_relation == "weak-lensing":
         # k-correct upto redshift z=0.1, since the scaling relations used are at z=0.1
