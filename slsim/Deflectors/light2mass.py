@@ -22,7 +22,7 @@ def get_velocity_dispersion(
     lsst_mags,
     lsst_errs,
     redshift,
-    cosmo=FlatLambdaCDM(H0=72, Om0=0.26),
+    cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
     bands=["g", "r", "i"],
     c1=0.01011,
     c2=0.01920,
@@ -125,37 +125,51 @@ def get_velocity_dispersion(
     )
 
     if scaling_relation == "spectroscopic":
-        # Find out the K-correction factor using the kcorrect module by Blanton
-        # k-correct upto redshift z=0 only
-        k_corrections = kcorr_sdss(
-            np.array([mgSDSS, mrSDSS, miSDSS]),
-            redshift,
-            responses=sdss_responses,
-            responses_out=sdss_responses,
-            band_shift=0.0,
-            redshift_range=[0, 2],
-        )
+        # for k-correction upto redshift z=0 only
+        band_shift = 0.0
 
-        # Apply the K-correction on the SDSS magnitudes
-        mgSDSS = mgSDSS - k_corrections[:, 0]
-        mrSDSS = mrSDSS - k_corrections[:, 1]
-        miSDSS = miSDSS - k_corrections[:, 2]
+    elif scaling_relation=='weak-lensing':
+        # for k-correction upto redshift z=0.1
+        # since the scaling relations used are at z=0.1
+        band_shift = 0.1        
 
-        ## Note: It will be better if we apply the K-correction directly on the LSST magnitudes,
-        ## but no such relation is known to me right now.
+    else:
+        raise KeyError("Invalid input for scaling relations.")
+
+
+    # Find out the K-correction factor using the kcorrect module by Blanton
+    k_corrections = kcorr_sdss(
+        np.array([mgSDSS, mrSDSS, miSDSS]),
+        redshift,
+        responses=sdss_responses,
+        responses_out=sdss_responses,
+        band_shift=band_shift,
+        redshift_range=[0, 2],
+    )
+
+    # Apply the K-correction on the SDSS magnitudes
+    mgSDSS = mgSDSS - k_corrections[:, 0]
+    mrSDSS = mrSDSS - k_corrections[:, 1]
+    miSDSS = miSDSS - k_corrections[:, 2]
+
+    ## Note: It will be better if we apply the K-correction directly on the LSST magnitudes,
+    ## but no such relation is known to me right now.
+
+    # calculates the distance luminosity using the redshift and the cosmology
+    Dlum = (cosmo.luminosity_distance(redshift) * cosmo.H(0) / 100).value
+
+
+    if scaling_relation == "spectroscopic":
 
         # Use the SDSS g-band and r-band magnitudes to get the B-band apparent magnitude of the galaxy using the relation
         # given in equation A2, Appendix, Bell et al 2004 for red galaxies. This is required only for using the relations
         # based on spectroscopic measurements.
-
         mag_B = mgSDSS + 0.155 + 0.370 * (mgSDSS - mrSDSS)
-
-        # calculates the distance luminosity using the redshift and the cosmology
-        Dlum = (cosmo.luminosity_distance(redshift) * cosmo.H(0) / 100).value
 
         # Convert the apparent B-band magnitude to the absolute B-band magnitude using the redshift and cosmology defined
         # Note that the 25 here comes since Dlum is in Mpc
         MabsB = mag_B - 5.0 * np.log10(Dlum) - 25.0
+
         """Now using the data from DEEP2 and COMBO-17 surveys, Bell et 2004 found that
         the B-band luminosity function evolves such that characteristic magnitude MBstar
         decline by 1.5 magnitudes from z=0.0 to z=1.0. We use the same assumption here;
@@ -183,39 +197,24 @@ def get_velocity_dispersion(
         sigma = sigma_star * LbyLstar ** (1 / alpha)
 
     elif scaling_relation == "weak-lensing":
-        # k-correct upto redshift z=0.1, since the scaling relations used are at z=0.1
-        k_corrections = kcorr_sdss(
-            np.array([mgSDSS, mrSDSS, miSDSS]),
-            redshift,
-            responses=sdss_responses,
-            responses_out=sdss_responses,
-            band_shift=0.1,
-            redshift_range=[0, 2],
-        )
-
-        # Apply the K-correction on the SDSS magnitudes
-        mgSDSS = mgSDSS - k_corrections[:, 0]
-        mrSDSS = mrSDSS - k_corrections[:, 1]
-        miSDSS = miSDSS - k_corrections[:, 2]
-
-        # calculates the distance luminosity using the redshift and the cosmology
-        Dlum = (cosmo.luminosity_distance(redshift) * cosmo.H(0) / 100).value
 
         # Convert the apparent r-band magnitudes to the absolute r
         Mabsr = mrSDSS - 5.0 * np.log10(Dlum) - 25.0
-        """We assume the same assumption here (from Bell et al 2004) for decline of
-        characteristic magnitude Mrstar for r'-band,
-
-        Hence, Mrstar and redshift should follow the relation, i.e., MBstar =
-        MBstar0-(redshift-0.1)*1.5. where Mrstar0 = MBstar(at redshift=0.1).
-
-        In our case, Mrstar0 = -20.44 has been estimated from Table 2, Blanton et al
-        2003.
-        """
 
         # Convert the sdss r-mag to r'-mag from Frei & Gunn 2003 (Table 3).
         # r' is a fake filter i.e., r shifted to z=0.1.
         Mabsr = Mabsr - 0.11
+
+        """
+        We assume the same assumption here (from Bell et al 2004) for decline of
+        characteristic magnitude Mrstar for r'-band,
+
+        Hence, Mrstar and redshift should follow the relation, i.e., Mrstar =
+        Mrstar0-(redshift-0.1)*1.5. where Mrstar0 = Mrstar(at redshift=0.1).
+
+        In our case, Mrstar0 = -20.44 has been estimated from Table 2, Blanton et al
+        2003.
+        """
 
         Mrstar0 = -20.44  # calculated at redhift=0.1
         # Use the above value to calculate Mrstar at the deflector redshift
@@ -223,9 +222,11 @@ def get_velocity_dispersion(
 
         # Calculate L/L* using the magnitude-luminosity relation
         LbyLstar = 10.0 ** (-0.4 * (Mabsr - Mrstar))
-        """Now use the L-sigma relation and taking the sigma_star and alpha value from
+        """
+        Now use the L-sigma relation and taking the sigma_star and alpha value from
         Parker et al 2007, derived using weak-lensing measurements, calculate the the
-        velocity dispersion sigma."""
+        velocity dispersion sigma.
+        """
         # sigma_star, alpha = ufloat(142,18), 3      # Parker et al 2007
 
         sigma_star_nominal = np.ones(len(LbyLstar)) * 142
@@ -238,8 +239,6 @@ def get_velocity_dispersion(
         # Use sigma_star and alpha values to calculate the stellar velocity dispersion sigma
         sigma = sigma_star * LbyLstar ** (1 / alpha)
 
-    else:
-        raise KeyError("Invalid input for scaling relations.")
 
     # returns the calculated sigma
     # type: a 1D array of uncertainties.core.Variable
