@@ -2,6 +2,8 @@ import numpy as np
 import scipy
 from scipy.signal import convolve2d
 from scipy.signal import fftconvolve
+from lenstronomy.Util.param_util import transform_e1e2_product_average
+from lenstronomy.Util.param_util import ellipticity2phi_q
 from astropy.io import fits
 
 
@@ -275,6 +277,35 @@ def ellipticity_slsim_to_lenstronomy(e1_slsim, e2_slsim):
     """
 
     return -e1_slsim, e2_slsim
+
+
+def elliptical_distortion_product_average(x, y, e1, e2, center_x, center_y):
+    """Maps the coordinates x, y with eccentricities e1, e2 into a new elliptical
+    coordinate system with same coordinate orientation.
+
+    :param x: x-coordinate
+    :param y: y-coordinate
+    :param e1: eccentricity
+    :param e2: eccentricity
+    :param center_x: center of distortion
+    :param center_y: center of distortion
+    :return: distorted coordinates x', y'
+    """
+    x_, y_ = transform_e1e2_product_average(x, y, e1, e2, center_x, center_y)
+
+    # Rotate back
+    phi_g, q = ellipticity2phi_q(e1, e2)
+    cos_phi = np.cos(-phi_g)
+    sin_phi = np.sin(-phi_g)
+
+    x__ = cos_phi * x_ + sin_phi * y_
+    y__ = -sin_phi * x_ + cos_phi * y_
+
+    # Shift
+    x___ = x__ + center_x
+    y___ = y__ + center_y
+
+    return x___, y___
 
 
 def fits_append_table(filename, table):
