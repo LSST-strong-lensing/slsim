@@ -30,7 +30,7 @@ class SNeLightcone(object):
 
         self.density = (
             self.convert_density(sne_rate.calculate_SNIa_rate(self._input_redshifts))
-        ) / (h * (1 + self._input_redshifts)**3)
+        ) / (h * (1 + self._input_redshifts) ** 3)
 
     def convert_density(self, density):
         """Converts SN Ia comoving densities from [yr^(-1)Mpc^(-3)] to have the desired
