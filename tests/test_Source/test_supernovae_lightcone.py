@@ -35,9 +35,9 @@ class TestSNeLightcone:
             noise=self.noise,
             time_interval=self.time_interval,
         )
-        test_density = self.sne_lightcone.density[0]
+        test_density = self.sne_lightcone.density[2]
         npt.assert_almost_equal(
-            test_density, ((5.87137528e-05 / 365.25) * 2), decimal=4
+            test_density, (((0.0001266925 / 365.25) * 2) / (1 + 0.52631579)**3), decimal=4
         )
 
         self.time_interval = 1 * units.year
