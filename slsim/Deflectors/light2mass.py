@@ -204,7 +204,8 @@ def get_velocity_dispersion(
         # Convert the sdss r-mag to r'-mag from Frei & Gunn 2003 (Table 3).
         # r' is a fake filter i.e., r shifted to z=0.1.
         Mabsr = Mabsr - 0.11
-        """We assume the same assumption here (from Bell et al 2004) for decline of
+        """
+        We assume the same assumption here (from Bell et al 2004) for decline of
         characteristic magnitude Mrstar for r'-band,
 
         Hence, Mrstar and redshift should follow the relation, i.e., Mrstar =
