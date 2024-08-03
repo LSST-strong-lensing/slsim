@@ -8,7 +8,7 @@ import pytest
 
 def test_get_velocity_dispersion():
 
-    cosmo = FlatLambdaCDM(H0=72, Om0=0.26)
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     deflector_type = "elliptical"
     lsst_mags = np.array([17.636, 16.674, 16.204]).reshape(1, 3)  # g,,r,i mags
     # lsst_errs = np.array([0.007, 0.005, 0.005]).reshape(1, 3)  # g,r,i errors, if known
@@ -64,6 +64,7 @@ def test_get_velocity_dispersion():
         c12=coefficients[11],
         scaling_relation="spectroscopic",
     )
+    print(vel_disp_spec)
 
     np.testing.assert_equal(len(vel_disp_spec), len(redshifts))
     np.testing.assert_almost_equal(vel_disp_spec[0].nominal_value, 149, decimal=-1)
@@ -91,6 +92,7 @@ def test_get_velocity_dispersion():
         c12=coefficients[11],
         scaling_relation="weak-lensing",
     )
+    print(vel_disp_wl)
 
     np.testing.assert_equal(len(vel_disp_wl), len(redshifts))
     np.testing.assert_almost_equal(vel_disp_wl[0].nominal_value, 143, decimal=-1)
@@ -106,7 +108,7 @@ def test_invalid_deflector_type():
             lsst_mags=np.array([17.636, 16.674, 16.204]).reshape(1, 3),
             lsst_errs=np.array([0.007, 0.005, 0.005]).reshape(1, 3),
             redshift=np.array([0.08496]),
-            cosmo=FlatLambdaCDM(H0=72, Om0=0.26),
+            cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
             scaling_relation="spectroscopic",
         )
 
@@ -120,7 +122,7 @@ def test_invalid_scaling_relations():
             lsst_mags=np.array([17.636, 16.674, 16.204]).reshape(1, 3),
             lsst_errs=np.array([0.007, 0.005, 0.005]).reshape(1, 3),
             redshift=np.array([0.08496]),
-            cosmo=FlatLambdaCDM(H0=72, Om0=0.26),
+            cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
             scaling_relation="something else",
         )
 
