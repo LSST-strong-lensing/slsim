@@ -167,8 +167,7 @@ def get_velocity_dispersion(
         # Convert the apparent B-band magnitude to the absolute B-band magnitude using the redshift and cosmology defined
         # Note that the 25 here comes since Dlum is in Mpc
         MabsB = mag_B - 5.0 * np.log10(Dlum) - 25.0
-        """
-        Now using the data from DEEP2 and COMBO-17 surveys, Bell et 2004 found that
+        """Now using the data from DEEP2 and COMBO-17 surveys, Bell et 2004 found that
         the B-band luminosity function evolves such that characteristic magnitude MBstar
         decline by 1.5 magnitudes from z=0.0 to z=1.0. We use the same assumption here;
 
@@ -185,12 +184,10 @@ def get_velocity_dispersion(
 
         # Calculate L/L* using the magnitude-luminosity relation
         LbyLstar = 10.0 ** (-0.4 * (MabsB - MBstar))
-        """
-        Now use the L-sigma relation for the elliptical galaxies i.e., the Faber
+        """Now use the L-sigma relation for the elliptical galaxies i.e., the Faber
         Jackson relation, sigma/sigma_star = (L/Lstar)**(1/alpha) and taking the sigma*
         and alpha value from Choi et al 2007, derived for early type galaxies, calculate
-        the the velocity dispersion sigma.
-        """
+        the the velocity dispersion sigma."""
         sigma_star, alpha = ufloat(161, 5), 2.32  # Choi et al 2007
 
         # Use sigma_star and alpha values to calculate the stellar velocity dispersion sigma
@@ -204,8 +201,7 @@ def get_velocity_dispersion(
         # Convert the sdss r-mag to r'-mag from Frei & Gunn 2003 (Table 3).
         # r' is a fake filter i.e., r shifted to z=0.1.
         Mabsr = Mabsr - 0.11
-        """
-        We assume the same assumption here (from Bell et al 2004) for decline of
+        """We assume the same assumption here (from Bell et al 2004) for decline of
         characteristic magnitude Mrstar for r'-band,
 
         Hence, Mrstar and redshift should follow the relation, i.e., Mrstar =
@@ -221,11 +217,9 @@ def get_velocity_dispersion(
 
         # Calculate L/L* using the magnitude-luminosity relation
         LbyLstar = 10.0 ** (-0.4 * (Mabsr - Mrstar))
-        """
-        Now use the L-sigma relation and taking the sigma_star and alpha value from
+        """Now use the L-sigma relation and taking the sigma_star and alpha value from
         Parker et al 2007, derived using weak-lensing measurements, calculate the the
-        velocity dispersion sigma.
-        """
+        velocity dispersion sigma."""
         # sigma_star, alpha = 142+-18, 3      # Parker et al 2007
 
         sigma_star_nominal = np.ones(len(LbyLstar)) * 142
