@@ -182,8 +182,11 @@ class QuasarRate(object):
         return converted_magnitude
 
     def n_comoving(self, m_min, m_max, z_value):
-        """Calculates the comoving number density of quasars for a given redshift by
-        integrating dPhi/dM over the range of absolute magnitudes.
+        """Calculates the comoving number density of quasars by integrating dPhi/dM
+        over the range of absolute magnitudes and applying the (1 + z)^-3 factor.
+
+        The (1 + z)^-3 factor converts from physical to comoving number density to account 
+        for the expansion of the universe and scale factor a = (1 + z)^-1.
 
         :param m_min: Minimum apparent magnitude.
         :type m_min: float or np.ndarray
@@ -205,11 +208,11 @@ class QuasarRate(object):
             integrals = np.zeros_like(z_value)
             for i, z in enumerate(z_value):
                 integral, _ = quad(self.dPhi_dM, M_min[i], M_max[i], args=(z,))
-                integrals[i] = integral / (1 + z)**3  
+                integrals[i] = integral / (1 + z)**3  # Convert from physical to wanted comoving density
             return integrals
         else:
             integral, _ = quad(self.dPhi_dM, M_min, M_max, args=(z_value,))
-            return integral / (1 + z_value)**3 
+            return integral / (1 + z_value)**3  # Convert from physical to wanted comoving density
 
     def generate_quasar_redshifts(self, m_min, m_max):
         """Generates redshift locations of quasars using a light cone formulation.
