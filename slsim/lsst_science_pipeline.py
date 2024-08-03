@@ -766,10 +766,10 @@ def multiple_dp0_time_series_images_data(
     butler, center_coords_list, radius="0.034", band="i", size=101, output_file=None
 ):
     """Creates multiple time series cutouts and associated meta data from dp0 data.
-     Here, multiple means time series cutouts at multiple sky location. Using this 
-     function one can produce more than one time series cutout based on how many
-     variable lenses he/she want to inject.
-     
+    Here, multiple means time series cutouts at multiple sky location. Using this
+    function one can produce more than one time series cutout based on how many variable
+    lenses he/she want to inject.
+
     :param butler: butler object
     :param center_coord: list of coordinate point around which we need to create time
         series images.
