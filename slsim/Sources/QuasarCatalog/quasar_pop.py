@@ -106,21 +106,8 @@ class QuasarRate(object):
         :rtype: float or np.ndarray :unit: mag
         """
         z_value = np.atleast_1d(z_value)
-        denominator = (
-            np.sqrt(np.exp(self.xi * z_value)) + np.sqrt(np.exp(self.xi * self.z_star))
-        ) ** 2
-        result = (
-            -20.90
-            + (5 * np.log10(self.h))
-            - (
-                2.5
-                * np.log10(
-                    np.exp(self.zeta * z_value)
-                    * (1 + np.exp(self.xi * self.z_star))
-                    / denominator
-                )
-            )
-        )
+        denominator = (np.sqrt(np.exp(self.xi * z_value)) + np.sqrt(np.exp(self.xi * self.z_star))) ** 2
+        result = (-20.90 + (5 * np.log10(self.h)) - (2.5 * np.log10(np.exp(self.zeta * z_value) * (1 + np.exp(self.xi * self.z_star)) / denominator)))
 
         if np.any(denominator == 0):
             raise ValueError(
@@ -196,7 +183,7 @@ class QuasarRate(object):
 
     def n_comoving(self, m_min, m_max, z_value):
         """Calculates the comoving number density of quasars for a given redshift by
-        integrating dPhi/dM over the range of apparent magnitudes.
+        integrating dPhi/dM over the range of absolute magnitudes.
 
         :param m_min: Minimum apparent magnitude.
         :type m_min: float or np.ndarray
@@ -218,11 +205,11 @@ class QuasarRate(object):
             integrals = np.zeros_like(z_value)
             for i, z in enumerate(z_value):
                 integral, _ = quad(self.dPhi_dM, M_min[i], M_max[i], args=(z,))
-                integrals[i] = integral
+                integrals[i] = integral / (1 + z)**3  
             return integrals
         else:
             integral, _ = quad(self.dPhi_dM, M_min, M_max, args=(z_value,))
-            return integral
+            return integral / (1 + z_value)**3 
 
     def generate_quasar_redshifts(self, m_min, m_max):
         """Generates redshift locations of quasars using a light cone formulation.
