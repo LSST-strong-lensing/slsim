@@ -106,8 +106,21 @@ class QuasarRate(object):
         :rtype: float or np.ndarray :unit: mag
         """
         z_value = np.atleast_1d(z_value)
-        denominator = (np.sqrt(np.exp(self.xi * z_value)) + np.sqrt(np.exp(self.xi * self.z_star))) ** 2
-        result = (-20.90 + (5 * np.log10(self.h)) - (2.5 * np.log10(np.exp(self.zeta * z_value) * (1 + np.exp(self.xi * self.z_star)) / denominator)))
+        denominator = (
+            np.sqrt(np.exp(self.xi * z_value)) + np.sqrt(np.exp(self.xi * self.z_star))
+        ) ** 2
+        result = (
+            -20.90
+            + (5 * np.log10(self.h))
+            - (
+                2.5
+                * np.log10(
+                    np.exp(self.zeta * z_value)
+                    * (1 + np.exp(self.xi * self.z_star))
+                    / denominator
+                )
+            )
+        )
 
         if np.any(denominator == 0):
             raise ValueError(
