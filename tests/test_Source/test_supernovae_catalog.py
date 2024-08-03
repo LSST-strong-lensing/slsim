@@ -15,7 +15,7 @@ lightcurve_time = np.linspace(-20, 100, 500)
 absolute_mag_band = "bessellb"
 mag_zpsys = "AB"
 skypy_config = None
-sky_area = Quantity(0.01, unit="deg2")
+sky_area = Quantity(0.05, unit="deg2")
 absolute_mag = None
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
@@ -27,28 +27,28 @@ def test_supernovae_host_galaxy_offset():
         sky_area=sky_area,
     )
     host_catalog = galaxy_catalog.galaxy_catalog()
-    ra_off, dec_off, e1, e2 = supernovae_host_galaxy_offset(host_catalog)
+    x_off, y_off, e1, e2 = supernovae_host_galaxy_offset(host_catalog)
 
-    ra_within_mean_radius = 0
-    dec_within_mean_radius = 0
+    x_within_mean_radius = 0
+    y_within_mean_radius = 0
     mean_radius = np.rad2deg(np.mean(host_catalog["angular_size"])) * units.deg
     mean_radius = mean_radius.to(units.arcsec)
 
-    for i in range(len(ra_off)):
+    for i in range(len(x_off)):
 
-        if np.abs(ra_off[i]) <= mean_radius.value:
-            ra_within_mean_radius += 1
-        if np.abs(dec_off[i]) <= mean_radius.value:
-            dec_within_mean_radius += 1
+        if np.abs(x_off[i]) <= mean_radius.value:
+            x_within_mean_radius += 1
+        if np.abs(y_off[i]) <= mean_radius.value:
+            y_within_mean_radius += 1
         e1[i] = abs(e1[i])
         e2[i] = abs(e2[i])
 
-    assert ra_within_mean_radius >= (2 / 3) * len(ra_off)
-    assert dec_within_mean_radius >= (2 / 3) * len(dec_off)
-    assert min(e1) > 0
-    assert min(e2) > 0
-    assert max(e1) < 1
-    assert max(e2) < 1
+    assert x_within_mean_radius >= (2 / 3) * len(x_off)
+    assert y_within_mean_radius >= (2 / 3) * len(y_off)
+    assert min(np.abs(e1)) > 0
+    assert min(np.abs(e2)) > 0
+    assert max(np.abs(e1)) < 1
+    assert max(np.abs(e2)) < 1
 
 
 class TestSupernovaeCatalog:
