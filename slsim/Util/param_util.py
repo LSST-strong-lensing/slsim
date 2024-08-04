@@ -4,6 +4,7 @@ from scipy.signal import convolve2d
 from scipy.signal import fftconvolve
 from lenstronomy.Util.param_util import transform_e1e2_product_average
 from lenstronomy.Util.param_util import ellipticity2phi_q
+from astropy.io import fits
 
 
 def epsilon2e(epsilon):
@@ -305,3 +306,15 @@ def elliptical_distortion_product_average(x, y, e1, e2, center_x, center_y):
     y___ = y__ + center_y
 
     return x___, y___
+
+
+def fits_append_table(filename, table):
+    """Append an Astropy Table to an existing FITS file.
+
+    :param filename: Name of the FITS file to append to
+    :param table: Astropy Table object to append
+    """
+    hdulist = fits.open(filename, mode="append")
+    hdulist.append(fits.BinTableHDU(table))
+    hdulist.writeto(filename, overwrite=True)
+    hdulist.close()
