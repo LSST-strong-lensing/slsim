@@ -1018,7 +1018,6 @@ def multiple_dp0_time_series_images_data(
     if len(time_series_data) > 1:
         return expo_data_list
     return None
->>>>>>> slsim-project/main
 
 
 def variable_lens_injection(
