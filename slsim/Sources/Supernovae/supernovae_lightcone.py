@@ -28,9 +28,10 @@ class SNeLightcone(object):
         sne_rate = SNIaRate(self._cosmo, self._input_redshifts[-1])
         h = self._cosmo.H(0).to_value() / 100
 
+        # Account for included factor of h and convert the density from physical to comoving
         self.density = (
             self.convert_density(sne_rate.calculate_SNIa_rate(self._input_redshifts))
-        ) / h
+        ) / (h * (1 + self._input_redshifts) ** 3)
 
     def convert_density(self, density):
         """Converts SN Ia comoving densities from [yr^(-1)Mpc^(-3)] to have the desired
