@@ -46,9 +46,9 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
                                  object_type="point", **kwargs_cut)
         Galaxies.__init__(
             self,
-            object_list,
-            cosmo,
-            sky_area,
+            galaxy_list=object_list,
+            cosmo=cosmo,
+            sky_area=sky_area,
             kwargs_cut={},
             light_profile=light_profile,
             list_type=list_type,
