@@ -1,5 +1,6 @@
 from slsim.Sources.source_pop_base import SourcePopBase
 from slsim.Sources.galaxies import Galaxies
+from slsim.selection import object_cut
 
 
 class PointPlusExtendedSources(Galaxies, SourcePopBase):
@@ -40,12 +41,15 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
          catalog, they need to specify it.
         :type catalog_type: str. eg: "scotch" or None
         """
+        
+        object_list = object_cut(point_plus_extended_sources_list, list_type=list_type, 
+                                 object_type="point", **kwargs_cut)
         Galaxies.__init__(
             self,
-            point_plus_extended_sources_list,
-            kwargs_cut,
+            object_list,
             cosmo,
             sky_area,
+            kwargs_cut={},
             light_profile=light_profile,
             list_type=list_type,
             catalog_type=catalog_type,

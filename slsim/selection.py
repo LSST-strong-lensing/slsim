@@ -1,5 +1,6 @@
-def deflector_cut(
-    galaxy_list, z_min=0, z_max=5, band=None, band_max=40, list_type="astropy_table"
+def object_cut(
+    galaxy_list, z_min=0, z_max=5, band=None, band_max=40, list_type="astropy_table",
+      object_type="extended"
 ):
     """Selects a subset of a given galaxy list satisfying given criteria.
 
@@ -12,6 +13,14 @@ def deflector_cut(
         astropy table or a list of astropy tables.
     :return: subset of galaxies matching the selection criteria
     """
+    if object_type == "extended":
+        mag_string = "mag_"
+    elif object_type == "point":
+        mag_string = "ps_mag_"
+    else:
+        raise ValueError(
+                            "given object %s is not supported." % object_type
+                        )
     if list_type == "astropy_table":
         if band is None:
             bool_cut = (galaxy_list["z"] > z_min) & (galaxy_list["z"] < z_max)
@@ -19,7 +28,7 @@ def deflector_cut(
             bool_cut = (
                 (galaxy_list["z"] > z_min)
                 & (galaxy_list["z"] < z_max)
-                & (galaxy_list["mag_" + band] < band_max)
+                & (galaxy_list[mag_string + band] < band_max)
             )
         galaxy_list_cut = galaxy_list[bool_cut]
     else:
@@ -32,7 +41,7 @@ def deflector_cut(
                 bool_cut = (
                     (table["z"] > z_min)
                     & (table["z"] < z_max)
-                    & (table["mag_" + band] < band_max)
+                    & (table[mag_string + band] < band_max)
                 )
 
             # Check if any rows satisfy the cut
