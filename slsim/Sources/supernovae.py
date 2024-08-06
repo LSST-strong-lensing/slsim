@@ -1,6 +1,7 @@
 import os
 from warnings import warn
 import sncosmo
+from sncosmo.bandpasses import get_bandpass
 import numpy as np
 from astropy import cosmology
 
@@ -102,6 +103,17 @@ class Supernova(sncosmo.Model):
 
         :return: magnitude of source
         """
+        bandpass = get_bandpass(band)
+
+        if bandpass.minwave() < self.minwave() or bandpass.maxwave() > self.maxwave():
+            warn('bandpass {0!r:s} [{1:.6g}, .., {2:.6g}] '
+                         'outside spectral range [{3:.6g}, .., {4:.6g}]\n'
+                            'Ignoring bandpass for now. Use extended wavelength SN models '
+                                'found here: https://github.com/LSST-strong-lensing/data_public/tree/main/sncosmo_sn_models'
+                         .format(bandpass.name, bandpass.minwave(), bandpass.maxwave(),
+                                 self.minwave(), self.maxwave()))
+            return np.ones_like(time)*np.NaN
+
         minphase = self.source.minphase()
         if self._sn_type == "Ia":
             return self.bandmag(band, zpsys, time)
