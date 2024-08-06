@@ -121,7 +121,7 @@ def test_supernovae_plus_galaxies_lens_pop_instance_2():
     kwargs_lens_cut = {}
     pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
     assert pes_lens_class._source_type == "point_plus_extended"
-    assert "ra_off" in pes_lens_class.source.source_dict.colnames
+    assert "x_off" in pes_lens_class.source.source_dict.colnames
     assert len(
         pes_lens_class.source.kwargs_variability_extracted["i"]["ps_mag_i"]
     ) == len(time_range)
@@ -133,7 +133,7 @@ def test_supernovae_lens_pop_instance():
     sky_area = Quantity(value=3, unit="deg2")
     sky_area2 = Quantity(value=1, unit="deg2")
     kwargs_deflector_cut = {"band": "g", "band_max": 23, "z_min": 0.01, "z_max": 2.5}
-    kwargs_source_cut = {"band": "g", "band_max": 26, "z_min": 0.1, "z_max": 5.0}
+    kwargs_source_cut = {"z_min": 0.1, "z_max": 5.0}
     time_range = np.linspace(-20, 50, 500)
     pes_lens_pop = LensPop(
         deflector_type="elliptical",
