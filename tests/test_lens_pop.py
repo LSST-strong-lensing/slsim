@@ -219,5 +219,6 @@ def test_num_sources_tested_and_test_area(gg_lens_pop_instance):
     ), "Expected num_sources_range to be between 0 and 50,"
     f"but got {num_sources_range}"
 
+
 if __name__ == "__main__":
     pytest.main()

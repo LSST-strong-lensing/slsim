@@ -41,9 +41,13 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
          catalog, they need to specify it.
         :type catalog_type: str. eg: "scotch" or None
         """
-        
-        object_list = object_cut(point_plus_extended_sources_list, list_type=list_type, 
-                                 object_type="point", **kwargs_cut)
+
+        object_list = object_cut(
+            point_plus_extended_sources_list,
+            list_type=list_type,
+            object_type="point",
+            **kwargs_cut
+        )
         Galaxies.__init__(
             self,
             galaxy_list=object_list,
