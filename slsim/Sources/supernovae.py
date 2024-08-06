@@ -106,13 +106,19 @@ class Supernova(sncosmo.Model):
         bandpass = get_bandpass(band)
 
         if bandpass.minwave() < self.minwave() or bandpass.maxwave() > self.maxwave():
-            warn('bandpass {0!r:s} [{1:.6g}, .., {2:.6g}] '
-                         'outside spectral range [{3:.6g}, .., {4:.6g}]\n'
-                            'Ignoring bandpass for now. Use extended wavelength SN models '
-                                'found here: https://github.com/LSST-strong-lensing/data_public/tree/main/sncosmo_sn_models'
-                         .format(bandpass.name, bandpass.minwave(), bandpass.maxwave(),
-                                 self.minwave(), self.maxwave()))
-            return np.ones_like(time)*np.NaN
+            warn(
+                "bandpass {0!r:s} [{1:.6g}, .., {2:.6g}] "
+                "outside spectral range [{3:.6g}, .., {4:.6g}]\n"
+                "Ignoring bandpass for now. Use extended wavelength SN models "
+                "found here: https://github.com/LSST-strong-lensing/data_public/tree/main/sncosmo_sn_models".format(
+                    bandpass.name,
+                    bandpass.minwave(),
+                    bandpass.maxwave(),
+                    self.minwave(),
+                    self.maxwave(),
+                )
+            )
+            return np.ones_like(time) * np.NaN
 
         minphase = self.source.minphase()
         if self._sn_type == "Ia":

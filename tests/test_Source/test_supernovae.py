@@ -21,7 +21,9 @@ def test_supernova_mag(Supernova_class):
     mag = Supernova_class.get_apparent_magnitude(time=0, band="lsstr")
     assert mag > 0
 
-    npt.assert_warns(UserWarning, Supernova_class.get_apparent_magnitude, time=0, band="lsstg")
+    npt.assert_warns(
+        UserWarning, Supernova_class.get_apparent_magnitude, time=0, band="lsstg"
+    )
 
 
 if __name__ == "__main__":
