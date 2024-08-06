@@ -11,6 +11,9 @@ def object_cut(
     :param band_max: maximum magnitude of galaxies in band
     :param list_type: format of the source catalog file. Currently, it supports a single
         astropy table or a list of astropy tables.
+    :param object_type: string to specify whether catalog contains an extended object or
+     point object. This is necessary because point and extended object have different
+     name for the magnitude. 
     :return: subset of galaxies matching the selection criteria
     """
     if object_type == "extended":
@@ -19,7 +22,7 @@ def object_cut(
         mag_string = "ps_mag_"
     else:
         raise ValueError(
-                            "given object %s is not supported." % object_type
+                            "given object type %s is not supported." % object_type
                         )
     if list_type == "astropy_table":
         if band is None:
