@@ -54,6 +54,7 @@ class SNIaRate(object):
         """Calculates redshift given cosmic time.
 
         :param t: cosmic time since big bang in [Gy]
+
         :return: redshift at time t [float]
         """
         if not hasattr(self, "_age_inv"):
@@ -80,6 +81,7 @@ class SNIaRate(object):
         """Calculates the rate of SN Ia. (Eq 15 - Oguri and Marshall 2010)
 
         :param z: redshift (z>=0)
+        :type z: array-like
         :param eta: canonical efficiency
 
         :return: SN Ia rate n(z) in [(h)yr^(-1)Mpc^(-3)]
@@ -99,3 +101,21 @@ class SNIaRate(object):
             SNIa_rate_list.append(SNIa_rate)
 
         return np.array(SNIa_rate_list)
+
+    def calculate_luminosity(self, M, z):
+        """Calculates the luminosity function of SN Ia. (Eq 18 - Oguri and Marshall 2010)
+
+        :param M: B-band absolute magnitude
+        :param z: redshift (z>=0)
+        :type z: array-like
+
+        :return: luminosity function dPhi_dM in [mag^(-1)Mpc^(-3)]
+        :return type: array-like
+        """
+        n = self.calculate_SNIa_rate(z)
+        M_star = -19.06
+        sigma = 0.56
+
+        dPhi_dM = (n * np.e**(-(M - M_star)**2 / (2 * sigma**2))) / ((1 + z) * np.sqrt(2 * np.pi) * sigma)
+
+        return dPhi_dM
