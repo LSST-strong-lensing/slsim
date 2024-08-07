@@ -54,7 +54,6 @@ class SNIaRate(object):
         """Calculates redshift given cosmic time.
 
         :param t: cosmic time since big bang in [Gy]
-
         :return: redshift at time t [float]
         """
         if not hasattr(self, "_age_inv"):
@@ -116,6 +115,8 @@ class SNIaRate(object):
         M_star = -19.06
         sigma = 0.56
 
-        dPhi_dM = (n * np.e**(-(M - M_star)**2 / (2 * sigma**2))) / ((1 + z) * np.sqrt(2 * np.pi) * sigma)
+        dPhi_dM = (n * np.e ** (-((M - M_star) ** 2) / (2 * sigma**2))) / (
+            (1 + z) * np.sqrt(2 * np.pi) * sigma
+        )
 
         return dPhi_dM
