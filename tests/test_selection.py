@@ -31,4 +31,7 @@ def test_object_cut():
                        band_max=40,
                        list_type="astropy_table",
                        object_type="source")
+            
+if __name__ == "__main__":
+    pytest.main()
 
