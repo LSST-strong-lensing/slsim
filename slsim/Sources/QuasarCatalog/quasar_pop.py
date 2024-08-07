@@ -195,8 +195,11 @@ class QuasarRate(object):
         return converted_magnitude
 
     def n_comoving(self, m_min, m_max, z_value):
-        """Calculates the comoving number density of quasars for a given redshift by
-        integrating dPhi/dM over the range of apparent magnitudes.
+        """Calculates the comoving number density of quasars by integrating dPhi/dM over
+        the range of absolute magnitudes and applying the (1 + z)^-3 factor.
+
+        The (1 + z)^-3 factor converts from physical to comoving number density to
+        account for the expansion of the universe and scale factor a = (1 + z)^-1.
 
         :param m_min: Minimum apparent magnitude.
         :type m_min: float or np.ndarray
@@ -218,11 +221,15 @@ class QuasarRate(object):
             integrals = np.zeros_like(z_value)
             for i, z in enumerate(z_value):
                 integral, _ = quad(self.dPhi_dM, M_min[i], M_max[i], args=(z,))
-                integrals[i] = integral
+                integrals[i] = (
+                    integral / (1 + z) ** 3
+                )  # Convert from physical to wanted comoving density
             return integrals
         else:
             integral, _ = quad(self.dPhi_dM, M_min, M_max, args=(z_value,))
-            return integral
+            return (
+                integral / (1 + z_value) ** 3
+            )  # Convert from physical to wanted comoving density
 
     def generate_quasar_redshifts(self, m_min, m_max):
         """Generates redshift locations of quasars using a light cone formulation.
@@ -330,7 +337,7 @@ class QuasarRate(object):
         inverse_cdf_dict = self.inverse_cdf_fits_for_redshifts(
             m_min, m_max, quasar_redshifts
         )
-        table_data = {"z": [], "ps_mag_i": []}
+        table_data = {"z": [], "M": [], "ps_mag_i": []}
 
         for redshift in quasar_redshifts:
             inverse_cdf = inverse_cdf_dict[redshift]
@@ -341,7 +348,7 @@ class QuasarRate(object):
             apparent_i_mag = self.convert_magnitude(
                 random_abs_M_value, redshift, conversion="absolute_to_apparent"
             )
-
+            table_data["M"].append(random_abs_M_value)
             table_data["z"].append(redshift)
             table_data["ps_mag_i"].append(apparent_i_mag)
 

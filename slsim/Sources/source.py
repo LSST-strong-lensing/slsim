@@ -10,7 +10,7 @@ from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 
 
 class Source(object):
-    """This class provides source dictionary and variable magnitude of a individual
+    """This class provides source dictionary and variable magnitude of an individual
     source."""
 
     def __init__(
@@ -97,6 +97,8 @@ class Source(object):
                         "r",
                         "i",
                         "g",
+                        "z",
+                        "y",
                         "F062",
                         "F087",
                         "F106",
@@ -106,7 +108,7 @@ class Source(object):
                         "F146",
                         "F213",
                     ]:
-                        if element in ["r", "i", "g"]:
+                        if element in ["r", "i", "g", "z", "y"]:
                             provided_band = "lsst" + element
                         else:
                             provided_band = element
@@ -318,7 +320,7 @@ class Source(object):
     def kwargs_extended_source_light(
         self, center_lens, draw_area, band=None, light_profile_str="single_sersic"
     ):
-        """Provids dictionary of keywords for the source light model(s). Kewords used
+        """Provides dictionary of keywords for the source light model(s). Kewords used
         are in lenstronomy conventions.
 
         :param band: Imaging band
