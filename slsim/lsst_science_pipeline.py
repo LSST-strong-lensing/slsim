@@ -983,6 +983,7 @@ def opsim_variable_lens_injection(
     exposure_data_new.add_columns([lens_col, final_image_col])
     return exposure_data_new
 
+
 def multiple_dp0_time_series_images_data(
     butler, center_coords_list, radius="0.034", band="i", size=101, output_file=None
 ):
