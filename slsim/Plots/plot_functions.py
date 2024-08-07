@@ -7,7 +7,13 @@ import numpy as np
 
 
 def create_image_montage_from_image_list(
-    num_rows, num_cols, images, time=None, band=None, image_type="other", image_center=None
+    num_rows,
+    num_cols,
+    images,
+    time=None,
+    band=None,
+    image_type="other",
+    image_center=None,
 ):
     """Creates an image montage from an image list.
 
