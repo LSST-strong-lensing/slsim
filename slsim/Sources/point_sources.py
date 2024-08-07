@@ -1,7 +1,7 @@
 import numpy.random as random
 from slsim.Sources.source_pop_base import SourcePopBase
 import warnings
-from slsim.selection import deflector_cut
+from slsim.selection import object_cut
 
 
 class PointSources(SourcePopBase):
@@ -53,8 +53,8 @@ class PointSources(SourcePopBase):
             )
             warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
         # make cuts
-        self._point_source_select = deflector_cut(
-            point_source_list, list_type=list_type, **kwargs_cut
+        self._point_source_select = object_cut(
+            point_source_list, list_type=list_type, object_type="point", **kwargs_cut
         )
 
         self._num_select = len(self._point_source_select)

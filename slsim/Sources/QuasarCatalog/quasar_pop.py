@@ -337,7 +337,7 @@ class QuasarRate(object):
         inverse_cdf_dict = self.inverse_cdf_fits_for_redshifts(
             m_min, m_max, quasar_redshifts
         )
-        table_data = {"z": [], "ps_mag_i": []}
+        table_data = {"z": [], "M": [], "ps_mag_i": []}
 
         for redshift in quasar_redshifts:
             inverse_cdf = inverse_cdf_dict[redshift]
@@ -348,7 +348,7 @@ class QuasarRate(object):
             apparent_i_mag = self.convert_magnitude(
                 random_abs_M_value, redshift, conversion="absolute_to_apparent"
             )
-
+            table_data["M"].append(random_abs_M_value)
             table_data["z"].append(redshift)
             table_data["ps_mag_i"].append(apparent_i_mag)
 
