@@ -8,7 +8,7 @@ from astropy.io import fits
 
 
 def epsilon2e(epsilon):
-    """Translates ellipticity definitions from.
+    """Translates ellipticity definitions from epsilon to e.
 
     .. math::
         epsilon = \\equic \\frac{1 - q^2}{1 + q^2}
@@ -27,6 +27,21 @@ def epsilon2e(epsilon):
         return (1 - np.sqrt(1 - epsilon**2)) / epsilon
     else:
         raise ValueError('Value of "epsilon" is %s and needs to be in [0, 1]' % epsilon)
+
+
+def ellipticity2phi_q(e1, e2):
+    """Transforms complex ellipticity moduli in orientation angle and axis ratio.
+
+    :param e1: eccentricity in x-direction
+    :param e2: eccentricity in xy-direction
+    :return: angle in radian, axis ratio (minor/major)
+    """
+
+    phi = np.arctan2(e2, e1) / 2
+    c = np.sqrt(e1**2 + e2**2)
+    c = np.minimum(c, 0.9999)
+    q = (1 - c) / (1 + c)
+    return phi, q
 
 
 def e2epsilon(e):
