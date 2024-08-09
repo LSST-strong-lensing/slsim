@@ -30,7 +30,9 @@ class SNeLightcone(object):
 
         # Account for included factor of h and convert the density from physical to comoving
         self.density = (
-            self.convert_density(sne_rate.calculate_SNIa_rate(self._input_redshifts)*h)
+            self.convert_density(
+                sne_rate.calculate_SNIa_rate(self._input_redshifts) * h
+            )
         ) / ((1 + self._input_redshifts) ** 3)
 
     def convert_density(self, density):
