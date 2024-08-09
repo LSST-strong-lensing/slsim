@@ -776,6 +776,7 @@ def opsim_time_series_images_data(
     readout_noise=10,
     delta_pix=0.2,
     print_warning=True,
+    opsim_path=None
 ):
     """Creates time series data from opsim database.
 
@@ -793,6 +794,8 @@ def opsim_time_series_images_data(
     :param delta_pix: size of pixel in units arcseonds
     :param print_warning: if True, prints a warning of coordinates outside of the LSST
         footprint
+    :param opsim_path: optional: provide a path to the opsim database.
+        if None: use "../data/OpSim_database/" + obs_strategy + ".db" as default path.
     :return: a list of astropy tables containing observation information for each
         coordinate
     """
@@ -806,8 +809,9 @@ def opsim_time_series_images_data(
         )
 
     # Initialise OpSimSummaryV2 with opsim database
-    try:
+    if opsim_path is None:
         opsim_path = "../data/OpSim_database/" + obs_strategy + ".db"
+    try:
         OpSimSurv = op.OpSimSurvey(opsim_path)
     except FileNotFoundError:
         raise FileNotFoundError(
@@ -817,7 +821,9 @@ def opsim_time_series_images_data(
         )
 
     # Collect observations that cover the coordinates in ra_list and dec_list
-    gen = OpSimSurv.get_obs_from_coords(ra_list, dec_list, is_deg=True)
+    gen = OpSimSurv.get_obs_from_coords(ra_list, dec_list, is_deg=True, formatobs=True,
+                                        keep_keys=['visitExposureTime', 'seeingFwhmGeom',
+                                                   'fieldRA', 'fieldDec'])
 
     table_data_list = []
 
@@ -826,7 +832,7 @@ def opsim_time_series_images_data(
 
         # Collect the next observation sequence from the opsim generator
         seq = next(gen)
-        seq = seq.sort_values(by=["observationStartMJD"])
+        seq = seq.sort_values(by=["expMJD"])
 
         # Check if the coordinates are in the opsim LSST footprint
         opsim_ra = np.mean(seq["fieldRA"])
@@ -840,17 +846,17 @@ def opsim_time_series_images_data(
             continue
 
         # Get the relevant properties from opsim
-        obs_time = np.array(seq["observationStartMJD"])
+        obs_time = np.array(seq["expMJD"])
 
         # Only give the observations between MJD_min and MJD_max
         mask = (obs_time > MJD_min) & (obs_time < MJD_max)
         obs_time = obs_time[mask]
 
         expo_time = np.array(seq["visitExposureTime"])[mask]
-        sky_brightness = np.array(seq["skyBrightness"])[mask]
-        bandpass = np.array(seq["filter"])[mask]
+        bandpass = np.array(seq["BAND"])[mask]
+        zero_point_mag = np.array(seq["ZPT"])[mask]
+        sky_brightness = np.array(seq['SKYSIG'])[mask] ** 2 / (delta_pix ** 2 * expo_time)
         psf_fwhm = np.array(seq["seeingFwhmGeom"])[mask]
-        m5_depth = np.array(seq["fiveSigmaDepth"])[mask]
         # Question: use 'FWHMeff' or 'seeingFwhmGeom' for the psf?
 
         radec_list = [(ra_list[i], dec_list[i])] * len(obs_time)
@@ -873,27 +879,6 @@ def opsim_time_series_images_data(
         bkg_noise = data_util.bkg_noise(
             readout_noise, expo_time, sky_brightness, delta_pix, num_exposures=1
         )
-
-        # Calculate the zero point magnitude
-        # Code from OpSimSummary/opsimsummary/simlib.py/add_simlibCols
-        # need to work in nvariance in photon electrons
-        term1 = (
-            2.0 * m5_depth - sky_brightness
-        )  # * pixArea   whata units is sky birghtness? counts or photo electrons?
-        # per pixel or arcsec?
-        term2 = -(m5_depth - sky_brightness)  # * pixArea
-        area = (1.51 * psf_fwhm) ** 2.0  # area = 1 / int(psf^2)
-        opsim_snr = 5.0
-        arg = area * opsim_snr * opsim_snr
-        # Background dominated limit assuming counts with system transmission only
-        # is approximately equal to counts with total transmission
-        zpt_approx = term1 + 2.5 * np.log10(arg)
-        val = -0.4 * term2
-        tmp = 10.0**val
-        # Additional term to account for photons from the source, again assuming
-        # that counts with system transmission approximately equal counts with total transmission.
-        zpt_cor = 2.5 * np.log10(1.0 + 1.0 / (area * tmp))
-        zero_point_mag = zpt_approx + zpt_cor
 
         table_data = Table(
             [
