@@ -13,7 +13,6 @@ class TestQuasarRate:
     def setup_method(self):
         """Setup the QuasarRate instance before each test method."""
         self.quasar_rate = QuasarRate(
-            h=0.70,
             zeta=2.98,
             xi=4.05,
             z_star=1.60,

@@ -11,7 +11,7 @@ from slsim.Sources.SupernovaeCatalog.supernovae_sample import (
 
 sn_type = "Ia"
 band_list = ["i"]
-lightcurve_time = np.linspace(-20, 100, 500)
+lightcurve_time = np.linspace(-20, 50, 100)
 absolute_mag_band = "bessellb"
 mag_zpsys = "AB"
 skypy_config = None
@@ -24,7 +24,7 @@ def test_supernovae_host_galaxy_offset():
     galaxy_catalog = GalaxyCatalog(
         cosmo=cosmo,
         skypy_config=skypy_config,
-        sky_area=sky_area,
+        sky_area=Quantity(0.001, unit="deg2"),
     )
     host_catalog = galaxy_catalog.galaxy_catalog()
     x_off, y_off, e1, e2 = supernovae_host_galaxy_offset(host_catalog)
