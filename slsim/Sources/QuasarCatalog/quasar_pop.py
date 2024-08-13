@@ -21,7 +21,6 @@ class QuasarRate(object):
 
     def __init__(
         self,
-        h: float = 0.70,
         zeta: float = 2.98,
         xi: float = 4.05,
         z_star: float = 1.60,
@@ -61,7 +60,6 @@ class QuasarRate(object):
         :param redshifts: Redshifts for quasar density lightcone to be evaluated at.
         :type redshifts: np.ndarray
         """
-        self.h = h
         self.zeta = zeta
         self.xi = xi
         self.z_star = z_star
@@ -111,7 +109,7 @@ class QuasarRate(object):
         ) ** 2
         result = (
             -20.90
-            + (5 * np.log10(self.h))
+            + (5 * np.log10(self.cosmo.h))
             - (
                 2.5
                 * np.log10(
@@ -139,7 +137,7 @@ class QuasarRate(object):
         :type M: float or numpy.ndarray
         :param z_value: Redshift value.
         :type z_value: float or numpy.ndarray
-        :return: dPhi_dM value.
+        :return: dPhi_dM value in the unit of comoving volume.
         :rtype: float or np.ndarray :unit: mag^-1 Mpc^-3
         """
         M = np.atleast_1d(M)
