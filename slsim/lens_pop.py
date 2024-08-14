@@ -9,6 +9,8 @@ from slsim.lens import Lens
 from slsim.lens import theta_e_when_source_infinity
 from slsim.lensed_population_base import LensedPopulationBase
 from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
+from slsim.Deflectors.deflectors_base import DeflectorsBase
+from slsim.Sources.source_pop_base import SourcePopBase
 
 
 class LensPop(LensedPopulationBase):
@@ -16,6 +18,8 @@ class LensPop(LensedPopulationBase):
 
     def __init__(
         self,
+        deflector_population: DeflectorsBase,
+        source_population: SourcePopBase,
         deflector_type="elliptical",
         source_type="galaxies",
         kwargs_deflector_cut=None,
@@ -119,260 +123,15 @@ class LensPop(LensedPopulationBase):
             sn_modeldir,
         )
         self.cosmo = cosmo
-        if source_sky_area is None:
-            self.source_sky_area = self.f_sky
-        else:
-            self.source_sky_area = source_sky_area
-        if deflector_sky_area is None:
-            self.deflector_sky_area = self.f_sky
-        else:
-            self.deflector_sky_area = deflector_sky_area
-        if source_type == "galaxies" and kwargs_variability is not None:
-            raise ValueError(
-                "Galaxies cannot have variability. Either choose"
-                "point source (eg: quasars) or do not provide kwargs_variability."
-            )
-
-        if deflector_type in ["elliptical", "all-galaxies"] or source_type in [
-            "galaxies"
-        ]:
-            pipeline_deflector = SkyPyPipeline(
-                skypy_config=skypy_config,
-                sky_area=self.deflector_sky_area,
-                filters=filters,
-                cosmo=cosmo,
-            )
-            if self.source_sky_area == self.deflector_sky_area:
-                pipeline_source = pipeline_deflector
-            else:
-                pipeline_source = SkyPyPipeline(
-                    skypy_config=skypy_config,
-                    sky_area=self.source_sky_area,
-                    filters=filters,
-                    cosmo=cosmo,
-                )
-        if kwargs_deflector_cut is None:
-            kwargs_deflector_cut = {}
-        if kwargs_mass2light is None:
-            kwargs_mass2light = {}
-
-        if deflector_type == "elliptical":
-            from slsim.Deflectors.elliptical_lens_galaxies import EllipticalLensGalaxies
-
-            self._lens_galaxies = EllipticalLensGalaxies(
-                pipeline_deflector.red_galaxies,
-                kwargs_cut=kwargs_deflector_cut,
-                kwargs_mass2light=kwargs_mass2light,
-                cosmo=cosmo,
-                sky_area=self.deflector_sky_area,
-            )
-
-        elif deflector_type == "all-galaxies":
-            from slsim.Deflectors.all_lens_galaxies import AllLensGalaxies
-
-            red_galaxy_list = pipeline_deflector.red_galaxies
-            blue_galaxy_list = pipeline_deflector.blue_galaxies
-
-            self._lens_galaxies = AllLensGalaxies(
-                red_galaxy_list=red_galaxy_list,
-                blue_galaxy_list=blue_galaxy_list,
-                kwargs_cut=kwargs_deflector_cut,
-                kwargs_mass2light=kwargs_mass2light,
-                cosmo=cosmo,
-                sky_area=self.deflector_sky_area,
-            )
-
-        elif deflector_type == "halo-models":
-            from slsim.Deflectors.compound_lens_halos_galaxies import (
-                CompoundLensHalosGalaxies,
-            )
-            from slsim.Pipelines.sl_hammocks_pipeline import SLHammocksPipeline
-
-            halo_galaxy_list = SLHammocksPipeline(
-                slhammocks_config=slhammocks_config,
-                sky_area=self.deflector_sky_area,
-                cosmo=cosmo,
-            )
-
-            self._lens_galaxies = CompoundLensHalosGalaxies(
-                halo_galaxy_list=halo_galaxy_list._pipeline,
-                kwargs_cut=kwargs_deflector_cut,
-                kwargs_mass2light=kwargs_mass2light,
-                cosmo=cosmo,
-                sky_area=self.deflector_sky_area,
-            )
-
-        else:
-            raise ValueError("deflector_type %s is not supported" % deflector_type)
-
-        if kwargs_source_cut is None:
-            kwargs_source_cut = {}
-        if source_type == "galaxies":
-            from slsim.Sources.galaxies import Galaxies
-
-            self._sources = Galaxies(
-                pipeline_source.blue_galaxies,
-                kwargs_cut=kwargs_source_cut,
-                cosmo=cosmo,
-                sky_area=self.source_sky_area,
-                light_profile=source_light_profile,
-                catalog_type=catalog_type,
-            )
-            self._source_model_type = "extended"
-        elif source_type == "quasars":
-            from slsim.Sources.point_sources import PointSources
-            from slsim.Sources.QuasarCatalog.quasar_pop import QuasarRate
-
-            if kwargs_quasars is None:
-                kwargs_quasars = {}
-            quasar_class = QuasarRate(
-                cosmo=cosmo,
-                sky_area=self.source_sky_area,
-                noise=True,
-                redshifts=np.linspace(0.001, 5.01, 100),  # these redshifts are provided
-                # to match general slsim redshift range in skypy pipeline.
-            )
-            quasar_source = quasar_class.quasar_sample(m_min=15, m_max=30)  # this range
-            # of m_min and m_max covers all quasars. If needed one can apply magnitude
-            # cuts after getting all the lenses.
-            self._sources = PointSources(
-                quasar_source,
-                cosmo=cosmo,
-                sky_area=self.source_sky_area,
-                kwargs_cut=kwargs_source_cut,
-                variability_model=variability_model,
-                kwargs_variability_model=kwargs_variability,
-                light_profile=source_light_profile,
-            )
-            self._source_model_type = "point_source"
-        elif source_type == "quasar_plus_galaxies":
-            from slsim.Sources.point_plus_extended_sources import (
-                PointPlusExtendedSources,
-            )
-            from slsim.Sources.QuasarCatalog.quasar_plus_galaxies import (
-                quasar_galaxies_simple,
-            )
-
-            if kwargs_quasars_galaxies is None:
-                kwargs_quasars_galaxies = {}
-            quasar_galaxy_source = quasar_galaxies_simple(**kwargs_quasars_galaxies)
-            self._sources = PointPlusExtendedSources(
-                quasar_galaxy_source,
-                cosmo=cosmo,
-                sky_area=self.source_sky_area,
-                kwargs_cut=kwargs_source_cut,
-                variability_model=variability_model,
-                kwargs_variability_model=kwargs_variability,
-                light_profile=source_light_profile,
-                catalog_type=catalog_type,
-            )
-            self._source_model_type = "point_plus_extended"
-        elif source_type in ["supernovae_plus_galaxies", "supernovae"]:
-            from slsim.Sources.point_plus_extended_sources import (
-                PointPlusExtendedSources,
-            )
-            from slsim.Sources.point_sources import PointSources
-
-            self.path = os.path.dirname(__file__)
-            if catalog_type == "scotch":
-                if catalog_path is not None:
-                    new_path = catalog_path
-                else:
-                    new_path = (
-                        self.path + "/Sources/SupernovaeCatalog/scotch_host_data.fits"
-                    )
-                load_supernovae_data = Table.read(
-                    new_path,
-                    format="fits",
-                )
-                self._sources = PointPlusExtendedSources(
-                    load_supernovae_data,
-                    cosmo=cosmo,
-                    sky_area=self.source_sky_area,
-                    kwargs_cut=kwargs_source_cut,
-                    variability_model=variability_model,
-                    kwargs_variability_model=kwargs_variability,
-                    list_type="astropy_table",
-                    light_profile=source_light_profile,
-                    catalog_type=catalog_type,
-                )
-            elif catalog_type == "supernovae_sample":
-                new_path = self.path + "/Sources/SupernovaeCatalog/supernovae_data.pkl"
-                with open(new_path, "rb") as f:
-                    load_supernovae_data = pickle.load(f)
-                self._sources = PointPlusExtendedSources(
-                    load_supernovae_data,
-                    cosmo=cosmo,
-                    sky_area=self.source_sky_area,
-                    kwargs_cut=kwargs_source_cut,
-                    variability_model=variability_model,
-                    kwargs_variability_model=kwargs_variability,
-                    list_type="list",
-                    light_profile=source_light_profile,
-                )
-            else:
-                from slsim.Sources.SupernovaeCatalog.supernovae_sample import (
-                    SupernovaeCatalog,
-                )
-
-                suffixes = []
-                for key in kwargs_variability:
-                    if key.startswith("ps_mag_"):
-                        suffixes.append(key.split("ps_mag_")[1])
-                    elif len(key) == 1:
-                        suffixes.append(key)
-                supernovae_catalog_class = SupernovaeCatalog(
-                    sn_type=sn_type,
-                    band_list=suffixes,
-                    lightcurve_time=lightcurve_time,
-                    absolute_mag=None,
-                    absolute_mag_band=sn_absolute_mag_band,
-                    mag_zpsys=sn_absolute_zpsys,
-                    cosmo=cosmo,
-                    skypy_config=skypy_config,
-                    sky_area=self.source_sky_area,
-                    sn_modeldir=sn_modeldir,
-                )
-                if source_type == "supernovae":
-                    supernovae_sample = supernovae_catalog_class.supernovae_catalog(
-                        host_galaxy=False, lightcurve=False
-                    )
-                    self._sources = PointSources(
-                        supernovae_sample,
-                        cosmo=cosmo,
-                        sky_area=self.source_sky_area,
-                        kwargs_cut=kwargs_source_cut,
-                        variability_model=variability_model,
-                        kwargs_variability_model=kwargs_variability,
-                        light_profile=source_light_profile,
-                    )
-                else:
-                    supernovae_sample = supernovae_catalog_class.supernovae_catalog(
-                        host_galaxy=True, lightcurve=False
-                    )
-                    self._sources = PointPlusExtendedSources(
-                        supernovae_sample,
-                        cosmo=cosmo,
-                        sky_area=self.source_sky_area,
-                        kwargs_cut=kwargs_source_cut,
-                        variability_model=variability_model,
-                        kwargs_variability_model=kwargs_variability,
-                        list_type="astropy_table",
-                        light_profile=source_light_profile,
-                    )
-            if source_type == "supernovae":
-                self._source_model_type = "point_source"
-            else:
-                self._source_model_type = "point_plus_extended"
-        else:
-            raise ValueError("source_type %s is not supported" % source_type)
+        self._lens_galaxies = deflector_population
+        self._sources = source_population
 
         self._factor_source = self.f_sky.to_value(
             "deg2"
-        ) / self.source_sky_area.to_value("deg2")
+        ) / self._sources._sky_area.to_value("deg2")
         self._factor_deflector = self.f_sky.to_value(
             "deg2"
-        ) / self.deflector_sky_area.to_value("deg2")
+        ) / self._lens_galaxies._sky_area.to_value("deg2")
         self.los_config = los_config
         if self.los_config is None:
             self.los_config = LOSConfig()
