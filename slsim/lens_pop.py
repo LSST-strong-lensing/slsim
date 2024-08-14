@@ -1,42 +1,14 @@
-import astropy.cosmology
-from slsim.ParamDistributions.los_config import LOSConfig
-import os
-import pickle
-import astropy
 import sncosmo
-
 import numpy as np
-from astropy.table import Table
-from typing import Optional, Union
 
 from slsim.lens import Lens
+from typing import Optional, Union
+from astropy.cosmology import Cosmology
 from slsim.lens import theta_e_when_source_infinity
-from slsim.lensed_population_base import LensedPopulationBase
-from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
-from slsim.Deflectors.deflectors_base import DeflectorsBase
 from slsim.Sources.source_pop_base import SourcePopBase
-
-# """
-# :param cosmo: cosmology object
-# :type cosmo: `~astropy.cosmology.FLRW`
-# :param lightcurve_time: observation time array for lightcurve in unit of days.
-# :type lightcurve_time: array
-# :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
-# :type sn_type: str
-# :param sn_absolute_mag_band: Band used to normalize to absolute magnitude
-# :type sn_absolute_mag_band: str or `~sncosmo.Bandpass`
-# :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
-# :type sn_absolute_zpsys: str
-# :param los_config: configuration for line of sight distribution
-# :type los_config: LOSConfig instance
-# :param sn_modeldir: sn_modeldir is the path to the directory containing files
-#     needed to initialize the sncosmo.model class. For example,
-#     sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can
-#     be downloaded from https://github.com/LSST-strong-lensing/data_public .
-#     For more detail, please look at the documentation of RandomizedSupernovae
-#     class.
-# :type sn_modeldir: str
-# """
+from slsim.ParamDistributions.los_config import LOSConfig
+from slsim.Deflectors.deflectors_base import DeflectorsBase
+from slsim.lensed_population_base import LensedPopulationBase
 
 
 class LensPop(LensedPopulationBase):
@@ -46,7 +18,7 @@ class LensPop(LensedPopulationBase):
         self,
         deflector_population: DeflectorsBase,
         source_population: SourcePopBase,
-        cosmo: Optional[astropy.cosmology.Cosmology] = None,
+        cosmo: Optional[Cosmology] = None,
         lightcurve_time: Optional[np.ndarray] = None,
         sn_type: Optional[str] = None,
         sn_absolute_mag_band: Optional[Union[str, sncosmo.Bandpass]] = None,
@@ -58,8 +30,8 @@ class LensPop(LensedPopulationBase):
         Args:
             deflector_population (DeflectorsBase): Deflector population as an instance of a DeflectorsBase subclass.
             source_population (SourcePopBase): Source population as an instance of a SourcePopBase subclass
-            cosmo (Optional[astropy.cosmology.Cosmology], optional): AstroPy Cosmology instance. If None, defaults to flat LCDM
-                                                                     with h0=0.7 and Om0=0.3. Defaults to None.
+            cosmo (Optional[Cosmology], optional): AstroPy Cosmology instance. If None, defaults to flat LCDM with h0=0.7 and Om0=0.3.
+                                                   Defaults to None.
             lightcurve_time (Optional[np.ndarray], optional): Lightcurve observation time array in units of days. Defaults to None.
             sn_type (Optional[str], optional): Supernova type (Ia, Ib, Ic, IIP, etc.). Defaults to None.
             sn_absolute_mag_band (Optional[Union[str,sncosmo.Bandpass]], optional): Band used to normalize to absolute magnitude.
