@@ -1,9 +1,13 @@
+import astropy.cosmology
 from slsim.ParamDistributions.los_config import LOSConfig
 import os
 import pickle
+import astropy
+import sncosmo
 
 import numpy as np
 from astropy.table import Table
+from typing import Optional, Union
 
 from slsim.lens import Lens
 from slsim.lens import theta_e_when_source_infinity
@@ -11,6 +15,28 @@ from slsim.lensed_population_base import LensedPopulationBase
 from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 from slsim.Deflectors.deflectors_base import DeflectorsBase
 from slsim.Sources.source_pop_base import SourcePopBase
+
+# """
+# :param cosmo: cosmology object
+# :type cosmo: `~astropy.cosmology.FLRW`
+# :param lightcurve_time: observation time array for lightcurve in unit of days.
+# :type lightcurve_time: array
+# :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
+# :type sn_type: str
+# :param sn_absolute_mag_band: Band used to normalize to absolute magnitude
+# :type sn_absolute_mag_band: str or `~sncosmo.Bandpass`
+# :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
+# :type sn_absolute_zpsys: str
+# :param los_config: configuration for line of sight distribution
+# :type los_config: LOSConfig instance
+# :param sn_modeldir: sn_modeldir is the path to the directory containing files
+#     needed to initialize the sncosmo.model class. For example,
+#     sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can
+#     be downloaded from https://github.com/LSST-strong-lensing/data_public .
+#     For more detail, please look at the documentation of RandomizedSupernovae
+#     class.
+# :type sn_modeldir: str
+# """
 
 
 class LensPop(LensedPopulationBase):
@@ -20,107 +46,42 @@ class LensPop(LensedPopulationBase):
         self,
         deflector_population: DeflectorsBase,
         source_population: SourcePopBase,
-        deflector_type="elliptical",
-        source_type="galaxies",
-        kwargs_deflector_cut=None,
-        kwargs_source_cut=None,
-        kwargs_quasars=None,
-        kwargs_quasars_galaxies=None,
-        variability_model=None,
-        kwargs_variability=None,
-        kwargs_mass2light=None,
-        skypy_config=None,
-        slhammocks_config=None,
-        sky_area=None,
-        source_sky_area=None,
-        deflector_sky_area=None,
-        filters=None,
-        cosmo=None,
-        source_light_profile="single_sersic",
-        catalog_type="skypy",
-        catalog_path=None,
-        lightcurve_time=None,
-        sn_type=None,
-        sn_absolute_mag_band=None,
-        sn_absolute_zpsys=None,
-        los_config=None,
-        sn_modeldir=None,
+        cosmo: Optional[astropy.cosmology.Cosmology] = None,
+        lightcurve_time: Optional[np.ndarray] = None,
+        sn_type: Optional[str] = None,
+        sn_absolute_mag_band: Optional[Union[str, sncosmo.Bandpass]] = None,
+        sn_absolute_zpsys: Optional[str] = None,
+        los_config: Optional[LOSConfig] = None,
+        sn_modeldir: Optional[str] = None,
     ):
         """
-
-        :param deflector_type: type of the lens
-        :type deflector_type: string
-        :param source_type: type of the source
-        :type source_type: string
-        :param kwargs_deflector_cut: cuts on the deflector to be excluded in the sample
-        :type kwargs_deflector_cut: dict
-        :param kwargs_source_cut: cuts on the source to be excluded in the sample
-        :type kwargs_source_cut: dict
-        :param kwargs_quasars: a dict of keyword arguments which is an input for
-         quasar_catalog. Please look at quasar_catalog/simple_quasar.py.
-        :param variability_model: keyword for variability model to be used. This is an
-         input for the Variability class.
-        :type variability_model: str
-        :param kwargs_variability: keyword arguments for the variability of a source.
-         This is associated with an input for Variability class.
-        :type kwargs_variability: list of str
-        :param skypy_config: path to SkyPy configuration yaml file
-        :type skypy_config: string
-        :param slhammocks_config: path to the deflector population csv file for 'halo-model'
-        :type slhammocks_config: string
-        :param sky_area: Sky area over which lens population will be simulated. If
-         sky_area is not None, number of source sample and deflector sample within a
-         source_sky_area and deflector_sky_area will be scaled to the sky_area.
-         This will allow us to simulate lens population over a large sky area without
-         further significant computational cost.
-        :param source_sky_area: Sky area over which sources are sampled. Must be in
-         units of solid angle. If None, source_sky_area will be equal to sky_area.
-        :type source_sky_area: `~astropy.units.Quantity`
-        :param deflector_sky_area: Sky area over which deflectors are sampled. Must be
-         in units of solid angle. If None, deflcetor_sky_area will be equal to sky_area.
-        :type deflector_sky_area: `~astropy.units.Quantity`
-        :type sky_area: `~astropy.units.Quantity`
-        :param filters: filters for SED integration
-        :type filters: list of strings or None
-        :param cosmo: cosmology object
-        :type cosmo: `~astropy.cosmology.FLRW`
-        :param source_light_profile: keyword for number of sersic profile to use in
-         source light model. It is necessary to recognize quantities given in the source
-         catalog.
-        :type source_light_profile: str . Either "single" or "double" .
-        :param catalog_type: type of the catalog. If someone wants to use scotch
-         catalog, they need to specify it.
-        :type catalog_type: str. eg: "scotch"
-        :param catalog_path: path to the source catalog. If None, existing source
-         catalog within the slsim will be used. We have used small subset of scotch
-         catalog. So, if one wants to use full scotch catalog, they can set path to
-         their path to local drive.
-        :param lightcurve_time: observation time array for lightcurve in unit of days.
-        :type lightcurve_time: array
-        :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
-        :type sn_type: str
-        :param sn_absolute_mag_band: Band used to normalize to absolute magnitude
-        :type sn_absolute_mag_band: str or `~sncosmo.Bandpass`
-        :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
-        :type sn_absolute_zpsys: str
-        :param los_config: configuration for line of sight distribution
-        :type los_config: LOSConfig instance
-        :param sn_modeldir: sn_modeldir is the path to the directory containing files
-         needed to initialize the sncosmo.model class. For example,
-         sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can
-         be downloaded from https://github.com/LSST-strong-lensing/data_public .
-         For more detail, please look at the documentation of RandomizedSupernovae
-         class.
-        :type sn_modeldir: str
+        Args:
+            deflector_population (DeflectorsBase): Deflector population as an instance of a DeflectorsBase subclass.
+            source_population (SourcePopBase): Source population as an instance of a SourcePopBase subclass
+            cosmo (Optional[astropy.cosmology.Cosmology], optional): AstroPy Cosmology instance. If None, defaults to flat LCDM
+                                                                     with h0=0.7 and Om0=0.3. Defaults to None.
+            lightcurve_time (Optional[np.ndarray], optional): Lightcurve observation time array in units of days. Defaults to None.
+            sn_type (Optional[str], optional): Supernova type (Ia, Ib, Ic, IIP, etc.). Defaults to None.
+            sn_absolute_mag_band (Optional[Union[str,sncosmo.Bandpass]], optional): Band used to normalize to absolute magnitude.
+                                                                                    Defaults to None.
+            sn_absolute_zpsys (Optional[str], optional): Zero point system, either AB or Vega, with None defaulting to AB.
+                                                         Defaults to None.
+            los_config (Optional[LOSConfig], optional): Configuration for line of sight distribution. Defaults to None.
+            sn_modeldir (Optional[str], optional): sn_modeldir is the path to the directory containing files needed to initialize
+                                                   the sncosmo.model class. For example, sn_modeldir =
+                                                   'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can be downloaded
+                                                   from https://github.com/LSST-strong-lensing/data_public. For more detail,
+                                                   please look at the documentation of RandomizedSupernovae class. Defaults to None.
         """
+
         super().__init__(
-            sky_area,
             cosmo,
             lightcurve_time,
             sn_type,
             sn_absolute_mag_band,
             sn_absolute_zpsys,
             sn_modeldir,
+            sky_area=None,
         )
         self.cosmo = cosmo
         self._lens_galaxies = deflector_population
