@@ -144,10 +144,10 @@ class Source(object):
                                 kwargs_for_variability[label] = self.source_dict[
                                     label
                                 ].data[0]
-                        driving_dict = {
-                            **self.source_dict["kwargs_agn_model"].data[0][0],
-                            **kwargs_for_variability,
-                        }
+                        # driving_dict = {
+                        #    **self.source_dict["kwargs_agn_model"].data[0][0],
+                        #    **kwargs_for_variability,
+                        # }
 
                         # if self.intrinsic_driving_variability_model == "light_curve":
                         #
