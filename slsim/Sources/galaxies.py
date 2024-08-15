@@ -8,6 +8,7 @@ from slsim.Util.param_util import average_angular_size, axis_ratio, eccentricity
 from lenstronomy.Util import constants
 
 
+# TODO: Use type to determine galaxy_list type
 class Galaxies(SourcePopBase):
     """Class describing elliptical galaxies."""
 
