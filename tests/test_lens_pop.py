@@ -196,7 +196,6 @@ def test_supernovae_plus_galaxies_lens_pop_instance():
 
 def test_supernovae_plus_galaxies_lens_pop_instance_2():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-    sky_area = Quantity(value=0.3, unit="deg2")
     deflector_sky_area = Quantity(value=0.1, unit="deg2")
     source_sky_area = Quantity(value=0.2, unit="deg2")
 
