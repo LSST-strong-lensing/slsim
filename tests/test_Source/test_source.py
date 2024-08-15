@@ -223,6 +223,8 @@ class TestSource:
 
         g_mags = self.source11.point_source_magnitude("g")
         z_mags = self.source11.point_source_magnitude("z")
+        assert np.sum(g_mags) > 0
+        assert np.sum(z_mags) > 0
 
         self.source = Source(
             self.source_dict,

@@ -1,7 +1,4 @@
 from astropy import cosmology
-from slsim.Sources.SourceVariability.accretion_disk_reprocessing import (
-    AccretionDiskReprocessing,
-)
 from slsim.Sources.SourceVariability.variability import Variability
 from speclite.filters import load_filters
 from numpy import random

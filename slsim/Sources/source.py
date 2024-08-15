@@ -2,9 +2,6 @@ from slsim.Sources.SourceVariability.variability import (
     Variability,
     reprocess_with_lamppost_model,
 )
-from slsim.Sources.SourceVariability.accretion_disk_reprocessing import (
-    AccretionDiskReprocessing,
-)
 import numpy as np
 
 # from slsim.Sources.simple_supernova_lightcurve import SimpleSupernovaLightCurve
@@ -165,16 +162,6 @@ class Source(object):
                             driving_light_curve = Variability(
                                 self.intrinsic_driving_variability_model, **driving_dict
                             )
-
-                        time_array = np.linspace(
-                            np.min(driving_dict["light_curve"]["MJD"]),
-                            np.max(driving_dict["light_curve"]["MJD"]),
-                            int(
-                                np.max(driving_dict["light_curve"]["MJD"])
-                                - int(np.min(driving_dict["light_curve"]["MJD"]))
-                                - 1
-                            ),
-                        )
 
                         # This is lsst filters, hard coded in for now. Fix later.
                         filters = ["u", "g", "r", "i", "z", "y"]

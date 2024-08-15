@@ -1,7 +1,6 @@
 import numpy as np
 import astropy.constants as const
 import astropy.units as u
-from astropy.table import Column
 from astropy import cosmology
 from scipy import signal, interpolate
 from slsim.Util.astro_util import (
