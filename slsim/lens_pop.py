@@ -126,7 +126,7 @@ class LensPop(LensedPopulationBase):
         """
         num_sources = self.source_number
         num_sources_tested_mean = (testarea * num_sources) / (
-            12960000 * self._factor_source * self.source_sky_area.to_value("deg2")
+            12960000 * self._factor_source * self._sources._sky_area.to_value("deg2")
         )
         return num_sources_tested_mean
 
