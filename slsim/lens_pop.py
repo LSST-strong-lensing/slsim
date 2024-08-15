@@ -122,8 +122,8 @@ class LensPop(LensedPopulationBase):
     def get_num_sources_tested_mean(self, testarea):
         """Compute the mean of source galaxies needed to be tested within the test area.
 
-        num_sources_tested_mean/ testarea = num_sources/ sky_area; testarea is in units of
-        arcsec^2, f_sky is in units of deg^2. 1 deg^2 = 12960000 arcsec^2
+        num_sources_tested_mean/ testarea = num_sources/ sky_area; testarea is in units
+        of arcsec^2, f_sky is in units of deg^2. 1 deg^2 = 12960000 arcsec^2
         """
         num_sources = self.source_number
         num_sources_tested_mean = (testarea * num_sources) / (
