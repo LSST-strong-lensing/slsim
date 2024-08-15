@@ -44,7 +44,7 @@ class PointSources(SourcePopBase):
         :param list_type: type of the format of the source catalog. It should be either
          astropy_table or list of astropy table.
         """
-        self.source_type = "point"
+
         self.n = len(point_source_list)
         self.light_profile = light_profile
         if self.light_profile is not None:
@@ -65,6 +65,7 @@ class PointSources(SourcePopBase):
             variability_model=variability_model,
             kwargs_variability_model=kwargs_variability_model,
         )
+        self.source_type = "point_source"
 
     @property
     def source_number(self):
