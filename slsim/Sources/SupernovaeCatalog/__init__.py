@@ -1,0 +1,1 @@
+from .supernovae_sample import SupernovaeCatalog as SupernovaeCatalog

@@ -4,3 +4,4 @@ from .point_plus_extended_sources import (
     PointPlusExtendedSources as PointPlusExtendedSources,
 )
 from . import QuasarCatalog as QuasarCatalog
+from . import SupernovaeCatalog as SupernovaeCatalog
