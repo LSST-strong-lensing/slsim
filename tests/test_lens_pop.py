@@ -1,23 +1,52 @@
-import numpy as np
 import pytest
-from astropy.cosmology import FlatLambdaCDM
-from astropy.units import Quantity
 
+import numpy as np
+import slsim.Sources as sources
+import slsim.Pipelines as pipelines
+import slsim.Deflectors as deflectors
+
+from astropy.units import Quantity
+from astropy.cosmology import FlatLambdaCDM
 from slsim.lens_pop import LensPop
 from slsim.lens_pop import draw_test_area
 
 
 def create_lens_pop_instance(return_kext=False):
+
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     sky_area = Quantity(value=0.05, unit="deg2")
+
     kwargs_deflector_cut = {"band": "g", "band_max": 28, "z_min": 0.01, "z_max": 2.5}
     kwargs_source_cut = {"band": "g", "band_max": 28, "z_min": 0.1, "z_max": 5.0}
-    return LensPop(
+
+    galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
+        skypy_config=None,
         sky_area=sky_area,
-        cosmo=cosmo,
-        kwargs_deflector_cut=kwargs_deflector_cut,
-        kwargs_source_cut=kwargs_source_cut,
+        filters=None,
     )
+    lens_galaxies = deflectors.EllipticalLensGalaxies(
+        galaxy_list=galaxy_simulation_pipeline.red_galaxies,
+        kwargs_cut=kwargs_deflector_cut,
+        kwargs_mass2light={},
+        cosmo=cosmo,
+        sky_area=sky_area,
+    )
+
+    source_galaxies = sources.Galaxies(
+        galaxy_list=galaxy_simulation_pipeline.blue_galaxies,
+        kwargs_cut=kwargs_source_cut,
+        cosmo=cosmo,
+        sky_area=sky_area,
+        catalog_type="skypy",
+    )
+
+    lenspop = LensPop(
+        deflector_population=lens_galaxies,
+        source_population=source_galaxies,
+        cosmo=cosmo,
+    )
+
+    return lenspop
 
 
 @pytest.fixture
