@@ -91,7 +91,7 @@ class LensPop(LensedPopulationBase):
                 sn_absolute_mag_band=self.sn_absolute_mag_band,
                 sn_absolute_zpsys=self.sn_absolute_zpsys,
                 cosmo=self.cosmo,
-                source_type=self._source_model_type,
+                source_type=self._sources.source_type,
                 light_profile=self._sources.light_profile,
                 lightcurve_time=self.lightcurve_time,
                 los_config=self.los_config,
