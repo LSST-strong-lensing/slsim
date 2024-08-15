@@ -19,6 +19,7 @@ class LensPop(LensedPopulationBase):
         deflector_population: DeflectorsBase,
         source_population: SourcePopBase,
         cosmo: Optional[Cosmology] = None,
+        sky_area: Optional[float] = None,
         lightcurve_time: Optional[np.ndarray] = None,
         sn_type: Optional[str] = None,
         sn_absolute_mag_band: Optional[Union[str, sncosmo.Bandpass]] = None,
@@ -47,7 +48,7 @@ class LensPop(LensedPopulationBase):
         """
 
         super().__init__(
-            sky_area=None,
+            sky_area=sky_area,
             cosmo=cosmo,
             lightcurve_time=lightcurve_time,
             sn_type=sn_type,
@@ -59,10 +60,10 @@ class LensPop(LensedPopulationBase):
         self._lens_galaxies = deflector_population
         self._sources = source_population
 
-        self._factor_source = self.f_sky.to_value(
+        self._factor_source = self.sky_area.to_value(
             "deg2"
         ) / self._sources.sky_area.to_value("deg2")
-        self._factor_deflector = self.f_sky.to_value(
+        self._factor_deflector = self.sky_area.to_value(
             "deg2"
         ) / self._lens_galaxies.sky_area.to_value("deg2")
         self.los_config = los_config
@@ -121,7 +122,7 @@ class LensPop(LensedPopulationBase):
     def get_num_sources_tested_mean(self, testarea):
         """Compute the mean of source galaxies needed to be tested within the test area.
 
-        num_sources_tested_mean/ testarea = num_sources/ f_sky; testarea is in units of
+        num_sources_tested_mean/ testarea = num_sources/ sky_area; testarea is in units of
         arcsec^2, f_sky is in units of deg^2. 1 deg^2 = 12960000 arcsec^2
         """
         num_sources = self.source_number
