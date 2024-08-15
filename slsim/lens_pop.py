@@ -183,7 +183,7 @@ class LensPop(LensedPopulationBase):
                         sn_absolute_zpsys=self.sn_absolute_zpsys,
                         cosmo=self.cosmo,
                         test_area=test_area,
-                        source_type=self._source_model_type,
+                        source_type=self._sources.source_type,
                         los_config=self.los_config,
                         light_profile=self._sources.light_profile,
                         lightcurve_time=self.lightcurve_time,
