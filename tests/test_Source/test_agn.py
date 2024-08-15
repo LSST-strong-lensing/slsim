@@ -4,11 +4,9 @@ from astropy import cosmology
 import pytest
 
 
-
-
 intrinsic_light_curve = {
-    "MJD":np.linspace(1, 500, 500),
-    "ps_mag_intrinsic":10+np.sin(np.linspace(1, 500, 500) * np.pi / 30)
+    "MJD": np.linspace(1, 500, 500),
+    "ps_mag_intrinsic": 10 + np.sin(np.linspace(1, 500, 500) * np.pi / 30),
 }
 
 agn_params = {
@@ -20,9 +18,9 @@ agn_params = {
     "r_resolution": 1000,
     "eddington_ratio": 0.5,
     "corona_height": 10,
-    "driving_variability":"intrinsic_light_curve",
-    "intrinsic_light_curve":intrinsic_light_curve,
-    "speclite_filter":"lsst2023-i"
+    "driving_variability": "intrinsic_light_curve",
+    "intrinsic_light_curve": intrinsic_light_curve,
+    "speclite_filter": "lsst2023-i",
 }
 i_band_mag = 20
 redshift = 1
@@ -38,7 +36,7 @@ def test_agn_init():
             "black_hole_mass_exponent": 8.0,
             "black_hole_spin": 0.5,
             "inclination_angle": 0,
-            "driving_variability":"intrinsic_light_curve"
+            "driving_variability": "intrinsic_light_curve",
         }
 
         Agn(i_band_mag, redshift, cosmo=cosmo, **less_params)
@@ -52,7 +50,7 @@ def test_agn_init():
             "r_out": 1000,
             "r_resolution": 1000,
             "eddington_ratio": 0.1,
-            "driving_variability":"intrinsic_light_curve"
+            "driving_variability": "intrinsic_light_curve",
         }
 
         Agn(i_band_mag, redshift, cosmo=cosmo, **unsupported_disk_kwargs)

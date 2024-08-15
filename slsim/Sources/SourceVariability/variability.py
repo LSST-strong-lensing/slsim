@@ -75,7 +75,6 @@ class Variability(object):
         elif self.variability_model == "lamppost_reprocessed":
             parse_kwargs_for_lamppost_reprocessed_model(self)
 
-
             self.accretion_disk_reprocessor = AccretionDiskReprocessing(
                 "lamppost", **self.agn_kwargs
             )
@@ -86,7 +85,7 @@ class Variability(object):
             ):
                 self.accretion_disk_reprocessor.define_intrinsic_signal(
                     time_array=self.signal_kwargs["time_array"],
-                    magnitude_array=self.signal_kwargs["magnitude_array"]
+                    magnitude_array=self.signal_kwargs["magnitude_array"],
                 )
             else:
                 driving_signal = Variability(

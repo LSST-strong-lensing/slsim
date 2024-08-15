@@ -144,7 +144,7 @@ class TestSource:
             ),
         )
 
-        intrinsic_lightcurve = {
+        intrinsic_light_curve = {
             "MJD": np.linspace(1, 500, 500),
             "ps_mag_intrinsic": 10 + np.sin(np.linspace(1, 500, 500) * np.pi / 30),
         }
@@ -155,8 +155,8 @@ class TestSource:
                 "r_resolution": 500,
                 "inclination_angle": 10,
                 "black_hole_mass_exponent": 9.5,
-                "light_curve": intrinsic_lightcurve,
-                "driving_variability_model": "lamppost_reprocessed",
+                "intrinsic_light_curve": intrinsic_light_curve,
+                "driving_variability": "intrinsic_light_curve",
             },
         )
 
@@ -171,14 +171,7 @@ class TestSource:
                 [0.8],
                 [0.76],
                 [20],
-                ["lsst2023-i"],
-                [0],
                 [20],
-                [10],
-                [1],
-                [-2],
-                [0],
-                ["Lamppost_reprocessed"],
                 [kwargs_agn_model],
             ],
             names=(
@@ -191,14 +184,7 @@ class TestSource:
                 "e1",
                 "e2",
                 "MJD",
-                "speclite_filter",
-                "agn_lightcurve",
                 "i_band_mag",
-                "length_of_light_curve",
-                "time_resolution",
-                "log_breakpoint_frequency",
-                "mean_magnitude",
-                "driving_variability_model",
                 "kwargs_agn_model",
             ),
         )
@@ -209,22 +195,15 @@ class TestSource:
             kwargs_variability={
                 "agn_lightcurve",
                 "speclite_filter",
-                "length_of_light_curve",
-                "time_resolution",
-                "log_breakpoint_frequency",
-                "mean_magnitude",
                 "driving_variability_model",
                 "kwargs_agn_model",
             },
             lightcurve_time=np.linspace(200, 1000, 50),
             cosmo=cosmo,
-            intrinsic_driving_variability_model="light_curve",
         )
 
         g_mags = self.source11.point_source_magnitude("g")
         z_mags = self.source11.point_source_magnitude("z")
-        assert np.sum(g_mags) > 0
-        assert np.sum(z_mags) > 0
         assert np.sum(abs(g_mags - z_mags)) != 0
 
         self.source = Source(

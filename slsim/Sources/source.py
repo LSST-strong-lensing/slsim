@@ -28,7 +28,6 @@ class Source(object):
         cosmo=None,
         lightcurve_time=None,
         sn_modeldir=None,
-        intrinsic_driving_variability_model=None,
     ):
         """
         :param source_dict: Source properties
@@ -58,12 +57,6 @@ class Source(object):
         :type sn_modeldir: str
         :param kwargs_agn_model: optional dictionary containing parameters to set up an AGN
          model. kwargs may be found in the agn class.
-        :param intrinsic_driving_variability_model: kwargs used to define the driving signal
-         within the lamppost model for AGN. This may be any user defined light curve or variability
-         class light curve. kwargs_variability will be used to define this driving signal.
-         Note, do not use 'lamppost_reprocessed' due to the fact that this argument sets up
-         the intrinsic signal and not the observed signal.
-
         """
         self.source_dict = source_dict
         self.variability_model = variability_model
@@ -74,7 +67,6 @@ class Source(object):
         self.cosmo = cosmo
         self.lightcurve_time = lightcurve_time
         self.sn_modeldir = sn_modeldir
-        self.intrinsic_driving_variability_model = intrinsic_driving_variability_model
 
     @property
     def kwargs_variability_extracted(self):
@@ -137,13 +129,12 @@ class Source(object):
                         # Note the reprocessing kwargs also must be stored in this object.
                         # To get to the dictionary held in the Column object, ".data[0][0]"
                         # must be appended.
-                        kwargs_for_variability = {}
-
-                        for label in self.kwargs_variability:
-                            if label in self.source_dict.colnames:
-                                kwargs_for_variability[label] = self.source_dict[
-                                    label
-                                ].data[0]
+                        # kwargs_for_variability = {}
+                        #
+                        #
+                        # for label in self.kwargs_variability:
+                        #    if label in self.source_dict.colnames:
+                        #        kwargs_for_variability[label] = self.source_dict[label].data[0]
                         # driving_dict = {
                         #    **self.source_dict["kwargs_agn_model"].data[0][0],
                         #    **kwargs_for_variability,
