@@ -1,7 +1,11 @@
 from astropy import cosmology
-from slsim.Sources.SourceVariability.variability import Variability
+from slsim.Sources.SourceVariability.variability import(
+    Variability
+)
 from speclite.filters import load_filters
 from numpy import random
+from astropy.table import Column
+import numpy as np
 
 
 class Agn:
@@ -30,11 +34,18 @@ class Agn:
         self.cosmo = cosmo
 
         supported_accretion_disks = ["thin_disk"]
+        supported_driving_variability = ["intrinsic_light_curve"]
 
         if self.kwargs_model["accretion_disk"] not in supported_accretion_disks:
             raise ValueError(
                 "Given accretion disk model is not supported. \n Currently supported model(s) is(are):",
                 supported_accretion_disks,
+            )
+
+        if self.kwargs_model["driving_variability"] not in supported_driving_variability:
+            raise ValueError(
+                "Given driving variability is not supported. \n Currently supported model(s) is(are):",
+                supported_driving_variability,
             )
 
         required_thin_disk_params = [
@@ -44,32 +55,31 @@ class Agn:
             "r_out",
             "eddington_ratio",
         ]
-
+        
+        
         for kwarg in required_thin_disk_params:
             if kwarg not in self.kwargs_model:
                 raise ValueError("AGN parameters are not completely defined.")
 
-        if "light_curve" in self.kwargs_model:
-            self.kwargs_model["time_array"] = self.kwargs_model["light_curve"]["MJD"]
-            self.kwargs_model["magnitude_array"] = self.kwargs_model["light_curve"][
-                "ps_mag_intrinsic"
-            ]
+        if "intrinsic_light_curve" in self.kwargs_model:
+            self.kwargs_model["time_array"] = self.kwargs_model["intrinsic_light_curve"]["MJD"]
+            self.kwargs_model["magnitude_array"] = self.kwargs_model["intrinsic_light_curve"]["ps_mag_intrinsic"]
 
-        else:
-            raise ValueError(
-                "Driving light curve not defined. Include a time_array and magnitude_array"
-            )
 
-        # Create accretion disk object to get SED
-        # self.accretion_disk = AccretionDiskReprocessing(
+        # Create accretion disk object to get SED 
+        #self.accretion_disk = AccretionDiskReprocessing(
         #    "lamppost",
         #    **self.kwargs_model
-        # )
+        #)
 
         # Create variability object to allow reprocessing of intrinsic signal
         # the variable_disk object has an accretion disk reprocessor which we can
         # pull the SED from.
-        self.variable_disk = Variability("lamppost_reprocessed", **self.kwargs_model)
+        self.variable_disk = Variability(
+            "lamppost_reprocessed",
+            **self.kwargs_model
+        )
+
 
     def get_mean_mags(self, survey):
         """Method to get mean magnitudes for AGN in multiple filters. Creates an
@@ -104,6 +114,12 @@ class Agn:
                 )
             )
         return magnitudes
+        
+        
+basic_light_curve = {
+    "MJD":np.linspace(1, 100, 100),
+    "ps_mag_intrinsic":np.sin(np.linspace(1, 100, 100) * np.pi / 10)
+}
 
 
 agn_bounds_dict = {
@@ -113,6 +129,8 @@ agn_bounds_dict = {
     "r_out_bounds": [1000, 1000],
     "eddington_ratio_bounds": [0.01, 0.3],
     "supported_disk_models": ["thin_disk"],
+    "driving_variability": ["intrinsic_light_curve"],
+    "intrinsic_light_curve": [basic_light_curve]
 }
 
 
@@ -144,25 +162,28 @@ def RandomAgn(
         "r_out",
         "eddington_ratio",
     ]
-
+    
     # Assumes input_agn_bounds_dict is an astropy.Column from source object
-    if input_agn_bounds_dict.data[0] is not None:
+    if input_agn_bounds_dict is not None:
         for kwarg in required_agn_kwargs:
             if kwarg not in input_agn_bounds_dict:
-                input_agn_bounds_dict.data[kwarg + "_bounds"] = agn_bounds_dict[
-                    kwarg + "_bounds"
-                ]
+                input_agn_bounds_dict.data[
+                    kwarg+"_bounds"
+                ] = agn_bounds_dict[kwarg+"_bounds"]
     else:
         input_agn_bounds_dict = agn_bounds_dict
 
+    
     for kwarg in required_agn_kwargs:
         if kwarg not in kwargs_agn_model:
             kwargs_agn_model[kwarg] = random.uniform(
                 low=input_agn_bounds_dict[kwarg + "_bounds"][0],
                 high=input_agn_bounds_dict[kwarg + "_bounds"][1],
             )
+            
     if "accretion_disk" not in kwargs_agn_model.keys():
         kwargs_agn_model["accretion_disk"] = None
+        
     if (
         kwargs_agn_model["accretion_disk"]
         not in agn_bounds_dict["supported_disk_models"]
@@ -173,6 +194,27 @@ def RandomAgn(
         kwargs_agn_model["accretion_disk"] = agn_bounds_dict["supported_disk_models"][
             int(random_disk_type)
         ]
+        
+    if "driving_variability" not in kwargs_agn_model.keys():
+        random_variability_type = random.uniform(
+            low=0, high=len(agn_bounds_dict["driving_variability"])
+        )
+        kwargs_agn_model["driving_variability"] = agn_bounds_dict["driving_variability"][
+            int(random_variability_type)
+        ]
+
+    if "intrinsic_light_curve" not in kwargs_agn_model.keys():
+        random_light_curve = random.uniform(
+            low=0, high=len(agn_bounds_dict["intrinsic_light_curve"])
+        )
+        kwargs_agn_model["intrinsic_light_curve"] = agn_bounds_dict["intrinsic_light_curve"][
+            int(random_light_curve)
+        ]
+        kwargs_agn_model["intrinsic_light_curve"]["ps_mag_intrinsic"] += i_band_mag
+    
+
+
+        
     kwargs_agn_model["speclite_filter"] = "lsst2023-i"
 
     new_agn = Agn(
