@@ -40,6 +40,7 @@ class Galaxies(SourcePopBase):
         :type catalog_type: str. eg: "scotch" or None
         """
         super(Galaxies, self).__init__(cosmo=cosmo, sky_area=sky_area)
+        self.source_type = "extended"
         self.n = len(galaxy_list)
         self.light_profile = light_profile
         # add missing keywords in astropy.Table object
