@@ -47,13 +47,13 @@ class LensPop(LensedPopulationBase):
         """
 
         super().__init__(
-            cosmo,
-            lightcurve_time,
-            sn_type,
-            sn_absolute_mag_band,
-            sn_absolute_zpsys,
-            sn_modeldir,
             sky_area=None,
+            cosmo=cosmo,
+            lightcurve_time=lightcurve_time,
+            sn_type=sn_type,
+            sn_absolute_mag_band=sn_absolute_mag_band,
+            sn_absolute_zpsys=sn_absolute_zpsys,
+            sn_modeldir=sn_modeldir,
         )
         self.cosmo = cosmo
         self._lens_galaxies = deflector_population
@@ -64,7 +64,7 @@ class LensPop(LensedPopulationBase):
         ) / self._sources._sky_area.to_value("deg2")
         self._factor_deflector = self.f_sky.to_value(
             "deg2"
-        ) / self._lens_galaxies._sky_area.to_value("deg2")
+        ) / self._lens_galaxies.sky_area.to_value("deg2")
         self.los_config = los_config
         if self.los_config is None:
             self.los_config = LOSConfig()
