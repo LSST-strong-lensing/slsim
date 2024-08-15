@@ -1,6 +1,7 @@
 import numpy as np
 import astropy.constants as const
 import astropy.units as u
+from astropy.table import Column
 from astropy import cosmology
 from scipy import signal, interpolate
 from slsim.Util.astro_util import (
@@ -56,6 +57,7 @@ class AccretionDiskReprocessing(object):
                 "black_hole_spin": 0.0,
                 "eddington_ratio": 0.1,
             }
+
             for jj in default_lamppost_kwargs:
                 if jj not in self.kwargs_model:
                     print(
@@ -66,8 +68,8 @@ class AccretionDiskReprocessing(object):
                     )
                     self.kwargs_model[jj] = default_lamppost_kwargs[jj]
 
-        self.time_array = None
-        self.magnitude_array = None
+            self.time_array = None
+            self.magnitude_array = None
 
     def define_new_response_function(self, rest_frame_wavelength_in_nanometers):
         """Define a response function of the agn accretion disk to the flaring corona in
@@ -229,6 +231,7 @@ class AccretionDiskReprocessing(object):
                     len(response_function) * gravitational_radius_in_days
                 )
                 time_lag_axis = np.linspace(0, length_in_days, len(response_function))
+
         if length_in_days == 0:
             length_in_days += 1
             time_lag_axis = np.linspace(0, length_in_days, len(response_function))
@@ -240,6 +243,11 @@ class AccretionDiskReprocessing(object):
         tau_axis = np.linspace(0, int(time_lag_axis[-1]), int(time_lag_axis[-1]) + 1)
 
         interpolated_response_function = interpolation_of_response_function(tau_axis)
+
+        if isinstance(self.time_array[0], (list, np.ndarray)):
+            self.time_array[0] = self.time_array[-1][0]
+        if isinstance(self.magnitude_array[0], (list, np.ndarray)):
+            self.magnitude_array[0] = self.magnitude_array[-1][0]
 
         light_curve = {
             "MJD": np.array(self.time_array),
@@ -258,6 +266,7 @@ class AccretionDiskReprocessing(object):
         reprocessed_signal = signal.convolve(
             interpolated_signal, (interpolated_response_function), mode="full"
         )
+
         normalization = np.nansum(interpolated_response_function)
         if normalization == 0:
             reprocessed_signal = interpolated_signal

@@ -1,11 +1,18 @@
 from slsim.Sources.SourceVariability.variability import (
     Variability,
+    reprocess_with_lamppost_model,
+)
+from slsim.Sources.SourceVariability.accretion_disk_reprocessing import (
+    AccretionDiskReprocessing,
 )
 import numpy as np
 
 # from slsim.Sources.simple_supernova_lightcurve import SimpleSupernovaLightCurve
 from astropy.table import Column, Table
-from slsim.Sources import random_supernovae
+from slsim.Sources import (
+    random_supernovae,
+    agn,
+)
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 
 
@@ -24,6 +31,7 @@ class Source(object):
         cosmo=None,
         lightcurve_time=None,
         sn_modeldir=None,
+        intrinsic_driving_variability_model=None,
     ):
         """
         :param source_dict: Source properties
@@ -51,6 +59,14 @@ class Source(object):
          For more detail, please look at the documentation of RandomizedSupernovae
          class.
         :type sn_modeldir: str
+        :param kwargs_agn_model: optional dictionary containing parameters to set up an AGN
+         model. kwargs may be found in the agn class.
+        :param intrinsic_driving_variability_model: kwargs used to define the driving signal
+         within the lamppost model for AGN. This may be any user defined light curve or variability
+         class light curve. kwargs_variability will be used to define this driving signal.
+         Note, do not use 'lamppost_reprocessed' due to the fact that this argument sets up
+         the intrinsic signal and not the observed signal.
+
         """
         self.source_dict = source_dict
         self.variability_model = variability_model
@@ -61,6 +77,7 @@ class Source(object):
         self.cosmo = cosmo
         self.lightcurve_time = lightcurve_time
         self.sn_modeldir = sn_modeldir
+        self.intrinsic_driving_variability_model = intrinsic_driving_variability_model
 
     @property
     def kwargs_variability_extracted(self):
@@ -68,13 +85,18 @@ class Source(object):
             ##Here we prepare variability class on the basis of given
             # kwargs_variability.
             kwargs_variab_extracted = {}
-            kwargs_variability_list = ["supernovae_lightcurve"]
-            # With this condition we call lightcurve generator class and prepare
-            # variability class.
-            if any(
-                element in kwargs_variability_list
-                for element in list(self.kwargs_variability)
-            ):
+            kwargs_variability_list = ["supernovae_lightcurve", "agn_lightcurve"]
+
+            joint_set = set(kwargs_variability_list) & set(self.kwargs_variability)
+            for element in joint_set:
+
+                # With this condition we call lightcurve generator class and prepare
+                # variability class.
+                # if any(
+                #    element in kwargs_variability_list
+                #    for element in list(self.kwargs_variability)
+                # ):
+
                 z = self.source_dict["z"]
                 if self.cosmo is None:
                     raise ValueError(
@@ -82,15 +104,121 @@ class Source(object):
                         "provide a suitable astropy cosmology."
                     )
                 else:
-                    lightcurve_class = random_supernovae.RandomizedSupernova(
-                        sn_type=self.sn_type,
-                        redshift=z,
-                        absolute_mag=None,
-                        absolute_mag_band=self.sn_absolute_mag_band,
-                        mag_zpsys=self.sn_absolute_zpsys,
-                        cosmo=self.cosmo,
-                        modeldir=self.sn_modeldir,
-                    )
+                    if element == "supernovae_lightcurve":
+                        lightcurve_class = random_supernovae.RandomizedSupernova(
+                            sn_type=self.sn_type,
+                            redshift=z,
+                            absolute_mag=None,
+                            absolute_mag_band=self.sn_absolute_mag_band,
+                            mag_zpsys=self.sn_absolute_zpsys,
+                            cosmo=self.cosmo,
+                            modeldir=self.sn_modeldir,
+                        )
+
+                    elif element == "agn_lightcurve":
+
+                        optional_keys = ["random_seed", "input_agn_bounds_dict"]
+                        for opt_key in optional_keys:
+                            if opt_key not in self.source_dict.keys():
+                                self.source_dict[opt_key] = None
+
+                        agn_class = agn.RandomAgn(
+                            self.source_dict["i_band_mag"],
+                            self.source_dict["z"],
+                            cosmo=self.cosmo,
+                            random_seed=self.source_dict["random_seed"],
+                            input_agn_bounds_dict=self.source_dict[
+                                "input_agn_bounds_dict"
+                            ],
+                            **self.source_dict["kwargs_agn_model"].data[0][0]
+                        )
+
+                        # Fix to eventually give the user power to choose other surveys
+                        mean_magnitudes = agn_class.get_mean_mags("lsst")
+
+                        # Set driving signal to keep correlation between bands
+                        # Note the reprocessing kwargs also must be stored in this object.
+                        # To get to the dictionary held in the Column object, ".data[0][0]"
+                        # must be appended.
+                        kwargs_for_variability = {}
+
+                        for label in self.kwargs_variability:
+                            if label in self.source_dict.colnames:
+                                kwargs_for_variability[label] = self.source_dict[
+                                    label
+                                ].data[0]
+                        driving_dict = {
+                            **self.source_dict["kwargs_agn_model"].data[0][0],
+                            **kwargs_for_variability,
+                        }
+
+                        if self.intrinsic_driving_variability_model == "light_curve":
+
+                            driving_light_curve = Variability(
+                                self.intrinsic_driving_variability_model,
+                                **self.source_dict["kwargs_agn_model"].data[0][0][
+                                    "light_curve"
+                                ]
+                            )
+
+                        else:
+                            driving_light_curve = Variability(
+                                self.intrinsic_driving_variability_model, **driving_dict
+                            )
+
+                        time_array = np.linspace(
+                            np.min(driving_dict["light_curve"]["MJD"]),
+                            np.max(driving_dict["light_curve"]["MJD"]),
+                            int(
+                                np.max(driving_dict["light_curve"]["MJD"])
+                                - int(np.min(driving_dict["light_curve"]["MJD"]))
+                                - 1
+                            ),
+                        )
+
+                        # This is lsst filters, hard coded in for now. Fix later.
+                        filters = ["u", "g", "r", "i", "z", "y"]
+
+                        for index, band in enumerate(filters):
+
+                            filter_name = "ps_mag_" + band
+
+                            # Again, lsst filters hard coded in. Fix later.
+                            agn_class.variable_disk.reprocessing_kwargs[
+                                "speclite_filter"
+                            ] = ("lsst2023-" + band)
+
+                            agn_class.variable_disk.driving_signal_kwargs[
+                                "mean_magnitude"
+                            ] = mean_magnitudes[index]
+
+                            reprocessed_lightcurve = reprocess_with_lamppost_model(
+                                agn_class.variable_disk
+                            )
+
+                            times = reprocessed_lightcurve["MJD"]
+                            magnitudes = reprocessed_lightcurve[
+                                "ps_mag_lsst2023-" + band
+                            ]
+
+                            # Copied this column creation from below
+                            # but I am not 100% sure if necessary.
+                            new_column = Column(
+                                [float(min(magnitudes))], name=filter_name
+                            )
+                            # if index == 0:
+                            self._source_dict = Table(self.source_dict)
+                            self._source_dict.add_column(new_column)
+                            self.source_dict = self._source_dict[0]
+                            # else:
+                            #    self.source_dict.add_column(new_column)
+
+                            # Stores the variable light curve for each band
+                            kwargs_variab_extracted[band] = {
+                                "MJD": times,
+                                filter_name: magnitudes,
+                            }
+
                 for element in list(self.kwargs_variability):
                     # if lsst filter is being used
                     if element in [
@@ -123,7 +251,8 @@ class Source(object):
                             "MJD": times,
                             name: magnitudes,
                         }
-            elif "MJD" in self.kwargs_variability:
+
+            if "MJD" in self.kwargs_variability:
                 # With this condition we extract values for kwargs_variability from the
                 # given source dict and prepar variability class. Here, we expect
                 # lightcurve in a source catalog and kwargs_variability should contain
@@ -210,6 +339,7 @@ class Source(object):
         :return: Magnitude of the point source in the specified band
         :rtype: float
         """
+
         if not hasattr(self, "kwargs_variab_dict"):
             self.kwargs_variab_dict = self.kwargs_variability_extracted
         column_names = self.source_dict.colnames
@@ -222,9 +352,12 @@ class Source(object):
                 kwargs_variab_band = self.kwargs_variab_dict[band]
             else:
                 kwargs_variab_band = self.kwargs_variab_dict
+
             self.variability_class = Variability(
                 self.variability_model, **kwargs_variab_band
             )
+            print(self.variability_class.variability_at_time(np.linspace(1, 100, 100)))
+
         else:
             self.variability_class = None
         if image_observation_times is not None:
@@ -239,6 +372,7 @@ class Source(object):
                     "one of the variability models in your kwargs_variability."
                 )
         else:
+
             source_mag = self.source_dict[band_string]
             if (
                 isinstance(source_mag, np.ndarray)

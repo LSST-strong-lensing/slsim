@@ -2,6 +2,7 @@ from astropy import cosmology
 from slsim.Sources.SourceVariability.accretion_disk_reprocessing import (
     AccretionDiskReprocessing,
 )
+from slsim.Sources.SourceVariability.variability import Variability
 from speclite.filters import load_filters
 from numpy import random
 
@@ -39,16 +40,34 @@ class Agn:
                 supported_accretion_disks,
             )
 
-        thin_disk_params = [
+        required_thin_disk_params = [
             "black_hole_mass_exponent",
             "black_hole_spin",
             "inclination_angle",
             "r_out",
             "eddington_ratio",
         ]
-        for kwarg in thin_disk_params:
+
+        for kwarg in required_thin_disk_params:
             if kwarg not in self.kwargs_model:
                 raise ValueError("AGN parameters are not completely defined.")
+
+        if "light_curve" in self.kwargs_model:
+            self.kwargs_model["time_array"] = self.kwargs_model["light_curve"]["MJD"]
+            self.kwargs_model["magnitude_array"] = self.kwargs_model["light_curve"][
+                "ps_mag_intrinsic"
+            ]
+
+        # Create accretion disk object to get SED
+        # self.accretion_disk = AccretionDiskReprocessing(
+        #    "lamppost",
+        #    **self.kwargs_model
+        # )
+
+        # Create variability object to allow reprocessing of intrinsic signal
+        # the variable_disk object has an accretion disk reprocessor which we can
+        # pull the SED from.
+        self.variable_disk = Variability("lamppost_reprocessed", **self.kwargs_model)
 
     def get_mean_mags(self, survey):
         """Method to get mean magnitudes for AGN in multiple filters. Creates an
@@ -71,11 +90,10 @@ class Agn:
                 supported_surveys,
             )
 
-        accretion_disk = AccretionDiskReprocessing("lamppost", **self.kwargs_model)
         magnitudes = []
         for band in filters:
             magnitudes.append(
-                accretion_disk.determine_agn_luminosity_from_i_band_luminosity(
+                self.variable_disk.accretion_disk_reprocessor.determine_agn_luminosity_from_i_band_luminosity(
                     self.i_band_mag,
                     self.redshift,
                     mag_zero_point=0,
@@ -86,9 +104,8 @@ class Agn:
         return magnitudes
 
 
-# Include functionality to change the bounds selected from
 agn_bounds_dict = {
-    "black_hole_mass_exponent_bounds": [6.0, 11.0],
+    "black_hole_mass_exponent_bounds": [6.0, 10.0],
     "black_hole_spin_bounds": [-0.999, 0.999],
     "inclination_angle_bounds": [0, 90],
     "r_out_bounds": [1000, 1000],
@@ -101,7 +118,8 @@ def RandomAgn(
     i_band_mag,
     redshift,
     cosmo=cosmology.FlatLambdaCDM(H0=70, Om0=0.3),
-    seed=None,
+    random_seed=None,
+    input_agn_bounds_dict=None,
     **kwargs_agn_model
 ):
     """Generate a random agn.
@@ -114,8 +132,8 @@ def RandomAgn(
     :param kwargs_agn_model: Dictionary containing any fixed agn parameters. This will
         populate random agn parameters for keywords not given.
     """
-    if seed:
-        random.seed(seed)
+    if random_seed:
+        random.seed(random_seed)
 
     required_agn_kwargs = [
         "black_hole_mass_exponent",
@@ -124,11 +142,22 @@ def RandomAgn(
         "r_out",
         "eddington_ratio",
     ]
+
+    # Assumes input_agn_bounds_dict is an astropy.Column from source object
+    if input_agn_bounds_dict.data[0] is not None:
+        for kwarg in required_agn_kwargs:
+            if kwarg not in input_agn_bounds_dict:
+                input_agn_bounds_dict.data[kwarg + "_bounds"] = agn_bounds_dict[
+                    kwarg + "_bounds"
+                ]
+    else:
+        input_agn_bounds_dict = agn_bounds_dict
+
     for kwarg in required_agn_kwargs:
         if kwarg not in kwargs_agn_model:
             kwargs_agn_model[kwarg] = random.uniform(
-                low=agn_bounds_dict[kwarg + "_bounds"][0],
-                high=agn_bounds_dict[kwarg + "_bounds"][1],
+                low=input_agn_bounds_dict[kwarg + "_bounds"][0],
+                high=input_agn_bounds_dict[kwarg + "_bounds"][1],
             )
     if "accretion_disk" not in kwargs_agn_model.keys():
         kwargs_agn_model["accretion_disk"] = None
@@ -142,6 +171,7 @@ def RandomAgn(
         kwargs_agn_model["accretion_disk"] = agn_bounds_dict["supported_disk_models"][
             int(random_disk_type)
         ]
+    kwargs_agn_model["speclite_filter"] = "lsst2023-i"
 
     new_agn = Agn(
         i_band_mag,

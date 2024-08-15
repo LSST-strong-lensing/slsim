@@ -144,11 +144,92 @@ class TestSource:
             ),
         )
 
+        intrinsic_lightcurve = {
+            "MJD": np.linspace(1, 500, 500),
+            "ps_mag_intrinsic": 10 + np.sin(np.linspace(1, 500, 500) * np.pi / 30),
+        }
+        kwargs_agn_model = (
+            {
+                "r_out": 1000,
+                "corona_height": 10,
+                "r_resolution": 500,
+                "inclination_angle": 10,
+                "black_hole_mass_exponent": 9.5,
+                "light_curve": intrinsic_lightcurve,
+                "driving_variability_model": "lamppost_reprocessed",
+            },
+        )
+
+        self.source_dict5 = Table(
+            [
+                [0.5],
+                [23],
+                [24],
+                [22],
+                [4],
+                [0.35],
+                [0.8],
+                [0.76],
+                [20],
+                ["lsst2023-i"],
+                [0],
+                [20],
+                [10],
+                [1],
+                [-2],
+                [0],
+                ["Lamppost_reprocessed"],
+                [kwargs_agn_model],
+            ],
+            names=(
+                "z",
+                "mag_r",
+                "mag_g",
+                "mag_i",
+                "n_sersic",
+                "angular_size",
+                "e1",
+                "e2",
+                "MJD",
+                "speclite_filter",
+                "agn_lightcurve",
+                "i_band_mag",
+                "length_of_light_curve",
+                "time_resolution",
+                "log_breakpoint_frequency",
+                "mean_magnitude",
+                "driving_variability_model",
+                "kwargs_agn_model",
+            ),
+        )
+
+        self.source11 = Source(
+            self.source_dict5,
+            variability_model="light_curve",
+            kwargs_variability={
+                "agn_lightcurve",
+                "speclite_filter",
+                "length_of_light_curve",
+                "time_resolution",
+                "log_breakpoint_frequency",
+                "mean_magnitude",
+                "driving_variability_model",
+                "kwargs_agn_model",
+            },
+            lightcurve_time=np.linspace(200, 1000, 50),
+            cosmo=cosmo,
+            intrinsic_driving_variability_model="light_curve",
+        )
+
+        g_mags = self.source11.point_source_magnitude("g")
+        z_mags = self.source11.point_source_magnitude("z")
+
         self.source = Source(
             self.source_dict,
             variability_model="sinusoidal",
-            kwargs_variability={"amp", "freq"},
+            kwargs_variability=["amp", "freq"],
         )
+
         self.source2 = Source(
             source_dict2,
             variability_model="sinusoidal",
