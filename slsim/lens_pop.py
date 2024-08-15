@@ -61,7 +61,7 @@ class LensPop(LensedPopulationBase):
 
         self._factor_source = self.f_sky.to_value(
             "deg2"
-        ) / self._sources._sky_area.to_value("deg2")
+        ) / self._sources.sky_area.to_value("deg2")
         self._factor_deflector = self.f_sky.to_value(
             "deg2"
         ) / self._lens_galaxies.sky_area.to_value("deg2")
@@ -126,7 +126,7 @@ class LensPop(LensedPopulationBase):
         """
         num_sources = self.source_number
         num_sources_tested_mean = (testarea * num_sources) / (
-            12960000 * self._factor_source * self._sources._sky_area.to_value("deg2")
+            12960000 * self._factor_source * self._sources.sky_area.to_value("deg2")
         )
         return num_sources_tested_mean
 
