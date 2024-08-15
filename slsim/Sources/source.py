@@ -149,19 +149,19 @@ class Source(object):
                             **kwargs_for_variability,
                         }
 
-                        if self.intrinsic_driving_variability_model == "light_curve":
-
-                            driving_light_curve = Variability(
-                                self.intrinsic_driving_variability_model,
-                                **self.source_dict["kwargs_agn_model"].data[0][0][
-                                    "light_curve"
-                                ]
-                            )
-
-                        else:
-                            driving_light_curve = Variability(
-                                self.intrinsic_driving_variability_model, **driving_dict
-                            )
+                        # if self.intrinsic_driving_variability_model == "light_curve":
+                        #
+                        #    driving_light_curve = Variability(
+                        #        self.intrinsic_driving_variability_model,
+                        #        **self.source_dict["kwargs_agn_model"].data[0][0]["light_curve"]
+                        #    )
+                        #
+                        #
+                        # else:
+                        #    driving_light_curve = Variability(
+                        #        self.intrinsic_driving_variability_model,
+                        #        **driving_dict
+                        #    )
 
                         # This is lsst filters, hard coded in for now. Fix later.
                         filters = ["u", "g", "r", "i", "z", "y"]

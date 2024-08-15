@@ -55,6 +55,11 @@ class Agn:
                 "ps_mag_intrinsic"
             ]
 
+        else:
+            raise ValueError(
+                "Driving light curve not defined. Include a time_array and magnitude_array"
+            )
+
         # Create accretion disk object to get SED
         # self.accretion_disk = AccretionDiskReprocessing(
         #    "lamppost",
