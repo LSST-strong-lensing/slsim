@@ -57,21 +57,43 @@ def gg_lens_pop_instance():
 
 def test_pes_lens_pop_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+
     sky_area = Quantity(value=0.001, unit="deg2")
+
     kwargs_deflector_cut = {"z_min": 0.01, "z_max": 2.5}
     kwargs_source_cut = {"band": "g", "band_max": 26, "z_min": 0.1, "z_max": 5.0}
-    pes_lens_pop = LensPop(
-        deflector_type="all-galaxies",
-        source_type="quasar_plus_galaxies",
-        kwargs_deflector_cut=kwargs_deflector_cut,
-        kwargs_source_cut=kwargs_source_cut,
-        variability_model="sinusoidal",
-        kwargs_variability={"amp", "freq"},
-        kwargs_mass2light=None,
+
+    galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
         skypy_config=None,
         sky_area=sky_area,
+        filters=None,
+    )
+
+    lens_galaxies = deflectors.AllLensGalaxies(
+        red_galaxy_list=galaxy_simulation_pipeline.red_galaxies,
+        blue_galaxy_list=galaxy_simulation_pipeline.blue_galaxies,
+        kwargs_cut=kwargs_deflector_cut,
+        kwargs_mass2light={},
+        cosmo=cosmo,
+        sky_area=sky_area,
+    )
+
+    quasar_galaxies = sources.QuasarCatalog.quasar_galaxies_simple(**{})
+    source_galaxies = sources.PointPlusExtendedSources(
+        point_plus_extended_sources_list=quasar_galaxies,
+        cosmo=cosmo,
+        sky_area=sky_area,
+        kwargs_cut=kwargs_source_cut,
+        variability_model="sinusoidal",
+        kwargs_variability_model={"amp", "freq"},
+    )
+
+    pes_lens_pop = LensPop(
+        deflector_population=lens_galaxies,
+        source_population=source_galaxies,
         cosmo=cosmo,
     )
+
     kwargs_lens_cut = {}
     pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
     assert pes_lens_class._source_type == "point_plus_extended"
