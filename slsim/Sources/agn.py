@@ -164,7 +164,7 @@ def RandomAgn(
 
     if type(input_agn_bounds_dict) is Column:
         input_agn_bounds_dict = input_agn_bounds_dict.data[0]
-    if type(input_agn_bounds_dict) isinstance (list, np.ndarray):
+    if isinstance(input_agn_bounds_dict, (list, np.ndarray)):
         input_agn_bounds_dict = input_agn_bounds_dict[0]
 
     # Needs to work with Column and dict objects
