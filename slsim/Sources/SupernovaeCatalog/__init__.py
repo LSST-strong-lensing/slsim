@@ -1,1 +1,3 @@
-from .supernovae_sample import SupernovaeCatalog as SupernovaeCatalog
+from .supernovae_sample import SupernovaeCatalog
+
+__all__ = ["SupernovaeCatalog"]
