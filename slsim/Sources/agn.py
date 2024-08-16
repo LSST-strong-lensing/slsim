@@ -171,7 +171,7 @@ def RandomAgn(
                         kwarg + "_bounds"
                     ]
                 else:
-                    input_agn_bunds_dict[kwarg + "_bounds"] = agn_bounds_dict[
+                    input_agn_bounds_dict[kwarg + "_bounds"] = agn_bounds_dict[
                         kwarg + "_bounds"
                     ]
     else:
