@@ -162,13 +162,18 @@ def RandomAgn(
         "eddington_ratio",
     ]
 
-    # Assumes input_agn_bounds_dict is an astropy.Column from source object
+    # Needs to work with Column and dict objects
     if input_agn_bounds_dict is not None:
         for kwarg in required_agn_kwargs:
             if kwarg not in input_agn_bounds_dict:
-                input_agn_bounds_dict.data[kwarg + "_bounds"] = agn_bounds_dict[
-                    kwarg + "_bounds"
-                ]
+                if type(input_agn_bounds_dict) is Column:
+                    input_agn_bounds_dict.data[kwarg + "_bounds"] = agn_bounds_dict[
+                        kwarg + "_bounds"
+                    ]
+                else:
+                    input_agn_bunds_dict[kwarg + "_bounds"] = agn_bounds_dict[
+                        kwarg + "_bounds"
+                    ]
     else:
         input_agn_bounds_dict = agn_bounds_dict
 
