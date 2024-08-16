@@ -195,7 +195,6 @@ class TestSource:
             kwargs_variability={
                 "agn_lightcurve",
                 "speclite_filter",
-                "driving_variability_model",
                 "kwargs_agn_model",
             },
             lightcurve_time=np.linspace(200, 1000, 50),

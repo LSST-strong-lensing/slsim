@@ -125,36 +125,7 @@ class Source(object):
                         # Fix to eventually give the user power to choose other surveys
                         mean_magnitudes = agn_class.get_mean_mags("lsst")
 
-                        # Set driving signal to keep correlation between bands
-                        # Note the reprocessing kwargs also must be stored in this object.
-                        # To get to the dictionary held in the Column object, ".data[0][0]"
-                        # must be appended.
-                        # kwargs_for_variability = {}
-                        #
-                        #
-                        # for label in self.kwargs_variability:
-                        #    if label in self.source_dict.colnames:
-                        #        kwargs_for_variability[label] = self.source_dict[label].data[0]
-                        # driving_dict = {
-                        #    **self.source_dict["kwargs_agn_model"].data[0][0],
-                        #    **kwargs_for_variability,
-                        # }
-
-                        # if self.intrinsic_driving_variability_model == "light_curve":
-                        #
-                        #    driving_light_curve = Variability(
-                        #        self.intrinsic_driving_variability_model,
-                        #        **self.source_dict["kwargs_agn_model"].data[0][0]["light_curve"]
-                        #    )
-                        #
-                        #
-                        # else:
-                        #    driving_light_curve = Variability(
-                        #        self.intrinsic_driving_variability_model,
-                        #        **driving_dict
-                        #    )
-
-                        # This is lsst filters, hard coded in for now. Fix later.
+                        # These are lsst filters, hard coded in for now. Fix later.
                         filters = ["u", "g", "r", "i", "z", "y"]
 
                         for index, band in enumerate(filters):
