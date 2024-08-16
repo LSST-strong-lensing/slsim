@@ -162,18 +162,17 @@ def RandomAgn(
         "eddington_ratio",
     ]
 
+    if type(input_agn_bounds_dict) is Column:
+        input_agn_bounds_dict = input_agn_bounds_dict.data[0]
+
     # Needs to work with Column and dict objects
     if input_agn_bounds_dict is not None:
         for kwarg in required_agn_kwargs:
             if kwarg not in input_agn_bounds_dict:
-                if type(input_agn_bounds_dict) is Column:
-                    input_agn_bounds_dict.data[kwarg + "_bounds"] = agn_bounds_dict[
-                        kwarg + "_bounds"
-                    ]
-                else:
-                    input_agn_bounds_dict[kwarg + "_bounds"] = agn_bounds_dict[
-                        kwarg + "_bounds"
-                    ]
+                input_agn_bounds_dict[kwarg + "_bounds"] = agn_bounds_dict[
+                    kwarg + "_bounds"
+                ]
+
     else:
         input_agn_bounds_dict = agn_bounds_dict
 
