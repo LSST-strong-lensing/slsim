@@ -6,6 +6,11 @@ from slsim.Util.param_util import (
     amplitude_to_magnitude,
     magnitude_to_amplitude,
 )
+from astropy.units.quantity import Quantity
+from speclite.filters import (
+    load_filter,
+    FilterResponse,
+)
 
 
 def spin_to_isco(spin):
@@ -163,9 +168,9 @@ def planck_law(temperature, wavelength_in_nanometers):
     :return: The spectral radiance of the black body
     """
     # If wavelength was entered as an int or float, append units
-    if type(wavelength_in_nanometers) != u.Quantity:
+    if type(wavelength_in_nanometers) is not u.Quantity:
         wavelength_in_nanometers *= u.nm
-    if type(temperature) != u.Quantity:
+    if type(temperature) is not u.Quantity:
         temperature *= u.K
 
     e_exponent = (
@@ -188,7 +193,7 @@ def planck_law_derivative(temperature, wavelength_in_nanometers):
     :param wavelength_in_nanometers: Emitted wavelength in local rest frame in [nanometers].
     :return: The derivative of the spectral radiance with respect to temperature for a black body.
     """
-    if type(temperature) == u.Quantity:
+    if type(temperature) is u.Quantity:
         temperature = temperature.value
 
     return (
@@ -333,12 +338,12 @@ def calculate_dt_dlx(radial_map, temperature_map, corona_height):
     Terms are expanded and temp_disk^4 is reconstructed on right hand side of equation in (3).
     Terms are collected in (4), higher order terms are discarded.
     The fractional change in temperature with respect to flux is approximated
-        to be the derivative in (5) as both delta_temp and delta_Lx are assumed to be small.
+    to be the derivative in (5) as both delta_temp and delta_Lx are assumed to be small.
 
     :param radial_map: A 2-dimension array of radial values on the accretion disk in units [R_g].
     :param temperature_map: A 2-dimensional array of temperature values on the accretion disk
         in [Kelvin].
-    :param corona_height: The height of the corona in units [R_. Typical values range
+    :param corona_height: The height of the corona in units [R]. Typical values range
         from 0 to 100.
     :return: A 2-dimensional map of values representing the change in temperature with
         respect to a change in X-ray flux.
@@ -375,6 +380,52 @@ def calculate_mean_time_lag(response_function):
     ) / np.nansum(response_function)
 
 
+def calculate_accretion_disk_emission(
+    r_out,
+    r_resolution,
+    inclination_angle,
+    rest_frame_wavelength_in_nanometers,
+    black_hole_mass_exponent,
+    black_hole_spin,
+    eddington_ratio,
+):
+    """This calculates the emission of the accretion disk due to black body radiation.
+    This emission is calculated by summing over all individual pixels.
+
+    :param r_out: The maximum radial value of the accretion disk. This typically can be
+        chosen as 10^3 to 10^5 [R_g].
+    :param r_resolution: The number of points between r = 0 and r = r_out. The final map
+        will be shape (2 * r_resolution), (2 * r_resolution). Higher resolution leads to
+        longer calculations but smoother response functions.
+    :param inclination_angle: The tilt of the accretion disk with respect to the
+        observer in [degrees]. Zero degrees is face on, 90 degrees is edge on.
+    :param rest_frame_wavelength_in_nanometers: Wavelength in local rest frame in
+        [nanometers].
+    :param black_hole_mass_exponent: The log of the black hole mass normalized by the
+        mass of the sun; black_hole_mass_exponent = log_10(black_hole_mass / mass_sun).
+        Typical AGN have an exponent ranging from 6 to 10.
+    :param black_hole_spin: The dimensionless spin parameter of the black hole, where
+        the spinless case (spin = 0) corresponds to a Schwarzschild black hole. Positive
+        spin represents the accretion disk's angular momentum is aligned with the black
+        hole's spin, and negative spin represents retrograde accretion flow.
+    :param eddington_ratio: The desired Eddington ratio defined as a fraction of
+        bolometric luminosity / Eddington luminosity.
+    :return: The normalized response of the accretion disk as a function of time lag in
+        units [R_g / c].
+    """
+    radial_map = create_radial_map(r_out, r_resolution, inclination_angle)
+
+    temperature_map = thin_disk_temperature_profile(
+        radial_map, black_hole_spin, black_hole_mass_exponent, eddington_ratio
+    )
+
+    temperature_map *= radial_map < r_out
+
+    emission_map = planck_law(temperature_map, rest_frame_wavelength_in_nanometers)
+
+    return np.nansum(emission_map)
+
+
 def calculate_accretion_disk_response_function(
     r_out,
     r_resolution,
@@ -404,11 +455,11 @@ def calculate_accretion_disk_response_function(
 
     To use the response function:
     1) Resample the response function at the time resolution of the signal or resample the
-        signal at units [R_g / c].
+    signal at units [R_g / c].
     2) The time axis of the response function must then be inverted as these are time lags.
     3) Take the convolution between the driving signal and the response function.
     4) The time axis of the convolution should then be shifted forward in time by the length
-        of the response function to remain consistent with respect to the driving signal.
+    of the response function to remain consistent with respect to the driving signal.
 
     :param r_out: The maximum radial value of the accretion disk. This typically can be chosen
         as 10^3 to 10^5 [R_g].
@@ -779,3 +830,165 @@ def generate_signal_from_generic_psd(
         seed=seed,
     )
     return time_array, magnitude_array
+
+
+def get_value_if_quantity(variable):
+    """Extracts the numerical value from an astropy Quantity object or returns the input
+    if not a Quantity.
+
+    This function checks if the input variable is an instance of an astropy Quantity. If
+    it is, the function extracts and returns the numerical value of the Quantity. If the
+    input is not a Quantity, it returns the input variable unchanged.
+
+    :param variable: The variable to be checked and possibly converted. Can be an
+        astropy Quantity or any other data type.
+    :type variable: Quantity or any
+    :return: The numerical value of the Quantity if the input is a Quantity; otherwise,
+        the input variable itself.
+    :rtype: float or any
+    """
+    if isinstance(variable, Quantity):
+        return variable.value
+    else:
+        return variable
+
+
+def cone_radius_angle_to_physical_area(radius_rad, z, cosmo):
+    """Convert cone radius angle to physical area at a specified redshift.
+
+    This function computes the physical area, in square megaparsecs (Mpc^2),
+    corresponding to a specified cone radius angle at a given redshift. The calculation
+    is based on the angular diameter distance, which is dependent on the adopted
+    cosmological model. This is particularly useful in cosmological simulations and
+    observations where the physical scale of structures is inferred from angular
+    measurements.
+
+    :param radius_rad: The half cone angle in radians.
+    :param z: The redshift at which the physical area is calculated.
+    :param cosmo: The astropy cosmology instance used for the conversion.
+    :type radius_rad: float
+    :type z: float
+    :type cosmo: astropy.cosmology instance
+    :return: The physical area in square megaparsecs (Mpc^2) for the given cone radius
+        and redshift.
+    :rtype: float :note: The calculation incorporates the angular diameter distance,
+        highlighting the interplay between angular measurements and physical scales in
+        an expanding universe.
+    """
+
+    physical_radius = cosmo.angular_diameter_distance(z) * radius_rad  # Mpc
+    area_physical = np.pi * physical_radius**2
+    return area_physical  # in Mpc2
+
+
+def downsample_passband(
+    passband,
+    output_delta_wavelength,
+    wavelength_unit_input=u.angstrom,
+    wavelength_unit_output=u.angstrom,
+):
+    """Takes in a throughput at one resolution and outputs a throughput at a downsampled
+    resolution. This will speed up calculations which must be done for multiple
+    wavelengths, especially for objects which do not have significant changes in signal
+    over short wavelength steps.
+
+    :param passband: Str or List representing passband data. Either from speclite or a user
+        defined passband represented as a list of lists or arrays. The first must be wavelengths,
+        and the second must be the throughput of signature: [wavelength, throughput].
+    :param output_delta_wavelength: Int, this represents the desired spacing between wavelengths
+        of the output passband.
+    :param wavelength_unit_input: Astropy unit representing the input wavelength units.
+        Speclite filters default to units of angstroms.
+    :param wavelength_unit_output: Astropy unit representing the output wavelength units.
+    :return: List of numpy arrays representing the downsampled passband with signature
+        [wavelength, throughput].
+    """
+    if isinstance(passband, str):
+        passband = load_filter(passband)
+    if isinstance(passband, FilterResponse):
+        if wavelength_unit_input != passband.effective_wavelength.unit:
+            print("Changing input unit to match speclite filter unit")
+            wavelength_unit_input = passband.effective_wavelength.unit
+        passband = [passband.wavelength, passband.response]
+    if not isinstance(passband, list):
+        raise ValueError(
+            "Throughput must be a speclite filter or a list of throughputs."
+        )
+    assert output_delta_wavelength < len(passband[0])
+    # Convert to desired output wavelength units
+    wavelength_ratio = wavelength_unit_input.to(wavelength_unit_output)
+    passband[0] = np.asarray(passband[0][:]) * wavelength_ratio
+    # Determine bins
+    min_wavelength = np.min(passband[0][:])
+    max_wavelength = np.max(passband[0][:])
+    filter_total_wavelength_coverage = max_wavelength - min_wavelength
+    nbins = int(
+        round(1 + filter_total_wavelength_coverage / output_delta_wavelength, 0)
+    )
+    bin_edges = np.linspace(min_wavelength, max_wavelength, nbins)
+    # Make throughput
+    objects_per_bin = np.histogram(passband[0], bins=bin_edges)[0]
+    output_wavelengths = (bin_edges[:-1] + bin_edges[1:]) / 2
+    weighted_throughput = np.histogram(
+        passband[0], bins=bin_edges, weights=passband[1]
+    )[0]
+    normalized_throughput = weighted_throughput / objects_per_bin
+    return [output_wavelengths, normalized_throughput]
+
+
+def bring_passband_to_source_plane(
+    passband,
+    redshift,
+):
+    """Takes in a passband and converts the wavelengths from the observer to source
+    plane.
+
+    :param passband: Str or List representing passband data. Either from speclite or a user
+        defined passband represented as a list of lists or arrays. The first must be wavelengths,
+        and the second must be the throughput of signature: [wavelength, throughput].
+    :param redshift: Redshift of the source.
+    :return: List of numpy arrays representing the passband in the source plane.
+    """
+    if isinstance(passband, str):
+        passband = load_filter(passband)
+
+    if isinstance(passband, FilterResponse):
+        passband = [passband.wavelength, passband.response]
+    if not isinstance(passband, list):
+        raise ValueError(
+            "Throughput must be a speclite filter or a list of throughputs."
+        )
+    assert redshift >= 0
+    new_wavelengths = np.asarray(passband[0]) / (1 + redshift)
+    return [new_wavelengths, np.asarray(passband[1])]
+
+
+def convert_passband_to_nm(
+    passband,
+    wavelength_unit_input=u.angstrom,
+):
+    """Takes in a passband and converts the wavelengths to nanometers.
+
+    :param passband: Str or List representing passband data. Either from speclite or a user
+        defined passband represented as a list of lists or arrays. The first must be wavelengths,
+        and the second must be the throughput of signature: [wavelength, throughput].
+    :param wavelength_unit_input: Astropy unit representing the input wavelength units.
+        Speclite passbands are typically in angstroms, but a user defined passband may have
+        any unit convenient for their purposes.
+    :return: List of numpy arrays representing the passband with units of nanometers.
+    """
+    if isinstance(passband, str):
+        passband = load_filter(passband)
+    if isinstance(passband, FilterResponse):
+        if wavelength_unit_input != passband.effective_wavelength.unit:
+            print("Changing input unit to match speclite filter unit")
+            wavelength_unit_input = passband.effective_wavelength.unit
+        passband = [passband.wavelength, passband.response]
+    if not isinstance(passband, list):
+        raise ValueError(
+            "Throughput must be a speclite filter or a list of throughputs."
+        )
+    wavelength_ratio = wavelength_unit_input.to(u.nm)
+    output_passband = passband.copy()
+    output_passband[0] = np.asarray(passband[0][:]) * wavelength_ratio
+    return output_passband

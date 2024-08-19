@@ -2,8 +2,12 @@ skypy
 lenstronomy>=1.11.10
 astropy>=5.2
 numpy
-scipy
+scipy<=1.13.1
+colossus
 speclite
 pyyaml
 matplotlib
 sncosmo
+colossus
+uncertainties
+kcorrect

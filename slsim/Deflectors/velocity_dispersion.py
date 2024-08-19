@@ -1,5 +1,7 @@
 import numpy as np
 import scipy
+from scipy import interpolate
+import copy
 from skypy.galaxies.redshift import redshifts_from_comoving_density
 from skypy.utils.random import schechter
 
@@ -25,6 +27,7 @@ def vel_disp_composite_model(r, m_star, rs_star, m_halo, c_halo, cosmo, z_lens):
     :param z_lens: redshift of the deflector
     :return: velocity dispersion [km/s]
     """
+
     kwargs_model = {
         "mass_profile_list": ["HERNQUIST", "NFW"],
         "light_profile_list": ["HERNQUIST"],
@@ -210,11 +213,10 @@ def vel_disp_sdss(sky_area, redshift, vd_min, vd_max, cosmology, noise=True):
     :math:`\\sigma` can be described by a Schechter function (see eq. (4) in [1]_)
 
     .. math::
-
         \\phi = \\phi_* \\left(\\frac{\\sigma}{\\sigma_*}\\right)^\\alpha
-            \\exp\\left[-\\left( \\frac{\\sigma}{\\sigma_*} \\right)^\\beta\\right]
-            \\frac{\\beta}{\\Gamma(\\alpha/\\beta)} \frac{1}{\\sigma}
-            \\mathrm{d}\\sigma \\;.
+        \\exp\\left[-\\left( \\frac{\\sigma}{\\sigma_*} \\right)^\\beta\\right]
+        \\frac{\\beta}{\\Gamma(\\alpha/\\beta)} \frac{1}{\\sigma}
+        \\mathrm{d}\\sigma \\;.
 
     where :math:`\\Gamma` is the gamma function, :math:`\\sigma_*` is the
     characteristic velocity dispersion, :math:`\\phi_*` is
@@ -480,3 +482,62 @@ def schechter_velocity_dispersion_function(
     samples = samples ** (1 / beta) * vd_star
 
     return samples
+
+
+def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
+    """Calculates the velocity dispersion from the steller mass. The routine uses
+    abundance matching between stellar mass and velocity dispersion taking the sample
+    drawn from z=0 to z_max (which can be still at low redshift where there is data on
+    the velocity dispersion function)
+
+    :param galaxy_list: list of galaxies with stellar masses given
+    :type galaxy_list: ~astropy.Table object
+    :param z_max: maximum redshift to which the abundance matching with the SDSS
+        velocity dispersion function is valid
+    :param cosmo: astropy.cosmology instance
+    :type sky_area: `~astropy.units.Quantity`
+    :param sky_area: Sky area over which galaxies are sampled. Must be in units of solid
+        angle.
+    :return: interpolation function f; f(stellar_mass) -> vel_disp
+    """
+
+    # selects galaxies with redshift below maximum redshift (z_max)
+    bool_cut = galaxy_list["z"] < z_max
+    galaxy_list_zmax = copy.deepcopy(galaxy_list[bool_cut])
+
+    # number of selected galaxies
+    num_select = len(galaxy_list_zmax)
+
+    redshift = np.arange(0, z_max + 0.001, 0.1)
+    z_list, vel_disp_list = vel_disp_sdss(
+        sky_area, redshift, vd_min=50, vd_max=500, cosmology=cosmo, noise=True
+    )
+
+    # sort for stellar masses, largest values first
+    galaxy_list_zmax.sort("stellar_mass", reverse=True)
+
+    # sort velocity dispersion, largest values first
+    vel_disp_list = np.flip(np.sort(vel_disp_list))
+    num_vel_disp = len(vel_disp_list)
+    # abundance match velocity dispersion with elliptical galaxy catalogue
+    # abundance match velocity dispersion with elliptical galaxy catalogue
+    if num_vel_disp >= num_select:
+        galaxy_list_zmax["vel_disp"] = vel_disp_list[:num_select]
+        # randomly select
+    else:
+        galaxy_list_zmax = galaxy_list_zmax[:num_vel_disp]
+        galaxy_list_zmax["vel_disp"] = vel_disp_list
+    # interpolate relationship between stellar mass and velocity dispersion
+    stellar_mass = np.asarray(galaxy_list_zmax["stellar_mass"])
+    vel_disp = np.asarray(galaxy_list_zmax["vel_disp"])
+
+    # here we make sure we interpolate to low stellar masses
+    stellar_mass = np.append(stellar_mass, 10**5)
+    vel_disp = np.append(vel_disp, 10)
+    f = interpolate.interp1d(
+        x=np.log10(stellar_mass),
+        y=vel_disp,
+        fill_value=(0, np.max(galaxy_list_zmax["vel_disp"])),
+        bounds_error=False,
+    )
+    return f
