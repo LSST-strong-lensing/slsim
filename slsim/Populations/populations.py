@@ -44,30 +44,28 @@ class GalaxyPopulation(PopulationBase):
                 % light_profile
             )
 
-    def __len__(self) -> int:
-        return len(self.galaxy_table)
-
-    def _preprocess_galaxy_table(
-        self, galaxy_table: Union[Table, list[Table]]
-    ) -> Union[Table, list[Table]]:
-
-        n = len(galaxy_table)
-        column_names = galaxy_table.colnames
         is_table = isinstance(galaxy_table, Table)
         is_list = isinstance(galaxy_table, list)
         if is_list:
             containts_only_tables = all(
                 isinstance(table, Table) for table in galaxy_table
             )
-
-        if is_table:
-            galaxy_tables = [galaxy_table]
-        elif is_list and containts_only_tables:
-            galaxy_tables = galaxy_table
-        else:
+        if not (is_table or is_list and containts_only_tables):
             raise ValueError(
                 "galaxy_table must be an astropy table or a list of astropy tables."
             )
+
+    def __len__(self) -> int:
+        return len(self.galaxy_table)
+
+    def _preprocess_galaxy_table(
+        self, galaxy_tables: Union[Table, list[Table]]
+    ) -> Union[Table, list[Table]]:
+
+        n = len(galaxy_tables)
+        column_names = galaxy_tables.colnames
+        if isinstance(galaxy_tables, Table):
+            galaxy_tables = [galaxy_tables]
 
         expected_columns = [
             "e1",
