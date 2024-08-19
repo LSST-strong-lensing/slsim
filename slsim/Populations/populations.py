@@ -4,15 +4,17 @@ import numpy as np
 
 from typing import Union, Optional
 from abc import ABC, abstractmethod
+from astropy.units import Quantity
 from astropy.table import Table, Column
 from astropy.cosmology import Cosmology
 
 
 class PopulationBase(ABC):
 
-    def __init__(self, cosmo: Cosmology):
+    def __init__(self, cosmo: Cosmology, sky_area: Quantity):
 
         self.cosmo = cosmo
+        self.sky_area = sky_area
 
     @abstractmethod
     def __len__(self) -> int:
@@ -30,10 +32,11 @@ class GalaxyPopulation(PopulationBase):
         cosmo: Cosmology,
         galaxy_table: Union[Table, list[Table]],
         kwargs_cut: dict,
+        sky_area: Quantity,
         light_profile: str = "single_sersic",
     ):
 
-        super().__init__(cosmo=cosmo)
+        super().__init__(cosmo=cosmo, sky_area=sky_area)
 
         self.galaxy_table = galaxy_table
         self.kwargs_cut = kwargs_cut
@@ -83,6 +86,7 @@ class GalaxyPopulation(PopulationBase):
             "e2_light",
             "e1_mass",
             "e2_mass",
+            "vel_disp",
         ]
 
         # TODO START: MAKE THIS THE RESPONSIBILITY OF FUTURE CATALOG OBJECTS
@@ -107,6 +111,7 @@ class GalaxyPopulation(PopulationBase):
         # TODO: CONSIDER MAKING RESPONSIBILITY OF FUTURE CATALOG OBJECTS
         for galaxy_table in galaxy_tables:
 
+            # TODO: SETUP VELOCITY_DISPERSION.PY THAT INCLUDES DEFAULTING TO STELLAR MASS
             galaxy_table["vel_disp"] = np.where(
                 galaxy_table["vel_disp"] == -1,
                 vel_disp_from_m_star(galaxy_table["stellar_mass"]),
