@@ -2,7 +2,6 @@ import warnings
 
 import numpy as np
 
-from slsim.Util import param_util
 from typing import Union, Optional
 from abc import ABC, abstractmethod
 from astropy.table import Table, Column
@@ -80,6 +79,10 @@ class GalaxyPopulation(PopulationBase):
             "e1_2",
             "angular_size0",
             "angular_size1",
+            "e1_light",
+            "e2_light",
+            "e1_mass",
+            "e2_mass",
         ]
 
         # TODO START: MAKE THIS THE RESPONSIBILITY OF FUTURE CATALOG OBJECTS
@@ -124,6 +127,10 @@ class GalaxyPopulation(PopulationBase):
             )
             galaxy_table["e2_mass"] = np.where(
                 galaxy_table["e2_mass"] == -1, e2_mass, galaxy_table["e2_mass"]
+            )
+
+            galaxy_table["n_sersic"] = np.where(
+                galaxy_table["n_sersic"] == -1, 4, galaxy_table["n_sersic"]
             )
 
         if is_table:
