@@ -145,37 +145,81 @@ def epsilon2e(epsilon: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
 
 
 def elliptical_projected_eccentricity(
-    ellipticity,
-    light2mass_e_scaling=1,
-    light2mass_e_scatter=0.1,
-    light2mass_angle_scatter=0.1,
+    ellipticity: Union[float, np.ndarray],
+    light2mass_e_scaling: Union[float, np.ndarray] = 1.0,
+    light2mass_e_scatter: Union[float, np.ndarray] = 0.1,
+    light2mass_angle_scatter: Union[float, np.ndarray] = 0.1,
+    rng: Optional[np.random.Generator] = None,
     **kwargs
-):
+) -> tuple[Union[float, np.ndarray]]:
     """Projected eccentricity of elliptical galaxies as a function of other deflector
     parameters.
 
-    :param ellipticity: eccentricity amplitude (1-q^2)/(1+q^2)
-    :type ellipticity: float [0,1)
-    :param light2mass_e_scaling: scaling factor of mass eccentricity / light
-        eccentricity
-    :param light2mass_e_scatter: scatter in light and mass eccentricities from the
-        scaling relation
-    :param light2mass_angle_scatter: scatter in orientation angle between light and mass
-        eccentricity
-    :param kwargs: deflector properties
-    :type kwargs: dict
-    :return: e1_light, e2_light,e1_mass, e2_mass eccentricity components
+    Args:
+        ellipticity (Union[float, np.ndarray]): Eccentricity amplitude (1-q^2)/(1+q^2).
+        light2mass_e_scaling (Union[float, np.ndarray], optional): Scaling factor of mass eccentricity / light eccentricity. Defaults to 1.0.
+        light2mass_e_scatter (Union[float, np.ndarray], optional): Scatter in light and mass eccentricities from the scaling relation. Defaults to 0.1.
+        light2mass_angle_scatter (Union[float, np.ndarray], optional): Scatter in orientation angle between light and mass eccentricities. Defaults to 0.1.
+        rng (Optional[np.random.Generator], optional): Numpy Random Generator instance. If None, use np.random. default_rng. Defaults to None.
+
+    Raises:
+        ValueError: If light2mass arguments do not have the same length as input ellipticity.
+
+    Returns:
+        tuple[Union[float, np.ndarray]]: e1_light, e2_light, e1_mass, e2_mass eccentricity components
     """
-    e_light = param_util.epsilon2e(ellipticity)
-    phi_light = np.random.uniform(0, np.pi)
+
+    if rng is None:
+        rng = np.random.default_rng()
+
+    ellipticity_is_float = isinstance(ellipticity, float)
+    light2mass_are_float = (
+        isinstance(light2mass_e_scaling, float)
+        and isinstance(light2mass_e_scatter, float)
+        and isinstance(light2mass_angle_scatter, float)
+    )
+
+    ellipticity = np.atleast_1d(ellipticity)
+    light2mass_e_scaling = np.atleast_1d(light2mass_e_scaling)
+    light2mass_e_scatter = np.atleast_1d(light2mass_e_scatter)
+    light2mass_angle_scatter = np.atleast_1d(light2mass_angle_scatter)
+    n = len(ellipticity)
+
+    if light2mass_are_float:
+        light2mass_e_scaling = np.full(n, light2mass_e_scaling)
+        light2mass_e_scatter = np.full(n, light2mass_e_scatter)
+        light2mass_angle_scatter = np.full(n, light2mass_angle_scatter)
+
+    light2mass_args_valid = (
+        n == len(light2mass_e_scaling)
+        and n == len(light2mass_e_scatter)
+        and n == len(light2mass_angle_scatter)
+    )
+    if not light2mass_args_valid:
+        raise ValueError(
+            "light2mass arguments must have the same length as input ellipticity."
+        )
+
+    e_light = epsilon2e(ellipticity)
+    phi_light = rng.uniform(0, np.pi, size=n)
     e1_light = e_light * np.cos(2 * phi_light)
     e2_light = e_light * np.sin(2 * phi_light)
-    e_mass = light2mass_e_scaling * ellipticity + np.random.normal(
-        loc=0, scale=light2mass_e_scatter
+
+    e_mass = light2mass_e_scaling * ellipticity + rng.normal(
+        loc=0, scale=light2mass_e_scatter, size=n
     )
-    phi_mass = phi_light + np.random.normal(loc=0, scale=light2mass_angle_scatter)
+    phi_mass = phi_light + rng.normal(loc=0, scale=light2mass_angle_scatter, size=n)
     e1_mass = e_mass * np.cos(2 * phi_mass)
     e2_mass = e_mass * np.sin(2 * phi_mass)
+
+    if ellipticity_is_float:
+        e1_light, e2_light, e1_mass, e2_mass = (
+            e1_light[0],
+            e2_light[0],
+            e1_mass[0],
+            e2_mass[0],
+        )
+
     return e1_light, e2_light, e1_mass, e2_mass
 
 
