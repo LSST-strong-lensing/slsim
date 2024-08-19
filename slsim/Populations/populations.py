@@ -130,7 +130,7 @@ def epsilon2e(epsilon: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
         Union[float, np.ndarray]: Eccentricity
     """
 
-    is_valid = np.all(epsilon >= 0 & epsilon <= 1)
+    is_valid = np.all((epsilon >= 0) & (epsilon <= 1))
     if not is_valid:
         raise ValueError("epsilon must be in the range [0, 1].")
 
