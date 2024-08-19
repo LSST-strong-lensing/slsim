@@ -60,7 +60,7 @@ class GalaxyPopulation(PopulationBase):
     def __len__(self) -> int:
         return len(self.galaxy_table)
 
-    def _preprocess_galaxy_table(
+    def _preprocess_galaxy_tables(
         self, galaxy_tables: Union[Table, list[Table]]
     ) -> Union[Table, list[Table]]:
 
@@ -82,6 +82,7 @@ class GalaxyPopulation(PopulationBase):
             "angular_size1",
         ]
 
+        # TODO START: MAKE THIS THE RESPONSIBILITY OF FUTURE CATALOG OBJECTS
         for galaxy_table, i in enumerate(galaxy_tables):
             galaxy_tables[i] = convert_to_slsim_convention(
                 galaxy_catalog=galaxy_table,
@@ -98,6 +99,32 @@ class GalaxyPopulation(PopulationBase):
                     galaxy_table.add_column(column)
                 if "ellipticity" not in column_names:
                     raise ValueError("ellipticity is missing in galaxy_table columns.")
+        # TODO END
+
+        # TODO: CONSIDER MAKING RESPONSIBILITY OF FUTURE CATALOG OBJECTS
+        for galaxy_table in galaxy_tables:
+
+            galaxy_table["vel_disp"] = np.where(
+                galaxy_table["vel_disp"] == -1,
+                vel_disp_from_m_star(galaxy_table["stellar_mass"]),
+                galaxy_table["vel_disp"],
+            )
+
+            e1_light, e2_light, e1_mass, e2_mass = elliptical_projected_eccentricity(
+                ellipticity=galaxy_table["ellipticity"],
+            )
+            galaxy_table["e1_light"] = np.where(
+                galaxy_table["e1_light"] == -1, e1_light, galaxy_table["e1_light"]
+            )
+            galaxy_table["e2_light"] = np.where(
+                galaxy_table["e2_light"] == -1, e2_light, galaxy_table["e2_light"]
+            )
+            galaxy_table["e1_mass"] = np.where(
+                galaxy_table["e1_mass"] == -1, e1_mass, galaxy_table["e1_mass"]
+            )
+            galaxy_table["e2_mass"] = np.where(
+                galaxy_table["e2_mass"] == -1, e2_mass, galaxy_table["e2_mass"]
+            )
 
         if is_table:
             galaxy_tables = galaxy_tables[0]
