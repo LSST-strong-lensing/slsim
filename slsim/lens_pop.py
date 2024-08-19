@@ -47,6 +47,7 @@ class LensPop(LensedPopulationBase):
                                                    please look at the documentation of RandomizedSupernovae class. Defaults to None.
         """
 
+        # TODO: ADD EXCEPTION FOR DEFLECTOR AND SOURCE POP FILTER MISMATCH
         super().__init__(
             sky_area=sky_area,
             cosmo=cosmo,
