@@ -1,5 +1,6 @@
 import numpy as np
 
+from slsim.Util import param_util
 from typing import Union, Optional
 from abc import ABC, abstractmethod
 from astropy.table import Table, Column
@@ -105,3 +106,61 @@ class GalaxyPopulation(PopulationBase):
     @abstractmethod
     def sample(self, seed: Optional[int] = None, n: Optional[int] = 1):
         pass
+
+
+def elliptical_projected_eccentricity(
+    ellipticity,
+    light2mass_e_scaling=1,
+    light2mass_e_scatter=0.1,
+    light2mass_angle_scatter=0.1,
+    **kwargs
+):
+    """Projected eccentricity of elliptical galaxies as a function of other deflector
+    parameters.
+
+    :param ellipticity: eccentricity amplitude (1-q^2)/(1+q^2)
+    :type ellipticity: float [0,1)
+    :param light2mass_e_scaling: scaling factor of mass eccentricity / light
+        eccentricity
+    :param light2mass_e_scatter: scatter in light and mass eccentricities from the
+        scaling relation
+    :param light2mass_angle_scatter: scatter in orientation angle between light and mass
+        eccentricity
+    :param kwargs: deflector properties
+    :type kwargs: dict
+    :return: e1_light, e2_light,e1_mass, e2_mass eccentricity components
+    """
+    e_light = param_util.epsilon2e(ellipticity)
+    phi_light = np.random.uniform(0, np.pi)
+    e1_light = e_light * np.cos(2 * phi_light)
+    e2_light = e_light * np.sin(2 * phi_light)
+    e_mass = light2mass_e_scaling * ellipticity + np.random.normal(
+        loc=0, scale=light2mass_e_scatter
+    )
+    phi_mass = phi_light + np.random.normal(loc=0, scale=light2mass_angle_scatter)
+    e1_mass = e_mass * np.cos(2 * phi_mass)
+    e2_mass = e_mass * np.sin(2 * phi_mass)
+    return e1_light, e2_light, e1_mass, e2_mass
+
+
+def vel_disp_from_m_star(m_star):
+    """Function to calculate the velocity dispersion from the staller mass using
+    empirical relation for elliptical galaxies.
+
+    The power-law formula is given by:
+
+    .. math::
+
+         V_{\\mathrm{disp}} = 10^{2.32} \\left( \\frac{M_{\\mathrm{star}}}{10^{11}
+         M_\\odot} \\right)^{0.24}
+
+    2.32,0.24 is the parameters from [1] table 2
+    [1]:Auger, M. W., et al. "The Sloan Lens ACS Survey. X. Stellar, dynamical, and
+    total mass correlations of massive elliptical galaxies." The Astrophysical
+    Journal 724.1 (2010): 511.
+
+    :param m_star: stellar mass in the unit of solar mass
+    :return: the velocity dispersion ("km/s")
+    """
+    v_disp = np.power(10, 2.32) * np.power(m_star / 1e11, 0.24)
+    return v_disp
