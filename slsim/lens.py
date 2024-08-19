@@ -26,7 +26,6 @@ class Lens(LensedSystemBase):
         deflector_dict,
         cosmo,
         deflector_type="EPL",
-        deflector_kwargs=None,
         source_type="extended",
         lens_equation_solver="lenstronomy_analytical",
         variability_model=None,
@@ -53,8 +52,6 @@ class Lens(LensedSystemBase):
         :param cosmo: astropy.cosmology instance
         :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST", "NFW_CLUSTER"
         :type deflector_type: str
-        :param deflector_kwargs: additional deflector properties
-        :type deflector_kwargs: dict
         :param source_type: type of the source 'extended' or 'point_source' or
          'point_plus_extended' supported
         :type source_type: str
@@ -96,7 +93,6 @@ class Lens(LensedSystemBase):
             deflector_dict=deflector_dict,
             cosmo=cosmo,
             deflector_type=deflector_type,
-            deflector_kwargs=deflector_kwargs,
             test_area=test_area,
             variability_model=variability_model,
             kwargs_variability=kwargs_variability,

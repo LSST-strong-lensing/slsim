@@ -1,11 +1,12 @@
 from slsim.Deflectors.DeflectorTypes.deflector_base import DeflectorBase
 from slsim.Deflectors.velocity_dispersion import vel_disp_nfw_aperture
+from slsim.Deflectors.DeflectorTypes.epl_sersic import EPLSersic
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 
 
 class NFWCluster(DeflectorBase):
-    """Class of a NFW halo lens model with subhalos. Each subhalo is a Deflector
+    """Class of a NFW halo lens model with subhalos. Each subhalo is a EPLSersic
     instance with its own mass and light.
 
     required quantities in dictionary:
@@ -14,18 +15,18 @@ class NFWCluster(DeflectorBase):
     - 'e1_mass': eccentricity of NFW profile
     - 'e2_mass': eccentricity of NFW profile
     - 'z': redshift of deflector
+    - 'subhalos': list of dictionary with subhalo parameters
     """
 
-    def __init__(self, deflector_dict, subhalos_list):
+    def __init__(self, deflector_dict):
         """
 
         :param deflector_dict:  parameters of the cluster halo
         :type deflector_dict: dict
-        :param subhalos_list: list with Deflector instances as cluster subhalos
-        :type subhalos_list: list[Deflector]
         """
+        subhalos_list = deflector_dict.pop("subhalos")
+        self._subhalos = [EPLSersic(subhalo_dict) for subhalo_dict in subhalos_list]
         super(NFWCluster, self).__init__(deflector_dict)
-        self._subhalos = subhalos_list
 
     def velocity_dispersion(self, cosmo=None):
         """Velocity dispersion of deflector. Simplified assumptions on anisotropy and
