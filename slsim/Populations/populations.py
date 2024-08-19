@@ -110,7 +110,7 @@ class GalaxyPopulation(PopulationBase):
 
 
 def epsilon2e(epsilon: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
-    """Translates ellipticity definitions from
+    """Translates ellipticity definitions from.
 
     .. math::
         \epsilon = \\equic \\frac{1 - q^2}{1 + q^2}
