@@ -121,19 +121,20 @@ class ClusterCatalogLens(DeflectorsBase):
         deflector = self.draw_cluster(index)
         members = self.draw_members(deflector["cluster_id"])
         deflector["subhalos"] = members
+        return deflector
 
     def draw_cluster(self, index):
-        deflector = self._cluster_select[index]
-        if deflector["halo_mass"] == -1:
-            deflector["halo_mass"] = mass_richness_simet2017(deflector["richness"])
-        if deflector["concentration"] == -1:
-            deflector["concentration"] = concent_m_w_scatter(deflector["halo_mass"], deflector["z"], sig=0.33)
-        if deflector["e1_mass"] == -1 or deflector["e2_mass"] == -1:
-            e, phi = gene_e_ang_halo(deflector["halo_mass"])
+        cluster = self._cluster_select[index]
+        if cluster["halo_mass"] == -1:
+            cluster["halo_mass"] = mass_richness_simet2017(cluster["richness"])
+        if cluster["concentration"] == -1:
+            cluster["concentration"] = concent_m_w_scatter(cluster["halo_mass"], cluster["z"], sig=0.33)
+        if cluster["e1_mass"] == -1 or cluster["e2_mass"] == -1:
+            e, phi = gene_e_ang_halo(cluster["halo_mass"])
             e1, e2 = phi_q2_ellipticity(np.deg2rad(phi), 1 - e)
-            deflector["e1_mass"] = e1
-            deflector["e2_mass"] = e2
-        return deflector
+            cluster["e1_mass"] = e1
+            cluster["e2_mass"] = e2
+        return dict(cluster)
 
     def draw_members(self, cluster_id):
         # members
