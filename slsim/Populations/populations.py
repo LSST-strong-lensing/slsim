@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 
 from slsim.Util import param_util
@@ -105,6 +107,41 @@ class GalaxyPopulation(PopulationBase):
     @abstractmethod
     def sample(self, seed: Optional[int] = None, n: Optional[int] = 1):
         pass
+
+
+def epsilon2e(epsilon: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    """Translates ellipticity definitions from
+
+    .. math::
+        \epsilon = \\equic \\frac{1 - q^2}{1 + q^2}
+
+    to
+
+    .. math::
+        e = \\equic \\frac{1-q}{1+q}
+
+    Args:
+        epsilon (Union[float, np.ndarray]): Ellipticity
+
+    Raises:
+        ValueError: If epsilon is not in the range [0, 1]
+
+    Returns:
+        Union[float, np.ndarray]: Eccentricity
+    """
+
+    is_valid = np.all(epsilon >= 0 & epsilon <= 1)
+    if not is_valid:
+        raise ValueError("epsilon must be in the range [0, 1].")
+
+    # Catch warnings from division by zero
+    # since epsilon = 0 is a valid input
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        e = (1 - np.sqrt(1 - epsilon**2)) / epsilon
+        e = np.where(np.isnan(e), 0, e)
+
+    return e
 
 
 def elliptical_projected_eccentricity(
