@@ -62,9 +62,8 @@ class GalaxyPopulation(PopulationBase):
         self, galaxy_tables: Union[Table, list[Table]]
     ) -> Union[Table, list[Table]]:
 
-        n = len(galaxy_tables)
-        column_names = galaxy_tables.colnames
-        if isinstance(galaxy_tables, Table):
+        is_table = isinstance(galaxy_tables, Table)
+        if is_table:
             galaxy_tables = [galaxy_tables]
 
         expected_columns = [
@@ -90,8 +89,10 @@ class GalaxyPopulation(PopulationBase):
 
         for expected_column in expected_columns:
             for galaxy_table in galaxy_tables:
+                column_names = galaxy_table.columns
+                n_rows = len(galaxy_table)
                 if expected_column not in column_names:
-                    column = Column([-1] * n, name=expected_column)
+                    column = Column([-1] * n_rows, name=expected_column)
                     galaxy_table.add_column(column)
                 if "ellipticity" not in column_names:
                     raise ValueError("ellipticity is missing in galaxy_table columns.")
