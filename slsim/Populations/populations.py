@@ -251,8 +251,8 @@ def elliptical_projected_eccentricity(
 
 
 def vel_disp_from_m_star(m_star: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
-    """Calculate the velocity dispersion of a galaxy from its stellar mass using an empirical
-    power-law relation for elliptical galaxies.
+    """Calculate the velocity dispersion of a galaxy from its stellar mass using an
+    empirical power-law relation for elliptical galaxies.
 
     The power-law formula is given by:
 
