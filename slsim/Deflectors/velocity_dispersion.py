@@ -227,10 +227,10 @@ def vel_disp_sdss(sky_area, redshift, vd_min, vd_max, cosmology, noise=True):
     .. [1] Choi, Park and Vogeley, (2007), astro-ph/0611607, doi:10.1086/511060
     """
     # SDSS velocity dispersion function for galaxies brighter than Mr >= -16.8
-    phi_star = 8.0 * 10 ** (-3) / cosmology.h**3
-    vd_star = 161
-    alpha = 2.32
-    beta = 2.67
+    phi_star = 2.099e-2 * cosmology.h**3
+    vd_star = 113.78
+    alpha = 0.94
+    beta = 1.85
     return schechter_vel_disp(
         redshift,
         phi_star,
@@ -583,7 +583,7 @@ def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
     # number of selected galaxies
     num_select = len(galaxy_list_zmax)
 
-    redshift = np.linspace(0, z_max, 40)
+    redshift = np.linspace(0, z_max, 50)
     z_list, vel_disp_list = vel_disp_sdss(
         sky_area, redshift, vd_min=50, vd_max=500, cosmology=cosmo, noise=True
     )
