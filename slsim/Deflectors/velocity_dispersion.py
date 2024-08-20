@@ -319,7 +319,7 @@ def schechter_vel_disp(
         noise=noise,
         )
     # sample galaxy mass for redshifts
-    vel_disp = schechter_velocity_dispersion_function_2(alpha, beta, phi_star, vd_star, vd_min, 
+    vel_disp = schechter_velocity_dispersion_function(alpha, beta, phi_star, vd_star, vd_min, 
                         vd_max, size=len(z), resolution=1000, scale=1
 )
     return z, vel_disp
