@@ -3,7 +3,6 @@ import scipy
 from scipy import interpolate
 import copy
 from skypy.galaxies.redshift import redshifts_from_comoving_density
-from skypy.utils.random import schechter
 
 """
 This module provides functions to compute velocity dispersion using schechter function.
