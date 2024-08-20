@@ -174,8 +174,13 @@ class ClusterCatalogLens(DeflectorsBase):
     
     @staticmethod
     def assign_similar_galaxy(
-            members_list, galaxy_list, cosmo=None, bands=("u", "g", "r", "i", "z", "Y")
+            members_list, galaxy_list, cosmo=None, bands=("g", "r", "i", "z", "Y"), max_gals=10000
     ):
+        # shuffle galaxy list and select a subset
+        if len(galaxy_list) > max_gals:
+            indices = np.random.choice(len(galaxy_list), max_gals, replace=False)
+            galaxy_list = galaxy_list[indices]
+
         mag_cols = [f"mag_{b}" for b in bands if f"mag_{b}" in members_list.columns]
         if not bands:
             raise ValueError("No magnitude columns found in members_list")
