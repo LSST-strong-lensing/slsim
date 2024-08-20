@@ -134,6 +134,8 @@ class Lens(LensedSystemBase):
         self._los_linear_distortions_cache = None
         self.los_config = los_config
         if self.los_config is None:
+            if los_dict is None:
+                los_dict = {}
             self.los_config = LOSConfig(**los_dict)
 
     @property
