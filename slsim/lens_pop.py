@@ -3,7 +3,7 @@ import os
 import pickle
 
 import numpy as np
-from astropy.table import Table
+from astropy.table import Table, vstack
 
 from slsim.lens import Lens
 from slsim.lens import theta_e_when_source_infinity
@@ -209,10 +209,20 @@ class LensPop(LensedPopulationBase):
 
             cluster_list = Table.read(cluster_config["cluster_catalog"])
             members_list = Table.read(cluster_config["members_catalog"])
+            cluster_galaxy_type = cluster_config.get("galaxy_type", "red")
+            if cluster_galaxy_type == "red":
+                cluster_galaxy_list = pipeline_deflector.red_galaxies
+            elif cluster_galaxy_type == "blue":
+                cluster_galaxy_list = pipeline_deflector.blue_galaxies
+            elif cluster_galaxy_type == "all":
+                cluster_galaxy_list = vstack([pipeline_deflector.red_galaxies,
+                                              pipeline_deflector.blue_galaxies])
+            else:
+                raise ValueError(f"cluster_galaxy_type {cluster_galaxy_type} is not supported")
             self._lens_galaxies = ClusterCatalogLens(
                 cluster_list=cluster_list,
                 members_list=members_list,
-                galaxy_list=pipeline_deflector.red_galaxies,
+                galaxy_list=cluster_galaxy_list,
                 kwargs_cut=kwargs_deflector_cut,
                 kwargs_mass2light=kwargs_mass2light,
                 cosmo=cosmo,
