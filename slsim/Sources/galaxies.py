@@ -1,6 +1,6 @@
 import numpy as np
 import numpy.random as random
-from slsim.selection import deflector_cut
+from slsim.selection import object_cut
 from slsim.Util import param_util
 from slsim.Sources.source_pop_base import SourcePopBase
 from astropy.table import Column
@@ -98,9 +98,7 @@ class Galaxies(SourcePopBase):
                     new_column = Column([-1] * new_column_length, name="n_sersic")
                     table.add_column(new_column)
         # make cuts
-        self._galaxy_select = deflector_cut(
-            galaxy_list, list_type=list_type, **kwargs_cut
-        )
+        self._galaxy_select = object_cut(galaxy_list, list_type=list_type, **kwargs_cut)
         self._num_select = len(self._galaxy_select)
         self.list_type = list_type
 

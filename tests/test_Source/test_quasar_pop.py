@@ -13,7 +13,6 @@ class TestQuasarRate:
     def setup_method(self):
         """Setup the QuasarRate instance before each test method."""
         self.quasar_rate = QuasarRate(
-            h=0.70,
             zeta=2.98,
             xi=4.05,
             z_star=1.60,
@@ -148,7 +147,7 @@ class TestQuasarRate:
         m_min = 15
         m_max = 25
         test_redshifts = [1.199, 3.151]
-        expected_n_comoving = [5.294255979e-5, 1.077342851e-5]
+        expected_n_comoving = [4.978852355e-6, 1.506245401e-7]
 
         # Test case #1: Scalar redshift values
         for z, expected_n in zip(test_redshifts, expected_n_comoving):
@@ -163,7 +162,7 @@ class TestQuasarRate:
         m_min = np.array([15, 16])
         m_max = np.array([25, 26])
         test_redshifts = np.array([1.199, 3.151])
-        expected_n_comoving = np.array([5.294255979e-5, 1.077342851e-5])
+        expected_n_comoving = np.array([4.978852355e-6, 1.506245401e-7])
 
         # Test case #2: Array of redshift values
         n_comoving_array = self.quasar_rate.n_comoving(m_min, m_max, test_redshifts)
