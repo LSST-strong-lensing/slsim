@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import os
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
 
@@ -67,6 +68,37 @@ def test_galaxies_lens_pop_halo_model_instance():
         cosmo=cosmo,
     )
     assert g_lens_halo_model_pop._lens_galaxies.draw_deflector()["halo_mass"] != 0
+
+
+def test_cluster_catalog_lens_pop_instance():
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3, Ob0=0.05)
+    sky_area = Quantity(value=0.001, unit="deg2")
+
+    kwargs_deflector_cut = {"z_min": 0.001, "z_max": 2.5}
+    kwargs_source_cut = {"band": "g", "band_max": 28, "z_min": 0.1, "z_max": 5.0}
+
+    path = os.path.dirname(__file__)
+    module_path = os.path.dirname(path)
+    cluster_catalog = os.path.join(module_path, "data/redMaPPer/clusters_example.fits")
+    members_catalog = os.path.join(module_path, "data/redMaPPer/members_example.fits")
+    cluster_config = {
+        "cluster_catalog": cluster_catalog,
+        "members_catalog": members_catalog
+    }
+
+    cluster_lens_cat_pop = LensPop(
+        deflector_type="cluster-catalog",
+        source_type="galaxies",
+        kwargs_deflector_cut=kwargs_deflector_cut,
+        kwargs_source_cut=kwargs_source_cut,
+        kwargs_mass2light=None,
+        skypy_config=None,
+        cluster_config=cluster_config,
+        sky_area=sky_area,
+        cosmo=cosmo,
+    )
+    deflector = cluster_lens_cat_pop._lens_galaxies.draw_deflector()
+    assert deflector["halo_mass"] > 0
 
 
 def test_supernovae_plus_galaxies_lens_pop_instance():

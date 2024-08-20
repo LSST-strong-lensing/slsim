@@ -46,6 +46,7 @@ class LensedPopulationBase(ABC):
         self.sn_absolute_mag_band = sn_absolute_mag_band
         self.sn_absolute_zpsys = sn_absolute_zpsys
         self.sn_modeldir = sn_modeldir
+        self.deflector_model = "EPL"
         if sky_area is None:
             from astropy.units import Quantity
 

@@ -27,6 +27,7 @@ class LensPop(LensedPopulationBase):
         kwargs_mass2light=None,
         skypy_config=None,
         slhammocks_config=None,
+        cluster_config=None,
         sky_area=None,
         source_sky_area=None,
         deflector_sky_area=None,
@@ -64,6 +65,8 @@ class LensPop(LensedPopulationBase):
         :type skypy_config: string
         :param slhammocks_config: path to the deflector population csv file for 'halo-model'
         :type slhammocks_config: string
+        :param cluster_config: path to the cluster catalog and member catalog
+        :type cluster_config: dict
         :param sky_area: Sky area over which lens population will be simulated. If
          sky_area is not None, number of source sample and deflector sample within a
          source_sky_area and deflector_sky_area will be scaled to the sky_area.
@@ -133,7 +136,7 @@ class LensPop(LensedPopulationBase):
                 "point source (eg: quasars) or do not provide kwargs_variability."
             )
 
-        if deflector_type in ["elliptical", "all-galaxies"] or source_type in [
+        if deflector_type in ["elliptical", "all-galaxies", "cluster-catalog"] or source_type in [
             "galaxies"
         ]:
             pipeline_deflector = SkyPyPipeline(
@@ -201,6 +204,21 @@ class LensPop(LensedPopulationBase):
                 cosmo=cosmo,
                 sky_area=self.deflector_sky_area,
             )
+        elif deflector_type == "cluster-catalog":
+            from slsim.Deflectors.cluster_catalog_lens import ClusterCatalogLens
+
+            cluster_list = Table.read(cluster_config["cluster_catalog"])
+            members_list = Table.read(cluster_config["members_catalog"])
+            self._lens_galaxies = ClusterCatalogLens(
+                cluster_list=cluster_list,
+                members_list=members_list,
+                galaxy_list=pipeline_deflector.red_galaxies,
+                kwargs_cut=kwargs_deflector_cut,
+                kwargs_mass2light=kwargs_mass2light,
+                cosmo=cosmo,
+                sky_area=self.deflector_sky_area,
+            )
+            self.deflector_model = "NFW_CLUSTER"
 
         else:
             raise ValueError("deflector_type %s is not supported" % deflector_type)
@@ -393,6 +411,7 @@ class LensPop(LensedPopulationBase):
             gg_lens = Lens(
                 deflector_dict=lens,
                 source_dict=source,
+                deflector_type=self.deflector_model,
                 variability_model=self._sources.variability_model,
                 kwargs_variability=self._sources.kwargs_variability,
                 sn_type=self.sn_type,
