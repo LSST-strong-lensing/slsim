@@ -51,7 +51,8 @@ def test_schechter_vdf():
     beta = 2.67
 
     vel_disp_list = schechter_velocity_dispersion_function(
-        alpha, beta, vd_star, vd_min=50, vd_max=500, size=10000, resolution=100
+        alpha, beta, phi_star, vd_star, vd_min=50, vd_max=500, size=10000, 
+        resolution=100
     )
 
     # plt.hist(np.log10(vel_disp_list))
@@ -79,4 +80,4 @@ def test_schechter_vdf():
         cosmology,
         noise=True,
     )
-    assert len(z_list) == 117
+    assert len(z_list) == 130
