@@ -465,8 +465,6 @@ def redshifts_from_comoving_density(redshift, density, sky_area, cosmo, noise=Tr
     #number
     dN_dz *=density
     number = dN_dz
-
-    # integrate density to get expected number of galaxies
     # Poisson sample galaxy number if requested
     number_list=[]
     for n in number:
