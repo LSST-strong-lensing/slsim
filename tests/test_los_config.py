@@ -30,7 +30,9 @@ def test_known_input():
     gamma1, gamma2 = -0.05, 0.05
     los_dict = {"gamma": [gamma1, gamma2], "kappa": kappa}
     config = LOSConfig(**los_dict)
-    gamma1_, gamma2_, kappa_ = config.calculate_los_linear_distortions(source_redshift=0, deflector_redshift=0)
+    gamma1_, gamma2_, kappa_ = config.calculate_los_linear_distortions(
+        source_redshift=0, deflector_redshift=0
+    )
     assert gamma1_ == gamma1
     assert gamma2_ == gamma2
     assert kappa_ == kappa
