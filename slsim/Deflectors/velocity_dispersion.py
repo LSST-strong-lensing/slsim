@@ -312,11 +312,19 @@ def schechter_vel_disp(
         sky_area,
         cosmo,
         noise=noise,
-        )
+    )
     # sample galaxy mass for redshifts
-    vel_disp = schechter_velocity_dispersion_function(alpha, beta, phi_star, vd_star, vd_min, 
-                        vd_max, size=len(z), resolution=1000, scale=1
-)
+    vel_disp = schechter_velocity_dispersion_function(
+        alpha,
+        beta,
+        phi_star,
+        vd_star,
+        vd_min,
+        vd_max,
+        size=len(z),
+        resolution=1000,
+        scale=1,
+    )
     return z, vel_disp
 
 
@@ -397,8 +405,13 @@ def schechter_vel_disp_redshift(
     # gamma function integrand
     def f(lnx, a):
         return (
-            np.exp(lnx) * np.exp(a * lnx - np.exp(lnx))*beta*((np.exp(-lnx
-                            ))**(1/beta))*(1/vd_star) if lnx < lnxmax.max() else 0.0
+            np.exp(lnx)
+            * np.exp(a * lnx - np.exp(lnx))
+            * beta
+            * ((np.exp(-lnx)) ** (1 / beta))
+            * (1 / vd_star)
+            if lnx < lnxmax.max()
+            else 0.0
         )
 
     # integrate gamma function for each redshift
@@ -415,14 +428,12 @@ def schechter_vel_disp_redshift(
 
     # sample redshifts from the comoving density
     return redshifts_from_comoving_density(
-        redshift, 
-        density, 
-        sky_area, 
-        cosmo, 
-        noise=noise)
+        redshift, density, sky_area, cosmo, noise=noise
+    )
+
 
 def redshifts_from_comoving_density(redshift, density, sky_area, cosmo, noise=True):
-    r'''Sample redshifts from a comoving density function.
+    r"""Sample redshifts from a comoving density function.
 
     Sample galaxy redshifts such that the resulting distribution matches a past
     lightcone with comoving galaxy number density `density` at redshifts
@@ -457,35 +468,34 @@ def redshifts_from_comoving_density(redshift, density, sky_area, cosmo, noise=Tr
     number density and comoving volume calculated at the given `redshift`
     values. The user must choose suitable `redshift` values to satisfy their
     desired numerical accuracy.
-
-    '''
+    """
 
     # redshift number density
-    dN_dz = (cosmo.differential_comoving_volume(redshift) * sky_area).to_value('Mpc3')
-    #number
-    dN_dz *=density
+    dN_dz = (cosmo.differential_comoving_volume(redshift) * sky_area).to_value("Mpc3")
+    # number
+    dN_dz *= density
     number = dN_dz
 
     # integrate density to get expected number of galaxies
     # Poisson sample galaxy number if requested
-    number_list=[]
+    number_list = []
     for n in number:
         if noise:
             N = np.random.poisson(n)
         else:
-            N = int(n)#np.array([int(digit) for digit in number])
+            N = int(n)  # np.array([int(digit) for digit in number])
         number_list.append(N)
-    cdf = dN_dz # in place
-    np.cumsum((dN_dz[1:]+dN_dz[:-1])/2*np.diff(redshift), out=cdf[1:])
+    cdf = dN_dz  # in place
+    np.cumsum((dN_dz[1:] + dN_dz[:-1]) / 2 * np.diff(redshift), out=cdf[1:])
     cdf[0] = 0
     cdf /= cdf[-1]
-    total_number=sum(number_list)
+    total_number = sum(number_list)
     return np.interp(np.random.rand(total_number), cdf, redshift)
 
-def schechter_velocity_dispersion_function(alpha, beta, phi_star, vd_star, vd_min, 
-                    vd_max, size=None, resolution=1000, scale=1
+
+def schechter_velocity_dispersion_function(
+    alpha, beta, phi_star, vd_star, vd_min, vd_max, size=None, resolution=1000, scale=1
 ):
- 
     """Sample velocity dispersion of elliptical galaxies in the local universe following
     a Schecter function.
 
@@ -534,20 +544,24 @@ def schechter_velocity_dispersion_function(alpha, beta, phi_star, vd_star, vd_mi
     .. [3] Choi, Park and Vogeley, (2007), astro-ph/0611607, doi:10.1086/511060
     """
 
-
     if size is None:
         size = np.broadcast(vd_min, vd_max, scale).shape or None
 
-    lnx_min = np.log((vd_min/vd_star)**beta)
-    lnx_max = np.log((vd_max/vd_star)**beta)
+    lnx_min = np.log((vd_min / vd_star) ** beta)
+    lnx_max = np.log((vd_max / vd_star) ** beta)
 
     lnx = np.linspace(np.min(lnx_min), np.max(lnx_max), resolution)
     gamma_ab = scipy.special.gamma(alpha / beta)
     phi_star = phi_star
-    pdf = np.exp(((alpha-1)/beta)*lnx - np.exp(lnx)) * (1/vd_star
-                                        ) * beta * phi_star/ gamma_ab
-    cdf = pdf # in place
-    np.cumsum((pdf[1:]+pdf[:-1])/2*np.diff(lnx), out=cdf[1:])
+    pdf = (
+        np.exp(((alpha - 1) / beta) * lnx - np.exp(lnx))
+        * (1 / vd_star)
+        * beta
+        * phi_star
+        / gamma_ab
+    )
+    cdf = pdf  # in place
+    np.cumsum((pdf[1:] + pdf[:-1]) / 2 * np.diff(lnx), out=cdf[1:])
     cdf[0] = 0
     cdf /= cdf[-1]
 
@@ -556,7 +570,7 @@ def schechter_velocity_dispersion_function(alpha, beta, phi_star, vd_star, vd_mi
     u = np.random.uniform(t_lower, t_upper, size=size)
     lnx_sample = np.interp(u, cdf, lnx)
 
-    return (np.exp(lnx_sample) * scale)**(1/beta)*vd_star
+    return (np.exp(lnx_sample) * scale) ** (1 / beta) * vd_star
 
 
 def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
