@@ -3,10 +3,13 @@ from slsim.Deflectors.velocity_dispersion import (
     schechter_velocity_dispersion_function,
     vel_disp_composite_model,
     vel_disp_nfw_aperture,
+    redshifts_from_comoving_density
 )
 import numpy as np
 import numpy.testing as npt
 from astropy.cosmology import FlatLambdaCDM
+from astropy.units import Quantity
+import pytest
 
 
 def test_vel_disp_composite_model():
@@ -81,3 +84,35 @@ def test_schechter_vdf():
         noise=True,
     )
     assert len(z_list) == 130
+
+def test_redshifts_from_comoving_density():
+    # Define input parameters
+    redshift = np.linspace(0.1, 2.0, 50)
+    density = np.ones_like(redshift) * 1e-3  # constant density
+    sky_area = Quantity(value=1, unit="deg2")
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    
+    # Test with noise = True
+    redshifts = redshifts_from_comoving_density(redshift, density, sky_area, cosmo, 
+                                                noise=True)
+    
+    # Check the output is an array and is not empty
+    assert isinstance(redshifts, np.ndarray)
+    assert len(redshifts) > 0
+    
+    # Test with noise = False 
+    redshifts_no_noise = redshifts_from_comoving_density(redshift, density, sky_area, 
+                                                         cosmo, noise=False)
+    
+    # Check the output is an array and is not empty
+    assert isinstance(redshifts_no_noise, np.ndarray)
+    assert len(redshifts_no_noise) > 0
+    
+    # Check that the number of galaxies is approximately equal to the expected number
+    expected_number = np.sum((cosmo.differential_comoving_volume(redshift
+                                            ) * sky_area).to_value('Mpc3') * density)
+    assert np.isclose(len(redshifts_no_noise), int(expected_number), rtol=0.1)
+
+if __name__ == "__main__":
+    pytest.main()
+
