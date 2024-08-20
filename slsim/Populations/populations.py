@@ -70,6 +70,8 @@ class GalaxyPopulation(PopulationBase):
         if is_table:
             galaxy_tables = [galaxy_tables]
 
+        # TODO: Rename E1, E2 and e1_light, e2_light to shared e1_0, e2_0,
+        # make addititional components responsibility of catalog objects.
         expected_columns = [
             "e1",
             "e2",
