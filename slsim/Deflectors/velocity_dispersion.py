@@ -426,68 +426,83 @@ def schechter_vel_disp_redshift(
         cosmo, 
         noise=noise)
 
-def redshifts_from_comoving_density(redshift, density, sky_area, cosmo, noise=True):
-    r'''Sample redshifts from a comoving density function.
 
-    Sample galaxy redshifts such that the resulting distribution matches a past
-    lightcone with comoving galaxy number density `density` at redshifts
-    `redshift`. The comoving volume sampled corresponds to a sky area `sky_area`
-    and transverse comoving distance given by the cosmology `cosmology`.
 
-    If the `noise` parameter is set to true, the number of galaxies has Poisson
-    noise. If `noise` is false, the expected number of galaxies is used.
+def schechter_velocity_dispersion_function(alpha, beta, phi_star, vd_star, vd_min, 
+                    vd_max, size=None, resolution=1000, scale=1
+):
+ 
+    """Sample velocity dispersion of elliptical galaxies in the local universe following
+    a Schecter function.
 
     Parameters
     ----------
-    redshift : array_like
-        Redshifts at which comoving number densities are provided.
-    density : array_like
-        Comoving galaxy number density at each redshift in Mpc-3.
-    sky_area : `~astropy.units.Quantity`
-        Sky area over which galaxies are sampled. Must be in units of solid angle.
-    cosmo : Cosmology
-        Cosmology object for conversion to comoving volume.
-    noise : bool, optional
-        Poisson-sample the number of galaxies. Default is `True`.
+    alpha: float
+        The alpha parameter in the modified Schechter equation.
+    beta: float
+        The beta parameter in the modified Schechter equation.
+    vd_star: float
+        The characteristic velocity dispersion.
+    vd_min, vd_max: float
+        Lower and upper bounds of random variable x. Samples are drawn uniformly from
+        bounds.
+    size: int
+        Number of samples returned. Default is 1.
+    resolution: int
+        Resolution of the inverse transform sampling spline. Default is 100.
+    scale: array-like, optional
+        Scale factor for the returned samples. Default is 1.
 
     Returns
     -------
-    redshifts : array_like
-        Sampled redshifts such that the comoving number density of galaxies
-        corresponds to the input distribution.
+    velocity_dispersion: array_like
+        Velocity dispersion drawn from Schechter function.
 
-    Warnings
-    --------
-    The inverse cumulative distribution function is approximated from the
-    number density and comoving volume calculated at the given `redshift`
-    values. The user must choose suitable `redshift` values to satisfy their
-    desired numerical accuracy.
+    Notes
+    -----
+    The probability distribution function :math:`p(\\sigma)` for velocity dispersion
+    :math:`\\sigma` can be described by a Schechter function (see eq. (4) in [3]_)
 
-    '''
+    .. math::
 
-    # redshift number density
-    dN_dz = (cosmo.differential_comoving_volume(redshift) * sky_area).to_value('Mpc3')
-    #number
-    dN_dz *=density
-    number = dN_dz
+        \\phi = \\phi_* \\left(\\frac{\\sigma}{\\sigma_*}\\right)^\\alpha
+            \\exp\\left[-\\left( \\frac{\\sigma}{\\sigma_*} \\right)^\\beta\\right]
+            \\frac{\\beta}{\\Gamma(\\alpha/\\beta)} \frac{1}{\\sigma} \\mathrm{d}
+            \\sigma \\;.
 
-    # integrate density to get expected number of galaxies
-    # Poisson sample galaxy number if requested
-    number_list=[]
-    for n in number:
-        if noise:
-            N = np.random.poisson(n)
-        else:
-            N = int(n)#np.array([int(digit) for digit in number])
-        number_list.append(N)
-    cdf = dN_dz # in place
-    np.cumsum((dN_dz[1:]+dN_dz[:-1])/2*np.diff(redshift), out=cdf[1:])
+    where :math:`\\Gamma` is the gamma function, :math:`\\sigma_*` is the
+    characteristic velocity dispersion, :math:`\\phi_*` is
+    number density of all spiral galaxies and
+    :math:`\\alpha` and :math:`\\beta` are free parameters.
+
+    References
+    ----------
+    .. [3] Choi, Park and Vogeley, (2007), astro-ph/0611607, doi:10.1086/511060
+    """
+
+
+    if size is None:
+        size = np.broadcast(vd_min, vd_max, scale).shape or None
+
+    lnx_min = np.log((vd_min/vd_star)**beta)
+    lnx_max = np.log((vd_max/vd_star)**beta)
+
+    lnx = np.linspace(np.min(lnx_min), np.max(lnx_max), resolution)
+    gamma_ab = scipy.special.gamma(alpha / beta)
+    phi_star = phi_star
+    pdf = np.exp(((alpha-1)/beta)*lnx - np.exp(lnx)) * (1/vd_star
+                                        ) * beta * phi_star/ gamma_ab
+    cdf = pdf # in place
+    np.cumsum((pdf[1:]+pdf[:-1])/2*np.diff(lnx), out=cdf[1:])
     cdf[0] = 0
     cdf /= cdf[-1]
-    total_number=sum(number_list)
-    return np.interp(np.random.rand(total_number), cdf, redshift)
 
+    t_lower = np.interp(lnx_min, lnx, cdf)
+    t_upper = np.interp(lnx_max, lnx, cdf)
+    u = np.random.uniform(t_lower, t_upper, size=size)
+    lnx_sample = np.interp(u, cdf, lnx)
 
+    return (np.exp(lnx_sample) * scale)**(1/beta)*vd_star
 
 
 def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
