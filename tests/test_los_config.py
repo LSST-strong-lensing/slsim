@@ -25,6 +25,17 @@ def test_default_settings():
     assert config.no_correction_path is None
 
 
+def test_known_input():
+    kappa = 0.1
+    gamma1, gamma2 = -0.05, 0.05
+    los_dict = {"gamma": [gamma1, gamma2], "kappa": kappa}
+    config = LOSConfig(**los_dict)
+    gamma1_, gamma2_, kappa_ = config.calculate_los_linear_distortions(source_redshift=0, deflector_redshift=0)
+    assert gamma1_ == gamma1
+    assert gamma2_ == gamma2
+    assert kappa_ == kappa
+
+
 @pytest.fixture
 def los_config():
     # Create an instance of LOSConfig with some default settings
