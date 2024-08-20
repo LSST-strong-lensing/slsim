@@ -62,7 +62,9 @@ class LOSConfig(object):
         :param no_correction_path: Path to the no non-linear correction distributions stored in an H5 file, default is None.
         :type no_correction_path: str or None
         :param gamma: [gamma1, gamma2] (takes these values if present)
+        :type gamma: list of floats
         :param kappa: convergence (takes this values if present)
+        :type kappa: float
         """
 
         self.mixgauss_gamma = mixgauss_gamma
