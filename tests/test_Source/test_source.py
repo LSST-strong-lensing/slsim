@@ -25,6 +25,7 @@ class TestSource:
                 [0.8],
                 [0.76],
                 [20],
+                [None],
             ],
             names=(
                 "z",
@@ -41,6 +42,7 @@ class TestSource:
                 "e1",
                 "e2",
                 "MJD",
+                "supernovae_lightcurve",
             ),
         )
         source_dict2 = Table(
@@ -60,6 +62,7 @@ class TestSource:
                 [0.76],
                 [0.001],
                 [-0.001],
+                [None],
             ],
             names=(
                 "z",
@@ -77,6 +80,7 @@ class TestSource:
                 "e2",
                 "ra_off",
                 "dec_off",
+                "supernovae_lightcurve",
             ),
         )
         self.source_dict3 = Table(
@@ -95,6 +99,7 @@ class TestSource:
                 [23],
                 [0.001],
                 [-0.001],
+                [None],
             ],
             names=(
                 "z",
@@ -111,6 +116,7 @@ class TestSource:
                 "mag_i",
                 "ra_off",
                 "dec_off",
+                "supernovae_lightcurve",
             ),
         )
         self.source_dict4 = Table(
@@ -127,6 +133,7 @@ class TestSource:
                 [23],
                 [0.001],
                 [-0.001],
+                [None],
             ],
             names=(
                 "z",
@@ -141,6 +148,7 @@ class TestSource:
                 "mag_i",
                 "ra_off",
                 "dec_off",
+                "supernovae_lightcurve",
             ),
         )
 
@@ -189,14 +197,6 @@ class TestSource:
                 "kwargs_agn_model",
                 "agn_lightcurve",
             ),
-        )
-
-        self.source11 = Source(
-            self.source_dict5,
-            variability_model="light_curve",
-            kwargs_variability={"agn_lightcurve"},
-            lightcurve_time=np.linspace(200, 1000, 50),
-            cosmo=cosmo,
         )
 
         self.source = Source(
@@ -276,6 +276,14 @@ class TestSource:
             sn_type="Ia",
             lightcurve_time=np.linspace(-20, 50, 100),
             cosmo=None,
+        )
+
+        self.source11 = Source(
+            self.source_dict5,
+            variability_model="light_curve",
+            kwargs_variability={"agn_lightcurve"},
+            lightcurve_time=np.linspace(200, 1000, 50),
+            cosmo=cosmo,
         )
 
     def test_redshift(self):

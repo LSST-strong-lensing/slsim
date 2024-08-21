@@ -92,115 +92,110 @@ class Source(object):
                         "Cosmology cannot be None for Supernova class. Please"
                         "provide a suitable astropy cosmology."
                     )
-                else:
-                    if element == "supernovae_lightcurve":
-                        lightcurve_class = random_supernovae.RandomizedSupernova(
-                            sn_type=self.sn_type,
-                            redshift=z,
-                            absolute_mag=None,
-                            absolute_mag_band=self.sn_absolute_mag_band,
-                            mag_zpsys=self.sn_absolute_zpsys,
-                            cosmo=self.cosmo,
-                            modeldir=self.sn_modeldir,
-                        )
+                if element == "supernovae_lightcurve":
+                    lightcurve_class = random_supernovae.RandomizedSupernova(
+                        sn_type=self.sn_type,
+                        redshift=z,
+                        absolute_mag=None,
+                        absolute_mag_band=self.sn_absolute_mag_band,
+                        mag_zpsys=self.sn_absolute_zpsys,
+                        cosmo=self.cosmo,
+                        modeldir=self.sn_modeldir,
+                    )
 
-                    elif element == "agn_lightcurve":
-
-                        # Get the dict object from the astropy.table.column
-                        self.agn_kwarg_dict = self.source_dict["kwargs_agn_model"].data[
-                            0
-                        ][0]
-
-                        # Populate "none" for optional keys in this dict
-                        optional_keys = ["random_seed", "input_agn_bounds_dict"]
-                        for opt_key in optional_keys:
-                            if opt_key not in self.agn_kwarg_dict.keys():
-                                self.agn_kwarg_dict[opt_key] = None
-
-                        # Create the agn object
-                        agn_class = agn.RandomAgn(
-                            self.source_dict["i_band_mag"],
-                            self.source_dict["z"],
-                            cosmo=self.cosmo,
-                            **self.agn_kwarg_dict
-                        )
-
-                        # Get mean mags across LSST filters
-                        # Fix to eventually give the user power to choose other surveys
-                        mean_magnitudes = agn_class.get_mean_mags("lsst")
-
-                        # These are lsst filters, hard coded in for now. Fix later.
-                        filters = ["u", "g", "r", "i", "z", "y"]
-
-                        for index, band in enumerate(filters):
-
-                            # Define name for point source mags
-                            filter_name = "ps_mag_" + band
-
-                            # Again, lsst filters hard coded in. Fix later.
-                            agn_class.variable_disk.reprocessing_kwargs[
-                                "speclite_filter"
-                            ] = ("lsst2023-" + band)
-
-                            agn_class.variable_disk.driving_signal_kwargs[
-                                "mean_magnitude"
-                            ] = mean_magnitudes[index]
-
-                            reprocessed_lightcurve = reprocess_with_lamppost_model(
-                                agn_class.variable_disk
+                    for element in list(self.kwargs_variability):
+                        # if lsst filter is being used
+                        if element in [
+                            "r",
+                            "i",
+                            "g",
+                            "F062",
+                            "F087",
+                            "F106",
+                            "F129",
+                            "F158",
+                            "F184",
+                            "F146",
+                            "F213",
+                        ]:
+                            if element in ["r", "i", "g"]:
+                                provided_band = "lsst" + element
+                            else:
+                                provided_band = element
+                            name = "ps_mag_" + element
+                            times = self.lightcurve_time
+                            magnitudes = lightcurve_class.get_apparent_magnitude(
+                                time=times,
+                                band=provided_band,
+                                zpsys=self.sn_absolute_zpsys,
                             )
-
-                            times = reprocessed_lightcurve["MJD"]
-                            magnitudes = reprocessed_lightcurve[
-                                "ps_mag_lsst2023-" + band
-                            ]
-
-                            # Copied this code from below to generate ps mag columns
-                            new_column = Column(
-                                [float(min(magnitudes))], name=filter_name
-                            )
-
+                            new_column = Column([float(min(magnitudes))], name=name)
                             self._source_dict = Table(self.source_dict)
                             self._source_dict.add_column(new_column)
                             self.source_dict = self._source_dict[0]
-
-                            # Stores the variable light curve for each band
-                            kwargs_variab_extracted[band] = {
+                            kwargs_variab_extracted[element] = {
                                 "MJD": times,
-                                filter_name: magnitudes,
+                                name: magnitudes,
                             }
 
-                for element in list(self.kwargs_variability):
-                    # if lsst filter is being used
-                    if element in [
-                        "r",
-                        "i",
-                        "g",
-                        "F062",
-                        "F087",
-                        "F106",
-                        "F129",
-                        "F158",
-                        "F184",
-                        "F146",
-                        "F213",
-                    ]:
-                        if element in ["r", "i", "g"]:
-                            provided_band = "lsst" + element
-                        else:
-                            provided_band = element
-                        name = "ps_mag_" + element
-                        times = self.lightcurve_time
-                        magnitudes = lightcurve_class.get_apparent_magnitude(
-                            time=times, band=provided_band, zpsys=self.sn_absolute_zpsys
+                elif element == "agn_lightcurve":
+
+                    # Get the dict object from the astropy.table.column
+                    self.agn_kwarg_dict = self.source_dict["kwargs_agn_model"].data[0][
+                        0
+                    ]
+
+                    # Populate "none" for optional keys in this dict
+                    optional_keys = ["random_seed", "input_agn_bounds_dict"]
+                    for opt_key in optional_keys:
+                        if opt_key not in self.agn_kwarg_dict.keys():
+                            self.agn_kwarg_dict[opt_key] = None
+
+                    # Create the agn object
+                    agn_class = agn.RandomAgn(
+                        self.source_dict["i_band_mag"],
+                        self.source_dict["z"],
+                        cosmo=self.cosmo,
+                        **self.agn_kwarg_dict
+                    )
+
+                    # Get mean mags across LSST filters
+                    # Fix to eventually give the user power to choose other surveys
+                    mean_magnitudes = agn_class.get_mean_mags("lsst")
+
+                    # These are lsst filters, hard coded in for now. Fix later.
+                    filters = ["u", "g", "r", "i", "z", "y"]
+                    for index, band in enumerate(filters):
+
+                        # Define name for point source mags
+                        filter_name = "ps_mag_" + band
+
+                        # Again, lsst filters hard coded in. Fix later.
+                        agn_class.variable_disk.reprocessing_kwargs[
+                            "speclite_filter"
+                        ] = ("lsst2023-" + band)
+
+                        agn_class.variable_disk.driving_signal_kwargs[
+                            "mean_magnitude"
+                        ] = mean_magnitudes[index]
+
+                        reprocessed_lightcurve = reprocess_with_lamppost_model(
+                            agn_class.variable_disk
                         )
-                        new_column = Column([float(min(magnitudes))], name=name)
+
+                        times = reprocessed_lightcurve["MJD"]
+                        magnitudes = reprocessed_lightcurve["ps_mag_lsst2023-" + band]
+
+                        new_column = Column([float(min(magnitudes))], name=filter_name)
+
                         self._source_dict = Table(self.source_dict)
                         self._source_dict.add_column(new_column)
                         self.source_dict = self._source_dict[0]
-                        kwargs_variab_extracted[element] = {
+
+                        # Stores the variable light curve for each band
+                        kwargs_variab_extracted[band] = {
                             "MJD": times,
-                            name: magnitudes,
+                            filter_name: magnitudes,
                         }
 
             if "MJD" in self.kwargs_variability:
@@ -298,17 +293,14 @@ class Source(object):
             raise ValueError("required parameter is missing in the source dictionary.")
         else:
             band_string = "ps_mag_" + band
-
         if self.kwargs_variab_dict is not None:
             if band in self.kwargs_variab_dict.keys():
                 kwargs_variab_band = self.kwargs_variab_dict[band]
             else:
                 kwargs_variab_band = self.kwargs_variab_dict
-
             self.variability_class = Variability(
                 self.variability_model, **kwargs_variab_band
             )
-
         else:
             self.variability_class = None
         if image_observation_times is not None:
@@ -323,7 +315,6 @@ class Source(object):
                     "one of the variability models in your kwargs_variability."
                 )
         else:
-
             source_mag = self.source_dict[band_string]
             if (
                 isinstance(source_mag, np.ndarray)
