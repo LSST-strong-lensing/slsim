@@ -435,8 +435,8 @@ def schechter_vel_disp_redshift(
 
 def redshifts_from_comoving_density(redshift, density, sky_area, cosmo, noise=True):
     r"""Sample redshifts from a comoving density function. We took this function is from
-      SkyPy package but we have modified it to make suitable for the constant comoving 
-      number density.
+    SkyPy package but we have modified it to make suitable for the constant comoving
+    number density.
 
     Sample galaxy redshifts such that the resulting distribution matches a past
     lightcone with comoving galaxy number density `density` at redshifts
