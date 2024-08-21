@@ -48,7 +48,7 @@ class Lens(LensedSystemBase):
         """
 
         :param source_dict: source properties
-        :type source_dict: dict
+        :type source_dict: dict or astropy table
         :param deflector_dict: deflector properties
         :type deflector_dict: dict
         :param cosmo: astropy.cosmology instance

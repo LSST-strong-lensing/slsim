@@ -26,7 +26,7 @@ class LensedSystemBase(ABC):
     ):
         """
         :param source_dict: source properties
-        :type source_dict: dict
+        :type source_dict: dict or astropy table
         :param deflector_dict: deflector properties
         :type deflector_dict: dict
         :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST"
