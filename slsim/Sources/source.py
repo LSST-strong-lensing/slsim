@@ -56,13 +56,18 @@ class Source(object):
         # Convert dict to astropy table
         if isinstance(source_dict, dict):
             self.source_dict = Table([source_dict])[0]
-        else: #if source_dict is already an astropy table
+        else:  # if source_dict is already an astropy table
             self.source_dict = source_dict
 
         # If center_x and center_y are already specified, use them instead of picking randomly
-        if 'center_x' in self.source_dict.colnames and 'center_y' in self.source_dict.colnames:
-            self._center_source = np.array([self.source_dict['center_x'], self.source_dict['center_y']])
-        
+        if (
+            "center_x" in self.source_dict.colnames
+            and "center_y" in self.source_dict.colnames
+        ):
+            self._center_source = np.array(
+                [self.source_dict["center_x"], self.source_dict["center_y"]]
+            )
+
         self.variability_model = variability_model
         self.kwargs_variability = kwargs_variability
         self.sn_type = sn_type
