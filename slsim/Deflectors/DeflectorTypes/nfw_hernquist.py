@@ -38,7 +38,7 @@ class NFWHernquist(DeflectorBase):
             m_halo, c_halo = self.halo_properties
             m_halo_acc = self._deflector_dict["halo_mass_acc"]
             m_halo = max(m_halo, m_halo_acc)
-            # convert angular size to physical size. For this, need to convert angular 
+            # convert angular size to physical size. For this, need to convert angular
             # size to radian.
             dd = cosmo.angular_diameter_distance(self.redshift).value
             rs_star = dd * (self.angular_size_light * constants.arcsec)

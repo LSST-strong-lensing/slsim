@@ -321,11 +321,10 @@ def fits_append_table(filename, table):
     hdulist.writeto(filename, overwrite=True)
     hdulist.close()
 
-def catalog_with_angular_size_in_arcsec(
-    galaxy_catalog, input_catalog_type="skypy"
-):
-    """This function is written to change unit of angular size in skypy galaxy catalog 
-    to arcsec. If user is using deflector catalog other than generated from skypy 
+
+def catalog_with_angular_size_in_arcsec(galaxy_catalog, input_catalog_type="skypy"):
+    """This function is written to change unit of angular size in skypy galaxy catalog
+    to arcsec. If user is using deflector catalog other than generated from skypy
     pipeline, we require them to provide angular size of the galaxy in arcsec.
 
     :param galaxy_catalog: galaxy catalog.
@@ -338,16 +337,16 @@ def catalog_with_angular_size_in_arcsec(
             galaxy_catalog["angular_size"] / constants.arcsec
         )
         warning_msg = (
-                "Angular size is converted to arcsec because provided" 
-                " input_catalog_type is skypy. If this is not correct, please refer to" 
-                " the documentation of the class you are using"
-            )
+            "Angular size is converted to arcsec because provided"
+            " input_catalog_type is skypy. If this is not correct, please refer to"
+            " the documentation of the class you are using"
+        )
         warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
     else:
-        galaxy_catalog=galaxy_catalog
+        galaxy_catalog = galaxy_catalog
         warning_msg = (
-                "You provided angular size in arcsec. If this is not correct, please" 
-                " refer to the documentation of the class that you are using"
-            )
+            "You provided angular size in arcsec. If this is not correct, please"
+            " refer to the documentation of the class that you are using"
+        )
         warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
     return galaxy_catalog

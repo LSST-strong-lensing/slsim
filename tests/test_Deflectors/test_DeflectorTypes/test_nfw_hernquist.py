@@ -26,7 +26,7 @@ class TestNFWHernquist(object):
             "e1_mass": 0.1,
             "e2_mass": -0.1,
             "stellar_mass": 10e11,
-            "angular_size": 0.001/4.84813681109536e-06,
+            "angular_size": 0.001 / 4.84813681109536e-06,
             "e1_light": -0.1,
             "e2_light": 0.1,
             "z": 0.5,
