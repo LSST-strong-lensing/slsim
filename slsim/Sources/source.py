@@ -106,22 +106,26 @@ class Source(object):
 
                     elif element == "agn_lightcurve":
 
+                        # Get the dict object from the astropy.table.column
+                        self.agn_kwarg_dict = self.source_dict["kwargs_agn_model"].data[
+                            0
+                        ][0]
+
+                        # Populate "none" for optional keys in this dict
                         optional_keys = ["random_seed", "input_agn_bounds_dict"]
                         for opt_key in optional_keys:
-                            if opt_key not in self.source_dict.keys():
-                                self.source_dict[opt_key] = None
+                            if opt_key not in self.agn_kwarg_dict.keys():
+                                self.agn_kwarg_dict[opt_key] = None
 
+                        # Create the agn object
                         agn_class = agn.RandomAgn(
                             self.source_dict["i_band_mag"],
                             self.source_dict["z"],
                             cosmo=self.cosmo,
-                            random_seed=self.source_dict["random_seed"],
-                            input_agn_bounds_dict=self.source_dict[
-                                "input_agn_bounds_dict"
-                            ],
-                            **self.source_dict["kwargs_agn_model"].data[0][0]
+                            **self.agn_kwarg_dict
                         )
 
+                        # Get mean mags across LSST filters
                         # Fix to eventually give the user power to choose other surveys
                         mean_magnitudes = agn_class.get_mean_mags("lsst")
 
@@ -130,6 +134,7 @@ class Source(object):
 
                         for index, band in enumerate(filters):
 
+                            # Define name for point source mags
                             filter_name = "ps_mag_" + band
 
                             # Again, lsst filters hard coded in. Fix later.
@@ -150,17 +155,14 @@ class Source(object):
                                 "ps_mag_lsst2023-" + band
                             ]
 
-                            # Copied this column creation from below
-                            # but I am not 100% sure if necessary.
+                            # Copied this code from below to generate ps mag columns
                             new_column = Column(
                                 [float(min(magnitudes))], name=filter_name
                             )
-                            # if index == 0:
+
                             self._source_dict = Table(self.source_dict)
                             self._source_dict.add_column(new_column)
                             self.source_dict = self._source_dict[0]
-                            # else:
-                            #    self.source_dict.add_column(new_column)
 
                             # Stores the variable light curve for each band
                             kwargs_variab_extracted[band] = {
@@ -296,6 +298,7 @@ class Source(object):
             raise ValueError("required parameter is missing in the source dictionary.")
         else:
             band_string = "ps_mag_" + band
+
         if self.kwargs_variab_dict is not None:
             if band in self.kwargs_variab_dict.keys():
                 kwargs_variab_band = self.kwargs_variab_dict[band]
@@ -305,7 +308,6 @@ class Source(object):
             self.variability_class = Variability(
                 self.variability_model, **kwargs_variab_band
             )
-            print(self.variability_class.variability_at_time(np.linspace(1, 100, 100)))
 
         else:
             self.variability_class = None

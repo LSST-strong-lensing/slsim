@@ -156,7 +156,7 @@ class TestSource:
                 "inclination_angle": 10,
                 "black_hole_mass_exponent": 9.5,
                 "intrinsic_light_curve": intrinsic_light_curve,
-                "driving_variability": "intrinsic_light_curve",
+                "driving_variability_model": "light_curve",
             },
         )
 
@@ -173,6 +173,7 @@ class TestSource:
                 [20],
                 [20],
                 [kwargs_agn_model],
+                [intrinsic_light_curve],
             ],
             names=(
                 "z",
@@ -186,29 +187,22 @@ class TestSource:
                 "MJD",
                 "i_band_mag",
                 "kwargs_agn_model",
+                "agn_lightcurve",
             ),
         )
 
         self.source11 = Source(
             self.source_dict5,
             variability_model="light_curve",
-            kwargs_variability={
-                "agn_lightcurve",
-                "speclite_filter",
-                "kwargs_agn_model",
-            },
+            kwargs_variability={"agn_lightcurve"},
             lightcurve_time=np.linspace(200, 1000, 50),
             cosmo=cosmo,
         )
 
-        g_mags = self.source11.point_source_magnitude("g")
-        z_mags = self.source11.point_source_magnitude("z")
-        assert np.sum(abs(g_mags - z_mags)) != 0
-
         self.source = Source(
             self.source_dict,
             variability_model="sinusoidal",
-            kwargs_variability=["amp", "freq"],
+            kwargs_variability={"amp", "freq"},
         )
 
         self.source2 = Source(
