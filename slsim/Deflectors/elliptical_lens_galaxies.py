@@ -1,6 +1,6 @@
 import numpy as np
 import numpy.random as random
-from slsim.selection import deflector_cut
+from slsim.selection import object_cut
 from slsim.Util import param_util
 from slsim.Deflectors.deflectors_base import DeflectorsBase
 from slsim.Deflectors.velocity_dispersion import vel_disp_abundance_matching
@@ -48,7 +48,7 @@ class EllipticalLensGalaxies(DeflectorsBase):
             galaxy_list, z_max=0.5, sky_area=sky_area, cosmo=cosmo
         )
 
-        self._galaxy_select = deflector_cut(galaxy_list, **kwargs_cut)
+        self._galaxy_select = object_cut(galaxy_list, **kwargs_cut)
         self._num_select = len(self._galaxy_select)
         self._galaxy_select["vel_disp"] = self._f_vel_disp(
             np.log10(self._galaxy_select["stellar_mass"])

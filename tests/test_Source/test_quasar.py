@@ -21,6 +21,7 @@ def Quasar_class():
         point_source_list=quasar_list,
         cosmo=cosmo,
         sky_area=sky_area,
+        kwargs_cut={},
         variability_model="sinusoidal",
         kwargs_variability_model={"amp", "freq"},
     )
