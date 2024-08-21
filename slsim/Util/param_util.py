@@ -339,15 +339,15 @@ def catalog_with_angular_size_in_arcsec(
         )
         warning_msg = (
                 "Angular size is converted to arcsec because provided" 
-                "input_catalog_type is skypy. If this is not correct, please refer to" 
-                "the documentation of the class you are using"
+                " input_catalog_type is skypy. If this is not correct, please refer to" 
+                " the documentation of the class you are using"
             )
         warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
     else:
         galaxy_catalog=galaxy_catalog
         warning_msg = (
                 "You provided angular size in arcsec. If this is not correct, please" 
-                "refer to the documentation of the class that you are using"
+                " refer to the documentation of the class that you are using"
             )
         warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
     return galaxy_catalog
