@@ -1,17 +1,50 @@
 import pytest
-from slsim.lens_pop import LensPop
+
 import numpy as np
+import matplotlib.pyplot as plt
+import slsim.Sources as sources
+import slsim.Pipelines as pipelines
+import slsim.Deflectors as deflectors
+
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
+from slsim.lens_pop import LensPop
 from slsim.Plots.lens_plots import LensingPlots
-import matplotlib.pyplot as plt
 
 
 @pytest.fixture
 def gg_lens_pop_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     sky_area = Quantity(value=0.001, unit="deg2")
-    return LensPop(sky_area=sky_area, cosmo=cosmo)
+
+    galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
+        skypy_config=None,
+        sky_area=sky_area,
+        filters=None,
+    )
+    lens_galaxies = deflectors.EllipticalLensGalaxies(
+        galaxy_list=galaxy_simulation_pipeline.red_galaxies,
+        kwargs_cut={},
+        kwargs_mass2light={},
+        cosmo=cosmo,
+        sky_area=sky_area,
+    )
+
+    source_galaxies = sources.Galaxies(
+        galaxy_list=galaxy_simulation_pipeline.blue_galaxies,
+        kwargs_cut={},
+        cosmo=cosmo,
+        sky_area=sky_area,
+        catalog_type="skypy",
+    )
+
+    lenspop = LensPop(
+        deflector_population=lens_galaxies,
+        source_population=source_galaxies,
+        cosmo=cosmo,
+    )
+
+    return lenspop
 
 
 def test_rgb_image(gg_lens_pop_instance):
