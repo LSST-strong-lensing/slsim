@@ -244,7 +244,7 @@ class TestSource:
         self.source6 = Source(
             self.source_dict4,
             variability_model="light_curve",
-            kwargs_variability={"supernovae_lightcurve", "F146"},
+            kwargs_variability={"supernovae_lightcurve", "F146", "z", "y"},
             sn_absolute_mag_band="bessellb",
             sn_absolute_zpsys="ab",
             sn_type="Ia",
@@ -308,6 +308,10 @@ class TestSource:
             self.source4.point_source_magnitude("r")
         result2 = self.source6.point_source_magnitude("F146")
         assert result2 == [self.source6.source_dict["ps_mag_F146"]]
+        result3 = self.source6.point_source_magnitude("z")
+        assert result3 == [self.source6.source_dict["ps_mag_z"]]
+        result4 = self.source6.point_source_magnitude("y")
+        assert result4 == [self.source6.source_dict["ps_mag_y"]]
 
     def test_ps_magnitude_with_variability(self):
         image_observation_times = np.array([np.pi, np.pi / 2, np.pi / 3])

@@ -9,3 +9,5 @@ pyyaml
 matplotlib
 sncosmo
 colossus
+uncertainties
+kcorrect

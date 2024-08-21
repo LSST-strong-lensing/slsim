@@ -21,7 +21,6 @@ class QuasarRate(object):
 
     def __init__(
         self,
-        h: float = 0.70,
         zeta: float = 2.98,
         xi: float = 4.05,
         z_star: float = 1.60,
@@ -61,7 +60,6 @@ class QuasarRate(object):
         :param redshifts: Redshifts for quasar density lightcone to be evaluated at.
         :type redshifts: np.ndarray
         """
-        self.h = h
         self.zeta = zeta
         self.xi = xi
         self.z_star = z_star
@@ -111,7 +109,7 @@ class QuasarRate(object):
         ) ** 2
         result = (
             -20.90
-            + (5 * np.log10(self.h))
+            + (5 * np.log10(self.cosmo.h))
             - (
                 2.5
                 * np.log10(
@@ -131,13 +129,15 @@ class QuasarRate(object):
 
     def dPhi_dM(self, M, z_value):
         """Calculates dPhi_dM for a given M and redshift according to Eq (10) in Oguri &
-        Marshall (2010): DOI: 10.1111/j.1365-2966.2010.16639.x.
+        Marshall (2010): DOI: 10.1111/j.1365-2966.2010.16639.x. The (1 + z)^-3 factor
+        converts from physical to comoving volume to account for the expansion of the
+        universe.
 
         :param M: Absolute i-band magnitude.
         :type M: float or numpy.ndarray
         :param z_value: Redshift value.
         :type z_value: float or numpy.ndarray
-        :return: dPhi_dM value.
+        :return: dPhi_dM value in the unit of comoving volume.
         :rtype: float or np.ndarray :unit: mag^-1 Mpc^-3
         """
         M = np.atleast_1d(M)
@@ -163,7 +163,9 @@ class QuasarRate(object):
             where=denominator_dphi_dm != 0,
         )
 
-        return term1
+        return term1 / (
+            (1 + z_value) ** 3
+        )  ## Convert from physical to wanted comoving volume.
 
     def convert_magnitude(self, magnitude, z, conversion="apparent_to_absolute"):
         """Converts between apparent and absolute magnitudes using K-corrections
@@ -195,8 +197,8 @@ class QuasarRate(object):
         return converted_magnitude
 
     def n_comoving(self, m_min, m_max, z_value):
-        """Calculates the comoving number density of quasars for a given redshift by
-        integrating dPhi/dM over the range of apparent magnitudes.
+        """Calculates the comoving number density of quasars by integrating dPhi/dM over
+        the range of absolute magnitudes.
 
         :param m_min: Minimum apparent magnitude.
         :type m_min: float or np.ndarray
@@ -330,7 +332,7 @@ class QuasarRate(object):
         inverse_cdf_dict = self.inverse_cdf_fits_for_redshifts(
             m_min, m_max, quasar_redshifts
         )
-        table_data = {"z": [], "ps_mag_i": []}
+        table_data = {"z": [], "M": [], "ps_mag_i": []}
 
         for redshift in quasar_redshifts:
             inverse_cdf = inverse_cdf_dict[redshift]
@@ -341,7 +343,7 @@ class QuasarRate(object):
             apparent_i_mag = self.convert_magnitude(
                 random_abs_M_value, redshift, conversion="absolute_to_apparent"
             )
-
+            table_data["M"].append(random_abs_M_value)
             table_data["z"].append(redshift)
             table_data["ps_mag_i"].append(apparent_i_mag)
 
