@@ -1,7 +1,5 @@
 from slsim.Deflectors.DeflectorTypes.deflector_base import DeflectorBase
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
-from lenstronomy.Util import constants
-
 
 class EPLSersic(DeflectorBase):
     """Deflector with an elliptical power-law and a Sersic light model.
