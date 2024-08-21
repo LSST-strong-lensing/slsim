@@ -13,9 +13,12 @@ class Agn:
     :param redshift: Redshift of the AGN
     :param cosmo: Astropy cosmology to use in calculating distances
     :param kwargs_agn_model: Dictionary containing all keywords for the accretion disk
-        model, in particular 'black_hole_mass_exp', 'black_hole_spin',
-        'inclination_angle', 'r_out', 'r_resoultion', 'eddington_ratio', and
-        'accretion_disk'
+        variability model. These are: 'black_hole_mass_exp': mass exponent of the SMBH
+        'black_hole_spin': spin of the SMBH 'inclination_angle': inclination of the AGN
+        disk in degrees 'r_out': Maximum radius of the disk in gravitational radii
+        'r_resoultion': Number of pixels the disk is resolved to 'eddington_ratio':
+        fraction of the eddington luminosity the disk is radiating with
+        'accretion_disk': accretion disk model
     """
 
     def __init__(
@@ -69,15 +72,6 @@ class Agn:
                 "intrinsic_light_curve"
             ]["ps_mag_intrinsic"]
 
-        # Create accretion disk object to get SED
-        # self.accretion_disk = AccretionDiskReprocessing(
-        #    "lamppost",
-        #    **self.kwargs_model
-        # )
-
-        # Create variability object to allow reprocessing of intrinsic signal
-        # the variable_disk object has an accretion disk reprocessor which we can
-        # pull the SED from.
         self.variable_disk = Variability("lamppost_reprocessed", **self.kwargs_model)
 
     def get_mean_mags(self, survey):
@@ -170,7 +164,7 @@ def RandomAgn(
 
     if input_agn_bounds_dict is not None:
         for kwarg in required_agn_kwargs:
-            if kwarg not in input_agn_bounds_dict:
+            if kwarg + "_bounds" not in input_agn_bounds_dict:
                 input_agn_bounds_dict[kwarg + "_bounds"] = agn_bounds_dict[
                     kwarg + "_bounds"
                 ]
