@@ -9,7 +9,8 @@ from slsim.Deflectors.velocity_dispersion import vel_disp_abundance_matching
 class EllipticalLensGalaxies(DeflectorsBase):
     """Class describing elliptical galaxies."""
 
-    def __init__(self, galaxy_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area):
+    def __init__(self, galaxy_list, kwargs_cut, kwargs_mass2light, 
+                 cosmo, sky_area, catalog_type="skypy"):
         """
 
         :param galaxy_list: list of dictionary with galaxy parameters of
@@ -21,7 +22,15 @@ class EllipticalLensGalaxies(DeflectorsBase):
         :type sky_area: `~astropy.units.Quantity`
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
+        :param catalog_type: type of the catalog. If user is using deflector catalog 
+         other than generated from skypy pipeline, we require them to provide angular 
+         size of the galaxy in arcsec and specify catalog_type as None. Otherwise, by 
+         default, this class considers deflector catalog is generated using skypy 
+         pipeline.
+        :type catalog_type: str. "skypy" or None. 
         """
+        galaxy_list = param_util.catalog_with_angular_size_in_arcsec(
+            galaxy_catalog=galaxy_list, input_catalog_type=catalog_type)
         super().__init__(
             deflector_table=galaxy_list,
             kwargs_cut=kwargs_cut,

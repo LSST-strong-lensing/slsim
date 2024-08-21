@@ -7,7 +7,7 @@ from slsim.Deflectors.elliptical_lens_galaxies import (
 )
 from slsim.Deflectors.deflectors_base import DeflectorsBase
 from astropy.table import vstack
-
+from slsim.Util.param_util import catalog_with_angular_size_in_arcsec
 
 class AllLensGalaxies(DeflectorsBase):
     """Class describing all-type galaxies."""
@@ -20,6 +20,7 @@ class AllLensGalaxies(DeflectorsBase):
         kwargs_mass2light,
         cosmo,
         sky_area,
+        catalog_type="skypy"
     ):
         """
         :param red_galaxy_list: list of dictionary with elliptical galaxy
@@ -35,8 +36,17 @@ class AllLensGalaxies(DeflectorsBase):
         :type sky_area: `~astropy.units.Quantity`
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
+        :param catalog_type: type of the catalog. If user is using deflector catalog 
+         other than generated from skypy pipeline, we require them to provide angular 
+         size of the galaxy in arcsec and specify catalog_type as None. Otherwise, by 
+         default, this class considers deflector catalog is generated using skypy 
+         pipeline.
+        :type catalog_type: str. "skypy" or None. 
         """
-
+        red_galaxy_list = catalog_with_angular_size_in_arcsec(
+            galaxy_catalog=red_galaxy_list, input_catalog_type=catalog_type)
+        blue_galaxy_list = catalog_with_angular_size_in_arcsec(
+            galaxy_catalog=blue_galaxy_list, input_catalog_type=catalog_type)
         red_column_names = red_galaxy_list.colnames
         if "galaxy_type" not in red_column_names:
             red_galaxy_list["galaxy_type"] = "red"
