@@ -26,6 +26,8 @@ class TestSource:
                 [0.76],
                 [20],
                 [None],
+                [None],
+                [None],
             ],
             names=(
                 "z",
@@ -43,6 +45,8 @@ class TestSource:
                 "e2",
                 "MJD",
                 "supernovae_lightcurve",
+                "F146",
+                "i",
             ),
         )
         source_dict2 = Table(
@@ -63,6 +67,8 @@ class TestSource:
                 [0.001],
                 [-0.001],
                 [None],
+                [None],
+                [None],
             ],
             names=(
                 "z",
@@ -81,6 +87,8 @@ class TestSource:
                 "ra_off",
                 "dec_off",
                 "supernovae_lightcurve",
+                "F146",
+                "i",
             ),
         )
         self.source_dict3 = Table(
@@ -100,6 +108,8 @@ class TestSource:
                 [0.001],
                 [-0.001],
                 [None],
+                [None],
+                [None],
             ],
             names=(
                 "z",
@@ -117,6 +127,8 @@ class TestSource:
                 "ra_off",
                 "dec_off",
                 "supernovae_lightcurve",
+                "F146",
+                "i",
             ),
         )
         self.source_dict4 = Table(
@@ -134,6 +146,8 @@ class TestSource:
                 [0.001],
                 [-0.001],
                 [None],
+                [None],
+                [None],
             ],
             names=(
                 "z",
@@ -149,6 +163,8 @@ class TestSource:
                 "ra_off",
                 "dec_off",
                 "supernovae_lightcurve",
+                "F146",
+                "i",
             ),
         )
 
