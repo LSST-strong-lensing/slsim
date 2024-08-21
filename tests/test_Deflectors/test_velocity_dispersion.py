@@ -69,7 +69,7 @@ def test_schechter_vdf():
         phi_star,
         vd_star,
         vd_min=50,
-        vd_max=500,
+        vd_max=450,
         size=None,
         resolution=100,
     )
