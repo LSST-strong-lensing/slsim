@@ -53,7 +53,7 @@ def test_schechter_vdf():
     alpha = 2.32
     beta = 2.67
 
-    vel_disp_list = schechter_velocity_dispersion_function(
+    vel_disp_list1 = schechter_velocity_dispersion_function(
         alpha,
         beta,
         phi_star,
@@ -61,6 +61,16 @@ def test_schechter_vdf():
         vd_min=50,
         vd_max=500,
         size=10000,
+        resolution=100,
+    )
+    vel_disp_list2 = schechter_velocity_dispersion_function(
+        alpha,
+        beta,
+        phi_star,
+        vd_star,
+        vd_min=50,
+        vd_max=500,
+        size=None,
         resolution=100,
     )
 
@@ -90,6 +100,8 @@ def test_schechter_vdf():
         noise=True,
     )
     assert len(z_list) == 130
+    assert len(vel_disp_list1) == 10000
+    assert len(np.array([vel_disp_list2])) == 1
 
 
 def test_redshifts_from_comoving_density():
