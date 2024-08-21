@@ -91,9 +91,7 @@ class EPLSersic(DeflectorBase):
                 e1_slsim=e1_light_lens, e2_slsim=e2_light_lens
             )
         )
-        size_lens_arcsec = (
-            self._deflector_dict["angular_size"] / constants.arcsec
-        )  # convert radian to arc seconds
+        size_lens_arcsec = self._deflector_dict["angular_size"]
         lens_light_model_list = ["SERSIC_ELLIPSE"]
         kwargs_lens_light = [
             {
