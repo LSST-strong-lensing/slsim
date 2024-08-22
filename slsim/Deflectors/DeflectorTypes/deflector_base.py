@@ -122,7 +122,7 @@ class DeflectorBase(ABC):
     def angular_size_light(self):
         """Angular size of the light component.
 
-        :return: angular size [radian]
+        :return: angular size [arcsec]
         """
         return self._deflector_dict["angular_size"]
 
