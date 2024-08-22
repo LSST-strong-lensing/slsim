@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.random as random
 from slsim.selection import object_cut
-from slsim.Deflectors.richness2mass import mass_richness_simet2017
+from slsim.Deflectors.richness2mass import mass_richness_relation
 from slsim.Deflectors.halo_population import gene_e_ang_halo, concent_m_w_scatter
 from colossus.cosmology import cosmology as colossus_cosmo
 from slsim.Deflectors.velocity_dispersion import vel_disp_abundance_matching
@@ -22,7 +22,15 @@ class ClusterCatalogLens(DeflectorsBase):
     """
 
     def __init__(
-        self, cluster_list, members_list, galaxy_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area
+        self,
+        cluster_list,
+        members_list,
+        galaxy_list,
+        kwargs_cut,
+        kwargs_mass2light,
+        cosmo,
+        sky_area,
+        richness_fn="Abdullah2022",
     ):
         """
 
@@ -48,6 +56,7 @@ class ClusterCatalogLens(DeflectorsBase):
             sky_area=sky_area,
         )
         self.set_cosmo()
+        self.richness_fn = richness_fn
         
         # cluster
         n_clusters = len(cluster_list)
@@ -129,7 +138,7 @@ class ClusterCatalogLens(DeflectorsBase):
     def draw_cluster(self, index):
         cluster = self._cluster_select[index]
         if cluster["halo_mass"] == -1:
-            cluster["halo_mass"] = mass_richness_simet2017(cluster["richness"])
+            cluster["halo_mass"] = mass_richness_relation(cluster["richness"], self.richness_fn)
         if cluster["concentration"] == -1:
             cluster["concentration"] = concent_m_w_scatter(
                 np.array([cluster["halo_mass"]]),
