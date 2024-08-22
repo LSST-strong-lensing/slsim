@@ -9,6 +9,7 @@ import slsim.Pipelines as pipelines
 import slsim.Deflectors as deflectors
 
 from astropy.units import Quantity
+from astropy.table import Table
 from astropy.cosmology import FlatLambdaCDM
 from slsim.lens_pop import LensPop
 from slsim.lens_pop import draw_test_area
@@ -146,7 +147,7 @@ def test_galaxies_lens_pop_halo_model_instance():
 
 
 def test_cluster_catalog_lens_pop_instance():
-    cosmo = FlatLambdaCDM(H0=70, Om0=0.3, Ob0=0.05)
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     sky_area = Quantity(value=0.001, unit="deg2")
 
     kwargs_deflector_cut = {"z_min": 0.001, "z_max": 2.5}
@@ -154,26 +155,44 @@ def test_cluster_catalog_lens_pop_instance():
 
     path = os.path.dirname(__file__)
     module_path = os.path.dirname(path)
-    cluster_catalog = os.path.join(module_path, "data/redMaPPer/clusters_example.fits")
-    members_catalog = os.path.join(module_path, "data/redMaPPer/members_example.fits")
-    cluster_config = {
-        "cluster_catalog": cluster_catalog,
-        "members_catalog": members_catalog
-    }
+    cluster_catalog_path = os.path.join(module_path, "data/redMaPPer/clusters_example.fits")
+    members_catalog_path = os.path.join(module_path, "data/redMaPPer/members_example.fits")
+    cluster_catalog = Table.read(cluster_catalog_path)
+    members_catalog = Table.read(members_catalog_path)
 
-    cluster_lens_cat_pop = LensPop(
-        deflector_type="cluster-catalog",
-        source_type="galaxies",
-        kwargs_deflector_cut=kwargs_deflector_cut,
-        kwargs_source_cut=kwargs_source_cut,
-        kwargs_mass2light=None,
+    galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
         skypy_config=None,
-        cluster_config=cluster_config,
         sky_area=sky_area,
+        filters=None,
+    )
+
+    lens_clusters = deflectors.ClusterCatalogLens(
+        cluster_list=cluster_catalog,
+        members_list=members_catalog,
+        galaxy_list=galaxy_simulation_pipeline.red_galaxies,
+        kwargs_cut=kwargs_deflector_cut,
+        kwargs_mass2light={},
+        cosmo=cosmo,
+        sky_area=sky_area,
+    )
+
+    source_galaxies = sources.Galaxies(
+        galaxy_list=galaxy_simulation_pipeline.blue_galaxies,
+        kwargs_cut=kwargs_source_cut,
+        cosmo=cosmo,
+        sky_area=sky_area,
+        catalog_type="skypy",
+    )
+
+    cluster_lens_pop = LensPop(
+        deflector_population=lens_clusters,
+        source_population=source_galaxies,
         cosmo=cosmo,
     )
-    deflector = cluster_lens_cat_pop._lens_galaxies.draw_deflector()
-    assert deflector["halo_mass"] > 0
+
+    kwargs_lens_cut = {}
+    pes_lens_class = cluster_lens_pop.select_lens_at_random(**kwargs_lens_cut)
+    assert pes_lens_class.deflector.deflector_type == "NFW_CLUSTER"
 
 
 def test_supernovae_plus_galaxies_lens_pop_instance():
