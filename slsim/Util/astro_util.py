@@ -990,6 +990,5 @@ def convert_passband_to_nm(
         )
     wavelength_ratio = wavelength_unit_input.to(u.nm)
     output_passband = passband.copy()
-    print(output_passband, type(output_passband))
     output_passband[0] = np.asarray(passband[0][:]) * wavelength_ratio
     return output_passband

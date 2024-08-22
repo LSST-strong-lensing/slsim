@@ -74,17 +74,15 @@ class Source(object):
             ##Here we prepare variability class on the basis of given
             # kwargs_variability.
             kwargs_variab_extracted = {}
-            kwargs_variability_list = ["supernovae_lightcurve", "agn_lightcurve"]
+            kwargs_variability_list = ["supernovae_lightcurve"]
+            kwargs_variability_list_agn = ["agn_lightcurve"]
 
-            joint_set = set(kwargs_variability_list) & set(self.kwargs_variability)
-            for element in joint_set:
-
-                # With this condition we call lightcurve generator class and prepare
-                # variability class.
-                # if any(
-                #    element in kwargs_variability_list
-                #    for element in list(self.kwargs_variability)
-                # ):
+            # With this condition we call lightcurve generator class and prepare
+            # variability class.
+            if any(
+                element in kwargs_variability_list
+                for element in list(self.kwargs_variability)
+            ):
 
                 z = self.source_dict["z"]
                 if self.cosmo is None:
@@ -92,7 +90,7 @@ class Source(object):
                         "Cosmology cannot be None for Supernova class. Please"
                         "provide a suitable astropy cosmology."
                     )
-                if element == "supernovae_lightcurve":
+                else:
                     lightcurve_class = random_supernovae.RandomizedSupernova(
                         sn_type=self.sn_type,
                         redshift=z,
@@ -138,21 +136,33 @@ class Source(object):
                                 name: magnitudes,
                             }
 
-                elif element == "agn_lightcurve":
+            # Check if AGN model is used
+            elif any(
+                element in kwargs_variability_list_agn
+                for element in list(self.kwargs_variability)
+            ):
 
+                z = self.source_dict["z"]
+                if self.cosmo is None:
+                    raise ValueError(
+                        "Cosmology cannot be None for AGN class. Please"
+                        "provide a suitable astropy cosmology."
+                    )
+
+                else:
                     # Get the dict object from the astropy.table.column
                     self.agn_kwarg_dict = self.source_dict["kwargs_agn_model"].data[0][
                         0
                     ]
 
-                    # Populate "none" for optional keys in this dict
+                    # Populate "None" for optional keys in this dict
                     optional_keys = ["random_seed", "input_agn_bounds_dict"]
                     for opt_key in optional_keys:
                         if opt_key not in self.agn_kwarg_dict.keys():
                             self.agn_kwarg_dict[opt_key] = None
 
                     # Create the agn object
-                    agn_class = agn.RandomAgn(
+                    self.agn_class = agn.RandomAgn(
                         self.source_dict["i_band_mag"],
                         self.source_dict["z"],
                         cosmo=self.cosmo,
@@ -161,7 +171,7 @@ class Source(object):
 
                     # Get mean mags across LSST filters
                     # Fix to eventually give the user power to choose other surveys
-                    mean_magnitudes = agn_class.get_mean_mags("lsst")
+                    mean_magnitudes = self.agn_class.get_mean_mags("lsst")
 
                     # These are lsst filters, hard coded in for now. Fix later.
                     filters = ["u", "g", "r", "i", "z", "y"]
@@ -171,16 +181,16 @@ class Source(object):
                         filter_name = "ps_mag_" + band
 
                         # Again, lsst filters hard coded in. Fix later.
-                        agn_class.variable_disk.reprocessing_kwargs[
+                        self.agn_class.variable_disk.reprocessing_kwargs[
                             "speclite_filter"
                         ] = ("lsst2023-" + band)
 
-                        agn_class.variable_disk.driving_signal_kwargs[
+                        self.agn_class.variable_disk.driving_signal_kwargs[
                             "mean_magnitude"
                         ] = mean_magnitudes[index]
 
                         reprocessed_lightcurve = reprocess_with_lamppost_model(
-                            agn_class.variable_disk
+                            self.agn_class.variable_disk
                         )
 
                         times = reprocessed_lightcurve["MJD"]
@@ -239,6 +249,7 @@ class Source(object):
                         raise ValueError(
                             "given keyword %s is not in the source catalog." % element
                         )
+
         else:
             # self.variability_class = None
             kwargs_variab_extracted = None

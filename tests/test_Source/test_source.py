@@ -25,9 +25,6 @@ class TestSource:
                 [0.8],
                 [0.76],
                 [20],
-                [None],
-                [None],
-                [None],
             ],
             names=(
                 "z",
@@ -44,9 +41,6 @@ class TestSource:
                 "e1",
                 "e2",
                 "MJD",
-                "supernovae_lightcurve",
-                "F146",
-                "i",
             ),
         )
         source_dict2 = Table(
@@ -66,9 +60,6 @@ class TestSource:
                 [0.76],
                 [0.001],
                 [-0.001],
-                [None],
-                [None],
-                [None],
             ],
             names=(
                 "z",
@@ -86,9 +77,6 @@ class TestSource:
                 "e2",
                 "ra_off",
                 "dec_off",
-                "supernovae_lightcurve",
-                "F146",
-                "i",
             ),
         )
         self.source_dict3 = Table(
@@ -107,9 +95,6 @@ class TestSource:
                 [23],
                 [0.001],
                 [-0.001],
-                [None],
-                [None],
-                [None],
             ],
             names=(
                 "z",
@@ -126,9 +111,6 @@ class TestSource:
                 "mag_i",
                 "ra_off",
                 "dec_off",
-                "supernovae_lightcurve",
-                "F146",
-                "i",
             ),
         )
         self.source_dict4 = Table(
@@ -145,9 +127,6 @@ class TestSource:
                 [23],
                 [0.001],
                 [-0.001],
-                [None],
-                [None],
-                [None],
             ],
             names=(
                 "z",
@@ -162,9 +141,6 @@ class TestSource:
                 "mag_i",
                 "ra_off",
                 "dec_off",
-                "supernovae_lightcurve",
-                "F146",
-                "i",
             ),
         )
 
@@ -194,7 +170,7 @@ class TestSource:
                 [0.35],
                 [0.8],
                 [0.76],
-                [20],
+                [[0, 20, 25, 30, 40]],
                 [20],
                 [kwargs_agn_model],
                 [intrinsic_light_curve],
@@ -410,6 +386,24 @@ class TestSource:
             self.source8.kwargs_variability_extracted
         assert self.source7.kwargs_variability_extracted["r"]["ps_mag_r"] == 17
         assert self.source7.kwargs_variability_extracted["r"]["MJD"] == 20
+
+    def test_agn(self):
+        assert self.source11.redshift == [0.5]
+
+        # Make sure both "g" and "z" band magnitudes exist, and they should
+        # not be equal
+        g_mag = self.source11.point_source_magnitude("g")
+        z_mag = self.source11.point_source_magnitude("z")
+
+        assert g_mag != z_mag
+
+        later_obs_time = [25]
+
+        g_mag_later_time = self.source11.point_source_magnitude(
+            "g", image_observation_times=later_obs_time
+        )
+
+        assert g_mag != g_mag_later_time
 
 
 if __name__ == "__main__":
