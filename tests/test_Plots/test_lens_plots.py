@@ -130,7 +130,8 @@ def test_roman_rgb_image():
     lens_pop = gg_roman_lens_pop_instance()
     kwargs_lens_cut = {}
     lens_class = lens_pop.select_lens_at_random(**kwargs_lens_cut)
-    rgb_band_list = ["F184", "F129", "F106"]
+    # Only F106 can be tested since external files are required for other bands
+    rgb_band_list = ["F106", "F106", "F106"]
     lensing_plots = LensingPlots(lens_pop, num_pix=64, observatory="Roman")
     image_rgb = lensing_plots.rgb_image(lens_class, rgb_band_list)
 
