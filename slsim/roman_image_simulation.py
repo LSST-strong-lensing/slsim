@@ -1,13 +1,17 @@
 from astropy.coordinates import SkyCoord
 import datetime
-import galsim
-from galsim import Image, InterpolatedImage, roman
 import numpy as np
 from lenstronomy.SimulationAPI.sim_api import SimAPI
 from slsim.Observations import image_quality_lenstronomy
 import os.path
 import pickle
 from webbpsf.roman import WFI
+
+try:
+    import galsim
+    from galsim import Image, InterpolatedImage, roman
+except:
+    raise Exception("Please install the galsim module. Note that this module is not supported on Windows")
 
 # NOTE: Adding sky background requires webbpsf-data, which can be found at
 #       https://webbpsf.readthedocs.io/en/latest/installation.html. Then, the
@@ -117,16 +121,13 @@ def simulate_roman_image(
         point_source_add=True,
     )
 
-    total_flux_cps = calculate_total_flux_cps(
-        image_model, kwargs_source, kwargs_lens_light
-    )
-
     # Converts image to the galsim InterpolatedImage class
     interp = InterpolatedImage(
         Image(array, xmin=0, ymin=0),
         scale=0.11 / oversample,
-        flux=total_flux_cps * _exposure_time,
+        flux=np.sum(array),
     )
+    
     # Gets psf and convolve
     galsim_psf = get_psf(band, detector, detector_pos, oversample, psf_directory)
     convolved = galsim.Convolve(interp, galsim_psf)
@@ -135,7 +136,7 @@ def simulate_roman_image(
     im = galsim.ImageF(num_pix, num_pix, scale=0.11)
     im.setOrigin(0, 0)
     image = convolved.drawImage(im)
-
+    
     if add_noise:
         # Obtain sky background corresponding to certain band and add it to the image
         # Requires webbpsf data files to use
@@ -153,34 +154,10 @@ def simulate_roman_image(
 
     final_array = array[3:-3, 3:-3]
     final_array = final_array / _exposure_time
-
     return final_array
-
-
-def calculate_total_flux_cps(image_model, kwargs_source, kwargs_lens_light):
-    """
-    :param image_model: Used to access the source model and lens light model's total flux
-    :type image_model: Instance of ImageModel class
-    :param kwargs_source: Contains source parameters, used to calculate source model total flux
-    :type kwargs_source: dict
-    :param kwargs_lens_light: Contains lens light parameters, used to calculate lens light model total flux
-    :type kwargs_lens_light: dict
-    :return: the total flux in the entire image in units of counts per second
-    :rtype: float
-    """
-
-    flux_source = image_model.SourceModel.total_flux(kwargs_list=kwargs_source)
-    total_flux_source = np.sum(flux_source)
-    flux_lens_light = image_model.LensLightModel.total_flux(
-        kwargs_list=kwargs_lens_light
-    )
-    total_flux_lens_light = np.sum(flux_lens_light)
-    return total_flux_lens_light + total_flux_source
-
 
 # The following functions have been copy-pasted from the mejiro repo
 # Credit to Bryce Wedig
-
 
 def get_psf(band, detector, detector_pos, oversample, psf_directory):
     """Obtain galsim psf corresponding to specific band, using webbpsf.
@@ -222,9 +199,9 @@ def get_psf(band, detector, detector_pos, oversample, psf_directory):
         wfi.detector_position = detector_pos
         psf = wfi.calc_psf(oversample=oversample)
 
-    # import PSF to GalSim
+    # import PSF to GalSim (and normalize the PSF so that sum.psf = 1)
     oversampled_pixel_scale = 0.11 / oversample
-    psf_image = galsim.Image(psf[0].data, scale=oversampled_pixel_scale)
+    psf_image = galsim.Image(psf[0].data/np.sum(psf[0].data), scale=oversampled_pixel_scale)
 
     return galsim.InterpolatedImage(psf_image)
 
