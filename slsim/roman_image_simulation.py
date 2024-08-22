@@ -11,8 +11,9 @@ try:
     import galsim
     from galsim import Image, InterpolatedImage, roman
 except ModuleNotFoundError:
-    raise Exception(
-        "Please install the galsim module. Note that this module is not supported on Windows"
+    raise ModuleNotFoundError(
+        "Please install the galsim module in order to use simulate_roman_image.\n"
+        "Note that this module is not supported on Windows"
     )
 
 # NOTE: Adding sky background requires webbpsf-data, which can be found at
