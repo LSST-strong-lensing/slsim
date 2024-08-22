@@ -11,5 +11,4 @@ sncosmo
 colossus
 uncertainties
 kcorrect
-galsim
 webbpsf
