@@ -48,6 +48,8 @@ class ClusterCatalogLens(DeflectorsBase):
         :type sky_area: `~astropy.units.Quantity`
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
+        :param richness_fn: richness-mass relation to use
+        :type richness_fn: str
         ## MEMO: DeflectorsBase's inputs are deflector_table, kwargs_cut, cosmo, sky_area
         """
         super().__init__(
@@ -192,6 +194,10 @@ class ClusterCatalogLens(DeflectorsBase):
     def assign_similar_galaxy(
             members_list, galaxy_list, cosmo=None, bands=("g", "r", "i", "z", "Y"), max_gals=10000
     ):
+        """
+        Assigns a similar galaxy to each member of a group/cluster member catalog by comparing
+        their magnitudes and redshifts.
+        """
         # shuffle galaxy list and select a subset
         if len(galaxy_list) > max_gals:
             indices = np.random.choice(len(galaxy_list), max_gals, replace=False)
