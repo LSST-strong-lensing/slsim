@@ -21,17 +21,17 @@ class TestNFWCluster(object):
         path = os.path.dirname(__file__)
         module_path = os.path.dirname(os.path.dirname(path))
         # a table with the dictionary for a single dark matter halo
-        self.halo_dict = dict(Table.read(
-            os.path.join(module_path, "TestData/halo_NFW.fits"), format="fits"
-        ))
+        self.halo_dict = dict(
+            Table.read(
+                os.path.join(module_path, "TestData/halo_NFW.fits"), format="fits"
+            )
+        )
         # a table with the dictionary for 10 EPL+Sersic subhalos
         subhalos_table = Table.read(
             os.path.join(module_path, "TestData/subhalos_table.fits"), format="fits"
         )
         self.halo_dict["subhalos"] = subhalos_table
-        self.nfw_cluster = NFWCluster(
-            deflector_dict=self.halo_dict
-        )
+        self.nfw_cluster = NFWCluster(deflector_dict=self.halo_dict)
 
     def test_redshift(self):
         z = self.nfw_cluster.redshift

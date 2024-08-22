@@ -182,8 +182,8 @@ def vel_disp_nfw_aperture(r, m_halo, c_halo, cosmo, z_lens):
 
 
 def vel_disp_nfw(m_halo, c_halo, cosmo, z_lens):
-    """Computes vel_disp_nfw_aperture using the characteristic radius rs of the NFW
-    as aperture (which is independent of the source redshift).
+    """Computes vel_disp_nfw_aperture using the characteristic radius rs of the NFW as
+    aperture (which is independent of the source redshift).
 
     :param r: radius of the aperture for the velocity dispersion [arcsec]
     :param m_halo: Halo mass [physical M_sun]

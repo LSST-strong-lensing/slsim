@@ -155,8 +155,12 @@ def test_cluster_catalog_lens_pop_instance():
 
     path = os.path.dirname(__file__)
     module_path = os.path.dirname(path)
-    cluster_catalog_path = os.path.join(module_path, "data/redMaPPer/clusters_example.fits")
-    members_catalog_path = os.path.join(module_path, "data/redMaPPer/members_example.fits")
+    cluster_catalog_path = os.path.join(
+        module_path, "data/redMaPPer/clusters_example.fits"
+    )
+    members_catalog_path = os.path.join(
+        module_path, "data/redMaPPer/members_example.fits"
+    )
     cluster_catalog = Table.read(cluster_catalog_path)
     members_catalog = Table.read(members_catalog_path)
 
