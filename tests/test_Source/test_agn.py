@@ -106,7 +106,6 @@ def test_random_agn():
         "black_hole_mass_exponent_bounds": [8.0, 8.0],
         "black_hole_spin_bounds": [-0.1, 0.1],
         "inclination_angle_bounds": [0, 45],
-        "r_out_bounds": [1000, 1000],
         "eddington_ratio_bounds": [0.1, 0.1],
         "supported_disk_models": ["thin_disk"],
         "driving_variability": ["intrinsic_light_curve"],

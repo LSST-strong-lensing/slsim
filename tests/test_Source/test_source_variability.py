@@ -121,6 +121,7 @@ class TestVariability:
         reprocessing_kwargs_4 = {
             "response_function_amplitudes": user_transfer_function_amplitudes
         }
+        reprocessing_kwargs_5 = {"speclite_filter": ["lsst2016-r"]}
         error_reprocessing_kwargs = {
             "response_function_amplitudes": badly_defined_transfer_function_amplitudes
         }
@@ -197,6 +198,7 @@ class TestVariability:
         var_2 = Variability("lamppost_reprocessed", **full_kwargs_2)
         Variability("lamppost_reprocessed", **full_kwargs_3)
         Variability("lamppost_reprocessed", **full_kwargs_4)
+        Variability("lamppost_reprocessed", **full_kwargs_5)
         Variability("lamppost_reprocessed", **single_response_kwargs)
         with pytest.raises(ValueError):
             Variability("lamppost_reprocessed", **full_error_kwargs)

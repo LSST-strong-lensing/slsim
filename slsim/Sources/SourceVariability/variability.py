@@ -144,9 +144,9 @@ def parse_kwargs_for_lamppost_reprocessed_model(variability):
     variability.redshift = 0
     variability.delta_wavelength = 50
 
-    # If agn kwargs are a dictionary in variability.kwargs_model
-    if "kwargs_agn_model" in variability.kwargs_model:
-        variability.agn_kwargs = variability.kwargs_model["kwargs_agn_model"].data[0][0]
+    # If agn kwargs are a dictionary in a column object
+    # if "kwargs_agn_model" in variability.kwargs_model:
+    #    variability.agn_kwargs = variability.kwargs_model["kwargs_agn_model"].data[0][0]
 
     for kwarg in variability.kwargs_model:
         if kwarg in [

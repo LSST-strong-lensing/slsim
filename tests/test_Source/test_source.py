@@ -157,6 +157,7 @@ class TestSource:
                 "black_hole_mass_exponent": 9.5,
                 "intrinsic_light_curve": intrinsic_light_curve,
                 "driving_variability_model": "light_curve",
+                "random_seed": 42,
             },
         )
 
