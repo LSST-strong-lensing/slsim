@@ -41,68 +41,46 @@ class LensingPlots(object):
         """
         if self._observatory == "Roman":
             # NOTE: Galsim is required which is not supported on Windows
-            image_r = simulate_roman_image(
-                lens_class,
-                band=rgb_band_list[0],
-                num_pix=self.num_pix,
-                oversample=5,
-                add_noise=add_noise,
-                **self._kwargs
-            )
-            image_g = simulate_roman_image(
-                lens_class,
-                band=rgb_band_list[1],
-                num_pix=self.num_pix,
-                oversample=5,
-                add_noise=add_noise,
-                **self._kwargs
-            )
-            image_b = simulate_roman_image(
-                lens_class,
-                band=rgb_band_list[2],
-                num_pix=self.num_pix,
-                oversample=5,
-                add_noise=add_noise,
-                **self._kwargs
-            )
-            min_r = np.min(image_r)
-            min_g = np.min(image_g)
-            min_b = np.min(image_b)
-            minimum = [min_r, min_g, min_b]
-            image_rgb = make_lupton_rgb(
-                image_r=image_r,
-                image_g=image_g,
-                image_b=image_b,
-                minimum=minimum,
-                stretch=8,
-                Q=10,
-            )
+            make_image = simulate_roman_image
         else:
-            image_r = simulate_image(
-                lens_class=lens_class,
-                band=rgb_band_list[0],
-                num_pix=self.num_pix,
-                add_noise=add_noise,
-                observatory=self._observatory,
-                **self._kwargs
-            )
-            image_g = simulate_image(
-                lens_class=lens_class,
-                band=rgb_band_list[1],
-                num_pix=self.num_pix,
-                add_noise=add_noise,
-                observatory=self._observatory,
-                **self._kwargs
-            )
-            image_b = simulate_image(
-                lens_class=lens_class,
-                band=rgb_band_list[2],
-                num_pix=self.num_pix,
-                add_noise=add_noise,
-                observatory=self._observatory,
-                **self._kwargs
-            )
-            image_rgb = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
+            make_image = simulate_image
+
+        image_r = make_image(
+            lens_class=lens_class,
+            band=rgb_band_list[0],
+            num_pix=self.num_pix,
+            add_noise=add_noise,
+            observatory=self._observatory,
+            **self._kwargs
+        )
+        image_g = make_image(
+            lens_class=lens_class,
+            band=rgb_band_list[1],
+            num_pix=self.num_pix,
+            add_noise=add_noise,
+            observatory=self._observatory,
+            **self._kwargs
+        )
+        image_b = make_image(
+            lens_class=lens_class,
+            band=rgb_band_list[2],
+            num_pix=self.num_pix,
+            add_noise=add_noise,
+            observatory=self._observatory,
+            **self._kwargs
+        )
+
+        # Need to use different settings for make_lupton_rgb for roman images
+        if make_image == simulate_roman_image:
+            minimum = [np.min(image_r), np.min(image_g), np.min(image_b)]
+            stretch = 8
+            Q = 10
+        else:
+            minimum = 0
+            stretch = 0.5
+            Q = 8
+
+        image_rgb = make_lupton_rgb(image_r, image_g, image_b, minimum=minimum, stretch=stretch, Q=Q)
         return image_rgb
 
     def plot_montage(

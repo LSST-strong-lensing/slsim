@@ -33,6 +33,7 @@ def simulate_roman_image(
     lens_class,
     band,
     num_pix,
+    observatory="Roman",
     oversample=5,
     add_noise=True,
     with_source=True,
@@ -88,7 +89,7 @@ def simulate_roman_image(
     kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band)
 
     kwargs_single_band = image_quality_lenstronomy.kwargs_single_band(
-        observatory="Roman", band=band, **kwargs
+        observatory=observatory, band=band, **kwargs
     )
 
     _exposure_time = kwargs_single_band["exposure_time"]
