@@ -148,7 +148,7 @@ class TestSource:
             "MJD": np.linspace(1, 500, 500),
             "ps_mag_intrinsic": 10 + np.sin(np.linspace(1, 500, 500) * np.pi / 30),
         }
-        kwargs_agn_model = (
+        kwargs_agn_model = [
             {
                 "r_out": 1000,
                 "corona_height": 10,
@@ -159,7 +159,7 @@ class TestSource:
                 "driving_variability_model": "light_curve",
                 "random_seed": 42,
             },
-        )
+        ]
 
         self.source_dict5 = {
             "angular_size": 0.1651633078964498,
@@ -287,6 +287,13 @@ class TestSource:
         self.source_agn = Source(
             self.source_dict_agn,
             variability_model="light_curve",
+            kwargs_variability={"agn_lightcurve"},
+            lightcurve_time=np.linspace(-20, 50, 100),
+            cosmo=cosmo,
+        )
+
+        self.source_agn_error = Source(
+            self.source_dict_agn,
             kwargs_variability={"agn_lightcurve"},
             lightcurve_time=np.linspace(-20, 50, 100),
             cosmo=cosmo,
@@ -421,6 +428,11 @@ class TestSource:
         )
 
         assert g_mag != g_mag_later_time
+
+        with pytest.raises(ValueError):
+            self.source_agn_error.point_source_magnitude(
+                "g", image_observation_times=obs_time
+            )
 
 
 if __name__ == "__main__":
