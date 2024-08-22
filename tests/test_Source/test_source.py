@@ -160,7 +160,20 @@ class TestSource:
             },
         )
 
-        self.source_dict5 = Table(
+        self.source_dict5 = {
+            "angular_size": 0.1651633078964498,
+            "center_x": 0.30298310338567075,
+            "center_y": -0.3505004565139597,
+            "e1": 0.06350855238708408,
+            "e2": -0.08420760408362458,
+            "mag_F106": 21.434711611915137,
+            "mag_F129": 21.121205893763328,
+            "mag_F184": 20.542431041034558,
+            "n_sersic": 1.0,
+            "z": 3.123,
+        }
+
+        self.source_dict_agn = Table(
             [
                 [0.5],
                 [23],
@@ -170,7 +183,7 @@ class TestSource:
                 [0.35],
                 [0.8],
                 [0.76],
-                [[0, 20, 25, 30, 40]],
+                [[np.linspace(1, 500, 500)]],
                 [20],
                 [kwargs_agn_model],
                 [intrinsic_light_curve],
@@ -270,8 +283,8 @@ class TestSource:
             cosmo=None,
         )
 
-        self.source11 = Source(
-            self.source_dict5,
+        self.source_agn = Source(
+            self.source_dict_agn,
             variability_model="light_curve",
             kwargs_variability={"agn_lightcurve"},
             lightcurve_time=np.linspace(200, 1000, 50),
@@ -387,19 +400,22 @@ class TestSource:
         assert self.source7.kwargs_variability_extracted["r"]["ps_mag_r"] == 17
         assert self.source7.kwargs_variability_extracted["r"]["MJD"] == 20
 
-    def test_agn(self):
-        assert self.source11.redshift == [0.5]
+    def test_source_agn(self):
+
+        obs_time = 20
+        later_obs_time = 250
 
         # Make sure both "g" and "z" band magnitudes exist, and they should
         # not be equal
-        g_mag = self.source11.point_source_magnitude("g")
-        z_mag = self.source11.point_source_magnitude("z")
+        g_mag = self.source_agn.point_source_magnitude(
+            "g", image_observation_times=obs_time
+        )
+        y_mag = self.source_agn.point_source_magnitude(
+            "y", image_observation_times=obs_time
+        )
+        assert g_mag != y_mag
 
-        assert g_mag != z_mag
-
-        later_obs_time = [25]
-
-        g_mag_later_time = self.source11.point_source_magnitude(
+        g_mag_later_time = self.source_agn.point_source_magnitude(
             "g", image_observation_times=later_obs_time
         )
 
