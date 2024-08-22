@@ -6,6 +6,7 @@ from slsim.Deflectors.halo_population import gene_e_ang_halo, concent_m_w_scatte
 from colossus.cosmology import cosmology as colossus_cosmo
 from slsim.Deflectors.velocity_dispersion import vel_disp_abundance_matching
 from slsim.Deflectors.elliptical_lens_galaxies import elliptical_projected_eccentricity, vel_disp_from_m_star
+from slsim.Deflectors.velocity_dispersion import vel_disp_nfw
 from slsim.Deflectors.deflectors_base import DeflectorsBase
 from lenstronomy.Util.param_util import phi_q2_ellipticity
 from astropy import units as u
@@ -55,9 +56,10 @@ class ClusterCatalogLens(DeflectorsBase):
             cosmo=cosmo,
             sky_area=sky_area,
         )
-        self.set_cosmo()
+        self.deflector_profile = "NFW_CLUSTER"
         self.richness_fn = richness_fn
-        
+        self.set_cosmo()
+
         # cluster
         n_clusters = len(cluster_list)
         cluster_column_names = cluster_list.columns
@@ -69,6 +71,8 @@ class ClusterCatalogLens(DeflectorsBase):
             cluster_list["halo_mass"] = -np.ones(n_clusters)
         if "concentration" not in cluster_column_names:
             cluster_list["concentration"] = -np.ones(n_clusters)
+        if "vel_disp" not in cluster_column_names:
+            cluster_list["vel_disp"] = -np.ones(n_clusters)
         if "e1_mass" not in cluster_column_names or "e2_mass" not in cluster_column_names:
             cluster_list["e1_mass"] = -np.ones(n_clusters)
             cluster_list["e2_mass"] = -np.ones(n_clusters)
@@ -145,6 +149,9 @@ class ClusterCatalogLens(DeflectorsBase):
                 cluster["z"],
                 sig=0.33
             )[0]
+        if cluster["vel_disp"] == -1:
+            cluster["vel_disp"] = vel_disp_nfw(cluster["halo_mass"], cluster["concentration"],
+                                               self.cosmo, cluster["z"])
         if cluster["e1_mass"] == -1 or cluster["e2_mass"] == -1:
             e, phi = gene_e_ang_halo(np.array([cluster["halo_mass"]]))
             e1, e2 = phi_q2_ellipticity(np.deg2rad(phi[0]), 1 - e[0])

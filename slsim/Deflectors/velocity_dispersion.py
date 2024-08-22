@@ -181,6 +181,33 @@ def vel_disp_nfw_aperture(r, m_halo, c_halo, cosmo, z_lens):
     return np.sqrt(vel_disp2)
 
 
+def vel_disp_nfw(m_halo, c_halo, cosmo, z_lens):
+    """Computes vel_disp_nfw_aperture using the characteristic radius rs of the NFW
+    as aperture (which is independent of the source redshift).
+
+    :param r: radius of the aperture for the velocity dispersion [arcsec]
+    :param m_halo: Halo mass [physical M_sun]
+    :param c_halo: halo concentration
+    :param cosmo: cosmology
+    :type cosmo: ~astropy.cosmology class
+    :param z_lens: redshift of the deflector
+    :return: velocity dispersion [km/s]
+    """
+    from lenstronomy.Cosmo.lens_cosmo import LensCosmo
+
+    lens_cosmo = LensCosmo(z_lens=z_lens, z_source=10, cosmo=cosmo)
+
+    rs_arcsec, _ = lens_cosmo.nfw_physical2angle(m_halo, c_halo)
+    vel_disp = vel_disp_nfw_aperture(
+        r=rs_arcsec,
+        m_halo=m_halo,
+        c_halo=c_halo,
+        cosmo=cosmo,
+        z_lens=z_lens,
+    )
+    return vel_disp
+
+
 def vel_disp_sdss(sky_area, redshift, vd_min, vd_max, cosmology, noise=True):
     """Velocity dispersion function in a cone matched by SDSS measurements.
 

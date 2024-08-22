@@ -1,5 +1,5 @@
 from slsim.Deflectors.DeflectorTypes.deflector_base import DeflectorBase
-from slsim.Deflectors.velocity_dispersion import vel_disp_nfw_aperture
+from slsim.Deflectors.velocity_dispersion import vel_disp_nfw
 from slsim.Deflectors.DeflectorTypes.epl_sersic import EPLSersic
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
@@ -36,19 +36,8 @@ class NFWCluster(DeflectorBase):
         :type cosmo: ~astropy.cosmology class
         :return: velocity dispersion [km/s]
         """
-        # convert radian to arc seconds
-        lens_cosmo = LensCosmo(z_lens=self.redshift, z_source=10, cosmo=cosmo)
-
         m_halo, c_halo = self.halo_properties
-        rs_arcsec, _ = lens_cosmo.nfw_physical2angle(m_halo, c_halo)
-        vel_disp = vel_disp_nfw_aperture(
-            r=rs_arcsec,
-            m_halo=m_halo,
-            c_halo=c_halo,
-            cosmo=cosmo,
-            z_lens=self.redshift,
-        )
-        return vel_disp
+        return vel_disp_nfw(m_halo, c_halo, cosmo, self.redshift)
 
     def mass_model_lenstronomy(self, lens_cosmo):
         """Returns lens model instance and parameters in lenstronomy conventions.

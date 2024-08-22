@@ -87,7 +87,7 @@ class LensPop(LensedPopulationBase):
             gg_lens = Lens(
                 deflector_dict=lens,
                 source_dict=source,
-                deflector_type=self.deflector_model,
+                deflector_type=self._lens_galaxies.deflector_profile,
                 variability_model=self._sources.variability_model,
                 kwargs_variability=self._sources.kwargs_variability,
                 sn_type=self.sn_type,
@@ -179,6 +179,7 @@ class LensPop(LensedPopulationBase):
                     gg_lens = Lens(
                         deflector_dict=lens,
                         source_dict=source,
+                        deflector_type=self._lens_galaxies.deflector_profile,
                         variability_model=self._sources.variability_model,
                         kwargs_variability=self._sources.kwargs_variability,
                         sn_type=self.sn_type,

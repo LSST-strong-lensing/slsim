@@ -739,7 +739,7 @@ def theta_e_when_source_infinity(deflector_dict=None, v_sigma=None):
         if deflector_dict is None:
             raise ValueError("Either deflector_dict or v_sigma must be provided")
         else:
-            v_sigma = deflector_dict["vel_disp"]  # TODO: this fails for NFW model
+            v_sigma = deflector_dict["vel_disp"]
 
     theta_E_infinity = (
         4 * np.pi * (v_sigma * 1000.0 / constants.c) ** 2 / constants.arcsec
