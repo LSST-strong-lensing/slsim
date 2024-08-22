@@ -71,7 +71,7 @@ class LensingPlots(object):
         )
 
         # Need to use different settings for make_lupton_rgb for roman images
-        if make_image == simulate_roman_image:
+        if self._observatory == "Roman":
             minimum = [np.min(image_r), np.min(image_g), np.min(image_b)]
             stretch = 8
             Q = 10
