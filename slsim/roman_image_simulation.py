@@ -223,7 +223,7 @@ def get_psf(band, detector, detector_pos, oversample, psf_directory):
         psf = wfi.calc_psf(oversample=oversample)
 
     # import PSF to GalSim
-    oversampled_pixel_scale = wfi.pixelscale / oversample
+    oversampled_pixel_scale = 0.11 / oversample
     psf_image = galsim.Image(psf[0].data, scale=oversampled_pixel_scale)
 
     return galsim.InterpolatedImage(psf_image)
