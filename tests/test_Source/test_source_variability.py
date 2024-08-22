@@ -175,6 +175,15 @@ class TestVariability:
         ]:
             for key in dictionary:
                 full_kwargs_4[key] = dictionary[key]
+        full_kwargs_5 = {}
+        for dictionary in [
+            agn_kwargs,
+            bpl_kwargs,
+            reprocessing_kwargs_5,
+            other_kwargs,
+        ]:
+            for key in dictionary:
+                full_kwargs_4[key] = dictionary[key]
         full_error_kwargs = {}
         for dictionary in [
             agn_kwargs,
