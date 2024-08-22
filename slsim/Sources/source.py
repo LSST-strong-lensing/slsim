@@ -107,6 +107,7 @@ class Source(object):
                             "r",
                             "i",
                             "g",
+                            "y",
                             "F062",
                             "F087",
                             "F106",
@@ -116,7 +117,7 @@ class Source(object):
                             "F146",
                             "F213",
                         ]:
-                            if element in ["r", "i", "g"]:
+                            if element in ["r", "i", "g", "y"]:
                                 provided_band = "lsst" + element
                             else:
                                 provided_band = element

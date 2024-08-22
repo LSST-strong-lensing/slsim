@@ -287,7 +287,7 @@ class TestSource:
             self.source_dict_agn,
             variability_model="light_curve",
             kwargs_variability={"agn_lightcurve"},
-            lightcurve_time=np.linspace(200, 1000, 50),
+            lightcurve_time=np.linspace(-20, 50, 100),
             cosmo=cosmo,
         )
 
@@ -403,7 +403,7 @@ class TestSource:
     def test_source_agn(self):
 
         obs_time = 20
-        later_obs_time = 250
+        later_obs_time = 50
 
         # Make sure both "g" and "z" band magnitudes exist, and they should
         # not be equal
