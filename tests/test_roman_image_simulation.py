@@ -71,3 +71,7 @@ def test_simulate_roman_image():
         psf_directory=psf_directory,
     )
     assert final_array.shape == (45, 45)
+
+
+if __name__ == "__main__":
+    pytest.main()
