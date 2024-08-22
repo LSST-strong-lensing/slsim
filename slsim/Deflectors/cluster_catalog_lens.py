@@ -227,6 +227,17 @@ class ClusterCatalogLens(DeflectorsBase):
         """
         Assigns a similar galaxy to each member of a group/cluster member catalog by comparing
         their magnitudes and redshifts.
+
+        :param members_list: astropy table with columns 'mag_{band}', 'z'
+        :type members_list: astropy.table.Table
+        :param galaxy_list: astropy table with columns 'mag_{band}', 'z'
+        :type galaxy_list: astropy.table.Table
+        :param cosmo: astropy.cosmology instance
+        :type cosmo: astropy.cosmology
+        :param bands: list of bands to compare
+        :type bands: list
+        :param max_gals: maximum number of galaxies to compare to
+        :type max_gals: int
         """
         # shuffle galaxy list and select a subset
         if len(galaxy_list) > max_gals:
