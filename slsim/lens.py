@@ -42,6 +42,7 @@ class Lens(LensedSystemBase):
         lightcurve_time=None,
         los_config=None,
         sn_modeldir=None,
+        los_dict=None,
     ):
         """
 
@@ -87,6 +88,9 @@ class Lens(LensedSystemBase):
          For more detail, please look at the documentation of RandomizedSupernovae
          class.
         :type sn_modeldir: str
+        :param los_dict: line of sight dictionary (optional, takes these values instead of drawing from distribution)
+         Takes "gamma" = [gamma1, gamma2] and "kappa" = kappa as entries
+        :type los_dict: dict
         """
         super().__init__(
             source_dict=source_dict,
@@ -126,7 +130,9 @@ class Lens(LensedSystemBase):
         self._los_linear_distortions_cache = None
         self.los_config = los_config
         if self.los_config is None:
-            self.los_config = LOSConfig()
+            if los_dict is None:
+                los_dict = {}
+            self.los_config = LOSConfig(**los_dict)
 
     @property
     def image_number(self):

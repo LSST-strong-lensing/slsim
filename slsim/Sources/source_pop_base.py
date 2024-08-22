@@ -22,8 +22,9 @@ class SourcePopBase(ABC):
          a source. This is a population argument, not the light curve parameter for
          the individual sources.
         """
+        self.source_type = None
+        self.sky_area = sky_area
         self._cosmo = cosmo
-        self._sky_area = sky_area
         self._variab_model = variability_model
         self._kwargs_variab_model = kwargs_variability_model
 
