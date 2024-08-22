@@ -101,41 +101,42 @@ class Source(object):
                         modeldir=self.sn_modeldir,
                     )
 
-                    for element in list(self.kwargs_variability):
-                        # if lsst filter is being used
-                        if element in [
-                            "r",
-                            "i",
-                            "g",
-                            "y",
-                            "F062",
-                            "F087",
-                            "F106",
-                            "F129",
-                            "F158",
-                            "F184",
-                            "F146",
-                            "F213",
-                        ]:
-                            if element in ["r", "i", "g", "y"]:
-                                provided_band = "lsst" + element
-                            else:
-                                provided_band = element
-                            name = "ps_mag_" + element
-                            times = self.lightcurve_time
-                            magnitudes = lightcurve_class.get_apparent_magnitude(
-                                time=times,
-                                band=provided_band,
-                                zpsys=self.sn_absolute_zpsys,
-                            )
-                            new_column = Column([float(min(magnitudes))], name=name)
-                            self._source_dict = Table(self.source_dict)
-                            self._source_dict.add_column(new_column)
-                            self.source_dict = self._source_dict[0]
-                            kwargs_variab_extracted[element] = {
-                                "MJD": times,
-                                name: magnitudes,
-                            }
+                for element in list(self.kwargs_variability):
+                    # if lsst filter is being used
+                    if element in [
+                        "r",
+                        "i",
+                        "g",
+                        "z",
+                        "y",
+                        "F062",
+                        "F087",
+                        "F106",
+                        "F129",
+                        "F158",
+                        "F184",
+                        "F146",
+                        "F213",
+                    ]:
+                        if element in ["r", "i", "g", "z", "y"]:
+                            provided_band = "lsst" + element
+                        else:
+                            provided_band = element
+                        name = "ps_mag_" + element
+                        times = self.lightcurve_time
+                        magnitudes = lightcurve_class.get_apparent_magnitude(
+                            time=times,
+                            band=provided_band,
+                            zpsys=self.sn_absolute_zpsys,
+                        )
+                        new_column = Column([float(min(magnitudes))], name=name)
+                        self._source_dict = Table(self.source_dict)
+                        self._source_dict.add_column(new_column)
+                        self.source_dict = self._source_dict[0]
+                        kwargs_variab_extracted[element] = {
+                            "MJD": times,
+                            name: magnitudes,
+                        }
 
             # Check if AGN model is used
             elif any(
@@ -209,7 +210,7 @@ class Source(object):
                             filter_name: magnitudes,
                         }
 
-            if "MJD" in self.kwargs_variability:
+            elif "MJD" in self.kwargs_variability:
                 # With this condition we extract values for kwargs_variability from the
                 # given source dict and prepar variability class. Here, we expect
                 # lightcurve in a source catalog and kwargs_variability should contain
