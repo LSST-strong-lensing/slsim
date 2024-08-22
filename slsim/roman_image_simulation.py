@@ -11,7 +11,9 @@ try:
     import galsim
     from galsim import Image, InterpolatedImage, roman
 except:
-    raise Exception("Please install the galsim module. Note that this module is not supported on Windows")
+    raise Exception(
+        "Please install the galsim module. Note that this module is not supported on Windows"
+    )
 
 # NOTE: Adding sky background requires webbpsf-data, which can be found at
 #       https://webbpsf.readthedocs.io/en/latest/installation.html. Then, the
@@ -127,7 +129,7 @@ def simulate_roman_image(
         scale=0.11 / oversample,
         flux=np.sum(array),
     )
-    
+
     # Gets psf and convolve
     galsim_psf = get_psf(band, detector, detector_pos, oversample, psf_directory)
     convolved = galsim.Convolve(interp, galsim_psf)
@@ -136,7 +138,7 @@ def simulate_roman_image(
     im = galsim.ImageF(num_pix, num_pix, scale=0.11)
     im.setOrigin(0, 0)
     image = convolved.drawImage(im)
-    
+
     if add_noise:
         # Obtain sky background corresponding to certain band and add it to the image
         # Requires webbpsf data files to use
@@ -156,8 +158,10 @@ def simulate_roman_image(
     final_array = final_array / _exposure_time
     return final_array
 
+
 # The following functions have been copy-pasted from the mejiro repo
 # Credit to Bryce Wedig
+
 
 def get_psf(band, detector, detector_pos, oversample, psf_directory):
     """Obtain galsim psf corresponding to specific band, using webbpsf.
@@ -201,7 +205,9 @@ def get_psf(band, detector, detector_pos, oversample, psf_directory):
 
     # import PSF to GalSim (and normalize the PSF so that sum.psf = 1)
     oversampled_pixel_scale = 0.11 / oversample
-    psf_image = galsim.Image(psf[0].data/np.sum(psf[0].data), scale=oversampled_pixel_scale)
+    psf_image = galsim.Image(
+        psf[0].data / np.sum(psf[0].data), scale=oversampled_pixel_scale
+    )
 
     return galsim.InterpolatedImage(psf_image)
 
