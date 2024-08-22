@@ -32,7 +32,7 @@ def simulate_roman_image(
     with_deflector=True,
     detector=1,
     detector_pos=(2000, 2000),
-    seed=42,
+    seed=None,
     ra=30,
     dec=-30,
     date=datetime.datetime(year=2027, month=7, day=7, hour=0, minute=0, second=0),
@@ -58,7 +58,7 @@ def simulate_roman_image(
     :param detector_pos: The position of the detector being used to generate the psf
     :type detector_pos: integer between 4 + num_pix * oversample and 4092 - num_pix * oversample
     :param seed: An rng seed used for generating detector effects in galsim
-    :type seed: integer
+    :type seed: integer or None
     :param ra: Coordinate in space used to generate sky background
     :type ra: float between 15 and 45
     :param dec: Coordinate in space used to generate sky background
