@@ -224,10 +224,8 @@ class ClusterCatalogLens(DeflectorsBase):
         bands=("g", "r", "i", "z", "Y"),
         max_gals=10000,
     ):
-        """
-        Assigns a similar galaxy to each member of a group/cluster member catalog by comparing
-        their magnitudes and redshifts.
-        """
+        """Assigns a similar galaxy to each member of a group/cluster member catalog by
+        comparing their magnitudes and redshifts."""
         # shuffle galaxy list and select a subset
         if len(galaxy_list) > max_gals:
             indices = np.random.choice(len(galaxy_list), max_gals, replace=False)
