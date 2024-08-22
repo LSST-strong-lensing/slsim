@@ -80,7 +80,9 @@ class LensingPlots(object):
             stretch = 0.5
             Q = 8
 
-        image_rgb = make_lupton_rgb(image_r, image_g, image_b, minimum=minimum, stretch=stretch, Q=Q)
+        image_rgb = make_lupton_rgb(
+            image_r, image_g, image_b, minimum=minimum, stretch=stretch, Q=Q
+        )
         return image_rgb
 
     def plot_montage(
