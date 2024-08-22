@@ -10,7 +10,7 @@ from webbpsf.roman import WFI
 try:
     import galsim
     from galsim import Image, InterpolatedImage, roman
-except:
+except ModuleNotFoundError:
     raise Exception(
         "Please install the galsim module. Note that this module is not supported on Windows"
     )
