@@ -224,9 +224,8 @@ class ClusterCatalogLens(DeflectorsBase):
         bands=("g", "r", "i", "z", "Y"),
         max_gals=10000,
     ):
-        """
-        Assigns a similar galaxy to each member of a group/cluster member catalog by comparing
-        their magnitudes and redshifts.
+        """Assigns a similar galaxy to each member of a group/cluster member catalog by
+        comparing their magnitudes and redshifts.
 
         :param members_list: astropy table with columns 'mag_{band}', 'z'
         :type members_list: astropy.table.Table
