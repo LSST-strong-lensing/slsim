@@ -187,10 +187,6 @@ class TestLens(object):
         subhalos_table = Table.read(
             os.path.join(path, "TestData/subhalos_table.fits"), format="fits"
         )
-        subhalos_list = [
-            Deflector(deflector_type="EPL", deflector_dict=subhalo)
-            for subhalo in subhalos_table
-        ]
         source_dict = blue_one
         deflector_dict = {
             "halo_mass": 10**14,
@@ -198,12 +194,12 @@ class TestLens(object):
             "e1_mass": 0.1,
             "e2_mass": -0.1,
             "z": 0.42,
+            "subhalos": subhalos_table,
         }
         while True:
             cg_lens = Lens(
                 source_dict=source_dict,
                 deflector_dict=deflector_dict,
-                deflector_kwargs={"subhalos_list": subhalos_list},
                 deflector_type="NFW_CLUSTER",
                 lens_equation_solver="lenstronomy_default",
                 cosmo=cosmo,
