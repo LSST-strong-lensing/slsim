@@ -2,7 +2,6 @@ from slsim.Deflectors.DeflectorTypes.deflector_base import DeflectorBase
 from slsim.Deflectors.velocity_dispersion import vel_disp_nfw
 from slsim.Deflectors.DeflectorTypes.epl_sersic import EPLSersic
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
-from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 
 
 class NFWCluster(DeflectorBase):
