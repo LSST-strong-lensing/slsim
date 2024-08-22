@@ -24,7 +24,7 @@ def test_simulate_roman_image():
                     'e1_light': -0.023377277902774978,
                     'e2_light': 0.05349948216860632,
                     'vel_disp': lens_velocity_dispersion,
-                    'angular_size': 2.569855493321708163e-6,
+                    'angular_size': 0.5300707454127908,
                     'n_sersic': 4.0,
                     'z': z_lens,
                     'mag_F106': 17.5664222662219,
