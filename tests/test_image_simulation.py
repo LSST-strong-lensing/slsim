@@ -52,9 +52,11 @@ class TestImageSimulation(object):
 
     def test_simulate_image(self):
         kwargs_psf = {
-            'point_source_supersampling_factor': 5,
-            'psf_type': "PIXEL",
-            'kernel_point_source': np.reshape(np.linspace(2e-8, 3e-7, 45*45), newshape=(45,45))
+            "point_source_supersampling_factor": 5,
+            "psf_type": "PIXEL",
+            "kernel_point_source": np.reshape(
+                np.linspace(2e-8, 3e-7, 45 * 45), newshape=(45, 45)
+            ),
         }
         kwargs_numerics = {
             "point_source_supersampling_factor": 5,
@@ -69,7 +71,7 @@ class TestImageSimulation(object):
             add_noise=True,
             observatory="LSST",
             kwargs_psf=kwargs_psf,
-            kwargs_numerics=kwargs_numerics
+            kwargs_numerics=kwargs_numerics,
         )
         assert len(image) == 100
 

@@ -11,7 +11,14 @@ from slsim.Util.param_util import (
 
 
 def simulate_image(
-    lens_class, band, num_pix, add_noise=True, observatory="LSST", kwargs_psf=None, kwargs_numerics=None, **kwargs
+    lens_class,
+    band,
+    num_pix,
+    add_noise=True,
+    observatory="LSST",
+    kwargs_psf=None,
+    kwargs_numerics=None,
+    **kwargs
 ):
     """Creates an image of a selected lens with noise.
 
@@ -22,11 +29,13 @@ def simulate_image(
     :param add_noise: if True, add noise
     :param observatory: telescope type to be simulated
     :type observatory: str
-    :param kwargs_psf: (optional) specific PSF quantities to overwrite default options ("psf_type", "kernel_point_source", "point_source_supersampling_factor")
+    :param kwargs_psf: (optional) specific PSF quantities to overwrite default options
+        ("psf_type", "kernel_point_source", "point_source_supersampling_factor")
     :type kwargs_psf: dict
     :param kwargs: additional keyword arguments for the bands
     :type kwargs_numerics: dict
-    :param kwargs_numerics: options are "point_source_supersampling_factor", "supersampling_factor", and more in lenstronomy.ImSim.Numerics.numerics class
+    :param kwargs_numerics: options are "point_source_supersampling_factor",
+        "supersampling_factor", and more in lenstronomy.ImSim.Numerics.numerics class
     :type kwargs: dict
     :return: simulated image
     :rtype: 2d numpy array

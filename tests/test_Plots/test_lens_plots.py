@@ -56,11 +56,11 @@ def gg_roman_lens_pop_instance():
 
     # generate Roman filters
     configure_roman_filters()
-    
+
     # import filter bands and make them recogniable in speclite
     roman_filters = filter_names()
     # filters are ['Roman-F062', 'Roman-F087', 'Roman-F106', 'Roman-F129', 'Roman-F158', 'Roman-F184', 'Roman-F146', 'Roman-F213']
-    
+
     speclite.filters.load_filters(
         roman_filters[0],
         roman_filters[1],
@@ -70,7 +70,7 @@ def gg_roman_lens_pop_instance():
         roman_filters[5],
         roman_filters[6],
         roman_filters[7],
-)
+    )
 
     path = os.path.dirname(slsim.__file__)
     module_path, _ = os.path.split(path)
@@ -123,6 +123,7 @@ def test_rgb_image(gg_lens_pop_instance):
         lensing_plots.num_pix,
         3,
     )
+
 
 # NOTE: Galsim is required which is not supported on Windows
 def test_roman_rgb_image():

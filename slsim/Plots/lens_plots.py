@@ -69,7 +69,14 @@ class LensingPlots(object):
             min_g = np.min(image_g)
             min_b = np.min(image_b)
             minimum = [min_r, min_g, min_b]
-            image_rgb = make_lupton_rgb(image_r=image_r, image_g=image_g, image_b=image_b, minimum=minimum, stretch=8, Q=10)
+            image_rgb = make_lupton_rgb(
+                image_r=image_r,
+                image_g=image_g,
+                image_b=image_b,
+                minimum=minimum,
+                stretch=8,
+                Q=10,
+            )
         else:
             image_r = simulate_image(
                 lens_class=lens_class,
