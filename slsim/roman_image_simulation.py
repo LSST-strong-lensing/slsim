@@ -34,7 +34,7 @@ def simulate_roman_image(
     band,
     num_pix,
     observatory="Roman",
-    oversample=5,
+    oversample=3,
     add_noise=True,
     with_source=True,
     with_deflector=True,

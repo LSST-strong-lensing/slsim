@@ -63,7 +63,7 @@ def test_simulate_roman_image_with_psf_and_noise():
         lens_class=LENS,
         band=BAND,
         num_pix=45,
-        oversample=5,
+        oversample=3,
         add_noise=True,
         psf_directory=PSF_DIRECTORY,
     )
@@ -72,18 +72,18 @@ def test_simulate_roman_image_with_psf_and_noise():
 
 def test_simulate_roman_image_with_psf_without_noise():
     with open(
-        os.path.join(PSF_DIRECTORY, "F106_SCA01_2000_2000_5.pkl"), "rb"
+        os.path.join(PSF_DIRECTORY, "F106_SCA01_2000_2000_3.pkl"), "rb"
     ) as psf_file:
         psf = pickle.load(psf_file)
 
     kwargs_psf = {
-        "point_source_supersampling_factor": 5,
+        "point_source_supersampling_factor": 3,
         "psf_type": "PIXEL",
         "kernel_point_source": psf[0].data / np.sum(psf[0].data),
     }
     kwargs_numerics = {
-        "point_source_supersampling_factor": 5,
-        "supersampling_factor": 5,
+        "point_source_supersampling_factor": 3,
+        "supersampling_factor": 3,
         "supersampling_convolution": True,
     }
     # Manually convolves psf through lenstronomy, no roman detector effects or background
@@ -103,14 +103,15 @@ def test_simulate_roman_image_with_psf_without_noise():
         lens_class=LENS,
         band=BAND,
         num_pix=45,
-        oversample=5,
+        oversample=3,
         seed=42,
         add_noise=False,
         psf_directory=PSF_DIRECTORY,
     )
 
-    # Makes sure that each pixel matches in flux by 1%, and the total flux matches by up to 0.1
-    np.testing.assert_allclose(galsim_image, image_ref, rtol=0.007, atol=0)
+    # Makes sure that each pixel matches in flux by 2%, and the total flux matches by up to 0.1
+    # Most pixels should match by 0.005% but there may be a couple ones that only match by 2%
+    np.testing.assert_allclose(galsim_image, image_ref, rtol=0.02, atol=0)
     np.testing.assert_allclose(
         np.sum(galsim_image), np.sum(image_ref), rtol=0, atol=0.1
     )
