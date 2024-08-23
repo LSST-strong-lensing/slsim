@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
+import numpy as np
 from astropy.visualization import make_lupton_rgb
 from slsim.image_simulation import simulate_image
+from slsim.roman_image_simulation import simulate_roman_image
 
 
 class LensingPlots(object):
@@ -19,6 +21,7 @@ class LensingPlots(object):
         :param kwargs: additional keyword arguments for the bands. Eg: coadd_years
             (=10): this is the number of years corresponding to num_exposures in obs
             dict. Currently supported: 1-10.
+            See roman_image_simulation.py for more options if simulating roman images
         :type kwargs: dict
         """
         self._lens_pop = lens_pop
@@ -36,7 +39,13 @@ class LensingPlots(object):
         :param add_noise: boolean flag, set to True to add noise to the image, default
             is True
         """
-        image_r = simulate_image(
+        if self._observatory == "Roman":
+            # NOTE: Galsim is required which is not supported on Windows
+            make_image = simulate_roman_image
+        else:
+            make_image = simulate_image
+
+        image_r = make_image(
             lens_class=lens_class,
             band=rgb_band_list[0],
             num_pix=self.num_pix,
@@ -44,7 +53,7 @@ class LensingPlots(object):
             observatory=self._observatory,
             **self._kwargs
         )
-        image_g = simulate_image(
+        image_g = make_image(
             lens_class=lens_class,
             band=rgb_band_list[1],
             num_pix=self.num_pix,
@@ -52,7 +61,7 @@ class LensingPlots(object):
             observatory=self._observatory,
             **self._kwargs
         )
-        image_b = simulate_image(
+        image_b = make_image(
             lens_class=lens_class,
             band=rgb_band_list[2],
             num_pix=self.num_pix,
@@ -60,7 +69,20 @@ class LensingPlots(object):
             observatory=self._observatory,
             **self._kwargs
         )
-        image_rgb = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
+
+        # Need to use different settings for make_lupton_rgb for roman images
+        if self._observatory == "Roman":
+            minimum = [np.min(image_r), np.min(image_g), np.min(image_b)]
+            stretch = 8
+            Q = 10
+        else:
+            minimum = 0
+            stretch = 0.5
+            Q = 8
+
+        image_rgb = make_lupton_rgb(
+            image_r, image_g, image_b, minimum=minimum, stretch=stretch, Q=Q
+        )
         return image_rgb
 
     def plot_montage(
