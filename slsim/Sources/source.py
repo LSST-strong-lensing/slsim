@@ -153,14 +153,14 @@ class Source(object):
 
                 else:
                     # Get the dict object from the astropy.table.column
-                    self.agn_kwarg_dict = self.source_dict["kwargs_agn_model"].data[0]
+                    agn_kwarg_dict = self.source_dict["kwargs_agn_model"].data[0][0]
 
                     # Populate "None" for optional keys related to drawing random AGN
                     random_kwargs = {"random_seed": None, "input_agn_bounds_dict": None}
                     for opt_key in random_kwargs.keys():
-                        if opt_key in self.agn_kwarg_dict.keys():
-                            random_kwargs[opt_key] = self.agn_kwarg_dict[opt_key]
-                            del self.agn_kwarg_dict[opt_key]
+                        if opt_key in agn_kwarg_dict.keys():
+                            random_kwargs[opt_key] = agn_kwarg_dict[opt_key]
+                            del agn_kwarg_dict[opt_key]
 
                     # Create the agn object
                     self.agn_class = agn.RandomAgn(
@@ -169,7 +169,7 @@ class Source(object):
                         cosmo=self.cosmo,
                         random_seed=random_kwargs["random_seed"],
                         input_agn_bounds_dict=random_kwargs["input_agn_bounds_dict"],
-                        **self.agn_kwarg_dict
+                        **agn_kwarg_dict
                     )
 
                     # Get mean mags across LSST filters
