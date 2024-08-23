@@ -157,17 +157,19 @@ class Source(object):
                         0
                     ]
 
-                    # Populate "None" for optional keys in this dict
-                    optional_keys = ["random_seed", "input_agn_bounds_dict"]
-                    for opt_key in optional_keys:
-                        if opt_key not in self.agn_kwarg_dict.keys():
-                            self.agn_kwarg_dict[opt_key] = None
+                    # Populate "None" for optional keys related to drawing random AGN
+                    random_kwargs = {"random_seed": None, "input_agn_bounds_dict": None}
+                    for opt_key in random_kwargs.keys():
+                        if opt_key in self.agn_kwarg_dict.keys():
+                            random_kwargs[opt_key] = self.agn_kwarg_dict[opt_key]
 
                     # Create the agn object
                     self.agn_class = agn.RandomAgn(
                         self.source_dict["i_band_mag"],
                         self.source_dict["z"],
                         cosmo=self.cosmo,
+                        random_seed=random_kwargs["random_seed"],
+                        input_agn_bounds_dict=random_kwargs["input_agn_bounds_dict"],
                         **self.agn_kwarg_dict
                     )
 
