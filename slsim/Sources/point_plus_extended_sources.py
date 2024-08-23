@@ -61,3 +61,4 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
         SourcePopBase.__init__(
             self, cosmo, sky_area, variability_model, kwargs_variability_model
         )
+        self.source_type = "point_plus_extended"

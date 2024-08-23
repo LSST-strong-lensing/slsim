@@ -5,6 +5,8 @@ from scipy.signal import fftconvolve
 from lenstronomy.Util.param_util import transform_e1e2_product_average
 from lenstronomy.Util.param_util import ellipticity2phi_q
 from astropy.io import fits
+from lenstronomy.Util import constants
+import warnings
 
 
 def epsilon2e(epsilon):
@@ -318,3 +320,33 @@ def fits_append_table(filename, table):
     hdulist.append(fits.BinTableHDU(table))
     hdulist.writeto(filename, overwrite=True)
     hdulist.close()
+
+
+def catalog_with_angular_size_in_arcsec(galaxy_catalog, input_catalog_type="skypy"):
+    """This function is written to change unit of angular size in skypy galaxy catalog
+    to arcsec. If user is using deflector catalog other than generated from skypy
+    pipeline, we require them to provide angular size of the galaxy in arcsec.
+
+    :param galaxy_catalog: galaxy catalog.
+    :param input_catalog_type: type of the catalog.
+    :type input_catalog_type: str. "skypy" or None
+    :return: galaxy catalog with anularsize in arcsec.
+    """
+    if input_catalog_type == "skypy":
+        galaxy_catalog["angular_size"] = (
+            galaxy_catalog["angular_size"] / constants.arcsec
+        )
+        warning_msg = (
+            "Angular size is converted to arcsec because provided"
+            " input_catalog_type is skypy. If this is not correct, please refer to"
+            " the documentation of the class you are using"
+        )
+        warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
+    else:
+        galaxy_catalog = galaxy_catalog
+        warning_msg = (
+            "You provided angular size in arcsec. If this is not correct, please"
+            " refer to the documentation of the class that you are using"
+        )
+        warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
+    return galaxy_catalog
