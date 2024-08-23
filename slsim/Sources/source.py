@@ -162,6 +162,7 @@ class Source(object):
                     for opt_key in random_kwargs.keys():
                         if opt_key in self.agn_kwarg_dict.keys():
                             random_kwargs[opt_key] = self.agn_kwarg_dict[opt_key]
+                            del self.agn_kwarg_dict[opt_key]
 
                     # Create the agn object
                     self.agn_class = agn.RandomAgn(
