@@ -50,20 +50,26 @@ class LensedPopulationBase(ABC):
 
         # Si no se proporciona sky_area, se establece un valor por defecto y se emite una advertencia
         if sky_area is None:
+            #Si sky_area es None: El bloque dentro del if se ejecuta, asignando un valor por defecto a sky_area.
+            # Luego, self.f_sky se asigna a ese valor por defecto.
             from astropy.units import Quantity  # Importa la clase Quantity de astropy para manejar unidades físicas
-
             sky_area = Quantity(value=0.1, unit="deg2")  # Establece el valor por defecto del área del cielo a 0.1 grados cuadrados
             warnings.warn("No sky area provided, instead uses 0.1 deg2")  # Emite una advertencia indicando que se ha utilizado el valor por defecto
-        self.f_sky = sky_area  # Asigna el valor del área del cielo al atributo de la instancia
+        #Si sky_area no es None: El Bloque dentro del if no se ejecuta, pero la línea self.f_sky = sky_area se ejecuta, asignando
+        # Asigna el valor de sky_area al atributo de instancia self.f_sky en la clase base
+        self.f_sky = sky_area  # self.f_sky ahora está disponible para todas las subclases
 
         # Si no se proporciona cosmo, se establece un modelo cosmológico por defecto y se emite una advertencia
         if cosmo is None:
+            # Si cosmo es None: El bloque dentro del if se ejecuta, asignando un modelo cosmológico por defecto a cosmo.
+            # Luego, self.cosmo se asigna a ese modelo cosmológico por defecto.
             warnings.warn(
                 "No cosmology provided, instead uses flat LCDM with default parameters"
             )  # Emite una advertencia indicando que se ha utilizado un modelo cosmológico por defecto
             from astropy.cosmology import FlatLambdaCDM  # Importa la clase FlatLambdaCDM de astropy.cosmology
-
             cosmo = FlatLambdaCDM(H0=70, Om0=0.3)  # Establece un modelo cosmológico plano con parámetros por defecto
+            # Si cosmo no es None: El bloque dentro del if no se ejecuta, pero la línea self.cosmo = cosmo se ejecuta,
+            # asignando a self.cosmo el valor proporcionado para cosmo.
         self.cosmo = cosmo  # Asigna el modelo cosmológico al atributo de la instancia
 
     # Método abstracto que debe ser implementado en las clases derivadas
