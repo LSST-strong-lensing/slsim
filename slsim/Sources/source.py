@@ -153,9 +153,7 @@ class Source(object):
 
                 else:
                     # Get the dict object from the astropy.table.column
-                    self.agn_kwarg_dict = self.source_dict["kwargs_agn_model"].data[0][
-                        0
-                    ]
+                    self.agn_kwarg_dict = self.source_dict["kwargs_agn_model"].data[0]
 
                     # Populate "None" for optional keys related to drawing random AGN
                     random_kwargs = {"random_seed": None, "input_agn_bounds_dict": None}
