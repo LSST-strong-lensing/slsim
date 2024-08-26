@@ -23,7 +23,7 @@ class NFWCluster(DeflectorBase):
         :param deflector_dict:  parameters of the cluster halo
         :type deflector_dict: dict
         """
-        subhalos_list = deflector_dict.pop("subhalos")
+        subhalos_list = deflector_dict["subhalos"]
         self._subhalos = [EPLSersic(subhalo_dict) for subhalo_dict in subhalos_list]
         super(NFWCluster, self).__init__(deflector_dict)
 
