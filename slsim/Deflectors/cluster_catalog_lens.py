@@ -34,6 +34,7 @@ class ClusterCatalogLens(DeflectorsBase):
         kwargs_mass2light,
         cosmo,
         sky_area,
+        catalog_type="skypy",
         richness_fn="Abdullah2022",
     ):
         """
@@ -55,6 +56,9 @@ class ClusterCatalogLens(DeflectorsBase):
         :type richness_fn: str
         ## MEMO: DeflectorsBase's inputs are deflector_table, kwargs_cut, cosmo, sky_area
         """
+        galaxy_list = param_util.catalog_with_angular_size_in_arcsec(
+            galaxy_catalog=galaxy_list, input_catalog_type=catalog_type
+        )
         super().__init__(
             deflector_table=cluster_list,
             kwargs_cut=kwargs_cut,
