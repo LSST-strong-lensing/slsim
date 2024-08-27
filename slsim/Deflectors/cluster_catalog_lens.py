@@ -69,59 +69,8 @@ class ClusterCatalogLens(DeflectorsBase):
         self.richness_fn = richness_fn
         self.set_cosmo()
 
-        # cluster
-        n_clusters = len(cluster_list)
-        cluster_column_names = cluster_list.columns
-        if "richness" not in cluster_column_names:
-            raise ValueError("richness is mandatory in cluster catalog")
-        if "z" not in cluster_column_names:
-            raise ValueError("redshift is mandatory in cluster catalog")
-        if "halo_mass" not in cluster_column_names:
-            cluster_list["halo_mass"] = -np.ones(n_clusters)
-        if "concentration" not in cluster_column_names:
-            cluster_list["concentration"] = -np.ones(n_clusters)
-        if "vel_disp" not in cluster_column_names:
-            cluster_list["vel_disp"] = -np.ones(n_clusters)
-        if (
-            "e1_mass" not in cluster_column_names
-            or "e2_mass" not in cluster_column_names
-        ):
-            cluster_list["e1_mass"] = -np.ones(n_clusters)
-            cluster_list["e2_mass"] = -np.ones(n_clusters)
-
-        # members
-        if "z" not in members_list.columns:
-            members_list["z"] = -np.ones(len(members_list))
-            # assign the redshift of the cluster to its members
-            for i in range(n_clusters):
-                z = cluster_list["z"][i]
-                members_list["z"][
-                    members_list["cluster_id"] == cluster_list["cluster_id"][i]
-                ] = z
-        # assign a similar SLSim galaxy to each member
-        members_list = self.assign_similar_galaxy(
-            members_list, galaxy_list, cosmo=cosmo
-        )
-        n_members = len(members_list)
-        members_column_names = members_list.colnames
-        if "vel_disp" not in members_column_names:
-            members_list["vel_disp"] = -np.ones(n_members)
-        if (
-            "e1_light" not in members_column_names
-            or "e2_light" not in members_column_names
-        ):
-            members_list["e1_light"] = -np.ones(n_members)
-            members_list["e2_light"] = -np.ones(n_members)
-        if (
-            "e1_mass" not in members_column_names
-            or "e2_mass" not in members_column_names
-        ):
-            members_list["e1_mass"] = -np.ones(n_members)
-            members_list["e2_mass"] = -np.ones(n_members)
-        if "n_sersic" not in members_column_names:
-            members_list["n_sersic"] = -np.ones(n_members)
-        if "gamma_pl" not in members_column_names:
-            members_list["gamma_pl"] = np.ones(n_members) * 2
+        cluster_list = self.preprocess_clusters(cluster_list)
+        members_list = self.preprocess_members(cluster_list, members_list, galaxy_list)
 
         self._f_vel_disp = vel_disp_abundance_matching(
             members_list, z_max=0.5, sky_area=sky_area, cosmo=cosmo
@@ -214,8 +163,14 @@ class ClusterCatalogLens(DeflectorsBase):
             np.random.normal(bcg_ra, center_scatter / 3600),
             np.random.normal(bcg_dec, center_scatter / 3600),
         )
-        members["center_x"] = (members["ra"] - center_ra) * 3600
-        members["center_y"] = (members["dec"] - center_dec) * 3600
+        center_x = (members["ra"] - center_ra) * 3600
+        center_y = (members["dec"] - center_dec) * 3600
+        members["center_x"] = np.where(
+            members["center_x"] == -1, center_x, members["center_x"]
+        )
+        members["center_y"] = np.where(
+            members["center_y"] == -1, center_y, members["center_y"]
+        )
         center_dist = np.sqrt(members["center_x"] ** 2 + members["center_y"] ** 2)
         members = members[center_dist < max_dist_arcsec]
         return members
@@ -269,6 +224,80 @@ class ClusterCatalogLens(DeflectorsBase):
             col for col in members_list.columns if col not in mag_cols + ["z"]
         ]
         return hstack([members_list[include_cols], similar_galaxies])
+
+    @staticmethod
+    def preprocess_clusters(cluster_list):
+        n_clusters = len(cluster_list)
+        column_names = cluster_list.columns
+
+        if "cluster_id" not in column_names:
+            raise ValueError("cluster_id is mandatory in cluster catalog")
+        if "z" not in column_names:
+            raise ValueError("redshift is mandatory in cluster catalog")
+        if "halo_mass" not in column_names:
+            if "richness" not in column_names:
+                raise ValueError("richness or halo_mass is mandatory in cluster catalog")
+            cluster_list["halo_mass"] = -np.ones(n_clusters)
+        if "concentration" not in column_names:
+            cluster_list["concentration"] = -np.ones(n_clusters)
+        if "vel_disp" not in column_names:
+            cluster_list["vel_disp"] = -np.ones(n_clusters)
+        if (
+                "e1_mass" not in column_names
+                or "e2_mass" not in column_names
+        ):
+            cluster_list["e1_mass"] = -np.ones(n_clusters)
+            cluster_list["e2_mass"] = -np.ones(n_clusters)
+        return cluster_list
+
+    def preprocess_members(self, cluster_list, members_list, galaxy_list):
+        n_clusters = len(cluster_list)
+        n_members = len(members_list)
+        column_names = members_list.columns
+        if "z" not in column_names:
+            members_list["z"] = -np.ones(n_members)
+            # assign the redshift of the cluster to its members
+            for i in range(n_clusters):
+                z = cluster_list["z"][i]
+                members_list["z"][
+                    members_list["cluster_id"] == cluster_list["cluster_id"][i]
+                ] = z
+        # use center_x and center_y if available, otherwise use ra and dec
+        if "center_x" not in column_names or "center_y" not in column_names:
+            members_list["center_x"] = -np.ones(n_members)
+            members_list["center_y"] = -np.ones(n_members)
+            if "ra" not in column_names or "dec" not in column_names:
+                raise ValueError("ra and dec or center_x and center_y "
+                                 "are mandatory in members catalog")
+        else:
+            if "ra" not in column_names or "dec" not in column_names:
+                members_list["ra"] = -np.ones(n_members)
+                members_list["dec"] = -np.ones(n_members)
+        # assign a similar SLSim galaxy to each member
+        members_list = self.assign_similar_galaxy(
+            members_list, galaxy_list, cosmo=self.cosmo
+        )
+        # update column names
+        column_names = members_list.colnames
+        if "vel_disp" not in column_names:
+            members_list["vel_disp"] = -np.ones(n_members)
+        if (
+            "e1_light" not in column_names
+            or "e2_light" not in column_names
+        ):
+            members_list["e1_light"] = -np.ones(n_members)
+            members_list["e2_light"] = -np.ones(n_members)
+        if (
+            "e1_mass" not in column_names
+            or "e2_mass" not in column_names
+        ):
+            members_list["e1_mass"] = -np.ones(n_members)
+            members_list["e2_mass"] = -np.ones(n_members)
+        if "n_sersic" not in column_names:
+            members_list["n_sersic"] = -np.ones(n_members)
+        if "gamma_pl" not in column_names:
+            members_list["gamma_pl"] = np.ones(n_members) * 2
+        return members_list
 
     def set_cosmo(self):
         params = dict(
