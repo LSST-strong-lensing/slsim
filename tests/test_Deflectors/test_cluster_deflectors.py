@@ -49,14 +49,14 @@ def cluster_deflectors_instance(cluster_deflectors_input):
 
 
 def test_deflector_number(cluster_deflectors_instance):
-    galaxy_pop = cluster_deflectors_instance
-    num_deflectors = galaxy_pop.deflector_number()
+    cluster_pop = cluster_deflectors_instance
+    num_deflectors = cluster_pop.deflector_number()
     assert num_deflectors >= 0
 
 
 def test_draw_deflector(cluster_deflectors_instance):
-    galaxy_pop = cluster_deflectors_instance
-    deflector = galaxy_pop.draw_deflector()
+    cluster_pop = cluster_deflectors_instance
+    deflector = cluster_pop.draw_deflector()
     # test if the properties of the deflector are
     # as expected from the input catalog
     assert (deflector["z"] > 0.2) and (deflector["z"] < 1.0)
@@ -140,6 +140,29 @@ def test_missing_ra_dec(cluster_deflectors_input):
             cosmo=cosmo,
             sky_area=sky_area,
         )
+
+
+def test_with_centers(cluster_deflectors_input):
+    cluster_catalog, members_catalog, red_galaxies = cluster_deflectors_input
+    members_catalog["center_x"] = 0.0
+    members_catalog["center_y"] = 0.0
+    members_catalog.remove_column("ra")
+    members_catalog.remove_column("dec")
+    kwargs_deflector_cut = {}
+    kwargs_mass2light = {}
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    sky_area = Quantity(value=0.005, unit="deg2")
+    cluster_pop = ClusterDeflectors(
+        cluster_catalog,
+        members_catalog,
+        red_galaxies,
+        kwargs_cut=kwargs_deflector_cut,
+        kwargs_mass2light=kwargs_mass2light,
+        cosmo=cosmo,
+        sky_area=sky_area,
+    )
+    deflector = cluster_pop.draw_deflector()
+    assert deflector["subhalos"]["center_x"][0] == 0.0
 
 
 if __name__ == "__main__":
