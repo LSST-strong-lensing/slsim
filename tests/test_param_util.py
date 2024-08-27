@@ -245,6 +245,8 @@ def test_catalog_with_angular_size_in_arcsec():
     )
     assert galaxy_cat["angular_size"][0] == 4.186996407348755e-08 / 4.84813681109536e-06
     assert galaxy_cat2["angular_size"][0] == 4.186996407348755e-08
+    assert galaxy_cat2["angular_size"].unit == u.rad
+    assert galaxy_cat["angular_size"].unit == u.arcsec
 
 
 if __name__ == "__main__":

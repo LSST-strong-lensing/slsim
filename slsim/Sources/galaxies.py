@@ -24,8 +24,8 @@ class Galaxies(SourcePopBase):
     ):
         """
 
-        :param galaxy_list: list of dictionary with galaxy parameters
-        :type galaxy_list: astropy Table object
+        :param galaxy_list: An astropy table with galaxy parameters.
+        :type galaxy_list: astropy Table object.
         :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max
         :type kwargs_cut: dict
         :param cosmo: astropy.cosmology instance
@@ -245,7 +245,8 @@ def convert_to_slsim_convention(
     Galaxies class. This function is written to convert scotch catalog to slsim
     convension and to change unit of angular size in skypy source catalog to arcsec.
 
-    :param galaxy_catalog: galaxy catalog in other conventions.
+    :param galaxy_catalog: An astropy table of galaxy catalog in other conventions.
+    :type galaxy_catalog: astropy Table object.
     :param light_profile: keyword for number of sersic profile to use in source light
         model. accepted kewords: "single_sersic", "double_sersic".
     :return: galaxy catalog in slsim convension.
