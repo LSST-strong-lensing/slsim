@@ -62,3 +62,11 @@ class TestNFWCluster(object):
             self.nfw_cluster.mass_model_lenstronomy(lens_cosmo=lens_cosmo)
         )
         assert len(lens_mass_model_list) == 11
+
+    def test_stellar_mass(self):
+        stellar_mass = self.nfw_cluster.stellar_mass
+        npt.assert_almost_equal(stellar_mass / 1e11, 8.876, decimal=3)
+
+    def test_magnitude(self):
+        magnitude = self.nfw_cluster.magnitude(band="r")
+        npt.assert_almost_equal(magnitude, 18.632, decimal=3)
