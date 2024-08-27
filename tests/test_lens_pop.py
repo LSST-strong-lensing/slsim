@@ -146,7 +146,7 @@ def test_galaxies_lens_pop_halo_model_instance():
     assert g_lens_halo_model_pop._lens_galaxies.draw_deflector()["halo_mass"] != 0
 
 
-def test_cluster_catalog_lens_pop_instance():
+def test_cluster_lens_pop_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     sky_area = Quantity(value=0.001, unit="deg2")
 
@@ -170,7 +170,7 @@ def test_cluster_catalog_lens_pop_instance():
         filters=None,
     )
 
-    lens_clusters = deflectors.ClusterCatalogLens(
+    lens_clusters = deflectors.ClusterDeflectors(
         cluster_list=cluster_catalog,
         members_list=members_catalog,
         galaxy_list=galaxy_simulation_pipeline.red_galaxies,

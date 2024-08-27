@@ -18,7 +18,7 @@ from astropy.table import hstack
 from scipy.spatial.distance import cdist
 
 
-class ClusterCatalogLens(DeflectorsBase):
+class ClusterDeflectors(DeflectorsBase):
     """Class describing cluster lens model with a NFW profile for the dark matter halo
     and EPL profile for the subhalos (cluster members). It makes use of a group/cluster
     catalog and a group/cluster member catalog (e.g. redMaPPer).
