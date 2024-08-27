@@ -271,7 +271,5 @@ def convert_to_slsim_convention(
     if input_catalog_type == "scotch":
         galaxy_catalog["a_rot"] = np.deg2rad(galaxy_catalog["a_rot"])
     if input_catalog_type == "skypy":
-        galaxy_catalog["angular_size"] = (
-            galaxy_catalog["angular_size"].to(u.arcsec)
-        )
+        galaxy_catalog["angular_size"] = galaxy_catalog["angular_size"].to(u.arcsec)
     return galaxy_catalog
