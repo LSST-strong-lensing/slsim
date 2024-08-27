@@ -144,9 +144,7 @@ class ClusterDeflectors(DeflectorsBase):
             cluster["e2_mass"] = e2
         return dict(cluster)
 
-    def draw_members(
-        self, cluster_id, center_scatter=0.2, max_dist=80, bcg_band="r"
-    ):
+    def draw_members(self, cluster_id, center_scatter=0.2, max_dist=80, bcg_band="r"):
         """
         :param cluster_id: identifier of the cluster
         :type cluster_id: int
@@ -259,16 +257,15 @@ class ClusterDeflectors(DeflectorsBase):
             raise ValueError("redshift is mandatory in cluster catalog")
         if "halo_mass" not in column_names:
             if "richness" not in column_names:
-                raise ValueError("richness or halo_mass is mandatory in cluster catalog")
+                raise ValueError(
+                    "richness or halo_mass is mandatory in cluster catalog"
+                )
             cluster_list["halo_mass"] = -np.ones(n_clusters)
         if "concentration" not in column_names:
             cluster_list["concentration"] = -np.ones(n_clusters)
         if "vel_disp" not in column_names:
             cluster_list["vel_disp"] = -np.ones(n_clusters)
-        if (
-                "e1_mass" not in column_names
-                or "e2_mass" not in column_names
-        ):
+        if "e1_mass" not in column_names or "e2_mass" not in column_names:
             cluster_list["e1_mass"] = -np.ones(n_clusters)
             cluster_list["e2_mass"] = -np.ones(n_clusters)
         return cluster_list
@@ -290,8 +287,10 @@ class ClusterDeflectors(DeflectorsBase):
             members_list["center_x"] = -np.ones(n_members)
             members_list["center_y"] = -np.ones(n_members)
             if "ra" not in column_names or "dec" not in column_names:
-                raise ValueError("ra and dec or center_x and center_y "
-                                 "are mandatory in members catalog")
+                raise ValueError(
+                    "ra and dec or center_x and center_y "
+                    "are mandatory in members catalog"
+                )
         else:
             if "ra" not in column_names or "dec" not in column_names:
                 members_list["ra"] = -np.ones(n_members)
@@ -304,16 +303,10 @@ class ClusterDeflectors(DeflectorsBase):
         column_names = members_list.colnames
         if "vel_disp" not in column_names:
             members_list["vel_disp"] = -np.ones(n_members)
-        if (
-            "e1_light" not in column_names
-            or "e2_light" not in column_names
-        ):
+        if "e1_light" not in column_names or "e2_light" not in column_names:
             members_list["e1_light"] = -np.ones(n_members)
             members_list["e2_light"] = -np.ones(n_members)
-        if (
-            "e1_mass" not in column_names
-            or "e2_mass" not in column_names
-        ):
+        if "e1_mass" not in column_names or "e2_mass" not in column_names:
             members_list["e1_mass"] = -np.ones(n_members)
             members_list["e2_mass"] = -np.ones(n_members)
         if "n_sersic" not in column_names:

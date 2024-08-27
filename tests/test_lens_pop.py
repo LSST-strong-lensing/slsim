@@ -197,7 +197,7 @@ def test_cluster_lens_pop_instance():
     kwargs_lens_cut = {}
     pes_lens_class = cluster_lens_pop.select_lens_at_random(**kwargs_lens_cut)
     assert pes_lens_class.deflector.deflector_type == "NFW_CLUSTER"
-    kwargs_model, kwargs_params = pes_lens_class.lenstronomy_kwargs(band='g')
+    kwargs_model, kwargs_params = pes_lens_class.lenstronomy_kwargs(band="g")
     assert len(kwargs_model["lens_model_list"]) >= 3  # halo, 1>= subhalo, LoS
     assert len(kwargs_model["lens_light_model_list"]) >= 1  # 1>= member galaxy
     assert pes_lens_class.deflector_velocity_dispersion() > 300
