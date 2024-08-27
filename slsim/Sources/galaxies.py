@@ -5,7 +5,7 @@ from slsim.Util import param_util
 from slsim.Sources.source_pop_base import SourcePopBase
 from astropy.table import Column
 from slsim.Util.param_util import average_angular_size, axis_ratio, eccentricity
-from lenstronomy.Util import constants
+from astropy import units as u
 
 
 # TODO: Use type to determine galaxy_list type
@@ -250,6 +250,7 @@ def convert_to_slsim_convention(
         model. accepted kewords: "single_sersic", "double_sersic".
     :return: galaxy catalog in slsim convension.
     """
+    galaxy_catalog = galaxy_catalog.copy()
     column_names = galaxy_catalog.colnames
     for col_name in column_names:
         if "_host" in col_name:
@@ -271,6 +272,6 @@ def convert_to_slsim_convention(
         galaxy_catalog["a_rot"] = np.deg2rad(galaxy_catalog["a_rot"])
     if input_catalog_type == "skypy":
         galaxy_catalog["angular_size"] = (
-            galaxy_catalog["angular_size"] / constants.arcsec
+            galaxy_catalog["angular_size"].to(u.arcsec)
         )
     return galaxy_catalog
