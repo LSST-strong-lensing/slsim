@@ -37,6 +37,7 @@ class ClusterDeflectors(DeflectorsBase):
         sky_area,
         catalog_type="skypy",
         richness_fn="Abdullah2022",
+        kwargs_draw_members=None,
     ):
         """
 
@@ -74,6 +75,9 @@ class ClusterDeflectors(DeflectorsBase):
         )
         self.deflector_profile = "NFW_CLUSTER"
         self.richness_fn = richness_fn
+        if kwargs_draw_members is None:
+            kwargs_draw_members = {}
+        self.kwargs_draw_members = kwargs_draw_members
         self.set_cosmo()
 
         cluster_list = self.preprocess_clusters(cluster_list)
@@ -114,7 +118,8 @@ class ClusterDeflectors(DeflectorsBase):
         """
         index = random.randint(0, self._num_select - 1)
         deflector = self.draw_cluster(index)
-        members = self.draw_members(deflector["cluster_id"])
+        members = self.draw_members(deflector["cluster_id"],
+                                    **self.kwargs_draw_members)
         deflector["subhalos"] = members
         return deflector
 
@@ -224,7 +229,7 @@ class ClusterDeflectors(DeflectorsBase):
             galaxy_list = galaxy_list[indices]
 
         mag_cols = [f"mag_{b}" for b in bands if f"mag_{b}" in members_list.columns]
-        if not bands:
+        if not mag_cols:
             raise ValueError("No magnitude columns found in members_list")
         mag_members = [members_list[mag] for mag in mag_cols]
         mag_galaxies = [galaxy_list[mag] for mag in mag_cols]
