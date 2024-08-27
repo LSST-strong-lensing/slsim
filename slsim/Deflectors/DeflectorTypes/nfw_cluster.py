@@ -107,3 +107,27 @@ class NFWCluster(DeflectorBase):
         :return: halo mass M200 [physical M_sol], concentration r200/rs
         """
         return self._deflector_dict["halo_mass"], self._deflector_dict["concentration"]
+
+    @property
+    def stellar_mass(self):
+        """
+
+        :return: total stellar mass of deflector [M_sol]
+        """
+        total_mass = 0
+        for subhalo in self._subhalos:
+            total_mass += subhalo.stellar_mass
+        return total_mass
+
+    def magnitude(self, band):
+        """Apparent magnitude of the deflector for a given band.
+
+        :param band: imaging band
+        :type band: string
+        :return: total magnitude of deflector in given band
+        """
+        total_flux = 0
+        for subhalo in self._subhalos:
+            mag = subhalo.magnitude(band)
+            total_flux += 10 ** (-0.4 * mag)
+        return -2.5 * np.log10(total_flux)
