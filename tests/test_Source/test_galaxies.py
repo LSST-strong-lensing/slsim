@@ -1,5 +1,6 @@
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
+from astropy import units as u
 from slsim.Sources.galaxies import Galaxies
 from slsim.Sources.galaxies import (
     galaxy_projected_eccentricity,
@@ -30,7 +31,8 @@ class TestGalaxies(object):
                 [0.5, 0.5, 0.5],
                 [-15.248975044343094, -15.248975044343094, -15.248975044343094],
                 [0.1492770563596445, 0.1492770563596445, 0.1492770563596445],
-                [4.186996407348755e-08, 4.186996407348755e-08, 4.186996407348755e-08],
+                [4.186996407348755e-08, 4.186996407348755e-08, 4.186996407348755e-08
+                 ]*u.rad,
                 [23, 23, 23],
                 [43, 43, 43],
             ],
