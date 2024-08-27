@@ -12,7 +12,7 @@ def general_mass_richness(rich, alpha, rich_0, m_0, ln_m_scatter, min_mass=0.0):
     return m
 
 
-def mass_richness_simet2017(rich, min_mass=1e11):
+def mass_richness_simet2017(rich, min_mass=1e12):
     """Mass-richness relation from Simet et al.
 
     2017
@@ -27,7 +27,7 @@ def mass_richness_simet2017(rich, min_mass=1e11):
     )
 
 
-def mass_richness_abdullah2022(rich, min_mass=1e11):
+def mass_richness_abdullah2022(rich, min_mass=1e12):
     """Mass-richness relation from Abdullah et al.
 
     2022 (sred13)

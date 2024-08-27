@@ -1,5 +1,6 @@
 import numpy as np
 import numpy.random as random
+from slsim.Util import param_util
 from slsim.selection import object_cut
 from slsim.Deflectors.richness2mass import mass_richness_relation
 from slsim.Deflectors.halo_population import gene_e_ang_halo, concent_m_w_scatter
@@ -39,22 +40,28 @@ class ClusterCatalogLens(DeflectorsBase):
     ):
         """
 
-        :param cluster_list: list of dictionary with lens parameters of
-            elliptical dark matter halos from a group/cluster catalog.
-            Mandatory keys: 'cluster_id' 'z', 'richness'
-        :param members_list: list of dictionary with lens parameters of
-            elliptical galaxies from a group/cluster member catalog.
+        :param cluster_list: list of dictionary with redshift and richness
+            (or mass) from a group/cluster catalog.
+            Mandatory keys: 'cluster_id' 'z', 'richness' or 'halo_mass'
+        :type cluster_list: ~astropy.table.Table
+        :param members_list: list of dictionary with positions and magnitudes of
+            group/cluster members.
             Mandatory keys: 'cluster_id', 'ra', 'dec', 'mag_{band}'
+        :type members_list: ~astropy.table.Table
+        :param galaxy_list: list of dictionary with lens parameters of
+            SLSim galaxies to be assigned as deflectors to each member.
+        :type galaxy_list: ~astropy.table.Table
         :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max
         :type kwargs_cut: dict
         :param kwargs_mass2light: mass-to-light relation
+        :type kwargs_mass2light: dict
         :param cosmo: astropy.cosmology instance
-        :type sky_area: `~astropy.units.Quantity`
+        :type cosmo: ~astropy.cosmology
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
-        :param richness_fn: richness-mass relation to use
+        :type sky_area: `~astropy.units.Quantity`
+        :param richness_fn: richness-mass relation to assign a mass to each cluster
         :type richness_fn: str
-        ## MEMO: DeflectorsBase's inputs are deflector_table, kwargs_cut, cosmo, sky_area
         """
         galaxy_list = param_util.catalog_with_angular_size_in_arcsec(
             galaxy_catalog=galaxy_list, input_catalog_type=catalog_type
@@ -112,6 +119,11 @@ class ClusterCatalogLens(DeflectorsBase):
         return deflector
 
     def draw_cluster(self, index):
+        """
+        :param index: index of cluster in catalog
+        :type index: int
+        :return: dictionary of NFW parameters for the cluster halo
+        """
         cluster = self._cluster_select[index]
         if cluster["halo_mass"] == -1:
             cluster["halo_mass"] = mass_richness_relation(
@@ -133,8 +145,19 @@ class ClusterCatalogLens(DeflectorsBase):
         return dict(cluster)
 
     def draw_members(
-        self, cluster_id, center_scatter=0.2, max_dist_arcsec=80, bcg_band="r"
+        self, cluster_id, center_scatter=0.2, max_dist=80, bcg_band="r"
     ):
+        """
+        :param cluster_id: identifier of the cluster
+        :type cluster_id: int
+        :param center_scatter: scatter in center of the BCG in arcsec
+        :type center_scatter: float
+        max_dist_arcsec: maximum distance from the BCG in arcsec
+        :type max_dist: float
+        bcg_band: band to use to identify the BCG
+        :type bcg_band: str
+        :return: astropy table with EPL+Sersic parameters of each member
+        """
         members = self._members_select[cluster_id == self._members_select["cluster_id"]]
 
         members["vel_disp"] = np.where(
@@ -172,7 +195,7 @@ class ClusterCatalogLens(DeflectorsBase):
             members["center_y"] == -1, center_y, members["center_y"]
         )
         center_dist = np.sqrt(members["center_x"] ** 2 + members["center_y"] ** 2)
-        members = members[center_dist < max_dist_arcsec]
+        members = members[center_dist < max_dist]
         return members
 
     @staticmethod
@@ -300,6 +323,7 @@ class ClusterCatalogLens(DeflectorsBase):
         return members_list
 
     def set_cosmo(self):
+        """Set the cosmology in colossus to match the astropy.cosmology instance."""
         params = dict(
             flat=(self.cosmo.Ok0 == 0.0),
             H0=self.cosmo.H0.value,

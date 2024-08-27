@@ -15,7 +15,7 @@ def galaxy_list():
 
 
 @pytest.fixture
-def cluster_catalog_lens():
+def cluster_catalog_input():
     red_galaxies = galaxy_list()
 
     path = os.path.dirname(__file__)
@@ -27,6 +27,12 @@ def cluster_catalog_lens():
         os.path.join(module_path, "data/redMaPPer/members_example.fits")
     )
 
+    return cluster_catalog, members_catalog, red_galaxies
+
+
+@pytest.fixture
+def cluster_catalog_lens(cluster_catalog_input):
+    cluster_catalog, members_catalog, red_galaxies = cluster_catalog_input
     kwargs_deflector_cut = {}
     kwargs_mass2light = {}
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -51,10 +57,89 @@ def test_deflector_number(cluster_catalog_lens):
 def test_draw_deflector(cluster_catalog_lens):
     galaxy_pop = cluster_catalog_lens
     deflector = galaxy_pop.draw_deflector()
-    assert deflector["z"] != 0
-    assert deflector["halo_mass"] > 0
-    assert deflector["concentration"] > 0
-    assert len(deflector["subhalos"]) > 0
+    # test if the properties of the deflector are
+    # as expected from the input catalog
+    assert (deflector["z"] > 0.2) and (deflector["z"] < 1.0)
+    assert (deflector["halo_mass"] > 1e12) and (deflector["halo_mass"] < 3e15)
+    assert (deflector["concentration"] > 1) and (deflector["concentration"] < 15)
+    assert (len(deflector["subhalos"]) >= 1) and (len(deflector["subhalos"]) < 100)
+
+
+def test_missing_id(cluster_catalog_input):
+    cluster_catalog, members_catalog, red_galaxies = cluster_catalog_input
+    cluster_catalog.remove_column("cluster_id")
+    kwargs_deflector_cut = {}
+    kwargs_mass2light = {}
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    sky_area = Quantity(value=0.005, unit="deg2")
+    with pytest.raises(ValueError):
+        ClusterCatalogLens(
+            cluster_catalog,
+            members_catalog,
+            red_galaxies,
+            kwargs_cut=kwargs_deflector_cut,
+            kwargs_mass2light=kwargs_mass2light,
+            cosmo=cosmo,
+            sky_area=sky_area,
+        )
+
+
+def test_missing_richness(cluster_catalog_input):
+    cluster_catalog, members_catalog, red_galaxies = cluster_catalog_input
+    cluster_catalog.remove_column("richness")
+    kwargs_deflector_cut = {}
+    kwargs_mass2light = {}
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    sky_area = Quantity(value=0.005, unit="deg2")
+    with pytest.raises(ValueError):
+        ClusterCatalogLens(
+            cluster_catalog,
+            members_catalog,
+            red_galaxies,
+            kwargs_cut=kwargs_deflector_cut,
+            kwargs_mass2light=kwargs_mass2light,
+            cosmo=cosmo,
+            sky_area=sky_area,
+        )
+
+
+def test_missing_redshift(cluster_catalog_input):
+    cluster_catalog, members_catalog, red_galaxies = cluster_catalog_input
+    cluster_catalog.remove_column("z")
+    kwargs_deflector_cut = {}
+    kwargs_mass2light = {}
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    sky_area = Quantity(value=0.005, unit="deg2")
+    with pytest.raises(ValueError):
+        ClusterCatalogLens(
+            cluster_catalog,
+            members_catalog,
+            red_galaxies,
+            kwargs_cut=kwargs_deflector_cut,
+            kwargs_mass2light=kwargs_mass2light,
+            cosmo=cosmo,
+            sky_area=sky_area,
+        )
+
+
+def test_missing_ra_dec(cluster_catalog_input):
+    cluster_catalog, members_catalog, red_galaxies = cluster_catalog_input
+    members_catalog.remove_column("ra")
+    members_catalog.remove_column("dec")
+    kwargs_deflector_cut = {}
+    kwargs_mass2light = {}
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    sky_area = Quantity(value=0.005, unit="deg2")
+    with pytest.raises(ValueError):
+        ClusterCatalogLens(
+            cluster_catalog,
+            members_catalog,
+            red_galaxies,
+            kwargs_cut=kwargs_deflector_cut,
+            kwargs_mass2light=kwargs_mass2light,
+            cosmo=cosmo,
+            sky_area=sky_area,
+        )
 
 
 if __name__ == "__main__":
