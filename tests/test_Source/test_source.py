@@ -144,23 +144,6 @@ class TestSource:
             ),
         )
 
-        intrinsic_light_curve = {
-            "MJD": np.linspace(1, 500, 500),
-            "ps_mag_intrinsic": 10 + np.sin(np.linspace(1, 500, 500) * np.pi / 30),
-        }
-        kwargs_agn_model = [
-            {
-                "r_out": 1000,
-                "corona_height": 10,
-                "r_resolution": 500,
-                "inclination_angle": 10,
-                "black_hole_mass_exponent": 9.5,
-                "intrinsic_light_curve": intrinsic_light_curve,
-                "driving_variability_model": "light_curve",
-                "random_seed": 42,
-            },
-        ]
-
         self.source_dict5 = {
             "angular_size": 0.1651633078964498,
             "center_x": 0.30298310338567075,
@@ -174,34 +157,43 @@ class TestSource:
             "z": 3.123,
         }
 
+        intrinsic_light_curve = {
+            "MJD": np.linspace(1, 500, 500),
+            "ps_mag_intrinsic": 10 + np.sin(np.linspace(1, 500, 500) * np.pi / 30),
+        }
+
         self.source_dict_agn = Table(
             [
                 [0.5],
-                [23],
-                [24],
-                [22],
                 [4],
                 [0.35],
                 [0.8],
                 [0.76],
                 [[np.linspace(1, 500, 500)]],
                 [20],
-                [kwargs_agn_model],
-                [intrinsic_light_curve],
+                [1000],
+                [10],
+                [500],
+                [10],
+                [9.5],
+                ["light_curve"],
+                [42],
             ],
             names=(
                 "z",
-                "mag_r",
-                "mag_g",
-                "mag_i",
                 "n_sersic",
                 "angular_size",
                 "e1",
                 "e2",
                 "MJD",
-                "i_band_mag",
-                "kwargs_agn_model",
-                "agn_lightcurve",
+                "ps_mag_i",
+                "r_out",
+                "corona_height",
+                "r_resolution",
+                "inclination_angle",
+                "black_hole_mass_exponent",
+                "driving_variability_model",
+                "random_seed",
             ),
         )
 
@@ -287,7 +279,15 @@ class TestSource:
         self.source_agn = Source(
             self.source_dict_agn,
             variability_model="light_curve",
-            kwargs_variability={"agn_lightcurve"},
+            kwargs_variability={
+                "agn_lightcurve",
+                "u",
+                "g",
+                "r",
+                "i",
+                "z",
+                "y",
+            },
             lightcurve_time=np.linspace(-20, 50, 100),
             cosmo=cosmo,
         )
@@ -297,6 +297,76 @@ class TestSource:
             kwargs_variability={"agn_lightcurve"},
             lightcurve_time=np.linspace(-20, 50, 100),
             cosmo=cosmo,
+        )
+
+        self.source_dict_bpl_agn = Table(
+            [
+                [0.5],
+                [4],
+                [0.35],
+                [0.8],
+                [0.76],
+                [[np.linspace(1, 500, 500)]],
+                [20],
+                [1000],
+                [10],
+                [500],
+                [10],
+                [9.5],
+                ["bending_power_law"],
+                [42],
+            ],
+            names=(
+                "z",
+                "n_sersic",
+                "angular_size",
+                "e1",
+                "e2",
+                "MJD",
+                "ps_mag_i",
+                "r_out",
+                "corona_height",
+                "r_resolution",
+                "inclination_angle",
+                "black_hole_mass_exponent",
+                "driving_variability_model",
+                "random_seed",
+            ),
+        )
+
+        variable_agn_kwarg_dict = {
+            "length_of_light_curve": 250,
+            "time_resolution": 1,
+            "log_breakpoint_frequency": 1 / 20,
+            "low_frequency_slope": 1,
+            "high_frequency_slope": 3,
+            "normal_magnitude_variance": 0.1,
+        }
+
+        self.source_bpl_agn = Source(
+            self.source_dict_agn,
+            variability_model="light_curve",
+            kwargs_variability={
+                "agn_lightcurve",
+                "g",
+                "i",
+            },
+            lightcurve_time=np.linspace(0, 500, 200),
+            cosmo=cosmo,
+            agn_driving_variability_model="bending_power_law",
+            agn_driving_kwargs_variability=variable_agn_kwarg_dict,
+        )
+        self.source_bpl_agn_error = Source(
+            self.source_dict_agn,
+            variability_model="light_curve",
+            kwargs_variability={
+                "agn_lightcurve",
+                "g",
+                "i",
+            },
+            cosmo=cosmo,
+            agn_driving_variability_model="bending_power_law",
+            agn_driving_kwargs_variability=variable_agn_kwarg_dict,
         )
 
     def test_redshift(self):
@@ -413,7 +483,7 @@ class TestSource:
         obs_time = 20
         later_obs_time = 50
 
-        # Make sure both "g" and "z" band magnitudes exist, and they should
+        # Make sure both "g" and "y" band magnitudes exist, and they should
         # not be equal
         g_mag = self.source_agn.point_source_magnitude(
             "g", image_observation_times=obs_time
@@ -433,6 +503,17 @@ class TestSource:
             self.source_agn_error.point_source_magnitude(
                 "g", image_observation_times=obs_time
             )
+            self.source_agn_bpl_error.point_source_magnitude(
+                "g", image_observation_times=obs_time
+            )
+
+        broken_power_law_time_1 = self.source_bpl_agn.point_source_magnitude(
+            "i", image_observation_times=obs_time
+        )
+        broken_power_law_time_2 = self.source_bpl_agn.point_source_magnitude(
+            "i", image_observation_times=later_obs_time
+        )
+        assert broken_power_law_time_1 != broken_power_law_time_2
 
 
 if __name__ == "__main__":

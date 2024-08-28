@@ -28,6 +28,10 @@ class Source(object):
         cosmo=None,
         lightcurve_time=None,
         sn_modeldir=None,
+        agn_known_band=None,
+        agn_known_mag=None,
+        agn_driving_variability_model=None,
+        agn_driving_kwargs_variability=None,
     ):
         """
         :param source_dict: Source properties
@@ -67,6 +71,10 @@ class Source(object):
         self.cosmo = cosmo
         self.lightcurve_time = lightcurve_time
         self.sn_modeldir = sn_modeldir
+        self.agn_known_band = agn_known_band
+        self.agn_known_mag = agn_known_mag
+        self.agn_driving_variability_model = agn_driving_variability_model
+        self.agn_driving_kwargs_variability = agn_driving_kwargs_variability
 
     @property
     def kwargs_variability_extracted(self):
@@ -152,8 +160,8 @@ class Source(object):
                     )
 
                 else:
-                    # Get the dict object from the astropy.table.column
-                    agn_kwarg_dict = self.source_dict["kwargs_agn_model"].data[0][0]
+                    # Pull the agn kwarg dict out of the kwargs_variability dict
+                    agn_kwarg_dict = self.extract_agn_kwargs_from_source_dict()
 
                     # Populate "None" for optional keys related to drawing random AGN
                     random_kwargs = {"random_seed": None, "input_agn_bounds_dict": None}
@@ -162,48 +170,85 @@ class Source(object):
                             random_kwargs[opt_key] = agn_kwarg_dict[opt_key]
                             del agn_kwarg_dict[opt_key]
 
+                    # If no other band and magnitude is given, populate with
+                    # the assumed point source magnitude column
+                    if self.agn_known_band is None:
+                        if "ps_mag_i" in self.source_dict.colnames:
+                            self.agn_known_band = "lsst2023-i"
+                            self.agn_known_mag = self.source_dict["ps_mag_i"]
+                        else:
+                            raise ValueError(
+                                "Please provide a band and magnitude for the AGN"
+                            )
+
                     # Create the agn object
                     self.agn_class = agn.RandomAgn(
-                        self.source_dict["i_band_mag"],
-                        self.source_dict["z"],
+                        self.agn_known_band,
+                        self.agn_known_mag,
+                        z,
                         cosmo=self.cosmo,
+                        lightcurve_time=self.lightcurve_time,
+                        agn_driving_variability_model=self.agn_driving_variability_model,
+                        agn_driving_kwargs_variability=self.agn_driving_kwargs_variability,
                         random_seed=random_kwargs["random_seed"],
                         input_agn_bounds_dict=random_kwargs["input_agn_bounds_dict"],
                         **agn_kwarg_dict
                     )
 
-                    # Get mean mags across LSST filters
-                    # Fix to eventually give the user power to choose other surveys
-                    mean_magnitudes = self.agn_class.get_mean_mags("lsst")
+                    # Get mean mags for each provided band
+                    # determine which kwargs_variability are lsst bands
+                    lsst_bands = ["u", "g", "r", "i", "z", "y"]
+                    provided_lsst_bands = set(lsst_bands) & set(self.kwargs_variability)
 
-                    # These are lsst filters, hard coded in for now. Fix later.
-                    filters = ["u", "g", "r", "i", "z", "y"]
-                    for index, band in enumerate(filters):
+                    # The set "provided_lsst_bands" is no longer ordered.
+                    # Therefore, create a list of speclite names in the new order
+                    speclite_names = []
+
+                    # change name to be compatible with speclite filter names
+                    for band in provided_lsst_bands:
+                        speclite_names.append("lsst2023-" + band)
+
+                    # determine mean magnitudes for each band
+                    mean_magnitudes = self.agn_class.get_mean_mags(speclite_names)
+
+                    # Calculate light curve in each band
+                    for index, band in enumerate(provided_lsst_bands):
 
                         # Define name for point source mags
                         filter_name = "ps_mag_" + band
 
-                        # Again, lsst filters hard coded in. Fix later.
+                        # Set the filter to use
                         self.agn_class.variable_disk.reprocessing_kwargs[
                             "speclite_filter"
-                        ] = ("lsst2023-" + band)
+                        ] = speclite_names[index]
 
+                        # Set the mean magnitude of this filter
                         self.agn_class.variable_disk.driving_signal_kwargs[
                             "mean_magnitude"
                         ] = mean_magnitudes[index]
 
+                        # Extract the reprocessed light curve
                         reprocessed_lightcurve = reprocess_with_lamppost_model(
                             self.agn_class.variable_disk
                         )
 
+                        # Prepare the light curve to be extracted
                         times = reprocessed_lightcurve["MJD"]
-                        magnitudes = reprocessed_lightcurve["ps_mag_lsst2023-" + band]
+                        magnitudes = reprocessed_lightcurve[
+                            "ps_mag_" + speclite_names[index]
+                        ]
 
+                        # Prepare the time variable magnitude
                         new_column = Column([float(min(magnitudes))], name=filter_name)
 
-                        self._source_dict = Table(self.source_dict)
-                        self._source_dict.add_column(new_column)
-                        self.source_dict = self._source_dict[0]
+                        # Replace "ps_mag_i" with its variable value
+                        if filter_name in self.source_dict.colnames:
+                            self.source_dict[filter_name] = new_column
+                        # Otherwise create a new column with the variable value
+                        else:
+                            self._source_dict = Table(self.source_dict)
+                            self._source_dict.add_column(new_column)
+                            self.source_dict = self._source_dict[0]
 
                         # Stores the variable light curve for each band
                         kwargs_variab_extracted[band] = {
@@ -488,3 +533,32 @@ class Source(object):
         else:
             raise ValueError("Provided sersic profile is not supported.")
         return kwargs_extended_source
+
+    def extract_agn_kwargs_from_source_dict(self):
+        """This extracts all AGN related parameters from the source_dict Table and
+        constructs a compact dictionary from them to pass into the agn class.
+
+        :param source_dict: Astropy Table with columns representing all information of
+            the source.
+        :return: Compact dict object containing key+value pairs of AGN parameters.
+        """
+
+        kwargs_variable_agn = [
+            "r_out",
+            "r_resolution",
+            "corona_height",
+            "inclination_angle",
+            "black_hole_mass_exponent",
+            "black_hole_spin",
+            "intrinsic_light_curve",
+            "eddington_ratio",
+            "driving_variability_model",
+            "random_seed",
+            "accretion_disk",
+        ]
+        column_names = self.source_dict.colnames
+        agn_kwarg_dict = {}
+        for kwarg in kwargs_variable_agn:
+            if kwarg in column_names:
+                agn_kwarg_dict[kwarg] = self.source_dict[kwarg].data[0]
+        return agn_kwarg_dict

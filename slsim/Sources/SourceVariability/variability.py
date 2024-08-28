@@ -1,7 +1,9 @@
 from slsim.Sources.SourceVariability.light_curve_interpolation import (
     LightCurveInterpolation,
 )
-from slsim.Sources.SourceVariability.sinusoidal_variability import SinusoidalVariability
+from slsim.Sources.SourceVariability.sinusoidal_variability import (
+    SinusoidalVariability,
+)
 from slsim.Sources.SourceVariability.accretion_disk_reprocessing import (
     AccretionDiskReprocessing,
 )
