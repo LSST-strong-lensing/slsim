@@ -15,7 +15,7 @@ class NFWCluster(DeflectorBase):
     - 'e1_mass': eccentricity of NFW profile
     - 'e2_mass': eccentricity of NFW profile
     - 'z': redshift of deflector
-    - 'subhalos': list of dictionary with subhalo parameters
+    - 'subhalos': list of dictionary with EPLSersic parameters
     """
 
     def __init__(self, deflector_dict):
