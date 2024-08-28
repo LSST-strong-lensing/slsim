@@ -276,7 +276,7 @@ class TestSource:
             cosmo=None,
         )
 
-        self.source_agn = Source(
+        self.source_agn_1 = Source(
             self.source_dict_agn,
             variability_model="light_curve",
             kwargs_variability={
@@ -290,6 +290,24 @@ class TestSource:
             },
             lightcurve_time=np.linspace(-20, 50, 100),
             cosmo=cosmo,
+        )
+
+        self.source_agn_2 = Source(
+            self.source_dict_agn,
+            variability_model="light_curve",
+            kwargs_variability={
+                "agn_lightcurve",
+                "u",
+                "g",
+                "r",
+                "i",
+                "z",
+                "y",
+            },
+            lightcurve_time=np.linspace(-20, 50, 100),
+            cosmo=cosmo,
+            agn_driving_variability_model="light_curve",
+            agn_driving_kwargs_variability=intrinsic_light_curve,
         )
 
         self.source_agn_error = Source(
@@ -313,7 +331,6 @@ class TestSource:
                 [500],
                 [10],
                 [9.5],
-                ["bending_power_law"],
                 [42],
             ],
             names=(
@@ -329,7 +346,6 @@ class TestSource:
                 "r_resolution",
                 "inclination_angle",
                 "black_hole_mass_exponent",
-                "driving_variability_model",
                 "random_seed",
             ),
         )
@@ -485,19 +501,23 @@ class TestSource:
 
         # Make sure both "g" and "y" band magnitudes exist, and they should
         # not be equal
-        g_mag = self.source_agn.point_source_magnitude(
+        g_mag = self.source_agn_1.point_source_magnitude(
             "g", image_observation_times=obs_time
         )
-        y_mag = self.source_agn.point_source_magnitude(
+        y_mag = self.source_agn_1.point_source_magnitude(
             "y", image_observation_times=obs_time
         )
         assert g_mag != y_mag
 
-        g_mag_later_time = self.source_agn.point_source_magnitude(
+        g_mag_later_time = self.source_agn_1.point_source_magnitude(
             "g", image_observation_times=later_obs_time
         )
 
         assert g_mag != g_mag_later_time
+
+        self.source_agn_2.point_source_magnitude(
+            "g", image_observation_times=later_obs_time
+        )
 
         with pytest.raises(ValueError):
             self.source_agn_error.point_source_magnitude(
