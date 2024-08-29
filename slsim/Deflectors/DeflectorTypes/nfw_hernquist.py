@@ -33,15 +33,15 @@ class NFWHernquist(DeflectorBase):
             return self._deflector_dict["vel_disp"]
 
         else:
-            # convert radian to arc seconds
-            size_lens_arcsec = self.angular_size_light / constants.arcsec
+            size_lens_arcsec = self.angular_size_light
 
             m_halo, c_halo = self.halo_properties
             m_halo_acc = self._deflector_dict["halo_mass_acc"]
             m_halo = max(m_halo, m_halo_acc)
-            # convert angular size to physical size
+            # convert angular size to physical size. For this, need to convert angular
+            # size to radian.
             dd = cosmo.angular_diameter_distance(self.redshift).value
-            rs_star = dd * self.angular_size_light
+            rs_star = dd * (self.angular_size_light * constants.arcsec)
             vel_disp = vel_disp_composite_model(
                 r=size_lens_arcsec,
                 m_star=self.stellar_mass,
@@ -72,7 +72,7 @@ class NFWHernquist(DeflectorBase):
         e1_mass_lenstronomy, e2_mass_lenstronomy = ellipticity_slsim_to_lenstronomy(
             e1_slsim=e1_mass, e2_slsim=e2_mass
         )
-        rs_phys = lens_cosmo.dd * self.angular_size_light
+        rs_phys = lens_cosmo.dd * (self.angular_size_light * constants.arcsec)
         sigma0, rs_light_angle = lens_cosmo.hernquist_phys2angular(
             mass=self.stellar_mass, rs=rs_phys
         )
@@ -117,10 +117,7 @@ class NFWHernquist(DeflectorBase):
                 e1_slsim=e1_light_lens, e2_slsim=e2_light_lens
             )
         )
-        size_lens_arcsec = (
-            self._deflector_dict["angular_size"] / constants.arcsec
-        )  # convert radian to arc seconds
-
+        size_lens_arcsec = self._deflector_dict["angular_size"]
         lens_light_model_list = ["HERNQUIST_ELLIPSE"]
         kwargs_lens_light = [
             {

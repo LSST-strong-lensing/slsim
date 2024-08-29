@@ -41,6 +41,8 @@ class LOSConfig(object):
         nonlinear_los_bool=False,
         nonlinear_correction_path=None,
         no_correction_path=None,
+        gamma=None,
+        kappa=None,
     ):
         """
         :param los_bool: Boolean to include line-of-sight distortions, default is True.
@@ -59,6 +61,10 @@ class LOSConfig(object):
         :type nonlinear_correction_path: str or None
         :param no_correction_path: Path to the no non-linear correction distributions stored in an H5 file, default is None.
         :type no_correction_path: str or None
+        :param gamma: [gamma1, gamma2] (takes these values if present)
+        :type gamma: list of floats
+        :param kappa: convergence (takes this values if present)
+        :type kappa: float
         """
 
         self.mixgauss_gamma = mixgauss_gamma
@@ -69,6 +75,10 @@ class LOSConfig(object):
         self.nonlinear_los_bool = nonlinear_los_bool
         self.nonlinear_correction_path = nonlinear_correction_path
         self.no_correction_path = no_correction_path
+        if gamma is not None:
+            self._gamma = gamma
+        if kappa is not None:
+            self._kappa = kappa
 
     def calculate_los_linear_distortions(self, source_redshift, deflector_redshift):
         """Calculate line-of-sight distortions in shear and convergence.
@@ -81,6 +91,8 @@ class LOSConfig(object):
         """
         if not self.los_bool:
             return 0, 0, 0
+        if hasattr(self, "_gamma") and hasattr(self, "_kappa"):
+            return self._gamma[0], self._gamma[1], self._kappa
 
         if self.mixgauss_gamma and not self.nonlinear_los_bool:
             if not hasattr(self, "_gamma"):

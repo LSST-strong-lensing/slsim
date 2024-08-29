@@ -2,8 +2,6 @@ import numpy as np
 import scipy
 from scipy import interpolate
 import copy
-from skypy.galaxies.redshift import redshifts_from_comoving_density
-from skypy.utils.random import schechter
 
 """
 This module provides functions to compute velocity dispersion using schechter function.
@@ -183,6 +181,33 @@ def vel_disp_nfw_aperture(r, m_halo, c_halo, cosmo, z_lens):
     return np.sqrt(vel_disp2)
 
 
+def vel_disp_nfw(m_halo, c_halo, cosmo, z_lens):
+    """Computes vel_disp_nfw_aperture using the characteristic radius rs of the NFW as
+    aperture (which is independent of the source redshift).
+
+    :param r: radius of the aperture for the velocity dispersion [arcsec]
+    :param m_halo: Halo mass [physical M_sun]
+    :param c_halo: halo concentration
+    :param cosmo: cosmology
+    :type cosmo: ~astropy.cosmology class
+    :param z_lens: redshift of the deflector
+    :return: velocity dispersion [km/s]
+    """
+    from lenstronomy.Cosmo.lens_cosmo import LensCosmo
+
+    lens_cosmo = LensCosmo(z_lens=z_lens, z_source=10, cosmo=cosmo)
+
+    rs_arcsec, _ = lens_cosmo.nfw_physical2angle(m_halo, c_halo)
+    vel_disp = vel_disp_nfw_aperture(
+        r=rs_arcsec,
+        m_halo=m_halo,
+        c_halo=c_halo,
+        cosmo=cosmo,
+        z_lens=z_lens,
+    )
+    return vel_disp
+
+
 def vel_disp_sdss(sky_area, redshift, vd_min, vd_max, cosmology, noise=True):
     """Velocity dispersion function in a cone matched by SDSS measurements.
 
@@ -225,13 +250,15 @@ def vel_disp_sdss(sky_area, redshift, vd_min, vd_max, cosmology, noise=True):
 
     References
     ----------
-    .. [1] Choi, Park and Vogeley, (2007), astro-ph/0611607, doi:10.1086/511060
+    .. [1] Bernardi et al. 2010,
+     https://ui.adsabs.harvard.edu/abs/2010MNRAS.404.2087B/abstract
     """
     # SDSS velocity dispersion function for galaxies brighter than Mr >= -16.8
-    phi_star = 8.0 * 10 ** (-3) / cosmology.h**3
-    vd_star = 161
-    alpha = 2.32
-    beta = 2.67
+    # These numbers are from the Bernardi et al. 2010.
+    phi_star = 2.099e-2 * cosmology.h**3
+    vd_star = 113.78
+    alpha = 0.94
+    beta = 1.85
     return schechter_vel_disp(
         redshift,
         phi_star,
@@ -255,7 +282,7 @@ def schechter_vel_disp(
     vd_min,
     vd_max,
     sky_area,
-    cosmology,
+    cosmo,
     noise=True,
 ):
     r"""Sample redshifts and stellar masses from a Schechter mass function.
@@ -283,7 +310,7 @@ def schechter_vel_disp(
         bounds.
     sky_area : `~astropy.units.Quantity`
         Sky area over which galaxies are sampled. Must be in units of solid angle.
-    cosmology : `~astropy.cosmology`
+    cosmo : `~astropy.cosmology`
         `astropy.cosmology` object to calculate comoving densities.
     noise : bool, optional
         Poisson-sample the number of galaxies. Default is `True`.
@@ -311,12 +338,20 @@ def schechter_vel_disp(
         vd_min,
         vd_max,
         sky_area,
-        cosmology,
-        noise,
+        cosmo,
+        noise=noise,
     )
     # sample galaxy mass for redshifts
     vel_disp = schechter_velocity_dispersion_function(
-        alpha, beta, vd_star, vd_min=vd_min, vd_max=vd_max, size=len(z), resolution=100
+        alpha,
+        beta,
+        phi_star,
+        vd_star,
+        vd_min,
+        vd_max,
+        size=len(z),
+        resolution=1000,
+        scale=1,
     )
     return z, vel_disp
 
@@ -330,7 +365,7 @@ def schechter_vel_disp_redshift(
     vd_min,
     vd_max,
     sky_area,
-    cosmology,
+    cosmo,
     noise=True,
 ):
     r"""Sample redshifts from Schechter function.
@@ -358,15 +393,15 @@ def schechter_vel_disp_redshift(
         bounds.
     sky_area : `~astropy.units.Quantity`
         Sky area over which galaxies are sampled. Must be in units of solid angle.
-    cosmology : Cosmology
-        Cosmology object to calculate comoving densities.
+    cosmology : `~astropy.cosmology`
+        `astropy.cosmology` object to calculate comoving densities.
     noise : bool, optional
         Poisson-sample the number of galaxies. Default is `True`.
 
     Returns
     -------
-    velocity_dispersion: array_like
-        Velocity dispersion drawn from Schechter function.
+    redshifts: array_like
+        redshifts drawn from Schechter function.
 
     Notes
     -----
@@ -398,7 +433,13 @@ def schechter_vel_disp_redshift(
     # gamma function integrand
     def f(lnx, a):
         return (
-            np.exp(lnx) * np.exp(a * lnx - np.exp(lnx)) if lnx < lnxmax.max() else 0.0
+            np.exp(lnx)
+            * np.exp(a * lnx - np.exp(lnx))
+            * beta
+            * ((np.exp(-lnx)) ** (1 / beta))
+            * (1 / vd_star)
+            if lnx < lnxmax.max()
+            else 0.0
         )
 
     # integrate gamma function for each redshift
@@ -415,16 +456,73 @@ def schechter_vel_disp_redshift(
 
     # sample redshifts from the comoving density
     return redshifts_from_comoving_density(
-        redshift=redshift,
-        density=density,
-        sky_area=sky_area,
-        cosmology=cosmology,
-        noise=noise,
+        redshift, density, sky_area, cosmo, noise=noise
     )
 
 
+def redshifts_from_comoving_density(redshift, density, sky_area, cosmo, noise=True):
+    r"""Sample redshifts from a comoving density function. We took this function is from
+    SkyPy package but we have modified it to make suitable for the constant comoving
+    number density.
+
+    Sample galaxy redshifts such that the resulting distribution matches a past
+    lightcone with comoving galaxy number density `density` at redshifts
+    `redshift`. The comoving volume sampled corresponds to a sky area `sky_area`
+    and transverse comoving distance given by the cosmology `cosmology`.
+
+    If the `noise` parameter is set to true, the number of galaxies has Poisson
+    noise. If `noise` is false, the expected number of galaxies is used.
+
+    Parameters
+    ----------
+    redshift : array_like
+        Redshifts at which comoving number densities are provided.
+    density : array_like
+        Comoving galaxy number density at each redshift in Mpc-3.
+    sky_area : `~astropy.units.Quantity`
+        Sky area over which galaxies are sampled. Must be in units of solid angle.
+    cosmo : Cosmology
+        Cosmology object for conversion to comoving volume.
+    noise : bool, optional
+        Poisson-sample the number of galaxies. Default is `True`.
+
+    Returns
+    -------
+    redshifts : array_like
+        Sampled redshifts such that the comoving number density of galaxies
+        corresponds to the input distribution.
+
+    Warnings
+    --------
+    The inverse cumulative distribution function is approximated from the
+    number density and comoving volume calculated at the given `redshift`
+    values. The user must choose suitable `redshift` values to satisfy their
+    desired numerical accuracy.
+    """
+
+    # redshift number density
+    dN_dz = (cosmo.differential_comoving_volume(redshift) * sky_area).to_value("Mpc3")
+    # number
+    dN_dz *= density
+    number = dN_dz
+    # Poisson sample galaxy number if requested
+    number_list = []
+    for n in number:
+        if noise:
+            N = np.random.poisson(n)
+        else:
+            N = int(n)  # np.array([int(digit) for digit in number])
+        number_list.append(N)
+    cdf = dN_dz  # in place
+    np.cumsum((dN_dz[1:] + dN_dz[:-1]) / 2 * np.diff(redshift), out=cdf[1:])
+    cdf[0] = 0
+    cdf /= cdf[-1]
+    total_number = sum(number_list)
+    return np.interp(np.random.rand(total_number), cdf, redshift)
+
+
 def schechter_velocity_dispersion_function(
-    alpha, beta, vd_star, vd_min, vd_max, size=None, resolution=1000
+    alpha, beta, phi_star, vd_star, vd_min, vd_max, size=None, resolution=1000, scale=1
 ):
     """Sample velocity dispersion of elliptical galaxies in the local universe following
     a Schecter function.
@@ -440,10 +538,12 @@ def schechter_velocity_dispersion_function(
     vd_min, vd_max: float
         Lower and upper bounds of random variable x. Samples are drawn uniformly from
         bounds.
-    resolution: int
-        Resolution of the inverse transform sampling spline. Default is 100.
     size: int
         Number of samples returned. Default is 1.
+    resolution: int
+        Resolution of the inverse transform sampling spline. Default is 100.
+    scale: array-like, optional
+        Scale factor for the returned samples. Default is 1.
 
     Returns
     -------
@@ -472,16 +572,33 @@ def schechter_velocity_dispersion_function(
     .. [3] Choi, Park and Vogeley, (2007), astro-ph/0611607, doi:10.1086/511060
     """
 
-    if np.ndim(alpha) > 0:
-        raise NotImplementedError("only scalar alpha is supported")
+    if size is None:
+        size = np.broadcast(vd_min, vd_max, scale).shape or None
 
-    alpha_prime = alpha / beta - 1
-    x_min, x_max = (vd_min / vd_star) ** beta, (vd_max / vd_star) ** beta
+    lnx_min = np.log((vd_min / vd_star) ** beta)
+    lnx_max = np.log((vd_max / vd_star) ** beta)
 
-    samples = schechter(alpha_prime, x_min, x_max, resolution=resolution, size=size)
-    samples = samples ** (1 / beta) * vd_star
+    lnx = np.linspace(np.min(lnx_min), np.max(lnx_max), resolution)
+    gamma_ab = scipy.special.gamma(alpha / beta)
+    phi_star = phi_star
+    pdf = (
+        np.exp(((alpha - 1) / beta) * lnx - np.exp(lnx))
+        * (1 / vd_star)
+        * beta
+        * phi_star
+        / gamma_ab
+    )
+    cdf = pdf  # in place
+    np.cumsum((pdf[1:] + pdf[:-1]) / 2 * np.diff(lnx), out=cdf[1:])
+    cdf[0] = 0
+    cdf /= cdf[-1]
 
-    return samples
+    t_lower = np.interp(lnx_min, lnx, cdf)
+    t_upper = np.interp(lnx_max, lnx, cdf)
+    u = np.random.uniform(t_lower, t_upper, size=size)
+    lnx_sample = np.interp(u, cdf, lnx)
+
+    return (np.exp(lnx_sample) * scale) ** (1 / beta) * vd_star
 
 
 def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
@@ -508,7 +625,7 @@ def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
     # number of selected galaxies
     num_select = len(galaxy_list_zmax)
 
-    redshift = np.arange(0, z_max + 0.001, 0.1)
+    redshift = np.linspace(0, z_max, 50)
     z_list, vel_disp_list = vel_disp_sdss(
         sky_area, redshift, vd_min=50, vd_max=500, cosmology=cosmo, noise=True
     )

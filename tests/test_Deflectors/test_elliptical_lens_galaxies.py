@@ -9,7 +9,7 @@ import pytest
 
 
 def galaxy_list():
-    sky_area = Quantity(value=0.005, unit="deg2")
+    sky_area = Quantity(value=0.001, unit="deg2")
     pipeline = SkyPyPipeline(skypy_config=None, sky_area=sky_area, filters=None)
     red_gal = pipeline.red_galaxies
     return red_gal
@@ -21,7 +21,7 @@ def elliptical_lens_galaxies():
     kwargs_deflector_cut = {}
     kwargs_mass2light = {}
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-    sky_area = Quantity(value=0.005, unit="deg2")
+    sky_area = Quantity(value=0.001, unit="deg2")
     return EllipticalLensGalaxies(
         red_galaxies,
         kwargs_cut=kwargs_deflector_cut,
