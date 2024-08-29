@@ -5,7 +5,7 @@ from scipy.signal import fftconvolve
 from lenstronomy.Util.param_util import transform_e1e2_product_average
 from lenstronomy.Util.param_util import ellipticity2phi_q
 from astropy.io import fits
-from lenstronomy.Util import constants
+from astropy import units as u
 import warnings
 
 
@@ -332,10 +332,11 @@ def catalog_with_angular_size_in_arcsec(galaxy_catalog, input_catalog_type="skyp
     :type input_catalog_type: str. "skypy" or None
     :return: galaxy catalog with anularsize in arcsec.
     """
+    copied_galaxy_catalog = galaxy_catalog.copy()
     if input_catalog_type == "skypy":
-        galaxy_catalog["angular_size"] = (
-            galaxy_catalog["angular_size"] / constants.arcsec
-        )
+        copied_galaxy_catalog["angular_size"] = copied_galaxy_catalog[
+            "angular_size"
+        ].to(u.arcsec)
         warning_msg = (
             "Angular size is converted to arcsec because provided"
             " input_catalog_type is skypy. If this is not correct, please refer to"
@@ -343,10 +344,9 @@ def catalog_with_angular_size_in_arcsec(galaxy_catalog, input_catalog_type="skyp
         )
         warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
     else:
-        galaxy_catalog = galaxy_catalog
         warning_msg = (
             "You provided angular size in arcsec. If this is not correct, please"
             " refer to the documentation of the class that you are using"
         )
         warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
-    return galaxy_catalog
+    return copied_galaxy_catalog

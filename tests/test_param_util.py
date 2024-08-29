@@ -20,6 +20,7 @@ from slsim.Util.param_util import (
 from slsim.Sources.SourceVariability.variability import Variability
 from astropy.io import fits
 from astropy.table import Table
+from astropy import units as u
 import tempfile
 import pytest
 
@@ -219,7 +220,8 @@ def test_catalog_with_angular_size_in_arcsec():
             [0.5, 0.5, 0.5],
             [-15.248975044343094, -15.248975044343094, -15.248975044343094],
             [0.1492770563596445, 0.1492770563596445, 0.1492770563596445],
-            [4.186996407348755e-08, 4.186996407348755e-08, 4.186996407348755e-08],
+            [4.186996407348755e-08, 4.186996407348755e-08, 4.186996407348755e-08]
+            * u.rad,
             [23, 23, 23],
             [43, 43, 43],
         ],
@@ -230,7 +232,8 @@ def test_catalog_with_angular_size_in_arcsec():
             [0.5, 0.5, 0.5],
             [-15.248975044343094, -15.248975044343094, -15.248975044343094],
             [0.1492770563596445, 0.1492770563596445, 0.1492770563596445],
-            [4.186996407348755e-08, 4.186996407348755e-08, 4.186996407348755e-08],
+            [4.186996407348755e-08, 4.186996407348755e-08, 4.186996407348755e-08]
+            * u.rad,
             [23, 23, 23],
             [43, 43, 43],
         ],
@@ -244,6 +247,8 @@ def test_catalog_with_angular_size_in_arcsec():
     )
     assert galaxy_cat["angular_size"][0] == 4.186996407348755e-08 / 4.84813681109536e-06
     assert galaxy_cat2["angular_size"][0] == 4.186996407348755e-08
+    assert galaxy_cat2["angular_size"].unit == u.rad
+    assert galaxy_cat["angular_size"].unit == u.arcsec
 
 
 if __name__ == "__main__":
