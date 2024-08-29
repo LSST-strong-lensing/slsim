@@ -1,6 +1,5 @@
 from astropy import cosmology
 from slsim.Sources.SourceVariability.variability import Variability
-from speclite.filters import load_filters
 from numpy import random
 from astropy.table import Column
 import numpy as np
