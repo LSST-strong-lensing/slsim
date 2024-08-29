@@ -243,10 +243,10 @@ class AccretionDiskReprocessing(object):
 
         interpolated_response_function = interpolation_of_response_function(tau_axis)
 
-        if isinstance(self.time_array[0], list):  # (list, np.ndarray)):
-            self.time_array[0] = self.time_array[-1][0]
-        if isinstance(self.magnitude_array[0], list):  # (list, np.ndarray)):
-            self.magnitude_array[0] = self.magnitude_array[-1][0]
+        # if isinstance(self.time_array[0], list):  # (list, np.ndarray)):
+        #    self.time_array[0] = self.time_array[-1][0]
+        # if isinstance(self.magnitude_array[0], list):  # (list, np.ndarray)):
+        #    self.magnitude_array[0] = self.magnitude_array[-1][0]
 
         light_curve = {
             "MJD": np.array(self.time_array),

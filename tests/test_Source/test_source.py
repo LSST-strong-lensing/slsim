@@ -162,6 +162,8 @@ class TestSource:
             "ps_mag_intrinsic": 10 + np.sin(np.linspace(1, 500, 500) * np.pi / 30),
         }
 
+        test_agn_bounds_dict_update = {"black_hole_mass_exponent_bounds", [7.0, 8.0]}
+
         self.source_dict_agn_1 = Table(
             [
                 [0.5],
@@ -212,7 +214,7 @@ class TestSource:
                 [10],
                 [9.5],
                 ["light_curve"],
-                [{}],
+                [test_agn_bounds_dict_update],
             ],
             names=(
                 "z",
@@ -395,7 +397,7 @@ class TestSource:
         }
 
         self.source_bpl_agn = Source(
-            self.source_dict_agn,
+            self.source_dict_agn_1,
             variability_model="light_curve",
             kwargs_variability={
                 "agn_lightcurve",
