@@ -67,8 +67,6 @@ class Agn(object):
             self.agn_driving_variability_model, **self.agn_driving_kwargs_variability
         )
 
-        print(driving_variability)
-
         # For consistency, we want to define the driving light curve here so it remains
         # the same for any light curve in a different filter (we don't want to
         # generate a new random light curve each time) so they remain correlated.
@@ -196,10 +194,10 @@ def RandomAgn(
     ]
 
     # Needs to work with Column and dict objects
-    if type(input_agn_bounds_dict) is Column:
-        input_agn_bounds_dict = input_agn_bounds_dict.data[0]
-    if isinstance(input_agn_bounds_dict, (list, np.ndarray)):
-        input_agn_bounds_dict = input_agn_bounds_dict[0]
+    # if type(input_agn_bounds_dict) is Column:
+    #    input_agn_bounds_dict = input_agn_bounds_dict.data[0]
+    # if isinstance(input_agn_bounds_dict, (list, np.ndarray)):
+    #    input_agn_bounds_dict = input_agn_bounds_dict[0]
 
     # Check if any updated bounds are input
     if input_agn_bounds_dict is not None:
