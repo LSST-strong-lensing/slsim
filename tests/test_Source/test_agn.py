@@ -129,15 +129,15 @@ def test_mean_mags():
         **agn_params
     )
 
-    # bad_band = "not_a_speclite_band"
-    # with pytest.raises(ValueError):
+    #bad_band = "not_a_speclite_band"
+    #with pytest.raises(ValueError):
     #    my_agn.get_mean_mags(bad_band)
 
     good_bands = [
         "lsst2023-u",
         "lsst2023-i",
         "lsst2016-z",
-        "decam2014-y",
+        "lsst2016-y",
     ]
 
     magnitudes = my_agn.get_mean_mags(good_bands)
