@@ -1,8 +1,8 @@
 import numpy as np
-from slsim.slsim.Sources.SourceVariability.accretion_disk_reprocessing import (
+from slsim.Sources.SourceVariability.accretion_disk_reprocessing import (
     AccretionDiskReprocessing,
 )
-from slsim.slsim.Util.astro_util import (
+from slsim.Util.astro_util import (
     generate_signal_from_bending_power_law,
     generate_signal_from_generic_psd,
 )
