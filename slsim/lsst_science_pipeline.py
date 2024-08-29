@@ -776,7 +776,7 @@ def opsim_time_series_images_data(
     readout_noise=10,
     delta_pix=0.2,
     print_warning=True,
-    opsim_path=None
+    opsim_path=None,
 ):
     """Creates time series data from opsim database.
 
@@ -821,9 +821,13 @@ def opsim_time_series_images_data(
         )
 
     # Collect observations that cover the coordinates in ra_list and dec_list
-    gen = OpSimSurv.get_obs_from_coords(ra_list, dec_list, is_deg=True, formatobs=True,
-                                        keep_keys=['visitExposureTime', 'seeingFwhmGeom',
-                                                   'fieldRA', 'fieldDec'])
+    gen = OpSimSurv.get_obs_from_coords(
+        ra_list,
+        dec_list,
+        is_deg=True,
+        formatobs=True,
+        keep_keys=["visitExposureTime", "seeingFwhmGeom", "fieldRA", "fieldDec"],
+    )
 
     table_data_list = []
 
@@ -855,7 +859,7 @@ def opsim_time_series_images_data(
         expo_time = np.array(seq["visitExposureTime"])[mask]
         bandpass = np.array(seq["BAND"])[mask]
         zero_point_mag = np.array(seq["ZPT"])[mask]
-        sky_brightness = np.array(seq['SKYSIG'])[mask] ** 2 / (delta_pix ** 2 * expo_time)
+        sky_brightness = np.array(seq["SKYSIG"])[mask] ** 2 / (delta_pix**2 * expo_time)
         psf_fwhm = np.array(seq["seeingFwhmGeom"])[mask]
         # Question: use 'FWHMeff' or 'seeingFwhmGeom' for the psf?
 
