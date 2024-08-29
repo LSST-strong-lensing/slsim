@@ -169,7 +169,6 @@ class Source(object):
                         if opt_key in agn_kwarg_dict.keys():
                             random_kwargs[opt_key] = agn_kwarg_dict[opt_key]
                             del agn_kwarg_dict[opt_key]
-
                     # If no other band and magnitude is given, populate with
                     # the assumed point source magnitude column
                     if self.agn_known_band is None:
@@ -194,7 +193,6 @@ class Source(object):
                         input_agn_bounds_dict=random_kwargs["input_agn_bounds_dict"],
                         **agn_kwarg_dict
                     )
-
                     # Get mean mags for each provided band
                     # determine which kwargs_variability are lsst bands
                     lsst_bands = ["u", "g", "r", "i", "z", "y"]
