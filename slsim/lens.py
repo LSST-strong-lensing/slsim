@@ -26,7 +26,6 @@ class Lens(LensedSystemBase):
         deflector_dict,
         cosmo,
         deflector_type="EPL",
-        deflector_kwargs=None,
         source_type="extended",
         lens_equation_solver="lenstronomy_analytical",
         variability_model=None,
@@ -43,18 +42,17 @@ class Lens(LensedSystemBase):
         lightcurve_time=None,
         los_config=None,
         sn_modeldir=None,
+        los_dict=None,
     ):
         """
 
         :param source_dict: source properties
-        :type source_dict: dict
+        :type source_dict: dict or astropy table
         :param deflector_dict: deflector properties
         :type deflector_dict: dict
         :param cosmo: astropy.cosmology instance
         :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST", "NFW_CLUSTER"
         :type deflector_type: str
-        :param deflector_kwargs: additional deflector properties
-        :type deflector_kwargs: dict
         :param source_type: type of the source 'extended' or 'point_source' or
          'point_plus_extended' supported
         :type source_type: str
@@ -90,13 +88,15 @@ class Lens(LensedSystemBase):
          For more detail, please look at the documentation of RandomizedSupernovae
          class.
         :type sn_modeldir: str
+        :param los_dict: line of sight dictionary (optional, takes these values instead of drawing from distribution)
+         Takes "gamma" = [gamma1, gamma2] and "kappa" = kappa as entries
+        :type los_dict: dict
         """
         super().__init__(
             source_dict=source_dict,
             deflector_dict=deflector_dict,
             cosmo=cosmo,
             deflector_type=deflector_type,
-            deflector_kwargs=deflector_kwargs,
             test_area=test_area,
             variability_model=variability_model,
             kwargs_variability=kwargs_variability,
@@ -130,7 +130,9 @@ class Lens(LensedSystemBase):
         self._los_linear_distortions_cache = None
         self.los_config = los_config
         if self.los_config is None:
-            self.los_config = LOSConfig()
+            if los_dict is None:
+                los_dict = {}
+            self.los_config = LOSConfig(**los_dict)
 
     @property
     def image_number(self):
