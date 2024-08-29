@@ -164,11 +164,17 @@ class Source(object):
                     agn_kwarg_dict = self.extract_agn_kwargs_from_source_dict()
 
                     # Populate "None" for optional keys related to drawing random AGN
-                    random_kwargs = {"random_seed": None, "input_agn_bounds_dict": None}
-                    for opt_key in random_kwargs.keys():
-                        if opt_key in agn_kwarg_dict.keys():
-                            random_kwargs[opt_key] = agn_kwarg_dict[opt_key]
-                            del agn_kwarg_dict[opt_key]
+                    if "random_seed" in self.source_dict.colnames:
+                        random_seed = self.source_dict["random_seed"]
+                    else:
+                        random_seed = None
+                    if "input_agn_bounds_dict" in self.source_dict.colnames:
+                        input_agn_bounds_dict = self.source_dict[
+                            "input_agn_bounds_dict"
+                        ]
+                    else:
+                        input_agn_bounds_dict = None
+
                     # If no other band and magnitude is given, populate with
                     # the assumed point source magnitude column
                     if self.agn_known_band is None:
@@ -189,8 +195,8 @@ class Source(object):
                         lightcurve_time=self.lightcurve_time,
                         agn_driving_variability_model=self.agn_driving_variability_model,
                         agn_driving_kwargs_variability=self.agn_driving_kwargs_variability,
-                        random_seed=random_kwargs["random_seed"],
-                        input_agn_bounds_dict=random_kwargs["input_agn_bounds_dict"],
+                        random_seed=random_seed,
+                        input_agn_bounds_dict=input_agn_bounds_dict,
                         **agn_kwarg_dict
                     )
                     # Get mean mags for each provided band
@@ -551,7 +557,6 @@ class Source(object):
             "intrinsic_light_curve",
             "eddington_ratio",
             "driving_variability_model",
-            "random_seed",
             "accretion_disk",
         ]
         column_names = self.source_dict.colnames

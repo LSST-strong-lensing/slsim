@@ -162,7 +162,7 @@ class TestSource:
             "ps_mag_intrinsic": 10 + np.sin(np.linspace(1, 500, 500) * np.pi / 30),
         }
 
-        self.source_dict_agn = Table(
+        self.source_dict_agn_1 = Table(
             [
                 [0.5],
                 [4],
@@ -194,6 +194,41 @@ class TestSource:
                 "black_hole_mass_exponent",
                 "driving_variability_model",
                 "random_seed",
+            ),
+        )
+
+        self.source_dict_agn_2 = Table(
+            [
+                [0.5],
+                [4],
+                [0.35],
+                [0.8],
+                [0.76],
+                [[np.linspace(1, 500, 500)]],
+                [20],
+                [1000],
+                [10],
+                [500],
+                [10],
+                [9.5],
+                ["light_curve"],
+                [{}],
+            ],
+            names=(
+                "z",
+                "n_sersic",
+                "angular_size",
+                "e1",
+                "e2",
+                "MJD",
+                "ps_mag_i",
+                "r_out",
+                "corona_height",
+                "r_resolution",
+                "inclination_angle",
+                "black_hole_mass_exponent",
+                "driving_variability_model",
+                "input_agn_bounds_dict",
             ),
         )
 
@@ -277,7 +312,7 @@ class TestSource:
         )
 
         self.source_agn_1 = Source(
-            self.source_dict_agn,
+            self.source_dict_agn_1,
             variability_model="light_curve",
             kwargs_variability={
                 "agn_lightcurve",
@@ -293,7 +328,7 @@ class TestSource:
         )
 
         self.source_agn_2 = Source(
-            self.source_dict_agn,
+            self.source_dict_agn_2,
             variability_model="light_curve",
             kwargs_variability={
                 "agn_lightcurve",
@@ -311,7 +346,7 @@ class TestSource:
         )
 
         self.source_agn_error = Source(
-            self.source_dict_agn,
+            self.source_dict_agn_1,
             kwargs_variability={"agn_lightcurve"},
             lightcurve_time=np.linspace(-20, 50, 100),
             cosmo=cosmo,
@@ -373,7 +408,7 @@ class TestSource:
             agn_driving_kwargs_variability=variable_agn_kwarg_dict,
         )
         self.source_bpl_agn_error = Source(
-            self.source_dict_agn,
+            self.source_dict_agn_1,
             variability_model="light_curve",
             kwargs_variability={
                 "agn_lightcurve",

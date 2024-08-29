@@ -230,6 +230,15 @@ class TestAccretionDiskReprocessing:
             response_function_time_lags=[0, 1],
             response_function_amplitudes=[1, 0],
         )
+        small_reprocessor.reprocess_signal(
+            response_function_time_lags=[[0, 1]],
+            response_function_amplitudes=[[1, 0]],
+        )
+
+        small_reprocessor.define_intrinsic_signal(
+            time_array=[time_array_list],
+            magnitude_array=[magnitude_array_list],
+        )
 
     def test_define_passband_response_function(self):
         kwargs_agn_model = {"black_hole_mass_exponent": 9.5}
@@ -296,8 +305,16 @@ class TestAccretionDiskReprocessing:
         # Use numpy testing because of rounding
         np.testing.assert_almost_equal(i_band_magnitude, test_i_band_magnitude)
 
-        # test error
+        # test errors
         with pytest.raises(ValueError):
             reprocessor.determine_agn_luminosity_from_known_luminosity(
                 known_band, i_band_magnitude, redshift, mag_zero_point
+            )
+        with pytest.raises(ValueError):
+            reprocessor.determine_agn_luminosity_from_known_luminosity(
+                100,
+                i_band_magnitude,
+                redshift,
+                mag_zero_point,
+                band=known_band,
             )
