@@ -162,7 +162,7 @@ class TestSource:
             "ps_mag_intrinsic": 10 + np.sin(np.linspace(1, 500, 500) * np.pi / 30),
         }
 
-        test_agn_bounds_dict_update = {"black_hole_mass_exponent_bounds", [7.0, 8.0]}
+        test_agn_bounds_dict_update = {"black_hole_mass_exponent_bounds", [[7.0, 8.0]]}
 
         self.source_dict_agn_1 = Table(
             [

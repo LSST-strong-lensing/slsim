@@ -230,10 +230,6 @@ class TestAccretionDiskReprocessing:
             response_function_time_lags=[0, 1],
             response_function_amplitudes=[1, 0],
         )
-        small_reprocessor.reprocess_signal(
-            response_function_time_lags=[[0, 1]],
-            response_function_amplitudes=[[1, 0]],
-        )
 
         # small_reprocessor.define_intrinsic_signal(
         #    time_array=[time_array_list],
