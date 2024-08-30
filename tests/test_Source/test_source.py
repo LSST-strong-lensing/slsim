@@ -326,6 +326,37 @@ class TestSource:
             ),
         )
 
+        self.source_dict_agn_no_mag = Table(
+            [
+                [0.5],
+                [4],
+                [0.35],
+                [0.8],
+                [0.76],
+                [[np.linspace(1, 500, 50)]],
+                [1000],
+                [10],
+                [500],
+                [10],
+                [9.5],
+                [agn_bounds_dict_update],
+            ],
+            names=(
+                "z",
+                "n_sersic",
+                "angular_size",
+                "e1",
+                "e2",
+                "MJD",
+                "r_out",
+                "corona_height",
+                "r_resolution",
+                "inclination_angle",
+                "black_hole_mass_exponent",
+                "input_agn_bounds_dict",
+            ),
+        )
+
         # Create the agn source objects
         self.source_agn_1 = Source(
             self.source_dict_agn_1,
@@ -361,12 +392,42 @@ class TestSource:
             agn_driving_kwargs_variability=intrinsic_light_curve,
         )
 
-        # test an ill defined source
+        # test errors in source
         self.source_agn_error = Source(
             self.source_dict_agn_1,
             kwargs_variability={"agn_lightcurve"},
             lightcurve_time=np.linspace(-20, 50, 100),
             cosmo=cosmo,
+        )
+
+        self.source_agn_error_no_redshift = Source(
+            self.source_dict_agn_1,
+            variability_model="light_curve",
+            kwargs_variability={
+                "agn_lightcurve",
+                "u",
+                "g",
+                "r",
+                "i",
+                "z",
+                "y",
+            },
+            lightcurve_time=np.linspace(10, 500, 100),
+        )
+
+        self.source_agn_error_no_magnitude = Source(
+            self.source_dict_agn_no_mag,
+            variability_model="light_curve",
+            kwargs_variability={
+                "agn_lightcurve",
+                "u",
+                "g",
+                "r",
+                "i",
+                "z",
+                "y",
+            },
+            lightcurve_time=np.linspace(10, 500, 100),
         )
 
         # create an agn that has a broken power law driving signal
@@ -601,6 +662,8 @@ class TestSource:
             self.source_agn_bpl_error.point_source_magnitude(
                 "g", image_observation_times=obs_time
             )
+            self.source_agn_error_no_redshift("g", image_observation_times=obs_time)
+            self.source_agn_error_no_magnitude("g", image_observation_times=obs_time)
 
         # Create a source with a broken power law
         broken_power_law_time_1 = self.source_bpl_agn.point_source_magnitude(
