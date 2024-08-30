@@ -175,13 +175,13 @@ class Source(object):
 
                     # Populate "None" for optional keys related to drawing random AGN
                     if "random_seed" in self.source_dict.colnames:
-                        random_seed = self.source_dict["random_seed"]
+                        random_seed = self.source_dict["random_seed"][0]
                     else:
                         random_seed = None
                     if "input_agn_bounds_dict" in self.source_dict.colnames:
                         input_agn_bounds_dict = self.source_dict[
                             "input_agn_bounds_dict"
-                        ]
+                        ][0]
                     else:
                         input_agn_bounds_dict = None
 
