@@ -14,7 +14,6 @@ class LensedSystemBase(ABC):
         deflector_dict,
         cosmo,
         deflector_type="EPL",
-        deflector_kwargs=None,
         test_area=4 * np.pi,
         variability_model=None,
         kwargs_variability=None,
@@ -26,13 +25,11 @@ class LensedSystemBase(ABC):
     ):
         """
         :param source_dict: source properties
-        :type source_dict: dict
+        :type source_dict: dict or astropy table
         :param deflector_dict: deflector properties
         :type deflector_dict: dict
         :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST"
         :type deflector_type: str
-        :param deflector_kwargs: additional keyword arguments for the deflector
-        :type deflector_kwargs: dict
         :param variability_model: keyword for variability model to be used. This is an
          input for the Variability class.
         :type variability_model: str
@@ -67,12 +64,9 @@ class LensedSystemBase(ABC):
             lightcurve_time=lightcurve_time,
             sn_modeldir=sn_modeldir,
         )
-        if deflector_kwargs is None:
-            deflector_kwargs = {}
         self.deflector = Deflector(
             deflector_type=deflector_type,
             deflector_dict=deflector_dict,
-            **deflector_kwargs
         )
         # TODO: tell them what keys the dictionary should contain
         self.test_area = test_area

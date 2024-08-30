@@ -143,6 +143,18 @@ class TestSource:
                 "dec_off",
             ),
         )
+        self.source_dict5 = {
+            "angular_size": 0.1651633078964498,
+            "center_x": 0.30298310338567075,
+            "center_y": -0.3505004565139597,
+            "e1": 0.06350855238708408,
+            "e2": -0.08420760408362458,
+            "mag_F106": 21.434711611915137,
+            "mag_F129": 21.121205893763328,
+            "mag_F184": 20.542431041034558,
+            "n_sersic": 1.0,
+            "z": 3.123,
+        }
 
         self.source_dict5 = {
             "angular_size": 0.1651633078964498,
@@ -235,6 +247,7 @@ class TestSource:
             lightcurve_time=np.linspace(-20, 50, 100),
             cosmo=None,
         )
+        self.source11 = Source(self.source_dict5, cosmo=cosmo)
 
         # Define AGN tests
         # try defining a specific light curve to use as the driving variability
@@ -429,6 +442,7 @@ class TestSource:
 
     def test_redshift(self):
         assert self.source.redshift == [0.5]
+        assert self.source11.redshift == 3.123
 
     def test_n_sersic(self):
         assert self.source.n_sersic == [4]
@@ -510,6 +524,22 @@ class TestSource:
         )
         assert len(kwargs) == 1
         assert isinstance(kwargs[0], dict)
+
+        kwargs_source11 = self.source11.kwargs_extended_source_light(
+            center_lens, draw_area, band="F106"
+        )
+        kwargs_source11_ref = [
+            {
+                "R_sersic": 0.1651633078964498,
+                "center_x": 0.30298310338567075,
+                "center_y": -0.3505004565139597,
+                "e1": -0.06350855238708408,
+                "e2": -0.08420760408362458,
+                "magnitude": 21.434711611915137,
+                "n_sersic": 1.0,
+            }
+        ]
+        assert kwargs_source11 == kwargs_source11_ref
 
     def test_kwargs_extended_source_light_double_sersic(self):
         center_lens = np.array([0, 0])
