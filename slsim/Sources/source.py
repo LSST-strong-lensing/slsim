@@ -35,7 +35,7 @@ class Source(object):
     ):
         """
         :param source_dict: Source properties
-        :type source_dict: dict
+        :type source_dict: dict or astropy table
         :param variability_model: keyword for variability model to be used. This is an
          input for the Variability class.
         :type variability_model: str
@@ -72,7 +72,21 @@ class Source(object):
         :type agn_driving_kwargs_variability: dict
         """
 
-        self.source_dict = source_dict
+        # Convert dict to astropy table
+        if isinstance(source_dict, dict):
+            self.source_dict = Table([source_dict])[0]
+        else:  # if source_dict is already an astropy table
+            self.source_dict = source_dict
+
+        # If center_x and center_y are already specified, use them instead of picking randomly
+        if (
+            "center_x" in self.source_dict.colnames
+            and "center_y" in self.source_dict.colnames
+        ):
+            self._center_source = np.array(
+                [self.source_dict["center_x"], self.source_dict["center_y"]]
+            )
+
         self.variability_model = variability_model
         self.kwargs_variability = kwargs_variability
         self.sn_type = sn_type

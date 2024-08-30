@@ -1,30 +1,58 @@
+import pytest
+
 import numpy as np
 import matplotlib.pyplot as plt
+import slsim.Sources as sources
+import slsim.Pipelines as pipelines
+import slsim.Deflectors as deflectors
+
+from astropy.units import Quantity
 from astropy.cosmology import FlatLambdaCDM
 from slsim.lens_pop import LensPop
-from astropy.units import Quantity
 from slsim.Plots.plot_functions import (
     create_image_montage_from_image_list,
     plot_montage_of_random_injected_lens,
 )
 from slsim.image_simulation import sharp_image
-import pytest
 
 
 @pytest.fixture
 def quasar_lens_pop_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     sky_area = Quantity(value=0.01, unit="deg2")
-    return LensPop(
-        deflector_type="all-galaxies",
-        source_type="quasars",
-        kwargs_deflector_cut=None,
-        kwargs_source_cut=None,
-        kwargs_mass2light=None,
+
+    galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
         skypy_config=None,
         sky_area=sky_area,
+        filters=None,
+    )
+
+    lens_galaxies = deflectors.AllLensGalaxies(
+        red_galaxy_list=galaxy_simulation_pipeline.red_galaxies,
+        blue_galaxy_list=galaxy_simulation_pipeline.blue_galaxies,
+        kwargs_cut={},
+        kwargs_mass2light={},
+        cosmo=cosmo,
+        sky_area=sky_area,
+    )
+
+    quasar_galaxies = sources.QuasarCatalog.quasar_galaxies_simple(**{})
+    source_galaxies = sources.PointPlusExtendedSources(
+        point_plus_extended_sources_list=quasar_galaxies,
+        cosmo=cosmo,
+        sky_area=sky_area,
+        kwargs_cut={},
+        variability_model="sinusoidal",
+        kwargs_variability_model={"amp", "freq"},
+    )
+
+    pes_lens_pop = LensPop(
+        deflector_population=lens_galaxies,
+        source_population=source_galaxies,
         cosmo=cosmo,
     )
+
+    return pes_lens_pop
 
 
 def test_create_image_montage_from_image_list(quasar_lens_pop_instance):
