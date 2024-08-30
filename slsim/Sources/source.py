@@ -59,9 +59,19 @@ class Source(object):
          For more detail, please look at the documentation of RandomizedSupernovae
          class.
         :type sn_modeldir: str
-        :param kwargs_agn_model: optional dictionary containing parameters to set up an AGN
-         model. kwargs may be found in the agn class.
+        :param agn_known_band: Speclite filter of which the magnitude is known. Used to normalize
+         mean magnitudes.
+        :type agn_known_band: str
+        :param agn_known_mag: Magnitude of the agn in the known band.
+        :type agn_known_mag: float
+        :param agn_driving_variability_model: Variability model with light_curve output
+         which drives the variability across all bands of the agn.
+        :type agn_driving_variability_model: str
+        :param agn_driving_kwargs_variability: Dictionary containing all variability parameters
+         for the driving variability class
+        :type agn_driving_kwargs_variability: dict
         """
+
         self.source_dict = source_dict
         self.variability_model = variability_model
         self.kwargs_variability = kwargs_variability
@@ -245,7 +255,7 @@ class Source(object):
                         # Prepare the time variable magnitude
                         new_column = Column([float(min(magnitudes))], name=filter_name)
 
-                        # Replace "ps_mag_i" with its variable value
+                        # Replace "ps_mag_i" or other mean value with its variable value
                         if filter_name in self.source_dict.colnames:
                             self.source_dict[filter_name] = new_column
                         # Otherwise create a new column with the variable value

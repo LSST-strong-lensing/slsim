@@ -58,10 +58,12 @@ class Agn(object):
             "eddington_ratio",
         ]
         for kwarg in required_thin_disk_params:
-            if kwarg not in self.kwargs_model:
+            if kwarg not in self.kwargs_model.keys():
                 raise ValueError("AGN parameters are not completely defined.")
 
         # Create the driving variability light curve from driving variability kwargs
+        # The type of Variability must be a light_curve object (e.g. constructed using
+        # "sinusoidal", "light_curve", "bending_power_law", or "user_defined_psd".
         driving_variability = Variability(
             self.agn_driving_variability_model, **self.agn_driving_kwargs_variability
         )
@@ -72,7 +74,6 @@ class Agn(object):
         # To do so, we must assure kwargs "time_array" and "magnitude_array" exist
         # in self.kwargs_model with sufficient cadence for convolution with many
         # transfer function kernels.
-
         if lightcurve_time is not None:
             max_time = np.max(lightcurve_time)
             min_time = np.min(lightcurve_time)
@@ -87,11 +88,13 @@ class Agn(object):
                 "Please provide an array of times to calculate the light curve at"
             )
 
+        # Store "time_array" and "magnitude_array" kwargs which will be used to drive
+        # the reprocessed signals
         self.kwargs_model["magnitude_array"] = driving_variability.variability_at_time(
             self.kwargs_model["time_array"]
         )
 
-        # Create the lamppost reprocessor with driving light curve
+        # Create the lamppost reprocessor with a driving light curve that remains static
         self.variable_disk = Variability("lamppost_reprocessed", **self.kwargs_model)
 
     def get_mean_mags(self, bands):
@@ -100,8 +103,7 @@ class Agn(object):
         the surface flux density over the accretion disk.
 
         :param bands: list of speclite filter names.
-        :return: list of magnitudes based on the speclite ordering of filters in a
-            survey. For lsst, this is the standard ugrizy ordering.
+        :return: list of magnitudes based on the speclite bands given.
         """
 
         magnitudes = []
@@ -128,7 +130,7 @@ basic_light_curve = {
     "ps_mag_intrinsic": np.sin(np.linspace(1, 100, 100) * np.pi / 10),
 }
 
-# This dictionary is designed to set the boundaries to pull random parameters from.
+# This dictionary is designed to set the boundaries to draw random parameters from.
 # The bounds of any keys may be redefined using an "input_agn_bounds_dict".
 # :key black_hole_mass_exponent_bounds: mass of SMBH as log_(10)(M_{BH}/M_{sun})
 # :key black_hole_spin_bounds: dimensionless spin of the SMBH. 0 is the Scwarzschild
@@ -147,11 +149,11 @@ basic_light_curve = {
 #   light curves directly, but this will also work with other variability choices using
 #   Source.SourceVariability.variability.Variability(variability_model)
 agn_bounds_dict = {
-    "black_hole_mass_exponent_bounds": [6.0, 10.0],
-    "black_hole_spin_bounds": [-0.997, 0.997],
-    "inclination_angle_bounds": [0, 90],
-    "r_out_bounds": [1000, 1000],
-    "eddington_ratio_bounds": [0.01, 0.3],
+    "black_hole_mass_exponent_bounds": (6.0, 10.0),
+    "black_hole_spin_bounds": (-0.997, 0.997),
+    "inclination_angle_bounds": (0, 90),
+    "r_out_bounds": (1000, 1000),
+    "eddington_ratio_bounds": (0.01, 0.3),
     "supported_disk_models": ["thin_disk"],
     "driving_variability": ["light_curve"],
     "intrinsic_light_curve": [basic_light_curve],
@@ -172,8 +174,6 @@ def RandomAgn(
 ):
     """Generate a random agn.
 
-    Does not do any special parameter weighting for now, but this can be implimented
-    later.
     :param known_band: speclite filter string defining the known band
     :param known_mag: magnitude of the AGN in a known band.
     :param redshift: redshift of the AGN
@@ -181,7 +181,7 @@ def RandomAgn(
     :param kwargs_agn_model: Dictionary containing any fixed agn parameters. This will
         populate random agn parameters for keywords not given.
     """
-    if random_seed:
+    if random_seed is not None:
         random.seed(random_seed)
 
     required_agn_kwargs = [
@@ -194,18 +194,24 @@ def RandomAgn(
 
     # Check if any updated bounds are input
     if input_agn_bounds_dict is not None:
-        for kwarg in required_agn_kwargs:
-            if kwarg + "_bounds" not in input_agn_bounds_dict:
-                input_agn_bounds_dict[kwarg + "_bounds"] = agn_bounds_dict[
-                    kwarg + "_bounds"
-                ]
+        for key in agn_bounds_dict.keys():
+            if key not in input_agn_bounds_dict.keys():
+                input_agn_bounds_dict[key] = agn_bounds_dict[key]
     else:
         input_agn_bounds_dict = agn_bounds_dict
+
+    #    for kwarg in required_agn_kwargs:
+    #        if kwarg + "_bounds" not in input_agn_bounds_dict:
+    #            input_agn_bounds_dict[kwarg + "_bounds"] = agn_bounds_dict[
+    #                kwarg + "_bounds"
+    #            ]
+    # else:
+    #    input_agn_bounds_dict = agn_bounds_dict
 
     # Populate any required kwargs with random values from the ranges
     # defined in the input_agn_bounds dict
     for kwarg in required_agn_kwargs:
-        if kwarg not in kwargs_agn_model:
+        if kwarg not in kwargs_agn_model.keys():
             kwargs_agn_model[kwarg] = random.uniform(
                 low=input_agn_bounds_dict[kwarg + "_bounds"][0],
                 high=input_agn_bounds_dict[kwarg + "_bounds"][1],
@@ -217,6 +223,7 @@ def RandomAgn(
         kwargs_agn_model["accretion_disk"] = None
 
     # Check for valid disk model, otherwise populate from supported models
+    # Only thin disk is supported now, but other models can be put in here once supported
     if (
         kwargs_agn_model["accretion_disk"]
         not in agn_bounds_dict["supported_disk_models"]

@@ -157,83 +157,6 @@ class TestSource:
             "z": 3.123,
         }
 
-        intrinsic_light_curve = {
-            "MJD": np.linspace(1, 500, 500),
-            "ps_mag_intrinsic": 10 + np.sin(np.linspace(1, 500, 500) * np.pi / 30),
-        }
-
-        test_agn_bounds_dict_update = {"black_hole_mass_exponent_bounds", [[7.0, 8.0]]}
-
-        self.source_dict_agn_1 = Table(
-            [
-                [0.5],
-                [4],
-                [0.35],
-                [0.8],
-                [0.76],
-                [[np.linspace(1, 500, 500)]],
-                [20],
-                [1000],
-                [10],
-                [500],
-                [10],
-                [9.5],
-                ["light_curve"],
-                [42],
-            ],
-            names=(
-                "z",
-                "n_sersic",
-                "angular_size",
-                "e1",
-                "e2",
-                "MJD",
-                "ps_mag_i",
-                "r_out",
-                "corona_height",
-                "r_resolution",
-                "inclination_angle",
-                "black_hole_mass_exponent",
-                "driving_variability_model",
-                "random_seed",
-            ),
-        )
-
-        self.source_dict_agn_2 = Table(
-            [
-                [0.5],
-                [4],
-                [0.35],
-                [0.8],
-                [0.76],
-                [[np.linspace(1, 500, 500)]],
-                [20],
-                [1000],
-                [10],
-                [500],
-                [10],
-                [9.5],
-                ["light_curve"],
-                [test_agn_bounds_dict_update],
-            ],
-            names=(
-                "z",
-                "n_sersic",
-                "angular_size",
-                "e1",
-                "e2",
-                "MJD",
-                "ps_mag_i",
-                "r_out",
-                "corona_height",
-                "r_resolution",
-                "inclination_angle",
-                "black_hole_mass_exponent",
-                "driving_variability_model",
-                "input_agn_bounds_dict",
-            ),
-        )
-
         self.source = Source(
             self.source_dict,
             variability_model="sinusoidal",
@@ -313,6 +236,84 @@ class TestSource:
             cosmo=None,
         )
 
+        # Define AGN tests
+        # try defining a specific light curve to use as the driving variability
+        intrinsic_light_curve = {
+            "MJD": np.linspace(1, 500, 500),
+            "ps_mag_intrinsic": 10 + np.sin(np.linspace(1, 500, 500) * np.pi / 30),
+        }
+
+        # try to update the pool of masses which RandomAgn draws from
+        agn_bounds_dict_update = {"black_hole_mass_exponent_bounds", (7.0, 8.0)}
+
+        # define source dictionary for agn
+        self.source_dict_agn_1 = Table(
+            [
+                [0.5],
+                [4],
+                [0.35],
+                [0.8],
+                [0.76],
+                [[np.linspace(1, 500, 50)]],
+                [20],
+                [1000],
+                [10],
+                [500],
+                [10],
+                [9.5],
+                [42],
+            ],
+            names=(
+                "z",
+                "n_sersic",
+                "angular_size",
+                "e1",
+                "e2",
+                "MJD",
+                "ps_mag_i",
+                "r_out",
+                "corona_height",
+                "r_resolution",
+                "inclination_angle",
+                "black_hole_mass_exponent",
+                "random_seed",
+            ),
+        )
+
+        self.source_dict_agn_2 = Table(
+            [
+                [0.5],
+                [4],
+                [0.35],
+                [0.8],
+                [0.76],
+                [[np.linspace(1, 500, 50)]],
+                [20],
+                [1000],
+                [10],
+                [500],
+                [10],
+                [9.5],
+                [agn_bounds_dict_update],
+            ],
+            names=(
+                "z",
+                "n_sersic",
+                "angular_size",
+                "e1",
+                "e2",
+                "MJD",
+                "ps_mag_i",
+                "r_out",
+                "corona_height",
+                "r_resolution",
+                "inclination_angle",
+                "black_hole_mass_exponent",
+                "input_agn_bounds_dict",
+            ),
+        )
+
+        # Create the agn source objects
         self.source_agn_1 = Source(
             self.source_dict_agn_1,
             variability_model="light_curve",
@@ -325,7 +326,7 @@ class TestSource:
                 "z",
                 "y",
             },
-            lightcurve_time=np.linspace(-20, 50, 100),
+            lightcurve_time=np.linspace(10, 500, 100),
             cosmo=cosmo,
         )
 
@@ -341,12 +342,13 @@ class TestSource:
                 "z",
                 "y",
             },
-            lightcurve_time=np.linspace(-20, 50, 100),
+            lightcurve_time=np.linspace(-20, 500, 100),
             cosmo=cosmo,
             agn_driving_variability_model="light_curve",
             agn_driving_kwargs_variability=intrinsic_light_curve,
         )
 
+        # test an ill defined source
         self.source_agn_error = Source(
             self.source_dict_agn_1,
             kwargs_variability={"agn_lightcurve"},
@@ -354,6 +356,7 @@ class TestSource:
             cosmo=cosmo,
         )
 
+        # create an agn that has a broken power law driving signal
         self.source_dict_bpl_agn = Table(
             [
                 [0.5],
@@ -386,7 +389,7 @@ class TestSource:
                 "random_seed",
             ),
         )
-
+        # define bpl parameters
         variable_agn_kwarg_dict = {
             "length_of_light_curve": 250,
             "time_resolution": 1,
@@ -395,7 +398,7 @@ class TestSource:
             "high_frequency_slope": 3,
             "normal_magnitude_variance": 0.1,
         }
-
+        # create agn source object with bpl driving variability
         self.source_bpl_agn = Source(
             self.source_dict_agn_1,
             variability_model="light_curve",
@@ -409,6 +412,8 @@ class TestSource:
             agn_driving_variability_model="bending_power_law",
             agn_driving_kwargs_variability=variable_agn_kwarg_dict,
         )
+
+        # test errors when creating bpl (no input lightcurve_time)
         self.source_bpl_agn_error = Source(
             self.source_dict_agn_1,
             variability_model="light_curve",
@@ -546,16 +551,19 @@ class TestSource:
         )
         assert g_mag != y_mag
 
+        # Show that the light curves evolve with time
         g_mag_later_time = self.source_agn_1.point_source_magnitude(
             "g", image_observation_times=later_obs_time
         )
-
         assert g_mag != g_mag_later_time
 
-        self.source_agn_2.point_source_magnitude(
+        # Create a second source and show it has a different magnitude
+        g_mag_2 = self.source_agn_2.point_source_magnitude(
             "g", image_observation_times=later_obs_time
         )
+        assert g_mag_2 != g_mag
 
+        # Test errors
         with pytest.raises(ValueError):
             self.source_agn_error.point_source_magnitude(
                 "g", image_observation_times=obs_time
@@ -564,9 +572,11 @@ class TestSource:
                 "g", image_observation_times=obs_time
             )
 
+        # Create a source with a broken power law
         broken_power_law_time_1 = self.source_bpl_agn.point_source_magnitude(
             "i", image_observation_times=obs_time
         )
+        # Show bpl also evolves with time
         broken_power_law_time_2 = self.source_bpl_agn.point_source_magnitude(
             "i", image_observation_times=later_obs_time
         )
