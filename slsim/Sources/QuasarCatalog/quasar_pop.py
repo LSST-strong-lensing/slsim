@@ -86,12 +86,21 @@ class QuasarRate(object):
         self.K_corrections = data[:, 1]
 
         # Precompute the interpolation function
-        self.K_corr_interp = interp1d(
+        self.k_corr = interp1d(
             self.redshifts_kcorr,
             self.K_corrections,
             kind="linear",
             fill_value="extrapolate",
         )
+    def k_corr_interp(self, z):
+        """This function computes the k-correction for a quasar at a given redshift.
+
+        :param z: Redshift value at which k correction need to be computed.
+        :type z: float or np.array
+        :return: k-correction value for given redshifts.
+        """
+        
+        return self.k_corr(z) - self.k_corr(0)
 
     def M_star(self, z_value):
         """Calculates the break absolute magnitude of quasars for a given redshift
@@ -164,7 +173,7 @@ class QuasarRate(object):
         )
 
         return term1 / (
-            (1 + z_value) ** 3
+            (1 + 0*z_value) ** 3
         )  ## Convert from physical to wanted comoving volume.
 
     def convert_magnitude(self, magnitude, z, conversion="apparent_to_absolute"):
@@ -183,7 +192,7 @@ class QuasarRate(object):
         """
 
         DM = self.cosmo.distmod(z).value
-        K_corr = self.K_corr_interp(z)
+        K_corr = self.k_corr_interp(z)
 
         if conversion == "apparent_to_absolute":
             converted_magnitude = magnitude - DM - K_corr

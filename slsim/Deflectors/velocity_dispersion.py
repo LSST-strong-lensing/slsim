@@ -228,7 +228,7 @@ def vel_disp_sdss(sky_area, redshift, vd_min, vd_max, cosmology, noise=True):
     """
     # SDSS velocity dispersion function for galaxies brighter than Mr >= -16.8
     # These numbers are from the Bernardi et al. 2010.
-    phi_star = 2.099e-2 * cosmology.h**3
+    phi_star = 2.099e-2 * (cosmology.h/0.7)**3
     vd_star = 113.78
     alpha = 0.94
     beta = 1.85
