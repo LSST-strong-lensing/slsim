@@ -400,7 +400,7 @@ class TestSource:
             cosmo=cosmo,
         )
 
-        self.source_agn_error_no_redshift = Source(
+        self.source_agn_error_no_cosmo = Source(
             self.source_dict_agn_1,
             variability_model="light_curve",
             kwargs_variability={
@@ -413,6 +413,7 @@ class TestSource:
                 "y",
             },
             lightcurve_time=np.linspace(10, 500, 100),
+            cosmo=None,
         )
 
         self.source_agn_error_no_magnitude = Source(
@@ -659,10 +660,14 @@ class TestSource:
             self.source_agn_error.point_source_magnitude(
                 "g", image_observation_times=obs_time
             )
+        with pytest.raises(ValueError):
             self.source_agn_bpl_error.point_source_magnitude(
                 "g", image_observation_times=obs_time
             )
-            self.source_agn_error_no_redshift("g", image_observation_times=obs_time)
+        with pytest.raises(ValueError):
+            self.source_agn_error_no_cosmo("g", image_observation_times=obs_time)
+
+        with pytest.raises(ValueError):
             self.source_agn_error_no_magnitude("g", image_observation_times=obs_time)
 
         # Create a source with a broken power law
