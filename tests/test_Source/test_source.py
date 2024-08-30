@@ -257,7 +257,7 @@ class TestSource:
         }
 
         # try to update the pool of masses which RandomAgn draws from
-        agn_bounds_dict_update = {"black_hole_mass_exponent_bounds", (7.0, 8.0)}
+        agn_bounds_dict_update = {"black_hole_mass_exponent_bounds": (7.0, 8.0)}
 
         # define source dictionary for agn
         self.source_dict_agn_1 = Table(
