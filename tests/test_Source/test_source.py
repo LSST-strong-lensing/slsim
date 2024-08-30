@@ -489,7 +489,7 @@ class TestSource:
         )
 
         # test errors when creating bpl (no input lightcurve_time)
-        self.source_bpl_agn_error = Source(
+        self.source_agn_bpl_error = Source(
             self.source_dict_agn_1,
             variability_model="light_curve",
             kwargs_variability={
