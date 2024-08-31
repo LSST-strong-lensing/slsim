@@ -665,10 +665,14 @@ class TestSource:
                 "g", image_observation_times=obs_time
             )
         with pytest.raises(ValueError):
-            self.source_agn_error_no_cosmo("g", image_observation_times=obs_time)
+            self.source_agn_error_no_cosmo.point_source_magnitude(
+                "g", image_observation_times=obs_time
+            )
 
         with pytest.raises(ValueError):
-            self.source_agn_error_no_magnitude("g", image_observation_times=obs_time)
+            self.source_agn_error_no_magnitude.point_source_magnitude(
+                "g", image_observation_times=obs_time
+            )
 
         # Create a source with a broken power law
         broken_power_law_time_1 = self.source_bpl_agn.point_source_magnitude(
