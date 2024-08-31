@@ -429,6 +429,7 @@ class TestSource:
                 "y",
             },
             lightcurve_time=np.linspace(10, 500, 100),
+            cosmo=cosmo,
         )
 
         # create an agn that has a broken power law driving signal
