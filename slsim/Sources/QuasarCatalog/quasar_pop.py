@@ -92,6 +92,7 @@ class QuasarRate(object):
             kind="linear",
             fill_value="extrapolate",
         )
+
     def k_corr_interp(self, z):
         """This function computes the k-correction for a quasar at a given redshift.
 
@@ -99,7 +100,7 @@ class QuasarRate(object):
         :type z: float or np.array
         :return: k-correction value for given redshifts.
         """
-        
+
         return self.k_corr(z) - self.k_corr(0)
 
     def M_star(self, z_value):

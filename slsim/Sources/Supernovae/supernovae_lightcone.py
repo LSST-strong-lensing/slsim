@@ -29,10 +29,8 @@ class SNeLightcone(object):
         h = self._cosmo.H(0).to_value() / 100
 
         # Account for included factor of h.
-        self.density = (
-            self.convert_density(
-                sne_rate.calculate_SNIa_rate(self._input_redshifts) * h
-            )
+        self.density = self.convert_density(
+            sne_rate.calculate_SNIa_rate(self._input_redshifts) * h
         )
 
     def convert_density(self, density):

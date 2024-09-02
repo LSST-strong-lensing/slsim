@@ -255,7 +255,7 @@ def vel_disp_sdss(sky_area, redshift, vd_min, vd_max, cosmology, noise=True):
     """
     # SDSS velocity dispersion function for galaxies brighter than Mr >= -16.8
     # These numbers are from the Bernardi et al. 2010.
-    phi_star = 2.099e-2 * (cosmology.h/0.7)**3
+    phi_star = 2.099e-2 * (cosmology.h / 0.7) ** 3
     vd_star = 113.78
     alpha = 0.94
     beta = 1.85
@@ -432,7 +432,13 @@ def schechter_vel_disp_redshift(
 
     # gamma function integrand
     def f(v):
-        return phi_star*((v/vd_star)**alpha)*np.exp(-(v/vd_star)**beta)*beta/v
+        return (
+            phi_star
+            * ((v / vd_star) ** alpha)
+            * np.exp(-((v / vd_star) ** beta))
+            * beta
+            / v
+        )
 
     # integrate gamma function for each redshift
 
@@ -450,6 +456,7 @@ def schechter_vel_disp_redshift(
     return redshifts_from_comoving_density(
         redshift, density, sky_area, cosmo, noise=noise
     )
+
 
 def redshifts_from_comoving_density(redshift, density, sky_area, cosmo, noise=True):
     r"""Sample redshifts from a comoving density function. We took this function is from
@@ -494,7 +501,7 @@ def redshifts_from_comoving_density(redshift, density, sky_area, cosmo, noise=Tr
     # redshift number density
     dN_dz = (cosmo.differential_comoving_volume(redshift) * sky_area).to_value("Mpc3")
     dN_dz *= density
-    #number
+    # number
     N = np.trapz(dN_dz, redshift)
     # Poisson sample galaxy number if requested
     if noise:
@@ -565,7 +572,13 @@ def schechter_velocity_dispersion_function(
     v = np.linspace(vd_min, vd_max, resolution)
     gamma_ab = scipy.special.gamma(alpha / beta)
     phi_star = phi_star
-    pdf = phi_star*((v/vd_star)**alpha)*np.exp(-(v/vd_star)**beta)*beta/(v*gamma_ab)
+    pdf = (
+        phi_star
+        * ((v / vd_star) ** alpha)
+        * np.exp(-((v / vd_star) ** beta))
+        * beta
+        / (v * gamma_ab)
+    )
     cdf = pdf  # in place
     np.cumsum((pdf[1:] + pdf[:-1]) / 2 * np.diff(v), out=cdf[1:])
     cdf[0] = 0
