@@ -12,7 +12,7 @@ import pytest
 
 
 def galaxy_list():
-    sky_area = Quantity(value=0.05, unit="deg2")
+    sky_area = Quantity(value=0.001, unit="deg2")
     pipeline = SkyPyPipeline(skypy_config=None, sky_area=sky_area, filters=None)
     return pipeline.red_galaxies, pipeline.blue_galaxies
 

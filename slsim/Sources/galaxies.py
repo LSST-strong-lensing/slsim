@@ -5,9 +5,10 @@ from slsim.Util import param_util
 from slsim.Sources.source_pop_base import SourcePopBase
 from astropy.table import Column
 from slsim.Util.param_util import average_angular_size, axis_ratio, eccentricity
-from lenstronomy.Util import constants
+from astropy import units as u
 
 
+# TODO: Use type to determine galaxy_list type
 class Galaxies(SourcePopBase):
     """Class describing elliptical galaxies."""
 
@@ -23,8 +24,8 @@ class Galaxies(SourcePopBase):
     ):
         """
 
-        :param galaxy_list: list of dictionary with galaxy parameters
-        :type galaxy_list: astropy Table object
+        :param galaxy_list: An astropy table with galaxy parameters.
+        :type galaxy_list: astropy Table object.
         :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max
         :type kwargs_cut: dict
         :param cosmo: astropy.cosmology instance
@@ -40,6 +41,7 @@ class Galaxies(SourcePopBase):
         :type catalog_type: str. eg: "scotch" or None
         """
         super(Galaxies, self).__init__(cosmo=cosmo, sky_area=sky_area)
+        self.source_type = "extended"
         self.n = len(galaxy_list)
         self.light_profile = light_profile
         # add missing keywords in astropy.Table object
@@ -243,11 +245,13 @@ def convert_to_slsim_convention(
     Galaxies class. This function is written to convert scotch catalog to slsim
     convension and to change unit of angular size in skypy source catalog to arcsec.
 
-    :param galaxy_catalog: galaxy catalog in other conventions.
+    :param galaxy_catalog: An astropy table of galaxy catalog in other conventions.
+    :type galaxy_catalog: astropy Table object.
     :param light_profile: keyword for number of sersic profile to use in source light
         model. accepted kewords: "single_sersic", "double_sersic".
     :return: galaxy catalog in slsim convension.
     """
+    galaxy_catalog = galaxy_catalog.copy()
     column_names = galaxy_catalog.colnames
     for col_name in column_names:
         if "_host" in col_name:
@@ -268,7 +272,5 @@ def convert_to_slsim_convention(
     if input_catalog_type == "scotch":
         galaxy_catalog["a_rot"] = np.deg2rad(galaxy_catalog["a_rot"])
     if input_catalog_type == "skypy":
-        galaxy_catalog["angular_size"] = (
-            galaxy_catalog["angular_size"] / constants.arcsec
-        )
+        galaxy_catalog["angular_size"] = galaxy_catalog["angular_size"].to(u.arcsec)
     return galaxy_catalog

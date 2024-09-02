@@ -51,7 +51,7 @@ class LensedPopulationBase(ABC):
 
             sky_area = Quantity(value=0.1, unit="deg2")
             warnings.warn("No sky area provided, instead uses 0.1 deg2")
-        self.f_sky = sky_area
+        self.sky_area = sky_area
 
         if cosmo is None:
             warnings.warn(

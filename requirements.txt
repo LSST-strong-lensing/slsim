@@ -11,3 +11,4 @@ sncosmo
 colossus
 uncertainties
 kcorrect
+webbpsf
