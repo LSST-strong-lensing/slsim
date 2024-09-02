@@ -138,9 +138,7 @@ class QuasarRate(object):
 
     def dPhi_dM(self, M, z_value):
         """Calculates dPhi_dM for a given M and redshift according to Eq (10) in Oguri &
-        Marshall (2010): DOI: 10.1111/j.1365-2966.2010.16639.x. The (1 + z)^-3 factor
-        converts from physical to comoving volume to account for the expansion of the
-        universe.
+        Marshall (2010): DOI: 10.1111/j.1365-2966.2010.16639.x.
 
         :param M: Absolute i-band magnitude.
         :type M: float or numpy.ndarray
@@ -172,9 +170,7 @@ class QuasarRate(object):
             where=denominator_dphi_dm != 0,
         )
 
-        return term1 / (
-            (1 + 0*z_value) ** 3
-        )  ## Convert from physical to wanted comoving volume.
+        return term1
 
     def convert_magnitude(self, magnitude, z, conversion="apparent_to_absolute"):
         """Converts between apparent and absolute magnitudes using K-corrections
