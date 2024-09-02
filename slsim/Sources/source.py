@@ -267,16 +267,16 @@ class Source(object):
                         ]
 
                         # Prepare the time variable magnitude
-                        # new_column = Column([magnitudes], name=filter_name)
+                        new_column = Column([[magnitudes]], name=filter_name)
 
                         # Replace "ps_mag_i" or other mean value with its variable value
-                        # if filter_name in self.source_dict.colnames:
-                        #    self.source_dict[filter_name] = new_column
+                        if filter_name in self.source_dict.colnames:
+                            self.source_dict[filter_name] = new_column
                         # Otherwise create a new column with the variable value
-                        # else:
-                        #    self._source_dict = Table(self.source_dict)
-                        #    self._source_dict.add_column(new_column)
-                        #    self.source_dict = self._source_dict[0]
+                        else:
+                            self._source_dict = Table(self.source_dict)
+                            self._source_dict.add_column(new_column)
+                            self.source_dict = self._source_dict[0]
 
                         # Stores the variable light curve for each band
                         kwargs_variab_extracted[band] = {
