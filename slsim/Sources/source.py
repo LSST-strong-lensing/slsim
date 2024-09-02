@@ -267,7 +267,7 @@ class Source(object):
                         ]
 
                         # Prepare the time variable magnitude
-                        new_column = Column([float(min(magnitudes))], name=filter_name)
+                        new_column = Column([magnitudes], name=filter_name)
 
                         # Replace "ps_mag_i" or other mean value with its variable value
                         if filter_name in self.source_dict.colnames:
