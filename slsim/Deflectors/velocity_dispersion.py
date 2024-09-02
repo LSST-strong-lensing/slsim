@@ -535,30 +535,20 @@ def schechter_velocity_dispersion_function(
     if size is None:
         size = np.broadcast(vd_min, vd_max, scale).shape or None
 
-    lnx_min = np.log((vd_min / vd_star) ** beta)
-    lnx_max = np.log((vd_max / vd_star) ** beta)
-
-    lnx = np.linspace(np.min(lnx_min), np.max(lnx_max), resolution)
+    v = np.linspace(vd_min, vd_max, resolution)
     gamma_ab = scipy.special.gamma(alpha / beta)
     phi_star = phi_star
-    pdf = (
-        np.exp(((alpha - 1) / beta) * lnx - np.exp(lnx))
-        * (1 / vd_star)
-        * beta
-        * phi_star
-        / gamma_ab
-    )
+    pdf = phi_star*((v/vd_star)**alpha)*np.exp(-(v/vd_star)**beta)*beta/(v*gamma_ab)
     cdf = pdf  # in place
-    np.cumsum((pdf[1:] + pdf[:-1]) / 2 * np.diff(lnx), out=cdf[1:])
+    np.cumsum((pdf[1:] + pdf[:-1]) / 2 * np.diff(v), out=cdf[1:])
     cdf[0] = 0
     cdf /= cdf[-1]
 
-    t_lower = np.interp(lnx_min, lnx, cdf)
-    t_upper = np.interp(lnx_max, lnx, cdf)
+    t_lower = np.interp(vd_min, v, cdf)
+    t_upper = np.interp(vd_max, v, cdf)
     u = np.random.uniform(t_lower, t_upper, size=size)
-    lnx_sample = np.interp(u, cdf, lnx)
-
-    return (np.exp(lnx_sample) * scale) ** (1 / beta) * vd_star
+    v_sample = np.interp(u, cdf, v)
+    return v_sample
 
 
 def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
