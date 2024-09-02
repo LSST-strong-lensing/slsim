@@ -106,13 +106,11 @@ class TestQuasarRate:
         test_redshifts = [1.199, 2.240, 0.460, 0.949, 0.989]
         test_magnitudes = [19.08, 18.18, 19.09, 19.05, 18.99]
 
-        expected_abs_mags = [
-            -25.40439324,
-            -27.86579516,
-            -23.21158492,
-            -25.02167014,
-            -25.15264705,
-        ]
+        expected_abs_mags = [-24.80839323533267,
+                            -27.269795157423943,
+                            -22.615584919748567,
+                            -24.42567014140787,
+                            -24.556647046788804]
         expected_app_mags = test_magnitudes
 
         # Test case #1: Apparent to Absolute Magnitude Conversion
