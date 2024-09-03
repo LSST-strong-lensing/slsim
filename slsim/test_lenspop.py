@@ -10,6 +10,7 @@ import slsim.Deflectors as deflectors
 from slsim.lens_pop import LensPop
 from slsim.Plots.lens_plots import LensingPlots
 
+
 def test_lenspop():
     # Seed for reproducibility
     np.random.seed(1)
@@ -39,10 +40,14 @@ def test_lenspop():
     )
 
     # Load cluster and member catalogs
-    #cluster_catalog = Table.read("../data/redMaPPer/clusters_example.fits")
-    #members_catalog = Table.read("../data/redMaPPer/members_example.fits")
-    cluster_catalog = Table.read("C:/Users/pinov/slsim_pruebas/data/redMaPPer/clusters_example.fits")
-    members_catalog = Table.read("C:/Users/pinov/slsim_pruebas/data/redMaPPer/members_example.fits")
+    # cluster_catalog = Table.read("../data/redMaPPer/clusters_example.fits")
+    # members_catalog = Table.read("../data/redMaPPer/members_example.fits")
+    cluster_catalog = Table.read(
+        "C:/Users/pinov/slsim_pruebas/data/redMaPPer/clusters_example.fits"
+    )
+    members_catalog = Table.read(
+        "C:/Users/pinov/slsim_pruebas/data/redMaPPer/members_example.fits"
+    )
 
     # Cluster deflectors
     lens_clusters = deflectors.ClusterDeflectors(
@@ -81,6 +86,7 @@ def test_lenspop():
         kwargs_lens_cut=kwargs_lens_cut_plot,
     )
     plt.show()
+
 
 if __name__ == "__main__":
     test_lenspop()

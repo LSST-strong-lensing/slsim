@@ -1,6 +1,4 @@
-"""
-
-#from astropy.table import Table
+"""#from astropy.table import Table
 
 #cluster_catalog = Table.read("/absolute/path/to/clusters_example.fits")
 #members_catalog = Table.read("/absolute/path/to/members_example.fits")
@@ -46,6 +44,7 @@ else:
 # Close the FITS file
 hdul.close()
 """
+
 from astropy.table import Table
 import pandas as pd
 
