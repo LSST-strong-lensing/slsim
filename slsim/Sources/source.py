@@ -379,7 +379,7 @@ class Source(object):
             self.kwargs_variab_dict = self.kwargs_variability_extracted
         column_names = self.source_dict.colnames
         if ("ps_mag_" + band not in column_names) or (
-            "ang_lightcurve" not in self.kwargs_variability
+            "agn_lightcurve" not in self.kwargs_variability
         ):
             raise ValueError("required parameter is missing in the source dictionary.")
         else:
