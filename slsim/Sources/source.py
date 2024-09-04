@@ -66,7 +66,7 @@ class Source(object):
         :type agn_known_mag: float
         :param agn_driving_variability_model: Variability model with light_curve output
          which drives the variability across all bands of the agn.
-        :type agn_driving_variability_model: str
+        :type agn_driving_variability_model: str (e.g. "light_curve", "sinusoidal", "bending_power_law")
         :param agn_driving_kwargs_variability: Dictionary containing all variability parameters
          for the driving variability class
         :type agn_driving_kwargs_variability: dict
@@ -185,7 +185,7 @@ class Source(object):
 
                 else:
                     # Pull the agn kwarg dict out of the kwargs_variability dict
-                    agn_kwarg_dict = self.extract_agn_kwargs_from_source_dict()
+                    agn_kwarg_dict = extract_agn_kwargs_from_source_dict(source_dict)
 
                     # Populate "None" for optional keys related to drawing random AGN
                     if "random_seed" in self.source_dict.colnames:
@@ -267,16 +267,16 @@ class Source(object):
                         ]
 
                         # Prepare the time variable magnitude
-                        new_column = Column([min(magnitudes)], name=filter_name)
+                        # new_column = Column([min(magnitudes)], name=filter_name)
 
                         # Replace "ps_mag_i" or other mean value with its variable value
-                        if filter_name in self.source_dict.colnames:
-                            self.source_dict[filter_name] = new_column
+                        # if filter_name in self.source_dict.colnames:
+                        #    self.source_dict[filter_name] = new_column
                         # Otherwise create a new column with the variable value
-                        else:
-                            self._source_dict = Table(self.source_dict)
-                            self._source_dict.add_column(new_column)
-                            self.source_dict = self._source_dict[0]
+                        # else:
+                        #    self._source_dict = Table(self.source_dict)
+                        #    self._source_dict.add_column(new_column)
+                        #    self.source_dict = self._source_dict[0]
 
                         # Stores the variable light curve for each band
                         kwargs_variab_extracted[band] = {
@@ -376,7 +376,9 @@ class Source(object):
         if not hasattr(self, "kwargs_variab_dict"):
             self.kwargs_variab_dict = self.kwargs_variability_extracted
         column_names = self.source_dict.colnames
-        if "ps_mag_" + band not in column_names:
+        if ("ps_mag_" + band not in column_names) or (
+            "ang_lightcurve" not in self.kwargs_variability
+        ):
             raise ValueError("required parameter is missing in the source dictionary.")
         else:
             band_string = "ps_mag_" + band
@@ -562,30 +564,31 @@ class Source(object):
             raise ValueError("Provided sersic profile is not supported.")
         return kwargs_extended_source
 
-    def extract_agn_kwargs_from_source_dict(self):
-        """This extracts all AGN related parameters from the source_dict Table and
-        constructs a compact dictionary from them to pass into the agn class.
 
-        :param source_dict: Astropy Table with columns representing all information of
-            the source.
-        :return: Compact dict object containing key+value pairs of AGN parameters.
-        """
+def extract_agn_kwargs_from_source_dict(source_dict):
+    """This extracts all AGN related parameters from a source_dict Table and constructs
+    a compact dictionary from them to pass into the agn class.
 
-        kwargs_variable_agn = [
-            "r_out",
-            "r_resolution",
-            "corona_height",
-            "inclination_angle",
-            "black_hole_mass_exponent",
-            "black_hole_spin",
-            "intrinsic_light_curve",
-            "eddington_ratio",
-            "driving_variability_model",
-            "accretion_disk",
-        ]
-        column_names = self.source_dict.colnames
-        agn_kwarg_dict = {}
-        for kwarg in kwargs_variable_agn:
-            if kwarg in column_names:
-                agn_kwarg_dict[kwarg] = self.source_dict[kwarg].data[0]
-        return agn_kwarg_dict
+    :param source_dict: Astropy Table with columns representing all information of the
+        source.
+    :return: Compact dict object containing key+value pairs of AGN parameters.
+    """
+
+    kwargs_variable_agn = [
+        "r_out",
+        "r_resolution",
+        "corona_height",
+        "inclination_angle",
+        "black_hole_mass_exponent",
+        "black_hole_spin",
+        "intrinsic_light_curve",
+        "eddington_ratio",
+        "driving_variability_model",
+        "accretion_disk",
+    ]
+    column_names = source_dict.colnames
+    agn_kwarg_dict = {}
+    for kwarg in kwargs_variable_agn:
+        if kwarg in column_names:
+            agn_kwarg_dict[kwarg] = source_dict[kwarg].data[0]
+    return agn_kwarg_dict
