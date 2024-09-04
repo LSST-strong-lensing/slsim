@@ -231,11 +231,6 @@ class TestAccretionDiskReprocessing:
             response_function_amplitudes=[1, 0],
         )
 
-        # small_reprocessor.define_intrinsic_signal(
-        #    time_array=[time_array_list],
-        #    magnitude_array=[magnitude_array_list],
-        # )
-
     def test_define_passband_response_function(self):
         kwargs_agn_model = {"black_hole_mass_exponent": 9.5}
         reprocessor = AccretionDiskReprocessing("lamppost", **kwargs_agn_model)

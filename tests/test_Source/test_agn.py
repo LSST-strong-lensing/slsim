@@ -129,10 +129,6 @@ def test_mean_mags():
         **agn_params
     )
 
-    # bad_band = "not_a_speclite_band"
-    # with pytest.raises(ValueError):
-    #    my_agn.get_mean_mags(bad_band)
-
     good_bands = [
         "lsst2023-u",
         "lsst2023-i",
@@ -216,17 +212,6 @@ def test_random_agn():
             input_agn_bounds_dict=input_agn_bounds_dict,
         )
 
-    # random_agn_2_table = RandomAgn(
-    #    i_band_mag, redshift, random_seed=1, input_agn_bounds_dict=dictionary_in_column
-    # )
-
-    # random_agn_2_ndarray = RandomAgn(
-    #    i_band_mag,
-    #    redshift,
-    #    random_seed=1,
-    #    input_agn_bounds_dict=dictionary_in_column.data,
-    # )
-
     # check that a random value from the range [8.0, 8.0) must return 8.0
     assert random_agn_2.kwargs_model["black_hole_mass_exponent"] == 8.0
 
@@ -252,9 +237,3 @@ def test_random_agn():
         assert lsst_mags_1[jj] != lsst_mags_2[jj]
     for jj in range(2):
         assert lsst_mags_1[jj + 4] != lsst_mags_2[jj + 4]
-
-    # Make sure mean mags are the same for each method of random_agn_2
-    # Each of these should be identical
-    # for jj in range(6):
-    #    assert lsst_mags_2[jj] == lsst_mags_2a[jj]
-    #    assert lsst_mags_2[jj] == lsst_mags_2b[jj]

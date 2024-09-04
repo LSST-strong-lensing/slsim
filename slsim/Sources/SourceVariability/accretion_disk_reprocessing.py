@@ -243,11 +243,6 @@ class AccretionDiskReprocessing(object):
 
         interpolated_response_function = interpolation_of_response_function(tau_axis)
 
-        # if isinstance(self.time_array[0], list):  # (list, np.ndarray)):
-        #    self.time_array[0] = self.time_array[-1][0]
-        # if isinstance(self.magnitude_array[0], list):  # (list, np.ndarray)):
-        #    self.magnitude_array[0] = self.magnitude_array[-1][0]
-
         light_curve = {
             "MJD": np.array(self.time_array),
             "ps_mag_intrinsic": np.array(self.magnitude_array),
@@ -305,12 +300,6 @@ class AccretionDiskReprocessing(object):
         obs_plane_flux = magnitude_to_amplitude(known_magnitude, mag_zero_point)
         source_plane_flux = luminosity_distance**2 * obs_plane_flux
 
-        # i_band_filter = load_filter("lsst2023-i")
-        # i_band_wavelength = (i_band_filter.effective_wavelength).to(u.nm)
-        # source_plane_i_band_wavelength = i_band_wavelength / (1 + redshift)
-
-        # obs_plane_i_band_flux = magnitude_to_amplitude(i_band_magnitude, mag_zero_point)
-        # source_plane_i_band_flux = luminosity_distance**2 * obs_plane_i_band_flux
         theoretical_flux = calculate_accretion_disk_emission(
             self.kwargs_model["r_out"],
             self.kwargs_model["r_resolution"],

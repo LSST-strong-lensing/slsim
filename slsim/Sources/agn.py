@@ -23,6 +23,11 @@ class Agn(object):
         :param known_mag: The flux of the accretion disk in the known filter
         :param redshift: Redshift of the AGN
         :param cosmo: Astropy cosmology to use in calculating distances
+        :param lightcurve_time: array of times associated with observation times
+        :param agn_driving_variability_model: variability model used as a driving signal,
+            This signal is then reprocessed through the lamppost model to get correlated signals.
+        :param agn_driving_kwargs_variability: dictionary holding all variability
+            keys and values
         :param kwargs_agn_model: Dictionary containing all keywords for the accretion
             disk variability model. These are: 'black_hole_mass_exponent': mass exponent
             of the SMBH 'black_hole_spin': spin of the SMBH 'inclination_angle':
@@ -199,14 +204,6 @@ def RandomAgn(
                 input_agn_bounds_dict[key] = agn_bounds_dict[key]
     else:
         input_agn_bounds_dict = agn_bounds_dict
-
-    #    for kwarg in required_agn_kwargs:
-    #        if kwarg + "_bounds" not in input_agn_bounds_dict:
-    #            input_agn_bounds_dict[kwarg + "_bounds"] = agn_bounds_dict[
-    #                kwarg + "_bounds"
-    #            ]
-    # else:
-    #    input_agn_bounds_dict = agn_bounds_dict
 
     # Populate any required kwargs with random values from the ranges
     # defined in the input_agn_bounds dict
