@@ -378,8 +378,11 @@ class Source(object):
         if not hasattr(self, "kwargs_variab_dict"):
             self.kwargs_variab_dict = self.kwargs_variability_extracted
         column_names = self.source_dict.colnames
-        if "agn_lightcurve" not in self.kwargs_variability:
-            if "ps_mag_" + band not in column_names:
+        if "ps_mag_" + band not in column_names:
+            if self.kwargs_variability is not None:
+                if "agn_lightcurve" not in self.kwargs_variability:
+                    break
+            else:
                 raise ValueError(
                     "required parameter is missing in the source dictionary."
                 )
