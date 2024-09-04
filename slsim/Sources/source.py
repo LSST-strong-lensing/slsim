@@ -185,7 +185,9 @@ class Source(object):
 
                 else:
                     # Pull the agn kwarg dict out of the kwargs_variability dict
-                    agn_kwarg_dict = extract_agn_kwargs_from_source_dict(source_dict)
+                    agn_kwarg_dict = extract_agn_kwargs_from_source_dict(
+                        self.source_dict
+                    )
 
                     # Populate "None" for optional keys related to drawing random AGN
                     if "random_seed" in self.source_dict.colnames:
