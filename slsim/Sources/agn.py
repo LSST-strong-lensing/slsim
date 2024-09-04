@@ -24,10 +24,11 @@ class Agn(object):
         :param redshift: Redshift of the AGN
         :param cosmo: Astropy cosmology to use in calculating distances
         :param lightcurve_time: array of times associated with observation times
-        :param agn_driving_variability_model: variability model used as a driving signal,
-            This signal is then reprocessed through the lamppost model to get correlated signals.
-        :param agn_driving_kwargs_variability: dictionary holding all variability
-            keys and values
+        :param agn_driving_variability_model: variability model used as a driving
+            signal, This signal is then reprocessed through the lamppost model to get
+            correlated signals.
+        :param agn_driving_kwargs_variability: dictionary holding all variability keys
+            and values
         :param kwargs_agn_model: Dictionary containing all keywords for the accretion
             disk variability model. These are: 'black_hole_mass_exponent': mass exponent
             of the SMBH 'black_hole_spin': spin of the SMBH 'inclination_angle':
