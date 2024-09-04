@@ -432,6 +432,17 @@ class TestSource:
             cosmo=cosmo,
         )
 
+        self.source_agn_error_agn_not_in_kwargs = Source(
+            self.source_dict3,
+            variability_model="light_curve",
+            kwargs_variability={"definitely_not_an_agn"},
+            sn_absolute_mag_band="bessellb",
+            sn_absolute_zpsys="ab",
+            sn_type="Ia",
+            lightcurve_time=np.linspace(-20, 50, 100),
+            cosmo=cosmo,
+        )
+
         # create an agn that has a broken power law driving signal
         self.source_dict_bpl_agn = Table(
             [
@@ -674,6 +685,9 @@ class TestSource:
             self.source_agn_error_no_magnitude.point_source_magnitude(
                 "g", image_observation_times=obs_time
             )
+
+        with pytest.raises(ValueError):
+            self.source_agn_error_agn_not_in_kwargs.point_source_magnitude("r")
 
         # Create a source with a broken power law
         broken_power_law_time_1 = self.source_bpl_agn.point_source_magnitude(

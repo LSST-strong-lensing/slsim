@@ -381,7 +381,9 @@ class Source(object):
         if "ps_mag_" + band not in column_names:
             if self.kwargs_variability is not None:
                 if "agn_lightcurve" not in self.kwargs_variability:
-                    break
+                    raise ValueError(
+                        "required parameter is missing in the source dictionary."
+                    )
             else:
                 raise ValueError(
                     "required parameter is missing in the source dictionary."
