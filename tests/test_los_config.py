@@ -131,19 +131,19 @@ def test_other_setting_los_config_params():
         nonlinear_correction_path=path_to_h5,
         no_correction_path=None,
     )
-    assert config.los_bool == False
-    assert config.mixgauss_gamma == True
+    assert not config.los_bool
+    assert config.mixgauss_gamma
     assert config.mixgauss_means == [0.1]
     assert config.mixgauss_stds == [0.01]
     assert config.mixgauss_weights == [1]
-    assert config.nonlinear_los_bool == True
+    assert config.nonlinear_los_bool
     assert config.nonlinear_correction_path == path_to_h5
     assert config.no_correction_path is None
-    assert config.create_los_config().los_bool == False
-    assert config.create_los_config().mixgauss_gamma == True
+    assert not config.create_los_config().los_bool
+    assert config.create_los_config().mixgauss_gamma
     assert config.create_los_config().mixgauss_means == [0.1]
     assert config.create_los_config().mixgauss_stds == [0.01]
     assert config.create_los_config().mixgauss_weights == [1]
-    assert config.create_los_config().nonlinear_los_bool == True
+    assert config.create_los_config().nonlinear_los_bool
     assert config.create_los_config().nonlinear_correction_path == path_to_h5
     assert config.create_los_config().no_correction_path is None
