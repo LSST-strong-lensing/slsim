@@ -1,7 +1,9 @@
 from slsim.Sources.SourceVariability.light_curve_interpolation import (
     LightCurveInterpolation,
 )
-from slsim.Sources.SourceVariability.sinusoidal_variability import SinusoidalVariability
+from slsim.Sources.SourceVariability.sinusoidal_variability import (
+    SinusoidalVariability,
+)
 from slsim.Sources.SourceVariability.accretion_disk_reprocessing import (
     AccretionDiskReprocessing,
 )
@@ -84,7 +86,8 @@ class Variability(object):
                 and "magnitude_array" in self.signal_kwargs
             ):
                 self.accretion_disk_reprocessor.define_intrinsic_signal(
-                    **self.signal_kwargs
+                    time_array=self.signal_kwargs["time_array"],
+                    magnitude_array=self.signal_kwargs["magnitude_array"],
                 )
             else:
                 driving_signal = Variability(
@@ -155,7 +158,7 @@ def parse_kwargs_for_lamppost_reprocessed_model(variability):
         ]:
             variability.agn_kwargs[kwarg] = variability.kwargs_model[kwarg]
 
-        elif kwarg in ["time_array", "magnitude_array"]:
+        elif kwarg in ["time_array", "magnitude_array", "light_curve"]:
             variability.signal_kwargs[kwarg] = variability.kwargs_model[kwarg]
 
         elif kwarg in [
@@ -216,6 +219,8 @@ def reprocess_with_lamppost_model(variability):
 
     elif "speclite_filter" in variability.reprocessing_kwargs:
         speclite_filter = variability.reprocessing_kwargs["speclite_filter"]
+        if isinstance(speclite_filter, list):
+            speclite_filter = str(speclite_filter[0])
         response_function = (
             variability.accretion_disk_reprocessor.define_passband_response_function(
                 speclite_filter,

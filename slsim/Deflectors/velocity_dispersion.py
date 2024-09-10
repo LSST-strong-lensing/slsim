@@ -182,8 +182,8 @@ def vel_disp_nfw_aperture(r, m_halo, c_halo, cosmo, z_lens):
 
 
 def vel_disp_nfw(m_halo, c_halo, cosmo, z_lens):
-    """Computes vel_disp_nfw_aperture using the characteristic radius rs of the NFW
-    as aperture (which is independent of the source redshift).
+    """Computes vel_disp_nfw_aperture using the characteristic radius rs of the NFW as
+    aperture (which is independent of the source redshift).
 
     :param r: radius of the aperture for the velocity dispersion [arcsec]
     :param m_halo: Halo mass [physical M_sun]
@@ -255,7 +255,7 @@ def vel_disp_sdss(sky_area, redshift, vd_min, vd_max, cosmology, noise=True):
     """
     # SDSS velocity dispersion function for galaxies brighter than Mr >= -16.8
     # These numbers are from the Bernardi et al. 2010.
-    phi_star = 2.099e-2 * cosmology.h**3
+    phi_star = 2.099e-2 * (cosmology.h / 0.7) ** 3
     vd_star = 113.78
     alpha = 0.94
     beta = 1.85
@@ -424,22 +424,20 @@ def schechter_vel_disp_redshift(
     ----------
     .. [2] Choi, Park and Vogeley, (2007), astro-ph/0611607, doi:10.1086/511060
     """
-    alpha_prime = alpha / beta - 1
+    """alpha_prime = alpha / beta - 1
     x_min, x_max = (vd_min / vd_star) ** beta, (vd_max / vd_star) ** beta
 
     lnxmin = np.log(x_min)
-    lnxmax = np.log(x_max)
+    lnxmax = np.log(x_max)"""
 
     # gamma function integrand
-    def f(lnx, a):
+    def f(v):
         return (
-            np.exp(lnx)
-            * np.exp(a * lnx - np.exp(lnx))
+            phi_star
+            * ((v / vd_star) ** alpha)
+            * np.exp(-((v / vd_star) ** beta))
             * beta
-            * ((np.exp(-lnx)) ** (1 / beta))
-            * (1 / vd_star)
-            if lnx < lnxmax.max()
-            else 0.0
+            / v
         )
 
     # integrate gamma function for each redshift
@@ -449,10 +447,10 @@ def schechter_vel_disp_redshift(
     gam = np.empty_like(redshift)
 
     for i, _ in np.ndenumerate(gam):
-        gam[i], _ = scipy.integrate.quad(f, lnxmin, lnxmax, args=(alpha_prime,))
+        gam[i], _ = scipy.integrate.quad(f, vd_min, vd_max)
 
     # comoving number density is normalisation times upper incomplete gamma
-    density = phi_star * gam / gamma_ab
+    density = gam / gamma_ab
 
     # sample redshifts from the comoving density
     return redshifts_from_comoving_density(
@@ -502,22 +500,18 @@ def redshifts_from_comoving_density(redshift, density, sky_area, cosmo, noise=Tr
 
     # redshift number density
     dN_dz = (cosmo.differential_comoving_volume(redshift) * sky_area).to_value("Mpc3")
-    # number
     dN_dz *= density
-    number = dN_dz
+    # number
+    N = np.trapz(dN_dz, redshift)
     # Poisson sample galaxy number if requested
-    number_list = []
-    for n in number:
-        if noise:
-            N = np.random.poisson(n)
-        else:
-            N = int(n)  # np.array([int(digit) for digit in number])
-        number_list.append(N)
+    if noise:
+        total_number = np.random.poisson(N)
+    else:
+        total_number = int(N)  # np.array([int(digit) for digit in number])
     cdf = dN_dz  # in place
     np.cumsum((dN_dz[1:] + dN_dz[:-1]) / 2 * np.diff(redshift), out=cdf[1:])
     cdf[0] = 0
     cdf /= cdf[-1]
-    total_number = sum(number_list)
     return np.interp(np.random.rand(total_number), cdf, redshift)
 
 
@@ -575,30 +569,26 @@ def schechter_velocity_dispersion_function(
     if size is None:
         size = np.broadcast(vd_min, vd_max, scale).shape or None
 
-    lnx_min = np.log((vd_min / vd_star) ** beta)
-    lnx_max = np.log((vd_max / vd_star) ** beta)
-
-    lnx = np.linspace(np.min(lnx_min), np.max(lnx_max), resolution)
+    v = np.linspace(vd_min, vd_max, resolution)
     gamma_ab = scipy.special.gamma(alpha / beta)
     phi_star = phi_star
     pdf = (
-        np.exp(((alpha - 1) / beta) * lnx - np.exp(lnx))
-        * (1 / vd_star)
+        phi_star
+        * ((v / vd_star) ** alpha)
+        * np.exp(-((v / vd_star) ** beta))
         * beta
-        * phi_star
-        / gamma_ab
+        / (v * gamma_ab)
     )
     cdf = pdf  # in place
-    np.cumsum((pdf[1:] + pdf[:-1]) / 2 * np.diff(lnx), out=cdf[1:])
+    np.cumsum((pdf[1:] + pdf[:-1]) / 2 * np.diff(v), out=cdf[1:])
     cdf[0] = 0
     cdf /= cdf[-1]
 
-    t_lower = np.interp(lnx_min, lnx, cdf)
-    t_upper = np.interp(lnx_max, lnx, cdf)
+    t_lower = np.interp(vd_min, v, cdf)
+    t_upper = np.interp(vd_max, v, cdf)
     u = np.random.uniform(t_lower, t_upper, size=size)
-    lnx_sample = np.interp(u, cdf, lnx)
-
-    return (np.exp(lnx_sample) * scale) ** (1 / beta) * vd_star
+    v_sample = np.interp(u, cdf, v)
+    return v_sample
 
 
 def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
@@ -625,7 +615,7 @@ def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
     # number of selected galaxies
     num_select = len(galaxy_list_zmax)
 
-    redshift = np.linspace(0, z_max, 50)
+    redshift = np.linspace(0, z_max, 100)
     z_list, vel_disp_list = vel_disp_sdss(
         sky_area, redshift, vd_min=50, vd_max=500, cosmology=cosmo, noise=True
     )

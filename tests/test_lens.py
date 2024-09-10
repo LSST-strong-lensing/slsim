@@ -3,7 +3,6 @@ import numpy as np
 from numpy import testing as npt
 from astropy.cosmology import FlatLambdaCDM
 from astropy.table import Table
-from slsim.Deflectors.deflector import Deflector
 from slsim.lens import (
     Lens,
     image_separation_from_positions,

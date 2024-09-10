@@ -2,7 +2,7 @@ from slsim.Deflectors.DeflectorTypes.deflector_base import DeflectorBase
 from slsim.Deflectors.velocity_dispersion import vel_disp_nfw
 from slsim.Deflectors.DeflectorTypes.epl_sersic import EPLSersic
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
-from lenstronomy.Cosmo.lens_cosmo import LensCosmo
+import numpy as np
 
 
 class NFWCluster(DeflectorBase):
@@ -15,7 +15,7 @@ class NFWCluster(DeflectorBase):
     - 'e1_mass': eccentricity of NFW profile
     - 'e2_mass': eccentricity of NFW profile
     - 'z': redshift of deflector
-    - 'subhalos': list of dictionary with subhalo parameters
+    - 'subhalos': list of dictionary with EPLSersic parameters
     """
 
     def __init__(self, deflector_dict):
@@ -24,7 +24,7 @@ class NFWCluster(DeflectorBase):
         :param deflector_dict:  parameters of the cluster halo
         :type deflector_dict: dict
         """
-        subhalos_list = deflector_dict.pop("subhalos")
+        subhalos_list = deflector_dict["subhalos"]
         self._subhalos = [EPLSersic(subhalo_dict) for subhalo_dict in subhalos_list]
         super(NFWCluster, self).__init__(deflector_dict)
 
@@ -108,3 +108,27 @@ class NFWCluster(DeflectorBase):
         :return: halo mass M200 [physical M_sol], concentration r200/rs
         """
         return self._deflector_dict["halo_mass"], self._deflector_dict["concentration"]
+
+    @property
+    def stellar_mass(self):
+        """
+
+        :return: total stellar mass of deflector [M_sol]
+        """
+        total_mass = 0
+        for subhalo in self._subhalos:
+            total_mass += subhalo.stellar_mass
+        return total_mass
+
+    def magnitude(self, band):
+        """Apparent magnitude of the deflector for a given band.
+
+        :param band: imaging band
+        :type band: string
+        :return: total magnitude of deflector in given band
+        """
+        total_flux = 0
+        for subhalo in self._subhalos:
+            mag = subhalo.magnitude(band)
+            total_flux += 10 ** (-0.4 * mag)
+        return -2.5 * np.log10(total_flux)

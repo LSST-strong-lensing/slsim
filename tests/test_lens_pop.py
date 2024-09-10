@@ -146,17 +146,21 @@ def test_galaxies_lens_pop_halo_model_instance():
     assert g_lens_halo_model_pop._lens_galaxies.draw_deflector()["halo_mass"] != 0
 
 
-def test_cluster_catalog_lens_pop_instance():
+def test_cluster_lens_pop_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     sky_area = Quantity(value=0.001, unit="deg2")
 
-    kwargs_deflector_cut = {"z_min": 0.001, "z_max": 2.5}
-    kwargs_source_cut = {"band": "g", "band_max": 28, "z_min": 0.1, "z_max": 5.0}
+    kwargs_deflector_cut = {"z_min": 0.2, "z_max": 1.0}
+    kwargs_source_cut = {"band": "g", "band_max": 28, "z_min": 0.25, "z_max": 5.0}
 
     path = os.path.dirname(__file__)
     module_path = os.path.dirname(path)
-    cluster_catalog_path = os.path.join(module_path, "data/redMaPPer/clusters_example.fits")
-    members_catalog_path = os.path.join(module_path, "data/redMaPPer/members_example.fits")
+    cluster_catalog_path = os.path.join(
+        module_path, "data/redMaPPer/clusters_example.fits"
+    )
+    members_catalog_path = os.path.join(
+        module_path, "data/redMaPPer/members_example.fits"
+    )
     cluster_catalog = Table.read(cluster_catalog_path)
     members_catalog = Table.read(members_catalog_path)
 
@@ -166,7 +170,7 @@ def test_cluster_catalog_lens_pop_instance():
         filters=None,
     )
 
-    lens_clusters = deflectors.ClusterCatalogLens(
+    lens_clusters = deflectors.ClusterDeflectors(
         cluster_list=cluster_catalog,
         members_list=members_catalog,
         galaxy_list=galaxy_simulation_pipeline.red_galaxies,
@@ -193,6 +197,10 @@ def test_cluster_catalog_lens_pop_instance():
     kwargs_lens_cut = {}
     pes_lens_class = cluster_lens_pop.select_lens_at_random(**kwargs_lens_cut)
     assert pes_lens_class.deflector.deflector_type == "NFW_CLUSTER"
+    kwargs_model, kwargs_params = pes_lens_class.lenstronomy_kwargs(band="g")
+    assert len(kwargs_model["lens_model_list"]) >= 3  # halo, 1>= subhalo, LoS
+    assert len(kwargs_model["lens_light_model_list"]) >= 1  # 1>= member galaxy
+    assert pes_lens_class.deflector_velocity_dispersion() > 300
 
 
 def test_supernovae_plus_galaxies_lens_pop_instance():
