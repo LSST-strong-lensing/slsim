@@ -99,7 +99,7 @@ def test_schechter_vdf():
         cosmology,
         noise=True,
     )
-    assert len(z_list) == 130
+    assert len(z_list) == 117
     assert len(vel_disp_list1) == 10000
     assert len(np.array([vel_disp_list2])) == 1
 
@@ -130,11 +130,10 @@ def test_redshifts_from_comoving_density():
     assert len(redshifts_no_noise) > 0
 
     # Check that the number of galaxies is approximately equal to the expected number
-    expected_number = np.sum(
-        (cosmo.differential_comoving_volume(redshift) * sky_area).to_value("Mpc3")
-        * density
-    )
-    assert np.isclose(len(redshifts_no_noise), int(expected_number), rtol=0.1)
+    dN_dz = (cosmo.differential_comoving_volume(redshift) * sky_area).to_value("Mpc3")
+    dN_dz *= density
+    N = np.trapz(dN_dz, redshift)
+    assert np.isclose(len(redshifts_no_noise), int(N), rtol=0.1)
 
 
 if __name__ == "__main__":

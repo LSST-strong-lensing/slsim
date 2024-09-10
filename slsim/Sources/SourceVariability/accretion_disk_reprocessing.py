@@ -56,6 +56,7 @@ class AccretionDiskReprocessing(object):
                 "black_hole_spin": 0.0,
                 "eddington_ratio": 0.1,
             }
+
             for jj in default_lamppost_kwargs:
                 if jj not in self.kwargs_model:
                     print(
@@ -66,8 +67,8 @@ class AccretionDiskReprocessing(object):
                     )
                     self.kwargs_model[jj] = default_lamppost_kwargs[jj]
 
-        self.time_array = None
-        self.magnitude_array = None
+            self.time_array = None
+            self.magnitude_array = None
 
     def define_new_response_function(self, rest_frame_wavelength_in_nanometers):
         """Define a response function of the agn accretion disk to the flaring corona in
@@ -229,6 +230,7 @@ class AccretionDiskReprocessing(object):
                     len(response_function) * gravitational_radius_in_days
                 )
                 time_lag_axis = np.linspace(0, length_in_days, len(response_function))
+
         if length_in_days == 0:
             length_in_days += 1
             time_lag_axis = np.linspace(0, length_in_days, len(response_function))
@@ -258,6 +260,7 @@ class AccretionDiskReprocessing(object):
         reprocessed_signal = signal.convolve(
             interpolated_signal, (interpolated_response_function), mode="full"
         )
+
         normalization = np.nansum(interpolated_response_function)
         if normalization == 0:
             reprocessed_signal = interpolated_signal
@@ -266,16 +269,17 @@ class AccretionDiskReprocessing(object):
 
         return reprocessed_signal[: len(self.time_array)]
 
-    def determine_agn_luminosity_from_i_band_luminosity(
+    def determine_agn_luminosity_from_known_luminosity(
         self,
-        i_band_magnitude,
+        known_band,
+        known_magnitude,
         redshift,
         mag_zero_point,
         cosmo=cosmology.FlatLambdaCDM(H0=70, Om0=0.3),
         band=None,
         observer_frame_wavelength_in_nm=None,
     ):
-        """Takes in the i band luminosity of the AGN and defines the expected magnitude
+        """Takes in the known luminosity of the AGN and defines the expected magnitude
         at other bands or wavelengths based on black body radiation. Speclite bands will
         be calculated at their effective wavelength.
 
@@ -285,22 +289,28 @@ class AccretionDiskReprocessing(object):
         :param bands: Float representing a speclite filter
         :param wavelengths: Float representing wavlength in nm.
         """
-        i_band_filter = load_filter("lsst2023-i")
-        i_band_wavelength = (i_band_filter.effective_wavelength).to(u.nm)
-        source_plane_i_band_wavelength = i_band_wavelength / (1 + redshift)
+        if isinstance(known_band, str):
+            filter_response = load_filter(known_band)
+        else:
+            raise ValueError("only speclite filters are implimented")
+
+        effective_wavelength = (filter_response.effective_wavelength).to(u.nm)
+        source_plane_wavelength = effective_wavelength / (1 + redshift)
         luminosity_distance = cosmo.luminosity_distance(redshift)
-        obs_plane_i_band_flux = magnitude_to_amplitude(i_band_magnitude, mag_zero_point)
-        source_plane_i_band_flux = luminosity_distance**2 * obs_plane_i_band_flux
-        theoretical_i_band_flux = calculate_accretion_disk_emission(
+        obs_plane_flux = magnitude_to_amplitude(known_magnitude, mag_zero_point)
+        source_plane_flux = luminosity_distance**2 * obs_plane_flux
+
+        theoretical_flux = calculate_accretion_disk_emission(
             self.kwargs_model["r_out"],
             self.kwargs_model["r_resolution"],
             self.kwargs_model["inclination_angle"],
-            source_plane_i_band_wavelength,
+            source_plane_wavelength,
             self.kwargs_model["black_hole_mass_exponent"],
             self.kwargs_model["black_hole_spin"],
             self.kwargs_model["eddington_ratio"],
         )
-        flux_adjustment_ratio = source_plane_i_band_flux / theoretical_i_band_flux
+        # normalize flux
+        flux_adjustment_ratio = source_plane_flux / theoretical_flux
         if band is not None:
             band_wavelength = (load_filter(band).effective_wavelength).to(u.nm) / (
                 1 + redshift
@@ -337,7 +347,7 @@ class AccretionDiskReprocessing(object):
             output_magnitude = amplitude_to_magnitude(cur_obs_flux, mag_zero_point)
         else:
             raise ValueError("Please define a band or wavelength")
-        return output_magnitude
+        return output_magnitude.value
 
 
 def lamppost_model(

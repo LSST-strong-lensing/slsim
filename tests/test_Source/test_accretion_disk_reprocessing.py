@@ -220,6 +220,17 @@ class TestAccretionDiskReprocessing:
             response_function_amplitudes=1 - np.linspace(-1, 1, 100) ** 2
         )
 
+        time_array_list = [1, 2, 3, 4, 5, 8, 20]
+        magnitude_array_list = [8, 5, 4, 3, 2, 1, 0]
+        small_reprocessor.define_intrinsic_signal(
+            time_array=time_array_list,
+            magnitude_array=magnitude_array_list,
+        )
+        small_reprocessor.reprocess_signal(
+            response_function_time_lags=[0, 1],
+            response_function_amplitudes=[1, 0],
+        )
+
     def test_define_passband_response_function(self):
         kwargs_agn_model = {"black_hole_mass_exponent": 9.5}
         reprocessor = AccretionDiskReprocessing("lamppost", **kwargs_agn_model)
@@ -243,20 +254,23 @@ class TestAccretionDiskReprocessing:
             passband_wavelength_unit=u.angstrom,
         )
 
-    def test_determine_agn_luminosity_from_i_band_luminosity(self):
+    def test_determine_agn_luminosity_from_known_luminosity(self):
         kwargs_agn_model = {"black_hole_mass_exponent": 9.5}
         reprocessor = AccretionDiskReprocessing("lamppost", **kwargs_agn_model)
 
         i_band_magnitude = 20
+        known_band = "lsst2023-i"
         redshift = 1
         mag_zero_point = 0
-        band = "lsst2023-r"
+        unknown_band = "lsst2023-r"
         wavelength = 700
 
-        reprocessor.determine_agn_luminosity_from_i_band_luminosity(
-            i_band_magnitude, redshift, mag_zero_point, band=band
+        r_band_magnitude = reprocessor.determine_agn_luminosity_from_known_luminosity(
+            known_band, i_band_magnitude, redshift, mag_zero_point, band=unknown_band
         )
-        reprocessor.determine_agn_luminosity_from_i_band_luminosity(
+
+        reprocessor.determine_agn_luminosity_from_known_luminosity(
+            known_band,
             i_band_magnitude,
             redshift,
             mag_zero_point,
@@ -264,13 +278,34 @@ class TestAccretionDiskReprocessing:
         )
 
         # test identiy
-        i_band_mag = reprocessor.determine_agn_luminosity_from_i_band_luminosity(
-            i_band_magnitude, redshift, mag_zero_point, band="lsst2023-i"
+        i_band_mag = reprocessor.determine_agn_luminosity_from_known_luminosity(
+            known_band, i_band_magnitude, redshift, mag_zero_point, band="lsst2023-i"
         )
         assert i_band_mag == 20
 
-        # test error
+        # test recipricosity
+        test_i_band_magnitude = (
+            reprocessor.determine_agn_luminosity_from_known_luminosity(
+                unknown_band,
+                r_band_magnitude,
+                redshift,
+                mag_zero_point,
+                band=known_band,
+            )
+        )
+        # Use numpy testing because of rounding
+        np.testing.assert_almost_equal(i_band_magnitude, test_i_band_magnitude)
+
+        # test errors
         with pytest.raises(ValueError):
-            reprocessor.determine_agn_luminosity_from_i_band_luminosity(
-                i_band_magnitude, redshift, mag_zero_point
+            reprocessor.determine_agn_luminosity_from_known_luminosity(
+                known_band, i_band_magnitude, redshift, mag_zero_point
+            )
+        with pytest.raises(ValueError):
+            reprocessor.determine_agn_luminosity_from_known_luminosity(
+                100,
+                i_band_magnitude,
+                redshift,
+                mag_zero_point,
+                band=known_band,
             )
