@@ -8,7 +8,7 @@ from slsim.lens import (
     image_separation_from_positions,
     theta_e_when_source_infinity,
 )
-from slsim.ParamDistributions.los_config import LOSConfig, LOSConfigParams
+from slsim.ParamDistributions.los_config import LOSConfig
 import os
 
 
@@ -380,46 +380,6 @@ class TestDifferenLens(object):
         )
         image_number = gg_lens_number.image_number
         assert (image_number == 4) or (image_number == 2) or (image_number == 1)
-
-    def test_initialization_with_default_parameters(self):
-        los_config_params = LOSConfigParams()
-        assert los_config_params.los_bool is True
-        assert los_config_params.mixgauss_gamma is False
-        assert los_config_params.mixgauss_means is None
-        assert los_config_params.mixgauss_stds is None
-        assert los_config_params.mixgauss_weights is None
-        assert los_config_params.nonlinear_los_bool is False
-        assert los_config_params.nonlinear_correction_path is None
-        assert los_config_params.no_correction_path is None
-        assert los_config_params.gamma is None
-        assert los_config_params.kappa is None
-
-    def test_initialization_with_all_parameters_provided(self):
-        los_config_params = LOSConfigParams(
-            los_bool=False,
-            mixgauss_gamma=True,
-            mixgauss_means=[0.1, 0.2],
-            mixgauss_stds=[0.1, 0.2],
-            mixgauss_weights=[0.5, 0.5],
-            nonlinear_los_bool=True,
-            nonlinear_correction_path="path/to/nonlinear_correction.h5",
-            no_correction_path="path/to/no_correction.h5",
-            gamma=[0.3, 0.4],
-            kappa=0.2,
-        )
-        assert los_config_params.los_bool is False
-        assert los_config_params.mixgauss_gamma is True
-        assert los_config_params.mixgauss_means == [0.1, 0.2]
-        assert los_config_params.mixgauss_stds == [0.1, 0.2]
-        assert los_config_params.mixgauss_weights == [0.5, 0.5]
-        assert los_config_params.nonlinear_los_bool is True
-        assert (
-            los_config_params.nonlinear_correction_path
-            == "path/to/nonlinear_correction.h5"
-        )
-        assert los_config_params.no_correction_path == "path/to/no_correction.h5"
-        assert los_config_params.gamma == [0.3, 0.4]
-        assert los_config_params.kappa == 0.2
 
 
 if __name__ == "__main__":
