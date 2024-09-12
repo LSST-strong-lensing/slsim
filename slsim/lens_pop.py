@@ -6,7 +6,7 @@ from typing import Optional, Union
 from astropy.cosmology import Cosmology
 from slsim.lens import theta_e_when_source_infinity
 from slsim.Sources.source_pop_base import SourcePopBase
-from slsim.ParamDistributions.los_config import LOSConfig
+from slsim.ParamDistributions.los_config import LOSConfigParams
 from slsim.Deflectors.deflectors_base import DeflectorsBase
 from slsim.lensed_population_base import LensedPopulationBase
 
@@ -24,7 +24,7 @@ class LensPop(LensedPopulationBase):
         sn_type: Optional[str] = None,
         sn_absolute_mag_band: Optional[Union[str, sncosmo.Bandpass]] = None,
         sn_absolute_zpsys: Optional[str] = None,
-        los_config: Optional[LOSConfig] = None,
+        los_config: Optional[LOSConfigParams] = None,
         sn_modeldir: Optional[str] = None,
     ):
         """
@@ -39,7 +39,7 @@ class LensPop(LensedPopulationBase):
                                                                                     Defaults to None.
             sn_absolute_zpsys (Optional[str], optional): Zero point system, either AB or Vega, with None defaulting to AB.
                                                          Defaults to None.
-            los_config (Optional[LOSConfig], optional): Configuration for line of sight distribution. Defaults to None.
+            los_config (Optional[LOSConfigParams], optional): Configuration for line of sight distribution parameters, used for LOSConfig in Lens class. Defaults to None.
             sn_modeldir (Optional[str], optional): sn_modeldir is the path to the directory containing files needed to initialize
                                                    the sncosmo.model class. For example, sn_modeldir =
                                                    'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can be downloaded
@@ -69,7 +69,7 @@ class LensPop(LensedPopulationBase):
         ) / self._lens_galaxies.sky_area.to_value("deg2")
         self.los_config = los_config
         if self.los_config is None:
-            self.los_config = LOSConfig()
+            self.los_config = LOSConfigParams()
 
     def select_lens_at_random(self, **kwargs_lens_cut):
         """Draw a random lens within the cuts of the lens and source, with possible
@@ -97,7 +97,7 @@ class LensPop(LensedPopulationBase):
                 source_type=self._sources.source_type,
                 light_profile=self._sources.light_profile,
                 lightcurve_time=self.lightcurve_time,
-                los_config=self.los_config,
+                los_config=self.los_config.create_los_config(),
                 sn_modeldir=self.sn_modeldir,
             )
             if gg_lens.validity_test(**kwargs_lens_cut):
@@ -188,7 +188,7 @@ class LensPop(LensedPopulationBase):
                         cosmo=self.cosmo,
                         test_area=test_area,
                         source_type=self._sources.source_type,
-                        los_config=self.los_config,
+                        los_config=self.los_config.create_los_config(),
                         light_profile=self._sources.light_profile,
                         lightcurve_time=self.lightcurve_time,
                         sn_modeldir=self.sn_modeldir,
