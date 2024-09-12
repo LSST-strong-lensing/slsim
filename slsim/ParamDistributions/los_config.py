@@ -89,25 +89,22 @@ class LOSConfig(object):
         :type deflector_redshift: float
         :return: kappa, gamma1, gamma2
         """
-        if not self.los_bool:
-            return 0, 0, 0
         if hasattr(self, "_gamma") and hasattr(self, "_kappa"):
             return self._gamma[0], self._gamma[1], self._kappa
+        if not self.los_bool:
+            return 0, 0, 0
 
         if self.mixgauss_gamma and not self.nonlinear_los_bool:
-            if not hasattr(self, "_gamma"):
-                mixture = GaussianMixtureModel(
-                    means=self.mixgauss_means,
-                    stds=self.mixgauss_stds,
-                    weights=self.mixgauss_weights,
-                )
-                gamma = np.abs(mixture.rvs(size=1))[0]
-                phi = 2 * np.pi * np.random.random()
-                gamma1 = gamma * np.cos(2 * phi)
-                gamma2 = gamma * np.sin(2 * phi)
-                self._gamma = [gamma1, gamma2]
-            if not hasattr(self, "_kappa"):
-                self._kappa = np.random.normal(loc=0, scale=0.05)
+            mixture = GaussianMixtureModel(
+                means=self.mixgauss_means,
+                stds=self.mixgauss_stds,
+                weights=self.mixgauss_weights,
+            )
+            gamma = np.abs(mixture.rvs(size=1))[0]
+            phi = 2 * np.pi * np.random.random()
+            gamma1 = gamma * np.cos(2 * phi)
+            gamma2 = gamma * np.sin(2 * phi)
+            kappa = np.random.normal(loc=0, scale=0.05)
         elif self.mixgauss_gamma and self.nonlinear_los_bool:
             raise ValueError(
                 "Can only choose one method for external shear and convergence"
@@ -119,12 +116,11 @@ class LOSConfig(object):
                 nonlinear_correction_path=self.nonlinear_correction_path,
                 no_correction_path=self.no_correction_path,
             )
-            gamma, self._kappa = LOS.get_kappa_gamma(
+            gamma, kappa = LOS.get_kappa_gamma(
                 z_source, z_lens, self.nonlinear_los_bool
             )
             phi = 2 * np.pi * np.random.random()
             gamma1 = gamma * np.cos(2 * phi)
             gamma2 = gamma * np.sin(2 * phi)
-            self._gamma = [gamma1, gamma2]
 
-        return self._gamma[0], self._gamma[1], self._kappa
+        return gamma1, gamma2, kappa
