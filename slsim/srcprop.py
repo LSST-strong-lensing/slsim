@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from math import *
 from scipy.interpolate import interp1d
 from scipy.optimize import brentq
 import numpy as np
@@ -100,10 +99,10 @@ def dPhibydM_qso(redshift, mag, cosmo):
     phistar = 5.34E-6 * pow(cosmo.H0.value/100, 3)
 
     # hence, the redshift dependent factor f(z), eq 12, Oguri and Marshall 2010.
-    fofz = (exp(zeta * redshift) * (1 + exp(xi * zstar)))/ pow(np.sqrt(exp(xi * redshift)) + np.sqrt(exp(xi * zstar)), 2)
+    fofz = (np.exp(zeta * redshift) * (1 + np.exp(xi * zstar)))/ pow(np.sqrt(np.exp(xi * redshift)) + np.sqrt(np.exp(xi * zstar)), 2)
 
     # compute the the characteristic absolute magnitude of quasars using eq 11, Oguri and Marshall 2010.
-    Mstar = -20.90 + 5 * log10(cosmo.H0.value/100) - 2.5 * np.log10(fofz)
+    Mstar = -20.90 + 5 * np.log10(cosmo.H0.value/100) - 2.5 * np.log10(fofz)
 
     # Compute and return the luminosity function dPhi/dM
     return phistar/(pow(10,(0.4*(alpha+1)*(Mabs-Mstar)))+pow(10,(0.4*(beta+1)*(Mabs-Mstar))))
@@ -444,14 +443,14 @@ def dnsbydm(mag):
 
   # define the parameters (n0, m1, a, b) in the source redshift distribution from eq 3, Faure et al. 2009
   ## convert from degree squared to degree radian
-  n0 = 3e3*(180./pi)**2.0
+  n0 = 3e3*(180./np.pi)**2.0
   
   m1 = 20.0
   a = 0.30
   b = 0.56
 
   # return the number density per unit magnitude
-  return n0 / sqrt(10.0**(2 * a * (m1-mag)) +10.0**(2 * b * (m1-mag)) )
+  return n0 / np.sqrt(10.0**(2 * a * (m1-mag)) +10.0**(2 * b * (m1-mag)) )
 
 
 
@@ -573,7 +572,7 @@ def findmaggal(magtry, zsrc, Phitarget):
   beta = 1.5  #taken from Faure et al 2009
 
   # compute the source number density Pmagzs based on the trial magnitude and redshift
-  Pmagzs = beta * (zsrc/z0) ** 2.0 * exp(-(zsrc/z0)**beta)/z0
+  Pmagzs = beta * (zsrc/z0) ** 2.0 * np.exp(-(zsrc/z0)**beta)/z0
 
   # Compute the number density using nsmlim_gal_spl and the trial magnitude
   # and calculate the difference from the target number density
