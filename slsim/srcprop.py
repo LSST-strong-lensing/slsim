@@ -1,8 +1,9 @@
 #!/usr/bin/env python
+#from math import *
 from scipy.interpolate import interp1d
 from scipy.optimize import brentq
 import numpy as np
-import slsim.srclensprop as slp
+import srclensprop as slp
 import scipy.integrate as sci
 
 
