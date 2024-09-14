@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 from math import *
 import numpy as np
-import srcprop as srcprop
-import srclensprop as slp
+import slsim.srcprop as srcprop
+import slsim.srclensprop as slp
 from astropy.table import Table
 from slsim.Deflectors.light2mass import get_velocity_dispersion
 from uncertainties import unumpy
