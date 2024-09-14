@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-from math import *
-from pylab import *
 from scipy.interpolate import interp1d
 from scipy.integrate import quad
 import numpy as np
@@ -65,12 +63,12 @@ def getcaustics(b_I,q):
 
 
   ## Do not change the next line or face consequences
-  t = np.arange(0.0, pi / 2.0 + pi / 100.0, pi / 200.0)
+  t = np.arange(0.0, np.pi / 2.0 + np.pi / 100.0, np.pi / 200.0)
 
   den = (1 + q ** 2) - (1 - q**2) * np.cos(2 * t)
 
   # Calculate the radial distance for the caustics  
-  r = sqrt(2.0) * b_I / np.sqrt(den)
+  r = np.sqrt(2.0) * b_I / np.sqrt(den)
 
   # Compute the coordinates for the caustics
   x = r * np.cos(t)
@@ -81,15 +79,15 @@ def getcaustics(b_I,q):
   u = np.cos(t) * r
   v = np.sin(t) * r
   if(q != 1.0):
-      u = u - b_I * np.arctan( xi * np.cos(t) ) / sqrt(1 - q ** 2)
-      v = v - b_I * np.arctanh( xi * np.sin(t) ) / sqrt(1 - q ** 2)
+      u = u - b_I * np.arctan( xi * np.cos(t) ) / np.sqrt(1 - q ** 2)
+      v = v - b_I * np.arctanh( xi * np.sin(t) ) / np.sqrt(1 - q ** 2)
 
   ## Generate the parametric function for the radial caustic
   up = b_I * 0.0
   vp = b_I * 0.0
   if(q != 1.0):
-      up =- b_I * np.arctan(xi * np.cos(t)) / sqrt(1 - q ** 2)
-      vp =- b_I * np.arctanh(xi * np.sin(t)) / sqrt(1 - q ** 2)
+      up =- b_I * np.arctan(xi * np.cos(t)) / np.sqrt(1 - q ** 2)
+      vp =- b_I * np.arctanh(xi * np.sin(t)) / np.sqrt(1 - q ** 2)
 
   # Set up splines for the tangential and radial caustic
   r1 = np.sqrt( u ** 2 + v ** 2)
@@ -103,16 +101,16 @@ def getcaustics(b_I,q):
           t1[ii] = np.pi/2.
       else:
           t1[ii] = np.arctan(np.abs(v[ii] / u[ii]))
-      if(t[ii] > pi / 2.0):
-          t1[ii] = pi - t1[ii]
+      if(t[ii] > np.pi / 2.0):
+          t1[ii] = np.pi - t1[ii]
   
   for ii in range(up.size):
       if(up[ii] == 0.):
           t2[ii] = np.pi / 2.0
       else:
           t2[ii] = np.arctan(np.abs(vp[ii] / up[ii]))
-      if(t[ii] > pi / 2.0):
-          t2[ii] = pi - t2[ii]
+      if(t[ii] > np.pi / 2.0):
+          t2[ii] = np.pi - t2[ii]
 
   # Create cubic splines for the tangential and radial caustics
   c1=interp1d(t1,r1,kind='cubic')
@@ -145,15 +143,15 @@ def srcpos_sie(b_I,q,pa):
   ## Generate random points within a circle with radius maxr until you find one
   ## inside the caustic
   while(1):
-    rgen = sqrt(np.random.rand(1)) * maxr
-    tgen = np.random.rand(1) * (pi / 2.0)
+    rgen = np.sqrt(np.random.rand(1)) * maxr
+    tgen = np.random.rand(1) * (np.pi / 2.0)
 
     if(rgen < c1(tgen) or rgen < c2(tgen) ):
       break
 
   ## Generate the positions in the first quadrant
-  xret = rgen * cos(tgen)
-  yret = rgen * sin(tgen)
+  xret = rgen * np.cos(tgen)
+  yret = rgen * np.sin(tgen)
 
   ## randomly assign a quadrant
   quadr = np.random.rand(1)
@@ -164,9 +162,9 @@ def srcpos_sie(b_I,q,pa):
     yret =- yret
 
   # Rotate the position by the given position angle
-  rad = pa * pi / 180.0
-  xnew = xret * cos(rad) - yret * sin(rad)
-  ynew = xret * sin(rad) + yret * cos(rad)
+  rad = pa * np.pi / 180.0
+  xnew = xret * np.cos(rad) - yret * np.sin(rad)
+  ynew = xret * np.sin(rad) + yret * np.cos(rad)
 
   return xnew, ynew
 
@@ -185,7 +183,7 @@ def srcpos_bsisq(bsis,q,pa):
   """
 
   # Get the source position using the SIE model
-  xret,yret=srcpos_sie(bsis*sqrt(q),q,pa)
+  xret,yret=srcpos_sie(bsis*np.sqrt(q),q,pa)
 
   return xret,yret
 
@@ -203,10 +201,10 @@ def getcrosssect(bsis,q):
   """
 
   # Convert SIS Einstein radius to SIE Einstein radius
-  b_I = bsis * sqrt(q)
+  b_I = bsis * np.sqrt(q)
 
   ## Generate parametric theta values and the critical curve
-  t = np.arange(0.0, pi / 2.0 + pi / 200.0, pi / 200.0)
+  t = np.arange(0.0, np.pi / 2.0 + np.pi / 200.0, np.pi / 200.0)
   c1, c2, maxr = getcaustics(b_I, q)
 
   # Evaluate the radial distances
@@ -222,7 +220,7 @@ def getcrosssect(bsis,q):
   cnew = interp1d(t, 4 * 0.5 * r1 * r1)
   
   # Integrate under the curve to find the total cross-sectional area
-  result, err = quad(lambda x: cnew(x), 0.0, pi/2.0, epsrel=1.0E-3)
+  result, err = quad(lambda x: cnew(x), 0.0, np.pi/2.0, epsrel=1.0E-3)
 
   #This is the angular area is in units^2 where units is the unit of b. 
   return result
@@ -252,7 +250,7 @@ def getreinst(zlens,zsrc,sigma,cosmo,constants):
       Dds=(cosmo.angular_diameter_distance_z1z2(zlens,zsrc)*cosmo.H(0)/100).value
 
       # Compute the Einstein radius in radians
-      reinst=4*pi*(sigma/constants.get('light_speed'))**2.*(Dds/Ds)
+      reinst=4*np.pi*(sigma/constants.get('light_speed'))**2.*(Dds/Ds)
       
       return reinst
 
@@ -301,7 +299,7 @@ def getcrosssect_num(bsis, q):
   if(init_cs_spl == 0):
     init_crosssect()
 
-  b_I = bsis * sqrt(q)
+  b_I = bsis * np.sqrt(q)
 
   # Compute the cross-section using the spline interpolation and return the result
   return cross_sect_spl(q) * (b_I/ fid_b_I) **2
