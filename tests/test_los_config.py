@@ -1,7 +1,8 @@
-from slsim.ParamDistributions.los_config import LOSConfig, LOSConfigParams
+from slsim.ParamDistributions.los_config import LOSConfig
 import os
 from astropy.cosmology import FlatLambdaCDM
 import pytest
+
 
 path = os.path.dirname(__file__)
 module_path, _ = os.path.split(path)
@@ -91,59 +92,3 @@ def test_nonlinear_los_corrections(los_config):
     assert isinstance(g1, float)
     assert isinstance(g2, float)
     assert isinstance(kappa, float)
-
-
-@pytest.fixture
-def los_config_params():
-    # Create an instance of LOSConfig with some default settings
-    config = LOSConfigParams()
-    return config
-
-
-def test_initialization_with_default_parameters(los_config_params):
-    assert los_config_params.mixgauss_gamma is False
-    assert los_config_params.mixgauss_means is None
-    assert los_config_params.mixgauss_stds is None
-    assert los_config_params.mixgauss_weights is None
-    assert los_config_params.los_bool is True
-    assert los_config_params.nonlinear_los_bool is False
-    assert los_config_params.nonlinear_correction_path is None
-    assert los_config_params.no_correction_path is None
-
-    assert los_config_params.create_los_config().mixgauss_gamma is False
-    assert los_config_params.create_los_config().mixgauss_means is None
-    assert los_config_params.create_los_config().mixgauss_stds is None
-    assert los_config_params.create_los_config().mixgauss_weights is None
-    assert los_config_params.create_los_config().los_bool is True
-    assert los_config_params.create_los_config().nonlinear_los_bool is False
-    assert los_config_params.create_los_config().nonlinear_correction_path is None
-    assert los_config_params.create_los_config().no_correction_path is None
-
-
-def test_other_setting_los_config_params():
-    config = LOSConfigParams(
-        los_bool=False,
-        mixgauss_gamma=True,
-        mixgauss_means=[0.1],
-        mixgauss_stds=[0.01],
-        mixgauss_weights=[1],
-        nonlinear_los_bool=True,
-        nonlinear_correction_path=path_to_h5,
-        no_correction_path=None,
-    )
-    assert not config.los_bool
-    assert config.mixgauss_gamma
-    assert config.mixgauss_means == [0.1]
-    assert config.mixgauss_stds == [0.01]
-    assert config.mixgauss_weights == [1]
-    assert config.nonlinear_los_bool
-    assert config.nonlinear_correction_path == path_to_h5
-    assert config.no_correction_path is None
-    assert not config.create_los_config().los_bool
-    assert config.create_los_config().mixgauss_gamma
-    assert config.create_los_config().mixgauss_means == [0.1]
-    assert config.create_los_config().mixgauss_stds == [0.01]
-    assert config.create_los_config().mixgauss_weights == [1]
-    assert config.create_los_config().nonlinear_los_bool
-    assert config.create_los_config().nonlinear_correction_path == path_to_h5
-    assert config.create_los_config().no_correction_path is None
