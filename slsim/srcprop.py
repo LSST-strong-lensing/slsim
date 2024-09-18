@@ -2,7 +2,7 @@
 from scipy.interpolate import interp1d
 from scipy.optimize import brentq
 import numpy as np
-import srclensprop as slp
+import slsim.srclensprop as slp
 import scipy.integrate as sci
 
 """
