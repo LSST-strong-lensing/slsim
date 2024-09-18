@@ -641,7 +641,7 @@ def Nsrc_gal(magg,magr,magi,zred,q,vdisp,myseed,kwargs_source,cosmo,constants):
   # Generate properties for each galaxy
   for ii in range(Nreal):
     galzsrc = 0.0
-    trials = 0
+    #trials = 0
     while(galzsrc < zred):
         np.random.seed(myseed)
         rr = np.random.random()
