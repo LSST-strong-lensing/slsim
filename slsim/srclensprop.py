@@ -262,8 +262,9 @@ def getreinst(zlens, zsrc, sigma, cosmo, constants):
 ## b_I changes. This implies we can initialize a cross-section spline which is a
 ## function of only q for a fiducial b_I.
 
+
 def create_crosssect_file(filename):
-    '''Create Crosssect.dat file, if not already created'''
+    """Create Crosssect.dat file, if not already created."""
 
     if os.path.exists(filename):
         print(f"{filename} already exists, exiting without creating a new file.")
