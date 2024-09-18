@@ -3,7 +3,7 @@ from astropy.table import Table
 import numpy as np
 from astropy.cosmology import FlatLambdaCDM
 from pathlib import Path
-
+from slsim.Deflectors.query_galaxies_as_deflectors import find_potential_lenses
 
 class TestFindPotentialLenses(unittest.TestCase):
 
@@ -54,7 +54,6 @@ class TestFindPotentialLenses(unittest.TestCase):
         self.constants = {"G": 4.2994e-9, "light_speed": 299792.458}
 
     def test_find_potential_lenses(self):
-        from galaxy_lens_identifier import find_potential_lenses
 
         # Call the function with the mock data
         find_potential_lenses(
