@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from math import *
+#from math import *
 import numpy as np
 import slsim.srcprop as srcprop
 import slsim.srclensprop as slp
@@ -220,10 +220,11 @@ def find_potential_lenses(
             ## keep lenses with atleat one background source and >0 velocity dispersion
             if background_source_counts > 0 and foreground_velocity_dispersion[ii] > 0:
                 for kk in range(background_source_counts):
-                    """if(foreground_redshift[ii] > 1.2*source_redshift_array[kk]):
 
-                    continue
-                    """
+                    #Ensure that the background source has redshift > 1.2*foreground redshift, to avoid numerical issues
+                    if(source_redshift_array[kk] < 1.2*foreground_redshift[ii]):
+                        continue
+                    
                     # get the Einstein radius of the foreground deflector
                     foreground_Einstein_radius = slp.getreinst(
                         foreground_redshift[ii],
