@@ -73,8 +73,8 @@ def getcaustics(b_I,q):
   r = np.sqrt(2.0) * b_I / np.sqrt(den)
 
   # Compute the coordinates for the caustics
-  x = r * np.cos(t)
-  y = r * np.sin(t)
+  ## x = r * np.cos(t)
+  ## y = r * np.sin(t)
 
   ## Generate the parametric function for the tangential caustic
   xi = np.sqrt(2.0 * (1 - q ** 2) / den)
