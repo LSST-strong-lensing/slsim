@@ -2,6 +2,7 @@
 from scipy.interpolate import interp1d
 from scipy.integrate import quad
 import numpy as np
+import os
 
 """
 This script provides a random source position which lies within the caustic
@@ -261,6 +262,23 @@ def getreinst(zlens, zsrc, sigma, cosmo, constants):
 ## b_I changes. This implies we can initialize a cross-section spline which is a
 ## function of only q for a fiducial b_I.
 
+def create_crosssect_file(filename):
+    '''Create Crosssect.dat file, if not already created'''
+
+    if os.path.exists(filename):
+        print(f"{filename} already exists, exiting without creating a new file.")
+    else:
+        print(f"File {filename} does not exist, creating it now.")
+
+        qi = np.arange(0.1, 1.0, 0.001)
+        csecti = np.zeros_like(qi)
+
+        for ii in range(qi.size):
+            csecti[ii] = getcrosssect(fid_b_I / np.sqrt(qi[ii]), qi[ii])
+
+        np.savetxt(filename, np.transpose([qi, csecti]))
+        print(f"{filename} created successfully.")
+
 
 def init_crosssect():
     """Initializes the cross-section spline interpolation from the Crosssect.dat
@@ -270,6 +288,9 @@ def init_crosssect():
 
     # Print a message indicating the initialization process
     print("Initializing Cross-section")
+
+    # create the Crosssection file, if not already created
+    create_crosssect_file("Crosssect.dat")
 
     # Load data from the file 'Crosssect.dat'
     qi, csecti = np.loadtxt("Crosssect.dat", unpack=1)
