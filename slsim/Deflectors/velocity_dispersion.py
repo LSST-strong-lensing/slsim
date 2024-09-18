@@ -353,7 +353,10 @@ def schechter_vel_disp(
         resolution=1000,
         scale=1,
     )
-    return z, vel_disp
+    # above vel_disp is measured with in the effective radius/8. So, correction factor 
+    # of 8**(-0.066) must be applied to convert to vel_disp at effective radius.
+    sigma_e = vel_disp*(8**(-0.066)) 
+    return z, sigma_e
 
 
 def schechter_vel_disp_redshift(
