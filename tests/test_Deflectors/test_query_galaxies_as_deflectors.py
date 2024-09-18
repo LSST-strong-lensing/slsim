@@ -5,6 +5,7 @@ from astropy.cosmology import FlatLambdaCDM
 from pathlib import Path
 from slsim.Deflectors.query_galaxies_as_deflectors import find_potential_lenses
 
+
 class TestFindPotentialLenses(unittest.TestCase):
 
     def setUp(self):
