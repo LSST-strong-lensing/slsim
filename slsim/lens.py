@@ -615,8 +615,16 @@ class Lens(LensedSystemBase):
         # adding line-of-sight structure
         gamma1, gamma2, kappa_ext = self.los_linear_distortions
         gamma1_lenstronomy, gamma2_lenstronomy = ellipticity_slsim_to_lenstronomy(
-            e1_slsim=gamma1, e2_slsim=gamma2)
-        kwargs_lens.append({"gamma1": gamma1_lenstronomy, "gamma2": gamma2_lenstronomy, "ra_0": 0, "dec_0": 0})
+            e1_slsim=gamma1, e2_slsim=gamma2
+        )
+        kwargs_lens.append(
+            {
+                "gamma1": gamma1_lenstronomy,
+                "gamma2": gamma2_lenstronomy,
+                "ra_0": 0,
+                "dec_0": 0,
+            }
+        )
         kwargs_lens.append({"kappa": kappa_ext, "ra_0": 0, "dec_0": 0})
         lens_mass_model_list.append("SHEAR")
         lens_mass_model_list.append("CONVERGENCE")
