@@ -43,6 +43,8 @@ class Lens(LensedSystemBase):
         los_config=None,
         sn_modeldir=None,
         los_dict=None,
+        agn_driving_variability_model=None,
+        agn_driving_kwargs_variability=None,
     ):
         """
 
@@ -91,6 +93,12 @@ class Lens(LensedSystemBase):
         :param los_dict: line of sight dictionary (optional, takes these values instead of drawing from distribution)
          Takes "gamma" = [gamma1, gamma2] and "kappa" = kappa as entries
         :type los_dict: dict
+        :param agn_driving_variability_model: Variability model with light_curve output
+         which drives the variability across all bands of the agn.
+        :type agn_driving_variability_model: str (e.g. "light_curve", "sinusoidal", "bending_power_law")
+        :param agn_driving_kwargs_variability: Dictionary containing all variability parameters
+         for the driving variability class
+        :type agn_driving_kwargs_variability: dict
         """
         super().__init__(
             source_dict=source_dict,
@@ -105,6 +113,8 @@ class Lens(LensedSystemBase):
             sn_absolute_mag_band=sn_absolute_mag_band,
             sn_absolute_zpsys=sn_absolute_zpsys,
             sn_modeldir=sn_modeldir,
+            agn_driving_variability_model=agn_driving_variability_model,
+            agn_driving_kwargs_variability=agn_driving_kwargs_variability,
         )
 
         self.cosmo = cosmo
