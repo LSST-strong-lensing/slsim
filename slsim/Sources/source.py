@@ -205,7 +205,7 @@ class Source(object):
                     # the assumed point source magnitude column
                     if self.agn_known_band is None:
                         if "ps_mag_i" in self.source_dict.colnames:
-                            self.agn_known_band = "lsst2023-i"
+                            self.agn_known_band = "lsst2016-i"
                             self.agn_known_mag = self.source_dict["ps_mag_i"]
                         else:
                             raise ValueError(
@@ -236,10 +236,23 @@ class Source(object):
 
                     # change name to be compatible with speclite filter names
                     for band in provided_lsst_bands:
-                        speclite_names.append("lsst2023-" + band)
+                        speclite_names.append("lsst2016-" + band)
 
                     # determine mean magnitudes for each band
                     mean_magnitudes = self.agn_class.get_mean_mags(speclite_names)
+
+                    # save mean magnitude of agn at given bands
+                    self._source_dict = Table(self.source_dict)
+                    for i in range(len(mean_magnitudes)):
+                        new_agn_column = Column([mean_magnitudes[i]],
+                            name="ps_mag_"+list(provided_lsst_bands)[i])
+                        if ("ps_mag_"+list(provided_lsst_bands)[i] \
+                            in self._source_dict.colnames):
+                            self._source_dict.replace_column(
+                                "ps_mag_"+list(provided_lsst_bands)[i],new_agn_column)
+                        else:
+                            self._source_dict.add_column(new_agn_column)
+                    self.source_dict = self._source_dict[0]
 
                     # Calculate light curve in each band
                     for index, band in enumerate(provided_lsst_bands):
@@ -267,11 +280,10 @@ class Source(object):
                         magnitudes = reprocessed_lightcurve[
                             "ps_mag_" + speclite_names[index]
                         ]
-
                         # Extracts the variable light curve for each band
                         kwargs_variab_extracted[band] = {
                             "MJD": times,
-                            filter_name: magnitudes,
+                            filter_name: magnitudes + self.source_dict["ps_mag_" + band]
                         }
 
             elif "MJD" in self.kwargs_variability:

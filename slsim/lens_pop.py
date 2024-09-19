@@ -26,6 +26,8 @@ class LensPop(LensedPopulationBase):
         sn_absolute_zpsys: Optional[str] = None,
         los_config: Optional[LOSConfig] = None,
         sn_modeldir: Optional[str] = None,
+        agn_driving_variability_model: Optional[str] = None,
+        agn_driving_kwargs_variability: Optional[dict] = None
     ):
         """
         Args:
@@ -45,6 +47,11 @@ class LensPop(LensedPopulationBase):
                                                    'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can be downloaded
                                                    from https://github.com/LSST-strong-lensing/data_public. For more detail,
                                                    please look at the documentation of RandomizedSupernovae class. Defaults to None.
+            agn_driving_variability_model (Optional[str], optional): Variability model with light_curve output
+            which drives the variability across all bands of the agn. eg: "light_curve", "sinusoidal", "bending_power_law"
+            agn_driving_kwargs_variability (Optional[dict], optional): Dictionary containing all variability parameters
+            for the driving variability class. eg: variable_agn_kwarg_dict = {"length_of_light_curve": 1000, "time_resolution": 1,
+            "log_breakpoint_frequency": 1 / 20, "low_frequency_slope": 1, "high_frequency_slope": 3, "normal_magnitude_variance": 0.1}
         """
 
         # TODO: ADD EXCEPTION FOR DEFLECTOR AND SOURCE POP FILTER MISMATCH
