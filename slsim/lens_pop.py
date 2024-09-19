@@ -63,6 +63,8 @@ class LensPop(LensedPopulationBase):
             sn_absolute_mag_band=sn_absolute_mag_band,
             sn_absolute_zpsys=sn_absolute_zpsys,
             sn_modeldir=sn_modeldir,
+            agn_driving_variability_model=agn_driving_variability_model,
+            agn_driving_kwargs_variability=agn_driving_kwargs_variability
         )
         self.cosmo = cosmo
         self._lens_galaxies = deflector_population
@@ -106,6 +108,9 @@ class LensPop(LensedPopulationBase):
                 lightcurve_time=self.lightcurve_time,
                 los_config=self.los_config,
                 sn_modeldir=self.sn_modeldir,
+                agn_driving_variability_model=self.agn_driving_variability_model,
+                agn_driving_kwargs_variability=self.agn_driving_kwargs_variability
+                
             )
             if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens
@@ -199,6 +204,8 @@ class LensPop(LensedPopulationBase):
                         light_profile=self._sources.light_profile,
                         lightcurve_time=self.lightcurve_time,
                         sn_modeldir=self.sn_modeldir,
+                        agn_driving_variability_model=self.agn_driving_variability_model,
+                        agn_driving_kwargs_variability=self.agn_driving_kwargs_variability
                     )
                     # Check the validity of the lens system
                     if gg_lens.validity_test(**kwargs_lens_cuts):

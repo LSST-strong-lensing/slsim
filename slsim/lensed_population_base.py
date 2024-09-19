@@ -17,6 +17,8 @@ class LensedPopulationBase(ABC):
         sn_absolute_mag_band=None,
         sn_absolute_zpsys=None,
         sn_modeldir=None,
+        agn_driving_variability_model=None,
+        agn_driving_kwargs_variability=None
     ):
         """
 
@@ -39,6 +41,12 @@ class LensedPopulationBase(ABC):
          For more detail, please look at the documentation of RandomizedSupernovae
          class.
         :type sn_modeldir: str
+        :param agn_driving_variability_model: Variability model with light_curve output
+         which drives the variability across all bands of the agn.
+        :type agn_driving_variability_model: str (e.g. "light_curve", "sinusoidal", "bending_power_law")
+        :param agn_driving_kwargs_variability: Dictionary containing all variability parameters
+         for the driving variability class
+        :type agn_driving_kwargs_variability: dict
         """
 
         self.lightcurve_time = lightcurve_time
@@ -46,6 +54,8 @@ class LensedPopulationBase(ABC):
         self.sn_absolute_mag_band = sn_absolute_mag_band
         self.sn_absolute_zpsys = sn_absolute_zpsys
         self.sn_modeldir = sn_modeldir
+        self.agn_driving_variability_model = agn_driving_variability_model
+        self.agn_driving_kwargs_variability = agn_driving_kwargs_variability
         if sky_area is None:
             from astropy.units import Quantity
 
