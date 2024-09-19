@@ -9,6 +9,7 @@ from lenstronomy.LensModel.Solver.lens_equation_solver import (
     analytical_lens_model_support,
 )
 from slsim.ParamDistributions.los_config import LOSConfig
+from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.Util import constants
 from lenstronomy.Util import data_util
@@ -613,7 +614,17 @@ class Lens(LensedSystemBase):
             )
         # adding line-of-sight structure
         gamma1, gamma2, kappa_ext = self.los_linear_distortions
-        kwargs_lens.append({"gamma1": gamma1, "gamma2": gamma2, "ra_0": 0, "dec_0": 0})
+        gamma1_lenstronomy, gamma2_lenstronomy = ellipticity_slsim_to_lenstronomy(
+            e1_slsim=gamma1, e2_slsim=gamma2
+        )
+        kwargs_lens.append(
+            {
+                "gamma1": gamma1_lenstronomy,
+                "gamma2": gamma2_lenstronomy,
+                "ra_0": 0,
+                "dec_0": 0,
+            }
+        )
         kwargs_lens.append({"kappa": kappa_ext, "ra_0": 0, "dec_0": 0})
         lens_mass_model_list.append("SHEAR")
         lens_mass_model_list.append("CONVERGENCE")
