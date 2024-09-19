@@ -354,7 +354,8 @@ def schechter_vel_disp(
         scale=1,
     )
     # above vel_disp is measured with in the effective radius/8. So, correction factor
-    # of 8**(-0.066) must be applied to convert to vel_disp at effective radius.
+    # of 8**(-0.066) must be applied to convert to vel_disp at effective radius. 
+    # This is from Cappellari et al. (2006): 10.1111/j.1365-2966.2005.09981.x
     sigma_e = vel_disp * (8 ** (-0.066))
     return z, sigma_e
 
