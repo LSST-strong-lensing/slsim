@@ -253,7 +253,7 @@ class Source(object):
                         ] = speclite_names[index]
 
                         # Set the mean magnitude of this filter
-                        self.agn_class.variable_disk.driving_signal_kwargs[
+                        self.agn_class.variable_disk.reprocessing_kwargs[
                             "mean_magnitude"
                         ] = mean_magnitudes[index]
 
