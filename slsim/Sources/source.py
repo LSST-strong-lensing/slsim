@@ -265,10 +265,9 @@ class Source(object):
                             "speclite_filter"
                         ] = speclite_names[index]
 
-                        # Set the mean magnitude of this filter
-                        self.agn_class.variable_disk.driving_signal_kwargs[
-                            "mean_magnitude"
-                        ] = mean_magnitudes[index]
+                        #Set the mean magnitude of the filter
+                        self.agn_class.variable_disk.reprocessing_kwargs[
+                            "mean_magnitude"] = mean_magnitudes[index]
 
                         # Extract the reprocessed light curve
                         reprocessed_lightcurve = reprocess_with_lamppost_model(
@@ -283,7 +282,7 @@ class Source(object):
                         # Extracts the variable light curve for each band
                         kwargs_variab_extracted[band] = {
                             "MJD": times,
-                            filter_name: magnitudes + self.source_dict["ps_mag_" + band]
+                            filter_name: magnitudes #+ self.source_dict["ps_mag_" + band]
                         }
 
             elif "MJD" in self.kwargs_variability:

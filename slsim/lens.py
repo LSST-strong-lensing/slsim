@@ -224,7 +224,8 @@ class Lens(LensedSystemBase):
         return self._point_image_positions
 
     def validity_test(
-        self, min_image_separation=0, max_image_separation=10, mag_arc_limit=None
+        self, min_image_separation=0, max_image_separation=10, mag_arc_limit=None, 
+        contrast=None
     ):
         """Check whether lensing configuration matches selection and plausibility
         criteria.
@@ -296,6 +297,20 @@ class Lens(LensedSystemBase):
             if bool_mag_limit is False:
                 return False
         # TODO make similar criteria for point source magnitudes
+        #Criteria 7: (Optional)
+        #compute the ratio between the magnitude of source and deflector magnitude 
+        # in specified band.
+        if contrast is not None:
+            if contrast["source_type"] == "point":
+                source_mag = min(self.point_source_magnitude(contrast["band"],
+                 lensed=True))
+            else:
+                source_mag = min(self.extended_source_magnitude(contrast["band"],
+                 lensed=True))
+            deflector_mag=self.deflector.magnitude(contrast["band"])
+            ratio = source_mag/deflector_mag
+            if ratio > contrast["mag_ratio_max"]:
+                return False
         return True
         # TODO: test for signal-to-noise ratio in surface brightness
 
