@@ -282,7 +282,7 @@ class Source(object):
                         # Extracts the variable light curve for each band
                         kwargs_variab_extracted[band] = {
                             "MJD": times,
-                            filter_name: magnitudes #+ self.source_dict["ps_mag_" + band]
+                            filter_name: magnitudes
                         }
 
             elif "MJD" in self.kwargs_variability:
