@@ -80,6 +80,7 @@ class Variability(object):
             self.accretion_disk_reprocessor = AccretionDiskReprocessing(
                 "lamppost", **self.agn_kwargs
             )
+            self.accretion_disk_reprocessor.redshift = self.redshift
 
             if (
                 "time_array" in self.signal_kwargs
@@ -235,7 +236,6 @@ def reprocess_with_lamppost_model(variability):
         if "mean_magnitude" in variability.reprocessing_kwargs.keys():
             reprocessed_signal -= np.mean(reprocessed_signal)
             reprocessed_signal += variability.reprocessing_kwargs["mean_magnitude"]
-
         light_curve = {
             "MJD": variability.signal_kwargs["time_array"],
             "ps_mag_" + str(speclite_filter): reprocessed_signal,
