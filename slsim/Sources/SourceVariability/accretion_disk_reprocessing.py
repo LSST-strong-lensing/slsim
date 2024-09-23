@@ -69,6 +69,10 @@ class AccretionDiskReprocessing(object):
 
             self.time_array = None
             self.magnitude_array = None
+        if "redshift" in self.kwargs_model:
+            self.redshift = self.kwargs_model["redshift"]
+        else:
+            self.redshift = 0
 
     def define_new_response_function(self, rest_frame_wavelength_in_nanometers):
         """Define a response function of the agn accretion disk to the flaring corona in
@@ -261,13 +265,27 @@ class AccretionDiskReprocessing(object):
             interpolated_signal, (interpolated_response_function), mode="full"
         )
 
+        # bring the reprocessed signal to the observer frame
+        interpolation_of_reprocessed_signal = interpolate.interp1d(
+            signal_time_axis,
+            reprocessed_signal[: len(signal_time_axis)],
+            bounds_error=False,
+            fill_value=0,
+        )
+        redshifted_time_axis = signal_time_axis / (1 + self.redshift)
+        reprocessed_signal_in_observed_frame = interpolation_of_reprocessed_signal(
+            redshifted_time_axis
+        )
+
         normalization = np.nansum(interpolated_response_function)
         if normalization == 0:
-            reprocessed_signal = interpolated_signal
+            reprocessed_signal_in_observed_frame = intrinsic_signal.magnitude(
+                redshifted_time_axis
+            )
         else:
-            reprocessed_signal /= normalization
+            reprocessed_signal_in_observed_frame /= normalization
 
-        return reprocessed_signal[: len(self.time_array)]
+        return reprocessed_signal_in_observed_frame[: len(self.time_array)]
 
     def determine_agn_luminosity_from_known_luminosity(
         self,
