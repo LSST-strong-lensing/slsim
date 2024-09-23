@@ -265,9 +265,10 @@ class Source(object):
                             "speclite_filter"
                         ] = speclite_names[index]
 
-                        #Set the mean magnitude of the filter
+                        # Set the mean magnitude of this filter
                         self.agn_class.variable_disk.reprocessing_kwargs[
-                            "mean_magnitude"] = mean_magnitudes[index]
+                            "mean_magnitude"
+                        ] = mean_magnitudes[index]
 
                         # Extract the reprocessed light curve
                         reprocessed_lightcurve = reprocess_with_lamppost_model(
