@@ -51,6 +51,7 @@ def test_opsim_time_series_images_data():
         MJD_min=60000,
         MJD_max=60500,
         print_warning=False,
+        opsim_path="../../data/OpSim_database/baseline_v3.0_10yrs.db"
     )
 
     assert isinstance(opsim_data, list)  # is opsim_data a list?
@@ -111,5 +112,6 @@ def test_opsim_variable_lens_injection(pes_lens_instance):
         exposure_data=expo_data,
     )
 
-    mask = np.isin(expo_data["band"], bands)
+    expo_bands = np.array([b for b in expo_data["band"]])
+    mask = np.isin(expo_bands, bands)
     assert len(results) == len(expo_data[mask])

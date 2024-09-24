@@ -209,7 +209,11 @@ def opsim_variable_lens_injection(
     final_image_col = Column(name="injected_lens", data=final_image)
 
     # Create a new Table with only the bands of interest
-    mask = np.isin(exposure_data["band"], bands)
+    expo_bands = np.array([b for b in exposure_data["band"]])
+    mask = np.isin(expo_bands, bands)
     exposure_data_new = exposure_data[mask]
+
+    # if len(exposure_data_new) > 0:
     exposure_data_new.add_columns([lens_col, final_image_col])
+
     return exposure_data_new
