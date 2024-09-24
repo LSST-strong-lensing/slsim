@@ -8,7 +8,6 @@ from slsim.LsstSciencePipeline.opsim_pipeline import (
     opsim_time_series_images_data,
 )
 import pytest
-import pickle
 
 @pytest.fixture
 def pes_lens_instance():
