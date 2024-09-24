@@ -99,6 +99,7 @@ class Agn(object):
         self.kwargs_model["magnitude_array"] = driving_variability.variability_at_time(
             self.kwargs_model["time_array"]
         )
+        self.kwargs_model["redshift"] = self.redshift
 
         # Create the lamppost reprocessor with a driving light curve that remains static
         self.variable_disk = Variability("lamppost_reprocessed", **self.kwargs_model)
