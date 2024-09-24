@@ -9,6 +9,7 @@ from slsim.LsstSciencePipeline.opsim_pipeline import (
 )
 import pytest
 
+
 @pytest.fixture
 def pes_lens_instance():
     path = os.path.dirname(__file__)
@@ -49,33 +50,54 @@ def test_opsim_time_series_images_data():
         obs_strategy="baseline_v3.0_10yrs",
         MJD_min=60000,
         MJD_max=60500,
-        print_warning=False)
+        print_warning=False,
+    )
 
     assert isinstance(opsim_data, list)  # is opsim_data a list?
-    assert len(opsim_data) == len(dec_points)  # does it have the same length as number of points given?
-    assert opsim_data[0].keys() == ['bkg_noise',  # does it contain the right data columns?
-                                     'psf_kernel',
-                                     'obs_time',
-                                     'expo_time',
-                                     'zero_point',
-                                     'calexp_center',
-                                     'band']
-    assert isinstance(opsim_data[0]['bkg_noise'][0], float)  # are entries from bkg_noise floats?
-    assert opsim_data[0]['psf_kernel'][0].ndim == 2  # is psf_kernel a 2 dimensional array?
-    assert isinstance(opsim_data[0]['obs_time'][0], float)  # are entries from obs_time floats?
-    assert isinstance(opsim_data[0]['expo_time'][0], float)  # are entries from expo_time floats?
-    assert isinstance(opsim_data[0]['zero_point'][0], float)  # are entries from zero_point floats?
-    assert isinstance(opsim_data[0]['calexp_center'][0], np.ndarray)  # is calexp_center an array?
-    assert opsim_data[0]['calexp_center'][0].shape == (2,)  # is calexp_center an array of length 2?
-    assert all(isinstance(item, float) for item in opsim_data[0]['calexp_center'][0])  # are entries floats?
-    assert isinstance(opsim_data[0]['band'][0], str)  # are entries from band strings?
+    assert len(opsim_data) == len(
+        dec_points
+    )  # does it have the same length as number of points given?
+    assert opsim_data[0].keys() == [
+        "bkg_noise",  # does it contain the right data columns?
+        "psf_kernel",
+        "obs_time",
+        "expo_time",
+        "zero_point",
+        "calexp_center",
+        "band",
+    ]
+    assert isinstance(
+        opsim_data[0]["bkg_noise"][0], float
+    )  # are entries from bkg_noise floats?
+    assert (
+        opsim_data[0]["psf_kernel"][0].ndim == 2
+    )  # is psf_kernel a 2 dimensional array?
+    assert isinstance(
+        opsim_data[0]["obs_time"][0], float
+    )  # are entries from obs_time floats?
+    assert isinstance(
+        opsim_data[0]["expo_time"][0], float
+    )  # are entries from expo_time floats?
+    assert isinstance(
+        opsim_data[0]["zero_point"][0], float
+    )  # are entries from zero_point floats?
+    assert isinstance(
+        opsim_data[0]["calexp_center"][0], np.ndarray
+    )  # is calexp_center an array?
+    assert opsim_data[0]["calexp_center"][0].shape == (
+        2,
+    )  # is calexp_center an array of length 2?
+    assert all(
+        isinstance(item, float) for item in opsim_data[0]["calexp_center"][0]
+    )  # are entries floats?
+    assert isinstance(opsim_data[0]["band"][0], str)  # are entries from band strings?
 
 
 def test_opsim_variable_lens_injection(pes_lens_instance):
     lens_class = pes_lens_instance
 
     # Load example opsim data format
-    expo_data = Table.read('../TestData/expo_data_opsim.hdf5', path='data')
+    expo_data = Table.read("../TestData/expo_data_opsim.hdf5", path="data")
 
     transform_pix2angle = np.array([[0.2, 0], [0, 0.2]])
     bands = ["g", "r", "i"]
