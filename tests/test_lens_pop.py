@@ -364,6 +364,16 @@ def test_supernovae_lens_pop_instance():
     assert "z" in ps_lens_class.source.source_dict.colnames
     assert len(ps_lens_class.source.source_dict) == 1
     assert abs(len(ps_lens_population_1) - len(ps_lens_population_1_speed)) <= 12
+    with pytest.raises(ValueError):
+        LensPop(
+        deflector_population=lens_galaxies_1,
+        source_population=source_galaxies_1,
+        cosmo=cosmo,
+        lightcurve_time=time_range,
+        sn_type="Ia",
+        sn_absolute_mag_band="bessellb",
+        sn_absolute_zpsys="ab"
+    )
 
 
 def test_num_lenses_and_sources(gg_lens_pop_instance):
