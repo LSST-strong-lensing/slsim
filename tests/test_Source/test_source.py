@@ -1,4 +1,4 @@
-from slsim.Sources.source import Source
+from slsim.Sources.source import Source, add_mean_mag_to_source_table
 import numpy as np
 import pytest
 from numpy import testing as npt
@@ -698,7 +698,12 @@ class TestSource:
             "i", image_observation_times=later_obs_time
         )
         assert broken_power_law_time_1 != broken_power_law_time_2
-
+    def test_add_mean_mag_to_source_table(self):
+        final_source_table=add_mean_mag_to_source_table(self.source_dict3,
+                        [23, 24, 25], ["i", "r", "g"])
+        assert final_source_table["ps_mag_i"] == 23
+        assert final_source_table["ps_mag_r"] == 24
+        assert final_source_table["ps_mag_g"] == 25
 
 if __name__ == "__main__":
     pytest.main()
