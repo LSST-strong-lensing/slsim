@@ -2,11 +2,6 @@ import pytest
 
 import numpy as np
 import matplotlib.pyplot as plt
-import slsim.Sources as sources
-import slsim.Pipelines as pipelines
-import slsim.Deflectors as deflectors
-
-from astropy.units import Quantity
 from astropy.cosmology import FlatLambdaCDM
 from slsim.lens import Lens
 from slsim.Plots.plot_functions import (
