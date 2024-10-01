@@ -42,12 +42,12 @@ class PointSources(SourcePopBase):
          a source. This is a population argument, not the light curve parameter for
          the individual point_source.
         :param agn_driving_variability_model: Variability model with light_curve output
-         which drives the variability across all bands of the agn. eg: "light_curve", 
+         which drives the variability across all bands of the agn. eg: "light_curve",
          "sinusoidal", "bending_power_law"
         :param agn_driving_kwargs_variability: Dictionary containing agn variability
-         parameters for the driving variability class. eg: variable_agn_kwarg_dict = 
-         {"length_of_light_curve": 1000, "time_resolution": 1, 
-         "log_breakpoint_frequency": 1 / 20, "low_frequency_slope": 1, 
+         parameters for the driving variability class. eg: variable_agn_kwarg_dict =
+         {"length_of_light_curve": 1000, "time_resolution": 1,
+         "log_breakpoint_frequency": 1 / 20, "low_frequency_slope": 1,
          "high_frequency_slope": 3, "normal_magnitude_variance": 0.1}
         :param light_profile: keyword for number of sersic profile to use in source
          light model. Always None for this class.
@@ -75,7 +75,7 @@ class PointSources(SourcePopBase):
             variability_model=variability_model,
             kwargs_variability_model=kwargs_variability_model,
             agn_driving_variability_model=agn_driving_variability_model,
-            agn_driving_kwargs_variability=agn_driving_kwargs_variability
+            agn_driving_kwargs_variability=agn_driving_kwargs_variability,
         )
         self.source_type = "point_source"
 

@@ -100,8 +100,7 @@ class LensPop(LensedPopulationBase):
                 los_config=self.los_config,
                 sn_modeldir=self.sn_modeldir,
                 agn_driving_variability_model=self._sources.agn_driving_variability_model,
-                agn_driving_kwargs_variability=self._sources.agn_driving_kwargs_variability
-                
+                agn_driving_kwargs_variability=self._sources.agn_driving_kwargs_variability,
             )
             if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens
@@ -196,7 +195,7 @@ class LensPop(LensedPopulationBase):
                         lightcurve_time=self.lightcurve_time,
                         sn_modeldir=self.sn_modeldir,
                         agn_driving_variability_model=self._sources.agn_driving_variability_model,
-                        agn_driving_kwargs_variability=self._sources.agn_driving_kwargs_variability
+                        agn_driving_kwargs_variability=self._sources.agn_driving_kwargs_variability,
                     )
                     # Check the validity of the lens system
                     if gg_lens.validity_test(**kwargs_lens_cuts):

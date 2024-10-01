@@ -49,13 +49,11 @@ class LensedPopulationBase(ABC):
         self.sn_absolute_mag_band = sn_absolute_mag_band
         self.sn_absolute_zpsys = sn_absolute_zpsys
         self.sn_modeldir = sn_modeldir
-        #self.agn_driving_variability_model = agn_driving_variability_model
-        #self.agn_driving_kwargs_variability = agn_driving_kwargs_variability
+        # self.agn_driving_variability_model = agn_driving_variability_model
+        # self.agn_driving_kwargs_variability = agn_driving_kwargs_variability
         if sky_area is None:
-            #sky_area = Quantity(value=0.1, unit="deg2")
-            raise ValueError(
-                    "No sky area provided. Please provide needed sky area."
-                )
+            # sky_area = Quantity(value=0.1, unit="deg2")
+            raise ValueError("No sky area provided. Please provide needed sky area.")
         self.sky_area = sky_area
 
         if cosmo is None:

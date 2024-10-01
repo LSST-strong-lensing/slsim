@@ -12,6 +12,7 @@ from slsim.image_simulation import sharp_image
 from astropy.table import Table
 import os
 
+
 @pytest.fixture
 def quasar_lens_pop_instance():
     path = os.path.dirname(__file__)
@@ -38,17 +39,18 @@ def quasar_lens_pop_instance():
             break
     return pes_lens
 
+
 def test_create_image_montage_from_image_list(quasar_lens_pop_instance):
     lens_class = quasar_lens_pop_instance
-    image=sharp_image(
-                lens_class=lens_class,
-                band="i",
-                mag_zero_point=27,
-                delta_pix=0.2,
-                num_pix=101,
-            )
-    image_list=[image, image, image, image, image, image]
-        
+    image = sharp_image(
+        lens_class=lens_class,
+        band="i",
+        mag_zero_point=27,
+        delta_pix=0.2,
+        num_pix=101,
+    )
+    image_list = [image, image, image, image, image, image]
+
     num_rows = 2
     num_cols = 3
     t = np.linspace(0, 10, 6)
@@ -70,14 +72,14 @@ def test_create_image_montage_from_image_list(quasar_lens_pop_instance):
 
 def test_plot_montage_of_random_injected_lens(quasar_lens_pop_instance):
     lens_class = quasar_lens_pop_instance
-    image=sharp_image(
-                lens_class=lens_class,
-                band="i",
-                mag_zero_point=27,
-                delta_pix=0.2,
-                num_pix=101,
-            )
-    image_list=[image, image, image, image, image, image]
+    image = sharp_image(
+        lens_class=lens_class,
+        band="i",
+        mag_zero_point=27,
+        delta_pix=0.2,
+        num_pix=101,
+    )
+    image_list = [image, image, image, image, image, image]
 
     num_rows = 2
     num_cols = 2

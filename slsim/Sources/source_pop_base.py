@@ -6,9 +6,13 @@ class SourcePopBase(ABC):
     populations."""
 
     def __init__(
-        self, cosmo, sky_area, variability_model=None, kwargs_variability_model=None,
+        self,
+        cosmo,
+        sky_area,
+        variability_model=None,
+        kwargs_variability_model=None,
         agn_driving_variability_model=None,
-        agn_driving_kwargs_variability=None
+        agn_driving_kwargs_variability=None,
     ):
         """
 
@@ -24,12 +28,12 @@ class SourcePopBase(ABC):
          a source. This is a population argument, not the light curve parameter for
          the individual sources.
         :param agn_driving_variability_model: Variability model with light_curve output
-         which drives the variability across all bands of the agn. eg: "light_curve", 
+         which drives the variability across all bands of the agn. eg: "light_curve",
          "sinusoidal", "bending_power_law"
         :param agn_driving_kwargs_variability: Dictionary containing agn variability
-         parameters for the driving variability class. eg: variable_agn_kwarg_dict = 
-         {"length_of_light_curve": 1000, "time_resolution": 1, 
-         "log_breakpoint_frequency": 1 / 20, "low_frequency_slope": 1, 
+         parameters for the driving variability class. eg: variable_agn_kwarg_dict =
+         {"length_of_light_curve": 1000, "time_resolution": 1,
+         "log_breakpoint_frequency": 1 / 20, "low_frequency_slope": 1,
          "high_frequency_slope": 3, "normal_magnitude_variance": 0.1}
         """
         self.source_type = None
