@@ -23,7 +23,7 @@ class LensedSystemBase(ABC):
         lightcurve_time=None,
         sn_modeldir=None,
         agn_driving_variability_model=None,
-        agn_driving_kwargs_variability=None
+        agn_driving_kwargs_variability=None,
     ):
         """
         :param source_dict: source properties
@@ -72,8 +72,8 @@ class LensedSystemBase(ABC):
             lightcurve_time=lightcurve_time,
             sn_modeldir=sn_modeldir,
             agn_driving_variability_model=agn_driving_variability_model,
-            agn_driving_kwargs_variability=agn_driving_kwargs_variability
-            )
+            agn_driving_kwargs_variability=agn_driving_kwargs_variability,
+        )
         self.deflector = Deflector(
             deflector_type=deflector_type,
             deflector_dict=deflector_dict,

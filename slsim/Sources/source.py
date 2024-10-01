@@ -244,12 +244,17 @@ class Source(object):
                     # save mean magnitude of agn at given bands
                     self._source_dict = Table(self.source_dict)
                     for i in range(len(mean_magnitudes)):
-                        new_agn_column = Column([mean_magnitudes[i]],
-                            name="ps_mag_"+list(provided_lsst_bands)[i])
-                        if ("ps_mag_"+list(provided_lsst_bands)[i] \
-                            in self._source_dict.colnames):
+                        new_agn_column = Column(
+                            [mean_magnitudes[i]],
+                            name="ps_mag_" + list(provided_lsst_bands)[i],
+                        )
+                        if (
+                            "ps_mag_" + list(provided_lsst_bands)[i]
+                            in self._source_dict.colnames
+                        ):
                             self._source_dict.replace_column(
-                                "ps_mag_"+list(provided_lsst_bands)[i],new_agn_column)
+                                "ps_mag_" + list(provided_lsst_bands)[i], new_agn_column
+                            )
                         else:
                             self._source_dict.add_column(new_agn_column)
                     self.source_dict = self._source_dict[0]
@@ -283,7 +288,7 @@ class Source(object):
                         # Extracts the variable light curve for each band
                         kwargs_variab_extracted[band] = {
                             "MJD": times,
-                            filter_name: magnitudes
+                            filter_name: magnitudes,
                         }
 
             elif "MJD" in self.kwargs_variability:

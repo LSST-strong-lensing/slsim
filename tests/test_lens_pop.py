@@ -16,10 +16,11 @@ from slsim.lens_pop import draw_test_area
 
 sky_area = Quantity(value=0.05, unit="deg2")
 galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
-        skypy_config=None,
-        sky_area=sky_area,
-        filters=None,
-    )
+    skypy_config=None,
+    sky_area=sky_area,
+    filters=None,
+)
+
 
 def create_lens_pop_instance(return_kext=False):
 
@@ -49,7 +50,7 @@ def create_lens_pop_instance(return_kext=False):
         deflector_population=lens_galaxies,
         source_population=source_galaxies,
         cosmo=cosmo,
-        sky_area=sky_area
+        sky_area=sky_area,
     )
 
     return lenspop
@@ -92,7 +93,7 @@ def test_pes_lens_pop_instance():
         deflector_population=lens_galaxies,
         source_population=source_galaxies,
         cosmo=cosmo,
-        sky_area=sky_area
+        sky_area=sky_area,
     )
 
     kwargs_lens_cut = {}
@@ -133,7 +134,7 @@ def test_galaxies_lens_pop_halo_model_instance():
         deflector_population=lens_galaxies,
         source_population=source_galaxies,
         cosmo=cosmo,
-        sky_area=sky_area
+        sky_area=sky_area,
     )
     assert g_lens_halo_model_pop._lens_galaxies.draw_deflector()["halo_mass"] != 0
 
@@ -178,7 +179,7 @@ def test_cluster_lens_pop_instance():
         deflector_population=lens_clusters,
         source_population=source_galaxies,
         cosmo=cosmo,
-        sky_area=sky_area
+        sky_area=sky_area,
     )
 
     kwargs_lens_cut = {}
@@ -196,7 +197,6 @@ def test_supernovae_plus_galaxies_lens_pop_instance():
 
     kwargs_deflector_cut = {"band": "g", "band_max": 23, "z_min": 0.01, "z_max": 2.5}
     kwargs_source_cut = {"z_min": 0.1, "z_max": 5.0}
-
 
     lens_galaxies = deflectors.AllLensGalaxies(
         red_galaxy_list=galaxy_simulation_pipeline.red_galaxies,
@@ -228,7 +228,7 @@ def test_supernovae_plus_galaxies_lens_pop_instance():
         deflector_population=lens_galaxies,
         source_population=source_galaxies,
         cosmo=cosmo,
-        sky_area=sky_area
+        sky_area=sky_area,
     )
     kwargs_lens_cut = {}
     pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
@@ -287,7 +287,7 @@ def test_supernovae_plus_galaxies_lens_pop_instance_2():
         sn_type="Ia",
         sn_absolute_mag_band="bessellb",
         sn_absolute_zpsys="ab",
-        sky_area=sky_area
+        sky_area=sky_area,
     )
     kwargs_lens_cut = {}
     pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
@@ -348,7 +348,7 @@ def test_supernovae_lens_pop_instance():
         sn_type="Ia",
         sn_absolute_mag_band="bessellb",
         sn_absolute_zpsys="ab",
-        sky_area=sky_area_pop
+        sky_area=sky_area_pop,
     )
     # drawing population
     kwargs_lens_cuts = {}
@@ -366,14 +366,14 @@ def test_supernovae_lens_pop_instance():
     assert abs(len(ps_lens_population_1) - len(ps_lens_population_1_speed)) <= 12
     with pytest.raises(ValueError):
         LensPop(
-        deflector_population=lens_galaxies_1,
-        source_population=source_galaxies_1,
-        cosmo=cosmo,
-        lightcurve_time=time_range,
-        sn_type="Ia",
-        sn_absolute_mag_band="bessellb",
-        sn_absolute_zpsys="ab"
-    )
+            deflector_population=lens_galaxies_1,
+            source_population=source_galaxies_1,
+            cosmo=cosmo,
+            lightcurve_time=time_range,
+            sn_type="Ia",
+            sn_absolute_mag_band="bessellb",
+            sn_absolute_zpsys="ab",
+        )
 
 
 def test_num_lenses_and_sources(gg_lens_pop_instance):

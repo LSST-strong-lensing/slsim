@@ -36,12 +36,12 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
          a source. This is a population argument, not the light curve parameter for
          the individual source.
         :param agn_driving_variability_model: Variability model with light_curve output
-         which drives the variability across all bands of the agn. eg: "light_curve", 
+         which drives the variability across all bands of the agn. eg: "light_curve",
          "sinusoidal", "bending_power_law"
         :param agn_driving_kwargs_variability: Dictionary containing agn variability
-         parameters for the driving variability class. eg: variable_agn_kwarg_dict = 
-         {"length_of_light_curve": 1000, "time_resolution": 1, 
-         "log_breakpoint_frequency": 1 / 20, "low_frequency_slope": 1, 
+         parameters for the driving variability class. eg: variable_agn_kwarg_dict =
+         {"length_of_light_curve": 1000, "time_resolution": 1,
+         "log_breakpoint_frequency": 1 / 20, "low_frequency_slope": 1,
          "high_frequency_slope": 3, "normal_magnitude_variance": 0.1}
         :param light_profile: keyword for number of sersic profile to use in source
          light model. accepted kewords: "single_sersic", "double_sersic".
@@ -51,7 +51,7 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
          catalog, they need to specify it.
         :type catalog_type: str. eg: "scotch" or None
         """
-    
+
         object_list = object_cut(
             point_plus_extended_sources_list,
             list_type=list_type,
@@ -69,9 +69,12 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
             catalog_type=catalog_type,
         )
         SourcePopBase.__init__(
-            self, cosmo=cosmo, sky_area=sky_area, variability_model=variability_model,
-              kwargs_variability_model=kwargs_variability_model, 
-              agn_driving_variability_model=agn_driving_variability_model,
-              agn_driving_kwargs_variability=agn_driving_kwargs_variability
+            self,
+            cosmo=cosmo,
+            sky_area=sky_area,
+            variability_model=variability_model,
+            kwargs_variability_model=kwargs_variability_model,
+            agn_driving_variability_model=agn_driving_variability_model,
+            agn_driving_kwargs_variability=agn_driving_kwargs_variability,
         )
         self.source_type = "point_plus_extended"
