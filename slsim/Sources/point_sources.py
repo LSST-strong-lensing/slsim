@@ -15,6 +15,8 @@ class PointSources(SourcePopBase):
         kwargs_cut,
         variability_model=None,
         kwargs_variability_model=None,
+        agn_driving_variability_model=None,
+        agn_driving_kwargs_variability=None,
         light_profile=None,
         list_type="astropy_table",
     ):
@@ -39,6 +41,14 @@ class PointSources(SourcePopBase):
         :param kwargs_variability_model: keyword arguments for the variability of
          a source. This is a population argument, not the light curve parameter for
          the individual point_source.
+        :param agn_driving_variability_model: Variability model with light_curve output
+         which drives the variability across all bands of the agn. eg: "light_curve", 
+         "sinusoidal", "bending_power_law"
+        :param agn_driving_kwargs_variability: Dictionary containing agn variability
+         parameters for the driving variability class. eg: variable_agn_kwarg_dict = 
+         {"length_of_light_curve": 1000, "time_resolution": 1, 
+         "log_breakpoint_frequency": 1 / 20, "low_frequency_slope": 1, 
+         "high_frequency_slope": 3, "normal_magnitude_variance": 0.1}
         :param light_profile: keyword for number of sersic profile to use in source
          light model. Always None for this class.
         :param list_type: type of the format of the source catalog. It should be either
@@ -47,6 +57,8 @@ class PointSources(SourcePopBase):
 
         self.n = len(point_source_list)
         self.light_profile = light_profile
+        self.agn_driving_variability_model = agn_driving_variability_model
+        self.agn_driving_kwargs_variability = agn_driving_kwargs_variability
         if self.light_profile is not None:
             warning_msg = (
                 "The provided light profile %s is not used to describe the point "
