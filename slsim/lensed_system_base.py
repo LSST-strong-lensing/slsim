@@ -57,8 +57,13 @@ class LensedSystemBase(ABC):
         :param agn_driving_variability_model: Variability model with light_curve output
          which drives the variability across all bands of the agn.
         :type agn_driving_variability_model: str (e.g. "light_curve", "sinusoidal", "bending_power_law")
-        :param agn_driving_kwargs_variability: Dictionary containing all variability parameters
-         for the driving variability class
+        :param agn_driving_kwargs_variability: Dictionary containing agn variability
+         parameters for the driving variability class. eg: variable_agn_kwarg_dict =
+         {"length_of_light_curve": 1000, "time_resolution": 1,
+         "log_breakpoint_frequency": 1 / 20, "low_frequency_slope": 1,
+         "high_frequency_slope": 3, "normal_magnitude_variance": 0.1}. For the detailed 
+          explanation of these parameters, see generate_signal() function in 
+          astro_util.py.
         :type agn_driving_kwargs_variability: dict
         """
         self.source = Source(

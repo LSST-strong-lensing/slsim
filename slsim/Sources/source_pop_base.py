@@ -34,7 +34,9 @@ class SourcePopBase(ABC):
          parameters for the driving variability class. eg: variable_agn_kwarg_dict =
          {"length_of_light_curve": 1000, "time_resolution": 1,
          "log_breakpoint_frequency": 1 / 20, "low_frequency_slope": 1,
-         "high_frequency_slope": 3, "normal_magnitude_variance": 0.1}
+         "high_frequency_slope": 3, "normal_magnitude_variance": 0.1}. For the detailed 
+          explanation of these parameters, see generate_signal() function in 
+          astro_util.py.
         """
         self.source_type = None
         self.sky_area = sky_area
