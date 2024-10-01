@@ -51,8 +51,7 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
          catalog, they need to specify it.
         :type catalog_type: str. eg: "scotch" or None
         """
-        self.agn_driving_variability_model = agn_driving_variability_model
-        self.agn_driving_kwargs_variability = agn_driving_kwargs_variability
+    
         object_list = object_cut(
             point_plus_extended_sources_list,
             list_type=list_type,
@@ -70,6 +69,9 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
             catalog_type=catalog_type,
         )
         SourcePopBase.__init__(
-            self, cosmo, sky_area, variability_model, kwargs_variability_model
+            self, cosmo=cosmo, sky_area=sky_area, variability_model=variability_model,
+              kwargs_variability_model=kwargs_variability_model, 
+              agn_driving_variability_model=agn_driving_variability_model,
+              agn_driving_kwargs_variability=agn_driving_kwargs_variability
         )
         self.source_type = "point_plus_extended"

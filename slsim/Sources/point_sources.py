@@ -57,8 +57,6 @@ class PointSources(SourcePopBase):
 
         self.n = len(point_source_list)
         self.light_profile = light_profile
-        self.agn_driving_variability_model = agn_driving_variability_model
-        self.agn_driving_kwargs_variability = agn_driving_kwargs_variability
         if self.light_profile is not None:
             warning_msg = (
                 "The provided light profile %s is not used to describe the point "
@@ -76,6 +74,8 @@ class PointSources(SourcePopBase):
             sky_area=sky_area,
             variability_model=variability_model,
             kwargs_variability_model=kwargs_variability_model,
+            agn_driving_variability_model=agn_driving_variability_model,
+            agn_driving_kwargs_variability=agn_driving_kwargs_variability
         )
         self.source_type = "point_source"
 
