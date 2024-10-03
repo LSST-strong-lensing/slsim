@@ -249,23 +249,6 @@ class Source(object):
                     self.source_dict = add_mean_mag_to_source_table(
                         self.source_dict, mean_magnitudes, provided_lsst_bands
                     )
-                    """self._source_dict = Table(self.source_dict) for i in
-                    range(len(mean_magnitudes)): new_agn_column = Column(
-                    [mean_magnitudes[i]],
-
-                            name="ps_mag_" + list(provided_lsst_bands)[i],
-                        )
-                        if (
-                            "ps_mag_" + list(provided_lsst_bands)[i]
-                            in self._source_dict.colnames
-                        ):
-                            self._source_dict.replace_column(
-                                "ps_mag_" + list(provided_lsst_bands)[i], new_agn_column
-                            )
-                        else:
-                            self._source_dict.add_column(new_agn_column)
-                    self.source_dict = self._source_dict[0]
-                    """
 
                     # Calculate light curve in each band
                     for index, band in enumerate(provided_lsst_bands):
