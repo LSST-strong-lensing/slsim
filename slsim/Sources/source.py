@@ -205,7 +205,7 @@ class Source(object):
                     # the assumed point source magnitude column
                     if self.agn_known_band is None:
                         if "ps_mag_i" in self.source_dict.colnames:
-                            self.agn_known_band = "lsst2023-i"
+                            self.agn_known_band = "lsst2016-i"
                             self.agn_known_mag = self.source_dict["ps_mag_i"]
                         else:
                             raise ValueError(
@@ -236,10 +236,19 @@ class Source(object):
 
                     # change name to be compatible with speclite filter names
                     for band in provided_lsst_bands:
-                        speclite_names.append("lsst2023-" + band)
+                        speclite_names.append("lsst2016-" + band)
 
                     # determine mean magnitudes for each band
                     mean_magnitudes = self.agn_class.get_mean_mags(speclite_names)
+
+                    # Our input quasar catalog has magnitude only in i band. So, Agn
+                    # class has computed mean magnitude of the given quasar in all lsst
+                    # bands using available i-band magnitude. We want to save mean
+                    # magnitudes of quasar at all bands so that we can access them at
+                    # anytime.
+                    self.source_dict = add_mean_mag_to_source_table(
+                        self.source_dict, mean_magnitudes, provided_lsst_bands
+                    )
 
                     # Calculate light curve in each band
                     for index, band in enumerate(provided_lsst_bands):
@@ -267,7 +276,6 @@ class Source(object):
                         magnitudes = reprocessed_lightcurve[
                             "ps_mag_" + speclite_names[index]
                         ]
-
                         # Extracts the variable light curve for each band
                         kwargs_variab_extracted[band] = {
                             "MJD": times,
@@ -587,3 +595,26 @@ def extract_agn_kwargs_from_source_dict(source_dict):
         if kwarg in column_names:
             agn_kwarg_dict[kwarg] = source_dict[kwarg].data[0]
     return agn_kwarg_dict
+
+
+def add_mean_mag_to_source_table(sourcedict, mean_mags, band_list):
+    """This function adds/replace given mean magnitudes in given bands in a given source
+    table/dict.
+
+    :param sourcedict: Given source table.
+    :param mean_mags: list of mean magnitudes in different bands.
+    :param band_list: list of bands corresponding to mean_mags.
+    :return: source table with additional columns corresponding to given mean
+        magnitudes.
+    """
+    _source_dict = Table(sourcedict)
+    for i in range(len(mean_mags)):
+        new_agn_column = Column(
+            [mean_mags[i]],
+            name="ps_mag_" + list(band_list)[i],
+        )
+        if "ps_mag_" + list(band_list)[i] in _source_dict.colnames:
+            _source_dict.replace_column("ps_mag_" + list(band_list)[i], new_agn_column)
+        else:
+            _source_dict.add_column(new_agn_column)
+    return _source_dict[0]

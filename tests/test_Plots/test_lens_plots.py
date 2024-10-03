@@ -47,6 +47,7 @@ def gg_lens_pop_instance():
         deflector_population=lens_galaxies,
         source_population=source_galaxies,
         cosmo=cosmo,
+        sky_area=sky_area,
     )
 
     return lenspop
@@ -104,6 +105,7 @@ def gg_roman_lens_pop_instance():
         deflector_population=lens_galaxies,
         source_population=source_galaxies,
         cosmo=cosmo,
+        sky_area=sky_area,
     )
 
     return lenspop
