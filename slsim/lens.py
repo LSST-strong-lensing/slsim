@@ -463,10 +463,10 @@ class Lens(LensedSystemBase):
         arrival_times = self.point_source_arrival_times()
         if type(t_obs) is np.ndarray and len(t_obs) > 1:
             observer_times = (
-                t_obs[:, np.newaxis] + arrival_times - np.min(arrival_times)
+                t_obs[:, np.newaxis] - arrival_times + np.min(arrival_times)
             ).T
         else:
-            observer_times = (t_obs + arrival_times - np.min(arrival_times))[
+            observer_times = (t_obs - arrival_times + np.min(arrival_times))[
                 :, np.newaxis
             ]
 
