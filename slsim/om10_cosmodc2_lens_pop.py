@@ -12,12 +12,14 @@ class OM10LensPop(LensedPopulationBase):
     All object that inherit from Lensed Sample must contain the methods it contains.
     """
 
-    def __init__(self, sky_area=None, cosmo=None, catalog_config="data/OM10", gamma=2):
+    def __init__(self, sky_area=None, cosmo=None, catalog_config="data/OM10"):
         """
-        :param source_type: type of the source
-        :type source_type: string
         :param sky_area: Sky area (solid angle) over which galaxies are sampled.
         :type sky_area: `~astropy.units.Quantity`
+        :param cosmo: cosmology object
+        :type cosmo: `~astropy.cosmology.FLRW`
+        :param catalog_config: Path to catalog
+        :type catalog_config: string
         """
         super().__init__(sky_area, cosmo)
         from slsim.Deflectors.om10_lens_galaxies import (
@@ -41,7 +43,6 @@ class OM10LensPop(LensedPopulationBase):
             source_input=self._pipeline.sources, cosmo=cosmo, sky_area=sky_area
         )
         self.cosmo = cosmo
-        self.gamma = gamma
 
     def select_lens_at_random(self):
         """Draw a random lens within the cuts of the lens and source, with possible

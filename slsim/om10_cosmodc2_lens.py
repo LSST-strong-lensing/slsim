@@ -18,9 +18,11 @@ class OM10LensSystem(LensedSystemBase):
         cosmo,
         test_area=4 * np.pi,
         magnification_limit=0.001,
-        gamma=2,
     ):
         """
+        Initialized OM10 Lens object.
+        Assumes that the source_dict has the following columns:
+        ['XSRC', 'YSRC', 'redshift']
 
         :param source_dict: source properties
         :type source_dict: dict
@@ -56,11 +58,12 @@ class OM10LensSystem(LensedSystemBase):
             "center_x",
             "center_y",
         ]
-        self.gamma = gamma
 
     @property
     def deflector_position(self):
         """Center of the deflector position.
+
+        Assumes that the deflector position is fixed at 0, 0.
 
         :return: [x_pox, y_pos] in arc seconds
         """
@@ -83,6 +86,9 @@ class OM10LensSystem(LensedSystemBase):
         """Source position, either the center of the extended source or the point
         source. If not present from the catalog, it is drawn uniformly within the circle
         of the test area centered on the lens.
+
+        Assumes that the source_dict has the following columns:
+        ['XSRC', 'YSRC']
 
         :return: [x_pos, y_pos]
         """
@@ -121,6 +127,10 @@ class OM10LensSystem(LensedSystemBase):
     ):
         """Check whether lensing configuration matches selection and plausibility
         criteria.
+        Assumes that the deflector_dict has the following columns:
+        ['ZLENS']
+        Assumes that the source_dict has the following columns:
+        ['om10z']
 
         :param min_image_separation: minimum image separation
         :param max_image_separation: maximum image separation
@@ -187,16 +197,20 @@ class OM10LensSystem(LensedSystemBase):
 
     @property
     def deflector_redshift(self):
-        """
+        """Lens redshift taken from deflector_dict.
 
+        Assumes that the deflector_dict has the following columns:
+        ['ZLENS']
         :return: lens redshift
         """
         return self._deflector_dict["ZLENS"]
 
     @property
     def source_redshift(self):
-        """
+        """AGN redshift taken from source_dict.
 
+        Assumes that the source_dict has the following columns:
+        ['ZSRC']
         :return: source redshift
         """
         return self._source_dict["ZSRC"]
@@ -212,6 +226,11 @@ class OM10LensSystem(LensedSystemBase):
 
     def deflector_ellipticity(self):
         """
+        Deflector light and mass ellipticity components (e1 and e2).
+        See here for ellipticity definition: lenstronomy.Util.param_util.phi_q2_ellipticity.
+
+        Assumes that the deflector_dict has the following columns:
+        ['e1_light', 'e2_light', 'e1_mass', 'e2_mass']
 
         :return: e1_light, e2_light, e1_mass, e2_mass
         """
@@ -224,6 +243,14 @@ class OM10LensSystem(LensedSystemBase):
         return e1_light, e2_light, e1_mass, e2_mass
 
     def source_ellipticity(self):
+        """AGN Host Galaxy light ellipticity components (e1, e2).
+        See here for ellipticity definition: lenstronomy.Util.param_util.phi_q2_ellipticity.
+
+        Assumes that the source_dict has the following columns:
+        ['e1_light', 'e2_light']
+
+        :return: e1_light, e2_light
+        """
         e1_light, e2_light = float(self._source_dict["e1_light"]), float(
             self._source_dict["e2_light"]
         )
@@ -231,13 +258,19 @@ class OM10LensSystem(LensedSystemBase):
 
     def deflector_stellar_mass(self):
         """
+        Deflector stellar mass.
+        Assumes that the deflector_dict has the following columns:
+        ['stellar_mass']
 
         :return: stellar mass of deflector
         """
         return self._deflector_dict["stellar_mass"]
 
     def deflector_velocity_dispersion(self):
-        """
+        """Deflector velocity dispersion.
+
+        Assumes that the deflector_dict has the following columns:
+        ['VELDISP']
 
         :return: velocity dispersion [km/s]
         """
@@ -245,6 +278,9 @@ class OM10LensSystem(LensedSystemBase):
 
     def los_linear_distortions(self):
         """Line-of-sight distortions in shear and convergence.
+
+        Assumes that the deflector_dict has the following columns:
+        ['GAMMA', 'PHIG']
 
         :return: gamma1, gamma2, kappa
         """
@@ -261,7 +297,10 @@ class OM10LensSystem(LensedSystemBase):
         return self._gamma[0], self._gamma[1], self._kappa
 
     def deflector_magnitude(self, band="i"):
-        """Apparent magnitude of the deflector for a given band.
+        """Apparent i-band magnitude of the deflector for a given band.
+
+        Assumes that the deflector_dict has the following columns:
+        ['APMAG_I']
 
         :param band: imaging band
         :type band: string
@@ -271,6 +310,13 @@ class OM10LensSystem(LensedSystemBase):
         return self._deflector_dict["APMAG_I"]
 
     def deflector_density_power_law_slope(self):
+        """Apparent i-band magnitude of the deflector for a given band.
+
+        Assumes that the deflector_dict has the following columns:
+        ['gamma_lens']
+
+        :return: negative logarithmic projected density slope
+        """
         return self._deflector_dict["gamma_lens"]
 
     def point_source_arrival_times(self):
@@ -309,8 +355,12 @@ class OM10LensSystem(LensedSystemBase):
         return observer_times
 
     def point_source_magnitude(self, band="i", lensed=False):
-        """Point source magnitude, either unlensed (single value) or lensed (array) with
-        macro-model magnifications.
+        """Point source i-band magnitude, either unlensed (single value) or lensed
+        (array) with macro-model magnifications.
+
+        Assumes that the deflector_dict has the following columns:
+        ['MAGI_IN']
+
 
         # TODO: time-variability with time-delayed and micro-lensing # TODO: add whether
         this is apparent or absolute magnitude
@@ -331,8 +381,11 @@ class OM10LensSystem(LensedSystemBase):
         return source_mag
 
     def extended_source_magnitude(self, band="i", lensed=False):
-        """Unlensed apparent magnitude of the extended source for a given band (assumes
-        that size is the same for different bands)
+        """Unlensed apparent i-band magnitude of the extended source for a given band
+        (assumes that size is the same for different bands)
+
+        Assumes that the deflector_dict has the following columns:
+        ['mag_true_i']
 
         :param band: imaging band
         :type band: string
@@ -363,6 +416,8 @@ class OM10LensSystem(LensedSystemBase):
         """Compute the extended lensed surface brightness and calculates the integrated
         flux-weighted magnification factor of the extended host galaxy.
 
+        Implemented for LSST image cutouts with pixel_scale = 0.2, numpix = 33,
+        magnitude_zero_point = 28.17
         :return: integrated magnification factor of host magnitude
         """
         # self._extended_source_magnification = self._source_dict["magnification"]
@@ -378,7 +433,7 @@ class OM10LensSystem(LensedSystemBase):
 
             kwargs_source_mag = kwargs_params["kwargs_source"]
             kwargs_source_amp = data_util.magnitude2amplitude(
-                lightModel, kwargs_source_mag, magnitude_zero_point=27
+                lightModel, kwargs_source_mag, magnitude_zero_point=28.17
             )
 
             num_pix = 33
@@ -442,14 +497,13 @@ class OM10LensSystem(LensedSystemBase):
         # lens_mass_model_list = ["PEMD", "SHEAR"]
         lens_mass_model_list = ["EPL", "SHEAR", "CONVERGENCE"]
         theta_E = self.einstein_radius
-        e1_light_lens, e2_light_lens, e1_mass, e2_mass = self.deflector_ellipticity()
+        _, _, e1_mass, e2_mass = self.deflector_ellipticity()
         center_lens = self.deflector_position
         gamma_lens = self.deflector_density_power_law_slope()
         gamma1, gamma2, kappa_ext = self.los_linear_distortions()
         kwargs_lens = [
             {
                 "theta_E": theta_E,
-                # "gamma": self.gamma,
                 "gamma": gamma_lens,
                 "e1": e1_mass,
                 "e2": e2_mass,
@@ -465,11 +519,14 @@ class OM10LensSystem(LensedSystemBase):
     def deflector_light_model_lenstronomy(self, band=None):
         """Returns lens model instance and parameters in lenstronomy conventions.
 
+        Assumes that the deflector_dict has the following columns:
+        ['size_true', 'n_sersic']
+
         :return: lens_light_model_list, kwargs_lens_light
         """
         lens_light_model_list = ["SERSIC_ELLIPSE"]
         center_lens = self.deflector_position
-        e1_light_lens, e2_light_lens, e1_mass, e2_mass = self.deflector_ellipticity()
+        e1_light_lens, e2_light_lens, _, _ = self.deflector_ellipticity()
         # TODO
         size_lens_arcsec = self._deflector_dict["size_true"]
 
@@ -494,6 +551,9 @@ class OM10LensSystem(LensedSystemBase):
         """Returns source light model instance and parameters in lenstronomy
         conventions.
 
+        Assumes that the deflector_dict has the following columns:
+        ['size_true', 'n_sersic']
+
         :return: source_light_model_list, kwargs_source_light
         """
         source_models = {}
@@ -510,7 +570,7 @@ class OM10LensSystem(LensedSystemBase):
             {
                 "magnitude": mag_source,
                 "R_sersic": size_source_arcsec,
-                "n_sersic": float(self._source_dict["sersic_bulge"]),
+                "n_sersic": float(self._source_dict["n_sersic"]),
                 "e1": e1_light_source,
                 "e2": e2_light_source,
                 "center_x": center_source[0],
@@ -538,6 +598,9 @@ class OM10LensSystem(LensedSystemBase):
 
 def theta_e_when_source_infinity(deflector_dict=None, v_sigma=None):
     """Calculate Einstein radius in arc-seconds for a source at infinity.
+
+    Assumes that the deflector_dict has the following columns:
+        ['VELDISP']
 
     :param deflector_dict: deflector properties
     :param v_sigma: velocity dispersion in km/s

@@ -26,8 +26,4 @@ class cosmoDC2AGN(SourcePopBase):
         :return: dictionary of source
         """
         self._chosen_source = dict(self.source_table.loc[index])
-        self._chosen_source["e1_light"] = self._chosen_source["ellipticity_1_true"]
-        self._chosen_source["e2_light"] = self._chosen_source["ellipticity_2_true"]
-
-        # self._chosen_source["n_sersic"] = np.random.normal(loc=4, scale=0.001)
         return self._chosen_source
