@@ -39,6 +39,9 @@ class LensedPopulationBase(ABC):
          For more detail, please look at the documentation of RandomizedSupernovae
          class.
         :type sn_modeldir: str
+        :param agn_driving_variability_model: Variability model with light_curve output
+         which drives the variability across all bands of the agn.
+        :type agn_driving_kwargs_variability: dict
         """
 
         self.lightcurve_time = lightcurve_time
@@ -47,10 +50,8 @@ class LensedPopulationBase(ABC):
         self.sn_absolute_zpsys = sn_absolute_zpsys
         self.sn_modeldir = sn_modeldir
         if sky_area is None:
-            from astropy.units import Quantity
-
-            sky_area = Quantity(value=0.1, unit="deg2")
-            warnings.warn("No sky area provided, instead uses 0.1 deg2")
+            # sky_area = Quantity(value=0.1, unit="deg2")
+            raise ValueError("No sky area provided. Please provide needed sky area.")
         self.sky_area = sky_area
 
         if cosmo is None:

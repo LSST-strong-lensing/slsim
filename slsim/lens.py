@@ -44,6 +44,8 @@ class Lens(LensedSystemBase):
         los_config=None,
         sn_modeldir=None,
         los_dict=None,
+        agn_driving_variability_model=None,
+        agn_driving_kwargs_variability=None,
     ):
         """
 
@@ -92,6 +94,17 @@ class Lens(LensedSystemBase):
         :param los_dict: line of sight dictionary (optional, takes these values instead of drawing from distribution)
          Takes "gamma" = [gamma1, gamma2] and "kappa" = kappa as entries
         :type los_dict: dict
+        :param agn_driving_variability_model: Variability model with light_curve output
+         which drives the variability across all bands of the agn.
+        :type agn_driving_variability_model: str (e.g. "light_curve", "sinusoidal", "bending_power_law")
+        :param agn_driving_kwargs_variability: Dictionary containing agn variability
+         parameters for the driving variability class. eg: variable_agn_kwarg_dict =
+         {"length_of_light_curve": 1000, "time_resolution": 1,
+         "log_breakpoint_frequency": 1 / 20, "low_frequency_slope": 1,
+         "high_frequency_slope": 3, "normal_magnitude_variance": 0.1}. For the detailed
+          explanation of these parameters, see generate_signal() function in
+          astro_util.py.
+        :type agn_driving_kwargs_variability: dict
         """
         super().__init__(
             source_dict=source_dict,
@@ -106,6 +119,8 @@ class Lens(LensedSystemBase):
             sn_absolute_mag_band=sn_absolute_mag_band,
             sn_absolute_zpsys=sn_absolute_zpsys,
             sn_modeldir=sn_modeldir,
+            agn_driving_variability_model=agn_driving_variability_model,
+            agn_driving_kwargs_variability=agn_driving_kwargs_variability,
         )
 
         self.cosmo = cosmo
@@ -215,7 +230,10 @@ class Lens(LensedSystemBase):
         return self._point_image_positions
 
     def validity_test(
-        self, min_image_separation=0, max_image_separation=10, mag_arc_limit=None
+        self,
+        min_image_separation=0,
+        max_image_separation=10,
+        mag_arc_limit=None,
     ):
         """Check whether lensing configuration matches selection and plausibility
         criteria.
@@ -445,10 +463,10 @@ class Lens(LensedSystemBase):
         arrival_times = self.point_source_arrival_times()
         if type(t_obs) is np.ndarray and len(t_obs) > 1:
             observer_times = (
-                t_obs[:, np.newaxis] + arrival_times - np.min(arrival_times)
+                t_obs[:, np.newaxis] - arrival_times + np.min(arrival_times)
             ).T
         else:
-            observer_times = (t_obs + arrival_times - np.min(arrival_times))[
+            observer_times = (t_obs - arrival_times + np.min(arrival_times))[
                 :, np.newaxis
             ]
 
