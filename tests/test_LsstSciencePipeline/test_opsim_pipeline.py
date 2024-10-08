@@ -51,7 +51,7 @@ def test_opsim_time_series_images_data():
         MJD_min=60000,
         MJD_max=60500,
         print_warning=False,
-        opsim_path="../../data/OpSim_database/baseline_v3.0_10yrs.db"
+        opsim_path="../../data/OpSim_database/baseline_v3.0_10yrs.db",
     )
 
     assert isinstance(opsim_data, list)  # is opsim_data a list?
