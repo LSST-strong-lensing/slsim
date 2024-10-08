@@ -43,3 +43,4 @@ repos:
       - id: docformatter
         additional_dependencies: [tomli]
         args: [-r, --black, --in-place]
+        language_version: python3
