@@ -1,7 +1,7 @@
 import sncosmo
 import numpy as np
 
-from slsim.false_positive import Lens
+from slsim.false_positive import FalsePositive
 from typing import Optional, Union
 from astropy.cosmology import Cosmology
 from slsim.lens import theta_e_when_source_infinity
@@ -11,21 +11,16 @@ from slsim.Deflectors.deflectors_base import DeflectorsBase
 from slsim.lensed_population_base import LensedPopulationBase
 
 
-class LensPop(LensedPopulationBase):
+class FalsePositivePop(LensedPopulationBase):
     """Class to perform samples of lens population."""
 
     def __init__(
         self,
-        deflector_population: DeflectorsBase,
-        source_population: SourcePopBase,
+        elliptical_galaxy_population: DeflectorsBase,
+        blue_galaxy_population: SourcePopBase,
         cosmo: Optional[Cosmology] = None,
         sky_area: Optional[float] = None,
-        lightcurve_time: Optional[np.ndarray] = None,
-        sn_type: Optional[str] = None,
-        sn_absolute_mag_band: Optional[Union[str, sncosmo.Bandpass]] = None,
-        sn_absolute_zpsys: Optional[str] = None,
         los_config: Optional[LOSConfig] = None,
-        sn_modeldir: Optional[str] = None,
     ):
         """
         Args:
@@ -33,40 +28,21 @@ class LensPop(LensedPopulationBase):
             source_population (SourcePopBase): Source population as an instance of a SourcePopBase subclass
             cosmo (Optional[Cosmology], optional): AstroPy Cosmology instance. If None, defaults to flat LCDM with h0=0.7 and Om0=0.3.
                                                    Defaults to None.
-            lightcurve_time (Optional[np.ndarray], optional): Lightcurve observation time array in units of days. Defaults to None.
-            sn_type (Optional[str], optional): Supernova type (Ia, Ib, Ic, IIP, etc.). Defaults to None.
-            sn_absolute_mag_band (Optional[Union[str,sncosmo.Bandpass]], optional): Band used to normalize to absolute magnitude.
-                                                                                    Defaults to None.
-            sn_absolute_zpsys (Optional[str], optional): Zero point system, either AB or Vega, with None defaulting to AB.
-                                                         Defaults to None.
             los_config (Optional[LOSConfig], optional): Configuration for line of sight distribution. Defaults to None.
-            sn_modeldir (Optional[str], optional): sn_modeldir is the path to the directory containing files needed to initialize
-                                                   the sncosmo.model class. For example, sn_modeldir =
-                                                   'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can be downloaded
-                                                   from https://github.com/LSST-strong-lensing/data_public. For more detail,
-                                                   please look at the documentation of RandomizedSupernovae class. Defaults to None.
         """
 
         # TODO: ADD EXCEPTION FOR DEFLECTOR AND SOURCE POP FILTER MISMATCH
-        super().__init__(
-            sky_area=sky_area,
-            cosmo=cosmo,
-            lightcurve_time=lightcurve_time,
-            sn_type=sn_type,
-            sn_absolute_mag_band=sn_absolute_mag_band,
-            sn_absolute_zpsys=sn_absolute_zpsys,
-            sn_modeldir=sn_modeldir,
-        )
         self.cosmo = cosmo
-        self._lens_galaxies = deflector_population
-        self._sources = source_population
-
-        self._factor_source = self.sky_area.to_value(
+        self._lens_galaxies = elliptical_galaxy_population
+        self._sources = blue_galaxy_population
+        self.sky_area = sky_area
+        
+        """self._factor_source = self.sky_area.to_value(
             "deg2"
         ) / self._sources.sky_area.to_value("deg2")
         self._factor_deflector = self.sky_area.to_value(
             "deg2"
-        ) / self._lens_galaxies.sky_area.to_value("deg2")
+        ) / self._lens_galaxies.sky_area.to_value("deg2")"""
         self.los_config = los_config
         if self.los_config is None:
             self.los_config = LOSConfig()
@@ -84,23 +60,13 @@ class LensPop(LensedPopulationBase):
         while True:
             source = self._sources.draw_source()
             lens = self._lens_galaxies.draw_deflector()
-            gg_lens = Lens(
+            gg_lens = FalsePositive(
                 deflector_dict=lens,
                 source_dict=source,
                 deflector_type=self._lens_galaxies.deflector_profile,
-                variability_model=self._sources.variability_model,
-                kwargs_variability=self._sources.kwargs_variability,
-                sn_type=self.sn_type,
-                sn_absolute_mag_band=self.sn_absolute_mag_band,
-                sn_absolute_zpsys=self.sn_absolute_zpsys,
                 cosmo=self.cosmo,
                 source_type=self._sources.source_type,
-                light_profile=self._sources.light_profile,
-                lightcurve_time=self.lightcurve_time,
-                los_config=self.los_config,
-                sn_modeldir=self.sn_modeldir,
-                agn_driving_variability_model=self._sources.agn_driving_variability_model,
-                agn_driving_kwargs_variability=self._sources.agn_driving_kwargs_variability,
+                light_profile=self._sources.light_profile
             )
             if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens
