@@ -47,26 +47,42 @@ class Lens(LensedSystemBase):
         agn_driving_variability_model=None,
         agn_driving_kwargs_variability=None,
     ):
-        """
-
-        :param source_dict: source properties
-        :type source_dict: dict or astropy table
-        :param deflector_dict: deflector properties
-        :type deflector_dict: dict
-        :param cosmo: astropy.cosmology instance
-        :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST", "NFW_CLUSTER"
-        :type deflector_type: str
+        """:param source_dict: source properties :type source_dict: dict or astropy
+        table :param deflector_dict: deflector properties :type deflector_dict: dict
+        :param cosmo: astropy.cosmology instance :param deflector_type: type of
+        deflector, i.e. "EPL", "NFW_HERNQUIST", "NFW_CLUSTER" :type deflector_type: str
         :param source_type: type of the source 'extended' or 'point_source' or
-         'point_plus_extended' supported
-        :type source_type: str
-        :param lens_equation_solver: type of lens equation solver; currently supporting
-         "lenstronomy_analytical" and "lenstronomy_general"
-        :type lens_equation_solver: str
-        :param variability_model: keyword for variability model to be used. This is an
-         input for the Variability class.
+        'point_plus_extended' supported :type source_type: str :param
+        lens_equation_solver: type of lens equation solver; currently supporting
+        "lenstronomy_analytical" and "lenstronomy_general" :type lens_equation_solver:
+        str :param variability_model: keyword for variability model to be used.
+
+        This is an  input for the Variability class. :type variability_model: str :param
+        kwargs_variability: keyword arguments for the variability of a source.  This is
+        associated with an input for Variability class. :type kwargs_variability: list
+        of str :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.) :type sn_type: str
+        :param sn_absolute_mag_band: Band used to normalize to absolute magnitude :type
+        sn_absolute_mag_band: str or `~sncosmo.Bandpass` :param sn_absolute_zpsys:
+        Optional, AB or Vega (AB default) :type sn_absolute_zpsys: str :param test_area:
+        area of disk around one lensing galaxies to be investigated     on (in arc-
+        seconds^2) :param magnification_limit: absolute lensing magnification lower
+        limit to     register a point source (ignore highly de-magnified images) :type
+        magnification_limit: float >= 0 :param light_pro
+        file:
+        keyword for number of sersic profile to use in source         light model
+        :type light_pro
+        file:
+        str . Either "single_sersic" or "double_sersic" .        :param lightcurve_time:
+        observation time array for lightcurve in unit of days.        :type
+        lightcurve_time: array        :param sn_modeldir: sn_modeldir is the path to the
+        directory containing files         needed to initialize the sncosmo.model class.
+        For example,         sn_modeldir =
+        'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can         be
+        downloaded from
+        https://github.com/LSST-strong-lensing/data_public
         :type variability_model: str
         :param kwargs_variability: keyword arguments for the variability of a source.
-         This is associated with an input for Variability class.
+                This is associated with an input for Variability class.
         :type kwargs_variability: list of str
         :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
         :type sn_type: str
@@ -75,9 +91,9 @@ class Lens(LensedSystemBase):
         :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
         :type sn_absolute_zpsys: str
         :param test_area: area of disk around one lensing galaxies to be investigated
-            on (in arc-seconds^2)
+                on (in arc-seconds^2)
         :param magnification_limit: absolute lensing magnification lower limit to
-            register a point source (ignore highly de-magnified images)
+                register a point source (ignore highly de-magnified images)
         :type magnification_limit: float >= 0
         :param light_profile: keyword for number of sersic profile to use in source
          light model
@@ -85,25 +101,27 @@ class Lens(LensedSystemBase):
         :param lightcurve_time: observation time array for lightcurve in unit of days.
         :type lightcurve_time: array
         :param sn_modeldir: sn_modeldir is the path to the directory containing files
-         needed to initialize the sncosmo.model class. For example,
-         sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can
-         be downloaded from https://github.com/LSST-strong-lensing/data_public .
-         For more detail, please look at the documentation of RandomizedSupernovae
-         class.
+                needed to initialize the sncosmo.model class. For example,
+                sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These
+                data can          be downloaded from https://github.com/LSST-strong-
+                lensing/data_public .          For more detail, please look at the
+                documentation of RandomizedSupernovae          class.
         :type sn_modeldir: str
-        :param los_dict: line of sight dictionary (optional, takes these values instead of drawing from distribution)
-         Takes "gamma" = [gamma1, gamma2] and "kappa" = kappa as entries
+        :param los_dict: line of sight dictionary (optional, takes these values instead
+                of drawing from distribution)          Takes "gamma" = [gamma1, gamma2]
+                and "kappa" = kappa as entries
         :type los_dict: dict
         :param agn_driving_variability_model: Variability model with light_curve output
-         which drives the variability across all bands of the agn.
+                which drives the variability across all bands of the agn.
         :type agn_driving_variability_model: str (e.g. "light_curve", "sinusoidal", "bending_power_law")
         :param agn_driving_kwargs_variability: Dictionary containing agn variability
-         parameters for the driving variability class. eg: variable_agn_kwarg_dict =
-         {"length_of_light_curve": 1000, "time_resolution": 1,
-         "log_breakpoint_frequency": 1 / 20, "low_frequency_slope": 1,
-         "high_frequency_slope": 3, "normal_magnitude_variance": 0.1}. For the detailed
-          explanation of these parameters, see generate_signal() function in
-          astro_util.py.
+                parameters for the driving variability class. eg:
+                variable_agn_kwarg_dict =          {"length_of_light_curve": 1000,
+                "time_resolution": 1,          "log_breakpoint_frequency": 1 / 20,
+                "low_frequency_slope": 1,          "high_frequency_slope": 3,
+                "normal_magnitude_variance": 0.1}. For the detailed
+                explanation of these parameters, see generate_signal() function in
+                astro_util.py.
         :type agn_driving_kwargs_variability: dict
         """
         super().__init__(
@@ -241,7 +259,7 @@ class Lens(LensedSystemBase):
         :param min_image_separation: minimum image separation
         :param max_image_separation: maximum image separation
         :param mag_arc_limit: dictionary with key of bands and values of magnitude
-            limits of integrated lensed arc
+                limits of integrated lensed arc
         :type mag_arc_limit: dict with key of bands and values of magnitude limits
         :return: boolean
         """
@@ -310,35 +328,23 @@ class Lens(LensedSystemBase):
 
     @property
     def deflector_redshift(self):
-        """
-
-        :return: lens redshift
-        """
+        """:return: lens redshift."""
         return self.deflector.redshift
 
     @property
     def source_redshift(self):
-        """
-
-        :return: source redshift
-        """
+        """:return: source redshift."""
         return self.source.redshift
 
     @property
     def external_convergence(self):
-        """
-
-        :return: external convergence
-        """
+        """:return: external convergence."""
         _, _, kappa_ext = self.los_linear_distortions
         return kappa_ext
 
     @property
     def external_shear(self):
-        """
-
-        :return: the absolute external shear
-        """
+        """:return: the absolute external shear."""
         gamma1, gamma2, _ = self.los_linear_distortions
         return (gamma1**2 + gamma2**2) ** 0.5
 
@@ -378,26 +384,17 @@ class Lens(LensedSystemBase):
         return theta_E / (1 - kappa_ext)
 
     def deflector_ellipticity(self):
-        """
-
-        :return: e1_light, e2_light, e1_mass, e2_mass
-        """
+        """:return: e1_light, e2_light, e1_mass, e2_mass."""
         e1_light, e2_light = self.deflector.light_ellipticity
         e1_mass, e2_mass = self.deflector.mass_ellipticity
         return e1_light, e2_light, e1_mass, e2_mass
 
     def deflector_stellar_mass(self):
-        """
-
-        :return: stellar mass of deflector
-        """
+        """:return: stellar mass of deflector."""
         return self.deflector.stellar_mass
 
     def deflector_velocity_dispersion(self):
-        """
-
-        :return: velocity dispersion [km/s]
-        """
+        """:return: velocity dispersion [km/s]"""
         return self.deflector.velocity_dispersion(cosmo=self.cosmo)
 
     @property
@@ -454,11 +451,11 @@ class Lens(LensedSystemBase):
         image.
 
         :param t_obs: time of observation [days]. It could be a single observation time
-            or an array of observation time.
+                or an array of observation time.
         :return: time of the source when seen in the different images (without redshift
-            correction)
+                correction)
         :rtype: numpy array. Each element of the array corresponds to different image
-            observation times.
+                observation times.
         """
         arrival_times = self.point_source_arrival_times()
         if type(t_obs) is np.ndarray and len(t_obs) > 1:
@@ -483,7 +480,7 @@ class Lens(LensedSystemBase):
         :param lensed: if True, returns the lensed magnified magnitude
         :type lensed: bool
         :param time: time is a image observation time in units of days. If None,
-            provides magnitude without variability.
+                provides magnitude without variability.
         :return: point source magnitude
         """
         # TODO: might have to change conventions between extended and point source

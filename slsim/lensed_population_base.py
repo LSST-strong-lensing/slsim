@@ -18,9 +18,20 @@ class LensedPopulationBase(ABC):
         sn_absolute_zpsys=None,
         sn_modeldir=None,
     ):
-        """
+        """:param sky_area: Sky area (solid angle) over which galaxies are sampled.
 
-        :param sky_area: Sky area (solid angle) over which galaxies are sampled.
+        :type sky_area: `~astropy.units.Quantity` :param cosmo: cosmology :type cosmo:
+        ~astropy.cosmology instance :param lightcurve_time: observation time array for
+        lightcurve in unit of days. :type lightcurve_time: array :param sn_type:
+        Supernova type (Ia, Ib, Ic, IIP, etc.) :type sn_type: str :param
+        sn_absolute_mag_band: Band used to normalize to absolute magnitude :type
+        sn_absolute_mag_band: str or `~sncosmo.Bandpass` :param sn_absolute_zpsys:
+        Optional, AB or Vega (AB default) :type sn_absolute_zpsys: str :param
+        sn_modeldir: sn_modeldir is the path to the directory containing files  needed
+        to initialize the sncosmo.model class. For example,  sn_modeldir =
+        'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can  be downloaded
+        from
+        https://github.com/LSST-strong-lensing/data_public
         :type sky_area: `~astropy.units.Quantity`
         :param cosmo: cosmology
         :type cosmo: ~astropy.cosmology instance
@@ -33,14 +44,14 @@ class LensedPopulationBase(ABC):
         :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
         :type sn_absolute_zpsys: str
         :param sn_modeldir: sn_modeldir is the path to the directory containing files
-         needed to initialize the sncosmo.model class. For example,
-         sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can
-         be downloaded from https://github.com/LSST-strong-lensing/data_public .
-         For more detail, please look at the documentation of RandomizedSupernovae
-         class.
+                needed to initialize the sncosmo.model class. For example,
+                sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These
+                data can          be downloaded from https://github.com/LSST-strong-
+                lensing/data_public .          For more detail, please look at the
+                documentation of RandomizedSupernovae          class.
         :type sn_modeldir: str
         :param agn_driving_variability_model: Variability model with light_curve output
-         which drives the variability across all bands of the agn.
+                which drives the variability across all bands of the agn.
         :type agn_driving_kwargs_variability: dict
         """
 
@@ -71,7 +82,7 @@ class LensedPopulationBase(ABC):
         # as well as option to draw all lenses within the cuts within the area
 
         :return: Lens() instance with parameters of the deflector and lens and source
-            light
+                light
         """
         pass
 
@@ -98,7 +109,7 @@ class LensedPopulationBase(ABC):
         """Return full sample list of all lenses within the area.
 
         :return: List of LensedSystemBase instances with parameters of the deflectors
-            and source.
+                and source.
         :rtype: list
         """
 

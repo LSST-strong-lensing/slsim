@@ -10,12 +10,8 @@ class DeflectorBase(ABC):
     (independent of the source)"""
 
     def __init__(self, deflector_dict):
-        """
-
-
-        :param deflector_dict: parameters of the deflector
-        :type deflector_dict: dict
-        """
+        """:param deflector_dict: parameters of the deflector :type deflector_dict:
+        dict."""
 
         self._deflector_dict = deflector_dict
 
@@ -60,10 +56,7 @@ class DeflectorBase(ABC):
 
     @property
     def stellar_mass(self):
-        """
-
-        :return: stellar mass of deflector [M_sol]
-        """
+        """:return: stellar mass of deflector [M_sol]"""
         return self._deflector_dict["stellar_mass"]
 
     def magnitude(self, band):

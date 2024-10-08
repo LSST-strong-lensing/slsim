@@ -13,17 +13,18 @@ class SLHammocksPipeline:
     """Class for slhammocks configuration."""
 
     def __init__(self, slhammocks_config=None, sky_area=None, cosmo=None):
-        """
-        :param slhammocks_config: path to the deflector population csv file for 'halo-model'
-                            If None, generate the population. Not supported at this time.
+        """:param slhammocks_config: path to the deflector population csv file for
+        'halo-model' If None, generate the population.
+
+        Not supported at this time.
         :type slhammocks_config: string or None
         :type sky_area: `~astropy.units.Quantity`
-        :param sky_area: Sky area over which galaxies are sampled.
-                                Must be in units of solid angle.
+        :param sky_area: Sky area over which galaxies are sampled. Must be in units of
+                solid angle.
         :param filters: filters for SED integration
         :type filters: list of strings or None
-        :param cosmo: An instance of an astropy cosmology model
-                        (e.g., FlatLambdaCDM(H0=70, Om0=0.3)).
+        :param cosmo: An instance of an astropy cosmology model         (e.g.,
+                FlatLambdaCDM(H0=70, Om0=0.3)).
         :type cosmo: astropy.cosmology instance or None
         """
         if slhammocks_config is not None:
@@ -182,47 +183,37 @@ def halo_galaxy_population(
     TYPE_SMHM,
     **kwargs,
 ):
-    """
-    :param sky_area: Sky area over which galaxies are sampled.
-                            Must be in units of solid angle.
-    :type sky_area: `~astropy.units.Quantity`
-    :param cosmo: An instance of an astropy cosmology model
-                    (e.g., FlatLambdaCDM(H0=70, Om0=0.3)).
-    :type cosmo: astropy.cosmology instance or None
-    :param z_min: Lower limit of the redshift range when generating delector population.
-    :type z_min: float
-    :param z_max: Upper limit of the redshift range when generating delector population.
-    :type z_max: float
-    :param log10host_halo_mass_min: Lower limit of host halo mass (in log10 scale).
-    :type log10host_halo_mass_min: float
-    :param log10host_halo_mass_max: Upper limit of host halo mass (in log10 scale).
-    :type log10host_halo_mass_max: float
-    :param sigma_host_halo_concentration: Intrinsic scatter of the concentration parameter of dark matter halos.
-             Represents the variance value in a log-normal distribution. (https://arxiv.org/abs/astro-ph/0608157)
-    :type sigma_host_halo_concentration: float
-    :param sigma_central_galaxy_mass: Intrinsic scatter of the stellar-mass-halo-mass relation.
-            Represents the variance value in a log-normal distribution.
-            (https://iopscience.iop.org/article/10.3847/1538-4357/ac4cb4/pdf)
-            :type sigma_central_galaxy_mass: float
-    :param sig_tb: Scatter of the galaxy-mass-size relation only used when you set 'oguri20' in "TYPE_GAL_SIZE".
-                    Represents the variance value in a log-normal distribution.
-    :type sig_tb: float
-    :param TYPE_GAL_SIZE: Type of galaxy size model to use.
-                    (Now three available options ['vdw23', 'oguri20', 'karmakar23'])
-    :type TYPE_GAL_SIZE: str
-    :param frac_SM_IMF: Fraction of stellar M/L ratio against the Chabrier initial mass function(IMF).
-                    (e.g., 1.0 for Chabrier IMF, 1.715 for Salpeter IMF)
-    :type frac_SM_IMF: float
-    :param TYPE_SMHM: Type of fitting function for the stellar-mass-halo-mass relation for quiescent galaxies, see Behroozi et al. 2019 for detail
-                    (Currently three options ['true', 'obs', 'true_all'])
-    :type TYPE_SMHM: str
-    :param sigma8: The normalization of the power spectrum, i.e. the variance when the field is filtered with a top hat filter of radius 8 Mpc/h.
-                            This parameter is required to convert from astropy.cosmology to colossus.cosmology
-    :type sigma8: float
-    :param ns: The tilt of the primordial power spectrum. This parameter is required to convert from astropy.cosmology to colossus.cosmology
-    :type ns: float
-    :param kwargs: keyword arguments
-    :type kwargs: dict
+    """:param sky_area: Sky area over which galaxies are sampled. Must be in units of
+    solid angle. :type sky_area: `~astropy.units.Quantity` :param cosmo: An instance of
+    an astropy cosmology model (e.g., FlatLambdaCDM(H0=70, Om0=0.3)). :type cosmo:
+    astropy.cosmology instance or None :param z_min: Lower limit of the redshift range
+    when generating delector population. :type z_min: float :param z_max: Upper limit of
+    the redshift range when generating delector population. :type z_max: float :param
+    log10host_halo_mass_min: Lower limit of host halo mass (in log10 scale). :type
+    log10host_halo_mass_min: float :param log10host_halo_mass_max: Upper limit of host
+    halo mass (in log10 scale). :type log10host_halo_mass_max: float :param
+    sigma_host_halo_concentration: Intrinsic scatter of the concentration parameter of
+    dark matter halos. Represents the variance value in a log-normal distribution.
+    (https://arxiv.org/abs/astro-ph/0608157) :type sigma_host_halo_concentration: float
+    :param sigma_central_galaxy_mass: Intrinsic scatter of the stellar-mass-halo-mass
+    relation. Represents the variance value in a log-normal distribution.
+    (https://iopscience.iop.org/article/10.3847/1538-4357/ac4cb4/pdf) :type
+    sigma_central_galaxy_mass: float :param sig_tb: Scatter of the galaxy-mass-size
+    relation only used when you set 'oguri20' in "TYPE_GAL_SIZE". Represents the
+    variance value in a log-normal distribution. :type sig_tb: float :param
+    TYPE_GAL_SIZE: Type of galaxy size model to use. (Now three available options
+    ['vdw23', 'oguri20', 'karmakar23']) :type TYPE_GAL_SIZE: str :param frac_SM_IMF:
+    Fraction of stellar M/L ratio against the Chabrier initial mass function(IMF).
+    (e.g., 1.0 for Chabrier IMF, 1.715 for Salpeter IMF) :type frac_SM_IMF: float :param
+    TYPE_SMHM: Type of fitting function for the stellar-mass-halo-mass relation for
+    quiescent galaxies, see Behroozi et al. 2019 for detail (Currently three options
+    ['true', 'obs', 'true_all']) :type TYPE_SMHM: str :param sigma8: The normalization
+    of the power spectrum, i.e. the variance when the field is filtered with a top hat
+    filter of radius 8 Mpc/h. This parameter is required to convert from
+    astropy.cosmology to colossus.cosmology :type sigma8: float :param ns: The tilt of
+    the primordial power spectrum. This parameter is required to convert from
+    astropy.cosmology to colossus.cosmology :type ns: float :param kwargs: keyword
+    arguments :type kwargs: dict.
 
     :return: table_pop containing as follows:
         - 'z" : redshift
@@ -235,7 +226,6 @@ def halo_galaxy_population(
         - 'ellipticity' : ellipticity of galaxies defined as 1-q, where q is axis ratio
         - 'p_g' : position angle of galaxies in units of degree.
         - 'tb' : scale radius of galaxies appeared in Hernquist profile in units of arcsec
-
     """
 
     dz = 0.001

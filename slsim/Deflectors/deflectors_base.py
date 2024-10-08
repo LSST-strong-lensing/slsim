@@ -8,15 +8,10 @@ class DeflectorsBase(ABC):
     """
 
     def __init__(self, deflector_table, kwargs_cut, cosmo, sky_area):
-        """
-
-        :param deflector_table: table with lens parameters
-        :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max
-        :type kwargs_cut: dict
-        :param cosmo: astropy.cosmology instance
-        :type sky_area: `~astropy.units.Quantity`
-        :param sky_area: Sky area (solid angle) over which galaxies are sampled.
-        """
+        """:param deflector_table: table with lens parameters :param kwargs_cut: cuts in
+        parameters: band, band_mag, z_min, z_max :type kwargs_cut: dict :param cosmo:
+        astropy.cosmology instance :type sky_area: `~astropy.units.Quantity` :param
+        sky_area: Sky area (solid angle) over which galaxies are sampled."""
         self.deflector_table = deflector_table
         self.kwargs_cut = kwargs_cut
         self.cosmo = cosmo
@@ -25,16 +20,10 @@ class DeflectorsBase(ABC):
 
     @abstractmethod
     def deflector_number(self):
-        """
-
-        :return: number of deflectors after applied cuts
-        """
+        """:return: number of deflectors after applied cuts."""
         pass
 
     @abstractmethod
     def draw_deflector(self):
-        """
-
-        :return: dictionary of complete parameterization of deflector
-        """
+        """:return: dictionary of complete parameterization of deflector."""
         pass

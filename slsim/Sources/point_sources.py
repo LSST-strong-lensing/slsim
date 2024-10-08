@@ -20,41 +20,63 @@ class PointSources(SourcePopBase):
         light_profile=None,
         list_type="astropy_table",
     ):
-        """
+        """:param point_source_list: list of dictionary with quasar parameters or
+        astropy table.
 
-        :param point_source_list: list of dictionary with quasar parameters or astropy
-         table.
+        :param cosmo: cosmology :type cosmo: ~astropy.cosmology class :param sky_area:
+        Sky area over which galaxies are sampled. Must be in units of     solid angle.
+        :type sky_area: `~astropy.units.Quantity` :param kwargs_cut: cuts in parameters:
+        band, band_mag, z_min, z_max. These are  the arguments that go into the
+        deflector_cut() definition which is a general  defination for performing given
+        cuts in given catalog. For the supernovae  sample, we can only apply redshift
+        cuts because supernovae sample contains only  redshift in this stage. :type
+        kwargs_cut: dict :param variability_model: keyword for the variability model to
+        be used. This is  a population argument, not the light curve parameter for the
+        individual  point source. :param kwargs_variability_model: keyword arguments for
+        the variability of  a source. This is a population argument, not the light curve
+        parameter for  the individual point_source. :param
+        agn_driving_variability_model: Variability model with light_curve output  which
+        drives the variability across all bands of the agn. eg: "light_curve",
+        "sinusoidal", "bending_power_law" :param agn_driving_kwargs_variability:
+        Dictionary containing agn variability  parameters for the driving variability
+        class. eg: variable_agn_kwarg_dict =  {"length_of_light_curve": 1000,
+        "time_resolution": 1,  "log_breakpoint_frequency": 1 / 20,
+        "low_frequency_slope": 1,  "high_frequency_slope": 3,
+        "normal_magnitude_variance": 0.1}. For the detailed   explanation of these
+        parameters, see generate_signal() function in   astro_util.py. :param light_pro
+        file:
         :param cosmo: cosmology
         :type cosmo: ~astropy.cosmology class
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
-            solid angle.
+                solid angle.
         :type sky_area: `~astropy.units.Quantity`
         :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max. These are
-         the arguments that go into the deflector_cut() definition which is a general
-         defination for performing given cuts in given catalog. For the supernovae
-         sample, we can only apply redshift cuts because supernovae sample contains only
-         redshift in this stage.
+                the arguments that go into the deflector_cut() definition which is a
+                general          defination for performing given cuts in given catalog.
+                For the supernovae          sample, we can only apply redshift cuts
+                because supernovae sample contains only          redshift in this stage.
         :type kwargs_cut: dict
         :param variability_model: keyword for the variability model to be used. This is
-         a population argument, not the light curve parameter for the individual
-         point source.
+                a population argument, not the light curve parameter for the individual
+                point source.
         :param kwargs_variability_model: keyword arguments for the variability of
-         a source. This is a population argument, not the light curve parameter for
-         the individual point_source.
+                a source. This is a population argument, not the light curve parameter
+                for          the individual point_source.
         :param agn_driving_variability_model: Variability model with light_curve output
-         which drives the variability across all bands of the agn. eg: "light_curve",
-         "sinusoidal", "bending_power_law"
+                which drives the variability across all bands of the agn. eg:
+                "light_curve",          "sinusoidal", "bending_power_law"
         :param agn_driving_kwargs_variability: Dictionary containing agn variability
-         parameters for the driving variability class. eg: variable_agn_kwarg_dict =
-         {"length_of_light_curve": 1000, "time_resolution": 1,
-         "log_breakpoint_frequency": 1 / 20, "low_frequency_slope": 1,
-         "high_frequency_slope": 3, "normal_magnitude_variance": 0.1}. For the detailed
-          explanation of these parameters, see generate_signal() function in
-          astro_util.py.
+                parameters for the driving variability class. eg:
+                variable_agn_kwarg_dict =          {"length_of_light_curve": 1000,
+                "time_resolution": 1,          "log_breakpoint_frequency": 1 / 20,
+                "low_frequency_slope": 1,          "high_frequency_slope": 3,
+                "normal_magnitude_variance": 0.1}. For the detailed
+                explanation of these parameters, see generate_signal() function in
+                astro_util.py.
         :param light_profile: keyword for number of sersic profile to use in source
-         light model. Always None for this class.
+                light model. Always None for this class.
         :param list_type: type of the format of the source catalog. It should be either
-         astropy_table or list of astropy table.
+                astropy_table or list of astropy table.
         """
 
         self.n = len(point_source_list)

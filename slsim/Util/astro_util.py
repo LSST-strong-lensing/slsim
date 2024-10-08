@@ -871,9 +871,10 @@ def cone_radius_angle_to_physical_area(radius_rad, z, cosmo):
     :type cosmo: astropy.cosmology instance
     :return: The physical area in square megaparsecs (Mpc^2) for the given cone radius
         and redshift.
-    :rtype: float :note: The calculation incorporates the angular diameter distance,
-        highlighting the interplay between angular measurements and physical scales in
-        an expanding universe.
+    :rtype: float
+    :note: The calculation incorporates the angular diameter distance, highlighting the
+        interplay between angular measurements and physical scales in an expanding
+        universe.
     """
 
     physical_radius = cosmo.angular_diameter_distance(z) * radius_rad  # Mpc

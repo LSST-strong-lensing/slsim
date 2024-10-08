@@ -36,14 +36,17 @@ class QuasarRate(object):
 
         :param h: Hubble constant parameter H0/100, where H0 = 70 km s^-1 Mpc^-1.
         :type h: float
-        :param zeta: (1) Best fit value of the observed evolution of the quasar luminosity function
-        from SDSS DR3 survey (Richards et al. 2006: DOI: 10.1086/503559)
+        :param zeta: (1) Best fit value of the observed evolution of the quasar
+                luminosity function         from SDSS DR3 survey (Richards et al. 2006
+        : DOI: 10.1086/503559)
         :type zeta: float
-        :param xi: (2) Best fit value of the observed evolution of the quasar luminosity function
-        from SDSS DR3 survey (Richards et al. 2006: DOI: 10.1086/503559)
+        :param xi: (2) Best fit value of the observed evolution of the quasar luminosity
+                function         from SDSS DR3 survey (Richards et al. 2006
+        : DOI: 10.1086/503559)
         :type xi: float
-        :param z_star: (3) Best fit value of the observed evolution of the quasar luminosity
-        function from SDSS DR3 survey (Richards et al. 2006: DOI: 10.1086/503559)
+        :param z_star: (3) Best fit value of the observed evolution of the quasar
+                luminosity         function from SDSS DR3 survey (Richards et al. 2006
+        : DOI: 10.1086/503559)
         :type z_star: float
         :param alpha: Bright end slope of quasar luminosity density profile.
         :type alpha: float
@@ -111,7 +114,8 @@ class QuasarRate(object):
         :param z_value: Redshift value.
         :type z_value: float or np.ndarray
         :return: M_star value.
-        :rtype: float or np.ndarray :unit: mag
+        :rtype: float or np.ndarray
+        :unit: mag
         """
         z_value = np.atleast_1d(z_value)
         denominator = (
@@ -146,7 +150,8 @@ class QuasarRate(object):
         :param z_value: Redshift value.
         :type z_value: float or numpy.ndarray
         :return: dPhi_dM value in the unit of comoving volume.
-        :rtype: float or np.ndarray :unit: mag^-1 Mpc^-3
+        :rtype: float or np.ndarray
+        :unit: mag^-1 Mpc^-3
         """
         M = np.atleast_1d(M)
         z_value = np.atleast_1d(z_value)
@@ -182,10 +187,11 @@ class QuasarRate(object):
         :param z: Redshift.
         :type z: float or np.ndarray
         :param conversion: Conversion direction, either 'apparent_to_absolute' or
-            'absolute_to_apparent'.
+                'absolute_to_apparent'.
         :type conversion: str
         :return: Converted magnitude.
-        :rtype: float or np.ndarray :unit: mag
+        :rtype: float or np.ndarray
+        :unit: mag
         """
 
         DM = self.cosmo.distmod(z).value
@@ -213,7 +219,8 @@ class QuasarRate(object):
         :param z_value: Redshift value.
         :type z_value: float or np.ndarray
         :return: Comoving number density of quasars.
-        :rtype: float or np.ndarray :unit: Mpc^-3
+        :rtype: float or np.ndarray
+        :unit: Mpc^-3
         """
         M_min = self.convert_magnitude(
             m_min, z_value, conversion="apparent_to_absolute"

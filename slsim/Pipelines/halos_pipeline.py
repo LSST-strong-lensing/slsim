@@ -22,7 +22,8 @@ class HalosSkyPyPipeline:
     ):
         """Initialize the class with the given parameters.
 
-        :param skypy_config: Path to SkyPy configuration yaml file. If None, the default SkyPy configuration file is used.
+        :param skypy_config: Path to SkyPy configuration yaml file. If None, the default
+                SkyPy configuration file is used.
         :type skypy_config: str or None, optional
         :param sky_area: Sky area over which Halos are sampled. Must be in units of solid angle.
         :type sky_area: `~astropy.units.Quantity`, optional, defaults to 0.0001 deg2
@@ -35,11 +36,11 @@ class HalosSkyPyPipeline:
         :type sigma_8: float, optional, defaults to 0.81
         :type n_s: float, optional, defaults to 0.96
         :type omega_m: float, optional, defaults to 0.30966
-        :param sigma_8: matter density fluctuations on a (8 h-1 Mpc), defaults to 0.81 if not
-            specified.
+        :param sigma_8: matter density fluctuations on a (8 h-1 Mpc), defaults to 0.81
+                if not             specified.
         :param n_s: Spectral index, defaults to 0.96 if not specified.
-        :param omega_m: Omega_m in Cosnmology, defaults to none which will lead to the same
-            in Cosmology setting.
+        :param omega_m: Omega_m in Cosnmology, defaults to none which will lead to the
+                same             in Cosmology setting.
         """
 
         path = os.path.dirname(slsim.__file__)

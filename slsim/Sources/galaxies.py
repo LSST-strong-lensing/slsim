@@ -22,22 +22,26 @@ class Galaxies(SourcePopBase):
         list_type="astropy_table",
         catalog_type=None,
     ):
-        """
+        """:param galaxy_list: An astropy table with galaxy parameters.
 
-        :param galaxy_list: An astropy table with galaxy parameters.
+        :type galaxy_list: astropy Table object. :param kwargs_cut: cuts in parameters:
+        band, band_mag, z_min, z_max :type kwargs_cut: dict :param cosmo:
+        astropy.cosmology instance :param sky_area: Sky area over which galaxies are
+        sampled. Must be in units of     solid angle. :param light_pro
+        file:
         :type galaxy_list: astropy Table object.
         :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max
         :type kwargs_cut: dict
         :param cosmo: astropy.cosmology instance
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
-            solid angle.
+                solid angle.
         :param light_profile: keyword for number of sersic profile to use in source
-         light model. accepted kewords: "single_sersic", "double_sersic".
+                light model. accepted kewords: "single_sersic", "double_sersic".
         :param list_type: format of the source catalog file. Currently, it supports a
-         single astropy table or a list of astropy tables.
+                single astropy table or a list of astropy tables.
         :type sky_area: `~astropy.units.Quantity`
         :param catalog_type: type of the catalog. If someone wants to use scotch
-         catalog, they need to specify it.
+                catalog, they need to specify it.
         :type catalog_type: str. eg: "scotch" or None
         """
         super(Galaxies, self).__init__(cosmo=cosmo, sky_area=sky_area)
@@ -245,6 +249,9 @@ def convert_to_slsim_convention(
     Galaxies class. This function is written to convert scotch catalog to slsim
     convension and to change unit of angular size in skypy source catalog to arcsec.
 
+    :param galaxy_catalog: An astropy table of galaxy catalog in other conventions.
+    :type galaxy_catalog: astropy Table object. :param light_pro
+    file:
     :param galaxy_catalog: An astropy table of galaxy catalog in other conventions.
     :type galaxy_catalog: astropy Table object.
     :param light_profile: keyword for number of sersic profile to use in source light

@@ -67,11 +67,9 @@ class RandomizedSupernova(Supernova):
         random_seed=None,
         **kwargs
     ):
-        """
-
-        :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
-        :type sn_type: str
+        """:param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.) :type sn_type: str
         :param redshift: The redshift of the source.
+
         :type redshift: float
         :param absolute_mag: Absolute magnitude of the supernova
         :type absolute_mag: float
@@ -139,7 +137,6 @@ class RandomizedSupernova(Supernova):
         :type sn_type: str
         :param random_seed: Random seed for randomization
         :type random_seed: int
-
         :return: randomized `~sncosmo.Source` class
         """
         if sn_type not in self._accepted_SN_types:

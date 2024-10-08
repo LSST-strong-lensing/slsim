@@ -23,25 +23,21 @@ class AllLensGalaxies(DeflectorsBase):
         sky_area,
         catalog_type="skypy",
     ):
-        """
-        :param red_galaxy_list: list of dictionary with elliptical galaxy
-            parameters (supporting skypy pipelines)
-        :type red_galaxy_list: astropy.Table
-        :param blue_galaxy_list: list of dictionary with spiral galaxy
-            parameters (supporting skypy pipelines)
-        :type blue_galaxy_list: astropy.Table
-        :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max
-        :type kwargs_cut: dict
-        :param kwargs_mass2light: mass-to-light relation
-        :param cosmo: astropy.cosmology instance
-        :type sky_area: `~astropy.units.Quantity`
-        :param sky_area: Sky area over which galaxies are sampled. Must be in units of
-            solid angle.
+        """:param red_galaxy_list: list of dictionary with elliptical galaxy parameters
+        (supporting skypy pipelines) :type red_galaxy_list: astropy.Table :param
+        blue_galaxy_list: list of dictionary with spiral galaxy parameters (supporting
+        skypy pipelines) :type blue_galaxy_list: astropy.Table :param kwargs_cut: cuts
+        in parameters: band, band_mag, z_min, z_max :type kwargs_cut: dict :param
+        kwargs_mass2light: mass-to-light relation :param cosmo: astropy.cosmology
+        instance :type sky_area: `~astropy.units.Quantity` :param sky_area: Sky area
+        over which galaxies are sampled.
+
+        Must be in units of     solid angle.
         :param catalog_type: type of the catalog. If user is using deflector catalog
-         other than generated from skypy pipeline, we require them to provide angular
-         size of the galaxy in arcsec and specify catalog_type as None. Otherwise, by
-         default, this class considers deflector catalog is generated using skypy
-         pipeline.
+                other than generated from skypy pipeline, we require them to provide
+                angular          size of the galaxy in arcsec and specify catalog_type
+                as None. Otherwise, by          default, this class considers deflector
+                catalog is generated using skypy          pipeline.
         :type catalog_type: str. "skypy" or None.
         """
         red_galaxy_list = catalog_with_angular_size_in_arcsec(
@@ -93,18 +89,12 @@ class AllLensGalaxies(DeflectorsBase):
         # TODO: random reshuffle of matched list
 
     def deflector_number(self):
-        """
-
-        :return: number of deflectors after applied cuts
-        """
+        """:return: number of deflectors after applied cuts."""
         number = self._num_select
         return number
 
     def draw_deflector(self):
-        """
-
-        :return: dictionary of complete parameterization of a deflector
-        """
+        """:return: dictionary of complete parameterization of a deflector."""
 
         index = random.randint(0, self._num_select - 1)
         deflector = self._galaxy_select[index]
@@ -122,11 +112,8 @@ class AllLensGalaxies(DeflectorsBase):
 
 
 def fill_table(galaxy_list):
-    """
-
-    :param galaxy_list: ~Astropy.Table instance
-    :return: table with additional columns
-    """
+    """:param galaxy_list: ~Astropy.Table instance :return: table with additional
+    columns."""
     n = len(galaxy_list)
     column_names = galaxy_list.colnames
     if "vel_disp" not in column_names:

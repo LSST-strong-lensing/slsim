@@ -260,12 +260,8 @@ def add_roman_background(image, band, detector, num_pix, exposure_time, ra, dec,
 
 
 def get_bandpass(band):
-    """
-    :param band: imaging band
-    :type band: string
-    :return: galsim bandpass object corresponding to specific band
-    :rtype: galsim Bandpass class
-    """
+    """:param band: imaging band :type band: string :return: galsim bandpass object
+    corresponding to specific band :rtype: galsim Bandpass class."""
     bandpass_key = get_bandpass_key(band)
     return roman.getBandpasses()[bandpass_key]
 
@@ -293,17 +289,12 @@ def get_bandpass_key(band):
 
 
 def _get_wcs_dict(ra, dec, date):
-    """
-    :param ra: Coordinate in space used to generate sky background
-    :type ra: float between 15 and 45
-    :param dec: Coordinate in space used to generate sky background
-    :type dec: float between -45 and -15
-    :param date: Date used to generate sky background
-    :type date: datetime.datetime class
-    :return: WCS corresponding to date and coordinate in space
-    :rtype: dictionary, where the keys are the detectors and the
-        values are the WCS corresponding to each detector
-    """
+    """:param ra: Coordinate in space used to generate sky background :type ra: float
+    between 15 and 45 :param dec: Coordinate in space used to generate sky background
+    :type dec: float between -45 and -15 :param date: Date used to generate sky
+    background :type date: datetime.datetime class :return: WCS corresponding to date
+    and coordinate in space :rtype: dictionary, where the keys are the detectors and the
+    values are the WCS corresponding to each detector."""
 
     skycoord = SkyCoord(ra, dec, frame="icrs", unit="deg")
     ra_hms, dec_dms = skycoord.to_string("hmsdms").split(" ")

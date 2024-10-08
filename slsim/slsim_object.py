@@ -6,11 +6,9 @@ class SLSimObject(object):
     """
 
     def __init__(self, image_array, psfkernel, pixelscale):
-        """
-        :param image_array: image in the form of numpy array
-        :param psfkernel: psf kernel associated with image_array
-        :param pixelscale: pixel scale in image_array
-        """
+        """:param image_array: image in the form of numpy array :param psfkernel: psf
+        kernel associated with image_array :param pixelscale: pixel scale in
+        image_array."""
         self.image_array = image_array
         self.psfkernel = psfkernel
         self.pixelscale = pixelscale

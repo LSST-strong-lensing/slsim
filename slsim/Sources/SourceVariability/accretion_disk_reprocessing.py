@@ -79,9 +79,9 @@ class AccretionDiskReprocessing(object):
         the lamppost geometry.
 
         :param rest_frame_wavelength_in_nanometers: The rest frame wavelength (not the
-            observer's frame!) in [nanometers].
+                observer's frame!) in [nanometers].
         :return: An array representing the response function of the accretion disk with
-            time lag spacing of [R_g / c].
+                time lag spacing of [R_g / c].
         """
         return self._model(rest_frame_wavelength_in_nanometers, **self.kwargs_model)
 
@@ -149,7 +149,7 @@ class AccretionDiskReprocessing(object):
         :param time_array: The times which the light curve is sampled at, in [days].
         :param magnitude_array: The amplitudes of the signal at each time in time_array.
         :return: The time_array and magnitude_array associated with the
-            AccretionDiskReprocessing() object's intrinsic (driving) signal.
+                AccretionDiskReprocessing() object's intrinsic (driving) signal.
         """
         if time_array is None and magnitude_array is None:
             return self.time_array, self.magnitude_array
@@ -179,17 +179,17 @@ class AccretionDiskReprocessing(object):
         convolution of the stored intrinsic signal with the chosen response function.
 
         :param rest_frame_wavelength_in_nanometers: Int representing the rest frame (not
-            the observer's frame!) wavelength to calculate the response function at, in
-            [nanometers].
+                the observer's frame!) wavelength to calculate the response function at,
+                in             [nanometers].
         :param response_function_time_lags: An optional array representing the
-            time_array associated with the response function with units [days]. Time
-            lags are defined in the rest frame (not the observer's frame!). If None and
-            response_function_amplitudes is given, the time lags will be assumed to be
-            in units [Rg / c].
+                time_array associated with the response function with units [days]. Time
+                lags are defined in the rest frame (not the observer's frame!). If None
+                and             response_function_amplitudes is given, the time lags
+                will be assumed to be             in units [Rg / c].
         :param response_function_amplitudes: An array representing the response function
-            at each time lag. The amplitudes may use arbitrary units.
+                at each time lag. The amplitudes may use arbitrary units.
         :return: The magnitude_array of the reprocessed signal. Note that this is
-            calculated in the rest frame, not the observer's frame!
+                calculated in the rest frame, not the observer's frame!
         """
         if self.time_array is None or self.magnitude_array is None:
             raise ValueError(

@@ -17,18 +17,15 @@ class CompoundLensHalosGalaxies(DeflectorsBase):
     def __init__(
         self, halo_galaxy_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area
     ):
-        """
+        """:param halo_galaxy_list: list of dictionary with lens parameters of
+        elliptical dark matte haloes and galaxies (currently supporting SL-Hammocks
+        pipelines) :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max
+        :type kwargs_cut: dict # :param kwargs_mass2light: mass-to-light relation :param
+        cosmo: astropy.cosmology instance :type sky_area: `~astropy.units.Quantity`
+        :param sky_area: Sky area over which galaxies are sampled.
 
-        :param halo_galaxy_list: list of dictionary with lens parameters of
-            elliptical dark matte haloes and galaxies (currently supporting SL-Hammocks pipelines)
-        :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max
-        :type kwargs_cut: dict
-        # :param kwargs_mass2light: mass-to-light relation
-        :param cosmo: astropy.cosmology instance
-        :type sky_area: `~astropy.units.Quantity`
-        :param sky_area: Sky area over which galaxies are sampled. Must be in units of
-            solid angle.
-        ## MEMO: DeflectorsBase's inputs are deflector_table, kwargs_cut, cosmo, sky_area
+        Must be in units of     solid angle. ## MEMO: DeflectorsBase's inputs are
+        deflector_table, kwargs_cut, cosmo, sky_area
         """
         super().__init__(
             deflector_table=halo_galaxy_list,
@@ -67,17 +64,12 @@ class CompoundLensHalosGalaxies(DeflectorsBase):
         # TODO: random reshuffle of matched list
 
     def deflector_number(self):
-        """
-
-        :return: number of deflectors
-        """
+        """:return: number of deflectors."""
         number = self._num_select
         return number
 
     def draw_deflector(self):
-        """
-        :return: dictionary of complete parameterization of deflector
-        """
+        """:return: dictionary of complete parameterization of deflector."""
 
         cosmo = self._cosmo
         index = random.randint(0, self._num_select - 1)

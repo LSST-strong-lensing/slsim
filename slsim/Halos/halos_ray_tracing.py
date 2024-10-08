@@ -50,21 +50,28 @@ class HalosRayTracing(object):
     ):
         """Computes the convergence and shear.
 
-        :param gamma12: If True, returns gamma1 and gamma2 in addition to kappa. If False, returns total shear gamma along with kappa.
+        :param gamma12: If True, returns gamma1 and gamma2 in addition to kappa. If
+                False, returns total shear gamma along with kappa.
         :type gamma12: bool, optional
-        :param same_from_class: If True and kwargs, lens_model is none uses the class's lens model and lens kwargs. If False, uses the provided lens model and kwargs. Specify for the when the 'None' type kwargs
+        :param same_from_class: If True and kwargs, lens_model is none uses the class's
+                lens model and lens kwargs. If False, uses the provided lens model and
+                kwargs. Specify for the when the 'None' type kwargs
         :type same_from_class: bool, optional
         :param diff: The differential used in the computation of the Hessian matrix. Default is 1.0.
         :type diff: float, optional
         :param diff_method: The method used to compute the differential. Default is "square".
         :type diff_method: str, optional
-        :param kwargs: Keyword arguments for the lens model. If None, uses the class method to generate them.
+        :param kwargs: Keyword arguments for the lens model. If None, uses the class
+                method to generate them.
         :type kwargs: dict, optional
         :param lens_model: The lens model instance to use. If None, uses the class's lens model.
         :type lens_model: LensModel, optional
-        :param zdzs: A tuple of deflector and source redshifts (zd, zs). If provided, uses `hessian_z1z2` method of the lens model.
+        :param zdzs: A tuple of deflector and source redshifts (zd, zs). If provided,
+                uses `hessian_z1z2` method of the lens model.
         :type zdzs: tuple, optional
-        :returns: Depending on `gamma12`, either (kappa, gamma) or (kappa, gamma1, gamma2). Kappa is the convergence, gamma is the total shear, and gamma1 and gamma2 are the shear components.
+        :returns: Depending on `gamma12`, either (kappa, gamma) or (kappa, gamma1,
+                gamma2). Kappa is the convergence, gamma is the total shear, and gamma1
+                and gamma2 are the shear components.
         :rtype: tuple
         """
         if same_from_class:
@@ -335,17 +342,22 @@ class HalosRayTracing(object):
         """Computes the convergence (kappa) values over a grid and returns both the 2D
         kappa image and the 1D array of kappa values.
 
-        :param sky_area: Total sky area in steradians over which halos are distributed. Defaults to full sky (4π steradians).
+        :param sky_area: Total sky area in steradians over which halos are distributed.
+                Defaults to full sky (4π steradians).
         :type sky_area: float, optional
-        :param diff: The differential used in the computation of the convergence. Defaults to 0.0000001.
+        :param diff: The differential used in the computation of the convergence.
+                Defaults to 0.0000001.
         :type diff: float, optional
         :param num_points: The number of points along each axis of the grid. Defaults to 500.
         :type num_points: int, optional
         :param diff_method: The method used to compute the differential. Defaults to "square".
         :type diff_method: str, optional
-        :param kwargs: The keyword arguments for the lens model. If None, it will use the class method `get_halos_lens_kwargs` to generate them. Defaults to None.
+        :param kwargs: The keyword arguments for the lens model. If None, it will use
+                the class method `get_halos_lens_kwargs` to generate them. Defaults to
+                None.
         :type kwargs: dict, optional
-        :param lens_model: The lens model to use. If None, it will use the class attribute `param_lens_model`. Defaults to None.
+        :param lens_model: The lens model to use. If None, it will use the class
+                attribute `param_lens_model`. Defaults to None.
         :type lens_model: LensModel, optional
         :return: A tuple containing the 2D kappa image and the 1D array of kappa values.
         :rtype: tuple(numpy.ndarray, numpy.ndarray)

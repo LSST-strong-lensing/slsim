@@ -44,8 +44,9 @@ class LOSConfig(object):
         gamma=None,
         kappa=None,
     ):
-        """
-        :param los_bool: Boolean to include line-of-sight distortions, default is True.
+        """:param los_bool: Boolean to include line-of-sight distortions, default is
+        True.
+
         :type los_bool: bool
         :param mixgauss_gamma: Flag to enable gamma correction for Gaussian mixtures, default is False.
         :type mixgauss_gamma: bool
@@ -57,9 +58,11 @@ class LOSConfig(object):
         :type mixgauss_weights: list of float or None
         :param nonlinear_los_bool: Boolean to include non-linear corrections to LOS distortions, default is False.
         :type nonlinear_los_bool: bool
-        :param nonlinear_correction_path: Path to the non-linear correction distributions stored in an H5 file, default is None.
+        :param nonlinear_correction_path: Path to the non-linear correction
+                distributions stored in an H5 file, default is None.
         :type nonlinear_correction_path: str or None
-        :param no_correction_path: Path to the no non-linear correction distributions stored in an H5 file, default is None.
+        :param no_correction_path: Path to the no non-linear correction distributions
+                stored in an H5 file, default is None.
         :type no_correction_path: str or None
         :param gamma: [gamma1, gamma2] (takes these values if present)
         :type gamma: list of floats

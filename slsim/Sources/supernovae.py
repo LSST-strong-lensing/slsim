@@ -40,10 +40,10 @@ class Supernova(sncosmo.Model):
         modeldir=None,
         **kwargs
     ):
-        """
-        :param source: The model for the spectral evolution of the source. If a string
-            is given, it is used to retrieve a `~sncosmo.Source` from
-            the registry.
+        """:param source: The model for the spectral evolution of the source.
+
+        If a string     is given, it is used to retrieve a `~sncosmo.Source` from
+        the registry.
         :type source: `~sncosmo.Source` or str
         :param redshift: The redshift of the source.
         :type redshift: float
@@ -100,7 +100,6 @@ class Supernova(sncosmo.Model):
         :type band: str or `~sncosmo.Bandpass`
         :param zpsys: Optional, AB or Vega (AB default)
         :type zpsys: str
-
         :return: magnitude of source
         """
         bandpass = get_bandpass(band)
@@ -156,7 +155,6 @@ class Supernova(sncosmo.Model):
         :type peak_apparent_mag_band: str or `~sncosmo.Bandpass`
         :param mag_zpsys: Optional, AB or Vega (AB default)
         :type mag_zpsys: str
-
         :return: Nothing is returned. The source's amplitude parameter is modified in place.
         """
         if absmag is not None:

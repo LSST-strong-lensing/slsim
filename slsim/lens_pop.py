@@ -79,7 +79,7 @@ class LensPop(LensedPopulationBase):
         lenses within the cuts within the area
 
         :return: Lens() instance with parameters of the deflector and lens and source
-            light
+                light
         """
         while True:
             source = self._sources.draw_source()
@@ -149,10 +149,10 @@ class LensPop(LensedPopulationBase):
 
         :param kwargs_lens_cuts: validity test keywords
         :param speed_factor: factor by which the number of deflectors is decreased to
-            speed up the calculations.
+                speed up the calculations.
         :type kwargs_lens_cuts: dict
         :return: List of Lens instances with parameters of the deflectors and lens and
-            source light.
+                source light.
         :rtype: list
         """
 

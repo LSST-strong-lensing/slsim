@@ -20,37 +20,54 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
         list_type="astropy_table",
         catalog_type=None,
     ):
-        """
+        """:param point_plus_extended_sources_list: list of dictionary with point and
+        extended source parameters or astropy table of sources.
 
-        :param point_plus_extended_sources_list: list of dictionary with point and
-         extended source parameters or astropy table of sources.
+        :param cosmo: cosmology :type cosmo: ~astropy.cosmology class :param sky_area:
+        Sky area over which galaxies are sampled. Must be in units of     solid angle.
+        :type sky_area: `~astropy.units.Quantity` :param variability_model: keyword for
+        the variability model to be used. This is  a population argument, not the light
+        curve parameter for the individual  source. :param kwargs_variability_model:
+        keyword arguments for the variability of  a source. This is a population
+        argument, not the light curve parameter for  the individual source. :param
+        agn_driving_variability_model: Variability model with light_curve output  which
+        drives the variability across all bands of the agn. eg: "light_curve",
+        "sinusoidal", "bending_power_law" :param agn_driving_kwargs_variability:
+        Dictionary containing agn variability  parameters for the driving variability
+        class. eg: variable_agn_kwarg_dict =  {"length_of_light_curve": 1000,
+        "time_resolution": 1,  "log_breakpoint_frequency": 1 / 20,
+        "low_frequency_slope": 1,  "high_frequency_slope": 3,
+        "normal_magnitude_variance": 0.1}. For the detailed   explanation of these
+        parameters, see generate_signal() function in   astro_util.py. :param light_pro
+        file:
         :param cosmo: cosmology
         :type cosmo: ~astropy.cosmology class
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
-            solid angle.
+                solid angle.
         :type sky_area: `~astropy.units.Quantity`
         :param variability_model: keyword for the variability model to be used. This is
-         a population argument, not the light curve parameter for the individual
-         source.
+                a population argument, not the light curve parameter for the individual
+                source.
         :param kwargs_variability_model: keyword arguments for the variability of
-         a source. This is a population argument, not the light curve parameter for
-         the individual source.
+                a source. This is a population argument, not the light curve parameter
+                for          the individual source.
         :param agn_driving_variability_model: Variability model with light_curve output
-         which drives the variability across all bands of the agn. eg: "light_curve",
-         "sinusoidal", "bending_power_law"
+                which drives the variability across all bands of the agn. eg:
+                "light_curve",          "sinusoidal", "bending_power_law"
         :param agn_driving_kwargs_variability: Dictionary containing agn variability
-         parameters for the driving variability class. eg: variable_agn_kwarg_dict =
-         {"length_of_light_curve": 1000, "time_resolution": 1,
-         "log_breakpoint_frequency": 1 / 20, "low_frequency_slope": 1,
-         "high_frequency_slope": 3, "normal_magnitude_variance": 0.1}. For the detailed
-          explanation of these parameters, see generate_signal() function in
-          astro_util.py.
+                parameters for the driving variability class. eg:
+                variable_agn_kwarg_dict =          {"length_of_light_curve": 1000,
+                "time_resolution": 1,          "log_breakpoint_frequency": 1 / 20,
+                "low_frequency_slope": 1,          "high_frequency_slope": 3,
+                "normal_magnitude_variance": 0.1}. For the detailed
+                explanation of these parameters, see generate_signal() function in
+                astro_util.py.
         :param light_profile: keyword for number of sersic profile to use in source
-         light model. accepted kewords: "single_sersic", "double_sersic".
+                light model. accepted kewords: "single_sersic", "double_sersic".
         :param list_type: format of the source catalog file. Currently, it supports
-         a single astropy table or a list of astropy tables.
+                a single astropy table or a list of astropy tables.
         :param catalog_type: type of the catalog. If someone wants to use scotch
-         catalog, they need to specify it.
+                catalog, they need to specify it.
         :type catalog_type: str. eg: "scotch" or None
         """
 

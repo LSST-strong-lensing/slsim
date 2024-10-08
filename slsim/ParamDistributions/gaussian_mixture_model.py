@@ -9,10 +9,9 @@ class GaussianMixtureModel:
     """
 
     def __init__(self, means=None, stds=None, weights=None):
-        """
-        The constructor for GaussianMixtureModel class. The default values are the
-        means, standard deviations, and weights of the fits to the data in the table
-        2 of https://doi.org/10.1093/mnras/stac2235 and others.
+        """The constructor for GaussianMixtureModel class. The default values are the
+        means, standard deviations, and weights of the fits to the data in the table 2
+        of https://doi.org/10.1093/mnras/stac2235 and others.
 
         :param means: the mean values of the Gaussian components.
         :type means: list of float

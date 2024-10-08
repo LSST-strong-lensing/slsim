@@ -33,16 +33,30 @@ class Source(object):
         agn_driving_variability_model=None,
         agn_driving_kwargs_variability=None,
     ):
-        """
-        :param source_dict: Source properties
-        :type source_dict: dict or astropy table
-        :param variability_model: keyword for variability model to be used. This is an
-         input for the Variability class.
+        """:param source_dict: Source properties :type source_dict: dict or astropy
+        table :param variability_model: keyword for variability model to be used.
+
+        This is an  input for the Variability class. :type variability_model: str :param
+        kwargs_variability: Keyword arguments for variability class.  This is associated
+        with an input for Variability class. By using these key  words, code search for
+        quantities in source_dict with these names and creates  a dictionary and this
+        dict should be passed to the Variability class. :type kwargs_variability: list
+        of str :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.) :type sn_type: str
+        :param sn_absolute_mag_band: Band used to normalize to absolute magnitude :type
+        sn_absolute_mag_band: str or `~sncosmo.Bandpass` :param sn_absolute_zpsys:
+        Optional, AB or Vega (AB default) :type sn_absolute_zpsys: str :param
+        lightcurve_time: observation time array for lightcurve in unit of days. :type
+        lightcurve_time: array :param sn_modeldir: sn_modeldir is the path to the
+        directory containing files  needed to initialize the sncosmo.model class. For
+        example,  sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These
+        data can  be downloaded from
+        https://github.com/LSST-strong-lensing/data_public
         :type variability_model: str
         :param kwargs_variability: Keyword arguments for variability class.
-         This is associated with an input for Variability class. By using these key
-         words, code search for quantities in source_dict with these names and creates
-         a dictionary and this dict should be passed to the Variability class.
+                This is associated with an input for Variability class. By using these
+                key          words, code search for quantities in source_dict with these
+                names and creates          a dictionary and this dict should be passed
+                to the Variability class.
         :type kwargs_variability: list of str
         :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
         :type sn_type: str
@@ -53,22 +67,22 @@ class Source(object):
         :param lightcurve_time: observation time array for lightcurve in unit of days.
         :type lightcurve_time: array
         :param sn_modeldir: sn_modeldir is the path to the directory containing files
-         needed to initialize the sncosmo.model class. For example,
-         sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can
-         be downloaded from https://github.com/LSST-strong-lensing/data_public .
-         For more detail, please look at the documentation of RandomizedSupernovae
-         class.
+                needed to initialize the sncosmo.model class. For example,
+                sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These
+                data can          be downloaded from https://github.com/LSST-strong-
+                lensing/data_public .          For more detail, please look at the
+                documentation of RandomizedSupernovae          class.
         :type sn_modeldir: str
-        :param agn_known_band: Speclite filter of which the magnitude is known. Used to normalize
-         mean magnitudes.
+        :param agn_known_band: Speclite filter of which the magnitude is known. Used to
+                normalize          mean magnitudes.
         :type agn_known_band: str
         :param agn_known_mag: Magnitude of the agn in the known band.
         :type agn_known_mag: float
         :param agn_driving_variability_model: Variability model with light_curve output
-         which drives the variability across all bands of the agn.
+                which drives the variability across all bands of the agn.
         :type agn_driving_variability_model: str (e.g. "light_curve", "sinusoidal", "bending_power_law")
-        :param agn_driving_kwargs_variability: Dictionary containing all variability parameters
-         for the driving variability class
+        :param agn_driving_kwargs_variability: Dictionary containing all variability
+                parameters          for the driving variability class
         :type agn_driving_kwargs_variability: dict
         """
 

@@ -33,11 +33,9 @@ class SNIaRate(object):
     """Class to calculate supernovae rates."""
 
     def __init__(self, cosmo, z_max):
-        """
-        :param cosmo: cosmology object
-        :type cosmo: ~astropy.cosmology object
-        :param z_max: maximum redshift to describe the SFR density (no stars accounted for >z_max)
-        """
+        """:param cosmo: cosmology object :type cosmo: ~astropy.cosmology object :param
+        z_max: maximum redshift to describe the SFR density (no stars accounted for
+        >z_max)"""
         self._cosmo = cosmo
         self._z_max = z_max
 

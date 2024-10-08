@@ -15,13 +15,9 @@ class SupernovaeHostMatch:
         supernovae_catalog,
         galaxy_catalog,
     ):
-        """
-
-        :param supernovae_catalog: supernovae redshift catalog
-        :type supernovae_catalog: np.ndarray
-        :param galaxy_catalog: supernovae host galaxy candidate catalog
-        :type galaxy_catalog: astropy Table
-        """
+        """:param supernovae_catalog: supernovae redshift catalog :type
+        supernovae_catalog: np.ndarray :param galaxy_catalog: supernovae host galaxy
+        candidate catalog :type galaxy_catalog: astropy Table."""
         self.supernovae_catalog = supernovae_catalog
         self.galaxy_catalog = galaxy_catalog
 

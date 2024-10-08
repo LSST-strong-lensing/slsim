@@ -9,13 +9,11 @@ class GalaxyCatalog(object):
     """Class to generate a galaxy catalog."""
 
     def __init__(self, cosmo, skypy_config, sky_area):
-        """
+        """:param cosmo: astropy.cosmology instance :param skypy_config: path to SkyPy
+        configuration yaml file :type skypy_config: string :param sky_area: Sky area
+        over which galaxies are sampled.
 
-        :param cosmo: astropy.cosmology instance
-        :param skypy_config: path to SkyPy configuration yaml file
-        :type skypy_config: string
-        :param sky_area: Sky area over which galaxies are sampled. Must be in units of
-            solid angle.
+        Must be in units of     solid angle.
         :type sky_area: `~astropy.units.Quantity`
         """
         self.cosmo = cosmo

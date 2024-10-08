@@ -39,11 +39,10 @@ class ClusterDeflectors(DeflectorsBase):
         richness_fn="Abdullah2022",
         kwargs_draw_members=None,
     ):
-        """
+        """:param cluster_list: list of dictionary with redshift and richness (or mass)
+        from a group/cluster catalog.
 
-        :param cluster_list: list of dictionary with redshift and richness
-            (or mass) from a group/cluster catalog.
-            Mandatory keys: 'cluster_id' 'z', 'richness' or 'halo_mass'
+        Mandatory keys: 'cluster_id' 'z', 'richness' or 'halo_mass'
         :type cluster_list: ~astropy.table.Table
         :param members_list: list of dictionary with positions and magnitudes of
             group/cluster members.
@@ -105,17 +104,12 @@ class ClusterDeflectors(DeflectorsBase):
         # TODO: random reshuffle of matched list
 
     def deflector_number(self):
-        """
-
-        :return: number of deflectors
-        """
+        """:return: number of deflectors."""
         number = self._num_select
         return number
 
     def draw_deflector(self):
-        """
-        :return: dictionary of complete parameterization of deflector
-        """
+        """:return: dictionary of complete parameterization of deflector."""
         index = random.randint(0, self._num_select - 1)
         deflector = self.draw_cluster(index)
         members = self.draw_members(deflector["cluster_id"], **self.kwargs_draw_members)
@@ -123,11 +117,8 @@ class ClusterDeflectors(DeflectorsBase):
         return deflector
 
     def draw_cluster(self, index):
-        """
-        :param index: index of cluster in catalog
-        :type index: int
-        :return: dictionary of NFW parameters for the cluster halo
-        """
+        """:param index: index of cluster in catalog :type index: int :return:
+        dictionary of NFW parameters for the cluster halo."""
         cluster = self._cluster_select[index]
         if cluster["halo_mass"] == -1:
             cluster["halo_mass"] = mass_richness_relation(
@@ -149,17 +140,11 @@ class ClusterDeflectors(DeflectorsBase):
         return dict(cluster)
 
     def draw_members(self, cluster_id, center_scatter=0.2, max_dist=80, bcg_band="r"):
-        """
-        :param cluster_id: identifier of the cluster
-        :type cluster_id: int
-        :param center_scatter: scatter in center of the BCG in arcsec
-        :type center_scatter: float
-        max_dist_arcsec: maximum distance from the BCG in arcsec
-        :type max_dist: float
-        bcg_band: band to use to identify the BCG
-        :type bcg_band: str
-        :return: astropy table with EPL+Sersic parameters of each member
-        """
+        """:param cluster_id: identifier of the cluster :type cluster_id: int :param
+        center_scatter: scatter in center of the BCG in arcsec :type center_scatter:
+        float max_dist_arcsec: maximum distance from the BCG in arcsec :type max_dist:
+        float bcg_band: band to use to identify the BCG :type bcg_band: str :return:
+        astropy table with EPL+Sersic parameters of each member."""
         members = self._members_select[cluster_id == self._members_select["cluster_id"]]
 
         members["vel_disp"] = np.where(

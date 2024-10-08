@@ -253,9 +253,10 @@ def deg2_to_cone_angle(solid_angle_deg2):
     :param solid_angle_deg2: Solid angle in square degrees to be converted.
     :type solid_angle_deg2: float
     :return: The half cone angle in radians equivalent to the input solid angle.
-    :rtype: float :note: The conversion utilizes the relationship between solid angles
-        in steradians and the apex angle of a cone, facilitating a direct transition
-        from square degrees to radians.
+    :rtype: float
+    :note: The conversion utilizes the relationship between solid angles in steradians
+        and the apex angle of a cone, facilitating a direct transition from square
+        degrees to radians.
     """
 
     solid_angle_sr = solid_angle_deg2 * (np.pi / 180) ** 2

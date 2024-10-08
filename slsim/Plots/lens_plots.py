@@ -10,15 +10,12 @@ class LensingPlots(object):
     provided configurations for the source (blue) and lens (red) galaxies."""
 
     def __init__(self, lens_pop, num_pix=64, observatory="LSST", **kwargs):
-        """
+        """:param lens_pop: lens population class :type lens_pop: `LensPop` :param
+        num_pix: number of pixels for the simulated image, default is 64 :type num_pix:
+        int :param observatory: observatory chosen :type observatory: str :param kwargs:
+        additional keyword arguments for the bands.
 
-        :param lens_pop: lens population class
-        :type lens_pop: `LensPop`
-        :param num_pix: number of pixels for the simulated image, default is 64
-        :type num_pix: int
-        :param observatory: observatory chosen
-        :type observatory: str
-        :param kwargs: additional keyword arguments for the bands. Eg: coadd_years
+        Eg: coadd_years
             (=10): this is the number of years corresponding to num_exposures in obs
             dict. Currently supported: 1-10.
             See roman_image_simulation.py for more options if simulating roman images
@@ -33,7 +30,7 @@ class LensingPlots(object):
         """Method to generate a rgb-image with lupton_rgb color scale.
 
         :param lens_class: class object containing all information of the lensing system
-            (e.g., Lens())
+                (e.g., Lens())
         :param rgb_band_list: list of imaging band names corresponding to r-g-b color
             map
         :param add_noise: boolean flag, set to True to add noise to the image, default
@@ -99,7 +96,7 @@ class LensingPlots(object):
         :param rgb_band_list: list of imaging band names corresponding to r-g-b color
             map
         :param add_noise: boolean flag, set to True to add noise to the images, default
-            is True
+                is True
         :param n_horizont: number of images to display horizontally, default is 1
         :param n_vertical: number of images to display vertically, default is 1
         :param kwargs_lens_cut: lens selection cuts for Lens.validity_test() function

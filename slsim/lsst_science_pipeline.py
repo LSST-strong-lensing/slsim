@@ -357,6 +357,13 @@ def multiple_lens_injection_fast(
     function. To initiate Butler, you need to specify data configuration and collection
     of the data.
 
+    :param lens_pop: lens population from slsim :param num_pix: number of pixel for the
+    cutout :param mag_zero_point: magnitude zero point in band :param
+    transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
+    displacements :param butler: butler object :param ra: ra for a cutout :param dec:
+    dec for a cutout :param noise: poisson noise to be added to an image. If True,
+    poisson noise will be     added to the image based on exposure time. :param output_
+    file:
     :param lens_pop: lens population from slsim
     :param num_pix: number of pixel for the cutout
     :param mag_zero_point: magnitude zero point in band
@@ -684,7 +691,8 @@ def radec_to_pix(radec, dp0_image):
     """Converts ra, dec to pixel units for a fiven image or list of images.
 
     :param radec: SpherePoint of radec
-    :type radec: an object: eg: geom.SpherePoint(65*degree, -36*degree)
+    :type radec: an object
+    : eg: geom.SpherePoint(65*degree, -36*degree)
     :param dp0_image: an image or list of images containing given radec
     :return: corresponding Point2D of pixel coordinate in provided images. If an image
         is provided, output will be a single Point2D. If list of image is provided,
@@ -870,6 +878,22 @@ def multiple_variable_lens_injection(
 ):
     """Injects multiple variable lenses to multiple dp0 time series data.
 
+    :param lens_class_list: list of Lens() object :param band: imaging band :param
+    num_pix: number of pixels per axis :param transform_matrices_list: list of
+    transformation matrix (2x2) of pixels into     coordinate displacements for each
+    exposure :param exposure_data: list of astropy table of exposure data for each set
+    of time     series images. It must contain calexp images or generated noisy
+    background image     (column name should be "time_series_images", these images are
+    single exposure     images of the same part of the sky at different time), magnitude
+    zero point     (column name should be "zero_point", these are zero point magnitudes
+    for each     single exposure images in time series image) , psf kernel for each
+    exposure     (column name should be "psf_kernel", these are pixel psf kernel for
+    each single     exposure images in time series image), exposure time (column name
+    should be     "expo_time", these are exposure time for each single exposure images
+    in time     series images), observation time (column name should be "obs_time",
+    these are     observation time in days for each single exposure images in time
+    series images) :param output_
+    file:
     :param lens_class_list: list of Lens() object
     :param band: imaging band
     :param num_pix: number of pixels per axis
@@ -988,14 +1012,16 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform:
         ra=None,
         dec=None,
     ):
-        """
-        :param butler: butler object
-        :param cutout_size: int, size of the cutout (in pixels) to be generated
-        :param n_im_per_coadd: int, number of cutouts to be generated per coadd
-        :param plot: bool, whether to plot the cutouts
-        :param good_seeing_only: bool, whether to use the goodSeeingCoadd (True) or deepCoadd (False) data products. The goodSeeingCoadd only use the  top one-third best seeing exposures, whereas deepCoadd uses all of them.
-        :param ra (optional): float, RA of the central point of the cutout
-        :param dec (optional): float, Dec of the central point of the cutout
+        """:param butler: butler object :param cutout_size: int, size of the cutout (in
+        pixels) to be generated :param n_im_per_coadd: int, number of cutouts to be
+        generated per coadd :param plot: bool, whether to plot the cutouts :param
+        good_seeing_only: bool, whether to use the goodSeeingCoadd (True) or deepCoadd
+        (False) data products.
+
+        The goodSeeingCoadd only use the  top one-third best seeing exposures, whereas
+        deepCoadd uses all of them. :param ra (optional): float, RA of the central point
+        of the cutout :param dec (optional): float, Dec of the central point of the
+        cutout
         """
         assert (ra is None and dec is None) or (
             ra is not None and dec is not None
@@ -1041,8 +1067,8 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform:
         The cutout size is specified by cutout_size during initialisation.
 
         :return: 1) Full coadd image, 2) full exposure map image (in units of N.
-            exposures), 3) full variance map image 4) list of cutout bounding boxes, 5)
-            list of cutout centres
+                exposures), 3) full variance map image 4) list of cutout bounding boxes,
+                5)             list of cutout centres
         """
         coaddId_i = {"tract": self.tract, "patch": self.patch, "band": "i"}
         if self.good_seeing_only:
@@ -1086,7 +1112,8 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform:
         array, which is always 57x57.
 
         :return: 1) list of cutouts, 2) list of exposure maps, 3) list of PSF arrays, 4)
-            list of variance maps, 5) uncropped coadd image, 6) uncropped variance map
+                list of variance maps, 5) uncropped coadd image, 6) uncropped variance
+                map
         """
         self.retrieve_tract_patch()
         coadd_im, coadd_exp, var_im, bbox_cutout_list, cutout_center_list = (
@@ -1127,11 +1154,12 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform:
         the number of cutouts.
 
         :param foldername: str, name of the folder in which to save the files. The
-            folder is generatred if it doesn't exist already.
+                folder is generatred if it doesn't exist already.
         :param prefix: str, prefix for the file names (e.g. 0,1,2,3 if generating sets
-            of cutouts from different coadds)
+                of cutouts from different coadds)
         :return: 1) list of cutouts, 2) list of exposure maps, 3) list of PSF arrays, 4)
-            list of variance maps, 5) uncropped coadd image, 6) uncropped variance map
+                list of variance maps, 5) uncropped coadd image, 6) uncropped variance
+                map
         """
         (
             cutout_list,

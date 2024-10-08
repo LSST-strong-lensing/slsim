@@ -663,9 +663,9 @@ def worker_kappaext_gammaext_kde(
 ):
     """Worker function that generates kappa-gamma distributions for given parameters.
 
-    This function utilizes the `HalosSkyPyPipeline` to generate halos and, if necessary, mass sheet
-    corrections. It then uses these halos (and corrections) to construct a `HalosLens` object and
-    generate kappa-gamma distributions.
+    This function utilizes the `HalosSkyPyPipeline` to generate halos and, if necessary,
+    mass sheet corrections. It then uses these halos (and corrections) to construct a
+    `HalosLens` object and generate kappa-gamma distributions.
 
     :param iter_num: The iteration number, mainly used for tracking in a parallel processing context.
     :type iter_num: int
@@ -683,15 +683,15 @@ def worker_kappaext_gammaext_kde(
     :type samples_number: int
     :param mass_sheet_correction: If True, apply mass sheet correction.
     :type mass_sheet_correction: bool
-    :param output_format: The format in which the results should be returned, either as `dict` or `vector`. Defaults to `dict`.
+    :param output_format: The format in which the results should be returned, either as
+        `dict` or `vector`. Defaults to `dict`.
     :type output_format: str, optional
     :param listmean: If True, subtract the mean kappa value from the results.
     :type listmean: bool
     :returns: A list of kappa and gamma values for the specified parameters.
-    :rtype: list
-
-    This function is primarily intended to be used as a worker function in a parallel processing
-    framework, where multiple instances of the function can be run simultaneously.
+    :rtype: list      This function is primarily intended to be used as a worker
+        function in a parallel processing     framework, where multiple instances of the
+        function can be run simultaneously.
     """
 
     npipeline = HalosSkyPyPipeline(
@@ -999,8 +999,8 @@ def worker_certain_redshift_many(
     zs,
     zd,
 ):
-    """
-    :param iter_num: The iteration number.
+    """:param iter_num: The iteration number.
+
     :type iter_num: int
     :param sky_area: The area of the sky under consideration.
     :type sky_area: float

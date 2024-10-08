@@ -18,22 +18,19 @@ class EllipticalLensGalaxies(DeflectorsBase):
         sky_area,
         catalog_type="skypy",
     ):
-        """
+        """:param galaxy_list: list of dictionary with galaxy parameters of elliptical
+        galaxies (currently supporting skypy pipelines) :param kwargs_cut: cuts in
+        parameters: band, band_mag, z_min, z_max :type kwargs_cut: dict :param
+        kwargs_mass2light: mass-to-light relation :param cosmo: astropy.cosmology
+        instance :type sky_area: `~astropy.units.Quantity` :param sky_area: Sky area
+        over which galaxies are sampled.
 
-        :param galaxy_list: list of dictionary with galaxy parameters of
-            elliptical galaxies (currently supporting skypy pipelines)
-        :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max
-        :type kwargs_cut: dict
-        :param kwargs_mass2light: mass-to-light relation
-        :param cosmo: astropy.cosmology instance
-        :type sky_area: `~astropy.units.Quantity`
-        :param sky_area: Sky area over which galaxies are sampled. Must be in units of
-            solid angle.
+        Must be in units of     solid angle.
         :param catalog_type: type of the catalog. If user is using deflector catalog
-         other than generated from skypy pipeline, we require them to provide angular
-         size of the galaxy in arcsec and specify catalog_type as None. Otherwise, by
-         default, this class considers deflector catalog is generated using skypy
-         pipeline.
+                other than generated from skypy pipeline, we require them to provide
+                angular          size of the galaxy in arcsec and specify catalog_type
+                as None. Otherwise, by          default, this class considers deflector
+                catalog is generated using skypy          pipeline.
         :type catalog_type: str. "skypy" or None.
         """
         galaxy_list = param_util.catalog_with_angular_size_in_arcsec(
@@ -76,18 +73,12 @@ class EllipticalLensGalaxies(DeflectorsBase):
         # TODO: random reshuffle of matched list
 
     def deflector_number(self):
-        """
-
-        :return: number of deflectors
-        """
+        """:return: number of deflectors."""
         number = self._num_select
         return number
 
     def draw_deflector(self):
-        """
-
-        :return: dictionary of complete parameterization of deflector
-        """
+        """:return: dictionary of complete parameterization of deflector."""
 
         index = random.randint(0, self._num_select - 1)
         deflector = self._galaxy_select[index]

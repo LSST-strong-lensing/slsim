@@ -7,18 +7,13 @@ class SNeLightcone(object):
     """Class to integrate SNe comoving density n(z) in light cone volume."""
 
     def __init__(self, cosmo, redshifts, sky_area, noise, time_interval):
-        """
-        :param cosmo: cosmology object
-        :type cosmo: ~astropy.cosmology object
-        :param redshifts: redshifts for supernovae density lightcone to be evaluated at
-        :type redshifts: array-like
-        :param sky_area: sky area for sampled galaxies in [solid angle]
-        :type sky_area: `~Astropy.units.Quantity`
-        :param noise: poisson-sample the number of galaxies in supernovae density lightcone
-        :type noise: bool
-        :param time_interval: time interval for supernovae density lightcone to be evaluated over
-        :type time_interval: `~Astropy.units.Quantity`
-        """
+        """:param cosmo: cosmology object :type cosmo: ~astropy.cosmology object :param
+        redshifts: redshifts for supernovae density lightcone to be evaluated at :type
+        redshifts: array-like :param sky_area: sky area for sampled galaxies in [solid
+        angle] :type sky_area: `~Astropy.units.Quantity` :param noise: poisson-sample
+        the number of galaxies in supernovae density lightcone :type noise: bool :param
+        time_interval: time interval for supernovae density lightcone to be evaluated
+        over :type time_interval: `~Astropy.units.Quantity`"""
         self._cosmo = cosmo
         self._input_redshifts = redshifts
         self._sky_area = sky_area
@@ -39,7 +34,7 @@ class SNeLightcone(object):
 
         :param density: initial comoving density of SN Ia [yr^(-1)Mpc^(-3)]
         :return: SN Ia comoving density with the desired time unit [day^(-1)Mpc^(-3),
-            hr^(-1)Mpc^(-3), etc.]
+                hr^(-1)Mpc^(-3), etc.]
         """
         time_conversion = (1 * units.year).to(self._time_interval.unit)
         converted_density = density / time_conversion * self._time_interval.value
@@ -49,7 +44,7 @@ class SNeLightcone(object):
         """Integrates SNe comoving density in light cone.
 
         :return: sampled redshifts such that the comoving number density of galaxies
-            corresponds to the input distribution
+                corresponds to the input distribution
         :return type: numpy.ndarray
         """
         if not hasattr(self, "_output_redshifts"):

@@ -451,15 +451,20 @@ class HalosStatistics(HalosLensBase):
 
         :param diff: The differential used in the computation of kappa. Defaults to 0.0000001.
         :type diff: float, optional
-        :param num_points: The number of points along each axis in the grid used for calculations. Defaults to 500.
+        :param num_points: The number of points along each axis in the grid used for
+                calculations. Defaults to 500.
         :type num_points: int, optional
         :param diff_method: The method used to compute the differential. Defaults to "square".
         :type diff_method: str, optional
-        :param kwargs: Keyword arguments for the lens model. If None, the method will use `get_halos_lens_kwargs` to generate them. Defaults to None.
+        :param kwargs: Keyword arguments for the lens model. If None, the method will
+                use `get_halos_lens_kwargs` to generate them. Defaults to None.
         :type kwargs: dict, optional
-        :param lens_model: The lens model to use for calculations. If None, the method will use the class's lens model. Defaults to None.
+        :param lens_model: The lens model to use for calculations. If None, the method
+                will use the class's lens model. Defaults to None.
         :type lens_model: LensModel, optional
-        :param mass_sheet: Specifies whether to use the mass sheet correction. If not None, it will update the class's `mass_sheet` attribute. Defaults to None.
+        :param mass_sheet: Specifies whether to use the mass sheet correction. If not
+                None, it will update the class's `mass_sheet` attribute. Defaults to
+                None.
         :type mass_sheet: bool, optional
         :returns: The calculated two-sigma divergence of kappa values.
         :rtype: float
@@ -592,11 +597,19 @@ class HalosStatistics(HalosLensBase):
         :type diff_method: str, optional
         :param diff: Differential used in the computation of the Hessian matrix. Default is 1.0.
         :type diff: float, optional
-        :param gamma_tot: If True, the function will return gamma values in place of gamma1 and gamma2 values. Default is False.
+        :param gamma_tot: If True, the function will return gamma values in place of
+                gamma1 and gamma2 values. Default is False.
         :type gamma_tot: bool, optional
-        :return: If gamma_tot is False, the returned list contains three lists with kappa, gamma1, and gamma2 values for each sample, respectively. If gamma_tot is True, the returned list contains two lists with kappa and gamma values for each sample, respectively.
+        :return: If gamma_tot is False, the returned list contains three lists with
+                kappa, gamma1, and gamma2 values for each sample, respectively. If
+                gamma_tot is True, the returned list contains two lists with kappa and
+                gamma values for each sample, respectively.
         :rtype: list of lists
-        :notes: This function assumes the method get_convergence_shear() is implemented, and it returns a 4-tuple: (kappa, gamma1, gamma2, gamma). If gamma_tot parameter is False, gamma1 and gamma2 are stored, otherwise gamma is stored. All returned values from get_convergence_shear() are assumed to be floats.
+        :notes: This function assumes the method get_convergence_shear() is implemented,
+                and it returns a 4-tuple: (kappa, gamma1, gamma2, gamma). If gamma_tot
+                parameter is False, gamma1 and gamma2 are stored, otherwise gamma is
+                stored. All returned values from get_convergence_shear() are assumed to
+                be floats.
         """
 
         kappa_gamma_distribution = np.empty(

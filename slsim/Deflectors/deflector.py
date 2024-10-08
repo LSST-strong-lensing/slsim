@@ -10,13 +10,9 @@ class Deflector(object):
     (independent of the source)"""
 
     def __init__(self, deflector_type, deflector_dict):
-        """
-
-        :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST", "NFW_CLUSTER"
-        :type deflector_type: str
-        :param deflector_dict: parameters of the deflector
-        :type deflector_dict: dict
-        """
+        """:param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST",
+        "NFW_CLUSTER" :type deflector_type: str :param deflector_dict: parameters of the
+        deflector :type deflector_dict: dict."""
         if deflector_type in ["EPL"]:
             self._deflector = EPLSersic(deflector_dict=deflector_dict)
         elif deflector_type in ["NFW_HERNQUIST"]:
@@ -57,10 +53,7 @@ class Deflector(object):
 
     @property
     def stellar_mass(self):
-        """
-
-        :return: stellar mass of deflector [M_sol]
-        """
+        """:return: stellar mass of deflector [M_sol]"""
         return self._deflector.stellar_mass
 
     def magnitude(self, band):

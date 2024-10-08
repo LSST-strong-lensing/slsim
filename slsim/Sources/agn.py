@@ -25,17 +25,18 @@ class Agn(object):
         :param cosmo: Astropy cosmology to use in calculating distances
         :param lightcurve_time: array of times associated with observation times
         :param agn_driving_variability_model: variability model used as a driving
-            signal, This signal is then reprocessed through the lamppost model to get
-            correlated signals.
+                signal, This signal is then reprocessed through the lamppost model to
+                get             correlated signals.
         :param agn_driving_kwargs_variability: dictionary holding all variability keys
             and values
         :param kwargs_agn_model: Dictionary containing all keywords for the accretion
-            disk variability model. These are: 'black_hole_mass_exponent': mass exponent
-            of the SMBH 'black_hole_spin': spin of the SMBH 'inclination_angle':
-            inclination of the AGN disk in degrees 'r_out': Maximum radius of the disk
-            in gravitational radii 'r_resoultion': Number of pixels the disk is resolved
-            to 'eddington_ratio': fraction of the eddington luminosity the disk is
-            radiating with 'accretion_disk': accretion disk model
+                disk variability model. These are: 'black_hole_mass_exponent': mass
+                exponent             of the SMBH 'black_hole_spin': spin of the SMBH
+                'inclination_angle':             inclination of the AGN disk in degrees
+                'r_out': Maximum radius of the disk             in gravitational radii
+                'r_resoultion': Number of pixels the disk is resolved             to
+                'eddington_ratio': fraction of the eddington luminosity the disk is
+                radiating with 'accretion_disk': accretion disk model
         """
 
         self.agn_known_band = agn_known_band

@@ -94,13 +94,19 @@ class HalosLensBase(object):
 
         :param halos_list: Table containing details of halos, including their redshifts and masses.
         :type halos_list: astropy.Table
-        :param mass_correction_list:  for mass correction, containing details like redshifts and external convergences. Defaults to {}. Ignored if `mass_sheet` is set to False.
+        :param mass_correction_list: for mass correction, containing details like
+                redshifts and external convergences. Defaults to {}. Ignored if
+                `mass_sheet` is set to False.
         :type mass_correction_list: astropy.Table, optional
-        :param cosmo: Instance specifying the cosmological parameters for lensing computations. If not provided, the default astropy cosmology will be used.
+        :param cosmo: Instance specifying the cosmological parameters for lensing
+                computations. If not provided, the default astropy cosmology will be
+                used.
         :type cosmo: astropy.Cosmology instance, optional
-        :param sky_area: Total sky area in steradians over which halos are distributed. Defaults to full sky (4π steradians).
+        :param sky_area: Total sky area in steradians over which halos are distributed.
+                Defaults to full sky (4π steradians).
         :type sky_area: float, optional
-        :param mass_sheet: Flag to decide whether to use the mass_sheet correction. If set to False, the mass_correction_list is ignored. Defaults to True.
+        :param mass_sheet: Flag to decide whether to use the mass_sheet correction. If
+                set to False, the mass_correction_list is ignored. Defaults to True.
         :type mass_sheet: bool, optional
         """
 
@@ -190,8 +196,9 @@ class HalosLensBase(object):
         """Lazy-load param_lens_model.
 
         This property ensures that the lens model is computed only once and stored for
-        repeated access. This is achieved by checking if the `_lens_model` attribute is already set;
-        if not, it calculates the lens model by calling `self.get_lens_model()`.
+        repeated access. This is achieved by checking if the `_lens_model` attribute is
+        already set; if not, it calculates the lens model by calling
+        `self.get_lens_model()`.
         """
         if self._lens_model is None:  # Only compute if not already done
             self._lens_model = self.get_lens_model()
@@ -216,10 +223,12 @@ class HalosLensBase(object):
         sheet correction is modeled using the CONVERGENCE profile.
 
         :return: A lens model instance equipped with the parameters and configurations
-            suitable for halo lensing studies. This model serves as the foundation for
-            conducting lensing simulations, enabling the calculation of lensing effects
-            such as deflection angles, shear, and magnification.
-        :rtype: LensModel :note:
+                suitable for halo lensing studies. This model serves as the foundation
+                for             conducting lensing simulations, enabling the calculation
+                of lensing effects             such as deflection angles, shear, and
+                magnification.
+        :rtype: LensModel
+        :note:
         """
         if self.n_halos == 0 and self.n_correction == 0:
             lens_model_list = []
@@ -308,7 +317,7 @@ class HalosLensBase(object):
         in the lens model for lenstronomy.
 
         :returns: kwargs_halos -- list of dicts. The list of dictionaries containing the
-            keyword arguments for each halo.
+                keyword arguments for each halo.
         """
 
         if self.mass_sheet and self.n_correction > 0:
@@ -542,12 +551,12 @@ class HalosLensBase(object):
         instance.
 
         :param combined_redshift_list: List of redshifts representing the halos and mass
-            corrections combined.
+                corrections combined.
         :type combined_redshift_list: list or array-like
         :param z_source: Source redshift.
         :type z_source: float
         :returns: Dictionary mapping each redshift to its corresponding LensCosmo
-            instance.
+                instance.
         :rtype: dict
         """
 
@@ -769,21 +778,28 @@ class HalosLensBase(object):
         """Computes the convergence and shear at the origin due to all Halos. return all
         0 if no halos.
 
-        :param gamma12: If True, returns gamma1 and gamma2 in addition to kappa. If False, returns total shear gamma along with kappa.
+        :param gamma12: If True, returns gamma1 and gamma2 in addition to kappa. If
+                False, returns total shear gamma along with kappa.
         :type gamma12: bool, optional
-        :param same_from_class: If True and kwargs, lens_model is none uses the class's lens model and lens kwargs. If False, uses the provided lens model and kwargs. Specify for the when the 'None' type kwargs
+        :param same_from_class: If True and kwargs, lens_model is none uses the class's
+                lens model and lens kwargs. If False, uses the provided lens model and
+                kwargs. Specify for the when the 'None' type kwargs
         :type same_from_class: bool, optional
         :param diff: The differential used in the computation of the Hessian matrix. Default is 1.0.
         :type diff: float, optional
         :param diff_method: The method used to compute the differential. Default is "square".
         :type diff_method: str, optional
-        :param kwargs: Keyword arguments for the lens model. If None, uses the class method to generate them.
+        :param kwargs: Keyword arguments for the lens model. If None, uses the class
+                method to generate them.
         :type kwargs: dict, optional
         :param lens_model: The lens model instance to use. If None, uses the class's lens model.
         :type lens_model: LensModel, optional
-        :param zdzs: A tuple of deflector and source redshifts (zd, zs). If provided, uses `hessian_z1z2` method of the lens model.
+        :param zdzs: A tuple of deflector and source redshifts (zd, zs). If provided,
+                uses `hessian_z1z2` method of the lens model.
         :type zdzs: tuple, optional
-        :returns: Depending on `gamma12`, either (kappa, gamma) or (kappa, gamma1, gamma2). Kappa is the convergence, gamma is the total shear, and gamma1 and gamma2 are the shear components.
+        :returns: Depending on `gamma12`, either (kappa, gamma) or (kappa, gamma1,
+                gamma2). Kappa is the convergence, gamma is the total shear, and gamma1
+                and gamma2 are the shear components.
         :rtype: tuple
         """
         if self.n_halos == 0:
@@ -850,7 +866,7 @@ class HalosLensBase(object):
         :param zs: Source redshift.
         :type zs: float
         :returns: A tuple containing the computed external convergence value (kext) and
-            the computed external shear magnitude (gext).
+                the computed external shear magnitude (gext).
         :rtype: (float, float)
         """
         lens_data = self.get_lens_data_by_redshift(zd, zs)
@@ -869,7 +885,7 @@ class HalosLensBase(object):
         kappa image and the 1D array of kappa values.
 
         :param diff: The differential used in the computation of the convergence.
-            Defaults to 0.0000001.
+                Defaults to 0.0000001.
         :type diff: float, optional
         :param num_points: The number of points along each axis of the grid. Defaults to
             500.
@@ -878,10 +894,10 @@ class HalosLensBase(object):
             "square".
         :type diff_method: str, optional
         :param mass_sheet_bool: A boolean value indicating whether to include the mass
-            sheet correction. Defaults to None.
+                sheet correction. Defaults to None.
         :type mass_sheet_bool: bool, optional
         :param enhance_pos: A boolean value indicating whether to reshuffle the halo
-            positions. Defaults to False.
+                positions. Defaults to False.
         :type enhance_pos: bool, optional
         :return: A tuple containing the 2D kappa image and the 1D array of kappa values.
         :rtype: tuple(numpy.ndarray, numpy.ndarray)

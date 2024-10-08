@@ -8,8 +8,9 @@ from colossus.halo import mass_so
 class GalaxySizeModel:
     """Characteristics of galaxy effective radius models.
 
-        This object contains certain characteristics of a galaxy effective radius model.
-    The :data:`models` dictionary contains one item of this class for each available model.
+    This object contains certain characteristics of a galaxy effective radius model.
+    The
+    :data: `models` dictionary contains one item of this class for each available model.
     """
 
     def __init__(self):
@@ -45,7 +46,8 @@ class GalaxySizeModel:
 models = OrderedDict()
 """Dictionary containing a list of models.
 
-An ordered dictionary containing one :class:`GalaxySizeModel` entry for each model.
+An ordered dictionary containing one
+:class: `GalaxySizeModel` entry for each model.
 """
 
 models["oguri20"] = GalaxySizeModel()

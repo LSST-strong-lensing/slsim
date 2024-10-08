@@ -23,10 +23,7 @@ _filter_name_list = [
 
 
 def filter_names():
-    """
-
-    :return: list of filter names with full path
-    """
+    """:return: list of filter names with full path."""
     path = os.path.dirname(slsim.__file__)
     module_path, _ = os.path.split(path)
     save_path = os.path.join(module_path, "data/Filters/Roman/")
@@ -37,10 +34,7 @@ def filter_names():
 
 
 def configure_roman_filters():
-    """
-
-    :return: Roman filters stored and accessible in speclite
-    """
+    """:return: Roman filters stored and accessible in speclite."""
     path = os.path.dirname(slsim.__file__)
     module_path, _ = os.path.split(path)
     file_name_roman = os.path.join(

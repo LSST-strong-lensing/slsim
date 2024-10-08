@@ -104,11 +104,23 @@ class SupernovaeCatalog(object):
         absolute_mag,
         sn_modeldir=None,
     ):
-        """
+        """:param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.) :type sn_type: str
+        :param band: observation band.
 
-        :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
-        :type sn_type: str
-        :param band: observation band. It sould be a list of bands. Eg: ["i"], ["i","r"]
+        It sould be a list of bands. Eg: ["i"], ["i","r"] :type band: str. eg: 'i', 'g',
+        'r', or any other supported band :param lightcurve_time: observation time array
+        for lightcurve in unit of days. :type lightcurve_time: array :param
+        absolute_mag_band: Band used to normalize to absolute magnitude :type
+        absolute_mag_band: str or `~sncosmo.Bandpass` :param mag_zpsys: Optional, AB or
+        Vega (AB default) :type mag_zpsys: str :param cosmo: astropy.cosmology instance
+        :param skypy_config: path to SkyPy configuration yaml file :type skypy_config:
+        string :param sky_area: Sky area over which galaxies are sampled. Must be in
+        units of     solid angle. :type sky_area: `~astropy.units.Quantity` :param
+        sn_modeldir: sn_modeldir is the path to the directory containing files  needed
+        to initialize the sncosmo.model class. For example,  sn_modeldir =
+        'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can  be downloaded
+        from
+        https://github.com/LSST-strong-lensing/data_public
         :type band: str. eg: 'i', 'g', 'r', or any other supported band
         :param lightcurve_time: observation time array for lightcurve in unit of days.
         :type lightcurve_time: array
@@ -120,14 +132,14 @@ class SupernovaeCatalog(object):
         :param skypy_config: path to SkyPy configuration yaml file
         :type skypy_config: string
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
-            solid angle.
+                solid angle.
         :type sky_area: `~astropy.units.Quantity`
         :param sn_modeldir: sn_modeldir is the path to the directory containing files
-         needed to initialize the sncosmo.model class. For example,
-         sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can
-         be downloaded from https://github.com/LSST-strong-lensing/data_public .
-         For more detail, please look at the documentation of RandomizedSupernovae
-         class.
+                needed to initialize the sncosmo.model class. For example,
+                sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These
+                data can          be downloaded from https://github.com/LSST-strong-
+                lensing/data_public .          For more detail, please look at the
+                documentation of RandomizedSupernovae          class.
         :type sn_modeldir: str
         """
         self.sn_type = sn_type
@@ -145,15 +157,16 @@ class SupernovaeCatalog(object):
         """Generates supernovae catalog for given redshifts.
 
         :param host_galaxy: kwargs to decide whether catalog should include host
-            galaxies or not. True or False.
+                galaxies or not. True or False.
         :param lightcurve: kwargs for the lightcurve, if lightcurve is True, it returns
-            extracts lightcurve for each supernovae redshift.
+                extracts lightcurve for each supernovae redshift.
         :return: Astropy Table of supernovae catalog containg redshift, lightcurves,
-            ra_off, dec_off, and host galaxy properties. If host_galaxy is set to False,
-            it returns catalog without host galaxy properties. Light curves are
-            generated using RandomizedSupernova class. Light curves are saved as an
-            array of observation time and array of corresponding magnitudes in specified
-            bands in different columns of the Table.
+                ra_off, dec_off, and host galaxy properties. If host_galaxy is set to
+                False,             it returns catalog without host galaxy properties.
+                Light curves are             generated using RandomizedSupernova class.
+                Light curves are saved as an             array of observation time and
+                array of corresponding magnitudes in specified             bands in
+                different columns of the Table.
         """
         sne_lightcone = SNeLightcone(
             self.cosmo,
