@@ -120,14 +120,20 @@ class Galaxies(SourcePopBase):
         """
         return self._num_select
 
-    def draw_source(self):
+    def draw_source(self, z_min=None):
         """Choose source at random.
+        :param z_min: minimum redshift for source to be drawn.
 
         :return: dictionary of source
         """
-
-        index = random.randint(0, self._num_select - 1)
-        galaxy = self._galaxy_select[index]
+        if z_min is not None:
+            filtered_galaxies = self._galaxy_select[
+                self._galaxy_select['z'] > z_min]
+            index = random.randint(0, len(filtered_galaxies) -1)
+            galaxy = filtered_galaxies[index]
+        else:
+            index = random.randint(0, self._num_select - 1)
+            galaxy = self._galaxy_select[index]
         if "a_rot" in galaxy.colnames:
             phi_rot = galaxy["a_rot"]
         else:
