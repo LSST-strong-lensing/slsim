@@ -21,6 +21,7 @@ class DeflectorsBase(ABC):
         self.kwargs_cut = kwargs_cut
         self.cosmo = cosmo
         self.sky_area = sky_area
+        self.deflector_profile = "EPL"
 
     @abstractmethod
     def deflector_number(self):

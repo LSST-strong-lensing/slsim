@@ -11,7 +11,14 @@ from slsim.Util.param_util import (
 
 
 def simulate_image(
-    lens_class, band, num_pix, add_noise=True, observatory="LSST", **kwargs
+    lens_class,
+    band,
+    num_pix,
+    add_noise=True,
+    observatory="LSST",
+    kwargs_psf=None,
+    kwargs_numerics=None,
+    **kwargs
 ):
     """Creates an image of a selected lens with noise.
 
@@ -22,7 +29,13 @@ def simulate_image(
     :param add_noise: if True, add noise
     :param observatory: telescope type to be simulated
     :type observatory: str
+    :param kwargs_psf: (optional) specific PSF quantities to overwrite default options
+        ("psf_type", "kernel_point_source", "point_source_supersampling_factor")
+    :type kwargs_psf: dict
     :param kwargs: additional keyword arguments for the bands
+    :type kwargs_numerics: dict
+    :param kwargs_numerics: options are "point_source_supersampling_factor",
+        "supersampling_factor", and more in lenstronomy.ImSim.Numerics.numerics class
     :type kwargs: dict
     :return: simulated image
     :rtype: 2d numpy array
@@ -33,7 +46,8 @@ def simulate_image(
     kwargs_single_band = image_quality_lenstronomy.kwargs_single_band(
         observatory=observatory, band=band, **kwargs
     )
-
+    if kwargs_psf is not None:
+        kwargs_single_band.update(kwargs_psf)
     sim_api = SimAPI(
         numpix=num_pix, kwargs_single_band=kwargs_single_band, kwargs_model=kwargs_model
     )
@@ -42,10 +56,11 @@ def simulate_image(
         kwargs_source_mag=kwargs_params.get("kwargs_source", None),
         kwargs_ps_mag=kwargs_params.get("kwargs_ps", None),
     )
-    kwargs_numerics = {
-        "point_source_supersampling_factor": 1,
-        "supersampling_factor": 3,
-    }
+    if kwargs_numerics is None:
+        kwargs_numerics = {
+            "point_source_supersampling_factor": 1,
+            "supersampling_factor": 3,
+        }
     image_model = sim_api.image_model_class(kwargs_numerics)
     kwargs_lens = kwargs_params.get("kwargs_lens", None)
     image = image_model.image(
@@ -100,7 +115,7 @@ def sharp_image(
         kwargs_source_mag=kwargs_params.get("kwargs_source", None),
         kwargs_ps_mag=kwargs_params.get("kwargs_ps", None),
     )
-    kwargs_numerics = {"supersampling_factor": 1}
+    kwargs_numerics = {"supersampling_factor": 5}
     image_model = sim_api.image_model_class(kwargs_numerics)
     kwargs_lens = kwargs_params.get("kwargs_lens", None)
     image = image_model.image(

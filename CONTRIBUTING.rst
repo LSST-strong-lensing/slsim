@@ -41,6 +41,19 @@ install the slsim package in development mode with
   python setup.py develop --user
 
 
+.. note::
+
+  Development mode installation uses the file path to the repository you work on.
+  If you do the regular installation, a copy of all the python files will be made in the path of the python version
+  and the path to call the routines will be to these files.
+
+.. warning::
+
+  Make sure you uninstalled all SLSim versions first before installing the version in development mode. Otherwise,
+  due to path hierarchy, there is still a good chance your copied files will be imported instead of the files in your
+  development repository.
+
+
 Create a branch for your new feature
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

@@ -7,6 +7,7 @@ from slsim.Util.astro_util import (
     generate_signal_from_generic_psd,
 )
 import pytest
+import astropy.units as u
 
 
 class TestAccretionDiskReprocessing:
@@ -22,6 +23,16 @@ class TestAccretionDiskReprocessing:
         }
         reprocessor = AccretionDiskReprocessing("lamppost", **kwargs_agn_model)
         assert reprocessor.reprocessing_model == "lamppost"
+        assert reprocessor.redshift == 0
+
+        kwargs_agn_model["redshift"] = 3.1
+        redshifted_reprocessor = AccretionDiskReprocessing(
+            "lamppost", **kwargs_agn_model
+        )
+        assert redshifted_reprocessor.redshift == 3.1
+
+        with pytest.raises(ValueError):
+            AccretionDiskReprocessing("other", **kwargs_agn_model)
 
     def test_initialization_invalid_model(self):
         kwargs_agn_model = {
@@ -39,6 +50,9 @@ class TestAccretionDiskReprocessing:
         assert (
             "Given model is not supported. Currently supported model is lamppost."
         ) in str(excinfo.value)
+
+        kwargs_agn_model["redshift"] = 3.1
+        AccretionDiskReprocessing("lamppost", **kwargs_agn_model)
 
     def test_default_initialization_lamppost_model(self):
         kwargs_agn_model = {"r_out": 1000}
@@ -157,7 +171,11 @@ class TestAccretionDiskReprocessing:
 
     def test_reprocessing_a_signal(self):
         kwargs_agn_model = {"black_hole_mass_exponent": 9.5}
+        kwargs_small_agn_model = {"black_hole_mass_exponent": 4.0}
         reprocessor = AccretionDiskReprocessing("lamppost", **kwargs_agn_model)
+        small_reprocessor = AccretionDiskReprocessing(
+            "lamppost", **kwargs_small_agn_model
+        )
 
         input_freq = np.linspace(1 / 100, 1 / 2, 100)
         input_psd = input_freq ** (-2)
@@ -172,6 +190,7 @@ class TestAccretionDiskReprocessing:
 
         time_array, magnitude_array = generate_signal_from_generic_psd(**kwargs_signal)
         reprocessor.define_intrinsic_signal(time_array, magnitude_array)
+        small_reprocessor.define_intrinsic_signal(time_array, magnitude_array)
 
         reprocessed_signal_500 = reprocessor.reprocess_signal(
             rest_frame_wavelength_in_nanometers=500
@@ -182,6 +201,7 @@ class TestAccretionDiskReprocessing:
         reprocessed_signal_2000 = reprocessor.reprocess_signal(
             rest_frame_wavelength_in_nanometers=2000
         )
+        small_reprocessor.reprocess_signal(rest_frame_wavelength_in_nanometers=500)
 
         assert len(reprocessed_signal_500) == len(time_array)
         assert len(reprocessed_signal_1000) == len(reprocessed_signal_500)
@@ -207,3 +227,96 @@ class TestAccretionDiskReprocessing:
             response_function_amplitudes=1 - np.linspace(-1, 1, 100) ** 2
         )
         assert len(reprocessed_signal_test) == len(magnitude_array)
+        small_reprocessor.reprocess_signal(
+            response_function_amplitudes=1 - np.linspace(-1, 1, 100) ** 2
+        )
+
+        time_array_list = [1, 2, 3, 4, 5, 8, 20]
+        magnitude_array_list = [8, 5, 4, 3, 2, 1, 0]
+        small_reprocessor.define_intrinsic_signal(
+            time_array=time_array_list,
+            magnitude_array=magnitude_array_list,
+        )
+        small_reprocessor.reprocess_signal(
+            response_function_time_lags=[0, 1],
+            response_function_amplitudes=[1, 0],
+        )
+
+    def test_define_passband_response_function(self):
+        kwargs_agn_model = {"black_hole_mass_exponent": 9.5}
+        reprocessor = AccretionDiskReprocessing("lamppost", **kwargs_agn_model)
+        lsst_filter = "lsst2016-r"
+        filter_response = reprocessor.define_passband_response_function(
+            lsst_filter,
+            redshift=0,
+            delta_wavelength=50,
+            passband_wavelength_unit=u.angstrom,
+        )
+        wavelength_in_nm = 500
+        wavelength_response = reprocessor.define_new_response_function(
+            wavelength_in_nm,
+        )
+        assert len(wavelength_response) == len(filter_response)
+
+        reprocessor.define_passband_response_function(
+            lsst_filter,
+            redshift=0,
+            delta_wavelength=5,
+            passband_wavelength_unit=u.angstrom,
+        )
+
+    def test_determine_agn_luminosity_from_known_luminosity(self):
+        kwargs_agn_model = {"black_hole_mass_exponent": 9.5}
+        reprocessor = AccretionDiskReprocessing("lamppost", **kwargs_agn_model)
+
+        i_band_magnitude = 20
+        known_band = "lsst2023-i"
+        redshift = 1
+        mag_zero_point = 0
+        unknown_band = "lsst2023-r"
+        wavelength = 700
+
+        r_band_magnitude = reprocessor.determine_agn_luminosity_from_known_luminosity(
+            known_band, i_band_magnitude, redshift, mag_zero_point, band=unknown_band
+        )
+
+        reprocessor.determine_agn_luminosity_from_known_luminosity(
+            known_band,
+            i_band_magnitude,
+            redshift,
+            mag_zero_point,
+            observer_frame_wavelength_in_nm=wavelength,
+        )
+
+        # test identiy
+        i_band_mag = reprocessor.determine_agn_luminosity_from_known_luminosity(
+            known_band, i_band_magnitude, redshift, mag_zero_point, band="lsst2023-i"
+        )
+        assert i_band_mag == 20
+
+        # test recipricosity
+        test_i_band_magnitude = (
+            reprocessor.determine_agn_luminosity_from_known_luminosity(
+                unknown_band,
+                r_band_magnitude,
+                redshift,
+                mag_zero_point,
+                band=known_band,
+            )
+        )
+        # Use numpy testing because of rounding
+        np.testing.assert_almost_equal(i_band_magnitude, test_i_band_magnitude)
+
+        # test errors
+        with pytest.raises(ValueError):
+            reprocessor.determine_agn_luminosity_from_known_luminosity(
+                known_band, i_band_magnitude, redshift, mag_zero_point
+            )
+        with pytest.raises(ValueError):
+            reprocessor.determine_agn_luminosity_from_known_luminosity(
+                100,
+                i_band_magnitude,
+                redshift,
+                mag_zero_point,
+                band=known_band,
+            )

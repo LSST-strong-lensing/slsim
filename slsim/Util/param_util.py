@@ -2,6 +2,10 @@ import numpy as np
 import scipy
 from scipy.signal import convolve2d
 from scipy.signal import fftconvolve
+from lenstronomy.Util.param_util import transform_e1e2_product_average
+from astropy.io import fits
+from astropy import units as u
+import warnings
 
 
 def epsilon2e(epsilon):
@@ -271,3 +275,92 @@ def deg2_to_cone_angle(solid_angle_deg2):
     solid_angle_sr = solid_angle_deg2 * (np.pi / 180) ** 2
     theta = np.arccos(1 - solid_angle_sr / (2 * np.pi))  # rad
     return theta
+
+
+def ellipticity_slsim_to_lenstronomy(e1_slsim, e2_slsim):
+    """Converts ellipticity component from slsim convension to lenstronomy convention.
+    In slsim, position angle goes from North to East. In lenstronomy, position angle
+    goes from East to North.
+
+    :param e1_slsim:
+        first component of the ellipticity in slsim convension i.e position
+        angle from north to east.
+
+    :param e2_slsim:
+        second component of the ellipticity in slsim convention.
+
+    return: ellipticity components in lenstronomy convention.
+    """
+
+    return -e1_slsim, e2_slsim
+
+
+def elliptical_distortion_product_average(x, y, e1, e2, center_x, center_y):
+    """Maps the coordinates x, y with eccentricities e1, e2 into a new elliptical
+    coordinate system with same coordinate orientation.
+
+    :param x: x-coordinate
+    :param y: y-coordinate
+    :param e1: eccentricity
+    :param e2: eccentricity
+    :param center_x: center of distortion
+    :param center_y: center of distortion
+    :return: distorted coordinates x', y'
+    """
+    x_, y_ = transform_e1e2_product_average(x, y, e1, e2, center_x, center_y)
+
+    # Rotate back
+    phi_g, q = ellipticity2phi_q(e1, e2)
+    cos_phi = np.cos(-phi_g)
+    sin_phi = np.sin(-phi_g)
+
+    x__ = cos_phi * x_ + sin_phi * y_
+    y__ = -sin_phi * x_ + cos_phi * y_
+
+    # Shift
+    x___ = x__ + center_x
+    y___ = y__ + center_y
+
+    return x___, y___
+
+
+def fits_append_table(filename, table):
+    """Append an Astropy Table to an existing FITS file.
+
+    :param filename: Name of the FITS file to append to
+    :param table: Astropy Table object to append
+    """
+    hdulist = fits.open(filename, mode="append")
+    hdulist.append(fits.BinTableHDU(table))
+    hdulist.writeto(filename, overwrite=True)
+    hdulist.close()
+
+
+def catalog_with_angular_size_in_arcsec(galaxy_catalog, input_catalog_type="skypy"):
+    """This function is written to change unit of angular size in skypy galaxy catalog
+    to arcsec. If user is using deflector catalog other than generated from skypy
+    pipeline, we require them to provide angular size of the galaxy in arcsec.
+
+    :param galaxy_catalog: galaxy catalog.
+    :param input_catalog_type: type of the catalog.
+    :type input_catalog_type: str. "skypy" or None
+    :return: galaxy catalog with anularsize in arcsec.
+    """
+    copied_galaxy_catalog = galaxy_catalog.copy()
+    if input_catalog_type == "skypy":
+        copied_galaxy_catalog["angular_size"] = copied_galaxy_catalog[
+            "angular_size"
+        ].to(u.arcsec)
+        warning_msg = (
+            "Angular size is converted to arcsec because provided"
+            " input_catalog_type is skypy. If this is not correct, please refer to"
+            " the documentation of the class you are using"
+        )
+        warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
+    else:
+        warning_msg = (
+            "You provided angular size in arcsec. If this is not correct, please"
+            " refer to the documentation of the class that you are using"
+        )
+        warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
+    return copied_galaxy_catalog
