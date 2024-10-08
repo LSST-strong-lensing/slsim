@@ -98,7 +98,11 @@ def test_opsim_variable_lens_injection(pes_lens_instance):
     lens_class = pes_lens_instance
 
     # Load example opsim data format
-    expo_data = Table.read("../TestData/expo_data_opsim.hdf5", path="data")
+    path = os.path.dirname(__file__)
+    module_path, _ = os.path.split(path)
+    expo_data = Table.read(
+        os.path.join(path, "../TestData/expo_data_opsim.hdf5"), path="data"
+    )
 
     transform_pix2angle = np.array([[0.2, 0], [0, 0.2]])
     bands = ["g", "r", "i"]
