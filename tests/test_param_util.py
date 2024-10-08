@@ -13,8 +13,15 @@ from slsim.Util.param_util import (
     transformmatrix_to_pixelscale,
     magnitude_to_amplitude,
     amplitude_to_magnitude,
+    ellipticity_slsim_to_lenstronomy,
+    fits_append_table,
+    catalog_with_angular_size_in_arcsec,
 )
 from slsim.Sources.SourceVariability.variability import Variability
+from astropy.io import fits
+from astropy.table import Table
+from astropy import units as u
+import tempfile
 import pytest
 
 
@@ -160,6 +167,88 @@ def test_magnitude_to_amplitude():
     new_high_mag = amplitude_to_magnitude(high_flux, zero_point)
     assert low_mag == new_low_mag
     assert high_mag == new_high_mag
+
+
+def test_ellipricity_slsim_to_lenstronomy():
+    result = ellipticity_slsim_to_lenstronomy(-0.17, 0.05)
+    assert result[0] == 0.17
+    assert result[1] == 0.05
+
+
+@pytest.fixture
+def temp_fits_file():
+    # Create a temporary FITS file
+    temp_file = tempfile.NamedTemporaryFile(suffix=".fits", delete=False)
+    temp_file.close()
+
+    # Create an initial empty FITS file
+    primary_hdu = fits.PrimaryHDU()
+    hdul = fits.HDUList([primary_hdu])
+    hdul.writeto(temp_file.name, overwrite=True)
+
+    yield temp_file.name
+
+    # Cleanup: Remove the temporary FITS file
+    os.remove(temp_file.name)
+
+
+@pytest.fixture
+def sample_table():
+    # Create a sample Astropy Table
+    return Table({"col1": [1, 2, 3], "col2": ["a", "b", "c"]}, names=["col1", "col2"])
+
+
+def test_append_table(temp_fits_file, sample_table):
+    # Append the sample table to the FITS file
+    fits_append_table(temp_fits_file, sample_table)
+
+    # Read back the FITS file and check the appended table
+    with fits.open(temp_fits_file) as hdul:
+        # Verify that a new table has been appended
+        assert len(hdul) == 2
+
+        # Verify the content of the appended table
+        appended_table_data = hdul[1].data
+        for i in range(len(sample_table)):
+            assert appended_table_data["col1"][i] == sample_table["col1"][i]
+            assert appended_table_data["col2"][i] == sample_table["col2"][i]
+
+
+def test_catalog_with_angular_size_in_arcsec():
+    galaxy_list = Table(
+        [
+            [0.5, 0.5, 0.5],
+            [-15.248975044343094, -15.248975044343094, -15.248975044343094],
+            [0.1492770563596445, 0.1492770563596445, 0.1492770563596445],
+            [4.186996407348755e-08, 4.186996407348755e-08, 4.186996407348755e-08]
+            * u.rad,
+            [23, 23, 23],
+            [43, 43, 43],
+        ],
+        names=("z", "M", "e", "angular_size", "mag_i", "a_rot"),
+    )
+    galaxy_list2 = Table(
+        [
+            [0.5, 0.5, 0.5],
+            [-15.248975044343094, -15.248975044343094, -15.248975044343094],
+            [0.1492770563596445, 0.1492770563596445, 0.1492770563596445],
+            [4.186996407348755e-08, 4.186996407348755e-08, 4.186996407348755e-08]
+            * u.rad,
+            [23, 23, 23],
+            [43, 43, 43],
+        ],
+        names=("z", "M", "e", "angular_size", "mag_i", "a_rot"),
+    )
+    galaxy_cat = catalog_with_angular_size_in_arcsec(
+        galaxy_catalog=galaxy_list, input_catalog_type="skypy"
+    )
+    galaxy_cat2 = catalog_with_angular_size_in_arcsec(
+        galaxy_catalog=galaxy_list2, input_catalog_type="other"
+    )
+    assert galaxy_cat["angular_size"][0] == 4.186996407348755e-08 / 4.84813681109536e-06
+    assert galaxy_cat2["angular_size"][0] == 4.186996407348755e-08
+    assert galaxy_cat2["angular_size"].unit == u.rad
+    assert galaxy_cat["angular_size"].unit == u.arcsec
 
 
 if __name__ == "__main__":

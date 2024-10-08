@@ -1,15 +1,23 @@
 import numpy as np
 import numpy.random as random
-from slsim.selection import deflector_cut
-from slsim.Deflectors.velocity_dispersion import vel_disp_sdss
+from slsim.selection import object_cut
 from slsim.Util import param_util
 from slsim.Deflectors.deflectors_base import DeflectorsBase
+from slsim.Deflectors.velocity_dispersion import vel_disp_abundance_matching
 
 
 class EllipticalLensGalaxies(DeflectorsBase):
     """Class describing elliptical galaxies."""
 
-    def __init__(self, galaxy_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area):
+    def __init__(
+        self,
+        galaxy_list,
+        kwargs_cut,
+        kwargs_mass2light,
+        cosmo,
+        sky_area,
+        catalog_type="skypy",
+    ):
         """
 
         :param galaxy_list: list of dictionary with galaxy parameters of
@@ -21,7 +29,16 @@ class EllipticalLensGalaxies(DeflectorsBase):
         :type sky_area: `~astropy.units.Quantity`
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
+        :param catalog_type: type of the catalog. If user is using deflector catalog
+         other than generated from skypy pipeline, we require them to provide angular
+         size of the galaxy in arcsec and specify catalog_type as None. Otherwise, by
+         default, this class considers deflector catalog is generated using skypy
+         pipeline.
+        :type catalog_type: str. "skypy" or None.
         """
+        galaxy_list = param_util.catalog_with_angular_size_in_arcsec(
+            galaxy_catalog=galaxy_list, input_catalog_type=catalog_type
+        )
         super().__init__(
             deflector_table=galaxy_list,
             kwargs_cut=kwargs_cut,
@@ -44,29 +61,16 @@ class EllipticalLensGalaxies(DeflectorsBase):
         if "gamma_pl" not in column_names:
             galaxy_list["gamma_pl"] = np.ones(n) * 2
 
-        num_total = len(galaxy_list)
-        z_min, z_max = 0, np.max(galaxy_list["z"])
-        redshift = np.arange(z_min, z_max, 0.1)
-        z_list, vel_disp_list = vel_disp_sdss(
-            sky_area, redshift, vd_min=100, vd_max=500, cosmology=cosmo, noise=True
+        self._f_vel_disp = vel_disp_abundance_matching(
+            galaxy_list, z_max=0.5, sky_area=sky_area, cosmo=cosmo
         )
-        # sort for stellar masses in decreasing manner
-        galaxy_list.sort("stellar_mass")
-        galaxy_list.reverse()
-        # sort velocity dispersion, largest values first
-        vel_disp_list = np.flip(np.sort(vel_disp_list))
-        num_vel_disp = len(vel_disp_list)
-        # abundance match velocity dispersion with elliptical galaxy catalogue
-        if num_vel_disp >= num_total:
-            galaxy_list["vel_disp"] = vel_disp_list[:num_total]
-            # randomly select
-        else:
-            galaxy_list = galaxy_list[:num_vel_disp]
-            galaxy_list["vel_disp"] = vel_disp_list
-            num_total = num_vel_disp
 
-        self._galaxy_select = deflector_cut(galaxy_list, **kwargs_cut)
+        self._galaxy_select = object_cut(galaxy_list, **kwargs_cut)
         self._num_select = len(self._galaxy_select)
+        self._galaxy_select["vel_disp"] = self._f_vel_disp(
+            np.log10(self._galaxy_select["stellar_mass"])
+        )
+
         self._kwargs_mass2light = kwargs_mass2light
 
         # TODO: random reshuffle of matched list

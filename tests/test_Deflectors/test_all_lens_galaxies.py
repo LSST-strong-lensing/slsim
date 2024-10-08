@@ -2,8 +2,8 @@ from astropy.cosmology import FlatLambdaCDM
 from slsim.Deflectors.all_lens_galaxies import (
     AllLensGalaxies,
     fill_table,
-    vel_disp_abundance_matching,
 )
+from slsim.Deflectors.velocity_dispersion import vel_disp_abundance_matching
 from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 from astropy.units import Quantity
 from astropy.table import Table
@@ -12,7 +12,7 @@ import pytest
 
 
 def galaxy_list():
-    sky_area = Quantity(value=0.05, unit="deg2")
+    sky_area = Quantity(value=0.001, unit="deg2")
     pipeline = SkyPyPipeline(skypy_config=None, sky_area=sky_area, filters=None)
     return pipeline.red_galaxies, pipeline.blue_galaxies
 

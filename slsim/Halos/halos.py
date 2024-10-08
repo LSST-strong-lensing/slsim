@@ -126,7 +126,7 @@ def colossus_halo_mass_sampler(
         omega_m,
     )
 
-    CDF = integrate.cumtrapz(massf, np.log(m), initial=0)
+    CDF = integrate.cumulative_trapezoid(massf, np.log(m), initial=0)
     CDF = CDF / CDF[-1]
     n_uniform = np.random.uniform(size=size)
     return np.interp(n_uniform, CDF, m) / cosmology.h
@@ -162,20 +162,14 @@ def set_defaults_halos(
     # Default values
     if m_min is None:
         m_min = 1.0e12
-        warnings.warn("No minimum mass provided, instead uses 1e10 Msun")
 
     if m_max is None:
         m_max = 1.0e14
-        warnings.warn("No maximum mass provided, instead uses 1e14 Msun")
 
     if resolution is None:
         resolution = 100
-        warnings.warn("No resolution provided, instead uses 100")
 
     if cosmology is None:
-        warnings.warn(
-            "No cosmology provided, instead uses astropy.cosmology import default_cosmology"
-        )
         from astropy.cosmology import default_cosmology
 
         cosmology = default_cosmology.get()
@@ -284,9 +278,9 @@ def number_density_for_massf(massf, m, dndlnM=False):
     :rtype: float
     """
     if dndlnM:
-        return integrate.trapz(massf, np.log(m))
+        return integrate.trapezoid(massf, np.log(m))
     else:
-        return integrate.trapz(massf * m, np.log(m))
+        return integrate.trapezoid(massf * m, np.log(m))
 
 
 def redshift_halos_array_from_comoving_density(
@@ -787,11 +781,11 @@ def colossus_halo_expected_mass_sampler(
     )
 
     mass_times_massf = m * massf
-    integral_mass_times_massf = integrate.cumtrapz(
+    integral_mass_times_massf = integrate.cumulative_trapezoid(
         mass_times_massf, np.log(m), initial=0
     )
 
-    integral_massf = integrate.cumtrapz(massf, np.log(m), initial=0)
+    integral_massf = integrate.cumulative_trapezoid(massf, np.log(m), initial=0)
     average_massh = integral_mass_times_massf[-1] / integral_massf[-1]
     return average_massh / cosmology.h
 

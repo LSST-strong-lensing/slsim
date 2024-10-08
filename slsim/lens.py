@@ -9,6 +9,7 @@ from lenstronomy.LensModel.Solver.lens_equation_solver import (
     analytical_lens_model_support,
 )
 from slsim.ParamDistributions.los_config import LOSConfig
+from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.Util import constants
 from lenstronomy.Util import data_util
@@ -26,7 +27,6 @@ class Lens(LensedSystemBase):
         deflector_dict,
         cosmo,
         deflector_type="EPL",
-        deflector_kwargs=None,
         source_type="extended",
         lens_equation_solver="lenstronomy_analytical",
         variability_model=None,
@@ -42,18 +42,20 @@ class Lens(LensedSystemBase):
         light_profile="single_sersic",
         lightcurve_time=None,
         los_config=None,
+        sn_modeldir=None,
+        los_dict=None,
+        agn_driving_variability_model=None,
+        agn_driving_kwargs_variability=None,
     ):
         """
 
         :param source_dict: source properties
-        :type source_dict: dict
+        :type source_dict: dict or astropy table
         :param deflector_dict: deflector properties
         :type deflector_dict: dict
         :param cosmo: astropy.cosmology instance
         :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST", "NFW_CLUSTER"
         :type deflector_type: str
-        :param deflector_kwargs: additional deflector properties
-        :type deflector_kwargs: dict
         :param source_type: type of the source 'extended' or 'point_source' or
          'point_plus_extended' supported
         :type source_type: str
@@ -82,13 +84,33 @@ class Lens(LensedSystemBase):
         :type light_profile: str . Either "single_sersic" or "double_sersic" .
         :param lightcurve_time: observation time array for lightcurve in unit of days.
         :type lightcurve_time: array
+        :param sn_modeldir: sn_modeldir is the path to the directory containing files
+         needed to initialize the sncosmo.model class. For example,
+         sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can
+         be downloaded from https://github.com/LSST-strong-lensing/data_public .
+         For more detail, please look at the documentation of RandomizedSupernovae
+         class.
+        :type sn_modeldir: str
+        :param los_dict: line of sight dictionary (optional, takes these values instead of drawing from distribution)
+         Takes "gamma" = [gamma1, gamma2] and "kappa" = kappa as entries
+        :type los_dict: dict
+        :param agn_driving_variability_model: Variability model with light_curve output
+         which drives the variability across all bands of the agn.
+        :type agn_driving_variability_model: str (e.g. "light_curve", "sinusoidal", "bending_power_law")
+        :param agn_driving_kwargs_variability: Dictionary containing agn variability
+         parameters for the driving variability class. eg: variable_agn_kwarg_dict =
+         {"length_of_light_curve": 1000, "time_resolution": 1,
+         "log_breakpoint_frequency": 1 / 20, "low_frequency_slope": 1,
+         "high_frequency_slope": 3, "normal_magnitude_variance": 0.1}. For the detailed
+          explanation of these parameters, see generate_signal() function in
+          astro_util.py.
+        :type agn_driving_kwargs_variability: dict
         """
         super().__init__(
             source_dict=source_dict,
             deflector_dict=deflector_dict,
             cosmo=cosmo,
             deflector_type=deflector_type,
-            deflector_kwargs=deflector_kwargs,
             test_area=test_area,
             variability_model=variability_model,
             kwargs_variability=kwargs_variability,
@@ -96,6 +118,9 @@ class Lens(LensedSystemBase):
             sn_type=sn_type,
             sn_absolute_mag_band=sn_absolute_mag_band,
             sn_absolute_zpsys=sn_absolute_zpsys,
+            sn_modeldir=sn_modeldir,
+            agn_driving_variability_model=agn_driving_variability_model,
+            agn_driving_kwargs_variability=agn_driving_kwargs_variability,
         )
 
         self.cosmo = cosmo
@@ -121,7 +146,9 @@ class Lens(LensedSystemBase):
         self._los_linear_distortions_cache = None
         self.los_config = los_config
         if self.los_config is None:
-            self.los_config = LOSConfig()
+            if los_dict is None:
+                los_dict = {}
+            self.los_config = LOSConfig(**los_dict)
 
     @property
     def image_number(self):
@@ -203,7 +230,10 @@ class Lens(LensedSystemBase):
         return self._point_image_positions
 
     def validity_test(
-        self, min_image_separation=0, max_image_separation=10, mag_arc_limit=None
+        self,
+        min_image_separation=0,
+        max_image_separation=10,
+        mag_arc_limit=None,
     ):
         """Check whether lensing configuration matches selection and plausibility
         criteria.
@@ -433,10 +463,10 @@ class Lens(LensedSystemBase):
         arrival_times = self.point_source_arrival_times()
         if type(t_obs) is np.ndarray and len(t_obs) > 1:
             observer_times = (
-                t_obs[:, np.newaxis] + arrival_times - np.min(arrival_times)
+                t_obs[:, np.newaxis] - arrival_times + np.min(arrival_times)
             ).T
         else:
-            observer_times = (t_obs + arrival_times - np.min(arrival_times))[
+            observer_times = (t_obs - arrival_times + np.min(arrival_times))[
                 :, np.newaxis
             ]
 
@@ -602,7 +632,17 @@ class Lens(LensedSystemBase):
             )
         # adding line-of-sight structure
         gamma1, gamma2, kappa_ext = self.los_linear_distortions
-        kwargs_lens.append({"gamma1": gamma1, "gamma2": gamma2, "ra_0": 0, "dec_0": 0})
+        gamma1_lenstronomy, gamma2_lenstronomy = ellipticity_slsim_to_lenstronomy(
+            e1_slsim=gamma1, e2_slsim=gamma2
+        )
+        kwargs_lens.append(
+            {
+                "gamma1": gamma1_lenstronomy,
+                "gamma2": gamma2_lenstronomy,
+                "ra_0": 0,
+                "dec_0": 0,
+            }
+        )
         kwargs_lens.append({"kappa": kappa_ext, "ra_0": 0, "dec_0": 0})
         lens_mass_model_list.append("SHEAR")
         lens_mass_model_list.append("CONVERGENCE")

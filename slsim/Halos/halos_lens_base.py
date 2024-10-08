@@ -496,9 +496,6 @@ class HalosLensBase(object):
         # If this above code need to be changed, notice the change in the following code
         # including the lens_cosmo_dict one since it assume halos is in front of mass sheet
         if not combined_redshift_list.size:
-            warnings.warn(
-                f"No halos OR mass correction in the given redshift range from z1={z1} to z2={z2}."
-            )
             return None, None, None
         if z2 < z1:
             raise ValueError(

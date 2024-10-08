@@ -1,5 +1,5 @@
 from slsim.Deflectors.DeflectorTypes.deflector_base import DeflectorBase
-from lenstronomy.Util import constants
+from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 
 
 class EPLSersic(DeflectorBase):
@@ -52,12 +52,15 @@ class EPLSersic(DeflectorBase):
             )
         gamma = self.halo_properties
         e1_mass, e2_mass = self.mass_ellipticity
+        e1_mass_lenstronomy, e2_mass_lenstronomy = ellipticity_slsim_to_lenstronomy(
+            e1_slsim=e1_mass, e2_slsim=e2_mass
+        )
         kwargs_lens_mass = [
             {
                 "theta_E": theta_E,
                 "gamma": gamma,
-                "e1": e1_mass,
-                "e2": e2_mass,
+                "e1": e1_mass_lenstronomy,
+                "e2": e2_mass_lenstronomy,
                 "center_x": self.deflector_center[0],
                 "center_y": self.deflector_center[1],
             }
@@ -82,17 +85,20 @@ class EPLSersic(DeflectorBase):
             mag_lens = self.magnitude(band)
         center_lens = self.deflector_center
         e1_light_lens, e2_light_lens = self.light_ellipticity
-        size_lens_arcsec = (
-            self._deflector_dict["angular_size"] / constants.arcsec
-        )  # convert radian to arc seconds
+        e1_light_lens_lenstronomy, e2_light_lens_lenstronomy = (
+            ellipticity_slsim_to_lenstronomy(
+                e1_slsim=e1_light_lens, e2_slsim=e2_light_lens
+            )
+        )
+        size_lens_arcsec = self._deflector_dict["angular_size"]
         lens_light_model_list = ["SERSIC_ELLIPSE"]
         kwargs_lens_light = [
             {
                 "magnitude": mag_lens,
                 "R_sersic": size_lens_arcsec,
                 "n_sersic": float(self._deflector_dict["n_sersic"]),
-                "e1": e1_light_lens,
-                "e2": e2_light_lens,
+                "e1": e1_light_lens_lenstronomy,
+                "e2": e2_light_lens_lenstronomy,
                 "center_x": center_lens[0],
                 "center_y": center_lens[1],
             }

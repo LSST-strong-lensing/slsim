@@ -3,7 +3,6 @@ import numpy as np
 from numpy import testing as npt
 from astropy.cosmology import FlatLambdaCDM
 from astropy.table import Table
-from slsim.Deflectors.deflector import Deflector
 from slsim.lens import (
     Lens,
     image_separation_from_positions,
@@ -24,24 +23,28 @@ class TestLens(object):
         blue_one = Table.read(
             os.path.join(path, "TestData/blue_one_modified.fits"), format="fits"
         )
+        blue_one["angular_size"] = blue_one["angular_size"] / 4.84813681109536e-06
         red_one = Table.read(
             os.path.join(path, "TestData/red_one_modified.fits"), format="fits"
         )
+        red_one["angular_size"] = red_one["angular_size"] / 4.84813681109536e-06
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         self.source_dict = blue_one
         self.deflector_dict = red_one
 
         print(blue_one)
         blue_one["gamma_pl"] = 2.1
-
+        mag_arc_limit = {"i": 35, "g": 35, "r": 35}
         while True:
             gg_lens = Lens(
                 source_dict=self.source_dict,
                 deflector_dict=self.deflector_dict,
                 lens_equation_solver="lenstronomy_analytical",
+                kwargs_variability={"MJD", "ps_mag_i"},  # This line will not be used in
+                # the testing but at least code go through this warning message.
                 cosmo=cosmo,
             )
-            if gg_lens.validity_test():
+            if gg_lens.validity_test(mag_arc_limit=mag_arc_limit):
                 self.gg_lens = gg_lens
                 break
 
@@ -111,9 +114,9 @@ class TestLens(object):
         dt_days = self.gg_lens.image_observer_times(t_obs=t_obs)
         dt_days2 = self.gg_lens.image_observer_times(t_obs=t_obs2)
         arrival_times = self.gg_lens.point_source_arrival_times()
-        observer_times = (t_obs + arrival_times - np.min(arrival_times))[:, np.newaxis]
+        observer_times = (t_obs - arrival_times + np.min(arrival_times))[:, np.newaxis]
         observer_times2 = (
-            t_obs2[:, np.newaxis] + arrival_times - np.min(arrival_times)
+            t_obs2[:, np.newaxis] - arrival_times + np.min(arrival_times)
         ).T
         npt.assert_almost_equal(dt_days, observer_times, decimal=5)
         npt.assert_almost_equal(dt_days2, observer_times2, decimal=5)
@@ -160,7 +163,7 @@ class TestLens(object):
             "e1_mass": 0.1,
             "e2_mass": -0.1,
             "stellar_mass": 10.5e11,
-            "angular_size": 0.001,
+            "angular_size": 0.16,
             "e1_light": -0.1,
             "e2_light": 0.1,
             "z": 0.5,
@@ -183,10 +186,6 @@ class TestLens(object):
         subhalos_table = Table.read(
             os.path.join(path, "TestData/subhalos_table.fits"), format="fits"
         )
-        subhalos_list = [
-            Deflector(deflector_type="EPL", deflector_dict=subhalo)
-            for subhalo in subhalos_table
-        ]
         source_dict = blue_one
         deflector_dict = {
             "halo_mass": 10**14,
@@ -194,12 +193,12 @@ class TestLens(object):
             "e1_mass": 0.1,
             "e2_mass": -0.1,
             "z": 0.42,
+            "subhalos": subhalos_table,
         }
         while True:
             cg_lens = Lens(
                 source_dict=source_dict,
                 deflector_dict=deflector_dict,
-                deflector_kwargs={"subhalos_list": subhalos_list},
                 deflector_type="NFW_CLUSTER",
                 lens_equation_solver="lenstronomy_default",
                 cosmo=cosmo,
