@@ -686,7 +686,7 @@ def generate_signal(
         (fourier_transform, fourier_transform[-2:0:-1].conjugate())
     )
     generated_light_curve = ifft(fourier_transform)[
-        : length_of_light_curve // time_resolution
+        : int(length_of_light_curve // time_resolution)
     ]
     if normal_magnitude_variance is False:
         amplitude_baseline = magnitude_to_amplitude(mean_magnitude, zero_point_mag)
@@ -761,7 +761,7 @@ def generate_signal_from_bending_power_law(
     :return: Two arrays, the time_array and the magnitude_array of the variability.
     """
     time_array = np.linspace(
-        0, length_of_light_curve - 1, length_of_light_curve // time_resolution
+        0, length_of_light_curve - 1, int(length_of_light_curve // time_resolution)
     )
     magnitude_array = generate_signal(
         length_of_light_curve,
@@ -816,7 +816,7 @@ def generate_signal_from_generic_psd(
         variability.
     """
     time_array = np.linspace(
-        0, length_of_light_curve - 1, length_of_light_curve // time_resolution
+        0, length_of_light_curve - 1, int(length_of_light_curve // time_resolution)
     )
     magnitude_array = generate_signal(
         length_of_light_curve,
