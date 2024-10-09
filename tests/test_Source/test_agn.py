@@ -201,12 +201,12 @@ def test_random_agn():
     )
 
     light_curve_1 = {
-        "MJD": [0, 1, 2, 3, 4, 5],
-        "ps_mag_intrinsic": [1, 0, -1, 0, 1, 0],
+        "MJD": np.asarray([0, 1, 2, 3, 4, 5]),
+        "ps_mag_intrinsic": np.asarray([1, 0, -1, 0, 1, 0]),
     }
     light_curve_2 = {
-        "MJD": [0, 1, 2, 3, 4, 5],
-        "ps_mag_intrinsic": [1, 0, 1, 0, 1, 0],
+        "MJD": np.asarray([0, 1, 2, 3, 4, 5]),
+        "ps_mag_intrinsic": np.asarray([1, 0, 1, 0, 1, 0]),
     }
     input_agn_bounds_dict["intrinsic_light_curve"] = [light_curve_1, light_curve_2]
 
