@@ -93,8 +93,8 @@ def create_slsim_from_coolest(path, file_name, mag_zero_point=27):
     # replace amplitudes with magnitudes in lenstronomy kwargs.
     replacement_mappings = {
         "kwargs_source": {"amp": "magnitude", "value": source_mags},
-        "kwargs_lens_light": {"amp": "magnitude", "value": lens_mag},
-        "kwargs_ps": {"point_amp": "magnitude", "value": ps_mag},
+        "kwargs_lens_light": {"amp": "magnitude", "value": [lens_mag]},
+        "kwargs_ps": {"point_amp": "magnitude", "value": [ps_mag]},
     }
     for key, replacement_info in replacement_mappings.items():
         for keys, values in replacement_info.items():
