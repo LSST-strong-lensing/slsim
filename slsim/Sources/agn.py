@@ -248,10 +248,10 @@ def RandomAgn(
         kwargs_agn_model["driving_variability"] = agn_bounds_dict[
             "driving_variability"
         ][int(random_variability_type)]
-        
+
         # Check if a list of other light curves were inserted into bounds dict and randomize
         if agn_bounds_dict["intrinsic_light_curve"] is not None:
-            
+
             random_light_curve_index = random.uniform(
                 low=0, high=len(agn_bounds_dict["intrinsic_light_curve"])
             )
@@ -259,36 +259,32 @@ def RandomAgn(
                 int(random_light_curve_index)
             ]
 
+            # Set magnitude
+            random_light_curve["ps_mag_intrinsic"] += known_mag
+
+            # Define the driving variability model as the light curve to pass into AGN object
+            agn_driving_variability_model = "light_curve"
+            agn_driving_kwargs_variability = random_light_curve
+
         # If not, generate a bending power law signal from reasonable parameters
         else:
+            if lightcurve_time is not None:
+                length_of_required_light_curve = np.max(lightcurve_time) - np.min(
+                    lightcurve_time
+                )
+            else:
+                length_of_required_light_curve = 1000
             low_freq_slope = random.uniform(0, 2.0)
             random_driving_signal_kwargs = {
-                "length_of_light_curve": 1000,
+                "length_of_light_curve": length_of_required_light_curve,
                 "time_resolution": 1,
                 "log_breakpoint_frequency": random.uniform(-0.5, -2.5),
                 "low_frequency_slope": low_freq_slope,
                 "high_frequency_slope": random.uniform(low_freq_slope, 4.0),
-                "standard_deviation": random.uniform(0.1, 0.5)
+                "standard_deviation": random.uniform(0.1, 1.0),
             }
-            light_curve = Variability(
-                "bending_power_law",
-                **random_driving_signal_kwargs
-            )
-            time_axis = np.linspace(1, 1000, 1000)
-            random_light_curve = {
-                "MJD": time_axis,
-                "ps_mag_intrinsic": light_curve.variability_at_time(time_axis),
-            }
-        
-
-        # Set magnitude
-        random_light_curve["ps_mag_intrinsic"] += known_mag
-
-        # Define the driving variability model as the light curve to pass into AGN object
-        agn_driving_variability_model = "light_curve"
-        print(agn_driving_variability_model)
-        agn_driving_kwargs_variability = random_light_curve
-        print(agn_driving_kwargs_variability)
+            agn_driving_variability_model = "bending_power_law"
+            agn_driving_kwargs_variability = random_driving_signal_kwargs
 
     # Define initial speclite filter to be known band
     kwargs_agn_model["speclite_filter"] = known_band
