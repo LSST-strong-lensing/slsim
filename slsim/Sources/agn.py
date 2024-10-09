@@ -137,6 +137,7 @@ basic_light_curve = {
     "ps_mag_intrinsic": np.sin(np.linspace(1, 100, 100) * np.pi / 10),
 }
 
+
 # This dictionary is designed to set the boundaries to draw random parameters from.
 # The bounds of any keys may be redefined using an "input_agn_bounds_dict".
 # :key black_hole_mass_exponent_bounds: mass of SMBH as log_(10)(M_{BH}/M_{sun})
@@ -155,6 +156,8 @@ basic_light_curve = {
 #   light curves across all bands. The simplest case os to provide a list of variable
 #   light curves directly, but this will also work with other variability choices using
 #   Source.SourceVariability.variability.Variability(variability_model)
+# :key intrinsic_light_curve: List of light curve objects to randomly choose from. If
+#   None, then a bending power law signal will randomly be generated for a 1000 day period.
 agn_bounds_dict = {
     "black_hole_mass_exponent_bounds": (6.0, 10.0),
     "black_hole_spin_bounds": (-0.997, 0.997),
@@ -163,7 +166,7 @@ agn_bounds_dict = {
     "eddington_ratio_bounds": (0.01, 0.3),
     "supported_disk_models": ["thin_disk"],
     "driving_variability": ["light_curve"],
-    "intrinsic_light_curve": [basic_light_curve],
+    "intrinsic_light_curve": None,
 }
 
 
@@ -237,6 +240,7 @@ def RandomAgn(
     # Check if there was a provided variabilty model.
     # If not, populate driving variability with a simple model
     if agn_driving_variability_model is None:
+
         # Check if other driving variabilities were inserted into bounds dict and randomize
         random_variability_type = random.uniform(
             low=0, high=len(agn_bounds_dict["driving_variability"])
@@ -244,21 +248,47 @@ def RandomAgn(
         kwargs_agn_model["driving_variability"] = agn_bounds_dict[
             "driving_variability"
         ][int(random_variability_type)]
+        
+        # Check if a list of other light curves were inserted into bounds dict and randomize
+        if agn_bounds_dict["intrinsic_light_curve"] is not None:
+            
+            random_light_curve_index = random.uniform(
+                low=0, high=len(agn_bounds_dict["intrinsic_light_curve"])
+            )
+            random_light_curve = agn_bounds_dict["intrinsic_light_curve"][
+                int(random_light_curve_index)
+            ]
 
-        # Check if other light curves were inserted into bounds dict and randomize
-        random_light_curve_index = random.uniform(
-            low=0, high=len(agn_bounds_dict["intrinsic_light_curve"])
-        )
-        random_light_curve = agn_bounds_dict["intrinsic_light_curve"][
-            int(random_light_curve_index)
-        ]
+        # If not, generate a bending power law signal from reasonable parameters
+        else:
+            low_freq_slope = random.uniform(0, 2.0)
+            random_driving_signal_kwargs = {
+                "length_of_light_curve": 1000,
+                "time_resolution": 1,
+                "log_breakpoint_frequency": random.uniform(-0.5, -2.5),
+                "low_frequency_slope": low_freq_slope,
+                "high_frequency_slope": random.uniform(low_freq_slope, 4.0),
+                "standard_deviation": random.uniform(0.1, 0.5)
+            }
+            light_curve = Variability(
+                "bending_power_law",
+                **random_driving_signal_kwargs
+            )
+            time_axis = np.linspace(1, 1000, 1000)
+            random_light_curve = {
+                "MJD": time_axis,
+                "ps_mag_intrinsic": light_curve.variability_at_time(time_axis),
+            }
+        
 
         # Set magnitude
         random_light_curve["ps_mag_intrinsic"] += known_mag
 
         # Define the driving variability model as the light curve to pass into AGN object
         agn_driving_variability_model = "light_curve"
+        print(agn_driving_variability_model)
         agn_driving_kwargs_variability = random_light_curve
+        print(agn_driving_kwargs_variability)
 
     # Define initial speclite filter to be known band
     kwargs_agn_model["speclite_filter"] = known_band
