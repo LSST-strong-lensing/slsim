@@ -216,15 +216,8 @@ def test_random_agn():
         input_agn_bounds_dict=input_agn_bounds_dict,
     )
 
-    RandomAgn(
-        i_band_string,
-        i_band_mag,
-        redshift,
-        random_seed=1,
-        agn_driving_variability_model=agn_driving_variability_model,
-        agn_driving_kwargs_variability=agn_driving_kwargs_variability,
-        input_agn_bounds_dict=input_agn_bounds_dict,
-    )
+    # test initialization with minimal information
+    RandomAgn(i_band_string, i_band_mag, redshift)
 
     # Test that we raise a warning in RandomAgn when no time axis is input
     with pytest.raises(ValueError):

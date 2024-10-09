@@ -128,16 +128,6 @@ class Agn(object):
         return magnitudes
 
 
-# Include a basic driving light curve to illustrate variability between bands
-# Any light curve can be inserted into the "intrinsic_light_curve" keyword of
-# "kwargs_agn_model". Here we include a placeholder to include (relatively
-# nonsensical) variability without user input.
-basic_light_curve = {
-    "MJD": np.linspace(1, 100, 100),
-    "ps_mag_intrinsic": np.sin(np.linspace(1, 100, 100) * np.pi / 10),
-}
-
-
 # This dictionary is designed to set the boundaries to draw random parameters from.
 # The bounds of any keys may be redefined using an "input_agn_bounds_dict".
 # :key black_hole_mass_exponent_bounds: mass of SMBH as log_(10)(M_{BH}/M_{sun})
