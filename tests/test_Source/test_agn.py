@@ -216,6 +216,16 @@ def test_random_agn():
         input_agn_bounds_dict=input_agn_bounds_dict,
     )
 
+    RandomAgn(
+        i_band_string,
+        i_band_mag,
+        redshift,
+        random_seed=1,
+        agn_driving_variability_model=agn_driving_variability_model,
+        agn_driving_kwargs_variability=agn_driving_kwargs_variability,
+        input_agn_bounds_dict=input_agn_bounds_dict,
+    )
+
     # Test that we raise a warning in RandomAgn when no time axis is input
     with pytest.raises(ValueError):
         RandomAgn(
@@ -230,6 +240,7 @@ def test_random_agn():
 
     # check that a random value from the range [8.0, 8.0) must return 8.0
     assert random_agn_2.kwargs_model["black_hole_mass_exponent"] == 8.0
+    assert random_agn_3.kwargs_model["black_hole_mass_exponent"] == 8.0
 
     # check the inclination is on range [0, 45)
     assert random_agn_2.kwargs_model["inclination_angle"] < 45.1

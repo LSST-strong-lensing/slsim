@@ -250,12 +250,12 @@ def RandomAgn(
         ][int(random_variability_type)]
 
         # Check if a list of other light curves were inserted into bounds dict and randomize
-        if agn_bounds_dict["intrinsic_light_curve"] is not None:
+        if input_agn_bounds_dict["intrinsic_light_curve"] is not None:
 
             random_light_curve_index = random.uniform(
-                low=0, high=len(agn_bounds_dict["intrinsic_light_curve"])
+                low=0, high=len(input_agn_bounds_dict["intrinsic_light_curve"])
             )
-            random_light_curve = agn_bounds_dict["intrinsic_light_curve"][
+            random_light_curve = input_agn_bounds_dict["intrinsic_light_curve"][
                 int(random_light_curve_index)
             ]
 
@@ -268,12 +268,18 @@ def RandomAgn(
 
         # If not, generate a bending power law signal from reasonable parameters
         else:
-            if lightcurve_time is not None:
-                length_of_required_light_curve = np.max(lightcurve_time) - np.min(
-                    lightcurve_time
-                )
-            else:
+            if lightcurve_time is None:
                 length_of_required_light_curve = 1000
+                lightcurve_time = np.linspace(
+                    0,
+                    length_of_required_light_curve - 1,
+                    length_of_required_light_curve,
+                )
+
+            length_of_required_light_curve = np.max(lightcurve_time) - np.min(
+                lightcurve_time
+            )
+
             low_freq_slope = random.uniform(0, 2.0)
             random_driving_signal_kwargs = {
                 "length_of_light_curve": length_of_required_light_curve,
