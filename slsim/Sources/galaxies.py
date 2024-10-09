@@ -129,8 +129,11 @@ class Galaxies(SourcePopBase):
         if z_max is not None:
             filtered_galaxies = self._galaxy_select[
                 self._galaxy_select['z'] < z_max]
-            index = random.randint(0, len(filtered_galaxies) -1)
-            galaxy = filtered_galaxies[index]
+            if len(filtered_galaxies) > 0:
+                index = random.randint(0, len(filtered_galaxies) -1)
+                galaxy = filtered_galaxies[index]
+            else:
+                raise ValueError(f"No galaxies found with z < {z_max}.")
         else:
             index = random.randint(0, self._num_select - 1)
             galaxy = self._galaxy_select[index]

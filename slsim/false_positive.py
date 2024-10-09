@@ -2,10 +2,6 @@ import numpy as np
 from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 from lenstronomy.LensModel.lens_model import LensModel
-from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
-from lenstronomy.LensModel.Solver.lens_equation_solver import (
-    analytical_lens_model_support,
-)
 from slsim.ParamDistributions.los_config import LOSConfig
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 from lenstronomy.Util import constants
@@ -86,37 +82,7 @@ class FalsePositive(object):
         :return: [x_pox, y_pos] in arc seconds
         """
         return self.deflector.deflector_center
-
-    def extended_source_image_positions(self):
-        """Returns extended source image positions by solving the lens equation.
-
-        :return: x-pos, y-pos
-        """
-        if not hasattr(self, "_image_positions"):
-            lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
-            lens_model_class = LensModel(lens_model_list=lens_model_list)
-            lens_eq_solver = LensEquationSolver(lens_model_class)
-            source_pos_x, source_pos_y = self.source.extended_source_position(
-                center_lens=self.deflector_position, draw_area=self.test_area
-            )
-            if (
-                self._lens_equation_solver == "lenstronomy_analytical"
-                and analytical_lens_model_support(lens_model_list) is True
-            ):
-                solver = "analytical"
-            else:
-                solver = "lenstronomy"
-            self._image_positions = lens_eq_solver.image_position_from_source(
-                source_pos_x,
-                source_pos_y,
-                kwargs_lens,
-                solver=solver,
-                search_window=self.einstein_radius * 6,
-                min_distance=self.einstein_radius * 6 / 200,
-                magnification_limit=self._magnification_limit,
-            )
-        return self._image_positions
-
+    
     @property
     def deflector_redshift(self):
         """
