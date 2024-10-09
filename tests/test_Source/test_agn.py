@@ -200,10 +200,15 @@ def test_random_agn():
         input_agn_bounds_dict=input_agn_bounds_dict,
     )
 
-    input_agn_bounds_dict["intrinsic_light_curve"] = {
+    light_curve_1 = {
         "MJD": [0, 1, 2, 3, 4, 5],
         "ps_mag_intrinsic": [1, 0, -1, 0, 1, 0],
-    } 
+    }
+    light_curve_2 = {
+        "MJD": [0, 1, 2, 3, 4, 5],
+        "ps_mag_intrinsic": [1, 0, 1, 0, 1, 0],
+    }
+    input_agn_bounds_dict["intrinsic_light_curve"] = [light_curve_1, light_curve_2]
 
     random_agn_3 = RandomAgn(
         i_band_string,
@@ -211,17 +216,11 @@ def test_random_agn():
         redshift,
         random_seed=1,
         lightcurve_time=lightcurve_time,
-        agn_driving_variability_model=agn_driving_variability_model,
-        agn_driving_kwargs_variability=agn_driving_kwargs_variability,
         input_agn_bounds_dict=input_agn_bounds_dict,
     )
 
     # test initialization with minimal information
-    RandomAgn(
-        i_band_string,
-        i_band_mag,
-        redshift
-    )
+    RandomAgn(i_band_string, i_band_mag, redshift)
 
     # Test that we raise a warning in RandomAgn when no time axis is input
     with pytest.raises(ValueError):
