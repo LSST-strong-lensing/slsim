@@ -1,7 +1,5 @@
 import numpy as np
-from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
-from lenstronomy.LensModel.lens_model import LensModel
 from slsim.ParamDistributions.los_config import LOSConfig
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 
@@ -27,8 +25,9 @@ class FalsePositive(object):
             on (in arc-seconds^2).
         :param los_config: LOSConfig instance which manages line-of-sight (LOS) effects
          and Gaussian mixture models in a simulation or analysis context.
-        :param los_dict: line of sight dictionary (optional, takes these values instead of drawing from distribution)
-         Takes "gamma" = [gamma1, gamma2] and "kappa" = kappa as entries
+        :param los_dict: line of sight dictionary (optional, takes these values instead 
+         of drawing from distribution) Takes "gamma" = [gamma1, gamma2] and 
+         "kappa" = kappa as entries
         :type los_dict: dict
         """
         self.deflector = deflector_class
