@@ -84,6 +84,8 @@ class Lens(LensedSystemBase):
         :type light_profile: str . Either "single_sersic" or "double_sersic" .
         :param lightcurve_time: observation time array for lightcurve in unit of days.
         :type lightcurve_time: array
+        :param los_config: LOSConfig instance which manages line-of-sight (LOS) effects
+         and Gaussian mixture models in a simulation or analysis context.
         :param sn_modeldir: sn_modeldir is the path to the directory containing files
          needed to initialize the sncosmo.model class. For example,
          sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can

@@ -7,6 +7,7 @@ from slsim.Deflectors.deflectors_base import DeflectorsBase
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
 from slsim.lens_pop import draw_test_area
+import random
 
 
 class FalsePositivePop(object):
@@ -18,6 +19,8 @@ class FalsePositivePop(object):
         blue_galaxy_population: SourcePopBase,
         cosmo: Optional[Cosmology] = None,
         los_config: Optional[LOSConfig] = None,
+        source_number_choice: Optional[list[int]] = [1, 2, 3],
+        weights_for_source_number: Optional[list[int]] = None
     ):
         """
         Args:
@@ -26,11 +29,17 @@ class FalsePositivePop(object):
             cosmo (Optional[Cosmology], optional): AstroPy Cosmology instance. If None, defaults to flat LCDM with h0=0.7 and Om0=0.3.
                                                    Defaults to None.
             los_config (Optional[LOSConfig], optional): Configuration for line of sight distribution. Defaults to None.
+            source_number_choice (Optional[list[int]], optional): A list of integers to choose source number from. If None, defaults to [1, 2, 3].
+            weights (Optional[list[int]], optional): A list of weights corresponding to the probabilities of selecting each value
+                                             in source_number_choice. If None, all choices are equally likely.
+                                             Defaults to None.
         """
 
         self.cosmo = cosmo
         self._lens_galaxies = elliptical_galaxy_population
         self._sources = blue_galaxy_population
+        self._choice = source_number_choice
+        self._weights = weights_for_source_number
         self.los_config = los_config
         if self.los_config is None:
             self.los_config = LOSConfig()
@@ -55,13 +64,22 @@ class FalsePositivePop(object):
                         deflector_dict=lens)
                     tolerance = 0.002
                     z_max = _lens.redshift + tolerance
-                    # Try to draw a source with the z_max based on the lens redshift
-                    source = self._sources.draw_source(z_max=z_max)
-                    _source = Source(
+                    # Try to draw a source with the z_max based on the lens redshift and
+                    # source number choice.
+                    source_number = random.choices(
+                        self._choice, weights=self._weights)[0]
+                    source_list=[]
+                    for _ in range(source_number):
+                        source = self._sources.draw_source(z_max=z_max)
+                        source_list.append(Source(
                         source_dict=source,
                         cosmo=self.cosmo,
                         source_type=self._sources.source_type,
-                        light_profile=self._sources.light_profile)
+                        light_profile=self._sources.light_profile))
+                    if source_number==1:
+                        _source=source_list[0]
+                    else:
+                        _source=source_list 
                     # Compute test area for false positive position. 
                     # This area will be used to determine the position of false positive.
                     test_area = 3 * draw_test_area(deflector=lens)

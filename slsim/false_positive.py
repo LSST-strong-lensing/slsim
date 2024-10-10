@@ -4,12 +4,6 @@ from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 from lenstronomy.LensModel.lens_model import LensModel
 from slsim.ParamDistributions.los_config import LOSConfig
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
-from lenstronomy.Util import constants
-
-#from slsim.lensed_system_base import LensedSystemBase
-#from slsim.Sources.source import Source
-#from slsim.Deflectors.deflector import Deflector
-
 
 class FalsePositive(object):
     """Class to manage individual false positive."""
@@ -24,33 +18,36 @@ class FalsePositive(object):
         los_dict=None,
     ):
         """
-
-        :param source_class: source class instance
+        :param source_class: A Source class instance or list of Source class instance
         :type source_class: Source class instance from slsim.Sources.source
-        :param deflector_dict: deflector instance
-        :type deflector_dict: Deflector class instance from slsim.Deflectors.deflector
+        :param deflector_class: deflector instance
+        :type deflector_class: Deflector class instance from slsim.Deflectors.deflector
         :param cosmo: astropy.cosmology instance
-        :param source_type: type of the source 'extended' or 'point_source' or
-         'point_plus_extended' supported
-        :type source_type: str
+        :param test_area: area of disk around one lensing galaxies to be investigated
+            on (in arc-seconds^2).
+        :param los_config: LOSConfig instance which manages line-of-sight (LOS) effects
+         and Gaussian mixture models in a simulation or analysis context.
+        :param los_dict: line of sight dictionary (optional, takes these values instead of drawing from distribution)
+         Takes "gamma" = [gamma1, gamma2] and "kappa" = kappa as entries
+        :type los_dict: dict
         """
         self.deflector = deflector_class
         self.source = source_class
         self.test_area = test_area
         self.cosmo = cosmo
-        self._source_type = self.source.source_type
-        """self.source = Source(
-            source_dict=source_dict,
-            cosmo=cosmo
-        )"""
-        """self.deflector = Deflector(
-            deflector_type=deflector_type,
-            deflector_dict=deflector_dict,
-        )"""
-
+        if isinstance(self.source, list):
+            source_z=self.source[0].redshift
+            self._source_type = self.source[0].source_type
+            self.source_number = len(self.source)
+            self.single_source_class = self.source[0] # to access some common kwargs.
+        else:
+            source_z=self.source.redshift
+            self._source_type = self.source.source_type
+            self.source_number = 1
+            self.single_source_class = self.source
         self._lens_cosmo = LensCosmo(
             z_lens=float(self.deflector.redshift),
-            z_source=float(self.source.redshift),
+            z_source=float(source_z),
             cosmo=self.cosmo,
         )
 
@@ -82,10 +79,16 @@ class FalsePositive(object):
     def source_redshift(self):
         """
 
-        :return: source redshift
+        :return: a source redshift or list of source redshift
         """
-        return self.source.redshift
-
+        if self.source_number==1:
+            source_redshift = self.source.redshift
+        else:
+            source_redshift=[]
+            for i in range(self.source_number):
+                source_redshift.append(self.source[i].redshift)
+        return source_redshift
+            
     @property
     def external_convergence(self):
         """
@@ -103,30 +106,6 @@ class FalsePositive(object):
         """
         gamma1, gamma2, _ = self.los_linear_distortions
         return (gamma1**2 + gamma2**2) ** 0.5
-
-    @property
-    def einstein_radius_deflector(self):
-        """Einstein radius, from SIS approximation (coming from velocity dispersion)
-        without line-of-sight correction.
-
-        :return:
-        """
-        if not hasattr(self, "_theta_E"):
-            if self.deflector.redshift >= self.source.redshift:
-                self._theta_E = 0
-            elif self.deflector.deflector_type in ["EPL"]:
-                self._theta_E = self._lens_cosmo.sis_sigma_v2theta_E(
-                    float(self.deflector.velocity_dispersion(cosmo=self.cosmo))
-                )
-            else:
-                # numerical solution for the Einstein radius
-                lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
-                lens_model = LensModel(lens_model_list=lens_model_list)
-                lens_analysis = LensProfileAnalysis(lens_model=lens_model)
-                self._theta_E = lens_analysis.effective_einstein_radius(
-                    kwargs_lens, r_min=1e-3, r_max=5e1, num_points=50
-                )
-        return self._theta_E
 
     @property
     def einstein_radius(self):
@@ -175,8 +154,12 @@ class FalsePositive(object):
 
         :return: kappa, gamma1, gamma2
         """
+        if self.source_number==1:
+            source_z = self.source_redshift
+        else:
+            source_z = self.source_redshift[0]
         return self.los_config.calculate_los_linear_distortions(
-            source_redshift=self.source_redshift,
+            source_redshift=source_z,
             deflector_redshift=self.deflector_redshift,
         )
 
@@ -294,18 +277,33 @@ class FalsePositive(object):
             self._source_type == "extended"
             or self._source_type == "point_plus_extended"
         ):
-            if self.source.light_profile == "single_sersic":
-                source_models["source_light_model_list"] = ["SERSIC_ELLIPSE"]
+            if self.source_number==1:
+                source_class=self.source
+            else:
+                source_class=self.source[0]
+            if source_class.light_profile == "single_sersic":
+                source_models["source_light_model_list"] = [
+                    "SERSIC_ELLIPSE"]*self.source_number
+            #In this case we will consider a single source with double sersic profile.
             else:
                 source_models["source_light_model_list"] = [
                     "SERSIC_ELLIPSE",
                     "SERSIC_ELLIPSE",
                 ]
-            kwargs_source = self.source.kwargs_extended_source_light(
-                draw_area=self.test_area,
-                center_lens=self.deflector_position,
-                band=band
-            )
+            if self.source_number==1:
+                kwargs_source = self.source.kwargs_extended_source_light(
+                    draw_area=self.test_area,
+                    center_lens=self.deflector_position,
+                    band=band
+                )
+            else:
+                kwargs_source=[]
+                for i in range(self.source_number):
+                    kwargs_source.append(self.source[i].kwargs_extended_source_light(
+                    draw_area=self.test_area,
+                    center_lens=self.deflector_position,
+                    band=band
+                )[0])
         else:
             # source_models['source_light_model_list'] = None
             kwargs_source = None
@@ -329,21 +327,3 @@ class FalsePositive(object):
         all_source_kwarg_dict["kwargs_source"] = kwargs_source
         all_source_kwarg_dict["kwargs_ps"] = kwargs_ps
         return source_models, all_source_kwarg_dict
-
-def theta_e_when_source_infinity(deflector_dict=None, v_sigma=None):
-    """Calculate Einstein radius in arc-seconds for a source at infinity.
-
-    :param deflector_dict: deflector properties
-    :param v_sigma: velocity dispersion in km/s
-    :return: Einstein radius in arc-seconds
-    """
-    if v_sigma is None:
-        if deflector_dict is None:
-            raise ValueError("Either deflector_dict or v_sigma must be provided")
-        else:
-            v_sigma = deflector_dict["vel_disp"]
-
-    theta_E_infinity = (
-        4 * np.pi * (v_sigma * 1000.0 / constants.c) ** 2 / constants.arcsec
-    )
-    return theta_E_infinity
