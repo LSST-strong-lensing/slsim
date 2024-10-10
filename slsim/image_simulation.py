@@ -605,8 +605,9 @@ def lens_image_series(
     to simulate time series images of a lens.
 
     :param lens_class: Lens() object
-    :param band: imaging band
-    :param mag_zero_point: list of magnitude zero point for sqeuence of exposure
+    :param band: imaging band (or list of bands).
+        if float: assumed to apply to the full image series.
+    :param mag_zero_point: list of magnitude zero point for sequence of exposure
     :param num_pix: number of pixels per axis
     :param psf_kernels: list of psf kernel for each exposure.
     :param transform_pix2angle: list of transformation matrix (2x2) of pixels into
@@ -621,13 +622,18 @@ def lens_image_series(
     :param with_deflector: If True, simulates image with deflector.
     :return: list of series of images of a lens
     """
+
+    # If band is one string, extend to list
+    if isinstance(band, str):
+        band = [band] * len(mag_zero_point)
+
     image_series = []
-    for time, psf_kern, mag_zero, transf_matrix, expo_time in zip(
-        t_obs, psf_kernel, mag_zero_point, transform_pix2angle, exposure_time
+    for time, psf_kern, mag_zero, transf_matrix, expo_time, band_obs in zip(
+        t_obs, psf_kernel, mag_zero_point, transform_pix2angle, exposure_time, band
     ):
         image = lens_image(
             lens_class=lens_class,
-            band=band,
+            band=band_obs,
             mag_zero_point=mag_zero,
             num_pix=num_pix,
             psf_kernel=psf_kern,

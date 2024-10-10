@@ -7,7 +7,13 @@ import numpy as np
 
 
 def create_image_montage_from_image_list(
-    num_rows, num_cols, images, time=None, image_type="other", image_center=None
+    num_rows,
+    num_cols,
+    images,
+    time=None,
+    band=None,
+    image_type="other",
+    image_center=None,
 ):
     """Creates an image montage from an image list.
 
@@ -16,6 +22,8 @@ def create_image_montage_from_image_list(
     :param images: list of images
     :param time: array of observation time for point source images. If None, considers
         static case.
+    :param band: array of bands corresponding to the observations. If None, does not
+        display any information regarding the band.
     :param image_type: type of the provided image. It could be 'dp0' or any other name.
     :param image_center: center of the source images.
     :type image_center: array. eg: for two image, it should be like
@@ -31,6 +39,10 @@ def create_image_montage_from_image_list(
         all_max.append(np.max(image))
     global_min = min(all_min)
     global_max = max(all_max)
+
+    # If band is one string, extend to list
+    if isinstance(band, str):
+        band = [band] * len(images)
 
     fig, axes = plt.subplots(num_rows, num_cols, figsize=(num_cols * 3, num_rows * 3))
 
@@ -55,6 +67,17 @@ def create_image_montage_from_image_list(
                         0.05,
                         0.95,
                         f"Time: {round(time[i * num_cols + j],2)} days",
+                        fontsize=10,
+                        color="white",
+                        verticalalignment="top",
+                        horizontalalignment="left",
+                        transform=axes[i, j].transAxes,
+                    )
+                if band is not None:
+                    axes[i, j].text(
+                        0.05,
+                        0.10,
+                        f"Band: {band[i * num_cols + j]}",
                         fontsize=10,
                         color="white",
                         verticalalignment="top",
