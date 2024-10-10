@@ -2,6 +2,7 @@ import numpy as np
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 from slsim.ParamDistributions.los_config import LOSConfig
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
+from slsim.lens import theta_e_when_source_infinity
 
 class FalsePositive(object):
     """Class to manage individual false positive."""
@@ -113,7 +114,8 @@ class FalsePositive(object):
 
         :return: Einstein radius [arc seconds]
         """
-        theta_E = self.einstein_radius_deflector
+        theta_E = theta_e_when_source_infinity(
+            v_sigma=self.deflector_velocity_dispersion())
         _, _, kappa_ext = self.los_linear_distortions
         return theta_E / (1 - kappa_ext)
 
