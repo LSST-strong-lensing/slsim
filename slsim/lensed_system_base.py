@@ -24,6 +24,8 @@ class LensedSystemBase(ABC):
         sn_modeldir=None,
         agn_driving_variability_model=None,
         agn_driving_kwargs_variability=None,
+        source_type="extended",
+        light_profile="single_sersic"
     ):
         """
         :param source_dict: source properties
@@ -65,6 +67,12 @@ class LensedSystemBase(ABC):
           explanation of these parameters, see generate_signal() function in
           astro_util.py.
         :type agn_driving_kwargs_variability: dict
+        :param source_type: type of the source 'extended' or 'point_source' or
+         'point_plus_extended' supported
+        :type source_type: str
+        :param light_profile: keyword for number of sersic profile to use in source
+         light model
+        :type light_profile: str . Either "single_sersic" or "double_sersic" .
         """
         self.source = Source(
             source_dict=source_dict,
@@ -78,6 +86,8 @@ class LensedSystemBase(ABC):
             sn_modeldir=sn_modeldir,
             agn_driving_variability_model=agn_driving_variability_model,
             agn_driving_kwargs_variability=agn_driving_kwargs_variability,
+            source_type=source_type,
+            light_profile=light_profile
         )
         self.deflector = Deflector(
             deflector_type=deflector_type,

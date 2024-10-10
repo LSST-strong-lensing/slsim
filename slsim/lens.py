@@ -121,10 +121,12 @@ class Lens(LensedSystemBase):
             sn_modeldir=sn_modeldir,
             agn_driving_variability_model=agn_driving_variability_model,
             agn_driving_kwargs_variability=agn_driving_kwargs_variability,
+            source_type=source_type,
+            light_profile=light_profile,
         )
 
         self.cosmo = cosmo
-        self._source_type = source_type
+        self._source_type = self.source.source_type
         self._lens_equation_solver = lens_equation_solver
         self._magnification_limit = magnification_limit
         self.kwargs_variab = kwargs_variability

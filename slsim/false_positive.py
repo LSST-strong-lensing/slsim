@@ -7,17 +7,17 @@ from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 from lenstronomy.Util import constants
 
 #from slsim.lensed_system_base import LensedSystemBase
-from slsim.Sources.source import Source
-from slsim.Deflectors.deflector import Deflector
+#from slsim.Sources.source import Source
+#from slsim.Deflectors.deflector import Deflector
 
 
 class FalsePositive(object):
-    """Class to manage individual lenses."""
+    """Class to manage individual false positive."""
 
     def __init__(
         self,
-        source_dict,
-        deflector_dict,
+        source_class,
+        deflector_class,
         cosmo,
         source_type="extended",
         test_area=4 * np.pi,
@@ -27,13 +27,11 @@ class FalsePositive(object):
     ):
         """
 
-        :param source_dict: source properties
-        :type source_dict: dict or astropy table
-        :param deflector_dict: deflector properties
-        :type deflector_dict: dict
+        :param source_class: source class instance
+        :type source_class: Source class instance from slsim.Sources.source
+        :param deflector_dict: deflector instance
+        :type deflector_dict: Deflector class instance from slsim.Deflectors.deflector
         :param cosmo: astropy.cosmology instance
-        :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST", "NFW_CLUSTER"
-        :type deflector_type: str
         :param source_type: type of the source 'extended' or 'point_source' or
          'point_plus_extended' supported
         :type source_type: str
@@ -50,8 +48,8 @@ class FalsePositive(object):
             deflector_type=deflector_type,
             deflector_dict=deflector_dict,
         )"""
-        self.deflector = deflector_dict
-        self.source = source_dict
+        self.deflector = deflector_class
+        self.source = source_class
 
         self._lens_cosmo = LensCosmo(
             z_lens=float(self.deflector.redshift),

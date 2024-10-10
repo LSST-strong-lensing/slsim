@@ -32,6 +32,8 @@ class Source(object):
         agn_known_mag=None,
         agn_driving_variability_model=None,
         agn_driving_kwargs_variability=None,
+        source_type="extended",
+        light_profile="single_sersic"
     ):
         """
         :param source_dict: Source properties
@@ -70,6 +72,12 @@ class Source(object):
         :param agn_driving_kwargs_variability: Dictionary containing all variability parameters
          for the driving variability class
         :type agn_driving_kwargs_variability: dict
+        :param source_type: type of the source 'extended' or 'point_source' or
+         'point_plus_extended' supported
+        :type source_type: str
+        :param light_profile: keyword for number of sersic profile to use in source
+         light model
+        :type light_profile: str . Either "single_sersic" or "double_sersic" .
         """
 
         # Convert dict to astropy table
@@ -99,6 +107,8 @@ class Source(object):
         self.agn_known_mag = agn_known_mag
         self.agn_driving_variability_model = agn_driving_variability_model
         self.agn_driving_kwargs_variability = agn_driving_kwargs_variability
+        self.source_type = source_type
+        self.light_profile = light_profile
 
     @property
     def kwargs_variability_extracted(self):
@@ -484,14 +494,16 @@ class Source(object):
         return extended_source_center
 
     def kwargs_extended_source_light(
-        self, center_lens, draw_area, band=None, light_profile_str="single_sersic"
+        self, center_lens, draw_area, band=None
     ):
         """Provides dictionary of keywords for the source light model(s). Kewords used
         are in lenstronomy conventions.
 
+        :param center_lens: center of the deflector.
+         Eg: np.array([center_x_lens, center_y_lens])
+        :param draw_area: The area of the test region from which we randomly draw a
+         source position. Eg: 4*pi.
         :param band: Imaging band
-        :param light_profile_str: number of light_profile
-        :type light_profile_str: str . eg: "single_sersic" or "double_sersic".
         :return: dictionary of keywords for the source light model(s)
         """
         if band is None:
@@ -501,7 +513,7 @@ class Source(object):
         center_source = self.extended_source_position(
             center_lens=center_lens, draw_area=draw_area
         )
-        if light_profile_str == "single_sersic":
+        if self.light_profile == "single_sersic":
             size_source_arcsec = float(self.angular_size)
             e1_light_source_lenstronomy, e2_light_source_lenstronomy = (
                 ellipticity_slsim_to_lenstronomy(
@@ -519,7 +531,7 @@ class Source(object):
                     "center_y": center_source[1],
                 }
             ]
-        elif light_profile_str == "double_sersic":
+        elif self.light_profile == "double_sersic":
             # w0 and w1 are the weight of the n=1 and n=4 sersic component.
             if "w0" in self.source_dict.colnames or "w1" in self.source_dict.colnames:
                 w0 = self.source_dict["w0"]
