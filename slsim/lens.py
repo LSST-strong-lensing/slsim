@@ -130,8 +130,6 @@ class Lens(LensedSystemBase):
         self._lens_equation_solver = lens_equation_solver
         self._magnification_limit = magnification_limit
         self.kwargs_variab = kwargs_variability
-        self.light_profile = light_profile
-
         if self._source_type == "extended" and self.kwargs_variab is not None:
             warning_msg = (
                 "Extended source can not have variability. Therefore,"
@@ -672,7 +670,7 @@ class Lens(LensedSystemBase):
             self._source_type == "extended"
             or self._source_type == "point_plus_extended"
         ):
-            if self.light_profile == "single_sersic":
+            if self.source.light_profile == "single_sersic":
                 source_models["source_light_model_list"] = ["SERSIC_ELLIPSE"]
             else:
                 source_models["source_light_model_list"] = [
