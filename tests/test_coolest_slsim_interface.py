@@ -114,7 +114,7 @@ def test_update_coolest_from_slsim_and_create_slsim_from_coolest(
     )
     npt.assert_almost_equal(
         slsim_from_updated_coolest[1]["kwargs_ps"][0]["magnitude"],
-        expected_result[1]["kwargs_ps"][0]["magnitude"],
+        [expected_result[1]["kwargs_ps"][0]["magnitude"]],
     )
 
     os.remove(test_path + "coolest_template_update.json")
