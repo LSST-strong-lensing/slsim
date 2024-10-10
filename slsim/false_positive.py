@@ -19,7 +19,6 @@ class FalsePositive(object):
         source_dict,
         deflector_dict,
         cosmo,
-        deflector_type="EPL",
         source_type="extended",
         test_area=4 * np.pi,
         light_profile="single_sersic",
@@ -43,23 +42,16 @@ class FalsePositive(object):
         self.cosmo = cosmo
         self._source_type = source_type
         self.light_profile = light_profile
-        self.source = Source(
+        """self.source = Source(
             source_dict=source_dict,
-            cosmo=cosmo,
-            variability_model=None,
-            kwargs_variability=None,
-            sn_type=None,
-            sn_absolute_mag_band=None,
-            sn_absolute_zpsys=None,
-            lightcurve_time=None,
-            sn_modeldir=None,
-            agn_driving_variability_model=None,
-            agn_driving_kwargs_variability=None,
-        )
-        self.deflector = Deflector(
+            cosmo=cosmo
+        )"""
+        """self.deflector = Deflector(
             deflector_type=deflector_type,
             deflector_dict=deflector_dict,
-        )
+        )"""
+        self.deflector = deflector_dict
+        self.source = source_dict
 
         self._lens_cosmo = LensCosmo(
             z_lens=float(self.deflector.redshift),
