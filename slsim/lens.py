@@ -130,6 +130,7 @@ class Lens(LensedSystemBase):
         self._lens_equation_solver = lens_equation_solver
         self._magnification_limit = magnification_limit
         self.kwargs_variab = kwargs_variability
+
         if self._source_type == "extended" and self.kwargs_variab is not None:
             warning_msg = (
                 "Extended source can not have variability. Therefore,"
@@ -680,8 +681,7 @@ class Lens(LensedSystemBase):
             kwargs_source = self.source.kwargs_extended_source_light(
                 draw_area=self.test_area,
                 center_lens=self.deflector_position,
-                band=band,
-                light_profile_str=self.light_profile,
+                band=band
             )
         else:
             # source_models['source_light_model_list'] = None
