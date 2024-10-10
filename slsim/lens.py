@@ -129,9 +129,9 @@ class Lens(LensedSystemBase):
         self._source_type = self.source.source_type
         self._lens_equation_solver = lens_equation_solver
         self._magnification_limit = magnification_limit
-        self.kwargs_variab = kwargs_variability
+        self._kwargs_variab = self.source.kwargs_variability
 
-        if self._source_type == "extended" and self.kwargs_variab is not None:
+        if self._source_type == "extended" and self._kwargs_variab is not None:
             warning_msg = (
                 "Extended source can not have variability. Therefore,"
                 "variability information provided by you will not be used."
