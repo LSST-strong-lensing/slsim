@@ -19,9 +19,7 @@ class FalsePositive(object):
         source_class,
         deflector_class,
         cosmo,
-        source_type="extended",
         test_area=4 * np.pi,
-        light_profile="single_sersic",
         los_config=None,
         los_dict=None,
     ):
@@ -36,10 +34,11 @@ class FalsePositive(object):
          'point_plus_extended' supported
         :type source_type: str
         """
+        self.deflector = deflector_class
+        self.source = source_class
         self.test_area = test_area
         self.cosmo = cosmo
-        self._source_type = source_type
-        self.light_profile = light_profile
+        self._source_type = self.source.source_type
         """self.source = Source(
             source_dict=source_dict,
             cosmo=cosmo
@@ -48,8 +47,6 @@ class FalsePositive(object):
             deflector_type=deflector_type,
             deflector_dict=deflector_dict,
         )"""
-        self.deflector = deflector_class
-        self.source = source_class
 
         self._lens_cosmo = LensCosmo(
             z_lens=float(self.deflector.redshift),
@@ -297,7 +294,7 @@ class FalsePositive(object):
             self._source_type == "extended"
             or self._source_type == "point_plus_extended"
         ):
-            if self.light_profile == "single_sersic":
+            if self.source.light_profile == "single_sersic":
                 source_models["source_light_model_list"] = ["SERSIC_ELLIPSE"]
             else:
                 source_models["source_light_model_list"] = [
@@ -307,8 +304,7 @@ class FalsePositive(object):
             kwargs_source = self.source.kwargs_extended_source_light(
                 draw_area=self.test_area,
                 center_lens=self.deflector_position,
-                band=band,
-                light_profile_str=self.light_profile,
+                band=band
             )
         else:
             # source_models['source_light_model_list'] = None

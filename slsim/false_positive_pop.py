@@ -59,7 +59,9 @@ class FalsePositivePop(object):
                     source = self._sources.draw_source(z_max=z_max)
                     _source = Source(
                         source_dict=source,
-                        cosmo=self.cosmo)
+                        cosmo=self.cosmo,
+                        source_type=self._sources.source_type,
+                        light_profile=self._sources.light_profile)
                     # Compute test area for false positive position. 
                     # This area will be used to determine the position of false positive.
                     test_area = 3 * draw_test_area(deflector=lens)
@@ -69,8 +71,6 @@ class FalsePositivePop(object):
                         deflector_class=_lens,
                         source_class=_source,
                         cosmo=self.cosmo,
-                        source_type=self._sources.source_type,
-                        light_profile=self._sources.light_profile,
                         test_area=test_area
                     )
 

@@ -84,6 +84,7 @@ class LensPop(LensedPopulationBase):
         while True:
             source = self._sources.draw_source()
             lens = self._lens_galaxies.draw_deflector()
+            test_area = draw_test_area(deflector=lens)
             gg_lens = Lens(
                 deflector_dict=lens,
                 source_dict=source,
@@ -94,6 +95,7 @@ class LensPop(LensedPopulationBase):
                 sn_absolute_mag_band=self.sn_absolute_mag_band,
                 sn_absolute_zpsys=self.sn_absolute_zpsys,
                 cosmo=self.cosmo,
+                test_area=test_area,
                 source_type=self._sources.source_type,
                 light_profile=self._sources.light_profile,
                 lightcurve_time=self.lightcurve_time,
