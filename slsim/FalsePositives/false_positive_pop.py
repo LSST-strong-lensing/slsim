@@ -1,4 +1,4 @@
-from slsim.false_positive import FalsePositive
+from slsim.FalsePositives.false_positive import FalsePositive
 from typing import Optional
 from astropy.cosmology import Cosmology
 from slsim.Sources.source_pop_base import SourcePopBase
