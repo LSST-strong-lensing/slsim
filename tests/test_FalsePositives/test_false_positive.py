@@ -7,7 +7,7 @@ from slsim.Deflectors.deflector import Deflector
 import slsim.Sources as sources
 import slsim.Deflectors as deflectors
 import slsim.Pipelines as pipelines
-from slsim.false_positive import FalsePositive
+from slsim.FalsePositives.false_positive import FalsePositive
 from astropy.units import Quantity
 
 sky_area = Quantity(value=0.01, unit="deg2")
