@@ -46,6 +46,10 @@ def test_false_positive():
                     cosmo=cosmo,
                     source_type="extended",
                     light_profile="single_sersic")
+    source2=Source(source_dict=single_source1,
+                    cosmo=cosmo,
+                    source_type="extended",
+                    light_profile="double_sersic")
     source_list=[Source(source_dict=single_source1,
                     cosmo=cosmo,
                     source_type="extended",
@@ -70,6 +74,15 @@ def test_false_positive():
         test_area=4 * np.pi,
         los_config=los_config,
     )
+    false_positive_instance_3 = FalsePositive(
+        source_class=source2,
+        deflector_class=lens,
+        cosmo=cosmo,
+        test_area=4 * np.pi,
+        los_config=los_config,
+    )
+    required_keys = {'magnitude', 'R_sersic', 'n_sersic', 'e1', 'e2', 'center_x',
+                      'center_y'}
     assert false_positive_instance_1.source_number == 1
     assert false_positive_instance_2.source_number == 2
     assert false_positive_instance_1.lenstronomy_kwargs("i")[0][
@@ -83,7 +96,8 @@ def test_false_positive():
     assert false_positive_instance_1.source_redshift == single_source1["z"]
     assert np.all(false_positive_instance_2.source_redshift) == np.all(
         np.array([single_source1["z"], single_source2["z"]]))
-    assert false_positive_instance_1.external_convergence < 0.2
+    assert false_positive_instance_1.external_convergence < 0.1
+    assert false_positive_instance_1.external_shear < 0.2
     assert false_positive_instance_1.einstein_radius < 2.5
     assert false_positive_instance_1.deflector_magnitude(band="i") ==\
           single_deflector["mag_i"]
@@ -92,6 +106,11 @@ def test_false_positive():
     assert len(false_positive_instance_1.deflector_ellipticity()) == 4
     assert false_positive_instance_1.deflector_stellar_mass() ==\
           single_deflector["stellar_mass"]
+    assert set(false_positive_instance_1.deflector_light_model_lenstronomy(band="i"
+    )[1][0].keys()) == required_keys
+    with pytest.raises(ValueError):
+            false_positive_instance_3.source_light_model_lenstronomy(band="i")
+    
     
 if __name__ == "__main__":
     pytest.main()

@@ -274,57 +274,38 @@ class FalsePositive(object):
         """
         source_models = {}
         all_source_kwarg_dict = {}
-        if (
+        """if (
             self._source_type == "extended"
             or self._source_type == "point_plus_extended"
-        ):
-            if self.source_number==1:
-                source_class=self.source
-            else:
-                source_class=self.source[0]
-            if source_class.light_profile == "single_sersic":
-                source_models["source_light_model_list"] = [
-                    "SERSIC_ELLIPSE"]*self.source_number
-            #In this case we will consider a single source with double sersic profile.
-            else:
-                source_models["source_light_model_list"] = [
-                    "SERSIC_ELLIPSE",
-                    "SERSIC_ELLIPSE",
-                ]
-            if self.source_number==1:
-                kwargs_source = self.source.kwargs_extended_source_light(
-                    draw_area=self.test_area,
-                    center_lens=self.deflector_position,
-                    band=band
-                )
-            else:
-                kwargs_source=[]
-                for i in range(self.source_number):
-                    kwargs_source.append(self.source[i].kwargs_extended_source_light(
-                    draw_area=self.test_area,
-                    center_lens=self.deflector_position,
-                    band=band
-                )[0])
+        ):"""
+        if self.source_number==1:
+            source_class=self.source
         else:
-            # source_models['source_light_model_list'] = None
-            kwargs_source = None
+            source_class=self.source[0]
+        if source_class.light_profile == "single_sersic":
+            source_models["source_light_model_list"] = [
+                "SERSIC_ELLIPSE"]*self.source_number
+        #In this case we will consider a single source with double sersic profile.
+        else:
+            raise ValueError("Provided light profile is not supported. Supported" 
+                                " light profile is single_sersic")
+        if self.source_number==1:
+            kwargs_source = self.source.kwargs_extended_source_light(
+                draw_area=self.test_area,
+                center_lens=self.deflector_position,
+                band=band
+            )
+        else:
+            kwargs_source=[]
+            for i in range(self.source_number):
+                kwargs_source.append(self.source[i].kwargs_extended_source_light(
+                draw_area=self.test_area,
+                center_lens=self.deflector_position,
+                band=band
+            )[0])
 
-        if (
-            self._source_type == "point_source"
-            or self._source_type == "point_plus_extended"
-        ):
-            source_models["point_source_model_list"] = ["LENSED_POSITION"]
-            img_x, img_y = self.point_source_image_positions()
-            if band is None:
-                image_magnitudes = np.abs(self.point_source_magnification())
-            else:
-                image_magnitudes = self.point_source_magnitude(band=band, lensed=False)
-            kwargs_ps = [
-                {"ra_image": img_x, "dec_image": img_y, "magnitude": image_magnitudes}
-            ]
-        else:
-            # source_models['point_source_model'] = None
-            kwargs_ps = None
+        
+        kwargs_ps = None
         all_source_kwarg_dict["kwargs_source"] = kwargs_source
         all_source_kwarg_dict["kwargs_ps"] = kwargs_ps
         return source_models, all_source_kwarg_dict
