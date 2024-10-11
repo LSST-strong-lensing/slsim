@@ -289,6 +289,8 @@ class TestGalaxies(object):
         assert galaxy_2["z"] < 1 + 0.002
         with pytest.raises(ValueError):
             self.galaxies5.draw_source()
+        with pytest.raises(ValueError):
+            self.galaxies5.draw_source(z_max=0.4)
 
     def test_draw_source_double_sersic(self):
         galaxy1 = self.galaxies2.draw_source()
