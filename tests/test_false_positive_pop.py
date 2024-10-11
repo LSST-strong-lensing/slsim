@@ -30,28 +30,23 @@ source_galaxies=sources.Galaxies(
     sky_area=sky_area,
     catalog_type="skypy",
 )
-@pytest.fixture
-def false_positive_pop_instance1():
-    fp_pop = FalsePositivePop(
+def test_draw_false_positive_single():
+    fp_pop1 = FalsePositivePop(
     elliptical_galaxy_population=lens_galaxies,
     blue_galaxy_population=source_galaxies,
     cosmo=cosmo,
     source_number_choice=[1])
-    return fp_pop
-def test_draw_false_positive_single_source(false_positive_pop_instance1):
-    draw_fp = false_positive_pop_instance1.draw_false_positive()
-    assert isinstance(draw_fp, object)
-@pytest.fixture
-def false_positive_pop_instance2():
-    fp_pop = FalsePositivePop(
+    draw_fp1 = fp_pop1.draw_false_positive()
+    assert isinstance(draw_fp1, object)
+
+def test_draw_false_positive_multiple():
+    fp_pop2 = FalsePositivePop(
     elliptical_galaxy_population=lens_galaxies,
     blue_galaxy_population=source_galaxies,
     cosmo=cosmo,
     source_number_choice=[2])
-    return fp_pop
-def test_draw_false_positive_single_source(false_positive_pop_instance2):
-    draw_fp = false_positive_pop_instance2.draw_false_positive(number=2)
-    assert isinstance(draw_fp, list)
+    draw_fp2 = fp_pop2.draw_false_positive(number=2)
+    assert isinstance(draw_fp2, list)
 
 if __name__ == "__main__":
     pytest.main()
