@@ -681,9 +681,7 @@ class Lens(LensedSystemBase):
                     "SERSIC_ELLIPSE",
                 ]
             kwargs_source = self.source.kwargs_extended_source_light(
-                draw_area=self.test_area,
-                center_lens=self.deflector_position,
-                band=band
+                draw_area=self.test_area, center_lens=self.deflector_position, band=band
             )
         else:
             # source_models['source_light_model_list'] = None

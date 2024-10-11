@@ -22,31 +22,38 @@ lens_galaxies = deflectors.EllipticalLensGalaxies(
     kwargs_cut=kwargs_deflector_cut,
     kwargs_mass2light=0.1,
     cosmo=cosmo,
-    sky_area=sky_area,)
-source_galaxies=sources.Galaxies(
+    sky_area=sky_area,
+)
+source_galaxies = sources.Galaxies(
     galaxy_list=blue_galaxy_list,
     kwargs_cut=kwargs_source_cut,
     cosmo=cosmo,
     sky_area=sky_area,
     catalog_type="skypy",
 )
+
+
 def test_draw_false_positive_single():
     fp_pop1 = FalsePositivePop(
-    elliptical_galaxy_population=lens_galaxies,
-    blue_galaxy_population=source_galaxies,
-    cosmo=cosmo,
-    source_number_choice=[1])
+        elliptical_galaxy_population=lens_galaxies,
+        blue_galaxy_population=source_galaxies,
+        cosmo=cosmo,
+        source_number_choice=[1],
+    )
     draw_fp1 = fp_pop1.draw_false_positive()
     assert isinstance(draw_fp1, object)
 
+
 def test_draw_false_positive_multiple():
     fp_pop2 = FalsePositivePop(
-    elliptical_galaxy_population=lens_galaxies,
-    blue_galaxy_population=source_galaxies,
-    cosmo=cosmo,
-    source_number_choice=[2])
+        elliptical_galaxy_population=lens_galaxies,
+        blue_galaxy_population=source_galaxies,
+        cosmo=cosmo,
+        source_number_choice=[2],
+    )
     draw_fp2 = fp_pop2.draw_false_positive(number=2)
     assert isinstance(draw_fp2, list)
+
 
 if __name__ == "__main__":
     pytest.main()

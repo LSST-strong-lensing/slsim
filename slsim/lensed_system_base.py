@@ -25,7 +25,7 @@ class LensedSystemBase(ABC):
         agn_driving_variability_model=None,
         agn_driving_kwargs_variability=None,
         source_type="extended",
-        light_profile="single_sersic"
+        light_profile="single_sersic",
     ):
         """
         :param source_dict: source properties
@@ -87,7 +87,7 @@ class LensedSystemBase(ABC):
             agn_driving_variability_model=agn_driving_variability_model,
             agn_driving_kwargs_variability=agn_driving_kwargs_variability,
             source_type=source_type,
-            light_profile=light_profile
+            light_profile=light_profile,
         )
         self.deflector = Deflector(
             deflector_type=deflector_type,

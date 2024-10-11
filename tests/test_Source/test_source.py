@@ -189,7 +189,7 @@ class TestSource:
             sn_type="Ia",
             lightcurve_time=np.linspace(-20, 50, 100),
             cosmo=cosmo,
-            light_profile="double_sersic"
+            light_profile="double_sersic",
         )
         self.source4 = Source(
             self.source_dict3,
@@ -210,7 +210,7 @@ class TestSource:
             sn_type="Ia",
             lightcurve_time=np.linspace(-20, 50, 100),
             cosmo=cosmo,
-            light_profile="double_sersic"
+            light_profile="double_sersic",
         )
 
         self.source6 = Source(
@@ -222,7 +222,7 @@ class TestSource:
             sn_type="Ia",
             lightcurve_time=np.linspace(-20, 50, 100),
             cosmo=cosmo,
-            light_profile="triplet"
+            light_profile="triplet",
         )
 
         self.source7 = Source(
@@ -627,13 +627,9 @@ class TestSource:
         assert len(kwargs) == 2
         assert all(isinstance(kwargs_item, dict) for kwargs_item in kwargs)
         with pytest.raises(ValueError):
-            self.source6.kwargs_extended_source_light(
-                center_lens, draw_area, band="i"
-            )
+            self.source6.kwargs_extended_source_light(center_lens, draw_area, band="i")
         with pytest.raises(ValueError):
-            self.source5.kwargs_extended_source_light(
-                center_lens, draw_area, band="i"
-            )
+            self.source5.kwargs_extended_source_light(center_lens, draw_area, band="i")
         with pytest.raises(ValueError):
             self.source10.kwargs_variability_extracted
         with pytest.raises(ValueError):
