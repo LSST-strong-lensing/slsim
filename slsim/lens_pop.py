@@ -71,20 +71,26 @@ class LensPop(LensedPopulationBase):
         if self.los_config is None:
             self.los_config = LOSConfig()
 
-    def select_lens_at_random(self, **kwargs_lens_cut):
+    def select_lens_at_random(self, test_area=None, **kwargs_lens_cut):
         """Draw a random lens within the cuts of the lens and source, with possible
         additional cut in the lensing configuration.
 
         # TODO: make sure mass function is preserved, # as well as option to draw all
         lenses within the cuts within the area
 
+        :param test_area: area of disk around one lensing galaxies to be investigated
+            on (in arc-seconds^2). If None, computed using deflector's velocity 
+            dispersion.
         :return: Lens() instance with parameters of the deflector and lens and source
             light
         """
         while True:
             source = self._sources.draw_source()
             lens = self._lens_galaxies.draw_deflector()
-            test_area = draw_test_area(deflector=lens)
+            if test_area is None:
+                test_area = draw_test_area(deflector=lens)
+            else:
+                test_area=test_area
             gg_lens = Lens(
                 deflector_dict=lens,
                 source_dict=source,
