@@ -3,7 +3,6 @@ from astropy.cosmology import FlatLambdaCDM
 import slsim.Sources as sources
 import slsim.Deflectors as deflectors
 import slsim.Pipelines as pipelines
-from slsim.false_positive import FalsePositive
 from slsim.false_positive_pop import FalsePositivePop
 from astropy.units import Quantity
 
@@ -39,7 +38,9 @@ def false_positive_pop_instance1():
     cosmo=cosmo,
     source_number_choice=[1])
     return fp_pop
-
+def test_draw_false_positive_single_source(false_positive_pop_instance1):
+    draw_fp = false_positive_pop_instance1.draw_false_positive()
+    assert isinstance(draw_fp, object)
 @pytest.fixture
 def false_positive_pop_instance2():
     fp_pop = FalsePositivePop(
@@ -48,11 +49,6 @@ def false_positive_pop_instance2():
     cosmo=cosmo,
     source_number_choice=[2])
     return fp_pop
-
-def test_draw_false_positive_single_source(false_positive_pop_instance1):
-    draw_fp = false_positive_pop_instance1.draw_false_positive()
-    assert isinstance(draw_fp, object)
-    
 def test_draw_false_positive_single_source(false_positive_pop_instance2):
     draw_fp = false_positive_pop_instance2.draw_false_positive(number=2)
     assert isinstance(draw_fp, list)
