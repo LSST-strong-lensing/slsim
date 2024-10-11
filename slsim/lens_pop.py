@@ -78,7 +78,7 @@ class LensPop(LensedPopulationBase):
         # TODO: make sure mass function is preserved, # as well as option to draw all
         lenses within the cuts within the area
 
-        :param test_area: area of disk around one lensing galaxies to be investigated on
+        :param test_area: solid angle around one lensing galaxies to be investigated on
             (in arc-seconds^2). If None, computed using deflector's velocity dispersion.
         :return: Lens() instance with parameters of the deflector and lens and source
             light

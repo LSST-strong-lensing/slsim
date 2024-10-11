@@ -74,7 +74,7 @@ class Lens(LensedSystemBase):
         :type sn_absolute_mag_band: str or `~sncosmo.Bandpass`
         :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
         :type sn_absolute_zpsys: str
-        :param test_area: area of disk around one lensing galaxies to be investigated
+        :param test_area: solid angle around one lensing galaxies to be investigated
             on (in arc-seconds^2)
         :param magnification_limit: absolute lensing magnification lower limit to
             register a point source (ignore highly de-magnified images)
@@ -673,13 +673,8 @@ class Lens(LensedSystemBase):
             self._source_type == "extended"
             or self._source_type == "point_plus_extended"
         ):
-            if self.source.light_profile == "single_sersic":
-                source_models["source_light_model_list"] = ["SERSIC_ELLIPSE"]
-            else:
-                source_models["source_light_model_list"] = [
-                    "SERSIC_ELLIPSE",
-                    "SERSIC_ELLIPSE",
-                ]
+            source_models["source_light_model_list"
+                          ] = self.source.extended_source_light_model()
             kwargs_source = self.source.kwargs_extended_source_light(
                 draw_area=self.test_area, center_lens=self.deflector_position, band=band
             )
