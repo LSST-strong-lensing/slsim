@@ -33,7 +33,7 @@ class Source(object):
         agn_driving_variability_model=None,
         agn_driving_kwargs_variability=None,
         source_type="extended",
-        light_profile="single_sersic"
+        light_profile="single_sersic",
     ):
         """
         :param source_dict: Source properties
@@ -493,9 +493,7 @@ class Source(object):
             return self._center_point_source
         return extended_source_center
 
-    def kwargs_extended_source_light(
-        self, center_lens, draw_area, band=None
-    ):
+    def kwargs_extended_source_light(self, center_lens, draw_area, band=None):
         """Provides dictionary of keywords for the source light model(s). Kewords used
         are in lenstronomy conventions.
 

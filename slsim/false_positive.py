@@ -4,6 +4,7 @@ from slsim.ParamDistributions.los_config import LOSConfig
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 from slsim.lens import theta_e_when_source_infinity
 
+
 class FalsePositive(object):
     """Class to manage individual false positive."""
 
@@ -26,8 +27,8 @@ class FalsePositive(object):
             on (in arc-seconds^2).
         :param los_config: LOSConfig instance which manages line-of-sight (LOS) effects
          and Gaussian mixture models in a simulation or analysis context.
-        :param los_dict: line of sight dictionary (optional, takes these values instead 
-         of drawing from distribution) Takes "gamma" = [gamma1, gamma2] and 
+        :param los_dict: line of sight dictionary (optional, takes these values instead
+         of drawing from distribution) Takes "gamma" = [gamma1, gamma2] and
          "kappa" = kappa as entries
         :type los_dict: dict
         """
@@ -36,12 +37,12 @@ class FalsePositive(object):
         self.test_area = test_area
         self.cosmo = cosmo
         if isinstance(self.source, list):
-            source_z=self.source[0].redshift
+            source_z = self.source[0].redshift
             self._source_type = self.source[0].source_type
             self.source_number = len(self.source)
-            self.single_source_class = self.source[0] # to access some common kwargs.
+            self.single_source_class = self.source[0]  # to access some common kwargs.
         else:
-            source_z=self.source.redshift
+            source_z = self.source.redshift
             self._source_type = self.source.source_type
             self.source_number = 1
             self.single_source_class = self.source
@@ -58,7 +59,6 @@ class FalsePositive(object):
                 los_dict = {}
             self.los_config = LOSConfig(**los_dict)
 
-
     @property
     def deflector_position(self):
         """Center of the deflector position.
@@ -66,7 +66,7 @@ class FalsePositive(object):
         :return: [x_pox, y_pos] in arc seconds
         """
         return self.deflector.deflector_center
-    
+
     @property
     def deflector_redshift(self):
         """
@@ -81,14 +81,14 @@ class FalsePositive(object):
 
         :return: a source redshift or list of source redshift
         """
-        if self.source_number==1:
+        if self.source_number == 1:
             source_redshift = self.source.redshift
         else:
-            source_redshift=[]
+            source_redshift = []
             for i in range(self.source_number):
                 source_redshift.append(self.source[i].redshift)
         return source_redshift
-            
+
     @property
     def external_convergence(self):
         """
@@ -115,7 +115,8 @@ class FalsePositive(object):
         :return: Einstein radius [arc seconds]
         """
         theta_E = theta_e_when_source_infinity(
-            v_sigma=self.deflector_velocity_dispersion())
+            v_sigma=self.deflector_velocity_dispersion()
+        )
         _, _, kappa_ext = self.los_linear_distortions
         return theta_E / (1 - kappa_ext)
 
@@ -155,7 +156,7 @@ class FalsePositive(object):
 
         :return: kappa, gamma1, gamma2
         """
-        if self.source_number==1:
+        if self.source_number == 1:
             source_z = self.source_redshift
         else:
             source_z = self.source_redshift[0]
@@ -172,7 +173,6 @@ class FalsePositive(object):
         :return: magnitude of deflector in given band
         """
         return self.deflector.magnitude(band=band)
-
 
     def extended_source_magnitude(self, band):
         """Unlensed apparent magnitude of the extended source for a given band (assumes
@@ -203,8 +203,9 @@ class FalsePositive(object):
         ) = self.deflector.light_model_lenstronomy(band=band)
 
         sources, sources_kwargs = self.source_light_model_lenstronomy(band=band)
-        combined_lens_light_model_list = lens_light_model_list + sources[
-            "source_light_model_list"]
+        combined_lens_light_model_list = (
+            lens_light_model_list + sources["source_light_model_list"]
+        )
         combined_kwargs_lens_light = kwargs_lens_light + sources_kwargs["kwargs_source"]
 
         kwargs_model = {
@@ -274,37 +275,39 @@ class FalsePositive(object):
         """
         source_models = {}
         all_source_kwarg_dict = {}
-        """if (
-            self._source_type == "extended"
-            or self._source_type == "point_plus_extended"
-        ):"""
-        if self.source_number==1:
-            source_class=self.source
+        """If ( self._source_type == "extended".
+
+        or self._source_type == "point_plus_extended" ):
+        """
+        if self.source_number == 1:
+            source_class = self.source
         else:
-            source_class=self.source[0]
+            source_class = self.source[0]
         if source_class.light_profile == "single_sersic":
             source_models["source_light_model_list"] = [
-                "SERSIC_ELLIPSE"]*self.source_number
-        #In this case we will consider a single source with double sersic profile.
+                "SERSIC_ELLIPSE"
+            ] * self.source_number
+        # In this case we will consider a single source with double sersic profile.
         else:
-            raise ValueError("Provided light profile is not supported. Supported" 
-                                " light profile is single_sersic")
-        if self.source_number==1:
+            raise ValueError(
+                "Provided light profile is not supported. Supported"
+                " light profile is single_sersic"
+            )
+        if self.source_number == 1:
             kwargs_source = self.source.kwargs_extended_source_light(
-                draw_area=self.test_area,
-                center_lens=self.deflector_position,
-                band=band
+                draw_area=self.test_area, center_lens=self.deflector_position, band=band
             )
         else:
-            kwargs_source=[]
+            kwargs_source = []
             for i in range(self.source_number):
-                kwargs_source.append(self.source[i].kwargs_extended_source_light(
-                draw_area=self.test_area,
-                center_lens=self.deflector_position,
-                band=band
-            )[0])
+                kwargs_source.append(
+                    self.source[i].kwargs_extended_source_light(
+                        draw_area=self.test_area,
+                        center_lens=self.deflector_position,
+                        band=band,
+                    )[0]
+                )
 
-        
         kwargs_ps = None
         all_source_kwarg_dict["kwargs_source"] = kwargs_source
         all_source_kwarg_dict["kwargs_ps"] = kwargs_ps

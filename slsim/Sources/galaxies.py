@@ -121,16 +121,15 @@ class Galaxies(SourcePopBase):
         return self._num_select
 
     def draw_source(self, z_max=None):
-        """Choose source at random.
-        :param z_max: maximum redshift for source to be drawn.
+        """Choose source at random. :param z_max: maximum redshift for source to be
+        drawn.
 
         :return: dictionary of source
         """
         if z_max is not None:
-            filtered_galaxies = self._galaxy_select[
-                self._galaxy_select['z'] < z_max]
+            filtered_galaxies = self._galaxy_select[self._galaxy_select["z"] < z_max]
             if len(filtered_galaxies) > 0:
-                index = random.randint(0, len(filtered_galaxies) -1)
+                index = random.randint(0, len(filtered_galaxies) - 1)
                 galaxy = filtered_galaxies[index]
             else:
                 raise ValueError(f"No galaxies found with z < {z_max}.")

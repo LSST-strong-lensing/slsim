@@ -286,7 +286,7 @@ class TestGalaxies(object):
         galaxy_2 = self.galaxies.draw_source(z_max=1)
         assert len(galaxy) > 0
         assert galaxy_1["n_sersic"] == 1
-        assert galaxy_2["z"] < 1+0.002
+        assert galaxy_2["z"] < 1 + 0.002
         with pytest.raises(ValueError):
             self.galaxies5.draw_source()
 

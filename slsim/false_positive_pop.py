@@ -20,7 +20,7 @@ class FalsePositivePop(object):
         cosmo: Optional[Cosmology] = None,
         los_config: Optional[LOSConfig] = None,
         source_number_choice: Optional[list[int]] = [1, 2, 3],
-        weights_for_source_number: Optional[list[int]] = None
+        weights_for_source_number: Optional[list[int]] = None,
     ):
         """
         Args:
@@ -48,11 +48,11 @@ class FalsePositivePop(object):
         """Draw given number of false positives within the cuts of the lens and source.
 
         :param number: number of false positive requested. The default value is 1.
-        :return: list of FalsePositive() instance with parameters of a pair of 
-         elliptical and blue galaxy.
+        :return: list of FalsePositive() instance with parameters of a pair of
+            elliptical and blue galaxy.
         """
         false_positive_population = []
-        
+
         for _ in range(number):
             successful = False
             while not successful:
@@ -61,26 +61,31 @@ class FalsePositivePop(object):
                     lens = self._lens_galaxies.draw_deflector()
                     _lens = Deflector(
                         deflector_type=self._lens_galaxies.deflector_profile,
-                        deflector_dict=lens)
+                        deflector_dict=lens,
+                    )
                     tolerance = 0.002
                     z_max = _lens.redshift + tolerance
                     # Try to draw a source with the z_max based on the lens redshift and
                     # source number choice.
-                    source_number = random.choices(
-                        self._choice, weights=self._weights)[0]
-                    source_list=[]
+                    source_number = random.choices(self._choice, weights=self._weights)[
+                        0
+                    ]
+                    source_list = []
                     for _ in range(source_number):
                         source = self._sources.draw_source(z_max=z_max)
-                        source_list.append(Source(
-                        source_dict=source,
-                        cosmo=self.cosmo,
-                        source_type=self._sources.source_type,
-                        light_profile=self._sources.light_profile))
-                    if source_number==1:
-                        _source=source_list[0]
+                        source_list.append(
+                            Source(
+                                source_dict=source,
+                                cosmo=self.cosmo,
+                                source_type=self._sources.source_type,
+                                light_profile=self._sources.light_profile,
+                            )
+                        )
+                    if source_number == 1:
+                        _source = source_list[0]
                     else:
-                        _source=source_list 
-                    # Compute test area for false positive position. 
+                        _source = source_list
+                    # Compute test area for false positive position.
                     # This area will be used to determine the position of false positive.
                     test_area = 3 * draw_test_area(deflector=lens)
 
@@ -89,12 +94,12 @@ class FalsePositivePop(object):
                         deflector_class=_lens,
                         source_class=_source,
                         cosmo=self.cosmo,
-                        test_area=test_area
+                        test_area=test_area,
                     )
 
                     # Add the false positive to the population
                     false_positive_population.append(false_positive)
-                    successful = True 
+                    successful = True
 
                 except ValueError as e:
                     # Handle the specific case where no sources are found for z_max
