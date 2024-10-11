@@ -124,15 +124,17 @@ class Galaxies(SourcePopBase):
         """Choose source at random. :param z_max: maximum redshift for source to be
         drawn.
 
+        :param z_max: maximum redshift limit for the galaxy to be drawn. If no galaxy is
+          found for this limit, None will be returned.
         :return: dictionary of source
         """
         if z_max is not None:
             filtered_galaxies = self._galaxy_select[self._galaxy_select["z"] < z_max]
-            if len(filtered_galaxies) > 0:
+            if len(filtered_galaxies) == 0:
+                return None
+            else:    
                 index = random.randint(0, len(filtered_galaxies) - 1)
                 galaxy = filtered_galaxies[index]
-            else:
-                raise ValueError(f"No galaxies found with z < {z_max}.")
         else:
             index = random.randint(0, self._num_select - 1)
             galaxy = self._galaxy_select[index]
