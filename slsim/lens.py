@@ -74,7 +74,7 @@ class Lens(LensedSystemBase):
         :type sn_absolute_mag_band: str or `~sncosmo.Bandpass`
         :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
         :type sn_absolute_zpsys: str
-        :param test_area: area of disk around one lensing galaxies to be investigated
+        :param test_area: solid angle around one lensing galaxies to be investigated
             on (in arc-seconds^2)
         :param magnification_limit: absolute lensing magnification lower limit to
             register a point source (ignore highly de-magnified images)
@@ -84,6 +84,8 @@ class Lens(LensedSystemBase):
         :type light_profile: str . Either "single_sersic" or "double_sersic" .
         :param lightcurve_time: observation time array for lightcurve in unit of days.
         :type lightcurve_time: array
+        :param los_config: LOSConfig instance which manages line-of-sight (LOS) effects
+         and Gaussian mixture models in a simulation or analysis context.
         :param sn_modeldir: sn_modeldir is the path to the directory containing files
          needed to initialize the sncosmo.model class. For example,
          sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can
@@ -121,16 +123,17 @@ class Lens(LensedSystemBase):
             sn_modeldir=sn_modeldir,
             agn_driving_variability_model=agn_driving_variability_model,
             agn_driving_kwargs_variability=agn_driving_kwargs_variability,
+            source_type=source_type,
+            light_profile=light_profile,
         )
 
         self.cosmo = cosmo
-        self._source_type = source_type
+        self._source_type = self.source.source_type
         self._lens_equation_solver = lens_equation_solver
         self._magnification_limit = magnification_limit
-        self.kwargs_variab = kwargs_variability
-        self.light_profile = light_profile
+        self._kwargs_variab = self.source.kwargs_variability
 
-        if self._source_type == "extended" and self.kwargs_variab is not None:
+        if self._source_type == "extended" and self._kwargs_variab is not None:
             warning_msg = (
                 "Extended source can not have variability. Therefore,"
                 "variability information provided by you will not be used."
@@ -670,18 +673,10 @@ class Lens(LensedSystemBase):
             self._source_type == "extended"
             or self._source_type == "point_plus_extended"
         ):
-            if self.light_profile == "single_sersic":
-                source_models["source_light_model_list"] = ["SERSIC_ELLIPSE"]
-            else:
-                source_models["source_light_model_list"] = [
-                    "SERSIC_ELLIPSE",
-                    "SERSIC_ELLIPSE",
-                ]
+            source_models["source_light_model_list"
+                          ] = self.source.extended_source_light_model()
             kwargs_source = self.source.kwargs_extended_source_light(
-                draw_area=self.test_area,
-                center_lens=self.deflector_position,
-                band=band,
-                light_profile_str=self.light_profile,
+                draw_area=self.test_area, center_lens=self.deflector_position, band=band
             )
         else:
             # source_models['source_light_model_list'] = None
