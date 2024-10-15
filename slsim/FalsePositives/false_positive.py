@@ -6,7 +6,7 @@ from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 from slsim.lens import theta_e_when_source_infinity
 
 
-class FalsePositive(Lens):
+class FalsePositive(object):
     """Class to manage individual false positive."""
 
     def __init__(
