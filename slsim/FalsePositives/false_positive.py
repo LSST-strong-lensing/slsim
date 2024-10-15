@@ -1,11 +1,12 @@
 import numpy as np
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 from slsim.ParamDistributions.los_config import LOSConfig
+from slsim.lens import Lens
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 from slsim.lens import theta_e_when_source_infinity
 
 
-class FalsePositive(object):
+class FalsePositive(Lens):
     """Class to manage individual false positive."""
 
     def __init__(
