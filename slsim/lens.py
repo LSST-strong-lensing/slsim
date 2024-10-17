@@ -596,10 +596,17 @@ class Lens(LensedSystemBase):
             lens_light_model_list,
             kwargs_lens_light,
         ) = self.deflector.light_model_lenstronomy(band=band)
-
+        # list of 
         kwargs_model = {
             "lens_light_model_list": lens_light_model_list,
             "lens_model_list": lens_mass_model_list,
+            # source_redshift_list: redshifts for each source_light component
+            # z_source_convention: source redshift for convention of lens parameters (make sure LensCosmo has the same one)
+            # cosmo: astropy cosmology
+            # point_source_redshift_list:
+            # for multi-plane lensing only:
+            # lens_redshift_list:
+            # multi_plane: True
         }
 
         sources, sources_kwargs = self.source_light_model_lenstronomy(band=band)
