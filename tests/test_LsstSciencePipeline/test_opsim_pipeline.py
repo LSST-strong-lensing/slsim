@@ -38,9 +38,8 @@ def pes_lens_instance():
 
 
 def test_opsim_time_series_images_data():
-    """
-    Only run this test function if user has an OpSim database downloaded in the folder data/OpSim_database
-    """
+    """Only run this test function if user has an OpSim database downloaded in the
+    folder data/OpSim_database."""
 
     path = os.path.dirname(__file__)
     opsim_path = os.path.join(path, "../../data/OpSim_database/")
@@ -102,7 +101,9 @@ def test_opsim_time_series_images_data():
             assert all(
                 isinstance(item, float) for item in opsim_data[0]["calexp_center"][0]
             )  # are entries floats?
-            assert isinstance(opsim_data[0]["band"][0], str)  # are entries from band strings?
+            assert isinstance(
+                opsim_data[0]["band"][0], str
+            )  # are entries from band strings?
 
 
 def test_opsim_variable_lens_injection(pes_lens_instance):
