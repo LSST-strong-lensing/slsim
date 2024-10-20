@@ -6,15 +6,17 @@ from slsim.Observations import image_quality_lenstronomy
 import os.path
 import pickle
 from webbpsf.roman import WFI
+import warnings
 
 try:
     import galsim
     from galsim import Image, InterpolatedImage, roman
 except ModuleNotFoundError:
-    raise ModuleNotFoundError(
-        "Please install the galsim module in order to use simulate_roman_image.\n"
+    warning_msg = (
+"If you want to simulate images with Roman filters, please install the galsim module.\n"
         "Note that this module is not supported on Windows"
-    )
+            )
+    warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
 
 # NOTE: Adding sky background requires webbpsf-data, which can be found at
 #       https://webbpsf.readthedocs.io/en/latest/installation.html. Then, the
