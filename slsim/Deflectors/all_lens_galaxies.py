@@ -93,16 +93,16 @@ class AllLensGalaxies(DeflectorsBase):
                 if "mean" in parameters and "std_dev" in parameters:
                     slope_list = np.random.normal(loc=gamma_pl["mean"],
                                 scale=gamma_pl["std_dev"], size=len(galaxy_list))
-                    galaxy_list["gamma_pl"] = slope_list
                 elif "gamma_min" in parameters and "gamma_max" in parameters:
                     slope_list = np.random.uniform(low=gamma_pl["gamma_min"],
-                                 high=gamma_pl["gamma_max"], size=len(galaxy_list))
+                                 high=gamma_pl["gamma_max"], size=len(galaxy_list))    
                 else:
                     raise ValueError(
                         "The given quantities in gamma_pl are not recognized."
                         " Please provide the mean and standard deviation for a"
                         " gaussian distribution, or specify the gamma_min and gamma_max " 
                         " for a uniform distribution.")
+                galaxy_list["gamma_pl"] = slope_list
             else:
                 raise ValueError(
                         "The given format of the gamma_pl is not supported."
