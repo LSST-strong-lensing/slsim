@@ -21,6 +21,7 @@ class AllLensGalaxies(DeflectorsBase):
         kwargs_mass2light,
         cosmo,
         sky_area,
+        gamma_pl=None,
         catalog_type="skypy",
     ):
         """
@@ -37,6 +38,11 @@ class AllLensGalaxies(DeflectorsBase):
         :type sky_area: `~astropy.units.Quantity`
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
+        :param gamma_pl: power law slope in EPL profile.
+        :type gamma_pl: A float or a dictionary with given mean and standard deviation 
+         of a density slope for gaussian distribution or minimum and maximum values of 
+         gamma for uniform distribution. eg: gamma_pl=2.1, gamma_pl={"mean": a, "std_dev": b},
+         gamma_pl={"gamma_min": c, "gamma_max": d}
         :param catalog_type: type of the catalog. If user is using deflector catalog
          other than generated from skypy pipeline, we require them to provide angular
          size of the galaxy in arcsec and specify catalog_type as None. Otherwise, by
@@ -79,6 +85,29 @@ class AllLensGalaxies(DeflectorsBase):
             galaxy_list["e2_mass"] = -np.ones(n)
         if "n_sersic" not in column_names:
             galaxy_list["n_sersic"] = -np.ones(n)
+        if gamma_pl is not None:
+            if isinstance(gamma_pl, float):
+                galaxy_list["gamma_pl"] = [gamma_pl]*len(galaxy_list)
+            elif isinstance(gamma_pl, dict):
+                parameters=gamma_pl.keys()
+                if "mean" in parameters and "std_dev" in parameters:
+                    slope_list = np.random.normal(loc=gamma_pl["mean"],
+                                scale=gamma_pl["std_dev"], size=len(galaxy_list))
+                    galaxy_list["gamma_pl"] = slope_list
+                elif "gamma_min" in parameters and "gamma_max" in parameters:
+                    slope_list = np.random.uniform(low=gamma_pl["gamma_min"],
+                                 high=gamma_pl["gamma_max"], size=len(galaxy_list))
+                else:
+                    raise ValueError(
+                        "The given quantities in gamma_pl are not recognized."
+                        " Please provide the mean and standard deviation for a"
+                        " gaussian distribution, or specify the gamma_min and gamma_max " 
+                        " for a uniform distribution.")
+            else:
+                raise ValueError(
+                        "The given format of the gamma_pl is not supported."
+                        " Please provide a float or dictionary. See the documentation" 
+                        " in AllLensGalaxies class")
 
         galaxy_list = fill_table(galaxy_list)
         self._f_vel_disp = vel_disp_abundance_matching(
