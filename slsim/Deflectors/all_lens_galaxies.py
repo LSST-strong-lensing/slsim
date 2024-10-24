@@ -87,15 +87,15 @@ class AllLensGalaxies(DeflectorsBase):
             galaxy_list["n_sersic"] = -np.ones(n)
         if gamma_pl is not None:
             if isinstance(gamma_pl, float):
-                galaxy_list["gamma_pl"] = [gamma_pl]*len(galaxy_list)
+                galaxy_list["gamma_pl"] = [gamma_pl]*n
             elif isinstance(gamma_pl, dict):
                 parameters=gamma_pl.keys()
                 if "mean" in parameters and "std_dev" in parameters:
                     slope_list = np.random.normal(loc=gamma_pl["mean"],
-                                scale=gamma_pl["std_dev"], size=len(galaxy_list))
+                                scale=gamma_pl["std_dev"], size=n)
                 elif "gamma_min" in parameters and "gamma_max" in parameters:
                     slope_list = np.random.uniform(low=gamma_pl["gamma_min"],
-                                 high=gamma_pl["gamma_max"], size=len(galaxy_list))    
+                                 high=gamma_pl["gamma_max"], size=n)    
                 else:
                     raise ValueError(
                         "The given quantities in gamma_pl are not recognized."
