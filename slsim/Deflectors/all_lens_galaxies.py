@@ -71,6 +71,7 @@ class AllLensGalaxies(DeflectorsBase):
             kwargs_cut=kwargs_cut,
             cosmo=cosmo,
             sky_area=sky_area,
+            gamma_pl=gamma_pl
         )
 
         n = len(galaxy_list)
@@ -85,29 +86,6 @@ class AllLensGalaxies(DeflectorsBase):
             galaxy_list["e2_mass"] = -np.ones(n)
         if "n_sersic" not in column_names:
             galaxy_list["n_sersic"] = -np.ones(n)
-        if gamma_pl is not None:
-            if isinstance(gamma_pl, float):
-                galaxy_list["gamma_pl"] = [gamma_pl]*n
-            elif isinstance(gamma_pl, dict):
-                parameters=gamma_pl.keys()
-                if "mean" in parameters and "std_dev" in parameters:
-                    slope_list = np.random.normal(loc=gamma_pl["mean"],
-                                scale=gamma_pl["std_dev"], size=n)
-                elif "gamma_min" in parameters and "gamma_max" in parameters:
-                    slope_list = np.random.uniform(low=gamma_pl["gamma_min"],
-                                 high=gamma_pl["gamma_max"], size=n)    
-                else:
-                    raise ValueError(
-                        "The given quantities in gamma_pl are not recognized."
-                        " Please provide the mean and standard deviation for a"
-                        " gaussian distribution, or specify the gamma_min and gamma_max " 
-                        " for a uniform distribution.")
-                galaxy_list["gamma_pl"] = slope_list
-            else:
-                raise ValueError(
-                        "The given format of the gamma_pl is not supported."
-                        " Please provide a float or dictionary. See the documentation" 
-                        " in AllLensGalaxies class")
 
         galaxy_list = fill_table(galaxy_list)
         self._f_vel_disp = vel_disp_abundance_matching(
