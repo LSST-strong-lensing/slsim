@@ -3,7 +3,7 @@ import numpy as np
 from astropy.table import Table
 from astropy.cosmology import FlatLambdaCDM
 from slsim.lens import Lens
-from slsim.lsst_science_pipeline import (
+from slsim.LsstSciencePipeline.lsst_science_pipeline import (
     variable_lens_injection,
     multiple_variable_lens_injection,
 )
@@ -14,10 +14,10 @@ import pytest
 def pes_lens_instance():
     path = os.path.dirname(__file__)
     source_dict = Table.read(
-        os.path.join(path, "TestData/source_dict_ps.fits"), format="fits"
+        os.path.join(path, "../TestData/source_dict_ps.fits"), format="fits"
     )
     deflector_dict = Table.read(
-        os.path.join(path, "TestData/deflector_dict_ps.fits"), format="fits"
+        os.path.join(path, "../TestData/deflector_dict_ps.fits"), format="fits"
     )
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -41,7 +41,7 @@ def test_variable_lens_injection(pes_lens_instance):
     lens_class = pes_lens_instance
     path = os.path.dirname(__file__)
     expo_data = Table.read(
-        os.path.join(path, "TestData/expo_data_1.fits"), format="fits"
+        os.path.join(path, "../TestData/expo_data_1.fits"), format="fits"
     )
     transf_matrix_single = np.array([[0.2, 0], [0, 0.2]])
     transform_matrices = [transf_matrix_single.copy() for _ in range(len(expo_data))]
@@ -59,10 +59,10 @@ def test_multiple_variable_lens_injection(pes_lens_instance):
     lens_class = [pes_lens_instance, pes_lens_instance]
     path = os.path.dirname(__file__)
     expo_data_1 = Table.read(
-        os.path.join(path, "TestData/expo_data_1.fits"), format="fits"
+        os.path.join(path, "../TestData/expo_data_1.fits"), format="fits"
     )
     expo_data_2 = Table.read(
-        os.path.join(path, "TestData/expo_data_2.fits"), format="fits"
+        os.path.join(path, "../TestData/expo_data_2.fits"), format="fits"
     )
     expo_data = [expo_data_1, expo_data_2]
     transf_matrix_single = np.array([[0.2, 0], [0, 0.2]])

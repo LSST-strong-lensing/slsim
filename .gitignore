@@ -35,6 +35,9 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+data/OpSim_database/
+data/Scotch/
+data/SALT3.NIR_WAVEEXT/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
