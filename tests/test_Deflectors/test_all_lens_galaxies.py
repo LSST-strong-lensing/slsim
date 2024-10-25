@@ -66,10 +66,18 @@ def test_vel_disp_abundance_matching():
     vel_disp = f_vel_disp(np.log10(stellar_mass))
     assert isinstance(vel_disp, np.ndarray)
 
-def all_lens_galaxies_2():
+def test_all_lens_galaxies_2():
     galaxy_list = copy.copy(galaxies)
-    red_galaxies = galaxy_list[0]
-    blue_galaxies = galaxy_list[1]
+    red_galaxies = copy.copy(galaxy_list[0])
+    blue_galaxies = copy.copy(galaxy_list[1])
+    red_galaxies2 = copy.copy(galaxy_list[0])
+    blue_galaxies2 = copy.copy(galaxy_list[1])
+    red_galaxies3 = copy.copy(galaxy_list[0])
+    blue_galaxies3 = copy.copy(galaxy_list[1])
+    red_galaxies4 = copy.copy(galaxy_list[0])
+    blue_galaxies4 = copy.copy(galaxy_list[1])
+    red_galaxies5 = copy.copy(galaxy_list[0])
+    blue_galaxies5 = copy.copy(galaxy_list[1])
     kwargs_deflector_cut = {}
     kwargs_mass2light = {}
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -84,8 +92,8 @@ def all_lens_galaxies_2():
         gamma_pl=2.05
     )
     galaxy_class2 = AllLensGalaxies(
-        red_galaxies,
-        blue_galaxies,
+        red_galaxies2,
+        blue_galaxies2,
         kwargs_cut=kwargs_deflector_cut,
         kwargs_mass2light=kwargs_mass2light,
         cosmo=cosmo,
@@ -93,8 +101,8 @@ def all_lens_galaxies_2():
         gamma_pl={"mean": 2.1, "std_dev": 0.16}
     )
     galaxy_class3 = AllLensGalaxies(
-        red_galaxies,
-        blue_galaxies,
+        red_galaxies3,
+        blue_galaxies3,
         kwargs_cut=kwargs_deflector_cut,
         kwargs_mass2light=kwargs_mass2light,
         cosmo=cosmo,
@@ -102,12 +110,12 @@ def all_lens_galaxies_2():
         gamma_pl={"gamma_min": 1.95, "gamma_max": 2.26}
     )
     assert galaxy_class1.draw_deflector()["gamma_pl"] == 2.05
-    assert 1.6 <= galaxy_class2.deflector_number()["gamma_pl"] <= 2.6
-    assert 1.95 <= galaxy_class3.deflector_number()["gamma_pl"] <= 2.26
+    assert 1.6 <= galaxy_class2.draw_deflector()["gamma_pl"] <= 2.6
+    assert 1.95 <= galaxy_class3.draw_deflector()["gamma_pl"] <= 2.26
     with pytest.raises(ValueError):
         AllLensGalaxies(
-        red_galaxies,
-        blue_galaxies,
+        red_galaxies4,
+        blue_galaxies4,
         kwargs_cut=kwargs_deflector_cut,
         kwargs_mass2light=kwargs_mass2light,
         cosmo=cosmo,
@@ -116,8 +124,8 @@ def all_lens_galaxies_2():
     )
     with pytest.raises(ValueError):
         AllLensGalaxies(
-        red_galaxies,
-        blue_galaxies,
+        red_galaxies5,
+        blue_galaxies5,
         kwargs_cut=kwargs_deflector_cut,
         kwargs_mass2light=kwargs_mass2light,
         cosmo=cosmo,
