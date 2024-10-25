@@ -120,24 +120,14 @@ class Galaxies(SourcePopBase):
         """
         return self._num_select
 
-    def draw_source(self, z_max=None):
-        """Choose source at random. :param z_max: maximum redshift for source to be
-        drawn.
+    def draw_source(self):
+        """Choose source at random.
 
-        :param z_max: maximum redshift limit for the galaxy to be drawn. If no galaxy is
-          found for this limit, None will be returned.
         :return: dictionary of source
         """
-        if z_max is not None:
-            filtered_galaxies = self._galaxy_select[self._galaxy_select["z"] < z_max]
-            if len(filtered_galaxies) == 0:
-                return None
-            else:    
-                index = random.randint(0, len(filtered_galaxies) - 1)
-                galaxy = filtered_galaxies[index]
-        else:
-            index = random.randint(0, self._num_select - 1)
-            galaxy = self._galaxy_select[index]
+
+        index = random.randint(0, self._num_select - 1)
+        galaxy = self._galaxy_select[index]
         if "a_rot" in galaxy.colnames:
             phi_rot = galaxy["a_rot"]
         else:
