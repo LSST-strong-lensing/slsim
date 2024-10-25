@@ -23,111 +23,59 @@ class Lens(LensedSystemBase):
 
     def __init__(
         self,
-        source_dict,
-        deflector_dict,
+        source_class,
+        deflector_class,
         cosmo,
-        deflector_type="EPL",
-        source_type="extended",
         lens_equation_solver="lenstronomy_analytical",
-        variability_model=None,
-        kwargs_variability=None,
-        sn_type=None,
-        sn_absolute_mag_band=None,
-        sn_absolute_zpsys=None,
         test_area=4 * np.pi,
-        mixgauss_means=None,
-        mixgauss_stds=None,
-        mixgauss_weights=None,
         magnification_limit=0.01,
-        light_profile="single_sersic",
-        lightcurve_time=None,
         los_config=None,
-        sn_modeldir=None,
         los_dict=None,
-        agn_driving_variability_model=None,
-        agn_driving_kwargs_variability=None,
     ):
         """
 
-        :param source_dict: source properties
-        :type source_dict: dict or astropy table
-        :param deflector_dict: deflector properties
-        :type deflector_dict: dict
-        :param cosmo: astropy.cosmology instance
-        :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST", "NFW_CLUSTER"
-        :type deflector_type: str
-        :param source_type: type of the source 'extended' or 'point_source' or
-         'point_plus_extended' supported
-        :type source_type: str
-        :param lens_equation_solver: type of lens equation solver; currently supporting
-         "lenstronomy_analytical" and "lenstronomy_general"
-        :type lens_equation_solver: str
-        :param variability_model: keyword for variability model to be used. This is an
-         input for the Variability class.
-        :type variability_model: str
-        :param kwargs_variability: keyword arguments for the variability of a source.
-         This is associated with an input for Variability class.
-        :type kwargs_variability: list of str
-        :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
-        :type sn_type: str
-        :param sn_absolute_mag_band: Band used to normalize to absolute magnitude
-        :type sn_absolute_mag_band: str or `~sncosmo.Bandpass`
-        :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
-        :type sn_absolute_zpsys: str
-        :param test_area: solid angle around one lensing galaxies to be investigated
-            on (in arc-seconds^2)
-        :param magnification_limit: absolute lensing magnification lower limit to
-            register a point source (ignore highly de-magnified images)
-        :type magnification_limit: float >= 0
-        :param light_profile: keyword for number of sersic profile to use in source
-         light model
-        :type light_profile: str . Either "single_sersic" or "double_sersic" .
-        :param lightcurve_time: observation time array for lightcurve in unit of days.
-        :type lightcurve_time: array
-        :param los_config: LOSConfig instance which manages line-of-sight (LOS) effects
-         and Gaussian mixture models in a simulation or analysis context.
-        :param sn_modeldir: sn_modeldir is the path to the directory containing files
-         needed to initialize the sncosmo.model class. For example,
-         sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can
-         be downloaded from https://github.com/LSST-strong-lensing/data_public .
-         For more detail, please look at the documentation of RandomizedSupernovae
-         class.
-        :type sn_modeldir: str
-        :param los_dict: line of sight dictionary (optional, takes these values instead of drawing from distribution)
-         Takes "gamma" = [gamma1, gamma2] and "kappa" = kappa as entries
-        :type los_dict: dict
-        :param agn_driving_variability_model: Variability model with light_curve output
-         which drives the variability across all bands of the agn.
-        :type agn_driving_variability_model: str (e.g. "light_curve", "sinusoidal", "bending_power_law")
-        :param agn_driving_kwargs_variability: Dictionary containing agn variability
-         parameters for the driving variability class. eg: variable_agn_kwarg_dict =
-         {"length_of_light_curve": 1000, "time_resolution": 1,
-         "log_breakpoint_frequency": 1 / 20, "low_frequency_slope": 1,
-         "high_frequency_slope": 3, "normal_magnitude_variance": 0.1}. For the detailed
-          explanation of these parameters, see generate_signal() function in
-          astro_util.py.
-        :type agn_driving_kwargs_variability: dict
-        """
-        super().__init__(
+        :param source_class: A Source class instance or list of Source class instance
+        :type source_class: Source class instance from slsim.Sources.source. Eg: 
+         source_class=Source(
             source_dict=source_dict,
-            deflector_dict=deflector_dict,
-            cosmo=cosmo,
-            deflector_type=deflector_type,
-            test_area=test_area,
             variability_model=variability_model,
             kwargs_variability=kwargs_variability,
-            lightcurve_time=lightcurve_time,
             sn_type=sn_type,
             sn_absolute_mag_band=sn_absolute_mag_band,
             sn_absolute_zpsys=sn_absolute_zpsys,
+            cosmo=cosmo,
+            lightcurve_time=lightcurve_time,
             sn_modeldir=sn_modeldir,
             agn_driving_variability_model=agn_driving_variability_model,
             agn_driving_kwargs_variability=agn_driving_kwargs_variability,
             source_type=source_type,
             light_profile=light_profile,
-        )
-
+        ). See the Source class documentation.
+        :param deflector_class: deflector instance
+        :type deflector_class: Deflector class instance from slsim.Deflectors.deflector
+         Eg: deflector_class = Deflector(
+            deflector_type=deflector_type,
+            deflector_dict=deflector_dict,
+        ). See the Deflector class documentation.
+        :param cosmo: astropy.cosmology instance
+        :param lens_equation_solver: type of lens equation solver; currently supporting
+         "lenstronomy_analytical" and "lenstronomy_general"
+        :type lens_equation_solver: str
+        :param test_area: solid angle around one lensing galaxies to be investigated
+            on (in arc-seconds^2)
+        :param magnification_limit: absolute lensing magnification lower limit to
+            register a point source (ignore highly de-magnified images)
+        :type magnification_limit: float >= 0
+        :param los_config: LOSConfig instance which manages line-of-sight (LOS) effects
+         and Gaussian mixture models in a simulation or analysis context.
+        :param los_dict: line of sight dictionary (optional, takes these values instead of drawing from distribution)
+         Takes "gamma" = [gamma1, gamma2] and "kappa" = kappa as entries
+        :type los_dict: dict
+        """
+        self.deflector = deflector_class
+        self.source = source_class
         self.cosmo = cosmo
+        self.test_area = test_area
         self._source_type = self.source.source_type
         self._lens_equation_solver = lens_equation_solver
         self._magnification_limit = magnification_limit
@@ -140,9 +88,20 @@ class Lens(LensedSystemBase):
             )
             warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
 
+        if isinstance(self.source, list):
+            self.single_source_class = max(self.source, key=lambda obj: obj.redshift)
+            #source_z = self.single_source_class.redshift
+            self._source_type = self.single_source_class.source_type
+            self.source_number = len(self.source)
+        else:
+            #source_z = self.source.redshift
+            self._source_type = self.source.source_type
+            self.source_number = 1
+            self.single_source_class = self.source
+        # we conventionally use highest source redshift in the lens cosmo.
         self._lens_cosmo = LensCosmo(
             z_lens=float(self.deflector.redshift),
-            z_source=float(self.source.redshift),
+            z_source=float(self.single_source_class.redshift),
             cosmo=self.cosmo,
         )
 
@@ -604,9 +563,6 @@ class Lens(LensedSystemBase):
             # z_source_convention: source redshift for convention of lens parameters (make sure LensCosmo has the same one)
             # cosmo: astropy cosmology
             # point_source_redshift_list:
-            # for multi-plane lensing only:
-            # lens_redshift_list:
-            # multi_plane: True
         }
 
         sources, sources_kwargs = self.source_light_model_lenstronomy(band=band)

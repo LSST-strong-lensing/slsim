@@ -1,8 +1,5 @@
 from abc import ABC, abstractmethod
 import numpy as np
-from slsim.Sources.source import Source
-from slsim.Deflectors.deflector import Deflector
-
 
 class LensedSystemBase(ABC):
     """Abstract Base class to create a lens system with all lensing properties required
@@ -74,28 +71,6 @@ class LensedSystemBase(ABC):
          light model
         :type light_profile: str . Either "single_sersic" or "double_sersic" .
         """
-        self.source = Source(
-            source_dict=source_dict,
-            variability_model=variability_model,
-            kwargs_variability=kwargs_variability,
-            sn_type=sn_type,
-            sn_absolute_mag_band=sn_absolute_mag_band,
-            sn_absolute_zpsys=sn_absolute_zpsys,
-            cosmo=cosmo,
-            lightcurve_time=lightcurve_time,
-            sn_modeldir=sn_modeldir,
-            agn_driving_variability_model=agn_driving_variability_model,
-            agn_driving_kwargs_variability=agn_driving_kwargs_variability,
-            source_type=source_type,
-            light_profile=light_profile,
-        )
-        self.deflector = Deflector(
-            deflector_type=deflector_type,
-            deflector_dict=deflector_dict,
-        )
-        # TODO: tell them what keys the dictionary should contain
-        self.test_area = test_area
-        self.cosmo = cosmo
 
     @abstractmethod
     def deflector_position(self):
