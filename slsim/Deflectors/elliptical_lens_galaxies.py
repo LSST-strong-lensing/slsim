@@ -16,6 +16,7 @@ class EllipticalLensGalaxies(DeflectorsBase):
         kwargs_mass2light,
         cosmo,
         sky_area,
+        gamma_pl=None,
         catalog_type="skypy",
     ):
         """
@@ -34,6 +35,11 @@ class EllipticalLensGalaxies(DeflectorsBase):
          size of the galaxy in arcsec and specify catalog_type as None. Otherwise, by
          default, this class considers deflector catalog is generated using skypy
          pipeline.
+        :param gamma_pl: power law slope in EPL profile.
+        :type gamma_pl: A float or a dictionary with given mean and standard deviation 
+         of a density slope for gaussian distribution or minimum and maximum values of 
+         gamma for uniform distribution. eg: gamma_pl=2.1, gamma_pl={"mean": a, "std_dev": b},
+         gamma_pl={"gamma_min": c, "gamma_max": d}
         :type catalog_type: str. "skypy" or None.
         """
         galaxy_list = param_util.catalog_with_angular_size_in_arcsec(
@@ -44,6 +50,7 @@ class EllipticalLensGalaxies(DeflectorsBase):
             kwargs_cut=kwargs_cut,
             cosmo=cosmo,
             sky_area=sky_area,
+            gamma_pl=gamma_pl
         )
 
         n = len(galaxy_list)
@@ -58,8 +65,6 @@ class EllipticalLensGalaxies(DeflectorsBase):
             galaxy_list["e2_mass"] = -np.ones(n)
         if "n_sersic" not in column_names:
             galaxy_list["n_sersic"] = -np.ones(n)
-        if "gamma_pl" not in column_names:
-            galaxy_list["gamma_pl"] = np.ones(n) * 2
 
         self._f_vel_disp = vel_disp_abundance_matching(
             galaxy_list, z_max=0.5, sky_area=sky_area, cosmo=cosmo
