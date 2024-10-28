@@ -9,6 +9,8 @@ from slsim.lens import (
     theta_e_when_source_infinity,
 )
 from slsim.ParamDistributions.los_config import LOSConfig
+from slsim.Sources.source import Source
+from slsim.Deflectors.deflector import Deflector
 import os
 
 
@@ -36,11 +38,21 @@ class TestLens(object):
         blue_one["gamma_pl"] = 2.1
         mag_arc_limit = {"i": 35, "g": 35, "r": 35}
         while True:
-            gg_lens = Lens(
-                source_dict=self.source_dict,
+            self.source = Source(
+            source_dict=self.source_dict,
+            cosmo=cosmo,
+            source_type="extended",
+            light_profile="single_sersic",
+        )
+            self.deflector = Deflector(
+                deflector_type="EPL",
                 deflector_dict=self.deflector_dict,
+            )
+            gg_lens = Lens(
+                source_class=self.source,
+                deflector_class=self.deflector,
                 lens_equation_solver="lenstronomy_analytical",
-                kwargs_variability={"MJD", "ps_mag_i"},  # This line will not be used in
+                #kwargs_variability={"MJD", "ps_mag_i"},  # This line will not be used in
                 # the testing but at least code go through this warning message.
                 cosmo=cosmo,
             )
@@ -126,12 +138,12 @@ class TestLens(object):
         assert len(kwargs_lens_light) >= 1
 
     def test_lens_equation_solver(self):
-        """Tests analytical and numerical lens equation solver options."""
+        #Tests analytical and numerical lens equation solver options.
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         gg_lens = Lens(
             lens_equation_solver="lenstronomy_default",
-            source_dict=self.source_dict,
-            deflector_dict=self.deflector_dict,
+            source_class=self.source,
+            deflector_class=self.deflector,
             cosmo=cosmo,
         )
         while True:
@@ -140,8 +152,8 @@ class TestLens(object):
 
         gg_lens = Lens(
             lens_equation_solver="lenstronomy_analytical",
-            source_dict=self.source_dict,
-            deflector_dict=self.deflector_dict,
+            source_class=self.source,
+            deflector_class=self.deflector,
             cosmo=cosmo,
         )
         while True:
@@ -171,10 +183,19 @@ class TestLens(object):
         }
 
         while True:
-            gg_lens = Lens(
-                source_dict=source_dict,
-                deflector_dict=deflector_dict,
+            self.source2 = Source(
+            source_dict=source_dict,
+            cosmo=cosmo,
+            source_type="extended",
+            light_profile="single_sersic",
+        )
+            self.deflector2 = Deflector(
                 deflector_type="NFW_HERNQUIST",
+                deflector_dict=deflector_dict,
+            )
+            gg_lens = Lens(
+                source_class=self.source2,
+                deflector_class=self.deflector2,
                 lens_equation_solver="lenstronomy_default",
                 cosmo=cosmo,
             )
@@ -196,10 +217,19 @@ class TestLens(object):
             "subhalos": subhalos_table,
         }
         while True:
-            cg_lens = Lens(
-                source_dict=source_dict,
-                deflector_dict=deflector_dict,
+            self.source3 = Source(
+            source_dict=source_dict,
+            cosmo=cosmo,
+            source_type="extended",
+            light_profile="single_sersic",
+        )
+            self.deflector3 = Deflector(
                 deflector_type="NFW_CLUSTER",
+                deflector_dict=deflector_dict,
+            )
+            cg_lens = Lens(
+                source_class=self.source3,
+                deflector_class=self.deflector3,
                 lens_equation_solver="lenstronomy_default",
                 cosmo=cosmo,
             )
@@ -236,12 +266,21 @@ def pes_lens_instance():
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
-        pes_lens = Lens(
+        source4 = Source(
             source_dict=source_dict,
-            deflector_dict=deflector_dict,
+            cosmo=cosmo,
             source_type="point_plus_extended",
+            light_profile="single_sersic",
             variability_model="sinusoidal",
             kwargs_variability={"amp", "freq"},
+        )
+        deflector4 = Deflector(
+                deflector_type="EPL",
+                deflector_dict=deflector_dict,
+            )
+        pes_lens = Lens(
+            source_class=source4,
+            deflector_class=deflector4,
             cosmo=cosmo,
         )
         if pes_lens.validity_test():
@@ -270,12 +309,21 @@ def supernovae_lens_instance():
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
-        supernovae_lens = Lens(
+        source5 = Source(
             source_dict=source_dict,
-            deflector_dict=deflector_dict,
+            cosmo=cosmo,
             source_type="point_plus_extended",
+            light_profile="single_sersic",
             variability_model="light_curve",
             kwargs_variability={"MJD", "ps_mag_r"},
+        )
+        deflector5 = Deflector(
+                deflector_type="EPL",
+                deflector_dict=deflector_dict,
+            )
+        supernovae_lens = Lens(
+            source_class=source5,
+            deflector_class=deflector5,
             cosmo=cosmo,
         )
         if supernovae_lens.validity_test():
@@ -309,7 +357,16 @@ class TestDifferenLens(object):
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         self.source_dict = blue_one
         self.deflector_dict = red_one
-
+        self.source6 = Source(
+            source_dict=self.source_dict,
+            cosmo=self.cosmo,
+            source_type="extended",
+            light_profile="single_sersic",
+        )
+        self.deflector6 = Deflector(
+                deflector_type="EPL",
+                deflector_dict=self.deflector_dict,
+            )
     def test_different_setting(self):
         los1 = LOSConfig(
             los_bool=True,
@@ -317,8 +374,8 @@ class TestDifferenLens(object):
             nonlinear_los_bool=False,
         )
         gg_lens = Lens(
-            source_dict=self.source_dict,
-            deflector_dict=self.deflector_dict,
+            source_class=self.source6,
+            deflector_class=self.deflector6,
             cosmo=self.cosmo,
             los_config=los1,
         )
@@ -333,8 +390,8 @@ class TestDifferenLens(object):
         )
 
         gg_lens_2 = Lens(
-            source_dict=self.source_dict,
-            deflector_dict=self.deflector_dict,
+            source_class=self.source6,
+            deflector_class=self.deflector6,
             cosmo=self.cosmo,
             los_config=los2,
         )
@@ -344,8 +401,8 @@ class TestDifferenLens(object):
 
         los3 = LOSConfig(los_bool=False)
         gg_lens_3 = Lens(
-            source_dict=self.source_dict,
-            deflector_dict=self.deflector_dict,
+            source_class=self.source6,
+            deflector_class=self.deflector6,
             cosmo=self.cosmo,
             los_config=los3,
         )
@@ -359,8 +416,8 @@ class TestDifferenLens(object):
         )
         with pytest.raises(ValueError):
             gg_lens_4 = Lens(
-                source_dict=self.source_dict,
-                deflector_dict=self.deflector_dict,
+                source_class=self.source6,
+                deflector_class=self.deflector6,
                 cosmo=self.cosmo,
                 los_config=los4,
             )
@@ -373,8 +430,8 @@ class TestDifferenLens(object):
             nonlinear_los_bool=False,
         )
         gg_lens_number = Lens(
-            source_dict=self.source_dict,
-            deflector_dict=self.deflector_dict,
+            source_class=self.source6,
+            deflector_class=self.deflector6,
             cosmo=self.cosmo,
             los_config=los,
         )

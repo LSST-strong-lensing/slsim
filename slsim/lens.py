@@ -79,14 +79,6 @@ class Lens(LensedSystemBase):
         self._source_type = self.source.source_type
         self._lens_equation_solver = lens_equation_solver
         self._magnification_limit = magnification_limit
-        self._kwargs_variab = self.source.kwargs_variability
-
-        if self._source_type == "extended" and self._kwargs_variab is not None:
-            warning_msg = (
-                "Extended source can not have variability. Therefore,"
-                "variability information provided by you will not be used."
-            )
-            warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
 
         if isinstance(self.source, list):
             self.single_source_class = max(self.source, key=lambda obj: obj.redshift)
