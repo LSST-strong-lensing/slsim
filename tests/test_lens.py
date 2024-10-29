@@ -444,6 +444,24 @@ class TestDifferenLens(object):
             cosmo=self.cosmo,
             los_config=los,
         )
+        kwargs_model = gg_lens_multisource.lenstronomy_kwargs()[0]
+        kwargs_model_keys = kwargs_model.keys()
+        expected_kwargs_model = ['lens_light_model_list',
+                                'lens_model_list',
+                                'z_lens',
+                                'lens_redshift_list',
+                                'source_redshift_list',
+                                'z_source_convention',
+                                'cosmo',
+                                'source_light_model_list']
+        assert expected_kwargs_model[0] in kwargs_model_keys
+        assert expected_kwargs_model[1] in kwargs_model_keys
+        assert expected_kwargs_model[2] in kwargs_model_keys
+        assert expected_kwargs_model[3] in kwargs_model_keys
+        assert expected_kwargs_model[4] in kwargs_model_keys
+        assert expected_kwargs_model[5] in kwargs_model_keys
+        assert expected_kwargs_model[6] in kwargs_model_keys
+        
 
 
 if __name__ == "__main__":
