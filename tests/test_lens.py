@@ -438,6 +438,13 @@ class TestDifferenLens(object):
         image_number = gg_lens_number.image_number
         assert (image_number[0] == 4) or (image_number[0] == 2) or (image_number[0] == 1)
 
+        gg_lens_multisource = Lens(
+            source_class=[self.source6, self.source6],
+            deflector_class=self.deflector6,
+            cosmo=self.cosmo,
+            los_config=los,
+        )
+
 
 if __name__ == "__main__":
     pytest.main()
