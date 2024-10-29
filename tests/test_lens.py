@@ -85,7 +85,7 @@ class TestLens(object):
         assert source_magnitude_lensed == expected_lensed_mag
 
     def test_image_separation_from_positions(self):
-        image_positions = self.gg_lens.extended_source_image_positions()
+        image_positions = self.gg_lens.extended_source_image_positions()[0]
         image_separation = image_separation_from_positions(image_positions)
         theta_E_infinity = theta_e_when_source_infinity(
             deflector_dict=self.deflector_dict
@@ -100,7 +100,7 @@ class TestLens(object):
         assert theta_E_infinity < 15
 
     def test_extended_source_magnification(self):
-        host_mag = self.gg_lens.extended_source_magnification()
+        host_mag = self.gg_lens.extended_source_magnification()[0]
         assert host_mag > 0
 
     def test_deflector_stellar_mass(self):
@@ -125,7 +125,7 @@ class TestLens(object):
         t_obs2 = np.array([100, 200, 300])
         dt_days = self.gg_lens.image_observer_times(t_obs=t_obs)
         dt_days2 = self.gg_lens.image_observer_times(t_obs=t_obs2)
-        arrival_times = self.gg_lens.point_source_arrival_times()
+        arrival_times = self.gg_lens.point_source_arrival_times()[0]
         observer_times = (t_obs - arrival_times + np.min(arrival_times))[:, np.newaxis]
         observer_times2 = (
             t_obs2[:, np.newaxis] - arrival_times + np.min(arrival_times)
@@ -291,8 +291,8 @@ def pes_lens_instance():
 
 def test_point_source_magnitude(pes_lens_instance):
     pes_lens = pes_lens_instance
-    mag = pes_lens.point_source_magnitude(band="i", lensed=True)
-    mag_unlensed = pes_lens.point_source_magnitude(band="i")
+    mag = pes_lens.point_source_magnitude(band="i", lensed=True)[0]
+    mag_unlensed = pes_lens.point_source_magnitude(band="i")[0]
     assert len(mag) >= 2
     assert len(mag_unlensed) == 1
 
@@ -334,8 +334,8 @@ def supernovae_lens_instance():
 
 def test_point_source_magnitude_with_lightcurve(supernovae_lens_instance):
     supernovae_lens = supernovae_lens_instance
-    mag = supernovae_lens.point_source_magnitude(band="r", lensed=True)
-    expected_results = supernovae_lens_instance.source.source_dict["ps_mag_r"]
+    mag = supernovae_lens.point_source_magnitude(band="r", lensed=True)[0]
+    expected_results = supernovae_lens_instance.source[0].source_dict["ps_mag_r"]
     assert mag[0][0] != expected_results[0][0]
     assert mag[1][0] != expected_results[0][0]
 
@@ -379,9 +379,9 @@ class TestDifferenLens(object):
             cosmo=self.cosmo,
             los_config=los1,
         )
-        assert gg_lens.external_shear >= 0
-        assert isinstance(gg_lens.external_convergence, float)
-        assert isinstance(gg_lens.external_shear, float)
+        assert gg_lens.external_shear[0] >= 0
+        assert isinstance(gg_lens.external_convergence[0], float)
+        assert isinstance(gg_lens.external_shear[0], float)
 
         los2 = LOSConfig(
             los_bool=True,
@@ -395,9 +395,9 @@ class TestDifferenLens(object):
             cosmo=self.cosmo,
             los_config=los2,
         )
-        assert gg_lens_2.external_shear >= 0
-        assert isinstance(gg_lens_2.external_convergence, float)
-        assert isinstance(gg_lens_2.external_shear, float)
+        assert gg_lens_2.external_shear[0] >= 0
+        assert isinstance(gg_lens_2.external_convergence, list)
+        assert isinstance(gg_lens_2.external_shear, list)
 
         los3 = LOSConfig(los_bool=False)
         gg_lens_3 = Lens(
@@ -406,8 +406,8 @@ class TestDifferenLens(object):
             cosmo=self.cosmo,
             los_config=los3,
         )
-        assert gg_lens_3.external_convergence == 0
-        assert gg_lens_3.external_shear == 0
+        assert gg_lens_3.external_convergence[0] == 0
+        assert gg_lens_3.external_shear[0] == 0
 
         los4 = LOSConfig(
             los_bool=True,
@@ -436,7 +436,7 @@ class TestDifferenLens(object):
             los_config=los,
         )
         image_number = gg_lens_number.image_number
-        assert (image_number == 4) or (image_number == 2) or (image_number == 1)
+        assert (image_number[0] == 4) or (image_number[0] == 2) or (image_number[0] == 1)
 
 
 if __name__ == "__main__":

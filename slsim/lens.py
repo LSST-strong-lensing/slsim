@@ -305,8 +305,11 @@ class Lens(LensedSystemBase):
 
         :return: external convergence
         """
-        _, _, kappa_ext = self.los_linear_distortions
-        return kappa_ext
+        kappa_list = []
+        for los_linear_dist in self.los_linear_distortions:
+            _, _, kappa_ext = los_linear_dist
+            kappa_list.append(kappa_ext)
+        return kappa_list
 
     @property
     def external_shear(self):
@@ -314,8 +317,11 @@ class Lens(LensedSystemBase):
 
         :return: the absolute external shear
         """
-        gamma1, gamma2, _ = self.los_linear_distortions
-        return (gamma1**2 + gamma2**2) ** 0.5
+        shear_list = []
+        for los_linear_dist in self.los_linear_distortions:
+            gamma1, gamma2, _ = los_linear_dist
+            shear_list.append((gamma1**2 + gamma2**2) ** 0.5)
+        return shear_list
 
     @property
     def einstein_radius_deflector(self):
@@ -486,7 +492,8 @@ class Lens(LensedSystemBase):
 
         if lensed:
             magnif_list = self.point_source_magnification()
-            magnif_log_list = 2.5 * np.log10(abs(magnif_list))
+            abs_magnif_list = [abs(i) for i in magnif_list]
+            magnif_log_list = 2.5 * np.log10(abs_magnif_list)
             #loop through all the source
             magnitude_list = []
             for index, (source, magnif_log) in enumerate(zip(
