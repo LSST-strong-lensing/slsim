@@ -462,7 +462,5 @@ class TestDifferenLens(object):
         assert expected_kwargs_model[5] in kwargs_model_keys
         assert expected_kwargs_model[6] in kwargs_model_keys
         
-
-
 if __name__ == "__main__":
     pytest.main()
