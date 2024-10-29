@@ -567,11 +567,6 @@ class Lens(LensedSystemBase):
             self._extended_source_magnification_list = []
             # loop through each source.
             for index, source in enumerate(self.source):
-                """lightModel = LightModel(
-                    light_model_list=kwargs_model.get(
-                        "source_light_model_list", [])
-                )
-                kwargs_source_mag = kwargs_params["kwargs_source"]"""
                 _light_model_list = kwargs_model.get(
                         "source_light_model_list", [])[index]
                 kwargs_source_mag = [kwargs_params["kwargs_source"][index]]
@@ -629,11 +624,21 @@ class Lens(LensedSystemBase):
         kwargs_model = {
             "lens_light_model_list": lens_light_model_list,
             "lens_model_list": lens_mass_model_list,
-            # source_redshift_list: redshifts for each source_light component
-            # z_source_convention: source redshift for convention of lens parameters (make sure LensCosmo has the same one)
-            # cosmo: astropy cosmology
-            # point_source_redshift_list:
         }
+        """"lens_redshift_list": [self.deflector_redshift]*len(lens_mass_model_list),
+            "z_lens": self.deflector_redshift,
+            "z_source": self.single_source_class.redshift,
+            "source_redshift_list" : self.source_redshift,
+            "z_source_convention" : self.single_source_class.redshift,
+            "cosmo": self.cosmo"""
+        if self.source_number > 1:
+            kwargs_model["lens_redshift_list"] = [
+                self.deflector_redshift]*len(lens_mass_model_list)
+            kwargs_model["z_lens"] = self.deflector_redshift
+            kwargs_model["z_source"] = self.single_source_class.redshift
+            kwargs_model["source_redshift_list"] = self.source_redshift
+            kwargs_model["z_source_convention"] = self.single_source_class.redshift
+            kwargs_model["cosmo"] = self.cosmo
 
         sources, sources_kwargs = self.source_light_model_lenstronomy(band=band)
         # ensure that only the models that exist are getting added to kwargs_model
@@ -714,12 +719,6 @@ class Lens(LensedSystemBase):
                 kwargs_source_list.append(source.kwargs_extended_source_light(
                 draw_area=self.test_area, center_lens=self.deflector_position, band=band
             )[0])
-            """if self.source_number == 1:
-                _source_models_list = [item[0] for item in source_models_list]
-                _kwargs_source_list = kwargs_source_list[0]
-            else:
-                _source_models_list = source_models_list
-                _kwargs_source_list = kwargs_source_list"""
             source_models["source_light_model_list"] = source_models_list
             kwargs_source = kwargs_source_list
         else:
