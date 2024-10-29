@@ -1,18 +1,22 @@
 from abc import ABC, abstractmethod
-import numpy as np
-from slsim.Sources.source import Source
-from slsim.Deflectors.deflector import Deflector
-
 
 class LensedSystemBase(ABC):
     """Abstract Base class to create a lens system with all lensing properties required
     to render populations."""
 
-    def __init__(self):
+    def __init__(self, source_class, deflector_class):
         """
-        # list input parameter
+        :param source_class: :param source_class: A Source class instance or list of 
+         Source class instance
+        :type source_class: Source class instance from slsim.Sources.source.
+        :param deflector_class: deflector instance
+        :type deflector_class: Deflector class instance from slsim.Deflectors.deflector
         """
-
+        self.deflector = deflector_class
+        if isinstance(source_class, list):
+            self.source = source_class
+        else:
+            self.source = [source_class]
     @abstractmethod
     def deflector_position(self):
         """Center of the deflector position.
