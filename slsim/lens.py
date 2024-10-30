@@ -701,12 +701,22 @@ class Lens(LensedSystemBase):
             source_models_list = []
             kwargs_source_list = []
             for source in self.source:
-                source_models_list.append(source.extended_source_light_model()[0])
+                source_models_list.append(source.extended_source_light_model())
                 kwargs_source_list.append(source.kwargs_extended_source_light(
                 draw_area=self.test_area, center_lens=self.deflector_position, band=band
-            )[0])
-            source_models["source_light_model_list"] = source_models_list
-            kwargs_source = kwargs_source_list
+            ))
+            #lets transform list in to required structure
+            if (self.single_source_class.light_profile == "double_sersic" and
+                 self.source_number > 1):
+                source_models_list_restructure = source_models_list
+                kwargs_source_list_restructure = kwargs_source_list
+            else:
+                source_models_list_restructure = list(
+                    np.concatenate(source_models_list))
+                kwargs_source_list_restructure = list(
+                    np.concatenate(kwargs_source_list))
+            source_models["source_light_model_list"] = source_models_list_restructure
+            kwargs_source = kwargs_source_list_restructure
         else:
             # source_models['source_light_model_list'] = None
             kwargs_source = None
