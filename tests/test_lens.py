@@ -461,6 +461,54 @@ class TestDifferenLens(object):
         assert expected_kwargs_model[4] in kwargs_model_keys
         assert expected_kwargs_model[5] in kwargs_model_keys
         assert expected_kwargs_model[6] in kwargs_model_keys
+
+@pytest.fixture
+def supernovae_lens_instance_double_sersic_multisource():
+    path = os.path.dirname(__file__)
+    source_dict = Table.read(
+        os.path.join(path, "TestData/source_supernovae_new.fits"), format="fits"
+    )
+    deflector_dict = Table.read(
+        os.path.join(path, "TestData/deflector_supernovae_new.fits"), format="fits"
+    )
+
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    while True:
+        source = Source(
+            source_dict=source_dict,
+            cosmo=cosmo,
+            source_type="point_plus_extended",
+            light_profile="double_sersic",
+            lightcurve_time=np.linspace(-20, 100, 1000),
+            variability_model="light_curve",
+            kwargs_variability={"supernovae_lightcurve", "i"},
+            sn_type="Ia",
+            sn_absolute_mag_band="bessellb",
+            sn_absolute_zpsys="ab",
+
+        )
+        deflector = Deflector(
+                deflector_type="EPL",
+                deflector_dict=deflector_dict,
+            )
+        supernovae_lens = Lens(
+            deflector_class=deflector,
+            source_class=[source, source],
+            cosmo=cosmo,
+        )
+        if supernovae_lens.validity_test():
+            supernovae_lens = supernovae_lens
+            break
+    return supernovae_lens
+
+def test_double_sersic_multisource(supernovae_lens_instance_double_sersic_multisource):
+    lens_class = supernovae_lens_instance_double_sersic_multisource
+    results = lens_class.source_light_model_lenstronomy(band="i")
+    assert len(results[0]["source_light_model_list"]) == 2
+    assert len(results[1]["kwargs_source"]) == 2
+    assert len(results[1]["kwargs_ps"]) == 2
+
+
         
 if __name__ == "__main__":
     pytest.main()
