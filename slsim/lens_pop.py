@@ -171,7 +171,7 @@ class LensPop(LensedPopulationBase):
         """
 
         # Initialize an empty list to store the Lens instances
-        gg_lens_population = []
+        lens_population = []
         # Estimate the number of lensing systems
         num_lenses = self.deflector_number
         # num_sources = self._source_galaxies.galaxies_number()
@@ -191,8 +191,8 @@ class LensPop(LensedPopulationBase):
                     deflector_type=self._lens_galaxies.deflector_profile,
                     deflector_dict=lens,
                 )
-            # TODO: to implement this for a multi-source plane lens system
             if num_sources_tested > 0:
+                valid_sources = []
                 n = 0
                 while n < num_sources_tested:
                     source = self._sources.draw_source()
@@ -211,7 +211,7 @@ class LensPop(LensedPopulationBase):
                     source_type=self._sources.source_type,
                     light_profile=self._sources.light_profile,
                     )
-                    gg_lens = Lens(
+                    lens_class = Lens(
                         deflector_class=_lens,
                         source_class=_source,
                         cosmo=self.cosmo,
@@ -219,16 +219,25 @@ class LensPop(LensedPopulationBase):
                         los_config=self.los_config,
                     )
                     # Check the validity of the lens system
-                    if gg_lens.validity_test(**kwargs_lens_cuts):
-                        gg_lens_population.append(gg_lens)
-                        # if a lens system passes the validity test, code should exit
-                        # the loop. so, n should be greater or equal to
-                        # num_sources_tested which will break the while loop
-                        # (instead of this one can simply use break).
-                        n = num_sources_tested
+                    if lens_class.validity_test(**kwargs_lens_cuts):
+                        valid_sources.append(_source)
+                    n += 1
+                if valid_sources:
+                    # Use a single source if only one source is valid, else use 
+                    # the list of valid sources
+                    if len(valid_sources) == 1:
+                        final_sources = valid_sources[0]
                     else:
-                        n += 1
-        return gg_lens_population
+                        final_sources = valid_sources
+                    lens_final = Lens(
+                        deflector_class=_lens,
+                        source_class=final_sources,
+                        cosmo=self.cosmo,
+                        test_area=test_area,
+                        los_config=self.los_config,
+                    )
+                    lens_population.append(lens_final)
+        return lens_population
 
 
 def draw_test_area(deflector):
