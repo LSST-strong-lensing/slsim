@@ -1,7 +1,5 @@
 import numpy as np
 from astropy.table import Table
-from astropy.table import Column
-from slsim.image_simulation import lens_image
 import lenstronomy.Util.util as util
 import lenstronomy.Util.kernel_util as kernel_util
 import lenstronomy.Util.data_util as data_util
@@ -149,71 +147,3 @@ def opsim_time_series_images_data(
 
         table_data_list.append(table_data)
     return table_data_list
-
-
-def opsim_variable_lens_injection(
-    lens_class, bands, num_pix, transform_pix2angle, exposure_data
-):
-    """Injects variable lens to the OpSim time series data (1 object).
-
-    :param lens_class: Lens() object
-    :param bands: list of imaging bands of interest
-    :param num_pix: number of pixels per axis
-    :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
-        displacements
-    :param exposure_data: An astropy table of exposure data. One entry of
-        table_list_data generated from the opsim_time_series_images_data function. It
-        must contain the rms of background noise fluctuations (column name should be
-        "bkg_noise"), psf kernel for each exposure (column name should be "psf_kernel",
-        these are pixel psf kernel for each single exposure images in time series
-        image), observation time (column name should be "obs_time", these are
-        observation time in days for each single exposure images in time series images),
-        exposure time (column name should be "expo_time", these are exposure time for
-        each single exposure images in time series images), magnitude zero point (column
-        name should be "zero_point", these are zero point magnitudes for each single
-        exposure images in time series image), coordinates of the object (column name
-        should be "calexp_center"), these are the coordinates in (ra, dec), and the band
-        in which the observation is taken (column name should be "band").
-    :return: Astropy table of injected lenses and exposure information of dp0 data
-    """
-
-    final_image = []
-
-    for obs in range(len(exposure_data["obs_time"])):
-
-        exposure_data_obs = exposure_data[obs]
-
-        if exposure_data_obs["band"] not in bands:
-            continue
-
-        if "bkg_noise" in exposure_data_obs.keys():
-            std_gaussian_noise = exposure_data_obs["bkg_noise"]
-        else:
-            std_gaussian_noise = None
-
-        lens_images = lens_image(
-            lens_class,
-            band=exposure_data_obs["band"],
-            mag_zero_point=exposure_data_obs["zero_point"],
-            num_pix=num_pix,
-            psf_kernel=exposure_data_obs["psf_kernel"],
-            transform_pix2angle=transform_pix2angle,
-            exposure_time=exposure_data_obs["expo_time"],
-            t_obs=exposure_data_obs["obs_time"],
-            std_gaussian_noise=std_gaussian_noise,
-        )
-
-        final_image.append(lens_images)
-
-    lens_col = Column(name="lens", data=final_image)
-    final_image_col = Column(name="injected_lens", data=final_image)
-
-    # Create a new Table with only the bands of interest
-    expo_bands = np.array([b for b in exposure_data["band"]])
-    mask = np.isin(expo_bands, bands)
-    exposure_data_new = exposure_data[mask]
-
-    # if len(exposure_data_new) > 0:
-    exposure_data_new.add_columns([lens_col, final_image_col])
-
-    return exposure_data_new
