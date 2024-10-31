@@ -3,7 +3,7 @@ import numpy as np
 from astropy.table import Table
 from astropy.cosmology import FlatLambdaCDM
 from slsim.lens import Lens
-from slsim.LsstSciencePipeline.lsst_science_pipeline import (
+from slsim.LsstSciencePipeline.util_lsst import (
     variable_lens_injection,
     multiple_variable_lens_injection,
 )
