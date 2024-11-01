@@ -14,6 +14,7 @@ from lenstronomy.Util import data_util
 from lenstronomy.Util import util
 
 from slsim.lensed_system_base import LensedSystemBase
+import warnings
 
 
 class Lens(LensedSystemBase):
@@ -283,15 +284,15 @@ class Lens(LensedSystemBase):
         return self.deflector.redshift
 
     @property
-    def source_redshift(self):
+    def source_redshift_list(self):
         """
 
         :return: list of source redshifts
         """
-        source_redshift_list = []
+        source_redshifts = []
         for source in self.source:
-            source_redshift_list.append(source.redshift)
-        return source_redshift_list
+            source_redshifts.append(source.redshift)
+        return source_redshifts
 
     @property
     def external_convergence(self):
@@ -316,7 +317,7 @@ class Lens(LensedSystemBase):
         """Einstein radius, from SIS approximation (coming from velocity dispersion)
         without line-of-sight correction.
 
-        :return:
+        :return: list of einstein radius of each lens-source pair.
         """
         if not hasattr(self, "_theta_E_list"):
             self._theta_E_list = []
@@ -445,6 +446,13 @@ class Lens(LensedSystemBase):
         :rtype: numpy array. Each element of the array corresponds to different image
             observation times.
         """
+        #TODO: This is not implemented for point source in lenstronomy. Need to update
+        #  when lenstronomy new version is public.
+        warning_msg = (
+                "Multi source lensing is not implemented for point source."
+                " So, this function need to be updated in future."
+            )
+        warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
         observer_times_list = []
         for point_source_arrival_time in self.point_source_arrival_times():
             arrival_times = point_source_arrival_time
@@ -554,6 +562,7 @@ class Lens(LensedSystemBase):
 
         :return: list of integrated magnification factor of host magnitude
         """
+        #TODO: add source redshift in ray_shooting. Wait for lenstronomy new version.
         if not hasattr(self, "_extended_source_magnification"):
             kwargs_model, kwargs_params = self.lenstronomy_kwargs(band=None)
             theta_E_list = self.einstein_radius
@@ -623,7 +632,7 @@ class Lens(LensedSystemBase):
                 self.deflector_redshift]*len(lens_mass_model_list)
             kwargs_model["z_lens"] = self.deflector_redshift
             kwargs_model["z_source"] = self.max_redshift_source_class.redshift
-            kwargs_model["source_redshift_list"] = self.source_redshift
+            kwargs_model["source_redshift_list"] = self.source_redshift_list
             kwargs_model["z_source_convention"]= self.max_redshift_source_class.redshift
             kwargs_model["cosmo"] = self.cosmo
 

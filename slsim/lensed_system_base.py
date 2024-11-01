@@ -52,10 +52,10 @@ class LensedSystemBase(ABC):
         pass
 
     @abstractmethod
-    def source_redshift(self):
+    def source_redshift_list(self):
         """Source redshift.
 
-        :return: source redshift
+        :return: list of each source redshift
         """
         pass
 
