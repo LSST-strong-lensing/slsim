@@ -78,19 +78,28 @@ class Lens(LensedSystemBase):
 
         if isinstance(source_class, list):
             self.source = source_class
-            self.single_source_class = max(self.source, key=lambda obj: obj.redshift)
+            # choose a highest resdshift source to use conventionally use in lens
+            #  mass model.
+            self.max_redshift_source_class = max(
+                self.source, key=lambda obj: obj.redshift)
             self.source_number = len(self.source)
-            self._single_source_index = self.source.index(self.single_source_class)
+            self._max_redshift_source_index = self.source.index(
+                self.max_redshift_source_class)
         else:
             self.source = [source_class]
             self.source_number = 1
-            self.single_source_class = source_class
-            self._single_source_index = 0
-        self._source_type = self.single_source_class.source_type
+            # this is for single source case. self.max_redshift_source_class and 
+            # self.source are the same class. The difference is only that one is in the
+            #  form of list and other is just a Source instance. This is done just for 
+            # the completion of routine to make things consistent in both single source 
+            # and double source case.
+            self.max_redshift_source_class = source_class
+            self._max_redshift_source_index = 0
+        self._source_type = self.max_redshift_source_class.source_type
         # we conventionally use highest source redshift in the lens cosmo.
         self._lens_cosmo = LensCosmo(
             z_lens=float(self.deflector.redshift),
-            z_source=float(self.single_source_class.redshift),
+            z_source=float(self.max_redshift_source_class.redshift),
             cosmo=self.cosmo,
         )
 
@@ -290,11 +299,8 @@ class Lens(LensedSystemBase):
 
         :return: external convergence
         """
-        kappa_list = []
-        for los_linear_dist in self.los_linear_distortions:
-            _, _, kappa_ext = los_linear_dist
-            kappa_list.append(kappa_ext)
-        return kappa_list
+        _, _, kappa_ext = self.los_linear_distortions
+        return kappa_ext
 
     @property
     def external_shear(self):
@@ -302,12 +308,9 @@ class Lens(LensedSystemBase):
 
         :return: the absolute external shear
         """
-        shear_list = []
-        for los_linear_dist in self.los_linear_distortions:
-            gamma1, gamma2, _ = los_linear_dist
-            shear_list.append((gamma1**2 + gamma2**2) ** 0.5)
-        return shear_list
-
+        gamma1, gamma2, _ = self.los_linear_distortions
+        return (gamma1**2 + gamma2**2) ** 0.5
+    
     @property
     def einstein_radius_deflector(self):
         """Einstein radius, from SIS approximation (coming from velocity dispersion)
@@ -344,14 +347,16 @@ class Lens(LensedSystemBase):
     @property
     def einstein_radius(self):
         """Einstein radius, from SIS approximation (coming from velocity dispersion) +
-        external convergence effect for each lens-source pair.
+        external convergence effect.
 
-        :return: Einstein radius [arc seconds]
+        :return: list of Einstein radius [arc seconds] for each lens source pair.
         """
-        theta_E_list = self.einstein_radius_deflector
-        los_distortions = self.los_linear_distortions
-        return [theta_E / (1 - kappa_ext) for theta_E, (_, _, kappa_ext) in zip(
-            theta_E_list, los_distortions)]
+        theta_E = self.einstein_radius_deflector
+        _, _, kappa_ext = self.los_linear_distortions
+        theta_E_list = []
+        for i in range(len(theta_E)):
+            theta_E_list.append(theta_E[i]/(1 - kappa_ext))
+        return theta_E_list
 
     def deflector_ellipticity(self):
         """
@@ -385,18 +390,14 @@ class Lens(LensedSystemBase):
         return self._los_linear_distortions_cache
 
     def _calculate_los_linear_distortions(self):
-        """Line-of-sight distortions in shear and convergence for each source.
+        """Line-of-sight distortions in shear and convergence.
 
         :return: kappa, gamma1, gamma2
         """
-        los_distortions = []
-        for source in self.source:
-            gamma1, gamma2, kappa = self.los_config.calculate_los_linear_distortions(
-                source_redshift=source.redshift,
-                deflector_redshift=self.deflector_redshift
-            )
-            los_distortions.append((gamma1, gamma2, kappa))
-        return los_distortions
+        return self.los_config.calculate_los_linear_distortions(
+            source_redshift=self.max_redshift_source_class.redshift,
+            deflector_redshift=self.deflector_redshift,
+        )
 
     def deflector_magnitude(self, band):
         """Apparent magnitude of the deflector for a given band.
@@ -621,9 +622,9 @@ class Lens(LensedSystemBase):
             kwargs_model["lens_redshift_list"] = [
                 self.deflector_redshift]*len(lens_mass_model_list)
             kwargs_model["z_lens"] = self.deflector_redshift
-            kwargs_model["z_source"] = self.single_source_class.redshift
+            kwargs_model["z_source"] = self.max_redshift_source_class.redshift
             kwargs_model["source_redshift_list"] = self.source_redshift
-            kwargs_model["z_source_convention"] = self.single_source_class.redshift
+            kwargs_model["z_source_convention"]= self.max_redshift_source_class.redshift
             kwargs_model["cosmo"] = self.cosmo
 
         sources, sources_kwargs = self.source_light_model_lenstronomy(band=band)
@@ -658,8 +659,7 @@ class Lens(LensedSystemBase):
                 % self.deflector.deflector_type
             )
         # adding line-of-sight structure
-        gamma1, gamma2, kappa_ext = self.los_linear_distortions[
-            self._single_source_index]
+        gamma1, gamma2, kappa_ext = self.los_linear_distortions
         gamma1_lenstronomy, gamma2_lenstronomy = ellipticity_slsim_to_lenstronomy(
             e1_slsim=gamma1, e2_slsim=gamma2
         )
@@ -706,7 +706,7 @@ class Lens(LensedSystemBase):
                 draw_area=self.test_area, center_lens=self.deflector_position, band=band
             ))
             #lets transform list in to required structure
-            if (self.single_source_class.light_profile == "double_sersic" and
+            if (self.max_redshift_source_class.light_profile == "double_sersic" and
                  self.source_number > 1):
                 source_models_list_restructure = source_models_list
                 kwargs_source_list_restructure = kwargs_source_list
