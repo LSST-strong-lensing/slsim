@@ -32,8 +32,8 @@ def variable_lens_injection(
     # lightcurve time. So, we use random observation time from the lens class lightcurve
     # time to ensure simulation of reasonable images.
     observation_time = np.random.uniform(
-        min(lens_class.single_source_class.lightcurve_time),
-        max(lens_class.single_source_class.lightcurve_time),
+        min(lens_class.max_redshift_source_class.lightcurve_time),
+        max(lens_class.max_redshift_source_class.lightcurve_time),
         size=len(exposure_data["obs_time"]),
     )
     observation_time.sort()

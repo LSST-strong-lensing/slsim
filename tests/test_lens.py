@@ -379,9 +379,9 @@ class TestDifferenLens(object):
             cosmo=self.cosmo,
             los_config=los1,
         )
-        assert gg_lens.external_shear[0] >= 0
-        assert isinstance(gg_lens.external_convergence[0], float)
-        assert isinstance(gg_lens.external_shear[0], float)
+        assert gg_lens.external_shear >= 0
+        assert isinstance(gg_lens.external_convergence, float)
+        assert isinstance(gg_lens.external_shear, float)
 
         los2 = LOSConfig(
             los_bool=True,
@@ -395,9 +395,9 @@ class TestDifferenLens(object):
             cosmo=self.cosmo,
             los_config=los2,
         )
-        assert gg_lens_2.external_shear[0] >= 0
-        assert isinstance(gg_lens_2.external_convergence, list)
-        assert isinstance(gg_lens_2.external_shear, list)
+        assert gg_lens_2.external_shear >= 0
+        assert isinstance(gg_lens_2.external_convergence, float)
+        assert isinstance(gg_lens_2.external_shear, float)
 
         los3 = LOSConfig(los_bool=False)
         gg_lens_3 = Lens(
@@ -406,8 +406,8 @@ class TestDifferenLens(object):
             cosmo=self.cosmo,
             los_config=los3,
         )
-        assert gg_lens_3.external_convergence[0] == 0
-        assert gg_lens_3.external_shear[0] == 0
+        assert gg_lens_3.external_convergence == 0
+        assert gg_lens_3.external_shear == 0
 
         los4 = LOSConfig(
             los_bool=True,

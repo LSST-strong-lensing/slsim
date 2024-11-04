@@ -715,7 +715,7 @@ class Lens(LensedSystemBase):
                 draw_area=self.test_area, center_lens=self.deflector_position, band=band
             ))
             #lets transform list in to required structure
-            if (self.single_source_class.light_profile == "double_sersic" and
+            if (self.max_redshift_source_class.light_profile == "double_sersic" and
                  self.source_number > 1):
                 source_models_list_restructure = source_models_list
                 kwargs_source_list_restructure = kwargs_source_list

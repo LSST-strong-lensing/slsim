@@ -84,6 +84,7 @@ class LensPop(LensedPopulationBase):
             light
         """
         while True:
+            #This creates a single deflector - single_source lens.
             source = self._sources.draw_source()
             lens = self._lens_galaxies.draw_deflector()
             _lens = Deflector(
@@ -222,7 +223,7 @@ class LensPop(LensedPopulationBase):
                     if lens_class.validity_test(**kwargs_lens_cuts):
                         valid_sources.append(_source)
                     n += 1
-                if valid_sources:
+                if len(valid_sources) > 0:
                     # Use a single source if only one source is valid, else use 
                     # the list of valid sources
                     if len(valid_sources) == 1:
