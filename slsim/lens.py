@@ -194,29 +194,30 @@ class Lens(LensedSystemBase):
                 ))
         return self._point_image_positions
     
-    def validity_test(
+    """def validity_test(
         self,
         min_image_separation=0,
         max_image_separation=10,
         mag_arc_limit=None,
     ):
-        """Check if the lensing configuration is valid for each source."""
+        #Check if the lensing configuration is valid for each source.
         for source in self.sources:
             if not self._validity_test(source, min_image_separation,
                                                  max_image_separation, mag_arc_limit):
                 return False
-        return True
+        return True"""
 
     
-    def _validity_test(
+    """def _validity_test(
         self,
         source,
         einstein_radius,
+        image_positions,
         min_image_separation=0,
         max_image_separation=10,
         mag_arc_limit=None,
     ):
-        """Check whether lensing configuration matches selection and plausibility
+        Check whether lensing configuration matches selection and plausibility
         criteria.
 
         :param min_image_separation: minimum image separation
@@ -225,7 +226,7 @@ class Lens(LensedSystemBase):
             limits of integrated lensed arc
         :type mag_arc_limit: dict with key of bands and values of magnitude limits
         :return: boolean
-        """
+        
         # Criteria 1:The redshift of the lens (z_lens) must be less than the
         # redshift of the source (z_source).
         z_lens = self.deflector.redshift
@@ -253,7 +254,7 @@ class Lens(LensedSystemBase):
             return False
 
         # Criteria 4: The lensing configuration must produce at least two SL images.
-        image_positions = self.point_source_image_positions()
+        image_positions = image_positions
         if len(image_positions[0]) < 2:
             return False
 
@@ -267,7 +268,7 @@ class Lens(LensedSystemBase):
         # Criteria 6: (optional)
         # compute the magnified brightness of the lensed extended arc for different
         # bands at least in one band, the magnitude has to be brighter than the limit
-        if mag_arc_limit is not None and self._source_type in [
+        if mag_arc_limit is not None and source.source_type in [
             "extended",
             "point_plus_extended",
         ]:
@@ -284,18 +285,18 @@ class Lens(LensedSystemBase):
                     bool_mag_limit = True
                     break
             if bool_mag_limit is False:
-                return False
+                return False"""
         # TODO make similar criteria for point source magnitudes
-        return True
+        #return True
         # TODO: test for signal-to-noise ratio in surface brightness
 
-    """def validity_test(
+    def validity_test(
         self,
         min_image_separation=0,
         max_image_separation=10,
         mag_arc_limit=None,
     ):
-        Check whether lensing configuration matches selection and plausibility
+        """Check whether lensing configuration matches selection and plausibility
         criteria.
 
         :param min_image_separation: minimum image separation
@@ -303,7 +304,7 @@ class Lens(LensedSystemBase):
         :param mag_arc_limit: dictionary with key of bands and values of magnitude
             limits of integrated lensed arc
         :type mag_arc_limit: dict with key of bands and values of magnitude limits
-        :return: boolean
+        :return: boolean"""
         
         for index, (source, einstein_radius) in enumerate(zip(
             self.source, self.einstein_radius)):
@@ -365,7 +366,7 @@ class Lens(LensedSystemBase):
                         bool_mag_limit = True
                         break
                 if bool_mag_limit is False:
-                    return False"""
+                    return False
         # TODO make similar criteria for point source magnitudes
         #return True
         # TODO: test for signal-to-noise ratio in surface brightness
