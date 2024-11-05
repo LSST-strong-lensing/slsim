@@ -857,19 +857,16 @@ class Lens(LensedSystemBase):
             self._source_type == "point_source"
             or self._source_type == "point_plus_extended"
         ):
-            image_pos_list = self.point_source_image_positions()
-            image_magnif_list = np.abs(self.point_source_magnification())
-            magnitude_list = self.point_source_magnitude(
-                        band=band, lensed=True)
             source_models_list = []
             kwargs_ps_list = []
-            for index, source in enumerate(self.source):
+            for source in self.source:
                 source_models_list.append("LENSED_POSITION")
-                img_x, img_y = image_pos_list[index]
+                img_x, img_y = self._point_source_image_positions(source=source)
                 if band is None:
-                    image_magnitudes = image_magnif_list[index]
+                    image_magnitudes = np.abs(self._point_source_magnification(source))
                 else:
-                    image_magnitudes = magnitude_list[index]
+                    image_magnitudes = self._point_source_magnitude(
+                        band=band, source=source, lensed=True)
                 kwargs_ps_list.append(
                     {"ra_image": img_x, "dec_image": img_y,
                                       "magnitude": image_magnitudes})
