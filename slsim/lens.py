@@ -193,102 +193,6 @@ class Lens(LensedSystemBase):
                     magnification_limit=self._magnification_limit,
                 ))
         return self._point_image_positions
-    
-    """def validity_test(
-        self,
-        min_image_separation=0,
-        max_image_separation=10,
-        mag_arc_limit=None,
-    ):
-        #Check if the lensing configuration is valid for each source.
-        for source in self.sources:
-            if not self._validity_test(source, min_image_separation,
-                                                 max_image_separation, mag_arc_limit):
-                return False
-        return True"""
-
-    
-    """def _validity_test(
-        self,
-        source,
-        einstein_radius,
-        image_positions,
-        min_image_separation=0,
-        max_image_separation=10,
-        mag_arc_limit=None,
-    ):
-        Check whether lensing configuration matches selection and plausibility
-        criteria.
-
-        :param min_image_separation: minimum image separation
-        :param max_image_separation: maximum image separation
-        :param mag_arc_limit: dictionary with key of bands and values of magnitude
-            limits of integrated lensed arc
-        :type mag_arc_limit: dict with key of bands and values of magnitude limits
-        :return: boolean
-        
-        # Criteria 1:The redshift of the lens (z_lens) must be less than the
-        # redshift of the source (z_source).
-        z_lens = self.deflector.redshift
-        z_source = source.redshift
-        if z_lens >= z_source:
-            return False
-
-        # Criteria 2: The angular Einstein radius of the lensing configuration (theta_E)
-        # times 2 must be greater than or equal to the minimum image separation
-        # (min_image_separation) and less than or equal to the maximum image
-        # separation (max_image_separation).
-        if not min_image_separation <= 2 * einstein_radius <= max_image_separation:
-            return False
-
-        # Criteria 3: The distance between the lens center and the source position
-        # must be less than or equal to the angular Einstein radius
-        # of the lensing configuration (times sqrt(2)).
-        center_lens, center_source = (
-            self.deflector_position,
-            source.point_source_position(
-                center_lens=self.deflector_position, draw_area=self.test_area
-            ),
-        )
-        if np.sum((center_lens - center_source) ** 2) > einstein_radius**2 * 2:
-            return False
-
-        # Criteria 4: The lensing configuration must produce at least two SL images.
-        image_positions = image_positions
-        if len(image_positions[0]) < 2:
-            return False
-
-        # Criteria 5: The maximum separation between any two image positions must be
-        # greater than or equal to the minimum image separation and less than or
-        # equal to the maximum image separation.
-        image_separation = image_separation_from_positions(image_positions)
-        if not min_image_separation <= image_separation <= max_image_separation:
-            return False
-
-        # Criteria 6: (optional)
-        # compute the magnified brightness of the lensed extended arc for different
-        # bands at least in one band, the magnitude has to be brighter than the limit
-        if mag_arc_limit is not None and source.source_type in [
-            "extended",
-            "point_plus_extended",
-        ]:
-            # makes sure magnification of extended source is only used when there is
-            # an extended source
-            bool_mag_limit = False
-            host_mag = self.extended_source_magnification()
-            for band, mag_limit_band in mag_arc_limit.items():
-                mag_source = self.extended_source_magnitude(band)
-                mag_arc = mag_source - 2.5 * np.log10(
-                    host_mag
-                )  # lensing magnification results in a shift in magnitude
-                if mag_arc < mag_limit_band:
-                    bool_mag_limit = True
-                    break
-            if bool_mag_limit is False:
-                return False"""
-        # TODO make similar criteria for point source magnitudes
-        #return True
-        # TODO: test for signal-to-noise ratio in surface brightness
 
     def validity_test(
         self,
@@ -304,8 +208,8 @@ class Lens(LensedSystemBase):
         :param mag_arc_limit: dictionary with key of bands and values of magnitude
             limits of integrated lensed arc
         :type mag_arc_limit: dict with key of bands and values of magnitude limits
-        :return: boolean"""
-        
+        :return: boolean
+        """
         for index, (source, einstein_radius) in enumerate(zip(
             self.source, self.einstein_radius)):
             # Criteria 1:The redshift of the lens (z_lens) must be less than the
@@ -368,7 +272,7 @@ class Lens(LensedSystemBase):
                 if bool_mag_limit is False:
                     return False
         # TODO make similar criteria for point source magnitudes
-        #return True
+        return True
         # TODO: test for signal-to-noise ratio in surface brightness
 
     @property
