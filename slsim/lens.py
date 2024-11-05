@@ -146,7 +146,11 @@ class Lens(LensedSystemBase):
         """
         if not hasattr(self, "_image_positions"):
             lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
-            lens_model_class = LensModel(lens_model_list=lens_model_list)
+            lens_model_class = LensModel(lens_model_list=lens_model_list,
+                            z_lens=self.deflector_redshift,
+                            z_source_convention=self.max_redshift_source_class.redshift,
+                            multi_plane=False,
+                            z_source=source.redshift)
             lens_eq_solver = LensEquationSolver(lens_model_class)
             source_pos_x, source_pos_y = source.extended_source_position(
                 center_lens=self.deflector_position, draw_area=self.test_area
@@ -191,7 +195,11 @@ class Lens(LensedSystemBase):
         """
         if not hasattr(self, "_point_image_positions"):
             lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
-            lens_model_class = LensModel(lens_model_list=lens_model_list)
+            lens_model_class = LensModel(lens_model_list=lens_model_list,
+                            z_lens=self.deflector_redshift,
+                            z_source_convention=self.max_redshift_source_class.redshift,
+                            multi_plane=False,
+                            z_source=source.redshift)
             lens_eq_solver = LensEquationSolver(lens_model_class)
             point_source_pos_x, point_source_pos_y = source.point_source_position(
                 center_lens=self.deflector_position, draw_area=self.test_area
@@ -367,7 +375,11 @@ class Lens(LensedSystemBase):
             else:
                 # numerical solution for the Einstein radius
                 lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
-                lens_model = LensModel(lens_model_list=lens_model_list)
+                lens_model = LensModel(lens_model_list=lens_model_list,
+                            z_lens=self.deflector_redshift,
+                            z_source_convention=self.max_redshift_source_class.redshift,
+                            multi_plane=False,
+                            z_source=source.redshift)
                 lens_analysis = LensProfileAnalysis(lens_model=lens_model)
                 self._theta_E = lens_analysis.effective_einstein_radius(
                     kwargs_lens, r_min=1e-3, r_max=5e1, num_points=50
@@ -474,6 +486,8 @@ class Lens(LensedSystemBase):
             cosmo=self.cosmo,
             z_lens=self.deflector_redshift,
             z_source=source.redshift,
+            z_source_convention=self.max_redshift_source_class.redshift,
+            multi_plane=False
         )
         x_image, y_image = self._point_source_image_positions(source)
         arrival_times = lens_model.arrival_time(
@@ -650,7 +664,11 @@ class Lens(LensedSystemBase):
         """
         if not hasattr(self, "_ps_magnification"):
             lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
-            lensModel = LensModel(lens_model_list=lens_model_list)
+            lensModel = LensModel(lens_model_list=lens_model_list,
+                            z_lens=self.deflector_redshift,
+                            z_source_convention=self.max_redshift_source_class.redshift,
+                            multi_plane=False,
+                            z_source=source.redshift)
             img_x, img_y = self._point_source_image_positions(source)
             self._ps_magnification = lensModel.magnification(img_x, img_y, kwargs_lens)
         return self._ps_magnification
@@ -691,7 +709,11 @@ class Lens(LensedSystemBase):
             lightModel = LightModel(
                 light_model_list=light_model_list)
             lensModel = LensModel(
-                lens_model_list=kwargs_model.get("lens_model_list", [])
+                lens_model_list=kwargs_model.get("lens_model_list", []),
+                z_lens=self.deflector_redshift,
+                z_source_convention=self.max_redshift_source_class.redshift,
+                multi_plane=False,
+                z_source=source.redshift
             )
             theta_E = self._einstein_radius(source)
             center_source = source.extended_source_position(
