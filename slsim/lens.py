@@ -14,8 +14,6 @@ from lenstronomy.Util import data_util
 from lenstronomy.Util import util
 
 from slsim.lensed_system_base import LensedSystemBase
-import warnings
-
 
 class Lens(LensedSystemBase):
     """Class to manage individual lenses."""
@@ -507,13 +505,6 @@ class Lens(LensedSystemBase):
         :rtype: list of numpy array. Each element of the array corresponds to different image
             observation times.
         """
-        #TODO: This is not implemented for point source in lenstronomy. Need to update
-        #  when lenstronomy new version is public.
-        warning_msg = (
-                "Multi source lensing is not implemented for point source."
-                " So, this function need to be updated in future."
-            )
-        warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
         observer_times_list = []
         for source in self.source:
             observer_times_list.append(self._image_observer_times(source, t_obs))
