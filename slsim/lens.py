@@ -131,45 +131,49 @@ class Lens(LensedSystemBase):
 
         :return: list of (x-pos, y-pos)
         """
-        image_position_list = []
-        for source in self.source:
-            image_position_list.append(self._extended_source_image_positions(source))
-        return image_position_list
+        if not hasattr(self, "_es_image_positions"):
+            self._es_image_position_list = []
+            for source in self.source:
+                self._es_image_position_list.append(
+                    self._extended_source_image_positions(source))
+        return self._es_image_position_list
     
     def _extended_source_image_positions(self, source):
         """Returns extended source image positions by solving the lens equation for a 
         single source.
 
+        :param source: Source class instance. The redshift of this source is used in 
+         the LensModel.
         :return: x-pos, y-pos
         """
-        if not hasattr(self, "_image_positions"):
-            lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
-            lens_model_class = LensModel(lens_model_list=lens_model_list,
-                            z_lens=self.deflector_redshift,
-                            z_source_convention=self.max_redshift_source_class.redshift,
-                            multi_plane=False,
-                            z_source=source.redshift)
-            lens_eq_solver = LensEquationSolver(lens_model_class)
-            source_pos_x, source_pos_y = source.extended_source_position(
-                center_lens=self.deflector_position, draw_area=self.test_area
-            )
-            if (
-                self._lens_equation_solver == "lenstronomy_analytical"
-                and analytical_lens_model_support(lens_model_list) is True
-            ):
-                solver = "analytical"
-            else:
-                solver = "lenstronomy"
-            einstein_radius = self._einstein_radius(source)
-            self._image_positions = lens_eq_solver.image_position_from_source(
-                source_pos_x,
-                source_pos_y,
-                kwargs_lens,
-                solver=solver,
-                search_window=einstein_radius * 6,
-                min_distance=einstein_radius * 6 / 200,
-                magnification_limit=self._magnification_limit,
-            )
+        
+        lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
+        lens_model_class = LensModel(lens_model_list=lens_model_list,
+                        z_lens=self.deflector_redshift,
+                        z_source_convention=self.max_redshift_source_class.redshift,
+                        multi_plane=False,
+                        z_source=source.redshift)
+        lens_eq_solver = LensEquationSolver(lens_model_class)
+        source_pos_x, source_pos_y = source.extended_source_position(
+            center_lens=self.deflector_position, draw_area=self.test_area
+        )
+        if (
+            self._lens_equation_solver == "lenstronomy_analytical"
+            and analytical_lens_model_support(lens_model_list) is True
+        ):
+            solver = "analytical"
+        else:
+            solver = "lenstronomy"
+        einstein_radius = self._einstein_radius(source)
+        self._image_positions = lens_eq_solver.image_position_from_source(
+            source_pos_x,
+            source_pos_y,
+            kwargs_lens,
+            solver=solver,
+            search_window=einstein_radius * 6,
+            min_distance=einstein_radius * 6 / 200,
+            magnification_limit=self._magnification_limit,
+        )
         return self._image_positions
 
     def point_source_image_positions(self):
@@ -179,47 +183,50 @@ class Lens(LensedSystemBase):
 
         :return: list of (x-pos, y-pos) for each source
         """
-        ps_image_position_list = []
-        for source in self.source:
-            ps_image_position_list.append(self._point_source_image_positions(source))
-        return ps_image_position_list
+        if not hasattr(self, "_ps_image_position_list"):
+            self._ps_image_position_list = []
+            for source in self.source:
+                self._ps_image_position_list.append(
+                    self._point_source_image_positions(source))
+        return self._ps_image_position_list
     
     def _point_source_image_positions(self, source):
         """Returns point source image positions by solving the lens equation for a 
         single source. In the absence of a point source, this function returns the 
         solution for the center of the extended source.
 
+        :param source: Source class instance. The redshift of this source is used in 
+         the LensModel.
         :return: x-pos, y-pos
         """
-        if not hasattr(self, "_point_image_positions"):
-            lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
-            lens_model_class = LensModel(lens_model_list=lens_model_list,
-                            z_lens=self.deflector_redshift,
-                            z_source_convention=self.max_redshift_source_class.redshift,
-                            multi_plane=False,
-                            z_source=source.redshift)
-            lens_eq_solver = LensEquationSolver(lens_model_class)
-            point_source_pos_x, point_source_pos_y = source.point_source_position(
-                center_lens=self.deflector_position, draw_area=self.test_area
-            )
-            # uses analytical lens equation solver in case it is supported by lenstronomy for speed-up
-            if (
-                self._lens_equation_solver == "lenstronomy_analytical"
-                and analytical_lens_model_support(lens_model_list) is True
-            ):
-                solver = "analytical"
-            else:
-                solver = "lenstronomy"
-            einstein_radius = self._einstein_radius(source)
-            self._point_image_positions = lens_eq_solver.image_position_from_source(
-                point_source_pos_x,
-                point_source_pos_y,
-                kwargs_lens,
-                solver=solver,
-                search_window=einstein_radius * 6,
-                min_distance=einstein_radius * 6 / 200,
-                magnification_limit=self._magnification_limit,
-            )
+        lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
+        lens_model_class = LensModel(lens_model_list=lens_model_list,
+                        z_lens=self.deflector_redshift,
+                        z_source_convention=self.max_redshift_source_class.redshift,
+                        multi_plane=False,
+                        z_source=source.redshift)
+        lens_eq_solver = LensEquationSolver(lens_model_class)
+        point_source_pos_x, point_source_pos_y = source.point_source_position(
+            center_lens=self.deflector_position, draw_area=self.test_area
+        )
+        # uses analytical lens equation solver in case it is supported by lenstronomy for speed-up
+        if (
+            self._lens_equation_solver == "lenstronomy_analytical"
+            and analytical_lens_model_support(lens_model_list) is True
+        ):
+            solver = "analytical"
+        else:
+            solver = "lenstronomy"
+        einstein_radius = self._einstein_radius(source)
+        self._point_image_positions = lens_eq_solver.image_position_from_source(
+            point_source_pos_x,
+            point_source_pos_y,
+            kwargs_lens,
+            solver=solver,
+            search_window=einstein_radius * 6,
+            min_distance=einstein_radius * 6 / 200,
+            magnification_limit=self._magnification_limit,
+        )
         return self._point_image_positions
     
     def validity_test(self, 
@@ -378,41 +385,43 @@ class Lens(LensedSystemBase):
 
         :return: list of einstein radius of each lens-source pair.
         """
-        self._theta_E_list = []
-        for source in self.source:
-            self._theta_E_list.append(self._einstein_radius_deflector(source))
+        if not hasattr(self, "_theta_E_list"):
+            self._theta_E_list = []
+            for source in self.source:
+                self._theta_E_list.append(self._einstein_radius_deflector(source))
         return self._theta_E_list
 
     def _einstein_radius_deflector(self, source):
         """Einstein radius, from SIS approximation (coming from velocity dispersion)
         without line-of-sight correction.
 
+        :param source: Source class instance. The redshift of this source is used in 
+         the LensCosmo or LensModel.
         :return: einstein radius of a lens-source pair.
         """
-        if not hasattr(self, "_theta_E"):
-            if self.deflector.redshift >= source.redshift:
-                self._theta_E = 0
-            elif self.deflector.deflector_type in ["EPL"]:
-                _lens_cosmo = LensCosmo(
-                                z_lens=float(self.deflector.redshift),
-                                z_source=float(source.redshift),
-                                cosmo=self.cosmo,
-                            )
-                self._theta_E = _lens_cosmo.sis_sigma_v2theta_E(
-                    float(self.deflector.velocity_dispersion(cosmo=self.cosmo))
-                )
-            else:
-                # numerical solution for the Einstein radius
-                lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
-                lens_model = LensModel(lens_model_list=lens_model_list,
-                            z_lens=self.deflector_redshift,
-                            z_source_convention=self.max_redshift_source_class.redshift,
-                            multi_plane=False,
-                            z_source=source.redshift)
-                lens_analysis = LensProfileAnalysis(lens_model=lens_model)
-                self._theta_E = lens_analysis.effective_einstein_radius(
-                    kwargs_lens, r_min=1e-3, r_max=5e1, num_points=50
-                )
+        if self.deflector.redshift >= source.redshift:
+            self._theta_E = 0
+        elif self.deflector.deflector_type in ["EPL"]:
+            _lens_cosmo = LensCosmo(
+                            z_lens=float(self.deflector.redshift),
+                            z_source=float(source.redshift),
+                            cosmo=self.cosmo,
+                        )
+            self._theta_E = _lens_cosmo.sis_sigma_v2theta_E(
+                float(self.deflector.velocity_dispersion(cosmo=self.cosmo))
+            )
+        else:
+            # numerical solution for the Einstein radius
+            lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
+            lens_model = LensModel(lens_model_list=lens_model_list,
+                        z_lens=self.deflector_redshift,
+                        z_source_convention=self.max_redshift_source_class.redshift,
+                        multi_plane=False,
+                        z_source=source.redshift)
+            lens_analysis = LensProfileAnalysis(lens_model=lens_model)
+            self._theta_E = lens_analysis.effective_einstein_radius(
+                kwargs_lens, r_min=1e-3, r_max=5e1, num_points=50
+            )
         return self._theta_E
 
     @property
@@ -422,10 +431,11 @@ class Lens(LensedSystemBase):
 
         :return: list of Einstein radius [arc seconds] for each lens source pair.
         """
-        theta_E_list = []
-        for source in self.source:
-            theta_E_list.append(self._einstein_radius(source=source))
-        return theta_E_list
+        if not hasattr(self, "_theta_E_corrected_list"):
+            self._theta_E_corrected_list = []
+            for source in self.source:
+                self._theta_E_corrected_list.append(self._einstein_radius(source=source))
+        return self._theta_E_corrected_list
     
     def _einstein_radius(self, source):
         """Einstein radius, from SIS approximation (coming from velocity dispersion) +
@@ -673,26 +683,28 @@ class Lens(LensedSystemBase):
         :return: list of signed magnification of point sources in same order as 
          image positions.
         """
-        self._ps_magnification_list = []
-        for source in self.source:
-                self._ps_magnification_list.append(
-                    self._point_source_magnification(source))
+        if not hasattr(self, "_ps_magnification_list"):
+            self._ps_magnification_list = []
+            for source in self.source:
+                    self._ps_magnification_list.append(
+                        self._point_source_magnification(source))
         return self._ps_magnification_list
     
     def _point_source_magnification(self, source):
         """Macro-model magnification of a point source. This is for a single source.
 
+        :param source: Source class instance. The redshift of this source is used in 
+         the LensModel.
         :return: signed magnification of a point source in same order as image positions
         """
-        if not hasattr(self, "_ps_magnification"):
-            lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
-            lensModel = LensModel(lens_model_list=lens_model_list,
-                            z_lens=self.deflector_redshift,
-                            z_source_convention=self.max_redshift_source_class.redshift,
-                            multi_plane=False,
-                            z_source=source.redshift)
-            img_x, img_y = self._point_source_image_positions(source)
-            self._ps_magnification = lensModel.magnification(img_x, img_y, kwargs_lens)
+        lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
+        lensModel = LensModel(lens_model_list=lens_model_list,
+                        z_lens=self.deflector_redshift,
+                        z_source_convention=self.max_redshift_source_class.redshift,
+                        multi_plane=False,
+                        z_source=source.redshift)
+        img_x, img_y = self._point_source_image_positions(source)
+        self._ps_magnification = lensModel.magnification(img_x, img_y, kwargs_lens)
         return self._ps_magnification
 
     def extended_source_magnification(self):
@@ -704,10 +716,11 @@ class Lens(LensedSystemBase):
         """
         #TODO: add source redshift in ray_shooting. Wait for lenstronomy new version.
         
-        self._extended_source_magnification_list = []
-        for index, source in enumerate(self.source):
-            self._extended_source_magnification_list.append(
-                    self._extended_single_source_magnification(source, index))
+        if not hasattr(self, "_extended_source_magnification_list"):
+            self._extended_source_magnification_list = []
+            for index, source in enumerate(self.source):
+                self._extended_source_magnification_list.append(
+                        self._extended_single_source_magnification(source, index))
         return self._extended_source_magnification_list
     
     def _extended_single_source_magnification(self, source, source_index):
@@ -719,49 +732,48 @@ class Lens(LensedSystemBase):
         :param source_index: index of a source in source list.
         :return: integrated magnification factor of host magnitude
         """
-        if not hasattr(self, "_extended_source_magnification"):
-            kwargs_model, kwargs_params = self.lenstronomy_kwargs(band=None)
-            _light_model_list = kwargs_model.get(
-                        "source_light_model_list", [])[source_index]
-            kwargs_source_mag = [kwargs_params["kwargs_source"][source_index]]
-            if isinstance(_light_model_list, list):
-                light_model_list = _light_model_list
-            else:
-                light_model_list = [_light_model_list]
-            lightModel = LightModel(
-                light_model_list=light_model_list)
-            lensModel = LensModel(
-                lens_model_list=kwargs_model.get("lens_model_list", []),
-                z_lens=self.deflector_redshift,
-                z_source_convention=self.max_redshift_source_class.redshift,
-                multi_plane=False,
-                z_source=source.redshift
-            )
-            theta_E = self._einstein_radius(source)
-            center_source = source.extended_source_position(
-                center_lens=self.deflector_position, draw_area=self.test_area
-            )
+        kwargs_model, kwargs_params = self.lenstronomy_kwargs(band=None)
+        _light_model_list = kwargs_model.get(
+                    "source_light_model_list", [])[source_index]
+        kwargs_source_mag = [kwargs_params["kwargs_source"][source_index]]
+        if isinstance(_light_model_list, list):
+            light_model_list = _light_model_list
+        else:
+            light_model_list = [_light_model_list]
+        lightModel = LightModel(
+            light_model_list=light_model_list)
+        lensModel = LensModel(
+            lens_model_list=kwargs_model.get("lens_model_list", []),
+            z_lens=self.deflector_redshift,
+            z_source_convention=self.max_redshift_source_class.redshift,
+            multi_plane=False,
+            z_source=source.redshift
+        )
+        theta_E = self._einstein_radius(source)
+        center_source = source.extended_source_position(
+            center_lens=self.deflector_position, draw_area=self.test_area
+        )
 
-            kwargs_source_amp = data_util.magnitude2amplitude(
-                lightModel, kwargs_source_mag, magnitude_zero_point=0
-            )
+        kwargs_source_amp = data_util.magnitude2amplitude(
+            lightModel, kwargs_source_mag, magnitude_zero_point=0
+        )
 
-            num_pix = 200
-            delta_pix = theta_E * 4 / num_pix
-            x, y = util.make_grid(numPix=num_pix, deltapix=delta_pix)
-            x += center_source[0]
-            y += center_source[1]
-            beta_x, beta_y = lensModel.ray_shooting(x, y, kwargs_params["kwargs_lens"])
-            flux_lensed = np.sum(
-                lightModel.surface_brightness(beta_x, beta_y, kwargs_source_amp)
-            )
-            flux_no_lens = np.sum(
-                lightModel.surface_brightness(x, y, kwargs_source_amp)
-            )
-            if flux_no_lens > 0:
-                self._extended_source_magnification = flux_lensed / flux_no_lens
-            else:
-                self._extended_source_magnification = 0
+        num_pix = 200
+        delta_pix = theta_E * 4 / num_pix
+        x, y = util.make_grid(numPix=num_pix, deltapix=delta_pix)
+        x += center_source[0]
+        y += center_source[1]
+        beta_x, beta_y = lensModel.ray_shooting(x, y, kwargs_params["kwargs_lens"])
+        flux_lensed = np.sum(
+            lightModel.surface_brightness(beta_x, beta_y, kwargs_source_amp)
+        )
+        flux_no_lens = np.sum(
+            lightModel.surface_brightness(x, y, kwargs_source_amp)
+        )
+        if flux_no_lens > 0:
+            self._extended_source_magnification = flux_lensed / flux_no_lens
+        else:
+            self._extended_source_magnification = 0
         return self._extended_source_magnification
 
     def lenstronomy_kwargs(self, band=None):
