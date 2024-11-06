@@ -271,6 +271,7 @@ class Lens(LensedSystemBase):
         :param mag_arc_limit: dictionary with key of bands and values of magnitude
             limits of integrated lensed arc
         :type mag_arc_limit: dict with key of bands and values of magnitude limits
+        :param source_index: index of a source in source list.
         :return: boolean
         """
         
