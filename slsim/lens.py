@@ -243,17 +243,17 @@ class Lens(LensedSystemBase):
         :type mag_arc_limit: dict with key of bands and values of magnitude limits
         :return: boolean
         """
-        validity_boolean = []
+        validity_results = {}
         for index, source in enumerate(self.source):
-            validity_boolean.append(self._validity_test(source,
+            validity_results[index] = self._validity_test(source,
                         min_image_separation=min_image_separation,
                         max_image_separation=max_image_separation,
                         mag_arc_limit=mag_arc_limit,
-                        source_index=index))
-        if np.all(validity_boolean) == True:
-            return True
+                        source_index=index)
+        if len(validity_results)==1:
+            return validity_results[0]
         else:
-            return False
+            return validity_results
 
     def _validity_test(
         self,
