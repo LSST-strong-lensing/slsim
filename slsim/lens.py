@@ -797,7 +797,6 @@ class Lens(LensedSystemBase):
             kwargs_model["lens_redshift_list"] = [
                 self.deflector_redshift]*len(lens_mass_model_list)
             kwargs_model["z_lens"] = self.deflector_redshift
-            kwargs_model["z_source"] = self.max_redshift_source_class.redshift
             kwargs_model["source_redshift_list"] = self.source_redshift_list
             kwargs_model["z_source_convention"]= self.max_redshift_source_class.redshift
             kwargs_model["cosmo"] = self.cosmo
