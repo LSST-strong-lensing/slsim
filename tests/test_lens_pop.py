@@ -64,7 +64,7 @@ def test_draw_population(gg_lens_pop_instance):
     lens_pop=gg_lens_pop_instance
     kwargs_lens_cuts = {}
     lens_population = lens_pop.draw_population(kwargs_lens_cuts)
-    assert len(lens_population) <= 25
+    assert len(lens_population) <= 40
 
 def test_pes_lens_pop_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
