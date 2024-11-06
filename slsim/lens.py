@@ -241,7 +241,7 @@ class Lens(LensedSystemBase):
         :param mag_arc_limit: dictionary with key of bands and values of magnitude
             limits of integrated lensed arc
         :type mag_arc_limit: dict with key of bands and values of magnitude limits
-        :return: boolean
+        :return: A boolean or dict of boolean.
         """
         validity_results = {}
         for index, source in enumerate(self.source):
