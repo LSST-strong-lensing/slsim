@@ -629,6 +629,10 @@ class TestMultiSource(object):
         #Test multisource image observation time
         assert image_observation_time1[0] == image_observation_time3[0]
         assert image_observation_time2[0] == image_observation_time3[1]
+        assert lens_class1.einstein_radius_deflector[0] == lens_class3.einstein_radius_deflector[0]
+        assert lens_class1.einstein_radius[0] == lens_class3.einstein_radius[0]
+        assert len(lens_class3.image_observer_times(t_obs=10)) == 2
+        
       
 if __name__ == "__main__":
     pytest.main()
