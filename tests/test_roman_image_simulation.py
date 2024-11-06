@@ -89,7 +89,8 @@ def test_simulate_roman_image_with_psf_without_noise():
     kwargs_psf = {
         "point_source_supersampling_factor": 3,
         "psf_type": "PIXEL",
-        "kernel_point_source": psf[0].data / np.sum(psf[0].data),
+        "kernel_point_source": psf[0].data,
+        'kernel_point_source_normalisation': False
     }
     kwargs_numerics = {
         "point_source_supersampling_factor": 3,
