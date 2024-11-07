@@ -9,6 +9,8 @@ from slsim.Sources.source_pop_base import SourcePopBase
 from slsim.ParamDistributions.los_config import LOSConfig
 from slsim.Deflectors.deflectors_base import DeflectorsBase
 from slsim.lensed_population_base import LensedPopulationBase
+from slsim.Sources.source import Source
+from slsim.Deflectors.deflector import Deflector
 
 
 class LensPop(LensedPopulationBase):
@@ -82,30 +84,38 @@ class LensPop(LensedPopulationBase):
             light
         """
         while True:
+            #This creates a single deflector - single_source lens.
             source = self._sources.draw_source()
             lens = self._lens_galaxies.draw_deflector()
+            _lens = Deflector(
+                    deflector_type=self._lens_galaxies.deflector_profile,
+                    deflector_dict=lens,
+                )
             if test_area is None:
                 test_area = draw_test_area(deflector=lens)
             else:
                 test_area = test_area
+            _source = Source(
+                    source_dict=source,
+                    variability_model=self._sources.variability_model,
+                    kwargs_variability=self._sources.kwargs_variability,
+                    sn_type=self.sn_type,
+                    sn_absolute_mag_band=self.sn_absolute_mag_band,
+                    sn_absolute_zpsys=self.sn_absolute_zpsys,
+                    cosmo=self.cosmo,
+                    lightcurve_time=self.lightcurve_time,
+                    sn_modeldir=self.sn_modeldir,
+                    agn_driving_variability_model=self._sources.agn_driving_variability_model,
+                    agn_driving_kwargs_variability=self._sources.agn_driving_kwargs_variability,
+                    source_type=self._sources.source_type,
+                    light_profile=self._sources.light_profile,
+                )
             gg_lens = Lens(
-                deflector_dict=lens,
-                source_dict=source,
-                deflector_type=self._lens_galaxies.deflector_profile,
-                variability_model=self._sources.variability_model,
-                kwargs_variability=self._sources.kwargs_variability,
-                sn_type=self.sn_type,
-                sn_absolute_mag_band=self.sn_absolute_mag_band,
-                sn_absolute_zpsys=self.sn_absolute_zpsys,
+                deflector_class=_lens,
+                source_class=_source,
                 cosmo=self.cosmo,
                 test_area=test_area,
-                source_type=self._sources.source_type,
-                light_profile=self._sources.light_profile,
-                lightcurve_time=self.lightcurve_time,
                 los_config=self.los_config,
-                sn_modeldir=self.sn_modeldir,
-                agn_driving_variability_model=self._sources.agn_driving_variability_model,
-                agn_driving_kwargs_variability=self._sources.agn_driving_kwargs_variability,
             )
             if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens
@@ -162,7 +172,7 @@ class LensPop(LensedPopulationBase):
         """
 
         # Initialize an empty list to store the Lens instances
-        gg_lens_population = []
+        lens_population = []
         # Estimate the number of lensing systems
         num_lenses = self.deflector_number
         # num_sources = self._source_galaxies.galaxies_number()
@@ -178,41 +188,57 @@ class LensPop(LensedPopulationBase):
             num_sources_tested = self.get_num_sources_tested(
                 testarea=test_area * speed_factor
             )
-            # TODO: to implement this for a multi-source plane lens system
+            _lens = Deflector(
+                    deflector_type=self._lens_galaxies.deflector_profile,
+                    deflector_dict=lens,
+                )
             if num_sources_tested > 0:
+                valid_sources = []
                 n = 0
                 while n < num_sources_tested:
                     source = self._sources.draw_source()
-                    gg_lens = Lens(
-                        deflector_dict=lens,
-                        source_dict=source,
-                        deflector_type=self._lens_galaxies.deflector_profile,
-                        variability_model=self._sources.variability_model,
-                        kwargs_variability=self._sources.kwargs_variability,
-                        sn_type=self.sn_type,
-                        sn_absolute_mag_band=self.sn_absolute_mag_band,
-                        sn_absolute_zpsys=self.sn_absolute_zpsys,
+                    _source = Source(
+                    source_dict=source,
+                    variability_model=self._sources.variability_model,
+                    kwargs_variability=self._sources.kwargs_variability,
+                    sn_type=self.sn_type,
+                    sn_absolute_mag_band=self.sn_absolute_mag_band,
+                    sn_absolute_zpsys=self.sn_absolute_zpsys,
+                    cosmo=self.cosmo,
+                    lightcurve_time=self.lightcurve_time,
+                    sn_modeldir=self.sn_modeldir,
+                    agn_driving_variability_model=self._sources.agn_driving_variability_model,
+                    agn_driving_kwargs_variability=self._sources.agn_driving_kwargs_variability,
+                    source_type=self._sources.source_type,
+                    light_profile=self._sources.light_profile,
+                    )
+                    lens_class = Lens(
+                        deflector_class=_lens,
+                        source_class=_source,
                         cosmo=self.cosmo,
                         test_area=test_area,
-                        source_type=self._sources.source_type,
                         los_config=self.los_config,
-                        light_profile=self._sources.light_profile,
-                        lightcurve_time=self.lightcurve_time,
-                        sn_modeldir=self.sn_modeldir,
-                        agn_driving_variability_model=self._sources.agn_driving_variability_model,
-                        agn_driving_kwargs_variability=self._sources.agn_driving_kwargs_variability,
                     )
                     # Check the validity of the lens system
-                    if gg_lens.validity_test(**kwargs_lens_cuts):
-                        gg_lens_population.append(gg_lens)
-                        # if a lens system passes the validity test, code should exit
-                        # the loop. so, n should be greater or equal to
-                        # num_sources_tested which will break the while loop
-                        # (instead of this one can simply use break).
-                        n = num_sources_tested
+                    if lens_class.validity_test(**kwargs_lens_cuts):
+                        valid_sources.append(_source)
+                    n += 1
+                if len(valid_sources) > 0:
+                    # Use a single source if only one source is valid, else use 
+                    # the list of valid sources
+                    if len(valid_sources) == 1:
+                        final_sources = valid_sources[0]
                     else:
-                        n += 1
-        return gg_lens_population
+                        final_sources = valid_sources
+                    lens_final = Lens(
+                        deflector_class=_lens,
+                        source_class=final_sources,
+                        cosmo=self.cosmo,
+                        test_area=test_area,
+                        los_config=self.los_config,
+                    )
+                    lens_population.append(lens_final)
+        return lens_population
 
 
 def draw_test_area(deflector):

@@ -60,7 +60,11 @@ def create_lens_pop_instance(return_kext=False):
 def gg_lens_pop_instance():
     # Create LensPop instance without return_kext
     return create_lens_pop_instance(return_kext=False)
-
+def test_draw_population(gg_lens_pop_instance):
+    lens_pop=gg_lens_pop_instance
+    kwargs_lens_cuts = {}
+    lens_population = lens_pop.draw_population(kwargs_lens_cuts)
+    assert len(lens_population) <= 40
 
 def test_pes_lens_pop_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -294,9 +298,9 @@ def test_supernovae_plus_galaxies_lens_pop_instance_2():
     kwargs_lens_cut = {}
     pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
     assert pes_lens_class._source_type == "point_plus_extended"
-    assert "x_off" in pes_lens_class.source.source_dict.colnames
+    assert "x_off" in pes_lens_class.source[0].source_dict.colnames
     assert len(
-        pes_lens_class.source.kwargs_variability_extracted["i"]["ps_mag_i"]
+        pes_lens_class.source[0].kwargs_variability_extracted["i"]["ps_mag_i"]
     ) == len(time_range)
 
 
@@ -363,8 +367,8 @@ def test_supernovae_lens_pop_instance():
     kwargs_lens_cut = {}
     ps_lens_class = ps_lens_pop_1.select_lens_at_random(**kwargs_lens_cut)
     assert ps_lens_class._source_type == "point_source"
-    assert "z" in ps_lens_class.source.source_dict.colnames
-    assert len(ps_lens_class.source.source_dict) == 1
+    assert "z" in ps_lens_class.source[0].source_dict.colnames
+    assert len(ps_lens_class.source[0].source_dict) == 1
     assert abs(len(ps_lens_population_1) - len(ps_lens_population_1_speed)) <= 12
     with pytest.raises(ValueError):
         LensPop(

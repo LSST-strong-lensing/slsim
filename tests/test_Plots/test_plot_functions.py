@@ -9,6 +9,8 @@ from slsim.Plots.plot_functions import (
     plot_montage_of_random_injected_lens,
 )
 from slsim.image_simulation import sharp_image
+from slsim.Sources.source import Source
+from slsim.Deflectors.deflector import Deflector
 from astropy.table import Table
 import os
 
@@ -26,12 +28,21 @@ def quasar_lens_pop_instance():
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
-        pes_lens = Lens(
+        source = Source(
             source_dict=source_dict,
-            deflector_dict=deflector_dict,
+            cosmo=cosmo,
             source_type="point_plus_extended",
+            light_profile="single_sersic",
             variability_model="sinusoidal",
             kwargs_variability={"amp", "freq"},
+        )
+        deflector = Deflector(
+                deflector_type="EPL",
+                deflector_dict=deflector_dict,
+            )
+        pes_lens = Lens(
+            source_class=source,
+            deflector_class=deflector,
             cosmo=cosmo,
         )
         if pes_lens.validity_test():

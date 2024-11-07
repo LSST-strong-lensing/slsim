@@ -4,6 +4,8 @@ from slsim.Util.coolest_slsim_interface import (
     create_slsim_from_coolest,
 )
 from slsim.lens import Lens
+from slsim.Sources.source import Source
+from slsim.Deflectors.deflector import Deflector
 import os
 from astropy.cosmology import FlatLambdaCDM
 from astropy.table import Table
@@ -23,18 +25,27 @@ def supernovae_lens_instance():
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
-        supernovae_lens = Lens(
-            deflector_dict=deflector_dict,
+        source = Source(
             source_dict=source_dict,
+            cosmo=cosmo,
+            source_type="point_plus_extended",
+            light_profile="double_sersic",
+            lightcurve_time=np.linspace(-20, 100, 1000),
             variability_model="light_curve",
             kwargs_variability={"supernovae_lightcurve", "i"},
             sn_type="Ia",
             sn_absolute_mag_band="bessellb",
             sn_absolute_zpsys="ab",
+
+        )
+        deflector = Deflector(
+                deflector_type="EPL",
+                deflector_dict=deflector_dict,
+            )
+        supernovae_lens = Lens(
+            deflector_class=deflector,
+            source_class=source,
             cosmo=cosmo,
-            source_type="point_plus_extended",
-            light_profile="double_sersic",
-            lightcurve_time=np.linspace(-20, 100, 1000),
         )
         if supernovae_lens.validity_test():
             supernovae_lens = supernovae_lens

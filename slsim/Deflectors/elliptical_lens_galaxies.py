@@ -102,7 +102,7 @@ class EllipticalLensGalaxies(DeflectorsBase):
             deflector["vel_disp"] = vel_disp
         if deflector["e1_light"] == -1 or deflector["e2_light"] == -1:
             e1_light, e2_light, e1_mass, e2_mass = elliptical_projected_eccentricity(
-                **deflector, **self._kwargs_mass2light
+                **deflector
             )
             deflector["e1_light"] = e1_light
             deflector["e2_light"] = e2_light
