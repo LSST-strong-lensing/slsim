@@ -5,8 +5,10 @@ import numpy as np
 
 # from slsim.Sources.simple_supernova_lightcurve import SimpleSupernovaLightCurve
 from astropy.table import Column, Table
+from astropy.cosmology import FLRW
 from slsim.Sources import random_supernovae
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
+from slsim.Util.cosmo_util import z_scale_factor
 
 
 class Source(object):
@@ -27,7 +29,7 @@ class Source(object):
     ):
         """
         :param source_dict: Source properties
-        :type source_dict: dict
+        :type source_dict: dict  # TODO: write what arguments need to be inculded when the source_type is interpolated.
         :param variability_model: keyword for variability model to be used. This is an
          input for the Variability class.
         :type variability_model: str
@@ -317,7 +319,7 @@ class Source(object):
 
     def kwargs_extended_source_light(
         self, center_lens, draw_area, band=None, light_profile_str="single_sersic"
-    ):
+    ): #MODIFY THIS
         """Provids dictionary of keywords for the source light model(s). Kewords used
         are in lenstronomy conventions.
 
@@ -395,6 +397,27 @@ class Source(object):
                     "center_y": center_source[1],
                 },
             ]
+        elif light_profile_str == "interpolated":
+            z_image = self.source_dict["z_data"]
+            pixel_width = self.source_dict["pixel_width_data"]
+            pixel_width *= z_scale_factor(z_old=z_image, z_new=self.redshift)
+    
+            # Ensure the image is 2D
+            image = self.source_dict["image"]
+            if image.ndim > 2:
+                image = image.squeeze()  # Remove any singleton dimensions
+            if image.ndim != 2:
+                raise ValueError(f"Interpolated image must be 2D, got shape {image.shape}")
+    
+            kwargs_extended_source = [dict(
+                magnitude=mag_source,
+                image=image,  # Use the potentially reshaped image
+                center_x=center_source[0],
+                center_y=center_source[1],
+                phi_G=self.source_dict["phi_G"],
+                scale=pixel_width
+            )]
+            print(f"kwargs_extended_source: {kwargs_extended_source}")
         else:
             raise ValueError("Provided sersic profile is not supported.")
         return kwargs_extended_source

@@ -3,6 +3,7 @@ import numpy as np
 from numpy import testing as npt
 from astropy.table import Table
 from astropy.cosmology import FlatLambdaCDM
+from astropy.io import fits
 from slsim.lens import Lens
 from slsim.image_simulation import (
     simulate_image,
@@ -24,6 +25,10 @@ from slsim.image_simulation import (
 import pytest
 
 
+from astropy.table import Table
+
+
+
 class TestImageSimulation(object):
     def setup_method(self):
         # path = os.path.dirname(slsim.__file__)
@@ -38,8 +43,38 @@ class TestImageSimulation(object):
             os.path.join(path, "TestData/red_one_modified.fits"), format="fits"
         )
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+
+        # Load the specific FITS file
+        fits_file_path = r'C:\Users\rahul\OneDrive\Documents\GitHub\Simulating_and_Predicting_Nancy_G_Roman_Telescope_Data\COSMOS_field_morphology_matching\COSMOS_23.5_training_sample\real_galaxy_images_23.5_n21.fits'
+        gal_hdu = 164
+        real_galaxy_image = fits.getdata(fits_file_path, ext=gal_hdu)
+
+        # Define the parameters
+        z = 0.5
+        z_data = 6
+        pixel_width_data = 0.1
+        phi_G = 0
+        mag_g = 20
+        mag_i=20
+        mag_r=20
+
+
+        # Create the interp_source table
+        source_interp = Table([
+            [z],
+            [real_galaxy_image], 
+            [z_data], 
+            [pixel_width_data], 
+            [phi_G], 
+            [mag_g],
+            [mag_i],
+            [mag_r]
+        ], names=("z", "image", "z_data", "pixel_width_data", "phi_G", "mag_g", "mag_i", "mag_r"))
+
+
         self.source_dict = blue_one
         self.deflector_dict = red_one
+        self.source_interp = source_interp
         while True:
             gg_lens = Lens(
                 source_dict=self.source_dict,
@@ -49,6 +84,16 @@ class TestImageSimulation(object):
             if gg_lens.validity_test():
                 self.gg_lens = gg_lens
                 break
+        self.gg_lens_interp = Lens(
+                source_dict=source_interp,
+                deflector_dict=self.deflector_dict,
+                lens_equation_solver="lenstronomy_analytical",
+                kwargs_variability={"MJD", "ps_mag_i"},  # This line will not be used in
+                # the testing but at least code go through this warning message.
+                cosmo=cosmo,
+                light_profile="interpolated"
+            )
+
 
     def test_simulate_image(self):
         image = simulate_image(
@@ -58,7 +103,15 @@ class TestImageSimulation(object):
             add_noise=True,
             observatory="LSST",
         )
+        image_interp = simulate_image(
+            lens_class=self.gg_lens_interp,
+            band="g",
+            num_pix=100,
+            add_noise=True,
+            observatory="LSST",
+        )
         assert len(image) == 100
+        assert len(image_interp) == 100
 
     def test_sharp_image(self):
         image = sharp_image(
@@ -69,7 +122,16 @@ class TestImageSimulation(object):
             num_pix=100,
             with_deflector=True,
         )
+        image_interp = sharp_image(
+            lens_class=self.gg_lens_interp,
+            band="g",
+            mag_zero_point=30,
+            delta_pix=0.05,
+            num_pix=100,
+            with_deflector=True,
+        )
         assert len(image) == 100
+        assert len(image_interp) == 100
 
     def test_sharp_rgb_image(self):
         image = sharp_rgb_image(
@@ -79,7 +141,15 @@ class TestImageSimulation(object):
             delta_pix=0.05,
             num_pix=100,
         )
+        image_interp = sharp_rgb_image(
+            lens_class=self.gg_lens_interp,
+            rgb_band_list=["r", "g", "i"],
+            mag_zero_point=30,
+            delta_pix=0.05,
+            num_pix=100,
+        )
         assert len(image) == 100
+        assert len(image_interp) == 100
 
     def test_rgb_image_from_image_list(self):
         image_g = sharp_image(
@@ -108,7 +178,38 @@ class TestImageSimulation(object):
         )
         image_list = [image_r, image_g, image_b]
         image = rgb_image_from_image_list(image_list, 0.5)
+
+        image_g_interp= sharp_image(
+            lens_class=self.gg_lens_interp,
+            band="g",
+            mag_zero_point=30,
+            delta_pix=0.05,
+            num_pix=100,
+            with_deflector=True,
+        )
+
+        image_r_interp= sharp_image(
+            lens_class=self.gg_lens,
+            band="r",
+            mag_zero_point=30,
+            delta_pix=0.05,
+            num_pix=100,
+            with_deflector=True,
+        )
+
+        image_b_interp= sharp_image(
+            lens_class=self.gg_lens,
+            band="i",
+            mag_zero_point=30,
+            delta_pix=0.05,
+            num_pix=100,
+            with_deflector=True,
+        )
+
+        image_list_interp = [image_r_interp, image_g_interp, image_b_interp]
+        image_interp = rgb_image_from_image_list(image_list, 0.5)
         assert len(image) == 100
+        assert len(image_interp) == 100
 
     def test_point_source_image_with_lens_class_with_no_point_source(self):
         transf_matrix = np.array([[0.2, 0], [0, 0.2]])
@@ -129,6 +230,18 @@ class TestImageSimulation(object):
             transform_pix2angle=transf_matrix,
             time=10,
         )
+
+        result_1_interp = point_source_image_at_time(
+            lens_class=self.gg_lens_interp,
+            band="i",
+            mag_zero_point=27,
+            delta_pix=0.2,
+            num_pix=101,
+            psf_kernel=psf_kernel_single,
+            transform_pix2angle=transf_matrix,
+            time=10,
+        )
+
         result2 = point_source_image_without_variability(
             lens_class=self.gg_lens,
             band="i",
@@ -138,8 +251,21 @@ class TestImageSimulation(object):
             psf_kernel=psf_kernel_single,
             transform_pix2angle=transf_matrix,
         )
+
+        result_2_interp = point_source_image_at_time(
+            lens_class=self.gg_lens_interp,
+            band="i",
+            mag_zero_point=27,
+            delta_pix=0.2,
+            num_pix=101,
+            psf_kernel=psf_kernel_single,
+            transform_pix2angle=transf_matrix,
+            time=10,
+        )
         assert np.all(result1[0] == 0)
         assert np.all(result2[0] == 0)
+        assert np.all(result_1_interp[0] == 0)
+        assert np.all(result_2_interp[0] == 0)
 
 
 @pytest.fixture

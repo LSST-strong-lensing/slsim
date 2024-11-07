@@ -327,6 +327,35 @@ class TestSource:
         assert self.source7.kwargs_variability_extracted["r"]["ps_mag_r"] == 17
         assert self.source7.kwargs_variability_extracted["r"]["MJD"] == 20
 
+    def test_kwargs_extended_source_light_interpolated(self):
+
+        image = np.zeros((11, 11))
+        image[5, 5] = 1 
+        z= 0.5
+        z_data = 0.1
+        pixel_width_data = 0.1
+        phi_G = 0
+        mag_i = 20   
+        source_dict = Table([
+        [z],
+        [image], 
+        [z_data], 
+        [pixel_width_data], 
+        [phi_G], 
+        [mag_i],], names=("z", "image", "z_data", "pixel_width_data", "phi_G", "mag_i"))
+
+
+        source_interp = Source(source_dict)
+
+        center_lens = np.array([0, 0])
+        draw_area = 4 * np.pi
+        kwargs = source_interp.kwargs_extended_source_light(
+            center_lens, draw_area, band="i", light_profile_str="interpolated"
+        )
+        print(kwargs)
+        assert len(kwargs) == 6
+        assert isinstance(kwargs[0], source_dict)
+
 
 if __name__ == "__main__":
     pytest.main()

@@ -27,7 +27,7 @@ class Lens(LensedSystemBase):
         cosmo,
         deflector_type="EPL",
         deflector_kwargs=None,
-        source_type="extended",
+        source_type="extended",  #TODO: might need to have another name for it for interpolation
         lens_equation_solver="lenstronomy_analytical",
         variability_model=None,
         kwargs_variability=None,
@@ -341,7 +341,7 @@ class Lens(LensedSystemBase):
                 lens_model = LensModel(lens_model_list=lens_model_list)
                 lens_analysis = LensProfileAnalysis(lens_model=lens_model)
                 self._theta_E = lens_analysis.effective_einstein_radius(
-                    kwargs_lens, r_min=1e-3, r_max=5e1, num_points=50
+                    kwargs_lens, r_min=1e-3, r_max=5e1, num_points=50   
                 )
         return self._theta_E
 
@@ -500,10 +500,12 @@ class Lens(LensedSystemBase):
         """
         # band_string = str("mag_" + band)
         # TODO: might have to change conventions between extended and point source
+        print(f"Entering extended_source_magnitude with band={band}, lensed={lensed}")
         source_mag = self.source.extended_source_magnitude(band)
         if lensed:
             mag = self.extended_source_magnification()
             return source_mag - 2.5 * np.log10(mag)
+        print(f"Exiting extended_source_magnitude with result={source_mag}")
         return source_mag
 
     def point_source_magnification(self):
@@ -524,6 +526,7 @@ class Lens(LensedSystemBase):
 
         :return: integrated magnification factor of host magnitude
         """
+        print("Entering extended_source_magnification")
         if not hasattr(self, "_extended_source_magnification"):
             kwargs_model, kwargs_params = self.lenstronomy_kwargs(band=None)
             lightModel = LightModel(
@@ -558,6 +561,7 @@ class Lens(LensedSystemBase):
                 self._extended_source_magnification = flux_lensed / flux_no_lens
             else:
                 self._extended_source_magnification = 0
+            print(f"Exiting extended_source_magnification with result={self._extended_source_magnification}")
         return self._extended_source_magnification
 
     def lenstronomy_kwargs(self, band=None):
@@ -627,7 +631,7 @@ class Lens(LensedSystemBase):
         """
         return self.deflector.light_model_lenstronomy(band=band)
 
-    def source_light_model_lenstronomy(self, band=None):
+    def source_light_model_lenstronomy(self, band=None): #MODIFY THIS
         """Returns source light model instance and parameters in lenstronomy
         conventions.
 
@@ -641,11 +645,19 @@ class Lens(LensedSystemBase):
         ):
             if self.light_profile == "single_sersic":
                 source_models["source_light_model_list"] = ["SERSIC_ELLIPSE"]
-            else:
+            elif self.light_profile == "double_sersic":
                 source_models["source_light_model_list"] = [
                     "SERSIC_ELLIPSE",
                     "SERSIC_ELLIPSE",
                 ]
+            elif self.light_profile == "interpolated":
+
+                source_models["source_light_model_list"] = ["INTERPOL"]
+            else:
+                raise ValueError(
+                    "Light profile %s not supported for Lens class"
+                    % self.light_profile
+                )
             kwargs_source = self.source.kwargs_extended_source_light(
                 draw_area=self.test_area,
                 center_lens=self.deflector_position,
