@@ -7,7 +7,6 @@ comment:                  # this is a top-level key
   require_base: false        # [true :: must have a base report to post]
   require_head: true       # [true :: must have a head report to post]
 ignore:
-  - "slsim/LsstSciencePipeline/lsst_science_pipeline.py"
-  - "slsim/LsstSciencePipeline/opsim_pipeline.py"
+  - "slsim/lsst_science_pipeline.py"
   - "setup.py"
   - "tests/*"

@@ -3,8 +3,7 @@ import numpy as np
 from slsim.lens import Lens
 from slsim.roman_image_simulation import simulate_roman_image
 from slsim.image_simulation import simulate_image
-from slsim.Sources.source import Source
-from slsim.Deflectors.deflector import Deflector
+
 import os
 import pickle
 import pytest
@@ -47,19 +46,10 @@ SOURCE_DICT = {
 }
 
 BAND = "F106"
-source = Source(
-            source_dict=SOURCE_DICT,
-            cosmo=COSMO,
-            source_type="extended",
-            light_profile="single_sersic",
-        )
-deflector = Deflector(
-                deflector_type="EPL",
-                deflector_dict=DEFLECTOR_DICT,
-            )
+
 LENS = Lens(
-    source_class=source,
-    deflector_class=deflector,
+    source_dict=SOURCE_DICT,
+    deflector_dict=DEFLECTOR_DICT,
     los_dict=LOS_DICT,
     cosmo=COSMO,
 )

@@ -264,24 +264,18 @@ def point_source_coordinate_properties(
     lens_pix_coordinate = image_data.map_coord2pix(ra_lens_value, dec_lens_value)
 
     ps_coordinate = lens_class.point_source_image_positions()
-    ra_image = []
-    dec_image = []
+    ra_image_values = ps_coordinate[0]
+    dec_image_values = ps_coordinate[1]
+    # image_magnitude = lens_class.point_source_magnitude(band=band, lensed=True)
     image_pix_coordinate = []
-    for ps_coord in ps_coordinate:
-        ra_image_values = ps_coord[0]
-        dec_image_values = ps_coord[1]
-        ra_image.append(ra_image_values)
-        dec_image.append(dec_image_values)
-        # image_magnitude = lens_class.point_source_magnitude(band=band, lensed=True)
-        for image_ra, image_dec in zip(ra_image_values, dec_image_values):
-            image_pix_coordinate.append(np.array([image_data.map_coord2pix(image_ra,
-                                                                     image_dec)]))
+    for image_ra, image_dec in zip(ra_image_values, dec_image_values):
+        image_pix_coordinate.append((image_data.map_coord2pix(image_ra, image_dec)))
 
     data = {
         "deflector_pix": np.array(lens_pix_coordinate),
-        "image_pix": image_pix_coordinate,
-        "ra_image": np.concatenate(ra_image),
-        "dec_image": np.concatenate(dec_image),
+        "image_pix": np.array(image_pix_coordinate),
+        "ra_image": ra_image_values,
+        "dec_image": dec_image_values,
     }
     return data
 
@@ -328,16 +322,19 @@ def point_source_image_without_variability(
         ra_image_values = image_data["ra_image"]
         dec_image_values = image_data["dec_image"]
         magnitude = lens_class.point_source_magnitude(band, lensed=True)
-        magnitude_list = np.concatenate(magnitude)
-        amp = magnitude_to_amplitude(magnitude_list, mag_zero_point)
-        rendering_class = PointSourceRendering(
-            pixel_grid=data_class, supersampling_factor=1, psf=psf_class
-        )
-        point_source_image = rendering_class.point_source_rendering(
-            ra_image_values,
-            dec_image_values,
-            amp,
-        )
+        amp = magnitude_to_amplitude(magnitude, mag_zero_point)
+        point_source_images_list = []
+        for i in range(len(ra_image_values)):
+            rendering_class = PointSourceRendering(
+                pixel_grid=data_class, supersampling_factor=1, psf=psf_class
+            )
+            point_source = rendering_class.point_source_rendering(
+                np.array([ra_image_values[i]]),
+                np.array([dec_image_values[i]]),
+                np.array([amp[i]]),
+            )
+            point_source_images_list.append(point_source)
+        point_source_image = sum(point_source_images_list)
     else:
         point_source_image = np.zeros((num_pix, num_pix))
     return point_source_image
@@ -390,17 +387,19 @@ def point_source_image_at_time(
         variable_mag = lens_class.point_source_magnitude(
             band=band, lensed=True, time=time
         )
-        variable_mag_list = np.concatenate(variable_mag)
-        variable_amp = magnitude_to_amplitude(variable_mag_list, mag_zero_point)
-        
-        rendering_class = PointSourceRendering(
-            pixel_grid=data_class, supersampling_factor=1, psf=psf_class
-        )
-        point_source_image = rendering_class.point_source_rendering(
-            ra_image_values,
-            dec_image_values,
-            variable_amp,
-        )
+        variable_amp = magnitude_to_amplitude(variable_mag, mag_zero_point)
+        point_source_images_list = []
+        for i in range(len(ra_image_values)):
+            rendering_class = PointSourceRendering(
+                pixel_grid=data_class, supersampling_factor=1, psf=psf_class
+            )
+            point_source = rendering_class.point_source_rendering(
+                np.array([ra_image_values[i]]),
+                np.array([dec_image_values[i]]),
+                np.array([variable_amp[i]]),
+            )
+            point_source_images_list.append(point_source)
+        point_source_image = sum(point_source_images_list)
     else:
         point_source_image = np.zeros((num_pix, num_pix))
     return point_source_image

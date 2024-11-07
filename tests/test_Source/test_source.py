@@ -189,7 +189,6 @@ class TestSource:
             sn_type="Ia",
             lightcurve_time=np.linspace(-20, 50, 100),
             cosmo=cosmo,
-            light_profile="double_sersic",
         )
         self.source4 = Source(
             self.source_dict3,
@@ -210,7 +209,6 @@ class TestSource:
             sn_type="Ia",
             lightcurve_time=np.linspace(-20, 50, 100),
             cosmo=cosmo,
-            light_profile="double_sersic",
         )
 
         self.source6 = Source(
@@ -222,7 +220,6 @@ class TestSource:
             sn_type="Ia",
             lightcurve_time=np.linspace(-20, 50, 100),
             cosmo=cosmo,
-            light_profile="triplet",
         )
 
         self.source7 = Source(
@@ -516,18 +513,7 @@ class TestSource:
             agn_driving_variability_model="bending_power_law",
             agn_driving_kwargs_variability=variable_agn_kwarg_dict,
         )
-        self.source_light_model_1=Source(source_dict=self.source_dict,
-                    cosmo=cosmo,
-                    source_type="extended",
-                    light_profile="single_sersic")
-        self.source_light_model_2=Source(source_dict=self.source_dict3,
-                    cosmo=cosmo,
-                    source_type="extended",
-                    light_profile="double_sersic")
-        self.source_light_model_3=Source(source_dict=self.source_dict3,
-                    cosmo=cosmo,
-                    source_type="extended",
-                    light_profile="triple_sersic")
+
     def test_redshift(self):
         assert self.source.redshift == [0.5]
         assert self.source11.redshift == 3.123
@@ -633,14 +619,18 @@ class TestSource:
         center_lens = np.array([0, 0])
         draw_area = 4 * np.pi
         kwargs = self.source3.kwargs_extended_source_light(
-            center_lens, draw_area, band="i"
+            center_lens, draw_area, band="i", light_profile_str="double_sersic"
         )
         assert len(kwargs) == 2
         assert all(isinstance(kwargs_item, dict) for kwargs_item in kwargs)
         with pytest.raises(ValueError):
-            self.source6.kwargs_extended_source_light(center_lens, draw_area, band="i")
+            self.source5.kwargs_extended_source_light(
+                center_lens, draw_area, band="i", light_profile_str="triple"
+            )
         with pytest.raises(ValueError):
-            self.source5.kwargs_extended_source_light(center_lens, draw_area, band="i")
+            self.source5.kwargs_extended_source_light(
+                center_lens, draw_area, band="i", light_profile_str="double_sersic"
+            )
         with pytest.raises(ValueError):
             self.source10.kwargs_variability_extracted
         with pytest.raises(ValueError):
@@ -716,15 +706,6 @@ class TestSource:
         assert final_source_table["ps_mag_i"] == 23
         assert final_source_table["ps_mag_r"] == 24
         assert final_source_table["ps_mag_g"] == 25
-    def test_extended_source_light_model(self):
-        light_model1=self.source_light_model_1.extended_source_light_model()
-        light_model2=self.source_light_model_2.extended_source_light_model()
-        assert light_model1[0]=="SERSIC_ELLIPSE"
-        assert len(light_model2)==2
-        assert light_model2[0]=="SERSIC_ELLIPSE"
-        with pytest.raises(ValueError):
-            self.source_light_model_3.extended_source_light_model()
-
 
 
 if __name__ == "__main__":

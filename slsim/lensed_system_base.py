@@ -1,22 +1,92 @@
 from abc import ABC, abstractmethod
+import numpy as np
+from slsim.Sources.source import Source
+from slsim.Deflectors.deflector import Deflector
+
 
 class LensedSystemBase(ABC):
     """Abstract Base class to create a lens system with all lensing properties required
     to render populations."""
 
-    def __init__(self, source_class, deflector_class):
+    def __init__(
+        self,
+        source_dict,
+        deflector_dict,
+        cosmo,
+        deflector_type="EPL",
+        test_area=4 * np.pi,
+        variability_model=None,
+        kwargs_variability=None,
+        sn_type=None,
+        sn_absolute_mag_band=None,
+        sn_absolute_zpsys=None,
+        lightcurve_time=None,
+        sn_modeldir=None,
+        agn_driving_variability_model=None,
+        agn_driving_kwargs_variability=None,
+    ):
         """
-        :param source_class: :param source_class: A Source class instance or list of 
-         Source class instance
-        :type source_class: Source class instance from slsim.Sources.source.
-        :param deflector_class: deflector instance
-        :type deflector_class: Deflector class instance from slsim.Deflectors.deflector
+        :param source_dict: source properties
+        :type source_dict: dict or astropy table
+        :param deflector_dict: deflector properties
+        :type deflector_dict: dict
+        :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST"
+        :type deflector_type: str
+        :param variability_model: keyword for variability model to be used. This is an
+         input for the Variability class.
+        :type variability_model: str
+        :param kwargs_variability: keyword arguments for the variability of a source.
+         This is associated with an input for Variability class.
+        :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
+        :type sn_type: str
+        :param sn_absolute_mag_band: Band used to normalize to absolute magnitude
+        :type sn_absolute_mag_band: str or `~sncosmo.Bandpass`
+        :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
+        :type sn_absolute_zpsys: str
+        :param cosmo: astropy.cosmology instance
+        :param test_area: area (arc-sec^2) around lensing galaxy to be investigated
+        :param lightcurve_time: observation time array for lightcurve in unit of days.
+        :type lightcurve_time: array
+        :param sn_modeldir: sn_modeldir is the path to the directory containing files
+         needed to initialize the sncosmo.model class. For example,
+         sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can
+         be downloaded from https://github.com/LSST-strong-lensing/data_public .
+         For more detail, please look at the documentation of RandomizedSupernovae
+         class.
+        :type sn_modeldir: str
+        :param agn_driving_variability_model: Variability model with light_curve output
+         which drives the variability across all bands of the agn.
+        :type agn_driving_variability_model: str (e.g. "light_curve", "sinusoidal", "bending_power_law")
+        :param agn_driving_kwargs_variability: Dictionary containing agn variability
+         parameters for the driving variability class. eg: variable_agn_kwarg_dict =
+         {"length_of_light_curve": 1000, "time_resolution": 1,
+         "log_breakpoint_frequency": 1 / 20, "low_frequency_slope": 1,
+         "high_frequency_slope": 3, "normal_magnitude_variance": 0.1}. For the detailed
+          explanation of these parameters, see generate_signal() function in
+          astro_util.py.
+        :type agn_driving_kwargs_variability: dict
         """
-        self.deflector = deflector_class
-        if isinstance(source_class, list):
-            self.source = source_class
-        else:
-            self.source = [source_class]
+        self.source = Source(
+            source_dict=source_dict,
+            variability_model=variability_model,
+            kwargs_variability=kwargs_variability,
+            sn_type=sn_type,
+            sn_absolute_mag_band=sn_absolute_mag_band,
+            sn_absolute_zpsys=sn_absolute_zpsys,
+            cosmo=cosmo,
+            lightcurve_time=lightcurve_time,
+            sn_modeldir=sn_modeldir,
+            agn_driving_variability_model=agn_driving_variability_model,
+            agn_driving_kwargs_variability=agn_driving_kwargs_variability,
+        )
+        self.deflector = Deflector(
+            deflector_type=deflector_type,
+            deflector_dict=deflector_dict,
+        )
+        # TODO: tell them what keys the dictionary should contain
+        self.test_area = test_area
+        self.cosmo = cosmo
+
     @abstractmethod
     def deflector_position(self):
         """Center of the deflector position.
@@ -52,10 +122,10 @@ class LensedSystemBase(ABC):
         pass
 
     @abstractmethod
-    def source_redshift_list(self):
+    def source_redshift(self):
         """Source redshift.
 
-        :return: list of each source redshift
+        :return: source redshift
         """
         pass
 

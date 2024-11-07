@@ -3,10 +3,10 @@ import numpy as np
 from astropy.table import Table
 from astropy.cosmology import FlatLambdaCDM
 from slsim.lens import Lens
-from slsim.LsstSciencePipeline.opsim_pipeline import opsim_time_series_images_data
-from slsim.LsstSciencePipeline.util_lsst import opsim_variable_lens_injection
-from slsim.Sources.source import Source
-from slsim.Deflectors.deflector import Deflector
+from slsim.LsstSciencePipeline.opsim_pipeline import (
+    opsim_variable_lens_injection,
+    opsim_time_series_images_data,
+)
 import pytest
 
 
@@ -22,23 +22,14 @@ def pes_lens_instance():
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
-        source = Source(
+        pes_lens = Lens(
             source_dict=source_dict,
-            cosmo=cosmo,
+            deflector_dict=deflector_dict,
             source_type="point_plus_extended",
-            light_profile="single_sersic",
             variability_model="sinusoidal",
             kwargs_variability={"amp", "freq"},
-            lightcurve_time=np.linspace(0, np.pi, 100),
-        )
-        deflector = Deflector(
-                deflector_type="EPL",
-                deflector_dict=deflector_dict,
-            )
-        pes_lens = Lens(
-            source_class=source,
-            deflector_class=deflector,
             cosmo=cosmo,
+            lightcurve_time=np.linspace(0, np.pi, 100),
         )
         if pes_lens.validity_test():
             pes_lens = pes_lens
