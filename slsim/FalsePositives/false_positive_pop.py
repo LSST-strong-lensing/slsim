@@ -66,11 +66,10 @@ class FalsePositivePop(object):
                 z_max = _lens.redshift + tolerance
                 # Try to draw a source with the z_max based on the lens redshift and
                 # source number choice.
-                source_number = random.choices(self._choice, weights=self._weights)[
-                    0
-                ]
+                source_number = random.choices(self._choice, weights=self._weights)[0]
                 source_list = []
                 valid_sources = True
+
                 for _ in range(source_number):
                     source = self._sources.draw_source(z_max=z_max)
                     # If the source is None, mark sources as invalid and break to retry
@@ -85,14 +84,18 @@ class FalsePositivePop(object):
                             light_profile=self._sources.light_profile,
                         )
                     )
-                    if not valid_sources:
-                        continue
+
+                # Skip the rest of the loop if sources are invalid
+                if not valid_sources:
+                    continue
+
+                # Handle single or multiple sources
                 if source_number == 1:
                     _source = source_list[0]
                 else:
                     _source = source_list
+
                 # Compute test area for false positive position.
-                # This area will be used to determine the position of false positive.
                 test_area = 3 * draw_test_area(deflector=lens)
 
                 # Create a FalsePositive instance with the lens and source information
@@ -106,6 +109,7 @@ class FalsePositivePop(object):
                 # Add the false positive to the population
                 false_positive_population.append(false_positive)
                 successful = True
+
         if number == 1:
             return false_positive_population[0]
         else:
