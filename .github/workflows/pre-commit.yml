@@ -26,11 +26,11 @@ jobs:
       - name: Fix 'python_venv' language to 'python' in .pre-commit-hooks.yaml
         run: |
           echo "Fixing pre-commit hook language..."
-          # Now that pre-commit hooks are installed, modify the cached .pre-commit-hooks.yaml files
-          find ~/.cache/pre-commit/ -type f -name '.pre-commit-hooks.yaml' -exec sed -i 's/python_venv/python/g' {} +
+          # Modify the cached .pre-commit-hooks.yaml files now that pre-commit hooks are installed
+          sudo find /home/runner/.cache/pre-commit/ -type f -name '.pre-commit-hooks.yaml' -exec sed -i 's/python_venv/python/g' {} +
 
-      # Run pre-commit action
+      # Run pre-commit checks
       - name: Run pre-commit checks
         uses: pre-commit/action@v3.0.0
         with:
-          all_files: true
+          extra_args: ["--all-files"]
