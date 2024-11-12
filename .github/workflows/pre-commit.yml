@@ -9,6 +9,22 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v3
-    - uses: pre-commit/action@v3.0.0
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+
+      # Cache step to reuse pre-commit cache
+      - name: Cache Pre-commit
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pre-commit
+          key: ${{ runner.os }}-pre-commit-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-pre-commit-
+
+      # Step to replace 'python_venv' with 'python' in .pre-commit-hooks.yaml
+      - name: Fix pre-commit hook language
+        run: |
+          find ~/.cache/pre-commit/ -type f -name '.pre-commit-hooks.yaml' -exec sed -i 's/python_venv/python/g' {} +
+
+      # Run pre-commit action
+      - uses: pre-commit/action@v3.0.0
