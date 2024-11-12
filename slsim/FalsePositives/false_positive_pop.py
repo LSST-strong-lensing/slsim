@@ -18,24 +18,26 @@ class FalsePositivePop(object):
 
     def __init__(
         self,
-        elliptical_galaxy_population: DeflectorsBase,
-        blue_galaxy_population: SourcePopBase,
-        cosmo: Optional[Cosmology] = None,
-        los_config: Optional[LOSConfig] = None,
-        source_number_choice: Optional[list[int]] = [1, 2, 3],
-        weights_for_source_number: Optional[list[int]] = None,
+        elliptical_galaxy_population,
+        blue_galaxy_population,
+        cosmo=None,
+        los_config=None,
+        source_number_choice=[1, 2, 3],
+        weights_for_source_number=None,
     ):
         """
         Args:
-            deflector_population (DeflectorsBase): Deflector population as an instance of a DeflectorsBase subclass.
-            source_population (SourcePopBase): Source population as an instance of a SourcePopBase subclass
-            cosmo (Optional[Cosmology], optional): AstroPy Cosmology instance. If None, defaults to flat LCDM with h0=0.7 and Om0=0.3.
-                                                   Defaults to None.
-            los_config (Optional[LOSConfig], optional): Configuration for line of sight distribution. Defaults to None.
-            source_number_choice (Optional[list[int]], optional): A list of integers to choose source number from. If None, defaults to [1, 2, 3].
-            weights (Optional[list[int]], optional): A list of weights corresponding to the probabilities of selecting each value
-                                             in source_number_choice. If None, all choices are equally likely.
-                                             Defaults to None.
+        :param deflector_population: Deflector population as an deflectors class 
+         instance.
+        :param source_population: Source population as an sources class inatnce.
+        :param cosmo: astropy.cosmology instance
+        :param los_config: LOSConfig instance which manages line-of-sight (LOS) effects
+         and Gaussian mixture models in a simulation or analysis context.
+        :param source_number_choice: A list of integers to choose source number from. If
+         None, defaults to [1, 2, 3].
+        :param weights: A list of weights corresponding to the probabilities of 
+         selecting each value in source_number_choice. If None, all choices are equally 
+         likely. Defaults to None.
         """
 
         self.cosmo = cosmo
