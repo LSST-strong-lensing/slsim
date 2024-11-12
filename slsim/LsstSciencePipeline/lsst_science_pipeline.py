@@ -495,8 +495,8 @@ def cutout_image_psf_kernel(
     calibFluxRadius=12,
 ):
     """This function extracts psf kernels from the dp0 cutout image at point source
-    image positions and deflector position. dp0 images are objects that has various 
-    attributes. In the dp0.2 data, psf kernel vary with coordinate and can be computed 
+    image positions and deflector position. dp0 images are objects that has various
+    attributes. In the dp0.2 data, psf kernel vary with coordinate and can be computed
     using given psf model.
 
     :param dp0_image: cutout image from the dp0 data.
@@ -796,6 +796,7 @@ def multiple_dp0_time_series_images_data(
     if len(time_series_data) > 1:
         return expo_data_list
     return None
+
 
 def measure_noise_level_in_RSP_coadd(RSP_coadd, N_pixels, plot=False):
     np.random.seed(1)

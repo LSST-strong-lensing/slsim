@@ -36,8 +36,8 @@ class EllipticalLensGalaxies(DeflectorsBase):
          default, this class considers deflector catalog is generated using skypy
          pipeline.
         :param gamma_pl: power law slope in EPL profile.
-        :type gamma_pl: A float or a dictionary with given mean and standard deviation 
-         of a density slope for gaussian distribution or minimum and maximum values of 
+        :type gamma_pl: A float or a dictionary with given mean and standard deviation
+         of a density slope for gaussian distribution or minimum and maximum values of
          gamma for uniform distribution. eg: gamma_pl=2.1, gamma_pl={"mean": a, "std_dev": b},
          gamma_pl={"gamma_min": c, "gamma_max": d}
         :type catalog_type: str. "skypy" or None.
@@ -50,7 +50,7 @@ class EllipticalLensGalaxies(DeflectorsBase):
             kwargs_cut=kwargs_cut,
             cosmo=cosmo,
             sky_area=sky_area,
-            gamma_pl=gamma_pl
+            gamma_pl=gamma_pl,
         )
 
         n = len(galaxy_list)

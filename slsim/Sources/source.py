@@ -579,13 +579,10 @@ class Source(object):
 
     def extended_source_light_model(self):
         """Provides a list of source models.
-        
+
         :return: list of extented source model.
         """
-        if (
-            self.source_type == "extended"
-            or self.source_type == "point_plus_extended"
-        ):
+        if self.source_type == "extended" or self.source_type == "point_plus_extended":
             if self.light_profile == "single_sersic":
                 source_models_list = ["SERSIC_ELLIPSE"]
             elif self.light_profile == "double_sersic":
@@ -594,11 +591,14 @@ class Source(object):
                     "SERSIC_ELLIPSE",
                 ]
             else:
-                raise ValueError("Provided sersic profile is not supported. "
-                            "Supported profiles are single_sersic and double_sersic.")
+                raise ValueError(
+                    "Provided sersic profile is not supported. "
+                    "Supported profiles are single_sersic and double_sersic."
+                )
         else:
             source_models_list = None
         return source_models_list
+
 
 def extract_agn_kwargs_from_source_dict(source_dict):
     """This extracts all AGN related parameters from a source_dict Table and constructs

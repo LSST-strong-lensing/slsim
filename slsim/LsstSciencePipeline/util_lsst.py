@@ -121,6 +121,7 @@ def multiple_variable_lens_injection(
         return final_images_catalog
     return None
 
+
 def opsim_variable_lens_injection(
     lens_class, bands, num_pix, transform_pix2angle, exposure_data
 ):

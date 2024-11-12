@@ -32,9 +32,9 @@ def pes_lens_instance():
             lightcurve_time=np.linspace(0, np.pi, 100),
         )
         deflector = Deflector(
-                deflector_type="EPL",
-                deflector_dict=deflector_dict,
-            )
+            deflector_type="EPL",
+            deflector_dict=deflector_dict,
+        )
         pes_lens = Lens(
             source_class=source,
             deflector_class=deflector,

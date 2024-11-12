@@ -274,8 +274,9 @@ def point_source_coordinate_properties(
         dec_image.append(dec_image_values)
         # image_magnitude = lens_class.point_source_magnitude(band=band, lensed=True)
         for image_ra, image_dec in zip(ra_image_values, dec_image_values):
-            image_pix_coordinate.append(np.array([image_data.map_coord2pix(image_ra,
-                                                                     image_dec)]))
+            image_pix_coordinate.append(
+                np.array([image_data.map_coord2pix(image_ra, image_dec)])
+            )
 
     data = {
         "deflector_pix": np.array(lens_pix_coordinate),
@@ -392,7 +393,7 @@ def point_source_image_at_time(
         )
         variable_mag_list = np.concatenate(variable_mag)
         variable_amp = magnitude_to_amplitude(variable_mag_list, mag_zero_point)
-        
+
         rendering_class = PointSourceRendering(
             pixel_grid=data_class, supersampling_factor=1, psf=psf_class
         )

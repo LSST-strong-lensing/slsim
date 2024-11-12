@@ -13,9 +13,9 @@ try:
     from galsim import Image, InterpolatedImage, roman
 except ModuleNotFoundError:
     warning_msg = (
-"If you want to simulate images with Roman filters, please install the galsim module.\n"
+        "If you want to simulate images with Roman filters, please install the galsim module.\n"
         "Note that this module is not supported on Windows"
-            )
+    )
     warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
 
 # NOTE: Adding sky background requires webbpsf-data, which can be found at
@@ -209,9 +209,7 @@ def get_psf(band, detector, detector_pos, oversample, psf_directory):
 
     # import PSF to GalSim
     oversampled_pixel_scale = 0.11 / oversample
-    psf_image = galsim.Image(
-        psf[0].data, scale=oversampled_pixel_scale
-    )
+    psf_image = galsim.Image(psf[0].data, scale=oversampled_pixel_scale)
 
     return galsim.InterpolatedImage(psf_image)
 

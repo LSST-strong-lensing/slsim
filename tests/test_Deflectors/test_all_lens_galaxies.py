@@ -17,7 +17,9 @@ def galaxy_list():
     pipeline = SkyPyPipeline(skypy_config=None, sky_area=sky_area, filters=None)
     return pipeline.red_galaxies, pipeline.blue_galaxies
 
+
 galaxies = galaxy_list()
+
 
 @pytest.fixture
 def all_lens_galaxies():
@@ -66,6 +68,7 @@ def test_vel_disp_abundance_matching():
     vel_disp = f_vel_disp(np.log10(stellar_mass))
     assert isinstance(vel_disp, np.ndarray)
 
+
 def test_all_lens_galaxies_2():
     galaxy_list = copy.copy(galaxies)
     red_galaxies = copy.copy(galaxy_list[0])
@@ -89,7 +92,7 @@ def test_all_lens_galaxies_2():
         kwargs_mass2light=kwargs_mass2light,
         cosmo=cosmo,
         sky_area=sky_area,
-        gamma_pl=2.05
+        gamma_pl=2.05,
     )
     galaxy_class2 = AllLensGalaxies(
         red_galaxies2,
@@ -98,7 +101,7 @@ def test_all_lens_galaxies_2():
         kwargs_mass2light=kwargs_mass2light,
         cosmo=cosmo,
         sky_area=sky_area,
-        gamma_pl={"mean": 2.1, "std_dev": 0.16}
+        gamma_pl={"mean": 2.1, "std_dev": 0.16},
     )
     galaxy_class3 = AllLensGalaxies(
         red_galaxies3,
@@ -107,32 +110,31 @@ def test_all_lens_galaxies_2():
         kwargs_mass2light=kwargs_mass2light,
         cosmo=cosmo,
         sky_area=sky_area,
-        gamma_pl={"gamma_min": 1.95, "gamma_max": 2.26}
+        gamma_pl={"gamma_min": 1.95, "gamma_max": 2.26},
     )
     assert galaxy_class1.draw_deflector()["gamma_pl"] == 2.05
     assert 1.6 <= galaxy_class2.draw_deflector()["gamma_pl"] <= 2.6
     assert 1.95 <= galaxy_class3.draw_deflector()["gamma_pl"] <= 2.26
     with pytest.raises(ValueError):
         AllLensGalaxies(
-        red_galaxies4,
-        blue_galaxies4,
-        kwargs_cut=kwargs_deflector_cut,
-        kwargs_mass2light=kwargs_mass2light,
-        cosmo=cosmo,
-        sky_area=sky_area,
-        gamma_pl={"gamma_mi": 1.95, "gamma_ma": 2.26}
-    )
+            red_galaxies4,
+            blue_galaxies4,
+            kwargs_cut=kwargs_deflector_cut,
+            kwargs_mass2light=kwargs_mass2light,
+            cosmo=cosmo,
+            sky_area=sky_area,
+            gamma_pl={"gamma_mi": 1.95, "gamma_ma": 2.26},
+        )
     with pytest.raises(ValueError):
         AllLensGalaxies(
-        red_galaxies5,
-        blue_galaxies5,
-        kwargs_cut=kwargs_deflector_cut,
-        kwargs_mass2light=kwargs_mass2light,
-        cosmo=cosmo,
-        sky_area=sky_area,
-        gamma_pl=[2.1, 0.16]
-    )
-
+            red_galaxies5,
+            blue_galaxies5,
+            kwargs_cut=kwargs_deflector_cut,
+            kwargs_mass2light=kwargs_mass2light,
+            cosmo=cosmo,
+            sky_area=sky_area,
+            gamma_pl=[2.1, 0.16],
+        )
 
 
 if __name__ == "__main__":
