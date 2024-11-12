@@ -9,6 +9,7 @@ ci:
     autoupdate_schedule: weekly
     skip: []
     submodules: false
+    pre-commit: migrate-config
 
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
