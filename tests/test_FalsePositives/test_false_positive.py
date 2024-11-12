@@ -122,13 +122,13 @@ def test_false_positive():
     )
     assert len(false_positive_instance_2.deflector_position) == 2
     assert false_positive_instance_2.deflector_redshift == single_deflector["z"]
-    assert false_positive_instance_1.source_redshift == single_source1["z"]
-    assert np.all(false_positive_instance_2.source_redshift) == np.all(
+    assert false_positive_instance_1.source_redshift_list[0] == single_source1["z"]
+    assert np.all(false_positive_instance_2.source_redshift_list) == np.all(
         np.array([single_source1["z"], single_source2["z"]])
     )
     assert false_positive_instance_1.external_convergence < 0.1
     assert false_positive_instance_1.external_shear < 0.2
-    assert false_positive_instance_1.einstein_radius < 2.5
+    assert false_positive_instance_1.einstein_radius[0] < 2.5
     assert (
         false_positive_instance_1.deflector_magnitude(band="i")
         == single_deflector["mag_i"]
