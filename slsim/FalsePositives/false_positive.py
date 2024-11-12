@@ -2,7 +2,9 @@ import numpy as np
 from slsim.lens import Lens
 
 class FalsePositive(Lens):
-    """Class to manage individual false positive."""
+    """Class to manage individual false positive. Here, false positives refer to a 
+    configuration that includes an elliptical galaxy at the center with blue galaxies 
+    surrounding the central elliptical galaxy."""
 
     def __init__(
         self,

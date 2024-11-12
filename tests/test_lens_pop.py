@@ -397,7 +397,7 @@ def test_num_lenses_and_sources(gg_lens_pop_instance):
 
 def test_num_sources_tested_and_test_area(gg_lens_pop_instance):
     lens = gg_lens_pop_instance._lens_galaxies.draw_deflector()
-    test_area = draw_test_area(deflector=lens)
+    test_area = draw_test_area(deflector_dict=lens)
     assert (
         0.01 < test_area < 100 * np.pi
     ), "Expected test_area to be between 0.1 and 100*pi,"

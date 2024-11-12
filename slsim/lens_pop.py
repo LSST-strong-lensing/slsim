@@ -92,7 +92,7 @@ class LensPop(LensedPopulationBase):
                     deflector_dict=lens,
                 )
             if test_area is None:
-                test_area = draw_test_area(deflector=lens)
+                test_area = draw_test_area(deflector_dict=lens)
             else:
                 test_area = test_area
             _source = Source(
@@ -184,7 +184,7 @@ class LensPop(LensedPopulationBase):
         # Draw a population of galaxy-galaxy lenses within the area.
         for _ in range(int(num_lenses / speed_factor)):
             lens = self._lens_galaxies.draw_deflector()
-            test_area = draw_test_area(deflector=lens)
+            test_area = draw_test_area(deflector_dict=lens)
             num_sources_tested = self.get_num_sources_tested(
                 testarea=test_area * speed_factor
             )
@@ -241,12 +241,12 @@ class LensPop(LensedPopulationBase):
         return lens_population
 
 
-def draw_test_area(deflector):
+def draw_test_area(**kwargs):
     """Draw a test area around the deflector.
 
-    :param deflector: deflector dictionary
+    :param kwargs: Either deflector dictionary or v_sigma for velocity dispersion.
     :return: test area in arcsec^2
     """
-    theta_e_infinity = theta_e_when_source_infinity(deflector)
+    theta_e_infinity = theta_e_when_source_infinity(**kwargs)
     test_area = np.pi * (theta_e_infinity * 2.5) ** 2
     return test_area
