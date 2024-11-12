@@ -18,28 +18,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install pre-commit
 
-      # Cache step to reuse pre-commit cache
-      - name: Cache Pre-commit
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pre-commit
-          key: ${{ runner.os }}-pre-commit-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-pre-commit-
-
-      # Remove pre-existing cache to avoid issues
-      - name: Clear pre-commit cache
-        run: rm -rf ~/.cache/pre-commit
-
-      # Install pre-commit hooks (this will create necessary cache files)
-      - name: Install pre-commit hooks
-        run: pre-commit install
-
-      # Step to replace 'python_venv' with 'python' in .pre-commit-hooks.yaml
-      - name: Fix pre-commit hook language
+      # Step to fix 'python_venv' language to 'python' in .pre-commit-hooks.yaml
+      - name: Fix 'python_venv' language to 'python' in .pre-commit-hooks.yaml
         run: |
           echo "Fixing pre-commit hook language..."
+          # Modify the cached pre-commit-hooks.yaml files before installation
           find ~/.cache/pre-commit/ -type f -name '.pre-commit-hooks.yaml' -exec sed -i 's/python_venv/python/g' {} +
+
+      # Install pre-commit hooks after fixing language key
+      - name: Install pre-commit hooks
+        run: pre-commit install
 
       # Run pre-commit action
       - name: Run pre-commit checks
