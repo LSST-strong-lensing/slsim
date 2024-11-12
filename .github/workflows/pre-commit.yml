@@ -27,6 +27,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pre-commit-
 
+      # Remove pre-existing cache to avoid issues
+      - name: Clear pre-commit cache
+        run: rm -rf ~/.cache/pre-commit
+
       # Install pre-commit hooks (this will create necessary cache files)
       - name: Install pre-commit hooks
         run: pre-commit install
