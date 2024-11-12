@@ -27,13 +27,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pre-commit-
 
-      # Step to initialize pre-commit to set up the cache
+      # Install pre-commit hooks (this will create necessary cache files)
       - name: Install pre-commit hooks
-        run: pre-commit install-hooks
+        run: pre-commit install
 
       # Step to replace 'python_venv' with 'python' in .pre-commit-hooks.yaml
       - name: Fix pre-commit hook language
         run: |
+          echo "Fixing pre-commit hook language..."
           find ~/.cache/pre-commit/ -type f -name '.pre-commit-hooks.yaml' -exec sed -i 's/python_venv/python/g' {} +
 
       # Run pre-commit action
