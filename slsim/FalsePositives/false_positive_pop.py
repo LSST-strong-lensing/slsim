@@ -11,7 +11,7 @@ import random
 
 
 class FalsePositivePop(object):
-    """Class to perform samples of false positive population. Here, Here, false 
+    """Class to perform samples of false positive population. Here, false 
     positives refer to a configuration that includes an elliptical galaxy at the center 
     with blue galaxies surrounding the central elliptical galaxy. This class generates 
     specified number of false positives."""
@@ -24,6 +24,7 @@ class FalsePositivePop(object):
         los_config=None,
         source_number_choice=[1, 2, 3],
         weights_for_source_number=None,
+        test_area_factor=1
     ):
         """
         Args:
@@ -38,6 +39,9 @@ class FalsePositivePop(object):
         :param weights: A list of weights corresponding to the probabilities of 
          selecting each value in source_number_choice. If None, all choices are equally 
          likely. Defaults to None.
+        :param test_area_factor: A multiplicative factor of a test_area. A test area is 
+         computed using a velocity dispersion of a central galaxy and that area is 
+         multiplied by this factor. A default value is 1.
         """
 
         self.cosmo = cosmo
@@ -45,6 +49,7 @@ class FalsePositivePop(object):
         self._sources = blue_galaxy_population
         self._choice = source_number_choice
         self._weights = weights_for_source_number
+        self._test_area_factor = test_area_factor
         self.los_config = los_config
         if self.los_config is None:
             self.los_config = LOSConfig()
@@ -103,18 +108,18 @@ class FalsePositivePop(object):
             successful = False
             while not successful:
                 # Step 1: Draw deflector
-                lens, z_max = self.draw_deflector()
+                deflector, z_max = self.draw_deflector()
                 # Step 2: Draw sources
                 source = self.draw_sources(z_max)
                 if source is None:
                     continue  # Retry if sources are invalid
 
                 # Step 3: Create false positive
-                vd=lens.velocity_dispersion(cosmo=self.cosmo)
-                test_area = 3 * draw_test_area(
+                vd=deflector.velocity_dispersion(cosmo=self.cosmo)
+                test_area = self._test_area_factor * draw_test_area(
                     v_sigma=vd)
                 false_positive = FalsePositive(
-                            deflector_class=lens,
+                            deflector_class=deflector,
                             source_class=source,
                             cosmo=self.cosmo,
                             test_area=test_area,
