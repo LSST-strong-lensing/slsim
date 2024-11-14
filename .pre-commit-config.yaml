@@ -1,3 +1,4 @@
+maximum_pre_commit_version: '3.99.99'
 ci:
     autofix_commit_msg: |
         [pre-commit.ci] auto fixes from pre-commit.com hooks
@@ -40,16 +41,6 @@ repos:
   - repo: https://github.com/PyCQA/docformatter
     rev: v1.7.5
     hooks:
-- repo: local
-  hooks:
-    - id: docformatter
-      name: docformatter
-      description: Formats docstrings to follow PEP 257.
-      entry: python -Im docformatter
-      additional_dependencies:
-      - docformatter == 1.7.5
-      args:
-      - --in-place
-      language: python
-      types:
-      - python
+      - id: docformatter
+        additional_dependencies: [tomli]
+        args: [-r, --black, --in-place]
