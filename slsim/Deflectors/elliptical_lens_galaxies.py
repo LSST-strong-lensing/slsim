@@ -4,6 +4,7 @@ from slsim.selection import object_cut
 from slsim.Util import param_util
 from slsim.Deflectors.deflectors_base import DeflectorsBase
 from slsim.Deflectors.velocity_dispersion import vel_disp_abundance_matching
+from slsim.Deflectors.deflector import Deflector
 
 
 class EllipticalLensGalaxies(DeflectorsBase):
@@ -110,7 +111,9 @@ class EllipticalLensGalaxies(DeflectorsBase):
             deflector["e2_mass"] = e2_mass
         if deflector["n_sersic"] == -1:
             deflector["n_sersic"] = 4  # TODO make a better estimate with scatter
-        return deflector
+        deflector_class = Deflector(deflector_type=self.deflector_profile,
+                                     deflector_dict=deflector)
+        return deflector_class
 
 
 def elliptical_projected_eccentricity(

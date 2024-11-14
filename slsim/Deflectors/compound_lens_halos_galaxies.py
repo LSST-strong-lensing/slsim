@@ -5,7 +5,7 @@ from slsim.Deflectors.velocity_dispersion import vel_disp_composite_model
 from slsim.Deflectors.deflectors_base import DeflectorsBase
 from lenstronomy.Util import constants
 from slsim.Deflectors.elliptical_lens_galaxies import elliptical_projected_eccentricity
-
+from slsim.Deflectors.deflector import Deflector
 
 class CompoundLensHalosGalaxies(DeflectorsBase):
     """Class describing compound lens model in which the mass distribution of individual
@@ -36,7 +36,7 @@ class CompoundLensHalosGalaxies(DeflectorsBase):
             cosmo=cosmo,
             sky_area=sky_area,
         )
-
+        self.deflector_profile = "NFW_HERNQUIST"
         n = len(halo_galaxy_list)
         column_names = halo_galaxy_list.columns
         if "vel_disp" not in column_names:
@@ -121,4 +121,6 @@ class CompoundLensHalosGalaxies(DeflectorsBase):
             deflector["e2_light"] = e2_light
             deflector["e1_mass"] = e1_mass
             deflector["e2_mass"] = e2_mass
-        return deflector
+        deflector_class = Deflector(deflector_type=self.deflector_profile,
+                                     deflector_dict=deflector)
+        return deflector_class

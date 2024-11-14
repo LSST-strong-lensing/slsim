@@ -6,6 +6,7 @@ from slsim.Sources.source_pop_base import SourcePopBase
 from astropy.table import Column
 from slsim.Util.param_util import average_angular_size, axis_ratio, eccentricity
 from astropy import units as u
+from slsim.Sources.source import Source
 
 
 # TODO: Use type to determine galaxy_list type
@@ -120,14 +121,24 @@ class Galaxies(SourcePopBase):
         """
         return self._num_select
 
-    def draw_source(self):
-        """Choose source at random.
+    def draw_source(self, z_max=None):
+        """Choose source at random. :param z_max: maximum redshift for source to be
+        drawn.
 
+        :param z_max: maximum redshift limit for the galaxy to be drawn. If no galaxy is
+          found for this limit, None will be returned.
         :return: dictionary of source
         """
-
-        index = random.randint(0, self._num_select - 1)
-        galaxy = self._galaxy_select[index]
+        if z_max is not None:
+            filtered_galaxies = self._galaxy_select[self._galaxy_select["z"] < z_max]
+            if len(filtered_galaxies) == 0:
+                return None
+            else:    
+                index = random.randint(0, len(filtered_galaxies) - 1)
+                galaxy = filtered_galaxies[index]
+        else:
+            index = random.randint(0, self._num_select - 1)
+            galaxy = self._galaxy_select[index]
         if "a_rot" in galaxy.colnames:
             phi_rot = galaxy["a_rot"]
         else:
@@ -211,7 +222,22 @@ class Galaxies(SourcePopBase):
                 "Provided number of light profiles is not supported. It should be"
                 "either 'single or 'double' "
             )
-        return galaxy
+        source_class = Source(
+                    source_dict=galaxy,
+                    variability_model=self.variability_model,
+                    kwargs_variability=self.kwargs_variability,
+                    sn_type=self.sn_type,
+                    sn_absolute_mag_band=self.sn_absolute_mag_band,
+                    sn_absolute_zpsys=self.sn_absolute_zpsys,
+                    cosmo=self._cosmo,
+                    lightcurve_time=self.lightcurve_time,
+                    sn_modeldir=self.sn_modeldir,
+                    agn_driving_variability_model=self.agn_driving_variability_model,
+                    agn_driving_kwargs_variability=self.agn_driving_kwargs_variability,
+                    source_type=self.source_type,
+                    light_profile=self.light_profile,
+                )
+        return source_class
 
 
 def galaxy_projected_eccentricity(ellipticity, rotation_angle=None):

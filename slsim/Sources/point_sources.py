@@ -2,6 +2,7 @@ import numpy.random as random
 from slsim.Sources.source_pop_base import SourcePopBase
 import warnings
 from slsim.selection import object_cut
+from slsim.Sources.source import Source
 
 
 class PointSources(SourcePopBase):
@@ -19,6 +20,11 @@ class PointSources(SourcePopBase):
         agn_driving_kwargs_variability=None,
         light_profile=None,
         list_type="astropy_table",
+        lightcurve_time=None,
+        sn_type=None,
+        sn_absolute_mag_band=None,
+        sn_absolute_zpsys=None,
+        sn_modeldir=None
     ):
         """
 
@@ -55,6 +61,17 @@ class PointSources(SourcePopBase):
          light model. Always None for this class.
         :param list_type: type of the format of the source catalog. It should be either
          astropy_table or list of astropy table.
+        :param lightcurve_time: Lightcurve observation time array in units of days. Defaults to None.
+        :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.). Defaults to None.
+        :param sn_absolute_mag_band: Band used to normalize to absolute magnitude.
+         Defaults to None.
+        :param sn_absolute_zpsys: Zero point system, either AB or Vega, with None defaulting to AB.
+         Defaults to None.
+        :param sn_modeldir: sn_modeldir is the path to the directory containing files needed to initialize
+         the sncosmo.model class. For example, sn_modeldir =
+         'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can be downloaded
+         from https://github.com/LSST-strong-lensing/data_public. For more detail,
+         please look at the documentation of RandomizedSupernovae class. Defaults to None.
         """
 
         self.n = len(point_source_list)
@@ -78,7 +95,12 @@ class PointSources(SourcePopBase):
             kwargs_variability_model=kwargs_variability_model,
             agn_driving_variability_model=agn_driving_variability_model,
             agn_driving_kwargs_variability=agn_driving_kwargs_variability,
-        )
+            lightcurve_time=lightcurve_time,
+            sn_type=sn_type,
+            sn_absolute_mag_band=sn_absolute_mag_band,
+            sn_absolute_zpsys=sn_absolute_zpsys,
+            sn_modeldir=sn_modeldir
+            )
         self.source_type = "point_source"
 
     @property
@@ -106,5 +128,20 @@ class PointSources(SourcePopBase):
 
         index = random.randint(0, self._num_select - 1)
         point_source = self._point_source_select[index]
+        source_class = Source(
+                    source_dict=point_source,
+                    variability_model=self.variability_model,
+                    kwargs_variability=self.kwargs_variability,
+                    sn_type=self.sn_type,
+                    sn_absolute_mag_band=self.sn_absolute_mag_band,
+                    sn_absolute_zpsys=self.sn_absolute_zpsys,
+                    cosmo=self._cosmo,
+                    lightcurve_time=self.lightcurve_time,
+                    sn_modeldir=self.sn_modeldir,
+                    agn_driving_variability_model=self.agn_driving_variability_model,
+                    agn_driving_kwargs_variability=self.agn_driving_kwargs_variability,
+                    source_type=self.source_type,
+                    light_profile=self.light_profile,
+                )
 
-        return point_source
+        return source_class
