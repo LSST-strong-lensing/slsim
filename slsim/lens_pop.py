@@ -24,20 +24,11 @@ class LensPop(LensedPopulationBase):
         """
         :param deflector_population: Deflector population as an deflectors class 
          instance.
-         Source population as an sources class inatnce.
+        :param source_population: Source population as an sources class inatnce.
         :param cosmo: astropy.cosmology instance
-        :param lightcurve_time: Lightcurve observation time array in units of days. Defaults to None.
-        :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.). Defaults to None.
-        :param sn_absolute_mag_band: Band used to normalize to absolute magnitude.
-         Defaults to None.
-        :param sn_absolute_zpsys: Zero point system, either AB or Vega, with None defaulting to AB.
-         Defaults to None.
+        :param sky_area: Sky area (solid angle) over which Lens population is sampled.
+        :type sky_area: `~astropy.units.Quantity`
         :param los_config: Configuration for line of sight distribution. Defaults to None.
-        :param sn_modeldir: sn_modeldir is the path to the directory containing files needed to initialize
-         the sncosmo.model class. For example, sn_modeldir =
-         'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can be downloaded
-         from https://github.com/LSST-strong-lensing/data_public. For more detail,
-         please look at the documentation of RandomizedSupernovae class. Defaults to None.
         """
 
         # TODO: ADD EXCEPTION FOR DEFLECTOR AND SOURCE POP FILTER MISMATCH
