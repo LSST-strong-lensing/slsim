@@ -1,100 +1,55 @@
 ci:
-  autofix_commit_msg: |
+    autofix_commit_msg: |
         [pre-commit.ci] auto fixes from pre-commit.com hooks
 
         for more information, see https://pre-commit.ci
     autofix_prs: true
     autoupdate_branch: ''
     autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
-    autoupdate_schedule: 'monthly'
+    autoupdate_schedule: weekly
     skip: []
     submodules: false
 
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
-    hooks:
-      - id: check-added-large-files
-        args: ["--enforce-all", "--maxkb=300"]
-        exclude: "^(\
-            cextern/wcslib/C/flexed/.*|\
-            CHANGES.rst|\
-            astropy/extern/jquery/data/js/jquery.dataTables.js|\
-        )$"
-        # Prevent giant files from being committed.
-      - id: check-case-conflict
-        # Check for files with names that would conflict on a case-insensitive
-        # filesystem like MacOS HFS+ or Windows FAT.
-      - id: check-json
-        # Attempts to load all json files to verify syntax.
-      - id: check-merge-conflict
-        # Check for files that contain merge conflict strings.
-      - id: check-symlinks
-        # Checks for symlinks which do not point to anything.
-      - id: check-toml
-        # Attempts to load all TOML files to verify syntax.
-      - id: check-xml
-        # Attempts to load all xml files to verify syntax.
-      - id: check-yaml
-        # Attempts to load all yaml files to verify syntax.
-        exclude: ".*(.github.*)$"
-      - id: detect-private-key
-        # Checks for the existence of private keys.
-      - id: end-of-file-fixer
-        # Makes sure files end in a newline and only a newline.
-        exclude: ".*(data.*|extern.*|licenses.*|_static.*|_parsetab.py)$"
-      # - id: fix-encoding-pragma  # covered by pyupgrade
-      - id: trailing-whitespace
-        # Trims trailing whitespace.
-        exclude_types: [python]  # Covered by Ruff W291.
-        exclude: ".*(data.*|extern.*|licenses.*|_static.*)$"
-
-  - repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.10.0
-    hooks:
-      - id: rst-directive-colons
-        # Detect mistake of rst directive not ending with double colon.
-      - id: rst-inline-touching-normal
-        # Detect mistake of inline code touching normal text in rst.
-      - id: text-unicode-replacement-char
-        # Forbid files which have a UTF-8 Unicode replacement character.
-
-  - repo: https://github.com/codespell-project/codespell
-    rev: v2.3.0
-    hooks:
-      - id: codespell
-        args: ["--write-changes"]
-        additional_dependencies:
-          - tomli
-
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.7.2
+    # Ruff version.
+    rev: v0.5.6
     hooks:
       - id: ruff
-        args: ["--fix", "--show-fixes"]
-      - id: ruff-format
-
-  - repo: https://github.com/scientific-python/cookie
-    rev: 2024.08.19
+        exclude: docs/.*
+        args: ["--line-length=88"]
+  - repo: https://github.com/nbQA-dev/nbQA
+    rev: 1.8.7
     hooks:
-      - id: sp-repo-review
-
-  - repo: local
+      - id: nbqa-ruff
+        args: ["--line-length=120"]
+  - repo: https://github.com/psf/black
+    rev: 24.8.0
     hooks:
-      - id: changelogs-rst
-        name: changelog filenames
-        language: fail
-        entry: >-
-          changelog files must be named <sub-package>/####.(bugfix|feature|api|perf).rst
-          or ####.other.rst (in the root directory only)
-        exclude: >-
-          ^docs/changes/[\w\.]+/(\d+\.(bugfix|feature|api|perf)(\.\d)?.rst|.gitkeep)
-        files: ^docs/changes/[\w\.]+/
-      - id: changelogs-rst-other
-        name: changelog filenames for other category
-        language: fail
-        entry: >-
-          only "other" changelog files must be placed in the root directory
-        exclude: >-
-          ^docs/changes/(\d+\.other.rst|README.rst|template.rst)
-        files: ^docs/changes/\d+.\w+.rst
+      - id: black
+        # It is recommended to specify the latest version of Python
+        # supported by your project here, or alternatively use
+        # pre-commit's default_language_version, see
+        # https://pre-commit.com/#top_level-default_language_version
+        language_version: python3
+  - repo: https://github.com/psf/black
+    rev: 24.8.0
+    hooks:
+      - id: black-jupyter
+        language_version: python3
+  - repo: https://github.com/PyCQA/docformatter
+    rev: v1.7.5
+    hooks:
+- repo: local
+  hooks:
+    - id: docformatter
+      name: docformatter
+      description: Formats docstrings to follow PEP 257.
+      entry: python -Im docformatter
+      additional_dependencies:
+      - docformatter == 1.7.5
+      args:
+      - --in-place
+      language: python
+      types:
+      - python
