@@ -282,16 +282,17 @@ def test_supernovae_plus_galaxies_lens_pop_instance_2():
         kwargs_cut=kwargs_source_cut,
         variability_model="light_curve",
         kwargs_variability_model={"supernovae_lightcurve", "i"},
+        lightcurve_time=time_range,
+        sn_type="Ia",
+        sn_absolute_mag_band="bessellb",
+        sn_absolute_zpsys="ab",
+        sn_modeldir=None
     )
 
     pes_lens_pop = LensPop(
         deflector_population=lens_galaxies,
         source_population=source_galaxies,
         cosmo=cosmo,
-        lightcurve_time=time_range,
-        sn_type="Ia",
-        sn_absolute_mag_band="bessellb",
-        sn_absolute_zpsys="ab",
         sky_area=sky_area,
     )
     kwargs_lens_cut = {}
@@ -343,16 +344,16 @@ def test_supernovae_lens_pop_instance():
         kwargs_cut=kwargs_source_cut,
         variability_model="light_curve",
         kwargs_variability_model={"supernovae_lightcurve", "r"},
+        lightcurve_time=time_range,
+        sn_type="Ia",
+        sn_absolute_mag_band="bessellb",
+        sn_absolute_zpsys="ab",
     )
 
     ps_lens_pop_1 = LensPop(
         deflector_population=lens_galaxies_1,
         source_population=source_galaxies_1,
         cosmo=cosmo,
-        lightcurve_time=time_range,
-        sn_type="Ia",
-        sn_absolute_mag_band="bessellb",
-        sn_absolute_zpsys="ab",
         sky_area=sky_area_pop,
     )
     # drawing population
@@ -374,10 +375,6 @@ def test_supernovae_lens_pop_instance():
             deflector_population=lens_galaxies_1,
             source_population=source_galaxies_1,
             cosmo=cosmo,
-            lightcurve_time=time_range,
-            sn_type="Ia",
-            sn_absolute_mag_band="bessellb",
-            sn_absolute_zpsys="ab",
         )
 
 

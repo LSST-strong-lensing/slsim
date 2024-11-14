@@ -285,9 +285,9 @@ class TestGalaxies(object):
         galaxy_1 = self.galaxies4.draw_source()
         galaxy_2 = self.galaxies.draw_source(z_max=1)
         galaxy_3 = self.galaxies5.draw_source(z_max=0.4)
-        assert len(galaxy) > 0
-        assert galaxy_1["n_sersic"] == 1
-        assert galaxy_2["z"] < 1 + 0.002
+        assert len(galaxy.source_dict) > 0
+        assert galaxy_1.source_dict["n_sersic"] == 1
+        assert galaxy_2.redshift < 1 + 0.002
         with pytest.raises(ValueError):
             self.galaxies5.draw_source()
         assert galaxy_3 is None
@@ -295,10 +295,10 @@ class TestGalaxies(object):
     def test_draw_source_double_sersic(self):
         galaxy1 = self.galaxies2.draw_source()
         galaxy2 = self.galaxies3.draw_source()
-        assert galaxy1["n_sersic_0"] == 1
-        assert galaxy1["n_sersic_1"] == 4
-        assert galaxy2["n_sersic_0"] == 1
-        assert galaxy2["n_sersic_1"] == 4
+        assert galaxy1.source_dict["n_sersic_0"] == 1
+        assert galaxy1.source_dict["n_sersic_1"] == 4
+        assert galaxy2.source_dict["n_sersic_0"] == 1
+        assert galaxy2.source_dict["n_sersic_1"] == 4
         with pytest.raises(ValueError):
             self.galaxies6.draw_source()
         with pytest.raises(ValueError):

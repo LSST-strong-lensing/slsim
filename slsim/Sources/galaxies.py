@@ -6,6 +6,7 @@ from slsim.Sources.source_pop_base import SourcePopBase
 from astropy.table import Column
 from slsim.Util.param_util import average_angular_size, axis_ratio, eccentricity
 from astropy import units as u
+from slsim.Sources.source import Source
 
 
 # TODO: Use type to determine galaxy_list type
@@ -221,7 +222,22 @@ class Galaxies(SourcePopBase):
                 "Provided number of light profiles is not supported. It should be"
                 "either 'single or 'double' "
             )
-        return galaxy
+        source_class = Source(
+                    source_dict=galaxy,
+                    variability_model=self.variability_model,
+                    kwargs_variability=self.kwargs_variability,
+                    sn_type=self.sn_type,
+                    sn_absolute_mag_band=self.sn_absolute_mag_band,
+                    sn_absolute_zpsys=self.sn_absolute_zpsys,
+                    cosmo=self._cosmo,
+                    lightcurve_time=self.lightcurve_time,
+                    sn_modeldir=self.sn_modeldir,
+                    agn_driving_variability_model=self.agn_driving_variability_model,
+                    agn_driving_kwargs_variability=self.agn_driving_kwargs_variability,
+                    source_type=self.source_type,
+                    light_profile=self.light_profile,
+                )
+        return source_class
 
 
 def galaxy_projected_eccentricity(ellipticity, rotation_angle=None):
