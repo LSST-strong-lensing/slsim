@@ -2,3 +2,4 @@
 git+https://github.com/LSSTDESC/OpSimSummaryV2
 coolest==0.1.8
 galsim
+pre-commit<4.0.0
