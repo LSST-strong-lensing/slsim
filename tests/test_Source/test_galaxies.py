@@ -285,6 +285,7 @@ class TestGalaxies(object):
         galaxy_1 = self.galaxies4.draw_source()
         galaxy_2 = self.galaxies.draw_source(z_max=1)
         galaxy_3 = self.galaxies5.draw_source(z_max=0.4)
+        assert isinstance(galaxy, object)
         assert len(galaxy.source_dict) > 0
         assert galaxy_1.source_dict["n_sersic"] == 1
         assert galaxy_2.redshift < 1 + 0.002

@@ -34,6 +34,7 @@ def test_source_number(Quasar_class):
 
 def test_draw_source(Quasar_class):
     quasar = Quasar_class.draw_source()
+    assert isinstance(quasar, object)
     assert len(quasar.source_dict) > 0
 
 
