@@ -24,9 +24,9 @@ class FalsePositivePop(object):
     ):
         """
         Args:
-        :param deflector_population: Deflector population as an deflectors class 
+        :param elliptical_galaxy_population: Deflector population as an deflectors class 
          instance.
-        :param source_population: Source population as an sources class inatnce.
+        :param blue_galaxy_population: Source population as an sources class inatnce.
         :param cosmo: astropy.cosmology instance
         :param los_config: LOSConfig instance which manages line-of-sight (LOS) effects
          and Gaussian mixture models in a simulation or analysis context.

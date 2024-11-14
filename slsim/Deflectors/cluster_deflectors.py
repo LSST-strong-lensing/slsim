@@ -12,6 +12,7 @@ from slsim.Deflectors.elliptical_lens_galaxies import (
 )
 from slsim.Deflectors.velocity_dispersion import vel_disp_nfw
 from slsim.Deflectors.deflectors_base import DeflectorsBase
+from slsim.Deflectors.deflector import Deflector
 from lenstronomy.Util.param_util import phi_q2_ellipticity
 from astropy import units as u
 from astropy.table import hstack
@@ -120,7 +121,9 @@ class ClusterDeflectors(DeflectorsBase):
         deflector = self.draw_cluster(index)
         members = self.draw_members(deflector["cluster_id"], **self.kwargs_draw_members)
         deflector["subhalos"] = members
-        return deflector
+        deflector_class = Deflector(deflector_type=self.deflector_profile,
+                                     deflector_dict=deflector)
+        return deflector_class
 
     def draw_cluster(self, index):
         """

@@ -30,23 +30,22 @@ class LensPop(LensedPopulationBase):
         sn_modeldir: Optional[str] = None,
     ):
         """
-        Args:
-            deflector_population (DeflectorsBase): Deflector population as an instance of a DeflectorsBase subclass.
-            source_population (SourcePopBase): Source population as an instance of a SourcePopBase subclass
-            cosmo (Optional[Cosmology], optional): AstroPy Cosmology instance. If None, defaults to flat LCDM with h0=0.7 and Om0=0.3.
-                                                   Defaults to None.
-            lightcurve_time (Optional[np.ndarray], optional): Lightcurve observation time array in units of days. Defaults to None.
-            sn_type (Optional[str], optional): Supernova type (Ia, Ib, Ic, IIP, etc.). Defaults to None.
-            sn_absolute_mag_band (Optional[Union[str,sncosmo.Bandpass]], optional): Band used to normalize to absolute magnitude.
-                                                                                    Defaults to None.
-            sn_absolute_zpsys (Optional[str], optional): Zero point system, either AB or Vega, with None defaulting to AB.
-                                                         Defaults to None.
-            los_config (Optional[LOSConfig], optional): Configuration for line of sight distribution. Defaults to None.
-            sn_modeldir (Optional[str], optional): sn_modeldir is the path to the directory containing files needed to initialize
-                                                   the sncosmo.model class. For example, sn_modeldir =
-                                                   'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can be downloaded
-                                                   from https://github.com/LSST-strong-lensing/data_public. For more detail,
-                                                   please look at the documentation of RandomizedSupernovae class. Defaults to None.
+        :param deflector_population: Deflector population as an deflectors class 
+         instance.
+         Source population as an sources class inatnce.
+        :param cosmo: astropy.cosmology instance
+        :param lightcurve_time: Lightcurve observation time array in units of days. Defaults to None.
+        :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.). Defaults to None.
+        :param sn_absolute_mag_band: Band used to normalize to absolute magnitude.
+         Defaults to None.
+        :param sn_absolute_zpsys: Zero point system, either AB or Vega, with None defaulting to AB.
+         Defaults to None.
+        :param los_config: Configuration for line of sight distribution. Defaults to None.
+        :param sn_modeldir: sn_modeldir is the path to the directory containing files needed to initialize
+         the sncosmo.model class. For example, sn_modeldir =
+         'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can be downloaded
+         from https://github.com/LSST-strong-lensing/data_public. For more detail,
+         please look at the documentation of RandomizedSupernovae class. Defaults to None.
         """
 
         # TODO: ADD EXCEPTION FOR DEFLECTOR AND SOURCE POP FILTER MISMATCH
@@ -85,14 +84,13 @@ class LensPop(LensedPopulationBase):
         """
         while True:
             #This creates a single deflector - single_source lens.
+            #--------------------------
             source = self._sources.draw_source()
-            lens = self._lens_galaxies.draw_deflector()
-            _lens = Deflector(
-                    deflector_type=self._lens_galaxies.deflector_profile,
-                    deflector_dict=lens,
-                )
+            #----------------------------
+            _lens = self._lens_galaxies.draw_deflector()
             if test_area is None:
-                test_area = draw_test_area(deflector_dict=lens)
+                vel_disp=_lens.velocity_dispersion(cosmo=self.cosmo)
+                test_area = draw_test_area(v_sigma=vel_disp)
             else:
                 test_area = test_area
             _source = Source(
@@ -110,6 +108,7 @@ class LensPop(LensedPopulationBase):
                     source_type=self._sources.source_type,
                     light_profile=self._sources.light_profile,
                 )
+            #--------------------------------
             gg_lens = Lens(
                 deflector_class=_lens,
                 source_class=_source,
@@ -183,15 +182,13 @@ class LensPop(LensedPopulationBase):
 
         # Draw a population of galaxy-galaxy lenses within the area.
         for _ in range(int(num_lenses / speed_factor)):
-            lens = self._lens_galaxies.draw_deflector()
-            test_area = draw_test_area(deflector_dict=lens)
+            _lens = self._lens_galaxies.draw_deflector()
+            vel_disp=_lens.velocity_dispersion(cosmo=self.cosmo)
+            test_area = draw_test_area(v_sigma=vel_disp)
             num_sources_tested = self.get_num_sources_tested(
                 testarea=test_area * speed_factor
             )
-            _lens = Deflector(
-                    deflector_type=self._lens_galaxies.deflector_profile,
-                    deflector_dict=lens,
-                )
+            
             if num_sources_tested > 0:
                 valid_sources = []
                 n = 0

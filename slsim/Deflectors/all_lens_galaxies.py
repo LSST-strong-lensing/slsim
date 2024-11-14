@@ -8,6 +8,7 @@ from slsim.Deflectors.elliptical_lens_galaxies import (
 from slsim.Deflectors.deflectors_base import DeflectorsBase
 from astropy.table import vstack
 from slsim.Util.param_util import catalog_with_angular_size_in_arcsec
+from slsim.Deflectors.deflector import Deflector
 
 
 class AllLensGalaxies(DeflectorsBase):
@@ -125,7 +126,9 @@ class AllLensGalaxies(DeflectorsBase):
             deflector["e2_mass"] = e2_mass
         if deflector["n_sersic"] == -1:
             deflector["n_sersic"] = 4  # TODO make a better estimate with scatter
-        return deflector
+        deflector_class = Deflector(deflector_type=self.deflector_profile,
+                                     deflector_dict=deflector)
+        return deflector_class
 
 
 def fill_table(galaxy_list):

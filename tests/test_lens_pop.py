@@ -21,7 +21,6 @@ galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
     filters=None,
 )
 
-
 def create_lens_pop_instance(return_kext=False):
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -140,7 +139,7 @@ def test_galaxies_lens_pop_halo_model_instance():
         cosmo=cosmo,
         sky_area=sky_area,
     )
-    assert g_lens_halo_model_pop._lens_galaxies.draw_deflector()["halo_mass"] != 0
+    assert g_lens_halo_model_pop._lens_galaxies.draw_deflector().halo_properties[0] != 0
 
 
 def test_cluster_lens_pop_instance():
@@ -396,8 +395,9 @@ def test_num_lenses_and_sources(gg_lens_pop_instance):
 
 
 def test_num_sources_tested_and_test_area(gg_lens_pop_instance):
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     lens = gg_lens_pop_instance._lens_galaxies.draw_deflector()
-    test_area = draw_test_area(deflector_dict=lens)
+    test_area = draw_test_area(v_sigma=lens.velocity_dispersion(cosmo=cosmo))
     assert (
         0.01 < test_area < 100 * np.pi
     ), "Expected test_area to be between 0.1 and 100*pi,"
