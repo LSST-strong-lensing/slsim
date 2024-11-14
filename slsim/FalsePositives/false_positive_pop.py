@@ -1,7 +1,5 @@
 from slsim.FalsePositives.false_positive import FalsePositive
 from slsim.ParamDistributions.los_config import LOSConfig
-from slsim.Sources.source import Source
-from slsim.Deflectors.deflector import Deflector
 from slsim.lens_pop import draw_test_area
 import random
 
@@ -55,11 +53,7 @@ class FalsePositivePop(object):
         
         :return: a deflector instance and deflector redshift with tolerance added.
         """
-        lens = self._lens_galaxies.draw_deflector()
-        deflector = Deflector(
-            deflector_type=self._lens_galaxies.deflector_profile,
-            deflector_dict=lens,
-        )
+        deflector = self._lens_galaxies.draw_deflector()
         z_max = deflector.redshift + 0.002  # Adding tolerance to redshift
         return deflector, z_max
 
@@ -77,14 +71,7 @@ class FalsePositivePop(object):
             # If no source is available, return None
             if source is None:
                 return None
-            source_list.append(
-                Source(
-                    source_dict=source,
-                    cosmo=self.cosmo,
-                    source_type=self._sources.source_type,
-                    light_profile=self._sources.light_profile,
-                )
-            )
+            source_list.append(source)
         if source_number==1:
             sources = source_list[0]
         else:

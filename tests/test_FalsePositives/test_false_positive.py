@@ -42,28 +42,28 @@ def test_false_positive():
     single_deflector = lens_galaxies.draw_deflector()
     single_source1 = source_galaxies.draw_source()
     single_source2 = source_galaxies.draw_source()
-    lens = Deflector(deflector_type="EPL", deflector_dict=single_deflector)
+    lens = single_deflector
     source = Source(
-        source_dict=single_source1,
+        source_dict=single_source1.source_dict,
         cosmo=cosmo,
         source_type="extended",
         light_profile="single_sersic",
     )
     source2 = Source(
-        source_dict=single_source1,
+        source_dict=single_source1.source_dict,
         cosmo=cosmo,
         source_type="extended",
         light_profile="double_sersic",
     )
     source_list = [
         Source(
-            source_dict=single_source1,
+            source_dict=single_source1.source_dict,
             cosmo=cosmo,
             source_type="extended",
             light_profile="single_sersic",
         ),
         Source(
-            source_dict=single_source2,
+            source_dict=single_source2.source_dict,
             cosmo=cosmo,
             source_type="extended",
             light_profile="single_sersic",
@@ -121,26 +121,26 @@ def test_false_positive():
         == 3
     )
     assert len(false_positive_instance_2.deflector_position) == 2
-    assert false_positive_instance_2.deflector_redshift == single_deflector["z"]
-    assert false_positive_instance_1.source_redshift_list[0] == single_source1["z"]
+    assert false_positive_instance_2.deflector_redshift == single_deflector.redshift
+    assert false_positive_instance_1.source_redshift_list[0] == single_source1.redshift
     assert np.all(false_positive_instance_2.source_redshift_list) == np.all(
-        np.array([single_source1["z"], single_source2["z"]])
+        np.array([single_source1.redshift, single_source2.redshift])
     )
     assert false_positive_instance_1.external_convergence < 0.1
     assert false_positive_instance_1.external_shear < 0.2
     assert false_positive_instance_1.einstein_radius[0] < 2.5
     assert (
         false_positive_instance_1.deflector_magnitude(band="i")
-        == single_deflector["mag_i"]
+        == single_deflector.magnitude(band="i")
     )
     assert (
         false_positive_instance_1.extended_source_magnitude(band="i")
-        == single_source1["mag_i"]
+        == single_source1.source_dict["mag_i"]
     )
     assert len(false_positive_instance_1.deflector_ellipticity()) == 4
     assert (
         false_positive_instance_1.deflector_stellar_mass()
-        == single_deflector["stellar_mass"]
+        == single_deflector.stellar_mass
     )
     assert (
         set(
