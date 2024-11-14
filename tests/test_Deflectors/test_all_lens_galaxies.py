@@ -42,7 +42,7 @@ def test_deflector_number_draw_deflector(all_lens_galaxies):
     galaxy_pop = all_lens_galaxies
     num_deflectors = galaxy_pop.deflector_number()
     deflector = galaxy_pop.draw_deflector()
-    assert deflector["z"] != 0
+    assert deflector.redshift != 0
     assert num_deflectors >= 0
 
 
@@ -109,9 +109,9 @@ def test_all_lens_galaxies_2():
         sky_area=sky_area,
         gamma_pl={"gamma_min": 1.95, "gamma_max": 2.26}
     )
-    assert galaxy_class1.draw_deflector()["gamma_pl"] == 2.05
-    assert 1.6 <= galaxy_class2.draw_deflector()["gamma_pl"] <= 2.6
-    assert 1.95 <= galaxy_class3.draw_deflector()["gamma_pl"] <= 2.26
+    assert galaxy_class1.draw_deflector().halo_properties == 2.05
+    assert 1.6 <= galaxy_class2.draw_deflector().halo_properties <= 2.6
+    assert 1.95 <= galaxy_class3.draw_deflector().halo_properties <= 2.26
     with pytest.raises(ValueError):
         AllLensGalaxies(
         red_galaxies4,
