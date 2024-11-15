@@ -5,6 +5,7 @@ from slsim.roman_image_simulation import simulate_roman_image
 from slsim.image_simulation import simulate_image
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
+from slsim.LOS.los_individual import LOSIndividual
 import os
 import pickle
 import pytest
@@ -60,7 +61,7 @@ deflector = Deflector(
 LENS = Lens(
     source_class=source,
     deflector_class=deflector,
-    los_dict=LOS_DICT,
+    los_class=LOSIndividual(**LOS_DICT),
     cosmo=COSMO,
 )
 

@@ -8,7 +8,8 @@ from slsim.lens import (
     image_separation_from_positions,
     theta_e_when_source_infinity,
 )
-from slsim.ParamDistributions.los_config import LOSConfig
+from slsim.LOS.los_individual import LOSIndividual
+from slsim.LOS.los_pop import LOSPop
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
 import os
@@ -367,8 +368,9 @@ class TestDifferenLens(object):
                 deflector_type="EPL",
                 deflector_dict=self.deflector_dict,
             )
+
     def test_different_setting(self):
-        los1 = LOSConfig(
+        los1 = LOSPop(
             los_bool=True,
             mixgauss_gamma=True,
             nonlinear_los_bool=False,
@@ -377,13 +379,14 @@ class TestDifferenLens(object):
             source_class=self.source6,
             deflector_class=self.deflector6,
             cosmo=self.cosmo,
-            los_config=los1,
+            los_class=los1.draw_los(source_redshift=self.source6.redshift,
+                                    deflector_redshift=self.deflector6.redshift),
         )
         assert gg_lens.external_shear >= 0
         assert isinstance(gg_lens.external_convergence, float)
         assert isinstance(gg_lens.external_shear, float)
 
-        los2 = LOSConfig(
+        los2 = LOSPop(
             los_bool=True,
             mixgauss_gamma=False,
             nonlinear_los_bool=True,
@@ -393,23 +396,25 @@ class TestDifferenLens(object):
             source_class=self.source6,
             deflector_class=self.deflector6,
             cosmo=self.cosmo,
-            los_config=los2,
+            los_class=los2.draw_los(source_redshift=self.source6.redshift,
+                                    deflector_redshift=self.deflector6.redshift),
         )
         assert gg_lens_2.external_shear >= 0
         assert isinstance(gg_lens_2.external_convergence, float)
         assert isinstance(gg_lens_2.external_shear, float)
 
-        los3 = LOSConfig(los_bool=False)
+        los3 = LOSPop(los_bool=False)
         gg_lens_3 = Lens(
             source_class=self.source6,
             deflector_class=self.deflector6,
             cosmo=self.cosmo,
-            los_config=los3,
+            los_class=los3.draw_los(source_redshift=self.source6.redshift,
+                                    deflector_redshift=self.deflector6.redshift),
         )
         assert gg_lens_3.external_convergence == 0
         assert gg_lens_3.external_shear == 0
 
-        los4 = LOSConfig(
+        los4 = LOSPop(
             los_bool=True,
             mixgauss_gamma=True,
             nonlinear_los_bool=True,
@@ -419,21 +424,18 @@ class TestDifferenLens(object):
                 source_class=self.source6,
                 deflector_class=self.deflector6,
                 cosmo=self.cosmo,
-                los_config=los4,
+                los_class=los4.draw_los(deflector_redshift=self.deflector6.redshift,
+                                        source_redshift=self.source6.redshift),
             )
             gg_lens_4.external_convergence()
 
     def test_image_number(self):
-        los = LOSConfig(
-            los_bool=True,
-            mixgauss_gamma=True,
-            nonlinear_los_bool=False,
-        )
+        los = LOSIndividual(kappa=0, gamma=[0, 0])
         gg_lens_number = Lens(
             source_class=self.source6,
             deflector_class=self.deflector6,
             cosmo=self.cosmo,
-            los_config=los,
+            los_class=los,
         )
         image_number = gg_lens_number.image_number
         assert (image_number[0] == 4) or (image_number[0] == 2) or (image_number[0] == 1)
@@ -442,7 +444,7 @@ class TestDifferenLens(object):
             source_class=[self.source6, self.source6],
             deflector_class=self.deflector6,
             cosmo=self.cosmo,
-            los_config=los,
+            los_class=los,
         )
         kwargs_model = gg_lens_multisource.lenstronomy_kwargs()[0]
         kwargs_model_keys = kwargs_model.keys()
@@ -461,6 +463,7 @@ class TestDifferenLens(object):
         assert expected_kwargs_model[4] in kwargs_model_keys
         assert expected_kwargs_model[5] in kwargs_model_keys
         assert expected_kwargs_model[6] in kwargs_model_keys
+
 
 @pytest.fixture
 def supernovae_lens_instance_double_sersic_multisource():
@@ -501,12 +504,14 @@ def supernovae_lens_instance_double_sersic_multisource():
             break
     return supernovae_lens
 
+
 def test_double_sersic_multisource(supernovae_lens_instance_double_sersic_multisource):
     lens_class = supernovae_lens_instance_double_sersic_multisource
     results = lens_class.source_light_model_lenstronomy(band="i")
     assert len(results[0]["source_light_model_list"]) == 2
     assert len(results[1]["kwargs_source"]) == 2
     assert len(results[1]["kwargs_ps"]) == 2
+
 
 class TestMultiSource(object):
     def setup_method(self):
@@ -578,17 +583,17 @@ class TestMultiSource(object):
                 deflector_type="EPL",
                 deflector_dict=deflector_dict,
             )
-        lens_class1 =  Lens(
+        lens_class1 = Lens(
             deflector_class=self.deflector,
             source_class=self.source1,
             cosmo=self.cosmo,
         )
-        lens_class2 =  Lens(
+        lens_class2 = Lens(
             deflector_class=self.deflector,
             source_class=self.source2,
             cosmo=self.cosmo,
         )
-        lens_class3 =  Lens(
+        lens_class3 = Lens(
             deflector_class=self.deflector,
             source_class=[self.source1, self.source2],
             cosmo=self.cosmo,
