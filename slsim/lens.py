@@ -7,7 +7,6 @@ from lenstronomy.LensModel.Solver.lens_equation_solver import (
     analytical_lens_model_support,
 )
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
-from slsim.LOS.los_individual import LOSIndividual
 from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.Util import constants
 from lenstronomy.Util import data_util
@@ -66,7 +65,7 @@ class Lens(LensedSystemBase):
         :param los_class: line of sight dictionary (optional, takes these values instead of drawing from distribution)
         :type los_class: ~LOSIndividual() class object
         """
-        self.deflector = deflector_class
+        super().__init__(source_class=source_class, deflector_class=deflector_class, los_class=los_class)
         self.cosmo = cosmo
         self.test_area = test_area
         self._lens_equation_solver = lens_equation_solver
@@ -98,9 +97,6 @@ class Lens(LensedSystemBase):
             z_source=float(self.max_redshift_source_class.redshift),
             cosmo=self.cosmo,
         )
-        if los_class is None:
-            los_class = LOSIndividual()
-        self.los_class = los_class
 
     @property
     def image_number(self):

@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from slsim.LOS.los_individual import LOSIndividual
 
 
 class LensedSystemBase(ABC):
@@ -20,6 +21,9 @@ class LensedSystemBase(ABC):
             self.source = source_class
         else:
             self.source = [source_class]
+        if los_class is None:
+            los_class = LOSIndividual()
+        self.los_class = los_class
 
     @abstractmethod
     def deflector_position(self):
