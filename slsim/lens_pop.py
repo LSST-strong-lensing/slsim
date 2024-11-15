@@ -120,8 +120,9 @@ class LensPop(LensedPopulationBase):
         return num_sources_range
 
     def draw_population(self, kwargs_lens_cuts, multi_source=False, speed_factor=1):
-        """Return full population list of all lenses within the area # TODO: need to
-        implement a version of it. (improve the algorithm)
+        """Return full population list of all lenses within the area
+         
+        # TODO: need to implement a version of it. (improve the algorithm)
 
         :param kwargs_lens_cuts: validity test keywords
         :type kwargs_lens_cuts: dict
@@ -177,9 +178,8 @@ class LensPop(LensedPopulationBase):
                         valid_sources.append(_source)
                         # If multi_source is False, stop after finding the first valid source
                         if not multi_source:
-                            n = num_sources_tested
-                    else:
-                        n += 1
+                            break
+                    n += 1
                 if len(valid_sources) > 0:
                     # Use a single source if only one source is valid, else use 
                     # the list of valid sources
