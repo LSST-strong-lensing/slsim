@@ -1,9 +1,8 @@
 import pytest
 import numpy as np
 from astropy.cosmology import FlatLambdaCDM
-from slsim.ParamDistributions.los_config import LOSConfig
+from slsim.LOS.los_individual import LOSIndividual
 from slsim.Sources.source import Source
-from slsim.Deflectors.deflector import Deflector
 import slsim.Sources as sources
 import slsim.Deflectors as deflectors
 import slsim.Pipelines as pipelines
@@ -70,7 +69,7 @@ def test_false_positive():
         ),
     ]
     # LOS configuration
-    los_config = LOSConfig()
+    los_class = LOSIndividual()
 
     # Create an instance of FalsePositive
     false_positive_instance_1 = FalsePositive(
@@ -84,14 +83,14 @@ def test_false_positive():
         deflector_class=lens,
         cosmo=cosmo,
         test_area=4 * np.pi,
-        los_config=los_config,
+        los_class=los_class,
     )
     false_positive_instance_3 = FalsePositive(
         source_class=source2,
         deflector_class=lens,
         cosmo=cosmo,
         test_area=4 * np.pi,
-        los_config=los_config,
+        los_class=los_class,
     )
     required_keys = {
         "magnitude",

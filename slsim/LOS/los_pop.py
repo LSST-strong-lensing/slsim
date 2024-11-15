@@ -1,9 +1,10 @@
 from slsim.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
 from slsim.ParamDistributions.kext_gext_distributions import LineOfSightDistribution
+from slsim.LOS.los_individual import LOSIndividual
 import numpy as np
 
 
-class LOSConfig(object):
+class LOSPop(object):
     """Configuration class for setting parameters related to line-of-sight (LOS) effects
     and Gaussian mixture models in a simulation or analysis context.
 
@@ -41,8 +42,6 @@ class LOSConfig(object):
         nonlinear_los_bool=False,
         nonlinear_correction_path=None,
         no_correction_path=None,
-        gamma=None,
-        kappa=None,
     ):
         """
         :param los_bool: Boolean to include line-of-sight distortions, default is True.
@@ -61,10 +60,6 @@ class LOSConfig(object):
         :type nonlinear_correction_path: str or None
         :param no_correction_path: Path to the no non-linear correction distributions stored in an H5 file, default is None.
         :type no_correction_path: str or None
-        :param gamma: [gamma1, gamma2] (takes these values if present)
-        :type gamma: list of floats
-        :param kappa: convergence (takes this values if present)
-        :type kappa: float
         """
 
         self.mixgauss_gamma = mixgauss_gamma
@@ -75,39 +70,31 @@ class LOSConfig(object):
         self.nonlinear_los_bool = nonlinear_los_bool
         self.nonlinear_correction_path = nonlinear_correction_path
         self.no_correction_path = no_correction_path
-        if gamma is not None:
-            self._gamma = gamma
-        if kappa is not None:
-            self._kappa = kappa
 
-    def calculate_los_linear_distortions(self, source_redshift, deflector_redshift):
-        """Calculate line-of-sight distortions in shear and convergence.
+    def draw_los(self, source_redshift, deflector_redshift):
+        """Calculate line-of-sight distortions in shear and convergence for an individual realisation.
 
         :param source_redshift: redshift of the source galaxy object.
         :type source_redshift: float
         :param deflector_redshift: redshift of the deflector galaxy object.
         :type deflector_redshift: float
-        :return: kappa, gamma1, gamma2
+        :return: LOSIndividual class instance
         """
         if not self.los_bool:
-            return 0, 0, 0
-        if hasattr(self, "_gamma") and hasattr(self, "_kappa"):
-            return self._gamma[0], self._gamma[1], self._kappa
+            return LOSIndividual(kappa=0, gamma=[0, 0])
 
         if self.mixgauss_gamma and not self.nonlinear_los_bool:
-            if not hasattr(self, "_gamma"):
                 mixture = GaussianMixtureModel(
                     means=self.mixgauss_means,
                     stds=self.mixgauss_stds,
                     weights=self.mixgauss_weights,
                 )
-                gamma = np.abs(mixture.rvs(size=1))[0]
+                gamma_abs = np.abs(mixture.rvs(size=1))[0]
                 phi = 2 * np.pi * np.random.random()
-                gamma1 = gamma * np.cos(2 * phi)
-                gamma2 = gamma * np.sin(2 * phi)
-                self._gamma = [gamma1, gamma2]
-            if not hasattr(self, "_kappa"):
-                self._kappa = np.random.normal(loc=0, scale=0.05)
+                gamma1 = gamma_abs * np.cos(2 * phi)
+                gamma2 = gamma_abs * np.sin(2 * phi)
+                gamma = [gamma1, gamma2]
+                kappa = np.random.normal(loc=0, scale=0.05)
         elif self.mixgauss_gamma and self.nonlinear_los_bool:
             raise ValueError(
                 "Can only choose one method for external shear and convergence"
@@ -119,12 +106,12 @@ class LOSConfig(object):
                 nonlinear_correction_path=self.nonlinear_correction_path,
                 no_correction_path=self.no_correction_path,
             )
-            gamma, self._kappa = LOS.get_kappa_gamma(
+            gamma_abs, kappa = LOS.get_kappa_gamma(
                 z_source, z_lens, self.nonlinear_los_bool
             )
             phi = 2 * np.pi * np.random.random()
-            gamma1 = gamma * np.cos(2 * phi)
-            gamma2 = gamma * np.sin(2 * phi)
-            self._gamma = [gamma1, gamma2]
+            gamma1 = gamma_abs * np.cos(2 * phi)
+            gamma2 = gamma_abs * np.sin(2 * phi)
+            gamma = [gamma1, gamma2]
 
-        return self._gamma[0], self._gamma[1], self._kappa
+        return LOSIndividual(kappa=kappa, gamma=gamma)

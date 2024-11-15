@@ -6,14 +6,15 @@ from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
 from lenstronomy.LensModel.Solver.lens_equation_solver import (
     analytical_lens_model_support,
 )
-from slsim.ParamDistributions.los_config import LOSConfig
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
+from slsim.LOS.los_individual import LOSIndividual
 from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.Util import constants
 from lenstronomy.Util import data_util
 from lenstronomy.Util import util
 
 from slsim.lensed_system_base import LensedSystemBase
+
 
 class Lens(LensedSystemBase):
     """Class to manage individual lenses."""
@@ -26,8 +27,7 @@ class Lens(LensedSystemBase):
         lens_equation_solver="lenstronomy_analytical",
         test_area=4 * np.pi,
         magnification_limit=0.01,
-        los_config=None,
-        los_dict=None,
+        los_class=None,
     ):
         """
 
@@ -63,11 +63,8 @@ class Lens(LensedSystemBase):
         :param magnification_limit: absolute lensing magnification lower limit to
             register a point source (ignore highly de-magnified images)
         :type magnification_limit: float >= 0
-        :param los_config: LOSConfig instance which manages line-of-sight (LOS) effects
-         and Gaussian mixture models in a simulation or analysis context.
-        :param los_dict: line of sight dictionary (optional, takes these values instead of drawing from distribution)
-         Takes "gamma" = [gamma1, gamma2] and "kappa" = kappa as entries
-        :type los_dict: dict
+        :param los_class: line of sight dictionary (optional, takes these values instead of drawing from distribution)
+        :type los_class: ~LOSIndividual() class object
         """
         self.deflector = deflector_class
         self.cosmo = cosmo
@@ -77,7 +74,7 @@ class Lens(LensedSystemBase):
 
         if isinstance(source_class, list):
             self.source = source_class
-            # choose a highest resdshift source to use conventionally use in lens
+            # chose a highest resdshift source to use conventionally use in lens
             #  mass model.
             self.max_redshift_source_class = max(
                 self.source, key=lambda obj: obj.redshift)
@@ -101,13 +98,9 @@ class Lens(LensedSystemBase):
             z_source=float(self.max_redshift_source_class.redshift),
             cosmo=self.cosmo,
         )
-
-        self._los_linear_distortions_cache = None
-        self.los_config = los_config
-        if self.los_config is None:
-            if los_dict is None:
-                los_dict = {}
-            self.los_config = LOSConfig(**los_dict)
+        if los_class is None:
+            los_class = LOSIndividual()
+        self.los_class = los_class
 
     @property
     def image_number(self):
@@ -362,13 +355,22 @@ class Lens(LensedSystemBase):
         return source_redshifts
 
     @property
+    def los_linear_distortions(self):
+        """Line-of-sight distortions in shear and convergence.
+
+        :return: kappa, gamma1, gamma2
+        """
+        kappa = self.los_class.convergence
+        gamma1, gamma2 = self.los_class.shear
+        return kappa, gamma1, gamma2
+
+    @property
     def external_convergence(self):
         """
 
         :return: external convergence
         """
-        _, _, kappa_ext = self.los_linear_distortions
-        return kappa_ext
+        return self.los_class.convergence
 
     @property
     def external_shear(self):
@@ -376,7 +378,7 @@ class Lens(LensedSystemBase):
 
         :return: the absolute external shear
         """
-        gamma1, gamma2, _ = self.los_linear_distortions
+        gamma1, gamma2 = self.los_class.shear
         return (gamma1**2 + gamma2**2) ** 0.5
     
     @property
@@ -407,7 +409,7 @@ class Lens(LensedSystemBase):
                             z_source=float(source.redshift),
                             cosmo=self.cosmo,
                         )
-            _, _, kappa_ext = self.los_linear_distortions
+            kappa_ext = self.los_class.convergence
             gamma_pl = self.deflector.halo_properties
             theta_E = _lens_cosmo.sis_sigma_v2theta_E(
                 float(self.deflector.velocity_dispersion(cosmo=self.cosmo))
@@ -448,24 +450,6 @@ class Lens(LensedSystemBase):
         :return: velocity dispersion [km/s]
         """
         return self.deflector.velocity_dispersion(cosmo=self.cosmo)
-
-    @property
-    def los_linear_distortions(self):
-        if self._los_linear_distortions_cache is None:
-            self._los_linear_distortions_cache = (
-                self._calculate_los_linear_distortions()
-            )
-        return self._los_linear_distortions_cache
-
-    def _calculate_los_linear_distortions(self):
-        """Line-of-sight distortions in shear and convergence.
-
-        :return: kappa, gamma1, gamma2
-        """
-        return self.los_config.calculate_los_linear_distortions(
-            source_redshift=self.max_redshift_source_class.redshift,
-            deflector_redshift=self.deflector_redshift,
-        )
 
     def deflector_magnitude(self, band):
         """Apparent magnitude of the deflector for a given band.

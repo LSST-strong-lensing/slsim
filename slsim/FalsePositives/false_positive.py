@@ -1,6 +1,7 @@
 import numpy as np
 from slsim.lens import Lens
 
+
 class FalsePositive(Lens):
     """Class to manage individual false positive. Here, false positives refer to a 
     configuration that includes an elliptical galaxy at the center with blue galaxies 
@@ -12,8 +13,7 @@ class FalsePositive(Lens):
         deflector_class,
         cosmo,
         test_area=4 * np.pi,
-        los_config=None,
-        los_dict=None,
+        los_class=None,
     ):
         """
         :param source_class: A Source class instance or list of Source class instance
@@ -23,21 +23,16 @@ class FalsePositive(Lens):
         :param cosmo: astropy.cosmology instance
         :param test_area: area of disk around one lensing galaxies to be investigated
             on (in arc-seconds^2).
-        :param los_config: LOSConfig instance which manages line-of-sight (LOS) effects
-         and Gaussian mixture models in a simulation or analysis context.
-        :param los_dict: line of sight dictionary (optional, takes these values instead
-         of drawing from distribution) Takes "gamma" = [gamma1, gamma2] and
-         "kappa" = kappa as entries
-        :type los_dict: dict
+        :param los_class: line of sight dictionary (optional, takes these values instead of drawing from distribution)
+        :type los_class: ~LOSIndividual() class object
         """
         Lens.__init__(self,
-            source_class=source_class,
-            deflector_class=deflector_class,
-            cosmo=cosmo,
-            test_area=test_area,
-            los_config=los_config,
-            los_dict=los_dict,
-            )
+                      source_class=source_class,
+                      deflector_class=deflector_class,
+                      cosmo=cosmo,
+                      test_area=test_area,
+                      los_class=los_class,
+                      )
 
     def lenstronomy_kwargs(self, band=None):
         """Generates lenstronomy dictionary conventions for the class object.
@@ -72,5 +67,4 @@ class FalsePositive(Lens):
             "kwargs_lens_light": combined_kwargs_lens_light,
             "kwargs_ps": kwargs_ps,
         }
-
         return kwargs_model, kwargs_params

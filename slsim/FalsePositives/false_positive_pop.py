@@ -1,6 +1,6 @@
 from slsim.FalsePositives.false_positive import FalsePositive
-from slsim.ParamDistributions.los_config import LOSConfig
 from slsim.lens_pop import draw_test_area
+from slsim.LOS.los_pop import LOSPop
 import random
 
 
@@ -15,22 +15,22 @@ class FalsePositivePop(object):
         elliptical_galaxy_population,
         blue_galaxy_population,
         cosmo=None,
-        los_config=None,
+        los_pop=None,
         source_number_choice=[1, 2, 3],
         weights_for_source_number=None,
         test_area_factor=1
     ):
         """
         Args:
-        :param elliptical_galaxy_population: Deflector population as an deflectors class 
+        :param elliptical_galaxy_population: Deflector population as a deflectors class
          instance.
-        :param blue_galaxy_population: Source population as an sources class inatnce.
+        :param blue_galaxy_population: Source population as a sources class inatnce.
         :param cosmo: astropy.cosmology instance
-        :param los_config: LOSConfig instance which manages line-of-sight (LOS) effects
+        :param los_pop: LOSPop instance which manages line-of-sight (LOS) effects
          and Gaussian mixture models in a simulation or analysis context.
         :param source_number_choice: A list of integers to choose source number from. If
          None, defaults to [1, 2, 3].
-        :param weights: A list of weights corresponding to the probabilities of 
+        :param weights_for_source_number: A list of weights corresponding to the probabilities of
          selecting each value in source_number_choice. If None, all choices are equally 
          likely. Defaults to None.
         :param test_area_factor: A multiplicative factor of a test_area. A test area is 
@@ -44,9 +44,9 @@ class FalsePositivePop(object):
         self._choice = source_number_choice
         self._weights = weights_for_source_number
         self._test_area_factor = test_area_factor
-        self.los_config = los_config
+        self.los_config = los_pop
         if self.los_config is None:
-            self.los_config = LOSConfig()
+            self.los_config = LOSPop()
     
     def draw_deflector(self):
         """Draw and prepare a deflector (lens) with tolerance-based z_max.
