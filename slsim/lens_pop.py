@@ -119,14 +119,16 @@ class LensPop(LensedPopulationBase):
         num_sources_range = np.random.poisson(lam=num_sources_tested_mean)
         return num_sources_range
 
-    def draw_population(self, kwargs_lens_cuts, speed_factor=1):
+    def draw_population(self, kwargs_lens_cuts, multi_source=False, speed_factor=1):
         """Return full population list of all lenses within the area # TODO: need to
         implement a version of it. (improve the algorithm)
 
         :param kwargs_lens_cuts: validity test keywords
+        :type kwargs_lens_cuts: dict
+        :param multi_source: A boolean value. If True, considers multi source lensing. 
+         If False, considers single source lensing. The default value is True.
         :param speed_factor: factor by which the number of deflectors is decreased to
             speed up the calculations.
-        :type kwargs_lens_cuts: dict
         :return: List of Lens instances with parameters of the deflectors and lens and
             source light.
         :rtype: list
@@ -157,9 +159,12 @@ class LensPop(LensedPopulationBase):
                 while n < num_sources_tested:
                     _source = self._sources.draw_source()
                     if n == 0:
-                        # TODO: this is only consistent for a single source. If there are multiple sources at different redshift, this is not fully acurate
-                        los_class = self.los_pop.draw_los(source_redshift=_source.redshift,
-                                                          deflector_redshift=_deflector.redshift)
+                        # TODO: this is only consistent for a single source. If there 
+                        # are multiple sources at different redshift, this is not fully 
+                        # acurate
+                        los_class = self.los_pop.draw_los(
+                            source_redshift=_source.redshift,
+                             deflector_redshift=_deflector.redshift)
                     lens_class = Lens(
                         deflector_class=_deflector,
                         source_class=_source,
@@ -170,7 +175,11 @@ class LensPop(LensedPopulationBase):
                     # Check the validity of the lens system
                     if lens_class.validity_test(**kwargs_lens_cuts):
                         valid_sources.append(_source)
-                    n += 1
+                        # If multi_source is False, stop after finding the first valid source
+                        if not multi_source:
+                            n = num_sources_tested
+                    else:
+                        n += 1
                 if len(valid_sources) > 0:
                     # Use a single source if only one source is valid, else use 
                     # the list of valid sources

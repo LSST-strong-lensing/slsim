@@ -62,7 +62,7 @@ def gg_lens_pop_instance():
 def test_draw_population(gg_lens_pop_instance):
     lens_pop=gg_lens_pop_instance
     kwargs_lens_cuts = {}
-    lens_population = lens_pop.draw_population(kwargs_lens_cuts)
+    lens_population = lens_pop.draw_population(kwargs_lens_cuts, multi_source=True)
     assert len(lens_population) <= 40
 
 def test_pes_lens_pop_instance():
