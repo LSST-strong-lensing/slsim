@@ -364,7 +364,7 @@ def convert_mjd_to_days(reference_mjd, start_point_mjd):
     reference_mjd = np.array(reference_mjd)
     return reference_mjd - start_point_mjd
 
-def start_point_mjd(min_mjd, max_mjd):
+def transient_event_time_mjd(min_mjd, max_mjd):
     """ Produces a random MJD time with in the given range
     
     :param min_mjd: Minimum bound for the MJD time

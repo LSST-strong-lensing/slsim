@@ -1,7 +1,8 @@
 import numpy as np
 from astropy.table import Column
 from slsim.image_simulation import lens_image_series, lens_image
-from slsim.Util.param_util import fits_append_table, convert_mjd_to_days, zero_point_mjd
+from slsim.Util.param_util import (fits_append_table, convert_mjd_to_days,
+                                    transient_event_time_mjd)
 import os
 
 
@@ -29,12 +30,12 @@ def variable_lens_injection(
     :return: Astropy table of injected lenses and exposure information of dp0 data
     """
     ## chose transient starting point randomly. 
-    zero_point_mjd_time = zero_point_mjd(min(exposure_data["obs_time"]),
+    start_point_mjd_time = transient_event_time_mjd(min(exposure_data["obs_time"]),
                                         max(exposure_data["obs_time"]))
     ## Convert mjd observation time to days. We should do this because lightcurves are
     #  in the unit of days.
     observation_time = convert_mjd_to_days(exposure_data["obs_time"],
-                                            zero_point_mjd_time)
+                                            start_point_mjd_time)
     lens_images = lens_image_series(
         lens_class,
         band=band,
@@ -144,7 +145,7 @@ def opsim_variable_lens_injection(
     """
 
     ## chose transient starting point randomly. 
-    zero_point_mjd_time = zero_point_mjd(min(exposure_data["obs_time"]),
+    start_point_mjd_time = transient_event_time_mjd(min(exposure_data["obs_time"]),
                                         max(exposure_data["obs_time"]))
     final_image = []
 
@@ -152,7 +153,7 @@ def opsim_variable_lens_injection(
 
         exposure_data_obs = exposure_data[obs]
         observation_time = convert_mjd_to_days(exposure_data_obs["obs_time"],
-                                                zero_point_mjd_time)
+                                                start_point_mjd_time)
         if exposure_data_obs["band"] not in bands:
             continue
 
