@@ -369,7 +369,7 @@ def zero_point_mjd(min_mjd, max_mjd):
     
     :param min_mjd: Minimum bound for the MJD time
     :param max_mjd: Maximum bound for the MJD time
-    :return: A MJD time between given min and max bounds.
+    :return: A random MJD time between given min and max bounds.
     """
     zero_mjd=np.random.randint(min_mjd, max_mjd)
     return zero_mjd
