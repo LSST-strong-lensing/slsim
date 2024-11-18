@@ -12,11 +12,6 @@ class LensedPopulationBase(ABC):
         self,
         sky_area=None,
         cosmo=None,
-        lightcurve_time=None,
-        sn_type=None,
-        sn_absolute_mag_band=None,
-        sn_absolute_zpsys=None,
-        sn_modeldir=None,
     ):
         """
 
@@ -24,33 +19,11 @@ class LensedPopulationBase(ABC):
         :type sky_area: `~astropy.units.Quantity`
         :param cosmo: cosmology
         :type cosmo: ~astropy.cosmology instance
-        :param lightcurve_time: observation time array for lightcurve in unit of days.
-        :type lightcurve_time: array
-        :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
-        :type sn_type: str
-        :param sn_absolute_mag_band: Band used to normalize to absolute magnitude
-        :type sn_absolute_mag_band: str or `~sncosmo.Bandpass`
-        :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
-        :type sn_absolute_zpsys: str
-        :param sn_modeldir: sn_modeldir is the path to the directory containing files
-         needed to initialize the sncosmo.model class. For example,
-         sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can
-         be downloaded from https://github.com/LSST-strong-lensing/data_public .
-         For more detail, please look at the documentation of RandomizedSupernovae
-         class.
-        :type sn_modeldir: str
         """
 
-        self.lightcurve_time = lightcurve_time
-        self.sn_type = sn_type
-        self.sn_absolute_mag_band = sn_absolute_mag_band
-        self.sn_absolute_zpsys = sn_absolute_zpsys
-        self.sn_modeldir = sn_modeldir
         if sky_area is None:
-            from astropy.units import Quantity
-
-            sky_area = Quantity(value=0.1, unit="deg2")
-            warnings.warn("No sky area provided, instead uses 0.1 deg2")
+            # sky_area = Quantity(value=0.1, unit="deg2")
+            raise ValueError("No sky area provided. Please provide needed sky area.")
         self.sky_area = sky_area
 
         if cosmo is None:

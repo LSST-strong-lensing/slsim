@@ -23,6 +23,14 @@ class TestAccretionDiskReprocessing:
         }
         reprocessor = AccretionDiskReprocessing("lamppost", **kwargs_agn_model)
         assert reprocessor.reprocessing_model == "lamppost"
+        assert reprocessor.redshift == 0
+
+        kwargs_agn_model["redshift"] = 3.1
+        redshifted_reprocessor = AccretionDiskReprocessing(
+            "lamppost", **kwargs_agn_model
+        )
+        assert redshifted_reprocessor.redshift == 3.1
+
         with pytest.raises(ValueError):
             AccretionDiskReprocessing("other", **kwargs_agn_model)
 
@@ -42,6 +50,9 @@ class TestAccretionDiskReprocessing:
         assert (
             "Given model is not supported. Currently supported model is lamppost."
         ) in str(excinfo.value)
+
+        kwargs_agn_model["redshift"] = 3.1
+        AccretionDiskReprocessing("lamppost", **kwargs_agn_model)
 
     def test_default_initialization_lamppost_model(self):
         kwargs_agn_model = {"r_out": 1000}

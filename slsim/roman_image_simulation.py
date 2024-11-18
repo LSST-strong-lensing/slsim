@@ -6,15 +6,17 @@ from slsim.Observations import image_quality_lenstronomy
 import os.path
 import pickle
 from webbpsf.roman import WFI
+import warnings
 
 try:
     import galsim
     from galsim import Image, InterpolatedImage, roman
 except ModuleNotFoundError:
-    raise ModuleNotFoundError(
-        "Please install the galsim module in order to use simulate_roman_image.\n"
+    warning_msg = (
+"If you want to simulate images with Roman filters, please install the galsim module.\n"
         "Note that this module is not supported on Windows"
-    )
+            )
+    warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
 
 # NOTE: Adding sky background requires webbpsf-data, which can be found at
 #       https://webbpsf.readthedocs.io/en/latest/installation.html. Then, the
@@ -205,10 +207,10 @@ def get_psf(band, detector, detector_pos, oversample, psf_directory):
         wfi.detector_position = detector_pos
         psf = wfi.calc_psf(oversample=oversample)
 
-    # import PSF to GalSim (and normalize the PSF so that sum.psf = 1)
+    # import PSF to GalSim
     oversampled_pixel_scale = 0.11 / oversample
     psf_image = galsim.Image(
-        psf[0].data / np.sum(psf[0].data), scale=oversampled_pixel_scale
+        psf[0].data, scale=oversampled_pixel_scale
     )
 
     return galsim.InterpolatedImage(psf_image)

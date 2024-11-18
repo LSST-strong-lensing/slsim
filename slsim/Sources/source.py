@@ -32,6 +32,8 @@ class Source(object):
         agn_known_mag=None,
         agn_driving_variability_model=None,
         agn_driving_kwargs_variability=None,
+        source_type="extended",
+        light_profile="single_sersic",
     ):
         """
         :param source_dict: Source properties
@@ -70,6 +72,12 @@ class Source(object):
         :param agn_driving_kwargs_variability: Dictionary containing all variability parameters
          for the driving variability class
         :type agn_driving_kwargs_variability: dict
+        :param source_type: type of the source 'extended' or 'point_source' or
+         'point_plus_extended' supported
+        :type source_type: str
+        :param light_profile: keyword for number of sersic profile to use in source
+         light model
+        :type light_profile: str . Either "single_sersic" or "double_sersic" .
         """
 
         # Convert dict to astropy table
@@ -99,6 +107,8 @@ class Source(object):
         self.agn_known_mag = agn_known_mag
         self.agn_driving_variability_model = agn_driving_variability_model
         self.agn_driving_kwargs_variability = agn_driving_kwargs_variability
+        self.source_type = source_type
+        self.light_profile = light_profile
 
     @property
     def kwargs_variability_extracted(self):
@@ -205,7 +215,7 @@ class Source(object):
                     # the assumed point source magnitude column
                     if self.agn_known_band is None:
                         if "ps_mag_i" in self.source_dict.colnames:
-                            self.agn_known_band = "lsst2023-i"
+                            self.agn_known_band = "lsst2016-i"
                             self.agn_known_mag = self.source_dict["ps_mag_i"]
                         else:
                             raise ValueError(
@@ -236,10 +246,19 @@ class Source(object):
 
                     # change name to be compatible with speclite filter names
                     for band in provided_lsst_bands:
-                        speclite_names.append("lsst2023-" + band)
+                        speclite_names.append("lsst2016-" + band)
 
                     # determine mean magnitudes for each band
                     mean_magnitudes = self.agn_class.get_mean_mags(speclite_names)
+
+                    # Our input quasar catalog has magnitude only in i band. So, Agn
+                    # class has computed mean magnitude of the given quasar in all lsst
+                    # bands using available i-band magnitude. We want to save mean
+                    # magnitudes of quasar at all bands so that we can access them at
+                    # anytime.
+                    self.source_dict = add_mean_mag_to_source_table(
+                        self.source_dict, mean_magnitudes, provided_lsst_bands
+                    )
 
                     # Calculate light curve in each band
                     for index, band in enumerate(provided_lsst_bands):
@@ -253,7 +272,7 @@ class Source(object):
                         ] = speclite_names[index]
 
                         # Set the mean magnitude of this filter
-                        self.agn_class.variable_disk.driving_signal_kwargs[
+                        self.agn_class.variable_disk.reprocessing_kwargs[
                             "mean_magnitude"
                         ] = mean_magnitudes[index]
 
@@ -267,7 +286,6 @@ class Source(object):
                         magnitudes = reprocessed_lightcurve[
                             "ps_mag_" + speclite_names[index]
                         ]
-
                         # Extracts the variable light curve for each band
                         kwargs_variab_extracted[band] = {
                             "MJD": times,
@@ -475,15 +493,15 @@ class Source(object):
             return self._center_point_source
         return extended_source_center
 
-    def kwargs_extended_source_light(
-        self, center_lens, draw_area, band=None, light_profile_str="single_sersic"
-    ):
+    def kwargs_extended_source_light(self, center_lens, draw_area, band=None):
         """Provides dictionary of keywords for the source light model(s). Kewords used
         are in lenstronomy conventions.
 
+        :param center_lens: center of the deflector.
+         Eg: np.array([center_x_lens, center_y_lens])
+        :param draw_area: The area of the test region from which we randomly draw a
+         source position. Eg: 4*pi.
         :param band: Imaging band
-        :param light_profile_str: number of light_profile
-        :type light_profile_str: str . eg: "single_sersic" or "double_sersic".
         :return: dictionary of keywords for the source light model(s)
         """
         if band is None:
@@ -493,7 +511,7 @@ class Source(object):
         center_source = self.extended_source_position(
             center_lens=center_lens, draw_area=draw_area
         )
-        if light_profile_str == "single_sersic":
+        if self.light_profile == "single_sersic":
             size_source_arcsec = float(self.angular_size)
             e1_light_source_lenstronomy, e2_light_source_lenstronomy = (
                 ellipticity_slsim_to_lenstronomy(
@@ -511,7 +529,7 @@ class Source(object):
                     "center_y": center_source[1],
                 }
             ]
-        elif light_profile_str == "double_sersic":
+        elif self.light_profile == "double_sersic":
             # w0 and w1 are the weight of the n=1 and n=4 sersic component.
             if "w0" in self.source_dict.colnames or "w1" in self.source_dict.colnames:
                 w0 = self.source_dict["w0"]
@@ -559,6 +577,28 @@ class Source(object):
             raise ValueError("Provided sersic profile is not supported.")
         return kwargs_extended_source
 
+    def extended_source_light_model(self):
+        """Provides a list of source models.
+        
+        :return: list of extented source model.
+        """
+        if (
+            self.source_type == "extended"
+            or self.source_type == "point_plus_extended"
+        ):
+            if self.light_profile == "single_sersic":
+                source_models_list = ["SERSIC_ELLIPSE"]
+            elif self.light_profile == "double_sersic":
+                source_models_list = [
+                    "SERSIC_ELLIPSE",
+                    "SERSIC_ELLIPSE",
+                ]
+            else:
+                raise ValueError("Provided sersic profile is not supported. "
+                            "Supported profiles are single_sersic and double_sersic.")
+        else:
+            source_models_list = None
+        return source_models_list
 
 def extract_agn_kwargs_from_source_dict(source_dict):
     """This extracts all AGN related parameters from a source_dict Table and constructs
@@ -587,3 +627,26 @@ def extract_agn_kwargs_from_source_dict(source_dict):
         if kwarg in column_names:
             agn_kwarg_dict[kwarg] = source_dict[kwarg].data[0]
     return agn_kwarg_dict
+
+
+def add_mean_mag_to_source_table(sourcedict, mean_mags, band_list):
+    """This function adds/replace given mean magnitudes in given bands in a given source
+    table/dict.
+
+    :param sourcedict: Given source table.
+    :param mean_mags: list of mean magnitudes in different bands.
+    :param band_list: list of bands corresponding to mean_mags.
+    :return: source table with additional columns corresponding to given mean
+        magnitudes.
+    """
+    _source_dict = Table(sourcedict)
+    for i in range(len(mean_mags)):
+        new_agn_column = Column(
+            [mean_mags[i]],
+            name="ps_mag_" + list(band_list)[i],
+        )
+        if "ps_mag_" + list(band_list)[i] in _source_dict.colnames:
+            _source_dict.replace_column("ps_mag_" + list(band_list)[i], new_agn_column)
+        else:
+            _source_dict.add_column(new_agn_column)
+    return _source_dict[0]
