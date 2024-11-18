@@ -16,6 +16,8 @@ from slsim.Util.param_util import (
     ellipticity_slsim_to_lenstronomy,
     fits_append_table,
     catalog_with_angular_size_in_arcsec,
+    convert_mjd_to_days,
+    zero_point_mjd,
 )
 from slsim.Sources.SourceVariability.variability import Variability
 from astropy.io import fits
@@ -249,6 +251,14 @@ def test_catalog_with_angular_size_in_arcsec():
     assert galaxy_cat2["angular_size"][0] == 4.186996407348755e-08
     assert galaxy_cat2["angular_size"].unit == u.rad
     assert galaxy_cat["angular_size"].unit == u.arcsec
+
+def test_convert_mjd_to_days():
+    result = convert_mjd_to_days(60100, 60000)
+    assert result==100
+
+def test_zero_point_mjd():
+    result = zero_point_mjd(60000, 60400)
+    assert 60000 <= result <=60400
 
 
 if __name__ == "__main__":

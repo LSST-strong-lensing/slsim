@@ -1,7 +1,7 @@
 import numpy as np
 from astropy.table import Column
 from slsim.image_simulation import lens_image_series, lens_image
-from slsim.Util.param_util import fits_append_table
+from slsim.Util.param_util import fits_append_table, convert_mjd_to_days, zero_point_mjd
 import os
 
 
@@ -28,17 +28,13 @@ def variable_lens_injection(
         in days for each single exposure images in time series images)
     :return: Astropy table of injected lenses and exposure information of dp0 data
     """
-    # the range of observation time of single exposure images might be outside of the
-    # lightcurve time. So, we use random observation time from the lens class lightcurve
-    # time to ensure simulation of reasonable images.
-    observation_time = np.random.uniform(
-        min(lens_class.max_redshift_source_class.lightcurve_time),
-        max(lens_class.max_redshift_source_class.lightcurve_time),
-        size=len(exposure_data["obs_time"]),
-    )
-    observation_time.sort()
-    new_obs_time = Column(name="obs_time", data=observation_time)
-    exposure_data.replace_column("obs_time", new_obs_time)
+    ## chose transient starting point randomly. 
+    zero_point_mjd_time = zero_point_mjd(min(exposure_data["obs_time"]),
+                                        max(exposure_data["obs_time"]))
+    ## Convert mjd observation time to days. We should do this because lightcurves are
+    #  in the unit of days.
+    observation_time = convert_mjd_to_days(exposure_data["obs_time"],
+                                            zero_point_mjd_time)
     lens_images = lens_image_series(
         lens_class,
         band=band,
@@ -47,7 +43,7 @@ def variable_lens_injection(
         psf_kernel=exposure_data["psf_kernel"],
         transform_pix2angle=transform_pix2angle,
         exposure_time=exposure_data["expo_time"],
-        t_obs=exposure_data["obs_time"],
+        t_obs=observation_time,
     )
 
     final_image = []
@@ -147,12 +143,16 @@ def opsim_variable_lens_injection(
     :return: Astropy table of injected lenses and exposure information of dp0 data
     """
 
+    ## chose transient starting point randomly. 
+    zero_point_mjd_time = zero_point_mjd(min(exposure_data["obs_time"]),
+                                        max(exposure_data["obs_time"]))
     final_image = []
 
     for obs in range(len(exposure_data["obs_time"])):
 
         exposure_data_obs = exposure_data[obs]
-
+        observation_time = convert_mjd_to_days(exposure_data_obs["obs_time"],
+                                                zero_point_mjd_time)
         if exposure_data_obs["band"] not in bands:
             continue
 
@@ -169,7 +169,7 @@ def opsim_variable_lens_injection(
             psf_kernel=exposure_data_obs["psf_kernel"],
             transform_pix2angle=transform_pix2angle,
             exposure_time=exposure_data_obs["expo_time"],
-            t_obs=exposure_data_obs["obs_time"],
+            t_obs=observation_time,
             std_gaussian_noise=std_gaussian_noise,
         )
 
