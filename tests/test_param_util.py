@@ -17,7 +17,7 @@ from slsim.Util.param_util import (
     fits_append_table,
     catalog_with_angular_size_in_arcsec,
     convert_mjd_to_days,
-    zero_point_mjd,
+    transient_event_time_mjd,
 )
 from slsim.Sources.SourceVariability.variability import Variability
 from astropy.io import fits
@@ -256,8 +256,8 @@ def test_convert_mjd_to_days():
     result = convert_mjd_to_days(60100, 60000)
     assert result==100
 
-def test_zero_point_mjd():
-    result = zero_point_mjd(60000, 60400)
+def test_start_point_mjd_time():
+    result = transient_event_time_mjd(60000, 60400)
     assert 60000 <= result <=60400
 
 
