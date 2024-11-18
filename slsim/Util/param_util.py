@@ -351,25 +351,25 @@ def catalog_with_angular_size_in_arcsec(galaxy_catalog, input_catalog_type="skyp
         warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
     return copied_galaxy_catalog
 
-def convert_mjd_to_days(reference_mjd, zero_point_mjd):
+def convert_mjd_to_days(reference_mjd, start_point_mjd):
     """
     Convert reference MJD(s) to days relative to a chosen zero-point MJD.
 
     :param reference_mjd: The reference MJD(s) to convert. 
     :type reference_mjd: float, list, or numpy.ndarray
-    :param zero_point_mjd: The zero-point MJD to use as the reference.
+    :param start_point_mjd: The zero-point MJD to use as the reference.
     :return: The time(s) in days relative to the zero-point MJD.
     """
     # Ensure input is a NumPy array for consistent handling
     reference_mjd = np.array(reference_mjd)
-    return reference_mjd - zero_point_mjd
+    return reference_mjd - start_point_mjd
 
-def zero_point_mjd(min_mjd, max_mjd):
+def start_point_mjd(min_mjd, max_mjd):
     """ Produces a random MJD time with in the given range
     
     :param min_mjd: Minimum bound for the MJD time
     :param max_mjd: Maximum bound for the MJD time
     :return: A random MJD time between given min and max bounds.
     """
-    zero_mjd=np.random.randint(min_mjd, max_mjd)
-    return zero_mjd
+    start_mjd=np.random.randint(min_mjd, max_mjd)
+    return start_mjd
