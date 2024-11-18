@@ -1,83 +1,22 @@
 from abc import ABC, abstractmethod
-import numpy as np
-from slsim.Sources.source import Source
-from slsim.Deflectors.deflector import Deflector
-
 
 class LensedSystemBase(ABC):
     """Abstract Base class to create a lens system with all lensing properties required
     to render populations."""
 
-    def __init__(
-        self,
-        source_dict,
-        deflector_dict,
-        cosmo,
-        deflector_type="EPL",
-        deflector_kwargs=None,
-        test_area=4 * np.pi,
-        variability_model=None,
-        kwargs_variability=None,
-        sn_type=None,
-        sn_absolute_mag_band=None,
-        sn_absolute_zpsys=None,
-        lightcurve_time=None,
-        sn_modeldir=None,
-    ):
+    def __init__(self, source_class, deflector_class):
         """
-        :param source_dict: source properties
-        :type source_dict: dict
-        :param deflector_dict: deflector properties
-        :type deflector_dict: dict
-        :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST"
-        :type deflector_type: str
-        :param deflector_kwargs: additional keyword arguments for the deflector
-        :type deflector_kwargs: dict
-        :param variability_model: keyword for variability model to be used. This is an
-         input for the Variability class.
-        :type variability_model: str
-        :param kwargs_variability: keyword arguments for the variability of a source.
-         This is associated with an input for Variability class.
-        :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
-        :type sn_type: str
-        :param sn_absolute_mag_band: Band used to normalize to absolute magnitude
-        :type sn_absolute_mag_band: str or `~sncosmo.Bandpass`
-        :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
-        :type sn_absolute_zpsys: str
-        :param cosmo: astropy.cosmology instance
-        :param test_area: area (arc-sec^2) around lensing galaxy to be investigated
-        :param lightcurve_time: observation time array for lightcurve in unit of days.
-        :type lightcurve_time: array
-        :param sn_modeldir: sn_modeldir is the path to the directory containing files
-         needed to initialize the sncosmo.model class. For example,
-         sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can
-         be downloaded from https://github.com/LSST-strong-lensing/data_public .
-         For more detail, please look at the documentation of RandomizedSupernovae
-         class.
-        :type sn_modeldir: str
+        :param source_class: :param source_class: A Source class instance or list of 
+         Source class instance
+        :type source_class: Source class instance from slsim.Sources.source.
+        :param deflector_class: deflector instance
+        :type deflector_class: Deflector class instance from slsim.Deflectors.deflector
         """
-        self.source = Source(
-            source_dict=source_dict,
-            variability_model=variability_model,
-            kwargs_variability=kwargs_variability,
-            sn_type=sn_type,
-            sn_absolute_mag_band=sn_absolute_mag_band,
-            sn_absolute_zpsys=sn_absolute_zpsys,
-            cosmo=cosmo,
-            lightcurve_time=lightcurve_time,
-            sn_modeldir=sn_modeldir,
-        )
-        if deflector_kwargs is None:
-            deflector_kwargs = {}
-        self.deflector = Deflector(
-            deflector_type=deflector_type,
-            deflector_dict=deflector_dict,
-            **deflector_kwargs
-        )
-        # TODO: tell them what keys the dictionary should contain
-        self.test_area = test_area
-        self.cosmo = cosmo
-
+        self.deflector = deflector_class
+        if isinstance(source_class, list):
+            self.source = source_class
+        else:
+            self.source = [source_class]
     @abstractmethod
     def deflector_position(self):
         """Center of the deflector position.
@@ -113,10 +52,10 @@ class LensedSystemBase(ABC):
         pass
 
     @abstractmethod
-    def source_redshift(self):
+    def source_redshift_list(self):
         """Source redshift.
 
-        :return: source redshift
+        :return: list of each source redshift
         """
         pass
 

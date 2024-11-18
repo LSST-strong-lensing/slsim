@@ -121,8 +121,13 @@ class TestVariability:
         reprocessing_kwargs_4 = {
             "response_function_amplitudes": user_transfer_function_amplitudes
         }
+        reprocessing_kwargs_5 = {"speclite_filter": ["lsst2016-r"]}
         error_reprocessing_kwargs = {
             "response_function_amplitudes": badly_defined_transfer_function_amplitudes
+        }
+        reprocessing_kwargs_6 = {
+            "speclite_filter": "lsst2016-z",
+            "mean_magnitude": 21,
         }
         single_reprocessing_kwargs = {
             "response_function_amplitudes": single_transfer_function_amplitudes
@@ -174,6 +179,24 @@ class TestVariability:
         ]:
             for key in dictionary:
                 full_kwargs_4[key] = dictionary[key]
+        full_kwargs_5 = {}
+        for dictionary in [
+            agn_kwargs,
+            bpl_kwargs,
+            reprocessing_kwargs_5,
+            other_kwargs,
+        ]:
+            for key in dictionary:
+                full_kwargs_5[key] = dictionary[key]
+        full_kwargs_6 = {}
+        for dictionary in [
+            agn_kwargs,
+            bpl_kwargs,
+            reprocessing_kwargs_6,
+            other_kwargs,
+        ]:
+            for key in dictionary:
+                full_kwargs_6[key] = dictionary[key]
         full_error_kwargs = {}
         for dictionary in [
             agn_kwargs,
@@ -197,6 +220,8 @@ class TestVariability:
         var_2 = Variability("lamppost_reprocessed", **full_kwargs_2)
         Variability("lamppost_reprocessed", **full_kwargs_3)
         Variability("lamppost_reprocessed", **full_kwargs_4)
+        Variability("lamppost_reprocessed", **full_kwargs_5)
+        Variability("lamppost_reprocessed", **full_kwargs_6)
         Variability("lamppost_reprocessed", **single_response_kwargs)
         with pytest.raises(ValueError):
             Variability("lamppost_reprocessed", **full_error_kwargs)

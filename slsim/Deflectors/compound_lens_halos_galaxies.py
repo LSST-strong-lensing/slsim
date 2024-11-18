@@ -1,6 +1,6 @@
 import numpy as np
 import numpy.random as random
-from slsim.selection import deflector_cut
+from slsim.selection import object_cut
 from slsim.Deflectors.velocity_dispersion import vel_disp_composite_model
 from slsim.Deflectors.deflectors_base import DeflectorsBase
 from lenstronomy.Util import constants
@@ -58,7 +58,7 @@ class CompoundLensHalosGalaxies(DeflectorsBase):
             halo_galaxy_list["e1_mass"] = -np.ones(n)
             halo_galaxy_list["e2_mass"] = -np.ones(n)
 
-        self._galaxy_select = deflector_cut(halo_galaxy_list, **kwargs_cut)
+        self._galaxy_select = object_cut(halo_galaxy_list, **kwargs_cut)
         # Currently only supporting redshift cut
         self._num_select = len(self._galaxy_select)
 

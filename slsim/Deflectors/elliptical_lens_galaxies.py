@@ -1,6 +1,6 @@
 import numpy as np
 import numpy.random as random
-from slsim.selection import deflector_cut
+from slsim.selection import object_cut
 from slsim.Util import param_util
 from slsim.Deflectors.deflectors_base import DeflectorsBase
 from slsim.Deflectors.velocity_dispersion import vel_disp_abundance_matching
@@ -9,7 +9,16 @@ from slsim.Deflectors.velocity_dispersion import vel_disp_abundance_matching
 class EllipticalLensGalaxies(DeflectorsBase):
     """Class describing elliptical galaxies."""
 
-    def __init__(self, galaxy_list, kwargs_cut, kwargs_mass2light, cosmo, sky_area):
+    def __init__(
+        self,
+        galaxy_list,
+        kwargs_cut,
+        kwargs_mass2light,
+        cosmo,
+        sky_area,
+        gamma_pl=None,
+        catalog_type="skypy",
+    ):
         """
 
         :param galaxy_list: list of dictionary with galaxy parameters of
@@ -21,12 +30,27 @@ class EllipticalLensGalaxies(DeflectorsBase):
         :type sky_area: `~astropy.units.Quantity`
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
+        :param catalog_type: type of the catalog. If user is using deflector catalog
+         other than generated from skypy pipeline, we require them to provide angular
+         size of the galaxy in arcsec and specify catalog_type as None. Otherwise, by
+         default, this class considers deflector catalog is generated using skypy
+         pipeline.
+        :param gamma_pl: power law slope in EPL profile.
+        :type gamma_pl: A float or a dictionary with given mean and standard deviation 
+         of a density slope for gaussian distribution or minimum and maximum values of 
+         gamma for uniform distribution. eg: gamma_pl=2.1, gamma_pl={"mean": a, "std_dev": b},
+         gamma_pl={"gamma_min": c, "gamma_max": d}
+        :type catalog_type: str. "skypy" or None.
         """
+        galaxy_list = param_util.catalog_with_angular_size_in_arcsec(
+            galaxy_catalog=galaxy_list, input_catalog_type=catalog_type
+        )
         super().__init__(
             deflector_table=galaxy_list,
             kwargs_cut=kwargs_cut,
             cosmo=cosmo,
             sky_area=sky_area,
+            gamma_pl=gamma_pl
         )
 
         n = len(galaxy_list)
@@ -41,14 +65,12 @@ class EllipticalLensGalaxies(DeflectorsBase):
             galaxy_list["e2_mass"] = -np.ones(n)
         if "n_sersic" not in column_names:
             galaxy_list["n_sersic"] = -np.ones(n)
-        if "gamma_pl" not in column_names:
-            galaxy_list["gamma_pl"] = np.ones(n) * 2
 
         self._f_vel_disp = vel_disp_abundance_matching(
             galaxy_list, z_max=0.5, sky_area=sky_area, cosmo=cosmo
         )
 
-        self._galaxy_select = deflector_cut(galaxy_list, **kwargs_cut)
+        self._galaxy_select = object_cut(galaxy_list, **kwargs_cut)
         self._num_select = len(self._galaxy_select)
         self._galaxy_select["vel_disp"] = self._f_vel_disp(
             np.log10(self._galaxy_select["stellar_mass"])
@@ -80,7 +102,7 @@ class EllipticalLensGalaxies(DeflectorsBase):
             deflector["vel_disp"] = vel_disp
         if deflector["e1_light"] == -1 or deflector["e2_light"] == -1:
             e1_light, e2_light, e1_mass, e2_mass = elliptical_projected_eccentricity(
-                **deflector, **self._kwargs_mass2light
+                **deflector
             )
             deflector["e1_light"] = e1_light
             deflector["e2_light"] = e2_light

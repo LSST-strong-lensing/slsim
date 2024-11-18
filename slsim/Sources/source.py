@@ -1,10 +1,15 @@
 from slsim.Sources.SourceVariability.variability import (
     Variability,
+    reprocess_with_lamppost_model,
 )
 import numpy as np
 
 # from slsim.Sources.simple_supernova_lightcurve import SimpleSupernovaLightCurve
 from astropy.table import Column, Table
+from slsim.Sources import (
+    random_supernovae,
+    agn,
+)
 from astropy.cosmology import FLRW
 from slsim.Sources import random_supernovae
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
@@ -12,7 +17,7 @@ from slsim.Util.cosmo_util import z_scale_factor
 
 
 class Source(object):
-    """This class provides source dictionary and variable magnitude of a individual
+    """This class provides source dictionary and variable magnitude of an individual
     source."""
 
     def __init__(
@@ -26,9 +31,16 @@ class Source(object):
         cosmo=None,
         lightcurve_time=None,
         sn_modeldir=None,
+        agn_known_band=None,
+        agn_known_mag=None,
+        agn_driving_variability_model=None,
+        agn_driving_kwargs_variability=None,
+        source_type="extended",
+        light_profile="single_sersic",
     ):
         """
         :param source_dict: Source properties
+        :type source_dict: dict or astropy table
         :type source_dict: dict  # TODO: write what arguments need to be inculded when the source_type is interpolated.
         :param variability_model: keyword for variability model to be used. This is an
          input for the Variability class.
@@ -53,8 +65,40 @@ class Source(object):
          For more detail, please look at the documentation of RandomizedSupernovae
          class.
         :type sn_modeldir: str
+        :param agn_known_band: Speclite filter of which the magnitude is known. Used to normalize
+         mean magnitudes.
+        :type agn_known_band: str
+        :param agn_known_mag: Magnitude of the agn in the known band.
+        :type agn_known_mag: float
+        :param agn_driving_variability_model: Variability model with light_curve output
+         which drives the variability across all bands of the agn.
+        :type agn_driving_variability_model: str (e.g. "light_curve", "sinusoidal", "bending_power_law")
+        :param agn_driving_kwargs_variability: Dictionary containing all variability parameters
+         for the driving variability class
+        :type agn_driving_kwargs_variability: dict
+        :param source_type: type of the source 'extended' or 'point_source' or
+         'point_plus_extended' supported
+        :type source_type: str
+        :param light_profile: keyword for number of sersic profile to use in source
+         light model
+        :type light_profile: str . Either "single_sersic" or "double_sersic" .
         """
-        self.source_dict = source_dict
+
+        # Convert dict to astropy table
+        if isinstance(source_dict, dict):
+            self.source_dict = Table([source_dict])[0]
+        else:  # if source_dict is already an astropy table
+            self.source_dict = source_dict
+
+        # If center_x and center_y are already specified, use them instead of picking randomly
+        if (
+            "center_x" in self.source_dict.colnames
+            and "center_y" in self.source_dict.colnames
+        ):
+            self._center_source = np.array(
+                [self.source_dict["center_x"], self.source_dict["center_y"]]
+            )
+
         self.variability_model = variability_model
         self.kwargs_variability = kwargs_variability
         self.sn_type = sn_type
@@ -63,6 +107,12 @@ class Source(object):
         self.cosmo = cosmo
         self.lightcurve_time = lightcurve_time
         self.sn_modeldir = sn_modeldir
+        self.agn_known_band = agn_known_band
+        self.agn_known_mag = agn_known_mag
+        self.agn_driving_variability_model = agn_driving_variability_model
+        self.agn_driving_kwargs_variability = agn_driving_kwargs_variability
+        self.source_type = source_type
+        self.light_profile = light_profile
 
     @property
     def kwargs_variability_extracted(self):
@@ -71,12 +121,15 @@ class Source(object):
             # kwargs_variability.
             kwargs_variab_extracted = {}
             kwargs_variability_list = ["supernovae_lightcurve"]
+            kwargs_variability_list_agn = ["agn_lightcurve"]
+
             # With this condition we call lightcurve generator class and prepare
             # variability class.
             if any(
                 element in kwargs_variability_list
                 for element in list(self.kwargs_variability)
             ):
+
                 z = self.source_dict["z"]
                 if self.cosmo is None:
                     raise ValueError(
@@ -93,12 +146,15 @@ class Source(object):
                         cosmo=self.cosmo,
                         modeldir=self.sn_modeldir,
                     )
+
                 for element in list(self.kwargs_variability):
                     # if lsst filter is being used
                     if element in [
                         "r",
                         "i",
                         "g",
+                        "z",
+                        "y",
                         "F062",
                         "F087",
                         "F106",
@@ -108,14 +164,16 @@ class Source(object):
                         "F146",
                         "F213",
                     ]:
-                        if element in ["r", "i", "g"]:
+                        if element in ["r", "i", "g", "z", "y"]:
                             provided_band = "lsst" + element
                         else:
                             provided_band = element
                         name = "ps_mag_" + element
                         times = self.lightcurve_time
                         magnitudes = lightcurve_class.get_apparent_magnitude(
-                            time=times, band=provided_band, zpsys=self.sn_absolute_zpsys
+                            time=times,
+                            band=provided_band,
+                            zpsys=self.sn_absolute_zpsys,
                         )
                         new_column = Column([float(min(magnitudes))], name=name)
                         self._source_dict = Table(self.source_dict)
@@ -125,6 +183,119 @@ class Source(object):
                             "MJD": times,
                             name: magnitudes,
                         }
+
+            # Check if AGN model is used
+            elif any(
+                element in kwargs_variability_list_agn
+                for element in list(self.kwargs_variability)
+            ):
+
+                z = self.source_dict["z"]
+                if self.cosmo is None:
+                    raise ValueError(
+                        "Cosmology cannot be None for AGN class. Please"
+                        "provide a suitable astropy cosmology."
+                    )
+
+                else:
+                    # Pull the agn kwarg dict out of the kwargs_variability dict
+                    agn_kwarg_dict = extract_agn_kwargs_from_source_dict(
+                        self.source_dict
+                    )
+
+                    # Populate "None" for optional keys related to drawing random AGN
+                    if "random_seed" in self.source_dict.colnames:
+                        random_seed = self.source_dict["random_seed"][0]
+                    else:
+                        random_seed = None
+                    if "input_agn_bounds_dict" in self.source_dict.colnames:
+                        input_agn_bounds_dict = self.source_dict[
+                            "input_agn_bounds_dict"
+                        ][0]
+                    else:
+                        input_agn_bounds_dict = None
+
+                    # If no other band and magnitude is given, populate with
+                    # the assumed point source magnitude column
+                    if self.agn_known_band is None:
+                        if "ps_mag_i" in self.source_dict.colnames:
+                            self.agn_known_band = "lsst2016-i"
+                            self.agn_known_mag = self.source_dict["ps_mag_i"]
+                        else:
+                            raise ValueError(
+                                "Please provide a band and magnitude for the AGN"
+                            )
+
+                    # Create the agn object
+                    self.agn_class = agn.RandomAgn(
+                        self.agn_known_band,
+                        self.agn_known_mag,
+                        z,
+                        cosmo=self.cosmo,
+                        lightcurve_time=self.lightcurve_time,
+                        agn_driving_variability_model=self.agn_driving_variability_model,
+                        agn_driving_kwargs_variability=self.agn_driving_kwargs_variability,
+                        random_seed=random_seed,
+                        input_agn_bounds_dict=input_agn_bounds_dict,
+                        **agn_kwarg_dict
+                    )
+                    # Get mean mags for each provided band
+                    # determine which kwargs_variability are lsst bands
+                    lsst_bands = ["u", "g", "r", "i", "z", "y"]
+                    provided_lsst_bands = set(lsst_bands) & set(self.kwargs_variability)
+
+                    # The set "provided_lsst_bands" is no longer ordered.
+                    # Therefore, create a list of speclite names in the new order
+                    speclite_names = []
+
+                    # change name to be compatible with speclite filter names
+                    for band in provided_lsst_bands:
+                        speclite_names.append("lsst2016-" + band)
+
+                    # determine mean magnitudes for each band
+                    mean_magnitudes = self.agn_class.get_mean_mags(speclite_names)
+
+                    # Our input quasar catalog has magnitude only in i band. So, Agn
+                    # class has computed mean magnitude of the given quasar in all lsst
+                    # bands using available i-band magnitude. We want to save mean
+                    # magnitudes of quasar at all bands so that we can access them at
+                    # anytime.
+                    self.source_dict = add_mean_mag_to_source_table(
+                        self.source_dict, mean_magnitudes, provided_lsst_bands
+                    )
+
+                    # Calculate light curve in each band
+                    for index, band in enumerate(provided_lsst_bands):
+
+                        # Define name for point source mags
+                        filter_name = "ps_mag_" + band
+
+                        # Set the filter to use
+                        self.agn_class.variable_disk.reprocessing_kwargs[
+                            "speclite_filter"
+                        ] = speclite_names[index]
+
+                        # Set the mean magnitude of this filter
+                        self.agn_class.variable_disk.reprocessing_kwargs[
+                            "mean_magnitude"
+                        ] = mean_magnitudes[index]
+
+                        # Extract the reprocessed light curve
+                        reprocessed_lightcurve = reprocess_with_lamppost_model(
+                            self.agn_class.variable_disk
+                        )
+
+                        # Prepare the light curve to be extracted
+                        times = reprocessed_lightcurve["MJD"]
+                        magnitudes = reprocessed_lightcurve[
+                            "ps_mag_" + speclite_names[index]
+                        ]
+                        # Extracts the variable light curve for each band
+                        kwargs_variab_extracted[band] = {
+                            "MJD": times,
+                            filter_name: magnitudes,
+                        }
+
             elif "MJD" in self.kwargs_variability:
                 # With this condition we extract values for kwargs_variability from the
                 # given source dict and prepar variability class. Here, we expect
@@ -166,6 +337,7 @@ class Source(object):
                         raise ValueError(
                             "given keyword %s is not in the source catalog." % element
                         )
+
         else:
             # self.variability_class = None
             kwargs_variab_extracted = None
@@ -212,13 +384,21 @@ class Source(object):
         :return: Magnitude of the point source in the specified band
         :rtype: float
         """
+
         if not hasattr(self, "kwargs_variab_dict"):
             self.kwargs_variab_dict = self.kwargs_variability_extracted
         column_names = self.source_dict.colnames
         if "ps_mag_" + band not in column_names:
-            raise ValueError("required parameter is missing in the source dictionary.")
-        else:
-            band_string = "ps_mag_" + band
+            if self.kwargs_variability is not None:
+                if "agn_lightcurve" not in self.kwargs_variability:
+                    raise ValueError(
+                        "required parameter is missing in the source dictionary."
+                    )
+            else:
+                raise ValueError(
+                    "required parameter is missing in the source dictionary."
+                )
+        band_string = "ps_mag_" + band
         if self.kwargs_variab_dict is not None:
             if band in self.kwargs_variab_dict.keys():
                 kwargs_variab_band = self.kwargs_variab_dict[band]
@@ -317,15 +497,19 @@ class Source(object):
             return self._center_point_source
         return extended_source_center
 
+    def kwargs_extended_source_light(self, center_lens, draw_area, band=None):
+        """Provides dictionary of keywords for the source light model(s). Kewords used
     def kwargs_extended_source_light(
         self, center_lens, draw_area, band=None, light_profile_str="single_sersic"
     ): #MODIFY THIS
         """Provids dictionary of keywords for the source light model(s). Kewords used
         are in lenstronomy conventions.
 
+        :param center_lens: center of the deflector.
+         Eg: np.array([center_x_lens, center_y_lens])
+        :param draw_area: The area of the test region from which we randomly draw a
+         source position. Eg: 4*pi.
         :param band: Imaging band
-        :param light_profile_str: number of light_profile
-        :type light_profile_str: str . eg: "single_sersic" or "double_sersic".
         :return: dictionary of keywords for the source light model(s)
         """
         if band is None:
@@ -335,7 +519,7 @@ class Source(object):
         center_source = self.extended_source_position(
             center_lens=center_lens, draw_area=draw_area
         )
-        if light_profile_str == "single_sersic":
+        if self.light_profile == "single_sersic":
             size_source_arcsec = float(self.angular_size)
             e1_light_source_lenstronomy, e2_light_source_lenstronomy = (
                 ellipticity_slsim_to_lenstronomy(
@@ -353,7 +537,7 @@ class Source(object):
                     "center_y": center_source[1],
                 }
             ]
-        elif light_profile_str == "double_sersic":
+        elif self.light_profile == "double_sersic":
             # w0 and w1 are the weight of the n=1 and n=4 sersic component.
             if "w0" in self.source_dict.colnames or "w1" in self.source_dict.colnames:
                 w0 = self.source_dict["w0"]
@@ -421,3 +605,77 @@ class Source(object):
         else:
             raise ValueError("Provided sersic profile is not supported.")
         return kwargs_extended_source
+
+    def extended_source_light_model(self):
+        """Provides a list of source models.
+        
+        :return: list of extented source model.
+        """
+        if (
+            self.source_type == "extended"
+            or self.source_type == "point_plus_extended"
+        ):
+            if self.light_profile == "single_sersic":
+                source_models_list = ["SERSIC_ELLIPSE"]
+            elif self.light_profile == "double_sersic":
+                source_models_list = [
+                    "SERSIC_ELLIPSE",
+                    "SERSIC_ELLIPSE",
+                ]
+            else:
+                raise ValueError("Provided sersic profile is not supported. "
+                            "Supported profiles are single_sersic and double_sersic.")
+        else:
+            source_models_list = None
+        return source_models_list
+
+def extract_agn_kwargs_from_source_dict(source_dict):
+    """This extracts all AGN related parameters from a source_dict Table and constructs
+    a compact dictionary from them to pass into the agn class.
+
+    :param source_dict: Astropy Table with columns representing all information of the
+        source.
+    :return: Compact dict object containing key+value pairs of AGN parameters.
+    """
+
+    kwargs_variable_agn = [
+        "r_out",
+        "r_resolution",
+        "corona_height",
+        "inclination_angle",
+        "black_hole_mass_exponent",
+        "black_hole_spin",
+        "intrinsic_light_curve",
+        "eddington_ratio",
+        "driving_variability_model",
+        "accretion_disk",
+    ]
+    column_names = source_dict.colnames
+    agn_kwarg_dict = {}
+    for kwarg in kwargs_variable_agn:
+        if kwarg in column_names:
+            agn_kwarg_dict[kwarg] = source_dict[kwarg].data[0]
+    return agn_kwarg_dict
+
+
+def add_mean_mag_to_source_table(sourcedict, mean_mags, band_list):
+    """This function adds/replace given mean magnitudes in given bands in a given source
+    table/dict.
+
+    :param sourcedict: Given source table.
+    :param mean_mags: list of mean magnitudes in different bands.
+    :param band_list: list of bands corresponding to mean_mags.
+    :return: source table with additional columns corresponding to given mean
+        magnitudes.
+    """
+    _source_dict = Table(sourcedict)
+    for i in range(len(mean_mags)):
+        new_agn_column = Column(
+            [mean_mags[i]],
+            name="ps_mag_" + list(band_list)[i],
+        )
+        if "ps_mag_" + list(band_list)[i] in _source_dict.colnames:
+            _source_dict.replace_column("ps_mag_" + list(band_list)[i], new_agn_column)
+        else:
+            _source_dict.add_column(new_agn_column)
+    return _source_dict[0]

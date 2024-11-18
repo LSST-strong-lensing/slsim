@@ -1,5 +1,5 @@
 skypy
-lenstronomy>=1.11.10
+lenstronomy>=1.12.1
 astropy>=5.2
 numpy
 scipy<=1.13.1
@@ -9,3 +9,6 @@ pyyaml
 matplotlib
 sncosmo
 colossus
+uncertainties
+kcorrect
+webbpsf

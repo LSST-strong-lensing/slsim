@@ -1,12 +1,13 @@
 import numpy as np
 import numpy.random as random
-from slsim.selection import deflector_cut
+from slsim.selection import object_cut
 from slsim.Deflectors.velocity_dispersion import vel_disp_abundance_matching
 from slsim.Deflectors.elliptical_lens_galaxies import (
     elliptical_projected_eccentricity,
 )
 from slsim.Deflectors.deflectors_base import DeflectorsBase
 from astropy.table import vstack
+from slsim.Util.param_util import catalog_with_angular_size_in_arcsec
 
 
 class AllLensGalaxies(DeflectorsBase):
@@ -20,6 +21,8 @@ class AllLensGalaxies(DeflectorsBase):
         kwargs_mass2light,
         cosmo,
         sky_area,
+        gamma_pl=None,
+        catalog_type="skypy",
     ):
         """
         :param red_galaxy_list: list of dictionary with elliptical galaxy
@@ -35,8 +38,24 @@ class AllLensGalaxies(DeflectorsBase):
         :type sky_area: `~astropy.units.Quantity`
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
+        :param gamma_pl: power law slope in EPL profile.
+        :type gamma_pl: A float or a dictionary with given mean and standard deviation 
+         of a density slope for gaussian distribution or minimum and maximum values of 
+         gamma for uniform distribution. eg: gamma_pl=2.1, gamma_pl={"mean": a, "std_dev": b},
+         gamma_pl={"gamma_min": c, "gamma_max": d}
+        :param catalog_type: type of the catalog. If user is using deflector catalog
+         other than generated from skypy pipeline, we require them to provide angular
+         size of the galaxy in arcsec and specify catalog_type as None. Otherwise, by
+         default, this class considers deflector catalog is generated using skypy
+         pipeline.
+        :type catalog_type: str. "skypy" or None.
         """
-
+        red_galaxy_list = catalog_with_angular_size_in_arcsec(
+            galaxy_catalog=red_galaxy_list, input_catalog_type=catalog_type
+        )
+        blue_galaxy_list = catalog_with_angular_size_in_arcsec(
+            galaxy_catalog=blue_galaxy_list, input_catalog_type=catalog_type
+        )
         red_column_names = red_galaxy_list.colnames
         if "galaxy_type" not in red_column_names:
             red_galaxy_list["galaxy_type"] = "red"
@@ -52,6 +71,7 @@ class AllLensGalaxies(DeflectorsBase):
             kwargs_cut=kwargs_cut,
             cosmo=cosmo,
             sky_area=sky_area,
+            gamma_pl=gamma_pl
         )
 
         n = len(galaxy_list)
@@ -72,7 +92,7 @@ class AllLensGalaxies(DeflectorsBase):
             galaxy_list, z_max=0.5, sky_area=sky_area, cosmo=cosmo
         )
 
-        self._galaxy_select = deflector_cut(galaxy_list, **kwargs_cut)
+        self._galaxy_select = object_cut(galaxy_list, **kwargs_cut)
         self._num_select = len(self._galaxy_select)
         self._galaxy_select["vel_disp"] = self._f_vel_disp(
             np.log10(self._galaxy_select["stellar_mass"])

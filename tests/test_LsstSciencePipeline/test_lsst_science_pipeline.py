@@ -3,10 +3,12 @@ import numpy as np
 from astropy.table import Table
 from astropy.cosmology import FlatLambdaCDM
 from slsim.lens import Lens
-from slsim.lsst_science_pipeline import (
+from slsim.LsstSciencePipeline.util_lsst import (
     variable_lens_injection,
     multiple_variable_lens_injection,
 )
+from slsim.Sources.source import Source
+from slsim.Deflectors.deflector import Deflector
 import pytest
 
 
@@ -14,20 +16,30 @@ import pytest
 def pes_lens_instance():
     path = os.path.dirname(__file__)
     source_dict = Table.read(
-        os.path.join(path, "TestData/source_dict_ps.fits"), format="fits"
+        os.path.join(path, "../TestData/source_dict_ps.fits"), format="fits"
     )
     deflector_dict = Table.read(
-        os.path.join(path, "TestData/deflector_dict_ps.fits"), format="fits"
+        os.path.join(path, "../TestData/deflector_dict_ps.fits"), format="fits"
     )
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
-        pes_lens = Lens(
+        source = Source(
             source_dict=source_dict,
-            deflector_dict=deflector_dict,
+            cosmo=cosmo,
             source_type="point_plus_extended",
+            light_profile="single_sersic",
             variability_model="sinusoidal",
             kwargs_variability={"amp", "freq"},
+            lightcurve_time=np.linspace(0, np.pi, 100),
+        )
+        deflector = Deflector(
+                deflector_type="EPL",
+                deflector_dict=deflector_dict,
+            )
+        pes_lens = Lens(
+            source_class=source,
+            deflector_class=deflector,
             cosmo=cosmo,
         )
         if pes_lens.validity_test():
@@ -40,7 +52,7 @@ def test_variable_lens_injection(pes_lens_instance):
     lens_class = pes_lens_instance
     path = os.path.dirname(__file__)
     expo_data = Table.read(
-        os.path.join(path, "TestData/expo_data_1.fits"), format="fits"
+        os.path.join(path, "../TestData/expo_data_1.fits"), format="fits"
     )
     transf_matrix_single = np.array([[0.2, 0], [0, 0.2]])
     transform_matrices = [transf_matrix_single.copy() for _ in range(len(expo_data))]
@@ -58,10 +70,10 @@ def test_multiple_variable_lens_injection(pes_lens_instance):
     lens_class = [pes_lens_instance, pes_lens_instance]
     path = os.path.dirname(__file__)
     expo_data_1 = Table.read(
-        os.path.join(path, "TestData/expo_data_1.fits"), format="fits"
+        os.path.join(path, "../TestData/expo_data_1.fits"), format="fits"
     )
     expo_data_2 = Table.read(
-        os.path.join(path, "TestData/expo_data_2.fits"), format="fits"
+        os.path.join(path, "../TestData/expo_data_2.fits"), format="fits"
     )
     expo_data = [expo_data_1, expo_data_2]
     transf_matrix_single = np.array([[0.2, 0], [0, 0.2]])

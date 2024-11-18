@@ -6,10 +6,9 @@ from slsim.Sources.supernovae_host_match import SupernovaeHostMatch
 import numpy as np
 from astropy import units
 from scipy import stats
-from astropy.coordinates import SkyCoord
 from slsim.Sources.galaxies import galaxy_projected_eccentricity
-from lenstronomy.Util.param_util import transform_e1e2_product_average
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
+from slsim.Util.param_util import elliptical_distortion_product_average
 
 
 def supernovae_host_galaxy_offset(host_galaxy_catalog):
@@ -17,11 +16,10 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
     based on observed data. (Wang et al. 2013)
 
     :param host_galaxy_catalog: catalog of host galaxies matched with supernovae (must
-        have 'angular_size' column)
+        have 'angular_size' and 'ellipticity' columns)
     :type host_galaxy_catalog: astropy Table
-    :return: ra_off [arcsec] and dec_off [arcsec] selected for each supernovae based on
-        observed distribution; e1 and e2 projected eccentricities calculated for each
-        host galaxy
+    :return: offsets x and y [arcsec] selected for each supernovae based on observed
+        distribution; e1 and e2 projected eccentricities calculated for each host galaxy
     :return type: list; float
     """
     # Select offset ratios based on observed offset distribution (Wang et al. 2013)
@@ -34,9 +32,14 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
     )
 
     offsets = []
-    position_angle = []
+    position_angle_galaxy = []
+    position_angle_supernovae = []
+    original_x_off = []
+    original_y_off = []
     e1 = []
     e2 = []
+    transformed_x_off = []
+    transformed_y_off = []
 
     for i in range(len(host_galaxy_catalog)):
 
@@ -47,47 +50,42 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
             )[0]
 
         # Calculate offsets [rad]
-        offsets.append(offset_ratios[i] * list(host_galaxy_catalog["angular_size"])[i])
+        offset = offset_ratios[i] * list(host_galaxy_catalog["angular_size"])[i]
+        offsets.append(offset)
 
-        # Generate random angle
-        position_angle.append(np.random.uniform(0, 360))
+        galaxy_angle = np.random.uniform(0, np.pi)
+        supernova_angle = np.random.uniform(0, 2 * np.pi)
+        position_angle_galaxy.append(galaxy_angle)
+        position_angle_supernovae.append(supernova_angle)
+
+        # Calculate the x and y coordinates of the offset [arcsec]
+        x_off = ((np.cos(supernova_angle * units.rad)) * (offset * units.rad)).to(
+            units.arcsec
+        )
+        y_off = ((np.sin(supernova_angle * units.rad)) * (offset * units.rad)).to(
+            units.arcsec
+        )
+        original_x_off.append(x_off)
+        original_y_off.append(y_off)
 
         # Calculate projected eccentricities
-        temp_e1, temp_e2 = galaxy_projected_eccentricity(
-            host_galaxy_catalog["ellipticity"][i]
+        slsim_e1, slsim_e2 = galaxy_projected_eccentricity(
+            host_galaxy_catalog["ellipticity"][i], galaxy_angle * units.rad
         )
-        e1.append(temp_e1)
-        e2.append(temp_e2)
+        e1.append(slsim_e1)
+        e2.append(slsim_e2)
 
-    # Calculate the ra and dec coordinates of the offset [arcsec]
-    host_center = SkyCoord(1 * units.deg, 1 * units.deg, frame="icrs")
-    offsets = host_center.directional_offset_by(
-        position_angle * units.deg, offsets * units.rad
-    )
-    original_ra_off = (offsets.ra - 1 * units.deg).to(units.arcsec)
-    original_dec_off = (offsets.dec - 1 * units.deg).to(units.arcsec)
+        # Transform the offset coordinates with eccentricities e1, e2 into elliptical coordinate
+        # system
+        lens_e1, lens_e2 = ellipticity_slsim_to_lenstronomy(slsim_e1, slsim_e2)
 
-    transformed_ra_off = []
-    transformed_dec_off = []
-
-    # Transform the offset coordinates with eccentricities e1, e2 into elliptical coordinate system
-    for i in range(len(host_galaxy_catalog)):
-
-        # Conversion of slsim e1, e2 to lenstronomy e1, e2
-        lenstronomy_e1, lenstronomy_e2 = ellipticity_slsim_to_lenstronomy(e1[i], e2[i])
-
-        ra_off, dec_off = transform_e1e2_product_average(
-            original_ra_off[i],
-            original_dec_off[i],
-            lenstronomy_e1,
-            lenstronomy_e2,
-            0 * units.deg,
-            0 * units.deg,
+        transform_x_off, transform_y_off = elliptical_distortion_product_average(
+            x_off.value, y_off.value, lens_e1, lens_e2, 0, 0
         )
-        transformed_ra_off.append(ra_off.value)
-        transformed_dec_off.append(dec_off.value)
+        transformed_x_off.append(transform_x_off)
+        transformed_y_off.append(transform_y_off)
 
-    return transformed_ra_off, transformed_dec_off, e1, e2
+    return transformed_x_off, transformed_y_off, e1, e2
 
 
 class SupernovaeCatalog(object):
@@ -211,9 +209,9 @@ class SupernovaeCatalog(object):
 
         # Get ra_off and dec_off if host galaxy is true.
         if host_galaxy is True:
-            ra_off, dec_off, e1, e2 = supernovae_host_galaxy_offset(matched_table)
-            lightcurve_data["ra_off"] = ra_off
-            lightcurve_data["dec_off"] = dec_off
+            x_off, y_off, e1, e2 = supernovae_host_galaxy_offset(matched_table)
+            matched_table["x_off"] = x_off
+            matched_table["y_off"] = y_off
             matched_table["e1"] = e1
             matched_table["e2"] = e2
             lightcurve_table = Table(lightcurve_data)
