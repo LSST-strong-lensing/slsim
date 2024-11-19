@@ -10,8 +10,8 @@ def opsim_time_series_images_data(
     dec_list,
     obs_strategy,
     MJD_min=60000,
-    MJD_max=64000,
-    size=101,
+    MJD_max=64500,
+    num_pix=101,
     moffat_beta=3.1,
     readout_noise=10,
     delta_pix=0.2,
@@ -28,7 +28,7 @@ def opsim_time_series_images_data(
         for example "baseline_v3.0_10yrs" (string)
     :param MJD_min: minimum MJD for the observations
     :param MJD_max: maximum MJD for the observations
-    :param size: cutout size of images (in pixels)
+    :param num_pix: cutout size of images (in pixels)
     :param moffat_beta: power index of the moffat psf kernel
     :param readout_noise: noise added per readout
     :param delta_pix: size of pixel in units arcseonds
@@ -111,7 +111,7 @@ def opsim_time_series_images_data(
 
         for psf in psf_fwhm:
             psf_kernel = kernel_util.kernel_moffat(
-                num_pix=size, delta_pix=delta_pix, fwhm=psf, moffat_beta=moffat_beta
+                num_pix=num_pix, delta_pix=delta_pix, fwhm=psf, moffat_beta=moffat_beta
             )
             psf_kernel = util.array2image(psf_kernel)
 
