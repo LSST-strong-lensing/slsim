@@ -905,6 +905,16 @@ class Lens(LensedSystemBase):
             flux_local / total_flux * stellar_mass / self._lens_cosmo.sigma_crit_angle
         )
         return kappa_star
+    
+    def generate_id(ra, dec):
+        """
+        Generate a unique ID for the lens based on its position.
+
+        :param ra: ra coordinate of the Lens
+        :param dec: dec coordinate of the Lens
+        :return: A string representing the lens ID.
+        """
+        return f"LENS-{ra:.4f}_{dec:.4f}"
 
 def image_separation_from_positions(image_positions):
     """Calculate image separation in arc-seconds; if there are only two images, the
