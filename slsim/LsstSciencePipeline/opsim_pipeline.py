@@ -141,7 +141,7 @@ def opsim_time_series_images_data(
                 "obs_time",
                 "expo_time",
                 "zero_point",
-                "psf_fwhm"
+                "psf_fwhm",
                 "calexp_center",
                 "band",
             ),
