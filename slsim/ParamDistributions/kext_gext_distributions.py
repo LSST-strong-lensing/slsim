@@ -100,7 +100,8 @@ class LineOfSightDistribution:
         :param use_nonlinear_correction: Boolean to use the nonlinear correction data.
         :return: Tuple of gamma and kappa values.
         """
-
+        if z_source <= z_lens:
+            return 0.0, 0.0
         z_source_rounded = self._round_to_nearest_0_1(z_source)
         z_lens_rounded = self._round_to_nearest_0_1(z_lens)
         if z_lens_rounded == z_source_rounded:
