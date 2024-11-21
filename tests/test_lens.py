@@ -8,6 +8,7 @@ from slsim.lens import (
     image_separation_from_positions,
     theta_e_when_source_infinity,
 )
+import astropy.units as u
 from slsim.ParamDistributions.los_config import LOSConfig
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
@@ -45,18 +46,23 @@ class TestLens(object):
         #image[5, 5] = 1
         image = real_galaxy_image
         print(f"Test image shape: {real_galaxy_image.shape}") 
+        y_indices, x_indices = np.indices(image.shape)
+        total_flux = np.sum(image)
+        center_x = np.sum(x_indices * image) / total_flux
+        center_y = np.sum(y_indices * image) / total_flux
         z= 0.5
         z_data = 0.1
         pixel_width_data = 0.1
         phi_G = 0
         mag_i = 20
-        interp_source = Table([
+        interp_source_dict = Table([
         [z],
         [image], 
         [z_data], 
         [pixel_width_data], 
         [phi_G], 
-        [mag_i],], names=("z", "image", "z_data", "pixel_width_data", "phi_G", "mag_i"))
+        [mag_i]], names=("z", "image", "z_data", "pixel_width_data", "phi_G", 
+                                 "mag_i",))
 
         red_one["angular_size"] = red_one["angular_size"] / 4.84813681109536e-06
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -88,17 +94,21 @@ class TestLens(object):
             if gg_lens.validity_test(mag_arc_limit=mag_arc_limit):
                 self.gg_lens = gg_lens
                 break
-    
+        interp_source= Source(
+            source_dict=interp_source_dict,
+            cosmo=cosmo,
+            source_type="extended",
+            light_profile="interpolated",
+        )
         self.gg_lens_interp = Lens(
-                source_dict=interp_source,
-                deflector_dict=self.deflector_dict,
+                source_class=interp_source,
+                source_type="extended",
+                deflector_class=self.deflector,
                 lens_equation_solver="lenstronomy_analytical",
-                kwargs_variability={"MJD", "ps_mag_i"},  # This line will not be used in
+                #kwargs_variability={"MJD", "ps_mag_i"},  # This line will not be used in
                 # the testing but at least code go through this warning message.
                 cosmo=cosmo,
-                light_profile="interpolated"
             )
-        print(f"Interpolated lens image shape: {self.gg_lens_interp.source.source_dict['image'].shape}")
 
 
     def test_deflector_ellipticity(self):
@@ -142,7 +152,7 @@ class TestLens(object):
 
     def test_image_separation_from_positions(self):
         image_positions = self.gg_lens.extended_source_image_positions()[0]
-        image_positions_interp = self.gg_lens_interp.extended_source_image_positions()
+        image_positions_interp = self.gg_lens_interp.extended_source_image_positions()[0]
         image_separation = image_separation_from_positions(image_positions)
         image_separation_interp = image_separation_from_positions(image_positions_interp)
         theta_E_infinity = theta_e_when_source_infinity(
@@ -163,7 +173,7 @@ class TestLens(object):
 
     def test_extended_source_magnification(self):
         host_mag = self.gg_lens.extended_source_magnification()[0]
-        host_mag_interp = self.gg_lens_interp.extended_source_magnification()
+        host_mag_interp = self.gg_lens_interp.extended_source_magnification()[0]
         assert host_mag > 0
         assert host_mag_interp > 0
 
@@ -201,7 +211,7 @@ class TestLens(object):
         dt_days2 = self.gg_lens.image_observer_times(t_obs=t_obs2)
         dt_days2_interp = self.gg_lens_interp.image_observer_times(t_obs=t_obs2)
         arrival_times = self.gg_lens.point_source_arrival_times()[0]
-        arrival_times_interp = self.gg_lens_interp.point_source_arrival_times()
+        arrival_times_interp = self.gg_lens_interp.point_source_arrival_times()[0]
         observer_times = (t_obs - arrival_times + np.min(arrival_times))[:, np.newaxis]
         observer_times_interp = (t_obs +arrival_times_interp - np.min(arrival_times_interp))[:, np.newaxis]
         observer_times2 = (

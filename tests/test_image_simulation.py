@@ -62,7 +62,7 @@ class TestImageSimulation(object):
 
 
         # Create the interp_source table
-        source_interp = Table([
+        source_interp_dict = Table([
             [z],
             [real_galaxy_image], 
             [z_data], 
@@ -72,6 +72,12 @@ class TestImageSimulation(object):
             [mag_i],
             [mag_r]
         ], names=("z", "image", "z_data", "pixel_width_data", "phi_G", "mag_g", "mag_i", "mag_r"))
+        source_interp = Source(
+            source_dict=source_interp_dict,
+            cosmo=cosmo,
+            source_type="extended",
+            light_profile="interpolated",
+        )
 
 
         self.source_dict = blue_one
@@ -97,13 +103,12 @@ class TestImageSimulation(object):
                 self.gg_lens = gg_lens
                 break
         self.gg_lens_interp = Lens(
-                source_dict=source_interp,
-                deflector_dict=self.deflector_dict,
+                source_class=source_interp,
+                deflector_class=self.deflector,
                 lens_equation_solver="lenstronomy_analytical",
-                kwargs_variability={"MJD", "ps_mag_i"},  # This line will not be used in
+                #kwargs_variability={"MJD", "ps_mag_i"},  # This line will not be used in
                 # the testing but at least code go through this warning message.
                 cosmo=cosmo,
-                light_profile="interpolated"
             )
 
 

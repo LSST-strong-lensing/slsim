@@ -498,12 +498,9 @@ class Source(object):
         return extended_source_center
 
     def kwargs_extended_source_light(self, center_lens, draw_area, band=None):
-        """Provides dictionary of keywords for the source light model(s). Kewords used
-    def kwargs_extended_source_light(
-        self, center_lens, draw_area, band=None, light_profile_str="single_sersic"
-    ): #MODIFY THIS
-        """Provids dictionary of keywords for the source light model(s). Kewords used
+        """Provides dictionary of keywords for the source light model(s). Keywords used
         are in lenstronomy conventions.
+        Provids dictionary of keywords for the source light model(s). 
 
         :param center_lens: center of the deflector.
          Eg: np.array([center_x_lens, center_y_lens])
@@ -581,7 +578,7 @@ class Source(object):
                     "center_y": center_source[1],
                 },
             ]
-        elif light_profile_str == "interpolated":
+        elif self.light_profile == "interpolated":
             z_image = self.source_dict["z_data"]
             pixel_width = self.source_dict["pixel_width_data"]
             pixel_width *= z_scale_factor(z_old=z_image, z_new=self.redshift)
@@ -622,9 +619,11 @@ class Source(object):
                     "SERSIC_ELLIPSE",
                     "SERSIC_ELLIPSE",
                 ]
+            elif self.light_profile == "interpolated":
+                source_models_list = ["INTERPOL"]
             else:
                 raise ValueError("Provided sersic profile is not supported. "
-                            "Supported profiles are single_sersic and double_sersic.")
+                            "Supported profiles are single_sersic, double_sersic and interpolated.")
         else:
             source_models_list = None
         return source_models_list
