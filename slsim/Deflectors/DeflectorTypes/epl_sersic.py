@@ -137,12 +137,8 @@ class EPLSersic(DeflectorBase):
 
         :return: gamma (with =2 is isothermal)
         """
-        # if hasattr(self._deflector_dict, "gamma_pl"):
-        #    return float(self._deflector_dict["gamma_pl"])
-        # else:
-        #    # TODO: this can (optionally) be made a function of stellar mass, velocity dispersion etc
-        #    return 2
         try:
             return float(self._deflector_dict["gamma_pl"])
         except KeyError:
+            # TODO: this can (optionally) be made a function of stellar mass, velocity dispersion etc
             return 2
