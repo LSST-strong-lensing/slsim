@@ -73,9 +73,10 @@ def vel_disp_composite_model(r, m_star, rs_star, m_halo, c_halo, cosmo, z_lens):
     return vel_disp
 
 
-def vel_disp_power_law(theta_E, gamma, r_half, kwargs_light, light_model_list, lens_cosmo):
-    """
-    velocity dispersion for a power-law mass density profile
+def vel_disp_power_law(
+    theta_E, gamma, r_half, kwargs_light, light_model_list, lens_cosmo
+):
+    """Velocity dispersion for a power-law mass density profile.
 
     :param theta_E: Einstein radius [arc seconds]
     :param gamma: power-law slope of deflector
@@ -88,7 +89,14 @@ def vel_disp_power_law(theta_E, gamma, r_half, kwargs_light, light_model_list, l
     # turn physical masses to lenstronomy units
 
     kwargs_mass = [
-        {"theta_E": theta_E, "gamma": gamma, "e1": 0, "e2": 0, "center_x": 0, "center_y": 0},
+        {
+            "theta_E": theta_E,
+            "gamma": gamma,
+            "e1": 0,
+            "e2": 0,
+            "center_x": 0,
+            "center_y": 0,
+        },
     ]
     kwargs_anisotropy = {"beta": 0}
     light_model = LightModel(light_model_list=light_model_list)
@@ -133,27 +141,39 @@ def vel_disp_power_law(theta_E, gamma, r_half, kwargs_light, light_model_list, l
     return vel_disp
 
 
-def theta_E_from_vel_disp_epl(vel_disp, gamma, r_half, kwargs_light, light_model_list, lens_cosmo,
-                              kappa_ext=0, sis_convention=True):
-    """
-    calculates Einstein radius given measured aperture averaged velocity dispersion and given power-law slope
+def theta_E_from_vel_disp_epl(
+    vel_disp,
+    gamma,
+    r_half,
+    kwargs_light,
+    light_model_list,
+    lens_cosmo,
+    kappa_ext=0,
+    sis_convention=True,
+):
+    """Calculates Einstein radius given measured aperture averaged velocity
+    dispersion and given power-law slope.
 
-    :param vel_disp: velocity dispersion measured within an aperture radius [km/s]
+    :param vel_disp: velocity dispersion measured within an aperture
+        radius [km/s]
     :param gamma: power-law slope
     :param r_half: half light radius (aperture radius) [arc seconds]
     :param kwargs_light: list of dict for light model parameters
     :param light_model_list: list of light models
     :param lens_cosmo: ~LensCosmo instance
     :param kappa_ext: external convergence
-    :param sis_convention: it True, uses velocity dispersion not as measured one but as the SIS equivalent velocity
-     dispersion
-    :return: Einstein radius matching the velocity dispersion and external convergence
+    :param sis_convention: it True, uses velocity dispersion not as
+        measured one but as the SIS equivalent velocity dispersion
+    :return: Einstein radius matching the velocity dispersion and
+        external convergence
     """
     if gamma == 2 or sis_convention is True:
         theta_E = lens_cosmo.sis_sigma_v2theta_E(vel_disp)
     else:
         theta_E_0 = 1
-        vel_disp_0 = vel_disp_power_law(theta_E_0, gamma, r_half, kwargs_light, light_model_list, lens_cosmo)
+        vel_disp_0 = vel_disp_power_law(
+            theta_E_0, gamma, r_half, kwargs_light, light_model_list, lens_cosmo
+        )
         # transform theta_E from vel_disp_0 prediction
         theta_E = theta_E_0 * (vel_disp / vel_disp_0) ** (2 / (gamma - 1))
     theta_E /= (1 - kappa_ext) ** (1.0 / (gamma - 1))

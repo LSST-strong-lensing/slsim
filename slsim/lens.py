@@ -421,11 +421,13 @@ class Lens(LensedSystemBase):
             theta_E = 0
             return theta_E
         lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
-        lens_model = LensModel(lens_model_list=lens_model_list,
-                               z_lens=self.deflector_redshift,
-                               z_source_convention=self.max_redshift_source_class.redshift,
-                               multi_plane=False,
-                               z_source=source.redshift)
+        lens_model = LensModel(
+            lens_model_list=lens_model_list,
+            z_lens=self.deflector_redshift,
+            z_source_convention=self.max_redshift_source_class.redshift,
+            multi_plane=False,
+            z_source=source.redshift,
+        )
         if self.deflector.deflector_type in ["EPL"]:
             kappa_ext_convention = self.los_class.convergence
             gamma_pl = self.deflector.halo_properties
@@ -435,9 +437,11 @@ class Lens(LensedSystemBase):
                 kappa_ext = kappa_ext_convention
             else:
                 # TODO: translate Einstein radius to different source redshift with power-law slope difference
-                beta = self._lens_cosmo.beta_double_source_plane(z_lens=self.deflector_redshift,
-                                                          z_source_2=self.max_redshift_source_class.redshift,
-                                                          z_source_1=source.redshift)
+                beta = self._lens_cosmo.beta_double_source_plane(
+                    z_lens=self.deflector_redshift,
+                    z_source_2=self.max_redshift_source_class.redshift,
+                    z_source_1=source.redshift,
+                )
                 theta_E = theta_E_convention * beta ** (1.0 / (gamma_pl - 1))
                 kappa_ext = kappa_ext_convention * beta
 

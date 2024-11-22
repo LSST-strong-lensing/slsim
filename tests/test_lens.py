@@ -579,14 +579,14 @@ class TestMultiSource(object):
             deflector_class=self.deflector,
             source_class=[self.source1, self.source2],
             cosmo=self.cosmo,
-            lens_equation_solver="lenstronomy_general"
+            lens_equation_solver="lenstronomy_general",
         )
 
         self.lens_class3_analytical = Lens(
             deflector_class=self.deflector,
             source_class=[self.source1, self.source2],
             cosmo=self.cosmo,
-            lens_equation_solver="lenstronomy_analytical"
+            lens_equation_solver="lenstronomy_analytical",
         )
 
     def test_point_source_arrival_time_multi(self):
@@ -637,9 +637,13 @@ class TestMultiSource(object):
             observation_time
         )
         # Test multisource image observation time
-        npt.assert_almost_equal(image_observation_time1[0],  image_observation_time3[0][0], decimal=5)
+        npt.assert_almost_equal(
+            image_observation_time1[0], image_observation_time3[0][0], decimal=5
+        )
         # assert image_observation_time1[0] == image_observation_time3[0][0]
-        npt.assert_almost_equal(image_observation_time2, image_observation_time3[1], decimal=5)
+        npt.assert_almost_equal(
+            image_observation_time2, image_observation_time3[1], decimal=5
+        )
         # assert np.all(image_observation_time2 == image_observation_time3[1])
         assert len(self.lens_class3.image_observer_times(t_obs=10)) == 2
 
