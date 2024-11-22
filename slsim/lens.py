@@ -13,7 +13,6 @@ from lenstronomy.Util import data_util
 from lenstronomy.Util import util
 
 from slsim.lensed_system_base import LensedSystemBase
-from slsim.Deflectors.velocity_dispersion import theta_E_from_vel_disp_epl
 
 
 class Lens(LensedSystemBase):
