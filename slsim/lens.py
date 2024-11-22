@@ -355,7 +355,7 @@ class Lens(LensedSystemBase):
 
         :return: lens redshift
         """
-        return self.deflector.redshift
+        return float(self.deflector.redshift)
 
     @property
     def source_redshift_list(self):
@@ -365,7 +365,7 @@ class Lens(LensedSystemBase):
         """
         source_redshifts = []
         for source in self.source:
-            source_redshifts.append(source.redshift)
+            source_redshifts.append(float(source.redshift))
         return source_redshifts
 
     @property

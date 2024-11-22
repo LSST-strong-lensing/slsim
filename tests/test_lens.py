@@ -522,10 +522,10 @@ class TestMultiSource(object):
         path = os.path.dirname(__file__)
         source_dict1 = Table.read(
             os.path.join(path, "TestData/source_supernovae_new.fits"), format="fits"
-        )
+        )[0]
         deflector_dict = Table.read(
             os.path.join(path, "TestData/deflector_supernovae_new.fits"), format="fits"
-        )
+        )[0]
         self.source1 = Source(
             source_dict=source_dict1,
             cosmo=self.cosmo,
@@ -538,10 +538,13 @@ class TestMultiSource(object):
             sn_absolute_mag_band="bessellb",
             sn_absolute_zpsys="ab",
         )
-        # We initiate the another Source class with the same source. In this class,
-        # source position will be different and all the lensing quantities will be different
+        source_dict2=Table.read(
+            os.path.join(path, "TestData/source_supernovae_new.fits"), format="fits"
+        )
+        source_dict2["z"] = 0.9
+        source_dict2 = source_dict2[0]
         self.source2 = Source(
-            source_dict=source_dict1,
+            source_dict=source_dict2,
             cosmo=self.cosmo,
             source_type="point_plus_extended",
             light_profile="double_sersic",
