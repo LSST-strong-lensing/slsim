@@ -435,7 +435,6 @@ class Lens(LensedSystemBase):
                 theta_E = theta_E_convention
                 kappa_ext = kappa_ext_convention
             else:
-                # TODO: translate Einstein radius to different source redshift with power-law slope difference
                 beta = self._lens_cosmo.beta_double_source_plane(
                     z_lens=self.deflector_redshift,
                     z_source_2=self.max_redshift_source_class.redshift,
