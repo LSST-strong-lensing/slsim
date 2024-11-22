@@ -3,6 +3,10 @@ import scipy
 from scipy import interpolate
 import copy
 
+from lenstronomy.Cosmo.lens_cosmo import LensCosmo
+from lenstronomy.Analysis.light_profile import LightProfileAnalysis
+from lenstronomy.LightModel.light_model import LightModel
+
 """
 This module provides functions to compute velocity dispersion using schechter function.
 """
@@ -35,8 +39,6 @@ def vel_disp_composite_model(r, m_star, rs_star, m_halo, c_halo, cosmo, z_lens):
     }
 
     # turn physical masses to lenstronomy units
-    from lenstronomy.Cosmo.lens_cosmo import LensCosmo
-
     lens_cosmo = LensCosmo(z_lens=z_lens, z_source=10, cosmo=cosmo)
     # Hernquist profile
     sigma0, rs_angle_hernquist = lens_cosmo.hernquist_phys2angular(
@@ -69,6 +71,113 @@ def vel_disp_composite_model(r, m_star, rs_star, m_halo, c_halo, cosmo, z_lens):
         r, kwargs_mass, kwargs_light, kwargs_anisotropy
     )
     return vel_disp
+
+
+def vel_disp_power_law(
+    theta_E, gamma, r_half, kwargs_light, light_model_list, lens_cosmo
+):
+    """Velocity dispersion for a power-law mass density profile.
+
+    :param theta_E: Einstein radius [arc seconds]
+    :param gamma: power-law slope of deflector
+    :param r_half: half light radius of deflector
+    :param kwargs_light: list of dict for light model parameters
+    :param light_model_list: list of light models
+    :param lens_cosmo: ~LensCosmo instance
+    :return: half light radius averaged velocity dispersion
+    """
+    # turn physical masses to lenstronomy units
+
+    kwargs_mass = [
+        {
+            "theta_E": theta_E,
+            "gamma": gamma,
+            "e1": 0,
+            "e2": 0,
+            "center_x": 0,
+            "center_y": 0,
+        },
+    ]
+    kwargs_anisotropy = {"beta": 0}
+    light_model = LightModel(light_model_list=light_model_list)
+    lensLightProfile = LightProfileAnalysis(light_model=light_model)
+
+    (
+        amps,
+        sigmas,
+        center_x,
+        center_y,
+    ) = lensLightProfile.multi_gaussian_decomposition(
+        kwargs_light,
+        r_h=r_half,
+        n_comp=20,
+    )
+    light_profile_list = ["MULTI_GAUSSIAN"]
+    kwargs_model = {
+        "mass_profile_list": ["EPL"],
+        "light_profile_list": light_profile_list,
+        "anisotropy_model": "const",
+    }
+
+    kwargs_light_mge = [{"amp": amps, "sigma": sigmas}]
+
+    from lenstronomy.GalKin.numeric_kinematics import NumericKinematics
+
+    kwargs_numerics = {
+        "interpol_grid_num": 1000,
+        "log_integration": True,
+        "max_integrate": 1000,
+        "min_integrate": 0.0001,
+        "max_light_draw": None,
+        "lum_weight_int_method": True,
+    }
+
+    kwargs_cosmo = {"d_d": lens_cosmo.dd, "d_s": lens_cosmo.ds, "d_ds": lens_cosmo.dds}
+
+    num_kin = NumericKinematics(kwargs_model, kwargs_cosmo, **kwargs_numerics)
+    vel_disp = num_kin.lum_weighted_vel_disp(
+        r_half, kwargs_mass, kwargs_light_mge, kwargs_anisotropy
+    )
+    return vel_disp
+
+
+def theta_E_from_vel_disp_epl(
+    vel_disp,
+    gamma,
+    r_half,
+    kwargs_light,
+    light_model_list,
+    lens_cosmo,
+    kappa_ext=0,
+    sis_convention=True,
+):
+    """Calculates Einstein radius given measured aperture averaged velocity
+    dispersion and given power-law slope.
+
+    :param vel_disp: velocity dispersion measured within an aperture
+        radius [km/s]
+    :param gamma: power-law slope
+    :param r_half: half light radius (aperture radius) [arc seconds]
+    :param kwargs_light: list of dict for light model parameters
+    :param light_model_list: list of light models
+    :param lens_cosmo: ~LensCosmo instance
+    :param kappa_ext: external convergence
+    :param sis_convention: it True, uses velocity dispersion not as
+        measured one but as the SIS equivalent velocity dispersion
+    :return: Einstein radius matching the velocity dispersion and
+        external convergence
+    """
+    if gamma == 2 or sis_convention is True:
+        theta_E = lens_cosmo.sis_sigma_v2theta_E(vel_disp)
+    else:
+        theta_E_0 = 1
+        vel_disp_0 = vel_disp_power_law(
+            theta_E_0, gamma, r_half, kwargs_light, light_model_list, lens_cosmo
+        )
+        # transform theta_E from vel_disp_0 prediction
+        theta_E = theta_E_0 * (vel_disp / vel_disp_0) ** (2 / (gamma - 1))
+    theta_E /= (1 - kappa_ext) ** (1.0 / (gamma - 1))
+    return theta_E
 
 
 def vel_disp_nfw_3d(r, m_halo, c_halo, cosmo, z_lens):
@@ -190,8 +299,6 @@ def vel_disp_nfw(m_halo, c_halo, cosmo, z_lens):
     """Computes vel_disp_nfw_aperture using the characteristic radius rs of the
     NFW as aperture (which is independent of the source redshift).
 
-    :param r: radius of the aperture for the velocity dispersion
-        [arcsec]
     :param m_halo: Halo mass [physical M_sun]
     :param c_halo: halo concentration
     :param cosmo: cosmology
@@ -403,7 +510,7 @@ def schechter_vel_disp_redshift(
         bounds.
     sky_area : `~astropy.units.Quantity`
         Sky area over which galaxies are sampled. Must be in units of solid angle.
-    cosmology : `~astropy.cosmology`
+    cosmo : `~astropy.cosmology`
         `astropy.cosmology` object to calculate comoving densities.
     noise : bool, optional
         Poisson-sample the number of galaxies. Default is `True`.

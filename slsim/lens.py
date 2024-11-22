@@ -99,8 +99,8 @@ class Lens(LensedSystemBase):
         self._source_type = self.max_redshift_source_class.source_type
         # we conventionally use highest source redshift in the lens cosmo.
         self._lens_cosmo = LensCosmo(
-            z_lens=float(self.deflector.redshift),
-            z_source=float(self.max_redshift_source_class.redshift),
+            z_lens=self.deflector.redshift,
+            z_source=self.max_redshift_source_class.redshift,
             cosmo=self.cosmo,
         )
 
@@ -210,6 +210,7 @@ class Lens(LensedSystemBase):
         point_source_pos_x, point_source_pos_y = source.point_source_position(
             center_lens=self.deflector_position, draw_area=self.test_area
         )
+
         # uses analytical lens equation solver in case it is supported by lenstronomy for speed-up
         if (
             self._lens_equation_solver == "lenstronomy_analytical"
@@ -417,27 +418,34 @@ class Lens(LensedSystemBase):
         """
         if self.deflector.redshift >= source.redshift:
             theta_E = 0
-        elif self.deflector.deflector_type in ["EPL"]:
-            _lens_cosmo = LensCosmo(
-                z_lens=float(self.deflector.redshift),
-                z_source=float(source.redshift),
-                cosmo=self.cosmo,
-            )
-            kappa_ext = self.los_class.convergence
+            return theta_E
+        lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
+        lens_model = LensModel(
+            lens_model_list=lens_model_list,
+            z_lens=self.deflector_redshift,
+            z_source_convention=self.max_redshift_source_class.redshift,
+            multi_plane=False,
+            z_source=source.redshift,
+        )
+        if self.deflector.deflector_type in ["EPL"]:
+            kappa_ext_convention = self.los_class.convergence
             gamma_pl = self.deflector.halo_properties
-            theta_E = _lens_cosmo.sis_sigma_v2theta_E(
-                float(self.deflector.velocity_dispersion(cosmo=self.cosmo))
-            ) / (1 - kappa_ext) ** (1.0 / (gamma_pl - 1))
+            theta_E_convention = kwargs_lens[0]["theta_E"]
+            if source.redshift == self.max_redshift_source_class.redshift:
+                theta_E = theta_E_convention
+                kappa_ext = kappa_ext_convention
+            else:
+                beta = self._lens_cosmo.beta_double_source_plane(
+                    z_lens=self.deflector_redshift,
+                    z_source_2=self.max_redshift_source_class.redshift,
+                    z_source_1=source.redshift,
+                )
+                theta_E = theta_E_convention * beta ** (1.0 / (gamma_pl - 1))
+                kappa_ext = kappa_ext_convention * beta
+
+            theta_E /= (1 - kappa_ext) ** (1.0 / (gamma_pl - 1))
         else:
             # numerical solution for the Einstein radius
-            lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
-            lens_model = LensModel(
-                lens_model_list=lens_model_list,
-                z_lens=self.deflector_redshift,
-                z_source_convention=self.max_redshift_source_class.redshift,
-                multi_plane=False,
-                z_source=source.redshift,
-            )
             lens_analysis = LensProfileAnalysis(lens_model=lens_model)
             theta_E = lens_analysis.effective_einstein_radius(
                 kwargs_lens, r_min=1e-3, r_max=5e1, num_points=50
@@ -823,6 +831,8 @@ class Lens(LensedSystemBase):
 
         :return: lens_model_list, kwargs_lens
         """
+        if hasattr(self, "_lens_mass_model_list") and hasattr(self, "_kwargs_lens"):
+            return self._lens_mass_model_list, self._kwargs_lens
         if self.deflector.deflector_type in ["EPL", "NFW_HERNQUIST", "NFW_CLUSTER"]:
             lens_mass_model_list, kwargs_lens = self.deflector.mass_model_lenstronomy(
                 lens_cosmo=self._lens_cosmo
@@ -833,7 +843,7 @@ class Lens(LensedSystemBase):
                 % self.deflector.deflector_type
             )
         # adding line-of-sight structure
-        gamma1, gamma2, kappa_ext = self.los_linear_distortions
+        kappa_ext, gamma1, gamma2 = self.los_linear_distortions
         gamma1_lenstronomy, gamma2_lenstronomy = ellipticity_slsim_to_lenstronomy(
             e1_slsim=gamma1, e2_slsim=gamma2
         )
@@ -848,6 +858,8 @@ class Lens(LensedSystemBase):
         kwargs_lens.append({"kappa": kappa_ext, "ra_0": 0, "dec_0": 0})
         lens_mass_model_list.append("SHEAR")
         lens_mass_model_list.append("CONVERGENCE")
+        self._kwargs_lens = kwargs_lens
+        self._lens_mass_model_list = lens_mass_model_list
 
         return lens_mass_model_list, kwargs_lens
 
