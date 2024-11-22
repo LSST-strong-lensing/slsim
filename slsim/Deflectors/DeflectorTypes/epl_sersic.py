@@ -16,6 +16,7 @@ class EPLSersic(DeflectorBase):
     - 'e2_light': eccentricity of light
     - 'z': redshift of deflector
     """
+
     def __init__(self, deflector_dict):
         """
 
@@ -62,12 +63,18 @@ class EPLSersic(DeflectorBase):
             theta_E = 0.0
         else:
             lens_light_model_list, kwargs_lens_light = self.light_model_lenstronomy()
-            theta_E = theta_E_from_vel_disp_epl(vel_disp=float(self.velocity_dispersion(cosmo=lens_cosmo.background.cosmo)),
-                                                gamma=gamma,
-                                                r_half=self.angular_size_light,
-                                                kwargs_light=kwargs_lens_light, light_model_list=lens_light_model_list,
-                                                lens_cosmo=lens_cosmo,
-                                                kappa_ext=0, sis_convention=self._sis_convention)
+            theta_E = theta_E_from_vel_disp_epl(
+                vel_disp=float(
+                    self.velocity_dispersion(cosmo=lens_cosmo.background.cosmo)
+                ),
+                gamma=gamma,
+                r_half=self.angular_size_light,
+                kwargs_light=kwargs_lens_light,
+                light_model_list=lens_light_model_list,
+                lens_cosmo=lens_cosmo,
+                kappa_ext=0,
+                sis_convention=self._sis_convention,
+            )
 
         e1_mass, e2_mass = self.mass_ellipticity
         e1_mass_lenstronomy, e2_mass_lenstronomy = ellipticity_slsim_to_lenstronomy(
@@ -130,9 +137,9 @@ class EPLSersic(DeflectorBase):
 
         :return: gamma (with =2 is isothermal)
         """
-        #if hasattr(self._deflector_dict, "gamma_pl"):
+        # if hasattr(self._deflector_dict, "gamma_pl"):
         #    return float(self._deflector_dict["gamma_pl"])
-        #else:
+        # else:
         #    # TODO: this can (optionally) be made a function of stellar mass, velocity dispersion etc
         #    return 2
         try:

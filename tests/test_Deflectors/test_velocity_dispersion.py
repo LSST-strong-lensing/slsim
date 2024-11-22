@@ -5,7 +5,7 @@ from slsim.Deflectors.velocity_dispersion import (
     vel_disp_nfw_aperture,
     redshifts_from_comoving_density,
     vel_disp_power_law,
-    theta_E_from_vel_disp_epl
+    theta_E_from_vel_disp_epl,
 )
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 import numpy as np
@@ -53,14 +53,26 @@ def test_vel_disp_power_law():
     theta_E = 1.5
     gamma = 2
     r_half = 1
-    kwargs_light = [{"amp": 1, "R_sersic": 2, "n_sersic": 1, "e1": 0, "e2": 0, "center_x": 0, "center_y": 0}]
+    kwargs_light = [
+        {
+            "amp": 1,
+            "R_sersic": 2,
+            "n_sersic": 1,
+            "e1": 0,
+            "e2": 0,
+            "center_x": 0,
+            "center_y": 0,
+        }
+    ]
     light_model_list = ["SERSIC_ELLIPSE"]
 
     # kwargs_light = [{"amp": 1, "gamma": 2, "e1": 0, "e2": 0, "center_x": 0, "center_y": 0}]
     # light_model_list = ["POWER_LAW"]
     lens_cosmo = LensCosmo(z_lens=z_lens, z_source=z_source, cosmo=cosmo)
 
-    vel_disp_pl = vel_disp_power_law(theta_E, gamma, r_half, kwargs_light, light_model_list, lens_cosmo)
+    vel_disp_pl = vel_disp_power_law(
+        theta_E, gamma, r_half, kwargs_light, light_model_list, lens_cosmo
+    )
 
     vel_disp_sis = lens_cosmo.sis_theta_E2sigma_v(theta_E)
     npt.assert_almost_equal(vel_disp_pl / vel_disp_sis, 1, decimal=1)
@@ -74,14 +86,34 @@ def test_theta_E_from_vel_disp_epl():
     theta_E = 1.5
     gamma = 2.5
     r_half = 1
-    kwargs_light = [{"amp": 1, "R_sersic": 2, "n_sersic": 1, "e1": 0, "e2": 0, "center_x": 0, "center_y": 0}]
+    kwargs_light = [
+        {
+            "amp": 1,
+            "R_sersic": 2,
+            "n_sersic": 1,
+            "e1": 0,
+            "e2": 0,
+            "center_x": 0,
+            "center_y": 0,
+        }
+    ]
     light_model_list = ["SERSIC_ELLIPSE"]
 
-    vel_disp_pl = vel_disp_power_law(theta_E, gamma, r_half, kwargs_light, light_model_list, lens_cosmo)
+    vel_disp_pl = vel_disp_power_law(
+        theta_E, gamma, r_half, kwargs_light, light_model_list, lens_cosmo
+    )
 
-    theta_E_out = theta_E_from_vel_disp_epl(vel_disp_pl, gamma, r_half, kwargs_light,
-                                            light_model_list, lens_cosmo, kappa_ext=0, sis_convention=False)
-    npt.assert_almost_equal(theta_E_out/theta_E, 1, decimal=3)
+    theta_E_out = theta_E_from_vel_disp_epl(
+        vel_disp_pl,
+        gamma,
+        r_half,
+        kwargs_light,
+        light_model_list,
+        lens_cosmo,
+        kappa_ext=0,
+        sis_convention=False,
+    )
+    npt.assert_almost_equal(theta_E_out / theta_E, 1, decimal=3)
 
 
 def test_schechter_vdf():
