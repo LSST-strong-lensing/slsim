@@ -834,7 +834,7 @@ class Lens(LensedSystemBase):
                 % self.deflector.deflector_type
             )
         # adding line-of-sight structure
-        gamma1, gamma2, kappa_ext = self.los_linear_distortions
+        kappa_ext, gamma1, gamma2 = self.los_linear_distortions
         gamma1_lenstronomy, gamma2_lenstronomy = ellipticity_slsim_to_lenstronomy(
             e1_slsim=gamma1, e2_slsim=gamma2
         )

@@ -1,3 +1,5 @@
+import copy
+
 import pytest
 import numpy as np
 from numpy import testing as npt
@@ -34,6 +36,7 @@ class TestLens(object):
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         self.source_dict = blue_one
         self.deflector_dict = red_one
+        self.los_individual = LOSIndividual(kappa=0.1, gamma=[-0.1, -0.2])
 
         print(blue_one)
         blue_one["gamma_pl"] = 2.1
@@ -52,6 +55,7 @@ class TestLens(object):
             gg_lens = Lens(
                 source_class=self.source,
                 deflector_class=self.deflector,
+                los_class=self.los_individual,
                 lens_equation_solver="lenstronomy_analytical",
                 # kwargs_variability={"MJD", "ps_mag_i"},  # This line will not be used in
                 # the testing but at least code go through this warning message.
@@ -113,8 +117,11 @@ class TestLens(object):
         assert vdp >= 10
 
     def test_los_linear_distortions(self):
-        losd = self.gg_lens.los_linear_distortions
-        assert losd != 0
+        kappa, gamma1, gamma2 = self.gg_lens.los_linear_distortions
+        assert kappa == self.los_individual.convergence
+        g1, g2 = self.los_individual.shear
+        assert gamma1 == g1
+        assert gamma2 == g2
 
     def test_point_source_arrival_times(self):
         dt_days = self.gg_lens.point_source_arrival_times()
@@ -526,8 +533,10 @@ class TestMultiSource(object):
         deflector_dict = Table.read(
             os.path.join(path, "TestData/deflector_supernovae_new.fits"), format="fits"
         )
+        source_dict2 = copy.deepcopy(source_dict1)
+        source_dict2["z"] += 0.5
         self.source1 = Source(
-            source_dict=source_dict1,
+            source_dict=source_dict2,
             cosmo=self.cosmo,
             source_type="point_plus_extended",
             light_profile="double_sersic",
@@ -607,6 +616,8 @@ class TestMultiSource(object):
         # Test multisource einstein radius.
         assert einstein_radius1[0] == einstein_radius3[0]
         assert einstein_radius2[0] == einstein_radius3[1]
+        print(einstein_radius3, einstein_radius1)
+        assert 1 == 0
 
     def test_image_observer_time_multi(self):
         observation_time = 50
