@@ -691,13 +691,14 @@ class Lens(LensedSystemBase):
         :return: integrated magnification factor of host magnitude
         """
         kwargs_model, kwargs_params = self.lenstronomy_kwargs(band=None)
-        _light_model_list = kwargs_model.get(
-                    "source_light_model_list", [])[source_index]
-        kwargs_source_mag = [kwargs_params["kwargs_source"][source_index]]
-        if isinstance(_light_model_list, list):
-            light_model_list = _light_model_list
+        if self.source_number==1:
+            light_model_list = kwargs_model.get(
+                    "source_light_model_list", [])
+            kwargs_source_mag = kwargs_params["kwargs_source"]
         else:
-            light_model_list = [_light_model_list]
+            light_model_list = kwargs_model.get(
+                        "source_light_model_list", [])[source_index]
+            kwargs_source_mag = kwargs_params["kwargs_source"][source_index]
         lightModel = LightModel(
             light_model_list=light_model_list)
         lensModel = LensModel(

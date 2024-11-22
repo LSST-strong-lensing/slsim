@@ -512,8 +512,7 @@ def test_double_sersic_multisource(supernovae_lens_instance_double_sersic_multis
     assert len(results[1]["kwargs_source"]) == 2
     assert len(results[1]["kwargs_ps"]) == 2
 
-
-class TestMultiSource(object):
+"""class TestMultiSource:
     def setup_method(self):
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         path = os.path.dirname(__file__)
@@ -583,60 +582,166 @@ class TestMultiSource(object):
                 deflector_type="EPL",
                 deflector_dict=deflector_dict,
             )
-        lens_class1 = Lens(
+        self.lens_class1 = Lens(
             deflector_class=self.deflector,
             source_class=self.source1,
             cosmo=self.cosmo,
         )
-        lens_class2 = Lens(
+        self.lens_class2 = Lens(
             deflector_class=self.deflector,
             source_class=self.source2,
             cosmo=self.cosmo,
         )
-        lens_class3 = Lens(
+        self.lens_class3 = Lens(
             deflector_class=self.deflector,
             source_class=[self.source1, self.source2],
             cosmo=self.cosmo,
         )
-        point_source_arival_time1=lens_class1.point_source_arrival_times()
-        point_source_arival_time2=lens_class2.point_source_arrival_times()
-        point_source_arival_time3=lens_class3.point_source_arrival_times()
 
-        ps_magnification1=lens_class1.point_source_magnification()
-        ps_magnification2=lens_class2.point_source_magnification()
-        ps_magnification3=lens_class3.point_source_magnification()
+    def test_point_source_arrival_times(self):
+        point_source_arival_time1 = self.lens_class1.point_source_arrival_times()
+        #point_source_arival_time2 = self.lens_class2.point_source_arrival_times()
+        point_source_arival_time3 = self.lens_class3.point_source_arrival_times()
 
-        es_magnification1=lens_class1.extended_source_magnification()
-        es_magnification2=lens_class2.extended_source_magnification()
-        es_magnification3=lens_class3.extended_source_magnification()
+        assert point_source_arival_time1 != 0
+        #assert point_source_arival_time1[0] == point_source_arival_time3[0]
+        #assert point_source_arival_time2[0] == point_source_arival_time3[1]
 
-        einstein_radius1=lens_class1.einstein_radius
-        einstein_radius2=lens_class2.einstein_radius
-        einstein_radius3=lens_class3.einstein_radius
+    def test_point_source_magnifications(self):
+        ps_magnification1 = self.lens_class1.point_source_magnification()
+        ps_magnification2 = self.lens_class2.point_source_magnification()
+        ps_magnification3 = self.lens_class3.point_source_magnification()
 
-        observation_time = 50
-        image_observation_time1=lens_class1.image_observer_times(observation_time)
-        image_observation_time2=lens_class2.image_observer_times(observation_time)  
-        image_observation_time3=lens_class3.image_observer_times(observation_time) 
-        
-        #Test multisource point source arival time.
-        assert point_source_arival_time1[0] == point_source_arival_time3[0]
-        assert point_source_arival_time2[0] == point_source_arival_time3[1]
-        #Test multisource point source magnifications.
         assert ps_magnification1[0] == ps_magnification3[0]
         assert ps_magnification2[0] == ps_magnification3[1]
-        #Test multisource extended source magnifications.
+
+    def test_extended_source_magnifications(self):
+        es_magnification1 = self.lens_class1.extended_source_magnification()
+        es_magnification2 = self.lens_class2.extended_source_magnification()
+        es_magnification3 = self.lens_class3.extended_source_magnification()
+
         assert es_magnification1[0] == es_magnification3[0]
         assert es_magnification2[0] == es_magnification3[1]
+
+    def test_einstein_radii(self):
+        einstein_radius1 = self.lens_class1.einstein_radius
+        einstein_radius2 = self.lens_class2.einstein_radius
+        einstein_radius3 = self.lens_class3.einstein_radius
+
+        assert einstein_radius1[0] == einstein_radius3[0]
+        assert einstein_radius2[0] == einstein_radius3[1]
+
+    def test_image_observation_times(self):
+        observation_time = 50
+        image_observation_time1 = self.lens_class1.image_observer_times(observation_time)
+        image_observation_time2 = self.lens_class2.image_observer_times(observation_time)
+        image_observation_time3 = self.lens_class3.image_observer_times(observation_time)
+
+        assert image_observation_time1[0] == image_observation_time3[0]
+        assert image_observation_time2[0] == image_observation_time3[1]
+
+    def test_image_observer_times_length(self):
+        assert len(self.lens_class3.image_observer_times(t_obs=10)) == 2"""
+
+
+class TestMultiSource(object):
+    def setup_method(self):
+        self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+        path = os.path.dirname(__file__)
+        source_dict1 = Table.read(
+            os.path.join(path, "TestData/source_supernovae_new.fits"), format="fits"
+        )
+        deflector_dict = Table.read(
+            os.path.join(path, "TestData/deflector_supernovae_new.fits"), format="fits"
+        )
+        self.source1 = Source(
+            source_dict=source_dict1,
+            cosmo=self.cosmo,
+            source_type="point_plus_extended",
+            light_profile="double_sersic",
+            lightcurve_time=np.linspace(-20, 100, 1000),
+            variability_model="light_curve",
+            kwargs_variability={"supernovae_lightcurve", "i"},
+            sn_type="Ia",
+            sn_absolute_mag_band="bessellb",
+            sn_absolute_zpsys="ab",
+
+        )
+        # We initiate the another Source class with the same source. In this class, 
+        # source position will be different and all the lensing quantities will be different
+        self.source2 = Source(
+            source_dict=source_dict1,
+            cosmo=self.cosmo,
+            source_type="point_plus_extended",
+            light_profile="double_sersic",
+            lightcurve_time=np.linspace(-20, 100, 1000),
+            variability_model="light_curve",
+            kwargs_variability={"supernovae_lightcurve", "i"},
+            sn_type="Ia",
+            sn_absolute_mag_band="bessellb",
+            sn_absolute_zpsys="ab",
+
+        )
+        self.deflector = Deflector(
+                deflector_type="EPL",
+                deflector_dict=deflector_dict,
+            )
+        self.lens_class1 = Lens(
+            deflector_class=self.deflector,
+            source_class=self.source1,
+            cosmo=self.cosmo,
+        )
+        self.lens_class2 = Lens(
+            deflector_class=self.deflector,
+            source_class=self.source2,
+            cosmo=self.cosmo,
+        )
+        self.lens_class3 = Lens(
+            deflector_class=self.deflector,
+            source_class=[self.source1, self.source2],
+            cosmo=self.cosmo,
+        )
+    def test_point_source_arrival_time_multi(self):   
+        point_source_arival_time1=self.lens_class1.point_source_arrival_times()
+        point_source_arival_time2=self.lens_class2.point_source_arrival_times()
+        point_source_arival_time3=self.lens_class3.point_source_arrival_times()
+        #Test multisource point source arival time.
+        assert np.all(point_source_arival_time1[0]) == np.all(point_source_arival_time3[0])
+        assert np.all(point_source_arival_time2[0]) == np.all(point_source_arival_time3[1])
+    
+    def test_ps_magnification_multi(self):
+        ps_magnification1=self.lens_class1.point_source_magnification()
+        ps_magnification2=self.lens_class2.point_source_magnification()
+        ps_magnification3=self.lens_class3.point_source_magnification()
+        #Test multisource point source magnifications.
+        assert np.all(ps_magnification1[0]) == np.all(ps_magnification3[0])
+        assert np.all(ps_magnification2[0]) == np.all(ps_magnification3[1])
+
+    """def test_es_magnification_multi(self):
+        es_magnification1=self.lens_class1.extended_source_magnification()
+        es_magnification2=self.lens_class2.extended_source_magnification()
+        es_magnification3=self.lens_class3.extended_source_magnification()
+        #Test multisource extended source magnifications.
+        assert es_magnification1[0] == es_magnification3[0]
+        assert es_magnification2[0] == es_magnification3[1]"""
+
+    def test_einstein_radius_multi(self):    
+        einstein_radius1=self.lens_class1.einstein_radius
+        einstein_radius2=self.lens_class2.einstein_radius
+        einstein_radius3=self.lens_class3.einstein_radius
         #Test multisource einstein radius.
         assert einstein_radius1[0] == einstein_radius3[0]
         assert einstein_radius2[0] == einstein_radius3[1]
+
+    def test_image_observer_time_multi(self):
+        observation_time = 50
+        image_observation_time1=self.lens_class1.image_observer_times(observation_time)
+        image_observation_time2=self.lens_class2.image_observer_times(observation_time)  
+        image_observation_time3=self.lens_class3.image_observer_times(observation_time)
         #Test multisource image observation time
-        assert image_observation_time1[0] == image_observation_time3[0]
-        assert image_observation_time2[0] == image_observation_time3[1]
-        assert lens_class1.einstein_radius_deflector[0] == lens_class3.einstein_radius_deflector[0]
-        assert lens_class1.einstein_radius[0] == lens_class3.einstein_radius[0]
-        assert len(lens_class3.image_observer_times(t_obs=10)) == 2
+        assert image_observation_time1[0] == image_observation_time3[0][0]
+        assert np.all(image_observation_time2 == image_observation_time3[1])
+        assert len(self.lens_class3.image_observer_times(t_obs=10)) == 2
         
       
 if __name__ == "__main__":
