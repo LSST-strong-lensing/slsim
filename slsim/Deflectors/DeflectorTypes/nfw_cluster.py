@@ -6,8 +6,8 @@ import numpy as np
 
 
 class NFWCluster(DeflectorBase):
-    """Class of a NFW halo lens model with subhalos. Each subhalo is a EPLSersic
-    instance with its own mass and light.
+    """Class of a NFW halo lens model with subhalos. Each subhalo is a
+    EPLSersic instance with its own mass and light.
 
     required quantities in dictionary:
     - 'halo_mass': halo mass in physical M_sol
@@ -29,8 +29,8 @@ class NFWCluster(DeflectorBase):
         super(NFWCluster, self).__init__(deflector_dict)
 
     def velocity_dispersion(self, cosmo=None):
-        """Velocity dispersion of deflector. Simplified assumptions on anisotropy and
-        averaged over the characteristic radius.
+        """Velocity dispersion of deflector. Simplified assumptions on
+        anisotropy and averaged over the characteristic radius.
 
         :param cosmo: cosmology
         :type cosmo: ~astropy.cosmology class
@@ -40,7 +40,8 @@ class NFWCluster(DeflectorBase):
         return vel_disp_nfw(m_halo, c_halo, cosmo, self.redshift)
 
     def mass_model_lenstronomy(self, lens_cosmo):
-        """Returns lens model instance and parameters in lenstronomy conventions.
+        """Returns lens model instance and parameters in lenstronomy
+        conventions.
 
         :param lens_cosmo: lens cosmology model
         :type lens_cosmo: ~lenstronomy.Cosmo.LensCosmo instance
@@ -58,8 +59,8 @@ class NFWCluster(DeflectorBase):
         return lens_mass_model_list, kwargs_lens_mass
 
     def _halo_mass_model_lenstronomy(self, lens_cosmo):
-        """Returns lens model instance and parameters in lenstronomy conventions for the
-        main halo.
+        """Returns lens model instance and parameters in lenstronomy
+        conventions for the main halo.
 
         :param lens_cosmo: lens cosmology model
         :type lens_cosmo: ~lenstronomy.Cosmo.LensCosmo instance
@@ -86,7 +87,8 @@ class NFWCluster(DeflectorBase):
         return lens_mass_model_list, kwargs_lens_mass
 
     def light_model_lenstronomy(self, band=None):
-        """Returns lens model instance and parameters in lenstronomy conventions.
+        """Returns lens model instance and parameters in lenstronomy
+        conventions.
 
         :param band: imaging band
         :type band: str

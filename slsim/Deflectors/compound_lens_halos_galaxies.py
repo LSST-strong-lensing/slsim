@@ -7,11 +7,14 @@ from lenstronomy.Util import constants
 from slsim.Deflectors.elliptical_lens_galaxies import elliptical_projected_eccentricity
 from slsim.Deflectors.deflector import Deflector
 
-class CompoundLensHalosGalaxies(DeflectorsBase):
-    """Class describing compound lens model in which the mass distribution of individual
-    lens objects is described by a superposition of dark matter and stellar components.
 
-    This class is called by setting deflector_type == "halo-models" in LensPop.
+class CompoundLensHalosGalaxies(DeflectorsBase):
+    """Class describing compound lens model in which the mass distribution of
+    individual lens objects is described by a superposition of dark matter and
+    stellar components.
+
+    This class is called by setting deflector_type == "halo-models" in
+    LensPop.
     """
 
     def __init__(
@@ -121,6 +124,7 @@ class CompoundLensHalosGalaxies(DeflectorsBase):
             deflector["e2_light"] = e2_light
             deflector["e1_mass"] = e1_mass
             deflector["e2_mass"] = e2_mass
-        deflector_class = Deflector(deflector_type=self.deflector_profile,
-                                     deflector_dict=deflector)
+        deflector_class = Deflector(
+            deflector_type=self.deflector_profile, deflector_dict=deflector
+        )
         return deflector_class

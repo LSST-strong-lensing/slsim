@@ -38,7 +38,8 @@ class EPLSersic(DeflectorBase):
         return e1_light, e2_light
 
     def mass_model_lenstronomy(self, lens_cosmo):
-        """Returns lens model instance and parameters in lenstronomy conventions.
+        """Returns lens model instance and parameters in lenstronomy
+        conventions.
 
         :param lens_cosmo: lens cosmology model
         :type lens_cosmo: ~lenstronomy.Cosmo.LensCosmo instance
@@ -73,7 +74,8 @@ class EPLSersic(DeflectorBase):
         return lens_mass_model_list, kwargs_lens_mass
 
     def light_model_lenstronomy(self, band=None):
-        """Returns lens model instance and parameters in lenstronomy conventions.
+        """Returns lens model instance and parameters in lenstronomy
+        conventions.
 
         :param band: imaging band
         :type band: str

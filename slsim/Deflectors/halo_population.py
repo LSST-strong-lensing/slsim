@@ -82,17 +82,19 @@ def calc_vol(z, cosmo_col):
 
 
 def dNhalodzdlnM_lens(M, z, cosmo_col):
-    """Compute the differential number density of halos with respect to redshift and log
-    halo mass, per a unit of solid angle [deg^2]
+    """Compute the differential number density of halos with respect to
+    redshift and log halo mass, per a unit of solid angle [deg^2]
 
     :param M: The masses of the dark matter halos.
     :type  M: ndarray, float
-    :param z: The redshift at which to compute the differential number density.
+    :param z: The redshift at which to compute the differential number
+        density.
     :type  z: float
     :param cosmo_col: An instance of an colossus cosmology model
     :type cosmo_col: colossus.cosmology instance
-    :return: dNhalodzdlnM, The differential number density of halos per unit redshift
-        per natural log mass interval per unit area in units of #/deg^2/dlnM[M_sol/h].
+    :return: dNhalodzdlnM, The differential number density of halos per
+        unit redshift per natural log mass interval per unit area in
+        units of #/deg^2/dlnM[M_sol/h].
     """
     dvoldzdO = calc_vol(z, cosmo_col)
     hhh = (cosmo_col.H0 / 100.0) ** 3
@@ -104,9 +106,9 @@ def dNhalodzdlnM_lens(M, z, cosmo_col):
 
 
 def concent_m_w_scatter(m, z, sig):
-    """Concentration parameter of halos in B. Diemer and A. V. Kravtsov, 2015 with
-    updated parameters of  Diemer & Joyce 2019 arXiv:1407.4730 [astro-ph.CO].
-    arXiv:1809.07326 [astro-ph.CO].
+    """Concentration parameter of halos in B. Diemer and A. V. Kravtsov, 2015
+    with updated parameters of  Diemer & Joyce 2019 arXiv:1407.4730 [astro-
+    ph.CO]. arXiv:1809.07326 [astro-ph.CO].
 
     :param m: halo mass
     :type  m: nd.array

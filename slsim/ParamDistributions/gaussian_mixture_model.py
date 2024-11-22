@@ -4,8 +4,8 @@ import numpy as np
 class GaussianMixtureModel:
     """A Gaussian Mixture Model (GMM) class.
 
-    This class is used to represent a mixture of Gaussian distributions, each of which
-    is defined by its mean, standard deviation and weight.
+    This class is used to represent a mixture of Gaussian distributions,
+    each of which is defined by its mean, standard deviation and weight.
     """
 
     def __init__(self, means=None, stds=None, weights=None):
@@ -39,7 +39,8 @@ class GaussianMixtureModel:
 
         :param size: The number of random variables to generate.
         :type size: int
-        :return: An array of random variables sampled from the GMM distribution.
+        :return: An array of random variables sampled from the GMM
+            distribution.
         :rtype: np.array
         """
         components = np.random.choice(len(self.means), size=size, p=self.weights)

@@ -45,7 +45,7 @@ def test_draw_false_positive_single():
     draw_source = fp_pop1.draw_sources(z_max=draw_deflector[1])
     assert isinstance(draw_fp1, object)
     assert isinstance(draw_deflector[0], object)
-    assert draw_deflector[1] == draw_deflector[0].redshift + 0.002 
+    assert draw_deflector[1] == draw_deflector[0].redshift + 0.002
     assert isinstance(draw_source, object)
 
 

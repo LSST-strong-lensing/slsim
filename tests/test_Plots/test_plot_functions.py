@@ -37,9 +37,9 @@ def quasar_lens_pop_instance():
             kwargs_variability={"amp", "freq"},
         )
         deflector = Deflector(
-                deflector_type="EPL",
-                deflector_dict=deflector_dict,
-            )
+            deflector_type="EPL",
+            deflector_dict=deflector_dict,
+        )
         pes_lens = Lens(
             source_class=source,
             deflector_class=deflector,

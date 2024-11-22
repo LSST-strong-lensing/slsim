@@ -36,12 +36,11 @@ def supernovae_lens_instance():
             sn_type="Ia",
             sn_absolute_mag_band="bessellb",
             sn_absolute_zpsys="ab",
-
         )
         deflector = Deflector(
-                deflector_type="EPL",
-                deflector_dict=deflector_dict,
-            )
+            deflector_type="EPL",
+            deflector_dict=deflector_dict,
+        )
         supernovae_lens = Lens(
             deflector_class=deflector,
             source_class=source,
