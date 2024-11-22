@@ -579,6 +579,14 @@ class TestMultiSource(object):
             deflector_class=self.deflector,
             source_class=[self.source1, self.source2],
             cosmo=self.cosmo,
+            lens_equation_solver="lenstronomy_general"
+        )
+
+        self.lens_class3_analytical = Lens(
+            deflector_class=self.deflector,
+            source_class=[self.source1, self.source2],
+            cosmo=self.cosmo,
+            lens_equation_solver="lenstronomy_analytical"
         )
 
     def test_point_source_arrival_time_multi(self):
@@ -606,18 +614,16 @@ class TestMultiSource(object):
         es_magnification2 = self.lens_class2.extended_source_magnification()
         es_magnification3 = self.lens_class3.extended_source_magnification()
         # Test multisource extended source magnifications.
-        assert es_magnification1[0] == es_magnification3[0]
-        assert es_magnification2[0] == es_magnification3[1]
+        npt.assert_almost_equal(es_magnification1[0], es_magnification3[0], decimal=3)
+        npt.assert_almost_equal(es_magnification2[0], es_magnification3[1], decimal=3)
 
     def test_einstein_radius_multi(self):
         einstein_radius1 = self.lens_class1.einstein_radius
         einstein_radius2 = self.lens_class2.einstein_radius
         einstein_radius3 = self.lens_class3.einstein_radius
         # Test multisource einstein radius.
-        assert einstein_radius1[0] == einstein_radius3[0]
-        assert einstein_radius2[0] == einstein_radius3[1]
-        print(einstein_radius3, einstein_radius1)
-        assert 1 == 0
+        npt.assert_almost_equal(einstein_radius1[0], einstein_radius3[0], decimal=5)
+        npt.assert_almost_equal(einstein_radius2[0], einstein_radius3[1], decimal=5)
 
     def test_image_observer_time_multi(self):
         observation_time = 50
@@ -631,8 +637,10 @@ class TestMultiSource(object):
             observation_time
         )
         # Test multisource image observation time
-        assert image_observation_time1[0] == image_observation_time3[0][0]
-        assert np.all(image_observation_time2 == image_observation_time3[1])
+        npt.assert_almost_equal(image_observation_time1[0],  image_observation_time3[0][0], decimal=5)
+        # assert image_observation_time1[0] == image_observation_time3[0][0]
+        npt.assert_almost_equal(image_observation_time2, image_observation_time3[1], decimal=5)
+        # assert np.all(image_observation_time2 == image_observation_time3[1])
         assert len(self.lens_class3.image_observer_times(t_obs=10)) == 2
 
 

@@ -100,8 +100,8 @@ class Lens(LensedSystemBase):
         self._source_type = self.max_redshift_source_class.source_type
         # we conventionally use highest source redshift in the lens cosmo.
         self._lens_cosmo = LensCosmo(
-            z_lens=float(self.deflector.redshift),
-            z_source=float(self.max_redshift_source_class.redshift),
+            z_lens=self.deflector.redshift,
+            z_source=self.max_redshift_source_class.redshift,
             cosmo=self.cosmo,
         )
 
@@ -211,6 +211,7 @@ class Lens(LensedSystemBase):
         point_source_pos_x, point_source_pos_y = source.point_source_position(
             center_lens=self.deflector_position, draw_area=self.test_area
         )
+
         # uses analytical lens equation solver in case it is supported by lenstronomy for speed-up
         if (
             self._lens_equation_solver == "lenstronomy_analytical"
@@ -435,8 +436,8 @@ class Lens(LensedSystemBase):
             else:
                 # TODO: translate Einstein radius to different source redshift with power-law slope difference
                 beta = self._lens_cosmo.beta_double_source_plane(z_lens=self.deflector_redshift,
-                                                          z_source_1=self.max_redshift_source_class.redshift,
-                                                          z_source_2=source.redshift)
+                                                          z_source_2=self.max_redshift_source_class.redshift,
+                                                          z_source_1=source.redshift)
                 theta_E = theta_E_convention * beta ** (1.0 / (gamma_pl - 1))
                 kappa_ext = kappa_ext_convention * beta
 

@@ -536,14 +536,14 @@ class TestSource:
         )
 
     def test_redshift(self):
-        assert self.source.redshift == [0.5]
+        assert self.source.redshift == 0.5
         assert self.source11.redshift == 3.123
 
     def test_n_sersic(self):
-        assert self.source.n_sersic == [4]
+        assert self.source.n_sersic == 4
 
     def test_angular_size(self):
-        assert self.source.angular_size == [0.35]
+        assert self.source.angular_size == 0.35
 
     def test_ellipticity(self):
         assert self.source.ellipticity[0] == 0.8
