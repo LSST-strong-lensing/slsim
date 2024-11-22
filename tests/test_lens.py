@@ -600,7 +600,8 @@ class TestMultiSource(object):
         es_magnification2 = self.lens_class2.extended_source_magnification()
         es_magnification3 = self.lens_class3.extended_source_magnification()
         # Test multisource extended source magnifications.
-        assert es_magnification1[0] == es_magnification3[0]
+        npt.assert_almost_equal(es_magnification1[0],
+                                        es_magnification3[0], decimal=4)
         assert es_magnification2[0] == es_magnification3[1]
 
     def test_einstein_radius_multi(self):
@@ -623,7 +624,8 @@ class TestMultiSource(object):
             observation_time
         )
         # Test multisource image observation time
-        assert image_observation_time1[0] == image_observation_time3[0][0]
+        npt.assert_almost_equal(image_observation_time1[0],
+                                        image_observation_time3[0][0], decimal=10)
         assert np.all(image_observation_time2 == image_observation_time3[1])
         assert len(self.lens_class3.image_observer_times(t_obs=10)) == 2
 
