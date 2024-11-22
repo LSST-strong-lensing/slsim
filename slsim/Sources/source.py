@@ -343,19 +343,19 @@ class Source(object):
     def redshift(self):
         """Returns source redshift."""
 
-        return self.source_dict["z"]
+        return float(self.source_dict["z"])
 
     @property
     def n_sersic(self):
         """Returns sersic index of the source."""
 
-        return self.source_dict["n_sersic"]
+        return float(self.source_dict["n_sersic"])
 
     @property
     def angular_size(self):
         """Returns angular size of the source."""
 
-        return self.source_dict["angular_size"]
+        return float(self.source_dict["angular_size"])
 
     @property
     def ellipticity(self):

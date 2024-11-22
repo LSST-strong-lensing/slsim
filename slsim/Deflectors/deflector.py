@@ -36,7 +36,7 @@ class Deflector(object):
 
         :return: redshift
         """
-        return self._deflector.redshift
+        return float(self._deflector.redshift)
 
     def velocity_dispersion(self, cosmo=None):
         """Velocity dispersion of deflector.
