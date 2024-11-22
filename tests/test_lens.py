@@ -593,6 +593,15 @@ class TestMultiSource(object):
         point_source_arival_time1 = self.lens_class1.point_source_arrival_times()
         point_source_arival_time2 = self.lens_class2.point_source_arrival_times()
         point_source_arival_time3 = self.lens_class3.point_source_arrival_times()
+        # Test multisource point source arrival time.
+        assert np.all(point_source_arival_time1[0]) == np.all(
+            point_source_arival_time3[0]
+        )
+        assert np.all(point_source_arival_time2[0]) == np.all(
+            point_source_arival_time3[1]
+        )
+
+        point_source_arival_time3 = self.lens_class3_analytical.point_source_arrival_times()
         # Test multisource point source arival time.
         assert np.all(point_source_arival_time1[0]) == np.all(
             point_source_arival_time3[0]
@@ -609,6 +618,10 @@ class TestMultiSource(object):
         assert np.all(ps_magnification1[0]) == np.all(ps_magnification3[0])
         assert np.all(ps_magnification2[0]) == np.all(ps_magnification3[1])
 
+        ps_magnification3 = self.lens_class3_analytical.point_source_magnification()
+        assert np.all(ps_magnification1[0]) == np.all(ps_magnification3[0])
+        assert np.all(ps_magnification2[0]) == np.all(ps_magnification3[1])
+
     def test_es_magnification_multi(self):
         es_magnification1 = self.lens_class1.extended_source_magnification()
         es_magnification2 = self.lens_class2.extended_source_magnification()
@@ -617,11 +630,19 @@ class TestMultiSource(object):
         npt.assert_almost_equal(es_magnification1[0], es_magnification3[0], decimal=3)
         npt.assert_almost_equal(es_magnification2[0], es_magnification3[1], decimal=3)
 
+        es_magnification3 = self.lens_class3_analytical.extended_source_magnification()
+        npt.assert_almost_equal(es_magnification1[0], es_magnification3[0], decimal=3)
+        npt.assert_almost_equal(es_magnification2[0], es_magnification3[1], decimal=3)
+
     def test_einstein_radius_multi(self):
         einstein_radius1 = self.lens_class1.einstein_radius
         einstein_radius2 = self.lens_class2.einstein_radius
         einstein_radius3 = self.lens_class3.einstein_radius
         # Test multisource einstein radius.
+        npt.assert_almost_equal(einstein_radius1[0], einstein_radius3[0], decimal=5)
+        npt.assert_almost_equal(einstein_radius2[0], einstein_radius3[1], decimal=5)
+
+        einstein_radius3 = self.lens_class3_analytical.einstein_radius
         npt.assert_almost_equal(einstein_radius1[0], einstein_radius3[0], decimal=5)
         npt.assert_almost_equal(einstein_radius2[0], einstein_radius3[1], decimal=5)
 
@@ -646,6 +667,18 @@ class TestMultiSource(object):
         )
         # assert np.all(image_observation_time2 == image_observation_time3[1])
         assert len(self.lens_class3.image_observer_times(t_obs=10)) == 2
+
+        image_observation_time3 = self.lens_class3_analytical.image_observer_times(
+            observation_time
+        )
+        # Test multisource image observation time
+        npt.assert_almost_equal(
+            image_observation_time1[0], image_observation_time3[0][0], decimal=5
+        )
+        # assert image_observation_time1[0] == image_observation_time3[0][0]
+        npt.assert_almost_equal(
+            image_observation_time2, image_observation_time3[1], decimal=5
+        )
 
 
 if __name__ == "__main__":
