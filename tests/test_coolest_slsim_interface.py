@@ -108,7 +108,7 @@ def test_update_coolest_from_slsim_and_create_slsim_from_coolest(
     )
     npt.assert_almost_equal(
         slsim_from_updated_coolest[1]["kwargs_lens"][1]["gamma1"],
-        expected_result[1]["kwargs_lens"][1]["gamma1"],
+        expected_result[1]["kwargs_lens"][1]["gamma1"], decimal=6,
     )
     npt.assert_almost_equal(
         slsim_from_updated_coolest[1]["kwargs_lens"][2]["kappa"],

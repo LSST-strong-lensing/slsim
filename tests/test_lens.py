@@ -533,6 +533,8 @@ class TestMultiSource(object):
         deflector_dict = Table.read(
             os.path.join(path, "TestData/deflector_supernovae_new.fits"), format="fits"
         )
+        self.gamma_pl = 2.0
+        deflector_dict["gamma_pl"] = self.gamma_pl
         source_dict2 = copy.deepcopy(source_dict1)
         source_dict2["z"] += 0.5
         self.source1 = Source(
@@ -561,10 +563,12 @@ class TestMultiSource(object):
             sn_absolute_mag_band="bessellb",
             sn_absolute_zpsys="ab",
         )
+
         self.deflector = Deflector(
             deflector_type="EPL",
             deflector_dict=deflector_dict,
         )
+
         self.lens_class1 = Lens(
             deflector_class=self.deflector,
             source_class=self.source1,
@@ -590,6 +594,9 @@ class TestMultiSource(object):
         )
 
     def test_point_source_arrival_time_multi(self):
+        gamma_pl_out = self.deflector.halo_properties
+        assert gamma_pl_out == self.gamma_pl
+
         point_source_arival_time1 = self.lens_class1.point_source_arrival_times()
         point_source_arival_time2 = self.lens_class2.point_source_arrival_times()
         point_source_arival_time3 = self.lens_class3.point_source_arrival_times()
