@@ -20,11 +20,13 @@ from scipy.spatial.distance import cdist
 
 
 class ClusterDeflectors(DeflectorsBase):
-    """Class describing cluster lens model with a NFW profile for the dark matter halo
-    and EPL profile for the subhalos (cluster members). It makes use of a group/cluster
-    catalog and a group/cluster member catalog (e.g. redMaPPer).
+    """Class describing cluster lens model with a NFW profile for the dark
+    matter halo and EPL profile for the subhalos (cluster members). It makes
+    use of a group/cluster catalog and a group/cluster member catalog (e.g.
+    redMaPPer).
 
-    This class is called by setting deflector_type == "cluster-catalog" in LensPop.
+    This class is called by setting deflector_type == "cluster-catalog"
+    in LensPop.
     """
 
     def __init__(
@@ -121,8 +123,9 @@ class ClusterDeflectors(DeflectorsBase):
         deflector = self.draw_cluster(index)
         members = self.draw_members(deflector["cluster_id"], **self.kwargs_draw_members)
         deflector["subhalos"] = members
-        deflector_class = Deflector(deflector_type=self.deflector_profile,
-                                     deflector_dict=deflector)
+        deflector_class = Deflector(
+            deflector_type=self.deflector_profile, deflector_dict=deflector
+        )
         return deflector_class
 
     def draw_cluster(self, index):
@@ -211,10 +214,11 @@ class ClusterDeflectors(DeflectorsBase):
         bands=("g", "r", "i", "z", "Y"),
         max_gals=10000,
     ):
-        """Assigns a similar galaxy to each member of a group/cluster member catalog by
-        comparing their magnitudes and redshifts.
+        """Assigns a similar galaxy to each member of a group/cluster member
+        catalog by comparing their magnitudes and redshifts.
 
-        :param members_list: astropy table with columns 'mag_{band}', 'z'
+        :param members_list: astropy table with columns 'mag_{band}',
+            'z'
         :type members_list: astropy.table.Table
         :param galaxy_list: astropy table with columns 'mag_{band}', 'z'
         :type galaxy_list: astropy.table.Table
@@ -323,7 +327,8 @@ class ClusterDeflectors(DeflectorsBase):
         return members_list
 
     def set_cosmo(self):
-        """Set the cosmology in colossus to match the astropy.cosmology instance."""
+        """Set the cosmology in colossus to match the astropy.cosmology
+        instance."""
         params = dict(
             flat=(self.cosmo.Ok0 == 0.0),
             H0=self.cosmo.H0.value,

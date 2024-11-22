@@ -1,9 +1,6 @@
-
-
 class LOSIndividual(object):
-    """
-    class to store the quantities of an individual line of sight
-    """
+    """Class to store the quantities of an individual line of sight."""
+
     def __init__(self, kappa=None, gamma=None):
         """
 
@@ -21,8 +18,7 @@ class LOSIndividual(object):
 
     @property
     def convergence(self):
-        """
-        line of sight convergence
+        """Line of sight convergence.
 
         :return: kappa
         """
@@ -30,8 +26,7 @@ class LOSIndividual(object):
 
     @property
     def shear(self):
-        """
-        line of sight shear
+        """Line of sight shear.
 
         :return: gamma1, gamma2
         """

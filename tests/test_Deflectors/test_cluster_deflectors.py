@@ -62,7 +62,9 @@ def test_draw_deflector(cluster_deflectors_instance):
     # test if the properties of the deflector are
     # as expected from the input catalog
     assert (deflector.redshift > 0.2) and (deflector.redshift < 1.0)
-    assert (deflector.halo_properties[0] > 1e12) and (deflector.halo_properties[0] < 3e15)
+    assert (deflector.halo_properties[0] > 1e12) and (
+        deflector.halo_properties[0] < 3e15
+    )
     assert (deflector.halo_properties[1] > 1) and (deflector.halo_properties[1] < 15)
     assert (len(members) >= 1) and (len(members) < 100)
 

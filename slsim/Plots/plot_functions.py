@@ -20,14 +20,16 @@ def create_image_montage_from_image_list(
     :param num_rows: number of images to display horizontally
     :param num_cols: number of images to display vertically
     :param images: list of images
-    :param time: array of observation time for point source images. If None, considers
-        static case.
-    :param band: array of bands corresponding to the observations. If None, does not
-        display any information regarding the band.
-    :param image_type: type of the provided image. It could be 'dp0' or any other name.
+    :param time: array of observation time for point source images. If
+        None, considers static case.
+    :param band: array of bands corresponding to the observations. If
+        None, does not display any information regarding the band.
+    :param image_type: type of the provided image. It could be 'dp0' or
+        any other name.
     :param image_center: center of the source images.
     :type image_center: array. eg: for two image, it should be like
-        np.array([[13.71649063, 13.09556121], [16.69249276, 17.78106655]])
+        np.array([[13.71649063, 13.09556121], [16.69249276,
+        17.78106655]])
     :return: image montage of given images.
     """
 
@@ -100,7 +102,8 @@ def create_image_montage_from_image_list(
 
 
 def plot_montage_of_random_injected_lens(image_list, num, n_horizont=1, n_vertical=1):
-    """Creates an image montage of random lenses from the catalog of injected lens.
+    """Creates an image montage of random lenses from the catalog of injected
+    lens.
 
     :param images_list: list of catalog images
     :param n_horizont: number of images to display horizontally

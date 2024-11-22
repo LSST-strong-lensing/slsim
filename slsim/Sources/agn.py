@@ -19,23 +19,28 @@ class Agn(object):
     ):
         """Initialization of an agn.
 
-        :param known_band: The speclite filter associated with the known_mag
-        :param known_mag: The flux of the accretion disk in the known filter
+        :param known_band: The speclite filter associated with the
+            known_mag
+        :param known_mag: The flux of the accretion disk in the known
+            filter
         :param redshift: Redshift of the AGN
         :param cosmo: Astropy cosmology to use in calculating distances
-        :param lightcurve_time: array of times associated with observation times
-        :param agn_driving_variability_model: variability model used as a driving
-            signal, This signal is then reprocessed through the lamppost model to get
-            correlated signals.
-        :param agn_driving_kwargs_variability: dictionary holding all variability keys
-            and values
-        :param kwargs_agn_model: Dictionary containing all keywords for the accretion
-            disk variability model. These are: 'black_hole_mass_exponent': mass exponent
-            of the SMBH 'black_hole_spin': spin of the SMBH 'inclination_angle':
-            inclination of the AGN disk in degrees 'r_out': Maximum radius of the disk
-            in gravitational radii 'r_resoultion': Number of pixels the disk is resolved
-            to 'eddington_ratio': fraction of the eddington luminosity the disk is
-            radiating with 'accretion_disk': accretion disk model
+        :param lightcurve_time: array of times associated with
+            observation times
+        :param agn_driving_variability_model: variability model used as
+            a driving signal, This signal is then reprocessed through
+            the lamppost model to get correlated signals.
+        :param agn_driving_kwargs_variability: dictionary holding all
+            variability keys and values
+        :param kwargs_agn_model: Dictionary containing all keywords for
+            the accretion disk variability model. These are:
+            'black_hole_mass_exponent': mass exponent of the SMBH
+            'black_hole_spin': spin of the SMBH 'inclination_angle':
+            inclination of the AGN disk in degrees 'r_out': Maximum
+            radius of the disk in gravitational radii 'r_resoultion':
+            Number of pixels the disk is resolved to 'eddington_ratio':
+            fraction of the eddington luminosity the disk is radiating
+            with 'accretion_disk': accretion disk model
         """
 
         self.agn_known_band = agn_known_band
@@ -105,9 +110,9 @@ class Agn(object):
         self.variable_disk = Variability("lamppost_reprocessed", **self.kwargs_model)
 
     def get_mean_mags(self, bands):
-        """Method to get mean magnitudes for AGN in multiple filters. Creates an
-        accretion disk using the AccretionDiskReprocessing class in order to integrate
-        the surface flux density over the accretion disk.
+        """Method to get mean magnitudes for AGN in multiple filters. Creates
+        an accretion disk using the AccretionDiskReprocessing class in order to
+        integrate the surface flux density over the accretion disk.
 
         :param bands: list of speclite filter names.
         :return: list of magnitudes based on the speclite bands given.
@@ -178,8 +183,9 @@ def RandomAgn(
     :param known_mag: magnitude of the AGN in a known band.
     :param redshift: redshift of the AGN
     :param cosmo: Astropy cosmology to use
-    :param kwargs_agn_model: Dictionary containing any fixed agn parameters. This will
-        populate random agn parameters for keywords not given.
+    :param kwargs_agn_model: Dictionary containing any fixed agn
+        parameters. This will populate random agn parameters for
+        keywords not given.
     """
     if random_seed is not None:
         random.seed(random_seed)
