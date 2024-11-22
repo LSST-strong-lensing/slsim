@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 
 
 class SourcePopBase(ABC):
-    """Base class with functions all source classes must have to be able to render
-    populations."""
+    """Base class with functions all source classes must have to be able to
+    render populations."""
 
     def __init__(
         self,
@@ -17,7 +17,7 @@ class SourcePopBase(ABC):
         sn_type=None,
         sn_absolute_mag_band=None,
         sn_absolute_zpsys=None,
-        sn_modeldir=None
+        sn_modeldir=None,
     ):
         """
 

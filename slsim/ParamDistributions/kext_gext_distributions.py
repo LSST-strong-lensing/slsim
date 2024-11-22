@@ -5,22 +5,25 @@ import warnings
 
 
 class LineOfSightDistribution:
-    """Class to read the joint and no nonlinear distributions from the H5 files.
+    """Class to read the joint and no nonlinear distributions from the H5
+    files.
 
-    From the H5 files, the class can retrieve kappa and gamma values from the H5 files
-    based on the source and lens redshifts for the resample of external convergence and
-    shear.
+    From the H5 files, the class can retrieve kappa and gamma values
+    from the H5 files based on the source and lens redshifts for the
+    resample of external convergence and shear.
     """
 
     correction_data = None
     no_nonlinear_correction_data = None
 
     def __init__(self, nonlinear_correction_path=None, no_correction_path=None):
-        """Initialize the Data Reader. Load data into class variables if not already
-        loaded.
+        """Initialize the Data Reader. Load data into class variables if not
+        already loaded.
 
-        :param nonlinear_correction_path: Path to the 'joint_distributions.h5' file.
-        :param no_correction_path: Path to the 'kg_distributions_nolos.h5' file.
+        :param nonlinear_correction_path: Path to the
+            'joint_distributions.h5' file.
+        :param no_correction_path: Path to the
+            'kg_distributions_nolos.h5' file.
         """
         current_script_path = os.path.abspath(__file__)
         current_directory = os.path.dirname(current_script_path)
@@ -92,12 +95,13 @@ class LineOfSightDistribution:
         return round(value * 10) / 10
 
     def get_kappa_gamma(self, z_source, z_lens, use_nonlinear_correction=False):
-        """Retrieve kappa and gamma values from the loaded data based on source and lens
-        redshifts.
+        """Retrieve kappa and gamma values from the loaded data based on source
+        and lens redshifts.
 
         :param z_source: Source redshift (zs).
         :param z_lens: Lens redshift (zd).
-        :param use_nonlinear_correction: Boolean to use the nonlinear correction data.
+        :param use_nonlinear_correction: Boolean to use the nonlinear
+            correction data.
         :return: Tuple of gamma and kappa values.
         """
         if z_source <= z_lens:

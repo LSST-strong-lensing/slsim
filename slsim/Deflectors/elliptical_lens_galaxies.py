@@ -37,8 +37,8 @@ class EllipticalLensGalaxies(DeflectorsBase):
          default, this class considers deflector catalog is generated using skypy
          pipeline.
         :param gamma_pl: power law slope in EPL profile.
-        :type gamma_pl: A float or a dictionary with given mean and standard deviation 
-         of a density slope for gaussian distribution or minimum and maximum values of 
+        :type gamma_pl: A float or a dictionary with given mean and standard deviation
+         of a density slope for gaussian distribution or minimum and maximum values of
          gamma for uniform distribution. eg: gamma_pl=2.1, gamma_pl={"mean": a, "std_dev": b},
          gamma_pl={"gamma_min": c, "gamma_max": d}
         :type catalog_type: str. "skypy" or None.
@@ -51,7 +51,7 @@ class EllipticalLensGalaxies(DeflectorsBase):
             kwargs_cut=kwargs_cut,
             cosmo=cosmo,
             sky_area=sky_area,
-            gamma_pl=gamma_pl
+            gamma_pl=gamma_pl,
         )
 
         n = len(galaxy_list)
@@ -111,8 +111,9 @@ class EllipticalLensGalaxies(DeflectorsBase):
             deflector["e2_mass"] = e2_mass
         if deflector["n_sersic"] == -1:
             deflector["n_sersic"] = 4  # TODO make a better estimate with scatter
-        deflector_class = Deflector(deflector_type=self.deflector_profile,
-                                     deflector_dict=deflector)
+        deflector_class = Deflector(
+            deflector_type=self.deflector_profile, deflector_dict=deflector
+        )
         return deflector_class
 
 
@@ -123,17 +124,17 @@ def elliptical_projected_eccentricity(
     light2mass_angle_scatter=0.1,
     **kwargs
 ):
-    """Projected eccentricity of elliptical galaxies as a function of other deflector
-    parameters.
+    """Projected eccentricity of elliptical galaxies as a function of other
+    deflector parameters.
 
     :param ellipticity: eccentricity amplitude (1-q^2)/(1+q^2)
     :type ellipticity: float [0,1)
-    :param light2mass_e_scaling: scaling factor of mass eccentricity / light
-        eccentricity
-    :param light2mass_e_scatter: scatter in light and mass eccentricities from the
-        scaling relation
-    :param light2mass_angle_scatter: scatter in orientation angle between light and mass
-        eccentricity
+    :param light2mass_e_scaling: scaling factor of mass eccentricity /
+        light eccentricity
+    :param light2mass_e_scatter: scatter in light and mass
+        eccentricities from the scaling relation
+    :param light2mass_angle_scatter: scatter in orientation angle
+        between light and mass eccentricity
     :param kwargs: deflector properties
     :type kwargs: dict
     :return: e1_light, e2_light,e1_mass, e2_mass eccentricity components
@@ -152,8 +153,8 @@ def elliptical_projected_eccentricity(
 
 
 def vel_disp_from_m_star(m_star):
-    """Function to calculate the velocity dispersion from the staller mass using
-    empirical relation for elliptical galaxies.
+    """Function to calculate the velocity dispersion from the staller mass
+    using empirical relation for elliptical galaxies.
 
     The power-law formula is given by:
 

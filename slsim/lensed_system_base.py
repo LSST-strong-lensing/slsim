@@ -3,12 +3,12 @@ from slsim.LOS.los_individual import LOSIndividual
 
 
 class LensedSystemBase(ABC):
-    """Abstract Base class to create a lens system with all lensing properties required
-    to render populations."""
+    """Abstract Base class to create a lens system with all lensing properties
+    required to render populations."""
 
     def __init__(self, source_class, deflector_class, los_class):
         """
-        :param source_class: :param source_class: A Source class instance or list of 
+        :param source_class: :param source_class: A Source class instance or list of
          Source class instance
         :type source_class: Source class instance from slsim.Sources.source.
         :param deflector_class: deflector instance
@@ -35,7 +35,8 @@ class LensedSystemBase(ABC):
 
     @abstractmethod
     def extended_source_image_positions(self):
-        """Returns extended source image positions by solving the lens equation.
+        """Returns extended source image positions by solving the lens
+        equation.
 
         :return: x-pos, y-pos
         """
@@ -43,9 +44,9 @@ class LensedSystemBase(ABC):
 
     @abstractmethod
     def point_source_image_positions(self):
-        """Returns point source image positions by solving the lens equation. In the
-        absence of a point source, this function returns the solution for the center of
-        the extended source.
+        """Returns point source image positions by solving the lens equation.
+        In the absence of a point source, this function returns the solution
+        for the center of the extended source.
 
         :return: x-pos, y-pos
         """
@@ -111,8 +112,8 @@ class LensedSystemBase(ABC):
 
     @abstractmethod
     def point_source_magnitude(self, band, lensed=False):
-        """Point source magnitude, either unlensed (single value) or lensed (array) with
-        macro-model magnifications.
+        """Point source magnitude, either unlensed (single value) or lensed
+        (array) with macro-model magnifications.
 
         :param band: imaging band
         :type band: string
@@ -124,8 +125,8 @@ class LensedSystemBase(ABC):
 
     @abstractmethod
     def extended_source_magnitude(self, band, lensed=False):
-        """Apparent magnitude of the extended source for a given band (lensed or
-        unlensed) (assumes that size is the same for different bands)
+        """Apparent magnitude of the extended source for a given band (lensed
+        or unlensed) (assumes that size is the same for different bands)
 
         :param band: imaging band
         :type band: string
@@ -139,7 +140,8 @@ class LensedSystemBase(ABC):
     def point_source_magnification(self):
         """Macro-model magnification of point sources.
 
-        :return: signed magnification of point sources in same order as image positions
+        :return: signed magnification of point sources in same order as
+            image positions
         """
         pass
 
@@ -153,7 +155,8 @@ class LensedSystemBase(ABC):
 
     @abstractmethod
     def deflector_mass_model_lenstronomy(self):
-        """Returns lens mass model instance and parameters in lenstronomy conventions.
+        """Returns lens mass model instance and parameters in lenstronomy
+        conventions.
 
         :return: lens_mass_model_list, kwargs_lens_mass
         """
@@ -161,7 +164,8 @@ class LensedSystemBase(ABC):
 
     @abstractmethod
     def deflector_light_model_lenstronomy(self, band):
-        """Returns lens model instance and parameters in lenstronomy conventions.
+        """Returns lens model instance and parameters in lenstronomy
+        conventions.
 
         :param band: imaging band
         :type band: str

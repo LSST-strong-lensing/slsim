@@ -21,6 +21,7 @@ galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
     filters=None,
 )
 
+
 def create_lens_pop_instance(return_kext=False):
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -59,13 +60,16 @@ def create_lens_pop_instance(return_kext=False):
 def gg_lens_pop_instance():
     # Create LensPop instance without return_kext
     return create_lens_pop_instance(return_kext=False)
+
+
 def test_draw_population(gg_lens_pop_instance):
-    lens_pop=gg_lens_pop_instance
+    lens_pop = gg_lens_pop_instance
     kwargs_lens_cuts = {}
     lens_population = lens_pop.draw_population(kwargs_lens_cuts, multi_source=True)
     lens_population2 = lens_pop.draw_population(kwargs_lens_cuts, multi_source=False)
     assert len(lens_population) <= 40
     assert len(lens_population2) <= 40
+
 
 def test_pes_lens_pop_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -288,7 +292,7 @@ def test_supernovae_plus_galaxies_lens_pop_instance_2():
         sn_type="Ia",
         sn_absolute_mag_band="bessellb",
         sn_absolute_zpsys="ab",
-        sn_modeldir=None
+        sn_modeldir=None,
     )
 
     pes_lens_pop = LensPop(

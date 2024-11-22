@@ -40,8 +40,8 @@ class AllLensGalaxies(DeflectorsBase):
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
         :param gamma_pl: power law slope in EPL profile.
-        :type gamma_pl: A float or a dictionary with given mean and standard deviation 
-         of a density slope for gaussian distribution or minimum and maximum values of 
+        :type gamma_pl: A float or a dictionary with given mean and standard deviation
+         of a density slope for gaussian distribution or minimum and maximum values of
          gamma for uniform distribution. eg: gamma_pl=2.1, gamma_pl={"mean": a, "std_dev": b},
          gamma_pl={"gamma_min": c, "gamma_max": d}
         :param catalog_type: type of the catalog. If user is using deflector catalog
@@ -72,7 +72,7 @@ class AllLensGalaxies(DeflectorsBase):
             kwargs_cut=kwargs_cut,
             cosmo=cosmo,
             sky_area=sky_area,
-            gamma_pl=gamma_pl
+            gamma_pl=gamma_pl,
         )
 
         n = len(galaxy_list)
@@ -126,8 +126,9 @@ class AllLensGalaxies(DeflectorsBase):
             deflector["e2_mass"] = e2_mass
         if deflector["n_sersic"] == -1:
             deflector["n_sersic"] = 4  # TODO make a better estimate with scatter
-        deflector_class = Deflector(deflector_type=self.deflector_profile,
-                                     deflector_dict=deflector)
+        deflector_class = Deflector(
+            deflector_type=self.deflector_profile, deflector_dict=deflector
+        )
         return deflector_class
 
 

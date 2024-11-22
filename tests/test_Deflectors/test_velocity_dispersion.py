@@ -44,7 +44,8 @@ def test_vel_disp_nfw_aperture():
 
 
 def test_schechter_vdf():
-    """SDSS velocity dispersion function for galaxies brighter than Mr >= -16.8."""
+    """SDSS velocity dispersion function for galaxies brighter than Mr >=
+    -16.8."""
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 

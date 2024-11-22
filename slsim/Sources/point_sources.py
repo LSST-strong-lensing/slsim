@@ -24,7 +24,7 @@ class PointSources(SourcePopBase):
         sn_type=None,
         sn_absolute_mag_band=None,
         sn_absolute_zpsys=None,
-        sn_modeldir=None
+        sn_modeldir=None,
     ):
         """
 
@@ -99,8 +99,8 @@ class PointSources(SourcePopBase):
             sn_type=sn_type,
             sn_absolute_mag_band=sn_absolute_mag_band,
             sn_absolute_zpsys=sn_absolute_zpsys,
-            sn_modeldir=sn_modeldir
-            )
+            sn_modeldir=sn_modeldir,
+        )
         self.source_type = "point_source"
 
     @property
@@ -129,19 +129,19 @@ class PointSources(SourcePopBase):
         index = random.randint(0, self._num_select - 1)
         point_source = self._point_source_select[index]
         source_class = Source(
-                    source_dict=point_source,
-                    variability_model=self.variability_model,
-                    kwargs_variability=self.kwargs_variability,
-                    sn_type=self.sn_type,
-                    sn_absolute_mag_band=self.sn_absolute_mag_band,
-                    sn_absolute_zpsys=self.sn_absolute_zpsys,
-                    cosmo=self._cosmo,
-                    lightcurve_time=self.lightcurve_time,
-                    sn_modeldir=self.sn_modeldir,
-                    agn_driving_variability_model=self.agn_driving_variability_model,
-                    agn_driving_kwargs_variability=self.agn_driving_kwargs_variability,
-                    source_type=self.source_type,
-                    light_profile=self.light_profile,
-                )
+            source_dict=point_source,
+            variability_model=self.variability_model,
+            kwargs_variability=self.kwargs_variability,
+            sn_type=self.sn_type,
+            sn_absolute_mag_band=self.sn_absolute_mag_band,
+            sn_absolute_zpsys=self.sn_absolute_zpsys,
+            cosmo=self._cosmo,
+            lightcurve_time=self.lightcurve_time,
+            sn_modeldir=self.sn_modeldir,
+            agn_driving_variability_model=self.agn_driving_variability_model,
+            agn_driving_kwargs_variability=self.agn_driving_kwargs_variability,
+            source_type=self.source_type,
+            light_profile=self.light_profile,
+        )
 
         return source_class

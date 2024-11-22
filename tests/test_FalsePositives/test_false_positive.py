@@ -128,10 +128,9 @@ def test_false_positive():
     assert false_positive_instance_1.external_convergence < 0.1
     assert false_positive_instance_1.external_shear < 0.2
     assert false_positive_instance_1.einstein_radius[0] < 2.5
-    assert (
-        false_positive_instance_1.deflector_magnitude(band="i")
-        == single_deflector.magnitude(band="i")
-    )
+    assert false_positive_instance_1.deflector_magnitude(
+        band="i"
+    ) == single_deflector.magnitude(band="i")
     assert (
         false_positive_instance_1.extended_source_magnitude(band="i")
         == single_source1.source_dict["mag_i"]
