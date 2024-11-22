@@ -580,9 +580,7 @@ class TestMultiSource(object):
         point_source_arival_time2 = self.lens_class2.point_source_arrival_times()
         point_source_arival_time3 = self.lens_class3.point_source_arrival_times()
         # Test multisource point source arival time.
-        assert np.all(point_source_arival_time1[0]) == np.all(
-            point_source_arival_time3[0]
-        )
+        assert point_source_arival_time1[0] == point_source_arival_time3[0]
         assert np.all(point_source_arival_time2[0]) == np.all(
             point_source_arival_time3[1]
         )
