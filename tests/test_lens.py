@@ -583,6 +583,8 @@ class TestMultiSource(object):
                 deflector_type="EPL",
                 deflector_dict=deflector_dict,
             )
+
+    def test_multi_source(self):
         lens_class1 = Lens(
             deflector_class=self.deflector,
             source_class=self.source1,
@@ -634,8 +636,8 @@ class TestMultiSource(object):
         #Test multisource image observation time
         assert image_observation_time1[0] == image_observation_time3[0]
         assert image_observation_time2[0] == image_observation_time3[1]
-        assert lens_class1.einstein_radius_deflector[0] == lens_class3.einstein_radius_deflector[0]
         assert lens_class1.einstein_radius[0] == lens_class3.einstein_radius[0]
+        assert lens_class2.einstein_radius[0] == lens_class3.einstein_radius[1]
         assert len(lens_class3.image_observer_times(t_obs=10)) == 2
         
       

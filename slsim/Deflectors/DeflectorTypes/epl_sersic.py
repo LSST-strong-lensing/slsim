@@ -1,5 +1,6 @@
 from slsim.Deflectors.DeflectorTypes.deflector_base import DeflectorBase
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
+from slsim.Deflectors.velocity_dispersion import theta_E_from_vel_disp_epl
 
 
 class EPLSersic(DeflectorBase):
@@ -15,6 +16,17 @@ class EPLSersic(DeflectorBase):
     - 'e2_light': eccentricity of light
     - 'z': redshift of deflector
     """
+    def __init__(self, deflector_dict):
+        """
+
+        :param deflector_dict: dictionary of deflector quantities
+        """
+        super().__init__(deflector_dict=deflector_dict)
+        try:
+            sis_convention = deflector_dict["sis_convention"]
+        except KeyError:
+            sis_convention = True
+        self._sis_convention = sis_convention
 
     def velocity_dispersion(self, cosmo=None):
         """Velocity dispersion of deflector.
@@ -44,13 +56,18 @@ class EPLSersic(DeflectorBase):
         :type lens_cosmo: ~lenstronomy.Cosmo.LensCosmo instance
         :return: lens_mass_model_list, kwargs_lens_mass
         """
+        gamma = self.halo_properties
         if lens_cosmo.z_lens >= lens_cosmo.z_source:
             theta_E = 0.0
         else:
-            theta_E = lens_cosmo.sis_sigma_v2theta_E(
-                float(self.velocity_dispersion(cosmo=lens_cosmo.background.cosmo))
-            )
-        gamma = self.halo_properties
+            lens_light_model_list, kwargs_lens_light = self.light_model_lenstronomy()
+            theta_E = theta_E_from_vel_disp_epl(vel_disp=float(self.velocity_dispersion(cosmo=lens_cosmo.background.cosmo)),
+                                                gamma=gamma,
+                                                r_half=self.angular_size_light,
+                                                kwargs_light=kwargs_lens_light, light_model_list=lens_light_model_list,
+                                                lens_cosmo=lens_cosmo,
+                                                kappa_ext=0, sis_convention=self._sis_convention)
+
         e1_mass, e2_mass = self.mass_ellipticity
         e1_mass_lenstronomy, e2_mass_lenstronomy = ellipticity_slsim_to_lenstronomy(
             e1_slsim=e1_mass, e2_slsim=e2_mass
@@ -111,7 +128,11 @@ class EPLSersic(DeflectorBase):
 
         :return: gamma (with =2 is isothermal)
         """
-
+        #if hasattr(self._deflector_dict, "gamma_pl"):
+        #    return float(self._deflector_dict["gamma_pl"])
+        #else:
+        #    # TODO: this can (optionally) be made a function of stellar mass, velocity dispersion etc
+        #    return 2
         try:
             return float(self._deflector_dict["gamma_pl"])
         except KeyError:
