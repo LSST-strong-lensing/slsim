@@ -376,7 +376,7 @@ class Lens(LensedSystemBase):
         """
         kappa = self.los_class.convergence
         gamma1, gamma2 = self.los_class.shear
-        return kappa, gamma1, gamma2
+        return gamma1, gamma2, kappa
 
     @property
     def external_convergence(self):
