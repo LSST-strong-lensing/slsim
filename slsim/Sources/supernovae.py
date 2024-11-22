@@ -7,22 +7,26 @@ from astropy import cosmology
 
 
 class Supernova(sncosmo.Model):
-    """Class for initializing a supernova of the type sn_type specified by the user. If
-    modeldir is provided by the user and sn_type is Ia, the sncosmo.SALT3Source class is
-    first used to model the supernova. In this case, modeldir is the path to the
-    directory containing files needed to initialize this class. For example, modeldir =
-    'C:/Users/username/Documents/SALT3.NIR_WAVEEXT' Afterwards, this sncosmo.SALT3Source
-    class is passed into the sncosmo.Model class. If modeldir is provided by the user
-    and sn_type is other than Ia, the sncosmo.TimeSeriesSource class is used to model
-    the supernova. In this case, modeldir is the path to the full list of models. For
-    example, modeldir = 'C:/Users/username/Documents/NON1ASED.V19_CC+HostXT_WAVEEXT
-    Afterwards, this sncosmo.TimeSeriesSource class is passed into the sncomsmo.Model
-    class.
+    """Class for initializing a supernova of the type sn_type specified by the
+    user. If modeldir is provided by the user and sn_type is Ia, the
+    sncosmo.SALT3Source class is first used to model the supernova. In this
+    case, modeldir is the path to the directory containing files needed to
+    initialize this class. For example, modeldir =
+    'C:/Users/username/Documents/SALT3.NIR_WAVEEXT' Afterwards, this
+    sncosmo.SALT3Source class is passed into the sncosmo.Model class. If
+    modeldir is provided by the user and sn_type is other than Ia, the
+    sncosmo.TimeSeriesSource class is used to model the supernova. In this
+    case, modeldir is the path to the full list of models. For example,
+    modeldir = 'C:/Users/username/Documents/NON1ASED.V19_CC+HostXT_WAVEEXT
+    Afterwards, this sncosmo.TimeSeriesSource class is passed into the
+    sncomsmo.Model class.
 
-    These files can be found in https://github.com/LSST-strong-lensing/data_public If
-    modeldir is not provided by the user, the sncosmo.Models class is directly used to
-    model the supernova by retrieving the specified sn model from sncosmo's list of
-    built-in models, which can be found here:
+    These files can be found in
+    https://github.com/LSST-strong-lensing/data_public
+    If    modeldir is not provided by the user, the sncosmo.Models class
+    is directly used to    model the supernova by retrieving the
+    specified sn model from sncosmo's list of    built-in models, which
+    can be found here:
     https://sncosmo.readthedocs.io/en/stable/source-list.html
     """
 
@@ -92,7 +96,8 @@ class Supernova(sncosmo.Model):
         )
 
     def get_apparent_magnitude(self, time, band, zpsys="AB"):
-        """Function to return apparent magnitude of a SN for a given band and time.
+        """Function to return apparent magnitude of a SN for a given band and
+        time.
 
         :param time: The observer-frame time array to evaluate the model (in days)
         :type time: `~np.ndarray` or list
@@ -137,8 +142,8 @@ class Supernova(sncosmo.Model):
         magsys,
         cosmo,
     ):
-        """Sets the amplitude of the source component of the model according to the
-        desired absolute magnitude in the specified band.
+        """Sets the amplitude of the source component of the model according to
+        the desired absolute magnitude in the specified band.
 
         If the absolute magnitude is not given, then sets the amplitude of the source
         component of the model according to a peak apparent magnitude.

@@ -5,7 +5,8 @@ import warnings
 class LensedPopulationBase(ABC):
     """Abstract Base Class to create a sample of lensed systems.
 
-    All object that inherit from Lensed Sample must contain the methods it contains.
+    All object that inherit from Lensed Sample must contain the methods
+    it contains.
     """
 
     def __init__(
@@ -37,20 +38,21 @@ class LensedPopulationBase(ABC):
 
     @abstractmethod
     def select_lens_at_random(self):
-        """Draw a random lens within the cuts of the lens and source, with possible
-        additional cut in the lensing configuration.
+        """Draw a random lens within the cuts of the lens and source, with
+        possible additional cut in the lensing configuration.
 
-        # as well as option to draw all lenses within the cuts within the area
+        # as well as option to draw all lenses within the cuts within
+        the area
 
-        :return: Lens() instance with parameters of the deflector and lens and source
-            light
+        :return: Lens() instance with parameters of the deflector and
+            lens and source light
         """
         pass
 
     @abstractmethod
     def deflector_number(self):
-        """Number of potential deflectors (meaning all objects with mass that are being
-        considered to have potential sources behind them)
+        """Number of potential deflectors (meaning all objects with mass that
+        are being considered to have potential sources behind them)
 
         :return: number of potential deflectors
         """
@@ -58,8 +60,8 @@ class LensedPopulationBase(ABC):
 
     @abstractmethod
     def source_number(self):
-        """Number of sources that are being considered to be placed in the sky area
-        potentially aligned behind deflectors.
+        """Number of sources that are being considered to be placed in the sky
+        area potentially aligned behind deflectors.
 
         :return: number of sources
         """
@@ -69,8 +71,8 @@ class LensedPopulationBase(ABC):
     def draw_population(self, **kwargs):
         """Return full sample list of all lenses within the area.
 
-        :return: List of LensedSystemBase instances with parameters of the deflectors
-            and source.
+        :return: List of LensedSystemBase instances with parameters of
+            the deflectors and source.
         :rtype: list
         """
 

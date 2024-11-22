@@ -20,8 +20,8 @@ class NFWHernquist(DeflectorBase):
     """
 
     def velocity_dispersion(self, cosmo=None):
-        """Velocity dispersion of deflector. Simplified assumptions on anisotropy and
-        averaged over the half-light radius.
+        """Velocity dispersion of deflector. Simplified assumptions on
+        anisotropy and averaged over the half-light radius.
 
         :param cosmo: cosmology
         :type cosmo: ~astropy.cosmology class
@@ -55,7 +55,8 @@ class NFWHernquist(DeflectorBase):
             return self._deflector_dict["vel_disp"]
 
     def mass_model_lenstronomy(self, lens_cosmo):
-        """Returns lens model instance and parameters in lenstronomy conventions.
+        """Returns lens model instance and parameters in lenstronomy
+        conventions.
 
         :param lens_cosmo: lens cosmology model
         :type lens_cosmo: ~lenstronomy.Cosmo.LensCosmo instance
@@ -100,7 +101,8 @@ class NFWHernquist(DeflectorBase):
         return lens_mass_model_list, kwargs_lens_mass
 
     def light_model_lenstronomy(self, band=None):
-        """Returns lens model instance and parameters in lenstronomy conventions.
+        """Returns lens model instance and parameters in lenstronomy
+        conventions.
 
         :param band: imaging band
         :type band: str

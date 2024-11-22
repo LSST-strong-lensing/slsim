@@ -16,10 +16,12 @@ This module provides functions to compute velocity dispersion using schechter fu
 
 
 def vel_disp_composite_model(r, m_star, rs_star, m_halo, c_halo, cosmo, z_lens):
-    """Computes the luminosity weighted velocity dispersion for a deflector with a
-    stellar Hernquist profile and a NFW halo profile, assuming isotropic anisotropy.
+    """Computes the luminosity weighted velocity dispersion for a deflector
+    with a stellar Hernquist profile and a NFW halo profile, assuming isotropic
+    anisotropy.
 
-    :param r: radius of the luminosity-weighted velocity dispersion [arcsec]
+    :param r: radius of the luminosity-weighted velocity dispersion
+        [arcsec]
     :param m_star: stellar mass [M_sun]
     :param rs_star: stellar half light radius [physical Mpc]
     :param m_halo: Halo mass [physical M_sun]
@@ -159,8 +161,9 @@ def theta_E_from_vel_disp_epl(vel_disp, gamma, r_half, kwargs_light, light_model
 
 
 def vel_disp_nfw_3d(r, m_halo, c_halo, cosmo, z_lens):
-    """Computes the unweighted velocity dispersion at 3D radius r for a deflector with a
-    NFW halo profile, assuming isotropic anisotropy (beta = 0).
+    """Computes the unweighted velocity dispersion at 3D radius r for a
+    deflector with a NFW halo profile, assuming isotropic anisotropy (beta =
+    0).
 
     Based on equation (14) of Lokas and Mamon 2001 (
     https://arxiv.org/abs/astro-ph/0002395)
@@ -209,13 +212,15 @@ def vel_disp_nfw_3d(r, m_halo, c_halo, cosmo, z_lens):
 
 
 def vel_disp_nfw_aperture(r, m_halo, c_halo, cosmo, z_lens):
-    """Computes the average line-of-sight velocity dispersion in an aperture r for a
-    deflector with a NFW halo profile, assuming isotropic anisotropy (beta = 0).
+    """Computes the average line-of-sight velocity dispersion in an aperture r
+    for a deflector with a NFW halo profile, assuming isotropic anisotropy
+    (beta = 0).
 
     Based on equation (48) of Lokas & Mamon 2001 (
     https://arxiv.org/abs/astro-ph/0002395)
 
-    :param r: radius of the aperture for the velocity dispersion [arcsec]
+    :param r: radius of the aperture for the velocity dispersion
+        [arcsec]
     :param m_halo: Halo mass [physical M_sun]
     :param c_halo: halo concentration
     :param cosmo: cosmology
@@ -271,8 +276,8 @@ def vel_disp_nfw_aperture(r, m_halo, c_halo, cosmo, z_lens):
 
 
 def vel_disp_nfw(m_halo, c_halo, cosmo, z_lens):
-    """Computes vel_disp_nfw_aperture using the characteristic radius rs of the NFW as
-    aperture (which is independent of the source redshift).
+    """Computes vel_disp_nfw_aperture using the characteristic radius rs of the
+    NFW as aperture (which is independent of the source redshift).
 
     :param m_halo: Halo mass [physical M_sun]
     :param c_halo: halo concentration
@@ -551,9 +556,9 @@ def schechter_vel_disp_redshift(
 
 
 def redshifts_from_comoving_density(redshift, density, sky_area, cosmo, noise=True):
-    r"""Sample redshifts from a comoving density function. We took this function is from
-    SkyPy package but we have modified it to make suitable for the constant comoving
-    number density.
+    r"""Sample redshifts from a comoving density function. We took this function
+    is from SkyPy package but we have modified it to make suitable for the
+    constant comoving number density.
 
     Sample galaxy redshifts such that the resulting distribution matches a past
     lightcone with comoving galaxy number density `density` at redshifts
@@ -610,8 +615,8 @@ def redshifts_from_comoving_density(redshift, density, sky_area, cosmo, noise=Tr
 def schechter_velocity_dispersion_function(
     alpha, beta, phi_star, vd_star, vd_min, vd_max, size=None, resolution=1000, scale=1
 ):
-    """Sample velocity dispersion of elliptical galaxies in the local universe following
-    a Schecter function.
+    """Sample velocity dispersion of elliptical galaxies in the local universe
+    following a Schecter function.
 
     Parameters
     ----------
@@ -684,10 +689,10 @@ def schechter_velocity_dispersion_function(
 
 
 def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
-    """Calculates the velocity dispersion from the steller mass. The routine uses
-    abundance matching between stellar mass and velocity dispersion taking the sample
-    drawn from z=0 to z_max (which can be still at low redshift where there is data on
-    the velocity dispersion function)
+    """Calculates the velocity dispersion from the steller mass. The routine
+    uses abundance matching between stellar mass and velocity dispersion taking
+    the sample drawn from z=0 to z_max (which can be still at low redshift
+    where there is data on the velocity dispersion function)
 
     :param galaxy_list: list of galaxies with stellar masses given
     :type galaxy_list: ~astropy.Table object

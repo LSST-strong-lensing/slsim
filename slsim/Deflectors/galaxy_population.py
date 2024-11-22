@@ -68,8 +68,8 @@ models["karmakar23"].sc_z_dependence = True
 def galaxy_size(
     mh, mstar, z, cosmo_col, q_out="tb", model="oguri20", scatter=False, sig_tb=0.1
 ):
-    """Calculate the size of a galaxy based on halo mass, stellar mass, redshift, and
-    cosmology, optionally including scatter.
+    """Calculate the size of a galaxy based on halo mass, stellar mass,
+    redshift, and cosmology, optionally including scatter.
 
     :param mh: The halo mass or masses at which to compute the galaxy size in units of M_sol/h
     :type  mh: float, np.ndarray, list
@@ -167,8 +167,8 @@ def modelOguri20(mh, z):
 
 
 def modelscLognormal(sig_tb, n):
-    """Generate samples from a lognormal distribution with specified standard deviation
-    and number of samples.
+    """Generate samples from a lognormal distribution with specified standard
+    deviation and number of samples.
 
     :param sig_tb: The standard deviation of the lognormal distribution.
     :type  sig_tb: float
@@ -404,8 +404,8 @@ models["karmakar23"].func_scat = modelscKarmakar23
 
 
 def log10Re_log10Mstar_vdW(log10M, a, b, c, d):
-    """Function to calculate the logarithm of the effective radius as a function of the
-    logarithm of the stellar mass used in vdw23 model.
+    """Function to calculate the logarithm of the effective radius as a
+    function of the logarithm of the stellar mass used in vdw23 model.
 
     :param log10M: The logarithm (base 10) of the stellar mass.
     :type  log10M: float
@@ -417,8 +417,8 @@ def log10Re_log10Mstar_vdW(log10M, a, b, c, d):
     :type  c: float
     :param d: Characteristic mass where the curvature changes.
     :type  d: float
-    :return: log10Re. float. The logarithm (base 10) of the effective radius computed
-        using the given parameters.
+    :return: log10Re. float. The logarithm (base 10) of the effective
+        radius computed using the given parameters.
     """
     return a + b * log10M + (c - b) * np.log10(1 + 10 ** (log10M - d)) ** (c - b)
 
@@ -506,9 +506,9 @@ def set_gals_param(pol_halo):
 
     :param pol_halo: Array or list of halo position angle values.
     :type  pol_halo: list or numpy.array
-    :return: elip_gal and polar_gal. An array of galaxy ellipticities generated for each
-        halo and an array of galaxy position anglen angles derived from the halo
-        position angle
+    :return: elip_gal and polar_gal. An array of galaxy ellipticities
+        generated for each halo and an array of galaxy position anglen
+        angles derived from the halo position angle
     """
     n = len(pol_halo)
     elip_gal = gene_e(n)
