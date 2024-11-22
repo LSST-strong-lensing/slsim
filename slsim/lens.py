@@ -732,6 +732,12 @@ class Lens(LensedSystemBase):
                 source_index
             ]
             kwargs_source_mag = kwargs_params["kwargs_source"][source_index]
+        if isinstance(light_model_list, list):
+            light_model_list=light_model_list
+            kwargs_source_mag=kwargs_source_mag
+        else:
+            light_model_list=[light_model_list]
+            kwargs_source_mag=[kwargs_source_mag]
         lightModel = LightModel(light_model_list=light_model_list)
         lensModel = LensModel(
             lens_model_list=kwargs_model.get("lens_model_list", []),
