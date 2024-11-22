@@ -549,11 +549,8 @@ class TestMultiSource(object):
             sn_absolute_mag_band="bessellb",
             sn_absolute_zpsys="ab",
         )
-        source_dict2 = Table.read(
-            os.path.join(path, "TestData/source_supernovae_new.fits"), format="fits"
-        )
-        source_dict2["z"] = 0.9
-        source_dict2 = source_dict2[0]
+        # We initiate the another Source class with the same source. In this class,
+        # source position will be different and all the lensing quantities will be different
         self.source2 = Source(
             source_dict=source_dict1,
             cosmo=self.cosmo,
