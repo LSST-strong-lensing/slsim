@@ -533,7 +533,7 @@ class TestMultiSource(object):
             os.path.join(path, "TestData/deflector_supernovae_new.fits"), format="fits"
         )
 
-        deflector_dict_ = dict(zip(deflector_dict.colnames,  deflector_dict[0]))
+        deflector_dict_ = dict(zip(deflector_dict.colnames, deflector_dict[0]))
         self.gamma_pl = 1.8
         deflector_dict_["gamma_pl"] = self.gamma_pl
         source_dict2 = copy.deepcopy(source_dict1)
@@ -637,12 +637,20 @@ class TestMultiSource(object):
         es_magnification2 = self.lens_class2.extended_source_magnification()
         es_magnification3 = self.lens_class3.extended_source_magnification()
         # Test multisource extended source magnifications.
-        npt.assert_almost_equal(es_magnification1[0] / es_magnification3[0], 1, decimal=1)
-        npt.assert_almost_equal(es_magnification2[0] / es_magnification3[1], 1, decimal=1)
+        npt.assert_almost_equal(
+            es_magnification1[0] / es_magnification3[0], 1, decimal=1
+        )
+        npt.assert_almost_equal(
+            es_magnification2[0] / es_magnification3[1], 1, decimal=1
+        )
 
         es_magnification3 = self.lens_class3_analytical.extended_source_magnification()
-        npt.assert_almost_equal(es_magnification1[0] / es_magnification3[0], 1, decimal=1)
-        npt.assert_almost_equal(es_magnification2[0] / es_magnification3[1], 1, decimal=1)
+        npt.assert_almost_equal(
+            es_magnification1[0] / es_magnification3[0], 1, decimal=1
+        )
+        npt.assert_almost_equal(
+            es_magnification2[0] / es_magnification3[1], 1, decimal=1
+        )
 
     def test_einstein_radius_multi(self):
         einstein_radius1 = self.lens_class1.einstein_radius

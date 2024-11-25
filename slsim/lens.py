@@ -738,8 +738,9 @@ class Lens(LensedSystemBase):
         """
         lens_mass_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
         light_model_list = source.extended_source_light_model()
-        kwargs_source_mag = source.kwargs_extended_source_light(center_lens=self.deflector_position,
-                                                                draw_area=self.test_area)
+        kwargs_source_mag = source.kwargs_extended_source_light(
+            center_lens=self.deflector_position, draw_area=self.test_area
+        )
 
         lightModel = LightModel(light_model_list=light_model_list)
         lensModel = LensModel(
