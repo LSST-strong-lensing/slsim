@@ -99,8 +99,13 @@ def vel_disp_power_law(
             "center_y": 0,
         },
     ]
-    mag2amp = MagAmpConversion(kwargs_model={"lens_light_model_list": light_model_list}, magnitude_zero_point=30)
-    kwargs_light_amp, _, _ = mag2amp.magnitude2amplitude(kwargs_lens_light_mag=kwargs_light)
+    mag2amp = MagAmpConversion(
+        kwargs_model={"lens_light_model_list": light_model_list},
+        magnitude_zero_point=30,
+    )
+    kwargs_light_amp, _, _ = mag2amp.magnitude2amplitude(
+        kwargs_lens_light_mag=kwargs_light
+    )
 
     kwargs_anisotropy = {"beta": 0}
     light_model = LightModel(light_model_list=light_model_list)
