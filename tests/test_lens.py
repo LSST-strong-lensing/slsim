@@ -523,6 +523,7 @@ def supernovae_lens_instance_double_sersic_multisource():
 
 class TestMultiSource(object):
     def setup_method(self):
+        np.random.seed(42)
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         path = os.path.dirname(__file__)
         source_dict1 = Table.read(
