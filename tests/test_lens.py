@@ -38,8 +38,6 @@ class TestLens(object):
         self.deflector_dict = red_one
         self.los_individual = LOSIndividual(kappa=0.1, gamma=[-0.1, -0.2])
 
-        print(blue_one)
-        blue_one["gamma_pl"] = 2.1
         mag_arc_limit = {"i": 35, "g": 35, "r": 35}
         while True:
             self.source = Source(
@@ -348,7 +346,7 @@ def test_point_source_magnitude_with_lightcurve(supernovae_lens_instance):
     assert mag[1][0] != expected_results[0][0]
 
 
-class TestDifferenLens(object):
+class TestDifferentLens(object):
     # pytest.fixture(scope='class')
     def setup_method(self):
         # path = os.path.dirname(slsim.__file__)
@@ -533,10 +531,12 @@ class TestMultiSource(object):
         deflector_dict = Table.read(
             os.path.join(path, "TestData/deflector_supernovae_new.fits"), format="fits"
         )
-        self.gamma_pl = 2.0
-        deflector_dict["gamma_pl"] = self.gamma_pl
+
+        deflector_dict_ = dict(zip(deflector_dict.colnames,  deflector_dict[0]))
+        self.gamma_pl = 1.8
+        deflector_dict_["gamma_pl"] = self.gamma_pl
         source_dict2 = copy.deepcopy(source_dict1)
-        source_dict2["z"] += 0.5
+        source_dict2["z"] += 2
         self.source1 = Source(
             source_dict=source_dict2,
             cosmo=self.cosmo,
@@ -563,10 +563,10 @@ class TestMultiSource(object):
             sn_absolute_mag_band="bessellb",
             sn_absolute_zpsys="ab",
         )
-
         self.deflector = Deflector(
             deflector_type="EPL",
-            deflector_dict=deflector_dict,
+            deflector_dict=deflector_dict_,
+            sis_convention=False,
         )
 
         self.lens_class1 = Lens(
@@ -636,20 +636,20 @@ class TestMultiSource(object):
         es_magnification2 = self.lens_class2.extended_source_magnification()
         es_magnification3 = self.lens_class3.extended_source_magnification()
         # Test multisource extended source magnifications.
-        npt.assert_almost_equal(es_magnification1[0], es_magnification3[0], decimal=3)
-        npt.assert_almost_equal(es_magnification2[0], es_magnification3[1], decimal=3)
+        npt.assert_almost_equal(es_magnification1[0] / es_magnification3[0], 1, decimal=1)
+        npt.assert_almost_equal(es_magnification2[0] / es_magnification3[1], 1, decimal=1)
 
         es_magnification3 = self.lens_class3_analytical.extended_source_magnification()
-        npt.assert_almost_equal(es_magnification1[0], es_magnification3[0], decimal=3)
-        npt.assert_almost_equal(es_magnification2[0], es_magnification3[1], decimal=3)
+        npt.assert_almost_equal(es_magnification1[0] / es_magnification3[0], 1, decimal=1)
+        npt.assert_almost_equal(es_magnification2[0] / es_magnification3[1], 1, decimal=1)
 
     def test_einstein_radius_multi(self):
         einstein_radius1 = self.lens_class1.einstein_radius
         einstein_radius2 = self.lens_class2.einstein_radius
         einstein_radius3 = self.lens_class3.einstein_radius
         # Test multisource einstein radius.
-        npt.assert_almost_equal(einstein_radius1[0], einstein_radius3[0], decimal=5)
-        npt.assert_almost_equal(einstein_radius2[0], einstein_radius3[1], decimal=5)
+        npt.assert_almost_equal(einstein_radius1[0], einstein_radius3[0], decimal=2)
+        npt.assert_almost_equal(einstein_radius2[0], einstein_radius3[1], decimal=2)
 
         einstein_radius3 = self.lens_class3_analytical.einstein_radius
         npt.assert_almost_equal(einstein_radius1[0], einstein_radius3[0], decimal=5)

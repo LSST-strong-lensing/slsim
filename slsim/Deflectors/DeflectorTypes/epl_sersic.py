@@ -17,16 +17,14 @@ class EPLSersic(DeflectorBase):
     - 'z': redshift of deflector
     """
 
-    def __init__(self, deflector_dict):
+    def __init__(self, deflector_dict, sis_convention=True):
         """
 
         :param deflector_dict: dictionary of deflector quantities
+        :param sis_convention: if using the SIS convention to normalize the Einstein radius or not
         """
         super().__init__(deflector_dict=deflector_dict)
-        try:
-            sis_convention = deflector_dict["sis_convention"]
-        except KeyError:
-            sis_convention = True
+
         self._sis_convention = sis_convention
 
     def velocity_dispersion(self, cosmo=None):

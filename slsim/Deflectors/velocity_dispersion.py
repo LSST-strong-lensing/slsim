@@ -6,6 +6,7 @@ import copy
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 from lenstronomy.Analysis.light_profile import LightProfileAnalysis
 from lenstronomy.LightModel.light_model import LightModel
+from lenstronomy.SimulationAPI.mag_amp_conversion import MagAmpConversion
 
 """
 This module provides functions to compute velocity dispersion using schechter function.
@@ -98,6 +99,9 @@ def vel_disp_power_law(
             "center_y": 0,
         },
     ]
+    mag2amp = MagAmpConversion(kwargs_model={"lens_light_model_list": light_model_list}, magnitude_zero_point=30)
+    kwargs_light_amp, _, _ = mag2amp.magnitude2amplitude(kwargs_lens_light_mag=kwargs_light)
+
     kwargs_anisotropy = {"beta": 0}
     light_model = LightModel(light_model_list=light_model_list)
     lensLightProfile = LightProfileAnalysis(light_model=light_model)
@@ -108,7 +112,7 @@ def vel_disp_power_law(
         center_x,
         center_y,
     ) = lensLightProfile.multi_gaussian_decomposition(
-        kwargs_light,
+        kwargs_light_amp,
         r_h=r_half,
         n_comp=20,
     )
@@ -170,6 +174,7 @@ def theta_E_from_vel_disp_epl(
     if gamma == 2 or sis_convention is True:
         theta_E = lens_cosmo.sis_sigma_v2theta_E(vel_disp)
     else:
+        print("test vel disp")
         theta_E_0 = 1
         vel_disp_0 = vel_disp_power_law(
             theta_E_0, gamma, r_half, kwargs_light, light_model_list, lens_cosmo
