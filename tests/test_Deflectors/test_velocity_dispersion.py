@@ -55,7 +55,7 @@ def test_vel_disp_power_law():
     r_half = 1
     kwargs_light = [
         {
-            "amp": 1,
+            "magnitude": 1,
             "R_sersic": 2,
             "n_sersic": 1,
             "e1": 0,
@@ -88,7 +88,7 @@ def test_theta_E_from_vel_disp_epl():
     r_half = 1
     kwargs_light = [
         {
-            "amp": 1,
+            "magnitude": 1,
             "R_sersic": 2,
             "n_sersic": 1,
             "e1": 0,

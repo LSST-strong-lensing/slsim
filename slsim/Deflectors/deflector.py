@@ -9,7 +9,7 @@ class Deflector(object):
     """Class of a single deflector with quantities only related to the
     deflector (independent of the source)"""
 
-    def __init__(self, deflector_type, deflector_dict):
+    def __init__(self, deflector_type, deflector_dict, **kwargs):
         """
 
         :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST", "NFW_CLUSTER"
@@ -18,7 +18,7 @@ class Deflector(object):
         :type deflector_dict: dict
         """
         if deflector_type in ["EPL"]:
-            self._deflector = EPLSersic(deflector_dict=deflector_dict)
+            self._deflector = EPLSersic(deflector_dict=deflector_dict, **kwargs)
         elif deflector_type in ["NFW_HERNQUIST"]:
             self._deflector = NFWHernquist(deflector_dict=deflector_dict)
         elif deflector_type in ["NFW_CLUSTER"]:

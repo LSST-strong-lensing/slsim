@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
@@ -447,8 +449,11 @@ class Lens(LensedSystemBase):
         else:
             # numerical solution for the Einstein radius
             lens_analysis = LensProfileAnalysis(lens_model=lens_model)
+            kwargs_lens_ = copy.deepcopy(kwargs_lens)
+            kwargs_lens_[0]["center_x"] = 0
+            kwargs_lens_[0]["center_y"] = 0
             theta_E = lens_analysis.effective_einstein_radius(
-                kwargs_lens, r_min=1e-3, r_max=5e1, num_points=50
+                kwargs_lens_, r_min=1e-4, r_max=5e1, num_points=100
             )
         return theta_E
 
@@ -731,18 +736,15 @@ class Lens(LensedSystemBase):
         :param source_index: index of a source in source list.
         :return: integrated magnification factor of host magnitude
         """
-        kwargs_model, kwargs_params = self.lenstronomy_kwargs(band=None)
-        if self.source_number == 1:
-            light_model_list = kwargs_model.get("source_light_model_list", [])
-            kwargs_source_mag = kwargs_params["kwargs_source"]
-        else:
-            light_model_list = kwargs_model.get("source_light_model_list", [])[
-                source_index
-            ]
-            kwargs_source_mag = kwargs_params["kwargs_source"][source_index]
+        lens_mass_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
+        light_model_list = source.extended_source_light_model()
+        kwargs_source_mag = source.kwargs_extended_source_light(
+            center_lens=self.deflector_position, draw_area=self.test_area
+        )
+
         lightModel = LightModel(light_model_list=light_model_list)
         lensModel = LensModel(
-            lens_model_list=kwargs_model.get("lens_model_list", []),
+            lens_model_list=lens_mass_model_list,
             z_lens=self.deflector_redshift,
             z_source_convention=self.max_redshift_source_class.redshift,
             multi_plane=False,
@@ -762,7 +764,7 @@ class Lens(LensedSystemBase):
         x, y = util.make_grid(numPix=num_pix, deltapix=delta_pix)
         x += center_source[0]
         y += center_source[1]
-        beta_x, beta_y = lensModel.ray_shooting(x, y, kwargs_params["kwargs_lens"])
+        beta_x, beta_y = lensModel.ray_shooting(x, y, kwargs_lens)
         flux_lensed = np.sum(
             lightModel.surface_brightness(beta_x, beta_y, kwargs_source_amp)
         )
