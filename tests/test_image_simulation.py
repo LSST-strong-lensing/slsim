@@ -467,23 +467,23 @@ class TestMultiSourceImageSimulation(object):
         )
 
         self.image1 = sharp_image(
-                lens_class1,
-                band="i",
-                mag_zero_point=27,
-                delta_pix=0.2,
-                num_pix=64,
-                with_source=True,
-                with_deflector=True,
-            )
-        self.image2=sharp_image(
-                lens_class2,
-                band="i",
-                mag_zero_point=27,
-                delta_pix=0.2,
-                num_pix=64,
-                with_source=True,
-                with_deflector=False,
-            )
+            lens_class1,
+            band="i",
+            mag_zero_point=27,
+            delta_pix=0.2,
+            num_pix=64,
+            with_source=True,
+            with_deflector=True,
+        )
+        self.image2 = sharp_image(
+            lens_class2,
+            band="i",
+            mag_zero_point=27,
+            delta_pix=0.2,
+            num_pix=64,
+            with_source=True,
+            with_deflector=False,
+        )
         self.image3 = sharp_image(
             lens_class3,
             band="i",
@@ -494,10 +494,9 @@ class TestMultiSourceImageSimulation(object):
             with_deflector=True,
         )
         self.combined_image = self.image1 + self.image2
+
     def test_image_multiple_source(self):
-        npt.assert_almost_equal(
-            self.image3, self.combined_image, decimal=8
-        )
+        npt.assert_almost_equal(self.image3, self.combined_image, decimal=8)
 
 
 if __name__ == "__main__":
