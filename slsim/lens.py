@@ -798,10 +798,16 @@ class Lens(LensedSystemBase):
                 lens_mass_model_list
             )
             kwargs_model["z_lens"] = self.deflector_redshift
-            kwargs_model["source_redshift_list"] = self.source_redshift_list
+            if self.max_redshift_source_class.light_profile == "single_sersic":
+                kwargs_model["source_redshift_list"] = self.source_redshift_list
+            elif self.max_redshift_source_class.light_profile == "double_sersic":
+                kwargs_model["source_redshift_list"] = [
+                    z for z in self.source_redshift_list for _ in range(2)
+                ]
             kwargs_model["z_source_convention"] = (
                 self.max_redshift_source_class.redshift
             )
+            kwargs_model["z_source"] = self.max_redshift_source_class.redshift
             kwargs_model["cosmo"] = self.cosmo
 
         sources, sources_kwargs = self.source_light_model_lenstronomy(band=band)
@@ -893,19 +899,15 @@ class Lens(LensedSystemBase):
                     )
                 )
             # lets transform list in to required structure
-            if (
+            """if (
                 self.max_redshift_source_class.light_profile == "double_sersic"
                 and self.source_number > 1
             ):
                 source_models_list_restructure = source_models_list
                 kwargs_source_list_restructure = kwargs_source_list
-            else:
-                source_models_list_restructure = list(
-                    np.concatenate(source_models_list)
-                )
-                kwargs_source_list_restructure = list(
-                    np.concatenate(kwargs_source_list)
-                )
+            else:"""
+            source_models_list_restructure = list(np.concatenate(source_models_list))
+            kwargs_source_list_restructure = list(np.concatenate(kwargs_source_list))
             source_models["source_light_model_list"] = source_models_list_restructure
             kwargs_source = kwargs_source_list_restructure
         else:

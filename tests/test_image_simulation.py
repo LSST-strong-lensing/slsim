@@ -465,42 +465,38 @@ class TestMultiSourceImageSimulation(object):
             source_class=[self.source1, self.source2],
             cosmo=self.cosmo,
         )
-        path = os.path.dirname(__file__)
-        psf_kernel_single = np.load(
-            os.path.join(path, "TestData/psf_kernels_for_image_1.npy")
-        )
-        image1 = lens_image(
-            lens_class=lens_class1,
+
+        self.image1 = sharp_image(
+            lens_class1,
             band="i",
             mag_zero_point=27,
+            delta_pix=0.2,
             num_pix=64,
-            psf_kernel=psf_kernel_single,
-            transform_pix2angle=np.array([[0.2, 0], [0, 0.2]]),
-            exposure_time=30,
-            t_obs=10,
+            with_source=True,
+            with_deflector=True,
         )
-        image2 = lens_image(
-            lens_class=lens_class2,
+        self.image2 = sharp_image(
+            lens_class2,
             band="i",
             mag_zero_point=27,
+            delta_pix=0.2,
             num_pix=64,
-            psf_kernel=psf_kernel_single,
-            transform_pix2angle=np.array([[0.2, 0], [0, 0.2]]),
-            exposure_time=30,
-            t_obs=10,
+            with_source=True,
+            with_deflector=False,
         )
-        image3 = lens_image(
-            lens_class=lens_class3,
+        self.image3 = sharp_image(
+            lens_class3,
             band="i",
             mag_zero_point=27,
+            delta_pix=0.2,
             num_pix=64,
-            psf_kernel=psf_kernel_single,
-            transform_pix2angle=np.array([[0.2, 0], [0, 0.2]]),
-            exposure_time=30,
-            t_obs=10,
+            with_source=True,
+            with_deflector=True,
         )
-        combined_image = image1 + image2
-        assert image3 == combined_image
+        self.combined_image = self.image1 + self.image2
+
+    def test_image_multiple_source(self):
+        npt.assert_almost_equal(self.image3, self.combined_image, decimal=8)
 
 
 if __name__ == "__main__":
