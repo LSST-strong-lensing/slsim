@@ -802,6 +802,7 @@ class Lens(LensedSystemBase):
             kwargs_model["z_source_convention"] = (
                 self.max_redshift_source_class.redshift
             )
+            kwargs_model["z_source"] = self.max_redshift_source_class.redshift
             kwargs_model["cosmo"] = self.cosmo
 
         sources, sources_kwargs = self.source_light_model_lenstronomy(band=band)
