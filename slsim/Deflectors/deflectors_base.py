@@ -12,7 +12,7 @@ class DeflectorsBase(ABC):
     def __init__(self, deflector_table, kwargs_cut, cosmo, sky_area, gamma_pl=None):
         """
 
-        :param deflector_table: table with lens parameters
+        :param deflector_table: file or table with lens parameters
         :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max
         :type kwargs_cut: dict
         :param cosmo: astropy.cosmology instance
