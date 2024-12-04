@@ -4,6 +4,7 @@ from slsim.Pipelines.sl_hammocks_pipeline import SLHammocksPipeline
 from astropy.units import Quantity
 from slsim.Deflectors.compound_lens_halos_galaxies import CompoundLensHalosGalaxies
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
+
 # Assuming other imports are already defined, we continue from here.
 
 
@@ -38,10 +39,10 @@ def test_deflector_number_draw_deflector(compound_lens_halos_galaxies):
     num_deflectors = halo_galaxy_pop.deflector_number()
     deflector = halo_galaxy_pop.draw_deflector()
     lens_cosmo = LensCosmo(
-            z_lens=float(deflector.redshift),
-            z_source=float(deflector.redshift+0.5),
-            cosmo=cosmo,
-        )
+        z_lens=float(deflector.redshift),
+        z_source=float(deflector.redshift + 0.5),
+        cosmo=cosmo,
+    )
     light_lenstronomy = deflector.light_model_lenstronomy()
     mass_lenstronomy = deflector.mass_model_lenstronomy(lens_cosmo)
     expected_mass_model = ["NFW_ELLIPSE_CSE", "HERNQUIST_ELLIPSE_CSE"]

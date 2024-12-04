@@ -32,9 +32,9 @@ def pes_lens_instance():
             lightcurve_time=np.linspace(0, np.pi, 100),
         )
         deflector = Deflector(
-                deflector_type="EPL",
-                deflector_dict=deflector_dict,
-            )
+            deflector_type="EPL",
+            deflector_dict=deflector_dict,
+        )
         pes_lens = Lens(
             source_class=source,
             deflector_class=deflector,
@@ -47,8 +47,8 @@ def pes_lens_instance():
 
 
 def test_opsim_time_series_images_data():
-    """Only run this test function if user has an OpSim database downloaded in the
-    folder data/OpSim_database."""
+    """Only run this test function if user has an OpSim database downloaded in
+    the folder data/OpSim_database."""
 
     path = os.path.dirname(__file__)
     opsim_path = os.path.join(path, "../../data/OpSim_database/")

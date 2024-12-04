@@ -252,13 +252,15 @@ def test_catalog_with_angular_size_in_arcsec():
     assert galaxy_cat2["angular_size"].unit == u.rad
     assert galaxy_cat["angular_size"].unit == u.arcsec
 
+
 def test_convert_mjd_to_days():
     result = convert_mjd_to_days(60100, 60000)
-    assert result==100
+    assert result == 100
+
 
 def test_start_point_mjd_time():
     result = transient_event_time_mjd(60000, 60400)
-    assert 60000 <= result <=60400
+    assert 60000 <= result <= 60400
 
 
 if __name__ == "__main__":

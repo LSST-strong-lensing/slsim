@@ -6,10 +6,10 @@ _SUPPORTED_DEFLECTORS = ["EPL", "NFW_HERNQUIST", "NFW_CLUSTER"]
 
 
 class Deflector(object):
-    """Class of a single deflector with quantities only related to the deflector
-    (independent of the source)"""
+    """Class of a single deflector with quantities only related to the
+    deflector (independent of the source)"""
 
-    def __init__(self, deflector_type, deflector_dict):
+    def __init__(self, deflector_type, deflector_dict, **kwargs):
         """
 
         :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST", "NFW_CLUSTER"
@@ -18,7 +18,7 @@ class Deflector(object):
         :type deflector_dict: dict
         """
         if deflector_type in ["EPL"]:
-            self._deflector = EPLSersic(deflector_dict=deflector_dict)
+            self._deflector = EPLSersic(deflector_dict=deflector_dict, **kwargs)
         elif deflector_type in ["NFW_HERNQUIST"]:
             self._deflector = NFWHernquist(deflector_dict=deflector_dict)
         elif deflector_type in ["NFW_CLUSTER"]:
@@ -36,7 +36,7 @@ class Deflector(object):
 
         :return: redshift
         """
-        return self._deflector.redshift
+        return float(self._deflector.redshift)
 
     def velocity_dispersion(self, cosmo=None):
         """Velocity dispersion of deflector.
@@ -103,7 +103,8 @@ class Deflector(object):
         return self._deflector.mass_ellipticity
 
     def mass_model_lenstronomy(self, lens_cosmo):
-        """Returns lens model instance and parameters in lenstronomy conventions.
+        """Returns lens model instance and parameters in lenstronomy
+        conventions.
 
         :param lens_cosmo: lens cosmology model
         :type lens_cosmo: ~lenstronomy.Cosmo.LensCosmo instance
@@ -112,7 +113,8 @@ class Deflector(object):
         return self._deflector.mass_model_lenstronomy(lens_cosmo=lens_cosmo)
 
     def light_model_lenstronomy(self, band=None):
-        """Returns lens model instance and parameters in lenstronomy conventions.
+        """Returns lens model instance and parameters in lenstronomy
+        conventions.
 
         :param band: imaging band
         :type band: str

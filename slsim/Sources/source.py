@@ -14,8 +14,8 @@ from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 
 
 class Source(object):
-    """This class provides source dictionary and variable magnitude of an individual
-    source."""
+    """This class provides source dictionary and variable magnitude of an
+    individual source."""
 
     def __init__(
         self,
@@ -343,19 +343,19 @@ class Source(object):
     def redshift(self):
         """Returns source redshift."""
 
-        return self.source_dict["z"]
+        return float(self.source_dict["z"])
 
     @property
     def n_sersic(self):
         """Returns sersic index of the source."""
 
-        return self.source_dict["n_sersic"]
+        return float(self.source_dict["n_sersic"])
 
     @property
     def angular_size(self):
         """Returns angular size of the source."""
 
-        return self.source_dict["angular_size"]
+        return float(self.source_dict["angular_size"])
 
     @property
     def ellipticity(self):
@@ -376,7 +376,8 @@ class Source(object):
 
         :param band: Imaging band
         :type band: str
-        :param image_observation_times: Images observation time for an image.
+        :param image_observation_times: Images observation time for an
+            image.
         :return: Magnitude of the point source in the specified band
         :rtype: float
         """
@@ -444,8 +445,9 @@ class Source(object):
         return source_mag
 
     def extended_source_position(self, center_lens, draw_area):
-        """Extended source position. If not present from the catalog, it is drawn
-        uniformly within the circle of the test area centered on the deflector position.
+        """Extended source position. If not present from the catalog, it is
+        drawn uniformly within the circle of the test area centered on the
+        deflector position.
 
         :param center_lens: center of the deflector.
          Eg: np.array([center_x_lens, center_y_lens])
@@ -467,9 +469,10 @@ class Source(object):
         return self._center_source
 
     def point_source_position(self, center_lens, draw_area):
-        """Point source position. point source could be at the center of the extended
-        source or it can be off from center of the extended source. In the absence of a
-        point source, this is the center of the extended source.
+        """Point source position. point source could be at the center of the
+        extended source or it can be off from center of the extended source. In
+        the absence of a point source, this is the center of the extended
+        source.
 
         :param center_lens: center of the deflector.
          Eg: np.array([center_x_lens, center_y_lens])
@@ -494,8 +497,8 @@ class Source(object):
         return extended_source_center
 
     def kwargs_extended_source_light(self, center_lens, draw_area, band=None):
-        """Provides dictionary of keywords for the source light model(s). Kewords used
-        are in lenstronomy conventions.
+        """Provides dictionary of keywords for the source light model(s).
+        Kewords used are in lenstronomy conventions.
 
         :param center_lens: center of the deflector.
          Eg: np.array([center_x_lens, center_y_lens])
@@ -579,13 +582,10 @@ class Source(object):
 
     def extended_source_light_model(self):
         """Provides a list of source models.
-        
+
         :return: list of extented source model.
         """
-        if (
-            self.source_type == "extended"
-            or self.source_type == "point_plus_extended"
-        ):
+        if self.source_type == "extended" or self.source_type == "point_plus_extended":
             if self.light_profile == "single_sersic":
                 source_models_list = ["SERSIC_ELLIPSE"]
             elif self.light_profile == "double_sersic":
@@ -594,19 +594,23 @@ class Source(object):
                     "SERSIC_ELLIPSE",
                 ]
             else:
-                raise ValueError("Provided sersic profile is not supported. "
-                            "Supported profiles are single_sersic and double_sersic.")
+                raise ValueError(
+                    "Provided sersic profile is not supported. "
+                    "Supported profiles are single_sersic and double_sersic."
+                )
         else:
             source_models_list = None
         return source_models_list
 
-def extract_agn_kwargs_from_source_dict(source_dict):
-    """This extracts all AGN related parameters from a source_dict Table and constructs
-    a compact dictionary from them to pass into the agn class.
 
-    :param source_dict: Astropy Table with columns representing all information of the
-        source.
-    :return: Compact dict object containing key+value pairs of AGN parameters.
+def extract_agn_kwargs_from_source_dict(source_dict):
+    """This extracts all AGN related parameters from a source_dict Table and
+    constructs a compact dictionary from them to pass into the agn class.
+
+    :param source_dict: Astropy Table with columns representing all
+        information of the source.
+    :return: Compact dict object containing key+value pairs of AGN
+        parameters.
     """
 
     kwargs_variable_agn = [
@@ -630,14 +634,14 @@ def extract_agn_kwargs_from_source_dict(source_dict):
 
 
 def add_mean_mag_to_source_table(sourcedict, mean_mags, band_list):
-    """This function adds/replace given mean magnitudes in given bands in a given source
-    table/dict.
+    """This function adds/replace given mean magnitudes in given bands in a
+    given source table/dict.
 
     :param sourcedict: Given source table.
     :param mean_mags: list of mean magnitudes in different bands.
     :param band_list: list of bands corresponding to mean_mags.
-    :return: source table with additional columns corresponding to given mean
-        magnitudes.
+    :return: source table with additional columns corresponding to given
+        mean magnitudes.
     """
     _source_dict = Table(sourcedict)
     for i in range(len(mean_mags)):

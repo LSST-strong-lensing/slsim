@@ -44,11 +44,11 @@ class TestImageSimulation(object):
         self.deflector_dict = red_one
         while True:
             self.source = Source(
-            source_dict=self.source_dict,
-            cosmo=cosmo,
-            source_type="extended",
-            light_profile="single_sersic",
-        )
+                source_dict=self.source_dict,
+                cosmo=cosmo,
+                source_type="extended",
+                light_profile="single_sersic",
+            )
             self.deflector = Deflector(
                 deflector_type="EPL",
                 deflector_dict=self.deflector_dict,
@@ -187,12 +187,12 @@ def pes_lens_instance():
             source_type="point_plus_extended",
             light_profile="single_sersic",
             variability_model="sinusoidal",
-            kwargs_variability={"amp", "freq"}
+            kwargs_variability={"amp", "freq"},
         )
         deflector = Deflector(
-                deflector_type="EPL",
-                deflector_dict=deflector_dict,
-            )
+            deflector_type="EPL",
+            deflector_dict=deflector_dict,
+        )
         pes_lens = Lens(
             source_class=source,
             deflector_class=deflector,
@@ -379,6 +379,7 @@ def test_deflector_images_with_different_zeropoint(pes_lens_instance):
     assert len(lens_image_result_3) == 2
     assert np.any(residual != 0)
 
+
 class TestMultiSourceImageSimulation(object):
     def setup_method(self):
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -386,35 +387,37 @@ class TestMultiSourceImageSimulation(object):
         source_dict1 = Table.read(
             os.path.join(path, "TestData/source_supernovae_new.fits"), format="fits"
         )
-        data={'ra_off':[-0.2524832112858584],
-        'dec_off':[0.1394853307977928],
-        'sep':[0.288450913482674],
-        'z':[0.65],
-        'R_d':[3.515342568459843],
-        'R_s':[2.0681117132023721],
-        'logMstar':[10.7699],
-        'logSFR':[0.6924],
-        'a0': [0.51747227],
-        'a1': [0.32622826],
-        'a_rot':[0.2952329149503528],
-        'b0':[0.25262737],
-        'b1':[0.27223456],
-        'e':[0.3303168046302505],
-        'ellipticity0': [0.33939099024025735],
-        'ellipticity1': [0.0802206575082465],
-        'mag_g': [22.936048],
-        'mag_i':[21.78715],
-        'mag_r':[22.503948],
-        'n_sersic_0':[1.0],
-        'n_sersic_1':[4.0],
-        'w0':[0.907],
-        'w1':[0.093],
-        'e0_1':[0.14733325180101145],
-        'e0_2':[0.09874724195027847],
-        'e1_1':[0.03754887782202202],
-        'e1_2':[0.025166403903583694],
-        'angular_size0':[0.37156280037917327],
-        'angular_size1':[0.29701108506340096]}
+        data = {
+            "ra_off": [-0.2524832112858584],
+            "dec_off": [0.1394853307977928],
+            "sep": [0.288450913482674],
+            "z": [0.65],
+            "R_d": [3.515342568459843],
+            "R_s": [2.0681117132023721],
+            "logMstar": [10.7699],
+            "logSFR": [0.6924],
+            "a0": [0.51747227],
+            "a1": [0.32622826],
+            "a_rot": [0.2952329149503528],
+            "b0": [0.25262737],
+            "b1": [0.27223456],
+            "e": [0.3303168046302505],
+            "ellipticity0": [0.33939099024025735],
+            "ellipticity1": [0.0802206575082465],
+            "mag_g": [22.936048],
+            "mag_i": [21.78715],
+            "mag_r": [22.503948],
+            "n_sersic_0": [1.0],
+            "n_sersic_1": [4.0],
+            "w0": [0.907],
+            "w1": [0.093],
+            "e0_1": [0.14733325180101145],
+            "e0_2": [0.09874724195027847],
+            "e1_1": [0.03754887782202202],
+            "e1_2": [0.025166403903583694],
+            "angular_size0": [0.37156280037917327],
+            "angular_size1": [0.29701108506340096],
+        }
         source_dict2 = Table(data)
         deflector_dict = Table.read(
             os.path.join(path, "TestData/deflector_supernovae_new.fits"), format="fits"
@@ -430,7 +433,6 @@ class TestMultiSourceImageSimulation(object):
             sn_type="Ia",
             sn_absolute_mag_band="bessellb",
             sn_absolute_zpsys="ab",
-
         )
         self.source2 = Source(
             source_dict=source_dict2,
@@ -443,62 +445,58 @@ class TestMultiSourceImageSimulation(object):
             sn_type="Ia",
             sn_absolute_mag_band="bessellb",
             sn_absolute_zpsys="ab",
-
         )
         self.deflector = Deflector(
-                deflector_type="EPL",
-                deflector_dict=deflector_dict,
-            )
-        lens_class1 =  Lens(
+            deflector_type="EPL",
+            deflector_dict=deflector_dict,
+        )
+        lens_class1 = Lens(
             deflector_class=self.deflector,
             source_class=self.source1,
             cosmo=self.cosmo,
         )
-        lens_class2 =  Lens(
+        lens_class2 = Lens(
             deflector_class=self.deflector,
             source_class=self.source2,
             cosmo=self.cosmo,
         )
-        lens_class3 =  Lens(
+        lens_class3 = Lens(
             deflector_class=self.deflector,
             source_class=[self.source1, self.source2],
             cosmo=self.cosmo,
         )
-        path = os.path.dirname(__file__)
-        psf_kernel_single = np.load(
-            os.path.join(path, "TestData/psf_kernels_for_image_1.npy"))
-        image1 = lens_image(
-            lens_class=lens_class1,
+
+        self.image1 = sharp_image(
+            lens_class1,
             band="i",
             mag_zero_point=27,
+            delta_pix=0.2,
             num_pix=64,
-            psf_kernel=psf_kernel_single,
-            transform_pix2angle=np.array([[0.2, 0], [0, 0.2]]),
-            exposure_time=30,
-            t_obs=10,
+            with_source=True,
+            with_deflector=True,
         )
-        image2 = lens_image(
-            lens_class=lens_class2,
+        self.image2 = sharp_image(
+            lens_class2,
             band="i",
             mag_zero_point=27,
+            delta_pix=0.2,
             num_pix=64,
-            psf_kernel=psf_kernel_single,
-            transform_pix2angle=np.array([[0.2, 0], [0, 0.2]]),
-            exposure_time=30,
-            t_obs=10,
+            with_source=True,
+            with_deflector=False,
         )
-        image3 = lens_image(
-            lens_class=lens_class3,
+        self.image3 = sharp_image(
+            lens_class3,
             band="i",
             mag_zero_point=27,
+            delta_pix=0.2,
             num_pix=64,
-            psf_kernel=psf_kernel_single,
-            transform_pix2angle=np.array([[0.2, 0], [0, 0.2]]),
-            exposure_time=30,
-            t_obs=10,
+            with_source=True,
+            with_deflector=True,
         )
-        combined_image = image1+image2
-        assert image3==combined_image
+        self.combined_image = self.image1 + self.image2
+
+    def test_image_multiple_source(self):
+        npt.assert_almost_equal(self.image3, self.combined_image, decimal=8)
 
 
 if __name__ == "__main__":

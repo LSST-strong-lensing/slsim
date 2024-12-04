@@ -33,7 +33,8 @@ def get_accepted_sn_types():
 
 
 class RandomizedSupernova(Supernova):
-    """Class for randomizing a supernova of the type sn_type specified by the user.
+    """Class for randomizing a supernova of the type sn_type specified by the
+    user.
 
     If modeldir is not provided by the user, and sn_type is Ia, the sn_model is
     chosen to be salt3-nir.
@@ -176,7 +177,8 @@ class RandomizedSupernova(Supernova):
 
         :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
         :type sn_type: str
-        :param absolute_mag_distribution: A function that returns an absolute mag
+        :param absolute_mag_distribution: A function that returns an
+            absolute mag
         :type absolute_mag_distribution: func
         :param random_seed: Random seed for randomization
         :type random_seed: int

@@ -23,7 +23,7 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
         sn_type=None,
         sn_absolute_mag_band=None,
         sn_absolute_zpsys=None,
-        sn_modeldir=None
+        sn_modeldir=None,
     ):
         """
 
@@ -98,6 +98,6 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
             sn_type=sn_type,
             sn_absolute_mag_band=sn_absolute_mag_band,
             sn_absolute_zpsys=sn_absolute_zpsys,
-            sn_modeldir=sn_modeldir
-            )
+            sn_modeldir=sn_modeldir,
+        )
         self.source_type = "point_plus_extended"

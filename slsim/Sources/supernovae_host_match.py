@@ -8,7 +8,8 @@ Sullivan et al. 2006
 
 
 class SupernovaeHostMatch:
-    """Class to generate a host galaxy catalog for a given supernovae catalog."""
+    """Class to generate a host galaxy catalog for a given supernovae
+    catalog."""
 
     def __init__(
         self,

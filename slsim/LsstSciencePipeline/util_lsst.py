@@ -15,28 +15,34 @@ def variable_lens_injection(
     :param lens_class: Lens() object
     :param band: imaging band
     :param num_pix: number of pixels per axis
-    :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
-        displacements
-    :param exposure_data: An astropy table of exposure data. It must contain calexp
-        images or generated noisy background image (column name should be
-        "time_series_images", these images are single exposure images of the same part
-        of the sky at different time), magnitude zero point (column name should be
-        "zero_point", these are zero point magnitudes for each single exposure images in
-        time series image) , psf kernel for each exposure (column name should be
-        "psf_kernel", these are pixel psf kernel for each single exposure images in time
-        series image), exposure time (column name should be "expo_time", these are
-        exposure time for each single exposure images in time series images),
-        observation time (column name should be "obs_time", these are observation time
-        in days for each single exposure images in time series images)
-    :return: Astropy table of injected lenses and exposure information of dp0 data
+    :param transform_pix2angle: transformation matrix (2x2) of pixels
+        into coordinate displacements
+    :param exposure_data: An astropy table of exposure data. It must
+        contain calexp images or generated noisy background image
+        (column name should be "time_series_images", these images are
+        single exposure images of the same part of the sky at different
+        time), magnitude zero point (column name should be "zero_point",
+        these are zero point magnitudes for each single exposure images
+        in time series image) , psf kernel for each exposure (column
+        name should be "psf_kernel", these are pixel psf kernel for each
+        single exposure images in time series image), exposure time
+        (column name should be "expo_time", these are exposure time for
+        each single exposure images in time series images), observation
+        time (column name should be "obs_time", these are observation
+        time in days for each single exposure images in time series
+        images)
+    :return: Astropy table of injected lenses and exposure information
+        of dp0 data
     """
-    ## chose transient starting point randomly. 
-    start_point_mjd_time = transient_event_time_mjd(min(exposure_data["obs_time"]),
-                                        max(exposure_data["obs_time"]))
+    ## chose transient starting point randomly.
+    start_point_mjd_time = transient_event_time_mjd(
+        min(exposure_data["obs_time"]), max(exposure_data["obs_time"])
+    )
     ## Convert mjd observation time to days. We should do this because lightcurves are
     #  in the unit of days.
-    observation_time = convert_mjd_to_days(exposure_data["obs_time"],
-                                            start_point_mjd_time)
+    observation_time = convert_mjd_to_days(
+        exposure_data["obs_time"], start_point_mjd_time
+    )
     lens_images = lens_image_series(
         lens_class,
         band=band,
@@ -77,23 +83,28 @@ def multiple_variable_lens_injection(
     :param lens_class_list: list of Lens() object
     :param band: imaging band
     :param num_pix: number of pixels per axis
-    :param transform_matrices_list: list of transformation matrix (2x2) of pixels into
-        coordinate displacements for each exposure
-    :param exposure_data: list of astropy table of exposure data for each set of time
-        series images. It must contain calexp images or generated noisy background image
-        (column name should be "time_series_images", these images are single exposure
-        images of the same part of the sky at different time), magnitude zero point
-        (column name should be "zero_point", these are zero point magnitudes for each
-        single exposure images in time series image) , psf kernel for each exposure
-        (column name should be "psf_kernel", these are pixel psf kernel for each single
-        exposure images in time series image), exposure time (column name should be
-        "expo_time", these are exposure time for each single exposure images in time
-        series images), observation time (column name should be "obs_time", these are
-        observation time in days for each single exposure images in time series images)
-    :param output_file: path to the output FITS file where data will be saved
-    :return: list of astropy table of injected lenses and exposure information of dp0
-        data for each time series lenses. If output_file path is provided, it saves list
-        of these astropy table in fits file with the given name.
+    :param transform_matrices_list: list of transformation matrix (2x2)
+        of pixels into coordinate displacements for each exposure
+    :param exposure_data: list of astropy table of exposure data for
+        each set of time series images. It must contain calexp images or
+        generated noisy background image (column name should be
+        "time_series_images", these images are single exposure images of
+        the same part of the sky at different time), magnitude zero
+        point (column name should be "zero_point", these are zero point
+        magnitudes for each single exposure images in time series image)
+        , psf kernel for each exposure (column name should be
+        "psf_kernel", these are pixel psf kernel for each single
+        exposure images in time series image), exposure time (column
+        name should be "expo_time", these are exposure time for each
+        single exposure images in time series images), observation time
+        (column name should be "obs_time", these are observation time in
+        days for each single exposure images in time series images)
+    :param output_file: path to the output FITS file where data will be
+        saved
+    :return: list of astropy table of injected lenses and exposure
+        information of dp0 data for each time series lenses. If
+        output_file path is provided, it saves list of these astropy
+        table in fits file with the given name.
     """
     final_images_catalog = []
     for lens_class, transform_matrices, expo_data in zip(
@@ -119,6 +130,7 @@ def multiple_variable_lens_injection(
         return final_images_catalog
     return None
 
+
 def opsim_variable_lens_injection(
     lens_class, bands, num_pix, transform_pix2angle, exposure_data
 ):
@@ -127,34 +139,41 @@ def opsim_variable_lens_injection(
     :param lens_class: Lens() object
     :param bands: list of imaging bands of interest
     :param num_pix: number of pixels per axis
-    :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
-        displacements
-    :param exposure_data: An astropy table of exposure data. One entry of
-        table_list_data generated from the opsim_time_series_images_data function. It
-        must contain the rms of background noise fluctuations (column name should be
-        "bkg_noise"), psf kernel for each exposure (column name should be "psf_kernel",
-        these are pixel psf kernel for each single exposure images in time series
-        image), observation time (column name should be "obs_time", these are
-        observation time in days for each single exposure images in time series images),
-        exposure time (column name should be "expo_time", these are exposure time for
-        each single exposure images in time series images), magnitude zero point (column
-        name should be "zero_point", these are zero point magnitudes for each single
-        exposure images in time series image), coordinates of the object (column name
-        should be "calexp_center"), these are the coordinates in (ra, dec), and the band
-        in which the observation is taken (column name should be "band").
-    :return: Astropy table of injected lenses and exposure information of dp0 data
+    :param transform_pix2angle: transformation matrix (2x2) of pixels
+        into coordinate displacements
+    :param exposure_data: An astropy table of exposure data. One entry
+        of table_list_data generated from the
+        opsim_time_series_images_data function. It must contain the rms
+        of background noise fluctuations (column name should be
+        "bkg_noise"), psf kernel for each exposure (column name should
+        be "psf_kernel", these are pixel psf kernel for each single
+        exposure images in time series image), observation time (column
+        name should be "obs_time", these are observation time in days
+        for each single exposure images in time series images), exposure
+        time (column name should be "expo_time", these are exposure time
+        for each single exposure images in time series images),
+        magnitude zero point (column name should be "zero_point", these
+        are zero point magnitudes for each single exposure images in
+        time series image), coordinates of the object (column name
+        should be "calexp_center"), these are the coordinates in (ra,
+        dec), and the band in which the observation is taken (column
+        name should be "band").
+    :return: Astropy table of injected lenses and exposure information
+        of dp0 data
     """
 
-    ## chose transient starting point randomly. 
-    start_point_mjd_time = transient_event_time_mjd(min(exposure_data["obs_time"]),
-                                        max(exposure_data["obs_time"]))
+    ## chose transient starting point randomly.
+    start_point_mjd_time = transient_event_time_mjd(
+        min(exposure_data["obs_time"]), max(exposure_data["obs_time"])
+    )
     final_image = []
 
     for obs in range(len(exposure_data["obs_time"])):
 
         exposure_data_obs = exposure_data[obs]
-        observation_time = convert_mjd_to_days(exposure_data_obs["obs_time"],
-                                                start_point_mjd_time)
+        observation_time = convert_mjd_to_days(
+            exposure_data_obs["obs_time"], start_point_mjd_time
+        )
         if exposure_data_obs["band"] not in bands:
             continue
 

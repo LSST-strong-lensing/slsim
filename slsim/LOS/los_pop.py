@@ -5,8 +5,9 @@ import numpy as np
 
 
 class LOSPop(object):
-    """Configuration class for setting parameters related to line-of-sight (LOS) effects
-    and Gaussian mixture models in a simulation or analysis context.
+    """Configuration class for setting parameters related to line-of-sight
+    (LOS) effects and Gaussian mixture models in a simulation or analysis
+    context.
 
     Attributes:
         mixgauss_gamma (bool): A flag to enable or disable gamma correction in the Gaussian
@@ -72,11 +73,13 @@ class LOSPop(object):
         self.no_correction_path = no_correction_path
 
     def draw_los(self, source_redshift, deflector_redshift):
-        """Calculate line-of-sight distortions in shear and convergence for an individual realisation.
+        """Calculate line-of-sight distortions in shear and convergence for an
+        individual realisation.
 
         :param source_redshift: redshift of the source galaxy object.
         :type source_redshift: float
-        :param deflector_redshift: redshift of the deflector galaxy object.
+        :param deflector_redshift: redshift of the deflector galaxy
+            object.
         :type deflector_redshift: float
         :return: LOSIndividual class instance
         """
@@ -84,17 +87,17 @@ class LOSPop(object):
             return LOSIndividual(kappa=0, gamma=[0, 0])
 
         if self.mixgauss_gamma and not self.nonlinear_los_bool:
-                mixture = GaussianMixtureModel(
-                    means=self.mixgauss_means,
-                    stds=self.mixgauss_stds,
-                    weights=self.mixgauss_weights,
-                )
-                gamma_abs = np.abs(mixture.rvs(size=1))[0]
-                phi = 2 * np.pi * np.random.random()
-                gamma1 = gamma_abs * np.cos(2 * phi)
-                gamma2 = gamma_abs * np.sin(2 * phi)
-                gamma = [gamma1, gamma2]
-                kappa = np.random.normal(loc=0, scale=0.05)
+            mixture = GaussianMixtureModel(
+                means=self.mixgauss_means,
+                stds=self.mixgauss_stds,
+                weights=self.mixgauss_weights,
+            )
+            gamma_abs = np.abs(mixture.rvs(size=1))[0]
+            phi = 2 * np.pi * np.random.random()
+            gamma1 = gamma_abs * np.cos(2 * phi)
+            gamma2 = gamma_abs * np.sin(2 * phi)
+            gamma = [gamma1, gamma2]
+            kappa = np.random.normal(loc=0, scale=0.05)
         elif self.mixgauss_gamma and self.nonlinear_los_bool:
             raise ValueError(
                 "Can only choose one method for external shear and convergence"

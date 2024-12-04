@@ -3,9 +3,12 @@ from slsim.lens import Lens
 
 
 class FalsePositive(Lens):
-    """Class to manage individual false positive. Here, false positives refer to a 
-    configuration that includes an elliptical galaxy at the center with blue galaxies 
-    surrounding the central elliptical galaxy."""
+    """Class to manage individual false positive.
+
+    Here, false positives refer to a configuration that includes an
+    elliptical galaxy at the center with blue galaxies surrounding the
+    central elliptical galaxy.
+    """
 
     def __init__(
         self,
@@ -26,18 +29,20 @@ class FalsePositive(Lens):
         :param los_class: line of sight dictionary (optional, takes these values instead of drawing from distribution)
         :type los_class: ~LOSIndividual() class object
         """
-        Lens.__init__(self,
-                      source_class=source_class,
-                      deflector_class=deflector_class,
-                      cosmo=cosmo,
-                      test_area=test_area,
-                      los_class=los_class,
-                      )
+        Lens.__init__(
+            self,
+            source_class=source_class,
+            deflector_class=deflector_class,
+            cosmo=cosmo,
+            test_area=test_area,
+            los_class=los_class,
+        )
 
     def lenstronomy_kwargs(self, band=None):
         """Generates lenstronomy dictionary conventions for the class object.
 
-        :param band: imaging band, if =None, will result in un-normalized amplitudes
+        :param band: imaging band, if =None, will result in un-
+            normalized amplitudes
         :type band: string or None
         :return: lenstronomy model and parameter conventions
         """
