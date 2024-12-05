@@ -8,7 +8,7 @@ from slsim.LsstSciencePipeline.util_lsst import (
     opsim_variable_lens_injection,
     optimized_transient_event_time_mjd,
     transient_data_with_cadence,
-    extract_lightcurves_in_different_bands
+    extract_lightcurves_in_different_bands,
 )
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
@@ -169,14 +169,14 @@ def test_transient_event_time_no_valid_start():
 
     assert 58000 <= result <= 58100
 
+
 def test_transient_event_time_no_optimized_cadence():
     mjd_times = np.linspace(58000, 58100, 50)
     lightcurve_range = (-50, 100)
-    result = optimized_transient_event_time_mjd(mjd_times, lightcurve_range, 
-                                                optimized_cadence=False)
+    result = optimized_transient_event_time_mjd(
+        mjd_times, lightcurve_range, optimized_cadence=False
+    )
     assert 58000 <= result <= 58100
-
-    
 
 
 @pytest.fixture
@@ -271,7 +271,7 @@ def test_transient_data_with_cadence(lens_class_instance, exposure_data):
         num_pix=61,
         min_points=5,
     )
-    lightcurves=extract_lightcurves_in_different_bands(result)
+    lightcurves = extract_lightcurves_in_different_bands(result)
     expected_keys = lightcurves.keys()
     colname = result.colnames
     assert isinstance(result, Table)
@@ -299,18 +299,21 @@ def test_transient_data_with_cadence(lens_class_instance, exposure_data):
     assert "obs_time" in expected_keys
     assert "image_lists" in expected_keys
 
-    results_i = result[result["band"]=="i"]
+    results_i = result[result["band"] == "i"]
     mag_i = results_i["mag_image_1"]
-    final_lightcurve_i=lightcurves["magnitudes"]["mag_image_1"]["i"]
+    final_lightcurve_i = lightcurves["magnitudes"]["mag_image_1"]["i"]
     assert np.all(np.array(list(mag_i))) == np.all(np.array(final_lightcurve_i))
     error_i_low = results_i["mag_error_image_1_low"]
     error_i_high = results_i["mag_error_image_1_high"]
-    lightcurve_error_i_low=lightcurves["errors_low"]["mag_error_image_1_low"]["i"]
-    lightcurve_error_i_high=lightcurves["errors_high"]["mag_error_image_1_high"]["i"]
-    assert np.all(np.array(list(error_i_low))) == np.all(np.array(
-        lightcurve_error_i_low))
-    assert np.all(np.array(list(error_i_high))) == np.all(np.array(
-        lightcurve_error_i_high))
+    lightcurve_error_i_low = lightcurves["errors_low"]["mag_error_image_1_low"]["i"]
+    lightcurve_error_i_high = lightcurves["errors_high"]["mag_error_image_1_high"]["i"]
+    assert np.all(np.array(list(error_i_low))) == np.all(
+        np.array(lightcurve_error_i_low)
+    )
+    assert np.all(np.array(list(error_i_high))) == np.all(
+        np.array(lightcurve_error_i_high)
+    )
+
 
 if __name__ == "__main__":
     pytest.main()
