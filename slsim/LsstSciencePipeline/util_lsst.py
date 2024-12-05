@@ -233,10 +233,11 @@ def optimized_transient_event_time_mjd(mjd_times, lightcurve_range=(-50, 100),
     return None  # No valid zero_point_mjd found
 
 def transient_data_with_cadence(
-    lens_class, exposure_data, transform_pix2angle=None, num_pix=61, 
+    lens_class, exposure_data, transform_pix2angle=None, num_pix=61, min_points=100,
     noise=True, symmetric=False
 ):
-    """Puts lensed transient into the provided cadence. For LSST, this will be cadence from opsim.
+    """Puts lensed transient into the provided cadence. For LSST, this will be cadence 
+    from opsim.
 
     :param lens_class: Lens() object
     :param exposure_data: An astropy table of exposure data. One entry of
@@ -255,6 +256,7 @@ def transient_data_with_cadence(
     :param transform_pix2angle: Transformation matrix (2x2) of pixels into
      coordinate displacements.
     :param num_pix: number of pixel for the image.
+    :param min_points: minimum number of observations in a certain time window.
     :param noise: Boolean. If True, a gaussian noise is added to the lightcurve flux.
     :param symmetric: Boolean. If True, a symmetric error on magnitude is provided.
     :return: Astropy table of lightcurve and exposure information of dp0 data
@@ -267,7 +269,7 @@ def transient_data_with_cadence(
     max_lc_time=max(lens_class.source[0].lightcurve_time)
     start_point_mjd_time = optimized_transient_event_time_mjd(
         copied_exposure_data["obs_time"], lightcurve_range=(min_lc_time, max_lc_time), 
-        min_points=100)
+        min_points=min_points)
     if start_point_mjd_time is None:
         start_point_mjd_time = transient_event_time_mjd(
                     min(copied_exposure_data["obs_time"]), 

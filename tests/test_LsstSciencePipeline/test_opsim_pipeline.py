@@ -4,10 +4,14 @@ from astropy.table import Table
 from astropy.cosmology import FlatLambdaCDM
 from slsim.lens import Lens
 from slsim.LsstSciencePipeline.opsim_pipeline import opsim_time_series_images_data
-from slsim.LsstSciencePipeline.util_lsst import opsim_variable_lens_injection
+from slsim.LsstSciencePipeline.util_lsst import (opsim_variable_lens_injection,
+                    optimized_transient_event_time_mjd, transient_data_with_cadence)
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
+import astropy.coordinates as coord
+import astropy.units as u
 import pytest
+import copy
 
 
 @pytest.fixture
@@ -122,7 +126,7 @@ def test_opsim_variable_lens_injection(pes_lens_instance):
     path = os.path.dirname(__file__)
     module_path, _ = os.path.split(path)
     expo_data = Table.read(
-        os.path.join(path, "../TestData/expo_data_opsim.hdf5"), path="data"
+        os.path.join(path, "../TestData/expo_data_opsim.hdf5")
     )
 
     transform_pix2angle = np.array([[0.2, 0], [0, 0.2]])
@@ -141,5 +145,131 @@ def test_opsim_variable_lens_injection(pes_lens_instance):
     mask = np.isin(expo_bands, bands)
     assert len(results) == len(expo_data[mask])
 
+def test_transient_event_time_basic():
+    mjd_times = np.linspace(58000, 58100, 200)
+    lightcurve_range = (-50, 100)
+    min_points = 100
 
-test_opsim_time_series_images_data()
+    result = optimized_transient_event_time_mjd(mjd_times, lightcurve_range, min_points)
+
+    assert result is not None
+    start, end = result + lightcurve_range[0], result + lightcurve_range[1]
+    points_in_range = np.sum((mjd_times >= start) & (mjd_times <= end))
+    assert points_in_range >= min_points
+
+def test_transient_event_time_no_valid_start():
+    mjd_times = np.linspace(58000, 58100, 50)
+    lightcurve_range = (-50, 100)
+    min_points = 100
+
+    result = optimized_transient_event_time_mjd(mjd_times, lightcurve_range, min_points)
+
+    assert result is None
+
+@pytest.fixture
+def lens_class_instance():
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    path = os.path.dirname(__file__)
+    source_dict1 = Table.read(
+        os.path.join(path, "../TestData/source_supernovae_new.fits"), format="fits"
+    )
+    deflector_dict = Table.read(
+        os.path.join(path, "../TestData/deflector_supernovae_new.fits"), format="fits"
+    )
+
+    deflector_dict_ = dict(zip(deflector_dict.colnames, deflector_dict[0]))
+    gamma_pl = 1.8
+    deflector_dict_["gamma_pl"] = gamma_pl
+    while True:
+        source1 = Source(
+            source_dict=source_dict1,
+            cosmo=cosmo,
+            source_type="point_plus_extended",
+            light_profile="double_sersic",
+            lightcurve_time=np.linspace(-50, 50, 50),
+            variability_model="light_curve",
+            kwargs_variability={"supernovae_lightcurve", "i", "r", "z", "g", "y"},
+            sn_type="Ia",
+            sn_absolute_mag_band="bessellb",
+            sn_absolute_zpsys="ab",
+        )
+        deflector = Deflector(
+            deflector_type="EPL",
+            deflector_dict=deflector_dict_,
+            sis_convention=False,
+        )
+
+        lens_class1 = Lens(
+            deflector_class=deflector,
+            source_class=source1,
+            cosmo=cosmo,
+        )
+        if lens_class1.validity_test():
+                lens_class = lens_class1
+                break
+    return lens_class
+
+@pytest.fixture
+def exposure_data():
+    num_obs = 20
+    obs_times = np.linspace(59000, 59050, num_obs)
+    bkg_noise = np.random.uniform(0.1, 0.5, num_obs)
+    psf_fwhm = np.random.uniform(0.6, 1.2, num_obs)
+    zero_points = np.random.uniform(25, 30, num_obs)
+    expo_times = np.random.uniform(30, 60, num_obs)
+    bands = ["g", "r", "i", "z"] * (num_obs // 4 + 1)
+    
+    # Create ra and dec values as Angle objects with units
+    ra_points = coord.Angle(np.random.uniform(low=0, high=360, size=num_obs) * u.degree)
+    ra_points = ra_points.wrap_at(180 * u.degree)
+    
+    dec_uniform = np.random.uniform(low=np.sin(np.radians(-75)),
+                                     high=np.sin(np.radians(5)), size=num_obs)
+    dec_points = coord.Angle(np.degrees(np.arcsin(dec_uniform)) * u.degree)
+    
+    # Combine ra_points and dec_points as a list of tuples, preserving units
+    calexp_centers = list(zip(ra_points, dec_points))
+    path = os.path.dirname(__file__)
+    psf_kernel = np.load(os.path.join(path, "../TestData/psf_kernels_for_deflector.npy"))
+    psf_kernel_list=[psf_kernel]*num_obs
+    return Table({
+        "obs_time": obs_times,
+        "bkg_noise": bkg_noise,
+        "psf_fwhm": psf_fwhm,
+        "zero_point": zero_points,
+        "expo_time": expo_times,
+        "calexp_center": calexp_centers,
+        "band": bands[:num_obs],
+        "psf_kernel": psf_kernel_list
+    })
+
+def test_transient_data_with_cadence(lens_class_instance, exposure_data):
+    result = transient_data_with_cadence(
+        lens_class=lens_class_instance,
+        exposure_data=exposure_data,
+        transform_pix2angle=np.array([[0.2, 0], [0, 0.2]]),
+        num_pix=61,
+        min_points=5
+    )
+    colname=result.colnames
+    assert isinstance(result, Table)
+    assert len(result) >= 5
+    assert len(colname) == 23 # 8 already existing col and 15 newly added.
+    assert "obs_time_in_days" in colname
+    assert "lens_id" in colname
+    assert "mag_image_1" in colname
+    assert "mag_image_2" in colname
+    assert "mag_image_3" in colname
+    assert "mag_image_4" in colname
+    assert "mag_error_image_1_low" in colname
+    assert "mag_error_image_1_high" in colname
+    assert "mag_error_image_2_low" in colname
+    assert "mag_error_image_2_high" in colname
+    assert "mag_error_image_3_low" in colname
+    assert "mag_error_image_3_high" in colname
+    assert "mag_error_image_4_low" in colname
+    assert "mag_error_image_4_high" in colname
+    assert "lens_image" in colname
+
+if __name__ == "__main__":
+    pytest.main()
