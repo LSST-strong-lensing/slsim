@@ -303,8 +303,5 @@ def test_transient_data_with_cadence(lens_class_instance, exposure_data):
     assert np.all(np.array(list(error_i_high))) == np.all(np.array(
         lightcurve_error_i_high))
 
-
-
-
 if __name__ == "__main__":
     pytest.main()
