@@ -18,7 +18,7 @@ from slsim.Util.param_util import (
     catalog_with_angular_size_in_arcsec,
     convert_mjd_to_days,
     transient_event_time_mjd,
-    flux_error_to_magnitude_error
+    flux_error_to_magnitude_error,
 )
 from slsim.Sources.SourceVariability.variability import Variability
 from astropy.io import fits
@@ -263,6 +263,7 @@ def test_start_point_mjd_time():
     result = transient_event_time_mjd(60000, 60400)
     assert 60000 <= result <= 60400
 
+
 def test_flux_error_to_magnitude_error_basic():
     flux_mean = 100.0
     flux_error = 10.0
@@ -273,22 +274,25 @@ def test_flux_error_to_magnitude_error_basic():
         flux_error=flux_error,
         mag_zero_point=mag_zero_point,
         noise=False,
-        symmetric=False
+        symmetric=False,
     )
 
     expected_mag_mean = amplitude_to_magnitude(flux_mean, mag_zero_point)
     assert np.isclose(mag_mean, expected_mag_mean), "Mag mean computation failed."
-    
+
     upper_flux_limit = flux_mean + flux_error
     lower_flux_limit = max(flux_mean - flux_error, flux_mean * 0.01)
-    
+
     expected_mag_error_lower = expected_mag_mean - amplitude_to_magnitude(
-        upper_flux_limit, mag_zero_point)
-    expected_mag_error_upper = amplitude_to_magnitude(
-        lower_flux_limit, mag_zero_point) - expected_mag_mean
+        upper_flux_limit, mag_zero_point
+    )
+    expected_mag_error_upper = (
+        amplitude_to_magnitude(lower_flux_limit, mag_zero_point) - expected_mag_mean
+    )
 
     assert mag_error_lower == expected_mag_error_lower
     assert mag_error_upper == expected_mag_error_upper
+
 
 def test_flux_error_to_magnitude_error_symmetric():
     flux_mean = 100.0
@@ -300,7 +304,7 @@ def test_flux_error_to_magnitude_error_symmetric():
         flux_error=flux_error,
         mag_zero_point=mag_zero_point,
         noise=False,
-        symmetric=True
+        symmetric=True,
     )
 
     expected_mag_mean = amplitude_to_magnitude(flux_mean, mag_zero_point)
@@ -309,6 +313,7 @@ def test_flux_error_to_magnitude_error_symmetric():
     assert mag_mean == expected_mag_mean
     assert mag_error_lower == expected_mag_error
     assert mag_error_upper == expected_mag_error
+
 
 def test_flux_error_to_magnitude_error_with_noise():
     flux_mean = 100.0
@@ -320,24 +325,27 @@ def test_flux_error_to_magnitude_error_with_noise():
         flux_error=flux_error,
         mag_zero_point=mag_zero_point,
         noise=True,
-        symmetric=False
+        symmetric=False,
     )
 
     # Noise makes mag_mean non-deterministic, so we validate the magnitude range
     mag_mean_2 = amplitude_to_magnitude(flux_mean, mag_zero_point)
 
-    assert mag_mean_2 - 3*mag_error_lower < mag_mean <= mag_mean_2 + 3*mag_error_upper
+    assert (
+        mag_mean_2 - 3 * mag_error_lower < mag_mean <= mag_mean_2 + 3 * mag_error_upper
+    )
+
 
 def test_flux_error_to_magnitude_error_negative_flux():
     mag_mean, mag_error_lower, mag_error_upper = flux_error_to_magnitude_error(
-            flux_mean=10.0,
-            flux_error=11.0,
-            mag_zero_point=27.0,
-            symmetric=False,
-            noise=False
-        )
+        flux_mean=10.0,
+        flux_error=11.0,
+        mag_zero_point=27.0,
+        symmetric=False,
+        noise=False,
+    )
     expected_upper_mag = amplitude_to_magnitude(0.1, 27)
-    expected_upper_error = expected_upper_mag-mag_mean
+    expected_upper_error = expected_upper_mag - mag_mean
     assert expected_upper_error == mag_error_upper
 
 
