@@ -11,7 +11,6 @@ from slsim.Deflectors.deflector import Deflector
 import astropy.coordinates as coord
 import astropy.units as u
 import pytest
-import copy
 
 
 @pytest.fixture
