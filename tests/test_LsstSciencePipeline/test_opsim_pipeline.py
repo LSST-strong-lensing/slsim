@@ -8,6 +8,7 @@ from slsim.LsstSciencePipeline.util_lsst import (
     opsim_variable_lens_injection,
     optimized_transient_event_time_mjd,
     transient_data_with_cadence,
+    extract_lightcurves_in_different_bands
 )
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
@@ -261,6 +262,8 @@ def test_transient_data_with_cadence(lens_class_instance, exposure_data):
         num_pix=61,
         min_points=5,
     )
+    lightcurves=extract_lightcurves_in_different_bands(result)
+    expected_keys = lightcurves.keys()
     colname = result.colnames
     assert isinstance(result, Table)
     assert len(result) >= 5
@@ -280,6 +283,27 @@ def test_transient_data_with_cadence(lens_class_instance, exposure_data):
     assert "mag_error_image_4_low" in colname
     assert "mag_error_image_4_high" in colname
     assert "lens_image" in colname
+
+    assert "magnitudes" in expected_keys
+    assert "errors_low" in expected_keys
+    assert "errors_high" in expected_keys
+    assert "obs_time" in expected_keys
+    assert "image_lists" in expected_keys
+
+    results_i = result[result["band"]=="i"]
+    mag_i = results_i["mag_image_1"]
+    final_lightcurve_i=lightcurves["magnitudes"]["mag_image_1"]["i"]
+    assert np.all(np.array(list(mag_i))) == np.all(np.array(final_lightcurve_i))
+    error_i_low = results_i["mag_error_image_1_low"]
+    error_i_high = results_i["mag_error_image_1_high"]
+    lightcurve_error_i_low=lightcurves["errors_low"]["mag_error_image_1_low"]["i"]
+    lightcurve_error_i_high=lightcurves["errors_high"]["mag_error_image_1_high"]["i"]
+    assert np.all(np.array(list(error_i_low))) == np.all(np.array(
+        lightcurve_error_i_low))
+    assert np.all(np.array(list(error_i_high))) == np.all(np.array(
+        lightcurve_error_i_high))
+
+
 
 
 if __name__ == "__main__":
