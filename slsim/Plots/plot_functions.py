@@ -234,7 +234,6 @@ def plot_lightcurves(data, images=True):
 
     # Adjust layout to avoid overlaps
     plt.tight_layout()
-    plt.show()
     return fig
 
 
