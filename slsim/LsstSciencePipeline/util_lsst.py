@@ -10,6 +10,7 @@ from slsim.Util.param_util import (
     magnitude_to_amplitude,
 )
 import os
+import warnings
 
 
 def variable_lens_injection(
@@ -216,35 +217,49 @@ def opsim_variable_lens_injection(
 
 
 def optimized_transient_event_time_mjd(
-    mjd_times, lightcurve_range=(-50, 100), min_points=100
+    mjd_times, lightcurve_range=(-50, 100), min_points=100, optimized_cadence=True
 ):
-    """Finds a transient start time such that at least `min_points` fall within
-    the lightcurve range.
+    """Finds a transient start time such that at least min_points fall within the light 
+    curve range. If no points meet the requirement for the minimum number of observations,
+    a start point will be randomly selected from the given observation times. Additionally, 
+    if optimized_cadence is set to False, the start point will also be chosen randomly.
 
     :param mjd_times: List or array of MJD times.
     :param lightcurve_range: Range of lightcurve in days (e.g., (-50,
         100)).
     :param min_points: Minimum number of points required in the range.
         eg: 100
+    :param optimized_cadence: Boolean. If True, search for the time interval where given
+     minimum number of observation points occur.
     :return: Chosen transient start mjd. Returns None if no valid start
         point is found.
     """
     mjd_times = np.array(mjd_times)
     min_mjd, max_mjd = min(mjd_times), max(mjd_times)
 
-    # Iterate through possible zero_point_mjd values
-    for zero_point_mjd in np.linspace(
-        min_mjd, max_mjd, 1000
-    ):  # Test multiple candidates
-        start, end = (
-            zero_point_mjd + lightcurve_range[0],
-            zero_point_mjd + lightcurve_range[1],
-        )
-        points_in_range = np.sum((mjd_times >= start) & (mjd_times <= end))
+    if optimized_cadence is True:
+        # Iterate through possible zero_point_mjd values
+        for zero_point_mjd in np.linspace(
+            min_mjd, max_mjd, 1000
+        ):  # Test multiple candidates
+            start, end = (
+                zero_point_mjd + lightcurve_range[0],
+                zero_point_mjd + lightcurve_range[1],
+            )
+            points_in_range = np.sum((mjd_times >= start) & (mjd_times <= end))
 
-        if points_in_range >= min_points:
-            return zero_point_mjd  # Return the first valid zero_point_mjd
-    return None  # No valid zero_point_mjd found
+            if points_in_range >= min_points:
+                start_point=zero_point_mjd  # Return the first valid zero_point_mjd
+            else:
+                warning_msg = (
+                "In the given observations, there is no observation window which contains" 
+                " %s observational points. So, random start point is choosen" % min_points
+                )
+                warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
+                start_point = transient_event_time_mjd(min_mjd=min_mjd, max_mjd=max_mjd)
+    else:
+        start_point = transient_event_time_mjd(min_mjd=min_mjd, max_mjd=max_mjd)
+    return start_point
 
 
 def transient_data_with_cadence(
@@ -252,6 +267,7 @@ def transient_data_with_cadence(
     exposure_data,
     transform_pix2angle=None,
     num_pix=61,
+    optimized_cadence=True,
     min_points=100,
     noise=True,
     symmetric=False,
@@ -280,6 +296,8 @@ def transient_data_with_cadence(
     :param transform_pix2angle: Transformation matrix (2x2) of pixels
         into coordinate displacements.
     :param num_pix: number of pixel for the image.
+    :param optimized_cadence: Boolean. If True, search for the time interval where given
+     minimum number of observation points occur.
     :param min_points: minimum number of observations in a certain time
         window.
     :param noise: Boolean. If True, a gaussian noise is added to the
@@ -296,14 +314,11 @@ def transient_data_with_cadence(
     min_lc_time = min(lens_class.source[0].lightcurve_time)
     max_lc_time = max(lens_class.source[0].lightcurve_time)
     start_point_mjd_time = optimized_transient_event_time_mjd(
-        copied_exposure_data["obs_time"],
-        lightcurve_range=(min_lc_time, max_lc_time),
-        min_points=min_points,
+    mjd_times=copied_exposure_data["obs_time"],
+    lightcurve_range=(min_lc_time, max_lc_time),
+    min_points=min_points,
+    optimized_cadence=optimized_cadence
     )
-    if start_point_mjd_time is None:
-        start_point_mjd_time = transient_event_time_mjd(
-            min(copied_exposure_data["obs_time"]), max(copied_exposure_data["obs_time"])
-        )
     obs_time_in_days = convert_mjd_to_days(
         copied_exposure_data["obs_time"], start_point_mjd_time
     )

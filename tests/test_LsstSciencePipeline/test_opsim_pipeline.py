@@ -167,7 +167,16 @@ def test_transient_event_time_no_valid_start():
 
     result = optimized_transient_event_time_mjd(mjd_times, lightcurve_range, min_points)
 
-    assert result is None
+    assert 58000 <= result <= 58100
+
+def test_transient_event_time_no_optimized_cadence():
+    mjd_times = np.linspace(58000, 58100, 50)
+    lightcurve_range = (-50, 100)
+    result = optimized_transient_event_time_mjd(mjd_times, lightcurve_range, 
+                                                optimized_cadence=False)
+    assert 58000 <= result <= 58100
+
+    
 
 
 @pytest.fixture
