@@ -212,6 +212,7 @@ def plot_lightcurves(data, images=True):
                 color=f"C{row_idx}",
                 alpha=0.7,
             )
+            axs[row_idx, col_idx].set_ylim(None, 30)
             axs[row_idx, col_idx].set_ylabel(f"Mag_{band}", fontsize=10)
             axs[row_idx, col_idx].invert_yaxis()
             axs[row_idx, col_idx].tick_params(axis="both", labelsize=8)
