@@ -34,7 +34,7 @@ tables:
       magnitudes: $blue.M
       coefficients: $blue.coeff
       filter:  bessell-B
-    mag_g, mag_r, mag_i, mag_z, mag_Y: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+    mag_g, mag_r, mag_i, mag_z, mag_y: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
       coefficients: $blue.coeff
       filters: $filters
       redshift: $blue.z
@@ -79,7 +79,7 @@ tables:
       magnitudes: $red.M
       coefficients: $red.coeff
       filter:  bessell-B
-    mag_g, mag_r, mag_i, mag_z, mag_Y: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+    mag_g, mag_r, mag_i, mag_z, mag_y: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
       coefficients: $red.coeff
       filters: $filters
       redshift: $red.z
