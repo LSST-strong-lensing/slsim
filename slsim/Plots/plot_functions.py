@@ -176,11 +176,9 @@ def plot_lightcurves(data, images=True):
         gridspec_kw={"hspace": 0.6, "wspace": 0.3},
     )
 
-    # Adjust axes for single-row or single-column scenarios
+    # Adjust axes for single-row scenarios
     if len(bands) == 1:
         axs = axs[np.newaxis, :]  # Ensure axs is 2D
-    if len(image_keys) == 1 and images:
-        axs = axs[:, np.newaxis]
 
     # Add titles for each column
     for col_idx, image_key in enumerate(image_keys):

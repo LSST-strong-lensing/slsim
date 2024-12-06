@@ -175,16 +175,37 @@ def test_plot_lightcurves():
             "r": [np.random.rand(10, 10) for _ in range(3)],
         },
     }
+    data2 = {
+        "magnitudes": {
+            "mag_image_1": {"g": np.random.rand(5)},
+            "mag_image_2": {"g": np.random.rand(5)},
+        },
+        "errors_low": {
+            "mag_error_image_1_low": {"g": np.random.rand(5)},
+            "mag_error_image_2_low": {"g": np.random.rand(5)},
+        },
+        "errors_high": {
+            "mag_error_image_1_high": {"g": np.random.rand(5)},
+            "mag_error_image_2_high": {"g": np.random.rand(5)},
+        },
+        "obs_time": {"g": np.arange(5)},
+        "image_lists": {
+            "g": [np.random.rand(10, 10) for _ in range(3)]
+        },
+    }
 
     fig = plot_lightcurves(data, images=True)
     fig2 = plot_lightcurves(data, images=False)
+    fig3 = plot_lightcurves(data2, images=True)
     ax1 = fig.get_axes()
     ax2 = fig2.get_axes()
+    ax3 = fig3.get_axes()
     assert fig is not None
     assert isinstance(fig, plt.Figure)
     assert fig2 is not None
     assert isinstance(fig2, plt.Figure)
     assert len(ax1) == len(ax2) + 2
+    assert len(ax3) == 3
 
 
 if __name__ == "__main__":
