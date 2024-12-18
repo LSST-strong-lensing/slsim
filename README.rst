@@ -14,8 +14,7 @@ the two LSST Science collaborations:
 - `Dark Energy Science Collaboration (DESC) <https://lsstdesc.org>`_
 
 This repository provides the simulation tools for the purpose of conducting strong gravitational lensing science with the Vera C. Rubin Observatory.
-All the tools are open-source available. Check out below how you can contribute and become part of the LSST strong lensing science.
-
+All the tools are open-sourced. Check out below how you can contribute and become part of the LSST strong lensing science.
 
 * Free software: MIT license
 * Documentation: https://slsim.readthedocs.io.
@@ -24,8 +23,7 @@ All the tools are open-source available. Check out below how you can contribute 
 How to contribute to the repository?
 ------------------------------------
 Check out our step-by-step instructions how you can contribute code to this project Contributing_ Guidelines.
-Are you new to coding and contributing to a software development project? No worries! We help you out! Write us on the LSST Slack channel #sl-pipeline.
-
+Are you new to coding and contributing to a software development project? No worries! We can help you out! Write to us on the LSST Slack channel #sl-pipeline.
 
 How can I participate in LSST strong lensing projects?
 ------------------------------------------------------
