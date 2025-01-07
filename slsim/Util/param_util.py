@@ -382,3 +382,43 @@ def transient_event_time_mjd(min_mjd, max_mjd):
     """
     start_mjd = np.random.randint(min_mjd, max_mjd)
     return start_mjd
+
+def downsample_galaxies(galaxy_pop, dN, dM, M_min, M_max, z_min, z_max):
+    """
+    Downsamples a galaxy population to match the luminosity function of another population.
+    Another population with the given redshift range is specified by the dN.
+
+    :param galaxy_population: astropy.table.Table. Table containing the galaxy population with 
+     at least a 'magnitude' column.
+    :param dN: array-like. Galaxy counts per magnitude bin for the reference population.
+    :param dM: float. Magnitude bin width.
+    :param M_min: float. Minimum magnitude for binning.
+    :param M_max: float. Maximum magnitude for binning.
+    :param z_min: float. Minimum redshift for sample.
+    :param z_max: float. Maximum redshift for sample.
+    :returns: astropy.table.Table. Downsampled galaxy population.
+    """
+    galaxy_pop=galaxy_pop[(galaxy_pop["z"] > z_min) & (
+        galaxy_pop["z"] <= z_max)]
+    # Create magnitude bins
+    M_bins = np.arange(M_min, M_max + dM, dM)
+
+    # Downsample second population to match dN
+    selected_indices = []
+
+    for i in range(len(dN)):
+        # Identify galaxies in the current magnitude bin
+        mask = (galaxy_pop['mag_i'] >= M_bins[i]) & (galaxy_pop['mag_i'] < M_bins[i+1])
+        indices = np.where(mask)[0]
+        
+        # Determine how many galaxies to keep
+        N_to_keep = min(dN[i], len(indices))
+        
+        # Randomly select indices
+        if N_to_keep > 0 and len(indices) > 0:
+            selected = np.random.choice(indices, N_to_keep, replace=False)
+            selected_indices.extend(selected)
+
+    # Create a downsampled population
+    downsampled_pop = galaxy_pop[selected_indices]
+    return downsampled_pop
