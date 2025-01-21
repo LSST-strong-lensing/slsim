@@ -54,9 +54,9 @@ def find_potential_lenses(
     chunk_offset=0,
 ):
     """This function identifies potential lensing galaxies (deflectors) from a
-    foreground galaxy catalog, on the basis of their angular cross section, source
-    luminosity function and their magnitudes and redshift falling within a certain bin,
-    defined in the source and deflector kwargs.
+    foreground galaxy catalog, on the basis of their angular cross section,
+    source luminosity function and their magnitudes and redshift falling within
+    a certain bin, defined in the source and deflector kwargs.
 
     params:
 

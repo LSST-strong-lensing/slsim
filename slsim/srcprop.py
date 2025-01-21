@@ -47,8 +47,8 @@ nsmlim_gal_spl = 0
 
 
 def dPhibydM_qso(redshift, mag, cosmo):
-    """Compute the quasar luminosity function, dPhi/dM, for a given redshift and
-    apparent magnitude.
+    """Compute the quasar luminosity function, dPhi/dM, for a given redshift
+    and apparent magnitude.
 
     Here, we adopt the standard double power law for quasar luminosity function with
     the parametric form given in Oguri and Marshal 2010, eq 10.
@@ -115,10 +115,10 @@ def dPhibydM_qso(redshift, mag, cosmo):
 
 
 def initPhiqso(kwargs_source, cosmo):
-    """Initializes the quasar luminosity function, Phi(z), as a function of redshift.
-    The resulting Phi(z) spline can be used to interpolate the number density of quasars
-    for a given redshift within the specified range. Units of Phi(z) will be h70^3
-    Mpc^{-3}
+    """Initializes the quasar luminosity function, Phi(z), as a function of
+    redshift. The resulting Phi(z) spline can be used to interpolate the number
+    density of quasars for a given redshift within the specified range. Units
+    of Phi(z) will be h70^3 Mpc^{-3}
 
     Parameters:
     - kwargs_source: A dictionary containing the source parameters
@@ -202,7 +202,8 @@ def dNbydz_qso(zz, vdisp, zred, q, kwargs_source, cosmo, constants):
 
 
 def findzqso(ztry, vdisp, zred, q, Ntarget, kwargs_source, cosmo, constants):
-    """Find the redshift at which the integrated quasar number density equals Ntarget.
+    """Find the redshift at which the integrated quasar number density equals
+    Ntarget.
 
     Parameters:
     - ztry: The trial redshift at which to evaluate the condition. #NOTE: confirm
@@ -263,8 +264,8 @@ def findmagqso(magtry, zsrc, Phitarget, kwargs_source, cosmo):
 
 
 def Nsrc_qso(magg, magr, magi, zred, q, vdisp, myseed, kwargs_source, cosmo, constants):
-    """Calculate the number of background quasars that could be lensed by a galaxy and
-    determine their properties.
+    """Calculate the number of background quasars that could be lensed by a
+    galaxy and determine their properties.
 
     Parameters:
       - magg: g-mag of the foreground
@@ -376,8 +377,8 @@ def Nsrc_qso(magg, magr, magi, zred, q, vdisp, myseed, kwargs_source, cosmo, con
 
 ## Calculate the total number of qsos in a survey
 def Nqso(kwargs_source, constants, cosmo):
-    """Calculate the total number of quasars (QSOs) in a survey based on the quasar
-    luminosity function.
+    """Calculate the total number of quasars (QSOs) in a survey based on the
+    quasar luminosity function.
 
     Parameters:
       - kwargs_source: Dictionary containing source parameters:
@@ -498,7 +499,8 @@ def dnsbydm(mag):
 
 
 def initnsmlim(kwargs_source):
-    """Initialize the number density of galaxies as a function of magnitude limit.
+    """Initialize the number density of galaxies as a function of magnitude
+    limit.
 
     Parameters:
     - kwargs_source: Dictionary containing the source parameters.
@@ -568,7 +570,8 @@ def dNbydz_gal(zz, vdisp, zred, q, kwargs_source, cosmo, constants):
 
 
 def findzgal(ztry, vdisp, zred, q, Ntarget, kwargs_source, cosmo, constants):
-    """Find the redshift at which the integrated galaxy number density equals Ntarget.
+    """Find the redshift at which the integrated galaxy number density equals
+    Ntarget.
 
     Parameters:
     - ztry: The trial redshift at which to evaluate the condition. #NOTE: confirm
@@ -631,8 +634,8 @@ def findmaggal(magtry, zsrc, Phitarget):
 
 
 def Nsrc_gal(magg, magr, magi, zred, q, vdisp, myseed, kwargs_source, cosmo, constants):
-    """Calculate the number of background galaxies that could be lensed by a foreground
-    galaxy and determine their properties.
+    """Calculate the number of background galaxies that could be lensed by a
+    foreground galaxy and determine their properties.
 
     Parameters:
     - magg: The galaxy's g-band magnitude.

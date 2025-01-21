@@ -49,7 +49,8 @@ cross_sect_spl = 0
 
 
 def getcaustics(b_I, q):
-    """Calculate the caustics for a Singular Isothermal Ellipsoid (SIE) lens model.
+    """Calculate the caustics for a Singular Isothermal Ellipsoid (SIE) lens
+    model.
 
     Parameters:
     - b_I: Einstein radius of the SIE
@@ -189,8 +190,8 @@ def srcpos_bsisq(bsis, q, pa):
 
 ## Gives cross-section in units of bsis
 def getcrosssect(bsis, q):
-    """Calculates the angular cross-section in the units of the Singular Isothermal
-    Sphere (SIS) Einstein radius.
+    """Calculates the angular cross-section in the units of the Singular
+    Isothermal Sphere (SIS) Einstein radius.
 
     Parameters:
     - bsis: Einstein radius of the Singular Isothermal Sphere (SIS)
@@ -282,8 +283,8 @@ def create_crosssect_file(filename):
 
 
 def init_crosssect():
-    """Initializes the cross-section spline interpolation from the Crosssect.dat
-    file."""
+    """Initializes the cross-section spline interpolation from the
+    Crosssect.dat file."""
 
     global cross_sect_spl, init_cs_spl
 
@@ -304,8 +305,8 @@ def init_crosssect():
 
 
 def getcrosssect_num(bsis, q):
-    """Get the cross-section in steradian using Einstein radius of SIS and projected
-    axis ratio.
+    """Get the cross-section in steradian using Einstein radius of SIS and
+    projected axis ratio.
 
       Parameters:
     - bsis (float): The Einstein radius of the SIS (in radians).
