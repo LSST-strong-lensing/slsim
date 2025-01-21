@@ -104,11 +104,12 @@ def convolved_image(image, psf_kernel, convolution_type="fft"):
     """Convolves an image with given psf kernel.
 
     :param image: image to be convolved
-    :param psf_kernel: kernel used to convolve the given image. It should be a pixel psf
-        kernel.
-    :param convolution_type: method to be used to convolve image. currently fftconvolve
-        and convolve2d are supported. The default type is fftconvolve and we prefer to
-        use fftconvolve over convolve2d because it is relatively faster for our purpose.
+    :param psf_kernel: kernel used to convolve the given image. It
+        should be a pixel psf kernel.
+    :param convolution_type: method to be used to convolve image.
+        currently fftconvolve and convolve2d are supported. The default
+        type is fftconvolve and we prefer to use fftconvolve over
+        convolve2d because it is relatively faster for our purpose.
     :returns: convolved image.
     """
     if convolution_type == "fft":
@@ -156,13 +157,13 @@ def images_to_pixels(image_series):
 
 
 def pixels_to_images(pixels, original_shape):
-    """Converts a string of pixel snapshots back into a series of image snapshots. This
-    is the inverse of images_to_pixels.
+    """Converts a string of pixel snapshots back into a series of image
+    snapshots. This is the inverse of images_to_pixels.
 
-    :param pixels: Series of pixel snapshots to arrange back into the original image
-        shape
-    :param original_shape: The original output of np.shape(original_image_series)
-        [tuple]
+    :param pixels: Series of pixel snapshots to arrange back into the
+        original image shape
+    :param original_shape: The original output of
+        np.shape(original_image_series) [tuple]
     :return: Series of image snapshots
     """
     return np.reshape(
@@ -171,17 +172,19 @@ def pixels_to_images(pixels, original_shape):
 
 
 def interpolate_variability(image_series, orig_timestamps, new_timestamps):
-    """Interpolates between time stamps of a series of image snapshots. This will be
-    important for future implimentation of microlensing.
+    """Interpolates between time stamps of a series of image snapshots. This
+    will be important for future implimentation of microlensing.
 
-    :param image_series: 3 dimensional array of shape (snapshot_index, x, y) defining
-        snapshots of a variable object in (x, y) coordinates
-    :param orig_timestamps: List of timestamps which represent the time of each
-        simulated observation, must be same length as np.size(image_series, 0)
-    :param new_timestamps: List of new timestamps to interpolate the series of snapshots
-        to
-    :return: Linearly interpolated series of snapshots at the new timestamps on a pixel-
-        by-pixel basis
+    :param image_series: 3 dimensional array of shape (snapshot_index,
+        x, y) defining snapshots of a variable object in (x, y)
+        coordinates
+    :param orig_timestamps: List of timestamps which represent the time
+        of each simulated observation, must be same length as
+        np.size(image_series, 0)
+    :param new_timestamps: List of new timestamps to interpolate the
+        series of snapshots to
+    :return: Linearly interpolated series of snapshots at the new
+        timestamps on a pixel- by-pixel basis
     """
     time_varying_pixels = images_to_pixels(image_series)
     number_pixels = np.size(time_varying_pixels, 1)
@@ -205,8 +208,8 @@ def interpolate_variability(image_series, orig_timestamps, new_timestamps):
 def transformmatrix_to_pixelscale(tranform_matrix):
     """Calculates pixel scale using tranform matrix.
 
-    :param tranform_matrix: transformation matrix (2x2) of pixels into coordinate
-        displacements
+    :param tranform_matrix: transformation matrix (2x2) of pixels into
+        coordinate displacements
     :return: pixel scale
     """
     determinant = np.linalg.det(tranform_matrix)
@@ -245,17 +248,21 @@ def eccentricity(q):
 def deg2_to_cone_angle(solid_angle_deg2):
     """Convert solid angle from square degrees to half cone angle in radians.
 
-    This function translates a solid angle, specified in square degrees, into the
-    corresponding half cone angle expressed in radians. This conversion is essential for
-    applications involving angular measurements in astronomy, particularly in lensing
-    calculations where the geometry of observations is defined in terms of cone angles.
+    This function translates a solid angle, specified in square degrees,
+    into the corresponding half cone angle expressed in radians. This
+    conversion is essential for applications involving angular
+    measurements in astronomy, particularly in lensing calculations
+    where the geometry of observations is defined in terms of cone
+    angles.
 
-    :param solid_angle_deg2: Solid angle in square degrees to be converted.
+    :param solid_angle_deg2: Solid angle in square degrees to be
+        converted.
     :type solid_angle_deg2: float
-    :return: The half cone angle in radians equivalent to the input solid angle.
-    :rtype: float :note: The conversion utilizes the relationship between solid angles
-        in steradians and the apex angle of a cone, facilitating a direct transition
-        from square degrees to radians.
+    :return: The half cone angle in radians equivalent to the input
+        solid angle.
+    :rtype: float :note: The conversion utilizes the relationship
+        between solid angles in steradians and the apex angle of a cone,
+        facilitating a direct transition from square degrees to radians.
     """
 
     solid_angle_sr = solid_angle_deg2 * (np.pi / 180) ** 2
@@ -264,9 +271,9 @@ def deg2_to_cone_angle(solid_angle_deg2):
 
 
 def ellipticity_slsim_to_lenstronomy(e1_slsim, e2_slsim):
-    """Converts ellipticity component from slsim convension to lenstronomy convention.
-    In slsim, position angle goes from North to East. In lenstronomy, position angle
-    goes from East to North.
+    """Converts ellipticity component from slsim convension to lenstronomy
+    convention. In slsim, position angle goes from North to East. In
+    lenstronomy, position angle goes from East to North.
 
     :param e1_slsim:
         first component of the ellipticity in slsim convension i.e position
@@ -282,8 +289,8 @@ def ellipticity_slsim_to_lenstronomy(e1_slsim, e2_slsim):
 
 
 def elliptical_distortion_product_average(x, y, e1, e2, center_x, center_y):
-    """Maps the coordinates x, y with eccentricities e1, e2 into a new elliptical
-    coordinate system with same coordinate orientation.
+    """Maps the coordinates x, y with eccentricities e1, e2 into a new
+    elliptical coordinate system with same coordinate orientation.
 
     :param x: x-coordinate
     :param y: y-coordinate
@@ -323,9 +330,10 @@ def fits_append_table(filename, table):
 
 
 def catalog_with_angular_size_in_arcsec(galaxy_catalog, input_catalog_type="skypy"):
-    """This function is written to change unit of angular size in skypy galaxy catalog
-    to arcsec. If user is using deflector catalog other than generated from skypy
-    pipeline, we require them to provide angular size of the galaxy in arcsec.
+    """This function is written to change unit of angular size in skypy galaxy
+    catalog to arcsec. If user is using deflector catalog other than generated
+    from skypy pipeline, we require them to provide angular size of the galaxy
+    in arcsec.
 
     :param galaxy_catalog: galaxy catalog.
     :param input_catalog_type: type of the catalog.
@@ -350,3 +358,27 @@ def catalog_with_angular_size_in_arcsec(galaxy_catalog, input_catalog_type="skyp
         )
         warnings.warn(warning_msg, category=UserWarning, stacklevel=2)
     return copied_galaxy_catalog
+
+
+def convert_mjd_to_days(reference_mjd, start_point_mjd):
+    """Convert reference MJD(s) to days relative to a chosen zero-point MJD.
+
+    :param reference_mjd: The reference MJD(s) to convert.
+    :type reference_mjd: float, list, or numpy.ndarray
+    :param start_point_mjd: The zero-point MJD to use as the reference.
+    :return: The time(s) in days relative to the zero-point MJD.
+    """
+    # Ensure input is a NumPy array for consistent handling
+    reference_mjd = np.array(reference_mjd)
+    return reference_mjd - start_point_mjd
+
+
+def transient_event_time_mjd(min_mjd, max_mjd):
+    """Produces a random MJD time with in the given range.
+
+    :param min_mjd: Minimum bound for the MJD time
+    :param max_mjd: Maximum bound for the MJD time
+    :return: A random MJD time between given min and max bounds.
+    """
+    start_mjd = np.random.randint(min_mjd, max_mjd)
+    return start_mjd

@@ -12,14 +12,15 @@ from slsim.Util.param_util import elliptical_distortion_product_average
 
 
 def supernovae_host_galaxy_offset(host_galaxy_catalog):
-    """This function generates random supernovae offsets from their host galaxy center
-    based on observed data. (Wang et al. 2013)
+    """This function generates random supernovae offsets from their host galaxy
+    center based on observed data. (Wang et al. 2013)
 
-    :param host_galaxy_catalog: catalog of host galaxies matched with supernovae (must
-        have 'angular_size' and 'ellipticity' columns)
+    :param host_galaxy_catalog: catalog of host galaxies matched with
+        supernovae (must have 'angular_size' and 'ellipticity' columns)
     :type host_galaxy_catalog: astropy Table
-    :return: offsets x and y [arcsec] selected for each supernovae based on observed
-        distribution; e1 and e2 projected eccentricities calculated for each host galaxy
+    :return: offsets x and y [arcsec] selected for each supernovae based
+        on observed distribution; e1 and e2 projected eccentricities
+        calculated for each host galaxy
     :return type: list; float
     """
     # Select offset ratios based on observed offset distribution (Wang et al. 2013)
@@ -144,16 +145,19 @@ class SupernovaeCatalog(object):
     def supernovae_catalog(self, host_galaxy=True, lightcurve=True):
         """Generates supernovae catalog for given redshifts.
 
-        :param host_galaxy: kwargs to decide whether catalog should include host
-            galaxies or not. True or False.
-        :param lightcurve: kwargs for the lightcurve, if lightcurve is True, it returns
-            extracts lightcurve for each supernovae redshift.
-        :return: Astropy Table of supernovae catalog containg redshift, lightcurves,
-            ra_off, dec_off, and host galaxy properties. If host_galaxy is set to False,
-            it returns catalog without host galaxy properties. Light curves are
-            generated using RandomizedSupernova class. Light curves are saved as an
-            array of observation time and array of corresponding magnitudes in specified
-            bands in different columns of the Table.
+        :param host_galaxy: kwargs to decide whether catalog should
+            include host galaxies or not. True or False.
+        :param lightcurve: kwargs for the lightcurve, if lightcurve is
+            True, it returns extracts lightcurve for each supernovae
+            redshift.
+        :return: Astropy Table of supernovae catalog containg redshift,
+            lightcurves, ra_off, dec_off, and host galaxy properties. If
+            host_galaxy is set to False, it returns catalog without host
+            galaxy properties. Light curves are generated using
+            RandomizedSupernova class. Light curves are saved as an
+            array of observation time and array of corresponding
+            magnitudes in specified bands in different columns of the
+            Table.
         """
         sne_lightcone = SNeLightcone(
             self.cosmo,

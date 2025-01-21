@@ -50,6 +50,11 @@ def test_valid_inputs():
     assert isinstance(result2[0], float)
     assert isinstance(result2[1], float)
 
+    result3 = line_of_sight.get_kappa_gamma(0.3, 0.4)
+    assert isinstance(result3, tuple)
+    assert len(result3) == 2
+    assert result3[0] == 0.0
+
 
 def test_invalid():
     with pytest.raises(FileNotFoundError):

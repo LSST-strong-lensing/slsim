@@ -3,7 +3,9 @@ import numpy as np
 from slsim.lens import Lens
 from slsim.roman_image_simulation import simulate_roman_image
 from slsim.image_simulation import simulate_image
-
+from slsim.Sources.source import Source
+from slsim.Deflectors.deflector import Deflector
+from slsim.LOS.los_individual import LOSIndividual
 import os
 import pickle
 import pytest
@@ -46,11 +48,20 @@ SOURCE_DICT = {
 }
 
 BAND = "F106"
-
-LENS = Lens(
+source = Source(
     source_dict=SOURCE_DICT,
+    cosmo=COSMO,
+    source_type="extended",
+    light_profile="single_sersic",
+)
+deflector = Deflector(
+    deflector_type="EPL",
     deflector_dict=DEFLECTOR_DICT,
-    los_dict=LOS_DICT,
+)
+LENS = Lens(
+    source_class=source,
+    deflector_class=deflector,
+    los_class=LOSIndividual(**LOS_DICT),
     cosmo=COSMO,
 )
 
@@ -79,7 +90,8 @@ def test_simulate_roman_image_with_psf_without_noise():
     kwargs_psf = {
         "point_source_supersampling_factor": 3,
         "psf_type": "PIXEL",
-        "kernel_point_source": psf[0].data / np.sum(psf[0].data),
+        "kernel_point_source": psf[0].data,
+        "kernel_point_source_normalisation": False,
     }
     kwargs_numerics = {
         "point_source_supersampling_factor": 3,
