@@ -50,7 +50,8 @@ class Galaxies(SourcePopBase):
         self.source_type = "extended"
         self.light_profile = light_profile
         if downsample_to_dc2 is True: 
-            samp1, samp2, samp3, samp4, samp5, samp6=down_sample_to_dc2(galaxy_list) 
+            samp1, samp2, samp3, samp4, samp5, samp6=down_sample_to_dc2(
+                galaxy_pop=galaxy_list, sky_area=sky_area)
             samp_low=galaxy_list[galaxy_list["z"]<=2]
             galaxy_list=vstack([samp_low, samp1, samp2, samp3, samp4, samp5, samp6])               
             """slsim_sample_3_35, slsim_sample_35_4, 
@@ -316,43 +317,45 @@ def convert_to_slsim_convention(
         galaxy_catalog["angular_size"] = galaxy_catalog["angular_size"].to(u.arcsec)
     return galaxy_catalog
 
-def down_sample_to_dc2(galaxy_pop):
-    """downsamples given galaxy pop above redshift 1.5 to DC2 galaxy pop.
+def down_sample_to_dc2(galaxy_pop, sky_area):
+    """downsamples given galaxy pop above redshift 1.5 to DC2 galaxy population. 
     
     :param galaxy_pop: Astropy table of galaxy population.
+    :param sky_area: Sky area over which galaxies are sampled. Must be in units of
+     solid angle and it should be astropy unit object.
     :return: Astropy tables of downsampled galaxy population in different bins. 
-     Redshift bins for returned populations are: (1.5-2), (2-2.5), (2.5-3), (3-3.5), 
+     Redshift bins for returned populations are: (2-2.5), (2.5-3), (3-3.5), 
      (3.5-4), (4-4.5), (4.5-5)
     """
     path = os.path.dirname(__file__)
     new_path=path[:path.rfind('slsim/')]
     module_path = os.path.dirname(new_path)
-    path1 = os.path.join(
-        module_path, "data/DC2_data/dc2_galaxy_count_1.5_2.npy"
-    )
+    #path1 = os.path.join(
+    #    module_path, "data/DC2_data/dc2_galaxy_count_1.5_2.npy"
+    #)
     path2 = os.path.join(
         module_path, "data/DC2_data/dc2_galaxy_count_2_2.5.npy"
     )
     path3 = os.path.join(
         module_path, "data/DC2_data/dc2_galaxy_count_2.5_3.npy"
     )
-    #DC2 galaxy counts in 3 different redshift bins: (1.5-2), (2-2.5), (2.5-3). Beyond 3
+    #DC2 galaxy counts in 3 different redshift bins: (2-2.5), (2.5-3). Beyond 3
     #, we use the same count as 3rd bin because DC2 only reach up to redshift 3.
-    dN1 = np.load(path1)
-    dN2 = np.load(path2)
-    dN3 = np.load(path3)
+    #dN1 = np.load(path1)
+    dN2 = int(sky_area.value)*np.load(path2)
+    dN3 = int(sky_area.value)*np.load(path3)
     
-    M_min1=21.531229
-    M_max1=29.999994 
-    dM1=0.2920263882341056
+    #M_min1=21.531229
+    #M_max1=29.999994 
+    #dM1=0.2920263882341056
     M_min2=22.084414
     M_max2=29.999998
     dM2=0.2729511918692753
     M_min3=22.654068
     M_max3=29.999996
     dM3=0.25330786869443694
-    slsim_sample_15_2=downsample_galaxies(galaxy_pop, dN1, dM1, M_min1,
-                                            M_max1, 1.5, 2)
+    #slsim_sample_15_2=downsample_galaxies(galaxy_pop, dN1, dM1, M_min1,
+    #                                        M_max1, 1.5, 2)
     slsim_sample_2_25=downsample_galaxies(galaxy_pop, dN2, dM2, M_min2,
                                             M_max2, 2, 2.5)
     slsim_sample_25_3=downsample_galaxies(galaxy_pop, dN3, dM3, M_min3,
