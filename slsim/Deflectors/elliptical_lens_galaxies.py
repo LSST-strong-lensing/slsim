@@ -150,4 +150,3 @@ def elliptical_projected_eccentricity(
     e1_mass = e_mass * np.cos(2 * phi_mass)
     e2_mass = e_mass * np.sin(2 * phi_mass)
     return e1_light, e2_light, e1_mass, e2_mass
-

@@ -4,8 +4,12 @@ from slsim.selection import object_cut
 from slsim.Util import param_util
 from slsim.Sources.source_pop_base import SourcePopBase
 from astropy.table import Column, vstack
-from slsim.Util.param_util import (average_angular_size, axis_ratio, eccentricity, 
-                                   downsample_galaxies)
+from slsim.Util.param_util import (
+    average_angular_size,
+    axis_ratio,
+    eccentricity,
+    downsample_galaxies,
+)
 from astropy import units as u
 from slsim.Sources.source import Source
 import os
@@ -24,7 +28,7 @@ class Galaxies(SourcePopBase):
         light_profile="single_sersic",
         list_type="astropy_table",
         catalog_type=None,
-        downsample_to_dc2=False
+        downsample_to_dc2=False,
     ):
         """
 
@@ -43,19 +47,20 @@ class Galaxies(SourcePopBase):
         :param catalog_type: type of the catalog. If someone wants to use scotch
          catalog, they need to specify it.
         :type catalog_type: str. eg: "scotch" or None
-        :param downsample_to_dc2: Boolean. If True, downsamples the given galaxy 
-         population at redshift greater than 1.5 to DC2 galaxy population. 
+        :param downsample_to_dc2: Boolean. If True, downsamples the given galaxy
+         population at redshift greater than 1.5 to DC2 galaxy population.
         """
         super(Galaxies, self).__init__(cosmo=cosmo, sky_area=sky_area)
         self.source_type = "extended"
         self.light_profile = light_profile
-        if downsample_to_dc2 is True: 
-            samp1, samp2, samp3, samp4, samp5, samp6=down_sample_to_dc2(
-                galaxy_pop=galaxy_list, sky_area=sky_area)
-            samp_low=galaxy_list[galaxy_list["z"]<=2]
-            galaxy_list=vstack([samp_low, samp1, samp2, samp3, samp4, samp5, samp6])               
-            """slsim_sample_3_35, slsim_sample_35_4, 
-                            slsim_sample_4_45, slsim_sample_45_5])"""
+        if downsample_to_dc2 is True:
+            samp1, samp2, samp3, samp4, samp5, samp6 = down_sample_to_dc2(
+                galaxy_pop=galaxy_list, sky_area=sky_area
+            )
+            samp_low = galaxy_list[galaxy_list["z"] <= 2]
+            galaxy_list = vstack([samp_low, samp1, samp2, samp3, samp4, samp5, samp6])
+            """slsim_sample_3_35, slsim_sample_35_4, slsim_sample_4_45,
+            slsim_sample_45_5])"""
         self.n = len(galaxy_list)
         # add missing keywords in astropy.Table object
         if list_type == "astropy_table":
@@ -317,56 +322,66 @@ def convert_to_slsim_convention(
         galaxy_catalog["angular_size"] = galaxy_catalog["angular_size"].to(u.arcsec)
     return galaxy_catalog
 
+
 def down_sample_to_dc2(galaxy_pop, sky_area):
-    """downsamples given galaxy pop above redshift 1.5 to DC2 galaxy population. 
-    
+    """Downsamples given galaxy pop above redshift 1.5 to DC2 galaxy
+    population.
+
     :param galaxy_pop: Astropy table of galaxy population.
     :param sky_area: Sky area over which galaxies are sampled. Must be in units of
      solid angle and it should be astropy unit object.
-    :return: Astropy tables of downsampled galaxy population in different bins. 
-     Redshift bins for returned populations are: (2-2.5), (2.5-3), (3-3.5), 
+    :return: Astropy tables of downsampled galaxy population in different bins.
+     Redshift bins for returned populations are: (2-2.5), (2.5-3), (3-3.5),
      (3.5-4), (4-4.5), (4.5-5)
     """
     path = os.path.dirname(__file__)
-    new_path=path[:path.rfind('slsim/')]
+    new_path = path[: path.rfind("slsim/")]
     module_path = os.path.dirname(new_path)
-    #path1 = os.path.join(
+    # path1 = os.path.join(
     #    module_path, "data/DC2_data/dc2_galaxy_count_1.5_2.npy"
-    #)
-    path2 = os.path.join(
-        module_path, "data/DC2_data/dc2_galaxy_count_2_2.5.npy"
-    )
-    path3 = os.path.join(
-        module_path, "data/DC2_data/dc2_galaxy_count_2.5_3.npy"
-    )
-    #DC2 galaxy counts in 3 different redshift bins: (2-2.5), (2.5-3). Beyond 3
-    #, we use the same count as 3rd bin because DC2 only reach up to redshift 3.
-    #dN1 = np.load(path1)
-    dN2 = int(sky_area.value)*np.load(path2)
-    dN3 = int(sky_area.value)*np.load(path3)
-    
-    #M_min1=21.531229
-    #M_max1=29.999994 
-    #dM1=0.2920263882341056
-    M_min2=22.084414
-    M_max2=29.999998
-    dM2=0.2729511918692753
-    M_min3=22.654068
-    M_max3=29.999996
-    dM3=0.25330786869443694
-    #slsim_sample_15_2=downsample_galaxies(galaxy_pop, dN1, dM1, M_min1,
+    # )
+    path2 = os.path.join(module_path, "data/DC2_data/dc2_galaxy_count_2_2.5.npy")
+    path3 = os.path.join(module_path, "data/DC2_data/dc2_galaxy_count_2.5_3.npy")
+    # DC2 galaxy counts in 3 different redshift bins: (2-2.5), (2.5-3). Beyond 3
+    # , we use the same count as 3rd bin because DC2 only reach up to redshift 3.
+    # dN1 = np.load(path1)
+    dN2 = int(sky_area.value) * np.load(path2)
+    dN3 = int(sky_area.value) * np.load(path3)
+
+    # M_min1=21.531229
+    # M_max1=29.999994
+    # dM1=0.2920263882341056
+    M_min2 = 22.084414
+    M_max2 = 29.999998
+    dM2 = 0.2729511918692753
+    M_min3 = 22.654068
+    M_max3 = 29.999996
+    dM3 = 0.25330786869443694
+    # slsim_sample_15_2=downsample_galaxies(galaxy_pop, dN1, dM1, M_min1,
     #                                        M_max1, 1.5, 2)
-    slsim_sample_2_25=downsample_galaxies(galaxy_pop, dN2, dM2, M_min2,
-                                            M_max2, 2, 2.5)
-    slsim_sample_25_3=downsample_galaxies(galaxy_pop, dN3, dM3, M_min3,
-                                            M_max3, 2.5, 3)
-    slsim_sample_3_35=downsample_galaxies(galaxy_pop, dN3, dM3, M_min3,
-                                            M_max3, 3, 3.5)
-    slsim_sample_35_4=downsample_galaxies(galaxy_pop, dN3, dM3, M_min3,
-                                            M_max3, 3.5, 4)
-    slsim_sample_4_45=downsample_galaxies(galaxy_pop, dN3, dM3, M_min3,
-                                            M_max3, 4, 4.5)
-    slsim_sample_45_5=downsample_galaxies(galaxy_pop, dN3, dM3, M_min3,
-                                            M_max3, 4.5, 5)
-    return (slsim_sample_2_25, slsim_sample_25_3, slsim_sample_3_35,
-             slsim_sample_35_4, slsim_sample_4_45, slsim_sample_45_5)
+    slsim_sample_2_25 = downsample_galaxies(
+        galaxy_pop, dN2, dM2, M_min2, M_max2, 2, 2.5
+    )
+    slsim_sample_25_3 = downsample_galaxies(
+        galaxy_pop, dN3, dM3, M_min3, M_max3, 2.5, 3
+    )
+    slsim_sample_3_35 = downsample_galaxies(
+        galaxy_pop, dN3, dM3, M_min3, M_max3, 3, 3.5
+    )
+    slsim_sample_35_4 = downsample_galaxies(
+        galaxy_pop, dN3, dM3, M_min3, M_max3, 3.5, 4
+    )
+    slsim_sample_4_45 = downsample_galaxies(
+        galaxy_pop, dN3, dM3, M_min3, M_max3, 4, 4.5
+    )
+    slsim_sample_45_5 = downsample_galaxies(
+        galaxy_pop, dN3, dM3, M_min3, M_max3, 4.5, 5
+    )
+    return (
+        slsim_sample_2_25,
+        slsim_sample_25_3,
+        slsim_sample_3_35,
+        slsim_sample_35_4,
+        slsim_sample_4_45,
+        slsim_sample_45_5,
+    )
