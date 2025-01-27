@@ -97,10 +97,6 @@ class EllipticalLensGalaxies(DeflectorsBase):
 
         index = random.randint(0, self._num_select - 1)
         deflector = self._galaxy_select[index]
-        if deflector["vel_disp"] == -1:
-            stellar_mass = deflector["stellar_mass"]
-            vel_disp = vel_disp_from_m_star(stellar_mass)
-            deflector["vel_disp"] = vel_disp
         if deflector["e1_light"] == -1 or deflector["e2_light"] == -1:
             e1_light, e2_light, e1_mass, e2_mass = elliptical_projected_eccentricity(
                 **deflector
