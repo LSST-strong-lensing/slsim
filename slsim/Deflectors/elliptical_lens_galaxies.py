@@ -151,25 +151,3 @@ def elliptical_projected_eccentricity(
     e2_mass = e_mass * np.sin(2 * phi_mass)
     return e1_light, e2_light, e1_mass, e2_mass
 
-
-def vel_disp_from_m_star(m_star):
-    """Function to calculate the velocity dispersion from the staller mass
-    using empirical relation for elliptical galaxies.
-
-    The power-law formula is given by:
-
-    .. math::
-
-         V_{\\mathrm{disp}} = 10^{2.32} \\left( \\frac{M_{\\mathrm{star}}}{10^{11}
-         M_\\odot} \\right)^{0.24}
-
-    2.32,0.24 is the parameters from [1] table 2
-    [1]:Auger, M. W., et al. "The Sloan Lens ACS Survey. X. Stellar, dynamical, and
-    total mass correlations of massive elliptical galaxies." The Astrophysical
-    Journal 724.1 (2010): 511.
-
-    :param m_star: stellar mass in the unit of solar mass
-    :return: the velocity dispersion ("km/s")
-    """
-    v_disp = np.power(10, 2.32) * np.power(m_star / 1e11, 0.24)
-    return v_disp

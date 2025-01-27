@@ -18,6 +18,7 @@ from slsim.Util.param_util import (
     catalog_with_angular_size_in_arcsec,
     convert_mjd_to_days,
     transient_event_time_mjd,
+    downsample_galaxies
 )
 from slsim.Sources.SourceVariability.variability import Variability
 from astropy.io import fits
@@ -262,6 +263,54 @@ def test_start_point_mjd_time():
     result = transient_event_time_mjd(60000, 60400)
     assert 60000 <= result <= 60400
 
+def test_downsample_galaxies():
+    # Create a mock galaxy population
+    np.random.seed(42)  # For reproducibility
+    galaxy_pop = Table({
+        'mag_i': np.random.uniform(18, 28, 1000),  # Magnitudes from 18 to 28
+        'z': np.random.uniform(0.1, 1.5, 1000)    # Redshifts from 0.1 to 1.5
+    })
+
+    # Define test parameters
+    dN = [50, 30, 20]  # Reference galaxy counts per magnitude bin
+    dM = 2.0  # Magnitude bin width
+    M_min = 18.0  # Minimum magnitude
+    M_max = 24.0  # Maximum magnitude
+    z_min = 0.3  # Minimum redshift
+    z_max = 1.0  # Maximum redshift
+
+    # Run the function
+    downsampled_pop = downsample_galaxies(
+        galaxy_pop, dN, dM, M_min, M_max, z_min, z_max)
+
+    # Assertions
+    # Check that the output is an Astropy Table
+    assert isinstance(downsampled_pop, Table)
+
+    # Check that the redshifts are within the specified range
+    assert np.all((downsampled_pop['z'] > z_min) & (downsampled_pop['z'] <= z_max))
+    # Check that the number of galaxies in each magnitude bin matches dN (or is less
+    #  if insufficient galaxies exist)
+    M_bins = np.arange(M_min, M_max + dM, dM)
+    for i in range(len(dN)):
+        mask = (downsampled_pop['mag_i'] >= M_bins[i]) & (
+            downsampled_pop['mag_i'] < M_bins[i + 1])
+        assert len(downsampled_pop[mask]) <= dN[i]
+
+    # Check edge cases
+    # Case: No galaxies in the input population within the redshift range
+    empty_pop = galaxy_pop[galaxy_pop['z'] < z_min]
+    downsampled_empty = downsample_galaxies(
+        empty_pop, dN, dM, M_min, M_max, z_min, z_max)
+    assert len(downsampled_empty) == 0
+
+    # Case: No galaxies in a specific magnitude bin
+    dN_with_zero = [50, 0, 20]  # Second bin has zero reference count
+    downsampled_zero_bin = downsample_galaxies(galaxy_pop, dN_with_zero,
+                                                dM, M_min, M_max, z_min, z_max)
+    mask_zero_bin = (downsampled_zero_bin['mag_i'] >= M_bins[1]) & (
+        downsampled_zero_bin['mag_i'] < M_bins[2])
+    assert len(downsampled_zero_bin[mask_zero_bin]) == 0
 
 if __name__ == "__main__":
     pytest.main()
