@@ -5,7 +5,7 @@ from slsim.Sources.galaxies import Galaxies
 from slsim.Sources.galaxies import (
     galaxy_projected_eccentricity,
     convert_to_slsim_convention,
-    down_sample_to_dc2
+    down_sample_to_dc2,
 )
 from astropy.table import Table
 import pytest
@@ -281,8 +281,9 @@ class TestGalaxies(object):
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            downsample_to_dc2=True
+            downsample_to_dc2=True,
         )
+
     def test_compare_downsample(self):
         galaxy_list = Table(
             [
@@ -359,19 +360,25 @@ def test_galaxy_projected_eccentricity():
     assert e1 == 0
     assert e2 == 0
 
+
 def test_down_sample_to_dc2():
-    galaxy_pop = Table({
-        'mag_i': np.random.uniform(18, 30, 10000),  # Magnitudes from 18 to 30
-        'z': np.random.uniform(1.5, 5.0, 10000)    # Redshifts from 1.5 to 5.0
-    })
+    galaxy_pop = Table(
+        {
+            "mag_i": np.random.uniform(18, 30, 10000),  # Magnitudes from 18 to 30
+            "z": np.random.uniform(1.5, 5.0, 10000),  # Redshifts from 1.5 to 5.0
+        }
+    )
     sky_area = Quantity(value=1, unit="deg2")
     results = down_sample_to_dc2(galaxy_pop, sky_area)
-    assert len(results) == 6 # downsamples in a 6 different bins and returns 6 different
+    assert (
+        len(results) == 6
+    )  # downsamples in a 6 different bins and returns 6 different
     # samples
-    assert min(results[0]["z"])>=2
-    assert max(results[0]["z"])<2.5
-    assert min(results[5]["z"])>=4.5
-    assert max(results[5]["z"])<5
+    assert min(results[0]["z"]) >= 2
+    assert max(results[0]["z"]) < 2.5
+    assert min(results[5]["z"]) >= 4.5
+    assert max(results[5]["z"]) < 5
+
 
 if __name__ == "__main__":
     pytest.main()
