@@ -1,8 +1,8 @@
 from astropy.cosmology import FlatLambdaCDM
 from slsim.Deflectors.elliptical_lens_galaxies import (
     EllipticalLensGalaxies,
-    vel_disp_from_m_star,
 )
+from slsim.Util.param_util import vel_disp_from_m_star
 from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 from astropy.units import Quantity
 import copy
