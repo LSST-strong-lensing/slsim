@@ -448,3 +448,16 @@ def vel_disp_from_m_star(m_star):
     """
     v_disp = np.power(10, 2.32) * np.power(m_star / 1e11, 0.24)
     return v_disp
+
+
+def galaxy_size_redshift_evolution(z):
+    """This function provides a galaxy size which evolves with the redshift. This 
+     relation is taken from https://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
+    
+    :param z: galaxy redshift. It can be a single galaxy redshift or list of galaxy 
+     redshifts.
+    :return: Physical size of the galaxy.
+    """
+    Bz=6.9
+    betaz=-1.2
+    return Bz*(1 + z)**betaz
