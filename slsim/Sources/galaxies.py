@@ -9,7 +9,7 @@ from slsim.Util.param_util import (
     axis_ratio,
     eccentricity,
     downsample_galaxies,
-    galaxy_size_redshift_evolution
+    galaxy_size_redshift_evolution,
 )
 from astropy import units as u
 from slsim.Sources.source import Source
@@ -69,7 +69,7 @@ class Galaxies(SourcePopBase):
                 galaxy_catalog=galaxy_list,
                 light_profile=self.light_profile,
                 input_catalog_type=catalog_type,
-                cosmo=cosmo
+                cosmo=cosmo,
             )
             column_names_update = galaxy_list.colnames
             if light_profile == "single_sersic":
@@ -323,13 +323,17 @@ def convert_to_slsim_convention(
     if input_catalog_type == "skypy":
         # compute the rescaled physical size. The resulted value is devided by 2.5 to
         #  match the best-fit model given in https://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
-        rescaled_physical_size=galaxy_catalog["physical_size"]*galaxy_size_redshift_evolution(
-            galaxy_catalog["z"])/2.5
+        rescaled_physical_size = (
+            galaxy_catalog["physical_size"]
+            * galaxy_size_redshift_evolution(galaxy_catalog["z"])
+            / 2.5
+        )
         # compute the rescaled angular size
-        rescaled_angular_size = (rescaled_physical_size)/cosmo.angular_diameter_distance(
-            galaxy_catalog["z"]).to(u.kpc)
+        rescaled_angular_size = (
+            rescaled_physical_size
+        ) / cosmo.angular_diameter_distance(galaxy_catalog["z"]).to(u.kpc)
         galaxy_catalog["physical_size"] = rescaled_physical_size
-        galaxy_catalog["angular_size"] = (rescaled_angular_size*u.rad).to(u.arcsec)
+        galaxy_catalog["angular_size"] = (rescaled_angular_size * u.rad).to(u.arcsec)
     return galaxy_catalog
 
 

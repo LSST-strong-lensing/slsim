@@ -19,7 +19,7 @@ from slsim.Util.param_util import (
     convert_mjd_to_days,
     transient_event_time_mjd,
     downsample_galaxies,
-    galaxy_size_redshift_evolution
+    galaxy_size_redshift_evolution,
 )
 from slsim.Sources.SourceVariability.variability import Variability
 from astropy.io import fits
@@ -321,9 +321,11 @@ def test_downsample_galaxies():
     )
     assert len(downsampled_zero_bin[mask_zero_bin]) == 0
 
+
 def test_galaxy_size_redshift_evolution():
     results = galaxy_size_redshift_evolution(z=0)
-    assert results==6.9
+    assert results == 6.9
+
 
 if __name__ == "__main__":
     pytest.main()
