@@ -451,8 +451,9 @@ def vel_disp_from_m_star(m_star):
 
 
 def galaxy_size_redshift_evolution(z):
-    """This function provides a galaxy size elolution with the redshift. This 
-     relation is taken from Shibuya et al. (2015): https://arxiv.org/abs/1503.07481
+    """This function provides a galaxy size elolution with the redshift.
+    Provides a correction factor to the size relative to z=0.
+    This relation is taken from Shibuya et al. (2015): https://arxiv.org/abs/1503.07481
     
     :param z: galaxy redshift. It can be a single galaxy redshift or list of galaxy 
      redshifts.
