@@ -8,8 +8,6 @@ from astropy.cosmology import FlatLambdaCDM
 from uncertainties import unumpy
 from color_transformations import *
 
-
-
 """
 This module provides function to calculate the central stellar velocity dispersion of the deflector 
 (elliptical galaxies) using LSST broadband magnitudes and the redshift. It assumes the evolution of 
@@ -48,8 +46,7 @@ def Lsigma_relation_spectroscopic(mgSDSS, mrSDSS, Dlum, redshift):
 
     # Convert the apparent B-band magnitude to the absolute B-band magnitude using the redshift and cosmology defined
     # Note that the 25 here comes since Dlum is in Mpc
-    MabsB = MabsB - 5.0 * np.log10(Dlum/10)
-    
+    MabsB = MabsB - 5.0 * np.log10(Dlum / 10)
     """
     Now using the data from DEEP2 and COMBO-17 surveys, Bell et 2004 found that the
     B-band luminosity function evolves such that characteristic magnitude MBstar decline
@@ -63,19 +60,16 @@ def Lsigma_relation_spectroscopic(mgSDSS, mrSDSS, Dlum, redshift):
 
     # define a 1D line model for MBstar evolution with redshift.
     MBstar_func = Linear1D(-1.5, -19.31)
-    
 
     # Use the above model to calculate MB* at the deflector redshift
     MBstar = MBstar_func(redshift)
 
     # Calculate L/L* using the magnitude-luminosity relation
     LbyLstar = 10.0 ** (-0.4 * (MabsB - MBstar))
-    '''
-    Now use the L-sigma relation for the elliptical galaxies i.e., the Faber Jackson
-    relation, sigma/sigma_star = (L/Lstar)**(1/alpha) and taking the sigma* and alpha
-    value from Choi et al 2007, derived for early type galaxies, calculate the the
-    velocity dispersion sigma.
-    '''
+    """Now use the L-sigma relation for the elliptical galaxies i.e., the Faber
+    Jackson relation, sigma/sigma_star = (L/Lstar)**(1/alpha) and taking the
+    sigma* and alpha value from Choi et al 2007, derived for early type
+    galaxies, calculate the the velocity dispersion sigma."""
     sigma_star, alpha = ufloat(161, 5), 2.32  # Choi et al 2007
 
     # Use sigma_star and alpha values to calculate the stellar velocity dispersion sigma
@@ -105,12 +99,11 @@ def Lsigma_relation_weaklensing(mrSDSS, miSDSS, Dlum, redshift):
     """
 
     # Convert the apparent r-band magnitudes to the absolute r
-    Mabsr = mrSDSS - 5.0 * np.log10(Dlum/10)
+    Mabsr = mrSDSS - 5.0 * np.log10(Dlum / 10)
 
     # Convert the sdss r-mag to r'-mag from Frei & Gunn 2003 (Table 3).
     # r' is a fake filter i.e., r shifted to z=0.1.
     Mabsr = Mabsr - 0.11
-
     """
     We assume the same assumption here (from Bell et al 2004) for decline of
     characteristic magnitude Mrstar for r'-band,
@@ -127,7 +120,6 @@ def Lsigma_relation_weaklensing(mrSDSS, miSDSS, Dlum, redshift):
 
     # Calculate L/L* using the magnitude-luminosity relation
     LbyLstar = 10.0 ** (-0.4 * (Mabsr - Mrstar))
-
     """
     Now use the L-sigma relation and taking the sigma_star and alpha value from
     Parker et al 2007, derived using weak-lensing measurements, calculate the the
@@ -156,7 +148,7 @@ def get_velocity_dispersion(
     cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
     bands=["u", "g", "r", "i", "z"],
     scaling_relation="spectroscopic",
-    ):
+):
     """
     input_params:
 
@@ -197,15 +189,13 @@ def get_velocity_dispersion(
     if deflector_type != "elliptical":
         raise KeyError("The module currently supports only elliptical galaxies.")
 
-
     muSDSS, mgSDSS, mrSDSS, miSDSS, mzSDSS = LSST_to_SDSS(
-                                                        unumpy.uarray(lsst_mags[0],lsst_errs[0]), 
-                                                        unumpy.uarray(lsst_mags[1],lsst_errs[1]), 
-                                                        unumpy.uarray(lsst_mags[2],lsst_errs[2]),
-                                                        unumpy.uarray(lsst_mags[3],lsst_errs[3]),
-                                                        unumpy.uarray(lsst_mags[4],lsst_errs[4])
-                                                         )
-
+        unumpy.uarray(lsst_mags[0], lsst_errs[0]),
+        unumpy.uarray(lsst_mags[1], lsst_errs[1]),
+        unumpy.uarray(lsst_mags[2], lsst_errs[2]),
+        unumpy.uarray(lsst_mags[3], lsst_errs[3]),
+        unumpy.uarray(lsst_mags[4], lsst_errs[4]),
+    )
 
     if scaling_relation == "spectroscopic":
         # for k-correction upto redshift z=0 only
@@ -219,13 +209,12 @@ def get_velocity_dispersion(
     else:
         raise KeyError("Invalid input for scaling relations.")
 
-
     # Find out the K-correction factor using the kcorrect module by Blanton
     k_corrections = kcorr_sdss(
-        np.array([muSDSS,mgSDSS, mrSDSS, miSDSS,mzSDSS]),
+        np.array([muSDSS, mgSDSS, mrSDSS, miSDSS, mzSDSS]),
         redshift,
         band_shift=band_shift,
-        )
+    )
 
     # Apply the K-correction on the SDSS magnitudes
     muSDSS = muSDSS - k_corrections[:, 0]
@@ -233,7 +222,6 @@ def get_velocity_dispersion(
     mrSDSS = mrSDSS - k_corrections[:, 2]
     miSDSS = miSDSS - k_corrections[:, 3]
     mzSDSS = mzSDSS - k_corrections[:, 4]
-
 
     ## Note: It will be better if we apply the K-correction directly on the LSST magnitudes,
     ## but no such relation is known to Vibhore right now.
@@ -250,7 +238,6 @@ def get_velocity_dispersion(
         # Use the Lsigma relation based on weak-lensing measurements to calculate the
         # sigma of the deflector
         sigma = Lsigma_relation_weaklensing(mrSDSS, miSDSS, Dlum, redshift)
-
 
     # returns the calculated sigma
     # type: a 1D array of uncertainties.core.Variable

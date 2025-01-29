@@ -2,40 +2,40 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import pandas
-pandas.set_option('display.max_rows', 1000)
+
+pandas.set_option("display.max_rows", 1000)
 from lsst.rsp import get_tap_service
 
 service = get_tap_service("tap")
 assert service is not None
-
-'''
+"""
 This script can be used to extract the DP0.2 Object catalogs within a defined region.
 It should be run on Rubin Science Platform (RSP) only, since the adql queries 
 to extract the DP0.2 catalogs is supported in RSP only.
-'''
+"""
+
 
 # Define the subquery function
 def fetch_adql_results(service, ra_min, ra_max, dec_min, dec_max):
-    '''
-    Extracts galaxies from the DP0.2 Object catalog that match the truth catalog
-    within a specified region of the sky, defined by right ascension (RA) and
-    declination (Dec) ranges.
+    """Extracts galaxies from the DP0.2 Object catalog that match the truth
+    catalog within a specified region of the sky, defined by right ascension
+    (RA) and declination (Dec) ranges.
 
     Parameters:
     -----------
     service : str
-        The TAP (Table Access Protocol) service endpoint used for querying 
+        The TAP (Table Access Protocol) service endpoint used for querying
         the DP0.2 Object catalog.
-    
+
     ra_min : float
         The minimum right ascension (RA) of the required region, in degrees.
-    
+
     ra_max : float
         The maximum right ascension (RA) of the required region, in degrees.
-    
+
     dec_min : float
         The minimum declination (Dec) of the required region, in degrees.
-    
+
     dec_max : float
         The maximum declination (Dec) of the required region, in degrees.
 
@@ -44,8 +44,7 @@ def fetch_adql_results(service, ra_min, ra_max, dec_min, dec_max):
     results : pandas.dataframe
         A pandas daataframe containing the results of the ADQL query, including
         the extracted galaxy data within the specified sky region.
-
-    '''
+    """
 
     query = f"""
     SELECT mt.id_truth_type AS mt_id_truth_type,
@@ -180,25 +179,25 @@ def fetch_adql_results(service, ra_min, ra_max, dec_min, dec_max):
 
     job = service.submit_job(query)
     job.run()
-    job.wait(phases=['COMPLETED', 'ERROR'])
-    print('Job phase is', job.phase)
+    job.wait(phases=["COMPLETED", "ERROR"])
+    print("Job phase is", job.phase)
 
     # Fetch and return results if the job is completed
-    if job.phase == 'COMPLETED':
+    if job.phase == "COMPLETED":
         results = job.fetch_result().to_table().to_pandas()
         print(f"Number of results: {len(results)}")
         return results
     else:
         print("Job failed with error phase.")
         return None
-    
+
 
 # Provide the ra and dec range within which the catalog has to be extracted
-ra_min,dec_min,ra_max,dec_max = 71.875, -28.125, 75.0, -25.0
+ra_min, dec_min, ra_max, dec_max = 71.875, -28.125, 75.0, -25.0
 
 query_results = fetch_adql_results(service, ra_min, ra_max, dec_min, dec_max)
 
-object_table = query_results                                                       
+object_table = query_results
 
 # Write the extracted catalog to a csv file.
-object_table.to_csv('DP0p2_final_%f_%f_%f_%f.csv'%(ra_min,ra_max,dec_min,dec_max))
+object_table.to_csv("DP0p2_final_%f_%f_%f_%f.csv" % (ra_min, ra_max, dec_min, dec_max))

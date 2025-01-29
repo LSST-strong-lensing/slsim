@@ -4,7 +4,6 @@ import kcorrect.kcorrect
 from uncertainties import unumpy
 
 
-
 def kcorr_sdss(
     mags_sdss,
     redshift,
@@ -12,11 +11,10 @@ def kcorr_sdss(
     responses_out=["sdss_u0", "sdss_g0", "sdss_r0", "sdss_i0", "sdss_z0"],
     band_shift=0.0,
     redshift_range=[0, 2],
-    ):
-
-    """
-    Computes the astronomical K correction for galaxies on the SDSS broadband filters
-    using the kcorrect module based on Blanton and Roweis 2007.
+):
+    """Computes the astronomical K correction for galaxies on the SDSS
+    broadband filters using the kcorrect module based on Blanton and Roweis
+    2007.
 
     input_params:
     mags_sdss : The multi-band SDSS magnitudes of all the targets.
@@ -43,9 +41,7 @@ def kcorr_sdss(
     mags = unumpy.nominal_values(mags_sdss).T
     mag_errs = unumpy.std_devs(mags_sdss).T
 
-
-    kc = kcorrect.kcorrect.Kcorrect(
-        responses=responses)
+    kc = kcorrect.kcorrect.Kcorrect(responses=responses)
 
     maggies_ivar = np.zeros(mag_errs.shape, dtype=np.float32)
     maggies = np.zeros(mags.shape, dtype=np.float32)
@@ -53,15 +49,15 @@ def kcorr_sdss(
     mag_low = mags - mag_errs
     mag_high = mags + mag_errs
 
-
     for j in range(len(maggies)):
         for k in np.arange(len(responses), dtype=int):
-            maggies[j, k] = 10**(-0.4*mags[j, k])
-            maggies_ivar[j, k] = 0.5*( 10**(-0.4*mag_low[j, k]) - 10**(-0.4*mag_high[j, k]) )
+            maggies[j, k] = 10 ** (-0.4 * mags[j, k])
+            maggies_ivar[j, k] = 0.5 * (
+                10 ** (-0.4 * mag_low[j, k]) - 10 ** (-0.4 * mag_high[j, k])
+            )
 
     coeffs = kc.fit_coeffs(redshift=redshift, maggies=maggies, ivar=maggies_ivar)
     k = kc.kcorrect(redshift=redshift, coeffs=coeffs, band_shift=band_shift)
 
     # return the k-correction coefficients for the provided targets and bands in a 2D array of floats.
     return k
-
