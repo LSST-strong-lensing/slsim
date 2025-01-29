@@ -324,12 +324,7 @@ def test_downsample_galaxies():
 
 def test_galaxy_size_redshift_evolution():
     results = galaxy_size_redshift_evolution(z=0)
-<<<<<<< HEAD
     assert results==4.89
-=======
-    assert results == 6.9
-
->>>>>>> 53364dd217eb62c058b2b2dd2aaf02fe35989d0d
 
 if __name__ == "__main__":
     pytest.main()
