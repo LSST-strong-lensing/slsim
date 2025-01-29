@@ -3,10 +3,10 @@ import numpy as np
 from slsim.Deflectors.light2mass import get_velocity_dispersion
 from uncertainties import unumpy
 from astropy.cosmology import FlatLambdaCDM
-from color_transformations import *
-from k_correction import kcorr_sdss
+from slsim.Util.color_transformations import *
+from slsim.Util.k_correction import kcorr_sdss
 from uncertainties import unumpy
-from light2mass import get_velocity_dispersion
+from slsim.Deflectors.light2mass import get_velocity_dispersion
 import numpy as np
 
 
