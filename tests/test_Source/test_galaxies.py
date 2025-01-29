@@ -36,7 +36,7 @@ class TestGalaxies(object):
                 * u.rad,
                 [23, 23, 23],
                 [43, 43, 43],
-                [2.245543177998075, 1.9, 2.3]*u.kpc
+                [2.245543177998075, 1.9, 2.3] * u.kpc,
             ],
             names=("z", "M", "e", "angular_size", "mag_i", "a_rot", "physical_size"),
         )
@@ -348,7 +348,7 @@ class TestGalaxies(object):
             galaxy_catalog=self.galaxy_list2,
             light_profile="single_sersic",
             input_catalog_type="skypy",
-            cosmo=self.cosmo
+            cosmo=self.cosmo,
         )
         assert galaxies["z"][0] == 0.5
         assert galaxies["n_sersic_0"][0] == 1
