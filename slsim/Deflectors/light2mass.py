@@ -3,10 +3,10 @@ import numpy as np
 from uncertainties import ufloat
 from uncertainties import unumpy
 from astropy.modeling.models import Linear1D
-from k_correction import kcorr_sdss
+from slsim.Util.k_correction import kcorr_sdss
 from astropy.cosmology import FlatLambdaCDM
 from uncertainties import unumpy
-from color_transformations import *
+from slsim.Util.color_transformations import *
 
 
 
