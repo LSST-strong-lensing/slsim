@@ -459,6 +459,6 @@ def galaxy_size_redshift_evolution(z):
      redshifts.
     :return: Physical size of the galaxy.
     """
-    Bz=4.89 # median value from Table 6 of Shibuya et al. (2015)
-    betaz=-1.05 # median value from Table 6 of Shibuya et al. (2015)
-    return Bz*(1 + z)**betaz
+    Bz = 4.89  # median value from Table 6 of Shibuya et al. (2015)
+    betaz = -1.05  # median value from Table 6 of Shibuya et al. (2015)
+    return Bz * (1 + z) ** betaz
