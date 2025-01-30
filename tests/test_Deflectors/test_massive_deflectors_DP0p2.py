@@ -11,8 +11,7 @@ def test_get_galaxy_parameters_from_moments():
 
     xx, xy, yy = 8.8278519, -2.2316406, 11.4708189
 
-    theta, r_eff, q, ellipticity = get_galaxy_parameters_from_moments(xx,xy,yy)
-
+    theta, r_eff, q, ellipticity = get_galaxy_parameters_from_moments(xx, xy, yy)
 
     np.testing.assert_equal(len(theta), len(r_eff), len(q), len(ellipticity))
     np.testing.assert_almost_equal(theta, -119, decimal=-1)
@@ -21,14 +20,12 @@ def test_get_galaxy_parameters_from_moments():
     np.testing.assert_almost_equal(ellipticity, 0.2299, decimal=0)
 
 
-
-
 class TestFindPotentialLenses(unittest.TestCase):
 
     def setUp(self):
         # Setup mock data for the test
 
-        self.DP0_table = Table.read('TestData/test_DP0_catalog.csv')
+        self.DP0_table = Table.read("TestData/test_DP0_catalog.csv")
 
         self.cosmo = FlatLambdaCDM(H0=72, Om0=0.26)
 
@@ -37,7 +34,9 @@ class TestFindPotentialLenses(unittest.TestCase):
     def test_find_massive_ellipticals(self):
 
         # Call the function with the mock data
-        DP0_table_massive_ellipticals = find_massive_ellipticals(DP0_table=self.DP0_table)
+        DP0_table_massive_ellipticals = find_massive_ellipticals(
+            DP0_table=self.DP0_table
+        )
 
         # Test assertions
 
