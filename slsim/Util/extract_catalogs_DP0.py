@@ -8,10 +8,11 @@ from lsst.rsp import get_tap_service
 
 service = get_tap_service("tap")
 assert service is not None
-"""
-This script can be used to extract the DP0.2 Object catalogs within a defined region.
-It should be run on Rubin Science Platform (RSP) only, since the adql queries 
-to extract the DP0.2 catalogs is supported in RSP only.
+"""This script can be used to extract the DP0.2 Object catalogs within a
+defined region.
+
+It should be run on Rubin Science Platform (RSP) only, since the adql
+queries to extract the DP0.2 catalogs is supported in RSP only.
 """
 
 
