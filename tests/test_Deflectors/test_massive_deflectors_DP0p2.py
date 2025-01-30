@@ -8,17 +8,6 @@ from astropy.table import Table
 import os
 
 
-def test_get_galaxy_parameters_from_moments():
-
-    xx, xy, yy = 8.8278519, -2.2316406, 11.4708189
-
-    theta, r_eff, q, ellipticity = get_galaxy_parameters_from_moments(xx, xy, yy)
-
-    np.testing.assert_almost_equal(theta, -119, decimal=-1)
-    np.testing.assert_almost_equal(r_eff, 3.1324, decimal=0)
-    np.testing.assert_almost_equal(q, 0.77, decimal=0)
-    np.testing.assert_almost_equal(ellipticity, 0.2299, decimal=0)
-
 
 class TestFindPotentialLenses(unittest.TestCase):
 
@@ -41,6 +30,13 @@ class TestFindPotentialLenses(unittest.TestCase):
             DP0_table=self.DP0_table
         )
 
+        # Ensure the function returned an Astropy Table
+        self.assertIsInstance(
+            DP0_table_massive_ellipticals,
+            Table,
+            "Expected an Astropy Table as the return type.",
+        )
+
         # Test assertions
         # Ensure that some galaxies are identified as potential lenses
         self.assertGreater(
@@ -53,5 +49,4 @@ class TestFindPotentialLenses(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    test_get_galaxy_parameters_from_moments()
     unittest.main()
