@@ -159,6 +159,8 @@ def find_massive_ellipticals(
     )[0]
     DP0_ellipticals = DP0_table[id_ellipticals]
 
+    print(len(DP0_ellipticals),' ellipticals')
+
     bands = ["u", "g", "r", "i", "z"]
     magnitudes, mag_errors = {}, {}
 
