@@ -38,6 +38,12 @@ class TestFindPotentialLenses(unittest.TestCase):
             DP0_table=self.DP0_table
         )
 
+        # Ensure the function returned an Astropy Table
+        self.assertIsInstance(
+            DP0_table_massive_ellipticals, Table,
+            "Expected an Astropy Table as the return type."
+        )
+
         # Test assertions
         # Ensure that some galaxies are identified as potential lenses
         self.assertGreater(
