@@ -41,7 +41,6 @@ class TestFindPotentialLenses(unittest.TestCase):
             DP0_table=self.DP0_table
         )
 
-
         # Test assertions
         # Ensure that some galaxies are identified as potential lenses
         self.assertGreater(
