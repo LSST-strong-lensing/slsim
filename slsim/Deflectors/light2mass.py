@@ -5,8 +5,7 @@ from uncertainties import unumpy
 from astropy.modeling.models import Linear1D
 from k_correction import kcorr_sdss
 from astropy.cosmology import FlatLambdaCDM
-from uncertainties import unumpy
-from color_transformations import *
+from color_transformations import LSST_to_SDSS
 
 """
 This module provides function to calculate the central stellar velocity dispersion of the deflector 
