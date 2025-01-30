@@ -17,11 +17,11 @@ class TestFindPotentialLenses(unittest.TestCase):
         test_file = os.path.join(
             os.path.dirname(__file__), "../TestData/test_DP0_catalog.csv"
         )
-        print(test_file)
+        
         self.DP0_table = Table.read(test_file, format="csv")
         self.cosmo = FlatLambdaCDM(H0=72, Om0=0.26)
 
-        self.constants = {"G": 4.2994e-9, "light_speed": 299792.458}
+        print(self.DP0_table)
 
     def test_find_massive_ellipticals(self):
 
@@ -36,6 +36,7 @@ class TestFindPotentialLenses(unittest.TestCase):
             Table,
             "Expected an Astropy Table as the return type.",
         )
+
         print(DP0_table_massive_ellipticals)
         # Test assertions
         # Ensure that some galaxies are identified as potential lenses
