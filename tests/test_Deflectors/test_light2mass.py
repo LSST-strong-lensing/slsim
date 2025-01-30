@@ -12,8 +12,7 @@ def test_get_velocity_dispersion():
     deflector_type = "elliptical"
     lsst_mags = np.array([19.492, 17.636, 16.674, 16.204, 15.893]).reshape(
         1, 5
-    )  # g,,r,i mags
-    # lsst_errs = np.array([0.007, 0.005, 0.005]).reshape(1, 3)  # g,r,i errors, if known
+    )
 
     # extract errors (due to Poisson noise only) if the errors are not known
     zeropoint_u, exptime_u = 26.52, 15
