@@ -8,9 +8,7 @@ def kcorr_sdss(
     mags_sdss,
     redshift,
     responses=["sdss_u0", "sdss_g0", "sdss_r0", "sdss_i0", "sdss_z0"],
-    responses_out=["sdss_u0", "sdss_g0", "sdss_r0", "sdss_i0", "sdss_z0"],
     band_shift=0.0,
-    redshift_range=[0, 2],
 ):
     """Computes the astronomical K correction for galaxies on the SDSS
     broadband filters using the kcorrect module based on Blanton and Roweis
@@ -37,7 +35,7 @@ def kcorr_sdss(
     the k-correction for output bands for each target.
     """
 
-    # Etract the magnitudes and errors in separate arrays.
+    # Extract the magnitudes and errors in separate arrays.
     mags = unumpy.nominal_values(mags_sdss).T
     mag_errs = unumpy.std_devs(mags_sdss).T
 
@@ -58,6 +56,8 @@ def kcorr_sdss(
 
     coeffs = kc.fit_coeffs(redshift=redshift, maggies=maggies, ivar=maggies_ivar)
     k = kc.kcorrect(redshift=redshift, coeffs=coeffs, band_shift=band_shift)
+
+    print(k)
 
     # return the k-correction coefficients for the provided targets and bands in a 2D array of floats.
     return k
