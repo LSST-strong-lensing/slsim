@@ -221,12 +221,14 @@ def get_velocity_dispersion(
     miSDSS = miSDSS - k_corrections[:, 3]
     mzSDSS = mzSDSS - k_corrections[:, 4]
 
-    print(muSDSS,mgSDSS,mrSDSS,miSDSS,mzSDSS)
+    print('SDSS mags ',muSDSS,mgSDSS,mrSDSS,miSDSS,mzSDSS)
     ## Note: It will be better if we apply the K-correction directly on the LSST magnitudes,
     ## but no such relation is known to Vibhore right now.
 
     # calculates the distance luminosity using the redshift and the cosmology
     Dlum = cosmo.luminosity_distance(redshift).to("pc").value
+
+    print('Dlum and redshift ',Dlum, redshift)
 
     if scaling_relation == "spectroscopic":
         # Use the Lsigma relation based on spectroscopic measurements to calculate the
