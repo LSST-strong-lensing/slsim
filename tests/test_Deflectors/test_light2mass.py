@@ -70,8 +70,8 @@ def test_invalid_deflector_type():
     ):
         get_velocity_dispersion(
             deflector_type="spiral",
-            lsst_mags=np.array([17.636, 16.674, 16.204]).reshape(1, 3),
-            lsst_errs=np.array([0.007, 0.005, 0.005]).reshape(1, 3),
+            lsst_mags=np.array([19.492, 17.636, 16.674, 16.204, 15.893]).reshape(1, 3),
+            lsst_errs=np.array([0.052, 0.007, 0.005, 0.005, 0.01]).reshape(1, 3),
             redshift=np.array([0.08496]),
             cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
             scaling_relation="spectroscopic",
@@ -84,8 +84,8 @@ def test_invalid_scaling_relations():
 
         get_velocity_dispersion(
             deflector_type="elliptical",
-            lsst_mags=np.array([17.636, 16.674, 16.204]).reshape(1, 3),
-            lsst_errs=np.array([0.007, 0.005, 0.005]).reshape(1, 3),
+            lsst_mags=np.array([19.492, 17.636, 16.674, 16.204, 15.893]).reshape(1, 3),
+            lsst_errs=np.array([0.052, 0.007, 0.005, 0.005, 0.01]).reshape(1, 3),
             redshift=np.array([0.08496]),
             cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
             scaling_relation="something else",
