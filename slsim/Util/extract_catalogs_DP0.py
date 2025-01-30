@@ -1,6 +1,3 @@
-import numpy as np
-import matplotlib
-import matplotlib.pyplot as plt
 import pandas
 from lsst.rsp import get_tap_service
 
