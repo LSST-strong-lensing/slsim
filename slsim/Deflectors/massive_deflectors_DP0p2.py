@@ -181,7 +181,7 @@ def find_massive_ellipticals(
     luminosity_distance = cosmo.luminosity_distance(redshift).to("pc").value
 
     # Find the k_correction coefficients for the five SDSS bands for the ellipticals
-    k_correction_coefficients = kcorr_sdss(sdss_mags, redshift)
+    k_correction_coefficients = kcorr_sdss(sdss_mags, redshift, band_shift=0.0)
 
     # Calculate the r-band absolute magnitude of the ellipticals
     Mag_r_sdss = (
