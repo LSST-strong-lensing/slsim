@@ -12,10 +12,9 @@ class TestFindPotentialLenses(unittest.TestCase):
         # Setup mock data for the test
 
         path = os.getcwd()
-        module_path, _ = os.path.split(path)
-        test_file = os.path.join(module_path, "TestData/test_DP0_catalog.csv")
+        #module_path, _ = os.path.split(path)
+        test_file = os.path.join(path, "TestData/test_DP0_catalog.csv")
         self.DP0_table = Table.read(test_file, format="csv")
-
         self.cosmo = FlatLambdaCDM(H0=72, Om0=0.26)
 
         self.constants = {"G": 4.2994e-9, "light_speed": 299792.458}
@@ -33,7 +32,7 @@ class TestFindPotentialLenses(unittest.TestCase):
             Table,
             "Expected an Astropy Table as the return type.",
         )
-
+        print(DP0_table_massive_ellipticals)
         # Test assertions
         # Ensure that some galaxies are identified as potential lenses
         self.assertGreater(
