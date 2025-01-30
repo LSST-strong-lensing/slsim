@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-import numpy as np
 from astropy.cosmology import FlatLambdaCDM
-from slsim.Deflectors.massive_deflectors_DP0p2 import get_galaxy_parameters_from_moments
 import unittest
 from slsim.Deflectors.massive_deflectors_DP0p2 import find_massive_ellipticals
 from astropy.table import Table
