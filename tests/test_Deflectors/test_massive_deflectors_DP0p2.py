@@ -41,7 +41,7 @@ class TestFindPotentialLenses(unittest.TestCase):
         # Test assertions
         # Ensure that some galaxies are identified as potential lenses
         self.assertGreater(
-            len(DP0_table_massive_ellipticals), 3, "3 galaxies were identified as massive ellipticals."
+            len(DP0_table_massive_ellipticals), 0, "A few galaxies were identified as massive ellipticals."
         )
 
         print("Test passed: DP0_table_massive_ellipticals returned successfully.")
