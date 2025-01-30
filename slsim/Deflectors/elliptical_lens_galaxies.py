@@ -139,7 +139,7 @@ def elliptical_projected_eccentricity(
     phi_light = np.random.uniform(0, np.pi)
     e1_light = e_light * np.cos(2 * phi_light)
     e2_light = e_light * np.sin(2 * phi_light)
-    e_mass = light2mass_e_scaling * ellipticity + np.random.normal(
+    e_mass = light2mass_e_scaling * e_light + np.random.normal(
         loc=0, scale=light2mass_e_scatter
     )
     phi_mass = phi_light + np.random.normal(loc=0, scale=light2mass_angle_scatter)
