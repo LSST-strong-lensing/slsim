@@ -2,9 +2,9 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import pandas
+from lsst.rsp import get_tap_service
 
 pandas.set_option("display.max_rows", 1000)
-from lsst.rsp import get_tap_service
 
 service = get_tap_service("tap")
 assert service is not None
