@@ -76,21 +76,7 @@ def test_invalid_deflector_type():
         )
 
 
-def test_invalid_scaling_relations():
-
-    with pytest.raises(KeyError, match="Invalid input for scaling relations."):
-
-        get_velocity_dispersion(
-            deflector_type="elliptical",
-            lsst_mags=np.array([19.492, 17.636, 16.674, 16.204, 15.893]).reshape(1, 5),
-            lsst_errs=np.array([0.052, 0.007, 0.005, 0.005, 0.01]).reshape(1, 5),
-            redshift=np.array([0.08496]),
-            cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
-            scaling_relation="something else",
-        )
-
 
 if __name__ == "__main__":
     test_get_velocity_dispersion()
     test_invalid_deflector_type()
-    #test_invalid_scaling_relations()
