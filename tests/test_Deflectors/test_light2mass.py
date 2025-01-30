@@ -20,7 +20,7 @@ def test_get_velocity_dispersion():
     zeropoint_r, exptime_r = 28.36, 15
     zeropoint_i, exptime_i = 28.17, 15
     zeropoint_z, exptime_z = 27.78, 15
-    lsst_errs = lsst_errs = np.array(
+    lsst_errs = np.array(
         [
             get_errors_Poisson(lsst_mags[:, 0], zeropoint_u, exptime_u),
             get_errors_Poisson(lsst_mags[:, 1], zeropoint_g, exptime_g),
@@ -93,4 +93,4 @@ def test_invalid_scaling_relations():
 if __name__ == "__main__":
     test_get_velocity_dispersion()
     test_invalid_deflector_type()
-    test_invalid_scaling_relations()
+    #test_invalid_scaling_relations()
