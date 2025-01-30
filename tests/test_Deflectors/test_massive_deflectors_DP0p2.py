@@ -17,7 +17,7 @@ class TestFindPotentialLenses(unittest.TestCase):
         test_file = os.path.join(
             os.path.dirname(__file__), "../TestData/test_DP0_catalog.csv"
         )
-        
+
         self.DP0_table = Table.read(test_file, format="csv")
         self.cosmo = FlatLambdaCDM(H0=72, Om0=0.26)
 
