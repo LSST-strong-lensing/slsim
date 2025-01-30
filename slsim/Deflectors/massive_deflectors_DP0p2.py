@@ -5,7 +5,7 @@ from uncertainties import unumpy
 from astropy.cosmology import FlatLambdaCDM
 from slsim.Util.color_transformations import LSST_to_SDSS
 from slsim.Util.k_correction import kcorr_sdss
-import numpy as np
+
 
 
 def get_galaxy_parameters_from_moments(xx, xy, yy):
