@@ -7,7 +7,6 @@ from slsim.Util.color_transformations import LSST_to_SDSS
 from slsim.Util.k_correction import kcorr_sdss
 
 
-
 def get_galaxy_parameters_from_moments(xx, xy, yy):
     """Caculate the parameters for a galaxy using the HSM moments.
 
