@@ -221,6 +221,7 @@ def get_velocity_dispersion(
     miSDSS = miSDSS - k_corrections[:, 3]
     mzSDSS = mzSDSS - k_corrections[:, 4]
 
+    print(muSDSS,mgSDSS,mrSDSS,miSDSS,mzSDSS)
     ## Note: It will be better if we apply the K-correction directly on the LSST magnitudes,
     ## but no such relation is known to Vibhore right now.
 
