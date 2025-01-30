@@ -12,8 +12,8 @@ class TestFindPotentialLenses(unittest.TestCase):
         # Setup mock data for the test
 
         path = os.getcwd()
-        # module_path, _ = os.path.split(path)
-        test_file = os.path.join(path, "TestData/test_DP0_catalog.csv")
+        module_path, _ = os.path.split(path)
+        test_file = os.path.join(module_path, "tests/TestData/test_DP0_catalog.csv")
         self.DP0_table = Table.read(test_file, format="csv")
         self.cosmo = FlatLambdaCDM(H0=72, Om0=0.26)
 
