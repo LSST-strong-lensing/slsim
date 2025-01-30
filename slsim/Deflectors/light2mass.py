@@ -187,6 +187,8 @@ def get_velocity_dispersion(
     if deflector_type != "elliptical":
         raise KeyError("The module currently supports only elliptical galaxies.")
 
+    print("lsst mags ", lsst_mags)
+
     muSDSS, mgSDSS, mrSDSS, miSDSS, mzSDSS = LSST_to_SDSS(
         unumpy.uarray(lsst_mags[0], lsst_errs[0]),
         unumpy.uarray(lsst_mags[1], lsst_errs[1]),
@@ -194,6 +196,8 @@ def get_velocity_dispersion(
         unumpy.uarray(lsst_mags[3], lsst_errs[3]),
         unumpy.uarray(lsst_mags[4], lsst_errs[4]),
     )
+
+    print("before k-correction ", muSDSS, mgSDSS, mrSDSS, miSDSS, mzSDSS)
 
     if scaling_relation == "spectroscopic":
         # for k-correction upto redshift z=0 only
