@@ -10,7 +10,9 @@ def test_get_velocity_dispersion():
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     deflector_type = "elliptical"
-    lsst_mags = np.array([19.492, 17.636, 16.674, 16.204, 15.893]).reshape(1, 5)  # g,,r,i mags
+    lsst_mags = np.array([19.492, 17.636, 16.674, 16.204, 15.893]).reshape(
+        1, 5
+    )  # g,,r,i mags
     # lsst_errs = np.array([0.007, 0.005, 0.005]).reshape(1, 3)  # g,r,i errors, if known
 
     # extract errors (due to Poisson noise only) if the errors are not known
@@ -30,7 +32,6 @@ def test_get_velocity_dispersion():
     ).T
     redshifts = np.array([0.08496])  # redshift
 
-
     # Get velocity dispersion using spectroscopy based relations
     vel_disp_spec = get_velocity_dispersion(
         deflector_type,
@@ -40,7 +41,7 @@ def test_get_velocity_dispersion():
         cosmo=cosmo,
         bands=["u", "g", "r", "i", "z"],
         scaling_relation="spectroscopic",
-        )
+    )
     print(vel_disp_spec)
 
     np.testing.assert_equal(len(vel_disp_spec), len(redshifts))
