@@ -5,8 +5,6 @@ from uncertainties import unumpy
 from astropy.cosmology import FlatLambdaCDM
 from slsim.Util.color_transformations import LSST_to_SDSS
 from slsim.Util.k_correction import kcorr_sdss
-from uncertainties import unumpy
-from slsim.Deflectors.light2mass import get_velocity_dispersion
 import numpy as np
 
 
