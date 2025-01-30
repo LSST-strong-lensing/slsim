@@ -10,9 +10,7 @@ def test_get_velocity_dispersion():
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     deflector_type = "elliptical"
-    lsst_mags = np.array([19.492, 17.636, 16.674, 16.204, 15.893]).reshape(
-        1, 5
-    )
+    lsst_mags = np.array([19.492, 17.636, 16.674, 16.204, 15.893]).reshape(1, 5)
 
     # extract errors (due to Poisson noise only) if the errors are not known
     zeropoint_u, exptime_u = 26.52, 15
@@ -74,7 +72,6 @@ def test_invalid_deflector_type():
             cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
             scaling_relation="spectroscopic",
         )
-
 
 
 if __name__ == "__main__":
