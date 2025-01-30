@@ -39,7 +39,7 @@ def test_get_velocity_dispersion():
         bands=["u", "g", "r", "i", "z"],
         scaling_relation="spectroscopic",
     )
-    print(vel_disp_spec)
+    print(vel_disp_spec[0].nominal_value)
 
     np.testing.assert_almost_equal(vel_disp_spec[0].nominal_value, 203, decimal=-1)
     #np.testing.assert_almost_equal(vel_disp_spec[0].nominal_value, 179, decimal=-1)
@@ -55,7 +55,7 @@ def test_get_velocity_dispersion():
         bands=["u", "g", "r", "i", "z"],
         scaling_relation="weak-lensing",
     )
-    print(vel_disp_wl)
+    print(vel_disp_wl[0].nominal_value)
 
     np.testing.assert_almost_equal(vel_disp_wl[0].nominal_value, 182, decimal=-1)
 
