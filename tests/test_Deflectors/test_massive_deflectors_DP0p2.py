@@ -5,6 +5,7 @@ from slsim.Deflectors.massive_deflectors_DP0p2 import get_galaxy_parameters_from
 import unittest
 from slsim.Deflectors.massive_deflectors_DP0p2 import find_massive_ellipticals
 from astropy.table import Table
+import os
 
 
 def test_get_galaxy_parameters_from_moments():
@@ -25,7 +26,10 @@ class TestFindPotentialLenses(unittest.TestCase):
     def setUp(self):
         # Setup mock data for the test
 
-        self.DP0_table = Table.read("slsim/TestData/test_DP0_catalog.csv")
+        path = os.getcwd
+        module_path, _ = os.path.split(path)
+        test_file = os.path.join(module_path,"TestData/test_DP0_catalog.csv")
+        self.DP0_table = Table.read(test_file, fomrat='csv')
 
         self.cosmo = FlatLambdaCDM(H0=72, Om0=0.26)
 
