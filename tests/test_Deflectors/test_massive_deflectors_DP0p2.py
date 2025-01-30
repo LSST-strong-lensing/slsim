@@ -8,7 +8,6 @@ from astropy.table import Table
 import os
 
 
-
 class TestFindPotentialLenses(unittest.TestCase):
 
     def setUp(self):
