@@ -25,7 +25,7 @@ class TestFindPotentialLenses(unittest.TestCase):
     def setUp(self):
         # Setup mock data for the test
 
-        self.DP0_table = Table.read("../TestData/test_DP0_catalog.csv")
+        self.DP0_table = Table.read("slsim/TestData/test_DP0_catalog.csv")
 
         self.cosmo = FlatLambdaCDM(H0=72, Om0=0.26)
 
