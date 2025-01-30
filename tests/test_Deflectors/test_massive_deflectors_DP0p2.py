@@ -61,9 +61,5 @@ class TestFindPotentialLenses(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
-
-
-if __name__ == "__main__":
     test_get_galaxy_parameters_from_moments()
     unittest.main()
