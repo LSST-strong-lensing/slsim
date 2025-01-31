@@ -61,6 +61,7 @@ def kcorr_sdss(
     print("ivar", maggies_ivar)
 
     coeffs = kc.fit_coeffs(redshift=redshift, maggies=maggies, ivar=maggies_ivar)
+    print("coeffs ", coeffs)
     k = kc.kcorrect(redshift=redshift, coeffs=coeffs, band_shift=band_shift)
 
     print(k)
