@@ -10,5 +10,5 @@ matplotlib
 sncosmo
 colossus
 uncertainties
-kcorrect
+kcorrect==5.1.3
 webbpsf
