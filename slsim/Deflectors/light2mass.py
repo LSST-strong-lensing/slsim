@@ -187,8 +187,6 @@ def get_velocity_dispersion(
     if deflector_type != "elliptical":
         raise KeyError("The module currently supports only elliptical galaxies.")
 
-    print("lsst mags ", lsst_mags)
-
     muSDSS, mgSDSS, mrSDSS, miSDSS, mzSDSS = LSST_to_SDSS(
         unumpy.uarray(lsst_mags[0], lsst_errs[0]),
         unumpy.uarray(lsst_mags[1], lsst_errs[1]),
@@ -196,8 +194,6 @@ def get_velocity_dispersion(
         unumpy.uarray(lsst_mags[3], lsst_errs[3]),
         unumpy.uarray(lsst_mags[4], lsst_errs[4]),
     )
-
-    print("before k-correction ", muSDSS, mgSDSS, mrSDSS, miSDSS, mzSDSS)
 
     if scaling_relation == "spectroscopic":
         # for k-correction upto redshift z=0 only
@@ -225,14 +221,11 @@ def get_velocity_dispersion(
     miSDSS = miSDSS - k_corrections[:, 3]
     mzSDSS = mzSDSS - k_corrections[:, 4]
 
-    print("SDSS mags ", muSDSS, mgSDSS, mrSDSS, miSDSS, mzSDSS)
     ## Note: It will be better if we apply the K-correction directly on the LSST magnitudes,
     ## but no such relation is known to Vibhore right now.
 
     # calculates the distance luminosity using the redshift and the cosmology
     Dlum = cosmo.luminosity_distance(redshift).to("pc").value
-
-    print("Dlum and redshift ", Dlum, redshift)
 
     if scaling_relation == "spectroscopic":
         # Use the Lsigma relation based on spectroscopic measurements to calculate the

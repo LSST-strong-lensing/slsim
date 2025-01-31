@@ -47,9 +47,6 @@ def kcorr_sdss(
     mag_low = mags - mag_errs
     mag_high = mags + mag_errs
 
-    print("mag low ", mag_low)
-    print("mag high ", mag_high)
-
     for j in range(len(maggies)):
         for k in np.arange(len(responses), dtype=int):
             maggies[j, k] = 10 ** (-0.4 * mags[j, k])
@@ -57,14 +54,8 @@ def kcorr_sdss(
                 10 ** (-0.4 * mag_low[j, k]) - 10 ** (-0.4 * mag_high[j, k])
             )
 
-    print("maggies ", maggies)
-    print("ivar", maggies_ivar)
-
     coeffs = kc.fit_coeffs(redshift=redshift, maggies=maggies, ivar=maggies_ivar)
-    print("coeffs ", coeffs)
     k = kc.kcorrect(redshift=redshift, coeffs=coeffs, band_shift=band_shift)
-
-    print(k)
 
     # return the k-correction coefficients for the provided targets and bands in a 2D array of floats.
     return k

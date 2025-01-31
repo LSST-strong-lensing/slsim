@@ -21,8 +21,6 @@ class TestFindPotentialLenses(unittest.TestCase):
         self.DP0_table = Table.read(test_file, format="csv")
         self.cosmo = FlatLambdaCDM(H0=72, Om0=0.26)
 
-        print(self.DP0_table)
-
     def test_find_massive_ellipticals(self):
 
         # Call the function with the mock data
@@ -37,7 +35,6 @@ class TestFindPotentialLenses(unittest.TestCase):
             "Expected an Astropy Table as the return type.",
         )
 
-        print(DP0_table_massive_ellipticals)
         # Test assertions
         # Ensure that some galaxies are identified as potential lenses
         self.assertGreater(
