@@ -234,7 +234,8 @@ class Lens(LensedSystemBase):
         return self._point_image_positions
 
     def validity_test(
-        self, min_image_separation=0, max_image_separation=10, mag_arc_limit=None
+        self, min_image_separation=0, max_image_separation=10, mag_arc_limit=None, 
+        second_bright_image_cut=None
     ):
         """Check whether multiple lensing configuration matches selection and
         plausibility criteria.
@@ -245,6 +246,11 @@ class Lens(LensedSystemBase):
             magnitude limits of integrated lensed arc
         :type mag_arc_limit: dict with key of bands and values of
             magnitude limits
+        :param second_bright_image_cut: Dictionary containing maximum magnitude of the 
+         second brightest image and corresponding band. If provided, selects lenses 
+         where the second brightest image has a magnitude less than or equal to 
+         provided magnitude. eg: second_bright_image_cut = {"band": "i", 
+         "second_bright_mag_max": 23}
         :return: A boolean or dict of boolean.
         """
         validity_results = {}
@@ -254,6 +260,7 @@ class Lens(LensedSystemBase):
                 min_image_separation=min_image_separation,
                 max_image_separation=max_image_separation,
                 mag_arc_limit=mag_arc_limit,
+                second_bright_image_cut=second_bright_image_cut,
                 source_index=index,
             )
         if len(validity_results) == 1:
@@ -282,7 +289,8 @@ class Lens(LensedSystemBase):
         :param second_bright_image_cut: Dictionary containing maximum magnitude of the 
          second brightest image and corresponding band. If provided, selects lenses 
          where the second brightest image has a magnitude less than or equal to 
-         provided magnitude.
+         provided magnitude. eg: second_bright_image_cut = {"band": "i", 
+         "second_bright_mag_max": 23}
         :param source_index: index of a source in source list.
         :return: boolean
         """
@@ -356,7 +364,8 @@ class Lens(LensedSystemBase):
         # TODO make similar criteria for point source magnitudes
         # Criteria 7: (optional)
         # computes the magnitude of each image and if the second brightest image has 
-        # the magnitude less or equal to second_bright_mag_max.
+        # the magnitude less or equal to "second_bright_mag_max" provided in the dict 
+        # second_bright_image_cut.
         if second_bright_image_cut is not None:
             if self._source_type == "extended":
                 image_magnitude_list = self.extended_source_magnitude_for_each_images(
