@@ -144,6 +144,20 @@ class TestLens(object):
     def test_deflector_light_model_lenstronomy(self):
         kwargs_lens_light = self.gg_lens.deflector_light_model_lenstronomy(band="g")
         assert len(kwargs_lens_light) >= 1
+    
+    def test_extended_source_magnification_for_individual_images(self):
+        results = self.gg_lens.extended_source_magnification_for_individual_images()
+        assert len(results[0]) > 2
+
+    def test_extended_source_magnitude_for_each_images(self):
+        result1 = self.gg_lens.extended_source_magnitude_for_each_images(band="i",
+                                         lensed=True)
+        result2 = self.gg_lens.extended_source_magnitude_for_each_images(band="i",
+                                         lensed=False)
+        result3= self.gg_lens.extended_source_magnitude(band="i",
+                                         lensed=False)
+        assert len(result1[0]) > 2
+        assert result2 == result3
 
     def test_lens_equation_solver(self):
         # Tests analytical and numerical lens equation solver options.
