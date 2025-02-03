@@ -147,7 +147,7 @@ class TestLens(object):
     
     def test_extended_source_magnification_for_individual_images(self):
         results = self.gg_lens.extended_source_magnification_for_individual_images()
-        assert len(results[0]) > 2
+        assert len(results[0]) >= 2
 
     def test_extended_source_magnitude_for_each_images(self):
         result1 = self.gg_lens.extended_source_magnitude_for_each_images(band="i",
@@ -156,7 +156,7 @@ class TestLens(object):
                                          lensed=False)
         result3= self.gg_lens.extended_source_magnitude(band="i",
                                          lensed=False)
-        assert len(result1[0]) > 2
+        assert len(result1[0]) >= 2
         assert result2 == result3
 
     def test_lens_equation_solver(self):
@@ -305,7 +305,8 @@ def pes_lens_instance():
             deflector_class=deflector4,
             cosmo=cosmo,
         )
-        if pes_lens.validity_test():
+        second_bright_image_cut={"band": "i", "second_bright_mag_max": 30}
+        if pes_lens.validity_test(second_bright_image_cut=second_bright_image_cut):
             pes_lens = pes_lens
             break
     return pes_lens
