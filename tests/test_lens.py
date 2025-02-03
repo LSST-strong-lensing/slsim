@@ -59,7 +59,9 @@ class TestLens(object):
                 # the testing but at least code go through this warning message.
                 cosmo=cosmo,
             )
-            if gg_lens.validity_test(mag_arc_limit=mag_arc_limit):
+            second_bright_image_cut={"band": "i", "second_bright_mag_max": 30}
+            if gg_lens.validity_test(second_bright_image_cut=second_bright_image_cut,
+                                     mag_arc_limit=mag_arc_limit):
                 self.gg_lens = gg_lens
                 break
 
