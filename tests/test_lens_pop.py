@@ -60,11 +60,16 @@ def create_lens_pop_instance(return_kext=False):
 def gg_lens_pop_instance():
     # Create LensPop instance without return_kext
     return create_lens_pop_instance(return_kext=False)
+
+
 def test_draw_population(gg_lens_pop_instance):
-    lens_pop=gg_lens_pop_instance
+    lens_pop = gg_lens_pop_instance
     kwargs_lens_cuts = {}
-    lens_population = lens_pop.draw_population(kwargs_lens_cuts)
+    lens_population = lens_pop.draw_population(kwargs_lens_cuts, multi_source=True)
+    lens_population2 = lens_pop.draw_population(kwargs_lens_cuts, multi_source=False)
     assert len(lens_population) <= 40
+    assert len(lens_population2) <= 40
+
 
 def test_pes_lens_pop_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -140,7 +145,7 @@ def test_galaxies_lens_pop_halo_model_instance():
         cosmo=cosmo,
         sky_area=sky_area,
     )
-    assert g_lens_halo_model_pop._lens_galaxies.draw_deflector()["halo_mass"] != 0
+    assert g_lens_halo_model_pop._lens_galaxies.draw_deflector().halo_properties[0] != 0
 
 
 def test_cluster_lens_pop_instance():
@@ -283,16 +288,17 @@ def test_supernovae_plus_galaxies_lens_pop_instance_2():
         kwargs_cut=kwargs_source_cut,
         variability_model="light_curve",
         kwargs_variability_model={"supernovae_lightcurve", "i"},
+        lightcurve_time=time_range,
+        sn_type="Ia",
+        sn_absolute_mag_band="bessellb",
+        sn_absolute_zpsys="ab",
+        sn_modeldir=None,
     )
 
     pes_lens_pop = LensPop(
         deflector_population=lens_galaxies,
         source_population=source_galaxies,
         cosmo=cosmo,
-        lightcurve_time=time_range,
-        sn_type="Ia",
-        sn_absolute_mag_band="bessellb",
-        sn_absolute_zpsys="ab",
         sky_area=sky_area,
     )
     kwargs_lens_cut = {}
@@ -344,16 +350,16 @@ def test_supernovae_lens_pop_instance():
         kwargs_cut=kwargs_source_cut,
         variability_model="light_curve",
         kwargs_variability_model={"supernovae_lightcurve", "r"},
+        lightcurve_time=time_range,
+        sn_type="Ia",
+        sn_absolute_mag_band="bessellb",
+        sn_absolute_zpsys="ab",
     )
 
     ps_lens_pop_1 = LensPop(
         deflector_population=lens_galaxies_1,
         source_population=source_galaxies_1,
         cosmo=cosmo,
-        lightcurve_time=time_range,
-        sn_type="Ia",
-        sn_absolute_mag_band="bessellb",
-        sn_absolute_zpsys="ab",
         sky_area=sky_area_pop,
     )
     # drawing population
@@ -375,10 +381,6 @@ def test_supernovae_lens_pop_instance():
             deflector_population=lens_galaxies_1,
             source_population=source_galaxies_1,
             cosmo=cosmo,
-            lightcurve_time=time_range,
-            sn_type="Ia",
-            sn_absolute_mag_band="bessellb",
-            sn_absolute_zpsys="ab",
         )
 
 
@@ -396,8 +398,9 @@ def test_num_lenses_and_sources(gg_lens_pop_instance):
 
 
 def test_num_sources_tested_and_test_area(gg_lens_pop_instance):
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     lens = gg_lens_pop_instance._lens_galaxies.draw_deflector()
-    test_area = draw_test_area(deflector=lens)
+    test_area = draw_test_area(v_sigma=lens.velocity_dispersion(cosmo=cosmo))
     assert (
         0.01 < test_area < 100 * np.pi
     ), "Expected test_area to be between 0.1 and 100*pi,"

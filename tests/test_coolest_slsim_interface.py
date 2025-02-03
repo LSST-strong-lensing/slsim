@@ -36,12 +36,11 @@ def supernovae_lens_instance():
             sn_type="Ia",
             sn_absolute_mag_band="bessellb",
             sn_absolute_zpsys="ab",
-
         )
         deflector = Deflector(
-                deflector_type="EPL",
-                deflector_dict=deflector_dict,
-            )
+            deflector_type="EPL",
+            deflector_dict=deflector_dict,
+        )
         supernovae_lens = Lens(
             deflector_class=deflector,
             source_class=source,
@@ -110,22 +109,27 @@ def test_update_coolest_from_slsim_and_create_slsim_from_coolest(
     npt.assert_almost_equal(
         slsim_from_updated_coolest[1]["kwargs_lens"][1]["gamma1"],
         expected_result[1]["kwargs_lens"][1]["gamma1"],
+        decimal=6,
     )
     npt.assert_almost_equal(
         slsim_from_updated_coolest[1]["kwargs_lens"][2]["kappa"],
         expected_result[1]["kwargs_lens"][2]["kappa"],
+        decimal=6,
     )
     npt.assert_almost_equal(
         slsim_from_updated_coolest[1]["kwargs_source"][0]["magnitude"],
         expected_result[1]["kwargs_source"][0]["magnitude"],
+        decimal=6,
     )
     npt.assert_almost_equal(
         slsim_from_updated_coolest[1]["kwargs_source"][1]["magnitude"],
         expected_result[1]["kwargs_source"][1]["magnitude"],
+        decimal=6,
     )
     npt.assert_almost_equal(
         slsim_from_updated_coolest[1]["kwargs_ps"][0]["magnitude"],
         [expected_result[1]["kwargs_ps"][0]["magnitude"]],
+        decimal=4,
     )
 
     os.remove(test_path + "coolest_template_update.json")

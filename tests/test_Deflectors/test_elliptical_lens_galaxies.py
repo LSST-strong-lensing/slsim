@@ -15,7 +15,9 @@ def galaxy_list():
     red_gal = pipeline.red_galaxies
     return red_gal
 
+
 galaxies = galaxy_list()
+
 
 @pytest.fixture
 def elliptical_lens_galaxies():
@@ -37,12 +39,13 @@ def test_deflector_number_draw_deflector(elliptical_lens_galaxies):
     galaxy_pop = elliptical_lens_galaxies
     num_deflectors = galaxy_pop.deflector_number()
     deflector = galaxy_pop.draw_deflector()
-    assert deflector["z"] != 0
+    assert deflector.redshift != 0
     assert num_deflectors >= 0
 
 
 def test_vel_disp_from_m_star():
     assert vel_disp_from_m_star(0) == 0
+
 
 def test_elliptical_lens_galaxies_2():
     red_galaxies = copy.copy(galaxies)
@@ -60,7 +63,7 @@ def test_elliptical_lens_galaxies_2():
         kwargs_mass2light=kwargs_mass2light,
         cosmo=cosmo,
         sky_area=sky_area,
-        gamma_pl=2.15
+        gamma_pl=2.15,
     )
     galaxy_class2 = EllipticalLensGalaxies(
         red_galaxies2,
@@ -68,7 +71,7 @@ def test_elliptical_lens_galaxies_2():
         kwargs_mass2light=kwargs_mass2light,
         cosmo=cosmo,
         sky_area=sky_area,
-        gamma_pl={"mean": 2.0, "std_dev": 0.16}
+        gamma_pl={"mean": 2.0, "std_dev": 0.16},
     )
     galaxy_class3 = EllipticalLensGalaxies(
         red_galaxies3,
@@ -76,29 +79,29 @@ def test_elliptical_lens_galaxies_2():
         kwargs_mass2light=kwargs_mass2light,
         cosmo=cosmo,
         sky_area=sky_area,
-        gamma_pl={"gamma_min": 1.8, "gamma_max": 2.3}
+        gamma_pl={"gamma_min": 1.8, "gamma_max": 2.3},
     )
-    assert galaxy_class1.draw_deflector()["gamma_pl"] == 2.15
-    assert 1.5 <= galaxy_class2.draw_deflector()["gamma_pl"] <= 2.5
-    assert 1.8 <= galaxy_class3.draw_deflector()["gamma_pl"] <= 2.3
+    assert galaxy_class1.draw_deflector().halo_properties == 2.15
+    assert 1.5 <= galaxy_class2.draw_deflector().halo_properties <= 2.5
+    assert 1.8 <= galaxy_class3.draw_deflector().halo_properties <= 2.3
     with pytest.raises(ValueError):
         EllipticalLensGalaxies(
-        red_galaxies4,
-        kwargs_cut=kwargs_deflector_cut,
-        kwargs_mass2light=kwargs_mass2light,
-        cosmo=cosmo,
-        sky_area=sky_area,
-        gamma_pl={"gamma_mi": 1.8, "gamma_ma": 2.3}
-    )
+            red_galaxies4,
+            kwargs_cut=kwargs_deflector_cut,
+            kwargs_mass2light=kwargs_mass2light,
+            cosmo=cosmo,
+            sky_area=sky_area,
+            gamma_pl={"gamma_mi": 1.8, "gamma_ma": 2.3},
+        )
     with pytest.raises(ValueError):
         EllipticalLensGalaxies(
-        red_galaxies5,
-        kwargs_cut=kwargs_deflector_cut,
-        kwargs_mass2light=kwargs_mass2light,
-        cosmo=cosmo,
-        sky_area=sky_area,
-        gamma_pl=[2.0, 0.16]
-    )
+            red_galaxies5,
+            kwargs_cut=kwargs_deflector_cut,
+            kwargs_mass2light=kwargs_mass2light,
+            cosmo=cosmo,
+            sky_area=sky_area,
+            gamma_pl=[2.0, 0.16],
+        )
 
 
 if __name__ == "__main__":

@@ -57,12 +57,16 @@ def test_deflector_number(cluster_deflectors_instance):
 def test_draw_deflector(cluster_deflectors_instance):
     cluster_pop = cluster_deflectors_instance
     deflector = cluster_pop.draw_deflector()
+    cluster = cluster_pop.draw_cluster(index=0)
+    members = cluster_pop.draw_members(cluster_id=cluster["cluster_id"])
     # test if the properties of the deflector are
     # as expected from the input catalog
-    assert (deflector["z"] > 0.2) and (deflector["z"] < 1.0)
-    assert (deflector["halo_mass"] > 1e12) and (deflector["halo_mass"] < 3e15)
-    assert (deflector["concentration"] > 1) and (deflector["concentration"] < 15)
-    assert (len(deflector["subhalos"]) >= 1) and (len(deflector["subhalos"]) < 100)
+    assert (deflector.redshift > 0.2) and (deflector.redshift < 1.0)
+    assert (deflector.halo_properties[0] > 1e12) and (
+        deflector.halo_properties[0] < 3e15
+    )
+    assert (deflector.halo_properties[1] > 1) and (deflector.halo_properties[1] < 15)
+    assert (len(members) >= 1) and (len(members) < 100)
 
 
 def test_missing_id(cluster_deflectors_input):
@@ -161,8 +165,9 @@ def test_with_centers(cluster_deflectors_input):
         cosmo=cosmo,
         sky_area=sky_area,
     )
-    deflector = cluster_pop.draw_deflector()
-    assert deflector["subhalos"]["center_x"][0] == 0.0
+    cluster = cluster_pop.draw_cluster(index=0)
+    members = cluster_pop.draw_members(cluster_id=cluster["cluster_id"])
+    assert members["center_x"][0] == 0.0
 
 
 def test_missing_magnitudes(cluster_deflectors_input):

@@ -22,20 +22,22 @@ def simulate_image(
 ):
     """Creates an image of a selected lens with noise.
 
-    :param lens_class: class object containing all information of the lensing system
-        (e.g., Lens())
+    :param lens_class: class object containing all information of the
+        lensing system (e.g., Lens())
     :param band: imaging band
     :param num_pix: number of pixels per axis
     :param add_noise: if True, add noise
     :param observatory: telescope type to be simulated
     :type observatory: str
-    :param kwargs_psf: (optional) specific PSF quantities to overwrite default options
-        ("psf_type", "kernel_point_source", "point_source_supersampling_factor")
+    :param kwargs_psf: (optional) specific PSF quantities to overwrite
+        default options ("psf_type", "kernel_point_source",
+        "point_source_supersampling_factor")
     :type kwargs_psf: dict
     :param kwargs: additional keyword arguments for the bands
     :type kwargs_numerics: dict
-    :param kwargs_numerics: options are "point_source_supersampling_factor",
-        "supersampling_factor", and more in lenstronomy.ImSim.Numerics.numerics class
+    :param kwargs_numerics: options are
+        "point_source_supersampling_factor", "supersampling_factor", and
+        more in lenstronomy.ImSim.Numerics.numerics class
     :type kwargs: dict
     :return: simulated image
     :rtype: 2d numpy array
@@ -83,8 +85,8 @@ def sharp_image(
     with_source=True,
     with_deflector=True,
 ):
-    """Creates an unconvolved image of a selected lens. Point source image is not
-    included in this function.
+    """Creates an unconvolved image of a selected lens. Point source image is
+    not included in this function.
 
     :param lens_class: Lens() object
     :param band: imaging band
@@ -134,8 +136,8 @@ def sharp_rgb_image(lens_class, rgb_band_list, mag_zero_point, delta_pix, num_pi
     """Creates an unconvolved rgb image of a selected lens.
 
     :param lens_class: Lens() object
-    :param rgb_band_list: imaging band list. Here, 'i', 'r', and 'g' band are consider
-        as r, g, and b respectively.
+    :param rgb_band_list: imaging band list. Here, 'i', 'r', and 'g'
+        band are consider as r, g, and b respectively.
     :param mag_zero_point: magnitude zero point in band
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
@@ -169,8 +171,8 @@ def sharp_rgb_image(lens_class, rgb_band_list, mag_zero_point, delta_pix, num_pi
 def rgb_image_from_image_list(image_list, stretch):
     """Creates a rgb image using list of images in r, g, and b.
 
-    :param image_list: images in r, g, and b band. Here, 'i', 'r', and 'g' band are
-        consider as r, g, and b respectively.
+    :param image_list: images in r, g, and b band. Here, 'i', 'r', and
+        'g' band are consider as r, g, and b respectively.
     :return: rgb image
     """
     image_rgb = make_lupton_rgb(
@@ -180,13 +182,13 @@ def rgb_image_from_image_list(image_list, stretch):
 
 
 def centered_coordinate_system(num_pix, transform_pix2angle):
-    """Returns dictionary for Coordinate Grid such that (0,0) is centered with given
-    input orientation coordinate transformation matrix.
+    """Returns dictionary for Coordinate Grid such that (0,0) is centered with
+    given input orientation coordinate transformation matrix.
 
     :param num_pix: number of pixels
     :type num_pix: int
-    :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
-        displacements
+    :param transform_pix2angle: transformation matrix (2x2) of pixels
+        into coordinate displacements
     :return: dict with ra_at_xy_0, dec_at_xy_0, transfrom_pix2angle
     """
     pix_center = (num_pix - 1) / 2
@@ -215,8 +217,8 @@ def image_data_class(
     :param mag_zero_point: magnitude zero point in band
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
-    :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
-        displacements
+    :param transform_pix2angle: transformation matrix (2x2) of pixels
+        into coordinate displacements
     :return: image data class
     """
 
@@ -240,18 +242,18 @@ def image_data_class(
 def point_source_coordinate_properties(
     lens_class, band, mag_zero_point, delta_pix, num_pix, transform_pix2angle
 ):
-    """Provides pixel coordinates for deflector and images. Currently, this function
-    only works for point source.
+    """Provides pixel coordinates for deflector and images. Currently, this
+    function only works for point source.
 
     :param lens_class: Lens() object
     :param band: imaging band
     :param mag_zero_point: magnitude zero point in band
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
-    :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
-        displacements
-    :return: Dictionary of deflector and image coordinate in pixel unit and other
-        coordinate properties.
+    :param transform_pix2angle: transformation matrix (2x2) of pixels
+        into coordinate displacements
+    :return: Dictionary of deflector and image coordinate in pixel unit
+        and other coordinate properties.
     """
 
     image_data = image_data_class(
@@ -274,8 +276,9 @@ def point_source_coordinate_properties(
         dec_image.append(dec_image_values)
         # image_magnitude = lens_class.point_source_magnitude(band=band, lensed=True)
         for image_ra, image_dec in zip(ra_image_values, dec_image_values):
-            image_pix_coordinate.append(np.array([image_data.map_coord2pix(image_ra,
-                                                                     image_dec)]))
+            image_pix_coordinate.append(
+                np.array([image_data.map_coord2pix(image_ra, image_dec)])
+            )
 
     data = {
         "deflector_pix": np.array(lens_pix_coordinate),
@@ -295,8 +298,8 @@ def point_source_image_without_variability(
     psf_kernel,
     transform_pix2angle,
 ):
-    """Creates lensed point source images without variability on the basis of given
-    information.
+    """Creates lensed point source images without variability on the basis of
+    given information.
 
     :param lens_class: Lens() object
     :param band: imaging band
@@ -304,8 +307,8 @@ def point_source_image_without_variability(
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
     :param psf_kernel: psf kernel for an image.
-    :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
-        displacements
+    :param transform_pix2angle: transformation matrix (2x2) of pixels
+        into coordinate displacements
     :return: point source images
     """
     kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band=band)
@@ -353,8 +356,8 @@ def point_source_image_at_time(
     transform_pix2angle,
     time,
 ):
-    """Creates lensed point source images with variability at a given time on the basis
-    of given information.
+    """Creates lensed point source images with variability at a given time on
+    the basis of given information.
 
     :param lens_class: Lens() object
     :param band: imaging band
@@ -362,8 +365,8 @@ def point_source_image_at_time(
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
     :param psf_kernel: psf kernel for the given exposure.
-    :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
-        displacements
+    :param transform_pix2angle: transformation matrix (2x2) of pixels
+        into coordinate displacements
     :param time: time is an image observation time [day].
     :return: point source images with variability
     """
@@ -392,7 +395,7 @@ def point_source_image_at_time(
         )
         variable_mag_list = np.concatenate(variable_mag)
         variable_amp = magnitude_to_amplitude(variable_mag_list, mag_zero_point)
-        
+
         rendering_class = PointSourceRendering(
             pixel_grid=data_class, supersampling_factor=1, psf=psf_class
         )
@@ -416,17 +419,18 @@ def point_source_image_with_variability(
     transform_pix2angle,
     t_obs,
 ):
-    """Creates lensed point source images with variability for series of time on the
-    basis of given information.
+    """Creates lensed point source images with variability for series of time
+    on the basis of given information.
 
     :param lens_class: Lens() object
     :param band: imaging band
     :param mag_zero_point: magnitude zero point for each exposure
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
-    :param psf_kernels: psf kernels in the sequence of exposures being simulated.
-    :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
-        displacements
+    :param psf_kernels: psf kernels in the sequence of exposures being
+        simulated.
+    :param transform_pix2angle: transformation matrix (2x2) of pixels
+        into coordinate displacements
     :param t_obs: array of image observation time [day].
     :return: array of point source images with variability
     """
@@ -458,14 +462,16 @@ def point_source_image_with_variability(
 def deflector_images_with_different_zeropoint(
     lens_class, band, mag_zero_point, delta_pix, num_pix
 ):
-    """Creates deflector images with different magnitude zero point. This function is
-    useful when one wants to simulate variable lens images. For this, we need to
-    simulate delctor images for different exposure (where we want to inject lenses) and
-    those exposure could have different magnitude zero point.
+    """Creates deflector images with different magnitude zero point. This
+    function is useful when one wants to simulate variable lens images. For
+    this, we need to simulate delctor images for different exposure (where we
+    want to inject lenses) and those exposure could have different magnitude
+    zero point.
 
     :param lens_class: Lens() object
     :param band: imaging band
-    :param mag_zero_point: list of magnitude zero point in band for sequence of exposure
+    :param mag_zero_point: list of magnitude zero point in band for
+        sequence of exposure
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
     :returns: list of deflector images with different zero point
@@ -523,24 +529,24 @@ def lens_image(
     with_source=True,
     with_deflector=True,
 ):
-    """Creates lens image on the basis of given information. It can simulate both static
-    lens image and variable lens image.
+    """Creates lens image on the basis of given information. It can simulate
+    both static lens image and variable lens image.
 
     :param lens_class: Lens() object
     :param band: imaging band
     :param mag_zero_point: magnitude zero point for the exposure
     :param num_pix: number of pixels per axis
     :param psf_kernels: psf kernel for the exposures being.
-    :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
-        displacements
-    :param exposure_time: exposure time for for the exposure. It could be single
-        exposure time or a exposure map.
-    :param t_obs: an observation time [day]. This is applicable only for variable
-        source. In case of point source, if we do not provide t_obs, considers no
-        variability in the lens.
+    :param transform_pix2angle: transformation matrix (2x2) of pixels
+        into coordinate displacements
+    :param exposure_time: exposure time for for the exposure. It could
+        be single exposure time or a exposure map.
+    :param t_obs: an observation time [day]. This is applicable only for
+        variable source. In case of point source, if we do not provide
+        t_obs, considers no variability in the lens.
     :param std_gaussian_noise: standard deviation for a gaussian noise
-    :param with_source: If True, simulates image with extended source in lens
-        configuration.
+    :param with_source: If True, simulates image with extended source in
+        lens configuration.
     :param with_deflector: If True, simulates image with deflector.
     :return: lens image
     """
@@ -602,8 +608,8 @@ def lens_image_series(
     with_source=True,
     with_deflector=True,
 ):
-    """Creates lens image on the basis of given information. This function is designed
-    to simulate time series images of a lens.
+    """Creates lens image on the basis of given information. This function is
+    designed to simulate time series images of a lens.
 
     :param lens_class: Lens() object
     :param band: imaging band (or list of bands).

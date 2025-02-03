@@ -2,10 +2,10 @@ import numpy as np
 
 
 def get_errors_Poisson(app_mag, zeropoint, exptime):
-    """This function provides rough photometric errors using the photometric magnitudes,
-    assuming only the statistical error due to Poisson noise in the counts. Since, the
-    photometric errors are not known in the LSST mock catalogs, these are just very
-    rough estimates.
+    """This function provides rough photometric errors using the photometric
+    magnitudes, assuming only the statistical error due to Poisson noise in the
+    counts. Since, the photometric errors are not known in the LSST mock
+    catalogs, these are just very rough estimates.
 
     It requires the apparent magnitude, photometric zeropoint and the exposure time.
 
