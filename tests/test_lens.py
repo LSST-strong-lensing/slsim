@@ -59,9 +59,11 @@ class TestLens(object):
                 # the testing but at least code go through this warning message.
                 cosmo=cosmo,
             )
-            second_bright_image_cut={"band": "i", "second_bright_mag_max": 30}
-            if gg_lens.validity_test(second_bright_image_cut=second_bright_image_cut,
-                                     mag_arc_limit=mag_arc_limit):
+            second_bright_image_cut = {"band": "i", "second_bright_mag_max": 30}
+            if gg_lens.validity_test(
+                second_bright_image_cut=second_bright_image_cut,
+                mag_arc_limit=mag_arc_limit,
+            ):
                 self.gg_lens = gg_lens
                 break
 
@@ -144,18 +146,19 @@ class TestLens(object):
     def test_deflector_light_model_lenstronomy(self):
         kwargs_lens_light = self.gg_lens.deflector_light_model_lenstronomy(band="g")
         assert len(kwargs_lens_light) >= 1
-    
+
     def test_extended_source_magnification_for_individual_images(self):
         results = self.gg_lens.extended_source_magnification_for_individual_images()
         assert len(results[0]) > 2
 
     def test_extended_source_magnitude_for_each_images(self):
-        result1 = self.gg_lens.extended_source_magnitude_for_each_images(band="i",
-                                         lensed=True)
-        result2 = self.gg_lens.extended_source_magnitude_for_each_images(band="i",
-                                         lensed=False)
-        result3= self.gg_lens.extended_source_magnitude(band="i",
-                                         lensed=False)
+        result1 = self.gg_lens.extended_source_magnitude_for_each_images(
+            band="i", lensed=True
+        )
+        result2 = self.gg_lens.extended_source_magnitude_for_each_images(
+            band="i", lensed=False
+        )
+        result3 = self.gg_lens.extended_source_magnitude(band="i", lensed=False)
         assert len(result1[0]) > 2
         assert result2 == result3
 
