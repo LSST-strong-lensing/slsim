@@ -234,8 +234,11 @@ class Lens(LensedSystemBase):
         return self._point_image_positions
 
     def validity_test(
-        self, min_image_separation=0, max_image_separation=10, mag_arc_limit=None, 
-        second_bright_image_cut=None
+        self,
+        min_image_separation=0,
+        max_image_separation=10,
+        mag_arc_limit=None,
+        second_bright_image_cut=None,
     ):
         """Check whether multiple lensing configuration matches selection and
         plausibility criteria.
@@ -246,11 +249,12 @@ class Lens(LensedSystemBase):
             magnitude limits of integrated lensed arc
         :type mag_arc_limit: dict with key of bands and values of
             magnitude limits
-        :param second_bright_image_cut: Dictionary containing maximum magnitude of the 
-         second brightest image and corresponding band. If provided, selects lenses 
-         where the second brightest image has a magnitude less than or equal to 
-         provided magnitude. eg: second_bright_image_cut = {"band": "i", 
-         "second_bright_mag_max": 23}
+        :param second_bright_image_cut: Dictionary containing maximum
+            magnitude of the second brightest image and corresponding
+            band. If provided, selects lenses where the second brightest
+            image has a magnitude less than or equal to provided
+            magnitude. eg: second_bright_image_cut = {"band": "i",
+            "second_bright_mag_max": 23}
         :return: A boolean or dict of boolean.
         """
         validity_results = {}
@@ -286,11 +290,12 @@ class Lens(LensedSystemBase):
             magnitude limits of integrated lensed arc
         :type mag_arc_limit: dict with key of bands and values of
             magnitude limits
-        :param second_bright_image_cut: Dictionary containing maximum magnitude of the 
-         second brightest image and corresponding band. If provided, selects lenses 
-         where the second brightest image has a magnitude less than or equal to 
-         provided magnitude. eg: second_bright_image_cut = {"band": "i", 
-         "second_bright_mag_max": 23}
+        :param second_bright_image_cut: Dictionary containing maximum
+            magnitude of the second brightest image and corresponding
+            band. If provided, selects lenses where the second brightest
+            image has a magnitude less than or equal to provided
+            magnitude. eg: second_bright_image_cut = {"band": "i",
+            "second_bright_mag_max": 23}
         :param source_index: index of a source in source list.
         :return: boolean
         """
@@ -363,16 +368,18 @@ class Lens(LensedSystemBase):
                 return False
         # TODO make similar criteria for point source magnitudes
         # Criteria 7: (optional)
-        # computes the magnitude of each image and if the second brightest image has 
-        # the magnitude less or equal to "second_bright_mag_max" provided in the dict 
+        # computes the magnitude of each image and if the second brightest image has
+        # the magnitude less or equal to "second_bright_mag_max" provided in the dict
         # second_bright_image_cut.
         if second_bright_image_cut is not None:
             if self._source_type == "extended":
                 image_magnitude_list = self.extended_source_magnitude_for_each_images(
-                    band=second_bright_image_cut["band"], lensed=True)
+                    band=second_bright_image_cut["band"], lensed=True
+                )
             elif self._source_type in ["point_plus_extended", "point_source"]:
                 image_magnitude_list = self.point_source_magnitude(
-                    band=second_bright_image_cut["band"], lensed=True)
+                    band=second_bright_image_cut["band"], lensed=True
+                )
             second_bright_mag = np.sort(image_magnitude_list[0])[1]
             if second_bright_mag > second_bright_image_cut["second_bright_mag_max"]:
                 return False
@@ -656,15 +663,16 @@ class Lens(LensedSystemBase):
                     magnified_mag_list.append(source_mag_unlensed - magnif_log[i])
                 return np.array(magnified_mag_list)
         return source.point_source_magnitude(band)
-    
+
     def extended_source_magnitude_for_each_images(self, band, lensed=False):
-        """extended source magnitudes, either unlensed (single value) or lensed
+        """Extended source magnitudes, either unlensed (single value) or lensed
         (array) with macro-model magnifications. This function provided
         magnitudes of all the sources.
 
         :param band: imaging band
         :type band: string
-        :param lensed: if True, returns the lensed magnified magnitude of each images.
+        :param lensed: if True, returns the lensed magnified magnitude
+            of each images.
         :type lensed: bool
         :return: list of extended source magnitudes.
         """
@@ -672,8 +680,10 @@ class Lens(LensedSystemBase):
         magnitude_list = []
         for source in self.source:
             magnitude_list.append(
-                self._extended_source_magnitude_for_each_images(band, source,
-                                                                 lensed=lensed))
+                self._extended_source_magnitude_for_each_images(
+                    band, source, lensed=lensed
+                )
+            )
         return magnitude_list
 
     def extended_source_magnitude(self, band, lensed=False):
@@ -697,15 +707,16 @@ class Lens(LensedSystemBase):
                 self._extended_source_magnitude(band, source, index, lensed=lensed)
             )
         return magnitude_list
-    
+
     def _extended_source_magnitude_for_each_images(self, band, source, lensed=False):
-        """extended source magnitude, either unlensed (single value) or lensed
+        """Extended source magnitude, either unlensed (single value) or lensed
         (array) with macro-model magnifications. This function does operation
         only for the single source.
 
         :param band: imaging band
         :type band: string
-        :param lensed: if True, returns the lensed magnified magnitude of each image.
+        :param lensed: if True, returns the lensed magnified magnitude
+            of each image.
         :type lensed: bool
         :return: extended source magnitude of a single source.
         """
@@ -722,8 +733,8 @@ class Lens(LensedSystemBase):
     def _extended_source_magnitude(self, band, source, source_index, lensed=False):
         """Unlensed apparent magnitude of the extended source for a given band
         (assumes that size is the same for different bands). This function
-        gives magnitude of a single source. Additionally, this function uses total 
-        magnification to provide a lensed source magnitude.
+        gives magnitude of a single source. Additionally, this function uses
+        total magnification to provide a lensed source magnitude.
 
         :param band: imaging band
         :type band: string
@@ -762,10 +773,10 @@ class Lens(LensedSystemBase):
 
         :param source: Source class instance. The redshift of this
             source is used in the LensModel.
-        :param extended: Boolean. If True, computes the magnification for extended source
-         and ignores point source case. 
-        :return: signed magnification of a point source (extended source) in same order as
-            image positions
+        :param extended: Boolean. If True, computes the magnification
+            for extended source and ignores point source case.
+        :return: signed magnification of a point source (extended
+            source) in same order as image positions
         """
         lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
         lensModel = LensModel(
@@ -799,10 +810,11 @@ class Lens(LensedSystemBase):
                     self._extended_single_source_magnification(source, index)
                 )
         return self._extended_source_magnification_list
-    
+
     def extended_source_magnification_for_individual_images(self):
-        """Macro-model magnification of extended sources. This function calculates
-        magnification for each extended sources at each image position.
+        """Macro-model magnification of extended sources. This function
+        calculates magnification for each extended sources at each image
+        position.
 
         :return: list of signed magnification of point sources in same
             order as image positions.
