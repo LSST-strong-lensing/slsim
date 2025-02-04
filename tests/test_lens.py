@@ -152,12 +152,13 @@ class TestLens(object):
         assert len(results[0]) >= 2
 
     def test_extended_source_magnitude_for_each_images(self):
-        result1 = self.gg_lens.extended_source_magnitude_for_each_image(band="i",
-                                         lensed=True)
-        result2 = self.gg_lens.extended_source_magnitude_for_each_image(band="i",
-                                         lensed=False)
-        result3= self.gg_lens.extended_source_magnitude(band="i",
-                                         lensed=False)
+        result1 = self.gg_lens.extended_source_magnitude_for_each_image(
+            band="i", lensed=True
+        )
+        result2 = self.gg_lens.extended_source_magnitude_for_each_image(
+            band="i", lensed=False
+        )
+        result3 = self.gg_lens.extended_source_magnitude(band="i", lensed=False)
         assert len(result1[0]) >= 2
         assert result2 == result3
 
@@ -308,7 +309,9 @@ def pes_lens_instance():
             cosmo=cosmo,
         )
         second_brightest_image_cut = {"i": 30}
-        if pes_lens.validity_test(second_brightest_image_cut=second_brightest_image_cut):
+        if pes_lens.validity_test(
+            second_brightest_image_cut=second_brightest_image_cut
+        ):
             pes_lens = pes_lens
             break
     return pes_lens
