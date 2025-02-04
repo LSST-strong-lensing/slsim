@@ -145,21 +145,17 @@ def find_massive_ellipticals(
 
     for row in DP0_table:
         band_prefix = band_mapping.get(row["obj_refband"])
-        if band_prefix:
-            fracDev = (
-                row[f"{band_prefix}_cModelFlux"] - row[f"{band_prefix}_bdFluxD"]
-            ) / (row[f"{band_prefix}_bdFluxB"] - row[f"{band_prefix}_bdFluxD"])
-            fracDev_list.append(fracDev)
-        else:
-            fracDev_list.append(None)  # Handle invalid bands
+
+        fracDev = (row[f"{band_prefix}_cModelFlux"] - row[f"{band_prefix}_bdFluxD"]) / (
+            row[f"{band_prefix}_bdFluxB"] - row[f"{band_prefix}_bdFluxD"]
+        )
+        fracDev_list.append(fracDev)
 
     # Select ellipticals based on fracDev threshold
     id_ellipticals = np.where(
         (np.array(fracDev_list) > fracDev_limit) & (np.array(fracDev_list) <= 1.2)
     )[0]
     DP0_ellipticals = DP0_table[id_ellipticals]
-
-    print(len(DP0_ellipticals), " ellipticals")
 
     bands = ["u", "g", "r", "i", "z"]
     magnitudes, mag_errors = {}, {}
