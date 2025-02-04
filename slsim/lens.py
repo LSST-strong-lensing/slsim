@@ -374,8 +374,10 @@ class Lens(LensedSystemBase):
         if second_brightest_image_cut is not None:
             for band_max, mag_max in second_brightest_image_cut.items():
                 if self._source_type == "extended":
-                    image_magnitude_list = self.extended_source_magnitude_for_each_image(
-                        band=band_max, lensed=True
+                    image_magnitude_list = (
+                        self.extended_source_magnitude_for_each_image(
+                            band=band_max, lensed=True
+                        )
                     )
                 elif self._source_type in ["point_plus_extended", "point_source"]:
                     image_magnitude_list = self.point_source_magnitude(
@@ -668,10 +670,10 @@ class Lens(LensedSystemBase):
     def extended_source_magnitude_for_each_image(self, band, lensed=False):
         """Extended source magnitudes, either unlensed (single value) or lensed
         (array) with macro-model magnifications. This function provided
-        magnitudes of all the sources. This function assumes that all the light of an 
-        extended source is concentrated at its center and magnifies it as a point source
-        multiple times. For a more accurate lensed extended source magnitude, please see 
-        the extended_source_magnitude() function.
+        magnitudes of all the sources. This function assumes that all the light
+        of an extended source is concentrated at its center and magnifies it as
+        a point source multiple times. For a more accurate lensed extended
+        source magnitude, please see the extended_source_magnitude() function.
 
         :param band: imaging band
         :type band: string
@@ -773,8 +775,8 @@ class Lens(LensedSystemBase):
 
     def _point_source_magnification(self, source, extended=False):
         """Macro-model magnification of a point source. This is for a single
-        source. The function also works for extended source. For this, It uses center of
-        the extended source to calculate lensing magnification.
+        source. The function also works for extended source. For this, It uses
+        center of the extended source to calculate lensing magnification.
 
         :param source: Source class instance. The redshift of this
             source is used in the LensModel.
