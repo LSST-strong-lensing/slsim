@@ -173,7 +173,9 @@ class Galaxies(SourcePopBase):
             else:
                 raise ValueError("ellipticity is missing in galaxy_list columns.")
             if galaxy["n_sersic"] == -1:
-                galaxy["n_sersic"] = 1  # TODO make a better estimate with scatter
+                # the meadian value of sersic index for star forming galaxies form 
+                # Shibuya et al. (2015): https://arxiv.org/abs/1503.07481
+                galaxy["n_sersic"] = 1.5  # TODO make a better estimate with scatter
         elif self.light_profile == "double_sersic":
             if galaxy["e0_1"] == -1 or galaxy["e0_2"] == -1:
                 if "ellipticity0" in galaxy.colnames:

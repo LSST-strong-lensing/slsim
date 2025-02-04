@@ -238,7 +238,7 @@ class Lens(LensedSystemBase):
         min_image_separation=0,
         max_image_separation=10,
         mag_arc_limit=None,
-        second_bright_image_cut=None,
+        second_brightest_image_cut=None,
     ):
         """Check whether multiple lensing configuration matches selection and
         plausibility criteria.
@@ -249,7 +249,7 @@ class Lens(LensedSystemBase):
             magnitude limits of integrated lensed arc
         :type mag_arc_limit: dict with key of bands and values of
             magnitude limits
-        :param second_bright_image_cut: Dictionary containing maximum
+        :param second_brightest_image_cut: Dictionary containing maximum
             magnitude of the second brightest image and corresponding
             band. If provided, selects lenses where the second brightest
             image has a magnitude less than or equal to provided
@@ -264,7 +264,7 @@ class Lens(LensedSystemBase):
                 min_image_separation=min_image_separation,
                 max_image_separation=max_image_separation,
                 mag_arc_limit=mag_arc_limit,
-                second_bright_image_cut=second_bright_image_cut,
+                second_brightest_image_cut=second_brightest_image_cut,
                 source_index=index,
             )
         if len(validity_results) == 1:
@@ -278,7 +278,7 @@ class Lens(LensedSystemBase):
         min_image_separation=0,
         max_image_separation=10,
         mag_arc_limit=None,
-        second_bright_image_cut=None,
+        second_brightest_image_cut=None,
         source_index=None,
     ):
         """Check whether a single lensing configuration matches selection and
@@ -295,7 +295,7 @@ class Lens(LensedSystemBase):
             band. If provided, selects lenses where the second brightest
             image has a magnitude less than or equal to provided
             magnitude. eg: second_bright_image_cut = {"band": "i",
-            "second_bright_mag_max": 23}
+            "mag_max": 23}
         :param source_index: index of a source in source list.
         :return: boolean
         """
@@ -371,17 +371,17 @@ class Lens(LensedSystemBase):
         # computes the magnitude of each image and if the second brightest image has
         # the magnitude less or equal to "second_bright_mag_max" provided in the dict
         # second_bright_image_cut.
-        if second_bright_image_cut is not None:
+        if second_brightest_image_cut is not None:
             if self._source_type == "extended":
                 image_magnitude_list = self.extended_source_magnitude_for_each_images(
-                    band=second_bright_image_cut["band"], lensed=True
+                    band=second_brightest_image_cut["band"], lensed=True
                 )
             elif self._source_type in ["point_plus_extended", "point_source"]:
                 image_magnitude_list = self.point_source_magnitude(
-                    band=second_bright_image_cut["band"], lensed=True
+                    band=second_brightest_image_cut["band"], lensed=True
                 )
-            second_bright_mag = np.sort(image_magnitude_list[0])[1]
-            if second_bright_mag > second_bright_image_cut["second_bright_mag_max"]:
+            second_brightest_mag = np.sort(image_magnitude_list[0])[1]
+            if second_brightest_mag > second_brightest_image_cut["mag_max"]:
                 return False
         return True
         # TODO: test for signal-to-noise ratio in surface brightness
@@ -664,10 +664,13 @@ class Lens(LensedSystemBase):
                 return np.array(magnified_mag_list)
         return source.point_source_magnitude(band)
 
-    def extended_source_magnitude_for_each_images(self, band, lensed=False):
+    def extended_source_magnitude_for_each_image(self, band, lensed=False):
         """Extended source magnitudes, either unlensed (single value) or lensed
         (array) with macro-model magnifications. This function provided
-        magnitudes of all the sources.
+        magnitudes of all the sources. This function assumes that all the light of an 
+        extended source is concentrated at its center and magnifies it as a point source
+        multiple times. For a more accurate lensed extended source magnitude, please see 
+        the extended_source_magnitude() function.
 
         :param band: imaging band
         :type band: string
@@ -680,7 +683,7 @@ class Lens(LensedSystemBase):
         magnitude_list = []
         for source in self.source:
             magnitude_list.append(
-                self._extended_source_magnitude_for_each_images(
+                self._extended_source_magnitude_for_each_image(
                     band, source, lensed=lensed
                 )
             )
@@ -708,7 +711,7 @@ class Lens(LensedSystemBase):
             )
         return magnitude_list
 
-    def _extended_source_magnitude_for_each_images(self, band, source, lensed=False):
+    def _extended_source_magnitude_for_each_image(self, band, source, lensed=False):
         """Extended source magnitude, either unlensed (single value) or lensed
         (array) with macro-model magnifications. This function does operation
         only for the single source.
@@ -769,7 +772,8 @@ class Lens(LensedSystemBase):
 
     def _point_source_magnification(self, source, extended=False):
         """Macro-model magnification of a point source. This is for a single
-        source. The function also works for extended source.
+        source. The function also works for extended source. For this, It uses center of
+        the extended source to calculate lensing magnification.
 
         :param source: Source class instance. The redshift of this
             source is used in the LensModel.
@@ -811,7 +815,7 @@ class Lens(LensedSystemBase):
                 )
         return self._extended_source_magnification_list
 
-    def extended_source_magnification_for_individual_images(self):
+    def extended_source_magnification_for_individual_image(self):
         """Macro-model magnification of extended sources. This function
         calculates magnification for each extended sources at each image
         position.
