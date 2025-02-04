@@ -87,9 +87,7 @@ class LensPop(LensedPopulationBase):
                 test_area=test_area,
                 los_class=_los,
             )
-            if gg_lens.validity_test(
-                second_bright_image_cut=second_bright_image_cut, **kwargs_lens_cut
-            ):
+            if gg_lens.validity_test(**kwargs_lens_cut):
                 return gg_lens
 
     @property
@@ -202,10 +200,7 @@ class LensPop(LensedPopulationBase):
                         los_class=los_class,
                     )
                     # Check the validity of the lens system
-                    if lens_class.validity_test(
-                        second_bright_image_cut=second_bright_image_cut,
-                        **kwargs_lens_cuts
-                    ):
+                    if lens_class.validity_test(**kwargs_lens_cuts):
                         valid_sources.append(_source)
                         # If multi_source is False, stop after finding the first valid source
                         if not multi_source:

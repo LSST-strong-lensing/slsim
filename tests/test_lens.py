@@ -59,9 +59,9 @@ class TestLens(object):
                 # the testing but at least code go through this warning message.
                 cosmo=cosmo,
             )
-            second_bright_image_cut = {"band": "i", "second_bright_mag_max": 30}
+            second_brightest_image_cut = {"i": 30}
             if gg_lens.validity_test(
-                second_bright_image_cut=second_bright_image_cut,
+                second_brightest_image_cut=second_brightest_image_cut,
                 mag_arc_limit=mag_arc_limit,
             ):
                 self.gg_lens = gg_lens
@@ -148,13 +148,13 @@ class TestLens(object):
         assert len(kwargs_lens_light) >= 1
 
     def test_extended_source_magnification_for_individual_images(self):
-        results = self.gg_lens.extended_source_magnification_for_individual_images()
+        results = self.gg_lens.extended_source_magnification_for_individual_image()
         assert len(results[0]) >= 2
 
     def test_extended_source_magnitude_for_each_images(self):
-        result1 = self.gg_lens.extended_source_magnitude_for_each_images(band="i",
+        result1 = self.gg_lens.extended_source_magnitude_for_each_image(band="i",
                                          lensed=True)
-        result2 = self.gg_lens.extended_source_magnitude_for_each_images(band="i",
+        result2 = self.gg_lens.extended_source_magnitude_for_each_image(band="i",
                                          lensed=False)
         result3= self.gg_lens.extended_source_magnitude(band="i",
                                          lensed=False)
@@ -307,8 +307,8 @@ def pes_lens_instance():
             deflector_class=deflector4,
             cosmo=cosmo,
         )
-        second_bright_image_cut={"band": "i", "second_bright_mag_max": 30}
-        if pes_lens.validity_test(second_bright_image_cut=second_bright_image_cut):
+        second_brightest_image_cut = {"i": 30}
+        if pes_lens.validity_test(second_brightest_image_cut=second_brightest_image_cut):
             pes_lens = pes_lens
             break
     return pes_lens

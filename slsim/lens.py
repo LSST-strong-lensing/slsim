@@ -372,17 +372,18 @@ class Lens(LensedSystemBase):
         # the magnitude less or equal to "second_bright_mag_max" provided in the dict
         # second_bright_image_cut.
         if second_brightest_image_cut is not None:
-            if self._source_type == "extended":
-                image_magnitude_list = self.extended_source_magnitude_for_each_images(
-                    band=second_brightest_image_cut["band"], lensed=True
-                )
-            elif self._source_type in ["point_plus_extended", "point_source"]:
-                image_magnitude_list = self.point_source_magnitude(
-                    band=second_brightest_image_cut["band"], lensed=True
-                )
-            second_brightest_mag = np.sort(image_magnitude_list[0])[1]
-            if second_brightest_mag > second_brightest_image_cut["mag_max"]:
-                return False
+            for band_max, mag_max in second_brightest_image_cut.items():
+                if self._source_type == "extended":
+                    image_magnitude_list = self.extended_source_magnitude_for_each_image(
+                        band=band_max, lensed=True
+                    )
+                elif self._source_type in ["point_plus_extended", "point_source"]:
+                    image_magnitude_list = self.point_source_magnitude(
+                        band=band_max, lensed=True
+                    )
+                second_brightest_mag = np.sort(image_magnitude_list[0])[1]
+                if second_brightest_mag > mag_max:
+                    return False
         return True
         # TODO: test for signal-to-noise ratio in surface brightness
 
