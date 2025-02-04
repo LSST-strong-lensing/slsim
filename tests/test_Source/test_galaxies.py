@@ -309,7 +309,7 @@ class TestGalaxies(object):
         galaxy_3 = self.galaxies5.draw_source(z_max=0.4)
         assert isinstance(galaxy, object)
         assert len(galaxy.source_dict) > 0
-        assert galaxy_1.source_dict["n_sersic"] == 1
+        assert galaxy_1.source_dict["n_sersic"] == 1.5
         assert galaxy_2.redshift < 1 + 0.002
         with pytest.raises(ValueError):
             self.galaxies5.draw_source()
