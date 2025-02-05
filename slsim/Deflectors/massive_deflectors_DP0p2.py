@@ -8,15 +8,16 @@ from slsim.Util.k_correction import kcorr_sdss
 
 
 def get_galaxy_parameters_from_moments(xx, xy, yy):
-    """Caculate the parameters for a galaxy using the HSM moments.
+    """Calculate the parameters for a galaxy using the HSM moments.
 
-    params:
-    -- xx : float
-            xx component of the HSM moments in the reference band
-    -- xy : float
-            xy component of the HSM moments in the reference band
-    -- yy : float
-            yy component of the HSM moments in the reference band
+    : param xx : xx component of the Hirata-Seljak-Mandelbaum (HSM) moments in the reference band
+    : type xx :  float
+
+    : param xy : xy component of the HSM moments in the reference band
+    : type xy : float
+
+    : param yy : yy component of the HSM moments in the reference band
+    : type yy : float
 
     returns: tuple
             (position angle, effective radius, axis ratio, and the ellipticity)
@@ -49,15 +50,19 @@ def get_galaxy_parameters_from_moments(xx, xy, yy):
     return theta, r_eff, q, ellipticity
 
 
-def compute_magnitude(flux, flux_err):
+def compute_magnitude(flux, flux_err, zeropoint=31.4):
     """Convert LSST flux to magnitude and compute errors.
 
     params:
 
-    -- flux: float or array-like
-         flux from DP0.2 catalogs
-    -- flux_err: float or array-like
-         flux error
+    :param flux : from DP0.2 catalogs
+    type flux: float or array-like
+
+    :param flux_err : float or array-like
+    type flux_err : flux error
+
+    :param zeropoint : zeropoint of the AB magnitude system
+    :type zeropoint : float
 
     Returns:
     -------
@@ -67,44 +72,53 @@ def compute_magnitude(flux, flux_err):
         - magnitude_error : float or array-like
             The propagated uncertainty in the magnitude.
     """
-    magnitude = -2.50 * np.log10(flux) + 31.4
+    magnitude = -2.50 * np.log10(flux) + zeropoint
     mag_error = (2.5 / np.log(10)) * (flux_err / flux)
     return magnitude, mag_error
 
 
 def find_massive_ellipticals(
-    DP0_table, fracDev_limit=0.8, cosmo=FlatLambdaCDM(H0=72, Om0=0.26), parallel=False
+    DP0_table,
+    fracDev_limit=0.8,
+    magnitude_cut_massive=-22,
+    pixel_scale=0.2,
+    cosmo=FlatLambdaCDM(H0=72, Om0=0.26),
+    parallel=False,
 ):
     """This function identifies potential lensing galaxies (deflectors) from
-    the LSST DP0.2 data or any other catalog, based on the morphology, and
-    provides their lens model parameters using the light-to-mass function in
-    SLSim.
+    the LSST DP0.2 object catalogs or any other catalog, based on the
+    morphology, and provides their lens model parameters using the light-to-
+    mass function in SLSim.
 
-    params:
-
-    -- DP0_table: astropy table
-         the foreground galaxy catalog extracted from DP0.2 Object catalog
+    : param DP0_table: the foreground galaxy catalog extracted from DP0.2 Object catalog
          having the g, r, i, z, y bands cModel, deVaucouleur, and exponential fluxes and errors,
          the true/ or photometric redshift,
          redshift, gmag, rmag, imag, zmag, ymag, err-g, err-r, err-i, err-z, err-y
          Please check the query in 'extract_catalogs_DP0.py' to extract the required parameters
          from DP0.2 Object Catalogs
          NOTE: the input catalog should have column names, as returned from DP0.2 Object catalogs'
+    : type DP0_table: astropy table
 
-    -- fracDev_limit: float
-         the fracDev limit above which a galaxy is considered to be an elliptical galaxy
-         (default is 0.8)
+    : param  fracDev_limit: the fracDev limit above which a galaxy is considered to be an elliptical galaxy
+            (default is 0.8)
+    : type fracDev_limit: float
 
-    -- cosmo: astropy.cosmology
-         the cosmology model used
+    : param magnitude_cut_massive: absolute magnitude cut for selecting massive (luminous) galaxies
+    : type magnitude_cut_massive: float
 
-    -- parallel: will be set to True only if you are running the code in parallel
+    : param pixel_scale: pixel scale for the LSST
+    : type pixel_scale: float
+
+    : param cosmo: the cosmology model used
+    : type cosmo: astropy.cosmology
+
+    : param parallel: will be set to True only if you are running the code in parallel
          default is False
 
-    Returns: astropy table
-    -- An output catalog (astropy table) of all the **massive ellipticals** selected from the input catalog
+    Returns: An output catalog (astropy table) of all the **massive ellipticals** selected from the input catalog
             having the same columns as in the input catalog, with additional columns added for
             velocity dispersion, position angle, axis ratio, half light radius (in arcsec), ellipticity.
+    : type : astropy table
     """
 
     id_valid = np.where(
@@ -140,7 +154,7 @@ def find_massive_ellipticals(
         "y": "obj_y",
     }
 
-    # Initialize a list to store fracDev values
+    # Initialize a list to store fractional de Vaucouleurs profile contribution (fracDev) values
     fracDev_list = []
 
     for row in DP0_table:
@@ -182,6 +196,7 @@ def find_massive_ellipticals(
     k_correction_coefficients = kcorr_sdss(sdss_mags, redshift, band_shift=0.0)
 
     # Calculate the r-band absolute magnitude of the ellipticals
+    # the luminosity_distance is in 'kpc';
     Mag_r_sdss = (
         sdss_mags[2]
         - k_correction_coefficients[:, 2]
@@ -191,7 +206,7 @@ def find_massive_ellipticals(
     # set a cut on absolute magnitude to choose highly luminous/ massive ellipticals
     # this cut is chosen based on luminosity vs absolute magnitude for galaxies
     # in the cosmo DC2 catalog
-    id_massive = np.where(Mag_r_sdss < -22)[0]
+    id_massive = np.where(Mag_r_sdss < magnitude_cut_massive)[0]
     DP0_massive_ellipticals = DP0_ellipticals[id_massive]
 
     magnitude_array = np.array([magnitudes[band][id_massive] for band in bands])
@@ -234,12 +249,12 @@ def find_massive_ellipticals(
 
         theta, r_eff, q, ellipticity = get_galaxy_parameters_from_moments(xx, xy, yy)
         theta_all.append(theta)
-        r_eff_all.append(r_eff)
+        r_eff_all.append(r_eff)  # in pixels
         q_all.append(q)
         ellipticity_all.append(ellipticity)
 
-    # convert the effective radius to arcsec
-    r_eff_all = np.array(r_eff_all) * 0.2
+    # convert the effective radius from pixels to arcsec
+    r_eff_all = np.array(r_eff_all) * pixel_scale
 
     # bring the position angle to convention 'East of north'
     theta_all = (np.array(theta_all) + 180) % 360

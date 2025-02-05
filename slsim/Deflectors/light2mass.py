@@ -44,7 +44,6 @@ def Lsigma_relation_spectroscopic(mgSDSS, mrSDSS, Dlum, redshift):
     MabsB = mgSDSS + 0.155 + 0.370 * (mgSDSS - mrSDSS)
 
     # Convert the apparent B-band magnitude to the absolute B-band magnitude using the redshift and cosmology defined
-    # Note that the 25 here comes since Dlum is in Mpc
     MabsB = MabsB - 5.0 * np.log10(Dlum / 10)
     """Now using the data from DEEP2 and COMBO-17 surveys, Bell et 2004 found
     that the B-band luminosity function evolves such that characteristic

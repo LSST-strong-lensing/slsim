@@ -1102,29 +1102,19 @@ def fetch_DP0_galaxies_from_Rubin_Science_Platform(
     catalog within a specified region of the sky, defined by right ascension
     (RA) and declination (Dec) ranges.
 
-    Parameters:
-    -----------
-    service : str
-        The TAP (Table Access Protocol) service endpoint used for querying
+    : param service : str, the TAP (Table Access Protocol) service endpoint used for querying
         the DP0.2 Object catalog.
 
-    ra_min : float
-        The minimum right ascension (RA) of the required region, in degrees.
+    : param ra_min : float, the minimum right ascension (RA) of the required region, in degrees.
 
-    ra_max : float
-        The maximum right ascension (RA) of the required region, in degrees.
+    : param ra_max : float, the maximum right ascension (RA) of the required region, in degrees.
 
-    dec_min : float
-        The minimum declination (Dec) of the required region, in degrees.
+    : param dec_min : float, the minimum declination (Dec) of the required region, in degrees.
 
-    dec_max : float
-        The maximum declination (Dec) of the required region, in degrees.
+    : param dec_max : float, the maximum declination (Dec) of the required region, in degrees.
 
-    Returns:
-    --------
-    results : pandas.dataframe
-        A pandas daataframe containing the results of the ADQL query, including
-        the extracted galaxy data within the specified sky region.
+    : returns: astropy.table.table.Table, A pandas daataframe containing the results of the ADQL query,
+        including the extracted galaxy data within the specified sky region.
     """
 
     assert service is not None
@@ -1267,7 +1257,7 @@ def fetch_DP0_galaxies_from_Rubin_Science_Platform(
 
     # Fetch and return results if the job is completed
     if job.phase == "COMPLETED":
-        results = job.fetch_result().to_table().to_pandas()
+        results = job.fetch_result().to_table()
         print(f"Number of results: {len(results)}")
         return results
     else:
