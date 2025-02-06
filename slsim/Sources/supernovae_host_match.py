@@ -66,9 +66,9 @@ class SupernovaeHostMatch:
         # Specify appropriate redshift range based on galaxy catalog sky area (1 deg^2 ~ 1e6
         # galaxies).
         if len(self.galaxy_catalog) > 1e6:
-            range = 0.05/2
+            range = 0.05 / 2
         else:
-            range = 0.1/2
+            range = 0.1 / 2
 
         # Iterate through the redshifts in the SNe catalog.
         for redshift in self.supernovae_catalog:
