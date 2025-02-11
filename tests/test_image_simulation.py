@@ -30,7 +30,6 @@ import pytest
 from astropy.table import Table
 
 
-
 class TestImageSimulation(object):
     def setup_method(self):
         # path = os.path.dirname(slsim.__file__)
@@ -68,7 +67,6 @@ class TestImageSimulation(object):
                 self.gg_lens = gg_lens
                 break
 
-
     def test_simulate_image(self):
         kwargs_psf = {
             "point_source_supersampling_factor": 5,
@@ -92,7 +90,7 @@ class TestImageSimulation(object):
             kwargs_psf=kwargs_psf,
             kwargs_numerics=kwargs_numerics,
         )
-        
+
         assert len(image) == 100
 
     def test_sharp_image(self):
@@ -104,7 +102,7 @@ class TestImageSimulation(object):
             num_pix=100,
             with_deflector=True,
         )
-        
+
         assert len(image) == 100
 
     def test_sharp_rgb_image(self):
@@ -115,7 +113,7 @@ class TestImageSimulation(object):
             delta_pix=0.05,
             num_pix=100,
         )
-        
+
         assert len(image) == 100
 
     def test_rgb_image_from_image_list(self):
@@ -145,7 +143,7 @@ class TestImageSimulation(object):
         )
         image_list = [image_r, image_g, image_b]
         image = rgb_image_from_image_list(image_list, 0.5)
-        
+
         assert len(image) == 100
 
     def test_point_source_image_with_lens_class_with_no_point_source(self):
@@ -511,16 +509,16 @@ class TestMultiSourceImageSimulation(object):
     def test_image_multiple_source(self):
         npt.assert_almost_equal(self.image3, self.combined_image, decimal=8)
 
+
 """
 New test class for a single interpolated source with "image" parameter
 """
 
+
 class TestImageSimulationInterpSingleSource:
-    """
-    A minimal class to demonstrate testing a single 'interpolated' Source 
-    with a 2D galaxy image, ensuring the image-simulation functions work 
-    without overwriting or duplicating all existing tests.
-    """
+    """A minimal class to demonstrate testing a single 'interpolated' Source
+    with a 2D galaxy image, ensuring the image-simulation functions work
+    without overwriting or duplicating all existing tests."""
 
     def setup_method(self):
 
@@ -529,7 +527,7 @@ class TestImageSimulationInterpSingleSource:
         red_one = Table.read(
             os.path.join(path, "TestData/red_one_modified.fits"), format="fits"
         )
-        
+
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
         # Interpolated Source
@@ -548,7 +546,7 @@ class TestImageSimulationInterpSingleSource:
         r = np.sqrt(x**2 + y**2)
 
         # Create the galaxy image with light concentrated near the center
-        image = center_brightness * np.exp(-r**2 / 0.1)
+        image = center_brightness * np.exp(-(r**2) / 0.1)
 
         # Add noise to the image
         noise = noise_level * np.random.normal(size=(size, size))
@@ -560,17 +558,40 @@ class TestImageSimulationInterpSingleSource:
 
         # Build a table for this "interp" source
         interp_source_dict = Table(
-            names=("z", "image", "center_x", "center_y", "z_data", "pixel_width_data", "phi_G", "mag_i", "mag_g", "mag_r"),
-            rows=[(0.5, test_image, size//2, size//2, 0.1, 0.05, 0.0, 20.0, 20.0, 20.0)]
+            names=(
+                "z",
+                "image",
+                "center_x",
+                "center_y",
+                "z_data",
+                "pixel_width_data",
+                "phi_G",
+                "mag_i",
+                "mag_g",
+                "mag_r",
+            ),
+            rows=[
+                (
+                    0.5,
+                    test_image,
+                    size // 2,
+                    size // 2,
+                    0.1,
+                    0.05,
+                    0.0,
+                    20.0,
+                    20.0,
+                    20.0,
+                )
+            ],
         )
 
         self.source_interp = Source(
-                source_dict=interp_source_dict,
-                cosmo=self.cosmo,
-                source_type="extended",
-                light_profile="interpolated",
-            )
-
+            source_dict=interp_source_dict,
+            cosmo=self.cosmo,
+            source_type="extended",
+            light_profile="interpolated",
+        )
 
         deflector_dict = red_one
         self.deflector_single = Deflector(
@@ -585,9 +606,8 @@ class TestImageSimulationInterpSingleSource:
         )
 
     def test_simulate_image_single_source(self):
-        """
-        Minimal check to confirm that 'simulate_image' works with the new lens setup.
-        """
+        """Minimal check to confirm that 'simulate_image' works with the new
+        lens setup."""
         image = simulate_image(
             lens_class=self.lens_interp_single,
             band="g",
@@ -599,9 +619,7 @@ class TestImageSimulationInterpSingleSource:
         # You could add numeric checks or compare to an expected result.
 
     def test_sharp_image_single_source(self):
-        """
-        Check that 'sharp_image' runs with the single interpolated lens.
-        """
+        """Check that 'sharp_image' runs with the single interpolated lens."""
         img_sharp = sharp_image(
             lens_class=self.lens_interp_single,
             band="i",
@@ -614,19 +632,19 @@ class TestImageSimulationInterpSingleSource:
         # Possibly test that it's nonzero, etc.
 
     def test_sharp_rgb_image_single_source(self):
-        """
-        Demonstrate using sharp_rgb_image with multiple bands 
-        on the single interpolated source.
-        """
+        """Demonstrate using sharp_rgb_image with multiple bands on the single
+        interpolated source."""
         from slsim.image_simulation import sharp_rgb_image
+
         rgb_img = sharp_rgb_image(
             lens_class=self.lens_interp_single,
-            rgb_band_list=["r", "g", "i"], 
+            rgb_band_list=["r", "g", "i"],
             mag_zero_point=30,
             delta_pix=0.05,
             num_pix=64,
         )
         assert rgb_img.shape == (64, 64, 3)  # typical shape for an RGB array
+
 
 if __name__ == "__main__":
     pytest.main()

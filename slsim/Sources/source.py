@@ -237,7 +237,7 @@ class Source(object):
                         agn_driving_kwargs_variability=self.agn_driving_kwargs_variability,
                         random_seed=random_seed,
                         input_agn_bounds_dict=input_agn_bounds_dict,
-                        **agn_kwarg_dict
+                        **agn_kwarg_dict,
                     )
                     # Get mean mags for each provided band
                     # determine which kwargs_variability are lsst bands
@@ -462,7 +462,10 @@ class Source(object):
 
         if not hasattr(self, "_center_source"):
             # 1) Check if the user has provided center_x/center_y in source_dict
-            if "center_x" in self.source_dict.colnames and "center_y" in self.source_dict.colnames:
+            if (
+                "center_x" in self.source_dict.colnames
+                and "center_y" in self.source_dict.colnames
+            ):
                 cx = self.source_dict["center_x"][0]
                 cy = self.source_dict["center_y"][0]
                 # interpret them as absolute positions or offsets
@@ -477,7 +480,6 @@ class Source(object):
                 self._center_source = np.array([center_x_source, center_y_source])
 
         return self._center_source
-
 
     def point_source_position(self, center_lens, draw_area):
         """Point source position. point source could be at the center of the
@@ -591,22 +593,26 @@ class Source(object):
             z_image = self.source_dict["z_data"]
             pixel_width = self.source_dict["pixel_width_data"]
             pixel_width *= z_scale_factor(z_old=z_image, z_new=self.redshift)
-    
+
             # Ensure the image is 2D
             image = self.source_dict["image"]
             if image.ndim > 2:
                 image = image.squeeze()  # Remove any singleton dimensions
             if image.ndim != 2:
-                raise ValueError(f"Interpolated image must be 2D, got shape {image.shape}")
-    
-            kwargs_extended_source = [dict(
-                magnitude=mag_source,
-                image=image,  # Use the potentially reshaped image
-                center_x=center_source[0],
-                center_y=center_source[1],
-                phi_G=self.source_dict["phi_G"],
-                scale=pixel_width
-            )]
+                raise ValueError(
+                    f"Interpolated image must be 2D, got shape {image.shape}"
+                )
+
+            kwargs_extended_source = [
+                dict(
+                    magnitude=mag_source,
+                    image=image,  # Use the potentially reshaped image
+                    center_x=center_source[0],
+                    center_y=center_source[1],
+                    phi_G=self.source_dict["phi_G"],
+                    scale=pixel_width,
+                )
+            ]
             print(f"kwargs_extended_source: {kwargs_extended_source}")
         else:
             raise ValueError("Provided sersic profile is not supported.")
@@ -628,8 +634,10 @@ class Source(object):
             elif self.light_profile == "interpolated":
                 source_models_list = ["INTERPOL"]
             else:
-                raise ValueError("Provided sersic profile is not supported. "
-                            "Supported profiles are single_sersic, double_sersic and interpolated.")
+                raise ValueError(
+                    "Provided sersic profile is not supported. "
+                    "Supported profiles are single_sersic, double_sersic and interpolated."
+                )
         else:
             source_models_list = None
         return source_models_list

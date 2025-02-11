@@ -8,7 +8,6 @@ from slsim.Util.param_util import average_angular_size, axis_ratio, eccentricity
 from lenstronomy.Util import constants
 import COSMOSCatalog
 
-
 """
 Turn Real galaxy images from the COSMOS field survey into source light model objects for SLsim.
 """

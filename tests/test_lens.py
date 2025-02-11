@@ -17,6 +17,7 @@ from slsim.Deflectors.deflector import Deflector
 import os
 from astropy.io import fits
 
+
 class TestLens(object):
     # pytest.fixture(scope='class')
     def setup_method(self):
@@ -78,7 +79,7 @@ class TestLens(object):
         r = np.sqrt(x**2 + y**2)
 
         # Create the galaxy image with light concentrated near the center
-        image = center_brightness * np.exp(-r**2 / 0.1)
+        image = center_brightness * np.exp(-(r**2) / 0.1)
 
         # Add noise to the image
         noise = noise_level * np.random.normal(size=(size, size))
@@ -90,15 +91,39 @@ class TestLens(object):
 
         # Build a table for this "interp" source
         interp_source_dict = Table(
-            names=("z", "image", "center_x", "center_y", "z_data", "pixel_width_data", "phi_G", "mag_i", "mag_g", "mag_r"),
-            rows=[(0.5, test_image, size//2, size//2, 0.1, 0.05, 0.0, 20.0, 20.0, 20.0)]
+            names=(
+                "z",
+                "image",
+                "center_x",
+                "center_y",
+                "z_data",
+                "pixel_width_data",
+                "phi_G",
+                "mag_i",
+                "mag_g",
+                "mag_r",
+            ),
+            rows=[
+                (
+                    0.5,
+                    test_image,
+                    size // 2,
+                    size // 2,
+                    0.1,
+                    0.05,
+                    0.0,
+                    20.0,
+                    20.0,
+                    20.0,
+                )
+            ],
         )
         self.source_interp = Source(
-                source_dict=interp_source_dict,
-                cosmo=cosmo,
-                source_type="extended",
-                light_profile="interpolated",
-            )
+            source_dict=interp_source_dict,
+            cosmo=cosmo,
+            source_type="extended",
+            light_profile="interpolated",
+        )
         self.gg_lens_interp = Lens(
             source_class=self.source_interp,
             deflector_class=self.deflector,
@@ -106,7 +131,6 @@ class TestLens(object):
             lens_equation_solver="lenstronomy_analytical",
             cosmo=cosmo,
         )
-     
 
     def test_deflector_ellipticity(self):
         e1_light, e2_light, e1_mass, e2_mass = self.gg_lens.deflector_ellipticity()
@@ -114,7 +138,6 @@ class TestLens(object):
         assert pytest.approx(e2_light, rel=1e-3) == 0.08738390223219591
         assert pytest.approx(e1_mass, rel=1e-3) == -0.08434700688970058
         assert pytest.approx(e2_mass, rel=1e-3) == 0.09710653297997263
-
 
     def test_deflector_magnitude(self):
         band = "g"
@@ -307,21 +330,27 @@ class TestLens(object):
         )
 
     def test_lenstronomy_kwargs_interpolated(self):
-        """
-        Minimal test to confirm that lenstronomy_kwargs() returns 
-        the correct keys for an interpolated source.
-        """
+        """Minimal test to confirm that lenstronomy_kwargs() returns the
+        correct keys for an interpolated source."""
 
         kwargs_model, kwargs_params = self.gg_lens_interp.lenstronomy_kwargs(band="i")
 
         # Check that kwargs_model has the essential lens modeling lists
-        assert "lens_model_list" in kwargs_model, "Missing 'lens_model_list' in kwargs_model"
-        assert "lens_light_model_list" in kwargs_model, "Missing 'lens_light_model_list' in kwargs_model"
+        assert (
+            "lens_model_list" in kwargs_model
+        ), "Missing 'lens_model_list' in kwargs_model"
+        assert (
+            "lens_light_model_list" in kwargs_model
+        ), "Missing 'lens_light_model_list' in kwargs_model"
         # assert "source_light_model_list" in kwargs_model, "Missing 'source_light_model_list'"
         # Check that kwargs_params holds the parameter dictionaries:
         assert "kwargs_lens" in kwargs_params, "Missing 'kwargs_lens' in kwargs_params"
-        assert "kwargs_lens_light" in kwargs_params, "Missing 'kwargs_lens_light' in kwargs_params"
-        assert "kwargs_source" in kwargs_params, "Missing 'kwargs_source' in kwargs_params"
+        assert (
+            "kwargs_lens_light" in kwargs_params
+        ), "Missing 'kwargs_lens_light' in kwargs_params"
+        assert (
+            "kwargs_source" in kwargs_params
+        ), "Missing 'kwargs_source' in kwargs_params"
         assert "kwargs_ps" in kwargs_params, "Missing 'kwargs_ps' in kwargs_params"
 
 
@@ -762,8 +791,6 @@ class TestMultiSource(object):
         npt.assert_almost_equal(
             image_observation_time2, image_observation_time3[1], decimal=5
         )
-
-    
 
 
 if __name__ == "__main__":
