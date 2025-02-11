@@ -1,4 +1,5 @@
 from slsim.Sources.source import Source, add_mean_mag_to_source_table
+from slsim.Util.cosmo_util import z_scale_factor
 import numpy as np
 import pytest
 from numpy import testing as npt
@@ -534,6 +535,72 @@ class TestSource:
             source_type="extended",
             light_profile="triple_sersic",
         )
+
+        # Image Parameters
+        size = 100
+        center_brightness = 100
+        noise_level = 10
+
+        # Create a grid of coordinates
+        x = np.linspace(-1, 1, size)
+        y = np.linspace(-1, 1, size)
+        x, y = np.meshgrid(x, y)
+
+        # Calculate the distance from the center
+        r = np.sqrt(x**2 + y**2)
+
+        # Create the galaxy image with light concentrated near the center
+        image = center_brightness * np.exp(-r**2 / 0.1)
+
+        # Add noise to the image
+        noise = noise_level * np.random.normal(size=(size, size))
+        image += noise
+
+        # Ensure no negative values
+        image = np.clip(image, 0, None)
+        test_image = image
+
+        # Build a table for this "interp" source
+        interp_source_dict = Table(
+            names=("z", "image", "center_x", "center_y", "z_data", "pixel_width_data", "phi_G", "mag_i", "mag_g", "mag_r"),
+            rows=[(0.5, test_image, size//2, size//2, 0.1, 0.05, 0.0, 20.0, 20.0, 20.0)]
+        )
+
+        self.source_interp = Source(
+                source_dict=interp_source_dict,
+                cosmo=cosmo,
+                source_type="extended",
+                light_profile="interpolated",
+            )
+
+        
+    def test_kwargs_extended_source_light_interpolated(self):
+        result = self.source_interp.kwargs_extended_source_light(
+            center_lens=np.array([0, 0]), draw_area=4 * np.pi, band="i")
+        source_array = self.source_interp.source_dict["image"][0]
+        size = source_array.shape[0]
+        z = self.source_interp.source_dict["z"][0]
+        z_data = self.source_interp.source_dict["z_data"][0]
+        ratio = z_scale_factor(z_old=z, z_new=z_data)
+        pixel_width_data = 0.05 / ratio  # so the code's multiplication yields 0.05
+
+        assert result[0]["magnitude"] == 20.0
+        npt.assert_allclose(result[0]["image"], source_array, 
+                            rtol=1e-5,
+                            err_msg="Images differ!")
+        assert result[0]["center_x"] == size // 2
+        assert result[0]["center_y"] == size // 2
+        assert result[0]["phi_G"] == 0.0
+        npt.assert_allclose(
+        float(result[0]["scale"][0]),
+        pixel_width_data,
+        rtol=1e-5,
+        err_msg="Pixel scale mismatch after z_scale_factor!"
+    )
+        
+    def test_extended_source_light_model_interpolated(self):
+        result = self.source_interp.extended_source_light_model()
+        assert result == ["INTERPOL"]
 
     def test_redshift(self):
         assert self.source.redshift == 0.5

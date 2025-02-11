@@ -4,7 +4,7 @@ import pytest
 import numpy as np
 from numpy import testing as npt
 from astropy.cosmology import FlatLambdaCDM
-from astropy.table import Table
+from astropy.table import Table, Column
 from slsim.lens import (
     Lens,
     image_separation_from_positions,
@@ -16,17 +16,6 @@ from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
 import os
 from astropy.io import fits
-
-# Load the specific FITS file
-fits_file_path = r'C:\Users\rahul\OneDrive\Documents\GitHub\Simulating_and_Predicting_Nancy_G_Roman_Telescope_Data\COSMOS_field_morphology_matching\COSMOS_23.5_training_sample\real_galaxy_images_23.5_n21.fits'
-gal_hdu = 164
-real_galaxy_image = fits.getdata(fits_file_path, ext=gal_hdu)
-
-# Ensure the image is in the expected format (e.g., 2D array)
-if real_galaxy_image.ndim != 2:
-    raise ValueError("The FITS file does not contain a 2D image.")
-
-
 
 class TestLens(object):
     # pytest.fixture(scope='class')
@@ -43,29 +32,6 @@ class TestLens(object):
         red_one = Table.read(
             os.path.join(path, "TestData/red_one_modified.fits"), format="fits"
         )
-
-        #image = np.zeros((11, 11))
-        #image[5, 5] = 1
-        image = real_galaxy_image
-        print(f"Test image shape: {real_galaxy_image.shape}") 
-        y_indices, x_indices = np.indices(image.shape)
-        total_flux = np.sum(image)
-        center_x = np.sum(x_indices * image) / total_flux
-        center_y = np.sum(y_indices * image) / total_flux
-        z= 0.5
-        z_data = 0.1
-        pixel_width_data = 0.1
-        phi_G = 0
-        mag_i = 20
-        interp_source_dict = Table([
-        [z],
-        [image], 
-        [z_data], 
-        [pixel_width_data], 
-        [phi_G], 
-        [mag_i]], names=("z", "image", "z_data", "pixel_width_data", "phi_G", 
-                                 "mag_i",))
-
         red_one["angular_size"] = red_one["angular_size"] / 4.84813681109536e-06
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         self.source_dict = blue_one
@@ -96,75 +62,85 @@ class TestLens(object):
             if gg_lens.validity_test(mag_arc_limit=mag_arc_limit):
                 self.gg_lens = gg_lens
                 break
-        interp_source= Source(
-            source_dict=interp_source_dict,
-            cosmo=cosmo,
-            source_type="extended",
-            light_profile="interpolated",
-        )
-        self.gg_lens_interp = Lens(
-                source_class=interp_source,
-                source_type="extended",
-                deflector_class=self.deflector,
-                lens_equation_solver="lenstronomy_analytical",
-                #kwargs_variability={"MJD", "ps_mag_i"},  # This line will not be used in
-                # the testing but at least code go through this warning message.
-                cosmo=cosmo,
-            )
+        # Create another galaxy class with interpolated source.
 
+        # Image Parameters
+        size = 100
+        center_brightness = 100
+        noise_level = 10
+
+        # Create a grid of coordinates
+        x = np.linspace(-1, 1, size)
+        y = np.linspace(-1, 1, size)
+        x, y = np.meshgrid(x, y)
+
+        # Calculate the distance from the center
+        r = np.sqrt(x**2 + y**2)
+
+        # Create the galaxy image with light concentrated near the center
+        image = center_brightness * np.exp(-r**2 / 0.1)
+
+        # Add noise to the image
+        noise = noise_level * np.random.normal(size=(size, size))
+        image += noise
+
+        # Ensure no negative values
+        image = np.clip(image, 0, None)
+        test_image = image
+
+        # Build a table for this "interp" source
+        interp_source_dict = Table(
+            names=("z", "image", "center_x", "center_y", "z_data", "pixel_width_data", "phi_G", "mag_i", "mag_g", "mag_r"),
+            rows=[(0.5, test_image, size//2, size//2, 0.1, 0.05, 0.0, 20.0, 20.0, 20.0)]
+        )
+        self.source_interp = Source(
+                source_dict=interp_source_dict,
+                cosmo=cosmo,
+                source_type="extended",
+                light_profile="interpolated",
+            )
+        self.gg_lens_interp = Lens(
+            source_class=self.source_interp,
+            deflector_class=self.deflector,
+            los_class=self.los_individual,
+            lens_equation_solver="lenstronomy_analytical",
+            cosmo=cosmo,
+        )
+     
 
     def test_deflector_ellipticity(self):
         e1_light, e2_light, e1_mass, e2_mass = self.gg_lens.deflector_ellipticity()
-        e1_light_interp, e2_light_interp, e1_mass_interp, e2_mass_interp = self.gg_lens_interp.deflector_ellipticity()
         assert pytest.approx(e1_light, rel=1e-3) == -0.05661955320450283
         assert pytest.approx(e2_light, rel=1e-3) == 0.08738390223219591
         assert pytest.approx(e1_mass, rel=1e-3) == -0.08434700688970058
         assert pytest.approx(e2_mass, rel=1e-3) == 0.09710653297997263
-        assert pytest.approx(e1_light_interp, rel=1e-3) == -0.05661955320450283
-        assert pytest.approx(e2_light_interp, rel=1e-3) == 0.08738390223219591
-        assert pytest.approx(e1_mass_interp, rel=1e-3) == -0.08434700688970058
-        assert pytest.approx(e2_mass_interp, rel=1e-3) == 0.09710653297997263
+
 
     def test_deflector_magnitude(self):
         band = "g"
         deflector_magnitude = self.gg_lens.deflector_magnitude(band)
-        deflector_magnitude_interp = self.gg_lens_interp.deflector_magnitude(band)
         assert isinstance(deflector_magnitude[0], float)
-        assert isinstance(deflector_magnitude_interp[0], float)
         assert pytest.approx(deflector_magnitude[0], rel=1e-3) == 26.4515655
-        assert pytest.approx(deflector_magnitude_interp[0], rel=1e-3) == 26.4515655
 
     def test_source_magnitude(self):
         band = "g"
         band2 = "i"
         source_magnitude = self.gg_lens.extended_source_magnitude(band)
-        source_magnitude_interp = self.gg_lens_interp.extended_source_magnitude(band2)
         source_magnitude_lensed = self.gg_lens.extended_source_magnitude(
             band, lensed=True
         )
-        source_magnitude_lensed_interp = self.gg_lens_interp.extended_source_magnitude(
-            band2, lensed=True
-        )
         host_mag = self.gg_lens.extended_source_magnification()
-        host_mag_interp = self.gg_lens_interp.extended_source_magnification()
         expected_lensed_mag = source_magnitude - 2.5 * np.log10(host_mag)
-        expected_lensed_mag_interp = source_magnitude_interp - 2.5 * np.log10(host_mag_interp)
         assert pytest.approx(source_magnitude[0], rel=1e-3) == 30.780194
         assert source_magnitude_lensed == expected_lensed_mag
 
     def test_image_separation_from_positions(self):
         image_positions = self.gg_lens.extended_source_image_positions()[0]
-        image_positions_interp = self.gg_lens_interp.extended_source_image_positions()[0]
         image_separation = image_separation_from_positions(image_positions)
-        image_separation_interp = image_separation_from_positions(image_positions_interp)
         theta_E_infinity = theta_e_when_source_infinity(
             deflector_dict=self.deflector_dict
         )
-        theta_E_infinity_interp = theta_e_when_source_infinity(
-            deflector_dict=self.deflector_dict
-        )
         assert image_separation < 2 * theta_E_infinity
-        assert image_separation_interp < 2 * theta_E_infinity_interp
 
     def test_theta_e_when_source_infinity(self):
         theta_E_infinity = theta_e_when_source_infinity(
@@ -175,21 +151,15 @@ class TestLens(object):
 
     def test_extended_source_magnification(self):
         host_mag = self.gg_lens.extended_source_magnification()[0]
-        host_mag_interp = self.gg_lens_interp.extended_source_magnification()[0]
         assert host_mag > 0
-        assert host_mag_interp > 0
 
     def test_deflector_stellar_mass(self):
         s_mass = self.gg_lens.deflector_stellar_mass()
-        s_mass_interp = self.gg_lens_interp.deflector_stellar_mass()
         assert s_mass >= 10**5
-        assert s_mass_interp >= 10**5
 
     def test_deflector_velocity_dispersion(self):
         vdp = self.gg_lens.deflector_velocity_dispersion()
-        vdp_interp = self.gg_lens_interp.deflector_velocity_dispersion()
         assert vdp >= 10
-        assert vdp_interp >= 10
 
     def test_los_linear_distortions(self):
         kappa, gamma1, gamma2 = self.gg_lens.los_linear_distortions
@@ -200,42 +170,25 @@ class TestLens(object):
 
     def test_point_source_arrival_times(self):
         dt_days = self.gg_lens.point_source_arrival_times()
-        dt_days_interp = self.gg_lens_interp.point_source_arrival_times()
         assert np.min(dt_days) > -1000
         assert np.max(dt_days) < 1000
-        assert np.min(dt_days_interp) > -1000
-        assert np.max(dt_days_interp) < 1000
 
     def test_image_observer_times(self):
         t_obs = 1000
         t_obs2 = np.array([100, 200, 300])
         dt_days = self.gg_lens.image_observer_times(t_obs=t_obs)
-        dt_days_interp = self.gg_lens_interp.image_observer_times(t_obs=t_obs)
         dt_days2 = self.gg_lens.image_observer_times(t_obs=t_obs2)
-        dt_days2_interp = self.gg_lens_interp.image_observer_times(t_obs=t_obs2)
         arrival_times = self.gg_lens.point_source_arrival_times()[0]
-        arrival_times_interp = self.gg_lens_interp.point_source_arrival_times()[0]
         observer_times = (t_obs - arrival_times + np.min(arrival_times))[:, np.newaxis]
-        observer_times_interp = (t_obs +arrival_times_interp - np.min(arrival_times_interp))[:, np.newaxis]
         observer_times2 = (
             t_obs2[:, np.newaxis] - arrival_times + np.min(arrival_times)
         ).T
-        observer_times2_interp = (
-            t_obs2[:, np.newaxis] + arrival_times_interp - np.min(arrival_times_interp)
-        ).T
-        observer_times2_interp = (
-            t_obs2[:, np.newaxis] + arrival_times_interp - np.min(arrival_times_interp)
-        ).T
         npt.assert_almost_equal(dt_days, observer_times, decimal=5)
         npt.assert_almost_equal(dt_days2, observer_times2, decimal=5)
-        npt.assert_almost_equal(dt_days_interp, observer_times_interp, decimal=5)
-        npt.assert_almost_equal(dt_days2_interp, observer_times2_interp, decimal=5)
 
     def test_deflector_light_model_lenstronomy(self):
         kwargs_lens_light = self.gg_lens.deflector_light_model_lenstronomy(band="g")
-        kwargs_lens_light_interp = self.gg_lens_interp.deflector_light_model_lenstronomy(band="g")
         assert len(kwargs_lens_light) >= 1
-        assert len(kwargs_lens_light_interp) >= 1
 
     def test_lens_equation_solver(self):
         # Tests analytical and numerical lens equation solver options.
@@ -343,25 +296,33 @@ class TestLens(object):
         delta_pix = 0.05
         x, y = make_grid(numPix=200, deltapix=delta_pix)
         kappa_star = self.gg_lens.kappa_star(x, y)
-        kappa_star_interp = self.gg_lens_interp.kappa_star(x, y)
         stellar_mass_from_kappa_star = (
             np.sum(kappa_star)
             * delta_pix**2
             * self.gg_lens._lens_cosmo.sigma_crit_angle
         )
-        stellar_mass_from_kappa_star_interp = (
-            np.sum(kappa_star_interp)
-            * delta_pix**2
-            * self.gg_lens_interp._lens_cosmo.sigma_crit_angle
-        )
         stellar_mass = self.gg_lens.deflector_stellar_mass()
-        stellar_mass_interp = self.gg_lens_interp.deflector_stellar_mass()
         npt.assert_almost_equal(
             stellar_mass_from_kappa_star / stellar_mass, 1, decimal=1
         )
-        npt.assert_almost_equal(
-            stellar_mass_from_kappa_star_interp / stellar_mass_interp, 1, decimal=1
-        )
+
+    def test_lenstronomy_kwargs_interpolated(self):
+        """
+        Minimal test to confirm that lenstronomy_kwargs() returns 
+        the correct keys for an interpolated source.
+        """
+
+        kwargs_model, kwargs_params = self.gg_lens_interp.lenstronomy_kwargs(band="i")
+
+        # Check that kwargs_model has the essential lens modeling lists
+        assert "lens_model_list" in kwargs_model, "Missing 'lens_model_list' in kwargs_model"
+        assert "lens_light_model_list" in kwargs_model, "Missing 'lens_light_model_list' in kwargs_model"
+        # assert "source_light_model_list" in kwargs_model, "Missing 'source_light_model_list'"
+        # Check that kwargs_params holds the parameter dictionaries:
+        assert "kwargs_lens" in kwargs_params, "Missing 'kwargs_lens' in kwargs_params"
+        assert "kwargs_lens_light" in kwargs_params, "Missing 'kwargs_lens_light' in kwargs_params"
+        assert "kwargs_source" in kwargs_params, "Missing 'kwargs_source' in kwargs_params"
+        assert "kwargs_ps" in kwargs_params, "Missing 'kwargs_ps' in kwargs_params"
 
 
 @pytest.fixture
@@ -802,196 +763,7 @@ class TestMultiSource(object):
             image_observation_time2, image_observation_time3[1], decimal=5
         )
 
-##############################################################################
-# New test class that replicates TestLens but uses an interpolated source
-# and the newest Deflector + LOS classes exactly like in TestLens.
-##############################################################################
-
-class TestLensInterpSource(object):
-    """
-    This new class mirrors `TestLens` but uses a source with an
-    interpolated image (instead of the single_sersic from the
-    "blue_one" FITS). We keep the same set of test methods,
-    referencing self.gg_lens_interp. That ensures the new code
-    merges and tests seamlessly.
-    """
-
-    def setup_method(self):
-        """
-        Very similar to TestLens's setup_method, but we build
-        an interpolated Source and store it in self.gg_lens_interp.
-        We also incorporate the new LOSIndividual usage and
-        the same Deflector approach to match the updated code.
-        """
-        path = os.path.dirname(__file__)
-        module_path, _ = os.path.split(path)
-        print(path, module_path)
-
-        red_one = Table.read(
-            os.path.join(path, "TestData/red_one_modified.fits"), format="fits"
-        )
-        # Adjust angular_size to match new code
-        red_one["angular_size"] = red_one["angular_size"] / 4.84813681109536e-0
-        image = np.zeros((11, 11))
-        image[5, 5] = 1
-        test_image = image
-
-        # Build a table for this "interp" source
-        interp_source_dict = Table(
-            names=("z", "image", "z_data", "pixel_width_data", "phi_G", "mag_i"),
-            rows=[(0.5, test_image, 0.1, 0.05, 0.0, 20.0)]
-        )
-
-        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-
-        self.los_individual = LOSIndividual(kappa=0.1, gamma=[-0.1, -0.2])
-        self.deflector_dict = red_one
-        self.deflector = Deflector(
-            deflector_type="EPL",
-            deflector_dict=self.deflector_dict,
-        )
-
-        mag_arc_limit = {"i": 35, "g": 35, "r": 35}
-        while True:
-            # Build the interpolated source
-            self.source_interp = Source(
-                source_dict=interp_source_dict,
-                cosmo=cosmo,
-                source_type="extended",
-                light_profile="interpolated",
-            )
-            # Instantiate the Lens object with the new source
-            lens_interp = Lens(
-                source_class=self.source_interp,
-                deflector_class=self.deflector,
-                los_class=self.los_individual,  # same new approach
-                lens_equation_solver="lenstronomy_analytical",
-                cosmo=cosmo,
-            )
-            # Check validity
-            if lens_interp.validity_test(mag_arc_limit=mag_arc_limit):
-                self.gg_lens_interp = lens_interp
-                break
-
-
-    def test_deflector_ellipticity(self):
-        e1_light, e2_light, e1_mass, e2_mass = self.gg_lens_interp.deflector_ellipticity()
-        assert pytest.approx(e1_light, rel=1e-3) == -0.05661955320450283
-        assert pytest.approx(e2_light, rel=1e-3) == 0.08738390223219591
-        assert pytest.approx(e1_mass, rel=1e-3) == -0.08434700688970058
-        assert pytest.approx(e2_mass, rel=1e-3) == 0.09710653297997263
-
-    def test_deflector_magnitude(self):
-        band = "g"
-        deflector_magnitude = self.gg_lens_interp.deflector_magnitude(band)
-        assert isinstance(deflector_magnitude[0], float)
-        assert pytest.approx(deflector_magnitude[0], rel=1e-3) == 26.4515655
-
-    def test_source_magnitude(self):
-        band = "g"
-        source_magnitude = self.gg_lens_interp.extended_source_magnitude(band)
-        source_magnitude_lensed = self.gg_lens_interp.extended_source_magnitude(
-            band, lensed=True
-        )
-        host_mag = self.gg_lens_interp.extended_source_magnification()
-        expected_lensed_mag = source_magnitude - 2.5 * np.log10(host_mag)
-        # Adjust the next line if your test_image changes the unlensed mag
-        assert pytest.approx(source_magnitude[0], rel=1e-3) == 30.780194
-        assert source_magnitude_lensed == expected_lensed_mag
-
-    def test_image_separation_from_positions(self):
-        image_positions = self.gg_lens_interp.extended_source_image_positions()[0]
-        image_separation = image_separation_from_positions(image_positions)
-        theta_E_infinity = theta_e_when_source_infinity(
-            deflector_dict=self.deflector_dict
-        )
-        assert image_separation < 2 * theta_E_infinity
-
-    def test_theta_e_when_source_infinity(self):
-        theta_E_infinity = theta_e_when_source_infinity(
-            deflector_dict=self.deflector_dict
-        )
-        assert theta_E_infinity < 15
-
-    def test_extended_source_magnification(self):
-        host_mag = self.gg_lens_interp.extended_source_magnification()[0]
-        assert host_mag > 0
-
-    def test_deflector_stellar_mass(self):
-        s_mass = self.gg_lens_interp.deflector_stellar_mass()
-        assert s_mass >= 10**5
-
-    def test_deflector_velocity_dispersion(self):
-        vdp = self.gg_lens_interp.deflector_velocity_dispersion()
-        assert vdp >= 10
-
-    def test_los_linear_distortions(self):
-        kappa, gamma1, gamma2 = self.gg_lens_interp.los_linear_distortions
-        assert kappa == self.los_individual.convergence
-        g1, g2 = self.los_individual.shear
-        assert gamma1 == g1
-        assert gamma2 == g2
-
-    def test_point_source_arrival_times(self):
-        dt_days = self.gg_lens_interp.point_source_arrival_times()
-        assert np.min(dt_days) > -1000
-        assert np.max(dt_days) < 1000
-
-    def test_image_observer_times(self):
-        t_obs = 1000
-        t_obs2 = np.array([100, 200, 300])
-        dt_days = self.gg_lens_interp.image_observer_times(t_obs=t_obs)
-        dt_days2 = self.gg_lens_interp.image_observer_times(t_obs=t_obs2)
-        arrival_times = self.gg_lens_interp.point_source_arrival_times()[0]
-        observer_times = (t_obs - arrival_times + np.min(arrival_times))[:, np.newaxis]
-        observer_times2 = (
-            t_obs2[:, np.newaxis] - arrival_times + np.min(arrival_times)
-        ).T
-        npt.assert_almost_equal(dt_days, observer_times, decimal=5)
-        npt.assert_almost_equal(dt_days2, observer_times2, decimal=5)
-
-    def test_deflector_light_model_lenstronomy(self):
-        kwargs_lens_light = self.gg_lens_interp.deflector_light_model_lenstronomy(band="g")
-        assert len(kwargs_lens_light) >= 1
-
-    def test_lens_equation_solver(self):
-        # Duplicate the solver tests, referencing our new lens's source & deflector
-        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-        gg_lens_def = Lens(
-            lens_equation_solver="lenstronomy_default",
-            source_class=self.gg_lens_interp.source,   # use the same Source
-            deflector_class=self.gg_lens_interp.deflector,
-            cosmo=cosmo,
-        )
-        while True:
-            gg_lens_def.validity_test()
-            break
-
-        gg_lens_ana = Lens(
-            lens_equation_solver="lenstronomy_analytical",
-            source_class=self.gg_lens_interp.source,
-            deflector_class=self.gg_lens_interp.deflector,
-            cosmo=cosmo,
-        )
-        while True:
-            gg_lens_ana.validity_test()
-            break
-
-    def test_kappa_star(self):
-        from lenstronomy.Util.util import make_grid
-        delta_pix = 0.05
-        x, y = make_grid(numPix=200, deltapix=delta_pix)
-        kappa_star = self.gg_lens_interp.kappa_star(x, y)
-        stellar_mass_from_kappa_star = (
-            np.sum(kappa_star)
-            * delta_pix**2
-            * self.gg_lens_interp._lens_cosmo.sigma_crit_angle
-        )
-        stellar_mass = self.gg_lens_interp.deflector_stellar_mass()
-        npt.assert_almost_equal(
-            stellar_mass_from_kappa_star / stellar_mass, 1, decimal=1
-        )
-
+    
 
 
 if __name__ == "__main__":

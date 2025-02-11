@@ -25,9 +25,6 @@ class Lens(LensedSystemBase):
         source_class,
         deflector_class,
         cosmo,
-        deflector_type="EPL",
-        deflector_kwargs=None,
-        source_type="extended",  #TODO: might need to have another name for it for interpolation
         lens_equation_solver="lenstronomy_analytical",
         test_area=4 * np.pi,
         magnification_limit=0.01,
@@ -458,50 +455,7 @@ class Lens(LensedSystemBase):
             theta_E = lens_analysis.effective_einstein_radius(
                 kwargs_lens_, r_min=1e-4, r_max=5e1, num_points=100
             )
-<<<<<<< HEAD
-        if not hasattr(self, "_theta_E"):
-            if self.deflector.redshift >= self.source.redshift:
-                self._theta_E = 0
-            elif self.deflector.deflector_type in ["EPL"]:
-                self._theta_E = self._lens_cosmo.sis_sigma_v2theta_E(
-                    float(self.deflector.velocity_dispersion(cosmo=self.cosmo))
-                )
-            else:
-                # numerical solution for the Einstein radius
-                lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
-                lens_model = LensModel(lens_model_list=lens_model_list)
-                lens_analysis = LensProfileAnalysis(lens_model=lens_model)
-                self._theta_E = lens_analysis.effective_einstein_radius(
-                    kwargs_lens, r_min=1e-3, r_max=5e1, num_points=50   
-                )
-        return self._theta_E
-
-    @property
-    def einstein_radius(self):
-        """Einstein radius, from SIS approximation (coming from velocity dispersion) +
-        external convergence effect.
-
-        :return: list of Einstein radius [arc seconds] for each lens source pair.
-        """
-        if not hasattr(self, "_theta_E_corrected_list"):
-            self._theta_E_corrected_list = []
-            for source in self.source:
-                self._theta_E_corrected_list.append(self._einstein_radius(source=source))
-        return self._theta_E_corrected_list
-    
-    def _einstein_radius(self, source):
-        """Einstein radius, from SIS approximation (coming from velocity dispersion) +
-        external convergence effect.
-        
-        :param source: Source class instance. 
-        :return: Einstein radius [arc seconds]
-        """
-        theta_E = self._einstein_radius_deflector(source)
-        _, _, kappa_ext = self.los_linear_distortions
-        return theta_E / (1 - kappa_ext)
-=======
         return theta_E
->>>>>>> 58f239596682fcd5db408e20cc7944b56c7dd014
 
     def deflector_ellipticity(self):
         """
@@ -713,12 +667,10 @@ class Lens(LensedSystemBase):
         """
         # band_string = str("mag_" + band)
         # TODO: might have to change conventions between extended and point source
-        print(f"Entering extended_source_magnitude with band={band}, lensed={lensed}")
         source_mag = source.extended_source_magnitude(band)
         if lensed:
             mag = self._extended_single_source_magnification(source, source_index)
             return source_mag - 2.5 * np.log10(mag)
-        print(f"Exiting extended_source_magnitude with result={source_mag}")
         return source_mag
 
     def point_source_magnification(self):
@@ -821,7 +773,6 @@ class Lens(LensedSystemBase):
             self._extended_source_magnification = flux_lensed / flux_no_lens
         else:
             self._extended_source_magnification = 0
-            print(f"Exiting extended_source_magnification with result={self._extended_source_magnification}")
         return self._extended_source_magnification
 
     def lenstronomy_kwargs(self, band=None):
@@ -847,7 +798,7 @@ class Lens(LensedSystemBase):
                 lens_mass_model_list
             )
             kwargs_model["z_lens"] = self.deflector_redshift
-            if self.max_redshift_source_class.light_profile == "single_sersic":
+            if self.max_redshift_source_class.light_profile in ["single_sersic", "interpolated"]:
                 kwargs_model["source_redshift_list"] = self.source_redshift_list
             elif self.max_redshift_source_class.light_profile == "double_sersic":
                 kwargs_model["source_redshift_list"] = [
@@ -924,7 +875,7 @@ class Lens(LensedSystemBase):
         """
         return self.deflector.light_model_lenstronomy(band=band)
 
-    def source_light_model_lenstronomy(self, band=None): #MODIFY THIS
+    def source_light_model_lenstronomy(self, band=None):
         """Returns source light model instance and parameters in lenstronomy
         conventions.
 
