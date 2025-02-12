@@ -5,7 +5,6 @@
 # b_phi = 10**(Phi0 - 0.5*P)
 cosmology: !astropy.cosmology.default_cosmology.get []
 z_range: !numpy.arange [0.0, 5.01, 0.01]
-#M_star_blue: !astropy.modeling.models.Linear1D [-1.03, -20.485]
 M_star_blue: !astropy.modeling.models.Polynomial1D
   degree: 3
   c0: -20.485
