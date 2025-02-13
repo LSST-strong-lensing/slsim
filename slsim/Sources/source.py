@@ -10,7 +10,10 @@ from slsim.Sources import (
     random_supernovae,
     agn,
 )
+from astropy.cosmology import FLRW
+from slsim.Sources import random_supernovae
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
+from slsim.Util.cosmo_util import z_scale_factor
 
 
 class Source(object):
@@ -38,6 +41,7 @@ class Source(object):
         """
         :param source_dict: Source properties
         :type source_dict: dict or astropy table
+        :type source_dict: dict  # TODO: write what arguments need to be inculded when the source_type is interpolated.
         :param variability_model: keyword for variability model to be used. This is an
          input for the Variability class.
         :type variability_model: str
@@ -233,7 +237,7 @@ class Source(object):
                         agn_driving_kwargs_variability=self.agn_driving_kwargs_variability,
                         random_seed=random_seed,
                         input_agn_bounds_dict=input_agn_bounds_dict,
-                        **agn_kwarg_dict
+                        **agn_kwarg_dict,
                     )
                     # Get mean mags for each provided band
                     # determine which kwargs_variability are lsst bands
@@ -450,22 +454,31 @@ class Source(object):
         deflector position.
 
         :param center_lens: center of the deflector.
-         Eg: np.array([center_x_lens, center_y_lens])
+        Eg: np.array([center_x_lens, center_y_lens])
         :param draw_area: The area of the test region from which we randomly draw a
-         source position. Eg: 4*pi.
+        source position. Eg: 4*pi.
         :return: [x_pos, y_pos]
         """
 
         if not hasattr(self, "_center_source"):
-            # Define the radius of the test area circle
-            test_area_radius = np.sqrt(draw_area / np.pi)
-            # Randomly generate a radius within the test area circle
-            r = np.sqrt(np.random.random()) * test_area_radius
-            theta = 2 * np.pi * np.random.random()
-            # Convert polar coordinates to cartesian coordinates
-            center_x_source = center_lens[0] + r * np.cos(theta)
-            center_y_source = center_lens[1] + r * np.sin(theta)
-            self._center_source = np.array([center_x_source, center_y_source])
+            # 1) Check if the user has provided center_x/center_y in source_dict
+            if (
+                "center_x" in self.source_dict.colnames
+                and "center_y" in self.source_dict.colnames
+            ):
+                cx = self.source_dict["center_x"][0]
+                cy = self.source_dict["center_y"][0]
+                # interpret them as absolute positions or offsets
+                self._center_source = np.array([cx, cy])
+            else:
+                # Else randomize
+                test_area_radius = np.sqrt(draw_area / np.pi)
+                r = np.sqrt(np.random.random()) * test_area_radius
+                theta = 2 * np.pi * np.random.random()
+                center_x_source = center_lens[0] + r * np.cos(theta)
+                center_y_source = center_lens[1] + r * np.sin(theta)
+                self._center_source = np.array([center_x_source, center_y_source])
+
         return self._center_source
 
     def point_source_position(self, center_lens, draw_area):
@@ -576,6 +589,31 @@ class Source(object):
                     "center_y": center_source[1],
                 },
             ]
+        elif self.light_profile == "interpolated":
+            z_image = self.source_dict["z_data"]
+            pixel_width = self.source_dict["pixel_width_data"]
+            pixel_width *= z_scale_factor(z_old=z_image, z_new=self.redshift)
+
+            # Ensure the image is 2D
+            image = self.source_dict["image"]
+            if image.ndim > 2:
+                image = image.squeeze()  # Remove any singleton dimensions
+            if image.ndim != 2:
+                raise ValueError(
+                    f"Interpolated image must be 2D, got shape {image.shape}"
+                )
+
+            kwargs_extended_source = [
+                dict(
+                    magnitude=mag_source,
+                    image=image,  # Use the potentially reshaped image
+                    center_x=center_source[0],
+                    center_y=center_source[1],
+                    phi_G=self.source_dict["phi_G"],
+                    scale=pixel_width,
+                )
+            ]
+            print(f"kwargs_extended_source: {kwargs_extended_source}")
         else:
             raise ValueError("Provided sersic profile is not supported.")
         return kwargs_extended_source
@@ -593,10 +631,12 @@ class Source(object):
                     "SERSIC_ELLIPSE",
                     "SERSIC_ELLIPSE",
                 ]
+            elif self.light_profile == "interpolated":
+                source_models_list = ["INTERPOL"]
             else:
                 raise ValueError(
                     "Provided sersic profile is not supported. "
-                    "Supported profiles are single_sersic and double_sersic."
+                    "Supported profiles are single_sersic, double_sersic and interpolated."
                 )
         else:
             source_models_list = None
