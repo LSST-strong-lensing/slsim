@@ -197,16 +197,16 @@ def find_massive_ellipticals(
 
     # Calculate the r-band absolute magnitude of the ellipticals
     # the luminosity_distance is in 'kpc';
-    Mag_r_sdss = (
-        sdss_mags[2]
-        - k_correction_coefficients[:, 2]
+    Mag_i_sdss = (
+        sdss_mags[3]
+        - k_correction_coefficients[:, 3]
         - 5.0 * np.log10(luminosity_distance / 10)
     )
 
     # set a cut on absolute magnitude to choose highly luminous/ massive ellipticals
-    # this cut is chosen based on luminosity vs absolute magnitude for galaxies
-    # in the cosmo DC2 catalog
-    id_massive = np.where(Mag_r_sdss < magnitude_cut_massive)[0]
+    # this cut is chosen based on stellar mass vs i-band absolute magnitude for ellipticals
+    # galaxies in the cosmo DC2 catalog
+    id_massive = np.where(Mag_i_sdss < magnitude_cut_massive)[0]
     DP0_massive_ellipticals = DP0_ellipticals[id_massive]
 
     magnitude_array = np.array([magnitudes[band][id_massive] for band in bands])
