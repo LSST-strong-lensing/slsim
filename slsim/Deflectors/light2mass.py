@@ -203,9 +203,6 @@ def get_velocity_dispersion(
         # since the scaling relations used are at z=0.1
         band_shift = 0.1
 
-    else:
-        raise KeyError("Invalid input for scaling relations.")
-
     # Find out the K-correction factor using the kcorrect module by Blanton
     k_corrections = kcorr_sdss(
         np.array([muSDSS, mgSDSS, mrSDSS, miSDSS, mzSDSS]),
