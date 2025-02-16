@@ -6,12 +6,7 @@ import numpy as np
 
 # from slsim.Sources.simple_supernova_lightcurve import SimpleSupernovaLightCurve
 from astropy.table import Column, Table
-from slsim.Sources import (
-    random_supernovae,
-    agn,
-)
-from astropy.cosmology import FLRW
-from slsim.Sources import random_supernovae
+from slsim.Sources import random_supernovae, agn
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 from slsim.Util.cosmo_util import z_scale_factor
 
@@ -471,7 +466,6 @@ class Source(object):
                 # interpret them as absolute positions or offsets
                 self._center_source = np.array([cx, cy])
             else:
-                # Else randomize
                 test_area_radius = np.sqrt(draw_area / np.pi)
                 r = np.sqrt(np.random.random()) * test_area_radius
                 theta = 2 * np.pi * np.random.random()
@@ -604,15 +598,16 @@ class Source(object):
                 )
 
             kwargs_extended_source = [
-                dict(
-                    magnitude=mag_source,
-                    image=image,  # Use the potentially reshaped image
-                    center_x=center_source[0],
-                    center_y=center_source[1],
-                    phi_G=self.source_dict["phi_G"],
-                    scale=pixel_width,
-                )
+                {
+                    "magnitude": mag_source,
+                    "image": image,  # Use the potentially reshaped image
+                    "center_x": center_source[0],
+                    "center_y": center_source[1],
+                    "phi_G": self.source_dict["phi_G"],
+                    "scale": pixel_width,
+                }
             ]
+
             print(f"kwargs_extended_source: {kwargs_extended_source}")
         else:
             raise ValueError("Provided sersic profile is not supported.")

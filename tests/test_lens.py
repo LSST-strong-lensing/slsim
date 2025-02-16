@@ -4,7 +4,7 @@ import pytest
 import numpy as np
 from numpy import testing as npt
 from astropy.cosmology import FlatLambdaCDM
-from astropy.table import Table, Column
+from astropy.table import Table
 from slsim.lens import (
     Lens,
     image_separation_from_positions,
@@ -15,7 +15,6 @@ from slsim.LOS.los_pop import LOSPop
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
 import os
-from astropy.io import fits
 
 
 class TestLens(object):
@@ -147,7 +146,6 @@ class TestLens(object):
 
     def test_source_magnitude(self):
         band = "g"
-        band2 = "i"
         source_magnitude = self.gg_lens.extended_source_magnitude(band)
         source_magnitude_lensed = self.gg_lens.extended_source_magnitude(
             band, lensed=True

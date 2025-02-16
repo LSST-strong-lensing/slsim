@@ -3,7 +3,6 @@ import numpy as np
 from numpy import testing as npt
 from astropy.table import Table
 from astropy.cosmology import FlatLambdaCDM
-from astropy.io import fits
 from slsim.lens import Lens
 from slsim.image_simulation import (
     simulate_image,
@@ -25,9 +24,6 @@ from slsim.image_simulation import (
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
 import pytest
-
-
-from astropy.table import Table
 
 
 class TestImageSimulation(object):

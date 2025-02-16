@@ -626,6 +626,35 @@ class TestSource:
         result = self.source_interp.extended_source_light_model()
         assert result == ["INTERPOL"]
 
+def test_extended_source_position_interpolated(self):
+    center_lens = np.array([0, 0])
+    draw_area = 4 * np.pi
+
+    result = self.source_interp.extended_source_position(center_lens, draw_area)
+    expected_position = np.array([self.source_interp.source_dict["center_x"][0], 
+                                  self.source_interp.source_dict["center_y"][0]])
+
+    np.testing.assert_array_almost_equal(
+        result, expected_position, decimal=5,
+        err_msg="Center position from source_dict does not match expected."
+    )
+
+    # Test Case 2: If `center_x` and `center_y` are not in `source_dict`, ensure a random position is drawn
+    backup_center_x = self.source_interp.source_dict["center_x"]
+    backup_center_y = self.source_interp.source_dict["center_y"]
+    del self.source_interp.source_dict["center_x"]
+    del self.source_interp.source_dict["center_y"]
+
+    result_random = self.source_interp.extended_source_position(center_lens, draw_area)
+
+    self.source_interp.source_dict["center_x"] = backup_center_x
+    self.source_interp.source_dict["center_y"] = backup_center_y
+
+    test_area_radius = np.sqrt(draw_area / np.pi)
+    assert np.linalg.norm(result_random - center_lens) <= test_area_radius, \
+        "Generated source position is outside the expected draw area."
+
+
     def test_redshift(self):
         assert self.source.redshift == 0.5
         assert self.source11.redshift == 3.123
