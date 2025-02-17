@@ -503,7 +503,9 @@ def image_plus_poisson_noise(
         27).
     :param single_visit_zero_point: Zero point of the single-visit image
         (default 27 for g-band).
-    :return: image with possion noise
+    :return: image with possion noise. The function returns ADU/sec in all cases, 
+     regardless of whether gain = 1 or not. The noise is applied in the electron domain,
+     but the final image is converted back to ADU/sec.
     """
     # make sure all values in an image are positive
     image_positive = np.clip(image, 0, None)
