@@ -59,7 +59,11 @@ class TestLens(object):
                 # the testing but at least code go through this warning message.
                 cosmo=cosmo,
             )
-            if gg_lens.validity_test(mag_arc_limit=mag_arc_limit):
+            second_brightest_image_cut = {"i": 30}
+            if gg_lens.validity_test(
+                second_brightest_image_cut=second_brightest_image_cut,
+                mag_arc_limit=mag_arc_limit,
+            ):
                 self.gg_lens = gg_lens
                 break
 
@@ -152,6 +156,21 @@ class TestLens(object):
     def test_deflector_light_model_lenstronomy(self):
         kwargs_lens_light = self.gg_lens.deflector_light_model_lenstronomy(band="g")
         assert len(kwargs_lens_light) >= 1
+
+    def test_extended_source_magnification_for_individual_images(self):
+        results = self.gg_lens.extended_source_magnification_for_individual_image()
+        assert len(results[0]) >= 2
+
+    def test_extended_source_magnitude_for_each_images(self):
+        result1 = self.gg_lens.extended_source_magnitude_for_each_image(
+            band="i", lensed=True
+        )
+        result2 = self.gg_lens.extended_source_magnitude_for_each_image(
+            band="i", lensed=False
+        )
+        result3 = self.gg_lens.extended_source_magnitude(band="i", lensed=False)
+        assert len(result1[0]) >= 2
+        assert result2 == result3
 
     def test_lens_equation_solver(self):
         # Tests analytical and numerical lens equation solver options.
@@ -299,7 +318,10 @@ def pes_lens_instance():
             deflector_class=deflector4,
             cosmo=cosmo,
         )
-        if pes_lens.validity_test():
+        second_brightest_image_cut = {"i": 30}
+        if pes_lens.validity_test(
+            second_brightest_image_cut=second_brightest_image_cut
+        ):
             pes_lens = pes_lens
             break
     return pes_lens

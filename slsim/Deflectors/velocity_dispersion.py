@@ -7,6 +7,7 @@ from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 from lenstronomy.Analysis.light_profile import LightProfileAnalysis
 from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.SimulationAPI.mag_amp_conversion import MagAmpConversion
+from slsim.Util.param_util import vel_disp_from_m_star
 
 """
 This module provides functions to compute velocity dispersion using schechter function.
@@ -768,10 +769,15 @@ def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
     # here we make sure we interpolate to low stellar masses
     stellar_mass = np.append(stellar_mass, 10**5)
     vel_disp = np.append(vel_disp, 10)
+    # here we make sure we interpolate to high stellar mass
+    max_stellar_mass = max(galaxy_list["stellar_mass"])
+    max_vel_disp = vel_disp_from_m_star(max_stellar_mass)
+    stellar_mass = np.append(max_stellar_mass, stellar_mass)
+    vel_disp = np.append(max_vel_disp, vel_disp)
     f = interpolate.interp1d(
         x=np.log10(stellar_mass),
         y=vel_disp,
-        fill_value=(0, np.max(galaxy_list_zmax["vel_disp"])),
+        fill_value=(0, max_vel_disp),
         bounds_error=False,
     )
     return f

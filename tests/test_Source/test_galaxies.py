@@ -5,6 +5,7 @@ from slsim.Sources.galaxies import Galaxies
 from slsim.Sources.galaxies import (
     galaxy_projected_eccentricity,
     convert_to_slsim_convention,
+    down_sample_to_dc2,
 )
 from astropy.table import Table
 import pytest
@@ -35,8 +36,9 @@ class TestGalaxies(object):
                 * u.rad,
                 [23, 23, 23],
                 [43, 43, 43],
+                [2.245543177998075, 1.9, 2.3] * u.kpc,
             ],
-            names=("z", "M", "e", "angular_size", "mag_i", "a_rot"),
+            names=("z", "M", "e", "angular_size", "mag_i", "a_rot", "physical_size"),
         )
 
         galaxy_list3 = Table(
@@ -275,6 +277,26 @@ class TestGalaxies(object):
             light_profile="triple",
             list_type="astropy_table",
         )
+        self.galaxies11 = Galaxies(
+            galaxy_list=galaxy_list,
+            kwargs_cut={},
+            cosmo=self.cosmo,
+            sky_area=sky_area,
+            downsample_to_dc2=True,
+        )
+
+    def test_compare_downsample(self):
+        galaxy_list = Table(
+            [
+                [0.5, 0.5, 0.5],
+                [-15.248975044343094, -15.248975044343094, -15.248975044343094],
+                [0.1492770563596445, 0.1492770563596445, 0.1492770563596445],
+                [4.186996407348755e-08, 4.186996407348755e-08, 4.186996407348755e-08],
+                [23, 23, 23],
+            ],
+            names=("z", "n0", "M", "ellipticity", "mag_i"),
+        )
+        assert self.galaxies11.n <= len(galaxy_list)
 
     def test_source_number(self):
         number = self.galaxies.source_number
@@ -326,6 +348,7 @@ class TestGalaxies(object):
             galaxy_catalog=self.galaxy_list2,
             light_profile="single_sersic",
             input_catalog_type="skypy",
+            cosmo=self.cosmo,
         )
         assert galaxies["z"][0] == 0.5
         assert galaxies["n_sersic_0"][0] == 1
@@ -338,6 +361,25 @@ def test_galaxy_projected_eccentricity():
     e1, e2 = galaxy_projected_eccentricity(0)
     assert e1 == 0
     assert e2 == 0
+
+
+def test_down_sample_to_dc2():
+    galaxy_pop = Table(
+        {
+            "mag_i": np.random.uniform(18, 30, 10000),  # Magnitudes from 18 to 30
+            "z": np.random.uniform(1.5, 5.0, 10000),  # Redshifts from 1.5 to 5.0
+        }
+    )
+    sky_area = Quantity(value=1, unit="deg2")
+    results = down_sample_to_dc2(galaxy_pop, sky_area)
+    assert (
+        len(results) == 6
+    )  # downsamples in a 6 different bins and returns 6 different
+    # samples
+    assert min(results[0]["z"]) >= 2
+    assert max(results[0]["z"]) < 2.5
+    assert min(results[5]["z"]) >= 4.5
+    assert max(results[5]["z"]) < 5
 
 
 if __name__ == "__main__":
