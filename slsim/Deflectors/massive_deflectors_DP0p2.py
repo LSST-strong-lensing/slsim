@@ -80,7 +80,7 @@ def compute_magnitude(flux, flux_err, zeropoint=31.4):
 def find_massive_ellipticals(
     DP0_table,
     fracDev_limit=0.8,
-    magnitude_cut_massive=-22,
+    iMag_cut_massive=-22,
     pixel_scale=0.2,
     cosmo=FlatLambdaCDM(H0=72, Om0=0.26),
     parallel=False,
@@ -206,7 +206,7 @@ def find_massive_ellipticals(
     # set a cut on absolute magnitude to choose highly luminous/ massive ellipticals
     # this cut is chosen based on stellar mass vs i-band absolute magnitude for ellipticals
     # galaxies in the cosmo DC2 catalog
-    id_massive = np.where(Mag_i_sdss < magnitude_cut_massive)[0]
+    id_massive = np.where(Mag_i_sdss <= iMag_cut_massive)[0]
     DP0_massive_ellipticals = DP0_ellipticals[id_massive]
 
     magnitude_array = np.array([magnitudes[band][id_massive] for band in bands])
