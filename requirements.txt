@@ -11,5 +11,5 @@ matplotlib
 sncosmo
 colossus
 uncertainties
-git+https://github.com/Vibhore-ARIES/kcorrect.git
+kcorrect
 webbpsf
