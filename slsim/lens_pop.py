@@ -48,7 +48,9 @@ class LensPop(LensedPopulationBase):
         if self.los_pop is None:
             self.los_pop = LOSPop()
 
-    def select_lens_at_random(self, test_area=None, **kwargs_lens_cut):
+    def select_lens_at_random(
+        self, test_area=None, second_bright_image_cut=None, **kwargs_lens_cut
+    ):
         """Draw a random lens within the cuts of the lens and source, with
         possible additional cut in the lensing configuration.
 
@@ -57,6 +59,12 @@ class LensPop(LensedPopulationBase):
         :param test_area: solid angle around one lensing galaxies to be
             investigated on (in arc-seconds^2). If None, computed using
             deflector's velocity dispersion.
+        :param second_bright_image_cut: Dictionary containing maximum
+            magnitude of the second brightest image and corresponding
+            band. If provided, selects lenses where the second brightest
+            image has a magnitude less than or equal to provided
+            magnitude. eg: second_bright_image_cut = {"band": "i",
+            "second_bright_mag_max": 23}
         :return: Lens() instance with parameters of the deflector and
             lens and source light
         """
@@ -122,7 +130,13 @@ class LensPop(LensedPopulationBase):
         num_sources_range = np.random.poisson(lam=num_sources_tested_mean)
         return num_sources_range
 
-    def draw_population(self, kwargs_lens_cuts, multi_source=False, speed_factor=1):
+    def draw_population(
+        self,
+        kwargs_lens_cuts,
+        multi_source=False,
+        second_bright_image_cut=None,
+        speed_factor=1,
+    ):
         """Return full population list of all lenses within the area.
 
         # TODO: need to implement a version of it. (improve the
@@ -133,6 +147,12 @@ class LensPop(LensedPopulationBase):
         :param multi_source: A boolean value. If True, considers multi
             source lensing. If False, considers single source lensing.
             The default value is True.
+        :param second_bright_image_cut: Dictionary containing maximum
+            magnitude of the second brightest image and corresponding
+            band. If provided, selects lenses where the second brightest
+            image has a magnitude less than or equal to provided
+            magnitude. eg: second_bright_image_cut = {"band": "i",
+            "second_bright_mag_max": 23}
         :param speed_factor: factor by which the number of deflectors is
             decreased to speed up the calculations.
         :return: List of Lens instances with parameters of the

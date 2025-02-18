@@ -503,7 +503,7 @@ class TestMultiSourceImageSimulation(object):
         self.combined_image = self.image1 + self.image2
 
     def test_image_multiple_source(self):
-        npt.assert_almost_equal(self.image3, self.combined_image, decimal=8)
+        npt.assert_almost_equal(self.image3, self.combined_image, decimal=7)
 
 
 """

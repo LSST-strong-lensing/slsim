@@ -6,10 +6,7 @@ from slsim.Deflectors.richness2mass import mass_richness_relation
 from slsim.Deflectors.halo_population import gene_e_ang_halo, concent_m_w_scatter
 from colossus.cosmology import cosmology as colossus_cosmo
 from slsim.Deflectors.velocity_dispersion import vel_disp_abundance_matching
-from slsim.Deflectors.elliptical_lens_galaxies import (
-    elliptical_projected_eccentricity,
-    vel_disp_from_m_star,
-)
+from slsim.Deflectors.elliptical_lens_galaxies import elliptical_projected_eccentricity
 from slsim.Deflectors.velocity_dispersion import vel_disp_nfw
 from slsim.Deflectors.deflectors_base import DeflectorsBase
 from slsim.Deflectors.deflector import Deflector
@@ -170,7 +167,7 @@ class ClusterDeflectors(DeflectorsBase):
 
         members["vel_disp"] = np.where(
             members["vel_disp"] == -1,
-            vel_disp_from_m_star(members["stellar_mass"]),
+            param_util.vel_disp_from_m_star(members["stellar_mass"]),
             members["vel_disp"],
         )
 
