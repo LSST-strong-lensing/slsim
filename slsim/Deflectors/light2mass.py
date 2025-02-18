@@ -5,6 +5,7 @@ from uncertainties import unumpy
 from astropy.modeling.models import Linear1D
 from slsim.Util.k_correction import kcorr_sdss
 from astropy.cosmology import FlatLambdaCDM
+from slsim.Util.color_transformations import LSST_to_SDSS
 
 """
 This module provides function to calculate the central stellar velocity dispersion of the deflector 
@@ -40,11 +41,10 @@ def Lsigma_relation_spectroscopic(mgSDSS, mrSDSS, Dlum, redshift):
     # Use the SDSS g-band and r-band magnitudes to get the B-band apparent magnitude of the galaxy using the relation
     # given in equation A2, Appendix, Bell et al 2004 for red galaxies. This is required only for using the relations
     # based on spectroscopic measurements.
-    mag_B = mgSDSS + 0.155 + 0.370 * (mgSDSS - mrSDSS)
+    MabsB = mgSDSS + 0.155 + 0.370 * (mgSDSS - mrSDSS)
 
     # Convert the apparent B-band magnitude to the absolute B-band magnitude using the redshift and cosmology defined
-    # Note that the 25 here comes since Dlum is in Mpc
-    MabsB = mag_B - 5.0 * np.log10(Dlum) - 25.0
+    MabsB = MabsB - 5.0 * np.log10(Dlum / 10)
     """Now using the data from DEEP2 and COMBO-17 surveys, Bell et 2004 found
     that the B-band luminosity function evolves such that characteristic
     magnitude MBstar decline by 1.5 magnitudes from z=0.0 to z=1.0. We use the
@@ -55,6 +55,7 @@ def Lsigma_relation_spectroscopic(mgSDSS, mrSDSS, Dlum, redshift):
     our case, MBstar0 = -19.31 has been estimated from the mean value of
     the MBstar0, from Table 1, Bell et al 2004.
     """
+
     # define a 1D line model for MBstar evolution with redshift.
     MBstar_func = Linear1D(-1.5, -19.31)
 
@@ -96,7 +97,7 @@ def Lsigma_relation_weaklensing(mrSDSS, miSDSS, Dlum, redshift):
     """
 
     # Convert the apparent r-band magnitudes to the absolute r
-    Mabsr = mrSDSS - 5.0 * np.log10(Dlum) - 25.0
+    Mabsr = mrSDSS - 5.0 * np.log10(Dlum / 10)
 
     # Convert the sdss r-mag to r'-mag from Frei & Gunn 2003 (Table 3).
     # r' is a fake filter i.e., r shifted to z=0.1.
@@ -142,19 +143,7 @@ def get_velocity_dispersion(
     lsst_errs,
     redshift,
     cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
-    bands=["g", "r", "i"],
-    c1=0.01011,
-    c2=0.01920,
-    c3=0.05162,
-    c4=-0.00032,
-    c5=0.06555,
-    c6=-0.02949,
-    c7=0.00003,
-    c8=0.04040,
-    c9=-0.00892,
-    c10=-0.03068,
-    c11=-0.21527,
-    c12=0.09394,
+    bands=["u", "g", "r", "i", "z"],
     scaling_relation="spectroscopic",
 ):
     """
@@ -171,27 +160,14 @@ def get_velocity_dispersion(
     along the row, and different deflector along the column.
     type: a 2D array of floats.
 
-    Note: Please provide atleast three bands data, including the g, r, and i bands.
-    The three bands are required to perform the k-correction in the SDSS bands. If there is some other
-    way of doing k-correction directly in the LSST bands, we will need only the two g and r bands data.
-
     redshift:   a 1D array of the redshifts
     type: a 1D array of floats
 
     cosmo: cosmology defined
     type: astropy.cosmology
 
-    bands: bands for which you're providing the magnitudes, for now use only 'g', 'r', and 'i'
-    type: a list of strings e.g., ['g','r','i']
-
-    c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12: The color conversion coefficients to convert the LSST magnitudes
-    to the SDSS magnitudes as per the equations (derived from the red galaxy catalog)
-        ##  sdss_g  = lsst_g + c0 + (c1*(lsst_g-lsst_r))   + (c2*(lsst_g-lsst_r)**2)
-        ##  sdss_r  = lsst_r + c3 + (c4*(lsst_g-lsst_r))   + (c5*(lsst_g-lsst_r)**2)
-        ##  sdss_i  = lsst_i + c7 +  (c8*(lsst_i-lsst_z))  +  (c9*(lsst_i-lsst_z)**2)
-        ########    if the z-band magnitude is not available:
-        ########    sdss_i  = lsst_i + c7 +  (c8*(lsst_r-lsst_i))  +  (c9*(lsst_r-lsst_i)**2)
-        ##  sdss_z  = lsst_z + c10 + (c11*(lsst_i-lsst_z)) +  (c12*(lsst_i-lsst_z)**2)
+    bands: bands for which you're providing the magnitudes,
+    type: a list of strings e.g., ['u', 'g', 'r', 'i', 'z' ]
 
 
     returns:
@@ -210,37 +186,12 @@ def get_velocity_dispersion(
     if deflector_type != "elliptical":
         raise KeyError("The module currently supports only elliptical galaxies.")
 
-    lsst_bands = ["u", "g", "r", "i", "z", "y"]
-
-    # extract the indices of the available lsst bands
-    indices = [lsst_bands.index(band) for band in bands]
-
-    lsst = {}
-    sdss_responses = []
-    for ind in range(len(indices)):
-        lsst["{0}".format(lsst_bands[indices[ind]])] = unumpy.uarray(
-            lsst_mags[:, ind], lsst_errs[:, ind]
-        )
-        sdss_responses.append("sdss_%s0" % (lsst_bands[indices[ind]]))
-
-    # transform from lsst to sdss magnitudes
-    mgSDSS = (
-        lsst["g"]
-        + c1
-        + (c2 * (lsst["g"] - lsst["r"]))
-        + (c3 * (lsst["g"] - lsst["r"]) ** 2)
-    )
-    mrSDSS = (
-        lsst["r"]
-        + c4
-        + (c5 * (lsst["g"] - lsst["r"]))
-        + (c6 * (lsst["g"] - lsst["r"]) ** 2)
-    )
-    miSDSS = (
-        lsst["i"]
-        + c7
-        + (c8 * (lsst["r"] - lsst["i"]))
-        + (c9 * (lsst["r"] - lsst["i"]) ** 2)
+    muSDSS, mgSDSS, mrSDSS, miSDSS, mzSDSS = LSST_to_SDSS(
+        unumpy.uarray(lsst_mags[0], lsst_errs[0]),
+        unumpy.uarray(lsst_mags[1], lsst_errs[1]),
+        unumpy.uarray(lsst_mags[2], lsst_errs[2]),
+        unumpy.uarray(lsst_mags[3], lsst_errs[3]),
+        unumpy.uarray(lsst_mags[4], lsst_errs[4]),
     )
 
     if scaling_relation == "spectroscopic":
@@ -252,29 +203,25 @@ def get_velocity_dispersion(
         # since the scaling relations used are at z=0.1
         band_shift = 0.1
 
-    else:
-        raise KeyError("Invalid input for scaling relations.")
-
     # Find out the K-correction factor using the kcorrect module by Blanton
     k_corrections = kcorr_sdss(
-        np.array([mgSDSS, mrSDSS, miSDSS]),
+        np.array([muSDSS, mgSDSS, mrSDSS, miSDSS, mzSDSS]),
         redshift,
-        responses=sdss_responses,
-        responses_out=sdss_responses,
         band_shift=band_shift,
-        redshift_range=[0, 2],
     )
 
     # Apply the K-correction on the SDSS magnitudes
-    mgSDSS = mgSDSS - k_corrections[:, 0]
-    mrSDSS = mrSDSS - k_corrections[:, 1]
-    miSDSS = miSDSS - k_corrections[:, 2]
+    muSDSS = muSDSS - k_corrections[:, 0]
+    mgSDSS = mgSDSS - k_corrections[:, 1]
+    mrSDSS = mrSDSS - k_corrections[:, 2]
+    miSDSS = miSDSS - k_corrections[:, 3]
+    mzSDSS = mzSDSS - k_corrections[:, 4]
 
     ## Note: It will be better if we apply the K-correction directly on the LSST magnitudes,
     ## but no such relation is known to Vibhore right now.
 
-    # calculates the distance luminosity using the redshift and the cosmology
-    Dlum = (cosmo.luminosity_distance(redshift) * cosmo.H(0) / 100).value
+    # calculates the distance luminosity using the redshift and the cosmology in 'pc'
+    Dlum = cosmo.luminosity_distance(redshift).to("pc").value
 
     if scaling_relation == "spectroscopic":
         # Use the Lsigma relation based on spectroscopic measurements to calculate the
@@ -290,4 +237,5 @@ def get_velocity_dispersion(
     # type: a 1D array of uncertainties.core.Variable
     ##   to extract the nomianl values and the uncertainities in separate arrays,
     ##   use unumpy.nominal_values(sigma) and unumpy.std_devs(sigma)
+
     return sigma
