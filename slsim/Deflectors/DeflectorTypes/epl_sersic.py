@@ -14,6 +14,7 @@ class EPLSersic(DeflectorBase):
     - 'angular_size': half-light radius of stellar/light profile in radian
     - 'e1_light': eccentricity of light
     - 'e2_light': eccentricity of light
+    - 'n_sersic': Sersic index
     - 'z': redshift of deflector
     """
 

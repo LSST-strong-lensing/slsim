@@ -470,7 +470,7 @@ class Lens(LensedSystemBase):
         # TODO: might have to change conventions between extended and point source
         if lensed:
             if molet:
-                return self.point_source_magnitude_molet(band=band, time=time)
+                return self.point_source_magnitude_micro_lensing(band=band, time=time)
             magnif = self.point_source_magnification()
             magnif_log = 2.5 * np.log10(abs(magnif))
             if time is not None:
@@ -492,7 +492,7 @@ class Lens(LensedSystemBase):
                 return np.array(magnified_mag_list)
         return self.source.point_source_magnitude(band)
 
-    def point_source_magnitude_molet(self, band, time, **kwargs_molet):
+    def point_source_magnitude_micro_lensing(self, band, time, **kwargs_micro_lensing):
         """Return image magnitudes at a given observer time.
 
         :param band: imaging band
@@ -517,7 +517,7 @@ class Lens(LensedSystemBase):
         # quasar disk model at given time(s) (either time-variable or static
 
         # ===============
-        # call MOLET with
+        # call micro-lensing calculation with
         # kappa: lensing convergence at image position
         # gamma: shear strength at image position
         # kappa_star: stellar convergence at image position
@@ -525,7 +525,7 @@ class Lens(LensedSystemBase):
         #         redshifts, but for time delays. The time is relative to the first arriving
         #         image.
         # band: photometric band, potentially changing to transmission curve
-        # kwargs_molet: additional (optional) dictionary of settings required by molet that do not depend on
+        # kwargs_micro_lensing: additional (optional) dictionary of settings required by micro-lensing calculation that do not depend on
         #         the Lens() class
         # ===============
 
