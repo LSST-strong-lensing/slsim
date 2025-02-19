@@ -575,8 +575,8 @@ class Lens(LensedSystemBase):
         return observer_times
 
     def point_source_magnitude(self, band, lensed=False, time=None, molet=False):
-        """Point source magnitude, either unlensed (single value) or lensed (array) with
-        macro-model magnifications. This function provided
+        """Point source magnitude, either unlensed (single value) or lensed
+        (array) with macro-model magnifications. This function provided
         magnitudes of all the sources.
 
         # TODO: time-variability with micro-lensing
@@ -613,7 +613,6 @@ class Lens(LensedSystemBase):
         :param time: time is a image observation time in units of days.
             If None, provides magnitude without variability.
         :return: point source magnitude of a single source
-
         """
         # TODO: might have to change conventions between extended and point source
         if lensed:
@@ -638,14 +637,13 @@ class Lens(LensedSystemBase):
                 return np.array(magnified_mag_list)
         return source.point_source_magnitude(band)
 
-
     def point_source_magnitude_micro_lensing(self, band, time, **kwargs_micro_lensing):
         """Return image magnitudes at a given observer time.
 
         :param band: imaging band
         :type band: string
-        :param time: time is an image observation time in units of days. If None,
-            provides magnitude without variability.
+        :param time: time is an image observation time in units of days.
+            If None, provides magnitude without variability.
         :return: point source magnitude (lensed (incl. micro-lensing))
         """
         # Get image observed times
