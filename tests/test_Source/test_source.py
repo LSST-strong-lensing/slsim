@@ -626,16 +626,17 @@ class TestSource:
         result = self.source_interp.extended_source_light_model()
         assert result == ["INTERPOL"]
 
-
     def test_extended_source_position_interpolated(self):
         center_lens = np.array([0, 0])
         draw_area = 4 * np.pi
 
         result = self.source_interp.extended_source_position(center_lens, draw_area)
-        expected_position = np.array([
-            self.source_interp.source_dict["center_x"][0],
-            self.source_interp.source_dict["center_y"][0],
-        ])
+        expected_position = np.array(
+            [
+                self.source_interp.source_dict["center_x"][0],
+                self.source_interp.source_dict["center_y"][0],
+            ]
+        )
 
         np.testing.assert_array_almost_equal(
             result.flatten(),  # Ensure same shape
@@ -643,7 +644,6 @@ class TestSource:
             decimal=5,
             err_msg="Center position from source_dict does not match expected.",
         )
-
 
     def test_redshift(self):
         assert self.source.redshift == 0.5
