@@ -28,17 +28,19 @@ class SNeLightcone(object):
         sne_rate = SNIaRate(self._cosmo, self._input_redshifts[-1])
         h = self._cosmo.H(0).to_value() / 100
 
-        self.density = (
-            self.convert_density(sne_rate.calculate_SNIa_rate(self._input_redshifts))
-        ) / h
+        # Account for included factor of h.
+        self.density = self.convert_density(
+            sne_rate.calculate_SNIa_rate(self._input_redshifts) * h
+        )
 
     def convert_density(self, density):
-        """Converts SN Ia comoving densities from [yr^(-1)Mpc^(-3)] to have the desired
-        time unit.
+        """Converts SN Ia comoving densities from [yr^(-1)Mpc^(-3)] to have the
+        desired time unit.
 
-        :param density: initial comoving density of SN Ia [yr^(-1)Mpc^(-3)]
-        :return: SN Ia comoving density with the desired time unit [day^(-1)Mpc^(-3),
-            hr^(-1)Mpc^(-3), etc.]
+        :param density: initial comoving density of SN Ia
+            [yr^(-1)Mpc^(-3)]
+        :return: SN Ia comoving density with the desired time unit
+            [day^(-1)Mpc^(-3), hr^(-1)Mpc^(-3), etc.]
         """
         time_conversion = (1 * units.year).to(self._time_interval.unit)
         converted_density = density / time_conversion * self._time_interval.value
@@ -47,8 +49,8 @@ class SNeLightcone(object):
     def supernovae_sample(self):
         """Integrates SNe comoving density in light cone.
 
-        :return: sampled redshifts such that the comoving number density of galaxies
-            corresponds to the input distribution
+        :return: sampled redshifts such that the comoving number density
+            of galaxies corresponds to the input distribution
         :return type: numpy.ndarray
         """
         if not hasattr(self, "_output_redshifts"):

@@ -11,9 +11,9 @@ from slsim.Halos.halos_util import convergence_mean_0
 
 
 class HalosStatistics(HalosLensBase):
-    """A class for computing statistical distributions of lensing properties such as
-    external convergence (kappa_ext) and external shear (gamma_ext) across multiple
-    samples of halo configurations.
+    """A class for computing statistical distributions of lensing properties
+    such as external convergence (kappa_ext) and external shear (gamma_ext)
+    across multiple samples of halo configurations.
 
     This class extends `HalosLensBase` to include statistical methods that allow for the computation of lensing effects over a range of redshifts and configurations, providing tools to analyze the statistical properties of lensing in cosmological simulations.
 
@@ -61,8 +61,8 @@ class HalosStatistics(HalosLensBase):
         self.samples_number = samples_number
 
     def get_kappaext_gammaext_distib_zdzs(self, zd, zs, listmean=False):
-        """Computes the distribution of external convergence (kappa_ext) and external
-        shear (gamma_ext) for given deflector and source redshifts.
+        """Computes the distribution of external convergence (kappa_ext) and
+        external shear (gamma_ext) for given deflector and source redshifts.
 
         :param zd: The deflector redshift.
         :type zd: float
@@ -101,8 +101,9 @@ class HalosStatistics(HalosLensBase):
         return kappa_gamma_distribution
 
     def generate_distributions_0to5(self, output_format="dict", listmean=False):
-        """Generates distributions of external convergence (kappa_ext) and external
-        shear (gamma_ext) for a range of deflector and source redshifts from 0 to 5.
+        """Generates distributions of external convergence (kappa_ext) and
+        external shear (gamma_ext) for a range of deflector and source
+        redshifts from 0 to 5.
 
         :param listmean: the boolean if average convergence (kappa) to 0
         :type listmean: bool
@@ -145,8 +146,9 @@ class HalosStatistics(HalosLensBase):
         return distributions
 
     def compute_various_k_g_lens_values(self, zd, zs):
-        r"""Computes various convergence (kappa) and shear (gamma) values for given
-        deflector and source redshifts and the lens kwargs and lens model.
+        r"""Computes various convergence (kappa) and shear (gamma) values for
+        given deflector and source redshifts and the lens kwargs and lens
+        model.
 
         This function extracts the lens model and its keyword arguments for different redshift combinations
         ('od`, `os`, and `ds`). It then computes the convergence and shear values for each of these combinations.
@@ -244,8 +246,8 @@ class HalosStatistics(HalosLensBase):
         ), (kwargs_lens_os, lens_model_os)
 
     def get_all_pars_distib(self, zd, zs):
-        """Computes the distribution of external convergence (kappa_ext) and external
-        shear (gamma_ext) for given deflector and source redshifts.
+        """Computes the distribution of external convergence (kappa_ext) and
+        external shear (gamma_ext) for given deflector and source redshifts.
 
         :param zd: The deflector redshift.
         :type zd: float
@@ -311,8 +313,8 @@ class HalosStatistics(HalosLensBase):
         return kappa_gamma_distribution, lens_instance
 
     def compute_kappa_in_bins(self):
-        """For computing a mass sheet correction. Computes the kappa values for each
-        redshift bin.
+        """For computing a mass sheet correction. Computes the kappa values for
+        each redshift bin.
 
         :returns: A list of kappa values for each redshift bin.
         :rtype: list[float]
@@ -366,8 +368,9 @@ class HalosStatistics(HalosLensBase):
             return np.sum(mass_list)
 
     def total_critical_mass(self, method="differential_comoving_volume"):
-        """Computes the total critical mass within a given sky area up to a redshift of
-        5 using either the total comoving volume or differential comoving volume method.
+        """Computes the total critical mass within a given sky area up to a
+        redshift of 5 using either the total comoving volume or differential
+        comoving volume method.
 
         The function computes the critical mass using either the `comoving_volume`
         method or the `differential_comoving_volume` method.
@@ -411,9 +414,9 @@ class HalosStatistics(HalosLensBase):
         return total_mass  # In Msun
 
     def mass_divide_kcrit(self):
-        """Computes the external convergence (kappa_ext) by dividing the mass of each
-        halo by the critical surface density and the physical area corresponding to the
-        cone opening angle at each halo's redshift.
+        """Computes the external convergence (kappa_ext) by dividing the mass
+        of each halo by the critical surface density and the physical area
+        corresponding to the cone opening angle at each halo's redshift.
 
         :returns: An array of kappa_ext values for each halo.
         :rtype: numpy.ndarray
@@ -447,7 +450,8 @@ class HalosStatistics(HalosLensBase):
         lens_model=None,
         mass_sheet=None,
     ):
-        """Calculates the divergence of kappa values across a specified sky area.
+        """Calculates the divergence of kappa values across a specified sky
+        area.
 
         :param diff: The differential used in the computation of kappa. Defaults to 0.0000001.
         :type diff: float, optional
@@ -534,7 +538,8 @@ class HalosStatistics(HalosLensBase):
     def get_kappa_gamma_distib(
         self, gamma_tot=False, diff=1.0, diff_method="square", listmean=False
     ):
-        """Computes and returns the distribution of convergence and shear values.
+        """Computes and returns the distribution of convergence and shear
+        values.
 
         This method uses multiprocessing to compute the convergence and shear values for multiple samples in parallel.
 
@@ -583,8 +588,8 @@ class HalosStatistics(HalosLensBase):
     def get_kappa_gamma_distib_without_multiprocessing(
         self, gamma_tot=False, diff=1.0, diff_method="square", listmean=False
     ):
-        """Runs the method get_convergence_shear() a specific number of times and stores
-        the results for kappa, gamma1, and gamma2 in separate lists.
+        """Runs the method get_convergence_shear() a specific number of times
+        and stores the results for kappa, gamma1, and gamma2 in separate lists.
 
         :param listmean: the boolean if average convergence (kappa) to 0
         :type listmean: bool

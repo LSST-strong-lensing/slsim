@@ -1,11 +1,14 @@
 import matplotlib.pyplot as plt
+import numpy as np
 from astropy.visualization import make_lupton_rgb
 from slsim.image_simulation import simulate_image
+from slsim.roman_image_simulation import simulate_roman_image
 
 
 class LensingPlots(object):
-    """A class to create and display simulated gravitational lensing images using the
-    provided configurations for the source (blue) and lens (red) galaxies."""
+    """A class to create and display simulated gravitational lensing images
+    using the provided configurations for the source (blue) and lens (red)
+    galaxies."""
 
     def __init__(self, lens_pop, num_pix=64, observatory="LSST", **kwargs):
         """
@@ -19,6 +22,7 @@ class LensingPlots(object):
         :param kwargs: additional keyword arguments for the bands. Eg: coadd_years
             (=10): this is the number of years corresponding to num_exposures in obs
             dict. Currently supported: 1-10.
+            See roman_image_simulation.py for more options if simulating roman images
         :type kwargs: dict
         """
         self._lens_pop = lens_pop
@@ -29,14 +33,20 @@ class LensingPlots(object):
     def rgb_image(self, lens_class, rgb_band_list, add_noise=True):
         """Method to generate a rgb-image with lupton_rgb color scale.
 
-        :param lens_class: class object containing all information of the lensing system
-            (e.g., Lens())
-        :param rgb_band_list: list of imaging band names corresponding to r-g-b color
-            map
-        :param add_noise: boolean flag, set to True to add noise to the image, default
-            is True
+        :param lens_class: class object containing all information of
+            the lensing system (e.g., Lens())
+        :param rgb_band_list: list of imaging band names corresponding
+            to r-g-b color map
+        :param add_noise: boolean flag, set to True to add noise to the
+            image, default is True
         """
-        image_r = simulate_image(
+        if self._observatory == "Roman":
+            # NOTE: Galsim is required which is not supported on Windows
+            make_image = simulate_roman_image
+        else:
+            make_image = simulate_image
+
+        image_r = make_image(
             lens_class=lens_class,
             band=rgb_band_list[0],
             num_pix=self.num_pix,
@@ -44,7 +54,7 @@ class LensingPlots(object):
             observatory=self._observatory,
             **self._kwargs
         )
-        image_g = simulate_image(
+        image_g = make_image(
             lens_class=lens_class,
             band=rgb_band_list[1],
             num_pix=self.num_pix,
@@ -52,7 +62,7 @@ class LensingPlots(object):
             observatory=self._observatory,
             **self._kwargs
         )
-        image_b = simulate_image(
+        image_b = make_image(
             lens_class=lens_class,
             band=rgb_band_list[2],
             num_pix=self.num_pix,
@@ -60,7 +70,20 @@ class LensingPlots(object):
             observatory=self._observatory,
             **self._kwargs
         )
-        image_rgb = make_lupton_rgb(image_r, image_g, image_b, stretch=0.5)
+
+        # Need to use different settings for make_lupton_rgb for roman images
+        if self._observatory == "Roman":
+            minimum = [np.min(image_r), np.min(image_g), np.min(image_b)]
+            stretch = 8
+            Q = 10
+        else:
+            minimum = 0
+            stretch = 0.5
+            Q = 8
+
+        image_rgb = make_lupton_rgb(
+            image_r, image_g, image_b, minimum=minimum, stretch=stretch, Q=Q
+        )
         return image_rgb
 
     def plot_montage(
@@ -71,16 +94,19 @@ class LensingPlots(object):
         n_vertical=1,
         kwargs_lens_cut=None,
     ):
-        """Method to generate and display a grid of simulated gravitational lensing
-        images with or without noise.
+        """Method to generate and display a grid of simulated gravitational
+        lensing images with or without noise.
 
-        :param rgb_band_list: list of imaging band names corresponding to r-g-b color
-            map
-        :param add_noise: boolean flag, set to True to add noise to the images, default
-            is True
-        :param n_horizont: number of images to display horizontally, default is 1
-        :param n_vertical: number of images to display vertically, default is 1
-        :param kwargs_lens_cut: lens selection cuts for Lens.validity_test() function
+        :param rgb_band_list: list of imaging band names corresponding
+            to r-g-b color map
+        :param add_noise: boolean flag, set to True to add noise to the
+            images, default is True
+        :param n_horizont: number of images to display horizontally,
+            default is 1
+        :param n_vertical: number of images to display vertically,
+            default is 1
+        :param kwargs_lens_cut: lens selection cuts for
+            Lens.validity_test() function
         """
         if kwargs_lens_cut is None:
             kwargs_lens_cut = {}

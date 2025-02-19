@@ -1,18 +1,17 @@
 import numpy as np
 from astropy.table import Table, vstack
-from astropy.table import Column
 from slsim.image_simulation import (
     sharp_image,
     lens_image,
-    lens_image_series,
 )
 from slsim.Util.param_util import transformmatrix_to_pixelscale
 from scipy import interpolate
 from scipy.stats import norm, halfnorm
 import matplotlib.pyplot as plt
 from slsim.image_simulation import point_source_coordinate_properties
-from slsim.Util.param_util import random_ra_dec
+from slsim.Util.param_util import random_ra_dec, fits_append_table
 import h5py
+import os
 
 try:
     import lsst.geom as geom
@@ -33,8 +32,9 @@ uses some of the packages provided by the LSST Science Pipeline.
 def DC2_cutout(ra, dec, num_pix, butler, band):
     """Draws a cutout from the DC2 data based on the given ra, dec pair.
 
-    For this, one needs to provide a butler to this function. To initiate Butler, you
-    need to specify data configuration and collection of the data.
+    For this, one needs to provide a butler to this function. To
+    initiate Butler, you need to specify data configuration and
+    collection of the data.
     :param ra: ra for the cutout
     :param dec: dec for the cutout
     :param num_pix: number of pixel for the cutout
@@ -63,9 +63,10 @@ def DC2_cutout(ra, dec, num_pix, butler, band):
 def lens_inejection(
     lens_pop, num_pix, delta_pix, butler, ra, dec, lens_cut=None, flux=None
 ):
-    """Chooses a random lens from the lens population and injects it to a DC2 cutout
-    image. For this one needs to provide a butler to this function. To initiate Butler,
-    you need to specify data configuration and collection of the data.
+    """Chooses a random lens from the lens population and injects it to a DC2
+    cutout image. For this one needs to provide a butler to this function. To
+    initiate Butler, you need to specify data configuration and collection of
+    the data.
 
     :param lens_pop: lens population from slsim
     :param num_pix: number of pixel for the cutout
@@ -74,10 +75,12 @@ def lens_inejection(
     :param ra: ra for the cutout
     :param dec: dec for the cutout
     :param lens_cut: list of criteria for lens selection
-    :param flux: flux need to be asigned to the lens image. It sould be None
+    :param flux: flux need to be asigned to the lens image. It sould be
+        None
     :param: path: path to save the output
-    :returns: An astropy table containing Injected lens in r-band, DC2 cutout image in
-        r-band, cutout image with injected lens in r, g , and i band
+    :returns: An astropy table containing Injected lens in r-band, DC2
+        cutout image in r-band, cutout image with injected lens in r, g
+        , and i band
     """
     # lens = sim_lens
     if lens_cut is None:
@@ -187,24 +190,26 @@ def lens_inejection_fast(
     lens_cut=None,
     noise=True,
 ):
-    """Chooses a random lens from the lens population and injects it to a DC2 cutout
-    image. For this one needs to provide a butler to this function. To initiate Butler,
-    you need to specify data configuration and collection of the data.
+    """Chooses a random lens from the lens population and injects it to a DC2
+    cutout image. For this one needs to provide a butler to this function. To
+    initiate Butler, you need to specify data configuration and collection of
+    the data.
 
     :param lens_pop: lens population from slsim
     :param num_pix: number of pixel for the cutout
     :param mag_zero_point: magnitude zero point in band
-    :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
-        displacements
+    :param transform_pix2angle: transformation matrix (2x2) of pixels
+        into coordinate displacements
     :param butler: butler object
     :param ra: ra for the cutout
     :param dec: dec for the cutout
     :param num_cutout_per_patch: number of cutout image drawn per patch
     :param lens_cut: list of criteria for lens selection
-    :param noise: poisson noise to be added to an image. If True, poisson noise will be
-        added to the image based on exposure time.
-    :returns: An astropy table containing Injected lens in r-band, DC2 cutout image in
-        r-band, cutout image with injected lens in r, g , and i band
+    :param noise: poisson noise to be added to an image. If True,
+        poisson noise will be added to the image based on exposure time.
+    :returns: An astropy table containing Injected lens in r-band, DC2
+        cutout image in r-band, cutout image with injected lens in r, g
+        , and i band
     """
 
     if lens_cut is None:
@@ -303,10 +308,10 @@ def lens_inejection_fast(
 def multiple_lens_injection(
     lens_pop, num_pix, delta_pix, butler, ra, dec, lens_cut=None, flux=None
 ):
-    """Injects random lenses from the lens population to multiple DC2 cutout images
-    using lens_inejection function. For this one needs to provide a butler to this
-    function. To initiate Butler, you need to specify data configuration and collection
-    of the data.
+    """Injects random lenses from the lens population to multiple DC2 cutout
+    images using lens_inejection function. For this one needs to provide a
+    butler to this function. To initiate Butler, you need to specify data
+    configuration and collection of the data.
 
     :param lens_pop: lens population from slsim
     :param num_pix: number of pixel for the cutout
@@ -314,11 +319,12 @@ def multiple_lens_injection(
     :param butler: butler object
     :param ra: ra for a cutout
     :param dec: dec for a cutout
-    :param flux: flux need to be asigned to the lens image. It sould be None
+    :param flux: flux need to be asigned to the lens image. It sould be
+        None
     :param: path: path to save the output
-    :returns: An astropy table containing Injected lenses in r-band, DC2 cutout images
-        in r-band, cutout images with injected lens in r, g , and i band for a given set
-        of ra and dec
+    :returns: An astropy table containing Injected lenses in r-band, DC2
+        cutout images in r-band, cutout images with injected lens in r,
+        g , and i band for a given set of ra and dec
     """
     injected_images = []
     for i in range(len(ra)):
@@ -349,44 +355,58 @@ def multiple_lens_injection_fast(
     num_cutout_per_patch=10,
     lens_cut=None,
     noise=True,
+    output_file=None,
 ):
-    """Injects random lenses from the lens population to multiple DC2 cutout images
-    using lens_inejection_fast function. For this one needs to provide a butler to this
-    function. To initiate Butler, you need to specify data configuration and collection
-    of the data.
+    """Injects random lenses from the lens population to multiple DC2 cutout
+    images using lens_inejection_fast function. For this one needs to provide a
+    butler to this function. To initiate Butler, you need to specify data
+    configuration and collection of the data.
 
     :param lens_pop: lens population from slsim
     :param num_pix: number of pixel for the cutout
     :param mag_zero_point: magnitude zero point in band
-    :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
-        displacements
+    :param transform_pix2angle: transformation matrix (2x2) of pixels
+        into coordinate displacements
     :param butler: butler object
     :param ra: ra for a cutout
     :param dec: dec for a cutout
-    :param noise: poisson noise to be added to an image. If True, poisson noise will be
-        added to the image based on exposure time.
-    :returns: An astropy table containing Injected lenses in r-band, DC2 cutout images
-        in r-band, cutout images with injected lens in r, g , and i band for a given set
-        of ra and dec
+    :param noise: poisson noise to be added to an image. If True,
+        poisson noise will be added to the image based on exposure time.
+    :param output_file: path to the output FITS file where data will be
+        saved
+    :returns: An astropy table containing Injected lenses in r-band, DC2
+        cutout images in r-band, cutout images with injected lens in r,
+        g , and i band for a given set of ra and dec. If output_file
+        path is provided, it saves this astropy table in fits file with
+        the given name.
     """
     injected_images = []
     for i in range(len(ra)):
-        injected_images.append(
-            lens_inejection_fast(
-                lens_pop,
-                num_pix,
-                mag_zero_point,
-                transform_pix2angle,
-                butler,
-                ra[i],
-                dec[i],
-                num_cutout_per_patch,
-                lens_cut=lens_cut,
-                noise=noise,
-            )
+        injected_image = lens_inejection_fast(
+            lens_pop,
+            num_pix,
+            mag_zero_point,
+            transform_pix2angle,
+            butler,
+            ra[i],
+            dec[i],
+            num_cutout_per_patch,
+            lens_cut=lens_cut,
+            noise=noise,
         )
-    injected_image_catalog = vstack(injected_images)
-    return injected_image_catalog
+        if output_file is None:
+            injected_images.append(injected_image)
+        else:
+            first_table = not os.path.exists(output_file)
+            if first_table:
+                injected_image.write(output_file, overwrite=True)
+                first_table = False
+            else:
+                fits_append_table(output_file, injected_image)
+    if len(injected_images) > 1:
+        injected_image_catalog = vstack(injected_images)
+        return injected_image_catalog
+    return None
 
 
 def add_object(
@@ -483,22 +503,25 @@ def cutout_image_psf_kernel(
     transform_pix2angle,
     calibFluxRadius=12,
 ):
-    """This function extracts psf kernels from the dp0 cutout image at point source
-    image positions and deflector position. In the dp0.2 data, psf kernel vary with
-    coordinate and can be computed using given psf model.
+    """This function extracts psf kernels from the dp0 cutout image at point
+    source image positions and deflector position. dp0 images are objects that
+    has various attributes. In the dp0.2 data, psf kernel vary with coordinate
+    and can be computed using given psf model.
 
-    :param dp0_image: cutout image from the dp0 data or any other image
-    :param lens_class: class object containing all information of the lensing system
-        (e.g., Lens())
+    :param dp0_image: cutout image from the dp0 data.
+    :param lens_class: class object containing all information of the
+        lensing system (e.g., Lens())
     :param band: imaging band
     :param mag_zero_point: magnitude zero point in band
     :param delta_pix: pixel scale of image generated
     :param num_pix: number of pixels per axis
-    :param calibFluxRadius: (optional) Aperture radius (in pixels) used to define the
-        calibration for thisexposure+catalog. This is used to produce the correct
-        instrumental fluxes within the radius. The value should match that of the field
-        defined in slot_CalibFlux_instFlux.
-    :returns: Astropy table containing psf kernel at image and deflector positions.
+    :param calibFluxRadius: (optional) Aperture radius (in pixels) used
+        to define the calibration for thisexposure+catalog. This is used
+        to produce the correct instrumental fluxes within the radius.
+        The value should match that of the field defined in
+        slot_CalibFlux_instFlux.
+    :returns: Astropy table containing psf kernel at image and deflector
+        positions.
     """
     image_data = point_source_coordinate_properties(
         lens_class=lens_class,
@@ -557,14 +580,17 @@ def cutout_image_psf_kernel(
 
 
 def tap_query(center_coords, radius=0.1, band="i"):
-    """This function uses tap_service from RSP to query calexp visit information around
-    a coordinate point.
+    """This function uses tap_service from RSP to query calexp visit
+    information around a coordinate point.
 
-    :param center_coords: A coordinate point around which visit informations are needed.
+    :param center_coords: A coordinate point around which visit
+        informations are needed.
     :type center_coords: string. eg: "65, -36"
-    :param radius: Radius around center point for query. The unit of radius is degree.
+    :param radius: Radius around center point for query. The unit of
+        radius is degree.
     :param band: imaging band
-    :return: An astropy table of visit information sorted with observation time.
+    :return: An astropy table of visit information sorted with
+        observation time.
     """
     service = get_tap_service("tap")
     query = (
@@ -594,8 +620,8 @@ def tap_query(center_coords, radius=0.1, band="i"):
 def list_of_calexp(expo_information, butler):
     """Extracts calexp images based on exposure information.
 
-    :param expo_information: Astropy table containing exposure information. It must
-        contain Visit ID and Detector ID.
+    :param expo_information: Astropy table containing exposure
+        information. It must contain Visit ID and Detector ID.
     :param butler: butler object
     :return: list of calexp images.
     """
@@ -612,7 +638,8 @@ def warp_to_exposure(exposure, warp_to_exposure):
     """This function aligns two given dp0 images.
 
     :param exposure: image that need to be aligned
-    :param warp_to_exposure: Reference image on which exposure should be aligned.
+    :param warp_to_exposure: Reference image on which exposure should be
+        aligned.
     :return: Image aligned to reference image.
     """
     warper = Warper(warpingKernelName="lanczos4")
@@ -673,9 +700,10 @@ def radec_to_pix(radec, dp0_image):
     :param radec: SpherePoint of radec
     :type radec: an object: eg: geom.SpherePoint(65*degree, -36*degree)
     :param dp0_image: an image or list of images containing given radec
-    :return: corresponding Point2D of pixel coordinate in provided images. If an image
-        is provided, output will be a single Point2D. If list of image is provided,
-        output will be list of correspoding Point2D.
+    :return: corresponding Point2D of pixel coordinate in provided
+        images. If an image is provided, output will be a single
+        Point2D. If list of image is provided, output will be list of
+        correspoding Point2D.
     """
     if isinstance(dp0_image, list):
         pix = []
@@ -702,15 +730,16 @@ def dp0_psf_kernels(pixel_coord, dp0_image):
 
 
 def dp0_time_series_images_data(butler, center_coord, radius="0.1", band="i", size=101):
-    """Creates time series data from dp0 data.
+    """Creates time series cutouts and associated metadata from dp0 data.
 
     :param butler: butler object
-    :param center_coord: A coordinate point around which we need to create time series
-        images.
+    :param center_coord: A coordinate point around which we need to
+        create time series images.
     :param radius: radius for query
     :param band: imaging band
     :param size: cutout size of images
-    :return: An astropy table containg time series images and other information
+    :return: An astropy table containg time series images and other
+        information
     """
     expo_information = tap_query(center_coords=center_coord, radius=radius, band=band)
     calexp_image = list_of_calexp(expo_information, butler=butler)
@@ -749,112 +778,63 @@ def dp0_time_series_images_data(butler, center_coord, radius="0.1", band="i", si
     return table_data
 
 
-def variable_lens_injection(
-    lens_class, band, num_pix, transform_pix2angle, exposure_data
+def multiple_dp0_time_series_images_data(
+    butler, center_coords_list, radius="0.034", band="i", size=101, output_file=None
 ):
-    """Injects variable lens to the dp0 time series data.
+    """Creates multiple time series cutouts and associated meta data from dp0
+    data. Here, multiple means time series cutouts at multiple sky location.
+    Using this function one can produce more than one time series cutout based
+    on how many variable lenses he/she want to inject.
 
-    :param lens_class: Lens() object
+    :param butler: butler object
+    :param center_coord: list of coordinate point around which we need
+        to create time series images.
+    :param radius: radius for query
     :param band: imaging band
-    :param num_pix: number of pixels per axis
-    :param transform_pix2angle: transformation matrix (2x2) of pixels into coordinate
-        displacements
-    :param exposure_data: An astropy table of exposure data. It must contain calexp
-        images or generated noisy background image (column name should be
-        "time_series_images", these images are single exposure images of the same part
-        of the sky at different time), magnitude zero point (column name should be
-        "zero_point", these are zero point magnitudes for each single exposure images in
-        time series image) , psf kernel for each exposure (column name should be
-        "psf_kernel", these are pixel psf kernel for each single exposure images in time
-        series image), exposure time (column name should be "expo_time", these are
-        exposure time for each single exposure images in time series images),
-        observation time (column name should be "obs_time", these are observation time
-        in days for each single exposure images in time series images)
-    :return: Astropy table of injected lenses and exposure information of dp0 data
+    :param size: cutout size of images
+    :return: List of astropy table containg time series images and other
+        information. If output_file path is provided, it saves list of
+        these astropy table in fits file with the given name.
     """
-
-    lens_images = lens_image_series(
-        lens_class,
-        band=band,
-        mag_zero_point=exposure_data["zero_point"],
-        num_pix=num_pix,
-        psf_kernel=exposure_data["psf_kernel"],
-        transform_pix2angle=transform_pix2angle,
-        exposure_time=exposure_data["expo_time"],
-        t_obs=exposure_data["obs_time"],
-    )
-
-    final_image = []
-    for i in range(len(exposure_data["obs_time"])):
-        final_image.append(exposure_data["time_series_images"][i] + lens_images[i])
-    lens_col = Column(name="lens", data=lens_images)
-    final_image_col = Column(name="injected_lens", data=final_image)
-    exposure_data.add_columns([lens_col, final_image_col])
-    return exposure_data
-
-
-def multiple_variable_lens_injection(
-    lens_class_list,
-    band,
-    num_pix,
-    transform_matrices_list,
-    exposure_data_list,
-):
-    """Injects multiple variable lenses to multiple dp0 time series data.
-
-    :param lens_class_list: list of Lens() object
-    :param band: imaging band
-    :param num_pix: number of pixels per axis
-    :param transform_matrices_list: list of transformation matrix (2x2) of pixels into
-        coordinate displacements for each exposure
-    :param exposure_data: list of astropy table of exposure data for each set of time
-        series images. It must contain calexp images or generated noisy background image
-        (column name should be "time_series_images", these images are single exposure
-        images of the same part of the sky at different time), magnitude zero point
-        (column name should be "zero_point", these are zero point magnitudes for each
-        single exposure images in time series image) , psf kernel for each exposure
-        (column name should be "psf_kernel", these are pixel psf kernel for each single
-        exposure images in time series image), exposure time (column name should be
-        "expo_time", these are exposure time for each single exposure images in time
-        series images), observation time (column name should be "obs_time", these are
-        observation time in days for each single exposure images in time series images)
-    :return: list of astropy table of injected lenses and exposure information of dp0
-        data for each time series lenses.
-    """
-    final_images_catalog = []
-    for lens_class, transform_matrices, expo_data in zip(
-        lens_class_list, transform_matrices_list, exposure_data_list
-    ):
-        final_images_catalog.append(
-            variable_lens_injection(
-                lens_class,
-                band=band,
-                num_pix=num_pix,
-                transform_pix2angle=transform_matrices,
-                exposure_data=expo_data,
-            )
+    expo_data_list = []
+    for center_coords in center_coords_list:
+        time_series_data = dp0_time_series_images_data(
+            butler, center_coords, radius=radius, band=band, size=size
         )
-    return final_images_catalog
+        if output_file is None:
+            expo_data_list.append(time_series_data)
+        else:
+            first_table = not os.path.exists(output_file)
+            if first_table:
+                time_series_data.write(output_file, overwrite=True)
+                first_table = False
+            else:
+                fits_append_table(output_file, time_series_data)
+    if len(time_series_data) > 1:
+        return expo_data_list
+    return None
 
 
 def measure_noise_level_in_RSP_coadd(RSP_coadd, N_pixels, plot=False):
     np.random.seed(1)
-    """Function to measure the noise level within a central square aperture of an RSP
-    coadd. The noise level could vary between coadds so this should be measured on a
-    coadd-by-coadd basis. This is done by fitting a half-norm distribution to the
-    negative values in the coadd and then generating a large number of random noise
-    realisations from this distribution. The maximum flux level (i.e. the aperture flux
-    above which the image is said to contain a central source) is then calculated as the
-    2-sigma limit of the sum of the aperture flux in these realisations.
+    """Function to measure the noise level within a central square aperture of
+    an RSP coadd. The noise level could vary between coadds so this should be
+    measured on a coadd-by-coadd basis. This is done by fitting a half-norm
+    distribution to the negative values in the coadd and then generating a
+    large number of random noise realisations from this distribution. The
+    maximum flux level (i.e. the aperture flux above which the image is said to
+    contain a central source) is then calculated as the 2-sigma limit of the
+    sum of the aperture flux in these realisations.
 
-    :param RSP_coadd: .npy array, the RSP coadd image (this should be large to ensure
-        the noise level is accurately measured). This could also be a 3D array of many
-        individual (random) cutouts.
-    :param N_central_pixels: int, size of (square) aperture within which to determine
-        the presence/absence of a central source.
-    :param plot: bool: Whether to plot the gaussian fits to the noise level
-    :return: float, 2-sigma flux level in the aperture above which the image is said to
-        contain a central source.
+    :param RSP_coadd: .npy array, the RSP coadd image (this should be
+        large to ensure the noise level is accurately measured). This
+        could also be a 3D array of many individual (random) cutouts.
+    :param N_central_pixels: int, size of (square) aperture within which
+        to determine the presence/absence of a central source.
+    :param plot: bool: Whether to plot the gaussian fits to the noise
+        level
+    :return: float, 2-sigma flux level in the aperture above which the
+        image is said to contain a central source.
     """
     # Select the negative pixel values from the coadd (positive values are excluded to remove the effect of bright sources):
     negative_values = -RSP_coadd.flatten()[RSP_coadd.flatten() < 0]
@@ -893,11 +873,11 @@ def measure_noise_level_in_RSP_coadd(RSP_coadd, N_pixels, plot=False):
 
 
 class retrieve_DP0_coadds_from_Rubin_Science_Platform:
-    """Class to retrieve cutouts of DP0.2 coadds, variance maps, PSF arrays and exposure
-    maps from the Rubin Science Platform.
+    """Class to retrieve cutouts of DP0.2 coadds, variance maps, PSF arrays and
+    exposure maps from the Rubin Science Platform.
 
-    Cutouts of size cutout_size are generated, with the number of cutouts per coadd
-    specified by n_im_per_coadd.
+    Cutouts of size cutout_size are generated, with the number of
+    cutouts per coadd specified by n_im_per_coadd.
     """
 
     def __init__(
@@ -946,8 +926,8 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform:
         return img[starty : starty + cropy, startx : startx + cropx]
 
     def retrieve_tract_patch(self):
-        """Adapted from DC2_cutout (above) Retrieves the tract & patch information of
-        the coadd image."""
+        """Adapted from DC2_cutout (above) Retrieves the tract & patch
+        information of the coadd image."""
         self.point = geom.SpherePoint(self.ra, self.dec, geom.degrees)
         self.cutoutSize = geom.ExtentI(self.cutout_size, self.cutout_size)
         self.tractInfo = self.skymap.findTract(self.point)
@@ -956,14 +936,15 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform:
         self.patch = patchInfo.getSequentialIndex()
 
     def retrieve_coadd_files(self):
-        """Adapted from lens_inejection_fast (above) This generates cutouts of the
-        coadd, exposure and variance maps.
+        """Adapted from lens_inejection_fast (above) This generates cutouts of
+        the coadd, exposure and variance maps.
 
-        The cutout size is specified by cutout_size during initialisation.
+        The cutout size is specified by cutout_size during
+        initialisation.
 
-        :return: 1) Full coadd image, 2) full exposure map image (in units of N.
-            exposures), 3) full variance map image 4) list of cutout bounding boxes, 5)
-            list of cutout centres
+        :return: 1) Full coadd image, 2) full exposure map image (in
+            units of N. exposures), 3) full variance map image 4) list
+            of cutout bounding boxes, 5) list of cutout centres
         """
         coaddId_i = {"tract": self.tract, "patch": self.patch, "band": "i"}
         if self.good_seeing_only:
@@ -999,15 +980,16 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform:
         return coadd_i, coadd_exp_i, coadd_var_i, bbox_cutout_list, cutout_center_list
 
     def retrieve_arrays(self):
-        """Adapted from cutout_image_psf_kernel (above) This function retrieves the
-        coadd images, exposure maps, PSF arrays and variance maps for the specified
-        position.
+        """Adapted from cutout_image_psf_kernel (above) This function retrieves
+        the coadd images, exposure maps, PSF arrays and variance maps for the
+        specified position.
 
-        These arrays are cropped to the specified size, with the exception of the PSF
-        array, which is always 57x57.
+        These arrays are cropped to the specified size, with the
+        exception of the PSF array, which is always 57x57.
 
-        :return: 1) list of cutouts, 2) list of exposure maps, 3) list of PSF arrays, 4)
-            list of variance maps, 5) uncropped coadd image, 6) uncropped variance map
+        :return: 1) list of cutouts, 2) list of exposure maps, 3) list
+            of PSF arrays, 4) list of variance maps, 5) uncropped coadd
+            image, 6) uncropped variance map
         """
         self.retrieve_tract_patch()
         coadd_im, coadd_exp, var_im, bbox_cutout_list, cutout_center_list = (
@@ -1044,15 +1026,16 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform:
     def save_arrays(self, foldername, prefix):
         """The generated cutouts are then saved as .h5 files.
 
-        The cutouts are saved as 3D arrays, with the first dimension corresponding to
-        the number of cutouts.
+        The cutouts are saved as 3D arrays, with the first dimension
+        corresponding to the number of cutouts.
 
-        :param foldername: str, name of the folder in which to save the files. The
-            folder is generatred if it doesn't exist already.
-        :param prefix: str, prefix for the file names (e.g. 0,1,2,3 if generating sets
-            of cutouts from different coadds)
-        :return: 1) list of cutouts, 2) list of exposure maps, 3) list of PSF arrays, 4)
-            list of variance maps, 5) uncropped coadd image, 6) uncropped variance map
+        :param foldername: str, name of the folder in which to save the
+            files. The folder is generatred if it doesn't exist already.
+        :param prefix: str, prefix for the file names (e.g. 0,1,2,3 if
+            generating sets of cutouts from different coadds)
+        :return: 1) list of cutouts, 2) list of exposure maps, 3) list
+            of PSF arrays, 4) list of variance maps, 5) uncropped coadd
+            image, 6) uncropped variance map
         """
         (
             cutout_list,

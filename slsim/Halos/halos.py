@@ -13,8 +13,8 @@ from scipy.optimize import bisect
 
 
 def colossus_halo_mass_function(m_200, cosmo, z, sigma8=0.81, ns=0.96, omega_m=None):
-    """Calculate the differential halo mass function per logarithmic mass interval at a
-    given redshift.
+    """Calculate the differential halo mass function per logarithmic mass
+    interval at a given redshift.
 
     This function leverages the Colossus library to determine the halo mass function
     based on a mass scale (m_200), a cosmological model (cosmo), and a redshift (z). The
@@ -126,7 +126,7 @@ def colossus_halo_mass_sampler(
         omega_m,
     )
 
-    CDF = integrate.cumtrapz(massf, np.log(m), initial=0)
+    CDF = integrate.cumulative_trapezoid(massf, np.log(m), initial=0)
     CDF = CDF / CDF[-1]
     n_uniform = np.random.uniform(size=size)
     return np.interp(n_uniform, CDF, m) / cosmology.h
@@ -140,23 +140,25 @@ def set_defaults_halos(
 ):
     """Set default values for parameters if not explicitly provided.
 
-    Ensure all parameters have values, setting defaults for any that are unspecified.
-    This utility function aids in initializing simulation or calculation setups where
-    certain parameters might not be critical and can assume default values.
+    Ensure all parameters have values, setting defaults for any that are
+    unspecified. This utility function aids in initializing simulation
+    or calculation setups where certain parameters might not be critical
+    and can assume default values.
 
-    :param m_min: The minimum halo mass, in solar mass units (M_sol). Defaults to a
-        predetermined value if not specified.
+    :param m_min: The minimum halo mass, in solar mass units (M_sol).
+        Defaults to a predetermined value if not specified.
     :type m_min: float, optional
-    :param m_max: The maximum halo mass, in solar mass units (M_sol). Defaults to a
-        predetermined value if not specified.
+    :param m_max: The maximum halo mass, in solar mass units (M_sol).
+        Defaults to a predetermined value if not specified.
     :type m_max: float, optional
-    :param resolution: Resolution of the computational grid. Assigned a default value if
-        omitted.
+    :param resolution: Resolution of the computational grid. Assigned a
+        default value if omitted.
     :type resolution: int, optional
-    :param cosmology: Cosmology model instance to be used in calculations. If not
-        provided, a default cosmology is used.
+    :param cosmology: Cosmology model instance to be used in
+        calculations. If not provided, a default cosmology is used.
     :type cosmology: astropy.cosmology instance, optional
-    :return: A tuple containing the parameters, with defaults applied where necessary.
+    :return: A tuple containing the parameters, with defaults applied
+        where necessary.
     :rtype: tuple
     """
     # Default values
@@ -192,41 +194,46 @@ def number_density_at_redshift(
     ns=0.96,
     omega_m=None,
 ):
-    """Compute the number density of halos at various redshifts within a specific mass
-    range.
+    """Compute the number density of halos at various redshifts within a
+    specific mass range.
 
-    This function integrates the halo mass function over a given mass range to find the
-    number density of halos per unit comoving volume at different redshifts. It's useful
-    for understanding the distribution and evolution of halos across cosmic time.
+    This function integrates the halo mass function over a given mass
+    range to find the number density of halos per unit comoving volume
+    at different redshifts. It's useful for understanding the
+    distribution and evolution of halos across cosmic time.
 
-    :param z: Redshift(s) at which to compute the number density, can be a single value
-        or an array.
+    :param z: Redshift(s) at which to compute the number density, can be
+        a single value or an array.
     :type z: float or ndarray
-    :param m_min: Minimum halo mass included in the density calculation, in solar masses
-        (M_sol). Optional, with a default value if not provided.
+    :param m_min: Minimum halo mass included in the density calculation,
+        in solar masses (M_sol). Optional, with a default value if not
+        provided.
     :type m_min: float, optional
-    :param m_max: Maximum halo mass for the density calculation, in solar masses
-        (M_sol). Optional, with a default value if not provided.
+    :param m_max: Maximum halo mass for the density calculation, in
+        solar masses (M_sol). Optional, with a default value if not
+        provided.
     :type m_max: float, optional
-    :param resolution: Number of mass bins for integrating the mass function. Optional,
-        defaults to a predetermined value.
+    :param resolution: Number of mass bins for integrating the mass
+        function. Optional, defaults to a predetermined value.
     :type resolution: int, optional
-    :param cosmology: astropy.cosmology instance for the underlying cosmological model.
-        Optional, defaults to a standard model if not provided.
+    :param cosmology: astropy.cosmology instance for the underlying
+        cosmological model. Optional, defaults to a standard model if
+        not provided.
     :type cosmology: astropy.Cosmology instance, optional
-    :param sigma8: Normalization of the power spectrum, optional, with a default value
-        if not specified.
+    :param sigma8: Normalization of the power spectrum, optional, with a
+        default value if not specified.
     :type sigma8: float, optional
-    :param ns: Spectral index for the power spectrum, optional, with a default value if
-        not specified.
+    :param ns: Spectral index for the power spectrum, optional, with a
+        default value if not specified.
     :type ns: float, optional
-    :param omega_m: Matter density parameter, optional, will use the cosmology setting
-        if not specified.
+    :param omega_m: Matter density parameter, optional, will use the
+        cosmology setting if not specified.
     :type omega_m: float, optional
-    :return: Number density of halos at each specified redshift, as a list (for scalar
-        z) or ndarray (for array z).
-    :rtype: list or ndarray :note: A warning is issued for NaN values in input
-        redshifts, with a fallback to a default redshift of 0.0001.
+    :return: Number density of halos at each specified redshift, as a
+        list (for scalar z) or ndarray (for array z).
+    :rtype: list or ndarray :note: A warning is issued for NaN values in
+        input redshifts, with a fallback to a default redshift of
+        0.0001.
     """
     (
         m_min,
@@ -256,8 +263,8 @@ def number_density_at_redshift(
 
 
 def number_density_for_massf(massf, m, dndlnM=False):
-    """Calculate the total number density of halos per cubic megaparsec (Mpc^3) at a
-    certain redshift.
+    """Calculate the total number density of halos per cubic megaparsec (Mpc^3)
+    at a certain redshift.
 
     This function integrates the mass function (massf) over a given mass range (m) to compute the total
     number density of halos. It can operate in two modes depending on the `dndlnM` flag: when `dndlnM` is
@@ -278,9 +285,9 @@ def number_density_for_massf(massf, m, dndlnM=False):
     :rtype: float
     """
     if dndlnM:
-        return integrate.trapz(massf, np.log(m))
+        return integrate.trapezoid(massf, np.log(m))
     else:
-        return integrate.trapz(massf * m, np.log(m))
+        return integrate.trapezoid(massf * m, np.log(m))
 
 
 def redshift_halos_array_from_comoving_density(
@@ -362,8 +369,8 @@ def dv_dz_to_dn_dz(
     ns=0.96,
     omega_m=None,
 ):
-    """Convert differential comoving volume element to differential number density per
-    redshift interval.
+    """Convert differential comoving volume element to differential number
+    density per redshift interval.
 
     This function transitions from the concept of a comoving volume element to the
     actual number density of objects within that volume per unit redshift. It achieves
@@ -432,20 +439,24 @@ def dndz_to_N(dN_dz, redshift_list):
     """Convert redshift distribution to total number of objects using Poisson
     statistics.
 
-    This function transforms a differential redshift distribution dN/dz into an estimate
-    of the total number of objects N. It applies Poisson statistics to model the
-    inherent stochastic nature of astronomical object distributions, using the integral
-    of dN/dz over the redshift range to set the mean of the Poisson distribution.
+    This function transforms a differential redshift distribution dN/dz
+    into an estimate of the total number of objects N. It applies
+    Poisson statistics to model the inherent stochastic nature of
+    astronomical object distributions, using the integral of dN/dz over
+    the redshift range to set the mean of the Poisson distribution.
 
-    :param dN_dz: Differential number of objects per redshift interval, serving as the
-        rate of object occurrence as a function of redshift.
+    :param dN_dz: Differential number of objects per redshift interval,
+        serving as the rate of object occurrence as a function of
+        redshift.
     :type dN_dz: ndarray,
-    :param redshift_list: Array of redshifts corresponding to the dN_dz values,
-        outlining the span over which the distribution is defined.
+    :param redshift_list: Array of redshifts corresponding to the dN_dz
+        values, outlining the span over which the distribution is
+        defined.
     :type redshift_list: ndarray,
-    :return: The total number of objects expected within the given redshift
-        distribution, determined by drawing from a Poisson distribution with the mean
-        calculated from the integral of dN/dz.
+    :return: The total number of objects expected within the given
+        redshift distribution, determined by drawing from a Poisson
+        distribution with the mean calculated from the integral of
+        dN/dz.
     :rtype: int
     """
     N = np.trapz(dN_dz, redshift_list)
@@ -457,23 +468,28 @@ def dndz_to_redshifts(N, dN_dz, redshift_list):
     """Generate a cumulative distribution function (CDF) of redshifts using the
     trapezoidal rule.
 
-    This function employs the cumulative trapezoidal rule to integrate a differential
-    number distribution of objects dN/dz over redshift, producing a redshift cumulative
-    distribution function (CDF). This CDF is then used to sample N redshifts, providing
-    a statistical basis for modeling distributions of astronomical objects over
+    This function employs the cumulative trapezoidal rule to integrate a
+    differential number distribution of objects dN/dz over redshift,
+    producing a redshift cumulative distribution function (CDF). This
+    CDF is then used to sample N redshifts, providing a statistical
+    basis for modeling distributions of astronomical objects over
     redshift.
 
-    :param N: The number of redshifts to sample from the cumulative distribution,
-        representing the size of the resultant redshift array.
+    :param N: The number of redshifts to sample from the cumulative
+        distribution, representing the size of the resultant redshift
+        array.
     :type N: int
-    :param dN_dz: Differential number of objects per redshift interval, indicating the
-        rate at which the number of objects changes with redshift.
+    :param dN_dz: Differential number of objects per redshift interval,
+        indicating the rate at which the number of objects changes with
+        redshift.
     :type dN_dz: ndarray,
-    :param redshift_list: Array of redshifts corresponding to the dN_dz values,
-        delineating the domain over which the distribution applies.
+    :param redshift_list: Array of redshifts corresponding to the dN_dz
+        values, delineating the domain over which the distribution
+        applies.
     :type redshift_list: ndarray,
-    :return: An array of N redshifts sampled according to the cumulative distribution
-        derived from the differential redshift distribution dN/dz.
+    :return: An array of N redshifts sampled according to the cumulative
+        distribution derived from the differential redshift distribution
+        dN/dz.
     :rtype: ndarray
     """
     assert len(dN_dz) == len(redshift_list)
@@ -514,8 +530,8 @@ def halo_mass_at_z(
     ns=0.96,
     omega_m=None,
 ):
-    """Sample halo masses at given redshift(s) using specified or default cosmological
-    parameters and mass range.
+    """Sample halo masses at given redshift(s) using specified or default
+    cosmological parameters and mass range.
 
     :param z: Redshift(s) at which to sample halo masses. Can be a single value or an
         iterable of values.
@@ -609,8 +625,8 @@ def redshift_mass_sheet_correction_array_from_comoving_density(redshift_list):
 def kappa_ext_for_each_sheet(
     redshift_list, first_moment, sky_area, cosmology, z_sigma_crit_source=10.0
 ):
-    """Calculate the external convergence (kappa_ext) for lensing sheets at given
-    redshifts.
+    """Calculate the external convergence (kappa_ext) for lensing sheets at
+    given redshifts.
 
     The function computes kappa_ext using the first moment of mass, the area under consideration,
     and the critical surface mass density.
@@ -656,8 +672,8 @@ def expected_mass_at_redshift(
     ns=0.96,
     omega_m=None,
 ):
-    """Calculate the first moment of mass at given redshift(s) using specified or
-    default cosmological parameters and mass range.
+    """Calculate the first moment of mass at given redshift(s) using specified
+    or default cosmological parameters and mass range.
 
     This function computes the first moment of mass within a given sky area and redshift range by
     integrating the halo mass function weighted by mass over the specified mass range.
@@ -738,7 +754,8 @@ def colossus_halo_expected_mass_sampler(
     omega_m=None,
 ):
     """Sample the average halo masses from a mass function within defined mass
-    boundaries. (what the average mass of certain halo if it exists in redshift z)
+    boundaries. (what the average mass of certain halo if it exists in redshift
+    z)
 
     Utilizes the Colossus library to compute a halo mass function, from which halo masses are sampled. The function calculates the mass function across a specified mass range and redshift, using given cosmological parameters and, optionally, values for sigma8 and ns for power spectrum normalization and spectral index, respectively.
 
@@ -781,11 +798,11 @@ def colossus_halo_expected_mass_sampler(
     )
 
     mass_times_massf = m * massf
-    integral_mass_times_massf = integrate.cumtrapz(
+    integral_mass_times_massf = integrate.cumulative_trapezoid(
         mass_times_massf, np.log(m), initial=0
     )
 
-    integral_massf = integrate.cumtrapz(massf, np.log(m), initial=0)
+    integral_massf = integrate.cumulative_trapezoid(massf, np.log(m), initial=0)
     average_massh = integral_mass_times_massf[-1] / integral_massf[-1]
     return average_massh / cosmology.h
 
@@ -802,8 +819,8 @@ def colossus_halo_expected_number_certain_bin(
     ns=0.96,
     omega_m=None,
 ):
-    """Calculate the first moment of mass at given redshift(s) using specified or
-    default cosmological parameters and mass range.
+    """Calculate the first moment of mass at given redshift(s) using specified
+    or default cosmological parameters and mass range.
 
     This function computes the first moment of mass within a given sky area and redshift range by
     integrating the halo mass function weighted by mass over the specified mass range.
@@ -865,8 +882,8 @@ def colossus_halo_expected_number(
     ns=0.96,
     omega_m=None,
 ):
-    """Calculate the first moment of mass at given redshift(s) using specified or
-    default cosmological parameters and mass range.
+    """Calculate the first moment of mass at given redshift(s) using specified
+    or default cosmological parameters and mass range.
 
     This function computes the first moment of mass within a given sky area and redshift range by
     integrating the halo mass function weighted by mass over the specified mass range.

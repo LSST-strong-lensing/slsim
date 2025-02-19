@@ -7,19 +7,29 @@ import numpy as np
 
 
 def create_image_montage_from_image_list(
-    num_rows, num_cols, images, time=None, image_type="other", image_center=None
+    num_rows,
+    num_cols,
+    images,
+    time=None,
+    band=None,
+    image_type="other",
+    image_center=None,
 ):
     """Creates an image montage from an image list.
 
     :param num_rows: number of images to display horizontally
     :param num_cols: number of images to display vertically
     :param images: list of images
-    :param time: array of observation time for point source images. If None, considers
-        static case.
-    :param image_type: type of the provided image. It could be 'dp0' or any other name.
+    :param time: array of observation time for point source images. If
+        None, considers static case.
+    :param band: array of bands corresponding to the observations. If
+        None, does not display any information regarding the band.
+    :param image_type: type of the provided image. It could be 'dp0' or
+        any other name.
     :param image_center: center of the source images.
     :type image_center: array. eg: for two image, it should be like
-        np.array([[13.71649063, 13.09556121], [16.69249276, 17.78106655]])
+        np.array([[13.71649063, 13.09556121], [16.69249276,
+        17.78106655]])
     :return: image montage of given images.
     """
 
@@ -31,6 +41,10 @@ def create_image_montage_from_image_list(
         all_max.append(np.max(image))
     global_min = min(all_min)
     global_max = max(all_max)
+
+    # If band is one string, extend to list
+    if isinstance(band, str):
+        band = [band] * len(images)
 
     fig, axes = plt.subplots(num_rows, num_cols, figsize=(num_cols * 3, num_rows * 3))
 
@@ -61,6 +75,17 @@ def create_image_montage_from_image_list(
                         horizontalalignment="left",
                         transform=axes[i, j].transAxes,
                     )
+                if band is not None:
+                    axes[i, j].text(
+                        0.05,
+                        0.10,
+                        f"Band: {band[i * num_cols + j]}",
+                        fontsize=10,
+                        color="white",
+                        verticalalignment="top",
+                        horizontalalignment="left",
+                        transform=axes[i, j].transAxes,
+                    )
                 if image_center is not None:
                     for k in range(len(image_center)):
                         axes[i, j].scatter(
@@ -77,7 +102,8 @@ def create_image_montage_from_image_list(
 
 
 def plot_montage_of_random_injected_lens(image_list, num, n_horizont=1, n_vertical=1):
-    """Creates an image montage of random lenses from the catalog of injected lens.
+    """Creates an image montage of random lenses from the catalog of injected
+    lens.
 
     :param images_list: list of catalog images
     :param n_horizont: number of images to display horizontally

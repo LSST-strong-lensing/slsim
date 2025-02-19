@@ -1,5 +1,4 @@
 from slsim.Deflectors.DeflectorTypes.nfw_cluster import NFWCluster
-from slsim.Deflectors.deflector import Deflector
 from astropy.cosmology import FlatLambdaCDM
 from astropy.table import Table
 import os
@@ -22,20 +21,17 @@ class TestNFWCluster(object):
         path = os.path.dirname(__file__)
         module_path = os.path.dirname(os.path.dirname(path))
         # a table with the dictionary for a single dark matter halo
-        self.halo_dict = Table.read(
-            os.path.join(module_path, "TestData/halo_NFW.fits"), format="fits"
+        self.halo_dict = dict(
+            Table.read(
+                os.path.join(module_path, "TestData/halo_NFW.fits"), format="fits"
+            )
         )
         # a table with the dictionary for 10 EPL+Sersic subhalos
         subhalos_table = Table.read(
             os.path.join(module_path, "TestData/subhalos_table.fits"), format="fits"
         )
-        subhalos_list = [
-            Deflector(deflector_type="EPL", deflector_dict=subhalo)
-            for subhalo in subhalos_table
-        ]
-        self.nfw_cluster = NFWCluster(
-            deflector_dict=self.halo_dict, subhalos_list=subhalos_list
-        )
+        self.halo_dict["subhalos"] = subhalos_table
+        self.nfw_cluster = NFWCluster(deflector_dict=self.halo_dict)
 
     def test_redshift(self):
         z = self.nfw_cluster.redshift
@@ -66,3 +62,11 @@ class TestNFWCluster(object):
             self.nfw_cluster.mass_model_lenstronomy(lens_cosmo=lens_cosmo)
         )
         assert len(lens_mass_model_list) == 11
+
+    def test_stellar_mass(self):
+        stellar_mass = self.nfw_cluster.stellar_mass
+        npt.assert_almost_equal(stellar_mass / 1e11, 8.876, decimal=3)
+
+    def test_magnitude(self):
+        magnitude = self.nfw_cluster.magnitude(band="r")
+        npt.assert_almost_equal(magnitude, 18.632, decimal=3)

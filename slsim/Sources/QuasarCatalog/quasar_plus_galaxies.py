@@ -13,10 +13,10 @@ def quasar_galaxies_simple(
     freq_max=1.5,
     sky_area=Quantity(value=0.1, unit="deg2"),
 ):
-    """Creates an simple catalog of quasars and host galaxies. It generate random
-    magnitude values in r, g, and i band for quasars. Also, generates amplitude and
-    frequency for each source. Then, adds all these quasar properties to the galaxy
-    catalog produced by skypy.
+    """Creates an simple catalog of quasars and host galaxies. It generate
+    random magnitude values in r, g, and i band for quasars. Also, generates
+    amplitude and frequency for each source. Then, adds all these quasar
+    properties to the galaxy catalog produced by skypy.
 
     :param z_max: maximum redshift for sources
     :param m_min: minimum magnitude for sources in r band

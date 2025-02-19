@@ -7,15 +7,22 @@ from slsim.Util.param_util import (
     magnitude_to_amplitude,
 )
 from astropy.units.quantity import Quantity
+from speclite.filters import (
+    load_filter,
+    FilterResponse,
+)
 
 
 def spin_to_isco(spin):
-    """Converts dimensionless spin parameter of a black hole to the innermost stable
-    circular orbit in gravitational radii [R_g = GM/c^2, with units length]
+    """Converts dimensionless spin parameter of a black hole to the innermost
+    stable circular orbit in gravitational radii [R_g = GM/c^2, with units
+    length]
 
-    :param spin: Dimensionless spin of black hole, ranging from -1 to 1. Positive values
-        represent orbits aligned with the black hole spin.
-    :return: Float value of innermost stable circular orbit, ranging from 1 to 9.
+    :param spin: Dimensionless spin of black hole, ranging from -1 to 1.
+        Positive values represent orbits aligned with the black hole
+        spin.
+    :return: Float value of innermost stable circular orbit, ranging
+        from 1 to 9.
     """
     if abs(spin) > 1:
         raise ValueError("Absolute value of spin cannot exceed 1")
@@ -28,9 +35,9 @@ def spin_to_isco(spin):
 
 
 def calculate_eddington_luminosity(black_hole_mass_exponent):
-    """Calculates the Eddington luminosity for a black hole mass exponent. The Eddington
-    luminosity is the theoretical limit of the accretion rate due to radiation pressure
-    for spherical (Bondi) accretion.
+    """Calculates the Eddington luminosity for a black hole mass exponent. The
+    Eddington luminosity is the theoretical limit of the accretion rate due to
+    radiation pressure for spherical (Bondi) accretion.
 
     Eddington_luminosity = 4 * pi * G * black_hole_mass * mass_proton
                               * c / sigma_thompson
@@ -47,19 +54,21 @@ def calculate_eddington_luminosity(black_hole_mass_exponent):
 def eddington_ratio_to_accretion_rate(
     black_hole_mass_exponent, eddington_ratio, efficiency=0.1
 ):
-    """Calculates the mass that must be accreted by the accretion disk for the accretion
-    disk to radiate at the desired Eddington ratio.
+    """Calculates the mass that must be accreted by the accretion disk for the
+    accretion disk to radiate at the desired Eddington ratio.
 
     Bolometric_luminosity = mass_accreted * c^2 * efficiency
 
-    :param black_hole_mass_exponent: The log of the black hole mass normalized by the
-        mass of the sun; black_hole_mass_exponent = log_10(black_hole_mass / mass_sun).
-        Typical AGN have an exponent ranging from 6 to 10.
-    :param eddington_ratio: The desired Eddington ratio defined as a fraction of
-        bolometric luminosity / Eddington luminosity.
-    :param efficiency: The efficiency of mass-to-energy conversion in accretion disk
-    :return: Required mass_accreted for accretion disk to radiate at the desired
-        Eddington ratio
+    :param black_hole_mass_exponent: The log of the black hole mass
+        normalized by the mass of the sun; black_hole_mass_exponent =
+        log_10(black_hole_mass / mass_sun). Typical AGN have an exponent
+        ranging from 6 to 10.
+    :param eddington_ratio: The desired Eddington ratio defined as a
+        fraction of bolometric luminosity / Eddington luminosity.
+    :param efficiency: The efficiency of mass-to-energy conversion in
+        accretion disk
+    :return: Required mass_accreted for accretion disk to radiate at the
+        desired Eddington ratio
     """
     if efficiency <= 0:
         raise ValueError("Efficiency cannot be negative")
@@ -74,7 +83,8 @@ def eddington_ratio_to_accretion_rate(
 
 
 def calculate_gravitational_radius(black_hole_mass_exponent):
-    """Calculates the gravitational radius (R_g) of a black hole. The gravitational.
+    """Calculates the gravitational radius (R_g) of a black hole. The
+    gravitational.
 
     radius defines the typical size scales around a black hole for AGN.
     The formula for gravitational radius is: R_g  = G * mass / c^2
@@ -89,12 +99,13 @@ def calculate_gravitational_radius(black_hole_mass_exponent):
 
 
 def convert_black_hole_mass_exponent_to_mass(black_hole_mass_exponent):
-    """This function takes in the log of the black hole mass normalized by the mass of
-    the sun and returns the mass of the black hole.
+    """This function takes in the log of the black hole mass normalized by the
+    mass of the sun and returns the mass of the black hole.
 
-    :param black_hole_mass_exponent: The log of the black hole mass normalized by the
-        mass of the sun; black_hole_mass_exponent = log_10(black_hole_mass / mass_sun).
-        Typical AGN have an exponent ranging from 6 to 10.
+    :param black_hole_mass_exponent: The log of the black hole mass
+        normalized by the mass of the sun; black_hole_mass_exponent =
+        log_10(black_hole_mass / mass_sun). Typical AGN have an exponent
+        ranging from 6 to 10.
     :return: The mass of the black hole in astropy units.
     """
     return 10**black_hole_mass_exponent * const.M_sun
@@ -103,8 +114,9 @@ def convert_black_hole_mass_exponent_to_mass(black_hole_mass_exponent):
 def thin_disk_temperature_profile(
     radial_points, black_hole_spin, black_hole_mass_exponent, eddington_ratio
 ):
-    """Calculates the thin disk temperature profile at all given radial positions
-    assuming the Shakura-Sunyaev geometricly thin, optically thick accretion disk.
+    """Calculates the thin disk temperature profile at all given radial
+    positions assuming the Shakura-Sunyaev geometricly thin, optically thick
+    accretion disk.
 
     The formula for a thin disk temperature profile is:
 
@@ -150,10 +162,10 @@ def thin_disk_temperature_profile(
 
 
 def planck_law(temperature, wavelength_in_nanometers):
-    """This takes a temperature in Kelvin and a wavelength in nanometers, and returns
-    the spectral radiance of the object as if it emitted black body radiation. This is
-    the spectral radiance per wavelength as opposed to per frequency, leading to
-    dependence as wavelength^(-5).
+    """This takes a temperature in Kelvin and a wavelength in nanometers, and
+    returns the spectral radiance of the object as if it emitted black body
+    radiation. This is the spectral radiance per wavelength as opposed to per
+    frequency, leading to dependence as wavelength^(-5).
 
     Planck's law states:
 
@@ -164,9 +176,9 @@ def planck_law(temperature, wavelength_in_nanometers):
     :return: The spectral radiance of the black body
     """
     # If wavelength was entered as an int or float, append units
-    if type(wavelength_in_nanometers) != u.Quantity:
+    if type(wavelength_in_nanometers) is not u.Quantity:
         wavelength_in_nanometers *= u.nm
-    if type(temperature) != u.Quantity:
+    if type(temperature) is not u.Quantity:
         temperature *= u.K
 
     e_exponent = (
@@ -178,8 +190,8 @@ def planck_law(temperature, wavelength_in_nanometers):
 
 
 def planck_law_derivative(temperature, wavelength_in_nanometers):
-    """This numerically approximates the derivative of the spectral radiance with
-    respect to temperature in Kelvin.
+    """This numerically approximates the derivative of the spectral radiance
+    with respect to temperature in Kelvin.
 
     Numerically calculating this derivative uses the limit definition of a derivative.
 
@@ -189,7 +201,7 @@ def planck_law_derivative(temperature, wavelength_in_nanometers):
     :param wavelength_in_nanometers: Emitted wavelength in local rest frame in [nanometers].
     :return: The derivative of the spectral radiance with respect to temperature for a black body.
     """
-    if type(temperature) == u.Quantity:
+    if type(temperature) is u.Quantity:
         temperature = temperature.value
 
     return (
@@ -199,8 +211,9 @@ def planck_law_derivative(temperature, wavelength_in_nanometers):
 
 
 def create_radial_map(r_out, r_resolution, inclination_angle):
-    """This creates a 2-dimentional array of radial positions where the maximum radius
-    is defined by r_out, and the radial resolution is defined by r_resolution.
+    """This creates a 2-dimentional array of radial positions where the maximum
+    radius is defined by r_out, and the radial resolution is defined by
+    r_resolution.
 
     :param r_out: The maximum radial value in [R_g]. For an accretion disk, this can be 10^3
         to 10^5.
@@ -222,19 +235,20 @@ def create_radial_map(r_out, r_resolution, inclination_angle):
 
 
 def create_phi_map(r_out, r_resolution, inclination_angle):
-    """This creates a 2-dimentional array of phi values at all positions where the
-    maximum radius is defined by r_out, and the radial resolution is defined by
-    r_resolution.
+    """This creates a 2-dimentional array of phi values at all positions where
+    the maximum radius is defined by r_out, and the radial resolution is
+    defined by r_resolution.
 
-    :param r_out: The maximum radial value in [R_g]. For an accretion disk, this can be
-        10^3 to 10^5.
-    :param r_resolution: The number of points between r = 0 and r = r_out. The final map
-        will be shape (2 * r_resolution), (2 * r_resolution)
-    :param inclination_angle: The inclination of the plane of the accretion disk with
-        respect to the observer in [degrees].
-    :return: A 2-dimensional array of phi values at radial positions of shape ((2 *
-        r_resolution), (2 * r_resolution)) in the projected plane of the sky, such that
-        phi = 0 is nearest to the observer.
+    :param r_out: The maximum radial value in [R_g]. For an accretion
+        disk, this can be 10^3 to 10^5.
+    :param r_resolution: The number of points between r = 0 and r =
+        r_out. The final map will be shape (2 * r_resolution), (2 *
+        r_resolution)
+    :param inclination_angle: The inclination of the plane of the
+        accretion disk with respect to the observer in [degrees].
+    :return: A 2-dimensional array of phi values at radial positions of
+        shape ((2 * r_resolution), (2 * r_resolution)) in the projected
+        plane of the sky, such that phi = 0 is nearest to the observer.
     """
     x_values = np.linspace(-r_out, r_out, 2 * r_resolution)
     y_values = np.linspace(-r_out, r_out, 2 * r_resolution) / np.cos(
@@ -249,9 +263,10 @@ def create_phi_map(r_out, r_resolution, inclination_angle):
 def calculate_time_delays_on_disk(
     radial_map, phi_map, inclination_angle, corona_height
 ):
-    """This calculates the time lags due to light travel time from a point source
-    located above the black hole to simulate the lamppost geometry. The corona is
-    defined as the point-souce approximation of the X-ray variable source.
+    """This calculates the time lags due to light travel time from a point
+    source located above the black hole to simulate the lamppost geometry. The
+    corona is defined as the point-souce approximation of the X-ray variable
+    source.
 
     The light travel time lags, tau(r, phi), are defined in the lamppost geometry through:
 
@@ -274,9 +289,9 @@ def calculate_time_delays_on_disk(
 
 
 def calculate_geometric_contribution_to_lamppost_model(radial_map, corona_height):
-    """This calculates the geometric scaling factor of the X-ray luminosity (L_x) as
-    seen by the accretion disk due to the varying distances involved in the lamppost
-    model.
+    """This calculates the geometric scaling factor of the X-ray luminosity
+    (L_x) as seen by the accretion disk due to the varying distances involved
+    in the lamppost model.
 
     According to Equation (2) of Cackett+ (2007), the scaling factor of L_x due to the
     geometry of the system is:
@@ -308,8 +323,8 @@ def calculate_geometric_contribution_to_lamppost_model(radial_map, corona_height
 
 
 def calculate_dt_dlx(radial_map, temperature_map, corona_height):
-    """This approximates the change in temperature on the accretion disk due to a change
-    in the incident X-ray flux from the source in the lamppost model.
+    """This approximates the change in temperature on the accretion disk due to
+    a change in the incident X-ray flux from the source in the lamppost model.
 
     This approximation follows that the change of temperature due to a change in X-ray
     energy is small:
@@ -376,6 +391,57 @@ def calculate_mean_time_lag(response_function):
     ) / np.nansum(response_function)
 
 
+def calculate_accretion_disk_emission(
+    r_out,
+    r_resolution,
+    inclination_angle,
+    rest_frame_wavelength_in_nanometers,
+    black_hole_mass_exponent,
+    black_hole_spin,
+    eddington_ratio,
+):
+    """This calculates the emission of the accretion disk due to black body
+    radiation. This emission is calculated by summing over all individual
+    pixels.
+
+    :param r_out: The maximum radial value of the accretion disk. This
+        typically can be chosen as 10^3 to 10^5 [R_g].
+    :param r_resolution: The number of points between r = 0 and r =
+        r_out. The final map will be shape (2 * r_resolution), (2 *
+        r_resolution). Higher resolution leads to longer calculations
+        but smoother response functions.
+    :param inclination_angle: The tilt of the accretion disk with
+        respect to the observer in [degrees]. Zero degrees is face on,
+        90 degrees is edge on.
+    :param rest_frame_wavelength_in_nanometers: Wavelength in local rest
+        frame in [nanometers].
+    :param black_hole_mass_exponent: The log of the black hole mass
+        normalized by the mass of the sun; black_hole_mass_exponent =
+        log_10(black_hole_mass / mass_sun). Typical AGN have an exponent
+        ranging from 6 to 10.
+    :param black_hole_spin: The dimensionless spin parameter of the
+        black hole, where the spinless case (spin = 0) corresponds to a
+        Schwarzschild black hole. Positive spin represents the accretion
+        disk's angular momentum is aligned with the black hole's spin,
+        and negative spin represents retrograde accretion flow.
+    :param eddington_ratio: The desired Eddington ratio defined as a
+        fraction of bolometric luminosity / Eddington luminosity.
+    :return: The normalized response of the accretion disk as a function
+        of time lag in units [R_g / c].
+    """
+    radial_map = create_radial_map(r_out, r_resolution, inclination_angle)
+
+    temperature_map = thin_disk_temperature_profile(
+        radial_map, black_hole_spin, black_hole_mass_exponent, eddington_ratio
+    )
+
+    temperature_map *= radial_map < r_out
+
+    emission_map = planck_law(temperature_map, rest_frame_wavelength_in_nanometers)
+
+    return np.nansum(emission_map)
+
+
 def calculate_accretion_disk_response_function(
     r_out,
     r_resolution,
@@ -388,8 +454,8 @@ def calculate_accretion_disk_response_function(
 ):
     """This calculates the response of the accretion disk due to a flash in the
     illuminating X-ray source in the lamppost geometry. This response function
-    represents the kernel between any driving signal from the point-like source and the
-    accretion disk at a specified wavelength.
+    represents the kernel between any driving signal from the point-like source
+    and the accretion disk at a specified wavelength.
 
     This response function is calculated by summing over all individual pixel responses
     and binning them according to their time lag with a weighting of their wavelength
@@ -470,8 +536,9 @@ def calculate_accretion_disk_response_function(
 def define_bending_power_law_psd(
     log_breakpoint_frequency, low_frequency_slope, high_frequency_slope, frequencies
 ):
-    """This function defines the power spectrum density (PSD) of a bending power law.
-    Note that bending power law is also sometimes referred to as a broken power law.
+    """This function defines the power spectrum density (PSD) of a bending
+    power law. Note that bending power law is also sometimes referred to as a
+    broken power law.
 
     :param log_breakpoint_frequency: The log_{10} of the breakpoint frequency where
         the power law changes slope, in units [1/days]. Typical values range between
@@ -501,21 +568,24 @@ def define_bending_power_law_psd(
 
 
 def define_frequencies(length_of_light_curve, time_resolution):
-    """This function defines the useful frequencies for generating a power spectrum
-    density (PSD). Frequencies below the low frequency limit will not contribute to the
-    light curve. Frequencies above the high frequency limit (the Nyquist frequency) will
-    not be able to be probed with the time_resolution, and will suffer from aliasing.
+    """This function defines the useful frequencies for generating a power
+    spectrum density (PSD). Frequencies below the low frequency limit will not
+    contribute to the light curve. Frequencies above the high frequency limit
+    (the Nyquist frequency) will not be able to be probed with the
+    time_resolution, and will suffer from aliasing.
 
-    :param length_of_light_curve: The total length of the light curve to simulate, in
-        units of [days]. The generated frequencies will have a 10 times lower limit than
-        required, as the function generate_signal_from_psd will generate extended light
-        curves to deal with periodicity issues.
-    :param time_resolution: The time resolution to generate the light curve at, in units
-        of [days]. This parameter defines the high frequency limit. If generating light
-        curves takes too long, consider increasing this parameter to generate fewer
+    :param length_of_light_curve: The total length of the light curve to
+        simulate, in units of [days]. The generated frequencies will
+        have a 10 times lower limit than required, as the function
+        generate_signal_from_psd will generate extended light curves to
+        deal with periodicity issues.
+    :param time_resolution: The time resolution to generate the light
+        curve at, in units of [days]. This parameter defines the high
+        frequency limit. If generating light curves takes too long,
+        consider increasing this parameter to generate fewer
         frequencies.
-    :return: A numpy array of the frequencies that are probed by the light curve in
-        [1/days].
+    :return: A numpy array of the frequencies that are probed by the
+        light curve in [1/days].
     """
 
     length_of_generated_light_curve = 10 * length_of_light_curve
@@ -531,16 +601,17 @@ def normalize_light_curve(light_curve, mean_magnitude, standard_deviation=None):
     """This function takes in a light curve and redefines its mean and standard
     deviation. It may also be used to re-normalize any time series.
 
-    :param light_curve: A time series list or array which represents a one-dimensional
-        light curve. This function does not require any specific units or spacings.
-    :param mean_magnitude: The new mean value of the light curve. This is done through a
-        simple shifting of the y-axis.
-    :param standard_deviation: The new standard deviation of the light curve. Note this
-        only makes sense for a variable signal (e.g. a constant signal cannot be given a
-        new standard_deviation). A negative standard deviation will invert the x and y
-        axis.
-    :return: A rescaled version of the original light curve, with new mean and standard
-        deviation.
+    :param light_curve: A time series list or array which represents a
+        one-dimensional light curve. This function does not require any
+        specific units or spacings.
+    :param mean_magnitude: The new mean value of the light curve. This
+        is done through a simple shifting of the y-axis.
+    :param standard_deviation: The new standard deviation of the light
+        curve. Note this only makes sense for a variable signal (e.g. a
+        constant signal cannot be given a new standard_deviation). A
+        negative standard deviation will invert the x and y axis.
+    :return: A rescaled version of the original light curve, with new
+        mean and standard deviation.
     """
     light_curve = np.asarray(light_curve)
     light_curve -= light_curve.mean()
@@ -566,9 +637,9 @@ def generate_signal(
     input_psd=None,
     seed=None,
 ):
-    """This function creates a stochastic signal to model AGN X-ray variability. This
-    may be used to generate either a bending power law signal, or a signal following any
-    input power spectrum density (psd).
+    """This function creates a stochastic signal to model AGN X-ray
+    variability. This may be used to generate either a bending power law
+    signal, or a signal following any input power spectrum density (psd).
 
     :param length_of_light_curve: The total length of the light curve to simulate, in units
         of [days]. The generated signal will be 10 times longer than this to
@@ -636,7 +707,7 @@ def generate_signal(
         (fourier_transform, fourier_transform[-2:0:-1].conjugate())
     )
     generated_light_curve = ifft(fourier_transform)[
-        : length_of_light_curve // time_resolution
+        : int(length_of_light_curve / time_resolution)
     ]
     if normal_magnitude_variance is False:
         amplitude_baseline = magnitude_to_amplitude(mean_magnitude, zero_point_mag)
@@ -683,9 +754,9 @@ def generate_signal_from_bending_power_law(
     zero_point_mag=0,
     seed=None,
 ):
-    """Uses astro_util.generate_signal_from_psd() to create an intrinsic bending power
-    law signal to use as a model for X-ray variability. Creates a light curve which can
-    be sampled from using sample_intrinsic_signal().
+    """Uses astro_util.generate_signal_from_psd() to create an intrinsic
+    bending power law signal to use as a model for X-ray variability. Creates a
+    light curve which can be sampled from using sample_intrinsic_signal().
 
     :param length_of_light_curve: Total length of desired light curve in [days].
     :param time_resolution: The time spacing between observations in [days].
@@ -711,7 +782,7 @@ def generate_signal_from_bending_power_law(
     :return: Two arrays, the time_array and the magnitude_array of the variability.
     """
     time_array = np.linspace(
-        0, length_of_light_curve - 1, length_of_light_curve // time_resolution
+        0, length_of_light_curve - 1, int(length_of_light_curve / time_resolution)
     )
     magnitude_array = generate_signal(
         length_of_light_curve,
@@ -739,34 +810,40 @@ def generate_signal_from_generic_psd(
     zero_point_mag=0,
     seed=None,
 ):
-    """Uses astro_util.generate_signal_from_psd() to create an intrinsic signal from any
-    input power spectrum to use as a model for X-ray variability. Creates a light curve
-    which can be sampled from using sample_intrinsic_signal().
+    """Uses astro_util.generate_signal_from_psd() to create an intrinsic signal
+    from any input power spectrum to use as a model for X-ray variability.
+    Creates a light curve which can be sampled from using
+    sample_intrinsic_signal().
 
-    :param length_of_light_curve: Total length of desired light curve in [days].
-    :param time_resolution: The time spacing between observations in [days].
-    :param input_frequencies: The input frequencies that correspond to the input power
-        spectrum in [1/days]. This can be generated using
-        astro_util.define_frequencies().
-    :param input_psd: The input power spectrum. This must be the same size as
-        input_frequencies.
+    :param length_of_light_curve: Total length of desired light curve in
+        [days].
+    :param time_resolution: The time spacing between observations in
+        [days].
+    :param input_frequencies: The input frequencies that correspond to
+        the input power spectrum in [1/days]. This can be generated
+        using astro_util.define_frequencies().
+    :param input_psd: The input power spectrum. This must be the same
+        size as input_frequencies.
     :param mean_magnitude: The desired mean value of the light curve.
-    :param standard_deviation: The desired standard deviation of the light curve.
-    :param normal_magnitude_variance: Bool, a toggle between whether variability is
-        calculated in magnitude or flux units. If True, variability will be assumed to
-        have the given standard deviation in magnitude. If False, variability will
-        assume to have the given standard deviation in flux. Note that if False,
-        "negative flux" becomes likely for standard deviation > 0.5 mag, and will return
-        a ValueError. If everything is assumed to be in flux units, simply insert your
-        mean flux for "mean_magnitude" and define "normal_magnitude_variance" = True.
-    :param zero_point_mag: The reference amplitude to calculate the zero point
-        magnitude.
+    :param standard_deviation: The desired standard deviation of the
+        light curve.
+    :param normal_magnitude_variance: Bool, a toggle between whether
+        variability is calculated in magnitude or flux units. If True,
+        variability will be assumed to have the given standard deviation
+        in magnitude. If False, variability will assume to have the
+        given standard deviation in flux. Note that if False, "negative
+        flux" becomes likely for standard deviation > 0.5 mag, and will
+        return a ValueError. If everything is assumed to be in flux
+        units, simply insert your mean flux for "mean_magnitude" and
+        define "normal_magnitude_variance" = True.
+    :param zero_point_mag: The reference amplitude to calculate the zero
+        point magnitude.
     :param seed: The random seed to be input for reproducability.
-    :return: Two arrays, the time_array in [days] and the magnitude_array of the
-        variability.
+    :return: Two arrays, the time_array in [days] and the
+        magnitude_array of the variability.
     """
     time_array = np.linspace(
-        0, length_of_light_curve - 1, length_of_light_curve // time_resolution
+        0, length_of_light_curve - 1, int(length_of_light_curve / time_resolution)
     )
     magnitude_array = generate_signal(
         length_of_light_curve,
@@ -783,18 +860,19 @@ def generate_signal_from_generic_psd(
 
 
 def get_value_if_quantity(variable):
-    """Extracts the numerical value from an astropy Quantity object or returns the input
-    if not a Quantity.
+    """Extracts the numerical value from an astropy Quantity object or returns
+    the input if not a Quantity.
 
-    This function checks if the input variable is an instance of an astropy Quantity. If
-    it is, the function extracts and returns the numerical value of the Quantity. If the
-    input is not a Quantity, it returns the input variable unchanged.
+    This function checks if the input variable is an instance of an
+    astropy Quantity. If it is, the function extracts and returns the
+    numerical value of the Quantity. If the input is not a Quantity, it
+    returns the input variable unchanged.
 
-    :param variable: The variable to be checked and possibly converted. Can be an
-        astropy Quantity or any other data type.
+    :param variable: The variable to be checked and possibly converted.
+        Can be an astropy Quantity or any other data type.
     :type variable: Quantity or any
-    :return: The numerical value of the Quantity if the input is a Quantity; otherwise,
-        the input variable itself.
+    :return: The numerical value of the Quantity if the input is a
+        Quantity; otherwise, the input variable itself.
     :rtype: float or any
     """
     if isinstance(variable, Quantity):
@@ -806,26 +884,141 @@ def get_value_if_quantity(variable):
 def cone_radius_angle_to_physical_area(radius_rad, z, cosmo):
     """Convert cone radius angle to physical area at a specified redshift.
 
-    This function computes the physical area, in square megaparsecs (Mpc^2),
-    corresponding to a specified cone radius angle at a given redshift. The calculation
-    is based on the angular diameter distance, which is dependent on the adopted
-    cosmological model. This is particularly useful in cosmological simulations and
-    observations where the physical scale of structures is inferred from angular
+    This function computes the physical area, in square megaparsecs
+    (Mpc^2), corresponding to a specified cone radius angle at a given
+    redshift. The calculation is based on the angular diameter distance,
+    which is dependent on the adopted cosmological model. This is
+    particularly useful in cosmological simulations and observations
+    where the physical scale of structures is inferred from angular
     measurements.
 
     :param radius_rad: The half cone angle in radians.
     :param z: The redshift at which the physical area is calculated.
-    :param cosmo: The astropy cosmology instance used for the conversion.
+    :param cosmo: The astropy cosmology instance used for the
+        conversion.
     :type radius_rad: float
     :type z: float
     :type cosmo: astropy.cosmology instance
-    :return: The physical area in square megaparsecs (Mpc^2) for the given cone radius
-        and redshift.
-    :rtype: float :note: The calculation incorporates the angular diameter distance,
-        highlighting the interplay between angular measurements and physical scales in
-        an expanding universe.
+    :return: The physical area in square megaparsecs (Mpc^2) for the
+        given cone radius and redshift.
+    :rtype: float :note: The calculation incorporates the angular
+        diameter distance, highlighting the interplay between angular
+        measurements and physical scales in an expanding universe.
     """
 
     physical_radius = cosmo.angular_diameter_distance(z) * radius_rad  # Mpc
     area_physical = np.pi * physical_radius**2
     return area_physical  # in Mpc2
+
+
+def downsample_passband(
+    passband,
+    output_delta_wavelength,
+    wavelength_unit_input=u.angstrom,
+    wavelength_unit_output=u.angstrom,
+):
+    """Takes in a throughput at one resolution and outputs a throughput at a
+    downsampled resolution. This will speed up calculations which must be done
+    for multiple wavelengths, especially for objects which do not have
+    significant changes in signal over short wavelength steps.
+
+    :param passband: Str or List representing passband data. Either from speclite or a user
+        defined passband represented as a list of lists or arrays. The first must be wavelengths,
+        and the second must be the throughput of signature: [wavelength, throughput].
+    :param output_delta_wavelength: Int, this represents the desired spacing between wavelengths
+        of the output passband.
+    :param wavelength_unit_input: Astropy unit representing the input wavelength units.
+        Speclite filters default to units of angstroms.
+    :param wavelength_unit_output: Astropy unit representing the output wavelength units.
+    :return: List of numpy arrays representing the downsampled passband with signature
+        [wavelength, throughput].
+    """
+    if isinstance(passband, str):
+        passband = load_filter(passband)
+    if isinstance(passband, FilterResponse):
+        if wavelength_unit_input != passband.effective_wavelength.unit:
+            print("Changing input unit to match speclite filter unit")
+            wavelength_unit_input = passband.effective_wavelength.unit
+        passband = [passband.wavelength, passband.response]
+    if not isinstance(passband, list):
+        raise ValueError(
+            "Throughput must be a speclite filter or a list of throughputs."
+        )
+    assert output_delta_wavelength < len(passband[0])
+    # Convert to desired output wavelength units
+    wavelength_ratio = wavelength_unit_input.to(wavelength_unit_output)
+    passband[0] = np.asarray(passband[0][:]) * wavelength_ratio
+    # Determine bins
+    min_wavelength = np.min(passband[0][:])
+    max_wavelength = np.max(passband[0][:])
+    filter_total_wavelength_coverage = max_wavelength - min_wavelength
+    nbins = int(
+        round(1 + filter_total_wavelength_coverage / output_delta_wavelength, 0)
+    )
+    bin_edges = np.linspace(min_wavelength, max_wavelength, nbins)
+    # Make throughput
+    objects_per_bin = np.histogram(passband[0], bins=bin_edges)[0]
+    output_wavelengths = (bin_edges[:-1] + bin_edges[1:]) / 2
+    weighted_throughput = np.histogram(
+        passband[0], bins=bin_edges, weights=passband[1]
+    )[0]
+    normalized_throughput = weighted_throughput / objects_per_bin
+    return [output_wavelengths, normalized_throughput]
+
+
+def bring_passband_to_source_plane(
+    passband,
+    redshift,
+):
+    """Takes in a passband and converts the wavelengths from the observer to
+    source plane.
+
+    :param passband: Str or List representing passband data. Either from speclite or a user
+        defined passband represented as a list of lists or arrays. The first must be wavelengths,
+        and the second must be the throughput of signature: [wavelength, throughput].
+    :param redshift: Redshift of the source.
+    :return: List of numpy arrays representing the passband in the source plane.
+    """
+    if isinstance(passband, str):
+        passband = load_filter(passband)
+
+    if isinstance(passband, FilterResponse):
+        passband = [passband.wavelength, passband.response]
+    if not isinstance(passband, list):
+        raise ValueError(
+            "Throughput must be a speclite filter or a list of throughputs."
+        )
+    assert redshift >= 0
+    new_wavelengths = np.asarray(passband[0]) / (1 + redshift)
+    return [new_wavelengths, np.asarray(passband[1])]
+
+
+def convert_passband_to_nm(
+    passband,
+    wavelength_unit_input=u.angstrom,
+):
+    """Takes in a passband and converts the wavelengths to nanometers.
+
+    :param passband: Str or List representing passband data. Either from speclite or a user
+        defined passband represented as a list of lists or arrays. The first must be wavelengths,
+        and the second must be the throughput of signature: [wavelength, throughput].
+    :param wavelength_unit_input: Astropy unit representing the input wavelength units.
+        Speclite passbands are typically in angstroms, but a user defined passband may have
+        any unit convenient for their purposes.
+    :return: List of numpy arrays representing the passband with units of nanometers.
+    """
+    if isinstance(passband, str):
+        passband = load_filter(passband)
+    if isinstance(passband, FilterResponse):
+        if wavelength_unit_input != passband.effective_wavelength.unit:
+            print("Changing input unit to match speclite filter unit")
+            wavelength_unit_input = passband.effective_wavelength.unit
+        passband = [passband.wavelength, passband.response]
+    if not isinstance(passband, list):
+        raise ValueError(
+            "Throughput must be a speclite filter or a list of throughputs."
+        )
+    wavelength_ratio = wavelength_unit_input.to(u.nm)
+    output_passband = passband.copy()
+    output_passband[0] = np.asarray(passband[0][:]) * wavelength_ratio
+    return output_passband

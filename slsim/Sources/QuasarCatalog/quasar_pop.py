@@ -17,11 +17,11 @@ Oguri & Marshall (2010)
 
 
 class QuasarRate(object):
-    """Class to calculate quasar luminosity functions and generate quasar samples."""
+    """Class to calculate quasar luminosity functions and generate quasar
+    samples."""
 
     def __init__(
         self,
-        h: float = 0.70,
         zeta: float = 2.98,
         xi: float = 4.05,
         z_star: float = 1.60,
@@ -61,7 +61,6 @@ class QuasarRate(object):
         :param redshifts: Redshifts for quasar density lightcone to be evaluated at.
         :type redshifts: np.ndarray
         """
-        self.h = h
         self.zeta = zeta
         self.xi = xi
         self.z_star = z_star
@@ -88,16 +87,28 @@ class QuasarRate(object):
         self.K_corrections = data[:, 1]
 
         # Precompute the interpolation function
-        self.K_corr_interp = interp1d(
+        self.k_corr = interp1d(
             self.redshifts_kcorr,
             self.K_corrections,
             kind="linear",
             fill_value="extrapolate",
         )
 
+    def k_corr_interp(self, z):
+        """This function computes the k-correction for a quasar at a given
+        redshift.
+
+        :param z: Redshift value at which k correction need to be
+            computed.
+        :type z: float or np.array
+        :return: k-correction value for given redshifts.
+        """
+
+        return self.k_corr(z) - self.k_corr(0)
+
     def M_star(self, z_value):
-        """Calculates the break absolute magnitude of quasars for a given redshift
-        according to Eq. (11) in Oguri & Marshall (2010): DOI:
+        """Calculates the break absolute magnitude of quasars for a given
+        redshift according to Eq. (11) in Oguri & Marshall (2010): DOI:
         10.1111/j.1365-2966.2010.16639.x.
 
         :param z_value: Redshift value.
@@ -111,7 +122,7 @@ class QuasarRate(object):
         ) ** 2
         result = (
             -20.90
-            + (5 * np.log10(self.h))
+            + (5 * np.log10(self.cosmo.h))
             - (
                 2.5
                 * np.log10(
@@ -130,14 +141,14 @@ class QuasarRate(object):
         return result
 
     def dPhi_dM(self, M, z_value):
-        """Calculates dPhi_dM for a given M and redshift according to Eq (10) in Oguri &
-        Marshall (2010): DOI: 10.1111/j.1365-2966.2010.16639.x.
+        """Calculates dPhi_dM for a given M and redshift according to Eq (10)
+        in Oguri & Marshall (2010): DOI: 10.1111/j.1365-2966.2010.16639.x.
 
         :param M: Absolute i-band magnitude.
         :type M: float or numpy.ndarray
         :param z_value: Redshift value.
         :type z_value: float or numpy.ndarray
-        :return: dPhi_dM value.
+        :return: dPhi_dM value in the unit of comoving volume.
         :rtype: float or np.ndarray :unit: mag^-1 Mpc^-3
         """
         M = np.atleast_1d(M)
@@ -166,22 +177,23 @@ class QuasarRate(object):
         return term1
 
     def convert_magnitude(self, magnitude, z, conversion="apparent_to_absolute"):
-        """Converts between apparent and absolute magnitudes using K-corrections
-        determined in Table 4 of Richards et al. 2006: DOI: 10.1086/503559.
+        """Converts between apparent and absolute magnitudes using
+        K-corrections determined in Table 4 of Richards et al. 2006: DOI:
+        10.1086/503559.
 
         :param magnitude: Apparent or absolute i-band magnitude.
         :type magnitude: float or np.ndarray
         :param z: Redshift.
         :type z: float or np.ndarray
-        :param conversion: Conversion direction, either 'apparent_to_absolute' or
-            'absolute_to_apparent'.
+        :param conversion: Conversion direction, either
+            'apparent_to_absolute' or 'absolute_to_apparent'.
         :type conversion: str
         :return: Converted magnitude.
         :rtype: float or np.ndarray :unit: mag
         """
 
         DM = self.cosmo.distmod(z).value
-        K_corr = self.K_corr_interp(z)
+        K_corr = self.k_corr_interp(z)
 
         if conversion == "apparent_to_absolute":
             converted_magnitude = magnitude - DM - K_corr
@@ -195,8 +207,8 @@ class QuasarRate(object):
         return converted_magnitude
 
     def n_comoving(self, m_min, m_max, z_value):
-        """Calculates the comoving number density of quasars for a given redshift by
-        integrating dPhi/dM over the range of apparent magnitudes.
+        """Calculates the comoving number density of quasars by integrating
+        dPhi/dM over the range of absolute magnitudes.
 
         :param m_min: Minimum apparent magnitude.
         :type m_min: float or np.ndarray
@@ -225,7 +237,8 @@ class QuasarRate(object):
             return integral
 
     def generate_quasar_redshifts(self, m_min, m_max):
-        """Generates redshift locations of quasars using a light cone formulation.
+        """Generates redshift locations of quasars using a light cone
+        formulation.
 
         :param m_min: Minimum apparent magnitude.
         :type m_min: float
@@ -252,8 +265,8 @@ class QuasarRate(object):
         return sampled_redshifts
 
     def compute_cdf_data(self, m_min, m_max, quasar_redshifts):
-        """Computes cumulative distribution function (CDF) data for given redshift
-        values.
+        """Computes cumulative distribution function (CDF) data for given
+        redshift values.
 
         :param m_min: Minimum apparent magnitude.
         :type m_min: float
@@ -313,8 +326,8 @@ class QuasarRate(object):
         return inverse_cdf_dict
 
     def quasar_sample(self, m_min, m_max, seed=42):
-        """Generates random redshift values and associated apparent i-band magnitude
-        values for quasar samples.
+        """Generates random redshift values and associated apparent i-band
+        magnitude values for quasar samples.
 
         :param m_min: Minimum apparent magnitude.
         :type m_min: float
@@ -330,7 +343,7 @@ class QuasarRate(object):
         inverse_cdf_dict = self.inverse_cdf_fits_for_redshifts(
             m_min, m_max, quasar_redshifts
         )
-        table_data = {"z": [], "ps_mag_i": []}
+        table_data = {"z": [], "M": [], "ps_mag_i": []}
 
         for redshift in quasar_redshifts:
             inverse_cdf = inverse_cdf_dict[redshift]
@@ -341,7 +354,7 @@ class QuasarRate(object):
             apparent_i_mag = self.convert_magnitude(
                 random_abs_M_value, redshift, conversion="absolute_to_apparent"
             )
-
+            table_data["M"].append(random_abs_M_value)
             table_data["z"].append(redshift)
             table_data["ps_mag_i"].append(apparent_i_mag)
 

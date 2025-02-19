@@ -1,17 +1,20 @@
 import numpy as np
 import numpy.random as random
-from slsim.selection import deflector_cut
+from slsim.selection import object_cut
 from slsim.Deflectors.velocity_dispersion import vel_disp_composite_model
 from slsim.Deflectors.deflectors_base import DeflectorsBase
 from lenstronomy.Util import constants
 from slsim.Deflectors.elliptical_lens_galaxies import elliptical_projected_eccentricity
+from slsim.Deflectors.deflector import Deflector
 
 
 class CompoundLensHalosGalaxies(DeflectorsBase):
-    """Class describing compound lens model in which the mass distribution of individual
-    lens objects is described by a superposition of dark matter and stellar components.
+    """Class describing compound lens model in which the mass distribution of
+    individual lens objects is described by a superposition of dark matter and
+    stellar components.
 
-    This class is called by setting deflector_type == "halo-models" in LensPop.
+    This class is called by setting deflector_type == "halo-models" in
+    LensPop.
     """
 
     def __init__(
@@ -36,7 +39,7 @@ class CompoundLensHalosGalaxies(DeflectorsBase):
             cosmo=cosmo,
             sky_area=sky_area,
         )
-
+        self.deflector_profile = "NFW_HERNQUIST"
         n = len(halo_galaxy_list)
         column_names = halo_galaxy_list.columns
         if "vel_disp" not in column_names:
@@ -58,7 +61,7 @@ class CompoundLensHalosGalaxies(DeflectorsBase):
             halo_galaxy_list["e1_mass"] = -np.ones(n)
             halo_galaxy_list["e2_mass"] = -np.ones(n)
 
-        self._galaxy_select = deflector_cut(halo_galaxy_list, **kwargs_cut)
+        self._galaxy_select = object_cut(halo_galaxy_list, **kwargs_cut)
         # Currently only supporting redshift cut
         self._num_select = len(self._galaxy_select)
 
@@ -121,4 +124,7 @@ class CompoundLensHalosGalaxies(DeflectorsBase):
             deflector["e2_light"] = e2_light
             deflector["e1_mass"] = e1_mass
             deflector["e2_mass"] = e2_mass
-        return deflector
+        deflector_class = Deflector(
+            deflector_type=self.deflector_profile, deflector_dict=deflector
+        )
+        return deflector_class
