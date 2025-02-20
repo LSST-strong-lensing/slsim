@@ -1,6 +1,7 @@
 import numpy as np
 import os
 from numpy import testing as npt
+from scipy.interpolate import interp1d
 from slsim.Util.param_util import (
     epsilon2e,
     e2epsilon,

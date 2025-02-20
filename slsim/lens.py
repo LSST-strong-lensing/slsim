@@ -637,10 +637,27 @@ class Lens(LensedSystemBase):
 
         :param band: imaging band
         :type band: string
-        :param time: time is an image observation time in units of days. If None,
-            provides magnitude without variability.
+        :param time: time is an image observation time in units of days.
+            If None, provides magnitude without variability.
         :return: point source magnitude (lensed (incl. micro-lensing))
         """
+        # Get image observed times
+        image_observed_times = self.image_observer_times(time)
+        if not hasattr(self, "_molet_output"):
+            self._molet_output = self._generate_molet_output(band, time, **kwargs_molet)
+
+        # calls interpolated functions for each images and saves magnitudes at given
+        # observation time.
+        variable_magnitudes = []
+        # This is the iteration through all images. Inside this, it checks whether
+        # self._molet_output is an interpolated function or a dictionary.
+        for i in range(len(self._molet_output)):
+            variable_magnitudes.append(
+                function_or_dictionary(self._molet_output[i])(image_observed_times[i])
+            )
+        return np.array(variable_magnitudes)
+
+    def _generate_molet_output(self, band, time, **kwargs_molet):
         # coolest convention of lens model (or kappa, gamma, kappa_star)
         lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
         lens_model = LensModel(lens_model_list=lens_model_list)
@@ -661,17 +678,53 @@ class Lens(LensedSystemBase):
         # kappa: lensing convergence at image position
         # gamma: shear strength at image position
         # kappa_star: stellar convergence at image position
-        # image_observed_times: time of the source at the different images, not correcting for
-        #         redshifts, but for time delays. The time is relative to the first arriving
-        #         image.
+        # image_observed_times: time of the source at the different images, not
+        # correcting for redshifts, but for time delays. The time is relative to the
+        # first arriving image.
         # band: photometric band, potentially changing to transmission curve
         # kwargs_micro_lensing: additional (optional) dictionary of settings required by micro-lensing calculation that do not depend on
         #         the Lens() class
         # ===============
 
-        # TODO: in what format should be the 2d source profile be stored (as it is time- and wavelength dependent)
-        # TODO: do we create full light curves (and save it in cache) or call it each time
-        return 0
+        # TODO: in what format should be the 2d source profile be stored (as it is
+        # time- and wavelength dependent)
+        # TODO: do we create full light curves (and save it in cache) or call it each
+        # time
+
+        # we can use this to get intrinsic brightness of a source at image observation
+        # time. Here, we are storing source profile as dictionary of observation time
+        # and magnitude but need to decide what format molet needs. I checked with molet
+        #  and it says format should be in the form given below.
+        source_profile = [
+            {
+                "time": list(self.source.lightcurve_time),
+                "signal": list(
+                    self._point_source_magnitude(
+                        band=band, lensed=False, time=self.source.lightcurve_time
+                    )
+                ),
+            }
+        ]
+        # using source profile, kappa, gamma, kappa_star, image_observed_time molet
+        # should return lightcurve of each images. The lightcurve can be a interpolated
+        # function or a dictionary of observation time and magnitudes in specified band
+        # as given below.
+        # This molet_output is temporary. Once we call molet, this will be an actual
+        # molet output.
+        image_lightcurve_list = [
+            {
+                "time": list(self.source.lightcurve_time),
+                "magnitude": np.lnspace(23, 34, len(self.source.lightcurve_time)),
+            },
+            {
+                "time": list(self.source.lightcurve_time),
+                "magnitude": np.lnspace(24, 36, len(self.source.lightcurve_time)),
+            },
+        ]
+        # molet_output can be molet_output = [interp_lightcurve_image1,
+        # interp_lightcurve_image2]
+
+        return image_lightcurve_list
 
     def extended_source_magnitude(self, band, lensed=False):
         """Unlensed apparent magnitude of the extended source for a given band
