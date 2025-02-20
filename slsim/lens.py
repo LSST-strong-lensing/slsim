@@ -569,9 +569,11 @@ class Lens(LensedSystemBase):
 
         return observer_times
 
-    def point_source_magnitude(self, band, lensed=False, time=None, micro_lensing=False):
-        """Point source magnitude, either unlensed (single value) or lensed (array) with
-        macro-model magnifications. This function provided
+    def point_source_magnitude(
+        self, band, lensed=False, time=None, micro_lensing=False
+    ):
+        """Point source magnitude, either unlensed (single value) or lensed
+        (array) with macro-model magnifications. This function provided
         magnitudes of all the sources.
 
         # TODO: time-variability with micro-lensing
@@ -582,7 +584,8 @@ class Lens(LensedSystemBase):
         :type lensed: bool
         :param time: time is an image observation time in units of days.
             If None, provides magnitude without variability.
-        :param micro_lensing: if using micro-lensing map to produce the lensed magnification
+        :param micro_lensing: if using micro-lensing map to produce the
+            lensed magnification
         :type micro_lensing: bool
         :return: list of point source magnitudes.
         """
@@ -594,7 +597,9 @@ class Lens(LensedSystemBase):
             )
         return magnitude_list
 
-    def _point_source_magnitude(self, band, source, lensed=False, time=None, micro_lensing=False):
+    def _point_source_magnitude(
+        self, band, source, lensed=False, time=None, micro_lensing=False
+    ):
         """Point source magnitude, either unlensed (single value) or lensed
         (array) with macro-model magnifications. This function does operation
         only for the single source.
@@ -977,7 +982,8 @@ class Lens(LensedSystemBase):
 
         :param band: imaging band
         :type band: string
-        :param micro_lensing: if using micro-lensing map to produce the lensed magnification
+        :param micro_lensing: if using micro-lensing map to produce the
+            lensed magnification
         :type micro_lensing: bool
         :return: source_light_model_list, kwargs_source_light
         """
@@ -1027,7 +1033,10 @@ class Lens(LensedSystemBase):
                     image_magnitudes = np.abs(self._point_source_magnification(source))
                 else:
                     image_magnitudes = self._point_source_magnitude(
-                        band=band, source=source, lensed=True, micro_lensing=micro_lensing
+                        band=band,
+                        source=source,
+                        lensed=True,
+                        micro_lensing=micro_lensing,
                     )
                 kwargs_ps_list.append(
                     {
