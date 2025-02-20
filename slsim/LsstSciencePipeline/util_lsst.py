@@ -165,7 +165,7 @@ def opsim_variable_lens_injection(
         dec), and the band in which the observation is taken (column
         name should be "band").
     :return: Astropy table of injected lenses and exposure information
-        of dp0 data
+        of dp0 data.
     """
 
     ## chose transient starting point randomly.
@@ -307,7 +307,9 @@ def transient_data_with_cadence(
     :param symmetric: Boolean. If True, a symmetric error on magnitude
         is provided.
     :return: Astropy table of lightcurve and exposure information of dp0
-        data
+        data. The table contains: Observation time in days, lens id, magnitude of
+        each image and associated errors, lens image. If the lens system produces fewer 
+        than four images, the missing magnitudes and errors are filled with -1.
     """
 
     pix_scale = transformmatrix_to_pixelscale(transform_pix2angle)
@@ -519,6 +521,101 @@ def transient_data_with_cadence(
         ]
     )
     return copied_exposure_data
+
+def transient_data_with_cadence_test(
+    lens_class,
+    exposure_data,
+    transform_pix2angle=None,
+    num_pix=61,
+    optimized_cadence=True,
+    min_points=100,
+    noise=True,
+    symmetric=False,
+):
+    """Puts lensed transient into the provided cadence.
+
+    :return: Astropy table containing transient lightcurve and exposure information.
+    """
+
+    pix_scale = transformmatrix_to_pixelscale(transform_pix2angle)
+    copied_exposure_data = exposure_data.copy()
+
+    min_lc_time, max_lc_time = min(lens_class.source[0].lightcurve_time), max(lens_class.source[0].lightcurve_time)
+    start_mjd_time = optimized_transient_event_time_mjd(
+        copied_exposure_data["obs_time"], (min_lc_time, max_lc_time), min_points, optimized_cadence
+    )
+    
+    copied_exposure_data["obs_time_in_days"] = convert_mjd_to_days(
+        copied_exposure_data["obs_time"], start_mjd_time
+    )
+    
+    copied_exposure_data = copied_exposure_data[
+        (copied_exposure_data["obs_time_in_days"] >= min_lc_time - 50) & 
+        (copied_exposure_data["obs_time_in_days"] <= max_lc_time)
+    ]
+
+    ra_dec = copied_exposure_data["calexp_center"][0]
+    lens_id = lens_class.generate_id(ra=ra_dec[0].degree, dec=ra_dec[1].degree)
+    
+    num_images = lens_class.image_number[0]
+    mag_images = {f"mag_image_{i+1}": [] for i in range(num_images)}
+    mag_errors = {f"mag_error_image_{i+1}_{err}": [] for i in range(num_images) for err in ["low", "high"]}
+    image_list = []
+
+    for exposure in copied_exposure_data:
+        obs_time = exposure["obs_time_in_days"]
+        magnitudes = lens_class.point_source_magnitude(band=exposure["band"], lensed=True, time=obs_time)[0]
+
+        # Compute noise
+        bkg_noise, fwhm = exposure["bkg_noise"], exposure["psf_fwhm"]
+        N_pix = np.pi * (2 * fwhm) ** 2 / (pix_scale**2)
+        sigma_noise_total = bkg_noise / np.sqrt(N_pix)
+
+        for i in range(num_images):
+            amplitude = magnitude_to_amplitude(magnitudes[i], exposure["zero_point"])
+            total_counts = amplitude * exposure["expo_time"]
+            poisson_noise = np.sqrt(total_counts)
+            flux_err = np.sqrt(sigma_noise_total**2 + poisson_noise**2)
+
+            mag_realiz, mag_err_low, mag_err_high = flux_error_to_magnitude_error(
+                amplitude, flux_err, exposure["zero_point"], noise=noise, symmetric=symmetric
+            )
+
+            mag_images[f"mag_image_{i+1}"].append(mag_realiz)
+            mag_errors[f"mag_error_image_{i+1}_low"].append(mag_err_low)
+            mag_errors[f"mag_error_image_{i+1}_high"].append(mag_err_high)
+
+        # Generate lens image
+        image_list.append(
+            lens_image(
+                lens_class,
+                band=exposure["band"],
+                mag_zero_point=exposure["zero_point"],
+                num_pix=num_pix,
+                psf_kernel=exposure["psf_kernel"],
+                transform_pix2angle=transform_pix2angle,
+                exposure_time=exposure["expo_time"],
+                t_obs=obs_time,
+                std_gaussian_noise=exposure["bkg_noise"],
+            )
+        )
+
+    # Fill missing values for systems with <4 images
+    for i in range(num_images, 4):
+        mag_images[f"mag_image_{i+1}"] = [-1] * len(copied_exposure_data)
+        mag_errors[f"mag_error_image_{i+1}_low"] = [-1] * len(copied_exposure_data)
+        mag_errors[f"mag_error_image_{i+1}_high"] = [-1] * len(copied_exposure_data)
+
+    # Create and add columns to the table
+    copied_exposure_data.add_columns(
+        [Column(name="lens_id", data=[lens_id] * len(copied_exposure_data))]
+        + [Column(name=name, data=data) for name, data in mag_images.items()]
+        + [Column(name=name, data=data) for name, data in mag_errors.items()]
+        + [Column(name="lens_image", data=image_list)]
+    )
+
+    return copied_exposure_data
+
 
 
 def extract_lightcurves_in_different_bands(data, images=True):
