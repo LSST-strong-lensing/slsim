@@ -1,11 +1,13 @@
 from slsim.Deflectors.DeflectorTypes.deflector_base import DeflectorBase
-from slsim.Deflectors.velocity_dispersion import vel_disp_nfw_aperture
-from lenstronomy.Cosmo.lens_cosmo import LensCosmo
+from slsim.Deflectors.velocity_dispersion import vel_disp_nfw
+from slsim.Deflectors.DeflectorTypes.epl_sersic import EPLSersic
+from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
+import numpy as np
 
 
 class NFWCluster(DeflectorBase):
-    """Class of a NFW halo lens model with subhalos. Each subhalo is a Deflector
-    instance with its own mass and light.
+    """Class of a NFW halo lens model with subhalos. Each subhalo is a
+    EPLSersic instance with its own mass and light.
 
     required quantities in dictionary:
     - 'halo_mass': halo mass in physical M_sol
@@ -13,43 +15,33 @@ class NFWCluster(DeflectorBase):
     - 'e1_mass': eccentricity of NFW profile
     - 'e2_mass': eccentricity of NFW profile
     - 'z': redshift of deflector
+    - 'subhalos': list of dictionary with EPLSersic parameters
     """
 
-    def __init__(self, deflector_dict, subhalos_list):
+    def __init__(self, deflector_dict):
         """
 
         :param deflector_dict:  parameters of the cluster halo
         :type deflector_dict: dict
-        :param subhalos_list: list with Deflector instances as cluster subhalos
-        :type subhalos_list: list[Deflector]
         """
+        subhalos_list = deflector_dict["subhalos"]
+        self._subhalos = [EPLSersic(subhalo_dict) for subhalo_dict in subhalos_list]
         super(NFWCluster, self).__init__(deflector_dict)
-        self._subhalos = subhalos_list
 
     def velocity_dispersion(self, cosmo=None):
-        """Velocity dispersion of deflector. Simplified assumptions on anisotropy and
-        averaged over the characteristic radius.
+        """Velocity dispersion of deflector. Simplified assumptions on
+        anisotropy and averaged over the characteristic radius.
 
         :param cosmo: cosmology
         :type cosmo: ~astropy.cosmology class
         :return: velocity dispersion [km/s]
         """
-        # convert radian to arc seconds
-        lens_cosmo = LensCosmo(z_lens=self.redshift, z_source=10, cosmo=cosmo)
-
         m_halo, c_halo = self.halo_properties
-        rs_arcsec, _ = lens_cosmo.nfw_physical2angle(m_halo, c_halo)
-        vel_disp = vel_disp_nfw_aperture(
-            r=rs_arcsec,
-            m_halo=m_halo,
-            c_halo=c_halo,
-            cosmo=cosmo,
-            z_lens=self.redshift,
-        )
-        return vel_disp
+        return vel_disp_nfw(m_halo, c_halo, cosmo, self.redshift)
 
     def mass_model_lenstronomy(self, lens_cosmo):
-        """Returns lens model instance and parameters in lenstronomy conventions.
+        """Returns lens model instance and parameters in lenstronomy
+        conventions.
 
         :param lens_cosmo: lens cosmology model
         :type lens_cosmo: ~lenstronomy.Cosmo.LensCosmo instance
@@ -67,8 +59,8 @@ class NFWCluster(DeflectorBase):
         return lens_mass_model_list, kwargs_lens_mass
 
     def _halo_mass_model_lenstronomy(self, lens_cosmo):
-        """Returns lens model instance and parameters in lenstronomy conventions for the
-        main halo.
+        """Returns lens model instance and parameters in lenstronomy
+        conventions for the main halo.
 
         :param lens_cosmo: lens cosmology model
         :type lens_cosmo: ~lenstronomy.Cosmo.LensCosmo instance
@@ -76,6 +68,9 @@ class NFWCluster(DeflectorBase):
         """
         lens_mass_model_list = ["NFW_ELLIPSE_CSE"]
         e1_mass, e2_mass = self.mass_ellipticity
+        e1_mass_lenstronomy, e2_mass_lenstronomy = ellipticity_slsim_to_lenstronomy(
+            e1_slsim=e1_mass, e2_slsim=e2_mass
+        )
         center_lens = self.deflector_center
         m_halo, c_halo = self.halo_properties
         rs_halo, alpha_rs = lens_cosmo.nfw_physical2angle(M=m_halo, c=c_halo)
@@ -83,8 +78,8 @@ class NFWCluster(DeflectorBase):
             {
                 "alpha_Rs": alpha_rs,
                 "Rs": rs_halo,
-                "e1": e1_mass,
-                "e2": e2_mass,
+                "e1": e1_mass_lenstronomy,
+                "e2": e2_mass_lenstronomy,
                 "center_x": center_lens[0],
                 "center_y": center_lens[1],
             },
@@ -92,7 +87,8 @@ class NFWCluster(DeflectorBase):
         return lens_mass_model_list, kwargs_lens_mass
 
     def light_model_lenstronomy(self, band=None):
-        """Returns lens model instance and parameters in lenstronomy conventions.
+        """Returns lens model instance and parameters in lenstronomy
+        conventions.
 
         :param band: imaging band
         :type band: str
@@ -114,3 +110,27 @@ class NFWCluster(DeflectorBase):
         :return: halo mass M200 [physical M_sol], concentration r200/rs
         """
         return self._deflector_dict["halo_mass"], self._deflector_dict["concentration"]
+
+    @property
+    def stellar_mass(self):
+        """
+
+        :return: total stellar mass of deflector [M_sol]
+        """
+        total_mass = 0
+        for subhalo in self._subhalos:
+            total_mass += subhalo.stellar_mass
+        return total_mass
+
+    def magnitude(self, band):
+        """Apparent magnitude of the deflector for a given band.
+
+        :param band: imaging band
+        :type band: string
+        :return: total magnitude of deflector in given band
+        """
+        total_flux = 0
+        for subhalo in self._subhalos:
+            mag = subhalo.magnitude(band)
+            total_flux += 10 ** (-0.4 * mag)
+        return -2.5 * np.log10(total_flux)

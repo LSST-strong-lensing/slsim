@@ -29,7 +29,8 @@ class TestPointPlusExtendedSources(object):
 
     def test_draw_source(self):
         point_plus_extended_sources = self.pe_source.draw_source()
-        assert len(point_plus_extended_sources) > 0
+        assert isinstance(point_plus_extended_sources, object)
+        assert len(point_plus_extended_sources.source_dict) > 0
 
 
 if __name__ == "__main__":

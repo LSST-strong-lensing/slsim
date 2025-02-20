@@ -1,6 +1,14 @@
 slsim.Deflectors package
 ========================
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   slsim.Deflectors.DeflectorTypes
+
 Submodules
 ----------
 
@@ -12,10 +20,18 @@ slsim.Deflectors.all\_lens\_galaxies module
    :undoc-members:
    :show-inheritance:
 
-slsim.Deflectors.deflector\_base module
----------------------------------------
+slsim.Deflectors.deflector module
+---------------------------------
 
-.. automodule:: slsim.Deflectors.deflector_base
+.. automodule:: slsim.Deflectors.deflector
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+slsim.Deflectors.deflectors\_base module
+----------------------------------------
+
+.. automodule:: slsim.Deflectors.deflectors_base
    :members:
    :undoc-members:
    :show-inheritance:

@@ -6,8 +6,8 @@ _SUPPORTED_DEFLECTORS = ["EPL", "NFW_HERNQUIST"]
 
 
 class DeflectorBase(ABC):
-    """Class of a single deflector with quantities only related to the deflector
-    (independent of the source)"""
+    """Class of a single deflector with quantities only related to the
+    deflector (independent of the source)"""
 
     def __init__(self, deflector_dict):
         """
@@ -100,7 +100,8 @@ class DeflectorBase(ABC):
 
     @abstractmethod
     def mass_model_lenstronomy(self, lens_cosmo):
-        """Returns lens model instance and parameters in lenstronomy conventions.
+        """Returns lens model instance and parameters in lenstronomy
+        conventions.
 
         :param lens_cosmo: lens cosmology model
         :type lens_cosmo: ~lenstronomy.Cosmo.LensCosmo instance
@@ -110,7 +111,8 @@ class DeflectorBase(ABC):
 
     @abstractmethod
     def light_model_lenstronomy(self, band=None):
-        """Returns lens model instance and parameters in lenstronomy conventions.
+        """Returns lens model instance and parameters in lenstronomy
+        conventions.
 
         :param band: imaging band
         :type band: str
@@ -122,7 +124,7 @@ class DeflectorBase(ABC):
     def angular_size_light(self):
         """Angular size of the light component.
 
-        :return: angular size [radian]
+        :return: angular size [arcsec]
         """
         return self._deflector_dict["angular_size"]
 

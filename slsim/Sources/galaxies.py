@@ -1,13 +1,15 @@
 import numpy as np
 import numpy.random as random
-from slsim.selection import deflector_cut
+from slsim.selection import object_cut
 from slsim.Util import param_util
 from slsim.Sources.source_pop_base import SourcePopBase
 from astropy.table import Column
 from slsim.Util.param_util import average_angular_size, axis_ratio, eccentricity
-from lenstronomy.Util import constants
+from astropy import units as u
+from slsim.Sources.source import Source
 
 
+# TODO: Use type to determine galaxy_list type
 class Galaxies(SourcePopBase):
     """Class describing elliptical galaxies."""
 
@@ -23,8 +25,8 @@ class Galaxies(SourcePopBase):
     ):
         """
 
-        :param galaxy_list: list of dictionary with galaxy parameters
-        :type galaxy_list: astropy Table object
+        :param galaxy_list: An astropy table with galaxy parameters.
+        :type galaxy_list: astropy Table object.
         :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max
         :type kwargs_cut: dict
         :param cosmo: astropy.cosmology instance
@@ -40,6 +42,7 @@ class Galaxies(SourcePopBase):
         :type catalog_type: str. eg: "scotch" or None
         """
         super(Galaxies, self).__init__(cosmo=cosmo, sky_area=sky_area)
+        self.source_type = "extended"
         self.n = len(galaxy_list)
         self.light_profile = light_profile
         # add missing keywords in astropy.Table object
@@ -98,9 +101,7 @@ class Galaxies(SourcePopBase):
                     new_column = Column([-1] * new_column_length, name="n_sersic")
                     table.add_column(new_column)
         # make cuts
-        self._galaxy_select = deflector_cut(
-            galaxy_list, list_type=list_type, **kwargs_cut
-        )
+        self._galaxy_select = object_cut(galaxy_list, list_type=list_type, **kwargs_cut)
         self._num_select = len(self._galaxy_select)
         self.list_type = list_type
 
@@ -120,14 +121,24 @@ class Galaxies(SourcePopBase):
         """
         return self._num_select
 
-    def draw_source(self):
-        """Choose source at random.
+    def draw_source(self, z_max=None):
+        """Choose source at random. :param z_max: maximum redshift for source
+        to be drawn.
 
+        :param z_max: maximum redshift limit for the galaxy to be drawn.
+            If no galaxy is found for this limit, None will be returned.
         :return: dictionary of source
         """
-
-        index = random.randint(0, self._num_select - 1)
-        galaxy = self._galaxy_select[index]
+        if z_max is not None:
+            filtered_galaxies = self._galaxy_select[self._galaxy_select["z"] < z_max]
+            if len(filtered_galaxies) == 0:
+                return None
+            else:
+                index = random.randint(0, len(filtered_galaxies) - 1)
+                galaxy = filtered_galaxies[index]
+        else:
+            index = random.randint(0, self._num_select - 1)
+            galaxy = self._galaxy_select[index]
         if "a_rot" in galaxy.colnames:
             phi_rot = galaxy["a_rot"]
         else:
@@ -211,19 +222,35 @@ class Galaxies(SourcePopBase):
                 "Provided number of light profiles is not supported. It should be"
                 "either 'single or 'double' "
             )
-        return galaxy
+        source_class = Source(
+            source_dict=galaxy,
+            variability_model=self.variability_model,
+            kwargs_variability=self.kwargs_variability,
+            sn_type=self.sn_type,
+            sn_absolute_mag_band=self.sn_absolute_mag_band,
+            sn_absolute_zpsys=self.sn_absolute_zpsys,
+            cosmo=self._cosmo,
+            lightcurve_time=self.lightcurve_time,
+            sn_modeldir=self.sn_modeldir,
+            agn_driving_variability_model=self.agn_driving_variability_model,
+            agn_driving_kwargs_variability=self.agn_driving_kwargs_variability,
+            source_type=self.source_type,
+            light_profile=self.light_profile,
+        )
+        return source_class
 
 
 def galaxy_projected_eccentricity(ellipticity, rotation_angle=None):
-    """Projected eccentricity of elliptical galaxies as a function of other deflector
-    parameters.
+    """Projected eccentricity of elliptical galaxies as a function of other
+    deflector parameters.
 
     :param ellipticity: eccentricity amplitude
     :type ellipticity: float [0,1)
-    :param rotation_angle: rotation angle of the major axis of elliptical galaxy in
-        radian. The reference of this rotation angle is +Ra axis i.e towards the East
-        direction and it goes from East to North. If it is not provided, it will be
-        drawn randomly.
+    :param rotation_angle: rotation angle of the major axis of
+        elliptical galaxy in radian. The reference of this rotation
+        angle is +Ra axis i.e towards the East direction and it goes
+        from East to North. If it is not provided, it will be drawn
+        randomly.
     :return: e1, e2 eccentricity components
     """
     if rotation_angle is None:
@@ -239,17 +266,22 @@ def galaxy_projected_eccentricity(ellipticity, rotation_angle=None):
 def convert_to_slsim_convention(
     galaxy_catalog, light_profile, input_catalog_type="skypy"
 ):
-    """This function converts scotch/catalog to slsim conventions. In slsim, sersic
-    index are either n_sersic or (n_sersic_0 and n_sersic_1). Ellipticity are either
-    ellipticity or (ellipticity0 and ellipticity1). These kewords can be read by
-    Galaxies class. This function is written to convert scotch catalog to slsim
-    convension and to change unit of angular size in skypy source catalog to arcsec.
+    """This function converts scotch/catalog to slsim conventions. In slsim,
+    sersic index are either n_sersic or (n_sersic_0 and n_sersic_1).
+    Ellipticity are either ellipticity or (ellipticity0 and ellipticity1).
+    These kewords can be read by Galaxies class. This function is written to
+    convert scotch catalog to slsim convension and to change unit of angular
+    size in skypy source catalog to arcsec.
 
-    :param galaxy_catalog: galaxy catalog in other conventions.
-    :param light_profile: keyword for number of sersic profile to use in source light
-        model. accepted kewords: "single_sersic", "double_sersic".
+    :param galaxy_catalog: An astropy table of galaxy catalog in other
+        conventions.
+    :type galaxy_catalog: astropy Table object.
+    :param light_profile: keyword for number of sersic profile to use in
+        source light model. accepted kewords: "single_sersic",
+        "double_sersic".
     :return: galaxy catalog in slsim convension.
     """
+    galaxy_catalog = galaxy_catalog.copy()
     column_names = galaxy_catalog.colnames
     for col_name in column_names:
         if "_host" in col_name:
@@ -270,7 +302,5 @@ def convert_to_slsim_convention(
     if input_catalog_type == "scotch":
         galaxy_catalog["a_rot"] = np.deg2rad(galaxy_catalog["a_rot"])
     if input_catalog_type == "skypy":
-        galaxy_catalog["angular_size"] = (
-            galaxy_catalog["angular_size"] / constants.arcsec
-        )
+        galaxy_catalog["angular_size"] = galaxy_catalog["angular_size"].to(u.arcsec)
     return galaxy_catalog
