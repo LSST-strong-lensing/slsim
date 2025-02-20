@@ -106,11 +106,6 @@ class Lens(LensedSystemBase):
             cosmo=self.cosmo,
         )
 
-        self._los_linear_distortions_cache = None
-        self.los_config = los_config
-        if self.los_config is None:
-            self.los_config = LOSConfig()
-
     @property
     def image_number(self):
         """Number of images in the lensing configuration.
@@ -574,7 +569,7 @@ class Lens(LensedSystemBase):
 
         return observer_times
 
-    def point_source_magnitude(self, band, lensed=False, time=None, molet=False):
+    def point_source_magnitude(self, band, lensed=False, time=None, micro_lensing=False):
         """Point source magnitude, either unlensed (single value) or lensed (array) with
         macro-model magnifications. This function provided
         magnitudes of all the sources.
@@ -587,8 +582,8 @@ class Lens(LensedSystemBase):
         :type lensed: bool
         :param time: time is an image observation time in units of days.
             If None, provides magnitude without variability.
-        :param molet: if using MOLET to produce the lensed magnification
-        :type molet: bool
+        :param micro_lensing: if using micro-lensing map to produce the lensed magnification
+        :type micro_lensing: bool
         :return: list of point source magnitudes.
         """
 
@@ -599,7 +594,7 @@ class Lens(LensedSystemBase):
             )
         return magnitude_list
 
-    def _point_source_magnitude(self, band, source, lensed=False, time=None):
+    def _point_source_magnitude(self, band, source, lensed=False, time=None, micro_lensing=False):
         """Point source magnitude, either unlensed (single value) or lensed
         (array) with macro-model magnifications. This function does operation
         only for the single source.
@@ -616,7 +611,7 @@ class Lens(LensedSystemBase):
         """
         # TODO: might have to change conventions between extended and point source
         if lensed:
-            magnif = self.point_source_magnification()
+            magnif = self._point_source_magnification(source)
             magnif_log = 2.5 * np.log10(abs(magnif))
             if time is not None:
                 time = time
@@ -923,14 +918,14 @@ class Lens(LensedSystemBase):
         """
         return self.deflector.light_model_lenstronomy(band=band)
 
-    def source_light_model_lenstronomy(self, band=None, molet=False):
+    def source_light_model_lenstronomy(self, band=None, micro_lensing=False):
         """Returns source light model instance and parameters in lenstronomy
         conventions, which includes extended sources and point sources.
 
         :param band: imaging band
         :type band: string
-        :param molet: if using MOLET to produce the lensed magnification
-        :type molet: bool
+        :param micro_lensing: if using micro-lensing map to produce the lensed magnification
+        :type micro_lensing: bool
         :return: source_light_model_list, kwargs_source_light
         """
         source_models = {}
@@ -979,7 +974,7 @@ class Lens(LensedSystemBase):
                     image_magnitudes = np.abs(self._point_source_magnification(source))
                 else:
                     image_magnitudes = self._point_source_magnitude(
-                        band=band, source=source, lensed=True, molet=molet
+                        band=band, source=source, lensed=True, micro_lensing=micro_lensing
                     )
                 kwargs_ps_list.append(
                     {
