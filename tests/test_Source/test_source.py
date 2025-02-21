@@ -561,7 +561,7 @@ class TestSource:
         test_image = image
 
         # Build a table for this "interp" source
-        interp_source_dict = Table(
+        interp_source_dict1 = Table(
             names=(
                 "z",
                 "image",
@@ -590,15 +590,46 @@ class TestSource:
             ],
         )
 
-        self.source_interp = Source(
-            source_dict=interp_source_dict,
+        interp_source_dict2 = Table(
+            names=(
+                "z",
+                "image",
+                "z_data",
+                "pixel_width_data",
+                "phi_G",
+                "mag_i",
+                "mag_g",
+                "mag_r",
+            ),
+            rows=[
+                (
+                    0.5,
+                    test_image,
+                    0.1,
+                    0.05,
+                    0.0,
+                    20.0,
+                    20.0,
+                    20.0,
+                )
+            ],
+        )
+
+        self.source_interp1 = Source(
+            source_dict=interp_source_dict1,
+            cosmo=cosmo,
+            source_type="extended",
+            light_profile="interpolated",
+        )
+        self.source_interp2 = Source(
+            source_dict=interp_source_dict2,
             cosmo=cosmo,
             source_type="extended",
             light_profile="interpolated",
         )
 
     def test_kwargs_extended_source_light_interpolated(self):
-        result = self.source_interp.kwargs_extended_source_light(
+        result = self.source_interp1.kwargs_extended_source_light(
             center_lens=np.array([0, 0]), draw_area=4 * np.pi, band="i"
         )
         source_array = self.source_interp.source_dict["image"][0]
@@ -623,27 +654,35 @@ class TestSource:
         )
 
     def test_extended_source_light_model_interpolated(self):
-        result = self.source_interp.extended_source_light_model()
+        result = self.source_interp1.extended_source_light_model()
         assert result == ["INTERPOL"]
 
     def test_extended_source_position_interpolated(self):
         center_lens = np.array([0, 0])
         draw_area = 4 * np.pi
 
-        result = self.source_interp.extended_source_position(center_lens, draw_area)
-        expected_position = np.array(
-            [
-                self.source_interp.source_dict["center_x"][0],
-                self.source_interp.source_dict["center_y"][0],
-            ]
-        )
+        result_with_center = self.source_interp1.extended_source_position(center_lens, draw_area)
+        expected_position_with_center = np.array([
+            self.source_interp1.source_dict["center_x"][0],
+            self.source_interp1.source_dict["center_y"][0],
+        ])
 
         np.testing.assert_array_almost_equal(
-            result.flatten(),  # Ensure same shape
-            expected_position,
+            result_with_center.flatten(),  
+            expected_position_with_center,
             decimal=5,
-            err_msg="Center position from source_dict does not match expected.",
+            err_msg="Center position from source_dict does not match expected when center_x and center_y exist.",
         )
+
+        result_no_center = self.source_interp2.extended_source_position(center_lens, draw_area)
+        
+        test_area_radius = np.sqrt(draw_area / np.pi)
+        r = np.linalg.norm(result_no_center - center_lens)
+
+        assert (
+            0 <= r <= test_area_radius
+        ), f"Generated position {result_no_center} is out of expected test area range."
+
 
     def test_redshift(self):
         assert self.source.redshift == 0.5
