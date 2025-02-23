@@ -632,10 +632,10 @@ class TestSource:
         result = self.source_interp1.kwargs_extended_source_light(
             center_lens=np.array([0, 0]), draw_area=4 * np.pi, band="i"
         )
-        source_array = self.source_interp.source_dict["image"][0]
+        source_array = self.source_interp1.source_dict["image"][0]
         size = source_array.shape[0]
-        z = self.source_interp.source_dict["z"][0]
-        z_data = self.source_interp.source_dict["z_data"][0]
+        z = self.source_interp1.source_dict["z"][0]
+        z_data = self.source_interp1.source_dict["z_data"][0]
         ratio = z_scale_factor(z_old=z, z_new=z_data)
         pixel_width_data = 0.05 / ratio  # so the code's multiplication yields 0.05
 
