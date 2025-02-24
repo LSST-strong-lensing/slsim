@@ -587,16 +587,6 @@ class Source(object):
             z_image = self.source_dict["z_data"]
             pixel_width = self.source_dict["pixel_width_data"]
             pixel_width *= z_scale_factor(z_old=z_image, z_new=self.redshift)
-
-            # Ensure the image is 2D
-            image = self.source_dict["image"]
-            if image.ndim > 2:
-                image = image.squeeze()  # Remove any singleton dimensions
-            if image.ndim != 2:
-                raise ValueError(
-                    f"Interpolated image must be 2D, got shape {image.shape}"
-                )
-
             kwargs_extended_source = [
                 {
                     "magnitude": mag_source,
