@@ -592,7 +592,7 @@ class Source(object):
 
             if isinstance(image, (list, np.ndarray)):
                 image = image[0]
-                
+
             kwargs_extended_source = [
                 {
                     "magnitude": mag_source,
