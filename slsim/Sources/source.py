@@ -587,6 +587,12 @@ class Source(object):
             z_image = self.source_dict["z_data"]
             pixel_width = self.source_dict["pixel_width_data"]
             pixel_width *= z_scale_factor(z_old=z_image, z_new=self.redshift)
+
+            image = self.source_dict["image"]
+
+            if isinstance(image, (list, np.ndarray)):
+                image = image[0]
+                
             kwargs_extended_source = [
                 {
                     "magnitude": mag_source,

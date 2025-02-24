@@ -661,16 +661,17 @@ class TestSource:
         center_lens = np.array([0, 0])
         draw_area = 4 * np.pi
 
-        result_with_center = self.source_interp1.extended_source_position(
-            center_lens, draw_area
-        )
+        # Ensure the method recomputes the position
+        if hasattr(self.source_interp1, "_center_source"):
+            del self.source_interp1._center_source
+
+        result_with_center = self.source_interp1.extended_source_position(center_lens, draw_area)
         expected_position_with_center = np.array(
             [
                 self.source_interp1.source_dict["center_x"][0],
                 self.source_interp1.source_dict["center_y"][0],
             ]
         )
-
         np.testing.assert_array_almost_equal(
             result_with_center.flatten(),
             expected_position_with_center,
@@ -678,16 +679,17 @@ class TestSource:
             err_msg="Center position from source_dict does not match expected when center_x and center_y exist.",
         )
 
-        result_no_center = self.source_interp2.extended_source_position(
-            center_lens, draw_area
-        )
+        # Do the same for the no-center branch:
+        if hasattr(self.source_interp2, "_center_source"):
+            del self.source_interp2._center_source
 
+        result_no_center = self.source_interp2.extended_source_position(center_lens, draw_area)
         test_area_radius = np.sqrt(draw_area / np.pi)
         r = np.linalg.norm(result_no_center - center_lens)
-
         assert (
             0 <= r <= test_area_radius
         ), f"Generated position {result_no_center} is out of expected test area range."
+
 
     def test_redshift(self):
         assert self.source.redshift == 0.5
