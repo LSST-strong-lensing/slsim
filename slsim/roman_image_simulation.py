@@ -387,7 +387,7 @@ def lens_image_roman(
     ps_image=point_source_image_at_time(
     lens_class,
     band=band,
-    mag_zero_point=27,
+    mag_zero_point=28,
     delta_pix=0.11,
     num_pix=71,
     psf_kernel=psf_kernel,
