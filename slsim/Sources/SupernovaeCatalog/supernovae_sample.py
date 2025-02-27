@@ -104,6 +104,7 @@ class SupernovaeCatalog(object):
         sky_area,
         absolute_mag,
         sn_modeldir=None,
+        host_galaxy_candidate=None
     ):
         """
 
@@ -130,6 +131,9 @@ class SupernovaeCatalog(object):
          For more detail, please look at the documentation of RandomizedSupernovae
          class.
         :type sn_modeldir: str
+        :param host_galaxy_candidate: Galaxy catalog in an Astropy table. This catalog 
+         is used to match with the supernova population. If None, the galaxy catalog is 
+         generated within this class.
         """
         self.sn_type = sn_type
         self.band_list = band_list
@@ -141,6 +145,7 @@ class SupernovaeCatalog(object):
         self.skypy_config = skypy_config
         self.sky_area = sky_area
         self.sn_modeldir = sn_modeldir
+        self.host_galaxy_candidate = host_galaxy_candidate
 
     def supernovae_catalog(self, host_galaxy=True, lightcurve=True):
         """Generates supernovae catalog for given redshifts.
@@ -169,13 +174,15 @@ class SupernovaeCatalog(object):
         supernovae_redshift = sne_lightcone.supernovae_sample()
 
         if host_galaxy is True:
-
-            galaxy_catalog = GalaxyCatalog(
-                cosmo=self.cosmo,
-                skypy_config=self.skypy_config,
-                sky_area=self.sky_area,
-            )
-            host_galaxy_catalog = galaxy_catalog.galaxy_catalog()
+            if self.host_galaxy_candidate is None:
+                galaxy_catalog = GalaxyCatalog(
+                    cosmo=self.cosmo,
+                    skypy_config=self.skypy_config,
+                    sky_area=self.sky_area,
+                )
+                host_galaxy_catalog = galaxy_catalog.galaxy_catalog()
+            else:
+                host_galaxy_catalog = self.host_galaxy_candidate
             matching_catalogs = SupernovaeHostMatch(
                 supernovae_catalog=supernovae_redshift,
                 galaxy_catalog=host_galaxy_catalog,

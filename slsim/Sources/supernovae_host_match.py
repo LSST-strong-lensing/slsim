@@ -33,35 +33,13 @@ class SupernovaeHostMatch:
         :return: catalog with supernovae redshifts and their corresponding host galaxies
         :return type: astropy Table
         """
+        dtype_tuple = tuple(["float64"] * len(self.galaxy_catalog.colnames))
+        dtype_tuple = dtype_tuple[:2] + ("object",) + dtype_tuple[3:]
         matched_catalog = Table(
             names=(
-                "z",
-                "M",
-                "coeff",
-                "ellipticity",
-                "physical_size",
-                "stellar_mass",
-                "angular_size",
-                "mag_g",
-                "mag_r",
-                "mag_i",
-                "mag_z",
-                "mag_Y",
+                tuple(self.galaxy_catalog.colnames)
             ),
-            dtype=(
-                "float64",
-                "float64",
-                "object",
-                "float64",
-                "float64",
-                "float64",
-                "float64",
-                "float64",
-                "float64",
-                "float64",
-                "float64",
-                "float64",
-            ),
+            dtype=dtype_tuple,
         )
         # Specify appropriate redshift range based on galaxy catalog sky area (1 deg^2 ~ 1e6
         # galaxies).
