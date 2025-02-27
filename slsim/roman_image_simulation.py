@@ -3,6 +3,9 @@ import datetime
 import numpy as np
 from lenstronomy.SimulationAPI.sim_api import SimAPI
 from slsim.Observations import image_quality_lenstronomy
+from slsim.image_simulation import (point_source_image_at_time,
+                                     sharp_image, image_plus_poisson_noise)
+from slsim.Util.param_util import transformmatrix_to_pixelscale, convolved_image
 import os.path
 import pickle
 from webbpsf.roman import WFI
@@ -315,3 +318,90 @@ def _get_wcs_dict(ra, dec, date):
 
     # NB targ_pos indicates the position to observe at the center of the focal plane array
     return roman.getWCS(world_pos=targ_pos, date=date)
+
+def lens_image_roman(
+    lens_class,
+    band,
+    mag_zero_point,
+    num_pix,
+    transform_pix2angle,
+    detector=1,
+    detector_pos=(2000, 2000),
+    oversample=5,
+    psf_directory=None,
+    t_obs=None,
+    with_source=True,
+    with_deflector=True,
+    exposure_time=None,
+    std_gaussian_noise=None,
+):
+    """Creates lens image on the basis of given information. It can simulate
+    both static lens image and variable lens image. 
+    
+    Note: This function might be changed in future.
+
+    :param lens_class: Lens() object
+    :param band: imaging band
+    :param mag_zero_point: magnitude zero point for the exposure
+    :param num_pix: number of pixels per axis
+    :param transform_pix2angle: transformation matrix (2x2) of pixels
+        into coordinate displacements
+    :param detector: The specific Roman detector being used to generate the psf
+    :type detector: integer from 1 to 18
+    :param detector_pos: The position of the detector being used to generate the psf
+    :type detector_pos: integer between 4 + num_pix * oversample and 4092 - num_pix * oversample
+    :param oversample: Number of times that each pixel's side is subdivided for higher 
+     accuracy psf convolution
+    :type oversample: integer
+    :param psf_directory: Path to directory containing psf file(s) where the psf can be loaded.
+     the user can download psfs from cached_webb_psf
+     (https://github.com/LSST-strong-lensing/data_public/webbpsf), where the
+      psfs have been generated ahead of time so that they can be loaded from
+      a file. The directory containing these psfs should be passed into the
+      "psf_directory".
+    :type psf_directory: string
+    :param t_obs: an observation time [day]. This is applicable only for
+        variable source. In case of point source, if we do not provide
+        t_obs, considers no variability in the lens.
+    :param with_source: If True, simulates image with extended source in
+        lens configuration.
+    :param with_deflector: If True, simulates image with deflector.
+    :param exposure_time: exposure time for for the exposure. It could
+        be single exposure time or a exposure map.
+    :param std_gaussian_noise: standard deviation for a gaussian noise
+    :return: lens image in roman filter
+    """
+    delta_pix=transformmatrix_to_pixelscale(transform_pix2angle)
+    psf_interp=get_psf(band, detector, detector_pos, oversample, psf_directory)
+    psf_kernel=psf_interp.image.array
+    deflector_image=sharp_image(
+    lens_class=lens_class,
+    band=band,
+    mag_zero_point=mag_zero_point,
+    delta_pix=delta_pix,
+    num_pix=num_pix,
+    with_source=with_source,
+    with_deflector=with_deflector,
+)
+    convolved_deflector= convolved_image(deflector_image,psf_kernel=psf_kernel)
+    ps_image=point_source_image_at_time(
+    lens_class,
+    band=band,
+    mag_zero_point=27,
+    delta_pix=0.11,
+    num_pix=71,
+    psf_kernel=psf_kernel,
+    transform_pix2angle=transform_pix2angle,
+    time=t_obs,
+)
+    ps_image = np.nan_to_num(ps_image, nan=0)
+    image = convolved_deflector + ps_image
+    if exposure_time is not None:
+        final_image = image_plus_poisson_noise(image=image, exposure_time=exposure_time,
+                mag_zero_point=mag_zero_point, single_visit_zero_point=mag_zero_point)
+    else:
+        final_image = image
+    if std_gaussian_noise is not None:
+        gaussian_noise = np.random.normal(0, std_gaussian_noise, final_image.shape)
+        return final_image + gaussian_noise
+    return final_image
