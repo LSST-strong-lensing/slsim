@@ -9,8 +9,8 @@ def z_scale_factor(z_old, z_new, cosmo=None):
     :type z_old: float
     :param z_new: The redshift the object will be placed at.
     :type z_new: float
-    :param cosmo: The cosmology object.
-    (Defaults to a FlatLambdaCDM model.)
+    :param cosmo: The cosmology object. (Defaults to a FlatLambdaCDM
+        model.)
     :type cosmo: astropy.cosmology.FLRW
     :return: The multiplicative pixel size.
     :rtype: float

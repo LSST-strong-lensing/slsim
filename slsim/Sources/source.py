@@ -36,7 +36,7 @@ class Source(object):
         """
         :param source_dict: Source properties
         :type source_dict: dict or astropy table
-        :type source_dict: dict  
+        :type source_dict: dict
         # When source_type is 'interpolated', include keys:
          'z' (float), 'image' (numpy.ndarray), 'z_data' (float), 'pixel_width_data' (float), 'phi_G' (float),
             'center_x' (float), 'center_y' (float).
