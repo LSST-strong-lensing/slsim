@@ -108,11 +108,11 @@ class TestLens(object):
             ),
             rows=[
                 (
-                    0.5,
+                    0.1,
                     test_image,
                     size // 2,
                     size // 2,
-                    0.1,
+                    0.5,
                     0.05,
                     0.0,
                     20.0,
