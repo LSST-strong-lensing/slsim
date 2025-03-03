@@ -1,7 +1,7 @@
 import astropy.cosmology
 import numpy as np
 from slsim.lens import Lens
-from slsim.roman_image_simulation import simulate_roman_image
+from slsim.roman_image_simulation import simulate_roman_image, lens_image_roman
 from slsim.image_simulation import simulate_image
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
@@ -45,6 +45,8 @@ SOURCE_DICT = {
     "mag_F184": 20.542431041034558,
     "n_sersic": 1.0,
     "z": 0.5876899931818929,
+    "x_off": -0.053568932950377096,
+    "y_off": 0.04383056304876015
 }
 
 BAND = "F106"
@@ -54,12 +56,32 @@ source = Source(
     source_type="extended",
     light_profile="single_sersic",
 )
+supernova_source = Source(
+    source_dict=SOURCE_DICT,
+    cosmo=COSMO,
+    source_type="point_plus_extended",
+    light_profile="single_sersic",
+    variability_model="light_curve",
+    kwargs_variability={"supernovae_lightcurve", "F184", "F129", "F106"},
+    sn_type="Ia",
+    sn_absolute_mag_band="bessellb",
+    sn_absolute_zpsys="ab",
+    lightcurve_time=np.linspace(-50, 100, 100)
+
+)
+
 deflector = Deflector(
     deflector_type="EPL",
     deflector_dict=DEFLECTOR_DICT,
 )
 LENS = Lens(
     source_class=source,
+    deflector_class=deflector,
+    los_class=LOSIndividual(**LOS_DICT),
+    cosmo=COSMO,
+)
+SNIa_Lens = Lens(
+    source_class=supernova_source,
     deflector_class=deflector,
     los_class=LOSIndividual(**LOS_DICT),
     cosmo=COSMO,
@@ -128,6 +150,24 @@ def test_simulate_roman_image_with_psf_without_noise():
         np.sum(galsim_image), np.sum(image_ref), rtol=0, atol=0.1
     )
 
+def test_lens_image_roman():
+    lens_image = lens_image_roman(
+    lens_class=SNIa_Lens,
+    band=BAND,
+    mag_zero_point=28,
+    num_pix=71,
+    transform_pix2angle=np.array([[0.11, 0], [0, 0.11]]),
+    detector=1,
+    detector_pos=(2000, 2000),
+    oversample=3,
+    psf_directory=PSF_DIRECTORY,
+    t_obs=0,
+    with_source=True,
+    with_deflector=True,
+    exposure_time=300,
+    std_gaussian_noise=0.003,
+)
+    
 
 if __name__ == "__main__":
     pytest.main()

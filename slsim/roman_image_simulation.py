@@ -398,7 +398,7 @@ def lens_image_roman(
     image = convolved_deflector + ps_image
     if exposure_time is not None:
         final_image = image_plus_poisson_noise(image=image, exposure_time=exposure_time,
-                mag_zero_point=mag_zero_point, single_visit_zero_point=mag_zero_point)
+                coadd_zero_point=mag_zero_point, single_visit_zero_point=mag_zero_point)
     else:
         final_image = image
     if std_gaussian_noise is not None:
