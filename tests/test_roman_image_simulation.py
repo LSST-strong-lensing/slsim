@@ -164,9 +164,27 @@ def test_lens_image_roman():
     t_obs=0,
     with_source=True,
     with_deflector=True,
-    exposure_time=300,
-    std_gaussian_noise=0.003,
 )
+    lens_image_no_noise = lens_image_roman(
+    lens_class=SNIa_Lens,
+    band=BAND,
+    mag_zero_point=28,
+    num_pix=71,
+    transform_pix2angle=np.array([[0.11, 0], [0, 0.11]]),
+    detector=1,
+    detector_pos=(2000, 2000),
+    oversample=3,
+    psf_directory=PSF_DIRECTORY,
+    t_obs=0,
+    with_source=True,
+    with_deflector=True,
+    add_noise=False
+)
+    noise = lens_image-lens_image_no_noise
+    assert np.shape(lens_image)[0] == 71
+    assert 1 < np.mean(noise) < 2
+
+    
     
 
 if __name__ == "__main__":
