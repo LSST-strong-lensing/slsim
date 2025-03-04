@@ -6,7 +6,6 @@ from slsim.Observations import image_quality_lenstronomy
 from slsim.image_simulation import (
     point_source_image_at_time,
     sharp_image,
-    image_plus_poisson_noise,
 )
 from slsim.Util.param_util import transformmatrix_to_pixelscale, convolved_image
 import os.path
