@@ -36,9 +36,7 @@ class SupernovaeHostMatch:
         dtype_tuple = tuple(["float64"] * len(self.galaxy_catalog.colnames))
         dtype_tuple = dtype_tuple[:2] + ("object",) + dtype_tuple[3:]
         matched_catalog = Table(
-            names=(
-                tuple(self.galaxy_catalog.colnames)
-            ),
+            names=(tuple(self.galaxy_catalog.colnames)),
             dtype=dtype_tuple,
         )
         # Specify appropriate redshift range based on galaxy catalog sky area (1 deg^2 ~ 1e6
