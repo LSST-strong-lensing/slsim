@@ -405,7 +405,7 @@ def lens_image_roman(
     psf_kernel=psf_kernel,
     transform_pix2angle=transform_pix2angle,
     time=t_obs,
-)
+)   
     ps_image = np.nan_to_num(ps_image, nan=0)
     image = convolved_deflector + ps_image
     image_galsim = galsim.ImageF(image, scale=delta_pix)
