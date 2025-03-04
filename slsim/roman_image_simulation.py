@@ -3,8 +3,11 @@ import datetime
 import numpy as np
 from lenstronomy.SimulationAPI.sim_api import SimAPI
 from slsim.Observations import image_quality_lenstronomy
-from slsim.image_simulation import (point_source_image_at_time,
-                                     sharp_image, image_plus_poisson_noise)
+from slsim.image_simulation import (
+    point_source_image_at_time,
+    sharp_image,
+    image_plus_poisson_noise,
+)
 from slsim.Util.param_util import transformmatrix_to_pixelscale, convolved_image
 import os.path
 import pickle
@@ -336,12 +339,12 @@ def lens_image_roman(
     ra=30,
     dec=-30,
     date=datetime.datetime(year=2027, month=7, day=7, hour=0, minute=0, second=0),
-    add_noise = True,
+    add_noise=True,
     seed=None,
 ):
     """Creates lens image on the basis of given information. It can simulate
-    both static lens image and variable lens image. 
-    
+    both static lens image and variable lens image.
+
     Note: This function might be changed in future.
 
     :param lens_class: Lens() object
@@ -354,7 +357,7 @@ def lens_image_roman(
     :type detector: integer from 1 to 18
     :param detector_pos: The position of the detector being used to generate the psf
     :type detector_pos: integer between 4 + num_pix * oversample and 4092 - num_pix * oversample
-    :param oversample: Number of times that each pixel's side is subdivided for higher 
+    :param oversample: Number of times that each pixel's side is subdivided for higher
      accuracy psf convolution
     :type oversample: integer
     :param psf_directory: Path to directory containing psf file(s) where the psf can be loaded.
@@ -382,30 +385,35 @@ def lens_image_roman(
     :type seed: integer or None
     :return: lens image in roman filter
     """
-    delta_pix=transformmatrix_to_pixelscale(transform_pix2angle)
-    psf_interp=get_psf(band=band, detector=detector, detector_pos=detector_pos, 
-                       oversample=oversample, psf_directory=psf_directory)
-    psf_kernel=psf_interp.image.array
-    deflector_image=sharp_image(
-    lens_class=lens_class,
-    band=band,
-    mag_zero_point=mag_zero_point,
-    delta_pix=delta_pix,
-    num_pix=num_pix,
-    with_source=with_source,
-    with_deflector=with_deflector,
-)
-    convolved_deflector = convolved_image(deflector_image,psf_kernel=psf_kernel)
-    ps_image=point_source_image_at_time(
-    lens_class,
-    band=band,
-    mag_zero_point=mag_zero_point,
-    delta_pix=0.11,
-    num_pix=num_pix,
-    psf_kernel=psf_kernel,
-    transform_pix2angle=transform_pix2angle,
-    time=t_obs,
-)   
+    delta_pix = transformmatrix_to_pixelscale(transform_pix2angle)
+    psf_interp = get_psf(
+        band=band,
+        detector=detector,
+        detector_pos=detector_pos,
+        oversample=oversample,
+        psf_directory=psf_directory,
+    )
+    psf_kernel = psf_interp.image.array
+    deflector_image = sharp_image(
+        lens_class=lens_class,
+        band=band,
+        mag_zero_point=mag_zero_point,
+        delta_pix=delta_pix,
+        num_pix=num_pix,
+        with_source=with_source,
+        with_deflector=with_deflector,
+    )
+    convolved_deflector = convolved_image(deflector_image, psf_kernel=psf_kernel)
+    ps_image = point_source_image_at_time(
+        lens_class,
+        band=band,
+        mag_zero_point=mag_zero_point,
+        delta_pix=0.11,
+        num_pix=num_pix,
+        psf_kernel=psf_kernel,
+        transform_pix2angle=transform_pix2angle,
+        time=t_obs,
+    )
     ps_image = np.nan_to_num(ps_image, nan=0)
     image = convolved_deflector + ps_image
     image_galsim = galsim.ImageF(image, scale=delta_pix)
@@ -424,10 +432,10 @@ def lens_image_roman(
         # Add detector effects and get the resulting array
         rng = galsim.UniformDeviate(seed)
         roman.allDetectorEffects(
-            noise_galsim, prev_exposures=(), rng=rng, exptime =_exposure_time
+            noise_galsim, prev_exposures=(), rng=rng, exptime=_exposure_time
         )
 
     image_array = image_galsim.array
-    noise_array = noise_galsim.array/_exposure_time
+    noise_array = noise_galsim.array / _exposure_time
     final_image = image_array + noise_array
     return final_image

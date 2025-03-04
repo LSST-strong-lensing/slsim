@@ -104,7 +104,7 @@ class SupernovaeCatalog(object):
         sky_area,
         absolute_mag,
         sn_modeldir=None,
-        host_galaxy_candidate=None
+        host_galaxy_candidate=None,
     ):
         """
 
@@ -131,8 +131,8 @@ class SupernovaeCatalog(object):
          For more detail, please look at the documentation of RandomizedSupernovae
          class.
         :type sn_modeldir: str
-        :param host_galaxy_candidate: Galaxy catalog in an Astropy table. This catalog 
-         is used to match with the supernova population. If None, the galaxy catalog is 
+        :param host_galaxy_candidate: Galaxy catalog in an Astropy table. This catalog
+         is used to match with the supernova population. If None, the galaxy catalog is
          generated within this class.
         """
         self.sn_type = sn_type

@@ -68,11 +68,9 @@ class TestSupernovaeCatalog:
         )
         # generate galaxy population using skypy pipeline.
         galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
-                skypy_config=skypy_config,
-                sky_area=sky_area,
-                filters=None,
-                cosmo=cosmo)
-        blue_galaxie=galaxy_simulation_pipeline.blue_galaxies
+            skypy_config=skypy_config, sky_area=sky_area, filters=None, cosmo=cosmo
+        )
+        blue_galaxie = galaxy_simulation_pipeline.blue_galaxies
         self.supernovae_catalog2 = SupernovaeCatalog(
             sn_type=sn_type,
             band_list=band_list,
@@ -83,7 +81,7 @@ class TestSupernovaeCatalog:
             skypy_config=skypy_config,
             sky_area=sky_area,
             absolute_mag=absolute_mag,
-            host_galaxy_candidate=blue_galaxie
+            host_galaxy_candidate=blue_galaxie,
         )
 
     def test_supernovae_catalog(self):
@@ -102,7 +100,6 @@ class TestSupernovaeCatalog:
         assert "x_off" in result3.colnames
         assert "y_off" in result3.colnames
         assert self.supernovae_catalog2.host_galaxy_candidate is not None
-
 
 
 if __name__ == "__main__":
