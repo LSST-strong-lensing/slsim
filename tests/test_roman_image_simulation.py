@@ -182,7 +182,7 @@ def test_lens_image_roman():
 )
     noise = lens_image-lens_image_no_noise
     assert np.shape(lens_image)[0] == 71
-    assert 1 < np.mean(noise) < 2
+    assert 1 < np.mean(noise) < 1.8
 
     
     
