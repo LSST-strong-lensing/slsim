@@ -344,6 +344,8 @@ def lens_image_roman(
     """Creates lens image on the basis of given information. It can simulate
     both static lens image and variable lens image.
 
+    Note: This function might evolve in near future.
+
     Note: This function might be changed in future.
 
     :param lens_class: Lens() object
