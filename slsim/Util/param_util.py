@@ -6,6 +6,7 @@ from lenstronomy.Util.param_util import transform_e1e2_product_average
 from lenstronomy.Util.param_util import ellipticity2phi_q
 from astropy.io import fits
 from astropy import units as u
+from astropy.stats import sigma_clipped_stats
 import warnings
 
 
@@ -462,3 +463,107 @@ def galaxy_size_redshift_evolution(z):
     Bz = 4.89  # median value from Table 6 of Shibuya et al. (2015)
     betaz = -1.05  # median value from Table 6 of Shibuya et al. (2015)
     return Bz * (1 + z) ** betaz
+
+
+def additional_poisson_noise_with_rescaled_coadd(
+    image, original_exp_time, degraded_exp_time, use_noise_diff=True
+):
+    """Computes additional Poisson noise to an image based on the change in
+    exposure time.
+
+    :param image : numpy.ndarray The input image array.
+    :param original_exp_time : numpy.ndarray The original exposure time
+        per pixel.
+    :param degraded_exp_time : numpy.ndarray The degraded exposure time
+        per pixel.
+    :param use_noise_diff : bool, optional If True, approximates noise
+        difference using Gaussian noise, otherwise, applies Poisson
+        sampling. Default is True.
+    :return: numpy.ndarray The additional noise to be added to the
+        image.
+    """
+    image_positive = np.where(image > 0, image, 0)
+
+    if use_noise_diff:
+        sigma_add = np.where(
+            original_exp_time > 0,
+            np.sqrt(image_positive)
+            * np.sqrt(1 / degraded_exp_time - 1 / original_exp_time),
+            0.0,
+        )
+        return np.random.normal(scale=sigma_add, size=image.shape)
+    else:
+        image_with_poisson = np.where(
+            original_exp_time > 0,
+            np.random.poisson(lam=image_positive * degraded_exp_time)
+            / degraded_exp_time,
+            0.0,
+        )
+        return image_with_poisson - image_positive
+
+
+def additional_bkg_rms_with_rescaled_coadd(
+    image, original_rms, degraded_rms, use_noise_diff=True
+):
+    """Computes additinal background noise based on RMS values before and after
+    degradation.
+
+    :param image : numpy.ndarray The input image array.
+    :param original_rms : float The original root mean square (RMS)
+        noise.
+    :param degraded_rms : float The degraded RMS noise.
+    :param use_noise_diff : bool, optional If True, approximates noise
+        difference using Gaussian noise, otherwise, applies new Gaussian
+        noise directly. Default is True.
+    :return: numpy.ndarray The additional noise to be added to the
+        image.
+    """
+    if use_noise_diff:
+        sigma_add = np.sqrt(degraded_rms**2 - original_rms**2)
+        return np.random.normal(scale=sigma_add, size=image.shape)
+    else:
+        return np.random.normal(scale=degraded_rms, size=image.shape)
+
+
+def degrade_coadd_data(
+    image,
+    variance_map,
+    exposure_map,
+    original_num_years=5,
+    degraded_num_years=1,
+    use_noise_diff=True,
+):
+    """Degrade a coadded astronomical image by reducing its effective exposure
+    time.
+
+    :param image : numpy.ndarray The input image array.
+    :param variance_map : numpy.ndarray The original variance map.
+    :param exposure_map : numpy.ndarray The original exposure time per
+        pixel.
+    :param original_num_years : int, optional The original coadded
+        number of years. Default is 5.
+    :param degraded_num_years : int, optional The new degraded number of
+        years. Default is 1.
+    :param use_noise_diff : bool, optional If True, approximates noise
+        difference using Gaussian noise, otherwise, applies full noise
+        resampling. Default is True.
+    :return: The degraded image, the new variance map, and he new
+        exposure map.
+    """
+    degraded_var_map = variance_map * original_num_years / degraded_num_years
+    degraded_exp_map = exposure_map * degraded_num_years / original_num_years
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        original_rms = np.sqrt(sigma_clipped_stats(variance_map, sigma=3)[0])
+        degraded_rms = np.sqrt(sigma_clipped_stats(degraded_var_map, sigma=3)[0])
+
+        degraded_image = image + additional_poisson_noise_with_rescaled_coadd(
+            image, exposure_map, degraded_exp_map, use_noise_diff
+        )
+
+    degraded_image += additional_bkg_rms_with_rescaled_coadd(
+        image, original_rms, degraded_rms, use_noise_diff
+    )
+
+    return degraded_image, degraded_var_map, degraded_exp_map
