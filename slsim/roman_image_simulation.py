@@ -5,7 +5,8 @@ from lenstronomy.SimulationAPI.sim_api import SimAPI
 from slsim.Observations import image_quality_lenstronomy
 from slsim.image_simulation import (
     point_source_image_at_time,
-    sharp_image, image_plus_poisson_noise
+    sharp_image,
+    image_plus_poisson_noise,
 )
 from slsim.Util.param_util import transformmatrix_to_pixelscale, convolved_image
 import os.path
@@ -444,5 +445,6 @@ def lens_image_roman(
     final_image = image_array + noise_array
     if poisson_noise:
         final_image = image_plus_poisson_noise(
-            image=final_image, exposure_time=_exposure_time)
+            image=final_image, exposure_time=_exposure_time
+        )
     return final_image

@@ -105,7 +105,7 @@ class SupernovaeCatalog(object):
         absolute_mag,
         sn_modeldir=None,
         host_galaxy_candidate=None,
-        redshift_max=5
+        redshift_max=5,
     ):
         """
 
