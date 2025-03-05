@@ -33,8 +33,12 @@ class SupernovaeHostMatch:
         :return: catalog with supernovae redshifts and their corresponding host galaxies
         :return type: astropy Table
         """
+        # Create a tuple of data types (dtype_tuple).
         dtype_tuple = tuple(["float64"] * len(self.galaxy_catalog.colnames))
+        # Convert 3rd element to object from float64.
         dtype_tuple = dtype_tuple[:2] + ("object",) + dtype_tuple[3:]
+        # Create a new Table object where supernovae and their host galaxy will be stored.
+        # This table will be created dynamically with the format of the given galaxy catalog.
         matched_catalog = Table(
             names=(tuple(self.galaxy_catalog.colnames)),
             dtype=dtype_tuple,
