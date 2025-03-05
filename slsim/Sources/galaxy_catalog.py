@@ -36,5 +36,4 @@ class GalaxyCatalog(object):
             cosmo=self.cosmo,
         )
         galaxy_table = pipeline.blue_galaxies
-        galaxy_table_cut = galaxy_table[galaxy_table["z"] <= 2.379]
-        return galaxy_table_cut
+        return galaxy_table
