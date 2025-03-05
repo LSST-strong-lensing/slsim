@@ -105,6 +105,7 @@ class SupernovaeCatalog(object):
         absolute_mag,
         sn_modeldir=None,
         host_galaxy_candidate=None,
+        redshift_max=5
     ):
         """
 
@@ -134,6 +135,7 @@ class SupernovaeCatalog(object):
         :param host_galaxy_candidate: Galaxy catalog in an Astropy table. This catalog
          is used to match with the supernova population. If None, the galaxy catalog is
          generated within this class.
+        :param redshift_max: Maximum redshift for supernovae sample. Default is 5.
         """
         self.sn_type = sn_type
         self.band_list = band_list
@@ -146,6 +148,7 @@ class SupernovaeCatalog(object):
         self.sky_area = sky_area
         self.sn_modeldir = sn_modeldir
         self.host_galaxy_candidate = host_galaxy_candidate
+        self.redshift_max = redshift_max
 
     def supernovae_catalog(self, host_galaxy=True, lightcurve=True):
         """Generates supernovae catalog for given redshifts.
@@ -166,7 +169,7 @@ class SupernovaeCatalog(object):
         """
         sne_lightcone = SNeLightcone(
             self.cosmo,
-            redshifts=np.linspace(0, 5, 500),
+            redshifts=np.linspace(0, self.redshift_max, 500),
             sky_area=self.sky_area,
             noise=True,
             time_interval=1 * units.year,
