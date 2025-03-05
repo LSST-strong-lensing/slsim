@@ -5,7 +5,7 @@ from lenstronomy.SimulationAPI.sim_api import SimAPI
 from slsim.Observations import image_quality_lenstronomy
 from slsim.image_simulation import (
     point_source_image_at_time,
-    sharp_image,
+    sharp_image, image_plus_poisson_noise
 )
 from slsim.Util.param_util import transformmatrix_to_pixelscale, convolved_image
 import os.path
@@ -339,6 +339,7 @@ def lens_image_roman(
     dec=-30,
     date=datetime.datetime(year=2027, month=7, day=7, hour=0, minute=0, second=0),
     add_noise=True,
+    poisson_noise=True,
     seed=None,
 ):
     """Creates lens image on the basis of given information. It can simulate
@@ -382,6 +383,8 @@ def lens_image_roman(
     :type date: datetime.datetime class
     :param add_noise: determines whether sky background and detector effects are added or not
     :type add_background: bool
+    :param poisson_noise: determines whether poisson noise is added or not
+    :type poisson_noise: bool
     :param seed: An rng seed used for generating detector effects in galsim
     :type seed: integer or None
     :return: lens image in roman filter
@@ -439,4 +442,7 @@ def lens_image_roman(
     image_array = image_galsim.array
     noise_array = noise_galsim.array / _exposure_time
     final_image = image_array + noise_array
+    if poisson_noise:
+        final_image = image_plus_poisson_noise(
+            image=final_image, exposure_time=_exposure_time)
     return final_image
