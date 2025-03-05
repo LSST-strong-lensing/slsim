@@ -20,6 +20,9 @@ from slsim.Util.param_util import (
     transient_event_time_mjd,
     downsample_galaxies,
     galaxy_size_redshift_evolution,
+    additional_poisson_noise_with_rescaled_coadd,
+    additional_bkg_rms_with_rescaled_coadd,
+    degrade_coadd_data
 )
 from slsim.Sources.SourceVariability.variability import Variability
 from astropy.io import fits
@@ -325,6 +328,44 @@ def test_downsample_galaxies():
 def test_galaxy_size_redshift_evolution():
     results = galaxy_size_redshift_evolution(z=0)
     assert results == 4.89
+
+def test_additional_poisson_noise_with_rescaled_coadd():
+    image = np.random.rand(41, 41)*5
+    original_exp_time = np.ones((41, 41))
+    degraded_exp_time = original_exp_time * 0.5
+    
+    result1 = additional_poisson_noise_with_rescaled_coadd(image,
+                            original_exp_time, degraded_exp_time, use_noise_diff=True)
+    result2 = additional_poisson_noise_with_rescaled_coadd(image,
+                            original_exp_time, degraded_exp_time, use_noise_diff=False)
+    
+    assert result1.shape == image.shape
+    assert np.mean(result1) < np.mean(image)
+    assert result2.shape == image.shape
+    assert np.mean(result2) < np.mean(image)
+
+def test_additional_bkg_rms_with_rescaled_coadd():
+    image = np.random.rand(41, 41)*5
+    
+    
+    result1 = additional_bkg_rms_with_rescaled_coadd(image,
+                            original_rms=0.5, degraded_rms=0.7, use_noise_diff=True)
+    result2 = additional_bkg_rms_with_rescaled_coadd(image,
+                            original_rms=0.5, degraded_rms=0.7, use_noise_diff=False)
+    
+    assert result1.shape == image.shape
+    assert -3*np.sqrt(0.7**2 - 0.5**2) <= np.mean(result1) <= 3*np.sqrt(0.7**2 - 0.5**2)
+    assert result2.shape == image.shape
+    assert -3*np.sqrt(0.7**2 - 0.5**2) <= np.mean(result2) <= 3*np.sqrt(0.7**2 - 0.5**2)
+
+def test_degrade_coadd_data():
+    image = np.random.rand(41, 41)*5
+    variance_map = np.random.rand(41, 41)
+    exposure_map = np.ones((41, 41))*300
+    result=degrade_coadd_data(image, variance_map, exposure_map, original_num_years=5,
+                               degraded_num_years=1)
+    assert len(result) == 3
+    assert np.mean(image) > np.mean(result[0])
 
 
 if __name__ == "__main__":
