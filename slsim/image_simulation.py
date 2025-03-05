@@ -393,6 +393,7 @@ def point_source_image_at_time(
         variable_mag = lens_class.point_source_magnitude(
             band=band, lensed=True, time=time
         )
+        variable_mag = np.nan_to_num(variable_mag, nan=np.inf)
         variable_mag_list = np.concatenate(variable_mag)
         variable_amp = magnitude_to_amplitude(variable_mag_list, mag_zero_point)
 

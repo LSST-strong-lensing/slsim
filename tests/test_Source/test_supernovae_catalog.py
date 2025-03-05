@@ -8,6 +8,7 @@ from slsim.Sources.galaxy_catalog import GalaxyCatalog
 from slsim.Sources.SupernovaeCatalog.supernovae_sample import (
     supernovae_host_galaxy_offset,
 )
+import slsim.Pipelines as pipelines
 
 sn_type = "Ia"
 band_list = ["i"]
@@ -65,17 +66,40 @@ class TestSupernovaeCatalog:
             sky_area=sky_area,
             absolute_mag=absolute_mag,
         )
+        # generate galaxy population using skypy pipeline.
+        galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
+            skypy_config=skypy_config, sky_area=sky_area, filters=None, cosmo=cosmo
+        )
+        blue_galaxie = galaxy_simulation_pipeline.blue_galaxies
+        self.supernovae_catalog2 = SupernovaeCatalog(
+            sn_type=sn_type,
+            band_list=band_list,
+            lightcurve_time=lightcurve_time,
+            absolute_mag_band=absolute_mag_band,
+            mag_zpsys=mag_zpsys,
+            cosmo=cosmo,
+            skypy_config=skypy_config,
+            sky_area=sky_area,
+            absolute_mag=absolute_mag,
+            host_galaxy_candidate=blue_galaxie,
+        )
 
     def test_supernovae_catalog(self):
         result = self.supernovae_catalog.supernovae_catalog()
         result2 = self.supernovae_catalog.supernovae_catalog(
             host_galaxy=False, lightcurve=False
         )
+        result3 = self.supernovae_catalog2.supernovae_catalog(
+            host_galaxy=True, lightcurve=False
+        )
         assert "MJD" in result.colnames
         assert "z" in result.colnames
         assert "stellar_mass" in result.colnames
         assert "e1" in result.colnames
         assert len(result2.colnames) == 1
+        assert "x_off" in result3.colnames
+        assert "y_off" in result3.colnames
+        assert self.supernovae_catalog2.host_galaxy_candidate is not None
 
 
 if __name__ == "__main__":
