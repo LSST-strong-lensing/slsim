@@ -2,17 +2,17 @@ from astropy.cosmology import FlatLambdaCDM
 
 
 def z_scale_factor(z_old, z_new, cosmo=None):
-    """Return multiplication factor for object/pixel size for moving its
-    redshift from z_old to z_new.
-
-    :param z_old: The original redshift of the object.
+    """
+    :param z_old: The original redshift.
     :type z_old: float
-    :param z_new: The redshift the object will be placed at.
+
+    :param z_new: The redshift where the object will be placed.
     :type z_new: float
-    :param cosmo: The cosmology object.
-    (Defaults to a FlatLambdaCDM model.)
-    :type cosmo: astropy.cosmology.FLRW
-    :return: The multiplicative pixel size.
+
+    :param cosmo: The cosmology object. Defaults to a FlatLambdaCDM model if None.
+    :type cosmo: astropy.cosmology.FLRW, optional
+
+    :return: The multiplicative pixel size scaling factor.
     :rtype: float
     """
     # Define default cosmology if not provided

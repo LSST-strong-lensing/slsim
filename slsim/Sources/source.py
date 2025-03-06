@@ -34,12 +34,16 @@ class Source(object):
         light_profile="single_sersic",
     ):
         """
-        :param source_dict: Source properties
-        :type source_dict: dict or astropy table
-        :type source_dict: dict  
-        # When source_type is 'interpolated', include keys:
-         'z' (float), 'image' (numpy.ndarray), 'z_data' (float), 'pixel_width_data' (float), 'phi_G' (float),
-            'center_x' (float), 'center_y' (float).
+        :param source_dict: Source properties. May be a dictionary or an Astropy table.
+        :type source_dict: dict or astropy.table.Table
+        When source_type is 'interpolated', include keys:
+        - 'z' (float)
+        - 'image' (numpy.ndarray)
+        - 'z_data' (float)
+        - 'pixel_width_data' (float)
+        - 'phi_G' (float)
+        - 'center_x' (float)
+        - 'center_y' (float)                
         :param variability_model: keyword for variability model to be used. This is an
          input for the Variability class.
         :type variability_model: str
