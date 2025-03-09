@@ -43,7 +43,7 @@ class Source(object):
         - 'pixel_width_data' (float)
         - 'phi_G' (float)
         - 'center_x' (float)
-        - 'center_y' (float)                
+        - 'center_y' (float)
         :param variability_model: keyword for variability model to be used. This is an
          input for the Variability class.
         :type variability_model: str
