@@ -99,7 +99,7 @@ def gg_roman_lens_pop_instance():
         cosmo=cosmo,
         sky_area=sky_area,
         catalog_type="skypy",
-        source_size=None
+        source_size=None,
     )
 
     lenspop = LensPop(
