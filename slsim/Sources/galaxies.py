@@ -303,16 +303,29 @@ def convert_to_slsim_convention(
     size in skypy source catalog to arcsec.
 
     :param galaxy_catalog: An astropy table of galaxy catalog in other
-     conventions. 
-    :type galaxy_catalog: astropy Table object. 
+    conventions. :type galaxy_catalog: astropy Table object. :param
+    light_profile: keyword for number of sersic profile to use in
+    source light model. accepted kewords: "single_sersic",
+    "double_sersic". :param input_catalog_type: type of the catalog. If
+    someone wants to use scotch  catalog or skypy catalog, they need to
+    specify it. :type input_catalog_type: str. eg: "scotch" or "skypy".
+    :param source_size: If "Bernardi", computes galaxy size  using
+    g-band magnitude otherwise rescales skypy source size to Shibuya et
+    al. (2015):
+    https://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
+    :param galaxy_catalog: An astropy table of galaxy catalog in other
+        conventions.
+    :type galaxy_catalog: astropy Table object.
     :param light_profile: keyword for number of sersic profile to use in
-     source light model. accepted kewords: "single_sersic", "double_sersic". 
-    :param input_catalog_type: type of the catalog. If someone wants to use scotch 
-     catalog or skypy catalog, they need to specify it. 
-    :type input_catalog_type: str. eg: "scotch" or "skypy". 
-    :param source_size: If "Bernardi", computes galaxy size
-     using g-band magnitude otherwise rescales skypy source size to Shibuya et al. (2015):
-     https://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
+        source light model. accepted kewords: "single_sersic",
+        "double_sersic".
+    :param input_catalog_type: type of the catalog. If someone wants to
+        use scotch catalog or skypy catalog, they need to specify it.
+    :type input_catalog_type: str. eg: "scotch" or "skypy".
+    :param source_size: If "Bernardi", computes galaxy size using g-band
+        magnitude otherwise rescales skypy source size to Shibuya et al.
+        (2015): https://iopscience.iop.org/article/10.1088/0067-
+        0049/219/2/15/pdf
     :param cosmo: astropy.cosmology instance
     :return: galaxy catalog in slsim convension.
     """
