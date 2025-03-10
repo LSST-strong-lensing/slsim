@@ -10,6 +10,7 @@ from slsim.Util.param_util import (
     eccentricity,
     downsample_galaxies,
     galaxy_size_redshift_evolution,
+    galaxy_size
 )
 from astropy import units as u
 from slsim.Sources.source import Source
@@ -30,6 +31,7 @@ class Galaxies(SourcePopBase):
         list_type="astropy_table",
         catalog_type=None,
         downsample_to_dc2=False,
+        source_size_compute=True
     ):
         """
 
@@ -50,6 +52,8 @@ class Galaxies(SourcePopBase):
         :type catalog_type: str. eg: "scotch" or None
         :param downsample_to_dc2: Boolean. If True, downsamples the given galaxy
          population at redshift greater than 1.5 to DC2 galaxy population.
+        :param source_size_compute: Boolean. If True, computes galaxy size using g-band 
+         magnitude.
         """
         super(Galaxies, self).__init__(cosmo=cosmo, sky_area=sky_area)
         self.source_type = "extended"
@@ -123,6 +127,13 @@ class Galaxies(SourcePopBase):
         self._galaxy_select = object_cut(galaxy_list, list_type=list_type, **kwargs_cut)
         self._num_select = len(self._galaxy_select)
         self.list_type = list_type
+        # compute angular size from g-band magnitude.
+        if source_size_compute is True:
+            source_size = galaxy_size(self._galaxy_select["mag_g"],
+                                       self._galaxy_select["z"], cosmo)
+            self._galaxy_select["angular_size"] = source_size[1].value*u.arcsec
+            self._galaxy_select["physical_size"] = source_size[0]*u.kpc
+
 
     @property
     def source_number(self):

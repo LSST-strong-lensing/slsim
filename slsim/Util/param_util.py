@@ -567,3 +567,39 @@ def degrade_coadd_data(
     )
 
     return degraded_image, degraded_var_map, degraded_exp_map
+
+def galaxy_size(mapp, zsrc, cosmo):
+    """
+    Calculate the half-light radius of a source using the size-luminosity relation
+    from Bernardi et al. (2003), as given in Oguri (2006). Please see equation 15 of 
+    : https://arxiv.org/pdf/astro-ph/0508528
+    
+    :param mapp: float
+        Apparent g-band magnitude of the source.
+    :param zsrc: float
+        Redshift of the source.
+    :param cosmo: astropy.cosmology instance
+    :return: Half-light radius in kpc and arcsec.
+    """
+
+    # Compute luminosity distance (in Mpc)
+    Dlum = cosmo.luminosity_distance(zsrc).value
+
+    # Compute absolute magnitude
+    Mabs = mapp - 5 * np.log10(Dlum) - 25
+
+    # Compute luminosity in solar units (using g-band solar magnitude 5.48)
+    Lum_src = 10**(-0.4 * (Mabs - 5.48))
+
+    # Compute angular diameter distance (in kpc)
+    Da = cosmo.angular_diameter_distance(zsrc).to(u.kpc).value
+
+    # Compute the effective radius using the size-luminosity relation
+    Lrat = Lum_src / 10**10.2
+    Reff = (10**0.52) * (Lrat**(2/3))*((0.7/cosmo.h)**(2/3)) / (1 + zsrc)**2  # in kpc
+
+    # Convert kpc to arcsec, then to pixels
+    Reff_arcsec = (Reff / Da) * (u.rad.to(u.arcsec))
+
+    return Reff, Reff_arcsec
+
