@@ -358,7 +358,7 @@ class TestGalaxies(object):
                 [0.1492770563596445, 0.1492770563596445, 0.1492770563596445],
                 [4.186996407348755e-08, 4.186996407348755e-08, 4.186996407348755e-08],
                 [23, 23, 23],
-                [22, 22, 22]
+                [22, 22, 22],
             ],
             names=("z", "n0", "M", "ellipticity", "mag_i", "mag_g"),
         )
@@ -367,7 +367,7 @@ class TestGalaxies(object):
             light_profile="single_sersic",
             input_catalog_type="skypy",
             source_size="Bernardi",
-            cosmo=cosmo
+            cosmo=cosmo,
         )
         assert galaxies["z"][0] == 0.5
         assert galaxies["n_sersic_0"][0] == 1
