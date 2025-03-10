@@ -1102,7 +1102,7 @@ class Lens(LensedSystemBase):
              else:
                  lens_type = "QSO"
 
-         return f"{lens_type}-LENS-{ra:.4f}_{dec:.4f}"
+         return f"{lens_type}-LENS_{ra:.4f}_{dec:.4f}"
 
 
 def image_separation_from_positions(image_positions):
