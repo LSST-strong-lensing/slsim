@@ -334,6 +334,7 @@ class TestGalaxies(object):
             self.galaxies10.draw_source()
 
     def test_convert_to_slsim_convention(self):
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         galaxies = convert_to_slsim_convention(
             galaxy_catalog=self.gal_list,
             light_profile="double_sersic",
@@ -350,11 +351,30 @@ class TestGalaxies(object):
             input_catalog_type="skypy",
             cosmo=self.cosmo,
         )
+        galaxy_list = Table(
+            [
+                [0.5, 0.5, 0.5],
+                [1, 1, 1],
+                [0.1492770563596445, 0.1492770563596445, 0.1492770563596445],
+                [4.186996407348755e-08, 4.186996407348755e-08, 4.186996407348755e-08],
+                [23, 23, 23],
+                [22, 22, 22]
+            ],
+            names=("z", "n0", "M", "ellipticity", "mag_i", "mag_g"),
+        )
+        galaxies4 = convert_to_slsim_convention(
+            galaxy_catalog=galaxy_list,
+            light_profile="single_sersic",
+            input_catalog_type="skypy",
+            source_size="Bernardi",
+            cosmo=cosmo
+        )
         assert galaxies["z"][0] == 0.5
         assert galaxies["n_sersic_0"][0] == 1
         assert galaxies["ellipticity0"][0] == 0.1492770563596445
         assert galaxies2["a_rot"][0] == np.deg2rad(42)
         assert galaxies3["ellipticity"][0] == 0.1492770563596445
+        assert galaxies4["angular_size"][0] == 0.2795787515848128
 
 
 def test_galaxy_projected_eccentricity():

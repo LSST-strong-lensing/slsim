@@ -31,7 +31,7 @@ class Galaxies(SourcePopBase):
         list_type="astropy_table",
         catalog_type=None,
         downsample_to_dc2=False,
-        source_size_compute=True
+        source_size="Bernardi"
     ):
         """
 
@@ -52,8 +52,9 @@ class Galaxies(SourcePopBase):
         :type catalog_type: str. eg: "scotch" or None
         :param downsample_to_dc2: Boolean. If True, downsamples the given galaxy
          population at redshift greater than 1.5 to DC2 galaxy population.
-        :param source_size_compute: Boolean. If True, computes galaxy size using g-band 
-         magnitude.
+        :param source_size: If "Bernardi", computes galaxy size using g-band 
+         magnitude otherwise rescales skypy source size to Shibuya et al. (2015):
+         https://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
         """
         super(Galaxies, self).__init__(cosmo=cosmo, sky_area=sky_area)
         self.source_type = "extended"
@@ -73,6 +74,7 @@ class Galaxies(SourcePopBase):
                 galaxy_catalog=galaxy_list,
                 light_profile=self.light_profile,
                 input_catalog_type=catalog_type,
+                source_size=source_size,
                 cosmo=cosmo,
             )
             column_names_update = galaxy_list.colnames
@@ -127,13 +129,6 @@ class Galaxies(SourcePopBase):
         self._galaxy_select = object_cut(galaxy_list, list_type=list_type, **kwargs_cut)
         self._num_select = len(self._galaxy_select)
         self.list_type = list_type
-        # compute angular size from g-band magnitude.
-        if source_size_compute is True:
-            source_size = galaxy_size(self._galaxy_select["mag_g"],
-                                       self._galaxy_select["z"], cosmo)
-            self._galaxy_select["angular_size"] = source_size[1].value*u.arcsec
-            self._galaxy_select["physical_size"] = source_size[0]*u.kpc
-
 
     @property
     def source_number(self):
@@ -294,7 +289,8 @@ def galaxy_projected_eccentricity(ellipticity, rotation_angle=None):
 
 
 def convert_to_slsim_convention(
-    galaxy_catalog, light_profile, input_catalog_type="skypy", cosmo=None
+    galaxy_catalog, light_profile, input_catalog_type="skypy", source_size=None,
+      cosmo=None
 ):
     """This function converts scotch/catalog to slsim conventions. In slsim,
     sersic index are either n_sersic or (n_sersic_0 and n_sersic_1).
@@ -309,6 +305,13 @@ def convert_to_slsim_convention(
     :param light_profile: keyword for number of sersic profile to use in
         source light model. accepted kewords: "single_sersic",
         "double_sersic".
+    :param input_catalog_type: type of the catalog. If someone wants to use scotch
+         catalog or skypy catalog, they need to specify it.
+    :type input_catalog_type: str. eg: "scotch" or "skypy".   
+    :param source_size: If "Bernardi", computes galaxy size using g-band 
+         magnitude otherwise rescales skypy source size to Shibuya et al. (2015):
+         https://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
+    :param cosmo: astropy.cosmology instance
     :return: galaxy catalog in slsim convension.
     """
     galaxy_catalog = galaxy_catalog.copy()
@@ -332,19 +335,29 @@ def convert_to_slsim_convention(
     if input_catalog_type == "scotch":
         galaxy_catalog["a_rot"] = np.deg2rad(galaxy_catalog["a_rot"])
     if input_catalog_type == "skypy":
-        # compute the rescaled physical size. The resulted value is devided by 2.5 to
-        #  match the best-fit model given in https://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
-        rescaled_physical_size = (
-            galaxy_catalog["physical_size"]
-            * galaxy_size_redshift_evolution(galaxy_catalog["z"])
-            / 2.5
-        )
-        # compute the rescaled angular size
-        rescaled_angular_size = (
-            rescaled_physical_size
-        ) / cosmo.angular_diameter_distance(galaxy_catalog["z"]).to(u.kpc)
-        galaxy_catalog["physical_size"] = rescaled_physical_size
-        galaxy_catalog["angular_size"] = (rescaled_angular_size * u.rad).to(u.arcsec)
+        if source_size == "Bernardi":
+            # compute angular size from g-band magnitude.
+            source_size = galaxy_size(galaxy_catalog["mag_g"],
+                                       galaxy_catalog["z"], cosmo)
+            physical_size = source_size[0]*u.kpc
+            angular_size = source_size[1].value*u.arcsec
+        else:
+            # rescales skypy source size to Shibuya et al. (2015).
+            # compute the rescaled physical size. The resulted value is devided by 2.5 to
+            #  match the best-fit model given in https://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
+            rescaled_physical_size = (
+                galaxy_catalog["physical_size"]
+                * galaxy_size_redshift_evolution(galaxy_catalog["z"])
+                / 2.5
+            )
+            # compute the rescaled angular size
+            rescaled_angular_size = (
+                rescaled_physical_size
+            ) / cosmo.angular_diameter_distance(galaxy_catalog["z"]).to(u.kpc)
+            physical_size = rescaled_physical_size
+            angular_size = (rescaled_angular_size * u.rad).to(u.arcsec)
+        galaxy_catalog["physical_size"] = physical_size
+        galaxy_catalog["angular_size"] = angular_size
     return galaxy_catalog
 
 
