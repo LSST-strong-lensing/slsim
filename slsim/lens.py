@@ -1078,6 +1078,31 @@ class Lens(LensedSystemBase):
             flux_local / total_flux * stellar_mass / self._lens_cosmo.sigma_crit_angle
         )
         return kappa_star
+    
+    def generate_id(self, ra=None, dec=None):
+         """Generate a unique ID for the lens based on its position.
+         :param ra: ra coordinate of the Lens
+         :param dec: dec coordinate of the Lens
+         :return: A string representing the lens ID.
+         """
+         if ra is None and dec is None:
+             ra = self.deflector_position[0]
+             dec = self.deflector_position[1]
+         else:
+             ra = ra
+             dec = dec
+         if self._source_type == "extended":
+             lens_type = "GG"
+         elif (
+             self._source_type == "point_source"
+             or self._source_type == "point_plus_extended"
+         ):
+             if self.max_redshift_source_class.sn_type is not None:
+                 lens_type = "SN" + self.max_redshift_source_class.sn_type
+             else:
+                 lens_type = "QSO"
+
+         return f"{lens_type}-LENS-{ra:.4f}_{dec:.4f}"
 
 
 def image_separation_from_positions(image_positions):
