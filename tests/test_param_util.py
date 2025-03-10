@@ -396,8 +396,8 @@ def test_galaxy_size():
     # Check outputs are finite and positive
     assert np.isfinite(Reff) and Reff > 0
     assert np.isfinite(Reff_arcsec) and Reff_arcsec > 0
-    assert Reff == 0.5322278567954598
-    assert Reff_arcsec == 0.08460152399994486
+    npt.assert_almost_equal(Reff, 0.5322278567954598, decimal=8)
+    npt.assert_almost_equal(Reff_arcsec, 0.08460152399994486, decimal=8)
 
 
 if __name__ == "__main__":
