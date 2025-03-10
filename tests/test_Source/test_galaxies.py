@@ -375,7 +375,9 @@ class TestGalaxies(object):
         assert galaxies["ellipticity0"][0] == 0.1492770563596445
         assert galaxies2["a_rot"][0] == np.deg2rad(42)
         assert galaxies3["ellipticity"][0] == 0.1492770563596445
-        npt.assert_almost_equal(galaxies4["angular_size"][0], 0.2795787515848128, decimal=8)
+        npt.assert_almost_equal(
+            galaxies4["angular_size"][0], 0.2795787515848128, decimal=8
+        )
 
 
 def test_galaxy_projected_eccentricity():
