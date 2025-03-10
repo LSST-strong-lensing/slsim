@@ -10,7 +10,7 @@ from slsim.Util.param_util import (
     eccentricity,
     downsample_galaxies,
     galaxy_size_redshift_evolution,
-    galaxy_size
+    galaxy_size,
 )
 from astropy import units as u
 from slsim.Sources.source import Source
@@ -31,7 +31,7 @@ class Galaxies(SourcePopBase):
         list_type="astropy_table",
         catalog_type=None,
         downsample_to_dc2=False,
-        source_size="Bernardi"
+        source_size="Bernardi",
     ):
         """
 
@@ -52,7 +52,7 @@ class Galaxies(SourcePopBase):
         :type catalog_type: str. eg: "scotch" or None
         :param downsample_to_dc2: Boolean. If True, downsamples the given galaxy
          population at redshift greater than 1.5 to DC2 galaxy population.
-        :param source_size: If "Bernardi", computes galaxy size using g-band 
+        :param source_size: If "Bernardi", computes galaxy size using g-band
          magnitude otherwise rescales skypy source size to Shibuya et al. (2015):
          https://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
         """
@@ -289,8 +289,11 @@ def galaxy_projected_eccentricity(ellipticity, rotation_angle=None):
 
 
 def convert_to_slsim_convention(
-    galaxy_catalog, light_profile, input_catalog_type="skypy", source_size=None,
-      cosmo=None
+    galaxy_catalog,
+    light_profile,
+    input_catalog_type="skypy",
+    source_size=None,
+    cosmo=None,
 ):
     """This function converts scotch/catalog to slsim conventions. In slsim,
     sersic index are either n_sersic or (n_sersic_0 and n_sersic_1).
@@ -300,17 +303,29 @@ def convert_to_slsim_convention(
     size in skypy source catalog to arcsec.
 
     :param galaxy_catalog: An astropy table of galaxy catalog in other
+    conventions. :type galaxy_catalog: astropy Table object. :param
+    light_profile: keyword for number of sersic profile to use in
+    source light model. accepted kewords: "single_sersic",
+    "double_sersic". :param input_catalog_type: type of the catalog. If
+    someone wants to use scotch      catalog or skypy catalog, they need
+    to specify it. :type input_catalog_type: str. eg: "scotch" or
+    "skypy". :param source_size: If "Bernardi", computes galaxy size
+    using g-band      magnitude otherwise rescales skypy source size to
+    Shibuya et al. (2015):
+    https://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
+    :param galaxy_catalog: An astropy table of galaxy catalog in other
         conventions.
     :type galaxy_catalog: astropy Table object.
     :param light_profile: keyword for number of sersic profile to use in
         source light model. accepted kewords: "single_sersic",
         "double_sersic".
-    :param input_catalog_type: type of the catalog. If someone wants to use scotch
-         catalog or skypy catalog, they need to specify it.
-    :type input_catalog_type: str. eg: "scotch" or "skypy".   
-    :param source_size: If "Bernardi", computes galaxy size using g-band 
-         magnitude otherwise rescales skypy source size to Shibuya et al. (2015):
-         https://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
+    :param input_catalog_type: type of the catalog. If someone wants to
+        use scotch catalog or skypy catalog, they need to specify it.
+    :type input_catalog_type: str. eg: "scotch" or "skypy".
+    :param source_size: If "Bernardi", computes galaxy size using g-band
+        magnitude otherwise rescales skypy source size to Shibuya et al.
+        (2015): https://iopscience.iop.org/article/10.1088/0067-
+        0049/219/2/15/pdf
     :param cosmo: astropy.cosmology instance
     :return: galaxy catalog in slsim convension.
     """
@@ -337,10 +352,11 @@ def convert_to_slsim_convention(
     if input_catalog_type == "skypy":
         if source_size == "Bernardi":
             # compute angular size from g-band magnitude.
-            source_size = galaxy_size(galaxy_catalog["mag_g"],
-                                       galaxy_catalog["z"], cosmo)
-            physical_size = source_size[0]*u.kpc
-            angular_size = source_size[1].value*u.arcsec
+            source_size = galaxy_size(
+                galaxy_catalog["mag_g"], galaxy_catalog["z"], cosmo
+            )
+            physical_size = source_size[0] * u.kpc
+            angular_size = source_size[1].value * u.arcsec
         else:
             # rescales skypy source size to Shibuya et al. (2015).
             # compute the rescaled physical size. The resulted value is devided by 2.5 to
