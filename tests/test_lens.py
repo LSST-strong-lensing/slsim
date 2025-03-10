@@ -66,6 +66,15 @@ class TestLens(object):
             ):
                 self.gg_lens = gg_lens
                 break
+    def test_lens_id_gg(self):
+         lens_id = self.gg_lens.generate_id()
+         ra = self.gg_lens.deflector_position[0]
+         dec = self.gg_lens.deflector_position[1]
+         ra2 = 12.03736542
+         dec2 = 35.17363534
+         lens_id2 = self.gg_lens.generate_id(ra=ra2, dec=dec2)
+         assert lens_id == f"GG-LENS-{ra:.4f}_{dec:.4f}"
+         assert lens_id2 == f"GG-LENS-{ra2:.4f}_{dec2:.4f}"
 
     def test_deflector_ellipticity(self):
         e1_light, e2_light, e1_mass, e2_mass = self.gg_lens.deflector_ellipticity()
@@ -324,6 +333,15 @@ def test_point_source_magnitude(pes_lens_instance):
     assert len(mag) >= 2
     assert len(mag_unlensed) == 1
 
+def test_lens_id_qso(pes_lens_instance):
+     lens_id = pes_lens_instance.generate_id()
+     ra = pes_lens_instance.deflector_position[0]
+     dec = pes_lens_instance.deflector_position[1]
+     ra2 = 12.03736542
+     dec2 = 35.17363534
+     lens_id2 = pes_lens_instance.generate_id(ra=ra2, dec=dec2)
+     assert lens_id == f"QSO-LENS-{ra:.4f}_{dec:.4f}"
+     assert lens_id2 == f"QSO-LENS-{ra2:.4f}_{dec2:.4f}"
 
 @pytest.fixture
 def supernovae_lens_instance():
@@ -542,6 +560,17 @@ def supernovae_lens_instance_double_sersic_multisource():
             break
     return supernovae_lens
 
+def test_lens_id_snia(supernovae_lens_instance_double_sersic_multisource):
+     lens_id = supernovae_lens_instance_double_sersic_multisource.generate_id()
+     ra = supernovae_lens_instance_double_sersic_multisource.deflector_position[0]
+     dec = supernovae_lens_instance_double_sersic_multisource.deflector_position[1]
+     ra2 = 12.03736542
+     dec2 = 35.17363534
+     lens_id2 = supernovae_lens_instance_double_sersic_multisource.generate_id(
+         ra=ra2, dec=dec2
+     )
+     assert lens_id == f"SNIa-LENS-{ra:.4f}_{dec:.4f}"
+     assert lens_id2 == f"SNIa-LENS-{ra2:.4f}_{dec2:.4f}"
 
 class TestMultiSource(object):
     def setup_method(self):
