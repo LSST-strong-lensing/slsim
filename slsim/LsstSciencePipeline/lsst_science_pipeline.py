@@ -12,7 +12,6 @@ from slsim.image_simulation import point_source_coordinate_properties
 from slsim.Util.param_util import (
     random_ra_dec,
     fits_append_table,
-    transformmatrix_to_pixelscale,
     detect_object,
 )
 import h5py
