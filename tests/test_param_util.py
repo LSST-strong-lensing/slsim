@@ -394,8 +394,8 @@ def test_detect_object():
     image1 = image + noise
     result1=detect_object(image1, variance_map2)
     result2=detect_object(noise, variance_map2)
-    assert result1==True
-    assert result2==False
+    assert result1
+    assert not result2
 
 if __name__ == "__main__":
     pytest.main()
