@@ -393,10 +393,11 @@ def test_detect_object():
     std_dev_map = np.sqrt(variance_map1)
     noise = np.random.normal(loc=0, scale=std_dev_map)
     image1 = image + noise
-    result1=detect_object(image1, variance_map2)
-    result2=detect_object(noise, variance_map2)
+    result1 = detect_object(image1, variance_map2)
+    result2 = detect_object(noise, variance_map2)
     assert result1
     assert not result2
+
 
 if __name__ == "__main__":
     pytest.main()
