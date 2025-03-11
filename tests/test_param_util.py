@@ -23,7 +23,7 @@ from slsim.Util.param_util import (
     additional_poisson_noise_with_rescaled_coadd,
     additional_bkg_rms_with_rescaled_coadd,
     degrade_coadd_data,
-    detect_object
+    detect_object,
 )
 from slsim.Sources.SourceVariability.variability import Variability
 from astropy.io import fits
@@ -383,12 +383,13 @@ def test_degrade_coadd_data():
     assert len(result) == 3
     assert np.mean(image) > np.mean(result[0])
 
+
 def test_detect_object():
     path = os.path.dirname(__file__)
 
-    image = np.load(os.path.join(path, "TestData/psf_kernels_for_image_1.npy"))+0.5
-    variance_map1=np.abs(np.random.normal(loc=0.1, scale=0.01, size=(57, 57)))
-    variance_map2=np.abs(np.random.normal(loc=0.1, scale=0.01, size=(57, 57)))
+    image = np.load(os.path.join(path, "TestData/psf_kernels_for_image_1.npy")) + 0.5
+    variance_map1 = np.abs(np.random.normal(loc=0.1, scale=0.01, size=(57, 57)))
+    variance_map2 = np.abs(np.random.normal(loc=0.1, scale=0.01, size=(57, 57)))
     std_dev_map = np.sqrt(variance_map1)
     noise = np.random.normal(loc=0, scale=std_dev_map)
     image1 = image + noise
