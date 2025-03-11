@@ -9,7 +9,8 @@ from scipy import interpolate
 from scipy.stats import norm, halfnorm
 import matplotlib.pyplot as plt
 from slsim.image_simulation import point_source_coordinate_properties
-from slsim.Util.param_util import random_ra_dec, fits_append_table
+from slsim.Util.param_util import (random_ra_dec, fits_append_table,
+      transformmatrix_to_pixelscale, detect_object)
 import h5py
 import os
 
@@ -192,6 +193,8 @@ def lens_inejection_fast(
     coadd_injection=True,
     coadd_year=5,
     band_list=["r", "g", "i"],
+    center_box_size=3,
+    center_source_snr_threshold=5
 ):
     """Chooses a random lens from the lens population and injects it to a DC2
     cutout image. For this one needs to provide a butler to this function. To
@@ -219,11 +222,15 @@ def lens_inejection_fast(
         desired year of coadd.
     :param band_list: List of imaging band in which lens need to be
         injected.
+    :param center_box_size: Size of the central box in arcsec (default is 3 arcsec).
+    :param center_source_snr_threshold: SNR threshold for object detection in center box
+     (default is 5).
     :returns: An astropy table containing Injected lens in r-band, DC2
         cutout image in r-band, cutout image with injected lens in r, g
         , and i band
     """
 
+    pixel_scale = transformmatrix_to_pixelscale(transform_pix2angle)
     if lens_cut is None:
         kwargs_lens_cut = {}
     else:
@@ -242,6 +249,7 @@ def lens_inejection_fast(
     coadd = []
     coadd_nImage = []
     mag_zero_visit = []
+    variance_map = []
     for band in rgb_band_list:
         coaddId = {"tract": my_tract, "patch": my_patch, "band": band}
 
@@ -257,42 +265,54 @@ def lens_inejection_fast(
             }
             visit_image = butler.get("calexp", dataId=dataId_visit)
             coadd.append(visit_image)
+            variance_map.append(visit_image.getVariance())
             photo_calib_cal = visit_image.getPhotoCalib()
             flux0_cal = photo_calib_cal.getInstFluxAtZeroMagnitude()
             mag_zero = 2.5 * np.log10(flux0_cal)
             mag_zero_visit.append(mag_zero)
         else:
             coadd.append(coadd_image)
+            variance_map.append(coadd_image.getVariance())
             coadd_nImage.append(butler.get("deepCoadd_nImage", dataId=coaddId))
-
     bbox = coadd[0].getBBox()
     xmin, ymin = bbox.getBegin()
     xmax, ymax = bbox.getEnd()
     wcs = coadd[0].getWcs()
-
-    x_center = np.random.randint(xmin + 150, xmax - 150, num_cutout_per_patch)
-    y_center = np.random.randint(ymin + 150, ymax - 150, num_cutout_per_patch)
-    xbox_min = x_center - ((num_pix - 1) / 2)
-    xbox_max = x_center + ((num_pix - 1) / 2)
-    ybox_min = y_center - ((num_pix - 1) / 2)
-    ybox_max = y_center + ((num_pix - 1) / 2)
-
+    
+    valid_cutouts = 0
     table = []
-    for i in range(len(x_center)):
+    #for i in range(len(x_center)):
+    while valid_cutouts < num_cutout_per_patch:
+        # Randomly select a position for the cutout
+        x_center = np.random.randint(xmin + 150, xmax - 150)
+        y_center = np.random.randint(ymin + 150, ymax - 150)
+        xbox_min = x_center - ((num_pix - 1) / 2)
+        xbox_max = x_center + ((num_pix - 1) / 2)
+        ybox_min = y_center - ((num_pix - 1) / 2)
+        ybox_max = y_center + ((num_pix - 1) / 2)
         if isinstance(lens_pop, list):
-            lens_class = lens_pop[i]
+            lens_class = lens_pop[valid_cutouts]
         else:
             lens_class = lens_pop.select_lens_at_random(**kwargs_lens_cut)
         cutout_bbox = geom.Box2I(
-            geom.Point2I(xbox_min[i], ybox_min[i]),
-            geom.Point2I(xbox_max[i], ybox_max[i]),
+            geom.Point2I(xbox_min, ybox_min),
+            geom.Point2I(xbox_max, ybox_max),
         )
         injected_final_image = []
         box_center = []
         cutout_image_list = []
         lens_image = []
+        lens_id = []
+        is_valid = True
         for j, band in enumerate(band_list):
             cutout_image = coadd[j][cutout_bbox]
+            cutout_variance = variance_map[j][cutout_bbox]
+            # Check for existing objects in the cutout image
+            if detect_object(cutout_image.image.array, cutout_variance.array, 
+                             pixel_scale=pixel_scale, box_size_arcsec=center_box_size,
+                             snr_threshold=center_source_snr_threshold):
+                is_valid = False
+                break  # Discard this cutout and try again
             if noise is True:
                 if coadd_injection is True:
                     exposure_map = 30 * coadd_nImage[j][cutout_bbox].array
@@ -312,7 +332,7 @@ def lens_inejection_fast(
                 exposure_time=exposure_map,
                 coadd_year=coadd_year,
             )
-            center_point = geom.Point2D(x_center[i], y_center[i])
+            center_point = geom.Point2D(x_center, y_center)
             center_wcs = wcs.pixelToSky(center_point)
             ra_deg = center_wcs.getRa().asDegrees()
             dec_deg = center_wcs.getDec().asDegrees()
@@ -321,23 +341,26 @@ def lens_inejection_fast(
             box_center.append((ra_deg, dec_deg))
             cutout_image_list.append(cutout_image.image.array)
             lens_image.append((final_injected_image - cutout_image.image.array))
-        # Define column names dynamically based on band_list
-        column_names = (
-            ["lens", "cutout_image"]
-            + [f"injected_lens_{band}" for band in band_list]
-            + ["cutout_center"]
-        )
-
-        # Construct row data dynamically
-        data = (
-            [[lens_image[0]], [cutout_image_list[0]]]
-            + [[img] for img in injected_final_image]
-            + [[box_center[0]]]
-        )
-
-        # Create Table instance
-        table_1 = Table(data, names=column_names)
-        table.append(table_1)
+            lens_id.append(lens_class.generate_id())
+        if is_valid:
+            # Define column names dynamically based on band_list
+            column_names = (
+                ["lens_id", "lens", "cutout_image"]
+                + [f"injected_lens_{band}" for band in band_list]
+                + ["cutout_center"]
+            )
+    
+            # Construct row data dynamically
+            data = (
+                [[[lens_id[0]]], [lens_image[0]], [cutout_image_list[0]]]
+                + [[img] for img in injected_final_image]
+                + [[box_center[0]]]
+            )
+    
+            # Create Table instance
+            table_1 = Table(data, names=column_names)
+            table.append(table_1)
+            valid_cutouts += 1 # Increase count of successful cutouts
     lens_catalog = vstack(table)
     return lens_catalog
 
