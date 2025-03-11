@@ -312,9 +312,9 @@ def convert_to_slsim_convention(
         use scotch catalog or skypy catalog, they need to specify it.
     :type input_catalog_type: str. eg: "scotch" or "skypy".
     :param source_size: Keyword for source size convention. If
-        "Bernardi", computes galaxy size using g-band magnitude
-        otherwise rescales skypy source size to Shibuya et al.(2015): ht
-        tps://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
+     "Bernardi", computes galaxy size using g-band magnitude
+     otherwise rescales skypy source size to Shibuya et al.(2015): 
+     https://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
     :param cosmo: astropy.cosmology instance
     :return: galaxy catalog in slsim convension.
     """
