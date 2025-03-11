@@ -301,7 +301,7 @@ def convert_to_slsim_convention(
     These kewords can be read by Galaxies class. This function is written to
     convert scotch catalog to slsim convension and to change unit of angular
     size in skypy source catalog to arcsec.
-    
+
     :param galaxy_catalog: An astropy table of galaxy catalog in other
         conventions.
     :type galaxy_catalog: astropy Table object.
