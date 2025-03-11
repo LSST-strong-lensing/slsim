@@ -291,6 +291,7 @@ def lens_inejection_fast(
         box_center = []
         cutout_image_list = []
         lens_image = []
+        lens_id = []
         for j, band in enumerate(band_list):
             cutout_image = coadd[j][cutout_bbox]
             if noise is True:
@@ -321,16 +322,17 @@ def lens_inejection_fast(
             box_center.append((ra_deg, dec_deg))
             cutout_image_list.append(cutout_image.image.array)
             lens_image.append((final_injected_image - cutout_image.image.array))
+            lens_id.append(lens_class.generate_id())
         # Define column names dynamically based on band_list
         column_names = (
-            ["lens", "cutout_image"]
+            ["lens_id", "lens", "cutout_image"]
             + [f"injected_lens_{band}" for band in band_list]
             + ["cutout_center"]
         )
 
         # Construct row data dynamically
         data = (
-            [[lens_image[0]], [cutout_image_list[0]]]
+            [[[lens_id[0]]], [lens_image[0]], [cutout_image_list[0]]]
             + [[img] for img in injected_final_image]
             + [[box_center[0]]]
         )

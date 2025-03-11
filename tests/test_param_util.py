@@ -23,11 +23,13 @@ from slsim.Util.param_util import (
     additional_poisson_noise_with_rescaled_coadd,
     additional_bkg_rms_with_rescaled_coadd,
     degrade_coadd_data,
+    galaxy_size,
 )
 from slsim.Sources.SourceVariability.variability import Variability
 from astropy.io import fits
 from astropy.table import Table
 from astropy import units as u
+from astropy.cosmology import Planck18 as cosmo
 import tempfile
 import pytest
 
@@ -381,6 +383,21 @@ def test_degrade_coadd_data():
     )
     assert len(result) == 3
     assert np.mean(image) > np.mean(result[0])
+
+
+def test_galaxy_size():
+    # Define test inputs
+    mapp = 24.0  # Apparent g-band magnitude
+    zsrc = 0.5  # Source redshift
+
+    # Call function
+    Reff, Reff_arcsec = galaxy_size(mapp, zsrc, cosmo)
+
+    # Check outputs are finite and positive
+    assert np.isfinite(Reff) and Reff > 0
+    assert np.isfinite(Reff_arcsec) and Reff_arcsec > 0
+    npt.assert_almost_equal(Reff, 0.5322278567954598, decimal=8)
+    npt.assert_almost_equal(Reff_arcsec, 0.08460152399994486, decimal=8)
 
 
 if __name__ == "__main__":
