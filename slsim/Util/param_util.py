@@ -605,3 +605,41 @@ def galaxy_size(mapp, zsrc, cosmo):
     Reff_arcsec = (Reff / Da) * (u.rad.to(u.arcsec))
 
     return Reff, Reff_arcsec
+
+
+def detect_object(image, variance, pixel_scale=0.2, box_size_arcsec=3, snr_threshold=5):
+    """Detect whether the central region of the image contains an object based
+    on SNR.
+
+    :param image: The input image.
+    :param variance: The variance map of the same size as the image.
+    :param pixel_scale: Pixel scale in arcsec/pixel (default is 0.2
+        arcsec/pixel).
+    :param box_size_arcsec: Size of the central box in arcsec (default
+        is 3 arcsec).
+    :param snr_threshold: SNR threshold for object detection (default is
+        5).
+    :return: bool. True if the region contains an object (SNR >
+        threshold), False otherwise.
+    """
+    n = image.shape[0]  # Assuming square image
+    box_size_pix = int(box_size_arcsec / pixel_scale)  # Convert arcsec to pixels
+    half_box = box_size_pix // 2
+
+    # Determine central region indices
+    center = n // 2
+    x_min, x_max = center - half_box, center + half_box + 1
+    y_min, y_max = center - half_box, center + half_box + 1
+
+    # Extract central region
+    sub_image = image[x_min:x_max, y_min:y_max]
+    sub_variance = variance[x_min:x_max, y_min:y_max]
+
+    # Compute total flux and noise
+    total_flux = np.sum(sub_image)
+    total_noise = np.sqrt(np.sum(sub_variance))
+
+    # Compute SNR
+    snr = total_flux / total_noise if total_noise > 0 else 0
+
+    return snr > snr_threshold

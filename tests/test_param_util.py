@@ -24,6 +24,7 @@ from slsim.Util.param_util import (
     additional_bkg_rms_with_rescaled_coadd,
     degrade_coadd_data,
     galaxy_size,
+    detect_object,
 )
 from slsim.Sources.SourceVariability.variability import Variability
 from astropy.io import fits
@@ -398,6 +399,21 @@ def test_galaxy_size():
     assert np.isfinite(Reff_arcsec) and Reff_arcsec > 0
     npt.assert_almost_equal(Reff, 0.5322278567954598, decimal=8)
     npt.assert_almost_equal(Reff_arcsec, 0.08460152399994486, decimal=8)
+
+
+def test_detect_object():
+    path = os.path.dirname(__file__)
+
+    image = np.load(os.path.join(path, "TestData/psf_kernels_for_image_1.npy")) + 0.5
+    variance_map1 = np.abs(np.random.normal(loc=0.1, scale=0.01, size=(57, 57)))
+    variance_map2 = np.abs(np.random.normal(loc=0.1, scale=0.01, size=(57, 57)))
+    std_dev_map = np.sqrt(variance_map1)
+    noise = np.random.normal(loc=0, scale=std_dev_map)
+    image1 = image + noise
+    result1 = detect_object(image1, variance_map2)
+    result2 = detect_object(noise, variance_map2)
+    assert result1
+    assert not result2
 
 
 if __name__ == "__main__":
