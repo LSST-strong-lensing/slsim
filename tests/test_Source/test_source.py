@@ -654,7 +654,6 @@ class TestSource:
             err_msg="Pixel scale mismatch after z_scale_factor!",
         )
 
-
     def test_extended_source_light_model_interpolated(self):
         result = self.source_interp1.extended_source_light_model()
         assert result == ["INTERPOL"]
