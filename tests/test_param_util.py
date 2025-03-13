@@ -20,11 +20,17 @@ from slsim.Util.param_util import (
     transient_event_time_mjd,
     downsample_galaxies,
     galaxy_size_redshift_evolution,
+    additional_poisson_noise_with_rescaled_coadd,
+    additional_bkg_rms_with_rescaled_coadd,
+    degrade_coadd_data,
+    galaxy_size,
+    detect_object,
 )
 from slsim.Sources.SourceVariability.variability import Variability
 from astropy.io import fits
 from astropy.table import Table
 from astropy import units as u
+from astropy.cosmology import Planck18 as cosmo
 import tempfile
 import pytest
 
@@ -325,6 +331,89 @@ def test_downsample_galaxies():
 def test_galaxy_size_redshift_evolution():
     results = galaxy_size_redshift_evolution(z=0)
     assert results == 4.89
+
+
+def test_additional_poisson_noise_with_rescaled_coadd():
+    image = np.random.rand(41, 41) * 5
+    original_exp_time = np.ones((41, 41))
+    degraded_exp_time = original_exp_time * 0.5
+
+    result1 = additional_poisson_noise_with_rescaled_coadd(
+        image, original_exp_time, degraded_exp_time, use_noise_diff=True
+    )
+    result2 = additional_poisson_noise_with_rescaled_coadd(
+        image, original_exp_time, degraded_exp_time, use_noise_diff=False
+    )
+
+    assert result1.shape == image.shape
+    assert np.mean(result1) < np.mean(image)
+    assert result2.shape == image.shape
+    assert np.mean(result2) < np.mean(image)
+
+
+def test_additional_bkg_rms_with_rescaled_coadd():
+    image = np.random.rand(41, 41) * 5
+
+    result1 = additional_bkg_rms_with_rescaled_coadd(
+        image, original_rms=0.5, degraded_rms=0.7, use_noise_diff=True
+    )
+    result2 = additional_bkg_rms_with_rescaled_coadd(
+        image, original_rms=0.5, degraded_rms=0.7, use_noise_diff=False
+    )
+
+    assert result1.shape == image.shape
+    assert (
+        -3 * np.sqrt(0.7**2 - 0.5**2)
+        <= np.mean(result1)
+        <= 3 * np.sqrt(0.7**2 - 0.5**2)
+    )
+    assert result2.shape == image.shape
+    assert (
+        -3 * np.sqrt(0.7**2 - 0.5**2)
+        <= np.mean(result2)
+        <= 3 * np.sqrt(0.7**2 - 0.5**2)
+    )
+
+
+def test_degrade_coadd_data():
+    image = np.random.rand(41, 41) * 5
+    variance_map = np.random.rand(41, 41)
+    exposure_map = np.ones((41, 41)) * 300
+    result = degrade_coadd_data(
+        image, variance_map, exposure_map, original_num_years=5, degraded_num_years=1
+    )
+    assert len(result) == 3
+    assert np.mean(image) > np.mean(result[0])
+
+
+def test_galaxy_size():
+    # Define test inputs
+    mapp = 24.0  # Apparent g-band magnitude
+    zsrc = 0.5  # Source redshift
+
+    # Call function
+    Reff, Reff_arcsec = galaxy_size(mapp, zsrc, cosmo)
+
+    # Check outputs are finite and positive
+    assert np.isfinite(Reff) and Reff > 0
+    assert np.isfinite(Reff_arcsec) and Reff_arcsec > 0
+    npt.assert_almost_equal(Reff, 0.5322278567954598, decimal=8)
+    npt.assert_almost_equal(Reff_arcsec, 0.08460152399994486, decimal=8)
+
+
+def test_detect_object():
+    path = os.path.dirname(__file__)
+
+    image = np.load(os.path.join(path, "TestData/psf_kernels_for_image_1.npy")) + 0.5
+    variance_map1 = np.abs(np.random.normal(loc=0.1, scale=0.01, size=(57, 57)))
+    variance_map2 = np.abs(np.random.normal(loc=0.1, scale=0.01, size=(57, 57)))
+    std_dev_map = np.sqrt(variance_map1)
+    noise = np.random.normal(loc=0, scale=std_dev_map)
+    image1 = image + noise
+    result1 = detect_object(image1, variance_map2)
+    result2 = detect_object(noise, variance_map2)
+    assert result1
+    assert not result2
 
 
 if __name__ == "__main__":

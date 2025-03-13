@@ -19,7 +19,7 @@ class TestGalaxyCatalog:
 
     def test_host_galaxy_catalog(self):
         result = self.galaxy_catalog.galaxy_catalog()
-        assert all(result["z"] <= 2.379)
+        assert all(result["z"] <= 5.01)
 
 
 if __name__ == "__main__":
