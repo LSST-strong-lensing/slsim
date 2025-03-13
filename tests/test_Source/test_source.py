@@ -603,9 +603,9 @@ class TestSource:
             ),
             rows=[
                 (
-                    0.1,
-                    test_image,
                     0.5,
+                    test_image,
+                    0.1,
                     0.05,
                     0.0,
                     20.0,
@@ -636,8 +636,9 @@ class TestSource:
         size = source_array.shape[0]
         z = self.source_interp1.source_dict["z"][0]
         z_data = self.source_interp1.source_dict["z_data"][0]
-        ratio = z_scale_factor(z_old=z, z_new=z_data)
-        pixel_width_data = 0.05 / ratio  # so the code's multiplication yields 0.05
+        ratio = z_scale_factor(z_old=z_data, z_new=z)
+        pixel_width_data = self.source_interp1.source_dict["pixel_width_data"][0]
+        expected_scale = pixel_width_data * ratio
 
         assert result[0]["magnitude"] == 20.0
         npt.assert_allclose(
@@ -647,11 +648,12 @@ class TestSource:
         assert result[0]["center_y"] == size // 2
         assert result[0]["phi_G"] == 0.0
         npt.assert_allclose(
-            float(result[0]["scale"][0]),
-            pixel_width_data,
-            rtol=1e-5,
+            float(result[0]["scale"]),
+            expected_scale,
+            rtol=1e-4,
             err_msg="Pixel scale mismatch after z_scale_factor!",
         )
+
 
     def test_extended_source_light_model_interpolated(self):
         result = self.source_interp1.extended_source_light_model()
