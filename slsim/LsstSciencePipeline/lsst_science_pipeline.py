@@ -266,7 +266,7 @@ def lens_inejection_fast(
     band_list=["r", "g", "i"],
     center_box_size=3,
     center_source_snr_threshold=5,
-    false_positive=False
+    false_positive=False,
 ):
     """Chooses a random lens from the lens population and injects it to a DC2
     cutout image. For this one needs to provide a butler to this function. To
@@ -472,7 +472,7 @@ def multiple_lens_injection_fast(
     center_box_size=3,
     center_source_snr_threshold=5,
     output_file=None,
-    false_positive=False
+    false_positive=False,
 ):
     """Injects random lenses from the lens population to multiple DC2 cutout
     images using lens_inejection_fast function. For this one needs to provide a
@@ -537,7 +537,7 @@ def multiple_lens_injection_fast(
             band_list=band_list,
             center_box_size=center_box_size,
             center_source_snr_threshold=center_source_snr_threshold,
-            false_positive=false_positive
+            false_positive=false_positive,
         )
         if output_file is None:
             injected_images.append(injected_image)
