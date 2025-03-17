@@ -300,7 +300,9 @@ def lens_inejection_fast(
         detection in center box (default is 5).
     :param false_positive: Boolean. If false, code assumes that the provided
      population is a lens population. If True, code assumes that the provided
-     population is a false popitive poulation.
+     population is a false popitive poulation. False positive contains an
+     elliptical galaxy at the center and blue galaxies around this central galaxy.
+     for more detail, please see: slsim/FalsePositives/
     :returns: An astropy table containing Injected lens in r-band, DC2
         cutout image in r-band, cutout image with injected lens in r, g
         , and i band
