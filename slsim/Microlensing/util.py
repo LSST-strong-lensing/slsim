@@ -1,1 +1,0 @@
-# contains paths to the amoeba and microlensing modules.
