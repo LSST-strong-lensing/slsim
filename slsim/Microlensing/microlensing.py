@@ -1,4 +1,4 @@
-__author__ = 'Paras Sharma'
+__author__ = "Paras Sharma"
 
 # This file contains the class to simulate
 # microlensing light curves
@@ -9,9 +9,7 @@ __author__ = 'Paras Sharma'
 
 
 class Microlensing(object):
-    """
-    Class to simulate
-    microlensing light curves
-    """
+    """Class to simulate microlensing light curves."""
+
     def __init__(self):
         pass

@@ -1,28 +1,43 @@
-__author__ = 'Paras Sharma'
+__author__ = "Paras Sharma"
 
 import sys
 import numpy as np
 
 # Credits: Luke's Microlensing code - https://github.com/weisluke/microlensing
 from _paths import LUKES_MICROLENSING_PATH
+
 sys.path.append(LUKES_MICROLENSING_PATH)
-from microlensing.IPM.ipm import IPM # Inverse Polygon Mapping class to generate magnification maps
+from microlensing.IPM.ipm import (
+    IPM,
+)  # Inverse Polygon Mapping class to generate magnification maps
+
 
 class MagnificationMap(object):
-    """
-    Class to generate magnification maps based on the kappa_tot, shear, kappa_star, etc.
-    """
-    def __init__(self,
-                 kappa_tot: float = None, shear: float = None, smooth_fraction: float = None, kappa_star: float = None,
-                 theta_star: float = None, 
-                 mass_function: str = None, m_solar: float = None, m_lower: float = None, m_upper: float = None,
-                 light_loss: float = None, 
-                 rectangular: bool = None,
-                 center_x: float = None, center_y: float = None, 
-                 half_length_x: float = None, half_length_y: float = None,
-                 num_pixels_x: int = None, num_pixels_y: int = None, 
-                 num_rays_y: int = None, random_seed: int = None,
-                 ):
+    """Class to generate magnification maps based on the kappa_tot, shear,
+    kappa_star, etc."""
+
+    def __init__(
+        self,
+        kappa_tot: float = None,
+        shear: float = None,
+        smooth_fraction: float = None,
+        kappa_star: float = None,
+        theta_star: float = None,
+        mass_function: str = None,
+        m_solar: float = None,
+        m_lower: float = None,
+        m_upper: float = None,
+        light_loss: float = None,
+        rectangular: bool = None,
+        center_x: float = None,
+        center_y: float = None,
+        half_length_x: float = None,
+        half_length_y: float = None,
+        num_pixels_x: int = None,
+        num_pixels_y: int = None,
+        num_rays_y: int = None,
+        random_seed: int = None,
+    ):
         """
         :param kappa_tot: total convergence
         :param shear: shear
@@ -63,7 +78,7 @@ class MagnificationMap(object):
         self.random_seed = random_seed
 
         if self.mass_function is None:
-            self.mass_function = 'kroupa'
+            self.mass_function = "kroupa"
         if self.m_solar is None:
             self.m_solar = 1
         if self.m_lower is None:
@@ -71,29 +86,44 @@ class MagnificationMap(object):
         if self.m_upper is None:
             self.m_upper = 100
 
-        self.microlensing_IPM = IPM(verbose=1, 
-                                    kappa_tot=self.kappa_tot, shear=self.shear, kappa_star=self.kappa_star, smooth_fraction=self.smooth_fraction,
-                                    theta_star=self.theta_star, light_loss=self.light_loss, 
-                                    rectangular=rectangular, approx=True, 
-                                    center_y1 = self.center_x, center_y2 = self.center_y,
-                                    half_length_y1 = self.half_length_x, half_length_y2 = self.half_length_y,
-                                    mass_function=self.mass_function, m_lower=self.m_lower, m_upper=self.m_upper, m_solar=self.m_solar,
-                                    num_pixels_y1=self.num_pixels_x, num_pixels_y2=self.num_pixels_y, num_rays_y=self.num_rays_y, random_seed=self.random_seed,
-                                    write_maps=False, write_parities=False, write_histograms=False)
-        
+        self.microlensing_IPM = IPM(
+            verbose=1,
+            kappa_tot=self.kappa_tot,
+            shear=self.shear,
+            kappa_star=self.kappa_star,
+            smooth_fraction=self.smooth_fraction,
+            theta_star=self.theta_star,
+            light_loss=self.light_loss,
+            rectangular=rectangular,
+            approx=True,
+            center_y1=self.center_x,
+            center_y2=self.center_y,
+            half_length_y1=self.half_length_x,
+            half_length_y2=self.half_length_y,
+            mass_function=self.mass_function,
+            m_lower=self.m_lower,
+            m_upper=self.m_upper,
+            m_solar=self.m_solar,
+            num_pixels_y1=self.num_pixels_x,
+            num_pixels_y2=self.num_pixels_y,
+            num_rays_y=self.num_rays_y,
+            random_seed=self.random_seed,
+            write_maps=False,
+            write_parities=False,
+            write_histograms=False,
+        )
+
         self.generate_magnification_map()
 
         self.magnifications = self.microlensing_MagMap.magnifications
-        
+
     def generate_magnification_map(self):
-        """
-        Generate the magnification map based on the parameters provided
-        """
+        """Generate the magnification map based on the parameters provided."""
         self.microlensing_MagMap = self.microlensing_IPM.run()
 
     @property
     def mu_ave(self):
-        return 1 / ((1 - self.kappa_tot)**2 - self.shear**2)
+        return 1 / ((1 - self.kappa_tot) ** 2 - self.shear**2)
 
     @property
     def stellar_fraction(self):
@@ -105,23 +135,23 @@ class MagnificationMap(object):
 
     @property
     def num_pixels(self):
-        """
-        Returns the number of pixels in the magnification map in (x, y) format
-        """
-        return (self.magnifications.shape[1], # axis 1 of array is y1 axis (IPM convention)
-                self.magnifications.shape[0]) # axis 0 of array is y2 axis (IPM convention)
+        """Returns the number of pixels in the magnification map in (x, y)
+        format."""
+        return (
+            self.magnifications.shape[1],  # axis 1 of array is y1 axis (IPM convention)
+            self.magnifications.shape[0],
+        )  # axis 0 of array is y2 axis (IPM convention)
 
     @property
     def pixel_scales(self):
-        """
-        Returns the pixel scales in (x, y) format
-        """
-        return (2 * self.half_length[0] / self.num_pixels[0],
-                2 * self.half_length[1] / self.num_pixels[1])
+        """Returns the pixel scales in (x, y) format."""
+        return (
+            2 * self.half_length[0] / self.num_pixels[0],
+            2 * self.half_length[1] / self.num_pixels[1],
+        )
 
     @property
     def magnitudes(self):
-        """
-        Returns the magnitudes of the magnification map normalized by the average magnification
-        """
+        """Returns the magnitudes of the magnification map normalized by the
+        average magnification."""
         return -2.5 * np.log10(self.magnifications / np.abs(self.mu_ave))
