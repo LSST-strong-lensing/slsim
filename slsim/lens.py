@@ -1090,10 +1090,10 @@ class Lens(LensedSystemBase):
         return kappa_star
 
     def contrast_ratio(self, band, source_index=0):
-        """
-        computes the surface brightness ratio (difference in magnitude per arc second square)
-        at image positions of the source, for the source as the average
-        surface brightness within the half light radius, for the lens light at the position of the lensed images
+        """Computes the surface brightness ratio (difference in magnitude per
+        arc second square) at image positions of the source, for the source as
+        the average surface brightness within the half light radius, for the
+        lens light at the position of the lensed images.
 
         :param source_index: index of source, default =0, i.e. the first
             source
