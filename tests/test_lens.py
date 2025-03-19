@@ -379,7 +379,7 @@ class TestLens(object):
             "kwargs_source" in kwargs_params
         ), "Missing 'kwargs_source' in kwargs_params"
         assert "kwargs_ps" in kwargs_params, "Missing 'kwargs_ps' in kwargs_params"
-        
+
     def test_contrast_ratio(self):
         mag_ratios = self.gg_lens.contrast_ratio(band="i", source_index=0)
         assert len(mag_ratios) == 4
