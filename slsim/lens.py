@@ -8,6 +8,7 @@ from lenstronomy.LensModel.Solver.lens_equation_solver import LensEquationSolver
 from lenstronomy.LensModel.Solver.lens_equation_solver import (
     analytical_lens_model_support,
 )
+
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.Util import constants
@@ -78,18 +79,18 @@ class Lens(LensedSystemBase):
         self._magnification_limit = magnification_limit
 
         if isinstance(source_class, list):
-            self.source = source_class
+            self._source = source_class
             # chose a highest resdshift source to use conventionally use in lens
             #  mass model.
             self.max_redshift_source_class = max(
-                self.source, key=lambda obj: obj.redshift
+                self._source, key=lambda obj: obj.redshift
             )
-            self.source_number = len(self.source)
-            self._max_redshift_source_index = self.source.index(
+            self.source_number = len(self._source)
+            self._max_redshift_source_index = self._source.index(
                 self.max_redshift_source_class
             )
         else:
-            self.source = [source_class]
+            self._source = [source_class]
             self.source_number = 1
             # this is for single source case. self.max_redshift_source_class and
             # self.source are the same class. The difference is only that one is in the
@@ -105,6 +106,15 @@ class Lens(LensedSystemBase):
             z_source=self.max_redshift_source_class.redshift,
             cosmo=self.cosmo,
         )
+
+    def source(self, index=0):
+        """
+
+        :param index: index of the source
+        :type index: int
+        :return: Source() class with index
+        """
+        return self._source[index]
 
     @property
     def image_number(self):
@@ -130,7 +140,7 @@ class Lens(LensedSystemBase):
         """
         if not hasattr(self, "_es_image_positions"):
             self._es_image_position_list = []
-            for source in self.source:
+            for source in self._source:
                 self._es_image_position_list.append(
                     self._extended_source_image_positions(source)
                 )
@@ -185,7 +195,7 @@ class Lens(LensedSystemBase):
         """
         if not hasattr(self, "_ps_image_position_list"):
             self._ps_image_position_list = []
-            for source in self.source:
+            for source in self._source:
                 self._ps_image_position_list.append(
                     self._point_source_image_positions(source)
                 )
@@ -258,7 +268,7 @@ class Lens(LensedSystemBase):
         :return: A boolean or dict of boolean.
         """
         validity_results = {}
-        for index, source in enumerate(self.source):
+        for index, source in enumerate(self._source):
             validity_results[index] = self._validity_test(
                 source,
                 min_image_separation=min_image_separation,
@@ -404,7 +414,7 @@ class Lens(LensedSystemBase):
         :return: list of source redshifts
         """
         source_redshifts = []
-        for source in self.source:
+        for source in self._source:
             source_redshifts.append(source.redshift)
         return source_redshifts
 
@@ -444,7 +454,7 @@ class Lens(LensedSystemBase):
         """
         if not hasattr(self, "_theta_E_list"):
             self._theta_E_list = []
-            for source in self.source:
+            for source in self._source:
                 self._theta_E_list.append(self._einstein_radius(source))
         return self._theta_E_list
 
@@ -536,7 +546,7 @@ class Lens(LensedSystemBase):
         :rtype: list of numpy array
         """
         arrival_times_list = []
-        for source in self.source:
+        for source in self._source:
             arrival_times_list.append(self._point_source_arrival_times(source))
         return arrival_times_list
 
@@ -576,7 +586,7 @@ class Lens(LensedSystemBase):
             corresponds to different image observation times.
         """
         observer_times_list = []
-        for source in self.source:
+        for source in self._source:
             observer_times_list.append(self._image_observer_times(source, t_obs))
         if self.source_number == 1:
             return observer_times_list[0]
@@ -623,7 +633,7 @@ class Lens(LensedSystemBase):
         """
 
         magnitude_list = []
-        for source in self.source:
+        for source in self._source:
             magnitude_list.append(
                 self._point_source_magnitude(band, source, lensed=lensed, time=time)
             )
@@ -684,7 +694,7 @@ class Lens(LensedSystemBase):
         """
 
         magnitude_list = []
-        for source in self.source:
+        for source in self._source:
             magnitude_list.append(
                 self._extended_source_magnitude_for_each_image(
                     band, source, lensed=lensed
@@ -708,7 +718,7 @@ class Lens(LensedSystemBase):
         # TODO: might have to change conventions between extended and point source
         magnitude_list = []
         # loop through each source.
-        for index, source in enumerate(self.source):
+        for index, source in enumerate(self._source):
             magnitude_list.append(
                 self._extended_source_magnitude(band, source, index, lensed=lensed)
             )
@@ -767,7 +777,7 @@ class Lens(LensedSystemBase):
         """
         if not hasattr(self, "_ps_magnification_list"):
             self._ps_magnification_list = []
-            for source in self.source:
+            for source in self._source:
                 self._ps_magnification_list.append(
                     self._point_source_magnification(source)
                 )
@@ -812,7 +822,7 @@ class Lens(LensedSystemBase):
 
         if not hasattr(self, "_extended_source_magnification_list"):
             self._extended_source_magnification_list = []
-            for index, source in enumerate(self.source):
+            for index, source in enumerate(self._source):
                 self._extended_source_magnification_list.append(
                     self._extended_single_source_magnification(source, index)
                 )
@@ -828,7 +838,7 @@ class Lens(LensedSystemBase):
         """
         if not hasattr(self, "_es_magnification_for_each_image_list"):
             self._es_magnification_for_each_image_list = []
-            for source in self.source:
+            for source in self._source:
                 self._es_magnification_for_each_image_list.append(
                     self._point_source_magnification(source, extended=True)
                 )
@@ -999,7 +1009,7 @@ class Lens(LensedSystemBase):
         ):
             source_models_list = []
             kwargs_source_list = []
-            for source in self.source:
+            for source in self._source:
                 source_models_list.append(source.extended_source_light_model())
                 kwargs_source_list.append(
                     source.kwargs_extended_source_light(
@@ -1030,7 +1040,7 @@ class Lens(LensedSystemBase):
         ):
             source_models_list = []
             kwargs_ps_list = []
-            for source in self.source:
+            for source in self._source:
                 source_models_list.append("LENSED_POSITION")
                 img_x, img_y = self._point_source_image_positions(source=source)
                 if band is None:
@@ -1081,6 +1091,30 @@ class Lens(LensedSystemBase):
             flux_local / total_flux * stellar_mass / self._lens_cosmo.sigma_crit_angle
         )
         return kappa_star
+
+    def contrast_ratio(self, band, source_index=0):
+        """Computes the surface brightness ratio (difference in magnitude per
+        arc second square) at image positions of the source, for the source as
+        the average surface brightness within the half light radius, for the
+        lens light at the position of the lensed images.
+
+        :param source_index: index of source, default =0, i.e. the first
+            source
+        :type source_index: int
+        :param band: bandpass filter
+        :type: str
+        :return: surface brightness ratio for all images
+            I_source_light/I_lens_light [mag/arcsec^2]
+        """
+        # TODO: make a definition that is more flexible to use either point sources or extended sources
+        ra, dec = self.extended_source_image_positions()[source_index]
+
+        mag_arcsec2_lens_light = self.deflector.surface_brightness(ra, dec, band=band)
+        mag_arcsec2_source = self.source(source_index).surface_brightness_reff(
+            band=band
+        )
+
+        return mag_arcsec2_source - mag_arcsec2_lens_light
 
     def generate_id(self, ra=None, dec=None):
         """Generate a unique ID for the lens based on its position.

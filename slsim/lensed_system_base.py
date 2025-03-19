@@ -18,9 +18,9 @@ class LensedSystemBase(ABC):
         """
         self.deflector = deflector_class
         if isinstance(source_class, list):
-            self.source = source_class
+            self._source = source_class
         else:
-            self.source = [source_class]
+            self._source = [source_class]
         if los_class is None:
             los_class = LOSIndividual()
         self.los_class = los_class

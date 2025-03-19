@@ -2,13 +2,21 @@ from slsim.Sources.SourceVariability.variability import (
     Variability,
     reprocess_with_lamppost_model,
 )
+from lenstronomy.LightModel.light_model import LightModel
+from lenstronomy.Util import data_util
 import numpy as np
 
 # from slsim.Sources.simple_supernova_lightcurve import SimpleSupernovaLightCurve
 from astropy.table import Column, Table
-from slsim.Sources import random_supernovae, agn
-from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
-from slsim.Util.cosmo_util import z_scale_factor
+
+from slsim.Sources import (
+    random_supernovae,
+    agn,
+)
+from slsim.Util.param_util import (
+    ellipticity_slsim_to_lenstronomy,
+    amplitude_to_magnitude,
+)
 
 
 class Source(object):
@@ -632,6 +640,39 @@ class Source(object):
         else:
             source_models_list = None
         return source_models_list
+
+    def surface_brightness_reff(self, band=None):
+        """Calculate average surface brightness within half light radius.
+
+        :param band: imaging band
+        :return: average surface brightness within half light radius
+            [mag/arcsec^2]
+        """
+        # TODO this definition only works when source position is given
+        _mag_zero_dummy = 0  # from mag to amp conversion we need a dummy mag zero point. Irrelevant for this routine.
+        source_models_list = self.extended_source_light_model()
+        # TODO: remove unnecessary dependencies on center_lens and draw_area from this class
+        kwargs_extended_source = self.kwargs_extended_source_light(
+            center_lens=None, draw_area=None, band=band
+        )
+
+        lightModel = LightModel(light_model_list=source_models_list)
+
+        kwargs_extended_source_amp = data_util.magnitude2amplitude(
+            lightModel, kwargs_extended_source, magnitude_zero_point=0
+        )
+
+        total_flux = np.sum(
+            lightModel.total_flux(kwargs_extended_source_amp)
+        )  # integrated flux
+        area = self.angular_size**2 * np.pi
+        surface_brightness_amp = (
+            total_flux / 2 / area
+        )  # flux /arcsec within half light radius
+        mag_arcsec2 = amplitude_to_magnitude(
+            surface_brightness_amp, mag_zero_point=_mag_zero_dummy
+        )
+        return mag_arcsec2
 
 
 def extract_agn_kwargs_from_source_dict(source_dict):

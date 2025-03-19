@@ -885,6 +885,23 @@ class TestSource:
         with pytest.raises(ValueError):
             self.source_light_model_3.extended_source_light_model()
 
+    def test_surface_brightness_reff(self):
+        source_dict = {
+            "angular_size": 1,
+            "center_x": 0.30298310338567075,
+            "center_y": -0.3505004565139597,
+            "e1": 0.06350855238708408,
+            "e2": -0.08420760408362458,
+            "mag_g": 15,
+            "n_sersic": 1.0,
+            "z": 3.123,
+        }
+
+        band = "g"
+        source = Source(source_dict=source_dict)
+        mag_arcsec2 = source.surface_brightness_reff(band=band)
+        npt.assert_almost_equal(mag_arcsec2, 16.995, decimal=2)
+
 
 if __name__ == "__main__":
     pytest.main()

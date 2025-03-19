@@ -266,6 +266,7 @@ def lens_inejection_fast(
     band_list=["r", "g", "i"],
     center_box_size=3,
     center_source_snr_threshold=5,
+    false_positive=False,
 ):
     """Chooses a random lens from the lens population and injects it to a DC2
     cutout image. For this one needs to provide a butler to this function. To
@@ -297,6 +298,11 @@ def lens_inejection_fast(
         is 3 arcsec).
     :param center_source_snr_threshold: SNR threshold for object
         detection in center box (default is 5).
+    :param false_positive: Boolean. If false, code assumes that the provided
+     population is a lens population. If True, code assumes that the provided
+     population is a false popitive poulation. False positive contains an
+     elliptical galaxy at the center and blue galaxies around this central galaxy.
+     for more detail, please see: slsim/FalsePositives/
     :returns: An astropy table containing Injected lens in r-band, DC2
         cutout image in r-band, cutout image with injected lens in r, g
         , and i band
@@ -334,7 +340,10 @@ def lens_inejection_fast(
         if isinstance(lens_pop, list):
             lens_class = lens_pop[valid_cutouts]
         else:
-            lens_class = lens_pop.select_lens_at_random(**kwargs_lens_cut)
+            if false_positive is False:
+                lens_class = lens_pop.select_lens_at_random(**kwargs_lens_cut)
+            else:
+                lens_class = lens_pop.draw_false_positive()
         injected_final_image, box_center, cutout_image_list, lens_image, lens_id = (
             [],
             [],
@@ -387,9 +396,10 @@ def lens_inejection_fast(
             lens_id.append(lens_class.generate_id())
         if is_valid:
             # Define column names dynamically based on band_list
+            prefix = "injected_object" if false_positive else "injected_lens"
             column_names = (
                 ["lens_id", "lens", "cutout_image"]
-                + [f"injected_lens_{band}" for band in band_list]
+                + [f"{prefix}_{band}" for band in band_list]
                 + ["cutout_center"]
             )
 
@@ -461,7 +471,10 @@ def multiple_lens_injection_fast(
     coadd_injection=True,
     coadd_year=5,
     band_list=["r", "g", "i"],
+    center_box_size=3,
+    center_source_snr_threshold=5,
     output_file=None,
+    false_positive=False,
 ):
     """Injects random lenses from the lens population to multiple DC2 cutout
     images using lens_inejection_fast function. For this one needs to provide a
@@ -487,8 +500,15 @@ def multiple_lens_injection_fast(
         desired year of coadd.
     :param band_list: List of imaging band in which lens need to be
         injected.
+    :param center_box_size: Size of the central box in arcsec (default
+        is 3 arcsec).
+    :param center_source_snr_threshold: SNR threshold for object
+        detection in center box (default is 5).
     :param output_file: path to the output FITS file where data will be
         saved
+    :param false_positive: Boolean. If false, code assumes that the provided
+     population is a lens population. If True, code assumes that the provided
+     population is a false popitive poulation.
     :returns: An astropy table containing Injected lenses in r-band, DC2
         cutout images in r-band, cutout images with injected lens in r,
         g , and i band for a given set of ra and dec. If output_file
@@ -517,6 +537,9 @@ def multiple_lens_injection_fast(
             coadd_injection=coadd_injection,
             coadd_year=coadd_year,
             band_list=band_list,
+            center_box_size=center_box_size,
+            center_source_snr_threshold=center_source_snr_threshold,
+            false_positive=false_positive,
         )
         if output_file is None:
             injected_images.append(injected_image)
