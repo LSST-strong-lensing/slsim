@@ -1,7 +1,7 @@
 from astropy.cosmology import FlatLambdaCDM
 
 
-def z_scale_factor(z_old, z_new, cosmo=None):
+def z_scale_factor(z_old, z_new, cosmo=FlatLambdaCDM(H0=70, Om0=0.3)):
     """
     :param z_old: The original redshift.
     :type z_old: float
@@ -15,7 +15,7 @@ def z_scale_factor(z_old, z_new, cosmo=None):
     :return: The multiplicative pixel size scaling factor.
     :rtype: float
     """
-    # Define default cosmology if not provided
+    # Define default cosmology if provided as None
     if cosmo is None:
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 

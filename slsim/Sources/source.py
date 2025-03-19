@@ -451,36 +451,29 @@ class Source(object):
         return source_mag
 
     def extended_source_position(self, center_lens, draw_area):
-        """Extended source position. If not present from the catalog, it is
-        drawn uniformly within the circle of the test area centered on the
-        deflector position.
+        """Extended source position. If a center has already been provided (and stored in 
+        self._center_source during initialization), then it is simply returned. Otherwise, 
+        a source position is drawn uniformly within the circle of the test area centered on 
+        the deflector position.
 
         :param center_lens: center of the deflector.
-         Eg: np.array([center_x_lens, center_y_lens])
-        :param draw_area: The area of the test region from which we randomly draw a
-        source position. Eg: 4*pi.
+            Eg: np.array([center_x_lens, center_y_lens])
+        :param draw_area: The area of the test region from which we randomly draw a source 
+            position. Eg: 4*pi.
         :return: [x_pos, y_pos]
         """
+        if hasattr(self, "_center_source"):
+            return self._center_source
 
-        if not hasattr(self, "_center_source"):
-            # 1) Check if the user has provided center_x/center_y in source_dict
-            if (
-                "center_x" in self.source_dict.colnames
-                and "center_y" in self.source_dict.colnames
-            ):
-                cx = self.source_dict["center_x"][0]
-                cy = self.source_dict["center_y"][0]
-                # interpret them as absolute positions or offsets
-                self._center_source = np.array([cx, cy])
-            else:
-                test_area_radius = np.sqrt(draw_area / np.pi)
-                r = np.sqrt(np.random.random()) * test_area_radius
-                theta = 2 * np.pi * np.random.random()
-                center_x_source = center_lens[0] + r * np.cos(theta)
-                center_y_source = center_lens[1] + r * np.sin(theta)
-                self._center_source = np.array([center_x_source, center_y_source])
-
+        test_area_radius = np.sqrt(draw_area / np.pi)
+        r = np.sqrt(np.random.random()) * test_area_radius
+        theta = 2 * np.pi * np.random.random()
+        self._center_source = np.array([
+            center_lens[0] + r * np.cos(theta),
+            center_lens[1] + r * np.sin(theta)
+        ])
         return self._center_source
+
 
     def point_source_position(self, center_lens, draw_area):
         """Point source position. point source could be at the center of the
