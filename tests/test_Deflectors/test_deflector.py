@@ -52,3 +52,25 @@ class TestDeflector(object):
     def test_stellar_mass(self):
         stellar_mass = self.deflector.stellar_mass
         npt.assert_almost_equal(stellar_mass, 6.94160421e10, decimal=-3)
+
+    def test_light_model_lenstronomy(self):
+        band = "g"
+        light_model, kwargs_lens_light = self.deflector.light_model_lenstronomy(band=band)
+        assert light_model[0] == "SERSIC_ELLIPSE"
+        assert kwargs_lens_light[0]['R_sersic'] == 7.613175197518637e-07
+
+    def test_surface_brightness(self):
+        # TODO:
+        ra, dec = 0, 0
+        band = "g"
+        r_eff = 1
+        deflector_dict = {'vel_disp': 200, 'e1_mass': 0, 'e2_mass': 0, 'stellar_mass': 10**10, 'z': 0.5,
+                          'e1_light': 0, 'e2_light': 0, 'center_x': 0, 'center_y': 0,
+                          'mag_g': 17, 'angular_size': r_eff, 'n_sersic': 1}
+
+        deflector = Deflector(deflector_type="EPL", deflector_dict=deflector_dict)
+        mag_arcsec2_center = deflector.surface_brightness(ra, dec, band=band)
+        mag_arcsec2_r_eff = deflector.surface_brightness(ra+r_eff, dec, band=band)
+        # TODO: define a more meaningful test
+        npt.assert_almost_equal(mag_arcsec2_center / mag_arcsec2_r_eff, 0.9079, decimal=3)
+

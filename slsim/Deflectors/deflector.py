@@ -1,6 +1,9 @@
 from slsim.Deflectors.DeflectorTypes.epl_sersic import EPLSersic
 from slsim.Deflectors.DeflectorTypes.nfw_hernquist import NFWHernquist
 from slsim.Deflectors.DeflectorTypes.nfw_cluster import NFWCluster
+from lenstronomy.LightModel.light_model import LightModel
+from lenstronomy.Util import data_util
+from slsim.Util import param_util
 
 _SUPPORTED_DEFLECTORS = ["EPL", "NFW_HERNQUIST", "NFW_CLUSTER"]
 
@@ -16,6 +19,7 @@ class Deflector(object):
         :type deflector_type: str
         :param deflector_dict: parameters of the deflector
         :type deflector_dict: dict
+        # TODO: document magnitude inputs
         """
         if deflector_type in ["EPL"]:
             self._deflector = EPLSersic(deflector_dict=deflector_dict, **kwargs)
@@ -137,3 +141,27 @@ class Deflector(object):
         :return: halo mass M200 [physical M_sol], concentration r200/rs
         """
         return self._deflector.halo_properties
+
+    def surface_brightness(self, ra, dec, band=None):
+        """
+        surface brightness at position ra/dec
+
+        :param ra: position RA
+        :param dec: position DEC
+        :param band: imaging band
+        :type band: str
+        :return: surface brightness at postion ra/dec [mag / arcsec^2]
+        """
+        _mag_zero_dummy = 0  # from mag to amp conversion we need a dummy mag zero point. Irrelevant for this routine.
+        lens_light_model_list, kwargs_lens_light_mag = self.light_model_lenstronomy(band=band)
+        lightModel = LightModel(light_model_list=lens_light_model_list)
+
+        kwargs_lens_light_amp = data_util.magnitude2amplitude(
+            lightModel, kwargs_lens_light_mag, magnitude_zero_point=_mag_zero_dummy
+        )
+        flux_lens_light_local = lightModel.surface_brightness(
+            ra, dec, kwargs_lens_light_amp
+        )
+        mag_arcsec2 = param_util.amplitude_to_magnitude(flux_lens_light_local, mag_zero_point=_mag_zero_dummy)
+        return mag_arcsec2
+

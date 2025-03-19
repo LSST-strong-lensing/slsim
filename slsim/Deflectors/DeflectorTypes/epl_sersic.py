@@ -12,10 +12,12 @@ class EPLSersic(DeflectorBase):
     - 'e2_mass': eccentricity of NFW profile
     - 'stellar_mass': stellar mass in physical M_sol
     - 'angular_size': half-light radius of stellar/light profile in radian
+    - 'n_sersic': Sersic index of deflector light
     - 'e1_light': eccentricity of light
     - 'e2_light': eccentricity of light
     - 'z': redshift of deflector
     """
+    # TODO: add center_x center_y to documentation
 
     def __init__(self, deflector_dict, sis_convention=True):
         """
