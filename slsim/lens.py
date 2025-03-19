@@ -1090,21 +1090,26 @@ class Lens(LensedSystemBase):
         return kappa_star
 
     def contrast_ratio(self, band, source_index=0):
-        """
-        computes the surface brightness ratio at image positions of the source, for the source as the average
-        surface brightness within the half light radius, for the lens light at the position of the lensed images
+        """Computes the surface brightness ratio at image positions of the
+        source, for the source as the average surface brightness within the
+        half light radius, for the lens light at the position of the lensed
+        images.
 
-        :param source_index: index of source, default =0, i.e. the first source
+        :param source_index: index of source, default =0, i.e. the first
+            source
         :type source_index: int
         :param band: bandpass filter
         :type: str
-        :return: surface brightness ratio for all images I_source_light/I_lens_light [mag/arcsec^2]
+        :return: surface brightness ratio for all images
+            I_source_light/I_lens_light [mag/arcsec^2]
         """
         # TODO: make a definition that is more flexible to use either point sources or extended sources
         ra, dec = self.extended_source_image_positions()[source_index]
 
         mag_arcsec2_lens_light = self.deflector.surface_brightness(ra, dec, band=band)
-        mag_arcsec2_source = self.source(source_index).surface_brightness_reff(band=band)
+        mag_arcsec2_source = self.source(source_index).surface_brightness_reff(
+            band=band
+        )
 
         return mag_arcsec2_source / mag_arcsec2_lens_light
 
