@@ -1091,7 +1091,8 @@ class Lens(LensedSystemBase):
 
     def contrast_ratio(self, band, source_index=0):
         """
-        computes the surface brightness ratio at image positions of the source, for the source as the average
+        computes the surface brightness ratio (difference in magnitude per arc second square)
+        at image positions of the source, for the source as the average
         surface brightness within the half light radius, for the lens light at the position of the lensed images
 
         :param source_index: index of source, default =0, i.e. the first source
@@ -1106,7 +1107,7 @@ class Lens(LensedSystemBase):
         mag_arcsec2_lens_light = self.deflector.surface_brightness(ra, dec, band=band)
         mag_arcsec2_source = self.source(source_index).surface_brightness_reff(band=band)
 
-        return mag_arcsec2_source / mag_arcsec2_lens_light
+        return mag_arcsec2_source - mag_arcsec2_lens_light
 
     def generate_id(self, ra=None, dec=None):
         """Generate a unique ID for the lens based on its position.
