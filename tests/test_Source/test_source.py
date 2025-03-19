@@ -745,7 +745,7 @@ class TestSource:
             "z": 3.123,
         }
 
-        band = 'g'
+        band = "g"
         source = Source(source_dict=source_dict)
         mag_arcsec2 = source.surface_brightness_reff(band=band)
         npt.assert_almost_equal(mag_arcsec2, 16.995, decimal=2)

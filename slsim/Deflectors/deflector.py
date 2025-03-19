@@ -143,8 +143,7 @@ class Deflector(object):
         return self._deflector.halo_properties
 
     def surface_brightness(self, ra, dec, band=None):
-        """
-        surface brightness at position ra/dec
+        """Surface brightness at position ra/dec.
 
         :param ra: position RA
         :param dec: position DEC
@@ -153,7 +152,9 @@ class Deflector(object):
         :return: surface brightness at postion ra/dec [mag / arcsec^2]
         """
         _mag_zero_dummy = 0  # from mag to amp conversion we need a dummy mag zero point. Irrelevant for this routine.
-        lens_light_model_list, kwargs_lens_light_mag = self.light_model_lenstronomy(band=band)
+        lens_light_model_list, kwargs_lens_light_mag = self.light_model_lenstronomy(
+            band=band
+        )
         lightModel = LightModel(light_model_list=lens_light_model_list)
 
         kwargs_lens_light_amp = data_util.magnitude2amplitude(
@@ -162,6 +163,7 @@ class Deflector(object):
         flux_lens_light_local = lightModel.surface_brightness(
             ra, dec, kwargs_lens_light_amp
         )
-        mag_arcsec2 = param_util.amplitude_to_magnitude(flux_lens_light_local, mag_zero_point=_mag_zero_dummy)
+        mag_arcsec2 = param_util.amplitude_to_magnitude(
+            flux_lens_light_local, mag_zero_point=_mag_zero_dummy
+        )
         return mag_arcsec2
-

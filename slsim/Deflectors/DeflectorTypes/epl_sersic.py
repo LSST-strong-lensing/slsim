@@ -17,6 +17,7 @@ class EPLSersic(DeflectorBase):
     - 'e2_light': eccentricity of light
     - 'z': redshift of deflector
     """
+
     # TODO: add center_x center_y to documentation
 
     def __init__(self, deflector_dict, sis_convention=True):
