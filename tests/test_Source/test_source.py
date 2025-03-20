@@ -636,7 +636,7 @@ class TestSource:
         size = source_array.shape[0]
         z = self.source_interp1.source_dict["z"][0]
         z_data = self.source_interp1.source_dict["z_data"][0]
-        ratio = z_scale_factor(z_old=z_data, z_new=z)
+        ratio = z_scale_factor(z_old=z_data, z_new=z, cosmo=self.source_interp1.cosmo)
         pixel_width_data = self.source_interp1.source_dict["pixel_width_data"][0]
         expected_scale = pixel_width_data * ratio
 

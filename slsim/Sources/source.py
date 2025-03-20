@@ -593,7 +593,9 @@ class Source(object):
         elif self.light_profile == "interpolated":
             z_image = self.source_dict["z_data"][0]
             pixel_width = self.source_dict["pixel_width_data"][0]
-            pixel_width *= z_scale_factor(z_old=z_image, z_new=self.redshift)
+            pixel_width *= z_scale_factor(
+                z_old=z_image, z_new=self.redshift, cosmo=self.cosmo
+            )
 
             image = self.source_dict["image"]
 
