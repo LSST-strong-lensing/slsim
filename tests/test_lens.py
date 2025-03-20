@@ -380,6 +380,10 @@ class TestLens(object):
         ), "Missing 'kwargs_source' in kwargs_params"
         assert "kwargs_ps" in kwargs_params, "Missing 'kwargs_ps' in kwargs_params"
 
+    def test_contrast_ratio(self):
+        mag_ratios = self.gg_lens.contrast_ratio(band="i", source_index=0)
+        assert len(mag_ratios) == 4
+
 
 @pytest.fixture
 def pes_lens_instance():
@@ -476,7 +480,7 @@ def supernovae_lens_instance():
 def test_point_source_magnitude_with_lightcurve(supernovae_lens_instance):
     supernovae_lens = supernovae_lens_instance
     mag = supernovae_lens.point_source_magnitude(band="r", lensed=True)[0]
-    expected_results = supernovae_lens_instance.source[0].source_dict["ps_mag_r"]
+    expected_results = supernovae_lens_instance._source[0].source_dict["ps_mag_r"]
     assert mag[0][0] != expected_results[0][0]
     assert mag[1][0] != expected_results[0][0]
 

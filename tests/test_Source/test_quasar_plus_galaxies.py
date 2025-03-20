@@ -25,7 +25,7 @@ def test_quasar_plus_galaxies():
         "mag_r",
         "mag_i",
         "mag_z",
-        "mag_Y",
+        "mag_y",
         "ps_mag_r",
         "ps_mag_g",
         "ps_mag_i",
