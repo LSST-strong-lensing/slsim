@@ -17,6 +17,7 @@ from slsim.Util.param_util import (
     ellipticity_slsim_to_lenstronomy,
     amplitude_to_magnitude,
 )
+from slsim.Util.cosmo_util import z_scale_factor
 
 
 class Source(object):
