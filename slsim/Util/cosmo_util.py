@@ -1,7 +1,7 @@
 from astropy.cosmology import FlatLambdaCDM
 
 
-def z_scale_factor(z_old, z_new, cosmo=FlatLambdaCDM(H0=70, Om0=0.3)):
+def z_scale_factor(z_old, z_new, cosmo=cosmo):
     """
     :param z_old: The original redshift.
     :type z_old: float
