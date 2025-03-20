@@ -8,9 +8,9 @@ z_range: !numpy.arange [0.0, 5.01, 0.01]
 M_star_blue: !astropy.modeling.models.Polynomial1D
   degree: 3
   c0: -20.485
-  c1: -1.03
-  c2: 0.5 
-  c3: -0.08
+  c1: -2.03
+  c2: 0.5
+  c3: -0.03
 phi_star_blue: !astropy.modeling.models.Exponential1D [0.00312608, -43.42936]
 M_star_red: !astropy.modeling.models.Linear1D [-0.80, -20.46]
 phi_star_red: !astropy.modeling.models.Exponential1D [0.00278612, -1.05925]
