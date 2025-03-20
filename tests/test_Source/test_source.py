@@ -663,12 +663,16 @@ class TestSource:
         draw_area = 4 * np.pi
 
         # For source_interp1 (which has center_x and center_y provided),
-    
-        result_with_center = self.source_interp1.extended_source_position(center_lens, draw_area)
-        expected_position_with_center = np.array([
-            self.source_interp1.source_dict["center_x"][0],
-            self.source_interp1.source_dict["center_y"][0],
-        ])
+
+        result_with_center = self.source_interp1.extended_source_position(
+            center_lens, draw_area
+        )
+        expected_position_with_center = np.array(
+            [
+                self.source_interp1.source_dict["center_x"][0],
+                self.source_interp1.source_dict["center_y"][0],
+            ]
+        )
         np.testing.assert_array_almost_equal(
             result_with_center.flatten(),
             expected_position_with_center,
@@ -681,11 +685,14 @@ class TestSource:
         if hasattr(self.source_interp2, "_center_source"):
             del self.source_interp2._center_source
 
-        result_no_center = self.source_interp2.extended_source_position(center_lens, draw_area)
+        result_no_center = self.source_interp2.extended_source_position(
+            center_lens, draw_area
+        )
         test_area_radius = np.sqrt(draw_area / np.pi)
         r = np.linalg.norm(result_no_center - center_lens)
-        assert 0 <= r <= test_area_radius, f"Generated position {result_no_center} is out of expected test area range."
-
+        assert (
+            0 <= r <= test_area_radius
+        ), f"Generated position {result_no_center} is out of expected test area range."
 
     def test_redshift(self):
         assert self.source.redshift == 0.5
