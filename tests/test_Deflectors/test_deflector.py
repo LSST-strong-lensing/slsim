@@ -3,6 +3,7 @@ import numpy.testing as npt
 import os
 from slsim.Deflectors.deflector import Deflector
 from astropy.table import Table
+from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 
 
 class TestDeflector(object):
@@ -15,6 +16,15 @@ class TestDeflector(object):
             os.path.join(module_path, "TestData/red_one_modified.fits"), format="fits"
         )
         self.deflector = Deflector(deflector_type="EPL", deflector_dict=red_one)
+
+        red_two = Table(red_one).copy()
+        red_two.remove_column("vel_disp")
+        red_two["theta_E"] = 0.8
+        self.deflector2 = Deflector(deflector_type="EPL", deflector_dict=red_two)
+        self.lens_cosmo = LensCosmo(
+            z_lens=red_two["z"],
+            z_source=1.5
+        )
 
     def test_light_ellipticity(self):
         e1_light, e2_light = self.deflector.light_ellipticity
@@ -42,7 +52,10 @@ class TestDeflector(object):
 
     def test_velocity_dispersion(self):
         sigma_v = self.deflector.velocity_dispersion(cosmo=None)
+        sigma_v2 = self.deflector2.velocity_dispersion(cosmo=None)
         assert pytest.approx(sigma_v, rel=1e-3) == 191.40371531030243
+        assert sigma_v2 is None
+
 
     def test_deflector_center(self):
         center = self.deflector.deflector_center
@@ -60,6 +73,14 @@ class TestDeflector(object):
         )
         assert light_model[0] == "SERSIC_ELLIPSE"
         assert kwargs_lens_light[0]["R_sersic"] == 7.613175197518637e-07
+
+    def test_mass_model_lenstronomy(self):
+        results = self.deflector.mass_model_lenstronomy(lens_cosmo=self.lens_cosmo)[1]
+        results2 = self.deflector2.mass_model_lenstronomy(lens_cosmo=self.lens_cosmo)[1]
+        npt.assert_almost_equal(
+            results[0]["theta_E"][0], 0.30360748, decimal=7
+        )
+        assert results2[0]["theta_E"] == 0.8
 
     def test_surface_brightness(self):
         # TODO:
