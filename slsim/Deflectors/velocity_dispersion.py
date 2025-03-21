@@ -743,7 +743,7 @@ def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
     # number of selected galaxies
     num_select = len(galaxy_list_zmax)
 
-    redshift = np.linspace(0, z_max, 120)
+    redshift = np.linspace(0, z_max, 100)
     z_list, vel_disp_list = vel_disp_sdss(
         sky_area, redshift, vd_min=50, vd_max=500, cosmology=cosmo, noise=True
     )
