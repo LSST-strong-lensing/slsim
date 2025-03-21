@@ -4,8 +4,7 @@ import sys
 import numpy as np
 
 # Credits: Luke's Microlensing code - https://github.com/weisluke/microlensing
-from _paths import LUKES_MICROLENSING_PATH
-
+from slsim.Microlensing import LUKES_MICROLENSING_PATH
 sys.path.append(LUKES_MICROLENSING_PATH)
 from microlensing.IPM.ipm import (
     IPM,
@@ -114,7 +113,6 @@ class MagnificationMap(object):
         )
 
         self.generate_magnification_map()
-
         self.magnifications = self.microlensing_MagMap.magnifications
 
     def generate_magnification_map(self):
