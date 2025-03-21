@@ -915,7 +915,10 @@ class Lens(LensedSystemBase):
                 lens_mass_model_list
             )
             kwargs_model["z_lens"] = self.deflector_redshift
-            if self.max_redshift_source_class.light_profile == "single_sersic":
+            if self.max_redshift_source_class.light_profile in [
+                "single_sersic",
+                "interpolated",
+            ]:
                 kwargs_model["source_redshift_list"] = self.source_redshift_list
             elif self.max_redshift_source_class.light_profile == "double_sersic":
                 kwargs_model["source_redshift_list"] = [
