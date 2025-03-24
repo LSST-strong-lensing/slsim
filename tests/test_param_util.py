@@ -25,6 +25,7 @@ from slsim.Util.param_util import (
     degrade_coadd_data,
     galaxy_size,
     detect_object,
+    gaussian_psf
 )
 from slsim.Sources.SourceVariability.variability import Variability
 from astropy.io import fits
@@ -415,6 +416,10 @@ def test_detect_object():
     assert result1
     assert not result2
 
+def test_gaussian_psf():
+    psf_kernel = gaussian_psf(fwhm=0.9, delta_pix=0.2, num_pix=21)
+    assert psf_kernel.shape[0] == 21
+    npt.assert_almost_equal(np.sum(psf_kernel), 1, decimal=16)
 
 if __name__ == "__main__":
     pytest.main()
