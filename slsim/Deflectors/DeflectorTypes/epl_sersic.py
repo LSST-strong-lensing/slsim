@@ -31,10 +31,10 @@ class EPLSersic(DeflectorBase):
         self._sis_convention = sis_convention
 
     def velocity_dispersion(self, cosmo=None):
-        """Velocity dispersion of deflector. If velocity dispersion is not provided in 
-        the deflector dict, None will be returned. Then, _einstein_radius() function 
-        expects value of einstein radius in the deflector dict which will be used in 
-        mass_model_lenstronomy() function.
+        """Velocity dispersion of deflector. If velocity dispersion is not
+        provided in the deflector dict, None will be returned. Then,
+        _einstein_radius() function expects value of einstein radius in the
+        deflector dict which will be used in mass_model_lenstronomy() function.
 
         :param cosmo: cosmology
         :type cosmo: ~astropy.cosmology class
@@ -45,7 +45,7 @@ class EPLSersic(DeflectorBase):
         else:
             vel_disp = None
         return vel_disp
-    
+
     def _einstein_radius(self, lens_cosmo=None):
         """Einstein radius of the deflector.
 
@@ -54,13 +54,13 @@ class EPLSersic(DeflectorBase):
         :return: Einstein radius of the deflector
         """
         if "theta_E" in self._deflector_dict.keys():
-            theta_E = self._deflector_dict["theta_E"] # given einstein radius should be in arcsec.
+            theta_E = self._deflector_dict[
+                "theta_E"
+            ]  # given einstein radius should be in arcsec.
         else:
             lens_light_model_list, kwargs_lens_light = self.light_model_lenstronomy()
             theta_E = theta_E_from_vel_disp_epl(
-                vel_disp=float(
-                    self.velocity_dispersion()
-                ),
+                vel_disp=float(self.velocity_dispersion()),
                 gamma=self.halo_properties,
                 r_half=self.angular_size_light,
                 kwargs_light=kwargs_lens_light,
@@ -93,7 +93,7 @@ class EPLSersic(DeflectorBase):
         gamma = self.halo_properties
         if lens_cosmo.z_lens >= lens_cosmo.z_source:
             theta_E = 0.0
-        else:    
+        else:
             theta_E = self._einstein_radius(lens_cosmo=lens_cosmo)
 
         e1_mass, e2_mass = self.mass_ellipticity

@@ -21,10 +21,7 @@ class TestDeflector(object):
         red_two.remove_column("vel_disp")
         red_two["theta_E"] = 0.8
         self.deflector2 = Deflector(deflector_type="EPL", deflector_dict=red_two)
-        self.lens_cosmo = LensCosmo(
-            z_lens=red_two["z"],
-            z_source=1.5
-        )
+        self.lens_cosmo = LensCosmo(z_lens=red_two["z"], z_source=1.5)
 
     def test_light_ellipticity(self):
         e1_light, e2_light = self.deflector.light_ellipticity
@@ -56,7 +53,6 @@ class TestDeflector(object):
         assert pytest.approx(sigma_v, rel=1e-3) == 191.40371531030243
         assert sigma_v2 is None
 
-
     def test_deflector_center(self):
         center = self.deflector.deflector_center
         assert isinstance(center[0], float)
@@ -77,9 +73,7 @@ class TestDeflector(object):
     def test_mass_model_lenstronomy(self):
         results = self.deflector.mass_model_lenstronomy(lens_cosmo=self.lens_cosmo)[1]
         results2 = self.deflector2.mass_model_lenstronomy(lens_cosmo=self.lens_cosmo)[1]
-        npt.assert_almost_equal(
-            results[0]["theta_E"][0], 0.30360748, decimal=7
-        )
+        npt.assert_almost_equal(results[0]["theta_E"][0], 0.30360748, decimal=7)
         assert results2[0]["theta_E"] == 0.8
 
     def test_surface_brightness(self):
