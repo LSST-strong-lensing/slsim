@@ -36,9 +36,9 @@ class EPLSersic(DeflectorBase):
         _einstein_radius() function expects value of einstein radius in the
         deflector dict which will be used in mass_model_lenstronomy() function.
 
-        :param cosmo: cosmology. This parameter is not used in this function. 
-         We use it as a dummy input for consistency with other deflector types. default 
-         is None.
+        :param cosmo: cosmology. This parameter is not used in this
+            function. We use it as a dummy input for consistency with
+            other deflector types. default is None.
         :type cosmo: ~astropy.cosmology class
         :return: velocity dispersion [km/s]
         """
