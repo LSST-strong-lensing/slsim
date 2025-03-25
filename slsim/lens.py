@@ -571,9 +571,7 @@ class Lens(LensedSystemBase):
 
         return observer_times
 
-    def point_source_magnitude(
-        self, band, lensed=False, time=None, microlensing=False
-    ):
+    def point_source_magnitude(self, band, lensed=False, time=None, microlensing=False):
         """Point source magnitude, either unlensed (single value) or lensed
         (array) with macro-model magnifications. This function provided
         magnitudes of all the sources.
@@ -595,7 +593,9 @@ class Lens(LensedSystemBase):
         magnitude_list = []
         for source in self.source:
             magnitude_list.append(
-                self._point_source_magnitude(band, source, lensed=lensed, time=time, microlensing = microlensing)
+                self._point_source_magnitude(
+                    band, source, lensed=lensed, time=time, microlensing=microlensing
+                )
             )
         return magnitude_list
 
@@ -637,7 +637,6 @@ class Lens(LensedSystemBase):
                 for i in range(len(magnif_log)):
                     magnified_mag_list.append(source_mag_unlensed - magnif_log[i])
                 return np.array(magnified_mag_list)
-             
 
         return source.point_source_magnitude(band)
 
@@ -653,7 +652,9 @@ class Lens(LensedSystemBase):
         # Get image observed times
         image_observed_times = self.image_observer_times(time)
         if not hasattr(self, "_molet_output"):
-            self._molet_output = self._generate_molet_output(band, time, **kwargs_microlensing)
+            self._molet_output = self._generate_molet_output(
+                band, time, **kwargs_microlensing
+            )
 
         # calls interpolated functions for each images and saves magnitudes at given
         # observation time.
@@ -665,7 +666,7 @@ class Lens(LensedSystemBase):
                 function_or_dictionary(self._molet_output[i])(image_observed_times[i])
             )
         return np.array(variable_magnitudes)
-    
+
     # USES THE NEW MICROLENSING MODULE!
     def _generate_microlensing_lightcurve(self, band, time, **kwargs_microlensing):
         """Generate microlensing lightcurve for a given band and time.
@@ -683,8 +684,6 @@ class Lens(LensedSystemBase):
         ra_image, dec_image = self.point_source_image_positions()
         kappa_star = self.kappa_star(ra=ra_image, dec=dec_image)
         image_observed_times = self.image_observer_times(time)
-
-
 
         pass
 

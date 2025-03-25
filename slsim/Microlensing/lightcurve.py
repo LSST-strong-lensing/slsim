@@ -16,11 +16,15 @@ import numpy as np
 import astropy.constants as const
 from astropy import units as u
 
+
 class MicrolensingLightCurve(object):
     """Class to generate lightcurves based on the magnification maps and the
     source."""
 
-    def __init__(self, magnification_map:MagnificationMap, ):
+    def __init__(
+        self,
+        magnification_map: MagnificationMap,
+    ):
         """
         :param magnification_map: MagnificationMap object
         :param image_observing_time: time at which the image is observed
@@ -29,15 +33,12 @@ class MicrolensingLightCurve(object):
         self.image_observing_time = image_observing_time
 
     def generate_lightcurve_magnitude(self, time_array, lens_class):
-        """
-        Generate lightcurve based on the source type
-        """
+        """Generate lightcurve based on the source type."""
         pass
 
     def _generate_agn_lightcurve(self, source_class, lens_class):
-        """
-        Generate lightcurve for a quasar(AGN) with the accretion disk model from amoeba
-        """
+        """Generate lightcurve for a quasar(AGN) with the accretion disk model
+        from amoeba."""
         mag_map_2d = self.magnification_map.magnifications
         z_l = lens_class.deflector.redshift
 
@@ -75,7 +76,6 @@ class MicrolensingLightCurve(object):
             0.6,
             0.7,
         )
-
 
         convolution = MagMap.convolve_with_flux_projection(disk_projection)
         # convolved_flux_map = convolution.magnification_array
