@@ -1,4 +1,4 @@
-__author__ = 'Paras Sharma'
+__author__ = "Paras Sharma"
 
 # here we generate the lightcurve from the microlensing map
 # this process can be different depending on the source type
@@ -17,7 +17,8 @@ import astropy.constants as const
 from astropy import units as u
 
 class MicrolensingLightCurve(object):
-    """Class to generate lightcurves based on the magnification maps and the source."""
+    """Class to generate lightcurves based on the magnification maps and the
+    source."""
 
     def __init__(self, magnification_map:MagnificationMap, ):
         """
@@ -81,7 +82,5 @@ class MicrolensingLightCurve(object):
         # convolutions_each_quasar.append(convolution)
 
     def _generate_supernova_lightcurve(self):
-        """
-        Generate lightcurve for a supernova
-        """
+        """Generate lightcurve for a supernova."""
         pass

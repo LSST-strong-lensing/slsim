@@ -5,6 +5,7 @@ import numpy as np
 
 # Credits: Luke's Microlensing code - https://github.com/weisluke/microlensing
 from slsim.Microlensing import LUKES_MICROLENSING_PATH
+
 sys.path.append(LUKES_MICROLENSING_PATH)
 from microlensing.IPM.ipm import (
     IPM,
