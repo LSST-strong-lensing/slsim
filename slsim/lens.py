@@ -1147,4 +1147,3 @@ def theta_e_when_source_infinity(deflector_dict=None, v_sigma=None):
         4 * np.pi * (v_sigma * 1000.0 / constants.c) ** 2 / constants.arcsec
     )
     return theta_E_infinity
-      
