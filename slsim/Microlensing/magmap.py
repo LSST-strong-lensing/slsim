@@ -20,7 +20,6 @@ class MagnificationMap(object):
         self,
         kappa_tot: float = None,
         shear: float = None,
-        smooth_fraction: float = None,
         kappa_star: float = None,
         theta_star: float = None,
         mass_function: str = None,
@@ -41,9 +40,8 @@ class MagnificationMap(object):
         """
         :param kappa_tot: total convergence
         :param shear: shear
-        :param smooth_fraction: fraction of smooth matter
         :param kappa_star: convergence in point mass lenses/stars
-        :param theta_star: Einstein radius of a unit mass point lens in arbitrary units
+        :param theta_star: Einstein radius of a unit mass point lens in arbitrary units. Default is 1.
         :param mass_function: mass function to use for the point mass lenses. Options are: equal, uniform, salpeter, kroupa, and optical_depth. Default is kroupa.
         :param m_solar: mass of the sun in arbitrary units. Default is 1.
         :param m_lower: lower mass limit for the mass function in solar masses. Default is 0.08.
@@ -60,7 +58,6 @@ class MagnificationMap(object):
 
         self.kappa_tot = kappa_tot
         self.shear = shear
-        self.smooth_fraction = smooth_fraction
         self.kappa_star = kappa_star
         self.theta_star = theta_star
         self.mass_function = mass_function
