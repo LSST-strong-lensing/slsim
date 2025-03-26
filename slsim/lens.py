@@ -16,7 +16,7 @@ from lenstronomy.Util import util
 
 from slsim.lensed_system_base import LensedSystemBase
 
-# from slsim.Microlensing.magmap import MagnificationMap
+from slsim.Microlensing.lightcurve import MicrolensingLightCurveFromLensModel
 
 
 class Lens(LensedSystemBase):
@@ -600,7 +600,8 @@ class Lens(LensedSystemBase):
         return magnitude_list
 
     def _point_source_magnitude(
-        self, band, source, lensed=False, time=None, microlensing=False
+        self, band, source, lensed=False, time=None, microlensing=False, 
+        kwargs_microlensing=None,
     ):
         """Point source magnitude, either unlensed (single value) or lensed
         (array) with macro-model magnifications. This function does operation
@@ -614,6 +615,11 @@ class Lens(LensedSystemBase):
         :type lensed: bool
         :param time: time is a image observation time in units of days.
             If None, provides magnitude without variability.
+        :param microlensing: to include microlensing effect?
+        :type microlensing: bool
+        :param kwargs_microlensing: additional (optional) dictionary of settings required by micro-lensing calculation that do not depend on the Lens() class. It is of type: kwargs_microlensing = {"kwargs_MagnificationMap": kwargs_MagnificationMap, "kwargs_AccretionDisk": kwargs_AccretionDisk,}
+        :type kwargs_microlensing: dict
+
         :return: point source magnitude of a single source
         """
         # TODO: might have to change conventions between extended and point source
@@ -630,7 +636,16 @@ class Lens(LensedSystemBase):
                 lensed_variable_magnitude = (
                     variable_magnitude - magnif_log[:, np.newaxis]
                 )
+                # TODO: is this enough of should we make a new function for microlensing?
+                if microlensing:
+                    ml_lc_lens = MicrolensingLightCurveFromLensModel(self)
+                    microlensing_magnitudes = ml_lc_lens.generate_point_source_microlensing_magnitudes(
+                        band=band, time=time, source_class = source,
+                    )
+                    lensed_variable_magnitude += microlensing_magnitudes
+                
                 return lensed_variable_magnitude
+
             else:
                 source_mag_unlensed = source.point_source_magnitude(band)
                 magnified_mag_list = []
@@ -666,26 +681,6 @@ class Lens(LensedSystemBase):
                 function_or_dictionary(self._molet_output[i])(image_observed_times[i])
             )
         return np.array(variable_magnitudes)
-
-    # USES THE NEW MICROLENSING MODULE!
-    def _generate_microlensing_lightcurve(self, band, time, **kwargs_microlensing):
-        """Generate microlensing lightcurve for a given band and time.
-
-        :param
-        """
-        lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
-        lens_model = LensModel(lens_model_list=lens_model_list)
-        x, y = self.point_source_image_positions()
-        f_xx, f_xy, f_yx, f_yy = lens_model.hessian(x=x, y=y, kwargs=kwargs_lens)
-        kappa = 1 / 2.0 * (f_xx + f_yy)
-        gamma1 = 1.0 / 2 * (f_xx - f_yy)
-        gamma2 = f_xy
-        gamma = np.sqrt(gamma1**2 + gamma2**2)
-        ra_image, dec_image = self.point_source_image_positions()
-        kappa_star = self.kappa_star(ra=ra_image, dec=dec_image)
-        image_observed_times = self.image_observer_times(time)
-
-        pass
 
     def _generate_molet_output(self, band, time, **kwargs_molet):
         # coolest convention of lens model (or kappa, gamma, kappa_star)
@@ -1104,7 +1099,7 @@ class Lens(LensedSystemBase):
         kappa_star = (
             flux_local / total_flux * stellar_mass / self._lens_cosmo.sigma_crit_angle
         )
-        return kappa_star
+        return kappa_star # currently it returns a list!
 
 
 def image_separation_from_positions(image_positions):

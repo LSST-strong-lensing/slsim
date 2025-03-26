@@ -11,6 +11,8 @@ from microlensing.IPM.ipm import (
     IPM,
 )  # Inverse Polygon Mapping class to generate magnification maps
 
+from matplotlib import pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 class MagnificationMap(object):
     """Class to generate magnification maps based on the kappa_tot, shear,
@@ -116,6 +118,41 @@ class MagnificationMap(object):
     def generate_magnification_map(self):
         """Generate the magnification map based on the parameters provided."""
         self.microlensing_MagMap = self.microlensing_IPM.run()
+
+    def plot_magnification_map(self, ax, plot_magnitude = True, **kwargs):
+        """Plot the magnification map on the given axis."""
+        fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+        if plot_magnitude:
+            im = ax.imshow(
+                self.magnitudes,
+                extent=[
+                    -self.half_length_x,
+                    self.half_length_x,
+                    -self.half_length_y,
+                    self.half_length_y,
+                ],
+                **kwargs,
+            )
+        else:
+            im = ax.imshow(
+                self.magnifications,
+                extent=[
+                    -self.half_length_x,
+                    self.half_length_x,
+                    -self.half_length_y,
+                    self.half_length_y,
+                ],
+                **kwargs,
+            )
+        ax.set_xlabel("$x / \\theta_★$")
+        ax.set_ylabel("$y / \\theta_★$")
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="5%", pad=0.05)
+        cbar = plt.colorbar(im, cax=cax)
+        if plot_magnitude:
+            cbar.set_label("Microlensing $\\Delta m$ (magnitudes)")
+        else:
+            cbar.set_label("Microlensing magnification")
 
     @property
     def mu_ave(self):
