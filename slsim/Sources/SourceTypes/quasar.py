@@ -155,38 +155,6 @@ class Quasar(SourceBase):
             kwargs_variab_extracted = None
         return kwargs_variab_extracted
     
-    @property
-    def redshift(self):
-        """Returns source redshift."""
-
-        return float(self.source_dict["z"])
-
-    @property
-    def n_sersic(self):
-        """Returns sersic index of the source."""
-
-        return float(self.source_dict["n_sersic"])
-
-    @property
-    def angular_size(self):
-        """Returns angular size of the source."""
-
-        return float(self.source_dict["angular_size"])
-
-    @property
-    def ellipticity(self):
-        """Returns ellipticity components of source.
-        Defined as:
-
-        .. math::
-            e1 = \\frac{1-q}{1+q} * cos(2 \\phi)
-            e2 = \\frac{1-q}{1+q} * sin(2 \\phi)
-
-        with q being the minor-to-major axis ratio.
-        """
-
-        return float(self.source_dict["e1"]), float(self.source_dict["e2"])
-    
     def point_source_magnitude(self, band, image_observation_times=None):
         """Get the magnitude of the point source in a specific band.
 

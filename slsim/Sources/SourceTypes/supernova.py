@@ -118,38 +118,6 @@ class Supernova(SourceBase):
             kwargs_variab_extracted = None
         return kwargs_variab_extracted
     
-    @property
-    def redshift(self):
-        """Returns source redshift."""
-
-        return float(self.source_dict["z"])
-
-    @property
-    def n_sersic(self):
-        """Returns sersic index of the source."""
-
-        return float(self.source_dict["n_sersic"])
-
-    @property
-    def angular_size(self):
-        """Returns angular size of the source."""
-
-        return float(self.source_dict["angular_size"])
-
-    @property
-    def ellipticity(self):
-        """Returns ellipticity components of source.
-        Defined as:
-
-        .. math::
-            e1 = \\frac{1-q}{1+q} * cos(2 \\phi)
-            e2 = \\frac{1-q}{1+q} * sin(2 \\phi)
-
-        with q being the minor-to-major axis ratio.
-        """
-
-        return float(self.source_dict["e1"]), float(self.source_dict["e2"])
-    
     def point_source_magnitude(self, band, image_observation_times=None):
         """Get the magnitude of the point source in a specific band.
 
@@ -199,35 +167,4 @@ class Supernova(SourceBase):
                 return source_mag.reshape(-1)
             else:
                 return source_mag
-            
-    def point_source_position(self, center_lens, draw_area):
-        """Point source position. point source could be at the center of the
-        extended source or it can be off from center of the extended source. In
-        the absence of a point source, this is the center of the extended
-        source.
-
-        :param center_lens: center of the deflector.
-         Eg: np.array([center_x_lens, center_y_lens])
-        :param draw_area: The area of the test region from which we randomly draw a
-         source position. Eg: 4*pi.
-        :return: [x_pos, y_pos]
-        """
-
-        # This is a extended source center which will be used to determine point 
-        # source center. if point source offset is not given, this will be the center 
-        # of the point source too.
-        source_center = self.source_position(center_lens, draw_area)
-
-        if "ra_off" in self.source_dict.colnames:
-            center_x_point_source = source_center[0] + float(
-                self.source_dict["ra_off"]
-            )
-            center_y_point_source = source_center[1] + float(
-                self.source_dict["dec_off"]
-            )
-            self._center_point_source = np.array(
-                [center_x_point_source, center_y_point_source]
-            )
-            return self._center_point_source
-        return source_center
     
