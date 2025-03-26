@@ -9,38 +9,38 @@ class Quasar(SourceBase):
     """A class to manage a quasar"""
     def __init__(self,
         source_dict,
-        variability_model=None,
-        kwargs_variability=None,
-        lightcurve_time=None,
-        agn_known_band=None,
-        agn_known_mag=None,
-        agn_driving_variability_model=None,
-        agn_driving_kwargs_variability=None,
+        cosmo=None,
+        **kwargs
         ):
         """
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
+         This dict or table should contain atleast redshift and i-band magnitude.
+         eg: {"z": 0.8, "ps_mag_i": 22}
         :type source_dict: dict or astropy.table.Table
-        :param variability_model: keyword for variability model to be used. This is an
-         input for the Variability class.
-        :type variability_model: str
-        :param kwargs_variability: Keyword arguments for variability class.
-         This is associated with an input for Variability class. By using these key
-         words, code search for quantities in source_dict with these names and creates
-         a dictionary and this dict should be passed to the Variability class.
-        :type kwargs_variability: list of str
-        :param lightcurve_time: observation time array for lightcurve in unit of days.
-        :type lightcurve_time: array
+        :param cosmo: astropy.cosmology instance
+        :param kwargs: dictionary of keyword arguments for a supernova. It sould contain
+          following keywords:
+            :param variability_model: keyword for variability model to be used. This is an
+            input for the Variability class.
+            :type variability_model: str
+            :param kwargs_variability: Keyword arguments for variability class.
+            This is associated with an input for Variability class. By using these key
+            words, code search for quantities in source_dict with these names and creates
+            a dictionary and this dict should be passed to the Variability class.
+            :type kwargs_variability: list of str
+            :param lightcurve_time: observation time array for lightcurve in unit of days.
+            :type lightcurve_time: array
         """
         
-        super().__init__(source_dict = source_dict,
-                        variability_model=variability_model,
-                        kwargs_variability=kwargs_variability,
-                        lightcurve_time=lightcurve_time,
-                        agn_known_band=agn_known_band,
-                        agn_known_mag=agn_known_mag,
-                        agn_driving_variability_model=agn_driving_variability_model,
-                        agn_driving_kwargs_variability=agn_driving_kwargs_variability,
-                        )
+        super().__init__(source_dict = source_dict)
+        self.cosmo = cosmo
+        self.variability_model = kwargs.get("variability_model")
+        self.kwargs_variability = kwargs.get("kwargs_variability")
+        self.lightcurve_time = kwargs.get("lightcurve_time")
+        self.agn_known_band = kwargs.get("agn_known_band")
+        self.agn_known_mag = kwargs.get("agn_known_mag")
+        self.agn_driving_variability_model = kwargs.get("agn_driving_variability_model")
+        self.agn_driving_kwargs_variability = kwargs.get("agn_driving_kwargs_variability")
     
     @property
     def light_curve(self):

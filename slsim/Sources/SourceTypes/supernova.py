@@ -8,54 +8,51 @@ class Supernova(SourceBase):
     """A class to manage a supernova"""
     def __init__(self,
         source_dict,
-        variability_model=None,
-        kwargs_variability=None,
-        sn_type=None,
-        sn_absolute_mag_band=None,
-        sn_absolute_zpsys=None,
         cosmo=None,
-        lightcurve_time=None,
-        sn_modeldir=None,
+        **kwargs
         ):
         """
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
+         This table or dict should contain atleast redshift of a supernova. 
         :type source_dict: dict or astropy.table.Table
-        :param variability_model: keyword for variability model to be used. This is an
-         input for the Variability class.
-        :type variability_model: str
-        :param kwargs_variability: Keyword arguments for variability class.
-         This is associated with an input for Variability class. By using these key
-         words, code search for quantities in source_dict with these names and creates
-         a dictionary and this dict should be passed to the Variability class.
-        :type kwargs_variability: list of str
-        :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
-        :type sn_type: str
-        :param sn_absolute_mag_band: Band used to normalize to absolute magnitude
-        :type sn_absolute_mag_band: str or `~sncosmo.Bandpass`
-        :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
-        :type sn_absolute_zpsys: str
-        :param lightcurve_time: observation time array for lightcurve in unit of days.
-        :type lightcurve_time: array
-        :param sn_modeldir: sn_modeldir is the path to the directory containing files
-         needed to initialize the sncosmo.model class. For example,
-         sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can
-         be downloaded from https://github.com/LSST-strong-lensing/data_public .
-         For more detail, please look at the documentation of RandomizedSupernovae
-         class.
-        :type sn_modeldir: str
+        :param cosmo: astropy.cosmology instance
+        :param kwargs: dictionary of keyword arguments for a supernova. It sould contain
+          following keywords:
+            :param variability_model: keyword for variability model to be used. This is an
+            input for the Variability class.
+            :type variability_model: str
+            :param kwargs_variability: Keyword arguments for variability class.
+            This is associated with an input for Variability class. By using these key
+            words, code search for quantities in source_dict with these names and creates
+            a dictionary and this dict should be passed to the Variability class.
+            :type kwargs_variability: list of str
+            :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
+            :type sn_type: str
+            :param sn_absolute_mag_band: Band used to normalize to absolute magnitude
+            :type sn_absolute_mag_band: str or `~sncosmo.Bandpass`
+            :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
+            :type sn_absolute_zpsys: str
+            :param lightcurve_time: observation time array for lightcurve in unit of days.
+            :type lightcurve_time: array
+            :param sn_modeldir: sn_modeldir is the path to the directory containing files
+            needed to initialize the sncosmo.model class. For example,
+            sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can
+            be downloaded from https://github.com/LSST-strong-lensing/data_public .
+            For more detail, please look at the documentation of RandomizedSupernovae
+            class.
+            :type sn_modeldir: str
         """
         
-        super().__init__(source_dict = source_dict,
-                        variability_model = variability_model,
-                        kwargs_variability = kwargs_variability,
-                        sn_type = sn_type,
-                        sn_absolute_mag_band = sn_absolute_mag_band,
-                        sn_absolute_zpsys = sn_absolute_zpsys,
-                        cosmo = cosmo,
-                        lightcurve_time = lightcurve_time,
-                        sn_modeldir = sn_modeldir,
-                        )
-    
+        super().__init__(source_dict = source_dict)
+        # These are the keywords that kwargs dict should contain
+        self.cosmo = cosmo
+        self.variability_model = kwargs.get("variability_model")
+        self.kwargs_variability = kwargs.get("kwargs_variability")
+        self.sn_type = kwargs.get("sn_type")
+        self.sn_absolute_mag_band = kwargs.get("sn_absolute_mag_band")
+        self.sn_absolute_zpsys = kwargs.get("sn_absolute_zpsys")
+        self.lightcurve_time = kwargs.get("lightcurve_time")
+        self.sn_modeldir = kwargs.get("sn_modeldir")
     @property
     def light_curve(self):
         if self.kwargs_variability is not None:
@@ -108,8 +105,9 @@ class Supernova(SourceBase):
                     )
                     new_column = Column([float(min(magnitudes))], name=name)
                     self._source_dict = Table(self.source_dict)
-                    self._source_dict.add_column(new_column)
-                    self.source_dict = self._source_dict[0]
+                    if name not in self._source_dict.colnames:
+                        self._source_dict.add_column(new_column)
+                        self.source_dict = self._source_dict[0]
                     kwargs_variab_extracted[element] = {
                         "MJD": times,
                         name: magnitudes,
