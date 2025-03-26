@@ -213,18 +213,21 @@ class Supernova(SourceBase):
         :return: [x_pos, y_pos]
         """
 
-        extended_source_center = self.source_position(center_lens, draw_area)
+        # This is a extended source center which will be used to determine point 
+        # source center. if point source offset is not given, this will be the center 
+        # of the point source too.
+        source_center = self.source_position(center_lens, draw_area)
 
         if "ra_off" in self.source_dict.colnames:
-            center_x_point_source = extended_source_center[0] + float(
+            center_x_point_source = source_center[0] + float(
                 self.source_dict["ra_off"]
             )
-            center_y_point_source = extended_source_center[1] + float(
+            center_y_point_source = source_center[1] + float(
                 self.source_dict["dec_off"]
             )
             self._center_point_source = np.array(
                 [center_x_point_source, center_y_point_source]
             )
             return self._center_point_source
-        return extended_source_center
+        return source_center
     
