@@ -14,6 +14,7 @@ from microlensing.IPM.ipm import (
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
+
 class MagnificationMap(object):
     """Class to generate magnification maps based on the kappa_tot, shear,
     kappa_star, etc."""
@@ -119,7 +120,7 @@ class MagnificationMap(object):
         """Generate the magnification map based on the parameters provided."""
         self.microlensing_MagMap = self.microlensing_IPM.run()
 
-    def plot_magnification_map(self, ax, plot_magnitude = True, **kwargs):
+    def plot_magnification_map(self, ax, plot_magnitude=True, **kwargs):
         """Plot the magnification map on the given axis."""
         fig, ax = plt.subplots(1, 1, figsize=(6, 6))
         if plot_magnitude:

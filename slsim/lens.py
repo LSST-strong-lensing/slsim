@@ -600,7 +600,12 @@ class Lens(LensedSystemBase):
         return magnitude_list
 
     def _point_source_magnitude(
-        self, band, source, lensed=False, time=None, microlensing=False, 
+        self,
+        band,
+        source,
+        lensed=False,
+        time=None,
+        microlensing=False,
         kwargs_microlensing=None,
     ):
         """Point source magnitude, either unlensed (single value) or lensed
@@ -617,9 +622,13 @@ class Lens(LensedSystemBase):
             If None, provides magnitude without variability.
         :param microlensing: to include microlensing effect?
         :type microlensing: bool
-        :param kwargs_microlensing: additional (optional) dictionary of settings required by micro-lensing calculation that do not depend on the Lens() class. It is of type: kwargs_microlensing = {"kwargs_MagnificationMap": kwargs_MagnificationMap, "kwargs_AccretionDisk": kwargs_AccretionDisk,}
+        :param kwargs_microlensing: additional (optional) dictionary of
+            settings required by micro-lensing calculation that do not
+            depend on the Lens() class. It is of type:
+            kwargs_microlensing = {"kwargs_MagnificationMap":
+            kwargs_MagnificationMap, "kwargs_AccretionDisk":
+            kwargs_AccretionDisk,}
         :type kwargs_microlensing: dict
-
         :return: point source magnitude of a single source
         """
         # TODO: might have to change conventions between extended and point source
@@ -639,11 +648,15 @@ class Lens(LensedSystemBase):
                 # TODO: is this enough of should we make a new function for microlensing?
                 if microlensing:
                     ml_lc_lens = MicrolensingLightCurveFromLensModel(self)
-                    microlensing_magnitudes = ml_lc_lens.generate_point_source_microlensing_magnitudes(
-                        band=band, time=time, source_class = source,
+                    microlensing_magnitudes = (
+                        ml_lc_lens.generate_point_source_microlensing_magnitudes(
+                            band=band,
+                            time=time,
+                            source_class=source,
+                        )
                     )
                     lensed_variable_magnitude += microlensing_magnitudes
-                
+
                 return lensed_variable_magnitude
 
             else:
@@ -1099,7 +1112,7 @@ class Lens(LensedSystemBase):
         kappa_star = (
             flux_local / total_flux * stellar_mass / self._lens_cosmo.sigma_crit_angle
         )
-        return kappa_star # currently it returns a list!
+        return kappa_star  # currently it returns a list!
 
 
 def image_separation_from_positions(image_positions):
