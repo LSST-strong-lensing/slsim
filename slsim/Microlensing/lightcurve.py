@@ -86,7 +86,9 @@ class MicrolensingLightCurve(object):
         mag_map_2d = self.magnification_map.magnifications
 
         # Disk parameters:
-        x = np.linspace(-2000, 2000, 2001) #TODO: ask if the x and y pixel ranges should be changed?
+        x = np.linspace(
+            -2000, 2000, 2001
+        )  # TODO: ask if the x and y pixel ranges should be changed?
         y = np.linspace(-2000, 2000, 2001)
         X, Y = np.meshgrid(x, y)
         radii, phi_array = util.convert_cartesian_to_polar(X, Y)
@@ -94,7 +96,11 @@ class MicrolensingLightCurve(object):
         mass_sm = 10**smbh_mass_exp
         grav_rad = util.calculate_gravitational_radius(mass_sm)
         temp_map = util.accretion_disk_temperature(
-            radii * grav_rad, min_disk_radius * grav_rad, mass_sm, eddington_ratio=eddington_ratio, corona_height=corona_height
+            radii * grav_rad,
+            min_disk_radius * grav_rad,
+            mass_sm,
+            eddington_ratio=eddington_ratio,
+            corona_height=corona_height,
         )
 
         Disk = AccretionDisk(
@@ -115,10 +121,11 @@ class MicrolensingLightCurve(object):
             source_redshift,
             deflector_redshift,
             mag_map_2d,
-            self.magnification_map.kappa_tot, #TODO: ask if this is correct for "Convergence of the lensing potential at the location of the image"?
+            self.magnification_map.kappa_tot,  # TODO: ask if this is correct for "Convergence of the lensing potential at the location of the image"?
             self.magnification_map.shear,
-            mean_microlens_mass_in_kg=mean_microlens_mass_in_kg,#TODO: ask if this can be related to theta_star in MagnificationMap class?
-            total_microlens_einstein_radii=self.magnification_map.half_length_x*2, # assuming square map
+            mean_microlens_mass_in_kg=mean_microlens_mass_in_kg,  # TODO: ask if this can be related to theta_star in MagnificationMap class?
+            total_microlens_einstein_radii=self.magnification_map.half_length_x
+            * 2,  # assuming square map
             OmM=OmM,
             H0=H0,
         )
@@ -131,7 +138,9 @@ class MicrolensingLightCurve(object):
         tracks = []
         time_arrays = []
 
-        time_duration_years = self.time_duration / 365.25 # converting time_duration from days to years
+        time_duration_years = (
+            self.time_duration / 365.25
+        )  # converting time_duration from days to years
         for jj in range(num_lightcurves):
             curve, tracks_x, tracks_y = convolution.pull_light_curve(
                 v_transverse, time_duration_years, return_track_coords=True
@@ -157,27 +166,36 @@ class MicrolensingLightCurve(object):
         if not(return_track_coords) and not(return_time_array):
             return LCs
 
-    
-    def _plot_agn_lightcurve(self, lightcurves, tracks=None, lightcurve_type='magnitude'):
+    def _plot_agn_lightcurve(
+        self, lightcurves, tracks=None, lightcurve_type="magnitude"
+    ):
         """Plot the AGN lightcurve."""
         fig, ax = plt.subplots(1, 2, figsize=(18, 6), width_ratios=[2, 1])
-        
-        time_array = np.linspace(0, self.time_duration, len(lightcurves[0])) # in days
+
+        time_array = np.linspace(0, self.time_duration, len(lightcurves[0]))  # in days
 
         # light curves
         for i in range(len(lightcurves)):
             ax[0].plot(time_array, lightcurves[i], label=f"Lightcurve {i+1}")
         ax[0].set_xlabel("Time (days)")
-        if lightcurve_type == 'magnitude':
+        if lightcurve_type == "magnitude":
             ax[0].set_ylabel("Magnitude")
-        elif lightcurve_type == 'flux':
+        elif lightcurve_type == "flux":
             ax[0].set_ylabel("Flux")
 
         ax[0].legend()
 
         # magmap
-        conts = ax[1].imshow(self.magnification_map.magnitudes, cmap="viridis_r", extent = [-self.magnification_map.half_length_x, self.magnification_map.half_length_x, 
-                                                                                            -self.magnification_map.half_length_y, self.magnification_map.half_length_y])
+        conts = ax[1].imshow(
+            self.magnification_map.magnitudes,
+            cmap="viridis_r",
+            extent=[
+                -self.magnification_map.half_length_x,
+                self.magnification_map.half_length_x,
+                -self.magnification_map.half_length_y,
+                self.magnification_map.half_length_y,
+            ],
+        )
         divider = make_axes_locatable(ax[1])
         cax = divider.append_axes("right", size="5%", pad=0.05)
         cbar = plt.colorbar(conts, cax=cax)
@@ -187,15 +205,33 @@ class MicrolensingLightCurve(object):
 
         # tracks are in pixel coordinates
         # to map them to the magmap coordinates, we need to convert them to the physical coordinates
-        delta_x = 2 * self.magnification_map.half_length_x / self.magnification_map.num_pixels_x
-        delta_y = 2 * self.magnification_map.half_length_y / self.magnification_map.num_pixels_y
+        delta_x = (
+            2
+            * self.magnification_map.half_length_x
+            / self.magnification_map.num_pixels_x
+        )
+        delta_y = (
+            2
+            * self.magnification_map.half_length_y
+            / self.magnification_map.num_pixels_y
+        )
         mid_x_pixel = self.magnification_map.num_pixels_x // 2
         mid_y_pixel = self.magnification_map.num_pixels_y // 2
 
         if tracks is not None:
             for j in range(len(tracks)):
-                ax[1].plot((tracks[j][0] - mid_x_pixel)*delta_x, (tracks[j][1] - mid_y_pixel)*delta_y, "w-", lw=1)
-                ax[1].text((tracks[j][0][0]- mid_x_pixel)*delta_x, (tracks[j][1][0] - mid_y_pixel)*delta_y, f"Track {j+1}", color="w")
+                ax[1].plot(
+                    (tracks[j][0] - mid_x_pixel) * delta_x,
+                    (tracks[j][1] - mid_y_pixel) * delta_y,
+                    "w-",
+                    lw=1,
+                )
+                ax[1].text(
+                    (tracks[j][0][0] - mid_x_pixel) * delta_x,
+                    (tracks[j][1][0] - mid_y_pixel) * delta_y,
+                    f"Track {j+1}",
+                    color="w",
+                )
 
 
 class MicrolensingLightCurveFromLensModel(object):
