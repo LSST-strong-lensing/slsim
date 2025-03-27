@@ -1,7 +1,7 @@
-from slsim.Sources.SourceTypes.source_base import SourceBase
+from slsim.Sources.SourceTypes.extended_source_base import ExtendedSourceBase
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 
-class SingleSersic(SourceBase):
+class SingleSersic(ExtendedSourceBase):
     """class to manage source with single sersic light profile"""
     def __init__(self, source_dict):
         """

@@ -1,8 +1,8 @@
 import numpy as np
-from slsim.Sources.SourceTypes.source_base import SourceBase
+from slsim.Sources.SourceTypes.extended_source_base import ExtendedSourceBase
 from slsim.Util.cosmo_util import z_scale_factor
 
-class Interpolated(SourceBase):
+class Interpolated(ExtendedSourceBase):
     """class to manage source with real extended source image"""
     def __init__(self, source_dict, cosmo):
         """
