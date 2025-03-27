@@ -9,7 +9,7 @@ class SingleSersic(SourceBase):
          This dict or table should contain atleast redshift, a magnitude in any band, 
          sersic index, angular size in arcsec, and ellipticity.
          eg: {"z": 0.8, "mag_i": 22, "n_sersic": 1, "angular_size": 0.10, 
-         , "e1": 0.002, "e2": 0.001}. One can provide magnitudes in multiple bands.
+         "e1": 0.002, "e2": 0.001}. One can provide magnitudes in multiple bands.
         :type source_dict: dict or astropy.table.Table
         """
         super().__init__(source_dict = source_dict)

@@ -1,7 +1,7 @@
 from slsim.Sources.SourceTypes.supernova import Supernova
 from slsim.Sources.SourceTypes.quasar import Quasar
 
-_SUPPORTED_SOURCE = ["supernova", "quasar"]
+_SUPPORTED_SOURCES = ["supernova", "quasar"]
 
 class PointSource(object):
     """class to manage a single point source"""
@@ -31,8 +31,8 @@ class PointSource(object):
             self._source = Quasar(source_dict=source_dict, cosmo=cosmo, **kwargs)
         else:
             raise ValueError(
-                "Given source is not supported. Choose among %s."
-                % _SUPPORTED_SOURCE
+                "source type %s not supported. Chose among %s."
+                % (pointsource_type, _SUPPORTED_SOURCES)
             )
         
     @property

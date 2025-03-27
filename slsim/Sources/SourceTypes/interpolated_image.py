@@ -4,7 +4,7 @@ from slsim.Util.cosmo_util import z_scale_factor
 
 class Interpolated(SourceBase):
     """class to manage source with real extended source image"""
-    def __init__(self, source_dict):
+    def __init__(self, source_dict, cosmo):
         """
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
          This dict or table should contain atleast redshift of a source, real image 
@@ -12,12 +12,14 @@ class Interpolated(SourceBase):
          a magnitude in any band, image, redshift of the image, position angle of the 
          given image, pixel scale of the image.
          eg: {"z": [0.8], "mag_i": [22], "image": [np.array([[1,2,3], [3,2,4], [5, 2,1]])],
-         "z_data": [1.2], "phi_G": [0.1], "pixel_scale": [0.05]}. One can also add 
+         "z_data": [1.2], "phi_G": [0.1], "pixel_width_data": [0.05]}. One can also add 
          magnitudes in multiple bands.
         :type source_dict: dict or astropy.table.Table
+        :param cosmo: astropy.cosmology instance
         """
         super().__init__(source_dict = source_dict)
-    
+        self.cosmo = cosmo
+
     @property
     def image_redshift(self):
         """Returns redshift of a given image"""
@@ -56,7 +58,7 @@ class Interpolated(SourceBase):
         else:
             band_string = "mag_" + band
         source_mag = self.source_dict[band_string]
-        return source_mag
+        return source_mag[0]
     
     def kwargs_extended_source_light(self, center_lens, draw_area, band=None):
         """Provides dictionary of keywords for the source light model(s).

@@ -8,10 +8,11 @@ class DoubleSersic(SourceBase):
         """
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
          This dict or table should contain atleast redshift, a magnitude in any band, 
-         sersic indices, sersic weight, angular sizes in arcsec, ellipticity, .
-         eg: {"z": 0.8, "mag_i": 22, "n_sersic_0": 1, "n_sersic_1": 4, "angular_size0": 0.10, 
-         "angular_size1": 0.05, "e0_1": 0.002, "e0_2": 0.001, "e1_1": 0.0, "e1_2": 0.0}.
-         One can provide magnitudes in multiple bands.
+         sersic indices, sersic weight, angular sizes in arcsec, ellipticity.
+         eg: {"z": 0.8, "mag_i": 22, "n_sersic_0": 1, "n_sersic_1": 4, "w0": 0.1,
+         "w1": 0.9, "angular_size0": 0.10, "angular_size1": 0.05, "e0_1": 0.002, 
+         "e0_2": 0.001, "e1_1": 0.0, "e1_2": 0.0}. One can provide magnitudes in 
+         multiple bands.
         :type source_dict: dict or astropy.table.Table
         """
         super().__init__(source_dict = source_dict)
