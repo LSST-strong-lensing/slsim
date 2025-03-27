@@ -13,7 +13,9 @@ class Supernova(SourceBase):
         ):
         """
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
-         This table or dict should contain atleast redshift of a supernova. 
+         This table or dict should contain atleast redshift of a supernova, offset from 
+         the host if host galaxy is available. 
+         eg: {"z": 0.8, "ra_off": 0.001, "dec_off": 0.005}
         :type source_dict: dict or astropy.table.Table
         :param cosmo: astropy.cosmology instance
         :param kwargs: dictionary of keyword arguments for a supernova. It sould contain
