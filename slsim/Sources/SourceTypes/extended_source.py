@@ -6,12 +6,15 @@ _SUPPORTED_SOURCES = ["single_sersic", "double_sersic", "interpolated"]
 
 class ExtendedSource(object):
     """Class to manage a single extended source"""
-    def __init__(self, source_dict, cosmo=None, extendedsource_type=None):
+    def __init__(self, source_dict, extendedsource_type="single_sersic", cosmo=None):
         """
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
          For a detailed description of this dictionary, please see the documentation for
          the SingleSersic, DoubleSersic, and Interpolated classes.
         :type source_dict: dict or astropy.table.Table
+        :param extendedsource_type: keyword for specifying light profile model.
+        :type extendedsource_type: str. supported types are "single_sersic", 
+         "double_sersic", "interpolated"
         :param cosmo: astropy.cosmology instance
         """
         if extendedsource_type in ["single_sersic"]:
@@ -67,3 +70,10 @@ class ExtendedSource(object):
         
         return self._source.kwargs_extended_source_light(center_lens=center_lens,
                                                  draw_area=draw_area, band=band)
+    
+    def extended_source_light_model(self):
+        """Provides a list of source models.
+
+        :return: list of extented source model.
+        """
+        return self._source.extended_source_light_model()

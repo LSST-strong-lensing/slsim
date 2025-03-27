@@ -19,10 +19,12 @@ class PointSource(object):
          For more detail, please see documentation of Supernova and Quasar class.
         :type source_dict: dict or astropy.table.Table
         :param cosmo: astropy.cosmology instance
+        :param pointsource_type: keyword for specifying point source type.
+        :type pointsource_type: str. supported types are "supernova", "quasar".
         :param kwargs: dictionary of keyword arguments for a supernova. For supernova 
-         kwargs dict, please see documentation of slsim.Sources.SourceType.supernova.
+         kwargs dict, please see documentation of Supernova class.
          For quasar kwargs dict, please see documentation of 
-         slsim.Sources.SourceType.quasar.
+         Quasar class.
         """
 
         if pointsource_type in ["supernova"]:
