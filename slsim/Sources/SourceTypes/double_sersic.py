@@ -39,9 +39,10 @@ class DoubleSersic(SourceBase):
                  float(self.source_dict["angular_size1"]))
 
     @property
-    def ellipticity0(self):
-        """Returns ellipticity components of source for the first component of 
-        the light profile.
+    def ellipticity(self):
+        """Returns ellipticity components of source for the both component of 
+        the light profile. first two ellipticity components are associated with the 
+        first sersic component and last two are associated with the second sersic component.
         Defined as:
 
         .. math::
@@ -51,22 +52,8 @@ class DoubleSersic(SourceBase):
         with q being the minor-to-major axis ratio.
         """
 
-        return float(self.source_dict["e0_1"]), float(self.source_dict["e0_2"])
-    
-    @property
-    def ellipticity1(self):
-        """Returns ellipticity components of source for second component of 
-        the light profile.
-        Defined as:
-
-        .. math::
-            e1 = \\frac{1-q}{1+q} * cos(2 \\phi)
-            e2 = \\frac{1-q}{1+q} * sin(2 \\phi)
-
-        with q being the minor-to-major axis ratio.
-        """
-
-        return float(self.source_dict["e1_1"]), float(self.source_dict["e1_2"])
+        return (float(self.source_dict["e0_1"]), float(self.source_dict["e0_2"]),
+                 float(self.source_dict["e1_1"]), float(self.source_dict["e1_2"]))
     
     def extended_source_magnitude(self, band):
         """Get the magnitude of the extended source in a specific band.
@@ -109,14 +96,14 @@ class DoubleSersic(SourceBase):
         # convert from slsim to lenstronomy convention.
         e1_light_source_1_lenstronomy, e2_light_source_1_lenstronomy = (
             ellipticity_slsim_to_lenstronomy(
-                e1_slsim=self.ellipticity0[0],
-                e2_slsim=self.ellipticity0[1],
+                e1_slsim=self.ellipticity[0],
+                e2_slsim=self.ellipticity[1],
             )
         )
         e1_light_source_2_lenstronomy, e2_light_source_2_lenstronomy = (
             ellipticity_slsim_to_lenstronomy(
-                e1_slsim=self.ellipticity1[0],
-                e2_slsim=self.ellipticity1[1],
+                e1_slsim=self.ellipticity[2],
+                e2_slsim=self.ellipticity[3],
             )
         )
         kwargs_extended_source = [

@@ -17,17 +17,80 @@ class ExtendedSource(object):
          "double_sersic", "interpolated"
         :param cosmo: astropy.cosmology instance
         """
-        if extendedsource_type in ["single_sersic"]:
+        self._extendedsource_type = extendedsource_type
+        if self._extendedsource_type in ["single_sersic"]:
             self._source = SingleSersic(source_dict=source_dict)
-        elif extendedsource_type in ["double_sersic"]:
+        elif self._extendedsource_type in ["double_sersic"]:
             self._source = DoubleSersic(source_dict=source_dict)
-        elif extendedsource_type in ["interpolated"]:
+        elif self._extendedsource_type in ["interpolated"]:
             self._source = Interpolated(source_dict=source_dict, cosmo=cosmo)
         else:
             raise ValueError(
                 "source type %s not supported. Chose among %s."
-                % (extendedsource_type, _SUPPORTED_SOURCES)
+                % (self._extendedsource_type, _SUPPORTED_SOURCES)
             )
+    
+    @property
+    def redshift(self):
+        """Returns source redshift."""
+
+        return self._source.redshift
+    
+    @property
+    def angular_size(self):
+        """Returns angular size of the source."""
+
+        return self._source.angular_size
+    
+    @property
+    def ellipticity(self):
+        """Returns ellipticity components of source.
+        Defined as:
+
+        .. math::
+            e1 = \\frac{1-q}{1+q} * cos(2 \\phi)
+            e2 = \\frac{1-q}{1+q} * sin(2 \\phi)
+
+        with q being the minor-to-major axis ratio.
+        """
+        
+        return self._source.ellipticity
+    
+    @property
+    def n_sersic(self):
+        """Returns sersic indices of the source profile."""
+
+        return self._source.n_sersic
+
+    @property
+    def sersicweight(self):
+        """Returns weight of the sersic components"""
+
+        return self._source.sersicweight
+    
+    @property
+    def image_redshift(self):
+        """Returns redshift of a given image"""
+        
+        return self._source.image_redshift
+    
+    @property
+    def image(self):
+        """Returns image of a given extended source"""
+        
+        return self._source.image
+
+    @property
+    def phi(self):
+        """Returns position angle of a given image in arcsec"""
+
+        return self._source.phi
+    
+    @property
+    def pixel_scale(self):
+        """Returns pixel scale of a given image"""
+
+        return self._source.pixel_scale
         
     def extended_source_magnitude(self, band):
         """Get the magnitude of the extended source in a specific band.

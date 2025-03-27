@@ -89,3 +89,54 @@ class SourceBase(ABC):
         if isinstance(self.source_dict["z"], list):
             return float(self.source_dict["z"][0])
         return float(self.source_dict["z"])
+    
+    @property
+    def angular_size(self):
+        """Returns angular size of the source."""
+
+        pass
+
+    @property
+    def n_sersic(self):
+        """Returns sersic index of the source."""
+
+        pass
+
+    @property
+    def ellipticity(self):
+        """Returns ellipticity components of source."""
+
+        pass
+
+    @property
+    def sersicweight(self):
+        """Returns weight of the sersic components"""
+
+        pass
+
+    @property
+    def image_redshift(self):
+        """Returns redshift of a given image"""
+        
+        pass
+
+    @property
+    def image(self):
+        """Returns image of a given extended source"""
+        
+        pass
+
+    @property
+    def phi(self):
+        """Returns position angle of a given image in arcsec"""
+
+        pass
+    
+    @property
+    def pixel_scale(self):
+        """Returns pixel scale of a given image"""
+
+        pass
+
+
+
