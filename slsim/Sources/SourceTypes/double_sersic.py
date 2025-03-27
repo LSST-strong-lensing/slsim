@@ -3,12 +3,15 @@ from slsim.Sources.SourceTypes.source_base import SourceBase
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 
 class DoubleSersic(SourceBase):
-    """class to manage source with single sersic light profile"""
+    """class to manage source with double sersic light profile"""
     def __init__(self, source_dict):
         """
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
-         This dict or table should contain atleast redshift and a magnitude in any band.
-         eg: {"z": 0.8, "mag_i": 22}
+         This dict or table should contain atleast redshift, a magnitude in any band, 
+         sersic indices, sersic weight, angular sizes in arcsec, ellipticity, .
+         eg: {"z": 0.8, "mag_i": 22, "n_sersic_0": 1, "n_sersic_1": 4, "angular_size0": 0.10, 
+         "angular_size1": 0.05, "e0_1": 0.002, "e0_2": 0.001, "e1_1": 0.0, "e1_2": 0.0}.
+         One can provide magnitudes in multiple bands.
         :type source_dict: dict or astropy.table.Table
         """
         super().__init__(source_dict = source_dict)
@@ -23,7 +26,7 @@ class DoubleSersic(SourceBase):
     @property
     def sersicweight(self):
         """Returns weight of the sersic components"""
-        
+
         return self.source_dict["w0"], self.source_dict["w1"]
 
     @property
