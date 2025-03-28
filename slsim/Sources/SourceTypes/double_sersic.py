@@ -1,6 +1,7 @@
 import numpy as np
 from slsim.Sources.SourceTypes.source_base import SourceBase
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
+from slsim.Util.param_util import surface_brightness_reff
 
 class DoubleSersic(SourceBase):
     """class to manage source with double sersic light profile"""
@@ -132,3 +133,15 @@ class DoubleSersic(SourceBase):
                 "SERSIC_ELLIPSE",
             ]
         return source_models_list
+    
+    def surface_brightness_reff(self, band=None):
+        """Calculate average surface brightness within half light radius.
+
+        :param band: Imageing band
+        :return: average surface brightness within half light radius
+            [mag/arcsec^2]
+        """
+        angularsize = np.mean(self.angular_size)
+        return surface_brightness_reff(angular_size=angularsize, 
+                        source_model_list=self.extended_source_light_model,
+                kwargs_extended_source=self.kwargs_extended_source_light(band=band))

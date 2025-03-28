@@ -1,4 +1,4 @@
-from slsim.Sources.SourceTypes.supernova import Supernova
+from slsim.Sources.SourceTypes.supernova_event import SupernovaEvent
 from slsim.Sources.SourceTypes.quasar import Quasar
 
 _SUPPORTED_SOURCES = ["supernova", "quasar"]
@@ -28,7 +28,7 @@ class PointSource(object):
         """
 
         if pointsource_type in ["supernova"]:
-            self._point_source = Supernova(source_dict=source_dict, cosmo=cosmo, **kwargs)
+            self._point_source = SupernovaEvent(source_dict=source_dict, cosmo=cosmo, **kwargs)
         elif pointsource_type in ["quasar"]:
             self._point_source = Quasar(source_dict=source_dict, cosmo=cosmo, **kwargs)
         else:

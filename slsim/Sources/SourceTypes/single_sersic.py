@@ -1,5 +1,6 @@
 from slsim.Sources.SourceTypes.source_base import SourceBase
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
+from slsim.Util.param_util import surface_brightness_reff
 
 class SingleSersic(SourceBase):
     """class to manage source with single sersic light profile"""
@@ -94,3 +95,14 @@ class SingleSersic(SourceBase):
         """
         source_models_list = ["SERSIC_ELLIPSE"]
         return source_models_list
+    
+    def surface_brightness_reff(self, band=None):
+        """Calculate average surface brightness within half light radius.
+
+        :param band: Imageing band
+        :return: average surface brightness within half light radius
+            [mag/arcsec^2]
+        """
+        return surface_brightness_reff(angular_size=self.angular_size, 
+                        source_model_list=self.extended_source_light_model,
+                kwargs_extended_source=self.kwargs_extended_source_light(band=band))

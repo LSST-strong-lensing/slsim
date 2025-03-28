@@ -4,7 +4,7 @@ from astropy.table import Column, Table
 from slsim.Sources.SourceVariability.variability import Variability
 from slsim.Sources.SourceTypes.source_base import SourceBase
 
-class Supernova(SourceBase):
+class SupernovaEvent(SourceBase):
     """A class to manage a supernova"""
     def __init__(self,
         source_dict,

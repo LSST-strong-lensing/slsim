@@ -135,3 +135,13 @@ class ExtendedSource(object):
         :return: list of extented source model.
         """
         return self._source.extended_source_light_model()
+    
+    def surface_brightness_reff(self, band=None):
+        """Calculate average surface brightness within half light radius.
+
+        :param band: Imageing band
+        :return: average surface brightness within half light radius
+            [mag/arcsec^2]
+        """
+
+        return self._source.surface_brightness_reff(band=band)
