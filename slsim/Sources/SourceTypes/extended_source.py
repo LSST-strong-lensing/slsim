@@ -17,17 +17,17 @@ class ExtendedSource(object):
          "double_sersic", "interpolated"
         :param cosmo: astropy.cosmology instance
         """
-        self._extendedsource_type = extendedsource_type
-        if self._extendedsource_type in ["single_sersic"]:
+    
+        if extendedsource_type in ["single_sersic"]:
             self._source = SingleSersic(source_dict=source_dict)
-        elif self._extendedsource_type in ["double_sersic"]:
+        elif extendedsource_type in ["double_sersic"]:
             self._source = DoubleSersic(source_dict=source_dict)
-        elif self._extendedsource_type in ["interpolated"]:
+        elif extendedsource_type in ["interpolated"]:
             self._source = Interpolated(source_dict=source_dict, cosmo=cosmo)
         else:
             raise ValueError(
                 "source type %s not supported. Chose among %s."
-                % (self._extendedsource_type, _SUPPORTED_SOURCES)
+                % (extendedsource_type, _SUPPORTED_SOURCES)
             )
     
     @property
