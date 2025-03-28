@@ -11,74 +11,41 @@ class Source(object):
         self,
         source_dict,
         source_type=None,
-        pointsource_type=None,
-        extendedsource_type=None,
         cosmo=None,
         **kwargs
     ):
         """
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
-        :type source_dict: dict or astropy.table.Table
-        When source_type is 'interpolated', include keys:
-        - 'z' (float)
-        - 'image' (numpy.ndarray)
-        - 'z_data' (float)
-        - 'pixel_width_data' (float)
-        - 'phi_G' (float)
-        - 'center_x' (float)
-        - 'center_y' (float)
-        :param variability_model: keyword for variability model to be used. This is an
-         input for the Variability class.
-        :type variability_model: str
-        :param kwargs_variability: Keyword arguments for variability class.
-         This is associated with an input for Variability class. By using these key
-         words, code search for quantities in source_dict with these names and creates
-         a dictionary and this dict should be passed to the Variability class.
-        :type kwargs_variability: list of str
-        :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
-        :type sn_type: str
-        :param sn_absolute_mag_band: Band used to normalize to absolute magnitude
-        :type sn_absolute_mag_band: str or `~sncosmo.Bandpass`
-        :param sn_absolute_zpsys: Optional, AB or Vega (AB default)
-        :type sn_absolute_zpsys: str
-        :param lightcurve_time: observation time array for lightcurve in unit of days.
-        :type lightcurve_time: array
-        :param sn_modeldir: sn_modeldir is the path to the directory containing files
-         needed to initialize the sncosmo.model class. For example,
-         sn_modeldir = 'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can
-         be downloaded from https://github.com/LSST-strong-lensing/data_public .
-         For more detail, please look at the documentation of RandomizedSupernovae
-         class.
-        :type sn_modeldir: str
-        :param agn_known_band: Speclite filter of which the magnitude is known. Used to normalize
-         mean magnitudes.
-        :type agn_known_band: str
-        :param agn_known_mag: Magnitude of the agn in the known band.
-        :type agn_known_mag: float
-        :param agn_driving_variability_model: Variability model with light_curve output
-         which drives the variability across all bands of the agn.
-        :type agn_driving_variability_model: str (e.g. "light_curve", "sinusoidal", "bending_power_law")
-        :param agn_driving_kwargs_variability: Dictionary containing all variability parameters
-         for the driving variability class
-        :type agn_driving_kwargs_variability: dict
-        :param source_type: type of the source 'extended' or 'point_source' or
-         'point_plus_extended' supported
+         For a detailed description of this dictionary, please see the documentation for
+         the SingleSersic, DoubleSersic, Interpolated classes, SupernovaEvent, and Quasar class.
+        :type source_dict: dict or astropy.table.Table .
+         eg of a supernova plus host galaxy dict: {"z": 0.8, "mag_i": 22, "n_sersic": 1,
+           "angular_size": 0.10, "e1": 0.002, "e2": 0.001, "ra_off": 0.001, "dec_off": 0.005}
+        :param source_type: Keyword to specify type of the source. Supported source types are
+         'extended', 'point_source', and 'point_plus_extended' supported
         :type source_type: str
-        :param light_profile: keyword for number of sersic profile to use in source
-         light model
-        :type light_profile: str . Either "single_sersic", "double_sersic", or "interpolated" .
+        :param cosmo: astropy.cosmology instance
+        :param kwargs: dictionary of keyword arguments for a source. It should 
+         contain keywords for pointsource_type or extendedsource_type and other keywords associated with 
+         pointsource. For supernova kwargs dict, please see documentation of 
+         SupernovaEvent class. For quasar kwargs dict, please see documentation of 
+         Quasar class. For extended source, only extentedsource_type is enough. 
+         eg: {"extedndedsource_type": "single_sersic"}
+         Eg of supernova kwargs: kwargs={"pointsource_type": "supernova", 
+          "variability_model": "light_curve", "kwargs_variability": ["supernovae_lightcurve",
+            "i", "r"], "sn_type": "Ia", "sn_absolute_mag_band": "bessellb", 
+            "sn_absolute_zpsys": "ab", "lightcurve_time": np.linspace(-50, 100, 150),
+            "sn_modeldir": "/Users/narayankhadka/Downloads/sncosmo_sn_models/SALT3.NIR_WAVEEXT/"}.
+         Other supported pointsource_types are "supernova", "quasar".
         """
         self.cosmo = cosmo
         if source_type in ["point_source"]:
             self.__source = PointSource(source_dict=source_dict, cosmo=self.cosmo,
-                                 pointsource_type=pointsource_type, **kwargs)
+                                         **kwargs)
         elif source_type in ["extended_source"]:
-            self.__source = ExtendedSource(source_dict=source_dict, cosmo=cosmo,
-                                           extendedsource_type=extendedsource_type)
+            self.__source = ExtendedSource(source_dict=source_dict, cosmo=cosmo, **kwargs)
         elif source_type in ["point_plus_extended"]:
             self.__source = PointPlusExtendedSource(source_dict=source_dict, cosmo=cosmo,
-                                                pointsource_type=pointsource_type, 
-                                                extendedsource_type=extendedsource_type,
                                                 **kwargs)
         else:
             raise ValueError(
@@ -220,7 +187,7 @@ class Source(object):
         return self.__source.extended_source_light_model()
     
     def surface_brightness_reff(self, band=None):
-        """Calculate average surface brightness within half light radius.
+        """Calculate average surface brightness within half light radius of a galaxy.
 
         :param band: Imageing band
         :return: average surface brightness within half light radius
@@ -228,5 +195,3 @@ class Source(object):
         """
 
         return self.__source.surface_brightness_reff(band=band)
-
-    

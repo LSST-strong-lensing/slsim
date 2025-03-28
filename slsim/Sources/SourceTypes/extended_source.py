@@ -6,7 +6,8 @@ _SUPPORTED_EXTENDED_SOURCES = ["single_sersic", "double_sersic", "interpolated"]
 
 class ExtendedSource(object):
     """Class to manage a single extended source"""
-    def __init__(self, source_dict, extendedsource_type="single_sersic", cosmo=None):
+    def __init__(self, source_dict,
+                  cosmo=None, **kwargs):
         """
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
          For a detailed description of this dictionary, please see the documentation for
@@ -14,20 +15,23 @@ class ExtendedSource(object):
         :type source_dict: dict or astropy.table.Table
         :param extendedsource_type: keyword for specifying light profile model.
         :type extendedsource_type: str. supported types are "single_sersic", 
-         "double_sersic", "interpolated"
+         "double_sersic", "interpolated".
         :param cosmo: astropy.cosmology instance
+        :param kwargs: dictionary of keyword arguments for a extended source.
+         eg: kwargs = {"extendedsource_type": "single_sersic"}. Other supported 
+         types are "single_sersic", "double_sersic", "interpolated".
         """
-    
-        if extendedsource_type in ["single_sersic"]:
+        self.extendedsource_type = kwargs["extendedsource_type"]
+        if self.extendedsource_type in ["single_sersic"]:
             self._source = SingleSersic(source_dict=source_dict)
-        elif extendedsource_type in ["double_sersic"]:
+        elif self.extendedsource_type in ["double_sersic"]:
             self._source = DoubleSersic(source_dict=source_dict)
-        elif extendedsource_type in ["interpolated"]:
+        elif self.extendedsource_type in ["interpolated"]:
             self._source = Interpolated(source_dict=source_dict, cosmo=cosmo)
         else:
             raise ValueError(
                 "Extended source type %s not supported. Chose among %s."
-                % (extendedsource_type, _SUPPORTED_EXTENDED_SOURCES)
+                % (self.extendedsource_type, _SUPPORTED_EXTENDED_SOURCES)
             )
     
     @property

@@ -3,8 +3,7 @@ from slsim.Sources.SourceTypes.extended_source import ExtendedSource
 
 class PointPlusExtendedSource(PointSource, ExtendedSource):
     """class to manage a single point source and a single extended source (host)"""
-    def __init__(self, source_dict, extendedsource_type="single_sersic", 
-                 pointsource_type=None, cosmo=None, **kwargs):
+    def __init__(self, source_dict, cosmo=None, **kwargs):
         """
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
          For a detailed description of this dictionary, please see the documentation for
@@ -23,11 +22,8 @@ class PointPlusExtendedSource(PointSource, ExtendedSource):
          For quasar kwargs dict, please see documentation of 
          Quasar class.
         """
-
         # Initialize the extended source
-        ExtendedSource.__init__(self, source_dict=source_dict, 
-                                extendedsource_type=extendedsource_type, cosmo=cosmo)
+        ExtendedSource.__init__(self, source_dict=source_dict, cosmo=cosmo, **kwargs)
         
         # Initialize the point source
-        PointSource.__init__(self, source_dict=source_dict, cosmo=cosmo, 
-                             pointsource_type=pointsource_type, **kwargs)
+        PointSource.__init__(self, source_dict=source_dict, cosmo=cosmo, **kwargs)
