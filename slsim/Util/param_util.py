@@ -702,27 +702,3 @@ def source_position(center_lens, draw_area):
     ])
     
     return center_source
-
-def point_source_position(center_lens, draw_area, ra_off=None, dec_off=None):
-    """Point source position. The point source could be at the center of the
-    extended source or offset from it. If a point source offset is not provided,
-    it defaults to the extended source center.
-
-    :param center_lens: Center of the deflector.
-    :param draw_area: The area of the test region from which we randomly draw a source position.
-    :param ra_off: The offset in RA direction. If not provided, no offset is applied.
-    :param dec_off: The offset in Dec direction. If not provided, no offset is applied.
-    :return: [x_pos, y_pos]
-    """
-
-    # Get the extended source center
-    extended_source_center = source_position(center_lens, draw_area)
-
-    # Apply offsets if provided
-    if ra_off is not None and dec_off is not None:
-        center_x_point_source = extended_source_center[0] + float(ra_off)
-        center_y_point_source = extended_source_center[1] + float(dec_off)
-    else:
-        center_x_point_source, center_y_point_source = extended_source_center
-
-    return np.array([center_x_point_source, center_y_point_source])
