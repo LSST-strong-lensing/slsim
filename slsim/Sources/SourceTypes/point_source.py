@@ -28,9 +28,9 @@ class PointSource(object):
         """
 
         if pointsource_type in ["supernova"]:
-            self._source = Supernova(source_dict=source_dict, cosmo=cosmo, **kwargs)
+            self._point_source = Supernova(source_dict=source_dict, cosmo=cosmo, **kwargs)
         elif pointsource_type in ["quasar"]:
-            self._source = Quasar(source_dict=source_dict, cosmo=cosmo, **kwargs)
+            self._point_source = Quasar(source_dict=source_dict, cosmo=cosmo, **kwargs)
         else:
             raise ValueError(
                 "source type %s not supported. Chose among %s."
@@ -41,7 +41,21 @@ class PointSource(object):
     def redshift(self):
         """Returns source redshift."""
 
-        return self._source.redshift
+        return self._point_source.redshift
+    
+    @property
+    def point_source_position(self):
+        """Point source position. point source could be at the center of the
+        extended source or it can be off from center of the extended source.
+
+        :param center_lens: center of the deflector.
+         Eg: np.array([center_x_lens, center_y_lens])
+        :param draw_area: The area of the test region from which we randomly draw a
+         source position. Eg: 4*pi.
+        :return: [x_pos, y_pos]
+        """
+
+        return self._point_source.point_source_position
     
     def point_source_magnitude(self, band, image_observation_times=None):
         """Get the magnitude of the point source in a specific band.
@@ -53,19 +67,5 @@ class PointSource(object):
         :return: Magnitude of the point source in the specified band
         :rtype: float
         """
-        return self._source.point_source_magnitude(band=band, 
+        return self._point_source.point_source_magnitude(band=band, 
                     image_observation_times=image_observation_times)
-    
-    def point_source_position(self, center_lens, draw_area):
-        """Point source position. point source could be at the center of the
-        extended source or it can be off from center of the extended source.
-
-        :param center_lens: center of the deflector.
-         Eg: np.array([center_x_lens, center_y_lens])
-        :param draw_area: The area of the test region from which we randomly draw a
-         source position. Eg: 4*pi.
-        :return: [x_pos, y_pos]
-        """
-
-        return self._source.point_source_position(center_lens=center_lens,
-                                                   draw_area=draw_area)

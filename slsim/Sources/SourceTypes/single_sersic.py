@@ -1,7 +1,7 @@
-from slsim.Sources.SourceTypes.extended_source_base import ExtendedSourceBase
+from slsim.Sources.SourceTypes.source_base import SourceBase
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 
-class SingleSersic(ExtendedSourceBase):
+class SingleSersic(SourceBase):
     """class to manage source with single sersic light profile"""
     def __init__(self, source_dict):
         """
@@ -56,14 +56,10 @@ class SingleSersic(ExtendedSourceBase):
         source_mag = self.source_dict[band_string]
         return source_mag
     
-    def kwargs_extended_source_light(self, center_lens, draw_area, band=None):
+    def kwargs_extended_source_light(self, band=None):
         """Provides dictionary of keywords for the source light model(s).
         Kewords used are in lenstronomy conventions.
 
-        :param center_lens: center of the deflector.
-         Eg: np.array([center_x_lens, center_y_lens])
-        :param draw_area: The area of the test region from which we randomly draw a
-         source position. Eg: 4*pi.
         :param band: Imaging band
         :return: dictionary of keywords for the source light model(s)
         """
@@ -71,9 +67,7 @@ class SingleSersic(ExtendedSourceBase):
             mag_source = 1
         else:
             mag_source = self.extended_source_magnitude(band=band)
-        center_source = self.extended_source_position(
-            center_lens=center_lens, draw_area=draw_area
-        )
+        center_source = self.extended_source_position
         size_source_arcsec = float(self.angular_size)
         e1_light_source_lenstronomy, e2_light_source_lenstronomy = (
             ellipticity_slsim_to_lenstronomy(

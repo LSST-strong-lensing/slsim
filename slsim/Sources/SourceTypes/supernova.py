@@ -2,9 +2,9 @@ import numpy as np
 from slsim.Sources import random_supernovae
 from astropy.table import Column, Table
 from slsim.Sources.SourceVariability.variability import Variability
-from slsim.Sources.SourceTypes.point_source_base import PointSourceBase
+from slsim.Sources.SourceTypes.source_base import SourceBase
 
-class Supernova(PointSourceBase):
+class Supernova(SourceBase):
     """A class to manage a supernova"""
     def __init__(self,
         source_dict,

@@ -3,9 +3,9 @@ from astropy.table import Column, Table
 from slsim.Sources.SourceVariability.variability import (Variability,
                      reprocess_with_lamppost_model)
 from slsim.Sources import agn
-from slsim.Sources.SourceTypes.point_source_base import PointSourceBase
+from slsim.Sources.SourceTypes.source_base import SourceBase
 
-class Quasar(PointSourceBase):
+class Quasar(SourceBase):
     """A class to manage a quasar"""
     def __init__(self,
         source_dict,

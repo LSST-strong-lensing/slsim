@@ -91,19 +91,9 @@ class ExtendedSource(object):
         """Returns pixel scale of a given image"""
 
         return self._source.pixel_scale
-        
-    def extended_source_magnitude(self, band):
-        """Get the magnitude of the extended source in a specific band.
-
-        :param band: Imaging band
-        :type band: str
-        :return: Magnitude of the extended source in the specified band
-        :rtype: float
-        """
-
-        return self._source.extended_source_magnitude(band=band)
-        
-    def extended_source_position(self, center_lens, draw_area):
+    
+    @property
+    def extended_source_position(self):
         """source position. If a center has already been provided (and
         stored in self._center_source during initialization), then it is simply
         returned. Otherwise, a source position is drawn uniformly within the
@@ -116,23 +106,28 @@ class ExtendedSource(object):
         :return: [x_pos, y_pos]
         """
         
-        return self._source.extended_source_position(center_lens=center_lens,
-                                                 draw_area=draw_area)
+        return self._source.extended_source_position
+        
+    def extended_source_magnitude(self, band):
+        """Get the magnitude of the extended source in a specific band.
+
+        :param band: Imaging band
+        :type band: str
+        :return: Magnitude of the extended source in the specified band
+        :rtype: float
+        """
+
+        return self._source.extended_source_magnitude(band=band)
     
-    def kwargs_extended_source_light(self, center_lens, draw_area, band=None):
+    def kwargs_extended_source_light(self, band=None):
         """Provides dictionary of keywords for the source light model(s).
         Kewords used are in lenstronomy conventions.
 
-        :param center_lens: center of the deflector.
-         Eg: np.array([center_x_lens, center_y_lens])
-        :param draw_area: The area of the test region from which we randomly draw a
-         source position. Eg: 4*pi.
         :param band: Imaging band
         :return: dictionary of keywords for the source light model(s)
         """
         
-        return self._source.kwargs_extended_source_light(center_lens=center_lens,
-                                                 draw_area=draw_area, band=band)
+        return self._source.kwargs_extended_source_light(band=band)
     
     def extended_source_light_model(self):
         """Provides a list of source models.
