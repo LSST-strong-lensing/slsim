@@ -56,6 +56,15 @@ class PointSource(object):
         return self._point_source.point_source_offset
     
     @property
+    def extended_source_position(self):
+        """Provides extended source position if host galaxy is given. In the absence of 
+        host galaxy, this is the same position as point source position. This position 
+        is not necessary in this class but we inherite this class in PointPlusExtendedSource 
+        class where this position is necessary."""
+
+        return self._point_source.extended_source_position
+    
+    @property
     def point_source_position(self):
         """Point source position. point source could be at the center of the
         extended source or it can be off from center of the extended source.

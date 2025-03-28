@@ -39,12 +39,13 @@ class Source(object):
          Other supported pointsource_types are "supernova", "quasar".
         """
         self.cosmo = cosmo
-        if source_type in ["point_source"]:
+        self.source_type = source_type
+        if self.source_type in ["point_source"]:
             self._single_source = PointSource(source_dict=source_dict, cosmo=self.cosmo,
                                          **kwargs)
-        elif source_type in ["extended_source"]:
+        elif self.source_type in ["extended_source"]:
             self._single_source = ExtendedSource(source_dict=source_dict, cosmo=cosmo, **kwargs)
-        elif source_type in ["point_plus_extended"]:
+        elif self.source_type in ["point_plus_extended"]:
             self._single_source = PointPlusExtendedSource(source_dict=source_dict, cosmo=cosmo,
                                                 **kwargs)
         else:
