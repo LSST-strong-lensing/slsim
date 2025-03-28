@@ -40,12 +40,12 @@ class Source(object):
         """
         self.cosmo = cosmo
         if source_type in ["point_source"]:
-            self.__source = PointSource(source_dict=source_dict, cosmo=self.cosmo,
+            self._single_source = PointSource(source_dict=source_dict, cosmo=self.cosmo,
                                          **kwargs)
         elif source_type in ["extended_source"]:
-            self.__source = ExtendedSource(source_dict=source_dict, cosmo=cosmo, **kwargs)
+            self._single_source = ExtendedSource(source_dict=source_dict, cosmo=cosmo, **kwargs)
         elif source_type in ["point_plus_extended"]:
-            self.__source = PointPlusExtendedSource(source_dict=source_dict, cosmo=cosmo,
+            self._single_source = PointPlusExtendedSource(source_dict=source_dict, cosmo=cosmo,
                                                 **kwargs)
         else:
             raise ValueError(
@@ -57,13 +57,13 @@ class Source(object):
     def redshift(self):
         """Returns source redshift."""
 
-        return self.__source.redshift
+        return self._single_source.redshift
     
     @property
     def angular_size(self):
         """Returns angular size of the source."""
 
-        return self.__source.angular_size
+        return self._single_source.angular_size
     
     @property
     def ellipticity(self):
@@ -77,43 +77,43 @@ class Source(object):
         with q being the minor-to-major axis ratio.
         """
         
-        return self.__source.ellipticity
+        return self._single_source.ellipticity
     
     @property
     def n_sersic(self):
         """Returns sersic indices of the source profile."""
 
-        return self.__source.n_sersic
+        return self._single_source.n_sersic
 
     @property
     def sersicweight(self):
         """Returns weight of the sersic components"""
 
-        return self._source.sersicweight
+        return self._single_source.sersicweight
     
     @property
     def image_redshift(self):
         """Returns redshift of a given image"""
         
-        return self.__source.image_redshift
+        return self._single_source.image_redshift
     
     @property
     def image(self):
         """Returns image of a given extended source"""
         
-        return self.__source.image
+        return self._single_source.image
 
     @property
     def phi(self):
         """Returns position angle of a given image in arcsec"""
 
-        return self.__source.phi
+        return self._single_source.phi
     
     @property
     def pixel_scale(self):
         """Returns pixel scale of a given image"""
 
-        return self.__source.pixel_scale
+        return self._single_source.pixel_scale
     
     @property
     def extended_source_position(self):
@@ -129,7 +129,7 @@ class Source(object):
         :return: [x_pos, y_pos]
         """
         
-        return self.__source.extended_source_position
+        return self._single_source.extended_source_position
     
     @property
     def point_source_position(self):
@@ -143,7 +143,7 @@ class Source(object):
         :return: [x_pos, y_pos]
         """
 
-        return self.__source.point_source_position
+        return self._single_source.point_source_position
         
     def extended_source_magnitude(self, band):
         """Get the magnitude of the extended source in a specific band.
@@ -154,7 +154,7 @@ class Source(object):
         :rtype: float
         """
 
-        return self.__source.extended_source_magnitude(band=band)
+        return self._single_source.extended_source_magnitude(band=band)
     
     def point_source_magnitude(self, band, image_observation_times=None):
         """Get the magnitude of the point source in a specific band.
@@ -166,7 +166,7 @@ class Source(object):
         :return: Magnitude of the point source in the specified band
         :rtype: float
         """
-        return self.__source.point_source_magnitude(band=band, 
+        return self._single_source.point_source_magnitude(band=band, 
                     image_observation_times=image_observation_times)
     
     def kwargs_extended_source_light(self, band=None):
@@ -177,14 +177,14 @@ class Source(object):
         :return: dictionary of keywords for the source light model(s)
         """
         
-        return self.__source.kwargs_extended_source_light(band=band)
+        return self._single_source.kwargs_extended_source_light(band=band)
     
     def extended_source_light_model(self):
         """Provides a list of source models.
 
         :return: list of extented source model.
         """
-        return self.__source.extended_source_light_model()
+        return self._single_source.extended_source_light_model()
     
     def surface_brightness_reff(self, band=None):
         """Calculate average surface brightness within half light radius of a galaxy.
@@ -194,4 +194,4 @@ class Source(object):
             [mag/arcsec^2]
         """
 
-        return self.__source.surface_brightness_reff(band=band)
+        return self._single_source.surface_brightness_reff(band=band)
