@@ -2,7 +2,7 @@ from slsim.Sources.SourceTypes.single_sersic import SingleSersic
 from slsim.Sources.SourceTypes.double_sersic import DoubleSersic
 from slsim.Sources.SourceTypes.interpolated_image import Interpolated
 
-_SUPPORTED_SOURCES = ["single_sersic", "double_sersic", "interpolated"]
+_SUPPORTED_EXTENDED_SOURCES = ["single_sersic", "double_sersic", "interpolated"]
 
 class ExtendedSource(object):
     """Class to manage a single extended source"""
@@ -26,8 +26,8 @@ class ExtendedSource(object):
             self._source = Interpolated(source_dict=source_dict, cosmo=cosmo)
         else:
             raise ValueError(
-                "source type %s not supported. Chose among %s."
-                % (extendedsource_type, _SUPPORTED_SOURCES)
+                "Extended source type %s not supported. Chose among %s."
+                % (extendedsource_type, _SUPPORTED_EXTENDED_SOURCES)
             )
     
     @property

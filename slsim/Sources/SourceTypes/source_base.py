@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 import numpy as np
 from astropy.table import Table
 
@@ -118,6 +118,57 @@ class SourceBase(ABC):
         """Returns pixel scale of a given image"""
 
         pass
+
+    @property
+    def light_curve(self):
+        """Provides lightcurves of a supernova in each band"""
+        
+        pass
+
+    @abstractmethod
+    def surface_brightness_reff(self, band=None):
+        """Calculate average surface brightness within half light radius.
+
+        :param band: imaging band
+        :return: average surface brightness within half light radius
+            [mag/arcsec^2]
+        """
+        pass
+
+    @abstractmethod
+    def kwargs_extended_source_light(self, band=None):
+        """Provides dictionary of keywords for the source light model(s).
+        Kewords used are in lenstronomy conventions.
+
+        :param band: Imaging band
+        :return: dictionary of keywords for the source light model(s)
+        """
+        pass
+
+    @abstractmethod
+    def extended_source_light_model(self):
+        """Provides a list of source models.
+
+        :return: list of extented source model.
+        """
+        pass
+
+    @abstractmethod
+    def point_source_magnitude(self, band, image_observation_times=None):
+        """Get the magnitude of the point source in a specific band.
+
+        :param band: Imaging band
+        :type band: str
+        :param image_observation_times: Images observation time for an
+            image.
+        :return: Magnitude of the point source in the specified band
+        :rtype: float
+        """
+
+        pass
+
+    
+    
 
 
 
