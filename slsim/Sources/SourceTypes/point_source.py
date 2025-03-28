@@ -50,6 +50,12 @@ class PointSource(object):
         return self._point_source.redshift
     
     @property
+    def point_source_offset(self):
+        """Provides point source offset from host center"""
+        
+        return self._point_source.point_source_offset
+    
+    @property
     def point_source_position(self):
         """Point source position. point source could be at the center of the
         extended source or it can be off from center of the extended source.

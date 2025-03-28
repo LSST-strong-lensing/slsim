@@ -29,6 +29,17 @@ class SourceBase(ABC):
             )
         else:
             self._center_source = [None, None]
+    
+    @property
+    def point_source_offset(self):
+        """Provides point source offset from host center"""
+        if "ra_off" in self.source_dict.colnames:
+             offset = [float(self.source_dict["ra_off"]),
+                        float(self.source_dict["dec_off"])]
+        else:
+            offset = [None, None]
+        return offset
+
     @property
     def extended_source_position(self):
         """source position. If a center has already been provided (and

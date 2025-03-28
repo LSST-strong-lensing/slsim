@@ -57,6 +57,7 @@ class SupernovaEvent(SourceBase):
         self.sn_modeldir = kwargs.get("sn_modeldir")
     @property
     def light_curve(self):
+        """Provides lightcurves of a supernova in each band"""
         if self.kwargs_variability is not None:
             # Here we extract lightcurves of a supernova in given bands
             kwargs_variab_extracted = {}
