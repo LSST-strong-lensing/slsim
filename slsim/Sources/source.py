@@ -2,7 +2,7 @@ from slsim.Sources.SourceTypes.point_source import PointSource
 from slsim.Sources.SourceTypes.extended_source import ExtendedSource
 from slsim.Sources.SourceTypes.point_plus_extended_source import PointPlusExtendedSource
 
-_SUPPORTED_SOURCES = ["point_source", "extended_source", "point_plus_extended"]
+_SUPPORTED_SOURCES = ["point_source", "extended", "point_plus_extended"]
 
 class Source(object):
     """class to manage an individual source."""
@@ -43,7 +43,7 @@ class Source(object):
         if self.source_type in ["point_source"]:
             self._single_source = PointSource(source_dict=source_dict, cosmo=self.cosmo,
                                          **kwargs)
-        elif self.source_type in ["extended_source"]:
+        elif self.source_type in ["extended"]:
             self._single_source = ExtendedSource(source_dict=source_dict, cosmo=cosmo, **kwargs)
         elif self.source_type in ["point_plus_extended"]:
             self._single_source = PointPlusExtendedSource(source_dict=source_dict, cosmo=cosmo,

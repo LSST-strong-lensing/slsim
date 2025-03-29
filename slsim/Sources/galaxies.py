@@ -27,11 +27,11 @@ class Galaxies(SourcePopBase):
         kwargs_cut,
         cosmo,
         sky_area,
-        light_profile="single_sersic",
         list_type="astropy_table",
         catalog_type=None,
         downsample_to_dc2=False,
         source_size="Bernardi",
+        **kwargs
     ):
         """
 
@@ -41,9 +41,7 @@ class Galaxies(SourcePopBase):
         :type kwargs_cut: dict
         :param cosmo: astropy.cosmology instance
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
-            solid angle.
-        :param light_profile: keyword for number of sersic profile to use in source
-         light model. accepted kewords: "single_sersic", "double_sersic".
+         solid angle.
         :param list_type: format of the source catalog file. Currently, it supports a
          single astropy table or a list of astropy tables.
         :type sky_area: `~astropy.units.Quantity`
@@ -55,10 +53,14 @@ class Galaxies(SourcePopBase):
         :param source_size: If "Bernardi", computes galaxy size using g-band
          magnitude otherwise rescales skypy source size to Shibuya et al. (2015):
          https://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
+        :param kwargs: dictionary of keyword arguments for a extended source.
+         eg: kwargs = {"extendedsource_type": "single_sersic"}. Other supported 
+         types are "single_sersic", "double_sersic", "interpolated".
         """
         super(Galaxies, self).__init__(cosmo=cosmo, sky_area=sky_area)
         self.source_type = "extended"
-        self.light_profile = light_profile
+        self.kwargs = kwargs
+        self.light_profile = kwargs["extendedsource_type"]
         if downsample_to_dc2 is True:
             samp1, samp2, samp3, samp4, samp5, samp6 = down_sample_to_dc2(
                 galaxy_pop=galaxy_list, sky_area=sky_area
@@ -78,13 +80,13 @@ class Galaxies(SourcePopBase):
                 cosmo=cosmo,
             )
             column_names_update = galaxy_list.colnames
-            if light_profile == "single_sersic":
+            if self.light_profile == "single_sersic":
                 if "e1" not in column_names_update or "e2" not in column_names_update:
                     galaxy_list["e1"] = -np.ones(self.n)
                     galaxy_list["e2"] = -np.ones(self.n)
                 if "n_sersic" not in column_names_update:
                     galaxy_list["n_sersic"] = -np.ones(self.n)
-            if light_profile == "double_sersic":
+            if self.light_profile == "double_sersic":
                 # these are the name convention for double sersic profiles.
                 if (
                     "n_sersic_0" not in column_names_update
@@ -247,20 +249,12 @@ class Galaxies(SourcePopBase):
                 "Provided number of light profiles is not supported. It should be"
                 "either 'single or 'double' "
             )
+        
         source_class = Source(
             source_dict=galaxy,
-            variability_model=self.variability_model,
-            kwargs_variability=self.kwargs_variability,
-            sn_type=self.sn_type,
-            sn_absolute_mag_band=self.sn_absolute_mag_band,
-            sn_absolute_zpsys=self.sn_absolute_zpsys,
-            cosmo=self._cosmo,
-            lightcurve_time=self.lightcurve_time,
-            sn_modeldir=self.sn_modeldir,
-            agn_driving_variability_model=self.agn_driving_variability_model,
-            agn_driving_kwargs_variability=self.agn_driving_kwargs_variability,
             source_type=self.source_type,
-            light_profile=self.light_profile,
+            cosmo=self._cosmo,
+            **self.kwargs
         )
         return source_class
 
