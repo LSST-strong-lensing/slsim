@@ -363,7 +363,7 @@ class Lens(LensedSystemBase):
         # Criteria 3: The distance between the lens center and the source position
         # must be less than or equal to the angular Einstein radius
         # of the lensing configuration (times sqrt(2)).
-        if source.source_type in ["extended_source"]:
+        if source.source_type in ["extended"]:
             source_pos = self.extended_source_position(source)
         elif source.source_type in ["point_source", "point_plus_extended"]:
             source_pos = self.point_source_position(source)
