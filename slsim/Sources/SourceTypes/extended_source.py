@@ -97,6 +97,12 @@ class ExtendedSource(object):
         return self._source.pixel_scale
     
     @property
+    def point_source_offset(self):
+        """Provides point source offset from host center. For extended source this 
+        is alsways None"""
+        return self._source.point_source_offset
+    
+    @property
     def extended_source_position(self):
         """source position. If a center has already been provided (and
         stored in self._center_source during initialization), then it is simply

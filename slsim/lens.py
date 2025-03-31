@@ -420,6 +420,8 @@ class Lens(LensedSystemBase):
                             band=band_max, lensed=True
                         )
                     )
+                    print(image_magnitude_list)
+                    print(len(image_magnitude_list[0]))
                 elif self._source_type in ["point_plus_extended", "point_source"]:
                     image_magnitude_list = self.point_source_magnitude(
                         band=band_max, lensed=True
@@ -768,7 +770,8 @@ class Lens(LensedSystemBase):
         :return: extended source magnitude of a single source.
         """
         if lensed:
-            magnif = self._point_source_magnification(source)
+            magnif = self._point_source_magnification(source, extended=True)
+            print(magnif)
             magnif_log = 2.5 * np.log10(abs(magnif))
             source_mag_unlensed = source.extended_source_magnitude(band)
             magnified_mag_list = []
