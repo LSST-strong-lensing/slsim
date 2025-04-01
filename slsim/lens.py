@@ -165,7 +165,7 @@ class Lens(LensedSystemBase):
         )
         lens_eq_solver = LensEquationSolver(lens_model_class)
         source_pos_x, source_pos_y = source.extended_source_position(
-            center_lens=self.deflector_position, draw_area=self.test_area
+            reference_position=self.deflector_position, draw_area=self.test_area
         )
         if (
             self._lens_equation_solver == "lenstronomy_analytical"
@@ -220,7 +220,7 @@ class Lens(LensedSystemBase):
         )
         lens_eq_solver = LensEquationSolver(lens_model_class)
         point_source_pos_x, point_source_pos_y = source.point_source_position(
-            center_lens=self.deflector_position, draw_area=self.test_area
+            reference_position=self.deflector_position, draw_area=self.test_area
         )
 
         # uses analytical lens equation solver in case it is supported by lenstronomy for speed-up
@@ -862,7 +862,7 @@ class Lens(LensedSystemBase):
         lens_mass_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
         light_model_list = source.extended_source_light_model()
         kwargs_source_mag = source.kwargs_extended_source_light(
-            center_lens=self.deflector_position, draw_area=self.test_area
+            reference_position=self.deflector_position, draw_area=self.test_area
         )
 
         lightModel = LightModel(light_model_list=light_model_list)
@@ -875,7 +875,7 @@ class Lens(LensedSystemBase):
         )
         theta_E = self._einstein_radius(source)
         center_source = source.extended_source_position(
-            center_lens=self.deflector_position, draw_area=self.test_area
+            reference_position=self.deflector_position, draw_area=self.test_area
         )
 
         kwargs_source_amp = data_util.magnitude2amplitude(
@@ -1020,7 +1020,7 @@ class Lens(LensedSystemBase):
                 kwargs_source_list.append(
                     source.kwargs_extended_source_light(
                         draw_area=self.test_area,
-                        center_lens=self.deflector_position,
+                        reference_position=self.deflector_position,
                         band=band,
                     )
                 )

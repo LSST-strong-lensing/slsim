@@ -116,33 +116,35 @@ class Source(object):
 
         return self._single_source.pixel_scale
     
-    def extended_source_position(self, center_lens, draw_area):
+    def extended_source_position(self, reference_position, draw_area):
         """extended source position. If a center has already been provided (and
         stored in the source_dict), then it is simply
         returned. Otherwise, a source position is drawn uniformly within the
         circle of the test area centered on the deflector position.
 
-        :param center_lens: center of the deflector.
-            Eg: np.array([center_x_lens, center_y_lens])
+        :param reference_position: reference position. the source postion will be 
+         defined relative to this position.
+         Eg: np.array([0, 0])
         :param draw_area: The area of the test region from which we randomly draw a source
             position. Eg: 4*pi.
         :return: [x_pos, y_pos]
         """
         
-        return self._single_source.extended_source_position(center_lens, draw_area)
+        return self._single_source.extended_source_position(reference_position, draw_area)
     
-    def point_source_position(self, center_lens, draw_area):
+    def point_source_position(self, reference_position, draw_area):
         """Point source position. point source could be at the center of the
         extended source or it can be off from center of the extended source.
 
-        :param center_lens: center of the deflector.
-         Eg: np.array([center_x_lens, center_y_lens])
+        :param reference_position: reference position. the source postion will be 
+         defined relative to this position.
+         Eg: np.array([0, 0])
         :param draw_area: The area of the test region from which we randomly draw a
          source position. Eg: 4*pi.
         :return: [x_pos, y_pos]
         """
 
-        return self._single_source.point_source_position(center_lens, draw_area)
+        return self._single_source.point_source_position(reference_position, draw_area)
         
     def extended_source_magnitude(self, band):
         """Get the magnitude of the extended source in a specific band.
@@ -168,15 +170,20 @@ class Source(object):
         return self._single_source.point_source_magnitude(band=band, 
                     image_observation_times=image_observation_times)
     
-    def kwargs_extended_source_light(self, center_lens, draw_area, band=None):
+    def kwargs_extended_source_light(self, reference_position, draw_area, band=None):
         """Provides dictionary of keywords for the source light model(s).
         Kewords used are in lenstronomy conventions.
 
+        :param reference_position: reference position. the source postion will be 
+         defined relative to this position.
+         Eg: np.array([0, 0])
+        :param draw_area: The area of the test region from which we randomly draw a
+         source position. Eg: 4*pi.
         :param band: Imaging band
         :return: dictionary of keywords for the source light model(s)
         """
         
-        return self._single_source.kwargs_extended_source_light(center_lens, draw_area, band)
+        return self._single_source.kwargs_extended_source_light(reference_position, draw_area, band)
     
     def extended_source_light_model(self):
         """Provides a list of source models.

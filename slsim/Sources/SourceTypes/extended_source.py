@@ -123,15 +123,20 @@ class ExtendedSource(object):
 
         return self._source.extended_source_magnitude(band=band)
     
-    def kwargs_extended_source_light(self, center_lens, draw_area, band=None):
+    def kwargs_extended_source_light(self, reference_position, draw_area, band=None):
         """Provides dictionary of keywords for the source light model(s).
         Kewords used are in lenstronomy conventions.
 
+        :param reference_position: reference position. the source postion will be 
+         defined relative to this position.
+         Eg: np.array([0, 0])
+        :param draw_area: The area of the test region from which we randomly draw a
+         source position. Eg: 4*pi.
         :param band: Imaging band
         :return: dictionary of keywords for the source light model(s)
         """
         
-        return self._source.kwargs_extended_source_light(center_lens, draw_area, band)
+        return self._source.kwargs_extended_source_light(reference_position, draw_area, band)
     
     def extended_source_light_model(self):
         """Provides a list of source models.
