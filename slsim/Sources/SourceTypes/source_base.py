@@ -40,14 +40,15 @@ class SourceBase(ABC):
             offset = [None, None]
         return offset
 
-    def extended_source_position(self, center_lens, draw_area):
+    def extended_source_position(self, reference_position, draw_area):
         """Extended source position. If a center has already been provided (and
         stored in self._center_source during initialization), then it is simply
         returned. Otherwise, a source position is drawn uniformly within the
         circle of the test area centered on the deflector position.
 
-        :param center_lens: center of the deflector.
-            Eg: np.array([center_x_lens, center_y_lens])
+        :param reference_position: reference position. The source postion will be 
+         defined relative to this position.
+         Eg: np.array([0, 0])
         :param draw_area: The area of the test region from which we randomly draw a source
             position. Eg: 4*pi.
         :return: [x_pos, y_pos]
@@ -59,24 +60,25 @@ class SourceBase(ABC):
         r = np.sqrt(np.random.random()) * test_area_radius
         theta = 2 * np.pi * np.random.random()
         self._center_source = np.array(
-            [center_lens[0] + r * np.cos(theta), center_lens[1] + r * np.sin(theta)]
+            [reference_position[0] + r * np.cos(theta), reference_position[1] + r * np.sin(theta)]
         )
         return self._center_source
     
-    def point_source_position(self, center_lens, draw_area):
+    def point_source_position(self, reference_position, draw_area):
         """Point source position. point source could be at the center of the
         extended source or it can be off from center of the extended source. In
         the absence of a point source, this is the center of the extended
         source.
 
-        :param center_lens: center of the deflector.
-         Eg: np.array([center_x_lens, center_y_lens])
+        :param reference_position: reference position. The source postion will be 
+         defined relative to this position.
+         Eg: np.array([0, 0])
         :param draw_area: The area of the test region from which we randomly draw a
          source position. Eg: 4*pi.
         :return: [x_pos, y_pos]
         """
 
-        extended_source_center = self.extended_source_position(center_lens, draw_area)
+        extended_source_center = self.extended_source_position(reference_position, draw_area)
 
         if self.point_source_offset[0] is not None:
             center_x_point_source = extended_source_center[0] + float(

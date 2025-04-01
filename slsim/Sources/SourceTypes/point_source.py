@@ -55,28 +55,35 @@ class PointSource(object):
         
         return self._point_source.point_source_offset
     
-    @property
-    def extended_source_position(self):
+    def extended_source_position(self, reference_position, draw_area):
         """Provides extended source position if host galaxy is given. In the absence of 
         host galaxy, this is the same position as point source position. This position 
         is not necessary in this class but we inherite this class in PointPlusExtendedSource 
-        class where this position is necessary."""
+        class where this position is necessary.
 
-        return self._point_source.extended_source_position
-    
-    @property
-    def point_source_position(self):
-        """Point source position. point source could be at the center of the
-        extended source or it can be off from center of the extended source.
-
-        :param center_lens: center of the deflector.
-         Eg: np.array([center_x_lens, center_y_lens])
+        :param reference_position: reference position. the source postion will be 
+         defined relative to this position.
+         Eg: np.array([0, 0])
         :param draw_area: The area of the test region from which we randomly draw a
          source position. Eg: 4*pi.
         :return: [x_pos, y_pos]
         """
 
-        return self._point_source.point_source_position
+        return self._point_source.extended_source_position(reference_position, draw_area)
+    
+    def point_source_position(self, reference_position, draw_area):
+        """Point source position. point source could be at the center of the
+        extended source or it can be off from center of the extended source.
+
+        :param reference_position: reference position. the source postion will be 
+         defined relative to this position.
+         Eg: np.array([0, 0])
+        :param draw_area: The area of the test region from which we randomly draw a
+         source position. Eg: 4*pi.
+        :return: [x_pos, y_pos]
+        """
+
+        return self._point_source.point_source_position(reference_position, draw_area)
     
     def point_source_magnitude(self, band, image_observation_times=None):
         """Get the magnitude of the point source in a specific band.

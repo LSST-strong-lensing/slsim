@@ -96,26 +96,21 @@ class ExtendedSource(object):
 
         return self._source.pixel_scale
     
-    @property
-    def point_source_offset(self):
-        """Provides point source offset from host center. For extended source this 
-        is alsways None"""
-        return self._source.point_source_offset
-    
-    def extended_source_position(self, center_lens, draw_area):
+    def extended_source_position(self, reference_postion, draw_area):
         """Extended source position. If a center has already been provided (and
         stored in self._center_source during initialization of _source), then it is simply
         returned. Otherwise, a source position is drawn uniformly within the
         circle of the test area centered on the deflector position. see: _source.
 
-        :param center_lens: center of the deflector.
-            Eg: np.array([center_x_lens, center_y_lens])
+        :param reference_position: reference position. the source postion will be 
+         defined relative to this position.
+         Eg: np.array([0, 0])
         :param draw_area: The area of the test region from which we randomly draw a source
             position. Eg: 4*pi.
         :return: [x_pos, y_pos]
         """
         
-        return self._source.extended_source_position(center_lens, draw_area)
+        return self._source.extended_source_position(reference_postion, draw_area)
 
     def extended_source_magnitude(self, band):
         """Get the magnitude of the extended source in a specific band.
