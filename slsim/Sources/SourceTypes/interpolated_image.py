@@ -24,13 +24,13 @@ class Interpolated(SourceBase):
     def image_redshift(self):
         """Returns redshift of a given image"""
         
-        return float(self.source_dict["z_data"][0])
+        return float(self.source_dict["z_data"])
     
     @property
     def image(self):
         """Returns image of a given extended source"""
         
-        return self.source_dict["image"][0]
+        return self.source_dict["image"]
 
     @property
     def phi(self):
@@ -42,7 +42,7 @@ class Interpolated(SourceBase):
     def pixel_scale(self):
         """Returns pixel scale of a given image"""
 
-        return self.source_dict["pixel_width_data"][0]
+        return self.source_dict["pixel_width_data"]
     
     def extended_source_magnitude(self, band):
         """Get the magnitude of the extended source in a specific band.
@@ -58,7 +58,7 @@ class Interpolated(SourceBase):
         else:
             band_string = "mag_" + band
         source_mag = self.source_dict[band_string]
-        return source_mag[0]
+        return source_mag
     
     def kwargs_extended_source_light(self, reference_position, draw_area, band=None):
         """Provides dictionary of keywords for the source light model(s).

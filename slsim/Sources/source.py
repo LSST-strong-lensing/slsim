@@ -1,3 +1,4 @@
+import numpy as np
 from slsim.Sources.SourceTypes.point_source import PointSource
 from slsim.Sources.SourceTypes.extended_source import ExtendedSource
 from slsim.Sources.SourceTypes.point_plus_extended_source import PointPlusExtendedSource
@@ -116,7 +117,7 @@ class Source(object):
 
         return self._single_source.pixel_scale
     
-    def extended_source_position(self, reference_position, draw_area):
+    def extended_source_position(self, reference_position=None, draw_area=None):
         """extended source position. If a center has already been provided (and
         stored in the source_dict), then it is simply
         returned. Otherwise, a source position is drawn uniformly within the
@@ -132,7 +133,7 @@ class Source(object):
         
         return self._single_source.extended_source_position(reference_position, draw_area)
     
-    def point_source_position(self, reference_position, draw_area):
+    def point_source_position(self, reference_position=None, draw_area=None):
         """Point source position. point source could be at the center of the
         extended source or it can be off from center of the extended source.
 
@@ -170,7 +171,8 @@ class Source(object):
         return self._single_source.point_source_magnitude(band=band, 
                     image_observation_times=image_observation_times)
     
-    def kwargs_extended_source_light(self, reference_position, draw_area, band=None):
+    def kwargs_extended_source_light(self, reference_position=None, draw_area=None,
+                                      band=None):
         """Provides dictionary of keywords for the source light model(s).
         Kewords used are in lenstronomy conventions.
 

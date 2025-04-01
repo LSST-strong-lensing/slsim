@@ -149,6 +149,9 @@ class DoubleSersic(SourceBase):
             [mag/arcsec^2]
         """
         angularsize = np.mean(self.angular_size)
+        # reference_position and draw_area do not matter, they are dummy input here.
+        kwargs_source = self.kwargs_extended_source_light(reference_position=[0, 0],
+                                                           draw_area=4*np.pi, band=band)
         return surface_brightness_reff(angular_size=angularsize, 
-                        source_model_list=self.extended_source_light_model,
-                kwargs_extended_source=self.kwargs_extended_source_light(band=band))
+                        source_model_list=self.extended_source_light_model(),
+                kwargs_extended_source=kwargs_source)

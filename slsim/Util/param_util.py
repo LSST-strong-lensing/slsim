@@ -649,7 +649,9 @@ def detect_object(image, variance, pixel_scale=0.2, box_size_arcsec=3, snr_thres
 def surface_brightness_reff(angular_size, source_model_list, kwargs_extended_source):
     """Calculate average surface brightness within half light radius.
 
-    :param angular_size: effective radius of an extended source in arcsec
+    :param angular_size: effective radius of an extended source in arcsec. For double 
+     sersic profile, user can use mean angular size of two component of the douuble 
+     sersic profile.
     :param source_model_list: list of source light models
     :param kwargs_extended_source: dictionary of keywords for the source light model(s).
         Kewords used are in lenstronomy conventions.
@@ -680,25 +682,3 @@ def surface_brightness_reff(angular_size, source_model_list, kwargs_extended_sou
         surface_brightness_amp, mag_zero_point=_mag_zero_dummy
     )
     return mag_arcsec2
-
-def source_position(center_lens, draw_area):
-    """
-    Generates a random source position within a circular area centered at center_lens.
-
-    :param center_lens: Coordinates of the lens center [x, y].
-    :type center_lens: list or np.array of shape (2,)
-    :param draw_area: The area within which the source position is drawn.
-    :type draw_area: float
-    :return: Randomly generated source position [x, y].
-    :rtype: np.array of shape (2,)
-    """
-    test_area_radius = np.sqrt(draw_area / np.pi)
-    r = np.sqrt(np.random.random()) * test_area_radius
-    theta = 2 * np.pi * np.random.random()
-    
-    center_source = np.array([
-        center_lens[0] + r * np.cos(theta),
-        center_lens[1] + r * np.sin(theta)
-    ])
-    
-    return center_source
