@@ -116,10 +116,9 @@ class Source(object):
 
         return self._single_source.pixel_scale
     
-    @property
-    def extended_source_position(self):
-        """source position. If a center has already been provided (and
-        stored in self._center_source during initialization), then it is simply
+    def extended_source_position(self, center_lens, draw_area):
+        """extended source position. If a center has already been provided (and
+        stored in the source_dict), then it is simply
         returned. Otherwise, a source position is drawn uniformly within the
         circle of the test area centered on the deflector position.
 
@@ -130,16 +129,9 @@ class Source(object):
         :return: [x_pos, y_pos]
         """
         
-        return self._single_source.extended_source_position
+        return self._single_source.extended_source_position(center_lens, draw_area)
     
-    @property
-    def point_source_offset(self):
-        """Provides point source offset from host center"""
-        
-        return self._single_source.point_source_offset
-    
-    @property
-    def point_source_position(self):
+    def point_source_position(self, center_lens, draw_area):
         """Point source position. point source could be at the center of the
         extended source or it can be off from center of the extended source.
 
@@ -150,7 +142,7 @@ class Source(object):
         :return: [x_pos, y_pos]
         """
 
-        return self._single_source.point_source_position
+        return self._single_source.point_source_position(center_lens, draw_area)
         
     def extended_source_magnitude(self, band):
         """Get the magnitude of the extended source in a specific band.
@@ -176,7 +168,7 @@ class Source(object):
         return self._single_source.point_source_magnitude(band=band, 
                     image_observation_times=image_observation_times)
     
-    def kwargs_extended_source_light(self, band=None):
+    def kwargs_extended_source_light(self, center_lens, draw_area, band=None):
         """Provides dictionary of keywords for the source light model(s).
         Kewords used are in lenstronomy conventions.
 
@@ -184,7 +176,7 @@ class Source(object):
         :return: dictionary of keywords for the source light model(s)
         """
         
-        return self._single_source.kwargs_extended_source_light(band=band)
+        return self._single_source.kwargs_extended_source_light(center_lens, draw_area, band)
     
     def extended_source_light_model(self):
         """Provides a list of source models.

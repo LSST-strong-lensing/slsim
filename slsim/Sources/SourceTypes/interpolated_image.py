@@ -60,7 +60,7 @@ class Interpolated(SourceBase):
         source_mag = self.source_dict[band_string]
         return source_mag[0]
     
-    def kwargs_extended_source_light(self, band=None):
+    def kwargs_extended_source_light(self, center_lens, draw_area, band=None):
         """Provides dictionary of keywords for the source light model(s).
         Kewords used are in lenstronomy conventions.
 
@@ -71,7 +71,9 @@ class Interpolated(SourceBase):
             mag_source = 1
         else:
             mag_source = self.extended_source_magnitude(band=band)
-        center_source = self.extended_source_position
+        center_source = self.extended_source_position(
+            center_lens=center_lens, draw_area=draw_area
+        )
         z_image = self.image_redshift
         pixel_width = self.pixel_scale
         pixel_width *= z_scale_factor(

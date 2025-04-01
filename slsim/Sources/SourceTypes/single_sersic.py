@@ -57,7 +57,7 @@ class SingleSersic(SourceBase):
         source_mag = self.source_dict[band_string]
         return source_mag
     
-    def kwargs_extended_source_light(self, band=None):
+    def kwargs_extended_source_light(self, center_lens, draw_area, band=None):
         """Provides dictionary of keywords for the source light model(s).
         Kewords used are in lenstronomy conventions.
 
@@ -68,7 +68,9 @@ class SingleSersic(SourceBase):
             mag_source = 1
         else:
             mag_source = self.extended_source_magnitude(band=band)
-        center_source = self.extended_source_position
+        center_source = self.extended_source_position(
+            center_lens=center_lens, draw_area=draw_area
+        )
         size_source_arcsec = float(self.angular_size)
         e1_light_source_lenstronomy, e2_light_source_lenstronomy = (
             ellipticity_slsim_to_lenstronomy(

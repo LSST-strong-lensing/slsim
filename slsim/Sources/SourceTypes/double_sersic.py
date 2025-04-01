@@ -72,7 +72,7 @@ class DoubleSersic(SourceBase):
         source_mag = self.source_dict[band_string]
         return source_mag
     
-    def kwargs_extended_source_light(self, band=None):
+    def kwargs_extended_source_light(self, center_lens, draw_area, band=None):
         """Provides dictionary of keywords for the source light model(s).
         Kewords used are in lenstronomy conventions.
 
@@ -83,7 +83,9 @@ class DoubleSersic(SourceBase):
             mag_source = 1
         else:
             mag_source = self.extended_source_magnitude(band=band)
-        center_source = self.extended_source_position
+        center_source = self.extended_source_position(
+            center_lens=center_lens, draw_area=draw_area
+        )
         # compute magnitude for each sersic component based on weight
         flux = 10 ** (-mag_source / 2.5)
         mag_source0 = -2.5 * np.log10(self.sersicweight[0] * flux)

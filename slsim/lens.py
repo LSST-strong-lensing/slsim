@@ -9,8 +9,7 @@ from lenstronomy.LensModel.Solver.lens_equation_solver import (
     analytical_lens_model_support,
 )
 
-from slsim.Util.param_util import (ellipticity_slsim_to_lenstronomy, 
-                                   source_position)
+from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.Util import constants
 from lenstronomy.Util import data_util
@@ -132,62 +131,6 @@ class Lens(LensedSystemBase):
         :return: [x_pox, y_pos] in arc seconds
         """
         return self.deflector.deflector_center
-    
-    def extended_source_postion_list(self):
-        """Provides list of extended source center"""
-        if not hasattr(self, "_source_pos_list"):
-            self._source_pos_list = []
-            for source in self._source:
-                single_source_pos = self._extended_source_position(source)
-                self._source_pos_list.append(single_source_pos)
-        return self._source_pos_list
-    
-    def extended_source_postion_list(self):
-        """Provides list of point source center"""
-        if not hasattr(self, "_point_source_pos_list"):
-            self._point_source_pos_list = []
-            for source in self._source:
-                single_source_pos = self._extended_source_position(source)
-                self._point_source_pos_list.append(single_source_pos)
-        return self._point_source_pos_list
-
-    def _extended_source_position(self, source):
-        """Extended source position for a single source. If the source already has a defined 
-        extended source position, it is used. Otherwise, a new position is randomly drawn.
-
-        :param source: The source object containing extended source properties.
-        :return: (x_pos, y_pos) coordinates of the extended source.
-        """
-        source_pos_x, source_pos_y = source.extended_source_position
-
-        if source_pos_x is None:
-            source_pos_x, source_pos_y = source_position(
-                center_lens=self.deflector_position,
-                draw_area=self.test_area
-            )
-        if not hasattr(self, "_center_source"):
-            self._center_source = np.array([source_pos_x, source_pos_y])
-        return self._center_source
-    
-    def _point_source_position(self, source):
-        """Point source position for a single. The point source could be at the center of the
-        extended source or offset from it. If a point source offset is not provided,
-        it defaults to the extended source center.
-
-        :param source: The source object containing point source properties.
-        :return: [x_pos, y_pos]
-        """
-
-        # Get the extended source center
-        extended_source_center = self._extended_source_position(source)
-
-        # Apply offsets if provided
-        if source.point_source_offset[0] is not None:
-            center_x_point_source = extended_source_center[0] + source.point_source_offset[0]
-            center_y_point_source = extended_source_center[1] + source.point_source_offset[1]
-        else:
-            center_x_point_source, center_y_point_source = extended_source_center
-        return np.array([center_x_point_source, center_y_point_source])
 
     def extended_source_image_positions(self):
         """Returns extended source image positions by solving the lens equation
@@ -195,7 +138,7 @@ class Lens(LensedSystemBase):
 
         :return: list of (x-pos, y-pos)
         """
-        if not hasattr(self, "_es_image_position_list"):
+        if not hasattr(self, "_es_image_positions"):
             self._es_image_position_list = []
             for source in self._source:
                 self._es_image_position_list.append(
@@ -221,7 +164,9 @@ class Lens(LensedSystemBase):
             z_source=source.redshift,
         )
         lens_eq_solver = LensEquationSolver(lens_model_class)
-        source_pos_x, source_pos_y = self._extended_source_position(source=source)
+        source_pos_x, source_pos_y = source.extended_source_position(
+            center_lens=self.deflector_position, draw_area=self.test_area
+        )
         if (
             self._lens_equation_solver == "lenstronomy_analytical"
             and analytical_lens_model_support(lens_model_list) is True
@@ -274,7 +219,10 @@ class Lens(LensedSystemBase):
             z_source=source.redshift,
         )
         lens_eq_solver = LensEquationSolver(lens_model_class)
-        point_source_pos_x, point_source_pos_y = self._point_source_position(source)
+        point_source_pos_x, point_source_pos_y = source.point_source_position(
+            center_lens=self.deflector_position, draw_area=self.test_area
+        )
+
         # uses analytical lens equation solver in case it is supported by lenstronomy for speed-up
         if (
             self._lens_equation_solver == "lenstronomy_analytical"
@@ -383,11 +331,15 @@ class Lens(LensedSystemBase):
         # Criteria 3: The distance between the lens center and the source position
         # must be less than or equal to the angular Einstein radius
         # of the lensing configuration (times sqrt(2)).
-        if source.source_type in ["extended"]:
-            source_pos = self._extended_source_position(source)
-        elif source.source_type in ["point_source", "point_plus_extended"]:
-            source_pos = self._point_source_position(source)
-        center_lens, center_source = (self.deflector_position, source_pos)
+        if self._source_type in ["point_source", "point_plus_extended"]:
+            source_pos = source.point_source_position(self.deflector_position, 
+                                                      self.test_area)
+        else:
+            source_pos = source.extended_source_position(self.deflector_position, 
+                                                         draw_area=self.test_area)
+        center_lens, center_source = (
+            self.deflector_position, source_pos
+        )
         if (
             np.sum((center_lens - center_source) ** 2)
             > self._einstein_radius(source) ** 2 * 2
@@ -395,7 +347,10 @@ class Lens(LensedSystemBase):
             return False
 
         # Criteria 4: The lensing configuration must produce at least two SL images.
-        image_positions = self._point_source_image_positions(source)
+        if self._source_type in ["point_source", "point_plus_extended"]:
+            image_positions = self._point_source_image_positions(source)
+        else:
+            image_positions = self._extended_source_image_positions(source)
         if len(image_positions[0]) < 2:
             return False
 
@@ -906,9 +861,9 @@ class Lens(LensedSystemBase):
         """
         lens_mass_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
         light_model_list = source.extended_source_light_model()
-        kwargs_source_mag = source.kwargs_extended_source_light()
-        kwargs_source_mag[0]["center_x"] = self._extended_source_position(source)[0]
-        kwargs_source_mag[0]["center_y"] = self._extended_source_position(source)[1]
+        kwargs_source_mag = source.kwargs_extended_source_light(
+            center_lens=self.deflector_position, draw_area=self.test_area
+        )
 
         lightModel = LightModel(light_model_list=light_model_list)
         lensModel = LensModel(
@@ -919,7 +874,9 @@ class Lens(LensedSystemBase):
             z_source=source.redshift,
         )
         theta_E = self._einstein_radius(source)
-        center_source = self._extended_source_position(source)
+        center_source = source.extended_source_position(
+            center_lens=self.deflector_position, draw_area=self.test_area
+        )
 
         kwargs_source_amp = data_util.magnitude2amplitude(
             lightModel, kwargs_source_mag, magnitude_zero_point=0
@@ -1060,10 +1017,13 @@ class Lens(LensedSystemBase):
             kwargs_source_list = []
             for source in self._source:
                 source_models_list.append(source.extended_source_light_model())
-                kwargs_es_light = source.kwargs_extended_source_light(band=band)
-                kwargs_es_light[0]["center_x"] = self._extended_source_position(source)[0]
-                kwargs_es_light[0]["center_y"] = self._extended_source_position(source)[1]
-                kwargs_source_list.append(kwargs_es_light)
+                kwargs_source_list.append(
+                    source.kwargs_extended_source_light(
+                        draw_area=self.test_area,
+                        center_lens=self.deflector_position,
+                        band=band,
+                    )
+                )
             # lets transform list in to required structure
             """if (
                 self.max_redshift_source_class.light_profile == "double_sersic"

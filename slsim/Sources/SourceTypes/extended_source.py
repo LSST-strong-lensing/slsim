@@ -102,12 +102,11 @@ class ExtendedSource(object):
         is alsways None"""
         return self._source.point_source_offset
     
-    @property
-    def extended_source_position(self):
-        """source position. If a center has already been provided (and
-        stored in self._center_source during initialization), then it is simply
+    def extended_source_position(self, center_lens, draw_area):
+        """Extended source position. If a center has already been provided (and
+        stored in self._center_source during initialization of _source), then it is simply
         returned. Otherwise, a source position is drawn uniformly within the
-        circle of the test area centered on the deflector position.
+        circle of the test area centered on the deflector position. see: _source.
 
         :param center_lens: center of the deflector.
             Eg: np.array([center_x_lens, center_y_lens])
@@ -116,8 +115,8 @@ class ExtendedSource(object):
         :return: [x_pos, y_pos]
         """
         
-        return self._source.extended_source_position
-        
+        return self._source.extended_source_position(center_lens, draw_area)
+
     def extended_source_magnitude(self, band):
         """Get the magnitude of the extended source in a specific band.
 
@@ -129,7 +128,7 @@ class ExtendedSource(object):
 
         return self._source.extended_source_magnitude(band=band)
     
-    def kwargs_extended_source_light(self, band=None):
+    def kwargs_extended_source_light(self, center_lens, draw_area, band=None):
         """Provides dictionary of keywords for the source light model(s).
         Kewords used are in lenstronomy conventions.
 
@@ -137,7 +136,7 @@ class ExtendedSource(object):
         :return: dictionary of keywords for the source light model(s)
         """
         
-        return self._source.kwargs_extended_source_light(band=band)
+        return self._source.kwargs_extended_source_light(center_lens, draw_area, band)
     
     def extended_source_light_model(self):
         """Provides a list of source models.

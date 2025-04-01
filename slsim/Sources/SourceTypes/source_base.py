@@ -27,8 +27,8 @@ class SourceBase(ABC):
             self._center_source = np.array(
                 [self.source_dict["center_x"], self.source_dict["center_y"]]
             )
-        else:
-            self._center_source = [None, None]
+        """else:
+            self._center_source = [None, None]"""
     
     @property
     def point_source_offset(self):
@@ -40,40 +40,56 @@ class SourceBase(ABC):
             offset = [None, None]
         return offset
 
-    @property
-    def extended_source_position(self):
-        """source position. If a center has already been provided (and
+    def extended_source_position(self, center_lens, draw_area):
+        """Extended source position. If a center has already been provided (and
         stored in self._center_source during initialization), then it is simply
-        returned. otherwise provides None.
+        returned. Otherwise, a source position is drawn uniformly within the
+        circle of the test area centered on the deflector position.
 
+        :param center_lens: center of the deflector.
+            Eg: np.array([center_x_lens, center_y_lens])
+        :param draw_area: The area of the test region from which we randomly draw a source
+            position. Eg: 4*pi.
         :return: [x_pos, y_pos]
         """
+        if hasattr(self, "_center_source"):
+            return self._center_source
 
+        test_area_radius = np.sqrt(draw_area / np.pi)
+        r = np.sqrt(np.random.random()) * test_area_radius
+        theta = 2 * np.pi * np.random.random()
+        self._center_source = np.array(
+            [center_lens[0] + r * np.cos(theta), center_lens[1] + r * np.sin(theta)]
+        )
         return self._center_source
     
-    @property
-    def point_source_position(self):
+    def point_source_position(self, center_lens, draw_area):
         """Point source position. point source could be at the center of the
-        extended source or it can be off from center of the extended source.
-        
+        extended source or it can be off from center of the extended source. In
+        the absence of a point source, this is the center of the extended
+        source.
+
+        :param center_lens: center of the deflector.
+         Eg: np.array([center_x_lens, center_y_lens])
+        :param draw_area: The area of the test region from which we randomly draw a
+         source position. Eg: 4*pi.
         :return: [x_pos, y_pos]
         """
 
-        if self._center_source[0] is not None:
-            if "ra_off" in self.source_dict.colnames:
-                center_x_point_source = self._center_source[0] + float(
-                    self.source_dict["ra_off"]
-                )
-                center_y_point_source = self._center_source[1] + float(
-                    self.source_dict["dec_off"]
-                )
-                self._center_point_source = np.array(
-                    [center_x_point_source, center_y_point_source]
-                )
-            else:
-                self._center_point_source = self._center_source
+        extended_source_center = self.extended_source_position(center_lens, draw_area)
+
+        if self.point_source_offset[0] is not None:
+            center_x_point_source = extended_source_center[0] + float(
+                self.point_source_offset[0]
+            )
+            center_y_point_source = extended_source_center[1] + float(
+                self.point_source_offset[1]
+            )
+            self._center_point_source = np.array(
+                [center_x_point_source, center_y_point_source]
+            )
             return self._center_point_source
-        return self._center_source
+        return extended_source_center
     
     @property
     def redshift(self):
