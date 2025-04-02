@@ -63,7 +63,7 @@ class TestSingleSersic:
             self.source_cosmo_error.light_curve
 
     def test_point_source_magnitude(self):
-        # supernova is randomly generated. So, can't assert a fix number. 
+        # supernova is randomly generated. So, can't assert a fix number for magnitude. 
         # Just checking these numbers are generated.
         assert self.source.point_source_magnitude("i") is not None
         with pytest.raises(ValueError):
