@@ -4,7 +4,7 @@ import pytest
 from numpy import testing as npt
 from astropy import cosmology
 
-class TestSingleSersic:
+class TestInterpolated:
     def setup_method(self):
         cosmo = cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
         # Create an image

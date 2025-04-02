@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 from numpy import testing as npt
 
-class TestSingleSersic:
+class TestDoubleSersic:
     def setup_method(self):
         self.source_dict = {"z": 0.5, "n_sersic_0":1, "n_sersic_1": 4, "angular_size0": 0.2,
                 "angular_size1": 0.15, "e0_1": 0.001, "e0_2": 0.002, "e1_1": 0.001,

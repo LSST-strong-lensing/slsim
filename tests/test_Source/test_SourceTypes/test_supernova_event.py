@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 from astropy import cosmology
 
-class TestSingleSersic:
+class TestSupernovaEvent:
     def setup_method(self):
         cosmo = cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
         source_dict = {"z": 0.8, "ra_off": 0.001, "dec_off": 0.005}
