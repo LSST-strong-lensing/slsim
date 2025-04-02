@@ -625,7 +625,8 @@ class Lens(LensedSystemBase):
             depend on the Lens() class. It is of type:
             kwargs_microlensing = {"kwargs_MagnificationMap":
             kwargs_MagnificationMap, "kwargs_AccretionDisk":
-            kwargs_AccretionDisk, "kwargs_PointSource":kwargs_PointSource}
+            kwargs_AccretionDisk,
+            "kwargs_PointSource":kwargs_PointSource}
         :type kwargs_microlensing: dict
         :return: point source magnitude of a single source
         """
@@ -663,20 +664,21 @@ class Lens(LensedSystemBase):
                 return np.array(magnified_mag_list)
 
         return source.point_source_magnitude(band)
-    
+
     def _microlensing_parameters_for_image_positions_single_source(self, band, source):
         """For a given source, calculates the microlensing parameters for each
         image position.
+
         :param source: Source class instance
-        :return: np.array(kappa_star_images), np.array(kappa_tot_images),
-            np.array(shear_images)
+        :return: np.array(kappa_star_images),
+            np.array(kappa_tot_images), np.array(shear_images)
         """
         lenstronomy_kwargs = self.lenstronomy_kwargs(band=band)
         lens_model_lenstronomy = LensModel(
             lens_model_list=lenstronomy_kwargs[0]["lens_model_list"]
         )
         lenstronomy_kwargs_lens = lenstronomy_kwargs[1]["kwargs_lens"]
-        
+
         image_positions_x, image_positions_y = image_positions_x, image_positions_y = (
             self._point_source_image_positions(source)
         )
@@ -688,15 +690,15 @@ class Lens(LensedSystemBase):
             ra = image_positions_x[i]  # TODO: is this correct?
             dec = image_positions_y[i]
 
-            kappa_tot = lens_model_lenstronomy.kappa(
-                ra, dec, lenstronomy_kwargs_lens
-            )
+            kappa_tot = lens_model_lenstronomy.kappa(ra, dec, lenstronomy_kwargs_lens)
             shear_smooth_vec = lens_model_lenstronomy.gamma(
                 ra, dec, lenstronomy_kwargs_lens
             )
             shear_smooth = np.sqrt(shear_smooth_vec[0] ** 2 + shear_smooth_vec[1] ** 2)
 
-            kappa_star_in_lensing_convergence_units = kappa_star_images[i]  # TODO: in the kappa_star function definition it's mentioned that the output is in units of lensing convergence.
+            kappa_star_in_lensing_convergence_units = kappa_star_images[
+                i
+            ]  # TODO: in the kappa_star function definition it's mentioned that the output is in units of lensing convergence.
             kappa_star = (
                 kappa_star_in_lensing_convergence_units * kappa_tot
             )  # based on above comment, Is this line correct?
@@ -704,17 +706,18 @@ class Lens(LensedSystemBase):
             kappa_tot_images.append(kappa_tot)
             shear_images.append(shear_smooth)
             kappa_star_images.append(kappa_star[0])
-        
+
         return (
             np.array(kappa_star_images),
             np.array(kappa_tot_images),
             np.array(shear_images),
         )
 
-
-    def _point_source_magnitude_microlensing(self, band, time, source, **kwargs_microlensing):
-        """Returns point source magnitude variability from only microlensing effect.
-        This function does operation only for the single source.
+    def _point_source_magnitude_microlensing(
+        self, band, time, source, **kwargs_microlensing
+    ):
+        """Returns point source magnitude variability from only microlensing
+        effect. This function does operation only for the single source.
 
         :param band: imaging band
         :type band: string
@@ -724,9 +727,11 @@ class Lens(LensedSystemBase):
             depend on the Lens() class. It is of type:
             kwargs_microlensing = {"kwargs_MagnificationMap":
             kwargs_MagnificationMap, "kwargs_AccretionDisk":
-            kwargs_AccretionDisk, "kwargs_PointSource":kwargs_PointSource}
+            kwargs_AccretionDisk,
+            "kwargs_PointSource":kwargs_PointSource}
         :type kwargs_microlensing: dict
-        :return: point source magnitude for a single source, does not include the macro-magnification.
+        :return: point source magnitude for a single source, does not
+            include the macro-magnification.
         :rtype: numpy array
         """
         if kwargs_microlensing is None:
@@ -752,7 +757,7 @@ class Lens(LensedSystemBase):
                 band, source
             )
         )
-        
+
         ml_lc_lens = MicrolensingLightCurveFromLensModel(self)
         microlensing_magnitudes = (
             ml_lc_lens.generate_point_source_microlensing_magnitudes(
@@ -762,19 +767,12 @@ class Lens(LensedSystemBase):
                 kappa_tot_images=kappa_tot_images,
                 shear_images=shear_images,
                 cosmology=self.cosmo,
-                kwargs_magnification_map=kwargs_microlensing[
-                    "kwargs_MagnificationMap"
-                ],
-                kwargs_accretion_disk=kwargs_microlensing[
-                    "kwargs_AccretionDisk"
-                ],
-                kwargs_point_source=kwargs_microlensing[
-                    "kwargs_PointSource"
-                ],
-                
+                kwargs_magnification_map=kwargs_microlensing["kwargs_MagnificationMap"],
+                kwargs_accretion_disk=kwargs_microlensing["kwargs_AccretionDisk"],
+                kwargs_point_source=kwargs_microlensing["kwargs_PointSource"],
             )
         )
-        return microlensing_magnitudes # # does not include the macro-lensing effect
+        return microlensing_magnitudes  # # does not include the macro-lensing effect
 
     # This function is not used in the code. It will be deleted in the future.
     def _generate_molet_output(self, band, time, **kwargs_molet):

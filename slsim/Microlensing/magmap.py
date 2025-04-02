@@ -53,8 +53,8 @@ class MagnificationMap(object):
         :param rectangular: whether the map is rectangular or not (in this case, the map is circular).
         :param center_x: x coordinate of the center of the magnification map in arcsec units. Default is 0.
         :param center_y: y coordinate of the center of the magnification map in arcsec units. Default is 0.
-        :param half_length_x: x extent of the half-length of the magnification map in arcsec units. 
-        :param half_length_y: y extent of the half_length of the magnification map in arcsec units. 
+        :param half_length_x: x extent of the half-length of the magnification map in arcsec units.
+        :param half_length_y: y extent of the half_length of the magnification map in arcsec units.
         :param num_pixels_x: number of pixels for the x axis
         :param num_pixels_y: number of pixels for the y axis
         """
@@ -128,10 +128,10 @@ class MagnificationMap(object):
                 self.magnitudes,
                 extent=[
                     (self.center_x - self.half_length_x) / self.theta_star,
-                  (self.center_x + self.half_length_x) / self.theta_star,
-                  (self.center_y - self.half_length_y) / self.theta_star,
-                  (self.center_y + self.half_length_y) / self.theta_star
-                  ],
+                    (self.center_x + self.half_length_x) / self.theta_star,
+                    (self.center_y - self.half_length_y) / self.theta_star,
+                    (self.center_y + self.half_length_y) / self.theta_star,
+                ],
                 **kwargs,
             )
         else:
@@ -139,10 +139,10 @@ class MagnificationMap(object):
                 self.magnifications,
                 extent=[
                     (self.center_x - self.half_length_x) / self.theta_star,
-                  (self.center_x + self.half_length_x) / self.theta_star,
-                  (self.center_y - self.half_length_y) / self.theta_star,
-                  (self.center_y + self.half_length_y) / self.theta_star
-                  ],
+                    (self.center_x + self.half_length_x) / self.theta_star,
+                    (self.center_y - self.half_length_y) / self.theta_star,
+                    (self.center_y + self.half_length_y) / self.theta_star,
+                ],
                 **kwargs,
             )
         ax.set_xlabel("$x / \\theta_★$")
@@ -174,7 +174,7 @@ class MagnificationMap(object):
         return (
             self.magnifications.shape[1],  # axis 1 of array is y1 axis (IPM convention)
             self.magnifications.shape[0],  # axis 0 of array is y2 axis (IPM convention)
-        ) 
+        )
 
     @property
     def pixel_scales(self):
@@ -183,13 +183,11 @@ class MagnificationMap(object):
             2 * self.half_length[0] / self.num_pixels[0],
             2 * self.half_length[1] / self.num_pixels[1],
         )
-    
+
     @property
     def pixel_size(self):
         """Returns the pixel size in arcseconds."""
-        return np.sqrt(
-            self.pixel_scales[0] * self.pixel_scales[1]
-        )
+        return np.sqrt(self.pixel_scales[0] * self.pixel_scales[1])
 
     @property
     def magnitudes(self):
