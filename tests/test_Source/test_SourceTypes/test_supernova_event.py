@@ -1,7 +1,6 @@
 from slsim.Sources.SourceTypes.supernova_event import SupernovaEvent
 import numpy as np
 import pytest
-from numpy import testing as npt
 from astropy import cosmology
 
 class TestSingleSersic:
