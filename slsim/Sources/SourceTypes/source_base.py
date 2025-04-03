@@ -27,8 +27,6 @@ class SourceBase(ABC):
             self._center_source = np.array(
                 [self.source_dict["center_x"], self.source_dict["center_y"]]
             )
-        """else:
-            self._center_source = [None, None]"""
     
     @property
     def point_source_offset(self):
