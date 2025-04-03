@@ -34,6 +34,13 @@ class TestPointSource:
         self.source_quasar = PointSource(source_dict=source_dict_quasar, cosmo=cosmo,
                                          **kwargs_quasar)
         
+        source_dict_general_lc = {"z": 0.8, "MJD": np.array([1,2,3,4,5,6,7,8,9]),
+                        "ps_mag_i": np.array([15, 16, 17, 18, 19, 20, 21, 22, 23])}
+        kwargs_general_lc={"pointsource_type": "general_lightcurve","variability_model": "light_curve"}
+        
+        self.source_general_lc = PointSource(source_dict=source_dict_general_lc, 
+                                             cosmo=cosmo, **kwargs_general_lc)
+        
         
     def test_redshift(self):
         assert self.source_sn.redshift == 1.0
@@ -57,6 +64,13 @@ class TestPointSource:
         # lightcurve is generated.
         assert self.source_sn.point_source_magnitude(band="i") is not None
         assert self.source_quasar.point_source_magnitude(band="i") == 20
+        assert self.source_general_lc.point_source_magnitude(band="i",
+                                             image_observation_times=5) == 19
+        expected_result = np.array([15, 16, 17, 18, 19, 20, 21, 22, 23])
+        assert np.all(self.source_general_lc.point_source_magnitude(
+            band="i")["ps_mag_i"] == expected_result)
+        with pytest.raises(ValueError):
+            self.source_general_lc.point_source_magnitude(band="g")
     
     def test_error(self):
         cosmo = cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
