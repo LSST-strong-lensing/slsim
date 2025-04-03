@@ -52,5 +52,5 @@ class GeneralLightCurve(SourceBase):
                     image_observation_times
                 )
                 return variable_mag
-        return kwargs_variab_band
+        return kwargs_variab_band[band_string]
     

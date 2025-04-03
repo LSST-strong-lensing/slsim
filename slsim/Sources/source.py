@@ -41,14 +41,16 @@ class Source(object):
         """
         self.cosmo = cosmo
         self.source_type = source_type
+        self.kwargs = kwargs
         if self.source_type in ["point_source"]:
             self._single_source = PointSource(source_dict=source_dict, cosmo=self.cosmo,
-                                         **kwargs)
+                                         **self.kwargs)
         elif self.source_type in ["extended"]:
-            self._single_source = ExtendedSource(source_dict=source_dict, cosmo=cosmo, **kwargs)
+            self._single_source = ExtendedSource(source_dict=source_dict, cosmo=cosmo,
+                                                  **self.kwargs)
         elif self.source_type in ["point_plus_extended"]:
             self._single_source = PointPlusExtendedSource(source_dict=source_dict, cosmo=cosmo,
-                                                **kwargs)
+                                                **self.kwargs)
         else:
             raise ValueError(
                 "source type %s not supported. Chose among %s."

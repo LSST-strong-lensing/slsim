@@ -122,7 +122,11 @@ class Lens(LensedSystemBase):
 
         :return: number of images
         """
-        return [len(pos[0]) for pos in self.point_source_image_positions()]
+        if self._source_type in ["point_source", "point_plus_extended"]:
+            n_image = [len(pos[0]) for pos in self.point_source_image_positions()]
+        else:
+            n_image = [len(pos[0]) for pos in self.extended_source_image_positions()]
+        return n_image
 
     @property
     def deflector_position(self):
@@ -921,12 +925,12 @@ class Lens(LensedSystemBase):
                 lens_mass_model_list
             )
             kwargs_model["z_lens"] = self.deflector_redshift
-            if self.max_redshift_source_class.light_profile in [
+            if self.max_redshift_source_class.kwargs["extendedsource_type"] in [
                 "single_sersic",
                 "interpolated",
             ]:
                 kwargs_model["source_redshift_list"] = self.source_redshift_list
-            elif self.max_redshift_source_class.light_profile == "double_sersic":
+            elif self.max_redshift_source_class.kwargs["extendedsource_type"] in ["double_sersic"]:
                 kwargs_model["source_redshift_list"] = [
                     z for z in self.source_redshift_list for _ in range(2)
                 ]
@@ -1025,13 +1029,6 @@ class Lens(LensedSystemBase):
                     )
                 )
             # lets transform list in to required structure
-            """if (
-                self.max_redshift_source_class.light_profile == "double_sersic"
-                and self.source_number > 1
-            ):
-                source_models_list_restructure = source_models_list
-                kwargs_source_list_restructure = kwargs_source_list
-            else:"""
             source_models_list_restructure = list(np.concatenate(source_models_list))
             kwargs_source_list_restructure = list(np.concatenate(kwargs_source_list))
             source_models["source_light_model_list"] = source_models_list_restructure
@@ -1141,10 +1138,13 @@ class Lens(LensedSystemBase):
             self._source_type == "point_source"
             or self._source_type == "point_plus_extended"
         ):
-            if self.max_redshift_source_class.sn_type is not None:
-                lens_type = "SN" + self.max_redshift_source_class.sn_type
-            else:
+            if self.max_redshift_source_class.kwargs["pointsource_type"] in ["supernova"]:
+                lens_type = "SN" + self.max_redshift_source_class.kwargs["sn_type"]
+            elif self.max_redshift_source_class.kwargs["pointsource_type"] in ["quasar"]:
                 lens_type = "QSO"
+            else:
+                # "LC" stands for Light Curve
+                lens_type = "LC"
 
         return f"{lens_type}-LENS_{ra:.4f}_{dec:.4f}"
 

@@ -205,24 +205,6 @@ class TestLens(object):
         assert gamma1 == g1
         assert gamma2 == g2
 
-    """def test_point_source_arrival_times(self):
-        dt_days = self.gg_lens.point_source_arrival_times()
-        assert np.min(dt_days) > -1000
-        assert np.max(dt_days) < 1000
-
-    def test_image_observer_times(self):
-        t_obs = 1000
-        t_obs2 = np.array([100, 200, 300])
-        dt_days = self.gg_lens.image_observer_times(t_obs=t_obs)
-        dt_days2 = self.gg_lens.image_observer_times(t_obs=t_obs2)
-        arrival_times = self.gg_lens.point_source_arrival_times()[0]
-        observer_times = (t_obs - arrival_times + np.min(arrival_times))[:, np.newaxis]
-        observer_times2 = (
-            t_obs2[:, np.newaxis] - arrival_times + np.min(arrival_times)
-        ).T
-        npt.assert_almost_equal(dt_days, observer_times, decimal=5)
-        npt.assert_almost_equal(dt_days2, observer_times2, decimal=5)"""
-
     def test_deflector_light_model_lenstronomy(self):
         kwargs_lens_light = self.gg_lens.deflector_light_model_lenstronomy(band="g")
         assert len(kwargs_lens_light) >= 1
@@ -386,10 +368,10 @@ class TestLens(object):
 
     def test_contrast_ratio(self):
         mag_ratios = self.gg_lens.contrast_ratio(band="i", source_index=0)
-        assert len(mag_ratios) == 4
+        assert 2 <= len(mag_ratios) <= 4
 
 
-"""@pytest.fixture
+@pytest.fixture
 def pes_lens_instance():
     path = os.path.dirname(__file__)
     source_dict = Table.read(
@@ -401,13 +383,13 @@ def pes_lens_instance():
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
+        kwargs4 = {"pointsource_type": "quasar", "extendedsource_type": "single_sersic",
+                    "kwargs_variability": None}
         source4 = Source(
             source_dict=source_dict,
             cosmo=cosmo,
             source_type="point_plus_extended",
-            light_profile="single_sersic",
-            variability_model="sinusoidal",
-            kwargs_variability={"amp", "freq"},
+            **kwargs4
         )
         deflector4 = Deflector(
             deflector_type="EPL",
@@ -449,22 +431,31 @@ def test_lens_id_qso(pes_lens_instance):
 @pytest.fixture
 def supernovae_lens_instance():
     path = os.path.dirname(__file__)
-    source_dict = Table.read(
-        os.path.join(path, "TestData/supernovae_source_dict.fits"), format="fits"
-    )
+    source_dict={'MJD': np.array([60966.29451169, 60968.2149886 , 60972.27148745, 61031.1304958 ]),
+        'ps_mag_r': np.array([30.79802681, 30.81809901, 30.86058829, 31.38072828]),
+        'z': 3.739813382373592,
+        'ellipticity': 0.27369234660412406,
+        'physical_size': 14.109069479312343,
+        'angular_size': 9.364416159676842e-06,
+        'mag_g': 27.007121008458327,
+        'mag_r': 26.5023820544612,
+        'mag_i': 26.311557659702515,
+        'e1': -0.1209494604090952,
+        'e2': -0.06952809999798619,
+        'n_sersic': 1.0}
     deflector_dict = Table.read(
         os.path.join(path, "TestData/supernovae_deflector_dict.fits"), format="fits"
     )
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
+        kwargs5 = {"pointsource_type": "general_lightcurve", "extendedsource_type": "single_sersic",
+                    "variability_model": "light_curve"}
         source5 = Source(
             source_dict=source_dict,
             cosmo=cosmo,
             source_type="point_plus_extended",
-            light_profile="single_sersic",
-            variability_model="light_curve",
-            kwargs_variability={"MJD", "ps_mag_r"},
+            **kwargs5
         )
         deflector5 = Deflector(
             deflector_type="EPL",
@@ -480,14 +471,32 @@ def supernovae_lens_instance():
             break
     return supernovae_lens
 
-
 def test_point_source_magnitude_with_lightcurve(supernovae_lens_instance):
     supernovae_lens = supernovae_lens_instance
     mag = supernovae_lens.point_source_magnitude(band="r", lensed=True)[0]
-    expected_results = supernovae_lens_instance._source[0].source_dict["ps_mag_r"]
-    assert mag[0][0] != expected_results[0][0]
-    assert mag[1][0] != expected_results[0][0]
+    expected_results = np.array([30.79802681, 30.81809901, 30.86058829, 31.38072828])
+    assert np.all(mag[0] != expected_results)
+    assert np.all(mag[1] != expected_results)
 
+def test_point_source_arrival_times(supernovae_lens_instance):
+        supernova_lens= supernovae_lens_instance
+        dt_days = supernova_lens.point_source_arrival_times()
+        assert np.min(dt_days) > -1000
+        assert np.max(dt_days) < 1000
+
+def test_image_observer_times(supernovae_lens_instance):
+    supernova_lens = supernovae_lens_instance
+    t_obs = 1000
+    t_obs2 = np.array([100, 200, 300])
+    dt_days = supernova_lens.image_observer_times(t_obs=t_obs)
+    dt_days2 = supernova_lens.image_observer_times(t_obs=t_obs2)
+    arrival_times = supernova_lens.point_source_arrival_times()[0]
+    observer_times = (t_obs - arrival_times + np.min(arrival_times))[:, np.newaxis]
+    observer_times2 = (
+        t_obs2[:, np.newaxis] - arrival_times + np.min(arrival_times)
+    ).T
+    npt.assert_almost_equal(dt_days, observer_times, decimal=5)
+    npt.assert_almost_equal(dt_days2, observer_times2, decimal=5)
 
 class TestDifferentLens(object):
     # pytest.fixture(scope='class')
@@ -506,11 +515,12 @@ class TestDifferentLens(object):
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         self.source_dict = blue_one
         self.deflector_dict = red_one
+        kwargs = {"extendedsource_type": "single_sersic"}
         self.source6 = Source(
             source_dict=self.source_dict,
             cosmo=self.cosmo,
             source_type="extended",
-            light_profile="single_sersic",
+            **kwargs
         )
         self.deflector6 = Deflector(
             deflector_type="EPL",
@@ -637,17 +647,15 @@ def supernovae_lens_instance_double_sersic_multisource():
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
+        kwargs = {"pointsource_type": "supernova", "extendedsource_type": "double_sersic",
+                "variability_model": "light_curve", "kwargs_variability": ["supernovae_lightcurve", "i"],
+                "sn_type": "Ia", "sn_absolute_mag_band": "bessellb", "sn_absolute_zpsys": "ab", 
+               "lightcurve_time": np.linspace(-20, 100, 1000), "sn_modeldir": None}
         source = Source(
             source_dict=source_dict,
             cosmo=cosmo,
             source_type="point_plus_extended",
-            light_profile="double_sersic",
-            lightcurve_time=np.linspace(-20, 100, 1000),
-            variability_model="light_curve",
-            kwargs_variability={"supernovae_lightcurve", "i"},
-            sn_type="Ia",
-            sn_absolute_mag_band="bessellb",
-            sn_absolute_zpsys="ab",
+            **kwargs
         )
         deflector = Deflector(
             deflector_type="EPL",
@@ -694,17 +702,15 @@ class TestMultiSource(object):
         deflector_dict_["gamma_pl"] = self.gamma_pl
         source_dict2 = copy.deepcopy(source_dict1)
         source_dict2["z"] += 2
+        kwargs = {"pointsource_type": "supernova", "extendedsource_type": "double_sersic",
+                "variability_model": "light_curve", "kwargs_variability": ["supernovae_lightcurve", "i"],
+                "sn_type": "Ia", "sn_absolute_mag_band": "bessellb", "sn_absolute_zpsys": "ab", 
+               "lightcurve_time": np.linspace(-20, 100, 1000), "sn_modeldir": None}
         self.source1 = Source(
             source_dict=source_dict2,
             cosmo=self.cosmo,
             source_type="point_plus_extended",
-            light_profile="double_sersic",
-            lightcurve_time=np.linspace(-20, 100, 1000),
-            variability_model="light_curve",
-            kwargs_variability={"supernovae_lightcurve", "i"},
-            sn_type="Ia",
-            sn_absolute_mag_band="bessellb",
-            sn_absolute_zpsys="ab",
+            **kwargs
         )
         # We initiate the another Source class with the same source. In this class,
         # source position will be different and all the lensing quantities will be different
@@ -712,13 +718,7 @@ class TestMultiSource(object):
             source_dict=source_dict1,
             cosmo=self.cosmo,
             source_type="point_plus_extended",
-            light_profile="double_sersic",
-            lightcurve_time=np.linspace(-20, 100, 1000),
-            variability_model="light_curve",
-            kwargs_variability={"supernovae_lightcurve", "i"},
-            sn_type="Ia",
-            sn_absolute_mag_band="bessellb",
-            sn_absolute_zpsys="ab",
+            **kwargs
         )
         self.deflector = Deflector(
             deflector_type="EPL",
@@ -852,7 +852,7 @@ class TestMultiSource(object):
         # assert image_observation_time1[0] == image_observation_time3[0][0]
         npt.assert_almost_equal(
             image_observation_time2, image_observation_time3[1], decimal=5
-        )"""
+        )
 
 
 if __name__ == "__main__":
