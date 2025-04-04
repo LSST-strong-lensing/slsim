@@ -68,7 +68,7 @@ class TestPointSource:
                                              image_observation_times=5) == 19
         expected_result = np.array([15, 16, 17, 18, 19, 20, 21, 22, 23])
         assert np.all(self.source_general_lc.point_source_magnitude(
-            band="i")["ps_mag_i"] == expected_result)
+            band="i") == expected_result)
         with pytest.raises(ValueError):
             self.source_general_lc.point_source_magnitude(band="g")
     
