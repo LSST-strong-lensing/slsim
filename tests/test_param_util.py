@@ -417,19 +417,27 @@ def test_detect_object():
     assert result1
     assert not result2
 
+
 def test_surface_brightness_reff():
-        kwargs_source=[{'magnitude': 15,
-            'R_sersic': 1,
-            'n_sersic': 1.0,
-            'e1': 0.06350855238708408,
-            'e2': -0.08420760408362458,
-            'center_x': 0.30298310338567075,
-            'center_y': -0.3505004565139597}]
-        source_model_list = ["SERSIC_ELLIPSE"]
-        angular_size=1
-        mag_arcsec2 = surface_brightness_reff(angular_size=angular_size, 
-                    source_model_list=source_model_list, kwargs_extended_source=kwargs_source)
-        npt.assert_almost_equal(mag_arcsec2, 16.995, decimal=2)
+    kwargs_source = [
+        {
+            "magnitude": 15,
+            "R_sersic": 1,
+            "n_sersic": 1.0,
+            "e1": 0.06350855238708408,
+            "e2": -0.08420760408362458,
+            "center_x": 0.30298310338567075,
+            "center_y": -0.3505004565139597,
+        }
+    ]
+    source_model_list = ["SERSIC_ELLIPSE"]
+    angular_size = 1
+    mag_arcsec2 = surface_brightness_reff(
+        angular_size=angular_size,
+        source_model_list=source_model_list,
+        kwargs_extended_source=kwargs_source,
+    )
+    npt.assert_almost_equal(mag_arcsec2, 16.995, decimal=2)
 
 
 def test_gaussian_psf():
