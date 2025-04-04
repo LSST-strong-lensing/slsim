@@ -137,10 +137,7 @@ class SupernovaEvent(SourceBase):
         else:
             band_string = "ps_mag_" + band
         if self.kwargs_variab_dict is not None:
-            if band in self.kwargs_variab_dict.keys():
-                kwargs_variab_band = self.kwargs_variab_dict[band]
-            else:
-                kwargs_variab_band = self.kwargs_variab_dict
+            kwargs_variab_band = self.kwargs_variab_dict[band]
             self.variability_class = Variability(
                 self.variability_model, **kwargs_variab_band
             )
@@ -159,11 +156,4 @@ class SupernovaEvent(SourceBase):
                 )
         else:
             source_mag = self.source_dict[band_string]
-            if (
-                isinstance(source_mag, np.ndarray)
-                and source_mag.ndim == 2
-                and source_mag.shape[0] == 1
-            ):
-                return source_mag.reshape(-1)
-            else:
-                return source_mag
+            return source_mag
