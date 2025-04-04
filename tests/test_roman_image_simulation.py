@@ -50,22 +50,23 @@ SOURCE_DICT = {
 }
 
 BAND = "F106"
-kwargs_extended={ "extendedsource_type": "single_sersic"}
+kwargs_extended = {"extendedsource_type": "single_sersic"}
 source = Source(
-    source_dict=SOURCE_DICT,
-    cosmo=COSMO,
-    source_type="extended",
-    **kwargs_extended
+    source_dict=SOURCE_DICT, cosmo=COSMO, source_type="extended", **kwargs_extended
 )
-kwargs = {"pointsource_type": "supernova", "extendedsource_type": "single_sersic",
-            "variability_model": "light_curve", "kwargs_variability": ["supernovae_lightcurve", "F184", "F129", "F106"],
-                    "sn_type": "Ia", "sn_absolute_mag_band": "bessellb", "sn_absolute_zpsys": "ab", 
-                    "lightcurve_time": np.linspace(-50, 100, 100), "sn_modeldir": None}
+kwargs = {
+    "pointsource_type": "supernova",
+    "extendedsource_type": "single_sersic",
+    "variability_model": "light_curve",
+    "kwargs_variability": ["supernovae_lightcurve", "F184", "F129", "F106"],
+    "sn_type": "Ia",
+    "sn_absolute_mag_band": "bessellb",
+    "sn_absolute_zpsys": "ab",
+    "lightcurve_time": np.linspace(-50, 100, 100),
+    "sn_modeldir": None,
+}
 supernova_source = Source(
-    source_dict=SOURCE_DICT,
-    cosmo=COSMO,
-    source_type="point_plus_extended",
-    **kwargs
+    source_dict=SOURCE_DICT, cosmo=COSMO, source_type="point_plus_extended", **kwargs
 )
 
 deflector = Deflector(

@@ -3,18 +3,20 @@ from slsim.Sources.SourceTypes.source_base import SourceBase
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 from slsim.Util.param_util import surface_brightness_reff
 
+
 class SingleSersic(SourceBase):
-    """class to manage source with single sersic light profile"""
+    """Class to manage source with single sersic light profile."""
+
     def __init__(self, source_dict):
         """
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
-         This dict or table should contain atleast redshift, a magnitude in any band, 
+         This dict or table should contain atleast redshift, a magnitude in any band,
          sersic index, angular size in arcsec, and ellipticity.
-         eg: {"z": 0.8, "mag_i": 22, "n_sersic": 1, "angular_size": 0.10, 
+         eg: {"z": 0.8, "mag_i": 22, "n_sersic": 1, "angular_size": 0.10,
          "e1": 0.002, "e2": 0.001}. One can provide magnitudes in multiple bands.
         :type source_dict: dict or astropy.table.Table
         """
-        super().__init__(source_dict = source_dict)
+        super().__init__(source_dict=source_dict)
 
     @property
     def n_sersic(self):
@@ -41,7 +43,7 @@ class SingleSersic(SourceBase):
         """
 
         return float(self.source_dict["e1"]), float(self.source_dict["e2"])
-    
+
     def extended_source_magnitude(self, band):
         """Get the magnitude of the extended source in a specific band.
 
@@ -57,12 +59,12 @@ class SingleSersic(SourceBase):
             band_string = "mag_" + band
         source_mag = self.source_dict[band_string]
         return source_mag
-    
+
     def kwargs_extended_source_light(self, reference_position, draw_area, band=None):
         """Provides dictionary of keywords for the source light model(s).
         Kewords used are in lenstronomy conventions.
 
-        :param reference_position: reference position. the source postion will be 
+        :param reference_position: reference position. the source postion will be
          defined relative to this position.
          Eg: np.array([0, 0])
         :param draw_area: The area of the test region from which we randomly draw a
@@ -103,7 +105,7 @@ class SingleSersic(SourceBase):
         """
         source_models_list = ["SERSIC_ELLIPSE"]
         return source_models_list
-    
+
     def surface_brightness_reff(self, band=None):
         """Calculate average surface brightness within half light radius.
 
@@ -112,8 +114,11 @@ class SingleSersic(SourceBase):
             [mag/arcsec^2]
         """
         # reference_position and draw_area do not matter, they are dummy input here.
-        kwargs_source = self.kwargs_extended_source_light(reference_position=[0, 0],
-                                                           draw_area=4*np.pi, band=band)
-        return surface_brightness_reff(angular_size=self.angular_size, 
-                        source_model_list=self.extended_source_light_model(),
-                kwargs_extended_source=kwargs_source)
+        kwargs_source = self.kwargs_extended_source_light(
+            reference_position=[0, 0], draw_area=4 * np.pi, band=band
+        )
+        return surface_brightness_reff(
+            angular_size=self.angular_size,
+            source_model_list=self.extended_source_light_model(),
+            kwargs_extended_source=kwargs_source,
+        )

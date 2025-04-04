@@ -17,11 +17,14 @@ def Quasar_class():
     }
     quasar_list = quasar_catalog_simple(**kwargs_quasars)
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-    kwargs={"pointsource_type": "quasar", "variability_model":"light_curve",
-            "kwargs_variability": None, 
-            "agn_driving_variability_model":None,
-            "agn_driving_kwargs_variability": None,
-            "lightcurve_time":None}
+    kwargs = {
+        "pointsource_type": "quasar",
+        "variability_model": "light_curve",
+        "kwargs_variability": None,
+        "agn_driving_variability_model": None,
+        "agn_driving_kwargs_variability": None,
+        "lightcurve_time": None,
+    }
     return PointSources(
         point_source_list=quasar_list,
         cosmo=cosmo,

@@ -32,14 +32,14 @@ class PointSources(SourcePopBase):
          sample, we can only apply redshift cuts because supernovae sample contains only
          redshift in this stage.
         :type kwargs_cut: dict
-        :param kwargs: dictionary of keyword arguments for a source. It should 
-         contain keywords for pointsource_type and other keywords associated with 
-         pointsource. For supernova kwargs dict, please see documentation of 
-         SupernovaEvent class. For quasar kwargs dict, please see documentation of 
+        :param kwargs: dictionary of keyword arguments for a source. It should
+         contain keywords for pointsource_type and other keywords associated with
+         pointsource. For supernova kwargs dict, please see documentation of
+         SupernovaEvent class. For quasar kwargs dict, please see documentation of
          Quasar class.
-        Eg of supernova kwargs: kwargs={"pointsource_type": "supernova", 
+        Eg of supernova kwargs: kwargs={"pointsource_type": "supernova",
           "variability_model": "light_curve", "kwargs_variability": ["supernovae_lightcurve",
-            "i", "r"], "sn_type": "Ia", "sn_absolute_mag_band": "bessellb", 
+            "i", "r"], "sn_type": "Ia", "sn_absolute_mag_band": "bessellb",
             "sn_absolute_zpsys": "ab", "lightcurve_time": np.linspace(-50, 100, 150),
             "sn_modeldir": "/Users/narayankhadka/Downloads/sncosmo_sn_models/SALT3.NIR_WAVEEXT/"}.
          Other supported pointsource_types are "supernova", "quasar".
@@ -55,8 +55,7 @@ class PointSources(SourcePopBase):
         )
 
         self._num_select = len(self._point_source_select)
-        """super(SourcePopBase, self).__init__(
-        )"""
+        """Super(SourcePopBase, self).__init__( )"""
         self.source_type = "point_source"
 
     @property

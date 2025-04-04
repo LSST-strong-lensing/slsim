@@ -40,12 +40,14 @@ class TestLens(object):
 
         mag_arc_limit = {"i": 35, "g": 35, "r": 35}
         while True:
-            kwargs = {"extendedsource_type":"single_sersic",}
+            kwargs = {
+                "extendedsource_type": "single_sersic",
+            }
             self.source = Source(
                 source_dict=self.source_dict,
                 cosmo=cosmo,
                 source_type="extended",
-                **kwargs
+                **kwargs,
             )
             self.deflector = Deflector(
                 deflector_type="EPL",
@@ -127,7 +129,7 @@ class TestLens(object):
             source_dict=interp_source_dict,
             cosmo=cosmo,
             source_type="extended",
-            **kwargs_int
+            **kwargs_int,
         )
         self.gg_lens_interp = Lens(
             source_class=self.source_interp,
@@ -270,12 +272,9 @@ class TestLens(object):
         }
 
         while True:
-            kwargs2={"extendedsource_type": "single_sersic"}
+            kwargs2 = {"extendedsource_type": "single_sersic"}
             self.source2 = Source(
-                source_dict=source_dict,
-                cosmo=cosmo,
-                source_type="extended",
-                **kwargs2
+                source_dict=source_dict, cosmo=cosmo, source_type="extended", **kwargs2
             )
             self.deflector2 = Deflector(
                 deflector_type="NFW_HERNQUIST",
@@ -305,12 +304,9 @@ class TestLens(object):
             "subhalos": subhalos_table,
         }
         while True:
-            kwargs_3={"extendedsource_type": "single_sersic"}
+            kwargs_3 = {"extendedsource_type": "single_sersic"}
             self.source3 = Source(
-                source_dict=source_dict,
-                cosmo=cosmo,
-                source_type="extended",
-                **kwargs_3
+                source_dict=source_dict, cosmo=cosmo, source_type="extended", **kwargs_3
             )
             self.deflector3 = Deflector(
                 deflector_type="NFW_CLUSTER",
@@ -383,13 +379,16 @@ def pes_lens_instance():
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
-        kwargs4 = {"pointsource_type": "quasar", "extendedsource_type": "single_sersic",
-                    "kwargs_variability": None}
+        kwargs4 = {
+            "pointsource_type": "quasar",
+            "extendedsource_type": "single_sersic",
+            "kwargs_variability": None,
+        }
         source4 = Source(
             source_dict=source_dict,
             cosmo=cosmo,
             source_type="point_plus_extended",
-            **kwargs4
+            **kwargs4,
         )
         deflector4 = Deflector(
             deflector_type="EPL",
@@ -431,31 +430,36 @@ def test_lens_id_qso(pes_lens_instance):
 @pytest.fixture
 def supernovae_lens_instance():
     path = os.path.dirname(__file__)
-    source_dict={'MJD': np.array([60966.29451169, 60968.2149886 , 60972.27148745, 61031.1304958 ]),
-        'ps_mag_r': np.array([30.79802681, 30.81809901, 30.86058829, 31.38072828]),
-        'z': 3.739813382373592,
-        'ellipticity': 0.27369234660412406,
-        'physical_size': 14.109069479312343,
-        'angular_size': 9.364416159676842e-06,
-        'mag_g': 27.007121008458327,
-        'mag_r': 26.5023820544612,
-        'mag_i': 26.311557659702515,
-        'e1': -0.1209494604090952,
-        'e2': -0.06952809999798619,
-        'n_sersic': 1.0}
+    source_dict = {
+        "MJD": np.array([60966.29451169, 60968.2149886, 60972.27148745, 61031.1304958]),
+        "ps_mag_r": np.array([30.79802681, 30.81809901, 30.86058829, 31.38072828]),
+        "z": 3.739813382373592,
+        "ellipticity": 0.27369234660412406,
+        "physical_size": 14.109069479312343,
+        "angular_size": 9.364416159676842e-06,
+        "mag_g": 27.007121008458327,
+        "mag_r": 26.5023820544612,
+        "mag_i": 26.311557659702515,
+        "e1": -0.1209494604090952,
+        "e2": -0.06952809999798619,
+        "n_sersic": 1.0,
+    }
     deflector_dict = Table.read(
         os.path.join(path, "TestData/supernovae_deflector_dict.fits"), format="fits"
     )
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
-        kwargs5 = {"pointsource_type": "general_lightcurve", "extendedsource_type": "single_sersic",
-                    "variability_model": "light_curve"}
+        kwargs5 = {
+            "pointsource_type": "general_lightcurve",
+            "extendedsource_type": "single_sersic",
+            "variability_model": "light_curve",
+        }
         source5 = Source(
             source_dict=source_dict,
             cosmo=cosmo,
             source_type="point_plus_extended",
-            **kwargs5
+            **kwargs5,
         )
         deflector5 = Deflector(
             deflector_type="EPL",
@@ -471,6 +475,7 @@ def supernovae_lens_instance():
             break
     return supernovae_lens
 
+
 def test_point_source_magnitude_with_lightcurve(supernovae_lens_instance):
     supernovae_lens = supernovae_lens_instance
     mag = supernovae_lens.point_source_magnitude(band="r", lensed=True)[0]
@@ -478,11 +483,13 @@ def test_point_source_magnitude_with_lightcurve(supernovae_lens_instance):
     assert np.all(mag[0] != expected_results)
     assert np.all(mag[1] != expected_results)
 
+
 def test_point_source_arrival_times(supernovae_lens_instance):
-        supernova_lens= supernovae_lens_instance
-        dt_days = supernova_lens.point_source_arrival_times()
-        assert np.min(dt_days) > -1000
-        assert np.max(dt_days) < 1000
+    supernova_lens = supernovae_lens_instance
+    dt_days = supernova_lens.point_source_arrival_times()
+    assert np.min(dt_days) > -1000
+    assert np.max(dt_days) < 1000
+
 
 def test_image_observer_times(supernovae_lens_instance):
     supernova_lens = supernovae_lens_instance
@@ -492,11 +499,10 @@ def test_image_observer_times(supernovae_lens_instance):
     dt_days2 = supernova_lens.image_observer_times(t_obs=t_obs2)
     arrival_times = supernova_lens.point_source_arrival_times()[0]
     observer_times = (t_obs - arrival_times + np.min(arrival_times))[:, np.newaxis]
-    observer_times2 = (
-        t_obs2[:, np.newaxis] - arrival_times + np.min(arrival_times)
-    ).T
+    observer_times2 = (t_obs2[:, np.newaxis] - arrival_times + np.min(arrival_times)).T
     npt.assert_almost_equal(dt_days, observer_times, decimal=5)
     npt.assert_almost_equal(dt_days2, observer_times2, decimal=5)
+
 
 class TestDifferentLens(object):
     # pytest.fixture(scope='class')
@@ -520,7 +526,7 @@ class TestDifferentLens(object):
             source_dict=self.source_dict,
             cosmo=self.cosmo,
             source_type="extended",
-            **kwargs
+            **kwargs,
         )
         self.deflector6 = Deflector(
             deflector_type="EPL",
@@ -647,15 +653,22 @@ def supernovae_lens_instance_double_sersic_multisource():
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
-        kwargs = {"pointsource_type": "supernova", "extendedsource_type": "double_sersic",
-                "variability_model": "light_curve", "kwargs_variability": ["supernovae_lightcurve", "i"],
-                "sn_type": "Ia", "sn_absolute_mag_band": "bessellb", "sn_absolute_zpsys": "ab", 
-               "lightcurve_time": np.linspace(-20, 100, 1000), "sn_modeldir": None}
+        kwargs = {
+            "pointsource_type": "supernova",
+            "extendedsource_type": "double_sersic",
+            "variability_model": "light_curve",
+            "kwargs_variability": ["supernovae_lightcurve", "i"],
+            "sn_type": "Ia",
+            "sn_absolute_mag_band": "bessellb",
+            "sn_absolute_zpsys": "ab",
+            "lightcurve_time": np.linspace(-20, 100, 1000),
+            "sn_modeldir": None,
+        }
         source = Source(
             source_dict=source_dict,
             cosmo=cosmo,
             source_type="point_plus_extended",
-            **kwargs
+            **kwargs,
         )
         deflector = Deflector(
             deflector_type="EPL",
@@ -702,15 +715,22 @@ class TestMultiSource(object):
         deflector_dict_["gamma_pl"] = self.gamma_pl
         source_dict2 = copy.deepcopy(source_dict1)
         source_dict2["z"] += 2
-        kwargs = {"pointsource_type": "supernova", "extendedsource_type": "double_sersic",
-                "variability_model": "light_curve", "kwargs_variability": ["supernovae_lightcurve", "i"],
-                "sn_type": "Ia", "sn_absolute_mag_band": "bessellb", "sn_absolute_zpsys": "ab", 
-               "lightcurve_time": np.linspace(-20, 100, 1000), "sn_modeldir": None}
+        kwargs = {
+            "pointsource_type": "supernova",
+            "extendedsource_type": "double_sersic",
+            "variability_model": "light_curve",
+            "kwargs_variability": ["supernovae_lightcurve", "i"],
+            "sn_type": "Ia",
+            "sn_absolute_mag_band": "bessellb",
+            "sn_absolute_zpsys": "ab",
+            "lightcurve_time": np.linspace(-20, 100, 1000),
+            "sn_modeldir": None,
+        }
         self.source1 = Source(
             source_dict=source_dict2,
             cosmo=self.cosmo,
             source_type="point_plus_extended",
-            **kwargs
+            **kwargs,
         )
         # We initiate the another Source class with the same source. In this class,
         # source position will be different and all the lensing quantities will be different
@@ -718,7 +738,7 @@ class TestMultiSource(object):
             source_dict=source_dict1,
             cosmo=self.cosmo,
             source_type="point_plus_extended",
-            **kwargs
+            **kwargs,
         )
         self.deflector = Deflector(
             deflector_type="EPL",

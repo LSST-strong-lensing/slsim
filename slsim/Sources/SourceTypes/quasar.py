@@ -1,17 +1,17 @@
 import numpy as np
 from astropy.table import Column, Table
-from slsim.Sources.SourceVariability.variability import (Variability,
-                     reprocess_with_lamppost_model)
+from slsim.Sources.SourceVariability.variability import (
+    Variability,
+    reprocess_with_lamppost_model,
+)
 from slsim.Sources import agn
 from slsim.Sources.SourceTypes.source_base import SourceBase
 
+
 class Quasar(SourceBase):
-    """A class to manage a quasar"""
-    def __init__(self,
-        source_dict,
-        cosmo=None,
-        **kwargs
-        ):
+    """A class to manage a quasar."""
+
+    def __init__(self, source_dict, cosmo=None, **kwargs):
         """
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
          This dict or table should contain atleast redshift and i-band magnitude.
@@ -31,8 +31,8 @@ class Quasar(SourceBase):
             :param lightcurve_time: observation time array for lightcurve in unit of days.
             :type lightcurve_time: array
         """
-        
-        super().__init__(source_dict = source_dict)
+
+        super().__init__(source_dict=source_dict)
         self.cosmo = cosmo
         self.variability_model = kwargs.get("variability_model")
         self.kwargs_variability = kwargs.get("kwargs_variability")
@@ -40,8 +40,10 @@ class Quasar(SourceBase):
         self.agn_known_band = kwargs.get("agn_known_band")
         self.agn_known_mag = kwargs.get("agn_known_mag")
         self.agn_driving_variability_model = kwargs.get("agn_driving_variability_model")
-        self.agn_driving_kwargs_variability = kwargs.get("agn_driving_kwargs_variability")
-    
+        self.agn_driving_kwargs_variability = kwargs.get(
+            "agn_driving_kwargs_variability"
+        )
+
     @property
     def light_curve(self):
         if self.kwargs_variability is not None:
@@ -55,9 +57,7 @@ class Quasar(SourceBase):
 
             else:
                 # Pull the agn kwarg dict out of the kwargs_variability dict
-                agn_kwarg_dict = extract_agn_kwargs_from_source_dict(
-                    self.source_dict
-                )
+                agn_kwarg_dict = extract_agn_kwargs_from_source_dict(self.source_dict)
 
                 # Populate "None" for optional keys related to drawing random AGN
                 if "random_seed" in self.source_dict.colnames:
@@ -65,9 +65,7 @@ class Quasar(SourceBase):
                 else:
                     random_seed = None
                 if "input_agn_bounds_dict" in self.source_dict.colnames:
-                    input_agn_bounds_dict = self.source_dict[
-                        "input_agn_bounds_dict"
-                    ][0]
+                    input_agn_bounds_dict = self.source_dict["input_agn_bounds_dict"][0]
                 else:
                     input_agn_bounds_dict = None
 
@@ -154,7 +152,7 @@ class Quasar(SourceBase):
         else:
             kwargs_variab_extracted = None
         return kwargs_variab_extracted
-    
+
     def point_source_magnitude(self, band, image_observation_times=None):
         """Get the magnitude of the point source in a specific band.
 
@@ -204,7 +202,8 @@ class Quasar(SourceBase):
                 return source_mag.reshape(-1)
             else:
                 return source_mag
-    
+
+
 def add_mean_mag_to_source_table(sourcedict, mean_mags, band_list):
     """This function adds/replace given mean magnitudes in given bands in a
     given source table/dict.
@@ -226,6 +225,7 @@ def add_mean_mag_to_source_table(sourcedict, mean_mags, band_list):
         else:
             _source_dict.add_column(new_agn_column)
     return _source_dict[0]
+
 
 def extract_agn_kwargs_from_source_dict(source_dict):
     """This extracts all AGN related parameters from a source_dict Table and

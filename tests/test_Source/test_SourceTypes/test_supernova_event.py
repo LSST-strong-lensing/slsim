@@ -3,39 +3,64 @@ import numpy as np
 import pytest
 from astropy import cosmology
 
+
 class TestSupernovaEvent:
     def setup_method(self):
         cosmo = cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
         source_dict = {"z": 0.8, "ra_off": 0.001, "dec_off": 0.005}
         source_dict2 = {"z": 0.8, "ra_off": 0.001, "dec_off": 0.005, "ps_mag_i": 20}
-        source_dict3 = {"z": 0.8, "ra_off": 0.001, "dec_off": 0.005, 
-                        "MJD": [0, 2, 3, 4, 5, 6], "ps_mag_i": [21, 20, 19, 21, 22, 23]}
-        kwargs_sn={"pointsource_type": "supernova","variability_model": "light_curve",
-               "kwargs_variability": ["supernovae_lightcurve", "i", "r"], "sn_type": "Ia",
-               "sn_absolute_mag_band": "bessellb", "sn_absolute_zpsys": "ab", 
-               "lightcurve_time": np.linspace(-50, 100, 150),
-               "sn_modeldir": None}
-        kwargs_sn_roman={"pointsource_type": "supernova","variability_model": "light_curve",
-               "kwargs_variability": ["supernovae_lightcurve", "F062", "F129"], "sn_type": "Ia",
-               "sn_absolute_mag_band": "bessellb", "sn_absolute_zpsys": "ab", 
-               "lightcurve_time": np.linspace(-50, 100, 100),
-               "sn_modeldir": None}
-        
-        kwargs_sn_none={"pointsource_type": "supernova","variability_model": "light_curve",
-               "kwargs_variability": None, "sn_type": "Ia",
-               "sn_absolute_mag_band": "bessellb", "sn_absolute_zpsys": "ab", 
-               "lightcurve_time": np.linspace(-50, 100, 100),
-               "sn_modeldir": None}
-        
+        source_dict3 = {
+            "z": 0.8,
+            "ra_off": 0.001,
+            "dec_off": 0.005,
+            "MJD": [0, 2, 3, 4, 5, 6],
+            "ps_mag_i": [21, 20, 19, 21, 22, 23],
+        }
+        kwargs_sn = {
+            "pointsource_type": "supernova",
+            "variability_model": "light_curve",
+            "kwargs_variability": ["supernovae_lightcurve", "i", "r"],
+            "sn_type": "Ia",
+            "sn_absolute_mag_band": "bessellb",
+            "sn_absolute_zpsys": "ab",
+            "lightcurve_time": np.linspace(-50, 100, 150),
+            "sn_modeldir": None,
+        }
+        kwargs_sn_roman = {
+            "pointsource_type": "supernova",
+            "variability_model": "light_curve",
+            "kwargs_variability": ["supernovae_lightcurve", "F062", "F129"],
+            "sn_type": "Ia",
+            "sn_absolute_mag_band": "bessellb",
+            "sn_absolute_zpsys": "ab",
+            "lightcurve_time": np.linspace(-50, 100, 100),
+            "sn_modeldir": None,
+        }
+
+        kwargs_sn_none = {
+            "pointsource_type": "supernova",
+            "variability_model": "light_curve",
+            "kwargs_variability": None,
+            "sn_type": "Ia",
+            "sn_absolute_mag_band": "bessellb",
+            "sn_absolute_zpsys": "ab",
+            "lightcurve_time": np.linspace(-50, 100, 100),
+            "sn_modeldir": None,
+        }
+
         self.source = SupernovaEvent(source_dict=source_dict, cosmo=cosmo, **kwargs_sn)
-        self.source_roman = SupernovaEvent(source_dict=source_dict, cosmo=cosmo,
-                                            **kwargs_sn_roman)
-        self.source_none = SupernovaEvent(source_dict=source_dict2, cosmo=cosmo,
-                                            **kwargs_sn_none)
-        self.source_cosmo_error = SupernovaEvent(source_dict=source_dict, cosmo=None,
-                                            **kwargs_sn)
-        self.source_light_curve = SupernovaEvent(source_dict=source_dict3, cosmo=cosmo,
-                                            **kwargs_sn_none)
+        self.source_roman = SupernovaEvent(
+            source_dict=source_dict, cosmo=cosmo, **kwargs_sn_roman
+        )
+        self.source_none = SupernovaEvent(
+            source_dict=source_dict2, cosmo=cosmo, **kwargs_sn_none
+        )
+        self.source_cosmo_error = SupernovaEvent(
+            source_dict=source_dict, cosmo=None, **kwargs_sn
+        )
+        self.source_light_curve = SupernovaEvent(
+            source_dict=source_dict3, cosmo=cosmo, **kwargs_sn_none
+        )
 
     def test_light_curve(self):
         light_curve = self.source.light_curve
@@ -62,7 +87,7 @@ class TestSupernovaEvent:
             self.source_cosmo_error.light_curve
 
     def test_point_source_magnitude(self):
-        # supernova is randomly generated. So, can't assert a fix number for magnitude. 
+        # supernova is randomly generated. So, can't assert a fix number for magnitude.
         # Just checking these numbers are generated.
         assert self.source.point_source_magnitude("i") is not None
         with pytest.raises(ValueError):
@@ -70,7 +95,7 @@ class TestSupernovaEvent:
         with pytest.raises(ValueError):
             self.source_none.point_source_magnitude("i", image_observation_times=10)
         assert self.source_none.point_source_magnitude("i") == 20
-        assert self.source_light_curve.point_source_magnitude("i")[2] == 19 
+        assert self.source_light_curve.point_source_magnitude("i")[2] == 19
 
 
 if __name__ == "__main__":

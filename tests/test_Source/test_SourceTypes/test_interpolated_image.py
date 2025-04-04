@@ -4,6 +4,7 @@ import pytest
 from numpy import testing as npt
 from astropy import cosmology
 
+
 class TestInterpolated:
     def setup_method(self):
         cosmo = cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
@@ -31,16 +32,22 @@ class TestInterpolated:
         # Ensure no negative values
         image = np.clip(image, 0, None)
         self.test_image = image
-        
-        self.source_dict = {"z": 0.5, "image": self.test_image, "center_x": size // 2,
-                "center_y": size // 2, "z_data": 0.1, "pixel_width_data":0.05,
-                "phi_G": 0.5, "mag_i": 21,
+
+        self.source_dict = {
+            "z": 0.5,
+            "image": self.test_image,
+            "center_x": size // 2,
+            "center_y": size // 2,
+            "z_data": 0.1,
+            "pixel_width_data": 0.05,
+            "phi_G": 0.5,
+            "mag_i": 21,
         }
         self.source = Interpolated(source_dict=self.source_dict, cosmo=cosmo)
 
     def test_image_redshift(self):
         assert self.source.image_redshift == 0.1
-    
+
     def test_image(self):
         assert np.all(self.source.image == self.test_image)
 
@@ -52,13 +59,14 @@ class TestInterpolated:
         with pytest.raises(ValueError):
             self.source.extended_source_magnitude("g")
 
-
     def test_kwargs_extended_source_light(self):
-        results = self.source.kwargs_extended_source_light(reference_position=[0,0],
-                                            draw_area=4*np.pi, band="i")
-        results2 = self.source.kwargs_extended_source_light(reference_position=[0,0],
-                                            draw_area=4*np.pi, band=None)
-        
+        results = self.source.kwargs_extended_source_light(
+            reference_position=[0, 0], draw_area=4 * np.pi, band="i"
+        )
+        results2 = self.source.kwargs_extended_source_light(
+            reference_position=[0, 0], draw_area=4 * np.pi, band=None
+        )
+
         assert np.all(results[0]["image"] == self.test_image)
         npt.assert_almost_equal(results[0]["scale"], 0.0151, decimal=3)
         assert results[0]["phi_G"] == 0.5
@@ -68,6 +76,7 @@ class TestInterpolated:
     def test_extended_source_light_model(self):
         source_model = self.source.extended_source_light_model()
         assert source_model[0] == "INTERPOL"
+
 
 if __name__ == "__main__":
     pytest.main()

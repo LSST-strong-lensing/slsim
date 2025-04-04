@@ -54,7 +54,7 @@ class Galaxies(SourcePopBase):
          magnitude otherwise rescales skypy source size to Shibuya et al. (2015):
          https://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
         :param kwargs: dictionary of keyword arguments for a extended source.
-         eg: kwargs = {"extendedsource_type": "single_sersic"}. Other supported 
+         eg: kwargs = {"extendedsource_type": "single_sersic"}. Other supported
          types are "single_sersic", "double_sersic", "interpolated".
         """
         super(Galaxies, self).__init__(cosmo=cosmo, sky_area=sky_area)
@@ -249,7 +249,7 @@ class Galaxies(SourcePopBase):
                 "Provided number of light profiles is not supported. It should be"
                 "either 'single or 'double' "
             )
-        
+
         source_class = Source(
             source_dict=galaxy,
             source_type=self.source_type,

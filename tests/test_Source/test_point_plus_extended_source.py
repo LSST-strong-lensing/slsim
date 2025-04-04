@@ -16,12 +16,15 @@ class TestPointPlusExtendedSources(object):
             format="fits",
         )
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-        kwargs={"pointsource_type": "quasar", "extendedsource_type": "single_sersic",
-                 "variability_model":"light_curve",
-            "kwargs_variability": None, 
-            "agn_driving_variability_model":None,
+        kwargs = {
+            "pointsource_type": "quasar",
+            "extendedsource_type": "single_sersic",
+            "variability_model": "light_curve",
+            "kwargs_variability": None,
+            "agn_driving_variability_model": None,
             "agn_driving_kwargs_variability": None,
-            "lightcurve_time":None}
+            "lightcurve_time": None,
+        }
         self.pe_source = PointPlusExtendedSources(
             point_plus_extended_sources_list=self.source_list,
             kwargs_cut={},
