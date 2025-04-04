@@ -24,14 +24,28 @@ def pes_lens_instance():
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
+        variable_agn_kwarg_dict = {
+            "length_of_light_curve": 500,
+            "time_resolution": 1,
+            "log_breakpoint_frequency": 1 / 20,
+            "low_frequency_slope": 1,
+            "high_frequency_slope": 3,
+            "standard_deviation": 0.9,
+        }
+        kwargs_quasar = {
+            "pointsource_type": "quasar",
+            "extendedsource_type": "single_sersic",
+            "variability_model": "light_curve",
+            "kwargs_variability": {"agn_lightcurve", "i", "r"},
+            "agn_driving_variability_model": "bending_power_law",
+            "agn_driving_kwargs_variability": variable_agn_kwarg_dict,
+            "lightcurve_time": np.linspace(0, 1000, 1000),
+        }
         source = Source(
             source_dict=source_dict,
             cosmo=cosmo,
             source_type="point_plus_extended",
-            light_profile="single_sersic",
-            variability_model="sinusoidal",
-            kwargs_variability={"amp", "freq"},
-            lightcurve_time=np.linspace(0, np.pi, 100),
+            **kwargs_quasar
         )
         deflector = Deflector(
             deflector_type="EPL",
