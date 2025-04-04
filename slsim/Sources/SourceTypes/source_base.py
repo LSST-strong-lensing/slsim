@@ -100,7 +100,7 @@ class SourceBase(ABC):
     @property
     def redshift(self):
         """Returns source redshift."""
-        
+
         return float(self.source_dict["z"])
 
     @property
