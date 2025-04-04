@@ -38,7 +38,6 @@ class TestSourceBase:
         self.source_table = Table([self.source_dict])
         self.source = SourceBase(source_dict=self.source_dict)
         self.source2 = SourceBase(source_dict=self.source_dict2)
-        self.source2 = SourceBase(source_dict=self.source_dict2)
         self.source3 = SourceBase(source_dict=self.source_dict3)
         self.source4 = SourceBase(source_dict=self.source_table)
 
