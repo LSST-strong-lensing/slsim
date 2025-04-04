@@ -25,11 +25,8 @@ from slsim.Util.param_util import (
     degrade_coadd_data,
     galaxy_size,
     detect_object,
-<<<<<<< HEAD
-    surface_brightness_reff
-=======
+    surface_brightness_reff,
     gaussian_psf,
->>>>>>> d1c00c35153344ed61371c64ac41fb6f03e410e1
 )
 from slsim.Sources.SourceVariability.variability import Variability
 from astropy.io import fits
