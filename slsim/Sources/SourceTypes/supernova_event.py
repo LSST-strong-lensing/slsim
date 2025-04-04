@@ -1,4 +1,3 @@
-import numpy as np
 from slsim.Sources import random_supernovae
 from astropy.table import Column, Table
 from slsim.Sources.SourceVariability.variability import Variability
