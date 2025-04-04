@@ -7,12 +7,13 @@ from astropy import cosmology
 class TestQuasar:
     def setup_method(self):
         cosmo = cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
-        source_dict = {"z": 0.8, "ps_mag_i": 20}
+        source_dict = {"z": 0.8, "ps_mag_i": 20, "random_seed": 42}
         source_dict2 = {
             "z": 0.8,
             "MJD": [0, 2, 3, 4, 5, 6],
             "ps_mag_i": [21, 20, 18, 21, 22, 23],
         }
+        source_dict3 = {"z": 0.8}
         variable_agn_kwarg_dict = {
             "length_of_light_curve": 500,
             "time_resolution": 1,
@@ -50,6 +51,9 @@ class TestQuasar:
         self.source_light_curve = Quasar(
             source_dict=source_dict2, cosmo=cosmo, **kwargs_quasar_none
         )
+        self.source_agn_band_error = Quasar(
+            source_dict=source_dict3, cosmo=None, **kwargs_quasar
+        )
 
     def test_light_curve(self):
         light_curve = self.source.light_curve
@@ -65,6 +69,8 @@ class TestQuasar:
         assert light_curve_none is None
         with pytest.raises(ValueError):
             self.source_cosmo_error.light_curve
+        with pytest.raises(ValueError):
+            self.source_agn_band_error.light_curve
 
     def test_point_source_magnitude(self):
         assert self.source.point_source_magnitude("i") == 20

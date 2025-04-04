@@ -43,6 +43,8 @@ class Quasar(SourceBase):
         self.agn_driving_kwargs_variability = kwargs.get(
             "agn_driving_kwargs_variability"
         )
+        self.input_agn_bounds_dict = kwargs.get("input_agn_bounds_dict")
+        self.random_seed = kwargs.get("random_seed")
 
     @property
     def light_curve(self):
@@ -58,16 +60,6 @@ class Quasar(SourceBase):
             else:
                 # Pull the agn kwarg dict out of the kwargs_variability dict
                 agn_kwarg_dict = extract_agn_kwargs_from_source_dict(self.source_dict)
-
-                # Populate "None" for optional keys related to drawing random AGN
-                if "random_seed" in self.source_dict.colnames:
-                    random_seed = self.source_dict["random_seed"][0]
-                else:
-                    random_seed = None
-                if "input_agn_bounds_dict" in self.source_dict.colnames:
-                    input_agn_bounds_dict = self.source_dict["input_agn_bounds_dict"][0]
-                else:
-                    input_agn_bounds_dict = None
 
                 # If no other band and magnitude is given, populate with
                 # the assumed point source magnitude column
@@ -89,8 +81,8 @@ class Quasar(SourceBase):
                     lightcurve_time=self.lightcurve_time,
                     agn_driving_variability_model=self.agn_driving_variability_model,
                     agn_driving_kwargs_variability=self.agn_driving_kwargs_variability,
-                    random_seed=random_seed,
-                    input_agn_bounds_dict=input_agn_bounds_dict,
+                    random_seed=self.random_seed,
+                    input_agn_bounds_dict=self.input_agn_bounds_dict,
                     **agn_kwarg_dict,
                 )
                 # Get mean mags for each provided band
@@ -194,14 +186,7 @@ class Quasar(SourceBase):
                 )
         else:
             source_mag = self.source_dict[band_string]
-            if (
-                isinstance(source_mag, np.ndarray)
-                and source_mag.ndim == 2
-                and source_mag.shape[0] == 1
-            ):
-                return source_mag.reshape(-1)
-            else:
-                return source_mag
+            return source_mag
 
 
 def add_mean_mag_to_source_table(sourcedict, mean_mags, band_list):
