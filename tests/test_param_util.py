@@ -25,7 +25,11 @@ from slsim.Util.param_util import (
     degrade_coadd_data,
     galaxy_size,
     detect_object,
+<<<<<<< HEAD
     surface_brightness_reff
+=======
+    gaussian_psf,
+>>>>>>> d1c00c35153344ed61371c64ac41fb6f03e410e1
 )
 from slsim.Sources.SourceVariability.variability import Variability
 from astropy.io import fits
@@ -429,6 +433,12 @@ def test_surface_brightness_reff():
         mag_arcsec2 = surface_brightness_reff(angular_size=angular_size, 
                     source_model_list=source_model_list, kwargs_extended_source=kwargs_source)
         npt.assert_almost_equal(mag_arcsec2, 16.995, decimal=2)
+
+
+def test_gaussian_psf():
+    psf_kernel = gaussian_psf(fwhm=0.9, delta_pix=0.2, num_pix=21)
+    assert psf_kernel.shape[0] == 21
+    npt.assert_almost_equal(np.sum(psf_kernel), 1, decimal=16)
 
 
 if __name__ == "__main__":
