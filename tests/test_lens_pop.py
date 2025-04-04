@@ -45,7 +45,7 @@ def create_lens_pop_instance(return_kext=False):
         cosmo=cosmo,
         sky_area=sky_area,
         catalog_type="skypy",
-        **kwargs
+        **kwargs,
     )
 
     lenspop = LensPop(
@@ -91,14 +91,18 @@ def test_pes_lens_pop_instance():
     )
 
     quasar_galaxies = sources.QuasarCatalog.quasar_galaxies_simple(**{})
-    kwargs = {"pointsource_type": "quasar", "extendedsource_type": "single_sersic",
-               "kwargs_variability": None, "variability_model": "light_curve"}
+    kwargs = {
+        "pointsource_type": "quasar",
+        "extendedsource_type": "single_sersic",
+        "kwargs_variability": None,
+        "variability_model": "light_curve",
+    }
     source_galaxies = sources.PointPlusExtendedSources(
         point_plus_extended_sources_list=quasar_galaxies,
         cosmo=cosmo,
         sky_area=sky_area,
         kwargs_cut=kwargs_source_cut,
-        **kwargs
+        **kwargs,
     )
 
     pes_lens_pop = LensPop(
@@ -141,7 +145,7 @@ def test_galaxies_lens_pop_halo_model_instance():
         cosmo=cosmo,
         sky_area=sky_area,
         catalog_type="skypy",
-        **kwargs
+        **kwargs,
     )
 
     g_lens_halo_model_pop = LensPop(
@@ -188,7 +192,7 @@ def test_cluster_lens_pop_instance():
         cosmo=cosmo,
         sky_area=sky_area,
         catalog_type="skypy",
-        **kwargs
+        **kwargs,
     )
 
     cluster_lens_pop = LensPop(
@@ -238,7 +242,7 @@ def test_galaxies_lens_pop_instance():
         sky_area=sky_area,
         kwargs_cut=kwargs_source_cut,
         list_type="list",
-        **kwargs
+        **kwargs,
     )
 
     gg_lens_pop = LensPop(
@@ -287,16 +291,23 @@ def test_supernovae_plus_galaxies_lens_pop_instance_2():
         host_galaxy=True, lightcurve=False
     )
 
-    kwargs = {"pointsource_type": "supernova", "extendedsource_type": "single_sersic",
-                "variability_model": "light_curve", "kwargs_variability": ["supernovae_lightcurve", "i"],
-                "sn_type": "Ia", "sn_absolute_mag_band": "bessellb", "sn_absolute_zpsys": "ab", 
-               "lightcurve_time": time_range, "sn_modeldir": None}
+    kwargs = {
+        "pointsource_type": "supernova",
+        "extendedsource_type": "single_sersic",
+        "variability_model": "light_curve",
+        "kwargs_variability": ["supernovae_lightcurve", "i"],
+        "sn_type": "Ia",
+        "sn_absolute_mag_band": "bessellb",
+        "sn_absolute_zpsys": "ab",
+        "lightcurve_time": time_range,
+        "sn_modeldir": None,
+    }
     source_galaxies = sources.PointPlusExtendedSources(
         point_plus_extended_sources_list=supernovae_data,
         cosmo=cosmo,
         sky_area=source_sky_area,
         kwargs_cut=kwargs_source_cut,
-        **kwargs
+        **kwargs,
     )
 
     pes_lens_pop = LensPop(
@@ -344,16 +355,23 @@ def test_supernovae_lens_pop_instance():
         host_galaxy=False, lightcurve=False
     )
 
-    kwargs = {"pointsource_type": "supernova", "extendedsource_type": "single_sersic",
-                "variability_model": "light_curve", "kwargs_variability": ["supernovae_lightcurve", "i"],
-                "sn_type": "Ia", "sn_absolute_mag_band": "bessellb", "sn_absolute_zpsys": "ab", 
-               "lightcurve_time": time_range, "sn_modeldir": None}
+    kwargs = {
+        "pointsource_type": "supernova",
+        "extendedsource_type": "single_sersic",
+        "variability_model": "light_curve",
+        "kwargs_variability": ["supernovae_lightcurve", "i"],
+        "sn_type": "Ia",
+        "sn_absolute_mag_band": "bessellb",
+        "sn_absolute_zpsys": "ab",
+        "lightcurve_time": time_range,
+        "sn_modeldir": None,
+    }
     source_galaxies_1 = sources.PointSources(
         point_source_list=supernovae_data_1,
         cosmo=cosmo,
         sky_area=sky_area_1,
         kwargs_cut=kwargs_source_cut,
-        **kwargs
+        **kwargs,
     )
 
     ps_lens_pop_1 = LensPop(

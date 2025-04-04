@@ -31,7 +31,7 @@ def test_false_positive():
         cosmo=cosmo,
         sky_area=sky_area,
     )
-    kwargs={"extendedsource_type": "single_sersic"}
+    kwargs = {"extendedsource_type": "single_sersic"}
     source_galaxies = sources.Galaxies(
         galaxy_list=galaxy_simulation_pipeline.blue_galaxies,
         kwargs_cut=kwargs_source_cut,
@@ -103,10 +103,9 @@ def test_false_positive():
     assert false_positive_instance_1.deflector_magnitude(
         band="i"
     ) == single_deflector.magnitude(band="i")
-    assert (
-        false_positive_instance_1.extended_source_magnitude(band="i")
-        == single_source1.extended_source_magnitude(band="i")
-    )
+    assert false_positive_instance_1.extended_source_magnitude(
+        band="i"
+    ) == single_source1.extended_source_magnitude(band="i")
     assert len(false_positive_instance_1.deflector_ellipticity()) == 4
     assert (
         false_positive_instance_1.deflector_stellar_mass()
@@ -120,6 +119,7 @@ def test_false_positive():
         )
         == required_keys
     )
+
 
 if __name__ == "__main__":
     pytest.main()

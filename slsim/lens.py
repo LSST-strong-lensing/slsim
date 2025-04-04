@@ -336,14 +336,14 @@ class Lens(LensedSystemBase):
         # must be less than or equal to the angular Einstein radius
         # of the lensing configuration (times sqrt(2)).
         if self._source_type in ["point_source", "point_plus_extended"]:
-            source_pos = source.point_source_position(self.deflector_position, 
-                                                      self.test_area)
+            source_pos = source.point_source_position(
+                self.deflector_position, self.test_area
+            )
         else:
-            source_pos = source.extended_source_position(self.deflector_position, 
-                                                         draw_area=self.test_area)
-        center_lens, center_source = (
-            self.deflector_position, source_pos
-        )
+            source_pos = source.extended_source_position(
+                self.deflector_position, draw_area=self.test_area
+            )
+        center_lens, center_source = (self.deflector_position, source_pos)
         if (
             np.sum((center_lens - center_source) ** 2)
             > self._einstein_radius(source) ** 2 * 2
@@ -930,7 +930,9 @@ class Lens(LensedSystemBase):
                 "interpolated",
             ]:
                 kwargs_model["source_redshift_list"] = self.source_redshift_list
-            elif self.max_redshift_source_class.kwargs["extendedsource_type"] in ["double_sersic"]:
+            elif self.max_redshift_source_class.kwargs["extendedsource_type"] in [
+                "double_sersic"
+            ]:
                 kwargs_model["source_redshift_list"] = [
                     z for z in self.source_redshift_list for _ in range(2)
                 ]
@@ -1138,9 +1140,13 @@ class Lens(LensedSystemBase):
             self._source_type == "point_source"
             or self._source_type == "point_plus_extended"
         ):
-            if self.max_redshift_source_class.kwargs["pointsource_type"] in ["supernova"]:
+            if self.max_redshift_source_class.kwargs["pointsource_type"] in [
+                "supernova"
+            ]:
                 lens_type = "SN" + self.max_redshift_source_class.kwargs["sn_type"]
-            elif self.max_redshift_source_class.kwargs["pointsource_type"] in ["quasar"]:
+            elif self.max_redshift_source_class.kwargs["pointsource_type"] in [
+                "quasar"
+            ]:
                 lens_type = "QSO"
             else:
                 # "LC" stands for Light Curve

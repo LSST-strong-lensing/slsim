@@ -4,17 +4,15 @@ from astropy.table import Column, Table
 from slsim.Sources.SourceVariability.variability import Variability
 from slsim.Sources.SourceTypes.source_base import SourceBase
 
+
 class SupernovaEvent(SourceBase):
-    """A class to manage a supernova"""
-    def __init__(self,
-        source_dict,
-        cosmo=None,
-        **kwargs
-        ):
+    """A class to manage a supernova."""
+
+    def __init__(self, source_dict, cosmo=None, **kwargs):
         """
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
-         This table or dict should contain atleast redshift of a supernova, offset from 
-         the host if host galaxy is available. 
+         This table or dict should contain atleast redshift of a supernova, offset from
+         the host if host galaxy is available.
          eg: {"z": 0.8, "ra_off": 0.001, "dec_off": 0.005}
         :type source_dict: dict or astropy.table.Table
         :param cosmo: astropy.cosmology instance
@@ -44,8 +42,8 @@ class SupernovaEvent(SourceBase):
             class.
             :type sn_modeldir: str
         """
-        
-        super().__init__(source_dict = source_dict)
+
+        super().__init__(source_dict=source_dict)
         # These are the keywords that kwargs dict should contain
         self.cosmo = cosmo
         self.variability_model = kwargs.get("variability_model")
@@ -55,9 +53,10 @@ class SupernovaEvent(SourceBase):
         self.sn_absolute_zpsys = kwargs.get("sn_absolute_zpsys")
         self.lightcurve_time = kwargs.get("lightcurve_time")
         self.sn_modeldir = kwargs.get("sn_modeldir")
+
     @property
     def light_curve(self):
-        """Provides lightcurves of a supernova in each band"""
+        """Provides lightcurves of a supernova in each band."""
         if self.kwargs_variability is not None:
             # Here we extract lightcurves of a supernova in given bands
             kwargs_variab_extracted = {}
@@ -118,7 +117,7 @@ class SupernovaEvent(SourceBase):
         else:
             kwargs_variab_extracted = None
         return kwargs_variab_extracted
-    
+
     def point_source_magnitude(self, band, image_observation_times=None):
         """Get the magnitude of the point source in a specific band.
 
@@ -168,4 +167,3 @@ class SupernovaEvent(SourceBase):
                 return source_mag.reshape(-1)
             else:
                 return source_mag
-    

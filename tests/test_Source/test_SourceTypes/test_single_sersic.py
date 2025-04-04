@@ -3,10 +3,17 @@ import numpy as np
 import pytest
 from numpy import testing as npt
 
+
 class TestSingleSersic:
     def setup_method(self):
-        self.source_dict = {"z": 0.8, "mag_i": 23, "n_sersic": 1,
-                                         "angular_size": 0.2, "e1": 0.002, "e2": 0.004}
+        self.source_dict = {
+            "z": 0.8,
+            "mag_i": 23,
+            "n_sersic": 1,
+            "angular_size": 0.2,
+            "e1": 0.002,
+            "e2": 0.004,
+        }
         self.source = SingleSersic(source_dict=self.source_dict)
 
     def test_angular_size(self):
@@ -16,7 +23,7 @@ class TestSingleSersic:
         e1, e2 = self.source.ellipticity
         assert e1 == 0.002
         assert e2 == 0.004
-    
+
     def test_n_sersic(self):
         assert self.source.n_sersic == 1
 
@@ -25,12 +32,13 @@ class TestSingleSersic:
         with pytest.raises(ValueError):
             self.source.extended_source_magnitude("g")
 
-
     def test_kwargs_extended_source_light(self):
-        results = self.source.kwargs_extended_source_light(reference_position=[0,0],
-                                            draw_area=4*np.pi, band="i")
-        results2 = self.source.kwargs_extended_source_light(reference_position=[0,0],
-                                            draw_area=4*np.pi, band=None)
+        results = self.source.kwargs_extended_source_light(
+            reference_position=[0, 0], draw_area=4 * np.pi, band="i"
+        )
+        results2 = self.source.kwargs_extended_source_light(
+            reference_position=[0, 0], draw_area=4 * np.pi, band=None
+        )
         assert results[0]["R_sersic"] == 0.2
         assert results[0]["e1"] == -0.002
         assert results[0]["e2"] == 0.004
@@ -44,6 +52,7 @@ class TestSingleSersic:
     def test_surface_brightness_reff(self):
         result = self.source.surface_brightness_reff(band="i")
         npt.assert_almost_equal(result, 21.500, decimal=3)
+
 
 if __name__ == "__main__":
     pytest.main()

@@ -8,26 +8,56 @@ from astropy import cosmology
 class TestSource:
     def setup_method(self):
         cosmo = cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
-        self.source_dict_extended = {"z": 1.0, "mag_i": 21, "n_sersic": 1,
-                                         "angular_size": 0.2, "e1": 0.005, "e2": 0.003,
-                                         "center_x": 0.034, "center_y": -0.06}
+        self.source_dict_extended = {
+            "z": 1.0,
+            "mag_i": 21,
+            "n_sersic": 1,
+            "angular_size": 0.2,
+            "e1": 0.005,
+            "e2": 0.003,
+            "center_x": 0.034,
+            "center_y": -0.06,
+        }
         kwargs_extended = {"extendedsource_type": "single_sersic"}
-        self.source = Source(source_dict=self.source_dict_extended,
-                              source_type="extended", cosmo=cosmo, **kwargs_extended)
-        
-        self.source_dict_point_extended = {"z": 1.0, "ps_mag_i": 20, "mag_i": 21, "n_sersic": 1,
-                         "angular_size": 0.2, "e1": 0.005, "e2": 0.003,
-                         "center_x": 0.044, "center_y": -0.05, "ra_off": 0.001,
-                           "dec_off": 0.002}
+        self.source = Source(
+            source_dict=self.source_dict_extended,
+            source_type="extended",
+            cosmo=cosmo,
+            **kwargs_extended
+        )
 
-        kwargs_point_extended={"pointsource_type": "supernova", "extendedsource_type": "single_sersic",
-            "variability_model": "light_curve", "kwargs_variability": ["supernovae_lightcurve", "i", "r"],
-                    "sn_type": "Ia", "sn_absolute_mag_band": "bessellb", "sn_absolute_zpsys": "ab", 
-                    "lightcurve_time": np.linspace(-50, 100, 150), "sn_modeldir": None}
-        self.source_point_extended = Source(source_dict=self.source_dict_point_extended,
-                              source_type="point_plus_extended", cosmo=cosmo,
-                                **kwargs_point_extended)
-        
+        self.source_dict_point_extended = {
+            "z": 1.0,
+            "ps_mag_i": 20,
+            "mag_i": 21,
+            "n_sersic": 1,
+            "angular_size": 0.2,
+            "e1": 0.005,
+            "e2": 0.003,
+            "center_x": 0.044,
+            "center_y": -0.05,
+            "ra_off": 0.001,
+            "dec_off": 0.002,
+        }
+
+        kwargs_point_extended = {
+            "pointsource_type": "supernova",
+            "extendedsource_type": "single_sersic",
+            "variability_model": "light_curve",
+            "kwargs_variability": ["supernovae_lightcurve", "i", "r"],
+            "sn_type": "Ia",
+            "sn_absolute_mag_band": "bessellb",
+            "sn_absolute_zpsys": "ab",
+            "lightcurve_time": np.linspace(-50, 100, 150),
+            "sn_modeldir": None,
+        }
+        self.source_point_extended = Source(
+            source_dict=self.source_dict_point_extended,
+            source_type="point_plus_extended",
+            cosmo=cosmo,
+            **kwargs_point_extended
+        )
+
         # Create an image
         # Image Parameters
         size = 100
@@ -52,27 +82,48 @@ class TestSource:
         # Ensure no negative values
         image = np.clip(image, 0, None)
         self.test_image = image
-        
-        self.source_dict_interpolated = {"z": 0.5, "image": self.test_image, "center_x": size // 2,
-                "center_y": size // 2, "z_data": 0.1, "pixel_width_data":0.05,
-                "phi_G": 0.0, "mag_i": 20,
+
+        self.source_dict_interpolated = {
+            "z": 0.5,
+            "image": self.test_image,
+            "center_x": size // 2,
+            "center_y": size // 2,
+            "z_data": 0.1,
+            "pixel_width_data": 0.05,
+            "phi_G": 0.0,
+            "mag_i": 20,
         }
         kwargs_interpolated = {"extendedsource_type": "interpolated"}
-        self.source_interpolated = Source(source_dict=self.source_dict_interpolated,
-                              source_type="extended", cosmo=cosmo,
-                                **kwargs_interpolated)
-        
-        self.source_dict_point = {"z": 1.0, "ps_mag_i": 20,
-                         "center_x": 0.044, "center_y": -0.05}
-        kwargs_point = {"pointsource_type": "supernova", "variability_model": "light_curve",
-                    "kwargs_variability": ["supernovae_lightcurve", "i", "r"],
-                    "sn_type": "Ia", "sn_absolute_mag_band": "bessellb", "sn_absolute_zpsys": "ab", 
-                    "lightcurve_time": np.linspace(-50, 100, 150), "sn_modeldir": None}
-        self.source_point = Source(source_dict=self.source_dict_point,
-                              source_type="point_source", cosmo=cosmo,
-                                **kwargs_point)
-        
-        
+        self.source_interpolated = Source(
+            source_dict=self.source_dict_interpolated,
+            source_type="extended",
+            cosmo=cosmo,
+            **kwargs_interpolated
+        )
+
+        self.source_dict_point = {
+            "z": 1.0,
+            "ps_mag_i": 20,
+            "center_x": 0.044,
+            "center_y": -0.05,
+        }
+        kwargs_point = {
+            "pointsource_type": "supernova",
+            "variability_model": "light_curve",
+            "kwargs_variability": ["supernovae_lightcurve", "i", "r"],
+            "sn_type": "Ia",
+            "sn_absolute_mag_band": "bessellb",
+            "sn_absolute_zpsys": "ab",
+            "lightcurve_time": np.linspace(-50, 100, 150),
+            "sn_modeldir": None,
+        }
+        self.source_point = Source(
+            source_dict=self.source_dict_point,
+            source_type="point_source",
+            cosmo=cosmo,
+            **kwargs_point
+        )
+
     def test_redshift(self):
         assert self.source.redshift == 1.0
 
@@ -83,7 +134,7 @@ class TestSource:
         e1, e2 = self.source.ellipticity
         assert e1 == 0.005
         assert e2 == 0.003
-    
+
     def test_n_sersic(self):
         assert self.source.n_sersic == 1
 
@@ -116,9 +167,9 @@ class TestSource:
         npt.assert_almost_equal(result, 19.500, decimal=3)
 
     def test_point_source_position(self):
-        x_pos, y_pos=self.source_point_extended.point_source_position()
-        assert x_pos==0.045
-        assert y_pos==-0.048
+        x_pos, y_pos = self.source_point_extended.point_source_position()
+        assert x_pos == 0.045
+        assert y_pos == -0.048
 
     def test_point_source_magnitude(self):
         result = self.source_point_extended.point_source_magnitude(band="i")
@@ -126,33 +177,46 @@ class TestSource:
 
     def test_image_redshift(self):
         assert self.source_interpolated.image_redshift == 0.1
-    
+
     def test_image(self):
         image_result = self.source_interpolated.image
         assert np.all(image_result == self.test_image)
-    
+
     def test_phi(self):
         phi = self.source_interpolated.phi
         assert phi == 0.0
 
     def test_pixel_scale(self):
         delta_pix = self.source_interpolated.pixel_scale
-        assert delta_pix==0.05
-    
+        assert delta_pix == 0.05
+
     def test_point_source_only(self):
         x_pos_1, y_pos_1 = self.source_point.point_source_position()
         x_pos_2, y_pos_2 = self.source_point.point_source_position()
         assert x_pos_1 == x_pos_2
         assert y_pos_1 == y_pos_2
+
     def test_error(self):
         cosmo = cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
-        self.source_dict_extended = {"z": 1.0, "mag_i": 21, "n_sersic": 1,
-                                         "angular_size": 0.2, "e1": 0.005, "e2": 0.003,
-                                         "center_x": 0.034, "center_y": -0.06}
+        self.source_dict_extended = {
+            "z": 1.0,
+            "mag_i": 21,
+            "n_sersic": 1,
+            "angular_size": 0.2,
+            "e1": 0.005,
+            "e2": 0.003,
+            "center_x": 0.034,
+            "center_y": -0.06,
+        }
         kwargs_extended = {"extendedsource_type": "single_sersic"}
         with pytest.raises(ValueError):
-            Source(source_dict=self.source_dict_extended,
-                              source_type="other", cosmo=cosmo, **kwargs_extended)
+            Source(
+                source_dict=self.source_dict_extended,
+                source_type="other",
+                cosmo=cosmo,
+                **kwargs_extended
+            )
+
 
 if __name__ == "__main__":
     pytest.main()

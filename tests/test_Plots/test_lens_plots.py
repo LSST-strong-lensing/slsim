@@ -34,7 +34,7 @@ def gg_lens_pop_instance():
         cosmo=cosmo,
         sky_area=sky_area,
     )
-    kwargs={"extendedsource_type": "single_sersic"}
+    kwargs = {"extendedsource_type": "single_sersic"}
     source_galaxies = sources.Galaxies(
         galaxy_list=galaxy_simulation_pipeline.blue_galaxies,
         kwargs_cut={},
@@ -93,7 +93,7 @@ def gg_roman_lens_pop_instance():
         cosmo=cosmo,
         sky_area=sky_area,
     )
-    kwargs={"extendedsource_type": "single_sersic"}
+    kwargs = {"extendedsource_type": "single_sersic"}
     source_galaxies = sources.Galaxies(
         galaxy_list=galaxy_simulation_pipeline.blue_galaxies,
         kwargs_cut={},

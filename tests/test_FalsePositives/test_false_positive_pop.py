@@ -24,7 +24,7 @@ lens_galaxies = deflectors.EllipticalLensGalaxies(
     cosmo=cosmo,
     sky_area=sky_area,
 )
-kwargs={"extendedsource_type": "single_sersic"}
+kwargs = {"extendedsource_type": "single_sersic"}
 source_galaxies = sources.Galaxies(
     galaxy_list=blue_galaxy_list,
     kwargs_cut=kwargs_source_cut,
