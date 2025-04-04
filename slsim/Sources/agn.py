@@ -86,13 +86,7 @@ class Agn(object):
         # in self.kwargs_model with sufficient cadence for convolution with many
         # transfer function kernels.
         if lightcurve_time is not None:
-            max_time = np.max(lightcurve_time)
-            min_time = np.min(lightcurve_time)
-            self.kwargs_model["time_array"] = np.linspace(
-                min_time,
-                max_time,
-                int(max_time - min_time),
-            )
+            self.kwargs_model["time_array"] = lightcurve_time
 
         else:
             raise ValueError(

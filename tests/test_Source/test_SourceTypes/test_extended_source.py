@@ -1,14 +1,14 @@
-from slsim.Sources.source import Source
+from slsim.Sources.SourceTypes.extended_source import ExtendedSource
 import numpy as np
 import pytest
 from numpy import testing as npt
 from astropy import cosmology
 
 
-class TestSource:
+class TestExtendedSource:
     def setup_method(self):
         cosmo = cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
-        self.source_dict_extended = {
+        self.source_dict_single_sersic = {
             "z": 1.0,
             "mag_i": 21,
             "n_sersic": 1,
@@ -18,44 +18,32 @@ class TestSource:
             "center_x": 0.034,
             "center_y": -0.06,
         }
-        kwargs_extended = {"extendedsource_type": "single_sersic"}
-        self.source = Source(
-            source_dict=self.source_dict_extended,
-            source_type="extended",
+        kwargs_single_sersic = {"extendedsource_type": "single_sersic"}
+        self.source = ExtendedSource(
+            source_dict=self.source_dict_single_sersic,
             cosmo=cosmo,
-            **kwargs_extended
+            **kwargs_single_sersic
         )
 
-        self.source_dict_point_extended = {
-            "z": 1.0,
-            "ps_mag_i": 20,
-            "mag_i": 21,
-            "n_sersic": 1,
-            "angular_size": 0.2,
-            "e1": 0.005,
-            "e2": 0.003,
-            "center_x": 0.044,
-            "center_y": -0.05,
-            "ra_off": 0.001,
-            "dec_off": 0.002,
+        self.source_dict_double_sersic = {
+            "z": 0.5,
+            "n_sersic_0": 1,
+            "n_sersic_1": 4,
+            "angular_size0": 0.2,
+            "angular_size1": 0.15,
+            "e0_1": 0.001,
+            "e0_2": 0.002,
+            "e1_1": 0.001,
+            "e1_2": 0.003,
+            "w0": 0.4,
+            "w1": 0.6,
+            "mag_i": 23,
         }
-
-        kwargs_point_extended = {
-            "pointsource_type": "supernova",
-            "extendedsource_type": "single_sersic",
-            "variability_model": "light_curve",
-            "kwargs_variability": ["supernovae_lightcurve", "i", "r"],
-            "sn_type": "Ia",
-            "sn_absolute_mag_band": "bessellb",
-            "sn_absolute_zpsys": "ab",
-            "lightcurve_time": np.linspace(-50, 100, 150),
-            "sn_modeldir": None,
-        }
-        self.source_point_extended = Source(
-            source_dict=self.source_dict_point_extended,
-            source_type="point_plus_extended",
+        kwargs_double_sersic = {"extendedsource_type": "double_sersic"}
+        self.source_double_sersic = ExtendedSource(
+            source_dict=self.source_dict_double_sersic,
             cosmo=cosmo,
-            **kwargs_point_extended
+            **kwargs_double_sersic
         )
 
         # Create an image
@@ -94,34 +82,10 @@ class TestSource:
             "mag_i": 20,
         }
         kwargs_interpolated = {"extendedsource_type": "interpolated"}
-        self.source_interpolated = Source(
+        self.source_interpolated = ExtendedSource(
             source_dict=self.source_dict_interpolated,
-            source_type="extended",
             cosmo=cosmo,
             **kwargs_interpolated
-        )
-
-        self.source_dict_point = {
-            "z": 1.0,
-            "ps_mag_i": 20,
-            "center_x": 0.044,
-            "center_y": -0.05,
-        }
-        kwargs_point = {
-            "pointsource_type": "supernova",
-            "variability_model": "light_curve",
-            "kwargs_variability": ["supernovae_lightcurve", "i", "r"],
-            "sn_type": "Ia",
-            "sn_absolute_mag_band": "bessellb",
-            "sn_absolute_zpsys": "ab",
-            "lightcurve_time": np.linspace(-50, 100, 150),
-            "sn_modeldir": None,
-        }
-        self.source_point = Source(
-            source_dict=self.source_dict_point,
-            source_type="point_source",
-            cosmo=cosmo,
-            **kwargs_point
         )
 
     def test_redshift(self):
@@ -139,10 +103,14 @@ class TestSource:
         assert self.source.n_sersic == 1
 
     def test_sersicweight(self):
-        assert self.source.sersicweight is None
+        w0, w1 = self.source_double_sersic.sersicweight
+        assert w0 == 0.4
+        assert w1 == 0.6
 
     def test_extended_source_position(self):
-        x_pos, y_pos = self.source.extended_source_position()
+        x_pos, y_pos = self.source.extended_source_position(
+            reference_postion=[0, 0], draw_area=4 * np.pi
+        )
         assert x_pos == 0.034
         assert y_pos == -0.06
 
@@ -150,7 +118,9 @@ class TestSource:
         assert self.source.extended_source_magnitude("i") == 21
 
     def test_kwargs_extended_source_light(self):
-        results = self.source.kwargs_extended_source_light(band="i")
+        results = self.source.kwargs_extended_source_light(
+            band="i", reference_position=[0, 0], draw_area=4 * np.pi
+        )
         assert results[0]["R_sersic"] == 0.2
         assert results[0]["center_x"] == 0.034
         assert results[0]["center_y"] == -0.06
@@ -165,15 +135,6 @@ class TestSource:
     def test_surface_brightness_reff(self):
         result = self.source.surface_brightness_reff(band="i")
         npt.assert_almost_equal(result, 19.500, decimal=3)
-
-    def test_point_source_position(self):
-        x_pos, y_pos = self.source_point_extended.point_source_position()
-        assert x_pos == 0.045
-        assert y_pos == -0.048
-
-    def test_point_source_magnitude(self):
-        result = self.source_point_extended.point_source_magnitude(band="i")
-        assert result == 20
 
     def test_image_redshift(self):
         assert self.source_interpolated.image_redshift == 0.1
@@ -190,12 +151,6 @@ class TestSource:
         delta_pix = self.source_interpolated.pixel_scale
         assert delta_pix == 0.05
 
-    def test_point_source_only(self):
-        x_pos_1, y_pos_1 = self.source_point.point_source_position()
-        x_pos_2, y_pos_2 = self.source_point.point_source_position()
-        assert x_pos_1 == x_pos_2
-        assert y_pos_1 == y_pos_2
-
     def test_error(self):
         cosmo = cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
         self.source_dict_extended = {
@@ -208,13 +163,10 @@ class TestSource:
             "center_x": 0.034,
             "center_y": -0.06,
         }
-        kwargs_extended = {"extendedsource_type": "single_sersic"}
+        kwargs_extended = {"extendedsource_type": "other"}
         with pytest.raises(ValueError):
-            Source(
-                source_dict=self.source_dict_extended,
-                source_type="other",
-                cosmo=cosmo,
-                **kwargs_extended
+            ExtendedSource(
+                source_dict=self.source_dict_extended, cosmo=cosmo, **kwargs_extended
             )
 
 

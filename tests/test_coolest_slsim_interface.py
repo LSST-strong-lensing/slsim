@@ -25,17 +25,22 @@ def supernovae_lens_instance():
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
+        kwargs_sn = {
+            "pointsource_type": "supernova",
+            "extendedsource_type": "double_sersic",
+            "variability_model": "light_curve",
+            "kwargs_variability": {"supernovae_lightcurve", "i"},
+            "sn_type": "Ia",
+            "sn_absolute_mag_band": "bessellb",
+            "sn_absolute_zpsys": "ab",
+            "lightcurve_time": np.linspace(-50, 100, 1000),
+            "sn_modeldir": None,
+        }
         source = Source(
             source_dict=source_dict,
             cosmo=cosmo,
             source_type="point_plus_extended",
-            light_profile="double_sersic",
-            lightcurve_time=np.linspace(-20, 100, 1000),
-            variability_model="light_curve",
-            kwargs_variability={"supernovae_lightcurve", "i"},
-            sn_type="Ia",
-            sn_absolute_mag_band="bessellb",
-            sn_absolute_zpsys="ab",
+            **kwargs_sn
         )
         deflector = Deflector(
             deflector_type="EPL",

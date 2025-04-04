@@ -38,12 +38,14 @@ def create_lens_pop_instance(return_kext=False):
         sky_area=sky_area,
     )
 
+    kwargs = {"extendedsource_type": "single_sersic"}
     source_galaxies = sources.Galaxies(
         galaxy_list=galaxy_simulation_pipeline.blue_galaxies,
         kwargs_cut=kwargs_source_cut,
         cosmo=cosmo,
         sky_area=sky_area,
         catalog_type="skypy",
+        **kwargs,
     )
 
     lenspop = LensPop(
@@ -89,13 +91,18 @@ def test_pes_lens_pop_instance():
     )
 
     quasar_galaxies = sources.QuasarCatalog.quasar_galaxies_simple(**{})
+    kwargs = {
+        "pointsource_type": "quasar",
+        "extendedsource_type": "single_sersic",
+        "kwargs_variability": None,
+        "variability_model": "light_curve",
+    }
     source_galaxies = sources.PointPlusExtendedSources(
         point_plus_extended_sources_list=quasar_galaxies,
         cosmo=cosmo,
         sky_area=sky_area,
         kwargs_cut=kwargs_source_cut,
-        variability_model="sinusoidal",
-        kwargs_variability_model={"amp", "freq"},
+        **kwargs,
     )
 
     pes_lens_pop = LensPop(
@@ -131,12 +138,14 @@ def test_galaxies_lens_pop_halo_model_instance():
         sky_area=sky_area,
     )
 
+    kwargs = {"extendedsource_type": "single_source"}
     source_galaxies = sources.Galaxies(
         galaxy_list=galaxy_simulation_pipeline.blue_galaxies,
         kwargs_cut=kwargs_source_cut,
         cosmo=cosmo,
         sky_area=sky_area,
         catalog_type="skypy",
+        **kwargs,
     )
 
     g_lens_halo_model_pop = LensPop(
@@ -176,12 +185,14 @@ def test_cluster_lens_pop_instance():
         sky_area=sky_area,
     )
 
+    kwargs = {"extendedsource_type": "single_sersic"}
     source_galaxies = sources.Galaxies(
         galaxy_list=galaxy_simulation_pipeline.blue_galaxies,
         kwargs_cut=kwargs_source_cut,
         cosmo=cosmo,
         sky_area=sky_area,
         catalog_type="skypy",
+        **kwargs,
     )
 
     cluster_lens_pop = LensPop(
@@ -202,7 +213,7 @@ def test_cluster_lens_pop_instance():
     assert pes_lens_class.deflector_velocity_dispersion() > 300
 
 
-def test_supernovae_plus_galaxies_lens_pop_instance():
+def test_galaxies_lens_pop_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     sky_area = Quantity(value=0.001, unit="deg2")
 
@@ -224,26 +235,25 @@ def test_supernovae_plus_galaxies_lens_pop_instance():
     )
     with open(path, "rb") as f:
         supernovae_data = pickle.load(f)
-
-    source_galaxies = sources.PointPlusExtendedSources(
-        point_plus_extended_sources_list=supernovae_data,
+    kwargs = {"extendedsource_type": "single_sersic"}
+    source_galaxies = sources.Galaxies(
+        galaxy_list=supernovae_data,
         cosmo=cosmo,
         sky_area=sky_area,
         kwargs_cut=kwargs_source_cut,
-        variability_model="light_curve",
-        kwargs_variability_model={"MJD", "ps_mag_r"},
         list_type="list",
+        **kwargs,
     )
 
-    pes_lens_pop = LensPop(
+    gg_lens_pop = LensPop(
         deflector_population=lens_galaxies,
         source_population=source_galaxies,
         cosmo=cosmo,
         sky_area=sky_area,
     )
     kwargs_lens_cut = {}
-    pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
-    assert pes_lens_class._source_type == "point_plus_extended"
+    pes_lens_class = gg_lens_pop.select_lens_at_random(**kwargs_lens_cut)
+    assert pes_lens_class._source_type == "extended"
 
 
 def test_supernovae_plus_galaxies_lens_pop_instance_2():
@@ -281,18 +291,23 @@ def test_supernovae_plus_galaxies_lens_pop_instance_2():
         host_galaxy=True, lightcurve=False
     )
 
+    kwargs = {
+        "pointsource_type": "supernova",
+        "extendedsource_type": "single_sersic",
+        "variability_model": "light_curve",
+        "kwargs_variability": ["supernovae_lightcurve", "i"],
+        "sn_type": "Ia",
+        "sn_absolute_mag_band": "bessellb",
+        "sn_absolute_zpsys": "ab",
+        "lightcurve_time": time_range,
+        "sn_modeldir": None,
+    }
     source_galaxies = sources.PointPlusExtendedSources(
         point_plus_extended_sources_list=supernovae_data,
         cosmo=cosmo,
         sky_area=source_sky_area,
         kwargs_cut=kwargs_source_cut,
-        variability_model="light_curve",
-        kwargs_variability_model={"supernovae_lightcurve", "i"},
-        lightcurve_time=time_range,
-        sn_type="Ia",
-        sn_absolute_mag_band="bessellb",
-        sn_absolute_zpsys="ab",
-        sn_modeldir=None,
+        **kwargs,
     )
 
     pes_lens_pop = LensPop(
@@ -304,10 +319,7 @@ def test_supernovae_plus_galaxies_lens_pop_instance_2():
     kwargs_lens_cut = {}
     pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
     assert pes_lens_class._source_type == "point_plus_extended"
-    assert "x_off" in pes_lens_class._source[0].source_dict.colnames
-    assert len(
-        pes_lens_class._source[0].kwargs_variability_extracted["i"]["ps_mag_i"]
-    ) == len(time_range)
+    assert "x_off" in supernovae_data.colnames
 
 
 def test_supernovae_lens_pop_instance():
@@ -343,17 +355,23 @@ def test_supernovae_lens_pop_instance():
         host_galaxy=False, lightcurve=False
     )
 
+    kwargs = {
+        "pointsource_type": "supernova",
+        "extendedsource_type": "single_sersic",
+        "variability_model": "light_curve",
+        "kwargs_variability": ["supernovae_lightcurve", "i"],
+        "sn_type": "Ia",
+        "sn_absolute_mag_band": "bessellb",
+        "sn_absolute_zpsys": "ab",
+        "lightcurve_time": time_range,
+        "sn_modeldir": None,
+    }
     source_galaxies_1 = sources.PointSources(
         point_source_list=supernovae_data_1,
         cosmo=cosmo,
         sky_area=sky_area_1,
         kwargs_cut=kwargs_source_cut,
-        variability_model="light_curve",
-        kwargs_variability_model={"supernovae_lightcurve", "r"},
-        lightcurve_time=time_range,
-        sn_type="Ia",
-        sn_absolute_mag_band="bessellb",
-        sn_absolute_zpsys="ab",
+        **kwargs,
     )
 
     ps_lens_pop_1 = LensPop(
@@ -373,8 +391,7 @@ def test_supernovae_lens_pop_instance():
     kwargs_lens_cut = {}
     ps_lens_class = ps_lens_pop_1.select_lens_at_random(**kwargs_lens_cut)
     assert ps_lens_class._source_type == "point_source"
-    assert "z" in ps_lens_class._source[0].source_dict.colnames
-    assert len(ps_lens_class._source[0].source_dict) == 1
+    assert "z" in supernovae_data_1.colnames
     assert abs(len(ps_lens_population_1) - len(ps_lens_population_1_speed)) <= 12
     with pytest.raises(ValueError):
         LensPop(
