@@ -2,7 +2,6 @@ import pytest
 import numpy as np
 from astropy.cosmology import FlatLambdaCDM
 from slsim.LOS.los_individual import LOSIndividual
-from slsim.Sources.source import Source
 import slsim.Sources as sources
 import slsim.Deflectors as deflectors
 import slsim.Pipelines as pipelines
