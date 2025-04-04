@@ -164,10 +164,7 @@ class Quasar(SourceBase):
         else:
             band_string = "ps_mag_" + band
         if self.kwargs_variab_dict is not None:
-            if band in self.kwargs_variab_dict.keys():
-                kwargs_variab_band = self.kwargs_variab_dict[band]
-            else:
-                kwargs_variab_band = self.kwargs_variab_dict
+            kwargs_variab_band = self.kwargs_variab_dict[band]
             self.variability_class = Variability(
                 self.variability_model, **kwargs_variab_band
             )
