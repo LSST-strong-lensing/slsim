@@ -64,13 +64,6 @@ def test_false_positive():
         test_area=4 * np.pi,
         los_class=los_class,
     )
-    false_positive_instance_3 = FalsePositive(
-        source_class=source2,
-        deflector_class=lens,
-        cosmo=cosmo,
-        test_area=4 * np.pi,
-        los_class=los_class,
-    )
     required_keys = {
         "magnitude",
         "R_sersic",

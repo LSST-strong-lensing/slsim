@@ -1,4 +1,3 @@
-import numpy as np
 from slsim.Sources.SourceTypes.point_source import PointSource
 from slsim.Sources.SourceTypes.extended_source import ExtendedSource
 from slsim.Sources.SourceTypes.point_plus_extended_source import PointPlusExtendedSource

@@ -1,6 +1,5 @@
 import numpy.random as random
 from slsim.Sources.source_pop_base import SourcePopBase
-import warnings
 from slsim.selection import object_cut
 from slsim.Sources.source import Source
 
@@ -55,8 +54,8 @@ class PointSources(SourcePopBase):
         )
 
         self._num_select = len(self._point_source_select)
-        """super(SourcePopBase, self).__init__(
-        )"""
+        super(SourcePopBase, self).__init__(
+        )
         self.source_type = "point_source"
 
     @property

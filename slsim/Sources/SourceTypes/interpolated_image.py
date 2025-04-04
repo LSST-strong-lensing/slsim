@@ -1,4 +1,3 @@
-import numpy as np
 from slsim.Sources.SourceTypes.source_base import SourceBase
 from slsim.Util.cosmo_util import z_scale_factor
 
