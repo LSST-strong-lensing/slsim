@@ -54,8 +54,7 @@ class PointSources(SourcePopBase):
         )
 
         self._num_select = len(self._point_source_select)
-        super(SourcePopBase, self).__init__(
-        )
+        super(SourcePopBase, self).__init__()
         self.source_type = "point_source"
 
     @property
