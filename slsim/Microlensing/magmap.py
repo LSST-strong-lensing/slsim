@@ -120,9 +120,10 @@ class MagnificationMap(object):
         """Generate the magnification map based on the parameters provided."""
         self.microlensing_MagMap = self.microlensing_IPM.run()
 
-    def plot_magnification_map(self, ax, plot_magnitude=True, **kwargs):
+    def plot_magnification_map(self, ax = None, plot_magnitude=True, **kwargs):
         """Plot the magnification map on the given axis."""
-        fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+        if ax is None:
+            fig, ax = plt.subplots(1, 1, figsize=(6, 6))
         if plot_magnitude:
             im = ax.imshow(
                 self.magnitudes,
@@ -180,8 +181,8 @@ class MagnificationMap(object):
     def pixel_scales(self):
         """Returns the pixel scales in (x, y) format."""
         return (
-            2 * self.half_length[0] / self.num_pixels[0],
-            2 * self.half_length[1] / self.num_pixels[1],
+            2 * self.half_length_x / self.num_pixels_x,
+            2 * self.half_length_y / self.num_pixels_y
         )
 
     @property
