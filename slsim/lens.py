@@ -22,9 +22,9 @@ try:
     from slsim.Microlensing.lightcurve import MicrolensingLightCurveFromLensModel
 except ModuleNotFoundError:
     raise ImportError(
-        "microlensing package (by Luke Weisenbach, https://github.com/weisluke/microlensing) is not installed. Please install it to use the microlensing features." \
-        "\n Note that after installing, you need to set the environment variable LUKES_MICROLENSING_PATH in slsim/Microlensing/__init__.py to the path of the microlensing package." \
-        "\n If you don't want to use microlensing features, you can ignore this error." \
+        "microlensing package (by Luke Weisenbach, https://github.com/weisluke/microlensing) is not installed. Please install it to use the microlensing features."
+        "\n Note that after installing, you need to set the environment variable LUKES_MICROLENSING_PATH in slsim/Microlensing/__init__.py to the path of the microlensing package."
+        "\n If you don't want to use microlensing features, you can ignore this error."
     )
 
 
@@ -707,7 +707,9 @@ class Lens(LensedSystemBase):
             )
             shear_smooth = np.sqrt(shear_smooth_vec[0] ** 2 + shear_smooth_vec[1] ** 2)
 
-            kappa_star_in_lensing_convergence_units = self.kappa_star(ra, dec)  # TODO: in the kappa_star function definition it's mentioned that the output is in units of lensing convergence.
+            kappa_star_in_lensing_convergence_units = self.kappa_star(
+                ra, dec
+            )  # TODO: in the kappa_star function definition it's mentioned that the output is in units of lensing convergence.
             kappa_star = (
                 kappa_star_in_lensing_convergence_units * kappa_tot
             )  # based on above comment, Is this line correct?
