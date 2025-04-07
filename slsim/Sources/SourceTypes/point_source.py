@@ -51,13 +51,7 @@ class PointSource(object):
 
         return self._point_source.redshift
 
-    @property
-    def point_source_offset(self):
-        """Provides point source offset from host center."""
-
-        return self._point_source.point_source_offset
-
-    def extended_source_position(self, reference_position, draw_area):
+    def extended_source_position(self, reference_position=None, draw_area=None):
         """Provides extended source position if host galaxy is given. In the
         absence of host galaxy, this is the same position as point source
         position. This position is not necessary in this class but we inherite
@@ -65,10 +59,12 @@ class PointSource(object):
         necessary.
 
         :param reference_position: reference position. the source postion will be
-         defined relative to this position.
+         defined relative to this position. The default choice is None. In this case 
+         source_dict must contain source position.
          Eg: np.array([0, 0])
         :param draw_area: The area of the test region from which we randomly draw a
-         source position. Eg: 4*pi.
+         source position. The default choice is None. In this case 
+         source_dict must contain source position. Eg: 4*pi.
         :return: [x_pos, y_pos]
         """
 
@@ -76,15 +72,17 @@ class PointSource(object):
             reference_position, draw_area
         )
 
-    def point_source_position(self, reference_position, draw_area):
+    def point_source_position(self, reference_position=None, draw_area=None):
         """Point source position. point source could be at the center of the
         extended source or it can be off from center of the extended source.
 
         :param reference_position: reference position. the source postion will be
-         defined relative to this position.
+         defined relative to this position. The default choice is None. In this case 
+         source_dict must contain source position.
          Eg: np.array([0, 0])
         :param draw_area: The area of the test region from which we randomly draw a
-         source position. Eg: 4*pi.
+         source position. The default choice is None. In this case 
+         source_dict must contain source position. Eg: 4*pi.
         :return: [x_pos, y_pos]
         """
 

@@ -66,11 +66,6 @@ class TestPointSource:
     def test_redshift(self):
         assert self.source_sn.redshift == 1.0
 
-    def test_point_source_offset(self):
-        x_off, y_off = self.source_sn.point_source_offset
-        assert x_off is None
-        assert y_off is None
-
     def test_source_position(self):
         ## no host galaxy. So, point and extended source position are the same.
         x_pos_1, y_pos_1 = self.source_sn.point_source_position(
