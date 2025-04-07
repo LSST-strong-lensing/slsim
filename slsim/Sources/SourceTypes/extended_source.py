@@ -41,7 +41,7 @@ class ExtendedSource(object):
 
         return self._source.redshift
 
-    def extended_source_position(self, reference_postion, draw_area):
+    def extended_source_position(self, reference_postion=None, draw_area=None):
         """Extended source position. If a center has already been provided (and
         stored in self._center_source during initialization of _source), then
         it is simply returned. Otherwise, a source position is drawn uniformly
@@ -49,10 +49,12 @@ class ExtendedSource(object):
         see: _source.
 
         :param reference_position: reference position. the source postion will be
-         defined relative to this position.
+         defined relative to this position. The default choice is None. In this case 
+         source_dict must contain source position.
          Eg: np.array([0, 0])
         :param draw_area: The area of the test region from which we randomly draw a source
-            position. Eg: 4*pi.
+         position. The default choice is None. In this case source_dict must contain 
+         source position. Eg: 4*pi.
         :return: [x_pos, y_pos]
         """
 
@@ -69,15 +71,17 @@ class ExtendedSource(object):
 
         return self._source.extended_source_magnitude(band=band)
 
-    def kwargs_extended_source_light(self, reference_position, draw_area, band=None):
+    def kwargs_extended_source_light(self, reference_position=None, draw_area=None, band=None):
         """Provides dictionary of keywords for the source light model(s).
         Kewords used are in lenstronomy conventions.
 
         :param reference_position: reference position. the source postion will be
-         defined relative to this position.
+         defined relative to this position. The default choice is None. In this case 
+         source_dict must contain source position.
          Eg: np.array([0, 0])
         :param draw_area: The area of the test region from which we randomly draw a
-         source position. Eg: 4*pi.
+         source position. The default choice is None. In this case 
+         source_dict must contain source position. Eg: 4*pi.
         :param band: Imaging band
         :return: dictionary of keywords for the source light model(s)
         """
