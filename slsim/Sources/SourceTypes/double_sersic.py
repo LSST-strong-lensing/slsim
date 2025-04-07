@@ -21,7 +21,7 @@ class DoubleSersic(SourceBase):
         super().__init__(source_dict=source_dict)
 
     @property
-    def n_sersic(self):
+    def _n_sersic(self):
         """Returns sersic indices of the source for double sersic profile."""
 
         return (
@@ -125,7 +125,7 @@ class DoubleSersic(SourceBase):
             {
                 "magnitude": mag_source0,
                 "R_sersic": self._angular_size[0],
-                "n_sersic": self.n_sersic[0],
+                "n_sersic": self._n_sersic[0],
                 "e1": e1_light_source_1_lenstronomy,
                 "e2": e2_light_source_1_lenstronomy,
                 "center_x": center_source[0],
@@ -134,7 +134,7 @@ class DoubleSersic(SourceBase):
             {
                 "magnitude": mag_source1,
                 "R_sersic": self._angular_size[1],
-                "n_sersic": self.n_sersic[1],
+                "n_sersic": self._n_sersic[1],
                 "e1": e1_light_source_2_lenstronomy,
                 "e2": e2_light_source_2_lenstronomy,
                 "center_x": center_source[0],

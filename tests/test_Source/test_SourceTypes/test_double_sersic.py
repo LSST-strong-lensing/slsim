@@ -39,8 +39,8 @@ class TestDoubleSersic:
         assert e12 == 0.003
 
     def test_n_sersic(self):
-        assert self.source.n_sersic[0] == 1
-        assert self.source.n_sersic[1] == 4
+        assert self.source._n_sersic[0] == 1
+        assert self.source._n_sersic[1] == 4
 
     def test_extended_source_magnitude(self):
         assert self.source.extended_source_magnitude("i") == 23
