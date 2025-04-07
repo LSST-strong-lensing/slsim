@@ -46,13 +46,13 @@ class TestInterpolated:
         self.source = Interpolated(source_dict=self.source_dict, cosmo=cosmo)
 
     def test_image_redshift(self):
-        assert self.source.image_redshift == 0.1
+        assert self.source._image_redshift == 0.1
 
     def test_image(self):
-        assert np.all(self.source.image == self.test_image)
+        assert np.all(self.source._image == self.test_image)
 
     def test_phi(self):
-        assert self.source.phi == 0.5
+        assert self.source._phi == 0.5
 
     def test_extended_source_magnitude(self):
         assert self.source.extended_source_magnitude("i") == 21

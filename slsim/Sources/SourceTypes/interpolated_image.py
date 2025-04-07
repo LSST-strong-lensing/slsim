@@ -22,25 +22,25 @@ class Interpolated(SourceBase):
         self.cosmo = cosmo
 
     @property
-    def image_redshift(self):
+    def _image_redshift(self):
         """Returns redshift of a given image."""
 
         return float(self.source_dict["z_data"])
 
     @property
-    def image(self):
+    def _image(self):
         """Returns image of a given extended source."""
 
         return self.source_dict["image"]
 
     @property
-    def phi(self):
+    def _phi(self):
         """Returns position angle of a given image in arcsec."""
 
         return self.source_dict["phi_G"]
 
     @property
-    def pixel_scale(self):
+    def _pixel_scale(self):
         """Returns pixel scale of a given image."""
 
         return self.source_dict["pixel_width_data"]
@@ -80,8 +80,8 @@ class Interpolated(SourceBase):
         center_source = self.extended_source_position(
             reference_position=reference_position, draw_area=draw_area
         )
-        z_image = self.image_redshift
-        pixel_width = self.pixel_scale
+        z_image = self._image_redshift
+        pixel_width = self._pixel_scale
         pixel_width *= z_scale_factor(
             z_old=z_image, z_new=self.redshift, cosmo=self.cosmo
         )
@@ -89,10 +89,10 @@ class Interpolated(SourceBase):
         kwargs_extended_source = [
             {
                 "magnitude": mag_source,
-                "image": self.image,  # Use the potentially reshaped image
+                "image": self._image,  # Use the potentially reshaped image
                 "center_x": center_source[0],
                 "center_y": center_source[1],
-                "phi_G": self.phi,
+                "phi_G": self._phi,
                 "scale": pixel_width,
             }
         ]
