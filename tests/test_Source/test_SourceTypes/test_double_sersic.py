@@ -23,16 +23,16 @@ class TestDoubleSersic:
         self.source = DoubleSersic(source_dict=self.source_dict)
 
     def test_angular_size(self):
-        assert self.source.angular_size[0] == 0.2
-        assert self.source.angular_size[1] == 0.15
+        assert self.source._angular_size[0] == 0.2
+        assert self.source._angular_size[1] == 0.15
 
     def test_sersicweight(self):
-        w0, w1 = self.source.sersicweight
+        w0, w1 = self.source._sersicweight
         assert w0 == 0.4
         assert w1 == 0.6
 
     def test_ellipticity(self):
-        e01, e02, e11, e12 = self.source.ellipticity
+        e01, e02, e11, e12 = self.source._ellipticity
         assert e01 == 0.001
         assert e02 == 0.002
         assert e11 == 0.001
