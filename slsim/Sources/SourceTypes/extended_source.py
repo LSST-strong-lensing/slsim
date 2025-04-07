@@ -41,62 +41,6 @@ class ExtendedSource(object):
 
         return self._source.redshift
 
-    @property
-    def angular_size(self):
-        """Returns angular size of the source."""
-
-        return self._source.angular_size
-
-    @property
-    def ellipticity(self):
-        """Returns ellipticity components of source.
-        Defined as:
-
-        .. math::
-            e1 = \\frac{1-q}{1+q} * cos(2 \\phi)
-            e2 = \\frac{1-q}{1+q} * sin(2 \\phi)
-
-        with q being the minor-to-major axis ratio.
-        """
-
-        return self._source.ellipticity
-
-    @property
-    def n_sersic(self):
-        """Returns sersic indices of the source profile."""
-
-        return self._source.n_sersic
-
-    @property
-    def sersicweight(self):
-        """Returns weight of the sersic components."""
-
-        return self._source.sersicweight
-
-    @property
-    def image_redshift(self):
-        """Returns redshift of a given image."""
-
-        return self._source.image_redshift
-
-    @property
-    def image(self):
-        """Returns image of a given extended source."""
-
-        return self._source.image
-
-    @property
-    def phi(self):
-        """Returns position angle of a given image in arcsec."""
-
-        return self._source.phi
-
-    @property
-    def pixel_scale(self):
-        """Returns pixel scale of a given image."""
-
-        return self._source.pixel_scale
-
     def extended_source_position(self, reference_postion, draw_area):
         """Extended source position. If a center has already been provided (and
         stored in self._center_source during initialization of _source), then

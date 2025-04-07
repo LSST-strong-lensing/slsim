@@ -91,22 +91,6 @@ class TestExtendedSource:
     def test_redshift(self):
         assert self.source.redshift == 1.0
 
-    def test_angular_size(self):
-        assert self.source.angular_size == 0.2
-
-    def test_ellipticity(self):
-        e1, e2 = self.source.ellipticity
-        assert e1 == 0.005
-        assert e2 == 0.003
-
-    def test_n_sersic(self):
-        assert self.source.n_sersic == 1
-
-    def test_sersicweight(self):
-        w0, w1 = self.source_double_sersic.sersicweight
-        assert w0 == 0.4
-        assert w1 == 0.6
-
     def test_extended_source_position(self):
         x_pos, y_pos = self.source.extended_source_position(
             reference_postion=[0, 0], draw_area=4 * np.pi
@@ -135,21 +119,6 @@ class TestExtendedSource:
     def test_surface_brightness_reff(self):
         result = self.source.surface_brightness_reff(band="i")
         npt.assert_almost_equal(result, 19.500, decimal=3)
-
-    def test_image_redshift(self):
-        assert self.source_interpolated.image_redshift == 0.1
-
-    def test_image(self):
-        image_result = self.source_interpolated.image
-        assert np.all(image_result == self.test_image)
-
-    def test_phi(self):
-        phi = self.source_interpolated.phi
-        assert phi == 0.0
-
-    def test_pixel_scale(self):
-        delta_pix = self.source_interpolated.pixel_scale
-        assert delta_pix == 0.05
 
     def test_error(self):
         cosmo = cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
