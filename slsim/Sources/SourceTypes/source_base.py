@@ -39,14 +39,15 @@ class SourceBase(ABC):
             offset = [None, None]
         return offset
 
-    def extended_source_position(self, reference_position, draw_area):
+    def extended_source_position(self, reference_position=None, draw_area=None):
         """Extended source position. If a center has already been provided (and
         stored in self._center_source during initialization), then it is simply
         returned. Otherwise, a source position is drawn uniformly within the
         circle of the test area centered on the deflector position.
 
         :param reference_position: reference position. The source postion will be
-         defined relative to this position.
+         defined relative to this position. The default choice is None. In this case 
+         source_dict must contain source position.
          Eg: np.array([0, 0])
         :param draw_area: The area of the test region from which we randomly draw a source
             position. Eg: 4*pi.
@@ -66,17 +67,19 @@ class SourceBase(ABC):
         )
         return self._center_source
 
-    def point_source_position(self, reference_position, draw_area):
+    def point_source_position(self, reference_position=None, draw_area=None):
         """Point source position. point source could be at the center of the
         extended source or it can be off from center of the extended source. In
         the absence of a point source, this is the center of the extended
         source.
 
         :param reference_position: reference position. The source postion will be
-         defined relative to this position.
+         defined relative to this position. The default choice is None. In this case 
+         source_dict must contain source position.
          Eg: np.array([0, 0])
         :param draw_area: The area of the test region from which we randomly draw a
-         source position. Eg: 4*pi.
+         source position. Eg: 4*pi. The default choice is None. In this case 
+         source_dict must contain source position.
         :return: [x_pos, y_pos]
         """
 
