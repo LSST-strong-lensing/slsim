@@ -52,27 +52,24 @@ class TestGalaxies(object):
             ],
             names=("z", "M", "angular_size", "mag_i", "a_rot"),
         )
-        kwargs = {"extendedsource_type": "single_sersic"}
         self.galaxies = Galaxies(
             galaxy_list=galaxy_list,
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            **kwargs
+            extendedsource_type="single_sersic"
         )
         self.galaxies4 = Galaxies(
             galaxy_list=self.galaxy_list2,
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            **kwargs
         )
         self.galaxies5 = Galaxies(
             galaxy_list=galaxy_list3,
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            **kwargs
         )
 
         self.gal_list = Table(
@@ -226,14 +223,13 @@ class TestGalaxies(object):
                 "dec_off",
             ),
         )
-        kwargs2 = {"extendedsource_type": "double_sersic"}
         self.galaxies2 = Galaxies(
             galaxy_list=self.gal_list,
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
             list_type="astropy_table",
-            **kwargs2
+            extendedsource_type="double_sersic"
         )
         self.galaxies3 = Galaxies(
             galaxy_list=self.gal_list2,
@@ -241,7 +237,7 @@ class TestGalaxies(object):
             cosmo=self.cosmo,
             sky_area=sky_area,
             list_type="astropy_table",
-            **kwargs2
+            extendedsource_type="double_sersic"
         )
         self.galaxies6 = Galaxies(
             galaxy_list=gal_list3,
@@ -249,7 +245,7 @@ class TestGalaxies(object):
             cosmo=self.cosmo,
             sky_area=sky_area,
             list_type="astropy_table",
-            **kwargs2
+            extendedsource_type="double_sersic"
         )
         self.galaxies7 = Galaxies(
             galaxy_list=gal_list4,
@@ -257,7 +253,7 @@ class TestGalaxies(object):
             cosmo=self.cosmo,
             sky_area=sky_area,
             list_type="astropy_table",
-            **kwargs2
+            extendedsource_type="double_sersic"
         )
         self.galaxies8 = Galaxies(
             galaxy_list=gal_list5,
@@ -265,7 +261,7 @@ class TestGalaxies(object):
             cosmo=self.cosmo,
             sky_area=sky_area,
             list_type="astropy_table",
-            **kwargs2
+            extendedsource_type="double_sersic"
         )
         self.galaxies9 = Galaxies(
             galaxy_list=gal_list6,
@@ -273,25 +269,23 @@ class TestGalaxies(object):
             cosmo=self.cosmo,
             sky_area=sky_area,
             list_type="astropy_table",
-            **kwargs2
+            extendedsource_type="double_sersic"
         )
-        kwargs3 = {"extendedsource_type": "triple"}
+        
         self.galaxies10 = Galaxies(
             galaxy_list=gal_list6,
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
             list_type="astropy_table",
-            **kwargs3
+            extendedsource_type="triple"
         )
-        kwargs4 = {"extendedsource_type": "single_sersic"}
         self.galaxies11 = Galaxies(
             galaxy_list=galaxy_list,
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
             downsample_to_dc2=True,
-            **kwargs4
         )
 
     def test_compare_downsample(self):
@@ -317,7 +311,7 @@ class TestGalaxies(object):
         galaxy_2 = self.galaxies.draw_source(z_max=1)
         galaxy_3 = self.galaxies5.draw_source(z_max=0.4)
         assert isinstance(galaxy, object)
-        assert galaxy_1.n_sersic == 1
+        assert galaxy_1.angular_size == 4.186996407348755e-08
         assert galaxy_2.redshift < 1 + 0.002
         with pytest.raises(ValueError):
             self.galaxies5.draw_source()
@@ -326,10 +320,8 @@ class TestGalaxies(object):
     def test_draw_source_double_sersic(self):
         galaxy1 = self.galaxies2.draw_source()
         galaxy2 = self.galaxies3.draw_source()
-        assert galaxy1.n_sersic[0] == 1
-        assert galaxy1.n_sersic[1] == 4
-        assert galaxy2.n_sersic[0] == 1
-        assert galaxy2.n_sersic[1] == 4
+        assert galaxy1.extended_source_magnitude("i") == 23
+        assert galaxy2.extended_source_magnitude("i") == 23
         with pytest.raises(ValueError):
             self.galaxies6.draw_source()
         with pytest.raises(ValueError):

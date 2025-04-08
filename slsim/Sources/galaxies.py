@@ -31,7 +31,7 @@ class Galaxies(SourcePopBase):
         catalog_type=None,
         downsample_to_dc2=False,
         source_size="Bernardi",
-        **kwargs
+        extendedsource_type="single_sersic"
     ):
         """
 
@@ -53,14 +53,13 @@ class Galaxies(SourcePopBase):
         :param source_size: If "Bernardi", computes galaxy size using g-band
          magnitude otherwise rescales skypy source size to Shibuya et al. (2015):
          https://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
-        :param kwargs: dictionary of keyword arguments for a extended source.
-         eg: kwargs = {"extendedsource_type": "single_sersic"}. Other supported
-         types are "single_sersic", "double_sersic", "interpolated".
+        :param extendedsource_type: Keyword to specify type of the extended source. 
+         Supported extended source types are "single_sersic", "double_sersic", "interpolated".
+        :type source_type: str.
         """
         super(Galaxies, self).__init__(cosmo=cosmo, sky_area=sky_area)
         self.source_type = "extended"
-        self.kwargs = kwargs
-        self.light_profile = kwargs["extendedsource_type"]
+        self.light_profile = extendedsource_type
         if downsample_to_dc2 is True:
             samp1, samp2, samp3, samp4, samp5, samp6 = down_sample_to_dc2(
                 galaxy_pop=galaxy_list, sky_area=sky_area
@@ -253,8 +252,8 @@ class Galaxies(SourcePopBase):
         source_class = Source(
             source_dict=galaxy,
             source_type=self.source_type,
+            extendedsource_type=self.light_profile,
             cosmo=self._cosmo,
-            **self.kwargs
         )
         return source_class
 
