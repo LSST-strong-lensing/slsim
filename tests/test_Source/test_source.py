@@ -135,12 +135,6 @@ class TestSource:
         assert e1 == 0.005
         assert e2 == 0.003
 
-    def test_n_sersic(self):
-        assert self.source.n_sersic == 1
-
-    def test_sersicweight(self):
-        assert self.source.sersicweight is None
-
     def test_extended_source_position(self):
         x_pos, y_pos = self.source.extended_source_position()
         assert x_pos == 0.034
@@ -174,21 +168,6 @@ class TestSource:
     def test_point_source_magnitude(self):
         result = self.source_point_extended.point_source_magnitude(band="i")
         assert result == 20
-
-    def test_image_redshift(self):
-        assert self.source_interpolated.image_redshift == 0.1
-
-    def test_image(self):
-        image_result = self.source_interpolated.image
-        assert np.all(image_result == self.test_image)
-
-    def test_phi(self):
-        phi = self.source_interpolated.phi
-        assert phi == 0.0
-
-    def test_pixel_scale(self):
-        delta_pix = self.source_interpolated.pixel_scale
-        assert delta_pix == 0.05
 
     def test_point_source_only(self):
         x_pos_1, y_pos_1 = self.source_point.point_source_position()

@@ -69,13 +69,13 @@ class Source(object):
 
     @property
     def angular_size(self):
-        """Returns angular size of the source."""
+        """Returns angular size of the extended source."""
 
         return self._single_source.angular_size
 
     @property
     def ellipticity(self):
-        """Returns ellipticity components of source.
+        """Returns ellipticity components of extended source.
         Defined as:
 
         .. math::
