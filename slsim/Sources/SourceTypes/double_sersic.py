@@ -39,7 +39,7 @@ class DoubleSersic(SourceBase):
         return self.source_dict["w0"], self.source_dict["w1"]
 
     @property
-    def _angular_size(self):
+    def angular_size(self):
         """Returns angular size of the source for two component of the sersic
         profile."""
 
@@ -49,7 +49,7 @@ class DoubleSersic(SourceBase):
         )
 
     @property
-    def _ellipticity(self):
+    def ellipticity(self):
         """Returns ellipticity components of source for the both component of
         the light profile. first two ellipticity components are associated with the
         first sersic component and last two are associated with the second sersic component.
@@ -113,20 +113,20 @@ class DoubleSersic(SourceBase):
         # convert from slsim to lenstronomy convention.
         e1_light_source_1_lenstronomy, e2_light_source_1_lenstronomy = (
             ellipticity_slsim_to_lenstronomy(
-                e1_slsim=self._ellipticity[0],
-                e2_slsim=self._ellipticity[1],
+                e1_slsim=self.ellipticity[0],
+                e2_slsim=self.ellipticity[1],
             )
         )
         e1_light_source_2_lenstronomy, e2_light_source_2_lenstronomy = (
             ellipticity_slsim_to_lenstronomy(
-                e1_slsim=self._ellipticity[2],
-                e2_slsim=self._ellipticity[3],
+                e1_slsim=self.ellipticity[2],
+                e2_slsim=self.ellipticity[3],
             )
         )
         kwargs_extended_source = [
             {
                 "magnitude": mag_source0,
-                "R_sersic": self._angular_size[0],
+                "R_sersic": self.angular_size[0],
                 "n_sersic": self._n_sersic[0],
                 "e1": e1_light_source_1_lenstronomy,
                 "e2": e2_light_source_1_lenstronomy,
@@ -135,7 +135,7 @@ class DoubleSersic(SourceBase):
             },
             {
                 "magnitude": mag_source1,
-                "R_sersic": self._angular_size[1],
+                "R_sersic": self.angular_size[1],
                 "n_sersic": self._n_sersic[1],
                 "e1": e1_light_source_2_lenstronomy,
                 "e2": e2_light_source_2_lenstronomy,
@@ -163,7 +163,7 @@ class DoubleSersic(SourceBase):
         :return: average surface brightness within half light radius
             [mag/arcsec^2]
         """
-        angularsize = np.mean(self._angular_size)
+        angularsize = np.mean(self.angular_size)
         # reference_position and draw_area do not matter, they are dummy input here.
         kwargs_source = self.kwargs_extended_source_light(
             reference_position=[0, 0], draw_area=4 * np.pi, band=band

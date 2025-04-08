@@ -25,13 +25,13 @@ class SingleSersic(SourceBase):
         return float(self.source_dict["n_sersic"])
 
     @property
-    def _angular_size(self):
+    def angular_size(self):
         """Returns angular size of the source."""
 
         return float(self.source_dict["angular_size"])
 
     @property
-    def _ellipticity(self):
+    def ellipticity(self):
         """Returns ellipticity components of source.
         Defined as:
 
@@ -82,10 +82,10 @@ class SingleSersic(SourceBase):
         center_source = self.extended_source_position(
             reference_position=reference_position, draw_area=draw_area
         )
-        size_source_arcsec = self._angular_size
+        size_source_arcsec = self.angular_size
         e1_light_source_lenstronomy, e2_light_source_lenstronomy = (
             ellipticity_slsim_to_lenstronomy(
-                e1_slsim=self._ellipticity[0], e2_slsim=self._ellipticity[1]
+                e1_slsim=self.ellipticity[0], e2_slsim=self.ellipticity[1]
             )
         )
         kwargs_extended_source = [
@@ -121,7 +121,7 @@ class SingleSersic(SourceBase):
             reference_position=[0, 0], draw_area=4 * np.pi, band=band
         )
         return surface_brightness_reff(
-            angular_size=self._angular_size,
+            angular_size=self.angular_size,
             source_model_list=self.extended_source_light_model(),
             kwargs_extended_source=kwargs_source,
         )

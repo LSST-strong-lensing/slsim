@@ -31,7 +31,14 @@ class Source(object):
             "i", "r"], "sn_type": "Ia", "sn_absolute_mag_band": "bessellb",
             "sn_absolute_zpsys": "ab", "lightcurve_time": np.linspace(-50, 100, 150),
             "sn_modeldir": "/Users/narayankhadka/Downloads/sncosmo_sn_models/SALT3.NIR_WAVEEXT/"}.
-         Other supported pointsource_types are "supernova", "quasar".
+         Eg of supernova plus extended source kwargs: kwargs={"pointsource_type": "supernova",
+           "extendedsource_type": "single_sersic", "variability_model": "light_curve", 
+           "kwargs_variability": ["supernovae_lightcurve", "i", "r"], "sn_type": "Ia", 
+           "sn_absolute_mag_band": "bessellb", "sn_absolute_zpsys": "ab", 
+           "lightcurve_time": np.linspace(-50, 100, 150),
+            "sn_modeldir": "/Users/narayankhadka/Downloads/sncosmo_sn_models/SALT3.NIR_WAVEEXT/"}.
+         Other supported pointsource_type are "supernova", "quasar" and extendedsource_type are
+         "double_sersic", "interpolated_image".
         """
         self.cosmo = cosmo
         self.source_type = source_type
@@ -80,42 +87,6 @@ class Source(object):
 
         return self._single_source.ellipticity
 
-    @property
-    def n_sersic(self):
-        """Returns sersic indices of the source profile."""
-
-        return self._single_source.n_sersic
-
-    @property
-    def sersicweight(self):
-        """Returns weight of the sersic components."""
-
-        return self._single_source.sersicweight
-
-    @property
-    def image_redshift(self):
-        """Returns redshift of a given image."""
-
-        return self._single_source.image_redshift
-
-    @property
-    def image(self):
-        """Returns image of a given extended source."""
-
-        return self._single_source.image
-
-    @property
-    def phi(self):
-        """Returns position angle of a given image in arcsec."""
-
-        return self._single_source.phi
-
-    @property
-    def pixel_scale(self):
-        """Returns pixel scale of a given image."""
-
-        return self._single_source.pixel_scale
-
     def extended_source_position(self, reference_position=None, draw_area=None):
         """Extended source position. If a center has already been provided (and
         stored in the source_dict), then it is simply returned. Otherwise, a
@@ -123,10 +94,12 @@ class Source(object):
         centered on the deflector position.
 
         :param reference_position: reference position. the source postion will be
-         defined relative to this position.
+         defined relative to this position. The default choice is None. In this case 
+         source_dict must contain source position.
          Eg: np.array([0, 0])
         :param draw_area: The area of the test region from which we randomly draw a source
-            position. Eg: 4*pi.
+         position. The default choice is None. In this case 
+         source_dict must contain source position. Eg: 4*pi.
         :return: [x_pos, y_pos]
         """
 
@@ -139,10 +112,12 @@ class Source(object):
         extended source or it can be off from center of the extended source.
 
         :param reference_position: reference position. the source postion will be
-         defined relative to this position.
+         defined relative to this position. The default choice is None. In this case 
+         source_dict must contain source position.
          Eg: np.array([0, 0])
         :param draw_area: The area of the test region from which we randomly draw a
-         source position. Eg: 4*pi.
+         source position. The default choice is None. In this case 
+         source_dict must contain source position. Eg: 4*pi.
         :return: [x_pos, y_pos]
         """
 

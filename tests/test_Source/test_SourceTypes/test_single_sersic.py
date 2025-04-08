@@ -17,10 +17,10 @@ class TestSingleSersic:
         self.source = SingleSersic(source_dict=self.source_dict)
 
     def test_angular_size(self):
-        assert self.source._angular_size == 0.2
+        assert self.source.angular_size == 0.2
 
     def test_ellipticity(self):
-        e1, e2 = self.source._ellipticity
+        e1, e2 = self.source.ellipticity
         assert e1 == 0.002
         assert e2 == 0.004
 
