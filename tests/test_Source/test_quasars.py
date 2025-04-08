@@ -18,7 +18,6 @@ def Quasar_class():
     quasar_list = quasar_catalog_simple(**kwargs_quasars)
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     kwargs = {
-        "pointsource_type": "quasar",
         "variability_model": "light_curve",
         "kwargs_variability": None,
         "agn_driving_variability_model": None,
@@ -30,6 +29,7 @@ def Quasar_class():
         cosmo=cosmo,
         sky_area=sky_area,
         kwargs_cut={},
+        pointsource_type="quasar",
         **kwargs
     )
 
