@@ -8,31 +8,27 @@ _SUPPORTED_EXTENDED_SOURCES = ["single_sersic", "double_sersic", "interpolated"]
 class ExtendedSource(object):
     """Class to manage a single extended source."""
 
-    def __init__(self, source_dict, cosmo=None, **kwargs):
+    def __init__(self, source_dict, extendedsource_type, cosmo=None):
         """
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
          For a detailed description of this dictionary, please see the documentation for
          the SingleSersic, DoubleSersic, and Interpolated classes.
         :type source_dict: dict or astropy.table.Table
-        :param extendedsource_type: keyword for specifying light profile model.
-        :type extendedsource_type: str. supported types are "single_sersic",
-         "double_sersic", "interpolated".
+        :param extendedsource_type: Keyword to specify type of the extended source. 
+         Supported extended source types are "single_sersic", "double_sersic", "interpolated".
+        :type source_type: str
         :param cosmo: astropy.cosmology instance
-        :param kwargs: dictionary of keyword arguments for a extended source.
-         eg: kwargs = {"extendedsource_type": "single_sersic"}. Other supported
-         types are "single_sersic", "double_sersic", "interpolated".
         """
-        self.extendedsource_type = kwargs["extendedsource_type"]
-        if self.extendedsource_type in ["single_sersic"]:
+        if extendedsource_type in ["single_sersic"]:
             self._source = SingleSersic(source_dict=source_dict)
-        elif self.extendedsource_type in ["double_sersic"]:
+        elif extendedsource_type in ["double_sersic"]:
             self._source = DoubleSersic(source_dict=source_dict)
-        elif self.extendedsource_type in ["interpolated"]:
+        elif extendedsource_type in ["interpolated"]:
             self._source = Interpolated(source_dict=source_dict, cosmo=cosmo)
         else:
             raise ValueError(
                 "Extended source type %s not supported. Chose among %s."
-                % (self.extendedsource_type, _SUPPORTED_EXTENDED_SOURCES)
+                % (extendedsource_type, _SUPPORTED_EXTENDED_SOURCES)
             )
 
     @property

@@ -8,41 +8,42 @@ _SUPPORTED_POINT_SOURCES = ["supernova", "quasar", "general_lightcurve"]
 class PointSource(object):
     """Class to manage a single point source."""
 
-    def __init__(self, source_dict, cosmo=None, **kwargs):
+    def __init__(self, source_dict, pointsource_type, cosmo=None, **kwargs):
         """One can supply either supernovae kwargs or agn kwargs. If supernovae
         kwargs are supplied, agn kwrgs can be None which is a default option.
 
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
          For more detail, please see documentation of SupernovaEvent and Quasar class.
         :type source_dict: dict or astropy.table.Table
+        :param pointsource_type: Keyword to specify type of the point source. 
+         Supported point source types are "supernova", "quasar", "general_lightcurve".
+        :type source_type: str
         :param cosmo: astropy.cosmology instance
-        :param pointsource_type: keyword for specifying point source type.
-        :type pointsource_type: str. supported types are "supernova", "quasar".
         :param kwargs: dictionary of keyword arguments for a point source. It should
          contain keywords for pointsource_type and other keywords associated with
          supernova and quasar. For supernova kwargs dict, please see documentation of
          SupernovaEvent class. For quasar kwargs dict, please see documentation of
          Quasar class.
-         Eg of supernova kwargs: kwargs={"pointsource_type": "supernova",
-          "variability_model": "light_curve", "kwargs_variability": ["supernovae_lightcurve",
-            "i", "r"], "sn_type": "Ia", "sn_absolute_mag_band": "bessellb",
-            "sn_absolute_zpsys": "ab", "lightcurve_time": np.linspace(-50, 100, 150),
-            "sn_modeldir": "/Users/narayankhadka/Downloads/sncosmo_sn_models/SALT3.NIR_WAVEEXT/"}.
+         Eg of supernova kwargs: kwargs={"variability_model": "light_curve", 
+         "kwargs_variability": ["supernovae_lightcurve", "i", "r"], "sn_type": "Ia",
+         "sn_absolute_mag_band": "bessellb", "sn_absolute_zpsys": "ab", 
+         "lightcurve_time": np.linspace(-50, 100, 150),
+         "sn_modeldir": "/Users/narayankhadka/Downloads/sncosmo_sn_models/SALT3.NIR_WAVEEXT/"}.
          Other supported pointsource_types are "supernova", "quasar".
         """
-        self.pointsource_type = kwargs["pointsource_type"]
-        if self.pointsource_type in ["supernova"]:
+        
+        if pointsource_type in ["supernova"]:
             self._point_source = SupernovaEvent(
                 source_dict=source_dict, cosmo=cosmo, **kwargs
             )
-        elif self.pointsource_type in ["quasar"]:
+        elif pointsource_type in ["quasar"]:
             self._point_source = Quasar(source_dict=source_dict, cosmo=cosmo, **kwargs)
-        elif self.pointsource_type in ["general_lightcurve"]:
+        elif pointsource_type in ["general_lightcurve"]:
             self._point_source = GeneralLightCurve(source_dict=source_dict, **kwargs)
         else:
             raise ValueError(
                 "Point source type %s not supported. Chose among %s."
-                % (self.pointsource_type, _SUPPORTED_POINT_SOURCES)
+                % (pointsource_type, _SUPPORTED_POINT_SOURCES)
             )
 
     @property

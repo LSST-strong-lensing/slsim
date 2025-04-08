@@ -6,7 +6,7 @@ class PointPlusExtendedSource(PointSource, ExtendedSource):
     """Class to manage a single point source and a single extended source
     (host)"""
 
-    def __init__(self, source_dict, cosmo=None, **kwargs):
+    def __init__(self, source_dict, extendedsource_type, pointsource_type, cosmo=None, **kwargs):
         """
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
          For a detailed description of this dictionary, please see the documentation for
@@ -18,7 +18,7 @@ class PointPlusExtendedSource(PointSource, ExtendedSource):
         :type extendedsource_type: str. supported types are "single_sersic",
          "double_sersic", "interpolated".
         :param pointsource_type: keyword for specifying point source type.
-        :type pointsource_type: str. supported types are "supernova", "quasar".
+        :type pointsource_type: str. supported types are "supernova", "quasar", "general_lightcurve".
         :param cosmo: astropy.cosmology instance
         :param kwargs: dictionary of keyword arguments for a supernova. For supernova
          kwargs dict, please see documentation of Supernova class.
@@ -26,7 +26,9 @@ class PointPlusExtendedSource(PointSource, ExtendedSource):
          Quasar class.
         """
         # Initialize the extended source
-        ExtendedSource.__init__(self, source_dict=source_dict, cosmo=cosmo, **kwargs)
+        ExtendedSource.__init__(self, source_dict=source_dict, extendedsource_type=extendedsource_type,
+                                 cosmo=cosmo)
 
         # Initialize the point source
-        PointSource.__init__(self, source_dict=source_dict, cosmo=cosmo, **kwargs)
+        PointSource.__init__(self, source_dict=source_dict, pointsource_type=pointsource_type,
+                              cosmo=cosmo, **kwargs)

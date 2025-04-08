@@ -18,12 +18,11 @@ class TestSource:
             "center_x": 0.034,
             "center_y": -0.06,
         }
-        kwargs_extended = {"extendedsource_type": "single_sersic"}
         self.source = Source(
             source_dict=self.source_dict_extended,
             source_type="extended",
             cosmo=cosmo,
-            **kwargs_extended
+            extendedsource_type="single_sersic"
         )
 
         self.source_dict_point_extended = {
@@ -41,8 +40,6 @@ class TestSource:
         }
 
         kwargs_point_extended = {
-            "pointsource_type": "supernova",
-            "extendedsource_type": "single_sersic",
             "variability_model": "light_curve",
             "kwargs_variability": ["supernovae_lightcurve", "i", "r"],
             "sn_type": "Ia",
@@ -54,6 +51,8 @@ class TestSource:
         self.source_point_extended = Source(
             source_dict=self.source_dict_point_extended,
             source_type="point_plus_extended",
+            extendedsource_type="single_sersic",
+            pointsource_type="supernova",
             cosmo=cosmo,
             **kwargs_point_extended
         )
@@ -93,12 +92,11 @@ class TestSource:
             "phi_G": 0.0,
             "mag_i": 20,
         }
-        kwargs_interpolated = {"extendedsource_type": "interpolated"}
         self.source_interpolated = Source(
             source_dict=self.source_dict_interpolated,
             source_type="extended",
             cosmo=cosmo,
-            **kwargs_interpolated
+            extendedsource_type="interpolated"
         )
 
         self.source_dict_point = {
@@ -108,7 +106,6 @@ class TestSource:
             "center_y": -0.05,
         }
         kwargs_point = {
-            "pointsource_type": "supernova",
             "variability_model": "light_curve",
             "kwargs_variability": ["supernovae_lightcurve", "i", "r"],
             "sn_type": "Ia",
@@ -120,6 +117,7 @@ class TestSource:
         self.source_point = Source(
             source_dict=self.source_dict_point,
             source_type="point_source",
+            pointsource_type="supernova",
             cosmo=cosmo,
             **kwargs_point
         )
@@ -187,13 +185,12 @@ class TestSource:
             "center_x": 0.034,
             "center_y": -0.06,
         }
-        kwargs_extended = {"extendedsource_type": "single_sersic"}
         with pytest.raises(ValueError):
             Source(
                 source_dict=self.source_dict_extended,
                 source_type="other",
                 cosmo=cosmo,
-                **kwargs_extended
+                extendedsource_type="single_sersic"
             )
 
 

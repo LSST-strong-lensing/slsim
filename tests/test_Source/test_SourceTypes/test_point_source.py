@@ -15,7 +15,6 @@ class TestPointSource:
             "center_y": -0.05,
         }
         kwargs_sn = {
-            "pointsource_type": "supernova",
             "variability_model": "light_curve",
             "kwargs_variability": ["supernovae_lightcurve", "i", "r"],
             "sn_type": "Ia",
@@ -25,7 +24,8 @@ class TestPointSource:
             "sn_modeldir": None,
         }
         self.source_sn = PointSource(
-            source_dict=self.source_dict_sn, cosmo=cosmo, **kwargs_sn
+            source_dict=self.source_dict_sn, pointsource_type="supernova",
+              cosmo=cosmo, **kwargs_sn
         )
 
         source_dict_quasar = {"z": 0.8, "ps_mag_i": 20}
@@ -38,7 +38,6 @@ class TestPointSource:
             "standard_deviation": 0.9,
         }
         kwargs_quasar = {
-            "pointsource_type": "quasar",
             "variability_model": "light_curve",
             "kwargs_variability": {"agn_lightcurve", "i", "r"},
             "agn_driving_variability_model": "bending_power_law",
@@ -46,7 +45,7 @@ class TestPointSource:
             "lightcurve_time": np.linspace(0, 1000, 1000),
         }
         self.source_quasar = PointSource(
-            source_dict=source_dict_quasar, cosmo=cosmo, **kwargs_quasar
+            source_dict=source_dict_quasar, pointsource_type="quasar", cosmo=cosmo, **kwargs_quasar
         )
 
         source_dict_general_lc = {
@@ -55,12 +54,12 @@ class TestPointSource:
             "ps_mag_i": np.array([15, 16, 17, 18, 19, 20, 21, 22, 23]),
         }
         kwargs_general_lc = {
-            "pointsource_type": "general_lightcurve",
             "variability_model": "light_curve",
         }
 
         self.source_general_lc = PointSource(
-            source_dict=source_dict_general_lc, cosmo=cosmo, **kwargs_general_lc
+            source_dict=source_dict_general_lc, pointsource_type="general_lightcurve",
+              cosmo=cosmo, **kwargs_general_lc
         )
 
     def test_redshift(self):
@@ -104,7 +103,6 @@ class TestPointSource:
             "center_y": -0.05,
         }
         kwargs_sn = {
-            "pointsource_type": "other",
             "variability_model": "light_curve",
             "kwargs_variability": ["supernovae_lightcurve", "i", "r"],
             "sn_type": "Ia",
@@ -114,7 +112,8 @@ class TestPointSource:
             "sn_modeldir": None,
         }
         with pytest.raises(ValueError):
-            PointSource(source_dict=source_dict_sn, cosmo=cosmo, **kwargs_sn)
+            PointSource(source_dict=source_dict_sn, cosmo=cosmo, pointsource_type="other",
+                         **kwargs_sn)
 
 
 if __name__ == "__main__":

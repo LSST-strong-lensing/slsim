@@ -8,7 +8,8 @@ _SUPPORTED_SOURCES = ["point_source", "extended", "point_plus_extended"]
 class Source(object):
     """Class to manage an individual source."""
 
-    def __init__(self, source_dict, source_type=None, cosmo=None, **kwargs):
+    def __init__(self, source_dict, source_type=None, extendedsource_type=None,
+                  pointsource_type=None, cosmo=None, **kwargs):
         """
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
          For a detailed description of this dictionary, please see the documentation for
@@ -19,41 +20,40 @@ class Source(object):
         :param source_type: Keyword to specify type of the source. Supported source types are
          'extended', 'point_source', and 'point_plus_extended' supported
         :type source_type: str
+        :param extendedsource_type: Keyword to specify type of the extended source. 
+         Supported extended source types are "single_sersic", "double_sersic", "interpolated".
+        :type source_type: str
+        :param pointsource_type: Keyword to specify type of the point source. 
+         Supported point source types are "supernova", "quasar", "general_lightcurve".
+        :type source_type: str
         :param cosmo: astropy.cosmology instance
         :param kwargs: dictionary of keyword arguments for a source. It should
-         contain keywords for pointsource_type or extendedsource_type and other keywords associated with
-         pointsource. For supernova kwargs dict, please see documentation of
+         contain keywords associated with a pointsource. For supernova kwargs dict, please see documentation of
          SupernovaEvent class. For quasar kwargs dict, please see documentation of
-         Quasar class. For extended source, only extentedsource_type is enough.
-         eg: {"extedndedsource_type": "single_sersic"}
-         Eg of supernova kwargs: kwargs={"pointsource_type": "supernova",
-          "variability_model": "light_curve", "kwargs_variability": ["supernovae_lightcurve",
+         Quasar class.
+         Eg of supernova kwargs: kwargs={          
+         "variability_model": "light_curve", "kwargs_variability": ["supernovae_lightcurve",
             "i", "r"], "sn_type": "Ia", "sn_absolute_mag_band": "bessellb",
             "sn_absolute_zpsys": "ab", "lightcurve_time": np.linspace(-50, 100, 150),
-            "sn_modeldir": "/Users/narayankhadka/Downloads/sncosmo_sn_models/SALT3.NIR_WAVEEXT/"}.
-         Eg of supernova plus extended source kwargs: kwargs={"pointsource_type": "supernova",
-           "extendedsource_type": "single_sersic", "variability_model": "light_curve", 
-           "kwargs_variability": ["supernovae_lightcurve", "i", "r"], "sn_type": "Ia", 
-           "sn_absolute_mag_band": "bessellb", "sn_absolute_zpsys": "ab", 
-           "lightcurve_time": np.linspace(-50, 100, 150),
-            "sn_modeldir": "/Users/narayankhadka/Downloads/sncosmo_sn_models/SALT3.NIR_WAVEEXT/"}.
-         Other supported pointsource_type are "supernova", "quasar" and extendedsource_type are
-         "double_sersic", "interpolated_image".
+            "sn_modeldir": None}.
         """
         self.cosmo = cosmo
         self.source_type = source_type
-        self.kwargs = kwargs
+        self.extendedsource_type = extendedsource_type
+        self.pointsource_type = pointsource_type
         if self.source_type in ["point_source"]:
             self._single_source = PointSource(
-                source_dict=source_dict, cosmo=self.cosmo, **self.kwargs
+                source_dict=source_dict, pointsource_type=self.pointsource_type,
+                  cosmo=self.cosmo, **kwargs
             )
         elif self.source_type in ["extended"]:
             self._single_source = ExtendedSource(
-                source_dict=source_dict, cosmo=cosmo, **self.kwargs
-            )
+                source_dict=source_dict, extendedsource_type=self.extendedsource_type,
+                  cosmo=cosmo)
         elif self.source_type in ["point_plus_extended"]:
             self._single_source = PointPlusExtendedSource(
-                source_dict=source_dict, cosmo=cosmo, **self.kwargs
+                source_dict=source_dict, extendedsource_type=self.extendedsource_type,
+                 pointsource_type=self.pointsource_type, cosmo=cosmo, **kwargs
             )
         else:
             raise ValueError(

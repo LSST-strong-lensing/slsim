@@ -18,11 +18,10 @@ class TestExtendedSource:
             "center_x": 0.034,
             "center_y": -0.06,
         }
-        kwargs_single_sersic = {"extendedsource_type": "single_sersic"}
         self.source = ExtendedSource(
             source_dict=self.source_dict_single_sersic,
             cosmo=cosmo,
-            **kwargs_single_sersic
+            extendedsource_type="single_sersic"
         )
 
         self.source_dict_double_sersic = {
@@ -39,11 +38,11 @@ class TestExtendedSource:
             "w1": 0.6,
             "mag_i": 23,
         }
-        kwargs_double_sersic = {"extendedsource_type": "double_sersic"}
+    
         self.source_double_sersic = ExtendedSource(
             source_dict=self.source_dict_double_sersic,
             cosmo=cosmo,
-            **kwargs_double_sersic
+            extendedsource_type="single_sersic"
         )
 
         # Create an image
@@ -81,11 +80,11 @@ class TestExtendedSource:
             "phi_G": 0.0,
             "mag_i": 20,
         }
-        kwargs_interpolated = {"extendedsource_type": "interpolated"}
+        
         self.source_interpolated = ExtendedSource(
             source_dict=self.source_dict_interpolated,
             cosmo=cosmo,
-            **kwargs_interpolated
+            extendedsource_type="single_sersic"
         )
 
     def test_redshift(self):
@@ -140,10 +139,11 @@ class TestExtendedSource:
             "center_x": 0.034,
             "center_y": -0.06,
         }
-        kwargs_extended = {"extendedsource_type": "other"}
+        
         with pytest.raises(ValueError):
             ExtendedSource(
-                source_dict=self.source_dict_extended, cosmo=cosmo, **kwargs_extended
+                source_dict=self.source_dict_extended, cosmo=cosmo, 
+                extendedsource_type="other"
             )
 
 
