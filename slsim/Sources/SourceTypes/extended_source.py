@@ -40,6 +40,27 @@ class ExtendedSource(object):
         """Returns source redshift."""
 
         return self._source.redshift
+    
+    @property
+    def angular_size(self):
+        """Returns angular size of the source."""
+
+        return self._source.angular_size
+
+    @property
+    def ellipticity(self):
+        """Returns ellipticity components of source.
+        Defined as:
+
+        .. math::
+            e1 = \\frac{1-q}{1+q} * cos(2 \\phi)
+            e2 = \\frac{1-q}{1+q} * sin(2 \\phi)
+
+        with q being the minor-to-major axis ratio.
+        """
+
+        return self._source.ellipticity
+
 
     def extended_source_position(self, reference_postion=None, draw_area=None):
         """Extended source position. If a center has already been provided (and

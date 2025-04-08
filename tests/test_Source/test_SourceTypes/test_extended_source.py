@@ -91,6 +91,14 @@ class TestExtendedSource:
     def test_redshift(self):
         assert self.source.redshift == 1.0
 
+    def test_angular_size(self):
+         assert self.source.angular_size == 0.2
+
+    def test_ellipticity(self):
+         e1, e2 = self.source.ellipticity
+         assert e1 == 0.005
+         assert e2 == 0.003
+
     def test_extended_source_position(self):
         x_pos, y_pos = self.source.extended_source_position(
             reference_postion=[0, 0], draw_area=4 * np.pi
