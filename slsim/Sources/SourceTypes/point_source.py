@@ -15,7 +15,7 @@ class PointSource(object):
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
          For more detail, please see documentation of SupernovaEvent and Quasar class.
         :type source_dict: dict or astropy.table.Table
-        :param pointsource_type: Keyword to specify type of the point source. 
+        :param pointsource_type: Keyword to specify type of the point source.
          Supported point source types are "supernova", "quasar", "general_lightcurve".
         :type source_type: str
         :param cosmo: astropy.cosmology instance
@@ -24,14 +24,14 @@ class PointSource(object):
          supernova and quasar. For supernova kwargs dict, please see documentation of
          SupernovaEvent class. For quasar kwargs dict, please see documentation of
          Quasar class.
-         Eg of supernova kwargs: kwargs={"variability_model": "light_curve", 
+         Eg of supernova kwargs: kwargs={"variability_model": "light_curve",
          "kwargs_variability": ["supernovae_lightcurve", "i", "r"], "sn_type": "Ia",
-         "sn_absolute_mag_band": "bessellb", "sn_absolute_zpsys": "ab", 
+         "sn_absolute_mag_band": "bessellb", "sn_absolute_zpsys": "ab",
          "lightcurve_time": np.linspace(-50, 100, 150),
          "sn_modeldir": "/Users/narayankhadka/Downloads/sncosmo_sn_models/SALT3.NIR_WAVEEXT/"}.
          Other supported pointsource_types are "supernova", "quasar".
         """
-        
+
         if pointsource_type in ["supernova"]:
             self._point_source = SupernovaEvent(
                 source_dict=source_dict, cosmo=cosmo, **kwargs
@@ -60,11 +60,11 @@ class PointSource(object):
         necessary.
 
         :param reference_position: reference position. the source postion will be
-         defined relative to this position. The default choice is None. In this case 
+         defined relative to this position. The default choice is None. In this case
          source_dict must contain source position.
          Eg: np.array([0, 0])
         :param draw_area: The area of the test region from which we randomly draw a
-         source position. The default choice is None. In this case 
+         source position. The default choice is None. In this case
          source_dict must contain source position. Eg: 4*pi.
         :return: [x_pos, y_pos]
         """
@@ -78,11 +78,11 @@ class PointSource(object):
         extended source or it can be off from center of the extended source.
 
         :param reference_position: reference position. the source postion will be
-         defined relative to this position. The default choice is None. In this case 
+         defined relative to this position. The default choice is None. In this case
          source_dict must contain source position.
          Eg: np.array([0, 0])
         :param draw_area: The area of the test region from which we randomly draw a
-         source position. The default choice is None. In this case 
+         source position. The default choice is None. In this case
          source_dict must contain source position. Eg: 4*pi.
         :return: [x_pos, y_pos]
         """

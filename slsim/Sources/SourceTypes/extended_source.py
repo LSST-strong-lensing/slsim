@@ -14,7 +14,7 @@ class ExtendedSource(object):
          For a detailed description of this dictionary, please see the documentation for
          the SingleSersic, DoubleSersic, and Interpolated classes.
         :type source_dict: dict or astropy.table.Table
-        :param extendedsource_type: Keyword to specify type of the extended source. 
+        :param extendedsource_type: Keyword to specify type of the extended source.
          Supported extended source types are "single_sersic", "double_sersic", "interpolated".
         :type source_type: str
         :param cosmo: astropy.cosmology instance
@@ -36,7 +36,7 @@ class ExtendedSource(object):
         """Returns source redshift."""
 
         return self._source.redshift
-    
+
     @property
     def angular_size(self):
         """Returns angular size of the source."""
@@ -57,7 +57,6 @@ class ExtendedSource(object):
 
         return self._source.ellipticity
 
-
     def extended_source_position(self, reference_postion=None, draw_area=None):
         """Extended source position. If a center has already been provided (and
         stored in self._center_source during initialization of _source), then
@@ -66,11 +65,11 @@ class ExtendedSource(object):
         see: _source.
 
         :param reference_position: reference position. the source postion will be
-         defined relative to this position. The default choice is None. In this case 
+         defined relative to this position. The default choice is None. In this case
          source_dict must contain source position.
          Eg: np.array([0, 0])
         :param draw_area: The area of the test region from which we randomly draw a source
-         position. The default choice is None. In this case source_dict must contain 
+         position. The default choice is None. In this case source_dict must contain
          source position. Eg: 4*pi.
         :return: [x_pos, y_pos]
         """
@@ -88,16 +87,18 @@ class ExtendedSource(object):
 
         return self._source.extended_source_magnitude(band=band)
 
-    def kwargs_extended_source_light(self, reference_position=None, draw_area=None, band=None):
+    def kwargs_extended_source_light(
+        self, reference_position=None, draw_area=None, band=None
+    ):
         """Provides dictionary of keywords for the source light model(s).
         Kewords used are in lenstronomy conventions.
 
         :param reference_position: reference position. the source postion will be
-         defined relative to this position. The default choice is None. In this case 
+         defined relative to this position. The default choice is None. In this case
          source_dict must contain source position.
          Eg: np.array([0, 0])
         :param draw_area: The area of the test region from which we randomly draw a
-         source position. The default choice is None. In this case 
+         source position. The default choice is None. In this case
          source_dict must contain source position. Eg: 4*pi.
         :param band: Imaging band
         :return: dictionary of keywords for the source light model(s)

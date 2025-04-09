@@ -24,8 +24,10 @@ class TestPointSource:
             "sn_modeldir": None,
         }
         self.source_sn = PointSource(
-            source_dict=self.source_dict_sn, pointsource_type="supernova",
-              cosmo=cosmo, **kwargs_sn
+            source_dict=self.source_dict_sn,
+            pointsource_type="supernova",
+            cosmo=cosmo,
+            **kwargs_sn
         )
 
         source_dict_quasar = {"z": 0.8, "ps_mag_i": 20}
@@ -45,7 +47,10 @@ class TestPointSource:
             "lightcurve_time": np.linspace(0, 1000, 1000),
         }
         self.source_quasar = PointSource(
-            source_dict=source_dict_quasar, pointsource_type="quasar", cosmo=cosmo, **kwargs_quasar
+            source_dict=source_dict_quasar,
+            pointsource_type="quasar",
+            cosmo=cosmo,
+            **kwargs_quasar
         )
 
         source_dict_general_lc = {
@@ -58,8 +63,10 @@ class TestPointSource:
         }
 
         self.source_general_lc = PointSource(
-            source_dict=source_dict_general_lc, pointsource_type="general_lightcurve",
-              cosmo=cosmo, **kwargs_general_lc
+            source_dict=source_dict_general_lc,
+            pointsource_type="general_lightcurve",
+            cosmo=cosmo,
+            **kwargs_general_lc
         )
 
     def test_redshift(self):
@@ -112,8 +119,12 @@ class TestPointSource:
             "sn_modeldir": None,
         }
         with pytest.raises(ValueError):
-            PointSource(source_dict=source_dict_sn, cosmo=cosmo, pointsource_type="other",
-                         **kwargs_sn)
+            PointSource(
+                source_dict=source_dict_sn,
+                cosmo=cosmo,
+                pointsource_type="other",
+                **kwargs_sn
+            )
 
 
 if __name__ == "__main__":

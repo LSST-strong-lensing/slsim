@@ -21,7 +21,7 @@ class TestExtendedSource:
         self.source = ExtendedSource(
             source_dict=self.source_dict_single_sersic,
             cosmo=cosmo,
-            extendedsource_type="single_sersic"
+            extendedsource_type="single_sersic",
         )
 
         self.source_dict_double_sersic = {
@@ -38,11 +38,11 @@ class TestExtendedSource:
             "w1": 0.6,
             "mag_i": 23,
         }
-    
+
         self.source_double_sersic = ExtendedSource(
             source_dict=self.source_dict_double_sersic,
             cosmo=cosmo,
-            extendedsource_type="single_sersic"
+            extendedsource_type="single_sersic",
         )
 
         # Create an image
@@ -80,23 +80,23 @@ class TestExtendedSource:
             "phi_G": 0.0,
             "mag_i": 20,
         }
-        
+
         self.source_interpolated = ExtendedSource(
             source_dict=self.source_dict_interpolated,
             cosmo=cosmo,
-            extendedsource_type="single_sersic"
+            extendedsource_type="single_sersic",
         )
 
     def test_redshift(self):
         assert self.source.redshift == 1.0
 
     def test_angular_size(self):
-         assert self.source.angular_size == 0.2
+        assert self.source.angular_size == 0.2
 
     def test_ellipticity(self):
-         e1, e2 = self.source.ellipticity
-         assert e1 == 0.005
-         assert e2 == 0.003
+        e1, e2 = self.source.ellipticity
+        assert e1 == 0.005
+        assert e2 == 0.003
 
     def test_extended_source_position(self):
         x_pos, y_pos = self.source.extended_source_position(
@@ -139,11 +139,12 @@ class TestExtendedSource:
             "center_x": 0.034,
             "center_y": -0.06,
         }
-        
+
         with pytest.raises(ValueError):
             ExtendedSource(
-                source_dict=self.source_dict_extended, cosmo=cosmo, 
-                extendedsource_type="other"
+                source_dict=self.source_dict_extended,
+                cosmo=cosmo,
+                extendedsource_type="other",
             )
 
 

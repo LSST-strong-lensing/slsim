@@ -1140,13 +1140,9 @@ class Lens(LensedSystemBase):
             self._source_type == "point_source"
             or self._source_type == "point_plus_extended"
         ):
-            if self.max_redshift_source_class.pointsource_type in [
-                "supernova"
-            ]:
+            if self.max_redshift_source_class.pointsource_type in ["supernova"]:
                 lens_type = "SN" + self.max_redshift_source_class.kwargs["sn_type"]
-            elif self.max_redshift_source_class.pointsource_type in [
-                "quasar"
-            ]:
+            elif self.max_redshift_source_class.pointsource_type in ["quasar"]:
                 lens_type = "QSO"
             else:
                 # "LC" stands for Light Curve

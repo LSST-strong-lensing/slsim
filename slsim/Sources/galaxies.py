@@ -54,7 +54,7 @@ class Galaxies(SourcePopBase):
         :param source_size: If "Bernardi", computes galaxy size using g-band
          magnitude otherwise rescales skypy source size to Shibuya et al. (2015):
          https://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
-        :param extendedsource_type: Keyword to specify type of the extended source. 
+        :param extendedsource_type: Keyword to specify type of the extended source.
          Supported extended source types are "single_sersic", "double_sersic", "interpolated".
         :type source_type: str.
 

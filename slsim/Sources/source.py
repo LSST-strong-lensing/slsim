@@ -8,8 +8,15 @@ _SUPPORTED_SOURCES = ["point_source", "extended", "point_plus_extended"]
 class Source(object):
     """Class to manage an individual source."""
 
-    def __init__(self, source_dict, source_type=None, extendedsource_type=None,
-                  pointsource_type=None, cosmo=None, **kwargs):
+    def __init__(
+        self,
+        source_dict,
+        source_type=None,
+        extendedsource_type=None,
+        pointsource_type=None,
+        cosmo=None,
+        **kwargs
+    ):
         """
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
          For a detailed description of this dictionary, please see the documentation for
@@ -20,10 +27,10 @@ class Source(object):
         :param source_type: Keyword to specify type of the source. Supported source types are
          'extended', 'point_source', and 'point_plus_extended' supported
         :type source_type: str
-        :param extendedsource_type: Keyword to specify type of the extended source. 
+        :param extendedsource_type: Keyword to specify type of the extended source.
          Supported extended source types are "single_sersic", "double_sersic", "interpolated".
         :type source_type: str
-        :param pointsource_type: Keyword to specify type of the point source. 
+        :param pointsource_type: Keyword to specify type of the point source.
          Supported point source types are "supernova", "quasar", "general_lightcurve".
         :type source_type: str
         :param cosmo: astropy.cosmology instance
@@ -31,7 +38,7 @@ class Source(object):
          contain keywords associated with a pointsource. For supernova kwargs dict, please see documentation of
          SupernovaEvent class. For quasar kwargs dict, please see documentation of
          Quasar class.
-         Eg of supernova kwargs: kwargs={          
+         Eg of supernova kwargs: kwargs={
          "variability_model": "light_curve", "kwargs_variability": ["supernovae_lightcurve",
             "i", "r"], "sn_type": "Ia", "sn_absolute_mag_band": "bessellb",
             "sn_absolute_zpsys": "ab", "lightcurve_time": np.linspace(-50, 100, 150),
@@ -44,17 +51,24 @@ class Source(object):
         self.pointsource_type = pointsource_type
         if self.source_type in ["point_source"]:
             self._single_source = PointSource(
-                source_dict=source_dict, pointsource_type=self.pointsource_type,
-                  cosmo=self.cosmo, **self.kwargs
+                source_dict=source_dict,
+                pointsource_type=self.pointsource_type,
+                cosmo=self.cosmo,
+                **self.kwargs
             )
         elif self.source_type in ["extended"]:
             self._single_source = ExtendedSource(
-                source_dict=source_dict, extendedsource_type=self.extendedsource_type,
-                  cosmo=cosmo)
+                source_dict=source_dict,
+                extendedsource_type=self.extendedsource_type,
+                cosmo=cosmo,
+            )
         elif self.source_type in ["point_plus_extended"]:
             self._single_source = PointPlusExtendedSource(
-                source_dict=source_dict, extendedsource_type=self.extendedsource_type,
-                 pointsource_type=self.pointsource_type, cosmo=cosmo, **self.kwargs
+                source_dict=source_dict,
+                extendedsource_type=self.extendedsource_type,
+                pointsource_type=self.pointsource_type,
+                cosmo=cosmo,
+                **self.kwargs
             )
         else:
             raise ValueError(
@@ -95,11 +109,11 @@ class Source(object):
         centered on the deflector position.
 
         :param reference_position: reference position. the source postion will be
-         defined relative to this position. The default choice is None. In this case 
+         defined relative to this position. The default choice is None. In this case
          source_dict must contain source position.
          Eg: np.array([0, 0])
         :param draw_area: The area of the test region from which we randomly draw a source
-         position. The default choice is None. In this case 
+         position. The default choice is None. In this case
          source_dict must contain source position. Eg: 4*pi.
         :return: [x_pos, y_pos]
         """
@@ -113,11 +127,11 @@ class Source(object):
         extended source or it can be off from center of the extended source.
 
         :param reference_position: reference position. the source postion will be
-         defined relative to this position. The default choice is None. In this case 
+         defined relative to this position. The default choice is None. In this case
          source_dict must contain source position.
          Eg: np.array([0, 0])
         :param draw_area: The area of the test region from which we randomly draw a
-         source position. The default choice is None. In this case 
+         source position. The default choice is None. In this case
          source_dict must contain source position. Eg: 4*pi.
         :return: [x_pos, y_pos]
         """
