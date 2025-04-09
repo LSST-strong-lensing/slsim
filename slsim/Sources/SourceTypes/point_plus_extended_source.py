@@ -25,10 +25,13 @@ class PointPlusExtendedSource(PointSource, ExtendedSource):
          For quasar kwargs dict, please see documentation of
          Quasar class.
         """
-        # Initialize the extended source
+        # Initialize the extended source. Here, source_dict will contain both host 
+        # galaxy and point source information but only extended source properties will 
+        # be read in the ExtendedSource class and only point source properties will be 
+        # read in the point source class.
         ExtendedSource.__init__(self, source_dict=source_dict, extendedsource_type=extendedsource_type,
                                  cosmo=cosmo)
 
-        # Initialize the point source
+        # Initialize the point source.
         PointSource.__init__(self, source_dict=source_dict, pointsource_type=pointsource_type,
                               cosmo=cosmo, **kwargs)
