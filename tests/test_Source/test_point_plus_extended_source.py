@@ -17,8 +17,6 @@ class TestPointPlusExtendedSources(object):
         )
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         kwargs = {
-            "pointsource_type": "quasar",
-            "extendedsource_type": "single_sersic",
             "variability_model": "light_curve",
             "kwargs_variability": None,
             "agn_driving_variability_model": None,
@@ -30,6 +28,8 @@ class TestPointPlusExtendedSources(object):
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
+            pointsource_type="quasar",
+            extendedsource_type="single_sersic",
             **kwargs
         )
 
@@ -42,6 +42,9 @@ class TestPointPlusExtendedSources(object):
         assert isinstance(point_plus_extended_sources, object)
         assert point_plus_extended_sources.redshift > 0
         assert point_plus_extended_sources.source_type == "point_plus_extended"
+        assert point_plus_extended_sources.extendedsource_type == "single_sersic"
+        assert point_plus_extended_sources.pointsource_type == "quasar"
+        assert point_plus_extended_sources.extendedsource_type == "single_sersic"
 
 
 if __name__ == "__main__":

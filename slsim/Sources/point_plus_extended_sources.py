@@ -15,6 +15,8 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
         list_type="astropy_table",
         catalog_type=None,
         source_size="Bernadi",
+        pointsource_type=None,
+        extendedsource_type=None,
         **kwargs
     ):
         """
@@ -76,6 +78,7 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
             list_type=list_type,
             catalog_type=catalog_type,
             source_size=source_size,
+            extendedsource_type=extendedsource_type,
             **kwargs
         )
         SourcePopBase.__init__(
@@ -84,3 +87,4 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
             sky_area=sky_area,
         )
         self.source_type = "point_plus_extended"
+        self.pointsource_type = pointsource_type

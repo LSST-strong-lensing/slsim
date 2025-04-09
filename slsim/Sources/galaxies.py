@@ -31,7 +31,8 @@ class Galaxies(SourcePopBase):
         catalog_type=None,
         downsample_to_dc2=False,
         source_size="Bernardi",
-        extendedsource_type="single_sersic"
+        extendedsource_type="single_sersic",
+        **kwargs
     ):
         """
 
@@ -56,8 +57,10 @@ class Galaxies(SourcePopBase):
         :param extendedsource_type: Keyword to specify type of the extended source. 
          Supported extended source types are "single_sersic", "double_sersic", "interpolated".
         :type source_type: str.
+
         """
-        super(Galaxies, self).__init__(cosmo=cosmo, sky_area=sky_area)
+        super().__init__(cosmo=cosmo, sky_area=sky_area)
+        self._kwargs = kwargs
         self.source_type = "extended"
         self.light_profile = extendedsource_type
         if downsample_to_dc2 is True:
@@ -253,7 +256,9 @@ class Galaxies(SourcePopBase):
             source_dict=galaxy,
             source_type=self.source_type,
             extendedsource_type=self.light_profile,
+            pointsource_type=self.pointsource_type,
             cosmo=self._cosmo,
+            **self._kwargs
         )
         return source_class
 
