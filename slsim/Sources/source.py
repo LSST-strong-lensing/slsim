@@ -38,13 +38,14 @@ class Source(object):
             "sn_modeldir": None}.
         """
         self.cosmo = cosmo
+        self.kwargs = kwargs
         self.source_type = source_type
         self.extendedsource_type = extendedsource_type
         self.pointsource_type = pointsource_type
         if self.source_type in ["point_source"]:
             self._single_source = PointSource(
                 source_dict=source_dict, pointsource_type=self.pointsource_type,
-                  cosmo=self.cosmo, **kwargs
+                  cosmo=self.cosmo, **self.kwargs
             )
         elif self.source_type in ["extended"]:
             self._single_source = ExtendedSource(
@@ -53,7 +54,7 @@ class Source(object):
         elif self.source_type in ["point_plus_extended"]:
             self._single_source = PointPlusExtendedSource(
                 source_dict=source_dict, extendedsource_type=self.extendedsource_type,
-                 pointsource_type=self.pointsource_type, cosmo=cosmo, **kwargs
+                 pointsource_type=self.pointsource_type, cosmo=cosmo, **self.kwargs
             )
         else:
             raise ValueError(
