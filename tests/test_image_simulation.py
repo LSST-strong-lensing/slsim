@@ -44,12 +44,11 @@ class TestImageSimulation(object):
         self.source_dict = blue_one
         self.deflector_dict = red_one
         while True:
-            kwargs = {"extendedsource_type": "single_sersic"}
             self.source = Source(
                 source_dict=self.source_dict,
                 cosmo=cosmo,
                 source_type="extended",
-                **kwargs
+                extendedsource_type="single_sersic"
             )
             self.deflector = Deflector(
                 deflector_type="EPL",
@@ -198,8 +197,6 @@ def pes_lens_instance():
             "standard_deviation": 0.9,
         }
         kwargs_quasar = {
-            "pointsource_type": "quasar",
-            "extendedsource_type": "single_sersic",
             "variability_model": "light_curve",
             "kwargs_variability": {"agn_lightcurve", "i", "r"},
             "agn_driving_variability_model": "bending_power_law",
@@ -210,6 +207,8 @@ def pes_lens_instance():
             source_dict=source_dict,
             cosmo=cosmo,
             source_type="point_plus_extended",
+            pointsource_type="quasar",
+            extendedsource_type="single_sersic",
             **kwargs_quasar
         )
         deflector = Deflector(
@@ -446,8 +445,6 @@ class TestMultiSourceImageSimulation(object):
             os.path.join(path, "TestData/deflector_supernovae_new.fits"), format="fits"
         )
         kwargs_sn = {
-            "pointsource_type": "supernova",
-            "extendedsource_type": "double_sersic",
             "variability_model": "light_curve",
             "kwargs_variability": ["supernovae_lightcurve", "i"],
             "sn_type": "Ia",
@@ -460,12 +457,16 @@ class TestMultiSourceImageSimulation(object):
             source_dict=source_dict1,
             cosmo=self.cosmo,
             source_type="point_plus_extended",
+            pointsource_type="supernova",
+            extendedsource_type="double_sersic",
             **kwargs_sn
         )
         self.source2 = Source(
             source_dict=source_dict2,
             cosmo=self.cosmo,
             source_type="point_plus_extended",
+            pointsource_type="supernova",
+            extendedsource_type="double_sersic",
             **kwargs_sn
         )
         self.deflector = Deflector(
@@ -596,12 +597,11 @@ class TestImageSimulationInterpSingleSource:
                 )
             ],
         )[0]
-        kwargs = {"extendedsource_type": "interpolated"}
         self.source_interp = Source(
             source_dict=interp_source_dict,
             cosmo=self.cosmo,
             source_type="extended",
-            **kwargs
+            extendedsource_type="interpolated"
         )
 
         deflector_dict = red_one
