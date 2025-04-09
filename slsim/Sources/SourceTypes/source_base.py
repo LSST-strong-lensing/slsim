@@ -46,7 +46,7 @@ class SourceBase(ABC):
         circle of the test area centered on the deflector position.
 
         :param reference_position: reference position. The source postion will be
-         defined relative to this position. The default choice is None. In this case 
+         defined relative to this position. The default choice is None. In this case
          source_dict must contain source position.
          Eg: np.array([0, 0])
         :param draw_area: The area of the test region from which we randomly draw a source
@@ -74,11 +74,11 @@ class SourceBase(ABC):
         source.
 
         :param reference_position: reference position. The source postion will be
-         defined relative to this position. The default choice is None. In this case 
+         defined relative to this position. The default choice is None. In this case
          source_dict must contain source position.
          Eg: np.array([0, 0])
         :param draw_area: The area of the test region from which we randomly draw a
-         source position. Eg: 4*pi. The default choice is None. In this case 
+         source position. Eg: 4*pi. The default choice is None. In this case
          source_dict must contain source position.
         :return: [x_pos, y_pos]
         """

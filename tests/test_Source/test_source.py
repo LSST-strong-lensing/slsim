@@ -22,7 +22,7 @@ class TestSource:
             source_dict=self.source_dict_extended,
             source_type="extended",
             cosmo=cosmo,
-            extendedsource_type="single_sersic"
+            extendedsource_type="single_sersic",
         )
 
         self.source_dict_point_extended = {
@@ -96,7 +96,7 @@ class TestSource:
             source_dict=self.source_dict_interpolated,
             source_type="extended",
             cosmo=cosmo,
-            extendedsource_type="interpolated"
+            extendedsource_type="interpolated",
         )
 
         self.source_dict_point = {
@@ -190,7 +190,7 @@ class TestSource:
                 source_dict=self.source_dict_extended,
                 source_type="other",
                 cosmo=cosmo,
-                extendedsource_type="single_sersic"
+                extendedsource_type="single_sersic",
             )
 
 

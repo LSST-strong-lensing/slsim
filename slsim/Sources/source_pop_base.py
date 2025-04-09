@@ -21,7 +21,7 @@ class SourcePopBase(ABC):
         self.source_type = None
         self.sky_area = sky_area
         self._cosmo = cosmo
-        # These quantities are defined here because Source class these quantities and 
+        # These quantities are defined here because Source class these quantities and
         # None act as default values.
         self.pointsource_type = None
         self.extendedsource_type = None

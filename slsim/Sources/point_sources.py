@@ -14,7 +14,7 @@ class PointSources(SourcePopBase):
         sky_area,
         kwargs_cut,
         list_type="astropy_table",
-        pointsource_type = None,
+        pointsource_type=None,
         **kwargs
     ):
         """
@@ -32,7 +32,7 @@ class PointSources(SourcePopBase):
          sample, we can only apply redshift cuts because supernovae sample contains only
          redshift in this stage.
         :type kwargs_cut: dict
-        :param pointsource_type: Keyword to specify type of the point source. 
+        :param pointsource_type: Keyword to specify type of the point source.
          Supported point source types are "supernova", "quasar", "general_lightcurve".
         :type source_type: str
         :param kwargs: dictionary of keyword arguments for a source. It should
