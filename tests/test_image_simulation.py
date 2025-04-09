@@ -48,7 +48,7 @@ class TestImageSimulation(object):
                 source_dict=self.source_dict,
                 cosmo=cosmo,
                 source_type="extended",
-                extendedsource_type="single_sersic"
+                extendedsource_type="single_sersic",
             )
             self.deflector = Deflector(
                 deflector_type="EPL",
@@ -601,7 +601,7 @@ class TestImageSimulationInterpSingleSource:
             source_dict=interp_source_dict,
             cosmo=self.cosmo,
             source_type="extended",
-            extendedsource_type="interpolated"
+            extendedsource_type="interpolated",
         )
 
         deflector_dict = red_one

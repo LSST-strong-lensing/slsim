@@ -34,14 +34,14 @@ def gg_lens_pop_instance():
         cosmo=cosmo,
         sky_area=sky_area,
     )
-    
+
     source_galaxies = sources.Galaxies(
         galaxy_list=galaxy_simulation_pipeline.blue_galaxies,
         kwargs_cut={},
         cosmo=cosmo,
         sky_area=sky_area,
         catalog_type="skypy",
-        extendedsource_type="single_sersic"
+        extendedsource_type="single_sersic",
     )
 
     lenspop = LensPop(
@@ -100,7 +100,7 @@ def gg_roman_lens_pop_instance():
         sky_area=sky_area,
         catalog_type="skypy",
         source_size=None,
-        extendedsource_type="single_sersic"
+        extendedsource_type="single_sersic",
     )
 
     lenspop = LensPop(
