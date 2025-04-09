@@ -925,12 +925,12 @@ class Lens(LensedSystemBase):
                 lens_mass_model_list
             )
             kwargs_model["z_lens"] = self.deflector_redshift
-            if self.max_redshift_source_class.kwargs["extendedsource_type"] in [
+            if self.max_redshift_source_class.extendedsource_type in [
                 "single_sersic",
                 "interpolated",
             ]:
                 kwargs_model["source_redshift_list"] = self.source_redshift_list
-            elif self.max_redshift_source_class.kwargs["extendedsource_type"] in [
+            elif self.max_redshift_source_class.extendedsource_type in [
                 "double_sersic"
             ]:
                 kwargs_model["source_redshift_list"] = [
@@ -1140,11 +1140,11 @@ class Lens(LensedSystemBase):
             self._source_type == "point_source"
             or self._source_type == "point_plus_extended"
         ):
-            if self.max_redshift_source_class.kwargs["pointsource_type"] in [
+            if self.max_redshift_source_class.pointsource_type in [
                 "supernova"
             ]:
-                lens_type = "SN" + self.max_redshift_source_class.kwargs["sn_type"]
-            elif self.max_redshift_source_class.kwargs["pointsource_type"] in [
+                lens_type = "SN"
+            elif self.max_redshift_source_class.pointsource_type in [
                 "quasar"
             ]:
                 lens_type = "QSO"
