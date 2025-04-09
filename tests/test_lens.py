@@ -694,8 +694,8 @@ def test_lens_id_snia(supernovae_lens_instance_double_sersic_multisource):
     lens_id2 = supernovae_lens_instance_double_sersic_multisource.generate_id(
         ra=ra2, dec=dec2
     )
-    assert lens_id == f"SN-LENS_{ra:.4f}_{dec:.4f}"
-    assert lens_id2 == f"SN-LENS_{ra2:.4f}_{dec2:.4f}"
+    assert lens_id == f"SNIa-LENS_{ra:.4f}_{dec:.4f}"
+    assert lens_id2 == f"SNIa-LENS_{ra2:.4f}_{dec2:.4f}"
 
 
 class TestMultiSource(object):
