@@ -48,7 +48,7 @@ class TestImageSimulation(object):
                 source_dict=self.source_dict,
                 cosmo=cosmo,
                 source_type="extended",
-                light_profile="single_sersic",
+                extendedsource_type="single_sersic",
             )
             self.deflector = Deflector(
                 deflector_type="EPL",
@@ -188,13 +188,28 @@ def pes_lens_instance():
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
+        variable_agn_kwarg_dict = {
+            "length_of_light_curve": 500,
+            "time_resolution": 1,
+            "log_breakpoint_frequency": 1 / 20,
+            "low_frequency_slope": 1,
+            "high_frequency_slope": 3,
+            "standard_deviation": 0.9,
+        }
+        kwargs_quasar = {
+            "variability_model": "light_curve",
+            "kwargs_variability": {"agn_lightcurve", "i", "r"},
+            "agn_driving_variability_model": "bending_power_law",
+            "agn_driving_kwargs_variability": variable_agn_kwarg_dict,
+            "lightcurve_time": np.linspace(0, 1000, 1000),
+        }
         source = Source(
             source_dict=source_dict,
             cosmo=cosmo,
             source_type="point_plus_extended",
-            light_profile="single_sersic",
-            variability_model="sinusoidal",
-            kwargs_variability={"amp", "freq"},
+            pointsource_type="quasar",
+            extendedsource_type="single_sersic",
+            **kwargs_quasar
         )
         deflector = Deflector(
             deflector_type="EPL",
@@ -429,29 +444,30 @@ class TestMultiSourceImageSimulation(object):
         deflector_dict = Table.read(
             os.path.join(path, "TestData/deflector_supernovae_new.fits"), format="fits"
         )
+        kwargs_sn = {
+            "variability_model": "light_curve",
+            "kwargs_variability": ["supernovae_lightcurve", "i"],
+            "sn_type": "Ia",
+            "sn_absolute_mag_band": "bessellb",
+            "sn_absolute_zpsys": "ab",
+            "lightcurve_time": np.linspace(-50, 100, 1000),
+            "sn_modeldir": None,
+        }
         self.source1 = Source(
             source_dict=source_dict1,
             cosmo=self.cosmo,
             source_type="point_plus_extended",
-            light_profile="double_sersic",
-            lightcurve_time=np.linspace(-20, 100, 1000),
-            variability_model="light_curve",
-            kwargs_variability={"supernovae_lightcurve", "i"},
-            sn_type="Ia",
-            sn_absolute_mag_band="bessellb",
-            sn_absolute_zpsys="ab",
+            pointsource_type="supernova",
+            extendedsource_type="double_sersic",
+            **kwargs_sn
         )
         self.source2 = Source(
             source_dict=source_dict2,
             cosmo=self.cosmo,
             source_type="point_plus_extended",
-            light_profile="double_sersic",
-            lightcurve_time=np.linspace(-20, 100, 1000),
-            variability_model="light_curve",
-            kwargs_variability={"supernovae_lightcurve", "i"},
-            sn_type="Ia",
-            sn_absolute_mag_band="bessellb",
-            sn_absolute_zpsys="ab",
+            pointsource_type="supernova",
+            extendedsource_type="double_sersic",
+            **kwargs_sn
         )
         self.deflector = Deflector(
             deflector_type="EPL",
@@ -580,13 +596,12 @@ class TestImageSimulationInterpSingleSource:
                     20.0,
                 )
             ],
-        )
-
+        )[0]
         self.source_interp = Source(
             source_dict=interp_source_dict,
             cosmo=self.cosmo,
             source_type="extended",
-            light_profile="interpolated",
+            extendedsource_type="interpolated",
         )
 
         deflector_dict = red_one

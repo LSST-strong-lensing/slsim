@@ -17,13 +17,20 @@ def Quasar_class():
     }
     quasar_list = quasar_catalog_simple(**kwargs_quasars)
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    kwargs = {
+        "variability_model": "light_curve",
+        "kwargs_variability": None,
+        "agn_driving_variability_model": None,
+        "agn_driving_kwargs_variability": None,
+        "lightcurve_time": None,
+    }
     return PointSources(
         point_source_list=quasar_list,
         cosmo=cosmo,
         sky_area=sky_area,
         kwargs_cut={},
-        variability_model="sinusoidal",
-        kwargs_variability_model={"amp", "freq"},
+        pointsource_type="quasar",
+        **kwargs
     )
 
 
@@ -35,7 +42,7 @@ def test_source_number(Quasar_class):
 def test_draw_source(Quasar_class):
     quasar = Quasar_class.draw_source()
     assert isinstance(quasar, object)
-    assert len(quasar.source_dict) > 0
+    assert quasar.redshift > 0
 
 
 def test_source_number_selected(Quasar_class):
@@ -44,13 +51,13 @@ def test_source_number_selected(Quasar_class):
 
 
 def test_variability_model(Quasar_class):
-    kwargs_variab = Quasar_class.variability_model
-    assert kwargs_variab == "sinusoidal"
+    kwargs_variab = Quasar_class.kwargs["variability_model"]
+    assert kwargs_variab == "light_curve"
 
 
 def test_kwarg_variability(Quasar_class):
-    kwargs_variab = Quasar_class.kwargs_variability
-    assert kwargs_variab == {"amp", "freq"}
+    kwargs_variab = Quasar_class.kwargs["kwargs_variability"]
+    assert kwargs_variab is None
 
 
 if __name__ == "__main__":
