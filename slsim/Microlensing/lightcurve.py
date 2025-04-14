@@ -15,11 +15,11 @@ from slsim.Microlensing.magmap import MagnificationMap
 
 # from slsim.Sources.agn import agn_bounds_dict # to set the limits for the AGN Disk parameters
 
-
 import gc  # for garbage collection
 import numpy as np
 from scipy.signal import fftconvolve
 import astropy.constants as const
+from astropy.cosmology import FlatLambdaCDM
 from astropy import units as u
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -42,7 +42,7 @@ class MicrolensingLightCurve(object):
         self.time_duration = time_duration
 
     def _get_convolved_map(self, source_size, return_source_kernel=False):
-        """Compute the convolved map."""
+        """Compute the convolved magnification map."""
         # we compute the convolved map here
         # convolve the magnification map with a Gaussian kernel
         mag_map_2d = self.magnification_map.magnifications
@@ -63,10 +63,10 @@ class MicrolensingLightCurve(object):
         X, Y = np.meshgrid(xs, ys)
         # Calculate 2D Gaussian map using float32
         sigma = source_size
-        # Ensure calculations use floats, np.float32(2) etc. might be needed if intermediate calcs default to float64
-        source_kernel = (1 / np.sqrt(np.float32(2 * np.pi) * sigma**2)) * np.exp(
-            -((X**2 + Y**2) / (np.float32(2) * sigma**2))
-        ).astype(np.float32)
+        # use normal distribution for the source kernel
+        source_kernel = np.exp(-(X**2 + Y**2) / (2 * sigma**2))
+        source_kernel /= np.sum(source_kernel)  # normalize the kernel
+        
 
         ## MEMORY MANAGEMENT ##
         # Optionally delete intermediate arrays if X, Y are very large and not needed again
@@ -75,21 +75,23 @@ class MicrolensingLightCurve(object):
         convolved_map = fftconvolve(mag_map_2d, source_kernel, mode="same")
         self.convolved_map = convolved_map  # Store the convolved map
         # Delete input arrays if they are no longer needed in this function scope
-        del mag_map_2d, source_kernel
+        del mag_map_2d
         gc.collect()
         ########################
 
         if return_source_kernel:
             return convolved_map, source_kernel
+        else:
+            del source_kernel
 
         return convolved_map
 
-    def _generate_point_source_lightcurve(
+    def generate_point_source_lightcurve(
         self,
         source_redshift,
         cosmology,
         kwargs_PointSource={},
-        lightcurve_type="magnitude",  # 'magnitude' or 'flux'
+        lightcurve_type="magnitude",  # 'magnitude' or 'magnification'
         num_lightcurves=1,  # Number of lightcurves to generate
         return_track_coords=False,
         return_time_array=False,
@@ -144,26 +146,9 @@ class MicrolensingLightCurve(object):
         X, Y = np.meshgrid(xs, ys)
 
         # Calculate 2D Gaussian map using float32
-        sigma = source_size
-        # Ensure calculations use floats, np.float32(2) etc. might be needed if intermediate calcs default to float64
-        source_size_gaussian_map = (
-            1 / np.sqrt(np.float32(2 * np.pi) * sigma**2)
-        ) * np.exp(-((X**2 + Y**2) / (np.float32(2) * sigma**2))).astype(
-            np.float32
+        convolved_map = self._get_convolved_map(
+            source_size=source_size, return_source_kernel=False
         )
-
-        ## MEMORY MANAGEMENT ##
-        # Optionally delete intermediate arrays if X, Y are very large and not needed again
-        del X, Y
-        gc.collect()  # Suggest garbage collection
-
-        convolved_map = fftconvolve(mag_map_2d, source_size_gaussian_map, mode="same")
-        self.convolved_map = convolved_map  # Store the convolved map
-
-        # Delete input arrays if they are no longer needed in this function scope
-        del mag_map_2d, source_size_gaussian_map
-        gc.collect()
-        ########################
 
         # get parameters for the light curve
         if "effective_transverse_velocity" in kwargs_PointSource:
@@ -199,6 +184,10 @@ class MicrolensingLightCurve(object):
         )  # list of [x_positions,y_positions]     # has a shape of (num_lightcurves, 2, length of light curve)
         time_arrays = []  # list of time arrays for each light curve
 
+        mean_magnification_convolved_map = np.nanmean(self.convolved_map)
+        # print("mean_magnification_convolved_map: ", mean_magnification_convolved_map)
+        # print("mu_ave from magnification map: ", self.magnification_map.mu_ave)
+
         for i in range(num_lightcurves):
             light_curve, x_positions, y_positions = extract_light_curve(
                 convolution_array=convolved_map,
@@ -214,12 +203,12 @@ class MicrolensingLightCurve(object):
             )
 
             if lightcurve_type == "magnitude":
-                print("Extracting magnitude for light curve...")
+                # print("Extracting magnitude for light curve...")
                 light_curve = -2.5 * np.log10(
-                    light_curve / self.magnification_map.mu_ave
+                    light_curve / np.abs(mean_magnification_convolved_map)
                 )
             elif lightcurve_type == "magnification":
-                print("Extracting magnification for light curve...")
+                # print("Extracting magnification for light curve...")
                 light_curve = light_curve
             else:
                 raise ValueError(
@@ -249,11 +238,12 @@ class MicrolensingLightCurve(object):
         """Generate lightcurve for a supernova."""
         pass
 
-    def _generate_agn_lightcurve(
+    def generate_agn_lightcurve(
         self,
         source_redshift,
         deflector_redshift,
-        lightcurve_type="magnitude",  # 'magnitude' or 'flux'
+        cosmology,
+        lightcurve_type="magnitude",  # 'magnitude' or 'magnification'
         v_transverse=1000,  # Transverse velocity in source plane (in km/s) #TODO: figure out this velocity based on the model in Section 3.3 of https://ui.adsabs.harvard.edu/abs/2020MNRAS.495..544N
         num_lightcurves=1,  # Number of lightcurves to generate
         corona_height=10,
@@ -261,8 +251,6 @@ class MicrolensingLightCurve(object):
         inclination_angle=0,
         observer_frame_wavelength_in_nm=600,  # Wavelength in nanometers used to determine black body flux. For the surface flux density of the AccretionDisk at desired wavelength.
         eddington_ratio=0.15,  # Eddington ratio of the accretion disk
-        OmM=0.3,
-        H0=70,  # Cosmological parameters, must be updated in Child classes based on lens cosmology!
         mean_microlens_mass_in_kg=1
         * const.M_sun.to(u.kg),  # Mean mass of the microlenses in kg
         min_disk_radius=6,  # Minimum radius of the accretion disk in gravitational radii
@@ -275,8 +263,9 @@ class MicrolensingLightCurve(object):
 
         :param source_redshift: Redshift of the source
         :param deflector_redshift: Redshift of the deflector
+        :param cosmology: Cosmology object for the lens class
         :param lightcurve_type: Type of lightcurve to generate, either
-            'magnitude' or 'flux'. Default is 'magnitude'.
+            'magnitude' or 'magnification'. Default is 'magnitude'.
         :param v_transverse: Transverse velocity in source plane (in
             km/s). Default is 1000 km/s.
         :param num_lightcurves: Number of lightcurves to generate.
@@ -293,9 +282,6 @@ class MicrolensingLightCurve(object):
             is 600 nm.
         :param eddington_ratio: Eddington ratio of the accretion disk.
             Default is 0.15.
-        :param OmM: Omega Matter, cosmological parameter. Default is
-            0.3.
-        :param H0: Hubble constant in km/s/Mpc. Default is 70.
         :param mean_microlens_mass_in_kg: Mean mass of the microlenses
             in kg. Default is 1 * const.M_sun.to(u.kg).
         :param min_disk_radius: Minimum radius of the accretion disk in
@@ -337,10 +323,8 @@ class MicrolensingLightCurve(object):
             height_array=np.zeros(np.shape(radii)),
         )
 
-        disk_projection = Disk.calculate_surface_intensity_map(
-            observer_frame_wavelength_in_nm=observer_frame_wavelength_in_nm
-        )  # TODO: ask if this should be connected to the band used for observations?
-
+        # AMOEBA CODE!
+        #------------------------------------------------------------------------------------------
         MagMap = AmoebaMagnificationMap(
             source_redshift,
             deflector_redshift,
@@ -348,15 +332,25 @@ class MicrolensingLightCurve(object):
             self.magnification_map.kappa_tot,  # TODO: ask if this is correct for "Convergence of the lensing potential at the location of the image"?
             self.magnification_map.shear,
             mean_microlens_mass_in_kg=mean_microlens_mass_in_kg,  # TODO: ask if this can be related to theta_star in MagnificationMap class?
-            total_microlens_einstein_radii=self.magnification_map.half_length_x
+            total_microlens_einstein_radii=2*self.magnification_map.half_length_x/self.magnification_map.theta_star
             * 2,  # assuming square map
-            OmM=OmM,
-            H0=H0,
+            OmM=cosmology.Om0,
+            H0=cosmology.H0.to(u.km / (u.s * u.Mpc)).value,
         )
 
+        disk_projection = Disk.calculate_surface_intensity_map(
+            observer_frame_wavelength_in_nm=observer_frame_wavelength_in_nm
+        )  # TODO: ask if this should be connected to the band used for observations? YES!
+        disk_projection.flux_array = disk_projection.flux_array / np.sum(disk_projection.flux_array) # disk projection is normalized to 1.
         convolution = MagMap.convolve_with_flux_projection(disk_projection)
-        self.amoeba_convolution = convolution
-        # convolved_flux_map = convolution.magnification_array
+        self.convolved_map = convolution.magnification_array
+
+        # del MagMap, Disk, disk_projection
+
+        # self.amoeba_convolution = convolution
+        # convolved_mag_map = convolution.magnification_array
+        
+        #------------------------------------------------------------------------------------------
 
         LCs = []
         tracks = []
@@ -365,19 +359,57 @@ class MicrolensingLightCurve(object):
         time_duration_years = (
             self.time_duration / 365.25
         )  # converting time_duration from days to years
-        for jj in range(num_lightcurves):
-            curve, tracks_x, tracks_y = convolution.pull_light_curve(
-                v_transverse, time_duration_years, return_track_coords=True
-            )
-            LCs.append(curve)
-            tracks.append([tracks_x, tracks_y])
-            time_arrays.append(np.linspace(0, self.time_duration, len(curve)))
 
-        if lightcurve_type == "magnitude":
-            mean_flux = np.mean(
-                convolution.magnification_array
-            )  # TODO: ask if this is correct? NO! - Needs fixing, ask Henry how can we get only the microlensing part from amoeba?
-            LCs = [-2.5 * np.log10(LC / mean_flux) for LC in LCs]
+        # extract_light_curve function requires the pixel size in meters
+        pixel_size_arcsec = (
+            self.magnification_map.pixel_size
+        )  # TODO: Is kpc_proper_per_arcmin the correct conversion factor?
+        pixel_size_kpc = (
+            ((cosmology.kpc_proper_per_arcmin(source_redshift)).to(u.kpc / u.arcsec))
+            * pixel_size_arcsec
+            * u.arcsec
+        )
+        pixel_size_meter = (pixel_size_kpc.to(u.m)).value  # pixel size in meters
+
+        mean_magnification_convolved_map = np.nanmean(self.convolved_map)
+        # print("mean_magnification_convolved_map: ", mean_magnification_convolved_map)
+        # print("mu_ave from magnification map: ", self.magnification_map.mu_ave)
+
+        for jj in range(num_lightcurves):
+            # light_curve, x_positions, y_positions = convolution.pull_light_curve(
+            #     v_transverse, time_duration_years, return_track_coords=True
+            # )
+
+            light_curve, x_positions, y_positions = extract_light_curve(
+                convolution_array=self.convolved_map,
+                pixel_size=pixel_size_meter,  # TODO: Make sure that the units for theta_star and pixel_size are in arcsec
+                effective_transverse_velocity=v_transverse,
+                light_curve_time_in_years=time_duration_years,
+                pixel_shift=0,
+                x_start_position=None,
+                y_start_position=None,
+                phi_travel_direction=None,
+                return_track_coords=True,
+                random_seed=None,
+            )
+
+            if lightcurve_type == "magnitude":
+                # print("Extracting magnitude for light curve...")
+                light_curve = -2.5 * np.log10(
+                    light_curve / mean_magnification_convolved_map
+                )
+            elif lightcurve_type == "magnification":
+                # print("Extracting magnification for light curve...")
+                light_curve = light_curve
+            else:
+                raise ValueError(
+                    "Lightcurve type not recognized. Please use 'magnitude' or 'magnification'."
+                )
+            LCs.append(light_curve)
+            tracks.append(np.array([x_positions, y_positions]))
+            time_arrays.append(np.linspace(0, self.time_duration, len(light_curve)))
+        
+
 
         if return_track_coords and not (return_time_array):
             return LCs, tracks
@@ -391,7 +423,7 @@ class MicrolensingLightCurve(object):
         if not (return_track_coords) and not (return_time_array):
             return LCs
 
-    def _plot_point_source_lightcurve(
+    def plot_lightcurves_and_magmap(
         self, lightcurves, tracks=None, lightcurve_type="magnitude"
     ):
         """Plot the point source lightcurve."""
@@ -403,14 +435,19 @@ class MicrolensingLightCurve(object):
         for i in range(len(lightcurves)):
             ax[0].plot(time_array, lightcurves[i], label=f"Lightcurve {i+1}")
         ax[0].set_xlabel("Time (days)")
+        
+        mean_magnification_convolved_map = np.nanmean(self.convolved_map)
+
         if lightcurve_type == "magnitude":
-            ax[0].set_ylabel("Magnitude")
+            ax[0].set_ylabel("Magnitude $\\Delta m = -2.5 \\log_{10} (\\mu / \\mu_{\\text{av}})$")
             im_to_show = -2.5 * np.log10(
-                self.convolved_map / self.magnification_map.mu_ave
+                self.convolved_map / np.abs(mean_magnification_convolved_map)
             )  # TODO: should you divide by mu_ave of original map or the convolved map?
         elif lightcurve_type == "magnification":
-            ax[0].set_ylabel("Magnification")
+            ax[0].set_ylabel("Magnification $\\mu$")
             im_to_show = self.convolved_map
+
+        ax[0].set_ylim(np.nanmin(im_to_show), np.nanmax(im_to_show))
         ax[0].legend()
 
         # magmap
@@ -427,14 +464,15 @@ class MicrolensingLightCurve(object):
                 (self.magnification_map.center_y + self.magnification_map.half_length_y)
                 / self.magnification_map.theta_star,
             ],
+            origin="lower",
         )
         divider = make_axes_locatable(ax[1])
         cax = divider.append_axes("right", size="5%", pad=0.05)
         cbar = plt.colorbar(conts, cax=cax)
         if lightcurve_type == "magnitude":
-            cbar.set_label("Microlensing $\\Delta m$ (magnitudes)")
+            cbar.set_label("Microlensing $\\Delta m = -2.5 \\log_{10} (\\mu / \\mu_{\\text{av}})$ (magnitudes)")
         elif lightcurve_type == "magnification":
-            cbar.set_label("Microlensing magnification")
+            cbar.set_label("Microlensing magnification $\\mu$")
         ax[1].set_xlabel("$x / \\theta_★$")
         ax[1].set_ylabel("$y / \\theta_★$")
         # tracks are in pixel coordinates
@@ -454,94 +492,28 @@ class MicrolensingLightCurve(object):
         if tracks is not None:
             for j in range(len(tracks)):
                 ax[1].plot(
-                    (tracks[j][0] - mid_x_pixel)
+                    (tracks[j][1] - mid_x_pixel)
                     * delta_x
                     / self.magnification_map.theta_star,
-                    (tracks[j][1] - mid_y_pixel)
+                    (tracks[j][0] - mid_y_pixel)
                     * delta_y
                     / self.magnification_map.theta_star,
                     "w-",
                     lw=1,
                 )
                 ax[1].text(
-                    (tracks[j][0][0] - mid_x_pixel)
+                    (tracks[j][1][0] - mid_x_pixel)
                     * delta_x
                     / self.magnification_map.theta_star,
-                    (tracks[j][1][0] - mid_y_pixel)
+                    (tracks[j][0][0] - mid_y_pixel)
                     * delta_y
                     / self.magnification_map.theta_star,
-                    f"Track {j+1}",
-                    color="w",
+                    str(j + 1),
+                    color="white",
+                    fontsize=16,
                 )
 
-        # return fig, ax
-
-    def _plot_agn_lightcurve(
-        self, lightcurves, tracks=None, lightcurve_type="magnitude"
-    ):
-        """Plot the AGN lightcurve."""
-        fig, ax = plt.subplots(1, 2, figsize=(18, 6), width_ratios=[2, 1])
-
-        time_array = np.linspace(0, self.time_duration, len(lightcurves[0]))  # in days
-
-        # light curves
-        for i in range(len(lightcurves)):
-            ax[0].plot(time_array, lightcurves[i], label=f"Lightcurve {i+1}")
-        ax[0].set_xlabel("Time (days)")
-        if lightcurve_type == "magnitude":
-            ax[0].set_ylabel("Magnitude")
-        elif lightcurve_type == "flux":  # TODO: fix flux is not working
-            ax[0].set_ylabel("Flux")
-
-        ax[0].legend()
-
-        # magmap
-        conts = ax[1].imshow(
-            self.magnification_map.magnitudes,  # TODO: this needs to be fixed for 'flux'
-            cmap="viridis_r",
-            extent=[
-                -self.magnification_map.half_length_x,
-                self.magnification_map.half_length_x,
-                -self.magnification_map.half_length_y,
-                self.magnification_map.half_length_y,
-            ],
-        )
-        divider = make_axes_locatable(ax[1])
-        cax = divider.append_axes("right", size="5%", pad=0.05)
-        cbar = plt.colorbar(conts, cax=cax)
-        cbar.set_label("Microlensing $\\Delta m$ (magnitudes)")
-        ax[1].set_xlabel("$x / \\theta_★$")
-        ax[1].set_ylabel("$y / \\theta_★$")
-
-        # tracks are in pixel coordinates
-        # to map them to the magmap coordinates, we need to convert them to the physical coordinates
-        delta_x = (
-            2
-            * self.magnification_map.half_length_x
-            / self.magnification_map.num_pixels_x
-        )
-        delta_y = (
-            2
-            * self.magnification_map.half_length_y
-            / self.magnification_map.num_pixels_y
-        )
-        mid_x_pixel = self.magnification_map.num_pixels_x // 2
-        mid_y_pixel = self.magnification_map.num_pixels_y // 2
-
-        if tracks is not None:
-            for j in range(len(tracks)):
-                ax[1].plot(
-                    (tracks[j][0] - mid_x_pixel) * delta_x,
-                    (tracks[j][1] - mid_y_pixel) * delta_y,
-                    "w-",
-                    lw=1,
-                )
-                ax[1].text(
-                    (tracks[j][0][0] - mid_x_pixel) * delta_x,
-                    (tracks[j][1][0] - mid_y_pixel) * delta_y,
-                    f"Track {j+1}",
-                    color="w",
-                )
+        return ax
 
 
 class MicrolensingLightCurveFromLensModel(object):
@@ -552,6 +524,7 @@ class MicrolensingLightCurveFromLensModel(object):
         self,
         time,
         source_redshift,
+        deflector_redshift,
         kappa_star_images,
         kappa_tot_images,
         shear_images,
@@ -582,21 +555,24 @@ class MicrolensingLightCurveFromLensModel(object):
 
         if kwargs_AccretionDisk != {} and kwargs_PointSource == {}:
             # if kwargs_AccretionDisk is provided, use the AGN lightcurve method
-            lightcurves, __tracks, __time_arrays = self._generate_agn_lightcurve(
+            lightcurves, __tracks, __time_arrays = self.generate_agn_lightcurve(
                 time_array,
                 source_redshift,
+                deflector_redshift,
                 kappa_star_images,
                 kappa_tot_images,
                 shear_images,
                 cosmology,
                 kwargs_MagnificationMap=kwargs_MagnificationMap,
                 kwargs_AccretionDisk=kwargs_AccretionDisk,
+                lightcurve_type="magnitude",
+                num_lightcurves=1,
             )
 
         if kwargs_PointSource != {} and kwargs_AccretionDisk == {}:
             # if kwargs_PointSource is provided, use the Point Source lightcurve method
             lightcurves, __tracks, __time_arrays = (
-                self._generate_point_source_lightcurve(
+                self.generate_point_source_lightcurve(
                     time_array,
                     source_redshift,
                     kappa_star_images,
@@ -609,6 +585,24 @@ class MicrolensingLightCurveFromLensModel(object):
                     num_lightcurves=1,
                 )
             )
+
+        if kwargs_PointSource != {} and kwargs_AccretionDisk != {}:
+            # if both kwargs_PointSource and kwargs_AccretionDisk are provided, use the AGN lightcurve method
+            lightcurves, __tracks, __time_arrays = self.generate_agn_lightcurve(
+                time_array,
+                source_redshift,
+                deflector_redshift,
+                kappa_star_images,
+                kappa_tot_images,
+                shear_images,
+                cosmology,
+                kwargs_MagnificationMap=kwargs_MagnificationMap,
+                kwargs_AccretionDisk=kwargs_AccretionDisk,
+                lightcurve_type="magnitude",
+                num_lightcurves=1,
+            )
+        
+
         # Here we choose just 1 lightcurve for the point sources
         lightcurves_single = np.zeros(
             (len(lightcurves), len(time_array))
@@ -622,7 +616,7 @@ class MicrolensingLightCurveFromLensModel(object):
 
         return lightcurves_single
 
-    def _generate_point_source_lightcurve(
+    def generate_point_source_lightcurve(
         self,
         time,
         source_redshift,
@@ -636,7 +630,8 @@ class MicrolensingLightCurveFromLensModel(object):
         num_lightcurves=1,  # Number of lightcurves to generate
     ):
         """Generate lightcurves for one single point source with certain size,
-        but for all images of that source based on the lens model.
+        but for all images of that source based on the lens model. The point source is simulated as a gaussian
+        source with a certain size. The size is given in arc seconds.
 
         The lightcurves are generated based on the microlensing map convolved with the source
         size.
@@ -692,7 +687,7 @@ class MicrolensingLightCurveFromLensModel(object):
                 magnification_map=magmaps_images[i], time_duration=lightcurve_duration
             )
             curr_lightcurves, curr_tracks, curr_time_arrays = (
-                ml_lc._generate_point_source_lightcurve(
+                ml_lc.generate_point_source_lightcurve(
                     source_redshift=source_redshift,
                     cosmology=cosmology,
                     kwargs_PointSource=kwargs_PointSource,
@@ -757,15 +752,15 @@ class MicrolensingLightCurveFromLensModel(object):
 
         return magmaps_images
 
-    def _generate_agn_lightcurve(
+    def generate_agn_lightcurve(
         self,
         time,
-        band,
         source_redshift,
         deflector_redshift,
         kappa_star_images,
         kappa_tot_images,
         shear_images,
+        cosmology,
         kwargs_MagnificationMap={
             "rectangular": True,
             "half_length_x": 25,
@@ -780,24 +775,31 @@ class MicrolensingLightCurveFromLensModel(object):
             "smbh_mass_exp": 8.0,
             "corona_height": 10,
             "inclination_angle": 0,
-            "observer_frame_wavelength_in_nm": 600,
+            "observer_frame_wavelength_in_nm": 600, #TODO: this needs to be connected with the band used for observations
             "eddington_ratio": 0.15,
-            "OmM": 0.3,
-            "H0": 70,
             "mean_microlens_mass_in_kg": 1 * const.M_sun.to(u.kg),
             "min_disk_radius": 6,
         },
+        lightcurve_type="magnitude",  # 'magnitude' or 'magnification'
+        num_lightcurves=1,  # Number of lightcurves to generate
     ):  # TODO: add the actual kwargs in the definition of the function
         """Generate lightcurves for one single quasar(AGN) source, but for all
         images of that source based on the lens model.
 
         The generated lightcurves will have the same length of time as the lightcurve_time provided in the source_class.
 
-        :param band: Band for which the lightcurve is needed.
-        :param source_class: Source object for which the lightcurve is needed.
         :param time: Time array for which the lightcurve is needed.
+        :param source_redshift: Redshift of the source
+        :param deflector_redshift: Redshift of the deflector
+        :param kappa_star_images: list containing the kappa star for each image of the source.
+        :param kappa_tot_images: list containing the kappa total for each image of the source.
+        :param shear_images: list containing the shear for each image of the source.
+        :param cosmology: Cosmology object for the lens class
         :param kwargs_MagnificationMap: Keyword arguments for the MagnificationMap class.
         :param kwargs_AccretionDisk: Keyword arguments for the AccretionDisk class.
+        :param lightcurve_type: Type of lightcurve to generate, either 'magnitude' or 'magnification'. If 'magnitude', the lightcurve is returned in magnitudes normalized to the macro magnification.
+                                If 'magnification', the lightcurve is returned in magnification without normalization. Default is 'magnitude'.
+        :param num_lightcurves: Number of lightcurves to generate. Default is 1.
 
         Returns a tuple of:
         lightcurves: a list which contains the [list of lightcurves] for each image of the source, depending on the num_lightcurves parameter.
@@ -840,9 +842,11 @@ class MicrolensingLightCurveFromLensModel(object):
                 magnification_map=magmaps_images[i], time_duration=time_duration
             )
             curr_lightcurves, curr_tracks, curr_time_arrays = (
-                ml_lc._generate_agn_lightcurve(
+                ml_lc.generate_agn_lightcurve(
                     source_redshift=source_redshift,
                     deflector_redshift=deflector_redshift,
+                    cosmology=cosmology,
+                    lightcurve_type=lightcurve_type,
                     num_lightcurves=1,  # TODO: make a decision on how many lightcurves to generate!
                     return_track_coords=True,
                     return_time_array=True,
@@ -880,8 +884,9 @@ class MicrolensingLightCurveFromLensModel(object):
         return np.interp(time_array_new, time_array, lightcurve)
 
 
-## The credits for the following functions go to Henry Best (https://github.com/Henry-Best-01/Amoeba)
 
+
+## The credits for the following functions go to Henry Best (https://github.com/Henry-Best-01/Amoeba)
 
 def pull_value_from_grid(array_2d, x_position, y_position):
     """This approximates the point (x_position, y_position) in a 2d array of
@@ -899,7 +904,7 @@ def pull_value_from_grid(array_2d, x_position, y_position):
     y_int = y_position // 1
     decx = x_position % 1
     decy = y_position % 1
-    baseval = array_2d[int(x_int), int(y_int)]
+    # baseval = array_2d[int(x_int), int(y_int)]
     # Calculate 1d gradients, allow for edge values
     if int(x_int) + 1 == np.size(array_2d, 0):
         dx = (
@@ -964,11 +969,11 @@ def extract_light_curve(
     """
     rng = np.random.default_rng(seed=random_seed)
 
-    if type(effective_transverse_velocity) == u.Quantity:
+    if isinstance(effective_transverse_velocity, u.Quantity):
         effective_transverse_velocity = effective_transverse_velocity.to(u.m / u.s)
     else:
         effective_transverse_velocity *= u.km.to(u.m)
-    if type(light_curve_time_in_years) == u.Quantity:
+    if isinstance(light_curve_time_in_years, u.Quantity):
         light_curve_time_in_years = light_curve_time_in_years.to(u.s)
     else:
         light_curve_time_in_years *= u.yr.to(u.s)

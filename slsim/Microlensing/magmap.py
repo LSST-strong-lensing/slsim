@@ -21,6 +21,7 @@ class MagnificationMap(object):
 
     def __init__(
         self,
+        magnifications_array: np.ndarray = None,
         kappa_tot: float = None,
         shear: float = None,
         kappa_star: float = None,
@@ -41,6 +42,9 @@ class MagnificationMap(object):
         random_seed: int = None,
     ):
         """
+        :param magnifications_array: array of magnifications to use. If None, a new
+            magnification map will be generated based on the parameters
+            provided.
         :param kappa_tot: total convergence
         :param shear: shear
         :param kappa_star: convergence in point mass lenses/stars.
@@ -113,8 +117,11 @@ class MagnificationMap(object):
             write_histograms=False,
         )
 
-        self.generate_magnification_map()
-        self.magnifications = self.microlensing_MagMap.magnifications
+        if magnifications_array is not None:
+            self.magnifications = magnifications_array # TODO: make it so that the magnification map is not generated again, is stored in cache!
+        else:    
+            self.generate_magnification_map()
+            self.magnifications = self.microlensing_MagMap.magnifications
 
     def generate_magnification_map(self):
         """Generate the magnification map based on the parameters provided."""

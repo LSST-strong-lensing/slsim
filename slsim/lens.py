@@ -580,7 +580,8 @@ class Lens(LensedSystemBase):
 
         return observer_times
 
-    def point_source_magnitude(self, band, lensed=False, time=None, microlensing=False):
+    def point_source_magnitude(self, band, lensed=False, time=None, microlensing=False, 
+                               kwargs_microlensing=None):
         """Point source magnitude, either unlensed (single value) or lensed
         (array) with macro-model magnifications. This function provided
         magnitudes of all the sources.
@@ -603,7 +604,8 @@ class Lens(LensedSystemBase):
         for source in self.source:
             magnitude_list.append(
                 self._point_source_magnitude(
-                    band, source, lensed=lensed, time=time, microlensing=microlensing
+                    band, source, lensed=lensed, time=time, microlensing=microlensing, 
+                    kwargs_microlensing=kwargs_microlensing
                 )
             )
         return magnitude_list
@@ -613,7 +615,7 @@ class Lens(LensedSystemBase):
         band,
         source,
         lensed=False,
-        time=None,
+        time=None, 
         microlensing=False,
         kwargs_microlensing=None,
     ):
@@ -709,7 +711,7 @@ class Lens(LensedSystemBase):
 
             kappa_star_in_lensing_convergence_units = self.kappa_star(
                 ra, dec
-            )  # TODO: in the kappa_star function definition it's mentioned that the output is in units of lensing convergence.
+            )  # in the kappa_star function definition it's mentioned that the output is in units of lensing convergence.
             kappa_star = (
                 kappa_star_in_lensing_convergence_units * kappa_tot
             )  # based on above comment, Is this line correct?
@@ -739,12 +741,17 @@ class Lens(LensedSystemBase):
             kwargs_microlensing = {"kwargs_MagnificationMap":
             kwargs_MagnificationMap, "kwargs_AccretionDisk":
             kwargs_AccretionDisk,
-            "kwargs_PointSource":kwargs_PointSource}
+            "kwargs_PointSource":kwargs_PointSource} You don't need to provide both
+            kwargs_AccretionDisk and kwargs_PointSource. You can provide
+            just one of them. If you provide both, kwargs_AccretionDisk will be
+            used. The kwargs_MagnificationMap is required for the microlensing
+            calculation.
         :type kwargs_microlensing: dict
         :return: point source magnitude for a single source, does not
             include the macro-magnification.
         :rtype: numpy array
         """
+        print("kwargs_microlensing", kwargs_microlensing)
         if kwargs_microlensing is None:
             raise ValueError(
                 "kwargs_microlensing is None. Please provide a dictionary of settings required by micro-lensing calculation."
@@ -753,7 +760,7 @@ class Lens(LensedSystemBase):
             raise ValueError(
                 "kwargs_MagnificationMap not in kwargs_microlensing. Please provide a dictionary of settings required by micro-lensing calculation."
             )
-        if "kwargs_AccretionDisk" or "kwargs_PointSource" not in kwargs_microlensing:
+        if ("kwargs_AccretionDisk" not in kwargs_microlensing) and ("kwargs_PointSource" not in kwargs_microlensing):
             raise ValueError(
                 "kwargs_AccretionDisk or kwargs_PointSource not in kwargs_microlensing. Please provide either of them."
             )
@@ -770,6 +777,7 @@ class Lens(LensedSystemBase):
             ml_lc_lens.generate_point_source_microlensing_magnitudes(
                 time=time,
                 source_redshift=source.redshift,
+                deflector_redshift=self.deflector_redshift,
                 kappa_star_images=kappa_star_images,
                 kappa_tot_images=kappa_tot_images,
                 shear_images=shear_images,
@@ -781,75 +789,75 @@ class Lens(LensedSystemBase):
         )
         return microlensing_magnitudes  # # does not include the macro-lensing effect
 
-    # This function is not used in the code. It will be deleted in the future.
-    def _generate_molet_output(self, band, time, **kwargs_molet):
-        # coolest convention of lens model (or kappa, gamma, kappa_star)
-        lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
-        lens_model = LensModel(lens_model_list=lens_model_list)
-        x, y = self.point_source_image_positions()
-        f_xx, f_xy, f_yx, f_yy = lens_model.hessian(x=x, y=y, kwargs=kwargs_lens)
-        kappa = 1 / 2.0 * (f_xx + f_yy)
-        gamma1 = 1.0 / 2 * (f_xx - f_yy)
-        gamma2 = f_xy
-        gamma = np.sqrt(gamma1**2 + gamma2**2)
-        ra_image, dec_image = self.point_source_image_positions()
-        kappa_star = self.kappa_star(ra=ra_image, dec=dec_image)
-        image_observed_times = self.image_observer_times(time)
+    # # This function is not used in the code. It will be deleted in the future.
+    # def _generate_molet_output(self, band, time, **kwargs_molet):
+    #     # coolest convention of lens model (or kappa, gamma, kappa_star)
+    #     lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
+    #     lens_model = LensModel(lens_model_list=lens_model_list)
+    #     x, y = self.point_source_image_positions()
+    #     f_xx, f_xy, f_yx, f_yy = lens_model.hessian(x=x, y=y, kwargs=kwargs_lens)
+    #     kappa = 1 / 2.0 * (f_xx + f_yy)
+    #     gamma1 = 1.0 / 2 * (f_xx - f_yy)
+    #     gamma2 = f_xy
+    #     gamma = np.sqrt(gamma1**2 + gamma2**2)
+    #     ra_image, dec_image = self.point_source_image_positions()
+    #     kappa_star = self.kappa_star(ra=ra_image, dec=dec_image)
+    #     image_observed_times = self.image_observer_times(time)
 
-        # quasar disk model at given time(s) (either time-variable or static
+    #     # quasar disk model at given time(s) (either time-variable or static
 
-        # ===============
-        # call micro-lensing calculation with
-        # kappa: lensing convergence at image position
-        # gamma: shear strength at image position
-        # kappa_star: stellar convergence at image position
-        # image_observed_times: time of the source at the different images, not
-        # correcting for redshifts, but for time delays. The time is relative to the
-        # first arriving image.
-        # band: photometric band, potentially changing to transmission curve
-        # kwargs_microlensing: additional (optional) dictionary of settings required by micro-lensing calculation that do not depend on
-        #         the Lens() class
-        # ===============
+    #     # ===============
+    #     # call micro-lensing calculation with
+    #     # kappa: lensing convergence at image position
+    #     # gamma: shear strength at image position
+    #     # kappa_star: stellar convergence at image position
+    #     # image_observed_times: time of the source at the different images, not
+    #     # correcting for redshifts, but for time delays. The time is relative to the
+    #     # first arriving image.
+    #     # band: photometric band, potentially changing to transmission curve
+    #     # kwargs_microlensing: additional (optional) dictionary of settings required by micro-lensing calculation that do not depend on
+    #     #         the Lens() class
+    #     # ===============
 
-        # TODO: in what format should be the 2d source profile be stored (as it is
-        # time- and wavelength dependent)
-        # TODO: do we create full light curves (and save it in cache) or call it each
-        # time
+    #     # TODO: in what format should be the 2d source profile be stored (as it is
+    #     # time- and wavelength dependent)
+    #     # TODO: do we create full light curves (and save it in cache) or call it each
+    #     # time
 
-        # we can use this to get intrinsic brightness of a source at image observation
-        # time. Here, we are storing source profile as dictionary of observation time
-        # and magnitude but need to decide what format molet needs. I checked with molet
-        #  and it says format should be in the form given below.
-        source_profile = [
-            {
-                "time": list(self.source.lightcurve_time),
-                "signal": list(
-                    self._point_source_magnitude(
-                        band=band, lensed=False, time=self.source.lightcurve_time
-                    )
-                ),
-            }
-        ]
-        # using source profile, kappa, gamma, kappa_star, image_observed_time molet
-        # should return lightcurve of each images. The lightcurve can be a interpolated
-        # function or a dictionary of observation time and magnitudes in specified band
-        # as given below.
-        # This molet_output is temporary. Once we call molet, this will be an actual
-        # molet output.
-        image_lightcurve_list = [
-            {
-                "time": list(self.source.lightcurve_time),
-                "magnitude": np.lnspace(23, 34, len(self.source.lightcurve_time)),
-            },
-            {
-                "time": list(self.source.lightcurve_time),
-                "magnitude": np.lnspace(24, 36, len(self.source.lightcurve_time)),
-            },
-        ]
-        # molet_output can be molet_output = [interp_lightcurve_image1,
-        # interp_lightcurve_image2]
+    #     # we can use this to get intrinsic brightness of a source at image observation
+    #     # time. Here, we are storing source profile as dictionary of observation time
+    #     # and magnitude but need to decide what format molet needs. I checked with molet
+    #     #  and it says format should be in the form given below.
+    #     source_profile = [
+    #         {
+    #             "time": list(self.source.lightcurve_time),
+    #             "signal": list(
+    #                 self._point_source_magnitude(
+    #                     band=band, lensed=False, time=self.source.lightcurve_time
+    #                 )
+    #             ),
+    #         }
+    #     ]
+    #     # using source profile, kappa, gamma, kappa_star, image_observed_time molet
+    #     # should return lightcurve of each images. The lightcurve can be a interpolated
+    #     # function or a dictionary of observation time and magnitudes in specified band
+    #     # as given below.
+    #     # This molet_output is temporary. Once we call molet, this will be an actual
+    #     # molet output.
+    #     image_lightcurve_list = [
+    #         {
+    #             "time": list(self.source.lightcurve_time),
+    #             "magnitude": np.lnspace(23, 34, len(self.source.lightcurve_time)),
+    #         },
+    #         {
+    #             "time": list(self.source.lightcurve_time),
+    #             "magnitude": np.lnspace(24, 36, len(self.source.lightcurve_time)),
+    #         },
+    #     ]
+    #     # molet_output can be molet_output = [interp_lightcurve_image1,
+    #     # interp_lightcurve_image2]
 
-        return image_lightcurve_list
+    #     return image_lightcurve_list
 
     def extended_source_magnitude(self, band, lensed=False):
         """Unlensed apparent magnitude of the extended source for a given band
