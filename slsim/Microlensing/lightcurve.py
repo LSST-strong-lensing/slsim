@@ -66,7 +66,6 @@ class MicrolensingLightCurve(object):
         # use normal distribution for the source kernel
         source_kernel = np.exp(-(X**2 + Y**2) / (2 * sigma**2))
         source_kernel /= np.sum(source_kernel)  # normalize the kernel
-        
 
         ## MEMORY MANAGEMENT ##
         # Optionally delete intermediate arrays if X, Y are very large and not needed again
@@ -324,7 +323,7 @@ class MicrolensingLightCurve(object):
         )
 
         # AMOEBA CODE!
-        #------------------------------------------------------------------------------------------
+        # ------------------------------------------------------------------------------------------
         MagMap = AmoebaMagnificationMap(
             source_redshift,
             deflector_redshift,
@@ -332,7 +331,9 @@ class MicrolensingLightCurve(object):
             self.magnification_map.kappa_tot,  # TODO: ask if this is correct for "Convergence of the lensing potential at the location of the image"?
             self.magnification_map.shear,
             mean_microlens_mass_in_kg=mean_microlens_mass_in_kg,  # TODO: ask if this can be related to theta_star in MagnificationMap class?
-            total_microlens_einstein_radii=2*self.magnification_map.half_length_x/self.magnification_map.theta_star
+            total_microlens_einstein_radii=2
+            * self.magnification_map.half_length_x
+            / self.magnification_map.theta_star
             * 2,  # assuming square map
             OmM=cosmology.Om0,
             H0=cosmology.H0.to(u.km / (u.s * u.Mpc)).value,
@@ -341,7 +342,9 @@ class MicrolensingLightCurve(object):
         disk_projection = Disk.calculate_surface_intensity_map(
             observer_frame_wavelength_in_nm=observer_frame_wavelength_in_nm
         )  # TODO: ask if this should be connected to the band used for observations? YES!
-        disk_projection.flux_array = disk_projection.flux_array / np.sum(disk_projection.flux_array) # disk projection is normalized to 1.
+        disk_projection.flux_array = disk_projection.flux_array / np.sum(
+            disk_projection.flux_array
+        )  # disk projection is normalized to 1.
         convolution = MagMap.convolve_with_flux_projection(disk_projection)
         self.convolved_map = convolution.magnification_array
 
@@ -349,8 +352,8 @@ class MicrolensingLightCurve(object):
 
         # self.amoeba_convolution = convolution
         # convolved_mag_map = convolution.magnification_array
-        
-        #------------------------------------------------------------------------------------------
+
+        # ------------------------------------------------------------------------------------------
 
         LCs = []
         tracks = []
@@ -408,8 +411,6 @@ class MicrolensingLightCurve(object):
             LCs.append(light_curve)
             tracks.append(np.array([x_positions, y_positions]))
             time_arrays.append(np.linspace(0, self.time_duration, len(light_curve)))
-        
-
 
         if return_track_coords and not (return_time_array):
             return LCs, tracks
@@ -435,11 +436,13 @@ class MicrolensingLightCurve(object):
         for i in range(len(lightcurves)):
             ax[0].plot(time_array, lightcurves[i], label=f"Lightcurve {i+1}")
         ax[0].set_xlabel("Time (days)")
-        
+
         mean_magnification_convolved_map = np.nanmean(self.convolved_map)
 
         if lightcurve_type == "magnitude":
-            ax[0].set_ylabel("Magnitude $\\Delta m = -2.5 \\log_{10} (\\mu / \\mu_{\\text{av}})$")
+            ax[0].set_ylabel(
+                "Magnitude $\\Delta m = -2.5 \\log_{10} (\\mu / \\mu_{\\text{av}})$"
+            )
             im_to_show = -2.5 * np.log10(
                 self.convolved_map / np.abs(mean_magnification_convolved_map)
             )  # TODO: should you divide by mu_ave of original map or the convolved map?
@@ -470,7 +473,9 @@ class MicrolensingLightCurve(object):
         cax = divider.append_axes("right", size="5%", pad=0.05)
         cbar = plt.colorbar(conts, cax=cax)
         if lightcurve_type == "magnitude":
-            cbar.set_label("Microlensing $\\Delta m = -2.5 \\log_{10} (\\mu / \\mu_{\\text{av}})$ (magnitudes)")
+            cbar.set_label(
+                "Microlensing $\\Delta m = -2.5 \\log_{10} (\\mu / \\mu_{\\text{av}})$ (magnitudes)"
+            )
         elif lightcurve_type == "magnification":
             cbar.set_label("Microlensing magnification $\\mu$")
         ax[1].set_xlabel("$x / \\theta_★$")
@@ -601,7 +606,6 @@ class MicrolensingLightCurveFromLensModel(object):
                 lightcurve_type="magnitude",
                 num_lightcurves=1,
             )
-        
 
         # Here we choose just 1 lightcurve for the point sources
         lightcurves_single = np.zeros(
@@ -630,8 +634,9 @@ class MicrolensingLightCurveFromLensModel(object):
         num_lightcurves=1,  # Number of lightcurves to generate
     ):
         """Generate lightcurves for one single point source with certain size,
-        but for all images of that source based on the lens model. The point source is simulated as a gaussian
-        source with a certain size. The size is given in arc seconds.
+        but for all images of that source based on the lens model. The point
+        source is simulated as a gaussian source with a certain size. The size
+        is given in arc seconds.
 
         The lightcurves are generated based on the microlensing map convolved with the source
         size.
@@ -775,7 +780,7 @@ class MicrolensingLightCurveFromLensModel(object):
             "smbh_mass_exp": 8.0,
             "corona_height": 10,
             "inclination_angle": 0,
-            "observer_frame_wavelength_in_nm": 600, #TODO: this needs to be connected with the band used for observations
+            "observer_frame_wavelength_in_nm": 600,  # TODO: this needs to be connected with the band used for observations
             "eddington_ratio": 0.15,
             "mean_microlens_mass_in_kg": 1 * const.M_sun.to(u.kg),
             "min_disk_radius": 6,
@@ -884,9 +889,8 @@ class MicrolensingLightCurveFromLensModel(object):
         return np.interp(time_array_new, time_array, lightcurve)
 
 
-
-
 ## The credits for the following functions go to Henry Best (https://github.com/Henry-Best-01/Amoeba)
+
 
 def pull_value_from_grid(array_2d, x_position, y_position):
     """This approximates the point (x_position, y_position) in a 2d array of

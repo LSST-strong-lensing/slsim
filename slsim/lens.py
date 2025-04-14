@@ -580,8 +580,14 @@ class Lens(LensedSystemBase):
 
         return observer_times
 
-    def point_source_magnitude(self, band, lensed=False, time=None, microlensing=False, 
-                               kwargs_microlensing=None):
+    def point_source_magnitude(
+        self,
+        band,
+        lensed=False,
+        time=None,
+        microlensing=False,
+        kwargs_microlensing=None,
+    ):
         """Point source magnitude, either unlensed (single value) or lensed
         (array) with macro-model magnifications. This function provided
         magnitudes of all the sources.
@@ -604,8 +610,12 @@ class Lens(LensedSystemBase):
         for source in self.source:
             magnitude_list.append(
                 self._point_source_magnitude(
-                    band, source, lensed=lensed, time=time, microlensing=microlensing, 
-                    kwargs_microlensing=kwargs_microlensing
+                    band,
+                    source,
+                    lensed=lensed,
+                    time=time,
+                    microlensing=microlensing,
+                    kwargs_microlensing=kwargs_microlensing,
                 )
             )
         return magnitude_list
@@ -615,7 +625,7 @@ class Lens(LensedSystemBase):
         band,
         source,
         lensed=False,
-        time=None, 
+        time=None,
         microlensing=False,
         kwargs_microlensing=None,
     ):
@@ -741,10 +751,11 @@ class Lens(LensedSystemBase):
             kwargs_microlensing = {"kwargs_MagnificationMap":
             kwargs_MagnificationMap, "kwargs_AccretionDisk":
             kwargs_AccretionDisk,
-            "kwargs_PointSource":kwargs_PointSource} You don't need to provide both
-            kwargs_AccretionDisk and kwargs_PointSource. You can provide
-            just one of them. If you provide both, kwargs_AccretionDisk will be
-            used. The kwargs_MagnificationMap is required for the microlensing
+            "kwargs_PointSource":kwargs_PointSource} You don't need to
+            provide both kwargs_AccretionDisk and kwargs_PointSource.
+            You can provide just one of them. If you provide both,
+            kwargs_AccretionDisk will be used. The
+            kwargs_MagnificationMap is required for the microlensing
             calculation.
         :type kwargs_microlensing: dict
         :return: point source magnitude for a single source, does not
@@ -760,7 +771,9 @@ class Lens(LensedSystemBase):
             raise ValueError(
                 "kwargs_MagnificationMap not in kwargs_microlensing. Please provide a dictionary of settings required by micro-lensing calculation."
             )
-        if ("kwargs_AccretionDisk" not in kwargs_microlensing) and ("kwargs_PointSource" not in kwargs_microlensing):
+        if ("kwargs_AccretionDisk" not in kwargs_microlensing) and (
+            "kwargs_PointSource" not in kwargs_microlensing
+        ):
             raise ValueError(
                 "kwargs_AccretionDisk or kwargs_PointSource not in kwargs_microlensing. Please provide either of them."
             )

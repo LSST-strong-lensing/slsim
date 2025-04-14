@@ -118,8 +118,8 @@ class MagnificationMap(object):
         )
 
         if magnifications_array is not None:
-            self.magnifications = magnifications_array # TODO: make it so that the magnification map is not generated again, is stored in cache!
-        else:    
+            self.magnifications = magnifications_array  # TODO: make it so that the magnification map is not generated again, is stored in cache!
+        else:
             self.generate_magnification_map()
             self.magnifications = self.microlensing_MagMap.magnifications
 
