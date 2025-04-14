@@ -6,6 +6,7 @@ __author__ = "Paras Sharma"
 # from Microlensing import HENRYS_AMOEBA_PATH
 # import sys
 # sys.path.append(HENRYS_AMOEBA_PATH)
+# amoeba must be installed in the environment!
 from amoeba.Classes.accretion_disk import AccretionDisk
 from amoeba.Classes.magnification_map import MagnificationMap as AmoebaMagnificationMap
 import amoeba.Util.util as util
@@ -19,7 +20,7 @@ import gc  # for garbage collection
 import numpy as np
 from scipy.signal import fftconvolve
 import astropy.constants as const
-from astropy.cosmology import FlatLambdaCDM
+# from astropy.cosmology import FlatLambdaCDM
 from astropy import units as u
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
