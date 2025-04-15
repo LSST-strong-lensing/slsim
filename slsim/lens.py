@@ -24,6 +24,7 @@ try:
     # This import is placed here bcoz otherwise it might cause issues with someone
     # not having Luke's microlensing package installed!
     from slsim.Microlensing.lightcurve import MicrolensingLightCurveFromLensModel
+
     MICROLENSING_AVAILABLE = True
 except ModuleNotFoundError:
     warnings.warn(
