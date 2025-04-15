@@ -1,4 +1,5 @@
 import copy
+import warnings
 
 import numpy as np
 from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
@@ -16,15 +17,19 @@ from lenstronomy.Util import util
 
 from slsim.lensed_system_base import LensedSystemBase
 
+# Set a global flag to track microlensing availability
+MICROLENSING_AVAILABLE = False
+
 try:
     # This import is placed here bcoz otherwise it might cause issues with someone
     # not having Luke's microlensing package installed!
     from slsim.Microlensing.lightcurve import MicrolensingLightCurveFromLensModel
+    MICROLENSING_AVAILABLE = True
 except ModuleNotFoundError:
-    raise Warning(
+    warnings.warn(
         "microlensing package (by Luke Weisenbach, https://github.com/weisluke/microlensing) is not installed. Please install it to use the microlensing features."
         "\n Note that after installing, you need to set the environment variable LUKES_MICROLENSING_PATH in slsim/Microlensing/__init__.py to the path of the microlensing package."
-        "\n If you don't want to use microlensing features, you can ignore this error."
+        "\n If you don't want to use microlensing features, you can ignore this warning."
     )
 
 
