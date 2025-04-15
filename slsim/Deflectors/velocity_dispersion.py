@@ -180,7 +180,6 @@ def theta_E_from_vel_disp_epl(
     if gamma == 2 or sis_convention is True:
         theta_E = lens_cosmo.sis_sigma_v2theta_E(vel_disp)
     else:
-        print("test vel disp")
         theta_E_0 = 1
         vel_disp_0 = vel_disp_power_law(
             theta_E_0, gamma, r_half, kwargs_light, light_model_list, lens_cosmo

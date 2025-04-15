@@ -507,8 +507,11 @@ class Lens(LensedSystemBase):
             # numerical solution for the Einstein radius
             lens_analysis = LensProfileAnalysis(lens_model=lens_model)
             kwargs_lens_ = copy.deepcopy(kwargs_lens)
-            kwargs_lens_[0]["center_x"] = 0
-            kwargs_lens_[0]["center_y"] = 0
+            for kwargs in kwargs_lens_:
+                if "center_x" in kwargs:
+                    kwargs["center_x"] = 0
+                if "center_y" in kwargs:
+                    kwargs["center_y"] = 0
             theta_E = lens_analysis.effective_einstein_radius(
                 kwargs_lens_, r_min=1e-4, r_max=5e1, num_points=100
             )
