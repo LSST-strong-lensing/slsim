@@ -21,7 +21,7 @@ try:
     # not having Luke's microlensing package installed!
     from slsim.Microlensing.lightcurve import MicrolensingLightCurveFromLensModel
 except ModuleNotFoundError:
-    raise ImportError(
+    raise Warning(
         "microlensing package (by Luke Weisenbach, https://github.com/weisluke/microlensing) is not installed. Please install it to use the microlensing features."
         "\n Note that after installing, you need to set the environment variable LUKES_MICROLENSING_PATH in slsim/Microlensing/__init__.py to the path of the microlensing package."
         "\n If you don't want to use microlensing features, you can ignore this error."
