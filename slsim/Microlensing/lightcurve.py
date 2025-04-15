@@ -22,8 +22,11 @@ try:
     # amoeba must be installed in the environment!
     # from slsim.Sources.agn import agn_bounds_dict # to set the limits for the AGN Disk parameters
     from amoeba.Classes.accretion_disk import AccretionDisk
-    from amoeba.Classes.magnification_map import MagnificationMap as AmoebaMagnificationMap
+    from amoeba.Classes.magnification_map import (
+        MagnificationMap as AmoebaMagnificationMap,
+    )
     import amoeba.Util.util as util
+
     AMOEBA_AVAILABLE = True
 except ImportError:
     warnings.warn(
@@ -54,7 +57,7 @@ class MicrolensingLightCurve(object):
         # convolve the magnification map with a Gaussian kernel
         mag_map_2d = self.magnification_map.magnifications
         # optimize the magnification map for the convolution
-        if (mag_map_2d.dtype != np.float32):
+        if mag_map_2d.dtype != np.float32:
             mag_map_2d = mag_map_2d.astype(np.float32)
         # make source size map
         xs = np.linspace(
@@ -302,7 +305,7 @@ class MicrolensingLightCurve(object):
                 "The amoeba package is required for AGN microlensing features but is not installed. "
                 "Please install it from https://github.com/Henry-Best-01/Amoeba"
             )
-            
+
         mag_map_2d = self.magnification_map.magnifications
 
         # Disk parameters:
