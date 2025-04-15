@@ -3,28 +3,33 @@ __author__ = "Paras Sharma"
 # here we generate the lightcurve from the microlensing map
 # this process can be different depending on the source type
 # currently only Quasar is implemented
-# from Microlensing import HENRYS_AMOEBA_PATH
-# import sys
-# sys.path.append(HENRYS_AMOEBA_PATH)
-# amoeba must be installed in the environment!
-from amoeba.Classes.accretion_disk import AccretionDisk
-from amoeba.Classes.magnification_map import MagnificationMap as AmoebaMagnificationMap
-import amoeba.Util.util as util
-
-
-from slsim.Microlensing.magmap import MagnificationMap
-
-# from slsim.Sources.agn import agn_bounds_dict # to set the limits for the AGN Disk parameters
 
 import gc  # for garbage collection
+import warnings
 import numpy as np
 from scipy.signal import fftconvolve
 import astropy.constants as const
-
-# from astropy.cosmology import FlatLambdaCDM
 from astropy import units as u
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+from slsim.Microlensing.magmap import MagnificationMap
+
+# Set global flag to track amoeba availability
+AMOEBA_AVAILABLE = False
+
+try:
+    # amoeba must be installed in the environment!
+    # from slsim.Sources.agn import agn_bounds_dict # to set the limits for the AGN Disk parameters
+    from amoeba.Classes.accretion_disk import AccretionDisk
+    from amoeba.Classes.magnification_map import MagnificationMap as AmoebaMagnificationMap
+    import amoeba.Util.util as util
+    AMOEBA_AVAILABLE = True
+except ImportError:
+    warnings.warn(
+        "amoeba package is not installed. Please install it to use the AGN microlensing features."
+        "\n If you don't want to use AGN microlensing features, you can ignore this warning."
+    )
 
 
 class MicrolensingLightCurve(object):
@@ -49,7 +54,7 @@ class MicrolensingLightCurve(object):
         # convolve the magnification map with a Gaussian kernel
         mag_map_2d = self.magnification_map.magnifications
         # optimize the magnification map for the convolution
-        if mag_map_2d.dtype != np.float32:
+        if (mag_map_2d.dtype != np.float32):
             mag_map_2d = mag_map_2d.astype(np.float32)
         # make source size map
         xs = np.linspace(
@@ -292,6 +297,12 @@ class MicrolensingLightCurve(object):
         :param return_time_array: Whether to return the time array used
             for the lightcurve(s) or not. Default is False.
         """
+        if not AMOEBA_AVAILABLE:
+            raise ImportError(
+                "The amoeba package is required for AGN microlensing features but is not installed. "
+                "Please install it from https://github.com/Henry-Best-01/Amoeba"
+            )
+            
         mag_map_2d = self.magnification_map.magnifications
 
         # Disk parameters:
