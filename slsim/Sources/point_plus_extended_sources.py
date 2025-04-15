@@ -12,18 +12,12 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
         cosmo,
         sky_area,
         kwargs_cut,
-        variability_model=None,
-        kwargs_variability_model=None,
-        agn_driving_variability_model=None,
-        agn_driving_kwargs_variability=None,
-        light_profile="single_sersic",
         list_type="astropy_table",
         catalog_type=None,
-        lightcurve_time=None,
-        sn_type=None,
-        sn_absolute_mag_band=None,
-        sn_absolute_zpsys=None,
-        sn_modeldir=None,
+        source_size="Bernadi",
+        pointsource_type=None,
+        extendedsource_type=None,
+        **kwargs
     ):
         """
 
@@ -69,7 +63,6 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
          from https://github.com/LSST-strong-lensing/data_public. For more detail,
          please look at the documentation of RandomizedSupernovae class. Defaults to None.
         """
-
         object_list = object_cut(
             point_plus_extended_sources_list,
             list_type=list_type,
@@ -82,22 +75,16 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
             cosmo=cosmo,
             sky_area=sky_area,
             kwargs_cut={},
-            light_profile=light_profile,
             list_type=list_type,
             catalog_type=catalog_type,
+            source_size=source_size,
+            extendedsource_type=extendedsource_type,
+            **kwargs
         )
         SourcePopBase.__init__(
             self,
             cosmo=cosmo,
             sky_area=sky_area,
-            variability_model=variability_model,
-            kwargs_variability_model=kwargs_variability_model,
-            agn_driving_variability_model=agn_driving_variability_model,
-            agn_driving_kwargs_variability=agn_driving_kwargs_variability,
-            lightcurve_time=lightcurve_time,
-            sn_type=sn_type,
-            sn_absolute_mag_band=sn_absolute_mag_band,
-            sn_absolute_zpsys=sn_absolute_zpsys,
-            sn_modeldir=sn_modeldir,
         )
         self.source_type = "point_plus_extended"
+        self.pointsource_type = pointsource_type

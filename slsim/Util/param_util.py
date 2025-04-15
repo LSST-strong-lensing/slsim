@@ -4,9 +4,12 @@ from scipy.signal import convolve2d
 from scipy.signal import fftconvolve
 from lenstronomy.Util.param_util import transform_e1e2_product_average
 from lenstronomy.Util.param_util import ellipticity2phi_q
+from lenstronomy.LightModel.light_model import LightModel
+from lenstronomy.Util import data_util
 from astropy.io import fits
 from astropy import units as u
 from astropy.stats import sigma_clipped_stats
+from astropy.convolution import Gaussian2DKernel
 import warnings
 
 
@@ -643,3 +646,63 @@ def detect_object(image, variance, pixel_scale=0.2, box_size_arcsec=3, snr_thres
     snr = total_flux / total_noise if total_noise > 0 else 0
 
     return snr > snr_threshold
+
+
+def gaussian_psf(fwhm, delta_pix=0.2, num_pix=41):
+    """Generate a normalized 2D Gaussian PSF array.
+
+    :param fwhm (float): Full Width at Half Maximum (FWHM) of the PSF in
+        arcseconds.
+    :param delta_pix (float): Pixel scale in arcsec/pixel (default: 0.2
+        arcsec/pixel).
+    :param num_pix (int): Size of the PSF array (default: 41x41 pixels).
+    :return: Normalized 2D PSF array.
+    """
+    # Convert FWHM to pixels
+    fwhm_pixels = fwhm / delta_pix
+    sigma = fwhm_pixels / (2 * np.sqrt(2 * np.log(2)))  # Convert FWHM to sigma
+
+    # Generate the PSF kernel
+    psf_kernel = Gaussian2DKernel(sigma, x_size=num_pix, y_size=num_pix)
+
+    psf_array = psf_kernel.array
+
+    return psf_array
+
+
+def surface_brightness_reff(angular_size, source_model_list, kwargs_extended_source):
+    """Calculate average surface brightness within half light radius.
+
+    :param angular_size: effective radius of an extended source in
+        arcsec. For double sersic profile, user can use mean angular
+        size of two component of the douuble sersic profile.
+    :param source_model_list: list of source light models
+    :param kwargs_extended_source: dictionary of keywords for the source
+        light model(s). Kewords used are in lenstronomy conventions.
+    :return: average surface brightness within half light radius
+        [mag/arcsec^2]
+    """
+    # TODO this definition only works when source position is given
+    _mag_zero_dummy = 0  # from mag to amp conversion we need a dummy mag zero point.
+    # Irrelevant for this routine.
+    source_models_list = source_model_list
+    # TODO: remove unnecessary dependencies on center_lens and draw_area from this class
+    kwargs_extended_source = kwargs_extended_source
+
+    lightModel = LightModel(light_model_list=source_models_list)
+
+    kwargs_extended_source_amp = data_util.magnitude2amplitude(
+        lightModel, kwargs_extended_source, magnitude_zero_point=0
+    )
+
+    total_flux = np.sum(
+        lightModel.total_flux(kwargs_extended_source_amp)
+    )  # integrated flux
+    area = angular_size**2 * np.pi
+    surface_brightness_amp = (
+        total_flux / 2 / area
+    )  # flux /arcsec within half light radius
+    mag_arcsec2 = amplitude_to_magnitude(
+        surface_brightness_amp, mag_zero_point=_mag_zero_dummy
+    )
+    return mag_arcsec2

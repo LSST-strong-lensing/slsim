@@ -122,7 +122,11 @@ class Lens(LensedSystemBase):
 
         :return: number of images
         """
-        return [len(pos[0]) for pos in self.point_source_image_positions()]
+        if self._source_type in ["point_source", "point_plus_extended"]:
+            n_image = [len(pos[0]) for pos in self.point_source_image_positions()]
+        else:
+            n_image = [len(pos[0]) for pos in self.extended_source_image_positions()]
+        return n_image
 
     @property
     def deflector_position(self):
@@ -165,7 +169,7 @@ class Lens(LensedSystemBase):
         )
         lens_eq_solver = LensEquationSolver(lens_model_class)
         source_pos_x, source_pos_y = source.extended_source_position(
-            center_lens=self.deflector_position, draw_area=self.test_area
+            reference_position=self.deflector_position, draw_area=self.test_area
         )
         if (
             self._lens_equation_solver == "lenstronomy_analytical"
@@ -220,7 +224,7 @@ class Lens(LensedSystemBase):
         )
         lens_eq_solver = LensEquationSolver(lens_model_class)
         point_source_pos_x, point_source_pos_y = source.point_source_position(
-            center_lens=self.deflector_position, draw_area=self.test_area
+            reference_position=self.deflector_position, draw_area=self.test_area
         )
 
         # uses analytical lens equation solver in case it is supported by lenstronomy for speed-up
@@ -331,12 +335,15 @@ class Lens(LensedSystemBase):
         # Criteria 3: The distance between the lens center and the source position
         # must be less than or equal to the angular Einstein radius
         # of the lensing configuration (times sqrt(2)).
-        center_lens, center_source = (
-            self.deflector_position,
-            source.point_source_position(
-                center_lens=self.deflector_position, draw_area=self.test_area
-            ),
-        )
+        if self._source_type in ["point_source", "point_plus_extended"]:
+            source_pos = source.point_source_position(
+                self.deflector_position, self.test_area
+            )
+        else:
+            source_pos = source.extended_source_position(
+                self.deflector_position, draw_area=self.test_area
+            )
+        center_lens, center_source = (self.deflector_position, source_pos)
         if (
             np.sum((center_lens - center_source) ** 2)
             > self._einstein_radius(source) ** 2 * 2
@@ -344,7 +351,10 @@ class Lens(LensedSystemBase):
             return False
 
         # Criteria 4: The lensing configuration must produce at least two SL images.
-        image_positions = self._point_source_image_positions(source)
+        if self._source_type in ["point_source", "point_plus_extended"]:
+            image_positions = self._point_source_image_positions(source)
+        else:
+            image_positions = self._extended_source_image_positions(source)
         if len(image_positions[0]) < 2:
             return False
 
@@ -737,7 +747,7 @@ class Lens(LensedSystemBase):
         :return: extended source magnitude of a single source.
         """
         if lensed:
-            magnif = self._point_source_magnification(source)
+            magnif = self._point_source_magnification(source, extended=True)
             magnif_log = 2.5 * np.log10(abs(magnif))
             source_mag_unlensed = source.extended_source_magnitude(band)
             magnified_mag_list = []
@@ -856,7 +866,7 @@ class Lens(LensedSystemBase):
         lens_mass_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
         light_model_list = source.extended_source_light_model()
         kwargs_source_mag = source.kwargs_extended_source_light(
-            center_lens=self.deflector_position, draw_area=self.test_area
+            reference_position=self.deflector_position, draw_area=self.test_area
         )
 
         lightModel = LightModel(light_model_list=light_model_list)
@@ -869,7 +879,7 @@ class Lens(LensedSystemBase):
         )
         theta_E = self._einstein_radius(source)
         center_source = source.extended_source_position(
-            center_lens=self.deflector_position, draw_area=self.test_area
+            reference_position=self.deflector_position, draw_area=self.test_area
         )
 
         kwargs_source_amp = data_util.magnitude2amplitude(
@@ -915,9 +925,14 @@ class Lens(LensedSystemBase):
                 lens_mass_model_list
             )
             kwargs_model["z_lens"] = self.deflector_redshift
-            if self.max_redshift_source_class.light_profile == "single_sersic":
+            if self.max_redshift_source_class.extendedsource_type in [
+                "single_sersic",
+                "interpolated",
+            ]:
                 kwargs_model["source_redshift_list"] = self.source_redshift_list
-            elif self.max_redshift_source_class.light_profile == "double_sersic":
+            elif self.max_redshift_source_class.extendedsource_type in [
+                "double_sersic"
+            ]:
                 kwargs_model["source_redshift_list"] = [
                     z for z in self.source_redshift_list for _ in range(2)
                 ]
@@ -1011,18 +1026,11 @@ class Lens(LensedSystemBase):
                 kwargs_source_list.append(
                     source.kwargs_extended_source_light(
                         draw_area=self.test_area,
-                        center_lens=self.deflector_position,
+                        reference_position=self.deflector_position,
                         band=band,
                     )
                 )
             # lets transform list in to required structure
-            """if (
-                self.max_redshift_source_class.light_profile == "double_sersic"
-                and self.source_number > 1
-            ):
-                source_models_list_restructure = source_models_list
-                kwargs_source_list_restructure = kwargs_source_list
-            else:"""
             source_models_list_restructure = list(np.concatenate(source_models_list))
             kwargs_source_list_restructure = list(np.concatenate(kwargs_source_list))
             source_models["source_light_model_list"] = source_models_list_restructure
@@ -1132,10 +1140,13 @@ class Lens(LensedSystemBase):
             self._source_type == "point_source"
             or self._source_type == "point_plus_extended"
         ):
-            if self.max_redshift_source_class.sn_type is not None:
-                lens_type = "SN" + self.max_redshift_source_class.sn_type
-            else:
+            if self.max_redshift_source_class.pointsource_type in ["supernova"]:
+                lens_type = "SN" + self.max_redshift_source_class.kwargs["sn_type"]
+            elif self.max_redshift_source_class.pointsource_type in ["quasar"]:
                 lens_type = "QSO"
+            else:
+                # "LC" stands for Light Curve
+                lens_type = "LC"
 
         return f"{lens_type}-LENS_{ra:.4f}_{dec:.4f}"
 
