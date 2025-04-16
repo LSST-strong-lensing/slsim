@@ -113,7 +113,9 @@ class MagnificationMap(object):
             self.magnifications = magnifications_array  # TODO: make it so that the magnification map is not generated again, is stored in cache!
         else:
             self.microlensing_IPM.run()
-            self.magnifications = self.microlensing_IPM.magnifications # based on updated IPM class
+            self.magnifications = (
+                self.microlensing_IPM.magnifications
+            )  # based on updated IPM class
 
     def plot_magnification_map(self, ax=None, plot_magnitude=True, **kwargs):
         """Plot the magnification map on the given axis."""
