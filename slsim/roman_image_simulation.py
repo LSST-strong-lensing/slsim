@@ -3,6 +3,12 @@ import datetime
 import numpy as np
 from lenstronomy.SimulationAPI.sim_api import SimAPI
 from slsim.Observations import image_quality_lenstronomy
+from slsim.image_simulation import (
+    point_source_image_at_time,
+    sharp_image,
+    image_plus_poisson_noise,
+)
+from slsim.Util.param_util import transformmatrix_to_pixelscale, convolved_image
 import os.path
 import pickle
 from webbpsf.roman import WFI
@@ -315,3 +321,130 @@ def _get_wcs_dict(ra, dec, date):
 
     # NB targ_pos indicates the position to observe at the center of the focal plane array
     return roman.getWCS(world_pos=targ_pos, date=date)
+
+
+def lens_image_roman(
+    lens_class,
+    band,
+    mag_zero_point,
+    num_pix,
+    transform_pix2angle,
+    detector=1,
+    detector_pos=(2000, 2000),
+    oversample=5,
+    psf_directory=None,
+    t_obs=None,
+    with_source=True,
+    with_deflector=True,
+    ra=30,
+    dec=-30,
+    date=datetime.datetime(year=2027, month=7, day=7, hour=0, minute=0, second=0),
+    add_noise=True,
+    poisson_noise=True,
+    seed=None,
+):
+    """Creates lens image on the basis of given information. It can simulate
+    both static lens image and variable lens image.
+
+    Note: This function might evolve in near future.
+
+    Note: This function might be changed in future.
+
+    :param lens_class: Lens() object
+    :param band: imaging band
+    :param mag_zero_point: magnitude zero point for the exposure
+    :param num_pix: number of pixels per axis
+    :param transform_pix2angle: transformation matrix (2x2) of pixels
+        into coordinate displacements
+    :param detector: The specific Roman detector being used to generate the psf
+    :type detector: integer from 1 to 18
+    :param detector_pos: The position of the detector being used to generate the psf
+    :type detector_pos: integer between 4 + num_pix * oversample and 4092 - num_pix * oversample
+    :param oversample: Number of times that each pixel's side is subdivided for higher
+     accuracy psf convolution
+    :type oversample: integer
+    :param psf_directory: Path to directory containing psf file(s) where the psf can be loaded.
+     the user can download psfs from cached_webb_psf
+     (https://github.com/LSST-strong-lensing/data_public/webbpsf), where the
+      psfs have been generated ahead of time so that they can be loaded from
+      a file. The directory containing these psfs should be passed into the
+      "psf_directory".
+    :type psf_directory: string
+    :param t_obs: an observation time [day]. This is applicable only for
+        variable source. In case of point source, if we do not provide
+        t_obs, considers no variability in the lens.
+    :param with_source: If True, simulates image with extended source in
+        lens configuration.
+    :param with_deflector: If True, simulates image with deflector.
+    :param ra: Coordinate in space used to generate sky background
+    :type ra: float between 15 and 45
+    :param dec: Coordinate in space used to generate sky background
+    :type dec: float between -45 and -15
+    :param date: Date used to generate sky background
+    :type date: datetime.datetime class
+    :param add_noise: determines whether sky background and detector effects are added or not
+    :type add_background: bool
+    :param poisson_noise: determines whether poisson noise is added or not
+    :type poisson_noise: bool
+    :param seed: An rng seed used for generating detector effects in galsim
+    :type seed: integer or None
+    :return: lens image in roman filter
+    """
+    delta_pix = transformmatrix_to_pixelscale(transform_pix2angle)
+    psf_interp = get_psf(
+        band=band,
+        detector=detector,
+        detector_pos=detector_pos,
+        oversample=oversample,
+        psf_directory=psf_directory,
+    )
+    psf_kernel = psf_interp.image.array
+    deflector_image = sharp_image(
+        lens_class=lens_class,
+        band=band,
+        mag_zero_point=mag_zero_point,
+        delta_pix=delta_pix,
+        num_pix=num_pix,
+        with_source=with_source,
+        with_deflector=with_deflector,
+    )
+    convolved_deflector = convolved_image(deflector_image, psf_kernel=psf_kernel)
+    ps_image = point_source_image_at_time(
+        lens_class,
+        band=band,
+        mag_zero_point=mag_zero_point,
+        delta_pix=0.11,
+        num_pix=num_pix,
+        psf_kernel=psf_kernel,
+        transform_pix2angle=transform_pix2angle,
+        time=t_obs,
+    )
+    ps_image = np.nan_to_num(ps_image, nan=0)
+    image = convolved_deflector + ps_image
+    image_galsim = galsim.ImageF(image, scale=delta_pix)
+    noise_galsim = galsim.ImageF(num_pix, num_pix, scale=delta_pix)
+    kwargs_single_band = image_quality_lenstronomy.kwargs_single_band(
+        observatory="Roman", band=band
+    )
+    _exposure_time = kwargs_single_band["exposure_time"]
+    if add_noise is True:
+        # Obtain sky background corresponding to certain band and add it to the image
+        # Requires webbpsf data files to use
+        noise_galsim = add_roman_background(
+            noise_galsim, band, detector, num_pix, _exposure_time, ra, dec, date
+        )
+
+        # Add detector effects and get the resulting array
+        rng = galsim.UniformDeviate(seed)
+        roman.allDetectorEffects(
+            noise_galsim, prev_exposures=(), rng=rng, exptime=_exposure_time
+        )
+
+    image_array = image_galsim.array
+    noise_array = noise_galsim.array / _exposure_time
+    final_image = image_array + noise_array
+    if poisson_noise:
+        final_image = image_plus_poisson_noise(
+            image=final_image, exposure_time=_exposure_time
+        )
+    return final_image

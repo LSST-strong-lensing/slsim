@@ -393,6 +393,7 @@ def point_source_image_at_time(
         variable_mag = lens_class.point_source_magnitude(
             band=band, lensed=True, time=time
         )
+        variable_mag = np.nan_to_num(variable_mag, nan=np.inf)
         variable_mag_list = np.concatenate(variable_mag)
         variable_amp = magnitude_to_amplitude(variable_mag_list, mag_zero_point)
 
@@ -490,16 +491,35 @@ def deflector_images_with_different_zeropoint(
     return image
 
 
-def image_plus_poisson_noise(image, exposure_time):
+def image_plus_poisson_noise(
+    image, exposure_time, gain=1, coadd_zero_point=27, single_visit_zero_point=27
+):
     """Creates an image with possion noise.
 
     :param image: an image
     :param exposure_time: exposure time or exposure map for an image
-    :return: image with possion noise
+    :param band: imaging band
+    :param gain: Amplifier gain (default 1).
+    :param coadd_zero_point: Zero point of the coadded image (default
+        27).
+    :param single_visit_zero_point: Zero point of the single-visit image
+        (default 27 for g-band).
+    :return: image with possion noise. The function returns ADU/sec in
+        all cases, regardless of whether gain = 1 or not. The noise is
+        applied in the electron domain, but the final image is converted
+        back to ADU/sec.
     """
-    image[image < 0] = 0
-    mean_photons = image * exposure_time
-    return np.random.poisson(mean_photons) / exposure_time
+    # make sure all values in an image are positive
+    image_positive = np.clip(image, 0, None)
+    # Compute zero point scaling factor
+    zero_point_scale = 10 ** (0.4 * (coadd_zero_point - single_visit_zero_point))
+    # Convert counts-per-second to electrons
+    cps_to_electrons = exposure_time * gain / zero_point_scale
+    # get electron count with poisson noise
+    noisy_electrons = np.random.poisson(image_positive * cps_to_electrons)
+    # convert back to count per sec
+    noisy_image = noisy_electrons / cps_to_electrons
+    return noisy_image
 
 
 def image_plus_poisson_noise_for_list_of_image(images, exposure_times):
@@ -528,6 +548,14 @@ def lens_image(
     std_gaussian_noise=None,
     with_source=True,
     with_deflector=True,
+    gain=0.7,
+    single_visit_mag_zero_points={
+        "g": 32.33,
+        "r": 32.17,
+        "i": 31.85,
+        "z": 31.45,
+        "y": 30.63,
+    },
 ):
     """Creates lens image on the basis of given information. It can simulate
     both static lens image and variable lens image.
@@ -548,6 +576,13 @@ def lens_image(
     :param with_source: If True, simulates image with extended source in
         lens configuration.
     :param with_deflector: If True, simulates image with deflector.
+    :param gain: Amplifier gain (default 0.7 for LSST).
+    :param single_visit_mag_zero_points: Zero points of the single-visit
+        image in different bands. It is a dictionary of the form: { 'g':
+        32.33, 'r': 32.17, 'i': 31.85, 'z': 31.45, 'y': 30.63 }. It
+        sould contain at least values for the band in which one need to
+        simulate images. Default values are average magnitude zero
+        points for LSST single visists in each band.
     :return: lens image
     """
     delta_pix = transformmatrix_to_pixelscale(transform_pix2angle)
@@ -586,7 +621,14 @@ def lens_image(
         )
     image = convolved_deflector_source + image_ps
     if exposure_time is not None:
-        final_image = image_plus_poisson_noise(image=image, exposure_time=exposure_time)
+        # For DP0 images, gain is always 0.7.
+        final_image = image_plus_poisson_noise(
+            image=image,
+            exposure_time=exposure_time,
+            gain=gain,
+            coadd_zero_point=mag_zero_point,
+            single_visit_zero_point=single_visit_mag_zero_points[band],
+        )
     else:
         final_image = image
     if std_gaussian_noise is not None:
@@ -607,6 +649,14 @@ def lens_image_series(
     std_gaussian_noise=None,
     with_source=True,
     with_deflector=True,
+    gain=0.7,
+    single_visit_mag_zero_points={
+        "g": 32.33,
+        "r": 32.17,
+        "i": 31.85,
+        "z": 31.45,
+        "y": 30.63,
+    },
 ):
     """Creates lens image on the basis of given information. This function is
     designed to simulate time series images of a lens.
@@ -627,6 +677,17 @@ def lens_image_series(
     :param with_source: If True, simulates image with extended source in lens
         configuration.
     :param with_deflector: If True, simulates image with deflector.
+    :param gain: Amplifier gain (default 0.7 for LSST).
+    :param single_visit_mag_zero_points: Zero points of the single-visit image in
+     different bands. It is a dictionary of the form: {
+                    'g': 32.33,
+                    'r': 32.17,
+                    'i': 31.85,
+                    'z': 31.45,
+                    'y': 30.63
+                }. It sould contain at least values for the band in which one need to
+                simulate images. Default values are average magnitude zero points for
+                LSST single visists in each band.
     :return: list of series of images of a lens
     """
 
@@ -650,6 +711,8 @@ def lens_image_series(
             std_gaussian_noise=std_gaussian_noise,
             with_source=with_source,
             with_deflector=with_deflector,
+            gain=gain,
+            single_visit_mag_zero_points=single_visit_mag_zero_points,
         )
         image_series.append(image)
 

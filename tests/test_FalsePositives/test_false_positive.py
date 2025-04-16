@@ -2,7 +2,6 @@ import pytest
 import numpy as np
 from astropy.cosmology import FlatLambdaCDM
 from slsim.LOS.los_individual import LOSIndividual
-from slsim.Sources.source import Source
 import slsim.Sources as sources
 import slsim.Deflectors as deflectors
 import slsim.Pipelines as pipelines
@@ -31,43 +30,22 @@ def test_false_positive():
         cosmo=cosmo,
         sky_area=sky_area,
     )
+    kwargs = {"extendedsource_type": "single_sersic"}
     source_galaxies = sources.Galaxies(
         galaxy_list=galaxy_simulation_pipeline.blue_galaxies,
         kwargs_cut=kwargs_source_cut,
         cosmo=cosmo,
         sky_area=sky_area,
         catalog_type="skypy",
+        **kwargs
     )
     single_deflector = lens_galaxies.draw_deflector()
     single_source1 = source_galaxies.draw_source()
     single_source2 = source_galaxies.draw_source()
     lens = single_deflector
-    source = Source(
-        source_dict=single_source1.source_dict,
-        cosmo=cosmo,
-        source_type="extended",
-        light_profile="single_sersic",
-    )
-    source2 = Source(
-        source_dict=single_source1.source_dict,
-        cosmo=cosmo,
-        source_type="extended",
-        light_profile="double_sersic",
-    )
-    source_list = [
-        Source(
-            source_dict=single_source1.source_dict,
-            cosmo=cosmo,
-            source_type="extended",
-            light_profile="single_sersic",
-        ),
-        Source(
-            source_dict=single_source2.source_dict,
-            cosmo=cosmo,
-            source_type="extended",
-            light_profile="single_sersic",
-        ),
-    ]
+    source = single_source1
+    source2 = single_source2
+    source_list = [source, source2]
     # LOS configuration
     los_class = LOSIndividual()
 
@@ -80,13 +58,6 @@ def test_false_positive():
     )
     false_positive_instance_2 = FalsePositive(
         source_class=source_list,
-        deflector_class=lens,
-        cosmo=cosmo,
-        test_area=4 * np.pi,
-        los_class=los_class,
-    )
-    false_positive_instance_3 = FalsePositive(
-        source_class=source2,
         deflector_class=lens,
         cosmo=cosmo,
         test_area=4 * np.pi,
@@ -131,10 +102,9 @@ def test_false_positive():
     assert false_positive_instance_1.deflector_magnitude(
         band="i"
     ) == single_deflector.magnitude(band="i")
-    assert (
-        false_positive_instance_1.extended_source_magnitude(band="i")
-        == single_source1.source_dict["mag_i"]
-    )
+    assert false_positive_instance_1.extended_source_magnitude(
+        band="i"
+    ) == single_source1.extended_source_magnitude(band="i")
     assert len(false_positive_instance_1.deflector_ellipticity()) == 4
     assert (
         false_positive_instance_1.deflector_stellar_mass()
@@ -148,8 +118,6 @@ def test_false_positive():
         )
         == required_keys
     )
-    with pytest.raises(ValueError):
-        false_positive_instance_3.source_light_model_lenstronomy(band="i")
 
 
 if __name__ == "__main__":

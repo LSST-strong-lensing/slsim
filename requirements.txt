@@ -2,7 +2,8 @@ skypy
 lenstronomy>=1.12.2
 astropy>=5.2
 numpy
-scipy<=1.13.1
+#scipy<=1.13.1
+scipy<=1.11.4
 colossus
 speclite
 pyyaml
