@@ -15,6 +15,7 @@ class EPLSersic(DeflectorBase):
     - 'n_sersic': Sersic index of deflector light
     - 'e1_light': eccentricity of light
     - 'e2_light': eccentricity of light
+    - 'n_sersic': Sersic index
     - 'z': redshift of deflector
     """
 

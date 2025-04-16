@@ -1,4 +1,5 @@
 import copy
+import warnings
 
 import numpy as np
 from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
@@ -16,6 +17,22 @@ from lenstronomy.Util import data_util
 from lenstronomy.Util import util
 
 from slsim.lensed_system_base import LensedSystemBase
+
+# Set a global flag to track microlensing availability
+MICROLENSING_AVAILABLE = False
+
+try:
+    # This import is placed here bcoz otherwise it might cause issues with someone
+    # not having Luke's microlensing package installed!
+    from slsim.Microlensing.lightcurve import MicrolensingLightCurveFromLensModel
+
+    MICROLENSING_AVAILABLE = True
+except ModuleNotFoundError:
+    warnings.warn(
+        "microlensing package (by Luke Weisenbach, https://github.com/weisluke/microlensing) is not installed. Please install it to use the microlensing features."
+        "\n Note that after installing, you need to set the environment variable LUKES_MICROLENSING_PATH in slsim/Microlensing/__init__.py to the path of the microlensing package."
+        "\n If you don't want to use microlensing features, you can ignore this warning."
+    )
 
 
 class Lens(LensedSystemBase):
@@ -629,8 +646,15 @@ class Lens(LensedSystemBase):
 
         return observer_times
 
-    def point_source_magnitude(self, band, lensed=False, time=None):
-        """Point source magnitudes, either unlensed (single value) or lensed
+    def point_source_magnitude(
+        self,
+        band,
+        lensed=False,
+        time=None,
+        microlensing=False,
+        kwargs_microlensing=None,
+    ):
+        """Point source magnitude, either unlensed (single value) or lensed
         (array) with macro-model magnifications. This function provided
         magnitudes of all the sources.
 
@@ -640,19 +664,37 @@ class Lens(LensedSystemBase):
         :type band: string
         :param lensed: if True, returns the lensed magnified magnitude
         :type lensed: bool
-        :param time: time is a image observation time in units of days.
+        :param time: time is an image observation time in units of days.
             If None, provides magnitude without variability.
+        :param microlensing: if using micro-lensing map to produce the
+            lensed magnification
+        :type microlensing: bool
         :return: list of point source magnitudes.
         """
 
         magnitude_list = []
         for source in self._source:
             magnitude_list.append(
-                self._point_source_magnitude(band, source, lensed=lensed, time=time)
+                self._point_source_magnitude(
+                    band,
+                    source,
+                    lensed=lensed,
+                    time=time,
+                    microlensing=microlensing,
+                    kwargs_microlensing=kwargs_microlensing,
+                )
             )
         return magnitude_list
 
-    def _point_source_magnitude(self, band, source, lensed=False, time=None):
+    def _point_source_magnitude(
+        self,
+        band,
+        source,
+        lensed=False,
+        time=None,
+        microlensing=False,
+        kwargs_microlensing=None,
+    ):
         """Point source magnitude, either unlensed (single value) or lensed
         (array) with macro-model magnifications. This function does operation
         only for the single source.
@@ -665,6 +707,16 @@ class Lens(LensedSystemBase):
         :type lensed: bool
         :param time: time is a image observation time in units of days.
             If None, provides magnitude without variability.
+        :param microlensing: to include microlensing effect?
+        :type microlensing: bool
+        :param kwargs_microlensing: additional (optional) dictionary of
+            settings required by micro-lensing calculation that do not
+            depend on the Lens() class. It is of type:
+            kwargs_microlensing = {"kwargs_MagnificationMap":
+            kwargs_MagnificationMap, "kwargs_AccretionDisk":
+            kwargs_AccretionDisk,
+            "kwargs_PointSource":kwargs_PointSource}
+        :type kwargs_microlensing: dict
         :return: point source magnitude of a single source
         """
         # TODO: might have to change conventions between extended and point source
@@ -681,13 +733,25 @@ class Lens(LensedSystemBase):
                 lensed_variable_magnitude = (
                     variable_magnitude - magnif_log[:, np.newaxis]
                 )
+                # TODO: is this enough or should we make a new function for microlensing?
+                if microlensing:
+                    microlensing_magnitudes = self._point_source_magnitude_microlensing(
+                        band,
+                        time,
+                        source,
+                        kwargs_microlensing=kwargs_microlensing,
+                    )
+                    lensed_variable_magnitude += microlensing_magnitudes
+
                 return lensed_variable_magnitude
+
             else:
                 source_mag_unlensed = source.point_source_magnitude(band)
                 magnified_mag_list = []
                 for i in range(len(magnif_log)):
                     magnified_mag_list.append(source_mag_unlensed - magnif_log[i])
                 return np.array(magnified_mag_list)
+
         return source.point_source_magnitude(band)
 
     def extended_source_magnitude_for_each_image(self, band, lensed=False):
@@ -714,6 +778,190 @@ class Lens(LensedSystemBase):
                 )
             )
         return magnitude_list
+
+    def _microlensing_parameters_for_image_positions_single_source(self, band, source):
+        """For a given source, calculates the microlensing parameters for each
+        image position.
+
+        :param source: Source class instance
+        :return: np.array(kappa_star_images),
+            np.array(kappa_tot_images), np.array(shear_images)
+        """
+        lenstronomy_kwargs = self.lenstronomy_kwargs(band=band)
+        lens_model_lenstronomy = LensModel(
+            lens_model_list=lenstronomy_kwargs[0]["lens_model_list"]
+        )
+        lenstronomy_kwargs_lens = lenstronomy_kwargs[1]["kwargs_lens"]
+
+        image_positions_x, image_positions_y = image_positions_x, image_positions_y = (
+            self._point_source_image_positions(source)
+        )
+
+        kappa_star_images = []  # kappa_star for each image of this source
+        kappa_tot_images = []
+        shear_images = []
+        for i in range(len(image_positions_x)):
+            ra = image_positions_x[i]  # TODO: is this correct?
+            dec = image_positions_y[i]
+
+            kappa_tot = lens_model_lenstronomy.kappa(ra, dec, lenstronomy_kwargs_lens)
+            shear_smooth_vec = lens_model_lenstronomy.gamma(
+                ra, dec, lenstronomy_kwargs_lens
+            )
+            shear_smooth = np.sqrt(shear_smooth_vec[0] ** 2 + shear_smooth_vec[1] ** 2)
+
+            kappa_star_in_lensing_convergence_units = self.kappa_star(
+                ra, dec
+            )  # in the kappa_star function definition it's mentioned that the output is in units of lensing convergence.
+            kappa_star = (
+                kappa_star_in_lensing_convergence_units * kappa_tot
+            )  # based on above comment, Is this line correct?
+
+            kappa_tot_images.append(kappa_tot)
+            shear_images.append(shear_smooth)
+            kappa_star_images.append(kappa_star[0])
+
+        return (
+            np.array(kappa_star_images),
+            np.array(kappa_tot_images),
+            np.array(shear_images),
+        )
+
+    def _point_source_magnitude_microlensing(
+        self, band, time, source, **kwargs_microlensing
+    ):
+        """Returns point source magnitude variability from only microlensing
+        effect. This function does operation only for the single source.
+
+        :param band: imaging band
+        :type band: string
+        :param time: time is an image observation time in units of days.
+        :param kwargs_microlensing: additional (optional) dictionary of
+            settings required by micro-lensing calculation that do not
+            depend on the Lens() class. It is of type:
+            kwargs_microlensing = {"kwargs_MagnificationMap":
+            kwargs_MagnificationMap, "kwargs_AccretionDisk":
+            kwargs_AccretionDisk,
+            "kwargs_PointSource":kwargs_PointSource} You don't need to
+            provide both kwargs_AccretionDisk and kwargs_PointSource.
+            You can provide just one of them. If you provide both,
+            kwargs_AccretionDisk will be used. The
+            kwargs_MagnificationMap is required for the microlensing
+            calculation.
+        :type kwargs_microlensing: dict
+        :return: point source magnitude for a single source, does not
+            include the macro-magnification.
+        :rtype: numpy array
+        """
+        print("kwargs_microlensing", kwargs_microlensing)
+        if kwargs_microlensing is None:
+            raise ValueError(
+                "kwargs_microlensing is None. Please provide a dictionary of settings required by micro-lensing calculation."
+            )
+        if "kwargs_MagnificationMap" not in kwargs_microlensing:
+            raise ValueError(
+                "kwargs_MagnificationMap not in kwargs_microlensing. Please provide a dictionary of settings required by micro-lensing calculation."
+            )
+        if ("kwargs_AccretionDisk" not in kwargs_microlensing) and (
+            "kwargs_PointSource" not in kwargs_microlensing
+        ):
+            raise ValueError(
+                "kwargs_AccretionDisk or kwargs_PointSource not in kwargs_microlensing. Please provide either of them."
+            )
+
+        # get microlensing parameters
+        kappa_star_images, kappa_tot_images, shear_images = (
+            self._microlensing_parameters_for_image_positions_single_source(
+                band, source
+            )
+        )
+
+        ml_lc_lens = MicrolensingLightCurveFromLensModel(self)
+        microlensing_magnitudes = (
+            ml_lc_lens.generate_point_source_microlensing_magnitudes(
+                time=time,
+                source_redshift=source.redshift,
+                deflector_redshift=self.deflector_redshift,
+                kappa_star_images=kappa_star_images,
+                kappa_tot_images=kappa_tot_images,
+                shear_images=shear_images,
+                cosmology=self.cosmo,
+                kwargs_magnification_map=kwargs_microlensing["kwargs_MagnificationMap"],
+                kwargs_accretion_disk=kwargs_microlensing["kwargs_AccretionDisk"],
+                kwargs_point_source=kwargs_microlensing["kwargs_PointSource"],
+            )
+        )
+        return microlensing_magnitudes  # # does not include the macro-lensing effect
+
+    # # This function is not used in the code. It will be deleted in the future.
+    # def _generate_molet_output(self, band, time, **kwargs_molet):
+    #     # coolest convention of lens model (or kappa, gamma, kappa_star)
+    #     lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
+    #     lens_model = LensModel(lens_model_list=lens_model_list)
+    #     x, y = self.point_source_image_positions()
+    #     f_xx, f_xy, f_yx, f_yy = lens_model.hessian(x=x, y=y, kwargs=kwargs_lens)
+    #     kappa = 1 / 2.0 * (f_xx + f_yy)
+    #     gamma1 = 1.0 / 2 * (f_xx - f_yy)
+    #     gamma2 = f_xy
+    #     gamma = np.sqrt(gamma1**2 + gamma2**2)
+    #     ra_image, dec_image = self.point_source_image_positions()
+    #     kappa_star = self.kappa_star(ra=ra_image, dec=dec_image)
+    #     image_observed_times = self.image_observer_times(time)
+
+    #     # quasar disk model at given time(s) (either time-variable or static
+
+    #     # ===============
+    #     # call micro-lensing calculation with
+    #     # kappa: lensing convergence at image position
+    #     # gamma: shear strength at image position
+    #     # kappa_star: stellar convergence at image position
+    #     # image_observed_times: time of the source at the different images, not
+    #     # correcting for redshifts, but for time delays. The time is relative to the
+    #     # first arriving image.
+    #     # band: photometric band, potentially changing to transmission curve
+    #     # kwargs_microlensing: additional (optional) dictionary of settings required by micro-lensing calculation that do not depend on
+    #     #         the Lens() class
+    #     # ===============
+
+    #     # TODO: in what format should be the 2d source profile be stored (as it is
+    #     # time- and wavelength dependent)
+    #     # TODO: do we create full light curves (and save it in cache) or call it each
+    #     # time
+
+    #     # we can use this to get intrinsic brightness of a source at image observation
+    #     # time. Here, we are storing source profile as dictionary of observation time
+    #     # and magnitude but need to decide what format molet needs. I checked with molet
+    #     #  and it says format should be in the form given below.
+    #     source_profile = [
+    #         {
+    #             "time": list(self.source.lightcurve_time),
+    #             "signal": list(
+    #                 self._point_source_magnitude(
+    #                     band=band, lensed=False, time=self.source.lightcurve_time
+    #                 )
+    #             ),
+    #         }
+    #     ]
+    #     # using source profile, kappa, gamma, kappa_star, image_observed_time molet
+    #     # should return lightcurve of each images. The lightcurve can be a interpolated
+    #     # function or a dictionary of observation time and magnitudes in specified band
+    #     # as given below.
+    #     # This molet_output is temporary. Once we call molet, this will be an actual
+    #     # molet output.
+    #     image_lightcurve_list = [
+    #         {
+    #             "time": list(self.source.lightcurve_time),
+    #             "magnitude": np.lnspace(23, 34, len(self.source.lightcurve_time)),
+    #         },
+    #         {
+    #             "time": list(self.source.lightcurve_time),
+    #             "magnitude": np.lnspace(24, 36, len(self.source.lightcurve_time)),
+    #         },
+    #     ]
+    #     # molet_output can be molet_output = [interp_lightcurve_image1,
+    #     # interp_lightcurve_image2]
+
+    #     return image_lightcurve_list
 
     def extended_source_magnitude(self, band, lensed=False):
         """Unlensed apparent magnitude of the extended source for a given band
@@ -1010,10 +1258,15 @@ class Lens(LensedSystemBase):
         """
         return self.deflector.light_model_lenstronomy(band=band)
 
-    def source_light_model_lenstronomy(self, band=None):
+    def source_light_model_lenstronomy(self, band=None, microlensing=False):
         """Returns source light model instance and parameters in lenstronomy
-        conventions.
+        conventions, which includes extended sources and point sources.
 
+        :param band: imaging band
+        :type band: string
+        :param microlensing: if using micro-lensing map to produce the
+            lensed magnification
+        :type microlensing: bool
         :return: source_light_model_list, kwargs_source_light
         """
         source_models = {}
@@ -1055,7 +1308,10 @@ class Lens(LensedSystemBase):
                     image_magnitudes = np.abs(self._point_source_magnification(source))
                 else:
                     image_magnitudes = self._point_source_magnitude(
-                        band=band, source=source, lensed=True
+                        band=band,
+                        source=source,
+                        lensed=True,
+                        microlensing=microlensing,
                     )
                 kwargs_ps_list.append(
                     {
@@ -1098,7 +1354,7 @@ class Lens(LensedSystemBase):
         kappa_star = (
             flux_local / total_flux * stellar_mass / self._lens_cosmo.sigma_crit_angle
         )
-        return kappa_star
+        return kappa_star  # currently it returns a list!
 
     def contrast_ratio(self, band, source_index=0):
         """Computes the surface brightness ratio (difference in magnitude per
