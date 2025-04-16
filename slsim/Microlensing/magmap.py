@@ -3,13 +3,15 @@ __author__ = "Paras Sharma"
 import sys
 import numpy as np
 
-# Credits: Luke's Microlensing code - https://github.com/weisluke/microlensing
-from slsim.Microlensing import LUKES_MICROLENSING_PATH
-
-sys.path.append(LUKES_MICROLENSING_PATH)
-from microlensing.IPM.ipm import (
-    IPM,
-)  # Inverse Polygon Mapping class to generate magnification maps
+try:
+    # Credits: Luke's Microlensing code - https://github.com/weisluke/microlensing
+    from microlensing.IPM.ipm import (
+        IPM,
+    )  # Inverse Polygon Mapping class to generate magnification maps
+except ImportError:
+    raise ImportError(
+        "The microlensing package is not installed. Please install it using 'pip install microlensing'."
+    )
 
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -30,16 +32,13 @@ class MagnificationMap(object):
         m_solar: float = None,
         m_lower: float = None,
         m_upper: float = None,
-        light_loss: float = None,
-        rectangular: bool = None,
         center_x: float = None,
         center_y: float = None,
         half_length_x: float = None,
         half_length_y: float = None,
         num_pixels_x: int = None,
         num_pixels_y: int = None,
-        num_rays_y: int = None,
-        random_seed: int = None,
+        kwargs_IPM: dict = {},
     ):
         """
         :param magnifications_array: array of magnifications to use. If None, a new
@@ -50,17 +49,16 @@ class MagnificationMap(object):
         :param kappa_star: convergence in point mass lenses/stars.
         :param theta_star: Einstein radius of a unit mass point lens in arcsec units. Default is 1.
         :param mass_function: mass function to use for the point mass lenses. Options are: equal, uniform, salpeter, kroupa, and optical_depth. Default is kroupa.
-        :param m_solar: mass of the sun in arbitrary units. Default is 1.
+        :param m_solar: solar mass in arbitrary units. Default is 1.
         :param m_lower: lower mass limit for the mass function in solar masses. Default is 0.08.
         :param m_upper: upper mass limit for the mass function in solar masses. Default is 100.
-        :param light_loss: fraction of light lost due to microlensing (0 <= light_loss <= 1)
-        :param rectangular: whether the map is rectangular or not (in this case, the map is circular).
         :param center_x: x coordinate of the center of the magnification map in arcsec units. Default is 0.
         :param center_y: y coordinate of the center of the magnification map in arcsec units. Default is 0.
         :param half_length_x: x extent of the half-length of the magnification map in arcsec units.
         :param half_length_y: y extent of the half_length of the magnification map in arcsec units.
         :param num_pixels_x: number of pixels for the x axis
         :param num_pixels_y: number of pixels for the y axis
+        :param kwargs_IPM: additional keyword arguments to pass to the IPM class.
         """
 
         self.kappa_tot = kappa_tot
@@ -71,15 +69,12 @@ class MagnificationMap(object):
         self.m_solar = m_solar
         self.m_lower = m_lower
         self.m_upper = m_upper
-        self.light_loss = light_loss
         self.center_x = center_x
         self.center_y = center_y
         self.half_length_x = half_length_x
         self.half_length_y = half_length_y
         self.num_pixels_x = num_pixels_x
         self.num_pixels_y = num_pixels_y
-        self.num_rays_y = num_rays_y
-        self.random_seed = random_seed
 
         if self.mass_function is None:
             self.mass_function = "kroupa"
@@ -97,9 +92,6 @@ class MagnificationMap(object):
             kappa_star=self.kappa_star,
             smooth_fraction=self.smooth_fraction,
             theta_star=self.theta_star,
-            light_loss=self.light_loss,
-            rectangular=rectangular,
-            approx=True,
             center_y1=self.center_x,
             center_y2=self.center_y,
             half_length_y1=self.half_length_x,
@@ -110,22 +102,18 @@ class MagnificationMap(object):
             m_solar=self.m_solar,
             num_pixels_y1=self.num_pixels_x,
             num_pixels_y2=self.num_pixels_y,
-            num_rays_y=self.num_rays_y,
-            random_seed=self.random_seed,
+            approx=True,
             write_maps=False,
             write_parities=False,
             write_histograms=False,
+            **kwargs_IPM,
         )
 
         if magnifications_array is not None:
             self.magnifications = magnifications_array  # TODO: make it so that the magnification map is not generated again, is stored in cache!
         else:
-            self.generate_magnification_map()
-            self.magnifications = self.microlensing_MagMap.magnifications
-
-    def generate_magnification_map(self):
-        """Generate the magnification map based on the parameters provided."""
-        self.microlensing_MagMap = self.microlensing_IPM.run()
+            self.microlensing_IPM.run()
+            self.magnifications = self.microlensing_IPM.magnifications # based on updated IPM class
 
     def plot_magnification_map(self, ax=None, plot_magnitude=True, **kwargs):
         """Plot the magnification map on the given axis."""
