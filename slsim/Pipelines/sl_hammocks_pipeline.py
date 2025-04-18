@@ -15,8 +15,16 @@ from skypy.pipeline import Pipeline
 class SLHammocksPipeline:
     """Class for slhammocks configuration."""
 
-    def __init__(self, slhammocks_config=None, sky_area=None, cosmo=None, z_min=None,
-                 z_max=None, loghm_min=11.5, loghm_max=16.0):
+    def __init__(
+        self,
+        slhammocks_config=None,
+        sky_area=None,
+        cosmo=None,
+        z_min=None,
+        z_max=None,
+        loghm_min=11.5,
+        loghm_max=16.0,
+    ):
         """
         :param slhammocks_config: path to the deflector population csv file for 'halo-model'
                             If None, generate the population. Not supported at this time.
@@ -92,24 +100,18 @@ class SLHammocksPipeline:
             table = table_translator_for_slsim(table, cosmo)
 
             self._pipeline = table
-        skypy_config = os.path.join(
-                module_path, "data/SkyPy/slhammock_skypy.yml"
-            )
+        skypy_config = os.path.join(module_path, "data/SkyPy/slhammock_skypy.yml")
         with open(skypy_config, "r") as file:
-                content = file.read()
-        redshift_array=list(self._pipeline["z"].value)
+            content = file.read()
+        redshift_array = list(self._pipeline["z"].value)
         old_z = "z: PLACEHOLDER_Z"
-        new_z = (
-            f"z: {redshift_array}"
-        )
+        new_z = f"z: {redshift_array}"
         content = content.replace(old_z, new_z)
-        stellar_mass_array=list(self._pipeline["stellar_mass"].value)
+        stellar_mass_array = list(self._pipeline["stellar_mass"].value)
         old_stellar_mass = "stellar_mass: PLACEHOLDER_MASS"
-        new_stellar_mass = (
-            f"stellar_mass: {stellar_mass_array}"
-        )
+        new_stellar_mass = f"stellar_mass: {stellar_mass_array}"
         content = content.replace(old_stellar_mass, new_stellar_mass)
-        
+
         if cosmo is not None:
             if cosmo is default_cosmology.get():
                 pass
@@ -117,9 +119,9 @@ class SLHammocksPipeline:
                 cosmology_dict = cosmo.to_format("mapping")
 
                 cosmology_class = str(cosmology_dict.pop("cosmology", None))
-                cosmology_class_str = cosmology_class.replace(
-                    "<class '", ""
-                ).replace("'>", "")
+                cosmology_class_str = cosmology_class.replace("<class '", "").replace(
+                    "'>", ""
+                )
 
                 cosmology_dict.pop("cosmology", None)
 
@@ -145,9 +147,7 @@ class SLHammocksPipeline:
                 cosmology_params_str = "\n".join(cosmology_params_list)
 
                 old_cosmo = "cosmology: !astropy.cosmology.default_cosmology.get []"
-                new_cosmo = (
-                    f"cosmology: !{cosmology_class_str}\n{cosmology_params_str}"
-                )
+                new_cosmo = f"cosmology: !{cosmology_class_str}\n{cosmology_params_str}"
                 content = content.replace(old_cosmo, new_cosmo)
 
         with tempfile.NamedTemporaryFile(
@@ -156,15 +156,13 @@ class SLHammocksPipeline:
             tmp_file.write(content)
         self._skypy_pipeline = Pipeline.read(tmp_file.name)
         self._skypy_pipeline.execute()
-        magnitude_table=self._skypy_pipeline["halo"]
-        magnitude_table.remove_columns(['z', 'stellar_mass', 'coeff'])
+        magnitude_table = self._skypy_pipeline["halo"]
+        magnitude_table.remove_columns(["z", "stellar_mass", "coeff"])
         self._final_galaxy_table = hstack([self._pipeline, magnitude_table])
 
-
-            
     @property
     def halo_galaxies(self):
-        """slhammock pipeline for galaxies.
+        """Slhammock pipeline for galaxies.
 
         :return: list of galaxies from halo model
         :rtype: list of dict
