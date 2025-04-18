@@ -215,8 +215,8 @@ def table_translator_for_slsim(table, cosmo):
     if "ellipticity" not in table.colnames:
         table.rename_column("e_g", "ellipticity")
     if "angular_size" not in table.colnames:
-        angular_size_in_deg = table["tb"] / 0.551
-        table.add_column(angular_size_in_deg, name="angular_size")
+        angular_size_in_arcsec = table["tb"] / 0.551
+        table.add_column(angular_size_in_arcsec, name="angular_size")
 
     M200_array, r200_array, c200_array = zip(
         *[
