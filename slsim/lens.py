@@ -801,7 +801,7 @@ class Lens(LensedSystemBase):
         kappa_tot_images = []
         shear_images = []
         for i in range(len(image_positions_x)):
-            ra = image_positions_x[i]  # TODO: is this correct?
+            ra = image_positions_x[i]
             dec = image_positions_y[i]
 
             kappa_tot = lens_model_lenstronomy.kappa(ra, dec, lenstronomy_kwargs_lens)
@@ -810,12 +810,7 @@ class Lens(LensedSystemBase):
             )
             shear_smooth = np.sqrt(shear_smooth_vec[0] ** 2 + shear_smooth_vec[1] ** 2)
 
-            kappa_star_in_lensing_convergence_units = self.kappa_star(
-                ra, dec
-            )  # in the kappa_star function definition it's mentioned that the output is in units of lensing convergence.
-            kappa_star = (
-                kappa_star_in_lensing_convergence_units * kappa_tot
-            )  # based on above comment, Is this line correct?
+            kappa_star = self.kappa_star(ra, dec) # TODO: why does it return a list? for each source?
 
             kappa_tot_images.append(kappa_tot)
             shear_images.append(shear_smooth)
