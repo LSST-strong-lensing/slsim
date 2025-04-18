@@ -810,7 +810,9 @@ class Lens(LensedSystemBase):
             )
             shear_smooth = np.sqrt(shear_smooth_vec[0] ** 2 + shear_smooth_vec[1] ** 2)
 
-            kappa_star = self.kappa_star(ra, dec) # TODO: why does it return a list? for each source?
+            kappa_star = self.kappa_star(
+                ra, dec
+            )  # TODO: why does it return a list? for each source?
 
             kappa_tot_images.append(kappa_tot)
             shear_images.append(shear_smooth)
