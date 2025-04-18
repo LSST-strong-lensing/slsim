@@ -1,9 +1,7 @@
 import numpy as np
 import numpy.random as random
 from slsim.selection import object_cut
-from slsim.Deflectors.velocity_dispersion import vel_disp_composite_model
 from slsim.Deflectors.deflectors_base import DeflectorsBase
-from lenstronomy.Util import constants
 from slsim.Deflectors.elliptical_lens_galaxies import elliptical_projected_eccentricity
 from slsim.Deflectors.deflector import Deflector
 
