@@ -16,7 +16,7 @@ class SLHammocksPipeline:
     """Class for slhammocks configuration."""
 
     def __init__(self, slhammocks_config=None, sky_area=None, cosmo=None, z_min=None,
-                 z_max=None):
+                 z_max=None, loghm_min=11.5, loghm_max=16.0):
         """
         :param slhammocks_config: path to the deflector population csv file for 'halo-model'
                             If None, generate the population. Not supported at this time.
@@ -29,6 +29,10 @@ class SLHammocksPipeline:
         :param cosmo: An instance of an astropy cosmology model
                         (e.g., FlatLambdaCDM(H0=70, Om0=0.3)).
         :type cosmo: astropy.cosmology instance or None
+        :param z_min: minimum galaxy redshift
+        :param z_max: maximum galaxy redshift
+        :param loghm_min: minimum halo mass in log unit
+        :param loghm_max: maximum halo mass in log unit
         """
         path = os.path.dirname(slsim.__file__)
         module_path, _ = os.path.split(path)
@@ -72,8 +76,8 @@ class SLHammocksPipeline:
             kwargs_population_base = {
                 "z_min": z_min,
                 "z_max": z_max,
-                "log10host_halo_mass_min": 11.5,
-                "log10host_halo_mass_max": 16.0,
+                "log10host_halo_mass_min": loghm_min,
+                "log10host_halo_mass_max": loghm_max,
                 "sigma_host_halo_concentration": 0.33,
                 "sigma_central_galaxy_mass": 0.2,
                 "TYPE_GAL_SIZE": "vdW23",
