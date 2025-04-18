@@ -140,8 +140,14 @@ class SLHammocksPipeline:
 
                 cosmology_params_list = []
                 for key, value in cosmology_dict.items():
-                    if hasattr(value, "value"):
+                    if hasattr(value, "value") and not isinstance(value.value, (list, tuple)):
                         value = value.value
+                    elif hasattr(value, "value"):  # For Quantity arrays like m_nu
+                        value = value.value
+
+                    if isinstance(value, (list, tuple, np.ndarray)):
+                        value = "[" + ", ".join(f"{float(x):.1f}" for x in value) + "]"
+
                     cosmology_params_list.append(f"    {key}: {value}")
 
                 cosmology_params_str = "\n".join(cosmology_params_list)

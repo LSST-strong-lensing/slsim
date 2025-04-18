@@ -23,12 +23,15 @@ class TestSkyPyPipeline(object):
             slhammocks_config=self.slhammocks_config,
             sky_area=self.sky_area,
             cosmo=self.cosmo,
+            z_min=0.01,
+            z_max=5
         )
 
     def test_cosmology_initialization(self):
         sky_area = self.sky_area
         galaxy_cosmo0 = LambdaCDM(H0=70, Om0=0.15, Ob0=0.02, Ode0=0.85, Tcmb0=2.725)
-        pipeline0 = SLHammocksPipeline(sky_area=sky_area, cosmo=galaxy_cosmo0)
+        pipeline0 = SLHammocksPipeline(sky_area=sky_area, cosmo=galaxy_cosmo0, z_min=0.01,
+            z_max=5)
         halos_galaxies = pipeline0._pipeline
         cosmo0_halo_number = len(halos_galaxies)
 
@@ -45,7 +48,8 @@ class TestSkyPyPipeline(object):
         cosmo3 = w0waCDM(
             H0=70, Om0=0.3, Ob0=0.05, Ode0=0.7, w0=-1.0, wa=0.0, Tcmb0=2.725
         )
-        pipeline3 = SLHammocksPipeline(sky_area=sky_area, cosmo=cosmo3)
+        pipeline3 = SLHammocksPipeline(sky_area=sky_area, cosmo=cosmo3, z_min=0.01,
+            z_max=5)
         halos_galaxies = pipeline3._pipeline
         # we expect the pipeline works:
         assert halos_galaxies[0]["z"] > 0
