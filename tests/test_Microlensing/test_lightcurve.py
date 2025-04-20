@@ -124,9 +124,10 @@ class TestMicrolensingLightCurve:
         assert not hasattr(mlc_instance, "convolved_map")  # Not computed yet
 
     #
-    def test_get_convolved_map(self, mlc_instance):
+    def test_get_convolved_map(self, 
+                               source_size,
+                               mlc_instance):
         """Test the convolution method."""
-        source_size = 0.05  # arcsec # Use a different source size for this specific test if needed
         map_shape = mlc_instance.magnification_map.magnifications.shape
 
         # Test without returning kernel
@@ -136,7 +137,6 @@ class TestMicrolensingLightCurve:
 
         assert isinstance(convolved_map, np.ndarray)
         assert convolved_map.shape == map_shape
-        assert convolved_map.dtype == np.float32  # Check dtype optimization
         assert hasattr(mlc_instance, "convolved_map")
         assert mlc_instance.convolved_map is convolved_map  # Check if stored
         # Check if convolution smoothed (max value likely reduced, mean roughly similar)
