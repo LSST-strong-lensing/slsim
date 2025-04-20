@@ -30,7 +30,7 @@ def dummy_magmap(theta_star):  # Request theta_star as argument
     try:
         # Assuming TestData is in the same directory as the test file
         test_dir = os.path.dirname(__file__)
-        magmap2D_path = os.path.join(test_dir, "TestData", "test_magmap2D.npy")
+        magmap2D_path = os.path.join(test_dir, "..", "TestData", "test_magmap2D.npy")
         if not os.path.exists(magmap2D_path):
             # Add more debug info for CI if it fails again
             print(f"[Fixture Debug] Looking for NPY in: {magmap2D_path}")
