@@ -3,6 +3,7 @@ import pytest
 import numpy as np
 from unittest.mock import patch, MagicMock, ANY  # ANY helps match arguments loosely
 import astropy.units as u
+
 # import astropy.constants as const
 from astropy.cosmology import FlatLambdaCDM
 
@@ -151,7 +152,7 @@ class TestMicrolensingLightCurve:
         source_velocity,
     ):
         """Test basic point source light curve generation (magnification)."""
-        
+
         kwargs_ps = {
             "source_size": source_size,  # arcsec
             "effective_transverse_velocity": source_velocity,  # km/s
@@ -211,7 +212,7 @@ class TestMicrolensingLightCurve:
         source_velocity,
     ):
         """Test basic point source light curve generation (magnitude)."""
-        
+
         kwargs_ps = {
             "source_size": source_size,  # arcsec
             "effective_transverse_velocity": source_velocity,  # km/s
@@ -256,17 +257,21 @@ class TestMicrolensingLightCurve:
 
         # Check that the light curve values lie between the min and max of the convolved map
         mean_mag_convolved = np.nanmean(mlc_instance.convolved_map)
-        min_magnitude = -2.5 * np.log10(np.nanmax(mlc_instance.convolved_map) / np.abs(mean_mag_convolved))
-        max_magnitude = -2.5 * np.log10(np.nanmin(mlc_instance.convolved_map) / np.abs(mean_mag_convolved))
+        min_magnitude = -2.5 * np.log10(
+            np.nanmax(mlc_instance.convolved_map) / np.abs(mean_mag_convolved)
+        )
+        max_magnitude = -2.5 * np.log10(
+            np.nanmin(mlc_instance.convolved_map) / np.abs(mean_mag_convolved)
+        )
         assert np.all(lcs >= min_magnitude)
         assert np.all(lcs <= max_magnitude)
-        
+
         # Check that the light curve values are not all the same
         if n_lc > 1:
             assert not np.all(lcs == lcs[0, :])
         # Check that the light curve values are not all zero
         assert not np.all(lcs == 0)
-    
+
     def test_generate_point_source_input_validation(self, mlc_instance, cosmo):
         """Test input validation for point source."""
         source_redshift = 1.5
@@ -276,23 +281,34 @@ class TestMicrolensingLightCurve:
 
         with pytest.raises(ValueError, match="Source size not provided"):
             mlc_instance.generate_point_source_lightcurve(
-                source_redshift=source_redshift, cosmology=cosmo, kwargs_PointSource=kwargs_no_size
+                source_redshift=source_redshift,
+                cosmology=cosmo,
+                kwargs_PointSource=kwargs_no_size,
             )
 
-        with pytest.raises(ValueError, match="Effective transverse velocity not provided"):
+        with pytest.raises(
+            ValueError, match="Effective transverse velocity not provided"
+        ):
             mlc_instance.generate_point_source_lightcurve(
-                source_redshift=source_redshift, cosmology=cosmo, kwargs_PointSource=kwargs_no_vel
+                source_redshift=source_redshift,
+                cosmology=cosmo,
+                kwargs_PointSource=kwargs_no_vel,
             )
 
         with pytest.raises(ValueError, match="Lightcurve type not recognized"):
-             mlc_instance.generate_point_source_lightcurve(
-                source_redshift=source_redshift, cosmology=cosmo, kwargs_PointSource=kwargs_ok,
-                lightcurve_type="invalid_type"
+            mlc_instance.generate_point_source_lightcurve(
+                source_redshift=source_redshift,
+                cosmology=cosmo,
+                kwargs_PointSource=kwargs_ok,
+                lightcurve_type="invalid_type",
             )
 
-###### DONE TILL HERE ######
+    ###### DONE TILL HERE ######
 
-    @patch('slsim.Microlensing.light_curve.extract_light_curve', side_effect=mock_extract_light_curve)
+    @patch(
+        "slsim.Microlensing.light_curve.extract_light_curve",
+        side_effect=mock_extract_light_curve,
+    )
     def test_generate_point_source_returns(self, mock_extract, mlc_instance, cosmo):
         """Test return options for point source light curves."""
         source_redshift = 1.5
@@ -301,21 +317,29 @@ class TestMicrolensingLightCurve:
 
         # Test return tracks
         lcs, tracks = mlc_instance.generate_point_source_lightcurve(
-            source_redshift=source_redshift, cosmology=cosmo, kwargs_PointSource=kwargs_ps,
-            num_lightcurves=n_lc, return_track_coords=True, return_time_array=False
+            source_redshift=source_redshift,
+            cosmology=cosmo,
+            kwargs_PointSource=kwargs_ps,
+            num_lightcurves=n_lc,
+            return_track_coords=True,
+            return_time_array=False,
         )
         assert isinstance(lcs, np.ndarray)
         assert isinstance(tracks, np.ndarray)
         assert lcs.shape == (n_lc, MOCK_LC_LEN)
-        assert tracks.shape == (n_lc, 2, MOCK_LC_LEN) # num_lc, (x,y), time_steps
+        assert tracks.shape == (n_lc, 2, MOCK_LC_LEN)  # num_lc, (x,y), time_steps
         assert mock_extract.call_count == n_lc
 
         mock_extract.reset_mock()
 
         # Test return time
         lcs, times = mlc_instance.generate_point_source_lightcurve(
-            source_redshift=source_redshift, cosmology=cosmo, kwargs_PointSource=kwargs_ps,
-            num_lightcurves=n_lc, return_track_coords=False, return_time_array=True
+            source_redshift=source_redshift,
+            cosmology=cosmo,
+            kwargs_PointSource=kwargs_ps,
+            num_lightcurves=n_lc,
+            return_track_coords=False,
+            return_time_array=True,
         )
         assert isinstance(lcs, np.ndarray)
         assert isinstance(times, list)
@@ -330,8 +354,12 @@ class TestMicrolensingLightCurve:
 
         # Test return tracks and time
         lcs, tracks, times = mlc_instance.generate_point_source_lightcurve(
-            source_redshift=source_redshift, cosmology=cosmo, kwargs_PointSource=kwargs_ps,
-            num_lightcurves=n_lc, return_track_coords=True, return_time_array=True
+            source_redshift=source_redshift,
+            cosmology=cosmo,
+            kwargs_PointSource=kwargs_ps,
+            num_lightcurves=n_lc,
+            return_track_coords=True,
+            return_time_array=True,
         )
         assert isinstance(lcs, np.ndarray)
         assert isinstance(tracks, np.ndarray)
@@ -351,13 +379,15 @@ class TestMicrolensingLightCurve:
     # Create mock objects for amoeba classes
     mock_amoeba_disk = MagicMock()
     mock_disk_projection = MagicMock()
-    mock_disk_projection.flux_array = np.ones((10, 10)) # Dummy flux array
+    mock_disk_projection.flux_array = np.ones((10, 10))  # Dummy flux array
     mock_amoeba_disk.calculate_surface_intensity_map.return_value = mock_disk_projection
 
     mock_amoeba_map = MagicMock()
     mock_amoeba_convolution = MagicMock()
     # Make sure the mock convolution object has the attribute expected later
-    mock_amoeba_convolution.magnification_array = np.random.rand(50, 50) + 0.5 # Use map size from fixture
+    mock_amoeba_convolution.magnification_array = (
+        np.random.rand(50, 50) + 0.5
+    )  # Use map size from fixture
     mock_amoeba_map.convolve_with_flux_projection.return_value = mock_amoeba_convolution
 
     # Patch util functions if necessary (or assume they work if simple)
@@ -365,11 +395,27 @@ class TestMicrolensingLightCurve:
     # for full isolation, but let's focus on class interactions first.
 
     @pytest.mark.skipif(not AMOEBA_AVAILABLE, reason="amoeba package not installed")
-    @patch('slsim.Microlensing.light_curve.extract_light_curve', side_effect=mock_extract_light_curve)
-    @patch('slsim.Microlensing.light_curve.AccretionDisk', return_value=mock_amoeba_disk)
-    @patch('slsim.Microlensing.light_curve.AmoebaMagnificationMap', return_value=mock_amoeba_map)
-    @patch('slsim.Microlensing.light_curve.util') # Mock the whole util module
-    def test_generate_agn_lightcurve_basic(self, mock_util, mock_AmoebaMap, mock_AccretionDisk, mock_extract, mlc_instance, cosmo):
+    @patch(
+        "slsim.Microlensing.light_curve.extract_light_curve",
+        side_effect=mock_extract_light_curve,
+    )
+    @patch(
+        "slsim.Microlensing.light_curve.AccretionDisk", return_value=mock_amoeba_disk
+    )
+    @patch(
+        "slsim.Microlensing.light_curve.AmoebaMagnificationMap",
+        return_value=mock_amoeba_map,
+    )
+    @patch("slsim.Microlensing.light_curve.util")  # Mock the whole util module
+    def test_generate_agn_lightcurve_basic(
+        self,
+        mock_util,
+        mock_AmoebaMap,
+        mock_AccretionDisk,
+        mock_extract,
+        mlc_instance,
+        cosmo,
+    ):
         """Test basic AGN light curve generation (magnification)."""
         # Reset mocks that might persist between tests if defined outside
         mock_AccretionDisk.reset_mock()
@@ -379,15 +425,20 @@ class TestMicrolensingLightCurve:
         mock_amoeba_map.convolve_with_flux_projection.reset_mock()
 
         # Set realistic return values for mock util functions if needed
-        mock_util.calculate_gravitational_radius.return_value = 1.5e11 # meters
-        mock_util.convert_cartesian_to_polar.return_value = (np.ones((10,10)), np.ones((10,10))) # dummy radii, phi
-        mock_util.accretion_disk_temperature.return_value = np.ones((10,10))*5000 # dummy temps
+        mock_util.calculate_gravitational_radius.return_value = 1.5e11  # meters
+        mock_util.convert_cartesian_to_polar.return_value = (
+            np.ones((10, 10)),
+            np.ones((10, 10)),
+        )  # dummy radii, phi
+        mock_util.accretion_disk_temperature.return_value = (
+            np.ones((10, 10)) * 5000
+        )  # dummy temps
 
         source_redshift = 1.5
         deflector_redshift = 0.5
-        v_transverse = 1200 # km/s
+        v_transverse = 1200  # km/s
         smbh_mass_exp = 8.5
-        wavelength = 500 # nm
+        wavelength = 500  # nm
         n_lc = 1
 
         lcs = mlc_instance.generate_agn_lightcurve(
@@ -402,27 +453,27 @@ class TestMicrolensingLightCurve:
             # Other params use defaults
         )
 
-        assert isinstance(lcs, list) # Function returns list for AGN
+        assert isinstance(lcs, list)  # Function returns list for AGN
         assert len(lcs) == n_lc
         assert isinstance(lcs[0], np.ndarray)
         assert lcs[0].shape == (MOCK_LC_LEN,)
-        assert np.all(lcs[0] > 0) # Magnification
+        assert np.all(lcs[0] > 0)  # Magnification
 
         # Check AccretionDisk initialization
         mock_AccretionDisk.assert_called_once_with(
             smbh_mass_exp=smbh_mass_exp,
             redshift_source=source_redshift,
-            inclination_angle=ANY, # or check default 0
-            corona_height=ANY,     # or check default 10
-            temp_array=ANY,        # Check if it's the result of util.accretion_disk_temperature
-            phi_array=ANY,         # Check if it's from util.convert_cartesian_to_polar
-            g_array=ANY,           # Check if it's ones
-            radii_array=ANY,       # Check if it's from util.convert_cartesian_to_polar
-            height_array=ANY       # Check if it's zeros
+            inclination_angle=ANY,  # or check default 0
+            corona_height=ANY,  # or check default 10
+            temp_array=ANY,  # Check if it's the result of util.accretion_disk_temperature
+            phi_array=ANY,  # Check if it's from util.convert_cartesian_to_polar
+            g_array=ANY,  # Check if it's ones
+            radii_array=ANY,  # Check if it's from util.convert_cartesian_to_polar
+            height_array=ANY,  # Check if it's zeros
         )
         # Check surface intensity calculation call
         mock_amoeba_disk.calculate_surface_intensity_map.assert_called_once_with(
-             observer_frame_wavelength_in_nm=wavelength
+            observer_frame_wavelength_in_nm=wavelength
         )
 
         # Check AmoebaMagnificationMap initialization
@@ -432,24 +483,29 @@ class TestMicrolensingLightCurve:
             mlc_instance.magnification_map.magnifications,
             mlc_instance.magnification_map.kappa_tot,
             mlc_instance.magnification_map.shear,
-            mean_microlens_mass_in_kg=ANY, # check default or passed value
-            total_microlens_einstein_radii=ANY, # check calculation
+            mean_microlens_mass_in_kg=ANY,  # check default or passed value
+            total_microlens_einstein_radii=ANY,  # check calculation
             OmM=cosmo.Om0,
             H0=cosmo.H0.to(u.km / (u.s * u.Mpc)).value,
         )
         # Check convolution call
-        mock_amoeba_map.convolve_with_flux_projection.assert_called_once_with(mock_disk_projection)
+        mock_amoeba_map.convolve_with_flux_projection.assert_called_once_with(
+            mock_disk_projection
+        )
 
         # Check extract_light_curve call
         assert mock_extract.call_count == n_lc
         pixel_size_arcsec = mlc_instance.magnification_map.pixel_size
-        kpc_per_arcsec = cosmo.kpc_proper_per_arcmin(source_redshift).to(u.kpc / u.arcsec).value / 60.0
+        kpc_per_arcsec = (
+            cosmo.kpc_proper_per_arcmin(source_redshift).to(u.kpc / u.arcsec).value
+            / 60.0
+        )
         pixel_size_kpc = pixel_size_arcsec * kpc_per_arcsec
         pixel_size_meter = (pixel_size_kpc * u.kpc).to(u.m).value
         expected_time_years = mlc_instance.time_duration / 365.25
 
         mock_extract.assert_called_with(
-            convolution_array=mock_amoeba_convolution.magnification_array, # Check the result of amoeba convolution is passed
+            convolution_array=mock_amoeba_convolution.magnification_array,  # Check the result of amoeba convolution is passed
             pixel_size=pixel_size_meter,
             effective_transverse_velocity=v_transverse,
             light_curve_time_in_years=expected_time_years,
@@ -457,20 +513,37 @@ class TestMicrolensingLightCurve:
             x_start_position=None,
             y_start_position=None,
             phi_travel_direction=None,
-            return_track_coords=True, # Called internally with True
+            return_track_coords=True,  # Called internally with True
             random_seed=None,
         )
         # Check that the internal convolved_map was updated
-        assert hasattr(mlc_instance, 'convolved_map')
-        np.testing.assert_array_equal(mlc_instance.convolved_map, mock_amoeba_convolution.magnification_array)
-
+        assert hasattr(mlc_instance, "convolved_map")
+        np.testing.assert_array_equal(
+            mlc_instance.convolved_map, mock_amoeba_convolution.magnification_array
+        )
 
     @pytest.mark.skipif(not AMOEBA_AVAILABLE, reason="amoeba package not installed")
-    @patch('slsim.Microlensing.light_curve.extract_light_curve', side_effect=mock_extract_light_curve)
-    @patch('slsim.Microlensing.light_curve.AccretionDisk', return_value=mock_amoeba_disk)
-    @patch('slsim.Microlensing.light_curve.AmoebaMagnificationMap', return_value=mock_amoeba_map)
-    @patch('slsim.Microlensing.light_curve.util') # Mock the whole util module
-    def test_generate_agn_lightcurve_magnitude(self, mock_util, mock_AmoebaMap, mock_AccretionDisk, mock_extract, mlc_instance, cosmo):
+    @patch(
+        "slsim.Microlensing.light_curve.extract_light_curve",
+        side_effect=mock_extract_light_curve,
+    )
+    @patch(
+        "slsim.Microlensing.light_curve.AccretionDisk", return_value=mock_amoeba_disk
+    )
+    @patch(
+        "slsim.Microlensing.light_curve.AmoebaMagnificationMap",
+        return_value=mock_amoeba_map,
+    )
+    @patch("slsim.Microlensing.light_curve.util")  # Mock the whole util module
+    def test_generate_agn_lightcurve_magnitude(
+        self,
+        mock_util,
+        mock_AmoebaMap,
+        mock_AccretionDisk,
+        mock_extract,
+        mlc_instance,
+        cosmo,
+    ):
         """Test AGN light curve generation (magnitude)."""
         # Reset mocks
         mock_AccretionDisk.reset_mock()
@@ -480,8 +553,11 @@ class TestMicrolensingLightCurve:
         mock_amoeba_map.convolve_with_flux_projection.reset_mock()
         # Set return values for mocks if needed
         mock_util.calculate_gravitational_radius.return_value = 1.5e11
-        mock_util.convert_cartesian_to_polar.return_value = (np.ones((10,10)), np.ones((10,10)))
-        mock_util.accretion_disk_temperature.return_value = np.ones((10,10))*5000
+        mock_util.convert_cartesian_to_polar.return_value = (
+            np.ones((10, 10)),
+            np.ones((10, 10)),
+        )
+        mock_util.accretion_disk_temperature.return_value = np.ones((10, 10)) * 5000
 
         source_redshift = 1.5
         deflector_redshift = 0.5
@@ -503,22 +579,46 @@ class TestMicrolensingLightCurve:
         assert mock_extract.call_count == n_lc
         # Check magnitude calculation logic (similar to point source test)
         raw_mock_output = mock_extract_light_curve()[0]
-        mean_convolved = np.nanmean(mlc_instance.convolved_map) # Should be from mock_amoeba_convolution
+        mean_convolved = np.nanmean(
+            mlc_instance.convolved_map
+        )  # Should be from mock_amoeba_convolution
         expected_mag_val = -2.5 * np.log10(raw_mock_output[0] / np.abs(mean_convolved))
-        assert not np.allclose(lcs[0][0], raw_mock_output[0]) # Check transformation occurred
-
+        assert not np.allclose(
+            lcs[0][0], raw_mock_output[0]
+        )  # Check transformation occurred
 
     @pytest.mark.skipif(not AMOEBA_AVAILABLE, reason="amoeba package not installed")
-    @patch('slsim.Microlensing.light_curve.extract_light_curve', side_effect=mock_extract_light_curve)
-    @patch('slsim.Microlensing.light_curve.AccretionDisk', return_value=mock_amoeba_disk)
-    @patch('slsim.Microlensing.light_curve.AmoebaMagnificationMap', return_value=mock_amoeba_map)
-    @patch('slsim.Microlensing.light_curve.util') # Mock the whole util module
-    def test_generate_agn_returns(self, mock_util, mock_AmoebaMap, mock_AccretionDisk, mock_extract, mlc_instance, cosmo):
+    @patch(
+        "slsim.Microlensing.light_curve.extract_light_curve",
+        side_effect=mock_extract_light_curve,
+    )
+    @patch(
+        "slsim.Microlensing.light_curve.AccretionDisk", return_value=mock_amoeba_disk
+    )
+    @patch(
+        "slsim.Microlensing.light_curve.AmoebaMagnificationMap",
+        return_value=mock_amoeba_map,
+    )
+    @patch("slsim.Microlensing.light_curve.util")  # Mock the whole util module
+    def test_generate_agn_returns(
+        self,
+        mock_util,
+        mock_AmoebaMap,
+        mock_AccretionDisk,
+        mock_extract,
+        mlc_instance,
+        cosmo,
+    ):
         """Test return options for AGN light curves."""
-        mock_AccretionDisk.reset_mock(); mock_AmoebaMap.reset_mock(); mock_extract.reset_mock()
+        mock_AccretionDisk.reset_mock()
+        mock_AmoebaMap.reset_mock()
+        mock_extract.reset_mock()
         mock_util.calculate_gravitational_radius.return_value = 1.5e11
-        mock_util.convert_cartesian_to_polar.return_value = (np.ones((10,10)), np.ones((10,10)))
-        mock_util.accretion_disk_temperature.return_value = np.ones((10,10))*5000
+        mock_util.convert_cartesian_to_polar.return_value = (
+            np.ones((10, 10)),
+            np.ones((10, 10)),
+        )
+        mock_util.accretion_disk_temperature.return_value = np.ones((10, 10)) * 5000
 
         source_redshift = 1.5
         deflector_redshift = 0.5
@@ -526,33 +626,50 @@ class TestMicrolensingLightCurve:
 
         # Test return tracks
         lcs, tracks = mlc_instance.generate_agn_lightcurve(
-            source_redshift=source_redshift, deflector_redshift=deflector_redshift, cosmology=cosmo,
-            num_lightcurves=n_lc, return_track_coords=True, return_time_array=False
+            source_redshift=source_redshift,
+            deflector_redshift=deflector_redshift,
+            cosmology=cosmo,
+            num_lightcurves=n_lc,
+            return_track_coords=True,
+            return_time_array=False,
         )
         assert isinstance(lcs, list) and len(lcs) == n_lc
         assert isinstance(tracks, list) and len(tracks) == n_lc
-        assert isinstance(tracks[0], np.ndarray) and tracks[0].shape == (2, MOCK_LC_LEN) # (x,y), time_steps
+        assert isinstance(tracks[0], np.ndarray) and tracks[0].shape == (
+            2,
+            MOCK_LC_LEN,
+        )  # (x,y), time_steps
         assert mock_extract.call_count == n_lc
 
         mock_extract.reset_mock()
 
         # Test return time
         lcs, times = mlc_instance.generate_agn_lightcurve(
-            source_redshift=source_redshift, deflector_redshift=deflector_redshift, cosmology=cosmo,
-            num_lightcurves=n_lc, return_track_coords=False, return_time_array=True
+            source_redshift=source_redshift,
+            deflector_redshift=deflector_redshift,
+            cosmology=cosmo,
+            num_lightcurves=n_lc,
+            return_track_coords=False,
+            return_time_array=True,
         )
         assert isinstance(lcs, list) and len(lcs) == n_lc
         assert isinstance(times, list) and len(times) == n_lc
         assert isinstance(times[0], np.ndarray) and len(times[0]) == MOCK_LC_LEN
-        assert np.isclose(times[0][0], 0) and np.isclose(times[0][-1], mlc_instance.time_duration)
+        assert np.isclose(times[0][0], 0) and np.isclose(
+            times[0][-1], mlc_instance.time_duration
+        )
         assert mock_extract.call_count == n_lc
 
         mock_extract.reset_mock()
 
         # Test return tracks and time
         lcs, tracks, times = mlc_instance.generate_agn_lightcurve(
-            source_redshift=source_redshift, deflector_redshift=deflector_redshift, cosmology=cosmo,
-            num_lightcurves=n_lc, return_track_coords=True, return_time_array=True
+            source_redshift=source_redshift,
+            deflector_redshift=deflector_redshift,
+            cosmology=cosmo,
+            num_lightcurves=n_lc,
+            return_track_coords=True,
+            return_time_array=True,
         )
         assert isinstance(lcs, list) and len(lcs) == n_lc
         assert isinstance(tracks, list) and len(tracks) == n_lc
@@ -561,14 +678,16 @@ class TestMicrolensingLightCurve:
         assert len(times[0]) == MOCK_LC_LEN
         assert mock_extract.call_count == n_lc
 
-    @patch('slsim.Microlensing.light_curve.AMOEBA_AVAILABLE', False) # Force unavailable
+    @patch(
+        "slsim.Microlensing.light_curve.AMOEBA_AVAILABLE", False
+    )  # Force unavailable
     def test_generate_agn_import_error(self, mlc_instance, cosmo):
         """Test that ImportError is raised if amoeba is unavailable."""
         source_redshift = 1.5
         deflector_redshift = 0.5
 
         with pytest.raises(ImportError, match="amoeba package is required"):
-             mlc_instance.generate_agn_lightcurve(
+            mlc_instance.generate_agn_lightcurve(
                 source_redshift=source_redshift,
                 deflector_redshift=deflector_redshift,
                 cosmology=cosmo,

@@ -17,6 +17,7 @@ from lenstronomy.Util import util
 
 from slsim.lensed_system_base import LensedSystemBase
 
+
 class Lens(LensedSystemBase):
     """Class to manage individual lenses."""
 
@@ -856,7 +857,9 @@ class Lens(LensedSystemBase):
         )
 
         # importing here to keep it optional
-        from slsim.Microlensing.lightcurvelensmodel import MicrolensingLightCurveFromLensModel
+        from slsim.Microlensing.lightcurvelensmodel import (
+            MicrolensingLightCurveFromLensModel,
+        )
 
         ml_lc_lens = MicrolensingLightCurveFromLensModel(self)
         microlensing_magnitudes = (
