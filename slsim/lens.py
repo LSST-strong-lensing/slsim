@@ -1,5 +1,4 @@
 import copy
-import warnings
 
 import numpy as np
 from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
@@ -17,9 +16,6 @@ from lenstronomy.Util import data_util
 from lenstronomy.Util import util
 
 from slsim.lensed_system_base import LensedSystemBase
-
-from slsim.Microlensing.lightcurvelensmodel import MicrolensingLightCurveFromLensModel
-
 
 class Lens(LensedSystemBase):
     """Class to manage individual lenses."""
@@ -858,6 +854,9 @@ class Lens(LensedSystemBase):
                 band, source
             )
         )
+
+        # importing here to keep it optional
+        from slsim.Microlensing.lightcurvelensmodel import MicrolensingLightCurveFromLensModel
 
         ml_lc_lens = MicrolensingLightCurveFromLensModel(self)
         microlensing_magnitudes = (
