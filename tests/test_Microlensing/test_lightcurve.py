@@ -50,7 +50,6 @@ def dummy_magmap(theta_star):  # Request theta_star as argument
         "shear": 0.34860889,
         "kappa_star": 0.24,
         "theta_star": theta_star,  # Use the fixture value
-        "rectangular": True,
         "center_x": 0,  # arcsec
         "center_y": 0,  # arcsec
         "half_length_x": 25 * theta_star,  # Use the fixture value
