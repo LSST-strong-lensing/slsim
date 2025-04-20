@@ -537,4 +537,3 @@ class MicrolensingLightCurve(object):
                 )
 
         return ax
-
