@@ -124,9 +124,7 @@ class TestMicrolensingLightCurve:
         assert not hasattr(mlc_instance, "convolved_map")  # Not computed yet
 
     #
-    def test_get_convolved_map(self, 
-                               source_size,
-                               mlc_instance):
+    def test_get_convolved_map(self, source_size, mlc_instance):
         """Test the convolution method."""
         map_shape = mlc_instance.magnification_map.magnifications.shape
 
