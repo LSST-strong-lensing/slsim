@@ -538,6 +538,7 @@ class MicrolensingLightCurve(object):
 
         return ax
 
+
 ## The credits for the following functions go to Henry Best (https://github.com/Henry-Best-01/Amoeba)
 
 
