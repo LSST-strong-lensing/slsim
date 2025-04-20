@@ -1,14 +1,13 @@
 import os
 import pytest
 import numpy as np
-from unittest.mock import patch, MagicMock, ANY  # ANY helps match arguments loosely
 import astropy.units as u
 
 # import astropy.constants as const
 from astropy.cosmology import FlatLambdaCDM
 
 # Import the class to test
-from slsim.Microlensing.lightcurve import MicrolensingLightCurve, AMOEBA_AVAILABLE
+from slsim.Microlensing.lightcurve import MicrolensingLightCurve
 
 # Import the MagnificationMap class for a dummy instance
 from slsim.Microlensing.magmap import MagnificationMap  # Assuming this exists
