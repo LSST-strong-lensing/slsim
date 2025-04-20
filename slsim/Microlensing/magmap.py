@@ -1,6 +1,5 @@
 __author__ = "Paras Sharma"
 
-import sys
 import numpy as np
 
 try:

@@ -18,21 +18,7 @@ from lenstronomy.Util import util
 
 from slsim.lensed_system_base import LensedSystemBase
 
-# Set a global flag to track microlensing availability
-MICROLENSING_AVAILABLE = False
-
-try:
-    # This import is placed here bcoz otherwise it might cause issues with someone
-    # not having Luke's microlensing package installed!
-    from slsim.Microlensing.lightcurve import MicrolensingLightCurveFromLensModel
-
-    MICROLENSING_AVAILABLE = True
-except ModuleNotFoundError:
-    warnings.warn(
-        "microlensing package (by Luke Weisenbach, https://github.com/weisluke/microlensing) is not installed. Please install it to use the microlensing features."
-        "\n Note that after installing, you need to set the environment variable LUKES_MICROLENSING_PATH in slsim/Microlensing/__init__.py to the path of the microlensing package."
-        "\n If you don't want to use microlensing features, you can ignore this warning."
-    )
+from slsim.Microlensing.lightcurvelensmodel import MicrolensingLightCurveFromLensModel
 
 
 class Lens(LensedSystemBase):
@@ -889,77 +875,7 @@ class Lens(LensedSystemBase):
             )
         )
         return microlensing_magnitudes  # # does not include the macro-lensing effect
-
-    # # This function is not used in the code. It will be deleted in the future.
-    # def _generate_molet_output(self, band, time, **kwargs_molet):
-    #     # coolest convention of lens model (or kappa, gamma, kappa_star)
-    #     lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
-    #     lens_model = LensModel(lens_model_list=lens_model_list)
-    #     x, y = self.point_source_image_positions()
-    #     f_xx, f_xy, f_yx, f_yy = lens_model.hessian(x=x, y=y, kwargs=kwargs_lens)
-    #     kappa = 1 / 2.0 * (f_xx + f_yy)
-    #     gamma1 = 1.0 / 2 * (f_xx - f_yy)
-    #     gamma2 = f_xy
-    #     gamma = np.sqrt(gamma1**2 + gamma2**2)
-    #     ra_image, dec_image = self.point_source_image_positions()
-    #     kappa_star = self.kappa_star(ra=ra_image, dec=dec_image)
-    #     image_observed_times = self.image_observer_times(time)
-
-    #     # quasar disk model at given time(s) (either time-variable or static
-
-    #     # ===============
-    #     # call micro-lensing calculation with
-    #     # kappa: lensing convergence at image position
-    #     # gamma: shear strength at image position
-    #     # kappa_star: stellar convergence at image position
-    #     # image_observed_times: time of the source at the different images, not
-    #     # correcting for redshifts, but for time delays. The time is relative to the
-    #     # first arriving image.
-    #     # band: photometric band, potentially changing to transmission curve
-    #     # kwargs_microlensing: additional (optional) dictionary of settings required by micro-lensing calculation that do not depend on
-    #     #         the Lens() class
-    #     # ===============
-
-    #     # TODO: in what format should be the 2d source profile be stored (as it is
-    #     # time- and wavelength dependent)
-    #     # TODO: do we create full light curves (and save it in cache) or call it each
-    #     # time
-
-    #     # we can use this to get intrinsic brightness of a source at image observation
-    #     # time. Here, we are storing source profile as dictionary of observation time
-    #     # and magnitude but need to decide what format molet needs. I checked with molet
-    #     #  and it says format should be in the form given below.
-    #     source_profile = [
-    #         {
-    #             "time": list(self.source.lightcurve_time),
-    #             "signal": list(
-    #                 self._point_source_magnitude(
-    #                     band=band, lensed=False, time=self.source.lightcurve_time
-    #                 )
-    #             ),
-    #         }
-    #     ]
-    #     # using source profile, kappa, gamma, kappa_star, image_observed_time molet
-    #     # should return lightcurve of each images. The lightcurve can be a interpolated
-    #     # function or a dictionary of observation time and magnitudes in specified band
-    #     # as given below.
-    #     # This molet_output is temporary. Once we call molet, this will be an actual
-    #     # molet output.
-    #     image_lightcurve_list = [
-    #         {
-    #             "time": list(self.source.lightcurve_time),
-    #             "magnitude": np.lnspace(23, 34, len(self.source.lightcurve_time)),
-    #         },
-    #         {
-    #             "time": list(self.source.lightcurve_time),
-    #             "magnitude": np.lnspace(24, 36, len(self.source.lightcurve_time)),
-    #         },
-    #     ]
-    #     # molet_output can be molet_output = [interp_lightcurve_image1,
-    #     # interp_lightcurve_image2]
-
-    #     return image_lightcurve_list
-
+    
     def extended_source_magnitude(self, band, lensed=False):
         """Unlensed apparent magnitude of the extended source for a given band
         (assumes that size is the same for different bands). This function
