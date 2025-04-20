@@ -85,7 +85,7 @@ class MagnificationMap(object):
                 raise ImportError(
                     "The microlensing package is not installed. Please install it using 'pip install microlensing'."
                 )
-            
+
             self.microlensing_IPM = IPM(
                 verbose=1,
                 kappa_tot=self.kappa_tot,
