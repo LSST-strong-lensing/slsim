@@ -1,17 +1,6 @@
 __author__ = "Paras Sharma"
 
 import numpy as np
-
-try:
-    # Credits: Luke's Microlensing code - https://github.com/weisluke/microlensing
-    from microlensing.IPM.ipm import (
-        IPM,
-    )  # Inverse Polygon Mapping class to generate magnification maps
-except ImportError:
-    raise ImportError(
-        "The microlensing package is not installed. Please install it using 'pip install microlensing'."
-    )
-
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -84,33 +73,43 @@ class MagnificationMap(object):
         if self.m_upper is None:
             self.m_upper = 100
 
-        self.microlensing_IPM = IPM(
-            verbose=1,
-            kappa_tot=self.kappa_tot,
-            shear=self.shear,
-            kappa_star=self.kappa_star,
-            smooth_fraction=self.smooth_fraction,
-            theta_star=self.theta_star,
-            center_y1=self.center_x,
-            center_y2=self.center_y,
-            half_length_y1=self.half_length_x,
-            half_length_y2=self.half_length_y,
-            mass_function=self.mass_function,
-            m_lower=self.m_lower,
-            m_upper=self.m_upper,
-            m_solar=self.m_solar,
-            num_pixels_y1=self.num_pixels_x,
-            num_pixels_y2=self.num_pixels_y,
-            approx=True,
-            write_maps=False,
-            write_parities=False,
-            write_histograms=False,
-            **kwargs_IPM,
-        )
-
         if magnifications_array is not None:
             self.magnifications = magnifications_array  # TODO: make it so that the magnification map is not generated again, is stored in cache!
         else:
+            try:
+                # Credits: Luke's Microlensing code - https://github.com/weisluke/microlensing
+                from microlensing.IPM.ipm import (
+                    IPM,
+                )  # Inverse Polygon Mapping class to generate magnification maps
+            except ImportError:
+                raise ImportError(
+                    "The microlensing package is not installed. Please install it using 'pip install microlensing'."
+                )
+            
+            self.microlensing_IPM = IPM(
+                verbose=1,
+                kappa_tot=self.kappa_tot,
+                shear=self.shear,
+                kappa_star=self.kappa_star,
+                smooth_fraction=self.smooth_fraction,
+                theta_star=self.theta_star,
+                center_y1=self.center_x,
+                center_y2=self.center_y,
+                half_length_y1=self.half_length_x,
+                half_length_y2=self.half_length_y,
+                mass_function=self.mass_function,
+                m_lower=self.m_lower,
+                m_upper=self.m_upper,
+                m_solar=self.m_solar,
+                num_pixels_y1=self.num_pixels_x,
+                num_pixels_y2=self.num_pixels_y,
+                approx=True,
+                write_maps=False,
+                write_parities=False,
+                write_histograms=False,
+                **kwargs_IPM,
+            )
+
             self.microlensing_IPM.run()
             self.magnifications = (
                 self.microlensing_IPM.magnifications
