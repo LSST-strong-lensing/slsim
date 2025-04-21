@@ -128,6 +128,8 @@ def test_galaxies_lens_pop_halo_model_instance():
         slhammocks_config=None,
         sky_area=sky_area,
         cosmo=cosmo,
+        z_min=0.01,
+        z_max=5.0
     )
 
     lens_galaxies = deflectors.CompoundLensHalosGalaxies(
