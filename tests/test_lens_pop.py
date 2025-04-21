@@ -125,11 +125,7 @@ def test_galaxies_lens_pop_halo_model_instance():
     kwargs_source_cut = {"band": "g", "band_max": 28, "z_min": 0.1, "z_max": 5.0}
 
     halo_galaxy_simulation_pipeline = pipelines.SLHammocksPipeline(
-        slhammocks_config=None,
-        sky_area=sky_area,
-        cosmo=cosmo,
-        z_min=0.01,
-        z_max=5.0
+        slhammocks_config=None, sky_area=sky_area, cosmo=cosmo, z_min=0.01, z_max=5.0
     )
 
     lens_galaxies = deflectors.CompoundLensHalosGalaxies(
