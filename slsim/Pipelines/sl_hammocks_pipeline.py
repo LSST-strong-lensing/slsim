@@ -8,12 +8,17 @@ import slsim
 import slsim.Deflectors.halo_population as halo_population
 import slsim.Util.param_util as util
 import tempfile
-from astropy.cosmology import default_cosmology
 from skypy.pipeline import Pipeline
 
 
 class SLHammocksPipeline:
-    """Class for slhammocks configuration."""
+    """SLHammocksPipeline is a class that generate galaxy populations using a halo-model approach.
+     It supports either loading pre-generated galaxy population data from a CSV file or generating the
+     population on-the-fly based on halo occupation and galaxy property models.
+     
+     The pipeline integrates halo properties (mass, redshift) with stellar masses and computes
+     photometric magnitudes using SkyPy. For this we need to execute skypy pipeline with in this class.
+     """
 
     def __init__(
         self,
@@ -103,61 +108,20 @@ class SLHammocksPipeline:
         skypy_config = os.path.join(module_path, "data/SkyPy/slhammock_skypy.yml")
         with open(skypy_config, "r") as file:
             content = file.read()
+        #replace z: PLACEHOLDER_Z with halo redshift
         redshift_array = list(self._pipeline["z"].value)
         old_z = "z: PLACEHOLDER_Z"
         new_z = f"z: {redshift_array}"
         content = content.replace(old_z, new_z)
+        #replace stellar_mass: PLACEHOLDER_MASS with stellar mass
         stellar_mass_array = list(self._pipeline["stellar_mass"].value)
         old_stellar_mass = "stellar_mass: PLACEHOLDER_MASS"
         new_stellar_mass = f"stellar_mass: {stellar_mass_array}"
         content = content.replace(old_stellar_mass, new_stellar_mass)
 
-        if cosmo is not None:
-            if cosmo is default_cosmology.get():
-                pass
-            else:
-                cosmology_dict = cosmo.to_format("mapping")
-
-                cosmology_class = str(cosmology_dict.pop("cosmology", None))
-                cosmology_class_str = cosmology_class.replace("<class '", "").replace(
-                    "'>", ""
-                )
-
-                cosmology_dict.pop("cosmology", None)
-
-                if "meta" in cosmology_dict and cosmology_dict["meta"] not in [
-                    "mapping",
-                    None,
-                ]:
-                    cosmology_dict.pop("meta", None)
-                # Reason: From Astropy:'meta:mapping or None (optional, keyword-only)'
-                # However, the dict will read out as meta: OrderedDict()
-                # which may raised error.
-
-                cosmology_dict = {
-                    k: v for k, v in cosmology_dict.items() if v is not None
-                }
-
-                cosmology_params_list = []
-                for key, value in cosmology_dict.items():
-                    if hasattr(value, "value") and not isinstance(
-                        value.value, (list, tuple)
-                    ):
-                        value = value.value
-                    elif hasattr(value, "value"):  # For Quantity arrays like m_nu
-                        value = value.value
-
-                    if isinstance(value, (list, tuple, np.ndarray)):
-                        value = "[" + ", ".join(f"{float(x):.1f}" for x in value) + "]"
-
-                    cosmology_params_list.append(f"    {key}: {value}")
-
-                cosmology_params_str = "\n".join(cosmology_params_list)
-
-                old_cosmo = "cosmology: !astropy.cosmology.default_cosmology.get []"
-                new_cosmo = f"cosmology: !{cosmology_class_str}\n{cosmology_params_str}"
-                content = content.replace(old_cosmo, new_cosmo)
-
+        #update yaml file with given cosmo.
+        content = util.update_cosmology_in_yaml_file(cosmo=cosmo, yml_file=content)
+        #execute given yml file in skypy and compute magnitudes of the halo galaxies.
         with tempfile.NamedTemporaryFile(
             mode="w", delete=False, suffix=".yml"
         ) as tmp_file:
@@ -166,6 +130,7 @@ class SLHammocksPipeline:
         self._skypy_pipeline.execute()
         magnitude_table = self._skypy_pipeline["halo"]
         magnitude_table.remove_columns(["z", "stellar_mass", "coeff"])
+        #stack magnitude with the halo galaxy table
         self._final_galaxy_table = hstack([self._pipeline, magnitude_table])
 
     @property

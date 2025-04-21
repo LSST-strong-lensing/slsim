@@ -27,12 +27,14 @@ from slsim.Util.param_util import (
     detect_object,
     surface_brightness_reff,
     gaussian_psf,
+    update_cosmology_in_yaml_file
 )
 from slsim.Sources.SourceVariability.variability import Variability
 from astropy.io import fits
 from astropy.table import Table
 from astropy import units as u
 from astropy.cosmology import Planck18 as cosmo
+from astropy.cosmology import FlatLambdaCDM, default_cosmology
 import tempfile
 import pytest
 
@@ -444,6 +446,29 @@ def test_gaussian_psf():
     psf_kernel = gaussian_psf(fwhm=0.9, delta_pix=0.2, num_pix=21)
     assert psf_kernel.shape[0] == 21
     npt.assert_almost_equal(np.sum(psf_kernel), 1, decimal=16)
+
+def test_update_cosmology_in_yaml_file():
+    # Sample input YAML content with a placeholder cosmology
+    original_yaml = """
+    simulation:
+      name: test_sim
+    cosmology: !astropy.cosmology.default_cosmology.get []
+    """
+
+    # Create a custom cosmology (different from default)
+    custom_cosmo = FlatLambdaCDM(H0=70, Om0=0.3, Tcmb0=2.725)
+
+    # Make sure it's not the default cosmology
+    assert custom_cosmo != default_cosmology.get()
+
+    # Run the function
+    updated_yaml = update_cosmology_in_yaml_file(cosmo=custom_cosmo, yml_file=original_yaml)
+
+    # Check that some expected parameters are present
+    assert "H0:" in updated_yaml
+    assert "Om0:" in updated_yaml
+    assert "Tcmb0:" in updated_yaml
+
 
 
 if __name__ == "__main__":
