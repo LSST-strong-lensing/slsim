@@ -4,6 +4,7 @@ import slsim
 import tempfile
 import slsim.Util.param_util as util
 
+
 class HalosSkyPyPipeline:
     """Class for halos configuration."""
 
