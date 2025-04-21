@@ -2,7 +2,6 @@ import os
 from skypy.pipeline import Pipeline
 import slsim
 import tempfile
-from astropy.cosmology import default_cosmology
 import slsim.Util.param_util as util
 
 class HalosSkyPyPipeline:
