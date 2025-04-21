@@ -708,15 +708,14 @@ def surface_brightness_reff(angular_size, source_model_list, kwargs_extended_sou
     )
     return mag_arcsec2
 
+
 def update_cosmology_in_yaml_file(cosmo, yml_file):
-    """
-    Replaces the default cosmology string in a yaml file with
-    the parameters of a custom astropy cosmology object.
+    """Replaces the default cosmology string in a yaml file with the parameters
+    of a custom astropy cosmology object.
 
-    :param cosmo : astropy.cosmology.Cosmology or None
-        The cosmology object to insert into the content.
+    :param cosmo : astropy.cosmology.Cosmology or None The cosmology
+        object to insert into the content.
     :param yml_file: A yml file containg cosmology information.
-
     :return: Updated yml_file with the new cosmology parameters.
     """
     if cosmo is None or cosmo == default_cosmology.get():
@@ -725,9 +724,7 @@ def update_cosmology_in_yaml_file(cosmo, yml_file):
     cosmology_dict = cosmo.to_format("mapping")
 
     cosmology_class = str(cosmology_dict.pop("cosmology", None))
-    cosmology_class_str = cosmology_class.replace("<class '", "").replace(
-        "'>", ""
-    )
+    cosmology_class_str = cosmology_class.replace("<class '", "").replace("'>", "")
 
     cosmology_dict.pop("cosmology", None)
 
@@ -740,15 +737,11 @@ def update_cosmology_in_yaml_file(cosmo, yml_file):
     # However, the dict will read out as meta: OrderedDict()
     # which may raised error.
 
-    cosmology_dict = {
-        k: v for k, v in cosmology_dict.items() if v is not None
-    }
+    cosmology_dict = {k: v for k, v in cosmology_dict.items() if v is not None}
 
     cosmology_params_list = []
     for key, value in cosmology_dict.items():
-        if hasattr(value, "value") and not isinstance(
-            value.value, (list, tuple)
-        ):
+        if hasattr(value, "value") and not isinstance(value.value, (list, tuple)):
             value = value.value
         elif hasattr(value, "value"):  # For Quantity arrays like m_nu
             value = value.value
