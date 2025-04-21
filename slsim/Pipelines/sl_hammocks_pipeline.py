@@ -12,13 +12,15 @@ from skypy.pipeline import Pipeline
 
 
 class SLHammocksPipeline:
-    """SLHammocksPipeline is a class that generate galaxy populations using a halo-model approach.
-     It supports either loading pre-generated galaxy population data from a CSV file or generating the
-     population on-the-fly based on halo occupation and galaxy property models.
-     
-     The pipeline integrates halo properties (mass, redshift) with stellar masses and computes
-     photometric magnitudes using SkyPy. For this we need to execute skypy pipeline with in this class.
-     """
+    """SLHammocksPipeline is a class that generate galaxy populations using a
+    halo-model approach. It supports either loading pre-generated galaxy
+    population data from a CSV file or generating the population on-the-fly
+    based on halo occupation and galaxy property models.
+
+    The pipeline integrates halo properties (mass, redshift) with
+    stellar masses and computes photometric magnitudes using SkyPy. For
+    this we need to execute skypy pipeline with in this class.
+    """
 
     def __init__(
         self,
@@ -108,20 +110,20 @@ class SLHammocksPipeline:
         skypy_config = os.path.join(module_path, "data/SkyPy/slhammock_skypy.yml")
         with open(skypy_config, "r") as file:
             content = file.read()
-        #replace z: PLACEHOLDER_Z with halo redshift
+        # replace z: PLACEHOLDER_Z with halo redshift
         redshift_array = list(self._pipeline["z"].value)
         old_z = "z: PLACEHOLDER_Z"
         new_z = f"z: {redshift_array}"
         content = content.replace(old_z, new_z)
-        #replace stellar_mass: PLACEHOLDER_MASS with stellar mass
+        # replace stellar_mass: PLACEHOLDER_MASS with stellar mass
         stellar_mass_array = list(self._pipeline["stellar_mass"].value)
         old_stellar_mass = "stellar_mass: PLACEHOLDER_MASS"
         new_stellar_mass = f"stellar_mass: {stellar_mass_array}"
         content = content.replace(old_stellar_mass, new_stellar_mass)
 
-        #update yaml file with given cosmo.
+        # update yaml file with given cosmo.
         content = util.update_cosmology_in_yaml_file(cosmo=cosmo, yml_file=content)
-        #execute given yml file in skypy and compute magnitudes of the halo galaxies.
+        # execute given yml file in skypy and compute magnitudes of the halo galaxies.
         with tempfile.NamedTemporaryFile(
             mode="w", delete=False, suffix=".yml"
         ) as tmp_file:
@@ -130,7 +132,7 @@ class SLHammocksPipeline:
         self._skypy_pipeline.execute()
         magnitude_table = self._skypy_pipeline["halo"]
         magnitude_table.remove_columns(["z", "stellar_mass", "coeff"])
-        #stack magnitude with the halo galaxy table
+        # stack magnitude with the halo galaxy table
         self._final_galaxy_table = hstack([self._pipeline, magnitude_table])
 
     @property

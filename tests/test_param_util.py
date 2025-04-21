@@ -27,7 +27,7 @@ from slsim.Util.param_util import (
     detect_object,
     surface_brightness_reff,
     gaussian_psf,
-    update_cosmology_in_yaml_file
+    update_cosmology_in_yaml_file,
 )
 from slsim.Sources.SourceVariability.variability import Variability
 from astropy.io import fits
@@ -447,6 +447,7 @@ def test_gaussian_psf():
     assert psf_kernel.shape[0] == 21
     npt.assert_almost_equal(np.sum(psf_kernel), 1, decimal=16)
 
+
 def test_update_cosmology_in_yaml_file():
     # Sample input YAML content with a placeholder cosmology
     original_yaml = """
@@ -462,13 +463,14 @@ def test_update_cosmology_in_yaml_file():
     assert custom_cosmo != default_cosmology.get()
 
     # Run the function
-    updated_yaml = update_cosmology_in_yaml_file(cosmo=custom_cosmo, yml_file=original_yaml)
+    updated_yaml = update_cosmology_in_yaml_file(
+        cosmo=custom_cosmo, yml_file=original_yaml
+    )
 
     # Check that some expected parameters are present
     assert "H0:" in updated_yaml
     assert "Om0:" in updated_yaml
     assert "Tcmb0:" in updated_yaml
-
 
 
 if __name__ == "__main__":
