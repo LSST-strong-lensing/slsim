@@ -24,7 +24,7 @@ class TestDeflector(object):
         self.lens_cosmo = LensCosmo(z_lens=red_two["z"], z_source=1.5)
 
         deflector_nfw_dict = {
-            "halo_mass": 10 ** 13,
+            "halo_mass": 10**13,
             "halo_mass_acc": 0.0,
             "concentration": 10,
             "e1_mass": 0.1,
@@ -36,7 +36,9 @@ class TestDeflector(object):
             "z": 0.5,
             "mag_g": -20,
         }
-        self.deflector_nfw = Deflector(deflector_type="NFW_HERNQUIST", deflector_dict=deflector_nfw_dict)
+        self.deflector_nfw = Deflector(
+            deflector_type="NFW_HERNQUIST", deflector_dict=deflector_nfw_dict
+        )
 
     def test_light_ellipticity(self):
         e1_light, e2_light = self.deflector.light_ellipticity

@@ -45,7 +45,6 @@ class TestEPLSersic(object):
         # gamma_pl not given, hence using isothermal
         self.epl_sersic = EPLSersic(deflector_dict=self.deflector_dict)
 
-
     def test_redshift(self):
         z = self.sie_sersic.redshift
         assert self.deflector_dict["z"] == z
@@ -61,25 +60,29 @@ class TestEPLSersic(object):
             cosmo=cosmo, z_lens=self.sie_sersic.redshift, z_source=2.0
         )
         lens_mass_model_list, kwargs_lens_mass = self.sie_sersic.mass_model_lenstronomy(
-            lens_cosmo=lens_cosmo, spherical=False,
+            lens_cosmo=lens_cosmo,
+            spherical=False,
         )
         assert len(lens_mass_model_list) == 1
         assert lens_mass_model_list[0] == "SIE"
 
         lens_mass_model_list, kwargs_lens_mass = self.sie_sersic.mass_model_lenstronomy(
-            lens_cosmo=lens_cosmo, spherical=True,
+            lens_cosmo=lens_cosmo,
+            spherical=True,
         )
         assert len(lens_mass_model_list) == 1
         assert lens_mass_model_list[0] == "SIS"
 
         lens_mass_model_list, kwargs_lens_mass = self.epl_sersic.mass_model_lenstronomy(
-            lens_cosmo=lens_cosmo, spherical=False,
+            lens_cosmo=lens_cosmo,
+            spherical=False,
         )
         assert len(lens_mass_model_list) == 1
         assert lens_mass_model_list[0] == "EPL"
 
         lens_mass_model_list, kwargs_lens_mass = self.epl_sersic.mass_model_lenstronomy(
-            lens_cosmo=lens_cosmo, spherical=True,
+            lens_cosmo=lens_cosmo,
+            spherical=True,
         )
         assert len(lens_mass_model_list) == 1
         assert lens_mass_model_list[0] == "SPP"
