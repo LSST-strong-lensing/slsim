@@ -4,6 +4,11 @@ from slsim.Deflectors.DeflectorTypes.nfw_cluster import NFWCluster
 from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.Util import data_util
 from slsim.Util import param_util
+import numpy as np
+import lenstronomy.Util.constants as constants
+from lenstronomy.Cosmo.lens_cosmo import LensCosmo
+from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
+from lenstronomy.LensModel.lens_model import LensModel
 
 _SUPPORTED_DEFLECTORS = ["EPL", "NFW_HERNQUIST", "NFW_CLUSTER"]
 
@@ -167,3 +172,42 @@ class Deflector(object):
             flux_lens_light_local, mag_zero_point=_mag_zero_dummy
         )
         return mag_arcsec2
+
+    def theta_e_infinity(self, cosmo):
+        """Einstein radius for a source at infinity (or well passed where
+        galaxies exist.
+
+        :param cosmo: astropy.cosmology instance
+        :return:
+        """
+        if self.deflector_type in ["EPL"]:
+            v_sigma = self._deflector.velocity_dispersion(cosmo=cosmo)
+            theta_E_infinity = (
+                4 * np.pi * (v_sigma * 1000.0 / constants.c) ** 2 / constants.arcsec
+            )
+        else:
+            _z_source_infty = 100
+            lens_cosmo = LensCosmo(
+                cosmo=cosmo, z_lens=self.redshift, z_source=_z_source_infty
+            )
+            lens_mass_model_list, kwargs_lens_mass = (
+                self._deflector.mass_model_lenstronomy(
+                    lens_cosmo=lens_cosmo, spherical=True
+                )
+            )
+            lens_model = LensModel(
+                lens_model_list=lens_mass_model_list,
+                z_lens=self.redshift,
+                z_source_convention=_z_source_infty,
+                multi_plane=False,
+                z_source=_z_source_infty,
+                cosmo=cosmo,
+            )
+
+            lens_analysis = LensProfileAnalysis(lens_model=lens_model)
+
+            theta_E_infinity = lens_analysis.effective_einstein_radius(
+                kwargs_lens_mass, r_min=1e-4, r_max=5e1, num_points=100
+            )
+            theta_E_infinity = np.nan_to_num(theta_E_infinity, nan=0)
+        return theta_E_infinity
