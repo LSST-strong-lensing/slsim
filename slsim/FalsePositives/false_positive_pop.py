@@ -104,7 +104,9 @@ class FalsePositivePop(object):
 
                 # Step 3: Create false positive
                 theta_e_infinity = deflector.theta_e_infinity(cosmo=self.cosmo)
-                test_area = self._test_area_factor * draw_test_area(theta_e_infinity=theta_e_infinity)
+                test_area = self._test_area_factor * draw_test_area(
+                    theta_e_infinity=theta_e_infinity
+                )
                 false_positive = FalsePositive(
                     deflector_class=deflector,
                     source_class=source,

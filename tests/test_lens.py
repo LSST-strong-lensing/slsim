@@ -175,7 +175,9 @@ class TestLens(object):
     def test_image_separation_from_positions(self):
         image_positions = self.gg_lens.extended_source_image_positions()[0]
         image_separation = image_separation_from_positions(image_positions)
-        theta_E_infinity = self.gg_lens.deflector.theta_e_infinity(cosmo=self.gg_lens.cosmo)
+        theta_E_infinity = self.gg_lens.deflector.theta_e_infinity(
+            cosmo=self.gg_lens.cosmo
+        )
         assert image_separation < 2 * theta_E_infinity
 
     def test_extended_source_magnification(self):

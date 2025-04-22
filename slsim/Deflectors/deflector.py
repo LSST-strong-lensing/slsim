@@ -174,8 +174,8 @@ class Deflector(object):
         return mag_arcsec2
 
     def theta_e_infinity(self, cosmo):
-        """
-        Einstein radius for a source at infinity (or well passed where galaxies exist
+        """Einstein radius for a source at infinity (or well passed where
+        galaxies exist.
 
         :param cosmo: astropy.cosmology instance
         :return:
@@ -183,20 +183,25 @@ class Deflector(object):
         if self.deflector_type in ["EPL"]:
             v_sigma = self._deflector.velocity_dispersion(cosmo=cosmo)
             theta_E_infinity = (
-                    4 * np.pi * (v_sigma * 1000.0 / constants.c) ** 2 / constants.arcsec
+                4 * np.pi * (v_sigma * 1000.0 / constants.c) ** 2 / constants.arcsec
             )
         else:
             _z_source_infty = 100
-            lens_cosmo = LensCosmo(cosmo=cosmo, z_lens=self.redshift, z_source=_z_source_infty)
-            lens_mass_model_list, kwargs_lens_mass = self._deflector.mass_model_lenstronomy(lens_cosmo=lens_cosmo,
-                                                                                            spherical=True)
+            lens_cosmo = LensCosmo(
+                cosmo=cosmo, z_lens=self.redshift, z_source=_z_source_infty
+            )
+            lens_mass_model_list, kwargs_lens_mass = (
+                self._deflector.mass_model_lenstronomy(
+                    lens_cosmo=lens_cosmo, spherical=True
+                )
+            )
             lens_model = LensModel(
                 lens_model_list=lens_mass_model_list,
                 z_lens=self.redshift,
                 z_source_convention=_z_source_infty,
                 multi_plane=False,
                 z_source=_z_source_infty,
-                cosmo=cosmo
+                cosmo=cosmo,
             )
 
             lens_analysis = LensProfileAnalysis(lens_model=lens_model)
