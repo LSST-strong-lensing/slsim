@@ -28,41 +28,75 @@ class TestEPLSersic(object):
             "e2_light": 0.1,
             "z": 0.5,
         }
+        # gamma_pl not given, hence using isothermal
+        self.sie_sersic = EPLSersic(deflector_dict=self.deflector_dict)
+
+        self.deflector_dict = {
+            "vel_disp": 200,
+            "gamma_pl": 2.1,
+            "e1_mass": 0.1,
+            "e2_mass": -0.1,
+            "angular_size": 0.001,
+            "n_sersic": 1,
+            "e1_light": -0.1,
+            "e2_light": 0.1,
+            "z": 0.5,
+        }
+        # gamma_pl not given, hence using isothermal
         self.epl_sersic = EPLSersic(deflector_dict=self.deflector_dict)
 
+
     def test_redshift(self):
-        z = self.epl_sersic.redshift
+        z = self.sie_sersic.redshift
         assert self.deflector_dict["z"] == z
 
     def test_velocity_dispersion(self):
-        vel_disp = self.epl_sersic.velocity_dispersion()
+        vel_disp = self.sie_sersic.velocity_dispersion()
         assert vel_disp == self.deflector_dict["vel_disp"]
 
     def test_mass_model_lenstronomy_sie(self):
         # Should yeld SIE model as gamma = 2
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         lens_cosmo = LensCosmo(
-            cosmo=cosmo, z_lens=self.epl_sersic.redshift, z_source=2.0
+            cosmo=cosmo, z_lens=self.sie_sersic.redshift, z_source=2.0
         )
-        lens_mass_model_list, kwargs_lens_mass = self.epl_sersic.mass_model_lenstronomy(
-            lens_cosmo=lens_cosmo
+        lens_mass_model_list, kwargs_lens_mass = self.sie_sersic.mass_model_lenstronomy(
+            lens_cosmo=lens_cosmo, spherical=False,
         )
         assert len(lens_mass_model_list) == 1
         assert lens_mass_model_list[0] == "SIE"
+
+        lens_mass_model_list, kwargs_lens_mass = self.sie_sersic.mass_model_lenstronomy(
+            lens_cosmo=lens_cosmo, spherical=True,
+        )
+        assert len(lens_mass_model_list) == 1
+        assert lens_mass_model_list[0] == "SIS"
+
+        lens_mass_model_list, kwargs_lens_mass = self.epl_sersic.mass_model_lenstronomy(
+            lens_cosmo=lens_cosmo, spherical=False,
+        )
+        assert len(lens_mass_model_list) == 1
+        assert lens_mass_model_list[0] == "EPL"
+
+        lens_mass_model_list, kwargs_lens_mass = self.epl_sersic.mass_model_lenstronomy(
+            lens_cosmo=lens_cosmo, spherical=True,
+        )
+        assert len(lens_mass_model_list) == 1
+        assert lens_mass_model_list[0] == "SPP"
 
     def test_mass_model_no_lensing(self):
         # case when z_source < z_lens
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         lens_cosmo = LensCosmo(
-            cosmo=cosmo, z_lens=self.epl_sersic.redshift, z_source=0.2
+            cosmo=cosmo, z_lens=self.sie_sersic.redshift, z_source=0.2
         )
-        lens_mass_model_list, kwargs_lens_mass = self.epl_sersic.mass_model_lenstronomy(
+        lens_mass_model_list, kwargs_lens_mass = self.sie_sersic.mass_model_lenstronomy(
             lens_cosmo=lens_cosmo
         )
         assert kwargs_lens_mass[0]["theta_E"] == 0.0
 
     def test_halo_porperties(self):
-        gamma = self.epl_sersic.halo_properties
+        gamma = self.sie_sersic.halo_properties
         assert gamma == 2.0
 
 

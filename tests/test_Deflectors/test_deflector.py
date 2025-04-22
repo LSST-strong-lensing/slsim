@@ -23,6 +23,21 @@ class TestDeflector(object):
         self.deflector2 = Deflector(deflector_type="EPL", deflector_dict=red_two)
         self.lens_cosmo = LensCosmo(z_lens=red_two["z"], z_source=1.5)
 
+        deflector_nfw_dict = {
+            "halo_mass": 10 ** 13,
+            "halo_mass_acc": 0.0,
+            "concentration": 10,
+            "e1_mass": 0.1,
+            "e2_mass": -0.1,
+            "stellar_mass": 10e11,
+            "angular_size": 0.001 / 4.84813681109536e-06,
+            "e1_light": -0.1,
+            "e2_light": 0.1,
+            "z": 0.5,
+            "mag_g": -20,
+        }
+        self.deflector_nfw = Deflector(deflector_type="NFW_HERNQUIST", deflector_dict=deflector_nfw_dict)
+
     def test_light_ellipticity(self):
         e1_light, e2_light = self.deflector.light_ellipticity
         assert pytest.approx(e1_light, rel=1e-3) == -0.05661955320450283
@@ -107,3 +122,6 @@ class TestDeflector(object):
     def test_theta_e_when_source_infinity(self):
         theta_E_infinity = self.deflector.theta_e_infinity(cosmo=None)
         assert theta_E_infinity < 15
+
+        theta_E_infinity = self.deflector_nfw.theta_e_infinity(cosmo=None)
+        npt.assert_almost_equal(theta_E_infinity, 1, decimal=2)
