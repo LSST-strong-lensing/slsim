@@ -1,4 +1,3 @@
-import copy
 
 import numpy as np
 from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
@@ -11,7 +10,6 @@ from lenstronomy.LensModel.Solver.lens_equation_solver import (
 
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 from lenstronomy.LightModel.light_model import LightModel
-from lenstronomy.Util import constants
 from lenstronomy.Util import data_util
 from lenstronomy.Util import util
 
