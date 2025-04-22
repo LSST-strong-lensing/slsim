@@ -143,13 +143,13 @@ class MicrolensingLightCurve(object):
 
         # make source size map
         xs = np.linspace(
-            self.magnification_map.center_x - self.magnification_map.half_length_x,
-            self.magnification_map.center_y + self.magnification_map.half_length_x,
+            self.magnification_map.half_length_x,
+            self.magnification_map.half_length_x,
             self.magnification_map.num_pixels_x,
         )
         ys = np.linspace(
-            self.magnification_map.center_x - self.magnification_map.half_length_y,
-            self.magnification_map.center_y + self.magnification_map.half_length_y,
+            self.magnification_map.half_length_y,
+            self.magnification_map.half_length_y,
             self.magnification_map.num_pixels_y,
         )
         X, Y = np.meshgrid(xs, ys)
