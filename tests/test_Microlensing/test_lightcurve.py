@@ -497,7 +497,8 @@ class TestMicrolensingLightCurve:
         tiny_positive = 1e-12
         theor_min_mag = -2.5 * np.log10(max(max_mu_conv, tiny_positive) / np.abs(mean_mag_convolved))
         theor_max_mag = -2.5 * np.log10(max(min_mu_conv, tiny_positive) / np.abs(mean_mag_convolved))
-        if theor_min_mag > theor_max_mag: theor_min_mag, theor_max_mag = theor_max_mag, theor_min_mag
+        if theor_min_mag > theor_max_mag: 
+            theor_min_mag, theor_max_mag = theor_max_mag, theor_min_mag
         tolerance = 1e-6
 
         for lc in lcs:
