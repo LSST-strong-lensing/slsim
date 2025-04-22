@@ -166,7 +166,7 @@ class Lens(LensedSystemBase):
             z_source_convention=self.max_redshift_source_class.redshift,
             multi_plane=False,
             z_source=source.redshift,
-            cosmo=self.cosmo
+            cosmo=self.cosmo,
         )
         lens_eq_solver = LensEquationSolver(lens_model_class)
         source_pos_x, source_pos_y = source.extended_source_position(
@@ -222,7 +222,7 @@ class Lens(LensedSystemBase):
             z_source_convention=self.max_redshift_source_class.redshift,
             multi_plane=False,
             z_source=source.redshift,
-            cosmo=self.cosmo
+            cosmo=self.cosmo,
         )
         lens_eq_solver = LensEquationSolver(lens_model_class)
         point_source_pos_x, point_source_pos_y = source.point_source_position(
@@ -509,8 +509,8 @@ class Lens(LensedSystemBase):
         else:
             # numerical solution for the Einstein radius
             lens_analysis = LensProfileAnalysis(lens_model=lens_model)
-            #kwargs_lens_ = copy.deepcopy(kwargs_lens)
-            #for kwargs in kwargs_lens_:
+            # kwargs_lens_ = copy.deepcopy(kwargs_lens)
+            # for kwargs in kwargs_lens_:
             #    if "center_x" in kwargs:
             #        kwargs["center_x"] = 0
             #    if "center_y" in kwargs:

@@ -226,7 +226,8 @@ class LensPop(LensedPopulationBase):
 def draw_test_area(theta_e_infinity):
     """Draw a test area around the deflector.
 
-    :param theta_e_infinity: Einstein radius for infinitly far away source (Dds/Ds = 1)
+    :param theta_e_infinity: Einstein radius for infinitly far away
+        source (Dds/Ds = 1)
     :return: test area in arcsec^2
     """
     test_area = np.pi * (theta_e_infinity * 2.5) ** 2
