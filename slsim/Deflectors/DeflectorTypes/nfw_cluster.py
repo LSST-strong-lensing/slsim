@@ -39,12 +39,14 @@ class NFWCluster(DeflectorBase):
         m_halo, c_halo = self.halo_properties
         return vel_disp_nfw(m_halo, c_halo, cosmo, self.redshift)
 
-    def mass_model_lenstronomy(self, lens_cosmo):
+    def mass_model_lenstronomy(self, lens_cosmo, spherical=False):
         """Returns lens model instance and parameters in lenstronomy
         conventions.
 
         :param lens_cosmo: lens cosmology model
         :type lens_cosmo: ~lenstronomy.Cosmo.LensCosmo instance
+        :param spherical: if True, makes spherical assumption
+        :type spherical: bool
         :return: lens_mass_model_list, kwargs_lens_mass
         """
         lens_mass_model_list, kwargs_lens_mass = self._halo_mass_model_lenstronomy(

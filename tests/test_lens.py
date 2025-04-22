@@ -8,7 +8,6 @@ from astropy.table import Table
 from slsim.lens import (
     Lens,
     image_separation_from_positions,
-    theta_e_when_source_infinity,
 )
 from slsim.LOS.los_individual import LOSIndividual
 from slsim.LOS.los_pop import LOSPop
@@ -176,17 +175,8 @@ class TestLens(object):
     def test_image_separation_from_positions(self):
         image_positions = self.gg_lens.extended_source_image_positions()[0]
         image_separation = image_separation_from_positions(image_positions)
-        theta_E_infinity = theta_e_when_source_infinity(
-            deflector_dict=self.deflector_dict
-        )
+        theta_E_infinity = self.gg_lens.deflector.theta_e_infinity(cosmo=self.gg_lens.cosmo)
         assert image_separation < 2 * theta_E_infinity
-
-    def test_theta_e_when_source_infinity(self):
-        theta_E_infinity = theta_e_when_source_infinity(
-            deflector_dict=self.deflector_dict
-        )
-        # We expect that theta_E_infinity should be less than 15
-        assert theta_E_infinity < 15
 
     def test_extended_source_magnification(self):
         host_mag = self.gg_lens.extended_source_magnification()[0]

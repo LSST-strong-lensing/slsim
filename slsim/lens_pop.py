@@ -3,7 +3,6 @@ import numpy as np
 from slsim.lens import Lens
 from typing import Optional
 from astropy.cosmology import Cosmology
-from slsim.lens import theta_e_when_source_infinity
 from slsim.Sources.source_pop_base import SourcePopBase
 from slsim.LOS.los_pop import LOSPop
 from slsim.Deflectors.deflectors_base import DeflectorsBase
@@ -72,8 +71,8 @@ class LensPop(LensedPopulationBase):
                 source_redshift=_source.redshift, deflector_redshift=_deflector.redshift
             )
             if test_area is None:
-                vel_disp = _deflector.velocity_dispersion(cosmo=self.cosmo)
-                test_area = draw_test_area(v_sigma=vel_disp)
+                theta_e_infinity = _deflector.theta_e_infinity(cosmo=self.cosmo)
+                test_area = draw_test_area(theta_e_infinity=theta_e_infinity)
             else:
                 test_area = test_area
             gg_lens = Lens(
@@ -137,7 +136,7 @@ class LensPop(LensedPopulationBase):
         # TODO: need to implement a version of it. (improve the
         algorithm)
 
-        :param kwargs_lens_cut: validity test keywords. dictionary of
+        :param kwargs_lens_cuts: validity test keywords. dictionary of
             cuts that one wants to apply to the lens. eg:
             kwargs_lens_cut = {}"min_image_separation": 0.5,
             "max_image_separation": 10, "mag_arc_limit": {"i", 24},
@@ -173,8 +172,8 @@ class LensPop(LensedPopulationBase):
         # Draw a population of galaxy-galaxy lenses within the area.
         for _ in range(int(num_lenses / speed_factor)):
             _deflector = self._lens_galaxies.draw_deflector()
-            vel_disp = _deflector.velocity_dispersion(cosmo=self.cosmo)
-            test_area = draw_test_area(v_sigma=vel_disp)
+            theta_e_infinity = _deflector.theta_e_infinity(cosmo=self.cosmo)
+            test_area = draw_test_area(theta_e_infinity=theta_e_infinity)
             num_sources_tested = self.get_num_sources_tested(
                 testarea=test_area * speed_factor
             )
@@ -224,13 +223,11 @@ class LensPop(LensedPopulationBase):
         return lens_population
 
 
-def draw_test_area(**kwargs):
+def draw_test_area(theta_e_infinity):
     """Draw a test area around the deflector.
 
-    :param kwargs: Either deflector dictionary or v_sigma for velocity
-        dispersion.
+    :param theta_e_infinity: Einstein radius for infinitly far away source (Dds/Ds = 1)
     :return: test area in arcsec^2
     """
-    theta_e_infinity = theta_e_when_source_infinity(**kwargs)
     test_area = np.pi * (theta_e_infinity * 2.5) ** 2
     return test_area

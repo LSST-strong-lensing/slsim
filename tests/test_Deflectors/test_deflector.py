@@ -103,3 +103,7 @@ class TestDeflector(object):
         npt.assert_almost_equal(
             mag_arcsec2_center / mag_arcsec2_r_eff, 0.9079, decimal=3
         )
+
+    def test_theta_e_when_source_infinity(self):
+        theta_E_infinity = self.deflector.theta_e_infinity(cosmo=None)
+        assert theta_E_infinity < 15
