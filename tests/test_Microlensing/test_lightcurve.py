@@ -9,7 +9,6 @@ from astropy.cosmology import FlatLambdaCDM
 # Import the class to test
 from slsim.Microlensing.lightcurve import (
     MicrolensingLightCurve,
-    AMOEBA_AVAILABLE,  # Import the flag
 )
 
 # Import the MagnificationMap class for a dummy instance
@@ -444,12 +443,7 @@ class TestMicrolensingLightCurve:
         )
 
     # ---- AGN Tests ----
-    # Use skipif to conditionally skip tests if amoeba is not installed
-    pytestmark_agn = pytest.mark.skipif(
-        not AMOEBA_AVAILABLE, reason="amoeba package not installed"
-    )
 
-    @pytestmark_agn
     def test_generate_agn_lightcurve_basic(
         self,
         mlc_instance,
@@ -496,7 +490,6 @@ class TestMicrolensingLightCurve:
             )  # Overall variance
             assert all(np.var(lc) > 1e-12 for lc in lcs)  # Variance within each lc
 
-    @pytestmark_agn
     def test_generate_agn_lightcurve_magnitude(
         self,
         mlc_instance,
@@ -548,7 +541,6 @@ class TestMicrolensingLightCurve:
             assert np.all(lc >= theor_min_mag - tolerance)
             assert np.all(lc <= theor_max_mag + tolerance)
 
-    @pytestmark_agn
     def test_generate_agn_lightcurve_return_options(
         self,
         mlc_instance,
