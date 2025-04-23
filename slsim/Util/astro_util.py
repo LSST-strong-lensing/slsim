@@ -398,7 +398,7 @@ def calculate_accretion_disk_emission(
     rest_frame_wavelength_in_nanometers,
     black_hole_mass_exponent,
     black_hole_spin,
-    eddington_ratio,    
+    eddington_ratio,
     return_spectral_radiance_distribution=False,
 ):
     """This calculates the emission of the accretion disk due to black body
@@ -446,7 +446,7 @@ def calculate_accretion_disk_emission(
 
     if return_spectral_radiance_distribution:
         return emission_map
-        
+
     return np.nansum(emission_map)
 
 

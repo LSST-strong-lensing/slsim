@@ -301,7 +301,7 @@ def test_calculate_accretion_disk_emission():
         black_hole_mass_exponent,
         black_hole_spin,
         eddington_ratio,
-        return_spectral_radiance_distribution=True
+        return_spectral_radiance_distribution=True,
     )
 
     # assert that higher eddington ratio = more emission
