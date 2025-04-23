@@ -391,6 +391,7 @@ def calculate_mean_time_lag(response_function):
         * response_function
     ) / np.nansum(response_function)
 
+
 ## The credits for the following functions go to Henry Best (https://github.com/Henry-Best-01/Amoeba)
 def pull_value_from_grid(array_2d, x_position, y_position):
     """This approximates the point (x_position, y_position) in a 2d array of
@@ -586,34 +587,36 @@ def extract_light_curve(
         )
     return np.asarray(light_curve)
 
+
 # Credits: Luke Weisenbach (https://github.com/weisluke/microlensing/blob/main/microlensing/Util/length_scales.py)
-def theta_star_physical(z_lens: float, z_src: float, m: float = 1,
-                        cosmo=Planck18) -> tuple:
-    '''
-    Calculate the size of the Einstein radius of a point mass lens in the
-    lens and source planes, in meters
+def theta_star_physical(
+    z_lens: float, z_src: float, m: float = 1, cosmo=Planck18
+) -> tuple:
+    """Calculate the size of the Einstein radius of a point mass lens in the
+    lens and source planes, in meters.
 
     :param z_lens: lens redshift
     :param z_src: source redshift
     :param m: point mass lens mass in solar mass units
     :param cosmo: an astropy.cosmology instance.  Default is Planck18
-
     :return theta_star: theta_star in the lens plane in arcseconds
     :return theta_star_lens: theta_star in the lens plane in meters
     :return theta_star_src: theta_star in the source plane in meters
-    '''
+    """
     microlens_mass = m * u.M_sun
 
     D_d = cosmo.angular_diameter_distance(z_lens)
     D_s = cosmo.angular_diameter_distance(z_src)
     D_ds = cosmo.angular_diameter_distance_z1z2(z_lens, z_src)
 
-    theta_star = np.sqrt(4 * const.G * microlens_mass / const.c**2
-                        * D_ds / (D_s * D_d))*u.rad
+    theta_star = (
+        np.sqrt(4 * const.G * microlens_mass / const.c**2 * D_ds / (D_s * D_d)) * u.rad
+    )
     theta_star_lens = theta_star.to(u.rad).value * D_d
     theta_star_src = theta_star_lens * D_s / D_d
 
     return theta_star.to(u.arcsec), theta_star_lens.to(u.m), theta_star_src.to(u.m)
+
 
 def calculate_accretion_disk_emission(
     r_out,

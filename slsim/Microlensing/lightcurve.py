@@ -15,7 +15,12 @@ from skimage.transform import rescale
 
 from slsim.Microlensing.magmap import MagnificationMap
 
-from slsim.Util.astro_util import calculate_accretion_disk_emission, calculate_gravitational_radius, extract_light_curve
+from slsim.Util.astro_util import (
+    calculate_accretion_disk_emission,
+    calculate_gravitational_radius,
+    extract_light_curve,
+)
+
 
 class MicrolensingLightCurve(object):
     """Class to generate microlensing lightcurve(s) for a single source based
@@ -84,7 +89,7 @@ class MicrolensingLightCurve(object):
         cosmology,
         source_size,
         # mean_microlens_mass_in_kg=1 * const.M_sun.to(u.kg),  # Mean mass of the microlenses in kg
-        effective_transverse_velocity = 1000,  # Transverse velocity in source plane (in km/s)
+        effective_transverse_velocity=1000,  # Transverse velocity in source plane (in km/s)
         lightcurve_type="magnitude",  # 'magnitude' or 'magnification'
         num_lightcurves=1,  # Number of lightcurves to generate
         return_track_coords=False,
@@ -138,7 +143,9 @@ class MicrolensingLightCurve(object):
             * pixel_size_arcsec
             * u.arcsec
         )
-        pixel_size_magnification_map = (pixel_size_kpc.to(u.m)).value  # pixel size in meters
+        pixel_size_magnification_map = (
+            pixel_size_kpc.to(u.m)
+        ).value  # pixel size in meters
         # print("pixel_size_magnification_map: ", pixel_size_magnification_map, "m")
 
         # randomly generates a light curves based on the convolved map
@@ -212,16 +219,17 @@ class MicrolensingLightCurve(object):
         # deflector_redshift,
         cosmology,
         lightcurve_type="magnitude",
-        v_transverse=1000,  #TODO: figure out this velocity based on the model in Section 3.3 of https://ui.adsabs.harvard.edu/abs/2020MNRAS.495..544N
-        num_lightcurves=1,  
-        r_out=1000,  
-        r_resolution=1000,  
+        v_transverse=1000,  # TODO: figure out this velocity based on the model in Section 3.3 of https://ui.adsabs.harvard.edu/abs/2020MNRAS.495..544N
+        num_lightcurves=1,
+        r_out=1000,
+        r_resolution=1000,
         smbh_mass_exp=8.0,
         inclination_angle=0,
         black_hole_spin=0,  # Spin of the black hole
         observer_frame_wavelength_in_nm=600,  # Wavelength in nanometers used to determine black body flux. For the surface flux density of the AccretionDisk at desired wavelength.
         eddington_ratio=0.15,  # Eddington ratio of the accretion disk
-        mean_microlens_mass_in_kg=1* const.M_sun.to(u.kg),  # Mean mass of the microlenses in kg
+        mean_microlens_mass_in_kg=1
+        * const.M_sun.to(u.kg),  # Mean mass of the microlenses in kg
         return_track_coords=False,
         return_time_array=False,
     ):
@@ -238,8 +246,9 @@ class MicrolensingLightCurve(object):
             km/s). Default is 1000 km/s.
         :param num_lightcurves: Number of lightcurves to generate.
             Default is 1.
-        :param r_out: Outer radius of the accretion disk in gravitational radii. This typically can be chosen as 10^3 to 10^5 [R_g]
-            Default is 1000.
+        :param r_out: Outer radius of the accretion disk in
+            gravitational radii. This typically can be chosen as 10^3 to
+            10^5 [R_g] Default is 1000.
         :param r_resolution: Resolution of the accretion disk in
             gravitational radii. Default is 1000.
         :param smbh_mass_exp: Exponent of the mass of the supermassive
@@ -270,24 +279,24 @@ class MicrolensingLightCurve(object):
 
         # invert redshifts to find locally emitted wavelengths
         redshiftfactor = 1 / (1 + source_redshift)
-        totalshiftfactor = redshiftfactor #* self.g_array # we are not using the g_array for now, # TODO: Check with Henry if this is needed?
+        totalshiftfactor = redshiftfactor  # * self.g_array # we are not using the g_array for now, # TODO: Check with Henry if this is needed?
         rest_frame_wavelength = totalshiftfactor * observer_frame_wavelength_in_nm
 
         accretion_disk_emission_map = calculate_accretion_disk_emission(
-            r_out = r_out,
-            r_resolution = r_resolution,
-            inclination_angle = inclination_angle,
-            rest_frame_wavelength_in_nanometers = rest_frame_wavelength,
-            black_hole_mass_exponent = smbh_mass_exp,
-            black_hole_spin = black_hole_spin,
-            eddington_ratio = eddington_ratio,
-            return_spectral_radiance_distribution=True
+            r_out=r_out,
+            r_resolution=r_resolution,
+            inclination_angle=inclination_angle,
+            rest_frame_wavelength_in_nanometers=rest_frame_wavelength,
+            black_hole_mass_exponent=smbh_mass_exp,
+            black_hole_spin=black_hole_spin,
+            eddington_ratio=eddington_ratio,
+            return_spectral_radiance_distribution=True,
         )
         accretion_disk_emission_map = np.array(accretion_disk_emission_map)
 
         # since we are using the accretion disk emission map as a kernel, we need to normalize it
-        normalized_emission_map = (
-            accretion_disk_emission_map / np.sum(accretion_disk_emission_map)
+        normalized_emission_map = accretion_disk_emission_map / np.sum(
+            accretion_disk_emission_map
         )
         # print("normalized_emission_map finished, shape: ", normalized_emission_map.shape)
 
@@ -299,7 +308,9 @@ class MicrolensingLightCurve(object):
             * (r_out * gravitational_radius_of_smbh)
             / np.size(normalized_emission_map, 0)
         )
-        pixel_size_emission_map = pixel_size_emission_map.to(u.m).value  # convert to meters
+        pixel_size_emission_map = pixel_size_emission_map.to(
+            u.m
+        ).value  # convert to meters
         # print("pixel_size_emission_map: ", pixel_size_emission_map, "m")
 
         # magnification map pixel size
@@ -311,21 +322,23 @@ class MicrolensingLightCurve(object):
             * pixel_size_arcsec
             * u.arcsec
         )
-        pixel_size_magnification_map = (pixel_size_kpc.to(u.m)).value  # pixel size in meters
+        pixel_size_magnification_map = (
+            pixel_size_kpc.to(u.m)
+        ).value  # pixel size in meters
         # print("pixel_size_magnification_map: ", pixel_size_magnification_map, "m")
 
         # rescale the emission map pixels to the magnification array pixels
         pixel_ratio = pixel_size_emission_map / pixel_size_magnification_map
         # print("pixel_ratio: ", pixel_ratio)
         rescaled_emission_map = rescale(normalized_emission_map, pixel_ratio)
-        rescaled_emission_map = rescaled_emission_map / np.sum(rescaled_emission_map) # normalize the kernel, just in case
+        rescaled_emission_map = rescaled_emission_map / np.sum(
+            rescaled_emission_map
+        )  # normalize the kernel, just in case
         # print("rescaled_emission_map finished, shape: ", rescaled_emission_map.shape)
         # print("rescaled_emission_map: ", rescaled_emission_map)
 
         # convolve the magnification map with the emission map
-        self.convolved_map = fftconvolve(
-            mag_map_2d, rescaled_emission_map, mode="same"
-        )
+        self.convolved_map = fftconvolve(mag_map_2d, rescaled_emission_map, mode="same")
         # print("convolved_map finished, shape: ", self.convolved_map.shape)
 
         LCs = []
