@@ -207,7 +207,7 @@ class Deflector(object):
             lens_analysis = LensProfileAnalysis(lens_model=lens_model)
 
             theta_E_infinity = lens_analysis.effective_einstein_radius(
-                kwargs_lens_mass, r_min=1e-4, r_max=5e1, num_points=100
+                kwargs_lens_mass, r_min=1e-3, r_max=5e1, num_points=40, spherical_model=True,
             )
             theta_E_infinity = np.nan_to_num(theta_E_infinity, nan=0)
         return theta_E_infinity
