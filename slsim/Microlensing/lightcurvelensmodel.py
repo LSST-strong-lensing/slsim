@@ -169,6 +169,17 @@ class MicrolensingLightCurveFromLensModel(object):
             raise ValueError(
                 "Time array not provided in the correct format. Please provide a time array in days."
             )
+        
+        # get parameters for the light curve
+        if not("source_size" in kwargs_PointSource):
+            raise ValueError(
+                "Source size not provided in kwargs_PointSource. Please provide a source size in arc seconds."
+            )
+
+        if not("effective_transverse_velocity" in kwargs_PointSource):
+            raise ValueError(
+                "Effective transverse velocity not provided in kwargs_PointSource. Please provide a effective transverse velocity in km/s in the  Source Plane."
+            )
 
         # generate lightcurves for each image of the source
         lightcurves = (
@@ -186,11 +197,11 @@ class MicrolensingLightCurveFromLensModel(object):
                 ml_lc.generate_point_source_lightcurve(
                     source_redshift=source_redshift,
                     cosmology=cosmology,
-                    kwargs_PointSource=kwargs_PointSource,
                     lightcurve_type=lightcurve_type,
                     num_lightcurves=num_lightcurves,
                     return_track_coords=True,
                     return_time_array=True,
+                    **kwargs_PointSource,
                 )
             )
 

@@ -2,6 +2,7 @@ import numpy as np
 from scipy.fftpack import ifft
 from astropy import constants as const
 from astropy import units as u
+from astropy.cosmology import Planck18
 from slsim.Util.param_util import (
     amplitude_to_magnitude,
     magnitude_to_amplitude,
@@ -390,6 +391,229 @@ def calculate_mean_time_lag(response_function):
         * response_function
     ) / np.nansum(response_function)
 
+## The credits for the following functions go to Henry Best (https://github.com/Henry-Best-01/Amoeba)
+def pull_value_from_grid(array_2d, x_position, y_position):
+    """This approximates the point (x_position, y_position) in a 2d array of
+    values. x_position and y_position may be decimals, and are assumed to be
+    measured in pixels.
+
+    :param array_2d: 2 dimensional array of values.
+    :param x_position: x coordinate in array_2d
+    :param y_position: y coordinate in array_2d
+    :return: approximation of array_2d at point (x_position, y_position)
+    """
+    assert x_position >= 0 and y_position >= 0
+    assert x_position < np.size(array_2d, 0) and y_position < np.size(array_2d, 1)
+    x_int = x_position // 1
+    y_int = y_position // 1
+    decx = x_position % 1
+    decy = y_position % 1
+    # baseval = array_2d[int(x_int), int(y_int)]
+    # Calculate 1d gradients, allow for edge values
+    if int(x_int) + 1 == np.size(array_2d, 0):
+        dx = (
+            (-1)
+            * (array_2d[int(x_int) - 1, int(y_int)] - array_2d[int(x_int), int(y_int)])
+            * decx
+        )
+    else:
+        dx = (
+            array_2d[int(x_int) + 1, int(y_int)] - array_2d[int(x_int), int(y_int)]
+        ) * decx
+    if int(y_int) + 1 == np.size(array_2d, 1):
+        dy = (
+            (-1)
+            * (array_2d[int(x_int), int(y_int) - 1] - array_2d[int(x_int), int(y_int)])
+            * decy
+        )
+    else:
+        dy = (
+            array_2d[int(x_int), int(y_int) + 1] - array_2d[int(x_int), int(y_int)]
+        ) * decy
+    return array_2d[int(x_int), int(y_int)] + dx + dy
+
+
+# TODO: modify it so that we can use this function in units of theta_star or unitless.
+def extract_light_curve(
+    convolution_array,
+    pixel_size,
+    effective_transverse_velocity,
+    light_curve_time_in_years,
+    pixel_shift=0,
+    x_start_position=None,
+    y_start_position=None,
+    phi_travel_direction=None,
+    return_track_coords=False,
+    random_seed=None,
+):
+    """Extracts a light curve from the convolution between two arrays by
+    selecting a trajectory and calling pull_value_from_grid at each relevant
+    point.
+
+    :param convolution_array: The convolution between a flux distribtion
+        and the magnification array due to microlensing. Note
+        coordinates on arrays have (y, x) signature.
+    :param pixel_size: Physical size of a pixel in the source plane, in
+        meters
+    :param effective_transverse_velocity: effective transverse velocity
+        in the source plane, in km / s
+    :param light_curve_time_in_years: duration of the light curve to
+        generate, in years
+    :param pixel_shift: offset of the SMBH with respect to the convolved
+        map, in pixels
+    :param x_start_position: the x coordinate to start pulling a light
+        curve from, in pixels
+    :param y_start_position: the y coordinate to start pulling a light
+        curve from, in pixels
+    :param phi_travel_direction: the angular direction of travel along
+        the convolution, in degrees
+    :param return_track_coords: bool switch allowing a list of relevant
+        positions to be returned
+    :return: list representing the microlensing light curve
+    """
+    rng = np.random.default_rng(seed=random_seed)
+
+    if isinstance(effective_transverse_velocity, u.Quantity):
+        effective_transverse_velocity = effective_transverse_velocity.to(u.m / u.s)
+    else:
+        effective_transverse_velocity *= u.km.to(u.m)
+    if isinstance(light_curve_time_in_years, u.Quantity):
+        light_curve_time_in_years = light_curve_time_in_years.to(u.s)
+    else:
+        light_curve_time_in_years *= u.yr.to(u.s)
+
+    # check convolution if the map was large enough. Otherwise return original total flux.
+    # Note the convolution should be weighted by the square of the pixel shift to conserve flux.
+    if pixel_shift >= np.size(convolution_array, 0) / 2:
+        print(
+            "warning, flux projection too large for this magnification map. Returning average flux."
+        )
+        return np.sum(convolution_array) / np.size(convolution_array)
+
+    # determine the path length of the light curve in the source plane and include endpoints
+    pixels_traversed = (
+        effective_transverse_velocity * light_curve_time_in_years / pixel_size
+    )
+
+    n_points = (
+        effective_transverse_velocity * light_curve_time_in_years / pixel_size
+    ) + 2
+
+    # ignore convolution artifacts
+    if pixel_shift > 0:
+        safe_convolution_array = convolution_array[
+            pixel_shift:-pixel_shift, pixel_shift:-pixel_shift
+        ]
+    else:
+        safe_convolution_array = convolution_array
+
+    # guarantee that we will be able to extract a light curve from the safe region for any random start point
+    if pixels_traversed >= np.size(safe_convolution_array, 0):
+        print(
+            "warning, light curve is too long for this magnification map. Returning average flux."
+        )
+        return np.sum(convolution_array) / np.size(convolution_array)
+
+    if x_start_position is not None:
+        if x_start_position < 0:
+            print(
+                "Warning, chosen position lays in the convolution artifact region. Returning average flux."
+            )
+            return np.sum(convolution_array) / np.size(convolution_array)
+    else:
+        x_start_position = rng.integers(0, np.size(safe_convolution_array, 0))
+
+    if y_start_position is not None:
+        if y_start_position < 0:
+            print(
+                "Warning, chosen position lays in the convolution artifact region. Returning average flux."
+            )
+            return np.sum(convolution_array) / np.size(convolution_array)
+    else:
+        y_start_position = rng.integers(0, np.size(safe_convolution_array, 1))
+
+    if phi_travel_direction is not None:
+        angle = phi_travel_direction * np.pi / 180
+        delta_x = pixels_traversed * np.cos(angle)
+        delta_y = pixels_traversed * np.sin(angle)
+
+        if (
+            x_start_position + delta_x >= np.size(safe_convolution_array, 0)
+            or y_start_position + delta_y >= np.size(safe_convolution_array, 1)
+            or x_start_position + delta_x < 0
+            or y_start_position + delta_y < 0
+        ):
+            print(
+                "Warning, chosen track leaves the convolution array. Returning average flux."
+            )
+            return np.sum(convolution_array) / np.size(convolution_array)
+    else:
+        # One quadrant will have enough space to extract the light curve
+        success = None
+        angle = rng.random() * 360 * np.pi / 180
+        while success is None:
+            angle += np.pi / 2
+            delta_x = pixels_traversed * np.cos(angle)
+            delta_y = pixels_traversed * np.sin(angle)
+            if (
+                x_start_position + delta_x < np.size(safe_convolution_array, 0)
+                and y_start_position + delta_y < np.size(safe_convolution_array, 1)
+                and x_start_position + delta_x >= 0
+                and y_start_position + delta_y >= 0
+            ):
+                break
+
+    # generate each (x, y) coordinate on the convolution
+    x_positions = np.linspace(
+        x_start_position, x_start_position + delta_x, int(n_points)
+    )
+    y_positions = np.linspace(
+        y_start_position, y_start_position + delta_y, int(n_points)
+    )
+
+    light_curve = []
+    for position in range(int(n_points)):
+        light_curve.append(
+            pull_value_from_grid(
+                safe_convolution_array, x_positions[position], y_positions[position]
+            )
+        )
+    if return_track_coords:
+        return (
+            np.asarray(light_curve),
+            x_positions + pixel_shift,
+            y_positions + pixel_shift,
+        )
+    return np.asarray(light_curve)
+
+# Credits: Luke Weisenbach (https://github.com/weisluke/microlensing/blob/main/microlensing/Util/length_scales.py)
+def theta_star_physical(z_lens: float, z_src: float, m: float = 1,
+                        cosmo=Planck18) -> tuple:
+    '''
+    Calculate the size of the Einstein radius of a point mass lens in the
+    lens and source planes, in meters
+
+    :param z_lens: lens redshift
+    :param z_src: source redshift
+    :param m: point mass lens mass in solar mass units
+    :param cosmo: an astropy.cosmology instance.  Default is Planck18
+
+    :return theta_star: theta_star in the lens plane in arcseconds
+    :return theta_star_lens: theta_star in the lens plane in meters
+    :return theta_star_src: theta_star in the source plane in meters
+    '''
+    microlens_mass = m * u.M_sun
+
+    D_d = cosmo.angular_diameter_distance(z_lens)
+    D_s = cosmo.angular_diameter_distance(z_src)
+    D_ds = cosmo.angular_diameter_distance_z1z2(z_lens, z_src)
+
+    theta_star = np.sqrt(4 * const.G * microlens_mass / const.c**2
+                        * D_ds / (D_s * D_d))*u.rad
+    theta_star_lens = theta_star.to(u.rad).value * D_d
+    theta_star_src = theta_star_lens * D_s / D_d
+
+    return theta_star.to(u.arcsec), theta_star_lens.to(u.m), theta_star_src.to(u.m)
 
 def calculate_accretion_disk_emission(
     r_out,
@@ -399,6 +623,7 @@ def calculate_accretion_disk_emission(
     black_hole_mass_exponent,
     black_hole_spin,
     eddington_ratio,
+    return_spectral_radiance_distribution=False,
 ):
     """This calculates the emission of the accretion disk due to black body
     radiation. This emission is calculated by summing over all individual
@@ -426,8 +651,12 @@ def calculate_accretion_disk_emission(
         and negative spin represents retrograde accretion flow.
     :param eddington_ratio: The desired Eddington ratio defined as a
         fraction of bolometric luminosity / Eddington luminosity.
-    :return: The normalized response of the accretion disk as a function
-        of time lag in units [R_g / c].
+    :param return_spectral_radiance_distribution: Boolean flag to reutrn
+        the distribution of spectral radiance (for True), or the sum
+        of the distribution (for False).
+    :return: The result of the Planck function for a distribution of
+        temperatures, either as an array representing the distribution
+        in the source plane or the sum of this array.
     """
     radial_map = create_radial_map(r_out, r_resolution, inclination_angle)
 
@@ -438,6 +667,9 @@ def calculate_accretion_disk_emission(
     temperature_map *= radial_map < r_out
 
     emission_map = planck_law(temperature_map, rest_frame_wavelength_in_nanometers)
+
+    if return_spectral_radiance_distribution:
+        return emission_map
 
     return np.nansum(emission_map)
 
