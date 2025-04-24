@@ -141,13 +141,13 @@ class Lens(LensedSystemBase):
         """
         if not hasattr(self, "_es_image_positions"):
             self._es_image_position_list = []
-            for source in self._source:
+            for index, source in enumerate(self._source):
                 self._es_image_position_list.append(
-                    self._extended_source_image_positions(source)
+                    self._extended_source_image_positions(source, index)
                 )
         return self._es_image_position_list
 
-    def _extended_source_image_positions(self, source):
+    def _extended_source_image_positions(self, source, source_index):
         """Returns extended source image positions by solving the lens equation
         for a single source.
 
@@ -176,7 +176,7 @@ class Lens(LensedSystemBase):
             solver = "analytical"
         else:
             solver = "lenstronomy"
-        einstein_radius = self._einstein_radius(source)
+        einstein_radius = self.einstein_radius[source_index]
         self._image_positions = lens_eq_solver.image_position_from_source(
             source_pos_x,
             source_pos_y,
@@ -197,13 +197,13 @@ class Lens(LensedSystemBase):
         """
         if not hasattr(self, "_ps_image_position_list"):
             self._ps_image_position_list = []
-            for source in self._source:
+            for index, source in enumerate(self._source):
                 self._ps_image_position_list.append(
-                    self._point_source_image_positions(source)
+                    self._point_source_image_positions(source, index)
                 )
         return self._ps_image_position_list
 
-    def _point_source_image_positions(self, source):
+    def _point_source_image_positions(self, source, source_index):
         """Returns point source image positions by solving the lens equation
         for a single source. In the absence of a point source, this function
         returns the solution for the center of the extended source.
@@ -234,7 +234,7 @@ class Lens(LensedSystemBase):
             solver = "analytical"
         else:
             solver = "lenstronomy"
-        einstein_radius = self._einstein_radius(source)
+        einstein_radius = self.einstein_radius[source_index]
         self._point_image_positions = lens_eq_solver.image_position_from_source(
             point_source_pos_x,
             point_source_pos_y,
@@ -326,7 +326,7 @@ class Lens(LensedSystemBase):
         # separation (max_image_separation).
         if (
             not min_image_separation
-            <= 2 * self._einstein_radius(source)
+            <= 2 * self.einstein_radius[source_index]
             <= max_image_separation
         ):
             return False
@@ -345,15 +345,15 @@ class Lens(LensedSystemBase):
         center_lens, center_source = (self.deflector_position, source_pos)
         if (
             np.sum((center_lens - center_source) ** 2)
-            > self._einstein_radius(source) ** 2 * 2
+            > self.einstein_radius[source_index] ** 2 * 2
         ):
             return False
 
         # Criteria 4: The lensing configuration must produce at least two SL images.
         if self._source_type in ["point_source", "point_plus_extended"]:
-            image_positions = self._point_source_image_positions(source)
+            image_positions = self.point_source_image_positions()[source_index]
         else:
-            image_positions = self._extended_source_image_positions(source)
+            image_positions = self.extended_source_image_positions()[source_index]
         if len(image_positions[0]) < 2:
             return False
 
@@ -505,16 +505,17 @@ class Lens(LensedSystemBase):
             theta_E /= (1 - kappa_ext) ** (1.0 / (gamma_pl - 1))
         else:
             # numerical solution for the Einstein radius
-            lens_analysis = LensProfileAnalysis(lens_model=lens_model)
+            #lens_analysis = LensProfileAnalysis(lens_model=lens_model)
             # kwargs_lens_ = copy.deepcopy(kwargs_lens)
             # for kwargs in kwargs_lens_:
             #    if "center_x" in kwargs:
             #        kwargs["center_x"] = 0
             #    if "center_y" in kwargs:
             #        kwargs["center_y"] = 0
-            theta_E = lens_analysis.effective_einstein_radius(
+            """theta_E = lens_analysis.effective_einstein_radius(
                 kwargs_lens, r_min=1e-4, r_max=5e1, num_points=100
-            )
+            )"""
+            theta_E = self.deflector.theta_e_infinity(self.cosmo)
         return theta_E
 
     def deflector_ellipticity(self):
@@ -880,7 +881,7 @@ class Lens(LensedSystemBase):
             multi_plane=False,
             z_source=source.redshift,
         )
-        theta_E = self._einstein_radius(source)
+        theta_E = self.einstein_radius[source_index]
         center_source = source.extended_source_position(
             reference_position=self.deflector_position, draw_area=self.test_area
         )
