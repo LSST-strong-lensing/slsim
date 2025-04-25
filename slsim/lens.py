@@ -708,10 +708,10 @@ class Lens(LensedSystemBase):
         """
 
         magnitude_list = []
-        for source in self._source:
+        for index, source in enumerate(self._source):
             magnitude_list.append(
                 self._extended_source_magnitude_for_each_image(
-                    band, source, lensed=lensed
+                    band, source,source_index=index, lensed=lensed
                 )
             )
         return magnitude_list
@@ -738,7 +738,7 @@ class Lens(LensedSystemBase):
             )
         return magnitude_list
 
-    def _extended_source_magnitude_for_each_image(self, band, source, lensed=False):
+    def _extended_source_magnitude_for_each_image(self, band, source, source_index, lensed=False):
         """Extended source magnitude, either unlensed (single value) or lensed
         (array) with macro-model magnifications. This function does operation
         only for the single source.
@@ -751,7 +751,8 @@ class Lens(LensedSystemBase):
         :return: extended source magnitude of a single source.
         """
         if lensed:
-            magnif = self._point_source_magnification(source, extended=True)
+            magnif = self._point_source_magnification(source, source_index=source_index,
+                                                       extended=True)
             magnif_log = 2.5 * np.log10(abs(magnif))
             source_mag_unlensed = source.extended_source_magnitude(band)
             magnified_mag_list = []
@@ -797,7 +798,7 @@ class Lens(LensedSystemBase):
                 )
         return self._ps_magnification_list
 
-    def _point_source_magnification(self, source, extended=False):
+    def _point_source_magnification(self, source, source_index, extended=False):
         """Macro-model magnification of a point source. This is for a single
         source. The function also works for extended source. For this, It uses
         center of the extended source to calculate lensing magnification.
@@ -818,9 +819,9 @@ class Lens(LensedSystemBase):
             z_source=source.redshift,
         )
         if extended is True:
-            img_x, img_y = self._extended_source_image_positions(source)
+            img_x, img_y = self._extended_source_image_positions(source, source_index)
         else:
-            img_x, img_y = self._point_source_image_positions(source)
+            img_x, img_y = self._point_source_image_positions(source, source_index)
         self._ps_magnification = lensModel.magnification(img_x, img_y, kwargs_lens)
         return self._ps_magnification
 
