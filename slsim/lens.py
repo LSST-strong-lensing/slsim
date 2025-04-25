@@ -153,6 +153,7 @@ class Lens(LensedSystemBase):
 
         :param source: Source class instance. The redshift of this
             source is used in the LensModel.
+        :param source_index: index of a source in source list.
         :return: x-pos, y-pos
         """
 
@@ -176,7 +177,7 @@ class Lens(LensedSystemBase):
             solver = "analytical"
         else:
             solver = "lenstronomy"
-        einstein_radius = self.einstein_radius[source_index]
+        einstein_radius = self.einstein_radius_infinity[source_index]
         self._image_positions = lens_eq_solver.image_position_from_source(
             source_pos_x,
             source_pos_y,
@@ -210,6 +211,7 @@ class Lens(LensedSystemBase):
 
         :param source: Source class instance. The redshift of this
             source is used in the LensModel.
+        :param source_index: index of a source in source list.
         :return: x-pos, y-pos
         """
         lens_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
@@ -234,7 +236,7 @@ class Lens(LensedSystemBase):
             solver = "analytical"
         else:
             solver = "lenstronomy"
-        einstein_radius = self.einstein_radius[source_index]
+        einstein_radius = self.einstein_radius_infinity[source_index]
         self._point_image_positions = lens_eq_solver.image_position_from_source(
             point_source_pos_x,
             point_source_pos_y,
@@ -297,6 +299,8 @@ class Lens(LensedSystemBase):
         """Check whether a single lensing configuration matches selection and
         plausibility criteria.
 
+        :param source: Source class instance. The redshift of this
+            source is used in the LensCosmo or LensModel.
         :param min_image_separation: minimum image separation
         :param max_image_separation: maximum image separation
         :param mag_arc_limit: dictionary with key of bands and values of
@@ -326,7 +330,7 @@ class Lens(LensedSystemBase):
         # separation (max_image_separation).
         if (
             not min_image_separation
-            <= 2 * self.einstein_radius[source_index]
+            <= 2 * self.einstein_radius_infinity[source_index]
             <= max_image_separation
         ):
             return False
@@ -345,7 +349,7 @@ class Lens(LensedSystemBase):
         center_lens, center_source = (self.deflector_position, source_pos)
         if (
             np.sum((center_lens - center_source) ** 2)
-            > self.einstein_radius[source_index] ** 2 * 2
+            > self.einstein_radius_infinity[source_index] ** 2 * 2
         ):
             return False
 
@@ -466,8 +470,23 @@ class Lens(LensedSystemBase):
             for source in self._source:
                 self._theta_E_list.append(self._einstein_radius(source))
         return self._theta_E_list
+    
+    @property
+    def einstein_radius_infinity(self):
+        """Einstein radius when source is at infinity. It is computed from from the 
+         numerical solution. In this class, this is only available for deflector type 
+         other than EPL. If the deflector type is EPL, it returns einstein radius with 
+         given deflector-source redshift pair and is equal to return of the einstein_radius.
 
-    def _einstein_radius(self, source):
+        :return: list of einstein radius of each lens-source pair.
+        """
+        if not hasattr(self, "_theta_E_list_infinity"):
+            self._theta_E_list_infinity = []
+            for source in self._source:
+                self._theta_E_list_infinity.append(self._einstein_radius(source, theta_E_infinity=True))
+        return self._theta_E_list_infinity
+
+    def _einstein_radius(self, source, theta_E_infinity=False):
         """Einstein radius, including external shear.
 
         :param source: Source class instance. The redshift of this
@@ -505,17 +524,19 @@ class Lens(LensedSystemBase):
             theta_E /= (1 - kappa_ext) ** (1.0 / (gamma_pl - 1))
         else:
             # numerical solution for the Einstein radius
-            #lens_analysis = LensProfileAnalysis(lens_model=lens_model)
-            # kwargs_lens_ = copy.deepcopy(kwargs_lens)
-            # for kwargs in kwargs_lens_:
-            #    if "center_x" in kwargs:
-            #        kwargs["center_x"] = 0
-            #    if "center_y" in kwargs:
-            #        kwargs["center_y"] = 0
-            """theta_E = lens_analysis.effective_einstein_radius(
-                kwargs_lens, r_min=1e-4, r_max=5e1, num_points=100
-            )"""
-            theta_E = self.deflector.theta_e_infinity(self.cosmo)
+            if theta_E_infinity is False:
+                lens_analysis = LensProfileAnalysis(lens_model=lens_model)
+                # kwargs_lens_ = copy.deepcopy(kwargs_lens)
+                # for kwargs in kwargs_lens_:
+                #    if "center_x" in kwargs:
+                #        kwargs["center_x"] = 0
+                #    if "center_y" in kwargs:
+                #        kwargs["center_y"] = 0
+                theta_E = lens_analysis.effective_einstein_radius(
+                    kwargs_lens, r_min=1e-4, r_max=5e1, num_points=100
+                )
+            else:
+                theta_E = self.deflector.theta_e_infinity(self.cosmo)
         return theta_E
 
     def deflector_ellipticity(self):
@@ -745,6 +766,9 @@ class Lens(LensedSystemBase):
 
         :param band: imaging band
         :type band: string
+        :param source: Source class instance. The redshift of this
+            source is used in the LensCosmo or LensModel.
+        :param source_index: index of a source in source list.
         :param lensed: if True, returns the lensed magnified magnitude
             of each image.
         :type lensed: bool
@@ -805,6 +829,7 @@ class Lens(LensedSystemBase):
 
         :param source: Source class instance. The redshift of this
             source is used in the LensModel.
+        :param source_index: index of a source in source list.
         :param extended: Boolean. If True, computes the magnification
             for extended source and ignores point source case.
         :return: signed magnification of a point source (extended
@@ -882,7 +907,7 @@ class Lens(LensedSystemBase):
             multi_plane=False,
             z_source=source.redshift,
         )
-        theta_E = self.einstein_radius[source_index]
+        theta_E = self.einstein_radius_infinity[source_index]
         center_source = source.extended_source_position(
             reference_position=self.deflector_position, draw_area=self.test_area
         )
