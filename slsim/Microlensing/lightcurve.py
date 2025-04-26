@@ -28,7 +28,7 @@ class MicrolensingLightCurve(object):
         self,
         magnification_map: MagnificationMap,
         time_duration: float,
-        point_source_morphology: str = "gaussian", # 'gaussian' or 'agn' or 'supernovae' #TODO: supernovae not implemented yet!
+        point_source_morphology: str = "gaussian",  # 'gaussian' or 'agn' or 'supernovae' #TODO: supernovae not implemented yet!
     ):
         """
         :param magnification_map: MagnificationMap object, if not provided.
@@ -39,7 +39,7 @@ class MicrolensingLightCurve(object):
         self.magnification_map = magnification_map
         self.time_duration = time_duration
         self.point_source_morphology = point_source_morphology
-    
+
     def get_convolved_map(
         self,
         kwargs_source_morphology,
@@ -56,22 +56,25 @@ class MicrolensingLightCurve(object):
                 length_y=self.magnification_map.half_length_y * 2,
                 num_pix_x=self.magnification_map.num_pixels_x,
                 num_pix_y=self.magnification_map.num_pixels_y,
-                center_x = 0,
-                center_y = 0,
+                center_x=0,
+                center_y=0,
             )
 
             # convolve the magnification map with the Gaussian kernel
-            self.convolved_map = fftconvolve(self.magnification_map.magnifications, 
-                                             source_morphology.kernel_map, 
-                                             mode="same")
-        
+            self.convolved_map = fftconvolve(
+                self.magnification_map.magnifications,
+                source_morphology.kernel_map,
+                mode="same",
+            )
+
         elif self.point_source_morphology == "agn":
             # AGN source morphology
-            source_morphology = AGNSourceMorphology(**kwargs_source_morphology,)
+            source_morphology = AGNSourceMorphology(
+                **kwargs_source_morphology,
+            )
             cosmo = source_morphology.cosmo
             source_redshift = source_morphology.source_redshift
 
-            
             # magnification map pixel size
             pixel_size_magnification_map = self.magnification_map.get_pixel_size_meters(
                 source_redshift=source_redshift, cosmo=cosmo
@@ -86,18 +89,14 @@ class MicrolensingLightCurve(object):
             print(f"pixel size of kernel map: {pixel_size_kernel_map}")
             print(f"Pixel ratio: {pixel_ratio}")
             rescaled_kernel_map = rescale(source_morphology.kernel_map, pixel_ratio)
-            
+
             # normalize the rescaled kernel, just in case
-            rescaled_kernel_map = rescaled_kernel_map / np.nansum(
-                rescaled_kernel_map
-            )
+            rescaled_kernel_map = rescaled_kernel_map / np.nansum(rescaled_kernel_map)
 
             # convolve the magnification map with the kernel map
-            self.convolved_map = fftconvolve(self.magnification_map.magnifications, 
-                                             rescaled_kernel_map, 
-                                             mode="same")
-            
-
+            self.convolved_map = fftconvolve(
+                self.magnification_map.magnifications, rescaled_kernel_map, mode="same"
+            )
 
         elif self.point_source_morphology == "supernovae":
             # Supernovae source morphology
@@ -105,20 +104,20 @@ class MicrolensingLightCurve(object):
             raise NotImplementedError(
                 "Supernovae source morphology is not implemented yet."
             )
-        
+
         else:
             raise ValueError(
                 "Invalid source morphology type. Choose 'gaussian', 'agn', or 'supernovae'."
             )
-        
+
         if source_morphology:
             self.source_morphology = source_morphology
-        
+
         if return_source_morphology:
             return self.convolved_map, source_morphology
         else:
             return self.convolved_map
-    
+
     def generate_lightcurves(
         self,
         source_redshift,
@@ -134,49 +133,55 @@ class MicrolensingLightCurve(object):
         return_time_array=False,
     ):
         """Generate lightcurves for a point source based on the convolved map.
-        
+
         :param source_redshift: Redshift of the source
         :param cosmo: Cosmology object for the lens class
-        :param kwargs_source_morphology: Dictionary of keyword arguments for the source morphology class. This should be as per the source morphology type.
-                                            For example, for Gaussian source morphology, it will look like:
-                                            kwargs_source_morphology = {
-                                                "source_redshift": source_redshift,
-                                                "cosmo": cosmo,
-                                                "source_size": source_size,
-                                            }
-                                            For AGN source morphology, it will look like:
-                                            kwargs_source_morphology = {
-                                                "source_redshift": source_redshift,
-                                                "cosmo": cosmology,
-                                                "r_out": r_out,
-                                                "r_resolution": r_resolution,
-                                                "smbh_mass_exp": smbh_mass_exp,
-                                                "inclination_angle": inclination_angle,
-                                                "black_hole_spin": black_hole_spin,
-                                                "observer_frame_wavelength_in_nm": observer_frame_wavelength_in_nm,
-                                                "eddington_ratio": eddington_ratio,
-                                            }
-        :param lightcurve_type: Type of lightcurve to generate, either 'magnitude' or 'magnification'. If 'magnitude', the lightcurve is returned in magnitudes normalized to the macro magnification.
-                                If 'magnification', the lightcurve is returned in magnification without normalization. Default is 'magnitude'.
-        :param effective_transverse_velocity: Transverse velocity in source plane (in km/s)
-        :param num_lightcurves: Number of lightcurves to generate. Default is 1.
-        :param x_start_position: Starting x position of the lightcurve in pixel coordinates. Default is None.
-        :param y_start_position: Starting y position of the lightcurve in pixel coordinates. Default is None.
-        :param phi_travel_direction: Angle of the travel direction in degrees. Default is None.
-        :param return_track_coords: Whether to return the track coordinates of the lightcuve(s) or not. Default is False.
-        :param return_time_array: Whether to return the time array used for the lightcurve(s) or not. Default is False.
-        :return: A tuple of lightcurves, tracks, and time arrays if requested.
-        If only lightcurves are requested, a list of lightcurves is returned.
-        
+        :param kwargs_source_morphology: Dictionary of keyword arguments
+            for the source morphology class. This should be as per the
+            source morphology type. For example, for Gaussian source
+            morphology, it will look like: kwargs_source_morphology = {
+            "source_redshift": source_redshift, "cosmo": cosmo,
+            "source_size": source_size, } For AGN source morphology, it
+            will look like: kwargs_source_morphology = {
+            "source_redshift": source_redshift, "cosmo": cosmology,
+            "r_out": r_out, "r_resolution": r_resolution,
+            "smbh_mass_exp": smbh_mass_exp, "inclination_angle":
+            inclination_angle, "black_hole_spin": black_hole_spin,
+            "observer_frame_wavelength_in_nm":
+            observer_frame_wavelength_in_nm, "eddington_ratio":
+            eddington_ratio, }
+        :param lightcurve_type: Type of lightcurve to generate, either
+            'magnitude' or 'magnification'. If 'magnitude', the
+            lightcurve is returned in magnitudes normalized to the macro
+            magnification. If 'magnification', the lightcurve is
+            returned in magnification without normalization. Default is
+            'magnitude'.
+        :param effective_transverse_velocity: Transverse velocity in
+            source plane (in km/s)
+        :param num_lightcurves: Number of lightcurves to generate.
+            Default is 1.
+        :param x_start_position: Starting x position of the lightcurve
+            in pixel coordinates. Default is None.
+        :param y_start_position: Starting y position of the lightcurve
+            in pixel coordinates. Default is None.
+        :param phi_travel_direction: Angle of the travel direction in
+            degrees. Default is None.
+        :param return_track_coords: Whether to return the track
+            coordinates of the lightcuve(s) or not. Default is False.
+        :param return_time_array: Whether to return the time array used
+            for the lightcurve(s) or not. Default is False.
+        :return: A tuple of lightcurves, tracks, and time arrays if
+            requested. If only lightcurves are requested, a list of
+            lightcurves is returned.
         """
 
         # Get the convolved magmap after convolving the magnification map with a Gaussian kernel
         convolved_map = self.get_convolved_map(
-            kwargs_source_morphology = kwargs_source_morphology,
-            return_source_morphology=False
+            kwargs_source_morphology=kwargs_source_morphology,
+            return_source_morphology=False,
         )
 
-        # determine physical pixel sizes in source plane 
+        # determine physical pixel sizes in source plane
         pixel_size_magnification_map = self.magnification_map.get_pixel_size_meters(
             source_redshift=source_redshift, cosmo=cosmo
         )
@@ -194,7 +199,6 @@ class MicrolensingLightCurve(object):
             return_time_array=return_time_array,
         )
 
-    
     def _generate_lightcurves(
         self,
         convolved_map,
@@ -209,21 +213,33 @@ class MicrolensingLightCurve(object):
         return_time_array=False,
     ):
         """Generate lightcurves for a point source based on the convolved map.
-        
+
         :param convolved_map: Convolved magnification map
-        :param pixel_size_magnification_map: Pixel size of the magnification map in meters
-        :param num_lightcurves: Number of lightcurves to generate. Default is 1.
-        :param lightcurve_type: Type of lightcurve to generate, either 'magnitude' or 'magnification'. If 'magnitude', the lightcurve is returned in magnitudes normalized to the macro magnification.
-                                If 'magnification', the lightcurve is returned in magnification without normalization. Default is 'magnitude'.
-        :param effective_transverse_velocity: Transverse velocity in source plane (in km/s)
-        :param x_start_position: Starting x position of the lightcurve in pixel coordinates. Default is None.
-        :param y_start_position: Starting y position of the lightcurve in pixel coordinates. Default is None.
-        :param phi_travel_direction: Angle of the travel direction in degrees. Default is None.
-        :param return_track_coords: Whether to return the track coordinates of the lightcuve(s) or not. Default is False.
-        :param return_time_array: Whether to return the time array used for the lightcurve(s) or not. Default is False.
-        :return: A tuple of lightcurves, tracks, and time arrays if requested.
-        If only lightcurves are requested, a list of lightcurves is returned.
-        
+        :param pixel_size_magnification_map: Pixel size of the
+            magnification map in meters
+        :param num_lightcurves: Number of lightcurves to generate.
+            Default is 1.
+        :param lightcurve_type: Type of lightcurve to generate, either
+            'magnitude' or 'magnification'. If 'magnitude', the
+            lightcurve is returned in magnitudes normalized to the macro
+            magnification. If 'magnification', the lightcurve is
+            returned in magnification without normalization. Default is
+            'magnitude'.
+        :param effective_transverse_velocity: Transverse velocity in
+            source plane (in km/s)
+        :param x_start_position: Starting x position of the lightcurve
+            in pixel coordinates. Default is None.
+        :param y_start_position: Starting y position of the lightcurve
+            in pixel coordinates. Default is None.
+        :param phi_travel_direction: Angle of the travel direction in
+            degrees. Default is None.
+        :param return_track_coords: Whether to return the track
+            coordinates of the lightcuve(s) or not. Default is False.
+        :param return_time_array: Whether to return the time array used
+            for the lightcurve(s) or not. Default is False.
+        :return: A tuple of lightcurves, tracks, and time arrays if
+            requested. If only lightcurves are requested, a list of
+            lightcurves is returned.
         """
 
         LCs = []
@@ -277,7 +293,7 @@ class MicrolensingLightCurve(object):
 
         if not (return_track_coords) and not (return_time_array):
             return LCs
-        
+
     def effective_transverse_velocity(
         self,
         source_redshift,
@@ -285,14 +301,13 @@ class MicrolensingLightCurve(object):
         cosmo,
     ):
         """Calculate the effective transverse velocity in the source plane.
+
         This implementation is based on the works in the following papers:
         1. https://arxiv.org/pdf/2004.13189
         2. https://iopscience.iop.org/article/10.1088/0004-637X/712/1/658/pdf
         3. https://iopscience.iop.org/article/10.3847/0004-637X/832/1/46/pdf
-        
         """
         pass
-
 
     def plot_lightcurves_and_magmap(
         self, lightcurves, tracks=None, lightcurve_type="magnitude"

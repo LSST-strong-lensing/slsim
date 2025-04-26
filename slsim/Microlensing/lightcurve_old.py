@@ -21,6 +21,7 @@ from slsim.Util.astro_util import (
     extract_light_curve,
 )
 
+
 class MicrolensingLightCurve(object):
     """Class to generate microlensing lightcurve(s) for a single source based
     on the magnification map, and lens properties."""
