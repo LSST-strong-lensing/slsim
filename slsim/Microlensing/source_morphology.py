@@ -245,7 +245,7 @@ class AGNSourceMorphology(SourceMorphology):
         black_hole_spin=0,  # Spin of the black hole
         observer_frame_wavelength_in_nm=600,  # Wavelength in nanometers used to determine black body flux. For the surface flux density of the AccretionDisk at desired wavelength.
         eddington_ratio=0.15,  # Eddington ratio of the accretion disk
-        observing_wavelength_band = None,
+        observing_wavelength_band=None,
         *args,
         **kwargs
     ):
@@ -275,7 +275,7 @@ class AGNSourceMorphology(SourceMorphology):
             observing_wavelength_band is provided.
         :param observing_wavelength_band: Wavelength band for the source morphology.
             Default is None. Options are:
-            
+
             - LSST: "u", "g", "r", "i", "z", "y"
 
             If None, the observer_frame_wavelength_in_nm is used and the kernel map is generated for that wavelength.

@@ -697,12 +697,11 @@ class Lens(LensedSystemBase):
             depend on the Lens() class. It is of type:
             kwargs_microlensing = {"kwargs_MagnificationMap":
             kwargs_MagnificationMap, "point_source_morphology":
-            'gaussian' or 'agn' or 'supernovae', "kwargs_source_morphology":
-            kwargs_source_morphology}
-            The kwargs_source_morphology is required for the source
-            morphology calculation.
-            The kwargs_MagnificationMap is required for the microlensing
-            calculation.
+            'gaussian' or 'agn' or 'supernovae',
+            "kwargs_source_morphology": kwargs_source_morphology} The
+            kwargs_source_morphology is required for the source
+            morphology calculation. The kwargs_MagnificationMap is
+            required for the microlensing calculation.
         :type kwargs_microlensing: dict
         :return: point source magnitude of a single source
         """
@@ -772,7 +771,8 @@ class Lens(LensedSystemBase):
 
         :param source: Source class instance
         :return: np.array(kappa_star_images),
-            np.array(kappa_tot_images), np.array(shear_images), np.array(shear_angle_images)
+            np.array(kappa_tot_images), np.array(shear_images),
+            np.array(shear_angle_images)
         """
         lenstronomy_kwargs = self.lenstronomy_kwargs(band=band)
         lens_model_lenstronomy = LensModel(
@@ -830,12 +830,11 @@ class Lens(LensedSystemBase):
             depend on the Lens() class. It is of type:
             kwargs_microlensing = {"kwargs_MagnificationMap":
             kwargs_MagnificationMap, "point_source_morphology":
-            'gaussian' or 'agn' or 'supernovae', "kwargs_source_morphology":
-            kwargs_source_morphology}
-            The kwargs_source_morphology is required for the source
-            morphology calculation.
-            The kwargs_MagnificationMap is required for the microlensing
-            calculation.
+            'gaussian' or 'agn' or 'supernovae',
+            "kwargs_source_morphology": kwargs_source_morphology} The
+            kwargs_source_morphology is required for the source
+            morphology calculation. The kwargs_MagnificationMap is
+            required for the microlensing calculation.
         :type kwargs_microlensing: dict
         :return: point source magnitude for a single source, does not
             include the macro-magnification.
@@ -854,7 +853,7 @@ class Lens(LensedSystemBase):
             raise ValueError(
                 "point_source_morphology not in kwargs_microlensing. Please provide the point source morphology type. It can be either 'gaussian' or 'agn' or 'supernovae'."
             )
-        if ("kwargs_source_morphology" not in kwargs_microlensing):
+        if "kwargs_source_morphology" not in kwargs_microlensing:
             raise ValueError(
                 "kwargs_source_morphology not in kwargs_microlensing. Please provide a dictionary of settings required by source morphology calculation."
             )
@@ -881,13 +880,15 @@ class Lens(LensedSystemBase):
                 kappa_tot_images=kappa_tot_images,
                 shear_images=shear_images,
                 shear_angle_images=shear_angle_images,
-                ra_lens = self.deflector_position[0], # TODO: check if this is correct?
-                dec_lens = self.deflector_position[1],
+                ra_lens=self.deflector_position[0],  # TODO: check if this is correct?
+                dec_lens=self.deflector_position[1],
                 deflector_velocity_dispersion=self.deflector_velocity_dispersion(),
                 cosmology=self.cosmo,
                 kwargs_magnification_map=kwargs_microlensing["kwargs_MagnificationMap"],
                 point_source_morphology=kwargs_microlensing["point_source_morphology"],
-                kwargs_source_morphology=kwargs_microlensing["kwargs_source_morphology"],
+                kwargs_source_morphology=kwargs_microlensing[
+                    "kwargs_source_morphology"
+                ],
             )
         )
         return microlensing_magnitudes  # # does not include the macro-lensing effect
