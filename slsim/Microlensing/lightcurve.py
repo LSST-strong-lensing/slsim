@@ -35,15 +35,15 @@ class MicrolensingLightCurve(object):
         :param magnification_map: MagnificationMap object, if not provided.
         :param time_duration: Time duration for which the lightcurve is needed (in days).
         :param point_source_morphology: Type of source morphology to use. Default is 'gaussian'. Options are 'gaussian' or 'agn' (Accretion Disk) or 'supernovae'.
-        :param kwargs_source_morphology: Dictionary of keyword arguments for the source morphology class. This should be as per the source morphology type. 
-            
-            For example, for Gaussian source morphology, it will look like: 
+        :param kwargs_source_morphology: Dictionary of keyword arguments for the source morphology class. This should be as per the source morphology type.
+
+            For example, for Gaussian source morphology, it will look like:
             kwargs_source_morphology = {"source_redshift": source_redshift, "cosmo": cosmo, "source_size": source_size, }.
-            
-            For AGN source morphology, it will look like: 
-            kwargs_source_morphology = {"source_redshift": source_redshift, "cosmo": cosmology, 
-            "r_out": r_out, "r_resolution": r_resolution, "smbh_mass_exp": smbh_mass_exp, "inclination_angle": inclination_angle, 
-            "black_hole_spin": black_hole_spin, "observer_frame_wavelength_in_nm": observer_frame_wavelength_in_nm, 
+
+            For AGN source morphology, it will look like:
+            kwargs_source_morphology = {"source_redshift": source_redshift, "cosmo": cosmology,
+            "r_out": r_out, "r_resolution": r_resolution, "smbh_mass_exp": smbh_mass_exp, "inclination_angle": inclination_angle,
+            "black_hole_spin": black_hole_spin, "observer_frame_wavelength_in_nm": observer_frame_wavelength_in_nm,
             "eddington_ratio": eddington_ratio, }.
         """
 
@@ -51,7 +51,7 @@ class MicrolensingLightCurve(object):
         self.time_duration = time_duration
         self.point_source_morphology = point_source_morphology
         self.kwargs_source_morphology = kwargs_source_morphology
-        
+
         # Initialize the convolved map and source morphology
         self.convolved_map = None
         self.source_morphology = None
@@ -64,7 +64,7 @@ class MicrolensingLightCurve(object):
         if self.point_source_morphology == "gaussian":
             # Gaussian source morphology
             source_morphology = GaussianSourceMorphology(
-                **self.kwargs_source_morphology, # sets the source size, redshift, and cosmology
+                **self.kwargs_source_morphology,  # sets the source size, redshift, and cosmology
                 length_x=self.magnification_map.half_length_x * 2,
                 length_y=self.magnification_map.half_length_y * 2,
                 num_pix_x=self.magnification_map.num_pixels_x,
