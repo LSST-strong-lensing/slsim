@@ -29,29 +29,42 @@ class MicrolensingLightCurve(object):
         magnification_map: MagnificationMap,
         time_duration: float,
         point_source_morphology: str = "gaussian",  # 'gaussian' or 'agn' or 'supernovae' #TODO: supernovae not implemented yet!
+        kwargs_source_morphology: dict = {},
     ):
         """
         :param magnification_map: MagnificationMap object, if not provided.
         :param time_duration: Time duration for which the lightcurve is needed (in days).
         :param point_source_morphology: Type of source morphology to use. Default is 'gaussian'. Options are 'gaussian' or 'agn' (Accretion Disk) or 'supernovae'.
+        :param kwargs_source_morphology: Dictionary of keyword arguments for the source morphology class. This should be as per the source morphology type. 
+            
+            For example, for Gaussian source morphology, it will look like: 
+            kwargs_source_morphology = {"source_redshift": source_redshift, "cosmo": cosmo, "source_size": source_size, }.
+            
+            For AGN source morphology, it will look like: 
+            kwargs_source_morphology = {"source_redshift": source_redshift, "cosmo": cosmology, 
+            "r_out": r_out, "r_resolution": r_resolution, "smbh_mass_exp": smbh_mass_exp, "inclination_angle": inclination_angle, 
+            "black_hole_spin": black_hole_spin, "observer_frame_wavelength_in_nm": observer_frame_wavelength_in_nm, 
+            "eddington_ratio": eddington_ratio, }.
         """
 
         self.magnification_map = magnification_map
         self.time_duration = time_duration
         self.point_source_morphology = point_source_morphology
+        self.kwargs_source_morphology = kwargs_source_morphology
+        
+        # Initialize the convolved map and source morphology
+        self.convolved_map = None
+        self.source_morphology = None
 
     def get_convolved_map(
         self,
-        kwargs_source_morphology,
         return_source_morphology=False,
     ):
         """Get the convolved map based on the source morphology."""
         if self.point_source_morphology == "gaussian":
             # Gaussian source morphology
             source_morphology = GaussianSourceMorphology(
-                source_redshift=kwargs_source_morphology["source_redshift"],
-                cosmo=kwargs_source_morphology["cosmo"],
-                source_size=kwargs_source_morphology["source_size"],
+                **self.kwargs_source_morphology, # sets the source size, redshift, and cosmology
                 length_x=self.magnification_map.half_length_x * 2,
                 length_y=self.magnification_map.half_length_y * 2,
                 num_pix_x=self.magnification_map.num_pixels_x,
@@ -70,7 +83,7 @@ class MicrolensingLightCurve(object):
         elif self.point_source_morphology == "agn":
             # AGN source morphology
             source_morphology = AGNSourceMorphology(
-                **kwargs_source_morphology,
+                **self.kwargs_source_morphology,
             )
             cosmo = source_morphology.cosmo
             source_redshift = source_morphology.source_redshift
@@ -122,7 +135,6 @@ class MicrolensingLightCurve(object):
         self,
         source_redshift,
         cosmo,
-        kwargs_source_morphology,
         lightcurve_type="magnitude",
         effective_transverse_velocity=1000,  # Transverse velocity in source plane (in km/s)
         num_lightcurves=1,
@@ -136,20 +148,6 @@ class MicrolensingLightCurve(object):
 
         :param source_redshift: Redshift of the source
         :param cosmo: Cosmology object for the lens class
-        :param kwargs_source_morphology: Dictionary of keyword arguments
-            for the source morphology class. This should be as per the
-            source morphology type. For example, for Gaussian source
-            morphology, it will look like: kwargs_source_morphology = {
-            "source_redshift": source_redshift, "cosmo": cosmo,
-            "source_size": source_size, } For AGN source morphology, it
-            will look like: kwargs_source_morphology = {
-            "source_redshift": source_redshift, "cosmo": cosmology,
-            "r_out": r_out, "r_resolution": r_resolution,
-            "smbh_mass_exp": smbh_mass_exp, "inclination_angle":
-            inclination_angle, "black_hole_spin": black_hole_spin,
-            "observer_frame_wavelength_in_nm":
-            observer_frame_wavelength_in_nm, "eddington_ratio":
-            eddington_ratio, }
         :param lightcurve_type: Type of lightcurve to generate, either
             'magnitude' or 'magnification'. If 'magnitude', the
             lightcurve is returned in magnitudes normalized to the macro
@@ -177,7 +175,6 @@ class MicrolensingLightCurve(object):
 
         # Get the convolved magmap after convolving the magnification map with a Gaussian kernel
         convolved_map = self.get_convolved_map(
-            kwargs_source_morphology=kwargs_source_morphology,
             return_source_morphology=False,
         )
 
@@ -293,21 +290,6 @@ class MicrolensingLightCurve(object):
 
         if not (return_track_coords) and not (return_time_array):
             return LCs
-
-    def effective_transverse_velocity(
-        self,
-        source_redshift,
-        lens_redshift,
-        cosmo,
-    ):
-        """Calculate the effective transverse velocity in the source plane.
-
-        This implementation is based on the works in the following papers:
-        1. https://arxiv.org/pdf/2004.13189
-        2. https://iopscience.iop.org/article/10.1088/0004-637X/712/1/658/pdf
-        3. https://iopscience.iop.org/article/10.3847/0004-637X/832/1/46/pdf
-        """
-        pass
 
     def plot_lightcurves_and_magmap(
         self, lightcurves, tracks=None, lightcurve_type="magnitude"

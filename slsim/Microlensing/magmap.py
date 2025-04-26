@@ -89,7 +89,6 @@ class MagnificationMap(object):
                 )
 
             self.microlensing_IPM = IPM(
-                verbose=1,
                 kappa_tot=self.kappa_tot,
                 shear=self.shear,
                 kappa_star=self.kappa_star,
@@ -112,7 +111,9 @@ class MagnificationMap(object):
                 **kwargs_IPM,
             )
 
+            print("Generating magnification map ...")
             self.microlensing_IPM.run()
+            print("Done generating magnification map.")
             self.magnifications = (
                 self.microlensing_IPM.magnifications
             )  # based on updated IPM class
