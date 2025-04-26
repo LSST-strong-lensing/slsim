@@ -245,6 +245,7 @@ class AGNSourceMorphology(SourceMorphology):
         black_hole_spin=0,  # Spin of the black hole
         observer_frame_wavelength_in_nm=600,  # Wavelength in nanometers used to determine black body flux. For the surface flux density of the AccretionDisk at desired wavelength.
         eddington_ratio=0.15,  # Eddington ratio of the accretion disk
+        observing_wavelength_band = None,
         *args,
         **kwargs
     ):
@@ -270,7 +271,15 @@ class AGNSourceMorphology(SourceMorphology):
         :param observer_frame_wavelength_in_nm: Wavelength in nanometers
             used to determine black body flux. For the surface flux
             density of the AccretionDisk at desired wavelength. Default
-            is 600 nm.
+            is 600 nm. This can be set to None if the
+            observing_wavelength_band is provided.
+        :param observing_wavelength_band: Wavelength band for the source morphology.
+            Default is None. Options are:
+            
+            - LSST: "u", "g", "r", "i", "z", "y"
+
+            If None, the observer_frame_wavelength_in_nm is used and the kernel map is generated for that wavelength.
+            If a wavelength band is provided, the kernel map is generated for the entire band.
         :param eddington_ratio: Eddington ratio of the accretion disk.
             Default is 0.15.
         """
@@ -283,6 +292,7 @@ class AGNSourceMorphology(SourceMorphology):
         self.inclination_angle = inclination_angle
         self.black_hole_spin = black_hole_spin
         self.observer_frame_wavelength_in_nm = observer_frame_wavelength_in_nm
+        self.observing_wavelength_band = observing_wavelength_band
         self.eddington_ratio = eddington_ratio
         self.black_hole_mass = 10**smbh_mass_exp
 
@@ -376,7 +386,7 @@ class AGNSourceMorphology(SourceMorphology):
         """
         raise NotImplementedError("This method is not implemented yet.")
 
-    def get_integrated_kernel_map(self, *args, **kwargs):
+    def get_integrated_kernel_map(self, band):
         """Returns the 2D array of the integrated AGN kernel map for a given
         wavelength range and transmission function.
 

@@ -682,7 +682,7 @@ class Lens(LensedSystemBase):
         (array) with macro-model magnifications. This function does operation
         only for the single source.
 
-        # TODO: time-variability with micro-lensing
+        # TODO: time-variability of the source with micro-lensing
 
         :param band: imaging band
         :type band: string
@@ -696,9 +696,13 @@ class Lens(LensedSystemBase):
             settings required by micro-lensing calculation that do not
             depend on the Lens() class. It is of type:
             kwargs_microlensing = {"kwargs_MagnificationMap":
-            kwargs_MagnificationMap, "kwargs_AccretionDisk":
-            kwargs_AccretionDisk,
-            "kwargs_PointSource":kwargs_PointSource}
+            kwargs_MagnificationMap, "point_source_morphology":
+            'gaussian' or 'agn' or 'supernovae', "kwargs_source_morphology":
+            kwargs_source_morphology}
+            The kwargs_source_morphology is required for the source
+            morphology calculation.
+            The kwargs_MagnificationMap is required for the microlensing
+            calculation.
         :type kwargs_microlensing: dict
         :return: point source magnitude of a single source
         """
@@ -768,7 +772,7 @@ class Lens(LensedSystemBase):
 
         :param source: Source class instance
         :return: np.array(kappa_star_images),
-            np.array(kappa_tot_images), np.array(shear_images)
+            np.array(kappa_tot_images), np.array(shear_images), np.array(shear_angle_images)
         """
         lenstronomy_kwargs = self.lenstronomy_kwargs(band=band)
         lens_model_lenstronomy = LensModel(
@@ -783,6 +787,8 @@ class Lens(LensedSystemBase):
         kappa_star_images = []  # kappa_star for each image of this source
         kappa_tot_images = []
         shear_images = []
+        shear_angle_images = []
+
         for i in range(len(image_positions_x)):
             ra = image_positions_x[i]
             dec = image_positions_y[i]
@@ -792,19 +798,22 @@ class Lens(LensedSystemBase):
                 ra, dec, lenstronomy_kwargs_lens
             )
             shear_smooth = np.sqrt(shear_smooth_vec[0] ** 2 + shear_smooth_vec[1] ** 2)
+            shear_angle = np.arctan2(shear_smooth_vec[1], shear_smooth_vec[0])
 
             kappa_star = self.kappa_star(
                 ra, dec
-            )  # TODO: why does it return a list? for each source?
+            )  # TODO: why does it return a list? is it for each source?
 
             kappa_tot_images.append(kappa_tot)
             shear_images.append(shear_smooth)
+            shear_angle_images.append(shear_angle)
             kappa_star_images.append(kappa_star[0])
 
         return (
             np.array(kappa_star_images),
             np.array(kappa_tot_images),
             np.array(shear_images),
+            np.array(shear_angle_images),
         )
 
     def _point_source_magnitude_microlensing(
@@ -820,13 +829,12 @@ class Lens(LensedSystemBase):
             settings required by micro-lensing calculation that do not
             depend on the Lens() class. It is of type:
             kwargs_microlensing = {"kwargs_MagnificationMap":
-            kwargs_MagnificationMap, "kwargs_AccretionDisk":
-            kwargs_AccretionDisk,
-            "kwargs_PointSource":kwargs_PointSource} You don't need to
-            provide both kwargs_AccretionDisk and kwargs_PointSource.
-            You can provide just one of them. If you provide both,
-            kwargs_AccretionDisk will be used. The
-            kwargs_MagnificationMap is required for the microlensing
+            kwargs_MagnificationMap, "point_source_morphology":
+            'gaussian' or 'agn' or 'supernovae', "kwargs_source_morphology":
+            kwargs_source_morphology}
+            The kwargs_source_morphology is required for the source
+            morphology calculation.
+            The kwargs_MagnificationMap is required for the microlensing
             calculation.
         :type kwargs_microlensing: dict
         :return: point source magnitude for a single source, does not
@@ -842,15 +850,17 @@ class Lens(LensedSystemBase):
             raise ValueError(
                 "kwargs_MagnificationMap not in kwargs_microlensing. Please provide a dictionary of settings required by micro-lensing calculation."
             )
-        if ("kwargs_AccretionDisk" not in kwargs_microlensing) and (
-            "kwargs_PointSource" not in kwargs_microlensing
-        ):
+        if "point_source_morphology" not in kwargs_microlensing:
             raise ValueError(
-                "kwargs_AccretionDisk or kwargs_PointSource not in kwargs_microlensing. Please provide either of them."
+                "point_source_morphology not in kwargs_microlensing. Please provide the point source morphology type. It can be either 'gaussian' or 'agn' or 'supernovae'."
+            )
+        if ("kwargs_source_morphology" not in kwargs_microlensing):
+            raise ValueError(
+                "kwargs_source_morphology not in kwargs_microlensing. Please provide a dictionary of settings required by source morphology calculation."
             )
 
         # get microlensing parameters
-        kappa_star_images, kappa_tot_images, shear_images = (
+        kappa_star_images, kappa_tot_images, shear_images, shear_angle_images = (
             self._microlensing_parameters_for_image_positions_single_source(
                 band, source
             )
@@ -870,10 +880,14 @@ class Lens(LensedSystemBase):
                 kappa_star_images=kappa_star_images,
                 kappa_tot_images=kappa_tot_images,
                 shear_images=shear_images,
+                shear_angle_images=shear_angle_images,
+                ra_lens = self.deflector_position[0], # TODO: check if this is correct?
+                dec_lens = self.deflector_position[1],
+                deflector_velocity_dispersion=self.deflector_velocity_dispersion(),
                 cosmology=self.cosmo,
                 kwargs_magnification_map=kwargs_microlensing["kwargs_MagnificationMap"],
-                kwargs_accretion_disk=kwargs_microlensing["kwargs_AccretionDisk"],
-                kwargs_point_source=kwargs_microlensing["kwargs_PointSource"],
+                point_source_morphology=kwargs_microlensing["point_source_morphology"],
+                kwargs_source_morphology=kwargs_microlensing["kwargs_source_morphology"],
             )
         )
         return microlensing_magnitudes  # # does not include the macro-lensing effect
