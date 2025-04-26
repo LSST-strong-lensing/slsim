@@ -3,6 +3,7 @@ __author__ = "Paras Sharma"
 import numpy as np
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from astropy import units as u
 
 
 class MagnificationMap(object):
@@ -83,7 +84,8 @@ class MagnificationMap(object):
                 )  # Inverse Polygon Mapping class to generate magnification maps
             except ImportError:
                 raise ImportError(
-                    "The microlensing package is not installed. Please install it using 'pip install microlensing'."
+                    "The microlensing package is not installed. Please install it using 'pip install microlensing'." \
+                    "And make sure you are on a GPU that supports CUDA."
                 )
 
             self.microlensing_IPM = IPM(
@@ -184,9 +186,16 @@ class MagnificationMap(object):
     def pixel_size(self):
         """Returns the pixel size in arcseconds."""
         return np.sqrt(self.pixel_scales[0] * self.pixel_scales[1])
-
+    
     @property
     def magnitudes(self):
         """Returns the magnitudes of the magnification map normalized by the
         average magnification."""
         return -2.5 * np.log10(self.magnifications / np.abs(self.mu_ave))
+    
+    def get_pixel_size_meters(self, source_redshift, cosmo):
+        """Returns the pixel size in meters."""
+        pixel_size_arcsec = self.pixel_size
+        pixel_size_meters = cosmo.angular_diameter_distance(source_redshift).to(u.m) * pixel_size_arcsec * (u.arcsec.to(u.rad))
+
+        return pixel_size_meters.value

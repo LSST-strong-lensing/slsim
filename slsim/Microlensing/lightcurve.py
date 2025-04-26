@@ -1,14 +1,9 @@
 __author__ = "Paras Sharma"
 
-# here we generate the lightcurve from the microlensing map
-# this process can be different depending on the source type
-# currently only Quasar is implemented
 
-import gc  # for garbage collection
+# import gc  # for garbage collection
 import numpy as np
 from scipy.signal import fftconvolve
-import astropy.constants as const
-from astropy import units as u
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from skimage.transform import rescale
@@ -16,330 +11,220 @@ from skimage.transform import rescale
 from slsim.Microlensing.magmap import MagnificationMap
 
 from slsim.Util.astro_util import (
-    calculate_accretion_disk_emission,
-    calculate_gravitational_radius,
     extract_light_curve,
+)
+
+from slsim.Microlensing.source_morphology import (
+    GaussianSourceMorphology,
+    AGNSourceMorphology,
 )
 
 
 class MicrolensingLightCurve(object):
     """Class to generate microlensing lightcurve(s) for a single source based
-    on the magnification map, and lens properties."""
+    on the magnification map, source morphology, and lens properties."""
 
     def __init__(
         self,
         magnification_map: MagnificationMap,
         time_duration: float,
+        point_source_morphology: str = "gaussian", # 'gaussian' or 'agn' or 'supernovae' #TODO: supernovae not implemented yet!
     ):
         """
         :param magnification_map: MagnificationMap object, if not provided.
         :param time_duration: Time duration for which the lightcurve is needed (in days).
+        :param point_source_morphology: Type of source morphology to use. Default is 'gaussian'. Options are 'gaussian' or 'agn' (Accretion Disk) or 'supernovae'.
         """
+
         self.magnification_map = magnification_map
         self.time_duration = time_duration
-
-    def _get_convolved_map(self, source_size, return_source_kernel=False):
-        """Compute the convolved magnification map."""
-        # we compute the convolved map here
-        # convolve the magnification map with a Gaussian kernel
-        mag_map_2d = self.magnification_map.magnifications
-        # optimize the magnification map for the convolution
-        if mag_map_2d.dtype != np.float32:
-            mag_map_2d = mag_map_2d.astype(np.float32)
-        # make source size map
-        xs = np.linspace(
-            self.magnification_map.center_x - self.magnification_map.half_length_x,
-            self.magnification_map.center_y + self.magnification_map.half_length_x,
-            self.magnification_map.num_pixels_x,
-        )
-        ys = np.linspace(
-            self.magnification_map.center_x - self.magnification_map.half_length_y,
-            self.magnification_map.center_y + self.magnification_map.half_length_y,
-            self.magnification_map.num_pixels_y,
-        )
-        X, Y = np.meshgrid(xs, ys)
-        # Calculate 2D Gaussian map using float32
-        sigma = source_size
-        # use normal distribution for the source kernel
-        source_kernel = np.exp(-(X**2 + Y**2) / (2 * sigma**2))
-        source_kernel /= np.sum(source_kernel)  # normalize the kernel
-
-        ## MEMORY MANAGEMENT ##
-        # Optionally delete intermediate arrays if X, Y are very large and not needed again
-        del X, Y
-        gc.collect()  # Suggest garbage collection
-        convolved_map = fftconvolve(mag_map_2d, source_kernel, mode="same")
-        self.convolved_map = convolved_map  # Store the convolved map
-        # Delete input arrays if they are no longer needed in this function scope
-        del mag_map_2d
-        gc.collect()
-        ########################
-
-        if return_source_kernel:
-            return convolved_map, source_kernel
-        else:
-            del source_kernel
-
-        return convolved_map
-
-    def generate_point_source_lightcurve(
+        self.point_source_morphology = point_source_morphology
+    
+    def get_convolved_map(
         self,
-        # deflector_redshift,
-        source_redshift,
-        cosmology,
-        source_size,
-        # mean_microlens_mass_in_kg=1 * const.M_sun.to(u.kg),  # Mean mass of the microlenses in kg
-        effective_transverse_velocity=1000,  # Transverse velocity in source plane (in km/s)
-        lightcurve_type="magnitude",  # 'magnitude' or 'magnification'
-        num_lightcurves=1,  # Number of lightcurves to generate
-        return_track_coords=False,
-        return_time_array=False,
+        kwargs_source_morphology,
+        return_source_morphology=False,
     ):
-        """Generate lightcurves for a point source with certain size.
-
-        The lightcurves are generated based on the microlensing map convolved with the source
-        size.
-
-        The generated lightcurves will have the same length of time as the "time" array provided.
-
-        :param deflector_redshift: Redshift of the deflector
-        :param source_redshift: Redshift of the source
-        :param cosmology: Cosmology object for the lens class
-        :param source_size: Size of the source in arcseconds
-        :param mean_microlens_mass_in_kg: Mean mass of the microlenses in kg
-        :param effective_transverse_velocity: Transverse velocity in source plane (in km/s)
-        :param lightcurve_type: Type of lightcurve to generate, either 'magnitude' or 'magnification'. If 'magnitude', the lightcurve is returned in magnitudes normalized to the macro magnification.
-                                If 'magnification', the lightcurve is returned in magnification without normalization. Default is 'magnitude'.
-        :param num_lightcurves: Number of lightcurves to generate. Default is 1.
-        :param return_track_coords: Whether to return the track coordinates of the lightcuve(s) or not. Default is False.
-        :param return_time_array: Whether to return the time array used for the lightcurve(s) or not. Default is False.
-
-        Returns a tuple of:
-        light_curve: a numpy array of lightcurves for the point source.
-        tracks: if requested, a list which contains the [list of tracks] for each image of the source, depending on the num_lightcurves parameter.
-        """
-        mag_map_2d = self.magnification_map.magnifications
-
-        # optimize the magnification map for the convolution
-        if mag_map_2d.dtype != np.float32:
-            mag_map_2d = mag_map_2d.astype(np.float32)
-
-        # Get the convolved magmap after convolving the magnification map with a Gaussian kernel
-        convolved_map = self._get_convolved_map(
-            source_size=source_size, return_source_kernel=False
-        )
-
-        light_curve_time_in_years = (
-            self.time_duration / 365.25
-        )  # converting time_duration from days to years
-
-        # get pixel size of the magnification map in meters
-        # magnification map pixel size
-        pixel_size_arcsec = (
-            self.magnification_map.pixel_size
-        )  # TODO: Is kpc_proper_per_arcmin the correct conversion factor?
-        pixel_size_kpc = (
-            ((cosmology.kpc_proper_per_arcmin(source_redshift)).to(u.kpc / u.arcsec))
-            * pixel_size_arcsec
-            * u.arcsec
-        )
-        pixel_size_magnification_map = (
-            pixel_size_kpc.to(u.m)
-        ).value  # pixel size in meters
-        # print("pixel_size_magnification_map: ", pixel_size_magnification_map, "m")
-
-        # randomly generates a light curves based on the convolved map
-        light_curves_list = (
-            []
-        )  # list of light curves       # has a shape of (num_lightcurves, length of light curve)
-        tracks = (
-            []
-        )  # list of [x_positions,y_positions]     # has a shape of (num_lightcurves, 2, length of light curve)
-        time_arrays = []  # list of time arrays for each light curve
-
-        mean_magnification_convolved_map = np.nanmean(self.convolved_map)
-        # print("mean_magnification_convolved_map: ", mean_magnification_convolved_map)
-        # print("mu_ave from magnification map: ", self.magnification_map.mu_ave)
-
-        for _ in range(num_lightcurves):
-            light_curve, x_positions, y_positions = extract_light_curve(
-                convolution_array=convolved_map,
-                pixel_size=pixel_size_magnification_map,  # TODO: Make sure that the units for theta_star and pixel_size are in arcsec
-                effective_transverse_velocity=effective_transverse_velocity,
-                light_curve_time_in_years=light_curve_time_in_years,
-                pixel_shift=0,
-                x_start_position=None,
-                y_start_position=None,
-                phi_travel_direction=None,
-                return_track_coords=True,
-                random_seed=None,
+        """Get the convolved map based on the source morphology."""
+        if self.point_source_morphology == "gaussian":
+            # Gaussian source morphology
+            source_morphology = GaussianSourceMorphology(
+                source_redshift=kwargs_source_morphology["source_redshift"],
+                cosmo=kwargs_source_morphology["cosmo"],
+                source_size=kwargs_source_morphology["source_size"],
+                length_x=self.magnification_map.half_length_x * 2,
+                length_y=self.magnification_map.half_length_y * 2,
+                num_pix_x=self.magnification_map.num_pixels_x,
+                num_pix_y=self.magnification_map.num_pixels_y,
+                center_x = 0,
+                center_y = 0,
             )
 
-            if lightcurve_type == "magnitude":
-                # print("Extracting magnitude for light curve...")
-                light_curve = -2.5 * np.log10(
-                    light_curve / np.abs(mean_magnification_convolved_map)
-                )
-            elif lightcurve_type == "magnification":
-                # print("Extracting magnification for light curve...")
-                light_curve = light_curve
-            else:
-                raise ValueError(
-                    "Lightcurve type not recognized. Please use 'magnitude' or 'magnification'."
-                )
+            # convolve the magnification map with the Gaussian kernel
+            self.convolved_map = fftconvolve(self.magnification_map.magnifications, 
+                                             source_morphology.kernel_map, 
+                                             mode="same")
+        
+        elif self.point_source_morphology == "agn":
+            # AGN source morphology
+            source_morphology = AGNSourceMorphology(**kwargs_source_morphology,)
+            cosmo = source_morphology.cosmo
+            source_redshift = source_morphology.source_redshift
 
-            light_curves_list.append(light_curve)
-            tracks.append(np.array([x_positions, y_positions]))
-            time_arrays.append(np.linspace(0, self.time_duration, len(light_curve)))
+            
+            # magnification map pixel size
+            pixel_size_magnification_map = self.magnification_map.get_pixel_size_meters(
+                source_redshift=source_redshift, cosmo=cosmo
+            )
 
-        # convert to numpy array
-        light_curves_list = np.array(
-            light_curves_list
-        )  # has a shape of (num_lightcurves, length of light curve)
-        tracks = np.array(
-            tracks
-        )  # has a shape of (num_lightcurves, 2, length of light curve)
+            # source kernel pixel size
+            pixel_size_kernel_map = source_morphology.pixel_scale_m
 
-        if return_track_coords and not (return_time_array):
-            return light_curves_list, tracks
-        if return_time_array and not (return_track_coords):
-            return light_curves_list, time_arrays
-        if return_track_coords and return_time_array:
-            return light_curves_list, tracks, time_arrays
-        if not (return_track_coords) and not (return_time_array):
-            return light_curves_list
+            # rescale the kernel to the pixel size of the magnification map
+            pixel_ratio = pixel_size_kernel_map / pixel_size_magnification_map
+            print(f"pixel size of magnification map: {pixel_size_magnification_map}")
+            print(f"pixel size of kernel map: {pixel_size_kernel_map}")
+            print(f"Pixel ratio: {pixel_ratio}")
+            rescaled_kernel_map = rescale(source_morphology.kernel_map, pixel_ratio)
+            
+            # normalize the rescaled kernel, just in case
+            rescaled_kernel_map = rescaled_kernel_map / np.nansum(
+                rescaled_kernel_map
+            )
 
-    def _generate_supernova_lightcurve(self):
-        """Generate lightcurve for a supernova."""
-        pass
+            # convolve the magnification map with the kernel map
+            self.convolved_map = fftconvolve(self.magnification_map.magnifications, 
+                                             rescaled_kernel_map, 
+                                             mode="same")
+            
 
-    def generate_agn_lightcurve(
+
+        elif self.point_source_morphology == "supernovae":
+            # Supernovae source morphology
+            source_morphology = None
+            raise NotImplementedError(
+                "Supernovae source morphology is not implemented yet."
+            )
+        
+        else:
+            raise ValueError(
+                "Invalid source morphology type. Choose 'gaussian', 'agn', or 'supernovae'."
+            )
+        
+        if source_morphology:
+            self.source_morphology = source_morphology
+        
+        if return_source_morphology:
+            return self.convolved_map, source_morphology
+        else:
+            return self.convolved_map
+    
+    def generate_lightcurves(
         self,
         source_redshift,
-        # deflector_redshift,
-        cosmology,
+        cosmo,
+        kwargs_source_morphology,
         lightcurve_type="magnitude",
-        v_transverse=1000,  # TODO: figure out this velocity based on the model in Section 3.3 of https://ui.adsabs.harvard.edu/abs/2020MNRAS.495..544N
+        effective_transverse_velocity=1000,  # Transverse velocity in source plane (in km/s)
         num_lightcurves=1,
-        r_out=1000,
-        r_resolution=1000,
-        smbh_mass_exp=8.0,
-        inclination_angle=0,
-        black_hole_spin=0,  # Spin of the black hole
-        observer_frame_wavelength_in_nm=600,  # Wavelength in nanometers used to determine black body flux. For the surface flux density of the AccretionDisk at desired wavelength.
-        eddington_ratio=0.15,  # Eddington ratio of the accretion disk
-        mean_microlens_mass_in_kg=1
-        * const.M_sun.to(u.kg),  # Mean mass of the microlenses in kg
+        x_start_position=None,
+        y_start_position=None,
+        phi_travel_direction=None,
         return_track_coords=False,
         return_time_array=False,
     ):
-        """Generate microlensing lightcurves for a quasar(AGN) with the
-        AccretionDisk model from amoeba. Returns a list of lightcurves based on
-        the number of lightcurves requested.
-
+        """Generate lightcurves for a point source based on the convolved map.
+        
         :param source_redshift: Redshift of the source
-        :param deflector_redshift: Redshift of the deflector
-        :param cosmology: Cosmology object for the lens class
-        :param lightcurve_type: Type of lightcurve to generate, either
-            'magnitude' or 'magnification'. Default is 'magnitude'.
-        :param v_transverse: Transverse velocity in source plane (in
-            km/s). Default is 1000 km/s.
-        :param num_lightcurves: Number of lightcurves to generate.
-            Default is 1.
-        :param r_out: Outer radius of the accretion disk in
-            gravitational radii. This typically can be chosen as 10^3 to
-            10^5 [R_g] Default is 1000.
-        :param r_resolution: Resolution of the accretion disk in
-            gravitational radii. Default is 1000.
-        :param smbh_mass_exp: Exponent of the mass of the supermassive
-            black hole in kg. Default is 8.0.
-        :param inclination_angle: Inclination angle of the disk in
-            degrees. Default is 0.
-        :param observer_frame_wavelength_in_nm: Wavelength in nanometers
-            used to determine black body flux. For the surface flux
-            density of the AccretionDisk at desired wavelength. Default
-            is 600 nm.
-        :param eddington_ratio: Eddington ratio of the accretion disk.
-            Default is 0.15.
-        :param mean_microlens_mass_in_kg: Mean mass of the microlenses
-            in kg. Default is 1 * const.M_sun.to(u.kg).
-        :param min_disk_radius: Minimum radius of the accretion disk in
-            gravitational radii. Default is 6.
-        :param return_track_coords: Whether to return the track
-            coordinates of the lightcuve(s) or not. Default is False.
-        :param return_time_array: Whether to return the time array used
-            for the lightcurve(s) or not. Default is False.
+        :param cosmo: Cosmology object for the lens class
+        :param kwargs_source_morphology: Dictionary of keyword arguments for the source morphology class. This should be as per the source morphology type.
+                                            For example, for Gaussian source morphology, it will look like:
+                                            kwargs_source_morphology = {
+                                                "source_redshift": source_redshift,
+                                                "cosmo": cosmo,
+                                                "source_size": source_size,
+                                            }
+                                            For AGN source morphology, it will look like:
+                                            kwargs_source_morphology = {
+                                                "source_redshift": source_redshift,
+                                                "cosmo": cosmology,
+                                                "r_out": r_out,
+                                                "r_resolution": r_resolution,
+                                                "smbh_mass_exp": smbh_mass_exp,
+                                                "inclination_angle": inclination_angle,
+                                                "black_hole_spin": black_hole_spin,
+                                                "observer_frame_wavelength_in_nm": observer_frame_wavelength_in_nm,
+                                                "eddington_ratio": eddington_ratio,
+                                            }
+        :param lightcurve_type: Type of lightcurve to generate, either 'magnitude' or 'magnification'. If 'magnitude', the lightcurve is returned in magnitudes normalized to the macro magnification.
+                                If 'magnification', the lightcurve is returned in magnification without normalization. Default is 'magnitude'.
+        :param effective_transverse_velocity: Transverse velocity in source plane (in km/s)
+        :param num_lightcurves: Number of lightcurves to generate. Default is 1.
+        :param x_start_position: Starting x position of the lightcurve in pixel coordinates. Default is None.
+        :param y_start_position: Starting y position of the lightcurve in pixel coordinates. Default is None.
+        :param phi_travel_direction: Angle of the travel direction in degrees. Default is None.
+        :param return_track_coords: Whether to return the track coordinates of the lightcuve(s) or not. Default is False.
+        :param return_time_array: Whether to return the time array used for the lightcurve(s) or not. Default is False.
+        :return: A tuple of lightcurves, tracks, and time arrays if requested.
+        If only lightcurves are requested, a list of lightcurves is returned.
+        
         """
 
-        mag_map_2d = self.magnification_map.magnifications
-
-        #########
-        # removed the dependency on the amoeba package by using source morphology from slsim.Util.astro_util functions
-        #########
-
-        # invert redshifts to find locally emitted wavelengths
-        redshiftfactor = 1 / (1 + source_redshift)
-        totalshiftfactor = redshiftfactor  # * self.g_array # we are not using the g_array for now, # TODO: Check with Henry if this is needed?
-        rest_frame_wavelength = totalshiftfactor * observer_frame_wavelength_in_nm
-
-        accretion_disk_emission_map = calculate_accretion_disk_emission(
-            r_out=r_out,
-            r_resolution=r_resolution,
-            inclination_angle=inclination_angle,
-            rest_frame_wavelength_in_nanometers=rest_frame_wavelength,
-            black_hole_mass_exponent=smbh_mass_exp,
-            black_hole_spin=black_hole_spin,
-            eddington_ratio=eddington_ratio,
-            return_spectral_radiance_distribution=True,
+        # Get the convolved magmap after convolving the magnification map with a Gaussian kernel
+        convolved_map = self.get_convolved_map(
+            kwargs_source_morphology = kwargs_source_morphology,
+            return_source_morphology=False
         )
-        accretion_disk_emission_map = np.array(accretion_disk_emission_map)
 
-        # since we are using the accretion disk emission map as a kernel, we need to normalize it
-        normalized_emission_map = accretion_disk_emission_map / np.sum(
-            accretion_disk_emission_map
+        # determine physical pixel sizes in source plane 
+        pixel_size_magnification_map = self.magnification_map.get_pixel_size_meters(
+            source_redshift=source_redshift, cosmo=cosmo
         )
-        # print("normalized_emission_map finished, shape: ", normalized_emission_map.shape)
 
-        ## determine physical pixel sizes in source plane
-        # emission map pixel size
-        gravitational_radius_of_smbh = calculate_gravitational_radius(smbh_mass_exp)
-        pixel_size_emission_map = (
-            2
-            * (r_out * gravitational_radius_of_smbh)
-            / np.size(normalized_emission_map, 0)
+        return self._generate_lightcurves(
+            convolved_map=convolved_map,
+            pixel_size_magnification_map=pixel_size_magnification_map,
+            num_lightcurves=num_lightcurves,
+            lightcurve_type=lightcurve_type,
+            effective_transverse_velocity=effective_transverse_velocity,
+            x_start_position=x_start_position,
+            y_start_position=y_start_position,
+            phi_travel_direction=phi_travel_direction,
+            return_track_coords=return_track_coords,
+            return_time_array=return_time_array,
         )
-        pixel_size_emission_map = pixel_size_emission_map.to(
-            u.m
-        ).value  # convert to meters
-        # print("pixel_size_emission_map: ", pixel_size_emission_map, "m")
 
-        # magnification map pixel size
-        pixel_size_arcsec = (
-            self.magnification_map.pixel_size
-        )  # TODO: Is kpc_proper_per_arcmin the correct conversion factor?
-        pixel_size_kpc = (
-            ((cosmology.kpc_proper_per_arcmin(source_redshift)).to(u.kpc / u.arcsec))
-            * pixel_size_arcsec
-            * u.arcsec
-        )
-        pixel_size_magnification_map = (
-            pixel_size_kpc.to(u.m)
-        ).value  # pixel size in meters
-        # print("pixel_size_magnification_map: ", pixel_size_magnification_map, "m")
-
-        # rescale the emission map pixels to the magnification array pixels
-        pixel_ratio = pixel_size_emission_map / pixel_size_magnification_map
-        # print("pixel_ratio: ", pixel_ratio)
-        rescaled_emission_map = rescale(normalized_emission_map, pixel_ratio)
-        rescaled_emission_map = rescaled_emission_map / np.sum(
-            rescaled_emission_map
-        )  # normalize the kernel, just in case
-        # print("rescaled_emission_map finished, shape: ", rescaled_emission_map.shape)
-        # print("rescaled_emission_map: ", rescaled_emission_map)
-
-        # convolve the magnification map with the emission map
-        self.convolved_map = fftconvolve(mag_map_2d, rescaled_emission_map, mode="same")
-        # print("convolved_map finished, shape: ", self.convolved_map.shape)
+    
+    def _generate_lightcurves(
+        self,
+        convolved_map,
+        pixel_size_magnification_map,
+        num_lightcurves=1,
+        lightcurve_type="magnitude",  # 'magnitude' or 'magnification'
+        effective_transverse_velocity=1000,  # Transverse velocity in source plane (in km/s)
+        x_start_position=None,
+        y_start_position=None,
+        phi_travel_direction=None,
+        return_track_coords=False,
+        return_time_array=False,
+    ):
+        """Generate lightcurves for a point source based on the convolved map.
+        
+        :param convolved_map: Convolved magnification map
+        :param pixel_size_magnification_map: Pixel size of the magnification map in meters
+        :param num_lightcurves: Number of lightcurves to generate. Default is 1.
+        :param lightcurve_type: Type of lightcurve to generate, either 'magnitude' or 'magnification'. If 'magnitude', the lightcurve is returned in magnitudes normalized to the macro magnification.
+                                If 'magnification', the lightcurve is returned in magnification without normalization. Default is 'magnitude'.
+        :param effective_transverse_velocity: Transverse velocity in source plane (in km/s)
+        :param x_start_position: Starting x position of the lightcurve in pixel coordinates. Default is None.
+        :param y_start_position: Starting y position of the lightcurve in pixel coordinates. Default is None.
+        :param phi_travel_direction: Angle of the travel direction in degrees. Default is None.
+        :param return_track_coords: Whether to return the track coordinates of the lightcuve(s) or not. Default is False.
+        :param return_time_array: Whether to return the time array used for the lightcurve(s) or not. Default is False.
+        :return: A tuple of lightcurves, tracks, and time arrays if requested.
+        If only lightcurves are requested, a list of lightcurves is returned.
+        
+        """
 
         LCs = []
         tracks = []
@@ -350,19 +235,17 @@ class MicrolensingLightCurve(object):
         )  # converting time_duration from days to years
 
         mean_magnification_convolved_map = np.nanmean(self.convolved_map)
-        # print("mean_magnification_convolved_map: ", mean_magnification_convolved_map)
-        # print("mu_ave from magnification map: ", self.magnification_map.mu_ave)
 
         for _ in range(num_lightcurves):
             light_curve, x_positions, y_positions = extract_light_curve(
-                convolution_array=self.convolved_map,
+                convolution_array=convolved_map,
                 pixel_size=pixel_size_magnification_map,  # Make sure that the units for theta_star and pixel_size are in arcsec
-                effective_transverse_velocity=v_transverse,
+                effective_transverse_velocity=effective_transverse_velocity,
                 light_curve_time_in_years=time_duration_years,
                 pixel_shift=0,
-                x_start_position=None,
-                y_start_position=None,
-                phi_travel_direction=None,
+                x_start_position=x_start_position,
+                y_start_position=y_start_position,
+                phi_travel_direction=phi_travel_direction,
                 return_track_coords=True,
                 random_seed=None,
             )
@@ -394,6 +277,22 @@ class MicrolensingLightCurve(object):
 
         if not (return_track_coords) and not (return_time_array):
             return LCs
+        
+    def effective_transverse_velocity(
+        self,
+        source_redshift,
+        lens_redshift,
+        cosmo,
+    ):
+        """Calculate the effective transverse velocity in the source plane.
+        This implementation is based on the works in the following papers:
+        1. https://arxiv.org/pdf/2004.13189
+        2. https://iopscience.iop.org/article/10.1088/0004-637X/712/1/658/pdf
+        3. https://iopscience.iop.org/article/10.3847/0004-637X/832/1/46/pdf
+        
+        """
+        pass
+
 
     def plot_lightcurves_and_magmap(
         self, lightcurves, tracks=None, lightcurve_type="magnitude"
