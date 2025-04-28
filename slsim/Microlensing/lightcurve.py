@@ -98,9 +98,9 @@ class MicrolensingLightCurve(object):
 
             # rescale the kernel to the pixel size of the magnification map
             pixel_ratio = pixel_size_kernel_map / pixel_size_magnification_map
-            print(f"pixel size of magnification map: {pixel_size_magnification_map}")
-            print(f"pixel size of kernel map: {pixel_size_kernel_map}")
-            print(f"Pixel ratio: {pixel_ratio}")
+            # print(f"pixel size of magnification map: {pixel_size_magnification_map}")
+            # print(f"pixel size of kernel map: {pixel_size_kernel_map}")
+            # print(f"Pixel ratio: {pixel_ratio}")
             rescaled_kernel_map = rescale(source_morphology.kernel_map, pixel_ratio)
 
             # normalize the rescaled kernel, just in case

@@ -512,6 +512,6 @@ class MicrolensingLightCurveFromLensModel(object):
             )
 
         return (
-            np.array(effective_velocities) * u.km / u.s,
-            np.array(effective_velocities_angles_deg) * u.deg,
+            np.array(effective_velocities),
+            np.array(effective_velocities_angles_deg),
         )

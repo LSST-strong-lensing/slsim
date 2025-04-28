@@ -104,10 +104,6 @@ class MagnificationMap(object):
                 m_solar=self.m_solar,
                 num_pixels_y1=self.num_pixels_x,
                 num_pixels_y2=self.num_pixels_y,
-                approx=True,
-                write_maps=False,
-                write_parities=False,
-                write_histograms=False,
                 **kwargs_IPM,
             )
 
