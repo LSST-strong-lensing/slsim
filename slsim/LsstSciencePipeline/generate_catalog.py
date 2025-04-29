@@ -19,17 +19,17 @@ except ImportError:
     HAS_TQDM = False
 
     def tqdm(iterable, **kwargs):
-        """Simple fallback for tqdm progress bar when the library is not available.
+        """Simple fallback for tqdm progress bar when the library is not
+        available.
 
         :param iterable: Iterable to iterate over
         :type iterable: iterable
-        :param kwargs: Keyword arguments that would be passed to tqdm (ignored in fallback)
+        :param kwargs: Keyword arguments that would be passed to tqdm
+            (ignored in fallback)
         :return: Unchanged input iterable
         :rtype: iterable
         """
         return iterable
-
-
 
 
 def generate_master_galaxy_list(
@@ -110,7 +110,7 @@ def generate_master_galaxy_list(
     # Process lens galaxies
     lens_ell_mask = lens["n_sersic"] < -0.999
     n_ell_lens = np.sum(lens_ell_mask)
-    
+
     if n_ell_lens > 0:
         phi = np.random.uniform(0, np.pi, size=n_ell_lens)
         e = lens["ellipticity"][lens_ell_mask].data
@@ -134,7 +134,6 @@ def generate_master_galaxy_list(
         source["e1"][source_ell_mask] = e1
         source["e2"][source_ell_mask] = e2
         source["n_sersic"][source_ell_mask] = 1
-
 
     # Generate random positions within the specified RA/Dec box
     ra = np.random.uniform(ra_min, ra_max, size=n_galaxies)
@@ -199,7 +198,8 @@ def get_calexps_in_region(
     filters=["u", "g", "r", "i", "z", "y"],
     max_calexps=10,
 ):
-    """Get calexp objects from the butler within given time and spatial constraints.
+    """Get calexp objects from the butler within given time and spatial
+    constraints.
 
     :param butler: The butler instance
     :type butler: `lsst.daf.butler.Butler`
@@ -330,7 +330,8 @@ def get_calexps_in_region(
 def find_galaxies_for_each_visit(
     visit_list, visit_ras, visit_decs, visit_times, galaxy_catalog, reference_time=None
 ):
-    """Find which galaxies from the master catalog overlap with each visit's boundaries and record the visit ID and time information.
+    """Find which galaxies from the master catalog overlap with each visit's
+    boundaries and record the visit ID and time information.
 
     :param visit_list: List of visit dataIds
     :type visit_list: list
@@ -423,83 +424,85 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="Generate a catalog of galaxies and find overlaps with LSST visits."
     )
-    
+
     # Region of interest
-    parser.add_argument("--ra-min", type=float, default=52, help="Minimum right ascension in degrees")
-    parser.add_argument("--ra-max", type=float, default=54, help="Maximum right ascension in degrees")
-    parser.add_argument("--dec-min", type=float, default=-29, help="Minimum declination in degrees")
-    parser.add_argument("--dec-max", type=float, default=-27, help="Maximum declination in degrees")
-    
+    parser.add_argument(
+        "--ra-min", type=float, default=52, help="Minimum right ascension in degrees"
+    )
+    parser.add_argument(
+        "--ra-max", type=float, default=54, help="Maximum right ascension in degrees"
+    )
+    parser.add_argument(
+        "--dec-min", type=float, default=-29, help="Minimum declination in degrees"
+    )
+    parser.add_argument(
+        "--dec-max", type=float, default=-27, help="Maximum declination in degrees"
+    )
+
     # Time range
     parser.add_argument(
-        "--start-time", 
-        type=str, 
-        default="2024-11-01T00:00:00", 
-        help="Start time in ISO format (YYYY-MM-DDTHH:MM:SS)"
+        "--start-time",
+        type=str,
+        default="2024-11-01T00:00:00",
+        help="Start time in ISO format (YYYY-MM-DDTHH:MM:SS)",
     )
     parser.add_argument(
-        "--end-time", 
-        type=str, 
-        default="2024-12-29T00:00:00", 
-        help="End time in ISO format (YYYY-MM-DDTHH:MM:SS)"
+        "--end-time",
+        type=str,
+        default="2024-12-29T00:00:00",
+        help="End time in ISO format (YYYY-MM-DDTHH:MM:SS)",
     )
-    
+
     # Galaxy generation parameters
     parser.add_argument(
-        "--n-galaxies", 
-        type=int, 
-        default=10000, 
-        help="Number of galaxies to generate"
+        "--n-galaxies", type=int, default=10000, help="Number of galaxies to generate"
     )
     parser.add_argument(
-        "--sky-area", 
-        type=float, 
-        default=5.0, 
-        help="Sky area in square degrees for galaxy simulation"
+        "--sky-area",
+        type=float,
+        default=5.0,
+        help="Sky area in square degrees for galaxy simulation",
     )
-    
+
     # Butler parameters
     parser.add_argument(
-        "--repo-path", 
-        type=str, 
-        default="/repo/main", 
-        help="Path to the butler repository"
+        "--repo-path",
+        type=str,
+        default="/repo/main",
+        help="Path to the butler repository",
     )
     parser.add_argument(
-        "--collection", 
-        type=str, 
-        default="LSSTComCam/runs/DRP/DP1/w_2025_07/DM-48940", 
-        help="Butler collection to query"
+        "--collection",
+        type=str,
+        default="LSSTComCam/runs/DRP/DP1/w_2025_07/DM-48940",
+        help="Butler collection to query",
     )
     parser.add_argument(
-        "--instrument", 
-        type=str, 
-        default="LSSTComCam", 
-        help="Instrument name to query"
+        "--instrument", type=str, default="LSSTComCam", help="Instrument name to query"
     )
     parser.add_argument(
-        "--filters", 
-        type=str, 
-        nargs="+", 
-        default=["r"], 
-        help="List of filters to include"
+        "--filters",
+        type=str,
+        nargs="+",
+        default=["r"],
+        help="List of filters to include",
     )
-    
+
     # Output
     parser.add_argument(
-        "--output-file", 
-        type=str, 
-        default="galaxy_visit_overlaps.fits", 
-        help="Output file name for galaxy-visit overlaps"
+        "--output-file",
+        type=str,
+        default="galaxy_visit_overlaps.fits",
+        help="Output file name for galaxy-visit overlaps",
     )
-    
+
     return parser.parse_args()
 
 
 def main():
     """Main function to process calexps and find overlapping galaxies."""
     args = parse_args()
-    
+
     # Define region of interest
     ra_min, ra_max = args.ra_min, args.ra_max
     dec_min, dec_max = args.dec_min, args.dec_max
@@ -512,7 +515,7 @@ def main():
     print("Generating master galaxy catalog...")
     sky_area_value = args.sky_area
     n_galaxies = args.n_galaxies
-    
+
     master_galaxies = generate_master_galaxy_list(
         ra_min=ra_min,
         ra_max=ra_max,

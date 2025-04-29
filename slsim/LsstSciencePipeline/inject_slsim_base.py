@@ -178,7 +178,7 @@ class BaseInjectSLSimTask(BaseInjectTask):
         num_injection_sources = np.sum(good_injections)
         calib_flux_radius = None
         num_pix = self.config.stamp_size
-        
+
         if num_injection_sources > 0:
             cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
@@ -288,14 +288,14 @@ class BaseInjectSLSimTask(BaseInjectTask):
                         source_redshift=source.redshift,
                         deflector_redshift=lens.redshift,
                     )
-                    
+
                     lens_class = Lens(
                         source_class=source,
                         deflector_class=lens,
                         cosmo=cosmo,
                         los_class=los,
                     )
-                    
+
                     lens_im = lens_image(
                         lens_class=lens_class,
                         band=band,

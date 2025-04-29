@@ -164,7 +164,7 @@ class VisitInjectSLSimTask(BaseInjectSLSimTask):
             "photo_calib",
             "wcs",
         ]
-        
+
         outputs = self.run(
             **{key: value for (key, value) in inputs.items() if key in input_keys}
         )
