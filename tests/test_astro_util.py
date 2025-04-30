@@ -293,11 +293,24 @@ def test_calculate_accretion_disk_emission():
         black_hole_spin,
         eddington_ratio,
     )
+    emission_distribution_3 = calculate_accretion_disk_emission(
+        r_out * 2,
+        r_resolution * 2,
+        inclination_angle,
+        rest_frame_wavelength_in_nm,
+        black_hole_mass_exponent,
+        black_hole_spin,
+        eddington_ratio,
+        return_spectral_radiance_distribution=True,
+    )
 
     # assert that higher eddington ratio = more emission
     assert emission_2 > emission_1
     # assert that larger accretion disk = more emission
     assert emission_3 > emission_1
+    # assert the distribution is a np array with total sum equal to emission_3
+    assert isinstance(emission_distribution_3, np.ndarray)
+    assert np.nansum(emission_distribution_3) == emission_3
 
 
 def test_calculate_accretion_disk_response_function():
