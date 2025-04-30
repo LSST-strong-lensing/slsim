@@ -513,7 +513,7 @@ class Lens(LensedSystemBase):
             #    if "center_y" in kwargs:
             #        kwargs["center_y"] = 0
             theta_E = lens_analysis.effective_einstein_radius(
-                kwargs_lens, r_min=1e-4, r_max=5e1, num_points=100
+                kwargs_lens, r_min=1e-3, r_max=5e1, num_points=100
             )
         return theta_E
 
