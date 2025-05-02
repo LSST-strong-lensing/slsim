@@ -866,6 +866,7 @@ class TestMultiSource(object):
             image_observation_time2, image_observation_time3[1], decimal=5
         )
 
+
 class TestSlhammock(object):
     def setup_method(self):
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3, Ob0=0.05)
@@ -874,11 +875,11 @@ class TestSlhammock(object):
         source_dict = {
             "z": 0.8664718175006184,
             "angular_size": 0.01345195778342412,  # effective radius of a source in arcsec
-            #"mag_g": 22.5,  # g-band magnitude of a source
-            #"mag_r": 22,  # r-band magnitude of a source
+            # "mag_g": 22.5,  # g-band magnitude of a source
+            # "mag_r": 22,  # r-band magnitude of a source
             "mag_i": 26.00614079444494,  # i-band magnitude of a source
-            #"mag_z": 22.1,  # z-band magnitude of a source
-            #"mag_y": 22.0,  # y-band magnitude of a source
+            # "mag_z": 22.1,  # z-band magnitude of a source
+            # "mag_y": 22.0,  # y-band magnitude of a source
             "e1": 0.08079814292965516,  # tangential component of the ellipticity
             "e2": 0.0038523986875793467,  # cross component of the ellipticity
             "n_sersic": 1,  # sersic index for sersic_ellipse profile
@@ -891,15 +892,15 @@ class TestSlhammock(object):
         deflector_dict = {
             "z": 0.09199999999999993,
             "angular_size": 9.893988634937736,  # effective radius of the deflector in arcsec
-            #"mag_g": 20.0,  # g-band magnitude of a deflector
-            #"mag_r": 13.80785703495668,  # r-band magnitude of a deflector
+            # "mag_g": 20.0,  # g-band magnitude of a deflector
+            # "mag_r": 13.80785703495668,  # r-band magnitude of a deflector
             "mag_i": 18.5,  # i-band magnitude of a deflector
-            #"mag_z": 18.0,  # z-band magnitude of a deflector
-            #"mag_y": 17.5,  # y-band magnitude of a deflector
+            # "mag_z": 18.0,  # z-band magnitude of a deflector
+            # "mag_y": 17.5,  # y-band magnitude of a deflector
             "halo_mass": 259737421577890.4,
             "halo_mass_acc": 0.0,
             "vel_disp": -1.0,
-            "e1_light":  -0.0073474229677211135,  # tangential component of the light ellipticity
+            "e1_light": -0.0073474229677211135,  # tangential component of the light ellipticity
             "e2_light": 0.24186783558136427,  # cross component of the light ellipticity
             "e1_mass": -0.07738867986582895,  # tangential component of the mass ellipticity
             "e2_mass": 0.23482266208752717,  # cross component of the mass ellipticity
@@ -913,26 +914,35 @@ class TestSlhammock(object):
             "center_y": 0.010467931830543249,  # y-position of the center of the lens
         }
         source = Source(
-        source_dict=source_dict,
-        cosmo=self.cosmo,
-        source_type="point_plus_extended",
-        extendedsource_type="single_sersic",
-        pointsource_type="supernova"
+            source_dict=source_dict,
+            cosmo=self.cosmo,
+            source_type="point_plus_extended",
+            extendedsource_type="single_sersic",
+            pointsource_type="supernova",
         )
         deflector = Deflector(
             deflector_type="NFW_HERNQUIST",
             deflector_dict=deflector_dict,
         )
-        los_class = LOSIndividual(kappa=0, gamma=[-0.005061965833762263, 0.028825761226555197])
-        self.lens_class = Lens(source_class=source, deflector_class=deflector, 
-                          cosmo=self.cosmo, los_class=los_class)
+        los_class = LOSIndividual(
+            kappa=0, gamma=[-0.005061965833762263, 0.028825761226555197]
+        )
+        self.lens_class = Lens(
+            source_class=source,
+            deflector_class=deflector,
+            cosmo=self.cosmo,
+            los_class=los_class,
+        )
+
     def test_theta_e_infinity(self):
         npt.assert_almost_equal(self.lens_class.einstein_radius_infinity, 3.76881, decimal=5)
 
     def test_image_position(self):
-        # In source dict we have not provided supernova-host offset. So, extended and 
+        # In source dict we have not provided supernova-host offset. So, extended and
         # point source image position should be the same.
-        extended_source_image_position = self.lens_class.extended_source_image_positions()[0]
+        extended_source_image_position = (
+            self.lens_class.extended_source_image_positions()[0]
+        )
         point_source_image_position = self.lens_class.point_source_image_positions()[0]
         assert extended_source_image_position[0] == point_source_image_position[0]
         assert extended_source_image_position[1] == point_source_image_position[1]
