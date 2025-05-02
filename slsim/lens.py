@@ -139,7 +139,7 @@ class Lens(LensedSystemBase):
 
         :return: list of (x-pos, y-pos)
         """
-        if not hasattr(self, "_es_image_positions"):
+        if not hasattr(self, "_es_image_position_list"):
             self._es_image_position_list = []
             for index, source in enumerate(self._source):
                 self._es_image_position_list.append(
