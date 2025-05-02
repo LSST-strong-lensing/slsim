@@ -678,12 +678,15 @@ class Lens(LensedSystemBase):
         magnitude_list = []
         for index, source in enumerate(self._source):
             magnitude_list.append(
-                self._point_source_magnitude(band, source, source_index=index,
-                                              lensed=lensed, time=time)
+                self._point_source_magnitude(
+                    band, source, source_index=index, lensed=lensed, time=time
+                )
             )
         return magnitude_list
 
-    def _point_source_magnitude(self, band, source, source_index, lensed=False, time=None):
+    def _point_source_magnitude(
+        self, band, source, source_index, lensed=False, time=None
+    ):
         """Point source magnitude, either unlensed (single value) or lensed
         (array) with macro-model magnifications. This function does operation
         only for the single source.
@@ -706,7 +709,9 @@ class Lens(LensedSystemBase):
             magnif_log = 2.5 * np.log10(abs(magnif))
             if time is not None:
                 time = time
-                image_observed_times = self._image_observer_times(source, source_index, time)
+                image_observed_times = self._image_observer_times(
+                    source, source_index, time
+                )
                 variable_magnitude = source.point_source_magnitude(
                     band,
                     image_observation_times=image_observed_times,
@@ -1091,9 +1096,13 @@ class Lens(LensedSystemBase):
             kwargs_ps_list = []
             for index, source in enumerate(self._source):
                 source_models_list.append("LENSED_POSITION")
-                img_x, img_y = self._point_source_image_positions(source=source, source_index=index)
+                img_x, img_y = self._point_source_image_positions(
+                    source=source, source_index=index
+                )
                 if band is None:
-                    image_magnitudes = np.abs(self._point_source_magnification(source, index))
+                    image_magnitudes = np.abs(
+                        self._point_source_magnification(source, index)
+                    )
                 else:
                     image_magnitudes = self._point_source_magnitude(
                         band=band, source=source, source_index=index, lensed=True
