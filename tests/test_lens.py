@@ -935,7 +935,9 @@ class TestSlhammock(object):
         )
 
     def test_theta_e_infinity(self):
-        npt.assert_almost_equal(self.lens_class.einstein_radius_infinity, 3.76881, decimal=5)
+        npt.assert_almost_equal(
+            self.lens_class.einstein_radius_infinity, 3.76881, decimal=5
+        )
 
     def test_image_position(self):
         # In source dict we have not provided supernova-host offset. So, extended and
