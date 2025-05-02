@@ -945,5 +945,10 @@ class TestSlhammock(object):
         result = self.lens_class.extended_source_magnification()
         npt.assert_almost_equal(result, 22.15978, decimal=5)
 
+    def test_source_light_model_lenstronomy_none_band(self):
+        result=self.lens_class.source_light_model_lenstronomy(band=None)[1]
+        assert result["kwargs_ps"]["magnitude"] == 10
+
+
 if __name__ == "__main__":
     pytest.main()
