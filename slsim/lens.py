@@ -703,7 +703,7 @@ class Lens(LensedSystemBase):
             magnif_log = 2.5 * np.log10(abs(magnif))
             if time is not None:
                 time = time
-                image_observed_times = self._image_observer_times(source, time)
+                image_observed_times = self._image_observer_times(source, source_index, time)
                 variable_magnitude = source.point_source_magnitude(
                     band,
                     image_observation_times=image_observed_times,
@@ -1083,14 +1083,14 @@ class Lens(LensedSystemBase):
         ):
             source_models_list = []
             kwargs_ps_list = []
-            for source in self._source:
+            for index, source in enumerate(self._source):
                 source_models_list.append("LENSED_POSITION")
-                img_x, img_y = self._point_source_image_positions(source=source)
+                img_x, img_y = self._point_source_image_positions(source=source, source_index=index)
                 if band is None:
-                    image_magnitudes = np.abs(self._point_source_magnification(source))
+                    image_magnitudes = np.abs(self._point_source_magnification(source, index))
                 else:
                     image_magnitudes = self._point_source_magnitude(
-                        band=band, source=source, lensed=True
+                        band=band, source=source, source_index=index, lensed=True
                     )
                 kwargs_ps_list.append(
                     {
