@@ -338,11 +338,7 @@ class Lens(LensedSystemBase):
             einstein_radius = self.einstein_radius[source_index]
         else:
             einstein_radius = self.einstein_radius_infinity
-        if (
-            not min_image_separation
-            <= 2 * einstein_radius
-            <= max_image_separation
-        ):
+        if not min_image_separation <= 2 * einstein_radius <= max_image_separation:
             return False
 
         # Criteria 3: The distance between the lens center and the source position
@@ -357,10 +353,7 @@ class Lens(LensedSystemBase):
                 self.deflector_position, draw_area=self.test_area
             )
         center_lens, center_source = (self.deflector_position, source_pos)
-        if (
-            np.sum((center_lens - center_source) ** 2)
-            > einstein_radius ** 2 * 2
-        ):
+        if np.sum((center_lens - center_source) ** 2) > einstein_radius**2 * 2:
             return False
 
         # Criteria 4: The lensing configuration must produce at least two SL images.
