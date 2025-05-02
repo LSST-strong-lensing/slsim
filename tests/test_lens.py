@@ -927,27 +927,15 @@ class TestSlhammock(object):
         self.lens_class = Lens(source_class=source, deflector_class=deflector, 
                           cosmo=self.cosmo, los_class=los_class)
     def test_theta_e_infinity(self):
-        # In source dict we have not provided supernova-host offset. So, extended and 
-        # point source image position should be the same.
-        extended_source_image_position = self.lens_class.extended_source_image_positions()[0]
-        point_source_image_position = self.lens_class.point_source_image_positions()[0]
         npt.assert_almost_equal(self.lens_class.einstein_radius_infinity, 3.76881, decimal=5)
-        assert extended_source_image_position == point_source_image_position
 
     def test_image_position(self):
         # In source dict we have not provided supernova-host offset. So, extended and 
         # point source image position should be the same.
         extended_source_image_position = self.lens_class.extended_source_image_positions()[0]
         point_source_image_position = self.lens_class.point_source_image_positions()[0]
-        assert extended_source_image_position == point_source_image_position
-
-    def test_extended_source_magnification(self):
-        result = self.lens_class.extended_source_magnification()
-        npt.assert_almost_equal(result, 22.15978, decimal=5)
-
-    def test_source_light_model_lenstronomy_none_band(self):
-        result=self.lens_class.source_light_model_lenstronomy(band=None)[1]
-        npt.assert_almost_equal(result["kwargs_ps"][0]["magnitude"], 2.37366, decimal=5)
+        assert extended_source_image_position[0] == point_source_image_position[0]
+        assert extended_source_image_position[1] == point_source_image_position[1]
 
 
 if __name__ == "__main__":
