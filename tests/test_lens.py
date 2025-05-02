@@ -251,11 +251,11 @@ class TestLens(object):
         )
         source_dict = blue_one
         deflector_dict = {
-            "halo_mass": 10**13.8,
-            "concentration": 10,
+            "halo_mass": 10**13,
+            "concentration": 6,
             "e1_mass": 0.1,
             "e2_mass": -0.1,
-            "stellar_mass": 10.5e11,
+            "stellar_mass": 10.5e10,
             "angular_size": 0.16,
             "e1_light": -0.1,
             "e2_light": 0.1,
@@ -357,6 +357,7 @@ class TestLens(object):
     def test_contrast_ratio(self):
         mag_ratios = self.gg_lens.contrast_ratio(band="i", source_index=0)
         assert 2 <= len(mag_ratios) <= 4
+        
 
 
 @pytest.fixture

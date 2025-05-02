@@ -581,15 +581,18 @@ class Lens(LensedSystemBase):
         :rtype: list of numpy array
         """
         arrival_times_list = []
-        for source in self._source:
-            arrival_times_list.append(self._point_source_arrival_times(source))
+        for index, source in enumerate(self._source):
+            arrival_times_list.append(self._point_source_arrival_times(source, index))
         return arrival_times_list
 
-    def _point_source_arrival_times(self, source):
+    def _point_source_arrival_times(self, source, source_index):
         """Arrival time of images relative to a straight line without lensing.
         Negative values correspond to images arriving earlier, and positive
         signs correspond to images arriving later.
 
+        :param source: Source class instance. The redshift of this
+            source is used in the LensModel.
+        :param source_index: index of a source in source list.
         :return: arrival times for each image [days]
         :rtype: numpy array
         """
@@ -602,7 +605,7 @@ class Lens(LensedSystemBase):
             z_source_convention=self.max_redshift_source_class.redshift,
             multi_plane=False,
         )
-        x_image, y_image = self._point_source_image_positions(source)
+        x_image, y_image = self._point_source_image_positions(source, source_index)
         arrival_times = lens_model.arrival_time(
             x_image, y_image, kwargs_lens=kwargs_lens
         )
@@ -621,17 +624,19 @@ class Lens(LensedSystemBase):
             corresponds to different image observation times.
         """
         observer_times_list = []
-        for source in self._source:
-            observer_times_list.append(self._image_observer_times(source, t_obs))
+        for index, source in enumerate(self._source):
+            observer_times_list.append(self._image_observer_times(source, index, t_obs))
         if self.source_number == 1:
             return observer_times_list[0]
         return observer_times_list
 
-    def _image_observer_times(self, source, t_obs):
+    def _image_observer_times(self, source, source_index, t_obs):
         """Calculates time of a source at the different images, not correcting
         for redshifts, but for time delays. The time is relative to the first
         arriving image.
 
+        :param source: Source class instance.
+        :param source_index: index of a source in source list.
         :param t_obs: time of observation [days]. It could be a single
             observation time or an array of observation time.
         :return: time of the source when seen in the different images
@@ -639,7 +644,7 @@ class Lens(LensedSystemBase):
         :rtype: numpy array. Each element of the array corresponds to
             different image observation times.
         """
-        arrival_times = self._point_source_arrival_times(source)
+        arrival_times = self._point_source_arrival_times(source, source_index)
         if type(t_obs) is np.ndarray and len(t_obs) > 1:
             observer_times = (
                 t_obs[:, np.newaxis] - arrival_times + np.min(arrival_times)
@@ -668,13 +673,14 @@ class Lens(LensedSystemBase):
         """
 
         magnitude_list = []
-        for source in self._source:
+        for index, source in enumerate(self._source):
             magnitude_list.append(
-                self._point_source_magnitude(band, source, lensed=lensed, time=time)
+                self._point_source_magnitude(band, source, source_index=index,
+                                              lensed=lensed, time=time)
             )
         return magnitude_list
 
-    def _point_source_magnitude(self, band, source, lensed=False, time=None):
+    def _point_source_magnitude(self, band, source, source_index, lensed=False, time=None):
         """Point source magnitude, either unlensed (single value) or lensed
         (array) with macro-model magnifications. This function does operation
         only for the single source.
@@ -683,6 +689,8 @@ class Lens(LensedSystemBase):
 
         :param band: imaging band
         :type band: string
+        :param source: Source class instance.
+        :param source_index: index of a source in source list.
         :param lensed: if True, returns the lensed magnified magnitude
         :type lensed: bool
         :param time: time is a image observation time in units of days.
@@ -691,7 +699,7 @@ class Lens(LensedSystemBase):
         """
         # TODO: might have to change conventions between extended and point source
         if lensed:
-            magnif = self._point_source_magnification(source)
+            magnif = self._point_source_magnification(source, source_index)
             magnif_log = 2.5 * np.log10(abs(magnif))
             if time is not None:
                 time = time
@@ -816,9 +824,9 @@ class Lens(LensedSystemBase):
         """
         if not hasattr(self, "_ps_magnification_list"):
             self._ps_magnification_list = []
-            for source in self._source:
+            for index, source in enumerate(self._source):
                 self._ps_magnification_list.append(
-                    self._point_source_magnification(source)
+                    self._point_source_magnification(source, index)
                 )
         return self._ps_magnification_list
 
@@ -878,9 +886,9 @@ class Lens(LensedSystemBase):
         """
         if not hasattr(self, "_es_magnification_for_each_image_list"):
             self._es_magnification_for_each_image_list = []
-            for source in self._source:
+            for index, source in enumerate(self._source):
                 self._es_magnification_for_each_image_list.append(
-                    self._point_source_magnification(source, extended=True)
+                    self._point_source_magnification(source, index, extended=True)
                 )
         return self._es_magnification_for_each_image_list
 
