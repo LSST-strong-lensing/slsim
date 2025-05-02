@@ -177,7 +177,10 @@ class Lens(LensedSystemBase):
             solver = "analytical"
         else:
             solver = "lenstronomy"
-        einstein_radius = self.einstein_radius_infinity[source_index]
+        if self.deflector.deflector_type in ["EPL"]:
+            einstein_radius = self.einstein_radius[source_index]
+        else:
+            einstein_radius = self.einstein_radius_infinity
         self._image_positions = lens_eq_solver.image_position_from_source(
             source_pos_x,
             source_pos_y,
@@ -236,7 +239,10 @@ class Lens(LensedSystemBase):
             solver = "analytical"
         else:
             solver = "lenstronomy"
-        einstein_radius = self.einstein_radius_infinity[source_index]
+        if self.deflector.deflector_type in ["EPL"]:
+            einstein_radius = self.einstein_radius[source_index]
+        else:
+            einstein_radius = self.einstein_radius_infinity
         self._point_image_positions = lens_eq_solver.image_position_from_source(
             point_source_pos_x,
             point_source_pos_y,
@@ -328,9 +334,13 @@ class Lens(LensedSystemBase):
         # times 2 must be greater than or equal to the minimum image separation
         # (min_image_separation) and less than or equal to the maximum image
         # separation (max_image_separation).
+        if self.deflector.deflector_type in ["EPL"]:
+            einstein_radius = self.einstein_radius[source_index]
+        else:
+            einstein_radius = self.einstein_radius_infinity
         if (
             not min_image_separation
-            <= 2 * self.einstein_radius_infinity[source_index]
+            <= 2 * einstein_radius
             <= max_image_separation
         ):
             return False
@@ -349,7 +359,7 @@ class Lens(LensedSystemBase):
         center_lens, center_source = (self.deflector_position, source_pos)
         if (
             np.sum((center_lens - center_source) ** 2)
-            > self.einstein_radius_infinity[source_index] ** 2 * 2
+            > einstein_radius ** 2 * 2
         ):
             return False
 
@@ -473,23 +483,15 @@ class Lens(LensedSystemBase):
 
     @property
     def einstein_radius_infinity(self):
-        """Einstein radius when source is at infinity. It is computed from from
-        the numerical solution. In this class, this is only available for
-        deflector type other than EPL. If the deflector type is EPL, it returns
-        einstein radius with given deflector-source redshift pair and is equal
-        to return of the einstein_radius.
+        """Einstein radius when source is at infinity.
 
-        :return: list of einstein radius of each lens-source pair.
+        :return: Einstein radius of a deflector.
         """
-        if not hasattr(self, "_theta_E_list_infinity"):
-            self._theta_E_list_infinity = []
-            for source in self._source:
-                self._theta_E_list_infinity.append(
-                    self._einstein_radius(source, theta_E_infinity=True)
-                )
-        return self._theta_E_list_infinity
+        if not hasattr(self, "_theta_E_infinity"):
+            self._theta_E_infinity = self.deflector.theta_e_infinity(self.cosmo)
+        return self._theta_E_infinity
 
-    def _einstein_radius(self, source, theta_E_infinity=False):
+    def _einstein_radius(self, source):
         """Einstein radius, including external shear.
 
         :param source: Source class instance. The redshift of this
@@ -527,19 +529,10 @@ class Lens(LensedSystemBase):
             theta_E /= (1 - kappa_ext) ** (1.0 / (gamma_pl - 1))
         else:
             # numerical solution for the Einstein radius
-            if theta_E_infinity is False:
-                lens_analysis = LensProfileAnalysis(lens_model=lens_model)
-                # kwargs_lens_ = copy.deepcopy(kwargs_lens)
-                # for kwargs in kwargs_lens_:
-                #    if "center_x" in kwargs:
-                #        kwargs["center_x"] = 0
-                #    if "center_y" in kwargs:
-                #        kwargs["center_y"] = 0
-                theta_E = lens_analysis.effective_einstein_radius(
-                    kwargs_lens, r_min=1e-4, r_max=5e1, num_points=100
-                )
-            else:
-                theta_E = self.deflector.theta_e_infinity(self.cosmo)
+            lens_analysis = LensProfileAnalysis(lens_model=lens_model)
+            theta_E = lens_analysis.effective_einstein_radius(
+                kwargs_lens, r_min=1e-4, r_max=5e1, num_points=100
+            )
         return theta_E
 
     def deflector_ellipticity(self):
@@ -921,7 +914,10 @@ class Lens(LensedSystemBase):
             multi_plane=False,
             z_source=source.redshift,
         )
-        theta_E = self.einstein_radius_infinity[source_index]
+        if self.deflector.deflector_type in ["EPL"]:
+            theta_E = self.einstein_radius[source_index]
+        else:
+            theta_E = self.einstein_radius_infinity
         center_source = source.extended_source_position(
             reference_position=self.deflector_position, draw_area=self.test_area
         )
