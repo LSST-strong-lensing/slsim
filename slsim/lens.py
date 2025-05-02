@@ -470,20 +470,23 @@ class Lens(LensedSystemBase):
             for source in self._source:
                 self._theta_E_list.append(self._einstein_radius(source))
         return self._theta_E_list
-    
+
     @property
     def einstein_radius_infinity(self):
-        """Einstein radius when source is at infinity. It is computed from from the 
-         numerical solution. In this class, this is only available for deflector type 
-         other than EPL. If the deflector type is EPL, it returns einstein radius with 
-         given deflector-source redshift pair and is equal to return of the einstein_radius.
+        """Einstein radius when source is at infinity. It is computed from from
+        the numerical solution. In this class, this is only available for
+        deflector type other than EPL. If the deflector type is EPL, it returns
+        einstein radius with given deflector-source redshift pair and is equal
+        to return of the einstein_radius.
 
         :return: list of einstein radius of each lens-source pair.
         """
         if not hasattr(self, "_theta_E_list_infinity"):
             self._theta_E_list_infinity = []
             for source in self._source:
-                self._theta_E_list_infinity.append(self._einstein_radius(source, theta_E_infinity=True))
+                self._theta_E_list_infinity.append(
+                    self._einstein_radius(source, theta_E_infinity=True)
+                )
         return self._theta_E_list_infinity
 
     def _einstein_radius(self, source, theta_E_infinity=False):
@@ -740,7 +743,7 @@ class Lens(LensedSystemBase):
         for index, source in enumerate(self._source):
             magnitude_list.append(
                 self._extended_source_magnitude_for_each_image(
-                    band, source,source_index=index, lensed=lensed
+                    band, source, source_index=index, lensed=lensed
                 )
             )
         return magnitude_list
@@ -767,7 +770,9 @@ class Lens(LensedSystemBase):
             )
         return magnitude_list
 
-    def _extended_source_magnitude_for_each_image(self, band, source, source_index, lensed=False):
+    def _extended_source_magnitude_for_each_image(
+        self, band, source, source_index, lensed=False
+    ):
         """Extended source magnitude, either unlensed (single value) or lensed
         (array) with macro-model magnifications. This function does operation
         only for the single source.
@@ -783,8 +788,9 @@ class Lens(LensedSystemBase):
         :return: extended source magnitude of a single source.
         """
         if lensed:
-            magnif = self._point_source_magnification(source, source_index=source_index,
-                                                       extended=True)
+            magnif = self._point_source_magnification(
+                source, source_index=source_index, extended=True
+            )
             magnif_log = 2.5 * np.log10(abs(magnif))
             source_mag_unlensed = source.extended_source_magnitude(band)
             magnified_mag_list = []
