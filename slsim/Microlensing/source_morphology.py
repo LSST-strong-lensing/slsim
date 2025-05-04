@@ -4,7 +4,7 @@ __author__ = "Paras Sharma"
 # Currently, it contains the following morphologies:
 # 1. Point source as a Gaussian
 # 2. AGN Disk simulated at different wavelengths and inclination angles
-# 3. Supernovae (#TODO: Needs to be implemented!)
+# 3. Supernovae (#TODO: Needs to be implemented in future!)
 
 import numpy as np
 
@@ -14,6 +14,8 @@ from slsim.Util.astro_util import (
 )
 
 from astropy import units as u
+
+import speclite.filters
 
 
 class SourceMorphology:
@@ -175,7 +177,7 @@ class GaussianSourceMorphology(SourceMorphology):
 
         :param source_redshift: Redshift of the source.
         :param cosmo: Astropy cosmology object for angle calculations.
-        :param source_size: Size of the source in arcseconds.
+        :param source_size: Size of the source in arcseconds. This should be the FWHM of the gaussian. FWHM = 2.3548 * sigma
         :param length_x: Length of the kernel map in x direction in
             arcseconds. Make sure this is larger than the source size.
         :param length_y: Length of the kernel map in y direction in
@@ -279,7 +281,7 @@ class AGNSourceMorphology(SourceMorphology):
             - LSST: "u", "g", "r", "i", "z", "y"
 
             If None, the observer_frame_wavelength_in_nm is used and the kernel map is generated for that wavelength.
-            If a wavelength band is provided, the kernel map is generated for the entire band.
+            If a wavelength band is provided, the kernel map is generated at the mean wavelength of the band.
         :param eddington_ratio: Eddington ratio of the accretion disk.
             Default is 0.15.
         """
@@ -295,6 +297,16 @@ class AGNSourceMorphology(SourceMorphology):
         self.observing_wavelength_band = observing_wavelength_band
         self.eddington_ratio = eddington_ratio
         self.black_hole_mass = 10**smbh_mass_exp
+
+        # -----------------------------------------------------------
+        # assign the observer frame wavelength in nm if the band is provided
+        # -----------------------------------------------------------
+        if self.observing_wavelength_band is not None:
+            # Get the mean wavelength of the band
+            filter = speclite.filters.load_filter('lsst2023-'+self.observing_wavelength_band)
+            self.observer_frame_wavelength_in_nm = filter.effective_wavelength.to(u.nm).value
+            #TODO: In future handle this by integrating the flux map over the band
+        # -----------------------------------------------------------
 
         self._kernel_map = self.get_kernel_map()
 

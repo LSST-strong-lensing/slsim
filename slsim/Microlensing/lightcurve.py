@@ -106,7 +106,7 @@ class MicrolensingLightCurve(object):
             # normalize the rescaled kernel, just in case
             rescaled_kernel_map = rescaled_kernel_map / np.nansum(rescaled_kernel_map)
 
-            # convolve the magnification map with the kernel map
+            # convolve the magnification map with the kernel map, #TODO: make this a cross-correlation
             self.convolved_map = fftconvolve(
                 self.magnification_map.magnifications, rescaled_kernel_map, mode="same"
             )
@@ -247,8 +247,6 @@ class MicrolensingLightCurve(object):
             self.time_duration / 365.25
         )  # converting time_duration from days to years
 
-        mean_magnification_convolved_map = np.nanmean(self.convolved_map)
-
         for _ in range(num_lightcurves):
             light_curve, x_positions, y_positions = extract_light_curve(
                 convolution_array=convolved_map,
@@ -266,7 +264,7 @@ class MicrolensingLightCurve(object):
             if lightcurve_type == "magnitude":
                 # print("Extracting magnitude for light curve...")
                 light_curve = -2.5 * np.log10(
-                    light_curve / mean_magnification_convolved_map
+                    light_curve / np.abs(self.magnification_map.mu_ave)
                 )
             elif lightcurve_type == "magnification":
                 # print("Extracting magnification for light curve...")
@@ -304,15 +302,13 @@ class MicrolensingLightCurve(object):
             ax[0].plot(time_array, lightcurves[i], label=f"Lightcurve {i+1}")
         ax[0].set_xlabel("Time (days)")
 
-        mean_magnification_convolved_map = np.nanmean(self.convolved_map)
-
         if lightcurve_type == "magnitude":
             ax[0].set_ylabel(
                 "Magnitude $\\Delta m = -2.5 \\log_{10} (\\mu / \\mu_{\\text{av}})$"
             )
             im_to_show = -2.5 * np.log10(
-                self.convolved_map / np.abs(mean_magnification_convolved_map)
-            )  # TODO: should you divide by mu_ave of original map or the convolved map?
+                self.convolved_map / np.abs(self.magnification_map.mu_ave)
+            )
         elif lightcurve_type == "magnification":
             ax[0].set_ylabel("Magnification $\\mu$")
             im_to_show = self.convolved_map

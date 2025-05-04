@@ -364,6 +364,7 @@ class MicrolensingLightCurveFromLensModel(object):
         shear_phi_angle_images,
         deflector_velocity_dispersion,
         random_seed=None,
+        magmap_reference_frame=True,
     ):
         """Calculate the effective transverse velocity in the source plane for
         each image position. Eventually return the effective transverse
@@ -507,8 +508,11 @@ class MicrolensingLightCurveFromLensModel(object):
 
             # assuming the shear vector is in the x-direction of the magnification map
             # the returned angle is with respect to the x-axis of the magnification map
+            if magmap_reference_frame:
+                # convert the angle to the reference frame of the magnification map
+                v_e_angle_deg = v_e_angle_deg - shear_phi_angle_images[i]
             effective_velocities_angles_deg.append(
-                v_e_angle_deg - shear_phi_angle_images[i]
+                v_e_angle_deg
             )
 
         return (
