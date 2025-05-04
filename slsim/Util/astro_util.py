@@ -433,11 +433,12 @@ def calculate_mean_time_lag(response_function):
 #         ) * decy
 #     return array_2d[int(x_int), int(y_int)] + dx + dy
 
+
 def pull_value_from_grid(array_2d, x_position, y_position):
-    """This approximates the point (x_position, y_position) in a 2d array of values.
-    x_position and y_position may be decimals, and are assumed to be measured in pixels.
-    This uses bilinear interpolation (or linear interpolation if one value is an
-    integer).
+    """This approximates the point (x_position, y_position) in a 2d array of
+    values. x_position and y_position may be decimals, and are assumed to be
+    measured in pixels. This uses bilinear interpolation (or linear
+    interpolation if one value is an integer).
 
     :param array_2d: 2 dimensional array of values.
     :param x_position: x coordinate in array_2d in pixels
@@ -670,27 +671,30 @@ def extract_light_curve(
     return_track_coords=False,
     random_seed=None,
 ):
-    """Extracts a light curve from the convolution between two arrays by selecting a
-    trajectory and calling pull_value_from_grid at each relevant point. If the light
-    curve is too long, or the size of the object is too large, a "light curve"
-    representing a constant magnification is returned.
+    """Extracts a light curve from the convolution between two arrays by
+    selecting a trajectory and calling pull_value_from_grid at each relevant
+    point. If the light curve is too long, or the size of the object is too
+    large, a "light curve" representing a constant magnification is returned.
 
-    :param convolution_array: The convolution between a flux distribtion and the
-        magnification array due to microlensing. Note coordinates on arrays have (y, x)
-        signature.
-    :param pixel_size: Physical size of a pixel in the source plane, in meters
-    :param effective_transverse_velocity: effective transverse velocity in the source
-        plane, in km / s
-    :param light_curve_time_in_years: duration of the light curve to generate, in years
-    :param pixel_shift: offset of the SMBH with respect to the convolved map, in pixels
-    :param x_start_position: None or the x coordinate to start pulling a light curve
-        from, in pixels
-    :param y_start_position: None or the y coordinate to start pulling a light curve
-        from, in pixels
-    :param phi_travel_direction: None or the angular direction of travel along the
-        convolution, in degrees
-    :param return_track_coords: boolean toggle to return the x and y coordinates of the
-        track in pixels
+    :param convolution_array: The convolution between a flux distribtion
+        and the magnification array due to microlensing. Note
+        coordinates on arrays have (y, x) signature.
+    :param pixel_size: Physical size of a pixel in the source plane, in
+        meters
+    :param effective_transverse_velocity: effective transverse velocity
+        in the source plane, in km / s
+    :param light_curve_time_in_years: duration of the light curve to
+        generate, in years
+    :param pixel_shift: offset of the SMBH with respect to the convolved
+        map, in pixels
+    :param x_start_position: None or the x coordinate to start pulling a
+        light curve from, in pixels
+    :param y_start_position: None or the y coordinate to start pulling a
+        light curve from, in pixels
+    :param phi_travel_direction: None or the angular direction of travel
+        along the convolution, in degrees
+    :param return_track_coords: boolean toggle to return the x and y
+        coordinates of the track in pixels
     :return: list representing the microlensing light curve
     """
     rng = np.random.default_rng(seed=random_seed)
@@ -802,7 +806,6 @@ def extract_light_curve(
         )
 
     return np.asarray(light_curve)
-
 
 
 # Credits: Luke Weisenbach (https://github.com/weisluke/microlensing/blob/main/microlensing/Util/length_scales.py)

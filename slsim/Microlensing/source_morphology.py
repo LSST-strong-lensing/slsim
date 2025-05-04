@@ -177,7 +177,8 @@ class GaussianSourceMorphology(SourceMorphology):
 
         :param source_redshift: Redshift of the source.
         :param cosmo: Astropy cosmology object for angle calculations.
-        :param source_size: Size of the source in arcseconds. This should be the FWHM of the gaussian. FWHM = 2.3548 * sigma
+        :param source_size: Size of the source in arcseconds. This
+            should be the FWHM of the gaussian. FWHM = 2.3548 * sigma
         :param length_x: Length of the kernel map in x direction in
             arcseconds. Make sure this is larger than the source size.
         :param length_y: Length of the kernel map in y direction in
@@ -303,9 +304,13 @@ class AGNSourceMorphology(SourceMorphology):
         # -----------------------------------------------------------
         if self.observing_wavelength_band is not None:
             # Get the mean wavelength of the band
-            filter = speclite.filters.load_filter('lsst2023-'+self.observing_wavelength_band)
-            self.observer_frame_wavelength_in_nm = filter.effective_wavelength.to(u.nm).value
-            #TODO: In future handle this by integrating the flux map over the band
+            filter = speclite.filters.load_filter(
+                "lsst2023-" + self.observing_wavelength_band
+            )
+            self.observer_frame_wavelength_in_nm = filter.effective_wavelength.to(
+                u.nm
+            ).value
+            # TODO: In future handle this by integrating the flux map over the band
         # -----------------------------------------------------------
 
         self._kernel_map = self.get_kernel_map()

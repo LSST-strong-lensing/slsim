@@ -415,9 +415,9 @@ def test_point_source_magnitude(pes_lens_instance):
     assert len(mag) >= 2
     assert len(mag_unlensed) == 1
 
+
 def test_point_source_magnitude_microlensing(pes_lens_instance):
     pass
-
 
 
 def test_lens_id_qso(pes_lens_instance):

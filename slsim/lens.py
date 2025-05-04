@@ -816,8 +816,6 @@ class Lens(LensedSystemBase):
             np.array(shear_angle_images),
         )
 
-     
-
     def extended_source_magnitude(self, band, lensed=False):
         """Unlensed apparent magnitude of the extended source for a given band
         (assumes that size is the same for different bands). This function

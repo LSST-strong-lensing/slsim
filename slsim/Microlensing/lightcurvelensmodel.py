@@ -511,9 +511,7 @@ class MicrolensingLightCurveFromLensModel(object):
             if magmap_reference_frame:
                 # convert the angle to the reference frame of the magnification map
                 v_e_angle_deg = v_e_angle_deg - shear_phi_angle_images[i]
-            effective_velocities_angles_deg.append(
-                v_e_angle_deg
-            )
+            effective_velocities_angles_deg.append(v_e_angle_deg)
 
         return (
             np.array(effective_velocities),
