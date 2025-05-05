@@ -1,7 +1,6 @@
 import os
 import pytest
 import numpy as np
-import astropy.units as u
 from astropy.cosmology import FlatLambdaCDM
 
 # Import the class to test
@@ -14,16 +13,6 @@ from slsim.Microlensing.magmap import MagnificationMap
 from slsim.Microlensing.source_morphology import (
     GaussianSourceMorphology,
     AGNSourceMorphology,
-)
-
-# Import dependencies directly as they are assumed available
-import speclite.filters
-import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from slsim.Util.astro_util import (
-    calculate_accretion_disk_emission,
-    calculate_gravitational_radius,
-    extract_light_curve,
 )
 
 
