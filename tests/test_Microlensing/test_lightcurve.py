@@ -14,7 +14,7 @@ from slsim.Microlensing.source_morphology import (
     GaussianSourceMorphology,
     AGNSourceMorphology,
 )
-
+from matplotlib import pyplot as plt
 
 # ---- Test Fixtures ----
 

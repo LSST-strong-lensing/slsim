@@ -1,7 +1,6 @@
 import os
 import pytest
 import numpy as np
-import astropy.units as u
 from astropy.cosmology import FlatLambdaCDM
 
 # Import patch and MagicMock for targeted mocking of map generation
