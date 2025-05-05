@@ -1,4 +1,3 @@
-import os
 import pytest
 import numpy as np
 import astropy.units as u
