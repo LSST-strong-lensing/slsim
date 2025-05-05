@@ -1,9 +1,7 @@
 import numpy as np
 import numpy.random as random
 from slsim.selection import object_cut
-from slsim.Deflectors.velocity_dispersion import vel_disp_composite_model
 from slsim.Deflectors.deflectors_base import DeflectorsBase
-from lenstronomy.Util import constants
 from slsim.Deflectors.elliptical_lens_galaxies import elliptical_projected_eccentricity
 from slsim.Deflectors.deflector import Deflector
 
@@ -82,40 +80,8 @@ class CompoundLensHalosGalaxies(DeflectorsBase):
         :return: dictionary of complete parameterization of deflector
         """
 
-        cosmo = self._cosmo
         index = random.randint(0, self._num_select - 1)
         deflector = self._galaxy_select[index]
-        if deflector["vel_disp"] == -1:
-            theta_eff = deflector["tb"] / 0.551  # [arcsec]
-            reff = (
-                theta_eff
-                * cosmo.angular_diameter_distance(deflector["z"])
-                * constants.arcsec
-            ).value  # physical Mpc
-            vel_disp = vel_disp_composite_model(
-                theta_eff,
-                deflector["stellar_mass"],
-                reff,
-                max(deflector["halo_mass"], deflector["halo_mass_acc"]),
-                deflector["concentration"],
-                cosmo,
-                deflector["z"],
-            )
-            deflector["vel_disp"] = vel_disp
-        # if (
-        #     deflector["mag_g"] == -1
-        #     or deflector["mag_r"]
-        #     or deflector["mag_i"] == -1
-        #     or deflector["mag_z"]
-        #     or deflector["mag_Y"] == -1
-        # ):
-        #     mag_g, mag_r, mag_i, mag_z, mag_Y = (
-        #         0,
-        #         0,
-        #         0,
-        #         0,
-        #         0,
-        #     )  # TODO: make function if needed
         if deflector["e1_light"] == -1 or deflector["e2_light"] == -1:
             e1_light, e2_light, e1_mass, e2_mass = elliptical_projected_eccentricity(
                 **deflector
