@@ -11,6 +11,7 @@ from astropy import units as u
 from astropy.stats import sigma_clipped_stats
 from astropy.convolution import Gaussian2DKernel
 import warnings
+from astropy.cosmology import default_cosmology
 
 
 def epsilon2e(epsilon):
@@ -706,3 +707,53 @@ def surface_brightness_reff(angular_size, source_model_list, kwargs_extended_sou
         surface_brightness_amp, mag_zero_point=_mag_zero_dummy
     )
     return mag_arcsec2
+
+
+def update_cosmology_in_yaml_file(cosmo, yml_file):
+    """Replaces the default cosmology string in a yaml file with the parameters
+    of a custom astropy cosmology object.
+
+    :param cosmo : astropy.cosmology.Cosmology or None The cosmology
+        object to insert into the content.
+    :param yml_file: A yml file containg cosmology information.
+    :return: Updated yml_file with the new cosmology parameters.
+    """
+    if cosmo is None or cosmo == default_cosmology.get():
+        return yml_file
+
+    cosmology_dict = cosmo.to_format("mapping")
+
+    cosmology_class = str(cosmology_dict.pop("cosmology", None))
+    cosmology_class_str = cosmology_class.replace("<class '", "").replace("'>", "")
+
+    cosmology_dict.pop("cosmology", None)
+
+    if "meta" in cosmology_dict and cosmology_dict["meta"] not in [
+        "mapping",
+        None,
+    ]:
+        cosmology_dict.pop("meta", None)
+    # Reason: From Astropy:'meta:mapping or None (optional, keyword-only)'
+    # However, the dict will read out as meta: OrderedDict()
+    # which may raised error.
+
+    cosmology_dict = {k: v for k, v in cosmology_dict.items() if v is not None}
+
+    cosmology_params_list = []
+    for key, value in cosmology_dict.items():
+        if hasattr(value, "value") and not isinstance(value.value, (list, tuple)):
+            value = value.value
+        elif hasattr(value, "value"):  # For Quantity arrays like m_nu
+            value = value.value
+
+        if isinstance(value, (list, tuple, np.ndarray)):
+            value = "[" + ", ".join(f"{float(x):.1f}" for x in value) + "]"
+
+        cosmology_params_list.append(f"    {key}: {value}")
+
+    cosmology_params_str = "\n".join(cosmology_params_list)
+
+    old_cosmo = "cosmology: !astropy.cosmology.default_cosmology.get []"
+    new_cosmo = f"cosmology: !{cosmology_class_str}\n{cosmology_params_str}"
+
+    return yml_file.replace(old_cosmo, new_cosmo)

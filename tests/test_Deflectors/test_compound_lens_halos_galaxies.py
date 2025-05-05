@@ -10,9 +10,9 @@ from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 
 def galaxy_list(sky_area, cosmo):
     pipeline = SLHammocksPipeline(
-        slhammocks_config=None, sky_area=sky_area, cosmo=cosmo
+        slhammocks_config=None, sky_area=sky_area, cosmo=cosmo, z_min=0.01, z_max=5
     )
-    return pipeline._pipeline
+    return pipeline.halo_galaxies
 
 
 @pytest.fixture

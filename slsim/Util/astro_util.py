@@ -399,6 +399,7 @@ def calculate_accretion_disk_emission(
     black_hole_mass_exponent,
     black_hole_spin,
     eddington_ratio,
+    return_spectral_radiance_distribution=False,
 ):
     """This calculates the emission of the accretion disk due to black body
     radiation. This emission is calculated by summing over all individual
@@ -426,8 +427,12 @@ def calculate_accretion_disk_emission(
         and negative spin represents retrograde accretion flow.
     :param eddington_ratio: The desired Eddington ratio defined as a
         fraction of bolometric luminosity / Eddington luminosity.
-    :return: The normalized response of the accretion disk as a function
-        of time lag in units [R_g / c].
+    :param return_spectral_radiance_distribution: Boolean flag to reutrn
+        the distribution of spectral radiance (for True), or the sum
+        of the distribution (for False).
+    :return: The result of the Planck function for a distribution of
+        temperatures, either as an array representing the distribution
+        in the source plane or the sum of this array.
     """
     radial_map = create_radial_map(r_out, r_resolution, inclination_angle)
 
@@ -438,6 +443,9 @@ def calculate_accretion_disk_emission(
     temperature_map *= radial_map < r_out
 
     emission_map = planck_law(temperature_map, rest_frame_wavelength_in_nanometers)
+
+    if return_spectral_radiance_distribution:
+        return emission_map
 
     return np.nansum(emission_map)
 
