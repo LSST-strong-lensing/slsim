@@ -129,7 +129,7 @@ class SourceMorphology:
             the given redshift.
         """
         # Convert arcseconds to radians
-        radians = (arcsecs * u.arcsec.to(u.rad))
+        radians = arcsecs * u.arcsec.to(u.rad)
         # Calculate the angular diameter distance in meters
         angular_diameter_distance = (
             cosmo.angular_diameter_distance(redshift).to(u.m)
@@ -248,7 +248,7 @@ class AGNSourceMorphology(SourceMorphology):
         black_hole_spin=0,  # Spin of the black hole
         observer_frame_wavelength_in_nm=600,  # Wavelength in nanometers used to determine black body flux. For the surface flux density of the AccretionDisk at desired wavelength.
         eddington_ratio=0.15,  # Eddington ratio of the accretion disk
-        observing_wavelength_band:str=None,
+        observing_wavelength_band: str = None,
         *args,
         **kwargs
     ):
