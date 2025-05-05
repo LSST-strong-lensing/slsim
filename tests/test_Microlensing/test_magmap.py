@@ -9,7 +9,6 @@ from slsim.Microlensing.magmap import MagnificationMap
 
 # Import dependencies directly as they are assumed available
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 # ---- Test Fixtures ----
