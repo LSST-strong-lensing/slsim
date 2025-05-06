@@ -29,8 +29,12 @@ from slsim.Util.astro_util import (
     downsample_passband,
     bring_passband_to_source_plane,
     convert_passband_to_nm,
+    pull_value_from_grid,
+    extract_light_curve,
+    theta_star_physical
 )
-
+from astropy.cosmology import Planck18
+from astropy.units import Quantity
 
 def test_spin_to_isco():
     # Check all special cases of:
@@ -741,3 +745,143 @@ def test_convert_passband_to_nm():
     )
     npt.assert_almost_equal(new_bandpass[0] * u.m.to(u.nm), new_bandpass_in_nm[0])
     npt.assert_almost_equal(new_bandpass[1], new_bandpass_in_nm[1])
+
+
+def test_pull_value_from_grid():
+    # Test that the function returns the correct value
+    grid = np.array([[1, 2], [3, 4]])
+    x = 0.5
+    y = 0.5
+    expected_value = 2.5
+    npt.assert_almost_equal(pull_value_from_grid(grid, x, y), expected_value)
+
+    # Test that the function returns the correct value for a different point
+    grid = np.array([[1, 2], [3, 4]])
+    x = 0.25
+    y = 0.75
+    expected_value = 2.25
+    npt.assert_almost_equal(pull_value_from_grid(grid, x, y), expected_value)
+
+    # Test that the function returns the correct value for a bigger grid
+    grid = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    x = 0.5
+    y = 0.5
+    expected_value = 3
+    npt.assert_almost_equal(pull_value_from_grid(grid, x, y), expected_value)
+
+    # Test array input
+    grid = np.array([[1, 2], [3, 4]])
+    x = np.array([0.5, 0.25])
+    y = np.array([0.5, 0.75])
+    expected_value = np.array([2.5, 2.25])
+    npt.assert_almost_equal(pull_value_from_grid(grid, x, y), expected_value)
+
+NPT_DECIMAL_PLACES = 5
+
+def test_extract_light_curve_all_cases():
+    print("Running tests for extract_light_curve...")
+
+    conv_array_3x3 = np.array([[1,2,3],[4,5,6],[7,8,9]], dtype=float)
+    conv_array_5x5 = np.arange(25, dtype=float).reshape(5,5)
+    pixel_size = 1.0
+    eff_vel_km_s = 1.0
+    time_yr_for_1px = (0.001 / u.yr.to(u.s))
+
+    lc1 = extract_light_curve(conv_array_3x3, pixel_size, eff_vel_km_s, time_yr_for_1px, x_start_position=0.0, y_start_position=0.0, phi_travel_direction=0.0)
+    assert isinstance(lc1, np.ndarray), "Test Case 1a Failed: LC type"
+    assert lc1.shape[0] == 15, f"Test Case 1b Failed: LC shape {lc1.shape}"
+    np.testing.assert_array_almost_equal(lc1, np.linspace(1.0, 4.0, 15), decimal=NPT_DECIMAL_PLACES, err_msg="Test Case 1c Failed: LC values")
+
+    lc2 = extract_light_curve(conv_array_3x3, pixel_size, eff_vel_km_s * u.km / u.s, time_yr_for_1px * u.yr, x_start_position=0.0, y_start_position=0.0, phi_travel_direction=0.0)
+    np.testing.assert_array_almost_equal(lc2, np.linspace(1.0, 4.0, 15), decimal=NPT_DECIMAL_PLACES, err_msg="Test Case 2b Failed: LC values with units")
+
+    avg_val3 = np.mean(conv_array_5x5)
+    val3 = extract_light_curve(conv_array_5x5, pixel_size, eff_vel_km_s, time_yr_for_1px, pixel_shift=3)
+    np.testing.assert_almost_equal(val3, avg_val3, decimal=NPT_DECIMAL_PLACES, err_msg="Test Case 3 Failed: pixel_shift too large")
+
+    time_for_6px = time_yr_for_1px * 6.0
+    avg_val4 = np.mean(conv_array_5x5)
+    val4 = extract_light_curve(conv_array_5x5, pixel_size, eff_vel_km_s, time_for_6px, pixel_shift=0)
+    np.testing.assert_almost_equal(val4, avg_val4, decimal=NPT_DECIMAL_PLACES, err_msg="Test Case 4 Failed: pixels_traversed too large")
+
+    avg_val5 = np.mean(conv_array_5x5)
+    np.testing.assert_almost_equal(extract_light_curve(conv_array_5x5, pixel_size, eff_vel_km_s, time_yr_for_1px, x_start_position=-1.0), avg_val5, decimal=NPT_DECIMAL_PLACES, err_msg="Test Case 5a Failed: Negative start_position")
+    np.testing.assert_almost_equal(extract_light_curve(conv_array_5x5, pixel_size, eff_vel_km_s, time_yr_for_1px, x_start_position=5.0), avg_val5, decimal=NPT_DECIMAL_PLACES, err_msg="Test Case 5b Failed: Too large start_position")
+
+    avg_val6 = np.mean(conv_array_5x5)
+    val6 = extract_light_curve(conv_array_5x5, pixel_size, eff_vel_km_s, time_yr_for_1px, x_start_position=4.0, y_start_position=2.0, phi_travel_direction=0.0)
+    np.testing.assert_almost_equal(val6, avg_val6, decimal=NPT_DECIMAL_PLACES, err_msg="Test Case 6 Failed: Track leaves array")
+
+    lc7 = extract_light_curve(conv_array_5x5, pixel_size, eff_vel_km_s, time_yr_for_1px, x_start_position=2, y_start_position=2, phi_travel_direction=None, random_seed=42)
+    assert not np.allclose(lc7, np.mean(conv_array_5x5)), "Test Case 7c Failed: LC is average (unexpected)" # np.allclose is fine for "not" checks
+
+    lc8 = extract_light_curve(conv_array_5x5, pixel_size, eff_vel_km_s, time_yr_for_1px, x_start_position=None, y_start_position=None, phi_travel_direction=None, random_seed=123)
+    assert not np.allclose(lc8, np.mean(conv_array_5x5)), "Test Case 8c Failed: LC is average (unexpected)"
+
+    res9 = extract_light_curve(conv_array_5x5, pixel_size, eff_vel_km_s, time_yr_for_1px, pixel_shift=1, x_start_position=0.0, y_start_position=0.0, phi_travel_direction=0.0, return_track_coords=True)
+    lc9, x_coords9, y_coords9 = res9
+    np.testing.assert_array_almost_equal(lc9, np.linspace(conv_array_5x5[1,1], conv_array_5x5[2,1], 15), decimal=NPT_DECIMAL_PLACES, err_msg="Test Case 9b Failed: LC values with shift")
+    np.testing.assert_array_almost_equal(x_coords9, np.linspace(0.0, 1.0, 15) + 1.0, decimal=NPT_DECIMAL_PLACES, err_msg="Test Case 9c Failed: X coords with shift")
+    np.testing.assert_array_almost_equal(y_coords9, np.zeros(15) + 1.0, decimal=NPT_DECIMAL_PLACES, err_msg="Test Case 9d Failed: Y coords with shift")
+
+    avg_val10 = np.mean(conv_array_3x3)
+    val10 = extract_light_curve(conv_array_3x3, pixel_size, eff_vel_km_s, time_yr_for_1px, pixel_shift=1)
+    np.testing.assert_almost_equal(val10, avg_val10, decimal=NPT_DECIMAL_PLACES, err_msg="Test Case 10 Failed: Safe array empty")
+    
+    x_s, y_s = 1.0, 1.0
+    expected_val11 = conv_array_3x3[int(x_s), int(y_s)]
+    lc11 = extract_light_curve(conv_array_3x3, pixel_size, eff_vel_km_s, 0.0, x_start_position=x_s, y_start_position=y_s, phi_travel_direction=0.0)
+    np.testing.assert_array_almost_equal(lc11, np.full(10, expected_val11), decimal=NPT_DECIMAL_PLACES, err_msg="Test Case 11c Failed: LC values zero traversal")
+    print("extract_light_curve tests PASSED")
+
+def test_theta_star_physical_realistic_scenario():
+    print("Running simple realistic test for theta_star_physical...")
+
+    # Realistic cosmological parameters for a quasar lensed by a galaxy/cluster
+    z_lens_realistic = 0.68  # Lens redshift (e.g., a galaxy in a cluster)
+    z_src_realistic = 1.734 # Source redshift (e.g., a background quasar)
+    lens_mass_solar = 1.0   # Mass of the microlens in solar masses (e.g., a star)
+    
+    cosmology_model = Planck18 # Using default Planck18 cosmology
+
+    # Call the function
+    theta_E_arcsec, theta_E_lens_plane_m, theta_E_src_plane_m = theta_star_physical(
+        z_lens=z_lens_realistic,
+        z_src=z_src_realistic,
+        m=lens_mass_solar,
+        cosmo=cosmology_model
+    )
+
+    # 1. Check output types
+    assert isinstance(theta_E_arcsec, Quantity), "theta_E_arcsec should be an Astropy Quantity"
+    assert isinstance(theta_E_lens_plane_m, Quantity), "theta_E_lens_plane_m should be an Astropy Quantity"
+    assert isinstance(theta_E_src_plane_m, Quantity), "theta_E_src_plane_m should be an Astropy Quantity"
+    print("Output types are correct.")
+
+    # 2. Check units
+    assert theta_E_arcsec.unit == u.arcsec, f"theta_E_arcsec unit is {theta_E_arcsec.unit}, expected arcsec"
+    assert theta_E_lens_plane_m.unit == u.m, f"theta_E_lens_plane_m unit is {theta_E_lens_plane_m.unit}, expected m"
+    assert theta_E_src_plane_m.unit == u.m, f"theta_E_src_plane_m unit is {theta_E_src_plane_m.unit}, expected m"
+    print("Output units are correct.")
+
+    # 3. Check for plausible values (non-NaN, positive)
+    assert not np.isnan(theta_E_arcsec.value), "theta_E_arcsec value is NaN"
+    assert not np.isnan(theta_E_lens_plane_m.value), "theta_E_lens_plane_m value is NaN"
+    assert not np.isnan(theta_E_src_plane_m.value), "theta_E_src_plane_m value is NaN"
+    print("Values are not NaN.")
+
+    assert theta_E_arcsec.value > 0, f"theta_E_arcsec ({theta_E_arcsec}) should be positive"
+    assert theta_E_lens_plane_m.value > 0, f"theta_E_lens_plane_m ({theta_E_lens_plane_m}) should be positive"
+    assert theta_E_src_plane_m.value > 0, f"theta_E_src_plane_m ({theta_E_src_plane_m}) should be positive"
+    print("Values are positive.")
+
+    # 4. Very broad plausibility check for angular size (for a 1 M_sun lens)
+    # Einstein radius for a solar mass lens is typically micro-arcseconds to a few milli-arcseconds.
+    # 1 micro-arcsecond = 1e-6 arcsec
+    # 10 milli-arcseconds = 0.01 arcsec
+    # This is a very loose check.
+    assert 1e-7 < theta_E_arcsec.value < 0.1, \
+        f"theta_E_arcsec ({theta_E_arcsec}) is outside a very broad plausible range for a 1 M_sun lens."
+    print(f"theta_E_arcsec: {theta_E_arcsec}")
+    print(f"theta_E_lens_plane_m: {theta_E_lens_plane_m}")
+    print(f"theta_E_src_plane_m: {theta_E_src_plane_m}")
