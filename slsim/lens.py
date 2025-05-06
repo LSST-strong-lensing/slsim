@@ -870,31 +870,27 @@ class Lens(LensedSystemBase):
         )
 
         # select random RA and DEC in Sky for the lens
-        ra_lens = np.random.uniform(0, 360) # degrees
-        dec_lens = np.random.uniform(-90, 90) # degrees
+        ra_lens = np.random.uniform(0, 360)  # degrees
+        dec_lens = np.random.uniform(-90, 90)  # degrees
 
         ml_lc_lens = MicrolensingLightCurveFromLensModel(self)
-        microlensing_magnitudes = (
-            ml_lc_lens.generate_point_source_microlensing_magnitudes(
-                time=time,
-                source_redshift=source.redshift,
-                deflector_redshift=self.deflector_redshift,
-                kappa_star_images=kappa_star_images,
-                kappa_tot_images=kappa_tot_images,
-                shear_images=shear_images,
-                shear_angle_images=shear_angle_images,
-                # ra_lens=self.deflector_position[0],  # TODO: check if this is correct?
-                # dec_lens=self.deflector_position[1],
-                ra_lens=ra_lens,
-                dec_lens=dec_lens,
-                deflector_velocity_dispersion=self.deflector_velocity_dispersion(),
-                cosmology=self.cosmo,
-                kwargs_magnification_map=kwargs_microlensing["kwargs_MagnificationMap"],
-                point_source_morphology=kwargs_microlensing["point_source_morphology"],
-                kwargs_source_morphology=kwargs_microlensing[
-                    "kwargs_source_morphology"
-                ],
-            )
+        microlensing_magnitudes = ml_lc_lens.generate_point_source_microlensing_magnitudes(
+            time=time,
+            source_redshift=source.redshift,
+            deflector_redshift=self.deflector_redshift,
+            kappa_star_images=kappa_star_images,
+            kappa_tot_images=kappa_tot_images,
+            shear_images=shear_images,
+            shear_angle_images=shear_angle_images,
+            # ra_lens=self.deflector_position[0],  # TODO: check if this is correct?
+            # dec_lens=self.deflector_position[1],
+            ra_lens=ra_lens,
+            dec_lens=dec_lens,
+            deflector_velocity_dispersion=self.deflector_velocity_dispersion(),
+            cosmology=self.cosmo,
+            kwargs_magnification_map=kwargs_microlensing["kwargs_MagnificationMap"],
+            point_source_morphology=kwargs_microlensing["point_source_morphology"],
+            kwargs_source_morphology=kwargs_microlensing["kwargs_source_morphology"],
         )
         return microlensing_magnitudes  # # does not include the macro-lensing effect
 

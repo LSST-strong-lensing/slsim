@@ -136,7 +136,9 @@ def create_mock_magmap_list(microlensing_params, kwargs_magnification_map_settin
     )
     # Try relative to parent of test dir (e.g., slsim/TestData/...)
     base_dir = os.path.dirname(test_dir)
-    saved_map_directory_root = os.path.join(base_dir, "TestData", "test_data_microlensing", "saved_magmaps2D")
+    saved_map_directory_root = os.path.join(
+        base_dir, "TestData", "test_data_microlensing", "saved_magmaps2D"
+    )
 
     if os.path.isdir(saved_map_directory_rel):
         saved_map_directory = saved_map_directory_rel
