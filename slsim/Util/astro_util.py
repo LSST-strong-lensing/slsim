@@ -14,6 +14,7 @@ from speclite.filters import (
 )
 from scipy.interpolate import RegularGridInterpolator
 
+
 def spin_to_isco(spin):
     """Converts dimensionless spin parameter of a black hole to the innermost
     stable circular orbit in gravitational radii [R_g = GM/c^2, with units
@@ -1032,6 +1033,7 @@ def convert_passband_to_nm(
     output_passband[0] = np.asarray(passband[0][:]) * wavelength_ratio
     return output_passband
 
+
 # The credits for the following function go to Henry Best (https://github.com/Henry-Best-01/Amoeba)
 # def pull_value_from_grid(array_2d, x_position, y_position):
 #     """This approximates the point (x_position, y_position) in a 2d array of
@@ -1103,11 +1105,13 @@ def convert_passband_to_nm(
 
 #         return value
 
+
 # CLEANER VERSION
 def pull_value_from_grid(array_2d, x_position, y_position):
     """This approximates the point (x_position, y_position) in a 2d array of
     values. x_position and y_position may be decimals, and are assumed to be
-    measured in pixels. This uses bilinear interpolation (powered by scipy.interpolate.RegularGridInterpolator).
+    measured in pixels. This uses bilinear interpolation (powered by
+    scipy.interpolate.RegularGridInterpolator).
 
     :param array_2d: 2 dimensional array of values.
     :param x_position: x coordinate in array_2d in pixels
@@ -1161,13 +1165,14 @@ def pull_value_from_grid(array_2d, x_position, y_position):
         query_points = np.array([[x_pos_arr.item(), y_pos_arr.item()]])
     else:
         query_points = np.vstack([x_pos_arr.ravel(), y_pos_arr.ravel()]).T
-    
+
     interpolated_values_flat = interpolator(query_points)
 
     if x_pos_arr.ndim == 0:
         return interpolated_values_flat[0]
     else:
         return interpolated_values_flat.reshape(x_pos_arr.shape)
+
 
 # The credits for the following function go to Henry Best (https://github.com/Henry-Best-01/Amoeba)
 def extract_light_curve(
@@ -1247,12 +1252,14 @@ def extract_light_curve(
             "warning, light curve is too long for this magnification map. Returning average flux."
         )
         return np.sum(convolution_array) / np.size(convolution_array)
-    
+
     max_safe_x_idx = np.size(safe_convolution_array, 0) - 1
     max_safe_y_idx = np.size(safe_convolution_array, 1) - 1
 
     if x_start_position is not None:
-        if not (0 <= x_start_position <= max_safe_x_idx): # Checks both lower and upper bounds
+        if not (
+            0 <= x_start_position <= max_safe_x_idx
+        ):  # Checks both lower and upper bounds
             print(
                 "Warning, chosen position lays in the convolution artifact region. Returning average flux."
             )
