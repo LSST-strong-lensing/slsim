@@ -175,10 +175,7 @@ class Lens(LensedSystemBase):
             solver = "analytical"
         else:
             solver = "lenstronomy"
-        if self.deflector.deflector_type in ["EPL"]:
-            einstein_radius = self.einstein_radius[source_index]
-        else:
-            einstein_radius = self.einstein_radius_infinity
+        einstein_radius = self._get_effective_einstein_radius(source_index=source_index)
         self._image_positions = lens_eq_solver.image_position_from_source(
             source_pos_x,
             source_pos_y,
@@ -235,10 +232,7 @@ class Lens(LensedSystemBase):
             solver = "analytical"
         else:
             solver = "lenstronomy"
-        if self.deflector.deflector_type in ["EPL"]:
-            einstein_radius = self.einstein_radius[source_index]
-        else:
-            einstein_radius = self.einstein_radius_infinity
+        einstein_radius = self._get_effective_einstein_radius(source_index=source_index)
         self._point_image_positions = lens_eq_solver.image_position_from_source(
             point_source_pos_x,
             point_source_pos_y,
@@ -326,10 +320,7 @@ class Lens(LensedSystemBase):
         # times 2 must be greater than or equal to the minimum image separation
         # (min_image_separation) and less than or equal to the maximum image
         # separation (max_image_separation).
-        if self.deflector.deflector_type in ["EPL"]:
-            einstein_radius = self.einstein_radius[source_index]
-        else:
-            einstein_radius = self.einstein_radius_infinity
+        einstein_radius = self._get_effective_einstein_radius(source_index=source_index)
         if not min_image_separation <= 2 * einstein_radius <= max_image_separation:
             return False
 
@@ -475,6 +466,18 @@ class Lens(LensedSystemBase):
         if not hasattr(self, "_theta_E_infinity"):
             self._theta_E_infinity = self.deflector.theta_e_infinity(self.cosmo)
         return self._theta_E_infinity
+    
+    def _get_effective_einstein_radius(self, source_index):
+        """
+        Returns the appropriate Einstein radius depending on the deflector type.
+        
+        :param source_index: index of the source.
+        :return: effective Einstein radius for the lens-source pair.
+        """
+        if self.deflector.deflector_type in ["EPL"]:
+            return self.einstein_radius[source_index]
+        else:
+            return self.einstein_radius_infinity
 
     def _einstein_radius(self, source_index):
         """Einstein radius, including external shear.
@@ -893,10 +896,7 @@ class Lens(LensedSystemBase):
             multi_plane=False,
             z_source=self.source(source_index).redshift,
         )
-        if self.deflector.deflector_type in ["EPL"]:
-            theta_E = self.einstein_radius[source_index]
-        else:
-            theta_E = self.einstein_radius_infinity
+        theta_E = self._get_effective_einstein_radius(source_index=source_index)
         center_source = self.source(source_index).extended_source_position(
             reference_position=self.deflector_position, draw_area=self.test_area
         )
