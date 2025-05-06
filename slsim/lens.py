@@ -151,8 +151,6 @@ class Lens(LensedSystemBase):
         """Returns extended source image positions by solving the lens equation
         for a single source.
 
-        :param source: Source class instance. The redshift of this
-            source is used in the LensModel.
         :param source_index: index of a source in source list.
         :return: x-pos, y-pos
         """
@@ -212,8 +210,6 @@ class Lens(LensedSystemBase):
         for a single source. In the absence of a point source, this function
         returns the solution for the center of the extended source.
 
-        :param source: Source class instance. The redshift of this
-            source is used in the LensModel.
         :param source_index: index of a source in source list.
         :return: x-pos, y-pos
         """
@@ -303,8 +299,6 @@ class Lens(LensedSystemBase):
         """Check whether a single lensing configuration matches selection and
         plausibility criteria.
 
-        :param source: Source class instance. The redshift of this
-            source is used in the LensCosmo or LensModel.
         :param min_image_separation: minimum image separation
         :param max_image_separation: maximum image separation
         :param mag_arc_limit: dictionary with key of bands and values of
@@ -485,8 +479,7 @@ class Lens(LensedSystemBase):
     def _einstein_radius(self, source_index):
         """Einstein radius, including external shear.
 
-        :param source: Source class instance. The redshift of this
-            source is used in the LensCosmo or LensModel.
+        :param source_index: index of a source in source list.
         :return: einstein radius of a lens-source pair.
         """
         if self.deflector.redshift >= self.source(source_index).redshift:
@@ -577,8 +570,6 @@ class Lens(LensedSystemBase):
         Negative values correspond to images arriving earlier, and positive
         signs correspond to images arriving later.
 
-        :param source: Source class instance. The redshift of this
-            source is used in the LensModel.
         :param source_index: index of a source in source list.
         :return: arrival times for each image [days]
         :rtype: numpy array
@@ -622,7 +613,6 @@ class Lens(LensedSystemBase):
         for redshifts, but for time delays. The time is relative to the first
         arriving image.
 
-        :param source: Source class instance.
         :param source_index: index of a source in source list.
         :param t_obs: time of observation [days]. It could be a single
             observation time or an array of observation time.
@@ -679,7 +669,6 @@ class Lens(LensedSystemBase):
 
         :param band: imaging band
         :type band: string
-        :param source: Source class instance.
         :param source_index: index of a source in source list.
         :param lensed: if True, returns the lensed magnified magnitude
         :type lensed: bool
@@ -768,8 +757,6 @@ class Lens(LensedSystemBase):
 
         :param band: imaging band
         :type band: string
-        :param source: Source class instance. The redshift of this
-            source is used in the LensCosmo or LensModel.
         :param source_index: index of a source in source list.
         :param lensed: if True, returns the lensed magnified magnitude
             of each image.
@@ -796,7 +783,6 @@ class Lens(LensedSystemBase):
 
         :param band: imaging band
         :type band: string
-        :param source: Source class instance
         :param source_index: index of a source in source list.
         :param lensed: if True, returns the lensed magnified magnitude
         :type lensed: bool
@@ -830,8 +816,6 @@ class Lens(LensedSystemBase):
         source. The function also works for extended source. For this, It uses
         center of the extended source to calculate lensing magnification.
 
-        :param source: Source class instance. The redshift of this
-            source is used in the LensModel.
         :param source_index: index of a source in source list.
         :param extended: Boolean. If True, computes the magnification
             for extended source and ignores point source case.
@@ -892,7 +876,6 @@ class Lens(LensedSystemBase):
         integrated flux-weighted magnification factor of the extended host
         galaxy. This function does the operation for single source.
 
-        :param source: Source class instance
         :param source_index: index of a source in source list.
         :return: integrated magnification factor of host magnitude
         """
