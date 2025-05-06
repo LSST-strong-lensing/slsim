@@ -14,7 +14,8 @@ from slsim.LOS.los_pop import LOSPop
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
 import os
-
+import pickle
+from unittest.mock import patch, MagicMock # Added for mocking
 
 class TestLens(object):
     # pytest.fixture(scope='class')
@@ -408,9 +409,202 @@ def test_point_source_magnitude(pes_lens_instance):
     assert len(mag_unlensed) == 1
 
 
-def test_point_source_magnitude_microlensing(pes_lens_instance):
-    pass
+################################################
+############## MICROLENSING TESTS###############
+################################################
 
+
+
+@pytest.fixture
+def lens_instance_with_variability():
+    # Path to the pickled Lens object
+    # IMPORTANT: Adjust this path to where your test_lens.py is relative to the TestData folder
+    path_to_test_dir = os.path.dirname(os.path.abspath(__file__))
+    pickle_path = os.path.join(path_to_test_dir, "TestData", "test_data_microlensing", "lens_class_microlensing.pickle")
+
+    if not os.path.exists(pickle_path):
+        pytest.skip(f"Pickle file for lens_instance_with_variability not found at {pickle_path}")
+    with open(pickle_path, "rb") as f:
+        lens_class = pickle.load(f)
+    return lens_class
+
+@pytest.fixture
+def band_i():
+    return "i"
+
+@pytest.fixture
+def time_array():
+    return np.linspace(0, 100, 20) # 20 time steps for microlensing tests
+
+@pytest.fixture
+def kwargs_microlensing_magmap_settings_test(lens_instance_with_variability):
+    """ Minimal settings for MagnificationMap for microlensing tests. """
+    # These should be consistent with how MicrolensingLightCurveFromLensModel
+    # would set them up, or use small values for speed if actual map generation is skipped.
+    # The theta_star from the loaded lens_class is the most relevant here.
+    source = lens_instance_with_variability.source(0)
+    theta_e = lens_instance_with_variability._einstein_radius(source) # Use actual theta_E
+    return {
+        "theta_star": theta_e * 0.01, # Example: theta_star as a fraction of theta_E
+        "num_pixels_x": 100, # Small for speed
+        "num_pixels_y": 100,
+        "half_length_x": 5 * theta_e * 0.01, # Small region
+        "half_length_y": 5 * theta_e * 0.01,
+        # Other params like mass_function can be defaults if not critical for the test's logic
+    }
+
+@pytest.fixture
+def kwargs_source_gaussian_test(lens_instance_with_variability):
+    source = lens_instance_with_variability.source(0)
+    return {
+        "source_redshift": source.redshift,
+        "cosmo": lens_instance_with_variability.cosmo,
+        "source_size": 1e-8, # Very small for point-like behavior
+    }
+
+@pytest.fixture
+def kwargs_microlensing_settings(kwargs_microlensing_magmap_settings_test, kwargs_source_gaussian_test):
+    """ Combines settings for the kwargs_microlensing dictionary. """
+    return {
+        "kwargs_MagnificationMap": kwargs_microlensing_magmap_settings_test,
+        "point_source_morphology": "gaussian", # Assuming Gaussian for simplicity
+        "kwargs_source_morphology": kwargs_source_gaussian_test,
+    }
+
+def test_microlensing_parameters_for_image_positions_single_source(lens_instance_with_variability, band_i):
+    """
+    Tests the _microlensing_parameters_for_image_positions_single_source method.
+    This is an integration test as it relies on other methods of pes_lens_instance.
+    """
+    source = lens_instance_with_variability.source(0) # Get the first (and likely only) source
+
+    # Ensure image positions are calculated if not already
+    if not hasattr(lens_instance_with_variability, "_ps_image_position_list"):
+        lens_instance_with_variability.point_source_image_positions()
+    
+    num_images = len(lens_instance_with_variability._ps_image_position_list[0][0])
+    assert num_images == 4
+    if num_images == 0:
+        pytest.skip("Skipping test: No lensed images found for this configuration.")
+
+    try:
+        (
+            kappa_star_img, kappa_tot_img, shear_img, shear_angle_img
+        ) = lens_instance_with_variability._microlensing_parameters_for_image_positions_single_source(
+            band_i, source
+        )
+    except Exception as e:
+        pytest.fail(f"_microlensing_parameters_for_image_positions_single_source raised: {e}")
+
+    assert isinstance(kappa_star_img, np.ndarray)
+    assert isinstance(kappa_tot_img, np.ndarray)
+    assert isinstance(shear_img, np.ndarray)
+    assert isinstance(shear_angle_img, np.ndarray)
+
+    assert kappa_star_img.shape == (num_images,)
+    assert kappa_tot_img.shape == (num_images,)
+    assert shear_img.shape == (num_images,)
+    assert shear_angle_img.shape == (num_images,)
+
+    # Basic plausibility checks (values depend heavily on the lens model)
+    assert np.all(np.isfinite(kappa_star_img))
+    assert np.all(np.isfinite(kappa_tot_img))
+    assert np.all(np.isfinite(shear_img))
+    assert np.all(np.isfinite(shear_angle_img))
+
+def test_point_source_magnitude_with_microlensing_block(
+    lens_instance_with_variability, time_array, band_i, kwargs_microlensing_settings
+):
+    """Test lensed point source magnitude including the microlensing block."""
+    lens_system = lens_instance_with_variability # Use the loaded instance
+    source = lens_system.source(0) # Assuming single point source in this fixture
+
+    # 1. Get lensed magnitude WITH time but WITHOUT microlensing
+    mag_lensed_time_list_no_ml = lens_system.point_source_magnitude(
+        band=band_i, lensed=True, time=time_array, microlensing=False
+    )
+    
+    num_images = lens_system.image_number[0]
+    if num_images == 0:
+        pytest.skip("No lensed images for microlensing test.")
+
+    # 2. Mock the internal _point_source_magnitude_microlensing method
+    with patch.object(lens_system, '_point_source_magnitude_microlensing', autospec=True) as mock_internal_microlensing_method:
+        # Define a specific return value for the mocked internal method
+        # This should be an array of shape (num_images, len(time_array))
+        mock_delta_mags_microlensing = np.random.normal(0, 0.05, size=(num_images, len(time_array)))
+        mock_internal_microlensing_method.return_value = mock_delta_mags_microlensing
+
+        # 3. Call point_source_magnitude WITH microlensing=True
+        # This should now call our mocked _point_source_magnitude_microlensing
+        mag_lensed_time_with_ml_list = lens_system.point_source_magnitude(
+            band=band_i,
+            lensed=True,
+            time=time_array,
+            microlensing=True, # This activates the block we want to test
+            kwargs_microlensing=kwargs_microlensing_settings
+        )
+
+        # 4. Assertions
+        # Check that our internal mock was called correctly
+        mock_internal_microlensing_method.assert_called_once_with(
+            band_i, time_array, source, kwargs_microlensing=kwargs_microlensing_settings
+        )
+
+        # Check that the final magnitude is the sum of the non-microlensed time-variable
+        # magnitude and the (mocked) microlensing delta magnitudes.
+        # We are testing the `+= microlensing_magnitudes` line.
+        expected_final_mags = mag_lensed_time_list_no_ml[0] + mock_delta_mags_microlensing
+        np.testing.assert_allclose(mag_lensed_time_with_ml_list[0], expected_final_mags)
+
+
+# This test requires mocking because it calls the external microlensing light curve generator
+@patch('slsim.Microlensing.lightcurvelensmodel.MicrolensingLightCurveFromLensModel')
+def test_point_source_magnitude_microlensing(
+    mock_ml_lc_from_lm_class, lens_instance_with_variability, band_i, time_array, kwargs_microlensing_settings
+):
+    """Tests _point_source_magnitude_microlensing by mocking the light curve generator."""
+    source = lens_instance_with_variability.source(0)
+    num_images = lens_instance_with_variability.image_number[0]
+
+    if num_images == 0:
+        pytest.skip("No lensed images found for this configuration.")
+
+    # Configure the mock MicrolensingLightCurveFromLensModel instance
+    mock_ml_lc_instance = MagicMock()
+    # This is what ml_lc_instance.generate_point_source_microlensing_magnitudes is expected to return
+    expected_microlensing_delta_mags = np.random.normal(0, 0.1, size=(num_images, len(time_array)))
+    mock_ml_lc_instance.generate_point_source_microlensing_magnitudes.return_value = expected_microlensing_delta_mags
+    mock_ml_lc_from_lm_class.return_value = mock_ml_lc_instance # When Lens calls MicrolensingLightCurveFromLensModel(), it gets our mock
+
+    # Call the method under test
+    try:
+        result_mags = lens_instance_with_variability._point_source_magnitude_microlensing(
+            band_i, time_array, source, kwargs_microlensing=kwargs_microlensing_settings
+        )
+    except Exception as e:
+        pytest.fail(f"_point_source_magnitude_microlensing raised an exception: {e}")
+
+    # Verify MicrolensingLightCurveFromLensModel was instantiated correctly
+    mock_ml_lc_from_lm_class.assert_called_once_with(lens_instance_with_variability)
+
+    # Verify generate_point_source_microlensing_magnitudes was called on the instance
+    mock_ml_lc_instance.generate_point_source_microlensing_magnitudes.assert_called_once()
+    call_kwargs = mock_ml_lc_instance.generate_point_source_microlensing_magnitudes.call_args.kwargs
+    
+    # Check some key arguments passed to the mocked method
+    np.testing.assert_array_equal(call_kwargs['time'], time_array)
+    assert call_kwargs['source_redshift'] == source.redshift
+    assert call_kwargs['kwargs_magnification_map'] == kwargs_microlensing_settings["kwargs_MagnificationMap"] # Corrected key
+    assert call_kwargs['point_source_morphology'] == kwargs_microlensing_settings["point_source_morphology"]
+    assert call_kwargs['kwargs_source_morphology'] == kwargs_microlensing_settings["kwargs_source_morphology"]
+
+    # The result of _point_source_magnitude_microlensing should be the direct output
+    # from the mocked generate_point_source_microlensing_magnitudes
+    np.testing.assert_allclose(result_mags, expected_microlensing_delta_mags)
+
+################################################
+################################################
 
 def test_lens_id_qso(pes_lens_instance):
     lens_id = pes_lens_instance.generate_id()

@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
@@ -9,6 +11,7 @@ from lenstronomy.LensModel.Solver.lens_equation_solver import (
 
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 from lenstronomy.LightModel.light_model import LightModel
+from lenstronomy.Util import constants
 from lenstronomy.Util import data_util
 from lenstronomy.Util import util
 
@@ -163,7 +166,6 @@ class Lens(LensedSystemBase):
             z_source_convention=self.max_redshift_source_class.redshift,
             multi_plane=False,
             z_source=source.redshift,
-            cosmo=self.cosmo,
         )
         lens_eq_solver = LensEquationSolver(lens_model_class)
         source_pos_x, source_pos_y = source.extended_source_position(
@@ -219,7 +221,6 @@ class Lens(LensedSystemBase):
             z_source_convention=self.max_redshift_source_class.redshift,
             multi_plane=False,
             z_source=source.redshift,
-            cosmo=self.cosmo,
         )
         lens_eq_solver = LensEquationSolver(lens_model_class)
         point_source_pos_x, point_source_pos_y = source.point_source_position(
@@ -484,7 +485,6 @@ class Lens(LensedSystemBase):
             z_source_convention=self.max_redshift_source_class.redshift,
             multi_plane=False,
             z_source=source.redshift,
-            cosmo=self.cosmo,
         )
         if self.deflector.deflector_type in ["EPL"]:
             kappa_ext_convention = self.los_class.convergence
@@ -506,14 +506,14 @@ class Lens(LensedSystemBase):
         else:
             # numerical solution for the Einstein radius
             lens_analysis = LensProfileAnalysis(lens_model=lens_model)
-            # kwargs_lens_ = copy.deepcopy(kwargs_lens)
-            # for kwargs in kwargs_lens_:
-            #    if "center_x" in kwargs:
-            #        kwargs["center_x"] = 0
-            #    if "center_y" in kwargs:
-            #        kwargs["center_y"] = 0
+            kwargs_lens_ = copy.deepcopy(kwargs_lens)
+            for kwargs in kwargs_lens_:
+                if "center_x" in kwargs:
+                    kwargs["center_x"] = 0
+                if "center_y" in kwargs:
+                    kwargs["center_y"] = 0
             theta_E = lens_analysis.effective_einstein_radius(
-                kwargs_lens, r_min=1e-4, r_max=5e1, num_points=100
+                kwargs_lens_, r_min=1e-4, r_max=5e1, num_points=100
             )
         return theta_E
 
@@ -719,13 +719,12 @@ class Lens(LensedSystemBase):
                 lensed_variable_magnitude = (
                     variable_magnitude - magnif_log[:, np.newaxis]
                 )
-                # TODO: is this enough or should we make a new function for microlensing?
                 if microlensing:
                     microlensing_magnitudes = self._point_source_magnitude_microlensing(
                         band,
                         time,
                         source,
-                        kwargs_microlensing=kwargs_microlensing,
+                        kwargs_microlensing,
                     )
                     lensed_variable_magnitude += microlensing_magnitudes
 
@@ -815,6 +814,89 @@ class Lens(LensedSystemBase):
             np.array(shear_images),
             np.array(shear_angle_images),
         )
+
+    def _point_source_magnitude_microlensing(
+        self, band, time, source, kwargs_microlensing
+    ):
+        """Returns point source magnitude variability from only microlensing
+        effect. This function does operation only for the single source.
+
+        :param band: imaging band
+        :type band: string
+        :param time: time is an image observation time in units of days.
+        :param kwargs_microlensing: additional (optional) dictionary of
+            settings required by micro-lensing calculation that do not
+            depend on the Lens() class. It is of type:
+            kwargs_microlensing = {"kwargs_MagnificationMap":
+            kwargs_MagnificationMap, "point_source_morphology":
+            'gaussian' or 'agn' or 'supernovae',
+            "kwargs_source_morphology": kwargs_source_morphology} The
+            kwargs_source_morphology is required for the source
+            morphology calculation. The kwargs_MagnificationMap is
+            required for the microlensing calculation.
+        :type kwargs_microlensing: dict
+        :return: point source magnitude for a single source, does not
+            include the macro-magnification.
+        :rtype: numpy array
+        """
+        print("kwargs_microlensing", kwargs_microlensing)
+        if kwargs_microlensing is None:
+            raise ValueError(
+                "kwargs_microlensing is None. Please provide a dictionary of settings required by micro-lensing calculation."
+            )
+        if "kwargs_MagnificationMap" not in kwargs_microlensing:
+            raise ValueError(
+                "kwargs_MagnificationMap not in kwargs_microlensing. Please provide a dictionary of settings required by micro-lensing calculation."
+            )
+        if "point_source_morphology" not in kwargs_microlensing:
+            raise ValueError(
+                "point_source_morphology not in kwargs_microlensing. Please provide the point source morphology type. It can be either 'gaussian' or 'agn' or 'supernovae'."
+            )
+        if "kwargs_source_morphology" not in kwargs_microlensing:
+            raise ValueError(
+                "kwargs_source_morphology not in kwargs_microlensing. Please provide a dictionary of settings required by source morphology calculation."
+            )
+
+        # get microlensing parameters
+        kappa_star_images, kappa_tot_images, shear_images, shear_angle_images = (
+            self._microlensing_parameters_for_image_positions_single_source(
+                band, source
+            )
+        )
+
+        # importing here to keep it optional
+        from slsim.Microlensing.lightcurvelensmodel import (
+            MicrolensingLightCurveFromLensModel,
+        )
+
+        # select random RA and DEC in Sky for the lens
+        ra_lens = np.random.uniform(0, 360) # degrees
+        dec_lens = np.random.uniform(-90, 90) # degrees
+
+        ml_lc_lens = MicrolensingLightCurveFromLensModel(self)
+        microlensing_magnitudes = (
+            ml_lc_lens.generate_point_source_microlensing_magnitudes(
+                time=time,
+                source_redshift=source.redshift,
+                deflector_redshift=self.deflector_redshift,
+                kappa_star_images=kappa_star_images,
+                kappa_tot_images=kappa_tot_images,
+                shear_images=shear_images,
+                shear_angle_images=shear_angle_images,
+                # ra_lens=self.deflector_position[0],  # TODO: check if this is correct?
+                # dec_lens=self.deflector_position[1],
+                ra_lens=ra_lens,
+                dec_lens=dec_lens,
+                deflector_velocity_dispersion=self.deflector_velocity_dispersion(),
+                cosmology=self.cosmo,
+                kwargs_magnification_map=kwargs_microlensing["kwargs_MagnificationMap"],
+                point_source_morphology=kwargs_microlensing["point_source_morphology"],
+                kwargs_source_morphology=kwargs_microlensing[
+                    "kwargs_source_morphology"
+                ],
+            )
+        )
+        return microlensing_magnitudes  # # does not include the macro-lensing effect
 
     def extended_source_magnitude(self, band, lensed=False):
         """Unlensed apparent magnitude of the extended source for a given band
@@ -1283,3 +1365,22 @@ def image_separation_from_positions(image_positions):
         )
         image_separation = np.max(separations)
     return image_separation
+
+
+def theta_e_when_source_infinity(deflector_dict=None, v_sigma=None):
+    """Calculate Einstein radius in arc-seconds for a source at infinity.
+
+    :param deflector_dict: deflector properties
+    :param v_sigma: velocity dispersion in km/s
+    :return: Einstein radius in arc-seconds
+    """
+    if v_sigma is None:
+        if deflector_dict is None:
+            raise ValueError("Either deflector_dict or v_sigma must be provided")
+        else:
+            v_sigma = deflector_dict["vel_disp"]
+
+    theta_E_infinity = (
+        4 * np.pi * (v_sigma * 1000.0 / constants.c) ** 2 / constants.arcsec
+    )
+    return theta_E_infinity
