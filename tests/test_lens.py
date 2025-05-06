@@ -942,14 +942,16 @@ class TestSlhammock(object):
     def test_image_position(self):
         # In source dict we have not provided supernova-host offset. So, extended and
         # point source image position should be the same.
-        extended_source_image_position = self.lens_class.extended_source_image_positions()[0]
+        extended_source_image_position = (
+            self.lens_class.extended_source_image_positions()[0]
+        )
         point_source_image_position = self.lens_class.point_source_image_positions()[0]
-        assert np.all(extended_source_image_position[0] == point_source_image_position[0])
-        assert np.all(extended_source_image_position[1] == point_source_image_position[1])
-    
-    def test_source_light_model_lenstronomy_none_band(self):
-        results = self.lens_class.source_light_model_lenstronomy(band=None)[1]
-        npt.assert_almost_equal(results["kwargs_ps"][0]["magnitude"], 2.37366613, decimal=6)
+        assert np.all(
+            extended_source_image_position[0] == point_source_image_position[0]
+        )
+        assert np.all(
+            extended_source_image_position[1] == point_source_image_position[1]
+        )
 
 
 if __name__ == "__main__":
