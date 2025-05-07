@@ -733,7 +733,7 @@ class Lens(LensedSystemBase):
                     microlensing_magnitudes = self._point_source_magnitude_microlensing(
                         band,
                         time,
-                        self.source(source_index),
+                        source_index,
                         kwargs_microlensing,
                     )
                     lensed_variable_magnitude += microlensing_magnitudes
@@ -775,7 +775,7 @@ class Lens(LensedSystemBase):
             )
         return magnitude_list
 
-    def _microlensing_parameters_for_image_positions_single_source(self, band, source):
+    def _microlensing_parameters_for_image_positions_single_source(self, band, source_index):
         """For a given source, calculates the microlensing parameters for each
         image position.
 
@@ -791,7 +791,7 @@ class Lens(LensedSystemBase):
         lenstronomy_kwargs_lens = lenstronomy_kwargs[1]["kwargs_lens"]
 
         image_positions_x, image_positions_y = image_positions_x, image_positions_y = (
-            self._point_source_image_positions(source)
+            self._point_source_image_positions(source_index)
         )
 
         kappa_star_images = []  # kappa_star for each image of this source
@@ -827,7 +827,7 @@ class Lens(LensedSystemBase):
         )
 
     def _point_source_magnitude_microlensing(
-        self, band, time, source, kwargs_microlensing
+        self, band, time, source_index, kwargs_microlensing
     ):
         """Returns point source magnitude variability from only microlensing
         effect. This function does operation only for the single source.
@@ -871,7 +871,7 @@ class Lens(LensedSystemBase):
         # get microlensing parameters
         kappa_star_images, kappa_tot_images, shear_images, shear_angle_images = (
             self._microlensing_parameters_for_image_positions_single_source(
-                band, source
+                band, source_index
             )
         )
 
@@ -887,7 +887,7 @@ class Lens(LensedSystemBase):
         ml_lc_lens = MicrolensingLightCurveFromLensModel(self)
         microlensing_magnitudes = ml_lc_lens.generate_point_source_microlensing_magnitudes(
             time=time,
-            source_redshift=source.redshift,
+            source_redshift=self.source(source_index).redshift,
             deflector_redshift=self.deflector_redshift,
             kappa_star_images=kappa_star_images,
             kappa_tot_images=kappa_tot_images,

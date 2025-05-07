@@ -452,10 +452,7 @@ def kwargs_microlensing_magmap_settings_test(lens_instance_with_variability):
     # These should be consistent with how MicrolensingLightCurveFromLensModel
     # would set them up, or use small values for speed if actual map generation is skipped.
     # The theta_star from the loaded lens_class is the most relevant here.
-    source = lens_instance_with_variability.source(0)
-    theta_e = lens_instance_with_variability._einstein_radius(
-        source
-    )  # Use actual theta_E
+    theta_e = lens_instance_with_variability._einstein_radius(0)  # Use actual theta_E
     return {
         "theta_star": theta_e * 0.01,  # Example: theta_star as a fraction of theta_E
         "num_pixels_x": 100,  # Small for speed
@@ -513,7 +510,7 @@ def test_microlensing_parameters_for_image_positions_single_source(
     try:
         (kappa_star_img, kappa_tot_img, shear_img, shear_angle_img) = (
             lens_instance_with_variability._microlensing_parameters_for_image_positions_single_source(
-                band_i, source
+                band_i, source_index=0
             )
         )
     except Exception as e:
@@ -578,7 +575,7 @@ def test_point_source_magnitude_with_microlensing_block(
         # 4. Assertions
         # Check that our internal mock was called correctly
         mock_internal_microlensing_method.assert_called_once_with(
-            band_i, time_array, source, kwargs_microlensing=kwargs_microlensing_settings
+            band_i, time_array, source_index=0, kwargs_microlensing=kwargs_microlensing_settings
         )
 
         # Check that the final magnitude is the sum of the non-microlensed time-variable
@@ -624,7 +621,7 @@ def test_point_source_magnitude_microlensing(
             lens_instance_with_variability._point_source_magnitude_microlensing(
                 band_i,
                 time_array,
-                source,
+                source_index=0,
                 kwargs_microlensing=kwargs_microlensing_settings,
             )
         )
