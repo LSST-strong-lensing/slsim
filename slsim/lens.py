@@ -672,8 +672,12 @@ class Lens(LensedSystemBase):
         for index in range(len(self._source)):
             magnitude_list.append(
                 self._point_source_magnitude(
-                    band, source_index=index, lensed=lensed, time=time, 
-                    microlensing=microlensing, kwargs_microlensing=kwargs_microlensing
+                    band,
+                    source_index=index,
+                    lensed=lensed,
+                    time=time,
+                    microlensing=microlensing,
+                    kwargs_microlensing=kwargs_microlensing,
                 )
             )
         return magnitude_list
@@ -775,7 +779,9 @@ class Lens(LensedSystemBase):
             )
         return magnitude_list
 
-    def _microlensing_parameters_for_image_positions_single_source(self, band, source_index):
+    def _microlensing_parameters_for_image_positions_single_source(
+        self, band, source_index
+    ):
         """For a given source, calculates the microlensing parameters for each
         image position.
 
@@ -1206,7 +1212,9 @@ class Lens(LensedSystemBase):
         """
         return self.deflector.light_model_lenstronomy(band=band)
 
-    def source_light_model_lenstronomy(self, band=None, microlensing=False, kwargs_microlensing=None):
+    def source_light_model_lenstronomy(
+        self, band=None, microlensing=False, kwargs_microlensing=None
+    ):
         """Returns source light model instance and parameters in lenstronomy
         conventions, which includes extended sources and point sources.
 
@@ -1266,7 +1274,9 @@ class Lens(LensedSystemBase):
                     )
                 else:
                     image_magnitudes = self._point_source_magnitude(
-                        band=band, source_index=index, lensed=True,
+                        band=band,
+                        source_index=index,
+                        lensed=True,
                         microlensing=microlensing,
                         kwargs_microlensing=kwargs_microlensing,
                     )
@@ -1387,4 +1397,3 @@ def image_separation_from_positions(image_positions):
         )
         image_separation = np.max(separations)
     return image_separation
-

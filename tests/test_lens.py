@@ -575,7 +575,10 @@ def test_point_source_magnitude_with_microlensing_block(
         # 4. Assertions
         # Check that our internal mock was called correctly
         mock_internal_microlensing_method.assert_called_once_with(
-            band_i, time_array, source_index=0, kwargs_microlensing=kwargs_microlensing_settings
+            band_i,
+            time_array,
+            source_index=0,
+            kwargs_microlensing=kwargs_microlensing_settings,
         )
 
         # Check that the final magnitude is the sum of the non-microlensed time-variable
