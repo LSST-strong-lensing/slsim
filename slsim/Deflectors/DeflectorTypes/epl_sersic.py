@@ -85,12 +85,14 @@ class EPLSersic(DeflectorBase):
         )
         return e1_light, e2_light
 
-    def mass_model_lenstronomy(self, lens_cosmo=None):
+    def mass_model_lenstronomy(self, lens_cosmo=None, spherical=False):
         """Returns lens model instance and parameters in lenstronomy
         conventions.
 
         :param lens_cosmo: lens cosmology model
         :type lens_cosmo: ~lenstronomy.Cosmo.LensCosmo instance
+        :param spherical: if True, makes spherical assumption
+        :type spherical: bool
         :return: lens_mass_model_list, kwargs_lens_mass
         """
         gamma = self.halo_properties
@@ -114,10 +116,19 @@ class EPLSersic(DeflectorBase):
             }
         ]
         if gamma == 2:
-            lens_mass_model_list = ["SIE"]
+            if spherical is True:
+                lens_mass_model_list = ["SIS"]
+            else:
+                lens_mass_model_list = ["SIE"]
             kwargs_lens_mass[0].pop("gamma")
         else:
-            lens_mass_model_list = ["EPL"]
+            if spherical is True:
+                lens_mass_model_list = ["SPP"]
+            else:
+                lens_mass_model_list = ["EPL"]
+        if spherical is False:
+            kwargs_lens_mass[0]["e1"] = e1_mass_lenstronomy
+            kwargs_lens_mass[0]["e2"] = e2_mass_lenstronomy
         return lens_mass_model_list, kwargs_lens_mass
 
     def light_model_lenstronomy(self, band=None):

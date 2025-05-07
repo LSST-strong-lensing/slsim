@@ -1,18 +1,37 @@
 import numpy as np
-from astropy.table import Table
+import os
+from astropy.table import Table, hstack
 from colossus.cosmology import cosmology
 from colossus.halo import mass_defs
-from lenstronomy.Util import constants
-
 import slsim.Deflectors.galaxy_population as galaxy_population
+import slsim
 import slsim.Deflectors.halo_population as halo_population
 import slsim.Util.param_util as util
+import tempfile
+from skypy.pipeline import Pipeline
 
 
 class SLHammocksPipeline:
-    """Class for slhammocks configuration."""
+    """SLHammocksPipeline is a class that generate galaxy populations using a
+    halo-model approach. It supports either loading pre-generated galaxy
+    population data from a CSV file or generating the population on-the-fly
+    based on halo occupation and galaxy property models.
 
-    def __init__(self, slhammocks_config=None, sky_area=None, cosmo=None):
+    The pipeline integrates halo properties (mass, redshift) with
+    stellar masses and computes photometric magnitudes using SkyPy. For
+    this we need to execute skypy pipeline with in this class.
+    """
+
+    def __init__(
+        self,
+        slhammocks_config=None,
+        sky_area=None,
+        cosmo=None,
+        z_min=None,
+        z_max=None,
+        loghm_min=11.5,
+        loghm_max=16.0,
+    ):
         """
         :param slhammocks_config: path to the deflector population csv file for 'halo-model'
                             If None, generate the population. Not supported at this time.
@@ -25,7 +44,13 @@ class SLHammocksPipeline:
         :param cosmo: An instance of an astropy cosmology model
                         (e.g., FlatLambdaCDM(H0=70, Om0=0.3)).
         :type cosmo: astropy.cosmology instance or None
+        :param z_min: minimum galaxy redshift
+        :param z_max: maximum galaxy redshift
+        :param loghm_min: minimum halo mass in log unit
+        :param loghm_max: maximum halo mass in log unit
         """
+        path = os.path.dirname(slsim.__file__)
+        module_path, _ = os.path.split(path)
         if slhammocks_config is not None:
             table = Table.read(slhammocks_config, format="csv")
             table = table_translator_for_slsim(table, cosmo)
@@ -64,10 +89,10 @@ class SLHammocksPipeline:
             - 'ns' : The tilt of the primordial power spectrum. This parameter is required to convert from astropy.cosmology to colossus.cosmology
             """
             kwargs_population_base = {
-                "z_min": 0.01,
-                "z_max": 5.0,
-                "log10host_halo_mass_min": 11.0,
-                "log10host_halo_mass_max": 16.0,
+                "z_min": z_min,
+                "z_max": z_max,
+                "log10host_halo_mass_min": loghm_min,
+                "log10host_halo_mass_max": loghm_max,
                 "sigma_host_halo_concentration": 0.33,
                 "sigma_central_galaxy_mass": 0.2,
                 "TYPE_GAL_SIZE": "vdW23",
@@ -82,6 +107,42 @@ class SLHammocksPipeline:
             table = table_translator_for_slsim(table, cosmo)
 
             self._pipeline = table
+        skypy_config = os.path.join(module_path, "data/SkyPy/slhammock_skypy.yml")
+        with open(skypy_config, "r") as file:
+            content = file.read()
+        # replace z: PLACEHOLDER_Z with halo redshift
+        redshift_array = list(self._pipeline["z"].value)
+        old_z = "z: PLACEHOLDER_Z"
+        new_z = f"z: {redshift_array}"
+        content = content.replace(old_z, new_z)
+        # replace stellar_mass: PLACEHOLDER_MASS with stellar mass
+        stellar_mass_array = list(self._pipeline["stellar_mass"].value)
+        old_stellar_mass = "stellar_mass: PLACEHOLDER_MASS"
+        new_stellar_mass = f"stellar_mass: {stellar_mass_array}"
+        content = content.replace(old_stellar_mass, new_stellar_mass)
+
+        # update yaml file with given cosmo.
+        content = util.update_cosmology_in_yaml_file(cosmo=cosmo, yml_file=content)
+        # execute given yml file in skypy and compute magnitudes of the halo galaxies.
+        with tempfile.NamedTemporaryFile(
+            mode="w", delete=False, suffix=".yml"
+        ) as tmp_file:
+            tmp_file.write(content)
+        self._skypy_pipeline = Pipeline.read(tmp_file.name)
+        self._skypy_pipeline.execute()
+        magnitude_table = self._skypy_pipeline["halo"]
+        magnitude_table.remove_columns(["z", "stellar_mass", "coeff"])
+        # stack magnitude with the halo galaxy table
+        self._final_galaxy_table = hstack([self._pipeline, magnitude_table])
+
+    @property
+    def halo_galaxies(self):
+        """Slhammock pipeline for galaxies.
+
+        :return: list of galaxies from halo model
+        :rtype: list of dict
+        """
+        return self._final_galaxy_table
 
 
 def table_translator_for_slsim(table, cosmo):
@@ -109,7 +170,7 @@ def table_translator_for_slsim(table, cosmo):
         - 'p_g': posiiton angle of the galaxy in units of degree
         - 'tb': the scale radius appreared in Hernquist profile in units of arcsec.
             This parameter relates to the commonly used galaxy effective (half-mass) radius by t_b = 0.551*theta_eff.
-        - 'angular_size': galaxy effective radius in units of radian
+        - 'angular_size': galaxy effective radius in units of arcsec
     """
     sigma8 = 0.8102  # from Planck18 TT,TE,EE+lowE+lensing+BAO best-fit value
     ns = 0.9660499  # from Planck18 TT,TE,EE+lowE+lensing+BAO best-fit value
@@ -129,8 +190,8 @@ def table_translator_for_slsim(table, cosmo):
     if "ellipticity" not in table.colnames:
         table.rename_column("e_g", "ellipticity")
     if "angular_size" not in table.colnames:
-        angular_size_in_deg = table["tb"] / 0.551 * constants.arcsec
-        table.add_column(angular_size_in_deg, name="angular_size")
+        angular_size_in_arcsec = table["tb"] / 0.551
+        table.add_column(angular_size_in_arcsec, name="angular_size")
 
     M200_array, r200_array, c200_array = zip(
         *[
