@@ -494,9 +494,6 @@ def test_microlensing_parameters_for_image_positions_single_source(
     This is an integration test as it relies on other methods of
     pes_lens_instance.
     """
-    source = lens_instance_with_variability.source(
-        0
-    )  # Get the first (and likely only) source
 
     # Ensure image positions are calculated if not already
     if not hasattr(lens_instance_with_variability, "_ps_image_position_list"):
@@ -540,7 +537,6 @@ def test_point_source_magnitude_with_microlensing_block(
 ):
     """Test lensed point source magnitude including the microlensing block."""
     lens_system = lens_instance_with_variability  # Use the loaded instance
-    source = lens_system.source(0)  # Assuming single point source in this fixture
 
     # 1. Get lensed magnitude WITH time but WITHOUT microlensing
     mag_lensed_time_list_no_ml = lens_system.point_source_magnitude(
