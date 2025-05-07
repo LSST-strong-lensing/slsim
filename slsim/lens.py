@@ -1,4 +1,4 @@
-import copy
+# import copy
 
 import numpy as np
 from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
@@ -166,6 +166,7 @@ class Lens(LensedSystemBase):
             z_source_convention=self.max_redshift_source_class.redshift,
             multi_plane=False,
             z_source=source.redshift,
+            cosmo=self.cosmo,
         )
         lens_eq_solver = LensEquationSolver(lens_model_class)
         source_pos_x, source_pos_y = source.extended_source_position(
@@ -221,6 +222,7 @@ class Lens(LensedSystemBase):
             z_source_convention=self.max_redshift_source_class.redshift,
             multi_plane=False,
             z_source=source.redshift,
+            cosmo=self.cosmo,
         )
         lens_eq_solver = LensEquationSolver(lens_model_class)
         point_source_pos_x, point_source_pos_y = source.point_source_position(
@@ -485,6 +487,7 @@ class Lens(LensedSystemBase):
             z_source_convention=self.max_redshift_source_class.redshift,
             multi_plane=False,
             z_source=source.redshift,
+            cosmo=self.cosmo,
         )
         if self.deflector.deflector_type in ["EPL"]:
             kappa_ext_convention = self.los_class.convergence
@@ -506,14 +509,14 @@ class Lens(LensedSystemBase):
         else:
             # numerical solution for the Einstein radius
             lens_analysis = LensProfileAnalysis(lens_model=lens_model)
-            kwargs_lens_ = copy.deepcopy(kwargs_lens)
-            for kwargs in kwargs_lens_:
-                if "center_x" in kwargs:
-                    kwargs["center_x"] = 0
-                if "center_y" in kwargs:
-                    kwargs["center_y"] = 0
+            # kwargs_lens_ = copy.deepcopy(kwargs_lens)
+            # for kwargs in kwargs_lens_:
+            #    if "center_x" in kwargs:
+            #        kwargs["center_x"] = 0
+            #    if "center_y" in kwargs:
+            #        kwargs["center_y"] = 0
             theta_E = lens_analysis.effective_einstein_radius(
-                kwargs_lens_, r_min=1e-4, r_max=5e1, num_points=100
+                kwargs_lens, r_min=1e-4, r_max=5e1, num_points=100
             )
         return theta_E
 
@@ -1285,7 +1288,7 @@ class Lens(LensedSystemBase):
         kappa_star = (
             flux_local / total_flux * stellar_mass / self._lens_cosmo.sigma_crit_angle
         )
-        return kappa_star  # currently it returns a list!
+        return kappa_star
 
     def contrast_ratio(self, band, source_index=0):
         """Computes the surface brightness ratio (difference in magnitude per
