@@ -641,8 +641,15 @@ class Lens(LensedSystemBase):
 
         return observer_times
 
-    def point_source_magnitude(self, band, lensed=False, time=None):
-        """Point source magnitudes, either unlensed (single value) or lensed
+    def point_source_magnitude(
+        self,
+        band,
+        lensed=False,
+        time=None,
+        microlensing=False,
+        kwargs_microlensing=None,
+    ):
+        """Point source magnitude, either unlensed (single value) or lensed
         (array) with macro-model magnifications. This function provided
         magnitudes of all the sources.
 
@@ -652,8 +659,11 @@ class Lens(LensedSystemBase):
         :type band: string
         :param lensed: if True, returns the lensed magnified magnitude
         :type lensed: bool
-        :param time: time is a image observation time in units of days.
+        :param time: time is an image observation time in units of days.
             If None, provides magnitude without variability.
+        :param microlensing: if using micro-lensing map to produce the
+            lensed magnification
+        :type microlensing: bool
         :return: list of point source magnitudes.
         """
 
@@ -661,17 +671,30 @@ class Lens(LensedSystemBase):
         for index in range(len(self._source)):
             magnitude_list.append(
                 self._point_source_magnitude(
-                    band, source_index=index, lensed=lensed, time=time
+                    band,
+                    source_index=index,
+                    lensed=lensed,
+                    time=time,
+                    microlensing=microlensing,
+                    kwargs_microlensing=kwargs_microlensing,
                 )
             )
         return magnitude_list
 
-    def _point_source_magnitude(self, band, source_index, lensed=False, time=None):
+    def _point_source_magnitude(
+        self,
+        band,
+        source_index,
+        lensed=False,
+        time=None,
+        microlensing=False,
+        kwargs_microlensing=None,
+    ):
         """Point source magnitude, either unlensed (single value) or lensed
         (array) with macro-model magnifications. This function does operation
         only for the single source.
 
-        # TODO: time-variability with micro-lensing
+        # TODO: time-variability of the source with micro-lensing
 
         :param band: imaging band
         :type band: string
@@ -680,6 +703,19 @@ class Lens(LensedSystemBase):
         :type lensed: bool
         :param time: time is a image observation time in units of days.
             If None, provides magnitude without variability.
+        :param microlensing: to include microlensing effect?
+        :type microlensing: bool
+        :param kwargs_microlensing: additional (optional) dictionary of
+            settings required by micro-lensing calculation that do not
+            depend on the Lens() class. It is of type:
+            kwargs_microlensing = {"kwargs_MagnificationMap":
+            kwargs_MagnificationMap, "point_source_morphology":
+            'gaussian' or 'agn' or 'supernovae',
+            "kwargs_source_morphology": kwargs_source_morphology} The
+            kwargs_source_morphology is required for the source
+            morphology calculation. The kwargs_MagnificationMap is
+            required for the microlensing calculation.
+        :type kwargs_microlensing: dict
         :return: point source magnitude of a single source
         """
         # TODO: might have to change conventions between extended and point source
@@ -696,7 +732,17 @@ class Lens(LensedSystemBase):
                 lensed_variable_magnitude = (
                     variable_magnitude - magnif_log[:, np.newaxis]
                 )
+                if microlensing:
+                    microlensing_magnitudes = self._point_source_magnitude_microlensing(
+                        band,
+                        time,
+                        source_index,
+                        kwargs_microlensing,
+                    )
+                    lensed_variable_magnitude += microlensing_magnitudes
+
                 return lensed_variable_magnitude
+
             else:
                 source_mag_unlensed = self.source(source_index).point_source_magnitude(
                     band
@@ -731,6 +777,138 @@ class Lens(LensedSystemBase):
                 )
             )
         return magnitude_list
+
+    def _microlensing_parameters_for_image_positions_single_source(
+        self, band, source_index
+    ):
+        """For a given source, calculates the microlensing parameters for each
+        image position.
+
+        :param source: Source class instance
+        :return: np.array(kappa_star_images),
+            np.array(kappa_tot_images), np.array(shear_images),
+            np.array(shear_angle_images)
+        """
+        lenstronomy_kwargs = self.lenstronomy_kwargs(band=band)
+        lens_model_lenstronomy = LensModel(
+            lens_model_list=lenstronomy_kwargs[0]["lens_model_list"]
+        )
+        lenstronomy_kwargs_lens = lenstronomy_kwargs[1]["kwargs_lens"]
+
+        image_positions_x, image_positions_y = image_positions_x, image_positions_y = (
+            self._point_source_image_positions(source_index)
+        )
+
+        kappa_star_images = []  # kappa_star for each image of this source
+        kappa_tot_images = []
+        shear_images = []
+        shear_angle_images = []
+
+        for i in range(len(image_positions_x)):
+            ra = image_positions_x[i]
+            dec = image_positions_y[i]
+
+            kappa_tot = lens_model_lenstronomy.kappa(ra, dec, lenstronomy_kwargs_lens)
+            shear_smooth_vec = lens_model_lenstronomy.gamma(
+                ra, dec, lenstronomy_kwargs_lens
+            )
+            shear_smooth = np.sqrt(shear_smooth_vec[0] ** 2 + shear_smooth_vec[1] ** 2)
+            shear_angle = np.arctan2(shear_smooth_vec[1], shear_smooth_vec[0])
+
+            kappa_star = self.kappa_star(
+                ra, dec
+            )  # TODO: why does it return a list? is it for each source?
+
+            kappa_tot_images.append(kappa_tot)
+            shear_images.append(shear_smooth)
+            shear_angle_images.append(shear_angle)
+            kappa_star_images.append(kappa_star[0])
+
+        return (
+            np.array(kappa_star_images),
+            np.array(kappa_tot_images),
+            np.array(shear_images),
+            np.array(shear_angle_images),
+        )
+
+    def _point_source_magnitude_microlensing(
+        self, band, time, source_index, kwargs_microlensing
+    ):
+        """Returns point source magnitude variability from only microlensing
+        effect. This function does operation only for the single source.
+
+        :param band: imaging band
+        :type band: string
+        :param time: time is an image observation time in units of days.
+        :param kwargs_microlensing: additional (optional) dictionary of
+            settings required by micro-lensing calculation that do not
+            depend on the Lens() class. It is of type:
+            kwargs_microlensing = {"kwargs_MagnificationMap":
+            kwargs_MagnificationMap, "point_source_morphology":
+            'gaussian' or 'agn' or 'supernovae',
+            "kwargs_source_morphology": kwargs_source_morphology} The
+            kwargs_source_morphology is required for the source
+            morphology calculation. The kwargs_MagnificationMap is
+            required for the microlensing calculation.
+        :type kwargs_microlensing: dict
+        :return: point source magnitude for a single source, does not
+            include the macro-magnification.
+        :rtype: numpy array
+        """
+        print("kwargs_microlensing", kwargs_microlensing)
+        if kwargs_microlensing is None:
+            raise ValueError(
+                "kwargs_microlensing is None. Please provide a dictionary of settings required by micro-lensing calculation."
+            )
+        if "kwargs_MagnificationMap" not in kwargs_microlensing:
+            raise ValueError(
+                "kwargs_MagnificationMap not in kwargs_microlensing. Please provide a dictionary of settings required by micro-lensing calculation."
+            )
+        if "point_source_morphology" not in kwargs_microlensing:
+            raise ValueError(
+                "point_source_morphology not in kwargs_microlensing. Please provide the point source morphology type. It can be either 'gaussian' or 'agn' or 'supernovae'."
+            )
+        if "kwargs_source_morphology" not in kwargs_microlensing:
+            raise ValueError(
+                "kwargs_source_morphology not in kwargs_microlensing. Please provide a dictionary of settings required by source morphology calculation."
+            )
+
+        # get microlensing parameters
+        kappa_star_images, kappa_tot_images, shear_images, shear_angle_images = (
+            self._microlensing_parameters_for_image_positions_single_source(
+                band, source_index
+            )
+        )
+
+        # importing here to keep it optional
+        from slsim.Microlensing.lightcurvelensmodel import (
+            MicrolensingLightCurveFromLensModel,
+        )
+
+        # select random RA and DEC in Sky for the lens
+        ra_lens = np.random.uniform(0, 360)  # degrees
+        dec_lens = np.random.uniform(-90, 90)  # degrees
+
+        ml_lc_lens = MicrolensingLightCurveFromLensModel(self)
+        microlensing_magnitudes = ml_lc_lens.generate_point_source_microlensing_magnitudes(
+            time=time,
+            source_redshift=self.source(source_index).redshift,
+            deflector_redshift=self.deflector_redshift,
+            kappa_star_images=kappa_star_images,
+            kappa_tot_images=kappa_tot_images,
+            shear_images=shear_images,
+            shear_angle_images=shear_angle_images,
+            # ra_lens=self.deflector_position[0],  # TODO: check if this is correct?
+            # dec_lens=self.deflector_position[1],
+            ra_lens=ra_lens,
+            dec_lens=dec_lens,
+            deflector_velocity_dispersion=self.deflector_velocity_dispersion(),
+            cosmology=self.cosmo,
+            kwargs_magnification_map=kwargs_microlensing["kwargs_MagnificationMap"],
+            point_source_morphology=kwargs_microlensing["point_source_morphology"],
+            kwargs_source_morphology=kwargs_microlensing["kwargs_source_morphology"],
+        )
+        return microlensing_magnitudes  # # does not include the macro-lensing effect
 
     def extended_source_magnitude(self, band, lensed=False):
         """Unlensed apparent magnitude of the extended source for a given band
@@ -1033,10 +1211,21 @@ class Lens(LensedSystemBase):
         """
         return self.deflector.light_model_lenstronomy(band=band)
 
-    def source_light_model_lenstronomy(self, band=None):
+    def source_light_model_lenstronomy(
+        self, band=None, microlensing=False, kwargs_microlensing=None
+    ):
         """Returns source light model instance and parameters in lenstronomy
-        conventions.
+        conventions, which includes extended sources and point sources.
 
+        :param band: imaging band
+        :type band: string
+        :param microlensing: if using micro-lensing map to produce the
+            lensed magnification
+        :type microlensing: bool
+        :param kwargs_microlensing: additional (optional) dictionary of
+            settings required by micro-lensing calculation that do not
+            depend on the Lens() class.
+        :type kwargs_microlensing: dict
         :return: source_light_model_list, kwargs_source_light
         """
         source_models = {}
@@ -1084,7 +1273,11 @@ class Lens(LensedSystemBase):
                     )
                 else:
                     image_magnitudes = self._point_source_magnitude(
-                        band=band, source_index=index, lensed=True
+                        band=band,
+                        source_index=index,
+                        lensed=True,
+                        microlensing=microlensing,
+                        kwargs_microlensing=kwargs_microlensing,
                     )
                 kwargs_ps_list.append(
                     {
