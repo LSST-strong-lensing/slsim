@@ -14,7 +14,7 @@ from slsim.LOS.los_pop import LOSPop
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
 import os
-import pickle
+# import pickle
 from unittest.mock import patch, MagicMock  # Added for mocking
 
 
@@ -415,24 +415,102 @@ def test_point_source_magnitude(pes_lens_instance):
 ################################################
 
 
+# @pytest.fixture
+# def lens_instance_with_variability():
+#     # Path to the pickled Lens object
+#     # IMPORTANT: Adjust this path to where your test_lens.py is relative to the TestData folder
+#     path_to_test_dir = os.path.dirname(os.path.abspath(__file__))
+#     pickle_path = os.path.join(
+#         path_to_test_dir,
+#         "TestData",
+#         "test_data_microlensing",
+#         "lens_class_microlensing.pickle",
+#     )
+
+#     if not os.path.exists(pickle_path):
+#         pytest.skip(
+#             f"Pickle file for lens_instance_with_variability not found at {pickle_path}"
+#         )
+#     with open(pickle_path, "rb") as f:
+#         lens_class = pickle.load(f)
+#     return lens_class
+
 @pytest.fixture
 def lens_instance_with_variability():
-    # Path to the pickled Lens object
-    # IMPORTANT: Adjust this path to where your test_lens.py is relative to the TestData folder
-    path_to_test_dir = os.path.dirname(os.path.abspath(__file__))
-    pickle_path = os.path.join(
-        path_to_test_dir,
-        "TestData",
-        "test_data_microlensing",
-        "lens_class_microlensing.pickle",
+    # quasar and host galaxy dict. One can avoid host galaxy information and simulate
+    # lensed quasar only.
+    source_dict_quasar = {
+        "z": 1.5,
+        "ps_mag_i": 21,
+        "angular_size": 0.10887651129362959,
+        "mag_i": 20,
+        "e1": 0.0,
+        "e2": 0.0,
+        "n_sersic": 1.5547096361698418,
+        "center_x": 0.046053505877290584,
+        "center_y": -0.09071283196326566
+        }
+
+    deflector_dict_quasar={
+        'z': 0.501666913484551,
+        'M': -21.83145200238993,
+        'coeff': [0.141014265858706, 9.517770703665604e-05],
+        'ellipticity': 0.2284277382812588,
+        'physical_size': 4.206949315885421,
+        'stellar_mass': 362262853208.36945,
+        'angular_size': 0.6879678734773863,
+        'mag_g': 21.867784201009997,
+        'mag_r': 20.33108481157918,
+        'mag_i': 19.493883022638812,
+        'mag_z': 19.105662758016145,
+        'mag_y': 18.86764491626696,
+        'galaxy_type': 'red',
+        'vel_disp': 225.65292910480588,
+        'e1_light': -0.11571475911179421,
+        'e2_light': -0.0025994949173672476,
+        'e1_mass': -0.17804791091757563,
+        'e2_mass': 0.040020226664717634,
+        'n_sersic': 4.0,   
+        "theta_E":1.5,
+        "gamma_pl": 2.0,
+        "center_x": 0.0316789,
+        "center_y": -0.0400549,}
+    variable_agn_kwarg_dict = {
+        "length_of_light_curve": 500,
+        "time_resolution": 1,
+        "log_breakpoint_frequency": 1 / 20,
+        "low_frequency_slope": 1,
+        "high_frequency_slope": 3,
+        "standard_deviation": 0.9,
+            }
+    kwargs_quasar = {
+        "pointsource_type": "quasar", "extendedsource_type": "None",
+        "variability_model": "light_curve",
+        "kwargs_variability": {"agn_lightcurve", "i", "r"},
+        "agn_driving_variability_model": "bending_power_law",
+        "agn_driving_kwargs_variability": variable_agn_kwarg_dict,
+        "lightcurve_time": np.linspace(0, 1000, 500),
+            }
+
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+
+    source_quasar = Source(
+                source_dict=source_dict_quasar,
+                cosmo=cosmo,
+                source_type="point_source",
+                **kwargs_quasar
+            )
+    deflector_quasar = Deflector(
+                    deflector_type="EPL",
+                    deflector_dict=deflector_dict_quasar,)
+
+    los_class = LOSIndividual(
+        kappa = -0.028113857977090363,
+        gamma = [0.01118681739734637, -0.012498985117640523],
     )
 
-    if not os.path.exists(pickle_path):
-        pytest.skip(
-            f"Pickle file for lens_instance_with_variability not found at {pickle_path}"
-        )
-    with open(pickle_path, "rb") as f:
-        lens_class = pickle.load(f)
+    lens_class = Lens(source_class=source_quasar, deflector_class=deflector_quasar, cosmo=cosmo, los_class=los_class)
+
     return lens_class
 
 
