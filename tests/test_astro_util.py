@@ -777,6 +777,36 @@ def test_pull_value_from_grid():
     expected_value = np.array([2.5, 2.25])
     npt.assert_almost_equal(pull_value_from_grid(grid, x, y), expected_value)
 
+    # ▶ Test non-ndarray input is converted to ndarray
+    grid_list = [[1, 2], [3, 4]]
+    x = 0.5
+    y = 0.5
+    npt.assert_almost_equal(pull_value_from_grid(grid_list, x, y), 2.5)
+
+    # ▶ Test error on non-2D input
+    with pytest.raises(ValueError, match="array_2d must be a 2-dimensional array"):
+        pull_value_from_grid([1, 2, 3], 0.5, 0.5)
+
+    # ▶ Test error on zero-sized dimensions
+    empty_grid = np.zeros((0, 5))
+    with pytest.raises(ValueError, match="must not have zero-sized dimensions"):
+        pull_value_from_grid(empty_grid, 0.0, 0.0)
+
+    # ▶ Test mismatched x/y shapes
+    grid = np.array([[1, 2], [3, 4]])
+    with pytest.raises(ValueError, match="must have the same shape"):
+        pull_value_from_grid(grid, np.array([0.1, 0.2]), np.array([0.1]))
+
+    # ▶ Test negative coordinates
+    grid = np.array([[1, 2], [3, 4]])
+    with pytest.raises(ValueError, match="must be non-negative"):
+        pull_value_from_grid(grid, -0.1, 0.5)
+
+    # ▶ Test out-of-bounds coordinates
+    grid = np.array([[1, 2], [3, 4]])
+    with pytest.raises(ValueError, match=r"must be <= 1\.0"):
+        pull_value_from_grid(grid, 1.1, 0.5)
+
 
 NPT_DECIMAL_PLACES = 5
 
@@ -871,6 +901,34 @@ def test_extract_light_curve_all_cases():
         avg_val5,
         decimal=NPT_DECIMAL_PLACES,
         err_msg="Test Case 5b Failed: Too large start_position",
+    )
+
+    # ▶ Test negative y_start_position (covers the y_start_position lower‐bounds check)
+    np.testing.assert_almost_equal(
+        extract_light_curve(
+            conv_array_5x5,
+            pixel_size,
+            eff_vel_km_s,
+            time_yr_for_1px,
+            y_start_position=-1.0,
+        ),
+        avg_val5,
+        decimal=NPT_DECIMAL_PLACES,
+        err_msg="Test Case 5c Failed: Negative y_start_position",
+    )
+
+    # ▶ Test too large y_start_position (covers the y_start_position upper‐bounds check)
+    np.testing.assert_almost_equal(
+        extract_light_curve(
+            conv_array_5x5,
+            pixel_size,
+            eff_vel_km_s,
+            time_yr_for_1px,
+            y_start_position=5.0,
+        ),
+        avg_val5,
+        decimal=NPT_DECIMAL_PLACES,
+        err_msg="Test Case 5d Failed: Too large y_start_position",
     )
 
     avg_val6 = np.mean(conv_array_5x5)
