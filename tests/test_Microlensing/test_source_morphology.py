@@ -338,12 +338,12 @@ class TestGaussianSourceMorphology:
 
         # Delete the cached attributes so we re‑trigger:
         if hasattr(gaussian_source, "_num_pix_x"):
-            del gaussian_source._num_pix_x   # <-- forces np.size(self.kernel_map, 0)
+            del gaussian_source._num_pix_x  # <-- forces np.size(self.kernel_map, 0)
         if hasattr(gaussian_source, "_num_pix_y"):
-            del gaussian_source._num_pix_y   # <-- forces np.size(self.kernel_map, 1)
+            del gaussian_source._num_pix_y  # <-- forces np.size(self.kernel_map, 1)
 
-        _ = gaussian_source.num_pix_x      # triggers the branch setting _num_pix_x
-        _ = gaussian_source.num_pix_y      # triggers the branch setting _num_pix_y
+        _ = gaussian_source.num_pix_x  # triggers the branch setting _num_pix_x
+        _ = gaussian_source.num_pix_y  # triggers the branch setting _num_pix_y
 
         pix_scale_x_m = gaussian_source.pixel_scale_x_m
         pix_scale_y_m = gaussian_source.pixel_scale_y_m

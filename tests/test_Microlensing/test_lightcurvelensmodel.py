@@ -224,9 +224,14 @@ class TestMicrolensingLightCurveFromLensModel:
 
         # ────── COVER ELSE BRANCHES FOR ra_lens, dec_lens, sig_star AS Quantity ──────
         from astropy import units as u
-        ra_q = lens_source_info["ra_lens"] * u.deg     # now a Quantity → hits `else: ra_l = ra_lens`
-        dec_q = lens_source_info["dec_lens"] * u.deg   # now a Quantity → hits `else: dec_l = dec_lens`
-        sigma_q = lens_source_info["deflector_velocity_dispersion"] * u.km/u.s
+
+        ra_q = (
+            lens_source_info["ra_lens"] * u.deg
+        )  # now a Quantity → hits `else: ra_l = ra_lens`
+        dec_q = (
+            lens_source_info["dec_lens"] * u.deg
+        )  # now a Quantity → hits `else: dec_l = dec_lens`
+        sigma_q = lens_source_info["deflector_velocity_dispersion"] * u.km / u.s
         velocities_q, angles_q = ml_lens_model.effective_transverse_velocity_images(
             lens_source_info["source_redshift"],
             lens_source_info["deflector_redshift"],
@@ -234,7 +239,7 @@ class TestMicrolensingLightCurveFromLensModel:
             dec_q,
             cosmology,
             microlensing_params["shear_phi"],
-            sigma_q,                                  # Quantity → hits `else: sig_star = …`
+            sigma_q,  # Quantity → hits `else: sig_star = …`
             random_seed=42,
             magmap_reference_frame=magmap_frame,
         )
@@ -258,7 +263,6 @@ class TestMicrolensingLightCurveFromLensModel:
         )
         assert isinstance(v_pole, np.ndarray)
         # ─────────────────────────────────────────────────────────────────────────
-
 
     def test_interpolate_light_curve(self, ml_lens_model):
         time_orig = np.array([0.0, 10.0, 20.0, 30.0])
@@ -468,7 +472,7 @@ class TestMicrolensingLightCurveFromLensModel:
         assert magnitudes.shape == (num_images, len(time_array))
         assert np.issubdtype(magnitudes.dtype, np.floating)
         assert not np.any(np.isnan(magnitudes)) and not np.any(np.isinf(magnitudes))
-    
+
     @pytest.mark.parametrize(
         "morphology_key, kwargs_source",
         [("gaussian", "kwargs_source_gaussian"), ("agn", "kwargs_source_agn_wave")],
@@ -520,7 +524,6 @@ class TestMicrolensingLightCurveFromLensModel:
         assert magnitudes.shape == (num_images, len(time_array))
         assert np.issubdtype(magnitudes.dtype, np.floating)
         assert not np.any(np.isnan(magnitudes)) and not np.any(np.isinf(magnitudes))
-        
 
     @pytest.mark.parametrize(
         "morphology_key, kwargs_source",
