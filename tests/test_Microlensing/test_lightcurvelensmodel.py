@@ -222,6 +222,44 @@ class TestMicrolensingLightCurveFromLensModel:
         assert np.issubdtype(angles.dtype, np.floating)
         assert np.all(velocities >= 0)
 
+        # ────── COVER ELSE BRANCHES FOR ra_lens, dec_lens, sig_star AS Quantity ──────
+        from astropy import units as u
+        ra_q = lens_source_info["ra_lens"] * u.deg     # now a Quantity → hits `else: ra_l = ra_lens`
+        dec_q = lens_source_info["dec_lens"] * u.deg   # now a Quantity → hits `else: dec_l = dec_lens`
+        sigma_q = lens_source_info["deflector_velocity_dispersion"] * u.km/u.s
+        velocities_q, angles_q = ml_lens_model.effective_transverse_velocity_images(
+            lens_source_info["source_redshift"],
+            lens_source_info["deflector_redshift"],
+            ra_q,
+            dec_q,
+            cosmology,
+            microlensing_params["shear_phi"],
+            sigma_q,                                  # Quantity → hits `else: sig_star = …`
+            random_seed=42,
+            magmap_reference_frame=magmap_frame,
+        )
+        assert velocities_q.shape == (num_images,)
+        # ─────────────────────────────────────────────────────────────────────────────
+
+        # ────── COVER the e1 ZERO‐VECTOR BRANCH ──────
+        # Choose dec_lens = 90° so u_los is (0,0,1) and first cross yields zero
+        ra_pole = 0 * u.deg
+        dec_pole = 90 * u.deg
+        v_pole, a_pole = ml_lens_model.effective_transverse_velocity_images(
+            lens_source_info["source_redshift"],
+            lens_source_info["deflector_redshift"],
+            ra_pole,
+            dec_pole,
+            cosmology,
+            microlensing_params["shear_phi"],
+            lens_source_info["deflector_velocity_dispersion"],
+            random_seed=42,
+            magmap_reference_frame=magmap_frame,
+        )
+        assert isinstance(v_pole, np.ndarray)
+        # ─────────────────────────────────────────────────────────────────────────
+
+
     def test_interpolate_light_curve(self, ml_lens_model):
         time_orig = np.array([0.0, 10.0, 20.0, 30.0])
         lc_orig = np.array([1.0, 1.5, 1.2, 1.8])
@@ -430,6 +468,59 @@ class TestMicrolensingLightCurveFromLensModel:
         assert magnitudes.shape == (num_images, len(time_array))
         assert np.issubdtype(magnitudes.dtype, np.floating)
         assert not np.any(np.isnan(magnitudes)) and not np.any(np.isinf(magnitudes))
+    
+    @pytest.mark.parametrize(
+        "morphology_key, kwargs_source",
+        [("gaussian", "kwargs_source_gaussian"), ("agn", "kwargs_source_agn_wave")],
+    )
+    @patch.object(
+        MicrolensingLightCurveFromLensModel,
+        "generate_magnification_maps_from_microlensing_params",
+    )
+    def test_generate_point_source_microlensing_magnitudes_list_time(
+        self,
+        mock_generate_maps,
+        ml_lens_model,
+        microlensing_params,
+        lens_source_info,
+        cosmology,
+        kwargs_magnification_map_settings,
+        morphology_key,
+        kwargs_source,
+        request,
+    ):
+        mock_generate_maps.return_value = create_mock_magmap_list(
+            microlensing_params, kwargs_magnification_map_settings
+        )
+        kwargs_morphology = request.getfixturevalue(kwargs_source)
+        num_images = len(microlensing_params["kappa_star"])
+        time_array = np.linspace(0, 1000, 50)
+        time_array = time_array.tolist()  # Convert to list
+        try:
+            magnitudes = ml_lens_model.generate_point_source_microlensing_magnitudes(
+                time_array,
+                lens_source_info["source_redshift"],
+                lens_source_info["deflector_redshift"],
+                microlensing_params["kappa_star"],
+                microlensing_params["kappa_tot"],
+                microlensing_params["shear"],
+                microlensing_params["shear_phi"],
+                lens_source_info["ra_lens"],
+                lens_source_info["dec_lens"],
+                lens_source_info["deflector_velocity_dispersion"],
+                cosmology,
+                kwargs_magnification_map_settings,
+                morphology_key,
+                kwargs_morphology,
+            )
+        except Exception as e:
+            pytest.fail(f"generate_..._magnitudes raised: {e}")
+        mock_generate_maps.assert_called_once()
+        assert isinstance(magnitudes, np.ndarray)
+        assert magnitudes.shape == (num_images, len(time_array))
+        assert np.issubdtype(magnitudes.dtype, np.floating)
+        assert not np.any(np.isnan(magnitudes)) and not np.any(np.isinf(magnitudes))
+        
 
     @pytest.mark.parametrize(
         "morphology_key, kwargs_source",
