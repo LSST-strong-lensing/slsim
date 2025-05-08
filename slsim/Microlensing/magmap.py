@@ -5,7 +5,6 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from astropy import units as u
 
-
 class MagnificationMap(object):
     """Class to generate magnification maps based on the kappa_tot, shear,
     kappa_star, etc."""
