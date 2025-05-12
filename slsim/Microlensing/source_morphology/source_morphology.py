@@ -2,14 +2,7 @@ __author__ = "Paras Sharma"
 
 import numpy as np
 
-from slsim.Util.astro_util import (
-    calculate_accretion_disk_emission,
-    calculate_gravitational_radius,
-)
-
 from astropy import units as u
-
-import speclite.filters
 
 
 class SourceMorphology:

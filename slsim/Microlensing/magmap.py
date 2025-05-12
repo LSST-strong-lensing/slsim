@@ -1,8 +1,6 @@
 __author__ = "Paras Sharma"
 
 import numpy as np
-from matplotlib import pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from astropy import units as u
 
 

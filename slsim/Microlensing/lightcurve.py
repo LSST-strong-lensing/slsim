@@ -4,8 +4,6 @@ __author__ = "Paras Sharma"
 # import gc  # for garbage collection
 import numpy as np
 from scipy.signal import fftconvolve
-from matplotlib import pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from skimage.transform import rescale
 
 from slsim.Microlensing.magmap import MagnificationMap
