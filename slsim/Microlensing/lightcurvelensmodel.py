@@ -62,33 +62,14 @@ class MicrolensingLightCurveFromLensModel(object):
         :param cosmology: Astropy cosmology object to use for the
             calculations.
         :param kwargs_MagnificationMap: Keyword arguments for the
-            MagnificationMap class. This can look like:
-            kwargs_MagnificationMap = { "theta_star": theta_star, #
-            arcsec "rectangular": True, "center_x": 0, # arcsec
-            "center_y": 0, # arcsec "half_length_x": 25 * theta_star, #
-            arcsec "half_length_y": 25 * theta_star, # arcsec
-            "mass_function": "kroupa", "m_solar": 1.0, "m_lower": 0.08,
-            "m_upper": 100, "num_pixels_x": 500, "num_pixels_y": 500, }
-            Note that theta_star needs be estimated based on the
-            cosmology model and redshifts for the source and deflector.
+            MagnificationMap class.
         :param point_source_morphology: Morphology of the point source.
             Options are "gaussian", "agn" (Accretion Disk) or
             "supernovae".
         :param kwargs_source_morphology: Dictionary of keyword arguments
             for the source morphology class. (See
-            slsim.Microlensing.source_morphology for more details) For
-            example, for Gaussian source morphology, it will look like:
-            kwargs_source_morphology = {"source_redshift":
-            source_redshift, "cosmo": cosmo, "source_size": source_size,
-            }. For AGN source morphology, it will look like:
-            kwargs_source_morphology = {"source_redshift":
-            source_redshift, "cosmo": cosmology, "r_out": r_out,
-            "r_resolution": r_resolution, "smbh_mass_exp":
-            smbh_mass_exp, "inclination_angle": inclination_angle,
-            "black_hole_spin": black_hole_spin,
-            "observer_frame_wavelength_in_nm":
-            observer_frame_wavelength_in_nm, "eddington_ratio":
-            eddington_ratio, }
+            slsim.Microlensing.source_morphology for more details). Note that different parameters are defined for different
+            source morphologies. So check the documentation for each morphology.
         :param lightcurve_type: Type of lightcurve to generate, either
             'magnitude' or 'magnification'. If 'magnitude', the
             lightcurve is returned in magnitudes normalized to the macro
@@ -110,6 +91,19 @@ class MicrolensingLightCurveFromLensModel(object):
         else:
             raise ValueError(
                 "Time array not provided in the correct format. Please provide a time array in days."
+            )
+        
+        if kwargs_MagnificationMap is None:
+            raise ValueError(
+                "kwargs_MagnificationMap not in kwargs_microlensing. Please provide a dictionary of settings required by micro-lensing calculation."
+            )
+        if point_source_morphology is None:
+            raise ValueError(
+                "point_source_morphology not in kwargs_microlensing. Please provide the point source morphology type. It can be either 'gaussian' or 'agn' or 'supernovae'."
+            )
+        if kwargs_source_morphology is None:
+            raise ValueError(
+                "kwargs_source_morphology not in kwargs_microlensing. Please provide a dictionary of settings required by source morphology calculation."
             )
 
         lightcurves, __tracks, __time_arrays = self.generate_point_source_lightcurves(
@@ -287,8 +281,6 @@ class MicrolensingLightCurveFromLensModel(object):
                     x_start_position=None,
                     y_start_position=None,
                     phi_travel_direction=eff_trv_vel_angles_images[i],
-                    return_track_coords=True,
-                    return_time_array=True,
                 )
             )
 

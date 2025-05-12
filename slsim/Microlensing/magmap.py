@@ -50,29 +50,32 @@ class MagnificationMap(object):
         :param kwargs_IPM: additional keyword arguments to pass to the IPM class.
         """
 
-        self.kappa_tot = kappa_tot
-        self.shear = shear
-        self.kappa_star = kappa_star
-        self.theta_star = theta_star
-        self.mass_function = mass_function
-        self.m_solar = m_solar
-        self.m_lower = m_lower
-        self.m_upper = m_upper
+        # Private attributes
+        self._kappa_tot = kappa_tot
+        self._shear = shear
+        self._kappa_star = kappa_star
+        self._mass_function = mass_function
+        self._m_solar = m_solar
+        self._m_lower = m_lower
+        self._m_upper = m_upper
+
+        # Public attributes
         self.center_x = center_x
         self.center_y = center_y
+        self.theta_star = theta_star
         self.half_length_x = half_length_x
         self.half_length_y = half_length_y
         self.num_pixels_x = num_pixels_x
         self.num_pixels_y = num_pixels_y
 
-        if self.mass_function is None:
-            self.mass_function = "kroupa"
-        if self.m_solar is None:
-            self.m_solar = 1
-        if self.m_lower is None:
-            self.m_lower = 0.08
-        if self.m_upper is None:
-            self.m_upper = 100
+        if self._mass_function is None:
+            self._mass_function = "kroupa"
+        if self._m_solar is None:
+            self._m_solar = 1
+        if self._m_lower is None:
+            self._m_lower = 0.08
+        if self._m_upper is None:
+            self._m_upper = 100
 
         if magnifications_array is not None:
             self.magnifications = magnifications_array  # TODO: make it so that the magnification map is not generated again, is stored in cache!
@@ -88,10 +91,10 @@ class MagnificationMap(object):
                     "And make sure you are on a GPU that supports CUDA."
                 )
 
-            self.microlensing_IPM = IPM(
-                kappa_tot=self.kappa_tot,
-                shear=self.shear,
-                kappa_star=self.kappa_star,
+            self._microlensing_IPM = IPM(
+                kappa_tot=self._kappa_tot,
+                shear=self._shear,
+                kappa_star=self._kappa_star,
                 smooth_fraction=self.smooth_fraction,
                 theta_star=self.theta_star,
                 center_y1=self.center_x,
@@ -108,59 +111,26 @@ class MagnificationMap(object):
             )
 
             print("Generating magnification map ...")
-            self.microlensing_IPM.run()
+            self._microlensing_IPM.run()
             print("Done generating magnification map.")
             self.magnifications = (
-                self.microlensing_IPM.magnifications
+                self._microlensing_IPM.magnifications
             )  # based on updated IPM class
-
-    def plot_magnification_map(self, ax=None, plot_magnitude=True, **kwargs):
-        """Plot the magnification map on the given axis."""
-        if ax is None:
-            fig, ax = plt.subplots(1, 1, figsize=(6, 6))
-        if plot_magnitude:
-            im = ax.imshow(
-                self.magnitudes,
-                extent=[
-                    (self.center_x - self.half_length_x) / self.theta_star,
-                    (self.center_x + self.half_length_x) / self.theta_star,
-                    (self.center_y - self.half_length_y) / self.theta_star,
-                    (self.center_y + self.half_length_y) / self.theta_star,
-                ],
-                **kwargs,
-            )
-        else:
-            im = ax.imshow(
-                self.magnifications,
-                extent=[
-                    (self.center_x - self.half_length_x) / self.theta_star,
-                    (self.center_x + self.half_length_x) / self.theta_star,
-                    (self.center_y - self.half_length_y) / self.theta_star,
-                    (self.center_y + self.half_length_y) / self.theta_star,
-                ],
-                **kwargs,
-            )
-        ax.set_xlabel("$x / \\theta_★$")
-        ax.set_ylabel("$y / \\theta_★$")
-        divider = make_axes_locatable(ax)
-        cax = divider.append_axes("right", size="5%", pad=0.05)
-        cbar = plt.colorbar(im, cax=cax)
-        if plot_magnitude:
-            cbar.set_label("Microlensing $\\Delta m$ (magnitudes)")
-        else:
-            cbar.set_label("Microlensing magnification")
 
     @property
     def mu_ave(self):
-        return 1 / ((1 - self.kappa_tot) ** 2 - self.shear**2)
+        """Returns the average (macro) magnification of the magnification map."""
+        return 1 / ((1 - self._kappa_tot) ** 2 - self._shear**2)
 
     @property
     def stellar_fraction(self):
-        return self.kappa_star / self.kappa_tot
+        """Returns the convergence fraction of that is due to stars/compact objects."""
+        return self._kappa_star / self._kappa_tot
 
     @property
     def smooth_fraction(self):
-        return 1 - self.kappa_star / self.kappa_tot
+        """Returns the convergence fraction of that is due to smooth matter."""
+        return 1 - self._kappa_star / self._kappa_tot
 
     @property
     def num_pixels(self):
@@ -173,7 +143,7 @@ class MagnificationMap(object):
 
     @property
     def pixel_scales(self):
-        """Returns the pixel scales in (x, y) format."""
+        """Returns the pixel scales in (x, y) format. The units are arcseconds."""
         return (
             2 * self.half_length_x / self.num_pixels_x,
             2 * self.half_length_y / self.num_pixels_y,
@@ -191,7 +161,12 @@ class MagnificationMap(object):
         return -2.5 * np.log10(self.magnifications / np.abs(self.mu_ave))
 
     def get_pixel_size_meters(self, source_redshift, cosmo):
-        """Returns the pixel size in meters."""
+        """Returns the pixel size in meters.
+        
+        :param source_redshift: redshift of the source.
+        :param cosmo: astropy.cosmology instance.
+        :return: pixel size in meters.
+        """
         pixel_size_arcsec = self.pixel_size
         pixel_size_meters = (
             cosmo.angular_diameter_distance(source_redshift).to(u.m)

@@ -10,6 +10,7 @@ from slsim.Microlensing.magmap import MagnificationMap
 # Import dependencies directly as they are assumed available
 import matplotlib.pyplot as plt
 
+from slsim.Plots.plot_functions import plot_magnification_map
 
 # ---- Test Fixtures ----
 
@@ -103,18 +104,18 @@ class TestMagnificationMap:
     def test_init_with_array(self, magmap_instance, loaded_mag_array, magmap_params):
         """Tests initialization when providing a magnification array."""
         assert magmap_instance.magnifications is loaded_mag_array
-        assert magmap_instance.kappa_tot == magmap_params["kappa_tot"]
-        assert magmap_instance.shear == magmap_params["shear"]
-        assert magmap_instance.kappa_star == magmap_params["kappa_star"]
+        assert magmap_instance._kappa_tot == magmap_params["kappa_tot"]
+        assert magmap_instance._shear == magmap_params["shear"]
+        assert magmap_instance._kappa_star == magmap_params["kappa_star"]
         assert magmap_instance.theta_star == magmap_params["theta_star"]
         assert magmap_instance.center_x == magmap_params["center_x"]
         assert magmap_instance.center_y == magmap_params["center_y"]
         assert magmap_instance.half_length_x == magmap_params["half_length_x"]
         assert magmap_instance.half_length_y == magmap_params["half_length_y"]
-        assert magmap_instance.mass_function == magmap_params["mass_function"]
-        assert magmap_instance.m_solar == magmap_params["m_solar"]
-        assert magmap_instance.m_lower == magmap_params["m_lower"]
-        assert magmap_instance.m_upper == magmap_params["m_upper"]
+        assert magmap_instance._mass_function == magmap_params["mass_function"]
+        assert magmap_instance._m_solar == magmap_params["m_solar"]
+        assert magmap_instance._m_lower == magmap_params["m_lower"]
+        assert magmap_instance._m_upper == magmap_params["m_upper"]
         assert magmap_instance.num_pixels_x == loaded_mag_array.shape[1]
         assert magmap_instance.num_pixels_y == loaded_mag_array.shape[0]
 
@@ -124,10 +125,10 @@ class TestMagnificationMap:
         dummy_array = np.ones((10, 10))
         # Minimal required args if providing array
         magmap = MagnificationMap(magnifications_array=dummy_array)
-        assert magmap.mass_function == "kroupa"
-        assert magmap.m_solar == 1
-        assert magmap.m_lower == 0.08
-        assert magmap.m_upper == 100
+        assert magmap._mass_function == "kroupa"
+        assert magmap._m_solar == 1
+        assert magmap._m_lower == 0.08
+        assert magmap._m_upper == 100
 
     # Test properties
     def test_property_mu_ave(self, magmap_instance, magmap_params):
@@ -211,7 +212,7 @@ class TestMagnificationMap:
         """Tests that the plotting function runs without error."""
         fig, ax = plt.subplots()
         try:
-            magmap_instance.plot_magnification_map(ax=ax, plot_magnitude=plot_magnitude)
+            plot_magnification_map(magmap_instance,ax=ax, plot_magnitude=plot_magnitude)
             assert len(ax.images) > 0
             assert ax.get_xlabel() == "$x / \\theta_★$"
             assert ax.get_ylabel() == "$y / \\theta_★$"
@@ -224,7 +225,7 @@ class TestMagnificationMap:
     def test_plot_magnification_map_runs_no_ax(self, magmap_instance):
         """Tests plotting function runs without error when ax is None."""
         try:
-            magmap_instance.plot_magnification_map(ax=None, plot_magnitude=True)
+            plot_magnification_map(magmap_instance, ax=None, plot_magnitude=True)
             assert plt.gcf().number > 0  # Check a figure was created
         except Exception as e:
             pytest.fail(f"plot_magnification_map raised an exception: {e}")

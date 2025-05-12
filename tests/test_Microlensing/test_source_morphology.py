@@ -5,10 +5,14 @@ from astropy.cosmology import FlatLambdaCDM
 from unittest.mock import patch  # Keep patch for testing caching logic
 
 # Import the classes to be tested
-from slsim.Microlensing.source_morphology import (
+from slsim.Microlensing.source_morphology.source_morphology import (
     SourceMorphology,
+)
+from slsim.Microlensing.source_morphology.gaussian import (
     GaussianSourceMorphology,
-    AGNSourceMorphology,
+)
+from slsim.Microlensing.source_morphology.agn import AGNSourceMorphology
+from slsim.Microlensing.source_morphology.supernovae import (
     SupernovaeSourceMorphology,
 )
 

@@ -2,7 +2,7 @@ import numpy as np
 from scipy.fftpack import ifft
 from astropy import constants as const
 from astropy import units as u
-from astropy.cosmology import Planck18
+from astropy.cosmology import Cosmology
 from slsim.Util.param_util import (
     amplitude_to_magnitude,
     magnitude_to_amplitude,
@@ -1034,79 +1034,6 @@ def convert_passband_to_nm(
     return output_passband
 
 
-# The credits for the following function go to Henry Best (https://github.com/Henry-Best-01/Amoeba)
-# def pull_value_from_grid(array_2d, x_position, y_position):
-#     """This approximates the point (x_position, y_position) in a 2d array of
-#     values. x_position and y_position may be decimals, and are assumed to be
-#     measured in pixels. This uses bilinear interpolation (or linear
-#     interpolation if one value is an integer).
-
-#     :param array_2d: 2 dimensional array of values.
-#     :param x_position: x coordinate in array_2d in pixels
-#     :param y_position: y coordinate in array_2d in pixels
-#     :return: approximation of array_2d at point (x_position, y_position)
-#     """
-
-#     array_2d = np.pad(array_2d, (0, 1), mode="edge")
-
-#     if isinstance(x_position, (int, float)) and isinstance(y_position, (int, float)):
-#         assert x_position >= 0 and y_position >= 0
-#         assert (
-#             x_position <= np.size(array_2d, 0) - 1
-#             and y_position <= np.size(array_2d, 1) - 1
-#         )
-
-#         x_int = x_position // 1
-#         y_int = y_position // 1
-#         dx = x_position % 1
-#         dy = y_position % 1
-
-#         base_value = array_2d[int(x_int), int(y_int)]
-#         base_plus_x = array_2d[int(x_int) + 1, int(y_int)]
-#         base_plus_y = array_2d[int(x_int), int(y_int) + 1]
-#         base_plus_x_plus_y = array_2d[int(x_int) + 1, int(y_int) + 1]
-
-#         value = (
-#             base_value * (1 - dx) * (1 - dy)
-#             + base_plus_x * (1 - dx) * dy
-#             + base_plus_y * dx * (1 - dy)
-#             + base_plus_x_plus_y * dx * dy
-#         )
-
-#         array_2d = array_2d[:-2, :-2]
-
-#         return value
-
-#     else:
-#         assert min(x_position) >= 0 and min(y_position) >= 0
-#         assert (
-#             max(x_position) <= np.size(array_2d, 0) - 1
-#             and max(y_position) <= np.size(array_2d, 1) - 1
-#         )
-
-#         x_int = x_position // 1
-#         y_int = y_position // 1
-#         dx = x_position % 1
-#         dy = y_position % 1
-
-#         base_value = array_2d[(x_int.astype(int)), (y_int.astype(int))]
-#         base_plus_x = array_2d[(x_int.astype(int) + 1), (y_int.astype(int))]
-#         base_plus_y = array_2d[(x_int.astype(int)), (y_int.astype(int) + 1)]
-#         base_plus_x_plus_y = array_2d[(x_int.astype(int) + 1), (y_int.astype(int) + 1)]
-
-#         value = (
-#             base_value * (1 - dx) * (1 - dy)
-#             + base_plus_x * (1 - dx) * dy
-#             + base_plus_y * dx * (1 - dy)
-#             + base_plus_x_plus_y * dx * dy
-#         )
-
-#         array_2d = array_2d[:-2, :-2]
-
-#         return value
-
-
-# CLEANER VERSION
 def pull_value_from_grid(array_2d, x_position, y_position):
     """This approximates the point (x_position, y_position) in a 2d array of
     values. x_position and y_position may be decimals, and are assumed to be
@@ -1331,15 +1258,15 @@ def extract_light_curve(
 
 # Credits: Luke Weisenbach (https://github.com/weisluke/microlensing/blob/main/microlensing/Util/length_scales.py)
 def theta_star_physical(
-    z_lens: float, z_src: float, m: float = 1, cosmo=Planck18
+    z_lens: float, z_src: float, cosmo:Cosmology, m: float = 1,
 ) -> tuple:
     """Calculate the size of the Einstein radius of a point mass lens in the
     lens and source planes, in meters.
 
     :param z_lens: lens redshift
     :param z_src: source redshift
+    :param cosmo: an astropy.cosmology instance.
     :param m: point mass lens mass in solar mass units
-    :param cosmo: an astropy.cosmology instance.  Default is Planck18
     :return theta_star: theta_star in the lens plane in arcseconds
     :return theta_star_lens: theta_star in the lens plane in meters
     :return theta_star_src: theta_star in the source plane in meters

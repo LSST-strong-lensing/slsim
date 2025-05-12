@@ -291,9 +291,9 @@ class TestMicrolensingLightCurveFromLensModel:
             assert isinstance(magmap_obj, MagnificationMap)
             assert hasattr(magmap_obj, "magnifications")
             assert magmap_obj.magnifications is not None
-            assert magmap_obj.kappa_tot == microlensing_params["kappa_tot"][i]
-            assert magmap_obj.shear == microlensing_params["shear"][i]
-            assert magmap_obj.kappa_star == microlensing_params["kappa_star"][i]
+            assert magmap_obj._kappa_tot == microlensing_params["kappa_tot"][i]
+            assert magmap_obj._shear == microlensing_params["shear"][i]
+            assert magmap_obj._kappa_star == microlensing_params["kappa_star"][i]
             assert (
                 magmap_obj.theta_star == kwargs_magnification_map_settings["theta_star"]
             )
@@ -472,6 +472,72 @@ class TestMicrolensingLightCurveFromLensModel:
         assert magnitudes.shape == (num_images, len(time_array))
         assert np.issubdtype(magnitudes.dtype, np.floating)
         assert not np.any(np.isnan(magnitudes)) and not np.any(np.isinf(magnitudes))
+
+        # Check raise ValueError for different cases of kwargs_microlensing
+        # 1. kwargs_MagnificationMap is None
+        with pytest.raises(
+            ValueError, match="kwargs_MagnificationMap not in kwargs_microlensing"
+        ):
+            magnitudes = ml_lens_model.generate_point_source_microlensing_magnitudes(
+                time_array,
+                lens_source_info["source_redshift"],
+                lens_source_info["deflector_redshift"],
+                microlensing_params["kappa_star"],
+                microlensing_params["kappa_tot"],
+                microlensing_params["shear"],
+                microlensing_params["shear_phi"],
+                lens_source_info["ra_lens"],
+                lens_source_info["dec_lens"],
+                lens_source_info["deflector_velocity_dispersion"],
+                cosmology,
+                kwargs_MagnificationMap = None,
+                point_source_morphology = morphology_key,
+                kwargs_source_morphology = kwargs_morphology,
+            )
+
+        # 3. point_source_morphology not in kwargs_microlensing
+        with pytest.raises(
+            ValueError, match="point_source_morphology not in kwargs_microlensing"
+        ):
+            magnitudes = ml_lens_model.generate_point_source_microlensing_magnitudes(
+                time_array,
+                lens_source_info["source_redshift"],
+                lens_source_info["deflector_redshift"],
+                microlensing_params["kappa_star"],
+                microlensing_params["kappa_tot"],
+                microlensing_params["shear"],
+                microlensing_params["shear_phi"],
+                lens_source_info["ra_lens"],
+                lens_source_info["dec_lens"],
+                lens_source_info["deflector_velocity_dispersion"],
+                cosmology,
+                kwargs_magnification_map_settings,
+                point_source_morphology=None,
+                kwargs_source_morphology=kwargs_morphology,
+            )
+            
+
+        # 3. kwargs_source_morphology not in kwargs_microlensing
+        with pytest.raises(
+            ValueError, match="kwargs_source_morphology not in kwargs_microlensing"
+        ):
+            magnitudes = ml_lens_model.generate_point_source_microlensing_magnitudes(
+                time_array,
+                lens_source_info["source_redshift"],
+                lens_source_info["deflector_redshift"],
+                microlensing_params["kappa_star"],
+                microlensing_params["kappa_tot"],
+                microlensing_params["shear"],
+                microlensing_params["shear_phi"],
+                lens_source_info["ra_lens"],
+                lens_source_info["dec_lens"],
+                lens_source_info["deflector_velocity_dispersion"],
+                cosmology,
+                kwargs_magnification_map_settings,
+                morphology_key,
+                kwargs_source_morphology=None,
+            )
+            
 
     @pytest.mark.parametrize(
         "morphology_key, kwargs_source",

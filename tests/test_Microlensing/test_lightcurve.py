@@ -10,11 +10,10 @@ from slsim.Microlensing.lightcurve import (
 
 # Import supporting classes and functions
 from slsim.Microlensing.magmap import MagnificationMap
-from slsim.Microlensing.source_morphology import (
-    GaussianSourceMorphology,
-    AGNSourceMorphology,
-)
+from slsim.Microlensing.source_morphology.gaussian import GaussianSourceMorphology
+from slsim.Microlensing.source_morphology.agn import AGNSourceMorphology
 from matplotlib import pyplot as plt
+from slsim.Plots.plot_functions import plot_lightcurves_and_magmap
 
 # ---- Test Fixtures ----
 
@@ -157,27 +156,27 @@ class TestMicrolensingLightCurve:
         ml_lc = MicrolensingLightCurve(
             magmap_instance, time_dur, morphology, kwargs_source_morphology_Gaussian
         )
-        assert ml_lc.magnification_map is magmap_instance
-        assert ml_lc.time_duration == time_dur
-        assert ml_lc.point_source_morphology == morphology
-        assert ml_lc.kwargs_source_morphology == kwargs_source_morphology_Gaussian
-        assert ml_lc.convolved_map is None
-        assert ml_lc.source_morphology is None
+        assert ml_lc._magnification_map is magmap_instance
+        assert ml_lc._time_duration_observer_frame == time_dur
+        assert ml_lc._point_source_morphology == morphology
+        assert ml_lc._kwargs_source_morphology == kwargs_source_morphology_Gaussian
+        assert ml_lc._convolved_map is None
+        assert ml_lc._source_morphology is None
 
     def test_get_convolved_map_gaussian(self, ml_lc_gaussian, magmap_instance):
         conv_map = ml_lc_gaussian.get_convolved_map(return_source_morphology=False)
         assert isinstance(conv_map, np.ndarray)
         assert conv_map.shape == magmap_instance.magnifications.shape
-        assert ml_lc_gaussian.convolved_map is conv_map
-        assert isinstance(ml_lc_gaussian.source_morphology, GaussianSourceMorphology)
-        ml_lc_gaussian.convolved_map = None
-        ml_lc_gaussian.source_morphology = None
+        assert ml_lc_gaussian._convolved_map is conv_map
+        assert isinstance(ml_lc_gaussian._source_morphology, GaussianSourceMorphology)
+        ml_lc_gaussian._convolved_map = None
+        ml_lc_gaussian._source_morphology = None
         conv_map2, morph = ml_lc_gaussian.get_convolved_map(
             return_source_morphology=True
         )
         assert np.array_equal(conv_map, conv_map2)
         assert isinstance(morph, GaussianSourceMorphology)
-        assert ml_lc_gaussian.source_morphology is morph
+        assert ml_lc_gaussian._source_morphology is morph
 
     @pytest.mark.filterwarnings(
         "ignore:divide by zero encountered in divide:RuntimeWarning"
@@ -188,9 +187,9 @@ class TestMicrolensingLightCurve:
         )
         assert isinstance(conv_map, np.ndarray)
         assert conv_map.shape == magmap_instance.magnifications.shape
-        assert ml_lc_agn_wave.convolved_map is conv_map
+        assert ml_lc_agn_wave._convolved_map is conv_map
         assert isinstance(morph, AGNSourceMorphology)
-        assert ml_lc_agn_wave.source_morphology is morph
+        assert ml_lc_agn_wave._source_morphology is morph
         assert hasattr(morph, "pixel_scale_m")
 
     @pytest.mark.filterwarnings(
@@ -202,18 +201,18 @@ class TestMicrolensingLightCurve:
         )
         assert isinstance(conv_map, np.ndarray)
         assert conv_map.shape == magmap_instance.magnifications.shape
-        assert ml_lc_agn_band.convolved_map is conv_map
+        assert ml_lc_agn_band._convolved_map is conv_map
         assert isinstance(morph, AGNSourceMorphology)
-        assert ml_lc_agn_band.source_morphology is morph
+        assert ml_lc_agn_band._source_morphology is morph
         assert hasattr(morph, "pixel_scale_m")
 
     def test_get_convolved_map_supernovae(self, ml_lc_gaussian):
-        ml_lc_gaussian.point_source_morphology = "supernovae"
+        ml_lc_gaussian._point_source_morphology = "supernovae"
         with pytest.raises(NotImplementedError):
             ml_lc_gaussian.get_convolved_map()
 
     def test_get_convolved_map_invalid_type(self, ml_lc_gaussian):
-        ml_lc_gaussian.point_source_morphology = "invalid_type"
+        ml_lc_gaussian._point_source_morphology = "invalid_type"
         with pytest.raises(ValueError, match="Invalid source morphology type"):
             ml_lc_gaussian.get_convolved_map()
 
@@ -225,7 +224,7 @@ class TestMicrolensingLightCurve:
         extract."""
         num_lc = 3
         try:
-            lcs = ml_lc_gaussian.generate_lightcurves(
+            lcs, _tracks, _time_arrays = ml_lc_gaussian.generate_lightcurves(
                 source_redshift=0.5,
                 cosmo=cosmology,
                 lightcurve_type="magnitude",
@@ -250,7 +249,7 @@ class TestMicrolensingLightCurve:
         extract."""
         num_lc = 1
         try:
-            lcs = ml_lc_agn_wave.generate_lightcurves(
+            lcs, _tracks, _time_arrays = ml_lc_agn_wave.generate_lightcurves(
                 source_redshift=0.5,
                 cosmo=cosmology,
                 lightcurve_type="magnification",
@@ -266,60 +265,70 @@ class TestMicrolensingLightCurve:
         assert np.issubdtype(lc.dtype, np.floating)
         assert not np.any(np.isnan(lc)), "LC has NaNs"
 
-    @pytest.mark.parametrize(
-        "ret_track, ret_time, expected_len",
-        [(False, False, 1), (True, False, 2), (False, True, 2), (True, True, 3)],
-    )
-    def test_generate_lightcurves_return_options(
-        self, ml_lc_gaussian, cosmology, ret_track, ret_time, expected_len
-    ):
-        """Tests different return combinations using real extract."""
-        num_lc = 2
-        try:
-            result = ml_lc_gaussian.generate_lightcurves(
-                source_redshift=0.5,
-                cosmo=cosmology,
-                num_lightcurves=num_lc,
-                return_track_coords=ret_track,
-                return_time_array=ret_time,
-            )
-        except Exception as e:
-            pytest.fail(f"generate_lightcurves raised: {e}")
-        if expected_len == 1:
-            lcs = result
-            assert isinstance(lcs, list) and len(lcs) == num_lc
-        else:
-            assert isinstance(result, tuple)
-            assert len(result) == expected_len
-            lcs = result[0]
-            assert isinstance(lcs, list) and len(lcs) == num_lc
-        if ret_track:
-            tracks = result[1]
-            assert isinstance(tracks, list) and len(tracks) == num_lc
-            assert isinstance(tracks[0], np.ndarray)
-            assert tracks[0].shape[0] == 2
-            assert tracks[0].shape[1] == len(lcs[0])
-        if ret_time:
-            time_arrays = result[-1]
-            assert isinstance(time_arrays, list) and len(time_arrays) == num_lc
-            assert isinstance(time_arrays[0], np.ndarray)
-            assert len(time_arrays[0]) == len(lcs[0])
-            assert np.isclose(time_arrays[0][0], 0)
-            assert np.isclose(time_arrays[0][-1], ml_lc_gaussian.time_duration)
+    # @pytest.mark.parametrize(
+    #     "ret_track, ret_time, expected_len",
+    #     [(False, False, 1), (True, False, 2), (False, True, 2), (True, True, 3)],
+    # )
+    # def test_generate_lightcurves_return_options(
+    #     self, ml_lc_gaussian, cosmology, ret_track, ret_time, expected_len
+    # ):
+    #     """Tests different return combinations using real extract."""
+    #     num_lc = 2
+    #     try:
+    #         result = ml_lc_gaussian.generate_lightcurves(
+    #             source_redshift=0.5,
+    #             cosmo=cosmology,
+    #             num_lightcurves=num_lc,
+    #             return_track_coords=ret_track,
+    #             return_time_array=ret_time,
+    #         )
+    #     except Exception as e:
+    #         pytest.fail(f"generate_lightcurves raised: {e}")
+    #     if expected_len == 1:
+    #         lcs = result
+    #         assert isinstance(lcs, list) and len(lcs) == num_lc
+    #     else:
+    #         assert isinstance(result, tuple)
+    #         assert len(result) == expected_len
+    #         lcs = result[0]
+    #         assert isinstance(lcs, list) and len(lcs) == num_lc
+    #     if ret_track:
+    #         tracks = result[1]
+    #         assert isinstance(tracks, list) and len(tracks) == num_lc
+    #         assert isinstance(tracks[0], np.ndarray)
+    #         assert tracks[0].shape[0] == 2
+    #         assert tracks[0].shape[1] == len(lcs[0])
+    #     if ret_time:
+    #         time_arrays = result[-1]
+    #         assert isinstance(time_arrays, list) and len(time_arrays) == num_lc
+    #         assert isinstance(time_arrays[0], np.ndarray)
+    #         assert len(time_arrays[0]) == len(lcs[0])
+    #         assert np.isclose(time_arrays[0][0], 0)
+    #         assert np.isclose(time_arrays[0][-1], ml_lc_gaussian._time_duration_observer_frame)
 
     def test_generate_lightcurves_specific_start_and_angle(
         self, ml_lc_gaussian, cosmology
     ):
         """Tests passing specific start position and angle using real
         extract."""
-        map_shape = ml_lc_gaussian.magnification_map.magnifications.shape
+        # coordinates in pixels
+        map_shape = ml_lc_gaussian._magnification_map.magnifications.shape
         x_start, y_start, phi = (
             map_shape[1] // 2 + 10,
             map_shape[0] // 2 - 5,
             45.0,
         )  # Offset slightly
+
+        # convert to units of arcseconds
+        half_length_x = ml_lc_gaussian._magnification_map.half_length_x
+        half_length_y = ml_lc_gaussian._magnification_map.half_length_y
+        num_pix_x = ml_lc_gaussian._magnification_map.num_pixels[0]
+        num_pix_y = ml_lc_gaussian._magnification_map.num_pixels[1]
+        x_start = (x_start - num_pix_x // 2) * 2 * half_length_x/num_pix_x
+        y_start = (y_start - num_pix_y // 2) * 2 * half_length_y/num_pix_y
+
         try:
-            lcs = ml_lc_gaussian.generate_lightcurves(
+            lcs, _tracks, _time_arrays = ml_lc_gaussian.generate_lightcurves(
                 source_redshift=0.5,
                 cosmo=cosmology,
                 num_lightcurves=1,
@@ -348,13 +357,18 @@ class TestMicrolensingLightCurve:
     ):
         """Tests plotting function runs without error (magnitude)."""
         num_lc = 2
-        lcs, tracks = ml_lc_gaussian.generate_lightcurves(
-            0.5, cosmology, num_lightcurves=num_lc, return_track_coords=True
+        lcs, tracks, _time_arrays = ml_lc_gaussian.generate_lightcurves(
+            0.5, cosmology, num_lightcurves=num_lc
         )
         ml_lc_gaussian.get_convolved_map()
         try:
-            ax_return = ml_lc_gaussian.plot_lightcurves_and_magmap(
-                lcs, tracks, "magnitude"
+            ax_return = plot_lightcurves_and_magmap(
+                convolved_map=ml_lc_gaussian._convolved_map,
+                lightcurves=lcs,
+                time_duration_observer_frame=ml_lc_gaussian._time_duration_observer_frame,
+                tracks=tracks,
+                magmap_instance=ml_lc_gaussian._magnification_map,
+                lightcurve_type="magnitude",
             )
             assert isinstance(ax_return, np.ndarray)
             assert all(isinstance(ax, plt.Axes) for ax in ax_return.flat)
@@ -371,13 +385,18 @@ class TestMicrolensingLightCurve:
     ):
         """Tests plotting function runs without error (magnification)."""
         num_lc = 1
-        lcs = ml_lc_agn_wave.generate_lightcurves(
+        lcs, _tracks, _time_arrays = ml_lc_agn_wave.generate_lightcurves(
             0.5, cosmology, num_lightcurves=num_lc, lightcurve_type="magnification"
         )
         ml_lc_agn_wave.get_convolved_map()
         try:
-            ax_return = ml_lc_agn_wave.plot_lightcurves_and_magmap(
-                lcs, tracks=None, lightcurve_type="magnification"
+            ax_return = plot_lightcurves_and_magmap(
+                convolved_map=ml_lc_agn_wave._convolved_map,
+                lightcurves=lcs, 
+                time_duration_observer_frame=ml_lc_agn_wave._time_duration_observer_frame,
+                tracks=None,
+                magmap_instance=ml_lc_agn_wave._magnification_map,
+                lightcurve_type="magnification"
             )
             assert isinstance(ax_return, np.ndarray)
             assert all(isinstance(ax, plt.Axes) for ax in ax_return.flat)

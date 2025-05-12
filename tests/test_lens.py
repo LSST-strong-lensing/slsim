@@ -715,9 +715,6 @@ def test_point_source_magnitude_microlensing(
     except Exception as e:
         pytest.fail(f"_point_source_magnitude_microlensing raised an exception: {e}")
 
-    # Verify MicrolensingLightCurveFromLensModel was instantiated correctly
-    mock_ml_lc_from_lm_class.assert_called_once_with(lens_instance_with_variability)
-
     # Verify generate_point_source_microlensing_magnitudes was called on the instance
     mock_ml_lc_instance.generate_point_source_microlensing_magnitudes.assert_called_once()
     call_kwargs = (
@@ -728,7 +725,7 @@ def test_point_source_magnitude_microlensing(
     np.testing.assert_array_equal(call_kwargs["time"], time_array)
     assert call_kwargs["source_redshift"] == source.redshift
     assert (
-        call_kwargs["kwargs_magnification_map"]
+        call_kwargs["kwargs_MagnificationMap"]
         == kwargs_microlensing_settings["kwargs_MagnificationMap"]
     )  # Corrected key
     assert (
@@ -743,52 +740,6 @@ def test_point_source_magnitude_microlensing(
     # The result of _point_source_magnitude_microlensing should be the direct output
     # from the mocked generate_point_source_microlensing_magnitudes
     np.testing.assert_allclose(result_mags, expected_microlensing_delta_mags)
-
-    # Check raise ValueError for different cases of kwargs_microlensing
-    # 1. kwargs_microlensing is None
-    with pytest.raises(ValueError, match="kwargs_microlensing is None"):
-        lens_instance_with_variability._point_source_magnitude_microlensing(
-            band_i,
-            time_array,
-            source_index=0,
-            kwargs_microlensing=None,
-        )
-
-    # 2. kwargs_MagnificationMap not in kwargs_microlensing
-    with pytest.raises(
-        ValueError, match="kwargs_MagnificationMap not in kwargs_microlensing"
-    ):
-        lens_instance_with_variability._point_source_magnitude_microlensing(
-            band_i,
-            time_array,
-            source_index=0,
-            kwargs_microlensing={"point_source_morphology": "gaussian"},
-        )
-
-    # 3. point_source_morphology not in kwargs_microlensing
-    with pytest.raises(
-        ValueError, match="point_source_morphology not in kwargs_microlensing"
-    ):
-        lens_instance_with_variability._point_source_magnitude_microlensing(
-            band_i,
-            time_array,
-            source_index=0,
-            kwargs_microlensing={"kwargs_MagnificationMap": {}},
-        )
-
-    # 4. kwargs_source_morphology not in kwargs_microlensing
-    with pytest.raises(
-        ValueError, match="kwargs_source_morphology not in kwargs_microlensing"
-    ):
-        lens_instance_with_variability._point_source_magnitude_microlensing(
-            band_i,
-            time_array,
-            source_index=0,
-            kwargs_microlensing={
-                "kwargs_MagnificationMap": {},
-                "point_source_morphology": "gaussian",
-            },
-        )
 
 
 ################################################

@@ -734,10 +734,10 @@ class Lens(LensedSystemBase):
                 )
                 if microlensing:
                     microlensing_magnitudes = self._point_source_magnitude_microlensing(
-                        band,
-                        time,
-                        source_index,
-                        kwargs_microlensing,
+                        band = band,
+                        time = time,
+                        source_index = source_index,
+                        kwargs_microlensing = kwargs_microlensing,
                     )
                     lensed_variable_magnitude += microlensing_magnitudes
 
@@ -784,10 +784,18 @@ class Lens(LensedSystemBase):
         """For a given source, calculates the microlensing parameters for each
         image position.
 
-        :param source: Source class instance
-        :return: np.array(kappa_star_images),
-            np.array(kappa_tot_images), np.array(shear_images),
-            np.array(shear_angle_images)
+        :param band: imaging band
+        :type band: string
+        :param source_index: index of a source in source list.
+        :return:  kappa_star, kappa_tot, shear, shear_angle
+            
+            kappa_star is the stellar convergence, kappa_tot is the
+            total convergence, shear is the magnitude of the shear vector, and
+            shear_angle is the angle of shear vector in radians. The returned arrays contains
+            the values for each image of the source in the lensing
+            configuration. The arrays are of the same length as the number of
+            images of the source.
+        :rtype: tuple of numpy arrays
         """
         lenstronomy_kwargs = self.lenstronomy_kwargs(band=band)
         lens_model_lenstronomy = LensModel(
@@ -795,41 +803,22 @@ class Lens(LensedSystemBase):
         )
         lenstronomy_kwargs_lens = lenstronomy_kwargs[1]["kwargs_lens"]
 
-        image_positions_x, image_positions_y = image_positions_x, image_positions_y = (
+        image_positions_x, image_positions_y = (
             self._point_source_image_positions(source_index)
         )
 
-        kappa_star_images = []  # kappa_star for each image of this source
-        kappa_tot_images = []
-        shear_images = []
-        shear_angle_images = []
-
-        for i in range(len(image_positions_x)):
-            ra = image_positions_x[i]
-            dec = image_positions_y[i]
-
-            kappa_tot = lens_model_lenstronomy.kappa(ra, dec, lenstronomy_kwargs_lens)
-            shear_smooth_vec = lens_model_lenstronomy.gamma(
-                ra, dec, lenstronomy_kwargs_lens
-            )
-            shear_smooth = np.sqrt(shear_smooth_vec[0] ** 2 + shear_smooth_vec[1] ** 2)
-            shear_angle = np.arctan2(shear_smooth_vec[1], shear_smooth_vec[0])
-
-            kappa_star = self.kappa_star(
-                ra, dec
-            )  # TODO: why does it return a list? is it for each source?
-
-            kappa_tot_images.append(kappa_tot)
-            shear_images.append(shear_smooth)
-            shear_angle_images.append(shear_angle)
-            kappa_star_images.append(kappa_star[0])
-
-        return (
-            np.array(kappa_star_images),
-            np.array(kappa_tot_images),
-            np.array(shear_images),
-            np.array(shear_angle_images),
+        kappa_star_images = self.kappa_star(image_positions_x, image_positions_y)
+        kappa_tot_images = lens_model_lenstronomy.kappa(
+            image_positions_x, image_positions_y, lenstronomy_kwargs_lens
         )
+        gamma1, gamma2 = lens_model_lenstronomy.gamma(
+            image_positions_x, image_positions_y, lenstronomy_kwargs_lens
+        )
+
+        shear_images = np.sqrt(gamma1**2 + gamma2**2)
+        shear_angle_images = np.arctan2(gamma2, gamma1)
+
+        return kappa_star_images, kappa_tot_images, shear_images, shear_angle_images
 
     def _point_source_magnitude_microlensing(
         self, band, time, source_index, kwargs_microlensing
@@ -840,7 +829,7 @@ class Lens(LensedSystemBase):
         :param band: imaging band
         :type band: string
         :param time: time is an image observation time in units of days.
-        :param kwargs_microlensing: additional (optional) dictionary of
+        :param kwargs_microlensing: additional dictionary of
             settings required by micro-lensing calculation that do not
             depend on the Lens() class. It is of type:
             kwargs_microlensing = {"kwargs_MagnificationMap":
@@ -855,28 +844,11 @@ class Lens(LensedSystemBase):
             include the macro-magnification.
         :rtype: numpy array
         """
-        print("kwargs_microlensing", kwargs_microlensing)
-        if kwargs_microlensing is None:
-            raise ValueError(
-                "kwargs_microlensing is None. Please provide a dictionary of settings required by micro-lensing calculation."
-            )
-        if "kwargs_MagnificationMap" not in kwargs_microlensing:
-            raise ValueError(
-                "kwargs_MagnificationMap not in kwargs_microlensing. Please provide a dictionary of settings required by micro-lensing calculation."
-            )
-        if "point_source_morphology" not in kwargs_microlensing:
-            raise ValueError(
-                "point_source_morphology not in kwargs_microlensing. Please provide the point source morphology type. It can be either 'gaussian' or 'agn' or 'supernovae'."
-            )
-        if "kwargs_source_morphology" not in kwargs_microlensing:
-            raise ValueError(
-                "kwargs_source_morphology not in kwargs_microlensing. Please provide a dictionary of settings required by source morphology calculation."
-            )
 
         # get microlensing parameters
         kappa_star_images, kappa_tot_images, shear_images, shear_angle_images = (
             self._microlensing_parameters_for_image_positions_single_source(
-                band, source_index
+                band = band, source_index = source_index
             )
         )
 
@@ -885,11 +857,11 @@ class Lens(LensedSystemBase):
             MicrolensingLightCurveFromLensModel,
         )
 
-        # select random RA and DEC in Sky for the lens
+        # select random RA and DEC in Sky for the lens, #TODO: In future, this should be the position of the lens in the sky
         ra_lens = np.random.uniform(0, 360)  # degrees
         dec_lens = np.random.uniform(-90, 90)  # degrees
 
-        ml_lc_lens = MicrolensingLightCurveFromLensModel(self)
+        ml_lc_lens = MicrolensingLightCurveFromLensModel()
         microlensing_magnitudes = ml_lc_lens.generate_point_source_microlensing_magnitudes(
             time=time,
             source_redshift=self.source(source_index).redshift,
@@ -898,15 +870,11 @@ class Lens(LensedSystemBase):
             kappa_tot_images=kappa_tot_images,
             shear_images=shear_images,
             shear_angle_images=shear_angle_images,
-            # ra_lens=self.deflector_position[0],  # TODO: check if this is correct?
-            # dec_lens=self.deflector_position[1],
             ra_lens=ra_lens,
             dec_lens=dec_lens,
             deflector_velocity_dispersion=self.deflector_velocity_dispersion(),
             cosmology=self.cosmo,
-            kwargs_magnification_map=kwargs_microlensing["kwargs_MagnificationMap"],
-            point_source_morphology=kwargs_microlensing["point_source_morphology"],
-            kwargs_source_morphology=kwargs_microlensing["kwargs_source_morphology"],
+            **kwargs_microlensing,
         )
         return microlensing_magnitudes  # # does not include the macro-lensing effect
 
