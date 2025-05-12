@@ -787,13 +787,13 @@ class Lens(LensedSystemBase):
         :param band: imaging band
         :type band: string
         :param source_index: index of a source in source list.
-        :return: kappa_star, kappa_tot, shear, shear_angle kappa_star
-            is the stellar convergence, kappa_tot is the total
-            convergence, shear is the magnitude of the shear vector, and
-            shear_angle is the angle of shear vector in radians. The
-            returned arrays contains the values for each image of the
-            source in the lensing configuration. The arrays are of the
-            same length as the number of images of the source.
+        :return: kappa_star, kappa_tot, shear, shear_angle kappa_star is
+            the stellar convergence, kappa_tot is the total convergence,
+            shear is the magnitude of the shear vector, and shear_angle
+            is the angle of shear vector in radians. The returned arrays
+            contains the values for each image of the source in the
+            lensing configuration. The arrays are of the same length as
+            the number of images of the source.
         :rtype: tuple of numpy arrays
         """
         lenstronomy_kwargs = self.lenstronomy_kwargs(band=band)
