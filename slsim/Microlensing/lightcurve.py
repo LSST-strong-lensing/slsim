@@ -60,10 +60,9 @@ class MicrolensingLightCurve(object):
         return_source_morphology=False,
     ):
         """Get the convolved map based on the source morphology.
-        
+
         :param return_source_morphology: Whether to return the source
             morphology object or not. Default is False.
-        
         :return: The convolved map and the source morphology object if
             requested. Otherwise, only the convolved map is returned.
         :rtype: numpy.ndarray or tuple
@@ -96,8 +95,10 @@ class MicrolensingLightCurve(object):
             source_redshift = source_morphology.source_redshift
 
             # magnification map pixel size
-            pixel_size_magnification_map = self._magnification_map.get_pixel_size_meters(
-                source_redshift=source_redshift, cosmo=cosmo
+            pixel_size_magnification_map = (
+                self._magnification_map.get_pixel_size_meters(
+                    source_redshift=source_redshift, cosmo=cosmo
+                )
             )
 
             # source kernel pixel size
@@ -171,11 +172,10 @@ class MicrolensingLightCurve(object):
         :return: A tuple of lightcurves, tracks, and time arrays.
 
             lightcurves: list of lightcurves
-            
+
             tracks: x and y positions (in pixels) on the magnification map grid for the paths used to generate the lightcurves.
 
             time_arrays: list of time arrays for each lightcurve
-
         """
 
         # Get the convolved magmap after convolving the magnification map with a Gaussian kernel
@@ -191,19 +191,23 @@ class MicrolensingLightCurve(object):
         # convert x and y positions from arcsec to pixel coordinates on the magnification map grid
         if x_start_position is not None:
             x_start_position = (
-                x_start_position / self._magnification_map.half_length_x
-            ) * self._magnification_map.num_pixels_x / 2
+                (x_start_position / self._magnification_map.half_length_x)
+                * self._magnification_map.num_pixels_x
+                / 2
+            )
             x_start_position = int(
                 x_start_position + self._magnification_map.num_pixels_x // 2
-                )
-        
+            )
+
         if y_start_position is not None:
             y_start_position = (
-                y_start_position / self._magnification_map.half_length_y
-            ) * self._magnification_map.num_pixels_y / 2
+                (y_start_position / self._magnification_map.half_length_y)
+                * self._magnification_map.num_pixels_y
+                / 2
+            )
             y_start_position = int(
                 y_start_position + self._magnification_map.num_pixels_y // 2
-                )
+            )
 
         return self._generate_lightcurves(
             source_redshift=source_redshift,
@@ -254,8 +258,9 @@ class MicrolensingLightCurve(object):
             position is chosen. A value of 0 indicates the center of the
             magnification map.
         :param phi_travel_direction: Angle of the travel direction in
-            degrees. Default is None. If None, a random angle is chosen. A value of 0
-            implies the positive x-axis of the magnification map.
+            degrees. Default is None. If None, a random angle is chosen.
+            A value of 0 implies the positive x-axis of the
+            magnification map.
         :return: A tuple of lightcurves, tracks, and time arrays if
             requested.
         """
@@ -264,11 +269,9 @@ class MicrolensingLightCurve(object):
         tracks = []
         time_arrays = []
 
-
         # time duration in source frame
-        self._time_duration_source_frame = (
-            self._time_duration_observer_frame
-            / (1 + source_redshift)
+        self._time_duration_source_frame = self._time_duration_observer_frame / (
+            1 + source_redshift
         )
 
         time_duration_years = (
@@ -303,6 +306,8 @@ class MicrolensingLightCurve(object):
                 )
             LCs.append(light_curve)
             tracks.append(np.array([x_positions, y_positions]))
-            time_arrays.append(np.linspace(0, self._time_duration_observer_frame, len(light_curve)))
+            time_arrays.append(
+                np.linspace(0, self._time_duration_observer_frame, len(light_curve))
+            )
 
         return LCs, tracks, time_arrays

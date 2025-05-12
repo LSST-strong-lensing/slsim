@@ -1258,7 +1258,10 @@ def extract_light_curve(
 
 # Credits: Luke Weisenbach (https://github.com/weisluke/microlensing/blob/main/microlensing/Util/length_scales.py)
 def theta_star_physical(
-    z_lens: float, z_src: float, cosmo:Cosmology, m: float = 1,
+    z_lens: float,
+    z_src: float,
+    cosmo: Cosmology,
+    m: float = 1,
 ) -> tuple:
     """Calculate the size of the Einstein radius of a point mass lens in the
     lens and source planes, in meters.

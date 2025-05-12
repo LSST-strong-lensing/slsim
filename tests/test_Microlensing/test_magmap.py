@@ -212,7 +212,9 @@ class TestMagnificationMap:
         """Tests that the plotting function runs without error."""
         fig, ax = plt.subplots()
         try:
-            plot_magnification_map(magmap_instance,ax=ax, plot_magnitude=plot_magnitude)
+            plot_magnification_map(
+                magmap_instance, ax=ax, plot_magnitude=plot_magnitude
+            )
             assert len(ax.images) > 0
             assert ax.get_xlabel() == "$x / \\theta_★$"
             assert ax.get_ylabel() == "$y / \\theta_★$"

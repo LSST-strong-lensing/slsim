@@ -68,8 +68,10 @@ class MicrolensingLightCurveFromLensModel(object):
             "supernovae".
         :param kwargs_source_morphology: Dictionary of keyword arguments
             for the source morphology class. (See
-            slsim.Microlensing.source_morphology for more details). Note that different parameters are defined for different
-            source morphologies. So check the documentation for each morphology.
+            slsim.Microlensing.source_morphology for more details). Note
+            that different parameters are defined for different source
+            morphologies. So check the documentation for each
+            morphology.
         :param lightcurve_type: Type of lightcurve to generate, either
             'magnitude' or 'magnification'. If 'magnitude', the
             lightcurve is returned in magnitudes normalized to the macro
@@ -92,7 +94,7 @@ class MicrolensingLightCurveFromLensModel(object):
             raise ValueError(
                 "Time array not provided in the correct format. Please provide a time array in days."
             )
-        
+
         if kwargs_MagnificationMap is None:
             raise ValueError(
                 "kwargs_MagnificationMap not in kwargs_microlensing. Please provide a dictionary of settings required by micro-lensing calculation."

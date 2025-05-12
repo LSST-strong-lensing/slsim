@@ -119,12 +119,14 @@ class MagnificationMap(object):
 
     @property
     def mu_ave(self):
-        """Returns the average (macro) magnification of the magnification map."""
+        """Returns the average (macro) magnification of the magnification
+        map."""
         return 1 / ((1 - self._kappa_tot) ** 2 - self._shear**2)
 
     @property
     def stellar_fraction(self):
-        """Returns the convergence fraction of that is due to stars/compact objects."""
+        """Returns the convergence fraction of that is due to stars/compact
+        objects."""
         return self._kappa_star / self._kappa_tot
 
     @property
@@ -143,7 +145,10 @@ class MagnificationMap(object):
 
     @property
     def pixel_scales(self):
-        """Returns the pixel scales in (x, y) format. The units are arcseconds."""
+        """Returns the pixel scales in (x, y) format.
+
+        The units are arcseconds.
+        """
         return (
             2 * self.half_length_x / self.num_pixels_x,
             2 * self.half_length_y / self.num_pixels_y,
@@ -162,7 +167,7 @@ class MagnificationMap(object):
 
     def get_pixel_size_meters(self, source_redshift, cosmo):
         """Returns the pixel size in meters.
-        
+
         :param source_redshift: redshift of the source.
         :param cosmo: astropy.cosmology instance.
         :return: pixel size in meters.

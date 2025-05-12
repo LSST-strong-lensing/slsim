@@ -324,8 +324,8 @@ class TestMicrolensingLightCurve:
         half_length_y = ml_lc_gaussian._magnification_map.half_length_y
         num_pix_x = ml_lc_gaussian._magnification_map.num_pixels[0]
         num_pix_y = ml_lc_gaussian._magnification_map.num_pixels[1]
-        x_start = (x_start - num_pix_x // 2) * 2 * half_length_x/num_pix_x
-        y_start = (y_start - num_pix_y // 2) * 2 * half_length_y/num_pix_y
+        x_start = (x_start - num_pix_x // 2) * 2 * half_length_x / num_pix_x
+        y_start = (y_start - num_pix_y // 2) * 2 * half_length_y / num_pix_y
 
         try:
             lcs, _tracks, _time_arrays = ml_lc_gaussian.generate_lightcurves(
@@ -392,11 +392,11 @@ class TestMicrolensingLightCurve:
         try:
             ax_return = plot_lightcurves_and_magmap(
                 convolved_map=ml_lc_agn_wave._convolved_map,
-                lightcurves=lcs, 
+                lightcurves=lcs,
                 time_duration_observer_frame=ml_lc_agn_wave._time_duration_observer_frame,
                 tracks=None,
                 magmap_instance=ml_lc_agn_wave._magnification_map,
-                lightcurve_type="magnification"
+                lightcurve_type="magnification",
             )
             assert isinstance(ax_return, np.ndarray)
             assert all(isinstance(ax, plt.Axes) for ax in ax_return.flat)

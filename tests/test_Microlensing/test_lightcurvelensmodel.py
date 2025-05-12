@@ -490,9 +490,9 @@ class TestMicrolensingLightCurveFromLensModel:
                 lens_source_info["dec_lens"],
                 lens_source_info["deflector_velocity_dispersion"],
                 cosmology,
-                kwargs_MagnificationMap = None,
-                point_source_morphology = morphology_key,
-                kwargs_source_morphology = kwargs_morphology,
+                kwargs_MagnificationMap=None,
+                point_source_morphology=morphology_key,
+                kwargs_source_morphology=kwargs_morphology,
             )
 
         # 3. point_source_morphology not in kwargs_microlensing
@@ -515,7 +515,6 @@ class TestMicrolensingLightCurveFromLensModel:
                 point_source_morphology=None,
                 kwargs_source_morphology=kwargs_morphology,
             )
-            
 
         # 3. kwargs_source_morphology not in kwargs_microlensing
         with pytest.raises(
@@ -537,7 +536,6 @@ class TestMicrolensingLightCurveFromLensModel:
                 morphology_key,
                 kwargs_source_morphology=None,
             )
-            
 
     @pytest.mark.parametrize(
         "morphology_key, kwargs_source",

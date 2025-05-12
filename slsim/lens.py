@@ -734,10 +734,10 @@ class Lens(LensedSystemBase):
                 )
                 if microlensing:
                     microlensing_magnitudes = self._point_source_magnitude_microlensing(
-                        band = band,
-                        time = time,
-                        source_index = source_index,
-                        kwargs_microlensing = kwargs_microlensing,
+                        band=band,
+                        time=time,
+                        source_index=source_index,
+                        kwargs_microlensing=kwargs_microlensing,
                     )
                     lensed_variable_magnitude += microlensing_magnitudes
 
@@ -787,14 +787,13 @@ class Lens(LensedSystemBase):
         :param band: imaging band
         :type band: string
         :param source_index: index of a source in source list.
-        :return:  kappa_star, kappa_tot, shear, shear_angle
-            
-            kappa_star is the stellar convergence, kappa_tot is the
-            total convergence, shear is the magnitude of the shear vector, and
-            shear_angle is the angle of shear vector in radians. The returned arrays contains
-            the values for each image of the source in the lensing
-            configuration. The arrays are of the same length as the number of
-            images of the source.
+        :return: kappa_star, kappa_tot, shear, shear_angle kappa_star
+            is the stellar convergence, kappa_tot is the total
+            convergence, shear is the magnitude of the shear vector, and
+            shear_angle is the angle of shear vector in radians. The
+            returned arrays contains the values for each image of the
+            source in the lensing configuration. The arrays are of the
+            same length as the number of images of the source.
         :rtype: tuple of numpy arrays
         """
         lenstronomy_kwargs = self.lenstronomy_kwargs(band=band)
@@ -803,8 +802,8 @@ class Lens(LensedSystemBase):
         )
         lenstronomy_kwargs_lens = lenstronomy_kwargs[1]["kwargs_lens"]
 
-        image_positions_x, image_positions_y = (
-            self._point_source_image_positions(source_index)
+        image_positions_x, image_positions_y = self._point_source_image_positions(
+            source_index
         )
 
         kappa_star_images = self.kappa_star(image_positions_x, image_positions_y)
@@ -829,16 +828,16 @@ class Lens(LensedSystemBase):
         :param band: imaging band
         :type band: string
         :param time: time is an image observation time in units of days.
-        :param kwargs_microlensing: additional dictionary of
-            settings required by micro-lensing calculation that do not
-            depend on the Lens() class. It is of type:
-            kwargs_microlensing = {"kwargs_MagnificationMap":
-            kwargs_MagnificationMap, "point_source_morphology":
-            'gaussian' or 'agn' or 'supernovae',
-            "kwargs_source_morphology": kwargs_source_morphology} The
-            kwargs_source_morphology is required for the source
-            morphology calculation. The kwargs_MagnificationMap is
-            required for the microlensing calculation.
+        :param kwargs_microlensing: additional dictionary of settings
+            required by micro-lensing calculation that do not depend on
+            the Lens() class. It is of type: kwargs_microlensing =
+            {"kwargs_MagnificationMap": kwargs_MagnificationMap,
+            "point_source_morphology": 'gaussian' or 'agn' or
+            'supernovae', "kwargs_source_morphology":
+            kwargs_source_morphology} The kwargs_source_morphology is
+            required for the source morphology calculation. The
+            kwargs_MagnificationMap is required for the microlensing
+            calculation.
         :type kwargs_microlensing: dict
         :return: point source magnitude for a single source, does not
             include the macro-magnification.
@@ -848,7 +847,7 @@ class Lens(LensedSystemBase):
         # get microlensing parameters
         kappa_star_images, kappa_tot_images, shear_images, shear_angle_images = (
             self._microlensing_parameters_for_image_positions_single_source(
-                band = band, source_index = source_index
+                band=band, source_index=source_index
             )
         )
 
@@ -862,19 +861,21 @@ class Lens(LensedSystemBase):
         dec_lens = np.random.uniform(-90, 90)  # degrees
 
         ml_lc_lens = MicrolensingLightCurveFromLensModel()
-        microlensing_magnitudes = ml_lc_lens.generate_point_source_microlensing_magnitudes(
-            time=time,
-            source_redshift=self.source(source_index).redshift,
-            deflector_redshift=self.deflector_redshift,
-            kappa_star_images=kappa_star_images,
-            kappa_tot_images=kappa_tot_images,
-            shear_images=shear_images,
-            shear_angle_images=shear_angle_images,
-            ra_lens=ra_lens,
-            dec_lens=dec_lens,
-            deflector_velocity_dispersion=self.deflector_velocity_dispersion(),
-            cosmology=self.cosmo,
-            **kwargs_microlensing,
+        microlensing_magnitudes = (
+            ml_lc_lens.generate_point_source_microlensing_magnitudes(
+                time=time,
+                source_redshift=self.source(source_index).redshift,
+                deflector_redshift=self.deflector_redshift,
+                kappa_star_images=kappa_star_images,
+                kappa_tot_images=kappa_tot_images,
+                shear_images=shear_images,
+                shear_angle_images=shear_angle_images,
+                ra_lens=ra_lens,
+                dec_lens=dec_lens,
+                deflector_velocity_dispersion=self.deflector_velocity_dispersion(),
+                cosmology=self.cosmo,
+                **kwargs_microlensing,
+            )
         )
         return microlensing_magnitudes  # # does not include the macro-lensing effect
 
