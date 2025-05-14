@@ -750,14 +750,14 @@ def test_convert_passband_to_nm():
 
 def test_pull_value_from_grid():
     # === Standard Interpolation Tests (within original grid boundaries) ===
-    grid_2x2 = np.array([[1., 2.], [3., 4.]])
-    
+    grid_2x2 = np.array([[1.0, 2.0], [3.0, 4.0]])
+
     # Test 1: Center point in 2x2 grid
     x, y = 0.5, 0.5
     expected_value = 2.5  # (1*(0.5*0.5) + 2*(0.5*0.5) + 3*(0.5*0.5) + 4*(0.5*0.5))
-                          # No, bilinear is:
-                          # (1-0.5)*(1-0.5)*1 + (0.5)*(1-0.5)*3 + (1-0.5)*(0.5)*2 + (0.5)*(0.5)*4
-                          # = 0.25*1 + 0.25*3 + 0.25*2 + 0.25*4 = 0.25+0.75+0.5+1.0 = 2.5
+    # No, bilinear is:
+    # (1-0.5)*(1-0.5)*1 + (0.5)*(1-0.5)*3 + (1-0.5)*(0.5)*2 + (0.5)*(0.5)*4
+    # = 0.25*1 + 0.25*3 + 0.25*2 + 0.25*4 = 0.25+0.75+0.5+1.0 = 2.5
     npt.assert_almost_equal(pull_value_from_grid(grid_2x2, x, y), expected_value)
 
     # Test 2: Another point in 2x2 grid
@@ -770,7 +770,7 @@ def test_pull_value_from_grid():
     npt.assert_almost_equal(pull_value_from_grid(grid_2x2, x, y), expected_value)
 
     # Test 3: Bigger grid
-    grid_3x3 = np.array([[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]])
+    grid_3x3 = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]])
     x, y = 0.5, 0.5
     # Interpolates between 1,2,4,5. Expected: (1+2+4+5)/4 = 12/4 = 3
     expected_value = 3.0
@@ -780,11 +780,13 @@ def test_pull_value_from_grid():
     x_arr = np.array([0.5, 0.25])
     y_arr = np.array([0.5, 0.75])
     expected_values_arr = np.array([2.5, 2.25])
-    npt.assert_almost_equal(pull_value_from_grid(grid_2x2, x_arr, y_arr), expected_values_arr)
+    npt.assert_almost_equal(
+        pull_value_from_grid(grid_2x2, x_arr, y_arr), expected_values_arr
+    )
 
     # === Input Validation Tests ===
     # Test 5: Non-ndarray input is converted to ndarray
-    grid_list = [[1., 2.], [3., 4.]]
+    grid_list = [[1.0, 2.0], [3.0, 4.0]]
     npt.assert_almost_equal(pull_value_from_grid(grid_list, 0.5, 0.5), 2.5)
 
     # Test 6: Error on non-2D input
@@ -793,24 +795,35 @@ def test_pull_value_from_grid():
 
     # Test 7: Error on zero-sized dimensions
     empty_grid_rows = np.zeros((0, 5))
-    with pytest.raises(ValueError, match="array_2d must not have zero-sized dimensions."):
+    with pytest.raises(
+        ValueError, match="array_2d must not have zero-sized dimensions."
+    ):
         pull_value_from_grid(empty_grid_rows, 0.0, 0.0)
     empty_grid_cols = np.zeros((5, 0))
-    with pytest.raises(ValueError, match="array_2d must not have zero-sized dimensions."):
+    with pytest.raises(
+        ValueError, match="array_2d must not have zero-sized dimensions."
+    ):
         pull_value_from_grid(empty_grid_cols, 0.0, 0.0)
 
     # Test 8: Mismatched x/y shapes
-    with pytest.raises(ValueError, match="x_position and y_position must have the same shape."):
+    with pytest.raises(
+        ValueError, match="x_position and y_position must have the same shape."
+    ):
         pull_value_from_grid(grid_2x2, np.array([0.1, 0.2]), np.array([0.1]))
 
     # Test 9: Negative coordinates
-    with pytest.raises(ValueError, match="x_position and y_position must be non-negative."):
+    with pytest.raises(
+        ValueError, match="x_position and y_position must be non-negative."
+    ):
         pull_value_from_grid(grid_2x2, -0.1, 0.5)
-    with pytest.raises(ValueError, match="x_position and y_position must be non-negative."):
+    with pytest.raises(
+        ValueError, match="x_position and y_position must be non-negative."
+    ):
         pull_value_from_grid(grid_2x2, 0.5, -0.1)
-    with pytest.raises(ValueError, match="x_position and y_position must be non-negative."):
+    with pytest.raises(
+        ValueError, match="x_position and y_position must be non-negative."
+    ):
         pull_value_from_grid(grid_2x2, np.array([-0.1, 0.5]), np.array([0.5, 0.5]))
-
 
     # === Boundary and Edge Padding Tests (New Behavior) ===
     # Original grid_2x2.shape = (2,2).
@@ -841,7 +854,6 @@ def test_pull_value_from_grid():
     # x=2.0, y=0.0. Should be padded_array[2,0] which is original_array[1,0]=3
     npt.assert_almost_equal(pull_value_from_grid(grid_2x2, 2.0, 0.0), 3.0)
 
-
     # Test 13: Point slightly beyond original max index, but within padded interpolation range
     # This was the old "out-of-bounds" test, now it should work due to padding.
     # grid_2x2 padded is [[1,2,2],[3,4,4],[3,4,4]]. Interpolator grid is [0,1,2] for rows/cols.
@@ -851,49 +863,83 @@ def test_pull_value_from_grid():
     # Final = interp at y=0.5 between R1=3 and R2=4 -> (3+4)/2 = 3.5
     # (Manual calculation: see previous thought block, it was 3.5)
     npt.assert_almost_equal(pull_value_from_grid(grid_2x2, 1.1, 0.5), 3.5)
-    npt.assert_almost_equal(pull_value_from_grid(grid_2x2, 0.5, 1.1), 3.0) # Symmetrically for y
+    npt.assert_almost_equal(
+        pull_value_from_grid(grid_2x2, 0.5, 1.1), 3.0
+    )  # Symmetrically for y
 
     # Test 14: Truly out-of-bounds coordinates (beyond padded interpolation range)
     # For grid_2x2 (shape 2,2), max_x_allowed=2.0, max_y_allowed=2.0
     # Test x too large
-    with pytest.raises(ValueError, match=r"x_position \(max found: 2\.10\) must be <= 2\.0 and y_position \(max found: 0\.50\) must be <= 2\.0"):
+    with pytest.raises(
+        ValueError,
+        match=r"x_position \(max found: 2\.10\) must be <= 2\.0 and y_position \(max found: 0\.50\) must be <= 2\.0",
+    ):
         pull_value_from_grid(grid_2x2, 2.1, 0.5)
     # Test y too large
-    with pytest.raises(ValueError, match=r"x_position \(max found: 0\.50\) must be <= 2\.0 and y_position \(max found: 2\.10\) must be <= 2\.0"):
+    with pytest.raises(
+        ValueError,
+        match=r"x_position \(max found: 0\.50\) must be <= 2\.0 and y_position \(max found: 2\.10\) must be <= 2\.0",
+    ):
         pull_value_from_grid(grid_2x2, 0.5, 2.1)
     # Test both too large
-    with pytest.raises(ValueError, match=r"x_position \(max found: 2\.10\) must be <= 2\.0 and y_position \(max found: 2\.20\) must be <= 2\.0"):
+    with pytest.raises(
+        ValueError,
+        match=r"x_position \(max found: 2\.10\) must be <= 2\.0 and y_position \(max found: 2\.20\) must be <= 2\.0",
+    ):
         pull_value_from_grid(grid_2x2, 2.1, 2.2)
-    
+
     # Test with array input for out of bounds
-    with pytest.raises(ValueError, match=r"x_position \(max found: 2\.10\) must be <= 2\.0 and y_position \(max found: 0\.60\) must be <= 2\.0"):
+    with pytest.raises(
+        ValueError,
+        match=r"x_position \(max found: 2\.10\) must be <= 2\.0 and y_position \(max found: 0\.60\) must be <= 2\.0",
+    ):
         pull_value_from_grid(grid_2x2, np.array([0.5, 2.1]), np.array([0.5, 0.6]))
 
     # Test for a 1xN or Nx1 grid (important for padding behavior)
-    grid_1x3 = np.array([[10., 20., 30.]]) # shape (1,3)
+    grid_1x3 = np.array([[10.0, 20.0, 30.0]])  # shape (1,3)
     # original_shape[0]=1 (max_x_allowed=1.0), original_shape[1]=3 (max_y_allowed=3.0)
     # padded is [[10,20,30,30],[10,20,30,30]]
     # Test 15a: x at max allowed (edge)
-    npt.assert_almost_equal(pull_value_from_grid(grid_1x3, 1.0, 1.0), 20.0) # uses padded_array[1,1]
-    npt.assert_almost_equal(pull_value_from_grid(grid_1x3, 1.0, 0.5), 15.0) # uses padded_array[1,0] and [1,1]
+    npt.assert_almost_equal(
+        pull_value_from_grid(grid_1x3, 1.0, 1.0), 20.0
+    )  # uses padded_array[1,1]
+    npt.assert_almost_equal(
+        pull_value_from_grid(grid_1x3, 1.0, 0.5), 15.0
+    )  # uses padded_array[1,0] and [1,1]
     # Test 15b: y at max allowed (edge)
-    npt.assert_almost_equal(pull_value_from_grid(grid_1x3, 0.0, 3.0), 30.0) # uses padded_array[0,3]
-    npt.assert_almost_equal(pull_value_from_grid(grid_1x3, 0.5, 3.0), 30.0) # uses padded_array[0,3] and [1,3]
+    npt.assert_almost_equal(
+        pull_value_from_grid(grid_1x3, 0.0, 3.0), 30.0
+    )  # uses padded_array[0,3]
+    npt.assert_almost_equal(
+        pull_value_from_grid(grid_1x3, 0.5, 3.0), 30.0
+    )  # uses padded_array[0,3] and [1,3]
 
-    grid_3x1 = np.array([[10.], [20.], [30.]]) # shape (3,1)
+    grid_3x1 = np.array([[10.0], [20.0], [30.0]])  # shape (3,1)
     # original_shape[0]=3 (max_x_allowed=3.0), original_shape[1]=1 (max_y_allowed=1.0)
     # padded is [[10,10],[20,20],[30,30],[30,30]]
     # Test 15c: x at max allowed (edge)
-    npt.assert_almost_equal(pull_value_from_grid(grid_3x1, 3.0, 0.0), 30.0) # uses padded_array[3,0]
-    npt.assert_almost_equal(pull_value_from_grid(grid_3x1, 3.0, 0.5), 30.0) # uses padded_array[3,0] and [3,1]
+    npt.assert_almost_equal(
+        pull_value_from_grid(grid_3x1, 3.0, 0.0), 30.0
+    )  # uses padded_array[3,0]
+    npt.assert_almost_equal(
+        pull_value_from_grid(grid_3x1, 3.0, 0.5), 30.0
+    )  # uses padded_array[3,0] and [3,1]
     # Test 15d: y at max allowed (edge)
-    npt.assert_almost_equal(pull_value_from_grid(grid_3x1, 1.0, 1.0), 20.0) # uses padded_array[1,1]
-    npt.assert_almost_equal(pull_value_from_grid(grid_3x1, 0.5, 1.0), 15.0) # uses padded_array[0,1] and [1,1]
+    npt.assert_almost_equal(
+        pull_value_from_grid(grid_3x1, 1.0, 1.0), 20.0
+    )  # uses padded_array[1,1]
+    npt.assert_almost_equal(
+        pull_value_from_grid(grid_3x1, 0.5, 1.0), 15.0
+    )  # uses padded_array[0,1] and [1,1]
 
     # Test 15e: Truly out of bounds for 1xN
-    with pytest.raises(ValueError, match=r"x_position \(max found: 1\.10\) must be <= 1\.0"):
+    with pytest.raises(
+        ValueError, match=r"x_position \(max found: 1\.10\) must be <= 1\.0"
+    ):
         pull_value_from_grid(grid_1x3, 1.1, 1.0)
-    with pytest.raises(ValueError, match=r"y_position \(max found: 3\.10\) must be <= 3\.0"):
+    with pytest.raises(
+        ValueError, match=r"y_position \(max found: 3\.10\) must be <= 3\.0"
+    ):
         pull_value_from_grid(grid_1x3, 0.5, 3.1)
 
 

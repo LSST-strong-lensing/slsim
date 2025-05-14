@@ -25,14 +25,16 @@ def cosmology():
 def magmap_params():
     """Provides the parameters associated with the test magnification map."""
     # These parameters should correspond to the saved TestData/test_magmap2D.npy
-    theta_star = 1.4533388875267387e-06  # Example value, ensure consistency if map depends on it
+    theta_star = (
+        1.4533388875267387e-06  # Example value, ensure consistency if map depends on it
+    )
     return {
         "kappa_tot": 0.47128266,
         "shear": 0.42394672,
         "kappa_star": 0.12007537,
         "theta_star": theta_star,
-        "center_x": 0.0, # arcsec
-        "center_y": 0.0, # arcsec
+        "center_x": 0.0,  # arcsec
+        "center_y": 0.0,  # arcsec
         "half_length_x": 2.5 * theta_star,
         "half_length_y": 2.5 * theta_star,
         "mass_function": "kroupa",  # Default, but set explicitly for clarity
@@ -59,7 +61,9 @@ def loaded_mag_array():
         magmap2D = np.load(magmap2D_path)
         return magmap2D
     except Exception as e:
-        pytest.fail(f"Failed to load TestData/test_magmaps_microlensing/magmap_0.npy: {e}")
+        pytest.fail(
+            f"Failed to load TestData/test_magmaps_microlensing/magmap_0.npy: {e}"
+        )
 
 
 @pytest.fixture

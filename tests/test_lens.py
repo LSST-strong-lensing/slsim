@@ -415,6 +415,7 @@ def test_point_source_magnitude(pes_lens_instance):
 ############## MICROLENSING TESTS###############
 ################################################
 
+
 @pytest.fixture
 def lens_instance_with_variability():
     # quasar and host galaxy dict. One can avoid host galaxy information and simulate

@@ -1038,15 +1038,15 @@ def pull_value_from_grid(array_2d, x_position, y_position):
     """This approximates the point (x_position, y_position) in a 2d array of
     values. x_position and y_position may be decimals, and are assumed to be
     measured in pixels relative to the original grid. This uses bilinear
-    interpolation (powered by scipy.interpolate.RegularGridInterpolator)
-    with 'edge' behavior for points at or slightly beyond the original grid
+    interpolation (powered by scipy.interpolate.RegularGridInterpolator) with
+    'edge' behavior for points at or slightly beyond the original grid
     boundaries, by interpolating on an edge-padded version of the grid.
 
     :param array_2d: 2 dimensional array of values.
-    :param x_position: x coordinate in array_2d in pixels.
-                       Valid range is [0, array_2d.shape[0]].
-    :param y_position: y coordinate in array_2d in pixels.
-                       Valid range is [0, array_2d.shape[1]].
+    :param x_position: x coordinate in array_2d in pixels. Valid range
+        is [0, array_2d.shape[0]].
+    :param y_position: y coordinate in array_2d in pixels. Valid range
+        is [0, array_2d.shape[1]].
     :return: approximation of array_2d at point (x_position, y_position)
     """
     if not isinstance(array_2d, np.ndarray):
@@ -1082,7 +1082,7 @@ def pull_value_from_grid(array_2d, x_position, y_position):
         # Report the actual maximum input values for a more informative error message
         max_x_input = np.max(x_pos_arr) if x_pos_arr.size > 0 else -1.0
         max_y_input = np.max(y_pos_arr) if y_pos_arr.size > 0 else -1.0
-        
+
         # The f-string formatting ensures at least one decimal place for the limits (e.g., "1.0" not "1")
         raise ValueError(
             f"x_position (max found: {max_x_input:.2f}) must be <= {max_x_allowed:.1f} and "
@@ -1111,9 +1111,9 @@ def pull_value_from_grid(array_2d, x_position, y_position):
     # Prepare query points for the interpolator.
     # x_pos_arr and y_pos_arr are already relative to the original grid, which is
     # consistent with how the padded grid and its coordinates (grid_rows, grid_cols) are set up.
-    if x_pos_arr.ndim == 0: # Scalar input
+    if x_pos_arr.ndim == 0:  # Scalar input
         query_points = np.array([[x_pos_arr.item(), y_pos_arr.item()]])
-    else: # Array input
+    else:  # Array input
         query_points = np.vstack([x_pos_arr.ravel(), y_pos_arr.ravel()]).T
 
     interpolated_values_flat = interpolator(query_points)
@@ -1201,7 +1201,7 @@ def extract_light_curve(
     N_safe_dim_x = safe_convolution_array.shape[0]
     N_safe_dim_y = safe_convolution_array.shape[1]
 
-    if pixels_traversed >= max(N_safe_dim_x, N_safe_dim_y) : 
+    if pixels_traversed >= max(N_safe_dim_x, N_safe_dim_y):
         print(
             "Warning: light curve traversal length is too long for the safe region dimensions. Returning average flux."
         )
@@ -1218,16 +1218,18 @@ def extract_light_curve(
                 "of the safe_convolution_array. Returning average flux."
             )
             return np.sum(convolution_array) / np.size(convolution_array)
-    else: # x_start_position is None, choose randomly
-        if max_safe_idx_x < 0: 
+    else:  # x_start_position is None, choose randomly
+        if max_safe_idx_x < 0:
             print("Error: max_safe_idx_x < 0, safe_array likely misconfigured.")
             return np.sum(convolution_array) / np.size(convolution_array)
-        
+
         # MODIFICATION: Choose non-border pixel if possible
-        if N_safe_dim_x >= 3: # Possible to choose non-border
+        if N_safe_dim_x >= 3:  # Possible to choose non-border
             # Non-border indices are 1 to N_safe_dim_x - 2 (or max_safe_idx_x - 1)
-            x_start_position = float(rng.integers(1, max_safe_idx_x)) # low is inclusive, high is exclusive
-        else: # N_safe_dim_x is 1 or 2, all pixels are border pixels
+            x_start_position = float(
+                rng.integers(1, max_safe_idx_x)
+            )  # low is inclusive, high is exclusive
+        else:  # N_safe_dim_x is 1 or 2, all pixels are border pixels
             x_start_position = float(rng.integers(0, max_safe_idx_x + 1))
 
     if y_start_position is not None:
@@ -1237,16 +1239,18 @@ def extract_light_curve(
                 "of the safe_convolution_array. Returning average flux."
             )
             return np.sum(convolution_array) / np.size(convolution_array)
-    else: # y_start_position is None, choose randomly
+    else:  # y_start_position is None, choose randomly
         if max_safe_idx_y < 0:
             print("Error: max_safe_idx_y < 0, safe_array likely misconfigured.")
             return np.sum(convolution_array) / np.size(convolution_array)
 
         # MODIFICATION: Choose non-border pixel if possible
-        if N_safe_dim_y >= 3: # Possible to choose non-border
+        if N_safe_dim_y >= 3:  # Possible to choose non-border
             # Non-border indices are 1 to N_safe_dim_y - 2 (or max_safe_idx_y - 1)
-            y_start_position = float(rng.integers(1, max_safe_idx_y)) # low is inclusive, high is exclusive
-        else: # N_safe_dim_y is 1 or 2, all pixels are border pixels
+            y_start_position = float(
+                rng.integers(1, max_safe_idx_y)
+            )  # low is inclusive, high is exclusive
+        else:  # N_safe_dim_y is 1 or 2, all pixels are border pixels
             y_start_position = float(rng.integers(0, max_safe_idx_y + 1))
 
     if phi_travel_direction is not None:
@@ -1266,7 +1270,6 @@ def extract_light_curve(
                 f"delta_x: {delta_x}, delta_y: {delta_y}",
                 f"x_end_position: {x_start_position + delta_x}, "
                 f"y_end_position: {y_start_position + delta_y}",
-                
             )
             return np.sum(convolution_array) / np.size(convolution_array)
     else:

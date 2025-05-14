@@ -43,7 +43,9 @@ def magmap_instance(theta_star):  # Request theta_star as argument
 
         magmap2D = np.load(magmap2D_path)
     except Exception as e:
-        pytest.fail(f"Failed to load TestData/test_magmaps_microlensing/magmap_0.npy: {e}")
+        pytest.fail(
+            f"Failed to load TestData/test_magmaps_microlensing/magmap_0.npy: {e}"
+        )
 
     # a precomputed map for the parameters below is available in the TestData folder
     # Use the injected theta_star value
@@ -52,8 +54,8 @@ def magmap_instance(theta_star):  # Request theta_star as argument
         "shear": 0.42394672,
         "kappa_star": 0.12007537,
         "theta_star": theta_star,
-        "center_x": 0.0, # arcsec
-        "center_y": 0.0, # arcsec
+        "center_x": 0.0,  # arcsec
+        "center_y": 0.0,  # arcsec
         "half_length_x": 2.5 * theta_star,
         "half_length_y": 2.5 * theta_star,
         "mass_function": "kroupa",  # Default, but set explicitly for clarity
@@ -93,6 +95,7 @@ def kwargs_source_morphology_AGN_wave(cosmology):
         "observer_frame_wavelength_in_nm": 600,
         "eddington_ratio": 0.1,
     }
+
 
 @pytest.fixture
 def kwargs_source_morphology_AGN_band(cosmology):
