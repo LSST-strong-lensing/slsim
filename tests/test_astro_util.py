@@ -1172,7 +1172,6 @@ def test_extract_light_curve_all_cases():
     )
 
     # ---- NEW TEST CASES FOR COVERAGE ----
-    time_yr_for_0px = 0.0  # For zero pixel traversal
 
     # Test Case 12: Covers `if max_safe_idx_x < 0:` in random x choice
     # N_safe_dim_x from shape[0] of safe_array.
@@ -1185,7 +1184,7 @@ def test_extract_light_curve_all_cases():
         convolution_array=conv_array_3x4_for_safe_x_neg,
         pixel_size=pixel_size,
         effective_transverse_velocity=eff_vel_km_s,
-        light_curve_time_in_years=time_yr_for_0px,
+        light_curve_time_in_years=0,
         pixel_shift=1,
         x_start_position=None,
         y_start_position=None,  # y_choice won't be reached if x_choice fails
@@ -1214,7 +1213,7 @@ def test_extract_light_curve_all_cases():
         convolution_array=conv_array_2x4_for_x_border,
         pixel_size=pixel_size,
         effective_transverse_velocity=eff_vel_km_s,
-        light_curve_time_in_years=time_yr_for_0px,
+        light_curve_time_in_years=0,
         pixel_shift=0,
         x_start_position=None,
         y_start_position=None,
@@ -1239,7 +1238,7 @@ def test_extract_light_curve_all_cases():
         convolution_array=conv_array_4x3_for_safe_y_neg,
         pixel_size=pixel_size,
         effective_transverse_velocity=eff_vel_km_s,
-        light_curve_time_in_years=time_yr_for_0px,
+        light_curve_time_in_years=0,
         pixel_shift=1,
         x_start_position=None,
         y_start_position=None,
@@ -1268,7 +1267,7 @@ def test_extract_light_curve_all_cases():
         convolution_array=conv_array_4x2_for_y_border,
         pixel_size=pixel_size,
         effective_transverse_velocity=eff_vel_km_s,
-        light_curve_time_in_years=time_yr_for_0px,
+        light_curve_time_in_years=0,
         pixel_shift=0,
         x_start_position=None,
         y_start_position=None,
