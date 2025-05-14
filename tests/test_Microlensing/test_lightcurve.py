@@ -34,36 +34,35 @@ def theta_star():
 @pytest.fixture
 def magmap_instance(theta_star):  # Request theta_star as argument
     """Provides a basic MagnificationMap instance for testing."""
-
-    # Robust path handling (adjust if needed for your structure)
     try:
-        # Assuming TestData is in the same directory as the test file
-        test_dir = os.path.dirname(__file__)
-        magmap2D_path = os.path.join(test_dir, "..", "TestData", "test_magmap2D.npy")
-        if not os.path.exists(magmap2D_path):
-            # Add more debug info for CI if it fails again
-            pytest.fail(f"TestData file not found: {magmap2D_path}")
+        test_dir = os.path.dirname(os.path.abspath(__file__))
+        # Try path relative to test file first
+        magmap2D_path = os.path.join(
+            test_dir, "..", "TestData", "test_magmaps_microlensing", "magmap_0.npy"
+        )
+
         magmap2D = np.load(magmap2D_path)
     except Exception as e:
-        pytest.fail(f"Failed to load TestData/test_magmap2D.npy: {e}")
+        pytest.fail(f"Failed to load TestData/test_magmaps_microlensing/magmap_0.npy: {e}")
 
     # a precomputed map for the parameters below is available in the TestData folder
     # Use the injected theta_star value
     kwargs_MagnificationMap = {
-        "kappa_tot": 0.34960889,
-        "shear": 0.34860889,
-        "kappa_star": 0.24,
-        "theta_star": theta_star,  # Use the fixture value
-        "center_x": 0,  # arcsec
-        "center_y": 0,  # arcsec
-        "half_length_x": 25 * theta_star,  # Use the fixture value
-        "half_length_y": 25 * theta_star,  # Use the fixture value
-        "mass_function": "kroupa",
+        "kappa_tot": 0.47128266,
+        "shear": 0.42394672,
+        "kappa_star": 0.12007537,
+        "theta_star": theta_star,
+        "center_x": 0.0, # arcsec
+        "center_y": 0.0, # arcsec
+        "half_length_x": 2.5 * theta_star,
+        "half_length_y": 2.5 * theta_star,
+        "mass_function": "kroupa",  # Default, but set explicitly for clarity
         "m_solar": 1.0,
-        "m_lower": 0.08,
-        "m_upper": 100,
-        "num_pixels_x": 1000,
-        "num_pixels_y": 1000,
+        "m_lower": 0.01,
+        "m_upper": 5,
+        # These MUST match the dimensions of the loaded magmap_0.npy
+        "num_pixels_x": 50,
+        "num_pixels_y": 50,
         "kwargs_IPM": {},
     }
 
@@ -94,7 +93,6 @@ def kwargs_source_morphology_AGN_wave(cosmology):
         "observer_frame_wavelength_in_nm": 600,
         "eddington_ratio": 0.1,
     }
-
 
 @pytest.fixture
 def kwargs_source_morphology_AGN_band(cosmology):
@@ -264,47 +262,6 @@ class TestMicrolensingLightCurve:
         assert len(lc) > 0
         assert np.issubdtype(lc.dtype, np.floating)
         assert not np.any(np.isnan(lc)), "LC has NaNs"
-
-    # @pytest.mark.parametrize(
-    #     "ret_track, ret_time, expected_len",
-    #     [(False, False, 1), (True, False, 2), (False, True, 2), (True, True, 3)],
-    # )
-    # def test_generate_lightcurves_return_options(
-    #     self, ml_lc_gaussian, cosmology, ret_track, ret_time, expected_len
-    # ):
-    #     """Tests different return combinations using real extract."""
-    #     num_lc = 2
-    #     try:
-    #         result = ml_lc_gaussian.generate_lightcurves(
-    #             source_redshift=0.5,
-    #             cosmo=cosmology,
-    #             num_lightcurves=num_lc,
-    #             return_track_coords=ret_track,
-    #             return_time_array=ret_time,
-    #         )
-    #     except Exception as e:
-    #         pytest.fail(f"generate_lightcurves raised: {e}")
-    #     if expected_len == 1:
-    #         lcs = result
-    #         assert isinstance(lcs, list) and len(lcs) == num_lc
-    #     else:
-    #         assert isinstance(result, tuple)
-    #         assert len(result) == expected_len
-    #         lcs = result[0]
-    #         assert isinstance(lcs, list) and len(lcs) == num_lc
-    #     if ret_track:
-    #         tracks = result[1]
-    #         assert isinstance(tracks, list) and len(tracks) == num_lc
-    #         assert isinstance(tracks[0], np.ndarray)
-    #         assert tracks[0].shape[0] == 2
-    #         assert tracks[0].shape[1] == len(lcs[0])
-    #     if ret_time:
-    #         time_arrays = result[-1]
-    #         assert isinstance(time_arrays, list) and len(time_arrays) == num_lc
-    #         assert isinstance(time_arrays[0], np.ndarray)
-    #         assert len(time_arrays[0]) == len(lcs[0])
-    #         assert np.isclose(time_arrays[0][0], 0)
-    #         assert np.isclose(time_arrays[0][-1], ml_lc_gaussian._time_duration_observer_frame)
 
     def test_generate_lightcurves_specific_start_and_angle(
         self, ml_lc_gaussian, cosmology

@@ -415,28 +415,6 @@ def test_point_source_magnitude(pes_lens_instance):
 ############## MICROLENSING TESTS###############
 ################################################
 
-
-# @pytest.fixture
-# def lens_instance_with_variability():
-#     # Path to the pickled Lens object
-#     # IMPORTANT: Adjust this path to where your test_lens.py is relative to the TestData folder
-#     path_to_test_dir = os.path.dirname(os.path.abspath(__file__))
-#     pickle_path = os.path.join(
-#         path_to_test_dir,
-#         "TestData",
-#         "test_data_microlensing",
-#         "lens_class_microlensing.pickle",
-#     )
-
-#     if not os.path.exists(pickle_path):
-#         pytest.skip(
-#             f"Pickle file for lens_instance_with_variability not found at {pickle_path}"
-#         )
-#     with open(pickle_path, "rb") as f:
-#         lens_class = pickle.load(f)
-#     return lens_class
-
-
 @pytest.fixture
 def lens_instance_with_variability():
     # quasar and host galaxy dict. One can avoid host galaxy information and simulate

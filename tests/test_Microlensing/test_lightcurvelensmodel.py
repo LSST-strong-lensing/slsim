@@ -55,8 +55,8 @@ def kwargs_magnification_map_settings(lens_source_info):
     """Provides SETTINGS for MagnificationMap (size, resolution etc)."""
     theta_star = lens_source_info["theta_star"]
     # These SHOULD MATCH THE SAVED MAPS' RESOLUTION AND EXTENT
-    num_pix = 1000  # Resolution of saved maps
-    half_len = 25  # Extent (in theta_star units) of saved maps
+    num_pix = 50  # Resolution of saved maps
+    half_len = 2.5  # Extent (in theta_star units) of saved maps
     return {
         "theta_star": theta_star,
         "center_x": 0,
@@ -65,8 +65,8 @@ def kwargs_magnification_map_settings(lens_source_info):
         "half_length_y": half_len * theta_star,
         "mass_function": "kroupa",
         "m_solar": 1.0,
-        "m_lower": 0.08,
-        "m_upper": 100,
+        "m_lower": 0.01,
+        "m_upper": 5,
         "num_pixels_x": num_pix,
         "num_pixels_y": num_pix,
         "kwargs_IPM": {},  # Added missing key
@@ -131,27 +131,13 @@ def create_mock_magmap_list(microlensing_params, kwargs_magnification_map_settin
     # --- Robust Path Finding ---
     test_dir = os.path.dirname(os.path.abspath(__file__))
     # Try relative to test file first (e.g., tests/TestData/...)
-    saved_map_directory_rel = os.path.join(
-        test_dir, "..", "TestData", "test_data_microlensing", "saved_magmaps2D"
+    saved_map_directory = os.path.join(
+        test_dir, "..", "TestData", "test_magmaps_microlensing"
     )
-    # Try relative to parent of test dir (e.g., slsim/TestData/...)
-    base_dir = os.path.dirname(test_dir)
-    saved_map_directory_root = os.path.join(
-        base_dir, "TestData", "test_data_microlensing", "saved_magmaps2D"
-    )
-
-    if os.path.isdir(saved_map_directory_rel):
-        saved_map_directory = saved_map_directory_rel
-    elif os.path.isdir(saved_map_directory_root):
-        saved_map_directory = saved_map_directory_root
-    else:
-        pytest.fail(
-            f"Could not find saved map directory at {saved_map_directory_rel} or {saved_map_directory_root}"
-        )
     # --- End Robust Path Finding ---
 
     for i in range(num_images):
-        map_filename = f"magmap_image_{i}.npy"
+        map_filename = f"magmap_{i}.npy"
         map_filepath = os.path.join(saved_map_directory, map_filename)
 
         if not os.path.exists(map_filepath):
@@ -333,7 +319,7 @@ class TestMicrolensingLightCurveFromLensModel:
         )
         kwargs_morphology = request.getfixturevalue(kwargs_source)
         num_images = len(microlensing_params["kappa_star"])
-        time_array = np.linspace(0, 1000, 100)
+        time_array = np.linspace(0, 4000, 100)
         try:
             lightcurves, tracks, time_arrays = (
                 ml_lens_model.generate_point_source_lightcurves(
@@ -447,7 +433,7 @@ class TestMicrolensingLightCurveFromLensModel:
         )
         kwargs_morphology = request.getfixturevalue(kwargs_source)
         num_images = len(microlensing_params["kappa_star"])
-        time_array = np.linspace(0, 1000, 50)
+        time_array = np.linspace(0, 4000, 50)
         try:
             magnitudes = ml_lens_model.generate_point_source_microlensing_magnitudes(
                 time_array,
@@ -562,7 +548,7 @@ class TestMicrolensingLightCurveFromLensModel:
         )
         kwargs_morphology = request.getfixturevalue(kwargs_source)
         num_images = len(microlensing_params["kappa_star"])
-        time_array = np.linspace(0, 1000, 50)
+        time_array = np.linspace(0, 4000, 50)
         time_array = time_array.tolist()  # Convert to list
         try:
             magnitudes = ml_lens_model.generate_point_source_microlensing_magnitudes(

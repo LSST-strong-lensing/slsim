@@ -25,23 +25,23 @@ def cosmology():
 def magmap_params():
     """Provides the parameters associated with the test magnification map."""
     # These parameters should correspond to the saved TestData/test_magmap2D.npy
-    theta_star = 1e-6  # Example value, ensure consistency if map depends on it
+    theta_star = 1.4533388875267387e-06  # Example value, ensure consistency if map depends on it
     return {
-        "kappa_tot": 0.34960889,
-        "shear": 0.34860889,
-        "kappa_star": 0.24,
+        "kappa_tot": 0.47128266,
+        "shear": 0.42394672,
+        "kappa_star": 0.12007537,
         "theta_star": theta_star,
-        "center_x": 0.0,
-        "center_y": 0.0,
-        "half_length_x": 25 * theta_star,
-        "half_length_y": 25 * theta_star,
+        "center_x": 0.0, # arcsec
+        "center_y": 0.0, # arcsec
+        "half_length_x": 2.5 * theta_star,
+        "half_length_y": 2.5 * theta_star,
         "mass_function": "kroupa",  # Default, but set explicitly for clarity
-        "m_solar": 1.0,  # Default
-        "m_lower": 0.08,  # Default
-        "m_upper": 100,  # Default
-        # These MUST match the dimensions of the loaded test_magmap2D.npy
-        "num_pixels_x": 1000,
-        "num_pixels_y": 1000,
+        "m_solar": 1.0,
+        "m_lower": 0.01,
+        "m_upper": 5,
+        # These MUST match the dimensions of the loaded magmap_0.npy
+        "num_pixels_x": 50,
+        "num_pixels_y": 50,
         "kwargs_IPM": {},
     }
 
@@ -50,29 +50,16 @@ def magmap_params():
 def loaded_mag_array():
     """Loads the magnification map data from the test file."""
     try:
-        # Robust path handling
         test_dir = os.path.dirname(os.path.abspath(__file__))
         # Try path relative to test file first
-        magmap2D_path_rel = os.path.join(
-            test_dir, "..", "TestData", "test_magmap2D.npy"
+        magmap2D_path = os.path.join(
+            test_dir, "..", "TestData", "test_magmaps_microlensing", "magmap_0.npy"
         )
-        # Try path relative to parent of test dir (project root)
-        base_dir = os.path.dirname(test_dir)
-        magmap2D_path_root = os.path.join(base_dir, "TestData", "test_magmap2D.npy")
-
-        if os.path.exists(magmap2D_path_rel):
-            magmap2D_path = magmap2D_path_rel
-        elif os.path.exists(magmap2D_path_root):
-            magmap2D_path = magmap2D_path_root
-        else:
-            pytest.fail(
-                f"TestData file not found at {magmap2D_path_rel} or {magmap2D_path_root}"
-            )
 
         magmap2D = np.load(magmap2D_path)
         return magmap2D
     except Exception as e:
-        pytest.fail(f"Failed to load TestData/test_magmap2D.npy: {e}")
+        pytest.fail(f"Failed to load TestData/test_magmaps_microlensing/magmap_0.npy: {e}")
 
 
 @pytest.fixture
