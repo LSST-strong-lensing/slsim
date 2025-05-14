@@ -1172,7 +1172,7 @@ def test_extract_light_curve_all_cases():
     )
 
     # ---- NEW TEST CASES FOR COVERAGE ----
-    time_yr_for_0px = 0.0 # For zero pixel traversal
+    time_yr_for_0px = 0.0  # For zero pixel traversal
 
     # Test Case 12: Covers `if max_safe_idx_x < 0:` in random x choice
     # N_safe_dim_x from shape[0] of safe_array.
@@ -1185,41 +1185,47 @@ def test_extract_light_curve_all_cases():
         convolution_array=conv_array_3x4_for_safe_x_neg,
         pixel_size=pixel_size,
         effective_transverse_velocity=eff_vel_km_s,
-        light_curve_time_in_years=time_yr_for_0px, 
+        light_curve_time_in_years=time_yr_for_0px,
         pixel_shift=1,
-        x_start_position=None, 
-        y_start_position=None, # y_choice won't be reached if x_choice fails
-        random_seed=42 # Seed helps if x_choice passes but y_choice has an issue
+        x_start_position=None,
+        y_start_position=None,  # y_choice won't be reached if x_choice fails
+        random_seed=42,  # Seed helps if x_choice passes but y_choice has an issue
     )
     np.testing.assert_almost_equal(
-        val12, avg_flux_tc12, decimal=NPT_DECIMAL_PLACES,
-        err_msg="Test Case 12 Failed: max_safe_idx_x < 0 in x-choice should return avg flux."
+        val12,
+        avg_flux_tc12,
+        decimal=NPT_DECIMAL_PLACES,
+        err_msg="Test Case 12 Failed: max_safe_idx_x < 0 in x-choice should return avg flux.",
     )
 
     # Test Case 13: Covers `else: x_start_position = float(rng.integers(0, max_safe_idx_x + 1))` (x random border)
-    # conv_array (2,4), pixel_shift=0. 
+    # conv_array (2,4), pixel_shift=0.
     # N_safe_dim_x (rows) = 2. max_safe_idx_x = 1. -> x_start_position chosen from [0,1] using rng.integers(0,2)
     # N_safe_dim_y (cols) = 4. max_safe_idx_y = 3. -> y_start_position chosen from [1,2] using rng.integers(1,3)
-    conv_array_2x4_for_x_border = np.array([[10, 20, 30, 40], [50, 60, 70, 80]], dtype=float)
+    conv_array_2x4_for_x_border = np.array(
+        [[10, 20, 30, 40], [50, 60, 70, 80]], dtype=float
+    )
     # Based on pytest output (actual result is 30.0):
     # x_start_position (row index) from rng.integers(0,2) (1st call, seed 42) -> 0
     # y_start_position (col index) from rng.integers(1,3) (2nd call, seed 42) -> 2 (in your env)
     # Point is (row=0, col=2), value is conv_array_2x4_for_x_border[0,2] = 30.0
-    expected_lc13 = np.full(10, 30.0) 
+    expected_lc13 = np.full(10, 30.0)
     lc13 = extract_light_curve(
         convolution_array=conv_array_2x4_for_x_border,
         pixel_size=pixel_size,
         effective_transverse_velocity=eff_vel_km_s,
-        light_curve_time_in_years=time_yr_for_0px, 
+        light_curve_time_in_years=time_yr_for_0px,
         pixel_shift=0,
         x_start_position=None,
         y_start_position=None,
-        phi_travel_direction=0.0, 
-        random_seed=42
+        phi_travel_direction=0.0,
+        random_seed=42,
     )
     np.testing.assert_array_almost_equal(
-        lc13, expected_lc13, decimal=NPT_DECIMAL_PLACES,
-        err_msg="Test Case 13 Failed: x_start_position random border choice incorrect."
+        lc13,
+        expected_lc13,
+        decimal=NPT_DECIMAL_PLACES,
+        err_msg="Test Case 13 Failed: x_start_position random border choice incorrect.",
     )
 
     # Test Case 14: Covers `if max_safe_idx_y < 0:` in random y choice
@@ -1236,24 +1242,28 @@ def test_extract_light_curve_all_cases():
         light_curve_time_in_years=time_yr_for_0px,
         pixel_shift=1,
         x_start_position=None,
-        y_start_position=None, 
-        random_seed=42 
+        y_start_position=None,
+        random_seed=42,
     )
     np.testing.assert_almost_equal(
-        val14, avg_flux_tc14, decimal=NPT_DECIMAL_PLACES,
-        err_msg="Test Case 14 Failed: max_safe_idx_y < 0 in y-choice should return avg flux."
+        val14,
+        avg_flux_tc14,
+        decimal=NPT_DECIMAL_PLACES,
+        err_msg="Test Case 14 Failed: max_safe_idx_y < 0 in y-choice should return avg flux.",
     )
 
     # Test Case 15: Covers `else: y_start_position = float(rng.integers(0, max_safe_idx_y + 1))` (y random border)
     # conv_array (4,2), pixel_shift=0.
     # N_safe_dim_x (rows) = 4. max_safe_idx_x = 3. -> x_start_position chosen from [1,2] using rng.integers(1,max_safe_idx_x) which is rng.integers(1,3)
     # N_safe_dim_y (cols) = 2. max_safe_idx_y = 1. -> y_start_position chosen from [0,1] using rng.integers(0,max_safe_idx_y+1) which is rng.integers(0,2)
-    conv_array_4x2_for_y_border = np.array([[10,20],[30,40],[50,60],[70,80]], dtype=float)
+    conv_array_4x2_for_y_border = np.array(
+        [[10, 20], [30, 40], [50, 60], [70, 80]], dtype=float
+    )
     # With random_seed=42 (based on latest pytest output for TC15):
     # 1st rng call for this test (for x_start): rng.integers(1, 3) -> 1. So x_start_position (row index) = 1.0
     # 2nd rng call for this test (for y_start): rng.integers(0, 2) -> 1. So y_start_position (col index) = 1.0
     # Point is (row=1, col=1), value is conv_array_4x2_for_y_border[1,1] = 40.0
-    expected_lc15 = np.full(10, 40.0) # Corrected based on latest pytest output
+    expected_lc15 = np.full(10, 40.0)  # Corrected based on latest pytest output
     lc15 = extract_light_curve(
         convolution_array=conv_array_4x2_for_y_border,
         pixel_size=pixel_size,
@@ -1263,11 +1273,13 @@ def test_extract_light_curve_all_cases():
         x_start_position=None,
         y_start_position=None,
         phi_travel_direction=0.0,
-        random_seed=42
+        random_seed=42,
     )
     np.testing.assert_array_almost_equal(
-        lc15, expected_lc15, decimal=NPT_DECIMAL_PLACES,
-        err_msg="Test Case 15 Failed: y_start_position random border choice incorrect."
+        lc15,
+        expected_lc15,
+        decimal=NPT_DECIMAL_PLACES,
+        err_msg="Test Case 15 Failed: y_start_position random border choice incorrect.",
     )
 
     print("extract_light_curve tests PASSED")
