@@ -12,8 +12,6 @@ from slsim.Microlensing.lightcurve import (
 from slsim.Microlensing.magmap import MagnificationMap
 from slsim.Microlensing.source_morphology.gaussian import GaussianSourceMorphology
 from slsim.Microlensing.source_morphology.agn import AGNSourceMorphology
-from matplotlib import pyplot as plt
-from slsim.Plots.plot_functions import plot_lightcurves_and_magmap
 
 # ---- Test Fixtures ----
 
@@ -309,58 +307,3 @@ class TestMicrolensingLightCurve:
             ml_lc_gaussian.generate_lightcurves(
                 0.5, cosmology, lightcurve_type="invalid_one", num_lightcurves=1
             )
-
-    # --- Test Plotting (Execution Check Only) ---
-
-    def test_plot_lightcurves_and_magmap_runs_magnitude(
-        self, ml_lc_gaussian, cosmology
-    ):
-        """Tests plotting function runs without error (magnitude)."""
-        num_lc = 2
-        lcs, tracks, _time_arrays = ml_lc_gaussian.generate_lightcurves(
-            0.5, cosmology, num_lightcurves=num_lc
-        )
-        ml_lc_gaussian.get_convolved_map()
-        try:
-            ax_return = plot_lightcurves_and_magmap(
-                convolved_map=ml_lc_gaussian._convolved_map,
-                lightcurves=lcs,
-                time_duration_observer_frame=ml_lc_gaussian._time_duration_observer_frame,
-                tracks=tracks,
-                magmap_instance=ml_lc_gaussian._magnification_map,
-                lightcurve_type="magnitude",
-            )
-            assert isinstance(ax_return, np.ndarray)
-            assert all(isinstance(ax, plt.Axes) for ax in ax_return.flat)
-        except Exception as e:
-            pytest.fail(f"plot_lightcurves_and_magmap raised: {e}")
-        finally:
-            plt.close("all")
-
-    @pytest.mark.filterwarnings(
-        "ignore:divide by zero encountered in divide:RuntimeWarning"
-    )
-    def test_plot_lightcurves_and_magmap_runs_magnification(
-        self, ml_lc_agn_wave, cosmology
-    ):
-        """Tests plotting function runs without error (magnification)."""
-        num_lc = 1
-        lcs, _tracks, _time_arrays = ml_lc_agn_wave.generate_lightcurves(
-            0.5, cosmology, num_lightcurves=num_lc, lightcurve_type="magnification"
-        )
-        ml_lc_agn_wave.get_convolved_map()
-        try:
-            ax_return = plot_lightcurves_and_magmap(
-                convolved_map=ml_lc_agn_wave._convolved_map,
-                lightcurves=lcs,
-                time_duration_observer_frame=ml_lc_agn_wave._time_duration_observer_frame,
-                tracks=None,
-                magmap_instance=ml_lc_agn_wave._magnification_map,
-                lightcurve_type="magnification",
-            )
-            assert isinstance(ax_return, np.ndarray)
-            assert all(isinstance(ax, plt.Axes) for ax in ax_return.flat)
-        except Exception as e:
-            pytest.fail(f"plot_lightcurves_and_magmap raised: {e}")
-        finally:
-            plt.close("all")

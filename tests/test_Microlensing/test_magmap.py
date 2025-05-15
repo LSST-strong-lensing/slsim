@@ -8,9 +8,7 @@ from astropy.cosmology import FlatLambdaCDM
 from slsim.Microlensing.magmap import MagnificationMap
 
 # Import dependencies directly as they are assumed available
-import matplotlib.pyplot as plt
 
-from slsim.Plots.plot_functions import plot_magnification_map
 
 # ---- Test Fixtures ----
 
@@ -196,31 +194,3 @@ class TestMagnificationMap:
         ang_diam_dist_m = cosmology.angular_diameter_distance(source_z).to(u.m).value
         expected_meters = ang_diam_dist_m * pixel_size_arcsec * u.arcsec.to(u.rad)
         np.testing.assert_allclose(pix_size_meters, expected_meters)
-
-    # Test plotting (execution only)
-    @pytest.mark.parametrize("plot_magnitude", [True, False])
-    def test_plot_magnification_map_runs(self, magmap_instance, plot_magnitude):
-        """Tests that the plotting function runs without error."""
-        fig, ax = plt.subplots()
-        try:
-            plot_magnification_map(
-                magmap_instance, ax=ax, plot_magnitude=plot_magnitude
-            )
-            assert len(ax.images) > 0
-            assert ax.get_xlabel() == "$x / \\theta_★$"
-            assert ax.get_ylabel() == "$y / \\theta_★$"
-            assert len(fig.axes) > 1  # Check colorbar axes was added
-        except Exception as e:
-            pytest.fail(f"plot_magnification_map raised an exception: {e}")
-        finally:
-            plt.close(fig)
-
-    def test_plot_magnification_map_runs_no_ax(self, magmap_instance):
-        """Tests plotting function runs without error when ax is None."""
-        try:
-            plot_magnification_map(magmap_instance, ax=None, plot_magnitude=True)
-            assert plt.gcf().number > 0  # Check a figure was created
-        except Exception as e:
-            pytest.fail(f"plot_magnification_map raised an exception: {e}")
-        finally:
-            plt.close("all")

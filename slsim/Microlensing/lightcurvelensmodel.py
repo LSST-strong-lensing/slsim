@@ -35,20 +35,15 @@ class MicrolensingLightCurveFromLensModel(object):
         point_source_morphology: str,
         kwargs_source_morphology: dict,
     ):
-        """Generate lightcurve magnitudes normalized to the mean magnification
-        for gaussian point sources. For single source only, it produces the
+        """Generate microlensing lightcurve magnitudes normalized to the mean magnification for various source morphologies. For single source only, it produces the
         lightcurve magnitudes for all images of the source.
-
-        Returns a numpy array of microlensing magnitudes (does not
-        include macro-magnifications) with the shape (num_images,
-        len(time)).
 
         :param time: Time array for which the lightcurve is needed.
         :param source_redshift: Redshift of the source
         :param deflector_redshift: Redshift of the deflector
-        :param kappa_star_images: list containing the kappa star for
+        :param kappa_star_images: list containing the kappa star (stellar convergence) for
             each image of the source.
-        :param kappa_tot_images: list containing the kappa total for
+        :param kappa_tot_images: list containing the kappa total (total convergence) for
             each image of the source.
         :param shear_images: list containing the shear for each image of
             the source.
@@ -72,14 +67,6 @@ class MicrolensingLightCurveFromLensModel(object):
             that different parameters are defined for different source
             morphologies. So check the documentation for each
             morphology.
-        :param lightcurve_type: Type of lightcurve to generate, either
-            'magnitude' or 'magnification'. If 'magnitude', the
-            lightcurve is returned in magnitudes normalized to the macro
-            magnification. If 'magnification', the lightcurve is
-            returned in magnification without normalization. Default is
-            'magnitude'.
-        :param num_lightcurves: Number of lightcurves to generate.
-            Default is 1.
         :return: lightcurves_single: numpy array of microlensing
             magnitudes with the shape (num_images, len(time)).
         """
@@ -92,7 +79,7 @@ class MicrolensingLightCurveFromLensModel(object):
             time_array = np.array(time)
         else:
             raise ValueError(
-                "Time array not provided in the correct format. Please provide a time array in days."
+                "Time array not provided in the correct format. Supported formats are int, float, array, and list."
             )
 
         if kwargs_MagnificationMap is None:
@@ -173,10 +160,10 @@ class MicrolensingLightCurveFromLensModel(object):
         :param time: Time array for which the lightcurve is needed.
         :param source_redshift: Redshift of the source
         :param deflector_redshift: Redshift of the deflector
-        :param kappa_star_images: list containing the kappa star for
-            each image of the source.
-        :param kappa_tot_images: list containing the kappa total for
-            each image of the source.
+        :param kappa_star_images: list containing the kappa star (stellar
+            convergence) for each image of the source.
+        :param kappa_tot_images: list containing the kappa total (total
+            convergence) for each image of the source.
         :param shear_images: list containing the shear for each image of
             the source.
         :param shear_phi_angle_images: list containing the angle of the
@@ -222,8 +209,25 @@ class MicrolensingLightCurveFromLensModel(object):
             magnification. If 'magnification', the lightcurve is
             returned in magnification without normalization. Default is
             'magnitude'.
-        :param num_lightcurves: Number of lightcurves to generate.
-            Default is 1.
+        :param num_lightcurves: Default is 1. If require multiple lightcurves for each image using the same magnification map, set
+            this parameter to the number of lightcurves required.
+
+        :return: 
+        
+        lightcurves: numpy array of microlensing magnitudes
+            with the shape (num_images, len(time)). The first dimension
+            is the number of images of the source and the second
+            dimension is the length of the time array.
+        
+        tracks: list of tracks for each image of the source.
+            Each track is a list of tuples with the x and y positions
+            of the source at each time step.
+        
+        time_arrays: list of time arrays for each image of the
+            source. Each time array is a numpy array with the same
+            length as the time array provided.
+
+        :rtype: tuple
         """
 
         # generate magnification maps for each image of the source
@@ -239,10 +243,10 @@ class MicrolensingLightCurveFromLensModel(object):
         elif (isinstance(time, np.ndarray) or isinstance(time, list)) and len(
             time
         ) == 1:
-            lightcurve_duration = time[0]  # TODO: check if this is correct thing to do?
+            lightcurve_duration = 0
         else:
             raise ValueError(
-                "Time array not provided in the correct format. Please provide a time array in days."
+                "Time array not provided in the correct format. Supported formats are int, float, array, and list."
             )
 
         # obtain velocities and angles for each image
@@ -343,8 +347,11 @@ class MicrolensingLightCurveFromLensModel(object):
     def _interpolate_light_curve(self, lightcurve, time_array, time_array_new):
         """Interpolate the lightcurve to a new time array.
 
-        Assuming "lightcurve" and "time_array" are 1D arrays of the same
-        length. "time_array_new" is a 1D array of the new time array.
+        :param lightcurve: Lightcurve to be interpolated.
+        :param time_array: Original time array of the lightcurve.
+        :param time_array_new: New time array to interpolate the lightcurve to.
+        :return: Interpolated lightcurve.
+        :rtype: numpy array
         """
         return np.interp(time_array_new, time_array, lightcurve)
 

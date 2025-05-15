@@ -664,6 +664,19 @@ class Lens(LensedSystemBase):
         :param microlensing: if using micro-lensing map to produce the
             lensed magnification
         :type microlensing: bool
+        :param kwargs_microlensing: additional (optional) dictionary of
+            settings required by micro-lensing calculation that do not
+            depend on the Lens() class. It is of type:
+            kwargs_microlensing = {"kwargs_MagnificationMap":
+            kwargs_MagnificationMap, "point_source_morphology":
+            'gaussian' or 'agn' or 'supernovae',
+            "kwargs_source_morphology": kwargs_source_morphology} The
+            kwargs_source_morphology is required for the source
+            morphology calculation. The kwargs_MagnificationMap is
+            required for the microlensing calculation. See the classes in slsim.Microlensing for
+            more details on the kwargs_MagnificationMap and
+            kwargs_source_morphology.
+        :type kwargs_microlensing: dict
         :return: list of point source magnitudes.
         """
 
@@ -714,7 +727,9 @@ class Lens(LensedSystemBase):
             "kwargs_source_morphology": kwargs_source_morphology} The
             kwargs_source_morphology is required for the source
             morphology calculation. The kwargs_MagnificationMap is
-            required for the microlensing calculation.
+            required for the microlensing calculation. See the classes in slsim.Microlensing for
+            more details on the kwargs_MagnificationMap and
+            kwargs_source_morphology.
         :type kwargs_microlensing: dict
         :return: point source magnitude of a single source
         """
@@ -869,7 +884,7 @@ class Lens(LensedSystemBase):
                 kappa_star_images=kappa_star_images,
                 kappa_tot_images=kappa_tot_images,
                 shear_images=shear_images,
-                shear_angle_images=shear_angle_images,
+                shear_phi_angle_images=shear_angle_images,
                 ra_lens=ra_lens,
                 dec_lens=dec_lens,
                 deflector_velocity_dispersion=self.deflector_velocity_dispersion(),

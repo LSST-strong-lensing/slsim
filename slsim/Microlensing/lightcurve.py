@@ -1,9 +1,7 @@
 __author__ = "Paras Sharma"
 
 
-# import gc  # for garbage collection
 import numpy as np
-from scipy.signal import fftconvolve
 from skimage.transform import rescale
 
 from slsim.Microlensing.magmap import MagnificationMap
@@ -14,6 +12,7 @@ from slsim.Util.astro_util import (
 
 from slsim.Microlensing.source_morphology.agn import AGNSourceMorphology
 from slsim.Microlensing.source_morphology.gaussian import GaussianSourceMorphology
+from slsim.Util.param_util import convolved_image
 
 
 class MicrolensingLightCurve(object):
@@ -78,10 +77,10 @@ class MicrolensingLightCurve(object):
             )
 
             # convolve the magnification map with the Gaussian kernel
-            self._convolved_map = fftconvolve(
+            self._convolved_map = convolved_image(
                 self._magnification_map.magnifications,
                 source_morphology.kernel_map,
-                mode="same",
+                convolution_type="fft",
             )
 
         elif self._point_source_morphology == "agn":
@@ -113,8 +112,10 @@ class MicrolensingLightCurve(object):
             rescaled_kernel_map = rescaled_kernel_map / np.nansum(rescaled_kernel_map)
 
             # convolve the magnification map with the kernel map, #TODO: make this a cross-correlation
-            self._convolved_map = fftconvolve(
-                self._magnification_map.magnifications, rescaled_kernel_map, mode="same"
+            self._convolved_map = convolved_image(
+                self._magnification_map.magnifications,
+                rescaled_kernel_map,
+                convolution_type="fft",
             )
 
         elif self._point_source_morphology == "supernovae":
@@ -159,7 +160,7 @@ class MicrolensingLightCurve(object):
             returned in magnification without normalization. Default is
             'magnitude'.
         :param effective_transverse_velocity: Transverse velocity in
-            source plane (in km/s)
+            source plane (in km/s). Default is 1000 km/s (typical effective velocity of the source with respect to microlenses/stars).
         :param num_lightcurves: Number of lightcurves to generate.
             Default is 1.
         :param x_start_position: Starting x position of the lightcurve on the magnification map in arcsec. A value of 0 indicates the center of the magnification map. Default is None. If None, a random position is chosen.
