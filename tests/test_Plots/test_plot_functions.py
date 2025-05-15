@@ -18,6 +18,7 @@ from slsim.Microlensing.lightcurve import MicrolensingLightCurve
 from slsim.Microlensing.magmap import MagnificationMap
 from slsim.Plots.plot_functions import plot_magnification_map
 
+
 @pytest.fixture
 def quasar_lens_pop_instance():
     path = os.path.dirname(__file__)
@@ -52,7 +53,7 @@ def quasar_lens_pop_instance():
             source_type="point_plus_extended",
             pointsource_type="quasar",
             extendedsource_type="single_sersic",
-            **kwargs_quasar
+            **kwargs_quasar,
         )
         deflector = Deflector(
             deflector_type="EPL",
@@ -250,15 +251,14 @@ def ml_lc_agn_wave(magmap_instance, kwargs_source_morphology_AGN_wave):
 
 # --- Test Plotting (Execution Check Only) ---
 
+
 # Test plotting (execution only)
 @pytest.mark.parametrize("plot_magnitude", [True, False])
 def test_plot_magnification_map_runs(magmap_instance, plot_magnitude):
     """Tests that the plotting function runs without error."""
     fig, ax = plt.subplots()
     try:
-        plot_magnification_map(
-            magmap_instance, ax=ax, plot_magnitude=plot_magnitude
-        )
+        plot_magnification_map(magmap_instance, ax=ax, plot_magnitude=plot_magnitude)
         assert len(ax.images) > 0
         assert ax.get_xlabel() == "$x / \\theta_★$"
         assert ax.get_ylabel() == "$y / \\theta_★$"
@@ -267,6 +267,7 @@ def test_plot_magnification_map_runs(magmap_instance, plot_magnitude):
         pytest.fail(f"plot_magnification_map raised an exception: {e}")
     finally:
         plt.close(fig)
+
 
 def test_plot_magnification_map_runs_no_ax(magmap_instance):
     """Tests plotting function runs without error when ax is None."""
@@ -279,9 +280,7 @@ def test_plot_magnification_map_runs_no_ax(magmap_instance):
         plt.close("all")
 
 
-def test_plot_lightcurves_and_magmap_runs_magnitude(
-    ml_lc_gaussian, cosmology
-):
+def test_plot_lightcurves_and_magmap_runs_magnitude(ml_lc_gaussian, cosmology):
     """Tests plotting function runs without error (magnitude)."""
     num_lc = 2
     lcs, tracks, _time_arrays = ml_lc_gaussian.generate_lightcurves(
@@ -304,12 +303,11 @@ def test_plot_lightcurves_and_magmap_runs_magnitude(
     finally:
         plt.close("all")
 
+
 @pytest.mark.filterwarnings(
     "ignore:divide by zero encountered in divide:RuntimeWarning"
 )
-def test_plot_lightcurves_and_magmap_runs_magnification(
-    ml_lc_agn_wave, cosmology
-):
+def test_plot_lightcurves_and_magmap_runs_magnification(ml_lc_agn_wave, cosmology):
     """Tests plotting function runs without error (magnification)."""
     num_lc = 1
     lcs, _tracks, _time_arrays = ml_lc_agn_wave.generate_lightcurves(
@@ -331,6 +329,7 @@ def test_plot_lightcurves_and_magmap_runs_magnification(
         pytest.fail(f"plot_lightcurves_and_magmap raised: {e}")
     finally:
         plt.close("all")
+
 
 ############################
 

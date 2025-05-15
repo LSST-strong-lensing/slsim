@@ -35,16 +35,17 @@ class MicrolensingLightCurveFromLensModel(object):
         point_source_morphology: str,
         kwargs_source_morphology: dict,
     ):
-        """Generate microlensing lightcurve magnitudes normalized to the mean magnification for various source morphologies. For single source only, it produces the
-        lightcurve magnitudes for all images of the source.
+        """Generate microlensing lightcurve magnitudes normalized to the mean
+        magnification for various source morphologies. For single source only,
+        it produces the lightcurve magnitudes for all images of the source.
 
         :param time: Time array for which the lightcurve is needed.
         :param source_redshift: Redshift of the source
         :param deflector_redshift: Redshift of the deflector
-        :param kappa_star_images: list containing the kappa star (stellar convergence) for
-            each image of the source.
-        :param kappa_tot_images: list containing the kappa total (total convergence) for
-            each image of the source.
+        :param kappa_star_images: list containing the kappa star
+            (stellar convergence) for each image of the source.
+        :param kappa_tot_images: list containing the kappa total (total
+            convergence) for each image of the source.
         :param shear_images: list containing the shear for each image of
             the source.
         :param shear_phi_angle_images: list containing the angle of the
@@ -212,17 +213,17 @@ class MicrolensingLightCurveFromLensModel(object):
         :param num_lightcurves: Default is 1. If require multiple lightcurves for each image using the same magnification map, set
             this parameter to the number of lightcurves required.
 
-        :return: 
-        
+        :return:
+
         lightcurves: numpy array of microlensing magnitudes
             with the shape (num_images, len(time)). The first dimension
             is the number of images of the source and the second
             dimension is the length of the time array.
-        
+
         tracks: list of tracks for each image of the source.
             Each track is a list of tuples with the x and y positions
             of the source at each time step.
-        
+
         time_arrays: list of time arrays for each image of the
             source. Each time array is a numpy array with the same
             length as the time array provided.
@@ -349,7 +350,8 @@ class MicrolensingLightCurveFromLensModel(object):
 
         :param lightcurve: Lightcurve to be interpolated.
         :param time_array: Original time array of the lightcurve.
-        :param time_array_new: New time array to interpolate the lightcurve to.
+        :param time_array_new: New time array to interpolate the
+            lightcurve to.
         :return: Interpolated lightcurve.
         :rtype: numpy array
         """

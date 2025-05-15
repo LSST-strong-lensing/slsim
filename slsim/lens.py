@@ -673,9 +673,9 @@ class Lens(LensedSystemBase):
             "kwargs_source_morphology": kwargs_source_morphology} The
             kwargs_source_morphology is required for the source
             morphology calculation. The kwargs_MagnificationMap is
-            required for the microlensing calculation. See the classes in slsim.Microlensing for
-            more details on the kwargs_MagnificationMap and
-            kwargs_source_morphology.
+            required for the microlensing calculation. See the classes
+            in slsim.Microlensing for more details on the
+            kwargs_MagnificationMap and kwargs_source_morphology.
         :type kwargs_microlensing: dict
         :return: list of point source magnitudes.
         """
@@ -727,9 +727,9 @@ class Lens(LensedSystemBase):
             "kwargs_source_morphology": kwargs_source_morphology} The
             kwargs_source_morphology is required for the source
             morphology calculation. The kwargs_MagnificationMap is
-            required for the microlensing calculation. See the classes in slsim.Microlensing for
-            more details on the kwargs_MagnificationMap and
-            kwargs_source_morphology.
+            required for the microlensing calculation. See the classes
+            in slsim.Microlensing for more details on the
+            kwargs_MagnificationMap and kwargs_source_morphology.
         :type kwargs_microlensing: dict
         :return: point source magnitude of a single source
         """
