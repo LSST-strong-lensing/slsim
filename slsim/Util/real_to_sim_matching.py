@@ -20,11 +20,12 @@ from astropy.table import Table, join, hstack
 from astropy.coordinates import SkyCoord
 from astropy.cosmology import FlatLambdaCDM
 
+
 # ╭──────────────────────────────────────────────────────────────────╮
 # │  helpers                                                        │
 # ╰──────────────────────────────────────────────────────────────────╯
 def _fingerprint(*items) -> str:
-    """md5 hash of (files + inputs) –  used for cache key."""
+    """Md5 hash of (files + inputs) –  used for cache key."""
     md5 = hashlib.md5()
     for it in items:
         if isinstance(it, (str, Path)):
@@ -62,8 +63,9 @@ def build_real_catalog(
     mag_limit_real: float | None = None,
     size_min_kpc: float | None = None,
 ) -> Table:
-    """
-    Re-implements the “Final_catalog_with_cuts” construction from the notebook.
+    """Re-implements the “Final_catalog_with_cuts” construction from the
+    notebook.
+
     Only columns needed for matching / plotting are retained.
     """
     cat1 = Table.read(catalog_paths["cat1"], format="fits", hdu=1)
@@ -105,8 +107,8 @@ def build_real_catalog(
     Final_catalog["RHALFreal"] = (
         Final_catalog["R_HALF"] * Final_catalog["PIXEL_SCALE"] * ang_dist * 4.84814e-3
     )
-    Final_catalog["MAGabs"] = Final_catalog["MAG"] + 5 - 5 * np.log10(
-        ang_dist.value * 1e6
+    Final_catalog["MAGabs"] = (
+        Final_catalog["MAG"] + 5 - 5 * np.log10(ang_dist.value * 1e6)
     )
 
     phi_deg = np.vstack(Final_catalog["sersicfit"])[:, 5]
@@ -161,10 +163,8 @@ def build_sim_catalog(
     source_size: str | None = None,
     skypy_config: str | Path | None = None,
 ) -> Table:
-    """
-    Replicates the notebook’s SkyPy ➜ Galaxies pipeline and returns
-    the filtered Astropy table.
-    """
+    """Replicates the notebook’s SkyPy ➜ Galaxies pipeline and returns the
+    filtered Astropy table."""
     from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
     from slsim.Sources.galaxies import Galaxies
 
@@ -188,9 +188,11 @@ def build_sim_catalog(
         source_size=source_size,
     )
 
-    ang_dist = cosmo.angular_diameter_distance(sim._galaxy_select['z'])
-    sim._galaxy_select['mag_i_abs'] = np.zeros_like(sim._galaxy_select['mag_i'])
-    sim._galaxy_select['mag_i_abs'] = sim._galaxy_select['mag_i'] + 5 - 5*np.log10((ang_dist.value)*1e6)
+    ang_dist = cosmo.angular_diameter_distance(sim._galaxy_select["z"])
+    sim._galaxy_select["mag_i_abs"] = np.zeros_like(sim._galaxy_select["mag_i"])
+    sim._galaxy_select["mag_i_abs"] = (
+        sim._galaxy_select["mag_i"] + 5 - 5 * np.log10((ang_dist.value) * 1e6)
+    )
     return sim._galaxy_select.copy()
 
 
@@ -214,10 +216,10 @@ def build_matched_table(
     cache_dir: str | Path = "~/.cache",
     return_tables: bool = False,
 ):
-    """
-    Wrapper that produces (& optionally caches) the full matched table.
-    If *return_tables* is True, the tuple (matched, sim_table, real_table)
-    is returned instead of only *matched*.
+    """Wrapper that produces (& optionally caches) the full matched table.
+
+    If *return_tables* is True, the tuple (matched, sim_table,
+    real_table) is returned instead of only *matched*.
     """
     cache_dir = Path(cache_dir).expanduser()
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -295,8 +297,7 @@ def plot_mag_size(
     save: str | Path | None = None,
     **scatter_kwargs,
 ):
-    """
-    Quick visual comparison in (absolute magnitude, half-light size) space.
+    """Quick visual comparison in (absolute magnitude, half-light size) space.
 
     Parameters
     ----------
@@ -317,8 +318,7 @@ def plot_mag_size(
     """
     if "mag_i_abs" not in sim_table.colnames and "mag_i" in sim_table.colnames:
         ang = FlatLambdaCDM(H0=70, Om0=0.3).angular_diameter_distance(sim_table["z"])
-        sim_table["mag_i_abs"] = sim_table["mag_i"] + 5 - 5*np.log10(ang.value*1e6)
-
+        sim_table["mag_i_abs"] = sim_table["mag_i"] + 5 - 5 * np.log10(ang.value * 1e6)
 
     if ax is None:
         fig, ax = plt.subplots(figsize=(6, 5))
@@ -338,7 +338,9 @@ def plot_mag_size(
     ax.scatter(x_real, y_real, **kw_real)
     ax.scatter(x_sim, y_sim, marker="x", **kw_sim)
 
-    ax.set_xlabel("Half-light radius  [kpc]" if size_real.endswith("real") else size_real)
+    ax.set_xlabel(
+        "Half-light radius  [kpc]" if size_real.endswith("real") else size_real
+    )
     ax.set_ylabel("Absolute magnitude $M_i$")
     ax.invert_yaxis()
     ax.legend(frameon=False)
