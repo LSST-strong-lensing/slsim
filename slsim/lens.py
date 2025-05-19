@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
@@ -162,7 +164,7 @@ class Lens(LensedSystemBase):
         )
         if (
             self._lens_equation_solver == "lenstronomy_analytical"
-            and analytical_lens_model_support(lens_model_list) is True
+            and analytical_lens_model_support(lens_model_class.lens_model_list) is True
         ):
             solver = "analytical"
         else:
@@ -213,7 +215,7 @@ class Lens(LensedSystemBase):
         # uses analytical lens equation solver in case it is supported by lenstronomy for speed-up
         if (
             self._lens_equation_solver == "lenstronomy_analytical"
-            and analytical_lens_model_support(lens_model_list) is True
+            and analytical_lens_model_support(lens_model_class.lens_model_list) is True
         ):
             solver = "analytical"
         else:
@@ -560,7 +562,7 @@ class Lens(LensedSystemBase):
         """
         lens_model, kwargs_lens = self.deflector_mass_model_lenstronomy(source_index=source_index)
 
-        x_image, y_image = self._point_source_image_positions(source)
+        x_image, y_image = self._point_source_image_positions(source_index=source_index)
         arrival_times = lens_model.arrival_time(
             x_image, y_image, kwargs_lens=kwargs_lens
         )
@@ -818,7 +820,6 @@ class Lens(LensedSystemBase):
         :return: list of integrated magnification factor of host
             magnitude for each source
         """
-        # TODO: add source redshift in ray_shooting. Wait for lenstronomy new version.
 
         if not hasattr(self, "_extended_source_magnification_list"):
             self._extended_source_magnification_list = []
@@ -874,15 +875,16 @@ class Lens(LensedSystemBase):
         x += center_source[0]
         y += center_source[1]
         beta_x, beta_y = lens_model_class.ray_shooting(x, y, kwargs_lens)
+        # test conventions
         flux_lensed = np.sum(
             lightModel.surface_brightness(beta_x, beta_y, kwargs_source_amp)
         )
         flux_no_lens = np.sum(lightModel.surface_brightness(x, y, kwargs_source_amp))
         if flux_no_lens > 0:
-            self._extended_source_magnification = flux_lensed / flux_no_lens
+            extended_source_magnification = flux_lensed / flux_no_lens
         else:
-            self._extended_source_magnification = 0
-        return self._extended_source_magnification
+            extended_source_magnification = 0
+        return extended_source_magnification
 
     def lenstronomy_kwargs(self, band=None):
         """Generates lenstronomy dictionary conventions for the class object.
@@ -892,8 +894,8 @@ class Lens(LensedSystemBase):
         :type band: string or None
         :return: lenstronomy model and parameter conventions
         """
-        lens_model, kwargs_lens = self.deflector_mass_model_lenstronomy()
-        lems_model_list = lens_model.lens_model_list
+        lens_model, kwargs_lens = self.deflector_mass_model_lenstronomy(source_index=0)
+        lens_model_list = lens_model.lens_model_list
         # TODO: extract other potentially relevant keyword arguments (such as redshift list, multi-plane etc)
 
         (
@@ -903,11 +905,11 @@ class Lens(LensedSystemBase):
         # list of
         kwargs_model = {
             "lens_light_model_list": lens_light_model_list,
-            "lens_model_list": lens_mass_model_list,
+            "lens_model_list": lens_model_list,
         }
         if self.source_number > 1:
             kwargs_model["lens_redshift_list"] = [self.deflector_redshift] * len(
-                lens_mass_model_list
+                lens_model_list
             )
             kwargs_model["z_lens"] = self.deflector_redshift
             if self.max_redshift_source_class.extendedsource_type in [
@@ -944,51 +946,65 @@ class Lens(LensedSystemBase):
 
         return kwargs_model, kwargs_params
 
-    def deflector_mass_model_lenstronomy(self, source_index):
+    def deflector_mass_model_lenstronomy(self, source_index=None):
         """Returns lens model instance and parameters in lenstronomy
         conventions.
 
         :return: LensModel() class, kwargs_lens
         """
+        if source_index is None:
+            z_sourse = self.max_redshift_source_class.redshift
+        else:
+            z_sourse = self.source(source_index).redshift
         if hasattr(self, "_lens_mass_model_list") and hasattr(self, "_kwargs_lens"):
-            return self._lens_mass_model_list, self._kwargs_lens
-        if self.deflector.deflector_type in ["EPL", "NFW_HERNQUIST", "NFW_CLUSTER"]:
+            pass
+        elif self.deflector.deflector_type in ["EPL", "NFW_HERNQUIST", "NFW_CLUSTER"]:
+
             lens_mass_model_list, kwargs_lens = self.deflector.mass_model_lenstronomy(
                 lens_cosmo=self._lens_cosmo
             )
+            # adding line-of-sight structure
+            kappa_ext, gamma1, gamma2 = self.los_linear_distortions
+            gamma1_lenstronomy, gamma2_lenstronomy = ellipticity_slsim_to_lenstronomy(
+                e1_slsim=gamma1, e2_slsim=gamma2
+            )
+            kwargs_lens.append(
+                {
+                    "gamma1": gamma1_lenstronomy,
+                    "gamma2": gamma2_lenstronomy,
+                    "ra_0": 0,
+                    "dec_0": 0,
+                }
+            )
+            kwargs_lens.append({"kappa": kappa_ext, "ra_0": 0, "dec_0": 0})
+            lens_mass_model_list.append("SHEAR")
+            lens_mass_model_list.append("CONVERGENCE")
+            self._kwargs_lens = kwargs_lens
+            self._lens_mass_model_list = lens_mass_model_list
+            self._lens_model = LensModel(
+            lens_model_list=self._lens_mass_model_list,
+            cosmo=self.cosmo,
+            z_lens=self.deflector_redshift,
+            z_source=z_sourse,
+            z_source_convention=self.max_redshift_source_class.redshift,
+            multi_plane=False,
+        )
         else:
             raise ValueError(
                 "Deflector model %s not supported for lenstronomy model"
                 % self.deflector.deflector_type
             )
-        # adding line-of-sight structure
-        kappa_ext, gamma1, gamma2 = self.los_linear_distortions
-        gamma1_lenstronomy, gamma2_lenstronomy = ellipticity_slsim_to_lenstronomy(
-            e1_slsim=gamma1, e2_slsim=gamma2
-        )
-        kwargs_lens.append(
-            {
-                "gamma1": gamma1_lenstronomy,
-                "gamma2": gamma2_lenstronomy,
-                "ra_0": 0,
-                "dec_0": 0,
-            }
-        )
-        kwargs_lens.append({"kappa": kappa_ext, "ra_0": 0, "dec_0": 0})
-        lens_mass_model_list.append("SHEAR")
-        lens_mass_model_list.append("CONVERGENCE")
-        self._kwargs_lens = kwargs_lens
-        self._lens_mass_model_list = lens_mass_model_list
-        lens_model = LensModel(
-            lens_model_list=lens_mass_model_list,
+        # TODO: replace with change_source_redshift() currently not fully working
+        #self._lens_model.change_source_redshift(z_source=z_sourse)
+        self._lens_model = LensModel(
+            lens_model_list=self._lens_mass_model_list,
             cosmo=self.cosmo,
             z_lens=self.deflector_redshift,
-            z_source=self.source(source_index).redshift,
+            z_source=z_sourse,
             z_source_convention=self.max_redshift_source_class.redshift,
             multi_plane=False,
         )
-
-        return lens_model, kwargs_lens
+        return self._lens_model, self._kwargs_lens
 
     def deflector_light_model_lenstronomy(self, band):
         """Returns lens model instance and parameters in lenstronomy

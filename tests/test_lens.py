@@ -804,20 +804,21 @@ class TestMultiSource(object):
         es_magnification1 = self.lens_class1.extended_source_magnification()
         es_magnification2 = self.lens_class2.extended_source_magnification()
         es_magnification3 = self.lens_class3.extended_source_magnification()
+
         # Test multisource extended source magnifications.
         npt.assert_almost_equal(
-            es_magnification1[0] / es_magnification3[0], 1, decimal=1
+            es_magnification1[0] / es_magnification3[0], 1, decimal=2
         )
         npt.assert_almost_equal(
-            es_magnification2[0] / es_magnification3[1], 1, decimal=1
+            es_magnification2[0] / es_magnification3[1], 1, decimal=2
         )
 
         es_magnification3 = self.lens_class3_analytical.extended_source_magnification()
         npt.assert_almost_equal(
-            es_magnification1[0] / es_magnification3[0], 1, decimal=1
+            es_magnification1[0] / es_magnification3[0], 1, decimal=2
         )
         npt.assert_almost_equal(
-            es_magnification2[0] / es_magnification3[1], 1, decimal=1
+            es_magnification2[0] / es_magnification3[1], 1, decimal=2
         )
 
     def test_einstein_radius_multi(self):
@@ -825,8 +826,8 @@ class TestMultiSource(object):
         einstein_radius2 = self.lens_class2.einstein_radius
         einstein_radius3 = self.lens_class3.einstein_radius
         # Test multisource einstein radius.
-        npt.assert_almost_equal(einstein_radius1[0], einstein_radius3[0], decimal=2)
-        npt.assert_almost_equal(einstein_radius2[0], einstein_radius3[1], decimal=2)
+        npt.assert_almost_equal(einstein_radius1[0], einstein_radius3[0], decimal=3)
+        npt.assert_almost_equal(einstein_radius2[0], einstein_radius3[1], decimal=3)
 
         einstein_radius3 = self.lens_class3_analytical.einstein_radius
         npt.assert_almost_equal(einstein_radius1[0], einstein_radius3[0], decimal=5)
