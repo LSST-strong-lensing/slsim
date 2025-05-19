@@ -1,4 +1,3 @@
-import copy
 
 import numpy as np
 from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
