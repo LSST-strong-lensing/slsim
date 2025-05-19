@@ -2,6 +2,7 @@ import numpy as np
 from scipy.fftpack import ifft
 from astropy import constants as const
 from astropy import units as u
+from astropy.cosmology import Cosmology
 from slsim.Util.param_util import (
     amplitude_to_magnitude,
     magnitude_to_amplitude,
@@ -11,6 +12,7 @@ from speclite.filters import (
     load_filter,
     FilterResponse,
 )
+from scipy.interpolate import RegularGridInterpolator
 
 
 def spin_to_isco(spin):
@@ -1030,3 +1032,312 @@ def convert_passband_to_nm(
     output_passband = passband.copy()
     output_passband[0] = np.asarray(passband[0][:]) * wavelength_ratio
     return output_passband
+
+
+def pull_value_from_grid(array_2d, x_position, y_position):
+    """This approximates the point (x_position, y_position) in a 2d array of
+    values. x_position and y_position may be decimals, and are assumed to be
+    measured in pixels relative to the original grid. This uses bilinear
+    interpolation (powered by scipy.interpolate.RegularGridInterpolator) with
+    'edge' behavior for points at or slightly beyond the original grid
+    boundaries, by interpolating on an edge-padded version of the grid.
+
+    :param array_2d: 2 dimensional array of values.
+    :param x_position: x coordinate in array_2d in pixels. Valid range
+        is [0, array_2d.shape[0]].
+    :param y_position: y coordinate in array_2d in pixels. Valid range
+        is [0, array_2d.shape[1]].
+    :return: approximation of array_2d at point (x_position, y_position)
+    """
+    if not isinstance(array_2d, np.ndarray):
+        array_2d = np.asarray(array_2d)
+
+    if array_2d.ndim != 2:
+        raise ValueError("array_2d must be a 2-dimensional array.")
+
+    original_shape = array_2d.shape
+    if original_shape[0] == 0 or original_shape[1] == 0:
+        raise ValueError("array_2d must not have zero-sized dimensions.")
+
+    x_pos_arr = np.asarray(x_position, dtype=float)
+    y_pos_arr = np.asarray(y_position, dtype=float)
+
+    if x_pos_arr.shape != y_pos_arr.shape:
+        raise ValueError("x_position and y_position must have the same shape.")
+
+    # Define the maximum allowed coordinates for interpolation on the padded grid.
+    # These are equivalent to original_shape[0] and original_shape[1] because
+    # the padded grid has points from index 0 up to original_shape[dim].
+    # E.g., for a 2xM original array (row indices 0, 1), the padded grid has
+    # data effectively at row indices 0, 1, 2 (where 2 is the padded edge).
+    # The interpolator's grid points will be [0.0, 1.0, 2.0].
+    # So, max x-coordinate for interpolation is original_shape[0].
+    max_x_allowed = float(original_shape[0])
+    max_y_allowed = float(original_shape[1])
+
+    if not (np.all(x_pos_arr >= 0) and np.all(y_pos_arr >= 0)):
+        raise ValueError("x_position and y_position must be non-negative.")
+
+    if np.any(x_pos_arr > max_x_allowed) or np.any(y_pos_arr > max_y_allowed):
+        # Report the actual maximum input values for a more informative error message
+        max_x_input = np.max(x_pos_arr) if x_pos_arr.size > 0 else -1.0
+        max_y_input = np.max(y_pos_arr) if y_pos_arr.size > 0 else -1.0
+
+        # The f-string formatting ensures at least one decimal place for the limits (e.g., "1.0" not "1")
+        raise ValueError(
+            f"x_position (max found: {max_x_input:.2f}) must be <= {max_x_allowed:.1f} and "
+            f"y_position (max found: {max_y_input:.2f}) must be <= {max_y_allowed:.1f}."
+        )
+
+    # Pad array to replicate 'edge' behavior for boundary conditions.
+    # For a 2D array, ((0, 1), (0, 1)) pads 0 before and 1 after each axis.
+    # Resulting shape: (original_shape[0]+1, original_shape[1]+1)
+    padded_array = np.pad(array_2d, ((0, 1), (0, 1)), mode="edge")
+
+    # Grid points for the PADDED array.
+    # These range from 0 to original_shape[0] for rows, and 0 to original_shape[1] for columns.
+    # E.g., if original_shape[0] is 2, grid_rows will be [0., 1., 2.].
+    grid_rows = np.arange(padded_array.shape[0], dtype=float)
+    grid_cols = np.arange(padded_array.shape[1], dtype=float)
+
+    # Create the interpolator.
+    # method='linear' performs bilinear interpolation for 2D.
+    # bounds_error=True will cause RGI to raise an error if query points are outside
+    # the grid defined by grid_rows/grid_cols. Our explicit check above should catch this first.
+    interpolator = RegularGridInterpolator(
+        (grid_rows, grid_cols), padded_array, method="linear", bounds_error=True
+    )
+
+    # Prepare query points for the interpolator.
+    # x_pos_arr and y_pos_arr are already relative to the original grid, which is
+    # consistent with how the padded grid and its coordinates (grid_rows, grid_cols) are set up.
+    if x_pos_arr.ndim == 0:  # Scalar input
+        query_points = np.array([[x_pos_arr.item(), y_pos_arr.item()]])
+    else:  # Array input
+        query_points = np.vstack([x_pos_arr.ravel(), y_pos_arr.ravel()]).T
+
+    interpolated_values_flat = interpolator(query_points)
+
+    # Reshape the output to match the input x_position/y_position shape.
+    if x_pos_arr.ndim == 0:
+        return interpolated_values_flat[0]
+    else:
+        return interpolated_values_flat.reshape(x_pos_arr.shape)
+
+
+# The credits for the following function go to Henry Best (https://github.com/Henry-Best-01/Amoeba)
+def extract_light_curve(
+    convolution_array,
+    pixel_size,
+    effective_transverse_velocity,
+    light_curve_time_in_years,
+    pixel_shift=0,
+    x_start_position=None,
+    y_start_position=None,
+    phi_travel_direction=None,
+    return_track_coords=False,
+    random_seed=None,
+):
+    """Extracts a light curve from the convolution between two arrays by
+    selecting a trajectory and calling pull_value_from_grid at each relevant
+    point. If the light curve is too long, or the size of the object is too
+    large, a "light curve" representing a constant magnification is returned.
+
+    :param convolution_array: The convolution between a flux distribtion
+        and the magnification array due to microlensing. Note
+        coordinates on arrays have (y, x) signature.
+    :param pixel_size: Physical size of a pixel in the source plane, in
+        meters
+    :param effective_transverse_velocity: effective transverse velocity
+        in the source plane, in km / s
+    :param light_curve_time_in_years: duration of the light curve to
+        generate, in years
+    :param pixel_shift: offset of the SMBH with respect to the convolved
+        map, in pixels
+    :param x_start_position: None or the x coordinate to start pulling a
+        light curve from, in pixels
+    :param y_start_position: None or the y coordinate to start pulling a
+        light curve from, in pixels
+    :param phi_travel_direction: None or the angular direction of travel
+        along the convolution, in degrees
+    :param return_track_coords: boolean toggle to return the x and y
+        coordinates of the track in pixels
+    :return: list representing the microlensing light curve
+    """
+    rng = np.random.default_rng(seed=random_seed)
+
+    if isinstance(effective_transverse_velocity, Quantity):
+        effective_transverse_velocity = effective_transverse_velocity.to(
+            u.m / u.s
+        ).value
+    else:
+        effective_transverse_velocity *= u.km.to(u.m)
+    if isinstance(light_curve_time_in_years, Quantity):
+        light_curve_time_in_years = light_curve_time_in_years.to(u.s).value
+    else:
+        light_curve_time_in_years *= u.yr.to(u.s)
+
+    if pixel_shift >= np.size(convolution_array, 0) / 2:
+        print(
+            "warning, flux projection too large for this magnification map. Returning average flux."
+        )
+        return np.sum(convolution_array) / np.size(convolution_array)
+
+    pixels_traversed = (
+        effective_transverse_velocity * light_curve_time_in_years / pixel_size
+    )
+
+    n_points = (
+        effective_transverse_velocity * light_curve_time_in_years / pixel_size
+    ) + 2
+
+    if pixel_shift > 0:
+        safe_convolution_array = convolution_array[
+            pixel_shift : -pixel_shift - 1, pixel_shift : -pixel_shift - 1
+        ]
+    else:
+        safe_convolution_array = convolution_array
+
+    N_safe_dim_x = safe_convolution_array.shape[0]
+    N_safe_dim_y = safe_convolution_array.shape[1]
+
+    if pixels_traversed >= max(N_safe_dim_x, N_safe_dim_y):
+        print(
+            "Warning: light curve traversal length is too long for the safe region dimensions. Returning average flux."
+        )
+        return np.sum(convolution_array) / np.size(convolution_array)
+
+    max_safe_idx_x = N_safe_dim_x - 1
+    max_safe_idx_y = N_safe_dim_y - 1
+
+    # Determine start positions
+    if x_start_position is not None:
+        if not (0 <= x_start_position <= max_safe_idx_x):
+            print(
+                f"Warning: chosen x_start_position ({x_start_position}) is outside the valid index range [0, {max_safe_idx_x}] "
+                "of the safe_convolution_array. Returning average flux."
+            )
+            return np.sum(convolution_array) / np.size(convolution_array)
+    else:  # x_start_position is None, choose randomly
+        if max_safe_idx_x < 0:
+            print("Error: max_safe_idx_x < 0, safe_array likely misconfigured.")
+            return np.sum(convolution_array) / np.size(convolution_array)
+
+        # MODIFICATION: Choose non-border pixel if possible
+        if N_safe_dim_x >= 3:  # Possible to choose non-border
+            # Non-border indices are 1 to N_safe_dim_x - 2 (or max_safe_idx_x - 1)
+            x_start_position = float(
+                rng.integers(1, max_safe_idx_x)
+            )  # low is inclusive, high is exclusive
+        else:  # N_safe_dim_x is 1 or 2, all pixels are border pixels
+            x_start_position = float(rng.integers(0, max_safe_idx_x + 1))
+
+    if y_start_position is not None:
+        if not (0 <= y_start_position <= max_safe_idx_y):
+            print(
+                f"Warning: chosen y_start_position ({y_start_position}) is outside the valid index range [0, {max_safe_idx_y}] "
+                "of the safe_convolution_array. Returning average flux."
+            )
+            return np.sum(convolution_array) / np.size(convolution_array)
+    else:  # y_start_position is None, choose randomly
+        if max_safe_idx_y < 0:
+            print("Error: max_safe_idx_y < 0, safe_array likely misconfigured.")
+            return np.sum(convolution_array) / np.size(convolution_array)
+
+        # MODIFICATION: Choose non-border pixel if possible
+        if N_safe_dim_y >= 3:  # Possible to choose non-border
+            # Non-border indices are 1 to N_safe_dim_y - 2 (or max_safe_idx_y - 1)
+            y_start_position = float(
+                rng.integers(1, max_safe_idx_y)
+            )  # low is inclusive, high is exclusive
+        else:  # N_safe_dim_y is 1 or 2, all pixels are border pixels
+            y_start_position = float(rng.integers(0, max_safe_idx_y + 1))
+
+    if phi_travel_direction is not None:
+        angle = phi_travel_direction * np.pi / 180
+        delta_x = pixels_traversed * np.cos(angle)
+        delta_y = pixels_traversed * np.sin(angle)
+
+        if (
+            x_start_position + delta_x >= np.size(safe_convolution_array, 0)
+            or y_start_position + delta_y >= np.size(safe_convolution_array, 1)
+            or x_start_position + delta_x < 0
+            or y_start_position + delta_y < 0
+        ):
+            print(
+                "Warning, chosen track leaves the convolution array. Returning average flux.",
+                f"x_start_position: {x_start_position}, y_start_position: {y_start_position}, "
+                f"delta_x: {delta_x}, delta_y: {delta_y}",
+                f"x_end_position: {x_start_position + delta_x}, "
+                f"y_end_position: {y_start_position + delta_y}",
+            )
+            return np.sum(convolution_array) / np.size(convolution_array)
+    else:
+        success = None
+        backup_counter = 0
+        angle = rng.random() * 360 * np.pi / 180
+        while success is None:
+            angle += np.pi / 2
+            delta_x = pixels_traversed * np.cos(angle)
+            delta_y = pixels_traversed * np.sin(angle)
+            if (
+                x_start_position + delta_x < np.size(safe_convolution_array, 0)
+                and y_start_position + delta_y < np.size(safe_convolution_array, 1)
+                and x_start_position + delta_x >= 0
+                and y_start_position + delta_y >= 0
+            ):
+                success = True
+            backup_counter += 1
+            if backup_counter > 4:  # pragma: no cover
+                break
+
+    x_positions = np.linspace(
+        x_start_position, x_start_position + delta_x, 5 * int(n_points)
+    )
+    y_positions = np.linspace(
+        y_start_position, y_start_position + delta_y, 5 * int(n_points)
+    )
+
+    light_curve = pull_value_from_grid(safe_convolution_array, x_positions, y_positions)
+
+    if return_track_coords:
+        return (
+            np.asarray(light_curve),
+            x_positions + pixel_shift,
+            y_positions + pixel_shift,
+        )
+
+    return np.asarray(light_curve)
+
+
+# Credits: Luke Weisenbach (https://github.com/weisluke/microlensing/blob/main/microlensing/Util/length_scales.py)
+def theta_star_physical(
+    z_lens: float,
+    z_src: float,
+    cosmo: Cosmology,
+    m: float = 1,
+) -> tuple:
+    """Calculate the size of the Einstein radius of a point mass lens in the
+    lens and source planes, in meters.
+
+    :param z_lens: lens redshift
+    :param z_src: source redshift
+    :param cosmo: an astropy.cosmology instance.
+    :param m: point mass lens mass in solar mass units
+    :return theta_star: theta_star in the lens plane in arcseconds
+    :return theta_star_lens: theta_star in the lens plane in meters
+    :return theta_star_src: theta_star in the source plane in meters
+    """
+    microlens_mass = m * u.M_sun
+
+    D_d = cosmo.angular_diameter_distance(z_lens)
+    D_s = cosmo.angular_diameter_distance(z_src)
+    D_ds = cosmo.angular_diameter_distance_z1z2(z_lens, z_src)
+
+    theta_star = (
+        np.sqrt(4 * const.G * microlens_mass / const.c**2 * D_ds / (D_s * D_d)) * u.rad
+    )
+    theta_star_lens = theta_star.to(u.rad).value * D_d
+    theta_star_src = theta_star_lens * D_s / D_d
+
+    return theta_star.to(u.arcsec), theta_star_lens.to(u.m), theta_star_src.to(u.m)
