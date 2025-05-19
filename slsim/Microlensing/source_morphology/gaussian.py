@@ -56,7 +56,6 @@ class GaussianSourceMorphology(SourceMorphology):
         self._pixel_scale_x = length_x / num_pix_x
         self._pixel_scale_y = length_y / num_pix_y
         self._pixel_scale = np.sqrt(self._pixel_scale_x * self._pixel_scale_y)
-        self._kernel_map = self.get_kernel_map()
 
     def get_kernel_map(self):
         """Returns the 2D array of the Gaussian kernel map. The kernel map is a

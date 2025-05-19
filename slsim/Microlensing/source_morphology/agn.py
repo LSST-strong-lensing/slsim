@@ -95,8 +95,6 @@ class AGNSourceMorphology(SourceMorphology):
             # TODO: In future handle this by integrating the flux map over the band
         # -----------------------------------------------------------
 
-        self._kernel_map = self.get_kernel_map()
-
         # -----------------------------------------------------------
         # determine the size of the emission map in source plane, in meters
         # -----------------------------------------------------------
@@ -137,8 +135,8 @@ class AGNSourceMorphology(SourceMorphology):
         # -----------------------------------------------------------
         # num pixels and length of the kernel map in arcseconds
         # -----------------------------------------------------------
-        self._num_pix_x = np.size(self.kernel_map, 0)
-        self._num_pix_y = np.size(self.kernel_map, 1)
+        self._num_pix_x = np.size(self.kernel_map, 1)
+        self._num_pix_y = np.size(self.kernel_map, 0)
         self._length_x = self.num_pix_x * self.pixel_scale_x
         self._length_y = self.num_pix_y * self.pixel_scale_y
         # -----------------------------------------------------------

@@ -47,15 +47,11 @@ class SourceMorphology:
     @property
     def num_pix_x(self):
         """Returns the number of pixels in x direction."""
-        if not hasattr(self, "_num_pix_x"):
-            self._num_pix_x = np.size(self.kernel_map, 0)
         return self._num_pix_x
 
     @property
     def num_pix_y(self):
         """Returns the number of pixels in y direction."""
-        if not hasattr(self, "_num_pix_y"):
-            self._num_pix_y = np.size(self.kernel_map, 1)
         return self._num_pix_y
 
     @property
