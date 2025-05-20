@@ -156,6 +156,7 @@ def test_galaxies_lens_pop_halo_model_instance():
 
 
 def test_cluster_lens_pop_instance():
+    np.random.seed(41)
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     sky_area = Quantity(value=0.001, unit="deg2")
 
