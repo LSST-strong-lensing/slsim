@@ -1183,9 +1183,11 @@ class Lens(LensedSystemBase):
         lens_mass_model_list.append("SHEAR")
         lens_mass_model_list.append("CONVERGENCE")
         if hasattr(self, "realization"):
-            halo_lens_model_list, _, kwargs_halos = self.realization.lensing_quantities(add_mass_sheet_correction=True)
+            halo_lens_model_list, _, kwargs_halos = self.realization.lensing_quantities(
+                add_mass_sheet_correction=True
+            )
             lens_mass_model_list += halo_lens_model_list
-            kwargs_lens+=kwargs_halos
+            kwargs_lens += kwargs_halos
         self._kwargs_lens = kwargs_lens
         self._lens_mass_model_list = lens_mass_model_list
 
@@ -1364,19 +1366,25 @@ class Lens(LensedSystemBase):
                 lens_type = "LC"
 
         return f"{lens_type}-LENS_{ra:.4f}_{dec:.4f}"
-    
-    def add_subhalos(self,source_index=0):  # , return_stats=False, suppress_output=True
+
+    def add_subhalos(
+        self, source_index=0
+    ):  # , return_stats=False, suppress_output=True
         """Get subhalo models from pyHalo and add them to the lens model.
-        :param los_norm: rescales the amplitude of the line-of-sight halo mass function
+
+        :param los_norm: rescales the amplitude of the line-of-sight
+            halo mass function
         :param source_index: index of source, default =0, i.e. the first
             source
         """
-        z_lens=self.deflector_redshift
-        z_source=self.max_redshift_source_class.redshift
+        z_lens = self.deflector_redshift
+        z_source = self.max_redshift_source_class.redshift
         einstein_radius = self._get_effective_einstein_radius(source_index)
-        cone_opening_angle=4*einstein_radius
-        realization = CDM(z_lens, z_source, cone_opening_angle_arcsec=cone_opening_angle)
-        
+        cone_opening_angle = 4 * einstein_radius
+        realization = CDM(
+            z_lens, z_source, cone_opening_angle_arcsec=cone_opening_angle
+        )
+
         self.realization = realization
 
 
