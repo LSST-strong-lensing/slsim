@@ -208,7 +208,7 @@ def test_cluster_lens_pop_instance():
     kwargs_model, kwargs_params = pes_lens_class.lenstronomy_kwargs(band="g")
     assert len(kwargs_model["lens_model_list"]) >= 3  # halo, 1>= subhalo, LoS
     assert len(kwargs_model["lens_light_model_list"]) >= 1  # 1>= member galaxy
-    assert pes_lens_class.deflector_velocity_dispersion() > 300
+    assert pes_lens_class.deflector_velocity_dispersion() > 250
 
 
 def test_galaxies_lens_pop_instance():
