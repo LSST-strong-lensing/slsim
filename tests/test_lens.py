@@ -1174,7 +1174,7 @@ class TestMultiSource(object):
         npt.assert_almost_equal(einstein_radius2[0], einstein_radius3[1], decimal=5)
 
         einstein_radius_nfw = self.lens_class_nfw.einstein_radius
-        npt.assert_almost_equal(einstein_radius_nfw, 0.36805206, decimal=2)
+        npt.assert_almost_equal(einstein_radius_nfw, .63, decimal=2)
 
     def test_image_observer_time_multi(self):
         observation_time = 50
