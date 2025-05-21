@@ -105,6 +105,7 @@ class Lens(LensedSystemBase):
             z_source=self.max_redshift_source_class.redshift,
             cosmo=self.cosmo,
         )
+        self.realization = None
 
     def source(self, index=0):
         """
@@ -1155,7 +1156,7 @@ class Lens(LensedSystemBase):
 
         :return: lens_model_list, kwargs_lens
         """
-        if hasattr(self, "_lens_mass_model_list") and hasattr(self, "_kwargs_lens"):
+        if hasattr(self, "_lens_mass_model_list") and hasattr(self, "_kwargs_lens") and self.realization is None:
             return self._lens_mass_model_list, self._kwargs_lens
         if self.deflector.deflector_type in ["EPL", "NFW_HERNQUIST", "NFW_CLUSTER"]:
             lens_mass_model_list, kwargs_lens = self.deflector.mass_model_lenstronomy(
@@ -1182,12 +1183,13 @@ class Lens(LensedSystemBase):
         kwargs_lens.append({"kappa": kappa_ext, "ra_0": 0, "dec_0": 0})
         lens_mass_model_list.append("SHEAR")
         lens_mass_model_list.append("CONVERGENCE")
-        if hasattr(self, "realization"):
-            halo_lens_model_list, _, kwargs_halos = self.realization.lensing_quantities(
-                add_mass_sheet_correction=True
-            )
-            lens_mass_model_list += halo_lens_model_list
-            kwargs_lens += kwargs_halos
+        if self.realization is not None:
+            try:
+                halo_lens_model_list, redshift_array, kwargs_halos, _ = self.realization.lensing_quantities(add_mass_sheet_correction=True)
+                lens_mass_model_list += halo_lens_model_list
+                kwargs_lens += kwargs_halos
+            except Exception as e:
+                print(f"[ERROR] Failed to add halos from realization: {e}")
         self._kwargs_lens = kwargs_lens
         self._lens_mass_model_list = lens_mass_model_list
 
@@ -1366,26 +1368,49 @@ class Lens(LensedSystemBase):
                 lens_type = "LC"
 
         return f"{lens_type}-LENS_{ra:.4f}_{dec:.4f}"
+    
+    def add_subhalos(self, source_index=0, **cdm_kwargs):  # , return_stats=False, suppress_output=True
+        """Generate a realization of the subhalos, halo mass.
 
-    def add_subhalos(
-        self, source_index=0
-    ):  # , return_stats=False, suppress_output=True
-        """Get subhalo models from pyHalo and add them to the lens model.
+        :param cdm_parameter_dict: dictionary of parameters for the CDM
+            realization. The dictionary should contain the following keys:
+            - "sigma_sub": amplitude of the subhalo mass function at 10^8 solar 
+            masses in units [# of halos / kpc^2]
+            - "log_mlow": log base 10 of the minimum halo mass to render
+            - "log_mhigh": log base 10 of the maximum halo mass to render
+            - "LOS_normalization": rescales the amplitude of the line-of-sight 
+            halo mass function, default =0, i.e. remove the LOS halo mass
+            - "r_tidal": the core radius of the host halo in units of the host 
+            halo scale radius. Subhalos are distributed in 3D with a cored NFW 
+            profile with this core radius
+        :param source_index: index of source, default =0, i.e. the first source
 
-        :param los_norm: rescales the amplitude of the line-of-sight
-            halo mass function
-        :param source_index: index of source, default =0, i.e. the first
-            source
+        :return: cdm_halo_mass -> list of halo masses in the realization
+                 realization -> a realization of dark matter halos
         """
-        z_lens = self.deflector_redshift
-        z_source = self.max_redshift_source_class.redshift
+        sigma_sub = cdm_kwargs.get("sigma_sub", 0.025)
+        log_mlow = cdm_kwargs.get("log_mlow", 6.)
+        log_mhigh = cdm_kwargs.get("log_mhigh", 10.0)
+        LOS_normalization = cdm_kwargs.get("LOS_normalization", 0.)
+        r_tidal = cdm_kwargs.get("r_tidal", 0.25)
+        
+        z_lens=self.deflector_redshift
+        z_source=self.max_redshift_source_class.redshift
         einstein_radius = self._get_effective_einstein_radius(source_index)
-        cone_opening_angle = 4 * einstein_radius
-        realization = CDM(
-            z_lens, z_source, cone_opening_angle_arcsec=cone_opening_angle
-        )
-
+        cone_opening_angle=4*einstein_radius
+        realization = CDM(z_lens,
+                          z_source, 
+                          cone_opening_angle_arcsec=cone_opening_angle,
+                          sigma_sub=sigma_sub,
+                          log_mlow=log_mlow,
+                          log_mhigh=log_mhigh,
+                          LOS_normalization=LOS_normalization,
+                          r_tidal=r_tidal,
+                          )
+        cdm_halo_mass = [halo.mass for halo in realization.halos]
         self.realization = realization
+        print('realization contains '+str(len(realization.halos))+' halos.')
+        return cdm_halo_mass, realization
 
 
 def image_separation_from_positions(image_positions):

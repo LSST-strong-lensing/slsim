@@ -361,6 +361,13 @@ class TestLens(object):
         mag_ratios = self.gg_lens.contrast_ratio(band="i", source_index=0)
         assert 2 <= len(mag_ratios) <= 4
 
+    def test_add_subhalos(self):
+        # Test the add_subhalos method
+        cdm_parms = {}
+        cdm_halo_mass, realization = self.gg_lens.add_subhalos(cdm_parms)
+        assert isinstance(cdm_halo_mass, list)
+        assert isinstance(realization, object)
+
 
 @pytest.fixture
 def pes_lens_instance():
