@@ -105,7 +105,6 @@ class Lens(LensedSystemBase):
             z_source=self.max_redshift_source_class.redshift,
             cosmo=self.cosmo,
         )
-        self.realization = None
 
     def source(self, index=0):
         """
@@ -1156,7 +1155,7 @@ class Lens(LensedSystemBase):
 
         :return: lens_model_list, kwargs_lens
         """
-        if hasattr(self, "_lens_mass_model_list") and hasattr(self, "_kwargs_lens") and self.realization is None:
+        if hasattr(self, "_lens_mass_model_list") and hasattr(self, "_kwargs_lens") and not hasattr(self, "realization"):
             return self._lens_mass_model_list, self._kwargs_lens
         if self.deflector.deflector_type in ["EPL", "NFW_HERNQUIST", "NFW_CLUSTER"]:
             lens_mass_model_list, kwargs_lens = self.deflector.mass_model_lenstronomy(
@@ -1183,7 +1182,7 @@ class Lens(LensedSystemBase):
         kwargs_lens.append({"kappa": kappa_ext, "ra_0": 0, "dec_0": 0})
         lens_mass_model_list.append("SHEAR")
         lens_mass_model_list.append("CONVERGENCE")
-        if self.realization is not None:
+        if hasattr(self, "realization"):
             try:
                 halo_lens_model_list, redshift_array, kwargs_halos, _ = self.realization.lensing_quantities(add_mass_sheet_correction=True)
                 lens_mass_model_list += halo_lens_model_list
@@ -1369,7 +1368,7 @@ class Lens(LensedSystemBase):
 
         return f"{lens_type}-LENS_{ra:.4f}_{dec:.4f}"
     
-    def add_subhalos(self, source_index=0, **cdm_kwargs):  # , return_stats=False, suppress_output=True
+    def add_subhalos(self, source_index=0, **cdm_kwargs):
         """Generate a realization of the subhalos, halo mass.
 
         :param cdm_parameter_dict: dictionary of parameters for the CDM
