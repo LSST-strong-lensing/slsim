@@ -2,7 +2,7 @@ import numpy as np
 from astropy.table import Table, hstack
 from astropy.coordinates import SkyCoord
 from astropy import units as u
-from astropy.cosmology import Planck13, FlatLambdaCDM
+from astropy.io import fits
 from sklearn.neighbors import NearestNeighbors
 
 
