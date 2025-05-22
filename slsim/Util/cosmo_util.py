@@ -5,11 +5,18 @@ from astropy import units as u
 from astropy.cosmology import Planck13, FlatLambdaCDM
 from sklearn.neighbors import NearestNeighbors
 
-def merge_catalogs(large_cat, small_cat,
-                   lc_mag_col, sc_mag_col,
-                   tolerance=1.0,
-                   lc_ra_col='RA', lc_dec_col='DEC',
-                   sc_ra_col='RA', sc_dec_col='DEC'):
+
+def merge_catalogs(
+    large_cat,
+    small_cat,
+    lc_mag_col,
+    sc_mag_col,
+    tolerance=1.0,
+    lc_ra_col="RA",
+    lc_dec_col="DEC",
+    sc_ra_col="RA",
+    sc_dec_col="DEC",
+):
     # SkyCoord objects
     Lcoords = SkyCoord(ra=large_cat[lc_ra_col], dec=large_cat[lc_dec_col])
     Scoords = SkyCoord(ra=small_cat[sc_ra_col], dec=small_cat[sc_dec_col])
@@ -19,9 +26,10 @@ def merge_catalogs(large_cat, small_cat,
     # mask by tolerance
     mask = d2d_arcsec < tolerance * u.arcsec
     # compute MAG_DIFF on matched
-    small_cat['MAG_DIFF'] = np.nan
-    small_cat['MAG_DIFF'][mask] = (small_cat[sc_mag_col][mask]
-                                   - large_cat[lc_mag_col][idx][mask])
+    small_cat["MAG_DIFF"] = np.nan
+    small_cat["MAG_DIFF"][mask] = (
+        small_cat[sc_mag_col][mask] - large_cat[lc_mag_col][idx][mask]
+    )
     # stack matched rows
     return hstack([large_cat[idx[mask]], small_cat[mask]])
 
@@ -31,21 +39,21 @@ def match_simulated_to_real(
     cosmos_catalog,
     cosmo,
     tolerance=None,
-    mag_col_sim='mag_i',
-    size_col_sim='physical_size',
-    mag_col_cat='MAGabs',
-    size_col_cat='RHALFreal',
+    mag_col_sim="mag_i",
+    size_col_sim="physical_size",
+    mag_col_cat="MAGabs",
+    size_col_cat="RHALFreal",
     id_col_sim=None,
     id_col_cat=None,
     n_neighbors=1,
 ):
-    """
-    Match simulated SkyPy sources to real COSMOS catalog sources using nearest-neighbor
-    matching in magnitude-size feature space, with an optional distance tolerance filter.
+    """Match simulated SkyPy sources to real COSMOS catalog sources using
+    nearest-neighbor matching in magnitude-size feature space, with an optional
+    distance tolerance filter.
 
-    Returns an Astropy table containing all columns from sim_table and matched
-    columns from the COSMOS catalog (prefixed 'COSMOS_'), along with 'MatchedIndex'
-    and 'Distance'.
+    Returns an Astropy table containing all columns from sim_table and
+    matched columns from the COSMOS catalog (prefixed 'COSMOS_'), along
+    with 'MatchedIndex' and 'Distance'.
     """
     # Load catalog
     if isinstance(cosmos_catalog, str):
@@ -58,17 +66,17 @@ def match_simulated_to_real(
     # Helper to extract raw values
     def _values(arr):
         try:
-            return np.array([val.value if hasattr(val, 'unit') else val for val in arr])
+            return np.array([val.value if hasattr(val, "unit") else val for val in arr])
         except Exception:
             return np.array(arr)
 
     # Compute simulated absolute magnitude if needed
-    if mag_col_sim == 'mag_i':
-        if 'z' not in sim_table.colnames:
+    if mag_col_sim == "mag_i":
+        if "z" not in sim_table.colnames:
             raise KeyError("'z' column required for computing absolute magnitude")
-        zvals = sim_table['z']
+        zvals = sim_table["z"]
         ang = cosmo.angular_diameter_distance(zvals)
-        sim_mag = sim_table['mag_i'] + 5 - 5 * np.log10(ang.value * 1e6)
+        sim_mag = sim_table["mag_i"] + 5 - 5 * np.log10(ang.value * 1e6)
     else:
         sim_mag = _values(sim_table[mag_col_sim])
 
@@ -86,7 +94,7 @@ def match_simulated_to_real(
     cat_feats = np.column_stack((_norm(cat_mag), _norm(cat_size)))
 
     # Nearest-neighbor search
-    nbrs = NearestNeighbors(n_neighbors=n_neighbors, metric='euclidean')
+    nbrs = NearestNeighbors(n_neighbors=n_neighbors, metric="euclidean")
     nbrs.fit(cat_feats)
     distances, indices = nbrs.kneighbors(sim_feats)
     distances = distances.flatten()
@@ -94,8 +102,8 @@ def match_simulated_to_real(
 
     # Prepare simulated output with full-length arrays
     sim_out = sim_table.copy()
-    sim_out['MatchedIndex'] = indices
-    sim_out['Distance'] = distances
+    sim_out["MatchedIndex"] = indices
+    sim_out["Distance"] = distances
     if id_col_sim and id_col_sim in sim_out.colnames:
         sim_out.rename_column(id_col_sim, id_col_sim)
 
@@ -111,12 +119,11 @@ def match_simulated_to_real(
     # Prefix matched catalog columns
     cat_prefixed = cat_matched.copy()
     for col in cat_prefixed.colnames:
-        cat_prefixed.rename_column(col, f'COSMOS_{col}')
+        cat_prefixed.rename_column(col, f"COSMOS_{col}")
 
     # Combine and return
     result = hstack([sim_masked, cat_prefixed])
     return result
-
 
 
 def z_scale_factor(z_old, z_new, cosmo):
@@ -138,13 +145,16 @@ def z_scale_factor(z_old, z_new, cosmo):
         z_new
     )
 
+
 def get_cosmos_catalog():
     # Adjust path to the COSMOS catalog
     return Table.read("/path/to/cosmos_catalog.fits")
 
+
 def load_cosmos_image(filename, hdu_index):
     with fits.open(filename) as hdulist:
         return hdulist[hdu_index].data
+
 
 def flux_weighted_center(image):
     y, x = np.indices(image.shape)
@@ -154,4 +164,3 @@ def flux_weighted_center(image):
     x_center = (x * image).sum() / total
     y_center = (y * image).sum() / total
     return x_center, y_center
-
