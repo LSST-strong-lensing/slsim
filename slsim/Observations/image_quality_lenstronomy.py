@@ -1,5 +1,6 @@
 from lenstronomy.SimulationAPI.ObservationConfig.LSST import LSST
 from lenstronomy.SimulationAPI.ObservationConfig.Roman import Roman
+from lenstronomy.SimulationAPI.ObservationConfig.Euclid import Euclid
 
 
 def kwargs_single_band(band, observatory="LSST", **kwargs):
@@ -19,4 +20,6 @@ def kwargs_single_band(band, observatory="LSST", **kwargs):
         observatory = LSST(band=band, **kwargs)
     elif observatory == "Roman":
         observatory = Roman(band=band, **kwargs)
+    elif observatory == "Euclid":
+        observatory = Euclid(band=band, **kwargs)
     return observatory.kwargs_single_band()
