@@ -1159,15 +1159,15 @@ class Lens(LensedSystemBase):
             kwargs_lens.append({"kappa": kappa_ext, "ra_0": 0, "dec_0": 0})
             lens_mass_model_list.append("SHEAR")
             lens_mass_model_list.append("CONVERGENCE")
-        if hasattr(self, "realization"):
-            try:
-                halo_lens_model_list, redshift_array, kwargs_halos, _ = (
-                    self.realization.lensing_quantities(add_mass_sheet_correction=True)
-                )
-                lens_mass_model_list += halo_lens_model_list
-                kwargs_lens += kwargs_halos
-            except Exception as e:
-                print(f"[ERROR] Failed to add halos from realization: {e}")
+            if hasattr(self, "realization"):
+                try:
+                    halo_lens_model_list, redshift_array, kwargs_halos, _ = (
+                        self.realization.lensing_quantities(add_mass_sheet_correction=True)
+                    )
+                    lens_mass_model_list += halo_lens_model_list
+                    kwargs_lens += kwargs_halos
+                except Exception as e:
+                    print(f"[ERROR] Failed to add halos from realization: {e}")
             self._kwargs_lens = kwargs_lens
             self._lens_mass_model_list = lens_mass_model_list
             self._lens_model = LensModel(
