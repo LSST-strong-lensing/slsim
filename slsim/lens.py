@@ -1162,7 +1162,9 @@ class Lens(LensedSystemBase):
             if hasattr(self, "realization"):
                 try:
                     halo_lens_model_list, redshift_array, kwargs_halos, _ = (
-                        self.realization.lensing_quantities(add_mass_sheet_correction=True)
+                        self.realization.lensing_quantities(
+                            add_mass_sheet_correction=True
+                        )
                     )
                     lens_mass_model_list += halo_lens_model_list
                     kwargs_lens += kwargs_halos
