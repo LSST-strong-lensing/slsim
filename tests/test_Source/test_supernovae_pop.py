@@ -6,6 +6,7 @@ from slsim.Sources.Supernovae.supernovae_pop import SNIaRate
 from astropy.cosmology import FlatLambdaCDM
 import numpy.testing as npt
 import pytest
+import numpy as np
 
 
 def test_calculate_star_formation_rate():
@@ -60,13 +61,23 @@ class TestSNIaRate:
 
     def test_calculate_SNIa_rate(self):
         # (Fig 2 - Oguri and Marshall 2010)
-        z_array = [0, 1, 2, 3]
-        rate_array = self.sne_rate.calculate_SNIa_rate(z_array)
+        z = np.array([0, 1, 2, 3])
+        rate = self.sne_rate.calculate_SNIa_rate(z)
 
-        npt.assert_almost_equal(rate_array[0], 0.000041006, decimal=3)
-        npt.assert_almost_equal(rate_array[1], 0.0001191, decimal=3)
-        npt.assert_almost_equal(rate_array[2], 0.0001349, decimal=3)
-        npt.assert_almost_equal(rate_array[3], 0.00008008, decimal=3)
+        npt.assert_almost_equal(rate[0], 0.000041006, decimal=3)
+        npt.assert_almost_equal(rate[1], 0.0001191, decimal=3)
+        npt.assert_almost_equal(rate[2], 0.0001349, decimal=3)
+        npt.assert_almost_equal(rate[3], 0.00008008, decimal=3)
+
+    def test_calculate_luminosity(self):
+        M = -28
+        z = np.array([1, 2, 4, 6])
+        luminosity = self.sne_rate.calculate_luminosity(M, z)
+
+        npt.assert_almost_equal(luminosity[0], 1.93040e-60, decimal=3)
+        npt.assert_almost_equal(luminosity[1], 1.45804e-60, decimal=3)
+        npt.assert_almost_equal(luminosity[2], 1.95788e-61, decimal=3)
+        npt.assert_almost_equal(luminosity[3], 1.89669e-62, decimal=3)
 
 
 if __name__ == "__main__":
