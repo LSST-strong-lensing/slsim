@@ -1373,6 +1373,7 @@ class Lens(LensedSystemBase):
         :type source_index: int
         """
         from pyHalo.PresetModels.cdm import CDM, WDM, ULDM
+
         if not hasattr(self, "realization"):
             z_lens = self.deflector_redshift
             z_source = self.max_redshift_source_class.redshift
@@ -1404,7 +1405,7 @@ class Lens(LensedSystemBase):
                     "We only support 'CDM', 'WDM', or 'ULDM'. "
                     "Received: {}".format(dm_type)
                 )
-            
+
             self.realization = realization
             halo_lens_model_list, redshift_array, kwargs_halos, _ = (
                 self.realization.lensing_quantities(add_mass_sheet_correction=True)
@@ -1429,7 +1430,6 @@ class Lens(LensedSystemBase):
         """
         if hasattr(self, "realization"):
             return [halo.mass for halo in self.realization.halos]
-        
 
 
 def image_separation_from_positions(image_positions):
