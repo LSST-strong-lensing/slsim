@@ -1356,7 +1356,7 @@ class Lens(LensedSystemBase):
 
         return f"{lens_type}-LENS_{ra:.4f}_{dec:.4f}"
 
-    def add_subhalos(self, pyhalos_kwargs, source_index=0):
+    def add_subhalos(self, pyhalos_kwargs, dm_type, source_index=0):
         """Generate a realization of the subhalos, halo mass.
 
         :param cdm_kwargs: dictionary of parameters for the CDM
@@ -1365,43 +1365,60 @@ class Lens(LensedSystemBase):
         :param source_index: index of source, default =0, i.e. the first
             source
         """
-        from pyHalo.PresetModels.cdm import CDM
+        from pyHalo.PresetModels.cdm import CDM, WDM, ULDM
 
         # sigma_sub = cdm_kwargs.get("sigma_sub", 0.025)
         # log_mlow = cdm_kwargs.get("log_mlow", 6.0)
         # log_mhigh = cdm_kwargs.get("log_mhigh", 10.0)
         # LOS_normalization = cdm_kwargs.get("LOS_normalization", 0.0)
         # r_tidal = cdm_kwargs.get("r_tidal", 0.25)
-
-
-        if hasattr(self, "_halos_redshift_list"):
-            return
-        z_lens = self.deflector_redshift
-        z_source = self.max_redshift_source_class.redshift
-        einstein_radius = self._get_effective_einstein_radius(source_index)
-        cone_opening_angle = 4 * einstein_radius
-        realization = CDM(
-            z_lens,
-            z_source,
-            cone_opening_angle_arcsec=cone_opening_angle,
-            **pyhalos_kwargs,
-        )
-        self.realization = realization
-        halo_lens_model_list, redshift_array, kwargs_halos, _ = (
-            self.realization.lensing_quantities(add_mass_sheet_correction=True)
-        )
-        self._lens_mass_model_list += halo_lens_model_list
-        self._kwargs_lens += kwargs_halos
-        self._halos_redshift_list = redshift_array
-        astropy_instance = self.realization.astropy_instance
-        self._lens_model = LensModel(
-            lens_model_list=self._lens_mass_model_list,
-            cosmo=astropy_instance,
-            z_lens=self.deflector_redshift,
-            z_source=z_source,
-            z_source_convention=self.max_redshift_source_class.redshift,
-            multi_plane=False,
-        )
+        if not hasattr(self, "realization"):
+            z_lens = self.deflector_redshift
+            z_source = self.max_redshift_source_class.redshift
+            einstein_radius = self._get_effective_einstein_radius(source_index)
+            cone_opening_angle = 4 * einstein_radius
+            if dm_type == "CDM":
+                realization = CDM(
+                    z_lens,
+                    z_source,
+                    cone_opening_angle_arcsec=cone_opening_angle,
+                    **pyhalos_kwargs,
+                )
+            if dm_type == "WDM":
+                realization = WDM(
+                    z_lens,
+                    z_source,
+                    cone_opening_angle_arcsec=cone_opening_angle,
+                    **pyhalos_kwargs,
+                )
+            if dm_type == "ULDM":
+                realization = ULDM(
+                    z_lens,
+                    z_source,
+                    cone_opening_angle_arcsec=cone_opening_angle,
+                    **pyhalos_kwargs,
+                )
+            else:
+                raise ValueError(
+                    "We only support 'CDM', 'WDM', or 'ULDM'. "
+                    "Received: {}".format(dm_type)
+                )
+            
+            self.realization = realization
+            halo_lens_model_list, redshift_array, kwargs_halos, _ = (
+                self.realization.lensing_quantities(add_mass_sheet_correction=True)
+            )
+            self._lens_mass_model_list += halo_lens_model_list
+            self._kwargs_lens += kwargs_halos
+            astropy_instance = self.realization.astropy_instance
+            self._lens_model_halos_only = LensModel(
+                lens_model_list=halo_lens_model_list,
+                cosmo=astropy_instance,
+                z_lens=self.deflector_redshift,
+                z_source=z_source,
+                z_source_convention=self.max_redshift_source_class.redshift,
+                multi_plane=False,
+            )
         print("realization contains " + str(len(realization.halos)) + " halos.")
 
     def get_cdm_halo_mass(self):
