@@ -14,6 +14,8 @@ from lenstronomy.Util import util
 
 from slsim.lensed_system_base import LensedSystemBase
 
+from pyHalo.PresetModels.cdm import CDM
+
 
 class Lens(LensedSystemBase):
     """Class to manage individual lenses."""
@@ -1353,6 +1355,81 @@ class Lens(LensedSystemBase):
                 lens_type = "LC"
 
         return f"{lens_type}-LENS_{ra:.4f}_{dec:.4f}"
+
+    def add_subhalos(self, pyhalos_kwargs, dm_type, source_index=0):
+        """Generate a realization of the subhalos, halo mass.
+
+        :param cdm_kwargs: dictionary of parameters for the CDM
+            realization. The dictionary should contain the following
+            keys:
+        :param pyhalos_kwargs: dictionary of parameters for the
+            pyhalos realization.
+        :type pyhalos_kwargs: dict
+        :param dm_type: type of dark matter models, can be 'CDM', 'WDM', or
+            'ULDM'
+        :type dm_type: str
+        :param source_index: index of source, default =0, i.e. the first
+            source
+        :type source_index: int
+        """
+        from pyHalo.PresetModels.cdm import CDM, WDM, ULDM
+
+        if not hasattr(self, "realization"):
+            z_lens = self.deflector_redshift
+            z_source = self.max_redshift_source_class.redshift
+            einstein_radius = self._get_effective_einstein_radius(source_index)
+            cone_opening_angle = 4 * einstein_radius
+            if dm_type == "CDM":
+                realization = CDM(
+                    z_lens,
+                    z_source,
+                    cone_opening_angle_arcsec=cone_opening_angle,
+                    **pyhalos_kwargs,
+                )
+            if dm_type == "WDM":
+                realization = WDM(
+                    z_lens,
+                    z_source,
+                    cone_opening_angle_arcsec=cone_opening_angle,
+                    **pyhalos_kwargs,
+                )
+            if dm_type == "ULDM":
+                realization = ULDM(
+                    z_lens,
+                    z_source,
+                    cone_opening_angle_arcsec=cone_opening_angle,
+                    **pyhalos_kwargs,
+                )
+            else:
+                raise ValueError(
+                    "We only support 'CDM', 'WDM', or 'ULDM'. "
+                    "Received: {}".format(dm_type)
+                )
+
+            self.realization = realization
+            halo_lens_model_list, redshift_array, kwargs_halos, _ = (
+                self.realization.lensing_quantities(add_mass_sheet_correction=True)
+            )
+            self._lens_mass_model_list += halo_lens_model_list
+            self._kwargs_lens += kwargs_halos
+            astropy_instance = self.realization.astropy_instance
+            self._lens_model_halos_only = LensModel(
+                lens_model_list=halo_lens_model_list,
+                cosmo=astropy_instance,
+                z_lens=self.deflector_redshift,
+                z_source=z_source,
+                z_source_convention=self.max_redshift_source_class.redshift,
+                multi_plane=False,
+            )
+        print("realization contains " + str(len(realization.halos)) + " halos.")
+
+    def get_cdm_halo_mass(self):
+        """Get the halo mass of the subhalos in the realization.
+
+        :return: list of halo masses in the realization
+        """
+        if hasattr(self, "realization"):
+            return [halo.mass for halo in self.realization.halos]
 
 
 def image_separation_from_positions(image_positions):
