@@ -1362,16 +1362,17 @@ class Lens(LensedSystemBase):
         :param cdm_kwargs: dictionary of parameters for the CDM
             realization. The dictionary should contain the following
             keys:
+        :param pyhalos_kwargs: dictionary of parameters for the
+            pyhalos realization.
+        :type pyhalos_kwargs: dict
+        :param dm_type: type of dark matter models, can be 'CDM', 'WDM', or
+            'ULDM'
+        :type dm_type: str
         :param source_index: index of source, default =0, i.e. the first
             source
+        :type source_index: int
         """
         from pyHalo.PresetModels.cdm import CDM, WDM, ULDM
-
-        # sigma_sub = cdm_kwargs.get("sigma_sub", 0.025)
-        # log_mlow = cdm_kwargs.get("log_mlow", 6.0)
-        # log_mhigh = cdm_kwargs.get("log_mhigh", 10.0)
-        # LOS_normalization = cdm_kwargs.get("LOS_normalization", 0.0)
-        # r_tidal = cdm_kwargs.get("r_tidal", 0.25)
         if not hasattr(self, "realization"):
             z_lens = self.deflector_redshift
             z_source = self.max_redshift_source_class.redshift
