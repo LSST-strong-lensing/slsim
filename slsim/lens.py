@@ -1132,10 +1132,7 @@ class Lens(LensedSystemBase):
             z_sourse = self.max_redshift_source_class.redshift
         else:
             z_sourse = self.source(source_index).redshift
-        if (
-            hasattr(self, "_lens_mass_model_list")
-            and hasattr(self, "_kwargs_lens")
-        ):
+        if hasattr(self, "_lens_mass_model_list") and hasattr(self, "_kwargs_lens"):
             pass
         elif self.deflector.deflector_type in ["EPL", "NFW_HERNQUIST", "NFW_CLUSTER"]:
 
@@ -1363,8 +1360,10 @@ class Lens(LensedSystemBase):
         """Generate a realization of the subhalos, halo mass.
 
         :param cdm_kwargs: dictionary of parameters for the CDM
-            realization. The dictionary should contain the following keys:
-        :param source_index: index of source, default =0, i.e. the first source
+            realization. The dictionary should contain the following
+            keys:
+        :param source_index: index of source, default =0, i.e. the first
+            source
         """
         from pyHalo.PresetModels.cdm import CDM
 
@@ -1387,10 +1386,8 @@ class Lens(LensedSystemBase):
         cdm_halo_mass = [halo.mass for halo in realization.halos]
         self.realization = realization
         halo_lens_model_list, redshift_array, kwargs_halos, _ = (
-                    self.realization.lensing_quantities(
-                        add_mass_sheet_correction=True
-                    )
-                )
+            self.realization.lensing_quantities(add_mass_sheet_correction=True)
+        )
         self._lens_mass_model_list += halo_lens_model_list
         self._kwargs_lens += kwargs_halos
         astropy_instance = self.realization.astropy_instance
