@@ -1373,6 +1373,9 @@ class Lens(LensedSystemBase):
         # LOS_normalization = cdm_kwargs.get("LOS_normalization", 0.0)
         # r_tidal = cdm_kwargs.get("r_tidal", 0.25)
 
+
+        if hasattr(self, "_halos_redshift_list"):
+            return
         z_lens = self.deflector_redshift
         z_source = self.max_redshift_source_class.redshift
         einstein_radius = self._get_effective_einstein_radius(source_index)
@@ -1383,13 +1386,13 @@ class Lens(LensedSystemBase):
             cone_opening_angle_arcsec=cone_opening_angle,
             **pyhalos_kwargs,
         )
-        cdm_halo_mass = [halo.mass for halo in realization.halos]
         self.realization = realization
         halo_lens_model_list, redshift_array, kwargs_halos, _ = (
             self.realization.lensing_quantities(add_mass_sheet_correction=True)
         )
         self._lens_mass_model_list += halo_lens_model_list
         self._kwargs_lens += kwargs_halos
+        self._halos_redshift_list = redshift_array
         astropy_instance = self.realization.astropy_instance
         self._lens_model = LensModel(
             lens_model_list=self._lens_mass_model_list,
@@ -1400,6 +1403,15 @@ class Lens(LensedSystemBase):
             multi_plane=False,
         )
         print("realization contains " + str(len(realization.halos)) + " halos.")
+
+    def get_cdm_halo_mass(self):
+        """Get the halo mass of the subhalos in the realization.
+
+        :return: list of halo masses in the realization
+        """
+        if hasattr(self, "realization"):
+            return [halo.mass for halo in self.realization.halos]
+        
 
 
 def image_separation_from_positions(image_positions):
