@@ -200,6 +200,28 @@ def test_random_agn():
         input_agn_bounds_dict=input_agn_bounds_dict,
     )
 
+    light_curve_1 = {
+        "MJD": np.asarray([0, 1, 2, 3, 4, 5]),
+        "ps_mag_intrinsic": np.asarray([1, 0, -1, 0, 1, 0]),
+    }
+    light_curve_2 = {
+        "MJD": np.asarray([0, 1, 2, 3, 4, 5]),
+        "ps_mag_intrinsic": np.asarray([1, 0, 1, 0, 1, 0]),
+    }
+    input_agn_bounds_dict["intrinsic_light_curve"] = [light_curve_1, light_curve_2]
+
+    random_agn_3 = RandomAgn(
+        i_band_string,
+        i_band_mag,
+        redshift,
+        random_seed=1,
+        lightcurve_time=lightcurve_time,
+        input_agn_bounds_dict=input_agn_bounds_dict,
+    )
+
+    # test initialization with minimal information
+    RandomAgn(i_band_string, i_band_mag, redshift)
+
     # Test that we raise a warning in RandomAgn when no time axis is input
     with pytest.raises(ValueError):
         RandomAgn(
@@ -214,6 +236,7 @@ def test_random_agn():
 
     # check that a random value from the range [8.0, 8.0) must return 8.0
     assert random_agn_2.kwargs_model["black_hole_mass_exponent"] == 8.0
+    assert random_agn_3.kwargs_model["black_hole_mass_exponent"] == 8.0
 
     # check the inclination is on range [0, 45)
     assert random_agn_2.kwargs_model["inclination_angle"] < 45.1

@@ -8,7 +8,8 @@ Sullivan et al. 2006
 
 
 class SupernovaeHostMatch:
-    """Class to generate a host galaxy catalog for a given supernovae catalog."""
+    """Class to generate a host galaxy catalog for a given supernovae
+    catalog."""
 
     def __init__(
         self,
@@ -32,42 +33,22 @@ class SupernovaeHostMatch:
         :return: catalog with supernovae redshifts and their corresponding host galaxies
         :return type: astropy Table
         """
+        # Create a tuple of data types (dtype_tuple).
+        dtype_tuple = tuple(["float64"] * len(self.galaxy_catalog.colnames))
+        # Convert 3rd element to object from float64.
+        dtype_tuple = dtype_tuple[:2] + ("object",) + dtype_tuple[3:]
+        # Create a new Table object where supernovae and their host galaxy will be stored.
+        # This table will be created dynamically with the format of the given galaxy catalog.
         matched_catalog = Table(
-            names=(
-                "z",
-                "M",
-                "coeff",
-                "ellipticity",
-                "physical_size",
-                "stellar_mass",
-                "angular_size",
-                "mag_g",
-                "mag_r",
-                "mag_i",
-                "mag_z",
-                "mag_Y",
-            ),
-            dtype=(
-                "float64",
-                "float64",
-                "object",
-                "float64",
-                "float64",
-                "float64",
-                "float64",
-                "float64",
-                "float64",
-                "float64",
-                "float64",
-                "float64",
-            ),
+            names=(tuple(self.galaxy_catalog.colnames)),
+            dtype=dtype_tuple,
         )
         # Specify appropriate redshift range based on galaxy catalog sky area (1 deg^2 ~ 1e6
         # galaxies).
         if len(self.galaxy_catalog) > 1e6:
-            range = 0.05
+            range = 0.05 / 2
         else:
-            range = 0.1
+            range = 0.1 / 2
 
         # Iterate through the redshifts in the SNe catalog.
         for redshift in self.supernovae_catalog:
@@ -90,5 +71,6 @@ class SupernovaeHostMatch:
 
             # Append host galaxy to the matched catalog.
             matched_catalog.add_row(host_galaxy[0])
+        matched_catalog["z"] = self.supernovae_catalog
 
         return matched_catalog

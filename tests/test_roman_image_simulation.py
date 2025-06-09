@@ -1,9 +1,11 @@
 import astropy.cosmology
 import numpy as np
 from slsim.lens import Lens
-from slsim.roman_image_simulation import simulate_roman_image
+from slsim.roman_image_simulation import simulate_roman_image, lens_image_roman
 from slsim.image_simulation import simulate_image
-
+from slsim.Sources.source import Source
+from slsim.Deflectors.deflector import Deflector
+from slsim.LOS.los_individual import LOSIndividual
 import os
 import pickle
 import pytest
@@ -43,14 +45,44 @@ SOURCE_DICT = {
     "mag_F184": 20.542431041034558,
     "n_sersic": 1.0,
     "z": 0.5876899931818929,
+    "x_off": -0.053568932950377096,
+    "y_off": 0.04383056304876015,
 }
 
 BAND = "F106"
+kwargs_extended = {"extendedsource_type": "single_sersic"}
+source = Source(
+    source_dict=SOURCE_DICT, cosmo=COSMO, source_type="extended", **kwargs_extended
+)
+kwargs = {
+    "pointsource_type": "supernova",
+    "extendedsource_type": "single_sersic",
+    "variability_model": "light_curve",
+    "kwargs_variability": ["supernovae_lightcurve", "F184", "F129", "F106"],
+    "sn_type": "Ia",
+    "sn_absolute_mag_band": "bessellb",
+    "sn_absolute_zpsys": "ab",
+    "lightcurve_time": np.linspace(-50, 100, 100),
+    "sn_modeldir": None,
+}
+supernova_source = Source(
+    source_dict=SOURCE_DICT, cosmo=COSMO, source_type="point_plus_extended", **kwargs
+)
 
-LENS = Lens(
-    source_dict=SOURCE_DICT,
+deflector = Deflector(
+    deflector_type="EPL",
     deflector_dict=DEFLECTOR_DICT,
-    los_dict=LOS_DICT,
+)
+LENS = Lens(
+    source_class=source,
+    deflector_class=deflector,
+    los_class=LOSIndividual(**LOS_DICT),
+    cosmo=COSMO,
+)
+SNIa_Lens = Lens(
+    source_class=supernova_source,
+    deflector_class=deflector,
+    los_class=LOSIndividual(**LOS_DICT),
     cosmo=COSMO,
 )
 
@@ -79,7 +111,8 @@ def test_simulate_roman_image_with_psf_without_noise():
     kwargs_psf = {
         "point_source_supersampling_factor": 3,
         "psf_type": "PIXEL",
-        "kernel_point_source": psf[0].data / np.sum(psf[0].data),
+        "kernel_point_source": psf[0].data,
+        "kernel_point_source_normalisation": False,
     }
     kwargs_numerics = {
         "point_source_supersampling_factor": 3,
@@ -115,6 +148,41 @@ def test_simulate_roman_image_with_psf_without_noise():
     np.testing.assert_allclose(
         np.sum(galsim_image), np.sum(image_ref), rtol=0, atol=0.1
     )
+
+
+def test_lens_image_roman():
+    lens_image = lens_image_roman(
+        lens_class=SNIa_Lens,
+        band=BAND,
+        mag_zero_point=28,
+        num_pix=71,
+        transform_pix2angle=np.array([[0.11, 0], [0, 0.11]]),
+        detector=1,
+        detector_pos=(2000, 2000),
+        oversample=3,
+        psf_directory=PSF_DIRECTORY,
+        t_obs=0,
+        with_source=True,
+        with_deflector=True,
+    )
+    lens_image_no_noise = lens_image_roman(
+        lens_class=SNIa_Lens,
+        band=BAND,
+        mag_zero_point=28,
+        num_pix=71,
+        transform_pix2angle=np.array([[0.11, 0], [0, 0.11]]),
+        detector=1,
+        detector_pos=(2000, 2000),
+        oversample=3,
+        psf_directory=PSF_DIRECTORY,
+        t_obs=0,
+        with_source=True,
+        with_deflector=True,
+        add_noise=False,
+    )
+    noise = lens_image - lens_image_no_noise
+    assert np.shape(lens_image)[0] == 71
+    assert 1 < np.mean(noise) < 1.8
 
 
 if __name__ == "__main__":

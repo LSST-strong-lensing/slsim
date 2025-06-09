@@ -16,11 +16,25 @@ from slsim.Util.param_util import (
     ellipticity_slsim_to_lenstronomy,
     fits_append_table,
     catalog_with_angular_size_in_arcsec,
+    convert_mjd_to_days,
+    transient_event_time_mjd,
+    downsample_galaxies,
+    galaxy_size_redshift_evolution,
+    additional_poisson_noise_with_rescaled_coadd,
+    additional_bkg_rms_with_rescaled_coadd,
+    degrade_coadd_data,
+    galaxy_size,
+    detect_object,
+    surface_brightness_reff,
+    gaussian_psf,
+    update_cosmology_in_yaml_file,
 )
 from slsim.Sources.SourceVariability.variability import Variability
 from astropy.io import fits
 from astropy.table import Table
 from astropy import units as u
+from astropy.cosmology import Planck18 as cosmo
+from astropy.cosmology import FlatLambdaCDM, default_cosmology
 import tempfile
 import pytest
 
@@ -249,6 +263,214 @@ def test_catalog_with_angular_size_in_arcsec():
     assert galaxy_cat2["angular_size"][0] == 4.186996407348755e-08
     assert galaxy_cat2["angular_size"].unit == u.rad
     assert galaxy_cat["angular_size"].unit == u.arcsec
+
+
+def test_convert_mjd_to_days():
+    result = convert_mjd_to_days(60100, 60000)
+    assert result == 100
+
+
+def test_start_point_mjd_time():
+    result = transient_event_time_mjd(60000, 60400)
+    assert 60000 <= result <= 60400
+
+
+def test_downsample_galaxies():
+    # Create a mock galaxy population
+    np.random.seed(42)  # For reproducibility
+    galaxy_pop = Table(
+        {
+            "mag_i": np.random.uniform(18, 28, 1000),  # Magnitudes from 18 to 28
+            "z": np.random.uniform(0.1, 1.5, 1000),  # Redshifts from 0.1 to 1.5
+        }
+    )
+
+    # Define test parameters
+    dN = [50, 30, 20]  # Reference galaxy counts per magnitude bin
+    dM = 2.0  # Magnitude bin width
+    M_min = 18.0  # Minimum magnitude
+    M_max = 24.0  # Maximum magnitude
+    z_min = 0.3  # Minimum redshift
+    z_max = 1.0  # Maximum redshift
+
+    # Run the function
+    downsampled_pop = downsample_galaxies(
+        galaxy_pop, dN, dM, M_min, M_max, z_min, z_max
+    )
+
+    # Assertions
+    # Check that the output is an Astropy Table
+    assert isinstance(downsampled_pop, Table)
+
+    # Check that the redshifts are within the specified range
+    assert np.all((downsampled_pop["z"] > z_min) & (downsampled_pop["z"] <= z_max))
+    # Check that the number of galaxies in each magnitude bin matches dN (or is less
+    #  if insufficient galaxies exist)
+    M_bins = np.arange(M_min, M_max + dM, dM)
+    for i in range(len(dN)):
+        mask = (downsampled_pop["mag_i"] >= M_bins[i]) & (
+            downsampled_pop["mag_i"] < M_bins[i + 1]
+        )
+        assert len(downsampled_pop[mask]) <= dN[i]
+
+    # Check edge cases
+    # Case: No galaxies in the input population within the redshift range
+    empty_pop = galaxy_pop[galaxy_pop["z"] < z_min]
+    downsampled_empty = downsample_galaxies(
+        empty_pop, dN, dM, M_min, M_max, z_min, z_max
+    )
+    assert len(downsampled_empty) == 0
+
+    # Case: No galaxies in a specific magnitude bin
+    dN_with_zero = [50, 0, 20]  # Second bin has zero reference count
+    downsampled_zero_bin = downsample_galaxies(
+        galaxy_pop, dN_with_zero, dM, M_min, M_max, z_min, z_max
+    )
+    mask_zero_bin = (downsampled_zero_bin["mag_i"] >= M_bins[1]) & (
+        downsampled_zero_bin["mag_i"] < M_bins[2]
+    )
+    assert len(downsampled_zero_bin[mask_zero_bin]) == 0
+
+
+def test_galaxy_size_redshift_evolution():
+    results = galaxy_size_redshift_evolution(z=0)
+    assert results == 4.89
+
+
+def test_additional_poisson_noise_with_rescaled_coadd():
+    image = np.random.rand(41, 41) * 5
+    original_exp_time = np.ones((41, 41))
+    degraded_exp_time = original_exp_time * 0.5
+
+    result1 = additional_poisson_noise_with_rescaled_coadd(
+        image, original_exp_time, degraded_exp_time, use_noise_diff=True
+    )
+    result2 = additional_poisson_noise_with_rescaled_coadd(
+        image, original_exp_time, degraded_exp_time, use_noise_diff=False
+    )
+
+    assert result1.shape == image.shape
+    assert np.mean(result1) < np.mean(image)
+    assert result2.shape == image.shape
+    assert np.mean(result2) < np.mean(image)
+
+
+def test_additional_bkg_rms_with_rescaled_coadd():
+    image = np.random.rand(41, 41) * 5
+
+    result1 = additional_bkg_rms_with_rescaled_coadd(
+        image, original_rms=0.5, degraded_rms=0.7, use_noise_diff=True
+    )
+    result2 = additional_bkg_rms_with_rescaled_coadd(
+        image, original_rms=0.5, degraded_rms=0.7, use_noise_diff=False
+    )
+
+    assert result1.shape == image.shape
+    assert (
+        -3 * np.sqrt(0.7**2 - 0.5**2)
+        <= np.mean(result1)
+        <= 3 * np.sqrt(0.7**2 - 0.5**2)
+    )
+    assert result2.shape == image.shape
+    assert (
+        -3 * np.sqrt(0.7**2 - 0.5**2)
+        <= np.mean(result2)
+        <= 3 * np.sqrt(0.7**2 - 0.5**2)
+    )
+
+
+def test_degrade_coadd_data():
+    image = np.random.rand(41, 41) * 5
+    variance_map = np.random.rand(41, 41)
+    exposure_map = np.ones((41, 41)) * 300
+    result = degrade_coadd_data(
+        image, variance_map, exposure_map, original_num_years=5, degraded_num_years=1
+    )
+    assert len(result) == 3
+    assert np.mean(image) > np.mean(result[0])
+
+
+def test_galaxy_size():
+    # Define test inputs
+    mapp = 24.0  # Apparent g-band magnitude
+    zsrc = 0.5  # Source redshift
+
+    # Call function
+    Reff, Reff_arcsec = galaxy_size(mapp, zsrc, cosmo)
+
+    # Check outputs are finite and positive
+    assert np.isfinite(Reff) and Reff > 0
+    assert np.isfinite(Reff_arcsec) and Reff_arcsec > 0
+    npt.assert_almost_equal(Reff, 0.5322278567954598, decimal=8)
+    npt.assert_almost_equal(Reff_arcsec, 0.08460152399994486, decimal=8)
+
+
+def test_detect_object():
+    path = os.path.dirname(__file__)
+
+    image = np.load(os.path.join(path, "TestData/psf_kernels_for_image_1.npy")) + 0.5
+    variance_map1 = np.abs(np.random.normal(loc=0.1, scale=0.01, size=(57, 57)))
+    variance_map2 = np.abs(np.random.normal(loc=0.1, scale=0.01, size=(57, 57)))
+    std_dev_map = np.sqrt(variance_map1)
+    noise = np.random.normal(loc=0, scale=std_dev_map)
+    image1 = image + noise
+    result1 = detect_object(image1, variance_map2)
+    result2 = detect_object(noise, variance_map2)
+    assert result1
+    assert not result2
+
+
+def test_surface_brightness_reff():
+    kwargs_source = [
+        {
+            "magnitude": 15,
+            "R_sersic": 1,
+            "n_sersic": 1.0,
+            "e1": 0.06350855238708408,
+            "e2": -0.08420760408362458,
+            "center_x": 0.30298310338567075,
+            "center_y": -0.3505004565139597,
+        }
+    ]
+    source_model_list = ["SERSIC_ELLIPSE"]
+    angular_size = 1
+    mag_arcsec2 = surface_brightness_reff(
+        angular_size=angular_size,
+        source_model_list=source_model_list,
+        kwargs_extended_source=kwargs_source,
+    )
+    npt.assert_almost_equal(mag_arcsec2, 16.995, decimal=2)
+
+
+def test_gaussian_psf():
+    psf_kernel = gaussian_psf(fwhm=0.9, delta_pix=0.2, num_pix=21)
+    assert psf_kernel.shape[0] == 21
+    npt.assert_almost_equal(np.sum(psf_kernel), 1, decimal=16)
+
+
+def test_update_cosmology_in_yaml_file():
+    # Sample input YAML content with a placeholder cosmology
+    original_yaml = """
+    simulation:
+      name: test_sim
+    cosmology: !astropy.cosmology.default_cosmology.get []
+    """
+
+    # Create a custom cosmology (different from default)
+    custom_cosmo = FlatLambdaCDM(H0=70, Om0=0.3, Tcmb0=2.725)
+
+    # Make sure it's not the default cosmology
+    assert custom_cosmo != default_cosmology.get()
+
+    # Run the function
+    updated_yaml = update_cosmology_in_yaml_file(
+        cosmo=custom_cosmo, yml_file=original_yaml
+    )
+
+    # Check that some expected parameters are present
+    assert "H0:" in updated_yaml
+    assert "Om0:" in updated_yaml
+    assert "Tcmb0:" in updated_yaml
 
 
 if __name__ == "__main__":

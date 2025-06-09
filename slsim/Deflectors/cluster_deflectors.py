@@ -6,12 +6,10 @@ from slsim.Deflectors.richness2mass import mass_richness_relation
 from slsim.Deflectors.halo_population import gene_e_ang_halo, concent_m_w_scatter
 from colossus.cosmology import cosmology as colossus_cosmo
 from slsim.Deflectors.velocity_dispersion import vel_disp_abundance_matching
-from slsim.Deflectors.elliptical_lens_galaxies import (
-    elliptical_projected_eccentricity,
-    vel_disp_from_m_star,
-)
+from slsim.Deflectors.elliptical_lens_galaxies import elliptical_projected_eccentricity
 from slsim.Deflectors.velocity_dispersion import vel_disp_nfw
 from slsim.Deflectors.deflectors_base import DeflectorsBase
+from slsim.Deflectors.deflector import Deflector
 from lenstronomy.Util.param_util import phi_q2_ellipticity
 from astropy import units as u
 from astropy.table import hstack
@@ -19,11 +17,13 @@ from scipy.spatial.distance import cdist
 
 
 class ClusterDeflectors(DeflectorsBase):
-    """Class describing cluster lens model with a NFW profile for the dark matter halo
-    and EPL profile for the subhalos (cluster members). It makes use of a group/cluster
-    catalog and a group/cluster member catalog (e.g. redMaPPer).
+    """Class describing cluster lens model with a NFW profile for the dark
+    matter halo and EPL profile for the subhalos (cluster members). It makes
+    use of a group/cluster catalog and a group/cluster member catalog (e.g.
+    redMaPPer).
 
-    This class is called by setting deflector_type == "cluster-catalog" in LensPop.
+    This class is called by setting deflector_type == "cluster-catalog"
+    in LensPop.
     """
 
     def __init__(
@@ -120,7 +120,10 @@ class ClusterDeflectors(DeflectorsBase):
         deflector = self.draw_cluster(index)
         members = self.draw_members(deflector["cluster_id"], **self.kwargs_draw_members)
         deflector["subhalos"] = members
-        return deflector
+        deflector_class = Deflector(
+            deflector_type=self.deflector_profile, deflector_dict=deflector
+        )
+        return deflector_class
 
     def draw_cluster(self, index):
         """
@@ -164,7 +167,7 @@ class ClusterDeflectors(DeflectorsBase):
 
         members["vel_disp"] = np.where(
             members["vel_disp"] == -1,
-            vel_disp_from_m_star(members["stellar_mass"]),
+            param_util.vel_disp_from_m_star(members["stellar_mass"]),
             members["vel_disp"],
         )
 
@@ -208,10 +211,11 @@ class ClusterDeflectors(DeflectorsBase):
         bands=("g", "r", "i", "z", "Y"),
         max_gals=10000,
     ):
-        """Assigns a similar galaxy to each member of a group/cluster member catalog by
-        comparing their magnitudes and redshifts.
+        """Assigns a similar galaxy to each member of a group/cluster member
+        catalog by comparing their magnitudes and redshifts.
 
-        :param members_list: astropy table with columns 'mag_{band}', 'z'
+        :param members_list: astropy table with columns 'mag_{band}',
+            'z'
         :type members_list: astropy.table.Table
         :param galaxy_list: astropy table with columns 'mag_{band}', 'z'
         :type galaxy_list: astropy.table.Table
@@ -320,7 +324,8 @@ class ClusterDeflectors(DeflectorsBase):
         return members_list
 
     def set_cosmo(self):
-        """Set the cosmology in colossus to match the astropy.cosmology instance."""
+        """Set the cosmology in colossus to match the astropy.cosmology
+        instance."""
         params = dict(
             flat=(self.cosmo.Ok0 == 0.0),
             H0=self.cosmo.H0.value,

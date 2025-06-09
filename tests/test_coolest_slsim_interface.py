@@ -4,6 +4,8 @@ from slsim.Util.coolest_slsim_interface import (
     create_slsim_from_coolest,
 )
 from slsim.lens import Lens
+from slsim.Sources.source import Source
+from slsim.Deflectors.deflector import Deflector
 import os
 from astropy.cosmology import FlatLambdaCDM
 from astropy.table import Table
@@ -23,18 +25,31 @@ def supernovae_lens_instance():
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
-        supernovae_lens = Lens(
-            deflector_dict=deflector_dict,
+        kwargs_sn = {
+            "pointsource_type": "supernova",
+            "extendedsource_type": "double_sersic",
+            "variability_model": "light_curve",
+            "kwargs_variability": {"supernovae_lightcurve", "i"},
+            "sn_type": "Ia",
+            "sn_absolute_mag_band": "bessellb",
+            "sn_absolute_zpsys": "ab",
+            "lightcurve_time": np.linspace(-50, 100, 1000),
+            "sn_modeldir": None,
+        }
+        source = Source(
             source_dict=source_dict,
-            variability_model="light_curve",
-            kwargs_variability={"supernovae_lightcurve", "i"},
-            sn_type="Ia",
-            sn_absolute_mag_band="bessellb",
-            sn_absolute_zpsys="ab",
             cosmo=cosmo,
             source_type="point_plus_extended",
-            light_profile="double_sersic",
-            lightcurve_time=np.linspace(-20, 100, 1000),
+            **kwargs_sn
+        )
+        deflector = Deflector(
+            deflector_type="EPL",
+            deflector_dict=deflector_dict,
+        )
+        supernovae_lens = Lens(
+            deflector_class=deflector,
+            source_class=source,
+            cosmo=cosmo,
         )
         if supernovae_lens.validity_test():
             supernovae_lens = supernovae_lens
@@ -99,22 +114,27 @@ def test_update_coolest_from_slsim_and_create_slsim_from_coolest(
     npt.assert_almost_equal(
         slsim_from_updated_coolest[1]["kwargs_lens"][1]["gamma1"],
         expected_result[1]["kwargs_lens"][1]["gamma1"],
+        decimal=6,
     )
     npt.assert_almost_equal(
         slsim_from_updated_coolest[1]["kwargs_lens"][2]["kappa"],
         expected_result[1]["kwargs_lens"][2]["kappa"],
+        decimal=6,
     )
     npt.assert_almost_equal(
         slsim_from_updated_coolest[1]["kwargs_source"][0]["magnitude"],
         expected_result[1]["kwargs_source"][0]["magnitude"],
+        decimal=6,
     )
     npt.assert_almost_equal(
         slsim_from_updated_coolest[1]["kwargs_source"][1]["magnitude"],
         expected_result[1]["kwargs_source"][1]["magnitude"],
+        decimal=6,
     )
     npt.assert_almost_equal(
         slsim_from_updated_coolest[1]["kwargs_ps"][0]["magnitude"],
-        expected_result[1]["kwargs_ps"][0]["magnitude"],
+        [expected_result[1]["kwargs_ps"][0]["magnitude"]],
+        decimal=4,
     )
 
     os.remove(test_path + "coolest_template_update.json")

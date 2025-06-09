@@ -1,4 +1,4 @@
-from slsim.ParamDistributions.los_config import LOSConfig
+from slsim.LOS.los_pop import LOSPop
 import os
 from astropy.cosmology import FlatLambdaCDM
 import pytest
@@ -14,7 +14,7 @@ path_to_h5 = os.path.join(mother_path, "data/glass/no_nonlinear_distributions.h5
 
 
 def test_default_settings():
-    config = LOSConfig()
+    config = LOSPop()
     assert config.mixgauss_gamma is False
     assert config.mixgauss_means is None
     assert config.mixgauss_stds is None
@@ -25,23 +25,10 @@ def test_default_settings():
     assert config.no_correction_path is None
 
 
-def test_known_input():
-    kappa = 0.1
-    gamma1, gamma2 = -0.05, 0.05
-    los_dict = {"gamma": [gamma1, gamma2], "kappa": kappa}
-    config = LOSConfig(**los_dict)
-    gamma1_, gamma2_, kappa_ = config.calculate_los_linear_distortions(
-        source_redshift=0, deflector_redshift=0
-    )
-    assert gamma1_ == gamma1
-    assert gamma2_ == gamma2
-    assert kappa_ == kappa
-
-
 @pytest.fixture
-def los_config():
+def los_pop():
     # Create an instance of LOSConfig with some default settings
-    config = LOSConfig(
+    los_pop = LOSPop(
         los_bool=True,
         mixgauss_gamma=False,
         mixgauss_means=[0.1],
@@ -51,44 +38,49 @@ def los_config():
         nonlinear_correction_path=None,
         no_correction_path=None,
     )
-    return config
+    return los_pop
 
 
-def test_no_los_effects(los_config):
-    los_config.los_bool = False
-    los_config.nonlinear_los_bool = False
+def test_no_los_effects(los_pop):
+    los_pop.los_bool = False
+    los_pop.nonlinear_los_bool = False
     source = 0.5
     deflector = 0.2
-    assert los_config.calculate_los_linear_distortions(source, deflector) == (0, 0, 0)
+    los_class = los_pop.draw_los(source, deflector)
+    kappa = los_class.convergence
+    gamma1, gamma2 = los_class.shear
+    assert (kappa, gamma1, gamma2) == (0, 0, 0)
 
 
-def test_gaussian_mixture_model_gamma(los_config):
-    los_config.mixgauss_gamma = True
+def test_gaussian_mixture_model_gamma(los_pop):
+    los_pop.mixgauss_gamma = True
     source = 0.4
     deflector = 0.2
-    gamma1, gamma2, kappa = los_config.calculate_los_linear_distortions(
-        source, deflector
-    )
+    los_class = los_pop.draw_los(source, deflector)
+    kappa = los_class.convergence
+    gamma1, gamma2 = los_class.shear
     assert isinstance(gamma1, float)
     assert isinstance(gamma2, float)
     assert isinstance(kappa, float)
 
 
-def test_conflicting_settings_error(los_config):
-    los_config.mixgauss_gamma = True
-    los_config.nonlinear_los_bool = True
+def test_conflicting_settings_error(los_pop):
+    los_pop.mixgauss_gamma = True
+    los_pop.nonlinear_los_bool = True
     source = 0.3
     deflector = 0.1
     with pytest.raises(ValueError):
-        los_config.calculate_los_linear_distortions(source, deflector)
+        los_pop.draw_los(source, deflector)
 
 
-def test_nonlinear_los_corrections(los_config):
-    los_config.nonlinear_los_bool = False
-    los_config.no_correction_path = path_to_h5
+def test_nonlinear_los_corrections(los_pop):
+    los_pop.nonlinear_los_bool = False
+    los_pop.no_correction_path = path_to_h5
     source = 0.2
     deflector = 0.1
-    g1, g2, kappa = los_config.calculate_los_linear_distortions(source, deflector)
-    assert isinstance(g1, float)
-    assert isinstance(g2, float)
+    los_class = los_pop.draw_los(source, deflector)
+    kappa = los_class.convergence
+    gamma1, gamma2 = los_class.shear
+    assert isinstance(gamma1, float)
+    assert isinstance(gamma2, float)
     assert isinstance(kappa, float)

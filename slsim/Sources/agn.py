@@ -19,23 +19,28 @@ class Agn(object):
     ):
         """Initialization of an agn.
 
-        :param known_band: The speclite filter associated with the known_mag
-        :param known_mag: The flux of the accretion disk in the known filter
+        :param known_band: The speclite filter associated with the
+            known_mag
+        :param known_mag: The flux of the accretion disk in the known
+            filter
         :param redshift: Redshift of the AGN
         :param cosmo: Astropy cosmology to use in calculating distances
-        :param lightcurve_time: array of times associated with observation times
-        :param agn_driving_variability_model: variability model used as a driving
-            signal, This signal is then reprocessed through the lamppost model to get
-            correlated signals.
-        :param agn_driving_kwargs_variability: dictionary holding all variability keys
-            and values
-        :param kwargs_agn_model: Dictionary containing all keywords for the accretion
-            disk variability model. These are: 'black_hole_mass_exponent': mass exponent
-            of the SMBH 'black_hole_spin': spin of the SMBH 'inclination_angle':
-            inclination of the AGN disk in degrees 'r_out': Maximum radius of the disk
-            in gravitational radii 'r_resoultion': Number of pixels the disk is resolved
-            to 'eddington_ratio': fraction of the eddington luminosity the disk is
-            radiating with 'accretion_disk': accretion disk model
+        :param lightcurve_time: array of times associated with
+            observation times
+        :param agn_driving_variability_model: variability model used as
+            a driving signal, This signal is then reprocessed through
+            the lamppost model to get correlated signals.
+        :param agn_driving_kwargs_variability: dictionary holding all
+            variability keys and values
+        :param kwargs_agn_model: Dictionary containing all keywords for
+            the accretion disk variability model. These are:
+            'black_hole_mass_exponent': mass exponent of the SMBH
+            'black_hole_spin': spin of the SMBH 'inclination_angle':
+            inclination of the AGN disk in degrees 'r_out': Maximum
+            radius of the disk in gravitational radii 'r_resoultion':
+            Number of pixels the disk is resolved to 'eddington_ratio':
+            fraction of the eddington luminosity the disk is radiating
+            with 'accretion_disk': accretion disk model
         """
 
         self.agn_known_band = agn_known_band
@@ -81,13 +86,7 @@ class Agn(object):
         # in self.kwargs_model with sufficient cadence for convolution with many
         # transfer function kernels.
         if lightcurve_time is not None:
-            max_time = np.max(lightcurve_time)
-            min_time = np.min(lightcurve_time)
-            self.kwargs_model["time_array"] = np.linspace(
-                min_time,
-                max_time,
-                int(max_time - min_time),
-            )
+            self.kwargs_model["time_array"] = lightcurve_time
 
         else:
             raise ValueError(
@@ -105,9 +104,9 @@ class Agn(object):
         self.variable_disk = Variability("lamppost_reprocessed", **self.kwargs_model)
 
     def get_mean_mags(self, bands):
-        """Method to get mean magnitudes for AGN in multiple filters. Creates an
-        accretion disk using the AccretionDiskReprocessing class in order to integrate
-        the surface flux density over the accretion disk.
+        """Method to get mean magnitudes for AGN in multiple filters. Creates
+        an accretion disk using the AccretionDiskReprocessing class in order to
+        integrate the surface flux density over the accretion disk.
 
         :param bands: list of speclite filter names.
         :return: list of magnitudes based on the speclite bands given.
@@ -128,15 +127,6 @@ class Agn(object):
         return magnitudes
 
 
-# Include a basic driving light curve to illustrate variability between bands
-# Any light curve can be inserted into the "intrinsic_light_curve" keyword of
-# "kwargs_agn_model". Here we include a placeholder to include (relatively
-# nonsensical) variability without user input.
-basic_light_curve = {
-    "MJD": np.linspace(1, 100, 100),
-    "ps_mag_intrinsic": np.sin(np.linspace(1, 100, 100) * np.pi / 10),
-}
-
 # This dictionary is designed to set the boundaries to draw random parameters from.
 # The bounds of any keys may be redefined using an "input_agn_bounds_dict".
 # :key black_hole_mass_exponent_bounds: mass of SMBH as log_(10)(M_{BH}/M_{sun})
@@ -155,6 +145,8 @@ basic_light_curve = {
 #   light curves across all bands. The simplest case os to provide a list of variable
 #   light curves directly, but this will also work with other variability choices using
 #   Source.SourceVariability.variability.Variability(variability_model)
+# :key intrinsic_light_curve: List of light curve objects to randomly choose from. If
+#   None, then a bending power law signal will randomly be generated for a 1000 day period.
 agn_bounds_dict = {
     "black_hole_mass_exponent_bounds": (6.0, 10.0),
     "black_hole_spin_bounds": (-0.997, 0.997),
@@ -163,7 +155,7 @@ agn_bounds_dict = {
     "eddington_ratio_bounds": (0.01, 0.3),
     "supported_disk_models": ["thin_disk"],
     "driving_variability": ["light_curve"],
-    "intrinsic_light_curve": [basic_light_curve],
+    "intrinsic_light_curve": None,
 }
 
 
@@ -185,8 +177,9 @@ def RandomAgn(
     :param known_mag: magnitude of the AGN in a known band.
     :param redshift: redshift of the AGN
     :param cosmo: Astropy cosmology to use
-    :param kwargs_agn_model: Dictionary containing any fixed agn parameters. This will
-        populate random agn parameters for keywords not given.
+    :param kwargs_agn_model: Dictionary containing any fixed agn
+        parameters. This will populate random agn parameters for
+        keywords not given.
     """
     if random_seed is not None:
         random.seed(random_seed)
@@ -237,6 +230,7 @@ def RandomAgn(
     # Check if there was a provided variabilty model.
     # If not, populate driving variability with a simple model
     if agn_driving_variability_model is None:
+
         # Check if other driving variabilities were inserted into bounds dict and randomize
         random_variability_type = random.uniform(
             low=0, high=len(agn_bounds_dict["driving_variability"])
@@ -245,20 +239,48 @@ def RandomAgn(
             "driving_variability"
         ][int(random_variability_type)]
 
-        # Check if other light curves were inserted into bounds dict and randomize
-        random_light_curve_index = random.uniform(
-            low=0, high=len(agn_bounds_dict["intrinsic_light_curve"])
-        )
-        random_light_curve = agn_bounds_dict["intrinsic_light_curve"][
-            int(random_light_curve_index)
-        ]
+        # Check if a list of other light curves were inserted into bounds dict and randomize
+        if input_agn_bounds_dict["intrinsic_light_curve"] is not None:
 
-        # Set magnitude
-        random_light_curve["ps_mag_intrinsic"] += known_mag
+            random_light_curve_index = random.uniform(
+                low=0, high=len(input_agn_bounds_dict["intrinsic_light_curve"])
+            )
+            random_light_curve = input_agn_bounds_dict["intrinsic_light_curve"][
+                int(random_light_curve_index)
+            ]
 
-        # Define the driving variability model as the light curve to pass into AGN object
-        agn_driving_variability_model = "light_curve"
-        agn_driving_kwargs_variability = random_light_curve
+            # Set magnitude
+            random_light_curve["ps_mag_intrinsic"] += known_mag
+
+            # Define the driving variability model as the light curve to pass into AGN object
+            agn_driving_variability_model = "light_curve"
+            agn_driving_kwargs_variability = random_light_curve
+
+        # If not, generate a bending power law signal from reasonable parameters
+        else:
+            if lightcurve_time is None:
+                length_of_required_light_curve = 1000
+                lightcurve_time = np.linspace(
+                    0,
+                    length_of_required_light_curve - 1,
+                    length_of_required_light_curve,
+                )
+
+            length_of_required_light_curve = np.max(lightcurve_time) - np.min(
+                lightcurve_time
+            )
+
+            low_freq_slope = random.uniform(0, 2.0)
+            random_driving_signal_kwargs = {
+                "length_of_light_curve": length_of_required_light_curve,
+                "time_resolution": 1,
+                "log_breakpoint_frequency": random.uniform(-0.5, -2.5),
+                "low_frequency_slope": low_freq_slope,
+                "high_frequency_slope": random.uniform(low_freq_slope, 4.0),
+                "standard_deviation": random.uniform(0.1, 1.0),
+            }
+            agn_driving_variability_model = "bending_power_law"
+            agn_driving_kwargs_variability = random_driving_signal_kwargs
 
     # Define initial speclite filter to be known band
     kwargs_agn_model["speclite_filter"] = known_band
