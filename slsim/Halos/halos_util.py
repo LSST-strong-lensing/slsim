@@ -2,10 +2,10 @@ import numpy as np
 
 
 def convergence_mean_0(kappa_data):
-    """Adjusts the input kappa data by subtracting the mean of non-zero elements from
-    the non-zero values only (above a small threshold to handle floating-point
-    precision). Keeps zeros as is. Returns the adjusted data in the same format (list or
-    numpy array) as the input.
+    """Adjusts the input kappa data by subtracting the mean of non-zero
+    elements from the non-zero values only (above a small threshold to handle
+    floating-point precision). Keeps zeros as is. Returns the adjusted data in
+    the same format (list or numpy array) as the input.
 
     :param kappa_data: The input kappa data to be adjusted.
     :type kappa_data: list or numpy.ndarray

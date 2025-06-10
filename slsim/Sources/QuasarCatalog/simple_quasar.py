@@ -13,9 +13,10 @@ def quasar_catalog_simple(
     freq_min=0.5,
     freq_max=1.5,
 ):
-    """Creates an simple catalog of quasars. It generate random redshift and magnitude
-    values in r, g, and i band. Also, generates amplitude and frequency for each source.
-    The function only works for r, g, and i band magnitudes.
+    """Creates an simple catalog of quasars. It generate random redshift and
+    magnitude values in r, g, and i band. Also, generates amplitude and
+    frequency for each source. The function only works for r, g, and i band
+    magnitudes.
 
     :param number: number of sources we want
     :param z_min: minimum redshift for sources

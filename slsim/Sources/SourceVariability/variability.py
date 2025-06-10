@@ -192,7 +192,8 @@ def parse_kwargs_for_lamppost_reprocessed_model(variability):
 def reprocess_with_lamppost_model(variability):
     """Reprocesses the signal based on the type of accretion disk reprocessor.
 
-    :param variability: Variability class object model 'lamppost_reprocessed'.
+    :param variability: Variability class object model
+        'lamppost_reprocessed'.
     :return: dict containing a light curve object parameters
     """
 

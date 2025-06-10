@@ -12,14 +12,15 @@ from slsim.Util.param_util import elliptical_distortion_product_average
 
 
 def supernovae_host_galaxy_offset(host_galaxy_catalog):
-    """This function generates random supernovae offsets from their host galaxy center
-    based on observed data. (Wang et al. 2013)
+    """This function generates random supernovae offsets from their host galaxy
+    center based on observed data. (Wang et al. 2013)
 
-    :param host_galaxy_catalog: catalog of host galaxies matched with supernovae (must
-        have 'angular_size' and 'ellipticity' columns)
+    :param host_galaxy_catalog: catalog of host galaxies matched with
+        supernovae (must have 'angular_size' and 'ellipticity' columns)
     :type host_galaxy_catalog: astropy Table
-    :return: offsets x and y [arcsec] selected for each supernovae based on observed
-        distribution; e1 and e2 projected eccentricities calculated for each host galaxy
+    :return: offsets x and y [arcsec] selected for each supernovae based
+        on observed distribution; e1 and e2 projected eccentricities
+        calculated for each host galaxy
     :return type: list; float
     """
     # Select offset ratios based on observed offset distribution (Wang et al. 2013)
@@ -103,6 +104,8 @@ class SupernovaeCatalog(object):
         sky_area,
         absolute_mag,
         sn_modeldir=None,
+        host_galaxy_candidate=None,
+        redshift_max=5,
     ):
         """
 
@@ -129,6 +132,10 @@ class SupernovaeCatalog(object):
          For more detail, please look at the documentation of RandomizedSupernovae
          class.
         :type sn_modeldir: str
+        :param host_galaxy_candidate: Galaxy catalog in an Astropy table. This catalog
+         is used to match with the supernova population. If None, the galaxy catalog is
+         generated within this class.
+        :param redshift_max: Maximum redshift for supernovae sample. Default is 5.
         """
         self.sn_type = sn_type
         self.band_list = band_list
@@ -140,24 +147,29 @@ class SupernovaeCatalog(object):
         self.skypy_config = skypy_config
         self.sky_area = sky_area
         self.sn_modeldir = sn_modeldir
+        self.host_galaxy_candidate = host_galaxy_candidate
+        self.redshift_max = redshift_max
 
     def supernovae_catalog(self, host_galaxy=True, lightcurve=True):
         """Generates supernovae catalog for given redshifts.
 
-        :param host_galaxy: kwargs to decide whether catalog should include host
-            galaxies or not. True or False.
-        :param lightcurve: kwargs for the lightcurve, if lightcurve is True, it returns
-            extracts lightcurve for each supernovae redshift.
-        :return: Astropy Table of supernovae catalog containg redshift, lightcurves,
-            ra_off, dec_off, and host galaxy properties. If host_galaxy is set to False,
-            it returns catalog without host galaxy properties. Light curves are
-            generated using RandomizedSupernova class. Light curves are saved as an
-            array of observation time and array of corresponding magnitudes in specified
-            bands in different columns of the Table.
+        :param host_galaxy: kwargs to decide whether catalog should
+            include host galaxies or not. True or False.
+        :param lightcurve: kwargs for the lightcurve, if lightcurve is
+            True, it returns extracts lightcurve for each supernovae
+            redshift.
+        :return: Astropy Table of supernovae catalog containg redshift,
+            lightcurves, ra_off, dec_off, and host galaxy properties. If
+            host_galaxy is set to False, it returns catalog without host
+            galaxy properties. Light curves are generated using
+            RandomizedSupernova class. Light curves are saved as an
+            array of observation time and array of corresponding
+            magnitudes in specified bands in different columns of the
+            Table.
         """
         sne_lightcone = SNeLightcone(
             self.cosmo,
-            redshifts=np.linspace(0, 2.379, 50),
+            redshifts=np.linspace(0, self.redshift_max, 500),
             sky_area=self.sky_area,
             noise=True,
             time_interval=1 * units.year,
@@ -165,13 +177,15 @@ class SupernovaeCatalog(object):
         supernovae_redshift = sne_lightcone.supernovae_sample()
 
         if host_galaxy is True:
-
-            galaxy_catalog = GalaxyCatalog(
-                cosmo=self.cosmo,
-                skypy_config=self.skypy_config,
-                sky_area=self.sky_area,
-            )
-            host_galaxy_catalog = galaxy_catalog.galaxy_catalog()
+            if self.host_galaxy_candidate is None:
+                galaxy_catalog = GalaxyCatalog(
+                    cosmo=self.cosmo,
+                    skypy_config=self.skypy_config,
+                    sky_area=self.sky_area,
+                )
+                host_galaxy_catalog = galaxy_catalog.galaxy_catalog()
+            else:
+                host_galaxy_catalog = self.host_galaxy_candidate
             matching_catalogs = SupernovaeHostMatch(
                 supernovae_catalog=supernovae_redshift,
                 galaxy_catalog=host_galaxy_catalog,

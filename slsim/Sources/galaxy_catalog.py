@@ -23,8 +23,8 @@ class GalaxyCatalog(object):
         self.sky_area = sky_area
 
     def galaxy_catalog(self):
-        """Generates galaxy catalog and those galaxies can be used as supernovae host
-        galaxies.
+        """Generates galaxy catalog and those galaxies can be used as
+        supernovae host galaxies.
 
         :return: supernovae host galaxy candidate catalog
         :return type: astropy Table
@@ -36,5 +36,4 @@ class GalaxyCatalog(object):
             cosmo=self.cosmo,
         )
         galaxy_table = pipeline.blue_galaxies
-        galaxy_table_cut = galaxy_table[galaxy_table["z"] <= 2.379]
-        return galaxy_table_cut
+        return galaxy_table
