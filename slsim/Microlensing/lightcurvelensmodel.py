@@ -96,7 +96,7 @@ class MicrolensingLightCurveFromLensModel(object):
                 "kwargs_source_morphology not in kwargs_microlensing. Please provide a dictionary of settings required by source morphology calculation."
             )
 
-        lightcurves, __tracks, __time_arrays = self.generate_point_source_lightcurves(
+        lightcurves, tracks, __time_arrays = self.generate_point_source_lightcurves(
             time_array,
             source_redshift,
             deflector_redshift,
@@ -114,6 +114,9 @@ class MicrolensingLightCurveFromLensModel(object):
             lightcurve_type="magnitude",
             num_lightcurves=1,
         )
+
+        self.lightcurves = lightcurves  # store the lightcurves in the class instance
+        self.tracks = tracks  # store the tracks in the class instance
 
         # Here we choose just 1 lightcurve for the point sources
         lightcurves_single = np.zeros(
