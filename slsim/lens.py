@@ -870,6 +870,9 @@ class Lens(LensedSystemBase):
                 **kwargs_microlensing,
             )
         )
+
+        self.microlensing_model_class = ml_lc_lens
+
         return microlensing_magnitudes  # # does not include the macro-lensing effect
 
     def extended_source_magnitude(self, band, lensed=False):
