@@ -1369,13 +1369,16 @@ class Lens(LensedSystemBase):
             source
         :type source_index: int
         """
-        from pyHalo.PresetModels.cdm import CDM, WDM, ULDM
+        
+        from pyHalo.PresetModels.cdm import CDM
+        from pyHalo.PresetModels.wdm import WDM
+        from pyHalo.PresetModels.uldm import ULDM
+        z_lens = self.deflector_redshift
+        z_source = self.max_redshift_source_class.redshift
+        einstein_radius = self._get_effective_einstein_radius(source_index)
+        cone_opening_angle = 4 * einstein_radius
 
         if not hasattr(self, "realization"):
-            z_lens = self.deflector_redshift
-            z_source = self.max_redshift_source_class.redshift
-            einstein_radius = self._get_effective_einstein_radius(source_index)
-            cone_opening_angle = 4 * einstein_radius
             if dm_type == "CDM":
                 realization = CDM(
                     z_lens,
@@ -1383,14 +1386,14 @@ class Lens(LensedSystemBase):
                     cone_opening_angle_arcsec=cone_opening_angle,
                     **pyhalos_kwargs,
                 )
-            if dm_type == "WDM":
+            elif dm_type == "WDM":
                 realization = WDM(
                     z_lens,
                     z_source,
                     cone_opening_angle_arcsec=cone_opening_angle,
                     **pyhalos_kwargs,
                 )
-            if dm_type == "ULDM":
+            elif dm_type == "ULDM":
                 realization = ULDM(
                     z_lens,
                     z_source,
@@ -1399,7 +1402,7 @@ class Lens(LensedSystemBase):
                 )
             else:
                 raise ValueError(
-                    "We only support 'CDM', 'WDM', or 'ULDM'. "
+                    "We only support 'CDM', 'WDM' or 'ULDM'. "
                     "Received: {}".format(dm_type)
                 )
 
@@ -1409,7 +1412,7 @@ class Lens(LensedSystemBase):
             )
             self._lens_mass_model_list += halo_lens_model_list
             self._kwargs_lens += kwargs_halos
-        print("realization contains " + str(len(realization.halos)) + " halos.")
+            print("realization contains " + str(len(realization.halos)) + " halos.")
 
     def get_cdm_halo_mass(self):
         """Get the halo mass of the subhalos in the realization.

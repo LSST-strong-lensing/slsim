@@ -4,3 +4,4 @@ coolest==0.1.8
 galsim
 microlensing
 pyhalo
+mcfit
