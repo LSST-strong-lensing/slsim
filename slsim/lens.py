@@ -1359,9 +1359,6 @@ class Lens(LensedSystemBase):
     def add_subhalos(self, pyhalos_kwargs, dm_type, source_index=0):
         """Generate a realization of the subhalos, halo mass.
 
-        :param cdm_kwargs: dictionary of parameters for the CDM
-            realization. The dictionary should contain the following
-            keys:
         :param pyhalos_kwargs: dictionary of parameters for the
             pyhalos realization.
         :type pyhalos_kwargs: dict
@@ -1412,15 +1409,6 @@ class Lens(LensedSystemBase):
             )
             self._lens_mass_model_list += halo_lens_model_list
             self._kwargs_lens += kwargs_halos
-            astropy_instance = self.realization.astropy_instance
-            self._lens_model_halos_only = LensModel(
-                lens_model_list=halo_lens_model_list,
-                cosmo=astropy_instance,
-                z_lens=self.deflector_redshift,
-                z_source=z_source,
-                z_source_convention=self.max_redshift_source_class.redshift,
-                multi_plane=False,
-            )
         print("realization contains " + str(len(realization.halos)) + " halos.")
 
     def get_cdm_halo_mass(self):
@@ -1430,6 +1418,28 @@ class Lens(LensedSystemBase):
         """
         if hasattr(self, "realization"):
             return [halo.mass for halo in self.realization.halos]
+    
+    def get_halos_only_lens_model(self):
+        """Get the lens model for the halos only.
+
+        :return: LensModel instance for the halos only
+        """
+        if hasattr(self, "realization"):
+            z_lens = self.deflector_redshift
+            z_source = self.max_redshift_source_class.redshift
+            halo_lens_model_list, redshift_array, kwargs_halos, _ = (
+                self.realization.lensing_quantities(add_mass_sheet_correction=True)
+            )
+            astropy_instance = self.realization.astropy_instance
+            lens_model_halos_only = LensModel(
+                lens_model_list=halo_lens_model_list,
+                cosmo=astropy_instance,
+                z_lens=z_lens,
+                z_source=z_source,
+                z_source_convention=self.max_redshift_source_class.redshift,
+                multi_plane=False,
+            )
+            return lens_model_halos_only
 
 
 def image_separation_from_positions(image_positions):
