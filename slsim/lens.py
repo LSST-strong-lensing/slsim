@@ -1369,10 +1369,11 @@ class Lens(LensedSystemBase):
             source
         :type source_index: int
         """
-        
+
         from pyHalo.PresetModels.cdm import CDM
         from pyHalo.PresetModels.wdm import WDM
         from pyHalo.PresetModels.uldm import ULDM
+
         z_lens = self.deflector_redshift
         z_source = self.max_redshift_source_class.redshift
         einstein_radius = self._get_effective_einstein_radius(source_index)

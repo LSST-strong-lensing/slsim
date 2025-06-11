@@ -363,11 +363,13 @@ class TestLens(object):
 
     def test_add_subhalos(self):
         # Test the add_subhalos method
-        pyhalos_parms = {"LOS_normalization": 0,}
+        pyhalos_parms = {
+            "LOS_normalization": 0,
+        }
         dm_type = "CDM"
 
         self.gg_lens.add_subhalos(pyhalos_parms, dm_type)
-        
+
         realization = self.gg_lens.realization
         cdm_halo_mass = self.gg_lens.get_cdm_halo_mass()
         assert isinstance(cdm_halo_mass, list)
@@ -381,7 +383,9 @@ class TestLens(object):
         second_len_models = len(self.gg_lens._lens_mass_model_list)
 
         assert second_len_kwargs == initial_len_kwargs, "kwargs_lens duplicated!"
-        assert second_len_models == initial_len_models, "lens_mass_model_list duplicated!"
+        assert (
+            second_len_models == initial_len_models
+        ), "lens_mass_model_list duplicated!"
 
     def test_get_halos_only_lens_model(self):
         # Test the get_halos_only_lens_model method
@@ -391,9 +395,12 @@ class TestLens(object):
         halos_only_model = self.gg_lens.get_halos_only_lens_model()
 
         from lenstronomy.LensModel.lens_model import LensModel
+
         assert isinstance(halos_only_model, LensModel)
 
-        halo_lens_model_list, _, _, _ = self.gg_lens.realization.lensing_quantities(add_mass_sheet_correction=True)
+        halo_lens_model_list, _, _, _ = self.gg_lens.realization.lensing_quantities(
+            add_mass_sheet_correction=True
+        )
         assert halos_only_model.lens_model_list == halo_lens_model_list
 
 
