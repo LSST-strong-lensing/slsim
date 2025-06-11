@@ -1359,11 +1359,11 @@ class Lens(LensedSystemBase):
     def add_subhalos(self, pyhalos_kwargs, dm_type, source_index=0):
         """Generate a realization of the subhalos, halo mass.
 
-        :param pyhalos_kwargs: dictionary of parameters for the
-            pyhalos realization.
+        :param pyhalos_kwargs: dictionary of parameters for the pyhalos
+            realization.
         :type pyhalos_kwargs: dict
-        :param dm_type: type of dark matter models, can be 'CDM', 'WDM', or
-            'ULDM'
+        :param dm_type: type of dark matter models, can be 'CDM', 'WDM',
+            or 'ULDM'
         :type dm_type: str
         :param source_index: index of source, default =0, i.e. the first
             source
@@ -1421,7 +1421,7 @@ class Lens(LensedSystemBase):
         """
         if hasattr(self, "realization"):
             return [halo.mass for halo in self.realization.halos]
-    
+
     def get_halos_only_lens_model(self):
         """Get the lens model for the halos only.
 
