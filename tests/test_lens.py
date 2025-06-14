@@ -380,7 +380,9 @@ class TestLens(object):
         self.gg_lens.add_subhalos(pyhalos_parms, dm_type)
         second_len_kwargs = len(self.gg_lens._kwargs_lens)
 
-        assert second_len_kwargs == initial_len_kwargs, "subhalos parameters duplicated!"
+        assert (
+            second_len_kwargs == initial_len_kwargs
+        ), "subhalos parameters duplicated!"
 
     def test_subhalos_only_lens_model(self):
         # Test the get_halos_only_lens_model method

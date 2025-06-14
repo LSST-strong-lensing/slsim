@@ -1378,6 +1378,7 @@ class Lens(LensedSystemBase):
         if not hasattr(self, "realization"):
             if dm_type == "CDM":
                 from pyHalo.PresetModels.cdm import CDM
+
                 realization = CDM(
                     z_lens,
                     z_source,
@@ -1386,6 +1387,7 @@ class Lens(LensedSystemBase):
                 )
             elif dm_type == "WDM":
                 from pyHalo.PresetModels.wdm import WDM
+
                 realization = WDM(
                     z_lens,
                     z_source,
@@ -1394,6 +1396,7 @@ class Lens(LensedSystemBase):
                 )
             elif dm_type == "ULDM":
                 from pyHalo.PresetModels.uldm import ULDM
+
                 realization = ULDM(
                     z_lens,
                     z_source,
@@ -1425,7 +1428,8 @@ class Lens(LensedSystemBase):
     def subhalos_only_lens_model(self):
         """Get the lens model for the halos only.
 
-        :return: LensModel instance for the halos only, and list of kwargs for the subhalos.
+        :return: LensModel instance for the halos only, and list of
+            kwargs for the subhalos.
         """
         if hasattr(self, "realization"):
             z_lens = self.deflector_redshift
