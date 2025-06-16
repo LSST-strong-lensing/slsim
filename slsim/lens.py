@@ -14,9 +14,6 @@ from lenstronomy.Util import util
 
 from slsim.lensed_system_base import LensedSystemBase
 
-from pyHalo.PresetModels.cdm import CDM
-
-
 class Lens(LensedSystemBase):
     """Class to manage individual lenses."""
 
