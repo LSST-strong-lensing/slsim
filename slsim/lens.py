@@ -14,6 +14,7 @@ from lenstronomy.Util import util
 
 from slsim.lensed_system_base import LensedSystemBase
 
+
 class Lens(LensedSystemBase):
     """Class to manage individual lenses."""
 
