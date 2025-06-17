@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 from slsim.Sources.QuasarCatalog.quasar_host_match import QuasarHostMatch
 from slsim.Deflectors.velocity_dispersion import vel_disp_abundance_matching
+from slsim.Sources.galaxy_catalog import GalaxyCatalog
 
 """
 References:
