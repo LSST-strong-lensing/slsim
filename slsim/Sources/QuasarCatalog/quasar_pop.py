@@ -31,7 +31,7 @@ class QuasarRate(object):
         beta: float = -1.45,
         phi_star: float = 5.34e-6 * (0.70**3),
         cosmo: FlatLambdaCDM = None,
-        skypy_config:str = None,
+        skypy_config: str = None,
         sky_area: Quantity = None,
         noise: bool = True,
         redshifts: np.ndarray = None,
@@ -388,16 +388,19 @@ class QuasarRate(object):
                 host_galaxy_catalog = galaxy_catalog.galaxy_catalog()
             else:
                 host_galaxy_catalog = self.host_galaxy_candidate
-            
+
             # compute "vel_disp" if not present
             if "vel_disp" not in host_galaxy_catalog.colnames:
                 self._f_vel_disp = vel_disp_abundance_matching(
-                    host_galaxy_catalog, z_max=0.5, sky_area=self.sky_area, cosmo=self.cosmo
+                    host_galaxy_catalog,
+                    z_max=0.5,
+                    sky_area=self.sky_area,
+                    cosmo=self.cosmo,
                 )
                 host_galaxy_catalog["vel_disp"] = self._f_vel_disp(
                     np.log10(host_galaxy_catalog["stellar_mass"])
                 )
-            
+
             matching_catalogs = QuasarHostMatch(
                 quasar_catalog=table,
                 galaxy_catalog=host_galaxy_catalog,
