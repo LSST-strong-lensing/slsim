@@ -383,13 +383,11 @@ class TestLens(object):
 
         len_after_second_kwargs = len(gg_lens_copy_cdm._kwargs_lens)
 
-        assert (
-            len_after_second_kwargs == len_after_first_kwargs
-        ), f"kwargs duplicated!"
+        assert len_after_second_kwargs == len_after_first_kwargs, f"kwargs duplicated!"
 
-        pyhalos_parms_wdm= {
+        pyhalos_parms_wdm = {
             "LOS_normalization": 0,
-            "log_mc":7.0,
+            "log_mc": 7.0,
         }
         dm_type_wdm = "WDM"
         gg_lens_copy_wdm = copy.deepcopy(self.gg_lens)
@@ -399,14 +397,14 @@ class TestLens(object):
         realization_wdm = gg_lens_copy_wdm.realization
         assert isinstance(realization_wdm, object)
 
-        pyhalos_parms_uldm= {
+        pyhalos_parms_uldm = {
             "LOS_normalization": 0,
-            "log10_m_uldm":-20.0,
-            "uldm_plaw":1 / 3,
-            "flucs_shape":"ring",
-            "flucs_args":{"angle": 0.0, "rmin": 0.9, "rmax": 1.1},
-            "log10_fluc_amplitude":-1.6,
-            "n_cut":1000000,
+            "log10_m_uldm": -20.0,
+            "uldm_plaw": 1 / 3,
+            "flucs_shape": "ring",
+            "flucs_args": {"angle": 0.0, "rmin": 0.9, "rmax": 1.1},
+            "log10_fluc_amplitude": -1.6,
+            "n_cut": 1000000,
         }
         dm_type_uldm = "ULDM"
         gg_lens_copy_uldm = copy.deepcopy(self.gg_lens)
@@ -415,8 +413,6 @@ class TestLens(object):
 
         realization_uldm = gg_lens_copy_uldm.realization
         assert isinstance(realization_uldm, object)
-
-
 
     def test_subhalos_only_lens_model(self):
         # Test the get_halos_only_lens_model method
