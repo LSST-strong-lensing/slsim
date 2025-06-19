@@ -384,7 +384,9 @@ class TestLens(object):
 
             len_after_second_kwargs = len(self.gg_lens._kwargs_lens)
 
-            assert len_after_second_kwargs == len_after_first_kwargs, f"{dm_type} kwargs duplicated!"
+            assert (
+                len_after_second_kwargs == len_after_first_kwargs
+            ), f"{dm_type} kwargs duplicated!"
 
     def test_subhalos_only_lens_model(self):
         # Test the get_halos_only_lens_model method
