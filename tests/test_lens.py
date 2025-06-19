@@ -383,7 +383,7 @@ class TestLens(object):
 
         len_after_second_kwargs = len(gg_lens_copy_cdm._kwargs_lens)
 
-        assert len_after_second_kwargs == len_after_first_kwargs, f"kwargs duplicated!"
+        assert len_after_second_kwargs == len_after_first_kwargs, "kwargs duplicated!"
 
         pyhalos_parms_wdm = {
             "LOS_normalization": 0,
