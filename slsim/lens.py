@@ -1423,9 +1423,7 @@ class Lens(LensedSystemBase):
         if hasattr(self, "realization"):
             return [halo.mass for halo in self.realization.halos]
         else:
-            raise ValueError(
-                "No realization found. Please run add_subhalos() first."
-            )
+            raise ValueError("No realization found. Please run add_subhalos() first.")
 
     def subhalos_only_lens_model(self):
         """Get the lens model for the halos only.
@@ -1450,9 +1448,7 @@ class Lens(LensedSystemBase):
             )
             return lens_model_subhalos_only, kwargs_subhalos
         else:
-            raise ValueError(
-                "No realization found. Please run add_subhalos() first."
-            )
+            raise ValueError("No realization found. Please run add_subhalos() first.")
 
 
 def image_separation_from_positions(image_positions):
