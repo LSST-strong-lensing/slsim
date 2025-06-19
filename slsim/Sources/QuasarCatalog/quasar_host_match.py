@@ -198,6 +198,14 @@ class QuasarHostMatch:
                 "Galaxy catalog must have 'vel_disp' column to calculate host galaxies."
             )
 
+        # add columns for black hole mass and eddington ratio
+        self.galaxy_catalog.add_column(
+            np.zeros(len(self.galaxy_catalog)), name="black_hole_mass_Msun"
+        )
+        self.galaxy_catalog.add_column(
+            np.zeros(len(self.galaxy_catalog)), name="eddington_ratio"
+        )
+
         # prepare a blank catalog with 0 rows to store matched galaxies.
         matched_galaxies = self.galaxy_catalog.copy()[:0]
 
@@ -231,12 +239,17 @@ class QuasarHostMatch:
             ]
 
             # select host galaxy with closest quasar absolute magnitude in "i" band.
-            closest_index = np.argmin(np.abs(M_i - quasar_abs_magnitudes_i_band))
+            closest_index = np.nanargmin(np.abs(M_i - quasar_abs_magnitudes_i_band))
             host_galaxy = host_galaxy_candidates[closest_index]
             matched_galaxies.add_row(host_galaxy)
 
+            # store the black hole mass and eddington ratio for the matched galaxy.
+            matched_galaxies["black_hole_mass_Msun"][-1] = bh_masses[closest_index]
+            matched_galaxies["eddington_ratio"][-1] = eddington_ratios[closest_index]
+
         # remove 'z' column from the matched galaxies.
         matched_galaxies.remove_column("z")
+        # matched_galaxies.rename_column("z", "host_galaxy_z")
 
         # concatenate the matched galaxies with the quasar catalog.
         matched_catalog = hstack(
