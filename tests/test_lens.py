@@ -363,6 +363,10 @@ class TestLens(object):
 
     def test_add_subhalos(self):
         # Test the add_subhalos method
+
+        # Check that the method raises an error if no subhalos are provided
+        npt.assert_raises(ValueError, self.gg_lens.dm_subhalo_mass)
+
         pyhalos_parms = {
             "LOS_normalization": 0,
         }
@@ -416,6 +420,10 @@ class TestLens(object):
 
     def test_subhalos_only_lens_model(self):
         # Test the get_halos_only_lens_model method
+        lens_model, kwargz_lens = self.gg_lens.subhalos_only_lens_model()
+        assert len(kwargz_lens) == len(self.gg_lens._kwargs_lens)
+
+
         pyhalos_parms = {"LOS_normalization": 0}
         dm_type = "CDM"
         self.gg_lens.add_subhalos(pyhalos_parms, dm_type)

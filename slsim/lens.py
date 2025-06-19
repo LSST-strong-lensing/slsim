@@ -1448,7 +1448,8 @@ class Lens(LensedSystemBase):
             )
             return lens_model_subhalos_only, kwargs_subhalos
         else:
-            raise ValueError("No realization found. Please run add_subhalos() first.")
+            print("No realization found. Please run add_subhalos() first.")
+            return self._lens_model, self._kwargs_lens
 
 
 def image_separation_from_positions(image_positions):
