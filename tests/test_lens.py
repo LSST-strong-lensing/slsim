@@ -366,23 +366,25 @@ class TestLens(object):
         pyhalos_parms = {
             "LOS_normalization": 0,
         }
-        dm_type = "CDM"
+        for dm_type in ["CDM", "WDM", "ULDM"]:
+            if hasattr(self.gg_lens, "realization"):
+                del self.gg_lens.realization
 
-        self.gg_lens.add_subhalos(pyhalos_parms, dm_type)
+            self.gg_lens.add_subhalos(pyhalos_parms, dm_type)
 
-        realization = self.gg_lens.realization
-        dm_subhalo_mass = self.gg_lens.dm_subhalo_mass()
-        assert isinstance(dm_subhalo_mass, list)
-        assert isinstance(realization, object)
+            realization = self.gg_lens.realization
+            dm_subhalo_mass = self.gg_lens.dm_subhalo_mass()
+            assert isinstance(dm_subhalo_mass, list)
+            assert isinstance(realization, object)
 
-        initial_len_kwargs = len(self.gg_lens._kwargs_lens)
-        # second call to check for duplicates
-        self.gg_lens.add_subhalos(pyhalos_parms, dm_type)
-        second_len_kwargs = len(self.gg_lens._kwargs_lens)
+            len_after_first_kwargs = len(self.gg_lens._kwargs_lens)
 
-        assert (
-            second_len_kwargs == initial_len_kwargs
-        ), "subhalos parameters duplicated!"
+            # second call for checking for no duplication
+            self.gg_lens.add_subhalos(pyhalos_parms, dm_type)
+
+            len_after_second_kwargs = len(self.gg_lens._kwargs_lens)
+
+            assert len_after_second_kwargs == len_after_first_kwargs, f"{dm_type} kwargs duplicated!"
 
     def test_subhalos_only_lens_model(self):
         # Test the get_halos_only_lens_model method

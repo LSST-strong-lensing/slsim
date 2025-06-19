@@ -1390,6 +1390,7 @@ class Lens(LensedSystemBase):
                     z_lens,
                     z_source,
                     cone_opening_angle_arcsec=cone_opening_angle,
+                    log_mc=7.0,
                     **pyhalos_kwargs,
                 )
             elif dm_type == "ULDM":
@@ -1399,6 +1400,12 @@ class Lens(LensedSystemBase):
                     z_lens,
                     z_source,
                     cone_opening_angle_arcsec=cone_opening_angle,
+                    log10_m_uldm= -20.0,
+                    uldm_plaw=1/3,
+                    flucs_shape='ring',
+                    flucs_args={'angle': 0.0, 'rmin': 0.9, 'rmax': 1.1},
+                    log10_fluc_amplitude=-1.6, 
+                    n_cut=1000000,
                     **pyhalos_kwargs,
                 )
             else:
