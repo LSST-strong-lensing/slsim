@@ -423,7 +423,6 @@ class TestLens(object):
         lens_model, kwargz_lens = self.gg_lens.subhalos_only_lens_model()
         assert len(kwargz_lens) == len(self.gg_lens._kwargs_lens)
 
-
         pyhalos_parms = {"LOS_normalization": 0}
         dm_type = "CDM"
         self.gg_lens.add_subhalos(pyhalos_parms, dm_type)
