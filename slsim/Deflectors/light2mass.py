@@ -143,7 +143,6 @@ def get_velocity_dispersion(
     lsst_errs,
     redshift,
     cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
-    #bands=["u", "g", "r", "i", "z"],
     bands=[ "g", "r", "i"],
     scaling_relation="spectroscopic",
 ):
@@ -189,21 +188,22 @@ def get_velocity_dispersion(
 
     if "g" not in bands or "r" not in bands or "i" not in bands:
         raise ValueError("input requires at least g r and i band. Provided are only %s" % bands)
+    
     g_index = bands.index("g")
-    g_band = unumpy.uarray(lsst_mags[:, g_index], lsst_errs[:, g_index])
+    g_band = unumpy.uarray(lsst_mags[g_index, :], lsst_errs[g_index, :])
     r_index = bands.index("r")
-    r_band = unumpy.uarray(lsst_mags[:, r_index], lsst_errs[:, r_index])
+    r_band = unumpy.uarray(lsst_mags[r_index, :], lsst_errs[r_index, :])
     i_index = bands.index("i")
-    i_band = unumpy.uarray(lsst_mags[:, i_index], lsst_errs[:, i_index])
+    i_band = unumpy.uarray(lsst_mags[i_index, :], lsst_errs[i_index, :])
     
     if "u" in bands:
         u_index = bands.index("u")
-        u_band = unumpy.uarray(lsst_mags[:, u_index], lsst_errs[:, u_index])
+        u_band = unumpy.uarray(lsst_mags[u_index, :], lsst_errs[u_index, :])
     else:
         u_band = g_band
     if "z" in bands:
         z_index = bands.index("z")
-        z_band = unumpy.uarray(lsst_mags[:, z_index], lsst_errs[:, z_index])
+        z_band = unumpy.uarray(lsst_mags[z_index, :], lsst_errs[z_index, :])
     else:
         z_band = i_band
 
