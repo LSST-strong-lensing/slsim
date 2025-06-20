@@ -7,61 +7,81 @@ import pytest
 
 
 def test_get_velocity_dispersion():
-
+    """Test velocity dispersion for both 5-band and 3-band inputs."""
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     deflector_type = "elliptical"
-    lsst_mags = np.array([19.492, 17.636, 16.674, 16.204, 15.893]).reshape(1, 5)
 
-    # extract errors (due to Poisson noise only) if the errors are not known
-    zeropoint_u, exptime_u = 26.52, 15
-    zeropoint_g, exptime_g = 28.51, 15
-    zeropoint_r, exptime_r = 28.36, 15
-    zeropoint_i, exptime_i = 28.17, 15
-    zeropoint_z, exptime_z = 27.78, 15
-    lsst_errs = np.array(
-        [
-            get_errors_Poisson(lsst_mags[:, 0], zeropoint_u, exptime_u),
-            get_errors_Poisson(lsst_mags[:, 1], zeropoint_g, exptime_g),
-            get_errors_Poisson(lsst_mags[:, 2], zeropoint_r, exptime_r),
-            get_errors_Poisson(lsst_mags[:, 3], zeropoint_i, exptime_i),
-            get_errors_Poisson(lsst_mags[:, 4], zeropoint_z, exptime_z),
-        ]
-    ).T
-    redshifts = np.array([0.08496])  # redshift
+    # --- 5-band spectroscopic & weak-lensing ---
+    lsst_mags_5 = np.array([19.492, 17.636, 16.674, 16.204, 15.893]).reshape(1, 5)
+    zeropoints = [26.52, 28.51, 28.36, 28.17, 27.78]
+    exptimes  = [15,    15,    15,    15,    15]
+    errs_5 = np.array([
+        get_errors_Poisson(lsst_mags_5[:, i], zeropoints[i], exptimes[i])
+        for i in range(5)
+    ]).T  # errs_5 will be (1,5)
+    redshifts = np.array([0.08496])
 
-    # Get velocity dispersion using spectroscopy based relations
-    vel_disp_spec = get_velocity_dispersion(
+    vel_disp_spec_5 = get_velocity_dispersion(
         deflector_type,
-        lsst_mags.T,
-        lsst_errs.T,
+        lsst_mags_5,
+        errs_5,
         redshift=redshifts,
         cosmo=cosmo,
         bands=["u", "g", "r", "i", "z"],
         scaling_relation="spectroscopic",
     )
-    print(vel_disp_spec[0].nominal_value)
+    # Expected value ~203 km/s (within ±10 km/s)
+    np.testing.assert_almost_equal(vel_disp_spec_5[0].nominal_value, 203, decimal=-1)
 
-    np.testing.assert_almost_equal(vel_disp_spec[0].nominal_value, 203, decimal=-1)
-    # np.testing.assert_almost_equal(vel_disp_spec[0].nominal_value, 179, decimal=-1)
-    # the returned value should be precise within +-10 km/s
-
-    # Get velocity dispersion using weak-lensing based relations
-    vel_disp_wl = get_velocity_dispersion(
+    vel_disp_wl_5 = get_velocity_dispersion(
         deflector_type,
-        lsst_mags.T,
-        lsst_errs.T,
+        lsst_mags_5,
+        errs_5,
         redshift=redshifts,
         cosmo=cosmo,
         bands=["u", "g", "r", "i", "z"],
         scaling_relation="weak-lensing",
     )
-    print(vel_disp_wl[0].nominal_value)
+    np.testing.assert_almost_equal(vel_disp_wl_5[0].nominal_value, 182, decimal=-1)
 
-    np.testing.assert_almost_equal(vel_disp_wl[0].nominal_value, 182, decimal=-1)
+    # --- 3-band spectroscopic & weak-lensing ---
+    lsst_mags_3 = np.array([17.636, 16.674, 16.204]).reshape(1, 3)
+    zeropoints_3 = [28.51, 28.36, 28.17]
+    exptimes_3  = [15,    15,    15]
+    errs_3 = np.array([
+        get_errors_Poisson(lsst_mags_3[:, i], zeropoints_3[i], exptimes_3[i])
+        for i in range(3)
+    ]).T  # errs_3 is (1,3)
+    
+    vel_disp_spec_3 = get_velocity_dispersion(
+        deflector_type,
+        lsst_mags_3,
+        errs_3,
+        redshift=redshifts,
+        cosmo=cosmo,
+        bands=["g", "r", "i"],
+        scaling_relation="spectroscopic",
+    )
+    # Expected value ~203 km/s (within ±10% tolerance)
+    np.testing.assert_allclose(vel_disp_spec_3[0].nominal_value, 203, rtol=0.10)
+    assert isinstance(vel_disp_spec_3, np.ndarray)
+    assert vel_disp_spec_3.shape == (1,)
 
+    vel_disp_wl_3 = get_velocity_dispersion(
+        deflector_type,
+        lsst_mags_3,
+        errs_3,
+        redshift=redshifts,
+        cosmo=cosmo,
+        bands=["g", "r", "i"],
+        scaling_relation="weak-lensing",
+    )
+    np.testing.assert_almost_equal(vel_disp_wl_3[0].nominal_value, 182, decimal=-1)
+    assert isinstance(vel_disp_wl_3, np.ndarray)
+    assert vel_disp_wl_3.shape == (1,)
+   
 
 def test_invalid_deflector_type():
-
     with pytest.raises(
         KeyError, match="The module currently supports only elliptical galaxies."
     ):

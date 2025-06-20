@@ -143,7 +143,8 @@ def get_velocity_dispersion(
     lsst_errs,
     redshift,
     cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
-    bands=["u", "g", "r", "i", "z"],
+    #bands=["u", "g", "r", "i", "z"],
+    bands=[ "g", "r", "i"],
     scaling_relation="spectroscopic",
 ):
     """
@@ -186,13 +187,27 @@ def get_velocity_dispersion(
     if deflector_type != "elliptical":
         raise KeyError("The module currently supports only elliptical galaxies.")
 
-    muSDSS, mgSDSS, mrSDSS, miSDSS, mzSDSS = LSST_to_SDSS(
-        unumpy.uarray(lsst_mags[0], lsst_errs[0]),
-        unumpy.uarray(lsst_mags[1], lsst_errs[1]),
-        unumpy.uarray(lsst_mags[2], lsst_errs[2]),
-        unumpy.uarray(lsst_mags[3], lsst_errs[3]),
-        unumpy.uarray(lsst_mags[4], lsst_errs[4]),
-    )
+    if "g" not in bands or "r" not in bands or "i" not in bands:
+        raise ValueError("input requires at least g r and i band. Provided are only %s" % bands)
+    g_index = bands.index("g")
+    g_band = unumpy.uarray(lsst_mags[:, g_index], lsst_errs[:, g_index])
+    r_index = bands.index("r")
+    r_band = unumpy.uarray(lsst_mags[:, r_index], lsst_errs[:, r_index])
+    i_index = bands.index("i")
+    i_band = unumpy.uarray(lsst_mags[:, i_index], lsst_errs[:, i_index])
+    
+    if "u" in bands:
+        u_index = bands.index("u")
+        u_band = unumpy.uarray(lsst_mags[:, u_index], lsst_errs[:, u_index])
+    else:
+        u_band = g_band
+    if "z" in bands:
+        z_index = bands.index("z")
+        z_band = unumpy.uarray(lsst_mags[:, z_index], lsst_errs[:, z_index])
+    else:
+        z_band = i_band
+
+    muSDSS, mgSDSS, mrSDSS, miSDSS, mzSDSS = LSST_to_SDSS(u_band, g_band, r_band, i_band, z_band)
 
     if scaling_relation == "spectroscopic":
         # for k-correction upto redshift z=0 only
@@ -210,12 +225,14 @@ def get_velocity_dispersion(
         band_shift=band_shift,
     )
 
-    # Apply the K-correction on the SDSS magnitudes
+# Apply the K-correction on the SDSS magnitudes
+
     muSDSS = muSDSS - k_corrections[:, 0]
     mgSDSS = mgSDSS - k_corrections[:, 1]
     mrSDSS = mrSDSS - k_corrections[:, 2]
     miSDSS = miSDSS - k_corrections[:, 3]
     mzSDSS = mzSDSS - k_corrections[:, 4]
+
 
     ## Note: It will be better if we apply the K-correction directly on the LSST magnitudes,
     ## but no such relation is known to Vibhore right now.
