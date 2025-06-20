@@ -143,7 +143,7 @@ def get_velocity_dispersion(
     lsst_errs,
     redshift,
     cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
-    bands=[ "g", "r", "i"],
+    bands=["u", "g", "r", "i", "z"],
     scaling_relation="spectroscopic",
 ):
     """

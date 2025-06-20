@@ -14,11 +14,13 @@ def test_get_velocity_dispersion():
     # --- 5-band spectroscopic & weak-lensing ---
     lsst_mags_5 = np.array([19.492, 17.636, 16.674, 16.204, 15.893]).reshape(1, 5)
     zeropoints = [26.52, 28.51, 28.36, 28.17, 27.78]
-    exptimes  = [15,    15,    15,    15,    15]
-    errs_5 = np.array([
-        get_errors_Poisson(lsst_mags_5[:, i], zeropoints[i], exptimes[i])
-        for i in range(5)
-    ]).T  # errs_5 will be (1,5)
+    exptimes = [15, 15, 15, 15, 15]
+    errs_5 = np.array(
+        [
+            get_errors_Poisson(lsst_mags_5[:, i], zeropoints[i], exptimes[i])
+            for i in range(5)
+        ]
+    ).T  # errs_5 will be (1,5)
     redshifts = np.array([0.08496])
 
     vel_disp_spec_5 = get_velocity_dispersion(
@@ -47,12 +49,14 @@ def test_get_velocity_dispersion():
     # --- 3-band spectroscopic & weak-lensing ---
     lsst_mags_3 = np.array([17.636, 16.674, 16.204]).reshape(1, 3)
     zeropoints_3 = [28.51, 28.36, 28.17]
-    exptimes_3  = [15,    15,    15]
-    errs_3 = np.array([
-        get_errors_Poisson(lsst_mags_3[:, i], zeropoints_3[i], exptimes_3[i])
-        for i in range(3)
-    ]).T  # errs_3 is (1,3)
-    
+    exptimes_3 = [15, 15, 15]
+    errs_3 = np.array(
+        [
+            get_errors_Poisson(lsst_mags_3[:, i], zeropoints_3[i], exptimes_3[i])
+            for i in range(3)
+        ]
+    ).T  # errs_3 is (1,3)
+
     vel_disp_spec_3 = get_velocity_dispersion(
         deflector_type,
         lsst_mags_3,
@@ -79,7 +83,7 @@ def test_get_velocity_dispersion():
     np.testing.assert_almost_equal(vel_disp_wl_3[0].nominal_value, 182, decimal=-1)
     assert isinstance(vel_disp_wl_3, np.ndarray)
     assert vel_disp_wl_3.shape == (1,)
-   
+
 
 def test_invalid_deflector_type():
     with pytest.raises(
