@@ -17,6 +17,34 @@ def merge_catalogs(
     sc_ra_col="RA",
     sc_dec_col="DEC",
 ):
+    """Cross-match two Astropy tables on sky position and magnitude, then stack
+    the matched rows.
+
+    Parameters
+    ----------
+    large_cat : astropy.table.Table
+        “Reference” catalog (bigger); must have RA/DEC columns.
+    small_cat : astropy.table.Table
+        “Query” catalog (smaller); must have RA/DEC columns.
+    lc_mag_col : str
+        Name of the magnitude column in `large_cat`.
+    sc_mag_col : str
+        Name of the magnitude column in `small_cat`.
+    tolerance : float, optional
+        Maximum separation (arcsec) to consider a match, by default 1.0.
+    lc_ra_col, lc_dec_col : str, optional
+        RA/DEC column names in `large_cat`, by default "RA", "DEC".
+    sc_ra_col, sc_dec_col : str, optional
+        RA/DEC column names in `small_cat`, by default "RA", "DEC".
+
+    Returns
+    -------
+    astropy.table.Table
+        Horizontal stack of the rows from `large_cat` and `small_cat`
+        that lie within `tolerance` arcsec, with an extra column
+        `"MAG_DIFF"` in the small catalog.
+    """
+
     # SkyCoord objects
     Lcoords = SkyCoord(ra=large_cat[lc_ra_col], dec=large_cat[lc_dec_col])
     Scoords = SkyCoord(ra=small_cat[sc_ra_col], dec=small_cat[sc_dec_col])
@@ -147,16 +175,53 @@ def z_scale_factor(z_old, z_new, cosmo):
 
 
 def get_cosmos_catalog():
+    """Load the master COSMOS FITS catalog from its default location.
+
+    Returns
+    -------
+    astropy.table.Table
+        The full COSMOS catalog read from
+        `/path/to/cosmos_catalog.fits`.
+    """
     # Adjust path to the COSMOS catalog
     return Table.read("/path/to/cosmos_catalog.fits")
 
 
 def load_cosmos_image(filename, hdu_index):
+    """Read a single HDU from a FITS file as a 2D numpy array.
+
+    Parameters
+    ----------
+    filename : str or Path
+        Path to the FITS file.
+    hdu_index : int
+        Index of the HDU to read from the FITS file.
+
+    Returns
+    -------
+    numpy.ndarray
+        The image data from the specified HDU.
+    """
+
     with fits.open(filename) as hdulist:
         return hdulist[hdu_index].data
 
 
 def flux_weighted_center(image):
+    """Compute the flux-weighted centroid of a 2D image array.
+
+    Parameters
+    ----------
+    image : array_like
+        2D array of pixel fluxes.
+
+    Returns
+    -------
+    (x_center, y_center) : tuple of float
+        The centroid coordinates in pixel units.  If the total flux is
+        non-positive, returns the geometric center of the array.
+    """
+
     y, x = np.indices(image.shape)
     total = image.sum()
     if total <= 0:

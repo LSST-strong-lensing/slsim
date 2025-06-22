@@ -24,7 +24,21 @@ from astropy.cosmology import FlatLambdaCDM
 # │  helpers                                                        │
 # ╰──────────────────────────────────────────────────────────────────╯
 def _fingerprint(*items) -> str:
-    """Md5 hash of (files + inputs) –  used for cache key."""
+    """Create a reproducible MD5 hash of input arguments for use as a cache
+    key. A simple helper to serialize strings/Paths (including their
+    modification times) and arbitrary Python objects.
+
+    Parameters
+    ----------
+    *items : str | Path | any picklable
+        Items to include in the hash.  File paths will incorporate
+        their last-modified timestamp.
+
+    Returns
+    -------
+    str
+        Hex MD5 digest of the concatenated inputs.
+    """
     md5 = hashlib.md5()
     for it in items:
         if isinstance(it, (str, Path)):
@@ -38,7 +52,21 @@ def _fingerprint(*items) -> str:
 
 
 def _values(arr):
-    """Return plain numpy array, stripping Astropy units if present."""
+    """Convert an array of quantity-bearing values to a plain numpy array.
+
+    Strips Astropy units if present, returning the raw `.value`. Falls back to
+    a normal array if any error occurs.
+
+    Parameters
+    ----------
+    arr : Sequence
+        Sequence of astropy Quantity or numeric values.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array of raw values without units.
+    """
     try:
         return np.asarray([v.value if hasattr(v, "unit") else v for v in arr])
     except Exception:
@@ -46,6 +74,20 @@ def _values(arr):
 
 
 def _normalise(x):
+    """Linearly scale a numeric array to the [0, 1] interval.
+
+    If all values are identical, returns an array of zeros.
+
+    Parameters
+    ----------
+    x : array_like
+        Numeric input array.
+
+    Returns
+    -------
+    numpy.ndarray
+        Normalized array of same shape as `x`.
+    """
     rng = np.max(x) - np.min(x)
     return (x - np.min(x)) / rng if rng != 0 else np.zeros_like(x)
 
@@ -62,10 +104,32 @@ def build_real_catalog(
     mag_limit_real: float | None = None,
     size_min_kpc: float | None = None,
 ) -> Table:
-    """Re-implements the “Final_catalog_with_cuts” construction from the
-    notebook.
+    """Construct and filter the COSMOS real galaxy catalog.
 
-    Only columns needed for matching / plotting are retained.
+    Reads two FITS catalogs, merges them, applies magnitude and size cuts,
+    computes physical sizes and absolute magnitudes, and renames columns
+    for consistency.
+
+    Parameters
+    ----------
+    catalog_paths : dict
+        Mapping with keys 'cat1' and 'cat2' pointing to FITS file paths.
+    cosmo : FlatLambdaCDM
+        Cosmology object for distance calculations.
+    sky_area_deg2 : float
+        Survey area in square degrees.
+    source_params : dict
+        Source extraction parameters (e.g., pixel scale).
+    mag_limit_real : float, optional
+        Maximum absolute magnitude to include (fainter limit), by default None.
+    size_min_kpc : float, optional
+        Minimum half-light radius in kpc to include, by default None.
+
+    Returns
+    -------
+    astropy.table.Table
+        Filtered real galaxy catalog containing columns:
+        ['RA', 'DEC', 'MAGabs', 'RHALFreal', 'phi_G', ...]
     """
     cat1 = Table.read(catalog_paths["cat1"], format="fits", hdu=1)
     cat2 = Table.read(catalog_paths["cat2"], format="fits", hdu=1)
@@ -162,8 +226,31 @@ def build_sim_catalog(
     source_size: str | None = None,
     skypy_config: str | Path | None = None,
 ) -> Table:
-    """Replicates the notebook’s SkyPy ➜ Galaxies pipeline and returns the
-    filtered Astropy table."""
+    """Generate and filter a simulated galaxy catalog using SkyPy.
+
+    Runs the SkyPyPipeline and Galaxies source model to create a simulation
+    over the specified sky area, then applies optional pre-filtering cuts.
+
+    Parameters
+    ----------
+    sky_area_deg2 : float
+        Survey area in square degrees.
+    cosmo : FlatLambdaCDM
+        Cosmology for physical conversions.
+    kwargs_cut : dict, optional
+        Pre-filters for simulation (e.g., redshift limits), by default None.
+    source_size : str, optional
+        Size field to include (e.g., 'r_eff'), by default None.
+    skypy_config : str | Path, optional
+        Path to SkyPy configuration file, by default None.
+
+    Returns
+    -------
+    astropy.table.Table
+        Simulated galaxy catalog with columns:
+        ['skycoord', 'mag_i', 'physical_size', ...]
+    """
+
     from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
     from slsim.Sources.galaxies import Galaxies
 
@@ -215,10 +302,36 @@ def build_matched_table(
     cache_dir: str | Path = "~/.cache",
     return_tables: bool = False,
 ):
-    """Wrapper that produces (& optionally caches) the full matched table.
+    """Cross-match real and simulated catalogs in magnitude–size space.
 
-    If *return_tables* is True, the tuple (matched, sim_table,
-    real_table) is returned instead of only *matched*.
+    Uses a k-NN search on (size, magnitude) to find the nearest simulated
+    neighbor for each real galaxy, within a tolerance threshold.
+
+    Parameters
+    ----------
+    real_table : astropy.table.Table
+        Filtered real galaxy catalog.
+    sim_table : astropy.table.Table
+        Simulated galaxy catalog.
+    mag_real : str, optional
+        Column name for real galaxies' magnitude, by default 'MAGabs'.
+    size_real : str, optional
+        Column name for real galaxies' size, by default 'RHALFreal'.
+    mag_sim : str, optional
+        Column name for simulated galaxies' magnitude, by default 'mag_i_abs'.
+    size_sim : str, optional
+        Column name for simulated galaxies' size, by default 'physical_size'.
+    nn_tolerance : float, optional
+        Maximum allowed neighbor distance in combined units, by default 1.0.
+    n_neighbors : int, optional
+        Number of neighbors to retrieve per real galaxy, by default 1.
+    return_tables : bool, optional
+        If True, also return the input real and sim tables, by default False.
+
+    Returns
+    -------
+    astropy.table.Table
+        Table of matched pairs, including distance and indices.
     """
     cache_dir = Path(cache_dir).expanduser()
     cache_dir.mkdir(parents=True, exist_ok=True)
