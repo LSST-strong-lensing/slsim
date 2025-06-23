@@ -5,7 +5,8 @@ import numpy as np
 from scipy.stats import ks_2samp
 from astropy.table import Table
 import pytest
-
+import numpy.testing as npt
+from unittest.mock import patch
 
 class TestQuasarRate:
     """Class to test the QuasarRate class."""
@@ -259,6 +260,51 @@ class TestQuasarRate:
         assert "z" in table.colnames, "Table does not contain 'z' column."
         assert "ps_mag_i" in table.colnames, "Table does not contain 'ps_mag_i' column."
         assert len(table) > 0, "The table is empty."
+    
+    # New tests for host galaxy matching functionality
+
+    @patch.object(QuasarRate, "generate_quasar_redshifts", return_value=np.array([0.51]))
+    def test_quasar_sample_with_provided_hosts(self, mock_gen_z):
+        """Tests sampling with a provided host catalog."""
+        host_table = Table({"z": [0.50], "stellar_mass": [1e11], "vel_disp": [200], "host_id": [1]})
+        self.quasar_rate.host_galaxy_candidate = host_table
+        result_table = self.quasar_rate.quasar_sample(m_min=15, m_max=25, host_galaxy=True)
+        assert "host_id" in result_table.colnames
+        assert result_table["host_id"][0] == 1
+
+    @patch("slsim.Sources.QuasarCatalog.quasar_pop.vel_disp_abundance_matching")
+    @patch.object(QuasarRate, "generate_quasar_redshifts", return_value=np.array([0.51]))
+    def test_quasar_sample_with_vel_disp_calc(self, mock_gen_z, mock_vel_disp):
+        """Tests sampling with automatic velocity dispersion calculation."""
+        host_table = Table({"z": [0.50], "stellar_mass": [1e11]})
+        self.quasar_rate.host_galaxy_candidate = host_table
+        mock_vel_disp.return_value = lambda log_mass: np.full_like(log_mass, 150.0)
+
+        result_table = self.quasar_rate.quasar_sample(m_min=15, m_max=25, host_galaxy=True)
+        mock_vel_disp.assert_called_once()
+        npt.assert_almost_equal(result_table["vel_disp"][0], 150.0)
+
+    @patch("slsim.Sources.QuasarCatalog.quasar_pop.SkyPyPipeline")
+    @patch("slsim.Sources.QuasarCatalog.quasar_pop.vel_disp_abundance_matching")
+    @patch.object(QuasarRate, "generate_quasar_redshifts", return_value=np.array([0.82]))
+    def test_quasar_sample_with_host_generation(self, mock_gen_z, mock_vel_disp, mock_skypy_pipeline):
+        """Tests sampling with automatic host catalog generation."""
+        # Configure the mock SkyPyPipeline instance to return predefined galaxy tables
+        mock_pipeline_instance = mock_skypy_pipeline.return_value
+        mock_pipeline_instance.red_galaxies = Table({"z": [0.8], "stellar_mass": [2e11]})
+        mock_pipeline_instance.blue_galaxies = Table({"z": [0.81], "stellar_mass": [1e11]})
+
+        self.quasar_rate.host_galaxy_candidate = None
+        mock_vel_disp.return_value = lambda log_mass: np.full_like(log_mass, 250.0, dtype=float)
+
+        result_table = self.quasar_rate.quasar_sample(m_min=15, m_max=25, host_galaxy=True)
+
+        # Assert that SkyPyPipeline was initialized
+        mock_skypy_pipeline.assert_called_once()
+        # The result should contain a host galaxy matched from the mocked pipeline's output
+        assert len(result_table) == 1
+        npt.assert_almost_equal(result_table["stellar_mass"][0], 1e11)
+        npt.assert_almost_equal(result_table["vel_disp"][0], 250.0)
 
 
 # Running the tests with pytest

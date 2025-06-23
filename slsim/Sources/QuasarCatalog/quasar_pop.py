@@ -4,12 +4,12 @@ from scipy.interpolate import interp1d
 from scipy.integrate import quad
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
-from astropy.table import Table
+from astropy.table import Table, vstack
 import os
 from pathlib import Path
 from slsim.Sources.QuasarCatalog.quasar_host_match import QuasarHostMatch
 from slsim.Deflectors.velocity_dispersion import vel_disp_abundance_matching
-from slsim.Sources.galaxy_catalog import GalaxyCatalog
+from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 
 """
 References:
@@ -381,12 +381,16 @@ class QuasarRate(object):
         # Generate and match the host galaxy catalog if requested
         if host_galaxy is True:
             if self.host_galaxy_candidate is None:
-                galaxy_catalog = GalaxyCatalog(
-                    cosmo=self.cosmo,
+                pipeline = SkyPyPipeline(
                     skypy_config=self.skypy_config,
                     sky_area=self.sky_area,
+                    filters=None,
+                    cosmo=self.cosmo,
                 )
-                host_galaxy_catalog = galaxy_catalog.galaxy_catalog()
+                host_galaxy_catalog = vstack(
+                    [pipeline.red_galaxies, pipeline.blue_galaxies],
+                    join_type="exact",
+                )
             else:
                 host_galaxy_catalog = self.host_galaxy_candidate
 
