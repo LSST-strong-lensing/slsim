@@ -189,9 +189,6 @@ def get_velocity_dispersion(
     ):
         lsst_mags, lsst_errs = lsst_mags.T, lsst_errs.T
 
-
-
-    
     if deflector_type != "elliptical":
         raise KeyError("The module currently supports only elliptical galaxies.")
 
