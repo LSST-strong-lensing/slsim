@@ -366,6 +366,7 @@ class TestLens(object):
 
         # Check that the method raises an error if no subhalos are provided
         npt.assert_raises(ValueError, self.gg_lens.dm_subhalo_mass)
+        npt.assert_raises(ValueError, self.gg_lens.add_subhalos, {}, "SIDM")
 
         pyhalos_parms = {
             "LOS_normalization": 0,
