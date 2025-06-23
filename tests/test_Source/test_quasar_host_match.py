@@ -74,32 +74,27 @@ class TestQuasarHostMatch:
     @pytest.fixture
     def setup_catalogs(self):
         """Creates basic quasar and galaxy catalogs for testing."""
-        quasar_cat = Table(
-            {
-                "z": [0.5], 
-                "M_i": [-23.0]
-            }
-        )
+        quasar_cat = Table({"z": [0.5], "M_i": [-23.0]})
 
         galaxy_cat = Table(
             {
                 "z": [0.49, 0.51],
-                "vel_disp": [150.0, 200.0], # km/s
-                "stellar_mass": [1e11, 2e11], # Solar masses
+                "vel_disp": [150.0, 200.0],  # km/s
+                "stellar_mass": [1e11, 2e11],  # Solar masses
                 "host_id": [1, 2],  # Unique identifier for host galaxies
             }
         )
         return quasar_cat, galaxy_cat
-    
+
     def test_initialization(self, setup_catalogs):
         """Tests the initialization of the QuasarHostMatch class."""
         quasar_cat, galaxy_cat = setup_catalogs
-        
+
         matcher = QuasarHostMatch(
             quasar_catalog=quasar_cat.copy(), galaxy_catalog=galaxy_cat.copy()
         )
-        
-        assert matcher.quasar_catalog is not None 
+
+        assert matcher.quasar_catalog is not None
         assert matcher.galaxy_catalog is not None
         assert len(matcher.quasar_catalog) == len(quasar_cat)
         assert len(matcher.galaxy_catalog) == len(galaxy_cat)
@@ -148,6 +143,6 @@ class TestQuasarHostMatch:
         matcher = QuasarHostMatch(
             quasar_catalog=quasar_cat, galaxy_catalog=galaxy_cat_no_vel_disp
         )
-        
+
         with pytest.raises(ValueError, match="must have 'vel_disp' column"):
             matcher.match()
