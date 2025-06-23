@@ -182,7 +182,16 @@ def get_velocity_dispersion(
     .. [4] Blanton et al., (2003), astro-ph/0210215, doi: 10.1086/375776
     .. [5] Parker et al., (2007),  arXiv:0707.1698, doi: 10.1086/521541
     """
+    if (
+        lsst_mags.ndim == 2
+        and lsst_mags.shape[0] != len(bands)
+        and lsst_mags.shape[1] == len(bands)
+    ):
+        lsst_mags, lsst_errs = lsst_mags.T, lsst_errs.T
 
+
+
+    
     if deflector_type != "elliptical":
         raise KeyError("The module currently supports only elliptical galaxies.")
 
