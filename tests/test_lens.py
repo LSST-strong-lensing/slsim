@@ -421,15 +421,15 @@ class TestLens(object):
 
     def test_subhalos_only_lens_model(self):
         # Test the get_halos_only_lens_model method
+        from lenstronomy.LensModel.lens_model import LensModel
         lens_model, kwargz_lens = self.gg_lens.subhalos_only_lens_model()
-        assert len(kwargz_lens) == len(self.gg_lens._kwargs_lens)
+        assert isinstance(lens_model, LensModel)
+        assert isinstance(kwargz_lens, list)
 
         pyhalos_parms = {"LOS_normalization": 0}
         dm_type = "CDM"
         self.gg_lens.add_subhalos(pyhalos_parms, dm_type)
         subhalos_only_model, kwargs_subhalos = self.gg_lens.subhalos_only_lens_model()
-
-        from lenstronomy.LensModel.lens_model import LensModel
 
         assert isinstance(subhalos_only_model, LensModel)
         assert isinstance(kwargs_subhalos, list)

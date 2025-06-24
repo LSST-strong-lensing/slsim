@@ -1431,9 +1431,9 @@ class Lens(LensedSystemBase):
         :return: LensModel instance for the halos only, and list of
             kwargs for the subhalos.
         """
+        z_lens = self.deflector_redshift
+        z_source = self.max_redshift_source_class.redshift
         if hasattr(self, "realization"):
-            z_lens = self.deflector_redshift
-            z_source = self.max_redshift_source_class.redshift
             subhalos_lens_model_list, redshift_array, kwargs_subhalos, _ = (
                 self.realization.lensing_quantities(add_mass_sheet_correction=True)
             )
@@ -1442,6 +1442,7 @@ class Lens(LensedSystemBase):
             print("No realization found. Please run add_subhalos() first.")
             kwargs_subhalos = []
             subhalos_lens_model_list = []
+            astropy_instance = None
         lens_model_subhalos_only = LensModel(
                 lens_model_list=subhalos_lens_model_list,
                 cosmo=astropy_instance,
