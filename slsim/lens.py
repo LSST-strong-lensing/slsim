@@ -1444,13 +1444,13 @@ class Lens(LensedSystemBase):
             subhalos_lens_model_list = []
             astropy_instance = None
         lens_model_subhalos_only = LensModel(
-                lens_model_list=subhalos_lens_model_list,
-                cosmo=astropy_instance,
-                z_lens=z_lens,
-                z_source=z_source,
-                z_source_convention=self.max_redshift_source_class.redshift,
-                multi_plane=False,
-            )
+            lens_model_list=subhalos_lens_model_list,
+            cosmo=astropy_instance,
+            z_lens=z_lens,
+            z_source=z_source,
+            z_source_convention=self.max_redshift_source_class.redshift,
+            multi_plane=False,
+        )
         return lens_model_subhalos_only, kwargs_subhalos
 
 
