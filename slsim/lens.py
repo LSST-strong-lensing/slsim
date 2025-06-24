@@ -1438,7 +1438,11 @@ class Lens(LensedSystemBase):
                 self.realization.lensing_quantities(add_mass_sheet_correction=True)
             )
             astropy_instance = self.realization.astropy_instance
-            lens_model_subhalos_only = LensModel(
+        else:
+            print("No realization found. Please run add_subhalos() first.")
+            kwargs_subhalos = []
+            subhalos_lens_model_list = []
+        lens_model_subhalos_only = LensModel(
                 lens_model_list=subhalos_lens_model_list,
                 cosmo=astropy_instance,
                 z_lens=z_lens,
@@ -1446,10 +1450,7 @@ class Lens(LensedSystemBase):
                 z_source_convention=self.max_redshift_source_class.redshift,
                 multi_plane=False,
             )
-            return lens_model_subhalos_only, kwargs_subhalos
-        else:
-            print("No realization found. Please run add_subhalos() first.")
-            return self._lens_model, self._kwargs_lens
+        return lens_model_subhalos_only, kwargs_subhalos
 
 
 def image_separation_from_positions(image_positions):
