@@ -46,7 +46,8 @@ class FalsePositive(Lens):
         :type band: string or None
         :return: lenstronomy model and parameter conventions
         """
-        lens_mass_model_list, kwargs_lens = self.deflector_mass_model_lenstronomy()
+        lens_model, kwargs_lens = self.deflector_mass_model_lenstronomy(source_index=0)
+        lens_model_list = lens_model.lens_model_list
         (
             lens_light_model_list,
             kwargs_lens_light,
@@ -60,7 +61,7 @@ class FalsePositive(Lens):
 
         kwargs_model = {
             "lens_light_model_list": combined_lens_light_model_list,
-            "lens_model_list": lens_mass_model_list,
+            "lens_model_list": lens_model_list,
         }
 
         kwargs_source = None
