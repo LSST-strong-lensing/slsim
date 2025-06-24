@@ -422,6 +422,7 @@ class TestLens(object):
     def test_subhalos_only_lens_model(self):
         # Test the get_halos_only_lens_model method
         from lenstronomy.LensModel.lens_model import LensModel
+
         lens_model, kwargz_lens = self.gg_lens.subhalos_only_lens_model()
         assert isinstance(lens_model, LensModel)
         assert isinstance(kwargz_lens, list)
