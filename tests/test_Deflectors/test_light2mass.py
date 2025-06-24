@@ -98,6 +98,7 @@ def test_invalid_deflector_type():
             scaling_relation="spectroscopic",
         )
 
+
 def test_missing_required_bands():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     deflector_type = "elliptical"
@@ -110,9 +111,9 @@ def test_missing_required_bands():
             get_errors_Poisson(lsst_mags_3[:, i], zeropoints_3[i], exptimes_3[i])
             for i in range(3)
         ]
-    ).T 
+    ).T
     redshifts = np.array([0.08496])
- 
+
     with pytest.raises(ValueError, match="input requires at least g r and i band"):
         get_velocity_dispersion(
             deflector_type,
@@ -123,6 +124,7 @@ def test_missing_required_bands():
             bands=["g", "r"],
             scaling_relation="spectroscopic",
         )
+
 
 if __name__ == "__main__":
     test_get_velocity_dispersion()
