@@ -1127,9 +1127,9 @@ class Lens(LensedSystemBase):
         :return: LensModel() class, kwargs_lens
         """
         if source_index is None:
-            z_sourse = self.max_redshift_source_class.redshift
+            z_source = self.max_redshift_source_class.redshift
         else:
-            z_sourse = self.source(source_index).redshift
+            z_source = self.source(source_index).redshift
         if hasattr(self, "_lens_mass_model_list") and hasattr(self, "_kwargs_lens"):
             pass
         elif self.deflector.deflector_type in ["EPL", "NFW_HERNQUIST", "NFW_CLUSTER"]:
@@ -1159,7 +1159,7 @@ class Lens(LensedSystemBase):
                 lens_model_list=self._lens_mass_model_list,
                 cosmo=self.cosmo,
                 z_lens=self.deflector_redshift,
-                z_source=z_sourse,
+                z_source=z_source,
                 z_source_convention=self.max_redshift_source_class.redshift,
                 multi_plane=False,
             )
@@ -1169,12 +1169,12 @@ class Lens(LensedSystemBase):
                 % self.deflector.deflector_type
             )
         # TODO: replace with change_source_redshift() currently not fully working
-        # self._lens_model.change_source_redshift(z_source=z_sourse)
+        # self._lens_model.change_source_redshift(z_source=z_source)
         self._lens_model = LensModel(
             lens_model_list=self._lens_mass_model_list,
             cosmo=self.cosmo,
             z_lens=self.deflector_redshift,
-            z_source=z_sourse,
+            z_source=z_source,
             z_source_convention=self.max_redshift_source_class.redshift,
             multi_plane=False,
         )
@@ -1353,6 +1353,105 @@ class Lens(LensedSystemBase):
                 lens_type = "LC"
 
         return f"{lens_type}-LENS_{ra:.4f}_{dec:.4f}"
+
+    def add_subhalos(self, pyhalos_kwargs, dm_type, source_index=0):
+        """Generate a realization of the subhalos, halo mass.
+
+        :param pyhalos_kwargs: dictionary of parameters for the pyhalos
+            realization.
+        :type pyhalos_kwargs: dict
+        :param dm_type: type of dark matter models, can be 'CDM', 'WDM',
+            or 'ULDM'
+        :type dm_type: str
+        :param source_index: index of source, default =0, i.e. the first
+            source
+        :type source_index: int
+        """
+
+        z_lens = self.deflector_redshift
+        z_source = self.max_redshift_source_class.redshift
+        einstein_radius = self._get_effective_einstein_radius(source_index)
+        cone_opening_angle = 4 * einstein_radius
+
+        if not hasattr(self, "realization"):
+            if dm_type == "CDM":
+                from pyHalo.PresetModels.cdm import CDM
+
+                realization = CDM(
+                    z_lens,
+                    z_source,
+                    cone_opening_angle_arcsec=cone_opening_angle,
+                    **pyhalos_kwargs,
+                )
+            elif dm_type == "WDM":
+                from pyHalo.PresetModels.wdm import WDM
+
+                realization = WDM(
+                    z_lens,
+                    z_source,
+                    cone_opening_angle_arcsec=cone_opening_angle,
+                    **pyhalos_kwargs,
+                )
+            elif dm_type == "ULDM":
+                from pyHalo.PresetModels.uldm import ULDM
+
+                realization = ULDM(
+                    z_lens,
+                    z_source,
+                    cone_opening_angle_arcsec=cone_opening_angle,
+                    **pyhalos_kwargs,
+                )
+            else:
+                raise ValueError(
+                    "We only support 'CDM', 'WDM' or 'ULDM'. "
+                    "Received: {}".format(dm_type)
+                )
+
+            self.realization = realization
+            subhalo_lens_model_list, redshift_array, kwargs_subhalos, _ = (
+                self.realization.lensing_quantities(add_mass_sheet_correction=True)
+            )
+            self._lens_mass_model_list += subhalo_lens_model_list
+            self._kwargs_lens += kwargs_subhalos
+            print("realization contains " + str(len(realization.halos)) + " halos.")
+
+    def dm_subhalo_mass(self):
+        """Get the halo mass of the subhalos in the realization.
+
+        :return: list of halo masses in the realization
+        """
+        if hasattr(self, "realization"):
+            return [halo.mass for halo in self.realization.halos]
+        else:
+            raise ValueError("No realization found. Please run add_subhalos() first.")
+
+    def subhalos_only_lens_model(self):
+        """Get the lens model for the halos only.
+
+        :return: LensModel instance for the halos only, and list of
+            kwargs for the subhalos.
+        """
+        z_lens = self.deflector_redshift
+        z_source = self.max_redshift_source_class.redshift
+        if hasattr(self, "realization"):
+            subhalos_lens_model_list, redshift_array, kwargs_subhalos, _ = (
+                self.realization.lensing_quantities(add_mass_sheet_correction=True)
+            )
+            astropy_instance = self.realization.astropy_instance
+        else:
+            print("No realization found. Please run add_subhalos() first.")
+            kwargs_subhalos = []
+            subhalos_lens_model_list = []
+            astropy_instance = None
+        lens_model_subhalos_only = LensModel(
+            lens_model_list=subhalos_lens_model_list,
+            cosmo=astropy_instance,
+            z_lens=z_lens,
+            z_source=z_source,
+            z_source_convention=self.max_redshift_source_class.redshift,
+            multi_plane=False,
+        )
+        return lens_model_subhalos_only, kwargs_subhalos
 
 
 def image_separation_from_positions(image_positions):
