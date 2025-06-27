@@ -118,10 +118,10 @@ class TestQuasarHostMatch:
         assert isinstance(result_table, Table)
         assert len(result_table) == 1
 
-        # resulting table should have the expected columns: z, M_i, black_hole_mass_Msun, eddington_ratio, stellar_mass, vel_disp
+        # resulting table should have the expected columns: z, M_i, black_hole_mass_exponent, eddington_ratio, stellar_mass, vel_disp
         assert "z" in result_table.colnames
         assert "M_i" in result_table.colnames
-        assert "black_hole_mass_Msun" in result_table.colnames
+        assert "black_hole_mass_exponent" in result_table.colnames
         assert "eddington_ratio" in result_table.colnames
         assert "stellar_mass" in result_table.colnames
         assert "vel_disp" in result_table.colnames
@@ -130,7 +130,7 @@ class TestQuasarHostMatch:
         assert result_table["host_id"][0] == 1
         assert result_table["vel_disp"][0] == 150.0
         assert result_table["stellar_mass"][0] == 1e11
-        assert "black_hole_mass_Msun" in result_table.colnames
+        assert "black_hole_mass_exponent" in result_table.colnames
         assert "eddington_ratio" in result_table.colnames
         assert result_table["eddington_ratio"][0] == 0.5
 

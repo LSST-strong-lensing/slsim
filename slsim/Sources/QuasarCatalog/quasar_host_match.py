@@ -86,31 +86,29 @@ def black_hole_mass_from_vel_disp(sigma_e, alpha=4.38, beta=0.310):
     return rslt
 
 
-def calculate_lsst_magnitude(lsst_band, black_hole_mass_msun, eddington_ratio):
+def calculate_lsst_magnitude(lsst_band, black_hole_mass_Msun, eddington_ratio):
     """Calculates the absolute magnitude of a quasar in a given LSST band.
 
     The calculation proceeds in three main steps:
     1.  Calculate the Eddington luminosity based on the black hole mass.
     2.  Calculate the bolometric luminosity from the Eddington ratio.
     3.  Convert the bolometric luminosity to an absolute magnitude in the
-        specified LSST band using a bolometric correction. (Ref. Runnoe+ 2012 https://ui.adsabs.harvard.edu/abs/2012MNRAS.422..478R/abstract)
+        specified LSST band using a bolometric correction. (Ref. Runnoe+ 2012 https://arxiv.org/abs/1201.5155)
 
-    Args:
-        lsst_band (str): The desired LSST band. Must be one of
-                         ['u', 'g', 'r', 'i', 'z', 'y'].
-        black_hole_mass_msun (float): The mass of the black hole in solar masses (M_sun).
-        eddington_ratio (float): The Eddington ratio (L_bol / L_edd).
+    :param lsst_band: The desired LSST band. Must be one of ['u', 'g', 'r', 'i', 'z', 'y'].
+    :param black_hole_mass_Msun: The mass of the black hole in solar masses (M_sun).
+    :param eddington_ratio: The Eddington ratio (L_bol / L_edd).
+    :type lsst_band: str
+    :type black_hole_mass_Msun: float
+    :type eddington_ratio: float
 
-    Returns:
-        float: The absolute magnitude of the quasar in the specified LSST band.
-               Returns None if an invalid band is provided.
-
-    Raises:
-        ValueError: If the lsst_band is not a valid LSST band.
+    :return: The absolute magnitude of the quasar in the specified LSST band. Returns None if an invalid band is provided.
+    :rtype: float
+    :raises ValueError: If the lsst_band is not a valid LSST band.
     """
 
-    # Eddington Luminosity from the black hole mass.
-    L_Edd = 3.2e4 * black_hole_mass_msun  # L_sun
+    # Eddington Luminosity from the black hole mass in solar units.
+    L_Edd = 3.2e4 * black_hole_mass_Msun  # L_sun
 
     # Bolometric Luminosity from the Eddington ratio.
     L_bol = L_Edd * eddington_ratio  # L_sun
@@ -119,9 +117,9 @@ def calculate_lsst_magnitude(lsst_band, black_hole_mass_msun, eddington_ratio):
     M_bol_sun = 4.74
     M_bol = M_bol_sun - 2.5 * np.log10(L_bol)  # L_sun
 
-    # Bolometric corrections for LSST bands.
-    # Effective wavelengths for LSST bands (approximate):
-    # u: 365 nm, g: 480 nm, r: 622 nm, i: 754 nm, z: 869 nm, y: 971 nm
+    # Bolometric corrections for LSST bands. (approximate, based on Runnoe+ 2012)
+    # Effective wavelengths for LSST bands (based on Fig. 1 in Huber+ 2020, https://arxiv.org/abs/2008.10393):
+    # u: 367.1 nm, g: 482.7 nm, r: 622.3 nm, i: 754.6 nm, z: 869.1 nm, y: 971.2 nm
     bolometric_corrections = {
         # Corresponds to Runnoe+ (2012) BC for 3000 Å (300 nm) as a UV proxy
         "u": 5.2,
@@ -195,12 +193,12 @@ class QuasarHostMatch:
         # check if galaxy catalog has vel_disp column.
         if "vel_disp" not in self.galaxy_catalog.colnames:
             raise ValueError(
-                "Galaxy catalog must have 'vel_disp' column to calculate host galaxies."
+                "Galaxy catalog must have 'vel_disp' column to perform quasar-host match."
             )
 
         # add columns for black hole mass and eddington ratio
         self.galaxy_catalog.add_column(
-            np.zeros(len(self.galaxy_catalog)), name="black_hole_mass_Msun"
+            np.zeros(len(self.galaxy_catalog)), name="black_hole_mass_exponent"
         )
         self.galaxy_catalog.add_column(
             np.zeros(len(self.galaxy_catalog)), name="eddington_ratio"
@@ -244,7 +242,7 @@ class QuasarHostMatch:
             matched_galaxies.add_row(host_galaxy)
 
             # store the black hole mass and eddington ratio for the matched galaxy.
-            matched_galaxies["black_hole_mass_Msun"][-1] = bh_masses[closest_index]
+            matched_galaxies["black_hole_mass_exponent"][-1] = np.log10(bh_masses[closest_index])
             matched_galaxies["eddington_ratio"][-1] = eddington_ratios[closest_index]
 
         # remove 'z' column from the matched galaxies.
