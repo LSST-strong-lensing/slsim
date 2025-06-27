@@ -242,7 +242,9 @@ class QuasarHostMatch:
             matched_galaxies.add_row(host_galaxy)
 
             # store the black hole mass and eddington ratio for the matched galaxy.
-            matched_galaxies["black_hole_mass_exponent"][-1] = np.log10(bh_masses[closest_index])
+            matched_galaxies["black_hole_mass_exponent"][-1] = np.log10(
+                bh_masses[closest_index]
+            )
             matched_galaxies["eddington_ratio"][-1] = eddington_ratios[closest_index]
 
         # remove 'z' column from the matched galaxies.
