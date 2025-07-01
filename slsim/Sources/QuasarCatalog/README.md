@@ -12,21 +12,15 @@ The overall workflow for matching a single quasar is as follows:
 
 1.  **Select Candidate Hosts**: For a given quasar at redshift `z`, we select a pool of potential host galaxies from the galaxy catalog that are within a small redshift slice (`z ± Δz`) around the quasar's redshift.
 
-2.  **Estimate Black Hole Mass ($M_{BH}$)**: For each candidate galaxy, we estimate the mass of its central SMBH. This is done using the well-known M-$\sigma$ relation, which links the black hole's mass to the stellar velocity dispersion ($\sigma_e$) of the galaxy's bulge (Kormendy & Ho 2013; [arXiv:1304.7762](https://arxiv.org/abs/1304.7762)). The specific relation used is:
-
-    ```math
-    \frac{M_{\text{BH}}}{10^9 M_{\odot}} = 0.310_{-0.033}^{+0.037} \left( \frac{\sigma_e}{200 \text{km.s}^{-1}} \right)^{4.38 \pm 0.29}
-    ```
+2.  **Estimate Black Hole Mass ($M_{BH}$)**: For each candidate galaxy, we estimate the mass of its central SMBH. This is done using the well-known M-$\sigma$ relation, which links the black hole's mass to the stellar velocity dispersion ($\sigma_e$) of the galaxy's bulge (Kormendy & Ho 2013; [arXiv:1304.7762](https://arxiv.org/abs/1304.7762)). The specific relation used is:\
+$$\frac{M_{\text{BH}}}{10^9 M_{\odot}} = 0.310_{-0.033}^{+0.037} \left( \frac{\sigma_e}{200 \text{km.s}^{-1}} \right)^{4.38 \pm 0.29}$$
 
     This calculation is performed by the `black_hole_mass_from_vel_disp()` function.
 
 3.  **Model Quasar Accretion (Eddington Ratio)**: A quasar's luminosity is powered by matter accreting onto the SMBH. The efficiency of this process is described by the Eddington Ratio, $\lambda_{\text{edd}} = L_{\text{bol}} / L_{\text{edd}}$, where $L_{\text{bol}}$ is the bolometric (total) luminosity and $L_{\text{edd}}$ is the theoretical maximum luminosity (the Eddington Luminosity).
 
-    Instead of assuming a single value, we draw a random $\lambda_{\text{edd}}$ for each candidate galaxy from a physically-motivated probability distribution that evolves with redshift (Korytov et al. 2019; [arXiv:1907.06530](https://arxiv.org/abs/1907.06530)). This acknowledges the observed diversity in quasar accretion rates. The probability distribution is modeled as:
-
-    ```math
-    P(\lambda_{\text{edd}}|z) = A \frac{1+z}{(1+z_0)^{\gamma_z}} \lambda_{\text{edd}}^{\gamma_e}
-    ```
+    Instead of assuming a single value, we draw a random $\lambda_{\text{edd}}$ for each candidate galaxy from a physically-motivated probability distribution that evolves with redshift (Korytov et al. 2019; [arXiv:1907.06530](https://arxiv.org/abs/1907.06530)). This acknowledges the observed diversity in quasar accretion rates. The probability distribution is modeled as:\
+    $$P(\lambda_{\text{edd}}|z) = A \frac{1+z}{(1+z_0)^{\gamma_z}} \lambda_{\text{edd}}^{\gamma_e}$$
 
     This sampling is implemented in the `sample_eddington_rate()` function.
 
@@ -36,11 +30,8 @@ The overall workflow for matching a single quasar is as follows:
     * Convert to Bolometric Magnitude: $M_{\text{bol}}$.
     * Apply a **Bolometric Correction (BC)** to convert $M_{\text{bol}}$ to the magnitude in the desired band, $M_i$ (Runnoe, Brotherton, & Shang 2012; [arXiv:1201.5155](https://arxiv.org/abs/1201.5155)).
 
-5.  **Find the Best Match**: After calculating a predicted i-band absolute magnitude ($M_{i, \text{predicted}}$) for every candidate galaxy, the algorithm compares these values to the actual magnitude of the target quasar ($M_{i, \text{target}}$). The galaxy that yields the predicted magnitude closest to the target magnitude is selected as the best-fit host.
-
-    ```math
-    \text{Select galaxy that minimizes } |M_{i, \text{predicted}} - M_{i, \text{target}}|
-    ```
+5.  **Find the Best Match**: After calculating a predicted i-band absolute magnitude ($M_{i, \text{predicted}}$) for every candidate galaxy, the algorithm compares these values to the actual magnitude of the target quasar ($M_{i, \text{target}}$). The galaxy that yields the predicted magnitude closest to the target magnitude is selected as the best-fit host.\
+$$\text{Select galaxy that minimizes } |M_{i, \text{predicted}} - M_{i, \text{target}}|$$
 
 This process is repeated for every quasar in the input catalog, resulting in a final catalog where each quasar is paired with a physically plausible host galaxy.
 
