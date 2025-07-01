@@ -13,3 +13,4 @@ colossus
 uncertainties
 kcorrect
 stpsf
+tqdm
