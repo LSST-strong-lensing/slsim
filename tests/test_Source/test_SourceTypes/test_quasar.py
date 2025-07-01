@@ -4,6 +4,7 @@ import pytest
 from astropy import cosmology
 from astropy.table import Table
 
+
 class TestQuasar:
     def setup_method(self):
         cosmo = cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
@@ -81,6 +82,7 @@ class TestQuasar:
         assert self.source_none.point_source_magnitude("i") == 20
         assert self.source_light_curve.point_source_magnitude("i")[2] == 18
 
+
 def test_extract_agn_kwargs_from_source_dict():
     source_dict = {
         "z": [0.8],
@@ -96,6 +98,7 @@ def test_extract_agn_kwargs_from_source_dict():
     assert "eddington_ratio" in agn_kwargs
     assert agn_kwargs["black_hole_mass_exponent"] == 8.0
     assert agn_kwargs["eddington_ratio"] == 0.5
+
 
 if __name__ == "__main__":
     pytest.main()

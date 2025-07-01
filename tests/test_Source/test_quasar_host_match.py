@@ -161,11 +161,11 @@ class TestQuasarHostMatch:
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
         pipeline = SkyPyPipeline(
-                    skypy_config=skypy_config,
-                    sky_area=sky_area,
-                    filters=None,
-                    cosmo=cosmo,
-                )
+            skypy_config=skypy_config,
+            sky_area=sky_area,
+            filters=None,
+            cosmo=cosmo,
+        )
         host_galaxy_catalog = vstack(
             [pipeline.red_galaxies, pipeline.blue_galaxies],
             join_type="exact",
