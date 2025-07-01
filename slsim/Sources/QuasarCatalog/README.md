@@ -31,7 +31,7 @@ $$\frac{M_{\text{BH}}}{10^9 M_{\odot}} = 0.310_{-0.033}^{+0.037} \left( \frac{\s
     * Apply a **Bolometric Correction (BC)** to convert $M_{\text{bol}}$ to the magnitude in the desired band, $M_i$ (Runnoe, Brotherton, & Shang 2012; [arXiv:1201.5155](https://arxiv.org/abs/1201.5155)).
 
 5.  **Find the Best Match**: After calculating a predicted i-band absolute magnitude ($M_{i, \text{predicted}}$) for every candidate galaxy, the algorithm compares these values to the actual magnitude of the target quasar ($M_{i, \text{target}}$). The galaxy that yields the predicted magnitude closest to the target magnitude is selected as the best-fit host.\
-$$\text{Select galaxy that minimizes } |M_{i, \text{predicted}} - M_{i, \text{target}}|$$
+Select galaxy that minimizes $|M_{i, \text{predicted}} - M_{i, \text{target}}|$
 
 This process is repeated for every quasar in the input catalog, resulting in a final catalog where each quasar is paired with a physically plausible host galaxy.
 
