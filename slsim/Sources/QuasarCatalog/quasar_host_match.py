@@ -203,6 +203,9 @@ class QuasarHostMatch:
         self.galaxy_catalog.add_column(
             np.zeros(len(self.galaxy_catalog)), name="eddington_ratio"
         )
+        # self.galaxy_catalog.add_column(
+        #     np.zeros(len(self.galaxy_catalog)), name="qso_M_i"
+        # )
 
         # prepare a blank catalog with 0 rows to store matched galaxies.
         matched_galaxies = self.galaxy_catalog.copy()[:0]
@@ -246,6 +249,8 @@ class QuasarHostMatch:
                 bh_masses[closest_index]
             )
             matched_galaxies["eddington_ratio"][-1] = eddington_ratios[closest_index]
+
+            # matched_galaxies["qso_M_i"][-1] = quasar_abs_magnitudes_i_band[closest_index]
 
         # remove 'z' column from the matched galaxies.
         matched_galaxies.remove_column("z")

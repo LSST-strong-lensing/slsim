@@ -2,7 +2,12 @@ import numpy as np
 import numpy.testing as npt  # Import numpy testing
 import pytest
 from astropy.table import Table
+from astropy.table import vstack
+from astropy.units import Quantity
+from astropy.cosmology import FlatLambdaCDM
 from unittest.mock import patch
+from slsim.Deflectors.velocity_dispersion import vel_disp_abundance_matching
+from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 
 # Import the functions and class to be tested
 from slsim.Sources.QuasarCatalog.quasar_host_match import (
@@ -146,3 +151,44 @@ class TestQuasarHostMatch:
 
         with pytest.raises(ValueError, match="must have 'vel_disp' column"):
             matcher.match()
+
+    def test_large_area(self):
+        """Tests the matching with a large galaxy catalog."""
+        quasar_cat = Table({"z": [0.5], "M_i": [-23.0], "ps_mag_i": [23.0]})
+
+        skypy_config = None
+        sky_area = Quantity(1, unit="deg2")
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+
+        pipeline = SkyPyPipeline(
+                    skypy_config=skypy_config,
+                    sky_area=sky_area,
+                    filters=None,
+                    cosmo=cosmo,
+                )
+        host_galaxy_catalog = vstack(
+            [pipeline.red_galaxies, pipeline.blue_galaxies],
+            join_type="exact",
+        )
+        print(f"Host galaxy catalog size: {len(host_galaxy_catalog)}")
+
+        self._f_vel_disp = vel_disp_abundance_matching(
+            host_galaxy_catalog,
+            z_max=0.5,
+            sky_area=sky_area,
+            cosmo=cosmo,
+        )
+        host_galaxy_catalog["vel_disp"] = self._f_vel_disp(
+            np.log10(host_galaxy_catalog["stellar_mass"])
+        )
+
+        galaxy_cat = host_galaxy_catalog.copy()
+
+        matcher = QuasarHostMatch(
+            quasar_catalog=quasar_cat.copy(), galaxy_catalog=galaxy_cat.copy()
+        )
+
+        rslt = matcher.match()
+
+        assert isinstance(rslt, Table)
+        assert len(rslt) == 1  # Expecting one match for the single quasar
