@@ -140,8 +140,8 @@ class LensPop(LensedPopulationBase):
             cuts that one wants to apply to the lens. eg:
             kwargs_lens_cut = {}"min_image_separation": 0.5,
             "max_image_separation": 10, "mag_arc_limit": {"i", 24},
-            "second_brightest_image_cut": {"i", 24}}. all these cuts are
-            optional.
+            "second_bright_image_cut = {"band": ["i"], "mag_max":[23]}.
+            all these cuts are optional.
         :type kwargs_lens_cuts: dict
         :param multi_source: A boolean value. If True, considers multi
             source lensing. If False, considers single source lensing.
@@ -150,8 +150,8 @@ class LensPop(LensedPopulationBase):
             magnitude of the second brightest image and corresponding
             band. If provided, selects lenses where the second brightest
             image has a magnitude less than or equal to provided
-            magnitude. eg: second_bright_image_cut = {"band": "i",
-            "second_bright_mag_max": 23}
+            magnitude. eg: second_bright_image_cut = {"band": ["i"],
+            "mag_max":[23]}
         :param speed_factor: factor by which the number of deflectors is
             decreased to speed up the calculations.
         :return: List of Lens instances with parameters of the
