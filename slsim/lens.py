@@ -371,7 +371,12 @@ class Lens(LensedSystemBase):
         # the magnitude less or equal to "second_bright_mag_max" provided in the dict
         # second_bright_image_cut.
         if second_brightest_image_cut is not None:
-            for band_max, mag_max in second_brightest_image_cut.items():
+            cut_values = list(second_brightest_image_cut.values())
+            bands = cut_values[0]
+            values = cut_values[1]
+            image_cut_dict = dict(zip(bands, values))
+            for band_max, mag_max in image_cut_dict.items():
+
                 if self._source_type == "extended":
                     image_magnitude_list = (
                         self.extended_source_magnitude_for_each_image(

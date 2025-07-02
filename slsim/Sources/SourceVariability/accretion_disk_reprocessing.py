@@ -59,12 +59,12 @@ class AccretionDiskReprocessing(object):
 
             for jj in default_lamppost_kwargs:
                 if jj not in self.kwargs_model:
-                    print(
-                        "keyword "
-                        + jj
-                        + " is not defined, using default value of: "
-                        + str(default_lamppost_kwargs[jj])
-                    )
+                    # print(
+                    #     "keyword "
+                    #     + jj
+                    #     + " is not defined, using default value of: "
+                    #     + str(default_lamppost_kwargs[jj])
+                    # )
                     self.kwargs_model[jj] = default_lamppost_kwargs[jj]
 
             self.time_array = None
