@@ -1,5 +1,6 @@
 import numpy as np
 from astropy.table import Table
+import astropy.units as u
 import random
 
 """References:
@@ -43,6 +44,8 @@ class SupernovaeHostMatch:
             names=(tuple(self.galaxy_catalog.colnames)),
             dtype=dtype_tuple,
         )
+        matched_catalog["physical_size"].unit = u.kpc
+        matched_catalog["angular_size"].unit = u.rad
         # Specify appropriate redshift range based on galaxy catalog sky area (1 deg^2 ~ 1e6
         # galaxies).
         if len(self.galaxy_catalog) > 1e6:

@@ -86,6 +86,10 @@ def test_false_positive():
         )
         == 3
     )
+    assert np.all(
+        false_positive_instance_1.lenstronomy_kwargs("i")[0]["lens_model_list"]
+        == ["SIE", "SHEAR", "CONVERGENCE"]
+    )
     assert (
         len(false_positive_instance_2.lenstronomy_kwargs("i")[1]["kwargs_lens_light"])
         == 3

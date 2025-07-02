@@ -86,7 +86,7 @@ SNIa_Lens = Lens(
     cosmo=COSMO,
 )
 
-PSF_DIRECTORY = os.path.join(os.path.dirname(__file__), "..", "data", "webbpsf")
+PSF_DIRECTORY = os.path.join(os.path.dirname(__file__), "..", "data", "stpsf")
 
 
 # NOTE: Galsim is required which is not supported on Windows

@@ -12,4 +12,5 @@ sncosmo
 colossus
 uncertainties
 kcorrect
-webbpsf
+stpsf
+tqdm

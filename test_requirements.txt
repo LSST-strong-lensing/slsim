@@ -5,3 +5,4 @@ galsim
 microlensing
 pyhalo
 mcfit
+tqdm
