@@ -4,9 +4,12 @@ from scipy.interpolate import interp1d
 from scipy.integrate import quad
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
-from astropy.table import Table
+from astropy.table import Table, vstack
 import os
 from pathlib import Path
+from slsim.Sources.QuasarCatalog.quasar_host_match import QuasarHostMatch
+from slsim.Deflectors.velocity_dispersion import vel_disp_abundance_matching
+from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 
 """
 References:
@@ -29,9 +32,11 @@ class QuasarRate(object):
         beta: float = -1.45,
         phi_star: float = 5.34e-6 * (0.70**3),
         cosmo: FlatLambdaCDM = None,
+        skypy_config: str = None,
         sky_area: Quantity = None,
         noise: bool = True,
         redshifts: np.ndarray = None,
+        host_galaxy_candidate: Table = None,
     ):
         """Initializes the QuasarRate class with given parameters.
 
@@ -54,12 +59,19 @@ class QuasarRate(object):
         :type phi_star: float
         :param cosmo: Cosmology object.
         :type cosmo: ~astropy.cosmology object
+        :param skypy_config: path to SkyPy configuration yaml file. Default is None.
+        If None, the default configuration will be used.
+        :type skypy_config: string
         :param sky_area: Sky area for sampled quasars in [solid angle].
         :type sky_area: `~Astropy.units.Quantity`
         :param noise: Poisson-sample the number of galaxies in quasar density lightcone.
         :type noise: bool
         :param redshifts: Redshifts for quasar density lightcone to be evaluated at.
         :type redshifts: np.ndarray
+        :param host_galaxy_candidate: Galaxy catalog in an Astropy table. This catalog
+         is used to match with the supernova population. If None, the galaxy catalog is
+         generated within this class.
+        :type host_galaxy_candidate: `~astropy.table.Table`
         """
         self.zeta = zeta
         self.xi = xi
@@ -68,6 +80,7 @@ class QuasarRate(object):
         self.beta = beta
         self.phi_star = phi_star
         self.cosmo = cosmo if cosmo is not None else FlatLambdaCDM(H0=70, Om0=0.3)
+        self.skypy_config = skypy_config
         self.sky_area = (
             sky_area if sky_area is not None else Quantity(0.05, unit="deg2")
         )
@@ -75,6 +88,7 @@ class QuasarRate(object):
         self.redshifts = (
             np.array(redshifts) if redshifts is not None else np.linspace(0.1, 5.0, 100)
         )
+        self.host_galaxy_candidate = host_galaxy_candidate
 
         # Construct the dynamic path to the data file
         base_path = Path(os.path.dirname(__file__))
@@ -325,7 +339,7 @@ class QuasarRate(object):
 
         return inverse_cdf_dict
 
-    def quasar_sample(self, m_min, m_max, seed=42):
+    def quasar_sample(self, m_min, m_max, seed=42, host_galaxy=False):
         """Generates random redshift values and associated apparent i-band
         magnitude values for quasar samples.
 
@@ -335,6 +349,9 @@ class QuasarRate(object):
         :type m_max: float
         :param seed: Random seed for reproducibility.
         :type seed: int
+        :param host_galaxy: Host galaxy catalog generation flag. If True, the
+            host galaxy catalog will be generated and matched with the quasar
+            catalog. If False, no host galaxy catalog will be generated.
         :return: astropy Table with redshift and associated apparent i-band magnitude values.
         :rtype: `~astropy.table.Table`
         """
@@ -343,21 +360,58 @@ class QuasarRate(object):
         inverse_cdf_dict = self.inverse_cdf_fits_for_redshifts(
             m_min, m_max, quasar_redshifts
         )
-        table_data = {"z": [], "M": [], "ps_mag_i": []}
+        table_data = {"z": [], "M_i": [], "ps_mag_i": []}
 
         for redshift in quasar_redshifts:
             inverse_cdf = inverse_cdf_dict[redshift]
             random_inverse_cdf_value = np.random.rand()
-            random_abs_M_value = inverse_cdf(random_inverse_cdf_value)
+            random_abs_M_i_value = inverse_cdf(random_inverse_cdf_value)
 
             # Convert the absolute magnitude back to apparent magnitude
             apparent_i_mag = self.convert_magnitude(
-                random_abs_M_value, redshift, conversion="absolute_to_apparent"
+                random_abs_M_i_value, redshift, conversion="absolute_to_apparent"
             )
-            table_data["M"].append(random_abs_M_value)
+            table_data["M_i"].append(random_abs_M_i_value)
             table_data["z"].append(redshift)
             table_data["ps_mag_i"].append(apparent_i_mag)
 
         # Create an Astropy Table from the collected data
         table = Table(table_data)
+
+        # Generate and match the host galaxy catalog if requested
+        if host_galaxy is True:
+            if self.host_galaxy_candidate is None:
+                pipeline = SkyPyPipeline(
+                    skypy_config=self.skypy_config,
+                    sky_area=self.sky_area,
+                    filters=None,
+                    cosmo=self.cosmo,
+                )
+                host_galaxy_catalog = vstack(
+                    [pipeline.red_galaxies, pipeline.blue_galaxies],
+                    join_type="exact",
+                )
+            else:
+                host_galaxy_catalog = self.host_galaxy_candidate
+
+            # compute "vel_disp" if not present
+            if "vel_disp" not in host_galaxy_catalog.colnames:
+                self._f_vel_disp = vel_disp_abundance_matching(
+                    host_galaxy_catalog,
+                    z_max=0.5,
+                    sky_area=self.sky_area,
+                    cosmo=self.cosmo,
+                )
+                host_galaxy_catalog["vel_disp"] = self._f_vel_disp(
+                    np.log10(host_galaxy_catalog["stellar_mass"])
+                )
+
+            matching_catalogs = QuasarHostMatch(
+                quasar_catalog=table,
+                galaxy_catalog=host_galaxy_catalog,
+            )
+            matched_table = matching_catalogs.match()
+
+            return matched_table
+
         return table
