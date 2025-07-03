@@ -265,7 +265,7 @@ class TestQuasarRate:
     # New tests for host galaxy matching functionality
 
     @patch.object(
-        QuasarRate, "generate_quasar_redshifts", return_value=np.array([0.51])
+        QuasarRate, "generate_quasar_redshifts", return_value=np.array([0.5001])
     )
     def test_quasar_sample_with_provided_hosts(self, mock_gen_z):
         """Tests sampling with a provided host catalog."""
@@ -281,7 +281,7 @@ class TestQuasarRate:
 
     @patch("slsim.Sources.QuasarCatalog.quasar_pop.vel_disp_abundance_matching")
     @patch.object(
-        QuasarRate, "generate_quasar_redshifts", return_value=np.array([0.51])
+        QuasarRate, "generate_quasar_redshifts", return_value=np.array([0.5001])
     )
     def test_quasar_sample_with_vel_disp_calc(self, mock_gen_z, mock_vel_disp):
         """Tests sampling with automatic velocity dispersion calculation."""
@@ -298,7 +298,7 @@ class TestQuasarRate:
     @patch("slsim.Sources.QuasarCatalog.quasar_pop.SkyPyPipeline")
     @patch("slsim.Sources.QuasarCatalog.quasar_pop.vel_disp_abundance_matching")
     @patch.object(
-        QuasarRate, "generate_quasar_redshifts", return_value=np.array([0.82])
+        QuasarRate, "generate_quasar_redshifts", return_value=np.array([0.80])
     )
     def test_quasar_sample_with_host_generation(
         self, mock_gen_z, mock_vel_disp, mock_skypy_pipeline
@@ -310,7 +310,7 @@ class TestQuasarRate:
             {"z": [0.8], "stellar_mass": [2e11]}
         )
         mock_pipeline_instance.blue_galaxies = Table(
-            {"z": [0.81], "stellar_mass": [1e11]}
+            {"z": [0.8001], "stellar_mass": [1e11]}
         )
 
         self.quasar_rate.host_galaxy_candidate = None

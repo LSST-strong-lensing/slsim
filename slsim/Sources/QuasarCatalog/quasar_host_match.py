@@ -1,5 +1,5 @@
 import numpy as np
-from astropy.table import Table, hstack
+from astropy.table import hstack
 from scipy.interpolate import interp1d
 from tqdm import tqdm
 
@@ -59,7 +59,9 @@ def sample_eddington_rate(
     cdf = np.cumsum(pdf)
     cdf /= cdf[-1]  # Normalize to [0, 1]
     # Inverse CDF interpolation
-    inv_cdf = interp1d(cdf, lambda_grid, bounds_error=False)
+    inv_cdf = interp1d(
+        cdf, lambda_grid, bounds_error=False, fill_value=(lambda_min, lambda_max)
+    )
     # Sample uniformly in [0,1]
     u = np.random.uniform(0, 1, size)
     return inv_cdf(u)
@@ -70,13 +72,13 @@ def black_hole_mass_from_vel_disp(sigma_e, alpha=4.38, beta=0.310):
     relationship derived from the M-sigma relation.
 
     :param sigma_e: Bulge Velocity dispersion in km/s
-    :type sigma_e: float
+    :type sigma_e: float or numpy.ndarray
     :param alpha: Power-law index (default: 4.38)
     :type alpha: float, optional
     :param beta: Normalization constant (default: 0.310)
     :type beta: float, optional
     :return: Black hole mass in solar masses
-    :rtype: float
+    :rtype: float or numpy.ndarray
 
     Notes
     -----
@@ -96,14 +98,14 @@ def calculate_lsst_magnitude(lsst_band, black_hole_mass_Msun, eddington_ratio):
         specified LSST band using a bolometric correction. (Ref. Runnoe+ 2012 https://arxiv.org/abs/1201.5155)
 
     :param lsst_band: The desired LSST band. Must be one of ['u', 'g', 'r', 'i', 'z', 'y'].
-    :param black_hole_mass_Msun: The mass of the black hole in solar masses (M_sun).
-    :param eddington_ratio: The Eddington ratio (L_bol / L_edd).
+    :param black_hole_mass_Msun: The mass of the black hole in solar masses (M_sun). Can be an array.
+    :param eddington_ratio: The Eddington ratio (L_bol / L_edd). Can be an array.
     :type lsst_band: str
-    :type black_hole_mass_Msun: float
-    :type eddington_ratio: float
+    :type black_hole_mass_Msun: float or numpy.ndarray
+    :type eddington_ratio: float or numpy.ndarray
 
     :return: The absolute magnitude of the quasar in the specified LSST band. Returns None if an invalid band is provided.
-    :rtype: float
+    :rtype: float or numpy.ndarray
     :raises ValueError: If the lsst_band is not a valid LSST band.
     """
 
@@ -164,7 +166,7 @@ class QuasarHostMatch:
         :type galaxy_catalog: astropy Table
         """
         self.quasar_catalog = quasar_catalog
-        self.galaxy_catalog = galaxy_catalog
+        self.galaxy_catalog = galaxy_catalog.copy()
 
     def match(self):
         """Generates catalog in which quasars are matched with host galaxies.
@@ -173,22 +175,9 @@ class QuasarHostMatch:
             host galaxies
         :return type: astropy Table
         """
-        # Create a tuple of data types (dtype_tuple).
-        dtype_tuple = tuple(["float64"] * len(self.galaxy_catalog.colnames))
-        # Convert 3rd element to object from float64.
-        dtype_tuple = dtype_tuple[:2] + ("object",) + dtype_tuple[3:]
-        # Create a new Table object where quasars and their host galaxy will be stored.
-        # This table will be created dynamically with the format of the given galaxy catalog.
-        matched_catalog = Table(
-            names=(tuple(self.galaxy_catalog.colnames)),
-            dtype=dtype_tuple,
-        )
-        # Specify appropriate redshift range based on galaxy catalog sky area (1 deg^2 ~ 1e6
-        # galaxies).
-        if len(self.galaxy_catalog) > 1e6:
-            z_range = 0.05 / 2
-        else:
-            z_range = 0.05
+        # Pre-sort the galaxy catalog by redshift
+        self.galaxy_catalog.sort("z")
+        galaxy_z = self.galaxy_catalog["z"].data
 
         # check if galaxy catalog has vel_disp column.
         if "vel_disp" not in self.galaxy_catalog.colnames:
@@ -196,69 +185,83 @@ class QuasarHostMatch:
                 "Galaxy catalog must have 'vel_disp' column to perform quasar-host match."
             )
 
-        # add columns for black hole mass and eddington ratio
-        self.galaxy_catalog.add_column(
-            np.zeros(len(self.galaxy_catalog)), name="black_hole_mass_exponent"
-        )
-        self.galaxy_catalog.add_column(
-            np.zeros(len(self.galaxy_catalog)), name="eddington_ratio"
-        )
-        # self.galaxy_catalog.add_column(
-        #     np.zeros(len(self.galaxy_catalog)), name="qso_M_i"
-        # )
+        galaxy_vel_disp = self.galaxy_catalog["vel_disp"].data
 
-        # prepare a blank catalog with 0 rows to store matched galaxies.
-        matched_galaxies = self.galaxy_catalog.copy()[:0]
+        # Specify appropriate redshift range based on galaxy catalog sky area (1 deg^2 ~ 1e6 galaxies)
+        z_range = 0.001 / 2 if len(self.galaxy_catalog) > 1e6 else 0.001
 
-        # Iterate through the quasar catalog.
-        for redshift, M_i in tqdm(
-            zip(self.quasar_catalog["z"], self.quasar_catalog["M_i"]),
-            total=len(self.quasar_catalog),
-            desc="Matching quasars with host galaxies",
+        # Build lists of results
+        matched_galaxy_indices = []
+        matched_bh_mass_exponents = []
+        matched_eddington_ratios = []
+        matched_galaxy_host_quasar_abs_magnitude_i = []
+
+        # Keep track of which quasars get a match
+        quasar_indices_with_match = []
+
+        # Iterate through the quasar catalog with an index
+        for i, (redshift, M_i) in enumerate(
+            tqdm(
+                zip(self.quasar_catalog["z"], self.quasar_catalog["M_i"]),
+                total=len(self.quasar_catalog),
+                desc="Matching quasars with host galaxies",
+            )
         ):
+            # Use np.searchsorted for fast slicing ---
+            start_idx = np.searchsorted(galaxy_z, redshift - z_range, side="left")
+            end_idx = np.searchsorted(galaxy_z, redshift + z_range, side="right")
 
-            # Select host galaxy candidates in the specified redshift range.
-            host_galaxy_candidates = self.galaxy_catalog[
-                (self.galaxy_catalog["z"] >= (redshift - z_range))
-                & (self.galaxy_catalog["z"] <= (redshift + z_range))
-            ]
+            num_candidates = end_idx - start_idx
+            if num_candidates == 0:
+                continue  # Skip this quasar if no host candidates are in range
 
-            # compute the BH mass from the velocity dispersion, append it to the host galaxy candidates.
-            bh_masses = black_hole_mass_from_vel_disp(
-                host_galaxy_candidates["vel_disp"]
+            candidate_vel_disp = galaxy_vel_disp[start_idx:end_idx]
+
+            # compute the BH mass from the velocity dispersion
+            bh_masses = black_hole_mass_from_vel_disp(candidate_vel_disp)
+
+            # assign the eddington ratios to the candidates
+            eddington_ratios = sample_eddington_rate(redshift, size=num_candidates)
+
+            # use both to calculate the quasar absolute magnitude in the "i" band.
+            quasar_abs_magnitudes_i_band = calculate_lsst_magnitude(
+                "i", bh_masses, eddington_ratios
             )
 
-            # Calculate the Eddington ratio for each host galaxy candidate.
-            eddington_ratios = sample_eddington_rate(
-                redshift, size=len(host_galaxy_candidates)
+            # Find the best match within the candidates
+            closest_local_index = np.nanargmin(
+                np.abs(M_i - quasar_abs_magnitudes_i_band)
             )
 
-            # use both to calculate the absolute magnitude in the "i" band.
-            quasar_abs_magnitudes_i_band = [
-                calculate_lsst_magnitude("i", bh_mass, eddington_ratio)
-                for bh_mass, eddington_ratio in zip(bh_masses, eddington_ratios)
-            ]
+            # Convert local index (within the slice) to global index (in the full galaxy catalog)
+            host_galaxy_global_index = start_idx + closest_local_index
 
-            # select host galaxy with closest quasar absolute magnitude in "i" band.
-            closest_index = np.nanargmin(np.abs(M_i - quasar_abs_magnitudes_i_band))
-            host_galaxy = host_galaxy_candidates[closest_index]
-            matched_galaxies.add_row(host_galaxy)
-
-            # store the black hole mass and eddington ratio for the matched galaxy.
-            matched_galaxies["black_hole_mass_exponent"][-1] = np.log10(
-                bh_masses[closest_index]
+            # Store the results for this quasar
+            matched_galaxy_indices.append(host_galaxy_global_index)
+            matched_bh_mass_exponents.append(np.log10(bh_masses[closest_local_index]))
+            matched_eddington_ratios.append(eddington_ratios[closest_local_index])
+            quasar_indices_with_match.append(i)
+            matched_galaxy_host_quasar_abs_magnitude_i.append(
+                quasar_abs_magnitudes_i_band[closest_local_index]
             )
-            matched_galaxies["eddington_ratio"][-1] = eddington_ratios[closest_index]
 
-            # matched_galaxies["qso_M_i"][-1] = quasar_abs_magnitudes_i_band[closest_index]
+        # Filter the quasar catalog to only include those that were matched.
+        matched_quasars = self.quasar_catalog[quasar_indices_with_match]
 
-        # remove 'z' column from the matched galaxies.
+        # Select all matched galaxies
+        matched_galaxies = self.galaxy_catalog[matched_galaxy_indices]
+
+        # Add the new columns to the results table.
+        matched_galaxies["black_hole_mass_exponent"] = matched_bh_mass_exponents
+        matched_galaxies["eddington_ratio"] = matched_eddington_ratios
+        # matched_galaxies["galaxy_host_quasar_M_i"] = matched_galaxy_host_quasar_abs_magnitude_i
+
+        # Remove the redshift column from the host galaxy part of the table
         matched_galaxies.remove_column("z")
-        # matched_galaxies.rename_column("z", "host_galaxy_z")
 
-        # concatenate the matched galaxies with the quasar catalog.
+        # Concatenate the matched quasars and their new host galaxies
         matched_catalog = hstack(
-            [self.quasar_catalog, matched_galaxies],
+            [matched_quasars, matched_galaxies],
             table_names=["quasar", "host_galaxy"],
             join_type="exact",
         )
