@@ -153,7 +153,8 @@ class TestQuasarHostMatch:
             matcher.match()
 
     def test_no_host_candidates_in_range(self):
-        """Tests that a quasar is skipped if no host galaxies are in the redshift range."""
+        """Tests that a quasar is skipped if no host galaxies are in the
+        redshift range."""
         # A quasar with a redshift that is far from any galaxy in the catalog
         quasar_cat = Table({"z": [2.0], "M_i": [-23.0]})
         # A galaxy catalog with redshifts far from the quasar
