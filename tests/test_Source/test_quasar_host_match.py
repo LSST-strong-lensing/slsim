@@ -83,7 +83,7 @@ class TestQuasarHostMatch:
 
         galaxy_cat = Table(
             {
-                "z": [0.49, 0.51],
+                "z": [0.5001, 0.4901],
                 "vel_disp": [150.0, 200.0],  # km/s
                 "stellar_mass": [1e11, 2e11],  # Solar masses
                 "host_id": [1, 2],  # Unique identifier for host galaxies
