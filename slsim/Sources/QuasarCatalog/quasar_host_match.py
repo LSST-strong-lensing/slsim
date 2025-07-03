@@ -191,7 +191,7 @@ class QuasarHostMatch:
         galaxy_vel_disp = self.galaxy_catalog["vel_disp"].data
 
         # Specify appropriate redshift range based on galaxy catalog sky area (1 deg^2 ~ 1e6 galaxies)
-        z_range = 0.001 / 2 if len(self.galaxy_catalog) > 1e6 else 0.001
+        z_range = 0.05 / 2 if len(self.galaxy_catalog) > 1e6 else 0.05
 
         # Build lists of results
         matched_galaxy_indices = []
