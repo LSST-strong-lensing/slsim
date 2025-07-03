@@ -57,9 +57,6 @@ def sample_eddington_rate(
     pdf = prefactor * lambda_grid**gamma_e
     # Cumulative distribution function (numerical)
     cdf = np.cumsum(pdf)
-    # Handle cases where the PDF is all zeros
-    if cdf[-1] == 0:
-        return np.full(size, np.nan)
     cdf /= cdf[-1]  # Normalize to [0, 1]
     # Inverse CDF interpolation
     inv_cdf = interp1d(

@@ -152,6 +152,29 @@ class TestQuasarHostMatch:
         with pytest.raises(ValueError, match="must have 'vel_disp' column"):
             matcher.match()
 
+    def test_no_host_candidates_in_range(self):
+        """Tests that a quasar is skipped if no host galaxies are in the redshift range."""
+        # A quasar with a redshift that is far from any galaxy in the catalog
+        quasar_cat = Table({"z": [2.0], "M_i": [-23.0]})
+        # A galaxy catalog with redshifts far from the quasar
+        galaxy_cat = Table(
+            {
+                "z": [0.5001, 0.4901],
+                "vel_disp": [150.0, 200.0],
+                "stellar_mass": [1e11, 2e11],
+                "host_id": [1, 2],
+            }
+        )
+
+        matcher = QuasarHostMatch(
+            quasar_catalog=quasar_cat.copy(), galaxy_catalog=galaxy_cat.copy()
+        )
+        result_table = matcher.match()
+
+        # Check that the resulting table is empty because no match was found
+        assert isinstance(result_table, Table)
+        assert len(result_table) == 0
+
     def test_large_area(self):
         """Tests the matching with a large galaxy catalog."""
         quasar_cat = Table({"z": [0.5], "M_i": [-23.0], "ps_mag_i": [23.0]})
