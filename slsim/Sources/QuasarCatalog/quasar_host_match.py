@@ -62,7 +62,9 @@ def sample_eddington_rate(
         return np.full(size, np.nan)
     cdf /= cdf[-1]  # Normalize to [0, 1]
     # Inverse CDF interpolation
-    inv_cdf = interp1d(cdf, lambda_grid, bounds_error=False, fill_value=(lambda_min, lambda_max))
+    inv_cdf = interp1d(
+        cdf, lambda_grid, bounds_error=False, fill_value=(lambda_min, lambda_max)
+    )
     # Sample uniformly in [0,1]
     u = np.random.uniform(0, 1, size)
     return inv_cdf(u)
@@ -168,7 +170,6 @@ class QuasarHostMatch:
         """
         self.quasar_catalog = quasar_catalog
         self.galaxy_catalog = galaxy_catalog.copy()
-        
 
     def match(self):
         """Generates catalog in which quasars are matched with host galaxies.
@@ -178,8 +179,8 @@ class QuasarHostMatch:
         :return type: astropy Table
         """
         # Pre-sort the galaxy catalog by redshift
-        self.galaxy_catalog.sort('z')
-        galaxy_z = self.galaxy_catalog['z'].data
+        self.galaxy_catalog.sort("z")
+        galaxy_z = self.galaxy_catalog["z"].data
 
         # check if galaxy catalog has vel_disp column.
         if "vel_disp" not in self.galaxy_catalog.colnames:
@@ -187,7 +188,7 @@ class QuasarHostMatch:
                 "Galaxy catalog must have 'vel_disp' column to perform quasar-host match."
             )
 
-        galaxy_vel_disp = self.galaxy_catalog['vel_disp'].data
+        galaxy_vel_disp = self.galaxy_catalog["vel_disp"].data
 
         # Specify appropriate redshift range based on galaxy catalog sky area (1 deg^2 ~ 1e6 galaxies)
         z_range = 0.001 / 2 if len(self.galaxy_catalog) > 1e6 else 0.001
@@ -197,19 +198,21 @@ class QuasarHostMatch:
         matched_bh_mass_exponents = []
         matched_eddington_ratios = []
         matched_galaxy_host_quasar_abs_magnitude_i = []
-        
+
         # Keep track of which quasars get a match
         quasar_indices_with_match = []
 
         # Iterate through the quasar catalog with an index
-        for i, (redshift, M_i) in enumerate(tqdm(
-            zip(self.quasar_catalog["z"], self.quasar_catalog["M_i"]),
-            total=len(self.quasar_catalog),
-            desc="Matching quasars with host galaxies",
-        )):
+        for i, (redshift, M_i) in enumerate(
+            tqdm(
+                zip(self.quasar_catalog["z"], self.quasar_catalog["M_i"]),
+                total=len(self.quasar_catalog),
+                desc="Matching quasars with host galaxies",
+            )
+        ):
             # Use np.searchsorted for fast slicing ---
-            start_idx = np.searchsorted(galaxy_z, redshift - z_range, side='left')
-            end_idx = np.searchsorted(galaxy_z, redshift + z_range, side='right')
+            start_idx = np.searchsorted(galaxy_z, redshift - z_range, side="left")
+            end_idx = np.searchsorted(galaxy_z, redshift + z_range, side="right")
 
             num_candidates = end_idx - start_idx
             if num_candidates == 0:
@@ -219,19 +222,19 @@ class QuasarHostMatch:
 
             # compute the BH mass from the velocity dispersion
             bh_masses = black_hole_mass_from_vel_disp(candidate_vel_disp)
-            
+
             # assign the eddington ratios to the candidates
             eddington_ratios = sample_eddington_rate(redshift, size=num_candidates)
 
-            
             # use both to calculate the quasar absolute magnitude in the "i" band.
             quasar_abs_magnitudes_i_band = calculate_lsst_magnitude(
                 "i", bh_masses, eddington_ratios
             )
 
             # Find the best match within the candidates
-            closest_local_index = np.nanargmin(np.abs(M_i - quasar_abs_magnitudes_i_band))
-
+            closest_local_index = np.nanargmin(
+                np.abs(M_i - quasar_abs_magnitudes_i_band)
+            )
 
             # Convert local index (within the slice) to global index (in the full galaxy catalog)
             host_galaxy_global_index = start_idx + closest_local_index
@@ -241,7 +244,9 @@ class QuasarHostMatch:
             matched_bh_mass_exponents.append(np.log10(bh_masses[closest_local_index]))
             matched_eddington_ratios.append(eddington_ratios[closest_local_index])
             quasar_indices_with_match.append(i)
-            matched_galaxy_host_quasar_abs_magnitude_i.append(quasar_abs_magnitudes_i_band[closest_local_index])
+            matched_galaxy_host_quasar_abs_magnitude_i.append(
+                quasar_abs_magnitudes_i_band[closest_local_index]
+            )
 
         # Filter the quasar catalog to only include those that were matched.
         matched_quasars = self.quasar_catalog[quasar_indices_with_match]
