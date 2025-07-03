@@ -1,5 +1,5 @@
 import numpy as np
-from astropy.table import Table, hstack
+from astropy.table import hstack
 from scipy.interpolate import interp1d
 from tqdm import tqdm
 
