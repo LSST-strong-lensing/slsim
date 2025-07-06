@@ -361,6 +361,86 @@ class TestLens(object):
         mag_ratios = self.gg_lens.contrast_ratio(band="i", source_index=0)
         assert 2 <= len(mag_ratios) <= 4
 
+    def test_add_subhalos(self):
+        # Test the add_subhalos method
+
+        # Check that the method raises an error if no subhalos are provided
+        npt.assert_raises(ValueError, self.gg_lens.dm_subhalo_mass)
+        npt.assert_raises(ValueError, self.gg_lens.add_subhalos, {}, "SIDM")
+
+        pyhalos_parms = {
+            "LOS_normalization": 0,
+        }
+        dm_type_cdm = "CDM"
+        gg_lens_copy_cdm = copy.deepcopy(self.gg_lens)
+
+        gg_lens_copy_cdm.add_subhalos(pyhalos_parms, dm_type_cdm)
+
+        realization = gg_lens_copy_cdm.realization
+        dm_subhalo_mass = gg_lens_copy_cdm.dm_subhalo_mass()
+        assert isinstance(dm_subhalo_mass, list)
+        assert isinstance(realization, object)
+
+        len_after_first_kwargs = len(gg_lens_copy_cdm._kwargs_lens)
+
+        # second call for checking for no duplication
+        gg_lens_copy_cdm.add_subhalos(pyhalos_parms, dm_type_cdm)
+
+        len_after_second_kwargs = len(gg_lens_copy_cdm._kwargs_lens)
+
+        assert len_after_second_kwargs == len_after_first_kwargs, "kwargs duplicated!"
+
+        pyhalos_parms_wdm = {
+            "LOS_normalization": 0,
+            "log_mc": 7.0,
+        }
+        dm_type_wdm = "WDM"
+        gg_lens_copy_wdm = copy.deepcopy(self.gg_lens)
+
+        gg_lens_copy_wdm.add_subhalos(pyhalos_parms_wdm, dm_type_wdm)
+
+        realization_wdm = gg_lens_copy_wdm.realization
+        assert isinstance(realization_wdm, object)
+
+        pyhalos_parms_uldm = {
+            "LOS_normalization": 0,
+            "log10_m_uldm": -20.0,
+            "uldm_plaw": 1 / 3,
+            "flucs_shape": "ring",
+            "flucs_args": {"angle": 0.0, "rmin": 0.9, "rmax": 1.1},
+            "log10_fluc_amplitude": -1.6,
+            "n_cut": 1000000,
+        }
+        dm_type_uldm = "ULDM"
+        gg_lens_copy_uldm = copy.deepcopy(self.gg_lens)
+
+        gg_lens_copy_uldm.add_subhalos(pyhalos_parms_uldm, dm_type_uldm)
+
+        realization_uldm = gg_lens_copy_uldm.realization
+        assert isinstance(realization_uldm, object)
+
+    def test_subhalos_only_lens_model(self):
+        # Test the get_halos_only_lens_model method
+        from lenstronomy.LensModel.lens_model import LensModel
+
+        lens_model, kwargz_lens = self.gg_lens.subhalos_only_lens_model()
+        assert isinstance(lens_model, LensModel)
+        assert isinstance(kwargz_lens, list)
+
+        pyhalos_parms = {"LOS_normalization": 0}
+        dm_type = "CDM"
+        self.gg_lens.add_subhalos(pyhalos_parms, dm_type)
+        subhalos_only_model, kwargs_subhalos = self.gg_lens.subhalos_only_lens_model()
+
+        assert isinstance(subhalos_only_model, LensModel)
+        assert isinstance(kwargs_subhalos, list)
+
+        subhalo_lens_model_list, _, _, _ = self.gg_lens.realization.lensing_quantities(
+            add_mass_sheet_correction=True
+        )
+        # check that the lens model list is the same as the one returned by subhalos_only_lens_model
+        assert subhalos_only_model.lens_model_list == subhalo_lens_model_list
+
 
 @pytest.fixture
 def pes_lens_instance():
