@@ -1,17 +1,11 @@
-import matplotlib.pyplot as plt
 from astropy.cosmology import FlatLambdaCDM
 import numpy as np
-
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
 from slsim.lens import Lens
 from slsim.LOS.los_individual import LOSIndividual
-from slsim.image_simulation import rgb_image_from_image_list, lens_image, simulate_image
-from slsim.Util.param_util import gaussian_psf, transformmatrix_to_pixelscale
-
-from lenstronomy.LensModel.lens_model import LensModel
-import os
-import pickle
+from slsim.image_simulation import lens_image, simulate_image
+from slsim.Util.param_util import gaussian_psf
 import pytest
 
 COSMO = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -19,7 +13,7 @@ COSMO = FlatLambdaCDM(H0=70, Om0=0.3)
 DEFLECTOR_DICT = {
     "z": 0.5,
     "angular_size": 0.09604418906529916,  # effective radius of the deflector in arcsec
-    "mag_VIS": 19.5,  # VIS-band magnitude of a deflector
+    "mag_VIS": 19.5, # VIS-band magnitude of a deflector
     "theta_E": 2,  # Einstein radius of the deflector
     "e1_light": 0.09096489106609575,  # tangential component of the light ellipticity
     "e2_light": 0.1489400739802363,  # cross component of the light ellipticity
@@ -39,7 +33,7 @@ LOS_DICT = {
 SOURCE_DICT = {
     "z": 1.0,
     "angular_size": 0.10887651129362959,  # effective radius of a source in arcsec
-    "mag_VIS": 22.1,  # VIS-band magnitude of a source
+    "mag_VIS": 22.1, # VIS-band magnitude of a source
     "e1": 0.0,  # tangential component of the ellipticity
     "e2": 0.0,  # cross component of the ellipticity
     "n_sersic": 1.5547096361698418,  # sersic index for sersic_ellipse profile
@@ -80,7 +74,6 @@ def test_simulate_euclid_image_with_noise():
     )
     assert euclid_vis_image.shape == (61, 61)
 
-
 def test_lens_image_euclid():
     euclid_vis_lens_image = lens_image(
         lens_class=lens_class,
@@ -99,7 +92,6 @@ def test_lens_image_euclid():
     )
 
     assert np.shape(euclid_vis_lens_image)[0] == 61
-
 
 if __name__ == "__main__":
     pytest.main()
