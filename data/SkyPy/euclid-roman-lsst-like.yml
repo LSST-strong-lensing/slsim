@@ -59,23 +59,23 @@ tables:
       size: !len [$blue.z]
   red1:
     z1, M1: !skypy.galaxies.redshift.schechter_lf_redshift
-      redshift: $z_range
-      M_star: $M_star_red
-      phi_star: $phi_star_red
-      alpha: -0.53
-      m_lim: $mag_lim
-      sky_area: $fsky
-      cosmology: $cosmology
+              redshift: $z_range
+              M_star: $M_star_red
+              phi_star: $phi_star_red
+              alpha: -0.53
+              m_lim: $mag_lim
+              sky_area: $fsky
+              cosmology: $cosmology
 
   red2:
     z2, M2: !skypy.galaxies.redshift.schechter_lf_redshift
-      redshift: $z_range
-      M_star: -17.00
-      phi_star: $phi_star_red
-      alpha: -1.31
-      m_lim: $mag_lim
-      sky_area: $fsky
-      cosmology: $cosmology
+              redshift: $z_range
+              M_star: -17.00
+              phi_star: $phi_star_red
+              alpha: -1.31
+              m_lim: $mag_lim
+              sky_area: $fsky
+              cosmology: $cosmology
 
   red:
     z: !numpy.concatenate
