@@ -962,8 +962,8 @@ def downsample_passband(
     min_wavelength = np.min(passband[0][:])
     max_wavelength = np.max(passband[0][:])
     filter_total_wavelength_coverage = max_wavelength - min_wavelength
-    nbins = int(
-        round(1 + filter_total_wavelength_coverage / output_delta_wavelength, 0)
+    nbins = max(
+        int(round(1 + filter_total_wavelength_coverage / output_delta_wavelength, 0)), 2
     )
     bin_edges = np.linspace(min_wavelength, max_wavelength, nbins)
     # Make throughput
