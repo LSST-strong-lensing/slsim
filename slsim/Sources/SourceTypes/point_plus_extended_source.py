@@ -10,7 +10,8 @@ class PointPlusExtendedSource(PointSource, ExtendedSource):
         self,
         source_dict,
         extendedsource_type,
-        pointsource_type, cosmo=None,
+        pointsource_type,
+        cosmo=None,
         pointsource_kwargs={},
         extendedsource_kwargs={},
     ):

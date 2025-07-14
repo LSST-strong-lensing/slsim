@@ -3,7 +3,12 @@ from slsim.Sources.SourceTypes.double_sersic import DoubleSersic
 from slsim.Sources.SourceTypes.real_cosmos import COSMOSSource
 from slsim.Sources.SourceTypes.interpolated_image import Interpolated
 
-_SUPPORTED_EXTENDED_SOURCES = ["single_sersic", "double_sersic", "real_cosmos", "interpolated"]
+_SUPPORTED_EXTENDED_SOURCES = [
+    "single_sersic",
+    "double_sersic",
+    "real_cosmos",
+    "interpolated",
+]
 
 
 class ExtendedSource(object):
