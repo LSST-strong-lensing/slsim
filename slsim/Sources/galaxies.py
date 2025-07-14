@@ -152,8 +152,7 @@ class Galaxies(SourcePopBase):
         return self._num_select
 
     def draw_source_dict(self, z_max=None):
-        """Choose source at random. :param z_max: maximum redshift for source
-        to be drawn.
+        """Choose source at random.
 
         :param z_max: maximum redshift limit for the galaxy to be drawn.
             If no galaxy is found for this limit, None will be returned.
@@ -255,6 +254,12 @@ class Galaxies(SourcePopBase):
         return galaxy
 
     def draw_source(self, z_max=None):
+        """Choose source at random.
+
+        :param z_max: maximum redshift limit for the galaxy to be drawn.
+            If no galaxy is found for this limit, None will be returned.
+        :return: instance of Source class
+        """
         galaxy = self.draw_source_dict(z_max=z_max)
         source_class = Source(
             source_dict=galaxy,

@@ -83,6 +83,12 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
         self.pointsource_type = pointsource_type
 
     def draw_source(self, z_max=None):
+        """Choose source at random.
+
+        :param z_max: maximum redshift limit for the galaxy to be drawn.
+            If no galaxy is found for this limit, None will be returned.
+        :return: instance of Source class
+        """
         galaxy = self.draw_source_dict(z_max)
         source_class = Source(
             source_dict=galaxy,
