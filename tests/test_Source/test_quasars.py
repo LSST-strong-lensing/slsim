@@ -30,7 +30,7 @@ def Quasar_class():
         sky_area=sky_area,
         kwargs_cut={},
         pointsource_type="quasar",
-        **kwargs
+        pointsource_kwargs=kwargs,
     )
 
 
