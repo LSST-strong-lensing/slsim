@@ -40,7 +40,7 @@ def supernovae_lens_instance():
             source_type="point_plus_extended",
             pointsource_type="supernova",
             extendedsource_type="double_sersic",
-            pointsource_kwargs=kwargs_sn
+            pointsource_kwargs=kwargs_sn,
         )
         deflector = Deflector(
             deflector_type="EPL",
