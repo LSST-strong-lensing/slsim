@@ -54,7 +54,7 @@ class TestSource:
             extendedsource_type="single_sersic",
             pointsource_type="supernova",
             cosmo=cosmo,
-            **kwargs_point_extended
+            pointsource_kwargs=kwargs_point_extended
         )
 
         # Create an image
@@ -119,7 +119,7 @@ class TestSource:
             source_type="point_source",
             pointsource_type="supernova",
             cosmo=cosmo,
-            **kwargs_point
+            pointsource_kwargs=kwargs_point
         )
 
     def test_redshift(self):

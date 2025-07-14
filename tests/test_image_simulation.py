@@ -209,7 +209,7 @@ def pes_lens_instance():
             source_type="point_plus_extended",
             pointsource_type="quasar",
             extendedsource_type="single_sersic",
-            **kwargs_quasar
+            pointsource_kwargs=kwargs_quasar
         )
         deflector = Deflector(
             deflector_type="EPL",
@@ -459,7 +459,7 @@ class TestMultiSourceImageSimulation(object):
             source_type="point_plus_extended",
             pointsource_type="supernova",
             extendedsource_type="double_sersic",
-            **kwargs_sn
+            pointsource_kwargs=kwargs_sn
         )
         self.source2 = Source(
             source_dict=source_dict2,
@@ -467,7 +467,7 @@ class TestMultiSourceImageSimulation(object):
             source_type="point_plus_extended",
             pointsource_type="supernova",
             extendedsource_type="double_sersic",
-            **kwargs_sn
+            pointsource_kwargs=kwargs_sn
         )
         self.deflector = Deflector(
             deflector_type="EPL",

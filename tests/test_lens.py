@@ -455,15 +455,15 @@ def pes_lens_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
         kwargs4 = {
-            "pointsource_type": "quasar",
-            "extendedsource_type": "single_sersic",
             "kwargs_variability": None,
         }
         source4 = Source(
             source_dict=source_dict,
             cosmo=cosmo,
             source_type="point_plus_extended",
-            **kwargs4,
+            pointsource_type="quasar",
+            extendedsource_type="single_sersic",
+            pointsource_kwargs=kwargs4,
         )
         deflector4 = Deflector(
             deflector_type="EPL",
@@ -546,8 +546,6 @@ def lens_instance_with_variability():
         "standard_deviation": 0.9,
     }
     kwargs_quasar = {
-        "pointsource_type": "quasar",
-        "extendedsource_type": "None",
         "variability_model": "light_curve",
         "kwargs_variability": {"agn_lightcurve", "i", "r"},
         "agn_driving_variability_model": "bending_power_law",
@@ -561,7 +559,9 @@ def lens_instance_with_variability():
         source_dict=source_dict_quasar,
         cosmo=cosmo,
         source_type="point_source",
-        **kwargs_quasar,
+        pointsource_type="quasar",
+        extendedsource_type=None,
+        pointsource_kwargs=kwargs_quasar,
     )
     deflector_quasar = Deflector(
         deflector_type="EPL",
@@ -840,15 +840,15 @@ def supernovae_lens_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
         kwargs5 = {
-            "pointsource_type": "general_lightcurve",
-            "extendedsource_type": "single_sersic",
             "variability_model": "light_curve",
         }
         source5 = Source(
             source_dict=source_dict,
             cosmo=cosmo,
             source_type="point_plus_extended",
-            **kwargs5,
+            pointsource_type="general_lightcurve",
+            extendedsource_type="single_sersic",
+            pointsource_kwargs=kwargs5,
         )
         deflector5 = Deflector(
             deflector_type="EPL",
@@ -1043,8 +1043,6 @@ def supernovae_lens_instance_double_sersic_multisource():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
         kwargs = {
-            "pointsource_type": "supernova",
-            "extendedsource_type": "double_sersic",
             "variability_model": "light_curve",
             "kwargs_variability": ["supernovae_lightcurve", "i"],
             "sn_type": "Ia",
@@ -1057,7 +1055,9 @@ def supernovae_lens_instance_double_sersic_multisource():
             source_dict=source_dict,
             cosmo=cosmo,
             source_type="point_plus_extended",
-            **kwargs,
+            pointsource_type="supernova",
+            extendedsource_type="double_sersic",
+            pointsource_kwargs=kwargs,
         )
         deflector = Deflector(
             deflector_type="EPL",
@@ -1105,8 +1105,6 @@ class TestMultiSource(object):
         source_dict2 = copy.deepcopy(source_dict1)
         source_dict2["z"] += 2
         kwargs = {
-            "pointsource_type": "supernova",
-            "extendedsource_type": "double_sersic",
             "variability_model": "light_curve",
             "kwargs_variability": ["supernovae_lightcurve", "i"],
             "sn_type": "Ia",
@@ -1119,7 +1117,9 @@ class TestMultiSource(object):
             source_dict=source_dict2,
             cosmo=self.cosmo,
             source_type="point_plus_extended",
-            **kwargs,
+            pointsource_type="supernova",
+            extendedsource_type="double_sersic",
+            pointsource_kwargs=kwargs,
         )
         # We initiate the another Source class with the same source. In this class,
         # source position will be different and all the lensing quantities will be different
@@ -1127,7 +1127,9 @@ class TestMultiSource(object):
             source_dict=source_dict1,
             cosmo=self.cosmo,
             source_type="point_plus_extended",
-            **kwargs,
+            pointsource_type="supernova",
+            extendedsource_type="double_sersic",
+            pointsource_kwargs=kwargs,
         )
         self.deflector = Deflector(
             deflector_type="EPL",
