@@ -55,14 +55,14 @@ class Source(object):
                 source_dict=source_dict,
                 pointsource_type=self.pointsource_type,
                 cosmo=self.cosmo,
-                **pointsource_kwargs
+                pointsource_kwargs=pointsource_kwargs,
             )
         elif self.source_type in ["extended"]:
             self._single_source = ExtendedSource(
                 source_dict=source_dict,
                 extendedsource_type=self.extendedsource_type,
                 cosmo=cosmo,
-                **extendedsource_kwargs
+                extendedsource_kwargs=extendedsource_kwargs,
             )
         elif self.source_type in ["point_plus_extended"]:
             self._single_source = PointPlusExtendedSource(

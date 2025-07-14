@@ -43,7 +43,7 @@ class PointPlusExtendedSource(PointSource, ExtendedSource):
             source_dict=source_dict,
             extendedsource_type=extendedsource_type,
             cosmo=cosmo,
-            **extendedsource_kwargs
+            extendedsource_kwargs=extendedsource_kwargs,
         )
 
         # Initialize the point source.
@@ -52,5 +52,5 @@ class PointPlusExtendedSource(PointSource, ExtendedSource):
             source_dict=source_dict,
             pointsource_type=pointsource_type,
             cosmo=cosmo,
-            **pointsource_kwargs
+            pointsource_kwargs=pointsource_kwargs,
         )
