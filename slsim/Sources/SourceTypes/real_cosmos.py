@@ -27,7 +27,9 @@ class COSMOSSource(SourceBase):
         # If many instances of COSMOSSource are created, this will only execute the first time
         if not hasattr(COSMOSSource, "final_catalog"):
             catalog1_path = os.path.join(cosmos_path, "real_galaxy_catalog_23.5.fits")
-            catalog2_path = os.path.join(cosmos_path, "real_galaxy_catalog_23.5_fits.fits")
+            catalog2_path = os.path.join(
+                cosmos_path, "real_galaxy_catalog_23.5_fits.fits"
+            )
             cat1 = Table.read(catalog1_path, format="fits", hdu=1)
             cat2 = Table.read(catalog2_path, format="fits", hdu=1)
             merged_catalog = join(cat1, cat2, keys="IDENT")
@@ -167,26 +169,34 @@ class COSMOSSource(SourceBase):
         min_flux_radius = 10.0
 
         is_ok = np.ones(len(merged_catalog), dtype=bool)
-        is_ok &= merged_catalog['zphot'] < max_z
-        is_ok &= merged_catalog['mag_auto'] < faintest_apparent_mag
-        is_ok &= merged_catalog['flux_radius'] > min_flux_radius
+        is_ok &= merged_catalog["zphot"] < max_z
+        is_ok &= merged_catalog["mag_auto"] < faintest_apparent_mag
+        is_ok &= merged_catalog["flux_radius"] > min_flux_radius
 
         # Drop any catalog indices that are in the exclusion list
-        is_ok &= np.invert(np.isin(np.arange(len(merged_catalog)), source_exclusion_list))
+        is_ok &= np.invert(
+            np.isin(np.arange(len(merged_catalog)), source_exclusion_list)
+        )
 
         filtered_catalog = merged_catalog[is_ok]
 
         # This is the half light radius that is the geometric mean of the major and minor axis lengths
         # calculated using sqrt(q) * R_half, where R_half is the half-light radius measured along the major axis
         # We then convert this from units of pixels to arcseconds
-        q = filtered_catalog['sersicfit'][:, 3]
-        R_half = filtered_catalog['sersicfit'][:, 1]
+        q = filtered_catalog["sersicfit"][:, 3]
+        R_half = filtered_catalog["sersicfit"][:, 1]
         filtered_catalog["angular_size"] = (
             np.sqrt(q) * R_half * filtered_catalog["PIXEL_SCALE"]
         )
 
         # drop extraneous data
-        keep_columns = ['GAL_FILENAME', 'GAL_HDU', 'PIXEL_SCALE', 'sersicfit', "angular_size"]
+        keep_columns = [
+            "GAL_FILENAME",
+            "GAL_HDU",
+            "PIXEL_SCALE",
+            "sersicfit",
+            "angular_size",
+        ]
 
         for col in filtered_catalog.colnames:
             if col not in keep_columns:
@@ -195,8 +205,9 @@ class COSMOSSource(SourceBase):
         return filtered_catalog
 
     def _match_source(self):
-        """This function matches the parameters in source_dict to find a corresponding
-        source in the COSMOS catalog. The parameters being matched are:
+        """This function matches the parameters in source_dict to find a
+        corresponding source in the COSMOS catalog. The parameters being
+        matched are:
 
         1. axis ratio q
         2. angular size
@@ -204,38 +215,48 @@ class COSMOSSource(SourceBase):
 
         When many matches are found, the match with the best n_sersic is taken.
         The COSMOS image is then rotated to match the desired angle and saved.
-        
+
         NOTE: To save time when generating a population of lenses, the matching is only done
         when an image is simulated, not when this class is initialized.
         """
-        n_sersic = self.source_dict['n_sersic']
-        e1 = self.source_dict['e1']
-        e2 = self.source_dict['e2']
+        n_sersic = self.source_dict["n_sersic"]
+        e1 = self.source_dict["e1"]
+        e2 = self.source_dict["e2"]
 
         # Match with COSMOS catalog based off of axis ratio
         phi, q = ellipticity2phi_q(e1, e2)
-        matched_catalog = self.final_catalog[np.abs(self.final_catalog['sersicfit'][:, 3].data - q) <= 0.1]
+        matched_catalog = self.final_catalog[
+            np.abs(self.final_catalog["sersicfit"][:, 3].data - q) <= 0.1
+        ]
 
         # Match based off of angular size
-        size_ratio = self.source_dict['angular_size'] / matched_catalog['angular_size'].data
+        size_ratio = (
+            self.source_dict["angular_size"] / matched_catalog["angular_size"].data
+        )
         matched_catalog = matched_catalog[size_ratio < 1.5]
 
         # Match based off of n_sersic
-        index = np.argsort(np.abs(matched_catalog['sersicfit'][:, 2].data - n_sersic))[0]
+        index = np.argsort(np.abs(matched_catalog["sersicfit"][:, 2].data - n_sersic))[
+            0
+        ]
         matched_source = matched_catalog[index]
-            
+
         # load and save image
         fname = matched_source["GAL_FILENAME"]
         hdu = int(matched_source["GAL_HDU"])
         path = os.path.join(self.cosmos_path, fname)
         with fits.open(path) as file:
-            self._image = file[hdu].data # flux per pixel
+            self._image = file[hdu].data  # flux per pixel
 
         # Scale the angular size of the COSMOS image so that it matches the source_dict
-        self._scale = matched_source['PIXEL_SCALE'] * self.source_dict['angular_size'] / matched_source['angular_size']
+        self._scale = (
+            matched_source["PIXEL_SCALE"]
+            * self.source_dict["angular_size"]
+            / matched_source["angular_size"]
+        )
 
         # Rotate the COSMOS image so that it matches the angle given in source_dict
-        self._phi = np.pi / 2 - matched_source['sersicfit'][7] - phi
+        self._phi = np.pi / 2 - matched_source["sersicfit"][7] - phi
 
     @property
     def redshift(self):
