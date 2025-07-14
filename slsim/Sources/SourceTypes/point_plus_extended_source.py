@@ -7,7 +7,12 @@ class PointPlusExtendedSource(PointSource, ExtendedSource):
     (host)"""
 
     def __init__(
-        self, source_dict, extendedsource_type, pointsource_type, cosmo=None, **kwargs
+        self,
+        source_dict,
+        extendedsource_type,
+        pointsource_type, cosmo=None,
+        pointsource_kwargs={},
+        extendedsource_kwargs={},
     ):
         """
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
@@ -22,10 +27,11 @@ class PointPlusExtendedSource(PointSource, ExtendedSource):
         :param pointsource_type: keyword for specifying point source type.
         :type pointsource_type: str. supported types are "supernova", "quasar", "general_lightcurve".
         :param cosmo: astropy.cosmology instance
-        :param kwargs: dictionary of keyword arguments for a supernova. For supernova
-         kwargs dict, please see documentation of Supernova class.
-         For quasar kwargs dict, please see documentation of
-         Quasar class.
+        :param pointsource_kwargs: dictionary of keyword arguments for a PointSource.
+         For supernova kwargs dict, please see documentation of Supernova class.
+         For quasar kwargs dict, please see documentation of Quasar class.
+        :param extendedsource_kwargs: dictionary of keyword arguments for ExtendedSource.
+         Please see documentation of ExtendedSource() class as well as specific extended source classes.
         """
         # Initialize the extended source. Here, source_dict will contain both host
         # galaxy and point source information but only extended source properties will
@@ -36,6 +42,7 @@ class PointPlusExtendedSource(PointSource, ExtendedSource):
             source_dict=source_dict,
             extendedsource_type=extendedsource_type,
             cosmo=cosmo,
+            **extendedsource_kwargs
         )
 
         # Initialize the point source.
@@ -44,5 +51,5 @@ class PointPlusExtendedSource(PointSource, ExtendedSource):
             source_dict=source_dict,
             pointsource_type=pointsource_type,
             cosmo=cosmo,
-            **kwargs
+            **pointsource_kwargs
         )
