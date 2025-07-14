@@ -92,7 +92,7 @@ class PointSources(SourcePopBase):
             cosmo=self._cosmo,
             source_type=self.source_type,
             pointsource_type=self._pointsource_type,
-            pointsource_kwargs=self.kwargs
+            pointsource_kwargs=self.kwargs,
         )
 
         return source_class
