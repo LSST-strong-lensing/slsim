@@ -69,7 +69,7 @@ supernova_source = Source(
     source_type="point_plus_extended",
     pointsource_type="supernova",
     extendedsource_type="single_sersic",
-    pointsource_kwargs=pointsource_kwargs
+    pointsource_kwargs=pointsource_kwargs,
 )
 
 deflector = Deflector(
