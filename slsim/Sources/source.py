@@ -30,10 +30,8 @@ class Source(object):
         :type source_type: str
         :param extendedsource_type: Keyword to specify type of the extended source.
          Supported extended source types are "single_sersic", "double_sersic", "interpolated".
-        :type source_type: str
         :param pointsource_type: Keyword to specify type of the point source.
          Supported point source types are "supernova", "quasar", "general_lightcurve".
-        :type source_type: str
         :param cosmo: astropy.cosmology instance
         :param pointsource_kwargs: dictionary of keyword arguments for PointSource.
          For supernova kwargs dict, please see documentation of SupernovaEvent class.
