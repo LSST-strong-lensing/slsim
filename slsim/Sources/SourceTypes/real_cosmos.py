@@ -19,6 +19,12 @@ class COSMOSSource(SourceBase):
          eg: {"z": 0.8, "mag_i": 22, "n_sersic": 1, "angular_size": 0.10,
          "e1": 0.002, "e2": 0.001}. One can provide magnitudes in multiple bands.
         :type source_dict: dict or astropy.table.Table
+        :param cosmos_path: path to the directory called "COSMOS_23.5_training_sample", e.g.
+         cosmos_path = "/home/data/COSMOS_23.5_training_sample".
+         This directory should contain "real_galaxy_catalog_23.5.fits",
+         "real_galaxy_catalog_23.5_fits.fits", and various other fits files.
+         This entire directory can be downloaded at https://zenodo.org/records/3242143.
+        :type cosmos_path: string
 
         """
         super().__init__(source_dict=source_dict)
