@@ -38,7 +38,7 @@ class Source(object):
         :param pointsource_kwargs: dictionary of keyword arguments for PointSource.
          For supernova kwargs dict, please see documentation of SupernovaEvent class.
          For quasar kwargs dict, please see documentation of Quasar class.
-         Eg of supernova kwargs: kwargs={
+         Eg of supernova kwargs: pointsource_kwargs={
          "variability_model": "light_curve", "kwargs_variability": ["supernovae_lightcurve",
             "i", "r"], "sn_type": "Ia", "sn_absolute_mag_band": "bessellb",
             "sn_absolute_zpsys": "ab", "lightcurve_time": np.linspace(-50, 100, 150),
