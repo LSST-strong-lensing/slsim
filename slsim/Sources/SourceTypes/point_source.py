@@ -8,7 +8,9 @@ _SUPPORTED_POINT_SOURCES = ["supernova", "quasar", "general_lightcurve"]
 class PointSource(object):
     """Class to manage a single point source."""
 
-    def __init__(self, source_dict, pointsource_type, cosmo=None, pointsource_kwargs={}):
+    def __init__(
+        self, source_dict, pointsource_type, cosmo=None, pointsource_kwargs={}
+    ):
         """One can supply either supernovae kwargs or agn kwargs. If supernovae
         kwargs are supplied, agn kwrgs can be None which is a default option.
 
@@ -37,9 +39,13 @@ class PointSource(object):
                 source_dict=source_dict, cosmo=cosmo, **pointsource_kwargs
             )
         elif pointsource_type in ["quasar"]:
-            self._point_source = Quasar(source_dict=source_dict, cosmo=cosmo, **pointsource_kwargs)
+            self._point_source = Quasar(
+                source_dict=source_dict, cosmo=cosmo, **pointsource_kwargs
+            )
         elif pointsource_type in ["general_lightcurve"]:
-            self._point_source = GeneralLightCurve(source_dict=source_dict, **pointsource_kwargs)
+            self._point_source = GeneralLightCurve(
+                source_dict=source_dict, **pointsource_kwargs
+            )
         else:
             raise ValueError(
                 "Point source type %s not supported. Chose among %s."

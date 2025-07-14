@@ -14,7 +14,9 @@ _SUPPORTED_EXTENDED_SOURCES = [
 class ExtendedSource(object):
     """Class to manage a single extended source."""
 
-    def __init__(self, source_dict, extendedsource_type, cosmo=None, extendedsource_kwargs={}):
+    def __init__(
+        self, source_dict, extendedsource_type, cosmo=None, extendedsource_kwargs={}
+    ):
         """
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
          For a detailed description of this dictionary, please see the documentation for
@@ -32,7 +34,9 @@ class ExtendedSource(object):
         elif extendedsource_type in ["double_sersic"]:
             self._source = DoubleSersic(source_dict=source_dict)
         elif extendedsource_type in ["real_cosmos"]:
-            self._source = COSMOSSource(source_dict=source_dict, **extendedsource_kwargs)
+            self._source = COSMOSSource(
+                source_dict=source_dict, **extendedsource_kwargs
+            )
         elif extendedsource_type in ["interpolated"]:
             self._source = Interpolated(source_dict=source_dict, cosmo=cosmo)
         else:
