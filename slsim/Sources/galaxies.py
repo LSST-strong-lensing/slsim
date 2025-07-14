@@ -261,6 +261,8 @@ class Galaxies(SourcePopBase):
         :return: instance of Source class
         """
         galaxy = self.draw_source_dict(z_max=z_max)
+        if galaxy is None:
+            return None
         source_class = Source(
             source_dict=galaxy,
             source_type=self.source_type,
