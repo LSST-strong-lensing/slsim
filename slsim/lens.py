@@ -1346,7 +1346,9 @@ class Lens(LensedSystemBase):
             or self._source_type == "point_plus_extended"
         ):
             if self.max_redshift_source_class.pointsource_type in ["supernova"]:
-                lens_type = "SN" + self.max_redshift_source_class.pointsource_kwargs["sn_type"]
+                lens_type = (
+                    "SN" + self.max_redshift_source_class.pointsource_kwargs["sn_type"]
+                )
             elif self.max_redshift_source_class.pointsource_type in ["quasar"]:
                 lens_type = "QSO"
             else:

@@ -253,7 +253,7 @@ class Galaxies(SourcePopBase):
                 "either 'single or 'double' "
             )
         return galaxy
-    
+
     def draw_source(self, z_max=None):
         galaxy = self.draw_source_dict(z_max=z_max)
         source_class = Source(
@@ -261,7 +261,7 @@ class Galaxies(SourcePopBase):
             source_type=self.source_type,
             extendedsource_type=self.light_profile,
             cosmo=self._cosmo,
-            extendedsource_kwargs=self.extendedsource_kwargs
+            extendedsource_kwargs=self.extendedsource_kwargs,
         )
         return source_class
 

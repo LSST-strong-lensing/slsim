@@ -71,7 +71,7 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
             catalog_type=catalog_type,
             source_size=source_size,
             extendedsource_type=extendedsource_type,
-            extendedsource_kwargs=extendedsource_kwargs
+            extendedsource_kwargs=extendedsource_kwargs,
         )
         SourcePopBase.__init__(
             self,
@@ -89,8 +89,8 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
             source_type=self.source_type,
             cosmo=self._cosmo,
             extendedsource_type=self.light_profile,
-            pointsource_type = self.pointsource_type,
-            pointsource_kwargs = self.pointsource_kwargs,
-            extendedsource_kwargs=self.extendedsource_kwargs
+            pointsource_type=self.pointsource_type,
+            pointsource_kwargs=self.pointsource_kwargs,
+            extendedsource_kwargs=self.extendedsource_kwargs,
         )
         return source_class
