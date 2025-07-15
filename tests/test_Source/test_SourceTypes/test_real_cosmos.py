@@ -174,10 +174,11 @@ def test_source():
     )
     assert sersic_image.shape == cosmos_image.shape
 
+
 def test_galaxies():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     sky_area = 0.01 * u.deg**2
-    
+
     pipeline = SkyPyPipeline(
         skypy_config=None,
         sky_area=sky_area,
@@ -199,7 +200,7 @@ def test_galaxies():
         catalog_type="skypy",
         source_size=None,
         extendedsource_type="real_cosmos",
-        extendedsource_kwargs={"cosmos_path": COSMOS_PATH}
+        extendedsource_kwargs={"cosmos_path": COSMOS_PATH},
     )
     source = source_simulation.draw_source()
     assert isinstance(source._single_source._source, COSMOSSource)
