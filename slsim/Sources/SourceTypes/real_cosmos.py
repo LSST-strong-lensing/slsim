@@ -28,7 +28,6 @@ class COSMOSSource(SourceBase):
 
         """
         super().__init__(source_dict=source_dict)
-
         # Read in the COSMOS catalogs and downselect sources, then store as a class variable
         # If many instances of COSMOSSource are created, this will only execute the first time
         if not hasattr(COSMOSSource, "final_catalog"):
@@ -38,11 +37,10 @@ class COSMOSSource(SourceBase):
             )
             cat1 = Table.read(catalog1_path, format="fits", hdu=1)
             cat2 = Table.read(catalog2_path, format="fits", hdu=1)
-            merged_catalog = join(cat1, cat2, keys="IDENT")
-            COSMOSSource.final_catalog = self._process_catalog(merged_catalog)
+            COSMOSSource.final_catalog = self._process_catalog(cat1, cat2)
             COSMOSSource.cosmos_path = cosmos_path
 
-    def _process_catalog(self, merged_catalog):
+    def _process_catalog(self, cat1, cat2):
         """This function filters out sources in the catalog so that only
         the nearby, well-resolved galaxies with high SNR remain. Thus, we
         perform the following cuts:
@@ -50,12 +48,14 @@ class COSMOSSource(SourceBase):
         2. apparent magnitude < 20
         3. half light radius > 10 pixels
 
-        :param merged_catalog: result from merging the two COSMOS catalogs
-        :type merged_catalog: astropy table
-        :return: astropy table with only the well-resolved galaxies
+        :param cat1: first COSMOS catalog
+        :type cat1: astropy table
+        :param cat2: second COSMOS catalog
+        :type cat2: astropy table
+        :return: merged astropy table with only the well-resolved galaxies
         """
 
-        # TODO: Why are these sources excluded?
+        # These sources are excluded because they are too close to other objects
         source_exclusion_list = [
             79,
             309,
@@ -174,17 +174,17 @@ class COSMOSSource(SourceBase):
         faintest_apparent_mag = 20
         min_flux_radius = 10.0
 
-        is_ok = np.ones(len(merged_catalog), dtype=bool)
-        is_ok &= merged_catalog["zphot"] < max_z
-        is_ok &= merged_catalog["mag_auto"] < faintest_apparent_mag
-        is_ok &= merged_catalog["flux_radius"] > min_flux_radius
+        is_ok = np.ones(len(cat2), dtype=bool)
+        is_ok &= cat2["zphot"] < max_z
+        is_ok &= cat2["mag_auto"] < faintest_apparent_mag
+        is_ok &= cat2["flux_radius"] > min_flux_radius
 
         # Drop any catalog indices that are in the exclusion list
         is_ok &= np.invert(
-            np.isin(np.arange(len(merged_catalog)), source_exclusion_list)
+            np.isin(np.arange(len(cat2)), source_exclusion_list)
         )
 
-        filtered_catalog = merged_catalog[is_ok]
+        filtered_catalog = join(cat1[is_ok], cat2[is_ok], keys='IDENT')
 
         # This is the half light radius that is the geometric mean of the major and minor axis lengths
         # calculated using sqrt(q) * R_half, where R_half is the half-light radius measured along the major axis
