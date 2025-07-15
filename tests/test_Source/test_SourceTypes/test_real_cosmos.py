@@ -5,7 +5,10 @@ import pytest
 
 from astropy.io import fits
 from astropy.cosmology import FlatLambdaCDM
+import astropy.units as u
 
+from slsim.Pipelines import SkyPyPipeline
+from slsim.Sources.galaxies import Galaxies
 from slsim.Sources.SourceTypes.real_cosmos import COSMOSSource
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
@@ -170,6 +173,36 @@ def test_source():
         np.sum(sersic_image), np.sum(cosmos_image), atol=20, rtol=0.1
     )
     assert sersic_image.shape == cosmos_image.shape
+
+def test_galaxies():
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    sky_area = 0.01 * u.deg**2
+    
+    pipeline = SkyPyPipeline(
+        skypy_config=None,
+        sky_area=sky_area,
+        filters=None,
+        cosmo=cosmo,
+    )
+    galaxy_list = pipeline.blue_galaxies
+    kwargs_cut = {
+        "band": "i",
+        "band_max": 20,
+        "z_min": 0.1,
+        "z_max": 1.5,
+    }
+    source_simulation = Galaxies(
+        galaxy_list=galaxy_list,
+        kwargs_cut=kwargs_cut,
+        cosmo=cosmo,
+        sky_area=sky_area,
+        catalog_type="skypy",
+        source_size=None,
+        extendedsource_type="real_cosmos",
+        extendedsource_kwargs={"cosmos_path": COSMOS_PATH}
+    )
+    source = source_simulation.draw_source()
+    assert isinstance(source._single_source._source, COSMOSSource)
 
 
 if __name__ == "__main__":
