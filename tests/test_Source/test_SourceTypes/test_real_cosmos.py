@@ -13,7 +13,12 @@ from slsim.lens import Lens
 from slsim.image_simulation import lens_image
 from slsim.Util.param_util import gaussian_psf
 
-COSMOS_PATH = os.path.join(str(pathlib.Path(__file__).parent.parent.parent.parent), "data", "test_COSMOS_23.5_training_sample")
+COSMOS_PATH = os.path.join(
+    str(pathlib.Path(__file__).parent.parent.parent.parent),
+    "data",
+    "test_COSMOS_23.5_training_sample",
+)
+
 
 class TestCOSMOSSource:
     def setup_method(self):
@@ -38,9 +43,9 @@ class TestCOSMOSSource:
             reference_position=[0, 0], draw_area=4 * np.pi, band=None
         )
 
-        with fits.open(COSMOS_PATH + '/test_galaxy_images_23.5.fits') as file:
+        with fits.open(COSMOS_PATH + "/test_galaxy_images_23.5.fits") as file:
             image_ref = file[2].data
-            
+
         np.testing.assert_allclose(results[0]["image"], image_ref)
         assert results[0]["magnitude"] == 20.3
         assert results2[0]["magnitude"] == 1
@@ -65,6 +70,7 @@ class TestCOSMOSSource:
         source_model = self.source.extended_source_light_model()
         assert source_model[0] == "INTERPOL"
 
+
 def test_source():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     # approximate HST/ACS F814W zero‑point
@@ -87,7 +93,7 @@ def test_source():
         source_type="extended",
         extendedsource_type="real_cosmos",
         cosmo=cosmo,
-        extendedsource_kwargs={"cosmos_path": COSMOS_PATH}
+        extendedsource_kwargs={"cosmos_path": COSMOS_PATH},
     )
     source2 = Source(
         source_dict=source_dict,
@@ -131,10 +137,8 @@ def test_source():
     # build transform matrix = pixel_scale arcsec/pix
     pixscale = 0.03
     transform_pix2angle = np.array([[pixscale, 0], [0, pixscale]])
-    psf_kernel = gaussian_psf(
-        fwhm=0.1, delta_pix=pixscale, num_pix=21
-    )
-    num_pix = int(source_dict['angular_size'] / pixscale * 4)
+    psf_kernel = gaussian_psf(fwhm=0.1, delta_pix=pixscale, num_pix=21)
+    num_pix = int(source_dict["angular_size"] / pixscale * 4)
     # simulate source‑only image
     cosmos_image = lens_image(
         lens_class=lens_class1,
@@ -162,7 +166,9 @@ def test_source():
         with_source=True,
         with_deflector=False,
     )
-    np.testing.assert_allclose(np.sum(sersic_image), np.sum(cosmos_image), atol=20, rtol=0.1)
+    np.testing.assert_allclose(
+        np.sum(sersic_image), np.sum(cosmos_image), atol=20, rtol=0.1
+    )
     assert sersic_image.shape == cosmos_image.shape
 
 

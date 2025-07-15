@@ -180,11 +180,9 @@ class COSMOSSource(SourceBase):
         is_ok &= cat2["flux_radius"] > min_flux_radius
 
         # Drop any catalog indices that are in the exclusion list
-        is_ok &= np.invert(
-            np.isin(np.arange(len(cat2)), source_exclusion_list)
-        )
+        is_ok &= np.invert(np.isin(np.arange(len(cat2)), source_exclusion_list))
 
-        filtered_catalog = join(cat1[is_ok], cat2[is_ok], keys='IDENT')
+        filtered_catalog = join(cat1[is_ok], cat2[is_ok], keys="IDENT")
 
         # This is the half light radius that is the geometric mean of the major and minor axis lengths
         # calculated using sqrt(q) * R_half, where R_half is the half-light radius measured along the major axis
