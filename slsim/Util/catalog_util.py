@@ -190,10 +190,17 @@ def match_cosmos_source(
     3. n_sersic
 
     When many matches are found, the match with the best n_sersic is taken.
-    The COSMOS image is then rotated to match the desired angle and saved.
 
-    NOTE: To save time when generating a population of lenses, the matching is only done
-    when an image is simulated, not when this class is initialized.
+    :param n_sersic: the desired n_sersic to match
+    :param e1: the desired e1 to match
+    :param e2: the desired e2 to match
+    :param angular_size: the desired angular size to match
+    :param processed_cosmos_catalog: the returned object from calling process_cosmos_catalog()
+    :param catalog_path: path to the COSMOS_23.5_training_sample directory.
+     Example: catalog_path = "/home/data/COSMOS_23.5_training_sample"
+    :return: a tuple with type signature tuple(ndarray, float, float).
+     This is the raw image matched from the catalog, the scale that the image needs to
+     match angular size, and the angle of rotation needed to match the desired e1 and e2.
     """
 
     # Match with COSMOS catalog based off of axis ratio
