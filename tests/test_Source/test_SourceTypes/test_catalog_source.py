@@ -73,6 +73,20 @@ class TestCatalogSource:
         source_model = self.source.extended_source_light_model()
         assert source_model[0] == "INTERPOL"
 
+    def test_catalog(self):
+        source_dict = {
+            "z": 0.5,
+            "mag_i": 20.3,
+            "n_sersic": 0.8,
+            "angular_size": 0.3,  # arcseconds
+            "e1": 0.09697001616620306,
+            "e2": 0.040998265256000574,
+            "center_x": 0.0,
+            "center_y": 0.0,
+            "phi_G": 0,
+        }
+        np.testing.assert_raises(ValueError, CatalogSource, source_dict=source_dict, catalog_path=catalog_path, catalog_type="incorrect")
+
 
 def test_source():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
