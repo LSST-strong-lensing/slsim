@@ -83,7 +83,7 @@ class Galaxies(SourcePopBase):
                 cosmo=cosmo,
             )
             column_names_update = galaxy_list.colnames
-            if self.light_profile in ["single_sersic", "real_cosmos"]:
+            if self.light_profile in ["single_sersic", "catalog_source"]:
                 if "e1" not in column_names_update or "e2" not in column_names_update:
                     galaxy_list["e1"] = -np.ones(self.n)
                     galaxy_list["e2"] = -np.ones(self.n)
@@ -172,7 +172,7 @@ class Galaxies(SourcePopBase):
             phi_rot = galaxy["a_rot"]
         else:
             phi_rot = None
-        if self.light_profile in ["single_sersic", "real_cosmos"]:
+        if self.light_profile in ["single_sersic", "catalog_source"]:
             if "ellipticity" in galaxy.colnames:
                 if galaxy["e1"] == -1 or galaxy["e2"] == -1:
                     e1, e2 = galaxy_projected_eccentricity(

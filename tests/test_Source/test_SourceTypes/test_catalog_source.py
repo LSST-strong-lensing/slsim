@@ -9,21 +9,21 @@ import astropy.units as u
 
 from slsim.Pipelines import SkyPyPipeline
 from slsim.Sources.galaxies import Galaxies
-from slsim.Sources.SourceTypes.real_cosmos import COSMOSSource
+from slsim.Sources.SourceTypes.catalog_source import CatalogSource
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
 from slsim.lens import Lens
 from slsim.image_simulation import lens_image
 from slsim.Util.param_util import gaussian_psf
 
-COSMOS_PATH = os.path.join(
+catalog_path = os.path.join(
     str(pathlib.Path(__file__).parent.parent.parent.parent),
     "data",
     "test_COSMOS_23.5_training_sample",
 )
 
 
-class TestCOSMOSSource:
+class TestCatalogSource:
     def setup_method(self):
         source_dict = {
             "z": 0.5,
@@ -36,7 +36,7 @@ class TestCOSMOSSource:
             "center_y": 0.0,
             "phi_G": 0,
         }
-        self.source = COSMOSSource(source_dict=source_dict, cosmos_path=COSMOS_PATH)
+        self.source = CatalogSource(source_dict=source_dict, catalog_path=catalog_path, catalog_type="COSMOS")
 
     def test_kwargs_extended_source_light(self):
         results = self.source.kwargs_extended_source_light(
@@ -46,7 +46,7 @@ class TestCOSMOSSource:
             reference_position=[0, 0], draw_area=4 * np.pi, band=None
         )
 
-        with fits.open(COSMOS_PATH + "/test_galaxy_images_23.5.fits") as file:
+        with fits.open(catalog_path + "/test_galaxy_images_23.5.fits") as file:
             image_ref = file[2].data
 
         np.testing.assert_allclose(results[0]["image"], image_ref)
@@ -94,9 +94,9 @@ def test_source():
     source1 = Source(
         source_dict=source_dict,
         source_type="extended",
-        extendedsource_type="real_cosmos",
+        extendedsource_type="catalog_source",
         cosmo=cosmo,
-        extendedsource_kwargs={"cosmos_path": COSMOS_PATH},
+        extendedsource_kwargs={"catalog_path": catalog_path, "catalog_type": "COSMOS"},
     )
     source2 = Source(
         source_dict=source_dict,
@@ -199,11 +199,11 @@ def test_galaxies():
         sky_area=sky_area,
         catalog_type="skypy",
         source_size=None,
-        extendedsource_type="real_cosmos",
-        extendedsource_kwargs={"cosmos_path": COSMOS_PATH},
+        extendedsource_type="catalog_source",
+        extendedsource_kwargs={"catalog_path": catalog_path, "catalog_type": "COSMOS"},
     )
     source = source_simulation.draw_source()
-    assert isinstance(source._single_source._source, COSMOSSource)
+    assert isinstance(source._single_source._source, CatalogSource)
 
 
 if __name__ == "__main__":

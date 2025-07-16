@@ -1,12 +1,12 @@
 from slsim.Sources.SourceTypes.single_sersic import SingleSersic
 from slsim.Sources.SourceTypes.double_sersic import DoubleSersic
-from slsim.Sources.SourceTypes.real_cosmos import COSMOSSource
+from slsim.Sources.SourceTypes.catalog_source import CatalogSource
 from slsim.Sources.SourceTypes.interpolated_image import Interpolated
 
 _SUPPORTED_EXTENDED_SOURCES = [
     "single_sersic",
     "double_sersic",
-    "real_cosmos",
+    "catalog_source",
     "interpolated",
 ]
 
@@ -23,7 +23,7 @@ class ExtendedSource(object):
          the SingleSersic, DoubleSersic, and Interpolated classes.
         :type source_dict: dict or astropy.table.Table
         :param extendedsource_type: Keyword to specify type of the extended source.
-         Supported extended source types are "single_sersic", "double_sersic", "interpolated".
+         Supported extended source types are "single_sersic", "double_sersic", "catalog_source", "interpolated".
         :type source_type: str
         :param cosmo: astropy.cosmology instance
         :param extendedsource_kwargs: dictionary of keyword arguments for specific extended source classes.
@@ -33,8 +33,8 @@ class ExtendedSource(object):
             self._source = SingleSersic(source_dict=source_dict)
         elif extendedsource_type in ["double_sersic"]:
             self._source = DoubleSersic(source_dict=source_dict)
-        elif extendedsource_type in ["real_cosmos"]:
-            self._source = COSMOSSource(
+        elif extendedsource_type in ["catalog_source"]:
+            self._source = CatalogSource(
                 source_dict=source_dict, **extendedsource_kwargs
             )
         elif extendedsource_type in ["interpolated"]:
