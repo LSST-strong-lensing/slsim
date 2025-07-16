@@ -5,6 +5,7 @@ from astropy.io import fits
 
 from lenstronomy.Util.param_util import ellipticity2phi_q
 
+
 def process_cosmos_catalog(catalog_path):
     """This function filters out sources in the catalog so that only
     the nearby, well-resolved galaxies with high SNR remain. Thus, we
@@ -20,9 +21,7 @@ def process_cosmos_catalog(catalog_path):
     """
 
     catalog1_path = os.path.join(catalog_path, "real_galaxy_catalog_23.5.fits")
-    catalog2_path = os.path.join(
-        catalog_path, "real_galaxy_catalog_23.5_fits.fits"
-    )
+    catalog2_path = os.path.join(catalog_path, "real_galaxy_catalog_23.5_fits.fits")
     cat1 = Table.read(catalog1_path, format="fits", hdu=1)
     cat2 = Table.read(catalog2_path, format="fits", hdu=1)
     # These sources are excluded because they are too close to other objects
@@ -178,7 +177,10 @@ def process_cosmos_catalog(catalog_path):
 
     return filtered_catalog
 
-def match_cosmos_source(n_sersic, e1, e2, angular_size, processed_cosmos_catalog, catalog_path):
+
+def match_cosmos_source(
+    n_sersic, e1, e2, angular_size, processed_cosmos_catalog, catalog_path
+):
     """This function matches the parameters in source_dict to find a
     corresponding source in the COSMOS catalog. The parameters being
     matched are:
@@ -201,15 +203,11 @@ def match_cosmos_source(n_sersic, e1, e2, angular_size, processed_cosmos_catalog
     ]
 
     # Match based off of angular size
-    size_ratio = (
-        angular_size / matched_catalog["angular_size"].data
-    )
+    size_ratio = angular_size / matched_catalog["angular_size"].data
     matched_catalog = matched_catalog[size_ratio < 1.5]
 
     # Match based off of n_sersic
-    index = np.argsort(np.abs(matched_catalog["sersicfit"][:, 2].data - n_sersic))[
-        0
-    ]
+    index = np.argsort(np.abs(matched_catalog["sersicfit"][:, 2].data - n_sersic))[0]
     matched_source = matched_catalog[index]
 
     # load and save image
@@ -221,9 +219,7 @@ def match_cosmos_source(n_sersic, e1, e2, angular_size, processed_cosmos_catalog
 
     # Scale the angular size of the COSMOS image so that it matches the source_dict
     scale = (
-        matched_source["PIXEL_SCALE"]
-        * angular_size
-        / matched_source["angular_size"]
+        matched_source["PIXEL_SCALE"] * angular_size / matched_source["angular_size"]
     )
 
     # Rotate the COSMOS image so that it matches the angle given in source_dict

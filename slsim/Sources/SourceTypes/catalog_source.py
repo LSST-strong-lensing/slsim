@@ -3,9 +3,12 @@ from slsim.Util import catalog_util
 
 CATALOG_TYPES = ["COSMOS"]
 
+
 class CatalogSource(SourceBase):
     """Class to match sersic parameters to a real source in a given catalog.
-    The sources in the catalog must have parameters that have been obtained by performing a sersic fit.
+
+    The sources in the catalog must have parameters that have been
+    obtained by performing a sersic fit.
     """
 
     def __init__(self, source_dict, catalog_type, catalog_path):
@@ -31,10 +34,14 @@ class CatalogSource(SourceBase):
         # If multiple instances of the class are created, this is only executed once
         if catalog_type == "COSMOS":
             if not hasattr(CatalogSource, "final_cosmos_catalog"):
-                CatalogSource.final_cosmos_catalog = catalog_util.process_cosmos_catalog(catalog_path)
+                CatalogSource.final_cosmos_catalog = (
+                    catalog_util.process_cosmos_catalog(catalog_path)
+                )
         else:
-            raise ValueError(f"Catalog_type {catalog_type} not supported. Currently only {CATALOG_TYPES} are supported.")
-        
+            raise ValueError(
+                f"Catalog_type {catalog_type} not supported. Currently only {CATALOG_TYPES} are supported."
+            )
+
         self.catalog_type = catalog_type
         self.catalog_path = catalog_path
 
@@ -108,10 +115,10 @@ class CatalogSource(SourceBase):
         if not hasattr(self, "_image"):
             if self.catalog_type == "COSMOS":
                 self._image, self._scale, self._phi = catalog_util.match_cosmos_source(
-                    n_sersic=self.source_dict['n_sersic'],
-                    e1=self.source_dict['e1'],
-                    e2=self.source_dict['e2'],
-                    angular_size=self.source_dict['angular_size'],
+                    n_sersic=self.source_dict["n_sersic"],
+                    e1=self.source_dict["e1"],
+                    e2=self.source_dict["e2"],
+                    angular_size=self.source_dict["angular_size"],
                     processed_cosmos_catalog=self.final_cosmos_catalog,
                     catalog_path=self.catalog_path,
                 )
