@@ -87,7 +87,13 @@ class TestCatalogSource:
             "center_y": 0.0,
             "phi_G": 0,
         }
-        np.testing.assert_raises(ValueError, CatalogSource, source_dict=source_dict, catalog_path=catalog_path, catalog_type="incorrect")
+        np.testing.assert_raises(
+            ValueError,
+            CatalogSource,
+            source_dict=source_dict,
+            catalog_path=catalog_path,
+            catalog_type="incorrect",
+        )
 
 
 def test_source():
