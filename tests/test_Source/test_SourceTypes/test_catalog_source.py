@@ -30,7 +30,7 @@ class TestCatalogSource:
             "mag_i": 20.3,
             "n_sersic": 0.8,
             "angular_size": 0.3,  # arcseconds
-            "e1": 0.09697001616620306,
+            "e1": 0.19697001616620306,
             "e2": 0.040998265256000574,
             "center_x": 0.0,
             "center_y": 0.0,
@@ -63,7 +63,7 @@ class TestCatalogSource:
 
     def test_ellipticity(self):
         e1, e2 = self.source.ellipticity
-        assert e1 == 0.09697001616620306
+        assert e1 == 0.19697001616620306
         assert e2 == 0.040998265256000574
 
     def test_extended_source_magnitude(self):
