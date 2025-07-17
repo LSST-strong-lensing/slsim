@@ -205,7 +205,9 @@ def match_cosmos_source(
 
     # Match based off of angular size
     size_ratio = angular_size / processed_cosmos_catalog["angular_size"].data
-    matched_catalog = processed_cosmos_catalog[np.logical_and(size_ratio < 1.2, size_ratio > 0.8)]
+    matched_catalog = processed_cosmos_catalog[
+        np.logical_and(size_ratio < 1.2, size_ratio > 0.8)
+    ]
 
     # Match with COSMOS catalog based off of axis ratio
     phi, q = ellipticity2phi_q(e1, e2)
