@@ -203,19 +203,26 @@ def match_cosmos_source(
      match angular size, and the angle of rotation needed to match the desired e1 and e2.
     """
 
+    # Match based off of angular size
+    size_ratio = angular_size / processed_cosmos_catalog["angular_size"].data
+    matched_catalog = processed_cosmos_catalog[np.logical_and(size_ratio < 1.2, size_ratio > 0.8)]
+
     # Match with COSMOS catalog based off of axis ratio
     phi, q = ellipticity2phi_q(e1, e2)
-    matched_catalog = processed_cosmos_catalog[
-        np.abs(processed_cosmos_catalog["sersicfit"][:, 3].data - q) <= 0.1
+    q_tol = 0.1
+    q_matched_catalog = matched_catalog[
+        np.abs(matched_catalog["sersicfit"][:, 3].data - q) <= q_tol
     ]
-
-    # Match based off of angular size
-    size_ratio = angular_size / matched_catalog["angular_size"].data
-    matched_catalog = matched_catalog[size_ratio < 1.5]
+    # If no matches, relax the matching condition
+    while len(q_matched_catalog) == 0:
+        q_tol += 0.05
+        q_matched_catalog = matched_catalog[
+            np.abs(matched_catalog["sersicfit"][:, 3].data - q) <= q_tol
+        ]
 
     # Match based off of n_sersic
-    index = np.argsort(np.abs(matched_catalog["sersicfit"][:, 2].data - n_sersic))[0]
-    matched_source = matched_catalog[index]
+    index = np.argsort(np.abs(q_matched_catalog["sersicfit"][:, 2].data - n_sersic))
+    matched_source = q_matched_catalog[index][0]
 
     # load and save image
     fname = matched_source["GAL_FILENAME"]
