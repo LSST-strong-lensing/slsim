@@ -27,7 +27,7 @@ class TestCatalogSource:
     def setup_method(self):
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         source_dict = {
-            "z": 1.5,
+            "z": 3.5,
             "mag_i": 20.3,
             "n_sersic": 0.8,
             "angular_size": 0.3,  # arcseconds
