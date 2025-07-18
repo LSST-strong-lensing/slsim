@@ -60,7 +60,7 @@ class TestCatalogSource:
         assert results2[0]["magnitude"] == 1
 
     def test_redshift(self):
-        assert self.source.redshift == 1.5
+        assert self.source.redshift == 3.5
 
     def test_angular_size(self):
         assert self.source.angular_size == 0.3
