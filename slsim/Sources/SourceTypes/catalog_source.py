@@ -29,16 +29,20 @@ class CatalogSource(SourceBase):
         :type catalog_path: string
         """
         ang_dist = cosmo.angular_diameter_distance(source_dict["z"])
-        source_dict["physical_size"] = source_dict["angular_size"] * 4.84814e-6 * ang_dist * 1000 # kPc
+        source_dict["physical_size"] = (
+            source_dict["angular_size"] * 4.84814e-6 * ang_dist * 1000
+        )  # kPc
 
         super().__init__(source_dict=source_dict)
-        
+
         # Process catalog and store as class attribute
         # If multiple instances of the class are created, this is only executed once
         if catalog_type == "COSMOS":
             if not hasattr(CatalogSource, "final_cosmos_catalog"):
                 CatalogSource.final_cosmos_catalog = (
-                    catalog_util.process_cosmos_catalog(cosmo=cosmo, catalog_path=catalog_path)
+                    catalog_util.process_cosmos_catalog(
+                        cosmo=cosmo, catalog_path=catalog_path
+                    )
                 )
         else:
             raise ValueError(
