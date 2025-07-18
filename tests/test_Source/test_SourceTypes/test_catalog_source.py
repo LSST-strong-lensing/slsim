@@ -27,7 +27,7 @@ class TestCatalogSource:
     def setup_method(self):
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         source_dict = {
-            "z": 0.5,
+            "z": 1.5,
             "mag_i": 20.3,
             "n_sersic": 0.8,
             "angular_size": 0.3,  # arcseconds
@@ -60,7 +60,7 @@ class TestCatalogSource:
         assert results2[0]["magnitude"] == 1
 
     def test_redshift(self):
-        assert self.source.redshift == 0.5
+        assert self.source.redshift == 1.5
 
     def test_angular_size(self):
         assert self.source.angular_size == 0.3
