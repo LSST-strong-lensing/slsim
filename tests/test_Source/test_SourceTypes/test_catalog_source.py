@@ -38,7 +38,10 @@ class TestCatalogSource:
             "phi_G": 0,
         }
         self.source = CatalogSource(
-            source_dict=source_dict, cosmo=cosmo, catalog_path=catalog_path, catalog_type="COSMOS"
+            source_dict=source_dict,
+            cosmo=cosmo,
+            catalog_path=catalog_path,
+            catalog_type="COSMOS",
         )
 
     def test_kwargs_extended_source_light(self):
