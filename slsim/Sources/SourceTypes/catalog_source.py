@@ -11,7 +11,7 @@ class CatalogSource(SourceBase):
     obtained by performing a sersic fit.
     """
 
-    def __init__(self, source_dict, catalog_type, catalog_path):
+    def __init__(self, source_dict, cosmo, catalog_type, catalog_path):
         """
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
          This dict or table should contain atleast redshift, a magnitude in any band,
@@ -19,6 +19,7 @@ class CatalogSource(SourceBase):
          eg: {"z": 0.8, "mag_i": 22, "n_sersic": 1, "angular_size": 0.10,
          "e1": 0.002, "e2": 0.001}. One can provide magnitudes in multiple bands.
         :type source_dict: dict or astropy.table.Table
+        :param cosmo: instance of astropy cosmology
         :param catalog_type: specifies which catalog to use. Currently the options are:
          1. "COSMOS" - this catalog can be downloaded from https://zenodo.org/records/3242143
         :type catalog_type: string
@@ -26,16 +27,18 @@ class CatalogSource(SourceBase):
          example, if catalog_type = "COSMOS", then catalog_path can be
          catalog_path = "/home/data/COSMOS_23.5_training_sample".
         :type catalog_path: string
-
         """
-        super().__init__(source_dict=source_dict)
+        ang_dist = cosmo.angular_diameter_distance(source_dict["z"])
+        source_dict["physical_size"] = source_dict["angular_size"] * 4.84814e-6 * ang_dist * 1000 # kPc
 
+        super().__init__(source_dict=source_dict)
+        
         # Process catalog and store as class attribute
         # If multiple instances of the class are created, this is only executed once
         if catalog_type == "COSMOS":
             if not hasattr(CatalogSource, "final_cosmos_catalog"):
                 CatalogSource.final_cosmos_catalog = (
-                    catalog_util.process_cosmos_catalog(catalog_path)
+                    catalog_util.process_cosmos_catalog(cosmo=cosmo, catalog_path=catalog_path)
                 )
         else:
             raise ValueError(
@@ -115,10 +118,7 @@ class CatalogSource(SourceBase):
         if not hasattr(self, "_image"):
             if self.catalog_type == "COSMOS":
                 self._image, self._scale, self._phi = catalog_util.match_cosmos_source(
-                    n_sersic=self.source_dict["n_sersic"],
-                    e1=self.source_dict["e1"],
-                    e2=self.source_dict["e2"],
-                    angular_size=self.source_dict["angular_size"],
+                    source_dict=self.source_dict,
                     processed_cosmos_catalog=self.final_cosmos_catalog,
                     catalog_path=self.catalog_path,
                 )
