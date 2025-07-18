@@ -1,5 +1,3 @@
-import numpy as np
-
 from slsim.Sources.SourceTypes.source_base import SourceBase
 from slsim.Util import catalog_util
 
