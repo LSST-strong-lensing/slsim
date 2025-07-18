@@ -35,7 +35,7 @@ class ExtendedSource(object):
             self._source = DoubleSersic(source_dict=source_dict)
         elif extendedsource_type in ["catalog_source"]:
             self._source = CatalogSource(
-                source_dict=source_dict, **extendedsource_kwargs
+                source_dict=source_dict, cosmo=cosmo, **extendedsource_kwargs
             )
         elif extendedsource_type in ["interpolated"]:
             self._source = Interpolated(source_dict=source_dict, cosmo=cosmo)

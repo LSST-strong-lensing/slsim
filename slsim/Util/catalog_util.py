@@ -166,7 +166,7 @@ def process_cosmos_catalog(cosmo, catalog_path):
     # Convert from arcseoncds to kPc
     ang_dist = cosmo.angular_diameter_distance(filtered_catalog["zphot"].data)
     filtered_catalog["physical_size"] = (
-        filtered_catalog["angular_size"].data * 4.84814e-6 * ang_dist * 1000
+        filtered_catalog["angular_size"].data * 4.84814e-6 * ang_dist.value * 1000
     )
 
     # drop extraneous data
@@ -215,7 +215,9 @@ def match_cosmos_source(source_dict, processed_cosmos_catalog, catalog_path):
     processed_cosmos_catalog = processed_cosmos_catalog[
         processed_cosmos_catalog["angular_size"].data >= source_dict["angular_size"]
     ]
-
+    if len(processed_cosmos_catalog) == 0:
+        raise ValueError("The desired angular size is larger than the available sources in the COSMOS catalog. Please use a smaller angular size.")
+    
     # Match based off of physical size
     size_tol = 0.5
     size_difference = np.abs(

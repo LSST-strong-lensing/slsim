@@ -1,3 +1,5 @@
+import numpy as np
+
 from slsim.Sources.SourceTypes.source_base import SourceBase
 from slsim.Util import catalog_util
 
@@ -29,8 +31,10 @@ class CatalogSource(SourceBase):
         :type catalog_path: string
         """
         ang_dist = cosmo.angular_diameter_distance(source_dict["z"])
+        print(ang_dist.value)
+        print(source_dict["angular_size"])
         source_dict["physical_size"] = (
-            source_dict["angular_size"] * 4.84814e-6 * ang_dist * 1000
+            source_dict["angular_size"] * 4.84814e-6 * ang_dist.value * 1000
         )  # kPc
 
         super().__init__(source_dict=source_dict)

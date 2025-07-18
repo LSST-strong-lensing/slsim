@@ -25,6 +25,7 @@ catalog_path = os.path.join(
 
 class TestCatalogSource:
     def setup_method(self):
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         source_dict = {
             "z": 0.5,
             "mag_i": 20.3,
@@ -37,7 +38,7 @@ class TestCatalogSource:
             "phi_G": 0,
         }
         self.source = CatalogSource(
-            source_dict=source_dict, catalog_path=catalog_path, catalog_type="COSMOS"
+            source_dict=source_dict, cosmo=cosmo, catalog_path=catalog_path, catalog_type="COSMOS"
         )
 
     def test_kwargs_extended_source_light(self):
@@ -75,12 +76,13 @@ class TestCatalogSource:
         source_model = self.source.extended_source_light_model()
         assert source_model[0] == "INTERPOL"
 
-    def test_catalog(self):
+    def test_raises(self):
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         source_dict = {
             "z": 0.5,
             "mag_i": 20.3,
             "n_sersic": 0.8,
-            "angular_size": 0.3,  # arcseconds
+            "angular_size": 999,  # arcseconds
             "e1": 0.09697001616620306,
             "e2": 0.040998265256000574,
             "center_x": 0.0,
@@ -90,9 +92,21 @@ class TestCatalogSource:
         np.testing.assert_raises(
             ValueError,
             CatalogSource,
+            cosmo=cosmo,
             source_dict=source_dict,
             catalog_path=catalog_path,
             catalog_type="incorrect",
+        )
+
+        source = CatalogSource(
+            cosmo=cosmo,
+            source_dict=source_dict,
+            catalog_path=catalog_path,
+            catalog_type="COSMOS",
+        )
+        np.testing.assert_raises(
+            ValueError,
+            source.kwargs_extended_source_light,
         )
 
 
