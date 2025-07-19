@@ -32,7 +32,7 @@ class Galaxies(SourcePopBase):
         downsample_to_dc2=False,
         source_size="Bernardi",
         extendedsource_type="single_sersic",
-        **kwargs
+        extendedsource_kwargs={},
     ):
         """
 
@@ -43,9 +43,9 @@ class Galaxies(SourcePopBase):
         :param cosmo: astropy.cosmology instance
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
          solid angle.
+        :type sky_area: `~astropy.units.Quantity`
         :param list_type: format of the source catalog file. Currently, it supports a
          single astropy table or a list of astropy tables.
-        :type sky_area: `~astropy.units.Quantity`
         :param catalog_type: type of the catalog. If someone wants to use scotch
          catalog, they need to specify it.
         :type catalog_type: str. eg: "scotch" or None
@@ -56,11 +56,12 @@ class Galaxies(SourcePopBase):
          https://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
         :param extendedsource_type: Keyword to specify type of the extended source.
          Supported extended source types are "single_sersic", "double_sersic", "interpolated".
-        :type source_type: str.
-
+        :type extendedsource_type: str
+        :param extendedsource_kwargs: dictionary of keyword arguments for ExtendedSource.
+         Please see documentation of ExtendedSource() class as well as specific extended source classes.
         """
         super().__init__(cosmo=cosmo, sky_area=sky_area)
-        self._kwargs = kwargs
+        self.extendedsource_kwargs = extendedsource_kwargs
         self.source_type = "extended"
         self.light_profile = extendedsource_type
         if downsample_to_dc2 is True:
@@ -82,7 +83,7 @@ class Galaxies(SourcePopBase):
                 cosmo=cosmo,
             )
             column_names_update = galaxy_list.colnames
-            if self.light_profile == "single_sersic":
+            if self.light_profile in ["single_sersic", "catalog_source"]:
                 if "e1" not in column_names_update or "e2" not in column_names_update:
                     galaxy_list["e1"] = -np.ones(self.n)
                     galaxy_list["e2"] = -np.ones(self.n)
@@ -150,9 +151,8 @@ class Galaxies(SourcePopBase):
         """
         return self._num_select
 
-    def draw_source(self, z_max=None):
-        """Choose source at random. :param z_max: maximum redshift for source
-        to be drawn.
+    def draw_source_dict(self, z_max=None):
+        """Choose source at random.
 
         :param z_max: maximum redshift limit for the galaxy to be drawn.
             If no galaxy is found for this limit, None will be returned.
@@ -172,7 +172,7 @@ class Galaxies(SourcePopBase):
             phi_rot = galaxy["a_rot"]
         else:
             phi_rot = None
-        if self.light_profile == "single_sersic":
+        if self.light_profile in ["single_sersic", "catalog_source"]:
             if "ellipticity" in galaxy.colnames:
                 if galaxy["e1"] == -1 or galaxy["e2"] == -1:
                     e1, e2 = galaxy_projected_eccentricity(
@@ -251,14 +251,24 @@ class Galaxies(SourcePopBase):
                 "Provided number of light profiles is not supported. It should be"
                 "either 'single or 'double' "
             )
+        return galaxy
 
+    def draw_source(self, z_max=None):
+        """Choose source at random.
+
+        :param z_max: maximum redshift limit for the galaxy to be drawn.
+            If no galaxy is found for this limit, None will be returned.
+        :return: instance of Source class
+        """
+        galaxy = self.draw_source_dict(z_max=z_max)
+        if galaxy is None:
+            return None
         source_class = Source(
             source_dict=galaxy,
             source_type=self.source_type,
             extendedsource_type=self.light_profile,
-            pointsource_type=self.pointsource_type,
             cosmo=self._cosmo,
-            **self._kwargs
+            extendedsource_kwargs=self.extendedsource_kwargs,
         )
         return source_class
 

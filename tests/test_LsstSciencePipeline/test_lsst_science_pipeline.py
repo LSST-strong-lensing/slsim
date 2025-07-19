@@ -33,8 +33,6 @@ def pes_lens_instance():
             "standard_deviation": 0.9,
         }
         kwargs_quasar = {
-            "pointsource_type": "quasar",
-            "extendedsource_type": "single_sersic",
             "variability_model": "light_curve",
             "kwargs_variability": {"agn_lightcurve", "i", "r"},
             "agn_driving_variability_model": "bending_power_law",
@@ -45,7 +43,9 @@ def pes_lens_instance():
             source_dict=source_dict,
             cosmo=cosmo,
             source_type="point_plus_extended",
-            **kwargs_quasar
+            pointsource_type="quasar",
+            extendedsource_type="single_sersic",
+            pointsource_kwargs=kwargs_quasar,
         )
         deflector = Deflector(
             deflector_type="EPL",

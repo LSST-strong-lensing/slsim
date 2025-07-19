@@ -92,8 +92,6 @@ def test_pes_lens_pop_instance():
 
     quasar_galaxies = sources.QuasarCatalog.quasar_galaxies_simple(**{})
     kwargs = {
-        "pointsource_type": "quasar",
-        "extendedsource_type": "single_sersic",
         "kwargs_variability": None,
         "variability_model": "light_curve",
     }
@@ -102,7 +100,9 @@ def test_pes_lens_pop_instance():
         cosmo=cosmo,
         sky_area=sky_area,
         kwargs_cut=kwargs_source_cut,
-        **kwargs,
+        pointsource_type="quasar",
+        extendedsource_type="single_sersic",
+        pointsource_kwargs=kwargs,
     )
 
     pes_lens_pop = LensPop(
@@ -290,9 +290,7 @@ def test_supernovae_plus_galaxies_lens_pop_instance_2():
         host_galaxy=True, lightcurve=False
     )
 
-    kwargs = {
-        "pointsource_type": "supernova",
-        "extendedsource_type": "single_sersic",
+    pointsource_kwargs = {
         "variability_model": "light_curve",
         "kwargs_variability": ["supernovae_lightcurve", "i"],
         "sn_type": "Ia",
@@ -306,7 +304,9 @@ def test_supernovae_plus_galaxies_lens_pop_instance_2():
         cosmo=cosmo,
         sky_area=source_sky_area,
         kwargs_cut=kwargs_source_cut,
-        **kwargs,
+        pointsource_type="supernova",
+        extendedsource_type="single_sersic",
+        pointsource_kwargs=pointsource_kwargs,
     )
 
     pes_lens_pop = LensPop(
@@ -354,8 +354,7 @@ def test_supernovae_lens_pop_instance():
         host_galaxy=False, lightcurve=False
     )
 
-    kwargs = {
-        "pointsource_type": "supernova",
+    pointsource_kwargs = {
         "extendedsource_type": "single_sersic",
         "variability_model": "light_curve",
         "kwargs_variability": ["supernovae_lightcurve", "i"],
@@ -370,7 +369,8 @@ def test_supernovae_lens_pop_instance():
         cosmo=cosmo,
         sky_area=sky_area_1,
         kwargs_cut=kwargs_source_cut,
-        **kwargs,
+        pointsource_type="supernova",
+        pointsource_kwargs=pointsource_kwargs,
     )
 
     ps_lens_pop_1 = LensPop(

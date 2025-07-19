@@ -1,4 +1,5 @@
 from slsim.Sources.source_pop_base import SourcePopBase
+from slsim.Sources.source import Source
 from slsim.Sources.galaxies import Galaxies
 from slsim.selection import object_cut
 
@@ -17,7 +18,8 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
         source_size="Bernadi",
         pointsource_type=None,
         extendedsource_type=None,
-        **kwargs
+        pointsource_kwargs={},
+        extendedsource_kwargs={},
     ):
         """
 
@@ -28,40 +30,30 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
         :type sky_area: `~astropy.units.Quantity`
-        :param variability_model: keyword for the variability model to be used. This is
-         a population argument, not the light curve parameter for the individual
-         source.
-        :param kwargs_variability_model: keyword arguments for the variability of
-         a source. This is a population argument, not the light curve parameter for
-         the individual source.
-        :param agn_driving_variability_model: Variability model with light_curve output
-         which drives the variability across all bands of the agn. eg: "light_curve",
-         "sinusoidal", "bending_power_law"
-        :param agn_driving_kwargs_variability: Dictionary containing agn variability
-         parameters for the driving variability class. eg: variable_agn_kwarg_dict =
-         {"length_of_light_curve": 1000, "time_resolution": 1,
-         "log_breakpoint_frequency": 1 / 20, "low_frequency_slope": 1,
-         "high_frequency_slope": 3, "normal_magnitude_variance": 0.1}. For the detailed
-          explanation of these parameters, see generate_signal() function in
-          astro_util.py.
-        :param light_profile: keyword for number of sersic profile to use in source
-         light model. accepted kewords: "single_sersic", "double_sersic".
+        :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max
+        :type kwargs_cut: dict
         :param list_type: format of the source catalog file. Currently, it supports
          a single astropy table or a list of astropy tables.
         :param catalog_type: type of the catalog. If someone wants to use scotch
          catalog, they need to specify it.
         :type catalog_type: str. eg: "scotch" or None
-        :param lightcurve_time: Lightcurve observation time array in units of days. Defaults to None.
-        :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.). Defaults to None.
-        :param sn_absolute_mag_band: Band used to normalize to absolute magnitude.
-         Defaults to None.
-        :param sn_absolute_zpsys: Zero point system, either AB or Vega, with None defaulting to AB.
-         Defaults to None.
-        :param sn_modeldir: sn_modeldir is the path to the directory containing files needed to initialize
-         the sncosmo.model class. For example, sn_modeldir =
-         'C:/Users/username/Documents/SALT3.NIR_WAVEEXT'. These data can be downloaded
-         from https://github.com/LSST-strong-lensing/data_public. For more detail,
-         please look at the documentation of RandomizedSupernovae class. Defaults to None.
+        :param source_size: If "Bernardi", computes galaxy size using g-band
+         magnitude otherwise rescales skypy source size to Shibuya et al. (2015):
+         https://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
+        :param pointsource_type: Keyword to specify type of the point source.
+         Supported point source types are "supernova", "quasar", "general_lightcurve".
+        :param extendedsource_type: keyword for number of sersic profile to use in source
+         light model. accepted kewords: "single_sersic", "double_sersic".
+        :param pointsource_kwargs: dictionary of keyword arguments for PointSource.
+         For supernova kwargs dict, please see documentation of SupernovaEvent class.
+         For quasar kwargs dict, please see documentation of Quasar class.
+         Eg of supernova kwargs: pointsource_kwargs={
+         "variability_model": "light_curve", "kwargs_variability": ["supernovae_lightcurve",
+            "i", "r"], "sn_type": "Ia", "sn_absolute_mag_band": "bessellb",
+            "sn_absolute_zpsys": "ab", "lightcurve_time": np.linspace(-50, 100, 150),
+            "sn_modeldir": None}.
+        :param extendedsource_kwargs: dictionary of keyword arguments for ExtendedSource.
+         Please see documentation of ExtendedSource() class as well as specific extended source classes.
         """
         object_list = object_cut(
             point_plus_extended_sources_list,
@@ -79,7 +71,7 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
             catalog_type=catalog_type,
             source_size=source_size,
             extendedsource_type=extendedsource_type,
-            **kwargs
+            extendedsource_kwargs=extendedsource_kwargs,
         )
         SourcePopBase.__init__(
             self,
@@ -87,4 +79,26 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
             sky_area=sky_area,
         )
         self.source_type = "point_plus_extended"
+        self.pointsource_kwargs = pointsource_kwargs
         self.pointsource_type = pointsource_type
+
+    def draw_source(self, z_max=None):
+        """Choose source at random.
+
+        :param z_max: maximum redshift limit for the galaxy to be drawn.
+            If no galaxy is found for this limit, None will be returned.
+        :return: instance of Source class
+        """
+        galaxy = self.draw_source_dict(z_max)
+        if galaxy is None:
+            return None
+        source_class = Source(
+            source_dict=galaxy,
+            source_type=self.source_type,
+            cosmo=self._cosmo,
+            extendedsource_type=self.light_profile,
+            pointsource_type=self.pointsource_type,
+            pointsource_kwargs=self.pointsource_kwargs,
+            extendedsource_kwargs=self.extendedsource_kwargs,
+        )
+        return source_class

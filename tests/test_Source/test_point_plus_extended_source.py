@@ -30,7 +30,7 @@ class TestPointPlusExtendedSources(object):
             sky_area=sky_area,
             pointsource_type="quasar",
             extendedsource_type="single_sersic",
-            **kwargs
+            pointsource_kwargs=kwargs,
         )
 
     def test_source_number(self):
@@ -45,6 +45,9 @@ class TestPointPlusExtendedSources(object):
         assert point_plus_extended_sources.extendedsource_type == "single_sersic"
         assert point_plus_extended_sources.pointsource_type == "quasar"
         assert point_plus_extended_sources.extendedsource_type == "single_sersic"
+
+        point_plus_extended_sources2 = self.pe_source.draw_source(z_max=-1)
+        assert point_plus_extended_sources2 is None
 
 
 if __name__ == "__main__":

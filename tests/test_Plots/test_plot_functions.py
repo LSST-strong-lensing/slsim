@@ -53,7 +53,7 @@ def quasar_lens_pop_instance():
             source_type="point_plus_extended",
             pointsource_type="quasar",
             extendedsource_type="single_sersic",
-            **kwargs_quasar,
+            pointsource_kwargs=kwargs_quasar,
         )
         deflector = Deflector(
             deflector_type="EPL",

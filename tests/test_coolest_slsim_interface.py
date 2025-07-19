@@ -26,8 +26,6 @@ def supernovae_lens_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
         kwargs_sn = {
-            "pointsource_type": "supernova",
-            "extendedsource_type": "double_sersic",
             "variability_model": "light_curve",
             "kwargs_variability": {"supernovae_lightcurve", "i"},
             "sn_type": "Ia",
@@ -40,7 +38,9 @@ def supernovae_lens_instance():
             source_dict=source_dict,
             cosmo=cosmo,
             source_type="point_plus_extended",
-            **kwargs_sn
+            pointsource_type="supernova",
+            extendedsource_type="double_sersic",
+            pointsource_kwargs=kwargs_sn,
         )
         deflector = Deflector(
             deflector_type="EPL",
