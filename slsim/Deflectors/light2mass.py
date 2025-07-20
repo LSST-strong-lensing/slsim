@@ -182,16 +182,41 @@ def get_velocity_dispersion(
     .. [4] Blanton et al., (2003), astro-ph/0210215, doi: 10.1086/375776
     .. [5] Parker et al., (2007),  arXiv:0707.1698, doi: 10.1086/521541
     """
+    if (
+        lsst_mags.ndim == 2
+        and lsst_mags.shape[0] != len(bands)
+        and lsst_mags.shape[1] == len(bands)
+    ):
+        lsst_mags, lsst_errs = lsst_mags.T, lsst_errs.T
 
     if deflector_type != "elliptical":
         raise KeyError("The module currently supports only elliptical galaxies.")
 
+    if "g" not in bands or "r" not in bands or "i" not in bands:
+        raise ValueError(
+            "input requires at least g r and i band. Provided are only %s" % bands
+        )
+
+    g_index = bands.index("g")
+    g_band = unumpy.uarray(lsst_mags[g_index, :], lsst_errs[g_index, :])
+    r_index = bands.index("r")
+    r_band = unumpy.uarray(lsst_mags[r_index, :], lsst_errs[r_index, :])
+    i_index = bands.index("i")
+    i_band = unumpy.uarray(lsst_mags[i_index, :], lsst_errs[i_index, :])
+
+    if "u" in bands:
+        u_index = bands.index("u")
+        u_band = unumpy.uarray(lsst_mags[u_index, :], lsst_errs[u_index, :])
+    else:
+        u_band = g_band
+    if "z" in bands:
+        z_index = bands.index("z")
+        z_band = unumpy.uarray(lsst_mags[z_index, :], lsst_errs[z_index, :])
+    else:
+        z_band = i_band
+
     muSDSS, mgSDSS, mrSDSS, miSDSS, mzSDSS = LSST_to_SDSS(
-        unumpy.uarray(lsst_mags[0], lsst_errs[0]),
-        unumpy.uarray(lsst_mags[1], lsst_errs[1]),
-        unumpy.uarray(lsst_mags[2], lsst_errs[2]),
-        unumpy.uarray(lsst_mags[3], lsst_errs[3]),
-        unumpy.uarray(lsst_mags[4], lsst_errs[4]),
+        u_band, g_band, r_band, i_band, z_band
     )
 
     if scaling_relation == "spectroscopic":
@@ -211,6 +236,7 @@ def get_velocity_dispersion(
     )
 
     # Apply the K-correction on the SDSS magnitudes
+
     muSDSS = muSDSS - k_corrections[:, 0]
     mgSDSS = mgSDSS - k_corrections[:, 1]
     mrSDSS = mrSDSS - k_corrections[:, 2]
