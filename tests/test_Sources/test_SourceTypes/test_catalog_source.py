@@ -8,7 +8,7 @@ from astropy.cosmology import FlatLambdaCDM
 import astropy.units as u
 
 from slsim.Pipelines import SkyPyPipeline
-from slsim.Sources.galaxies import Galaxies
+from slsim.Sources.SourcePopulation.galaxies import Galaxies
 from slsim.Sources.SourceTypes.catalog_source import CatalogSource
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector

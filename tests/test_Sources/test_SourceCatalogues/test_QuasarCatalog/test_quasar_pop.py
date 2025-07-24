@@ -1,4 +1,4 @@
-from slsim.Sources.QuasarCatalog.quasar_pop import QuasarRate
+from slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_pop import QuasarRate
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
 import numpy as np

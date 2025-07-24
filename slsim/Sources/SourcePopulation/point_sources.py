@@ -1,5 +1,5 @@
 import numpy.random as random
-from slsim.Sources.source_pop_base import SourcePopBase
+from slsim.Sources.SourcePopulation.source_pop_base import SourcePopBase
 from slsim.selection import object_cut
 from slsim.Sources.source import Source
 

@@ -1,4 +1,4 @@
-from slsim.Sources import random_supernovae
+from slsim.Sources.Supernovae import random_supernovae
 from astropy.table import Column, Table
 from slsim.Sources.SourceVariability.variability import Variability
 from slsim.Sources.SourceTypes.source_base import SourceBase

@@ -1,7 +1,7 @@
 import pytest
 from astropy.units import Quantity
 from astropy.cosmology import FlatLambdaCDM
-from slsim.Sources.galaxy_catalog import GalaxyCatalog
+from slsim.Sources.SourceCatalogues.skypy_galaxy_catalog import GalaxyCatalog
 
 skypy_config = None
 sky_area = Quantity(0.001, unit="deg2")

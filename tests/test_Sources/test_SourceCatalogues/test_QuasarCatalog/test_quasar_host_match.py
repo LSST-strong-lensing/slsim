@@ -10,7 +10,7 @@ from slsim.Deflectors.MassLightConnection.velocity_dispersion import vel_disp_ab
 from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 
 # Import the functions and class to be tested
-from slsim.Sources.QuasarCatalog.quasar_host_match import (
+from slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_host_match import (
     sample_eddington_rate,
     black_hole_mass_from_vel_disp,
     calculate_lsst_magnitude,

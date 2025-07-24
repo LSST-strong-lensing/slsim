@@ -7,7 +7,7 @@ from astropy.units import Quantity
 from astropy.table import Table, vstack
 import os
 from pathlib import Path
-from slsim.Sources.QuasarCatalog.quasar_host_match import QuasarHostMatch
+from slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_host_match import QuasarHostMatch
 from slsim.Deflectors.MassLightConnection.velocity_dispersion import vel_disp_abundance_matching
 from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 
