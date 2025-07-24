@@ -1,9 +1,11 @@
 from astropy.cosmology import FlatLambdaCDM
-from slsim.Deflectors.all_lens_galaxies import (
+from slsim.Deflectors.DeflectorPopulation.all_lens_galaxies import (
     AllLensGalaxies,
     fill_table,
 )
-from slsim.Deflectors.velocity_dispersion import vel_disp_abundance_matching
+from slsim.Deflectors.MassLightConnection.velocity_dispersion import (
+    vel_disp_abundance_matching,
+)
 from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 from astropy.units import Quantity
 from astropy.table import Table

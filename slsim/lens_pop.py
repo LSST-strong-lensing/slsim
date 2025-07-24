@@ -5,7 +5,7 @@ from typing import Optional
 from astropy.cosmology import Cosmology
 from slsim.Sources.source_pop_base import SourcePopBase
 from slsim.LOS.los_pop import LOSPop
-from slsim.Deflectors.deflectors_base import DeflectorsBase
+from slsim.Deflectors.DeflectorPopulation.deflectors_base import DeflectorsBase
 from slsim.lensed_population_base import LensedPopulationBase
 
 

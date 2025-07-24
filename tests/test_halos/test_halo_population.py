@@ -1,6 +1,6 @@
 import numpy as np
 from colossus.cosmology import cosmology
-from slsim.Deflectors.halo_population import (
+from slsim.Halos.halo_population import (
     gene_e_ang_halo,
     calc_vol,
     dNhalodzdlnM_lens,

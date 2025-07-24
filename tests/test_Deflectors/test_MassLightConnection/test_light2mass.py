@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import numpy as np
-from slsim.Deflectors.light2mass import get_velocity_dispersion
+from slsim.Deflectors.MassLightConnection.light2mass import get_velocity_dispersion
 from astropy.cosmology import FlatLambdaCDM
 from slsim.Util.mag2errors import get_errors_Poisson
 import pytest

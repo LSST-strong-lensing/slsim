@@ -1,5 +1,5 @@
 from astropy.cosmology import FlatLambdaCDM
-from slsim.Deflectors.elliptical_lens_galaxies import (
+from slsim.Deflectors.DeflectorPopulation.elliptical_lens_galaxies import (
     EllipticalLensGalaxies,
 )
 from slsim.Util.param_util import vel_disp_from_m_star

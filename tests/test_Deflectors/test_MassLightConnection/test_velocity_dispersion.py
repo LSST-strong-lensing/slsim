@@ -1,4 +1,4 @@
-from slsim.Deflectors.velocity_dispersion import (
+from slsim.Deflectors.MassLightConnection.velocity_dispersion import (
     schechter_vel_disp,
     schechter_velocity_dispersion_function,
     vel_disp_composite_model,
