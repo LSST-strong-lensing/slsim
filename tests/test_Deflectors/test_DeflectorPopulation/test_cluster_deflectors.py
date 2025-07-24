@@ -1,5 +1,5 @@
 from astropy.cosmology import FlatLambdaCDM
-from slsim.Deflectors.cluster_deflectors import ClusterDeflectors
+from slsim.Deflectors.DeflectorPopulation.cluster_deflectors import ClusterDeflectors
 from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 from astropy.units import Quantity
 from astropy.table import Table, vstack
@@ -19,7 +19,7 @@ def cluster_deflectors_input():
     red_galaxies = galaxy_list()
 
     path = os.path.dirname(__file__)
-    module_path = os.path.dirname(os.path.dirname(path))
+    module_path = os.path.dirname(os.path.dirname(os.path.dirname(path)))
     cluster_catalog = Table.read(
         os.path.join(module_path, "data/redMaPPer/clusters_example.fits")
     )

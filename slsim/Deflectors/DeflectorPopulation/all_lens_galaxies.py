@@ -1,11 +1,11 @@
 import numpy as np
 import numpy.random as random
 from slsim.selection import object_cut
-from slsim.Deflectors.velocity_dispersion import vel_disp_abundance_matching
-from slsim.Deflectors.elliptical_lens_galaxies import (
+from slsim.Deflectors.MassLightConnection.velocity_dispersion import vel_disp_abundance_matching
+from slsim.Deflectors.DeflectorPopulation.elliptical_lens_galaxies import (
     elliptical_projected_eccentricity,
 )
-from slsim.Deflectors.deflectors_base import DeflectorsBase
+from slsim.Deflectors.DeflectorPopulation.deflectors_base import DeflectorsBase
 from astropy.table import vstack
 from slsim.Util.param_util import catalog_with_angular_size_in_arcsec
 from slsim.Deflectors.deflector import Deflector

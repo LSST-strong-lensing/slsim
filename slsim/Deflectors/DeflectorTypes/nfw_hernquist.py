@@ -1,5 +1,5 @@
 from slsim.Deflectors.DeflectorTypes.deflector_base import DeflectorBase
-from slsim.Deflectors.velocity_dispersion import vel_disp_composite_model
+from slsim.Deflectors.MassLightConnection.velocity_dispersion import vel_disp_composite_model
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 from lenstronomy.Util import constants
 

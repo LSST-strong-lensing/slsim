@@ -3,9 +3,9 @@ import os
 from astropy.table import Table, hstack
 from colossus.cosmology import cosmology
 from colossus.halo import mass_defs
-import slsim.Deflectors.galaxy_population as galaxy_population
+import slsim.Deflectors.MassLightConnection.galaxy_population as galaxy_population
 import slsim
-import slsim.Deflectors.halo_population as halo_population
+import slsim.Halos.halo_population as halo_population
 import slsim.Util.param_util as util
 import tempfile
 from skypy.pipeline import Pipeline

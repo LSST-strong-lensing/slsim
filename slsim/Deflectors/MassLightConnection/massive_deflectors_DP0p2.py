@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import numpy as np
-from slsim.Deflectors.light2mass import get_velocity_dispersion
+from slsim.Deflectors.MassLightConnection.light2mass import get_velocity_dispersion
 from uncertainties import unumpy
 from astropy.cosmology import FlatLambdaCDM
 from slsim.Util.color_transformations import LSST_to_SDSS

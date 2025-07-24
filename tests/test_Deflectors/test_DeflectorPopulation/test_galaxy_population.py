@@ -3,11 +3,11 @@ import pytest
 from colossus.cosmology import cosmology
 from scipy import stats
 
-from slsim.Deflectors.galaxy_population import galaxy_size
-from slsim.Deflectors.galaxy_population import gals_init
-from slsim.Deflectors.galaxy_population import modelscLognormal
-from slsim.Deflectors.galaxy_population import set_gals_param
-from slsim.Deflectors.galaxy_population import stellarmass_halomass
+from slsim.Deflectors.MassLightConnection.galaxy_population import galaxy_size
+from slsim.Deflectors.MassLightConnection.galaxy_population import gals_init
+from slsim.Deflectors.MassLightConnection.galaxy_population import modelscLognormal
+from slsim.Deflectors.MassLightConnection.galaxy_population import set_gals_param
+from slsim.Deflectors.MassLightConnection.galaxy_population import stellarmass_halomass
 
 
 def test_galaxy_size():

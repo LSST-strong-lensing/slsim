@@ -6,7 +6,7 @@ from astropy.table import vstack
 from astropy.units import Quantity
 from astropy.cosmology import FlatLambdaCDM
 from unittest.mock import patch
-from slsim.Deflectors.velocity_dispersion import vel_disp_abundance_matching
+from slsim.Deflectors.MassLightConnection.velocity_dispersion import vel_disp_abundance_matching
 from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 
 # Import the functions and class to be tested

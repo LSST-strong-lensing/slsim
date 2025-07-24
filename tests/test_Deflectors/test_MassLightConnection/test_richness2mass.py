@@ -1,4 +1,4 @@
-from slsim.Deflectors.richness2mass import mass_richness_relation
+from slsim.Deflectors.MassLightConnection.richness2mass import mass_richness_relation
 import pytest
 
 

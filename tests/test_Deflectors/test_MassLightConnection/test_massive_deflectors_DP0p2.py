@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from astropy.cosmology import FlatLambdaCDM
 import unittest
-from slsim.Deflectors.massive_deflectors_DP0p2 import find_massive_ellipticals
+from slsim.Deflectors.MassLightConnection.massive_deflectors_DP0p2 import find_massive_ellipticals
 from astropy.table import Table
 import os
 
@@ -15,7 +15,7 @@ class TestFindPotentialLenses(unittest.TestCase):
         # module_path, _ = os.path.split(path)
         # test_file = os.path.join(module_path, "tests/TestData/test_DP0_catalog.csv")
         test_file = os.path.join(
-            os.path.dirname(__file__), "../TestData/test_DP0_catalog.csv"
+            os.path.dirname(__file__), "../../TestData/test_DP0_catalog.csv"
         )
 
         self.DP0_table = Table.read(test_file, format="csv")

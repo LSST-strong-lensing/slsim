@@ -2,7 +2,7 @@ import pytest
 from astropy.cosmology import FlatLambdaCDM
 from slsim.Pipelines.sl_hammocks_pipeline import SLHammocksPipeline
 from astropy.units import Quantity
-from slsim.Deflectors.compound_lens_halos_galaxies import CompoundLensHalosGalaxies
+from slsim.Deflectors.DeflectorPopulation.compound_lens_halos_galaxies import CompoundLensHalosGalaxies
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 
 # Assuming other imports are already defined, we continue from here.
