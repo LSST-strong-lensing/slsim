@@ -3,7 +3,9 @@ import numpy.random as random
 from slsim.selection import object_cut
 from slsim.Util import param_util
 from slsim.Deflectors.DeflectorPopulation.deflectors_base import DeflectorsBase
-from slsim.Deflectors.MassLightConnection.velocity_dispersion import vel_disp_abundance_matching
+from slsim.Deflectors.MassLightConnection.velocity_dispersion import (
+    vel_disp_abundance_matching,
+)
 from slsim.Deflectors.deflector import Deflector
 
 

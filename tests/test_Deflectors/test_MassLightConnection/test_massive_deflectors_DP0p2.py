@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 from astropy.cosmology import FlatLambdaCDM
 import unittest
-from slsim.Deflectors.MassLightConnection.massive_deflectors_DP0p2 import find_massive_ellipticals
+from slsim.Deflectors.MassLightConnection.massive_deflectors_DP0p2 import (
+    find_massive_ellipticals,
+)
 from astropy.table import Table
 import os
 
