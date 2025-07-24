@@ -1,6 +1,8 @@
 from slsim.Deflectors.DeflectorTypes.deflector_base import DeflectorBase
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
-from slsim.Deflectors.MassLightConnection.velocity_dispersion import theta_E_from_vel_disp_epl
+from slsim.Deflectors.MassLightConnection.velocity_dispersion import (
+    theta_E_from_vel_disp_epl,
+)
 
 
 class EPLSersic(DeflectorBase):
