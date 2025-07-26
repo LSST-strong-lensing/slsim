@@ -230,7 +230,7 @@ def test_galaxies_lens_pop_instance():
 
     path = (
         os.path.dirname(slsim.__file__)
-        + "/Sources/SupernovaeCatalog/supernovae_data.pkl"
+        + "/Sources/SourceCatalogues/SupernovaeCatalog/supernovae_data.pkl"
     )
     with open(path, "rb") as f:
         supernovae_data = pickle.load(f)

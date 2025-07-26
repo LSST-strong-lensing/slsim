@@ -1,4 +1,4 @@
-from slsim.Sources.supernovae import Supernova
+from slsim.Sources.Supernovae.supernova import Supernova
 import numpy.testing as npt
 import pytest
 

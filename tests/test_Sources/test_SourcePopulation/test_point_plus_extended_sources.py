@@ -1,6 +1,8 @@
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
-from slsim.Sources.point_plus_extended_sources import PointPlusExtendedSources
+from slsim.Sources.SourcePopulation.point_plus_extended_sources import (
+    PointPlusExtendedSources,
+)
 import os
 from astropy.table import Table
 import pytest
@@ -9,8 +11,8 @@ import pytest
 class TestPointPlusExtendedSources(object):
     def setup_method(self):
         sky_area = Quantity(value=0.1, unit="deg2")
-        self.path = os.path.dirname(__file__)
-        new_path = self.path.replace("test_Source", "/")
+        new_path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        # new_path = self.path.replace("test_Sources", "/")
         self.source_list = Table.read(
             os.path.join(new_path, "TestData/point_source_catalog_test.fits"),
             format="fits",

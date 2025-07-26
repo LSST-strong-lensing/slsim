@@ -3,7 +3,7 @@ from slsim.Sources.SourceVariability.variability import (
     Variability,
     reprocess_with_lamppost_model,
 )
-from slsim.Sources import agn
+from slsim.Sources.SourceTypes import agn
 from slsim.Sources.SourceTypes.source_base import SourceBase
 
 

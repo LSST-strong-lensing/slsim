@@ -1,8 +1,8 @@
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
 from astropy import units as u
-from slsim.Sources.galaxies import Galaxies
-from slsim.Sources.galaxies import (
+from slsim.Sources.SourcePopulation.galaxies import Galaxies
+from slsim.Sources.SourcePopulation.galaxies import (
     galaxy_projected_eccentricity,
     convert_to_slsim_convention,
     down_sample_to_dc2,

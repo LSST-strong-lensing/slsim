@@ -1,12 +1,12 @@
 from astropy.table import Table, hstack
-from slsim.Sources import random_supernovae
+from slsim.Sources.Supernovae import random_supernovae
 from slsim.Sources.Supernovae.supernovae_lightcone import SNeLightcone
-from slsim.Sources.galaxy_catalog import GalaxyCatalog
-from slsim.Sources.supernovae_host_match import SupernovaeHostMatch
+from slsim.Sources.SourceCatalogues.skypy_galaxy_catalog import GalaxyCatalog
+from slsim.Sources.Supernovae.supernovae_host_match import SupernovaeHostMatch
 import numpy as np
 from astropy import units
 from scipy import stats
-from slsim.Sources.galaxies import galaxy_projected_eccentricity
+from slsim.Sources.SourcePopulation.galaxies import galaxy_projected_eccentricity
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 from slsim.Util.param_util import elliptical_distortion_product_average
 

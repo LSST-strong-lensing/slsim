@@ -1,6 +1,6 @@
-from slsim.Sources.source_pop_base import SourcePopBase
+from slsim.Sources.SourcePopulation.source_pop_base import SourcePopBase
 from slsim.Sources.source import Source
-from slsim.Sources.galaxies import Galaxies
+from slsim.Sources.SourcePopulation.galaxies import Galaxies
 from slsim.selection import object_cut
 
 

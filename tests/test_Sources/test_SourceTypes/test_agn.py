@@ -1,5 +1,5 @@
 import numpy as np
-from slsim.Sources.agn import Agn, RandomAgn
+from slsim.Sources.SourceTypes.agn import Agn, RandomAgn
 from astropy import cosmology
 import pytest
 

@@ -3,9 +3,9 @@ import numpy as np
 from astropy.units import Quantity
 from astropy import units
 from astropy.cosmology import FlatLambdaCDM
-from slsim.Sources.SupernovaeCatalog.supernovae_sample import SupernovaeCatalog
-from slsim.Sources.galaxy_catalog import GalaxyCatalog
-from slsim.Sources.SupernovaeCatalog.supernovae_sample import (
+from slsim.Sources.SourceCatalogues.SupernovaeCatalog import SupernovaeCatalog
+from slsim.Sources.SourceCatalogues.skypy_galaxy_catalog import GalaxyCatalog
+from slsim.Sources.SourceCatalogues.SupernovaeCatalog.supernovae_sample import (
     supernovae_host_galaxy_offset,
 )
 import slsim.Pipelines as pipelines
