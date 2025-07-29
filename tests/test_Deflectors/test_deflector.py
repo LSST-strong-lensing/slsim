@@ -40,6 +40,8 @@ class TestDeflector(object):
             deflector_type="NFW_HERNQUIST", **deflector_nfw_dict
         )
 
+        self.deflector_epl = Deflector(deflector_type="EPL", **red_two)
+
     def test_light_ellipticity(self):
         e1_light, e2_light = self.deflector.light_ellipticity
         assert pytest.approx(e1_light, rel=1e-3) == -0.05661955320450283
