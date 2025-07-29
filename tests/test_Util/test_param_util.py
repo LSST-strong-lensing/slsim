@@ -10,4 +10,3 @@ def test_draw_coord_in_circle():
 
     ra, dec = draw_coord_in_circle(area=2, size=1)
     assert isinstance(ra, float)
-

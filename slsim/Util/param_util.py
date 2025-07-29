@@ -15,13 +15,13 @@ from astropy.cosmology import default_cosmology
 
 
 def draw_coord_in_circle(area, size=1):
-    """
-    draw realizations of points in circle
+    """Draw realizations of points in circle.
 
     :param area: area (solid angle) of circle to draw uniformly in
     :param size: number of draws
     :type size: int
-    :return: coordinate (x, y) drawn uniformly in the area of the circle, centered at (0, 0)
+    :return: coordinate (x, y) drawn uniformly in the area of the
+        circle, centered at (0, 0)
     """
     if size == 1:
         size = None

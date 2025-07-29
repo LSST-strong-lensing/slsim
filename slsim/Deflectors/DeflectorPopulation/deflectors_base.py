@@ -9,7 +9,15 @@ class DeflectorsBase(ABC):
     it contains.
     """
 
-    def __init__(self, deflector_table, kwargs_cut, cosmo, sky_area, gamma_pl=None, deflector_type="EPL_SERSIC"):
+    def __init__(
+        self,
+        deflector_table,
+        kwargs_cut,
+        cosmo,
+        sky_area,
+        gamma_pl=None,
+        deflector_type="EPL_SERSIC",
+    ):
         """
 
         :param deflector_table: table with lens parameters

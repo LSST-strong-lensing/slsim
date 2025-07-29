@@ -183,7 +183,7 @@ class Deflector(object):
         :param cosmo: astropy.cosmology instance
         :return:
         """
-        if hasattr(self, '_theta_e_infinity'):
+        if hasattr(self, "_theta_e_infinity"):
             return self._theta_e_infinity
         if self.deflector_type in ["EPL", "EPL_SERSIC"]:
             v_sigma = self._deflector.velocity_dispersion(cosmo=cosmo)

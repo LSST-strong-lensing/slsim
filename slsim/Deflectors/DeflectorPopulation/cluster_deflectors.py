@@ -124,9 +124,7 @@ class ClusterDeflectors(DeflectorsBase):
         deflector = self.draw_cluster(index)
         members = self.draw_members(deflector["cluster_id"], **self.kwargs_draw_members)
         deflector["subhalos"] = members
-        deflector_class = Deflector(
-            deflector_type=self.deflector_profile, **deflector
-        )
+        deflector_class = Deflector(deflector_type=self.deflector_profile, **deflector)
         return deflector_class
 
     def draw_cluster(self, index):

@@ -92,7 +92,5 @@ class CompoundLensHalosGalaxies(DeflectorsBase):
             deflector["e2_light"] = e2_light
             deflector["e1_mass"] = e1_mass
             deflector["e2_mass"] = e2_mass
-        deflector_class = Deflector(
-            deflector_type=self.deflector_profile, **deflector
-        )
+        deflector_class = Deflector(deflector_type=self.deflector_profile, **deflector)
         return deflector_class

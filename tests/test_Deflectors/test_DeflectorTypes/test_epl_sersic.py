@@ -99,7 +99,7 @@ class TestEPLSersic(object):
         assert kwargs_lens_mass[0]["theta_E"] == 0.0
 
     def test_halo_porperties(self):
-        gamma = self.sie_sersic.halo_properties['gamma_pl']
+        gamma = self.sie_sersic.halo_properties["gamma_pl"]
         assert gamma == 2.0
 
 

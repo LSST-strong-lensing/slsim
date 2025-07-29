@@ -114,9 +114,9 @@ def test_all_lens_galaxies_2():
         sky_area=sky_area,
         gamma_pl={"gamma_min": 1.95, "gamma_max": 2.26},
     )
-    assert galaxy_class1.draw_deflector().halo_properties['gamma_pl'] == 2.05
-    assert 1.6 <= galaxy_class2.draw_deflector().halo_properties['gamma_pl'] <= 2.6
-    assert 1.95 <= galaxy_class3.draw_deflector().halo_properties['gamma_pl'] <= 2.26
+    assert galaxy_class1.draw_deflector().halo_properties["gamma_pl"] == 2.05
+    assert 1.6 <= galaxy_class2.draw_deflector().halo_properties["gamma_pl"] <= 2.6
+    assert 1.95 <= galaxy_class3.draw_deflector().halo_properties["gamma_pl"] <= 2.26
     with pytest.raises(ValueError):
         AllLensGalaxies(
             red_galaxies4,

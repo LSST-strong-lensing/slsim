@@ -47,9 +47,7 @@ class TestEPL(object):
     def test_mass_model_lenstronomy_sie(self):
         # Should yeld SIE model as gamma = 2
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-        lens_cosmo = LensCosmo(
-            cosmo=cosmo, z_lens=self.sie.redshift, z_source=2.0
-        )
+        lens_cosmo = LensCosmo(cosmo=cosmo, z_lens=self.sie.redshift, z_source=2.0)
         lens_mass_model_list, kwargs_lens_mass = self.sie.mass_model_lenstronomy(
             lens_cosmo=lens_cosmo,
             spherical=False,
@@ -81,16 +79,14 @@ class TestEPL(object):
     def test_mass_model_no_lensing(self):
         # case when z_source < z_lens
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-        lens_cosmo = LensCosmo(
-            cosmo=cosmo, z_lens=self.sie.redshift, z_source=0.2
-        )
+        lens_cosmo = LensCosmo(cosmo=cosmo, z_lens=self.sie.redshift, z_source=0.2)
         lens_mass_model_list, kwargs_lens_mass = self.sie.mass_model_lenstronomy(
             lens_cosmo=lens_cosmo
         )
         assert kwargs_lens_mass[0]["theta_E"] == 0.0
 
     def test_halo_porperties(self):
-        gamma = self.sie.halo_properties['gamma_pl']
+        gamma = self.sie.halo_properties["gamma_pl"]
         assert gamma == 2.0
 
 

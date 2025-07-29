@@ -10,10 +10,17 @@ class DeflectorBase(ABC):
     """Class of a single deflector with quantities only related to the
     deflector (independent of the source)"""
 
-    def __init__(self, z, vel_disp=None, stellar_mass=None, angular_size=None,
-                 center_x=None, center_y=None,
-                 deflector_area=0.01,
-                 **kwargs):
+    def __init__(
+        self,
+        z,
+        vel_disp=None,
+        stellar_mass=None,
+        angular_size=None,
+        center_x=None,
+        center_y=None,
+        deflector_area=0.01,
+        **kwargs
+    ):
         """
 
         :param z: redshift
@@ -36,7 +43,9 @@ class DeflectorBase(ABC):
         self._angular_size = angular_size
         if center_x is None or center_y is None:
 
-            center_x, center_y = param_util.draw_coord_in_circle(area=deflector_area, size=1)
+            center_x, center_y = param_util.draw_coord_in_circle(
+                area=deflector_area, size=1
+            )
         self._center_lens = np.array([center_x, center_y])
 
     @property

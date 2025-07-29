@@ -1133,7 +1133,12 @@ class Lens(LensedSystemBase):
             z_source = self.source(source_index).redshift
         if hasattr(self, "_lens_mass_model_list") and hasattr(self, "_kwargs_lens"):
             pass
-        elif self.deflector.deflector_type in ["EPL", "EPL_SERSIC", "NFW_HERNQUIST", "NFW_CLUSTER"]:
+        elif self.deflector.deflector_type in [
+            "EPL",
+            "EPL_SERSIC",
+            "NFW_HERNQUIST",
+            "NFW_CLUSTER",
+        ]:
 
             lens_mass_model_list, kwargs_lens = self.deflector.mass_model_lenstronomy(
                 lens_cosmo=self._lens_cosmo

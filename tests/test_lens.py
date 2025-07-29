@@ -1132,8 +1132,7 @@ class TestMultiSource(object):
             pointsource_kwargs=kwargs,
         )
         self.deflector = Deflector(
-            deflector_type="EPL_SERSIC",
-            sis_convention=False, **deflector_dict_
+            deflector_type="EPL_SERSIC", sis_convention=False, **deflector_dict_
         )
 
         self.lens_class1 = Lens(

@@ -132,4 +132,4 @@ class EPL(DeflectorBase):
 
         :return: gamma (with =2 is isothermal)
         """
-        return {'gamma_pl': self._gamma_pl}
+        return {"gamma_pl": self._gamma_pl}
