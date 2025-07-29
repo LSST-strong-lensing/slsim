@@ -52,8 +52,8 @@ class TestLens(object):
                 **kwargs,
             )
             self.deflector = Deflector(
-                deflector_type="EPL",
-                deflector_dict=self.deflector_dict,
+                deflector_type="EPL_SERSIC",
+                **self.deflector_dict,
             )
             gg_lens = Lens(
                 source_class=self.source,
@@ -273,7 +273,7 @@ class TestLens(object):
             )
             self.deflector2 = Deflector(
                 deflector_type="NFW_HERNQUIST",
-                deflector_dict=deflector_dict,
+                **deflector_dict,
             )
             gg_lens = Lens(
                 source_class=self.source2,
@@ -305,7 +305,7 @@ class TestLens(object):
             )
             self.deflector3 = Deflector(
                 deflector_type="NFW_CLUSTER",
-                deflector_dict=deflector_dict,
+                **deflector_dict,
             )
             cg_lens = Lens(
                 source_class=self.source3,
@@ -466,8 +466,8 @@ def pes_lens_instance():
             pointsource_kwargs=kwargs4,
         )
         deflector4 = Deflector(
-            deflector_type="EPL",
-            deflector_dict=deflector_dict,
+            deflector_type="EPL_SERSIC",
+            **deflector_dict,
         )
         pes_lens = Lens(
             source_class=source4,
@@ -564,8 +564,8 @@ def lens_instance_with_variability():
         pointsource_kwargs=kwargs_quasar,
     )
     deflector_quasar = Deflector(
-        deflector_type="EPL",
-        deflector_dict=deflector_dict_quasar,
+        deflector_type="EPL_SERSIC",
+        **deflector_dict_quasar,
     )
 
     los_class = LOSIndividual(
@@ -851,8 +851,8 @@ def supernovae_lens_instance():
             pointsource_kwargs=kwargs5,
         )
         deflector5 = Deflector(
-            deflector_type="EPL",
-            deflector_dict=deflector_dict,
+            deflector_type="EPL_SERSIC",
+            **deflector_dict,
         )
         supernovae_lens = Lens(
             source_class=source5,
@@ -918,8 +918,8 @@ class TestDifferentLens(object):
             **kwargs,
         )
         self.deflector6 = Deflector(
-            deflector_type="EPL",
-            deflector_dict=self.deflector_dict,
+            deflector_type="EPL_SERSIC",
+            **self.deflector_dict,
         )
 
     def test_different_setting(self):
@@ -1060,8 +1060,8 @@ def supernovae_lens_instance_double_sersic_multisource():
             pointsource_kwargs=kwargs,
         )
         deflector = Deflector(
-            deflector_type="EPL",
-            deflector_dict=deflector_dict,
+            deflector_type="EPL_SERSIC",
+            **deflector_dict,
         )
         supernovae_lens = Lens(
             deflector_class=deflector,
@@ -1132,9 +1132,7 @@ class TestMultiSource(object):
             pointsource_kwargs=kwargs,
         )
         self.deflector = Deflector(
-            deflector_type="EPL",
-            deflector_dict=deflector_dict_,
-            sis_convention=False,
+            deflector_type="EPL_SERSIC", sis_convention=False, **deflector_dict_
         )
 
         self.lens_class1 = Lens(
@@ -1174,7 +1172,7 @@ class TestMultiSource(object):
             "mag_g": -20,
         }
         self.deflector_nfw = Deflector(
-            deflector_type="NFW_HERNQUIST", deflector_dict=deflector_nfw_dict
+            deflector_type="NFW_HERNQUIST", **deflector_nfw_dict
         )
 
         self.lens_class_nfw = Lens(
@@ -1185,7 +1183,7 @@ class TestMultiSource(object):
         )
 
     def test_point_source_arrival_time_multi(self):
-        gamma_pl_out = self.deflector.halo_properties
+        gamma_pl_out = self.deflector.halo_properties["gamma_pl"]
         assert gamma_pl_out == self.gamma_pl
 
         point_source_arival_time1 = self.lens_class1.point_source_arrival_times()
@@ -1348,7 +1346,7 @@ class TestSlhammock(object):
         )
         deflector = Deflector(
             deflector_type="NFW_HERNQUIST",
-            deflector_dict=deflector_dict,
+            **deflector_dict,
         )
         los_class = LOSIndividual(
             kappa=0, gamma=[-0.005061965833762263, 0.028825761226555197]

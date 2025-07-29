@@ -43,8 +43,8 @@ def supernovae_lens_instance():
             pointsource_kwargs=kwargs_sn,
         )
         deflector = Deflector(
-            deflector_type="EPL",
-            deflector_dict=deflector_dict,
+            deflector_type="EPL_SERSIC",
+            **deflector_dict,
         )
         supernovae_lens = Lens(
             deflector_class=deflector,

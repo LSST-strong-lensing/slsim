@@ -81,9 +81,9 @@ def test_elliptical_lens_galaxies_2():
         sky_area=sky_area,
         gamma_pl={"gamma_min": 1.8, "gamma_max": 2.3},
     )
-    assert galaxy_class1.draw_deflector().halo_properties == 2.15
-    assert 1.5 <= galaxy_class2.draw_deflector().halo_properties <= 2.5
-    assert 1.8 <= galaxy_class3.draw_deflector().halo_properties <= 2.3
+    assert galaxy_class1.draw_deflector().halo_properties["gamma_pl"] == 2.15
+    assert 1.5 <= galaxy_class2.draw_deflector().halo_properties["gamma_pl"] <= 2.5
+    assert 1.8 <= galaxy_class3.draw_deflector().halo_properties["gamma_pl"] <= 2.3
     with pytest.raises(ValueError):
         EllipticalLensGalaxies(
             red_galaxies4,

@@ -128,9 +128,7 @@ class AllLensGalaxies(DeflectorsBase):
             deflector["e2_mass"] = e2_mass
         if deflector["n_sersic"] == -1:
             deflector["n_sersic"] = 4  # TODO make a better estimate with scatter
-        deflector_class = Deflector(
-            deflector_type=self.deflector_profile, deflector_dict=deflector
-        )
+        deflector_class = Deflector(deflector_type=self.deflector_profile, **deflector)
         return deflector_class
 
 

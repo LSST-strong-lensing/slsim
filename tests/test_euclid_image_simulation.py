@@ -53,8 +53,8 @@ source = Source(
     extendedsource_type="single_sersic",
 )
 deflector = Deflector(
-    deflector_type="EPL",
-    deflector_dict=DEFLECTOR_DICT,
+    deflector_type="EPL_SERSIC",
+    **DEFLECTOR_DICT,
 )
 los_class = LOSIndividual(kappa=0, gamma=[-0.005061965833762263, 0.028825761226555197])
 

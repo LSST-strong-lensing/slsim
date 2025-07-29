@@ -1,6 +1,7 @@
 from abc import ABC
 import numpy as np
 from astropy.table import Table
+from slsim.Util import param_util
 
 
 class SourceBase(ABC):
@@ -56,13 +57,11 @@ class SourceBase(ABC):
         if hasattr(self, "_center_source"):
             return self._center_source
 
-        test_area_radius = np.sqrt(draw_area / np.pi)
-        r = np.sqrt(np.random.random()) * test_area_radius
-        theta = 2 * np.pi * np.random.random()
+        x_, y_ = param_util.draw_coord_in_circle(area=draw_area, size=1)
         self._center_source = np.array(
             [
-                reference_position[0] + r * np.cos(theta),
-                reference_position[1] + r * np.sin(theta),
+                reference_position[0] + x_,
+                reference_position[1] + y_,
             ]
         )
         return self._center_source
