@@ -51,8 +51,8 @@ class TestImageSimulation(object):
                 extendedsource_type="single_sersic",
             )
             self.deflector = Deflector(
-                deflector_type="EPL",
-                deflector_dict=self.deflector_dict,
+                deflector_type="EPL_SERSIC",
+                **self.deflector_dict,
             )
             gg_lens = Lens(
                 source_class=self.source,
@@ -212,8 +212,8 @@ def pes_lens_instance():
             pointsource_kwargs=kwargs_quasar,
         )
         deflector = Deflector(
-            deflector_type="EPL",
-            deflector_dict=deflector_dict,
+            deflector_type="EPL_SERSIC",
+            **deflector_dict,
         )
         pes_lens = Lens(
             source_class=source,
@@ -470,8 +470,8 @@ class TestMultiSourceImageSimulation(object):
             pointsource_kwargs=kwargs_sn,
         )
         self.deflector = Deflector(
-            deflector_type="EPL",
-            deflector_dict=deflector_dict,
+            deflector_type="EPL_SERSIC",
+            **deflector_dict,
         )
         lens_class1 = Lens(
             deflector_class=self.deflector,
@@ -606,8 +606,8 @@ class TestImageSimulationInterpSingleSource:
 
         deflector_dict = red_one
         self.deflector_single = Deflector(
-            deflector_type="EPL",
-            deflector_dict=deflector_dict,
+            deflector_type="EPL_SERSIC",
+            **deflector_dict,
         )
 
         self.lens_interp_single = Lens(

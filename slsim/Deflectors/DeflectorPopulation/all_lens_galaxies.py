@@ -129,7 +129,7 @@ class AllLensGalaxies(DeflectorsBase):
         if deflector["n_sersic"] == -1:
             deflector["n_sersic"] = 4  # TODO make a better estimate with scatter
         deflector_class = Deflector(
-            deflector_type=self.deflector_profile, deflector_dict=deflector
+            deflector_type=self.deflector_profile, **deflector
         )
         return deflector_class
 

@@ -73,8 +73,8 @@ supernova_source = Source(
 )
 
 deflector = Deflector(
-    deflector_type="EPL",
-    deflector_dict=DEFLECTOR_DICT,
+    deflector_type="EPL_SERSIC",
+    **DEFLECTOR_DICT,
 )
 LENS = Lens(
     source_class=source,

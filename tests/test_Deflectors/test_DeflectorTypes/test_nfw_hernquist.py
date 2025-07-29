@@ -32,7 +32,7 @@ class TestNFWHernquist(object):
             "z": 0.5,
             "mag_g": -20,
         }
-        self.nfw_hernquist = NFWHernquist(deflector_dict=self.deflector_dict)
+        self.nfw_hernquist = NFWHernquist(**self.deflector_dict)
 
     def test_redshift(self):
         z = self.nfw_hernquist.redshift

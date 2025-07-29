@@ -146,8 +146,8 @@ def test_source():
 
     # dummy, zero‑mass deflector
     deflector = Deflector(
-        deflector_type="EPL",
-        deflector_dict={
+        deflector_type="EPL_SERSIC",
+        **{
             "z": 0.5,
             "theta_E": 0.0,
             "e1_light": 0.0,

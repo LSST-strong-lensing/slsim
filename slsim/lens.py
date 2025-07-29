@@ -465,7 +465,7 @@ class Lens(LensedSystemBase):
         :param source_index: index of the source.
         :return: effective Einstein radius for the lens-source pair.
         """
-        if self.deflector.deflector_type in ["EPL"]:
+        if self.deflector.deflector_type in ["EPL", "EPL_SERSIC"]:
             return self.einstein_radius[source_index]
         else:
             return self.einstein_radius_infinity
@@ -482,9 +482,9 @@ class Lens(LensedSystemBase):
         lens_model_class, kwargs_lens = self.deflector_mass_model_lenstronomy(
             source_index=source_index
         )
-        if self.deflector.deflector_type in ["EPL"]:
+        if self.deflector.deflector_type in ["EPL", "EPL_SERSIC"]:
             kappa_ext_convention = self.los_class.convergence
-            gamma_pl = self.deflector.halo_properties
+            gamma_pl = self.deflector.halo_properties["gamma_pl"]
             theta_E_convention = kwargs_lens[0]["theta_E"]
             if (
                 self.source(source_index).redshift
@@ -1133,7 +1133,7 @@ class Lens(LensedSystemBase):
             z_source = self.source(source_index).redshift
         if hasattr(self, "_lens_mass_model_list") and hasattr(self, "_kwargs_lens"):
             pass
-        elif self.deflector.deflector_type in ["EPL", "NFW_HERNQUIST", "NFW_CLUSTER"]:
+        elif self.deflector.deflector_type in ["EPL", "EPL_SERSIC", "NFW_HERNQUIST", "NFW_CLUSTER"]:
 
             lens_mass_model_list, kwargs_lens = self.deflector.mass_model_lenstronomy(
                 lens_cosmo=self._lens_cosmo
