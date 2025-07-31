@@ -853,9 +853,9 @@ class Lens(LensedSystemBase):
         ra_lens = np.random.uniform(0, 360)  # degrees
         dec_lens = np.random.uniform(-90, 90)  # degrees
 
-        ml_lc_lens = MicrolensingLightCurveFromLensModel()
+        self._microlensing_model_class = MicrolensingLightCurveFromLensModel()
         microlensing_magnitudes = (
-            ml_lc_lens.generate_point_source_microlensing_magnitudes(
+            self._microlensing_model_class.generate_point_source_microlensing_magnitudes(
                 time=time,
                 source_redshift=self.source(source_index).redshift,
                 deflector_redshift=self.deflector_redshift,
@@ -871,9 +871,21 @@ class Lens(LensedSystemBase):
             )
         )
 
-        self.microlensing_model_class = ml_lc_lens
-
         return microlensing_magnitudes  # # does not include the macro-lensing effect
+    
+    @property
+    def microlensing_model_class(self):
+        """Returns the MicrolensingLightCurveFromLensModel class instance used for the microlensing calculations. Only available if microlensing=True was used in point_source_magnitude.
+
+        :return: MicrolensingLightCurveFromLensModel class instance
+        """
+        if hasattr(self, "_microlensing_model_class"):
+            return self._microlensing_model_class
+        else:
+            raise AttributeError(
+                "MicrolensingLightCurveFromLensModel class is not set. "
+                "Please run point_source_magnitude with microlensing=True."
+            )
 
     def extended_source_magnitude(self, band, lensed=False):
         """Unlensed apparent magnitude of the extended source for a given band
