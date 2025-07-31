@@ -345,8 +345,10 @@ class MicrolensingLightCurveFromLensModel(object):
                 **kwargs_MagnificationMap,
             )
             magmaps_images.append(magmap)
-        
-        self.magmaps_images = magmaps_images  # store the magnification maps in the class instance
+
+        self.magmaps_images = (
+            magmaps_images  # store the magnification maps in the class instance
+        )
 
         return magmaps_images
 
