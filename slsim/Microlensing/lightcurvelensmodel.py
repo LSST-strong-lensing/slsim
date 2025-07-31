@@ -96,23 +96,25 @@ class MicrolensingLightCurveFromLensModel(object):
                 "kwargs_source_morphology not in kwargs_microlensing. Please provide a dictionary of settings required by source morphology calculation."
             )
 
-        self._lightcurves, self._tracks, __time_arrays = self.generate_point_source_lightcurves(
-            time_array,
-            source_redshift,
-            deflector_redshift,
-            kappa_star_images,
-            kappa_tot_images,
-            shear_images,
-            shear_phi_angle_images,
-            ra_lens,
-            dec_lens,
-            deflector_velocity_dispersion,
-            cosmology,
-            kwargs_MagnificationMap=kwargs_MagnificationMap,
-            point_source_morphology=point_source_morphology,
-            kwargs_source_morphology=kwargs_source_morphology,
-            lightcurve_type="magnitude",
-            num_lightcurves=1,
+        self._lightcurves, self._tracks, __time_arrays = (
+            self.generate_point_source_lightcurves(
+                time_array,
+                source_redshift,
+                deflector_redshift,
+                kappa_star_images,
+                kappa_tot_images,
+                shear_images,
+                shear_phi_angle_images,
+                ra_lens,
+                dec_lens,
+                deflector_velocity_dispersion,
+                cosmology,
+                kwargs_MagnificationMap=kwargs_MagnificationMap,
+                point_source_morphology=point_source_morphology,
+                kwargs_source_morphology=kwargs_source_morphology,
+                lightcurve_type="magnitude",
+                num_lightcurves=1,
+            )
         )
 
         # Here we choose just 1 lightcurve for the point sources
@@ -127,20 +129,24 @@ class MicrolensingLightCurveFromLensModel(object):
             lightcurves_single = lightcurves_single[:, 0]
 
         return lightcurves_single
-    
+
     @property
     def lightcurves(self):
-        """Returns the cached lightcurves generated for the point source. Has shape (num_images, len(time))."""
+        """Returns the cached lightcurves generated for the point source.
+
+        Has shape (num_images, len(time)).
+        """
         if hasattr(self, "_lightcurves"):
             return self._lightcurves
         else:
             raise AttributeError(
                 "Lightcurves are not set. Please run generate_point_source_microlensing_magnitudes first."
             )
-    
+
     @property
     def tracks(self):
-        """Returns the cached track coordinates on the magnification map, generated for the point source."""
+        """Returns the cached track coordinates on the magnification map,
+        generated for the point source."""
         if hasattr(self, "_tracks"):
             return self._tracks
         else:
@@ -364,7 +370,7 @@ class MicrolensingLightCurveFromLensModel(object):
             self._magmaps_images.append(magmap)
 
         return self._magmaps_images
-    
+
     @property
     def magmaps_images(self):
         """Returns the magnification maps for each image of the source."""

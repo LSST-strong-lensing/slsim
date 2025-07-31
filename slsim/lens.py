@@ -854,28 +854,28 @@ class Lens(LensedSystemBase):
         dec_lens = np.random.uniform(-90, 90)  # degrees
 
         self._microlensing_model_class = MicrolensingLightCurveFromLensModel()
-        microlensing_magnitudes = (
-            self._microlensing_model_class.generate_point_source_microlensing_magnitudes(
-                time=time,
-                source_redshift=self.source(source_index).redshift,
-                deflector_redshift=self.deflector_redshift,
-                kappa_star_images=kappa_star_images,
-                kappa_tot_images=kappa_tot_images,
-                shear_images=shear_images,
-                shear_phi_angle_images=shear_angle_images,
-                ra_lens=ra_lens,
-                dec_lens=dec_lens,
-                deflector_velocity_dispersion=self.deflector_velocity_dispersion(),
-                cosmology=self.cosmo,
-                **kwargs_microlensing,
-            )
+        microlensing_magnitudes = self._microlensing_model_class.generate_point_source_microlensing_magnitudes(
+            time=time,
+            source_redshift=self.source(source_index).redshift,
+            deflector_redshift=self.deflector_redshift,
+            kappa_star_images=kappa_star_images,
+            kappa_tot_images=kappa_tot_images,
+            shear_images=shear_images,
+            shear_phi_angle_images=shear_angle_images,
+            ra_lens=ra_lens,
+            dec_lens=dec_lens,
+            deflector_velocity_dispersion=self.deflector_velocity_dispersion(),
+            cosmology=self.cosmo,
+            **kwargs_microlensing,
         )
 
         return microlensing_magnitudes  # # does not include the macro-lensing effect
-    
+
     @property
     def microlensing_model_class(self):
-        """Returns the MicrolensingLightCurveFromLensModel class instance used for the microlensing calculations. Only available if microlensing=True was used in point_source_magnitude.
+        """Returns the MicrolensingLightCurveFromLensModel class instance used
+        for the microlensing calculations. Only available if microlensing=True
+        was used in point_source_magnitude.
 
         :return: MicrolensingLightCurveFromLensModel class instance
         """
