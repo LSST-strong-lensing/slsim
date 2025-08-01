@@ -1,7 +1,6 @@
 import copy
 
 from slsim.Sources.SourceVariability.variability import (
-    Variability,
     reprocess_with_lamppost_model,
 )
 from slsim.Sources.SourceVariability import agn

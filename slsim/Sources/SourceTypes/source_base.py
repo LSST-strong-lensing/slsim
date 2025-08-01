@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 import numpy as np
 from slsim.Util import param_util
 from slsim.Sources.SourceVariability.variability import Variability

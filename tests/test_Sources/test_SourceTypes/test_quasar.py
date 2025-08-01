@@ -2,7 +2,6 @@ from slsim.Sources.SourceTypes.quasar import Quasar, extract_agn_kwargs_from_sou
 import numpy as np
 import pytest
 from astropy import cosmology
-from astropy.table import Table
 
 
 class TestQuasar:

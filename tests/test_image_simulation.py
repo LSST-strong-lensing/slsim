@@ -404,9 +404,7 @@ class TestMultiSourceImageSimulation(object):
     def setup_method(self):
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         path = os.path.dirname(__file__)
-        source_dict1 = Table.read(
-            os.path.join(path, "TestData/source_supernovae_new.fits"), format="fits"
-        )
+
         data = {
             "ra_off": [-0.2524832112858584],
             "dec_off": [0.1394853307977928],
