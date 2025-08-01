@@ -2,7 +2,7 @@ import os
 import numpy as np
 from astropy.table import Table
 from astropy.cosmology import FlatLambdaCDM
-from slsim.lens import Lens
+from slsim.Lenses.lens import Lens
 from slsim.LsstSciencePipeline.opsim_pipeline import opsim_time_series_images_data
 from slsim.LsstSciencePipeline.util_lsst import opsim_variable_lens_injection
 from slsim.Sources.source import Source

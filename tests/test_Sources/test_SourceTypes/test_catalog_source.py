@@ -12,8 +12,8 @@ from slsim.Sources.SourcePopulation.galaxies import Galaxies
 from slsim.Sources.SourceTypes.catalog_source import CatalogSource
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
-from slsim.lens import Lens
-from slsim.image_simulation import lens_image
+from slsim.Lenses.lens import Lens
+from slsim.ImageSimulation.image_simulation import lens_image
 from slsim.Util.param_util import gaussian_psf
 
 catalog_path = os.path.join(

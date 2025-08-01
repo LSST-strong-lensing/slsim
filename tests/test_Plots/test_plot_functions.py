@@ -3,12 +3,12 @@ import pytest
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.cosmology import FlatLambdaCDM
-from slsim.lens import Lens
+from slsim.Lenses.lens import Lens
 from slsim.Plots.plot_functions import (
     create_image_montage_from_image_list,
     plot_montage_of_random_injected_lens,
 )
-from slsim.image_simulation import sharp_image
+from slsim.ImageSimulation.image_simulation import sharp_image
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
 from astropy.table import Table

@@ -10,10 +10,10 @@ import slsim.Deflectors as deflectors
 
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
-from slsim.lens_pop import LensPop
+from slsim.Lenses.lens_pop import LensPop
 from slsim.Plots.lens_plots import LensingPlots
-from slsim.Observations.roman_speclite import configure_roman_filters
-from slsim.Observations.roman_speclite import filter_names
+from slsim.Pipelines.roman_speclite import configure_roman_filters
+from slsim.Pipelines.roman_speclite import filter_names
 import speclite
 
 

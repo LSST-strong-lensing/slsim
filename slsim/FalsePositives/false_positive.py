@@ -1,5 +1,5 @@
 import numpy as np
-from slsim.lens import Lens
+from slsim.Lenses.lens import Lens
 
 
 class FalsePositive(Lens):

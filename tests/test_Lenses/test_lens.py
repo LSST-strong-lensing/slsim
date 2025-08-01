@@ -5,7 +5,7 @@ import numpy as np
 from numpy import testing as npt
 from astropy.cosmology import FlatLambdaCDM
 from astropy.table import Table
-from slsim.lens import (
+from slsim.Lenses.lens import (
     Lens,
     image_separation_from_positions,
 )
@@ -28,11 +28,11 @@ class TestLens(object):
         module_path, _ = os.path.split(path)
         print(path, module_path)
         blue_one = Table.read(
-            os.path.join(path, "TestData/blue_one_modified.fits"), format="fits"
+            os.path.join(path, "../TestData/blue_one_modified.fits"), format="fits"
         )
         blue_one["angular_size"] = blue_one["angular_size"] / 4.84813681109536e-06
         red_one = Table.read(
-            os.path.join(path, "TestData/red_one_modified.fits"), format="fits"
+            os.path.join(path, "../TestData/red_one_modified.fits"), format="fits"
         )
         red_one["angular_size"] = red_one["angular_size"] / 4.84813681109536e-06
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -249,7 +249,7 @@ class TestLens(object):
         module_path, _ = os.path.split(path)
         print(path, module_path)
         blue_one = Table.read(
-            os.path.join(path, "TestData/blue_one_modified.fits"), format="fits"
+            os.path.join(path, "../TestData/blue_one_modified.fits"), format="fits"
         )
         source_dict = blue_one
         deflector_dict = {
@@ -284,7 +284,7 @@ class TestLens(object):
 
         # here for NFW-Cluster model
         subhalos_table = Table.read(
-            os.path.join(path, "TestData/subhalos_table.fits"), format="fits"
+            os.path.join(path, "../TestData/subhalos_table.fits"), format="fits"
         )
         source_dict = blue_one
         deflector_dict = {
@@ -441,10 +441,10 @@ class TestLens(object):
 def pes_lens_instance():
     path = os.path.dirname(__file__)
     source_dict = Table.read(
-        os.path.join(path, "TestData/source_dict_ps.fits"), format="fits"
+        os.path.join(path, "../TestData/source_dict_ps.fits"), format="fits"
     )
     deflector_dict = Table.read(
-        os.path.join(path, "TestData/deflector_dict_ps.fits"), format="fits"
+        os.path.join(path, "../TestData/deflector_dict_ps.fits"), format="fits"
     )
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -827,7 +827,7 @@ def supernovae_lens_instance():
         "n_sersic": 1.0,
     }
     deflector_dict = Table.read(
-        os.path.join(path, "TestData/supernovae_deflector_dict.fits"), format="fits"
+        os.path.join(path, "../TestData/supernovae_deflector_dict.fits"), format="fits"
     )
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -894,10 +894,10 @@ class TestDifferentLens(object):
         module_path, _ = os.path.split(path)
         print(path, module_path)
         blue_one = Table.read(
-            os.path.join(path, "TestData/blue_one_modified.fits"), format="fits"
+            os.path.join(path, "../TestData/blue_one_modified.fits"), format="fits"
         )
         red_one = Table.read(
-            os.path.join(path, "TestData/red_one_modified.fits"), format="fits"
+            os.path.join(path, "../TestData/red_one_modified.fits"), format="fits"
         )
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         self.source_dict = blue_one
@@ -1025,12 +1025,12 @@ class TestDifferentLens(object):
 def supernovae_lens_instance_double_sersic_multisource():
     path = os.path.dirname(__file__)
     source_dict = Table.read(
-        os.path.join(path, "TestData/source_supernovae_new.fits"), format="fits"
+        os.path.join(path, "../TestData/source_supernovae_new.fits"), format="fits"
     )
     source_dict.rename_column("angular_size0", "angular_size_0")
     source_dict.rename_column("angular_size1", "angular_size_1")
     deflector_dict = Table.read(
-        os.path.join(path, "TestData/deflector_supernovae_new.fits"), format="fits"
+        os.path.join(path, "../TestData/deflector_supernovae_new.fits"), format="fits"
     )
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -1085,12 +1085,12 @@ class TestMultiSource(object):
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         path = os.path.dirname(__file__)
         source_dict1 = Table.read(
-            os.path.join(path, "TestData/source_supernovae_new.fits"), format="fits"
+            os.path.join(path, "../TestData/source_supernovae_new.fits"), format="fits"
         )
         source_dict1.rename_column("angular_size0", "angular_size_0")
         source_dict1.rename_column("angular_size1", "angular_size_1")
         deflector_dict = Table.read(
-            os.path.join(path, "TestData/deflector_supernovae_new.fits"), format="fits"
+            os.path.join(path, "../TestData/deflector_supernovae_new.fits"), format="fits"
         )
 
         deflector_dict_ = dict(zip(deflector_dict.colnames, deflector_dict[0]))

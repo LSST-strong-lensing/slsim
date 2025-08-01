@@ -2,9 +2,9 @@ from astropy.cosmology import FlatLambdaCDM
 import numpy as np
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
-from slsim.lens import Lens
+from slsim.Lenses.lens import Lens
 from slsim.LOS.los_individual import LOSIndividual
-from slsim.image_simulation import lens_image, simulate_image
+from slsim.ImageSimulation.image_simulation import lens_image, simulate_image
 from slsim.Util.param_util import gaussian_psf
 import pytest
 

@@ -3,7 +3,7 @@ from slsim.Util.coolest_slsim_interface import (
     update_coolest_from_slsim,
     create_slsim_from_coolest,
 )
-from slsim.lens import Lens
+from slsim.Lenses.lens import Lens
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
 import os
@@ -17,12 +17,12 @@ from numpy import testing as npt
 def supernovae_lens_instance():
     path = os.path.dirname(__file__)
     source_dict = Table.read(
-        os.path.join(path, "TestData/source_supernovae_new.fits"), format="fits"
+        os.path.join(path, "../TestData/source_supernovae_new.fits"), format="fits"
     )
     source_dict.rename_column("angular_size0", "angular_size_0")
     source_dict.rename_column("angular_size1", "angular_size_1")
     deflector_dict = Table.read(
-        os.path.join(path, "TestData/deflector_supernovae_new.fits"), format="fits"
+        os.path.join(path, "../TestData/deflector_supernovae_new.fits"), format="fits"
     )
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -62,7 +62,7 @@ def test_update_coolest_from_slsim_and_create_slsim_from_coolest(
     supernovae_lens_instance,
 ):
     # Define test data
-    path = os.path.dirname(__file__)
+    path = os.path.dirname(os.path.dirname(__file__))
     lens_class = supernovae_lens_instance
     test_path = path + "/TestData/"
     test_file_name = "coolest_template"

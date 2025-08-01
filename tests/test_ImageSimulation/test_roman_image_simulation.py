@@ -1,8 +1,8 @@
 import astropy.cosmology
 import numpy as np
-from slsim.lens import Lens
-from slsim.roman_image_simulation import simulate_roman_image, lens_image_roman
-from slsim.image_simulation import simulate_image
+from slsim.Lenses.lens import Lens
+from slsim.ImageSimulation.roman_image_simulation import simulate_roman_image, lens_image_roman
+from slsim.ImageSimulation.image_simulation import simulate_image
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
 from slsim.LOS.los_individual import LOSIndividual
@@ -86,7 +86,7 @@ SNIa_Lens = Lens(
     cosmo=COSMO,
 )
 
-PSF_DIRECTORY = os.path.join(os.path.dirname(__file__), "..", "data", "stpsf")
+PSF_DIRECTORY = os.path.join(os.path.dirname(__file__), "../..", "data", "stpsf")
 
 
 # NOTE: Galsim is required which is not supported on Windows

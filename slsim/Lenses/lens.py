@@ -12,7 +12,7 @@ from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.Util import data_util
 from lenstronomy.Util import util
 
-from slsim.lensed_system_base import LensedSystemBase
+from slsim.Lenses.lensed_system_base import LensedSystemBase
 
 
 class Lens(LensedSystemBase):
