@@ -11,8 +11,8 @@ import slsim.Deflectors as deflectors
 from astropy.units import Quantity
 from astropy.table import Table
 from astropy.cosmology import FlatLambdaCDM
-from slsim.lens_pop import LensPop
-from slsim.lens_pop import draw_test_area
+from slsim.Lenses.lens_pop import LensPop
+from slsim.Lenses.lens_pop import draw_test_area
 
 sky_area = Quantity(value=0.05, unit="deg2")
 galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
@@ -38,7 +38,7 @@ def create_lens_pop_instance(return_kext=False):
         sky_area=sky_area,
     )
 
-    kwargs = {"extendedsource_type": "single_sersic"}
+    kwargs = {"extended_source_type": "single_sersic"}
     source_galaxies = sources.Galaxies(
         galaxy_list=galaxy_simulation_pipeline.blue_galaxies,
         kwargs_cut=kwargs_source_cut,
@@ -101,7 +101,7 @@ def test_pes_lens_pop_instance():
         sky_area=sky_area,
         kwargs_cut=kwargs_source_cut,
         pointsource_type="quasar",
-        extendedsource_type="single_sersic",
+        extended_source_type="single_sersic",
         pointsource_kwargs=kwargs,
     )
 
@@ -136,7 +136,7 @@ def test_galaxies_lens_pop_halo_model_instance():
         sky_area=sky_area,
     )
 
-    kwargs = {"extendedsource_type": "single_source"}
+    kwargs = {"extended_source_type": "single_source"}
     source_galaxies = sources.Galaxies(
         galaxy_list=galaxy_simulation_pipeline.blue_galaxies,
         kwargs_cut=kwargs_source_cut,
@@ -164,7 +164,7 @@ def test_cluster_lens_pop_instance():
     kwargs_source_cut = {"band": "g", "band_max": 28, "z_min": 0.25, "z_max": 5.0}
 
     path = os.path.dirname(__file__)
-    module_path = os.path.dirname(path)
+    module_path = os.path.dirname(os.path.dirname(path))
     cluster_catalog_path = os.path.join(
         module_path, "data/redMaPPer/clusters_example.fits"
     )
@@ -184,7 +184,7 @@ def test_cluster_lens_pop_instance():
         sky_area=sky_area,
     )
 
-    kwargs = {"extendedsource_type": "single_sersic"}
+    kwargs = {"extended_source_type": "single_sersic"}
     source_galaxies = sources.Galaxies(
         galaxy_list=galaxy_simulation_pipeline.blue_galaxies,
         kwargs_cut=kwargs_source_cut,
@@ -234,7 +234,7 @@ def test_galaxies_lens_pop_instance():
     )
     with open(path, "rb") as f:
         supernovae_data = pickle.load(f)
-    kwargs = {"extendedsource_type": "single_sersic"}
+    kwargs = {"extended_source_type": "single_sersic"}
     source_galaxies = sources.Galaxies(
         galaxy_list=supernovae_data,
         cosmo=cosmo,
@@ -305,7 +305,7 @@ def test_supernovae_plus_galaxies_lens_pop_instance_2():
         sky_area=source_sky_area,
         kwargs_cut=kwargs_source_cut,
         pointsource_type="supernova",
-        extendedsource_type="single_sersic",
+        extended_source_type="single_sersic",
         pointsource_kwargs=pointsource_kwargs,
     )
 
@@ -355,7 +355,6 @@ def test_supernovae_lens_pop_instance():
     )
 
     pointsource_kwargs = {
-        "extendedsource_type": "single_sersic",
         "variability_model": "light_curve",
         "kwargs_variability": ["supernovae_lightcurve", "i"],
         "sn_type": "Ia",

@@ -26,7 +26,7 @@ class TestGalaxies(object):
                 [4.186996407348755e-08, 4.186996407348755e-08, 4.186996407348755e-08],
                 [23, 23, 23],
             ],
-            names=("z", "n0", "M", "ellipticity", "mag_i"),
+            names=("z", "n0", "ellipticity", "angular_size", "mag_i"),
         )
         self.galaxy_list2 = Table(
             [
@@ -57,7 +57,7 @@ class TestGalaxies(object):
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            extendedsource_type="single_sersic",
+            extended_source_type="single_sersic",
         )
         self.galaxies4 = Galaxies(
             galaxy_list=self.galaxy_list2,
@@ -229,7 +229,7 @@ class TestGalaxies(object):
             cosmo=self.cosmo,
             sky_area=sky_area,
             list_type="astropy_table",
-            extendedsource_type="double_sersic",
+            extended_source_type="double_sersic",
         )
         self.galaxies3 = Galaxies(
             galaxy_list=self.gal_list2,
@@ -237,7 +237,7 @@ class TestGalaxies(object):
             cosmo=self.cosmo,
             sky_area=sky_area,
             list_type="astropy_table",
-            extendedsource_type="double_sersic",
+            extended_source_type="double_sersic",
         )
         self.galaxies6 = Galaxies(
             galaxy_list=gal_list3,
@@ -245,7 +245,7 @@ class TestGalaxies(object):
             cosmo=self.cosmo,
             sky_area=sky_area,
             list_type="astropy_table",
-            extendedsource_type="double_sersic",
+            extended_source_type="double_sersic",
         )
         self.galaxies7 = Galaxies(
             galaxy_list=gal_list4,
@@ -253,7 +253,7 @@ class TestGalaxies(object):
             cosmo=self.cosmo,
             sky_area=sky_area,
             list_type="astropy_table",
-            extendedsource_type="double_sersic",
+            extended_source_type="double_sersic",
         )
         self.galaxies8 = Galaxies(
             galaxy_list=gal_list5,
@@ -261,7 +261,7 @@ class TestGalaxies(object):
             cosmo=self.cosmo,
             sky_area=sky_area,
             list_type="astropy_table",
-            extendedsource_type="double_sersic",
+            extended_source_type="double_sersic",
         )
         self.galaxies9 = Galaxies(
             galaxy_list=gal_list6,
@@ -269,7 +269,7 @@ class TestGalaxies(object):
             cosmo=self.cosmo,
             sky_area=sky_area,
             list_type="astropy_table",
-            extendedsource_type="double_sersic",
+            extended_source_type="double_sersic",
         )
 
         self.galaxies10 = Galaxies(
@@ -278,7 +278,7 @@ class TestGalaxies(object):
             cosmo=self.cosmo,
             sky_area=sky_area,
             list_type="astropy_table",
-            extendedsource_type="triple",
+            extended_source_type="triple",
         )
         self.galaxies11 = Galaxies(
             galaxy_list=galaxy_list,

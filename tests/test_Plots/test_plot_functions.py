@@ -3,12 +3,12 @@ import pytest
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.cosmology import FlatLambdaCDM
-from slsim.lens import Lens
+from slsim.Lenses.lens import Lens
 from slsim.Plots.plot_functions import (
     create_image_montage_from_image_list,
     plot_montage_of_random_injected_lens,
 )
-from slsim.image_simulation import sharp_image
+from slsim.ImageSimulation.image_simulation import sharp_image
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
 from astropy.table import Table
@@ -50,10 +50,10 @@ def quasar_lens_pop_instance():
         source = Source(
             source_dict=source_dict,
             cosmo=cosmo,
-            source_type="point_plus_extended",
-            pointsource_type="quasar",
-            extendedsource_type="single_sersic",
-            pointsource_kwargs=kwargs_quasar,
+            point_source_type="quasar",
+            extended_source_type="single_sersic",
+            **source_dict,
+            **kwargs_quasar,
         )
         deflector = Deflector(
             deflector_type="EPL_SERSIC",

@@ -1,6 +1,6 @@
 import numpy as np
 from astropy.table import Table, vstack
-from slsim.image_simulation import (
+from slsim.ImageSimulation.image_simulation import (
     sharp_image,
     lens_image,
 )
@@ -8,7 +8,7 @@ from slsim.Util.param_util import transformmatrix_to_pixelscale, degrade_coadd_d
 from scipy import interpolate
 from scipy.stats import norm, halfnorm
 import matplotlib.pyplot as plt
-from slsim.image_simulation import point_source_coordinate_properties
+from slsim.ImageSimulation.image_simulation import point_source_coordinate_properties
 from slsim.Util.param_util import (
     random_ra_dec,
     fits_append_table,

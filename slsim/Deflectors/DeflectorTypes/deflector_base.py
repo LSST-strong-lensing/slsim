@@ -56,7 +56,6 @@ class DeflectorBase(ABC):
         """
         return self._z
 
-    @abstractmethod
     def velocity_dispersion(self, cosmo=None):
         """Velocity dispersion of deflector.
 

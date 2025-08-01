@@ -5,7 +5,7 @@ import numpy as np
 from numpy import testing as npt
 from astropy.cosmology import FlatLambdaCDM
 from astropy.table import Table
-from slsim.lens import (
+from slsim.Lenses.lens import (
     Lens,
     image_separation_from_positions,
 )
@@ -28,14 +28,15 @@ class TestLens(object):
         module_path, _ = os.path.split(path)
         print(path, module_path)
         blue_one = Table.read(
-            os.path.join(path, "TestData/blue_one_modified.fits"), format="fits"
+            os.path.join(path, "../TestData/blue_one_modified.fits"), format="fits"
         )
         blue_one["angular_size"] = blue_one["angular_size"] / 4.84813681109536e-06
         red_one = Table.read(
-            os.path.join(path, "TestData/red_one_modified.fits"), format="fits"
+            os.path.join(path, "../TestData/red_one_modified.fits"), format="fits"
         )
         red_one["angular_size"] = red_one["angular_size"] / 4.84813681109536e-06
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+
         self.source_dict = blue_one
         self.deflector_dict = red_one
         self.los_individual = LOSIndividual(kappa=0.1, gamma=[-0.1, -0.2])
@@ -43,12 +44,11 @@ class TestLens(object):
         mag_arc_limit = {"i": 35, "g": 35, "r": 35}
         while True:
             kwargs = {
-                "extendedsource_type": "single_sersic",
+                "extended_source_type": "single_sersic",
             }
             self.source = Source(
-                source_dict=self.source_dict,
                 cosmo=cosmo,
-                source_type="extended",
+                **self.source_dict,
                 **kwargs,
             )
             self.deflector = Deflector(
@@ -126,11 +126,10 @@ class TestLens(object):
                 )
             ],
         )
-        kwargs_int = {"extendedsource_type": "interpolated"}
+        kwargs_int = {"extended_source_type": "interpolated"}
         self.source_interp = Source(
-            source_dict=interp_source_dict,
             cosmo=cosmo,
-            source_type="extended",
+            **interp_source_dict,
             **kwargs_int,
         )
         self.gg_lens_interp = Lens(
@@ -148,8 +147,8 @@ class TestLens(object):
         ra2 = 12.03736542
         dec2 = 35.17363534
         lens_id2 = self.gg_lens.generate_id(ra=ra2, dec=dec2)
-        assert lens_id == f"GG-LENS_{ra:.4f}_{dec:.4f}"
-        assert lens_id2 == f"GG-LENS_{ra2:.4f}_{dec2:.4f}"
+        assert lens_id == f"GAL-GAL-LENS_{ra:.4f}_{dec:.4f}"
+        assert lens_id2 == f"GAL-GAL-LENS_{ra2:.4f}_{dec2:.4f}"
 
     def test_deflector_ellipticity(self):
         e1_light, e2_light, e1_mass, e2_mass = self.gg_lens.deflector_ellipticity()
@@ -250,7 +249,7 @@ class TestLens(object):
         module_path, _ = os.path.split(path)
         print(path, module_path)
         blue_one = Table.read(
-            os.path.join(path, "TestData/blue_one_modified.fits"), format="fits"
+            os.path.join(path, "../TestData/blue_one_modified.fits"), format="fits"
         )
         source_dict = blue_one
         deflector_dict = {
@@ -267,10 +266,8 @@ class TestLens(object):
         }
 
         while True:
-            kwargs2 = {"extendedsource_type": "single_sersic"}
-            self.source2 = Source(
-                source_dict=source_dict, cosmo=cosmo, source_type="extended", **kwargs2
-            )
+            kwargs2 = {"extended_source_type": "single_sersic"}
+            self.source2 = Source(cosmo=cosmo, **kwargs2, **source_dict)
             self.deflector2 = Deflector(
                 deflector_type="NFW_HERNQUIST",
                 **deflector_dict,
@@ -287,7 +284,7 @@ class TestLens(object):
 
         # here for NFW-Cluster model
         subhalos_table = Table.read(
-            os.path.join(path, "TestData/subhalos_table.fits"), format="fits"
+            os.path.join(path, "../TestData/subhalos_table.fits"), format="fits"
         )
         source_dict = blue_one
         deflector_dict = {
@@ -299,10 +296,8 @@ class TestLens(object):
             "subhalos": subhalos_table,
         }
         while True:
-            kwargs_3 = {"extendedsource_type": "single_sersic"}
-            self.source3 = Source(
-                source_dict=source_dict, cosmo=cosmo, source_type="extended", **kwargs_3
-            )
+            kwargs_3 = {"extended_source_type": "single_sersic"}
+            self.source3 = Source(cosmo=cosmo, **source_dict, **kwargs_3)
             self.deflector3 = Deflector(
                 deflector_type="NFW_CLUSTER",
                 **deflector_dict,
@@ -446,10 +441,10 @@ class TestLens(object):
 def pes_lens_instance():
     path = os.path.dirname(__file__)
     source_dict = Table.read(
-        os.path.join(path, "TestData/source_dict_ps.fits"), format="fits"
+        os.path.join(path, "../TestData/source_dict_ps.fits"), format="fits"
     )
     deflector_dict = Table.read(
-        os.path.join(path, "TestData/deflector_dict_ps.fits"), format="fits"
+        os.path.join(path, "../TestData/deflector_dict_ps.fits"), format="fits"
     )
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -458,12 +453,11 @@ def pes_lens_instance():
             "kwargs_variability": None,
         }
         source4 = Source(
-            source_dict=source_dict,
             cosmo=cosmo,
-            source_type="point_plus_extended",
-            pointsource_type="quasar",
-            extendedsource_type="single_sersic",
-            pointsource_kwargs=kwargs4,
+            point_source_type="quasar",
+            extended_source_type="single_sersic",
+            **source_dict,
+            **kwargs4,
         )
         deflector4 = Deflector(
             deflector_type="EPL_SERSIC",
@@ -556,12 +550,11 @@ def lens_instance_with_variability():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
     source_quasar = Source(
-        source_dict=source_dict_quasar,
         cosmo=cosmo,
-        source_type="point_source",
-        pointsource_type="quasar",
-        extendedsource_type=None,
-        pointsource_kwargs=kwargs_quasar,
+        point_source_type="quasar",
+        extended_source_type=None,
+        **source_dict_quasar,
+        **kwargs_quasar,
     )
     deflector_quasar = Deflector(
         deflector_type="EPL_SERSIC",
@@ -812,8 +805,8 @@ def test_lens_id_qso(pes_lens_instance):
     ra2 = 12.03736542
     dec2 = 35.17363534
     lens_id2 = pes_lens_instance.generate_id(ra=ra2, dec=dec2)
-    assert lens_id == f"QSO-LENS_{ra:.4f}_{dec:.4f}"
-    assert lens_id2 == f"QSO-LENS_{ra2:.4f}_{dec2:.4f}"
+    assert lens_id == f"GAL-QSO-LENS_{ra:.4f}_{dec:.4f}"
+    assert lens_id2 == f"GAL-QSO-LENS_{ra2:.4f}_{dec2:.4f}"
 
 
 @pytest.fixture
@@ -834,7 +827,7 @@ def supernovae_lens_instance():
         "n_sersic": 1.0,
     }
     deflector_dict = Table.read(
-        os.path.join(path, "TestData/supernovae_deflector_dict.fits"), format="fits"
+        os.path.join(path, "../TestData/supernovae_deflector_dict.fits"), format="fits"
     )
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -843,12 +836,11 @@ def supernovae_lens_instance():
             "variability_model": "light_curve",
         }
         source5 = Source(
-            source_dict=source_dict,
             cosmo=cosmo,
-            source_type="point_plus_extended",
-            pointsource_type="general_lightcurve",
-            extendedsource_type="single_sersic",
-            pointsource_kwargs=kwargs5,
+            point_source_type="general_lightcurve",
+            extended_source_type="single_sersic",
+            **source_dict,
+            **kwargs5,
         )
         deflector5 = Deflector(
             deflector_type="EPL_SERSIC",
@@ -902,19 +894,18 @@ class TestDifferentLens(object):
         module_path, _ = os.path.split(path)
         print(path, module_path)
         blue_one = Table.read(
-            os.path.join(path, "TestData/blue_one_modified.fits"), format="fits"
+            os.path.join(path, "../TestData/blue_one_modified.fits"), format="fits"
         )
         red_one = Table.read(
-            os.path.join(path, "TestData/red_one_modified.fits"), format="fits"
+            os.path.join(path, "../TestData/red_one_modified.fits"), format="fits"
         )
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         self.source_dict = blue_one
         self.deflector_dict = red_one
-        kwargs = {"extendedsource_type": "single_sersic"}
+        kwargs = {"extended_source_type": "single_sersic"}
         self.source6 = Source(
-            source_dict=self.source_dict,
             cosmo=self.cosmo,
-            source_type="extended",
+            **self.source_dict,
             **kwargs,
         )
         self.deflector6 = Deflector(
@@ -1034,10 +1025,12 @@ class TestDifferentLens(object):
 def supernovae_lens_instance_double_sersic_multisource():
     path = os.path.dirname(__file__)
     source_dict = Table.read(
-        os.path.join(path, "TestData/source_supernovae_new.fits"), format="fits"
+        os.path.join(path, "../TestData/source_supernovae_new.fits"), format="fits"
     )
+    source_dict.rename_column("angular_size0", "angular_size_0")
+    source_dict.rename_column("angular_size1", "angular_size_1")
     deflector_dict = Table.read(
-        os.path.join(path, "TestData/deflector_supernovae_new.fits"), format="fits"
+        os.path.join(path, "../TestData/deflector_supernovae_new.fits"), format="fits"
     )
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -1052,12 +1045,11 @@ def supernovae_lens_instance_double_sersic_multisource():
             "sn_modeldir": None,
         }
         source = Source(
-            source_dict=source_dict,
             cosmo=cosmo,
-            source_type="point_plus_extended",
-            pointsource_type="supernova",
-            extendedsource_type="double_sersic",
-            pointsource_kwargs=kwargs,
+            point_source_type="supernova",
+            extended_source_type="double_sersic",
+            **source_dict,
+            **kwargs,
         )
         deflector = Deflector(
             deflector_type="EPL_SERSIC",
@@ -1083,8 +1075,8 @@ def test_lens_id_snia(supernovae_lens_instance_double_sersic_multisource):
     lens_id2 = supernovae_lens_instance_double_sersic_multisource.generate_id(
         ra=ra2, dec=dec2
     )
-    assert lens_id == f"SNIa-LENS_{ra:.4f}_{dec:.4f}"
-    assert lens_id2 == f"SNIa-LENS_{ra2:.4f}_{dec2:.4f}"
+    assert lens_id == f"GAL-SNIa-LENS_{ra:.4f}_{dec:.4f}"
+    assert lens_id2 == f"GAL-SNIa-LENS_{ra2:.4f}_{dec2:.4f}"
 
 
 class TestMultiSource(object):
@@ -1093,15 +1085,19 @@ class TestMultiSource(object):
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         path = os.path.dirname(__file__)
         source_dict1 = Table.read(
-            os.path.join(path, "TestData/source_supernovae_new.fits"), format="fits"
+            os.path.join(path, "../TestData/source_supernovae_new.fits"), format="fits"
         )
+        source_dict1.rename_column("angular_size0", "angular_size_0")
+        source_dict1.rename_column("angular_size1", "angular_size_1")
         deflector_dict = Table.read(
-            os.path.join(path, "TestData/deflector_supernovae_new.fits"), format="fits"
+            os.path.join(path, "../TestData/deflector_supernovae_new.fits"),
+            format="fits",
         )
 
         deflector_dict_ = dict(zip(deflector_dict.colnames, deflector_dict[0]))
         self.gamma_pl = 1.8
         deflector_dict_["gamma_pl"] = self.gamma_pl
+
         source_dict2 = copy.deepcopy(source_dict1)
         source_dict2["z"] += 2
         kwargs = {
@@ -1114,22 +1110,21 @@ class TestMultiSource(object):
             "sn_modeldir": None,
         }
         self.source1 = Source(
-            source_dict=source_dict2,
             cosmo=self.cosmo,
-            source_type="point_plus_extended",
-            pointsource_type="supernova",
-            extendedsource_type="double_sersic",
-            pointsource_kwargs=kwargs,
+            point_source_type="supernova",
+            extended_source_type="double_sersic",
+            **source_dict2,
+            **kwargs,
         )
         # We initiate the another Source class with the same source. In this class,
         # source position will be different and all the lensing quantities will be different
         self.source2 = Source(
             source_dict=source_dict1,
             cosmo=self.cosmo,
-            source_type="point_plus_extended",
-            pointsource_type="supernova",
-            extendedsource_type="double_sersic",
-            pointsource_kwargs=kwargs,
+            point_source_type="supernova",
+            extended_source_type="double_sersic",
+            **source_dict1,
+            **kwargs,
         )
         self.deflector = Deflector(
             deflector_type="EPL_SERSIC", sis_convention=False, **deflector_dict_
@@ -1338,11 +1333,10 @@ class TestSlhammock(object):
             "center_y": 0.010467931830543249,  # y-position of the center of the lens
         }
         source = Source(
-            source_dict=source_dict,
             cosmo=self.cosmo,
-            source_type="point_plus_extended",
-            extendedsource_type="single_sersic",
-            pointsource_type="supernova",
+            extended_source_type="single_sersic",
+            point_source_type=None,
+            **source_dict,
         )
         deflector = Deflector(
             deflector_type="NFW_HERNQUIST",
@@ -1379,9 +1373,7 @@ class TestSlhammock(object):
 
     def test_source_light_model_lenstronomy_none_band(self):
         results = self.lens_class.source_light_model_lenstronomy(band=None)[1]
-        npt.assert_almost_equal(
-            results["kwargs_ps"][0]["magnitude"], 2.37366613, decimal=6
-        )
+        npt.assert_almost_equal(results["kwargs_source"][0]["magnitude"], 1, decimal=6)
 
 
 if __name__ == "__main__":

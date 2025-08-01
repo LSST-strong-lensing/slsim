@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.random as random
 from slsim.Util import param_util
-from slsim.selection import object_cut
+from slsim.Lenses.selection import object_cut
 from slsim.Deflectors.MassLightConnection.richness2mass import mass_richness_relation
 from slsim.Halos.halo_population import gene_e_ang_halo, concent_m_w_scatter
 from colossus.cosmology import cosmology as colossus_cosmo

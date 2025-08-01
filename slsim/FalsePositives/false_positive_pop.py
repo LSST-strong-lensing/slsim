@@ -1,5 +1,5 @@
 from slsim.FalsePositives.false_positive import FalsePositive
-from slsim.lens_pop import draw_test_area
+from slsim.Lenses.lens_pop import draw_test_area
 from slsim.LOS.los_pop import LOSPop
 import random
 

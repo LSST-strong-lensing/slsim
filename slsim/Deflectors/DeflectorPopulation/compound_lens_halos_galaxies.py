@@ -1,6 +1,6 @@
 import numpy as np
 import numpy.random as random
-from slsim.selection import object_cut
+from slsim.Lenses.selection import object_cut
 from slsim.Deflectors.DeflectorPopulation.deflectors_base import DeflectorsBase
 from slsim.Deflectors.DeflectorPopulation.elliptical_lens_galaxies import (
     elliptical_projected_eccentricity,
