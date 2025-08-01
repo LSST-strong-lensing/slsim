@@ -269,7 +269,7 @@ class TestMicrolensingLightCurveFromLensModel:
     ):
         # check no _magmaps_images set yet
         assert not hasattr(ml_lens_model, "_magmaps_images")
-        
+
         with patch.object(
             MicrolensingLightCurveFromLensModel,
             "generate_magnification_maps_from_microlensing_params",
@@ -278,7 +278,7 @@ class TestMicrolensingLightCurveFromLensModel:
                 microlensing_params, kwargs_magnification_map_settings
             )
             ml_lens_model._magmaps_images = mock_generate_maps.return_value
-        
+
         # check _magmaps_images is set
         assert hasattr(ml_lens_model, "_magmaps_images")
         assert hasattr(ml_lens_model, "magmaps_images")
