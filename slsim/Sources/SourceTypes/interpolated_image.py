@@ -24,7 +24,9 @@ class Interpolated(SourceBase):
         :type source_dict: dict or astropy.table.Table
         :param cosmo: astropy.cosmology instance
         """
-        super().__init__(extended_source=True, point_source=False, cosmo=cosmo, **source_dict)
+        super().__init__(
+            extended_source=True, point_source=False, cosmo=cosmo, **source_dict
+        )
         self.name = "GAL"
         self._image = image
         self._pixel_scale = pixel_width_data
@@ -37,9 +39,7 @@ class Interpolated(SourceBase):
 
         return self._z_data
 
-    def kwargs_extended_light(
-        self, reference_position=None, draw_area=None, band=None
-    ):
+    def kwargs_extended_light(self, reference_position=None, draw_area=None, band=None):
         """Provides dictionary of keywords for the source light model(s).
         Kewords used are in lenstronomy conventions.
 

@@ -45,8 +45,12 @@ class TestQuasar:
 
         self.source_none = Quasar(cosmo=cosmo, **kwargs_quasar_none, **source_dict)
         self.source_cosmo_error = Quasar(cosmo=None, **kwargs_quasar, **source_dict)
-        self.source_light_curve = Quasar(cosmo=cosmo, **kwargs_quasar_none, **source_dict2)
-        self.source_agn_band_error = Quasar(source_dict=source_dict3, cosmo=None, **kwargs_quasar, **source_dict3)
+        self.source_light_curve = Quasar(
+            cosmo=cosmo, **kwargs_quasar_none, **source_dict2
+        )
+        self.source_agn_band_error = Quasar(
+            source_dict=source_dict3, cosmo=None, **kwargs_quasar, **source_dict3
+        )
 
     def test_light_curve(self):
         light_curve = self.source.light_curve
@@ -83,7 +87,7 @@ def test_extract_agn_kwargs_from_source_dict():
         "black_hole_mass_exponent": 8.0,
         "eddington_ratio": 0.5,
     }
-    #source_dict = Table(source_dict)
+    # source_dict = Table(source_dict)
 
     agn_kwargs = extract_agn_kwargs_from_source_dict(source_dict=source_dict)
     assert "black_hole_mass_exponent" in agn_kwargs

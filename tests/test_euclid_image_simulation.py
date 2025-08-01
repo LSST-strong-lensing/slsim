@@ -46,11 +46,7 @@ psf_kernel = gaussian_psf(fwhm=0.16, delta_pix=0.101, num_pix=41)
 transform_matrix = np.array([[0.101, 0], [0, 0.101]])
 
 BAND = "VIS"
-source = Source(
-    cosmo=COSMO,
-    extended_source_type="single_sersic",
-    **SOURCE_DICT
-)
+source = Source(cosmo=COSMO, extended_source_type="single_sersic", **SOURCE_DICT)
 deflector = Deflector(
     deflector_type="EPL_SERSIC",
     **DEFLECTOR_DICT,

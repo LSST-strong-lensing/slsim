@@ -46,8 +46,7 @@ class PointSource(object):
 
     @property
     def name(self):
-        """
-        meaningful name string of the source
+        """Meaningful name string of the source.
 
         :return: name string
         """

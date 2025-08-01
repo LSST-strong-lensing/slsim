@@ -11,7 +11,17 @@ class CatalogSource(SourceBase):
     obtained by performing a sersic fit.
     """
 
-    def __init__(self, angular_size, e1, e2, n_sersic, cosmo, catalog_type, catalog_path, **source_dict):
+    def __init__(
+        self,
+        angular_size,
+        e1,
+        e2,
+        n_sersic,
+        cosmo,
+        catalog_type,
+        catalog_path,
+        **source_dict,
+    ):
         """
         :param angular_size: half light radius of object [arcseconds]
         :param e1: eccentricity modulus
@@ -56,9 +66,7 @@ class CatalogSource(SourceBase):
         self.catalog_type = catalog_type
         self.catalog_path = catalog_path
 
-    def kwargs_extended_light(
-        self, reference_position=None, draw_area=None, band=None
-    ):
+    def kwargs_extended_light(self, reference_position=None, draw_area=None, band=None):
         """Provides dictionary of keywords for the source light model(s).
         Kewords used are in lenstronomy conventions.
 
@@ -83,10 +91,12 @@ class CatalogSource(SourceBase):
 
         if not hasattr(self, "_image"):
             if self.catalog_type == "COSMOS":
-                self._image, self._scale, self._phi = catalog_util.match_cosmos_source(angular_size=self.angular_size,
-                                                                                       physical_size=self.physical_size(cosmo=self._cosmo),
-                                                                                       e1=self._e1, e2=self._e2,
-                                                                                       n_sersic=self._n_sersic,
+                self._image, self._scale, self._phi = catalog_util.match_cosmos_source(
+                    angular_size=self.angular_size,
+                    physical_size=self.physical_size(cosmo=self._cosmo),
+                    e1=self._e1,
+                    e2=self._e2,
+                    n_sersic=self._n_sersic,
                     processed_cosmos_catalog=self.final_cosmos_catalog,
                     catalog_path=self.catalog_path,
                 )

@@ -69,11 +69,8 @@ class TestSourceBase:
     def test_angular_size(self):
         assert self.source.angular_size == 0
 
-
     def ellipticity(self):
         assert self.source.ellipticity is None
-
-
 
 
 if __name__ == "__main__":

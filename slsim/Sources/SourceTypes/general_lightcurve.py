@@ -58,7 +58,9 @@ class GeneralLightCurve(SourceBase):
                     "MJD": self._MJD,
                     band_string: self.source_dict[band_string],
                 }
-                self._variability_bands[band] = Variability(variability_model=self._variability_model,
-                                                            **kwargs_variab_band)
-            return self._variability_bands[band].variability_at_time(image_observation_times)
-
+                self._variability_bands[band] = Variability(
+                    variability_model=self._variability_model, **kwargs_variab_band
+                )
+            return self._variability_bands[band].variability_at_time(
+                image_observation_times
+            )

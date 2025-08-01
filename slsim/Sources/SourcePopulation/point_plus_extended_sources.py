@@ -98,5 +98,6 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
             point_source_type=self.pointsource_type,
             **self.pointsource_kwargs,
             **self.extendedsource_kwargs,
-            **galaxy)
+            **galaxy
+        )
         return source_class

@@ -19,9 +19,7 @@ class TestExtendedSource:
             "center_y": -0.06,
         }
         self.source = ExtendedSource(
-            cosmo=cosmo,
-            source_type="single_sersic",
-            **self.source_dict_single_sersic
+            cosmo=cosmo, source_type="single_sersic", **self.source_dict_single_sersic
         )
 
         self.source_dict_double_sersic = {
@@ -40,9 +38,7 @@ class TestExtendedSource:
         }
 
         self.source_double_sersic = ExtendedSource(
-            cosmo=cosmo,
-            source_type="double_sersic",
-            **self.source_dict_double_sersic
+            cosmo=cosmo, source_type="double_sersic", **self.source_dict_double_sersic
         )
 
         # Create an image
@@ -82,9 +78,7 @@ class TestExtendedSource:
         }
 
         self.source_interpolated = ExtendedSource(
-            cosmo=cosmo,
-            source_type="interpolated",
-            **self.source_dict_interpolated
+            cosmo=cosmo, source_type="interpolated", **self.source_dict_interpolated
         )
 
     def test_redshift(self):
