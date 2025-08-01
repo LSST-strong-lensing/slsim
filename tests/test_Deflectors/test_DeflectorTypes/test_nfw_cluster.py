@@ -31,7 +31,7 @@ class TestNFWCluster(object):
             os.path.join(module_path, "TestData/subhalos_table.fits"), format="fits"
         )
         self.halo_dict["subhalos"] = subhalos_table
-        self.nfw_cluster = NFWCluster(deflector_dict=self.halo_dict)
+        self.nfw_cluster = NFWCluster(**self.halo_dict)
 
     def test_redshift(self):
         z = self.nfw_cluster.redshift

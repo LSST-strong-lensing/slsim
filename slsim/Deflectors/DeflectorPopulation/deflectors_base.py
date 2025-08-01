@@ -9,7 +9,15 @@ class DeflectorsBase(ABC):
     it contains.
     """
 
-    def __init__(self, deflector_table, kwargs_cut, cosmo, sky_area, gamma_pl=None):
+    def __init__(
+        self,
+        deflector_table,
+        kwargs_cut,
+        cosmo,
+        sky_area,
+        gamma_pl=None,
+        deflector_type="EPL_SERSIC",
+    ):
         """
 
         :param deflector_table: table with lens parameters
@@ -18,6 +26,8 @@ class DeflectorsBase(ABC):
         :param cosmo: astropy.cosmology instance
         :type sky_area: `~astropy.units.Quantity`
         :param sky_area: Sky area (solid angle) over which galaxies are sampled.
+        :param deflector_type: type of Deflector() model class
+        :type deflector_type: string
         :param gamma_pl: power law slope in EPL profile.
         :type gamma_pl: A float or a dictionary with given mean and standard deviation
          of a density slope for gaussian distribution or minimum and maximum values of
@@ -28,7 +38,7 @@ class DeflectorsBase(ABC):
         self.kwargs_cut = kwargs_cut
         self.cosmo = cosmo
         self.sky_area = sky_area
-        self.deflector_profile = "EPL"
+        self.deflector_profile = deflector_type
         galaxies = deflector_table
         galaxy_number = len(galaxies)
         if gamma_pl is not None:

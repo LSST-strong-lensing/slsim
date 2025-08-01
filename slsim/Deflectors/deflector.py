@@ -1,4 +1,5 @@
 from slsim.Deflectors.DeflectorTypes.epl_sersic import EPLSersic
+from slsim.Deflectors.DeflectorTypes.epl import EPL
 from slsim.Deflectors.DeflectorTypes.nfw_hernquist import NFWHernquist
 from slsim.Deflectors.DeflectorTypes.nfw_cluster import NFWCluster
 from lenstronomy.LightModel.light_model import LightModel
@@ -10,14 +11,14 @@ from lenstronomy.Cosmo.lens_cosmo import LensCosmo
 from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
 from lenstronomy.LensModel.lens_model import LensModel
 
-_SUPPORTED_DEFLECTORS = ["EPL", "NFW_HERNQUIST", "NFW_CLUSTER"]
+_SUPPORTED_DEFLECTORS = ["EPL", "EPL_SERSIC", "NFW_HERNQUIST", "NFW_CLUSTER"]
 
 
 class Deflector(object):
     """Class of a single deflector with quantities only related to the
     deflector (independent of the source)"""
 
-    def __init__(self, deflector_type, deflector_dict, **kwargs):
+    def __init__(self, deflector_type, **kwargs):
         """
 
         :param deflector_type: type of deflector, i.e. "EPL", "NFW_HERNQUIST", "NFW_CLUSTER"
@@ -27,11 +28,13 @@ class Deflector(object):
         # TODO: document magnitude inputs
         """
         if deflector_type in ["EPL"]:
-            self._deflector = EPLSersic(deflector_dict=deflector_dict, **kwargs)
+            self._deflector = EPL(**kwargs)
+        elif deflector_type in ["EPL_SERSIC"]:
+            self._deflector = EPLSersic(**kwargs)
         elif deflector_type in ["NFW_HERNQUIST"]:
-            self._deflector = NFWHernquist(deflector_dict=deflector_dict)
+            self._deflector = NFWHernquist(**kwargs)
         elif deflector_type in ["NFW_CLUSTER"]:
-            self._deflector = NFWCluster(deflector_dict=deflector_dict)
+            self._deflector = NFWCluster(**kwargs)
         else:
             raise ValueError(
                 "Deflector type %s not supported. Chose among %s."
@@ -180,7 +183,9 @@ class Deflector(object):
         :param cosmo: astropy.cosmology instance
         :return:
         """
-        if self.deflector_type in ["EPL"]:
+        if hasattr(self, "_theta_e_infinity"):
+            return self._theta_e_infinity
+        if self.deflector_type in ["EPL", "EPL_SERSIC"]:
             v_sigma = self._deflector.velocity_dispersion(cosmo=cosmo)
             theta_E_infinity = (
                 4 * np.pi * (v_sigma * 1000.0 / constants.c) ** 2 / constants.arcsec
@@ -214,4 +219,5 @@ class Deflector(object):
                 spherical_model=True,
             )
             theta_E_infinity = np.nan_to_num(theta_E_infinity, nan=0)
+        self._theta_e_infinity = theta_E_infinity
         return theta_E_infinity

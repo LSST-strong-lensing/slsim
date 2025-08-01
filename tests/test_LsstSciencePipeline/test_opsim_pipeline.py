@@ -46,8 +46,8 @@ def pes_lens_instance():
             pointsource_kwargs=kwargs_quasar,
         )
         deflector = Deflector(
-            deflector_type="EPL",
-            deflector_dict=deflector_dict,
+            deflector_type="EPL_SERSIC",
+            **deflector_dict,
         )
         pes_lens = Lens(
             source_class=source,

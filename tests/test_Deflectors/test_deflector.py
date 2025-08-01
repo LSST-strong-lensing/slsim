@@ -15,12 +15,12 @@ class TestDeflector(object):
         red_one = Table.read(
             os.path.join(module_path, "TestData/red_one_modified.fits"), format="fits"
         )
-        self.deflector = Deflector(deflector_type="EPL", deflector_dict=red_one)
+        self.deflector = Deflector(deflector_type="EPL_SERSIC", **red_one)
 
         red_two = Table(red_one).copy()
         red_two.remove_column("vel_disp")
         red_two["theta_E"] = 0.8
-        self.deflector2 = Deflector(deflector_type="EPL", deflector_dict=red_two)
+        self.deflector2 = Deflector(deflector_type="EPL_SERSIC", **red_two)
         self.lens_cosmo = LensCosmo(z_lens=red_two["z"], z_source=1.5)
 
         deflector_nfw_dict = {
@@ -37,8 +37,10 @@ class TestDeflector(object):
             "mag_g": -20,
         }
         self.deflector_nfw = Deflector(
-            deflector_type="NFW_HERNQUIST", deflector_dict=deflector_nfw_dict
+            deflector_type="NFW_HERNQUIST", **deflector_nfw_dict
         )
+
+        self.deflector_epl = Deflector(deflector_type="EPL", **red_two)
 
     def test_light_ellipticity(self):
         e1_light, e2_light = self.deflector.light_ellipticity
@@ -113,7 +115,7 @@ class TestDeflector(object):
             "n_sersic": 1,
         }
 
-        deflector = Deflector(deflector_type="EPL", deflector_dict=deflector_dict)
+        deflector = Deflector(deflector_type="EPL_SERSIC", **deflector_dict)
         mag_arcsec2_center = deflector.surface_brightness(ra, dec, band=band)
         mag_arcsec2_r_eff = deflector.surface_brightness(ra + r_eff, dec, band=band)
         # TODO: define a more meaningful test
@@ -124,6 +126,8 @@ class TestDeflector(object):
     def test_theta_e_when_source_infinity(self):
         theta_E_infinity = self.deflector.theta_e_infinity(cosmo=None)
         assert theta_E_infinity < 15
+        theta_E_infinity_new = self.deflector.theta_e_infinity(cosmo=None)
+        npt.assert_almost_equal(theta_E_infinity, theta_E_infinity_new, decimal=5)
 
         theta_E_infinity = self.deflector_nfw.theta_e_infinity(cosmo=None)
         npt.assert_almost_equal(theta_E_infinity, 1, decimal=2)
