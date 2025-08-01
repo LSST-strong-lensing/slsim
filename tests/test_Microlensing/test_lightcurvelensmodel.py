@@ -653,3 +653,67 @@ class TestMicrolensingLightCurveFromLensModel:
                 point_source_morphology="gaussian",
                 kwargs_source_morphology={},
             )
+            
+    def test_properties_access(
+        self,
+        ml_lens_model,
+        microlensing_params,
+        lens_source_info,
+        cosmology,
+        kwargs_magnification_map_settings,
+        kwargs_source_gaussian,
+    ):
+        """Test property access for lightcurves, tracks, and magmaps_images."""
+    
+        # Test AttributeError when properties are accessed before generation
+        with pytest.raises(AttributeError, match="Lightcurves are not set"):
+            _ = ml_lens_model.lightcurves
+        
+        with pytest.raises(AttributeError, match="Tracks are not set"):
+            _ = ml_lens_model.tracks
+        
+        with pytest.raises(AttributeError, match="Magnification maps are not set"):
+            _ = ml_lens_model.magmaps_images
+        
+        # Generate data to populate the properties
+        time_array = np.linspace(0, 1000, 50)
+        
+        with patch.object(
+            MicrolensingLightCurveFromLensModel,
+            "generate_magnification_maps_from_microlensing_params",
+        ) as mock_generate_maps:
+            mock_generate_maps.return_value = create_mock_magmap_list(
+                microlensing_params, kwargs_magnification_map_settings
+            )
+            ml_lens_model._magmaps_images = mock_generate_maps.return_value
+            
+            # This should populate _lightcurves and _tracks
+            magnitudes = ml_lens_model.generate_point_source_microlensing_magnitudes(
+                time_array,
+                lens_source_info["source_redshift"],
+                lens_source_info["deflector_redshift"],
+                microlensing_params["kappa_star"],
+                microlensing_params["kappa_tot"],
+                microlensing_params["shear"],
+                microlensing_params["shear_phi"],
+                lens_source_info["ra_lens"],
+                lens_source_info["dec_lens"],
+                lens_source_info["deflector_velocity_dispersion"],
+                cosmology,
+                kwargs_magnification_map_settings,
+                "gaussian",
+                kwargs_source_gaussian,
+            )
+        
+        # Now test that properties work correctly
+        lightcurves = ml_lens_model.lightcurves
+        assert isinstance(lightcurves, np.ndarray)
+        assert len(lightcurves) == len(microlensing_params["kappa_star"])
+        
+        tracks = ml_lens_model.tracks
+        assert isinstance(tracks, list)
+        assert len(tracks) == len(microlensing_params["kappa_star"])
+        
+        magmaps = ml_lens_model.magmaps_images
+        assert isinstance(magmaps, list)
+        assert len(magmaps) == len(microlensing_params["kappa_star"])

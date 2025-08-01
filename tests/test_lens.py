@@ -761,6 +761,9 @@ def test_point_source_magnitude_microlensing(
     )
     mock_ml_lc_from_lm_class.return_value = mock_ml_lc_instance  # When Lens calls MicrolensingLightCurveFromLensModel(), it gets our mock
 
+    with pytest.raises(AttributeError, match="MicrolensingLightCurveFromLensModel class is not set."):
+        _ = lens_instance_with_variability.microlensing_model_class
+
     # Call the method under test
     try:
         result_mags = (
@@ -796,9 +799,15 @@ def test_point_source_magnitude_microlensing(
         == kwargs_microlensing_settings["kwargs_source_morphology"]
     )
 
+    # check if microlensing_model_class is set correctly
+    microlensing_model_class = lens_instance_with_variability.microlensing_model_class
+    assert microlensing_model_class is not None, "Microlensing model class should be set."
+    assert microlensing_model_class == mock_ml_lc_instance
+
     # The result of _point_source_magnitude_microlensing should be the direct output
     # from the mocked generate_point_source_microlensing_magnitudes
     np.testing.assert_allclose(result_mags, expected_microlensing_delta_mags)
+
 
 
 ################################################

@@ -96,7 +96,7 @@ class MicrolensingLightCurveFromLensModel(object):
                 "kwargs_source_morphology not in kwargs_microlensing. Please provide a dictionary of settings required by source morphology calculation."
             )
 
-        self._lightcurves, self._tracks, __time_arrays = (
+        lightcurves, self._tracks, __time_arrays = (
             self.generate_point_source_lightcurves(
                 time_array,
                 source_redshift,
@@ -119,14 +119,16 @@ class MicrolensingLightCurveFromLensModel(object):
 
         # Here we choose just 1 lightcurve for the point sources
         lightcurves_single = np.zeros(
-            (len(self._lightcurves), len(time_array))
+            (len(lightcurves), len(time_array))
         )  # has shape (num_images, len(time))
-        for i in range(len(self._lightcurves)):
-            lightcurves_single[i] = self._lightcurves[i][0]
+        for i in range(len(lightcurves)):
+            lightcurves_single[i] = lightcurves[i][0]
 
         if isinstance(time, (int, float)):
             # if time is a number, return the magnitude for the first time
             lightcurves_single = lightcurves_single[:, 0]
+        
+        self._lightcurves = lightcurves_single  # cache the lightcurves
 
         return lightcurves_single
 
@@ -242,7 +244,7 @@ class MicrolensingLightCurveFromLensModel(object):
         :return:
 
         lightcurves: numpy array of microlensing magnitudes
-            with the shape (num_images, len(time)). The first dimension
+            with the shape (num_images, num_lightcurves, len(time)). The first dimension
             is the number of images of the source and the second
             dimension is the length of the time array.
 
