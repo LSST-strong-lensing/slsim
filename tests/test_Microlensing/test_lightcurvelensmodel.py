@@ -264,15 +264,18 @@ class TestMicrolensingLightCurveFromLensModel:
         )
         np.testing.assert_allclose(lc_interp_endpoints, np.array([1.0, 1.8]))
 
-    def test_mocked_generate_magnification_maps(self, ml_lens_model, microlensing_params, kwargs_magnification_map_settings):
-        """Test magnification map generation with mocking and internal storage."""
+    def test_mocked_generate_magnification_maps(
+        self, ml_lens_model, microlensing_params, kwargs_magnification_map_settings
+    ):
+        """Test magnification map generation with mocking and internal
+        storage."""
         num_images = len(microlensing_params["kappa_star"])
-        
+
         # Create mock maps
         mock_map_list = create_mock_magmap_list(
             microlensing_params, kwargs_magnification_map_settings
         )
-        
+
         # Test the magmaps_images property before generation
         with pytest.raises(AttributeError, match="Magnification maps are not set"):
             _ = ml_lens_model.magmaps_images
@@ -280,36 +283,38 @@ class TestMicrolensingLightCurveFromLensModel:
         # check no _magmaps_images set yet
         assert not hasattr(ml_lens_model, "_magmaps_images")
         assert not hasattr(ml_lens_model, "magmaps_images")
-        
+
         # Mock the MagnificationMap constructor to avoid GPU computation
-        with patch('slsim.Microlensing.lightcurvelensmodel.MagnificationMap') as mock_magmap_class:
+        with patch(
+            "slsim.Microlensing.lightcurvelensmodel.MagnificationMap"
+        ) as mock_magmap_class:
             # Configure the mock to return pre-created mock objects in sequence
             mock_magmap_class.side_effect = mock_map_list
-            
+
             result = ml_lens_model.generate_magnification_maps_from_microlensing_params(
                 kappa_star_images=microlensing_params["kappa_star"],
                 kappa_tot_images=microlensing_params["kappa_tot"],
                 shear_images=microlensing_params["shear"],
                 kwargs_MagnificationMap=kwargs_magnification_map_settings,
             )
-            
+
             # Verify the mock was called correctly
             assert mock_magmap_class.call_count == num_images
-            
+
             # Verify the method behavior
             assert isinstance(result, list)
             assert len(result) == num_images
             assert result == mock_map_list
-            
+
             # Verify that _magmaps_images is set correctly
-            assert hasattr(ml_lens_model, '_magmaps_images')
+            assert hasattr(ml_lens_model, "_magmaps_images")
             assert ml_lens_model._magmaps_images == mock_map_list
-            
+
             # Verify that magmaps_images exists
             magmaps_images = ml_lens_model.magmaps_images
             assert len(magmaps_images) == num_images
             assert magmaps_images == mock_map_list
-            
+
             # Verify individual map properties
             for i, magmap_obj in enumerate(result):
                 assert isinstance(magmap_obj, MagnificationMap)
