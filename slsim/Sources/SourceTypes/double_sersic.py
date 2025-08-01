@@ -7,9 +7,20 @@ from slsim.Util.param_util import surface_brightness_reff
 class DoubleSersic(SourceBase):
     """Class to manage source with double sersic light profile."""
 
-    def __init__(self, angular_size_0, angular_size_1, n_sersic_0, n_sersic_1, w0, w1=None,
-                 e1_1=0, e2_1=0, e1_2=0, e2_2=0,
-                 **source_dict):
+    def __init__(
+        self,
+        angular_size_0,
+        angular_size_1,
+        n_sersic_0,
+        n_sersic_1,
+        w0,
+        w1=None,
+        e1_1=0,
+        e2_1=0,
+        e1_2=0,
+        e2_2=0,
+        **source_dict
+    ):
         """
 
         :param angular_size_0: half-light radius of the first Sersic component [arcsec]
@@ -26,7 +37,12 @@ class DoubleSersic(SourceBase):
         :param source_dict: dictionary for SourceBase() option (see documentation)
         :type source_dict: dict or astropy.table.Table
         """
-        super().__init__(model_type="DoubleSersic", extended_source=True, point_source=False, **source_dict)
+        super().__init__(
+            model_type="DoubleSersic",
+            extended_source=True,
+            point_source=False,
+            **source_dict
+        )
         self.name = "GAL"
         self._n_sersic = [n_sersic_0, n_sersic_1]
         self._angular_size_list = [angular_size_0, angular_size_1]
@@ -50,10 +66,15 @@ class DoubleSersic(SourceBase):
         if self._angular_size is None:
             from lenstronomy.Analysis.light_profile import LightProfileAnalysis
             from lenstronomy.LightModel.light_model import LightModel
+
             kwargs_light = self._shape_light_model()
             light_model = LightModel(light_model_list=self._light_model_list)
             analysis = LightProfileAnalysis(light_model=light_model)
-            r_eff = analysis.half_light_radius(kwargs_light=kwargs_light, grid_num=500, grid_spacing=np.max(self._angular_size_list)/10)
+            r_eff = analysis.half_light_radius(
+                kwargs_light=kwargs_light,
+                grid_num=500,
+                grid_spacing=np.max(self._angular_size_list) / 10,
+            )
             self._angular_size = r_eff
 
         return self._angular_size
@@ -74,17 +95,19 @@ class DoubleSersic(SourceBase):
         if self._e1 is None or self._e2 is None:
             from lenstronomy.Analysis.light_profile import LightProfileAnalysis
             from lenstronomy.LightModel.light_model import LightModel
+
             kwargs_light = self._shape_light_model()
             light_model = LightModel(light_model_list=self._light_model_list)
             analysis = LightProfileAnalysis(light_model=light_model)
-            self._e1, self._e2 = analysis.ellipticity(kwargs_light=kwargs_light, grid_num=500,
-                                                      grid_spacing=np.max(self._angular_size_list)/10)
+            self._e1, self._e2 = analysis.ellipticity(
+                kwargs_light=kwargs_light,
+                grid_num=500,
+                grid_spacing=np.max(self._angular_size_list) / 10,
+            )
 
         return self._e1, self._e2
 
-    def kwargs_extended_light(
-        self, reference_position=None, draw_area=None, band=None
-    ):
+    def kwargs_extended_light(self, reference_position=None, draw_area=None, band=None):
         """Provides dictionary of keywords for the source light model(s).
         Kewords used are in lenstronomy conventions.
 
@@ -184,7 +207,6 @@ class DoubleSersic(SourceBase):
             },
         ]
         return kwargs_extended_source
-
 
     def surface_brightness_reff(self, band=None):
         """Calculate average surface brightness within half light radius.

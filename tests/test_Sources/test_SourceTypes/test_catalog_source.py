@@ -38,10 +38,7 @@ class TestCatalogSource:
             "phi_G": 0,
         }
         self.source = CatalogSource(
-            cosmo=cosmo,
-            catalog_path=catalog_path,
-            catalog_type="COSMOS",
-            **source_dict
+            cosmo=cosmo, catalog_path=catalog_path, catalog_type="COSMOS", **source_dict
         )
 
     def test_kwargs_extended_source_light(self):
@@ -98,14 +95,11 @@ class TestCatalogSource:
             cosmo=cosmo,
             catalog_path=catalog_path,
             catalog_type="incorrect",
-            **source_dict
+            **source_dict,
         )
 
         source = CatalogSource(
-            cosmo=cosmo,
-            catalog_path=catalog_path,
-            catalog_type="COSMOS",
-            **source_dict
+            cosmo=cosmo, catalog_path=catalog_path, catalog_type="COSMOS", **source_dict
         )
         np.testing.assert_raises(
             ValueError,
@@ -136,13 +130,9 @@ def test_source():
         catalog_path=catalog_path,
         catalog_type="COSMOS",
         # extendedsource_kwargs={"catalog_path": catalog_path, "catalog_type": "COSMOS"},
-        **source_dict
+        **source_dict,
     )
-    source2 = Source(
-        extended_source_type="single_sersic",
-        cosmo=cosmo,
-        **source_dict
-    )
+    source2 = Source(extended_source_type="single_sersic", cosmo=cosmo, **source_dict)
 
     # dummy, zero‑mass deflector
     deflector = Deflector(

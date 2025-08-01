@@ -267,10 +267,7 @@ class TestLens(object):
 
         while True:
             kwargs2 = {"extended_source_type": "single_sersic"}
-            self.source2 = Source(
-                cosmo=cosmo, **kwargs2,
-                **source_dict
-            )
+            self.source2 = Source(cosmo=cosmo, **kwargs2, **source_dict)
             self.deflector2 = Deflector(
                 deflector_type="NFW_HERNQUIST",
                 **deflector_dict,
@@ -300,11 +297,7 @@ class TestLens(object):
         }
         while True:
             kwargs_3 = {"extended_source_type": "single_sersic"}
-            self.source3 = Source(
-                cosmo=cosmo,
-                **source_dict,
-                **kwargs_3
-            )
+            self.source3 = Source(cosmo=cosmo, **source_dict, **kwargs_3)
             self.deflector3 = Deflector(
                 deflector_type="NFW_CLUSTER",
                 **deflector_dict,
@@ -1342,7 +1335,7 @@ class TestSlhammock(object):
             cosmo=self.cosmo,
             extended_source_type="single_sersic",
             point_source_type=None,
-            **source_dict
+            **source_dict,
         )
         deflector = Deflector(
             deflector_type="NFW_HERNQUIST",
@@ -1379,9 +1372,7 @@ class TestSlhammock(object):
 
     def test_source_light_model_lenstronomy_none_band(self):
         results = self.lens_class.source_light_model_lenstronomy(band=None)[1]
-        npt.assert_almost_equal(
-            results["kwargs_source"][0]["magnitude"], 1, decimal=6
-        )
+        npt.assert_almost_equal(results["kwargs_source"][0]["magnitude"], 1, decimal=6)
 
 
 if __name__ == "__main__":

@@ -1031,7 +1031,9 @@ class Lens(LensedSystemBase):
         lens_model_class, kwargs_lens = self.deflector_mass_model_lenstronomy(
             source_index=source_index
         )
-        light_model_list, kwargs_source_mag = self.source(source_index).kwargs_extended_light(
+        light_model_list, kwargs_source_mag = self.source(
+            source_index
+        ).kwargs_extended_light(
             reference_position=self.deflector_position, draw_area=self.test_area
         )
 
@@ -1224,7 +1226,9 @@ class Lens(LensedSystemBase):
             kwargs_source_list = []
             for index in range(len(self._source)):
 
-                source_model_list, kwargs_source = self.source(index).kwargs_extended_light(
+                source_model_list, kwargs_source = self.source(
+                    index
+                ).kwargs_extended_light(
                     draw_area=self.test_area,
                     reference_position=self.deflector_position,
                     band=band,

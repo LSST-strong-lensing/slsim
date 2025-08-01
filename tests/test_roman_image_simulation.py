@@ -51,8 +51,7 @@ SOURCE_DICT = {
 
 BAND = "F106"
 kwargs_extended = {"extended_source_type": "single_sersic"}
-source = Source(cosmo=COSMO, **kwargs_extended, **SOURCE_DICT
-)
+source = Source(cosmo=COSMO, **kwargs_extended, **SOURCE_DICT)
 pointsource_kwargs = {
     "variability_model": "light_curve",
     "kwargs_variability": ["supernovae_lightcurve", "F184", "F129", "F106"],
@@ -67,7 +66,7 @@ supernova_source = Source(
     pointsource_type="supernova",
     extended_source_type="single_sersic",
     **pointsource_kwargs,
-    **SOURCE_DICT
+    **SOURCE_DICT,
 )
 
 deflector = Deflector(

@@ -21,7 +21,7 @@ class TestSource:
         self.source = Source(
             cosmo=cosmo,
             extended_source_type="single_sersic",
-            **self.source_dict_extended
+            **self.source_dict_extended,
         )
 
         self.source_dict_point_extended = {
@@ -52,7 +52,7 @@ class TestSource:
             point_source_type="supernova",
             cosmo=cosmo,
             **self.source_dict_point_extended,
-            **kwargs_point_extended
+            **kwargs_point_extended,
         )
 
         # Create an image
@@ -93,7 +93,7 @@ class TestSource:
         self.source_interpolated = Source(
             cosmo=cosmo,
             extended_source_type="interpolated",
-            **self.source_dict_interpolated
+            **self.source_dict_interpolated,
         )
 
         self.source_dict_point = {

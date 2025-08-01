@@ -32,8 +32,7 @@ class ExtendedSource(object):
         elif source_type in ["double_sersic"]:
             self._source = DoubleSersic(**source_dict)
         elif source_type in ["catalog_source"]:
-            self._source = CatalogSource(**source_dict
-            )
+            self._source = CatalogSource(**source_dict)
         elif source_type in ["interpolated"]:
             self._source = Interpolated(**source_dict)
         else:
@@ -44,8 +43,7 @@ class ExtendedSource(object):
 
     @property
     def name(self):
-        """
-        meaningful name string of the source
+        """Meaningful name string of the source.
 
         :return: name string
         """
@@ -107,9 +105,7 @@ class ExtendedSource(object):
 
         return self._source.extended_source_magnitude(band=band)
 
-    def kwargs_extended_light(
-        self, reference_position=None, draw_area=None, band=None
-    ):
+    def kwargs_extended_light(self, reference_position=None, draw_area=None, band=None):
         """Provides dictionary of keywords for the source light model(s).
         Kewords used are in lenstronomy conventions.
 
@@ -124,9 +120,7 @@ class ExtendedSource(object):
         :return: dictionary of keywords for the source light model(s)
         """
 
-        return self._source.kwargs_extended_light(
-            reference_position, draw_area, band
-        )
+        return self._source.kwargs_extended_light(reference_position, draw_area, band)
 
     def surface_brightness_reff(self, band=None):
         """Calculate average surface brightness within half light radius.

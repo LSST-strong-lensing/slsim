@@ -10,12 +10,21 @@ from slsim.Sources.SourceTypes.source_base import SourceBase
 class Quasar(SourceBase):
     """A class to manage a quasar."""
 
-    def __init__(self, lightcurve_time=None, agn_known_band=None, agn_known_mag=None, agn_driving_variability_model=None,
-                 agn_driving_kwargs_variability=None, input_agn_bounds_dict=None, kwargs_variability=None,
-                 kwargs_variability_model=None,
-                 variability_model="light_curve",
-                 random_seed=None,
-                 cosmo=None, **kwargs):
+    def __init__(
+        self,
+        lightcurve_time=None,
+        agn_known_band=None,
+        agn_known_mag=None,
+        agn_driving_variability_model=None,
+        agn_driving_kwargs_variability=None,
+        input_agn_bounds_dict=None,
+        kwargs_variability=None,
+        kwargs_variability_model=None,
+        variability_model="light_curve",
+        random_seed=None,
+        cosmo=None,
+        **kwargs
+    ):
         """
 
         :param lightcurve_time: observation time array for lightcurve in unit of days.
@@ -40,9 +49,14 @@ class Quasar(SourceBase):
         :type lightcurve_time: array
         """
 
-        super().__init__(extended_source=False, point_source=True, variability_model=variability_model,
-                         kwargs_variability_model=kwargs_variability_model,
-                         cosmo=cosmo, **kwargs)
+        super().__init__(
+            extended_source=False,
+            point_source=True,
+            variability_model=variability_model,
+            kwargs_variability_model=kwargs_variability_model,
+            cosmo=cosmo,
+            **kwargs,
+        )
         self.name = "QSO"
         self._lightcurve_time = lightcurve_time
         self._agn_known_band = agn_known_band
@@ -169,7 +183,9 @@ class Quasar(SourceBase):
         if image_observation_times is not None:
             if self._variability_computed is False:
                 self._kwargs_variability_model = self.light_curve
-        return super().point_source_magnitude(band=band, image_observation_times=image_observation_times)
+        return super().point_source_magnitude(
+            band=band, image_observation_times=image_observation_times
+        )
 
 
 def add_mean_mag_to_source_table(sourcedict, mean_mags, band_list):
@@ -212,7 +228,7 @@ def extract_agn_kwargs_from_source_dict(source_dict):
         "driving_variability_model",
         "accretion_disk",
     ]
-    #column_names = source_dict.colnames
+    # column_names = source_dict.colnames
     agn_kwarg_dict = {}
     for kwarg in kwargs_variable_agn:
         if kwarg in source_dict:

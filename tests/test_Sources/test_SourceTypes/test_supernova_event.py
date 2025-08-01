@@ -49,10 +49,14 @@ class TestSupernovaEvent:
         }
 
         self.source = SupernovaEvent(cosmo=cosmo, **kwargs_sn, **source_dict)
-        self.source_roman = SupernovaEvent(cosmo=cosmo, **kwargs_sn_roman, **source_dict)
+        self.source_roman = SupernovaEvent(
+            cosmo=cosmo, **kwargs_sn_roman, **source_dict
+        )
         self.source_none = SupernovaEvent(cosmo=cosmo, **kwargs_sn_none, **source_dict2)
         self.source_cosmo_error = SupernovaEvent(cosmo=None, **kwargs_sn, **source_dict)
-        self.source_light_curve = SupernovaEvent(cosmo=cosmo, **kwargs_sn_none, **source_dict3)
+        self.source_light_curve = SupernovaEvent(
+            cosmo=cosmo, **kwargs_sn_none, **source_dict3
+        )
 
     def test_light_curve(self):
         light_curve = self.source.light_curve

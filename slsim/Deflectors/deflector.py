@@ -46,8 +46,7 @@ class Deflector(object):
 
     @property
     def name(self):
-        """
-        meaningful name string of the deflector
+        """Meaningful name string of the deflector.
 
         :return: name string
         """

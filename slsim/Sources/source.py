@@ -42,31 +42,40 @@ class Source(object):
             source_type = point_source_type
             self.source_type = "point_source"
         else:
-            raise ValueError("either extended_source_type of point_source_type need to set.")
+            raise ValueError(
+                "either extended_source_type of point_source_type need to set."
+            )
 
         # point sources
         if source_type in ["supernova"]:
             from slsim.Sources.SourceTypes.supernova_event import SupernovaEvent
+
             self._source = SupernovaEvent(**source_dict)
         elif source_type in ["quasar"]:
             from slsim.Sources.SourceTypes.quasar import Quasar
+
             self._source = Quasar(**source_dict)
         elif source_type in ["general_lightcurve"]:
             from slsim.Sources.SourceTypes.general_lightcurve import GeneralLightCurve
+
             self._source = GeneralLightCurve(**source_dict)
 
         # extended sources
         elif source_type in ["single_sersic"]:
             from slsim.Sources.SourceTypes.single_sersic import SingleSersic
+
             self._source = SingleSersic(**source_dict)
         elif source_type in ["double_sersic"]:
             from slsim.Sources.SourceTypes.double_sersic import DoubleSersic
+
             self._source = DoubleSersic(**source_dict)
         elif source_type in ["catalog_source"]:
             from slsim.Sources.SourceTypes.catalog_source import CatalogSource
+
             self._source = CatalogSource(**source_dict)
         elif source_type in ["interpolated"]:
             from slsim.Sources.SourceTypes.interpolated_image import Interpolated
+
             self._source = Interpolated(**source_dict)
 
         # point source plus extended source
@@ -74,7 +83,7 @@ class Source(object):
             self._source = PointPlusExtendedSource(
                 extended_source_type=extended_source_type,
                 point_source_type=point_source_type,
-                **source_dict
+                **source_dict,
             )
         else:
             raise ValueError(
@@ -84,8 +93,7 @@ class Source(object):
 
     @property
     def name(self):
-        """
-        meaningful name string of the source
+        """Meaningful name string of the source.
 
         :return: name string
         """
@@ -133,9 +141,7 @@ class Source(object):
         :return: [x_pos, y_pos]
         """
 
-        return self._source.extended_source_position(
-            reference_position, draw_area
-        )
+        return self._source.extended_source_position(reference_position, draw_area)
 
     def point_source_position(self, reference_position=None, draw_area=None):
         """Point source position. point source could be at the center of the
@@ -178,9 +184,7 @@ class Source(object):
             band=band, image_observation_times=image_observation_times
         )
 
-    def kwargs_extended_light(
-        self, reference_position=None, draw_area=None, band=None
-    ):
+    def kwargs_extended_light(self, reference_position=None, draw_area=None, band=None):
         """Provides dictionary of keywords for the source light model(s).
         Keywords used are in lenstronomy conventions.
 
@@ -193,9 +197,7 @@ class Source(object):
         :return: dictionary of keywords for the source light model(s)
         """
 
-        return self._source.kwargs_extended_light(
-            reference_position, draw_area, band
-        )
+        return self._source.kwargs_extended_light(reference_position, draw_area, band)
 
     def surface_brightness_reff(self, band=None):
         """Calculate average surface brightness within half light radius of a

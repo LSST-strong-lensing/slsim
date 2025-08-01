@@ -262,8 +262,12 @@ class Galaxies(SourcePopBase):
         galaxy = self.draw_source_dict(z_max=z_max)
         if galaxy is None:
             return None
-        source_class = Source(cosmo=self._cosmo, extended_source_type=self.light_profile,
-                              **galaxy, **self.extendedsource_kwargs)
+        source_class = Source(
+            cosmo=self._cosmo,
+            extended_source_type=self.light_profile,
+            **galaxy,
+            **self.extendedsource_kwargs
+        )
         return source_class
 
 

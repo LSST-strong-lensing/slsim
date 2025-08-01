@@ -5,10 +5,20 @@ from slsim.Sources.SourceTypes.source_base import SourceBase
 class SupernovaEvent(SourceBase):
     """A class to manage a supernova."""
 
-    def __init__(self, sn_type, sn_absolute_mag_band, sn_absolute_zpsys, lightcurve_time, sn_modeldir,
-                 variability_model, kwargs_variability=None, cosmo=None, **kwargs):
-        """
-        # TODO: is there a specific variability model needed for this class, if so, we should set it directly.
+    def __init__(
+        self,
+        sn_type,
+        sn_absolute_mag_band,
+        sn_absolute_zpsys,
+        lightcurve_time,
+        sn_modeldir,
+        variability_model,
+        kwargs_variability=None,
+        cosmo=None,
+        **kwargs
+    ):
+        """# TODO: is there a specific variability model needed for this class,
+        if so, we should set it directly.
 
         :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
             :type sn_type: str
@@ -41,12 +51,15 @@ class SupernovaEvent(SourceBase):
          This table or dict should contain atleast redshift of a supernova, offset from
          the host if host galaxy is available.
          eg: {"z": 0.8, "ra_off": 0.001, "dec_off": 0.005}
-
-
         """
 
-        super().__init__(extended_source=False, point_source=True, cosmo=cosmo, variability_model=variability_model,
-                         **kwargs)
+        super().__init__(
+            extended_source=False,
+            point_source=True,
+            cosmo=cosmo,
+            variability_model=variability_model,
+            **kwargs
+        )
         self.name = "SN" + sn_type
         self._variability_computed = False  # to be set to True once the light_curve() definition has been processed
         # These are the keywords that kwargs dict should contain
@@ -132,4 +145,6 @@ class SupernovaEvent(SourceBase):
         #  then we can simply set the magnitude = -inf
         if not self._variability_computed:
             self._kwargs_variability_model = self.light_curve
-        return super().point_source_magnitude(band=band, image_observation_times=image_observation_times)
+        return super().point_source_magnitude(
+            band=band, image_observation_times=image_observation_times
+        )

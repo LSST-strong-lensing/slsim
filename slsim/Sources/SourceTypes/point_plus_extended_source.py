@@ -45,5 +45,3 @@ class PointPlusExtendedSource(PointSource, ExtendedSource):
             cosmo=cosmo,
             **source_dict,
         )
-
-

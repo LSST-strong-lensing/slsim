@@ -8,12 +8,25 @@ class SourceBase(ABC):
     """Class of a single source with quantities only related to the source
     (independent of the deflector)"""
 
-    def __init__(self, z, model_type="SourceBase", lensed=True, point_source=False, extended_source=False,
-                 center_x=None, center_y=None, ra_off=None, dec_off=None,
-                 angular_size=None, e1=None, e2=None,
-                 cosmo=None,
-                 variability_model="NONE", kwargs_variability_model=None,
-                 **kwargs):
+    def __init__(
+        self,
+        z,
+        model_type="SourceBase",
+        lensed=True,
+        point_source=False,
+        extended_source=False,
+        center_x=None,
+        center_y=None,
+        ra_off=None,
+        dec_off=None,
+        angular_size=None,
+        e1=None,
+        e2=None,
+        cosmo=None,
+        variability_model="NONE",
+        kwargs_variability_model=None,
+        **kwargs
+    ):
         """
 
         :param z: redshift
@@ -56,7 +69,9 @@ class SourceBase(ABC):
             self._offset = np.array([0, 0])
         self.source_dict = kwargs
 
-        self._variability_bands = {}  # empty dictionary to be filled with Variability() models for different bands
+        self._variability_bands = (
+            {}
+        )  # empty dictionary to be filled with Variability() models for different bands
         self._variability_model = variability_model
         if kwargs_variability_model is None:
             kwargs_variability_model = {}
@@ -82,8 +97,7 @@ class SourceBase(ABC):
 
     @property
     def angular_size(self):
-        """
-        Returns angular size of the source for two component of the sersic
+        """Returns angular size of the source for two component of the sersic
         profile.
 
         :return: angular size [arcseconds]
@@ -102,9 +116,7 @@ class SourceBase(ABC):
         :return: physical size [kpc]
         """
         ang_dist = cosmo.angular_diameter_distance(self.redshift)
-        physical_size = (
-                self.angular_size * 4.84814e-6 * ang_dist.value * 1000
-        )  # kPc
+        physical_size = self.angular_size * 4.84814e-6 * ang_dist.value * 1000  # kPc
         return physical_size
 
     @property
@@ -151,9 +163,7 @@ class SourceBase(ABC):
             )
         return self._center_source
 
-    def kwargs_extended_light(
-        self, reference_position=None, draw_area=None, band=None
-    ):
+    def kwargs_extended_light(self, reference_position=None, draw_area=None, band=None):
         """Provides dictionary of keywords for the source light model(s).
         Kewords used are in lenstronomy conventions.
 
@@ -169,8 +179,10 @@ class SourceBase(ABC):
         if self._extended_source is False:
             return [], []
         else:
-            raise NotImplementedError("Model type %s requires an implementation of an extended surface brightness "
-                                      "profile." % self._model_type)
+            raise NotImplementedError(
+                "Model type %s requires an implementation of an extended surface brightness "
+                "profile." % self._model_type
+            )
 
     def extended_source_magnitude(self, band):
         """Get the magnitude of the extended source in a specific band.
@@ -184,8 +196,10 @@ class SourceBase(ABC):
             return None
         band_string = "mag_" + band
         if band_string not in self.source_dict:
-            raise ValueError("required parameter %s is missing in the source dictionary to evaluate extended source "
-                             "magnitude in band %s." % (band_string, band))
+            raise ValueError(
+                "required parameter %s is missing in the source dictionary to evaluate extended source "
+                "magnitude in band %s." % (band_string, band)
+            )
         return self.source_dict[band_string]
 
     def point_source_position(self, reference_position=None, draw_area=None):
@@ -226,22 +240,30 @@ class SourceBase(ABC):
         if image_observation_times is None or self._variability_model == "NONE":
             band_string = "ps_mag_" + band
             if band_string not in self.source_dict:
-                raise ValueError("required parameter %s is missing in the source dictionary to provide point source "
-                                 "magnitude without a image_observation_time or without variability model."
-                                 % band_string)
+                raise ValueError(
+                    "required parameter %s is missing in the source dictionary to provide point source "
+                    "magnitude without a image_observation_time or without variability model."
+                    % band_string
+                )
             return self.source_dict[band_string]
         else:
             if band not in self._variability_bands:
                 if band not in self._kwargs_variability_model:
-                    raise ValueError("kwargs_variability_model requires information about band %s" % band)
+                    raise ValueError(
+                        "kwargs_variability_model requires information about band %s"
+                        % band
+                    )
                 kwargs_variab_band = self._kwargs_variability_model[band]
-                self._variability_bands[band] = Variability(variability_model=self._variability_model,
-                                                            **kwargs_variab_band)
-            return self._variability_bands[band].variability_at_time(
-                    image_observation_times
+                self._variability_bands[band] = Variability(
+                    variability_model=self._variability_model, **kwargs_variab_band
                 )
+            return self._variability_bands[band].variability_at_time(
+                image_observation_times
+            )
 
-    def kwargs_point_source(self, band, image_observation_times=None, image_pos_x=None, image_pos_y=None):
+    def kwargs_point_source(
+        self, band, image_observation_times=None, image_pos_x=None, image_pos_y=None
+    ):
         """
 
         :param band: Imaging band
@@ -266,8 +288,12 @@ class SourceBase(ABC):
         # get magnitude
         if image_observation_times is not None:
             if len(image_pos_x) != len(image_observation_times):
-                raise ValueError("length of image positions needs to be the length of the observation times")
-        ps_mag = self.point_source_magnitude(band=band, image_observation_times=image_observation_times)
+                raise ValueError(
+                    "length of image positions needs to be the length of the observation times"
+                )
+        ps_mag = self.point_source_magnitude(
+            band=band, image_observation_times=image_observation_times
+        )
 
         # set keyword arguments for lenstronomy
         if ps_type in ["LENSED_POSITION", "UNLENSED"]:

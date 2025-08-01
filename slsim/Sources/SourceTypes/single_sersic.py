@@ -7,8 +7,7 @@ from slsim.Util.param_util import surface_brightness_reff
 class SingleSersic(SourceBase):
     """Class to manage source with single sersic light profile."""
 
-    def __init__(self, angular_size, n_sersic, e1=0, e2=0,
-                 **source_dict):
+    def __init__(self, angular_size, n_sersic, e1=0, e2=0, **source_dict):
         """
 
         :param angular_size: half-light radius of Sersic [arcsec]
@@ -18,15 +17,18 @@ class SingleSersic(SourceBase):
         :param source_dict: dictionary for SourceBase() option (see documentation)
         :type source_dict: dict or astropy.table.Table
         """
-        super().__init__(model_type="DoubleSersic", extended_source=True, point_source=False, **source_dict)
+        super().__init__(
+            model_type="DoubleSersic",
+            extended_source=True,
+            point_source=False,
+            **source_dict
+        )
         self.name = "GAL"
         self._n_sersic = n_sersic
         self._angular_size = angular_size
         self._e1, self._e2 = e1, e2
 
-    def kwargs_extended_light(
-        self, reference_position=None, draw_area=None, band=None
-    ):
+    def kwargs_extended_light(self, reference_position=None, draw_area=None, band=None):
         """Provides dictionary of keywords for the source light model(s).
         Kewords used are in lenstronomy conventions.
 

@@ -186,7 +186,15 @@ def process_cosmos_catalog(cosmo, catalog_path):
     return filtered_catalog
 
 
-def match_cosmos_source(angular_size, physical_size, e1, e2, n_sersic, processed_cosmos_catalog, catalog_path):
+def match_cosmos_source(
+    angular_size,
+    physical_size,
+    e1,
+    e2,
+    n_sersic,
+    processed_cosmos_catalog,
+    catalog_path,
+):
     """This function matches the parameters in source_dict to find a
     corresponding source in the COSMOS catalog. The parameters being
     matched are:
@@ -228,7 +236,10 @@ def match_cosmos_source(angular_size, physical_size, e1, e2, n_sersic, processed
     # Match based off of physical size
     size_tol = 0.5
     size_difference = np.abs(
-        physical_size - processed_cosmos_catalog["physical_size"].data  # TODO: is the catalogue in units [kpc]?
+        physical_size
+        - processed_cosmos_catalog[
+            "physical_size"
+        ].data  # TODO: is the catalogue in units [kpc]?
     )
     matched_catalog = processed_cosmos_catalog[size_difference < size_tol]
     # If no matches, relax the matching condition and try again
@@ -250,9 +261,7 @@ def match_cosmos_source(angular_size, physical_size, e1, e2, n_sersic, processed
         ]
 
     # Match based off of n_sersic
-    index = np.argsort(
-        np.abs(q_matched_catalog["sersicfit"][:, 2].data - n_sersic)
-    )
+    index = np.argsort(np.abs(q_matched_catalog["sersicfit"][:, 2].data - n_sersic))
     matched_source = q_matched_catalog[index][0]
 
     # load and save image
@@ -264,9 +273,7 @@ def match_cosmos_source(angular_size, physical_size, e1, e2, n_sersic, processed
 
     # Scale the angular size of the COSMOS image so that it matches the source_dict
     scale = (
-        matched_source["PIXEL_SCALE"]
-        * angular_size
-        / matched_source["angular_size"]
+        matched_source["PIXEL_SCALE"] * angular_size / matched_source["angular_size"]
     )
 
     # Rotate the COSMOS image so that it matches the angle given in source_dict
