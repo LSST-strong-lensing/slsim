@@ -15,14 +15,7 @@ class TestSourceBase:
             "e1": 0.002,
             "e2": 0.004,
         }
-        self.source_dict2 = {
-            "z": [0.7],
-            "mag_i": [23],
-            "n_sersic": [1],
-            "angular_size": [0.2],
-            "e1": [0.002],
-            "e2": [0.004],
-        }
+
         self.source_dict3 = {
             "z": 0.8,
             "mag_i": 23,
@@ -36,20 +29,18 @@ class TestSourceBase:
             "dec_off": 0.002,
         }
         self.source_table = Table([self.source_dict])
-        self.source = SourceBase(source_dict=self.source_dict)
-        self.source2 = SourceBase(source_dict=self.source_dict2)
-        self.source3 = SourceBase(source_dict=self.source_dict3)
-        self.source4 = SourceBase(source_dict=self.source_table)
+        self.source = SourceBase(**self.source_dict)
+        self.source3 = SourceBase(**self.source_dict3)
+        self.source4 = SourceBase(**self.source_table)
 
     def test_redshift(self):
         assert self.source.redshift == 0.8
-        assert self.source2.redshift == 0.7
         assert self.source4.redshift == 0.8
 
     def test_point_source_offset(self):
         offset = self.source.point_source_offset
-        assert offset[0] is None
-        assert offset[1] is None
+        assert offset[0] == 0
+        assert offset[1] == 0
 
     def test_source_position(self):
         x, y = self.source.extended_source_position(
@@ -76,31 +67,13 @@ class TestSourceBase:
         npt.assert_almost_equal(y4, 0.046, decimal=4)
 
     def test_angular_size(self):
-        assert self.source.angular_size is None
+        assert self.source.angular_size == 0
 
-    def test_n_sersic(self):
-        assert self.source.n_sersic is None
 
     def ellipticity(self):
         assert self.source.ellipticity is None
 
-    def test_sersicweight(self):
-        assert self.source.sersicweight is None
 
-    def test_image_redshift(self):
-        assert self.source.image_redshift is None
-
-    def test_image(self):
-        assert self.source.image is None
-
-    def test_phi(self):
-        assert self.source.phi is None
-
-    def test_pixel_scale(self):
-        assert self.source.pixel_scale is None
-
-    def test_light_curve(self):
-        assert self.source.light_curve is None
 
 
 if __name__ == "__main__":

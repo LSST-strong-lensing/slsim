@@ -30,7 +30,7 @@ def test_false_positive():
         cosmo=cosmo,
         sky_area=sky_area,
     )
-    kwargs = {"extendedsource_type": "single_sersic"}
+    kwargs = {"extended_source_type": "single_sersic"}
     source_galaxies = sources.Galaxies(
         galaxy_list=galaxy_simulation_pipeline.blue_galaxies,
         kwargs_cut=kwargs_source_cut,

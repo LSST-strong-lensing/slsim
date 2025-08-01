@@ -116,7 +116,7 @@ class Supernova(sncosmo.Model):
                 "outside spectral range [{3:.6g}, .., {4:.6g}]\n"
                 "Ignoring bandpass for now. Use extended wavelength SN models "
                 "found here: https://github.com/LSST-strong-lensing/data_public/tree/main/sncosmo_sn_models".format(
-                    bandpass.name,
+                    bandpass._name,
                     bandpass.minwave(),
                     bandpass.maxwave(),
                     self.minwave(),

@@ -14,36 +14,42 @@ _SUPPORTED_EXTENDED_SOURCES = [
 class ExtendedSource(object):
     """Class to manage a single extended source."""
 
-    def __init__(
-        self, source_dict, extendedsource_type, cosmo=None, extendedsource_kwargs={}
-    ):
+    def __init__(self, source_type, **source_dict):
         """
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
          For a detailed description of this dictionary, please see the documentation for
          the SingleSersic, DoubleSersic, and Interpolated classes.
         :type source_dict: dict or astropy.table.Table
-        :param extendedsource_type: Keyword to specify type of the extended source.
+        :param source_type: Keyword to specify type of the extended source.
          Supported extended source types are "single_sersic", "double_sersic", "catalog_source", "interpolated".
         :type source_type: str
         :param cosmo: astropy.cosmology instance
         :param extendedsource_kwargs: dictionary of keyword arguments for specific extended source classes.
          Currently only used for COSMOSSource, see its documentation.
         """
-        if extendedsource_type in ["single_sersic"]:
-            self._source = SingleSersic(source_dict=source_dict)
-        elif extendedsource_type in ["double_sersic"]:
-            self._source = DoubleSersic(source_dict=source_dict)
-        elif extendedsource_type in ["catalog_source"]:
-            self._source = CatalogSource(
-                source_dict=source_dict, cosmo=cosmo, **extendedsource_kwargs
+        if source_type in ["single_sersic"]:
+            self._source = SingleSersic(**source_dict)
+        elif source_type in ["double_sersic"]:
+            self._source = DoubleSersic(**source_dict)
+        elif source_type in ["catalog_source"]:
+            self._source = CatalogSource(**source_dict
             )
-        elif extendedsource_type in ["interpolated"]:
-            self._source = Interpolated(source_dict=source_dict, cosmo=cosmo)
+        elif source_type in ["interpolated"]:
+            self._source = Interpolated(**source_dict)
         else:
             raise ValueError(
                 "Extended source type %s not supported. Chose among %s."
-                % (extendedsource_type, _SUPPORTED_EXTENDED_SOURCES)
+                % (source_type, _SUPPORTED_EXTENDED_SOURCES)
             )
+
+    @property
+    def name(self):
+        """
+        meaningful name string of the source
+
+        :return: name string
+        """
+        return self._source.name
 
     @property
     def redshift(self):
@@ -101,7 +107,7 @@ class ExtendedSource(object):
 
         return self._source.extended_source_magnitude(band=band)
 
-    def kwargs_extended_source_light(
+    def kwargs_extended_light(
         self, reference_position=None, draw_area=None, band=None
     ):
         """Provides dictionary of keywords for the source light model(s).
@@ -118,16 +124,9 @@ class ExtendedSource(object):
         :return: dictionary of keywords for the source light model(s)
         """
 
-        return self._source.kwargs_extended_source_light(
+        return self._source.kwargs_extended_light(
             reference_position, draw_area, band
         )
-
-    def extended_source_light_model(self):
-        """Provides a list of source models.
-
-        :return: list of extented source model.
-        """
-        return self._source.extended_source_light_model()
 
     def surface_brightness_reff(self, band=None):
         """Calculate average surface brightness within half light radius.

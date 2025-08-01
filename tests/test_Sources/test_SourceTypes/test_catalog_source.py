@@ -38,17 +38,17 @@ class TestCatalogSource:
             "phi_G": 0,
         }
         self.source = CatalogSource(
-            source_dict=source_dict,
             cosmo=cosmo,
             catalog_path=catalog_path,
             catalog_type="COSMOS",
+            **source_dict
         )
 
     def test_kwargs_extended_source_light(self):
-        results = self.source.kwargs_extended_source_light(
+        light_model_list, results = self.source.kwargs_extended_light(
             reference_position=[0, 0], draw_area=4 * np.pi, band="i"
         )
-        results2 = self.source.kwargs_extended_source_light(
+        _, results2 = self.source.kwargs_extended_light(
             reference_position=[0, 0], draw_area=4 * np.pi, band=None
         )
 
@@ -76,7 +76,7 @@ class TestCatalogSource:
             self.source.extended_source_magnitude("g")
 
     def test_extended_source_light_model(self):
-        source_model = self.source.extended_source_light_model()
+        source_model, kwargs_light = self.source.kwargs_extended_light()
         assert source_model[0] == "INTERPOL"
 
     def test_raises(self):
@@ -96,20 +96,20 @@ class TestCatalogSource:
             ValueError,
             CatalogSource,
             cosmo=cosmo,
-            source_dict=source_dict,
             catalog_path=catalog_path,
             catalog_type="incorrect",
+            **source_dict
         )
 
         source = CatalogSource(
             cosmo=cosmo,
-            source_dict=source_dict,
             catalog_path=catalog_path,
             catalog_type="COSMOS",
+            **source_dict
         )
         np.testing.assert_raises(
             ValueError,
-            source.kwargs_extended_source_light,
+            source.kwargs_extended_light,
         )
 
 
@@ -131,17 +131,17 @@ def test_source():
         "phi_G": 0,
     }
     source1 = Source(
-        source_dict=source_dict,
-        source_type="extended",
-        extendedsource_type="catalog_source",
+        extended_source_type="catalog_source",
         cosmo=cosmo,
-        extendedsource_kwargs={"catalog_path": catalog_path, "catalog_type": "COSMOS"},
+        catalog_path=catalog_path,
+        catalog_type="COSMOS",
+        # extendedsource_kwargs={"catalog_path": catalog_path, "catalog_type": "COSMOS"},
+        **source_dict
     )
     source2 = Source(
-        source_dict=source_dict,
-        source_type="extended",
-        extendedsource_type="single_sersic",
+        extended_source_type="single_sersic",
         cosmo=cosmo,
+        **source_dict
     )
 
     # dummy, zero‑mass deflector
@@ -238,11 +238,11 @@ def test_galaxies():
         sky_area=sky_area,
         catalog_type="skypy",
         source_size=None,
-        extendedsource_type="catalog_source",
+        extended_source_type="catalog_source",
         extendedsource_kwargs={"catalog_path": catalog_path, "catalog_type": "COSMOS"},
     )
     source = source_simulation.draw_source()
-    assert isinstance(source._single_source._source, CatalogSource)
+    assert isinstance(source._source, CatalogSource)
 
 
 if __name__ == "__main__":

@@ -19,6 +19,8 @@ def supernovae_lens_instance():
     source_dict = Table.read(
         os.path.join(path, "TestData/source_supernovae_new.fits"), format="fits"
     )
+    source_dict.rename_column("angular_size0", "angular_size_0")
+    source_dict.rename_column("angular_size1", "angular_size_1")
     deflector_dict = Table.read(
         os.path.join(path, "TestData/deflector_supernovae_new.fits"), format="fits"
     )
@@ -35,12 +37,11 @@ def supernovae_lens_instance():
             "sn_modeldir": None,
         }
         source = Source(
-            source_dict=source_dict,
             cosmo=cosmo,
-            source_type="point_plus_extended",
-            pointsource_type="supernova",
-            extendedsource_type="double_sersic",
-            pointsource_kwargs=kwargs_sn,
+            point_source_type="supernova",
+            extended_source_type="double_sersic",
+            **kwargs_sn,
+            **source_dict
         )
         deflector = Deflector(
             deflector_type="EPL_SERSIC",

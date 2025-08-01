@@ -186,7 +186,7 @@ def process_cosmos_catalog(cosmo, catalog_path):
     return filtered_catalog
 
 
-def match_cosmos_source(source_dict, processed_cosmos_catalog, catalog_path):
+def match_cosmos_source(angular_size, physical_size, e1, e2, n_sersic, processed_cosmos_catalog, catalog_path):
     """This function matches the parameters in source_dict to find a
     corresponding source in the COSMOS catalog. The parameters being
     matched are:
@@ -197,6 +197,10 @@ def match_cosmos_source(source_dict, processed_cosmos_catalog, catalog_path):
 
     When many matches are found, the match with the best n_sersic is taken.
 
+    :param angular_size: angular size of the source [arcsec]
+    :param physical_size: physical size of the source [kpc]
+    :param e1: eccentricity modulus
+    :param e2: eccentricity modulus
     :param source_dict: Source properties. May be a dictionary or an Astropy table.
      This dict or table should contain atleast redshift, a magnitude in any band,
      sersic index, angular size in arcsec, and ellipticities e1 and e2.
@@ -213,17 +217,18 @@ def match_cosmos_source(source_dict, processed_cosmos_catalog, catalog_path):
 
     # Later the COSMOS image will be scaled to have the desired angular size. We don't want to expand, only shrink
     processed_cosmos_catalog = processed_cosmos_catalog[
-        processed_cosmos_catalog["angular_size"].data >= source_dict["angular_size"]
+        processed_cosmos_catalog["angular_size"].data >= angular_size
     ]
     if len(processed_cosmos_catalog) == 0:
         raise ValueError(
-            "The desired angular size is larger than the available sources in the COSMOS catalog. Please use a smaller angular size."
+            "The desired angular size is larger than the available sources in the COSMOS catalog. "
+            "Please use a smaller angular size."
         )
 
     # Match based off of physical size
     size_tol = 0.5
     size_difference = np.abs(
-        source_dict["physical_size"] - processed_cosmos_catalog["physical_size"].data
+        physical_size - processed_cosmos_catalog["physical_size"].data  # TODO: is the catalogue in units [kpc]?
     )
     matched_catalog = processed_cosmos_catalog[size_difference < size_tol]
     # If no matches, relax the matching condition and try again
@@ -232,7 +237,7 @@ def match_cosmos_source(source_dict, processed_cosmos_catalog, catalog_path):
         matched_catalog = processed_cosmos_catalog[size_difference < size_tol]
 
     # Match with COSMOS catalog based off of axis ratio
-    phi, q = ellipticity2phi_q(source_dict["e1"], source_dict["e2"])
+    phi, q = ellipticity2phi_q(e1, e2)
     q_tol = 0.1
     q_matched_catalog = matched_catalog[
         np.abs(matched_catalog["sersicfit"][:, 3].data - q) <= q_tol
@@ -246,7 +251,7 @@ def match_cosmos_source(source_dict, processed_cosmos_catalog, catalog_path):
 
     # Match based off of n_sersic
     index = np.argsort(
-        np.abs(q_matched_catalog["sersicfit"][:, 2].data - source_dict["n_sersic"])
+        np.abs(q_matched_catalog["sersicfit"][:, 2].data - n_sersic)
     )
     matched_source = q_matched_catalog[index][0]
 
@@ -260,7 +265,7 @@ def match_cosmos_source(source_dict, processed_cosmos_catalog, catalog_path):
     # Scale the angular size of the COSMOS image so that it matches the source_dict
     scale = (
         matched_source["PIXEL_SCALE"]
-        * source_dict["angular_size"]
+        * angular_size
         / matched_source["angular_size"]
     )
 

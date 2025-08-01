@@ -24,10 +24,10 @@ class TestPointSource:
             "sn_modeldir": None,
         }
         self.source_sn = PointSource(
-            source_dict=self.source_dict_sn,
-            pointsource_type="supernova",
+            source_type="supernova",
             cosmo=cosmo,
-            pointsource_kwargs=kwargs_sn,
+            **kwargs_sn,
+            **self.source_dict_sn
         )
 
         source_dict_quasar = {"z": 0.8, "ps_mag_i": 20}
@@ -47,10 +47,10 @@ class TestPointSource:
             "lightcurve_time": np.linspace(0, 1000, 1000),
         }
         self.source_quasar = PointSource(
-            source_dict=source_dict_quasar,
-            pointsource_type="quasar",
+            source_type="quasar",
             cosmo=cosmo,
-            pointsource_kwargs=kwargs_quasar,
+            **kwargs_quasar,
+            **source_dict_quasar
         )
 
         source_dict_general_lc = {
@@ -63,10 +63,10 @@ class TestPointSource:
         }
 
         self.source_general_lc = PointSource(
-            source_dict=source_dict_general_lc,
-            pointsource_type="general_lightcurve",
+            source_type="general_lightcurve",
             cosmo=cosmo,
-            pointsource_kwargs=kwargs_general_lc,
+            **kwargs_general_lc,
+            **source_dict_general_lc
         )
 
     def test_redshift(self):
@@ -96,7 +96,7 @@ class TestPointSource:
         )
         expected_result = np.array([15, 16, 17, 18, 19, 20, 21, 22, 23])
         assert np.all(
-            self.source_general_lc.point_source_magnitude(band="i") == expected_result
+            self.source_general_lc.point_source_magnitude(band="i") == np.mean(expected_result)
         )
         with pytest.raises(ValueError):
             self.source_general_lc.point_source_magnitude(band="g")
@@ -120,10 +120,10 @@ class TestPointSource:
         }
         with pytest.raises(ValueError):
             PointSource(
-                source_dict=source_dict_sn,
                 cosmo=cosmo,
-                pointsource_type="other",
-                pointsource_kwargs=kwargs_sn,
+                source_type="other",
+                **kwargs_sn,
+                **source_dict_sn
             )
 
 

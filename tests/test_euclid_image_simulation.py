@@ -47,10 +47,9 @@ transform_matrix = np.array([[0.101, 0], [0, 0.101]])
 
 BAND = "VIS"
 source = Source(
-    source_dict=SOURCE_DICT,
     cosmo=COSMO,
-    source_type="extended",
-    extendedsource_type="single_sersic",
+    extended_source_type="single_sersic",
+    **SOURCE_DICT
 )
 deflector = Deflector(
     deflector_type="EPL_SERSIC",

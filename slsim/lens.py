@@ -77,7 +77,7 @@ class Lens(LensedSystemBase):
 
         if isinstance(source_class, list):
             self._source = source_class
-            # chose a highest resdshift source to use conventionally use in lens
+            # chose the highest redshift source to use conventionally use in lens
             #  mass model.
             self.max_redshift_source_class = max(
                 self._source, key=lambda obj: obj.redshift
@@ -97,7 +97,7 @@ class Lens(LensedSystemBase):
             self.max_redshift_source_class = source_class
             self._max_redshift_source_index = 0
         self._source_type = self.max_redshift_source_class.source_type
-        # we conventionally use highest source redshift in the lens cosmo.
+        # we conventionally use the highest source redshift in the lens cosmo.
         self._lens_cosmo = LensCosmo(
             z_lens=self.deflector.redshift,
             z_source=self.max_redshift_source_class.redshift,
@@ -251,8 +251,8 @@ class Lens(LensedSystemBase):
         :type mag_arc_limit: dict with key of bands and values of
             magnitude limits
         :param second_brightest_image_cut: Dictionary containing maximum
-            magnitude of the second brightest image and corresponding
-            band. If provided, selects lenses where the second brightest
+            magnitude of the second-brightest image and corresponding
+            band. If provided, selects lenses where the second-brightest
             image has a magnitude less than or equal to provided
             magnitude. e.g.: second_brightest_image_cut = {"i": 23, "g":
             24, "r": 22}
@@ -289,9 +289,9 @@ class Lens(LensedSystemBase):
             magnitude limits of integrated lensed arc
         :type mag_arc_limit: dict with key of bands and values of
             magnitude limits
-        :param second_bright_image_cut: Dictionary containing maximum
-            magnitude of the second brightest image and corresponding
-            band. If provided, selects lenses where the second brightest
+        :param second_brightest_image_cut: Dictionary containing maximum
+            magnitude of the second-brightest image and corresponding
+            band. If provided, selects lenses where the second-brightest
             image has a magnitude less than or equal to provided
             magnitude.
             eg: second_brightest_image_cut = {"i": 23, "g": 24, "r": 22}
@@ -498,10 +498,12 @@ class Lens(LensedSystemBase):
                     z_source_2=self.max_redshift_source_class.redshift,
                     z_source_1=self.source(source_index).redshift,
                 )
+
                 theta_E = theta_E_convention * beta ** (1.0 / (gamma_pl - 1))
                 kappa_ext = kappa_ext_convention * beta
 
             theta_E /= (1 - kappa_ext) ** (1.0 / (gamma_pl - 1))
+
         else:
             # numerical solution for the Einstein radius
             lens_analysis = LensProfileAnalysis(lens_model=lens_model_class)
@@ -757,7 +759,7 @@ class Lens(LensedSystemBase):
         :param band: imaging band
         :type band: string
         :param lensed: if True, returns the lensed magnified magnitude
-            of each images.
+            of each image.
         :type lensed: bool
         :return: list of extended source magnitudes.
         """
@@ -875,7 +877,7 @@ class Lens(LensedSystemBase):
     def extended_source_magnitude(self, band, lensed=False):
         """Unlensed apparent magnitude of the extended source for a given band
         (assumes that size is the same for different bands). This function
-        gives gives magnitude for all the provided sources.
+        gives magnitude for all the provided sources.
 
         :param band: imaging band
         :type band: string
@@ -946,7 +948,7 @@ class Lens(LensedSystemBase):
 
     def point_source_magnification(self):
         """Macro-model magnification of point sources. This function calculates
-        magnification for each sources.
+        magnification for each source.
 
         :return: list of signed magnification of point sources in same
             order as image positions.
@@ -1029,8 +1031,7 @@ class Lens(LensedSystemBase):
         lens_model_class, kwargs_lens = self.deflector_mass_model_lenstronomy(
             source_index=source_index
         )
-        light_model_list = self.source(source_index).extended_source_light_model()
-        kwargs_source_mag = self.source(source_index).kwargs_extended_source_light(
+        light_model_list, kwargs_source_mag = self.source(source_index).kwargs_extended_light(
             reference_position=self.deflector_position, draw_area=self.test_area
         )
 
@@ -1087,12 +1088,12 @@ class Lens(LensedSystemBase):
                 lens_model_list
             )
             kwargs_model["z_lens"] = self.deflector_redshift
-            if self.max_redshift_source_class.extendedsource_type in [
+            if self.max_redshift_source_class.extended_source_type in [
                 "single_sersic",
                 "interpolated",
             ]:
                 kwargs_model["source_redshift_list"] = self.source_redshift_list
-            elif self.max_redshift_source_class.extendedsource_type in [
+            elif self.max_redshift_source_class.extended_source_type in [
                 "double_sersic"
             ]:
                 kwargs_model["source_redshift_list"] = [
@@ -1222,16 +1223,14 @@ class Lens(LensedSystemBase):
             source_models_list = []
             kwargs_source_list = []
             for index in range(len(self._source)):
-                source_models_list.append(
-                    self.source(index).extended_source_light_model()
+
+                source_model_list, kwargs_source = self.source(index).kwargs_extended_light(
+                    draw_area=self.test_area,
+                    reference_position=self.deflector_position,
+                    band=band,
                 )
-                kwargs_source_list.append(
-                    self.source(index).kwargs_extended_source_light(
-                        draw_area=self.test_area,
-                        reference_position=self.deflector_position,
-                        band=band,
-                    )
-                )
+                source_models_list.append(source_model_list)
+                kwargs_source_list.append(kwargs_source)
             # lets transform list in to required structure
             source_models_list_restructure = list(np.concatenate(source_models_list))
             kwargs_source_list_restructure = list(np.concatenate(kwargs_source_list))
@@ -1344,23 +1343,11 @@ class Lens(LensedSystemBase):
         else:
             ra = ra
             dec = dec
-        if self._source_type == "extended":
-            lens_type = "GG"
-        elif (
-            self._source_type == "point_source"
-            or self._source_type == "point_plus_extended"
-        ):
-            if self.max_redshift_source_class.pointsource_type in ["supernova"]:
-                lens_type = (
-                    "SN" + self.max_redshift_source_class.pointsource_kwargs["sn_type"]
-                )
-            elif self.max_redshift_source_class.pointsource_type in ["quasar"]:
-                lens_type = "QSO"
-            else:
-                # "LC" stands for Light Curve
-                lens_type = "LC"
 
-        return f"{lens_type}-LENS_{ra:.4f}_{dec:.4f}"
+        name_def = self.deflector.name
+        name_source = self.max_redshift_source_class.name
+
+        return f"{name_def}-{name_source}-LENS_{ra:.4f}_{dec:.4f}"
 
     def add_subhalos(self, pyhalos_kwargs, dm_type, source_index=0):
         """Generate a realization of the subhalos, halo mass.

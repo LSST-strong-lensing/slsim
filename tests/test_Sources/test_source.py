@@ -19,10 +19,9 @@ class TestSource:
             "center_y": -0.06,
         }
         self.source = Source(
-            source_dict=self.source_dict_extended,
-            source_type="extended",
             cosmo=cosmo,
-            extendedsource_type="single_sersic",
+            extended_source_type="single_sersic",
+            **self.source_dict_extended
         )
 
         self.source_dict_point_extended = {
@@ -49,12 +48,11 @@ class TestSource:
             "sn_modeldir": None,
         }
         self.source_point_extended = Source(
-            source_dict=self.source_dict_point_extended,
-            source_type="point_plus_extended",
-            extendedsource_type="single_sersic",
-            pointsource_type="supernova",
+            extended_source_type="single_sersic",
+            point_source_type="supernova",
             cosmo=cosmo,
-            pointsource_kwargs=kwargs_point_extended,
+            **self.source_dict_point_extended,
+            **kwargs_point_extended
         )
 
         # Create an image
@@ -93,10 +91,9 @@ class TestSource:
             "mag_i": 20,
         }
         self.source_interpolated = Source(
-            source_dict=self.source_dict_interpolated,
-            source_type="extended",
             cosmo=cosmo,
-            extendedsource_type="interpolated",
+            extended_source_type="interpolated",
+            **self.source_dict_interpolated
         )
 
         self.source_dict_point = {
@@ -115,11 +112,10 @@ class TestSource:
             "sn_modeldir": None,
         }
         self.source_point = Source(
-            source_dict=self.source_dict_point,
-            source_type="point_source",
-            pointsource_type="supernova",
+            point_source_type="supernova",
             cosmo=cosmo,
-            pointsource_kwargs=kwargs_point,
+            **self.source_dict_point,
+            **kwargs_point,
         )
 
     def test_redshift(self):
@@ -142,7 +138,7 @@ class TestSource:
         assert self.source.extended_source_magnitude("i") == 21
 
     def test_kwargs_extended_source_light(self):
-        results = self.source.kwargs_extended_source_light(band="i")
+        source_model, results = self.source.kwargs_extended_light(band="i")
         assert results[0]["R_sersic"] == 0.2
         assert results[0]["center_x"] == 0.034
         assert results[0]["center_y"] == -0.06
@@ -151,7 +147,7 @@ class TestSource:
         assert results[0]["magnitude"] == 21
 
     def test_extended_source_light_model(self):
-        source_model = self.source.extended_source_light_model()
+        source_model, kwargs_light = self.source.kwargs_extended_light()
         assert source_model[0] == "SERSIC_ELLIPSE"
 
     def test_surface_brightness_reff(self):

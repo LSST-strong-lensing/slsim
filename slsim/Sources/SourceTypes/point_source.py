@@ -8,9 +8,7 @@ _SUPPORTED_POINT_SOURCES = ["supernova", "quasar", "general_lightcurve"]
 class PointSource(object):
     """Class to manage a single point source."""
 
-    def __init__(
-        self, source_dict, pointsource_type, cosmo=None, pointsource_kwargs={}
-    ):
+    def __init__(self, source_type, **source_dict):
         """One can supply either supernovae kwargs or agn kwargs. If supernovae
         kwargs are supplied, agn kwrgs can be None which is a default option.
 
@@ -34,23 +32,26 @@ class PointSource(object):
          Other supported pointsource_types are "supernova", "quasar".
         """
 
-        if pointsource_type in ["supernova"]:
-            self._point_source = SupernovaEvent(
-                source_dict=source_dict, cosmo=cosmo, **pointsource_kwargs
-            )
-        elif pointsource_type in ["quasar"]:
-            self._point_source = Quasar(
-                source_dict=source_dict, cosmo=cosmo, **pointsource_kwargs
-            )
-        elif pointsource_type in ["general_lightcurve"]:
-            self._point_source = GeneralLightCurve(
-                source_dict=source_dict, **pointsource_kwargs
-            )
+        if source_type in ["supernova"]:
+            self._point_source = SupernovaEvent(**source_dict)
+        elif source_type in ["quasar"]:
+            self._point_source = Quasar(**source_dict)
+        elif source_type in ["general_lightcurve"]:
+            self._point_source = GeneralLightCurve(**source_dict)
         else:
             raise ValueError(
                 "Point source type %s not supported. Chose among %s."
-                % (pointsource_type, _SUPPORTED_POINT_SOURCES)
+                % (source_type, _SUPPORTED_POINT_SOURCES)
             )
+
+    @property
+    def name(self):
+        """
+        meaningful name string of the source
+
+        :return: name string
+        """
+        return self._point_source.name
 
     @property
     def redshift(self):

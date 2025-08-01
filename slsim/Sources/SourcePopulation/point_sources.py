@@ -28,13 +28,12 @@ class PointSources(SourcePopBase):
         :type sky_area: `~astropy.units.Quantity`
         :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max. These are
          the arguments that go into the deflector_cut() definition which is a general
-         defination for performing given cuts in given catalog. For the supernovae
+         definition for performing given cuts in given catalog. For the supernovae
          sample, we can only apply redshift cuts because supernovae sample contains only
          redshift in this stage.
         :type kwargs_cut: dict
         :param pointsource_type: Keyword to specify type of the point source.
          Supported point source types are "supernova", "quasar", "general_lightcurve".
-        :type source_type: str
         :param pointsource_kwargs: dictionary of keyword arguments for a source. It should
          contain keywords for pointsource_type and other keywords associated with
          pointsource. For supernova kwargs dict, please see documentation of
@@ -88,11 +87,10 @@ class PointSources(SourcePopBase):
         index = random.randint(0, self._num_select - 1)
         point_source = self._point_source_select[index]
         source_class = Source(
-            source_dict=point_source,
             cosmo=self._cosmo,
-            source_type=self.source_type,
-            pointsource_type=self._pointsource_type,
-            pointsource_kwargs=self.pointsource_kwargs,
+            point_source_type=self._pointsource_type,
+            **self.pointsource_kwargs,
+            **point_source
         )
 
         return source_class

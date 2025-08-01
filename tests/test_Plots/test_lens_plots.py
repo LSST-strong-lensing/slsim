@@ -41,7 +41,7 @@ def gg_lens_pop_instance():
         cosmo=cosmo,
         sky_area=sky_area,
         catalog_type="skypy",
-        extendedsource_type="single_sersic",
+        extended_source_type="single_sersic",
     )
 
     lenspop = LensPop(
@@ -100,7 +100,7 @@ def gg_roman_lens_pop_instance():
         sky_area=sky_area,
         catalog_type="skypy",
         source_size=None,
-        extendedsource_type="single_sersic",
+        extended_source_type="single_sersic",
     )
 
     lenspop = LensPop(
