@@ -1,4 +1,6 @@
-from slsim.Util.ParamDistributions.kext_gext_distributions import LineOfSightDistribution
+from slsim.Util.ParamDistributions.kext_gext_distributions import (
+    LineOfSightDistribution,
+)
 import pytest
 import os
 
