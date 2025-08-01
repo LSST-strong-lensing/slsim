@@ -127,7 +127,7 @@ class MicrolensingLightCurveFromLensModel(object):
         if isinstance(time, (int, float)):
             # if time is a number, return the magnitude for the first time
             lightcurves_single = lightcurves_single[:, 0]
-        
+
         self._lightcurves = lightcurves_single  # cache the lightcurves
 
         return lightcurves_single
