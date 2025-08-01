@@ -267,10 +267,24 @@ class TestMicrolensingLightCurveFromLensModel:
     def test_mocked_generate_magnification_maps(
         self, ml_lens_model, microlensing_params, kwargs_magnification_map_settings
     ):
+        # check no _magmaps_images set yet
+        assert not hasattr(ml_lens_model, "_magmaps_images")
+        
+        with patch.object(
+            MicrolensingLightCurveFromLensModel,
+            "generate_magnification_maps_from_microlensing_params",
+        ) as mock_generate_maps:
+            mock_generate_maps.return_value = create_mock_magmap_list(
+                microlensing_params, kwargs_magnification_map_settings
+            )
+            ml_lens_model._magmaps_images = mock_generate_maps.return_value
+        
+        # check _magmaps_images is set
+        assert hasattr(ml_lens_model, "_magmaps_images")
+        assert hasattr(ml_lens_model, "magmaps_images")
+
         num_images = len(microlensing_params["kappa_star"])
-        mock_map_list = create_mock_magmap_list(
-            microlensing_params, kwargs_magnification_map_settings
-        )
+        mock_map_list = ml_lens_model.magmaps_images
         assert isinstance(mock_map_list, list)
         assert len(mock_map_list) == num_images
         for i, magmap_obj in enumerate(mock_map_list):
