@@ -688,7 +688,7 @@ class TestMicrolensingLightCurveFromLensModel:
             ml_lens_model._magmaps_images = mock_generate_maps.return_value
 
             # This should populate _lightcurves and _tracks
-            magnitudes = ml_lens_model.generate_point_source_microlensing_magnitudes(
+            _ = ml_lens_model.generate_point_source_microlensing_magnitudes(
                 time_array,
                 lens_source_info["source_redshift"],
                 lens_source_info["deflector_redshift"],
