@@ -49,10 +49,7 @@ class Lens(LensedSystemBase):
         ). See the Source class documentation.
         :param deflector_class: deflector instance
         :type deflector_class: Deflector class instance from slsim.Deflectors.deflector
-         Eg: deflector_class = Deflector(
-            deflector_type=deflector_type,
-            deflector_dict=deflector_dict,
-        ). See the Deflector class documentation.
+         See the Deflector class documentation.
         :param cosmo: astropy.cosmology instance
         :param lens_equation_solver: type of lens equation solver; currently supporting
          "lenstronomy_analytical" and "lenstronomy_general"

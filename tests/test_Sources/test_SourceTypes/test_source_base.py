@@ -30,6 +30,7 @@ class TestSourceBase:
         }
         self.source_table = Table([self.source_dict])
         self.source = SourceBase(**self.source_dict)
+        self.source2 = SourceBase(z=1)
         self.source3 = SourceBase(**self.source_dict3)
         self.source4 = SourceBase(**self.source_table)
 
@@ -69,8 +70,36 @@ class TestSourceBase:
     def test_angular_size(self):
         assert self.source.angular_size == 0
 
-    def ellipticity(self):
-        assert self.source.ellipticity is None
+    def test_ellipticity(self):
+        assert self.source.ellipticity == (0, 0)
+
+    def test_kwargs_point_source(self):
+        source = SourceBase(z=1, point_source=False)
+        source_model, kwargs_source = source.kwargs_point_source(band='r', image_observation_times=None,
+                                                                 image_pos_x=None, image_pos_y=None)
+        assert source_model == []
+        assert kwargs_source == []
+        source = SourceBase(z=1, point_source=True, lensed=True, variability_model="NONE")
+        npt.assert_raises(ValueError, source.kwargs_point_source, band='r', image_observation_times=None,
+                                                                 image_pos_x=[1], image_pos_y=[0])
+
+        source = SourceBase(z=1, point_source=True, lensed=False, variability_model="NONE", ps_mag_r=20)
+        source_model, kwargs_source = source.kwargs_point_source(band='r', image_observation_times=None,
+                                                                 image_pos_x=None, image_pos_y=None)
+
+        source_model, kwargs_source_new = source.kwargs_point_source(band='r', image_observation_times=None,
+                                                                 image_pos_x=None, image_pos_y=None)
+
+        assert source_model == "UNLENSED"
+        assert kwargs_source["ra_image"] == kwargs_source_new["ra_image"]
+
+        source = SourceBase(z=1, point_source=True, lensed=True, variability_model="NONE", ps_mag_r=20)
+        source_model, kwargs_source = source.kwargs_point_source(band='r', image_observation_times=None,
+                                                                 image_pos_x=None, image_pos_y=None)
+        assert source_model == "SOURCE_POSITION"
+
+        npt.assert_raises(ValueError, source.kwargs_point_source, band='r', image_observation_times=[1, 2],
+                          image_pos_x=[1], image_pos_y=[0])
 
 
 if __name__ == "__main__":

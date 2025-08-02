@@ -154,6 +154,10 @@ class SourceBase(ABC):
         :return: [x_pos, y_pos]
         """
         if not hasattr(self, "_center_source"):
+            if draw_area is None:
+                draw_area = 1
+            if reference_position is None:
+                reference_position = np.array([0, 0])
             x_, y_ = param_util.draw_coord_in_circle(area=draw_area, size=1)
             self._center_source = np.array(
                 [
@@ -274,17 +278,17 @@ class SourceBase(ABC):
         :return: source type, list of dictionary in lenstronomy convention
         """
         if self._point_source is False:
-            return None, []
+            return [], []
         # get point source position
         if image_pos_x is None or image_pos_y is None:
             ps_position = self.point_source_position()
             image_pos_x, image_pos_y = ps_position[0], ps_position[1]
             if self.lensed is True:
-                ps_type = "LENSED_POSITION"
+                ps_type = "SOURCE_POSITION"
             else:
                 ps_type = "UNLENSED"
         else:
-            ps_type = "SOURCE_POSITION"
+            ps_type = "LENSED_POSITION"
         # get magnitude
         if image_observation_times is not None:
             if len(image_pos_x) != len(image_observation_times):
