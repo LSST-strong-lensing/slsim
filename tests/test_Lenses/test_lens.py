@@ -1090,7 +1090,8 @@ class TestMultiSource(object):
         source_dict1.rename_column("angular_size0", "angular_size_0")
         source_dict1.rename_column("angular_size1", "angular_size_1")
         deflector_dict = Table.read(
-            os.path.join(path, "../TestData/deflector_supernovae_new.fits"), format="fits"
+            os.path.join(path, "../TestData/deflector_supernovae_new.fits"),
+            format="fits",
         )
 
         deflector_dict_ = dict(zip(deflector_dict.colnames, deflector_dict[0]))

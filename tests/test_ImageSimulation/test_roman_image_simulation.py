@@ -1,7 +1,10 @@
 import astropy.cosmology
 import numpy as np
 from slsim.Lenses.lens import Lens
-from slsim.ImageSimulation.roman_image_simulation import simulate_roman_image, lens_image_roman
+from slsim.ImageSimulation.roman_image_simulation import (
+    simulate_roman_image,
+    lens_image_roman,
+)
 from slsim.ImageSimulation.image_simulation import simulate_image
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector

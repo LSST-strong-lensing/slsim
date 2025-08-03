@@ -28,7 +28,7 @@ from slsim.Util.param_util import (
     surface_brightness_reff,
     gaussian_psf,
     update_cosmology_in_yaml_file,
-    draw_coord_in_circle
+    draw_coord_in_circle,
 )
 from slsim.Sources.SourceVariability.variability import Variability
 from astropy.io import fits
