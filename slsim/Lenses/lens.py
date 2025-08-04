@@ -7,7 +7,10 @@ from lenstronomy.LensModel.Solver.lens_equation_solver import (
     analytical_lens_model_support,
 )
 
-from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy, image_separation_from_positions
+from slsim.Util.param_util import (
+    ellipticity_slsim_to_lenstronomy,
+    image_separation_from_positions,
+)
 from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.Util import data_util
 from lenstronomy.Util import util
@@ -1434,5 +1437,3 @@ class Lens(LensedSystemBase):
             multi_plane=False,
         )
         return lens_model_subhalos_only, kwargs_subhalos
-
-
