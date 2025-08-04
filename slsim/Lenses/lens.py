@@ -188,7 +188,9 @@ class Lens(LensedSystemBase):
             source_index=source_index
         )
         lens_eq_solver = LensEquationSolver(lens_model_class)
-        point_source_pos_x, point_source_pos_y = self.source(source_index).point_source_position
+        point_source_pos_x, point_source_pos_y = self.source(
+            source_index
+        ).point_source_position
 
         # uses analytical lens equation solver in case it is supported by lenstronomy for speed-up
         if (
@@ -1196,7 +1198,9 @@ class Lens(LensedSystemBase):
 
                 source_model_list, kwargs_source = self.source(
                     index
-                ).kwargs_extended_light(band=band,)
+                ).kwargs_extended_light(
+                    band=band,
+                )
                 source_models_list.append(source_model_list)
                 kwargs_source_list.append(kwargs_source)
             # lets transform list in to required structure

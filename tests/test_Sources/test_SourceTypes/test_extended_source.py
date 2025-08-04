@@ -101,7 +101,9 @@ class TestExtendedSource:
         assert self.source.extended_source_magnitude("i") == 21
 
     def test_kwargs_extended_source_light(self):
-        source_model, results = self.source.kwargs_extended_light(band="i",)
+        source_model, results = self.source.kwargs_extended_light(
+            band="i",
+        )
         assert results[0]["R_sersic"] == 0.2
         assert results[0]["center_x"] == 0.034
         assert results[0]["center_y"] == -0.06

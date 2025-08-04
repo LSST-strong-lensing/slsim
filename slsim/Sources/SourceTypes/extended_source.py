@@ -55,19 +55,26 @@ class ExtendedSource(object):
 
         return self._extended_source.redshift
 
-    def update_center(self, area=None, reference_position=None, center_x=None, center_y=None):
-        """
-        overwrites the source center position
+    def update_center(
+        self, area=None, reference_position=None, center_x=None, center_y=None
+    ):
+        """Overwrites the source center position.
 
-        :param reference_position: [RA, DEC] in arc-seconds of the reference from where within a circle the source
-         position is being drawn from
+        :param reference_position: [RA, DEC] in arc-seconds of the
+            reference from where within a circle the source position is
+            being drawn from
         :type reference_position: 2d numpy array
-        :param area: area (in solid angle arcseconds^2) to dither the center of the source
-        :param center_x: RA position [arc-secons] (optional, otherwise renders within area)
-        :param center_y: DEC position [arc-secons] (optional, otherwise renders within area)
+        :param area: area (in solid angle arcseconds^2) to dither the
+            center of the source
+        :param center_x: RA position [arc-secons] (optional, otherwise
+            renders within area)
+        :param center_y: DEC position [arc-secons] (optional, otherwise
+            renders within area)
         :return: Source() instance updated with new center position
         """
-        return self._extended_source.update_center(area, reference_position, center_x=center_x, center_y=center_y)
+        return self._extended_source.update_center(
+            area, reference_position, center_x=center_x, center_y=center_y
+        )
 
     @property
     def angular_size(self):
@@ -92,6 +99,7 @@ class ExtendedSource(object):
     @property
     def extended_source_position(self):
         """Extended source position.
+
         :return: [x_pos, y_pos]
         """
 

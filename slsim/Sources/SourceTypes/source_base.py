@@ -61,7 +61,9 @@ class SourceBase(ABC):
         self._model_type = model_type
         self._point_source = point_source
         self._extended_source = extended_source
-        self.update_center(area=None, reference_position=None, center_x=center_x, center_y=center_y)
+        self.update_center(
+            area=None, reference_position=None, center_x=center_x, center_y=center_y
+        )
         if ra_off is not None and dec_off is not None:
             self._offset = np.array([float(ra_off), float(dec_off)])
         else:
@@ -89,16 +91,21 @@ class SourceBase(ABC):
 
         return self._z
 
-    def update_center(self, area=None, reference_position=None, center_x=None, center_y=None):
-        """
-        overwrites the source center position
+    def update_center(
+        self, area=None, reference_position=None, center_x=None, center_y=None
+    ):
+        """Overwrites the source center position.
 
-        :param reference_position: [RA, DEC] in arc-seconds of the reference from where within a circle the source
-         position is being drawn from
+        :param reference_position: [RA, DEC] in arc-seconds of the
+            reference from where within a circle the source position is
+            being drawn from
         :type reference_position: 2d numpy array
-        :param area: area (in solid angle arc-seconds^2) to dither the center of the source
-        :param center_x: RA position [arc-seconds] (optional, otherwise renders within area)
-        :param center_y: DEC position [arc-seconds] (optional, otherwise renders within area)
+        :param area: area (in solid angle arc-seconds^2) to dither the
+            center of the source
+        :param center_x: RA position [arc-seconds] (optional, otherwise
+            renders within area)
+        :param center_y: DEC position [arc-seconds] (optional, otherwise
+            renders within area)
         :return: Source() instance updated with new center position
         """
         if center_x is not None and center_y is not None:
@@ -179,8 +186,9 @@ class SourceBase(ABC):
         Keywords used are in lenstronomy conventions.
 
         :param band: Imaging band
-        :return: list of extended source profiles (lenstronomy conventions), dictionary of keywords for the source
-         light model(s)
+        :return: list of extended source profiles (lenstronomy
+            conventions), dictionary of keywords for the source light
+            model(s)
         """
         if self._extended_source is False:
             return [], []

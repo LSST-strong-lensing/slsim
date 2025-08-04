@@ -49,10 +49,10 @@ class DeflectorBase(ABC):
         self._center_lens = np.array([center_x, center_y])
 
     def update_center(self, deflector_area):
-        """
-        overwrites the deflector center position
+        """Overwrites the deflector center position.
 
-        :param deflector_area: area (in solid angle arcseconds^2) to dither the center of the deflector
+        :param deflector_area: area (in solid angle arcseconds^2) to
+            dither the center of the deflector
         :return:
         """
         center_x, center_y = param_util.draw_coord_in_circle(

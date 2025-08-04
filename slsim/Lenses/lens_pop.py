@@ -77,7 +77,9 @@ class LensPop(LensedPopulationBase):
                 test_area = test_area
             # set a center for the deflector and source
             _deflector.update_center(deflector_area=0.01)
-            _source.update_center(area=test_area, reference_position=_deflector.deflector_center)
+            _source.update_center(
+                area=test_area, reference_position=_deflector.deflector_center
+            )
             gg_lens = Lens(
                 deflector_class=_deflector,
                 source_class=_source,
@@ -180,7 +182,9 @@ class LensPop(LensedPopulationBase):
                 n = 0
                 while n < num_sources_tested:
                     _source = self._sources.draw_source()
-                    _source.update_center(area=test_area, reference_position=_deflector.deflector_center)
+                    _source.update_center(
+                        area=test_area, reference_position=_deflector.deflector_center
+                    )
                     if n == 0:
                         # TODO: this is only consistent for a single source. If there
                         # are multiple sources at different redshift, this is not fully

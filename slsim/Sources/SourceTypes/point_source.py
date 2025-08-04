@@ -12,8 +12,9 @@ class PointSource(object):
         """One can supply either supernovae kwargs or agn kwargs. If supernovae
         kwargs are supplied, agn kwargs can be None which is a default option.
 
-        :param source_dict: Source properties. Can be a dictionary or an Astropy table.
-         For more detail, please see documentation of SupernovaEvent and Quasar class.
+        :param source_dict: Source properties. Can be a dictionary or an
+            Astropy table. For more detail, please see documentation of
+            SupernovaEvent and Quasar class.
         :type source_dict: dict or astropy.table.Table
         """
         if source_type in ["supernova"]:
@@ -42,19 +43,26 @@ class PointSource(object):
 
         return self._point_source.redshift
 
-    def update_center(self, area=None, reference_position=None, center_x=None, center_y=None):
-        """
-        overwrites the source center position
+    def update_center(
+        self, area=None, reference_position=None, center_x=None, center_y=None
+    ):
+        """Overwrites the source center position.
 
-        :param reference_position: [RA, DEC] in arc-seconds of the reference from where within a circle the source
-         position is being drawn from
+        :param reference_position: [RA, DEC] in arc-seconds of the
+            reference from where within a circle the source position is
+            being drawn from
         :type reference_position: 2d numpy array
-        :param area: area (in solid angle arc-seconds^2) to dither the center of the source
-        :param center_x: RA position [arc-seconds] (optional, otherwise renders within area)
-        :param center_y: DEC position [arc-seconds] (optional, otherwise renders within area)
+        :param area: area (in solid angle arc-seconds^2) to dither the
+            center of the source
+        :param center_x: RA position [arc-seconds] (optional, otherwise
+            renders within area)
+        :param center_y: DEC position [arc-seconds] (optional, otherwise
+            renders within area)
         :return: Source() instance updated with new center position
         """
-        return self._point_source.update_center(area, reference_position, center_x=center_x, center_y=center_y)
+        return self._point_source.update_center(
+            area, reference_position, center_x=center_x, center_y=center_y
+        )
 
     @property
     def point_source_position(self):
