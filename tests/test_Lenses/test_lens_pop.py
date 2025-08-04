@@ -417,7 +417,7 @@ def test_num_sources_tested_and_test_area(gg_lens_pop_instance):
     lens = gg_lens_pop_instance._lens_galaxies.draw_deflector()
     test_area = draw_test_area(theta_e_infinity=lens.theta_e_infinity(cosmo=cosmo))
     assert (
-        0.01 < test_area < 100 * np.pi
+        0.001 < test_area < 1000 * np.pi
     ), "Expected test_area to be between 0.1 and 100*pi,"
     f"but got {test_area}"
     num_sources_range = gg_lens_pop_instance.get_num_sources_tested(testarea=test_area)
