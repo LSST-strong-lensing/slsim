@@ -93,9 +93,7 @@ class TestExtendedSource:
         assert e2 == 0.003
 
     def test_extended_source_position(self):
-        x_pos, y_pos = self.source.extended_source_position(
-            reference_postion=[0, 0], draw_area=4 * np.pi
-        )
+        x_pos, y_pos = self.source.extended_source_position
         assert x_pos == 0.034
         assert y_pos == -0.06
 
@@ -103,9 +101,7 @@ class TestExtendedSource:
         assert self.source.extended_source_magnitude("i") == 21
 
     def test_kwargs_extended_source_light(self):
-        source_model, results = self.source.kwargs_extended_light(
-            band="i", reference_position=[0, 0], draw_area=4 * np.pi
-        )
+        source_model, results = self.source.kwargs_extended_light(band="i",)
         assert results[0]["R_sersic"] == 0.2
         assert results[0]["center_x"] == 0.034
         assert results[0]["center_y"] == -0.06

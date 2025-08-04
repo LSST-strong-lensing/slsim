@@ -24,7 +24,6 @@ class Lens(LensedSystemBase):
         deflector_class,
         cosmo,
         lens_equation_solver="lenstronomy_analytical",
-        test_area=4 * np.pi,
         magnification_limit=0.01,
         los_class=None,
     ):
@@ -40,8 +39,6 @@ class Lens(LensedSystemBase):
         :param lens_equation_solver: type of lens equation solver; currently supporting
          "lenstronomy_analytical" and "lenstronomy_general"
         :type lens_equation_solver: str
-        :param test_area: solid angle around one lensing galaxies to be investigated
-            on (in arc-seconds^2)
         :param magnification_limit: absolute lensing magnification lower limit to
             register a point source (ignore highly de-magnified images)
         :type magnification_limit: float >= 0
@@ -54,7 +51,6 @@ class Lens(LensedSystemBase):
             los_class=los_class,
         )
         self.cosmo = cosmo
-        self.test_area = test_area
         self._lens_equation_solver = lens_equation_solver
         self._magnification_limit = magnification_limit
 
@@ -142,9 +138,7 @@ class Lens(LensedSystemBase):
             source_index=source_index
         )
         lens_eq_solver = LensEquationSolver(lens_model_class)
-        source_pos_x, source_pos_y = self.source(source_index).extended_source_position(
-            reference_position=self.deflector_position, draw_area=self.test_area
-        )
+        source_pos_x, source_pos_y = self.source(source_index).extended_source_position
         if (
             self._lens_equation_solver == "lenstronomy_analytical"
             and analytical_lens_model_support(lens_model_class.lens_model_list) is True
@@ -191,11 +185,7 @@ class Lens(LensedSystemBase):
             source_index=source_index
         )
         lens_eq_solver = LensEquationSolver(lens_model_class)
-        point_source_pos_x, point_source_pos_y = self.source(
-            source_index
-        ).point_source_position(
-            reference_position=self.deflector_position, draw_area=self.test_area
-        )
+        point_source_pos_x, point_source_pos_y = self.source(source_index).point_source_position
 
         # uses analytical lens equation solver in case it is supported by lenstronomy for speed-up
         if (
@@ -301,13 +291,9 @@ class Lens(LensedSystemBase):
         # must be less than or equal to the angular Einstein radius
         # of the lensing configuration (times sqrt(2)).
         if self._source_type in ["point_source", "point_plus_extended"]:
-            source_pos = self.source(source_index).point_source_position(
-                self.deflector_position, self.test_area
-            )
+            source_pos = self.source(source_index).point_source_position
         else:
-            source_pos = self.source(source_index).extended_source_position(
-                self.deflector_position, draw_area=self.test_area
-            )
+            source_pos = self.source(source_index).extended_source_position
         center_lens, center_source = (self.deflector_position, source_pos)
         if np.sum((center_lens - center_source) ** 2) > einstein_radius**2 * 2:
             return False
@@ -1016,15 +1002,11 @@ class Lens(LensedSystemBase):
         )
         light_model_list, kwargs_source_mag = self.source(
             source_index
-        ).kwargs_extended_light(
-            reference_position=self.deflector_position, draw_area=self.test_area
-        )
+        ).kwargs_extended_light()
 
         lightModel = LightModel(light_model_list=light_model_list)
         theta_E = self._get_effective_einstein_radius(source_index=source_index)
-        center_source = self.source(source_index).extended_source_position(
-            reference_position=self.deflector_position, draw_area=self.test_area
-        )
+        center_source = self.source(source_index).extended_source_position
 
         kwargs_source_amp = data_util.magnitude2amplitude(
             lightModel, kwargs_source_mag, magnitude_zero_point=0
@@ -1211,11 +1193,7 @@ class Lens(LensedSystemBase):
 
                 source_model_list, kwargs_source = self.source(
                     index
-                ).kwargs_extended_light(
-                    draw_area=self.test_area,
-                    reference_position=self.deflector_position,
-                    band=band,
-                )
+                ).kwargs_extended_light(band=band,)
                 source_models_list.append(source_model_list)
                 kwargs_source_list.append(kwargs_source)
             # lets transform list in to required structure

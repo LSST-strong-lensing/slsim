@@ -28,7 +28,7 @@ class SingleSersic(SourceBase):
         self._angular_size = angular_size
         self._e1, self._e2 = e1, e2
 
-    def kwargs_extended_light(self, reference_position=None, draw_area=None, band=None):
+    def kwargs_extended_light(self, band=None):
         """Provides dictionary of keywords for the source light model(s).
         Kewords used are in lenstronomy conventions.
 
@@ -46,9 +46,7 @@ class SingleSersic(SourceBase):
             mag_source = 1
         else:
             mag_source = self.extended_source_magnitude(band=band)
-        center_source = self.extended_source_position(
-            reference_position=reference_position, draw_area=draw_area
-        )
+        center_source = self.extended_source_position
         # convert from slsim to lenstronomy convention.
         e1_light_source_lenstronomy, e2_light_source_lenstronomy = (
             ellipticity_slsim_to_lenstronomy(
@@ -80,9 +78,7 @@ class SingleSersic(SourceBase):
             [mag/arcsec^2]
         """
         # reference_position and draw_area do not matter, they are dummy input here.
-        light_model_list, kwargs_source = self.kwargs_extended_light(
-            reference_position=[0, 0], draw_area=4 * np.pi, band=band
-        )
+        light_model_list, kwargs_source = self.kwargs_extended_light(band=band)
         return surface_brightness_reff(
             angular_size=self.angular_size,
             source_model_list=light_model_list,

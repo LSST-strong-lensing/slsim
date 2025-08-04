@@ -77,6 +77,15 @@ class Deflector(object):
         """
         return self._deflector.deflector_center
 
+    def update_center(self, deflector_area):
+        """
+        overwrites the deflector center position
+
+        :param deflector_area: area (in solid angle arcseconds^2) to dither the center of the deflector
+        :return:
+        """
+        return self._deflector.update_center(deflector_area)
+
     @property
     def stellar_mass(self):
         """

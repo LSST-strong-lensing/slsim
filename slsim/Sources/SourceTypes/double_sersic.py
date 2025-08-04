@@ -107,17 +107,10 @@ class DoubleSersic(SourceBase):
 
         return self._e1, self._e2
 
-    def kwargs_extended_light(self, reference_position=None, draw_area=None, band=None):
+    def kwargs_extended_light(self, band=None):
         """Provides dictionary of keywords for the source light model(s).
-        Kewords used are in lenstronomy conventions.
+        Keywords used are in lenstronomy conventions.
 
-        :param reference_position: reference position. the source postion will be
-         defined relative to this position. The default choice is None. In this case
-         source_dict must contain source position.
-         Eg: np.array([0, 0])
-        :param draw_area: The area of the test region from which we randomly draw a
-         source position. Eg: 4*pi. The default choice is None. In this case
-         source_dict must contain source position.
         :param band: Imaging band
         :return: dictionary of keywords for the source light model(s)
         """
@@ -125,9 +118,7 @@ class DoubleSersic(SourceBase):
             mag_source = 1
         else:
             mag_source = self.extended_source_magnitude(band=band)
-        center_source = self.extended_source_position(
-            reference_position=reference_position, draw_area=draw_area
-        )
+        center_source = self.extended_source_position
         # compute magnitude for each sersic component based on weight
         flux = 10 ** (-mag_source / 2.5)
         mag_source0 = -2.5 * np.log10(self._w0 * flux)
@@ -216,9 +207,7 @@ class DoubleSersic(SourceBase):
             [mag/arcsec^2]
         """
         # reference_position and draw_area do not matter, they are dummy input here.
-        light_model_list, kwargs_source = self.kwargs_extended_light(
-            reference_position=[0, 0], draw_area=4 * np.pi, band=band
-        )
+        light_model_list, kwargs_source = self.kwargs_extended_light(band=band)
         return surface_brightness_reff(
             angular_size=self.angular_size,
             source_model_list=light_model_list,

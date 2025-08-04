@@ -15,7 +15,6 @@ class FalsePositive(Lens):
         source_class,
         deflector_class,
         cosmo,
-        test_area=4 * np.pi,
         los_class=None,
     ):
         """
@@ -34,7 +33,6 @@ class FalsePositive(Lens):
             source_class=source_class,
             deflector_class=deflector_class,
             cosmo=cosmo,
-            test_area=test_area,
             los_class=los_class,
         )
 

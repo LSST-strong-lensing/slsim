@@ -67,15 +67,10 @@ class TestPointSource:
         assert self.source_sn.redshift == 1.0
 
     def test_source_position(self):
-        ## no host galaxy. So, point and extended source position are the same.
-        x_pos_1, y_pos_1 = self.source_sn.point_source_position(
-            reference_position=[0, 0], draw_area=4 * np.pi
-        )
-        x_pos_2, y_pos_2 = self.source_sn.extended_source_position(
-            reference_position=[0, 0], draw_area=4 * np.pi
-        )
-        assert x_pos_1 == x_pos_2
-        assert y_pos_1 == y_pos_2
+        # no host galaxy. So, point and extended source position are the same.
+        x_pos_1, y_pos_1 = self.source_sn.point_source_position
+        assert x_pos_1 == self.source_dict_sn["center_x"]
+        assert y_pos_1 == self.source_dict_sn["center_y"]
 
     def test_point_source_magnitude(self):
         # supernova is randomly selected. Can't assert a fix value. Just checking that
@@ -115,7 +110,3 @@ class TestPointSource:
         }
         with pytest.raises(ValueError):
             PointSource(cosmo=cosmo, source_type="other", **kwargs_sn, **source_dict_sn)
-
-
-if __name__ == "__main__":
-    pytest.main()

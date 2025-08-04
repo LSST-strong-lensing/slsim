@@ -40,8 +40,8 @@ class SourceBase(ABC):
         :type extended_source: bool
         :param center_x: RA coordinate (relative arcseconds)
         :param center_y: DEC coordinate (relative arcseconds)
-        :param ra_off: RA offset of point source from center of host (relatve arcseconds)
-        :param dec_off: DEC offset of point source from center of host (relatve arcseconds)
+        :param ra_off: RA offset of point source from center of host (relative arc-seconds)
+        :param dec_off: DEC offset of point source from center of host (relative arc-seconds)
         :param angular_size: angular size of the object [arcseconds]
         :param e1: eccentricity modulus
         :param e2: eccentricity modulus
@@ -61,8 +61,7 @@ class SourceBase(ABC):
         self._model_type = model_type
         self._point_source = point_source
         self._extended_source = extended_source
-        if center_x is not None and center_y is not None:
-            self._center_source = np.array([center_x, center_y])
+        self.update_center(area=None, reference_position=None, center_x=center_x, center_y=center_y)
         if ra_off is not None and dec_off is not None:
             self._offset = np.array([float(ra_off), float(dec_off)])
         else:
@@ -89,6 +88,34 @@ class SourceBase(ABC):
         """Returns source redshift."""
 
         return self._z
+
+    def update_center(self, area=None, reference_position=None, center_x=None, center_y=None):
+        """
+        overwrites the source center position
+
+        :param reference_position: [RA, DEC] in arc-seconds of the reference from where within a circle the source
+         position is being drawn from
+        :type reference_position: 2d numpy array
+        :param area: area (in solid angle arc-seconds^2) to dither the center of the source
+        :param center_x: RA position [arc-seconds] (optional, otherwise renders within area)
+        :param center_y: DEC position [arc-seconds] (optional, otherwise renders within area)
+        :return: Source() instance updated with new center position
+        """
+        if center_x is not None and center_y is not None:
+            self._center_source = np.array([float(center_x), float(center_y)])
+        else:
+            if reference_position is None:
+                reference_position = np.array([0, 0])
+            if area is None:
+                x_, y_ = 0, 0
+            else:
+                x_, y_ = param_util.draw_coord_in_circle(area=area, size=1)
+            self._center_source = np.array(
+                [
+                    reference_position[0] + x_,
+                    reference_position[1] + y_,
+                ]
+            )
 
     @property
     def point_source_offset(self):
@@ -139,43 +166,18 @@ class SourceBase(ABC):
         else:
             raise ValueError("ellipticity of extended object is not specified.")
 
-    def extended_source_position(self, reference_position=None, draw_area=None):
-        """Extended source position. If a center has already been provided (and
-        stored in self._center_source during initialization), then it is simply
-        returned. Otherwise, a source position is drawn uniformly within the
-        circle of the test area centered on the deflector position.
+    @property
+    def extended_source_position(self):
+        """Extended source position.
 
-        :param reference_position: reference position. The source position will be
-         defined relative to this position. The default choice is None. In this case
-         source_dict must contain source position.
-         Eg: np.array([0, 0])
-        :param draw_area: The area of the test region from which we randomly draw a source
-            position. Eg: 4*pi. in [arcsec^2]
-        :return: [x_pos, y_pos]
+        :return: [x_pos, y_pos] [arc-seconds]
         """
-        if not hasattr(self, "_center_source"):
-            if draw_area is None:
-                draw_area = 1
-            if reference_position is None:
-                reference_position = np.array([0, 0])
-            x_, y_ = param_util.draw_coord_in_circle(area=draw_area, size=1)
-            self._center_source = np.array(
-                [
-                    reference_position[0] + x_,
-                    reference_position[1] + y_,
-                ]
-            )
         return self._center_source
 
-    def kwargs_extended_light(self, reference_position=None, draw_area=None, band=None):
+    def kwargs_extended_light(self, band=None):
         """Provides dictionary of keywords for the source light model(s).
-        Kewords used are in lenstronomy conventions.
+        Keywords used are in lenstronomy conventions.
 
-        :param reference_position: reference position. the source postion will be
-         defined relative to this position.
-         Eg: np.array([0, 0])
-        :param draw_area: The area of the test region from which we randomly draw a
-         source position. Eg: 4*pi.
         :param band: Imaging band
         :return: list of extended source profiles (lenstronomy conventions), dictionary of keywords for the source
          light model(s)
@@ -206,27 +208,14 @@ class SourceBase(ABC):
             )
         return self.source_dict[band_string]
 
-    def point_source_position(self, reference_position=None, draw_area=None):
-        """Point source position. point source could be at the center of the
-        extended source or it can be off from center of the extended source. In
-        the absence of a point source, this is the center of the extended
-        source.
+    @property
+    def point_source_position(self):
+        """Point source position.
 
-        :param reference_position: reference position. The source postion will be
-         defined relative to this position. The default choice is None. In this case
-         source_dict must contain source position.
-         Eg: np.array([0, 0])
-        :param draw_area: The area of the test region from which we randomly draw a
-         source position. Eg: 4*pi. The default choice is None. In this case
-         source_dict must contain source position.
         :return: [x_pos, y_pos]
         """
         if not hasattr(self, "_center_point_source"):
-
-            extended_source_center = self.extended_source_position(
-                reference_position, draw_area
-            )
-            self._center_point_source = extended_source_center + self._offset
+            self._center_point_source = self.extended_source_position + self._offset
         return self._center_point_source
 
     def point_source_magnitude(self, band, image_observation_times=None):
@@ -281,7 +270,7 @@ class SourceBase(ABC):
             return [], []
         # get point source position
         if image_pos_x is None or image_pos_y is None:
-            ps_position = self.point_source_position()
+            ps_position = self.point_source_position
             image_pos_x, image_pos_y = ps_position[0], ps_position[1]
             if self.lensed is True:
                 ps_type = "SOURCE_POSITION"

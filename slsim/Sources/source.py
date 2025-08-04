@@ -29,7 +29,6 @@ class Source(object):
         :type source_dict: dict or astropy.table.Table .
 
         """
-        print(extended_source_type, point_source_type, "test source types")
         self.extended_source_type = extended_source_type
         self.point_source_type = point_source_type
         if extended_source_type is not None and point_source_type is not None:
@@ -125,39 +124,39 @@ class Source(object):
 
         return self._source.ellipticity
 
-    def extended_source_position(self, reference_position=None, draw_area=None):
-        """Extended source position. If a center has already been provided (and
-        stored in the source_dict), then it is simply returned. Otherwise, a
-        source position is drawn uniformly within the circle of the test area
-        centered on the deflector position.
+    def update_center(self, area=None, reference_position=None, center_x=None, center_y=None):
+        """
+        overwrites the source center position
 
-        :param reference_position: reference position. the source position will be
-         defined relative to this position. The default choice is None. In this case
-         source_dict must contain source position.
-         Eg: np.array([0, 0])
-        :param draw_area: The area of the test region from which we randomly draw a source
-         position. The default choice is None. In this case
-         source_dict must contain source position. Eg: 4*pi.
+        :param reference_position: [RA, DEC] in arc-seconds of the reference from where within a circle the source
+         position is being drawn from
+        :type reference_position: 2d numpy array
+        :param area: area (in solid angle arc-seconds^2) to dither the center of the source
+        :param center_x: RA position [arc-seconds] (optional, otherwise renders within area)
+        :param center_y: DEC position [arc-seconds] (optional, otherwise renders within area)
+        :return: Source() instance updated with new center position
+        """
+        self._source.update_center(area=area, reference_position=reference_position,
+                                   center_x=center_x, center_y=center_y)
+
+    @property
+    def extended_source_position(self):
+        """Extended source position.
+
         :return: [x_pos, y_pos]
         """
 
-        return self._source.extended_source_position(reference_position, draw_area)
+        return self._source.extended_source_position
 
-    def point_source_position(self, reference_position=None, draw_area=None):
+    @property
+    def point_source_position(self):
         """Point source position. point source could be at the center of the
         extended source, or it can be off from center of the extended source.
 
-        :param reference_position: reference position. the source position will be
-         defined relative to this position. The default choice is None. In this case
-         source_dict must contain source position.
-         Eg: np.array([0, 0])
-        :param draw_area: The area of the test region from which we randomly draw a
-         source position. The default choice is None. In this case
-         source_dict must contain source position. Eg: 4*pi.
         :return: [x_pos, y_pos]
         """
 
-        return self._source.point_source_position(reference_position, draw_area)
+        return self._source.point_source_position
 
     def extended_source_magnitude(self, band):
         """Get the magnitude of the extended source in a specific band.
@@ -184,20 +183,15 @@ class Source(object):
             band=band, image_observation_times=image_observation_times
         )
 
-    def kwargs_extended_light(self, reference_position=None, draw_area=None, band=None):
+    def kwargs_extended_light(self, band=None):
         """Provides dictionary of keywords for the source light model(s).
         Keywords used are in lenstronomy conventions.
 
-        :param reference_position: reference position. the source position will be
-         defined relative to this position.
-         Eg: np.array([0, 0])
-        :param draw_area: The area of the test region from which we randomly draw a
-         source position. Eg: 4*pi.
         :param band: Imaging band
         :return: dictionary of keywords for the source light model(s)
         """
 
-        return self._source.kwargs_extended_light(reference_position, draw_area, band)
+        return self._source.kwargs_extended_light(band=band)
 
     def surface_brightness_reff(self, band=None):
         """Calculate average surface brightness within half light radius of a

@@ -42,12 +42,8 @@ class TestCatalogSource:
         )
 
     def test_kwargs_extended_source_light(self):
-        light_model_list, results = self.source.kwargs_extended_light(
-            reference_position=[0, 0], draw_area=4 * np.pi, band="i"
-        )
-        _, results2 = self.source.kwargs_extended_light(
-            reference_position=[0, 0], draw_area=4 * np.pi, band=None
-        )
+        light_model_list, results = self.source.kwargs_extended_light(band="i")
+        _, results2 = self.source.kwargs_extended_light(band=None)
 
         with fits.open(catalog_path + "/test_galaxy_images_23.5.fits") as file:
             image_ref = file[2].data

@@ -111,7 +111,6 @@ class FalsePositivePop(object):
                     deflector_class=deflector,
                     source_class=source,
                     cosmo=self.cosmo,
-                    test_area=test_area,
                 )
                 false_positive_population.append(false_positive)
                 successful = True

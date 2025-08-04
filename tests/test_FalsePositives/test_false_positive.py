@@ -54,13 +54,11 @@ def test_false_positive():
         source_class=source,
         deflector_class=lens,
         cosmo=cosmo,
-        test_area=4 * np.pi,
     )
     false_positive_instance_2 = FalsePositive(
         source_class=source_list,
         deflector_class=lens,
         cosmo=cosmo,
-        test_area=4 * np.pi,
         los_class=los_class,
     )
     required_keys = {

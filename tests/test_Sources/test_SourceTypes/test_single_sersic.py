@@ -33,11 +33,9 @@ class TestSingleSersic:
             self.source.extended_source_magnitude("g")
 
     def test_kwargs_extended_source_light(self):
-        source_model, results = self.source.kwargs_extended_light(
-            reference_position=[0, 0], draw_area=4 * np.pi, band="i"
+        source_model, results = self.source.kwargs_extended_light(band="i"
         )
-        _, results2 = self.source.kwargs_extended_light(
-            reference_position=[0, 0], draw_area=4 * np.pi, band=None
+        _, results2 = self.source.kwargs_extended_light(band=None
         )
         assert results[0]["R_sersic"] == 0.2
         assert results[0]["e1"] == -0.002

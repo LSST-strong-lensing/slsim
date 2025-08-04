@@ -130,7 +130,7 @@ class TestSource:
         assert e2 == 0.003
 
     def test_extended_source_position(self):
-        x_pos, y_pos = self.source.extended_source_position()
+        x_pos, y_pos = self.source.extended_source_position
         assert x_pos == 0.034
         assert y_pos == -0.06
 
@@ -155,7 +155,7 @@ class TestSource:
         npt.assert_almost_equal(result, 19.500, decimal=3)
 
     def test_point_source_position(self):
-        x_pos, y_pos = self.source_point_extended.point_source_position()
+        x_pos, y_pos = self.source_point_extended.point_source_position
         assert x_pos == 0.045
         assert y_pos == -0.048
 
@@ -164,8 +164,8 @@ class TestSource:
         assert result == 20
 
     def test_point_source_only(self):
-        x_pos_1, y_pos_1 = self.source_point.point_source_position()
-        x_pos_2, y_pos_2 = self.source_point.point_source_position()
+        x_pos_1, y_pos_1 = self.source_point.point_source_position
+        x_pos_2, y_pos_2 = self.source_point.point_source_position
         assert x_pos_1 == x_pos_2
         assert y_pos_1 == y_pos_2
 

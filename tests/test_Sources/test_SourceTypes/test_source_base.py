@@ -44,18 +44,10 @@ class TestSourceBase:
         assert offset[1] == 0
 
     def test_source_position(self):
-        x, y = self.source.extended_source_position(
-            reference_position=[0, 0], draw_area=4 * np.pi
-        )
-        x2, y2 = self.source.point_source_position(
-            reference_position=[0, 0], draw_area=4 * np.pi
-        )
-        x3, y3 = self.source3.extended_source_position(
-            reference_position=[0, 0], draw_area=4 * np.pi
-        )
-        x4, y4 = self.source3.point_source_position(
-            reference_position=[0, 0], draw_area=4 * np.pi
-        )
+        x, y = self.source.extended_source_position
+        x2, y2 = self.source.point_source_position
+        x3, y3 = self.source3.extended_source_position
+        x4, y4 = self.source3.point_source_position
         assert -2 < x < 2
         assert -2 < y < 2
         assert -2 < x2 < 2

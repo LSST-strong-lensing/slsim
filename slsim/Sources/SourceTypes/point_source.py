@@ -10,28 +10,12 @@ class PointSource(object):
 
     def __init__(self, source_type, **source_dict):
         """One can supply either supernovae kwargs or agn kwargs. If supernovae
-        kwargs are supplied, agn kwrgs can be None which is a default option.
+        kwargs are supplied, agn kwargs can be None which is a default option.
 
-        :param source_dict: Source properties. May be a dictionary or an Astropy table.
+        :param source_dict: Source properties. Can be a dictionary or an Astropy table.
          For more detail, please see documentation of SupernovaEvent and Quasar class.
         :type source_dict: dict or astropy.table.Table
-        :param pointsource_type: Keyword to specify type of the point source.
-         Supported point source types are "supernova", "quasar", "general_lightcurve".
-        :type source_type: str
-        :param cosmo: astropy.cosmology instance
-        :param pointsource_kwargs: dictionary of keyword arguments for a point source. It should
-         contain keywords for pointsource_type and other keywords associated with
-         supernova and quasar. For supernova kwargs dict, please see documentation of
-         SupernovaEvent class. For quasar kwargs dict, please see documentation of
-         Quasar class.
-         Eg of supernova kwargs: kwargs={"variability_model": "light_curve",
-         "kwargs_variability": ["supernovae_lightcurve", "i", "r"], "sn_type": "Ia",
-         "sn_absolute_mag_band": "bessellb", "sn_absolute_zpsys": "ab",
-         "lightcurve_time": np.linspace(-50, 100, 150),
-         "sn_modeldir": "/Users/narayankhadka/Downloads/sncosmo_sn_models/SALT3.NIR_WAVEEXT/"}.
-         Other supported pointsource_types are "supernova", "quasar".
         """
-
         if source_type in ["supernova"]:
             self._point_source = SupernovaEvent(**source_dict)
         elif source_type in ["quasar"]:
@@ -58,42 +42,29 @@ class PointSource(object):
 
         return self._point_source.redshift
 
-    def extended_source_position(self, reference_position=None, draw_area=None):
-        """Provides extended source position if host galaxy is given. In the
-        absence of host galaxy, this is the same position as point source
-        position. This position is not necessary in this class but we inherite
-        this class in PointPlusExtendedSource class where this position is
-        necessary.
-
-        :param reference_position: reference position. the source postion will be
-         defined relative to this position. The default choice is None. In this case
-         source_dict must contain source position.
-         Eg: np.array([0, 0])
-        :param draw_area: The area of the test region from which we randomly draw a
-         source position. The default choice is None. In this case
-         source_dict must contain source position. Eg: 4*pi.
-        :return: [x_pos, y_pos]
+    def update_center(self, area=None, reference_position=None, center_x=None, center_y=None):
         """
+        overwrites the source center position
 
-        return self._point_source.extended_source_position(
-            reference_position, draw_area
-        )
+        :param reference_position: [RA, DEC] in arc-seconds of the reference from where within a circle the source
+         position is being drawn from
+        :type reference_position: 2d numpy array
+        :param area: area (in solid angle arc-seconds^2) to dither the center of the source
+        :param center_x: RA position [arc-seconds] (optional, otherwise renders within area)
+        :param center_y: DEC position [arc-seconds] (optional, otherwise renders within area)
+        :return: Source() instance updated with new center position
+        """
+        return self._point_source.update_center(area, reference_position, center_x=center_x, center_y=center_y)
 
-    def point_source_position(self, reference_position=None, draw_area=None):
+    @property
+    def point_source_position(self):
         """Point source position. point source could be at the center of the
-        extended source or it can be off from center of the extended source.
+        extended source, or it can be off from center of the extended source.
 
-        :param reference_position: reference position. the source postion will be
-         defined relative to this position. The default choice is None. In this case
-         source_dict must contain source position.
-         Eg: np.array([0, 0])
-        :param draw_area: The area of the test region from which we randomly draw a
-         source position. The default choice is None. In this case
-         source_dict must contain source position. Eg: 4*pi.
         :return: [x_pos, y_pos]
         """
 
-        return self._point_source.point_source_position(reference_position, draw_area)
+        return self._point_source.point_source_position
 
     def point_source_magnitude(self, band, image_observation_times=None):
         """Get the magnitude of the point source in a specific band.

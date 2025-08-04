@@ -60,12 +60,8 @@ class TestInterpolated:
             self.source.extended_source_magnitude("g")
 
     def test_kwargs_extended_source_light(self):
-        light_model_list, results = self.source.kwargs_extended_light(
-            reference_position=[0, 0], draw_area=4 * np.pi, band="i"
-        )
-        _, results2 = self.source.kwargs_extended_light(
-            reference_position=[0, 0], draw_area=4 * np.pi, band=None
-        )
+        light_model_list, results = self.source.kwargs_extended_light(band="i")
+        _, results2 = self.source.kwargs_extended_light(band=None)
 
         assert np.all(results[0]["image"] == self.test_image)
         npt.assert_almost_equal(results[0]["scale"], 0.0151, decimal=3)

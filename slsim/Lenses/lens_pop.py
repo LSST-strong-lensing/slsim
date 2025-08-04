@@ -75,11 +75,13 @@ class LensPop(LensedPopulationBase):
                 test_area = area_theta_e_infinity(theta_e_infinity=theta_e_infinity)
             else:
                 test_area = test_area
+            # set a center for the deflector and source
+            _deflector.update_center(deflector_area=0.01)
+            _source.update_center(area=test_area, reference_position=_deflector.deflector_center)
             gg_lens = Lens(
                 deflector_class=_deflector,
                 source_class=_source,
                 cosmo=self.cosmo,
-                test_area=test_area,
                 los_class=_los,
             )
             if gg_lens.validity_test(**kwargs_lens_cut):
@@ -146,12 +148,6 @@ class LensPop(LensedPopulationBase):
         :param multi_source: A boolean value. If True, considers multi
             source lensing. If False, considers single source lensing.
             The default value is True.
-        :param second_bright_image_cut: Dictionary containing maximum
-            magnitude of the second brightest image and corresponding
-            band. If provided, selects lenses where the second brightest
-            image has a magnitude less than or equal to provided
-            magnitude. eg: second_bright_image_cut = {"band": ["i"],
-            "mag_max":[23]}
         :param speed_factor: factor by which the number of deflectors is
             decreased to speed up the calculations.
         :return: List of Lens instances with parameters of the
@@ -172,6 +168,7 @@ class LensPop(LensedPopulationBase):
         # Draw a population of galaxy-galaxy lenses within the area.
         for _ in range(int(num_lenses / speed_factor)):
             _deflector = self._lens_galaxies.draw_deflector()
+            _deflector.update_center(deflector_area=0.01)
             theta_e_infinity = _deflector.theta_e_infinity(cosmo=self.cosmo)
             test_area = area_theta_e_infinity(theta_e_infinity=theta_e_infinity)
             num_sources_tested = self.get_num_sources_tested(
@@ -183,6 +180,7 @@ class LensPop(LensedPopulationBase):
                 n = 0
                 while n < num_sources_tested:
                     _source = self._sources.draw_source()
+                    _source.update_center(area=test_area, reference_position=_deflector.deflector_center)
                     if n == 0:
                         # TODO: this is only consistent for a single source. If there
                         # are multiple sources at different redshift, this is not fully
@@ -195,7 +193,6 @@ class LensPop(LensedPopulationBase):
                         deflector_class=_deflector,
                         source_class=_source,
                         cosmo=self.cosmo,
-                        test_area=test_area,
                         los_class=los_class,
                     )
                     # Check the validity of the lens system
@@ -216,7 +213,6 @@ class LensPop(LensedPopulationBase):
                         deflector_class=_deflector,
                         source_class=final_sources,
                         cosmo=self.cosmo,
-                        test_area=test_area,
                         los_class=los_class,
                     )
                     lens_population.append(lens_final)

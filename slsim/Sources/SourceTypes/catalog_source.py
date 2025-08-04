@@ -66,18 +66,10 @@ class CatalogSource(SourceBase):
         self.catalog_type = catalog_type
         self.catalog_path = catalog_path
 
-    def kwargs_extended_light(self, reference_position=None, draw_area=None, band=None):
+    def kwargs_extended_light(self, band=None):
         """Provides dictionary of keywords for the source light model(s).
-        Kewords used are in lenstronomy conventions.
+        Keywords used are in lenstronomy conventions.
 
-        :param reference_position: reference position. the source postion will be
-         defined relative to this position. The default choice is None. In this case
-         source_dict must contain source position.
-         Eg: np.array([0, 0])
-        :param draw_area: The area of the test region from which we randomly draw a
-         source position. The default choice is None. In this case
-         source_dict must contain source position.
-         Eg: 4*pi.
         :param band: Imaging band
         :return: dictionary of keywords for the source light model(s)
         """
@@ -85,9 +77,7 @@ class CatalogSource(SourceBase):
             mag_source = 1
         else:
             mag_source = self.extended_source_magnitude(band=band)
-        center_source = self.extended_source_position(
-            reference_position=reference_position, draw_area=draw_area
-        )
+        center_source = self.extended_source_position
 
         if not hasattr(self, "_image"):
             if self.catalog_type == "COSMOS":
