@@ -1,5 +1,5 @@
 from slsim.FalsePositives.false_positive import FalsePositive
-from slsim.Lenses.lens_pop import draw_test_area
+from slsim.Lenses.lens_pop import area_theta_e_infinity
 from slsim.LOS.los_pop import LOSPop
 import random
 
@@ -104,7 +104,7 @@ class FalsePositivePop(object):
 
                 # Step 3: Create false positive
                 theta_e_infinity = deflector.theta_e_infinity(cosmo=self.cosmo)
-                test_area = self._test_area_factor * draw_test_area(
+                test_area = self._test_area_factor * area_theta_e_infinity(
                     theta_e_infinity=theta_e_infinity
                 )
                 false_positive = FalsePositive(

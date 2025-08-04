@@ -5,10 +5,8 @@ import numpy as np
 from numpy import testing as npt
 from astropy.cosmology import FlatLambdaCDM
 from astropy.table import Table
-from slsim.Lenses.lens import (
-    Lens,
-    image_separation_from_positions,
-)
+from slsim.Lenses.lens import Lens
+from slsim.Util.param_util import image_separation_from_positions
 from slsim.LOS.los_individual import LOSIndividual
 from slsim.LOS.los_pop import LOSPop
 from slsim.Sources.source import Source

@@ -72,7 +72,7 @@ class LensPop(LensedPopulationBase):
             )
             if test_area is None:
                 theta_e_infinity = _deflector.theta_e_infinity(cosmo=self.cosmo)
-                test_area = draw_test_area(theta_e_infinity=theta_e_infinity)
+                test_area = area_theta_e_infinity(theta_e_infinity=theta_e_infinity)
             else:
                 test_area = test_area
             gg_lens = Lens(
@@ -173,7 +173,7 @@ class LensPop(LensedPopulationBase):
         for _ in range(int(num_lenses / speed_factor)):
             _deflector = self._lens_galaxies.draw_deflector()
             theta_e_infinity = _deflector.theta_e_infinity(cosmo=self.cosmo)
-            test_area = draw_test_area(theta_e_infinity=theta_e_infinity)
+            test_area = area_theta_e_infinity(theta_e_infinity=theta_e_infinity)
             num_sources_tested = self.get_num_sources_tested(
                 testarea=test_area * speed_factor
             )
@@ -223,7 +223,7 @@ class LensPop(LensedPopulationBase):
         return lens_population
 
 
-def draw_test_area(theta_e_infinity):
+def area_theta_e_infinity(theta_e_infinity):
     """Draw a test area around the deflector.
 
     :param theta_e_infinity: Einstein radius for infinitly far away

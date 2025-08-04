@@ -7,7 +7,7 @@ from lenstronomy.LensModel.Solver.lens_equation_solver import (
     analytical_lens_model_support,
 )
 
-from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
+from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy, image_separation_from_positions
 from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.Util import data_util
 from lenstronomy.Util import util
@@ -31,22 +31,8 @@ class Lens(LensedSystemBase):
         """
 
         :param source_class: A Source class instance or list of Source class instance
-        :type source_class: Source class instance from slsim.Sources.source. Eg:
-         source_class=Source(
-            source_dict=source_dict,
-            variability_model=variability_model,
-            kwargs_variability=kwargs_variability,
-            sn_type=sn_type,
-            sn_absolute_mag_band=sn_absolute_mag_band,
-            sn_absolute_zpsys=sn_absolute_zpsys,
-            cosmo=cosmo,
-            lightcurve_time=lightcurve_time,
-            sn_modeldir=sn_modeldir,
-            agn_driving_variability_model=agn_driving_variability_model,
-            agn_driving_kwargs_variability=agn_driving_kwargs_variability,
-            source_type=source_type,
-            light_profile=light_profile,
-        ). See the Source class documentation.
+        :type source_class: Source class instance from slsim.Sources.source.
+         See the Source class documentation.
         :param deflector_class: deflector instance
         :type deflector_class: Deflector class instance from slsim.Deflectors.deflector
          See the Deflector class documentation.
@@ -1450,23 +1436,3 @@ class Lens(LensedSystemBase):
         return lens_model_subhalos_only, kwargs_subhalos
 
 
-def image_separation_from_positions(image_positions):
-    """Calculate image separation in arc-seconds; if there are only two images,
-    the separation between them is returned; if there are more than 2 images,
-    the maximum separation is returned.
-
-    :param image_positions: list of image positions in arc-seconds
-    :return: image separation in arc-seconds
-    """
-    if len(image_positions[0]) == 2:
-        image_separation = np.sqrt(
-            (image_positions[0][0] - image_positions[0][1]) ** 2
-            + (image_positions[1][0] - image_positions[1][1]) ** 2
-        )
-    else:
-        coords = np.stack((image_positions[0], image_positions[1]), axis=-1)
-        separations = np.sqrt(
-            np.sum((coords[:, np.newaxis] - coords[np.newaxis, :]) ** 2, axis=-1)
-        )
-        image_separation = np.max(separations)
-    return image_separation
