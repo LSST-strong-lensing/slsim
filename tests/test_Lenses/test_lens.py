@@ -167,13 +167,13 @@ class TestLens(object):
         source_magnitude_lensed = self.gg_lens.extended_source_magnitude(
             band, lensed=True
         )
-        host_mag = self.gg_lens.extended_source_magnification()
+        host_mag = self.gg_lens.extended_source_magnification
         expected_lensed_mag = source_magnitude - 2.5 * np.log10(host_mag)
         assert pytest.approx(source_magnitude[0], rel=1e-3) == 30.780194
         assert source_magnitude_lensed == expected_lensed_mag
 
     def test_image_separation_from_positions(self):
-        image_positions = self.gg_lens.extended_source_image_positions()[0]
+        image_positions = self.gg_lens.extended_source_image_positions[0]
         image_separation = image_separation_from_positions(image_positions)
         theta_E_infinity = self.gg_lens.deflector.theta_e_infinity(
             cosmo=self.gg_lens.cosmo
@@ -181,7 +181,7 @@ class TestLens(object):
         assert image_separation < 2 * theta_E_infinity
 
     def test_extended_source_magnification(self):
-        host_mag = self.gg_lens.extended_source_magnification()[0]
+        host_mag = self.gg_lens.extended_source_magnification[0]
         assert host_mag > 0
 
     def test_deflector_stellar_mass(self):
@@ -217,6 +217,10 @@ class TestLens(object):
         result3 = self.gg_lens.extended_source_magnitude(band="i", lensed=False)
         assert len(result1[0]) >= 2
         assert result2 == result3
+
+    def test_lenstronomy_kwargs(self):
+        kwargs_model, kwargs_params = self.gg_lens.lenstronomy_kwargs(band='i')
+        assert kwargs_model["point_source_model_list"] ==[]
 
     def test_lens_equation_solver(self):
         # Tests analytical and numerical lens equation solver options.
@@ -480,7 +484,7 @@ def test_point_source_magnitude(pes_lens_instance):
     mag = pes_lens.point_source_magnitude(band="i", lensed=True)[0]
     mag_unlensed = pes_lens.point_source_magnitude(band="i")[0]
     assert len(mag) >= 2
-    assert len(mag_unlensed) == 1
+    assert mag_unlensed > 0
 
 
 ################################################
@@ -1214,9 +1218,9 @@ class TestMultiSource(object):
         assert np.all(ps_magnification2[0]) == np.all(ps_magnification3[1])
 
     def test_es_magnification_multi(self):
-        es_magnification1 = self.lens_class1.extended_source_magnification()
-        es_magnification2 = self.lens_class2.extended_source_magnification()
-        es_magnification3 = self.lens_class3.extended_source_magnification()
+        es_magnification1 = self.lens_class1.extended_source_magnification
+        es_magnification2 = self.lens_class2.extended_source_magnification
+        es_magnification3 = self.lens_class3.extended_source_magnification
 
         # Test multisource extended source magnifications.
         npt.assert_almost_equal(
@@ -1226,7 +1230,7 @@ class TestMultiSource(object):
             es_magnification2[0] / es_magnification3[1], 1, decimal=2
         )
 
-        es_magnification3 = self.lens_class3_analytical.extended_source_magnification()
+        es_magnification3 = self.lens_class3_analytical.extended_source_magnification
         npt.assert_almost_equal(
             es_magnification1[0] / es_magnification3[0], 1, decimal=2
         )
@@ -1359,7 +1363,7 @@ class TestSlhammock(object):
         # In source dict we have not provided supernova-host offset. So, extended and
         # point source image position should be the same.
         extended_source_image_position = (
-            self.lens_class.extended_source_image_positions()[0]
+            self.lens_class.extended_source_image_positions[0]
         )
         point_source_image_position = self.lens_class.point_source_image_positions()[0]
         assert np.all(

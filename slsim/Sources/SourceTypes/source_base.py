@@ -65,6 +65,8 @@ class SourceBase(ABC):
             area=None, reference_position=None, center_x=center_x, center_y=center_y
         )
         if ra_off is not None and dec_off is not None:
+            if point_source is False:
+                self._offset = np.array([0, 0])  # without a point source, offsets have to be zero
             self._offset = np.array([float(ra_off), float(dec_off)])
         else:
             self._offset = np.array([0, 0])
@@ -246,7 +248,7 @@ class SourceBase(ABC):
                     "magnitude without a image_observation_time or without variability model."
                     % band_string
                 )
-            return self.source_dict[band_string]
+            return np.mean(self.source_dict[band_string])
         else:
             if band not in self._variability_bands:
                 if band not in self._kwargs_variability_model:
@@ -262,8 +264,26 @@ class SourceBase(ABC):
                 image_observation_times
             )
 
+    def point_source_type(self, image_positions=False):
+        """
+        type of point source model
+
+        :param image_positions:
+        :return: point source model string, or None
+        """
+        if self._point_source is False:
+            return None
+        if self.lensed:
+            if image_positions:
+                return "LENSED_POSITION"
+            else:
+                return "SOURCE_POSITION"
+        else:
+            return "UNLENSED"
+
     def kwargs_point_source(
-        self, band, image_observation_times=None, image_pos_x=None, image_pos_y=None
+        self, band, image_observation_times=None, image_pos_x=None, image_pos_y=None,
+            ps_mag=None
     ):
         """
 
@@ -272,29 +292,34 @@ class SourceBase(ABC):
         :param image_observation_times: Images observation time for an image.
         :param image_pos_x: pre-calculated image positions (solutions of the lens equation) RA [arcseconds]
         :param image_pos_y: pre-calculated image positions (solutions of the lens equation) DEC [arcseconds]
+        :param ps_mag: magnitudes of images (or source)
         :return: source type, list of dictionary in lenstronomy convention
         """
-        if self._point_source is False:
-            return [], []
-        # get point source position
         if image_pos_x is None or image_pos_y is None:
+            image_positions = False
+        else:
+            image_positions = True
+        ps_type = self.point_source_type(image_positions=image_positions)
+        if ps_type is None:
+            return None, []
+        # get point source position
+        if not image_positions:
             ps_position = self.point_source_position
             image_pos_x, image_pos_y = ps_position[0], ps_position[1]
-            if self.lensed is True:
-                ps_type = "SOURCE_POSITION"
-            else:
-                ps_type = "UNLENSED"
-        else:
-            ps_type = "LENSED_POSITION"
         # get magnitude
         if image_observation_times is not None:
             if len(image_pos_x) != len(image_observation_times):
                 raise ValueError(
                     "length of image positions needs to be the length of the observation times"
                 )
-        ps_mag = self.point_source_magnitude(
-            band=band, image_observation_times=image_observation_times
-        )
+        if ps_mag is None:
+            ps_mag = self.point_source_magnitude(
+                band=band, image_observation_times=image_observation_times
+            )
+        print(ps_type, ps_mag, image_pos_x, "test")
+        if np.shape(np.asarray(ps_mag)) != np.shape(np.asarray(image_pos_x)):
+            raise ValueError("length of image positions %s needs to be the length of the ps_mag %s"
+                             % (np.shape(image_pos_x), np.shape(ps_mag)))
 
         # set keyword arguments for lenstronomy
         if ps_type in ["LENSED_POSITION", "UNLENSED"]:

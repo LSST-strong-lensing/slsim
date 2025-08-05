@@ -30,7 +30,6 @@ class Source(object):
 
         """
         self.extended_source_type = extended_source_type
-        self.point_source_type = point_source_type
         if extended_source_type is not None and point_source_type is not None:
             source_type = "point_plus_extended"
             self.source_type = source_type
@@ -192,6 +191,15 @@ class Source(object):
             band=band, image_observation_times=image_observation_times
         )
 
+    def point_source_type(self, image_positions=False):
+        """
+        type of point source model
+
+        :param image_positions:
+        :return: point source model string, or None
+        """
+        return self._source.point_source_type(image_positions=image_positions)
+
     def kwargs_extended_light(self, band=None):
         """Provides dictionary of keywords for the source light model(s).
         Keywords used are in lenstronomy conventions.
@@ -201,6 +209,24 @@ class Source(object):
         """
 
         return self._source.kwargs_extended_light(band=band)
+
+    def kwargs_point_source(
+        self, band, image_observation_times=None, image_pos_x=None, image_pos_y=None,
+            ps_mag=None
+    ):
+        """
+
+        :param band: Imaging band
+        :type band: str
+        :param image_observation_times: Images observation time for an image.
+        :param image_pos_x: pre-calculated image positions (solutions of the lens equation) RA [arcseconds]
+        :param image_pos_y: pre-calculated image positions (solutions of the lens equation) DEC [arcseconds]
+        :param ps_mag: magnitudes of images (or source)
+        :return: source type, list of dictionary in lenstronomy convention
+        """
+        return self._source.kwargs_point_source(band=band, image_observation_times=image_observation_times,
+                                                image_pos_x=image_pos_x, image_pos_y=image_pos_y,
+                                                ps_mag=ps_mag)
 
     def surface_brightness_reff(self, band=None):
         """Calculate average surface brightness within half light radius of a

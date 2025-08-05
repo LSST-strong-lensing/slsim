@@ -43,6 +43,7 @@ def simulate_image(
     :rtype: 2d numpy array
     """
     kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band)
+    print(kwargs_model, kwargs_params, "test lenstronomy kwargs")
     from slsim.ImageSimulation import image_quality_lenstronomy
 
     kwargs_single_band = image_quality_lenstronomy.kwargs_single_band(
@@ -319,7 +320,7 @@ def point_source_image_without_variability(
     )
 
     psf_class = PSF(psf_type="PIXEL", kernel_point_source=psf_kernel)
-    if kwargs_ps is not None:
+    if len(kwargs_ps) > 0:
         image_data = point_source_coordinate_properties(
             lens_class=lens_class,
             band=band,
@@ -379,7 +380,7 @@ def point_source_image_at_time(
 
     psf_class = PSF(psf_type="PIXEL", kernel_point_source=psf_kernel)
 
-    if kwargs_ps is not None:
+    if len(kwargs_ps) > 0:
         image_data = point_source_coordinate_properties(
             lens_class=lens_class,
             band=band,

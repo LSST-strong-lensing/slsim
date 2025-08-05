@@ -70,7 +70,7 @@ class TestSourceBase:
         source_model, kwargs_source = source.kwargs_point_source(
             band="r", image_observation_times=None, image_pos_x=None, image_pos_y=None
         )
-        assert source_model == []
+        assert source_model == None
         assert kwargs_source == []
         source = SourceBase(
             z=1, point_source=True, lensed=True, variability_model="NONE"

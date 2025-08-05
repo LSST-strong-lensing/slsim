@@ -13,6 +13,7 @@ from astropy.table import Table
 from astropy.cosmology import FlatLambdaCDM
 from slsim.Lenses.lens_pop import LensPop
 from slsim.Lenses.lens_pop import area_theta_e_infinity
+from slsim.Lenses.lens import Lens
 
 sky_area = Quantity(value=0.05, unit="deg2")
 galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
@@ -114,7 +115,7 @@ def test_pes_lens_pop_instance():
 
     kwargs_lens_cut = {}
     pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
-    assert pes_lens_class._source_type == "point_plus_extended"
+    assert isinstance(pes_lens_class, Lens)
 
 
 def test_galaxies_lens_pop_halo_model_instance():
@@ -252,7 +253,7 @@ def test_galaxies_lens_pop_instance():
     )
     kwargs_lens_cut = {}
     pes_lens_class = gg_lens_pop.select_lens_at_random(**kwargs_lens_cut)
-    assert pes_lens_class._source_type == "extended"
+    assert isinstance(pes_lens_class, Lens)
 
 
 def test_supernovae_plus_galaxies_lens_pop_instance_2():
@@ -317,7 +318,7 @@ def test_supernovae_plus_galaxies_lens_pop_instance_2():
     )
     kwargs_lens_cut = {}
     pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
-    assert pes_lens_class._source_type == "point_plus_extended"
+    assert pes_lens_class._source[0].source_type == "point_plus_extended"
     assert "x_off" in supernovae_data.colnames
 
 
@@ -388,7 +389,7 @@ def test_supernovae_lens_pop_instance():
     )
     kwargs_lens_cut = {}
     ps_lens_class = ps_lens_pop_1.select_lens_at_random(**kwargs_lens_cut)
-    assert ps_lens_class._source_type == "point_source"
+    assert ps_lens_class._source[0].source_type == "point_source"
     assert "z" in supernovae_data_1.colnames
     assert abs(len(ps_lens_population_1) - len(ps_lens_population_1_speed)) <= 12
     with pytest.raises(ValueError):

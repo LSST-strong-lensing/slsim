@@ -91,7 +91,7 @@ class TestSupernovaEvent:
         with pytest.raises(ValueError):
             self.source_none.point_source_magnitude("i", image_observation_times=10)
         assert self.source_none.point_source_magnitude("i") == 20
-        assert self.source_light_curve.point_source_magnitude("i")[2] == 19
+        assert self.source_light_curve.point_source_magnitude("i") == 21
 
 
 if __name__ == "__main__":

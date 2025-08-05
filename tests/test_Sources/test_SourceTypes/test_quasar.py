@@ -1,5 +1,6 @@
 from slsim.Sources.SourceTypes.quasar import Quasar, extract_agn_kwargs_from_source_dict
 import numpy as np
+import numpy.testing as npt
 import pytest
 from astropy import cosmology
 
@@ -75,7 +76,7 @@ class TestQuasar:
         with pytest.raises(ValueError):
             self.source_none.point_source_magnitude("i", image_observation_times=10)
         assert self.source_none.point_source_magnitude("i") == 20
-        assert self.source_light_curve.point_source_magnitude("i")[2] == 18
+        npt.assert_almost_equal(self.source_light_curve.point_source_magnitude("i"), 20.833, decimal=2)
 
 
 def test_extract_agn_kwargs_from_source_dict():
