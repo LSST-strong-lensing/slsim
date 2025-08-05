@@ -66,7 +66,9 @@ class SourceBase(ABC):
         )
         if ra_off is not None and dec_off is not None:
             if point_source is False:
-                self._offset = np.array([0, 0])  # without a point source, offsets have to be zero
+                self._offset = np.array(
+                    [0, 0]
+                )  # without a point source, offsets have to be zero
             self._offset = np.array([float(ra_off), float(dec_off)])
         else:
             self._offset = np.array([0, 0])
@@ -265,8 +267,7 @@ class SourceBase(ABC):
             )
 
     def point_source_type(self, image_positions=False):
-        """
-        type of point source model
+        """Type of point source model.
 
         :param image_positions:
         :return: point source model string, or None
@@ -282,8 +283,12 @@ class SourceBase(ABC):
             return "UNLENSED"
 
     def kwargs_point_source(
-        self, band, image_observation_times=None, image_pos_x=None, image_pos_y=None,
-            ps_mag=None
+        self,
+        band,
+        image_observation_times=None,
+        image_pos_x=None,
+        image_pos_y=None,
+        ps_mag=None,
     ):
         """
 
@@ -318,8 +323,10 @@ class SourceBase(ABC):
             )
         print(ps_type, ps_mag, image_pos_x, "test")
         if np.shape(np.asarray(ps_mag)) != np.shape(np.asarray(image_pos_x)):
-            raise ValueError("length of image positions %s needs to be the length of the ps_mag %s"
-                             % (np.shape(image_pos_x), np.shape(ps_mag)))
+            raise ValueError(
+                "length of image positions %s needs to be the length of the ps_mag %s"
+                % (np.shape(image_pos_x), np.shape(ps_mag))
+            )
 
         # set keyword arguments for lenstronomy
         if ps_type in ["LENSED_POSITION", "UNLENSED"]:

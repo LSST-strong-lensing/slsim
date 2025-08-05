@@ -76,7 +76,9 @@ class TestQuasar:
         with pytest.raises(ValueError):
             self.source_none.point_source_magnitude("i", image_observation_times=10)
         assert self.source_none.point_source_magnitude("i") == 20
-        npt.assert_almost_equal(self.source_light_curve.point_source_magnitude("i"), 20.833, decimal=2)
+        npt.assert_almost_equal(
+            self.source_light_curve.point_source_magnitude("i"), 20.833, decimal=2
+        )
 
 
 def test_extract_agn_kwargs_from_source_dict():

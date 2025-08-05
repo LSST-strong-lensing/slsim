@@ -48,7 +48,8 @@ class Lens(LensedSystemBase):
         :param los_class: line of sight dictionary (optional, takes these values instead of drawing from distribution)
         :type los_class: ~LOSIndividual() class object
         """
-        LensedSystemBase.__init__(self,
+        LensedSystemBase.__init__(
+            self,
             source_class=source_class,
             deflector_class=deflector_class,
             los_class=los_class,
@@ -76,8 +77,8 @@ class Lens(LensedSystemBase):
 
     @property
     def image_number(self):
-        """Number of images in the lensing configuration. If a point source is present, uses point source,
-        otherwise extended source
+        """Number of images in the lensing configuration. If a point source is
+        present, uses point source, otherwise extended source.
 
         :return: number of images for each source model
         """
@@ -115,7 +116,9 @@ class Lens(LensedSystemBase):
         :return: x-pos, y-pos
         """
         source_pos_x, source_pos_y = self.source(source_index).extended_source_position
-        return self._image_position_from_source(source_pos_x, source_pos_y, source_index)
+        return self._image_position_from_source(
+            source_pos_x, source_pos_y, source_index
+        )
 
     def point_source_image_positions(self):
         """Returns point source image positions by solving the lens equation
@@ -143,16 +146,18 @@ class Lens(LensedSystemBase):
         point_source_pos_x, point_source_pos_y = self.source(
             source_index
         ).point_source_position
-        return self._image_position_from_source(point_source_pos_x, point_source_pos_y, source_index)
+        return self._image_position_from_source(
+            point_source_pos_x, point_source_pos_y, source_index
+        )
 
     def _image_position_from_source(self, x_source, y_source, source_index):
-        """
-        solves the lens equation
+        """Solves the lens equation.
 
         :param x_source: x-position of source [arc-seconds]
         :param y_source: y-position of source [arc-seconds]
         :param source_index: source index
-        :return: solution of the lens equation for source position [RA list], [DEC list]
+        :return: solution of the lens equation for source position [RA
+            list], [DEC list]
         """
         lens_model_class, kwargs_lens = self.deflector_mass_model_lenstronomy(
             source_index=source_index
@@ -162,8 +167,8 @@ class Lens(LensedSystemBase):
 
         # uses analytical lens equation solver in case it is supported by lenstronomy for speed-up
         if (
-                self._lens_equation_solver == "lenstronomy_analytical"
-                and analytical_lens_model_support(lens_model_class.lens_model_list) is True
+            self._lens_equation_solver == "lenstronomy_analytical"
+            and analytical_lens_model_support(lens_model_class.lens_model_list) is True
         ):
             solver = "analytical"
         else:
@@ -388,7 +393,8 @@ class Lens(LensedSystemBase):
 
     def _approximate_einstein_radius(self, source_index):
         """Returns the appropriate Einstein radius depending on the deflector
-        type. This definition is meant to estimate an approximate (conservative) area to place a source
+        type. This definition is meant to estimate an approximate
+        (conservative) area to place a source.
 
         :param source_index: index of the source.
         :return: effective Einstein radius for the lens-source pair.
@@ -872,7 +878,9 @@ class Lens(LensedSystemBase):
         # TODO: might have to change conventions between extended and point source
         source_mag = self.source(source_index).extended_source_magnitude(band)
         if lensed and source_mag is not None:
-            mag = self._extended_integrated_source_magnification(source_index=source_index)
+            mag = self._extended_integrated_source_magnification(
+                source_index=source_index
+            )
             return source_mag - 2.5 * np.log10(mag)
         return source_mag
 
@@ -897,7 +905,8 @@ class Lens(LensedSystemBase):
         center of the extended source to calculate lensing magnification.
 
         :param source_index: index of a source in source list.
-        :param extended: if True, calculates image positions of extended source
+        :param extended: if True, calculates image positions of extended
+            source
         :return: signed magnification of a point source (extended
             source) in same order as image positions
         """
@@ -906,12 +915,12 @@ class Lens(LensedSystemBase):
         )
 
         if extended:
-            img_x, img_y = self._extended_source_image_positions(source_index=source_index)
+            img_x, img_y = self._extended_source_image_positions(
+                source_index=source_index
+            )
         else:
             img_x, img_y = self._point_source_image_positions(source_index=source_index)
-        ps_magnification = lens_model_class.magnification(
-            img_x, img_y, kwargs_lens
-        )
+        ps_magnification = lens_model_class.magnification(img_x, img_y, kwargs_lens)
         return ps_magnification
 
     @property
@@ -1142,9 +1151,7 @@ class Lens(LensedSystemBase):
         kwargs_source_list = []
         for index in range(len(self._source)):
 
-            source_model_list, kwargs_source = self.source(
-                index
-            ).kwargs_extended_light(
+            source_model_list, kwargs_source = self.source(index).kwargs_extended_light(
                 band=band,
             )
             source_models_list.append(source_model_list)
@@ -1178,9 +1185,9 @@ class Lens(LensedSystemBase):
                         microlensing=microlensing,
                         kwargs_microlensing=kwargs_microlensing,
                     )
-                ps_type, kwargs_ps_ = self.source(index).kwargs_point_source(band,
-                                                                             image_pos_x=img_x, image_pos_y=img_y,
-                                                                             ps_mag=image_magnitudes)
+                ps_type, kwargs_ps_ = self.source(index).kwargs_point_source(
+                    band, image_pos_x=img_x, image_pos_y=img_y, ps_mag=image_magnitudes
+                )
                 # TODO: ps_redshift_list to be added
                 point_source_models_list.append(ps_type)
                 kwargs_ps_list.append(kwargs_ps_)

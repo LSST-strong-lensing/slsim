@@ -43,8 +43,6 @@ class LensedSystemBase(ABC):
             self.max_redshift_source_class = source_class
             self._max_redshift_source_index = 0
 
-
-
         if isinstance(source_class, list):
             self._source = source_class
         else:

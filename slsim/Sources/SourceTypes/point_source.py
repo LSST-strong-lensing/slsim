@@ -89,19 +89,25 @@ class PointSource(object):
         )
 
     def point_source_type(self, image_positions=False):
-        """
-        type of point source model
+        """Type of point source model.
 
         :param image_positions:
         :return: point source model string, or None
         """
         print("test that I am here")
-        print(self._point_source.point_source_type(image_positions=image_positions), "output test")
+        print(
+            self._point_source.point_source_type(image_positions=image_positions),
+            "output test",
+        )
         return self._point_source.point_source_type(image_positions=image_positions)
 
     def kwargs_point_source(
-        self, band, image_observation_times=None, image_pos_x=None, image_pos_y=None,
-            ps_mag=None
+        self,
+        band,
+        image_observation_times=None,
+        image_pos_x=None,
+        image_pos_y=None,
+        ps_mag=None,
     ):
         """
 
@@ -113,6 +119,10 @@ class PointSource(object):
         :param ps_mag: magnitudes of images (or source)
         :return: source type, list of dictionary in lenstronomy convention
         """
-        return self._point_source.kwargs_point_source(band=band, image_observation_times=image_observation_times,
-                                                image_pos_x=image_pos_x, image_pos_y=image_pos_y,
-                                                ps_mag=ps_mag)
+        return self._point_source.kwargs_point_source(
+            band=band,
+            image_observation_times=image_observation_times,
+            image_pos_x=image_pos_x,
+            image_pos_y=image_pos_y,
+            ps_mag=ps_mag,
+        )
