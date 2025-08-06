@@ -56,9 +56,13 @@ def supernovae_lens_instance():
 
 
 def test_kwargs_model(supernovae_lens_instance):
-    assert isinstance(supernovae_lens_instance._source[0]._source, PointPlusExtendedSource)
+    assert isinstance(
+        supernovae_lens_instance._source[0]._source, PointPlusExtendedSource
+    )
 
-    ps_type = supernovae_lens_instance._source[0].point_source_type(image_positions=False)
+    ps_type = supernovae_lens_instance._source[0].point_source_type(
+        image_positions=False
+    )
     assert ps_type == "SOURCE_POSITION"
 
     kwargs_model, kwargs_param = supernovae_lens_instance.lenstronomy_kwargs(band="i")

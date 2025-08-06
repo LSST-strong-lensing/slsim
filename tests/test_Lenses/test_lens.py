@@ -219,8 +219,8 @@ class TestLens(object):
         assert result2 == result3
 
     def test_lenstronomy_kwargs(self):
-        kwargs_model, kwargs_params = self.gg_lens.lenstronomy_kwargs(band='i')
-        assert kwargs_model["point_source_model_list"] ==[]
+        kwargs_model, kwargs_params = self.gg_lens.lenstronomy_kwargs(band="i")
+        assert kwargs_model["point_source_model_list"] == []
 
     def test_lens_equation_solver(self):
         # Tests analytical and numerical lens equation solver options.

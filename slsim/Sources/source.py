@@ -192,8 +192,7 @@ class Source(object):
         )
 
     def point_source_type(self, image_positions=False):
-        """
-        type of point source model
+        """Type of point source model.
 
         :param image_positions:
         :return: point source model string, or None
@@ -211,8 +210,12 @@ class Source(object):
         return self._source.kwargs_extended_light(band=band)
 
     def kwargs_point_source(
-        self, band, image_observation_times=None, image_pos_x=None, image_pos_y=None,
-            ps_mag=None
+        self,
+        band,
+        image_observation_times=None,
+        image_pos_x=None,
+        image_pos_y=None,
+        ps_mag=None,
     ):
         """
 
@@ -224,9 +227,13 @@ class Source(object):
         :param ps_mag: magnitudes of images (or source)
         :return: source type, list of dictionary in lenstronomy convention
         """
-        return self._source.kwargs_point_source(band=band, image_observation_times=image_observation_times,
-                                                image_pos_x=image_pos_x, image_pos_y=image_pos_y,
-                                                ps_mag=ps_mag)
+        return self._source.kwargs_point_source(
+            band=band,
+            image_observation_times=image_observation_times,
+            image_pos_x=image_pos_x,
+            image_pos_y=image_pos_y,
+            ps_mag=ps_mag,
+        )
 
     def surface_brightness_reff(self, band=None):
         """Calculate average surface brightness within half light radius of a
