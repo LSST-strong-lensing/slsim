@@ -1,5 +1,5 @@
 import numpy as np
-from slsim.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
+from slsim.Util.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
 
 
 def test_gaussian_mixture_model():

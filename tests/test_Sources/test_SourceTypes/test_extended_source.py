@@ -1,8 +1,17 @@
 from slsim.Sources.SourceTypes.extended_source import ExtendedSource
 import numpy as np
 import pytest
+import os
+import pathlib
+
 from numpy import testing as npt
 from astropy import cosmology
+
+catalog_path = os.path.join(
+    str(pathlib.Path(__file__).parent.parent.parent.parent),
+    "data",
+    "test_COSMOS_23.5_training_sample",
+)
 
 
 class TestExtendedSource:
@@ -19,17 +28,15 @@ class TestExtendedSource:
             "center_y": -0.06,
         }
         self.source = ExtendedSource(
-            source_dict=self.source_dict_single_sersic,
-            cosmo=cosmo,
-            extendedsource_type="single_sersic",
+            cosmo=cosmo, source_type="single_sersic", **self.source_dict_single_sersic
         )
 
         self.source_dict_double_sersic = {
             "z": 0.5,
             "n_sersic_0": 1,
             "n_sersic_1": 4,
-            "angular_size0": 0.2,
-            "angular_size1": 0.15,
+            "angular_size_0": 0.2,
+            "angular_size_1": 0.15,
             "e0_1": 0.001,
             "e0_2": 0.002,
             "e1_1": 0.001,
@@ -40,9 +47,7 @@ class TestExtendedSource:
         }
 
         self.source_double_sersic = ExtendedSource(
-            source_dict=self.source_dict_double_sersic,
-            cosmo=cosmo,
-            extendedsource_type="single_sersic",
+            cosmo=cosmo, source_type="double_sersic", **self.source_dict_double_sersic
         )
 
         # Create an image
@@ -82,9 +87,15 @@ class TestExtendedSource:
         }
 
         self.source_interpolated = ExtendedSource(
-            source_dict=self.source_dict_interpolated,
+            cosmo=cosmo, source_type="interpolated", **self.source_dict_interpolated
+        )
+
+        self.catalogue_source = ExtendedSource(
             cosmo=cosmo,
-            extendedsource_type="single_sersic",
+            source_type="catalog_source",
+            catalog_type="COSMOS",
+            catalog_path=catalog_path,
+            **self.source_dict_single_sersic
         )
 
     def test_redshift(self):
@@ -93,15 +104,20 @@ class TestExtendedSource:
     def test_angular_size(self):
         assert self.source.angular_size == 0.2
 
+    def test_name(self):
+        assert self.source.name == "GAL"
+
+    def test_update_center(self):
+        self.source.update_center(center_x=1, center_y=1)
+        assert self.source.extended_source_position[0] == 1
+
     def test_ellipticity(self):
         e1, e2 = self.source.ellipticity
         assert e1 == 0.005
         assert e2 == 0.003
 
     def test_extended_source_position(self):
-        x_pos, y_pos = self.source.extended_source_position(
-            reference_postion=[0, 0], draw_area=4 * np.pi
-        )
+        x_pos, y_pos = self.source.extended_source_position
         assert x_pos == 0.034
         assert y_pos == -0.06
 
@@ -109,8 +125,8 @@ class TestExtendedSource:
         assert self.source.extended_source_magnitude("i") == 21
 
     def test_kwargs_extended_source_light(self):
-        results = self.source.kwargs_extended_source_light(
-            band="i", reference_position=[0, 0], draw_area=4 * np.pi
+        source_model, results = self.source.kwargs_extended_light(
+            band="i",
         )
         assert results[0]["R_sersic"] == 0.2
         assert results[0]["center_x"] == 0.034
@@ -119,8 +135,6 @@ class TestExtendedSource:
         assert results[0]["e2"] == 0.003
         assert results[0]["magnitude"] == 21
 
-    def test_extended_source_light_model(self):
-        source_model = self.source.extended_source_light_model()
         assert source_model[0] == "SERSIC_ELLIPSE"
 
     def test_surface_brightness_reff(self):
@@ -144,7 +158,7 @@ class TestExtendedSource:
             ExtendedSource(
                 source_dict=self.source_dict_extended,
                 cosmo=cosmo,
-                extendedsource_type="other",
+                source_type="other",
             )
 
 

@@ -1,6 +1,6 @@
 import numpy as np
 import numpy.random as random
-from slsim.selection import object_cut
+from slsim.Lenses.selection import object_cut
 from slsim.Util import param_util
 from slsim.Sources.SourcePopulation.source_pop_base import SourcePopBase
 from astropy.table import Column, vstack
@@ -31,7 +31,7 @@ class Galaxies(SourcePopBase):
         catalog_type=None,
         downsample_to_dc2=False,
         source_size="Bernardi",
-        extendedsource_type="single_sersic",
+        extended_source_type="single_sersic",
         extendedsource_kwargs={},
     ):
         """
@@ -62,8 +62,7 @@ class Galaxies(SourcePopBase):
         """
         super().__init__(cosmo=cosmo, sky_area=sky_area)
         self.extendedsource_kwargs = extendedsource_kwargs
-        self.source_type = "extended"
-        self.light_profile = extendedsource_type
+        self.light_profile = extended_source_type
         if downsample_to_dc2 is True:
             samp1, samp2, samp3, samp4, samp5, samp6 = down_sample_to_dc2(
                 galaxy_pop=galaxy_list, sky_area=sky_area
@@ -110,11 +109,11 @@ class Galaxies(SourcePopBase):
                     galaxy_list["e1_1"] = -np.ones(self.n)
                     galaxy_list["e1_2"] = -np.ones(self.n)
                 if (
-                    "angular_size0" not in column_names_update
-                    or "angular_size1" not in column_names_update
+                    "angular_size_0" not in column_names_update
+                    or "angular_size_1" not in column_names_update
                 ):
-                    galaxy_list["angular_size0"] = -np.ones(self.n)
-                    galaxy_list["angular_size1"] = -np.ones(self.n)
+                    galaxy_list["angular_size_0"] = -np.ones(self.n)
+                    galaxy_list["angular_size_1"] = -np.ones(self.n)
         else:
             column_names = galaxy_list[0].colnames
             if "ellipticity" not in column_names:
@@ -134,6 +133,7 @@ class Galaxies(SourcePopBase):
         self._galaxy_select = object_cut(galaxy_list, list_type=list_type, **kwargs_cut)
         self._num_select = len(self._galaxy_select)
         self.list_type = list_type
+        self._full_galaxy_list = galaxy_list
 
     @property
     def source_number(self):
@@ -151,15 +151,27 @@ class Galaxies(SourcePopBase):
         """
         return self._num_select
 
-    def draw_source_dict(self, z_max=None):
+    def draw_source_dict(self, z_max=None, z_min=None, galaxy_index=None):
         """Choose source at random.
 
         :param z_max: maximum redshift limit for the galaxy to be drawn.
             If no galaxy is found for this limit, None will be returned.
+        :param z_min: minimum redshift limit for the galaxy to be drawn.
+            If no galaxy is found for this limit, None will be returned.
+        :param galaxy_index: index of galaxy to pic (if provided)
         :return: dictionary of source
         """
-        if z_max is not None:
-            filtered_galaxies = self._galaxy_select[self._galaxy_select["z"] < z_max]
+        if galaxy_index is not None:
+            galaxy = self._full_galaxy_list[galaxy_index]
+
+        elif z_max is not None or z_min is not None:
+            if z_max is None:
+                z_max = 1100
+            if z_min is None:
+                z_min = 0
+            filtered_galaxies = self._galaxy_select[
+                (self._galaxy_select["z"] < z_max) & (z_min < self._galaxy_select["z"])
+            ]
             if len(filtered_galaxies) == 0:
                 return None
             else:
@@ -224,9 +236,9 @@ class Galaxies(SourcePopBase):
                         "ellipticity or semi-major and semi-minor axis are missing for"
                         "the second light profile in galaxy_list columns"
                     )
-            if galaxy["angular_size0"] == -1 or galaxy["angular_size1"] == -1:
+            if galaxy["angular_size_0"] == -1 or galaxy["angular_size_1"] == -1:
                 if "a0" in galaxy.colnames and "b0" in galaxy.colnames:
-                    galaxy["angular_size0"] = average_angular_size(
+                    galaxy["angular_size_0"] = average_angular_size(
                         a=galaxy["a0"], b=galaxy["b0"]
                     )
                 else:
@@ -235,7 +247,7 @@ class Galaxies(SourcePopBase):
                         "profile in galaxy_list columns"
                     )
                 if "a1" in galaxy.colnames and "b1" in galaxy.colnames:
-                    galaxy["angular_size1"] = average_angular_size(
+                    galaxy["angular_size_1"] = average_angular_size(
                         a=galaxy["a1"], b=galaxy["b1"]
                     )
                 else:
@@ -253,22 +265,26 @@ class Galaxies(SourcePopBase):
             )
         return galaxy
 
-    def draw_source(self, z_max=None):
+    def draw_source(self, z_max=None, z_min=None, galaxy_index=None):
         """Choose source at random.
 
         :param z_max: maximum redshift limit for the galaxy to be drawn.
             If no galaxy is found for this limit, None will be returned.
+        :param z_min: minimum redshift limit for the galaxy to be drawn.
+            If no galaxy is found for this limit, None will be returned.
+        :param galaxy_index: index of galaxy to pic (if provided)
         :return: instance of Source class
         """
-        galaxy = self.draw_source_dict(z_max=z_max)
+        galaxy = self.draw_source_dict(
+            z_max=z_max, z_min=z_min, galaxy_index=galaxy_index
+        )
         if galaxy is None:
             return None
         source_class = Source(
-            source_dict=galaxy,
-            source_type=self.source_type,
-            extendedsource_type=self.light_profile,
             cosmo=self._cosmo,
-            extendedsource_kwargs=self.extendedsource_kwargs,
+            extended_source_type=self.light_profile,
+            **galaxy,
+            **self.extendedsource_kwargs
         )
         return source_class
 
@@ -341,6 +357,9 @@ def convert_to_slsim_convention(
         if "e0" in column_names or "e1" in column_names:
             galaxy_catalog.rename_column("e0", "ellipticity0")
             galaxy_catalog.rename_column("e1", "ellipticity1")
+        if "angular_size0" in column_names or "angular_size1" in column_names:
+            galaxy_catalog.rename_column("angular_size0", "angular_size_0")
+            galaxy_catalog.rename_column("angular_size1", "angular_size_1")
     if light_profile == "single_sersic":
         if "e" in column_names:
             galaxy_catalog.rename_column("e", "ellipticity")

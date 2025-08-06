@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy.visualization import make_lupton_rgb
-from slsim.image_simulation import simulate_image
-from slsim.roman_image_simulation import simulate_roman_image
+from slsim.ImageSimulation.image_simulation import simulate_image
+from slsim.ImageSimulation.roman_image_simulation import simulate_roman_image
 
 
 class LensingPlots(object):

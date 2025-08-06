@@ -6,7 +6,7 @@ import pytest
 
 path = os.path.dirname(__file__)
 module_path, _ = os.path.split(path)
-mother_path = os.path.dirname(path)
+mother_path = os.path.dirname(os.path.dirname(path))
 
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 

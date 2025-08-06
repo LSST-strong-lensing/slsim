@@ -1,4 +1,4 @@
-from slsim.selection import object_cut
+from slsim.Lenses.selection import object_cut
 import numpy as np
 from astropy.table import Table
 import pytest

@@ -2,8 +2,8 @@ from astropy.coordinates import SkyCoord
 import datetime
 import numpy as np
 from lenstronomy.SimulationAPI.sim_api import SimAPI
-from slsim.Observations import image_quality_lenstronomy
-from slsim.image_simulation import (
+from slsim.ImageSimulation import image_quality_lenstronomy
+from slsim.ImageSimulation.image_simulation import (
     point_source_image_at_time,
     sharp_image,
     image_plus_poisson_noise,
@@ -196,7 +196,7 @@ def get_psf(band, detector, detector_pos, oversample, psf_directory):
         psf_file_path = os.path.join(psf_directory, psf_file_name)
     else:
         psf_file_path = os.path.join(
-            os.path.dirname(__file__), "..", "data", "stpsf", psf_file_name
+            os.path.dirname(__file__), "../..", "data", "stpsf", psf_file_name
         )
 
     if os.path.exists(psf_file_path):

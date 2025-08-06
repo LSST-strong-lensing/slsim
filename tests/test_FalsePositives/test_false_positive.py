@@ -30,7 +30,7 @@ def test_false_positive():
         cosmo=cosmo,
         sky_area=sky_area,
     )
-    kwargs = {"extendedsource_type": "single_sersic"}
+    kwargs = {"extended_source_type": "single_sersic"}
     source_galaxies = sources.Galaxies(
         galaxy_list=galaxy_simulation_pipeline.blue_galaxies,
         kwargs_cut=kwargs_source_cut,
@@ -54,13 +54,11 @@ def test_false_positive():
         source_class=source,
         deflector_class=lens,
         cosmo=cosmo,
-        test_area=4 * np.pi,
     )
     false_positive_instance_2 = FalsePositive(
         source_class=source_list,
         deflector_class=lens,
         cosmo=cosmo,
-        test_area=4 * np.pi,
         los_class=los_class,
     )
     required_keys = {
