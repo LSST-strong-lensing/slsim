@@ -310,6 +310,8 @@ class TestGalaxies(object):
         galaxy_1 = self.galaxies4.draw_source()
         galaxy_2 = self.galaxies.draw_source(z_max=1)
         galaxy_3 = self.galaxies5.draw_source(z_max=0.4)
+        galaxy_4 = self.galaxies5.draw_source(z_min=0.4)
+        galaxy_ind = self.galaxies.draw_source(galaxy_index=0)
         assert isinstance(galaxy, object)
         assert galaxy_1.angular_size == 4.186996407348755e-08
         assert galaxy_2.redshift < 1 + 0.002

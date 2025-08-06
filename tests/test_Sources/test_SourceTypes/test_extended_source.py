@@ -1,9 +1,17 @@
 from slsim.Sources.SourceTypes.extended_source import ExtendedSource
 import numpy as np
 import pytest
+import os
+import pathlib
+
 from numpy import testing as npt
 from astropy import cosmology
 
+catalog_path = os.path.join(
+    str(pathlib.Path(__file__).parent.parent.parent.parent),
+    "data",
+    "test_COSMOS_23.5_training_sample",
+)
 
 class TestExtendedSource:
     def setup_method(self):
@@ -81,11 +89,22 @@ class TestExtendedSource:
             cosmo=cosmo, source_type="interpolated", **self.source_dict_interpolated
         )
 
+        self.catalogue_source = ExtendedSource(cosmo=cosmo, source_type="catalog_source",
+                                               catalog_type="COSMOS", catalog_path=catalog_path,
+                                               **self.source_dict_single_sersic)
+
     def test_redshift(self):
         assert self.source.redshift == 1.0
 
     def test_angular_size(self):
         assert self.source.angular_size == 0.2
+
+    def test_name(self):
+        assert self.source.name == "GAL"
+
+    def test_update_center(self):
+        self.source.update_center(center_x=1, center_y=1)
+        assert self.source.extended_source_position[0] == 1
 
     def test_ellipticity(self):
         e1, e2 = self.source.ellipticity

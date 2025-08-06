@@ -61,8 +61,23 @@ class TestSourceBase:
     def test_angular_size(self):
         assert self.source.angular_size == 0
 
+        def angular_size_raise():
+            source = SourceBase(z=1, extended_source=True)
+            return source.angular_size
+        npt.assert_raises(ValueError, angular_size_raise)
+
     def test_ellipticity(self):
         assert self.source.ellipticity == (0, 0)
+
+        def ellipticity_raise():
+            source = SourceBase(z=1, extended_source=True)
+            return source.ellipticity
+        npt.assert_raises(ValueError, ellipticity_raise)
+
+    def test_extended_source_magnitude(self):
+        source = SourceBase(z=1, extended_source=False)
+        mag = source.extended_source_magnitude(band="i")
+        assert mag is None
 
     def test_kwargs_point_source(self):
         source = SourceBase(z=1, point_source=False)
@@ -79,6 +94,16 @@ class TestSourceBase:
             source.kwargs_point_source,
             band="r",
             image_observation_times=None,
+            image_pos_x=[1],
+            image_pos_y=[0],
+        )
+
+        npt.assert_raises(
+            ValueError,
+            source.kwargs_point_source,
+            band="r",
+            image_observation_times=None,
+            ps_mag=[1, 1],
             image_pos_x=[1],
             image_pos_y=[0],
         )
