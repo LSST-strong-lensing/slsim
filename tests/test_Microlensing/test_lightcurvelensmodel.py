@@ -267,28 +267,63 @@ class TestMicrolensingLightCurveFromLensModel:
     def test_mocked_generate_magnification_maps(
         self, ml_lens_model, microlensing_params, kwargs_magnification_map_settings
     ):
+        """Test magnification map generation with mocking and internal
+        storage."""
         num_images = len(microlensing_params["kappa_star"])
+
+        # Create mock maps
         mock_map_list = create_mock_magmap_list(
             microlensing_params, kwargs_magnification_map_settings
         )
-        assert isinstance(mock_map_list, list)
-        assert len(mock_map_list) == num_images
-        for i, magmap_obj in enumerate(mock_map_list):
-            assert isinstance(magmap_obj, MagnificationMap)
-            assert hasattr(magmap_obj, "magnifications")
-            assert magmap_obj.magnifications is not None
-            assert magmap_obj._kappa_tot == microlensing_params["kappa_tot"][i]
-            assert magmap_obj._shear == microlensing_params["shear"][i]
-            assert magmap_obj._kappa_star == microlensing_params["kappa_star"][i]
-            assert (
-                magmap_obj.theta_star == kwargs_magnification_map_settings["theta_star"]
+
+        # Test the magmaps_images property before generation
+        with pytest.raises(AttributeError, match="Magnification maps are not set"):
+            _ = ml_lens_model.magmaps_images
+
+        # check no _magmaps_images set yet
+        assert not hasattr(ml_lens_model, "_magmaps_images")
+        assert not hasattr(ml_lens_model, "magmaps_images")
+
+        # Mock the MagnificationMap constructor to avoid GPU computation
+        with patch(
+            "slsim.Microlensing.lightcurvelensmodel.MagnificationMap"
+        ) as mock_magmap_class:
+            # Configure the mock to return pre-created mock objects in sequence
+            mock_magmap_class.side_effect = mock_map_list
+
+            result = ml_lens_model.generate_magnification_maps_from_microlensing_params(
+                kappa_star_images=microlensing_params["kappa_star"],
+                kappa_tot_images=microlensing_params["kappa_tot"],
+                shear_images=microlensing_params["shear"],
+                kwargs_MagnificationMap=kwargs_magnification_map_settings,
             )
-            assert (
-                magmap_obj.num_pixels_x
-                == kwargs_magnification_map_settings["num_pixels_x"]
-            )
-            # Removed mu_ave check as requested
-            # assert hasattr(magmap_obj, 'mu_ave') and isinstance(magmap_obj.mu_ave, (float, np.floating))
+
+            # Verify the mock was called correctly
+            assert mock_magmap_class.call_count == num_images
+
+            # Verify the method behavior
+            assert isinstance(result, list)
+            assert len(result) == num_images
+            assert result == mock_map_list
+
+            # Verify that _magmaps_images is set correctly
+            assert hasattr(ml_lens_model, "_magmaps_images")
+            assert ml_lens_model._magmaps_images == mock_map_list
+
+            # Verify that magmaps_images exists
+            magmaps_images = ml_lens_model.magmaps_images
+            assert len(magmaps_images) == num_images
+            assert magmaps_images == mock_map_list
+
+            # Verify individual map properties
+            for i, magmap_obj in enumerate(result):
+                assert isinstance(magmap_obj, MagnificationMap)
+                assert hasattr(magmap_obj, "magnifications")
+                assert magmap_obj.magnifications is not None
+                assert magmap_obj._kappa_tot == microlensing_params["kappa_tot"][i]
+                assert magmap_obj._shear == microlensing_params["shear"][i]
+                assert magmap_obj._kappa_star == microlensing_params["kappa_star"][i]
+                assert isinstance(magmap_obj, MagnificationMap)
 
     @pytest.mark.parametrize(
         "morphology_key, kwargs_source",
@@ -653,3 +688,67 @@ class TestMicrolensingLightCurveFromLensModel:
                 point_source_morphology="gaussian",
                 kwargs_source_morphology={},
             )
+
+    def test_properties_access(
+        self,
+        ml_lens_model,
+        microlensing_params,
+        lens_source_info,
+        cosmology,
+        kwargs_magnification_map_settings,
+        kwargs_source_gaussian,
+    ):
+        """Test property access for lightcurves, tracks, and magmaps_images."""
+
+        # Test AttributeError when properties are accessed before generation
+        with pytest.raises(AttributeError, match="Lightcurves are not set"):
+            _ = ml_lens_model.lightcurves
+
+        with pytest.raises(AttributeError, match="Tracks are not set"):
+            _ = ml_lens_model.tracks
+
+        with pytest.raises(AttributeError, match="Magnification maps are not set"):
+            _ = ml_lens_model.magmaps_images
+
+        # Generate data to populate the properties
+        time_array = np.linspace(0, 1000, 50)
+
+        with patch.object(
+            MicrolensingLightCurveFromLensModel,
+            "generate_magnification_maps_from_microlensing_params",
+        ) as mock_generate_maps:
+            mock_generate_maps.return_value = create_mock_magmap_list(
+                microlensing_params, kwargs_magnification_map_settings
+            )
+            ml_lens_model._magmaps_images = mock_generate_maps.return_value
+
+            # This should populate _lightcurves and _tracks
+            _ = ml_lens_model.generate_point_source_microlensing_magnitudes(
+                time_array,
+                lens_source_info["source_redshift"],
+                lens_source_info["deflector_redshift"],
+                microlensing_params["kappa_star"],
+                microlensing_params["kappa_tot"],
+                microlensing_params["shear"],
+                microlensing_params["shear_phi"],
+                lens_source_info["ra_lens"],
+                lens_source_info["dec_lens"],
+                lens_source_info["deflector_velocity_dispersion"],
+                cosmology,
+                kwargs_magnification_map_settings,
+                "gaussian",
+                kwargs_source_gaussian,
+            )
+
+        # Now test that properties work correctly
+        lightcurves = ml_lens_model.lightcurves
+        assert isinstance(lightcurves, np.ndarray)
+        assert len(lightcurves) == len(microlensing_params["kappa_star"])
+
+        tracks = ml_lens_model.tracks
+        assert isinstance(tracks, list)
+        assert len(tracks) == len(microlensing_params["kappa_star"])
+
+        magmaps = ml_lens_model.magmaps_images
+        assert isinstance(magmaps, list)
+        assert len(magmaps) == len(microlensing_params["kappa_star"])
