@@ -65,7 +65,8 @@ class FalsePositivePop(object):
         """Draw source(s) within the redshift limit of z_max.
 
         :param z_max: maximum redshift for drawn source.
-        :param area: area to draw source coordinates, if None, does not draw it
+        :param area: area to draw source coordinates, if None, does not
+            draw it
         :return: A Source instance or a list of Source instance.
         """
         source_number = random.choices(self._choice, weights=self._weights)[0]
@@ -110,7 +111,6 @@ class FalsePositivePop(object):
                     continue  # Retry if sources are invalid
 
                 # Step 3: Create false positive
-
 
                 false_positive = FalsePositive(
                     deflector_class=deflector,
