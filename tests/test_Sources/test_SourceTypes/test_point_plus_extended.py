@@ -7,7 +7,6 @@ import os
 from astropy.cosmology import FlatLambdaCDM
 from astropy.table import Table
 import pytest
-from numpy import testing as npt
 
 
 @pytest.fixture

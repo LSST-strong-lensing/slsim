@@ -1,6 +1,5 @@
 from slsim.Sources.SourceTypes.double_sersic import DoubleSersic
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
-import numpy as np
 import pytest
 from numpy import testing as npt
 

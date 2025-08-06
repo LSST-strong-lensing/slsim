@@ -1,4 +1,3 @@
-import numpy as np
 from slsim.Sources.SourceTypes.source_base import SourceBase
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 from slsim.Util.param_util import surface_brightness_reff

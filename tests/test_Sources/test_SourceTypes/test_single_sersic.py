@@ -1,5 +1,4 @@
 from slsim.Sources.SourceTypes.single_sersic import SingleSersic
-import numpy as np
 import pytest
 from numpy import testing as npt
 

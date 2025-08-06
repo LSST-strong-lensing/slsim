@@ -1,5 +1,4 @@
 from slsim.Sources.SourceTypes.source_base import SourceBase
-import numpy as np
 from numpy import testing as npt
 from astropy.table import Table
 import pytest
@@ -70,7 +69,7 @@ class TestSourceBase:
         source_model, kwargs_source = source.kwargs_point_source(
             band="r", image_observation_times=None, image_pos_x=None, image_pos_y=None
         )
-        assert source_model == None
+        assert source_model is None
         assert kwargs_source == []
         source = SourceBase(
             z=1, point_source=True, lensed=True, variability_model="NONE"
