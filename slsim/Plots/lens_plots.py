@@ -114,10 +114,12 @@ class LensingPlots(object):
             default is 1
         :param kwargs_lens_cut: lens selection cuts for
             Lens.validity_test() function
-        :param single_band: boolean flag, set to True to only show the first
-            band in the rgb_band_list, default is False
-        :param lens_class_list: list of lens_class objects to be plotted.
-        :param rgb_kwargs: additional keyword arguments for rgb_image function.
+        :param single_band: boolean flag, set to True to only show the
+            first band in the rgb_band_list, default is False
+        :param lens_class_list: list of lens_class objects to be
+            plotted.
+        :param rgb_kwargs: additional keyword arguments for rgb_image
+            function.
         """
         if kwargs_lens_cut is None:
             kwargs_lens_cut = {}
@@ -137,7 +139,9 @@ class LensingPlots(object):
                     current_lens = lens_class_list[idx]
                     idx += 1
                 else:
-                    current_lens = self._lens_pop.select_lens_at_random(**kwargs_lens_cut)
+                    current_lens = self._lens_pop.select_lens_at_random(
+                        **kwargs_lens_cut
+                    )
                 if single_band:
                     # If single band, we only show the first band in the list
                     image_rgb = make_image(

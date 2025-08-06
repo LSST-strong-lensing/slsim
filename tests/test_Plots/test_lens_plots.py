@@ -167,6 +167,7 @@ def test_plot_montage(gg_lens_pop_instance):
     assert len(axes) == n_vertical
     assert len(axes[0]) == n_horizont
 
+
 def test_plot_montage_single_band(gg_lens_pop_instance):
     rgb_band_list = ["r", "g", "i"]
     add_noise = True
@@ -175,7 +176,10 @@ def test_plot_montage_single_band(gg_lens_pop_instance):
     kwargs_lens_cut_plot = {}
     n_total = n_horizont * n_vertical
     lensing_plots = LensingPlots(gg_lens_pop_instance, num_pix=64, coadd_years=5)
-    gg_lens_list=[gg_lens_pop_instance.select_lens_at_random(**kwargs_lens_cut_plot) for _ in range(n_total)]
+    gg_lens_list = [
+        gg_lens_pop_instance.select_lens_at_random(**kwargs_lens_cut_plot)
+        for _ in range(n_total)
+    ]
     fig, axes = lensing_plots.plot_montage(
         rgb_band_list,
         add_noise=add_noise,
