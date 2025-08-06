@@ -118,7 +118,9 @@ class TestSource:
             **kwargs_point,
         )
 
-        self.source_general_lc = Source(point_source_type="general_lightcurve", z=1, MJD=[0, 1, 2])
+        self.source_general_lc = Source(
+            point_source_type="general_lightcurve", z=1, MJD=[0, 1, 2]
+        )
 
     def test_redshift(self):
         assert self.source.redshift == 1.0
