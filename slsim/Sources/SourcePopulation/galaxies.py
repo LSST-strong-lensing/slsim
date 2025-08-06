@@ -133,6 +133,7 @@ class Galaxies(SourcePopBase):
         self._galaxy_select = object_cut(galaxy_list, list_type=list_type, **kwargs_cut)
         self._num_select = len(self._galaxy_select)
         self.list_type = list_type
+        self._full_galaxy_list = galaxy_list
 
     @property
     def source_number(self):
@@ -150,15 +151,25 @@ class Galaxies(SourcePopBase):
         """
         return self._num_select
 
-    def draw_source_dict(self, z_max=None):
+    def draw_source_dict(self, z_max=None, z_min=None, galaxy_index=None):
         """Choose source at random.
 
         :param z_max: maximum redshift limit for the galaxy to be drawn.
             If no galaxy is found for this limit, None will be returned.
+        :param z_min: minimum redshift limit for the galaxy to be drawn.
+            If no galaxy is found for this limit, None will be returned.
+        :param galaxy_index: index of galaxy to pic (if provided)
         :return: dictionary of source
         """
-        if z_max is not None:
-            filtered_galaxies = self._galaxy_select[self._galaxy_select["z"] < z_max]
+        if galaxy_index is not None:
+            galaxy = self._full_galaxy_list[galaxy_index]
+
+        elif z_max is not None or z_min is not None:
+            if z_max is None:
+                z_max = 1100
+            if z_min is None:
+                z_min = 0
+            filtered_galaxies = self._galaxy_select[(self._galaxy_select["z"] < z_max) & (z_min < self._galaxy_select["z"])]
             if len(filtered_galaxies) == 0:
                 return None
             else:
@@ -252,14 +263,17 @@ class Galaxies(SourcePopBase):
             )
         return galaxy
 
-    def draw_source(self, z_max=None):
+    def draw_source(self, z_max=None, z_min=None, galaxy_index=None):
         """Choose source at random.
 
         :param z_max: maximum redshift limit for the galaxy to be drawn.
             If no galaxy is found for this limit, None will be returned.
+        :param z_min: minimum redshift limit for the galaxy to be drawn.
+            If no galaxy is found for this limit, None will be returned.
+        :param galaxy_index: index of galaxy to pic (if provided)
         :return: instance of Source class
         """
-        galaxy = self.draw_source_dict(z_max=z_max)
+        galaxy = self.draw_source_dict(z_max=z_max, z_min=z_min, galaxy_index=galaxy_index)
         if galaxy is None:
             return None
         source_class = Source(

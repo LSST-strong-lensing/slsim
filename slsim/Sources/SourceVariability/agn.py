@@ -75,7 +75,6 @@ class Agn(object):
         # Create the driving variability light curve from driving variability kwargs
         # The type of Variability must be a light_curve object (e.g. constructed using
         # "sinusoidal", "light_curve", "bending_power_law", or "user_defined_psd".
-        print(self.agn_driving_kwargs_variability, "test AGN variability model")
         driving_variability = Variability(
             self.agn_driving_variability_model, **self.agn_driving_kwargs_variability
         )
