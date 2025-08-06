@@ -72,13 +72,13 @@ class LensPop(LensedPopulationBase):
             )
             if test_area is None:
                 theta_e_infinity = _deflector.theta_e_infinity(cosmo=self.cosmo)
-                test_area = area_theta_e_infinity(theta_e_infinity=theta_e_infinity)
+                test_area_ = area_theta_e_infinity(theta_e_infinity=theta_e_infinity)
             else:
-                test_area = test_area
+                test_area_ = test_area
             # set a center for the deflector and source
             _deflector.update_center(deflector_area=0.01)
             _source.update_center(
-                area=test_area, reference_position=_deflector.deflector_center
+                area=test_area_, reference_position=_deflector.deflector_center
             )
             gg_lens = Lens(
                 deflector_class=_deflector,
@@ -230,5 +230,5 @@ def area_theta_e_infinity(theta_e_infinity):
         source (Dds/Ds = 1)
     :return: test area in arcsec^2
     """
-    test_area = np.pi * (theta_e_infinity * 2.5) ** 2
+    test_area = np.pi * (theta_e_infinity * 1.5) ** 2
     return test_area

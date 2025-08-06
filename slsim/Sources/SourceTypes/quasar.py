@@ -69,7 +69,10 @@ class Quasar(SourceBase):
             self._variability_computed = False
         else:
             self._variability_computed = True
-        self._random_seed = random_seed
+        if random_seed is not None:
+            self._random_seed = int(random_seed)
+        else:
+            self._random_seed = None
 
     @property
     def light_curve(self):

@@ -94,11 +94,6 @@ class PointSource(object):
         :param image_positions:
         :return: point source model string, or None
         """
-        print("test that I am here")
-        print(
-            self._point_source.point_source_type(image_positions=image_positions),
-            "output test",
-        )
         return self._point_source.point_source_type(image_positions=image_positions)
 
     def kwargs_point_source(

@@ -43,7 +43,6 @@ def simulate_image(
     :rtype: 2d numpy array
     """
     kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band)
-    print(kwargs_model, kwargs_params, "test lenstronomy kwargs")
     from slsim.ImageSimulation import image_quality_lenstronomy
 
     kwargs_single_band = image_quality_lenstronomy.kwargs_single_band(

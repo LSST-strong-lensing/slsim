@@ -321,7 +321,6 @@ class SourceBase(ABC):
             ps_mag = self.point_source_magnitude(
                 band=band, image_observation_times=image_observation_times
             )
-        print(ps_type, ps_mag, image_pos_x, "test")
         if np.shape(np.asarray(ps_mag)) != np.shape(np.asarray(image_pos_x)):
             raise ValueError(
                 "length of image positions %s needs to be the length of the ps_mag %s"

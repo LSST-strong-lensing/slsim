@@ -679,7 +679,6 @@ class Lens(LensedSystemBase):
                 magnified_mag_list = []
                 for i in range(len(magnif_log)):
                     magnified_mag_list.append(source_mag_unlensed - magnif_log[i])
-                print(magnified_mag_list, "test magnified_mag_list")
                 return np.array(magnified_mag_list)
         return self.source(source_index).point_source_magnitude(band)
 
@@ -980,7 +979,7 @@ class Lens(LensedSystemBase):
         kwargs_source_amp = data_util.magnitude2amplitude(
             lightModel, kwargs_source_mag, magnitude_zero_point=0
         )
-
+        # TODO: this does not work well for clusters when the lensed source is relatively small compared to the image
         num_pix = 200
         delta_pix = theta_E * 4 / num_pix
         x, y = util.make_grid(numPix=num_pix, deltapix=delta_pix)
