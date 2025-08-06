@@ -169,7 +169,9 @@ class Galaxies(SourcePopBase):
                 z_max = 1100
             if z_min is None:
                 z_min = 0
-            filtered_galaxies = self._galaxy_select[(self._galaxy_select["z"] < z_max) & (z_min < self._galaxy_select["z"])]
+            filtered_galaxies = self._galaxy_select[
+                (self._galaxy_select["z"] < z_max) & (z_min < self._galaxy_select["z"])
+            ]
             if len(filtered_galaxies) == 0:
                 return None
             else:
@@ -273,7 +275,9 @@ class Galaxies(SourcePopBase):
         :param galaxy_index: index of galaxy to pic (if provided)
         :return: instance of Source class
         """
-        galaxy = self.draw_source_dict(z_max=z_max, z_min=z_min, galaxy_index=galaxy_index)
+        galaxy = self.draw_source_dict(
+            z_max=z_max, z_min=z_min, galaxy_index=galaxy_index
+        )
         if galaxy is None:
             return None
         source_class = Source(

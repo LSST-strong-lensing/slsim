@@ -254,12 +254,15 @@ class ClusterDeflectors(DeflectorsBase):
         nearest_neighbors_indices = distance.argmin(axis=1)
         similar_galaxies = galaxy_list[nearest_neighbors_indices]
         include_cols_members = [
-            col for col in members_list.columns if col not in mag_cols # + ["z"]
+            col for col in members_list.columns if col not in mag_cols  # + ["z"]
         ]
-        include_cols_galaxies = [
-            col for col in galaxy_list.columns if col not in ["z"]
-        ]
-        return hstack([members_list[include_cols_members], similar_galaxies[include_cols_galaxies]])
+        include_cols_galaxies = [col for col in galaxy_list.columns if col not in ["z"]]
+        return hstack(
+            [
+                members_list[include_cols_members],
+                similar_galaxies[include_cols_galaxies],
+            ]
+        )
 
     @staticmethod
     def preprocess_clusters(cluster_list):
