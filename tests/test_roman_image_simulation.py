@@ -54,9 +54,7 @@ kwargs_extended = {"extendedsource_type": "single_sersic"}
 source = Source(
     source_dict=SOURCE_DICT, cosmo=COSMO, source_type="extended", **kwargs_extended
 )
-kwargs = {
-    "pointsource_type": "supernova",
-    "extendedsource_type": "single_sersic",
+pointsource_kwargs = {
     "variability_model": "light_curve",
     "kwargs_variability": ["supernovae_lightcurve", "F184", "F129", "F106"],
     "sn_type": "Ia",
@@ -66,12 +64,17 @@ kwargs = {
     "sn_modeldir": None,
 }
 supernova_source = Source(
-    source_dict=SOURCE_DICT, cosmo=COSMO, source_type="point_plus_extended", **kwargs
+    source_dict=SOURCE_DICT,
+    cosmo=COSMO,
+    source_type="point_plus_extended",
+    pointsource_type="supernova",
+    extendedsource_type="single_sersic",
+    pointsource_kwargs=pointsource_kwargs,
 )
 
 deflector = Deflector(
-    deflector_type="EPL",
-    deflector_dict=DEFLECTOR_DICT,
+    deflector_type="EPL_SERSIC",
+    **DEFLECTOR_DICT,
 )
 LENS = Lens(
     source_class=source,
@@ -86,7 +89,7 @@ SNIa_Lens = Lens(
     cosmo=COSMO,
 )
 
-PSF_DIRECTORY = os.path.join(os.path.dirname(__file__), "..", "data", "webbpsf")
+PSF_DIRECTORY = os.path.join(os.path.dirname(__file__), "..", "data", "stpsf")
 
 
 # NOTE: Galsim is required which is not supported on Windows

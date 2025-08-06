@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
+from slsim.Util import param_util
 
 _SUPPORTED_DEFLECTORS = ["EPL", "NFW_HERNQUIST"]
 
@@ -9,15 +10,43 @@ class DeflectorBase(ABC):
     """Class of a single deflector with quantities only related to the
     deflector (independent of the source)"""
 
-    def __init__(self, deflector_dict):
+    def __init__(
+        self,
+        z,
+        vel_disp=None,
+        stellar_mass=None,
+        angular_size=None,
+        center_x=None,
+        center_y=None,
+        deflector_area=0.01,
+        **kwargs
+    ):
         """
 
-
+        :param z: redshift
+        :param vel_disp: velocity dispersion [km/s]
+        :param stellar_mass: stellar mass of deflector [M_sol]
+        :param center_x: RA coordinate (relative arcseconds)
+        :param center_y: DEC coordinate (relative arcseconds)
+        :param angular_size: half light radius of the deflector
+         (potentially used to calculate the velocity dispersion of the deflector)
+        :param deflector_area: area (in solid angle arcseconds^2) to dither the center of the deflector
+         (if center_x or center_y) are not provided)
         :param deflector_dict: parameters of the deflector
         :type deflector_dict: dict
         """
 
-        self._deflector_dict = deflector_dict
+        self._vel_disp = vel_disp
+        self._z = z
+        self._stellar_mass = stellar_mass
+        self._deflector_dict = kwargs
+        self._angular_size = angular_size
+        if center_x is None or center_y is None:
+
+            center_x, center_y = param_util.draw_coord_in_circle(
+                area=deflector_area, size=1
+            )
+        self._center_lens = np.array([center_x, center_y])
 
     @property
     def redshift(self):
@@ -25,7 +54,7 @@ class DeflectorBase(ABC):
 
         :return: redshift
         """
-        return self._deflector_dict["z"]
+        return self._z
 
     @abstractmethod
     def velocity_dispersion(self, cosmo=None):
@@ -34,7 +63,7 @@ class DeflectorBase(ABC):
         :param cosmo: ~astropy.cosmology class
         :return: velocity dispersion [km/s]
         """
-        pass
+        return self._vel_disp
 
     @property
     def deflector_center(self):
@@ -42,20 +71,6 @@ class DeflectorBase(ABC):
 
         :return: [x_pox, y_pos] in arc seconds
         """
-        if not hasattr(self, "_center_lens"):
-
-            if (
-                "center_x" in self._deflector_dict.keys()
-                and "center_y" in self._deflector_dict.keys()
-            ):
-                center_x_lens, center_y_lens = float(
-                    self._deflector_dict["center_x"]
-                ), float(self._deflector_dict["center_y"])
-            else:
-                center_x_lens, center_y_lens = np.random.normal(
-                    loc=0, scale=0.1
-                ), np.random.normal(loc=0, scale=0.1)
-            self._center_lens = np.array([center_x_lens, center_y_lens])
         return self._center_lens
 
     @property
@@ -64,7 +79,7 @@ class DeflectorBase(ABC):
 
         :return: stellar mass of deflector [M_sol]
         """
-        return self._deflector_dict["stellar_mass"]
+        return self._stellar_mass
 
     def magnitude(self, band):
         """Apparent magnitude of the deflector for a given band.
@@ -126,13 +141,13 @@ class DeflectorBase(ABC):
 
         :return: angular size [arcsec]
         """
-        return self._deflector_dict["angular_size"]
+        return self._angular_size
 
     @property
     @abstractmethod
     def halo_properties(self):
-        """Properties of the NFW halo.
+        """Dictionary of properties of the deflector (mass distribution)
 
-        :return: halo mass M200 [physical M_sol], concentration r200/rs
+        :return: dictionary of properties
         """
         pass

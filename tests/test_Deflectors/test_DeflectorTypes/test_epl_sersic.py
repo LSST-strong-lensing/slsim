@@ -29,7 +29,7 @@ class TestEPLSersic(object):
             "z": 0.5,
         }
         # gamma_pl not given, hence using isothermal
-        self.sie_sersic = EPLSersic(deflector_dict=self.deflector_dict)
+        self.sie_sersic = EPLSersic(**self.deflector_dict)
 
         self.deflector_dict = {
             "vel_disp": 200,
@@ -43,7 +43,7 @@ class TestEPLSersic(object):
             "z": 0.5,
         }
         # gamma_pl not given, hence using isothermal
-        self.epl_sersic = EPLSersic(deflector_dict=self.deflector_dict)
+        self.epl_sersic = EPLSersic(**self.deflector_dict)
 
     def test_redshift(self):
         z = self.sie_sersic.redshift
@@ -99,7 +99,7 @@ class TestEPLSersic(object):
         assert kwargs_lens_mass[0]["theta_E"] == 0.0
 
     def test_halo_porperties(self):
-        gamma = self.sie_sersic.halo_properties
+        gamma = self.sie_sersic.halo_properties["gamma_pl"]
         assert gamma == 2.0
 
 
@@ -116,7 +116,7 @@ def gamma_epl_sersic_instance():
         "e2_light": 0.1,
         "z": 0.5,
     }
-    return EPLSersic(deflector_dict=deflector_dict)
+    return EPLSersic(**deflector_dict)
 
 
 def test_mass_model_lenstronomy_gamma(gamma_epl_sersic_instance):

@@ -1,5 +1,5 @@
 from slsim.Deflectors.DeflectorTypes.deflector_base import DeflectorBase
-from slsim.Deflectors.velocity_dispersion import vel_disp_nfw
+from slsim.Deflectors.MassLightConnection.velocity_dispersion import vel_disp_nfw
 from slsim.Deflectors.DeflectorTypes.epl_sersic import EPLSersic
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 import numpy as np
@@ -18,15 +18,15 @@ class NFWCluster(DeflectorBase):
     - 'subhalos': list of dictionary with EPLSersic parameters
     """
 
-    def __init__(self, deflector_dict):
+    def __init__(self, subhalos, **deflector_dict):
         """
 
         :param deflector_dict:  parameters of the cluster halo
         :type deflector_dict: dict
         """
-        subhalos_list = deflector_dict["subhalos"]
-        self._subhalos = [EPLSersic(subhalo_dict) for subhalo_dict in subhalos_list]
-        super(NFWCluster, self).__init__(deflector_dict)
+        subhalos_list = subhalos
+        self._subhalos = [EPLSersic(**subhalo_dict) for subhalo_dict in subhalos_list]
+        super(NFWCluster, self).__init__(**deflector_dict)
 
     def velocity_dispersion(self, cosmo=None):
         """Velocity dispersion of deflector. Simplified assumptions on

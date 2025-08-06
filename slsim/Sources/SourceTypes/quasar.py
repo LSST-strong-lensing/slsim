@@ -3,7 +3,7 @@ from slsim.Sources.SourceVariability.variability import (
     Variability,
     reprocess_with_lamppost_model,
 )
-from slsim.Sources import agn
+from slsim.Sources.SourceTypes import agn
 from slsim.Sources.SourceTypes.source_base import SourceBase
 
 
@@ -234,5 +234,5 @@ def extract_agn_kwargs_from_source_dict(source_dict):
     agn_kwarg_dict = {}
     for kwarg in kwargs_variable_agn:
         if kwarg in column_names:
-            agn_kwarg_dict[kwarg] = source_dict[kwarg].data[0]
+            agn_kwarg_dict[kwarg] = source_dict[kwarg]  # .data[0]
     return agn_kwarg_dict

@@ -254,8 +254,8 @@ class Lens(LensedSystemBase):
             magnitude of the second brightest image and corresponding
             band. If provided, selects lenses where the second brightest
             image has a magnitude less than or equal to provided
-            magnitude. eg: second_bright_image_cut = {"band": "i",
-            "second_bright_mag_max": 23}
+            magnitude. e.g.: second_brightest_image_cut = {"i": 23, "g":
+            24, "r": 22}
         :return: A boolean or dict of boolean.
         """
         validity_results = {}
@@ -293,8 +293,8 @@ class Lens(LensedSystemBase):
             magnitude of the second brightest image and corresponding
             band. If provided, selects lenses where the second brightest
             image has a magnitude less than or equal to provided
-            magnitude. eg: second_bright_image_cut = {"band": "i",
-            "mag_max": 23}
+            magnitude.
+            eg: second_brightest_image_cut = {"i": 23, "g": 24, "r": 22}
         :param source_index: index of a source in source list.
         :return: boolean
         """
@@ -370,6 +370,7 @@ class Lens(LensedSystemBase):
         # computes the magnitude of each image and if the second brightest image has
         # the magnitude less or equal to "second_bright_mag_max" provided in the dict
         # second_bright_image_cut.
+
         if second_brightest_image_cut is not None:
             for band_max, mag_max in second_brightest_image_cut.items():
                 if self._source_type == "extended":
@@ -464,7 +465,7 @@ class Lens(LensedSystemBase):
         :param source_index: index of the source.
         :return: effective Einstein radius for the lens-source pair.
         """
-        if self.deflector.deflector_type in ["EPL"]:
+        if self.deflector.deflector_type in ["EPL", "EPL_SERSIC"]:
             return self.einstein_radius[source_index]
         else:
             return self.einstein_radius_infinity
@@ -481,9 +482,9 @@ class Lens(LensedSystemBase):
         lens_model_class, kwargs_lens = self.deflector_mass_model_lenstronomy(
             source_index=source_index
         )
-        if self.deflector.deflector_type in ["EPL"]:
+        if self.deflector.deflector_type in ["EPL", "EPL_SERSIC"]:
             kappa_ext_convention = self.los_class.convergence
-            gamma_pl = self.deflector.halo_properties
+            gamma_pl = self.deflector.halo_properties["gamma_pl"]
             theta_E_convention = kwargs_lens[0]["theta_E"]
             if (
                 self.source(source_index).redshift
@@ -852,24 +853,39 @@ class Lens(LensedSystemBase):
         ra_lens = np.random.uniform(0, 360)  # degrees
         dec_lens = np.random.uniform(-90, 90)  # degrees
 
-        ml_lc_lens = MicrolensingLightCurveFromLensModel()
-        microlensing_magnitudes = (
-            ml_lc_lens.generate_point_source_microlensing_magnitudes(
-                time=time,
-                source_redshift=self.source(source_index).redshift,
-                deflector_redshift=self.deflector_redshift,
-                kappa_star_images=kappa_star_images,
-                kappa_tot_images=kappa_tot_images,
-                shear_images=shear_images,
-                shear_phi_angle_images=shear_angle_images,
-                ra_lens=ra_lens,
-                dec_lens=dec_lens,
-                deflector_velocity_dispersion=self.deflector_velocity_dispersion(),
-                cosmology=self.cosmo,
-                **kwargs_microlensing,
-            )
+        self._microlensing_model_class = MicrolensingLightCurveFromLensModel()
+        microlensing_magnitudes = self._microlensing_model_class.generate_point_source_microlensing_magnitudes(
+            time=time,
+            source_redshift=self.source(source_index).redshift,
+            deflector_redshift=self.deflector_redshift,
+            kappa_star_images=kappa_star_images,
+            kappa_tot_images=kappa_tot_images,
+            shear_images=shear_images,
+            shear_phi_angle_images=shear_angle_images,
+            ra_lens=ra_lens,
+            dec_lens=dec_lens,
+            deflector_velocity_dispersion=self.deflector_velocity_dispersion(),
+            cosmology=self.cosmo,
+            **kwargs_microlensing,
         )
+
         return microlensing_magnitudes  # # does not include the macro-lensing effect
+
+    @property
+    def microlensing_model_class(self):
+        """Returns the MicrolensingLightCurveFromLensModel class instance used
+        for the microlensing calculations. Only available if microlensing=True
+        was used in point_source_magnitude.
+
+        :return: MicrolensingLightCurveFromLensModel class instance
+        """
+        if hasattr(self, "_microlensing_model_class"):
+            return self._microlensing_model_class
+        else:
+            raise AttributeError(
+                "MicrolensingLightCurveFromLensModel class is not set. "
+                "Please run point_source_magnitude with microlensing=True."
+            )
 
     def extended_source_magnitude(self, band, lensed=False):
         """Unlensed apparent magnitude of the extended source for a given band
@@ -1127,12 +1143,17 @@ class Lens(LensedSystemBase):
         :return: LensModel() class, kwargs_lens
         """
         if source_index is None:
-            z_sourse = self.max_redshift_source_class.redshift
+            z_source = self.max_redshift_source_class.redshift
         else:
-            z_sourse = self.source(source_index).redshift
+            z_source = self.source(source_index).redshift
         if hasattr(self, "_lens_mass_model_list") and hasattr(self, "_kwargs_lens"):
             pass
-        elif self.deflector.deflector_type in ["EPL", "NFW_HERNQUIST", "NFW_CLUSTER"]:
+        elif self.deflector.deflector_type in [
+            "EPL",
+            "EPL_SERSIC",
+            "NFW_HERNQUIST",
+            "NFW_CLUSTER",
+        ]:
 
             lens_mass_model_list, kwargs_lens = self.deflector.mass_model_lenstronomy(
                 lens_cosmo=self._lens_cosmo
@@ -1159,7 +1180,7 @@ class Lens(LensedSystemBase):
                 lens_model_list=self._lens_mass_model_list,
                 cosmo=self.cosmo,
                 z_lens=self.deflector_redshift,
-                z_source=z_sourse,
+                z_source=z_source,
                 z_source_convention=self.max_redshift_source_class.redshift,
                 multi_plane=False,
             )
@@ -1169,12 +1190,12 @@ class Lens(LensedSystemBase):
                 % self.deflector.deflector_type
             )
         # TODO: replace with change_source_redshift() currently not fully working
-        # self._lens_model.change_source_redshift(z_source=z_sourse)
+        # self._lens_model.change_source_redshift(z_source=z_source)
         self._lens_model = LensModel(
             lens_model_list=self._lens_mass_model_list,
             cosmo=self.cosmo,
             z_lens=self.deflector_redshift,
-            z_source=z_sourse,
+            z_source=z_source,
             z_source_convention=self.max_redshift_source_class.redshift,
             multi_plane=False,
         )
@@ -1345,7 +1366,9 @@ class Lens(LensedSystemBase):
             or self._source_type == "point_plus_extended"
         ):
             if self.max_redshift_source_class.pointsource_type in ["supernova"]:
-                lens_type = "SN" + self.max_redshift_source_class.kwargs["sn_type"]
+                lens_type = (
+                    "SN" + self.max_redshift_source_class.pointsource_kwargs["sn_type"]
+                )
             elif self.max_redshift_source_class.pointsource_type in ["quasar"]:
                 lens_type = "QSO"
             else:
@@ -1353,6 +1376,105 @@ class Lens(LensedSystemBase):
                 lens_type = "LC"
 
         return f"{lens_type}-LENS_{ra:.4f}_{dec:.4f}"
+
+    def add_subhalos(self, pyhalos_kwargs, dm_type, source_index=0):
+        """Generate a realization of the subhalos, halo mass.
+
+        :param pyhalos_kwargs: dictionary of parameters for the pyhalos
+            realization.
+        :type pyhalos_kwargs: dict
+        :param dm_type: type of dark matter models, can be 'CDM', 'WDM',
+            or 'ULDM'
+        :type dm_type: str
+        :param source_index: index of source, default =0, i.e. the first
+            source
+        :type source_index: int
+        """
+
+        z_lens = self.deflector_redshift
+        z_source = self.max_redshift_source_class.redshift
+        einstein_radius = self._get_effective_einstein_radius(source_index)
+        cone_opening_angle = 4 * einstein_radius
+
+        if not hasattr(self, "realization"):
+            if dm_type == "CDM":
+                from pyHalo.PresetModels.cdm import CDM
+
+                realization = CDM(
+                    z_lens,
+                    z_source,
+                    cone_opening_angle_arcsec=cone_opening_angle,
+                    **pyhalos_kwargs,
+                )
+            elif dm_type == "WDM":
+                from pyHalo.PresetModels.wdm import WDM
+
+                realization = WDM(
+                    z_lens,
+                    z_source,
+                    cone_opening_angle_arcsec=cone_opening_angle,
+                    **pyhalos_kwargs,
+                )
+            elif dm_type == "ULDM":
+                from pyHalo.PresetModels.uldm import ULDM
+
+                realization = ULDM(
+                    z_lens,
+                    z_source,
+                    cone_opening_angle_arcsec=cone_opening_angle,
+                    **pyhalos_kwargs,
+                )
+            else:
+                raise ValueError(
+                    "We only support 'CDM', 'WDM' or 'ULDM'. "
+                    "Received: {}".format(dm_type)
+                )
+
+            self.realization = realization
+            subhalo_lens_model_list, redshift_array, kwargs_subhalos, _ = (
+                self.realization.lensing_quantities(add_mass_sheet_correction=True)
+            )
+            self._lens_mass_model_list += subhalo_lens_model_list
+            self._kwargs_lens += kwargs_subhalos
+            print("realization contains " + str(len(realization.halos)) + " halos.")
+
+    def dm_subhalo_mass(self):
+        """Get the halo mass of the subhalos in the realization.
+
+        :return: list of halo masses in the realization
+        """
+        if hasattr(self, "realization"):
+            return [halo.mass for halo in self.realization.halos]
+        else:
+            raise ValueError("No realization found. Please run add_subhalos() first.")
+
+    def subhalos_only_lens_model(self):
+        """Get the lens model for the halos only.
+
+        :return: LensModel instance for the halos only, and list of
+            kwargs for the subhalos.
+        """
+        z_lens = self.deflector_redshift
+        z_source = self.max_redshift_source_class.redshift
+        if hasattr(self, "realization"):
+            subhalos_lens_model_list, redshift_array, kwargs_subhalos, _ = (
+                self.realization.lensing_quantities(add_mass_sheet_correction=True)
+            )
+            astropy_instance = self.realization.astropy_instance
+        else:
+            print("No realization found. Please run add_subhalos() first.")
+            kwargs_subhalos = []
+            subhalos_lens_model_list = []
+            astropy_instance = None
+        lens_model_subhalos_only = LensModel(
+            lens_model_list=subhalos_lens_model_list,
+            cosmo=astropy_instance,
+            z_lens=z_lens,
+            z_source=z_source,
+            z_source_convention=self.max_redshift_source_class.redshift,
+            multi_plane=False,
+        )
+        return lens_model_subhalos_only, kwargs_subhalos
 
 
 def image_separation_from_positions(image_positions):

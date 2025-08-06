@@ -1,5 +1,7 @@
 from slsim.Deflectors.DeflectorTypes.deflector_base import DeflectorBase
-from slsim.Deflectors.velocity_dispersion import vel_disp_composite_model
+from slsim.Deflectors.MassLightConnection.velocity_dispersion import (
+    vel_disp_composite_model,
+)
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 from lenstronomy.Util import constants
 
@@ -125,7 +127,7 @@ class NFWHernquist(DeflectorBase):
                 e1_slsim=e1_light_lens, e2_slsim=e2_light_lens
             )
         )
-        size_lens_arcsec = self._deflector_dict["angular_size"]
+        size_lens_arcsec = self.angular_size_light
         lens_light_model_list = ["HERNQUIST_ELLIPSE"]
         kwargs_lens_light = [
             {

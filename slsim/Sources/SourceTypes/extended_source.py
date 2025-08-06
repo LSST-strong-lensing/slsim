@@ -1,28 +1,42 @@
 from slsim.Sources.SourceTypes.single_sersic import SingleSersic
 from slsim.Sources.SourceTypes.double_sersic import DoubleSersic
+from slsim.Sources.SourceTypes.catalog_source import CatalogSource
 from slsim.Sources.SourceTypes.interpolated_image import Interpolated
 
-_SUPPORTED_EXTENDED_SOURCES = ["single_sersic", "double_sersic", "interpolated"]
+_SUPPORTED_EXTENDED_SOURCES = [
+    "single_sersic",
+    "double_sersic",
+    "catalog_source",
+    "interpolated",
+]
 
 
 class ExtendedSource(object):
     """Class to manage a single extended source."""
 
-    def __init__(self, source_dict, extendedsource_type, cosmo=None):
+    def __init__(
+        self, source_dict, extendedsource_type, cosmo=None, extendedsource_kwargs={}
+    ):
         """
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
          For a detailed description of this dictionary, please see the documentation for
          the SingleSersic, DoubleSersic, and Interpolated classes.
         :type source_dict: dict or astropy.table.Table
         :param extendedsource_type: Keyword to specify type of the extended source.
-         Supported extended source types are "single_sersic", "double_sersic", "interpolated".
+         Supported extended source types are "single_sersic", "double_sersic", "catalog_source", "interpolated".
         :type source_type: str
         :param cosmo: astropy.cosmology instance
+        :param extendedsource_kwargs: dictionary of keyword arguments for specific extended source classes.
+         Currently only used for COSMOSSource, see its documentation.
         """
         if extendedsource_type in ["single_sersic"]:
             self._source = SingleSersic(source_dict=source_dict)
         elif extendedsource_type in ["double_sersic"]:
             self._source = DoubleSersic(source_dict=source_dict)
+        elif extendedsource_type in ["catalog_source"]:
+            self._source = CatalogSource(
+                source_dict=source_dict, cosmo=cosmo, **extendedsource_kwargs
+            )
         elif extendedsource_type in ["interpolated"]:
             self._source = Interpolated(source_dict=source_dict, cosmo=cosmo)
         else:

@@ -52,8 +52,8 @@ class TestLens(object):
                 **kwargs,
             )
             self.deflector = Deflector(
-                deflector_type="EPL",
-                deflector_dict=self.deflector_dict,
+                deflector_type="EPL_SERSIC",
+                **self.deflector_dict,
             )
             gg_lens = Lens(
                 source_class=self.source,
@@ -273,7 +273,7 @@ class TestLens(object):
             )
             self.deflector2 = Deflector(
                 deflector_type="NFW_HERNQUIST",
-                deflector_dict=deflector_dict,
+                **deflector_dict,
             )
             gg_lens = Lens(
                 source_class=self.source2,
@@ -305,7 +305,7 @@ class TestLens(object):
             )
             self.deflector3 = Deflector(
                 deflector_type="NFW_CLUSTER",
-                deflector_dict=deflector_dict,
+                **deflector_dict,
             )
             cg_lens = Lens(
                 source_class=self.source3,
@@ -361,6 +361,86 @@ class TestLens(object):
         mag_ratios = self.gg_lens.contrast_ratio(band="i", source_index=0)
         assert 2 <= len(mag_ratios) <= 4
 
+    def test_add_subhalos(self):
+        # Test the add_subhalos method
+
+        # Check that the method raises an error if no subhalos are provided
+        npt.assert_raises(ValueError, self.gg_lens.dm_subhalo_mass)
+        npt.assert_raises(ValueError, self.gg_lens.add_subhalos, {}, "SIDM")
+
+        pyhalos_parms = {
+            "LOS_normalization": 0,
+        }
+        dm_type_cdm = "CDM"
+        gg_lens_copy_cdm = copy.deepcopy(self.gg_lens)
+
+        gg_lens_copy_cdm.add_subhalos(pyhalos_parms, dm_type_cdm)
+
+        realization = gg_lens_copy_cdm.realization
+        dm_subhalo_mass = gg_lens_copy_cdm.dm_subhalo_mass()
+        assert isinstance(dm_subhalo_mass, list)
+        assert isinstance(realization, object)
+
+        len_after_first_kwargs = len(gg_lens_copy_cdm._kwargs_lens)
+
+        # second call for checking for no duplication
+        gg_lens_copy_cdm.add_subhalos(pyhalos_parms, dm_type_cdm)
+
+        len_after_second_kwargs = len(gg_lens_copy_cdm._kwargs_lens)
+
+        assert len_after_second_kwargs == len_after_first_kwargs, "kwargs duplicated!"
+
+        pyhalos_parms_wdm = {
+            "LOS_normalization": 0,
+            "log_mc": 7.0,
+        }
+        dm_type_wdm = "WDM"
+        gg_lens_copy_wdm = copy.deepcopy(self.gg_lens)
+
+        gg_lens_copy_wdm.add_subhalos(pyhalos_parms_wdm, dm_type_wdm)
+
+        realization_wdm = gg_lens_copy_wdm.realization
+        assert isinstance(realization_wdm, object)
+
+        pyhalos_parms_uldm = {
+            "LOS_normalization": 0,
+            "log10_m_uldm": -20.0,
+            "uldm_plaw": 1 / 3,
+            "flucs_shape": "ring",
+            "flucs_args": {"angle": 0.0, "rmin": 0.9, "rmax": 1.1},
+            "log10_fluc_amplitude": -1.6,
+            "n_cut": 1000000,
+        }
+        dm_type_uldm = "ULDM"
+        gg_lens_copy_uldm = copy.deepcopy(self.gg_lens)
+
+        gg_lens_copy_uldm.add_subhalos(pyhalos_parms_uldm, dm_type_uldm)
+
+        realization_uldm = gg_lens_copy_uldm.realization
+        assert isinstance(realization_uldm, object)
+
+    def test_subhalos_only_lens_model(self):
+        # Test the get_halos_only_lens_model method
+        from lenstronomy.LensModel.lens_model import LensModel
+
+        lens_model, kwargz_lens = self.gg_lens.subhalos_only_lens_model()
+        assert isinstance(lens_model, LensModel)
+        assert isinstance(kwargz_lens, list)
+
+        pyhalos_parms = {"LOS_normalization": 0}
+        dm_type = "CDM"
+        self.gg_lens.add_subhalos(pyhalos_parms, dm_type)
+        subhalos_only_model, kwargs_subhalos = self.gg_lens.subhalos_only_lens_model()
+
+        assert isinstance(subhalos_only_model, LensModel)
+        assert isinstance(kwargs_subhalos, list)
+
+        subhalo_lens_model_list, _, _, _ = self.gg_lens.realization.lensing_quantities(
+            add_mass_sheet_correction=True
+        )
+        # check that the lens model list is the same as the one returned by subhalos_only_lens_model
+        assert subhalos_only_model.lens_model_list == subhalo_lens_model_list
+
 
 @pytest.fixture
 def pes_lens_instance():
@@ -375,19 +455,19 @@ def pes_lens_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
         kwargs4 = {
-            "pointsource_type": "quasar",
-            "extendedsource_type": "single_sersic",
             "kwargs_variability": None,
         }
         source4 = Source(
             source_dict=source_dict,
             cosmo=cosmo,
             source_type="point_plus_extended",
-            **kwargs4,
+            pointsource_type="quasar",
+            extendedsource_type="single_sersic",
+            pointsource_kwargs=kwargs4,
         )
         deflector4 = Deflector(
-            deflector_type="EPL",
-            deflector_dict=deflector_dict,
+            deflector_type="EPL_SERSIC",
+            **deflector_dict,
         )
         pes_lens = Lens(
             source_class=source4,
@@ -466,8 +546,6 @@ def lens_instance_with_variability():
         "standard_deviation": 0.9,
     }
     kwargs_quasar = {
-        "pointsource_type": "quasar",
-        "extendedsource_type": "None",
         "variability_model": "light_curve",
         "kwargs_variability": {"agn_lightcurve", "i", "r"},
         "agn_driving_variability_model": "bending_power_law",
@@ -481,11 +559,13 @@ def lens_instance_with_variability():
         source_dict=source_dict_quasar,
         cosmo=cosmo,
         source_type="point_source",
-        **kwargs_quasar,
+        pointsource_type="quasar",
+        extendedsource_type=None,
+        pointsource_kwargs=kwargs_quasar,
     )
     deflector_quasar = Deflector(
-        deflector_type="EPL",
-        deflector_dict=deflector_dict_quasar,
+        deflector_type="EPL_SERSIC",
+        **deflector_dict_quasar,
     )
 
     los_class = LOSIndividual(
@@ -681,6 +761,11 @@ def test_point_source_magnitude_microlensing(
     )
     mock_ml_lc_from_lm_class.return_value = mock_ml_lc_instance  # When Lens calls MicrolensingLightCurveFromLensModel(), it gets our mock
 
+    with pytest.raises(
+        AttributeError, match="MicrolensingLightCurveFromLensModel class is not set."
+    ):
+        _ = lens_instance_with_variability.microlensing_model_class
+
     # Call the method under test
     try:
         result_mags = (
@@ -715,6 +800,13 @@ def test_point_source_magnitude_microlensing(
         call_kwargs["kwargs_source_morphology"]
         == kwargs_microlensing_settings["kwargs_source_morphology"]
     )
+
+    # check if microlensing_model_class is set correctly
+    microlensing_model_class = lens_instance_with_variability.microlensing_model_class
+    assert (
+        microlensing_model_class is not None
+    ), "Microlensing model class should be set."
+    assert microlensing_model_class == mock_ml_lc_instance
 
     # The result of _point_source_magnitude_microlensing should be the direct output
     # from the mocked generate_point_source_microlensing_magnitudes
@@ -760,19 +852,19 @@ def supernovae_lens_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
         kwargs5 = {
-            "pointsource_type": "general_lightcurve",
-            "extendedsource_type": "single_sersic",
             "variability_model": "light_curve",
         }
         source5 = Source(
             source_dict=source_dict,
             cosmo=cosmo,
             source_type="point_plus_extended",
-            **kwargs5,
+            pointsource_type="general_lightcurve",
+            extendedsource_type="single_sersic",
+            pointsource_kwargs=kwargs5,
         )
         deflector5 = Deflector(
-            deflector_type="EPL",
-            deflector_dict=deflector_dict,
+            deflector_type="EPL_SERSIC",
+            **deflector_dict,
         )
         supernovae_lens = Lens(
             source_class=source5,
@@ -838,8 +930,8 @@ class TestDifferentLens(object):
             **kwargs,
         )
         self.deflector6 = Deflector(
-            deflector_type="EPL",
-            deflector_dict=self.deflector_dict,
+            deflector_type="EPL_SERSIC",
+            **self.deflector_dict,
         )
 
     def test_different_setting(self):
@@ -963,8 +1055,6 @@ def supernovae_lens_instance_double_sersic_multisource():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     while True:
         kwargs = {
-            "pointsource_type": "supernova",
-            "extendedsource_type": "double_sersic",
             "variability_model": "light_curve",
             "kwargs_variability": ["supernovae_lightcurve", "i"],
             "sn_type": "Ia",
@@ -977,11 +1067,13 @@ def supernovae_lens_instance_double_sersic_multisource():
             source_dict=source_dict,
             cosmo=cosmo,
             source_type="point_plus_extended",
-            **kwargs,
+            pointsource_type="supernova",
+            extendedsource_type="double_sersic",
+            pointsource_kwargs=kwargs,
         )
         deflector = Deflector(
-            deflector_type="EPL",
-            deflector_dict=deflector_dict,
+            deflector_type="EPL_SERSIC",
+            **deflector_dict,
         )
         supernovae_lens = Lens(
             deflector_class=deflector,
@@ -1025,8 +1117,6 @@ class TestMultiSource(object):
         source_dict2 = copy.deepcopy(source_dict1)
         source_dict2["z"] += 2
         kwargs = {
-            "pointsource_type": "supernova",
-            "extendedsource_type": "double_sersic",
             "variability_model": "light_curve",
             "kwargs_variability": ["supernovae_lightcurve", "i"],
             "sn_type": "Ia",
@@ -1039,7 +1129,9 @@ class TestMultiSource(object):
             source_dict=source_dict2,
             cosmo=self.cosmo,
             source_type="point_plus_extended",
-            **kwargs,
+            pointsource_type="supernova",
+            extendedsource_type="double_sersic",
+            pointsource_kwargs=kwargs,
         )
         # We initiate the another Source class with the same source. In this class,
         # source position will be different and all the lensing quantities will be different
@@ -1047,12 +1139,12 @@ class TestMultiSource(object):
             source_dict=source_dict1,
             cosmo=self.cosmo,
             source_type="point_plus_extended",
-            **kwargs,
+            pointsource_type="supernova",
+            extendedsource_type="double_sersic",
+            pointsource_kwargs=kwargs,
         )
         self.deflector = Deflector(
-            deflector_type="EPL",
-            deflector_dict=deflector_dict_,
-            sis_convention=False,
+            deflector_type="EPL_SERSIC", sis_convention=False, **deflector_dict_
         )
 
         self.lens_class1 = Lens(
@@ -1092,7 +1184,7 @@ class TestMultiSource(object):
             "mag_g": -20,
         }
         self.deflector_nfw = Deflector(
-            deflector_type="NFW_HERNQUIST", deflector_dict=deflector_nfw_dict
+            deflector_type="NFW_HERNQUIST", **deflector_nfw_dict
         )
 
         self.lens_class_nfw = Lens(
@@ -1103,7 +1195,7 @@ class TestMultiSource(object):
         )
 
     def test_point_source_arrival_time_multi(self):
-        gamma_pl_out = self.deflector.halo_properties
+        gamma_pl_out = self.deflector.halo_properties["gamma_pl"]
         assert gamma_pl_out == self.gamma_pl
 
         point_source_arival_time1 = self.lens_class1.point_source_arrival_times()
@@ -1266,7 +1358,7 @@ class TestSlhammock(object):
         )
         deflector = Deflector(
             deflector_type="NFW_HERNQUIST",
-            deflector_dict=deflector_dict,
+            **deflector_dict,
         )
         los_class = LOSIndividual(
             kappa=0, gamma=[-0.005061965833762263, 0.028825761226555197]
