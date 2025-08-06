@@ -13,6 +13,7 @@ catalog_path = os.path.join(
     "test_COSMOS_23.5_training_sample",
 )
 
+
 class TestExtendedSource:
     def setup_method(self):
         cosmo = cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
@@ -89,9 +90,13 @@ class TestExtendedSource:
             cosmo=cosmo, source_type="interpolated", **self.source_dict_interpolated
         )
 
-        self.catalogue_source = ExtendedSource(cosmo=cosmo, source_type="catalog_source",
-                                               catalog_type="COSMOS", catalog_path=catalog_path,
-                                               **self.source_dict_single_sersic)
+        self.catalogue_source = ExtendedSource(
+            cosmo=cosmo,
+            source_type="catalog_source",
+            catalog_type="COSMOS",
+            catalog_path=catalog_path,
+            **self.source_dict_single_sersic
+        )
 
     def test_redshift(self):
         assert self.source.redshift == 1.0

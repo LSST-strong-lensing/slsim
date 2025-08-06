@@ -64,6 +64,7 @@ class TestSourceBase:
         def angular_size_raise():
             source = SourceBase(z=1, extended_source=True)
             return source.angular_size
+
         npt.assert_raises(ValueError, angular_size_raise)
 
     def test_ellipticity(self):
@@ -72,6 +73,7 @@ class TestSourceBase:
         def ellipticity_raise():
             source = SourceBase(z=1, extended_source=True)
             return source.ellipticity
+
         npt.assert_raises(ValueError, ellipticity_raise)
 
     def test_extended_source_magnitude(self):
