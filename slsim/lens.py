@@ -625,6 +625,7 @@ class Lens(LensedSystemBase):
         lensed=False,
         time=None,
         microlensing=False,
+        snapshot_method=False,
         kwargs_microlensing=None,
     ):
         """Point source magnitude, either unlensed (single value) or lensed
@@ -642,6 +643,11 @@ class Lens(LensedSystemBase):
         :param microlensing: if using micro-lensing map to produce the
             lensed magnification
         :type microlensing: bool
+        :param snapshot_method: set to True if you want to compute light
+            curves by generating snapshots of the variable disk,
+            multiplying with the microlensing map slices across the
+            microlens trajectory (factoring in transverse velocity of
+            AGN disk and lens plane)
         :param kwargs_microlensing: additional (optional) dictionary of
             settings required by micro-lensing calculation that do not
             depend on the Lens() class. It is of type:
@@ -667,6 +673,7 @@ class Lens(LensedSystemBase):
                     lensed=lensed,
                     time=time,
                     microlensing=microlensing,
+                    snapshot_method=snapshot_method,
                     kwargs_microlensing=kwargs_microlensing,
                 )
             )
@@ -679,6 +686,7 @@ class Lens(LensedSystemBase):
         lensed=False,
         time=None,
         microlensing=False,
+        snapshot_method=False,
         kwargs_microlensing=None,
     ):
         """Point source magnitude, either unlensed (single value) or lensed
@@ -726,13 +734,28 @@ class Lens(LensedSystemBase):
                     variable_magnitude - magnif_log[:, np.newaxis]
                 )
                 if microlensing:
-                    microlensing_magnitudes = self._point_source_magnitude_microlensing(
-                        band=band,
-                        time=time,
-                        source_index=source_index,
-                        kwargs_microlensing=kwargs_microlensing,
-                    )
-                    lensed_variable_magnitude += microlensing_magnitudes
+                    if snapshot_method:
+                        # this will also return magnitudes computed at image_observer_times
+                        # in order to compute the magnitudes, I will need the following:
+
+                        # 1. a method that returns a list of 2d snapshots in quasar.py that
+                        # inherits from Variability and uses util functions in astro_util.py
+                        # Variability has access to accretion_disk_reprocessing where I can initially
+                        # connect static --> variable disk
+                        # and this method trickles down to self.source (which I have access to in this class)
+                        # 2. mag_map_slices from self._microlensing_model_class
+                        # And then I'll write a small helper function here to assemble the two
+                        return None
+                    else:
+                        microlensing_magnitudes = (
+                            self._point_source_magnitude_microlensing(
+                                band=band,
+                                time=time,
+                                source_index=source_index,
+                                kwargs_microlensing=kwargs_microlensing,
+                            )
+                        )
+                        lensed_variable_magnitude += microlensing_magnitudes
 
                 return lensed_variable_magnitude
 
