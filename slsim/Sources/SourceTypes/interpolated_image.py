@@ -5,8 +5,14 @@ from slsim.Util.cosmo_util import z_scale_factor
 class Interpolated(SourceBase):
     """Class to manage source with real extended source image."""
 
-    def __init__(self, source_dict, cosmo):
+    def __init__(self, image, pixel_width_data, phi_G, z_data, cosmo, **source_dict):
         """
+        :param image: pixelated image to be interpolated
+        :type image: 2d numpy array
+        :param pixel_width_data: width of pixel in image data [arcseconds], which is then being redshifted to the
+         redshift of the source
+        :param z_data: redshift of the original image data
+        :param phi_G: rotation angle of the interpolated image in regard to the RA-DEC coordinate grid
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
          This dict or table should contain atleast redshift of a source, real image
          associated with the source, redshift of that image, orientation angle of th
@@ -18,52 +24,22 @@ class Interpolated(SourceBase):
         :type source_dict: dict or astropy.table.Table
         :param cosmo: astropy.cosmology instance
         """
-        super().__init__(source_dict=source_dict)
-        self.cosmo = cosmo
+        super().__init__(
+            extended_source=True, point_source=False, cosmo=cosmo, **source_dict
+        )
+        self.name = "GAL"
+        self._image = image
+        self._pixel_scale = pixel_width_data
+        self._z_data = z_data
+        self._phi = phi_G
 
     @property
     def _image_redshift(self):
         """Returns redshift of a given image."""
 
-        return float(self.source_dict["z_data"])
+        return self._z_data
 
-    @property
-    def _image(self):
-        """Returns image of a given extended source."""
-
-        return self.source_dict["image"]
-
-    @property
-    def _phi(self):
-        """Returns position angle of a given image in arcsec."""
-
-        return self.source_dict["phi_G"]
-
-    @property
-    def _pixel_scale(self):
-        """Returns pixel scale of a given image."""
-
-        return self.source_dict["pixel_width_data"]
-
-    def extended_source_magnitude(self, band):
-        """Get the magnitude of the extended source in a specific band.
-
-        :param band: Imaging band
-        :type band: str
-        :return: Magnitude of the extended source in the specified band
-        :rtype: float
-        """
-        column_names = self.source_dict.colnames
-        if "mag_" + band not in column_names:
-            raise ValueError("required parameter is missing in the source dictionary.")
-        else:
-            band_string = "mag_" + band
-        source_mag = self.source_dict[band_string]
-        return source_mag
-
-    def kwargs_extended_source_light(
-        self, reference_position=None, draw_area=None, band=None
-    ):
+    def kwargs_extended_light(self, band=None):
         """Provides dictionary of keywords for the source light model(s).
         Kewords used are in lenstronomy conventions.
 
@@ -82,15 +58,12 @@ class Interpolated(SourceBase):
             mag_source = 1
         else:
             mag_source = self.extended_source_magnitude(band=band)
-        center_source = self.extended_source_position(
-            reference_position=reference_position, draw_area=draw_area
-        )
-        z_image = self._image_redshift
+        center_source = self.extended_source_position
         pixel_width = self._pixel_scale
         pixel_width *= z_scale_factor(
-            z_old=z_image, z_new=self.redshift, cosmo=self.cosmo
+            z_old=self._image_redshift, z_new=self.redshift, cosmo=self._cosmo
         )
-
+        light_model_list = ["INTERPOL"]
         kwargs_extended_source = [
             {
                 "magnitude": mag_source,
@@ -101,13 +74,4 @@ class Interpolated(SourceBase):
                 "scale": pixel_width,
             }
         ]
-        return kwargs_extended_source
-
-    def extended_source_light_model(self):
-        """Provides a list of source models.
-
-        :return: list of extented source model.
-        """
-
-        source_models_list = ["INTERPOL"]
-        return source_models_list
+        return light_model_list, kwargs_extended_source

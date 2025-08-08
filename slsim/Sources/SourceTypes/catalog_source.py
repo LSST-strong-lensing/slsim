@@ -11,8 +11,22 @@ class CatalogSource(SourceBase):
     obtained by performing a sersic fit.
     """
 
-    def __init__(self, source_dict, cosmo, catalog_type, catalog_path):
+    def __init__(
+        self,
+        angular_size,
+        e1,
+        e2,
+        n_sersic,
+        cosmo,
+        catalog_type,
+        catalog_path,
+        **source_dict,
+    ):
         """
+        :param angular_size: half light radius of object [arcseconds]
+        :param e1: eccentricity modulus
+        :param e2: eccentricity modulus
+        :param n_sersic: Sersic index
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
          This dict or table should contain atleast redshift, a magnitude in any band,
          sersic index, angular size in arcsec, and ellipticities e1 and e2.
@@ -20,7 +34,7 @@ class CatalogSource(SourceBase):
          "e1": 0.002, "e2": 0.001}. One can provide magnitudes in multiple bands.
         :type source_dict: dict or astropy.table.Table
         :param cosmo: instance of astropy cosmology
-        :param catalog_type: specifies which catalog to use. Currently the options are:
+        :param catalog_type: specifies which catalog to use. Curently the options are:
          1. "COSMOS" - this catalog can be downloaded from https://zenodo.org/records/3242143
         :type catalog_type: string
         :param catalog_path: path to the directory containing the source catalog. For
@@ -28,12 +42,12 @@ class CatalogSource(SourceBase):
          catalog_path = "/home/data/COSMOS_23.5_training_sample".
         :type catalog_path: string
         """
-        ang_dist = cosmo.angular_diameter_distance(source_dict["z"])
-        source_dict["physical_size"] = (
-            source_dict["angular_size"] * 4.84814e-6 * ang_dist.value * 1000
-        )  # kPc
-
-        super().__init__(source_dict=source_dict)
+        super().__init__(extended_source=True, point_source=False, **source_dict)
+        self.name = "GAL"
+        self._angular_size = angular_size
+        self._e1, self._e2 = e1, e2
+        self._n_sersic = n_sersic
+        self._cosmo = cosmo
 
         # Process catalog and store as class attribute
         # If multiple instances of the class are created, this is only executed once
@@ -52,62 +66,10 @@ class CatalogSource(SourceBase):
         self.catalog_type = catalog_type
         self.catalog_path = catalog_path
 
-    @property
-    def redshift(self):
-        """Returns source redshift."""
-
-        return self.source_dict["z"]
-
-    @property
-    def angular_size(self):
-        """Returns angular size of the source."""
-
-        return self.source_dict["angular_size"]
-
-    @property
-    def ellipticity(self):
-        """Returns ellipticity components of source.
-        Defined as:
-
-        .. math::
-            e1 = \\frac{1-q}{1+q} * cos(2 \\phi)
-            e2 = \\frac{1-q}{1+q} * sin(2 \\phi)
-
-        with q being the minor-to-major axis ratio.
-        """
-
-        return self.source_dict["e1"], self.source_dict["e2"]
-
-    def extended_source_magnitude(self, band):
-        """Get the magnitude of the extended source in a specific band.
-
-        :param band: Imaging band
-        :type band: str
-        :return: Magnitude of the extended source in the specified band
-        :rtype: float
-        """
-        column_names = self.source_dict.colnames
-        if "mag_" + band not in column_names:
-            raise ValueError("required parameter is missing in the source dictionary.")
-        else:
-            band_string = "mag_" + band
-        source_mag = self.source_dict[band_string]
-        return source_mag
-
-    def kwargs_extended_source_light(
-        self, reference_position=None, draw_area=None, band=None
-    ):
+    def kwargs_extended_light(self, band=None):
         """Provides dictionary of keywords for the source light model(s).
-        Kewords used are in lenstronomy conventions.
+        Keywords used are in lenstronomy conventions.
 
-        :param reference_position: reference position. the source postion will be
-         defined relative to this position. The default choice is None. In this case
-         source_dict must contain source position.
-         Eg: np.array([0, 0])
-        :param draw_area: The area of the test region from which we randomly draw a
-         source position. The default choice is None. In this case
-         source_dict must contain source position.
-         Eg: 4*pi.
         :param band: Imaging band
         :return: dictionary of keywords for the source light model(s)
         """
@@ -115,18 +77,20 @@ class CatalogSource(SourceBase):
             mag_source = 1
         else:
             mag_source = self.extended_source_magnitude(band=band)
-        center_source = self.extended_source_position(
-            reference_position=reference_position, draw_area=draw_area
-        )
+        center_source = self.extended_source_position
 
         if not hasattr(self, "_image"):
             if self.catalog_type == "COSMOS":
                 self._image, self._scale, self._phi = catalog_util.match_cosmos_source(
-                    source_dict=self.source_dict,
+                    angular_size=self.angular_size,
+                    physical_size=self.physical_size(cosmo=self._cosmo),
+                    e1=self._e1,
+                    e2=self._e2,
+                    n_sersic=self._n_sersic,
                     processed_cosmos_catalog=self.final_cosmos_catalog,
                     catalog_path=self.catalog_path,
                 )
-
+        light_model_list = ["INTERPOL"]
         kwargs_extended_source = [
             {
                 "magnitude": mag_source,
@@ -137,13 +101,4 @@ class CatalogSource(SourceBase):
                 "scale": self._scale,
             }
         ]
-        return kwargs_extended_source
-
-    def extended_source_light_model(self):
-        """Provides a list of source models.
-
-        :return: list of extended source model.
-        """
-
-        source_models_list = ["INTERPOL"]
-        return source_models_list
+        return light_model_list, kwargs_extended_source

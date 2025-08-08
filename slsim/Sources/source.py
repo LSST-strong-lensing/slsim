@@ -1,8 +1,12 @@
-from slsim.Sources.SourceTypes.point_source import PointSource
-from slsim.Sources.SourceTypes.extended_source import ExtendedSource
 from slsim.Sources.SourceTypes.point_plus_extended_source import PointPlusExtendedSource
 
-_SUPPORTED_SOURCES = ["point_source", "extended", "point_plus_extended"]
+_SUPPORTED_POINT_SOURCES = ["supernova", "quasar", "general_lightcurve"]
+_SUPPORTED_EXTENDED_SOURCES = [
+    "single_sersic",
+    "double_sersic",
+    "catalog_source",
+    "interpolated",
+]
 
 
 class Source(object):
@@ -10,86 +14,100 @@ class Source(object):
 
     def __init__(
         self,
-        source_dict,
-        source_type=None,
-        extendedsource_type=None,
-        pointsource_type=None,
-        cosmo=None,
-        pointsource_kwargs={},
-        extendedsource_kwargs={},
+        extended_source_type=None,
+        point_source_type=None,
+        **source_dict,
     ):
         """
-        :param source_dict: Source properties. May be a dictionary or an Astropy table.
-         For a detailed description of this dictionary, please see the documentation for
-         the SingleSersic, DoubleSersic, Interpolated classes, SupernovaEvent, and Quasar class.
-        :type source_dict: dict or astropy.table.Table .
-         eg of a supernova plus host galaxy dict: {"z": 0.8, "mag_i": 22, "n_sersic": 1,
-           "angular_size": 0.10, "e1": 0.002, "e2": 0.001, "ra_off": 0.001, "dec_off": 0.005}
         :param source_type: Keyword to specify type of the source. Supported source types are
          'extended', 'point_source', and 'point_plus_extended' supported
         :type source_type: str
-        :param extendedsource_type: Keyword to specify type of the extended source.
-         Supported extended source types are "single_sersic", "double_sersic", "interpolated".
-        :param pointsource_type: Keyword to specify type of the point source.
-         Supported point source types are "supernova", "quasar", "general_lightcurve".
-        :param cosmo: astropy.cosmology instance
-        :param pointsource_kwargs: dictionary of keyword arguments for PointSource.
-         For supernova kwargs dict, please see documentation of SupernovaEvent class.
-         For quasar kwargs dict, please see documentation of Quasar class.
-         Eg of supernova kwargs: pointsource_kwargs={
-         "variability_model": "light_curve", "kwargs_variability": ["supernovae_lightcurve",
-            "i", "r"], "sn_type": "Ia", "sn_absolute_mag_band": "bessellb",
-            "sn_absolute_zpsys": "ab", "lightcurve_time": np.linspace(-50, 100, 150),
-            "sn_modeldir": None}.
-        :param extendedsource_kwargs: dictionary of keyword arguments for ExtendedSource.
-         Please see documentation of ExtendedSource() class as well as specific extended source classes.
+        :param source_dict: Source properties. Can be a dictionary or an Astropy table.
+         For a detailed description of this dictionary, please see the documentation for
+         the individual classes, such as SingleSersic, DoubleSersic, Interpolated classes, SupernovaEvent,
+         and Quasar class.
+        :type source_dict: dict or astropy.table.Table .
+
         """
-        self.cosmo = cosmo
-        self.pointsource_kwargs = pointsource_kwargs
-        self.extendedsource_kwargs = extendedsource_kwargs
-        self.source_type = source_type
-        self.extendedsource_type = extendedsource_type
-        self.pointsource_type = pointsource_type
-        if self.source_type in ["point_source"]:
-            self._single_source = PointSource(
-                source_dict=source_dict,
-                pointsource_type=self.pointsource_type,
-                cosmo=self.cosmo,
-                pointsource_kwargs=pointsource_kwargs,
+        self.extended_source_type = extended_source_type
+        if extended_source_type is not None and point_source_type is not None:
+            source_type = "point_plus_extended"
+            self.source_type = source_type
+        elif extended_source_type is not None:
+            source_type = extended_source_type
+            self.source_type = "extended"
+        elif point_source_type is not None:
+            source_type = point_source_type
+            self.source_type = "point_source"
+        else:
+            raise ValueError(
+                "either extended_source_type of point_source_type need to set."
             )
-        elif self.source_type in ["extended"]:
-            self._single_source = ExtendedSource(
-                source_dict=source_dict,
-                extendedsource_type=self.extendedsource_type,
-                cosmo=cosmo,
-                extendedsource_kwargs=extendedsource_kwargs,
-            )
-        elif self.source_type in ["point_plus_extended"]:
-            self._single_source = PointPlusExtendedSource(
-                source_dict=source_dict,
-                extendedsource_type=self.extendedsource_type,
-                pointsource_type=self.pointsource_type,
-                cosmo=cosmo,
-                pointsource_kwargs=pointsource_kwargs,
-                extendedsource_kwargs=extendedsource_kwargs,
+
+        # point sources
+        if source_type in ["supernova"]:
+            from slsim.Sources.SourceTypes.supernova_event import SupernovaEvent
+
+            self._source = SupernovaEvent(**source_dict)
+        elif source_type in ["quasar"]:
+            from slsim.Sources.SourceTypes.quasar import Quasar
+
+            self._source = Quasar(**source_dict)
+        elif source_type in ["general_lightcurve"]:
+            from slsim.Sources.SourceTypes.general_lightcurve import GeneralLightCurve
+
+            self._source = GeneralLightCurve(**source_dict)
+
+        # extended sources
+        elif source_type in ["single_sersic"]:
+            from slsim.Sources.SourceTypes.single_sersic import SingleSersic
+
+            self._source = SingleSersic(**source_dict)
+        elif source_type in ["double_sersic"]:
+            from slsim.Sources.SourceTypes.double_sersic import DoubleSersic
+
+            self._source = DoubleSersic(**source_dict)
+        elif source_type in ["catalog_source"]:
+            from slsim.Sources.SourceTypes.catalog_source import CatalogSource
+
+            self._source = CatalogSource(**source_dict)
+        elif source_type in ["interpolated"]:
+            from slsim.Sources.SourceTypes.interpolated_image import Interpolated
+
+            self._source = Interpolated(**source_dict)
+
+        # point source plus extended source
+        elif source_type in ["point_plus_extended"]:
+            self._source = PointPlusExtendedSource(
+                extended_source_type=extended_source_type,
+                point_source_type=point_source_type,
+                **source_dict,
             )
         else:
             raise ValueError(
-                "source type %s not supported. Chose among %s."
-                % (source_type, _SUPPORTED_SOURCES)
+                "source type %s not supported. Chose among %s for extended sources and %s for point sources."
+                % (source_type, _SUPPORTED_EXTENDED_SOURCES, _SUPPORTED_POINT_SOURCES)
             )
+
+    @property
+    def name(self):
+        """Meaningful name string of the source.
+
+        :return: name string
+        """
+        return self._source.name
 
     @property
     def redshift(self):
         """Returns source redshift."""
 
-        return self._single_source.redshift
+        return self._source.redshift
 
     @property
     def angular_size(self):
         """Returns angular size of the extended source."""
 
-        return self._single_source.angular_size
+        return self._source.angular_size
 
     @property
     def ellipticity(self):
@@ -103,43 +121,50 @@ class Source(object):
         with q being the minor-to-major axis ratio.
         """
 
-        return self._single_source.ellipticity
+        return self._source.ellipticity
 
-    def extended_source_position(self, reference_position=None, draw_area=None):
-        """Extended source position. If a center has already been provided (and
-        stored in the source_dict), then it is simply returned. Otherwise, a
-        source position is drawn uniformly within the circle of the test area
-        centered on the deflector position.
+    def update_center(
+        self, area=None, reference_position=None, center_x=None, center_y=None
+    ):
+        """Overwrites the source center position.
 
-        :param reference_position: reference position. the source postion will be
-         defined relative to this position. The default choice is None. In this case
-         source_dict must contain source position.
-         Eg: np.array([0, 0])
-        :param draw_area: The area of the test region from which we randomly draw a source
-         position. The default choice is None. In this case
-         source_dict must contain source position. Eg: 4*pi.
-        :return: [x_pos, y_pos]
+        :param reference_position: [RA, DEC] in arc-seconds of the
+            reference from where within a circle the source position is
+            being drawn from
+        :type reference_position: 2d numpy array
+        :param area: area (in solid angle arc-seconds^2) to dither the
+            center of the source
+        :param center_x: RA position [arc-seconds] (optional, otherwise
+            renders within area)
+        :param center_y: DEC position [arc-seconds] (optional, otherwise
+            renders within area)
+        :return: Source() instance updated with new center position
         """
-
-        return self._single_source.extended_source_position(
-            reference_position, draw_area
+        self._source.update_center(
+            area=area,
+            reference_position=reference_position,
+            center_x=center_x,
+            center_y=center_y,
         )
 
-    def point_source_position(self, reference_position=None, draw_area=None):
-        """Point source position. point source could be at the center of the
-        extended source or it can be off from center of the extended source.
+    @property
+    def extended_source_position(self):
+        """Extended source position.
 
-        :param reference_position: reference position. the source postion will be
-         defined relative to this position. The default choice is None. In this case
-         source_dict must contain source position.
-         Eg: np.array([0, 0])
-        :param draw_area: The area of the test region from which we randomly draw a
-         source position. The default choice is None. In this case
-         source_dict must contain source position. Eg: 4*pi.
         :return: [x_pos, y_pos]
         """
 
-        return self._single_source.point_source_position(reference_position, draw_area)
+        return self._source.extended_source_position
+
+    @property
+    def point_source_position(self):
+        """Point source position. point source could be at the center of the
+        extended source, or it can be off from center of the extended source.
+
+        :return: [x_pos, y_pos]
+        """
+
+        return self._source.point_source_position
 
     def extended_source_magnitude(self, band):
         """Get the magnitude of the extended source in a specific band.
@@ -150,7 +175,7 @@ class Source(object):
         :rtype: float
         """
 
-        return self._single_source.extended_source_magnitude(band=band)
+        return self._source.extended_source_magnitude(band=band)
 
     def point_source_magnitude(self, band, image_observation_times=None):
         """Get the magnitude of the point source in a specific band.
@@ -162,43 +187,61 @@ class Source(object):
         :return: Magnitude of the point source in the specified band
         :rtype: float
         """
-        return self._single_source.point_source_magnitude(
+        return self._source.point_source_magnitude(
             band=band, image_observation_times=image_observation_times
         )
 
-    def kwargs_extended_source_light(
-        self, reference_position=None, draw_area=None, band=None
-    ):
-        """Provides dictionary of keywords for the source light model(s).
-        Kewords used are in lenstronomy conventions.
+    def point_source_type(self, image_positions=False):
+        """Type of point source model.
 
-        :param reference_position: reference position. the source postion will be
-         defined relative to this position.
-         Eg: np.array([0, 0])
-        :param draw_area: The area of the test region from which we randomly draw a
-         source position. Eg: 4*pi.
+        :param image_positions:
+        :return: point source model string, or None
+        """
+        return self._source.point_source_type(image_positions=image_positions)
+
+    def kwargs_extended_light(self, band=None):
+        """Provides dictionary of keywords for the source light model(s).
+        Keywords used are in lenstronomy conventions.
+
         :param band: Imaging band
         :return: dictionary of keywords for the source light model(s)
         """
 
-        return self._single_source.kwargs_extended_source_light(
-            reference_position, draw_area, band
-        )
+        return self._source.kwargs_extended_light(band=band)
 
-    def extended_source_light_model(self):
-        """Provides a list of source models.
-
-        :return: list of extented source model.
+    def kwargs_point_source(
+        self,
+        band,
+        image_observation_times=None,
+        image_pos_x=None,
+        image_pos_y=None,
+        ps_mag=None,
+    ):
         """
-        return self._single_source.extended_source_light_model()
+
+        :param band: Imaging band
+        :type band: str
+        :param image_observation_times: Images observation time for an image.
+        :param image_pos_x: pre-calculated image positions (solutions of the lens equation) RA [arcseconds]
+        :param image_pos_y: pre-calculated image positions (solutions of the lens equation) DEC [arcseconds]
+        :param ps_mag: magnitudes of images (or source)
+        :return: source type, list of dictionary in lenstronomy convention
+        """
+        return self._source.kwargs_point_source(
+            band=band,
+            image_observation_times=image_observation_times,
+            image_pos_x=image_pos_x,
+            image_pos_y=image_pos_y,
+            ps_mag=ps_mag,
+        )
 
     def surface_brightness_reff(self, band=None):
         """Calculate average surface brightness within half light radius of a
         galaxy.
 
-        :param band: Imageing band
+        :param band: Imaging band
         :return: average surface brightness within half light radius
             [mag/arcsec^2]
         """
 
-        return self._single_source.surface_brightness_reff(band=band)
+        return self._source.surface_brightness_reff(band=band)

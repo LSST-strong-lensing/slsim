@@ -27,6 +27,7 @@ class Deflector(object):
         :type deflector_dict: dict
         # TODO: document magnitude inputs
         """
+        self._name = "GAL"
         if deflector_type in ["EPL"]:
             self._deflector = EPL(**kwargs)
         elif deflector_type in ["EPL_SERSIC"]:
@@ -35,12 +36,21 @@ class Deflector(object):
             self._deflector = NFWHernquist(**kwargs)
         elif deflector_type in ["NFW_CLUSTER"]:
             self._deflector = NFWCluster(**kwargs)
+            self._name = "CLUSTER"
         else:
             raise ValueError(
                 "Deflector type %s not supported. Chose among %s."
                 % (deflector_type, _SUPPORTED_DEFLECTORS)
             )
         self.deflector_type = deflector_type
+
+    @property
+    def name(self):
+        """Meaningful name string of the deflector.
+
+        :return: name string
+        """
+        return self._name
 
     @property
     def redshift(self):
@@ -66,6 +76,15 @@ class Deflector(object):
         :return: [x_pox, y_pos] in arc seconds
         """
         return self._deflector.deflector_center
+
+    def update_center(self, deflector_area):
+        """Overwrites the deflector center position.
+
+        :param deflector_area: area (in solid angle arcseconds^2) to
+            dither the center of the deflector
+        :return:
+        """
+        return self._deflector.update_center(deflector_area)
 
     @property
     def stellar_mass(self):

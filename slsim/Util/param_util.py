@@ -774,3 +774,25 @@ def update_cosmology_in_yaml_file(cosmo, yml_file):
     new_cosmo = f"cosmology: !{cosmology_class_str}\n{cosmology_params_str}"
 
     return yml_file.replace(old_cosmo, new_cosmo)
+
+
+def image_separation_from_positions(image_positions):
+    """Calculate image separation in arc-seconds; if there are only two images,
+    the separation between them is returned; if there are more than 2 images,
+    the maximum separation is returned.
+
+    :param image_positions: list of image positions in arc-seconds
+    :return: image separation in arc-seconds
+    """
+    if len(image_positions[0]) == 2:
+        image_separation = np.sqrt(
+            (image_positions[0][0] - image_positions[0][1]) ** 2
+            + (image_positions[1][0] - image_positions[1][1]) ** 2
+        )
+    else:
+        coords = np.stack((image_positions[0], image_positions[1]), axis=-1)
+        separations = np.sqrt(
+            np.sum((coords[:, np.newaxis] - coords[np.newaxis, :]) ** 2, axis=-1)
+        )
+        image_separation = np.max(separations)
+    return image_separation

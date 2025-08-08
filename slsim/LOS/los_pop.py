@@ -1,5 +1,7 @@
-from slsim.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
-from slsim.ParamDistributions.kext_gext_distributions import LineOfSightDistribution
+from slsim.Util.ParamDistributions.gaussian_mixture_model import GaussianMixtureModel
+from slsim.Util.ParamDistributions.kext_gext_distributions import (
+    LineOfSightDistribution,
+)
 from slsim.LOS.los_individual import LOSIndividual
 import numpy as np
 

@@ -10,10 +10,10 @@ import slsim.Deflectors as deflectors
 
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
-from slsim.lens_pop import LensPop
+from slsim.Lenses.lens_pop import LensPop
 from slsim.Plots.lens_plots import LensingPlots
-from slsim.Observations.roman_speclite import configure_roman_filters
-from slsim.Observations.roman_speclite import filter_names
+from slsim.Pipelines.roman_speclite import configure_roman_filters
+from slsim.Pipelines.roman_speclite import filter_names
 import speclite
 
 
@@ -41,7 +41,7 @@ def gg_lens_pop_instance():
         cosmo=cosmo,
         sky_area=sky_area,
         catalog_type="skypy",
-        extendedsource_type="single_sersic",
+        extended_source_type="single_sersic",
     )
 
     lenspop = LensPop(
@@ -100,7 +100,7 @@ def gg_roman_lens_pop_instance():
         sky_area=sky_area,
         catalog_type="skypy",
         source_size=None,
-        extendedsource_type="single_sersic",
+        extended_source_type="single_sersic",
     )
 
     lenspop = LensPop(

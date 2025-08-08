@@ -3,8 +3,8 @@ import numpy as np
 from numpy import testing as npt
 from astropy.table import Table
 from astropy.cosmology import FlatLambdaCDM
-from slsim.lens import Lens
-from slsim.image_simulation import (
+from slsim.Lenses.lens import Lens
+from slsim.ImageSimulation.image_simulation import (
     simulate_image,
     sharp_image,
     sharp_rgb_image,
@@ -34,10 +34,10 @@ class TestImageSimulation(object):
         module_path, _ = os.path.split(path)
         print(path, module_path)
         blue_one = Table.read(
-            os.path.join(path, "TestData/blue_one_modified.fits"), format="fits"
+            os.path.join(path, "../TestData/blue_one_modified.fits"), format="fits"
         )
         red_one = Table.read(
-            os.path.join(path, "TestData/red_one_modified.fits"), format="fits"
+            os.path.join(path, "../TestData/red_one_modified.fits"), format="fits"
         )
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
@@ -45,10 +45,7 @@ class TestImageSimulation(object):
         self.deflector_dict = red_one
         while True:
             self.source = Source(
-                source_dict=self.source_dict,
-                cosmo=cosmo,
-                source_type="extended",
-                extendedsource_type="single_sersic",
+                cosmo=cosmo, extended_source_type="single_sersic", **self.source_dict
             )
             self.deflector = Deflector(
                 deflector_type="EPL_SERSIC",
@@ -147,7 +144,7 @@ class TestImageSimulation(object):
         path = os.path.dirname(__file__)
 
         psf_image_1 = [
-            np.load(os.path.join(path, "TestData/psf_kernels_for_image_1.npy"))
+            np.load(os.path.join(path, "../TestData/psf_kernels_for_image_1.npy"))
         ]
         psf_kernel_single = psf_image_1[-1]
 
@@ -180,10 +177,10 @@ class TestImageSimulation(object):
 def pes_lens_instance():
     path = os.path.dirname(__file__)
     source_dict = Table.read(
-        os.path.join(path, "TestData/source_dict_ps.fits"), format="fits"
+        os.path.join(path, "../TestData/source_dict_ps.fits"), format="fits"
     )
     deflector_dict = Table.read(
-        os.path.join(path, "TestData/deflector_dict_ps.fits"), format="fits"
+        os.path.join(path, "../TestData/deflector_dict_ps.fits"), format="fits"
     )
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -204,12 +201,11 @@ def pes_lens_instance():
             "lightcurve_time": np.linspace(0, 1000, 1000),
         }
         source = Source(
-            source_dict=source_dict,
             cosmo=cosmo,
-            source_type="point_plus_extended",
-            pointsource_type="quasar",
-            extendedsource_type="single_sersic",
-            pointsource_kwargs=kwargs_quasar,
+            point_source_type="quasar",
+            extended_source_type="single_sersic",
+            **kwargs_quasar,
+            **source_dict,
         )
         deflector = Deflector(
             deflector_type="EPL_SERSIC",
@@ -278,7 +274,9 @@ def test_point_source_image_with_and_without_variability(pes_lens_instance):
     transf_matrix = np.array([[0.2, 0], [0, 0.2]])
     path = os.path.dirname(__file__)
 
-    psf_image_1 = [np.load(os.path.join(path, "TestData/psf_kernels_for_image_1.npy"))]
+    psf_image_1 = [
+        np.load(os.path.join(path, "../TestData/psf_kernels_for_image_1.npy"))
+    ]
     psf_kernel_single = psf_image_1[-1]
 
     # Call the function to get the result
@@ -347,7 +345,9 @@ def test_deflector_images_with_different_zeropoint(pes_lens_instance):
     )
     path = os.path.dirname(__file__)
 
-    psf_image_1 = [np.load(os.path.join(path, "TestData/psf_kernels_for_image_1.npy"))]
+    psf_image_1 = [
+        np.load(os.path.join(path, "../TestData/psf_kernels_for_image_1.npy"))
+    ]
     psf_kernel_single = psf_image_1[-1]
     transf_matrix = np.array([[0.2, 0], [0, 0.2]])
     lens_image_result_1 = lens_image(
@@ -406,9 +406,7 @@ class TestMultiSourceImageSimulation(object):
     def setup_method(self):
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         path = os.path.dirname(__file__)
-        source_dict1 = Table.read(
-            os.path.join(path, "TestData/source_supernovae_new.fits"), format="fits"
-        )
+
         data = {
             "ra_off": [-0.2524832112858584],
             "dec_off": [0.1394853307977928],
@@ -437,12 +435,13 @@ class TestMultiSourceImageSimulation(object):
             "e0_2": [0.09874724195027847],
             "e1_1": [0.03754887782202202],
             "e1_2": [0.025166403903583694],
-            "angular_size0": [0.37156280037917327],
-            "angular_size1": [0.29701108506340096],
+            "angular_size_0": [0.37156280037917327],
+            "angular_size_1": [0.29701108506340096],
         }
         source_dict2 = Table(data)
         deflector_dict = Table.read(
-            os.path.join(path, "TestData/deflector_supernovae_new.fits"), format="fits"
+            os.path.join(path, "../TestData/deflector_supernovae_new.fits"),
+            format="fits",
         )
         kwargs_sn = {
             "variability_model": "light_curve",
@@ -454,20 +453,18 @@ class TestMultiSourceImageSimulation(object):
             "sn_modeldir": None,
         }
         self.source1 = Source(
-            source_dict=source_dict1,
             cosmo=self.cosmo,
-            source_type="point_plus_extended",
-            pointsource_type="supernova",
-            extendedsource_type="double_sersic",
-            pointsource_kwargs=kwargs_sn,
+            point_source_type="supernova",
+            extended_source_type="double_sersic",
+            **kwargs_sn,
+            **source_dict2,
         )
         self.source2 = Source(
-            source_dict=source_dict2,
             cosmo=self.cosmo,
-            source_type="point_plus_extended",
-            pointsource_type="supernova",
-            extendedsource_type="double_sersic",
-            pointsource_kwargs=kwargs_sn,
+            point_source_type="supernova",
+            extended_source_type="double_sersic",
+            **kwargs_sn,
+            **source_dict2,
         )
         self.deflector = Deflector(
             deflector_type="EPL_SERSIC",
@@ -537,7 +534,7 @@ class TestImageSimulationInterpSingleSource:
         path = os.path.dirname(__file__)
         module_path, _ = os.path.split(path)
         red_one = Table.read(
-            os.path.join(path, "TestData/red_one_modified.fits"), format="fits"
+            os.path.join(path, "../TestData/red_one_modified.fits"), format="fits"
         )
 
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -598,10 +595,7 @@ class TestImageSimulationInterpSingleSource:
             ],
         )[0]
         self.source_interp = Source(
-            source_dict=interp_source_dict,
-            cosmo=self.cosmo,
-            source_type="extended",
-            extendedsource_type="interpolated",
+            cosmo=self.cosmo, extended_source_type="interpolated", **interp_source_dict
         )
 
         deflector_dict = red_one
@@ -645,7 +639,7 @@ class TestImageSimulationInterpSingleSource:
     def test_sharp_rgb_image_single_source(self):
         """Demonstrate using sharp_rgb_image with multiple bands on the single
         interpolated source."""
-        from slsim.image_simulation import sharp_rgb_image
+        from slsim.ImageSimulation.image_simulation import sharp_rgb_image
 
         rgb_img = sharp_rgb_image(
             lens_class=self.lens_interp_single,

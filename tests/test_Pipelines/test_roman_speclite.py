@@ -1,7 +1,7 @@
 import speclite.filters
 import os
 import slsim
-from slsim.Observations.roman_speclite import (
+from slsim.Pipelines.roman_speclite import (
     configure_roman_filters,
     filter_names,
 )

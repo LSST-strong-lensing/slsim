@@ -31,7 +31,7 @@ class DeflectorBase(ABC):
         :param angular_size: half light radius of the deflector
          (potentially used to calculate the velocity dispersion of the deflector)
         :param deflector_area: area (in solid angle arcseconds^2) to dither the center of the deflector
-         (if center_x or center_y) are not provided)
+         (if center_x or center_y) are not provided
         :param deflector_dict: parameters of the deflector
         :type deflector_dict: dict
         """
@@ -48,6 +48,18 @@ class DeflectorBase(ABC):
             )
         self._center_lens = np.array([center_x, center_y])
 
+    def update_center(self, deflector_area):
+        """Overwrites the deflector center position.
+
+        :param deflector_area: area (in solid angle arcseconds^2) to
+            dither the center of the deflector
+        :return:
+        """
+        center_x, center_y = param_util.draw_coord_in_circle(
+            area=deflector_area, size=1
+        )
+        self._center_lens = np.array([center_x, center_y])
+
     @property
     def redshift(self):
         """Deflector redshift.
@@ -56,7 +68,6 @@ class DeflectorBase(ABC):
         """
         return self._z
 
-    @abstractmethod
     def velocity_dispersion(self, cosmo=None):
         """Velocity dispersion of deflector.
 

@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
 from slsim.LOS.los_individual import LOSIndividual
+from slsim.Sources.source import Source
 
 
 class LensedSystemBase(ABC):
     """Abstract Base class to create a lens system with all lensing properties
     required to render populations."""
 
-    def __init__(self, source_class, deflector_class, los_class):
+    def __init__(self, source_class, deflector_class, los_class=None):
         """
         :param source_class: :param source_class: A Source class instance or list of
          Source class instance
@@ -17,6 +18,31 @@ class LensedSystemBase(ABC):
         :type los_class: ~LOSIndividual instance
         """
         self.deflector = deflector_class
+        if isinstance(source_class, list):
+            for source_class_ in source_class:
+                assert isinstance(source_class_, Source)
+            self._source = source_class
+            # chose the highest redshift source to use conventionally use in lens
+            #  mass model.
+            self.max_redshift_source_class = max(
+                self._source, key=lambda obj: obj.redshift
+            )
+            self.source_number = len(self._source)
+            self._max_redshift_source_index = self._source.index(
+                self.max_redshift_source_class
+            )
+        else:
+            assert isinstance(source_class, Source)
+            self._source = [source_class]
+            self.source_number = 1
+            # this is for single source case. self.max_redshift_source_class and
+            # self.source are the same class. The difference is only that one is in the
+            #  form of list and other is just a Source instance. This is done just for
+            # the completion of routine to make things consistent in both single source
+            # and double source case.
+            self.max_redshift_source_class = source_class
+            self._max_redshift_source_index = 0
+
         if isinstance(source_class, list):
             self._source = source_class
         else:

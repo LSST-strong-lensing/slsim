@@ -28,7 +28,7 @@ class LineOfSightDistribution:
         current_script_path = os.path.abspath(__file__)
         current_directory = os.path.dirname(current_script_path)
         parent_directory = os.path.dirname(current_directory)
-        parent_parent = os.path.dirname(parent_directory)
+        parent_parent = os.path.dirname(os.path.dirname(parent_directory))
 
         if nonlinear_correction_path is None:
             file_path_joint = os.path.join(

@@ -1,8 +1,11 @@
 import astropy.cosmology
 import numpy as np
-from slsim.lens import Lens
-from slsim.roman_image_simulation import simulate_roman_image, lens_image_roman
-from slsim.image_simulation import simulate_image
+from slsim.Lenses.lens import Lens
+from slsim.ImageSimulation.roman_image_simulation import (
+    simulate_roman_image,
+    lens_image_roman,
+)
+from slsim.ImageSimulation.image_simulation import simulate_image
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
 from slsim.LOS.los_individual import LOSIndividual
@@ -50,10 +53,8 @@ SOURCE_DICT = {
 }
 
 BAND = "F106"
-kwargs_extended = {"extendedsource_type": "single_sersic"}
-source = Source(
-    source_dict=SOURCE_DICT, cosmo=COSMO, source_type="extended", **kwargs_extended
-)
+kwargs_extended = {"extended_source_type": "single_sersic"}
+source = Source(cosmo=COSMO, **kwargs_extended, **SOURCE_DICT)
 pointsource_kwargs = {
     "variability_model": "light_curve",
     "kwargs_variability": ["supernovae_lightcurve", "F184", "F129", "F106"],
@@ -64,12 +65,11 @@ pointsource_kwargs = {
     "sn_modeldir": None,
 }
 supernova_source = Source(
-    source_dict=SOURCE_DICT,
     cosmo=COSMO,
-    source_type="point_plus_extended",
     pointsource_type="supernova",
-    extendedsource_type="single_sersic",
-    pointsource_kwargs=pointsource_kwargs,
+    extended_source_type="single_sersic",
+    **pointsource_kwargs,
+    **SOURCE_DICT,
 )
 
 deflector = Deflector(
@@ -89,7 +89,7 @@ SNIa_Lens = Lens(
     cosmo=COSMO,
 )
 
-PSF_DIRECTORY = os.path.join(os.path.dirname(__file__), "..", "data", "stpsf")
+PSF_DIRECTORY = os.path.join(os.path.dirname(__file__), "../..", "data", "stpsf")
 
 
 # NOTE: Galsim is required which is not supported on Windows

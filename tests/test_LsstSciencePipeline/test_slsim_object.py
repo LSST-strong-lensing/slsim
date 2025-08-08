@@ -1,4 +1,4 @@
-from slsim.slsim_object import SLSimObject
+from slsim.LsstSciencePipeline.slsim_object import SLSimObject
 import numpy as np
 import pytest
 
