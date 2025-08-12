@@ -369,8 +369,8 @@ def test_supernovae_lens_pop_instance():
         cosmo=cosmo,
         sky_area=sky_area_1,
         kwargs_cut=kwargs_source_cut,
-        pointsource_type="supernova",
-        pointsource_kwargs=pointsource_kwargs,
+        point_source_type="supernova",
+        point_source_kwargs=pointsource_kwargs,
     )
 
     ps_lens_pop_1 = LensPop(
