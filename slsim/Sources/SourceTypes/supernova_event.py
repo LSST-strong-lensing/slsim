@@ -11,8 +11,8 @@ class SupernovaEvent(SourceBase):
         sn_absolute_mag_band,
         sn_absolute_zpsys,
         lightcurve_time,
-        sn_modeldir,
         variability_model,
+        sn_modeldir=None,
         kwargs_variability=None,
         cosmo=None,
         **kwargs

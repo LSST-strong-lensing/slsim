@@ -27,7 +27,12 @@ class GeneralLightCurve(SourceBase):
 
         """
 
-        super().__init__(variability_model=variability_model, **kwargs)
+        super().__init__(
+            variability_model=variability_model,
+            point_source=True,
+            extended_source=False,
+            **kwargs
+        )
         self.name = "LC"
         # These are the keywords that kwargs dict should contain
         self._MJD = MJD
