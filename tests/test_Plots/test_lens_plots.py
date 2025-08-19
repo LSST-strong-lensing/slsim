@@ -168,6 +168,7 @@ def test_plot_montage(gg_lens_pop_instance):
     assert len(axes) == n_vertical
     assert len(axes[0]) == n_horizont
 
+
 def test_plot_montage_single_band(gg_lens_pop_instance):
     rgb_band_list = ["r", "g", "i"]
     add_noise = True

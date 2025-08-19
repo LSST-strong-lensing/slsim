@@ -30,7 +30,15 @@ class LensingPlots(object):
         self._observatory = observatory
         self._kwargs = kwargs
 
-    def rgb_image(self, lens_class, rgb_band_list, add_noise=True, minimum=None, stretch=None, Q=None):
+    def rgb_image(
+        self,
+        lens_class,
+        rgb_band_list,
+        add_noise=True,
+        minimum=None,
+        stretch=None,
+        Q=None,
+    ):
         """Method to generate a rgb-image with lupton_rgb color scale.
 
         :param lens_class: class object containing all information of
@@ -39,7 +47,8 @@ class LensingPlots(object):
             to r-g-b color map
         :param add_noise: boolean flag, set to True to add noise to the
             image, default is True
-        :param minimum: minimum value for the color scale, default is None
+        :param minimum: minimum value for the color scale, default is
+            None
         :param kwargs: additional keyword arguments for make_lupton_rgb
         """
         if self._observatory == "Roman":
@@ -84,7 +93,7 @@ class LensingPlots(object):
                 "minimum": 0,
                 "stretch": 0.5,
                 "Q": 8,
-            }
+            },
         }
         cfg = defaults["Roman"] if self._observatory == "Roman" else defaults["Other"]
         minimum = minimum if minimum is not None else cfg["minimum"]
