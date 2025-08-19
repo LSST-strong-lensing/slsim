@@ -160,13 +160,13 @@ def test_plot_montage(gg_lens_pop_instance):
         n_horizont=n_horizont,
         n_vertical=n_vertical,
         kwargs_lens_cut=kwargs_lens_cut_plot,
+        minimum=0,
         stretch=5,
         Q=5,
     )
     assert isinstance(fig, plt.Figure)
     assert len(axes) == n_vertical
     assert len(axes[0]) == n_horizont
-
 
 def test_plot_montage_single_band(gg_lens_pop_instance):
     rgb_band_list = ["r", "g", "i"]

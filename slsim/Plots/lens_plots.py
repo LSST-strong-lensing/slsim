@@ -30,7 +30,7 @@ class LensingPlots(object):
         self._observatory = observatory
         self._kwargs = kwargs
 
-    def rgb_image(self, lens_class, rgb_band_list, add_noise=True, **kwargs):
+    def rgb_image(self, lens_class, rgb_band_list, add_noise=True, minimum=None, stretch=None, Q=None):
         """Method to generate a rgb-image with lupton_rgb color scale.
 
         :param lens_class: class object containing all information of
@@ -39,6 +39,7 @@ class LensingPlots(object):
             to r-g-b color map
         :param add_noise: boolean flag, set to True to add noise to the
             image, default is True
+        :param minimum: minimum value for the color scale, default is None
         :param kwargs: additional keyword arguments for make_lupton_rgb
         """
         if self._observatory == "Roman":
@@ -73,17 +74,22 @@ class LensingPlots(object):
         )
 
         # Need to use different settings for make_lupton_rgb for roman images
-        if self._observatory == "Roman":
-            minimum = [np.min(image_r), np.min(image_g), np.min(image_b)]
-            stretch = 8
-            Q = 10
-        else:
-            minimum = 0
-            stretch = 0.5
-            Q = 8
-        minimum = kwargs.get("minimum", minimum)
-        stretch = kwargs.get("stretch", stretch)
-        Q = kwargs.get("Q", Q)
+        defaults = {
+            "Roman": {
+                "minimum": [np.min(image_r), np.min(image_g), np.min(image_b)],
+                "stretch": 8,
+                "Q": 10,
+            },
+            "Other": {
+                "minimum": 0,
+                "stretch": 0.5,
+                "Q": 8,
+            }
+        }
+        cfg = defaults["Roman"] if self._observatory == "Roman" else defaults["Other"]
+        minimum = minimum if minimum is not None else cfg["minimum"]
+        stretch = stretch if stretch is not None else cfg["stretch"]
+        Q = Q if Q is not None else cfg["Q"]
 
         image_rgb = make_lupton_rgb(
             image_r, image_g, image_b, minimum=minimum, stretch=stretch, Q=Q
@@ -116,7 +122,7 @@ class LensingPlots(object):
             Lens.validity_test() function
         :param single_band: boolean flag, set to True to only show the
             first band in the rgb_band_list, default is False
-        :param lens_class_list: list of lens_class objects to be
+        :param lens_class_list: list of lens() class objects to be
             plotted.
         :param rgb_kwargs: additional keyword arguments for rgb_image
             function.
