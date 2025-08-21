@@ -66,7 +66,6 @@ def calc_vol(z, cosmo_col):
     :type z: float
     :param cosmo_col: An instance of a colossus cosmology model
     :type cosmo_col: colossus.cosmology instance
-
     :return: volume
     :rtype: float
     """

@@ -230,7 +230,7 @@ class HalosRayTracing(object):
         :type zd: float
         :param zs: The source redshift.
         :type zs: float
-        :returns: 
+        :returns:
             A tuple containing:
                 - A tuple of computed values for kappa and gamma for the different redshift combinations and the external convergence and shear.
                 - A tuple containing the lens model and its keyword arguments for the `os` redshift combination.
