@@ -10,6 +10,7 @@ Subpackages
    slsim.Deflectors
    slsim.FalsePositives
    slsim.Halos
+   slsim.ImageSimulation
    slsim.Observations
    slsim.ParamDistributions
    slsim.Pipelines
@@ -19,14 +20,6 @@ Subpackages
 
 Submodules
 ----------
-
-slsim.image\_simulation module
-------------------------------
-
-.. automodule:: slsim.image_simulation
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 slsim.lens module
 -----------------
