@@ -9,6 +9,7 @@ Subpackages
 
    slsim.Deflectors
    slsim.FalsePositives
+   slsim.Halos
    slsim.Observations
    slsim.ParamDistributions
    slsim.Pipelines

@@ -731,10 +731,13 @@ class HalosLensBase(object):
         :rtype: dict
 
         .. note::
-            lens_model_ds = lens_data['ds`]['param_lens_model`]
-            lens_cosmo_ds = lens_data['ds`]['param_lens_cosmo`]
-            kwargs_lens_ds = lens_data['ds`]['kwargs_lens`]
-             ... and similarly for `od` and `os` data
+
+            .. code-block:: python
+
+                lens_model_ds = lens_data['ds']['param_lens_model']
+                lens_cosmo_ds = lens_data['ds']['param_lens_cosmo']
+                kwargs_lens_ds = lens_data['ds']['kwargs_lens']
+                # ... and similarly for `od` and `os` data
         """
 
         ds_data, od_data, os_data = self.filter_halos_by_redshift(zd, zs)
@@ -814,10 +817,10 @@ class HalosLensBase(object):
         )
 
     def compute_halos_nonlinear_correction_kappa_gamma_values(self, zd, zs):
-        """Compute various kappa and gamma values for the given lens data.
-                This function retrieves the lens data based on the input redshifts and computes the convergence
-        and shear for three categories: `od`, `os`, and `ds`. The gamma values are computed for
-        both components, gamma1 and gamma2.
+        """Compute various kappa and gamma values for the given lens data. 
+        This function retrieves the lens data based on the input redshifts and computes 
+        the convergence and shear for three categories: `od`, `os`, and `ds`. 
+        The gamma values are computed for both components, gamma1 and gamma2.
 
             kappa_od,
             kappa_os,
@@ -984,14 +987,14 @@ class HalosLensBase(object):
         diff=0.0000001,
         diff_method="square",
     ):
-        """Compare the convergence plot with and without the mass sheet
-        correction.
+        """
+        Compare the convergence plot with and without the mass sheet correction.
 
         :param diff: The differential used in the computation of the convergence.
-        Defaults to 0.0000001.
+            Defaults to 0.0000001.
         :type diff: float, optional
-        :param diff_method: The
-        method used to compute the differential. Defaults to "square".
+        :param diff_method: The method used to compute the differential.
+            Defaults to "square".
         :type diff_method: str, optional.
 
         .. note::
@@ -1025,32 +1028,39 @@ class HalosLensBase(object):
         self.halos_list["py"] = py
 
     def halos_various_halos_data(self, zd, zs):
-        """Computes (kappa_od, kappa_os, gamma_od1, gamma_od2, gamma_os1,
-        gamma_os2, kappa_ds, gamma_ds1, gamma_ds2, kappa_os2, gamma_os12,
-        gamma_os22, kext, gext,), (kwargs_lens_os, lens_model_os)  convergence
-        (kappa) and shear (gamma) values for given deflector and source
-        redshifts.
+        """
+        Computes (kappa_od, kappa_os, gamma_od1, gamma_od2, gamma_os1, gamma_os2, kappa_ds,
+        gamma_ds1, gamma_ds2, kappa_os2, gamma_os12, gamma_os22, kext, gext,), 
+        (kwargs_lens_os, lens_model_os)  convergence (kappa) and shear (gamma) values for 
+        given deflector and source redshifts.
 
-        This function extracts the lens model and its keyword arguments for different redshift combinations
-        ('od`, `os`, and `ds`). It then computes the convergence and shear values for each of these combinations.
+        This function extracts the lens model and its keyword arguments for different redshift 
+        combinations (`od`, `os`, and `ds`). It then computes the convergence and shear values
+        for each of these combinations.
 
         :param zd: The deflector redshift.
         :type zd: float
         :param zs: The source redshift.
         :type zs: float
-        :returns: A tuple containing:
-                    - A tuple of computed values for kappa and gamma for the different redshift combinations and the
-                      external convergence and shear.
-                    - A tuple containing the lens model and its keyword arguments for the `os` redshift combination.
+        :returns: 
+            A tuple containing:
+                - A tuple of computed values for kappa and gamma for the different redshift combinations and the external convergence and shear.
+                - A tuple containing the lens model and its keyword arguments for the `os` redshift combination.
         :rtype: tuple
 
         .. math::
-                1 - \kappa_{\text{ext}} = \frac{(1-\kappa_{\text{od}})(1-\kappa_{\text{os}})}{1-\kappa_{\text{ds}}}
 
-            and
+            1 - \kappa_{\text{ext}} 
+            = \\frac{(1-\kappa_{\text{od}})(1-\kappa_{\text{os}})}{1-\kappa_{\text{ds}}}
+
+        and
 
         .. math::
-                \gamma_{\text{ext}} = \sqrt{(\gamma_{\text{od}1}+\gamma_{\text{os}1}-\gamma_{\text{ds}1})^2+(\gamma_{\text{od}2}+\gamma_{\text{os}2}-\gamma_{\text{ds}2})^2}
+
+            \gamma_{\text{ext}} = \sqrt{(\gamma_{\text{od}1}+\gamma_{\text{os}1}
+            -\gamma_{\text{ds}1})^2 
+            +(\gamma_{\text{od}2}+\gamma_{\text{os}2}-\gamma_{\text{ds}2})^2}
+            
         """
         lens_data = self.get_lens_data_by_redshift(zd, zs)
         HRT = HalosRayTracing(lens_kwargs={}, lens_model={})
