@@ -4,6 +4,14 @@ slsim.Pipelines package
 Submodules
 ----------
 
+slsim.Pipelines.roman\_speclite module
+--------------------------------------
+
+.. automodule:: slsim.Pipelines.roman_speclite
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 slsim.Pipelines.skypy\_pipeline module
 --------------------------------------
 

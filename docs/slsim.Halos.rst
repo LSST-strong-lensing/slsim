@@ -63,7 +63,7 @@ slsim.Halos.halos module
 Module contents
 ---------------
 
-.. automodule:: slsim.Observations
+.. automodule:: slsim.Halos
    :members:
    :undoc-members:
    :show-inheritance:

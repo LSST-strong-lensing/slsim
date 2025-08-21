@@ -11,7 +11,6 @@ Subpackages
    slsim.FalsePositives
    slsim.Halos
    slsim.ImageSimulation
-   slsim.Observations
    slsim.ParamDistributions
    slsim.Pipelines
    slsim.Plots
