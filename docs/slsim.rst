@@ -8,6 +8,7 @@ Subpackages
    :maxdepth: 4
 
    slsim.Deflectors
+   slsim.FalsePositives
    slsim.Observations
    slsim.ParamDistributions
    slsim.Pipelines
