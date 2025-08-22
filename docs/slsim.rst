@@ -14,6 +14,7 @@ Subpackages
    slsim.Lenses
    slsim.LOS
    slsim.LsstSciencePipeline
+   slsim.Microlensing
    slsim.ParamDistributions
    slsim.Pipelines
    slsim.Plots
