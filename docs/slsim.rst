@@ -12,6 +12,7 @@ Subpackages
    slsim.Halos
    slsim.ImageSimulation
    slsim.Lenses
+   slsim.LOS
    slsim.ParamDistributions
    slsim.Pipelines
    slsim.Plots
