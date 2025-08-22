@@ -237,10 +237,7 @@ def match_cosmos_source(
     # Match based off of physical size, all units in kPc
     size_tol = 0.5
     size_difference = np.abs(
-        physical_size
-        - processed_cosmos_catalog[
-            "physical_size"
-        ].data
+        physical_size - processed_cosmos_catalog["physical_size"].data
     )
     matched_catalog = processed_cosmos_catalog[size_difference < size_tol]
     # If no matches, relax the matching condition and try again
@@ -280,4 +277,4 @@ def match_cosmos_source(
     # Rotate the COSMOS image so that it matches the angle given in source_dict
     phi = np.pi / 2 - matched_source["sersicfit"][7] - phi
 
-    return image, scale, phi, matched_source['IDENT']
+    return image, scale, phi, matched_source["IDENT"]
