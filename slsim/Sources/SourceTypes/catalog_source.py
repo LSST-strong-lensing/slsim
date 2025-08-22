@@ -86,15 +86,17 @@ class CatalogSource(SourceBase):
         """
         if not hasattr(self, "_image"):
             if self.catalog_type == "COSMOS":
-                self._image, self._scale, self._phi, self.ident = catalog_util.match_cosmos_source(
-                    angular_size=self.angular_size,
-                    physical_size=self.physical_size(cosmo=self._cosmo),
-                    e1=self._e1,
-                    e2=self._e2,
-                    n_sersic=self._n_sersic,
-                    processed_cosmos_catalog=self.final_cosmos_catalog,
-                    catalog_path=self.catalog_path,
-                    max_scale=self._max_scale,
+                self._image, self._scale, self._phi, self.ident = (
+                    catalog_util.match_cosmos_source(
+                        angular_size=self.angular_size,
+                        physical_size=self.physical_size(cosmo=self._cosmo),
+                        e1=self._e1,
+                        e2=self._e2,
+                        n_sersic=self._n_sersic,
+                        processed_cosmos_catalog=self.final_cosmos_catalog,
+                        catalog_path=self.catalog_path,
+                        max_scale=self._max_scale,
+                    )
                 )
         # If the matching failed, fall back on a regular sersic profile
         if self._image is None:
@@ -105,13 +107,14 @@ class CatalogSource(SourceBase):
                         n_sersic=self._n_sersic,
                         e1=self._e1,
                         e2=self._e2,
-                        **self.source_dict
+                        **self.source_dict,
                     )
                 return self.single_sersic.kwargs_extended_light(band=band)
             else:
                 raise ValueError(
                     "No valid matches found! Try reducing the desired angular size or increasing max_scale."
-                    "Alternatively, enable sersic_fallback to use a single sersic whenever the matching fails.")
+                    "Alternatively, enable sersic_fallback to use a single sersic whenever the matching fails."
+                )
 
         if band is None:
             mag_source = 1
