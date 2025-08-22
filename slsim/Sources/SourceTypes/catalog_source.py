@@ -46,9 +46,9 @@ class CatalogSource(SourceBase):
         :type catalog_path: string
         :param max_scale: The matched COSMOS image will be scaled to have the desired angular size. Scaling up
          results in a more pixelated image. This input determines what the maximum up-scale factor is.
+        :type max_scale: int or float
         :param sersic_fallback: If the matching process returns no matches, then fall back on a single sersic profile.
         :type sersic_fallback: bool
-        :type max_scale: int or float
         """
         super().__init__(extended_source=True, point_source=False, **source_dict)
         self.name = "GAL"
@@ -86,7 +86,7 @@ class CatalogSource(SourceBase):
         """
         if not hasattr(self, "_image"):
             if self.catalog_type == "COSMOS":
-                self._image, self._scale, self._phi, self.ident = (
+                self._image, self._scale, self._phi, self.galaxy_ID = (
                     catalog_util.match_cosmos_source(
                         angular_size=self.angular_size,
                         physical_size=self.physical_size(cosmo=self._cosmo),
