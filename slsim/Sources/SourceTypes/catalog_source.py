@@ -1,3 +1,4 @@
+from slsim.Sources.SourceTypes.single_sersic import SingleSersic
 from slsim.Sources.SourceTypes.source_base import SourceBase
 from slsim.Util import catalog_util
 
@@ -20,6 +21,8 @@ class CatalogSource(SourceBase):
         cosmo,
         catalog_type,
         catalog_path,
+        max_scale=1,
+        sersic_fallback=False,
         **source_dict,
     ):
         """
@@ -41,6 +44,11 @@ class CatalogSource(SourceBase):
          example, if catalog_type = "COSMOS", then catalog_path can be
          catalog_path = "/home/data/COSMOS_23.5_training_sample".
         :type catalog_path: string
+        :param max_scale: The matched COSMOS image will be scaled to have the desired angular size. Scaling up
+         results in a more pixelated image. This input determines what the maximum up-scale factor is.
+        :param sersic_fallback: If the matching process returns no matches, then fall back on a single sersic profile.
+        :type sersic_fallback: bool
+        :type max_scale: int or float
         """
         super().__init__(extended_source=True, point_source=False, **source_dict)
         self.name = "GAL"
@@ -48,6 +56,9 @@ class CatalogSource(SourceBase):
         self._e1, self._e2 = e1, e2
         self._n_sersic = n_sersic
         self._cosmo = cosmo
+        self._max_scale = max_scale
+        self.sersic_fallback = sersic_fallback
+        self.source_dict = source_dict
 
         # Process catalog and store as class attribute
         # If multiple instances of the class are created, this is only executed once
@@ -73,15 +84,9 @@ class CatalogSource(SourceBase):
         :param band: Imaging band
         :return: dictionary of keywords for the source light model(s)
         """
-        if band is None:
-            mag_source = 1
-        else:
-            mag_source = self.extended_source_magnitude(band=band)
-        center_source = self.extended_source_position
-
         if not hasattr(self, "_image"):
             if self.catalog_type == "COSMOS":
-                self._image, self._scale, self._phi = catalog_util.match_cosmos_source(
+                self._image, self._scale, self._phi, self.ident = catalog_util.match_cosmos_source(
                     angular_size=self.angular_size,
                     physical_size=self.physical_size(cosmo=self._cosmo),
                     e1=self._e1,
@@ -89,7 +94,31 @@ class CatalogSource(SourceBase):
                     n_sersic=self._n_sersic,
                     processed_cosmos_catalog=self.final_cosmos_catalog,
                     catalog_path=self.catalog_path,
+                    max_scale=self._max_scale,
                 )
+        # If the matching failed, fall back on a regular sersic profile
+        if self._image is None:
+            if self.sersic_fallback:
+                if not hasattr(self, "single_sersic"):
+                    self.single_sersic = SingleSersic(
+                        angular_size=self.angular_size,
+                        n_sersic=self._n_sersic,
+                        e1=self._e1,
+                        e2=self._e2,
+                        **self.source_dict
+                    )
+                return self.single_sersic.kwargs_extended_light(band=band)
+            else:
+                raise ValueError(
+                    "No valid matches found! Try reducing the desired angular size or increasing max_scale."
+                    "Alternatively, enable sersic_fallback to use a single sersic whenever the matching fails.")
+
+        if band is None:
+            mag_source = 1
+        else:
+            mag_source = self.extended_source_magnitude(band=band)
+        center_source = self.extended_source_position
+
         light_model_list = ["INTERPOL"]
         kwargs_extended_source = [
             {

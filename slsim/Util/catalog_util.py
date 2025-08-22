@@ -171,6 +171,7 @@ def process_cosmos_catalog(cosmo, catalog_path):
 
     # drop extraneous data
     keep_columns = [
+        "IDENT",
         "GAL_FILENAME",
         "GAL_HDU",
         "PIXEL_SCALE",
@@ -194,6 +195,7 @@ def match_cosmos_source(
     n_sersic,
     processed_cosmos_catalog,
     catalog_path,
+    max_scale=1,
 ):
     """This function matches the parameters in source_dict to find a
     corresponding source in the COSMOS catalog. The parameters being
@@ -218,28 +220,27 @@ def match_cosmos_source(
     :param processed_cosmos_catalog: the returned object from calling process_cosmos_catalog()
     :param catalog_path: path to the COSMOS_23.5_training_sample directory.
      Example: catalog_path = "/home/data/COSMOS_23.5_training_sample"
+    :param max_scale: The COSMOS image will be scaled to have the desired angular size. Scaling up
+     results in a more pixelated image. This input determines what the maximum up-scale factor is.
+    :type max_scale: int or float
     :return: tuple(ndarray, float, float)
      This is the raw image matched from the catalog, the scale that the image needs to
      match angular size, and the angle of rotation needed to match the desired e1 and e2.
     """
 
-    # Later the COSMOS image will be scaled to have the desired angular size. We don't want to expand, only shrink
     processed_cosmos_catalog = processed_cosmos_catalog[
-        processed_cosmos_catalog["angular_size"].data >= angular_size
+        angular_size <= processed_cosmos_catalog["angular_size"].data * max_scale
     ]
     if len(processed_cosmos_catalog) == 0:
-        raise ValueError(
-            "The desired angular size is larger than the available sources in the COSMOS catalog. "
-            "Please use a smaller angular size."
-        )
+        return None, None, None, None
 
-    # Match based off of physical size
+    # Match based off of physical size, all units in kPc
     size_tol = 0.5
     size_difference = np.abs(
         physical_size
         - processed_cosmos_catalog[
             "physical_size"
-        ].data  # TODO: is the catalogue in units [kpc]?
+        ].data
     )
     matched_catalog = processed_cosmos_catalog[size_difference < size_tol]
     # If no matches, relax the matching condition and try again
@@ -279,4 +280,4 @@ def match_cosmos_source(
     # Rotate the COSMOS image so that it matches the angle given in source_dict
     phi = np.pi / 2 - matched_source["sersicfit"][7] - phi
 
-    return image, scale, phi
+    return image, scale, phi, matched_source['IDENT']
