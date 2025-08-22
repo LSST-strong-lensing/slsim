@@ -13,6 +13,7 @@ Subpackages
    slsim.ImageSimulation
    slsim.Lenses
    slsim.LOS
+   slsim.LsstSciencePipeline
    slsim.ParamDistributions
    slsim.Pipelines
    slsim.Plots
@@ -21,14 +22,6 @@ Subpackages
 
 Submodules
 ----------
-
-slsim.lsst\_science\_pipeline module
-------------------------------------
-
-.. automodule:: slsim.lsst_science_pipeline
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 slsim.slsim module
 ------------------
