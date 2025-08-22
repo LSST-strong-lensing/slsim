@@ -9,6 +9,7 @@ import astropy.units as u
 
 from slsim.Pipelines import SkyPyPipeline
 from slsim.Sources.SourcePopulation.galaxies import Galaxies
+from slsim.Sources.SourceTypes.single_sersic import SingleSersic
 from slsim.Sources.SourceTypes.catalog_source import CatalogSource
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
@@ -102,6 +103,31 @@ class TestCatalogSource:
             source.kwargs_extended_light,
         )
 
+    def test_sersic_fallback(self):
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+        source_dict = {
+            "z": 0.5,
+            "mag_i": 20.3,
+            "n_sersic": 0.8,
+            "angular_size": 1.3,  # arcseconds
+            "e1": 0.09697001616620306,
+            "e2": 0.040998265256000574,
+            "center_x": 0.0,
+            "center_y": 0.0,
+            "phi_G": 0,
+        }
+
+        source1 = CatalogSource(
+            cosmo=cosmo,
+            catalog_path=catalog_path,
+            catalog_type="COSMOS",
+            max_scale=0.1,
+            sersic_fallback=True,
+            **source_dict
+        )
+        source2 = SingleSersic(**source_dict)
+        assert source1.kwargs_extended_light() == source2.kwargs_extended_light()
+
 
 def test_source():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -125,7 +151,6 @@ def test_source():
         cosmo=cosmo,
         catalog_path=catalog_path,
         catalog_type="COSMOS",
-        # extendedsource_kwargs={"catalog_path": catalog_path, "catalog_type": "COSMOS"},
         **source_dict,
     )
     source2 = Source(extended_source_type="single_sersic", cosmo=cosmo, **source_dict)
