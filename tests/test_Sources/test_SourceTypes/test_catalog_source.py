@@ -123,7 +123,7 @@ class TestCatalogSource:
             catalog_type="COSMOS",
             max_scale=0.1,
             sersic_fallback=True,
-            **source_dict
+            **source_dict,
         )
         source2 = SingleSersic(**source_dict)
         assert source1.kwargs_extended_light() == source2.kwargs_extended_light()
