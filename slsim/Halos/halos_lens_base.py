@@ -1050,16 +1050,16 @@ class HalosLensBase(object):
 
         .. math::
 
-            1 - \kappa_{\text{ext}}
-            = \\frac{(1-\kappa_{\text{od}})(1-\kappa_{\text{os}})}{1-\kappa_{\text{ds}}}
+            1 - \kappa_{\\text{ext}}
+            = \\frac{(1-\kappa_{\\text{od}})(1-\kappa_{\\text{os}})}{1-\kappa_{\\text{ds}}}
 
         and
 
         .. math::
 
-            \gamma_{\text{ext}} = \sqrt{(\gamma_{\text{od}1}+\gamma_{\text{os}1}
-            -\gamma_{\text{ds}1})^2
-            +(\gamma_{\text{od}2}+\gamma_{\text{os}2}-\gamma_{\text{ds}2})^2}
+            \gamma_{\\text{ext}} = \sqrt{(\gamma_{\\text{od}1}+\gamma_{\\text{os}1}
+            -\gamma_{\\text{ds}1})^2
+            +(\gamma_{\\text{od}2}+\gamma_{\\text{os}2}-\gamma_{\\text{ds}2})^2}
         """
         lens_data = self.get_lens_data_by_redshift(zd, zs)
         HRT = HalosRayTracing(lens_kwargs={}, lens_model={})
