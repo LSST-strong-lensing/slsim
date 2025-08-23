@@ -21,17 +21,6 @@ Subpackages
    slsim.Sources
    slsim.Util
 
-Submodules
-----------
-
-slsim.slsim module
-------------------
-
-.. automodule:: slsim.slsim
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Module contents
 ---------------
 
