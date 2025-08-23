@@ -48,21 +48,20 @@ class LensPop(LensedPopulationBase):
             self.los_pop = LOSPop()
 
     def select_lens_at_random(self, test_area=None, **kwargs_lens_cut):
-        """
-        Draw a random lens within the cuts of the lens and source, with possible additional 
-        cuts in the lensing configuration.
+        """Draw a random lens within the cuts of the lens and source, with
+        possible additional cuts in the lensing configuration.
 
-        # TODO: Make sure mass function is preserved, as well as the option to draw all lenses 
+        # TODO: Make sure mass function is preserved, as well as the option to draw all lenses
         within the cuts within the area.
 
-        :param test_area: Solid angle around one lensing galaxy to be investigated on 
+        :param test_area: Solid angle around one lensing galaxy to be investigated on
                         (in arc-seconds^2). If None, computed using deflector's velocity dispersion.
         :type test_area: float or None
         :param kwargs_lens_cut: Dictionary of cuts that one wants to apply to the lens.
                                 Example: kwargs_lens_cut = {
-                                    "min_image_separation": 0.5, 
+                                    "min_image_separation": 0.5,
                                     "max_image_separation": 10,
-                                    "mag_arc_limit": {"i", 24}, 
+                                    "mag_arc_limit": {"i", 24},
                                     "second_brightest_image_cut": {"i", 24}
                                 }. All these cuts are optional.
         :type kwargs_lens_cut: dict

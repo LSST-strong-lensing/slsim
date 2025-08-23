@@ -89,25 +89,24 @@ def black_hole_mass_from_vel_disp(sigma_e, alpha=4.38, beta=0.310):
 
 
 def calculate_lsst_magnitude(lsst_band, black_hole_mass_Msun, eddington_ratio):
-    """
-    Calculates the absolute magnitude of a quasar in a given LSST band.
+    """Calculates the absolute magnitude of a quasar in a given LSST band.
 
     The calculation proceeds in three main steps:
     1. Calculate the Eddington luminosity based on the black hole mass.
     2. Calculate the bolometric luminosity from the Eddington ratio.
     3. Convert the bolometric luminosity to an absolute magnitude in the
-    specified LSST band using a bolometric correction. 
+    specified LSST band using a bolometric correction.
     (Ref. Runnoe+ 2012 https://arxiv.org/abs/1201.5155)
 
     :param lsst_band: The desired LSST band. Must be one of ['u', 'g', 'r', 'i', 'z', 'y'].
     :type lsst_band: str
-    :param black_hole_mass_Msun: The mass of the black hole in solar masses (M_sun). 
+    :param black_hole_mass_Msun: The mass of the black hole in solar masses (M_sun).
                                 Can be an array.
     :type black_hole_mass_Msun: float or numpy.ndarray
     :param eddington_ratio: The Eddington ratio (L_bol / L_edd). Can be an array.
     :type eddington_ratio: float or numpy.ndarray
 
-    :return: The absolute magnitude of the quasar in the specified LSST band. 
+    :return: The absolute magnitude of the quasar in the specified LSST band.
             Returns None if an invalid band is provided.
     :rtype: float or numpy.ndarray
     :raises ValueError: If the lsst_band is not a valid LSST band.

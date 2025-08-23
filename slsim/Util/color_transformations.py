@@ -2,8 +2,7 @@
 
 
 def LSST_to_SDSS(lsst_u, lsst_g, lsst_r, lsst_i, lsst_z):
-    """
-    Converts the five bands LSST magnitudes to the SDSS magnitudes using
+    """Converts the five bands LSST magnitudes to the SDSS magnitudes using
     empirically derived transformations. These transformations are only valid
     for red galaxies and should not be used for blue galaxies or other stellar
     populations. The coefficients are based on polynomial fits to color terms.
@@ -18,8 +17,8 @@ def LSST_to_SDSS(lsst_u, lsst_g, lsst_r, lsst_i, lsst_z):
     :type lsst_i: float
     :param lsst_z: z-band LSST magnitude
     :type lsst_z: float
-
-    :return: A list of SDSS-equivalent magnitudes in the order [u, g, r, i, z].
+    :return: A list of SDSS-equivalent magnitudes in the order [u, g, r,
+        i, z].
     :rtype: list
     """
     sdss_u = (

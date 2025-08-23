@@ -530,12 +530,14 @@ def additional_bkg_rms_with_rescaled_coadd(
     degradation.
 
     :param image: numpy.ndarray The input image array.
-    :param original_rms: float The original root mean square (RMS) noise.
+    :param original_rms: float The original root mean square (RMS)
+        noise.
     :param degraded_rms: float The degraded RMS noise.
-    :param use_noise_diff: bool, optional If True, approximates noise difference 
-        using Gaussian noise, otherwise, applies new Gaussian noise directly. 
-        Default is True.
-    :return: numpy.ndarray The additional noise to be added to the image.
+    :param use_noise_diff: bool, optional If True, approximates noise
+        difference using Gaussian noise, otherwise, applies new Gaussian
+        noise directly. Default is True.
+    :return: numpy.ndarray The additional noise to be added to the
+        image.
     """
     if use_noise_diff:
         sigma_add = np.sqrt(degraded_rms**2 - original_rms**2)
@@ -552,24 +554,22 @@ def degrade_coadd_data(
     degraded_num_years=1,
     use_noise_diff=True,
 ):
-    """
-    Degrade a coadded astronomical image by reducing its effective exposure time.
+    """Degrade a coadded astronomical image by reducing its effective exposure
+    time.
 
-    :param image: numpy.ndarray
-        The input image array.
-    :param variance_map: numpy.ndarray
-        The original variance map.
-    :param exposure_map: numpy.ndarray
-        The original exposure time per pixel.
-    :param original_num_years: int, optional
-        The original coadded number of years. Default is 5.
-    :param degraded_num_years: int, optional
-        The new degraded number of years. Default is 1.
-    :param use_noise_diff: bool, optional
-        If True, approximates noise difference using Gaussian noise, 
-        otherwise, applies full noise resampling. Default is True.
-    :return:
-        The degraded image, the new variance map, and the new exposure map.
+    :param image: numpy.ndarray The input image array.
+    :param variance_map: numpy.ndarray The original variance map.
+    :param exposure_map: numpy.ndarray The original exposure time per
+        pixel.
+    :param original_num_years: int, optional The original coadded number
+        of years. Default is 5.
+    :param degraded_num_years: int, optional The new degraded number of
+        years. Default is 1.
+    :param use_noise_diff: bool, optional If True, approximates noise
+        difference using Gaussian noise, otherwise, applies full noise
+        resampling. Default is True.
+    :return: The degraded image, the new variance map, and the new
+        exposure map.
     """
     degraded_var_map = variance_map * original_num_years / degraded_num_years
     degraded_exp_map = exposure_map * degraded_num_years / original_num_years
