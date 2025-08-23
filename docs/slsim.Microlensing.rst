@@ -1,5 +1,5 @@
 slsim.Microlensing package
-========================
+==========================
 
 Subpackages
 -----------
