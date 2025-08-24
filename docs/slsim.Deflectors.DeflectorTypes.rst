@@ -20,6 +20,14 @@ slsim.Deflectors.DeflectorTypes.epl\_sersic module
    :undoc-members:
    :show-inheritance:
 
+slsim.Deflectors.DeflectorTypes.epl module
+------------------------------------------
+
+.. automodule:: slsim.Deflectors.DeflectorTypes.epl
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 slsim.Deflectors.DeflectorTypes.nfw\_cluster module
 ---------------------------------------------------
 

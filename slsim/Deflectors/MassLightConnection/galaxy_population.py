@@ -321,25 +321,26 @@ def modelscVanderwel23(mstar, n):
 
 def modelKarmakar23(mh, z):
     """
-     The galaxy-size model of T. Karmakar et al 2023.
-     arXiv: 2301.10409
-     We here adopt the following double-power-law fitting function as one of simple fitting functions,
+    The galaxy-size model of T. Karmakar et al 2023.
+    arXiv: 2301.10409
+    We here adopt the following double-power-law fitting function as one of simple fitting functions,
 
-     .. math::
-         r_e/R_\\mathrm{vir} = a*\frac{M_h}{10^{12} \\mathrm{M_\\odot/h}}**b*(0.5*(1+\frac{M_h}{10^{12} \\mathrm{M_\\odot/h}}^6))^{0.001-b/6}
+    .. math::
+        r_e/R_\\mathrm{vir} = a*\\frac{M_h}{10^{12} \\mathrm{M_\\odot/h}}**b*(0.5*(1
+        +\\frac{M_h}{10^{12} \\mathrm{M_\\odot/h}}^6))^{0.001-b/6}
 
-     where r_e and R_\\mathrm{vir} are galaxy effective radius and halo virial radius.
+    where :math:`r_e` and :math:`R_\\mathrm{vir}` are galaxy effective radius and halo virial radius.
 
-     :param mh: (sub)halo mass [Msun/h]; can be a number or a numpy array.
-     :type  mh: ndarray
-     :param z: redshift; can be a number or a numpy array.
-     :type  z: ndarray
-     :return: rb. ndarray or a number. The galaxy size, has the dimensions as 1.0e-3 * mass_so.M_to_R(mh, z, 'vir') i.e. [Mpc].
+    :param mh: (sub)halo mass [Msun/h]; can be a number or a numpy array.
+    :type  mh: ndarray
+    :param z: redshift; can be a number or a numpy array.
+    :type  z: ndarray
+    :return: rb. ndarray or a number. The galaxy size, has the dimensions as 1.0e-3 * mass_so.M_to_R(mh, z, 'vir') i.e. [Mpc].
 
-     Notes
-     -----------------------------------------------------------------------------------------------
+    Notes
+    -----------------------------------------------------------------------------------------------
     The following values of a_z and b_z are determined by applying the curve_fit function in scipy.optimize
-    to the ratio between r_e and R_\\mathrm{vir} for the data at four redshifts (z=0, 1, 2, 3) in T. Karmakar et al. (2023)
+    to the ratio between :math:`r_e` and :math:`R_\\mathrm{vir}` for the data at four redshifts (z=0, 1, 2, 3) in T. Karmakar et al. (2023)
     with the above fitting function and then applying numpy.polyfit at a linear level as functions of z.
     """
     a_z = -0.00135984 * z + 0.01667855
@@ -359,10 +360,10 @@ def modelscKarmakar23(mh, z, n):
     arXiv: 2301.10409
     We here adopt the following double-power-law fitting function as one of simple fitting functions,
 
-     .. math::
-         r_e/R_\\mathrm{vir} = a*\frac{M_h}{d}}**b*(0.5*(1+\frac{M_h}{d)^{c-b/6}
+    .. math::
+        r_e/R_\\mathrm{vir} = a*\\frac{M_h}{d}**b*(0.5*(1+\\frac{M_h}{d)^{c-b/6}
 
-     where r_e and R_\\mathrm{vir} are galaxy effective radius and halo virial radius.
+    where :math:`r_e` and :math:`R_\\mathrm{vir}` are galaxy effective radius and halo virial radius.
 
     :param mh: The halo mass or masses used in the scaling relation in units of M_sol/h
     :type  mh: float or np.ndarray
@@ -374,9 +375,9 @@ def modelscKarmakar23(mh, z, n):
     :return: An array of values drawn from a log-normal distribution defined by the scaling relation. ndndarray
 
     Notes
-     -----------------------------------------------------------------------------------------------
+    -----------------------------------------------------------------------------------------------
     The following values of a_z, b_z, c_z, and d_z are determined by applying the curve_fit function in scipy.optimize
-    to the ratio between r_e and R_\\mathrm{vir} for the data at four redshifts (z=0, 1, 2, 3) in T. Karmakar et al. (2023)
+    to the ratio between :math:`r_e` and :math:`R_\\mathrm{vir}` for the data at four redshifts (z=0, 1, 2, 3) in T. Karmakar et al. (2023)
     with the above fitting function and then applying numpy.polyfit at a linear level as functions of z.
     d is in units of M_sol/h
     """

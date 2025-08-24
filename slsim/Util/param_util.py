@@ -492,12 +492,12 @@ def additional_poisson_noise_with_rescaled_coadd(
     """Computes additional Poisson noise to an image based on the change in
     exposure time.
 
-    :param image : numpy.ndarray The input image array.
-    :param original_exp_time : numpy.ndarray The original exposure time
+    :param image: numpy.ndarray The input image array.
+    :param original_exp_time: numpy.ndarray The original exposure time
         per pixel.
-    :param degraded_exp_time : numpy.ndarray The degraded exposure time
+    :param degraded_exp_time: numpy.ndarray The degraded exposure time
         per pixel.
-    :param use_noise_diff : bool, optional If True, approximates noise
+    :param use_noise_diff: bool, optional If True, approximates noise
         difference using Gaussian noise, otherwise, applies Poisson
         sampling. Default is True.
     :return: numpy.ndarray The additional noise to be added to the
@@ -529,11 +529,11 @@ def additional_bkg_rms_with_rescaled_coadd(
     """Computes additinal background noise based on RMS values before and after
     degradation.
 
-    :param image : numpy.ndarray The input image array.
-    :param original_rms : float The original root mean square (RMS)
+    :param image: numpy.ndarray The input image array.
+    :param original_rms: float The original root mean square (RMS)
         noise.
-    :param degraded_rms : float The degraded RMS noise.
-    :param use_noise_diff : bool, optional If True, approximates noise
+    :param degraded_rms: float The degraded RMS noise.
+    :param use_noise_diff: bool, optional If True, approximates noise
         difference using Gaussian noise, otherwise, applies new Gaussian
         noise directly. Default is True.
     :return: numpy.ndarray The additional noise to be added to the
@@ -557,18 +557,18 @@ def degrade_coadd_data(
     """Degrade a coadded astronomical image by reducing its effective exposure
     time.
 
-    :param image : numpy.ndarray The input image array.
-    :param variance_map : numpy.ndarray The original variance map.
-    :param exposure_map : numpy.ndarray The original exposure time per
+    :param image: numpy.ndarray The input image array.
+    :param variance_map: numpy.ndarray The original variance map.
+    :param exposure_map: numpy.ndarray The original exposure time per
         pixel.
-    :param original_num_years : int, optional The original coadded
-        number of years. Default is 5.
-    :param degraded_num_years : int, optional The new degraded number of
+    :param original_num_years: int, optional The original coadded number
+        of years. Default is 5.
+    :param degraded_num_years: int, optional The new degraded number of
         years. Default is 1.
-    :param use_noise_diff : bool, optional If True, approximates noise
+    :param use_noise_diff: bool, optional If True, approximates noise
         difference using Gaussian noise, otherwise, applies full noise
         resampling. Default is True.
-    :return: The degraded image, the new variance map, and he new
+    :return: The degraded image, the new variance map, and the new
         exposure map.
     """
     degraded_var_map = variance_map * original_num_years / degraded_num_years
@@ -730,7 +730,7 @@ def update_cosmology_in_yaml_file(cosmo, yml_file):
     """Replaces the default cosmology string in a yaml file with the parameters
     of a custom astropy cosmology object.
 
-    :param cosmo : astropy.cosmology.Cosmology or None The cosmology
+    :param cosmo: astropy.cosmology.Cosmology or None The cosmology
         object to insert into the content.
     :param yml_file: A yml file containg cosmology information.
     :return: Updated yml_file with the new cosmology parameters.
