@@ -16,7 +16,7 @@ M_star_red: !astropy.modeling.models.Linear1D [-0.80, -20.46]
 phi_star_red: !astropy.modeling.models.Exponential1D [0.00278612, -1.05925]
 magnitude_limit: 30
 fsky: 0.1 deg2
-filters: ['lsst2016-g', 'lsst2016-r', 'lsst2016-i', 'lsst2016-z', 'lsst2016-y']
+filters: []
 tables:
   blue:
     z, M: !skypy.galaxies.schechter_lf
@@ -35,7 +35,7 @@ tables:
       coefficients: $blue.coeff
       magnitudes: $blue.M
       filter: bessell-B
-    mag_g, mag_r, mag_i, mag_z, mag_y: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+    mag_*: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
       coefficients: $blue.coeff
       redshift: $blue.z
       filters: $filters
@@ -89,7 +89,7 @@ tables:
       coefficients: $red.coeff
       magnitudes: $red.M
       filter: bessell-B
-    mag_g, mag_r, mag_i, mag_z, mag_y: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+    mag_*: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
       coefficients: $red.coeff
       redshift: $red.z
       filters: $filters

@@ -28,6 +28,7 @@ from slsim.Util.param_util import (
     surface_brightness_reff,
     gaussian_psf,
     update_cosmology_in_yaml_file,
+    update_filters_in_yaml_file,
     draw_coord_in_circle,
 )
 from slsim.Sources.SourceVariability.variability import Variability
@@ -481,6 +482,43 @@ def test_update_cosmology_in_yaml_file():
     assert "H0:" in updated_yaml
     assert "Om0:" in updated_yaml
     assert "Tcmb0:" in updated_yaml
+
+def test_update_mag_keys_in_yaml_file():
+    # Sample input YAML content with placeholders
+    original_yaml = """
+    simulation:
+      name: test_sim
+    filters: []
+      mag_*: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+    """
+
+    # Case 1: custom 3 filters
+    custom_filters = ['lsst2016-g', 'lsst2016-r', 'lsst2016-i']
+
+    updated_yaml = update_filters_in_yaml_file(
+        filters=custom_filters, yml_file=original_yaml
+    )
+
+    # Make sure filters have been updated
+    assert "filters:" in updated_yaml
+    assert "lsst2016-g" in updated_yaml
+    assert "lsst2016-r" in updated_yaml
+    assert "lsst2016-i" in updated_yaml
+
+    # Make sure mag_* has been replaced with mag_g, mag_r, mag_i
+    assert "mag_g, mag_r, mag_i:" in updated_yaml
+
+    # Case 2: filters=None -> Using the Lsst filters
+    updated_yaml_default = update_filters_in_yaml_file(
+        filters=None, yml_file=original_yaml
+    )
+
+    # Make sure the default filters have been added
+    assert "lsst2016-g" in updated_yaml_default
+    assert "lsst2016-y" in updated_yaml_default
+    # Make sure the mag keys have been updated as well
+    assert "mag_z" in updated_yaml_default
+
 
 
 if __name__ == "__main__":

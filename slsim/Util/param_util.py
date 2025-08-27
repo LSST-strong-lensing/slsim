@@ -775,6 +775,38 @@ def update_cosmology_in_yaml_file(cosmo, yml_file):
 
     return yml_file.replace(old_cosmo, new_cosmo)
 
+def update_filters_in_yaml_file(filters, yml_file):
+    """
+    Replace
+        mag_*: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+    with correspongding filters names and amount
+    If filters is empty or None, using LSST default filters.
+
+    :param filters: A dict containing filters name in speclite
+    :param yml_file: A yml file containg cosmology information.
+    :return: Updated yml_file with the new filters config.
+    """
+    # Default filters
+    default_filters = ['lsst2016-g', 'lsst2016-r', 'lsst2016-i', 'lsst2016-z', 'lsst2016-y']
+    filters_to_use = filters if filters else default_filters
+
+    labels = []
+    for f in filters_to_use:
+        if 'lsst' in f.lower() or f.lower().startswith('roman-') or f.lower().startswith('Euclid-'):
+            labels.append(f.split('-')[-1])
+        else:
+            labels.append(f)
+    mag_key = ', '.join("mag_" + lab for lab in labels)
+
+    updated_filters = f"filters: {filters_to_use}" 
+    content = yml_file.replace("filters: []", updated_filters)
+    content = content.replace(
+        "  mag_*: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes",
+        f"  {mag_key}: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes"
+    )
+
+    return content
+
 
 def image_separation_from_positions(image_positions):
     """Calculate image separation in arc-seconds; if there are only two images,
