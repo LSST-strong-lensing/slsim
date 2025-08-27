@@ -52,7 +52,9 @@ class SkyPyPipeline:
                 content = content.replace(old_fsky, new_fsky)
 
             content = util.update_cosmology_in_yaml_file(cosmo=cosmo, yml_file=content)
-            content = util.update_filters_in_yaml_file(filters=filters, yml_file=content)
+            content = util.update_filters_in_yaml_file(
+                filters=filters, yml_file=content
+            )
 
             with tempfile.NamedTemporaryFile(
                 mode="w", delete=False, suffix=".yml"

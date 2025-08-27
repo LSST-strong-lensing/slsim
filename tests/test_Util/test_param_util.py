@@ -483,6 +483,7 @@ def test_update_cosmology_in_yaml_file():
     assert "Om0:" in updated_yaml
     assert "Tcmb0:" in updated_yaml
 
+
 def test_update_mag_keys_in_yaml_file():
     # Sample input YAML content with placeholders
     original_yaml = """
@@ -493,7 +494,7 @@ def test_update_mag_keys_in_yaml_file():
     """
 
     # Case 1: custom 3 filters
-    custom_filters = ['lsst2016-g', 'lsst2016-r', 'lsst2016-i']
+    custom_filters = ["lsst2016-g", "lsst2016-r", "lsst2016-i"]
 
     updated_yaml = update_filters_in_yaml_file(
         filters=custom_filters, yml_file=original_yaml
@@ -518,7 +519,6 @@ def test_update_mag_keys_in_yaml_file():
     assert "lsst2016-y" in updated_yaml_default
     # Make sure the mag keys have been updated as well
     assert "mag_z" in updated_yaml_default
-
 
 
 if __name__ == "__main__":
