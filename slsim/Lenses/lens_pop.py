@@ -49,19 +49,25 @@ class LensPop(LensedPopulationBase):
 
     def select_lens_at_random(self, test_area=None, **kwargs_lens_cut):
         """Draw a random lens within the cuts of the lens and source, with
-        possible additional cut in the lensing configuration.
+        possible additional cuts in the lensing configuration.
 
-        # TODO: make sure mass function is preserved, # as well as
-        option to draw all lenses within the cuts within the area
-        :param test_area: solid angle around one lensing galaxies to be
-            investigated on (in arc-seconds^2). If None, computed using
-            deflector's velocity dispersion.
-        :param kwargs_lens_cut: dictionary of cuts that one wants to apply to the lens.
-         eg: kwargs_lens_cut = {}"min_image_separation": 0.5, "max_image_separation": 10,
-         "mag_arc_limit": {"i", 24}, "second_brightest_image_cut": {"i", 24}}. all these
-          cuts are optional.
-        :return: Lens() instance with parameters of the deflector and
-            lens and source light
+        # TODO: Make sure mass function is preserved, as well as the option to draw all lenses
+        within the cuts within the area.
+
+        :param test_area: Solid angle around one lensing galaxy to be investigated on
+                        (in arc-seconds^2). If None, computed using deflector's velocity dispersion.
+        :type test_area: float or None
+        :param kwargs_lens_cut: Dictionary of cuts that one wants to apply to the lens.
+                                Example: kwargs_lens_cut = {
+                                    "min_image_separation": 0.5,
+                                    "max_image_separation": 10,
+                                    "mag_arc_limit": {"i", 24},
+                                    "second_brightest_image_cut": {"i", 24}
+                                }. All these cuts are optional.
+        :type kwargs_lens_cut: dict
+
+        :return: Lens() instance with parameters of the deflector and lens and source light.
+        :rtype: Lens
         """
         while True:
             # This creates a single deflector - single_source lens.
