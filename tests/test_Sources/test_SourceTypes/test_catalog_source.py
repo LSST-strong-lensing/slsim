@@ -131,7 +131,7 @@ class TestCatalogSource:
 
 def test_source1():
     # Set match_n_sersic to False
-    
+
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     # approximate HST/ACS F814W zero‑point
     m_zp = 25.5
@@ -227,9 +227,10 @@ def test_source1():
     )
     assert sersic_image.shape == cosmos_image.shape
 
+
 def test_source2():
     # Set match_n_sersic to True
-    
+
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     # approximate HST/ACS F814W zero‑point
     m_zp = 25.5
@@ -325,6 +326,7 @@ def test_source2():
     )
     assert sersic_image.shape == cosmos_image.shape
 
+
 def test_galaxies():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     sky_area = 0.01 * u.deg**2
@@ -357,8 +359,6 @@ def test_galaxies():
     )
     source = source_simulation.draw_source()
     assert isinstance(source._source, CatalogSource)
-
-
 
 
 if __name__ == "__main__":
