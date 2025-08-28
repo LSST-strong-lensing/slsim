@@ -196,6 +196,7 @@ def match_cosmos_source(
     processed_cosmos_catalog,
     catalog_path,
     max_scale=1,
+    match_n_sersic=False,
 ):
     """This function matches the parameters in source_dict to find a
     corresponding source in the COSMOS catalog. The parameters being
@@ -223,9 +224,12 @@ def match_cosmos_source(
     :param max_scale: The COSMOS image will be scaled to have the desired angular size. Scaling up
      results in a more pixelated image. This input determines what the maximum up-scale factor is.
     :type max_scale: int or float
-    :return: tuple(ndarray, float, float)
+    :param match_n_sersic: determines whether to match based off of the sersic index as well.
+     Since n_sersic is usually undefined and set to 1 in SLSim, this is set to False by default.
+    :type match_n_sersic: bool
+    :return: tuple(ndarray, float, float, int)
      This is the raw image matched from the catalog, the scale that the image needs to
-     match angular size, and the angle of rotation needed to match the desired e1 and e2.
+     match angular size, the angle of rotation needed to match the desired e1 and e2, and the galaxy ID.
     """
 
     processed_cosmos_catalog = processed_cosmos_catalog[
@@ -234,33 +238,38 @@ def match_cosmos_source(
     if len(processed_cosmos_catalog) == 0:
         return None, None, None, None
 
-    # Match based off of physical size, all units in kPc
+    # Keep sources within the physical size tolerance, all units in kPc
     size_tol = 0.5
     size_difference = np.abs(
         physical_size - processed_cosmos_catalog["physical_size"].data
     )
     matched_catalog = processed_cosmos_catalog[size_difference < size_tol]
-    # If no matches, relax the matching condition and try again
+    # If no sources, relax the matching condition and try again
     while len(matched_catalog) == 0:
         size_tol += 0.2
         matched_catalog = processed_cosmos_catalog[size_difference < size_tol]
 
-    # Match with COSMOS catalog based off of axis ratio
     phi, q = ellipticity2phi_q(e1, e2)
+    # Keep sources within the axis ratio tolerance
     q_tol = 0.1
     q_matched_catalog = matched_catalog[
         np.abs(matched_catalog["sersicfit"][:, 3].data - q) <= q_tol
     ]
-    # If no matches, relax the matching condition and try again
+    # If no sources, relax the tolerance and try again
     while len(q_matched_catalog) == 0:
         q_tol += 0.05
         q_matched_catalog = matched_catalog[
             np.abs(matched_catalog["sersicfit"][:, 3].data - q) <= q_tol
         ]
 
-    # Match based off of n_sersic
-    index = np.argsort(np.abs(q_matched_catalog["sersicfit"][:, 2].data - n_sersic))
-    matched_source = q_matched_catalog[index][0]
+    if match_n_sersic:
+        # Select source based off of best matching n_sersic
+        index = np.argsort(np.abs(q_matched_catalog["sersicfit"][:, 2].data - n_sersic))
+        matched_source = q_matched_catalog[index][0]
+    else:
+        # Select source based off of best matching axis ratio
+        index = np.argsort(np.abs(q_matched_catalog["sersicfit"][:, 3].data - q))
+        matched_source = q_matched_catalog[index][0]
 
     # load and save image
     fname = matched_source["GAL_FILENAME"]
