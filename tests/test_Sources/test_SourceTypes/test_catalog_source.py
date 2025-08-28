@@ -226,6 +226,7 @@ def test_source():
 
 
 def test_galaxies():
+    # match_n_sersic is False
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     sky_area = 0.01 * u.deg**2
 
@@ -250,7 +251,38 @@ def test_galaxies():
         catalog_type="skypy",
         source_size=None,
         extended_source_type="catalog_source",
-        extendedsource_kwargs={"catalog_path": catalog_path, "catalog_type": "COSMOS"},
+        extendedsource_kwargs={"catalog_path": catalog_path, "catalog_type": "COSMOS", "match_n_sersic": False},
+    )
+    source = source_simulation.draw_source()
+    assert isinstance(source._source, CatalogSource)
+
+def test_galaxies2():
+    # match_n_sersic is True
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    sky_area = 0.01 * u.deg**2
+
+    pipeline = SkyPyPipeline(
+        skypy_config=None,
+        sky_area=sky_area,
+        filters=None,
+        cosmo=cosmo,
+    )
+    galaxy_list = pipeline.blue_galaxies
+    kwargs_cut = {
+        "band": "i",
+        "band_max": 20,
+        "z_min": 0.1,
+        "z_max": 1.5,
+    }
+    source_simulation = Galaxies(
+        galaxy_list=galaxy_list,
+        kwargs_cut=kwargs_cut,
+        cosmo=cosmo,
+        sky_area=sky_area,
+        catalog_type="skypy",
+        source_size=None,
+        extended_source_type="catalog_source",
+        extendedsource_kwargs={"catalog_path": catalog_path, "catalog_type": "COSMOS", "match_n_sersic": True},
     )
     source = source_simulation.draw_source()
     assert isinstance(source._source, CatalogSource)
