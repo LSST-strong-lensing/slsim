@@ -251,10 +251,15 @@ def test_galaxies():
         catalog_type="skypy",
         source_size=None,
         extended_source_type="catalog_source",
-        extendedsource_kwargs={"catalog_path": catalog_path, "catalog_type": "COSMOS", "match_n_sersic": False},
+        extendedsource_kwargs={
+            "catalog_path": catalog_path,
+            "catalog_type": "COSMOS",
+            "match_n_sersic": False,
+        },
     )
     source = source_simulation.draw_source()
     assert isinstance(source._source, CatalogSource)
+
 
 def test_galaxies2():
     # match_n_sersic is True
@@ -282,7 +287,11 @@ def test_galaxies2():
         catalog_type="skypy",
         source_size=None,
         extended_source_type="catalog_source",
-        extendedsource_kwargs={"catalog_path": catalog_path, "catalog_type": "COSMOS", "match_n_sersic": True},
+        extendedsource_kwargs={
+            "catalog_path": catalog_path,
+            "catalog_type": "COSMOS",
+            "match_n_sersic": True,
+        },
     )
     source = source_simulation.draw_source()
     assert isinstance(source._source, CatalogSource)
