@@ -219,6 +219,13 @@ class Deflector(object):
                     lens_cosmo=lens_cosmo, spherical=True
                 )
             )
+            use_jax = []
+            jax_profiles = ["EPL", "NFW", "HERNQUIST", "NFW_ELLIPSE_CSE", "HERNQUIST_ELLIPSE_CSE"]
+            for profile in lens_mass_model_list:
+                if profile in jax_profiles:
+                    use_jax.append(True)
+                else:
+                    use_jax.append(False)
             lens_model = LensModel(
                 lens_model_list=lens_mass_model_list,
                 z_lens=self.redshift,
@@ -226,6 +233,7 @@ class Deflector(object):
                 multi_plane=False,
                 z_source=_z_source_infty,
                 cosmo=cosmo,
+                use_jax=use_jax,
             )
 
             lens_analysis = LensProfileAnalysis(lens_model=lens_model)
