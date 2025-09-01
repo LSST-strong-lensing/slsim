@@ -220,7 +220,13 @@ class Deflector(object):
                 )
             )
             use_jax = []
-            jax_profiles = ["EPL", "NFW", "HERNQUIST", "NFW_ELLIPSE_CSE", "HERNQUIST_ELLIPSE_CSE"]
+            jax_profiles = [
+                "EPL",
+                "NFW",
+                "HERNQUIST",
+                "NFW_ELLIPSE_CSE",
+                "HERNQUIST_ELLIPSE_CSE",
+            ]
             for profile in lens_mass_model_list:
                 if profile in jax_profiles:
                     use_jax.append(True)
