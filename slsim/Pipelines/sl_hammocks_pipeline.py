@@ -118,12 +118,12 @@ class SLHammocksPipeline:
             content = file.read()
 
         # replace z: PLACEHOLDER_Z with halo redshift
-        redshift_array = list(self._pipeline["z"].value)
+        redshift_array = self._pipeline["z"].value.tolist()
         old_z = "z: PLACEHOLDER_Z"
         new_z = f"z: {redshift_array}"
         content = content.replace(old_z, new_z)
         # replace stellar_mass: PLACEHOLDER_MASS with stellar mass
-        stellar_mass_array = list(self._pipeline["stellar_mass"].value)
+        stellar_mass_array = self._pipeline["stellar_mass"].value.tolist()
         old_stellar_mass = "stellar_mass: PLACEHOLDER_MASS"
         new_stellar_mass = f"stellar_mass: {stellar_mass_array}"
         content = content.replace(old_stellar_mass, new_stellar_mass)
