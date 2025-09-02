@@ -12,7 +12,13 @@ from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
 from lenstronomy.LensModel.lens_model import LensModel
 
 _SUPPORTED_DEFLECTORS = ["EPL", "EPL_SERSIC", "NFW_HERNQUIST", "NFW_CLUSTER"]
-
+JAX_PROFILES = [
+    "EPL",
+    "NFW",
+    "HERNQUIST",
+    "NFW_ELLIPSE_CSE",
+    "HERNQUIST_ELLIPSE_CSE",
+]
 
 class Deflector(object):
     """Class of a single deflector with quantities only related to the
@@ -220,15 +226,8 @@ class Deflector(object):
                 )
             )
             use_jax = []
-            jax_profiles = [
-                "EPL",
-                "NFW",
-                "HERNQUIST",
-                "NFW_ELLIPSE_CSE",
-                "HERNQUIST_ELLIPSE_CSE",
-            ]
             for profile in lens_mass_model_list:
-                if profile in jax_profiles:
+                if profile in JAX_PROFILES:
                     use_jax.append(True)
                 else:
                     use_jax.append(False)

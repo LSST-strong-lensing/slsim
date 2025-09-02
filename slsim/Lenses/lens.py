@@ -16,7 +16,7 @@ from lenstronomy.Util import data_util
 from lenstronomy.Util import util
 
 from slsim.Lenses.lensed_system_base import LensedSystemBase
-
+from slsim.Deflectors.deflector import JAX_PROFILES
 
 class Lens(LensedSystemBase):
     """Class to manage individual lenses."""
@@ -1120,15 +1120,8 @@ class Lens(LensedSystemBase):
 
         # For significant speedup, use these mass profiles from jaxtronomy
         use_jax = []
-        jax_profiles = [
-            "EPL",
-            "NFW",
-            "HERNQUIST",
-            "NFW_ELLIPSE_CSE",
-            "HERNQUIST_ELLIPSE_CSE",
-        ]
         for profile in self._lens_mass_model_list:
-            if profile in jax_profiles:
+            if profile in JAX_PROFILES:
                 use_jax.append(True)
             else:
                 use_jax.append(False)
