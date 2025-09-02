@@ -18,6 +18,7 @@ from lenstronomy.Util import util
 from slsim.Lenses.lensed_system_base import LensedSystemBase
 from slsim.Deflectors.deflector import JAX_PROFILES
 
+
 class Lens(LensedSystemBase):
     """Class to manage individual lenses."""
 

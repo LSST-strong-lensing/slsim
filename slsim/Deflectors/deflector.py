@@ -20,6 +20,7 @@ JAX_PROFILES = [
     "HERNQUIST_ELLIPSE_CSE",
 ]
 
+
 class Deflector(object):
     """Class of a single deflector with quantities only related to the
     deflector (independent of the source)"""
