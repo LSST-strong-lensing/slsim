@@ -46,12 +46,8 @@ class SkyPyPipeline:
             with open(skypy_config, "r") as file:
                 content = file.read()
 
-            content = util.update_cosmology_in_yaml_file(
-                cosmo=cosmo, yml_file=content
-            )
-            content = util.insert_fsky_in_yml_file(
-                fsky=sky_area, yml_file=content
-            )
+            content = util.update_cosmology_in_yaml_file(cosmo=cosmo, yml_file=content)
+            content = util.insert_fsky_in_yml_file(fsky=sky_area, yml_file=content)
             content = util.insert_filters_in_yaml_file(
                 filters=filters, yml_file=content
             )

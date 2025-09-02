@@ -513,6 +513,7 @@ def test_update_mag_keys_in_yaml_file():
     # Make sure the mag keys have been updated as well
     assert "mag_z" in updated_yaml_default
 
+
 def test_update_mag_keys_in_yaml_file():
     # Sample input YAML content with placeholders
     original_yaml = """cosmology: !astropy.cosmology.default_cosmology.get []
@@ -543,6 +544,7 @@ def test_update_mag_keys_in_yaml_file():
     # Make sure the default filters have been added
     assert "lsst2016-g" in updated_yaml_default
     assert "lsst2016-y" in updated_yaml_default
+
 
 def test_insert_fsky_in_yml_file():
     # Sample input YAML content with same format as lsst-like_triple_SF.yml

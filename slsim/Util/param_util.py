@@ -775,8 +775,9 @@ def update_cosmology_in_yaml_file(cosmo, yml_file):
 
     return yml_file.replace(old_cosmo, new_cosmo)
 
+
 def insert_fsky_in_yml_file(fsky, yml_file):
-    """Insert fsky values, if fsky = None, then using default_fsky
+    """Insert fsky values, if fsky = None, then using default_fsky.
 
     :param fsky:
         Sky area value to insert. Supported types:
@@ -821,6 +822,7 @@ def insert_fsky_in_yml_file(fsky, yml_file):
 
     return content
 
+
 def insert_filters_in_yaml_file(filters, yml_file):
     """Insert filters: []
     with correspongding filters names and amount If filters is empty or None,
@@ -847,7 +849,7 @@ def insert_filters_in_yaml_file(filters, yml_file):
         if ln.lstrip().startswith("fsky:"):
             fsky_idx = i
             break
-    
+
     indent = ""
     if fsky_idx >= 0:
         fsky_line = lines[fsky_idx]
@@ -866,6 +868,7 @@ def insert_filters_in_yaml_file(filters, yml_file):
     content = "".join(lines)
 
     return content
+
 
 def update_mag_key_in_yaml_file(filters, yml_file):
     """Replace mag_*: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
