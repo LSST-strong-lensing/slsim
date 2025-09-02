@@ -775,9 +775,54 @@ def update_cosmology_in_yaml_file(cosmo, yml_file):
 
     return yml_file.replace(old_cosmo, new_cosmo)
 
+def insert_fsky_in_yml_file(fsky, yml_file):
+    """Insert fsky values, if fsky = None, then using default_fsky
 
-def update_filters_in_yaml_file(filters, yml_file):
-    """Replace mag_*: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+    :param fsky:
+        Sky area value to insert. Supported types:
+            - ``astropy.units.Quantity``: formatted as ``"<value> <unit>"`` (e.g., ``"0.2 deg2"``).
+            - ``str``: used as-is (you are responsible for including units if needed).
+            - numeric (``int``/``float``): converted via ``str(fsky)`` (no units added).
+            - ``None``: falls back to the default ``"0.1 deg2"``.
+    :param yml_file: A yml file containg cosmology information.
+    :return: Updated yml_file with the new fsky config.
+    """
+    default_fsky = "0.1 deg2"
+
+    if fsky is not None:
+        try:
+            updated_fsky = f"{fsky.value} {fsky.unit}"
+        except AttributeError:
+            updated_fsky = str(fsky)
+    else:
+        updated_fsky = default_fsky
+
+    lines = yml_file.splitlines(keepends=True)
+    mag_idx = -1
+    for i, ln in enumerate(lines):
+        if ln.lstrip().startswith("magnitude_limit:"):
+            mag_idx = i
+            break
+    indent = ""
+    if mag_idx >= 0:
+        mag_line = lines[mag_idx]
+        indent = mag_line[: len(mag_line) - len(mag_line.lstrip())]
+
+    insertion_block = f"{indent}fsky: {updated_fsky}\n"
+
+    if mag_idx >= 0:
+        lines.insert(mag_idx + 1, insertion_block)
+    else:
+        if lines and not lines[-1].endswith("\n"):
+            lines[-1] = lines[-1] + "\n"
+        lines.append(insertion_block)
+
+    content = "".join(lines)
+
+    return content
+
+def insert_filters_in_yaml_file(filters, yml_file):
+    """Insert filters: []
     with correspongding filters names and amount If filters is empty or None,
     using LSST default filters.
 
@@ -795,21 +840,65 @@ def update_filters_in_yaml_file(filters, yml_file):
     ]
     filters_to_use = filters if filters else default_filters
 
+    updated_filters = f"{filters_to_use}"
+    lines = yml_file.splitlines(keepends=True)
+    fsky_idx = -1
+    for i, ln in enumerate(lines):
+        if ln.lstrip().startswith("fsky:"):
+            fsky_idx = i
+            break
+    
+    indent = ""
+    if fsky_idx >= 0:
+        fsky_line = lines[fsky_idx]
+        indent = fsky_line[: len(fsky_line) - len(fsky_line.lstrip())]
+        if not fsky_line.endswith("\n"):
+            lines[fsky_idx] = fsky_line + "\n"
+    insertion_block = f"{indent}filters: {updated_filters}\n"
+
+    if fsky_idx >= 0:
+        lines.insert(fsky_idx + 1, insertion_block)
+    else:
+        if lines and not lines[-1].endswith("\n"):
+            lines[-1] = lines[-1] + "\n"
+        lines.append(insertion_block)
+
+    content = "".join(lines)
+
+    return content
+
+def update_mag_key_in_yaml_file(filters, yml_file):
+    """Replace mag_*: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+    with correspongding filters names and amount If filters is empty or None,
+    using LSST default filters. e.g., mag_g, mag_i, mag_r.
+
+    :param filters: A dict containing filters name in speclite
+    :param yml_file: A yml file containg cosmology information.
+    :return: Updated yml_file with the new mag_key config.
+    """
+    # Default filters
+    default_filters = [
+        "lsst2016-g",
+        "lsst2016-r",
+        "lsst2016-i",
+        "lsst2016-z",
+        "lsst2016-y",
+    ]
+    filters_to_use = filters if filters else default_filters
+
     labels = []
     for f in filters_to_use:
         if (
             "lsst" in f.lower()
             or f.lower().startswith("roman-")
-            or f.lower().startswith("Euclid-")
+            or f.lower().startswith("euclid-")
         ):
             labels.append(f.split("-")[-1])
         else:
             labels.append(f)
     mag_key = ", ".join("mag_" + lab for lab in labels)
 
-    updated_filters = f"filters: {filters_to_use}"
-    content = yml_file.replace("filters: []", updated_filters)
-    content = content.replace(
+    content = yml_file.replace(
         "  mag_*: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes",
         f"  {mag_key}: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes",
     )

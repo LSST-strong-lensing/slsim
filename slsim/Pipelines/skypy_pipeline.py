@@ -46,13 +46,16 @@ class SkyPyPipeline:
             with open(skypy_config, "r") as file:
                 content = file.read()
 
-            if sky_area is not None:
-                old_fsky = "fsky: 0.1 deg2"
-                new_fsky = f"fsky: {sky_area.value} {sky_area.unit}"
-                content = content.replace(old_fsky, new_fsky)
-
-            content = util.update_cosmology_in_yaml_file(cosmo=cosmo, yml_file=content)
-            content = util.update_filters_in_yaml_file(
+            content = util.update_cosmology_in_yaml_file(
+                cosmo=cosmo, yml_file=content
+            )
+            content = util.insert_fsky_in_yml_file(
+                fsky=sky_area, yml_file=content
+            )
+            content = util.insert_filters_in_yaml_file(
+                filters=filters, yml_file=content
+            )
+            content = util.unpdate_mag_key_in_yaml_file(
                 filters=filters, yml_file=content
             )
 

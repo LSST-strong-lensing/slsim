@@ -28,8 +28,10 @@ from slsim.Util.param_util import (
     surface_brightness_reff,
     gaussian_psf,
     update_cosmology_in_yaml_file,
-    update_filters_in_yaml_file,
+    update_mag_key_in_yaml_file,
     draw_coord_in_circle,
+    insert_fsky_in_yml_file,
+    insert_filters_in_yaml_file,
 )
 from slsim.Sources.SourceVariability.variability import Variability
 from astropy.io import fits
@@ -496,7 +498,34 @@ def test_update_mag_keys_in_yaml_file():
     # Case 1: custom 3 filters
     custom_filters = ["lsst2016-g", "lsst2016-r", "lsst2016-i"]
 
-    updated_yaml = update_filters_in_yaml_file(
+    updated_yaml = update_mag_key_in_yaml_file(
+        filters=custom_filters, yml_file=original_yaml
+    )
+
+    # Make sure mag_* has been replaced with mag_g, mag_r, mag_i
+    assert "mag_g, mag_r, mag_i:" in updated_yaml
+
+    # Case 2: filters=None -> Using the Lsst filters
+    updated_yaml_default = update_mag_key_in_yaml_file(
+        filters=None, yml_file=original_yaml
+    )
+
+    # Make sure the mag keys have been updated as well
+    assert "mag_z" in updated_yaml_default
+
+def test_update_mag_keys_in_yaml_file():
+    # Sample input YAML content with placeholders
+    original_yaml = """cosmology: !astropy.cosmology.default_cosmology.get []
+    z_range: !numpy.arange [0.0, 5.01, 0.01]
+    magnitude_limit: 30
+    tables:
+    mag_*: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+    """
+
+    # Case 1: custom 3 filters
+    custom_filters = ["lsst2016-g", "lsst2016-r", "lsst2016-i"]
+
+    updated_yaml = insert_filters_in_yaml_file(
         filters=custom_filters, yml_file=original_yaml
     )
 
@@ -506,19 +535,38 @@ def test_update_mag_keys_in_yaml_file():
     assert "lsst2016-r" in updated_yaml
     assert "lsst2016-i" in updated_yaml
 
-    # Make sure mag_* has been replaced with mag_g, mag_r, mag_i
-    assert "mag_g, mag_r, mag_i:" in updated_yaml
-
     # Case 2: filters=None -> Using the Lsst filters
-    updated_yaml_default = update_filters_in_yaml_file(
+    updated_yaml_default = insert_filters_in_yaml_file(
         filters=None, yml_file=original_yaml
     )
 
     # Make sure the default filters have been added
     assert "lsst2016-g" in updated_yaml_default
     assert "lsst2016-y" in updated_yaml_default
-    # Make sure the mag keys have been updated as well
-    assert "mag_z" in updated_yaml_default
+
+def test_insert_fsky_in_yml_file():
+    # Sample input YAML content with same format as lsst-like_triple_SF.yml
+    original_yaml = """cosmology: !astropy.cosmology.default_cosmology.get []
+    z_range: !numpy.arange [0.0, 5.01, 0.01]
+    magnitude_limit: 30
+    tables:
+    mag_*: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+    """
+    # Case 1: Custom fsky
+    updated_yml = insert_fsky_in_yml_file(
+        fsky="0.2 deg2",
+        yml_file=original_yaml,
+    )
+
+    assert "fsky: 0.2 deg2" in updated_yml
+
+    # Case 2: default fsky
+    updated_yml_default = insert_fsky_in_yml_file(
+        fsky=None,
+        yml_file=original_yaml,
+    )
+
+    assert "fsky: 0.1 deg2" in updated_yml_default
 
 
 if __name__ == "__main__":
