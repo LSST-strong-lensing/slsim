@@ -514,7 +514,7 @@ def test_update_mag_keys_in_yaml_file():
     assert "mag_z" in updated_yaml_default
 
 
-def test_update_mag_keys_in_yaml_file():
+def test_insert_filters_in_yaml_file():
     # Sample input YAML content with placeholders
     original_yaml = """cosmology: !astropy.cosmology.default_cosmology.get []
     z_range: !numpy.arange [0.0, 5.01, 0.01]
