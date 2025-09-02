@@ -55,7 +55,7 @@ class SkyPyPipeline:
             content = util.insert_filters_in_yaml_file(
                 filters=filters, yml_file=content
             )
-            content = util.unpdate_mag_key_in_yaml_file(
+            content = util.update_mag_key_in_yaml_file(
                 filters=filters, yml_file=content
             )
 
