@@ -564,8 +564,9 @@ def test_insert_fsky_in_yml_file():
 
     # Case 1b: Custom quantity fsky
     from astropy.units import Quantity
+
     updated_yml_q = insert_fsky_in_yml_file(
-        fsky = Quantity(value=1.0, unit="deg2"),
+        fsky=Quantity(value=1.0, unit="deg2"),
         yml_file=original_yaml,
     )
     assert "fsky: 1.0 deg2" in updated_yml_q
