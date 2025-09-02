@@ -554,13 +554,21 @@ def test_insert_fsky_in_yml_file():
     tables:
     mag_*: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
     """
-    # Case 1: Custom fsky
+    # Case 1: Custom str fsky
     updated_yml = insert_fsky_in_yml_file(
         fsky="0.2 deg2",
         yml_file=original_yaml,
     )
 
     assert "fsky: 0.2 deg2" in updated_yml
+
+    # Case 1b: Custom quantity fsky
+    from astropy.units import Quantity
+    updated_yml_q = insert_fsky_in_yml_file(
+        fsky = Quantity(value=1.0, unit="deg2"),
+        yml_file=original_yaml,
+    )
+    assert "fsky: 1.0 deg2" in updated_yml_q
 
     # Case 2: default fsky
     updated_yml_default = insert_fsky_in_yml_file(

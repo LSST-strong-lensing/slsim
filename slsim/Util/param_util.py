@@ -804,19 +804,17 @@ def insert_fsky_in_yml_file(fsky, yml_file):
         if ln.lstrip().startswith("magnitude_limit:"):
             mag_idx = i
             break
-    indent = ""
-    if mag_idx >= 0:
-        mag_line = lines[mag_idx]
-        indent = mag_line[: len(mag_line) - len(mag_line.lstrip())]
 
-    insertion_block = f"{indent}fsky: {updated_fsky}\n"
+    fsky_line = f"fsky: {updated_fsky}\n"
 
     if mag_idx >= 0:
-        lines.insert(mag_idx + 1, insertion_block)
+        if not lines[mag_idx].endswith("\n"):
+            lines[mag_idx] = lines[mag_idx] + "\n"
+        lines.insert(mag_idx + 1, fsky_line)
     else:
         if lines and not lines[-1].endswith("\n"):
             lines[-1] = lines[-1] + "\n"
-        lines.append(insertion_block)
+        lines.append(fsky_line)
 
     content = "".join(lines)
 
@@ -850,13 +848,11 @@ def insert_filters_in_yaml_file(filters, yml_file):
             fsky_idx = i
             break
 
-    indent = ""
     if fsky_idx >= 0:
         fsky_line = lines[fsky_idx]
-        indent = fsky_line[: len(fsky_line) - len(fsky_line.lstrip())]
         if not fsky_line.endswith("\n"):
             lines[fsky_idx] = fsky_line + "\n"
-    insertion_block = f"{indent}filters: {updated_filters}\n"
+    insertion_block = f"filters: {updated_filters}\n"
 
     if fsky_idx >= 0:
         lines.insert(fsky_idx + 1, insertion_block)
