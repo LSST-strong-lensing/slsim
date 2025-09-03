@@ -513,15 +513,29 @@ def test_update_mag_keys_in_yaml_file():
     # Make sure the mag keys have been updated as well
     assert "mag_z" in updated_yaml_default
 
+    # Case 3: Wrong filter name
+    test_filters = ["Test-i"]
+
+    with pytest.raises(ValueError, match=r"Unsupported filter name"):
+        update_mag_key_in_yaml_file(filters=test_filters, yml_file=original_yaml)
+
+    
+
 
 def test_insert_filters_in_yaml_file():
     # Sample input YAML content with placeholders
     original_yaml = """cosmology: !astropy.cosmology.default_cosmology.get []
     z_range: !numpy.arange [0.0, 5.01, 0.01]
     magnitude_limit: 30
+    fsky: 0.1 deg2
     tables:
     mag_*: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
     """
+
+    Stick_yaml = """cosmology: !astropy.cosmology.default_cosmology.get []
+    z_range: !numpy.arange [0.0, 5.01, 0.01]
+    magnitude_limit: 30
+    fsky: 0.1 deg2"""
 
     # Case 1: custom 3 filters
     custom_filters = ["lsst2016-g", "lsst2016-r", "lsst2016-i"]
@@ -536,9 +550,9 @@ def test_insert_filters_in_yaml_file():
     assert "lsst2016-r" in updated_yaml
     assert "lsst2016-i" in updated_yaml
 
-    # Case 2: filters=None -> Using the Lsst filters
+    # Case 2: filters=None -> Using the Lsst filters and fsky at end line
     updated_yaml_default = insert_filters_in_yaml_file(
-        filters=None, yml_file=original_yaml
+        filters=None, yml_file=Stick_yaml
     )
 
     # Make sure the default filters have been added
@@ -554,6 +568,10 @@ def test_insert_fsky_in_yml_file():
     tables:
     mag_*: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
     """
+    Stick_yaml = """cosmology: !astropy.cosmology.default_cosmology.get []
+    z_range: !numpy.arange [0.0, 5.01, 0.01]
+    magnitude_limit: 30"""
+
     # Case 1: Custom str fsky
     updated_yml = insert_fsky_in_yml_file(
         fsky="0.2 deg2",
@@ -571,10 +589,10 @@ def test_insert_fsky_in_yml_file():
     )
     assert "fsky: 1.0 deg2" in updated_yml_q
 
-    # Case 2: default fsky
+    # Case 2: default fsky and magnitude at end line
     updated_yml_default = insert_fsky_in_yml_file(
         fsky=None,
-        yml_file=original_yaml,
+        yml_file=Stick_yaml,
     )
 
     assert "fsky: 0.1 deg2" in updated_yml_default
