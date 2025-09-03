@@ -519,8 +519,6 @@ def test_update_mag_keys_in_yaml_file():
     with pytest.raises(ValueError, match=r"Unsupported filter name"):
         update_mag_key_in_yaml_file(filters=test_filters, yml_file=original_yaml)
 
-    
-
 
 def test_insert_filters_in_yaml_file():
     # Sample input YAML content with placeholders

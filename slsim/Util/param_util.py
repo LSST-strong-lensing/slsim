@@ -894,8 +894,10 @@ def update_mag_key_in_yaml_file(filters, yml_file):
         ):
             labels.append(f.split("-")[-1])
         else:
-            raise ValueError(f"Unsupported filter name: {f!r}. "
-                         "Expected 'lsst*', 'roman-*', or 'euclid-*'.")
+            raise ValueError(
+                f"Unsupported filter name: {f!r}. "
+                "Expected 'lsst*', 'roman-*', or 'euclid-*'."
+            )
     mag_key = ", ".join("mag_" + lab for lab in labels)
 
     content = yml_file.replace(
