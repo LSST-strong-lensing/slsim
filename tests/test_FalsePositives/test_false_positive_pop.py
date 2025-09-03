@@ -6,7 +6,7 @@ import slsim.Pipelines as pipelines
 from slsim.FalsePositives.false_positive_pop import FalsePositivePop
 from astropy.units import Quantity
 
-sky_area = Quantity(value=0.01, unit="deg2")
+sky_area = Quantity(value=0.02, unit="deg2")
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
     skypy_config=None,
