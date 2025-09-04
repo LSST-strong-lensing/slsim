@@ -332,12 +332,21 @@ class ScotchSources(SourcePopBase):
         """Uniform over classes; within chosen class, uniform over all survivors."""
         
         transient, host = self._draw_source_dict()
+        source_dict = transient | host
+        
+        point_source_type = "general_lightcurve"
+        extended_source_type = "double_sersic"
         if not host:
-            # Point Source for hostless transient
-            pass
-        else:
-            #PointPlusExtendedSource for transient with host
-            pass
+            extended_source_type = None
+
+        source = Source(
+            cosmo=self._cosmo,
+            extended_source_type=extended_source_type,
+            point_source_type=point_source_type,
+            **source_dict
+        )
+
+        return source
         
 
     def close(self):
