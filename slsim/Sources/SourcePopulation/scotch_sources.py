@@ -350,7 +350,7 @@ class ScotchSources(SourcePopBase):
         
         return source_dict, has_host
 
-    def draw_source(self):
+    def draw_source(self, *args, **kwargs) -> Source:
         """Uniform over classes; within chosen class, uniform over all survivors."""
         
         source_dict, has_host = self._draw_source_dict() 
