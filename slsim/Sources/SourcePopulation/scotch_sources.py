@@ -15,21 +15,23 @@ from slsim.Sources.SourcePopulation.source_pop_base import SourcePopBase
 
 BANDS = ("u", "g", "r", "i", "z", "Y")
 SCOTCH_MAPPINGS = {
-    'n0': 'n_sersic_0',
-    'n1': 'n_sersic_1',
-    'e0': 'ellipticity0',
-    'e1': 'ellipticity1',
+    "n0": "n_sersic_0",
+    "n1": "n_sersic_1",
+    "e0": "ellipticity0",
+    "e1": "ellipticity1",
 }
+
 
 def _norm_band_names(bands: list[str]) -> list[str]:
     out = []
     for b in bands:
         b = b.strip()
         if b.lower() == "y":
-            out.append("Y")        # dataset is "mag_Y"
+            out.append("Y")  # dataset is "mag_Y"
         else:
             out.append(b.lower())  # "u","g","r","i","z"
     return out
+
 
 def galaxy_projected_eccentricity(ellipticity, rotation_angle=None):
     """Projected eccentricity of elliptical galaxies as a function of other
@@ -53,6 +55,7 @@ def galaxy_projected_eccentricity(ellipticity, rotation_angle=None):
     e2 = e * np.sin(2 * phi)
     return e1, e2
 
+
 @dataclass
 class _SubclassIndex:
     name: str
@@ -60,6 +63,7 @@ class _SubclassIndex:
     N: int
     n_ok: int
     eligible: np.ndarray | None  # None => all rows valid
+
 
 @dataclass
 class _ClassIndex:
@@ -70,6 +74,7 @@ class _ClassIndex:
     subclasses: list[_SubclassIndex]
     total: int
     total_selected: int = 0
+
 
 class ScotchSources(SourcePopBase):
     def __init__(
@@ -91,7 +96,9 @@ class ScotchSources(SourcePopBase):
         else:
             missing = [t for t in transient_types if t not in avail]
             if missing:
-                raise ValueError(f"Unknown transient_types {missing}. Available: {sorted(avail)}")
+                raise ValueError(
+                    f"Unknown transient_types {missing}. Available: {sorted(avail)}"
+                )
         self.transient_types = list(transient_types)
 
         # Parse kwargs_cut
@@ -110,14 +117,16 @@ class ScotchSources(SourcePopBase):
 
             band = kwargs_cut.get("band")
             band_max = kwargs_cut.get("band_max")
-            
+
             band_is_list = isinstance(band, (list, tuple))
             bandmax_is_list = isinstance(band_max, (list, tuple))
             band_and_bandmax_equal_len = len(band)
-            is_valid = (band_is_list and bandmax_is_list and band_and_bandmax_equal_len)
+            is_valid = band_is_list and bandmax_is_list and band_and_bandmax_equal_len
 
             if not is_valid:
-                raise ValueError("kwargs_cut['band'] and ['band_max'] must be lists of equal length.")
+                raise ValueError(
+                    "kwargs_cut['band'] and ['band_max'] must be lists of equal length."
+                )
             self.bands = _norm_band_names(list(band))
             self.band_max = list(map(float, band_max))
             for b in self.bands:
@@ -128,8 +137,7 @@ class ScotchSources(SourcePopBase):
         self.zmax = np.inf if z_max is None else float(z_max)
 
         self.rng = (
-            rng if isinstance(rng, np.random.Generator) 
-            else np.random.default_rng(rng)
+            rng if isinstance(rng, np.random.Generator) else np.random.default_rng(rng)
         )
 
         # Build indices per class
@@ -137,11 +145,11 @@ class ScotchSources(SourcePopBase):
         for cls in self.transient_types:
             # Hosts: precompute sorted GIDs and a boolean mask for host filters
             host_grp = self.f["HostTable"][cls]
-            host_gids = host_grp["GID"][...]                  # |S8
+            host_gids = host_grp["GID"][...]  # |S8
             sort_idx = np.argsort(host_gids)
             gids_sorted = host_gids[sort_idx]
 
-            host_mask = self._host_pass_mask(host_grp)        # (Nh,)
+            host_mask = self._host_pass_mask(host_grp)  # (Nh,)
             host_mask_sorted = host_mask[sort_idx]
 
             # Transient subclasses: build eligible lists with chunked scans
@@ -149,12 +157,18 @@ class ScotchSources(SourcePopBase):
             total = 0
             total_selected = 0
             for subname, subgrp in self.f["TransientTable"][cls].items():
-                eligible_mask = self._transient_pass_mask(subgrp, gids_sorted, host_mask_sorted)
+                eligible_mask = self._transient_pass_mask(
+                    subgrp, gids_sorted, host_mask_sorted
+                )
                 n_ok = int(eligible_mask.sum())
                 if n_ok == 0:
                     continue
                 N = eligible_mask.size
-                eligible_idx = None if n_ok == N else np.flatnonzero(eligible_mask).astype(np.int64)
+                eligible_idx = (
+                    None
+                    if n_ok == N
+                    else np.flatnonzero(eligible_mask).astype(np.int64)
+                )
                 sub_list.append(_SubclassIndex(subname, subgrp, N, n_ok, eligible_idx))
                 total += N
                 total_selected += n_ok
@@ -180,14 +194,14 @@ class ScotchSources(SourcePopBase):
                 total_selected += self._index[c].total_selected
             else:
                 warnings.warn(
-                    f"Transient class '{c}' has no objects passing " + 
-                    "the provided kwargs_cut filters and will be ignored.",
+                    f"Transient class '{c}' has no objects passing "
+                    + "the provided kwargs_cut filters and will be ignored.",
                 )
 
         self.n_source = total
         self.n_source_selected = total_selected
         self.active_transient_types = active_types
-        
+
         if self.n_source_selected == 0:
             raise ValueError("No objects satisfy the provided kwargs_cut filters.")
 
@@ -197,8 +211,7 @@ class ScotchSources(SourcePopBase):
 
     @property
     def source_number_selected(self) -> int:
-        return self.n_source_selected    
-
+        return self.n_source_selected
 
     # -------------------- filtering helpers --------------------
 
@@ -213,9 +226,9 @@ class ScotchSources(SourcePopBase):
 
         # bands
         for b, mmax in zip(self.bands, self.band_max):
-            arr = host_grp[f"mag_{b}"][...]   # ~8–16 MB per band
+            arr = host_grp[f"mag_{b}"][...]  # ~8–16 MB per band
             mask &= np.isfinite(arr) & (arr <= mmax)
-        
+
         return mask
 
     def _transient_pass_mask(
@@ -241,7 +254,7 @@ class ScotchSources(SourcePopBase):
             # chunk along rows
             for i in range(0, N, batch):
                 sl = slice(i, min(i + batch, N))
-                arr = ds[sl]                     # (B,T)
+                arr = ds[sl]  # (B,T)
                 # nanmin across time; if all NaN, result is NaN (treated as fail)
                 with np.errstate(invalid="ignore"):
                     mn = np.nanmin(arr, axis=1)  # (B,)
@@ -291,25 +304,24 @@ class ScotchSources(SourcePopBase):
             b = host[f"b{comp}"]
 
             e1, e2 = galaxy_projected_eccentricity(
-                ellipticity=ellip,
-                rotation_angle=a_rot
+                ellipticity=ellip, rotation_angle=a_rot
             )
             angular_size = param_util.average_angular_size(a=a, b=b)
-            
+
             host[f"e{comp}_1"] = e1
             host[f"e{comp}_2"] = e2
             host[f"angular_size_{comp}"] = angular_size
-        
+
         return host
 
     def _build_host_dict(self, host_grp: h5py.Group, host_idx: int) -> dict:
-        
+
         host = {}
-        if host_grp['z'][host_idx] == 999.0:
+        if host_grp["z"][host_idx] == 999.0:
             return host
 
         for name, ds in host_grp.items():
-            
+
             if not isinstance(ds, h5py.Dataset):
                 continue
 
@@ -318,11 +330,11 @@ class ScotchSources(SourcePopBase):
                 val = val.decode("utf-8")
             if name == "a_rot":
                 val = np.deg2rad(val)
-            
+
             if name in SCOTCH_MAPPINGS:
                 name = SCOTCH_MAPPINGS[name]
             host[name] = val
-        
+
         host = self._scotch_to_slsim_host(host)
 
         return host
@@ -338,7 +350,7 @@ class ScotchSources(SourcePopBase):
             "ra_off": float(g["ra_off"][i]),
             "dec_off": float(g["dec_off"][i]),
         }
-        
+
         transient_lightcurve = {"MJD": g["MJD"][i]}
         for band in BANDS:
             mags = g[f"mag_{band}"][i]
@@ -351,15 +363,16 @@ class ScotchSources(SourcePopBase):
         host_grp = self._index[cls].host_grp
         host_dict = self._build_host_dict(host_grp, host_idx)
         has_host = bool(host_dict)
-        
+
         source_dict = transient_dict | host_dict
-        
+
         return source_dict, has_host
 
     def draw_source(self, *args, **kwargs) -> Source:
-        """Uniform over classes; within chosen class, uniform over all survivors."""
-        
-        source_dict, has_host = self._draw_source_dict() 
+        """Uniform over classes; within chosen class, uniform over all
+        survivors."""
+
+        source_dict, has_host = self._draw_source_dict()
         point_source_type = "general_lightcurve"
         extended_source_type = "double_sersic"
         if not has_host:
@@ -369,11 +382,11 @@ class ScotchSources(SourcePopBase):
             cosmo=self._cosmo,
             extended_source_type=extended_source_type,
             point_source_type=point_source_type,
-            **source_dict
+            **source_dict,
         )
 
         return source
-        
+
     def close(self):
         try:
             self.f.close()
