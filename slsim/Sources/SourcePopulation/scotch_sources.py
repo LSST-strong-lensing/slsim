@@ -1,0 +1,293 @@
+import os
+import h5py
+
+import numpy as np
+import numpy.random as random
+
+from astropy import units as u
+from slsim.Util import param_util
+from dataclasses import dataclass
+from slsim.Sources.source import Source
+from astropy.table import Column, vstack
+from slsim.Lenses.selection import object_cut
+from slsim.Sources.SourcePopulation.source_pop_base import SourcePopBase
+from slsim.Util.param_util import (
+    average_angular_size,
+    axis_ratio,
+    eccentricity,
+    downsample_galaxies,
+    galaxy_size_redshift_evolution,
+    galaxy_size,
+)
+
+MAG_KEYS = ("u", "g", "r", "i", "z", "Y")
+SCOTCH_TO_SLSIM = {
+    'n0': 'n_sersic_0',
+    'n1': 'n_sersice_1',
+    'e0': 'ellipticity0',
+    'e1': 'ellipticity1',
+}
+
+def _as_str(x):
+    return x.decode("utf-8") if isinstance(x, (bytes, np.bytes_)) else x
+
+def _norm_band_names(bands: list[str]) -> list[str]:
+    out = []
+    for b in bands:
+        b = b.strip()
+        if b.lower() == "y":
+            out.append("Y")        # dataset is "mag_Y"
+        else:
+            out.append(b.lower())  # "u","g","r","i","z"
+    return out
+
+@dataclass
+class _SubclassIndex:
+    name: str
+    grp: h5py.Group
+    N: int
+    n_ok: int
+    eligible: np.ndarray | None  # None => all rows valid
+
+@dataclass
+class _ClassIndex:
+    host_grp: h5py.Group
+    host_gid_sorted: np.ndarray
+    host_gid_sort_idx: np.ndarray
+    host_mask_sorted: np.ndarray  # boolean, aligned with host_gid_sorted
+    subclasses: list[_SubclassIndex]
+    total: int
+
+class ScotchSources(SourcePopBase):
+    def __init__(
+        self,
+        cosmo,
+        scotch_path: str,
+        sky_area=None,
+        transient_types: list[str] | None = None,
+        kwargs_cut: dict | None = None,
+        rng: np.random.Generator | int | None = None,
+    ):
+        super().__init__(cosmo=cosmo, sky_area=sky_area)
+        self.f = h5py.File(scotch_path, "r")
+
+        # Parse transient types
+        avail = set(self.f["TransientTable"].keys())
+        if transient_types is None:
+            transient_types = sorted(avail)
+        else:
+            missing = [t for t in transient_types if t not in avail]
+            if missing:
+                raise ValueError(f"Unknown transient_types {missing}. Available: {sorted(avail)}")
+        self.transient_types = list(transient_types)
+
+        # Parse kwargs_cut
+        self.bands, self.band_max = [], []
+        z_min = kwargs_cut.get("z_min") if kwargs_cut else None
+        z_max = kwargs_cut.get("z_max") if kwargs_cut else None
+        if kwargs_cut and ("band" in kwargs_cut or "band_max" in kwargs_cut):
+            band = kwargs_cut.get("band")
+            band_max = kwargs_cut.get("band_max")
+            band_is_str = isinstance(band, str)
+            bandmax_is_num = isinstance(band_max, (int, float))
+
+            if band_is_str and bandmax_is_num:
+                kwargs_cut["band"] = [band]
+                kwargs_cut["band_max"] = [band_max]
+
+            band = kwargs_cut.get("band")
+            band_max = kwargs_cut.get("band_max")
+            
+            band_is_list = isinstance(band, (list, tuple))
+            bandmax_is_list = isinstance(band_max, (list, tuple))
+            band_and_bandmax_equal_len = len(band)
+            is_valid = (band_is_list and bandmax_is_list and band_and_bandmax_equal_len)
+
+            if not is_valid:
+                raise ValueError("kwargs_cut['band'] and ['band_max'] must be lists of equal length.")
+            self.bands = _norm_band_names(list(band))
+            self.band_max = list(map(float, band_max))
+            for b in self.bands:
+                if b not in MAG_KEYS:
+                    raise ValueError(f"Unsupported band '{b}'. Allowed: {MAG_KEYS}")
+
+        self.zmin = 0.0 if z_min is None else float(z_min)
+        self.zmax = np.inf if z_max is None else float(z_max)
+
+        self.rng = (
+            rng if isinstance(rng, np.random.Generator) 
+            else np.random.default_rng(rng)
+        )
+
+        # Build indices per class
+        self._index: dict[str, _ClassIndex] = {}
+        for cls in self.transient_types:
+            # Hosts: precompute sorted GIDs and a boolean mask for host filters
+            host_grp = self.f["HostTable"][cls]
+            host_gids = host_grp["GID"][...]                  # |S8
+            sort_idx = np.argsort(host_gids)
+            gids_sorted = host_gids[sort_idx]
+
+            host_mask = self._host_pass_mask(host_grp)        # (Nh,)
+            host_mask_sorted = host_mask[sort_idx]
+
+            # Transient subclasses: build eligible lists with chunked scans
+            sub_list: list[_SubclassIndex] = []
+            total = 0
+            for subname, subgrp in self.f["TransientTable"][cls].items():
+                eligible_mask = self._transient_pass_mask(subgrp, gids_sorted, host_mask_sorted)
+                n_ok = int(eligible_mask.sum())
+                if n_ok == 0:
+                    continue
+                N = eligible_mask.size
+                eligible_idx = None if n_ok == N else np.flatnonzero(eligible_mask).astype(np.int64)
+                sub_list.append(_SubclassIndex(subname, subgrp, N, n_ok, eligible_idx))
+                total += n_ok
+
+            self._index[cls] = _ClassIndex(
+                host_grp=host_grp,
+                host_gid_sorted=gids_sorted,
+                host_gid_sort_idx=sort_idx,
+                host_mask_sorted=host_mask_sorted,
+                subclasses=sub_list,
+                total=total,
+            )
+
+        # keep only classes with survivors
+        self.active_types = [c for c in self.transient_types if self._index[c].total > 0]
+        if not self.active_types:
+            raise ValueError("No objects satisfy the provided kwargs_cut filters.")
+
+    # -------------------- filtering helpers --------------------
+
+    def _host_pass_mask(self, host_grp: h5py.Group) -> np.ndarray:
+        """Host filter: z in [zmin,zmax] and mag_band <= band_max for all requested pairs."""
+        Nh = host_grp["z"].shape[0]
+        mask = np.ones(Nh, dtype=bool)
+
+        # redshift
+        z = host_grp["z"][...]
+        mask &= np.isfinite(z) & (z >= self.zmin) & (z <= self.zmax)
+
+        # bands
+        for b, mmax in zip(self.bands, self.band_max):
+            arr = host_grp[f"mag_{b}"][...]   # ~8–16 MB per band
+            mask &= np.isfinite(arr) & (arr <= mmax)
+        
+        return mask
+
+    def _transient_pass_mask(
+        self,
+        subgrp: h5py.Group,
+        host_gid_sorted: np.ndarray,
+        host_mask_sorted: np.ndarray,
+        batch: int = 100_000,
+    ) -> np.ndarray:
+        """Transient filter: transient z in range, passes band thresholds (ever <= max),
+        and host(GID) passes host mask."""
+        N = subgrp["z"].shape[0]
+        mask = np.ones(N, dtype=bool)
+
+        # transient redshift
+        z = subgrp["z"][...]
+        mask &= np.isfinite(z) & (z >= self.zmin) & (z <= self.zmax)
+
+        # transient bands: require nanmin over time <= threshold for each requested band
+        for b, mmax in zip(self.bands, self.band_max):
+            ds = subgrp[f"mag_{b}"]  # shape (N, T)
+            T = ds.shape[1]
+            # chunk along rows
+            for i in range(0, N, batch):
+                sl = slice(i, min(i + batch, N))
+                arr = ds[sl]                     # (B,T)
+                # nanmin across time; if all NaN, result is NaN (treated as fail)
+                with np.errstate(invalid="ignore"):
+                    mn = np.nanmin(arr, axis=1)  # (B,)
+                ok = np.isfinite(mn) & (mn <= mmax)
+                mask[sl] &= ok
+
+        # host pass via GID membership (vectorized searchsorted per chunk)
+        for i in range(0, N, batch):
+            sl = slice(i, min(i + batch, N))
+            gids = subgrp["GID"][sl]
+            pos = np.searchsorted(host_gid_sorted, gids)
+            in_range = pos < host_gid_sorted.size
+            match = in_range & (host_gid_sorted[pos] == gids)
+            host_ok = np.zeros(sl.stop - sl.start, dtype=bool)
+            host_ok[match] = host_mask_sorted[pos[match]]
+            mask[sl] &= host_ok
+
+        return mask
+
+    # -------------------- sampling --------------------
+
+    def _sample_from_class(self, cls: str) -> tuple[_SubclassIndex, int]:
+        ci = self._index[cls]
+        weights = np.array([s.n_ok for s in ci.subclasses], dtype=float)
+        weights /= weights.sum()
+        s = ci.subclasses[self.rng.choice(len(ci.subclasses), p=weights)]
+        if s.eligible is None:
+            i = int(self.rng.integers(0, s.N))
+        else:
+            i = int(s.eligible[self.rng.integers(0, len(s.eligible))])
+        return s, i
+
+    def _host_lookup(self, cls: str, gid_bytes: bytes) -> int:
+        ci = self._index[cls]
+        pos = int(np.searchsorted(ci.host_gid_sorted, gid_bytes))
+        if pos >= len(ci.host_gid_sorted) or ci.host_gid_sorted[pos] != gid_bytes:
+            raise KeyError(f"GID {gid_bytes!r} not found in HostTable/{cls}")
+        return int(ci.host_gid_sort_idx[pos])
+
+    def _draw_source_dict(self, *args, **kwargs) -> dict:
+        cls = self.rng.choice(self.active_types)
+        s, i = self._sample_from_class(cls)
+        g = s.grp
+
+        gid_b = g["GID"][i]
+        tid_b = g["TID"][i]
+        host_idx = self._host_lookup(cls, gid_b)
+
+        mjd = g["MJD"][i]
+        mags = {f"mag_{b}": g[f"mag_{b}"][i] for b in MAG_KEYS if f"mag_{b}" in g}
+        meta = {
+            "class": cls,
+            "subclass": s.name,
+            "GID": _as_str(gid_b),
+            "TID": _as_str(tid_b),
+            "z": float(g["z"][i]),
+            "cadence": _as_str(g["cadence"][i]),
+            "ra_off": float(g["ra_off"][i]),
+            "dec_off": float(g["dec_off"][i]),
+            "sep": float(g["sep"][i]),
+        }
+
+        host_grp = self._index[cls].host_grp
+        host = {}
+        for name, ds in host_grp.items():
+            
+            if not isinstance(ds, h5py.Dataset):
+                continue
+
+            val = ds[host_idx]
+            if ds.dtype.kind == "S":
+                val = val.decode("utf-8")
+            if name == "a_rot":
+                val = np.deg2rad(val)
+            
+            if name in SCOTCH_TO_SLSIM:
+                name = SCOTCH_TO_SLSIM[name]
+            host[name] = val
+        
+        return {"meta": meta, "mjd": mjd, "mags": mags, "host": host}
+
+
+    def draw_source(self):
+        """Uniform over classes; within chosen class, uniform over all survivors."""
+        pass
+
+    def close(self):
+        try:
+            self.f.close()
+        except Exception:
+            pass
