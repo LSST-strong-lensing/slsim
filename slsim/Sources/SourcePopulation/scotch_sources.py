@@ -1,5 +1,6 @@
 import os
 import h5py
+import warnings
 
 import numpy as np
 import numpy.random as random
@@ -71,6 +72,7 @@ class _ClassIndex:
     host_mask_sorted: np.ndarray  # boolean, aligned with host_gid_sorted
     subclasses: list[_SubclassIndex]
     total: int
+    total_selected: int = 0
 
 class ScotchSources(SourcePopBase):
     def __init__(
@@ -148,6 +150,7 @@ class ScotchSources(SourcePopBase):
             # Transient subclasses: build eligible lists with chunked scans
             sub_list: list[_SubclassIndex] = []
             total = 0
+            total_selected = 0
             for subname, subgrp in self.f["TransientTable"][cls].items():
                 eligible_mask = self._transient_pass_mask(subgrp, gids_sorted, host_mask_sorted)
                 n_ok = int(eligible_mask.sum())
@@ -156,7 +159,8 @@ class ScotchSources(SourcePopBase):
                 N = eligible_mask.size
                 eligible_idx = None if n_ok == N else np.flatnonzero(eligible_mask).astype(np.int64)
                 sub_list.append(_SubclassIndex(subname, subgrp, N, n_ok, eligible_idx))
-                total += n_ok
+                total += N
+                total_selected += n_ok
 
             self._index[cls] = _ClassIndex(
                 host_grp=host_grp,
@@ -165,11 +169,29 @@ class ScotchSources(SourcePopBase):
                 host_mask_sorted=host_mask_sorted,
                 subclasses=sub_list,
                 total=total,
+                total_selected=total_selected,
             )
 
         # keep only classes with survivors
-        self.active_types = [c for c in self.transient_types if self._index[c].total > 0]
-        if not self.active_types:
+        active_types = []
+        total = 0
+        total_selected = 0
+        for c in self.transient_types:
+            if self._index[c].total_selected > 0:
+                active_types.append(c)
+                total += self._index[c].total
+                total_selected += self._index[c].total_selected
+            else:
+                warnings.warn(
+                    f"Transient class '{c}' has no objects passing " + 
+                    "the provided kwargs_cut filters and will be ignored.",
+                )
+
+        self.source_number = total
+        self.source_number_selected = total_selected
+        self.transient_types = active_types
+        
+        if not self.source_number_selected:
             raise ValueError("No objects satisfy the provided kwargs_cut filters.")
 
     # -------------------- filtering helpers --------------------
@@ -328,7 +350,6 @@ class ScotchSources(SourcePopBase):
         
         return source_dict, has_host
 
-
     def draw_source(self):
         """Uniform over classes; within chosen class, uniform over all survivors."""
         
@@ -347,7 +368,6 @@ class ScotchSources(SourcePopBase):
 
         return source
         
-
     def close(self):
         try:
             self.f.close()
