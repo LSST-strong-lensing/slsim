@@ -12,7 +12,7 @@ from astropy.table import Column, vstack
 from slsim.Lenses.selection import object_cut
 from slsim.Sources.SourcePopulation.source_pop_base import SourcePopBase
 
-MAG_KEYS = ("u", "g", "r", "i", "z", "Y")
+BANDS = ("u", "g", "r", "i", "z", "Y")
 SCOTCH_MAPPINGS = {
     'n0': 'n_sersic_0',
     'n1': 'n_sersice_1',
@@ -122,8 +122,8 @@ class ScotchSources(SourcePopBase):
             self.bands = _norm_band_names(list(band))
             self.band_max = list(map(float, band_max))
             for b in self.bands:
-                if b not in MAG_KEYS:
-                    raise ValueError(f"Unsupported band '{b}'. Allowed: {MAG_KEYS}")
+                if b not in BANDS:
+                    raise ValueError(f"Unsupported band '{b}'. Allowed: {BANDS}")
 
         self.zmin = 0.0 if z_min is None else float(z_min)
         self.zmax = np.inf if z_max is None else float(z_max)
@@ -304,39 +304,38 @@ class ScotchSources(SourcePopBase):
         s, i = self._sample_from_class(cls)
         g = s.grp
 
-        gid_b = g["GID"][i]
-        tid_b = g["TID"][i]
-        host_idx = self._host_lookup(cls, gid_b)
-
-        mjd = g["MJD"][i]
-        mags = {f"ps_mag_{b}": g[f"mag_{b}"][i] for b in MAG_KEYS if f"mag_{b}" in g}
-        meta = {
-            "class": cls,
-            "subclass": s.name,
-            "GID": _as_str(gid_b),
-            "TID": _as_str(tid_b),
+        transient_metadata = {
+            "name": f"{cls}_{s.name}",
             "z": float(g["z"][i]),
-            "cadence": _as_str(g["cadence"][i]),
             "ra_off": float(g["ra_off"][i]),
             "dec_off": float(g["dec_off"][i]),
-            "sep": float(g["sep"][i]),
         }
-
-        host_grp = self._index[cls].host_grp
-        host = self._build_host_dict(host_grp, host_idx)
         
-        return host
+        transient_lightcurve = {"MJD": g["MJD"][i]}
+        for band in BANDS:
+            mags = g[f"mag_{band}"][i]
+            mags = np.where(mags == 99.0, np.nan, mags)
+            transient_lightcurve[f"ps_mag_{band}"] = mags
+        transient_dict = transient_metadata | transient_lightcurve
+
+        gid_b = g["GID"][i]
+        host_idx = self._host_lookup(cls, gid_b)
+        host_grp = self._index[cls].host_grp
+        host_dict = self._build_host_dict(host_grp, host_idx)
+        has_host = bool(host_dict)
+        
+        source_dict = transient_dict | host_dict
+        
+        return source_dict, has_host
 
 
     def draw_source(self):
         """Uniform over classes; within chosen class, uniform over all survivors."""
         
-        transient, host = self._draw_source_dict()
-        source_dict = transient | host
-        
+        source_dict, has_host = self._draw_source_dict() 
         point_source_type = "general_lightcurve"
         extended_source_type = "double_sersic"
-        if not host:
+        if not has_host:
             extended_source_type = None
 
         source = Source(
