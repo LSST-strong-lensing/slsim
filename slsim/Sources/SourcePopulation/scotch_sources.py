@@ -277,6 +277,9 @@ class ScotchSources(SourcePopBase):
     def _build_host_dict(self, host_grp: h5py.Group, host_idx: int) -> dict:
         
         host = {}
+        if host_grp['z'][host_idx] == 999.0:
+            return host
+
         for name, ds in host_grp.items():
             
             if not isinstance(ds, h5py.Dataset):
@@ -327,7 +330,15 @@ class ScotchSources(SourcePopBase):
 
     def draw_source(self):
         """Uniform over classes; within chosen class, uniform over all survivors."""
-        pass
+        
+        transient, host = self._draw_source_dict()
+        if not host:
+            # Point Source for hostless transient
+            pass
+        else:
+            #PointPlusExtendedSource for transient with host
+            pass
+        
 
     def close(self):
         try:
