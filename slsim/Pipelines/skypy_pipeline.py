@@ -28,7 +28,10 @@ class SkyPyPipeline:
                         (e.g., FlatLambdaCDM(H0=70, Om0=0.3)).
         :type cosmo: astropy.cosmology instance or None
         """
-        path = os.path.dirname(slsim.__file__)
+        #path = os.path.dirname(slsim.__file__)
+
+        path = os.path.dirname(os.path.abspath(__file__))
+        path, _ = os.path.split(path)
         module_path, _ = os.path.split(path)
         if skypy_config is None:
             skypy_config = os.path.join(
