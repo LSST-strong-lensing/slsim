@@ -16,13 +16,10 @@ from slsim.Sources.SourcePopulation.source_pop_base import SourcePopBase
 BANDS = ("u", "g", "r", "i", "z", "Y")
 SCOTCH_MAPPINGS = {
     'n0': 'n_sersic_0',
-    'n1': 'n_sersice_1',
+    'n1': 'n_sersic_1',
     'e0': 'ellipticity0',
     'e1': 'ellipticity1',
 }
-
-def _as_str(x):
-    return x.decode("utf-8") if isinstance(x, (bytes, np.bytes_)) else x
 
 def _norm_band_names(bands: list[str]) -> list[str]:
     out = []
@@ -187,12 +184,21 @@ class ScotchSources(SourcePopBase):
                     "the provided kwargs_cut filters and will be ignored.",
                 )
 
-        self.source_number = total
-        self.source_number_selected = total_selected
-        self.transient_types = active_types
+        self.n_source = total
+        self.n_source_selected = total_selected
+        self.active_transient_types = active_types
         
-        if not self.source_number_selected:
+        if self.n_source_selected == 0:
             raise ValueError("No objects satisfy the provided kwargs_cut filters.")
+
+    @property
+    def source_number(self) -> int:
+        return self.n_source
+
+    @property
+    def source_number_selected(self) -> int:
+        return self.n_source_selected    
+
 
     # -------------------- filtering helpers --------------------
 
@@ -322,7 +328,7 @@ class ScotchSources(SourcePopBase):
         return host
 
     def _draw_source_dict(self, *args, **kwargs) -> dict:
-        cls = self.rng.choice(self.active_types)
+        cls = self.rng.choice(self.active_transient_types)
         s, i = self._sample_from_class(cls)
         g = s.grp
 
