@@ -11,17 +11,9 @@ from slsim.Sources.source import Source
 from astropy.table import Column, vstack
 from slsim.Lenses.selection import object_cut
 from slsim.Sources.SourcePopulation.source_pop_base import SourcePopBase
-from slsim.Util.param_util import (
-    average_angular_size,
-    axis_ratio,
-    eccentricity,
-    downsample_galaxies,
-    galaxy_size_redshift_evolution,
-    galaxy_size,
-)
 
 MAG_KEYS = ("u", "g", "r", "i", "z", "Y")
-SCOTCH_TO_SLSIM = {
+SCOTCH_MAPPINGS = {
     'n0': 'n_sersic_0',
     'n1': 'n_sersice_1',
     'e0': 'ellipticity0',
@@ -40,6 +32,28 @@ def _norm_band_names(bands: list[str]) -> list[str]:
         else:
             out.append(b.lower())  # "u","g","r","i","z"
     return out
+
+def galaxy_projected_eccentricity(ellipticity, rotation_angle=None):
+    """Projected eccentricity of elliptical galaxies as a function of other
+    deflector parameters.
+
+    :param ellipticity: eccentricity amplitude
+    :type ellipticity: float [0,1)
+    :param rotation_angle: rotation angle of the major axis of
+        elliptical galaxy in radian. The reference of this rotation
+        angle is +Ra axis i.e towards the East direction and it goes
+        from East to North. If it is not provided, it will be drawn
+        randomly.
+    :return: e1, e2 eccentricity components
+    """
+    if rotation_angle is None:
+        phi = np.random.uniform(0, np.pi)
+    else:
+        phi = rotation_angle
+    e = param_util.epsilon2e(ellipticity)
+    e1 = e * np.cos(2 * phi)
+    e2 = e * np.sin(2 * phi)
+    return e1, e2
 
 @dataclass
 class _SubclassIndex:
@@ -239,6 +253,49 @@ class ScotchSources(SourcePopBase):
             raise KeyError(f"GID {gid_bytes!r} not found in HostTable/{cls}")
         return int(ci.host_gid_sort_idx[pos])
 
+    def _scotch_to_slsim_host(self, host: dict) -> dict:
+
+        for comp in [0, 1]:
+
+            ellip = host[f"ellipticity{comp}"]
+            a_rot = host["a_rot"]
+            a = host[f"a{comp}"]
+            b = host[f"b{comp}"]
+
+            e1, e2 = galaxy_projected_eccentricity(
+                ellipticity=ellip,
+                rotation_angle=a_rot
+            )
+            angular_size = param_util.average_angular_size(a=a, b=b)
+            
+            host[f"e{comp}_1"] = e1
+            host[f"e{comp}_2"] = e2
+            host[f"angular_size_{comp}"] = angular_size
+        
+        return host
+
+    def _build_host_dict(self, host_grp: h5py.Group, host_idx: int) -> dict:
+        
+        host = {}
+        for name, ds in host_grp.items():
+            
+            if not isinstance(ds, h5py.Dataset):
+                continue
+
+            val = ds[host_idx]
+            if ds.dtype.kind == "S":
+                val = val.decode("utf-8")
+            if name == "a_rot":
+                val = np.deg2rad(val)
+            
+            if name in SCOTCH_MAPPINGS:
+                name = SCOTCH_MAPPINGS[name]
+            host[name] = val
+        
+        host = self._scotch_to_slsim_host(host)
+
+        return host
+
     def _draw_source_dict(self, *args, **kwargs) -> dict:
         cls = self.rng.choice(self.active_types)
         s, i = self._sample_from_class(cls)
@@ -249,7 +306,7 @@ class ScotchSources(SourcePopBase):
         host_idx = self._host_lookup(cls, gid_b)
 
         mjd = g["MJD"][i]
-        mags = {f"mag_{b}": g[f"mag_{b}"][i] for b in MAG_KEYS if f"mag_{b}" in g}
+        mags = {f"ps_mag_{b}": g[f"mag_{b}"][i] for b in MAG_KEYS if f"mag_{b}" in g}
         meta = {
             "class": cls,
             "subclass": s.name,
@@ -263,23 +320,9 @@ class ScotchSources(SourcePopBase):
         }
 
         host_grp = self._index[cls].host_grp
-        host = {}
-        for name, ds in host_grp.items():
-            
-            if not isinstance(ds, h5py.Dataset):
-                continue
-
-            val = ds[host_idx]
-            if ds.dtype.kind == "S":
-                val = val.decode("utf-8")
-            if name == "a_rot":
-                val = np.deg2rad(val)
-            
-            if name in SCOTCH_TO_SLSIM:
-                name = SCOTCH_TO_SLSIM[name]
-            host[name] = val
+        host = self._build_host_dict(host_grp, host_idx)
         
-        return {"meta": meta, "mjd": mjd, "mags": mags, "host": host}
+        return host
 
 
     def draw_source(self):
