@@ -33,7 +33,7 @@ class GeneralLightCurve(SourceBase):
             extended_source=False,
             **kwargs
         )
-        self.name = "LC"
+        self.name = kwargs.get("name", "LC")
         # These are the keywords that kwargs dict should contain
         self._MJD = MJD
 
