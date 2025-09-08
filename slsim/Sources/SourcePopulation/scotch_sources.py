@@ -231,6 +231,7 @@ class _SubclassIndex:
     grp: h5py.Group
     N: int
     n_ok: int
+    n_expected: int
     eligible: np.ndarray | None  # None => all rows valid
 
 
@@ -242,6 +243,7 @@ class _ClassIndex:
     host_mask_sorted: np.ndarray  # boolean, aligned with host_gid_sorted
     subclasses: list[_SubclassIndex]
     total: int
+    total_expected: int
     total_selected: int = 0
 
 
@@ -358,7 +360,7 @@ class ScotchSources(SourcePopBase):
                     raise ValueError(f"Unsupported band '{b}'. Allowed: {BANDS}")
 
         self.zmin = 0.0 if z_min is None else float(z_min)
-        self.zmax = np.inf if z_max is None else float(z_max)
+        self.zmax = 3.0 if z_max is None else float(z_max) # Max in SCOTCH
 
         self.rng = (
             rng if isinstance(rng, np.random.Generator) else np.random.default_rng(rng)
@@ -379,8 +381,10 @@ class ScotchSources(SourcePopBase):
             # Transient subclasses: build eligible lists with chunked scans
             sub_list: list[_SubclassIndex] = []
             total = 0
+            total_expected = 0
             total_selected = 0
             for subname, subgrp in self.f["TransientTable"][cls].items():
+                
                 eligible_mask = self._transient_pass_mask(
                     subgrp, gids_sorted, host_mask_sorted
                 )
@@ -393,7 +397,35 @@ class ScotchSources(SourcePopBase):
                     if n_ok == N
                     else np.flatnonzero(eligible_mask).astype(np.int64)
                 )
-                sub_list.append(_SubclassIndex(subname, subgrp, N, n_ok, eligible_idx))
+
+                if subname in RATE_FUNCS:
+                    rate_fn = RATE_FUNCS[subname]
+                    n_expected = expected_number(
+                        rate_fn=rate_fn,
+                        cosmo=cosmo,
+                        z_min=self.zmin,
+                        z_max=self.zmax
+                    )
+                elif "AGN" in subname:
+                    n_expected = n_ok
+                else:
+                    raise ValueError(
+                        f"Transient Subclass {subname} not found in rate functions. " +
+                        f"Rate functions are available for {list(RATE_FUNCS.keys())}."
+                    )
+                
+                total_expected += n_expected
+
+                sub_list.append(
+                    _SubclassIndex(
+                        name=subname,
+                        grp=subgrp,
+                        N=N,
+                        n_ok=n_ok,
+                        n_expected=n_expected,
+                        eligible=eligible_idx
+                    )
+                )
                 total += N
                 total_selected += n_ok
 
@@ -404,6 +436,7 @@ class ScotchSources(SourcePopBase):
                 host_mask_sorted=host_mask_sorted,
                 subclasses=sub_list,
                 total=total,
+                total_expected=total_expected,
                 total_selected=total_selected,
             )
 
