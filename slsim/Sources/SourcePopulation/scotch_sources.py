@@ -194,7 +194,7 @@ class ScotchSources(SourcePopBase):
 
             band_is_list = isinstance(band, (list, tuple))
             bandmax_is_list = isinstance(band_max, (list, tuple))
-            band_and_bandmax_equal_len = len(band)
+            band_and_bandmax_equal_len = len(band) == len(band_max)
             is_valid = band_is_list and bandmax_is_list and band_and_bandmax_equal_len
 
             if not is_valid:
