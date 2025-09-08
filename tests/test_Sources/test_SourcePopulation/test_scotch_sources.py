@@ -6,6 +6,8 @@ import slsim.Sources.SourcePopulation.scotch_sources as scotch_module
 
 from pathlib import Path
 from astropy.cosmology import FlatLambdaCDM
+from slsim.Sources.SourceTypes.point_source import PointSource
+from slsim.Sources.SourceTypes.point_plus_extended_source import PointPlusExtendedSource
 
 # -----------------------------
 # Helpers / Fixtures, since we
@@ -38,6 +40,9 @@ def scotch_h5(tmp_path: Path):
         sn_host.create_dataset("a_rot", data=np.array([45.0, 30.0]))  # degrees
         for name in ["a0", "b0", "a1", "b1", "ellipticity0", "ellipticity1", "n0", "n1"]:
             sn_host.create_dataset(name, data=np.array([1.0, 1.5]))
+        sn_host.create_dataset("w0", data=np.array([0.3, 0.4]))
+        sn_host.create_dataset("w1", data=np.array([0.7, 0.6]))
+
         # Host mag for 'r' band so that first passes and second fails
         sn_host.create_dataset("mag_r", data=np.array([21.0, 25.0]))
 
@@ -49,6 +54,8 @@ def scotch_h5(tmp_path: Path):
         agn_host.create_dataset("a_rot", data=np.array([0.0]))
         for name in ["a0", "b0", "a1", "b1", "ellipticity0", "ellipticity1", "n0", "n1"]:
             agn_host.create_dataset(name, data=np.array([1.0]))
+        agn_host.create_dataset("w0", data=np.array([0.3, 0.4]))
+        agn_host.create_dataset("w1", data=np.array([0.7, 0.6]))
         agn_host.create_dataset("mag_r", data=np.array([30.0]))  # too faint
 
         # ---- SNII transients ----
@@ -161,3 +168,87 @@ def test_init_unsupported_band_raises(scotch_h5):
             scotch_path=scotch_h5,
             kwargs_cut={"band": ["q"], "band_max": [22.0]},
         )
+
+def test_host_pass_mask(scotch_instance):
+    host_grp = scotch_instance._index["SNII"].host_grp
+    mask = scotch_instance._host_pass_mask(host_grp)
+    assert mask.dtype == bool
+    assert mask.shape == host_grp["z"].shape
+    assert mask.tolist() == [True, False]
+
+def test_transient_pass_mask_and_selection(scotch_instance):
+    cls = "SNII"
+    ci = scotch_instance._index[cls]
+    # Subclass "A" -> [True, False]
+    subA = next(s for s in ci.subclasses if s.name == "A")
+    maskA = scotch_instance._transient_pass_mask(
+        subA.grp, ci.host_gid_sorted, ci.host_mask_sorted, batch=1
+    )
+    assert maskA.tolist() == [True, False]
+    # Subclass "B" -> [True]
+    subB = next(s for s in ci.subclasses if s.name == "B")
+    maskB = scotch_instance._transient_pass_mask(
+        subB.grp, ci.host_gid_sorted, ci.host_mask_sorted, batch=1
+    )
+    assert maskB.tolist() == [True]
+    # Totals reflect only active classes with survivors
+    assert scotch_instance.source_number == 3   # total rows in SNII (2 + 1)
+    assert scotch_instance.source_number_selected == 2  # two survivors
+
+def test_sample_from_class_yields_valid_indices(scotch_instance):
+    s, i = scotch_instance._sample_from_class("SNII")
+    # With our data: both subclasses only have index 0 eligible
+    assert i == 0
+    assert s.N >= 1
+    assert s.n_ok >= 1
+
+def test_host_lookup(scotch_instance):
+    gid = scotch_instance._index["SNII"].host_grp["GID"][0]
+    idx = scotch_instance._host_lookup("SNII", gid)
+    assert idx == 0
+    with pytest.raises(KeyError):
+        scotch_instance._host_lookup("SNII", b"99999999")
+
+def test_build_host_dict_and_hostless(scotch_instance):
+    host_grp = scotch_instance._index["SNII"].host_grp
+    d0 = scotch_instance._build_host_dict(host_grp, 0)
+    # Basic keys + converted names + computed ones
+    for k in [
+        "ellipticity0", "ellipticity1", "a_rot", "a0", "b0", "a1", "b1",
+        "n_sersic_0", "n_sersic_1", "e0_1", "e0_2", "e1_1", "e1_2",
+        "angular_size_0", "angular_size_1", "w0", "w1"
+    ]:
+        assert k in d0
+    # a_rot converted to radians
+    assert np.isclose(d0["a_rot"], np.deg2rad(45.0))
+    # Host 1 is hostless (z==999.0)
+    d1 = scotch_instance._build_host_dict(host_grp, 1)
+    assert d1 == {}
+
+def test_draw_source_dict(scotch_instance):
+    source_dict, has_host = scotch_instance._draw_source_dict()
+    # Transient metadata present
+    for k in ("name", "z", "ra_off", "dec_off"):
+        assert k in source_dict
+    
+    # Host metadata present if has_host
+    if has_host:
+        for k in [
+            "ellipticity0", "ellipticity1", "a_rot", "a0", "b0", "a1", "b1",
+            "n_sersic_0", "n_sersic_1", "e0_1", "e0_2", "e1_1", "e1_2",
+            "angular_size_0", "angular_size_1", "w0", "w1"
+        ]:
+            assert k in source_dict
+    else:
+        for k in [
+            "ellipticity0", "ellipticity1", "a_rot", "a0", "b0", "a1", "b1",
+            "n_sersic_0", "n_sersic_1", "e0_1", "e0_2", "e1_1", "e1_2",
+            "angular_size_0", "angular_size_1", "w0", "w1"
+        ]:
+            assert k not in source_dict
+    
+    # Lightcurve keys
+    assert "MJD" in source_dict and source_dict["MJD"].ndim == 1
+    for b in ("u", "g", "r", "i", "z", "Y"):
+        assert f"ps_mag_{b}" in source_dict
+        assert source_dict[f"ps_mag_{b}"].ndim == 1
