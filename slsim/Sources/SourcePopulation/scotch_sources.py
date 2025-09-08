@@ -105,9 +105,8 @@ class ScotchSources(SourcePopBase):
         kwargs_cut: dict | None = None,
         rng: np.random.Generator | int | None = None,
     ):
-        """
-        Class for SCOTCH transient source population. Allows for sampling
-        of transients and their hosts from the SCOTCH HDF5 catalogs.
+        """Class for SCOTCH transient source population. Allows for sampling of
+        transients and their hosts from the SCOTCH HDF5 catalogs.
 
         Parameters
         ----------
@@ -282,8 +281,7 @@ class ScotchSources(SourcePopBase):
 
     @property
     def source_number(self) -> int:
-        """
-        Number of sources in the population before any selection cuts.
+        """Number of sources in the population before any selection cuts.
 
         Returns
         -------
@@ -294,9 +292,8 @@ class ScotchSources(SourcePopBase):
 
     @property
     def source_number_selected(self) -> int:
-        """
-        Number of sources in the population after applying selection cuts.
-        
+        """Number of sources in the population after applying selection cuts.
+
         Returns
         -------
         int
