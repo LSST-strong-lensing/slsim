@@ -1,16 +1,11 @@
-import os
 import h5py
 import warnings
 
 import numpy as np
-import numpy.random as random
 
-from astropy import units as u
 from slsim.Util import param_util
 from dataclasses import dataclass
 from slsim.Sources.source import Source
-from astropy.table import Column, vstack
-from slsim.Lenses.selection import object_cut
 from slsim.Sources.SourcePopulation.source_pop_base import SourcePopBase
 
 BANDS = ("u", "g", "r", "i", "z", "Y")
@@ -23,6 +18,20 @@ SCOTCH_MAPPINGS = {
 
 
 def _norm_band_names(bands: list[str]) -> list[str]:
+    """
+    Normalize band names to lowercase, except for 'Y' which is uppercase.
+    
+    Parameters
+    ----------
+    bands : list of str
+        List of band names to normalize.
+
+    Returns
+    -------
+    list of str
+        Normalized band names.
+    """
+
     out = []
     for b in bands:
         b = b.strip()
@@ -33,19 +42,40 @@ def _norm_band_names(bands: list[str]) -> list[str]:
     return out
 
 
-def galaxy_projected_eccentricity(ellipticity, rotation_angle=None):
-    """Projected eccentricity of elliptical galaxies as a function of other
-    deflector parameters.
-
-    :param ellipticity: eccentricity amplitude
-    :type ellipticity: float [0,1)
-    :param rotation_angle: rotation angle of the major axis of
-        elliptical galaxy in radian. The reference of this rotation
-        angle is +Ra axis i.e towards the East direction and it goes
-        from East to North. If it is not provided, it will be drawn
-        randomly.
-    :return: e1, e2 eccentricity components
+def galaxy_projected_eccentricity(ellipticity: float, rotation_angle= float | None) -> tuple[float, float]:
     """
+    Compute the projected eccentricity components (e1, e2) of an elliptical galaxy
+    given its ellipticity and rotation angle. If the rotation angle is not provided,
+    it is drawn randomly from a uniform distribution between 0 and π.
+
+    Parameters
+    ----------
+    ellipticity : float
+        Eccentricity amplitude, must be in the range [0, 1).
+    rotation_angle : float or None, optional
+        Rotation angle of the major axis in radians. The reference is the +RA axis
+        (towards the East direction) and it increases from East to North. If None, a random angle is drawn.
+
+    Returns
+    -------
+    e1 : float
+        First component of the projected eccentricity.
+    e2 : float
+        Second component of the projected eccentricity.
+    """
+
+    # """Projected eccentricity of elliptical galaxies as a function of other
+    # deflector parameters.
+
+    # :param ellipticity: eccentricity amplitude
+    # :type ellipticity: float [0,1)
+    # :param rotation_angle: rotation angle of the major axis of
+    #     elliptical galaxy in radian. The reference of this rotation
+    #     angle is +Ra axis i.e towards the East direction and it goes
+    #     from East to North. If it is not provided, it will be drawn
+    #     randomly.
+    # :return: e1, e2 eccentricity components
+    # """
     if rotation_angle is None:
         phi = np.random.uniform(0, np.pi)
     else:
@@ -216,7 +246,20 @@ class ScotchSources(SourcePopBase):
     # -------------------- filtering helpers --------------------
 
     def _host_pass_mask(self, host_grp: h5py.Group) -> np.ndarray:
-        """Host filter: z in [zmin,zmax] and mag_band <= band_max for all requested pairs."""
+        """
+        Create a boolean mask for hosts passing cuts on redshift and magnitude.
+
+        Parameters
+        ----------
+        host_grp : h5py.Group
+            HDF5 group for the host table of a given transient class. Must contain
+            datasets "z" and "mag_{band}" for each band in self.bands, all of shape (Nh,).
+        
+        Returns
+        -------
+        mask : np.ndarray
+            Boolean array with shape (Nh,) where True indicates the host passes all cuts.
+        """
         Nh = host_grp["z"].shape[0]
         mask = np.ones(Nh, dtype=bool)
 
@@ -236,8 +279,28 @@ class ScotchSources(SourcePopBase):
         host_mask_sorted: np.ndarray,
         batch: int = 100_000,
     ) -> np.ndarray:
-        """Transient filter: transient z in range, passes band thresholds (ever <= max),
-        and host(GID) passes host mask."""
+        """
+        Create a boolean mask for transients passing cuts on redshift, magnitude, and
+        host validity. Lightcurve magnitude cuts are applied as nanmin over time <= threshold.
+
+        Parameters
+        ----------
+        subgrp : h5py.Group
+            HDF5 group for a transient subclass. Must contain datasets "z", "GID", and
+            "mag_{band}" for each band in self.bands, where "z" and "GID" have shape (N,)
+            and "mag_{band}" has shape (N, T).
+        host_gid_sorted : np.ndarray
+            Sorted array of host GIDs (|S8) for the corresponding transient class.
+        host_mask_sorted : np.ndarray
+            Boolean array aligned with host_gid_sorted indicating valid hosts.
+        batch : int, optional
+            Number of transient rows to process in each chunk, by default 100_000.
+
+        Returns
+        -------
+        mask : np.ndarray
+            Boolean array with shape (N,) where True indicates the transient passes all cuts.
+        """
         N = subgrp["z"].shape[0]
         mask = np.ones(N, dtype=bool)
 
@@ -275,6 +338,22 @@ class ScotchSources(SourcePopBase):
     # -------------------- sampling --------------------
 
     def _sample_from_class(self, cls: str) -> tuple[_SubclassIndex, int]:
+        """
+        Sample a transient subclass and an index within that subclass,
+        uniformly over all surviving objects in the class.
+
+        Parameters
+        ----------
+        cls : str
+            Transient class name.
+
+        Returns
+        -------
+        s : _SubclassIndex
+            The sampled transient subclass.
+        i : int
+            Index within the subclass's dataset.
+        """
         ci = self._index[cls]
         weights = np.array([s.n_ok for s in ci.subclasses], dtype=float)
         weights /= weights.sum()
@@ -286,6 +365,22 @@ class ScotchSources(SourcePopBase):
         return s, i
 
     def _host_lookup(self, cls: str, gid_bytes: bytes) -> int:
+        """
+        Given a transient class and a GID (as bytes), return the index of the
+        corresponding host in the HostTable for that class.
+        
+        Parameters
+        ----------
+        cls: str
+            Transient class name.
+        gid_bytes: bytes
+            GID of the host as bytes (|S8).
+
+        Returns
+        -------
+        int
+            Index of the host in the HostTable for the given class.
+        """
         ci = self._index[cls]
         pos = int(np.searchsorted(ci.host_gid_sorted, gid_bytes))
         if pos >= len(ci.host_gid_sorted) or ci.host_gid_sorted[pos] != gid_bytes:
@@ -293,7 +388,26 @@ class ScotchSources(SourcePopBase):
         return int(ci.host_gid_sort_idx[pos])
 
     def _scotch_to_slsim_host(self, host: dict) -> dict:
+        """
+        Convert a host dictionary from SCOTCH naming and conventions
+        to slsim naming and conventions. Adds projected eccentricity
+        components and average angular size for each component.
 
+        Parameters
+        ----------
+        host : dict
+            Dictionary with host parameters using SCOTCH naming. Must include
+            keys "ellipticity0", "ellipticity1", "a_rot", "a0", "b0", "a1", "b1".
+        
+        Returns
+        -------
+        dict
+            Dictionary with host parameters using slsim naming, including
+            "e0_1", "e0_2", "angular_size_0", "e1_1", "e1_2", "angular_size_1".
+        """
+
+        _host = host.copy()
+        host = _host
         for comp in [0, 1]:
 
             ellip = host[f"ellipticity{comp}"]
@@ -313,6 +427,23 @@ class ScotchSources(SourcePopBase):
         return host
 
     def _build_host_dict(self, host_grp: h5py.Group, host_idx: int) -> dict:
+        """
+        Build an SLSlim-compatible host dictionary from the host group 
+        and index. If the host redshift is 999.0 (corresponding to a 
+        hostless transient), return an empty dictionary.
+
+        Parameters
+        ----------
+        host_grp : h5py.Group
+            HDF5 group for the host table of a given transient class.
+        host_idx : int
+            Index of the host within the host group.
+        Returns
+        -------
+        dict
+            Dictionary with host parameters using slsim naming. Empty if
+            the transient is hostless (host redshift = 999.0).
+        """
 
         host = {}
         if host_grp["z"][host_idx] == 999.0:
@@ -338,6 +469,19 @@ class ScotchSources(SourcePopBase):
         return host
 
     def _draw_source_dict(self, *args, **kwargs) -> dict:
+        """
+        Draw a transient and its host (if any), returning a combined
+        dictionary of parameters. Transient class is chosen uniformly
+        among those with surviving objects, then a transient is chosen
+        uniformly among all surviving subclasses in that class.
+
+        Returns
+        -------
+        dict
+            Dictionary with transient and host parameters using slsim naming.
+        bool
+            True if the transient has a host, False if hostless.
+        """
         cls = self.rng.choice(self.active_transient_types)
         s, i = self._sample_from_class(cls)
         g = s.grp
@@ -367,8 +511,19 @@ class ScotchSources(SourcePopBase):
         return source_dict, has_host
 
     def draw_source(self, *args, **kwargs) -> Source:
-        """Uniform over classes; within chosen class, uniform over all
-        survivors."""
+        """
+        Draw a source from the population, returning a Source object. Transients
+        are instantiated as "general_lightcurve" point sources, and hosts (if any)
+        as "double_sersic" extended sources. If the transient is hostless, the Source
+        is an instance of PointSource, otherwise it is an instance of PointPlusExtendedSource.
+
+        Returns
+        -------
+        Source
+            The drawn source object. If hostless, an instance of PointSource;
+            otherwise, an instance of PointPlusExtendedSource.
+
+        """
 
         source_dict, has_host = self._draw_source_dict()
         point_source_type = "general_lightcurve"
@@ -386,6 +541,9 @@ class ScotchSources(SourcePopBase):
         return source
 
     def close(self):
+        """
+        Close the underlying HDF5 file.
+        """
         try:
             self.f.close()
         except Exception:
