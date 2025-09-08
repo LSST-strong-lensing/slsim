@@ -65,18 +65,6 @@ def galaxy_projected_eccentricity(
         Second component of the projected eccentricity.
     """
 
-    # """Projected eccentricity of elliptical galaxies as a function of other
-    # deflector parameters.
-
-    # :param ellipticity: eccentricity amplitude
-    # :type ellipticity: float [0,1)
-    # :param rotation_angle: rotation angle of the major axis of
-    #     elliptical galaxy in radian. The reference of this rotation
-    #     angle is +Ra axis i.e towards the East direction and it goes
-    #     from East to North. If it is not provided, it will be drawn
-    #     randomly.
-    # :return: e1, e2 eccentricity components
-    # """
     if rotation_angle is None:
         phi = np.random.uniform(0, np.pi)
     else:
@@ -238,10 +226,26 @@ class ScotchSources(SourcePopBase):
 
     @property
     def source_number(self) -> int:
+        """
+        Number of sources in the population before any selection cuts.
+
+        Returns
+        -------
+        int
+            Number of sources.
+        """
         return self.n_source
 
     @property
     def source_number_selected(self) -> int:
+        """
+        Number of sources in the population after applying selection cuts.
+        
+        Returns
+        -------
+        int
+            Number of sources passing the selection criteria.
+        """
         return self.n_source_selected
 
     # -------------------- filtering helpers --------------------
