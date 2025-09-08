@@ -332,11 +332,15 @@ def test_draw_source_dict(scotch_instance):
         assert f"ps_mag_{b}" in source_dict
         assert source_dict[f"ps_mag_{b}"].ndim == 1
 
+
 def test_draw_source(scotch_instance):
 
     src = scotch_instance.draw_source()
     assert isinstance(src, Source)
-    assert isinstance(src._source, PointSource) or isinstance(src._source, PointPlusExtendedSource)
+    assert isinstance(src._source, PointSource) or isinstance(
+        src._source, PointPlusExtendedSource
+    )
+
 
 def test_close(scotch_instance):
     scotch_instance.close()
