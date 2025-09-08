@@ -360,7 +360,7 @@ class ScotchSources(SourcePopBase):
                     raise ValueError(f"Unsupported band '{b}'. Allowed: {BANDS}")
 
         self.zmin = 0.0 if z_min is None else float(z_min)
-        self.zmax = 3.0 if z_max is None else float(z_max) # Max in SCOTCH
+        self.zmax = 3.0 if z_max is None else float(z_max)  # Max in SCOTCH
 
         self.rng = (
             rng if isinstance(rng, np.random.Generator) else np.random.default_rng(rng)
@@ -384,7 +384,7 @@ class ScotchSources(SourcePopBase):
             total_expected = 0
             total_selected = 0
             for subname, subgrp in self.f["TransientTable"][cls].items():
-                
+
                 eligible_mask = self._transient_pass_mask(
                     subgrp, gids_sorted, host_mask_sorted
                 )
@@ -401,19 +401,16 @@ class ScotchSources(SourcePopBase):
                 if subname in RATE_FUNCS:
                     rate_fn = RATE_FUNCS[subname]
                     n_expected = expected_number(
-                        rate_fn=rate_fn,
-                        cosmo=cosmo,
-                        z_min=self.zmin,
-                        z_max=self.zmax
+                        rate_fn=rate_fn, cosmo=cosmo, z_min=self.zmin, z_max=self.zmax
                     )
                 elif "AGN" in subname:
                     n_expected = n_ok
                 else:
                     raise ValueError(
-                        f"Transient Subclass {subname} not found in rate functions. " +
-                        f"Rate functions are available for {list(RATE_FUNCS.keys())}."
+                        f"Transient Subclass {subname} not found in rate functions. "
+                        + f"Rate functions are available for {list(RATE_FUNCS.keys())}."
                     )
-                
+
                 total_expected += n_expected
 
                 sub_list.append(
@@ -423,7 +420,7 @@ class ScotchSources(SourcePopBase):
                         N=N,
                         n_ok=n_ok,
                         n_expected=n_expected,
-                        eligible=eligible_idx
+                        eligible=eligible_idx,
                     )
                 )
                 total += N
