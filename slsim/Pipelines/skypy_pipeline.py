@@ -1,6 +1,5 @@
 import os
 from skypy.pipeline import Pipeline
-import slsim
 import tempfile
 import slsim.Util.param_util as util
 

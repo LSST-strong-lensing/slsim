@@ -312,7 +312,6 @@ class ScotchSources(SourcePopBase):
         # transient bands: require nanmin over time <= threshold for each requested band
         for b, mmax in zip(self.bands, self.band_max):
             ds = subgrp[f"mag_{b}"]  # shape (N, T)
-            T = ds.shape[1]
             # chunk along rows
             for i in range(0, N, batch):
                 sl = slice(i, min(i + batch, N))
