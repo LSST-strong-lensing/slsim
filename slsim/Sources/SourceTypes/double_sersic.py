@@ -48,7 +48,7 @@ class DoubleSersic(SourceBase):
         self._angular_size_list = [angular_size_0, angular_size_1]
         self._e1_1, self._e2_1 = e1_1, e2_1
         self._e1_2, self._e2_2 = e1_2, e2_2
-        
+
         s = w0 + w1
         w0 = w0 / s
         self._w0 = w0

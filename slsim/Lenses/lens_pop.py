@@ -10,6 +10,7 @@ from slsim.Lenses.lensed_population_base import LensedPopulationBase
 
 from tqdm import tqdm
 
+
 class LensPop(LensedPopulationBase):
     """Class to perform samples of lens population."""
 
@@ -162,7 +163,8 @@ class LensPop(LensedPopulationBase):
             decreased to speed up the calculations.
         :return: List of Lens instances with parameters of the
             deflectors and lens and source light.
-        :param verbose: If True, prints progress information. Default is False.
+        :param verbose: If True, prints progress information. Default is
+            False.
         :type verbose: bool
         :rtype: list
         """
