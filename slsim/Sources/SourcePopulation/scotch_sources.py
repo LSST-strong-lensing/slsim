@@ -122,6 +122,30 @@ def kn_rate(z: float | np.ndarray) -> float | np.ndarray:
 
     return rate
 
+# Subclass rates are calculated using Lokken et al. 2022
+# Table B1 if not given in Kessler et al. 2019
+# https://arxiv.org/abs/1903.11756 Table 2
+RATE_FUNCS = {
+    'SNIa-SALT2': snia_rate,
+    'SNIax': sniax_rate,
+    'SNIa-91bg': snia_91bg_rate,
+    'SNII-Templates': lambda z: 0.19448 * snii_rate(z),
+    'SNII-NMF': lambda z: 0.19948 * snii_rate(z),
+    'SNII+HostXT_V19': lambda z: 0.39016 * snii_rate(z),
+    'SNIIn+HostXT_V19': lambda z: 0.04502 * snii_rate(z),
+    'SNIIn-MOSFIT': lambda z: 0.04502 * snii_rate(z),
+    'SNIb-Templates': lambda z: 0.27835 * snibc_rate(z),
+    'SNIb+HostXT_V19': lambda z: 0.27835 * snibc_rate(z),
+    'SNIc-Templates': lambda z: 0.19330 * snibc_rate(z),
+    'SNIc+HostXT_V19': lambda z: 0.19330 * snibc_rate(z),
+    'SNIcBL+HostXT_V19': lambda z: 0.05670 * snibc_rate(z),
+    'SNIIb+HostXT_V19': lambda z: 0.13085 * snii_rate(z),
+    'SLSN-I': slsn_rate,
+    'KN_K17': lambda z: 0.5 * kn_rate(z),
+    'KN_B19': lambda z: 0.5 * kn_rate(z),
+    'TDE': tde_rate,
+}
+
 
 def expected_number(
     rate_fn: Callable,
@@ -133,7 +157,7 @@ def expected_number(
     def integrand(z):
 
         dv = 4 * np.pi * cosmo.differential_comoving_volume(z)
-        volumetric_rate = 1e6 * rate_fn(z)
+        volumetric_rate = 1e-6 * rate_fn(z)
 
         return volumetric_rate * dv
 
@@ -164,7 +188,6 @@ def _norm_band_names(bands: list[str]) -> list[str]:
         else:
             out.append(b.lower())
     return out
-
 
 def galaxy_projected_eccentricity(
     ellipticity: float, rotation_angle=float | None
