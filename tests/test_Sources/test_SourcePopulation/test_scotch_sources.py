@@ -1,26 +1,15 @@
+import h5py
 import pytest
 import numpy as np
 
-from astropy import units as u
-from astropy.table import Table
-from numpy import testing as npt
-from astropy.units import Quantity
-from astropy.cosmology import FlatLambdaCDM
-from slsim.Sources.SourcePopulation.scotch_sources import (
-    ScotchSources,
-    galaxy_projected_eccentricity,
-    _norm_band_names
-)
+import slsim.Sources.SourcePopulation.scotch_sources as scotch_module
 
-def test_galaxy_projected_eccentricity():
-    e1, e2 = galaxy_projected_eccentricity(0)
-    assert e1 == 0
-    assert e2 == 0
 
-def test__norm_band_names():
-    bands = ['u', 'g', 'r', 'i', 'z', 'y']
-    norm_bands = _norm_band_names(bands)
-    assert norm_bands == ['u', 'g', 'r', 'i', 'z', 'Y']
+def test_norm_band_names():
+    _norm = scotch_module._norm_band_names
+    assert _norm(["U", "g", "Y", " y  "]) == ["u", "g", "Y", "Y"]
 
-class TestScotchSources:
-    
+def test_galaxy_projected_eccentricity_deterministic():
+    e1, e2 = scotch_module.galaxy_projected_eccentricity(ellipticity=0.0, rotation_angle=None)
+    assert np.isclose(e1, 0.0) and np.isclose(e2, 0.0)
+
