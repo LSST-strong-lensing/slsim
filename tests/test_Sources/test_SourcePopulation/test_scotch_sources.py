@@ -8,7 +8,10 @@ from pathlib import Path
 from astropy.cosmology import FlatLambdaCDM
 
 # -----------------------------
-# Helpers / Fixtures, since we aren't using conftest.py
+# Helpers / Fixtures, since we
+# aren't using conftest.py.
+# Remember to pester devs about
+# this in the future
 # -----------------------------
 
 @pytest.fixture(scope="function")
@@ -113,6 +116,10 @@ def scotch_instance(scotch_h5):
         rng=np.random.default_rng(123),
     )
     return inst
+
+# -----------------------------
+# Actual tests
+# -----------------------------
 
 def test_norm_band_names():
     _norm = scotch_module._norm_band_names
