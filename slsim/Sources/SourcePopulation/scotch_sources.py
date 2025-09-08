@@ -220,13 +220,11 @@ class ScotchSources(SourcePopBase):
         Nh = host_grp["z"].shape[0]
         mask = np.ones(Nh, dtype=bool)
 
-        # redshift
         z = host_grp["z"][...]
         mask &= np.isfinite(z) & (z >= self.zmin) & (z <= self.zmax)
 
-        # bands
         for b, mmax in zip(self.bands, self.band_max):
-            arr = host_grp[f"mag_{b}"][...]  # ~8–16 MB per band
+            arr = host_grp[f"mag_{b}"][...] 
             mask &= np.isfinite(arr) & (arr <= mmax)
 
         return mask
