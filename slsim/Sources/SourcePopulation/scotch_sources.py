@@ -27,9 +27,9 @@ def _norm_band_names(bands: list[str]) -> list[str]:
     for b in bands:
         b = b.strip()
         if b.lower() == "y":
-            out.append("Y")  # dataset is "mag_Y"
+            out.append("Y")
         else:
-            out.append(b.lower())  # "u","g","r","i","z"
+            out.append(b.lower())
     return out
 
 
