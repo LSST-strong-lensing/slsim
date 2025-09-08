@@ -3,9 +3,12 @@ import warnings
 
 import numpy as np
 
+from typing import Callable
+from scipy.integrate import quad
 from slsim.Util import param_util
 from dataclasses import dataclass
 from slsim.Sources.source import Source
+from astropy.cosmology import Cosmology
 from slsim.Sources.SourcePopulation.source_pop_base import SourcePopBase
 
 BANDS = ("u", "g", "r", "i", "z", "Y")
@@ -16,6 +19,121 @@ SCOTCH_MAPPINGS = {
     "e1": "ellipticity1",
 }
 
+def d08(z: float | np.ndarray) -> float | np.ndarray:
+    """
+    Redshift Evolution of SNIa Rates from
+    Dilday et al. 2008 Sec. 6.4.1
+    https://arxiv.org/abs/0801.3297
+    """
+
+
+    return (1+z)**1.5
+
+def md14(z: float | np.ndarray) -> float | np.ndarray:
+    """
+    Redshift Evolution of Cosmic Star Formation Rate from
+    Madau & Dickinson 2014 Eq. 15.
+    https://arxiv.org/abs/1403.0007
+    """
+
+
+    return (1+z)**2.7 / (1 + ((1+z)/2.9)**5.6)
+
+def s15(z: float | np.ndarray) -> float | np.ndarray:
+    """
+    Redshift Evolution of CCSNe Rates from 
+    Strolger et al. 2015 Eq. 9.
+    https://arxiv.org/abs/1509.06574
+    """
+
+
+    return (1+z)**5.0 / (1 + ((1+z)/1.5)**6.1)
+
+def snia_rate(z: float | np.ndarray) -> float | np.ndarray:
+    
+    r0 = 25 # in units of 10^-6 Mpc^-3 yr^-1
+    z = np.asarray(z)
+    rate = np.where(
+        z < 1,
+        r0 * d08(z),
+        r0 * (1+z)**-0.5
+    )
+
+    return rate
+
+def snia_91bg_rate(z: float | np.ndarray) -> float | np.ndarray:
+    
+    r0 = 3 # in units of 10^-6 Mpc^-3 yr^-1
+    z = np.asarray(z)
+    rate = r0 * d08(z)
+
+    return rate
+
+def sniax_rate(z: float | np.ndarray) -> float | np.ndarray:
+    
+    r0 = 6
+    z = np.asarray(z)
+    rate = r0 * md14(z)
+
+    return rate
+
+def snii_rate(z: float | np.ndarray) -> float | np.ndarray:
+    
+    r0 = 45 # in units of 10^-6 Mpc^-3 yr^-1
+    z = np.asarray(z)
+    rate = r0 * s15(z)
+
+    return rate
+
+def snibc_rate(z: float | np.ndarray) -> float | np.ndarray:
+    
+    r0 = 19 # in units of 10^-6 Mpc^-3 yr^-1
+    z = np.asarray(z)
+    rate = r0 * s15(z)
+    
+    return rate
+
+def slsn_rate(z: float | np.ndarray) -> float | np.ndarray:
+    
+    r0 = 0.02 # in units of 10^-6 Mpc^-3 yr^-1
+    z = np.asarray(z)
+    rate = r0 * md14(z)
+
+    return rate
+
+def tde_rate(z: float | np.ndarray) -> float | np.ndarray:
+    
+    r0 = 1 # in units of 10^-6 Mpc^-3 yr^-1
+    z = np.asarray(z)
+    rate = r0 * 10**(-5 * z / 6)
+
+    return rate
+
+def kn_rate(z: float | np.ndarray) -> float | np.ndarray:
+    
+    r0 = 6
+    z = np.asarray(z)
+    rate = r0 * np.ones_like(z)
+
+    return rate
+
+def expected_number(
+    rate_fn: Callable,
+    cosmo: Cosmology,
+    z_min: float,
+    z_max: float,
+) -> float:
+    
+    def integrand(z):
+
+        dv = 4 * np.pi * cosmo.differential_comoving_volume(z)
+        volumetric_rate = 1e6 * rate_fn(z)
+
+        return volumetric_rate * dv
+
+    n = quad(integrand, z_min, z_max)[0]
+
+    return n    
 
 def _norm_band_names(bands: list[str]) -> list[str]:
     """Normalize band names to lowercase, except for 'Y' which is uppercase.
@@ -98,7 +216,7 @@ class _ClassIndex:
 class ScotchSources(SourcePopBase):
     def __init__(
         self,
-        cosmo,
+        cosmo: Cosmology,
         scotch_path: str,
         sky_area=None,
         transient_types: list[str] | None = None,
