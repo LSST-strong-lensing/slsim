@@ -105,6 +105,62 @@ class ScotchSources(SourcePopBase):
         kwargs_cut: dict | None = None,
         rng: np.random.Generator | int | None = None,
     ):
+        """
+        Class for SCOTCH transient source population. Allows for sampling
+        of transients and their hosts from the SCOTCH HDF5 catalogs.
+
+        Parameters
+        ----------
+        cosmo : astropy.cosmology instance
+            An instance of an astropy cosmology model (e.g., FlatLambdaCDM(H0=70, Om0=0.3)).
+        scotch_path : str
+            Path to the SCOTCH HDF5 file.
+        sky_area : astropy.units.Quantity, optional
+            Sky area over which galaxies are sampled. Must be in units of solid angle.
+            Default is None.
+        transient_types : list of str, optional
+            List of transient types to include. If None, all available types are used.
+            Default is None.
+        kwargs_cut : dict, optional
+            Dictionary of selection criteria to filter the sources. Supported keys:
+            - 'z_min': Minimum redshift (float).
+            - 'z_max': Maximum redshift (float).
+            - 'band': List of band names (str) for magnitude cuts.
+            - 'band_max': List of maximum magnitudes (float) corresponding to 'band'.
+            The lengths of 'band' and 'band_max' must be equal. Default is None
+        rng : np.random.Generator, int, or None, optional
+            Random number generator or seed for reproducibility. If None, a new
+            generator is created. Default is None.
+        Raises
+        ------
+        ValueError
+            If transient_types contains unknown types, or if kwargs_cut is invalid,
+            or if no sources pass the selection criteria.
+        Warnings
+            If any transient class has no objects passing the provided kwargs_cut filters.
+        Notes
+        -----
+        The SCOTCH catalogs contain multiple transient classes, each with its own
+        host galaxy table. Transients are sampled uniformly among the selected classes
+        and subclasses, with selection cuts applied as specified in kwargs_cut.
+        Hosts are included if their redshift is not 999.0; otherwise, the transient
+        is considered hostless.
+
+        The transient lightcurves are provided as "general_lightcurve" point sources,
+        and hosts (if any) as "double_sersic" extended sources. If the
+        transient is hostless, the Source is an instance of PointSource; otherwise,
+        it is an instance of PointPlusExtendedSource.
+
+        The SCOTCH HDF5 file is expected to have the following structure:
+        - /TransientTable/{transient_class}/{subclass}/
+            - Datasets: "z", "GID", "ra_off", "dec_off", "MJD", "mag_{band}" for each band
+        - /HostTable/{transient_class}/
+            - Datasets: "GID", "z", "mag_{band}" for each band, "a_rot", "a0", "b0", "n
+            "ellipticity0", "a1", "b1", "n1", etc.
+        The "GID" fields are used to link transients to their hosts.
+        The "mag_{band}" datasets contain magnitudes, with 99.0 indicating missing data.
+        """
+
         super().__init__(cosmo=cosmo, sky_area=sky_area)
         self.f = h5py.File(scotch_path, "r")
 
