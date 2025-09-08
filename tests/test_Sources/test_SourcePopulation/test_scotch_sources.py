@@ -6,6 +6,7 @@ import slsim.Sources.SourcePopulation.scotch_sources as scotch_module
 
 from pathlib import Path
 from astropy.cosmology import FlatLambdaCDM
+from slsim.Sources.source import Source
 from slsim.Sources.SourceTypes.point_source import PointSource
 from slsim.Sources.SourceTypes.point_plus_extended_source import PointPlusExtendedSource
 
@@ -330,3 +331,14 @@ def test_draw_source_dict(scotch_instance):
     for b in ("u", "g", "r", "i", "z", "Y"):
         assert f"ps_mag_{b}" in source_dict
         assert source_dict[f"ps_mag_{b}"].ndim == 1
+
+def test_draw_source(scotch_instance):
+
+    src = scotch_instance.draw_source()
+    assert isinstance(src, Source)
+    assert isinstance(src._source, PointSource) or isinstance(src._source, PointPlusExtendedSource)
+
+def test_close(scotch_instance):
+    scotch_instance.close()
+    assert hasattr(scotch_instance.f, "id")
+    assert not scotch_instance.f.id.valid
