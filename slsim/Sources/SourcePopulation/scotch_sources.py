@@ -766,7 +766,7 @@ class ScotchSources(SourcePopBase):
         g = s.grp
 
         transient_metadata = {
-            "name": f"{cls}_{s.name}",
+            "name": f"{s.name}",
             "z": float(g["z"][i]),
             "ra_off": float(g["ra_off"][i]),
             "dec_off": float(g["dec_off"][i]),
