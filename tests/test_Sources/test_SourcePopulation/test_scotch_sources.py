@@ -174,7 +174,7 @@ def test_init_warning_no_objects_passed(scotch_h5):
         + "kwargs_cut filters and will be ignored"
     )
     with pytest.warns(UserWarning, match=match_string):
-        inst = scotch_module.ScotchSources(
+        scotch_module.ScotchSources(
             cosmo=cosmo,
             sky_area=sky_area,
             scotch_path=scotch_h5,
