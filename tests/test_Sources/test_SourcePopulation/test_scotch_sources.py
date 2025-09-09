@@ -164,6 +164,7 @@ def test_galaxy_projected_eccentricity_deterministic():
     )
     assert np.isclose(e1, 0.0) and np.isclose(e2, 0.0)
 
+
 def test_init_warning_no_objects_passed(scotch_h5):
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     sky_area = 1.0 * u.deg**2
@@ -181,6 +182,7 @@ def test_init_warning_no_objects_passed(scotch_h5):
             kwargs_cut=kwargs_cut,
             rng=np.random.default_rng(123),
         )
+
 
 def test_init_unknown_transient_type_raises(scotch_h5):
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
