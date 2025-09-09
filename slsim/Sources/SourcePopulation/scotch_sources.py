@@ -242,6 +242,9 @@ class _ClassIndex:
     host_gid_sort_idx: np.ndarray
     host_mask_sorted: np.ndarray  # boolean, aligned with host_gid_sorted
     subclasses: list[_SubclassIndex]
+    subclass_total: np.ndarray
+    subclass_expected: np.ndarray
+    subclass_selected: np.ndarray
     total: int
     total_expected: int
     total_selected: int = 0
@@ -380,9 +383,9 @@ class ScotchSources(SourcePopBase):
 
             # Transient subclasses: build eligible lists with chunked scans
             sub_list: list[_SubclassIndex] = []
-            total = 0
-            total_expected = 0
-            total_selected = 0
+            subclass_total = []
+            subclass_expected = []
+            subclass_selected = []
             for subname, subgrp in self.f["TransientTable"][cls].items():
 
                 eligible_mask = self._transient_pass_mask(
@@ -400,8 +403,10 @@ class ScotchSources(SourcePopBase):
 
                 if subname in RATE_FUNCS:
                     rate_fn = RATE_FUNCS[subname]
-                    n_expected = expected_number(
-                        rate_fn=rate_fn, cosmo=cosmo, z_min=self.zmin, z_max=self.zmax
+                    n_expected = int(
+                        expected_number(
+                            rate_fn=rate_fn, cosmo=cosmo, z_min=self.zmin, z_max=self.zmax
+                        )
                     )
                 elif "AGN" in subname:
                     n_expected = n_ok
@@ -411,7 +416,6 @@ class ScotchSources(SourcePopBase):
                         + f"Rate functions are available for {list(RATE_FUNCS.keys())}."
                     )
 
-                total_expected += n_expected
 
                 sub_list.append(
                     _SubclassIndex(
@@ -423,8 +427,17 @@ class ScotchSources(SourcePopBase):
                         eligible=eligible_idx,
                     )
                 )
-                total += N
-                total_selected += n_ok
+                
+                subclass_total.append(N)
+                subclass_selected.append(n_ok)
+                subclass_expected.append(n_expected)
+
+            subclass_total = np.asarray(subclass_total)
+            subclass_selected = np.asarray(subclass_selected)
+            subclass_expected = np.asarray(subclass_expected)
+            total = np.sum(subclass_total)
+            total_selected = np.sum(subclass_selected)
+            total_expected = np.sum(subclass_expected)
 
             self._index[cls] = _ClassIndex(
                 host_grp=host_grp,
@@ -432,6 +445,9 @@ class ScotchSources(SourcePopBase):
                 host_gid_sort_idx=sort_idx,
                 host_mask_sorted=host_mask_sorted,
                 subclasses=sub_list,
+                subclass_total=subclass_total,
+                subclass_selected=subclass_selected,
+                subclass_expected=subclass_expected,
                 total=total,
                 total_expected=total_expected,
                 total_selected=total_selected,
@@ -441,11 +457,13 @@ class ScotchSources(SourcePopBase):
         active_types = []
         total = 0
         total_selected = 0
+        total_expected = 0
         for c in self.transient_types:
             if self._index[c].total_selected > 0:
                 active_types.append(c)
                 total += self._index[c].total
                 total_selected += self._index[c].total_selected
+                total_expected += self._index[c].total_expected
             else:
                 warnings.warn(
                     f"Transient class '{c}' has no objects passing "
@@ -454,6 +472,7 @@ class ScotchSources(SourcePopBase):
 
         self.n_source = total
         self.n_source_selected = total_selected
+        self.total_expected = total_expected
         self.active_transient_types = active_types
 
         if self.n_source_selected == 0:
@@ -502,7 +521,9 @@ class ScotchSources(SourcePopBase):
         mask = np.ones(Nh, dtype=bool)
 
         z = host_grp["z"][...]
-        mask &= np.isfinite(z) & (z >= self.zmin) & (z <= self.zmax)
+        is_hostless = z == 999.0
+        passes_redshift_cut = (z >= self.zmin) & (z <= self.zmax)
+        mask &= np.isfinite(z) & (is_hostless | passes_redshift_cut)
 
         for b, mmax in zip(self.bands, self.band_max):
             arr = host_grp[f"mag_{b}"][...]
