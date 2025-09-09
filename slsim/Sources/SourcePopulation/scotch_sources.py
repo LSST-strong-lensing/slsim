@@ -476,14 +476,14 @@ class ScotchSources(SourcePopBase):
         self.n_source_selected = total_selected
         self.total_expected = total_expected
         self.active_transient_types = active_types
-        
+
         class_weights = np.zeros(len(active_types))
         for i, c in enumerate(self.active_transient_types):
             cls = self._index[c]
             n_selected_i = cls.total_selected
             n_expected_i = cls.total_expected
             weight_i = n_selected_i / n_expected_i
-            class_weights[i] = 1. / weight_i
+            class_weights[i] = 1.0 / weight_i
         self.class_probs = class_weights / np.sum(class_weights)
 
         if self.n_source_selected == 0:
