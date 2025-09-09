@@ -386,12 +386,10 @@ def test_expected_number_defaults_integrate_0_to_3():
 
 def test_expected_number_kwargs_override_defaults_individually():
     """If only z_max is provided, z_min should remain at 0.0 (default)."""
-    R = 1.0
     C = 2.0
     cosmo = FakeCosmoConst(C)
-    rate_fn = lambda z: R
 
-    got = scotch_module.expected_number(rate_fn, cosmo, z_max=5.0)
+    got = scotch_module.expected_number(constant_rate_fn, cosmo, z_max=5.0)
     exp = 4 * np.pi * C * 1e-6 * R * (5.0 - 0.0)
 
     assert np.isclose(got, exp, rtol=1e-12, atol=0.0)
