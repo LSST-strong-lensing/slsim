@@ -247,6 +247,13 @@ class FakeCosmoLinear:
     def differential_comoving_volume(self, z):
         return SimpleNamespace(value=self.a * z + self.b)
 
+A, B, R = 3.0, 5.0, 12
+
+def constant_rate_fn(z):
+    return R
+
+def linear_rate_fn(z):
+    return A * z + B
 
 # -----------------------------
 # Actual tests
@@ -318,14 +325,12 @@ def test_expected_number_constant_rate_and_volume():
     integrand = 4π * (C) * 1e-6 * (R), so
     N = 4π * C * 1e-6 * R * (z_max - z_min)
     """
-    R = 12.0
+    
     C = 3.0
     z0, z1 = 0.2, 2.7
 
     cosmo = FakeCosmoConst(C)
-    rate_fn = lambda z: R
-
-    got = scotch_module.expected_number(rate_fn, cosmo, z0, z1)
+    got = scotch_module.expected_number(constant_rate_fn, cosmo, z0, z1)
     exp = 4 * np.pi * C * 1e-6 * R * (z1 - z0)
 
     assert np.isclose(got, exp, rtol=1e-12, atol=0.0)
@@ -337,14 +342,12 @@ def test_expected_number_linear_rate_linear_volume_closed_form():
     integrand = 4π * 1e-6 * (a z + b)(A z + B)           = 4π * 1e-6 *
     [aA z^2 + (aB + bA) z + bB] Integrate term-wise on [z0, z1].
     """
-    A, B = 3.0, 5.0  # rate coefficients
-    a, b = 2.0, 1.0  # volume coefficients
+    a, b = 2.0, 1.0       # volume coefficients
     z0, z1 = 0.4, 1.9
 
     cosmo = FakeCosmoLinear(a, b)
-    rate_fn = lambda z: A * z + B
 
-    got = scotch_module.expected_number(rate_fn, cosmo, z0, z1)
+    got = scotch_module.expected_number(linear_rate_fn, cosmo, z0, z1)
 
     k = 4 * np.pi * 1e-6
     exp = k * (
@@ -358,9 +361,8 @@ def test_expected_number_linear_rate_linear_volume_closed_form():
 
 def test_expected_number_zero_when_same_limits():
     cosmo = FakeCosmoConst(10.0)
-    rate_fn = lambda z: 7.0
     z = 1.2345
-    got = scotch_module.expected_number(rate_fn, cosmo, z, z)
+    got = scotch_module.expected_number(constant_rate_fn, cosmo, z, z)
     assert np.isclose(got, 0.0, atol=0.0, rtol=0.0)
 
 
@@ -369,12 +371,10 @@ def test_expected_number_defaults_integrate_0_to_3():
 
     Use constant rate & constant volume for a closed-form check.
     """
-    R = 2.5
+    
     C = 4.0
     cosmo = FakeCosmoConst(C)
-    rate_fn = lambda z: R
-
-    got = scotch_module.expected_number(rate_fn, cosmo)  # use defaults
+    got = scotch_module.expected_number(constant_rate_fn, cosmo)  # use defaults
     exp = 4 * np.pi * C * 1e-6 * R * (3.0 - 0.0)
 
     assert np.isclose(got, exp, rtol=1e-12, atol=0.0)
