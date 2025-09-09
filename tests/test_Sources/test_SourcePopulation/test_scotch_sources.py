@@ -82,7 +82,7 @@ def scotch_h5(tmp_path: Path):
         sn_tt = tt.create_group("SNII")
 
         # Subclass A: 2 rows; first passes (mag_r <= 22), second fails (all 99s -> NaNs)
-        A = sn_tt.create_group("A")
+        A = sn_tt.create_group("SNII-Templates")
         A.create_dataset("z", data=np.array([0.6, 0.4]))
         A.create_dataset("GID", data=np.array([gids_sn[0], gids_sn[1]]))
         A.create_dataset("ra_off", data=np.array([0.01, -0.01]))
@@ -99,7 +99,7 @@ def scotch_h5(tmp_path: Path):
                 )
 
         # Subclass B: 1 row; passes
-        B = sn_tt.create_group("B")
+        B = sn_tt.create_group("SNII+HostXT_V19")
         B.create_dataset("z", data=np.array([0.55]))
         B.create_dataset("GID", data=np.array([gids_sn[0]]))
         B.create_dataset("ra_off", data=np.array([0.0]))
@@ -164,6 +164,23 @@ def test_galaxy_projected_eccentricity_deterministic():
     )
     assert np.isclose(e1, 0.0) and np.isclose(e2, 0.0)
 
+def test_init_warning_no_objects_passed(scotch_h5):
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    sky_area = 1.0 * u.deg**2
+    kwargs_cut = {"band": ["r"], "band_max": [22.0]}
+    match_string = (
+        "has no objects passing the provided "
+        + "kwargs_cut filters and will be ignored"
+    )
+    with pytest.warns(UserWarning, match=match_string):
+        inst = scotch_module.ScotchSources(
+            cosmo=cosmo,
+            sky_area=sky_area,
+            scotch_path=scotch_h5,
+            transient_types=None,
+            kwargs_cut=kwargs_cut,
+            rng=np.random.default_rng(123),
+        )
 
 def test_init_unknown_transient_type_raises(scotch_h5):
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -212,14 +229,14 @@ def test_host_pass_mask(scotch_instance):
 def test_transient_pass_mask_and_selection(scotch_instance):
     cls = "SNII"
     ci = scotch_instance._index[cls]
-    # Subclass "A" -> [True, False]
-    subA = next(s for s in ci.subclasses if s.name == "A")
+    # Subclass "SNII-Templates" -> [True, False]
+    subA = next(s for s in ci.subclasses if s.name == "SNII-Templates")
     maskA = scotch_instance._transient_pass_mask(
         subA.grp, ci.host_gid_sorted, ci.host_mask_sorted, batch=1
     )
     assert maskA.tolist() == [True, False]
-    # Subclass "B" -> [True]
-    subB = next(s for s in ci.subclasses if s.name == "B")
+    # Subclass "SNII+HostXT_V19" -> [True]
+    subB = next(s for s in ci.subclasses if s.name == "SNII+HostXT_V19")
     maskB = scotch_instance._transient_pass_mask(
         subB.grp, ci.host_gid_sorted, ci.host_mask_sorted, batch=1
     )

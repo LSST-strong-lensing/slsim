@@ -157,7 +157,7 @@ def expected_number(
 
     def integrand(z):
 
-        dv = 4 * np.pi * cosmo.differential_comoving_volume(z)
+        dv = 4 * np.pi * cosmo.differential_comoving_volume(z).value
         volumetric_rate = 1e-6 * rate_fn(z)
 
         return volumetric_rate * dv
