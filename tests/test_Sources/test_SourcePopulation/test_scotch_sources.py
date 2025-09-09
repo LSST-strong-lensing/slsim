@@ -148,44 +148,56 @@ def scotch_instance(scotch_h5):
     )
     return inst
 
+
 # ----- reference (oracle) formulas (duplicated on purpose for independence) -----
 def d08_ref(z):  # Dilday+08
     return (1 + z) ** 1.5
 
+
 def md14_ref(z):  # Madau & Dickinson 2014, Eq. 15
     return (1 + z) ** 2.7 / (1 + ((1 + z) / 2.9) ** 5.6)
 
+
 def s15_ref(z):  # Strolger+15, Eq. 9
     return (1 + z) ** 5.0 / (1 + ((1 + z) / 1.5) ** 6.1)
+
 
 def snia_rate_ref(z):
     r0 = 25.0
     z = np.asarray(z)
     return np.where(z < 1, r0 * d08_ref(z), r0 * (1 + z) ** -0.5)
 
+
 def snia_91bg_rate_ref(z):
     return 3.0 * d08_ref(z)
+
 
 def sniax_rate_ref(z):
     return 6.0 * md14_ref(z)
 
+
 def snii_rate_ref(z):
     return 45.0 * s15_ref(z)
+
 
 def snibc_rate_ref(z):
     return 19.0 * s15_ref(z)
 
+
 def slsn_rate_ref(z):
     return 0.02 * md14_ref(z)
+
 
 def tde_rate_ref(z):
     r0 = 1.0
     z = np.asarray(z)
     return r0 * 10 ** (-5 * z / 6)
 
+
 def kn_rate_ref(z):
     z = np.asarray(z)
     return 6.0 * np.ones_like(z)
+
 
 # Map functions-under-test to their oracle
 CASES = [
@@ -206,8 +218,8 @@ CASES = [
 ZS = [
     0.0,
     0.3,
-    0.999999,     # just below boundary for snia_rate
-    1.0,          # boundary
+    0.999999,  # just below boundary for snia_rate
+    1.0,  # boundary
     2.1,
     np.array([0.0, 0.2, 0.9999, 1.0, 3.5]),
     np.linspace(0, 5, 11),
@@ -218,6 +230,7 @@ ZS = [
 # Actual tests
 # -----------------------------
 
+
 @pytest.mark.parametrize("fn,ref", CASES)
 @pytest.mark.parametrize("z", ZS)
 def test_formulas_match_reference(fn, ref, z):
@@ -226,10 +239,11 @@ def test_formulas_match_reference(fn, ref, z):
     # Uniform comparison for scalars and arrays
     assert np.allclose(got, exp, rtol=1e-12, atol=0.0)
 
+
 def test_snia_rate_piecewise_boundary_behavior():
     # Explicitly assert branch selection around z=1
     z_below = np.array([0.0, 0.5, 0.999999])
-    z_edge  = 1.0
+    z_edge = 1.0
     z_above = np.array([1.000001, 2.0, 3.0])
 
     r0 = 25.0
@@ -248,6 +262,7 @@ def test_snia_rate_piecewise_boundary_behavior():
     right_exp = r0 * (1 + z_above) ** -0.5
     assert np.allclose(right, right_exp, rtol=1e-12)
 
+
 def test_shapes_and_types_are_preserved():
     # Arrays in -> arrays out with same shape
     z = np.random.RandomState(0).rand(7, 3) * 5.0
@@ -261,6 +276,7 @@ def test_shapes_and_types_are_preserved():
     for fn, _ in CASES:
         out = fn(z_scalar)
         assert np.isscalar(out) or (isinstance(out, np.ndarray) and out.shape == ())
+
 
 def test_basic_invariants():
     # Non-negativity for z >= 0 for all these models

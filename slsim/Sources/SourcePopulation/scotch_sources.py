@@ -151,7 +151,7 @@ RATE_FUNCS = {
 def expected_number(
     rate_fn: Callable,
     cosmo: Cosmology,
-    z_min: float = 0.,
+    z_min: float = 0.0,
     z_max: float = 3.0,
 ) -> float:
 
