@@ -5,8 +5,9 @@ import astropy.units as u
 import slsim.Sources.SourcePopulation.scotch_sources as scotch_module
 
 from pathlib import Path
-from astropy.cosmology import FlatLambdaCDM
+from types import SimpleNamespace
 from slsim.Sources.source import Source
+from astropy.cosmology import FlatLambdaCDM
 from slsim.Sources.SourceTypes.point_source import PointSource
 from slsim.Sources.SourceTypes.point_plus_extended_source import PointPlusExtendedSource
 
@@ -147,10 +148,130 @@ def scotch_instance(scotch_h5):
     )
     return inst
 
+# ----- reference (oracle) formulas (duplicated on purpose for independence) -----
+def d08_ref(z):  # Dilday+08
+    return (1 + z) ** 1.5
+
+def md14_ref(z):  # Madau & Dickinson 2014, Eq. 15
+    return (1 + z) ** 2.7 / (1 + ((1 + z) / 2.9) ** 5.6)
+
+def s15_ref(z):  # Strolger+15, Eq. 9
+    return (1 + z) ** 5.0 / (1 + ((1 + z) / 1.5) ** 6.1)
+
+def snia_rate_ref(z):
+    r0 = 25.0
+    z = np.asarray(z)
+    return np.where(z < 1, r0 * d08_ref(z), r0 * (1 + z) ** -0.5)
+
+def snia_91bg_rate_ref(z):
+    return 3.0 * d08_ref(z)
+
+def sniax_rate_ref(z):
+    return 6.0 * md14_ref(z)
+
+def snii_rate_ref(z):
+    return 45.0 * s15_ref(z)
+
+def snibc_rate_ref(z):
+    return 19.0 * s15_ref(z)
+
+def slsn_rate_ref(z):
+    return 0.02 * md14_ref(z)
+
+def tde_rate_ref(z):
+    r0 = 1.0
+    z = np.asarray(z)
+    return r0 * 10 ** (-5 * z / 6)
+
+def kn_rate_ref(z):
+    z = np.asarray(z)
+    return 6.0 * np.ones_like(z)
+
+# Map functions-under-test to their oracle
+CASES = [
+    (scotch_module.d08, d08_ref),
+    (scotch_module.md14, md14_ref),
+    (scotch_module.s15, s15_ref),
+    (scotch_module.snia_rate, snia_rate_ref),
+    (scotch_module.snia_91bg_rate, snia_91bg_rate_ref),
+    (scotch_module.sniax_rate, sniax_rate_ref),
+    (scotch_module.snii_rate, snii_rate_ref),
+    (scotch_module.snibc_rate, snibc_rate_ref),
+    (scotch_module.slsn_rate, slsn_rate_ref),
+    (scotch_module.tde_rate, tde_rate_ref),
+    (scotch_module.kn_rate, kn_rate_ref),
+]
+
+# Scalars and arrays to hit both code paths & vectorization
+ZS = [
+    0.0,
+    0.3,
+    0.999999,     # just below boundary for snia_rate
+    1.0,          # boundary
+    2.1,
+    np.array([0.0, 0.2, 0.9999, 1.0, 3.5]),
+    np.linspace(0, 5, 11),
+]
+
 
 # -----------------------------
 # Actual tests
 # -----------------------------
+
+@pytest.mark.parametrize("fn,ref", CASES)
+@pytest.mark.parametrize("z", ZS)
+def test_formulas_match_reference(fn, ref, z):
+    got = fn(z)
+    exp = ref(z)
+    # Uniform comparison for scalars and arrays
+    assert np.allclose(got, exp, rtol=1e-12, atol=0.0)
+
+def test_snia_rate_piecewise_boundary_behavior():
+    # Explicitly assert branch selection around z=1
+    z_below = np.array([0.0, 0.5, 0.999999])
+    z_edge  = 1.0
+    z_above = np.array([1.000001, 2.0, 3.0])
+
+    r0 = 25.0
+    # Left side (<1) uses d08
+    left = scotch_module.snia_rate(z_below)
+    left_exp = r0 * d08_ref(z_below)
+    assert np.allclose(left, left_exp, rtol=1e-12)
+
+    # Exactly at 1.0 uses the >=1 branch per the implementation (z < 1)
+    at_edge = scotch_module.snia_rate(z_edge)
+    at_edge_exp = r0 * (1 + z_edge) ** -0.5
+    assert np.allclose(at_edge, at_edge_exp, rtol=1e-12)
+
+    # Right side (>=1) uses power-law decline
+    right = scotch_module.snia_rate(z_above)
+    right_exp = r0 * (1 + z_above) ** -0.5
+    assert np.allclose(right, right_exp, rtol=1e-12)
+
+def test_shapes_and_types_are_preserved():
+    # Arrays in -> arrays out with same shape
+    z = np.random.RandomState(0).rand(7, 3) * 5.0
+    for fn, _ in CASES:
+        out = fn(z)
+        assert isinstance(out, np.ndarray)
+        assert out.shape == z.shape
+
+    # Scalars in -> numeric scalar (numpy scalar or Python float both okay)
+    z_scalar = 0.7
+    for fn, _ in CASES:
+        out = fn(z_scalar)
+        assert np.isscalar(out) or (isinstance(out, np.ndarray) and out.shape == ())
+
+def test_basic_invariants():
+    # Non-negativity for z >= 0 for all these models
+    z = np.linspace(0, 10, 101)
+    for fn, _ in CASES:
+        out = fn(z)
+        assert np.all(out >= 0)
+
+    # kn_rate is constant 6 for any z
+    z2 = np.array([0.0, 1.0, 5.0, 10.0])
+    assert np.allclose(scotch_module.kn_rate(z2), 6.0)
 
 
 def test_norm_band_names():

@@ -151,8 +151,8 @@ RATE_FUNCS = {
 def expected_number(
     rate_fn: Callable,
     cosmo: Cosmology,
-    z_min: float,
-    z_max: float,
+    z_min: float = 0.,
+    z_max: float = 3.0,
 ) -> float:
 
     def integrand(z):
