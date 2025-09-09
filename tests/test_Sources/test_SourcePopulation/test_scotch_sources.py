@@ -225,19 +225,25 @@ ZS = [
     np.linspace(0, 5, 11),
 ]
 
+
 # --- Tiny, dependency-free cosmology doubles ---
 class FakeCosmoConst:
-    """d(dV)/dz/dΩ = C (constant)"""
+    """D(dV)/dz/dΩ = C (constant)"""
+
     def __init__(self, C: float):
         self.C = C
+
     def differential_comoving_volume(self, z):
         # expected_number reads .value
         return SimpleNamespace(value=self.C)
 
+
 class FakeCosmoLinear:
-    """d(dV)/dz/dΩ = a*z + b (linear in z)"""
+    """D(dV)/dz/dΩ = a*z + b (linear in z)"""
+
     def __init__(self, a: float, b: float):
         self.a, self.b = a, b
+
     def differential_comoving_volume(self, z):
         return SimpleNamespace(value=self.a * z + self.b)
 
@@ -307,8 +313,8 @@ def test_basic_rate_invariants():
 
 
 def test_expected_number_constant_rate_and_volume():
-    """
-    If rate_fn(z) = R (constant) and dV/dz/dΩ = C (constant),
+    """If rate_fn(z) = R (constant) and dV/dz/dΩ = C (constant),
+
     integrand = 4π * (C) * 1e-6 * (R), so
     N = 4π * C * 1e-6 * R * (z_max - z_min)
     """
@@ -326,14 +332,13 @@ def test_expected_number_constant_rate_and_volume():
 
 
 def test_expected_number_linear_rate_linear_volume_closed_form():
+    """For rate_fn(z) = A*z + B and dV/dz/dΩ = a*z + b,
+
+    integrand = 4π * 1e-6 * (a z + b)(A z + B)           = 4π * 1e-6 *
+    [aA z^2 + (aB + bA) z + bB] Integrate term-wise on [z0, z1].
     """
-    For rate_fn(z) = A*z + B and dV/dz/dΩ = a*z + b,
-    integrand = 4π * 1e-6 * (a z + b)(A z + B)
-              = 4π * 1e-6 * [aA z^2 + (aB + bA) z + bB]
-    Integrate term-wise on [z0, z1].
-    """
-    A, B = 3.0, 5.0       # rate coefficients
-    a, b = 2.0, 1.0       # volume coefficients
+    A, B = 3.0, 5.0  # rate coefficients
+    a, b = 2.0, 1.0  # volume coefficients
     z0, z1 = 0.4, 1.9
 
     cosmo = FakeCosmoLinear(a, b)
@@ -360,8 +365,8 @@ def test_expected_number_zero_when_same_limits():
 
 
 def test_expected_number_defaults_integrate_0_to_3():
-    """
-    With no z_min/z_max passed, integrate over [0, 3].
+    """With no z_min/z_max passed, integrate over [0, 3].
+
     Use constant rate & constant volume for a closed-form check.
     """
     R = 2.5
@@ -376,9 +381,7 @@ def test_expected_number_defaults_integrate_0_to_3():
 
 
 def test_expected_number_kwargs_override_defaults_individually():
-    """
-    If only z_max is provided, z_min should remain at 0.0 (default).
-    """
+    """If only z_max is provided, z_min should remain at 0.0 (default)."""
     R = 1.0
     C = 2.0
     cosmo = FakeCosmoConst(C)
