@@ -405,7 +405,10 @@ class ScotchSources(SourcePopBase):
                     rate_fn = RATE_FUNCS[subname]
                     n_expected = int(
                         expected_number(
-                            rate_fn=rate_fn, cosmo=cosmo, z_min=self.zmin, z_max=self.zmax
+                            rate_fn=rate_fn,
+                            cosmo=cosmo,
+                            z_min=self.zmin,
+                            z_max=self.zmax,
                         )
                     )
                 elif "AGN" in subname:
@@ -415,7 +418,6 @@ class ScotchSources(SourcePopBase):
                         f"Transient Subclass {subname} not found in rate functions. "
                         + f"Rate functions are available for {list(RATE_FUNCS.keys())}."
                     )
-
 
                 sub_list.append(
                     _SubclassIndex(
@@ -427,7 +429,7 @@ class ScotchSources(SourcePopBase):
                         eligible=eligible_idx,
                     )
                 )
-                
+
                 subclass_total.append(N)
                 subclass_selected.append(n_ok)
                 subclass_expected.append(n_expected)
