@@ -225,6 +225,22 @@ ZS = [
     np.linspace(0, 5, 11),
 ]
 
+# --- Tiny, dependency-free cosmology doubles ---
+class FakeCosmoConst:
+    """d(dV)/dz/dΩ = C (constant)"""
+    def __init__(self, C: float):
+        self.C = C
+    def differential_comoving_volume(self, z):
+        # expected_number reads .value
+        return SimpleNamespace(value=self.C)
+
+class FakeCosmoLinear:
+    """d(dV)/dz/dΩ = a*z + b (linear in z)"""
+    def __init__(self, a: float, b: float):
+        self.a, self.b = a, b
+    def differential_comoving_volume(self, z):
+        return SimpleNamespace(value=self.a * z + self.b)
+
 
 # -----------------------------
 # Actual tests
@@ -233,7 +249,7 @@ ZS = [
 
 @pytest.mark.parametrize("fn,ref", CASES)
 @pytest.mark.parametrize("z", ZS)
-def test_formulas_match_reference(fn, ref, z):
+def test_rate_formulas_match_reference(fn, ref, z):
     got = fn(z)
     exp = ref(z)
     # Uniform comparison for scalars and arrays
@@ -263,7 +279,7 @@ def test_snia_rate_piecewise_boundary_behavior():
     assert np.allclose(right, right_exp, rtol=1e-12)
 
 
-def test_shapes_and_types_are_preserved():
+def test_rate_shapes_and_types_are_preserved():
     # Arrays in -> arrays out with same shape
     z = np.random.RandomState(0).rand(7, 3) * 5.0
     for fn, _ in CASES:
@@ -278,7 +294,7 @@ def test_shapes_and_types_are_preserved():
         assert np.isscalar(out) or (isinstance(out, np.ndarray) and out.shape == ())
 
 
-def test_basic_invariants():
+def test_basic_rate_invariants():
     # Non-negativity for z >= 0 for all these models
     z = np.linspace(0, 10, 101)
     for fn, _ in CASES:
@@ -288,6 +304,90 @@ def test_basic_invariants():
     # kn_rate is constant 6 for any z
     z2 = np.array([0.0, 1.0, 5.0, 10.0])
     assert np.allclose(scotch_module.kn_rate(z2), 6.0)
+
+
+def test_expected_number_constant_rate_and_volume():
+    """
+    If rate_fn(z) = R (constant) and dV/dz/dΩ = C (constant),
+    integrand = 4π * (C) * 1e-6 * (R), so
+    N = 4π * C * 1e-6 * R * (z_max - z_min)
+    """
+    R = 12.0
+    C = 3.0
+    z0, z1 = 0.2, 2.7
+
+    cosmo = FakeCosmoConst(C)
+    rate_fn = lambda z: R
+
+    got = scotch_module.expected_number(rate_fn, cosmo, z0, z1)
+    exp = 4 * np.pi * C * 1e-6 * R * (z1 - z0)
+
+    assert np.isclose(got, exp, rtol=1e-12, atol=0.0)
+
+
+def test_expected_number_linear_rate_linear_volume_closed_form():
+    """
+    For rate_fn(z) = A*z + B and dV/dz/dΩ = a*z + b,
+    integrand = 4π * 1e-6 * (a z + b)(A z + B)
+              = 4π * 1e-6 * [aA z^2 + (aB + bA) z + bB]
+    Integrate term-wise on [z0, z1].
+    """
+    A, B = 3.0, 5.0       # rate coefficients
+    a, b = 2.0, 1.0       # volume coefficients
+    z0, z1 = 0.4, 1.9
+
+    cosmo = FakeCosmoLinear(a, b)
+    rate_fn = lambda z: A * z + B
+
+    got = scotch_module.expected_number(rate_fn, cosmo, z0, z1)
+
+    k = 4 * np.pi * 1e-6
+    exp = k * (
+        (a * A) / 3.0 * (z1**3 - z0**3)
+        + (a * B + b * A) / 2.0 * (z1**2 - z0**2)
+        + (b * B) * (z1 - z0)
+    )
+
+    assert np.isclose(got, exp, rtol=1e-12, atol=0.0)
+
+
+def test_expected_number_zero_when_same_limits():
+    cosmo = FakeCosmoConst(10.0)
+    rate_fn = lambda z: 7.0
+    z = 1.2345
+    got = scotch_module.expected_number(rate_fn, cosmo, z, z)
+    assert np.isclose(got, 0.0, atol=0.0, rtol=0.0)
+
+
+def test_expected_number_defaults_integrate_0_to_3():
+    """
+    With no z_min/z_max passed, integrate over [0, 3].
+    Use constant rate & constant volume for a closed-form check.
+    """
+    R = 2.5
+    C = 4.0
+    cosmo = FakeCosmoConst(C)
+    rate_fn = lambda z: R
+
+    got = scotch_module.expected_number(rate_fn, cosmo)  # use defaults
+    exp = 4 * np.pi * C * 1e-6 * R * (3.0 - 0.0)
+
+    assert np.isclose(got, exp, rtol=1e-12, atol=0.0)
+
+
+def test_expected_number_kwargs_override_defaults_individually():
+    """
+    If only z_max is provided, z_min should remain at 0.0 (default).
+    """
+    R = 1.0
+    C = 2.0
+    cosmo = FakeCosmoConst(C)
+    rate_fn = lambda z: R
+
+    got = scotch_module.expected_number(rate_fn, cosmo, z_max=5.0)
+    exp = 4 * np.pi * C * 1e-6 * R * (5.0 - 0.0)
+
+    assert np.isclose(got, exp, rtol=1e-12, atol=0.0)
 
 
 def test_norm_band_names():
