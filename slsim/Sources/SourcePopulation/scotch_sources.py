@@ -2,6 +2,7 @@ import h5py
 import warnings
 
 import numpy as np
+import astropy.units as u
 
 from typing import Callable
 from scipy.integrate import quad
@@ -18,7 +19,7 @@ SCOTCH_MAPPINGS = {
     "e0": "ellipticity0",
     "e1": "ellipticity1",
 }
-
+SKY_AREA = (4 * np.pi * u.rad**2).to(u.deg**2).value
 
 def d08(z: float | np.ndarray) -> float | np.ndarray:
     """Redshift Evolution of SNIa Rates from Dilday et al.
@@ -245,6 +246,7 @@ class _ClassIndex:
     subclass_total: np.ndarray
     subclass_expected: np.ndarray
     subclass_selected: np.ndarray
+    subclass_weights: np.ndarray
     total: int
     total_expected: int
     total_selected: int = 0
@@ -450,6 +452,7 @@ class ScotchSources(SourcePopBase):
                 subclass_total=subclass_total,
                 subclass_selected=subclass_selected,
                 subclass_expected=subclass_expected,
+                subclass_weights=subclass_expected,
                 total=total,
                 total_expected=total_expected,
                 total_selected=total_selected,
@@ -476,19 +479,27 @@ class ScotchSources(SourcePopBase):
         self.n_source_selected = total_selected
         self.total_expected = total_expected
         self.active_transient_types = active_types
-
-        class_weights = np.zeros(len(active_types))
-        for i, c in enumerate(self.active_transient_types):
-            cls = self._index[c]
-            n_selected_i = cls.total_selected
-            n_expected_i = cls.total_expected
-            weight_i = n_selected_i / n_expected_i
-            class_weights[i] = 1.0 / weight_i
-        self.class_probs = class_weights / np.sum(class_weights)
-
+        
         if self.n_source_selected == 0:
             raise ValueError("No objects satisfy the provided kwargs_cut filters.")
+        
+        class_weights = np.zeros(len(self.active_transient_types))
+        for i, c in enumerate(self.active_transient_types):
+            cls = self._index[c]
+            subclass_expected = cls.subclass_expected
+            global_subclass_weights = subclass_expected / self.total_expected
+            class_weight = np.sum(global_subclass_weights)
+            subclass_weights = global_subclass_weights / class_weight
+            cls.subclass_weights = subclass_weights
+            class_weights[i] = class_weight
+        class_weights = np.array(class_weights)
+        self.class_weights = class_weights
 
+        effective_sky_area = SKY_AREA * self.n_source_selected / self.total_expected
+        if self.sky_area == None:
+            self.sky_area = effective_sky_area
+
+        
     @property
     def source_number(self) -> int:
         """Number of sources in the population before any selection cuts.
