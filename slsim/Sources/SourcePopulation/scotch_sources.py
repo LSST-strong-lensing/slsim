@@ -497,7 +497,7 @@ class ScotchSources(SourcePopBase):
         self.class_weights = class_weights
 
         effective_sky_area = SKY_AREA * self.n_source_selected / self.total_expected
-        if self.sky_area == None:
+        if self.sky_area is None:
             self.sky_area = effective_sky_area * u.deg**2
         else:
             scaling_factor = self.sky_area / effective_sky_area
