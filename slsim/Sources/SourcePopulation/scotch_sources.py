@@ -21,6 +21,7 @@ SCOTCH_MAPPINGS = {
 }
 SKY_AREA = (4 * np.pi * u.rad**2).to(u.deg**2).value
 
+
 def d08(z: float | np.ndarray) -> float | np.ndarray:
     """Redshift Evolution of SNIa Rates from Dilday et al.
 
@@ -479,10 +480,10 @@ class ScotchSources(SourcePopBase):
         self.n_source_selected = total_selected
         self.total_expected = total_expected
         self.active_transient_types = active_types
-        
+
         if self.n_source_selected == 0:
             raise ValueError("No objects satisfy the provided kwargs_cut filters.")
-        
+
         class_weights = np.zeros(len(self.active_transient_types))
         for i, c in enumerate(self.active_transient_types):
             cls = self._index[c]
@@ -499,7 +500,6 @@ class ScotchSources(SourcePopBase):
         if self.sky_area == None:
             self.sky_area = effective_sky_area
 
-        
     @property
     def source_number(self) -> int:
         """Number of sources in the population before any selection cuts.
