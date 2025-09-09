@@ -498,7 +498,11 @@ class ScotchSources(SourcePopBase):
 
         effective_sky_area = SKY_AREA * self.n_source_selected / self.total_expected
         if self.sky_area == None:
-            self.sky_area = effective_sky_area
+            self.sky_area = effective_sky_area * u.deg**2
+        else:
+            scaling_factor = self.sky_area / effective_sky_area
+            new_number_selected = int(scaling_factor * self.source_number_selected)
+            self.source_number_selected = new_number_selected
 
     @property
     def source_number(self) -> int:
