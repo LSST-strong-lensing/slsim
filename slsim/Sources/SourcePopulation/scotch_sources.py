@@ -262,6 +262,7 @@ class ScotchSources(SourcePopBase):
         transient_types: list[str] | None = None,
         kwargs_cut: dict | None = None,
         rng: np.random.Generator | int | None = None,
+        sample_uniformly: bool = False,
     ):
         """Class for SCOTCH transient source population. Allows for sampling of
         transients and their hosts from the SCOTCH HDF5 catalogs.
@@ -288,6 +289,10 @@ class ScotchSources(SourcePopBase):
         rng : np.random.Generator, int, or None, optional
             Random number generator or seed for reproducibility. If None, a new
             generator is created. Default is None.
+        sample_uniformly: bool, optional
+            If False, sampling is done according to the expected rates of transient
+            subclasses within the given redshift range. If True, sampling is done 
+            uniformly over all transient subclasses. Default is False.
         Raises
         ------
         ValueError
@@ -320,6 +325,7 @@ class ScotchSources(SourcePopBase):
 
         super().__init__(cosmo=cosmo, sky_area=sky_area)
         self.f = h5py.File(scotch_path, "r")
+        self.sample_uniformly = sample_uniformly
 
         # Parse transient types
         avail = set(self.f["TransientTable"].keys())
@@ -484,15 +490,36 @@ class ScotchSources(SourcePopBase):
         if self.n_source_selected == 0:
             raise ValueError("No objects satisfy the provided kwargs_cut filters.")
 
-        class_weights = np.zeros(len(self.active_transient_types))
+        # Setup weights for sampling
+        n_active_transient_types = len(self.active_transient_types)
+        class_weights = np.zeros(n_active_transient_types)
         for i, c in enumerate(self.active_transient_types):
+
             cls = self._index[c]
             subclass_expected = cls.subclass_expected
-            global_subclass_weights = subclass_expected / self.total_expected
-            class_weight = np.sum(global_subclass_weights)
-            subclass_weights = global_subclass_weights / class_weight
+            
+            if sample_uniformly:
+                class_weight = 1. / n_active_transient_types
+                subclass_weights = np.array([s.n_ok for s in cls.subclasses], dtype=float)
+                subclass_weights /= np.sum(subclass_weights)
+            else:
+                # We calculate sampling probabilities for a given subclass s as
+                # p_s = n^{expected}_{s} / n^{expected}_total,
+                # where s indexes over subclasses. Since we sample class and then
+                # subclass, we factorize such that 
+                # p(c) = \sum_{s \in S(c)} p_s
+                # and
+                # p(s | c) = p_s / p(c).
+                # In this way, we ensure that sampling results in the distribution
+                # of transient subclasses given by the volumetric rates defined earlier
+
+                global_subclass_weights = subclass_expected / self.total_expected
+                class_weight = np.sum(global_subclass_weights)
+                subclass_weights = global_subclass_weights / class_weight
+            
             cls.subclass_weights = subclass_weights
             class_weights[i] = class_weight
+        
         class_weights = np.array(class_weights)
         self.class_weights = class_weights
 
@@ -622,8 +649,8 @@ class ScotchSources(SourcePopBase):
     # -------------------- sampling --------------------
 
     def _sample_from_class(self, cls: str) -> tuple[_SubclassIndex, int]:
-        """Sample a transient subclass and an index within that subclass,
-        uniformly over all surviving objects in the class.
+        """Sample a transient subclass and an index within that subclass
+        over all surviving subclasses within the provided class.
 
         Parameters
         ----------
@@ -638,9 +665,12 @@ class ScotchSources(SourcePopBase):
             Index within the subclass's dataset.
         """
         ci = self._index[cls]
-        weights = np.array([s.n_ok for s in ci.subclasses], dtype=float)
-        weights /= weights.sum()
-        s = ci.subclasses[self.rng.choice(len(ci.subclasses), p=weights)]
+        s = ci.subclasses[
+            self.rng.choice(
+                len(ci.subclasses),
+                p=ci.subclass_weights
+            )
+        ]
         if s.eligible is None:
             i = int(self.rng.integers(0, s.N))
         else:
@@ -761,7 +791,10 @@ class ScotchSources(SourcePopBase):
         bool
             True if the transient has a host, False if hostless.
         """
-        cls = self.rng.choice(self.active_transient_types)
+        cls = self.rng.choice(
+            self.active_transient_types,
+            p=self.class_weights
+        )
         s, i = self._sample_from_class(cls)
         g = s.grp
 
