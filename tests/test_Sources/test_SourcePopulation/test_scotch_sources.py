@@ -478,6 +478,7 @@ def test_init_uniform_sampling(scotch_h5):
     agn_subclass_weights = scotch._index["AGN"].subclass_weights
     assert agn_subclass_weights[0] == 1.0
 
+
 def test_host_pass_mask(scotch_instance):
     host_grp = scotch_instance._index["SNII"].host_grp
     mask = scotch_instance._host_pass_mask(host_grp)
