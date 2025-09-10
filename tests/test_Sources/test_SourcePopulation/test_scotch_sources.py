@@ -461,24 +461,22 @@ def test_init_unsupported_band_raises(scotch_h5):
             kwargs_cut={"band": ["q"], "band_max": [22.0]},
         )
 
+
 def test_init_uniform_sampling(scotch_h5):
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     scotch = scotch_module.ScotchSources(
-            cosmo=cosmo,
-            scotch_path=scotch_h5,
-            sample_uniformly=True
-        )
-    
+        cosmo=cosmo, scotch_path=scotch_h5, sample_uniformly=True
+    )
+
     class_weights = scotch.class_weights
     assert np.all(class_weights == 0.5) and np.sum(class_weights)
 
-    snii_subclass_weights = scotch._index['SNII'].subclass_weights
-    assert np.isclose(snii_subclass_weights[0], 1/3)
-    assert np.isclose(snii_subclass_weights[1], 2/3)
+    snii_subclass_weights = scotch._index["SNII"].subclass_weights
+    assert np.isclose(snii_subclass_weights[0], 1 / 3)
+    assert np.isclose(snii_subclass_weights[1], 2 / 3)
 
-    agn_subclass_weights = scotch._index['AGN'].subclass_weights
+    agn_subclass_weights = scotch._index["AGN"].subclass_weights
     assert agn_subclass_weights[0] == 1.0
-    
 
 
 def test_host_pass_mask(scotch_instance):
