@@ -136,7 +136,7 @@ def scotch_instance(scotch_h5):
     """Construct a ScotchSources with deterministic RNG and an r-band cut
     (<=22)."""
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-    #sky_area = 1.0 * u.deg**2
+    # sky_area = 1.0 * u.deg**2
     kwargs_cut = {"band": ["r"], "band_max": [22.0]}
     inst = scotch_module.ScotchSources(
         cosmo=cosmo,
