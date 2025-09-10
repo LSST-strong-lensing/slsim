@@ -92,7 +92,7 @@ def scotch_h5(tmp_path: Path):
         for b in ("u", "g", "r", "i", "z", "Y"):
             if b == "r":
                 A.create_dataset(
-                    "mag_r", data=np.array([[21.0, 22.0, 21.0], [99.0, 99.0, 99.0]])
+                    "mag_r", data=np.array([[23.0, 22.0, 23.0], [99.0, 99.0, 99.0]])
                 )
             else:
                 A.create_dataset(
@@ -477,7 +477,6 @@ def test_init_uniform_sampling(scotch_h5):
 
     agn_subclass_weights = scotch._index["AGN"].subclass_weights
     assert agn_subclass_weights[0] == 1.0
-
 
 def test_host_pass_mask(scotch_instance):
     host_grp = scotch_instance._index["SNII"].host_grp

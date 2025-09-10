@@ -638,9 +638,8 @@ class ScotchSources(SourcePopBase):
                 sl = slice(i, min(i + batch, N))
                 arr = ds[sl]  # (B,T)
                 # nanmin across time; if all NaN, result is NaN (treated as fail)
-                with np.errstate(invalid="ignore"):
-                    mn = np.nanmin(arr, axis=1)  # (B,)
-                ok = np.isfinite(mn) & (mn <= mmax)
+                new_arr = np.where(np.isnan(arr), np.inf, arr)
+                ok = np.any(new_arr <= mmax, axis=1)
                 mask[sl] &= ok
 
         # host pass via GID membership (vectorized searchsorted per chunk)
