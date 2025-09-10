@@ -557,7 +557,7 @@ class ScotchSources(SourcePopBase):
         # Why not just rename self.n_source_selected as
         # self.source_number_selected. Would mean having to refactor
         # SourcePopBase and any children, but would reduce boat.
-        # Grumble grumble grumble 
+        # Grumble grumble grumble
         return self.n_source_selected
 
     # -------------------- filtering helpers --------------------
