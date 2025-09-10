@@ -114,7 +114,7 @@ def scotch_h5(tmp_path: Path):
 
         # ---- AGN transients ---- (should fail)
         agn_tt = tt.create_group("AGN")
-        X = agn_tt.create_group("X")
+        X = agn_tt.create_group("AGN")
         X.create_dataset("z", data=np.array([0.8]))
         X.create_dataset("GID", data=np.array([gids_agn[0]]))
         X.create_dataset("ra_off", data=np.array([0.0]))
@@ -460,6 +460,25 @@ def test_init_unsupported_band_raises(scotch_h5):
             scotch_path=scotch_h5,
             kwargs_cut={"band": ["q"], "band_max": [22.0]},
         )
+
+def test_init_uniform_sampling(scotch_h5):
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    scotch = scotch_module.ScotchSources(
+            cosmo=cosmo,
+            scotch_path=scotch_h5,
+            sample_uniformly=True
+        )
+    
+    class_weights = scotch.class_weights
+    assert np.all(class_weights == 0.5) and np.sum(class_weights)
+
+    snii_subclass_weights = scotch._index['SNII'].subclass_weights
+    assert np.isclose(snii_subclass_weights[0], 1/3)
+    assert np.isclose(snii_subclass_weights[1], 2/3)
+
+    agn_subclass_weights = scotch._index['AGN'].subclass_weights
+    assert agn_subclass_weights[0] == 1.0
+    
 
 
 def test_host_pass_mask(scotch_instance):

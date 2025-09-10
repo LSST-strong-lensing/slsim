@@ -443,9 +443,12 @@ class ScotchSources(SourcePopBase):
                 subclass_selected.append(n_ok)
                 subclass_expected.append(n_expected)
 
-            subclass_total = np.asarray(subclass_total)
-            subclass_selected = np.asarray(subclass_selected)
-            subclass_expected = np.asarray(subclass_expected)
+            sub_names = [sub.name for sub in sub_list]
+            idx_ordered = np.argsort(sub_names)
+            ordered_sub_list = [sub_list[i] for i in idx_ordered]
+            subclass_total = np.asarray(subclass_total)[idx_ordered]
+            subclass_selected = np.asarray(subclass_selected)[idx_ordered]
+            subclass_expected = np.asarray(subclass_expected)[idx_ordered]
             total = np.sum(subclass_total)
             total_selected = np.sum(subclass_selected)
             total_expected = np.sum(subclass_expected)
@@ -455,7 +458,7 @@ class ScotchSources(SourcePopBase):
                 host_gid_sorted=gids_sorted,
                 host_gid_sort_idx=sort_idx,
                 host_mask_sorted=host_mask_sorted,
-                subclasses=sub_list,
+                subclasses=ordered_sub_list,
                 subclass_total=subclass_total,
                 subclass_selected=subclass_selected,
                 subclass_expected=subclass_expected,
