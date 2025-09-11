@@ -38,7 +38,7 @@ install the slsim package in development mode with
 
   cd slsim
   pip install -r requirements.txt --user
-  pip install -e .
+  pip install -e . --user
 
 
 .. note::
