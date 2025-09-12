@@ -3,6 +3,7 @@
 # M = M0 + Q * (z - 0.5) and log10(Phi) = Phi0 + P * (z - 0.5) we have to convert
 # the given parameters as a_m = Q, b_m = M0 - 0.5*Q, a_phi = ln(10) * P and
 # b_phi = 10**(Phi0 - 0.5*P)
+# fsky and filters will be injected during skypy_pipeline
 cosmology: !astropy.cosmology.default_cosmology.get []
 z_range: !numpy.arange [0.0, 5.01, 0.01]
 M_star_blue: !astropy.modeling.models.Polynomial1D

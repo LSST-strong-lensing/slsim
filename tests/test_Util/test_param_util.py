@@ -530,7 +530,7 @@ def test_insert_filters_in_yaml_file():
     mag_*: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
     """
 
-    Stick_yaml = """cosmology: !astropy.cosmology.default_cosmology.get []
+    stick_yaml = """cosmology: !astropy.cosmology.default_cosmology.get []
     z_range: !numpy.arange [0.0, 5.01, 0.01]
     magnitude_limit: 30
     fsky: 0.1 deg2"""
@@ -550,7 +550,7 @@ def test_insert_filters_in_yaml_file():
 
     # Case 2: filters=None -> Using the Lsst filters and fsky at end line
     updated_yaml_default = insert_filters_in_yaml_file(
-        filters=None, yml_file=Stick_yaml
+        filters=None, yml_file=stick_yaml
     )
 
     # Make sure the default filters have been added
@@ -566,7 +566,8 @@ def test_insert_fsky_in_yml_file():
     tables:
     mag_*: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
     """
-    Stick_yaml = """cosmology: !astropy.cosmology.default_cosmology.get []
+
+    stick_yaml = """cosmology: !astropy.cosmology.default_cosmology.get []
     z_range: !numpy.arange [0.0, 5.01, 0.01]
     magnitude_limit: 30"""
 
@@ -590,7 +591,7 @@ def test_insert_fsky_in_yml_file():
     # Case 2: default fsky and magnitude at end line
     updated_yml_default = insert_fsky_in_yml_file(
         fsky=None,
-        yml_file=Stick_yaml,
+        yml_file=stick_yaml,
     )
 
     assert "fsky: 0.1 deg2" in updated_yml_default

@@ -826,7 +826,7 @@ def insert_filters_in_yaml_file(filters, yml_file):
     with correspongding filters names and amount If filters is empty or None,
     using LSST default filters.
 
-    :param filters: A dict containing filters name in speclite
+    :param filters: A list containing filters name in speclite
     :param yml_file: A yml file containg cosmology information.
     :return: Updated yml_file with the new filters config.
     """
@@ -855,6 +855,8 @@ def insert_filters_in_yaml_file(filters, yml_file):
     insertion_block = f"filters: {updated_filters}\n"
 
     if fsky_idx >= 0:
+        if not lines[fsky_idx].endswith("\n"):
+            lines[fsky_idx] = lines[fsky_idx] + "\n"
         lines.insert(fsky_idx + 1, insertion_block)
     else:
         if lines and not lines[-1].endswith("\n"):
