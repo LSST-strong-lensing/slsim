@@ -848,10 +848,6 @@ def insert_filters_in_yaml_file(filters, yml_file):
             fsky_idx = i
             break
 
-    if fsky_idx >= 0:
-        fsky_line = lines[fsky_idx]
-        if not fsky_line.endswith("\n"):
-            lines[fsky_idx] = fsky_line + "\n"
     insertion_block = f"filters: {updated_filters}\n"
 
     if fsky_idx >= 0:
