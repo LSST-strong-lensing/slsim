@@ -339,7 +339,7 @@ class ScotchSources(SourcePopBase):
                     f"Unknown transient_types {missing}. Available: {sorted(avail)}"
                 )
         self.transient_types = list(transient_types)
-        
+
         if transient_subtypes is None:
             transient_subtypes = {}
         for transient_type in transient_types:
@@ -354,7 +354,6 @@ class ScotchSources(SourcePopBase):
                     f"Unknown transient_subtypes {missing} for transient_type {transient_type}. Available: {sorted(avail)}"
                 )
         self.transient_subtypes = transient_subtypes
-            
 
         # Parse kwargs_cut
         self.bands, self.band_max = [], []
@@ -413,7 +412,7 @@ class ScotchSources(SourcePopBase):
             subclass_expected = []
             subclass_selected = []
             for subname in self.transient_subtypes[cls]:
-                
+
                 subgrp = self.f["TransientTable"][cls][subname]
                 eligible_mask = self._transient_pass_mask(
                     subgrp, gids_sorted, host_mask_sorted
