@@ -260,6 +260,7 @@ class ScotchSources(SourcePopBase):
         scotch_path: str,
         sky_area=None,
         transient_types: list[str] | None = None,
+        transient_subtypes: dict[list[str]] | None = None,
         kwargs_cut: dict | None = None,
         rng: np.random.Generator | int | None = None,
         sample_uniformly: bool = False,
@@ -338,6 +339,22 @@ class ScotchSources(SourcePopBase):
                     f"Unknown transient_types {missing}. Available: {sorted(avail)}"
                 )
         self.transient_types = list(transient_types)
+        
+        if transient_subtypes is None:
+            transient_subtypes = {}
+        for transient_type in transient_types:
+            avail = self.f["TransientTable"][transient_type].keys()
+            provided = transient_subtypes.get(transient_type, None)
+            if provided is None:
+                transient_subtypes[transient_type] = avail
+                continue
+            missing = [t for t in provided if t not in avail]
+            if missing:
+                raise ValueError(
+                    f"Unknown transient_subtypes {missing} for transient_type {transient_type}. Available: {sorted(avail)}"
+                )
+        self.transient_subtypes = transient_subtypes
+            
 
         # Parse kwargs_cut
         self.bands, self.band_max = [], []
@@ -395,8 +412,9 @@ class ScotchSources(SourcePopBase):
             subclass_total = []
             subclass_expected = []
             subclass_selected = []
-            for subname, subgrp in self.f["TransientTable"][cls].items():
-
+            for subname in self.transient_subtypes[cls]:
+                
+                subgrp = self.f["TransientTable"][cls][subname]
                 eligible_mask = self._transient_pass_mask(
                     subgrp, gids_sorted, host_mask_sorted
                 )
@@ -806,10 +824,12 @@ class ScotchSources(SourcePopBase):
             "dec_off": float(g["dec_off"][i]),
         }
 
-        transient_lightcurve = {"MJD": g["MJD"][i]}
+        mjd = g["MJD"][i]
+        mjd = mjd - mjd[50]
+        transient_lightcurve = {"MJD": mjd}
         for band in BANDS:
             mags = g[f"mag_{band}"][i]
-            mags = np.where(mags == 99.0, np.nan, mags)
+            mags = np.where(mags == 99.0, np.inf, mags)
             transient_lightcurve[f"ps_mag_{band}"] = mags
         transient_dict = transient_metadata | transient_lightcurve
 
