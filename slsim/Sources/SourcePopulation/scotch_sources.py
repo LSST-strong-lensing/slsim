@@ -264,6 +264,7 @@ class ScotchSources(SourcePopBase):
         kwargs_cut: dict | None = None,
         rng: np.random.Generator | int | None = None,
         sample_uniformly: bool = False,
+        exclude_agn: bool = True,
     ):
         """Class for SCOTCH transient source population. Allows for sampling of
         transients and their hosts from the SCOTCH HDF5 catalogs.
@@ -280,6 +281,10 @@ class ScotchSources(SourcePopBase):
         transient_types : list of str, optional
             List of transient types to include. If None, all available types are used.
             Default is None.
+        transient_subtypes: dict of list of str, optional
+            Dict with transient types as keys and lists of transient subtypes to include.
+            If None, all available subtypes for chosen transient types are used. Default
+            is None.
         kwargs_cut : dict, optional
             Dictionary of selection criteria to filter the sources. Supported keys:
             - 'z_min': Minimum redshift (float).
@@ -294,6 +299,8 @@ class ScotchSources(SourcePopBase):
             If False, sampling is done according to the expected rates of transient
             subclasses within the given redshift range. If True, sampling is done
             uniformly over all transient subclasses. Default is False.
+        exclude_agn: bool, optional
+            If True, AGN are excluded from the source population. Defualt is True.
         Raises
         ------
         ValueError
@@ -824,12 +831,23 @@ class ScotchSources(SourcePopBase):
         }
 
         mjd = g["MJD"][i]
-        mjd = mjd - mjd[50]
-        transient_lightcurve = {"MJD": mjd}
+        transient_lightcurve = {}
+        min_mag = np.inf
         for band in BANDS:
+
             mags = g[f"mag_{band}"][i]
             mags = np.where(mags == 99.0, np.inf, mags)
+            
+            idx_min_i = np.nanargmin(mags)
+            min_mag_i = mags[idx_min_i]
+            if min_mag_i < min_mag:
+                min_mag = min_mag_i
+                idx_min = idx_min_i 
+            
             transient_lightcurve[f"ps_mag_{band}"] = mags
+        mjd = mjd - mjd[idx_min]
+        transient_lightcurve['MJD'] = mjd
+        
         transient_dict = transient_metadata | transient_lightcurve
 
         gid_b = g["GID"][i]
