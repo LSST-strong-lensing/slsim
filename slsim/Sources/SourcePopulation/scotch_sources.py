@@ -837,17 +837,17 @@ class ScotchSources(SourcePopBase):
 
             mags = g[f"mag_{band}"][i]
             mags = np.where(mags == 99.0, np.inf, mags)
-            
+
             idx_min_i = np.nanargmin(mags)
             min_mag_i = mags[idx_min_i]
             if min_mag_i < min_mag:
                 min_mag = min_mag_i
-                idx_min = idx_min_i 
-            
+                idx_min = idx_min_i
+
             transient_lightcurve[f"ps_mag_{band}"] = mags
         mjd = mjd - mjd[idx_min]
-        transient_lightcurve['MJD'] = mjd
-        
+        transient_lightcurve["MJD"] = mjd
+
         transient_dict = transient_metadata | transient_lightcurve
 
         gid_b = g["GID"][i]
