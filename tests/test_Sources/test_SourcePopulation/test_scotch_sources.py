@@ -437,6 +437,17 @@ def test_init_unknown_transient_type_raises(scotch_h5):
             transient_types=["DOES_NOT_EXIST"],
         )
 
+def test_init_unknown_transient_subtype_raises(scotch_h5):
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    sky_area = 1.0 * u.deg**2
+    with pytest.raises(ValueError):
+        scotch_module.ScotchSources(
+            cosmo=cosmo,
+            sky_area=sky_area,
+            scotch_path=scotch_h5,
+            transient_subtypes={'SNII': "DOES_NOT_EXIST"},
+        )
+
 
 def test_init_invalid_band_spec_raises(scotch_h5):
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -448,6 +459,24 @@ def test_init_invalid_band_spec_raises(scotch_h5):
             scotch_path=scotch_h5,
             kwargs_cut={"band": ["r", "g"], "band_max": [22.0]},
         )
+
+
+def test_init_band_cuts_as_str(scotch_h5):
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    sky_area = 1.0 * u.deg**2
+    scotch = scotch_module.ScotchSources(
+        cosmo=cosmo,
+        sky_area=sky_area,
+        scotch_path=scotch_h5,
+        kwargs_cut={"band": "r", "band_max": 22.0},
+    )
+
+    assert isinstance(scotch.bands, list)
+    assert isinstance(scotch.band_max, list)
+    assert len(scotch.bands) == 1
+    assert len(scotch.band_max) == 1
+    assert "r" in scotch.bands
+    assert 22.0 in scotch.band_max
 
 
 def test_init_unsupported_band_raises(scotch_h5):
@@ -478,6 +507,16 @@ def test_init_uniform_sampling(scotch_h5):
     agn_subclass_weights = scotch._index["AGN"].subclass_weights
     assert agn_subclass_weights[0] == 1.0
 
+def test_no_objects_pass_cut(scotch_h5):
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    sky_area = 1.0 * u.deg**2
+    with pytest.raises(ValueError):
+        scotch_module.ScotchSources(
+            cosmo=cosmo,
+            sky_area=sky_area,
+            scotch_path=scotch_h5,
+            kwargs_cut={"band": "r", "band_max": -np.inf},
+        )
 
 def test_host_pass_mask(scotch_instance):
     host_grp = scotch_instance._index["SNII"].host_grp
@@ -485,7 +524,7 @@ def test_host_pass_mask(scotch_instance):
     assert mask.dtype == bool
     assert mask.shape == host_grp["z"].shape
     assert mask.tolist() == [True, False]
-
+    
 
 def test_transient_pass_mask_and_selection(scotch_instance):
     cls = "SNII"
