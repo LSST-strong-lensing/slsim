@@ -25,6 +25,7 @@ def test_simple_quasar():
 def test_testmon():
     assert 1 == 1
 
+
 def test_testmon2():
     assert 1 == 1
 
