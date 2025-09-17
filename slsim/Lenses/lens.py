@@ -16,6 +16,7 @@ from lenstronomy.Util import data_util
 from lenstronomy.Util import util
 
 from slsim.Lenses.lensed_system_base import LensedSystemBase
+from slsim.Deflectors.deflector import JAX_PROFILES
 
 
 class Lens(LensedSystemBase):
@@ -1117,6 +1118,15 @@ class Lens(LensedSystemBase):
                 "Deflector model %s not supported for lenstronomy model"
                 % self.deflector.deflector_type
             )
+
+        # For significant speedup, use these mass profiles from jaxtronomy
+        use_jax = []
+        for profile in self._lens_mass_model_list:
+            if profile in JAX_PROFILES:
+                use_jax.append(True)
+            else:
+                use_jax.append(False)
+
         # TODO: replace with change_source_redshift() currently not fully working
         # self._lens_model.change_source_redshift(z_source=z_source)
         lens_model = LensModel(
@@ -1126,6 +1136,7 @@ class Lens(LensedSystemBase):
             z_source=z_source,
             z_source_convention=self.max_redshift_source_class.redshift,
             multi_plane=False,
+            use_jax=use_jax,
         )
         return lens_model, self._kwargs_lens
 
