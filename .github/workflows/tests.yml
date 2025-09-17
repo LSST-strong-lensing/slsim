@@ -1,45 +1,69 @@
-- uses: actions/checkout@v4
+name: CI
 
-- name: Set up Python
-  uses: actions/setup-python@v5
-  with:
-    python-version: ${{ matrix.python-version }}
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
-# (optional) keep pip cache too for speed
-- name: Cache pip
-  uses: actions/cache@v4
-  with:
-    path: ~/.cache/pip
-    key: pip-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml', '**/setup.cfg', '**/setup.py', 'requirements*.txt') }}
-    restore-keys: |
-      pip-${{ runner.os }}-py${{ matrix.python-version }}-
+permissions:
+  contents: read
 
-- name: Install deps
-  run: |
-    python -m pip install --upgrade pip
-    pip install -r requirements.txt
-    # ensure testmon is present; remove if already in your reqs
-    pip install pytest-testmon
+# Avoid overlapping runs fighting over the cache
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 
-# (optional but tidy)
-- name: Configure testmon path
-  run: |
-    mkdir -p .cache/testmon
-    echo "TESTMON_DATAFILE=.cache/testmon/data.sqlite" >> $GITHUB_ENV
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11"]
 
-- name: Restore testmon cache
-  uses: actions/cache@v4
-  with:
-    path: |
-      .testmondata
-      .testmondata.bak
-      .testmon/
-      .cache/testmon/
-    key: testmon-${{ runner.os }}-py${{ matrix.python-version }}-${{ github.ref_name }}-${{ hashFiles('**/pyproject.toml', '**/setup.cfg', '**/setup.py', 'requirements*.txt') }}
-    restore-keys: |
-      testmon-${{ runner.os }}-py${{ matrix.python-version }}-${{ github.ref_name }}-
-      testmon-${{ runner.os }}-py${{ matrix.python-version }}-
+    # Put testmon DB in a stable, cacheable location
+    env:
+      TESTMON_DATAFILE: .cache/testmon/data.sqlite
 
-- name: Run tests (incremental)
-  run: |
-    pytest --testmon --cov=./ --cov-report=xml
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          # Also caches pip wheels for faster installs
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          # Ensure pytest + testmon are present (remove if already in your reqs)
+          python -m pip install pytest pytest-testmon
+
+      - name: Prepare testmon directory
+        run: mkdir -p .cache/testmon
+
+      - name: Restore testmon cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .testmondata
+            .testmondata.bak
+            .testmon/
+            .cache/testmon/
+          # Keyed by OS + Py + branch-name + dependency hash
+          key: testmon-${{ runner.os }}-py${{ matrix.python-version }}-${{ github.head_ref || github.ref_name }}-${{ hashFiles('**/pyproject.toml', '**/setup.cfg', '**/setup.py', '**/requirements*.txt', 'poetry.lock', 'uv.lock') }}
+          restore-keys: |
+            testmon-${{ runner.os }}-py${{ matrix.python-version }}-${{ github.head_ref || github.ref_name }}-
+            testmon-${{ runner.os }}-py${{ matrix.python-version }}-
+
+      - name: Run tests (incremental with testmon)
+        run: pytest --testmon --cov=./ --cov-report=xml
+
+      - name: Upload coverage.xml
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.python-version }}
+          path: coverage.xml
