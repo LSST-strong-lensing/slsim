@@ -40,7 +40,8 @@ jobs:
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           # Ensure pytest + testmon are present (remove if already in your reqs)
-          python -m pip install pytest pytest-testmon
+          python -m pip install flake8 pytest pytest-cov coveralls pytest-testmon codecov
+          python -m pip install .
 
       - name: Prepare testmon directory
         run: mkdir -p .cache/testmon
