@@ -355,7 +355,7 @@ class ScotchSources(SourcePopBase):
 
         self.transient_types = self._parse_transient_types(transient_types)
         self.transient_subtypes = self._parse_transient_subtypes(transient_subtypes)
-
+        
         zmin, zmax, bands_to_filter, band_maxes = self._parse_kwargs_cut(kwargs_cut)
         self.zmin, self.zmax = zmin, zmax
         self.bands_to_filter = bands_to_filter
@@ -496,7 +496,6 @@ class ScotchSources(SourcePopBase):
 
         if transient_subtypes is None:
             transient_subtypes = {}
-
         for transient_type in self.transient_types:
 
             sub_union = set()
@@ -507,7 +506,7 @@ class ScotchSources(SourcePopBase):
             provided = transient_subtypes.get(transient_type, None)
 
             if provided is None:
-                transient_subtypes[transient_type] = sorted(sub_union)
+                transient_subtypes[transient_type] = sorted(list(sub_union))
                 continue
 
             missing = [t for t in provided if t not in sub_union]
@@ -516,6 +515,8 @@ class ScotchSources(SourcePopBase):
                     f"Unknown transient_subtypes {missing} for transient_type {transient_type}. "
                     f"Available: {sorted(sub_union)}"
                 )
+
+        return transient_subtypes 
 
     def _parse_kwargs_cut(
         self, kwargs_cut: dict | None
