@@ -366,94 +366,11 @@ class ScotchSources(SourcePopBase):
         )
 
         # Build indices per class
+
         self._index: dict[str, _ClassIndex] = {}
-        for cls in self.transient_types:
-            # Hosts: precompute sorted GIDs and a boolean mask for host filters
-            host_grp = self.f["HostTable"][cls]
-            host_gids = host_grp["GID"][...]  # |S8
-            sort_idx = np.argsort(host_gids)
-            gids_sorted = host_gids[sort_idx]
-
-            host_mask = self._host_pass_mask(host_grp)  # (Nh,)
-            host_mask_sorted = host_mask[sort_idx]
-
-            # Transient subclasses: build eligible lists with chunked scans
-            sub_list: list[_SubclassIndex] = []
-            subclass_total = []
-            subclass_expected = []
-            subclass_selected = []
-            for subname in self.transient_subtypes[cls]:
-
-                subgrp = self.f["TransientTable"][cls][subname]
-                eligible_mask = self._transient_pass_mask(
-                    subgrp, gids_sorted, host_mask_sorted
-                )
-                n_ok = int(eligible_mask.sum())
-                if n_ok == 0:
-                    continue
-                N = eligible_mask.size
-                eligible_idx = (
-                    None
-                    if n_ok == N
-                    else np.flatnonzero(eligible_mask).astype(np.int64)
-                )
-
-                if subname in RATE_FUNCS:
-                    rate_fn = RATE_FUNCS[subname]
-                    n_expected = int(
-                        expected_number(
-                            rate_fn=rate_fn,
-                            cosmo=cosmo,
-                            z_min=self.zmin,
-                            z_max=self.zmax,
-                        )
-                    )
-                elif "AGN" in subname:
-                    n_expected = n_ok
-                else:
-                    raise ValueError(
-                        f"Transient Subclass {subname} not found in rate functions. "
-                        + f"Rate functions are available for {list(RATE_FUNCS.keys())}."
-                    )
-
-                sub_list.append(
-                    _SubclassIndex(
-                        name=subname,
-                        grp=subgrp,
-                        N=N,
-                        n_ok=n_ok,
-                        n_expected=n_expected,
-                        eligible=eligible_idx,
-                    )
-                )
-
-                subclass_total.append(N)
-                subclass_selected.append(n_ok)
-                subclass_expected.append(n_expected)
-
-            sub_names = [sub.name for sub in sub_list]
-            idx_ordered = np.argsort(sub_names)
-            ordered_sub_list = [sub_list[i] for i in idx_ordered]
-            subclass_total = np.asarray(subclass_total)[idx_ordered]
-            subclass_selected = np.asarray(subclass_selected)[idx_ordered]
-            subclass_expected = np.asarray(subclass_expected)[idx_ordered]
-            total = np.sum(subclass_total)
-            total_selected = np.sum(subclass_selected)
-            total_expected = np.sum(subclass_expected)
-
-            self._index[cls] = _ClassIndex(
-                host_grp=host_grp,
-                host_gid_sorted=gids_sorted,
-                host_gid_sort_idx=sort_idx,
-                host_mask_sorted=host_mask_sorted,
-                subclasses=ordered_sub_list,
-                subclass_total=subclass_total,
-                subclass_selected=subclass_selected,
-                subclass_expected=subclass_expected,
-                subclass_weights=subclass_expected,
-                total=total,
-                total_expected=total_expected,
-                total_selected=total_selected,
+        for transient_type in self.transient_types:
+            self._index[transient_type] = self._build_transient_index(
+                transient_type=transient_type
             )
 
         # keep only classes with survivors
@@ -684,6 +601,39 @@ class ScotchSources(SourcePopBase):
 
         return mask
 
+    def _build_index_host_info(
+        self, transient_type: str
+    ) -> tuple[list, list, list, list]:
+        # Per-file host info
+        host_grps = []
+        gids_sorted_list = []
+        sort_idx_list = []
+        host_mask_sorted_list = []
+
+        for f in self.files:
+            if transient_type not in f["HostTable"]:
+                # If a file lacks this class, create empty stubs to keep indexing aligned
+                host_grps.append(None)
+                gids_sorted_list.append(np.array([], dtype="|S8"))
+                sort_idx_list.append(np.array([], dtype=int))
+                host_mask_sorted_list.append(np.array([], dtype=bool))
+                continue
+
+            host_grp = f["HostTable"][transient_type]
+            host_grps.append(host_grp)
+            host_gids = host_grp["GID"][...]
+            sort_idx = np.argsort(host_gids)
+            gids_sorted = host_gids[sort_idx]
+
+            host_mask = self._host_pass_mask(host_grp)
+            host_mask_sorted = host_mask[sort_idx]
+
+            gids_sorted_list.append(gids_sorted)
+            sort_idx_list.append(sort_idx)
+            host_mask_sorted_list.append(host_mask_sorted)
+        
+        return host_grps, gids_sorted_list, sort_idx_list, host_mask_sorted_list
+
     def _transient_pass_mask(
         self,
         subgrp: h5py.Group,
@@ -744,6 +694,193 @@ class ScotchSources(SourcePopBase):
             mask[sl] &= host_ok
 
         return mask
+
+    def _build_subtype_shards(
+        self,
+        transient_type: str,
+        subname: str,
+        host_grps: list,
+        gids_sorted_list: list,
+        host_mask_sorted_list: list
+    ) -> tuple[list[_SubclassShard], int, int]:
+        shards: list[_SubclassShard] = []
+        total_rows = 0
+        total_ok = 0
+
+        # collect shards from each file
+        for f_idx, f in enumerate(self.files):
+            # skip if class/subclass missing in this file
+            has_transient_type = transient_type in f["TransientTable"]
+            if not has_transient_type:
+                continue
+
+            grp = f["TransientTable"][transient_type]
+            has_subname = subname not in grp
+            if not has_subname:
+                continue
+
+            subgrp = grp[subname]
+            no_host_table = host_grps[f_idx] is None
+            if no_host_table:
+                continue
+
+            eligible_mask = self._transient_pass_mask(
+                subgrp,
+                gids_sorted_list[f_idx],
+                host_mask_sorted_list[f_idx],
+            )
+            n_ok = int(eligible_mask.sum())
+            if n_ok == 0:
+                continue
+
+            N = eligible_mask.size
+            eligible_idx = (
+                None if n_ok == N 
+                else np.flatnonzero(eligible_mask).astype(np.int64)
+            )
+
+            shards.append(
+                _SubclassShard(
+                    file_index=f_idx,
+                    grp=subgrp,
+                    N=N,
+                    n_ok=n_ok,
+                    eligible=eligible_idx,
+                )
+            )
+            total_rows += N
+            total_ok += n_ok
+        
+        return shards, total_rows, total_ok
+        
+    def _get_expected_number(self, subname: str, total_ok: int) -> int:
+        if subname in RATE_FUNCS:
+            rate_fn = RATE_FUNCS[subname]
+            n_expected = int(
+                expected_number(
+                    rate_fn=rate_fn,
+                    cosmo=self.cosmo,
+                    z_min=self.zmin,
+                    z_max=self.zmax,
+                )
+            )
+        elif "AGN" in subname:
+            n_expected = total_ok
+        else:
+            raise ValueError(
+                f"Transient Subclass {subname} not found in rate functions. "
+                + f"Rate functions are available for {list(RATE_FUNCS.keys())}."
+            )
+        
+        return n_expected
+
+    def _build_subtype_indeces(
+        self,
+        transient_type: str,
+        host_grps: list,
+        gids_sorted_list: list,
+        host_mask_sorted_list: list
+    ) -> tuple[
+        list[_SubclassIndex],
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+    ]:
+        sub_list: list[_SubclassIndex] = []
+        subclass_total = []
+        subclass_selected = []
+        subclass_expected = []
+
+        for subname in self.transient_subtypes[transient_type]:
+            
+            shards, total_rows, total_ok = self._build_subtype_shards(
+                transient_type=transient_type,
+                subname=subname,
+                host_grps=host_grps,
+                gids_sorted_list=gids_sorted_list,
+                host_mask_sorted_list=host_mask_sorted_list
+            )
+            # keep only if any shard has survivors
+            if not shards:
+                continue
+
+            # expected number for this subclass (same across files)
+            n_expected = self._get_expected_number(
+                subname=subname, total_ok=total_ok
+            )
+
+            sub_list.append(
+                _SubclassIndex(
+                    name=subname,
+                    shards=shards,
+                    n_expected=n_expected
+                )
+            )
+            subclass_total.append(total_rows)
+            subclass_selected.append(total_ok)
+            subclass_expected.append(n_expected)
+        
+        # sort subclasses by name for determinism
+        sub_names = [s.name for s in sub_list]
+        idx_ordered = np.argsort(sub_names)
+        ordered_sub_list = [sub_list[i] for i in idx_ordered]
+        subclass_total = np.asarray(subclass_total)[idx_ordered]
+        subclass_selected = np.asarray(subclass_selected)[idx_ordered]
+        subclass_expected = np.asarray(subclass_expected)[idx_ordered]
+
+        return (
+            ordered_sub_list,
+            subclass_total,
+            subclass_selected,
+            subclass_expected
+        )
+
+    def _build_transient_index(
+        self,
+        transient_type: str
+    ) -> _ClassIndex:
+            
+        (
+            host_grps, gids_sorted_list,
+            sort_idx_list, host_mask_sorted_list
+        ) = self._build_index_host_info(transient_type)
+
+        # Subclasses across files (as shards)
+        
+        (
+            ordered_sub_list,
+            subclass_total,
+            subclass_selected,
+            subclass_expected
+        ) = self._build_subtype_indeces(
+            transient_type=transient_type,
+            host_grps=host_grps,
+            gids_sorted_list=gids_sorted_list,
+            host_mask_sorted_list=host_mask_sorted_list,
+        )
+
+
+        total = int(np.sum(subclass_total))
+        total_selected = int(np.sum(subclass_selected))
+        total_expected = int(np.sum(subclass_expected))
+
+        class_index = _ClassIndex(
+            host_grp=host_grps,
+            host_gid_sorted=gids_sorted_list,
+            host_gid_sort_idx=sort_idx_list,
+            host_mask_sorted=host_mask_sorted_list,
+            subclasses=ordered_sub_list,
+            subclass_total=subclass_total,
+            subclass_selected=subclass_selected,
+            subclass_expected=subclass_expected,
+            subclass_weights=subclass_expected,  # placeholder; overwritten below
+            total=total,
+            total_expected=total_expected,
+            total_selected=total_selected,
+        )
+
+        return class_index
+
 
     # -------------------- sampling --------------------
 
