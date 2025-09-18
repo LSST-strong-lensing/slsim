@@ -227,39 +227,52 @@ def galaxy_projected_eccentricity(
     return e1, e2
 
 
+# REPLACE the existing _SubclassIndex / _ClassIndex with the following:
+
 @dataclass
-class _SubclassIndex:
-    name: str
+class _SubclassShard:
+    file_index: int
     grp: h5py.Group
     N: int
     n_ok: int
-    n_expected: int
     eligible: np.ndarray | None  # None => all rows valid
 
 
 @dataclass
+class _SubclassIndex:
+    name: str
+    shards: list[_SubclassShard]
+    n_expected: int  # from RATE_FUNCS integral over z
+
+
+@dataclass
 class _ClassIndex:
-    host_grp: h5py.Group
-    host_gid_sorted: np.ndarray
-    host_gid_sort_idx: np.ndarray
-    host_mask_sorted: np.ndarray  # boolean, aligned with host_gid_sorted
+    # One host table per input file for this class
+    host_grp: list[h5py.Group]
+    host_gid_sorted: list[np.ndarray]
+    host_gid_sort_idx: list[np.ndarray]
+    host_mask_sorted: list[np.ndarray]
+
+    # Per-subclass info (merged across files)
     subclasses: list[_SubclassIndex]
-    subclass_total: np.ndarray
-    subclass_expected: np.ndarray
-    subclass_selected: np.ndarray
-    subclass_weights: np.ndarray
+    subclass_total: np.ndarray        # total rows per subclass (sum across files)
+    subclass_selected: np.ndarray     # eligible rows per subclass (sum across files)
+    subclass_expected: np.ndarray     # expected counts per subclass (RATE_FUNCS)
+    subclass_weights: np.ndarray      # sampling weights p(s | class)
+
     total: int
     total_expected: int
     total_selected: int = 0
+
 
 
 class ScotchSources(SourcePopBase):
     def __init__(
         self,
         cosmo: Cosmology,
-        scotch_path: str,
+        scotch_path: list[str] | str,
         sky_area=None,
-        transient_types: list[str] | None = None,
+        transient_types: list[str] | str | None = None,
         transient_subtypes: dict[list[str]] | None = None,
         kwargs_cut: dict | None = None,
         rng: np.random.Generator | int | None = None,
@@ -332,35 +345,17 @@ class ScotchSources(SourcePopBase):
         """
 
         super().__init__(cosmo=cosmo, sky_area=sky_area)
-        self.f = h5py.File(scotch_path, "r")
+        
+        self.files = (
+            [h5py.File(p, "r") for p in scotch_path]
+            if isinstance(scotch_path, (list, tuple))
+            else [h5py.File(scotch_path, "r")]
+        )
+
         self.sample_uniformly = sample_uniformly
 
-        # Parse transient types
-        avail = set(self.f["TransientTable"].keys())
-        if transient_types is None:
-            transient_types = sorted(avail)
-        else:
-            missing = [t for t in transient_types if t not in avail]
-            if missing:
-                raise ValueError(
-                    f"Unknown transient_types {missing}. Available: {sorted(avail)}"
-                )
-        self.transient_types = list(transient_types)
-
-        if transient_subtypes is None:
-            transient_subtypes = {}
-        for transient_type in transient_types:
-            avail = self.f["TransientTable"][transient_type].keys()
-            provided = transient_subtypes.get(transient_type, None)
-            if provided is None:
-                transient_subtypes[transient_type] = avail
-                continue
-            missing = [t for t in provided if t not in avail]
-            if missing:
-                raise ValueError(
-                    f"Unknown transient_subtypes {missing} for transient_type {transient_type}. Available: {sorted(avail)}"
-                )
-        self.transient_subtypes = transient_subtypes
+        self.transient_types = self._parse_transient_types(transient_types)        
+        self.transient_subtypes = self._parse_transient_subtypes(transient_subtypes)
 
         # Parse kwargs_cut
         self.bands, self.band_max = [], []
@@ -587,7 +582,54 @@ class ScotchSources(SourcePopBase):
         # Grumble grumble grumble
         return self.n_source_selected
 
-    # -------------------- filtering helpers --------------------
+    # -------------------- init helpers --------------------
+
+    def _parse_transient_types(self, transient_types: list[str] | str | None) -> list:
+        
+        if isinstance(transient_types, str):
+            transient_types = [transient_types]
+
+        avail = set()
+        for f in self.files:
+            avail |= set(f["TransientTable"].keys())
+        if transient_types is None:
+            transient_types = avail
+        else:
+            missing = [t for t in transient_types if t not in avail]
+            if missing:
+                raise ValueError(
+                    f"Unknown transient_types {missing}. Available: {sorted(avail)}"
+                )
+        transient_types = sorted(list(transient_types))
+        
+        return transient_types
+
+    def _parse_transient_subtypes(
+        self, transient_subtypes: dict | dict[list[str]] | None
+    ) -> dict[list[str]] | None:
+        
+        if transient_subtypes is None:
+            transient_subtypes = {}
+
+        for transient_type in self.transient_types:
+
+            sub_union = set()
+            for f in self.files:
+                if transient_type in f["TransientTable"]:
+                    sub_union |= set(f["TransientTable"][transient_type].keys())
+            
+            provided = transient_subtypes.get(transient_type, None)
+            
+            if provided is None:
+                transient_subtypes[transient_type] = sorted(sub_union)
+                continue
+            
+            missing = [t for t in provided if t not in sub_union]
+            if missing:
+                raise ValueError(
+                    f"Unknown transient_subtypes {missing} for transient_type {transient_type}. "
+                    f"Available: {sorted(sub_union)}"
+                )        
 
     def _host_pass_mask(self, host_grp: h5py.Group) -> np.ndarray:
         """Create a boolean mask for hosts passing cuts on redshift and
