@@ -355,7 +355,7 @@ class ScotchSources(SourcePopBase):
 
         self.transient_types = self._parse_transient_types(transient_types)
         self.transient_subtypes = self._parse_transient_subtypes(transient_subtypes)
-        
+
         zmin, zmax, bands_to_filter, band_maxes = self._parse_kwargs_cut(kwargs_cut)
         self.zmin, self.zmax = zmin, zmax
         self.bands_to_filter = bands_to_filter
@@ -516,7 +516,7 @@ class ScotchSources(SourcePopBase):
                     f"Available: {sorted(sub_union)}"
                 )
 
-        return transient_subtypes 
+        return transient_subtypes
 
     def _parse_kwargs_cut(
         self, kwargs_cut: dict | None
