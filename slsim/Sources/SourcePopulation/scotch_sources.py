@@ -542,8 +542,8 @@ class ScotchSources(SourcePopBase):
 
         if (has_bands and not has_band_max) or (has_band_max and not has_bands):
             raise ValueError(
-                f'If "band" is provided in kwargs_cut then "band_max" must also be '
-                + f"provided, and vice versa. Currently provided keys in kwargs_cut"
+                'If "band" is provided in kwargs_cut then "band_max" must also be '
+                + "provided, and vice versa. Currently provided keys in kwargs_cut"
                 + f" are {list(kwargs_cut.keys())}."
             )
 
