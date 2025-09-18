@@ -896,8 +896,9 @@ class ScotchSources(SourcePopBase):
     # -------------------- sampling --------------------
 
     def _sample_from_class(self, cls: str) -> tuple[_SubclassIndex, int]:
-        """Sample a transient subclass and an index within that subclass over
-        all surviving subclasses within the provided class.
+        """Sample a transient subclass, a subclass shard and an index 
+        within that subclass shard over all surviving subclasses within 
+        the provided class.
 
         Parameters
         ----------
@@ -908,8 +909,11 @@ class ScotchSources(SourcePopBase):
         -------
         s : _SubclassIndex
             The sampled transient subclass.
+        sh: _SubclassShard:
+            The sampled subclass shard
         i : int
-            Index within the subclass's dataset.
+            Index within the subclass in the file 
+            belonging to the sampled shard.
         """
 
         ci = self._index[cls]
@@ -930,14 +934,16 @@ class ScotchSources(SourcePopBase):
 
         return s, sh, i
 
-    def _host_lookup(self, cls: str, gid_bytes: bytes) -> int:
-        """Given a transient class and a GID (as bytes), return the index of
-        the corresponding host in the HostTable for that class.
+    def _host_lookup(self, cls: str, file_index: int, gid_bytes: bytes) -> int:
+        """Given a transient class, a file index and a GID (as bytes), return the 
+        index of the corresponding host in the HostTable for that class.
 
         Parameters
         ----------
         cls: str
             Transient class name.
+        file_index: int
+            Sampled file index
         gid_bytes: bytes
             GID of the host as bytes (|S8).
 
@@ -947,10 +953,13 @@ class ScotchSources(SourcePopBase):
             Index of the host in the HostTable for the given class.
         """
         ci = self._index[cls]
-        pos = int(np.searchsorted(ci.host_gid_sorted, gid_bytes))
-        if pos >= len(ci.host_gid_sorted) or ci.host_gid_sorted[pos] != gid_bytes:
+        gids_sorted = ci.host_gid_sorted[file_index]
+        sort_idx = ci.host_gid_sort_idx[file_index]
+
+        pos = int(np.searchsorted(gids_sorted, gid_bytes))
+        if pos >= len(gids_sorted) or gids_sorted[pos] != gid_bytes:
             raise KeyError(f"GID {gid_bytes!r} not found in HostTable/{cls}")
-        return int(ci.host_gid_sort_idx[pos])
+        return int(sort_idx[pos])
 
     def _scotch_to_slsim_host(self, host: dict) -> dict:
         """Convert a host dictionary from SCOTCH naming and conventions to
@@ -1045,8 +1054,9 @@ class ScotchSources(SourcePopBase):
             True if the transient has a host, False if hostless.
         """
         cls = self.rng.choice(self.active_transient_types, p=self.class_weights)
-        s, i = self._sample_from_class(cls)
-        g = s.grp
+        s, sh, i = self._sample_from_class(cls)
+        file_index = sh.file_index
+        g = sh.grp
 
         transient_metadata = {
             "name": f"{s.name}",
@@ -1076,8 +1086,10 @@ class ScotchSources(SourcePopBase):
         transient_dict = transient_metadata | transient_lightcurve
 
         gid_b = g["GID"][i]
-        host_idx = self._host_lookup(cls, gid_b)
-        host_grp = self._index[cls].host_grp
+        host_idx = self._host_lookup(
+            cls=cls, file_index=file_index, gid_bytes=gid_b
+        )
+        host_grp = self._index[cls].host_grp[file_index]
         host_dict = self._build_host_dict(host_grp, host_idx)
         has_host = bool(host_dict)
 
