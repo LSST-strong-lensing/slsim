@@ -265,7 +265,6 @@ class _ClassIndex:
     total_selected: int = 0
 
 
-
 class ScotchSources(SourcePopBase):
     def __init__(
         self,
@@ -357,40 +356,10 @@ class ScotchSources(SourcePopBase):
         self.transient_types = self._parse_transient_types(transient_types)        
         self.transient_subtypes = self._parse_transient_subtypes(transient_subtypes)
 
-        # Parse kwargs_cut
-        self.bands, self.band_max = [], []
-        z_min = kwargs_cut.get("z_min") if kwargs_cut else None
-        z_max = kwargs_cut.get("z_max") if kwargs_cut else None
-        if kwargs_cut and ("band" in kwargs_cut or "band_max" in kwargs_cut):
-            band = kwargs_cut.get("band")
-            band_max = kwargs_cut.get("band_max")
-            band_is_str = isinstance(band, str)
-            bandmax_is_num = isinstance(band_max, (int, float))
-
-            if band_is_str and bandmax_is_num:
-                kwargs_cut["band"] = [band]
-                kwargs_cut["band_max"] = [band_max]
-
-            band = kwargs_cut.get("band")
-            band_max = kwargs_cut.get("band_max")
-
-            band_is_list = isinstance(band, (list, tuple))
-            bandmax_is_list = isinstance(band_max, (list, tuple))
-            band_and_bandmax_equal_len = len(band) == len(band_max)
-            is_valid = band_is_list and bandmax_is_list and band_and_bandmax_equal_len
-
-            if not is_valid:
-                raise ValueError(
-                    "kwargs_cut['band'] and ['band_max'] must be lists of equal length."
-                )
-            self.bands = _norm_band_names(list(band))
-            self.band_max = list(map(float, band_max))
-            for b in self.bands:
-                if b not in BANDS:
-                    raise ValueError(f"Unsupported band '{b}'. Allowed: {BANDS}")
-
-        self.zmin = 0.0 if z_min is None else float(z_min)
-        self.zmax = 3.0 if z_max is None else float(z_max)  # Max in SCOTCH
+        zmin, zmax, bands_to_filter, band_maxes = self._parse_kwargs_cut(kwargs_cut)
+        self.zmin, self.zmax = zmin, zmax
+        self.bands_to_filter = bands_to_filter
+        self.band_maxes = band_maxes
 
         self.rng = (
             rng if isinstance(rng, np.random.Generator) else np.random.default_rng(rng)
@@ -631,6 +600,61 @@ class ScotchSources(SourcePopBase):
                     f"Available: {sorted(sub_union)}"
                 )        
 
+    def _parse_kwargs_cut(
+        self, kwargs_cut: dict | None
+    ) -> tuple[float, float, list, list]:
+
+        if kwargs_cut is None:
+            kwargs_cut = {}
+
+        z_min = float(kwargs_cut.get("z_min", 0.0))
+        z_max = float(kwargs_cut.get("z_max", 3.0))
+        bands = []
+        band_maxes = []
+
+        has_bands = "band" in kwargs_cut
+        has_band_max  = "band_max" in kwargs_cut
+
+        if (has_bands and not has_band_max) or (has_band_max and not has_bands):
+            raise ValueError(
+                f'If "band" is provided in kwargs_cut then "band_max" must also be '
+                + f'provided, and vice versa. Currently provided keys in kwargs_cut'
+                + f' are {list(kwargs_cut.keys())}.'
+            )
+
+        if has_bands and has_band_max:
+
+            band = kwargs_cut.get("band")
+            band_max = kwargs_cut.get("band_max")
+            band_is_str = isinstance(band, str)
+            bandmax_is_num = isinstance(band_max, (int, float))
+
+            if band_is_str:
+                kwargs_cut["band"] = [band]
+            if bandmax_is_num:
+                kwargs_cut["band_max"] = [band_max]
+
+            band = kwargs_cut.get("band")
+            band_max = kwargs_cut.get("band_max")
+
+            band_is_list = isinstance(band, (list, tuple))
+            bandmax_is_list = isinstance(band_max, (list, tuple))
+            band_and_bandmax_equal_len = len(band) == len(band_max)
+            is_valid = band_is_list and bandmax_is_list and band_and_bandmax_equal_len
+
+            if not is_valid:
+                raise ValueError(
+                    "kwargs_cut['band'] and ['band_max'] must be lists of equal length."
+                )
+            bands = _norm_band_names(list(band))
+            band_maxes = list(map(float, band_max))
+            
+            for b in bands:
+                if b not in BANDS:
+                    raise ValueError(f"Unsupported band '{b}'. Allowed: {BANDS}")
+            
+        return z_min, z_max, bands, band_maxes
+
     def _host_pass_mask(self, host_grp: h5py.Group) -> np.ndarray:
         """Create a boolean mask for hosts passing cuts on redshift and
         magnitude.
@@ -654,7 +678,7 @@ class ScotchSources(SourcePopBase):
         passes_redshift_cut = (z >= self.zmin) & (z <= self.zmax)
         mask &= np.isfinite(z) & (is_hostless | passes_redshift_cut)
 
-        for b, mmax in zip(self.bands, self.band_max):
+        for b, mmax in zip(self.bands_to_filter, self.band_maxes):
             arr = host_grp[f"mag_{b}"][...]
             mask &= np.isfinite(arr) & (arr <= mmax)
 
@@ -697,7 +721,7 @@ class ScotchSources(SourcePopBase):
         mask &= np.isfinite(z) & (z >= self.zmin) & (z <= self.zmax)
 
         # transient bands: require nanmin over time <= threshold for each requested band
-        for b, mmax in zip(self.bands, self.band_max):
+        for b, mmax in zip(self.bands_to_filter, self.band_maxes):
             ds = subgrp[f"mag_{b}"]  # shape (N, T)
             # chunk along rows
             for i in range(0, N, batch):
