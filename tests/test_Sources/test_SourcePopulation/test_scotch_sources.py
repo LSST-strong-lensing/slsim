@@ -472,12 +472,12 @@ def test_init_band_cuts_as_str(scotch_h5):
         kwargs_cut={"band": "r", "band_max": 22.0},
     )
 
-    assert isinstance(scotch.bands, list)
-    assert isinstance(scotch.band_max, list)
-    assert len(scotch.bands) == 1
-    assert len(scotch.band_max) == 1
-    assert "r" in scotch.bands
-    assert 22.0 in scotch.band_max
+    assert isinstance(scotch.bands_to_filter, list)
+    assert isinstance(scotch.band_maxes, list)
+    assert len(scotch.bands_to_filter) == 1
+    assert len(scotch.band_maxes) == 1
+    assert "r" in scotch.bands_to_filter
+    assert 22.0 in scotch.band_maxes
 
 
 def test_init_unsupported_band_raises(scotch_h5):
@@ -502,8 +502,8 @@ def test_init_uniform_sampling(scotch_h5):
     assert np.all(class_weights == 0.5) and np.sum(class_weights)
 
     snii_subclass_weights = scotch._index["SNII"].subclass_weights
-    assert np.isclose(snii_subclass_weights[0], 1 / 3)
-    assert np.isclose(snii_subclass_weights[1], 2 / 3)
+    assert np.isclose(snii_subclass_weights[0], 2 / 3)
+    assert np.isclose(snii_subclass_weights[1], 1 / 3)
 
     agn_subclass_weights = scotch._index["AGN"].subclass_weights
     assert agn_subclass_weights[0] == 1.0
@@ -522,7 +522,7 @@ def test_no_objects_pass_cut(scotch_h5):
 
 
 def test_host_pass_mask(scotch_instance):
-    host_grp = scotch_instance._index["SNII"].host_grp
+    host_grp = scotch_instance._index["SNII"].host_grp[0]
     mask = scotch_instance._host_pass_mask(host_grp)
     assert mask.dtype == bool
     assert mask.shape == host_grp["z"].shape
@@ -534,14 +534,16 @@ def test_transient_pass_mask_and_selection(scotch_instance):
     ci = scotch_instance._index[cls]
     # Subclass "SNII-Templates" -> [True, False]
     subA = next(s for s in ci.subclasses if s.name == "SNII-Templates")
+    subA = subA.shards[0]
     maskA = scotch_instance._transient_pass_mask(
-        subA.grp, ci.host_gid_sorted, ci.host_mask_sorted, batch=1
+        subA.grp, ci.host_gid_sorted[0], ci.host_mask_sorted[0], batch=1
     )
     assert maskA.tolist() == [True, False]
     # Subclass "SNII+HostXT_V19" -> [True]
     subB = next(s for s in ci.subclasses if s.name == "SNII+HostXT_V19")
+    subB = subB.shards[0]
     maskB = scotch_instance._transient_pass_mask(
-        subB.grp, ci.host_gid_sorted, ci.host_mask_sorted, batch=1
+        subB.grp, ci.host_gid_sorted[0], ci.host_mask_sorted[0], batch=1
     )
     assert maskB.tolist() == [True]
     # Totals reflect only active classes with survivors
@@ -550,23 +552,25 @@ def test_transient_pass_mask_and_selection(scotch_instance):
 
 
 def test_sample_from_class_yields_valid_indices(scotch_instance):
-    s, i = scotch_instance._sample_from_class("SNII")
+    s, sh, i = scotch_instance._sample_from_class("SNII")
     # With our data: both subclasses only have index 0 eligible
+
     assert i == 0
-    assert s.N >= 1
-    assert s.n_ok >= 1
+    assert sh.N >= 1
+    assert sh.n_ok >= 1
 
 
 def test_host_lookup(scotch_instance):
-    gid = scotch_instance._index["SNII"].host_grp["GID"][0]
-    idx = scotch_instance._host_lookup("SNII", gid)
+    gid = scotch_instance._index["SNII"].host_grp[0]["GID"][0]
+    print(gid)
+    idx = scotch_instance._host_lookup("SNII", 0, gid)
     assert idx == 0
     with pytest.raises(KeyError):
-        scotch_instance._host_lookup("SNII", b"99999999")
+        scotch_instance._host_lookup("SNII", 0, b"99999999")
 
 
 def test_build_host_dict_and_hostless(scotch_instance):
-    host_grp = scotch_instance._index["SNII"].host_grp
+    host_grp = scotch_instance._index["SNII"].host_grp[0]
     d0 = scotch_instance._build_host_dict(host_grp, 0)
     # Basic keys + converted names + computed ones
     for k in [
@@ -664,5 +668,6 @@ def test_draw_source(scotch_instance):
 
 def test_close(scotch_instance):
     scotch_instance.close()
-    assert hasattr(scotch_instance.f, "id")
-    assert not scotch_instance.f.id.valid
+    for file in scotch_instance.files:
+        assert hasattr(file, "id")
+        assert not file.id.valid
