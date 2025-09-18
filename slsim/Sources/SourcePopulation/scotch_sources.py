@@ -276,7 +276,7 @@ class ScotchSources(SourcePopBase):
         kwargs_cut: dict | None = None,
         rng: np.random.Generator | int | None = None,
         sample_uniformly: bool = False,
-        exclude_agn: bool = True,
+        exclude_agn: bool = False,
     ):
         """Class for SCOTCH transient source population. Allows for sampling of
         transients and their hosts from the SCOTCH HDF5 catalogs.
@@ -310,9 +310,10 @@ class ScotchSources(SourcePopBase):
         sample_uniformly: bool, optional
             If False, sampling is done according to the expected rates of transient
             subclasses within the given redshift range. If True, sampling is done
-            uniformly over all transient subclasses. Default is False.
+            uniformly over all transient subclasses, while the redshift of the 
+            transient is still sampled according to the volumetric rate. Default is False.
         exclude_agn: bool, optional
-            If True, AGN are excluded from the source population. Defualt is True.
+            If True, AGN are excluded from the source population. Defualt is False.
         Raises
         ------
         ValueError
@@ -353,7 +354,14 @@ class ScotchSources(SourcePopBase):
 
         self.sample_uniformly = sample_uniformly
 
-        self.transient_types = self._parse_transient_types(transient_types)
+        transient_types = self._parse_transient_types(transient_types)
+        if "AGN" in transient_types and exclude_agn:
+            transient_types = [
+                transient_type for transient_type
+                in transient_types if
+                transient_type != "AGN"
+            ]
+        self.transient_types = transient_types
         self.transient_subtypes = self._parse_transient_subtypes(transient_subtypes)
 
         zmin, zmax, bands_to_filter, band_maxes = self._parse_kwargs_cut(kwargs_cut)
@@ -405,12 +413,11 @@ class ScotchSources(SourcePopBase):
 
             cls = self._index[c]
             subclass_expected = cls.subclass_expected
+            subclass_selected = cls.subclass_selected
 
             if sample_uniformly:
                 class_weight = 1.0 / n_active_transient_types
-                subclass_weights = np.array(
-                    [s.n_ok for s in cls.subclasses], dtype=float
-                )
+                subclass_weights = 1. / subclass_selected.astype(float)
                 subclass_weights /= np.sum(subclass_weights)
             else:
                 # The probability of sampling a transient class c and a subclass
@@ -736,9 +743,12 @@ class ScotchSources(SourcePopBase):
 
             N = eligible_mask.size
             redshifts = subgrp["z"][:]
-            rate_func = RATE_FUNCS[subname]
-            weights = rate_func(redshifts).astype(np.float64)
-            weights[weights < 0] = 0.0
+            if "AGN" in subname:
+                weights = np.ones_like(redshifts) / len(redshifts)
+            else:
+                rate_func = RATE_FUNCS[subname]
+                weights = rate_func(redshifts).astype(np.float64)
+                weights[weights < 0] = 0.0
 
             if n_ok == N:
                 eligible_idx = N
@@ -906,7 +916,7 @@ class ScotchSources(SourcePopBase):
         s = ci.subclasses[self.rng.choice(len(ci.subclasses), p=p_sub)]
 
         # P(file | leaf) ∝ S_{f,rl} = shard.w_sum
-        shard_weights = np.array([sh.w_sum for sh in s.shards], dtype=float)
+        shard_weights = np.array([sh.weight_sum for sh in s.shards], dtype=float)
         shard_weights /= shard_weights.sum()
         sh = s.shards[self.rng.choice(len(s.shards), p=shard_weights)]
 
@@ -1106,8 +1116,8 @@ class ScotchSources(SourcePopBase):
         return source
 
     def close(self):
-        """Close the underlying HDF5 file."""
-        try:
-            self.f.close()
-        except Exception:
-            pass
+        for f in getattr(self, "files", []):
+            try:
+                f.close()
+            except Exception:
+                pass
