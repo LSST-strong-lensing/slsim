@@ -233,9 +233,9 @@ class _SubclassShard:
     grp: h5py.Group
     N: int
     n_ok: int
-    eligible: np.ndarray | int    # If int then eligible = n_ok = N, so all rows valid
-    weight_sum: float             # S_{f,rl} = sum d_{rl}(z_i) over eligible rows
-    weights: np.ndarray | None    # Normalized weights over eligible rows
+    eligible: np.ndarray | int  # If int then eligible = n_ok = N, so all rows valid
+    weight_sum: float  # S_{f,rl} = sum d_{rl}(z_i) over eligible rows
+    weights: np.ndarray | None  # Normalized weights over eligible rows
 
 
 @dataclass
@@ -255,10 +255,10 @@ class _ClassIndex:
 
     # Per-subclass info (merged across files)
     subclasses: list[_SubclassIndex]
-    subclass_total: np.ndarray        # total rows per subclass (sum across files)
-    subclass_selected: np.ndarray     # eligible rows per subclass (sum across files)
-    subclass_expected: np.ndarray     # expected counts per subclass (RATE_FUNCS)
-    subclass_weights: np.ndarray      # sampling weights p(s | class)
+    subclass_total: np.ndarray  # total rows per subclass (sum across files)
+    subclass_selected: np.ndarray  # eligible rows per subclass (sum across files)
+    subclass_expected: np.ndarray  # expected counts per subclass (RATE_FUNCS)
+    subclass_weights: np.ndarray  # sampling weights p(s | class)
 
     total: int
     total_expected: int
@@ -344,7 +344,7 @@ class ScotchSources(SourcePopBase):
         """
 
         super().__init__(cosmo=cosmo, sky_area=sky_area)
-        
+
         self.files = (
             [h5py.File(p, "r") for p in scotch_path]
             if isinstance(scotch_path, (list, tuple))
@@ -353,7 +353,7 @@ class ScotchSources(SourcePopBase):
 
         self.sample_uniformly = sample_uniformly
 
-        self.transient_types = self._parse_transient_types(transient_types)        
+        self.transient_types = self._parse_transient_types(transient_types)
         self.transient_subtypes = self._parse_transient_subtypes(transient_subtypes)
 
         zmin, zmax, bands_to_filter, band_maxes = self._parse_kwargs_cut(kwargs_cut)
@@ -421,7 +421,7 @@ class ScotchSources(SourcePopBase):
                 # p(c) = \sum_{s} p(c,s).
                 # Given a transient class, we then sample the subclass as
                 # p(s | c) = p(c, s) / p(c).
-                # Thus p(c, s) = p(s | c) * p(c) 
+                # Thus p(c, s) = p(s | c) * p(c)
 
                 global_subclass_weights = subclass_expected / self.total_expected
                 class_weight = np.sum(global_subclass_weights)
@@ -471,7 +471,7 @@ class ScotchSources(SourcePopBase):
     # -------------------- init helpers --------------------
 
     def _parse_transient_types(self, transient_types: list[str] | str | None) -> list:
-        
+
         if isinstance(transient_types, str):
             transient_types = [transient_types]
 
@@ -487,13 +487,13 @@ class ScotchSources(SourcePopBase):
                     f"Unknown transient_types {missing}. Available: {sorted(avail)}"
                 )
         transient_types = sorted(list(transient_types))
-        
+
         return transient_types
 
     def _parse_transient_subtypes(
         self, transient_subtypes: dict | dict[list[str]] | None
     ) -> dict[list[str]] | None:
-        
+
         if transient_subtypes is None:
             transient_subtypes = {}
 
@@ -503,19 +503,19 @@ class ScotchSources(SourcePopBase):
             for f in self.files:
                 if transient_type in f["TransientTable"]:
                     sub_union |= set(f["TransientTable"][transient_type].keys())
-            
+
             provided = transient_subtypes.get(transient_type, None)
-            
+
             if provided is None:
                 transient_subtypes[transient_type] = sorted(sub_union)
                 continue
-            
+
             missing = [t for t in provided if t not in sub_union]
             if missing:
                 raise ValueError(
                     f"Unknown transient_subtypes {missing} for transient_type {transient_type}. "
                     f"Available: {sorted(sub_union)}"
-                )        
+                )
 
     def _parse_kwargs_cut(
         self, kwargs_cut: dict | None
@@ -530,13 +530,13 @@ class ScotchSources(SourcePopBase):
         band_maxes = []
 
         has_bands = "band" in kwargs_cut
-        has_band_max  = "band_max" in kwargs_cut
+        has_band_max = "band_max" in kwargs_cut
 
         if (has_bands and not has_band_max) or (has_band_max and not has_bands):
             raise ValueError(
                 f'If "band" is provided in kwargs_cut then "band_max" must also be '
-                + f'provided, and vice versa. Currently provided keys in kwargs_cut'
-                + f' are {list(kwargs_cut.keys())}.'
+                + f"provided, and vice versa. Currently provided keys in kwargs_cut"
+                + f" are {list(kwargs_cut.keys())}."
             )
 
         if has_bands and has_band_max:
@@ -565,11 +565,11 @@ class ScotchSources(SourcePopBase):
                 )
             bands = _norm_band_names(list(band))
             band_maxes = list(map(float, band_max))
-            
+
             for b in bands:
                 if b not in BANDS:
                     raise ValueError(f"Unsupported band '{b}'. Allowed: {BANDS}")
-            
+
         return z_min, z_max, bands, band_maxes
 
     def _host_pass_mask(self, host_grp: h5py.Group) -> np.ndarray:
@@ -631,7 +631,7 @@ class ScotchSources(SourcePopBase):
             gids_sorted_list.append(gids_sorted)
             sort_idx_list.append(sort_idx)
             host_mask_sorted_list.append(host_mask_sorted)
-        
+
         return host_grps, gids_sorted_list, sort_idx_list, host_mask_sorted_list
 
     def _transient_pass_mask(
@@ -701,7 +701,7 @@ class ScotchSources(SourcePopBase):
         subname: str,
         host_grps: list,
         gids_sorted_list: list,
-        host_mask_sorted_list: list
+        host_mask_sorted_list: list,
     ) -> tuple[list[_SubclassShard], int, int]:
         shards: list[_SubclassShard] = []
         total_rows = 0
@@ -761,9 +761,9 @@ class ScotchSources(SourcePopBase):
             )
             total_rows += N
             total_ok += n_ok
-        
+
         return shards, total_rows, total_ok
-        
+
     def _get_expected_number(self, subname: str, total_ok: int) -> int:
         if subname in RATE_FUNCS:
             rate_fn = RATE_FUNCS[subname]
@@ -782,7 +782,7 @@ class ScotchSources(SourcePopBase):
                 f"Transient Subclass {subname} not found in rate functions. "
                 + f"Rate functions are available for {list(RATE_FUNCS.keys())}."
             )
-        
+
         return n_expected
 
     def _build_subtype_indeces(
@@ -790,7 +790,7 @@ class ScotchSources(SourcePopBase):
         transient_type: str,
         host_grps: list,
         gids_sorted_list: list,
-        host_mask_sorted_list: list
+        host_mask_sorted_list: list,
     ) -> tuple[
         list[_SubclassIndex],
         np.ndarray,
@@ -803,34 +803,28 @@ class ScotchSources(SourcePopBase):
         subclass_expected = []
 
         for subname in self.transient_subtypes[transient_type]:
-            
+
             shards, total_rows, total_ok = self._build_subtype_shards(
                 transient_type=transient_type,
                 subname=subname,
                 host_grps=host_grps,
                 gids_sorted_list=gids_sorted_list,
-                host_mask_sorted_list=host_mask_sorted_list
+                host_mask_sorted_list=host_mask_sorted_list,
             )
             # keep only if any shard has survivors
             if not shards:
                 continue
 
             # expected number for this subclass (same across files)
-            n_expected = self._get_expected_number(
-                subname=subname, total_ok=total_ok
-            )
+            n_expected = self._get_expected_number(subname=subname, total_ok=total_ok)
 
             sub_list.append(
-                _SubclassIndex(
-                    name=subname,
-                    shards=shards,
-                    n_expected=n_expected
-                )
+                _SubclassIndex(name=subname, shards=shards, n_expected=n_expected)
             )
             subclass_total.append(total_rows)
             subclass_selected.append(total_ok)
             subclass_expected.append(n_expected)
-        
+
         # sort subclasses by name for determinism
         sub_names = [s.name for s in sub_list]
         idx_ordered = np.argsort(sub_names)
@@ -839,37 +833,24 @@ class ScotchSources(SourcePopBase):
         subclass_selected = np.asarray(subclass_selected)[idx_ordered]
         subclass_expected = np.asarray(subclass_expected)[idx_ordered]
 
-        return (
-            ordered_sub_list,
-            subclass_total,
-            subclass_selected,
-            subclass_expected
-        )
+        return (ordered_sub_list, subclass_total, subclass_selected, subclass_expected)
 
-    def _build_transient_index(
-        self,
-        transient_type: str
-    ) -> _ClassIndex:
-            
-        (
-            host_grps, gids_sorted_list,
-            sort_idx_list, host_mask_sorted_list
-        ) = self._build_index_host_info(transient_type)
+    def _build_transient_index(self, transient_type: str) -> _ClassIndex:
+
+        (host_grps, gids_sorted_list, sort_idx_list, host_mask_sorted_list) = (
+            self._build_index_host_info(transient_type)
+        )
 
         # Subclasses across files (as shards)
-        
-        (
-            ordered_sub_list,
-            subclass_total,
-            subclass_selected,
-            subclass_expected
-        ) = self._build_subtype_indeces(
-            transient_type=transient_type,
-            host_grps=host_grps,
-            gids_sorted_list=gids_sorted_list,
-            host_mask_sorted_list=host_mask_sorted_list,
-        )
 
+        (ordered_sub_list, subclass_total, subclass_selected, subclass_expected) = (
+            self._build_subtype_indeces(
+                transient_type=transient_type,
+                host_grps=host_grps,
+                gids_sorted_list=gids_sorted_list,
+                host_mask_sorted_list=host_mask_sorted_list,
+            )
+        )
 
         total = int(np.sum(subclass_total))
         total_selected = int(np.sum(subclass_selected))
@@ -892,13 +873,12 @@ class ScotchSources(SourcePopBase):
 
         return class_index
 
-
     # -------------------- sampling --------------------
 
     def _sample_from_class(self, cls: str) -> tuple[_SubclassIndex, int]:
-        """Sample a transient subclass, a subclass shard and an index 
-        within that subclass shard over all surviving subclasses within 
-        the provided class.
+        """Sample a transient subclass, a subclass shard and an index within
+        that subclass shard over all surviving subclasses within the provided
+        class.
 
         Parameters
         ----------
@@ -912,7 +892,7 @@ class ScotchSources(SourcePopBase):
         sh: _SubclassShard:
             The sampled subclass shard
         i : int
-            Index within the subclass in the file 
+            Index within the subclass in the file
             belonging to the sampled shard.
         """
 
@@ -935,8 +915,8 @@ class ScotchSources(SourcePopBase):
         return s, sh, i
 
     def _host_lookup(self, cls: str, file_index: int, gid_bytes: bytes) -> int:
-        """Given a transient class, a file index and a GID (as bytes), return the 
-        index of the corresponding host in the HostTable for that class.
+        """Given a transient class, a file index and a GID (as bytes), return
+        the index of the corresponding host in the HostTable for that class.
 
         Parameters
         ----------
@@ -1086,9 +1066,7 @@ class ScotchSources(SourcePopBase):
         transient_dict = transient_metadata | transient_lightcurve
 
         gid_b = g["GID"][i]
-        host_idx = self._host_lookup(
-            cls=cls, file_index=file_index, gid_bytes=gid_b
-        )
+        host_idx = self._host_lookup(cls=cls, file_index=file_index, gid_bytes=gid_b)
         host_grp = self._index[cls].host_grp[file_index]
         host_dict = self._build_host_dict(host_grp, host_idx)
         has_host = bool(host_dict)
