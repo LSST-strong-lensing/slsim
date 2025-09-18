@@ -716,7 +716,7 @@ class ScotchSources(SourcePopBase):
                 continue
 
             grp = f["TransientTable"][transient_type]
-            has_subname = subname not in grp
+            has_subname = subname in grp
             if not has_subname:
                 continue
 
@@ -771,7 +771,7 @@ class ScotchSources(SourcePopBase):
             n_expected = int(
                 expected_number(
                     rate_fn=rate_fn,
-                    cosmo=self.cosmo,
+                    cosmo=self._cosmo,
                     z_min=self.zmin,
                     z_max=self.zmax,
                 )
