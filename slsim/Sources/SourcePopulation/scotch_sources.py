@@ -227,15 +227,15 @@ def galaxy_projected_eccentricity(
     return e1, e2
 
 
-# REPLACE the existing _SubclassIndex / _ClassIndex with the following:
-
 @dataclass
 class _SubclassShard:
     file_index: int
     grp: h5py.Group
     N: int
     n_ok: int
-    eligible: np.ndarray | None  # None => all rows valid
+    eligible: np.ndarray | int    # If int then eligible = n_ok = N, so all rows valid
+    weight_sum: float             # S_{f,rl} = sum d_{rl}(z_i) over eligible rows
+    weights: np.ndarray | None    # Normalized weights over eligible rows
 
 
 @dataclass
@@ -413,15 +413,15 @@ class ScotchSources(SourcePopBase):
                 )
                 subclass_weights /= np.sum(subclass_weights)
             else:
-                # We calculate sampling probabilities for a given subclass s as
-                # p_s = n^{expected}_{s} / n^{expected}_total,
-                # where s indexes over subclasses. Since we sample class and then
-                # subclass, we factorize such that
-                # p(c) = \sum_{s \in S(c)} p_s
-                # and
-                # p(s | c) = p_s / p(c).
-                # In this way, we ensure that sampling results in the distribution
-                # of transient subclasses given by the volumetric rates defined earlier
+                # The probability of sampling a transient class c and a subclass
+                # s are given as
+                # p(c, s) = n^{expected}_{c,s} / n^{expected}_total.
+                # We factorize this such that we first sample the class c with
+                # probabilities
+                # p(c) = \sum_{s} p(c,s).
+                # Given a transient class, we then sample the subclass as
+                # p(s | c) = p(c, s) / p(c).
+                # Thus p(c, s) = p(s | c) * p(c) 
 
                 global_subclass_weights = subclass_expected / self.total_expected
                 class_weight = np.sum(global_subclass_weights)
@@ -734,10 +734,19 @@ class ScotchSources(SourcePopBase):
                 continue
 
             N = eligible_mask.size
-            eligible_idx = (
-                None if n_ok == N 
-                else np.flatnonzero(eligible_mask).astype(np.int64)
-            )
+            redshifts = subgrp["z"][:]
+            rate_func = RATE_FUNCS[subname]
+            weights = rate_func(redshifts).astype(np.float64)
+            weights[weights < 0] = 0.0
+
+            if n_ok == N:
+                eligible_idx = N
+                weights_ok = weights
+            else:
+                eligible_idx = np.flatnonzero(eligible_mask).astype(np.int64)
+                weights_ok = weights[eligible_idx]
+            weight_sum = np.sum(weights_ok)
+            normed_weights = weights_ok / weight_sum
 
             shards.append(
                 _SubclassShard(
@@ -746,6 +755,8 @@ class ScotchSources(SourcePopBase):
                     N=N,
                     n_ok=n_ok,
                     eligible=eligible_idx,
+                    weight_sum=weight_sum,
+                    weights=normed_weights,
                 )
             )
             total_rows += N
@@ -900,13 +911,24 @@ class ScotchSources(SourcePopBase):
         i : int
             Index within the subclass's dataset.
         """
+
         ci = self._index[cls]
-        s = ci.subclasses[self.rng.choice(len(ci.subclasses), p=ci.subclass_weights)]
-        if s.eligible is None:
-            i = int(self.rng.integers(0, s.N))
-        else:
-            i = int(s.eligible[self.rng.integers(0, len(s.eligible))])
-        return s, i
+
+        # Ensure subclass weights are normalized (E_{rl} / sum E)
+        p_sub = ci.subclass_weights
+        p_sub = p_sub / p_sub.sum()
+
+        s = ci.subclasses[self.rng.choice(len(ci.subclasses), p=p_sub)]
+
+        # P(file | leaf) ∝ S_{f,rl} = shard.w_sum
+        shard_weights = np.array([sh.w_sum for sh in s.shards], dtype=float)
+        shard_weights /= shard_weights.sum()
+        sh = s.shards[self.rng.choice(len(s.shards), p=shard_weights)]
+
+        # P(row | file, leaf) ∝ d_{rl}(z_i):
+        i = int(self.rng.choice(sh.eligible, p=sh.weights))
+
+        return s, sh, i
 
     def _host_lookup(self, cls: str, gid_bytes: bytes) -> int:
         """Given a transient class and a GID (as bytes), return the index of
