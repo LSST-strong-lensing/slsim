@@ -310,7 +310,7 @@ class ScotchSources(SourcePopBase):
         sample_uniformly: bool, optional
             If False, sampling is done according to the expected rates of transient
             subclasses within the given redshift range. If True, sampling is done
-            uniformly over all transient subclasses, while the redshift of the 
+            uniformly over all transient subclasses, while the redshift of the
             transient is still sampled according to the volumetric rate. Default is False.
         exclude_agn: bool, optional
             If True, AGN are excluded from the source population. Defualt is False.
@@ -357,9 +357,9 @@ class ScotchSources(SourcePopBase):
         transient_types = self._parse_transient_types(transient_types)
         if "AGN" in transient_types and exclude_agn:
             transient_types = [
-                transient_type for transient_type
-                in transient_types if
-                transient_type != "AGN"
+                transient_type
+                for transient_type in transient_types
+                if transient_type != "AGN"
             ]
         self.transient_types = transient_types
         self.transient_subtypes = self._parse_transient_subtypes(transient_subtypes)
@@ -417,7 +417,7 @@ class ScotchSources(SourcePopBase):
 
             if sample_uniformly:
                 class_weight = 1.0 / n_active_transient_types
-                subclass_weights = 1. / subclass_selected.astype(float)
+                subclass_weights = 1.0 / subclass_selected.astype(float)
                 subclass_weights /= np.sum(subclass_weights)
             else:
                 # The probability of sampling a transient class c and a subclass
