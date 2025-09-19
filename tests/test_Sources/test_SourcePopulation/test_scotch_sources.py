@@ -148,10 +148,11 @@ def scotch_instance(scotch_h5):
     )
     return inst
 
+
 @pytest.fixture(scope="function")
 def scotch_h5_unknown_subclass(tmp_path: Path):
-    """Minimal file with a subclass not in RATE_FUNCS and not AGN;
-    should raise in _get_expected_number."""
+    """Minimal file with a subclass not in RATE_FUNCS and not AGN; should raise
+    in _get_expected_number."""
     p = tmp_path / "scotch_unknown_subclass.h5"
     with h5py.File(p, "w") as f:
         tt = f.create_group("TransientTable")
@@ -162,7 +163,16 @@ def scotch_h5_unknown_subclass(tmp_path: Path):
         sn_host.create_dataset("GID", data=np.array([b"12345678"]))
         sn_host.create_dataset("z", data=np.array([0.2]))
         sn_host.create_dataset("a_rot", data=np.array([0.0]))
-        for name in ["a0", "b0", "a1", "b1", "ellipticity0", "ellipticity1", "n0", "n1"]:
+        for name in [
+            "a0",
+            "b0",
+            "a1",
+            "b1",
+            "ellipticity0",
+            "ellipticity1",
+            "n0",
+            "n1",
+        ]:
             sn_host.create_dataset(name, data=np.array([1.0]))
         sn_host.create_dataset("w0", data=np.array([0.5]))
         sn_host.create_dataset("w1", data=np.array([0.5]))
@@ -181,10 +191,13 @@ def scotch_h5_unknown_subclass(tmp_path: Path):
             sub.create_dataset(f"mag_{b}", data=np.array([vals]))
     return p
 
+
 @pytest.fixture(scope="function")
 def scotch_twofile_missing_host(scotch_h5, tmp_path: Path):
     """Second file that has TransientTable/SNII but NO HostTable/SNII.
-    Exercises 'no_host_table' and the per-file host-info stubs."""
+
+    Exercises 'no_host_table' and the per-file host-info stubs.
+    """
     p2 = tmp_path / "scotch_missing_host.h5"
     with h5py.File(p2, "w") as f:
         tt = f.create_group("TransientTable")
@@ -202,10 +215,14 @@ def scotch_twofile_missing_host(scotch_h5, tmp_path: Path):
         f.create_group("HostTable")
     return [scotch_h5, p2]
 
+
 @pytest.fixture(scope="function")
 def scotch_twofile_with_hostless_survivor(scotch_h5, tmp_path: Path):
     """Second file adds a hostless (z==999) SNII row that PASSES cuts.
-    This lets us exercise has_host=False all the way through _draw_source_dict."""
+
+    This lets us exercise has_host=False all the way through
+    _draw_source_dict.
+    """
     p2 = tmp_path / "scotch_hostless_ok.h5"
     with h5py.File(p2, "w") as f:
         tt = f.create_group("TransientTable")
@@ -216,11 +233,22 @@ def scotch_twofile_with_hostless_survivor(scotch_h5, tmp_path: Path):
         sn_host.create_dataset("GID", data=np.array([b"00000003"]))
         sn_host.create_dataset("z", data=np.array([999.0]))  # hostless
         sn_host.create_dataset("a_rot", data=np.array([0.0]))
-        for name in ["a0", "b0", "a1", "b1", "ellipticity0", "ellipticity1", "n0", "n1"]:
+        for name in [
+            "a0",
+            "b0",
+            "a1",
+            "b1",
+            "ellipticity0",
+            "ellipticity1",
+            "n0",
+            "n1",
+        ]:
             sn_host.create_dataset(name, data=np.array([1.0]))
         sn_host.create_dataset("w0", data=np.array([0.5]))
         sn_host.create_dataset("w1", data=np.array([0.5]))
-        sn_host.create_dataset("mag_r", data=np.array([20.0]))  # bright to pass host mag cuts
+        sn_host.create_dataset(
+            "mag_r", data=np.array([20.0])
+        )  # bright to pass host mag cuts
 
         # Transient subclass referencing the hostless GID; bright LC so it survives
         sn_tt = tt.create_group("SNII")
@@ -493,6 +521,7 @@ def test_galaxy_projected_eccentricity():
     )
     assert np.isclose(e1, 0.0) and np.isclose(e2, 0.0)
 
+
 def test_galaxy_projected_eccentricity_with_explicit_angle():
     # Covers explicit-angle branch: e1=e*cos(2phi), e2=e*sin(2phi)
     eps = 0.5
@@ -514,6 +543,7 @@ def test_init_exclude_agn_flag(scotch_h5):
     )
     assert "AGN" not in inst.transient_types
     assert "AGN" not in inst.active_transient_types
+
 
 def test_init_warning_no_objects_passed(scotch_h5):
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -557,6 +587,7 @@ def test_init_unknown_transient_subtype_raises(scotch_h5):
             transient_subtypes={"SNII": "DOES_NOT_EXIST"},
         )
 
+
 def test_unknown_subclass_raises_expected_number(scotch_h5_unknown_subclass):
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     with pytest.raises(KeyError, match="not found in rate functions"):
@@ -565,6 +596,7 @@ def test_unknown_subclass_raises_expected_number(scotch_h5_unknown_subclass):
             scotch_path=scotch_h5_unknown_subclass,
             kwargs_cut={"band": "r", "band_max": 22.0},
         )
+
 
 def test_init_kwargs_cut_requires_matching_keys(scotch_h5):
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -578,6 +610,7 @@ def test_init_kwargs_cut_requires_matching_keys(scotch_h5):
         scotch_module.ScotchSources(
             cosmo=cosmo, scotch_path=scotch_h5, kwargs_cut={"band_max": [22.0]}
         )
+
 
 def test_init_invalid_band_spec_raises(scotch_h5):
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -630,7 +663,7 @@ def test_init_uniform_sampling(scotch_h5):
     class_weights = scotch.class_weights
     print(scotch.active_transient_types)
     print(scotch.transient_subtypes)
-    assert np.all(class_weights == np.array([1, 2]) / 3) 
+    assert np.all(class_weights == np.array([1, 2]) / 3)
     assert np.sum(class_weights) == 1.0
 
     snii_subclass_weights = scotch._index["SNII"].subclass_weights
@@ -639,10 +672,12 @@ def test_init_uniform_sampling(scotch_h5):
     agn_subclass_weights = scotch._index["AGN"].subclass_weights
     assert np.all(agn_subclass_weights == 1.0)
 
+
 def test_sky_area_scaling_with_stubbed_expected_number(scotch_h5, monkeypatch):
     # Make expected_number tiny and deterministic so we can assert scaling
     def _stub_expected_number(rate_fn, cosmo, z_min=0.0, z_max=3.0):
         return 2.0  # per subclass
+
     # AGN are just set to total_ok = 1 in this case
 
     monkeypatch.setattr(scotch_module, "expected_number", _stub_expected_number)
@@ -685,6 +720,7 @@ def test_missing_host_table_is_skipped(scotch_twofile_missing_host):
     ci = inst._index["SNII"]
     assert ci.total == 3
     assert ci.total_selected == 2
+
 
 def test_no_objects_pass_cut(scotch_h5):
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -833,7 +869,10 @@ def test_draw_source_dict(scotch_instance):
         assert f"ps_mag_{b}" in source_dict
         assert source_dict[f"ps_mag_{b}"].ndim == 1
 
-def test_draw_source_dict_hostless_and_mjd_zero(scotch_twofile_with_hostless_survivor, monkeypatch):
+
+def test_draw_source_dict_hostless_and_mjd_zero(
+    scotch_twofile_with_hostless_survivor, monkeypatch
+):
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     inst = scotch_module.ScotchSources(
         cosmo=cosmo,
@@ -876,6 +915,7 @@ def test_draw_source_dict_hostless_and_mjd_zero(scotch_twofile_with_hostless_sur
     # draw_source should now produce a pure GeneralLightCurve (no extended host)
     src = inst.draw_source()
     assert isinstance(src._source, GeneralLightCurve)
+
 
 def test_draw_source(scotch_instance):
 

@@ -415,7 +415,7 @@ class ScotchSources(SourcePopBase):
 
             cls = self._index[c]
             subclass_expected = cls.subclass_expected
-            
+
             if sample_uniformly:
                 n_subclasses = len(subclass_expected)
                 class_weight = n_subclasses
@@ -443,7 +443,9 @@ class ScotchSources(SourcePopBase):
             class_weights = class_weights / np.sum(class_weights)
         self.class_weights = class_weights
 
-        self._effective_sky_area = SKY_AREA * self.n_source_selected / self.total_expected
+        self._effective_sky_area = (
+            SKY_AREA * self.n_source_selected / self.total_expected
+        )
         if self.sky_area is None:
             self.sky_area = self._effective_sky_area * u.deg**2
         else:
@@ -894,7 +896,9 @@ class ScotchSources(SourcePopBase):
 
     # -------------------- sampling --------------------
 
-    def _sample_from_class(self, cls: str) -> tuple[_SubclassIndex, _SubclassShard, int]:
+    def _sample_from_class(
+        self, cls: str
+    ) -> tuple[_SubclassIndex, _SubclassShard, int]:
         """Sample a transient subclass, a subclass shard and an index within
         that subclass shard over all surviving subclasses within the provided
         class.
