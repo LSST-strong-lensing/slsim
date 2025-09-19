@@ -387,6 +387,7 @@ class ScotchSources(SourcePopBase):
         total_selected = 0
         total_expected = 0
         for c in self.transient_types:
+
             if self._index[c].total_selected > 0:
                 active_types.append(c)
                 total += self._index[c].total
@@ -409,16 +410,17 @@ class ScotchSources(SourcePopBase):
         # Setup weights for sampling
         n_active_transient_types = len(self.active_transient_types)
         class_weights = np.zeros(n_active_transient_types)
+
         for i, c in enumerate(self.active_transient_types):
 
             cls = self._index[c]
             subclass_expected = cls.subclass_expected
-            subclass_selected = cls.subclass_selected
-
+            
             if sample_uniformly:
-                class_weight = 1.0 / n_active_transient_types
-                subclass_weights = 1.0 / subclass_selected.astype(float)
-                subclass_weights /= np.sum(subclass_weights)
+                n_subclasses = len(subclass_expected)
+                class_weight = n_subclasses
+                subclass_weights = np.ones(n_subclasses) / n_subclasses
+
             else:
                 # The probability of sampling a transient class c and a subclass
                 # s are given as
@@ -437,14 +439,15 @@ class ScotchSources(SourcePopBase):
             cls.subclass_weights = subclass_weights
             class_weights[i] = class_weight
 
-        class_weights = np.array(class_weights)
+        if sample_uniformly:
+            class_weights = class_weights / np.sum(class_weights)
         self.class_weights = class_weights
 
-        effective_sky_area = SKY_AREA * self.n_source_selected / self.total_expected
+        self._effective_sky_area = SKY_AREA * self.n_source_selected / self.total_expected
         if self.sky_area is None:
-            self.sky_area = effective_sky_area * u.deg**2
+            self.sky_area = self._effective_sky_area * u.deg**2
         else:
-            scaling_factor = (self.sky_area / effective_sky_area).value
+            scaling_factor = (self.sky_area / self._effective_sky_area).value
             new_number_selected = int(scaling_factor * self.source_number_selected)
             self.n_source_selected = new_number_selected
 
@@ -746,7 +749,12 @@ class ScotchSources(SourcePopBase):
             if "AGN" in subname:
                 weights = np.ones_like(redshifts) / len(redshifts)
             else:
-                rate_func = RATE_FUNCS[subname]
+                try:
+                    rate_func = RATE_FUNCS[subname]
+                except KeyError:
+                    raise KeyError(
+                        f"Transient subclass {subname} not found in rate functions."
+                    )
                 weights = rate_func(redshifts).astype(np.float64)
                 weights[weights < 0] = 0.0
 
@@ -789,7 +797,7 @@ class ScotchSources(SourcePopBase):
         elif "AGN" in subname:
             n_expected = total_ok
         else:
-            raise ValueError(
+            raise KeyError(
                 f"Transient Subclass {subname} not found in rate functions. "
                 + f"Rate functions are available for {list(RATE_FUNCS.keys())}."
             )
@@ -886,7 +894,7 @@ class ScotchSources(SourcePopBase):
 
     # -------------------- sampling --------------------
 
-    def _sample_from_class(self, cls: str) -> tuple[_SubclassIndex, int]:
+    def _sample_from_class(self, cls: str) -> tuple[_SubclassIndex, _SubclassShard, int]:
         """Sample a transient subclass, a subclass shard and an index within
         that subclass shard over all surviving subclasses within the provided
         class.

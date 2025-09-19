@@ -8,7 +8,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from slsim.Sources.source import Source
 from astropy.cosmology import FlatLambdaCDM
-from slsim.Sources.SourceTypes.point_source import PointSource
+from slsim.Sources.SourceTypes.general_lightcurve import GeneralLightCurve
 from slsim.Sources.SourceTypes.point_plus_extended_source import PointPlusExtendedSource
 
 # -----------------------------
@@ -147,6 +147,93 @@ def scotch_instance(scotch_h5):
         rng=np.random.default_rng(123),
     )
     return inst
+
+@pytest.fixture(scope="function")
+def scotch_h5_unknown_subclass(tmp_path: Path):
+    """Minimal file with a subclass not in RATE_FUNCS and not AGN;
+    should raise in _get_expected_number."""
+    p = tmp_path / "scotch_unknown_subclass.h5"
+    with h5py.File(p, "w") as f:
+        tt = f.create_group("TransientTable")
+        ht = f.create_group("HostTable")
+
+        # Host table for SNII
+        sn_host = ht.create_group("SNII")
+        sn_host.create_dataset("GID", data=np.array([b"12345678"]))
+        sn_host.create_dataset("z", data=np.array([0.2]))
+        sn_host.create_dataset("a_rot", data=np.array([0.0]))
+        for name in ["a0", "b0", "a1", "b1", "ellipticity0", "ellipticity1", "n0", "n1"]:
+            sn_host.create_dataset(name, data=np.array([1.0]))
+        sn_host.create_dataset("w0", data=np.array([0.5]))
+        sn_host.create_dataset("w1", data=np.array([0.5]))
+        sn_host.create_dataset("mag_r", data=np.array([20.0]))
+
+        # Transient subclass with unknown name that survives
+        sn_tt = tt.create_group("SNII")
+        sub = sn_tt.create_group("SNII-NotInRates")
+        sub.create_dataset("z", data=np.array([0.3]))
+        sub.create_dataset("GID", data=np.array([b"12345678"]))
+        sub.create_dataset("ra_off", data=np.array([0.0]))
+        sub.create_dataset("dec_off", data=np.array([0.0]))
+        sub.create_dataset("MJD", data=np.array([[1.0, 2.0, 3.0]]))
+        for b in ("u", "g", "r", "i", "z", "Y"):
+            vals = [20.0, 20.0, 20.0] if b == "r" else [99.0, 99.0, 99.0]
+            sub.create_dataset(f"mag_{b}", data=np.array([vals]))
+    return p
+
+@pytest.fixture(scope="function")
+def scotch_twofile_missing_host(scotch_h5, tmp_path: Path):
+    """Second file that has TransientTable/SNII but NO HostTable/SNII.
+    Exercises 'no_host_table' and the per-file host-info stubs."""
+    p2 = tmp_path / "scotch_missing_host.h5"
+    with h5py.File(p2, "w") as f:
+        tt = f.create_group("TransientTable")
+        tt_sn = tt.create_group("SNII")
+        sub = tt_sn.create_group("SNII-Templates")
+        sub.create_dataset("z", data=np.array([0.3]))
+        sub.create_dataset("GID", data=np.array([b"00000001"]))
+        sub.create_dataset("ra_off", data=np.array([0.0]))
+        sub.create_dataset("dec_off", data=np.array([0.0]))
+        sub.create_dataset("MJD", data=np.array([[1.0, 2.0, 3.0]]))
+        for b in ("u", "g", "r", "i", "z", "Y"):
+            vals = [20.0, 20.0, 20.0] if b == "r" else [99.0, 99.0, 99.0]
+            sub.create_dataset(f"mag_{b}", data=np.array([vals]))
+        # Create HostTable group but leave it EMPTY for SNII (no 'SNII' key)
+        f.create_group("HostTable")
+    return [scotch_h5, p2]
+
+@pytest.fixture(scope="function")
+def scotch_twofile_with_hostless_survivor(scotch_h5, tmp_path: Path):
+    """Second file adds a hostless (z==999) SNII row that PASSES cuts.
+    This lets us exercise has_host=False all the way through _draw_source_dict."""
+    p2 = tmp_path / "scotch_hostless_ok.h5"
+    with h5py.File(p2, "w") as f:
+        tt = f.create_group("TransientTable")
+        ht = f.create_group("HostTable")
+
+        # Host table for SNII with a hostless entry that also passes mag cuts
+        sn_host = ht.create_group("SNII")
+        sn_host.create_dataset("GID", data=np.array([b"00000003"]))
+        sn_host.create_dataset("z", data=np.array([999.0]))  # hostless
+        sn_host.create_dataset("a_rot", data=np.array([0.0]))
+        for name in ["a0", "b0", "a1", "b1", "ellipticity0", "ellipticity1", "n0", "n1"]:
+            sn_host.create_dataset(name, data=np.array([1.0]))
+        sn_host.create_dataset("w0", data=np.array([0.5]))
+        sn_host.create_dataset("w1", data=np.array([0.5]))
+        sn_host.create_dataset("mag_r", data=np.array([20.0]))  # bright to pass host mag cuts
+
+        # Transient subclass referencing the hostless GID; bright LC so it survives
+        sn_tt = tt.create_group("SNII")
+        sub = sn_tt.create_group("SNII-Templates")
+        sub.create_dataset("z", data=np.array([0.3]))
+        sub.create_dataset("GID", data=np.array([b"00000003"]))
+        sub.create_dataset("ra_off", data=np.array([0.0]))
+        sub.create_dataset("dec_off", data=np.array([0.0]))
+        sub.create_dataset("MJD", data=np.array([[1.0, 2.0, 3.0]]))
+        for b in ("u", "g", "r", "i", "z", "Y"):
+            vals = [20.0, 20.0, 20.0] if b == "r" else [99.0, 99.0, 99.0]
+            sub.create_dataset(f"mag_{b}", data=np.array([vals]))
+    return [scotch_h5, p2]
 
 
 # ----- reference (oracle) formulas (duplicated on purpose for independence) -----
@@ -400,12 +487,33 @@ def test_norm_band_names():
     assert _norm(["U", "g", "Y", " y  "]) == ["u", "g", "Y", "Y"]
 
 
-def test_galaxy_projected_eccentricity_deterministic():
+def test_galaxy_projected_eccentricity():
     e1, e2 = scotch_module.galaxy_projected_eccentricity(
         ellipticity=0.0, rotation_angle=None
     )
     assert np.isclose(e1, 0.0) and np.isclose(e2, 0.0)
 
+def test_galaxy_projected_eccentricity_with_explicit_angle():
+    # Covers explicit-angle branch: e1=e*cos(2phi), e2=e*sin(2phi)
+    eps = 0.5
+    phi = np.pi / 6  # 30 deg
+    e = scotch_module.param_util.epsilon2e(eps)
+    e1, e2 = scotch_module.galaxy_projected_eccentricity(eps, rotation_angle=phi)
+    assert np.isclose(e1, e * np.cos(2 * phi))
+    assert np.isclose(e2, e * np.sin(2 * phi))
+
+
+def test_init_exclude_agn_flag(scotch_h5):
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    inst = scotch_module.ScotchSources(
+        cosmo=cosmo,
+        scotch_path=scotch_h5,
+        rng=0,
+        sample_uniformly=True,  # ensure AGN would otherwise be included
+        exclude_agn=True,
+    )
+    assert "AGN" not in inst.transient_types
+    assert "AGN" not in inst.active_transient_types
 
 def test_init_warning_no_objects_passed(scotch_h5):
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -449,6 +557,27 @@ def test_init_unknown_transient_subtype_raises(scotch_h5):
             transient_subtypes={"SNII": "DOES_NOT_EXIST"},
         )
 
+def test_unknown_subclass_raises_expected_number(scotch_h5_unknown_subclass):
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    with pytest.raises(KeyError, match="not found in rate functions"):
+        scotch_module.ScotchSources(
+            cosmo=cosmo,
+            scotch_path=scotch_h5_unknown_subclass,
+            kwargs_cut={"band": "r", "band_max": 22.0},
+        )
+
+def test_init_kwargs_cut_requires_matching_keys(scotch_h5):
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    # band without band_max
+    with pytest.raises(ValueError):
+        scotch_module.ScotchSources(
+            cosmo=cosmo, scotch_path=scotch_h5, kwargs_cut={"band": ["r"]}
+        )
+    # band_max without band
+    with pytest.raises(ValueError):
+        scotch_module.ScotchSources(
+            cosmo=cosmo, scotch_path=scotch_h5, kwargs_cut={"band_max": [22.0]}
+        )
 
 def test_init_invalid_band_spec_raises(scotch_h5):
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -499,15 +628,63 @@ def test_init_uniform_sampling(scotch_h5):
     )
 
     class_weights = scotch.class_weights
-    assert np.all(class_weights == 0.5) and np.sum(class_weights)
+    print(scotch.active_transient_types)
+    print(scotch.transient_subtypes)
+    assert np.all(class_weights == np.array([1, 2]) / 3) 
+    assert np.sum(class_weights) == 1.0
 
     snii_subclass_weights = scotch._index["SNII"].subclass_weights
-    assert np.isclose(snii_subclass_weights[0], 2 / 3)
-    assert np.isclose(snii_subclass_weights[1], 1 / 3)
+    assert np.all(snii_subclass_weights == 0.5)
 
     agn_subclass_weights = scotch._index["AGN"].subclass_weights
-    assert agn_subclass_weights[0] == 1.0
+    assert np.all(agn_subclass_weights == 1.0)
 
+def test_sky_area_scaling_with_stubbed_expected_number(scotch_h5, monkeypatch):
+    # Make expected_number tiny and deterministic so we can assert scaling
+    def _stub_expected_number(rate_fn, cosmo, z_min=0.0, z_max=3.0):
+        return 2.0  # per subclass
+    # AGN are just set to total_ok = 1 in this case
+
+    monkeypatch.setattr(scotch_module, "expected_number", _stub_expected_number)
+
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    # No cuts -> active subclasses: SNII-Templates, SNII+HostXT_V19, AGN
+    base = scotch_module.ScotchSources(cosmo=cosmo, scotch_path=scotch_h5, rng=0)
+    # total_expected = 2 * 2 + 1= 5; n_source_selected should be 4 with this file
+    print(base.active_transient_types)
+    print(base.transient_subtypes)
+    print(base.total_expected)
+    print(base.n_source_selected)
+    print(base._effective_sky_area)
+    print(scotch_module.SKY_AREA)
+
+    assert base.total_expected == 5
+    assert base.source_number_selected == 4
+    assert base._effective_sky_area == scotch_module.SKY_AREA * 4 / 5
+
+    # effective_sky_area = SKY_AREA * 4 / 5
+    # If we pass sky_area = 4 * effective => scaling factor = 4,
+    # new n_source_selected = 4 * 4 = 16.
+    sky_area = (4 * (scotch_module.SKY_AREA * 4 / 5)) * u.deg**2
+    scaled = scotch_module.ScotchSources(
+        cosmo=cosmo, scotch_path=scotch_h5, rng=0, sky_area=sky_area
+    )
+    assert scaled.source_number_selected == 16
+
+
+def test_missing_host_table_is_skipped(scotch_twofile_missing_host):
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    inst = scotch_module.ScotchSources(
+        cosmo=cosmo,
+        scotch_path=scotch_twofile_missing_host,
+        kwargs_cut={"band": "r", "band_max": 22.0},
+        rng=0,
+    )
+    # Totals should match the single-file SNII (3 rows total, 2 survivors),
+    # i.e., the second file's SNII shard is skipped due to missing host table.
+    ci = inst._index["SNII"]
+    assert ci.total == 3
+    assert ci.total_selected == 2
 
 def test_no_objects_pass_cut(scotch_h5):
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -656,12 +833,55 @@ def test_draw_source_dict(scotch_instance):
         assert f"ps_mag_{b}" in source_dict
         assert source_dict[f"ps_mag_{b}"].ndim == 1
 
+def test_draw_source_dict_hostless_and_mjd_zero(scotch_twofile_with_hostless_survivor, monkeypatch):
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    inst = scotch_module.ScotchSources(
+        cosmo=cosmo,
+        scotch_path=[str(p) for p in scotch_twofile_with_hostless_survivor],
+        kwargs_cut={"band": "r", "band_max": 22.0},
+        rng=0,
+    )
+
+    # Find the shard/row that references the hostless GID b"00000003"
+    target_cls = "SNII"
+    target_gid = b"00000003"
+    ci = inst._index[target_cls]
+    chosen = None
+    for s in ci.subclasses:
+        for sh in s.shards:
+            gids = sh.grp["GID"][:]
+            hits = np.where(gids == target_gid)[0]
+            if hits.size:
+                i_file = int(hits[0])
+                # Ensure this row is eligible (either all-ok int or contained in array)
+                if isinstance(sh.eligible, (int, np.integer)):
+                    eligible_index = i_file
+                else:
+                    if i_file not in set(map(int, sh.eligible.tolist())):
+                        continue
+                    eligible_index = i_file
+                chosen = (s, sh, eligible_index)
+                break
+        if chosen:
+            break
+    assert chosen is not None, "Could not locate the hostless surviving row"
+
+    # Force _draw_source_dict to use the hostless row
+    monkeypatch.setattr(inst, "_sample_from_class", lambda cls: chosen)
+    source_dict, has_host = inst._draw_source_dict()
+    assert has_host is False
+    # MJD should be zeroed at peak => contains 0
+    assert 0.0 in source_dict["MJD"]
+
+    # draw_source should now produce a pure GeneralLightCurve (no extended host)
+    src = inst.draw_source()
+    assert isinstance(src._source, GeneralLightCurve)
 
 def test_draw_source(scotch_instance):
 
     src = scotch_instance.draw_source()
     assert isinstance(src, Source)
-    assert isinstance(src._source, PointSource) or isinstance(
+    assert isinstance(src._source, GeneralLightCurve) or isinstance(
         src._source, PointPlusExtendedSource
     )
 
