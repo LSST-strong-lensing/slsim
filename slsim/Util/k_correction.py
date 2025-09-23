@@ -14,25 +14,20 @@ def kcorr_sdss(
     broadband filters using the kcorrect module based on Blanton and Roweis
     2007.
 
-    input_params:
-    mags_sdss : The multi-band SDSS magnitudes of all the targets.
-    type      : a 2D array of uncertainties.core.Variable, with bands along the
-                rows and targets along the column.
-            If your magnitude is m1 and associated error is e1,
-            uncertainties.core.Variable should be : ufloat(m1,e1).
-
-    redshift:   an array of the redshifts of the deflectors
-    type:       a 1D array fo floats.
-
-    responses: the sdss bands for which the magnitude is provided
-    type:      an array of strings
-
-    responses_out: the sdss bands on which you want the k-corrections
-    type:      an array of strings
-
-    returns:
-    a 2-D array with K-correction for all the targets with each row containing
-    the k-correction for output bands for each target.
+    :param mags_sdss: numpy.ndarray The multi-band SDSS magnitudes of
+        all the targets. A 2D array of uncertainties.core.Variable, with
+        bands along the rows and targets along the columns. If your
+        magnitude is m1 and associated error is e1,
+        uncertainties.core.Variable should be: ufloat(m1, e1).
+    :param redshift: numpy.ndarray An array of the redshifts of the
+        deflectors. A 1D array of floats.
+    :param responses: list of str The SDSS bands for which the magnitude
+        is provided.
+    :param responses_out: list of str The SDSS bands on which you want
+        the K-corrections.
+    :return: numpy.ndarray A 2-D array with K-correction for all the
+        targets, with each row containing the K-correction for output
+        bands for each target.
     """
 
     # Extract the magnitudes and errors in separate arrays.

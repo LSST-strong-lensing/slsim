@@ -10,10 +10,10 @@ import slsim.Deflectors as deflectors
 
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
-from slsim.lens_pop import LensPop
+from slsim.Lenses.lens_pop import LensPop
 from slsim.Plots.lens_plots import LensingPlots
-from slsim.Observations.roman_speclite import configure_roman_filters
-from slsim.Observations.roman_speclite import filter_names
+from slsim.Pipelines.roman_speclite import configure_roman_filters
+from slsim.Pipelines.roman_speclite import filter_names
 import speclite
 
 
@@ -41,7 +41,7 @@ def gg_lens_pop_instance():
         cosmo=cosmo,
         sky_area=sky_area,
         catalog_type="skypy",
-        extendedsource_type="single_sersic",
+        extended_source_type="single_sersic",
     )
 
     lenspop = LensPop(
@@ -100,7 +100,7 @@ def gg_roman_lens_pop_instance():
         sky_area=sky_area,
         catalog_type="skypy",
         source_size=None,
-        extendedsource_type="single_sersic",
+        extended_source_type="single_sersic",
     )
 
     lenspop = LensPop(
@@ -160,6 +160,35 @@ def test_plot_montage(gg_lens_pop_instance):
         n_horizont=n_horizont,
         n_vertical=n_vertical,
         kwargs_lens_cut=kwargs_lens_cut_plot,
+        minimum=0,
+        stretch=5,
+        Q=5,
+    )
+    assert isinstance(fig, plt.Figure)
+    assert len(axes) == n_vertical
+    assert len(axes[0]) == n_horizont
+
+
+def test_plot_montage_single_band(gg_lens_pop_instance):
+    rgb_band_list = ["r", "g", "i"]
+    add_noise = True
+    n_horizont = 2
+    n_vertical = 2
+    kwargs_lens_cut_plot = {}
+    n_total = n_horizont * n_vertical
+    lensing_plots = LensingPlots(gg_lens_pop_instance, num_pix=64, coadd_years=5)
+    gg_lens_list = [
+        gg_lens_pop_instance.select_lens_at_random(**kwargs_lens_cut_plot)
+        for _ in range(n_total)
+    ]
+    fig, axes = lensing_plots.plot_montage(
+        rgb_band_list,
+        add_noise=add_noise,
+        n_horizont=n_horizont,
+        n_vertical=n_vertical,
+        kwargs_lens_cut=kwargs_lens_cut_plot,
+        single_band=True,
+        lens_class_list=gg_lens_list,
     )
     assert isinstance(fig, plt.Figure)
     assert len(axes) == n_vertical

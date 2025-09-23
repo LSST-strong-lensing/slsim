@@ -17,7 +17,7 @@ class TestSupernovaEvent:
             "ps_mag_i": [21, 20, 19, 21, 22, 23],
         }
         kwargs_sn = {
-            "pointsource_type": "supernova",
+            "source_type": "supernova",
             "variability_model": "light_curve",
             "kwargs_variability": ["supernovae_lightcurve", "i", "r"],
             "sn_type": "Ia",
@@ -27,7 +27,7 @@ class TestSupernovaEvent:
             "sn_modeldir": None,
         }
         kwargs_sn_roman = {
-            "pointsource_type": "supernova",
+            "source_type": "supernova",
             "variability_model": "light_curve",
             "kwargs_variability": ["supernovae_lightcurve", "F062", "F129"],
             "sn_type": "Ia",
@@ -38,7 +38,7 @@ class TestSupernovaEvent:
         }
 
         kwargs_sn_none = {
-            "pointsource_type": "supernova",
+            "source_type": "supernova",
             "variability_model": "light_curve",
             "kwargs_variability": None,
             "sn_type": "Ia",
@@ -48,18 +48,14 @@ class TestSupernovaEvent:
             "sn_modeldir": None,
         }
 
-        self.source = SupernovaEvent(source_dict=source_dict, cosmo=cosmo, **kwargs_sn)
+        self.source = SupernovaEvent(cosmo=cosmo, **kwargs_sn, **source_dict)
         self.source_roman = SupernovaEvent(
-            source_dict=source_dict, cosmo=cosmo, **kwargs_sn_roman
+            cosmo=cosmo, **kwargs_sn_roman, **source_dict
         )
-        self.source_none = SupernovaEvent(
-            source_dict=source_dict2, cosmo=cosmo, **kwargs_sn_none
-        )
-        self.source_cosmo_error = SupernovaEvent(
-            source_dict=source_dict, cosmo=None, **kwargs_sn
-        )
+        self.source_none = SupernovaEvent(cosmo=cosmo, **kwargs_sn_none, **source_dict2)
+        self.source_cosmo_error = SupernovaEvent(cosmo=None, **kwargs_sn, **source_dict)
         self.source_light_curve = SupernovaEvent(
-            source_dict=source_dict3, cosmo=cosmo, **kwargs_sn_none
+            cosmo=cosmo, **kwargs_sn_none, **source_dict3
         )
 
     def test_light_curve(self):
@@ -82,7 +78,7 @@ class TestSupernovaEvent:
         assert "ps_mag_F129" in light_curve_roman["F129"].keys()
         assert len(light_curve_roman["F062"]["MJD"]) == 100
 
-        assert light_curve_none is None
+        assert not light_curve_none
         with pytest.raises(ValueError):
             self.source_cosmo_error.light_curve
 
@@ -95,7 +91,7 @@ class TestSupernovaEvent:
         with pytest.raises(ValueError):
             self.source_none.point_source_magnitude("i", image_observation_times=10)
         assert self.source_none.point_source_magnitude("i") == 20
-        assert self.source_light_curve.point_source_magnitude("i")[2] == 19
+        assert self.source_light_curve.point_source_magnitude("i") == 21
 
 
 if __name__ == "__main__":

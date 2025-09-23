@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.random as random
 from slsim.Util import param_util
-from slsim.selection import object_cut
+from slsim.Lenses.selection import object_cut
 from slsim.Deflectors.MassLightConnection.richness2mass import mass_richness_relation
 from slsim.Halos.halo_population import gene_e_ang_halo, concent_m_w_scatter
 from colossus.cosmology import cosmology as colossus_cosmo
@@ -62,7 +62,7 @@ class ClusterDeflectors(DeflectorsBase):
         :type kwargs_mass2light: dict
         :param cosmo: astropy.cosmology instance
         :type cosmo: ~astropy.cosmology
-        :param sky_area: Sky area over which galaxies are sampled. Must be in units of
+        :param sky_area: Sky area over which galaxy_list is sampled. Must be in units of
             solid angle.
         :type sky_area: `~astropy.units.Quantity`
         :param richness_fn: richness-mass relation to assign a mass to each cluster
@@ -88,7 +88,7 @@ class ClusterDeflectors(DeflectorsBase):
         members_list = self.preprocess_members(cluster_list, members_list, galaxy_list)
 
         self._f_vel_disp = vel_disp_abundance_matching(
-            members_list, z_max=0.5, sky_area=sky_area, cosmo=cosmo
+            galaxy_list, z_max=0.5, sky_area=sky_area, cosmo=cosmo
         )
 
         self._members_select = object_cut(members_list, **kwargs_cut)
@@ -116,8 +116,10 @@ class ClusterDeflectors(DeflectorsBase):
         number = self._num_select
         return number
 
-    def draw_deflector(self):
+    def draw_deflector(self, index=None):
         """
+        :param index: index of deflector, if not provided, draw randomly from all deflectors
+        :type index: int or None
         :return: dictionary of complete parameterization of deflector
         """
         index = random.randint(0, self._num_select - 1)
@@ -159,7 +161,7 @@ class ClusterDeflectors(DeflectorsBase):
         :type cluster_id: int
         :param center_scatter: scatter in center of the BCG in arcsec
         :type center_scatter: float
-        max_dist_arcsec: maximum distance from the BCG in arcsec
+        :param max_dist: maximum distance from the BCG in arcsec
         :type max_dist: float
         bcg_band: band to use to identify the BCG
         :type bcg_band: str
@@ -193,7 +195,7 @@ class ClusterDeflectors(DeflectorsBase):
             np.random.normal(bcg_ra, center_scatter / 3600),
             np.random.normal(bcg_dec, center_scatter / 3600),
         )
-        center_x = (members["ra"] - center_ra) * 3600
+        center_x = (members["ra"] - center_ra) * 3600 * np.cos(center_dec / 180 * np.pi)
         center_y = (members["dec"] - center_dec) * 3600
         members["center_x"] = np.where(
             members["center_x"] == -1, center_x, members["center_x"]
@@ -251,10 +253,16 @@ class ClusterDeflectors(DeflectorsBase):
         )
         nearest_neighbors_indices = distance.argmin(axis=1)
         similar_galaxies = galaxy_list[nearest_neighbors_indices]
-        include_cols = [
-            col for col in members_list.columns if col not in mag_cols + ["z"]
+        include_cols_members = [
+            col for col in members_list.columns if col not in mag_cols  # + ["z"]
         ]
-        return hstack([members_list[include_cols], similar_galaxies])
+        include_cols_galaxies = [col for col in galaxy_list.columns if col not in ["z"]]
+        return hstack(
+            [
+                members_list[include_cols_members],
+                similar_galaxies[include_cols_galaxies],
+            ]
+        )
 
     @staticmethod
     def preprocess_clusters(cluster_list):
