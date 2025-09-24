@@ -1418,7 +1418,6 @@ class Lens(LensedSystemBase):
         for i in self.deflector_mass_model_lenstronomy()[1]:
             for key in i.keys():
                 val = i[key]
-                print("deflector_mass_model: ", val, safe_value(val))
                 df.loc[lens_index, "deflector_mass_" + key] = (
                     safe_value(val)
                     if isinstance(val, (np.ndarray, np.generic, float))
@@ -1429,8 +1428,6 @@ class Lens(LensedSystemBase):
         for i in self.deflector_light_model_lenstronomy("i")[1]:
             for key in i.keys():
                 val = i[key]
-                print("deflector_light_model: ", key, safe_value(val))
-
                 df.loc[lens_index, "deflector_light_" + key] = safe_value(val)
 
         # store source light properties
