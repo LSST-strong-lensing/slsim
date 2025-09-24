@@ -1,6 +1,7 @@
 import os
 import numpy as np
-from astropy.table import Table, join
+from astropy.table import Table, join, Column
+
 from astropy.io import fits
 
 from lenstronomy.Util.param_util import ellipticity2phi_q
@@ -287,3 +288,27 @@ def match_cosmos_source(
     phi = np.pi / 2 - matched_source["sersicfit"][7] - phi
 
     return image, scale, phi, matched_source["IDENT"]
+
+
+def safe_value(val):
+    """This function ensures that a value that we put into a pandas DataFrame
+    is safe, i.e doesn't have mismatched datatypes.
+
+    :param val: value to store in df
+    :type val: string or float or list or array
+    :return: safe value
+    """
+    if isinstance(val, np.ndarray):
+        # Ensure native byte order
+        if hasattr(val, "dtype") and val.dtype.byteorder not in ("=", "|"):
+            val = val.astype(val.dtype.newbyteorder("="))
+        # If array has one element, convert to float
+        if val.size == 1:
+            return float(val)
+        # Otherwise, return as list
+        return val.tolist()
+    elif isinstance(val, np.generic):
+        return float(val)
+    elif isinstance(val, Column) and val.shape == (1,):
+        return val[0]
+    return val

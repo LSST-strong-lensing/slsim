@@ -490,8 +490,7 @@ def test_point_source_magnitude(pes_lens_instance):
 def test_lens_to_df(pes_lens_instance):
     import pandas as pd
 
-    pes_lens = pes_lens_instance
-    lens_df = pes_lens.lens_to_df()
+    lens_df = pes_lens_instance.lens_to_df()
     assert isinstance(lens_df, pd.DataFrame)
 
 
