@@ -17,6 +17,7 @@ from lenstronomy.Util import util
 
 from slsim.Lenses.lensed_system_base import LensedSystemBase
 from slsim.Deflectors.deflector import JAX_PROFILES
+import pandas as pd
 
 
 class Lens(LensedSystemBase):
@@ -1390,3 +1391,76 @@ class Lens(LensedSystemBase):
             multi_plane=False,
         )
         return lens_model_subhalos_only, kwargs_subhalos
+
+    def lens_to_df(self, index=0, df=None):
+        """Store lens properties to a dataframe. :param index: index of row
+        that the lens is stored in. Default = 0 :type index: int :param df:
+        Optional. Stores lens into an existing df if necessary, creates one if
+        not.
+
+        This function assumes the name of other methods in the lens
+        class. Thus, if the name of some method changes, this function
+        will break. Additionally, it assumes that the source lives on
+        one plane.
+
+        :return: pandas DataFrame containing deflector/source mass and
+            light properties.
+        """
+        lens_index = index
+        if df is None:
+            df = pd.DataFrame()
+        # store lens ID
+        df.loc[lens_index, "ID"] = self.generate_id()
+
+        # store mass model parameters
+        for i in self.deflector_mass_model_lenstronomy()[1]:
+            for key in i.keys():
+                df.loc[lens_index, "deflector_mass_" + key] = i[key]
+
+        # store light model parameters
+        for i in self.deflector_light_model_lenstronomy("i")[1]:
+            for key in i.keys():
+                df.loc[lens_index, "deflector_light_" + key] = i[key]
+
+        # store source light properties
+        for i in self.source_light_model_lenstronomy("i")[1]["kwargs_ps"]:
+            for key in i.keys():
+                if isinstance(i[key], np.ndarray):
+                    for j in range(len(i[key])):
+                        df.loc[lens_index, f"point_source_light_{key}_{j}"] = i[key][j]
+                else:
+                    df.loc[lens_index, f"point_source_light_{key}"] = i[key]
+        df.loc[lens_index, "velocity_dispersion"] = self.deflector_velocity_dispersion()
+        df.loc[lens_index, "deflector_redshift"] = self.deflector_redshift
+        df.loc[lens_index, "point_source_redshift"] = self.source_redshift_list[0]
+        ps_times = self.point_source_arrival_times()[0]
+        num_images = len(ps_times)
+        df.loc[lens_index, "num_ps_images"] = num_images
+        micro_lens_params = (
+            self._microlensing_parameters_for_image_positions_single_source(
+                band="i", source_index=0
+            )
+        )
+        params = ["kappa_star", "kappa_tot", "shear", "shear_angle"]
+        for (
+            i,
+            p,
+        ) in enumerate(params):
+            for k in range(num_images):
+                pls = f"micro_{p}_{k}"
+                df.loc[lens_index, pls] = np.array(micro_lens_params[i][k])
+        for i in range(num_images):
+            df.loc[lens_index, f"point_source_arrival_time_{i}"] = ps_times[i]
+        df.loc[lens_index, "external_shear"] = self.external_shear
+        df.loc[lens_index, "extended_lensed_mag"] = self.extended_source_magnitude(
+            "i", lensed=True
+        )
+        df.loc[lens_index, "extended_unlensed_mag"] = self.extended_source_magnitude(
+            "i", lensed=False
+        )
+
+        df.loc[lens_index, "extended_magnification"] = (
+            self.extended_source_magnification
+        )
+
+        return df
