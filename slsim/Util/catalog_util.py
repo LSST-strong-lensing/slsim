@@ -1,6 +1,6 @@
 import os
 import numpy as np
-from astropy.table import Table, join, Column
+from astropy.table import Table, join
 
 from astropy.io import fits
 
@@ -305,10 +305,6 @@ def safe_value(val):
         # If array has one element, convert to float
         if val.size == 1:
             return float(val)
-        # Otherwise, return as list
-        return val.tolist()
     elif isinstance(val, np.generic):
         return float(val)
-    elif isinstance(val, Column) and val.shape == (1,):
-        return val[0]
     return val

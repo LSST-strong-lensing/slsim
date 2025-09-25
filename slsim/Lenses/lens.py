@@ -1439,14 +1439,6 @@ class Lens(LensedSystemBase):
                         df.loc[lens_index, f"point_source_light_{key}_{j}"] = (
                             safe_value(v)
                         )
-                else:
-                    v = i[key]
-                    df.loc[lens_index, f"point_source_light_{key}"] = (
-                        safe_value(v)
-                        if isinstance(v, (np.ndarray, np.generic, float))
-                        else v
-                    )
-
         # single float values (velocity dispersion, redshifts)
         df.loc[lens_index, "velocity_dispersion"] = safe_value(
             self.deflector_velocity_dispersion()
