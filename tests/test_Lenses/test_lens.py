@@ -487,6 +487,13 @@ def test_point_source_magnitude(pes_lens_instance):
     assert mag_unlensed > 0
 
 
+def test_lens_to_dataframe(pes_lens_instance):
+    import pandas as pd
+
+    lens_df = pes_lens_instance.lens_to_dataframe()
+    assert isinstance(lens_df, pd.DataFrame)
+
+
 ################################################
 ############## MICROLENSING TESTS###############
 ################################################
