@@ -315,10 +315,16 @@ class Lens(LensedSystemBase):
 
         if second_brightest_image_cut is not None:
             for band_max, mag_max in second_brightest_image_cut.items():
-
-                image_magnitude_list = self.point_source_magnitude(
-                    band=band_max, lensed=True
-                )
+                if self.source(source_index).source_type == "extended":
+                    image_magnitude_list = (
+                        self.extended_source_magnitude_for_each_image(
+                            band=band_max, lensed=True
+                        )
+                    )
+                else:
+                    image_magnitude_list = self.point_source_magnitude(
+                        band=band_max, lensed=True
+                    )
                 second_brightest_mag = np.sort(image_magnitude_list[source_index])[1]
                 if second_brightest_mag > mag_max:
                     return False

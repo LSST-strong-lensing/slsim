@@ -138,6 +138,15 @@ class TestLens(object):
             cosmo=cosmo,
         )
 
+    def test_validity_test(self):
+        second_brightest_image_cut = {"i": 20}
+        assert (
+            self.gg_lens.validity_test(
+                second_brightest_image_cut=second_brightest_image_cut
+            )
+            is False
+        )
+
     def test_lens_id_gg(self):
         lens_id = self.gg_lens.generate_id()
         ra = self.gg_lens.deflector_position[0]
@@ -477,6 +486,16 @@ def pes_lens_instance():
             pes_lens = pes_lens
             break
     return pes_lens
+
+
+def test_validity_test_2(pes_lens_instance):
+    second_brightest_image_cut = {"i": 30}
+    assert (
+        pes_lens_instance.validity_test(
+            second_brightest_image_cut=second_brightest_image_cut
+        )
+        is True
+    )
 
 
 def test_point_source_magnitude(pes_lens_instance):
