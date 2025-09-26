@@ -487,10 +487,16 @@ def pes_lens_instance():
             break
     return pes_lens
 
+
 def test_validity_test_2(pes_lens_instance):
     second_brightest_image_cut = {"i": 30}
-    assert pes_lens_instance.validity_test(
-        second_brightest_image_cut=second_brightest_image_cut) is True
+    assert (
+        pes_lens_instance.validity_test(
+            second_brightest_image_cut=second_brightest_image_cut
+        )
+        is True
+    )
+
 
 def test_point_source_magnitude(pes_lens_instance):
     pes_lens = pes_lens_instance
