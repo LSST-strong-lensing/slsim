@@ -137,10 +137,15 @@ class TestLens(object):
             lens_equation_solver="lenstronomy_analytical",
             cosmo=cosmo,
         )
+
     def test_validity_test(self):
         second_brightest_image_cut = {"i": 20}
-        assert self.gg_lens.validity_test(
-            second_brightest_image_cut=second_brightest_image_cut) is False
+        assert (
+            self.gg_lens.validity_test(
+                second_brightest_image_cut=second_brightest_image_cut
+            )
+            is False
+        )
 
     def test_lens_id_gg(self):
         lens_id = self.gg_lens.generate_id()
