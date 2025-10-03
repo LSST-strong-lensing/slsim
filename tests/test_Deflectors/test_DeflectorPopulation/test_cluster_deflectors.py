@@ -212,6 +212,7 @@ def test_long_galaxy_list(cluster_deflectors_input):
     num_deflectors = cluster_pop.deflector_number()
     assert num_deflectors >= 0
 
+
 def test_cosmo_Ob0(cluster_deflectors_input):
     cluster_catalog, members_catalog, red_galaxies = cluster_deflectors_input
     kwargs_deflector_cut = {}
@@ -221,14 +222,14 @@ def test_cosmo_Ob0(cluster_deflectors_input):
     cosmo_Ob0_nonzero = FlatLambdaCDM(H0=70, Om0=0.3, Ob0=0.05)
     sky_area = Quantity(value=0.005, unit="deg2")
     ClusterDeflectors(
-            cluster_catalog,
-            members_catalog,
-            red_galaxies,
-            kwargs_cut=kwargs_deflector_cut,
-            kwargs_mass2light=kwargs_mass2light,
-            cosmo=cosmo_Ob0_zero,
-            sky_area=sky_area,
-        )
+        cluster_catalog,
+        members_catalog,
+        red_galaxies,
+        kwargs_cut=kwargs_deflector_cut,
+        kwargs_mass2light=kwargs_mass2light,
+        cosmo=cosmo_Ob0_zero,
+        sky_area=sky_area,
+    )
     assert colossus_cosmo.current_cosmo.Ob0 == 0.04897
     ClusterDeflectors(
         cluster_catalog,
@@ -250,6 +251,7 @@ def test_cosmo_Ob0(cluster_deflectors_input):
         sky_area=sky_area,
     )
     assert colossus_cosmo.current_cosmo.Ob0 == 0.05
+
 
 if __name__ == "__main__":
     pytest.main()
