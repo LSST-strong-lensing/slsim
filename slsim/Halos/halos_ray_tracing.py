@@ -26,8 +26,8 @@ class HalosRayTracing(object):
     """
 
     def __init__(self, lens_kwargs, lens_model):
-        """Initializes the HalosRayTracing class with specified lens model and keyword
-        arguments.
+        """Initializes the HalosRayTracing class with specified lens model and
+        keyword arguments.
 
         :param lens_kwargs: Keyword arguments for the lens model.
         :type lens_kwargs: dict
@@ -100,8 +100,8 @@ class HalosRayTracing(object):
             return kappa, gamma
 
     def nonlinear_correction_kappa_gamma_values(self, lens_data, zd, zs):
-        """Computes various kappa (convergence) and gamma (shear) values for given
-        deflector and source redshifts.
+        """Computes various kappa (convergence) and gamma (shear) values for
+        given deflector and source redshifts.
 
         This function retrieves the lens data based on the input redshifts and computes the convergence
         and shear for three categories: `od`, `os`, and `ds`. The gamma values are computed for
@@ -165,8 +165,8 @@ class HalosRayTracing(object):
         )
 
     def get_kext_gext_values(self, lens_data, zd, zs):
-        r"""Computes the external convergence (kappa_ext) and external shear (gamma_ext)
-        for given deflector and source redshifts.
+        r"""Computes the external convergence (kappa_ext) and external shear
+        (gamma_ext) for given deflector and source redshifts.
 
         :param lens_data: A dict containing lens data for three different conditions:
                   1. Between deflector and source redshift (ds).
@@ -212,10 +212,11 @@ class HalosRayTracing(object):
         return kext, gext
 
     def various_halos_data(self, lens_data, zd, zs):
-        r"""Computes (kappa_od, kappa_os, gamma_od1, gamma_od2, gamma_os1, gamma_os2,
-        kappa_ds, gamma_ds1, gamma_ds2, kappa_os2, gamma_os12, gamma_os22, kext, gext,),
-        (kwargs_lens_os, lens_model_os)  convergence (kappa) and shear (gamma) values
-        for given deflector and source redshifts.
+        r"""Computes (kappa_od, kappa_os, gamma_od1, gamma_od2, gamma_os1,
+        gamma_os2, kappa_ds, gamma_ds1, gamma_ds2, kappa_os2, gamma_os12,
+        gamma_os22, kext, gext,), (kwargs_lens_os, lens_model_os)  convergence
+        (kappa) and shear (gamma) values for given deflector and source
+        redshifts.
 
         This function extracts the lens model and its keyword arguments for different redshift combinations
         ('od`, `os`, and `ds`). It then computes the convergence and shear values for each of these combinations.
@@ -229,10 +230,10 @@ class HalosRayTracing(object):
         :type zd: float
         :param zs: The source redshift.
         :type zs: float
-        :returns: A tuple containing:
-                    - A tuple of computed values for kappa and gamma for the different redshift combinations and the
-                      external convergence and shear.
-                    - A tuple containing the lens model and its keyword arguments for the `os` redshift combination.
+        :returns:
+            A tuple containing:
+                - A tuple of computed values for kappa and gamma for the different redshift combinations and the external convergence and shear.
+                - A tuple containing the lens model and its keyword arguments for the `os` redshift combination.
         :rtype: tuple
 
         .. note::
@@ -332,8 +333,8 @@ class HalosRayTracing(object):
         lens_model=None,
     ):
         # can out as single
-        """Computes the convergence (kappa) values over a grid and returns both the 2D
-        kappa image and the 1D array of kappa values.
+        """Computes the convergence (kappa) values over a grid and returns both
+        the 2D kappa image and the 1D array of kappa values.
 
         :param sky_area: Total sky area in steradians over which halos are distributed. Defaults to full sky (4π steradians).
         :type sky_area: float, optional

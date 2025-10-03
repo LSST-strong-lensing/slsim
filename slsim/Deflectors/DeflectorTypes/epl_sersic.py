@@ -1,30 +1,31 @@
-from slsim.Deflectors.DeflectorTypes.deflector_base import DeflectorBase
+from slsim.Deflectors.DeflectorTypes.epl import EPL
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 
 
-class EPLSersic(DeflectorBase):
+class EPLSersic(EPL):
     """Deflector with an elliptical power-law and a Sersic light model.
 
     required quantities in dictionary:
     - 'vel_disp': SIS equivalent velocity dispersion of the deflector
-    - 'e1_mass': eccentricity of NFW profile
-    - 'e2_mass': eccentricity of NFW profile
+    - 'e1_mass': eccentricity of EPL profile
+    - 'e2_mass': eccentricity of EPL profile
     - 'stellar_mass': stellar mass in physical M_sol
     - 'angular_size': half-light radius of stellar/light profile in radian
+    - 'n_sersic': Sersic index of deflector light
     - 'e1_light': eccentricity of light
     - 'e2_light': eccentricity of light
     - 'z': redshift of deflector
     """
 
-    def velocity_dispersion(self, cosmo=None):
-        """Velocity dispersion of deflector.
+    # TODO: add center_x center_y to documentation
 
-        :param cosmo: cosmology
-        :type cosmo: ~astropy.cosmology class
-        :return: velocity dispersion [km/s]
+    def __init__(self, **deflector_dict):
         """
 
-        return self._deflector_dict["vel_disp"]
+        :param deflector_dict: dictionary of deflector quantities
+        :param sis_convention: if using the SIS convention to normalize the Einstein radius or not
+        """
+        super().__init__(**deflector_dict)
 
     @property
     def light_ellipticity(self):
@@ -37,43 +38,9 @@ class EPLSersic(DeflectorBase):
         )
         return e1_light, e2_light
 
-    def mass_model_lenstronomy(self, lens_cosmo):
-        """Returns lens model instance and parameters in lenstronomy conventions.
-
-        :param lens_cosmo: lens cosmology model
-        :type lens_cosmo: ~lenstronomy.Cosmo.LensCosmo instance
-        :return: lens_mass_model_list, kwargs_lens_mass
-        """
-        if lens_cosmo.z_lens >= lens_cosmo.z_source:
-            theta_E = 0.0
-        else:
-            theta_E = lens_cosmo.sis_sigma_v2theta_E(
-                float(self.velocity_dispersion(cosmo=lens_cosmo.background.cosmo))
-            )
-        gamma = self.halo_properties
-        e1_mass, e2_mass = self.mass_ellipticity
-        e1_mass_lenstronomy, e2_mass_lenstronomy = ellipticity_slsim_to_lenstronomy(
-            e1_slsim=e1_mass, e2_slsim=e2_mass
-        )
-        kwargs_lens_mass = [
-            {
-                "theta_E": theta_E,
-                "gamma": gamma,
-                "e1": e1_mass_lenstronomy,
-                "e2": e2_mass_lenstronomy,
-                "center_x": self.deflector_center[0],
-                "center_y": self.deflector_center[1],
-            }
-        ]
-        if gamma == 2:
-            lens_mass_model_list = ["SIE"]
-            kwargs_lens_mass[0].pop("gamma")
-        else:
-            lens_mass_model_list = ["EPL"]
-        return lens_mass_model_list, kwargs_lens_mass
-
     def light_model_lenstronomy(self, band=None):
-        """Returns lens model instance and parameters in lenstronomy conventions.
+        """Returns lens model instance and parameters in lenstronomy
+        conventions.
 
         :param band: imaging band
         :type band: str
@@ -90,7 +57,7 @@ class EPLSersic(DeflectorBase):
                 e1_slsim=e1_light_lens, e2_slsim=e2_light_lens
             )
         )
-        size_lens_arcsec = self._deflector_dict["angular_size"]
+        size_lens_arcsec = self.angular_size_light
         lens_light_model_list = ["SERSIC_ELLIPSE"]
         kwargs_lens_light = [
             {
@@ -104,15 +71,3 @@ class EPLSersic(DeflectorBase):
             }
         ]
         return lens_light_model_list, kwargs_lens_light
-
-    @property
-    def halo_properties(self):
-        """Mass density logarithmic slope.
-
-        :return: gamma (with =2 is isothermal)
-        """
-
-        try:
-            return float(self._deflector_dict["gamma_pl"])
-        except KeyError:
-            return 2
