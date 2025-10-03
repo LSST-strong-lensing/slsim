@@ -1,5 +1,7 @@
 from slsim.Deflectors.DeflectorTypes.deflector_base import DeflectorBase
-from slsim.Deflectors.velocity_dispersion import vel_disp_composite_model
+from slsim.Deflectors.MassLightConnection.velocity_dispersion import (
+    vel_disp_composite_model,
+)
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 from lenstronomy.Util import constants
 
@@ -20,15 +22,15 @@ class NFWHernquist(DeflectorBase):
     """
 
     def velocity_dispersion(self, cosmo=None):
-        """Velocity dispersion of deflector. Simplified assumptions on anisotropy and
-        averaged over the half-light radius.
+        """Velocity dispersion of deflector. Simplified assumptions on
+        anisotropy and averaged over the half-light radius.
 
         :param cosmo: cosmology
         :type cosmo: ~astropy.cosmology class
         :return: velocity dispersion [km/s]
         """
         if ("vel_disp" in self._deflector_dict) and (
-            self._deflector_dict["vel_disp"] != -1
+            self._deflector_dict["vel_disp"] >= 0
         ):
             return self._deflector_dict["vel_disp"]
 
@@ -54,14 +56,20 @@ class NFWHernquist(DeflectorBase):
             self._deflector_dict["vel_disp"] = vel_disp
             return self._deflector_dict["vel_disp"]
 
-    def mass_model_lenstronomy(self, lens_cosmo):
-        """Returns lens model instance and parameters in lenstronomy conventions.
+    def mass_model_lenstronomy(self, lens_cosmo, spherical=False):
+        """Returns lens model instance and parameters in lenstronomy
+        conventions.
 
         :param lens_cosmo: lens cosmology model
         :type lens_cosmo: ~lenstronomy.Cosmo.LensCosmo instance
+        :param spherical: if True, makes spherical assumption
+        :type spherical: bool
         :return: lens_mass_model_list, kwargs_lens_mass
         """
-        lens_mass_model_list = ["NFW_ELLIPSE_CSE", "HERNQUIST_ELLIPSE_CSE"]
+        if spherical is True:
+            lens_mass_model_list = ["NFW", "HERNQUIST"]
+        else:
+            lens_mass_model_list = ["NFW_ELLIPSE_CSE", "HERNQUIST_ELLIPSE_CSE"]
         e1_light_lens, e2_light_lens = self.light_ellipticity
         e1_light_lens_lenstronomy, e2_light_lens_lenstronomy = (
             ellipticity_slsim_to_lenstronomy(
@@ -83,24 +91,26 @@ class NFWHernquist(DeflectorBase):
             {
                 "alpha_Rs": alpha_rs,
                 "Rs": rs_halo,
-                "e1": e1_mass_lenstronomy,
-                "e2": e2_mass_lenstronomy,
                 "center_x": self.deflector_center[0],
                 "center_y": self.deflector_center[1],
             },
             {
                 "Rs": rs_light_angle,
                 "sigma0": sigma0,
-                "e1": e1_light_lens_lenstronomy,
-                "e2": e2_light_lens_lenstronomy,
                 "center_x": self.deflector_center[0],
                 "center_y": self.deflector_center[1],
             },
         ]
+        if spherical is False:
+            kwargs_lens_mass[0]["e1"] = e1_mass_lenstronomy
+            kwargs_lens_mass[0]["e2"] = e2_mass_lenstronomy
+            kwargs_lens_mass[1]["e1"] = e1_light_lens_lenstronomy
+            kwargs_lens_mass[1]["e2"] = e2_light_lens_lenstronomy
         return lens_mass_model_list, kwargs_lens_mass
 
     def light_model_lenstronomy(self, band=None):
-        """Returns lens model instance and parameters in lenstronomy conventions.
+        """Returns lens model instance and parameters in lenstronomy
+        conventions.
 
         :param band: imaging band
         :type band: str
@@ -117,7 +127,7 @@ class NFWHernquist(DeflectorBase):
                 e1_slsim=e1_light_lens, e2_slsim=e2_light_lens
             )
         )
-        size_lens_arcsec = self._deflector_dict["angular_size"]
+        size_lens_arcsec = self.angular_size_light
         lens_light_model_list = ["HERNQUIST_ELLIPSE"]
         kwargs_lens_light = [
             {

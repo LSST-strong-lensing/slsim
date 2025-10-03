@@ -8,17 +8,19 @@ from slsim.Util.param_util import magnitude_to_amplitude, amplitude_to_magnitude
 def update_coolest_from_slsim(
     lens_class, path, file_name, band=None, mag_zero_point=27, ending="_update"
 ):
-    """This function updates given coolest format .json file using lenstronomy kwargs of
-    Lens class. This function needs a .json file of coolest format. So, to generate
-    required template file please use a notebook given in our notebooks folder.
+    """This function updates given coolest format .json file using lenstronomy
+    kwargs of Lens class. This function needs a .json file of coolest format.
+    So, to generate required template file please use a notebook given in our
+    notebooks folder.
 
-    :param lens_class: Lens() object. This contains all the lensing parameters.
+    :param lens_class: Lens() object. This contains all the lensing
+        parameters.
     :param path: path to the .json file that need to be updated
     :param file_name: name of the .json file without .json extension
     :param band: imaging band
     :param mag_zero_point: magnitude zero point for the exposure
-    :param ending: extention to the original .json file that distinguish between
-        original coolest file and updated coolest file.
+    :param ending: extention to the original .json file that distinguish
+        between original coolest file and updated coolest file.
     :returns: saves updated .json file in a given path
     """
     kwargs_result_slsim = lens_class.lenstronomy_kwargs(band=band)[1]
@@ -71,8 +73,9 @@ def create_slsim_from_coolest(path, file_name, mag_zero_point=27):
 
     :param path: path to the .json file that need to be updated
     :param file_name: name of the .json file without .json extension
-    :return: dictionary of lenstronomy_kwargs for slsim. It contains lens_light_model,
-        lens_mass_model, source_light_model, point_source_model.
+    :return: dictionary of lenstronomy_kwargs for slsim. It contains
+        lens_light_model, lens_mass_model, source_light_model,
+        point_source_model.
     """
     kwargs_out = create_lenstronomy_from_coolest(path + file_name)
     kwargs_result = kwargs_out["kwargs_result"]
@@ -93,8 +96,8 @@ def create_slsim_from_coolest(path, file_name, mag_zero_point=27):
     # replace amplitudes with magnitudes in lenstronomy kwargs.
     replacement_mappings = {
         "kwargs_source": {"amp": "magnitude", "value": source_mags},
-        "kwargs_lens_light": {"amp": "magnitude", "value": lens_mag},
-        "kwargs_ps": {"point_amp": "magnitude", "value": ps_mag},
+        "kwargs_lens_light": {"amp": "magnitude", "value": [lens_mag]},
+        "kwargs_ps": {"point_amp": "magnitude", "value": [ps_mag]},
     }
     for key, replacement_info in replacement_mappings.items():
         for keys, values in replacement_info.items():

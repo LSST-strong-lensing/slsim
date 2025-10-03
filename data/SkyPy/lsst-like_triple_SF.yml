@@ -5,8 +5,13 @@
 # b_phi = 10**(Phi0 - 0.5*P)
 cosmology: !astropy.cosmology.default_cosmology.get []
 z_range: !numpy.arange [0.0, 5.01, 0.01]
-M_star_blue: !astropy.modeling.models.Linear1D [-1.03, -20.485]
-phi_star_blue: !astropy.modeling.models.Exponential1D [0.00312608, -43.42936]
+M_star_blue: !astropy.modeling.models.Polynomial1D
+  degree: 3
+  c0: -20.485
+  c1: -2.03
+  c2: 0.49
+  c3: -0.03
+phi_star_blue: !astropy.modeling.models.Exponential1D [0.00200608, -43.42936]
 M_star_red: !astropy.modeling.models.Linear1D [-0.80, -20.46]
 phi_star_red: !astropy.modeling.models.Exponential1D [0.00278612, -1.05925]
 magnitude_limit: 30
@@ -30,7 +35,7 @@ tables:
       coefficients: $blue.coeff
       magnitudes: $blue.M
       filter: bessell-B
-    mag_g, mag_r, mag_i, mag_z, mag_Y: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+    mag_g, mag_r, mag_i, mag_z, mag_y: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
       coefficients: $blue.coeff
       redshift: $blue.z
       filters: $filters
@@ -84,7 +89,7 @@ tables:
       coefficients: $red.coeff
       magnitudes: $red.M
       filter: bessell-B
-    mag_g, mag_r, mag_i, mag_z, mag_Y: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+    mag_g, mag_r, mag_i, mag_z, mag_y: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
       coefficients: $red.coeff
       redshift: $red.z
       filters: $filters

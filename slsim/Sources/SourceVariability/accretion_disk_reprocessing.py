@@ -69,15 +69,19 @@ class AccretionDiskReprocessing(object):
 
             self.time_array = None
             self.magnitude_array = None
+        if "redshift" in self.kwargs_model:
+            self.redshift = self.kwargs_model["redshift"]
+        else:
+            self.redshift = 0
 
     def define_new_response_function(self, rest_frame_wavelength_in_nanometers):
-        """Define a response function of the agn accretion disk to the flaring corona in
-        the lamppost geometry.
+        """Define a response function of the agn accretion disk to the flaring
+        corona in the lamppost geometry.
 
-        :param rest_frame_wavelength_in_nanometers: The rest frame wavelength (not the
-            observer's frame!) in [nanometers].
-        :return: An array representing the response function of the accretion disk with
-            time lag spacing of [R_g / c].
+        :param rest_frame_wavelength_in_nanometers: The rest frame
+            wavelength (not the observer's frame!) in [nanometers].
+        :return: An array representing the response function of the
+            accretion disk with time lag spacing of [R_g / c].
         """
         return self._model(rest_frame_wavelength_in_nanometers, **self.kwargs_model)
 
@@ -88,8 +92,8 @@ class AccretionDiskReprocessing(object):
         delta_wavelength=10,
         passband_wavelength_unit=u.angstrom,
     ):
-        """Calculates the response function of the agn accretion disk to the flaring
-        corona in the lamppost geometry for an input passband.
+        """Calculates the response function of the agn accretion disk to the
+        flaring corona in the lamppost geometry for an input passband.
 
         :param passband: Str or List representing passband data. Either from speclite or
             a user defined passband represented as a list of lists or arrays. The first
@@ -138,14 +142,17 @@ class AccretionDiskReprocessing(object):
 
     def define_intrinsic_signal(self, time_array=None, magnitude_array=None):
         """Multi-purpose method to define an intrinsic signal of the
-        AccretionDiskReprocessing() class. Passing in the time_array and magnitude_array
-        arguments will write the signal to the object, while a call with no arguments
-        will return the stored signal.
+        AccretionDiskReprocessing() class. Passing in the time_array and
+        magnitude_array arguments will write the signal to the object, while a
+        call with no arguments will return the stored signal.
 
-        :param time_array: The times which the light curve is sampled at, in [days].
-        :param magnitude_array: The amplitudes of the signal at each time in time_array.
+        :param time_array: The times which the light curve is sampled
+            at, in [days].
+        :param magnitude_array: The amplitudes of the signal at each
+            time in time_array.
         :return: The time_array and magnitude_array associated with the
-            AccretionDiskReprocessing() object's intrinsic (driving) signal.
+            AccretionDiskReprocessing() object's intrinsic (driving)
+            signal.
         """
         if time_array is None and magnitude_array is None:
             return self.time_array, self.magnitude_array
@@ -167,25 +174,29 @@ class AccretionDiskReprocessing(object):
         response_function_time_lags=None,
         response_function_amplitudes=None,
     ):
-        """Multi-purpose method to calculate the response of the accretion disk to a
-        reprocessing of the intrinsic signal. Passing the
-        rest_frame_wavelength_in_nanometers argument will calculate a response function
-        using define_new_response_function(). Passing in a response function (e.g. from
-        an external source) to the response_function arguments will perform the
-        convolution of the stored intrinsic signal with the chosen response function.
+        """Multi-purpose method to calculate the response of the accretion disk
+        to a reprocessing of the intrinsic signal. Passing the
+        rest_frame_wavelength_in_nanometers argument will calculate a response
+        function using define_new_response_function(). Passing in a response
+        function (e.g. from an external source) to the response_function
+        arguments will perform the convolution of the stored intrinsic signal
+        with the chosen response function.
 
-        :param rest_frame_wavelength_in_nanometers: Int representing the rest frame (not
-            the observer's frame!) wavelength to calculate the response function at, in
-            [nanometers].
-        :param response_function_time_lags: An optional array representing the
-            time_array associated with the response function with units [days]. Time
-            lags are defined in the rest frame (not the observer's frame!). If None and
-            response_function_amplitudes is given, the time lags will be assumed to be
-            in units [Rg / c].
-        :param response_function_amplitudes: An array representing the response function
-            at each time lag. The amplitudes may use arbitrary units.
-        :return: The magnitude_array of the reprocessed signal. Note that this is
-            calculated in the rest frame, not the observer's frame!
+        :param rest_frame_wavelength_in_nanometers: Int representing the
+            rest frame (not the observer's frame!) wavelength to
+            calculate the response function at, in [nanometers].
+        :param response_function_time_lags: An optional array
+            representing the time_array associated with the response
+            function with units [days]. Time lags are defined in the
+            rest frame (not the observer's frame!). If None and
+            response_function_amplitudes is given, the time lags will be
+            assumed to be in units [Rg / c].
+        :param response_function_amplitudes: An array representing the
+            response function at each time lag. The amplitudes may use
+            arbitrary units.
+        :return: The magnitude_array of the reprocessed signal. Note
+            that this is calculated in the rest frame, not the
+            observer's frame!
         """
         if self.time_array is None or self.magnitude_array is None:
             raise ValueError(
@@ -261,13 +272,27 @@ class AccretionDiskReprocessing(object):
             interpolated_signal, (interpolated_response_function), mode="full"
         )
 
+        # bring the reprocessed signal to the observer frame
+        interpolation_of_reprocessed_signal = interpolate.interp1d(
+            signal_time_axis,
+            reprocessed_signal[: len(signal_time_axis)],
+            bounds_error=False,
+            fill_value=0,
+        )
+        redshifted_time_axis = signal_time_axis / (1 + self.redshift)
+        reprocessed_signal_in_observed_frame = interpolation_of_reprocessed_signal(
+            redshifted_time_axis
+        )
+
         normalization = np.nansum(interpolated_response_function)
         if normalization == 0:
-            reprocessed_signal = interpolated_signal
+            reprocessed_signal_in_observed_frame = intrinsic_signal.magnitude(
+                redshifted_time_axis
+            )
         else:
-            reprocessed_signal /= normalization
+            reprocessed_signal_in_observed_frame /= normalization
 
-        return reprocessed_signal[: len(self.time_array)]
+        return reprocessed_signal_in_observed_frame[: len(self.time_array)]
 
     def determine_agn_luminosity_from_known_luminosity(
         self,
@@ -279,13 +304,14 @@ class AccretionDiskReprocessing(object):
         band=None,
         observer_frame_wavelength_in_nm=None,
     ):
-        """Takes in the known luminosity of the AGN and defines the expected magnitude
-        at other bands or wavelengths based on black body radiation. Speclite bands will
-        be calculated at their effective wavelength.
+        """Takes in the known luminosity of the AGN and defines the expected
+        magnitude at other bands or wavelengths based on black body radiation.
+        Speclite bands will be calculated at their effective wavelength.
 
         :param i_band_magnitude: Float representing magnitude of i band
         :param redshift: Float representing redshift of AGN
-        :param cosmo: Astropy cosmology object used to calculate distances
+        :param cosmo: Astropy cosmology object used to calculate
+            distances
         :param bands: Float representing a speclite filter
         :param wavelengths: Float representing wavlength in nm.
         """
@@ -360,8 +386,9 @@ def lamppost_model(
     corona_height=10,
     eddington_ratio=0.1,
 ):
-    """Uses astro_util.calculate_accretion_disk_response_function() to define the
-    response of the accretion disk due to a driving signal in the lamppost geometry.
+    """Uses astro_util.calculate_accretion_disk_response_function() to define
+    the response of the accretion disk due to a driving signal in the lamppost
+    geometry.
 
     :param rest_frame_wavelength_in_nanometers: The wavelength to calculate the response
         function at, in [nanometers]. This is in the frame of the accretion disk, not the

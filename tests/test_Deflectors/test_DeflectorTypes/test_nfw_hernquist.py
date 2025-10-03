@@ -32,7 +32,7 @@ class TestNFWHernquist(object):
             "z": 0.5,
             "mag_g": -20,
         }
-        self.nfw_hernquist = NFWHernquist(deflector_dict=self.deflector_dict)
+        self.nfw_hernquist = NFWHernquist(**self.deflector_dict)
 
     def test_redshift(self):
         z = self.nfw_hernquist.redshift
@@ -61,6 +61,17 @@ class TestNFWHernquist(object):
             cosmo=cosmo, z_lens=self.deflector_dict["z"], z_source=2.0
         )
         lens_mass_model_list, kwargs_lens_mass = (
-            self.nfw_hernquist.mass_model_lenstronomy(lens_cosmo=lens_cosmo)
+            self.nfw_hernquist.mass_model_lenstronomy(
+                lens_cosmo=lens_cosmo, spherical=False
+            )
         )
+        assert lens_mass_model_list[0] == "NFW_ELLIPSE_CSE"
+        assert len(lens_mass_model_list) == 2
+
+        lens_mass_model_list, kwargs_lens_mass = (
+            self.nfw_hernquist.mass_model_lenstronomy(
+                lens_cosmo=lens_cosmo, spherical=True
+            )
+        )
+        assert lens_mass_model_list[0] == "NFW"
         assert len(lens_mass_model_list) == 2
