@@ -341,7 +341,11 @@ class ClusterDeflectors(DeflectorsBase):
             H0=self.cosmo.H0.value,
             Om0=self.cosmo.Om0,
             Ode0=self.cosmo.Ode0,
-            Ob0=self.cosmo.Ob0 if self.cosmo.Ob0 is not None else 0.04897,
+            Ob0=(
+                self.cosmo.Ob0
+                if (self.cosmo.Ob0 is not None) and (self.cosmo.Ob0 != 0)
+                else 0.04897
+            ),
             Tcmb0=self.cosmo.Tcmb0.value if self.cosmo.Tcmb0.value > 0 else 2.7255,
             Neff=self.cosmo.Neff,
             sigma8=0.8102,
