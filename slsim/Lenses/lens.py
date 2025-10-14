@@ -1253,13 +1253,6 @@ class Lens(LensedSystemBase):
         flux_local = lightModel.surface_brightness(
             ra, dec, kwargs_lens_light_amp
         )  # surface brightness per arcsecond square
-
-        # print shapes for debugging
-        print("flux_local shape:", flux_local.shape)
-        print("total_flux:", total_flux)
-        print("stellar_mass:", stellar_mass)
-        print("sigma_crit_angle:", self._lens_cosmo.sigma_crit_angle)
-
         kappa_star = (
             flux_local / total_flux * stellar_mass / self._lens_cosmo.sigma_crit_angle
         )
