@@ -258,7 +258,6 @@ def plot_magnification_map(magmap_instance, ax=None, plot_magnitude=True, **kwar
                 (magmap_instance.center_y + magmap_instance.half_length_y)
                 / magmap_instance.theta_star,
             ],
-            origin="lower",
             **kwargs,
         )
     else:
@@ -274,7 +273,6 @@ def plot_magnification_map(magmap_instance, ax=None, plot_magnitude=True, **kwar
                 (magmap_instance.center_y + magmap_instance.half_length_y)
                 / magmap_instance.theta_star,
             ],
-            origin="lower",
             **kwargs,
         )
     ax.set_xlabel("$x / \\theta_★$")

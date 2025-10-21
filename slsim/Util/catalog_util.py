@@ -1,6 +1,7 @@
 import os
 import numpy as np
 from astropy.table import Table, join
+
 from astropy.io import fits
 
 from lenstronomy.Util.param_util import ellipticity2phi_q
@@ -287,6 +288,7 @@ def match_cosmos_source(
     phi = np.pi / 2 - matched_source["sersicfit"][7] - phi
 
     return image, scale, phi, matched_source["IDENT"]
+
 
 def safe_value(val):
     """This function ensures that a value that we put into a pandas DataFrame

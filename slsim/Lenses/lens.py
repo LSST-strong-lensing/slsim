@@ -14,6 +14,7 @@ from slsim.Util.param_util import (
 from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.Util import data_util
 from lenstronomy.Util import util
+from slsim.Util.catalog_util import safe_value
 
 from slsim.Lenses.lensed_system_base import LensedSystemBase
 from slsim.Deflectors.deflector import JAX_PROFILES
@@ -336,10 +337,16 @@ class Lens(LensedSystemBase):
 
         if second_brightest_image_cut is not None:
             for band_max, mag_max in second_brightest_image_cut.items():
-
-                image_magnitude_list = self.point_source_magnitude(
-                    band=band_max, lensed=True
-                )
+                if self.source(source_index).source_type == "extended":
+                    image_magnitude_list = (
+                        self.extended_source_magnitude_for_each_image(
+                            band=band_max, lensed=True
+                        )
+                    )
+                else:
+                    image_magnitude_list = self.point_source_magnitude(
+                        band=band_max, lensed=True
+                    )
                 second_brightest_mag = np.sort(image_magnitude_list[source_index])[1]
                 if second_brightest_mag > mag_max:
                     return False
@@ -1476,7 +1483,7 @@ class Lens(LensedSystemBase):
             multi_plane=False,
         )
         return lens_model_subhalos_only, kwargs_subhalos
-    
+
     def lens_to_dataframe(self, index=0, df=None):
         """Store lens properties to a dataframe. This function assumes the name
         of other methods in the lens class. Thus, if the name of some method
@@ -1537,22 +1544,22 @@ class Lens(LensedSystemBase):
             df.loc[lens_index, f"image_{i}_arrival_time"] = ps_times[i]
         df.loc[lens_index, "num_ps_images"] = safe_value(num_images)
 
-        # micro_lens_params = (
-        #     self._microlensing_parameters_for_image_positions_single_source(
-        #         band="i", source_index=0
-        #     )
-        # )
-        # params = ["kappa_star", "kappa_tot", "shear", "shear_angle"]
-        # for i, p in enumerate(params):
-        #     for k in range(num_images):
-        #         pls = f"micro_{p}_{k}"
-        #         # check if any of the lists for any param is nested
-        #         param_for_all_images = np.array(micro_lens_params[i])
-        #         if param_for_all_images.shape[0] > 0:
-        #             param_for_all_images = param_for_all_images.flatten()
-        #         # if param_for_all_images.shape[0]
-        #         val = param_for_all_images[k]
-        #         df.loc[lens_index, pls] = safe_value(val)
+        micro_lens_params = (
+            self._microlensing_parameters_for_image_positions_single_source(
+                band="i", source_index=0
+            )
+        )
+        params = ["kappa_star", "kappa_tot", "shear", "shear_angle"]
+        for i, p in enumerate(params):
+            for k in range(num_images):
+                pls = f"micro_{p}_{k}"
+                # check if any of the lists for any param is nested
+                param_for_all_images = np.array(micro_lens_params[i])
+                if param_for_all_images.shape[0] > 0:
+                    param_for_all_images = param_for_all_images.flatten()
+                # if param_for_all_images.shape[0]
+                val = param_for_all_images[k]
+                df.loc[lens_index, pls] = safe_value(val)
 
         for i in range(num_images):
             df.loc[lens_index, f"point_source_arrival_time_{i}"] = safe_value(
