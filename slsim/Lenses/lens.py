@@ -17,7 +17,8 @@ from lenstronomy.Util import util
 
 from slsim.Lenses.lensed_system_base import LensedSystemBase
 from slsim.Deflectors.deflector import JAX_PROFILES
-
+from slsim.Util.catalog_util import safe_value
+import pandas as pd
 
 class Lens(LensedSystemBase):
     """Class to manage individual lenses."""
@@ -30,6 +31,9 @@ class Lens(LensedSystemBase):
         lens_equation_solver="lenstronomy_analytical",
         magnification_limit=0.01,
         los_class=None,
+        multi_plane=False,
+        shear=True,
+        convergence =False
     ):
         """
 
@@ -54,6 +58,10 @@ class Lens(LensedSystemBase):
             source_class=source_class,
             deflector_class=deflector_class,
             los_class=los_class,
+            multi_plane=multi_plane,
+            shear=shear,
+            convergence=convergence
+            
         )
         # SourceList.__init__(self, source_class_list=source_class)
         self.cosmo = cosmo
@@ -163,9 +171,18 @@ class Lens(LensedSystemBase):
         lens_model_class, kwargs_lens = self.deflector_mass_model_lenstronomy(
             source_index=source_index
         )
+        safe_kwargs_lens = []
+        for lens in kwargs_lens:
+            safe_dict = {}
+            for key in lens.keys():
+                if key in JAX_PROFILES and lens[key] is not None:
+                    safe_dict[key] = safe_value(lens[key])
+                else:
+                    safe_dict[key] = lens[key]
+            safe_kwargs_lens.append(safe_dict)  
+        kwargs_lens = safe_kwargs_lens
         lens_eq_solver = LensEquationSolver(lens_model_class)
         point_source_pos_x, point_source_pos_y = x_source, y_source
-
         # uses analytical lens equation solver in case it is supported by lenstronomy for speed-up
         if (
             self._lens_equation_solver == "lenstronomy_analytical"
@@ -184,6 +201,9 @@ class Lens(LensedSystemBase):
             min_distance=einstein_radius * 6 / 200,
             magnification_limit=self._magnification_limit,
         )
+        if len(image_positions)>2:
+            print(f'Einstein radius: {einstein_radius}, Point source position: {point_source_pos_x}, {point_source_pos_y}, Image positions: {image_positions}')
+
         return image_positions
 
     def validity_test(
@@ -253,7 +273,10 @@ class Lens(LensedSystemBase):
 
         # Criteria 1:The redshift of the lens (z_lens) must be less than the
         # redshift of the source (z_source).
-        z_lens = self.deflector.redshift
+        if self.multi_plane:
+            z_lens = np.max(self.deflector_redshift)
+        else:
+            z_lens = self.deflector.redshift
         z_source = self.source(source_index).redshift
         if z_lens >= z_source:
             return False
@@ -328,8 +351,25 @@ class Lens(LensedSystemBase):
         """
 
         :return: lens redshift
+    
         """
-        return self.deflector.redshift
+        deflector_redshifts = [self.deflector.redshift]
+
+        if self.multi_plane:
+            
+            if self.deflector.deflector_type in ["NFW_CLUSTER"]:
+                for subhalo in self.deflector._deflector._subhalos:
+                    deflector_redshifts.append(float(subhalo.redshift))
+    
+            if self.shear:
+                deflector_redshifts.insert(1, self.deflector.redshift)
+                
+            if self.convergence:
+                deflector_redshifts.insert(2, self.deflector.redshift)
+
+            return deflector_redshifts
+        else:
+            return self.deflector.redshift
 
     @property
     def source_redshift_list(self):
@@ -389,7 +429,7 @@ class Lens(LensedSystemBase):
         :return: Einstein radius of a deflector.
         """
         if not hasattr(self, "_theta_E_infinity"):
-            self._theta_E_infinity = self.deflector.theta_e_infinity(self.cosmo)
+            self._theta_E_infinity = self.deflector.theta_e_infinity(self.cosmo, multi_plane=self.multi_plane)
         return self._theta_E_infinity
 
     def _approximate_einstein_radius(self, source_index):
@@ -1030,31 +1070,62 @@ class Lens(LensedSystemBase):
             kwargs_lens_light,
         ) = self.deflector.light_model_lenstronomy(band=band)
         # list of
-        kwargs_model = {
-            "lens_light_model_list": lens_light_model_list,
-            "lens_model_list": lens_model_list,
-        }
-        if self.source_number > 1:
-            kwargs_model["lens_redshift_list"] = [self.deflector_redshift] * len(
-                lens_model_list
-            )
-            kwargs_model["z_lens"] = self.deflector_redshift
-            if self.max_redshift_source_class.extended_source_type in [
-                "single_sersic",
-                "interpolated",
-            ]:
-                kwargs_model["source_redshift_list"] = self.source_redshift_list
-            elif self.max_redshift_source_class.extended_source_type in [
-                "double_sersic"
-            ]:
-                kwargs_model["source_redshift_list"] = [
-                    z for z in self.source_redshift_list for _ in range(2)
-                ]
-            kwargs_model["z_source_convention"] = (
-                self.max_redshift_source_class.redshift
-            )
-            kwargs_model["z_source"] = self.max_redshift_source_class.redshift
+
+        if self.multi_plane:
+            kwargs_model = {
+                "lens_light_model_list": lens_light_model_list,
+                "lens_model_list": lens_model_list,
+            }
+            kwargs_model["lens_redshift_list"] = self.deflector_redshift
+            
+            kwargs_model["z_lens"] = self.deflector.redshift
+            
             kwargs_model["cosmo"] = self.cosmo
+            
+            if self.source_number > 1:
+
+                if self.max_redshift_source_class.extended_source_type in [
+                    "single_sersic",
+                    "interpolated",
+                ]:
+                    kwargs_model["source_redshift_list"] = self.source_redshift_list
+                elif self.max_redshift_source_class.extended_source_type in [
+                    "double_sersic"
+                ]:
+                    kwargs_model["source_redshift_list"] = [
+                        z for z in self.source_redshift_list for _ in range(2)
+                    ]
+                kwargs_model["z_source_convention"] = (
+                    self.max_redshift_source_class.redshift
+                )
+                kwargs_model["z_source"] = self.max_redshift_source_class.redshift 
+
+        else:
+            kwargs_model = {
+                "lens_light_model_list": lens_light_model_list,
+                "lens_model_list": lens_model_list,
+            }
+            if self.source_number > 1:
+                kwargs_model["lens_redshift_list"] = [self.deflector_redshift] * len(
+                    lens_model_list
+                )
+                kwargs_model["z_lens"] = self.deflector_redshift
+                if self.max_redshift_source_class.extended_source_type in [
+                    "single_sersic",
+                    "interpolated",
+                ]:
+                    kwargs_model["source_redshift_list"] = self.source_redshift_list
+                elif self.max_redshift_source_class.extended_source_type in [
+                    "double_sersic"
+                ]:
+                    kwargs_model["source_redshift_list"] = [
+                        z for z in self.source_redshift_list for _ in range(2)
+                    ]
+                kwargs_model["z_source_convention"] = (
+                    self.max_redshift_source_class.redshift
+                )
+                kwargs_model["z_source"] = self.max_redshift_source_class.redshift
+                kwargs_model["cosmo"] = self.cosmo
 
         sources, sources_kwargs = self.source_light_model_lenstronomy(band=band)
         # ensure that only the models that exist are getting added to kwargs_model
@@ -1100,17 +1171,22 @@ class Lens(LensedSystemBase):
             gamma1_lenstronomy, gamma2_lenstronomy = ellipticity_slsim_to_lenstronomy(
                 e1_slsim=gamma1, e2_slsim=gamma2
             )
-            kwargs_lens.append(
-                {
-                    "gamma1": gamma1_lenstronomy,
-                    "gamma2": gamma2_lenstronomy,
-                    "ra_0": 0,
-                    "dec_0": 0,
-                }
-            )
-            kwargs_lens.append({"kappa": kappa_ext, "ra_0": 0, "dec_0": 0})
-            lens_mass_model_list.append("SHEAR")
-            lens_mass_model_list.append("CONVERGENCE")
+            if self.shear:
+
+                kwargs_lens.insert(1,
+                    {
+                        "gamma1": gamma1_lenstronomy,
+                        "gamma2": gamma2_lenstronomy,
+                        "ra_0": 0,
+                        "dec_0": 0,
+                    }
+                )
+                lens_mass_model_list.insert(1,"SHEAR")
+            if self.convergence:
+
+                kwargs_lens.insert(2, {"kappa": kappa_ext, "ra_0": 0, "dec_0": 0})
+                lens_mass_model_list.insert(2,"CONVERGENCE")
+
             self._kwargs_lens = kwargs_lens
             self._lens_mass_model_list = lens_mass_model_list
         else:
@@ -1129,15 +1205,25 @@ class Lens(LensedSystemBase):
 
         # TODO: replace with change_source_redshift() currently not fully working
         # self._lens_model.change_source_redshift(z_source=z_source)
-        lens_model = LensModel(
-            lens_model_list=self._lens_mass_model_list,
-            cosmo=self.cosmo,
-            z_lens=self.deflector_redshift,
-            z_source=z_source,
-            z_source_convention=self.max_redshift_source_class.redshift,
-            multi_plane=False,
-            use_jax=use_jax,
-        )
+        if self.multi_plane:
+            lens_model = LensModel(
+                lens_model_list=self._lens_mass_model_list,
+                cosmo=self.cosmo,
+                lens_redshift_list=self.deflector_redshift,
+                z_source=z_source,
+                z_source_convention=self.max_redshift_source_class.redshift,
+                use_jax=True,
+                multi_plane=True,
+            )
+        else:
+            lens_model = LensModel(
+                lens_model_list=self._lens_mass_model_list,
+                cosmo=self.cosmo,
+                z_lens=self.deflector_redshift,
+                z_source=z_source,
+                z_source_convention=self.max_redshift_source_class.redshift,
+                use_jax=use_jax,
+            )
         return lens_model, self._kwargs_lens
 
     def deflector_light_model_lenstronomy(self, band):
@@ -1390,3 +1476,93 @@ class Lens(LensedSystemBase):
             multi_plane=False,
         )
         return lens_model_subhalos_only, kwargs_subhalos
+    
+    def lens_to_dataframe(self, index=0, df=None):
+        """Store lens properties to a dataframe. This function assumes the name
+        of other methods in the lens class. Thus, if the name of some method
+        changes, this function will break. Additionally, it assumes that the
+        source lives on one plane.
+
+        :param index: index of row that the lens is stored in. Default =
+            0
+        :type index: int
+        :param df: Optional. Stores lens into an existing df if
+            necessary, creates one if not.
+        :return: pandas DataFrame containing deflector/source mass and
+            light properties.
+        """
+        # TODO: Extend this to work for multiple plane sources
+        lens_index = index
+        if df is None:
+            df = pd.DataFrame()
+        # store lens ID
+        df.loc[lens_index, "ID"] = str(self.generate_id())
+
+        # store mass model parameters
+        for i in self.deflector_mass_model_lenstronomy()[1]:
+            for key in i.keys():
+                val = i[key]
+                df.loc[lens_index, "deflector_mass_" + key] = (
+                    safe_value(val)
+                    if isinstance(val, (np.ndarray, np.generic, float))
+                    else val
+                )
+
+        # store light model parameters
+        for i in self.deflector_light_model_lenstronomy("i")[1]:
+            for key in i.keys():
+                val = i[key]
+                df.loc[lens_index, "deflector_light_" + key] = safe_value(val)
+
+        # store source light properties
+        for i in self.source_light_model_lenstronomy("i")[1]["kwargs_ps"]:
+            for key in i.keys():
+                if isinstance(i[key], np.ndarray):
+                    for j in range(len(i[key])):
+                        v = i[key][j]
+                        df.loc[lens_index, f"point_source_light_{key}_{j}"] = (
+                            safe_value(v)
+                        )
+        # single float values (velocity dispersion, redshifts)
+        df.loc[lens_index, "velocity_dispersion"] = safe_value(
+            self.deflector_velocity_dispersion()
+        )
+        df.loc[lens_index, "deflector_redshift"] = safe_value(self.deflector_redshift)
+        df.loc[lens_index, "point_source_redshift"] = safe_value(
+            self.source_redshift_list[0]
+        )
+        ps_times = self.point_source_arrival_times()[0]
+        num_images = len(ps_times)
+        for i in range(num_images):
+            df.loc[lens_index, f"image_{i}_arrival_time"] = ps_times[i]
+        df.loc[lens_index, "num_ps_images"] = safe_value(num_images)
+
+        # micro_lens_params = (
+        #     self._microlensing_parameters_for_image_positions_single_source(
+        #         band="i", source_index=0
+        #     )
+        # )
+        # params = ["kappa_star", "kappa_tot", "shear", "shear_angle"]
+        # for i, p in enumerate(params):
+        #     for k in range(num_images):
+        #         pls = f"micro_{p}_{k}"
+        #         # check if any of the lists for any param is nested
+        #         param_for_all_images = np.array(micro_lens_params[i])
+        #         if param_for_all_images.shape[0] > 0:
+        #             param_for_all_images = param_for_all_images.flatten()
+        #         # if param_for_all_images.shape[0]
+        #         val = param_for_all_images[k]
+        #         df.loc[lens_index, pls] = safe_value(val)
+
+        for i in range(num_images):
+            df.loc[lens_index, f"point_source_arrival_time_{i}"] = safe_value(
+                ps_times[i]
+            )
+        df.loc[lens_index, "external_shear"] = safe_value(self.external_shear)
+        df.loc[lens_index, "extended_unlensed_mag"] = safe_value(
+            self.extended_source_magnitude("i", lensed=False)[0]
+        )
+        df.loc[lens_index, "extended_magnification"] = safe_value(
+            self.extended_source_magnification[0]
+        )
+        return df

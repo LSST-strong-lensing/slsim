@@ -202,7 +202,7 @@ class Deflector(object):
         )
         return mag_arcsec2
 
-    def theta_e_infinity(self, cosmo):
+    def theta_e_infinity(self, cosmo, multi_plane=False):
         """Einstein radius for a source at infinity (or well passed where
         galaxies exist.
 
@@ -226,21 +226,33 @@ class Deflector(object):
                     lens_cosmo=lens_cosmo, spherical=True
                 )
             )
-            use_jax = []
-            for profile in lens_mass_model_list:
-                if profile in JAX_PROFILES:
-                    use_jax.append(True)
-                else:
-                    use_jax.append(False)
-            lens_model = LensModel(
-                lens_model_list=lens_mass_model_list,
-                z_lens=self.redshift,
-                z_source_convention=_z_source_infty,
-                multi_plane=False,
-                z_source=_z_source_infty,
-                cosmo=cosmo,
-                use_jax=use_jax,
-            )
+            if multi_plane:
+                print(f"multi-plane model in Deflector() used!")
+                lens_model = LensModel(
+                    lens_model_list=lens_mass_model_list,
+                    lens_redshift_list=[self.redshift] + self._deflector.subhalo_redshifts,
+                    z_source_convention=_z_source_infty,
+                    multi_plane=True,
+                    z_source=_z_source_infty,
+                    cosmo=cosmo,
+                    use_jax=True,
+                )                   
+            else:    
+                use_jax = []
+                for profile in lens_mass_model_list:
+                    if profile in JAX_PROFILES:
+                        use_jax.append(True)
+                    else:
+                        use_jax.append(False)
+                lens_model = LensModel(
+                    lens_model_list=lens_mass_model_list,
+                    z_lens=self.redshift,
+                    z_source_convention=_z_source_infty,
+                    multi_plane=False,
+                    z_source=_z_source_infty,
+                    cosmo=cosmo,
+                    use_jax=use_jax,
+                )
 
             lens_analysis = LensProfileAnalysis(lens_model=lens_model)
 
