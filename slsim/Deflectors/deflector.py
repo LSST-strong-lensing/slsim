@@ -230,14 +230,15 @@ class Deflector(object):
                 print(f"multi-plane model in Deflector() used!")
                 lens_model = LensModel(
                     lens_model_list=lens_mass_model_list,
-                    lens_redshift_list=[self.redshift] + self._deflector.subhalo_redshifts,
+                    lens_redshift_list=[self.redshift]
+                    + self._deflector.subhalo_redshifts,
                     z_source_convention=_z_source_infty,
                     multi_plane=True,
                     z_source=_z_source_infty,
                     cosmo=cosmo,
                     use_jax=True,
-                )                   
-            else:    
+                )
+            else:
                 use_jax = []
                 for profile in lens_mass_model_list:
                     if profile in JAX_PROFILES:

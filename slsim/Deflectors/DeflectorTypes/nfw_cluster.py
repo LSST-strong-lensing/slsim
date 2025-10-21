@@ -144,7 +144,7 @@ class NFWCluster(DeflectorBase):
             mag = subhalo.magnitude(band)
             total_flux += 10 ** (-0.4 * mag)
         return -2.5 * np.log10(total_flux)
-    
+
     @property
     def subhalo_redshifts(self):
         """Redshifts of the subhalos for multi-plane LensModel()"""
@@ -152,5 +152,3 @@ class NFWCluster(DeflectorBase):
         for subhalo in self._subhalos:
             subhalo_z.append(subhalo.redshift)
         return subhalo_z
-
-

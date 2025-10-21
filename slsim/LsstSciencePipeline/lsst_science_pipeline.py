@@ -35,15 +35,17 @@ This module provides necessary functions to inject lenses to the dp0 data. For t
 uses some of the packages provided by the LSST Science Pipeline.
 """
 import pyvo
-RSP_TAP_SERVICE = 'https://data.lsst.cloud/api/tap'
-homedir = os.path.expanduser('~')
-token_file = os.path.join(homedir,'.rsp-tap.token')
-with open(token_file, 'r') as f:
+
+RSP_TAP_SERVICE = "https://data.lsst.cloud/api/tap"
+homedir = os.path.expanduser("~")
+token_file = os.path.join(homedir, ".rsp-tap.token")
+with open(token_file, "r") as f:
     token_str = f.readline()
 cred = pyvo.auth.CredentialStore()
 cred.set_password("x-oauth-basic", token_str)
 credential = cred.get("ivo://ivoa.net/sso#BasicAA")
 rsp_tap = pyvo.dal.TAPService(RSP_TAP_SERVICE, session=credential)
+
 
 def DC2_cutout(ra, dec, num_pix, butler, band):
     """Draws a cutout from the DC2 data based on the given ra, dec pair.
@@ -193,6 +195,7 @@ def lens_inejection(
     )
     return t
 
+
 def lens_injection_to_coadd(
     lens_pop, num_pix, delta_pix, coadd_dict, lens_cut=None, flux=None
 ):
@@ -221,12 +224,16 @@ def lens_injection_to_coadd(
     else:
         kwargs_lens_cut = lens_cut
 
-    coadd = coadd_dict['r']
+    coadd = coadd_dict["r"]
     rgb_band_list = ["r", "g", "i"]
     lens_class = lens_pop
     wcs = coadd.getWcs()
     bbox = coadd.getBBox()
-    center = SkyCoord(ra=wcs.getSkyOrigin().getRa().asDegrees()*u.degree, dec=wcs.getSkyOrigin().getDec().asDegrees()*u.degree, frame='icrs')
+    center = SkyCoord(
+        ra=wcs.getSkyOrigin().getRa().asDegrees() * u.degree,
+        dec=wcs.getSkyOrigin().getDec().asDegrees() * u.degree,
+        frame="icrs",
+    )
     injected_final_image = []
     # band_report = []
     box_center = []
@@ -368,6 +375,7 @@ def generate_cutout_bbox(x_center, y_center, num_pix):
     return geom.Box2I(
         geom.Point2I(xbox_min, ybox_min), geom.Point2I(xbox_max, ybox_max)
     )
+
 
 def get_dp0_images(butler, ra, dec, band_list, coadd_injection):
     """Retrieve coadd or visit images for the given bands.
@@ -604,6 +612,7 @@ def lens_inejection_fast(
     lens_catalog = vstack(table)
     return lens_catalog
 
+
 def lens_injection_fast_coadd(
     lens_pop,
     num_pix,
@@ -674,7 +683,7 @@ def lens_injection_fast_coadd(
     xmax, ymax = bbox.getEnd()
     wcs = coadd[0].getWcs()
 
-    cutout_dim = (num_pix+1) // 2
+    cutout_dim = (num_pix + 1) // 2
     valid_cutouts = 0
     table = []
     # for i in range(len(x_center)):
@@ -713,9 +722,9 @@ def lens_injection_fast_coadd(
             ):
                 is_valid = False
                 break  # Discard this cutout and try again
-            
+
             if noise is True:
-                
+
                 exposure_map = 30 * coadd_nImage[j][cutout_bbox].array
                 zero_point_magnitude = mag_zero_visit[j]
 

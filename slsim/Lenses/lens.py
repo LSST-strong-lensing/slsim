@@ -21,6 +21,7 @@ from slsim.Deflectors.deflector import JAX_PROFILES
 from slsim.Util.catalog_util import safe_value
 import pandas as pd
 
+
 class Lens(LensedSystemBase):
     """Class to manage individual lenses."""
 
@@ -34,7 +35,7 @@ class Lens(LensedSystemBase):
         los_class=None,
         multi_plane=False,
         shear=True,
-        convergence =False
+        convergence=False,
     ):
         """
 
@@ -61,8 +62,7 @@ class Lens(LensedSystemBase):
             los_class=los_class,
             multi_plane=multi_plane,
             shear=shear,
-            convergence=convergence
-            
+            convergence=convergence,
         )
         # SourceList.__init__(self, source_class_list=source_class)
         self.cosmo = cosmo
@@ -180,7 +180,7 @@ class Lens(LensedSystemBase):
                     safe_dict[key] = safe_value(lens[key])
                 else:
                     safe_dict[key] = lens[key]
-            safe_kwargs_lens.append(safe_dict)  
+            safe_kwargs_lens.append(safe_dict)
         kwargs_lens = safe_kwargs_lens
         lens_eq_solver = LensEquationSolver(lens_model_class)
         point_source_pos_x, point_source_pos_y = x_source, y_source
@@ -202,8 +202,10 @@ class Lens(LensedSystemBase):
             min_distance=einstein_radius * 6 / 200,
             magnification_limit=self._magnification_limit,
         )
-        if len(image_positions)>2:
-            print(f'Einstein radius: {einstein_radius}, Point source position: {point_source_pos_x}, {point_source_pos_y}, Image positions: {image_positions}')
+        if len(image_positions) > 2:
+            print(
+                f"Einstein radius: {einstein_radius}, Point source position: {point_source_pos_x}, {point_source_pos_y}, Image positions: {image_positions}"
+            )
 
         return image_positions
 
@@ -358,19 +360,19 @@ class Lens(LensedSystemBase):
         """
 
         :return: lens redshift
-    
+
         """
         deflector_redshifts = [self.deflector.redshift]
 
         if self.multi_plane:
-            
+
             if self.deflector.deflector_type in ["NFW_CLUSTER"]:
                 for subhalo in self.deflector._deflector._subhalos:
                     deflector_redshifts.append(float(subhalo.redshift))
-    
+
             if self.shear:
                 deflector_redshifts.insert(1, self.deflector.redshift)
-                
+
             if self.convergence:
                 deflector_redshifts.insert(2, self.deflector.redshift)
 
@@ -436,7 +438,9 @@ class Lens(LensedSystemBase):
         :return: Einstein radius of a deflector.
         """
         if not hasattr(self, "_theta_E_infinity"):
-            self._theta_E_infinity = self.deflector.theta_e_infinity(self.cosmo, multi_plane=self.multi_plane)
+            self._theta_E_infinity = self.deflector.theta_e_infinity(
+                self.cosmo, multi_plane=self.multi_plane
+            )
         return self._theta_E_infinity
 
     def _approximate_einstein_radius(self, source_index):
@@ -1084,11 +1088,11 @@ class Lens(LensedSystemBase):
                 "lens_model_list": lens_model_list,
             }
             kwargs_model["lens_redshift_list"] = self.deflector_redshift
-            
+
             kwargs_model["z_lens"] = self.deflector.redshift
-            
+
             kwargs_model["cosmo"] = self.cosmo
-            
+
             if self.source_number > 1:
 
                 if self.max_redshift_source_class.extended_source_type in [
@@ -1105,7 +1109,7 @@ class Lens(LensedSystemBase):
                 kwargs_model["z_source_convention"] = (
                     self.max_redshift_source_class.redshift
                 )
-                kwargs_model["z_source"] = self.max_redshift_source_class.redshift 
+                kwargs_model["z_source"] = self.max_redshift_source_class.redshift
 
         else:
             kwargs_model = {
@@ -1180,19 +1184,20 @@ class Lens(LensedSystemBase):
             )
             if self.shear:
 
-                kwargs_lens.insert(1,
+                kwargs_lens.insert(
+                    1,
                     {
                         "gamma1": gamma1_lenstronomy,
                         "gamma2": gamma2_lenstronomy,
                         "ra_0": 0,
                         "dec_0": 0,
-                    }
+                    },
                 )
-                lens_mass_model_list.insert(1,"SHEAR")
+                lens_mass_model_list.insert(1, "SHEAR")
             if self.convergence:
 
                 kwargs_lens.insert(2, {"kappa": kappa_ext, "ra_0": 0, "dec_0": 0})
-                lens_mass_model_list.insert(2,"CONVERGENCE")
+                lens_mass_model_list.insert(2, "CONVERGENCE")
 
             self._kwargs_lens = kwargs_lens
             self._lens_mass_model_list = lens_mass_model_list

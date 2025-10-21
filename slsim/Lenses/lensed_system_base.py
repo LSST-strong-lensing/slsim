@@ -7,7 +7,15 @@ class LensedSystemBase(ABC):
     """Abstract Base class to create a lens system with all lensing properties
     required to render populations."""
 
-    def __init__(self, source_class, deflector_class, los_class=None, multi_plane=False, shear=True, convergence=False):
+    def __init__(
+        self,
+        source_class,
+        deflector_class,
+        los_class=None,
+        multi_plane=False,
+        shear=True,
+        convergence=False,
+    ):
         """
         :param source_class: :param source_class: A Source class instance or list of
          Source class instance

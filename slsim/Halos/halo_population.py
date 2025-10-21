@@ -5,6 +5,7 @@ from colossus.lss import mass_function
 
 # Changed "vir" to 200c in concent_m_w_scatter function, mdef="vir" is not supported in diemer19 model.
 
+
 def gene_e_ang_halo(Mh):
     """Ellipticity.
 
