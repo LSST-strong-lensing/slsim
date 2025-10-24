@@ -193,6 +193,7 @@ def lens_inejection(
     )
     return t
 
+
 def get_dp0_images(butler, ra, dec, band_list, coadd_injection):
     """Retrieve coadd or visit images for the given bands.
 
@@ -446,14 +447,17 @@ def lens_injection_fast_coadd(
     center_source_snr_threshold=5,
     false_positive=False,
 ):
-    """Injects lenses into randomly taken cutouts from a given DC2 cutout image.
+    """Injects lenses into randomly taken cutouts from a given DC2 cutout
+    image.
 
     :param lens_pop: lens population from slsim. It can be a LensPop
         instance or list of Lens class.
     :param num_pix: number of pixel for the cutout
     :param coadd: list of coadd images in different bands
-    :param coadd_nImage: list of number of images in coadd in different bands
-    :param mag_zero_visit: list of magnitude zero points in different bands
+    :param coadd_nImage: list of number of images in coadd in different
+        bands
+    :param mag_zero_visit: list of magnitude zero points in different
+        bands
     :param variance_map: list of variance maps in different bands
     :param transform_pix2angle: transformation matrix (2x2) of pixels
         into coordinate displacements
@@ -470,11 +474,12 @@ def lens_injection_fast_coadd(
         is 3 arcsec).
     :param center_source_snr_threshold: SNR threshold for object
         detection in center box (default is 5).
-    :param false_positive: Boolean. If false, code assumes that the provided
-     population is a lens population. If True, code assumes that the provided
-     population is a false positive population. False positive contains an
-     elliptical galaxy at the center and blue galaxies around this central galaxy.
-     for more detail, please see: slsim/FalsePositives/
+    :param false_positive: Boolean. If false, code assumes that the
+        provided population is a lens population. If True, code assumes
+        that the provided population is a false positive population.
+        False positive contains an elliptical galaxy at the center and
+        blue galaxies around this central galaxy. for more detail,
+        please see: slsim/FalsePositives/
     :returns: An astropy table containing Injected lens in r-band, DC2
         cutout image in r-band, cutout image with injected lens in r, g
         , and i band, cutout box center and cutout bbox.
