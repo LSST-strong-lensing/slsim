@@ -16,6 +16,7 @@ from slsim.Util.param_util import (
 )
 import h5py
 import os
+
 try:
     import lsst.geom as geom
     from lsst.pipe.tasks.insertFakes import _add_fake_sources
