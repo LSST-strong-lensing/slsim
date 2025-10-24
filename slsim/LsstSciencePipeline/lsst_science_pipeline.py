@@ -18,6 +18,7 @@ import h5py
 import os
 from astropy.coordinates import SkyCoord
 import astropy.units as u
+
 try:
     import lsst.geom as geom
     from lsst.pipe.tasks.insertFakes import _add_fake_sources
