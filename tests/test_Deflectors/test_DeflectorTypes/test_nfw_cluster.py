@@ -70,3 +70,8 @@ class TestNFWCluster(object):
     def test_magnitude(self):
         magnitude = self.nfw_cluster.magnitude(band="r")
         npt.assert_almost_equal(magnitude, 18.632, decimal=3)
+
+    def test_subhalo_redshifts(self):
+        subhalo_redshifts = self.nfw_cluster.subhalo_redshifts
+        for i, subhalo in enumerate(self.nfw_cluster._subhalos):
+            npt.assert_almost_equal(subhalo_redshifts[i], subhalo.redshift, decimal=6)

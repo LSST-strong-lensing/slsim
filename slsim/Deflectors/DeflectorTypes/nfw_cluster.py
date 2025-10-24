@@ -147,8 +147,11 @@ class NFWCluster(DeflectorBase):
 
     @property
     def subhalo_redshifts(self):
-        """Redshifts of the subhalos for multi-plane LensModel()"""
+        """Redshifts of the subhalos for multi-plane LensModel()
+        :return: list of subhalo redshifts
+        """
         subhalo_z = []
         for subhalo in self._subhalos:
-            subhalo_z.append(subhalo.redshift)
+            subhalo_z.append(float(subhalo.redshift))
         return subhalo_z
+    

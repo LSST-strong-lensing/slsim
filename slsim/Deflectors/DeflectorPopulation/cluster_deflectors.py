@@ -143,7 +143,12 @@ class ClusterDeflectors(DeflectorsBase):
         return deflector_class
 
     def get_deflector(self, cluster_id):
-
+        """
+        :param cluster_id: identifier of the cluster
+        :type cluster_id: int
+        :type index: int or None
+        :return: dictionary of complete parameterization of deflector for the given cluster_id
+        """
         indices = np.where(self._cluster_select["cluster_id"] == cluster_id)[0]
 
         if len(indices) == 0:

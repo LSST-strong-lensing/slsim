@@ -44,6 +44,7 @@ class Deflector(object):
         elif deflector_type in ["NFW_CLUSTER"]:
             self._deflector = NFWCluster(**kwargs)
             self._name = "CLUSTER"
+            self.subhalo_redshifts = self._deflector.subhalo_redshifts
         else:
             raise ValueError(
                 "Deflector type %s not supported. Chose among %s."
@@ -202,12 +203,16 @@ class Deflector(object):
         )
         return mag_arcsec2
 
-    def theta_e_infinity(self, cosmo, multi_plane=False):
+    def theta_e_infinity(self, cosmo, multi_plane=None):
         """Einstein radius for a source at infinity (or well passed where
         galaxies exist.
 
         :param cosmo: astropy.cosmology instance
-        :return:
+        :type cosmo: ~astropy.cosmology class
+        :param multi_plane: None for single-plane, 'Source' for multi-source plane, 'Deflector' for multi-deflector plane,
+            or 'Both' for both multi-deflector and multi-source plane
+        :type multi_plane: None or str
+        :return: Einstein radius [arcsec]
         """
         if hasattr(self, "_theta_e_infinity"):
             return self._theta_e_infinity
@@ -226,34 +231,34 @@ class Deflector(object):
                     lens_cosmo=lens_cosmo, spherical=True
                 )
             )
-            if multi_plane:
-                print(f"multi-plane model in Deflector() used!")
-                lens_model = LensModel(
-                    lens_model_list=lens_mass_model_list,
-                    lens_redshift_list=[self.redshift]
-                    + self._deflector.subhalo_redshifts,
-                    z_source_convention=_z_source_infty,
-                    multi_plane=True,
-                    z_source=_z_source_infty,
-                    cosmo=cosmo,
-                    use_jax=True,
+
+            if self.deflector_type == "NFW_CLUSTER" and multi_plane:
+                num_main_lens_profiles = len(lens_mass_model_list) - len(
+                    self.subhalo_redshifts
                 )
+                lens_redshift_list = [self.redshift]*num_main_lens_profiles
+                lens_redshift_list.extend(self.subhalo_redshifts)
             else:
-                use_jax = []
-                for profile in lens_mass_model_list:
-                    if profile in JAX_PROFILES:
-                        use_jax.append(True)
-                    else:
-                        use_jax.append(False)
-                lens_model = LensModel(
-                    lens_model_list=lens_mass_model_list,
-                    z_lens=self.redshift,
-                    z_source_convention=_z_source_infty,
-                    multi_plane=False,
-                    z_source=_z_source_infty,
-                    cosmo=cosmo,
-                    use_jax=use_jax,
-                )
+                num_main_lens_profiles = len(lens_mass_model_list)
+                lens_redshift_list = [self.redshift] * num_main_lens_profiles
+
+            use_jax = []
+            for profile in lens_mass_model_list:
+                if profile in JAX_PROFILES:
+                    use_jax.append(True)
+                else:
+                    use_jax.append(False)
+            print(f'deflector redshift list length: {len(lens_redshift_list)}, lens model list length: {len(lens_mass_model_list)}')
+            lens_model = LensModel(
+                lens_model_list=lens_mass_model_list,
+                z_lens=self.redshift,
+                lens_redshift_list=lens_redshift_list,
+                z_source_convention=_z_source_infty,
+                multi_plane=bool(multi_plane),
+                z_source=_z_source_infty,
+                cosmo=cosmo,
+                use_jax=True,
+            )
 
             lens_analysis = LensProfileAnalysis(lens_model=lens_model)
 
