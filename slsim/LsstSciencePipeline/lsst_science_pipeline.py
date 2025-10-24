@@ -193,188 +193,6 @@ def lens_inejection(
     )
     return t
 
-
-def lens_injection_to_coadd(
-    lens_pop, num_pix, delta_pix, coadd_dict, lens_cut=None, flux=None
-):
-    """Chooses a random lens from the lens population and injects it to a DC2
-    cutout image. For this one needs to provide a butler to this function. To
-    initiate Butler, you need to specify data configuration and collection of
-    the data.
-
-    :param lens_pop: lens population from slsim
-    :param num_pix: number of pixel for the cutout
-    :param delta_pix: pixel scale for the lens image
-    :param butler: butler object
-    :param ra: ra for the cutout
-    :param dec: dec for the cutout
-    :param lens_cut: list of criteria for lens selection
-    :param flux: flux need to be asigned to the lens image. It sould be
-        None
-    :param: path: path to save the output
-    :returns: An astropy table containing Injected lens in r-band, DC2
-        cutout image in r-band, cutout image with injected lens in r, g
-        , and i band
-    """
-    # lens = sim_lens
-    if lens_cut is None:
-        kwargs_lens_cut = {}
-    else:
-        kwargs_lens_cut = lens_cut
-
-    coadd = coadd_dict["r"]
-    rgb_band_list = ["r", "g", "i"]
-    lens_class = lens_pop
-    wcs = coadd.getWcs()
-    bbox = coadd.getBBox()
-    center = SkyCoord(
-        ra=wcs.getSkyOrigin().getRa().asDegrees() * u.degree,
-        dec=wcs.getSkyOrigin().getDec().asDegrees() * u.degree,
-        frame="icrs",
-    )
-    injected_final_image = []
-    # band_report = []
-    box_center = []
-    cutout_image = []
-    lens_image = []
-    for band in rgb_band_list:
-
-        # coadd cutout image
-        coadd_cut_r = coadd_dict[band]
-        lens = sharp_image(
-            lens_class=lens_class,
-            band=band,
-            mag_zero_point=27,
-            delta_pix=delta_pix,
-            num_pix=num_pix,
-        )
-        if flux is None:
-            gsobj = galsim.InterpolatedImage(
-                galsim.Image(lens), scale=delta_pix, normalization="flux"
-            )
-        else:
-            gsobj = galsim.InterpolatedImage(
-                galsim.Image(lens), scale=delta_pix, flux=flux
-            )
-
-        wcs_r = coadd_cut_r.getWcs()
-        bbox_r = coadd_cut_r.getBBox()
-        x_min_r = bbox_r.getMinX()
-        y_min_r = bbox_r.getMinY()
-        x_max_r = bbox_r.getMaxX()
-        y_max_r = bbox_r.getMaxY()
-
-        # Calculate the center coordinates
-        x_center_r = (x_min_r + x_max_r) / 2
-        y_center_r = (y_min_r + y_max_r) / 2
-
-        center_r = geom.Point2D(x_center_r, y_center_r)
-        # geom.Point2D(26679, 15614)
-        point_r = wcs_r.pixelToSky(center_r)
-        ra_degrees = point_r.getRa().asDegrees()
-        dec_degrees = point_r.getDec().asDegrees()
-        center = (ra_degrees, dec_degrees)
-
-        # image_r = butler.get("deepCoadd", parameters={'bbox':bbox_r},dataId=coaddId_r)
-        arr_r = np.copy(coadd_cut_r.image.array)
-
-        _add_fake_sources(coadd_cut_r, [(point_r, gsobj)])
-        inj_arr_r = coadd_cut_r.image.array
-        injected_final_image.append(inj_arr_r)
-        # band_report.append(band)
-        box_center.append(center)
-        cutout_image.append(arr_r)
-        lens_image.append((inj_arr_r - arr_r))
-
-    t = Table(
-        [
-            [lens_image[0]],
-            [cutout_image[0]],
-            [injected_final_image[0]],
-            [injected_final_image[1]],
-            [injected_final_image[2]],
-            [box_center[0]],
-        ],
-        names=(
-            "lens",
-            "cutout_image",
-            "injected_lens_r",
-            "injected_lens_g",
-            "injected_lens_i",
-            "cutout_center",
-        ),
-    )
-    return t
-
-
-def get_dp0_images(butler, ra, dec, band_list, coadd_injection):
-    """Retrieve coadd or visit images for the given bands.
-
-    :param butler: butler object
-    :param ra: ra for the cutout
-    :param dec: dec for the cutout
-    :param band_list: List of imaging band in which lens need to be
-        injected.
-    :param coadd_injection: Boolean. If True, queries the DP0 coadd
-        image and if False, queries the single visit DP0 images.
-    :return: coadd or single visit image, number of images in coadd,
-        magnitude zero point, and variance map in specified bands.
-    """
-    skymap = butler.get("skyMap")
-    point = geom.SpherePoint(ra, dec, geom.degrees)
-    # cutoutSize = geom.ExtentI(num_pix, num_pix)
-
-    tractInfo = skymap.findTract(point)
-    patchInfo = tractInfo.findPatch(point)
-    my_tract = tractInfo.tract_id
-    my_patch = patchInfo.getSequentialIndex()
-    coadd, coadd_nImage, mag_zero_visit, variance_map = [], [], [], []
-
-    for band in band_list:
-        coaddId = {"tract": my_tract, "patch": my_patch, "band": band}
-        coadd_image = butler.get("deepCoadd", dataId=coaddId)
-
-        if not coadd_injection:
-            visit_info = coadd_image.getInfo().getCoaddInputs().ccds
-            index = np.random.randint(0, len(visit_info))
-            dataId_visit = {
-                "visit": visit_info[index]["visit"],
-                "detector": visit_info[index]["ccd"],
-                "band": visit_info[index]["filter"],
-                "tract": tractInfo.getId(),
-            }
-            visit_image = butler.get("calexp", dataId=dataId_visit)
-            coadd.append(visit_image)
-            variance_map.append(visit_image.getVariance())
-            mag_zero_visit.append(
-                2.5 * np.log10(visit_image.getPhotoCalib().getInstFluxAtZeroMagnitude())
-            )
-        else:
-            coadd.append(coadd_image)
-            variance_map.append(coadd_image.getVariance())
-            coadd_nImage.append(butler.get("deepCoadd_nImage", dataId=coaddId))
-
-    return coadd, coadd_nImage, mag_zero_visit, variance_map
-
-
-def generate_cutout_bbox(x_center, y_center, num_pix):
-    """Generate bounding box for cutout selection.
-
-    :param x_center: x value of center of the cutout box in pixel unit
-    :param y_center: y value of center of the cutout box in pixel unit
-    :param num_pix: number of pixel for the cutout
-    :return: 2d box readable by the butler
-    """
-    xbox_min = x_center - ((num_pix - 1) / 2)
-    xbox_max = x_center + ((num_pix - 1) / 2)
-    ybox_min = y_center - ((num_pix - 1) / 2)
-    ybox_max = y_center + ((num_pix - 1) / 2)
-
-    return geom.Box2I(
-        geom.Point2I(xbox_min, ybox_min), geom.Point2I(xbox_max, ybox_max)
-    )
-
-
 def get_dp0_images(butler, ra, dec, band_list, coadd_injection):
     """Retrieve coadd or visit images for the given bands.
 
@@ -628,27 +446,21 @@ def lens_injection_fast_coadd(
     center_source_snr_threshold=5,
     false_positive=False,
 ):
-    """Chooses a random lens from the lens population and injects it to a DC2
-    cutout image. For this one needs to provide a butler to this function. To
-    initiate Butler, you need to specify data configuration and collection of
-    the data.
+    """Injects lenses into randomly taken cutouts from a given DC2 cutout image.
 
     :param lens_pop: lens population from slsim. It can be a LensPop
         instance or list of Lens class.
     :param num_pix: number of pixel for the cutout
-    :param mag_zero_point: magnitude zero point in band
+    :param coadd: list of coadd images in different bands
+    :param coadd_nImage: list of number of images in coadd in different bands
+    :param mag_zero_visit: list of magnitude zero points in different bands
+    :param variance_map: list of variance maps in different bands
     :param transform_pix2angle: transformation matrix (2x2) of pixels
         into coordinate displacements
-    :param butler: butler object
-    :param ra: ra for the cutout
-    :param dec: dec for the cutout
     :param num_cutout_per_patch: number of cutout image drawn per patch
     :param lens_cut: list of criteria for lens selection
     :param noise: poisson noise to be added to an image. If True,
         poisson noise will be added to the image based on exposure time.
-    :param coadd_injection: Boolean. If True, injects lens into the DP0
-        coadd image and if False, injects lens into the single visit DP0
-        images.
     :param coadd_year: Year for the coadd images. This parameter is used
         to rescale the noise properties of 5 year dp0 coadd images to
         desired year of coadd.
@@ -660,12 +472,12 @@ def lens_injection_fast_coadd(
         detection in center box (default is 5).
     :param false_positive: Boolean. If false, code assumes that the provided
      population is a lens population. If True, code assumes that the provided
-     population is a false popitive poulation. False positive contains an
+     population is a false positive population. False positive contains an
      elliptical galaxy at the center and blue galaxies around this central galaxy.
      for more detail, please see: slsim/FalsePositives/
     :returns: An astropy table containing Injected lens in r-band, DC2
         cutout image in r-band, cutout image with injected lens in r, g
-        , and i band
+        , and i band, cutout box center and cutout bbox.
     """
 
     pixel_scale = transformmatrix_to_pixelscale(transform_pix2angle)
