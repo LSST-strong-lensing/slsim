@@ -379,7 +379,7 @@ class Lens(LensedSystemBase):
 
             if self.convergence:
                 deflector_redshifts.append(self.deflector.redshift)
-                
+
             return deflector_redshifts
         else:
             return self.deflector.redshift
@@ -1096,7 +1096,7 @@ class Lens(LensedSystemBase):
         kwargs_model["cosmo"] = self.cosmo
         kwargs_model["lens_redshift_list"] = self.deflector_redshift
 
-        if self.multi_plane == "Source":        
+        if self.multi_plane == "Source":
             if self.max_redshift_source_class.extended_source_type in [
                 "single_sersic",
                 "interpolated",
@@ -1111,7 +1111,7 @@ class Lens(LensedSystemBase):
             kwargs_model["z_source_convention"] = (
                 self.max_redshift_source_class.redshift
             )
-            
+
         sources, sources_kwargs = self.source_light_model_lenstronomy(band=band)
         # ensure that only the models that exist are getting added to kwargs_model
         for k in sources.keys():
@@ -1159,7 +1159,6 @@ class Lens(LensedSystemBase):
             if self.shear:
 
                 kwargs_lens.append(
-            
                     {
                         "gamma1": gamma1_lenstronomy,
                         "gamma2": gamma2_lenstronomy,
@@ -1171,13 +1170,7 @@ class Lens(LensedSystemBase):
 
             if self.convergence:
 
-                kwargs_lens.append(
-                    {
-                        "kappa": kappa_ext,
-                        "ra_0": 0,
-                        "dec_0": 0
-                    }
-                )
+                kwargs_lens.append({"kappa": kappa_ext, "ra_0": 0, "dec_0": 0})
                 lens_mass_model_list.append("CONVERGENCE")
 
             self._kwargs_lens = kwargs_lens
@@ -1188,7 +1181,6 @@ class Lens(LensedSystemBase):
                 "Deflector model %s not supported for lenstronomy model"
                 % self.deflector.deflector_type
             )
-
 
         # For significant speedup, use these mass profiles from jaxtronomy
         use_jax = []

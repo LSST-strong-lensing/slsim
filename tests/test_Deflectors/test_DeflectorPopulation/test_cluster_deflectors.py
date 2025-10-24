@@ -252,6 +252,7 @@ def test_cosmo_Ob0(cluster_deflectors_input):
     )
     assert colossus_cosmo.current_cosmo.Ob0 == 0.05
 
+
 def test_get_deflector(cluster_deflectors_instance):
     cluster_pop = cluster_deflectors_instance
     cluster = cluster_pop.draw_cluster(index=0)
@@ -268,6 +269,7 @@ def test_get_deflector(cluster_deflectors_instance):
     )
     assert (deflector.halo_properties[1] > 1) and (deflector.halo_properties[1] < 15)
     assert (len(members) >= 1) and (len(members) < 100)
+
 
 if __name__ == "__main__":
     pytest.main()

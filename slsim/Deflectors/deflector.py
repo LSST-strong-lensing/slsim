@@ -209,8 +209,9 @@ class Deflector(object):
 
         :param cosmo: astropy.cosmology instance
         :type cosmo: ~astropy.cosmology class
-        :param multi_plane: None for single-plane, 'Source' for multi-source plane, 'Deflector' for multi-deflector plane,
-            or 'Both' for both multi-deflector and multi-source plane
+        :param multi_plane: None for single-plane, 'Source' for multi-
+            source plane, 'Deflector' for multi-deflector plane, or
+            'Both' for both multi-deflector and multi-source plane
         :type multi_plane: None or str
         :return: Einstein radius [arcsec]
         """
@@ -236,7 +237,7 @@ class Deflector(object):
                 num_main_lens_profiles = len(lens_mass_model_list) - len(
                     self.subhalo_redshifts
                 )
-                lens_redshift_list = [self.redshift]*num_main_lens_profiles
+                lens_redshift_list = [self.redshift] * num_main_lens_profiles
                 lens_redshift_list.extend(self.subhalo_redshifts)
             else:
                 num_main_lens_profiles = len(lens_mass_model_list)
@@ -248,7 +249,9 @@ class Deflector(object):
                     use_jax.append(True)
                 else:
                     use_jax.append(False)
-            print(f'deflector redshift list length: {len(lens_redshift_list)}, lens model list length: {len(lens_mass_model_list)}')
+            print(
+                f"deflector redshift list length: {len(lens_redshift_list)}, lens model list length: {len(lens_mass_model_list)}"
+            )
             lens_model = LensModel(
                 lens_model_list=lens_mass_model_list,
                 z_lens=self.redshift,
