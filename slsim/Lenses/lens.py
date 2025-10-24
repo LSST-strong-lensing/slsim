@@ -18,7 +18,6 @@ from slsim.Util.catalog_util import safe_value
 
 from slsim.Lenses.lensed_system_base import LensedSystemBase
 from slsim.Deflectors.deflector import JAX_PROFILES
-from slsim.Util.catalog_util import safe_value
 import pandas as pd
 
 

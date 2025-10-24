@@ -18,9 +18,6 @@ import h5py
 import os
 from astropy.coordinates import SkyCoord
 import astropy.units as u
-from astropy.io import fits
-
-
 try:
     import lsst.geom as geom
     from lsst.pipe.tasks.insertFakes import _add_fake_sources
@@ -29,12 +26,12 @@ try:
 except ModuleNotFoundError:
     lsst = None
     galsim = None
+import pyvo
 
 """
 This module provides necessary functions to inject lenses to the dp0 data. For this, it 
 uses some of the packages provided by the LSST Science Pipeline.
 """
-import pyvo
 
 RSP_TAP_SERVICE = "https://data.lsst.cloud/api/tap"
 homedir = os.path.expanduser("~")
