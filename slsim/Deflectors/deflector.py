@@ -235,7 +235,7 @@ class Deflector(object):
             )
 
             if multi_plane:
-                
+
                 if self.deflector_type == "NFW_CLUSTER":
                     num_main_lens_profiles = len(lens_mass_model_list) - len(
                         self.subhalo_redshifts
@@ -245,17 +245,17 @@ class Deflector(object):
                 else:
                     num_main_lens_profiles = len(lens_mass_model_list)
                     lens_redshift_list = [self.redshift] * num_main_lens_profiles
-                    
-                use_jax=True
+
+                use_jax = True
             else:
-                lens_redshift_list=None
+                lens_redshift_list = None
                 use_jax = []
                 for profile in lens_mass_model_list:
                     if profile in JAX_PROFILES:
                         use_jax.append(True)
                     else:
                         use_jax.append(False)
-                    
+
             lens_model = LensModel(
                 lens_model_list=lens_mass_model_list,
                 z_lens=self.redshift,
