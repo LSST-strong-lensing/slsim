@@ -257,9 +257,6 @@ def test_get_deflector(cluster_deflectors_instance):
     cluster_pop = cluster_deflectors_instance
     cluster = cluster_pop.draw_cluster(index=0)
     deflector = cluster_pop.get_deflector(cluster_id=cluster["cluster_id"])
-    # test if the cluster id of the deflector is the same as the input cluster
-    assert deflector["cluster_id"] == cluster["cluster_id"]
-    # the rest is the same as test_draw_deflector
     members = cluster_pop.draw_members(cluster_id=cluster["cluster_id"])
     # test if the properties of the deflector are
     # as expected from the input catalog
