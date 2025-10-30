@@ -547,7 +547,9 @@ def lens_image(
     t_obs=None,
     std_gaussian_noise=None,
     with_source=True,
+    with_ps=True,
     with_deflector=True,
+    add_noise=True,
     gain=0.7,
     single_visit_mag_zero_points={
         "g": 32.33,
@@ -648,7 +650,9 @@ def lens_image_series(
     t_obs=None,
     std_gaussian_noise=None,
     with_source=True,
+    with_ps=True,
     with_deflector=True,
+    add_noise=False,
     gain=0.7,
     single_visit_mag_zero_points={
         "g": 32.33,
