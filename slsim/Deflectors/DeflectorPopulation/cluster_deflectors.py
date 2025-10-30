@@ -129,24 +129,29 @@ class ClusterDeflectors(DeflectorsBase):
         number = self._num_select
         return number
 
-    def draw_deflector(self, index=None):
+    def draw_deflector(self, index=None, cored=False):
         """
         :param index: index of deflector, if not provided, draw randomly from all deflectors
         :type index: int or None
+        :param cored: Boolean flag for cored density profile
+        :type cored: True for cored, False for cuspy profile
         :return: dictionary of complete parameterization of deflector
         """
         index = random.randint(0, self._num_select - 1)
         deflector = self.draw_cluster(index)
         members = self.draw_members(deflector["cluster_id"], **self.kwargs_draw_members)
         deflector["subhalos"] = members
+        deflector["core"] = cored
         deflector_class = Deflector(deflector_type=self.deflector_profile, **deflector)
         return deflector_class
 
-    def get_deflector(self, cluster_id):
+    def get_deflector(self, cluster_id, cored=False):
         """
         :param cluster_id: identifier of the cluster
         :type cluster_id: int
         :type index: int or None
+        :param cored: Boolean flag for cored density profile
+        :type cored: True for cored, False for cuspy profile
         :return: dictionary of complete parameterization of deflector for the given cluster_id
         """
         indices = np.where(self._cluster_select["cluster_id"] == cluster_id)[0]
@@ -164,7 +169,7 @@ class ClusterDeflectors(DeflectorsBase):
         # Draw the members for this cluster
         members = self.draw_members(deflector["cluster_id"], **self.kwargs_draw_members)
         deflector["subhalos"] = members
-
+        deflector["core"] = cored
         # Create and return the deflector class
         deflector_class = Deflector(deflector_type=self.deflector_profile, **deflector)
         return deflector_class

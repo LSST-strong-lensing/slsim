@@ -280,10 +280,7 @@ class Lens(LensedSystemBase):
 
         # Criteria 1:The redshift of the lens (z_lens) must be less than the
         # redshift of the source (z_source).
-        if self.multi_plane:
-            z_lens = np.max(self.deflector_redshift)
-        else:
-            z_lens = self.deflector.redshift
+        z_lens = np.max(self.deflector_redshift)
         z_source = self.source(source_index).redshift
         if z_lens >= z_source:
             return False
@@ -368,9 +365,13 @@ class Lens(LensedSystemBase):
         """
         deflector_redshifts = [self.deflector.redshift]
 
-        if self.multi_plane and self.multi_plane != "Source":
+        if self.multi_plane:
 
             if self.deflector.deflector_type in ["NFW_CLUSTER"]:
+                
+                if self.deflector.cored_profile:
+                    deflector_redshifts.append(self.deflector.redshift)
+                    
                 deflector_redshifts.extend(self.deflector.subhalo_redshifts)
 
             if self.shear:
@@ -378,10 +379,11 @@ class Lens(LensedSystemBase):
 
             if self.convergence:
                 deflector_redshifts.append(self.deflector.redshift)
+                
 
             return deflector_redshifts
         else:
-            return self.deflector.redshift
+            return deflector_redshifts
 
     @property
     def source_redshift_list(self):
@@ -484,7 +486,7 @@ class Lens(LensedSystemBase):
                 kappa_ext = kappa_ext_convention
             else:
                 beta = self._lens_cosmo.beta_double_source_plane(
-                    z_lens=self.deflector_redshift,
+                    z_lens=self.deflector.redshift,
                     z_source_2=self.max_redshift_source_class.redshift,
                     z_source_1=self.source(source_index).redshift,
                 )
@@ -1093,23 +1095,25 @@ class Lens(LensedSystemBase):
         kwargs_model["z_lens"] = self.deflector.redshift
         kwargs_model["z_source"] = self.max_redshift_source_class.redshift
         kwargs_model["cosmo"] = self.cosmo
-        kwargs_model["lens_redshift_list"] = self.deflector_redshift
 
-        if self.multi_plane == "Source":
-            if self.max_redshift_source_class.extended_source_type in [
-                "single_sersic",
-                "interpolated",
-            ]:
-                kwargs_model["source_redshift_list"] = self.source_redshift_list
-            elif self.max_redshift_source_class.extended_source_type in [
-                "double_sersic"
-            ]:
-                kwargs_model["source_redshift_list"] = [
-                    z for z in self.source_redshift_list for _ in range(2)
-                ]
-            kwargs_model["z_source_convention"] = (
-                self.max_redshift_source_class.redshift
-            )
+        if self.multi_plane:
+            kwargs_model["lens_redshift_list"] = self.deflector_redshift
+            
+            if self.source_number > 1:
+                if self.max_redshift_source_class.extended_source_type in [
+                    "single_sersic",
+                    "interpolated",
+                ]:
+                    kwargs_model["source_redshift_list"] = self.source_redshift_list
+                elif self.max_redshift_source_class.extended_source_type in [
+                    "double_sersic"
+                ]:
+                    kwargs_model["source_redshift_list"] = [
+                        z for z in self.source_redshift_list for _ in range(2)
+                    ]
+                kwargs_model["z_source_convention"] = (
+                    self.max_redshift_source_class.redshift
+                )
 
         sources, sources_kwargs = self.source_light_model_lenstronomy(band=band)
         # ensure that only the models that exist are getting added to kwargs_model
@@ -1181,23 +1185,28 @@ class Lens(LensedSystemBase):
                 % self.deflector.deflector_type
             )
 
-        # For significant speedup, use these mass profiles from jaxtronomy
-        use_jax = []
-        for profile in self._lens_mass_model_list:
-            if profile in JAX_PROFILES:
-                use_jax.append(True)
-            else:
-                use_jax.append(False)
-
         # TODO: replace with change_source_redshift() currently not fully working
         # self._lens_model.change_source_redshift(z_source=z_source)
+        if self.multi_plane:
+            lens_redshift_list = self.deflector_redshift
+            use_jax = True
+        else:
+            lens_redshift_list = None
+            # For significant speedup, use these mass profiles from jaxtronomy
+            use_jax = []
+            for profile in self._lens_mass_model_list:
+                if profile in JAX_PROFILES:
+                    use_jax.append(True)
+                else:
+                    use_jax.append(False)
         lens_model = LensModel(
             lens_model_list=self._lens_mass_model_list,
             cosmo=self.cosmo,
-            lens_redshift_list=self.deflector_redshift,
+            lens_redshift_list=lens_redshift_list,
+            z_lens=self.deflector.redshift,
             z_source=z_source,
             z_source_convention=self.max_redshift_source_class.redshift,
-            use_jax=True,
+            use_jax=use_jax,
             multi_plane=bool(self.multi_plane),
         )
 
@@ -1432,7 +1441,7 @@ class Lens(LensedSystemBase):
         :return: LensModel instance for the halos only, and list of
             kwargs for the subhalos.
         """
-        z_lens = self.deflector_redshift
+        z_lens = self.deflector.redshift
         z_source = self.max_redshift_source_class.redshift
         if hasattr(self, "realization"):
             subhalos_lens_model_list, redshift_array, kwargs_subhalos, _ = (

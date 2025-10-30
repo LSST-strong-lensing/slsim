@@ -45,6 +45,7 @@ class Deflector(object):
             self._deflector = NFWCluster(**kwargs)
             self._name = "CLUSTER"
             self.subhalo_redshifts = self._deflector.subhalo_redshifts
+            self.cored_profile = self._deflector.cored_profile
         else:
             raise ValueError(
                 "Deflector type %s not supported. Chose among %s."
@@ -233,25 +234,28 @@ class Deflector(object):
                 )
             )
 
-            if self.deflector_type == "NFW_CLUSTER" and multi_plane:
-                num_main_lens_profiles = len(lens_mass_model_list) - len(
-                    self.subhalo_redshifts
-                )
-                lens_redshift_list = [self.redshift] * num_main_lens_profiles
-                lens_redshift_list.extend(self.subhalo_redshifts)
-            else:
-                num_main_lens_profiles = len(lens_mass_model_list)
-                lens_redshift_list = [self.redshift] * num_main_lens_profiles
-
-            use_jax = []
-            for profile in lens_mass_model_list:
-                if profile in JAX_PROFILES:
-                    use_jax.append(True)
+            if multi_plane:
+                
+                if self.deflector_type == "NFW_CLUSTER":
+                    num_main_lens_profiles = len(lens_mass_model_list) - len(
+                        self.subhalo_redshifts
+                    )
+                    lens_redshift_list = [self.redshift] * num_main_lens_profiles
+                    lens_redshift_list.extend(self.subhalo_redshifts)
                 else:
-                    use_jax.append(False)
-            print(
-                f"deflector redshift list length: {len(lens_redshift_list)}, lens model list length: {len(lens_mass_model_list)}"
-            )
+                    num_main_lens_profiles = len(lens_mass_model_list)
+                    lens_redshift_list = [self.redshift] * num_main_lens_profiles
+                    
+                use_jax=True
+            else:
+                lens_redshift_list=None
+                use_jax = []
+                for profile in lens_mass_model_list:
+                    if profile in JAX_PROFILES:
+                        use_jax.append(True)
+                    else:
+                        use_jax.append(False)
+                    
             lens_model = LensModel(
                 lens_model_list=lens_mass_model_list,
                 z_lens=self.redshift,
@@ -260,7 +264,7 @@ class Deflector(object):
                 multi_plane=bool(multi_plane),
                 z_source=_z_source_infty,
                 cosmo=cosmo,
-                use_jax=True,
+                use_jax=use_jax,
             )
 
             lens_analysis = LensProfileAnalysis(lens_model=lens_model)
