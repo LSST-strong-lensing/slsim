@@ -372,10 +372,10 @@ class Lens(LensedSystemBase):
         if self.multi_plane or self.source_number > 1:
 
             if self.deflector.deflector_type in ["NFW_CLUSTER"]:
-                
+
                 if self.deflector.cored_profile:
                     deflector_redshifts.append(self.deflector.redshift)
-                    
+
                 deflector_redshifts.extend(self.deflector.subhalo_redshifts)
 
             if self.shear:
@@ -383,7 +383,6 @@ class Lens(LensedSystemBase):
 
             if self.convergence:
                 deflector_redshifts.append(self.deflector.redshift)
-                
 
             return deflector_redshifts
         else:
@@ -1102,7 +1101,7 @@ class Lens(LensedSystemBase):
             kwargs_model["lens_redshift_list"] = self.deflector_redshift
             kwargs_model["z_lens"] = self.deflector.redshift
             kwargs_model["z_source"] = self.max_redshift_source_class.redshift
-            
+
             if self.max_redshift_source_class.extended_source_type in [
                 "single_sersic",
                 "interpolated",

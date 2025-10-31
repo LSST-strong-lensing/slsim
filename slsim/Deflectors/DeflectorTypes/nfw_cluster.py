@@ -50,7 +50,7 @@ class NFWCluster(DeflectorBase):
         :type spherical: bool
         :return: lens_mass_model_list, kwargs_lens_mass
         """
-        
+
         lens_mass_model_list, kwargs_lens_mass = self._halo_mass_model_lenstronomy(
             lens_cosmo=lens_cosmo, spherical=spherical
         )
@@ -72,7 +72,7 @@ class NFWCluster(DeflectorBase):
         :type spherical: bool
         :return: lens_mass_model_list, kwargs_lens_mass
         """
-        cored =  self.cored_profile
+        cored = self.cored_profile
         center_lens = self.deflector_center
         m_halo, c_halo = self.halo_properties
         rs_halo, alpha_rs = lens_cosmo.nfw_physical2angle(M=m_halo, c=c_halo)
@@ -94,34 +94,34 @@ class NFWCluster(DeflectorBase):
             )
             kwargs_lens_mass[0]["e1"] = e1_mass_lenstronomy
             kwargs_lens_mass[0]["e2"] = e2_mass_lenstronomy
-            
-        if cored:            
-            r_cmin = max(0.5*0.2, 0.4*0.8) # r_cmin >= (1/2 pixel scale, 0.4 FWHM) 
+
+        if cored:
+            r_cmin = max(0.5 * 0.2, 0.4 * 0.8)  # r_cmin >= (1/2 pixel scale, 0.4 FWHM)
             r_smax = rs_halo
-            r_s = np.random.uniform(r_cmin/0.3, r_smax)
-            r_cmax = 0.3*r_s # assuming Rs in NFW could be used for PSEUDOJAFFE
+            r_s = np.random.uniform(r_cmin / 0.3, r_smax)
+            r_cmax = 0.3 * r_s  # assuming Rs in NFW could be used for PSEUDOJAFFE
             r_c = np.random.uniform(r_cmin, r_cmax)
-            
+
             vel_disp = self.velocity_dispersion()
             sigma0 = lens_cosmo.vel_disp_dPIED_sigma0(vel_disp, r_c, r_s)
-            
+
             kwargs_lens_mass_cored = [
                 {
-                "sigma0": sigma0,
-                "Rs": r_s,
-                "Ra": r_c,
-                "center_x": center_lens[0],
-                "center_y": center_lens[1],
+                    "sigma0": sigma0,
+                    "Rs": r_s,
+                    "Ra": r_c,
+                    "center_x": center_lens[0],
+                    "center_y": center_lens[1],
                 },
             ]
 
             if spherical:
-                lens_mass_model_list += ['PJAFFE']                 
+                lens_mass_model_list += ["PJAFFE"]
             else:
-                lens_mass_model_list += ['PJAFFE_ELLIPSE_POTENTIAL']
+                lens_mass_model_list += ["PJAFFE_ELLIPSE_POTENTIAL"]
                 kwargs_lens_mass_cored[0]["e1"] = e1_mass_lenstronomy
-                kwargs_lens_mass_cored[0]["e2"] = e2_mass_lenstronomy 
-                
+                kwargs_lens_mass_cored[0]["e2"] = e2_mass_lenstronomy
+
             kwargs_lens_mass += kwargs_lens_mass_cored
 
         return lens_mass_model_list, kwargs_lens_mass
@@ -177,9 +177,10 @@ class NFWCluster(DeflectorBase):
 
     @property
     def subhalo_redshifts(self):
-        """Redshifts of the subhalos for multi-plane LensModel() 
-        
-        :return: list of subhalo redshifts."""
+        """Redshifts of the subhalos for multi-plane LensModel()
+
+        :return: list of subhalo redshifts.
+        """
         subhalo_z = []
         for subhalo in self._subhalos:
             subhalo_z.append(float(subhalo.redshift))
@@ -188,12 +189,10 @@ class NFWCluster(DeflectorBase):
     @property
     def cored_profile(self):
         """Boolean flag for cored density profile.
-        
-        :return: True for cored, False for cuspy profile. """
-        if "core" in  self._deflector_dict.keys():
+
+        :return: True for cored, False for cuspy profile.
+        """
+        if "core" in self._deflector_dict.keys():
             return self._deflector_dict["core"]
         else:
             return False
-
-        
-        
