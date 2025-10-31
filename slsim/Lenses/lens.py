@@ -34,7 +34,7 @@ class Lens(LensedSystemBase):
         los_class=None,
         multi_plane=None,
         shear=True,
-        convergence=True,
+        convergence=False,
     ):
         """
 
@@ -291,6 +291,7 @@ class Lens(LensedSystemBase):
         # separation (max_image_separation).
         einstein_radius = self._approximate_einstein_radius(source_index=source_index)
         if not min_image_separation <= 2 * einstein_radius <= max_image_separation:
+            print(f"Failed condition 2, thetaE = {einstein_radius}")
             return False
 
         # Criteria 3: The distance between the lens center and the source position
@@ -299,11 +300,13 @@ class Lens(LensedSystemBase):
         source_pos = self.source(source_index).point_source_position
         center_lens, center_source = (self.deflector_position, source_pos)
         if np.sum((center_lens - center_source) ** 2) > einstein_radius**2 * 2:
+            print(f"Failed condition 3, thetaE = {einstein_radius}")
             return False
 
         # Criteria 4: The lensing configuration must produce at least two SL images.
         image_positions = self.point_source_image_positions()[source_index]
         if len(image_positions[0]) < 2:
+            print(f"Failed condition 4, thetaE = {einstein_radius}")
             return False
 
         # Criteria 5: The maximum separation between any two image positions must be
@@ -311,6 +314,7 @@ class Lens(LensedSystemBase):
         # equal to the maximum image separation.
         image_separation = image_separation_from_positions(image_positions)
         if not min_image_separation <= image_separation <= max_image_separation:
+            print(f"Failed condition 5,image sep. = {image_separation }")
             return False
 
         # Criteria 6: (optional)
@@ -365,13 +369,13 @@ class Lens(LensedSystemBase):
         """
         deflector_redshifts = [self.deflector.redshift]
 
-        if self.multi_plane:
+        if self.multi_plane or self.source_number > 1:
 
             if self.deflector.deflector_type in ["NFW_CLUSTER"]:
-
+                
                 if self.deflector.cored_profile:
                     deflector_redshifts.append(self.deflector.redshift)
-
+                    
                 deflector_redshifts.extend(self.deflector.subhalo_redshifts)
 
             if self.shear:
@@ -379,10 +383,11 @@ class Lens(LensedSystemBase):
 
             if self.convergence:
                 deflector_redshifts.append(self.deflector.redshift)
+                
 
             return deflector_redshifts
         else:
-            return deflector_redshifts
+            return deflector_redshifts[0]
 
     @property
     def source_redshift_list(self):
@@ -1091,16 +1096,13 @@ class Lens(LensedSystemBase):
             "lens_light_model_list": lens_light_model_list,
             "lens_model_list": lens_model_list,
         }
-        kwargs_model["z_lens"] = self.deflector.redshift
-        kwargs_model["z_source"] = self.max_redshift_source_class.redshift
         kwargs_model["cosmo"] = self.cosmo
 
-        if self.multi_plane:
+        if self.multi_plane or self.source_number > 1:
             kwargs_model["lens_redshift_list"] = self.deflector_redshift
-        else:
-            kwargs_model["lens_redshift_list"] = None
-
-        if self.source_number > 1:
+            kwargs_model["z_lens"] = self.deflector.redshift
+            kwargs_model["z_source"] = self.max_redshift_source_class.redshift
+            
             if self.max_redshift_source_class.extended_source_type in [
                 "single_sersic",
                 "interpolated",
