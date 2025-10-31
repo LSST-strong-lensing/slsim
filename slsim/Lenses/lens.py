@@ -34,7 +34,7 @@ class Lens(LensedSystemBase):
         los_class=None,
         multi_plane=None,
         shear=True,
-        convergence=False,
+        convergence=True,
     ):
         """
 
@@ -1190,7 +1190,7 @@ class Lens(LensedSystemBase):
 
         # TODO: replace with change_source_redshift() currently not fully working
         # self._lens_model.change_source_redshift(z_source=z_source)
-        if self.multi_plane:
+        if self.multi_plane or self.source_number > 1:
             lens_redshift_list = self.deflector_redshift
             use_jax = True
         else:
