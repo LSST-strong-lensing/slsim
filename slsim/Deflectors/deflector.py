@@ -234,7 +234,7 @@ class Deflector(object):
                 )
             )
 
-            if multi_plane or self.source_number > 1:
+            if multi_plane:
 
                 if self.deflector_type == "NFW_CLUSTER":
                     num_main_lens_profiles = len(lens_mass_model_list) - len(
