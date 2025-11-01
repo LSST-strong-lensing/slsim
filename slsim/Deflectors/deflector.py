@@ -243,8 +243,8 @@ class Deflector(object):
                     lens_redshift_list = [self.redshift] * num_main_lens_profiles
                     lens_redshift_list.extend(self.subhalo_redshifts)
                 else:
-                    num_main_lens_profiles = len(lens_mass_model_list)
-                    lens_redshift_list = [self.redshift] * num_main_lens_profiles
+                    # num_main_lens_profiles = len(lens_mass_model_list)
+                    lens_redshift_list = self.redshift
 
                 use_jax = True
             else:

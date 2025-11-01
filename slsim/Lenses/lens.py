@@ -372,10 +372,10 @@ class Lens(LensedSystemBase):
         if self.multi_plane or self.source_number > 1:
 
             if self.deflector.deflector_type in ["NFW_CLUSTER"]:
-
+                
                 if self.deflector.cored_profile:
                     deflector_redshifts.append(self.deflector.redshift)
-
+                    
                 deflector_redshifts.extend(self.deflector.subhalo_redshifts)
 
             if self.shear:
@@ -383,6 +383,7 @@ class Lens(LensedSystemBase):
 
             if self.convergence:
                 deflector_redshifts.append(self.deflector.redshift)
+                
 
             return deflector_redshifts
         else:
@@ -1095,13 +1096,14 @@ class Lens(LensedSystemBase):
             "lens_light_model_list": lens_light_model_list,
             "lens_model_list": lens_model_list,
         }
-        kwargs_model["cosmo"] = self.cosmo
-
+        
         if self.multi_plane or self.source_number > 1:
+            
             kwargs_model["lens_redshift_list"] = self.deflector_redshift
             kwargs_model["z_lens"] = self.deflector.redshift
             kwargs_model["z_source"] = self.max_redshift_source_class.redshift
-
+            kwargs_model["cosmo"] = self.cosmo
+            
             if self.max_redshift_source_class.extended_source_type in [
                 "single_sersic",
                 "interpolated",
@@ -1189,7 +1191,7 @@ class Lens(LensedSystemBase):
 
         # TODO: replace with change_source_redshift() currently not fully working
         # self._lens_model.change_source_redshift(z_source=z_source)
-        if self.multi_plane or self.source_number > 1:
+        if self.multi_plane:
             lens_redshift_list = self.deflector_redshift
             use_jax = True
         else:
