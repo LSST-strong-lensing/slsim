@@ -14,6 +14,8 @@ class SkyPyPipeline:
         sky_area=None,
         filters=None,
         cosmo=None,
+        z_min=None,
+        z_max=None,
     ):
         """
         :param skypy_config: path to SkyPy configuration yaml file.
@@ -39,7 +41,7 @@ class SkyPyPipeline:
         else:
             skypy_config = skypy_config
 
-        if sky_area is None and filters is None and cosmo is None:
+        if sky_area is None and filters is None and cosmo is None and z_min is None:
             self._pipeline = Pipeline.read(skypy_config)
             self._pipeline.execute()
         else:
@@ -50,6 +52,21 @@ class SkyPyPipeline:
                 old_fsky = "fsky: 0.1 deg2"
                 new_fsky = f"fsky: {sky_area.value} {sky_area.unit}"
                 content = content.replace(old_fsky, new_fsky)
+            if z_min is not None and z_max is not None:
+                old_zrange = "!numpy.arange [0.0, 5.01, 0.01]"
+                new_zrange = f"!numpy.arange [{z_min}, {z_max}, {0.01}]"
+                content = content.replace(old_zrange, new_zrange)
+
+            if filters is not None:
+                old_filter_name = "mag_g, mag_r, mag_i, mag_z, mag_y"
+                new_filters_name = f"{filters}".strip("[]").replace("'", "")
+                old_filters = "filters: ['lsst2016-g', 'lsst2016-r', 'lsst2016-i', 'lsst2016-z', 'lsst2016-y']"
+
+                new_filters = [f.replace('mag_', 'lsst2016-') for f in filters]
+                new_filters = f"filters: {new_filters}"
+        
+                content = content.replace(old_filters, new_filters)
+                content = content.replace(old_filter_name, new_filters_name)
 
             content = util.update_cosmology_in_yaml_file(cosmo=cosmo, yml_file=content)
 
