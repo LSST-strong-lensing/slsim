@@ -14,9 +14,11 @@ from slsim.Util.param_util import (
 from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.Util import data_util
 from lenstronomy.Util import util
+from slsim.Util.catalog_util import safe_value
 
 from slsim.Lenses.lensed_system_base import LensedSystemBase
 from slsim.Deflectors.deflector import JAX_PROFILES
+import pandas as pd
 
 
 class Lens(LensedSystemBase):
@@ -313,10 +315,16 @@ class Lens(LensedSystemBase):
 
         if second_brightest_image_cut is not None:
             for band_max, mag_max in second_brightest_image_cut.items():
-
-                image_magnitude_list = self.point_source_magnitude(
-                    band=band_max, lensed=True
-                )
+                if self.source(source_index).source_type == "extended":
+                    image_magnitude_list = (
+                        self.extended_source_magnitude_for_each_image(
+                            band=band_max, lensed=True
+                        )
+                    )
+                else:
+                    image_magnitude_list = self.point_source_magnitude(
+                        band=band_max, lensed=True
+                    )
                 second_brightest_mag = np.sort(image_magnitude_list[source_index])[1]
                 if second_brightest_mag > mag_max:
                     return False
@@ -1390,3 +1398,93 @@ class Lens(LensedSystemBase):
             multi_plane=False,
         )
         return lens_model_subhalos_only, kwargs_subhalos
+
+    def lens_to_dataframe(self, index=0, df=None):
+        """Store lens properties to a dataframe. This function assumes the name
+        of other methods in the lens class. Thus, if the name of some method
+        changes, this function will break. Additionally, it assumes that the
+        source lives on one plane.
+
+        :param index: index of row that the lens is stored in. Default =
+            0
+        :type index: int
+        :param df: Optional. Stores lens into an existing df if
+            necessary, creates one if not.
+        :return: pandas DataFrame containing deflector/source mass and
+            light properties.
+        """
+        # TODO: Extend this to work for multiple plane sources
+        lens_index = index
+        if df is None:
+            df = pd.DataFrame()
+        # store lens ID
+        df.loc[lens_index, "ID"] = str(self.generate_id())
+
+        # store mass model parameters
+        for i in self.deflector_mass_model_lenstronomy()[1]:
+            for key in i.keys():
+                val = i[key]
+                df.loc[lens_index, "deflector_mass_" + key] = (
+                    safe_value(val)
+                    if isinstance(val, (np.ndarray, np.generic, float))
+                    else val
+                )
+
+        # store light model parameters
+        for i in self.deflector_light_model_lenstronomy("i")[1]:
+            for key in i.keys():
+                val = i[key]
+                df.loc[lens_index, "deflector_light_" + key] = safe_value(val)
+
+        # store source light properties
+        for i in self.source_light_model_lenstronomy("i")[1]["kwargs_ps"]:
+            for key in i.keys():
+                if isinstance(i[key], np.ndarray):
+                    for j in range(len(i[key])):
+                        v = i[key][j]
+                        df.loc[lens_index, f"point_source_light_{key}_{j}"] = (
+                            safe_value(v)
+                        )
+        # single float values (velocity dispersion, redshifts)
+        df.loc[lens_index, "velocity_dispersion"] = safe_value(
+            self.deflector_velocity_dispersion()
+        )
+        df.loc[lens_index, "deflector_redshift"] = safe_value(self.deflector_redshift)
+        df.loc[lens_index, "point_source_redshift"] = safe_value(
+            self.source_redshift_list[0]
+        )
+        ps_times = self.point_source_arrival_times()[0]
+        num_images = len(ps_times)
+        for i in range(num_images):
+            df.loc[lens_index, f"image_{i}_arrival_time"] = ps_times[i]
+        df.loc[lens_index, "num_ps_images"] = safe_value(num_images)
+
+        micro_lens_params = (
+            self._microlensing_parameters_for_image_positions_single_source(
+                band="i", source_index=0
+            )
+        )
+        params = ["kappa_star", "kappa_tot", "shear", "shear_angle"]
+        for i, p in enumerate(params):
+            for k in range(num_images):
+                pls = f"micro_{p}_{k}"
+                # check if any of the lists for any param is nested
+                param_for_all_images = np.array(micro_lens_params[i])
+                if param_for_all_images.shape[0] > 0:
+                    param_for_all_images = param_for_all_images.flatten()
+                # if param_for_all_images.shape[0]
+                val = param_for_all_images[k]
+                df.loc[lens_index, pls] = safe_value(val)
+
+        for i in range(num_images):
+            df.loc[lens_index, f"point_source_arrival_time_{i}"] = safe_value(
+                ps_times[i]
+            )
+        df.loc[lens_index, "external_shear"] = safe_value(self.external_shear)
+        df.loc[lens_index, "extended_unlensed_mag"] = safe_value(
+            self.extended_source_magnitude("i", lensed=False)[0]
+        )
+        df.loc[lens_index, "extended_magnification"] = safe_value(
+            self.extended_source_magnification[0]
+        )
+        return df

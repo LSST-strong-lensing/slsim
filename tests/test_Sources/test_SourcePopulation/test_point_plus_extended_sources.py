@@ -30,9 +30,9 @@ class TestPointPlusExtendedSources(object):
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            pointsource_type="quasar",
+            point_source_type="quasar",
             extended_source_type="single_sersic",
-            pointsource_kwargs=kwargs,
+            point_source_kwargs=kwargs,
         )
 
     def test_source_number(self):

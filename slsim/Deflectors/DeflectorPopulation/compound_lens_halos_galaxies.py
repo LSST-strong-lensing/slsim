@@ -23,7 +23,7 @@ class CompoundLensHalosGalaxies(DeflectorsBase):
         """
 
         :param halo_galaxy_list: list of dictionary with lens parameters of
-            elliptical dark matte haloes and galaxies (currently supporting SL-Hammocks pipelines)
+            elliptical dark matter haloes and galaxies (currently supporting SL-Hammocks pipelines)
         :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max
         :type kwargs_cut: dict
         # :param kwargs_mass2light: mass-to-light relation
