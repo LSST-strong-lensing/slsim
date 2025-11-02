@@ -1121,7 +1121,6 @@ class TestDifferentLens(object):
         )
 
 
-
 @pytest.fixture
 def supernovae_lens_instance_double_sersic_multisource():
     path = os.path.dirname(__file__)
