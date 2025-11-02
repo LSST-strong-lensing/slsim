@@ -84,12 +84,9 @@ class TestNFWCluster(object):
         c_lens_model_list, c_kwargs_lens = cored_cluster.mass_model_lenstronomy(
             lens_cosmo=lens_cosmo
         )
-        assert 'PJAFFE_ELLIPSE_POTENTIAL' in c_lens_model_list
+        assert "PJAFFE_ELLIPSE_POTENTIAL" in c_lens_model_list
         # test if the cored halo model is added for the spherical case
         cs_lens_model_list, cs_kwargs_lens = cored_cluster.mass_model_lenstronomy(
             lens_cosmo=lens_cosmo, spherical=True
         )
-        assert 'PJAFFE' in cs_lens_model_list
-
-        
-
+        assert "PJAFFE" in cs_lens_model_list

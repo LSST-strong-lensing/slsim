@@ -43,7 +43,7 @@ class ClusterDeflectors(DeflectorsBase):
         richness_fn="Abdullah2022",
         kwargs_draw_members=None,
         assign_galaxy_redshift=False,
-        cored_profile=False
+        cored_profile=False,
     ):
         """
 
