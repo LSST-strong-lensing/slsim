@@ -958,7 +958,6 @@ class TestDifferentLens(object):
             cosmo=self.cosmo,
             lens_equation_solver="lenstronomy_general",
             multi_plane="Source",
-            
         )
         subhalos_table = Table.read(
             os.path.join(path, "../TestData/subhalos_table.fits"), format="fits"
@@ -981,14 +980,14 @@ class TestDifferentLens(object):
             source_class=self.source3,
             cosmo=self.cosmo,
             lens_equation_solver="lenstronomy_analytical",
-        )  
+        )
         self.lens_class_nfw_cluster_multi_source_plane = Lens(
             deflector_class=self.deflector_nfw_cluster,
             source_class=[self.source6, self.source6],
             cosmo=self.cosmo,
             lens_equation_solver="lenstronomy_general",
             multi_plane="Source",
-        )  
+        )
 
     def test_different_setting(self):
         los1 = LOSPop(
@@ -1099,17 +1098,26 @@ class TestDifferentLens(object):
 
     def test_multi_plane_setting(self):
         mp_deflector_redshifts = self.lens_class_multi_source_plane.deflector_redshift()
-        mp_lens_model, mp_kwargs_lens = self.lens_class_multi_source_plane.deflector_mass_model_lenstronomy()
+        mp_lens_model, mp_kwargs_lens = (
+            self.lens_class_multi_source_plane.deflector_mass_model_lenstronomy()
+        )
         # Test the lenght and values of the lens redshift list
         number_of_models = len(mp_lens_model.lens_model_list)
-        assert mp_deflector_redshifts == [self.deflector6.redshift]*number_of_models 
-        
+        assert mp_deflector_redshifts == [self.deflector6.redshift] * number_of_models
+
         # Test multi-plane for nfw cluster model
-        nfw_mp_deflector_redshifts = self.lens_class_nfw_multi_source_plane.deflector_redshift()
-        nfw_mp_lens_model, nfw_mp_kwargs_lens = self.lens_class_nfw_multi_source_plane.deflector_mass_model_lenstronomy()
+        nfw_mp_deflector_redshifts = (
+            self.lens_class_nfw_multi_source_plane.deflector_redshift()
+        )
+        nfw_mp_lens_model, nfw_mp_kwargs_lens = (
+            self.lens_class_nfw_multi_source_plane.deflector_mass_model_lenstronomy()
+        )
         # Test the lenght and values of the lens redshift list
         number_of_models_nfw = len(nfw_mp_lens_model.lens_model_list)
-        assert nfw_mp_deflector_redshifts == [self.deflector_nfw_cluster.redshift]*number_of_models_nfw         
+        assert (
+            nfw_mp_deflector_redshifts
+            == [self.deflector_nfw_cluster.redshift] * number_of_models_nfw
+        )
 
 
 @pytest.fixture
@@ -1267,7 +1275,7 @@ class TestMultiSource(object):
             source_class=self.source1,
             cosmo=self.cosmo,
             lens_equation_solver="lenstronomy_analytical",
-        )          
+        )
 
     def test_point_source_arrival_time_multi(self):
         gamma_pl_out = self.deflector.halo_properties["gamma_pl"]
@@ -1376,6 +1384,7 @@ class TestMultiSource(object):
         npt.assert_almost_equal(
             image_observation_time2, image_observation_time3[1], decimal=5
         )
+
 
 class TestSlhammock(object):
     def setup_method(self):
