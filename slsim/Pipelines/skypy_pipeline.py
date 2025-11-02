@@ -68,9 +68,9 @@ class SkyPyPipeline:
                 new_filters_name = f"{filters}".strip("[]").replace("'", "")
                 old_filters = "filters: ['lsst2016-g', 'lsst2016-r', 'lsst2016-i', 'lsst2016-z', 'lsst2016-y']"
 
-                new_filters = [f.replace('mag_', 'lsst2016-') for f in filters]
+                new_filters = [f.replace("mag_", "lsst2016-") for f in filters]
                 new_filters = f"filters: {new_filters}"
-        
+
                 content = content.replace(old_filters, new_filters)
                 content = content.replace(old_filter_name, new_filters_name)
 

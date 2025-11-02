@@ -1,16 +1,28 @@
 ﻿from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
-from astropy.cosmology import LambdaCDM, FlatLambdaCDM, FlatwCDM, w0waCDM, default_cosmology
+from astropy.cosmology import (
+    LambdaCDM,
+    FlatLambdaCDM,
+    FlatwCDM,
+    w0waCDM,
+    default_cosmology,
+)
 import os
 
 
 class TestSkyPyPipeline(object):
     def setup_method(self):
         from astropy.units import Quantity
+
         cosmo_test = FlatLambdaCDM(H0=70, Om0=0.3)
         self.sky_area = Quantity(value=0.001, unit="deg2")
-        self.pipeline = SkyPyPipeline(skypy_config=None, sky_area=self.sky_area, z_min=0,
-                            z_max=4.09, filters=['mag_g', 'mag_r', 'mag_i', 'mag_z', 'mag_y', 'mag_u'],
-                              cosmo=cosmo_test)
+        self.pipeline = SkyPyPipeline(
+            skypy_config=None,
+            sky_area=self.sky_area,
+            z_min=0,
+            z_max=4.09,
+            filters=["mag_g", "mag_r", "mag_i", "mag_z", "mag_y", "mag_u"],
+            cosmo=cosmo_test,
+        )
         self.pipeline2 = SkyPyPipeline(
             skypy_config="lsst_like_old", sky_area=self.sky_area
         )
