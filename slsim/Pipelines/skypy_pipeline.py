@@ -64,11 +64,12 @@ class SkyPyPipeline:
                 content = content.replace(old_zrange, new_zrange)
 
             if filters is not None:
+                filters_mag  = [f"mag_{f}" for f in filters]
                 old_filter_name = "mag_g, mag_r, mag_i, mag_z, mag_y"
-                new_filters_name = f"{filters}".strip("[]").replace("'", "")
+                new_filters_name = f"{filters_mag}".strip("[]").replace("'", "")
                 old_filters = "filters: ['lsst2016-g', 'lsst2016-r', 'lsst2016-i', 'lsst2016-z', 'lsst2016-y']"
 
-                new_filters = [f.replace('mag_', 'lsst2016-') for f in filters]
+                new_filters = [f.replace('mag_', 'lsst2016-') for f in filters_mag]
                 new_filters = f"filters: {new_filters}"
         
                 content = content.replace(old_filters, new_filters)
