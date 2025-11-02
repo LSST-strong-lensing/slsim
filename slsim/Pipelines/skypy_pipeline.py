@@ -29,6 +29,10 @@ class SkyPyPipeline:
         :param cosmo: An instance of an astropy cosmology model
                         (e.g., FlatLambdaCDM(H0=70, Om0=0.3)).
         :type cosmo: astropy.cosmology instance or None
+        :z_min: minimum redshift of the galaxy catalog to be simulated.
+        :type z_min: float or None
+        :z_max: maximum redshift of the galaxy catalog to be simulated.
+        :type z_max: float or None
         """
         path = os.path.dirname(slsim.__file__)
         module_path, _ = os.path.split(path)
