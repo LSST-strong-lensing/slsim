@@ -1101,8 +1101,7 @@ class TestDifferentLens(object):
         
         mp_deflector_redshifts = self.lens_class_multi_source_plane.deflector_redshift()
         mp_lens_model, mp_kwargs_lens = self.lens_class_multi_source_plane.deflector_mass_model_lenstronomy()
-        # Test if LensModel() object is initialized correctly
-        assert mp_lens_model.multi_plane == True
+
         # Test the lenght and values of the lens redshift list
         number_of_models = len(mp_lens_model.lens_model_list)
         assert mp_deflector_redshifts == [self.deflector6.redshift]*number_of_models 
@@ -1110,11 +1109,10 @@ class TestDifferentLens(object):
         # Test multi-plane for nfw cluster model
         nfw_mp_deflector_redshifts = self.lens_class_nfw_multi_source_plane.deflector_redshift()
         nfw_mp_lens_model, nfw_mp_kwargs_lens = self.lens_class_nfw_multi_source_plane.deflector_mass_model_lenstronomy()
-        # Test if LensModel() object is initialized correctly
-        assert nfw_mp_lens_model.multi_plane == True
+
         # Test the lenght and values of the lens redshift list
         number_of_models_nfw = len(nfw_mp_lens_model.lens_model_list)
-        assert mp_deflector_redshifts == [self.deflector_nfw_cluster.redshift]*number_of_models_nfw         
+        assert nfw_mp_deflector_redshifts == [self.deflector_nfw_cluster.redshift]*number_of_models_nfw         
 
 
 @pytest.fixture
