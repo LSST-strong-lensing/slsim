@@ -267,7 +267,6 @@ def test_get_deflector(cluster_deflectors_instance):
     assert (deflector.halo_properties[1] > 1) and (deflector.halo_properties[1] < 15)
     assert (len(members) >= 1) and (len(members) < 100)
 
-
 def test_assign_galaxy_redshifts(cluster_deflectors_input):
     cluster_catalog, members_catalog, red_galaxies = cluster_deflectors_input
     kwargs_deflector_cut = {}
@@ -285,9 +284,9 @@ def test_assign_galaxy_redshifts(cluster_deflectors_input):
         assign_galaxy_redshift=True,
     )
     deflector = cluster_pop.draw_deflector()
-    member_redshifts = deflector.subhalo_redshifts()
+    member_redshifts = deflector.subhalo_redshifts
     assert len(set(member_redshifts)) > 1
-
+    
 
 if __name__ == "__main__":
     pytest.main()
