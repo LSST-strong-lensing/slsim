@@ -32,6 +32,8 @@ class SkyPyPipeline:
         :z_min: minimum redshift of the galaxy catalog to be simulated.
         :type z_min: float or None
         :z_max: maximum redshift of the galaxy catalog to be simulated.
+         If one passes u-band filter, z_max should be <= 4.09 to avoid
+         issues with skypy SED templates.
         :type z_max: float or None
         """
         path = os.path.dirname(slsim.__file__)
