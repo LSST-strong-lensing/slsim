@@ -71,7 +71,7 @@ class SkyPyPipeline:
 
                 new_filters = [f.replace('mag_', 'lsst2016-') for f in filters_mag]
                 new_filters = f"filters: {new_filters}"
-        
+
                 content = content.replace(old_filters, new_filters)
                 content = content.replace(old_filter_name, new_filters_name)
 
