@@ -514,12 +514,14 @@ def lens_injection_fast_coadd(
                 lens_class = lens_pop.select_lens_at_random(**kwargs_lens_cut)
             else:
                 lens_class = lens_pop.draw_false_positive()
-        injected_final_image, box_center, cutout_image_list, lens_image, lens_ = (
+        injected_final_image, box_center, cutout_image_list, lens_image, lens_, psf_kernel_, noise_map_ = (
             [],
             [],
             [],
             [],
             [],
+            [],
+            []
         )
         is_valid = True
         for j, band in enumerate(band_list):
@@ -544,7 +546,7 @@ def lens_injection_fast_coadd(
             else:
                 exposure_map = None
 
-            final_injected_image = add_object(
+            final_injected_image, psf_kernel, noise_map = add_object(
                 cutout_image,
                 lens_class=lens_class,
                 band=rgb_band_list[j],
@@ -564,6 +566,8 @@ def lens_injection_fast_coadd(
             cutout_image_list.append(cutout_image.image.array)
             lens_image.append((final_injected_image - cutout_image.image.array))
             lens_.append(lens_class)
+            psf_kernel_.append(psf_kernel)
+            noise_map_.append(noise_map)
 
         if is_valid:
             # Define column names dynamically based on band_list
@@ -571,6 +575,8 @@ def lens_injection_fast_coadd(
             column_names = (
                 ["lens_class", "lens", "cutout_image"]
                 + [f"{prefix}_{band}" for band in band_list]
+                + [f"psf_kernel_{band}" for band in band_list]
+                + [f"noise_map_{band}" for band in band_list]
                 + ["cutout_center", "cutout_bbox"]
             )
 
@@ -578,6 +584,8 @@ def lens_injection_fast_coadd(
             data = (
                 [[lens_[0]], [lens_image[0]], [cutout_image_list[0]]]
                 + [[img] for img in injected_final_image]
+                + [[img] for img in psf_kernel_]
+                + [[img] for img in noise_map_]
                 + [[box_center[0]], [cutout_bbox]]
             )
 
@@ -814,6 +822,7 @@ def add_object(
             )
         else:
             variance_map = image_object.getVariance()
+            noise_map = np.sqrt(variance_map)
             degraded_image = degrade_coadd_data(
                 image_object.image.array,
                 variance_map=variance_map.array,
@@ -823,7 +832,7 @@ def add_object(
                 use_noise_diff=True,
             )
             injected_image = degraded_image[0] + lens
-            return injected_image
+            return injected_image, psf_ker, noise_map
 
 
 def cutout_image_psf_kernel(
