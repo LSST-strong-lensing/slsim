@@ -41,7 +41,7 @@ class Deflector(object):
             self._deflector = EPLSersic(**kwargs)
         elif deflector_type in ["NFW_HERNQUIST"]:
             self._deflector = NFWHernquist(**kwargs)
-        elif deflector_type in ["NFW_CLUSTER"]:
+        elif deflector_type in ["NFW_CLUSTER"]:           
             self._deflector = NFWCluster(**kwargs)
             self._name = "CLUSTER"
             self.subhalo_redshifts = self._deflector.subhalo_redshifts

@@ -952,6 +952,43 @@ class TestDifferentLens(object):
             deflector_type="EPL_SERSIC",
             **self.deflector_dict,
         )
+        self.lens_class_multi_source_plane = Lens(
+            deflector_class=self.deflector6,
+            source_class=[self.source6, self.source6],
+            cosmo=self.cosmo,
+            lens_equation_solver="lenstronomy_general",
+            multi_plane="Source",
+            
+        )
+        subhalos_table = Table.read(
+            os.path.join(path, "../TestData/subhalos_table.fits"), format="fits"
+        )
+        deflector_dict_nfw = {
+            "halo_mass": 10**14,
+            "concentration": 5,
+            "e1_mass": 0.1,
+            "e2_mass": -0.1,
+            "z": 0.42,
+            "subhalos": subhalos_table,
+        }
+        self.deflector_nfw_cluster = Deflector(
+            deflector_type="NFW_CLUSTER",
+            cored_profile=True,
+            **deflector_dict_nfw,
+        )
+        self.lens_class_nfw_cluster = Lens(
+            deflector_class=self.deflector_nfw_cluster,
+            source_class=self.source3,
+            cosmo=self.cosmo,
+            lens_equation_solver="lenstronomy_analytical",
+        )  
+        self.lens_class_nfw_cluster_multi_source_plane = Lens(
+            deflector_class=self.deflector_nfw_cluster,
+            source_class=[self.source6, self.source6],
+            cosmo=self.cosmo,
+            lens_equation_solver="lenstronomy_general",
+            multi_plane="Source",
+        )  
 
     def test_different_setting(self):
         los1 = LOSPop(
@@ -1059,6 +1096,25 @@ class TestDifferentLens(object):
         assert expected_kwargs_model[4] in kwargs_model_keys
         assert expected_kwargs_model[5] in kwargs_model_keys
         assert expected_kwargs_model[6] in kwargs_model_keys
+
+    def test_multi_plane_setting(self):
+        
+        mp_deflector_redshifts = self.lens_class_multi_source_plane.deflector_redshift()
+        mp_lens_model, mp_kwargs_lens = self.lens_class_multi_source_plane.deflector_mass_model_lenstronomy()
+        # Test if LensModel() object is initialized correctly
+        assert mp_lens_model.multi_plane == True
+        # Test the lenght and values of the lens redshift list
+        number_of_models = len(mp_lens_model.lens_model_list)
+        assert mp_deflector_redshifts == [self.deflector6.redshift]*number_of_models 
+        
+        # Test multi-plane for nfw cluster model
+        nfw_mp_deflector_redshifts = self.lens_class_nfw_multi_source_plane.deflector_redshift()
+        nfw_mp_lens_model, nfw_mp_kwargs_lens = self.lens_class_nfw_multi_source_plane.deflector_mass_model_lenstronomy()
+        # Test if LensModel() object is initialized correctly
+        assert nfw_mp_lens_model.multi_plane == True
+        # Test the lenght and values of the lens redshift list
+        number_of_models_nfw = len(nfw_mp_lens_model.lens_model_list)
+        assert mp_deflector_redshifts == [self.deflector_nfw_cluster.redshift]*number_of_models_nfw         
 
 
 @pytest.fixture
@@ -1193,6 +1249,7 @@ class TestMultiSource(object):
             cosmo=self.cosmo,
             lens_equation_solver="lenstronomy_analytical",
         )
+
         deflector_nfw_dict = {
             "halo_mass": 10**13,
             "halo_mass_acc": 0.0,
@@ -1215,7 +1272,7 @@ class TestMultiSource(object):
             source_class=self.source1,
             cosmo=self.cosmo,
             lens_equation_solver="lenstronomy_analytical",
-        )
+        )          
 
     def test_point_source_arrival_time_multi(self):
         gamma_pl_out = self.deflector.halo_properties["gamma_pl"]
@@ -1324,7 +1381,6 @@ class TestMultiSource(object):
         npt.assert_almost_equal(
             image_observation_time2, image_observation_time3[1], decimal=5
         )
-
 
 class TestSlhammock(object):
     def setup_method(self):

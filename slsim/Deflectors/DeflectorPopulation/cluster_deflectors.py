@@ -43,6 +43,7 @@ class ClusterDeflectors(DeflectorsBase):
         richness_fn="Abdullah2022",
         kwargs_draw_members=None,
         assign_galaxy_redshift=False,
+        cored_profile=False
     ):
         """
 
@@ -75,6 +76,8 @@ class ClusterDeflectors(DeflectorsBase):
         :param assign_galaxy_redshift: if True, assign the redshift of the
             galaxy to the member galaxy instead of the cluster redshift
         :type assign_galaxy_redshift: bool
+        :param cored_profile: flag for adding cored density profile
+        :type cored_profile: boolean
         """
         galaxy_list = param_util.catalog_with_angular_size_in_arcsec(
             galaxy_catalog=galaxy_list, input_catalog_type=catalog_type
@@ -86,6 +89,7 @@ class ClusterDeflectors(DeflectorsBase):
             sky_area=sky_area,
         )
         self.deflector_profile = "NFW_CLUSTER"
+        self.cored_profile = cored_profile
         self.richness_fn = richness_fn
         if kwargs_draw_members is None:
             kwargs_draw_members = {}
@@ -129,7 +133,7 @@ class ClusterDeflectors(DeflectorsBase):
         number = self._num_select
         return number
 
-    def draw_deflector(self, index=None, cored=False):
+    def draw_deflector(self, index=None):
         """
         :param index: index of deflector, if not provided, draw randomly from all deflectors
         :type index: int or None
@@ -141,7 +145,7 @@ class ClusterDeflectors(DeflectorsBase):
         deflector = self.draw_cluster(index)
         members = self.draw_members(deflector["cluster_id"], **self.kwargs_draw_members)
         deflector["subhalos"] = members
-        deflector["core"] = cored
+        deflector["cored_profile"] = self.cored_profile
         deflector_class = Deflector(deflector_type=self.deflector_profile, **deflector)
         return deflector_class
 
@@ -169,7 +173,7 @@ class ClusterDeflectors(DeflectorsBase):
         # Draw the members for this cluster
         members = self.draw_members(deflector["cluster_id"], **self.kwargs_draw_members)
         deflector["subhalos"] = members
-        deflector["core"] = cored
+        deflector["cored_profile"] = self.cored_profile
         # Create and return the deflector class
         deflector_class = Deflector(deflector_type=self.deflector_profile, **deflector)
         return deflector_class
