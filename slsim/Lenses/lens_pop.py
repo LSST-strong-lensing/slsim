@@ -148,9 +148,9 @@ class LensPop(LensedPopulationBase):
 
         :param kwargs_lens_cuts: validity test keywords. dictionary of
             cuts that one wants to apply to the lens. eg:
-            kwargs_lens_cut = {}"min_image_separation": 0.5,
+            kwargs_lens_cut = {"min_image_separation": 0.5,
             "max_image_separation": 10, "mag_arc_limit": {"i", 24},
-            "second_bright_image_cut = {"band": ["i"], "mag_max":[23]}.
+            "second_bright_image_cut": {"band": ["i"], "mag_max":[23]}}
             all these cuts are optional.
         :type kwargs_lens_cuts: dict
         :param multi_source: A boolean value. If True, considers multi

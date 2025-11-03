@@ -376,8 +376,10 @@ def point_source_image_at_time(
     data_class = image_data_class(
         lens_class, band, mag_zero_point, delta_pix, num_pix, transform_pix2angle
     )
-
-    psf_class = PSF(psf_type="PIXEL", kernel_point_source=psf_kernel)
+    if psf_kernel is None:
+        psf_class = PSF(psf_type="NONE")
+    else:
+        psf_class = PSF(psf_type="PIXEL", kernel_point_source=psf_kernel)
 
     if len(kwargs_ps) > 0:
         image_data = point_source_coordinate_properties(
@@ -624,10 +626,10 @@ def lens_image(
             transform_pix2angle=transform_pix2angle,
             time=t_obs,
         )
-    if with_deflector or with_source:
-        image = convolved_deflector_source
-        if with_ps:
-            image += image_ps
+
+    image = convolved_deflector_source
+    if with_ps:
+        image += image_ps
     if exposure_time is not None and add_noise:
         # For DP0 images, gain is always 0.7.
         final_image = image_plus_poisson_noise(

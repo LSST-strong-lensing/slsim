@@ -254,6 +254,10 @@ class SourceBase(ABC):
         else:
             if band not in self._variability_bands:
                 if band not in self._kwargs_variability_model:
+                    print(
+                        "self._kwargs_variability_model: ",
+                        self._kwargs_variability_model,
+                    )
                     raise ValueError(
                         "kwargs_variability_model requires information about band %s"
                         % band
