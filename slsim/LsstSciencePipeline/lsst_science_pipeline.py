@@ -514,15 +514,15 @@ def lens_injection_fast_coadd(
                 lens_class = lens_pop.select_lens_at_random(**kwargs_lens_cut)
             else:
                 lens_class = lens_pop.draw_false_positive()
-        (
-            injected_final_image,
-            box_center,
-            cutout_image_list,
-            lens_image,
-            lens_,
-            psf_kernel_,
-            noise_map_,
-        ) = ([], [], [], [], [], [], [])
+        injected_final_image, box_center, cutout_image_list, lens_image, lens_, psf_kernel_, noise_map_ = (
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            []
+        )
         is_valid = True
         for j, band in enumerate(band_list):
             cutout_image = coadd[j][cutout_bbox]
@@ -822,7 +822,7 @@ def add_object(
             )
         else:
             variance_map = image_object.getVariance()
-            noise_map = np.sqrt(variance_map)
+            noise_map = np.sqrt(variance_map.array)
             degraded_image = degrade_coadd_data(
                 image_object.image.array,
                 variance_map=variance_map.array,
