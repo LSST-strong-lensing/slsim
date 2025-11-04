@@ -4,9 +4,31 @@ from scipy.signal import convolve2d
 from scipy.signal import fftconvolve
 from lenstronomy.Util.param_util import transform_e1e2_product_average
 from lenstronomy.Util.param_util import ellipticity2phi_q
+from lenstronomy.LightModel.light_model import LightModel
+from lenstronomy.Util import data_util
 from astropy.io import fits
 from astropy import units as u
+from astropy.stats import sigma_clipped_stats
+from astropy.convolution import Gaussian2DKernel
 import warnings
+from astropy.cosmology import default_cosmology
+
+
+def draw_coord_in_circle(area, size=1):
+    """Draw realizations of points in circle.
+
+    :param area: area (solid angle) of circle to draw uniformly in
+    :param size: number of draws
+    :type size: int
+    :return: coordinate (x, y) drawn uniformly in the area of the
+        circle, centered at (0, 0)
+    """
+    if size == 1:
+        size = None
+    test_area_radius = np.sqrt(area / np.pi)
+    r = np.sqrt(np.random.random(size=size)) * test_area_radius
+    theta = 2 * np.pi * np.random.random(size=size)
+    return r * np.cos(theta), r * np.sin(theta)
 
 
 def epsilon2e(epsilon):
@@ -464,6 +486,7 @@ def galaxy_size_redshift_evolution(z):
     return Bz * (1 + z) ** betaz
 
 
+<<<<<<< HEAD
 def flux_error_to_magnitude_error(
     flux_mean, flux_error, mag_zero_point, noise=True, symmetric=False
 ):
@@ -498,3 +521,315 @@ def flux_error_to_magnitude_error(
         mag_mean_noise = amplitude_to_magnitude(flux_mean_noise, mag_zero_point)
         return mag_mean_noise, mag_error_lower, mag_error_upper
     return mag_mean, mag_error_lower, mag_error_upper
+=======
+def additional_poisson_noise_with_rescaled_coadd(
+    image, original_exp_time, degraded_exp_time, use_noise_diff=True
+):
+    """Computes additional Poisson noise to an image based on the change in
+    exposure time.
+
+    :param image: numpy.ndarray The input image array.
+    :param original_exp_time: numpy.ndarray The original exposure time
+        per pixel.
+    :param degraded_exp_time: numpy.ndarray The degraded exposure time
+        per pixel.
+    :param use_noise_diff: bool, optional If True, approximates noise
+        difference using Gaussian noise, otherwise, applies Poisson
+        sampling. Default is True.
+    :return: numpy.ndarray The additional noise to be added to the
+        image.
+    """
+    image_positive = np.where(image > 0, image, 0)
+
+    if use_noise_diff:
+        sigma_add = np.where(
+            original_exp_time > 0,
+            np.sqrt(image_positive)
+            * np.sqrt(1 / degraded_exp_time - 1 / original_exp_time),
+            0.0,
+        )
+        return np.random.normal(scale=sigma_add, size=image.shape)
+    else:
+        image_with_poisson = np.where(
+            original_exp_time > 0,
+            np.random.poisson(lam=image_positive * degraded_exp_time)
+            / degraded_exp_time,
+            0.0,
+        )
+        return image_with_poisson - image_positive
+
+
+def additional_bkg_rms_with_rescaled_coadd(
+    image, original_rms, degraded_rms, use_noise_diff=True
+):
+    """Computes additinal background noise based on RMS values before and after
+    degradation.
+
+    :param image: numpy.ndarray The input image array.
+    :param original_rms: float The original root mean square (RMS)
+        noise.
+    :param degraded_rms: float The degraded RMS noise.
+    :param use_noise_diff: bool, optional If True, approximates noise
+        difference using Gaussian noise, otherwise, applies new Gaussian
+        noise directly. Default is True.
+    :return: numpy.ndarray The additional noise to be added to the
+        image.
+    """
+    if use_noise_diff:
+        sigma_add = np.sqrt(degraded_rms**2 - original_rms**2)
+        return np.random.normal(scale=sigma_add, size=image.shape)
+    else:
+        return np.random.normal(scale=degraded_rms, size=image.shape)
+
+
+def degrade_coadd_data(
+    image,
+    variance_map,
+    exposure_map,
+    original_num_years=5,
+    degraded_num_years=1,
+    use_noise_diff=True,
+):
+    """Degrade a coadded astronomical image by reducing its effective exposure
+    time.
+
+    :param image: numpy.ndarray The input image array.
+    :param variance_map: numpy.ndarray The original variance map.
+    :param exposure_map: numpy.ndarray The original exposure time per
+        pixel.
+    :param original_num_years: int, optional The original coadded number
+        of years. Default is 5.
+    :param degraded_num_years: int, optional The new degraded number of
+        years. Default is 1.
+    :param use_noise_diff: bool, optional If True, approximates noise
+        difference using Gaussian noise, otherwise, applies full noise
+        resampling. Default is True.
+    :return: The degraded image, the new variance map, and the new
+        exposure map.
+    """
+    degraded_var_map = variance_map * original_num_years / degraded_num_years
+    degraded_exp_map = exposure_map * degraded_num_years / original_num_years
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        original_rms = np.sqrt(sigma_clipped_stats(variance_map, sigma=3)[0])
+        degraded_rms = np.sqrt(sigma_clipped_stats(degraded_var_map, sigma=3)[0])
+
+        degraded_image = image + additional_poisson_noise_with_rescaled_coadd(
+            image, exposure_map, degraded_exp_map, use_noise_diff
+        )
+
+    degraded_image += additional_bkg_rms_with_rescaled_coadd(
+        image, original_rms, degraded_rms, use_noise_diff
+    )
+
+    return degraded_image, degraded_var_map, degraded_exp_map
+
+
+def galaxy_size(mapp, zsrc, cosmo):
+    """
+    Calculate the half-light radius of a source using the size-luminosity relation
+    from Bernardi et al. (2003), as given in Oguri (2006). Please see equation 15 of
+    : https://arxiv.org/pdf/astro-ph/0508528
+
+    :param mapp: float
+        Apparent g-band magnitude of the source.
+    :param zsrc: float
+        Redshift of the source.
+    :param cosmo: astropy.cosmology instance
+    :return: Half-light radius in kpc and arcsec.
+    """
+
+    # Compute luminosity distance (in Mpc)
+    Dlum = cosmo.luminosity_distance(zsrc).value
+
+    # Compute absolute magnitude
+    Mabs = mapp - 5 * np.log10(Dlum) - 25
+
+    # Compute luminosity in solar units (using g-band solar magnitude 5.48)
+    Lum_src = 10 ** (-0.4 * (Mabs - 5.48))
+
+    # Compute angular diameter distance (in kpc)
+    Da = cosmo.angular_diameter_distance(zsrc).to(u.kpc).value
+
+    # Compute the effective radius using the size-luminosity relation
+    Lrat = Lum_src / 10**10.2
+    Reff = (
+        (10**0.52) * (Lrat ** (2 / 3)) * ((0.7 / cosmo.h) ** (2 / 3)) / (1 + zsrc) ** 2
+    )  # in kpc
+
+    # Convert kpc to arcsec, then to pixels
+    Reff_arcsec = (Reff / Da) * (u.rad.to(u.arcsec))
+
+    return Reff, Reff_arcsec
+
+
+def detect_object(image, variance, pixel_scale=0.2, box_size_arcsec=3, snr_threshold=5):
+    """Detect whether the central region of the image contains an object based
+    on SNR.
+
+    :param image: The input image.
+    :param variance: The variance map of the same size as the image.
+    :param pixel_scale: Pixel scale in arcsec/pixel (default is 0.2
+        arcsec/pixel).
+    :param box_size_arcsec: Size of the central box in arcsec (default
+        is 3 arcsec).
+    :param snr_threshold: SNR threshold for object detection (default is
+        5).
+    :return: bool. True if the region contains an object (SNR >
+        threshold), False otherwise.
+    """
+    n = image.shape[0]  # Assuming square image
+    box_size_pix = int(box_size_arcsec / pixel_scale)  # Convert arcsec to pixels
+    half_box = box_size_pix // 2
+
+    # Determine central region indices
+    center = n // 2
+    x_min, x_max = center - half_box, center + half_box + 1
+    y_min, y_max = center - half_box, center + half_box + 1
+
+    # Extract central region
+    sub_image = image[x_min:x_max, y_min:y_max]
+    sub_variance = variance[x_min:x_max, y_min:y_max]
+
+    # Compute total flux and noise
+    total_flux = np.sum(sub_image)
+    total_noise = np.sqrt(np.sum(sub_variance))
+
+    # Compute SNR
+    snr = total_flux / total_noise if total_noise > 0 else 0
+
+    return snr > snr_threshold
+
+
+def gaussian_psf(fwhm, delta_pix=0.2, num_pix=41):
+    """Generate a normalized 2D Gaussian PSF array.
+
+    :param fwhm (float): Full Width at Half Maximum (FWHM) of the PSF in
+        arcseconds.
+    :param delta_pix (float): Pixel scale in arcsec/pixel (default: 0.2
+        arcsec/pixel).
+    :param num_pix (int): Size of the PSF array (default: 41x41 pixels).
+    :return: Normalized 2D PSF array.
+    """
+    # Convert FWHM to pixels
+    fwhm_pixels = fwhm / delta_pix
+    sigma = fwhm_pixels / (2 * np.sqrt(2 * np.log(2)))  # Convert FWHM to sigma
+
+    # Generate the PSF kernel
+    psf_kernel = Gaussian2DKernel(sigma, x_size=num_pix, y_size=num_pix)
+
+    psf_array = psf_kernel.array
+
+    return psf_array
+
+
+def surface_brightness_reff(angular_size, source_model_list, kwargs_extended_source):
+    """Calculate average surface brightness within half light radius.
+
+    :param angular_size: effective radius of an extended source in
+        arcsec. For double sersic profile, user can use mean angular
+        size of two component of the douuble sersic profile.
+    :param source_model_list: list of source light models
+    :param kwargs_extended_source: dictionary of keywords for the source
+        light model(s). Kewords used are in lenstronomy conventions.
+    :return: average surface brightness within half light radius
+        [mag/arcsec^2]
+    """
+    # TODO this definition only works when source position is given
+    _mag_zero_dummy = 0  # from mag to amp conversion we need a dummy mag zero point.
+    # Irrelevant for this routine.
+    source_models_list = source_model_list
+    # TODO: remove unnecessary dependencies on center_lens and draw_area from this class
+    kwargs_extended_source = kwargs_extended_source
+
+    lightModel = LightModel(light_model_list=source_models_list)
+
+    kwargs_extended_source_amp = data_util.magnitude2amplitude(
+        lightModel, kwargs_extended_source, magnitude_zero_point=0
+    )
+
+    total_flux = np.sum(
+        lightModel.total_flux(kwargs_extended_source_amp)
+    )  # integrated flux
+    area = angular_size**2 * np.pi
+    surface_brightness_amp = (
+        total_flux / 2 / area
+    )  # flux /arcsec within half light radius
+    mag_arcsec2 = amplitude_to_magnitude(
+        surface_brightness_amp, mag_zero_point=_mag_zero_dummy
+    )
+    return mag_arcsec2
+
+
+def update_cosmology_in_yaml_file(cosmo, yml_file):
+    """Replaces the default cosmology string in a yaml file with the parameters
+    of a custom astropy cosmology object.
+
+    :param cosmo: astropy.cosmology.Cosmology or None The cosmology
+        object to insert into the content.
+    :param yml_file: A yml file containg cosmology information.
+    :return: Updated yml_file with the new cosmology parameters.
+    """
+    if cosmo is None or cosmo == default_cosmology.get():
+        return yml_file
+
+    cosmology_dict = cosmo.to_format("mapping")
+
+    cosmology_class = str(cosmology_dict.pop("cosmology", None))
+    cosmology_class_str = cosmology_class.replace("<class '", "").replace("'>", "")
+
+    cosmology_dict.pop("cosmology", None)
+
+    if "meta" in cosmology_dict and cosmology_dict["meta"] not in [
+        "mapping",
+        None,
+    ]:
+        cosmology_dict.pop("meta", None)
+    # Reason: From Astropy:'meta:mapping or None (optional, keyword-only)'
+    # However, the dict will read out as meta: OrderedDict()
+    # which may raised error.
+
+    cosmology_dict = {k: v for k, v in cosmology_dict.items() if v is not None}
+
+    cosmology_params_list = []
+    for key, value in cosmology_dict.items():
+        if hasattr(value, "value") and not isinstance(value.value, (list, tuple)):
+            value = value.value
+        elif hasattr(value, "value"):  # For Quantity arrays like m_nu
+            value = value.value
+
+        if isinstance(value, (list, tuple, np.ndarray)):
+            value = "[" + ", ".join(f"{float(x):.1f}" for x in value) + "]"
+
+        cosmology_params_list.append(f"    {key}: {value}")
+
+    cosmology_params_str = "\n".join(cosmology_params_list)
+
+    old_cosmo = "cosmology: !astropy.cosmology.default_cosmology.get []"
+    new_cosmo = f"cosmology: !{cosmology_class_str}\n{cosmology_params_str}"
+
+    return yml_file.replace(old_cosmo, new_cosmo)
+
+
+def image_separation_from_positions(image_positions):
+    """Calculate image separation in arc-seconds; if there are only two images,
+    the separation between them is returned; if there are more than 2 images,
+    the maximum separation is returned.
+
+    :param image_positions: list of image positions in arc-seconds
+    :return: image separation in arc-seconds
+    """
+    if len(image_positions[0]) == 2:
+        image_separation = np.sqrt(
+            (image_positions[0][0] - image_positions[0][1]) ** 2
+            + (image_positions[1][0] - image_positions[1][1]) ** 2
+        )
+    else:
+        coords = np.stack((image_positions[0], image_positions[1]), axis=-1)
+        separations = np.sqrt(
+            np.sum((coords[:, np.newaxis] - coords[np.newaxis, :]) ** 2, axis=-1)
+        )
+        image_separation = np.max(separations)
+    return image_separation
+>>>>>>> 26e99f7472ae41ced79b0fa8db029c9565635656

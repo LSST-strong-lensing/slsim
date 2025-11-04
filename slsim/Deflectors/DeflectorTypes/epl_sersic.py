@@ -1,41 +1,31 @@
-from slsim.Deflectors.DeflectorTypes.deflector_base import DeflectorBase
+from slsim.Deflectors.DeflectorTypes.epl import EPL
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
-from slsim.Deflectors.velocity_dispersion import theta_E_from_vel_disp_epl
 
 
-class EPLSersic(DeflectorBase):
+class EPLSersic(EPL):
     """Deflector with an elliptical power-law and a Sersic light model.
 
     required quantities in dictionary:
     - 'vel_disp': SIS equivalent velocity dispersion of the deflector
-    - 'e1_mass': eccentricity of NFW profile
-    - 'e2_mass': eccentricity of NFW profile
+    - 'e1_mass': eccentricity of EPL profile
+    - 'e2_mass': eccentricity of EPL profile
     - 'stellar_mass': stellar mass in physical M_sol
     - 'angular_size': half-light radius of stellar/light profile in radian
+    - 'n_sersic': Sersic index of deflector light
     - 'e1_light': eccentricity of light
     - 'e2_light': eccentricity of light
     - 'z': redshift of deflector
     """
 
-    def __init__(self, deflector_dict, sis_convention=True):
+    # TODO: add center_x center_y to documentation
+
+    def __init__(self, **deflector_dict):
         """
 
         :param deflector_dict: dictionary of deflector quantities
         :param sis_convention: if using the SIS convention to normalize the Einstein radius or not
         """
-        super().__init__(deflector_dict=deflector_dict)
-
-        self._sis_convention = sis_convention
-
-    def velocity_dispersion(self, cosmo=None):
-        """Velocity dispersion of deflector.
-
-        :param cosmo: cosmology
-        :type cosmo: ~astropy.cosmology class
-        :return: velocity dispersion [km/s]
-        """
-
-        return self._deflector_dict["vel_disp"]
+        super().__init__(**deflector_dict)
 
     @property
     def light_ellipticity(self):
@@ -47,53 +37,6 @@ class EPLSersic(DeflectorBase):
             self._deflector_dict["e2_light"]
         )
         return e1_light, e2_light
-
-    def mass_model_lenstronomy(self, lens_cosmo):
-        """Returns lens model instance and parameters in lenstronomy
-        conventions.
-
-        :param lens_cosmo: lens cosmology model
-        :type lens_cosmo: ~lenstronomy.Cosmo.LensCosmo instance
-        :return: lens_mass_model_list, kwargs_lens_mass
-        """
-        gamma = self.halo_properties
-        if lens_cosmo.z_lens >= lens_cosmo.z_source:
-            theta_E = 0.0
-        else:
-            lens_light_model_list, kwargs_lens_light = self.light_model_lenstronomy()
-            theta_E = theta_E_from_vel_disp_epl(
-                vel_disp=float(
-                    self.velocity_dispersion(cosmo=lens_cosmo.background.cosmo)
-                ),
-                gamma=gamma,
-                r_half=self.angular_size_light,
-                kwargs_light=kwargs_lens_light,
-                light_model_list=lens_light_model_list,
-                lens_cosmo=lens_cosmo,
-                kappa_ext=0,
-                sis_convention=self._sis_convention,
-            )
-
-        e1_mass, e2_mass = self.mass_ellipticity
-        e1_mass_lenstronomy, e2_mass_lenstronomy = ellipticity_slsim_to_lenstronomy(
-            e1_slsim=e1_mass, e2_slsim=e2_mass
-        )
-        kwargs_lens_mass = [
-            {
-                "theta_E": theta_E,
-                "gamma": gamma,
-                "e1": e1_mass_lenstronomy,
-                "e2": e2_mass_lenstronomy,
-                "center_x": self.deflector_center[0],
-                "center_y": self.deflector_center[1],
-            }
-        ]
-        if gamma == 2:
-            lens_mass_model_list = ["SIE"]
-            kwargs_lens_mass[0].pop("gamma")
-        else:
-            lens_mass_model_list = ["EPL"]
-        return lens_mass_model_list, kwargs_lens_mass
 
     def light_model_lenstronomy(self, band=None):
         """Returns lens model instance and parameters in lenstronomy
@@ -114,7 +57,7 @@ class EPLSersic(DeflectorBase):
                 e1_slsim=e1_light_lens, e2_slsim=e2_light_lens
             )
         )
-        size_lens_arcsec = self._deflector_dict["angular_size"]
+        size_lens_arcsec = self.angular_size_light
         lens_light_model_list = ["SERSIC_ELLIPSE"]
         kwargs_lens_light = [
             {
@@ -128,15 +71,3 @@ class EPLSersic(DeflectorBase):
             }
         ]
         return lens_light_model_list, kwargs_lens_light
-
-    @property
-    def halo_properties(self):
-        """Mass density logarithmic slope.
-
-        :return: gamma (with =2 is isothermal)
-        """
-        try:
-            return float(self._deflector_dict["gamma_pl"])
-        except KeyError:
-            # TODO: this can (optionally) be made a function of stellar mass, velocity dispersion etc
-            return 2

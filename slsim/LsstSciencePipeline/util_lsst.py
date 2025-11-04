@@ -1,6 +1,6 @@
 import numpy as np
 from astropy.table import Column
-from slsim.image_simulation import lens_image_series, lens_image
+from slsim.ImageSimulation.image_simulation import lens_image_series, lens_image
 from slsim.Util.param_util import (
     fits_append_table,
     convert_mjd_to_days,

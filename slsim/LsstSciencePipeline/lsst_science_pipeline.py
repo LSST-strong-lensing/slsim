@@ -1,15 +1,19 @@
 import numpy as np
 from astropy.table import Table, vstack
-from slsim.image_simulation import (
+from slsim.ImageSimulation.image_simulation import (
     sharp_image,
     lens_image,
 )
-from slsim.Util.param_util import transformmatrix_to_pixelscale
+from slsim.Util.param_util import transformmatrix_to_pixelscale, degrade_coadd_data
 from scipy import interpolate
 from scipy.stats import norm, halfnorm
 import matplotlib.pyplot as plt
-from slsim.image_simulation import point_source_coordinate_properties
-from slsim.Util.param_util import random_ra_dec, fits_append_table
+from slsim.ImageSimulation.image_simulation import point_source_coordinate_properties
+from slsim.Util.param_util import (
+    random_ra_dec,
+    fits_append_table,
+    detect_object,
+)
 import h5py
 import os
 
@@ -178,6 +182,74 @@ def lens_inejection(
     return t
 
 
+def get_dp0_images(butler, ra, dec, band_list, coadd_injection):
+    """Retrieve coadd or visit images for the given bands.
+
+    :param butler: butler object
+    :param ra: ra for the cutout
+    :param dec: dec for the cutout
+    :param band_list: List of imaging band in which lens need to be
+        injected.
+    :param coadd_injection: Boolean. If True, queries the DP0 coadd
+        image and if False, queries the single visit DP0 images.
+    :return: coadd or single visit image, number of images in coadd,
+        magnitude zero point, and variance map in specified bands.
+    """
+    skymap = butler.get("skyMap")
+    point = geom.SpherePoint(ra, dec, geom.degrees)
+    # cutoutSize = geom.ExtentI(num_pix, num_pix)
+
+    tractInfo = skymap.findTract(point)
+    patchInfo = tractInfo.findPatch(point)
+    my_tract = tractInfo.tract_id
+    my_patch = patchInfo.getSequentialIndex()
+    coadd, coadd_nImage, mag_zero_visit, variance_map = [], [], [], []
+
+    for band in band_list:
+        coaddId = {"tract": my_tract, "patch": my_patch, "band": band}
+        coadd_image = butler.get("deepCoadd", dataId=coaddId)
+
+        if not coadd_injection:
+            visit_info = coadd_image.getInfo().getCoaddInputs().ccds
+            index = np.random.randint(0, len(visit_info))
+            dataId_visit = {
+                "visit": visit_info[index]["visit"],
+                "detector": visit_info[index]["ccd"],
+                "band": visit_info[index]["filter"],
+                "tract": tractInfo.getId(),
+            }
+            visit_image = butler.get("calexp", dataId=dataId_visit)
+            coadd.append(visit_image)
+            variance_map.append(visit_image.getVariance())
+            mag_zero_visit.append(
+                2.5 * np.log10(visit_image.getPhotoCalib().getInstFluxAtZeroMagnitude())
+            )
+        else:
+            coadd.append(coadd_image)
+            variance_map.append(coadd_image.getVariance())
+            coadd_nImage.append(butler.get("deepCoadd_nImage", dataId=coaddId))
+
+    return coadd, coadd_nImage, mag_zero_visit, variance_map
+
+
+def generate_cutout_bbox(x_center, y_center, num_pix):
+    """Generate bounding box for cutout selection.
+
+    :param x_center: x value of center of the cutout box in pixel unit
+    :param y_center: y value of center of the cutout box in pixel unit
+    :param num_pix: number of pixel for the cutout
+    :return: 2d box readable by the butler
+    """
+    xbox_min = x_center - ((num_pix - 1) / 2)
+    xbox_max = x_center + ((num_pix - 1) / 2)
+    ybox_min = y_center - ((num_pix - 1) / 2)
+    ybox_max = y_center + ((num_pix - 1) / 2)
+
+    return geom.Box2I(
+        geom.Point2I(xbox_min, ybox_min), geom.Point2I(xbox_max, ybox_max)
+    )
+
+
 def lens_inejection_fast(
     lens_pop,
     num_pix,
@@ -189,13 +261,20 @@ def lens_inejection_fast(
     num_cutout_per_patch=10,
     lens_cut=None,
     noise=True,
+    coadd_injection=True,
+    coadd_year=5,
+    band_list=["r", "g", "i"],
+    center_box_size=3,
+    center_source_snr_threshold=5,
+    false_positive=False,
 ):
     """Chooses a random lens from the lens population and injects it to a DC2
     cutout image. For this one needs to provide a butler to this function. To
     initiate Butler, you need to specify data configuration and collection of
     the data.
 
-    :param lens_pop: lens population from slsim
+    :param lens_pop: lens population from slsim. It can be a LensPop
+        instance or list of Lens class.
     :param num_pix: number of pixel for the cutout
     :param mag_zero_point: magnitude zero point in band
     :param transform_pix2angle: transformation matrix (2x2) of pixels
@@ -207,73 +286,105 @@ def lens_inejection_fast(
     :param lens_cut: list of criteria for lens selection
     :param noise: poisson noise to be added to an image. If True,
         poisson noise will be added to the image based on exposure time.
+    :param coadd_injection: Boolean. If True, injects lens into the DP0
+        coadd image and if False, injects lens into the single visit DP0
+        images.
+    :param coadd_year: Year for the coadd images. This parameter is used
+        to rescale the noise properties of 5 year dp0 coadd images to
+        desired year of coadd.
+    :param band_list: List of imaging band in which lens need to be
+        injected.
+    :param center_box_size: Size of the central box in arcsec (default
+        is 3 arcsec).
+    :param center_source_snr_threshold: SNR threshold for object
+        detection in center box (default is 5).
+    :param false_positive: Boolean. If false, code assumes that the provided
+     population is a lens population. If True, code assumes that the provided
+     population is a false popitive poulation. False positive contains an
+     elliptical galaxy at the center and blue galaxies around this central galaxy.
+     for more detail, please see: slsim/FalsePositives/
     :returns: An astropy table containing Injected lens in r-band, DC2
         cutout image in r-band, cutout image with injected lens in r, g
         , and i band
     """
 
+    pixel_scale = transformmatrix_to_pixelscale(transform_pix2angle)
     if lens_cut is None:
         kwargs_lens_cut = {}
     else:
         kwargs_lens_cut = lens_cut
 
-    rgb_band_list = ["r", "g", "i"]
-    skymap = butler.get("skyMap")
-    point = geom.SpherePoint(ra, dec, geom.degrees)
-    # cutoutSize = geom.ExtentI(num_pix, num_pix)
-
-    tractInfo = skymap.findTract(point)
-    patchInfo = tractInfo.findPatch(point)
-    my_tract = tractInfo.tract_id
-    my_patch = patchInfo.getSequentialIndex()
-
-    coadd = []
-    coadd_nImage = []
-    for band in rgb_band_list:
-        coaddId = {"tract": my_tract, "patch": my_patch, "band": band}
-
-        coadd.append(butler.get("deepCoadd", dataId=coaddId))
-        coadd_nImage.append(butler.get("deepCoadd_nImage", dataId=coaddId))
-
+    rgb_band_list = band_list
+    coadd, coadd_nImage, mag_zero_visit, variance_map = get_dp0_images(
+        butler=butler,
+        ra=ra,
+        dec=dec,
+        band_list=rgb_band_list,
+        coadd_injection=coadd_injection,
+    )
     bbox = coadd[0].getBBox()
     xmin, ymin = bbox.getBegin()
     xmax, ymax = bbox.getEnd()
     wcs = coadd[0].getWcs()
 
-    x_center = np.random.randint(xmin + 150, xmax - 150, num_cutout_per_patch)
-    y_center = np.random.randint(ymin + 150, ymax - 150, num_cutout_per_patch)
-    xbox_min = x_center - ((num_pix - 1) / 2)
-    xbox_max = x_center + ((num_pix - 1) / 2)
-    ybox_min = y_center - ((num_pix - 1) / 2)
-    ybox_max = y_center + ((num_pix - 1) / 2)
-
+    valid_cutouts = 0
     table = []
-    for i in range(len(x_center)):
-        lens_class = lens_pop.select_lens_at_random(**kwargs_lens_cut)
-        cutout_bbox = geom.Box2I(
-            geom.Point2I(xbox_min[i], ybox_min[i]),
-            geom.Point2I(xbox_max[i], ybox_max[i]),
+    # for i in range(len(x_center)):
+    while valid_cutouts < num_cutout_per_patch:
+        # Randomly select a position for the cutout
+        x_center = np.random.randint(xmin + 150, xmax - 150)
+        y_center = np.random.randint(ymin + 150, ymax - 150)
+        cutout_bbox = generate_cutout_bbox(
+            x_center=x_center, y_center=y_center, num_pix=num_pix
         )
-        injected_final_image = []
-        box_center = []
-        cutout_image_list = []
-        lens_image = []
-        for j in range(len(coadd)):
+        if isinstance(lens_pop, list):
+            lens_class = lens_pop[valid_cutouts]
+        else:
+            if false_positive is False:
+                lens_class = lens_pop.select_lens_at_random(**kwargs_lens_cut)
+            else:
+                lens_class = lens_pop.draw_false_positive()
+        injected_final_image, box_center, cutout_image_list, lens_image, lens_id = (
+            [],
+            [],
+            [],
+            [],
+            [],
+        )
+        is_valid = True
+        for j, band in enumerate(band_list):
             cutout_image = coadd[j][cutout_bbox]
+            cutout_variance = variance_map[j][cutout_bbox]
+            # Check for existing objects in the cutout image
+            if detect_object(
+                cutout_image.image.array,
+                cutout_variance.array,
+                pixel_scale=pixel_scale,
+                box_size_arcsec=center_box_size,
+                snr_threshold=center_source_snr_threshold,
+            ):
+                is_valid = False
+                break  # Discard this cutout and try again
             if noise is True:
-                exposure_map = 30 * coadd_nImage[j][cutout_bbox].array
+                if coadd_injection is True:
+                    exposure_map = 30 * coadd_nImage[j][cutout_bbox].array
+                    zero_point_magnitude = mag_zero_point
+                else:
+                    exposure_map = 30
+                    zero_point_magnitude = mag_zero_visit[j]
             else:
                 exposure_map = None
             final_injected_image = add_object(
                 cutout_image,
                 lens_class=lens_class,
                 band=rgb_band_list[j],
-                mag_zero_point=mag_zero_point,
+                mag_zero_point=zero_point_magnitude,
                 num_pix=num_pix,
                 transform_pix2angle=transform_pix2angle,
                 exposure_time=exposure_map,
+                coadd_year=coadd_year,
             )
-            center_point = geom.Point2D(x_center[i], y_center[i])
+            center_point = geom.Point2D(x_center, y_center)
             center_wcs = wcs.pixelToSky(center_point)
             ra_deg = center_wcs.getRa().asDegrees()
             dec_deg = center_wcs.getDec().asDegrees()
@@ -282,25 +393,27 @@ def lens_inejection_fast(
             box_center.append((ra_deg, dec_deg))
             cutout_image_list.append(cutout_image.image.array)
             lens_image.append((final_injected_image - cutout_image.image.array))
-        table_1 = Table(
-            [
-                [lens_image[0]],
-                [cutout_image_list[0]],
-                [injected_final_image[0]],
-                [injected_final_image[1]],
-                [injected_final_image[2]],
-                [box_center[0]],
-            ],
-            names=(
-                "lens",
-                "cutout_image",
-                "injected_lens_r",
-                "injected_lens_g",
-                "injected_lens_i",
-                "cutout_center",
-            ),
-        )
-        table.append(table_1)
+            lens_id.append(lens_class.generate_id())
+        if is_valid:
+            # Define column names dynamically based on band_list
+            prefix = "injected_object" if false_positive else "injected_lens"
+            column_names = (
+                ["lens_id", "lens", "cutout_image"]
+                + [f"{prefix}_{band}" for band in band_list]
+                + ["cutout_center"]
+            )
+
+            # Construct row data dynamically
+            data = (
+                [[[lens_id[0]]], [lens_image[0]], [cutout_image_list[0]]]
+                + [[img] for img in injected_final_image]
+                + [[box_center[0]]]
+            )
+
+            # Create Table instance
+            table_1 = Table(data, names=column_names)
+            table.append(table_1)
+            valid_cutouts += 1  # Increase count of successful cutouts
     lens_catalog = vstack(table)
     return lens_catalog
 
@@ -355,14 +468,21 @@ def multiple_lens_injection_fast(
     num_cutout_per_patch=10,
     lens_cut=None,
     noise=True,
+    coadd_injection=True,
+    coadd_year=5,
+    band_list=["r", "g", "i"],
+    center_box_size=3,
+    center_source_snr_threshold=5,
     output_file=None,
+    false_positive=False,
 ):
     """Injects random lenses from the lens population to multiple DC2 cutout
     images using lens_inejection_fast function. For this one needs to provide a
     butler to this function. To initiate Butler, you need to specify data
     configuration and collection of the data.
 
-    :param lens_pop: lens population from slsim
+    :param lens_pop: lens population from slsim. It can be a LensPop
+        instance or list of Lens class.
     :param num_pix: number of pixel for the cutout
     :param mag_zero_point: magnitude zero point in band
     :param transform_pix2angle: transformation matrix (2x2) of pixels
@@ -372,8 +492,23 @@ def multiple_lens_injection_fast(
     :param dec: dec for a cutout
     :param noise: poisson noise to be added to an image. If True,
         poisson noise will be added to the image based on exposure time.
+    :param coadd_injection: Boolean. If True, injects lens into the DP0
+        coadd image and if False, injects lens into the single visit DP0
+        images.
+    :param coadd_year: Year for the coadd images. This parameter is used
+        to rescale the noise properties of 5 year dp0 coadd images to
+        desired year of coadd.
+    :param band_list: List of imaging band in which lens need to be
+        injected.
+    :param center_box_size: Size of the central box in arcsec (default
+        is 3 arcsec).
+    :param center_source_snr_threshold: SNR threshold for object
+        detection in center box (default is 5).
     :param output_file: path to the output FITS file where data will be
         saved
+    :param false_positive: Boolean. If false, code assumes that the provided
+     population is a lens population. If True, code assumes that the provided
+     population is a false popitive poulation.
     :returns: An astropy table containing Injected lenses in r-band, DC2
         cutout images in r-band, cutout images with injected lens in r,
         g , and i band for a given set of ra and dec. If output_file
@@ -382,8 +517,14 @@ def multiple_lens_injection_fast(
     """
     injected_images = []
     for i in range(len(ra)):
+        if isinstance(lens_pop, list):
+            lens_pop_array = np.array(lens_pop)
+            lens_pop_group = lens_pop_array.reshape(len(ra), num_cutout_per_patch)
+            _lens_pop = list(lens_pop_group[i])
+        else:
+            _lens_pop = lens_pop
         injected_image = lens_inejection_fast(
-            lens_pop,
+            _lens_pop,
             num_pix,
             mag_zero_point,
             transform_pix2angle,
@@ -393,6 +534,12 @@ def multiple_lens_injection_fast(
             num_cutout_per_patch,
             lens_cut=lens_cut,
             noise=noise,
+            coadd_injection=coadd_injection,
+            coadd_year=coadd_year,
+            band_list=band_list,
+            center_box_size=center_box_size,
+            center_source_snr_threshold=center_source_snr_threshold,
+            false_positive=false_positive,
         )
         if output_file is None:
             injected_images.append(injected_image)
@@ -419,6 +566,7 @@ def add_object(
     exposure_time,
     calibFluxRadius=None,
     image_type="dp0",
+    coadd_year=5,
 ):
     """Injects a given object in a dp0 cutout image or SLSimObject.
 
@@ -432,10 +580,14 @@ def add_object(
         coordinate displacements for each exposure
     :param exposure_time: list of exposure time for each exposure. It could be single
         exposure time or a exposure map.
+    :param variance_map: variance map for a given image_object.
     :param calibFluxRadius: (optional) Aperture radius (in pixels) used to define the
         calibration for thisexposure+catalog. This is used to produce the correct
         instrumental fluxes within the radius. The value should match that of the field
         defined in slot_CalibFlux_instFlux.
+    :param image_type: dp0 or slsim_object.
+    :param coadd_year: Year for the coadd images. This parameter is used to rescale the
+     noise properties of 5 year dp0 coadd images to desired year of coadd.
     :returns: an image with injected source
     """
     if image_type == "dp0":
@@ -489,7 +641,16 @@ def add_object(
                 "scale."
             )
         else:
-            injected_image = image_object.image.array + lens
+            variance_map = image_object.getVariance()
+            degraded_image = degrade_coadd_data(
+                image_object.image.array,
+                variance_map=variance_map.array,
+                exposure_map=exposure_time,
+                original_num_years=5,
+                degraded_num_years=coadd_year,
+                use_noise_diff=True,
+            )
+            injected_image = degraded_image[0] + lens
             return injected_image
 
 
@@ -1088,3 +1249,178 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform:
             full_coadd.image.array,
             full_var.array,
         )
+
+
+# Define the subquery function
+def fetch_DP0_galaxies_from_Rubin_Science_Platform(
+    service=get_tap_service("tap"),
+    ra_min=71.875,
+    ra_max=-28.125,
+    dec_min=75.0,
+    dec_max=-25.0,
+):
+    """Extracts galaxies from the DP0.2 Object catalog that match the truth
+    catalog within a specified region of the sky, defined by right ascension
+    (RA) and declination (Dec) ranges.
+
+    : param service : str, the TAP (Table Access Protocol) service endpoint used for querying
+        the DP0.2 Object catalog.
+
+    : param ra_min : float, the minimum right ascension (RA) of the required region, in degrees.
+
+    : param ra_max : float, the maximum right ascension (RA) of the required region, in degrees.
+
+    : param dec_min : float, the minimum declination (Dec) of the required region, in degrees.
+
+    : param dec_max : float, the maximum declination (Dec) of the required region, in degrees.
+
+    : returns: astropy.table.table.Table, A pandas daataframe containing the results of the ADQL query,
+        including the extracted galaxy data within the specified sky region.
+    """
+
+    assert service is not None
+
+    query = f"""
+    SELECT mt.id_truth_type AS mt_id_truth_type,
+           mt.match_objectId AS mt_match_objectId,
+           ts.ra AS ts_ra,
+           ts.dec AS ts_dec,
+           ts.truth_type AS ts_truth_type,
+           ts.mag_r AS ts_mag_r,
+           ts.is_pointsource AS ts_is_pointsource,
+           ts.redshift AS ts_redshift,
+           
+           ts.flux_u AS ts_flux_u,
+           ts.flux_g AS ts_flux_g,
+           ts.flux_r AS ts_flux_r,
+           ts.flux_i AS ts_flux_i,
+           ts.flux_z AS ts_flux_z,
+           ts.flux_y AS ts_flux_y,
+           
+           obj.coord_ra AS obj_coord_ra,
+           obj.coord_dec AS obj_coord_dec,
+           obj.refExtendedness AS obj_refExtendedness,
+           obj.refBand AS obj_refband,
+
+           obj.u_cModel_flag AS obj_u_cModel_flag,
+           obj.u_psfFlux_flag AS obj_u_psfFlux_flag,
+           obj.u_cModelFlux AS obj_u_cModelFlux,
+           obj.u_cModelFluxErr AS obj_u_cModelFluxerr,
+           obj.u_psfFlux AS obj_u_psfFlux,
+           obj.u_psfFluxErr AS obj_u_psfFluxerr,
+           obj.u_bdFluxB AS obj_u_bdFluxB,
+           obj.u_bdFluxBErr AS obj_u_bdFluxBerr,
+           obj.u_bdFluxD AS obj_u_bdFluxD,
+           obj.u_bdFluxDErr AS obj_u_bdFluxDerr,
+
+           obj.g_cModel_flag AS obj_g_cModel_flag,
+           obj.g_psfFlux_flag AS obj_g_psfFlux_flag,
+           obj.g_cModelFlux AS obj_g_cModelFlux,
+           obj.g_cModelFluxErr AS obj_g_cModelFluxerr,
+           obj.g_psfFlux AS obj_g_psfFlux,
+           obj.g_psfFluxErr AS obj_g_psfFluxerr,
+           obj.g_bdFluxB AS obj_g_bdFluxB,
+           obj.g_bdFluxBErr AS obj_g_bdFluxBerr,
+           obj.g_bdFluxD AS obj_g_bdFluxD,
+           obj.g_bdFluxDErr AS obj_g_bdFluxDerr,
+
+           obj.r_cModel_flag AS obj_r_cModel_flag,
+           obj.r_psfFlux_flag AS obj_r_psfFlux_flag,
+           obj.r_cModelFlux AS obj_r_cModelFlux,
+           obj.r_cModelFluxErr AS obj_r_cModelFluxerr,
+           obj.r_psfFlux AS obj_r_psfFlux,
+           obj.r_psfFluxErr AS obj_r_psfFluxerr,
+           obj.r_bdFluxB AS obj_r_bdFluxB,
+           obj.r_bdFluxBErr AS obj_r_bdFluxBerr,
+           obj.r_bdFluxD AS obj_r_bdFluxD,
+           obj.r_bdFluxDErr AS obj_r_bdFluxDerr,
+
+           obj.i_cModel_flag AS obj_i_cModel_flag,
+           obj.i_psfFlux_flag AS obj_i_psfFlux_flag,
+           obj.i_cModelFlux AS obj_i_cModelFlux,
+           obj.i_cModelFluxErr AS obj_i_cModelFluxerr,
+           obj.i_psfFlux AS obj_i_psfFlux,
+           obj.i_psfFluxErr AS obj_i_psfFluxerr,
+           obj.i_bdFluxB AS obj_i_bdFluxB,
+           obj.i_bdFluxBErr AS obj_i_bdFluxBerr,
+           obj.i_bdFluxD AS obj_i_bdFluxD,
+           obj.i_bdFluxDErr AS obj_i_bdFluxDerr,
+
+           obj.z_cModel_flag AS obj_z_cModel_flag,
+           obj.z_psfFlux_flag AS obj_z_psfFlux_flag,
+           obj.z_cModelFlux AS obj_z_cModelFlux,
+           obj.z_cModelFluxErr AS obj_z_cModelFluxerr,
+           obj.z_psfFlux AS obj_z_psfFlux,
+           obj.z_psfFluxErr AS obj_z_psfFluxerr,
+           obj.z_bdFluxB AS obj_z_bdFluxB,
+           obj.z_bdFluxBErr AS obj_z_bdFluxBerr,
+           obj.z_bdFluxD AS obj_z_bdFluxD,
+           obj.z_bdFluxDErr AS obj_z_bdFluxDerr,
+
+           obj.y_cModel_flag AS obj_y_cModel_flag,
+           obj.y_psfFlux_flag AS obj_y_psfFlux_flag,
+           obj.y_cModelFlux AS obj_y_cModelFlux,
+           obj.y_cModelFluxErr AS obj_y_cModelFluxerr,
+           obj.y_psfFlux AS obj_y_psfFlux,
+           obj.y_psfFluxErr AS obj_y_psfFluxerr,
+           obj.y_bdFluxB AS obj_y_bdFluxB,
+           obj.y_bdFluxBErr AS obj_y_bdFluxBerr,
+           obj.y_bdFluxD AS obj_y_bdFluxD,
+           obj.y_bdFluxDErr AS obj_y_bdFluxDerr,
+
+           obj.shape_xx AS obj_shape_xx,
+           obj.shape_xy AS obj_shape_xy,
+           obj.shape_yy AS obj_shape_yy,
+           
+           obj.u_bdReB AS obj_u_bdReB,
+           obj.g_bdReB AS obj_g_bdReB,
+           obj.r_bdReB AS obj_r_bdReB,
+           obj.i_bdReB AS obj_i_bdReB,
+           obj.z_bdReB AS obj_z_bdReB,
+           obj.y_bdReB AS obj_y_bdReB,
+
+           obj.u_bdReD AS obj_u_bdReD,
+           obj.g_bdReD AS obj_g_bdReD,
+           obj.r_bdReD AS obj_r_bdReD,
+           obj.i_bdReD AS obj_i_bdReD,
+           obj.z_bdReD AS obj_z_bdReD,
+           obj.y_bdReD AS obj_y_bdReD
+           
+    FROM dp02_dc2_catalogs.MatchesTruth AS mt
+    JOIN dp02_dc2_catalogs.TruthSummary AS ts ON mt.id_truth_type = ts.id_truth_type
+    JOIN dp02_dc2_catalogs.Object AS obj ON mt.match_objectId = obj.objectId
+    WHERE CONTAINS(POINT('ICRS', obj.coord_ra, obj.coord_dec), 
+                   POLYGON('ICRS', {ra_min}, {dec_min}, 
+                                  {ra_min}, {dec_max}, 
+                                  {ra_max}, {dec_max}, 
+                                  {ra_max}, {dec_min})) = 1
+    AND ts.truth_type = 1
+    AND obj.refExtendedness = 1
+    AND obj.u_cModelFlux > 0
+    AND obj.g_cModelFlux > 0
+    AND obj.r_cModelFlux > 0
+    AND obj.i_cModelFlux > 0
+    AND obj.z_cModelFlux > 0
+    AND obj.y_cModelFlux > 0
+    AND obj.u_cModel_flag = 0
+    AND obj.g_cModel_flag = 0
+    AND obj.r_cModel_flag = 0
+    AND obj.i_cModel_flag = 0
+    AND obj.z_cModel_flag = 0
+    AND obj.y_cModel_flag = 0
+    AND obj.detect_isPrimary = 1
+    """
+
+    job = service.submit_job(query)
+    job.run()
+    job.wait(phases=["COMPLETED", "ERROR"])
+    print("Job phase is", job.phase)
+
+    # Fetch and return results if the job is completed
+    if job.phase == "COMPLETED":
+        results = job.fetch_result().to_table()
+        print(f"Number of results: {len(results)}")
+        return results
+    else:
+        print("Job failed with error phase.")
+        return None

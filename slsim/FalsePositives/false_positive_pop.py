@@ -1,5 +1,5 @@
 from slsim.FalsePositives.false_positive import FalsePositive
-from slsim.lens_pop import draw_test_area
+from slsim.Lenses.lens_pop import area_theta_e_infinity
 from slsim.LOS.los_pop import LOSPop
 import random
 
@@ -61,10 +61,12 @@ class FalsePositivePop(object):
         z_max = deflector.redshift + 0.002  # Adding tolerance to redshift
         return deflector, z_max
 
-    def draw_sources(self, z_max):
+    def draw_sources(self, z_max, area=None):
         """Draw source(s) within the redshift limit of z_max.
 
         :param z_max: maximum redshift for drawn source.
+        :param area: area to draw source coordinates, if None, does not
+            draw it
         :return: A Source instance or a list of Source instance.
         """
         source_number = random.choices(self._choice, weights=self._weights)[0]
@@ -72,6 +74,8 @@ class FalsePositivePop(object):
 
         for _ in range(source_number):
             source = self._sources.draw_source(z_max=z_max)
+            if area is not None:
+                source.update_center(area=area)
             # If no source is available, return None
             if source is None:
                 return None
@@ -98,18 +102,20 @@ class FalsePositivePop(object):
                 # Step 1: Draw deflector
                 deflector, z_max = self.draw_deflector()
                 # Step 2: Draw sources
-                source = self.draw_sources(z_max)
+                theta_e_infinity = deflector.theta_e_infinity(cosmo=self.cosmo)
+                test_area = self._test_area_factor * area_theta_e_infinity(
+                    theta_e_infinity=theta_e_infinity
+                )
+                source = self.draw_sources(z_max, area=test_area)
                 if source is None:
                     continue  # Retry if sources are invalid
 
                 # Step 3: Create false positive
-                vd = deflector.velocity_dispersion(cosmo=self.cosmo)
-                test_area = self._test_area_factor * draw_test_area(v_sigma=vd)
+
                 false_positive = FalsePositive(
                     deflector_class=deflector,
                     source_class=source,
                     cosmo=self.cosmo,
-                    test_area=test_area,
                 )
                 false_positive_population.append(false_positive)
                 successful = True
