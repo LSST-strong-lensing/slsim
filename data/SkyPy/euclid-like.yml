@@ -56,7 +56,7 @@ tables:
       e_sum: 3.5
       size: !len [$blue.z]
   red1:
-    z1, M1: !skypy.galaxies.redshift.schechter_lf_redshift
+    z1, M1: !skypy.galaxies.schechter_lf
               redshift: $z_range
               M_star: $M_star_red
               phi_star: $phi_star_red
@@ -66,7 +66,7 @@ tables:
               cosmology: $cosmology
 
   red2:
-    z2, M2: !skypy.galaxies.redshift.schechter_lf_redshift
+    z2, M2: !skypy.galaxies.schechter_lf
               redshift: $z_range
               M_star: -17.00
               phi_star: $phi_star_red

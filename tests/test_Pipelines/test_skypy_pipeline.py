@@ -1,5 +1,11 @@
 ﻿from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
-from astropy.cosmology import LambdaCDM, FlatwCDM, w0waCDM, default_cosmology
+from astropy.cosmology import (
+    LambdaCDM,
+    FlatLambdaCDM,
+    FlatwCDM,
+    w0waCDM,
+    default_cosmology,
+)
 import os
 
 
@@ -7,8 +13,16 @@ class TestSkyPyPipeline(object):
     def setup_method(self):
         from astropy.units import Quantity
 
+        cosmo_test = FlatLambdaCDM(H0=70, Om0=0.3)
         self.sky_area = Quantity(value=0.001, unit="deg2")
-        self.pipeline = SkyPyPipeline(skypy_config=None, sky_area=self.sky_area)
+        self.pipeline = SkyPyPipeline(
+            skypy_config=None,
+            sky_area=self.sky_area,
+            z_min=0,
+            z_max=4.09,
+            filters=["g", "r", "i", "z", "y", "u"],
+            cosmo=cosmo_test,
+        )
         self.pipeline2 = SkyPyPipeline(
             skypy_config="lsst_like_old", sky_area=self.sky_area
         )
@@ -72,3 +86,28 @@ class TestSkyPyPipeline(object):
         assert red_galaxies[0]["z"] > 0
         assert len(self.pipeline2.red_galaxies["z"]) > 0
         assert len(self.pipeline3.red_galaxies["z"]) > 0
+
+    def test_redshift_range(self):
+        blue_galaxies = self.pipeline.blue_galaxies
+        red_galaxies = self.pipeline.red_galaxies
+        assert max(blue_galaxies["z"]) <= 4.09
+        assert min(blue_galaxies["z"]) >= 0.0
+        assert max(red_galaxies["z"]) <= 4.09
+        assert min(red_galaxies["z"]) >= 0.0
+
+    def test_filters(self):
+        blue_galaxies = self.pipeline.blue_galaxies
+        red_galaxies = self.pipeline.red_galaxies
+        assert "mag_g" in blue_galaxies.colnames
+        assert "mag_r" in blue_galaxies.colnames
+        assert "mag_i" in blue_galaxies.colnames
+        assert "mag_z" in blue_galaxies.colnames
+        assert "mag_y" in blue_galaxies.colnames
+        assert "mag_u" in blue_galaxies.colnames
+
+        assert "mag_g" in red_galaxies.colnames
+        assert "mag_r" in red_galaxies.colnames
+        assert "mag_i" in red_galaxies.colnames
+        assert "mag_z" in red_galaxies.colnames
+        assert "mag_y" in red_galaxies.colnames
+        assert "mag_u" in red_galaxies.colnames

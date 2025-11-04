@@ -18,7 +18,7 @@ class TestHalosSkyPyPipeline(object):
         galaxy_cosmo0 = FlatLambdaCDM(
             H0=70, Om0=0.3, Tcmb0=2.72, Neff=3.04, m_nu=0.06, Ob0=0.05
         )
-        pipeline0 = HalosSkyPyPipeline(cosmo=galaxy_cosmo0)
+        pipeline0 = HalosSkyPyPipeline(cosmo=galaxy_cosmo0, sky_area=0.001)
         halos0 = pipeline0.halos
         assert halos0[0]["z"] > 0
 

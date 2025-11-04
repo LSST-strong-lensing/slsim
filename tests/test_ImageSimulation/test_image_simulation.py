@@ -267,6 +267,8 @@ def test_point_source_image_properties(pes_lens_instance):
     assert result_key[1] == expected_key[1]
     assert result_key[2] == expected_key[2]
     assert result_key[3] == expected_key[3]
+    print(result["image_pix"])
+    assert np.shape(result["image_pix"]) == (4, 2)
 
 
 def test_point_source_image_with_and_without_variability(pes_lens_instance):

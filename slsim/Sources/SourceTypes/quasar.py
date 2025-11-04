@@ -183,9 +183,12 @@ class Quasar(SourceBase):
         :rtype: float
         """
 
-        if image_observation_times is not None:
-            if self._variability_computed is False:
-                self._kwargs_variability_model = self.light_curve
+        # If variability has not yet been computed, compute it now
+        # this also adds the mean magnitudes to the source_dict
+        if self._variability_computed is False:
+            self._kwargs_variability_model = self.light_curve
+
+        # all the returning of variable magnitudes will be handled by the Parent class
         return super().point_source_magnitude(
             band=band, image_observation_times=image_observation_times
         )

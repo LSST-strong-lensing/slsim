@@ -24,6 +24,7 @@ class SLHammocksPipeline:
 
     def __init__(
         self,
+        skypy_config=None,
         slhammocks_config=None,
         sky_area=None,
         cosmo=None,
@@ -33,6 +34,8 @@ class SLHammocksPipeline:
         loghm_max=16.0,
     ):
         """
+        :param skypy_config: path to the SkyPy configuration file.
+        :type skypy_config: string or None
         :param slhammocks_config: path to the deflector population csv file for 'halo-model'
                             If None, generate the population. Not supported at this time.
         :type slhammocks_config: string or None
@@ -107,16 +110,20 @@ class SLHammocksPipeline:
             table = table_translator_for_slsim(table, cosmo)
 
             self._pipeline = table
-        skypy_config = os.path.join(module_path, "data/SkyPy/slhammock_skypy.yml")
+
+        # load SkyPy configuration
+        if skypy_config is None:
+            skypy_config = os.path.join(module_path, "data/SkyPy/slhammock_skypy.yml")
         with open(skypy_config, "r") as file:
             content = file.read()
+
         # replace z: PLACEHOLDER_Z with halo redshift
-        redshift_array = list(self._pipeline["z"].value)
+        redshift_array = self._pipeline["z"].value.tolist()
         old_z = "z: PLACEHOLDER_Z"
         new_z = f"z: {redshift_array}"
         content = content.replace(old_z, new_z)
         # replace stellar_mass: PLACEHOLDER_MASS with stellar mass
-        stellar_mass_array = list(self._pipeline["stellar_mass"].value)
+        stellar_mass_array = self._pipeline["stellar_mass"].value.tolist()
         old_stellar_mass = "stellar_mass: PLACEHOLDER_MASS"
         new_stellar_mass = f"stellar_mass: {stellar_mass_array}"
         content = content.replace(old_stellar_mass, new_stellar_mass)

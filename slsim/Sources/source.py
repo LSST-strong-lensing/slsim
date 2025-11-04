@@ -19,9 +19,12 @@ class Source(object):
         **source_dict,
     ):
         """
-        :param source_type: Keyword to specify type of the source. Supported source types are
-         'extended', 'point_source', and 'point_plus_extended' supported
-        :type source_type: str
+        :param extended_source_type: Keyword to specify type of the extended source. Supported
+         extended source types are 'single_sersic', 'double_sersic', 'catalog_source', and 'interpolated'.
+        :type extended_source_type: str
+        :param point_source_type: Keyword to specify type of point source. Supported point
+         source types are 'supernova', 'quasar', and 'general_lightcurve'.
+        :type point_source_type: str
         :param source_dict: Source properties. Can be a dictionary or an Astropy table.
          For a detailed description of this dictionary, please see the documentation for
          the individual classes, such as SingleSersic, DoubleSersic, Interpolated classes, SupernovaEvent,
@@ -41,7 +44,7 @@ class Source(object):
             self.source_type = "point_source"
         else:
             raise ValueError(
-                "either extended_source_type of point_source_type need to set."
+                "either extended_source_type or point_source_type needs to be set."
             )
 
         # point sources

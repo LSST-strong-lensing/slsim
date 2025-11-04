@@ -17,7 +17,7 @@ class SingleSersic(SourceBase):
         :type source_dict: dict or astropy.table.Table
         """
         super().__init__(
-            model_type="DoubleSersic",
+            model_type="SingleSersic",
             extended_source=True,
             point_source=False,
             **source_dict

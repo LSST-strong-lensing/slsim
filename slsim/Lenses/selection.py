@@ -31,6 +31,7 @@ def object_cut(
         if band is None:
             bool_cut = (galaxy_list["z"] > z_min) & (galaxy_list["z"] < z_max)
         else:
+            # TODO: What if you wanted to work with multiple bands?
             bool_cut = (
                 (galaxy_list["z"] > z_min)
                 & (galaxy_list["z"] < z_max)
@@ -39,7 +40,6 @@ def object_cut(
         galaxy_list_cut = galaxy_list[bool_cut]
     else:
         galaxy_list_cut = []
-
         for table in galaxy_list:
             if band is None:
                 bool_cut = (table["z"] > z_min) & (table["z"] < z_max)

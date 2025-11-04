@@ -31,8 +31,8 @@ def Quasar_class():
         cosmo=cosmo,
         sky_area=sky_area,
         kwargs_cut={},
-        pointsource_type="quasar",
-        pointsource_kwargs=kwargs,
+        point_source_type="quasar",
+        point_source_kwargs=kwargs,
     )
 
 
@@ -53,12 +53,12 @@ def test_source_number_selected(Quasar_class):
 
 
 def test_variability_model(Quasar_class):
-    kwargs_variab = Quasar_class.pointsource_kwargs["variability_model"]
+    kwargs_variab = Quasar_class.point_source_kwargs["variability_model"]
     assert kwargs_variab == "light_curve"
 
 
 def test_kwarg_variability(Quasar_class):
-    kwargs_variab = Quasar_class.pointsource_kwargs["kwargs_variability"]
+    kwargs_variab = Quasar_class.point_source_kwargs["kwargs_variability"]
     assert kwargs_variab is None
 
 

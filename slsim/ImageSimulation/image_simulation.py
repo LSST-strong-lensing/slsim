@@ -277,7 +277,7 @@ def point_source_coordinate_properties(
         # image_magnitude = lens_class.point_source_magnitude(band=band, lensed=True)
         for image_ra, image_dec in zip(ra_image_values, dec_image_values):
             image_pix_coordinate.append(
-                np.array([image_data.map_coord2pix(image_ra, image_dec)])
+                np.array(image_data.map_coord2pix(image_ra, image_dec))
             )
 
     data = {

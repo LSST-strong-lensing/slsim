@@ -27,6 +27,31 @@ class TestSkyPyPipeline(object):
             z_max=5,
         )
 
+    def test_specifying_skypy_configuration(self):
+        # use case: Roman simulation
+
+        import os
+        import speclite
+        from slsim.Pipelines import roman_speclite
+
+        # load Roman speclite filters
+        roman_speclite.configure_roman_filters()
+        roman_filters = roman_speclite.filter_names()
+        speclite.filters.load_filters(*roman_filters)
+
+        skypy_config = os.path.join(
+            os.path.dirname(__file__),
+            "../../data/SkyPy/slhammock_skypy_roman.yml",
+        )
+        pipeline = SLHammocksPipeline(
+            skypy_config=skypy_config,
+            sky_area=self.sky_area,
+            cosmo=self.cosmo,
+            z_min=0.01,
+            z_max=2,
+        )
+        assert pipeline._skypy_pipeline is not None
+
     def test_cosmology_initialization(self):
         sky_area = self.sky_area
         galaxy_cosmo0 = LambdaCDM(H0=70, Om0=0.15, Ob0=0.02, Ode0=0.85, Tcmb0=2.725)
