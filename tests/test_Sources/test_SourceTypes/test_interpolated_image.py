@@ -43,7 +43,7 @@ class TestInterpolated:
             "phi_G": 0.5,
             "mag_i": 21,
         }
-        self.source = Interpolated(source_dict=self.source_dict, cosmo=cosmo)
+        self.source = Interpolated(cosmo=cosmo, **self.source_dict)
 
     def test_image_redshift(self):
         assert self.source._image_redshift == 0.1
@@ -60,12 +60,8 @@ class TestInterpolated:
             self.source.extended_source_magnitude("g")
 
     def test_kwargs_extended_source_light(self):
-        results = self.source.kwargs_extended_source_light(
-            reference_position=[0, 0], draw_area=4 * np.pi, band="i"
-        )
-        results2 = self.source.kwargs_extended_source_light(
-            reference_position=[0, 0], draw_area=4 * np.pi, band=None
-        )
+        light_model_list, results = self.source.kwargs_extended_light(band="i")
+        _, results2 = self.source.kwargs_extended_light(band=None)
 
         assert np.all(results[0]["image"] == self.test_image)
         npt.assert_almost_equal(results[0]["scale"], 0.0151, decimal=3)
@@ -73,9 +69,7 @@ class TestInterpolated:
         assert results[0]["magnitude"] == 21
         assert results2[0]["magnitude"] == 1
 
-    def test_extended_source_light_model(self):
-        source_model = self.source.extended_source_light_model()
-        assert source_model[0] == "INTERPOL"
+        assert light_model_list[0] == "INTERPOL"
 
 
 if __name__ == "__main__":

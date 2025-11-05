@@ -47,7 +47,7 @@ This section details what each column in the CSV file represents. Below is a lis
   ```python
   from astropy.cosmology import FlatLambdaCDM
   from astropy.units import Quantity
-  from slsim.lens_pop import LensPop
+  from slsim.Lenses.lens_pop import LensPop
 
   cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
   sky_area = Quantity(value=0.001, unit="deg2")

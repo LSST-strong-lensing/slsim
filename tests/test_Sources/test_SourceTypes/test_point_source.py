@@ -24,10 +24,7 @@ class TestPointSource:
             "sn_modeldir": None,
         }
         self.source_sn = PointSource(
-            source_dict=self.source_dict_sn,
-            pointsource_type="supernova",
-            cosmo=cosmo,
-            pointsource_kwargs=kwargs_sn,
+            source_type="supernova", cosmo=cosmo, **kwargs_sn, **self.source_dict_sn
         )
 
         source_dict_quasar = {"z": 0.8, "ps_mag_i": 20}
@@ -47,10 +44,7 @@ class TestPointSource:
             "lightcurve_time": np.linspace(0, 1000, 1000),
         }
         self.source_quasar = PointSource(
-            source_dict=source_dict_quasar,
-            pointsource_type="quasar",
-            cosmo=cosmo,
-            pointsource_kwargs=kwargs_quasar,
+            source_type="quasar", cosmo=cosmo, **kwargs_quasar, **source_dict_quasar
         )
 
         source_dict_general_lc = {
@@ -63,25 +57,20 @@ class TestPointSource:
         }
 
         self.source_general_lc = PointSource(
-            source_dict=source_dict_general_lc,
-            pointsource_type="general_lightcurve",
+            source_type="general_lightcurve",
             cosmo=cosmo,
-            pointsource_kwargs=kwargs_general_lc,
+            **kwargs_general_lc,
+            **source_dict_general_lc
         )
 
     def test_redshift(self):
         assert self.source_sn.redshift == 1.0
 
     def test_source_position(self):
-        ## no host galaxy. So, point and extended source position are the same.
-        x_pos_1, y_pos_1 = self.source_sn.point_source_position(
-            reference_position=[0, 0], draw_area=4 * np.pi
-        )
-        x_pos_2, y_pos_2 = self.source_sn.extended_source_position(
-            reference_position=[0, 0], draw_area=4 * np.pi
-        )
-        assert x_pos_1 == x_pos_2
-        assert y_pos_1 == y_pos_2
+        # no host galaxy. So, point and extended source position are the same.
+        x_pos_1, y_pos_1 = self.source_sn.point_source_position
+        assert x_pos_1 == self.source_dict_sn["center_x"]
+        assert y_pos_1 == self.source_dict_sn["center_y"]
 
     def test_point_source_magnitude(self):
         # supernova is randomly selected. Can't assert a fix value. Just checking that
@@ -96,7 +85,8 @@ class TestPointSource:
         )
         expected_result = np.array([15, 16, 17, 18, 19, 20, 21, 22, 23])
         assert np.all(
-            self.source_general_lc.point_source_magnitude(band="i") == expected_result
+            self.source_general_lc.point_source_magnitude(band="i")
+            == np.mean(expected_result)
         )
         with pytest.raises(ValueError):
             self.source_general_lc.point_source_magnitude(band="g")
@@ -119,13 +109,4 @@ class TestPointSource:
             "sn_modeldir": None,
         }
         with pytest.raises(ValueError):
-            PointSource(
-                source_dict=source_dict_sn,
-                cosmo=cosmo,
-                pointsource_type="other",
-                pointsource_kwargs=kwargs_sn,
-            )
-
-
-if __name__ == "__main__":
-    pytest.main()
+            PointSource(cosmo=cosmo, source_type="other", **kwargs_sn, **source_dict_sn)

@@ -1,6 +1,6 @@
 import numpy as np
 import numpy.random as random
-from slsim.selection import object_cut
+from slsim.Lenses.selection import object_cut
 from slsim.Deflectors.DeflectorPopulation.deflectors_base import DeflectorsBase
 from slsim.Deflectors.DeflectorPopulation.elliptical_lens_galaxies import (
     elliptical_projected_eccentricity,
@@ -23,7 +23,7 @@ class CompoundLensHalosGalaxies(DeflectorsBase):
         """
 
         :param halo_galaxy_list: list of dictionary with lens parameters of
-            elliptical dark matte haloes and galaxies (currently supporting SL-Hammocks pipelines)
+            elliptical dark matter haloes and galaxies (currently supporting SL-Hammocks pipelines)
         :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max
         :type kwargs_cut: dict
         # :param kwargs_mass2light: mass-to-light relation

@@ -1,5 +1,4 @@
 from slsim.Sources.SourceTypes.single_sersic import SingleSersic
-import numpy as np
 import pytest
 from numpy import testing as npt
 
@@ -14,7 +13,7 @@ class TestSingleSersic:
             "e1": 0.002,
             "e2": 0.004,
         }
-        self.source = SingleSersic(source_dict=self.source_dict)
+        self.source = SingleSersic(**self.source_dict)
 
     def test_angular_size(self):
         assert self.source.angular_size == 0.2
@@ -33,20 +32,14 @@ class TestSingleSersic:
             self.source.extended_source_magnitude("g")
 
     def test_kwargs_extended_source_light(self):
-        results = self.source.kwargs_extended_source_light(
-            reference_position=[0, 0], draw_area=4 * np.pi, band="i"
-        )
-        results2 = self.source.kwargs_extended_source_light(
-            reference_position=[0, 0], draw_area=4 * np.pi, band=None
-        )
+        source_model, results = self.source.kwargs_extended_light(band="i")
+        _, results2 = self.source.kwargs_extended_light(band=None)
         assert results[0]["R_sersic"] == 0.2
         assert results[0]["e1"] == -0.002
         assert results[0]["e2"] == 0.004
         assert results[0]["magnitude"] == 23
         assert results2[0]["magnitude"] == 1
 
-    def test_extended_source_light_model(self):
-        source_model = self.source.extended_source_light_model()
         assert source_model[0] == "SERSIC_ELLIPSE"
 
     def test_surface_brightness_reff(self):

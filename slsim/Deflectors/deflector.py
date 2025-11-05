@@ -12,6 +12,13 @@ from lenstronomy.Analysis.lens_profile import LensProfileAnalysis
 from lenstronomy.LensModel.lens_model import LensModel
 
 _SUPPORTED_DEFLECTORS = ["EPL", "EPL_SERSIC", "NFW_HERNQUIST", "NFW_CLUSTER"]
+JAX_PROFILES = [
+    "EPL",
+    "NFW",
+    "HERNQUIST",
+    "NFW_ELLIPSE_CSE",
+    "HERNQUIST_ELLIPSE_CSE",
+]
 
 
 class Deflector(object):
@@ -27,6 +34,7 @@ class Deflector(object):
         :type deflector_dict: dict
         # TODO: document magnitude inputs
         """
+        self._name = "GAL"
         if deflector_type in ["EPL"]:
             self._deflector = EPL(**kwargs)
         elif deflector_type in ["EPL_SERSIC"]:
@@ -35,12 +43,21 @@ class Deflector(object):
             self._deflector = NFWHernquist(**kwargs)
         elif deflector_type in ["NFW_CLUSTER"]:
             self._deflector = NFWCluster(**kwargs)
+            self._name = "CLUSTER"
         else:
             raise ValueError(
                 "Deflector type %s not supported. Chose among %s."
                 % (deflector_type, _SUPPORTED_DEFLECTORS)
             )
         self.deflector_type = deflector_type
+
+    @property
+    def name(self):
+        """Meaningful name string of the deflector.
+
+        :return: name string
+        """
+        return self._name
 
     @property
     def redshift(self):
@@ -66,6 +83,15 @@ class Deflector(object):
         :return: [x_pox, y_pos] in arc seconds
         """
         return self._deflector.deflector_center
+
+    def update_center(self, deflector_area):
+        """Overwrites the deflector center position.
+
+        :param deflector_area: area (in solid angle arcseconds^2) to
+            dither the center of the deflector
+        :return:
+        """
+        return self._deflector.update_center(deflector_area)
 
     @property
     def stellar_mass(self):
@@ -200,6 +226,12 @@ class Deflector(object):
                     lens_cosmo=lens_cosmo, spherical=True
                 )
             )
+            use_jax = []
+            for profile in lens_mass_model_list:
+                if profile in JAX_PROFILES:
+                    use_jax.append(True)
+                else:
+                    use_jax.append(False)
             lens_model = LensModel(
                 lens_model_list=lens_mass_model_list,
                 z_lens=self.redshift,
@@ -207,6 +239,7 @@ class Deflector(object):
                 multi_plane=False,
                 z_source=_z_source_infty,
                 cosmo=cosmo,
+                use_jax=use_jax,
             )
 
             lens_analysis = LensProfileAnalysis(lens_model=lens_model)

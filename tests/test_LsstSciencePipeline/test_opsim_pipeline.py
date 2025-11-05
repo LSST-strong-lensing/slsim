@@ -2,7 +2,7 @@ import os
 import numpy as np
 from astropy.table import Table
 from astropy.cosmology import FlatLambdaCDM
-from slsim.lens import Lens
+from slsim.Lenses.lens import Lens
 from slsim.LsstSciencePipeline.opsim_pipeline import opsim_time_series_images_data
 from slsim.LsstSciencePipeline.util_lsst import opsim_variable_lens_injection
 from slsim.Sources.source import Source
@@ -38,12 +38,11 @@ def pes_lens_instance():
             "lightcurve_time": np.linspace(0, 1000, 1000),
         }
         source = Source(
-            source_dict=source_dict,
             cosmo=cosmo,
-            source_type="point_plus_extended",
-            pointsource_type="quasar",
-            extendedsource_type="single_sersic",
-            pointsource_kwargs=kwargs_quasar,
+            point_source_type="quasar",
+            extended_source_type="single_sersic",
+            **kwargs_quasar,
+            **source_dict,
         )
         deflector = Deflector(
             deflector_type="EPL_SERSIC",

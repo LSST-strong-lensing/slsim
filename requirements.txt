@@ -1,4 +1,5 @@
 skypy
+jaxtronomy
 lenstronomy>=1.12.6
 astropy>=5.2
 numpy

@@ -1,5 +1,4 @@
-import numpy as np
-from slsim.lens import Lens
+from slsim.Lenses.lens import Lens
 
 
 class FalsePositive(Lens):
@@ -15,7 +14,6 @@ class FalsePositive(Lens):
         source_class,
         deflector_class,
         cosmo,
-        test_area=4 * np.pi,
         los_class=None,
     ):
         """
@@ -24,8 +22,6 @@ class FalsePositive(Lens):
         :param deflector_class: deflector instance
         :type deflector_class: Deflector class instance from slsim.Deflectors.deflector
         :param cosmo: astropy.cosmology instance
-        :param test_area: area of disk around one lensing galaxies to be investigated
-            on (in arc-seconds^2).
         :param los_class: line of sight dictionary (optional, takes these values instead of drawing from distribution)
         :type los_class: ~LOSIndividual() class object
         """
@@ -34,7 +30,6 @@ class FalsePositive(Lens):
             source_class=source_class,
             deflector_class=deflector_class,
             cosmo=cosmo,
-            test_area=test_area,
             los_class=los_class,
         )
 

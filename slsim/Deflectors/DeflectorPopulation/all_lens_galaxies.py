@@ -1,6 +1,6 @@
 import numpy as np
 import numpy.random as random
-from slsim.selection import object_cut
+from slsim.Lenses.selection import object_cut
 from slsim.Deflectors.MassLightConnection.velocity_dispersion import (
     vel_disp_abundance_matching,
 )

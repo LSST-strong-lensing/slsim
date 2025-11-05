@@ -7,20 +7,19 @@ def LSST_to_SDSS(lsst_u, lsst_g, lsst_r, lsst_i, lsst_z):
     for red galaxies and should not be used for blue galaxies or other stellar
     populations. The coefficients are based on polynomial fits to color terms.
 
-    params:
-    -- lsst_u : float
-            u-band lsst magnitude
-    -- lsst_g : float
-            g-band lsst magnitude
-    -- lsst_r : float
-            r-band lsst magnitude
-    -- lsst_i : float
-            i-band lsst magnitude
-    -- lsst_z : float
-            z-band lsst magnitude
-
-    returns:   list
-        A list of SDSS-equivalent magnitudes in the order [u, g, r, i, z].
+    :param lsst_u: u-band LSST magnitude
+    :type lsst_u: float
+    :param lsst_g: g-band LSST magnitude
+    :type lsst_g: float
+    :param lsst_r: r-band LSST magnitude
+    :type lsst_r: float
+    :param lsst_i: i-band LSST magnitude
+    :type lsst_i: float
+    :param lsst_z: z-band LSST magnitude
+    :type lsst_z: float
+    :return: A list of SDSS-equivalent magnitudes in the order [u, g, r,
+        i, z].
+    :rtype: list
     """
     sdss_u = (
         lsst_u

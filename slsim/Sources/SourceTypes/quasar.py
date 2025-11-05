@@ -1,17 +1,34 @@
-from astropy.table import Column, Table
+import copy
+
 from slsim.Sources.SourceVariability.variability import (
-    Variability,
     reprocess_with_lamppost_model,
 )
-from slsim.Sources.SourceTypes import agn
+from slsim.Sources.SourceVariability import agn
 from slsim.Sources.SourceTypes.source_base import SourceBase
 
 
 class Quasar(SourceBase):
     """A class to manage a quasar."""
 
-    def __init__(self, source_dict, cosmo=None, **kwargs):
+    def __init__(
+        self,
+        lightcurve_time=None,
+        agn_known_band=None,
+        agn_known_mag=None,
+        agn_driving_variability_model=None,
+        agn_driving_kwargs_variability=None,
+        input_agn_bounds_dict=None,
+        kwargs_variability=None,
+        kwargs_variability_model=None,
+        variability_model="light_curve",
+        random_seed=None,
+        cosmo=None,
+        **kwargs
+    ):
         """
+
+        :param lightcurve_time: observation time array for lightcurve in unit of days.
+        :type lightcurve_time: array
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
          This dict or table should contain atleast redshift and i-band magnitude.
          eg: {"z": 0.8, "ps_mag_i": 22}
@@ -19,38 +36,50 @@ class Quasar(SourceBase):
         :param cosmo: astropy.cosmology instance
         :param kwargs: dictionary of keyword arguments for a supernova. It sould contain
           following keywords:
-            :param variability_model: keyword for variability model to be used. This is an
+        :param variability_model: keyword for variability model to be used. This is an
             input for the Variability class.
-            :type variability_model: str
-            :param kwargs_variability: Keyword arguments for variability class.
+        :type variability_model: str
+        :param kwargs_variability: Keyword arguments for variability class.
             This is associated with an input for Variability class. By using these key
             words, code search for quantities in source_dict with these names and creates
             a dictionary and this dict should be passed to the Variability class.
-            :type kwargs_variability: list of str
-            :param lightcurve_time: observation time array for lightcurve in unit of days.
-            :type lightcurve_time: array
+        :type kwargs_variability: list of str
+        :param kwargs_variability_model: Pre-computed variabilities for each band (default=None)
+        :param lightcurve_time: observation time array for lightcurve in unit of days.
+        :type lightcurve_time: array
         """
 
-        super().__init__(source_dict=source_dict)
-        self.cosmo = cosmo
-        self.variability_model = kwargs.get("variability_model")
-        self.kwargs_variability = kwargs.get("kwargs_variability")
-        self.lightcurve_time = kwargs.get("lightcurve_time")
-        self.agn_known_band = kwargs.get("agn_known_band")
-        self.agn_known_mag = kwargs.get("agn_known_mag")
-        self.agn_driving_variability_model = kwargs.get("agn_driving_variability_model")
-        self.agn_driving_kwargs_variability = kwargs.get(
-            "agn_driving_kwargs_variability"
+        super().__init__(
+            extended_source=False,
+            point_source=True,
+            variability_model=variability_model,
+            kwargs_variability_model=kwargs_variability_model,
+            cosmo=cosmo,
+            **kwargs,
         )
-        self.input_agn_bounds_dict = kwargs.get("input_agn_bounds_dict")
-        self.random_seed = kwargs.get("random_seed")
+        self.name = "QSO"
+        self._lightcurve_time = lightcurve_time
+        self._agn_known_band = agn_known_band
+        self._agn_known_mag = agn_known_mag
+        self._agn_driving_variability_model = agn_driving_variability_model
+        self._agn_driving_kwargs_variability = agn_driving_kwargs_variability
+        self.input_agn_bounds_dict = input_agn_bounds_dict
+        self._kwargs_variability = kwargs_variability
+        if kwargs_variability_model is None:
+            self._variability_computed = False
+        else:
+            self._variability_computed = True
+        if random_seed is not None:
+            self._random_seed = int(random_seed)
+        else:
+            self._random_seed = None
 
     @property
     def light_curve(self):
-        if self.kwargs_variability is not None:
-            kwargs_variab_extracted = {}
-            z = self.source_dict["z"]
-            if self.cosmo is None:
+        kwargs_variab_extracted = {}
+        if self._kwargs_variability is not None:
+            z = self._z
+            if self._cosmo is None:
                 raise ValueError(
                     "Cosmology cannot be None for AGN class. Please"
                     "provide a suitable astropy cosmology."
@@ -62,10 +91,10 @@ class Quasar(SourceBase):
 
                 # If no other band and magnitude is given, populate with
                 # the assumed point source magnitude column
-                if self.agn_known_band is None:
-                    if "ps_mag_i" in self.source_dict.colnames:
-                        self.agn_known_band = "lsst2016-i"
-                        self.agn_known_mag = self.source_dict["ps_mag_i"]
+                if self._agn_known_band is None:
+                    if "ps_mag_i" in self.source_dict:
+                        self._agn_known_band = "lsst2016-i"
+                        self._agn_known_mag = self.source_dict["ps_mag_i"]
                     else:
                         raise ValueError(
                             "Please provide a band and magnitude for the AGN"
@@ -73,21 +102,21 @@ class Quasar(SourceBase):
 
                 # Create the agn object
                 self.agn_class = agn.RandomAgn(
-                    self.agn_known_band,
-                    self.agn_known_mag,
+                    self._agn_known_band,
+                    self._agn_known_mag,
                     z,
-                    cosmo=self.cosmo,
-                    lightcurve_time=self.lightcurve_time,
-                    agn_driving_variability_model=self.agn_driving_variability_model,
-                    agn_driving_kwargs_variability=self.agn_driving_kwargs_variability,
-                    random_seed=self.random_seed,
+                    cosmo=self._cosmo,
+                    lightcurve_time=self._lightcurve_time,
+                    agn_driving_variability_model=self._agn_driving_variability_model,
+                    agn_driving_kwargs_variability=self._agn_driving_kwargs_variability,
+                    random_seed=self._random_seed,
                     input_agn_bounds_dict=self.input_agn_bounds_dict,
                     **agn_kwarg_dict,
                 )
                 # Get mean mags for each provided band
                 # determine which kwargs_variability are lsst bands
                 lsst_bands = ["u", "g", "r", "i", "z", "y"]
-                provided_lsst_bands = set(lsst_bands) & set(self.kwargs_variability)
+                provided_lsst_bands = set(lsst_bands) & set(self._kwargs_variability)
 
                 # The set "provided_lsst_bands" is no longer ordered.
                 # Therefore, create a list of speclite names in the new order
@@ -140,8 +169,7 @@ class Quasar(SourceBase):
                         "MJD": times,
                         filter_name: magnitudes,
                     }
-        else:
-            kwargs_variab_extracted = None
+        self._variability_computed = True
         return kwargs_variab_extracted
 
     def point_source_magnitude(self, band, image_observation_times=None):
@@ -155,34 +183,15 @@ class Quasar(SourceBase):
         :rtype: float
         """
 
-        if not hasattr(self, "kwargs_variab_dict"):
-            self.kwargs_variab_dict = self.light_curve
-        column_names = self.source_dict.colnames
-        if "ps_mag_" + band not in column_names:
-            raise ValueError("required parameter is missing in the source dictionary.")
-        else:
-            band_string = "ps_mag_" + band
-        if self.kwargs_variab_dict is not None:
-            kwargs_variab_band = self.kwargs_variab_dict[band]
-            self.variability_class = Variability(
-                self.variability_model, **kwargs_variab_band
-            )
-        else:
-            self.variability_class = None
-        if image_observation_times is not None:
-            if self.variability_class is not None:
-                variable_mag = self.variability_class.variability_at_time(
-                    image_observation_times
-                )
-                return variable_mag
-            else:
-                raise ValueError(
-                    "variability model is not provided. Please include"
-                    "one of the variability models in your kwargs_variability."
-                )
-        else:
-            source_mag = self.source_dict[band_string]
-            return source_mag
+        # If variability has not yet been computed, compute it now
+        # this also adds the mean magnitudes to the source_dict
+        if self._variability_computed is False:
+            self._kwargs_variability_model = self.light_curve
+
+        # all the returning of variable magnitudes will be handled by the Parent class
+        return super().point_source_magnitude(
+            band=band, image_observation_times=image_observation_times
+        )
 
 
 def add_mean_mag_to_source_table(sourcedict, mean_mags, band_list):
@@ -195,17 +204,12 @@ def add_mean_mag_to_source_table(sourcedict, mean_mags, band_list):
     :return: source table with additional columns corresponding to given
         mean magnitudes.
     """
-    _source_dict = Table(sourcedict)
+    _source_dict = copy.deepcopy(sourcedict)
     for i in range(len(mean_mags)):
-        new_agn_column = Column(
-            [mean_mags[i]],
-            name="ps_mag_" + list(band_list)[i],
-        )
-        if "ps_mag_" + list(band_list)[i] in _source_dict.colnames:
-            _source_dict.replace_column("ps_mag_" + list(band_list)[i], new_agn_column)
-        else:
-            _source_dict.add_column(new_agn_column)
-    return _source_dict[0]
+        name = "ps_mag_" + list(band_list)[i]
+        _source_dict[name] = mean_mags[i]
+
+    return _source_dict
 
 
 def extract_agn_kwargs_from_source_dict(source_dict):
@@ -230,9 +234,9 @@ def extract_agn_kwargs_from_source_dict(source_dict):
         "driving_variability_model",
         "accretion_disk",
     ]
-    column_names = source_dict.colnames
+    # column_names = source_dict.colnames
     agn_kwarg_dict = {}
     for kwarg in kwargs_variable_agn:
-        if kwarg in column_names:
+        if kwarg in source_dict:
             agn_kwarg_dict[kwarg] = source_dict[kwarg]  # .data[0]
     return agn_kwarg_dict
