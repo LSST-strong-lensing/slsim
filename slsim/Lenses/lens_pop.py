@@ -1,4 +1,8 @@
 import numpy as np
+from itertools import chain
+import multiprocessing
+
+import tqdm
 
 from slsim.Lenses.lens import Lens
 from typing import Optional
@@ -135,6 +139,134 @@ class LensPop(LensedPopulationBase):
         num_sources_range = np.random.poisson(lam=num_sources_tested_mean)
         return num_sources_range
 
+    def _process_single_deflector(self, args):
+        """Helper function for parallel processing.
+
+        Processes a SINGLE deflector and returns a Lens object or None.
+        """
+        kwargs_lens_cuts, multi_source, speed_factor = args
+
+        _deflector = self._lens_galaxies.draw_deflector()
+        _deflector.update_center(deflector_area=0.01)
+        theta_e_infinity = _deflector.theta_e_infinity(cosmo=self.cosmo)
+        test_area = area_theta_e_infinity(theta_e_infinity=theta_e_infinity)
+        num_sources_tested = self.get_num_sources_tested(
+            testarea=test_area * speed_factor
+        )
+
+        if num_sources_tested > 0:
+            valid_sources = []
+            n = 0
+            los_class = None  # Initialize los_class
+            while n < num_sources_tested:
+                _source = self._sources.draw_source()
+                _source.update_center(
+                    area=test_area, reference_position=_deflector.deflector_center
+                )
+                if n == 0:
+                    # Set LOS class based on the first source
+                    los_class = self.los_pop.draw_los(
+                        source_redshift=_source.redshift,
+                        deflector_redshift=_deflector.redshift,
+                    )
+
+                lens_class = Lens(
+                    deflector_class=_deflector,
+                    source_class=_source,
+                    cosmo=self.cosmo,
+                    los_class=los_class,
+                )
+
+                if lens_class.validity_test(**kwargs_lens_cuts):
+                    valid_sources.append(_source)
+                    if not multi_source:
+                        break
+                n += 1
+
+            if len(valid_sources) > 0:
+                if len(valid_sources) == 1:
+                    final_sources = valid_sources[0]
+                else:
+                    final_sources = valid_sources
+
+                lens_final = Lens(
+                    deflector_class=_deflector,
+                    source_class=final_sources,
+                    cosmo=self.cosmo,
+                    los_class=los_class,
+                )
+                return lens_final
+
+        return None
+
+    def _process_deflectors_chunk(self, args):
+        """Helper function that processes a CHUNK of deflectors."""
+        # Unpack the new seed argument
+        kwargs_lens_cuts, multi_source, speed_factor, num_in_chunk, seed = args
+
+        # Seed this worker's RNG to make it unique
+        np.random.seed(seed)
+
+        lenses_in_chunk = []
+
+        for _ in range(num_in_chunk):
+            single_args = (kwargs_lens_cuts, multi_source, speed_factor)
+            lens = self._process_single_deflector(single_args)
+
+            if lens is not None:
+                lenses_in_chunk.append(lens)
+
+        return lenses_in_chunk
+
+    def draw_population_parallel(
+        self,
+        kwargs_lens_cuts,
+        multi_source=False,
+        speed_factor=1,
+        num_workers=None,
+    ):
+        """Return full population list of all lenses within the area, processed
+        in parallel using manually defined chunks."""
+        num_lenses = int(self.deflector_number / speed_factor)
+
+        # Use multiprocessing.cpu_count() for a sensible default
+        if num_workers is None:
+            num_workers = 1  # Use all available cores
+
+        base_chunk_size = num_lenses // num_workers
+        remainder = num_lenses % num_workers
+        chunk_sizes = [base_chunk_size] * num_workers
+        for i in range(remainder):
+            chunk_sizes[i] += 1
+
+        # Generate a list of unique, random seeds for each worker
+        # We use a master RNG in the parent process to control the
+        # seeds for the child processes.
+        master_rng = np.random.RandomState()
+        child_seeds = master_rng.randint(0, 2**32 - 1, size=num_workers)
+
+        # Create the argument list for imap
+        args_list = [
+            (kwargs_lens_cuts, multi_source, speed_factor, size, seed)  # Add seed
+            for size, seed in zip(chunk_sizes, child_seeds)
+            if size > 0
+        ]
+
+        lens_population = []
+
+        multiprocessing.set_start_method("spawn", force=True)
+
+        with multiprocessing.Pool(processes=num_workers) as pool:
+            results_iterator = tqdm.tqdm(
+                pool.imap(self._process_deflectors_chunk, args_list, chunksize=1),
+                total=len(args_list),
+                desc="Drawing lens population in chunks",
+            )
+
+            lens_population = list(chain.from_iterable(results_iterator))
+
+        return lens_population
+
     def draw_population(
         self,
         kwargs_lens_cuts,
@@ -148,9 +280,9 @@ class LensPop(LensedPopulationBase):
 
         :param kwargs_lens_cuts: validity test keywords. dictionary of
             cuts that one wants to apply to the lens. eg:
-            kwargs_lens_cut = {"min_image_separation": 0.5,
+            kwargs_lens_cut = {}"min_image_separation": 0.5,
             "max_image_separation": 10, "mag_arc_limit": {"i", 24},
-            "second_bright_image_cut": {"band": ["i"], "mag_max":[23]}}
+            "second_bright_image_cut = {"band": ["i"], "mag_max":[23]}.
             all these cuts are optional.
         :type kwargs_lens_cuts: dict
         :param multi_source: A boolean value. If True, considers multi
@@ -174,7 +306,9 @@ class LensPop(LensedPopulationBase):
         #        print(np.int(num_lenses * num_sources_tested_mean))
 
         # Draw a population of galaxy-galaxy lenses within the area.
-        for _ in range(int(num_lenses / speed_factor)):
+        for _ in tqdm.tqdm(
+            range(int(num_lenses / speed_factor)), desc="Drawing lens population"
+        ):
             _deflector = self._lens_galaxies.draw_deflector()
             _deflector.update_center(deflector_area=0.01)
             theta_e_infinity = _deflector.theta_e_infinity(cosmo=self.cosmo)
@@ -194,7 +328,7 @@ class LensPop(LensedPopulationBase):
                     if n == 0:
                         # TODO: this is only consistent for a single source. If there
                         # are multiple sources at different redshift, this is not fully
-                        # acurate
+                        # accurate
                         los_class = self.los_pop.draw_los(
                             source_redshift=_source.redshift,
                             deflector_redshift=_deflector.redshift,
