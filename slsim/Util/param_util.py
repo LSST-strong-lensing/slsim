@@ -486,7 +486,6 @@ def galaxy_size_redshift_evolution(z):
     return Bz * (1 + z) ** betaz
 
 
-<<<<<<< HEAD
 def flux_error_to_magnitude_error(
     flux_mean, flux_error, mag_zero_point, noise=True, symmetric=False
 ):
@@ -521,7 +520,6 @@ def flux_error_to_magnitude_error(
         mag_mean_noise = amplitude_to_magnitude(flux_mean_noise, mag_zero_point)
         return mag_mean_noise, mag_error_lower, mag_error_upper
     return mag_mean, mag_error_lower, mag_error_upper
-=======
 def additional_poisson_noise_with_rescaled_coadd(
     image, original_exp_time, degraded_exp_time, use_noise_diff=True
 ):
@@ -832,4 +830,3 @@ def image_separation_from_positions(image_positions):
         )
         image_separation = np.max(separations)
     return image_separation
->>>>>>> 26e99f7472ae41ced79b0fa8db029c9565635656
