@@ -133,22 +133,55 @@ def plot_montage_of_random_injected_lens(image_list, num, n_horizont=1, n_vertic
     return fig
 
 
-<<<<<<< HEAD
-def plot_lightcurves(data, images=True):
+def plot_lightcurves(lightcurve_dict):
     """Plots lightcurves dynamically for all available images across different
-    bands, excluding empty images.
+    bands.
 
-    :param data: Dictionary returned by `extract_lightcurves_in_different_bands`.
-    :param images: Boolean. If True, plots some sample images in each bands.
-    :return: lightcurve plots (and image motage).
+    :param lightcurve_dict: Dictionary of lightciurves.
+     The format of this dictionary should be following: 
+     lightcurve_dict = {
+    "obs_time": {
+        "i": [63105.42, 63107.41],
+        "r": [63107.39, 63118.22],
+    }, "magnitudes": {
+        "mag_image_1": {
+            "i": [21.21, 20.42],
+            "r": [20.87, 19.31],
+        },
+        "mag_image_2": {
+            "i": [23.82, 22.87],
+            "r": [23.45, 23.16],
+        },
+        "mag_image_3": {"i": [], "r": []},
+        "mag_image_4": {"i": [], "r": []},
+    }, "errors_low": {
+        "mag_error_image_1_low": {
+            "i": [0.04, 0.03],
+            "r": [0.03, 0.02],
+        },
+        "mag_error_image_2_low": {
+            "i": [0.06, 0.05],
+            "r": [0.04, 0.03],
+        },
+    }, "errors_high": {
+        "mag_error_image_1_high": {
+            "i": [0.05, 0.04],
+            "r": [0.03, 0.02],
+        },
+        "mag_error_image_2_high": {
+            "i": [0.07, 0.06],
+            "r": [0.05, 0.04],
+        },
+    },
+}
+
+
+    :return: lightcurve plots.
     """
-    magnitudes = data["magnitudes"]
-    errors_low = data["errors_low"]
-    errors_high = data["errors_high"]
-    obs_time = data["obs_time"]
-    if images:
-        image_lists = data["image_lists"]
-
+    magnitudes = lightcurve_dict["magnitudes"]
+    errors_low = lightcurve_dict["errors_low"]
+    errors_high = lightcurve_dict["errors_high"]
+    obs_time = lightcurve_dict["obs_time"]
     # Extract all bands and filter out bands where all magnitudes are not NaN across.
     bands = [
         band
@@ -174,7 +207,7 @@ def plot_lightcurves(data, images=True):
     # optional images montage
     fig, axs = plt.subplots(
         nrows=len(bands),
-        ncols=len(image_keys) + (1 if images else 0),
+        ncols=len(image_keys),
         figsize=(12, 6),
         gridspec_kw={"hspace": 0.6, "wspace": 0.3},
     )
@@ -188,8 +221,6 @@ def plot_lightcurves(data, images=True):
         axs[0, col_idx].set_title(
             f"Lightcurves of image {col_idx+1}", fontsize=12, loc="center"
         )
-    if images:
-        axs[0, -1].set_title("Lens Images", fontsize=12, loc="center")
 
     # Plot data for each band
     for row_idx, band in enumerate(bands):
@@ -223,17 +254,6 @@ def plot_lightcurves(data, images=True):
             # Add x-label only for the bottom row
             if row_idx == len(bands) - 1:
                 axs[row_idx, col_idx].set_xlabel("MJD [Days]", fontsize=10)
-
-        # Display lens images montage if image_lists is available
-        if images:
-            montage = (
-                create_montage(image_lists[band])
-                if image_lists[band]
-                else np.zeros((10, 10))
-            )
-            axs[row_idx, -1].imshow(montage, cmap="viridis", origin="lower")
-            axs[row_idx, -1].axis("off")
-
     # Adjust layout to avoid overlaps
     plt.tight_layout()
     return fig
@@ -286,7 +306,6 @@ def create_montage(images_band, grid_size=None):
             image
         )
     return montage
-=======
 # microlensing lightcurve plot along with the magnification maps
 def plot_lightcurves_and_magmap(
     convolved_map,
@@ -438,4 +457,3 @@ def plot_magnification_map(magmap_instance, ax=None, plot_magnitude=True, **kwar
         cbar.set_label("Microlensing $\\Delta m$ (magnitudes)")
     else:
         cbar.set_label("Microlensing magnification")
->>>>>>> 26e99f7472ae41ced79b0fa8db029c9565635656

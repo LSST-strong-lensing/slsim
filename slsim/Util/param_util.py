@@ -395,13 +395,15 @@ def convert_mjd_to_days(reference_mjd, start_point_mjd):
     return reference_mjd - start_point_mjd
 
 
-def transient_event_time_mjd(min_mjd, max_mjd):
+def transient_event_time_mjd(min_mjd, max_mjd, random_seed=42):
     """Produces a random MJD time with in the given range.
 
     :param min_mjd: Minimum bound for the MJD time
     :param max_mjd: Maximum bound for the MJD time
+    :param random_seed: int. Default is 42.
     :return: A random MJD time between given min and max bounds.
     """
+    np.random.seed(random_seed)
     start_mjd = np.random.randint(min_mjd, max_mjd)
     return start_mjd
 
@@ -506,7 +508,7 @@ def flux_error_to_magnitude_error(
         upper_flux_limit = flux_mean + flux_error
         lower_flux_limit = flux_mean - flux_error
         if lower_flux_limit <= 0:
-            lower_flux_limit = flux_mean * 0.01
+            lower_flux_limit = 0
         lower_mag_limit = amplitude_to_magnitude(upper_flux_limit, mag_zero_point)
         upper_mag_limit = amplitude_to_magnitude(lower_flux_limit, mag_zero_point)
         mag_error_upper = upper_mag_limit - mag_mean
