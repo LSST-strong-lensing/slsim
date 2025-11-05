@@ -236,7 +236,7 @@ class Deflector(object):
 
             if multi_plane:
 
-                if self.deflector_type == "NFW_CLUSTER":
+                if self.deflector_type in ["NFW_CLUSTER"]:
                     num_main_lens_profiles = len(lens_mass_model_list) - len(
                         self.subhalo_redshifts
                     )

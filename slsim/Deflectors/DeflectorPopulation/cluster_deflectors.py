@@ -160,11 +160,6 @@ class ClusterDeflectors(DeflectorsBase):
         """
         indices = np.where(self._cluster_select["cluster_id"] == cluster_id)[0]
 
-        if len(indices) == 0:
-            raise ValueError(
-                f"Cluster with ID {cluster_id} not found in selected clusters"
-            )
-
         index = indices[0]  # Take the first match
 
         # Draw the cluster using the found index

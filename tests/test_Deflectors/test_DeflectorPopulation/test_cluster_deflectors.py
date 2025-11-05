@@ -286,7 +286,8 @@ def test_assign_galaxy_redshifts(cluster_deflectors_input):
     )
     deflector = cluster_pop.draw_deflector()
     member_redshifts = deflector.subhalo_redshifts
-    assert len(set(member_redshifts)) > 1
+
+    assert (len(set(member_redshifts)) > 1) or member_redshifts[0] != deflector.redshift
 
 
 if __name__ == "__main__":

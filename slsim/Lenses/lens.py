@@ -179,17 +179,6 @@ class Lens(LensedSystemBase):
         lens_model_class, kwargs_lens = self.deflector_mass_model_lenstronomy(
             source_index=source_index
         )
-        # make sure kwargs_lens doesn't have mismatched datatypes.
-        safe_kwargs_lens = []
-        for lens in kwargs_lens:
-            safe_dict = {}
-            for key in lens.keys():
-                if key in JAX_PROFILES and lens[key] is not None:
-                    safe_dict[key] = safe_value(lens[key])
-                else:
-                    safe_dict[key] = lens[key]
-            safe_kwargs_lens.append(safe_dict)
-        kwargs_lens = safe_kwargs_lens
         lens_eq_solver = LensEquationSolver(lens_model_class)
         point_source_pos_x, point_source_pos_y = x_source, y_source
         # uses analytical lens equation solver in case it is supported by lenstronomy for speed-up
@@ -291,7 +280,6 @@ class Lens(LensedSystemBase):
         # separation (max_image_separation).
         einstein_radius = self._approximate_einstein_radius(source_index=source_index)
         if not min_image_separation <= 2 * einstein_radius <= max_image_separation:
-            print(f"Failed condition 2, thetaE = {einstein_radius}")
             return False
 
         # Criteria 3: The distance between the lens center and the source position
@@ -300,13 +288,11 @@ class Lens(LensedSystemBase):
         source_pos = self.source(source_index).point_source_position
         center_lens, center_source = (self.deflector_position, source_pos)
         if np.sum((center_lens - center_source) ** 2) > einstein_radius**2 * 2:
-            print(f"Failed condition 3, thetaE = {einstein_radius}")
             return False
 
         # Criteria 4: The lensing configuration must produce at least two SL images.
         image_positions = self.point_source_image_positions()[source_index]
         if len(image_positions[0]) < 2:
-            print(f"Failed condition 4, thetaE = {einstein_radius}")
             return False
 
         # Criteria 5: The maximum separation between any two image positions must be
@@ -314,7 +300,6 @@ class Lens(LensedSystemBase):
         # equal to the maximum image separation.
         image_separation = image_separation_from_positions(image_positions)
         if not min_image_separation <= image_separation <= max_image_separation:
-            print(f"Failed condition 5,image sep. = {image_separation }")
             return False
 
         # Criteria 6: (optional)
