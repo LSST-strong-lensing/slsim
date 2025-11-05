@@ -57,12 +57,10 @@ class TestDeflector(object):
             deflector_type="NFW_HERNQUIST", **deflector_nfw_dict
         )
         self.deflector_nfw_cluster1 = Deflector(
-            deflector_type="NFW_CLUSTER",
-            **deflector_nfw_cluster_dict
+            deflector_type="NFW_CLUSTER", **deflector_nfw_cluster_dict
         )
         self.deflector_nfw_cluster2 = Deflector(
-            deflector_type="NFW_CLUSTER",
-            **deflector_nfw_cluster_dict
+            deflector_type="NFW_CLUSTER", **deflector_nfw_cluster_dict
         )
 
     def test_light_ellipticity(self):
@@ -157,17 +155,25 @@ class TestDeflector(object):
 
         # Test the multi_plane case
         # EPL_SERSIC
-        theta_E_infinity = self.deflector3.theta_e_infinity(cosmo=None, multi_plane=True)
+        theta_E_infinity = self.deflector3.theta_e_infinity(
+            cosmo=None, multi_plane=True
+        )
         assert theta_E_infinity < 15
-        theta_E_infinity_new = self.deflector3.theta_e_infinity(cosmo=None, multi_plane=True)
+        theta_E_infinity_new = self.deflector3.theta_e_infinity(
+            cosmo=None, multi_plane=True
+        )
         npt.assert_almost_equal(theta_E_infinity, theta_E_infinity_new, decimal=5)
 
-        # NFW_CLUSTER 
+        # NFW_CLUSTER
         theta_E_infinity = self.deflector_nfw_cluster1.theta_e_infinity(cosmo=None)
         assert theta_E_infinity < 30
-        theta_E_infinity_multi = self.deflector_nfw_cluster2.theta_e_infinity(cosmo=None, multi_plane=True)
+        theta_E_infinity_multi = self.deflector_nfw_cluster2.theta_e_infinity(
+            cosmo=None, multi_plane=True
+        )
         assert theta_E_infinity_multi < 30
 
         # NFW_HERNQUIST
-        theta_E_infinity = self.deflector_nfw2.theta_e_infinity(cosmo=None, multi_plane=True)
+        theta_E_infinity = self.deflector_nfw2.theta_e_infinity(
+            cosmo=None, multi_plane=True
+        )
         assert theta_E_infinity < 30
