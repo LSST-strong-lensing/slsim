@@ -144,7 +144,6 @@ def test_plot_montage_of_random_injected_lens(quasar_lens_pop_instance):
     assert fig.get_size_inches()[0] == np.array([num_cols * 3, num_rows * 3])[0]
 
 
-<<<<<<< HEAD
 def test_create_montage_basics():
     images = [
         np.random.rand(5, 5),
@@ -214,19 +213,12 @@ def test_plot_lightcurves():
         },
     }
 
-    fig = plot_lightcurves(data, images=True)
-    fig2 = plot_lightcurves(data, images=False)
-    fig3 = plot_lightcurves(data2, images=True)
-    ax1 = fig.get_axes()
-    ax2 = fig2.get_axes()
+    fig = plot_lightcurves(data)
+    fig3 = plot_lightcurves(data2)
     ax3 = fig3.get_axes()
     assert fig is not None
     assert isinstance(fig, plt.Figure)
-    assert fig2 is not None
-    assert isinstance(fig2, plt.Figure)
-    assert len(ax1) == len(ax2) + 2
-    assert len(ax3) == 3
-=======
+    assert len(ax3) == 2
 #### MICROLENSING TESTS ####
 
 # ---- Test Fixtures ----
@@ -417,7 +409,6 @@ def test_plot_lightcurves_and_magmap_runs_magnification(ml_lc_agn_wave, cosmolog
 
 
 ############################
->>>>>>> 26e99f7472ae41ced79b0fa8db029c9565635656
 
 
 if __name__ == "__main__":
