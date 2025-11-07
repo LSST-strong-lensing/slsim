@@ -395,13 +395,15 @@ def convert_mjd_to_days(reference_mjd, start_point_mjd):
     return reference_mjd - start_point_mjd
 
 
-def transient_event_time_mjd(min_mjd, max_mjd):
+def transient_event_time_mjd(min_mjd, max_mjd, random_seed=42):
     """Produces a random MJD time with in the given range.
 
     :param min_mjd: Minimum bound for the MJD time
     :param max_mjd: Maximum bound for the MJD time
+    :param random_seed: int. Default is 42.
     :return: A random MJD time between given min and max bounds.
     """
+    np.random.seed(random_seed)
     start_mjd = np.random.randint(min_mjd, max_mjd)
     return start_mjd
 
@@ -484,6 +486,42 @@ def galaxy_size_redshift_evolution(z):
     Bz = 4.89  # median value from Table 6 of Shibuya et al. (2015)
     betaz = -1.05  # median value from Table 6 of Shibuya et al. (2015)
     return Bz * (1 + z) ** betaz
+
+
+def flux_error_to_magnitude_error(
+    flux_mean, flux_error, mag_zero_point, noise=True, symmetric=False
+):
+    """Computes mean magnitude and corresponding errors from the provided mean
+    flux and associate error.
+
+    :param flux_mean: mean flux of a transient.
+    :param flux_error: error in a mean flux.
+    :param mag_zero_point: magnitude zero point of the observation.
+    :param noise: Boolean. If True, a gaussian noise is added to the
+        lightcurve flux.
+    :param symmetric: Boolean. If True, a symmetric error on magnitude
+        is provided.
+    :return: mean magnitude and associted errors.
+    """
+    mag_mean = amplitude_to_magnitude(flux_mean, mag_zero_point)
+    if symmetric is False:
+        upper_flux_limit = flux_mean + flux_error
+        lower_flux_limit = flux_mean - flux_error
+        if lower_flux_limit <= 0:
+            lower_flux_limit = 0
+        lower_mag_limit = amplitude_to_magnitude(upper_flux_limit, mag_zero_point)
+        upper_mag_limit = amplitude_to_magnitude(lower_flux_limit, mag_zero_point)
+        mag_error_upper = upper_mag_limit - mag_mean
+        mag_error_lower = mag_mean - lower_mag_limit
+    else:
+        mag_error = (2.5 / np.log(10)) * flux_error / flux_mean
+        mag_error_upper = mag_error
+        mag_error_lower = mag_error
+    if noise is True:
+        flux_mean_noise = flux_mean + np.random.normal(0.0, flux_error)
+        mag_mean_noise = amplitude_to_magnitude(flux_mean_noise, mag_zero_point)
+        return mag_mean_noise, mag_error_lower, mag_error_upper
+    return mag_mean, mag_error_lower, mag_error_upper
 
 
 def additional_poisson_noise_with_rescaled_coadd(
