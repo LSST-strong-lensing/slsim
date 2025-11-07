@@ -158,6 +158,7 @@ def test_opsim_variable_lens_injection(pes_lens_instance):
     mask = np.isin(expo_bands, bands)
     assert len(results) == len(expo_data[mask])
 
+
 @pytest.fixture
 def lens_class_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)

@@ -217,6 +217,8 @@ def test_plot_lightcurves():
     assert fig is not None
     assert isinstance(fig, plt.Figure)
     assert len(ax3) == 2
+
+
 #### MICROLENSING TESTS ####
 
 # ---- Test Fixtures ----

@@ -431,6 +431,8 @@ def test_flux_error_to_magnitude_error_negative_flux():
     expected_upper_mag = amplitude_to_magnitude(0, 27)
     expected_upper_error = expected_upper_mag - mag_mean
     assert expected_upper_error == mag_error_upper
+
+
 def test_additional_poisson_noise_with_rescaled_coadd():
     image = np.random.rand(41, 41) * 5
     original_exp_time = np.ones((41, 41))

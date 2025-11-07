@@ -522,6 +522,8 @@ def flux_error_to_magnitude_error(
         mag_mean_noise = amplitude_to_magnitude(flux_mean_noise, mag_zero_point)
         return mag_mean_noise, mag_error_lower, mag_error_upper
     return mag_mean, mag_error_lower, mag_error_upper
+
+
 def additional_poisson_noise_with_rescaled_coadd(
     image, original_exp_time, degraded_exp_time, use_noise_diff=True
 ):
