@@ -334,20 +334,20 @@ def transient_data_with_cadence(
 
 
 
-def extract_lightcurves_in_different_bands(data):
+def extract_lightcurves_in_different_bands(transient_data_table):
     """Extract lightcurves and images in different bands from the given
     catalog. This a function written to read data table from 
     transient_data_with_cadence function above.
 
-    :param data: An astropy table containing lightcurves in a certain
+    :param transient_data_table: An astropy table containing lightcurves in a certain
         cadence. This table must contain magnitude and corresponding
         errors. The column name for magnitude should be "mag_image_n",
         and column names for the error should be "mag_error_image_n_low"
         and "mag_error_image_n_high", where n could be 1, 2, 3, or 4.
     :return: A dictionary of magnitudes, associated errors, observation
-        times, and optionally image lists, structured by image or band.
+        times, structured by band.
     """
-    table = data
+    table = transient_data_table
     # Extract unique bands
     bands = np.unique(table["band"])
 
