@@ -20,9 +20,7 @@ from slsim.Util.param_util import (
     transient_event_time_mjd,
     downsample_galaxies,
     galaxy_size_redshift_evolution,
-<<<<<<< HEAD:tests/test_param_util.py
     flux_error_to_magnitude_error,
-=======
     additional_poisson_noise_with_rescaled_coadd,
     additional_bkg_rms_with_rescaled_coadd,
     degrade_coadd_data,
@@ -32,7 +30,6 @@ from slsim.Util.param_util import (
     gaussian_psf,
     update_cosmology_in_yaml_file,
     draw_coord_in_circle,
->>>>>>> 26e99f7472ae41ced79b0fa8db029c9565635656:tests/test_Util/test_param_util.py
 )
 from slsim.Sources.SourceVariability.variability import Variability
 from astropy.io import fits
@@ -351,7 +348,6 @@ def test_galaxy_size_redshift_evolution():
     assert results == 4.89
 
 
-<<<<<<< HEAD:tests/test_param_util.py
 def test_flux_error_to_magnitude_error_basic():
     flux_mean = 100.0
     flux_error = 10.0
@@ -435,7 +431,6 @@ def test_flux_error_to_magnitude_error_negative_flux():
     expected_upper_mag = amplitude_to_magnitude(0.1, 27)
     expected_upper_error = expected_upper_mag - mag_mean
     assert expected_upper_error == mag_error_upper
-=======
 def test_additional_poisson_noise_with_rescaled_coadd():
     image = np.random.rand(41, 41) * 5
     original_exp_time = np.ones((41, 41))
@@ -570,7 +565,6 @@ def test_update_cosmology_in_yaml_file():
     assert "H0:" in updated_yaml
     assert "Om0:" in updated_yaml
     assert "Tcmb0:" in updated_yaml
->>>>>>> 26e99f7472ae41ced79b0fa8db029c9565635656:tests/test_Util/test_param_util.py
 
 
 if __name__ == "__main__":
