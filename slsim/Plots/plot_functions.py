@@ -137,46 +137,46 @@ def plot_lightcurves(lightcurve_dict):
     """Plots lightcurves dynamically for all available images across different
     bands.
 
-    :param lightcurve_dict: Dictionary of lightciurves.
-     The format of this dictionary should be following: 
-     lightcurve_dict = {
-    "obs_time": {
-        "i": [63105.42, 63107.41],
-        "r": [63107.39, 63118.22],
-    }, "magnitudes": {
-        "mag_image_1": {
-            "i": [21.21, 20.42],
-            "r": [20.87, 19.31],
+        :param lightcurve_dict: Dictionary of lightciurves.
+         The format of this dictionary should be following:
+         lightcurve_dict = {
+        "obs_time": {
+            "i": [63105.42, 63107.41],
+            "r": [63107.39, 63118.22],
+        }, "magnitudes": {
+            "mag_image_1": {
+                "i": [21.21, 20.42],
+                "r": [20.87, 19.31],
+            },
+            "mag_image_2": {
+                "i": [23.82, 22.87],
+                "r": [23.45, 23.16],
+            },
+            "mag_image_3": {"i": [], "r": []},
+            "mag_image_4": {"i": [], "r": []},
+        }, "errors_low": {
+            "mag_error_image_1_low": {
+                "i": [0.04, 0.03],
+                "r": [0.03, 0.02],
+            },
+            "mag_error_image_2_low": {
+                "i": [0.06, 0.05],
+                "r": [0.04, 0.03],
+            },
+        }, "errors_high": {
+            "mag_error_image_1_high": {
+                "i": [0.05, 0.04],
+                "r": [0.03, 0.02],
+            },
+            "mag_error_image_2_high": {
+                "i": [0.07, 0.06],
+                "r": [0.05, 0.04],
+            },
         },
-        "mag_image_2": {
-            "i": [23.82, 22.87],
-            "r": [23.45, 23.16],
-        },
-        "mag_image_3": {"i": [], "r": []},
-        "mag_image_4": {"i": [], "r": []},
-    }, "errors_low": {
-        "mag_error_image_1_low": {
-            "i": [0.04, 0.03],
-            "r": [0.03, 0.02],
-        },
-        "mag_error_image_2_low": {
-            "i": [0.06, 0.05],
-            "r": [0.04, 0.03],
-        },
-    }, "errors_high": {
-        "mag_error_image_1_high": {
-            "i": [0.05, 0.04],
-            "r": [0.03, 0.02],
-        },
-        "mag_error_image_2_high": {
-            "i": [0.07, 0.06],
-            "r": [0.05, 0.04],
-        },
-    },
-}
+    }
 
 
-    :return: lightcurve plots.
+        :return: lightcurve plots.
     """
     magnitudes = lightcurve_dict["magnitudes"]
     errors_low = lightcurve_dict["errors_low"]
@@ -306,6 +306,8 @@ def create_montage(images_band, grid_size=None):
             image
         )
     return montage
+
+
 # microlensing lightcurve plot along with the magnification maps
 def plot_lightcurves_and_magmap(
     convolved_map,

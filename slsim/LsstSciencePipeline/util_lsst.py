@@ -10,6 +10,7 @@ from slsim.Util.param_util import (
 )
 import os
 
+
 def variable_lens_injection(
     lens_class, band, num_pix, transform_pix2angle, exposure_data
 ):
@@ -212,13 +213,14 @@ def opsim_variable_lens_injection(
 
     return exposure_data_new
 
+
 def transient_data_with_cadence(
     lens_class,
     exposure_data,
     noise=True,
     symmetric=False,
     pix_scale=0.2,
-    random_seed=None
+    random_seed=None,
 ):
     """Puts lensed transient into the provided cadence. For LSST, this will be
     cadence from opsim.
@@ -247,22 +249,21 @@ def transient_data_with_cadence(
         is provided.
     :param pixscale: pixel scale of the observing instrument.
     :return: Astropy table of lightcurve and exposure information of dp0
-        data. The table contains: Observation time in days, lens id, magnitude of
-        each image and associated errors, lens image. If the lens system produces fewer 
-        than four images, the missing magnitudes and errors are filled with -1.
+        data. The table contains: Observation time in days, lens id,
+        magnitude of each image and associated errors, lens image. If
+        the lens system produces fewer than four images, the missing
+        magnitudes and errors are filled with -1.
     """
     copied_exposure_data = exposure_data.copy()
-    min_mjd=min(copied_exposure_data["obs_time"])
-    max_mjd=max(copied_exposure_data["obs_time"])
+    min_mjd = min(copied_exposure_data["obs_time"])
+    max_mjd = max(copied_exposure_data["obs_time"])
 
     min_lc_time, max_lc_time = (
         min(lens_class.source(0)._source._lightcurve_time),
         max(lens_class.source(0)._source._lightcurve_time),
     )
 
-    start_mjd_time = transient_event_time_mjd(
-        min_mjd, max_mjd, random_seed=random_seed
-    )
+    start_mjd_time = transient_event_time_mjd(min_mjd, max_mjd, random_seed=random_seed)
 
     copied_exposure_data["obs_time_in_days"] = convert_mjd_to_days(
         copied_exposure_data["obs_time"], start_mjd_time
@@ -321,7 +322,9 @@ def transient_data_with_cadence(
 
     for key in list(mag_images.keys()) + list(mag_errors.keys()):
         mag_images_or_errors = mag_images if key in mag_images else mag_errors
-        mag_images_or_errors[key] = np.array(mag_images_or_errors[key], dtype=float).reshape(-1)
+        mag_images_or_errors[key] = np.array(
+            mag_images_or_errors[key], dtype=float
+        ).reshape(-1)
 
     # Create and add columns to the table
     copied_exposure_data.add_columns(
@@ -333,17 +336,17 @@ def transient_data_with_cadence(
     return copied_exposure_data
 
 
-
 def extract_lightcurves_in_different_bands(transient_data_table):
     """Extract lightcurves and images in different bands from the given
-    catalog. This a function written to read data table from 
+    catalog. This a function written to read data table from
     transient_data_with_cadence function above.
 
-    :param transient_data_table: An astropy table containing lightcurves in a certain
-        cadence. This table must contain magnitude and corresponding
-        errors. The column name for magnitude should be "mag_image_n",
-        and column names for the error should be "mag_error_image_n_low"
-        and "mag_error_image_n_high", where n could be 1, 2, 3, or 4.
+    :param transient_data_table: An astropy table containing lightcurves
+        in a certain cadence. This table must contain magnitude and
+        corresponding errors. The column name for magnitude should be
+        "mag_image_n", and column names for the error should be
+        "mag_error_image_n_low" and "mag_error_image_n_high", where n
+        could be 1, 2, 3, or 4.
     :return: A dictionary of magnitudes, associated errors, observation
         times, structured by band.
     """
