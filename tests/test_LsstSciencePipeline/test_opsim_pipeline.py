@@ -6,7 +6,6 @@ from slsim.Lenses.lens import Lens
 from slsim.LsstSciencePipeline.opsim_pipeline import opsim_time_series_images_data
 from slsim.LsstSciencePipeline.util_lsst import (
     opsim_variable_lens_injection,
-    optimized_transient_event_time_mjd,
     transient_data_with_cadence,
     extract_lightcurves_in_different_bands,
 )
@@ -159,39 +158,6 @@ def test_opsim_variable_lens_injection(pes_lens_instance):
     mask = np.isin(expo_bands, bands)
     assert len(results) == len(expo_data[mask])
 
-
-def test_transient_event_time_basic():
-    mjd_times = np.linspace(58000, 58100, 200)
-    lightcurve_range = (-50, 100)
-    min_points = 100
-
-    result = optimized_transient_event_time_mjd(mjd_times, lightcurve_range, min_points)
-
-    assert result is not None
-    start, end = result + lightcurve_range[0], result + lightcurve_range[1]
-    points_in_range = np.sum((mjd_times >= start) & (mjd_times <= end))
-    assert points_in_range >= min_points
-
-
-def test_transient_event_time_no_valid_start():
-    mjd_times = np.linspace(58000, 58100, 50)
-    lightcurve_range = (-50, 100)
-    min_points = 100
-
-    result = optimized_transient_event_time_mjd(mjd_times, lightcurve_range, min_points)
-
-    assert 58000 <= result <= 58100
-
-
-def test_transient_event_time_no_optimized_cadence():
-    mjd_times = np.linspace(58000, 58100, 50)
-    lightcurve_range = (-50, 100)
-    result = optimized_transient_event_time_mjd(
-        mjd_times, lightcurve_range, optimized_cadence=False
-    )
-    assert 58000 <= result <= 58100
-
-
 @pytest.fixture
 def lens_class_instance():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -207,22 +173,24 @@ def lens_class_instance():
     gamma_pl = 1.8
     deflector_dict_["gamma_pl"] = gamma_pl
     while True:
+        kwargs_point_extended = {
+            "variability_model": "light_curve",
+            "kwargs_variability": ["supernovae_lightcurve", "i", "r", "z", "g", "y"],
+            "sn_type": "Ia",
+            "sn_absolute_mag_band": "bessellb",
+            "sn_absolute_zpsys": "ab",
+            "lightcurve_time": np.linspace(-50, 100, 150),
+            "sn_modeldir": None,
+        }
         source1 = Source(
-            source_dict=source_dict1,
+            point_source_type="supernova",
             cosmo=cosmo,
-            source_type="point_plus_extended",
-            light_profile="double_sersic",
-            lightcurve_time=np.linspace(-50, 50, 50),
-            variability_model="light_curve",
-            kwargs_variability={"supernovae_lightcurve", "i", "r", "z", "g", "y"},
-            sn_type="Ia",
-            sn_absolute_mag_band="bessellb",
-            sn_absolute_zpsys="ab",
+            **source_dict1,
+            **kwargs_point_extended,
         )
         deflector = Deflector(
             deflector_type="EPL",
-            deflector_dict=deflector_dict_,
-            sis_convention=False,
+            **deflector_dict_,
         )
 
         lens_class1 = Lens(
@@ -280,16 +248,12 @@ def test_transient_data_with_cadence(lens_class_instance, exposure_data):
     result = transient_data_with_cadence(
         lens_class=lens_class_instance,
         exposure_data=exposure_data,
-        transform_pix2angle=np.array([[0.2, 0], [0, 0.2]]),
-        num_pix=61,
-        min_points=5,
     )
     lightcurves = extract_lightcurves_in_different_bands(result)
     expected_keys = lightcurves.keys()
     colname = result.colnames
     assert isinstance(result, Table)
-    assert len(result) >= 5
-    assert len(colname) == 23  # 8 already existing col and 15 newly added.
+    assert len(colname) == 22  # 8 already existing col and 15 newly added.
     assert "obs_time_in_days" in colname
     assert "lens_id" in colname
     assert "mag_image_1" in colname
@@ -304,14 +268,11 @@ def test_transient_data_with_cadence(lens_class_instance, exposure_data):
     assert "mag_error_image_3_high" in colname
     assert "mag_error_image_4_low" in colname
     assert "mag_error_image_4_high" in colname
-    assert "lens_image" in colname
 
     assert "magnitudes" in expected_keys
     assert "errors_low" in expected_keys
     assert "errors_high" in expected_keys
     assert "obs_time" in expected_keys
-    assert "image_lists" in expected_keys
-
     results_i = result[result["band"] == "i"]
     mag_i = results_i["mag_image_1"]
     final_lightcurve_i = lightcurves["magnitudes"]["mag_image_1"]["i"]
