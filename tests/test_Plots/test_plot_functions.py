@@ -208,9 +208,7 @@ def test_plot_lightcurves():
             "mag_error_image_2_high": {"g": np.random.rand(5)},
         },
         "obs_time": {"g": np.arange(5)},
-        "image_lists": {
-            "g": [np.random.rand(10, 10) for _ in range(3)]
-        },
+        "image_lists": {"g": [np.random.rand(10, 10) for _ in range(3)]},
     }
 
     fig = plot_lightcurves(data)
