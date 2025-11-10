@@ -51,7 +51,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "slsim"
-copyright = "2022, DESC & SLSC"
+copyright = "2022-2025, DESC & SLSC"
 author = "DESC & SLSC"
 
 # The version info for the project you're documenting, acts as replacement

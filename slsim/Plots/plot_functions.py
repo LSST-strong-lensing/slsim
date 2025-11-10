@@ -137,7 +137,7 @@ def plot_lightcurves(lightcurve_dict):
     """Plots lightcurves dynamically for all available images across different
     bands.
 
-        :param lightcurve_dict: Dictionary of lightciurves.
+    :param lightcurve_dict: Dictionary of lightciurves.
          The format of this dictionary should be following:
          lightcurve_dict = {
         "obs_time": {
@@ -173,10 +173,8 @@ def plot_lightcurves(lightcurve_dict):
                 "r": [0.05, 0.04],
             },
         },
-    }
-
-
-        :return: lightcurve plots.
+        }
+    :return: lightcurve plots.
     """
     magnitudes = lightcurve_dict["magnitudes"]
     errors_low = lightcurve_dict["errors_low"]
