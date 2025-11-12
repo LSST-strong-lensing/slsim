@@ -65,7 +65,6 @@ class LensPop(LensedPopulationBase):
                                     "second_brightest_image_cut": {"i", 24}
                                 }. All these cuts are optional.
         :type kwargs_lens_cut: dict
-
         :return: Lens() instance with parameters of the deflector and lens and source light.
         :rtype: Lens
         """

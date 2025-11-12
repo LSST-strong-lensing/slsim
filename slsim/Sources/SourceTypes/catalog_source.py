@@ -22,6 +22,7 @@ class CatalogSource(SourceBase):
         catalog_type,
         catalog_path,
         max_scale=1,
+        match_n_sersic=False,
         sersic_fallback=False,
         **source_dict,
     ):
@@ -47,6 +48,9 @@ class CatalogSource(SourceBase):
         :param max_scale: The matched COSMOS image will be scaled to have the desired angular size. Scaling up
          results in a more pixelated image. This input determines what the maximum up-scale factor is.
         :type max_scale: int or float
+        :param match_n_sersic: determines whether to match based off of the sersic index as well.
+         Since n_sersic is usually undefined and set to 1 in SLSim, this is set to False by default.
+        :type match_n_sersic: bool
         :param sersic_fallback: If the matching process returns no matches, then fall back on a single sersic profile.
         :type sersic_fallback: bool
         """
@@ -57,7 +61,8 @@ class CatalogSource(SourceBase):
         self._n_sersic = n_sersic
         self._cosmo = cosmo
         self._max_scale = max_scale
-        self.sersic_fallback = sersic_fallback
+        self._match_n_sersic = match_n_sersic
+        self._sersic_fallback = sersic_fallback
         self.source_dict = source_dict
 
         # Process catalog and store as class attribute
@@ -96,11 +101,12 @@ class CatalogSource(SourceBase):
                         processed_cosmos_catalog=self.final_cosmos_catalog,
                         catalog_path=self.catalog_path,
                         max_scale=self._max_scale,
+                        match_n_sersic=self._match_n_sersic,
                     )
                 )
         # If the matching failed, fall back on a regular sersic profile
         if self._image is None:
-            if self.sersic_fallback:
+            if self._sersic_fallback:
                 if not hasattr(self, "single_sersic"):
                     self.single_sersic = SingleSersic(
                         angular_size=self.angular_size,

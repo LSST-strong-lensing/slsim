@@ -101,9 +101,9 @@ def test_pes_lens_pop_instance():
         cosmo=cosmo,
         sky_area=sky_area,
         kwargs_cut=kwargs_source_cut,
-        pointsource_type="quasar",
+        point_source_type="quasar",
         extended_source_type="single_sersic",
-        pointsource_kwargs=kwargs,
+        point_source_kwargs=kwargs,
     )
 
     pes_lens_pop = LensPop(
@@ -291,7 +291,7 @@ def test_supernovae_plus_galaxies_lens_pop_instance_2():
         host_galaxy=True, lightcurve=False
     )
 
-    pointsource_kwargs = {
+    point_source_kwargs = {
         "variability_model": "light_curve",
         "kwargs_variability": ["supernovae_lightcurve", "i"],
         "sn_type": "Ia",
@@ -305,9 +305,9 @@ def test_supernovae_plus_galaxies_lens_pop_instance_2():
         cosmo=cosmo,
         sky_area=source_sky_area,
         kwargs_cut=kwargs_source_cut,
-        pointsource_type="supernova",
+        point_source_type="supernova",
         extended_source_type="single_sersic",
-        pointsource_kwargs=pointsource_kwargs,
+        point_source_kwargs=point_source_kwargs,
     )
 
     pes_lens_pop = LensPop(
@@ -355,7 +355,7 @@ def test_supernovae_lens_pop_instance():
         host_galaxy=False, lightcurve=False
     )
 
-    pointsource_kwargs = {
+    point_source_kwargs = {
         "variability_model": "light_curve",
         "kwargs_variability": ["supernovae_lightcurve", "i"],
         "sn_type": "Ia",
@@ -370,7 +370,7 @@ def test_supernovae_lens_pop_instance():
         sky_area=sky_area_1,
         kwargs_cut=kwargs_source_cut,
         point_source_type="supernova",
-        point_source_kwargs=pointsource_kwargs,
+        point_source_kwargs=point_source_kwargs,
     )
 
     ps_lens_pop_1 = LensPop(

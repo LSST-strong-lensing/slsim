@@ -14,6 +14,8 @@ class SkyPyPipeline:
         sky_area=None,
         filters=None,
         cosmo=None,
+        z_min=None,
+        z_max=None,
     ):
         """
         :param skypy_config: path to SkyPy configuration yaml file.
@@ -27,6 +29,12 @@ class SkyPyPipeline:
         :param cosmo: An instance of an astropy cosmology model
                         (e.g., FlatLambdaCDM(H0=70, Om0=0.3)).
         :type cosmo: astropy.cosmology instance or None
+        :z_min: minimum redshift of the galaxy catalog to be simulated.
+        :type z_min: float or None
+        :z_max: maximum redshift of the galaxy catalog to be simulated.
+         If one passes u-band filter, z_max should be <= 4.09 to avoid
+         issues with skypy SED templates.
+        :type z_max: float or None
         """
         path = os.path.dirname(slsim.__file__)
         module_path, _ = os.path.split(path)
@@ -39,7 +47,7 @@ class SkyPyPipeline:
         else:
             skypy_config = skypy_config
 
-        if sky_area is None and filters is None and cosmo is None:
+        if sky_area is None and filters is None and cosmo is None and z_min is None:
             self._pipeline = Pipeline.read(skypy_config)
             self._pipeline.execute()
         else:
