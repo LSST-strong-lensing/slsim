@@ -791,13 +791,11 @@ def test_point_source_magnitude_microlensing(
 
     # Call the method under test
     try:
-        result_mags = (
-            lens_system._point_source_magnitude_microlensing(
-                band_i,
-                time_array,
-                source_index=0,
-                kwargs_microlensing=kwargs_microlensing_settings,
-            )
+        result_mags = lens_system._point_source_magnitude_microlensing(
+            band_i,
+            time_array,
+            source_index=0,
+            kwargs_microlensing=kwargs_microlensing_settings,
         )
     except Exception as e:
         pytest.fail(f"_point_source_magnitude_microlensing raised an exception: {e}")

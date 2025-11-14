@@ -34,8 +34,8 @@ class MicrolensingLightCurveFromLensModel(object):
         point_source_morphology: str,
         kwargs_source_morphology: dict,
     ):
-        """
-        Initialize the MicrolensingLightCurveFromLensModel with lens and source parameters.
+        """Initialize the MicrolensingLightCurveFromLensModel with lens and
+        source parameters.
 
         :param source_redshift: Redshift of the source
         :param deflector_redshift: Redshift of the deflector

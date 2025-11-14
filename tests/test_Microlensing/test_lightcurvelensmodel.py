@@ -133,9 +133,7 @@ def ml_lens_model(
         shear_phi_angle_images=microlensing_params["shear_phi"],
         ra_lens=lens_source_info["ra_lens"],
         dec_lens=lens_source_info["dec_lens"],
-        deflector_velocity_dispersion=lens_source_info[
-            "deflector_velocity_dispersion"
-        ],
+        deflector_velocity_dispersion=lens_source_info["deflector_velocity_dispersion"],
         cosmology=cosmology,
         kwargs_MagnificationMap=kwargs_magnification_map_settings,
         point_source_morphology="gaussian",
@@ -206,8 +204,7 @@ class TestMicrolensingLightCurveFromLensModel:
         kwargs_magnification_map_settings,
         kwargs_source_gaussian,
     ):
-        """Tests that ValueError is raised for missing kwargs during
-        init."""
+        """Tests that ValueError is raised for missing kwargs during init."""
         base_args = {
             "source_redshift": lens_source_info["source_redshift"],
             "deflector_redshift": lens_source_info["deflector_redshift"],
@@ -360,7 +357,9 @@ class TestMicrolensingLightCurveFromLensModel:
             # Configure the mock to return pre-created mock objects in sequence
             mock_magmap_class.side_effect = mock_map_list
 
-            result = ml_lens_model.generate_magnification_maps_from_microlensing_params()
+            result = (
+                ml_lens_model.generate_magnification_maps_from_microlensing_params()
+            )
 
             # Verify the mock was called correctly
             assert mock_magmap_class.call_count == num_images
@@ -439,10 +438,12 @@ class TestMicrolensingLightCurveFromLensModel:
         )
 
         try:
-            lightcurves, tracks, time_arrays = ml_model.generate_point_source_lightcurves(
-                time_array,
-                lightcurve_type,
-                num_lc,
+            lightcurves, tracks, time_arrays = (
+                ml_model.generate_point_source_lightcurves(
+                    time_array,
+                    lightcurve_type,
+                    num_lc,
+                )
             )
         except Exception as e:
             pytest.fail(f"generate_point_source_lightcurves raised: {e}")

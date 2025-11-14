@@ -812,10 +812,8 @@ class Lens(LensedSystemBase):
         )
 
         # Generate microlensing magnitudes with the simplified method call
-        microlensing_magnitudes = (
-            self._microlensing_model_class.generate_point_source_microlensing_magnitudes(
-                time=time
-            )
+        microlensing_magnitudes = self._microlensing_model_class.generate_point_source_microlensing_magnitudes(
+            time=time
         )
 
         return microlensing_magnitudes  # # does not include the macro-lensing effect
