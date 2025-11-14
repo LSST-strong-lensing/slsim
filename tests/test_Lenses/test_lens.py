@@ -765,8 +765,9 @@ def test_point_source_magnitude_microlensing(
 ):
     """Tests _point_source_magnitude_microlensing by mocking the light curve
     generator."""
-    source = lens_instance_with_variability.source(0)
-    num_images = lens_instance_with_variability.image_number[0]
+    lens_system = lens_instance_with_variability
+    source = lens_system.source(0)
+    num_images = lens_system.image_number[0]
 
     if num_images == 0:
         pytest.skip("No lensed images found for this configuration.")
@@ -780,17 +781,18 @@ def test_point_source_magnitude_microlensing(
     mock_ml_lc_instance.generate_point_source_microlensing_magnitudes.return_value = (
         expected_microlensing_delta_mags
     )
-    mock_ml_lc_from_lm_class.return_value = mock_ml_lc_instance  # When Lens calls MicrolensingLightCurveFromLensModel(), it gets our mock
+    # When Lens calls MicrolensingLightCurveFromLensModel(...), it gets our mock instance
+    mock_ml_lc_from_lm_class.return_value = mock_ml_lc_instance
 
     with pytest.raises(
         AttributeError, match="MicrolensingLightCurveFromLensModel class is not set."
     ):
-        _ = lens_instance_with_variability.microlensing_model_class
+        _ = lens_system.microlensing_model_class
 
     # Call the method under test
     try:
         result_mags = (
-            lens_instance_with_variability._point_source_magnitude_microlensing(
+            lens_system._point_source_magnitude_microlensing(
                 band_i,
                 time_array,
                 source_index=0,
@@ -800,34 +802,55 @@ def test_point_source_magnitude_microlensing(
     except Exception as e:
         pytest.fail(f"_point_source_magnitude_microlensing raised an exception: {e}")
 
-    # Verify generate_point_source_microlensing_magnitudes was called on the instance
-    mock_ml_lc_instance.generate_point_source_microlensing_magnitudes.assert_called_once()
-    call_kwargs = (
-        mock_ml_lc_instance.generate_point_source_microlensing_magnitudes.call_args.kwargs
+    # Get the actual microlensing parameters from lens class
+    (
+        kappa_star_images,
+        kappa_tot_images,
+        shear_images,
+        shear_angle_images_rad,
+    ) = lens_system._microlensing_parameters_for_image_positions_single_source(
+        band=band_i, source_index=0
     )
+    shear_phi_angle_images_deg = np.degrees(shear_angle_images_rad)
 
-    # Check some key arguments passed to the mocked method
-    np.testing.assert_array_equal(call_kwargs["time"], time_array)
-    assert call_kwargs["source_redshift"] == source.redshift
+    # Verify the CONSTRUCTOR call on the class
+    mock_ml_lc_from_lm_class.assert_called_once()
+    constructor_kwargs = mock_ml_lc_from_lm_class.call_args.kwargs
+
+    # Check key arguments passed to the constructor
+    assert constructor_kwargs["source_redshift"] == source.redshift
+    assert constructor_kwargs["deflector_redshift"] == lens_system.deflector_redshift
+    np.testing.assert_array_equal(
+        constructor_kwargs["kappa_star_images"], kappa_star_images
+    )
+    np.testing.assert_array_equal(
+        constructor_kwargs["kappa_tot_images"], kappa_tot_images
+    )
+    np.testing.assert_array_equal(constructor_kwargs["shear_images"], shear_images)
+    np.testing.assert_array_equal(
+        constructor_kwargs["shear_phi_angle_images"], shear_phi_angle_images_deg
+    )
+    assert constructor_kwargs["cosmology"] == lens_system.cosmo
     assert (
-        call_kwargs["kwargs_MagnificationMap"]
+        constructor_kwargs["kwargs_MagnificationMap"]
         == kwargs_microlensing_settings["kwargs_MagnificationMap"]
-    )  # Corrected key
+    )
     assert (
-        call_kwargs["point_source_morphology"]
+        constructor_kwargs["point_source_morphology"]
         == kwargs_microlensing_settings["point_source_morphology"]
     )
     assert (
-        call_kwargs["kwargs_source_morphology"]
+        constructor_kwargs["kwargs_source_morphology"]
         == kwargs_microlensing_settings["kwargs_source_morphology"]
     )
 
-    # check if microlensing_model_class is set correctly
-    microlensing_model_class = lens_instance_with_variability.microlensing_model_class
-    assert (
-        microlensing_model_class is not None
-    ), "Microlensing model class should be set."
-    assert microlensing_model_class == mock_ml_lc_instance
+    # Verify the generate_... method was called on the INSTANCE with the correct time
+    mock_ml_lc_instance.generate_point_source_microlensing_magnitudes.assert_called_once_with(
+        time=time_array
+    )
+
+    # Check if microlensing_model_class property is set correctly
+    assert lens_system.microlensing_model_class is mock_ml_lc_instance
 
     # The result of _point_source_magnitude_microlensing should be the direct output
     # from the mocked generate_point_source_microlensing_magnitudes

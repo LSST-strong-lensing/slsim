@@ -116,9 +116,31 @@ def kwargs_source_agn_band(lens_source_info, cosmology):
 
 
 @pytest.fixture
-def ml_lens_model():
-    """Provides an instance of the class under test."""
-    return MicrolensingLightCurveFromLensModel()
+def ml_lens_model(
+    microlensing_params,
+    lens_source_info,
+    cosmology,
+    kwargs_magnification_map_settings,
+    kwargs_source_gaussian,
+):
+    """Provides an initialized instance of the class under test."""
+    return MicrolensingLightCurveFromLensModel(
+        source_redshift=lens_source_info["source_redshift"],
+        deflector_redshift=lens_source_info["deflector_redshift"],
+        kappa_star_images=microlensing_params["kappa_star"],
+        kappa_tot_images=microlensing_params["kappa_tot"],
+        shear_images=microlensing_params["shear"],
+        shear_phi_angle_images=microlensing_params["shear_phi"],
+        ra_lens=lens_source_info["ra_lens"],
+        dec_lens=lens_source_info["dec_lens"],
+        deflector_velocity_dispersion=lens_source_info[
+            "deflector_velocity_dispersion"
+        ],
+        cosmology=cosmology,
+        kwargs_MagnificationMap=kwargs_magnification_map_settings,
+        point_source_morphology="gaussian",
+        kwargs_source_morphology=kwargs_source_gaussian,
+    )
 
 
 # ---- Helper Function to Load Maps and Create Mock Return Value ---
@@ -159,9 +181,6 @@ def create_mock_magmap_list(microlensing_params, kwargs_magnification_map_settin
             magmap_obj = MagnificationMap(
                 magnifications_array=mag_data, **current_kwargs
             )
-            # REMOVED mu_ave assignment as per user request
-            # valid_mu = mag_data[np.isfinite(mag_data) & (mag_data != 0)]
-            # magmap_obj.mu_ave = np.mean(valid_mu) if len(valid_mu) > 0 else 1.0
             loaded_magmaps.append(magmap_obj)
         except Exception as e:
             pytest.fail(
@@ -179,24 +198,84 @@ def create_mock_magmap_list(microlensing_params, kwargs_magnification_map_settin
 )
 class TestMicrolensingLightCurveFromLensModel:
 
+    def test_initialization_errors(
+        self,
+        microlensing_params,
+        lens_source_info,
+        cosmology,
+        kwargs_magnification_map_settings,
+        kwargs_source_gaussian,
+    ):
+        """Tests that ValueError is raised for missing kwargs during
+        init."""
+        base_args = {
+            "source_redshift": lens_source_info["source_redshift"],
+            "deflector_redshift": lens_source_info["deflector_redshift"],
+            "kappa_star_images": microlensing_params["kappa_star"],
+            "kappa_tot_images": microlensing_params["kappa_tot"],
+            "shear_images": microlensing_params["shear"],
+            "shear_phi_angle_images": microlensing_params["shear_phi"],
+            "ra_lens": lens_source_info["ra_lens"],
+            "dec_lens": lens_source_info["dec_lens"],
+            "deflector_velocity_dispersion": lens_source_info[
+                "deflector_velocity_dispersion"
+            ],
+            "cosmology": cosmology,
+        }
+
+        # 1. kwargs_MagnificationMap is None
+        with pytest.raises(
+            ValueError, match="kwargs_MagnificationMap not in kwargs_microlensing"
+        ):
+            args = base_args.copy()
+            args.update(
+                {
+                    "kwargs_MagnificationMap": None,
+                    "point_source_morphology": "gaussian",
+                    "kwargs_source_morphology": kwargs_source_gaussian,
+                }
+            )
+            MicrolensingLightCurveFromLensModel(**args)
+
+        # 2. point_source_morphology is None
+        with pytest.raises(
+            ValueError, match="point_source_morphology not in kwargs_microlensing"
+        ):
+            args = base_args.copy()
+            args.update(
+                {
+                    "kwargs_MagnificationMap": kwargs_magnification_map_settings,
+                    "point_source_morphology": None,
+                    "kwargs_source_morphology": kwargs_source_gaussian,
+                }
+            )
+            MicrolensingLightCurveFromLensModel(**args)
+
+        # 3. kwargs_source_morphology is None
+        with pytest.raises(
+            ValueError, match="kwargs_source_morphology not in kwargs_microlensing"
+        ):
+            args = base_args.copy()
+            args.update(
+                {
+                    "kwargs_MagnificationMap": kwargs_magnification_map_settings,
+                    "point_source_morphology": "gaussian",
+                    "kwargs_source_morphology": None,
+                }
+            )
+            MicrolensingLightCurveFromLensModel(**args)
+
     @pytest.mark.parametrize("magmap_frame", [True, False])
     def test_effective_transverse_velocity_images(
         self,
         ml_lens_model,
-        lens_source_info,
         microlensing_params,
+        lens_source_info,
         cosmology,
         magmap_frame,
     ):
         num_images = len(microlensing_params["shear_phi"])
         velocities, angles = ml_lens_model.effective_transverse_velocity_images(
-            lens_source_info["source_redshift"],
-            lens_source_info["deflector_redshift"],
-            lens_source_info["ra_lens"],
-            lens_source_info["dec_lens"],
-            cosmology,
-            microlensing_params["shear_phi"],
-            lens_source_info["deflector_velocity_dispersion"],
             random_seed=42,
             magmap_reference_frame=magmap_frame,
         )
@@ -211,41 +290,32 @@ class TestMicrolensingLightCurveFromLensModel:
         # ────── COVER ELSE BRANCHES FOR ra_lens, dec_lens, sig_star AS Quantity ──────
         from astropy import units as u
 
-        ra_q = (
-            lens_source_info["ra_lens"] * u.deg
-        )  # now a Quantity → hits `else: ra_l = ra_lens`
-        dec_q = (
-            lens_source_info["dec_lens"] * u.deg
-        )  # now a Quantity → hits `else: dec_l = dec_lens`
+        # Create a new instance with Quantity inputs to test those branches
+        ra_q = lens_source_info["ra_lens"] * u.deg
+        dec_q = lens_source_info["dec_lens"] * u.deg
         sigma_q = lens_source_info["deflector_velocity_dispersion"] * u.km / u.s
-        velocities_q, angles_q = ml_lens_model.effective_transverse_velocity_images(
-            lens_source_info["source_redshift"],
-            lens_source_info["deflector_redshift"],
-            ra_q,
-            dec_q,
-            cosmology,
-            microlensing_params["shear_phi"],
-            sigma_q,  # Quantity → hits `else: sig_star = …`
-            random_seed=42,
-            magmap_reference_frame=magmap_frame,
+
+        model_q = MicrolensingLightCurveFromLensModel(
+            **ml_lens_model.__dict__
+        )  # Copy params
+        model_q.ra_lens = ra_q
+        model_q.dec_lens = dec_q
+        model_q.deflector_velocity_dispersion = sigma_q
+
+        velocities_q, angles_q = model_q.effective_transverse_velocity_images(
+            random_seed=42, magmap_reference_frame=magmap_frame
         )
         assert velocities_q.shape == (num_images,)
         # ─────────────────────────────────────────────────────────────────────────────
 
         # ────── COVER the e1 ZERO‐VECTOR BRANCH ──────
         # Choose dec_lens = 90° so u_los is (0,0,1) and first cross yields zero
-        ra_pole = 0 * u.deg
-        dec_pole = 90 * u.deg
-        v_pole, a_pole = ml_lens_model.effective_transverse_velocity_images(
-            lens_source_info["source_redshift"],
-            lens_source_info["deflector_redshift"],
-            ra_pole,
-            dec_pole,
-            cosmology,
-            microlensing_params["shear_phi"],
-            lens_source_info["deflector_velocity_dispersion"],
-            random_seed=42,
-            magmap_reference_frame=magmap_frame,
+        model_pole = MicrolensingLightCurveFromLensModel(**ml_lens_model.__dict__)
+        model_pole.ra_lens = 0 * u.deg
+        model_pole.dec_lens = 90 * u.deg
+
+        v_pole, a_pole = model_pole.effective_transverse_velocity_images(
+            random_seed=42, magmap_reference_frame=magmap_frame
         )
         assert isinstance(v_pole, np.ndarray)
         # ─────────────────────────────────────────────────────────────────────────
@@ -282,7 +352,6 @@ class TestMicrolensingLightCurveFromLensModel:
 
         # check no _magmaps_images set yet
         assert not hasattr(ml_lens_model, "_magmaps_images")
-        assert not hasattr(ml_lens_model, "magmaps_images")
 
         # Mock the MagnificationMap constructor to avoid GPU computation
         with patch(
@@ -291,12 +360,7 @@ class TestMicrolensingLightCurveFromLensModel:
             # Configure the mock to return pre-created mock objects in sequence
             mock_magmap_class.side_effect = mock_map_list
 
-            result = ml_lens_model.generate_magnification_maps_from_microlensing_params(
-                kappa_star_images=microlensing_params["kappa_star"],
-                kappa_tot_images=microlensing_params["kappa_tot"],
-                shear_images=microlensing_params["shear"],
-                kwargs_MagnificationMap=kwargs_magnification_map_settings,
-            )
+            result = ml_lens_model.generate_magnification_maps_from_microlensing_params()
 
             # Verify the mock was called correctly
             assert mock_magmap_class.call_count == num_images
@@ -310,7 +374,7 @@ class TestMicrolensingLightCurveFromLensModel:
             assert hasattr(ml_lens_model, "_magmaps_images")
             assert ml_lens_model._magmaps_images == mock_map_list
 
-            # Verify that magmaps_images exists
+            # Verify that magmaps_images property works
             magmaps_images = ml_lens_model.magmaps_images
             assert len(magmaps_images) == num_images
             assert magmaps_images == mock_map_list
@@ -338,7 +402,6 @@ class TestMicrolensingLightCurveFromLensModel:
     def test_generate_point_source_lightcurves_structure(
         self,
         mock_generate_maps,
-        ml_lens_model,
         microlensing_params,
         lens_source_info,
         cosmology,
@@ -355,35 +418,36 @@ class TestMicrolensingLightCurveFromLensModel:
         kwargs_morphology = request.getfixturevalue(kwargs_source)
         num_images = len(microlensing_params["kappa_star"])
         time_array = np.linspace(0, 4000, 100)
-        try:
-            lightcurves, tracks, time_arrays = (
-                ml_lens_model.generate_point_source_lightcurves(
-                    time_array,
-                    lens_source_info["source_redshift"],
-                    lens_source_info["deflector_redshift"],
-                    microlensing_params["kappa_star"],
-                    microlensing_params["kappa_tot"],
-                    microlensing_params["shear"],
-                    microlensing_params["shear_phi"],
-                    lens_source_info["ra_lens"],
-                    lens_source_info["dec_lens"],
-                    lens_source_info["deflector_velocity_dispersion"],
-                    cosmology,
-                    kwargs_magnification_map_settings,
-                    morphology_key,
-                    kwargs_morphology,
-                    lightcurve_type,
-                    num_lc,
-                )
-            )
-        except Exception as e:
-            pytest.fail(f"generate_point_source_lightcurves raised: {e}")
-        mock_generate_maps.assert_called_once_with(
+
+        # Create instance for this specific test case
+        ml_model = MicrolensingLightCurveFromLensModel(
+            source_redshift=lens_source_info["source_redshift"],
+            deflector_redshift=lens_source_info["deflector_redshift"],
             kappa_star_images=microlensing_params["kappa_star"],
             kappa_tot_images=microlensing_params["kappa_tot"],
             shear_images=microlensing_params["shear"],
+            shear_phi_angle_images=microlensing_params["shear_phi"],
+            ra_lens=lens_source_info["ra_lens"],
+            dec_lens=lens_source_info["dec_lens"],
+            deflector_velocity_dispersion=lens_source_info[
+                "deflector_velocity_dispersion"
+            ],
+            cosmology=cosmology,
             kwargs_MagnificationMap=kwargs_magnification_map_settings,
+            point_source_morphology=morphology_key,
+            kwargs_source_morphology=kwargs_morphology,
         )
+
+        try:
+            lightcurves, tracks, time_arrays = ml_model.generate_point_source_lightcurves(
+                time_array,
+                lightcurve_type,
+                num_lc,
+            )
+        except Exception as e:
+            pytest.fail(f"generate_point_source_lightcurves raised: {e}")
+
+        mock_generate_maps.assert_called_once_with()
         assert isinstance(lightcurves, list)
         assert len(lightcurves) == num_images
         assert isinstance(tracks, list)
@@ -408,7 +472,7 @@ class TestMicrolensingLightCurveFromLensModel:
         assert track00.shape[0] == 2
         assert (
             track00.shape[1] > 0
-        )  # Check track has some length, but not necessarily same as interpolated LC
+        )  # Check track has some length, not necessarily same as interpolated LC
         # --- End Modified Assertion ---
         assert isinstance(time00, np.ndarray)
         assert time00.shape == time_array.shape
@@ -420,28 +484,12 @@ class TestMicrolensingLightCurveFromLensModel:
         "generate_magnification_maps_from_microlensing_params",
     )
     def test_generate_point_source_lightcurves_invalid_time(
-        self, mock_generate_maps, ml_lens_model, cosmology
+        self, mock_generate_maps, ml_lens_model
     ):
         """Tests error handling for invalid time input."""
-        # Set a dummy return for the mocked map generation, although it shouldn't be used much
         mock_generate_maps.return_value = [MagicMock()]
         with pytest.raises(ValueError, match="Time array not provided"):
-            ml_lens_model.generate_point_source_lightcurves(
-                time="invalid",
-                source_redshift=1,
-                deflector_redshift=0.5,
-                kappa_star_images=[0.1],
-                kappa_tot_images=[0.4],
-                shear_images=[0.1],
-                shear_phi_angle_images=[0],
-                ra_lens=0,
-                dec_lens=0,
-                deflector_velocity_dispersion=200,
-                cosmology=cosmology,  # Pass fixture instance
-                kwargs_MagnificationMap={},
-                point_source_morphology="gaussian",
-                kwargs_source_morphology={},
-            )
+            ml_lens_model.generate_point_source_lightcurves(time="invalid")
 
     @pytest.mark.parametrize(
         "morphology_key, kwargs_source",
@@ -454,7 +502,6 @@ class TestMicrolensingLightCurveFromLensModel:
     def test_generate_point_source_microlensing_magnitudes_array_time(
         self,
         mock_generate_maps,
-        ml_lens_model,
         microlensing_params,
         lens_source_info,
         cosmology,
@@ -469,94 +516,38 @@ class TestMicrolensingLightCurveFromLensModel:
         kwargs_morphology = request.getfixturevalue(kwargs_source)
         num_images = len(microlensing_params["kappa_star"])
         time_array = np.linspace(0, 4000, 50)
+
+        # Create instance for this specific test case
+        ml_model = MicrolensingLightCurveFromLensModel(
+            source_redshift=lens_source_info["source_redshift"],
+            deflector_redshift=lens_source_info["deflector_redshift"],
+            kappa_star_images=microlensing_params["kappa_star"],
+            kappa_tot_images=microlensing_params["kappa_tot"],
+            shear_images=microlensing_params["shear"],
+            shear_phi_angle_images=microlensing_params["shear_phi"],
+            ra_lens=lens_source_info["ra_lens"],
+            dec_lens=lens_source_info["dec_lens"],
+            deflector_velocity_dispersion=lens_source_info[
+                "deflector_velocity_dispersion"
+            ],
+            cosmology=cosmology,
+            kwargs_MagnificationMap=kwargs_magnification_map_settings,
+            point_source_morphology=morphology_key,
+            kwargs_source_morphology=kwargs_morphology,
+        )
+
         try:
-            magnitudes = ml_lens_model.generate_point_source_microlensing_magnitudes(
-                time_array,
-                lens_source_info["source_redshift"],
-                lens_source_info["deflector_redshift"],
-                microlensing_params["kappa_star"],
-                microlensing_params["kappa_tot"],
-                microlensing_params["shear"],
-                microlensing_params["shear_phi"],
-                lens_source_info["ra_lens"],
-                lens_source_info["dec_lens"],
-                lens_source_info["deflector_velocity_dispersion"],
-                cosmology,
-                kwargs_magnification_map_settings,
-                morphology_key,
-                kwargs_morphology,
+            magnitudes = ml_model.generate_point_source_microlensing_magnitudes(
+                time_array
             )
         except Exception as e:
             pytest.fail(f"generate_..._magnitudes raised: {e}")
+
         mock_generate_maps.assert_called_once()
         assert isinstance(magnitudes, np.ndarray)
         assert magnitudes.shape == (num_images, len(time_array))
         assert np.issubdtype(magnitudes.dtype, np.floating)
         assert not np.any(np.isnan(magnitudes)) and not np.any(np.isinf(magnitudes))
-
-        # Check raise ValueError for different cases of kwargs_microlensing
-        # 1. kwargs_MagnificationMap is None
-        with pytest.raises(
-            ValueError, match="kwargs_MagnificationMap not in kwargs_microlensing"
-        ):
-            magnitudes = ml_lens_model.generate_point_source_microlensing_magnitudes(
-                time_array,
-                lens_source_info["source_redshift"],
-                lens_source_info["deflector_redshift"],
-                microlensing_params["kappa_star"],
-                microlensing_params["kappa_tot"],
-                microlensing_params["shear"],
-                microlensing_params["shear_phi"],
-                lens_source_info["ra_lens"],
-                lens_source_info["dec_lens"],
-                lens_source_info["deflector_velocity_dispersion"],
-                cosmology,
-                kwargs_MagnificationMap=None,
-                point_source_morphology=morphology_key,
-                kwargs_source_morphology=kwargs_morphology,
-            )
-
-        # 3. point_source_morphology not in kwargs_microlensing
-        with pytest.raises(
-            ValueError, match="point_source_morphology not in kwargs_microlensing"
-        ):
-            magnitudes = ml_lens_model.generate_point_source_microlensing_magnitudes(
-                time_array,
-                lens_source_info["source_redshift"],
-                lens_source_info["deflector_redshift"],
-                microlensing_params["kappa_star"],
-                microlensing_params["kappa_tot"],
-                microlensing_params["shear"],
-                microlensing_params["shear_phi"],
-                lens_source_info["ra_lens"],
-                lens_source_info["dec_lens"],
-                lens_source_info["deflector_velocity_dispersion"],
-                cosmology,
-                kwargs_magnification_map_settings,
-                point_source_morphology=None,
-                kwargs_source_morphology=kwargs_morphology,
-            )
-
-        # 3. kwargs_source_morphology not in kwargs_microlensing
-        with pytest.raises(
-            ValueError, match="kwargs_source_morphology not in kwargs_microlensing"
-        ):
-            magnitudes = ml_lens_model.generate_point_source_microlensing_magnitudes(
-                time_array,
-                lens_source_info["source_redshift"],
-                lens_source_info["deflector_redshift"],
-                microlensing_params["kappa_star"],
-                microlensing_params["kappa_tot"],
-                microlensing_params["shear"],
-                microlensing_params["shear_phi"],
-                lens_source_info["ra_lens"],
-                lens_source_info["dec_lens"],
-                lens_source_info["deflector_velocity_dispersion"],
-                cosmology,
-                kwargs_magnification_map_settings,
-                morphology_key,
-                kwargs_source_morphology=None,
-            )
 
     @pytest.mark.parametrize(
         "morphology_key, kwargs_source",
@@ -571,8 +562,6 @@ class TestMicrolensingLightCurveFromLensModel:
         mock_generate_maps,
         ml_lens_model,
         microlensing_params,
-        lens_source_info,
-        cosmology,
         kwargs_magnification_map_settings,
         morphology_key,
         kwargs_source,
@@ -583,27 +572,20 @@ class TestMicrolensingLightCurveFromLensModel:
         )
         kwargs_morphology = request.getfixturevalue(kwargs_source)
         num_images = len(microlensing_params["kappa_star"])
-        time_array = np.linspace(0, 4000, 50)
-        time_array = time_array.tolist()  # Convert to list
+        time_array = np.linspace(0, 4000, 50).tolist()  # Convert to list
+
+        ml_model = MicrolensingLightCurveFromLensModel(
+            **ml_lens_model.__dict__
+        )  # copy params
+        ml_model.point_source_morphology = morphology_key
+        ml_model.kwargs_source_morphology = kwargs_morphology
+
         try:
-            magnitudes = ml_lens_model.generate_point_source_microlensing_magnitudes(
-                time_array,
-                lens_source_info["source_redshift"],
-                lens_source_info["deflector_redshift"],
-                microlensing_params["kappa_star"],
-                microlensing_params["kappa_tot"],
-                microlensing_params["shear"],
-                microlensing_params["shear_phi"],
-                lens_source_info["ra_lens"],
-                lens_source_info["dec_lens"],
-                lens_source_info["deflector_velocity_dispersion"],
-                cosmology,
-                kwargs_magnification_map_settings,
-                morphology_key,
-                kwargs_morphology,
+            magnitudes = ml_model.generate_point_source_microlensing_magnitudes(
+                time_array
             )
         except Exception as e:
-            pytest.fail(f"generate_..._magnitudes raised: {e}")
+            pytest.fail(f"generate_point_source_microlensing_magnitudes raised: {e}")
         mock_generate_maps.assert_called_once()
         assert isinstance(magnitudes, np.ndarray)
         assert magnitudes.shape == (num_images, len(time_array))
@@ -623,8 +605,6 @@ class TestMicrolensingLightCurveFromLensModel:
         mock_generate_maps,
         ml_lens_model,
         microlensing_params,
-        lens_source_info,
-        cosmology,
         kwargs_magnification_map_settings,
         morphology_key,
         kwargs_source,
@@ -636,22 +616,16 @@ class TestMicrolensingLightCurveFromLensModel:
         kwargs_morphology = request.getfixturevalue(kwargs_source)
         num_images = len(microlensing_params["kappa_star"])
         scalar_time = 500.0
+
+        ml_model = MicrolensingLightCurveFromLensModel(
+            **ml_lens_model.__dict__
+        )  # copy params
+        ml_model.point_source_morphology = morphology_key
+        ml_model.kwargs_source_morphology = kwargs_morphology
+
         try:
-            magnitudes = ml_lens_model.generate_point_source_microlensing_magnitudes(
-                scalar_time,
-                lens_source_info["source_redshift"],
-                lens_source_info["deflector_redshift"],
-                microlensing_params["kappa_star"],
-                microlensing_params["kappa_tot"],
-                microlensing_params["shear"],
-                microlensing_params["shear_phi"],
-                lens_source_info["ra_lens"],
-                lens_source_info["dec_lens"],
-                lens_source_info["deflector_velocity_dispersion"],
-                cosmology,
-                kwargs_magnification_map_settings,
-                morphology_key,
-                kwargs_morphology,
+            magnitudes = ml_model.generate_point_source_microlensing_magnitudes(
+                scalar_time
             )
         except Exception as e:
             pytest.fail(f"generate_..._magnitudes raised: {e}")
@@ -661,42 +635,23 @@ class TestMicrolensingLightCurveFromLensModel:
         assert np.issubdtype(magnitudes.dtype, np.floating)
         assert not np.any(np.isnan(magnitudes)) and not np.any(np.isinf(magnitudes))
 
-    # Patch map generation even for invalid time test to avoid IPM errors
     @patch.object(
         MicrolensingLightCurveFromLensModel,
         "generate_magnification_maps_from_microlensing_params",
     )
     def test_generate_point_source_microlensing_magnitudes_invalid_time(
-        self, mock_generate_maps, ml_lens_model, cosmology
+        self, mock_generate_maps, ml_lens_model
     ):
         """Tests error handling for invalid time input."""
         mock_generate_maps.return_value = [MagicMock()]  # Dummy return
         with pytest.raises(ValueError, match="Time array not provided"):
-            ml_lens_model.generate_point_source_microlensing_magnitudes(
-                time="invalid",
-                source_redshift=1,
-                deflector_redshift=0.5,
-                kappa_star_images=[0.1],
-                kappa_tot_images=[0.4],
-                shear_images=[0.1],
-                shear_phi_angle_images=[0],
-                ra_lens=0,
-                dec_lens=0,
-                deflector_velocity_dispersion=200,
-                cosmology=cosmology,
-                kwargs_MagnificationMap={},
-                point_source_morphology="gaussian",
-                kwargs_source_morphology={},
-            )
+            ml_lens_model.generate_point_source_microlensing_magnitudes(time="invalid")
 
     def test_properties_access(
         self,
         ml_lens_model,
         microlensing_params,
-        lens_source_info,
-        cosmology,
         kwargs_magnification_map_settings,
-        kwargs_source_gaussian,
     ):
         """Test property access for lightcurves, tracks, and magmaps_images."""
 
@@ -717,28 +672,15 @@ class TestMicrolensingLightCurveFromLensModel:
             MicrolensingLightCurveFromLensModel,
             "generate_magnification_maps_from_microlensing_params",
         ) as mock_generate_maps:
-            mock_generate_maps.return_value = create_mock_magmap_list(
+            mock_map_list = create_mock_magmap_list(
                 microlensing_params, kwargs_magnification_map_settings
             )
-            ml_lens_model._magmaps_images = mock_generate_maps.return_value
+            mock_generate_maps.return_value = mock_map_list
 
             # This should populate _lightcurves and _tracks
-            _ = ml_lens_model.generate_point_source_microlensing_magnitudes(
-                time_array,
-                lens_source_info["source_redshift"],
-                lens_source_info["deflector_redshift"],
-                microlensing_params["kappa_star"],
-                microlensing_params["kappa_tot"],
-                microlensing_params["shear"],
-                microlensing_params["shear_phi"],
-                lens_source_info["ra_lens"],
-                lens_source_info["dec_lens"],
-                lens_source_info["deflector_velocity_dispersion"],
-                cosmology,
-                kwargs_magnification_map_settings,
-                "gaussian",
-                kwargs_source_gaussian,
-            )
+            _ = ml_lens_model.generate_point_source_microlensing_magnitudes(time_array)
+            # manually set magmaps as the above call mocks its generation
+            ml_lens_model._magmaps_images = mock_map_list
 
         # Now test that properties work correctly
         lightcurves = ml_lens_model.lightcurves

@@ -576,8 +576,6 @@ class Lens(LensedSystemBase):
         (array) with macro-model magnifications. This function provided
         magnitudes of all the sources.
 
-        # TODO: time-variability with micro-lensing
-
         :param band: imaging band
         :type band: string
         :param lensed: if True, returns the lensed magnified magnitude
@@ -629,8 +627,6 @@ class Lens(LensedSystemBase):
         """Point source magnitude, either unlensed (single value) or lensed
         (array) with macro-model magnifications. This function does operation
         only for the single source.
-
-        # TODO: time-variability of the source with micro-lensing
 
         :param band: imaging band
         :type band: string
@@ -781,38 +777,45 @@ class Lens(LensedSystemBase):
             include the macro-magnification.
         :rtype: numpy array
         """
-
-        # get microlensing parameters
-        kappa_star_images, kappa_tot_images, shear_images, shear_angle_images = (
-            self._microlensing_parameters_for_image_positions_single_source(
-                band=band, source_index=source_index
-            )
-        )
-
         # importing here to keep it optional
         from slsim.Microlensing.lightcurvelensmodel import (
             MicrolensingLightCurveFromLensModel,
         )
+
+        # get microlensing parameters
+        kappa_star_images, kappa_tot_images, shear_images, shear_angle_images_rad = (
+            self._microlensing_parameters_for_image_positions_single_source(
+                band=band, source_index=source_index
+            )
+        )
+        # convert shear angle to degrees for the microlensing class
+        shear_phi_angle_images = np.degrees(shear_angle_images_rad)
 
         # select random RA and DEC in Sky for the lens,
         # #TODO: In future, this should be the position of the lens in the sky
         ra_lens = np.random.uniform(0, 360)  # degrees
         dec_lens = np.random.uniform(-90, 90)  # degrees
 
-        self._microlensing_model_class = MicrolensingLightCurveFromLensModel()
-        microlensing_magnitudes = self._microlensing_model_class.generate_point_source_microlensing_magnitudes(
-            time=time,
+        # Instantiate the microlensing model with all required parameters
+        self._microlensing_model_class = MicrolensingLightCurveFromLensModel(
             source_redshift=self.source(source_index).redshift,
             deflector_redshift=self.deflector_redshift,
             kappa_star_images=kappa_star_images,
             kappa_tot_images=kappa_tot_images,
             shear_images=shear_images,
-            shear_phi_angle_images=shear_angle_images,
+            shear_phi_angle_images=shear_phi_angle_images,
             ra_lens=ra_lens,
             dec_lens=dec_lens,
             deflector_velocity_dispersion=self.deflector_velocity_dispersion(),
             cosmology=self.cosmo,
             **kwargs_microlensing,
+        )
+
+        # Generate microlensing magnitudes with the simplified method call
+        microlensing_magnitudes = (
+            self._microlensing_model_class.generate_point_source_microlensing_magnitudes(
+                time=time
+            )
         )
 
         return microlensing_magnitudes  # # does not include the macro-lensing effect
