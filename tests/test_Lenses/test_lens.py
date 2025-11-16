@@ -805,7 +805,7 @@ def test_point_source_magnitude_microlensing(
     # Check that the microlensing_model_class attribute is not set before the call
     with pytest.raises(
         AttributeError,
-        match=f"MicrolensingLightCurveFromLensModel class is not set.",
+        match="MicrolensingLightCurveFromLensModel class is not set.",
     ):
         # Accessing as a method now
         _ = lens_system.microlensing_model_class(source_index=source_index)
