@@ -796,8 +796,54 @@ class Lens(LensedSystemBase):
         ra_lens = np.random.uniform(0, 360)  # degrees
         dec_lens = np.random.uniform(-90, 90)  # degrees
 
+        # Make a copy of kwargs_microlensing to avoid modifying the original dict
+        kwargs_microlensing_updated = kwargs_microlensing.copy()
+
+        # Get or initialize kwargs_source_morphology
+        kwargs_source_morphology = kwargs_microlensing_updated.get(
+            "kwargs_source_morphology", {}
+        )
+
+        # Update kwargs_source_morphology with values from the Lens class if not provided by the user
+        if "source_redshift" not in kwargs_source_morphology:
+            kwargs_source_morphology["source_redshift"] = self.source(
+                source_index
+            ).redshift
+        if "cosmo" not in kwargs_source_morphology:
+            kwargs_source_morphology["cosmo"] = self.cosmo
+        if "observing_wavelength_band" not in kwargs_source_morphology:
+            kwargs_source_morphology["observing_wavelength_band"] = band
+
+        # For AGN morphology, extract additional parameters from the source class if not provided
+        if kwargs_microlensing_updated.get("point_source_morphology") == "agn":
+            source_instance = self.source(source_index)
+
+            if source_instance.name == "QSO":
+                agn_params = [
+                    "black_hole_mass_exponent",
+                    "inclination_angle",
+                    "black_hole_spin",
+                    "eddington_ratio",
+                    "r_out",
+                    "r_resolution",
+                ]
+                kwargs_agn_model = source_instance._source.agn_class.kwargs_model
+
+                for param in agn_params:
+                    if param not in kwargs_source_morphology:
+                        if param in kwargs_agn_model:
+                            kwargs_source_morphology[param] = kwargs_agn_model[param]
+
+        # Update the main microlensing kwargs dictionary
+        kwargs_microlensing_updated[
+            "kwargs_source_morphology"
+        ] = kwargs_source_morphology
+
         # Instantiate the microlensing model with all required parameters
-        self._microlensing_model_class = MicrolensingLightCurveFromLensModel(
+        # TODO: handle multiple background sources in future for microlensing,
+        # specifically storing microlensing_model_class for each source.
+        self._microlensing_model_class = {}
+        self._microlensing_model_class[source_index] = MicrolensingLightCurveFromLensModel(
             source_redshift=self.source(source_index).redshift,
             deflector_redshift=self.deflector_redshift,
             kappa_star_images=kappa_star_images,
@@ -808,26 +854,31 @@ class Lens(LensedSystemBase):
             dec_lens=dec_lens,
             deflector_velocity_dispersion=self.deflector_velocity_dispersion(),
             cosmology=self.cosmo,
-            **kwargs_microlensing,
+            **kwargs_microlensing_updated,
         )
 
         # Generate microlensing magnitudes with the simplified method call
-        microlensing_magnitudes = self._microlensing_model_class.generate_point_source_microlensing_magnitudes(
+        microlensing_magnitudes = self._microlensing_model_class[source_index].generate_point_source_microlensing_magnitudes(
             time=time
         )
 
         return microlensing_magnitudes  # # does not include the macro-lensing effect
 
-    @property
-    def microlensing_model_class(self):
-        """Returns the MicrolensingLightCurveFromLensModel class instance used
-        for the microlensing calculations. Only available if microlensing=True
-        was used in point_source_magnitude.
-
-        :return: MicrolensingLightCurveFromLensModel class instance
+    def microlensing_model_class(self, source_index):
+        """Returns the MicrolensingLightCurveFromLensModel class instance corresponding
+        to a specific source index for the microlensing calculations. Only available if 
+        microlensing=True was used in point_source_magnitude.
+        
+        :param source_index: index of a source in source list.
+        :return: MicrolensingLightCurveFromLensModel class instance for the specified source.
         """
         if hasattr(self, "_microlensing_model_class"):
-            return self._microlensing_model_class
+            if source_index not in self._microlensing_model_class:
+                raise AttributeError(
+                    f"MicrolensingLightCurveFromLensModel class is not set for source index {source_index}. "
+                    "Please run point_source_magnitude with microlensing=True."
+                )
+            return self._microlensing_model_class[source_index]
         else:
             raise AttributeError(
                 "MicrolensingLightCurveFromLensModel class is not set. "

@@ -25,7 +25,7 @@ class AGNSourceMorphology(SourceMorphology):
         cosmo,
         r_out=1000,
         r_resolution=1000,
-        smbh_mass_exp=8.0,
+        black_hole_mass_exponent=8.0,
         inclination_angle=0,
         black_hole_spin=0,  # Spin of the black hole
         observer_frame_wavelength_in_nm=600,  # Wavelength in nanometers used to determine black body flux. For the surface flux density of the AccretionDisk at desired wavelength.
@@ -43,7 +43,7 @@ class AGNSourceMorphology(SourceMorphology):
             10^5 [R_g] Default is 1000.
         :param r_resolution: Resolution of the accretion disk in
             gravitational radii. Default is 1000.
-        :param smbh_mass_exp: Exponent of the mass of the supermassive
+        :param black_hole_mass_exponent: Exponent of the mass of the supermassive
             black hole in kg. Default is 8.0.
         :param inclination_angle: Inclination angle of the disk in
             degrees. Default is 0.
@@ -73,13 +73,13 @@ class AGNSourceMorphology(SourceMorphology):
         self.cosmo = cosmo
         self.r_out = r_out
         self.r_resolution = r_resolution
-        self.smbh_mass_exp = smbh_mass_exp
+        self.black_hole_mass_exponent = black_hole_mass_exponent
         self.inclination_angle = inclination_angle
         self.black_hole_spin = black_hole_spin
         self.observer_frame_wavelength_in_nm = observer_frame_wavelength_in_nm
         self.observing_wavelength_band = observing_wavelength_band
         self.eddington_ratio = eddington_ratio
-        self.black_hole_mass = 10**smbh_mass_exp
+        self.black_hole_mass = 10**black_hole_mass_exponent
 
         # -----------------------------------------------------------
         # assign the observer frame wavelength in nm if the band is provided
@@ -99,7 +99,7 @@ class AGNSourceMorphology(SourceMorphology):
         # determine the size of the emission map in source plane, in meters
         # -----------------------------------------------------------
         gravitational_radius_of_smbh = calculate_gravitational_radius(
-            self.smbh_mass_exp
+            self.black_hole_mass_exponent
         )
         kernel_pixel_size_x_metres = (
             2
@@ -160,7 +160,7 @@ class AGNSourceMorphology(SourceMorphology):
             r_resolution=self.r_resolution,
             inclination_angle=self.inclination_angle,
             rest_frame_wavelength_in_nanometers=rest_frame_wavelength,
-            black_hole_mass_exponent=self.smbh_mass_exp,
+            black_hole_mass_exponent=self.black_hole_mass_exponent,
             black_hole_spin=self.black_hole_spin,
             eddington_ratio=self.eddington_ratio,
             return_spectral_radiance_distribution=True,
