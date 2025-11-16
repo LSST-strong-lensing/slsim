@@ -374,7 +374,10 @@ class TestAGNSourceMorphology:
             agn_source_band.observing_wavelength_band
             == kwargs_AGN_band["observing_wavelength_band"]
         )
-        assert agn_source_band.black_hole_mass == 10 ** kwargs_AGN_band["black_hole_mass_exponent"]
+        assert (
+            agn_source_band.black_hole_mass
+            == 10 ** kwargs_AGN_band["black_hole_mass_exponent"]
+        )
 
         filter_r = speclite.filters.load_filter("lsst2023-r")
         expected_wave_nm = filter_r.effective_wavelength.to(u.nm).value
@@ -470,7 +473,9 @@ class TestAGNSourceMorphology:
         kernel_shape = agn_source_wave.kernel_map.shape  # (rows, cols) = (y, x)
 
         # Calculate expected scales based on real grav radius and ACTUAL kernel shape
-        grav_radius = calculate_gravitational_radius(kwargs_AGN_wave["black_hole_mass_exponent"])
+        grav_radius = calculate_gravitational_radius(
+            kwargs_AGN_wave["black_hole_mass_exponent"]
+        )
         grav_radius_val = grav_radius.to(u.m).value
 
         # Use correct axes: x scale depends on cols (shape[1]), y scale depends on rows (shape[0])

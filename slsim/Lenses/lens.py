@@ -835,42 +835,46 @@ class Lens(LensedSystemBase):
                             kwargs_source_morphology[param] = kwargs_agn_model[param]
 
         # Update the main microlensing kwargs dictionary
-        kwargs_microlensing_updated[
-            "kwargs_source_morphology"
-        ] = kwargs_source_morphology
+        kwargs_microlensing_updated["kwargs_source_morphology"] = (
+            kwargs_source_morphology
+        )
 
         # Instantiate the microlensing model with all required parameters
         # TODO: handle multiple background sources in future for microlensing,
         # specifically storing microlensing_model_class for each source.
         self._microlensing_model_class = {}
-        self._microlensing_model_class[source_index] = MicrolensingLightCurveFromLensModel(
-            source_redshift=self.source(source_index).redshift,
-            deflector_redshift=self.deflector_redshift,
-            kappa_star_images=kappa_star_images,
-            kappa_tot_images=kappa_tot_images,
-            shear_images=shear_images,
-            shear_phi_angle_images=shear_phi_angle_images,
-            ra_lens=ra_lens,
-            dec_lens=dec_lens,
-            deflector_velocity_dispersion=self.deflector_velocity_dispersion(),
-            cosmology=self.cosmo,
-            **kwargs_microlensing_updated,
+        self._microlensing_model_class[source_index] = (
+            MicrolensingLightCurveFromLensModel(
+                source_redshift=self.source(source_index).redshift,
+                deflector_redshift=self.deflector_redshift,
+                kappa_star_images=kappa_star_images,
+                kappa_tot_images=kappa_tot_images,
+                shear_images=shear_images,
+                shear_phi_angle_images=shear_phi_angle_images,
+                ra_lens=ra_lens,
+                dec_lens=dec_lens,
+                deflector_velocity_dispersion=self.deflector_velocity_dispersion(),
+                cosmology=self.cosmo,
+                **kwargs_microlensing_updated,
+            )
         )
 
         # Generate microlensing magnitudes with the simplified method call
-        microlensing_magnitudes = self._microlensing_model_class[source_index].generate_point_source_microlensing_magnitudes(
-            time=time
-        )
+        microlensing_magnitudes = self._microlensing_model_class[
+            source_index
+        ].generate_point_source_microlensing_magnitudes(time=time)
 
         return microlensing_magnitudes  # # does not include the macro-lensing effect
 
     def microlensing_model_class(self, source_index):
-        """Returns the MicrolensingLightCurveFromLensModel class instance corresponding
-        to a specific source index for the microlensing calculations. Only available if 
-        microlensing=True was used in point_source_magnitude.
-        
+        """Returns the MicrolensingLightCurveFromLensModel class instance
+        corresponding to a specific source index for the microlensing
+        calculations. Only available if microlensing=True was used in
+        point_source_magnitude.
+
         :param source_index: index of a source in source list.
-        :return: MicrolensingLightCurveFromLensModel class instance for the specified source.
+        :return: MicrolensingLightCurveFromLensModel class instance for
+            the specified source.
         """
         if hasattr(self, "_microlensing_model_class"):
             if source_index not in self._microlensing_model_class:

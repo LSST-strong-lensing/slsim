@@ -866,9 +866,7 @@ def test_point_source_magnitude_microlensing(
         constructor_kwargs["point_source_morphology"]
         == kwargs_microlensing_settings["point_source_morphology"]
     )
-    assert (
-        constructor_kwargs["kwargs_source_morphology"] == expected_source_morphology
-    )
+    assert constructor_kwargs["kwargs_source_morphology"] == expected_source_morphology
 
     # Verify the generate_... method was called on the INSTANCE with the correct time
     mock_ml_lc_instance.generate_point_source_microlensing_magnitudes.assert_called_once_with(
