@@ -932,8 +932,8 @@ def test_microlensing_model_class_raises_for_invalid_index(
     lens_instance_with_variability, time_array, band_i, kwargs_microlensing_settings
 ):
     """Tests that microlensing_model_class raises an error if the model for a
-    specific source index has not been initialized, even if the model dictionary
-    exists."""
+    specific source index has not been initialized, even if the model
+    dictionary exists."""
     lens_system = lens_instance_with_variability
 
     # Run microlensing calculation for the existing source (index 0)
@@ -963,6 +963,7 @@ def test_microlensing_model_class_raises_for_invalid_index(
         "Please run point_source_magnitude with microlensing=True.",
     ):
         lens_system.microlensing_model_class(source_index=invalid_source_index)
+
 
 ################################################
 ################################################
