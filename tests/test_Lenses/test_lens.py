@@ -928,6 +928,42 @@ def test_point_source_magnitude_microlensing_agn(
         assert final_source_morphology_kwargs[param] == source_agn_kwargs[param]
 
 
+def test_microlensing_model_class_raises_for_invalid_index(
+    lens_instance_with_variability, time_array, band_i, kwargs_microlensing_settings
+):
+    """Tests that microlensing_model_class raises an error if the model for a
+    specific source index has not been initialized, even if the model dictionary
+    exists."""
+    lens_system = lens_instance_with_variability
+
+    # Run microlensing calculation for the existing source (index 0)
+    # This creates the _microlensing_model_class dictionary
+    lens_system.point_source_magnitude(
+        band=band_i,
+        lensed=True,
+        time=time_array,
+        microlensing=True,
+        kwargs_microlensing=kwargs_microlensing_settings,
+    )
+
+    # Check that it works for the valid source index
+    try:
+        _ = lens_system.microlensing_model_class(source_index=0)
+    except AttributeError:
+        pytest.fail(
+            "microlensing_model_class unexpectedly raised AttributeError for a valid index."
+        )
+
+    # Now, try to access a source index that does not exist.
+    # The lens_instance_with_variability fixture only has one source.
+    invalid_source_index = 1
+    with pytest.raises(
+        AttributeError,
+        match=f"MicrolensingLightCurveFromLensModel class is not set for source index {invalid_source_index}. "
+        "Please run point_source_magnitude with microlensing=True.",
+    ):
+        lens_system.microlensing_model_class(source_index=invalid_source_index)
+
 ################################################
 ################################################
 

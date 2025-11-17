@@ -840,8 +840,6 @@ class Lens(LensedSystemBase):
         )
 
         # Instantiate the microlensing model with all required parameters
-        # TODO: handle multiple background sources in future for microlensing,
-        # specifically storing microlensing_model_class for each source.
         self._microlensing_model_class = {}
         self._microlensing_model_class[source_index] = (
             MicrolensingLightCurveFromLensModel(
