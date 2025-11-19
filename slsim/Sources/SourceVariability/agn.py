@@ -2,6 +2,7 @@ from astropy import cosmology
 from slsim.Sources.SourceVariability.variability import Variability
 from numpy import random
 import numpy as np
+from slsim.Util.astro_util import get_tau_sf_agn_variability, get_breakpoint_frequency_and_std_agn_variability
 
 
 class Agn(object):
@@ -274,13 +275,61 @@ def RandomAgn(
             random_driving_signal_kwargs = {
                 "length_of_light_curve": length_of_required_light_curve,
                 "time_resolution": 1,
-                "log_breakpoint_frequency": random.uniform(-0.5, -2.5),
+                "log_breakpoint_frequency": random.uniform(-0.5, -2.5), 
                 "low_frequency_slope": low_freq_slope,
                 "high_frequency_slope": random.uniform(low_freq_slope, 4.0),
                 "standard_deviation": random.uniform(0.1, 1.0),
             }
             agn_driving_variability_model = "bending_power_law"
             agn_driving_kwargs_variability = random_driving_signal_kwargs
+    
+    # base on M_i, z and black hole mass, set SF and Tau for Macleod 2010 correlations
+    if (agn_driving_variability_model == "bending_power_law_Macleod_2010") and (agn_driving_kwargs_variability is None):
+        black_hole_mass_exponent = kwargs_agn_model["black_hole_mass_exponent"]
+        if known_band=='lsst2016-i':
+            ps_mag_i = known_mag
+            D = cosmo.luminosity_distance(redshift).to('pc').value
+            M_i = ps_mag_i - 5.0*(np.log10(D)-1)
+        else:
+            raise ValueError("Macleod 2010 variability model only supported for known_band='lsst2016-i'")
+
+        log_SFi_inf, log_tau = get_tau_sf_agn_variability(
+            black_hole_mass_exponent=black_hole_mass_exponent,
+            M_i=M_i,
+            z_src=redshift,
+            means=None,
+            cov=None,
+            nsamps=1
+        )
+
+        log_breakpoint_frequency, standar_deviation = get_breakpoint_frequency_and_std_agn_variability(
+            log_SFi_inf=log_SFi_inf,
+            log_tau=log_tau
+        )
+
+        if lightcurve_time is None:
+            length_of_required_light_curve = 1000
+            lightcurve_time = np.linspace(
+                0,
+                length_of_required_light_curve - 1,
+                length_of_required_light_curve,
+            )
+
+        length_of_required_light_curve = np.max(lightcurve_time) - np.min(
+            lightcurve_time
+        )
+
+        low_freq_slope = random.uniform(0, 2.0)
+        MacLeod_driving_signal_kwargs = {
+            "length_of_light_curve": length_of_required_light_curve,
+            "time_resolution": 1,
+            "log_breakpoint_frequency": log_breakpoint_frequency,
+            "low_frequency_slope": low_freq_slope,
+            "high_frequency_slope": random.uniform(low_freq_slope, 4.0),
+            "standard_deviation": standar_deviation,
+        }
+        agn_driving_variability_model = "bending_power_law"
+        agn_driving_kwargs_variability = MacLeod_driving_signal_kwargs
 
     # Define initial speclite filter to be known band
     kwargs_agn_model["speclite_filter"] = known_band
