@@ -1344,23 +1344,29 @@ def theta_star_physical(
     return theta_star.to(u.arcsec), theta_star_lens.to(u.m), theta_star_src.to(u.m)
 
 
+def get_tau_sf_agn_variability(
+    black_hole_mass_exponent, M_i, z_src, means=None, cov=None, nsamps=1
+):
+    """Draw Tau and SFi_inf from the joint distribution conditioned on the BH
+    mass, absolute magnitude, and source redshift.
 
-def get_tau_sf_agn_variability(black_hole_mass_exponent, M_i, z_src, means = None, cov = None, nsamps = 1):
-    """
-    Draw Tau and SFi_inf from the joint distribution
-    conditioned on the BH mass, absolute magnitude, and source redshift.
+    The joint distribution is a multivariate normal distribution in
+    log_BH_mass, M_i, log_(SFi_inf/mag), log_(tau/days), zsrc space from
+    MacLeod+2010.
 
-    The joint distribution is a multivariate normal distribution
-    in log_BH_mass, M_i, log_(SFi_inf/mag), log_(tau/days), zsrc space from MacLeod+2010.
-
-    :param black_hole_mass_exponent: log_{10} of the black hole mass in solar masses.
+    :param black_hole_mass_exponent: log_{10} of the black hole mass in
+        solar masses.
     :param M_i: Absolute magnitude of the point source.
     :param z_src: Redshift of the source.
-    :param means: Optional means of the joint distribution. If None, uses default values.
-    :param cov: Optional covariance matrix of the joint distribution. If None, uses default values.
-    :param nsamps: Number of samples to draw from the joint distribution.
-    :return: [SFi_inf, tau] drawn from the conditional distribution.
-    2D numpy array with shape (2,), where the first element is SFi_inf and the second is tau.
+    :param means: Optional means of the joint distribution. If None,
+        uses default values.
+    :param cov: Optional covariance matrix of the joint distribution. If
+        None, uses default values.
+    :param nsamps: Number of samples to draw from the joint
+        distribution.
+    :return: [SFi_inf, tau] drawn from the conditional distribution. 2D
+        numpy array with shape (2,), where the first element is SFi_inf
+        and the second is tau.
     """
 
     # we're conditioning on BH_mass, M_i, zsrc
@@ -1368,35 +1374,44 @@ def get_tau_sf_agn_variability(black_hole_mass_exponent, M_i, z_src, means = Non
     # means and covariances for the log_BH_mass, M_i, log_SFi_inf, log_tau, zsrc
     # distribution from MacLeod+2010
     if (means is None) or (cov is None):
-        means = np.array([8.53308079, -23.48721021,  -0.51665998,   2.28708691, 2.11640976])
-        cov = np.array([
-                [ 0.27862905, -0.29501766,  0.00675703,  0.04606804, -0.00665875],
-                [-0.29501766,  2.06855169,  0.19690851,  0.0244139 , -0.29913764],
-                [ 0.00675703,  0.19690851,  0.02785685,  0.01083628, -0.02216221],
-                [ 0.04606804,  0.0244139 ,  0.01083628,  0.05636087, -0.02716507],
-                [-0.00665875, -0.29913764, -0.02216221, -0.02716507,  0.3077278 ]
-                ])
+        means = np.array(
+            [8.53308079, -23.48721021, -0.51665998, 2.28708691, 2.11640976]
+        )
+        cov = np.array(
+            [
+                [0.27862905, -0.29501766, 0.00675703, 0.04606804, -0.00665875],
+                [-0.29501766, 2.06855169, 0.19690851, 0.0244139, -0.29913764],
+                [0.00675703, 0.19690851, 0.02785685, 0.01083628, -0.02216221],
+                [0.04606804, 0.0244139, 0.01083628, 0.05636087, -0.02716507],
+                [-0.00665875, -0.29913764, -0.02216221, -0.02716507, 0.3077278],
+            ]
+        )
 
     samples = multivariate_normal(mean=means, cov=cov).rvs(nsamps)
     specific_obj = np.array([black_hole_mass_exponent, M_i, z_src])
-    sum_of_squared_differences = np.sum((specific_obj - samples[:, [0, 1, 4]])**2, axis=1)
-    min_dist_ind = np.argmin(np.sqrt(np.array(sum_of_squared_differences, dtype='float')))
+    sum_of_squared_differences = np.sum(
+        (specific_obj - samples[:, [0, 1, 4]]) ** 2, axis=1
+    )
+    min_dist_ind = np.argmin(
+        np.sqrt(np.array(sum_of_squared_differences, dtype="float"))
+    )
     selected_sample = samples[min_dist_ind]
     return selected_sample[[2, 3]]
 
+
 def get_breakpoint_frequency_and_std_agn_variability(log_SFi_inf, log_tau):
-    """
-    Convert SFi_inf and tau to breakpoint frequency and standard deviation.
+    """Convert SFi_inf and tau to breakpoint frequency and standard deviation.
 
     :param log_SFi_inf: log_{10} of SFi_inf in magnitudes.
     :param log_tau: log_{10} of tau in days.
-    :return: log_{10} of the breakpoint frequency in 1/days and standard deviation in magnitudes.
+    :return: log_{10} of the breakpoint frequency in 1/days and standard
+        deviation in magnitudes.
     """
-    SFi_inf = 10**log_SFi_inf # in mag
-    tau = 10**log_tau # in days
+    SFi_inf = 10**log_SFi_inf  # in mag
+    tau = 10**log_tau  # in days
 
-    standard_deviation = SFi_inf / np.sqrt(2) # in mag
-    breakpoint_frequency = 1 / (2 * np.pi * tau) # in 1/days
+    standard_deviation = SFi_inf / np.sqrt(2)  # in mag
+    breakpoint_frequency = 1 / (2 * np.pi * tau)  # in 1/days
     log_breakpoint_frequency = np.log10(breakpoint_frequency)
 
     return log_breakpoint_frequency, standard_deviation
