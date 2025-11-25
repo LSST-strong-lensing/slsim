@@ -19,7 +19,7 @@ class DeflectorBase(ABC):
         center_x=None,
         center_y=None,
         deflector_area=0.01,
-        **kwargs
+        **deflector_dict
     ):
         """
 
@@ -32,14 +32,15 @@ class DeflectorBase(ABC):
          (potentially used to calculate the velocity dispersion of the deflector)
         :param deflector_area: area (in solid angle arcseconds^2) to dither the center of the deflector
          (if center_x or center_y) are not provided
-        :param deflector_dict: parameters of the deflector
+        :param deflector_dict: parameters of the deflector. Assumed to contain:
+            'mag_band' for each band, 'e1_light', 'e2_light', 'e1_mass', 'e2_mass',
         :type deflector_dict: dict
         """
 
         self._vel_disp = vel_disp
         self._z = z
         self._stellar_mass = stellar_mass
-        self._deflector_dict = kwargs
+        self._deflector_dict = deflector_dict
         self._angular_size = angular_size
         if center_x is None or center_y is None:
 
