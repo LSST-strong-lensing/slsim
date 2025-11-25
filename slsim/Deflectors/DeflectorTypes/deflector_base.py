@@ -33,7 +33,7 @@ class DeflectorBase(ABC):
         :param deflector_area: area (in solid angle arcseconds^2) to dither the center of the deflector
          (if center_x or center_y) are not provided
         :param deflector_dict: parameters of the deflector. Assumed to contain:
-            'mag_band' for each band, 'e1_light', 'e2_light', 'e1_mass', 'e2_mass', 
+            'mag_band' for each band, 'e1_light', 'e2_light', 'e1_mass', 'e2_mass',
         :type deflector_dict: dict
         """
 
