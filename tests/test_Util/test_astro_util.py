@@ -32,6 +32,8 @@ from slsim.Util.astro_util import (
     pull_value_from_grid,
     extract_light_curve,
     theta_star_physical,
+    get_tau_sf_from_distribution_agn_variability,
+    get_breakpoint_frequency_and_std_agn_variability,
 )
 from astropy.cosmology import Planck18
 from astropy.units import Quantity
@@ -1354,3 +1356,45 @@ def test_theta_star_physical_realistic_scenario():
     print(f"theta_E_arcsec: {theta_E_arcsec}")
     print(f"theta_E_lens_plane_m: {theta_E_lens_plane_m}")
     print(f"theta_E_src_plane_m: {theta_E_src_plane_m}")
+
+
+def test_get_tau_sf_from_distribution_agn_variability():
+    # Setup specific means: [BH_mass, M_i, log_SF, log_tau, z_src]
+    means = np.array([8.0, -23.0, -0.5, 2.0, 1.0])
+    # Very small covariance to ensure samples are near means
+    cov = np.eye(5) * 1e-6
+
+    # Target parameters matching the means exactly
+    bh_mass = 8.0
+    m_i = -23.0
+    z_src = 1.0
+
+    # With such small covariance, the "random" sample will be extremely close to the mean
+    # Expected outputs are indices 2 (log_SF) and 3 (log_tau)
+    result = get_tau_sf_from_distribution_agn_variability(
+        bh_mass, m_i, z_src, means, cov, nsamps=10
+    )
+
+    npt.assert_approx_equal(result[0], -0.5, significant=2)
+    npt.assert_approx_equal(result[1], 2.0, significant=2)
+
+
+def test_get_breakpoint_frequency_and_std_agn_variability():
+    # Case 1: Simple math checks
+    # Let log_SFi_inf = log10(sqrt(2)) => SFi_inf = sqrt(2) => std = 1
+    # Let log_tau = log10(1 / (2pi)) => tau = 1/(2pi) => freq = 1 => log_freq = 0
+
+    log_sfi = np.log10(np.sqrt(2))
+    log_tau = np.log10(1 / (2 * np.pi))
+
+    log_freq, std = get_breakpoint_frequency_and_std_agn_variability(log_sfi, log_tau)
+
+    npt.assert_approx_equal(std, 1.0)
+    npt.assert_approx_equal(log_freq, 0.0)
+
+    # Case 2: Arbitrary numbers
+    # log_SFi_inf = 0 => SFi = 1 => std = 1/sqrt(2) approx 0.707
+    # log_tau = 0 => tau = 1 => freq = 1/(2pi) approx 0.159 => log_freq approx -0.798
+    log_freq_2, std_2 = get_breakpoint_frequency_and_std_agn_variability(0, 0)
+    npt.assert_approx_equal(std_2, 1.0 / np.sqrt(2))
+    npt.assert_approx_equal(log_freq_2, np.log10(1 / (2 * np.pi)))
