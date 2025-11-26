@@ -9,16 +9,20 @@ class EPL(DeflectorBase):
     """Deflector with an elliptical power-law and a Sersic light model.
 
     required quantities in dictionary:
-    - 'vel_disp': SIS equivalent velocity dispersion of the deflector
+    - 'vel_disp' OR 'theta_E': SIS equivalent velocity dispersion of the deflector,
+        or Einstein radius of the EPL profile.
     - 'gamma_pl': power-law slope
     - 'e1_mass': eccentricity of EPL profile
     - 'e2_mass': eccentricity of EPL profile
-    - 'stellar_mass': stellar mass in physical M_sol
-    - 'angular_size': half-light radius of stellar/light profile in radian
     - 'z': redshift of deflector
+    optional quantities in dictionary:
+    - 'angular_size': half-light radius of stellar/light profile in radian.
+        If None, uses numerical option in MGE decomposition when computing
+        theta_E from v_disp
+    - center_x: RA coordinate (relative arcseconds)
+    - center_y: DEC coordinate (relative arcseconds)
+        If None, draws random center coordinates (see DeflectorBase)
     """
-
-    # TODO: add center_x center_y to documentation
 
     def __init__(self, sis_convention=True, theta_E=None, gamma_pl=2, **deflector_dict):
         """
@@ -33,6 +37,13 @@ class EPL(DeflectorBase):
         self._sis_convention = sis_convention
         self._theta_E = theta_E
         self._gamma_pl = gamma_pl
+
+        # edge case: what happens if user provides both of these?
+        # how can you guarantee they are consistent, esp. if cosmology changes?
+        if self._theta_E is not None and self._vel_disp is not None:
+            raise ValueError(
+                "Provide theta_E OR vel_disp, not both, to guarantee consistency"
+            )
 
     def velocity_dispersion(self, cosmo=None):
         """Velocity dispersion of deflector. If velocity dispersion is not
@@ -56,6 +67,11 @@ class EPL(DeflectorBase):
         :return: Einstein radius of the deflector
         """
         if self._theta_E is None:
+            if lens_cosmo is None:
+                raise ValueError(
+                    "Must provide lens_cosmo to compute theta_E from v_disp"
+                )
+
             lens_light_model_list, kwargs_lens_light = self.light_model_lenstronomy()
             theta_E = theta_E_from_vel_disp_epl(
                 vel_disp=float(self.velocity_dispersion()),
