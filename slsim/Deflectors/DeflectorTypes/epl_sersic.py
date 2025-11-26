@@ -20,7 +20,6 @@ class EPLSersic(EPL):
         If None, draws random center coordinates (see DeflectorBase)
     """
 
-
     def __init__(self, **deflector_dict):
         """
 
