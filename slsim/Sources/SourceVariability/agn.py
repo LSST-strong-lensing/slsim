@@ -353,7 +353,7 @@ def RandomAgn(
             "high_frequency_slope": random.uniform(low_freq_slope, 4.0),
             "standard_deviation": standard_deviation,
         }
-        agn_driving_variability_model = "bending_power_law_from_distribution"
+        agn_driving_variability_model = "bending_power_law"
         agn_driving_kwargs_variability = agn_driving_signal_kwargs_from_distribution
 
     # Define initial speclite filter to be known band

@@ -1343,9 +1343,8 @@ def theta_star_physical(
 
     return theta_star.to(u.arcsec), theta_star_lens.to(u.m), theta_star_src.to(u.m)
 
-
 def get_tau_sf_from_distribution_agn_variability(
-    black_hole_mass_exponent, M_i, z_src, means=None, cov=None, nsamps=1
+    black_hole_mass_exponent, M_i, z_src, means, cov, nsamps=1
 ):
     """Draw Tau and SFi_inf from the joint distribution conditioned on the BH
     mass, absolute magnitude, and source redshift.
@@ -1357,12 +1356,10 @@ def get_tau_sf_from_distribution_agn_variability(
 
     :param black_hole_mass_exponent: log_{10} of the black hole mass in
         solar masses.
-    :param M_i: Absolute magnitude of the point source.
+    :param M_i: Absolute magnitude of the point source in LSST i-band.
     :param z_src: Redshift of the source.
-    :param means: Optional means of the joint distribution. If None,
-        uses default values.
-    :param cov: Optional covariance matrix of the joint distribution. If
-        None, uses default values.
+    :param means: means of the joint distribution.
+    :param cov: covariance matrix of the joint distribution.
     :param nsamps: Number of samples to draw from the joint
         distribution.
     :return: [SFi_inf, tau] drawn from the conditional distribution. 2D
@@ -1370,6 +1367,8 @@ def get_tau_sf_from_distribution_agn_variability(
         and the second is tau.
     """
     samples = multivariate_normal(mean=means, cov=cov).rvs(nsamps)
+    if nsamps == 1:
+        samples = samples.reshape(1, -1)
     specific_obj = np.array([black_hole_mass_exponent, M_i, z_src])
     sum_of_squared_differences = np.sum(
         (specific_obj - samples[:, [0, 1, 4]]) ** 2, axis=1
