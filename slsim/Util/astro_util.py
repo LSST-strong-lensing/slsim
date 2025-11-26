@@ -1343,6 +1343,7 @@ def theta_star_physical(
 
     return theta_star.to(u.arcsec), theta_star_lens.to(u.m), theta_star_src.to(u.m)
 
+
 def get_tau_sf_from_distribution_agn_variability(
     black_hole_mass_exponent, M_i, z_src, means, cov, nsamps=1
 ):
