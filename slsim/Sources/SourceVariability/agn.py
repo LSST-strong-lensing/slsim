@@ -3,7 +3,7 @@ from slsim.Sources.SourceVariability.variability import Variability
 from numpy import random
 import numpy as np
 from slsim.Util.astro_util import (
-    get_tau_sf_agn_variability,
+    get_tau_sf_from_distribution_agn_variability,
     get_breakpoint_frequency_and_std_agn_variability,
 )
 
@@ -286,10 +286,9 @@ def RandomAgn(
             agn_driving_variability_model = "bending_power_law"
             agn_driving_kwargs_variability = random_driving_signal_kwargs
 
-    # base on M_i, z and black hole mass, set SF and Tau for Macleod 2010 correlations
-    if (agn_driving_variability_model == "bending_power_law_Macleod_2010") and (
-        agn_driving_kwargs_variability is None
-    ):
+    # based on M_i, z and black hole mass, set SF and Tau for provided multivariate gaussian correlations
+    if (agn_driving_variability_model == "bending_power_law_from_distribution"):
+
         black_hole_mass_exponent = kwargs_agn_model["black_hole_mass_exponent"]
         if known_band == "lsst2016-i":
             ps_mag_i = known_mag
@@ -297,19 +296,37 @@ def RandomAgn(
             M_i = ps_mag_i - 5.0 * (np.log10(D) - 1)
         else:
             raise ValueError(
-                "Macleod 2010 variability model only supported for known_band='lsst2016-i'"
+                f"{agn_driving_variability_model} variability model is only supported for known_band='lsst2016-i'"
             )
 
-        log_SFi_inf, log_tau = get_tau_sf_agn_variability(
+        # here we assume that agn_driving_kwargs_variability contains the means and cov of the multivariate gaussian
+        if "multivariate_gaussian_means" not in agn_driving_kwargs_variability.keys():
+            raise ValueError(
+                "multivariate_gaussian_means not found in agn_driving_kwargs_variability\n",
+                "Please provide the means of the multivariate gaussian in agn_driving_kwargs_variability",
+            )
+        if "multivariate_gaussian_covs" not in agn_driving_kwargs_variability.keys():
+            raise ValueError(
+                "multivariate_gaussian_covs not found in agn_driving_kwargs_variability\n",
+                "Please provide the covariance matrix of the multivariate gaussian in agn_driving_kwargs_variability",
+                )
+        
+        means = agn_driving_kwargs_variability["multivariate_gaussian_means"]
+        cov = agn_driving_kwargs_variability["multivariate_gaussian_covs"]
+
+        # it is assumed that the means and cov are in the same order as the variables in the multivariate normal distribution
+        # log(BH_mass/Msun), M_i, log(SFi_inf/mag), log(tau/days), zsrc
+
+        log_SFi_inf, log_tau = get_tau_sf_from_distribution_agn_variability(
             black_hole_mass_exponent=black_hole_mass_exponent,
             M_i=M_i,
             z_src=redshift,
-            means=None,
-            cov=None,
+            means=means,
+            cov=cov,
             nsamps=1,
         )
 
-        log_breakpoint_frequency, standar_deviation = (
+        log_breakpoint_frequency, standard_deviation = (
             get_breakpoint_frequency_and_std_agn_variability(
                 log_SFi_inf=log_SFi_inf, log_tau=log_tau
             )
@@ -328,16 +345,16 @@ def RandomAgn(
         )
 
         low_freq_slope = random.uniform(0, 2.0)
-        MacLeod_driving_signal_kwargs = {
+        agn_driving_signal_kwargs_from_distribution = {
             "length_of_light_curve": length_of_required_light_curve,
             "time_resolution": 1,
             "log_breakpoint_frequency": log_breakpoint_frequency,
             "low_frequency_slope": low_freq_slope,
             "high_frequency_slope": random.uniform(low_freq_slope, 4.0),
-            "standard_deviation": standar_deviation,
+            "standard_deviation": standard_deviation,
         }
-        agn_driving_variability_model = "bending_power_law"
-        agn_driving_kwargs_variability = MacLeod_driving_signal_kwargs
+        agn_driving_variability_model = "bending_power_law_from_distribution"
+        agn_driving_kwargs_variability = agn_driving_signal_kwargs_from_distribution
 
     # Define initial speclite filter to be known band
     kwargs_agn_model["speclite_filter"] = known_band
