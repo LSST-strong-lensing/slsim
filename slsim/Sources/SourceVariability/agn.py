@@ -19,7 +19,7 @@ class Agn(object):
         lightcurve_time=None,
         agn_driving_variability_model=None,
         agn_driving_kwargs_variability=None,
-        **kwargs_agn_model
+        **kwargs_agn_model,
     ):
         """Initialization of an agn.
 
@@ -173,7 +173,7 @@ def RandomAgn(
     agn_driving_kwargs_variability=None,
     random_seed=None,
     input_agn_bounds_dict=None,
-    **kwargs_agn_model
+    **kwargs_agn_model,
 ):
     """Generate a random agn.
 
@@ -287,7 +287,7 @@ def RandomAgn(
             agn_driving_kwargs_variability = random_driving_signal_kwargs
 
     # based on M_i, z and black hole mass, set SF and Tau for provided multivariate gaussian correlations
-    if (agn_driving_variability_model == "bending_power_law_from_distribution"):
+    if agn_driving_variability_model == "bending_power_law_from_distribution":
 
         black_hole_mass_exponent = kwargs_agn_model["black_hole_mass_exponent"]
         if known_band == "lsst2016-i":
@@ -309,8 +309,8 @@ def RandomAgn(
             raise ValueError(
                 "multivariate_gaussian_covs not found in agn_driving_kwargs_variability\n",
                 "Please provide the covariance matrix of the multivariate gaussian in agn_driving_kwargs_variability",
-                )
-        
+            )
+
         means = agn_driving_kwargs_variability["multivariate_gaussian_means"]
         cov = agn_driving_kwargs_variability["multivariate_gaussian_covs"]
 

@@ -1351,8 +1351,9 @@ def get_tau_sf_from_distribution_agn_variability(
     mass, absolute magnitude, and source redshift.
 
     The joint distribution is a multivariate normal distribution in
-    log(BH_mass/Msun), M_i, log_(SFi_inf/mag), log_(tau/days), zsrc space. Make sure
-    to follow the same order for the means array and cov matrix. 
+    log(BH_mass/Msun), M_i, log_(SFi_inf/mag), log_(tau/days), zsrc
+    space. Make sure to follow the same order for the means array and
+    cov matrix.
 
     :param black_hole_mass_exponent: log_{10} of the black hole mass in
         solar masses.
