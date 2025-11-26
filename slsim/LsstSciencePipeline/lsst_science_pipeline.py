@@ -20,17 +20,27 @@ import os
 try:
     import lsst.geom as geom
     from lsst.pipe.tasks.insertFakes import _add_fake_sources
-    from lsst.rsp import get_tap_service
     from lsst.afw.math import Warper
     import galsim
 except ModuleNotFoundError:
     lsst = None
     galsim = None
+import pyvo
 
 """
 This module provides necessary functions to inject lenses to the dp0 data. For this, it 
 uses some of the packages provided by the LSST Science Pipeline.
 """
+
+RSP_TAP_SERVICE = "https://data.lsst.cloud/api/tap"
+homedir = os.path.expanduser("~")
+token_file = os.path.join(homedir, ".rsp-tap.token")
+with open(token_file, "r") as f:
+    token_str = f.readline()
+cred = pyvo.auth.CredentialStore()
+cred.set_password("x-oauth-basic", token_str)
+credential = cred.get("ivo://ivoa.net/sso#BasicAA")
+rsp_tap = pyvo.dal.TAPService(RSP_TAP_SERVICE, session=credential)
 
 
 def DC2_cutout(ra, dec, num_pix, butler, band):
@@ -418,6 +428,176 @@ def lens_inejection_fast(
     return lens_catalog
 
 
+def lens_injection_fast_coadd(
+    lens_pop,
+    num_pix,
+    coadd,
+    coadd_nImage,
+    mag_zero_visit,
+    variance_map,
+    transform_pix2angle,
+    num_cutout_per_patch=5,
+    lens_cut=None,
+    noise=True,
+    coadd_year=5,
+    band_list=["r", "g", "i"],
+    center_box_size=3,
+    center_source_snr_threshold=5,
+    false_positive=False,
+):
+    """Injects lenses into randomly taken cutouts from a given DC2 cutout
+    image.
+
+    :param lens_pop: lens population from slsim. It can be a LensPop
+        instance or list of Lens class.
+    :param num_pix: number of pixel for the cutout
+    :param coadd: list of coadd images in different bands
+    :param coadd_nImage: list of number of images in coadd in different
+        bands
+    :param mag_zero_visit: list of magnitude zero points in different
+        bands
+    :param variance_map: list of variance maps in different bands
+    :param transform_pix2angle: transformation matrix (2x2) of pixels
+        into coordinate displacements
+    :param num_cutout_per_patch: number of cutout image drawn per patch
+    :param lens_cut: list of criteria for lens selection
+    :param noise: poisson noise to be added to an image. If True,
+        poisson noise will be added to the image based on exposure time.
+    :param coadd_year: Year for the coadd images. This parameter is used
+        to rescale the noise properties of 5 year dp0 coadd images to
+        desired year of coadd.
+    :param band_list: List of imaging band in which lens need to be
+        injected.
+    :param center_box_size: Size of the central box in arcsec (default
+        is 3 arcsec).
+    :param center_source_snr_threshold: SNR threshold for object
+        detection in center box (default is 5).
+    :param false_positive: Boolean. If false, code assumes that the
+        provided population is a lens population. If True, code assumes
+        that the provided population is a false positive population.
+        False positive contains an elliptical galaxy at the center and
+        blue galaxies around this central galaxy. for more detail,
+        please see: slsim/FalsePositives/
+    :returns: An astropy table containing Injected lens in r-band, DC2
+        cutout image in r-band, cutout image with injected lens in r, g
+        , and i band, cutout box center and cutout bbox.
+    """
+
+    pixel_scale = transformmatrix_to_pixelscale(transform_pix2angle)
+    if lens_cut is None:
+        kwargs_lens_cut = {}
+    else:
+        kwargs_lens_cut = lens_cut
+
+    rgb_band_list = band_list
+
+    bbox = coadd[0].getBBox()
+    xmin, ymin = bbox.getBegin()
+    xmax, ymax = bbox.getEnd()
+    wcs = coadd[0].getWcs()
+
+    cutout_dim = (num_pix + 1) // 2
+    valid_cutouts = 0
+    table = []
+    # for i in range(len(x_center)):
+    while valid_cutouts < num_cutout_per_patch:
+        # Randomly select a position for the cutout
+        x_center = np.random.randint(xmin + cutout_dim, xmax - cutout_dim)
+        y_center = np.random.randint(ymin + cutout_dim, ymax - cutout_dim)
+        cutout_bbox = generate_cutout_bbox(
+            x_center=x_center, y_center=y_center, num_pix=num_pix
+        )
+        if isinstance(lens_pop, list):
+            lens_class = lens_pop[valid_cutouts]
+        else:
+            if false_positive is False:
+                lens_class = lens_pop.select_lens_at_random(**kwargs_lens_cut)
+            else:
+                lens_class = lens_pop.draw_false_positive()
+        (
+            injected_final_image,
+            box_center,
+            cutout_image_list,
+            lens_image,
+            lens_,
+            psf_kernel_,
+            noise_map_,
+        ) = ([], [], [], [], [], [], [])
+        is_valid = True
+        for j, band in enumerate(band_list):
+            cutout_image = coadd[j][cutout_bbox]
+            cutout_variance = variance_map[j][cutout_bbox]
+            # Check for existing objects in the cutout image
+            if detect_object(
+                cutout_image.image.array,
+                cutout_variance.array,
+                pixel_scale=pixel_scale,
+                box_size_arcsec=center_box_size,
+                snr_threshold=center_source_snr_threshold,
+            ):
+                is_valid = False
+                break  # Discard this cutout and try again
+
+            if noise is True:
+
+                exposure_map = 30 * coadd_nImage[j][cutout_bbox].array
+                zero_point_magnitude = mag_zero_visit[j]
+
+            else:
+                exposure_map = None
+
+            final_injected_image, psf_kernel, noise_map = add_object(
+                cutout_image,
+                lens_class=lens_class,
+                band=rgb_band_list[j],
+                mag_zero_point=zero_point_magnitude,
+                num_pix=num_pix,
+                transform_pix2angle=transform_pix2angle,
+                exposure_time=exposure_map,
+                coadd_year=coadd_year,
+            )
+            center_point = geom.Point2D(x_center, y_center)
+            center_wcs = wcs.pixelToSky(center_point)
+            ra_deg = center_wcs.getRa().asDegrees()
+            dec_deg = center_wcs.getDec().asDegrees()
+
+            injected_final_image.append(final_injected_image)
+            box_center.append((ra_deg, dec_deg))
+            cutout_image_list.append(cutout_image.image.array)
+            lens_image.append((final_injected_image - cutout_image.image.array))
+            lens_.append(lens_class)
+            psf_kernel_.append(psf_kernel)
+            noise_map_.append(noise_map)
+
+        if is_valid:
+            # Define column names dynamically based on band_list
+            prefix = "injected_object" if false_positive else "injected_lens"
+            column_names = (
+                ["lens_class", "lens", "cutout_image"]
+                + [f"{prefix}_{band}" for band in band_list]
+                + [f"psf_kernel_{band}" for band in band_list]
+                + [f"noise_map_{band}" for band in band_list]
+                + ["cutout_center", "cutout_bbox"]
+            )
+
+            # Construct row data dynamically
+            data = (
+                [[lens_[0]], [lens_image[0]], [cutout_image_list[0]]]
+                + [[img] for img in injected_final_image]
+                + [[img] for img in psf_kernel_]
+                + [[img] for img in noise_map_]
+                + [[box_center[0]], [cutout_bbox]]
+            )
+
+            # Create Table instance
+            table_1 = Table(data, names=column_names)
+            table.append(table_1)
+            valid_cutouts += 1  # Increase count of successful cutouts
+    lens_catalog = vstack(table)
+
+    return lens_catalog
+
+
 def multiple_lens_injection(
     lens_pop, num_pix, delta_pix, butler, ra, dec, lens_cut=None, flux=None
 ):
@@ -642,6 +822,7 @@ def add_object(
             )
         else:
             variance_map = image_object.getVariance()
+            noise_map = np.sqrt(variance_map.array)
             degraded_image = degrade_coadd_data(
                 image_object.image.array,
                 variance_map=variance_map.array,
@@ -651,7 +832,7 @@ def add_object(
                 use_noise_diff=True,
             )
             injected_image = degraded_image[0] + lens
-            return injected_image
+            return injected_image, psf_ker, noise_map
 
 
 def cutout_image_psf_kernel(
@@ -753,7 +934,7 @@ def tap_query(center_coords, radius=0.1, band="i"):
     :return: An astropy table of visit information sorted with
         observation time.
     """
-    service = get_tap_service("tap")
+    service = rsp_tap
     query = (
         "SELECT ra, decl,"
         + "ccdVisitId, band, "
@@ -1253,7 +1434,7 @@ class retrieve_DP0_coadds_from_Rubin_Science_Platform:
 
 # Define the subquery function
 def fetch_DP0_galaxies_from_Rubin_Science_Platform(
-    service=get_tap_service("tap"),
+    service=rsp_tap,
     ra_min=71.875,
     ra_max=-28.125,
     dec_min=75.0,

@@ -42,6 +42,27 @@ class TestDeflector(object):
 
         self.deflector_epl = Deflector(deflector_type="EPL", **red_two)
 
+        deflector_nfw_cluster_dict = {
+            "halo_mass": 10**14,
+            "concentration": 10,
+            "e1_mass": 0.1,
+            "e2_mass": -0.1,
+            "z": 0.3,
+            "subhalos": [red_one, red_one],
+        }
+
+        self.deflector3 = Deflector(deflector_type="EPL_SERSIC", **red_one)
+
+        self.deflector_nfw2 = Deflector(
+            deflector_type="NFW_HERNQUIST", **deflector_nfw_dict
+        )
+        self.deflector_nfw_cluster1 = Deflector(
+            deflector_type="NFW_CLUSTER", **deflector_nfw_cluster_dict
+        )
+        self.deflector_nfw_cluster2 = Deflector(
+            deflector_type="NFW_CLUSTER", **deflector_nfw_cluster_dict
+        )
+
     def test_light_ellipticity(self):
         e1_light, e2_light = self.deflector.light_ellipticity
         assert pytest.approx(e1_light, rel=1e-3) == -0.05661955320450283
@@ -131,3 +152,28 @@ class TestDeflector(object):
 
         theta_E_infinity = self.deflector_nfw.theta_e_infinity(cosmo=None)
         npt.assert_almost_equal(theta_E_infinity, 1, decimal=2)
+
+        # Test the multi_plane case
+        # EPL_SERSIC
+        theta_E_infinity = self.deflector3.theta_e_infinity(
+            cosmo=None, multi_plane=True
+        )
+        assert theta_E_infinity < 15
+        theta_E_infinity_new = self.deflector3.theta_e_infinity(
+            cosmo=None, multi_plane=True
+        )
+        npt.assert_almost_equal(theta_E_infinity, theta_E_infinity_new, decimal=5)
+
+        # NFW_CLUSTER
+        theta_E_infinity = self.deflector_nfw_cluster1.theta_e_infinity(cosmo=None)
+        assert theta_E_infinity < 30
+        theta_E_infinity_multi = self.deflector_nfw_cluster2.theta_e_infinity(
+            cosmo=None, multi_plane=True
+        )
+        assert theta_E_infinity_multi < 30
+
+        # NFW_HERNQUIST
+        theta_E_infinity = self.deflector_nfw2.theta_e_infinity(
+            cosmo=None, multi_plane=True
+        )
+        assert theta_E_infinity < 30

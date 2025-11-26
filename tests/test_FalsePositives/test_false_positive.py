@@ -93,7 +93,7 @@ def test_false_positive():
         == 3
     )
     assert len(false_positive_instance_2.deflector_position) == 2
-    assert false_positive_instance_2.deflector_redshift == single_deflector.redshift
+    assert false_positive_instance_2.deflector_redshift[0] == single_deflector.redshift
     assert false_positive_instance_1.source_redshift_list[0] == single_source1.redshift
     assert np.all(false_positive_instance_2.source_redshift_list) == np.all(
         np.array([single_source1.redshift, single_source2.redshift])

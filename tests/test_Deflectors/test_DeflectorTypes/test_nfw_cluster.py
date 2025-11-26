@@ -70,3 +70,23 @@ class TestNFWCluster(object):
     def test_magnitude(self):
         magnitude = self.nfw_cluster.magnitude(band="r")
         npt.assert_almost_equal(magnitude, 18.632, decimal=3)
+
+    def test_subhalo_redshifts(self):
+        subhalo_redshifts = self.nfw_cluster.subhalo_redshifts
+        for i, subhalo in enumerate(self.nfw_cluster._subhalos):
+            npt.assert_almost_equal(subhalo_redshifts[i], subhalo.redshift, decimal=6)
+
+    def test_cored_profile(self):
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+        lens_cosmo = LensCosmo(cosmo=cosmo, z_lens=self.halo_dict["z"], z_source=2.0)
+        cored_cluster = NFWCluster(cored_profile=True, **self.halo_dict)
+        # test if the cored halo model is added
+        c_lens_model_list, c_kwargs_lens = cored_cluster.mass_model_lenstronomy(
+            lens_cosmo=lens_cosmo
+        )
+        assert "PJAFFE_ELLIPSE_POTENTIAL" in c_lens_model_list
+        # test if the cored halo model is added for the spherical case
+        cs_lens_model_list, cs_kwargs_lens = cored_cluster.mass_model_lenstronomy(
+            lens_cosmo=lens_cosmo, spherical=True
+        )
+        assert "PJAFFE" in cs_lens_model_list
