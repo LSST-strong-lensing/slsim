@@ -1,6 +1,5 @@
 import os
 from skypy.pipeline import Pipeline
-import slsim
 import tempfile
 import slsim.Util.param_util as util
 
@@ -36,7 +35,10 @@ class SkyPyPipeline:
          issues with skypy SED templates.
         :type z_max: float or None
         """
-        path = os.path.dirname(slsim.__file__)
+        # path = os.path.dirname(slsim.__file__)
+
+        path = os.path.dirname(os.path.abspath(__file__))
+        path, _ = os.path.split(path)
         module_path, _ = os.path.split(path)
         if skypy_config is None:
             skypy_config = os.path.join(
