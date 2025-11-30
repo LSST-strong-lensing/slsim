@@ -265,10 +265,7 @@ def test_random_agn():
 def test_random_agn_variability_from_distribution():
     # Setup for the new distribution-based variability model
 
-    # NOTE: The code specifically checks for "lsst2016-i",
-    # so we cannot use the generic "lsst2023-i" here if we want to pass the check.
-    valid_band = "lsst2016-i"
-    invalid_band = "lsst2023-i"
+    valid_band = "lsst2016-i" # just for testing, in reality can be any band
 
     variability_model = "bending_power_law_from_distribution"
 
@@ -280,12 +277,13 @@ def test_random_agn_variability_from_distribution():
     kwargs_variability_valid = {
         "multivariate_gaussian_means": means,
         "multivariate_gaussian_covs": covs,
+        "known_band": valid_band,
     }
 
-    # Test 1: Raise ValueError if band is not lsst2016-i
+    # Test 1: Raise ValueError if known_band in kwargs does not match known_band argument
     with pytest.raises(ValueError) as excinfo:
         RandomAgn(
-            known_band=invalid_band,
+            known_band="lsst2023-r",
             known_mag=20,
             redshift=1.0,
             lightcurve_time=lightcurve_time,
@@ -293,7 +291,7 @@ def test_random_agn_variability_from_distribution():
             agn_driving_kwargs_variability=kwargs_variability_valid,
             black_hole_mass_exponent=8.0,
         )
-    assert "variability model is only supported for known_band='lsst2016-i'" in str(
+    assert "known_band in agn_driving_kwargs_variability does not match" in str(
         excinfo.value
     )
 
@@ -305,7 +303,10 @@ def test_random_agn_variability_from_distribution():
             redshift=1.0,
             lightcurve_time=lightcurve_time,
             agn_driving_variability_model=variability_model,
-            agn_driving_kwargs_variability={"multivariate_gaussian_covs": covs},
+            agn_driving_kwargs_variability={
+                "multivariate_gaussian_covs": covs,
+                "known_band": valid_band,
+            },
             black_hole_mass_exponent=8.0,
         )
     assert "multivariate_gaussian_means not found" in str(excinfo.value)
@@ -318,12 +319,33 @@ def test_random_agn_variability_from_distribution():
             redshift=1.0,
             lightcurve_time=lightcurve_time,
             agn_driving_variability_model=variability_model,
-            agn_driving_kwargs_variability={"multivariate_gaussian_means": means},
+            agn_driving_kwargs_variability={
+                "multivariate_gaussian_means": means,
+                "known_band": valid_band,
+            },
             black_hole_mass_exponent=8.0,
         )
     assert "multivariate_gaussian_covs not found" in str(excinfo.value)
 
-    # Test 4: Successful generation
+    # Test 4: Raise ValueError if known_band is missing in kwargs
+    with pytest.raises(ValueError) as excinfo:
+        RandomAgn(
+            known_band=valid_band,
+            known_mag=20,
+            redshift=1.0,
+            lightcurve_time=lightcurve_time,
+            agn_driving_variability_model=variability_model,
+            agn_driving_kwargs_variability={
+                "multivariate_gaussian_means": means,
+                "multivariate_gaussian_covs": covs,
+            },
+            black_hole_mass_exponent=8.0,
+        )
+    assert "known_band not found in agn_driving_kwargs_variability" in str(
+        excinfo.value
+    )
+
+    # Test 5: Successful generation
     # Also test implicit time array generation by passing lightcurve_time=None
     random_agn_dist = RandomAgn(
         known_band=valid_band,
@@ -345,7 +367,11 @@ def test_random_agn_variability_from_distribution():
     assert "log_breakpoint_frequency" in generated_kwargs
     assert "standard_deviation" in generated_kwargs
     assert "length_of_light_curve" in generated_kwargs
+    assert generated_kwargs["low_frequency_slope"] == 0 # DRW default
+    assert generated_kwargs["high_frequency_slope"] == 2 # DRW default
 
     # Verify time array was generated (default length is 1000)
     assert len(random_agn_dist.kwargs_model["time_array"]) == 1000
     assert generated_kwargs["length_of_light_curve"] == 999.0
+
+    print("generated_kwargs:", generated_kwargs)

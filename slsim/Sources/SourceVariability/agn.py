@@ -290,14 +290,9 @@ def RandomAgn(
     if agn_driving_variability_model == "bending_power_law_from_distribution":
 
         black_hole_mass_exponent = kwargs_agn_model["black_hole_mass_exponent"]
-        if known_band == "lsst2016-i":
-            ps_mag_i = known_mag
-            D = cosmo.luminosity_distance(redshift).to("pc").value
-            M_i = ps_mag_i - 5.0 * (np.log10(D) - 1)
-        else:
-            raise ValueError(
-                f"{agn_driving_variability_model} variability model is only supported for known_band='lsst2016-i'"
-            )
+        
+        D = cosmo.luminosity_distance(redshift).to("pc").value
+        known_mag_abs = known_mag - 5.0 * (np.log10(D) - 1)
 
         # here we assume that agn_driving_kwargs_variability contains the means and cov of the multivariate gaussian
         if "multivariate_gaussian_means" not in agn_driving_kwargs_variability.keys():
@@ -310,16 +305,28 @@ def RandomAgn(
                 "multivariate_gaussian_covs not found in agn_driving_kwargs_variability\n",
                 "Please provide the covariance matrix of the multivariate gaussian in agn_driving_kwargs_variability",
             )
+        if "known_band" not in agn_driving_kwargs_variability.keys():
+            raise ValueError(
+                "known_band not found in agn_driving_kwargs_variability\n",
+                "Please provide the band in which the absolute magnitude is measured.",
+            )
 
         means = agn_driving_kwargs_variability["multivariate_gaussian_means"]
         cov = agn_driving_kwargs_variability["multivariate_gaussian_covs"]
+        provided_known_band = agn_driving_kwargs_variability["known_band"]
+
+        if known_band != provided_known_band:
+            raise ValueError(
+                "known_band in agn_driving_kwargs_variability does not match known_band in kwargs_agn_model"
+            )
 
         # it is assumed that the means and cov are in the same order as the variables in the multivariate normal distribution
-        # log(BH_mass/Msun), M_i, log(SFi_inf/mag), log(tau/days), zsrc
+        # log(BH_mass/Msun), known_mag_abs, log(SF_inf/mag), log(tau/days), zsrc
+        # by default in SLSim lsst - i band is used
 
-        log_SFi_inf, log_tau = get_tau_sf_from_distribution_agn_variability(
+        log_SF_inf, log_tau = get_tau_sf_from_distribution_agn_variability(
             black_hole_mass_exponent=black_hole_mass_exponent,
-            M_i=M_i,
+            known_mag_abs=known_mag_abs,
             z_src=redshift,
             means=means,
             cov=cov,
@@ -328,7 +335,7 @@ def RandomAgn(
 
         log_breakpoint_frequency, standard_deviation = (
             get_breakpoint_frequency_and_std_agn_variability(
-                log_SFi_inf=log_SFi_inf, log_tau=log_tau
+                log_SF_inf=log_SF_inf, log_tau=log_tau
             )
         )
 
@@ -344,13 +351,13 @@ def RandomAgn(
             lightcurve_time
         )
 
-        low_freq_slope = random.uniform(0, 2.0)
+        # Use DRW as default!
         agn_driving_signal_kwargs_from_distribution = {
             "length_of_light_curve": length_of_required_light_curve,
             "time_resolution": 1,
             "log_breakpoint_frequency": log_breakpoint_frequency,
-            "low_frequency_slope": low_freq_slope,
-            "high_frequency_slope": random.uniform(low_freq_slope, 4.0),
+            "low_frequency_slope": 0,
+            "high_frequency_slope": 2,
             "standard_deviation": standard_deviation,
         }
         agn_driving_variability_model = "bending_power_law"

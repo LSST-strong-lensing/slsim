@@ -1345,54 +1345,91 @@ def theta_star_physical(
 
 
 def get_tau_sf_from_distribution_agn_variability(
-    black_hole_mass_exponent, M_i, z_src, means, cov, nsamps=1
+    black_hole_mass_exponent, known_mag_abs, z_src,
+    means, cov, nsamps=1
 ):
-    """Draw Tau and SFi_inf from the joint distribution conditioned on the BH
+    """Draw Tau and SF_inf from the joint distribution conditioned on the BH
     mass, absolute magnitude, and source redshift.
 
     The joint distribution is a multivariate normal distribution in
-    log(BH_mass/Msun), M_i, log_(SFi_inf/mag), log_(tau/days), zsrc
-    space. Make sure to follow the same order for the means array and
-    cov matrix.
+    log(BH_mass/Msun), known_mag_abs, log_(SF_inf/mag), log_(tau/days), zsrc
+    space.
 
     :param black_hole_mass_exponent: log_{10} of the black hole mass in
         solar masses.
-    :param M_i: Absolute magnitude of the point source in LSST i-band.
+    :param known_mag_abs: Absolute magnitude of the point source in some known band.
     :param z_src: Redshift of the source.
-    :param means: means of the joint distribution.
-    :param cov: covariance matrix of the joint distribution.
-    :param nsamps: Number of samples to draw from the joint
-        distribution.
-    :return: [SFi_inf, tau] drawn from the conditional distribution. 2D
-        numpy array with shape (2,), where the first element is SFi_inf
-        and the second is tau.
+    :param means: List of means of the joint distribution. Order: log(BH_mass/Msun), known_mag_abs, log_(SF_inf/mag), log_(tau/days), zsrc
+    :param cov: Covariance matrix of the joint distribution. Shape (5, 5).
+    :param nsamps: Number of samples to draw from the joint distribution.
+    :return: SF_inf, tau drawn from the conditional distribution. 
+             Returns a tuple of numpy arrays (SF_inf, tau).
+             If nsamps == 1, returns a tuple of scalars.
     """
-    samples = multivariate_normal(mean=means, cov=cov).rvs(nsamps)
+    means = np.array(means)
+    cov = np.array(cov)
+
+    # 1. Define indices based on the docstring order:
+    # 0: log(BH_mass)  [Given]
+    # 1: known_mag_abs [Given]
+    # 2: log(SF_inf)   [Target]
+    # 3: log(tau)      [Target]
+    # 4: zsrc          [Given]
+    
+    idx_given = [0, 1, 4]  # The variables we observe
+    idx_target = [2, 3]    # The variables we want to sample
+    
+    # 2. Partition the Mean Vector
+    mu_given = means[idx_given]
+    mu_target = means[idx_target]
+    
+    # 3. Partition the Covariance Matrix
+    # Covariance of the targets (2x2)
+    cov_target_target = cov[np.ix_(idx_target, idx_target)]
+    # Covariance of the given variables (3x3)
+    cov_given_given = cov[np.ix_(idx_given, idx_given)]
+    # Cross-covariance (2x3)
+    cov_target_given = cov[np.ix_(idx_target, idx_given)]
+    
+    # Calculate Conditional Mean and Covariance
+    # solve for x in: cov_given_given * x = (observed_values - mu_given)
+    observed_values = np.array([black_hole_mass_exponent, known_mag_abs, z_src])
+    diff = observed_values - mu_given
+    
+    # mu_cond = mu_target + cov_target_given * cov_given_given^-1 * diff
+    term1 = np.linalg.solve(cov_given_given, diff)
+    cond_mean = mu_target + np.dot(cov_target_given, term1)
+    
+    # cov_cond = cov_target_target - cov_target_given * cov_given_given^-1 * cov_given_target
+    # cov_given_target is the transpose of cov_target_given
+    term2 = np.linalg.solve(cov_given_given, cov_target_given.T)
+    cond_cov = cov_target_target - np.dot(cov_target_given, term2)
+    
+    # Sample from the new conditional distribution
+    # This returns shape (nsamps, 2) where col 0 is SF and col 1 is Tau
+    samples = np.random.multivariate_normal(cond_mean, cond_cov, size=nsamps)
+    
+    sf_inf_samples = samples[:, 0]
+    tau_samples = samples[:, 1]
+    
     if nsamps == 1:
-        samples = samples.reshape(1, -1)
-    specific_obj = np.array([black_hole_mass_exponent, M_i, z_src])
-    sum_of_squared_differences = np.sum(
-        (specific_obj - samples[:, [0, 1, 4]]) ** 2, axis=1
-    )
-    min_dist_ind = np.argmin(
-        np.sqrt(np.array(sum_of_squared_differences, dtype="float"))
-    )
-    selected_sample = samples[min_dist_ind]
-    return selected_sample[[2, 3]]
+        return sf_inf_samples[0], tau_samples[0]
+        
+    return sf_inf_samples, tau_samples
 
 
-def get_breakpoint_frequency_and_std_agn_variability(log_SFi_inf, log_tau):
-    """Convert SFi_inf and tau to breakpoint frequency and standard deviation.
+def get_breakpoint_frequency_and_std_agn_variability(log_SF_inf, log_tau):
+    """Convert SF_inf and tau to breakpoint frequency and standard deviation.
 
-    :param log_SFi_inf: log_{10} of SFi_inf in magnitudes.
+    :param log_SF_inf: log_{10} of SF_inf in magnitudes.
     :param log_tau: log_{10} of tau in days.
     :return: log_{10} of the breakpoint frequency in 1/days and standard
         deviation in magnitudes.
     """
-    SFi_inf = 10**log_SFi_inf  # in mag
+    SF_inf = 10**log_SF_inf  # in mag
     tau = 10**log_tau  # in days
 
-    standard_deviation = SFi_inf / np.sqrt(2)  # in mag
+    standard_deviation = SF_inf / np.sqrt(2)  # in mag
     breakpoint_frequency = 1 / (2 * np.pi * tau)  # in 1/days
     log_breakpoint_frequency = np.log10(breakpoint_frequency)
 
