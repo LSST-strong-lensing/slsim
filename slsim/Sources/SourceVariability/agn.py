@@ -290,7 +290,7 @@ def RandomAgn(
     if agn_driving_variability_model == "bending_power_law_from_distribution":
 
         black_hole_mass_exponent = kwargs_agn_model["black_hole_mass_exponent"]
-        
+
         D = cosmo.luminosity_distance(redshift).to("pc").value
         known_mag_abs = known_mag - 5.0 * (np.log10(D) - 1)
 

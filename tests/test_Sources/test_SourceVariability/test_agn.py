@@ -265,7 +265,7 @@ def test_random_agn():
 def test_random_agn_variability_from_distribution():
     # Setup for the new distribution-based variability model
 
-    valid_band = "lsst2016-i" # just for testing, in reality can be any band
+    valid_band = "lsst2016-i"  # just for testing, in reality can be any band
 
     variability_model = "bending_power_law_from_distribution"
 
@@ -367,8 +367,8 @@ def test_random_agn_variability_from_distribution():
     assert "log_breakpoint_frequency" in generated_kwargs
     assert "standard_deviation" in generated_kwargs
     assert "length_of_light_curve" in generated_kwargs
-    assert generated_kwargs["low_frequency_slope"] == 0 # DRW default
-    assert generated_kwargs["high_frequency_slope"] == 2 # DRW default
+    assert generated_kwargs["low_frequency_slope"] == 0  # DRW default
+    assert generated_kwargs["high_frequency_slope"] == 2  # DRW default
 
     # Verify time array was generated (default length is 1000)
     assert len(random_agn_dist.kwargs_model["time_array"]) == 1000
