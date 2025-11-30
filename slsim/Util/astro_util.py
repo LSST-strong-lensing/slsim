@@ -1,4 +1,3 @@
-from scipy.stats import multivariate_normal
 import numpy as np
 from scipy.fftpack import ifft
 from astropy import constants as const
