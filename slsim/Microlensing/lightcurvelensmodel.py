@@ -85,29 +85,29 @@ class MicrolensingLightCurveFromLensModel(object):
             observer_frame_wavelength_in_nm, "eddington_ratio":
             eddington_ratio, }
         """
-        self.source_redshift = source_redshift
-        self.deflector_redshift = deflector_redshift
-        self.kappa_star_images = kappa_star_images
-        self.kappa_tot_images = kappa_tot_images
-        self.shear_images = shear_images
-        self.shear_phi_angle_images = shear_phi_angle_images
-        self.ra_lens = ra_lens
-        self.dec_lens = dec_lens
-        self.deflector_velocity_dispersion = deflector_velocity_dispersion
-        self.cosmology = cosmology
-        self.kwargs_MagnificationMap = kwargs_MagnificationMap
-        self.point_source_morphology = point_source_morphology
-        self.kwargs_source_morphology = kwargs_source_morphology
+        self._source_redshift = source_redshift
+        self._deflector_redshift = deflector_redshift
+        self._kappa_star_images = kappa_star_images
+        self._kappa_tot_images = kappa_tot_images
+        self._shear_images = shear_images
+        self._shear_phi_angle_images = shear_phi_angle_images
+        self._ra_lens = ra_lens
+        self._dec_lens = dec_lens
+        self._deflector_velocity_dispersion = deflector_velocity_dispersion
+        self._cosmology = cosmology
+        self._kwargs_MagnificationMap = kwargs_MagnificationMap
+        self._point_source_morphology = point_source_morphology
+        self._kwargs_source_morphology = kwargs_source_morphology
 
-        if self.kwargs_MagnificationMap is None:
+        if self._kwargs_MagnificationMap is None:
             raise ValueError(
                 "kwargs_MagnificationMap not in kwargs_microlensing. Please provide a dictionary of settings required by micro-lensing calculation."
             )
-        if self.point_source_morphology is None:
+        if self._point_source_morphology is None:
             raise ValueError(
                 "point_source_morphology not in kwargs_microlensing. Please provide the point source morphology type. It can be either 'gaussian' or 'agn' or 'supernovae'."
             )
-        if self.kwargs_source_morphology is None:
+        if self._kwargs_source_morphology is None:
             raise ValueError(
                 "kwargs_source_morphology not in kwargs_microlensing. Please provide a dictionary of settings required by source morphology calculation."
             )
@@ -255,17 +255,17 @@ class MicrolensingLightCurveFromLensModel(object):
             []
         )  # a list which contains the [list of tracks] for each image of the source, depending on the num_lightcurves parameter.
         time_arrays = []  # corresponding to each lightcurve
-        for i in range(len(self.kappa_star_images)):
+        for i in range(len(self._kappa_star_images)):
             ml_lc = MicrolensingLightCurve(
                 magnification_map=magmaps_images[i],
                 time_duration=lightcurve_duration,
-                point_source_morphology=self.point_source_morphology,
-                kwargs_source_morphology=self.kwargs_source_morphology,
+                point_source_morphology=self._point_source_morphology,
+                kwargs_source_morphology=self._kwargs_source_morphology,
             )
             curr_lightcurves, curr_tracks, curr_time_arrays = (
                 ml_lc.generate_lightcurves(
-                    source_redshift=self.source_redshift,
-                    cosmo=self.cosmology,
+                    source_redshift=self._source_redshift,
+                    cosmo=self._cosmology,
                     lightcurve_type=lightcurve_type,
                     effective_transverse_velocity=eff_trv_vel_images[i],
                     num_lightcurves=num_lightcurves,
@@ -307,13 +307,13 @@ class MicrolensingLightCurveFromLensModel(object):
         """
         # generate magnification maps for each image of the source
         self._magmaps_images = []
-        for i in range(len(self.kappa_star_images)):
+        for i in range(len(self._kappa_star_images)):
             # generate magnification maps for each image of the source
             magmap = MagnificationMap(
-                kappa_tot=self.kappa_tot_images[i],
-                shear=self.shear_images[i],
-                kappa_star=self.kappa_star_images[i],
-                **self.kwargs_MagnificationMap,
+                kappa_tot=self._kappa_tot_images[i],
+                shear=self._shear_images[i],
+                kappa_star=self._kappa_star_images[i],
+                **self._kwargs_MagnificationMap,
             )
             self._magmaps_images.append(magmap)
 
@@ -364,24 +364,24 @@ class MicrolensingLightCurveFromLensModel(object):
         """
 
         # --- Lens Model Inputs ---
-        z_s = self.source_redshift
-        z_l = self.deflector_redshift
+        z_s = self._source_redshift
+        z_l = self._deflector_redshift
 
-        if not isinstance(self.ra_lens, u.Quantity):
-            ra_l = self.ra_lens * u.deg
+        if not isinstance(self._ra_lens, u.Quantity):
+            ra_l = self._ra_lens * u.deg
         else:
-            ra_l = self.ra_lens
+            ra_l = self._ra_lens
 
-        if not isinstance(self.dec_lens, u.Quantity):
-            dec_l = self.dec_lens * u.deg
+        if not isinstance(self._dec_lens, u.Quantity):
+            dec_l = self._dec_lens * u.deg
         else:
-            dec_l = self.dec_lens
+            dec_l = self._dec_lens
 
         # σ⋆
-        if not isinstance(self.deflector_velocity_dispersion, u.Quantity):
-            sig_star = self.deflector_velocity_dispersion * u.km / u.s
+        if not isinstance(self._deflector_velocity_dispersion, u.Quantity):
+            sig_star = self._deflector_velocity_dispersion * u.km / u.s
         else:
-            sig_star = self.deflector_velocity_dispersion
+            sig_star = self._deflector_velocity_dispersion
 
         np.random.seed(random_seed)  # Set the random seed for reproducibility
 
@@ -390,8 +390,8 @@ class MicrolensingLightCurveFromLensModel(object):
         # f = Omega_m**(4./7.) + Omega_v*(1.+Omega_m/2.)/70.
         #############################################
         def f_GrowthRate(z):
-            Omega_m = self.cosmology.Om(z)
-            Omega_v = self.cosmology.Ode(z)
+            Omega_m = self._cosmology.Om(z)
+            Omega_v = self._cosmology.Ode(z)
             return Omega_m ** (4.0 / 7.0) + Omega_v * (1.0 + Omega_m / 2.0) / 70.0
 
         #############################################
@@ -410,9 +410,9 @@ class MicrolensingLightCurveFromLensModel(object):
         #############################################
 
         # angular‐diameter distances
-        D_l = self.cosmology.angular_diameter_distance(z_l)
-        D_s = self.cosmology.angular_diameter_distance(z_s)
-        D_ls = self.cosmology.angular_diameter_distance_z1z2(z_l, z_s)
+        D_l = self._cosmology.angular_diameter_distance(z_l)
+        D_s = self._cosmology.angular_diameter_distance(z_s)
+        D_ls = self._cosmology.angular_diameter_distance_z1z2(z_l, z_s)
 
         # effective combined pec.‐velocity dispersion σ_g (Eq.5)
         sigma_g = np.sqrt(
@@ -454,7 +454,7 @@ class MicrolensingLightCurveFromLensModel(object):
         effective_velocities = []  # km/s
         effective_velocities_angles_deg = []  # degrees
 
-        for i in range(len(self.shear_phi_angle_images)):
+        for i in range(len(self._shear_phi_angle_images)):
             # 5) lens‐galaxy peculiar velocity v_* (Eq.4)
             θ = np.random.uniform(0, 2 * np.pi)
             v_star_mag = np.sqrt(2) * sig_star  # (Eq.3)
@@ -483,7 +483,7 @@ class MicrolensingLightCurveFromLensModel(object):
             # the returned angle is with respect to the x-axis of the magnification map
             if magmap_reference_frame:
                 # convert the angle to the reference frame of the magnification map
-                v_e_angle_deg = v_e_angle_deg - self.shear_phi_angle_images[i]
+                v_e_angle_deg = v_e_angle_deg - self._shear_phi_angle_images[i]
             effective_velocities_angles_deg.append(v_e_angle_deg)
 
         return (
