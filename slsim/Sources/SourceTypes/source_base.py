@@ -341,3 +341,14 @@ class SourceBase(ABC):
                 "magnitude": ps_mag,
             }
         return ps_type, kwargs_ps
+    
+    def update_microlensing_kwargs_source_morphology(self, kwargs_source_morphology):
+        """
+        Update the kwargs_source_morphology dictionary with parameters from the respective
+        source type class. This method will be overwritten in child classes for specific
+        source types.
+
+        :param kwargs_source_morphology: Dictionary of source morphology parameters.
+        :return: Updated dictionary of source morphology parameters.
+        """
+        return kwargs_source_morphology

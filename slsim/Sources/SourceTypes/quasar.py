@@ -192,6 +192,30 @@ class Quasar(SourceBase):
         return super().point_source_magnitude(
             band=band, image_observation_times=image_observation_times
         )
+    
+    def update_microlensing_kwargs_source_morphology(self, kwargs_source_morphology):
+        """
+        Update the kwargs_source_morphology dictionary with AGN parameters from the AGN
+        class associated with this quasar.
+
+        :param kwargs_source_morphology: Dictionary of source morphology parameters.
+        :return: Updated dictionary of source morphology parameters.
+        """
+        agn_params = [
+            "black_hole_mass_exponent",
+            "inclination_angle",
+            "black_hole_spin",
+            "eddington_ratio",
+            "r_out",
+            "r_resolution",
+        ]
+        kwargs_agn_model = self.agn_class.kwargs_model
+
+        for param in agn_params:
+            if param not in kwargs_source_morphology:
+                if param in kwargs_agn_model:
+                    kwargs_source_morphology[param] = kwargs_agn_model[param]
+        return kwargs_source_morphology
 
 
 def add_mean_mag_to_source_table(sourcedict, mean_mags, band_list):

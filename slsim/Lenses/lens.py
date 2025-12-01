@@ -19,6 +19,7 @@ from slsim.Util.catalog_util import safe_value
 from slsim.Lenses.lensed_system_base import LensedSystemBase
 from slsim.Deflectors.deflector import JAX_PROFILES
 import pandas as pd
+from copy import deepcopy
 
 
 class Lens(LensedSystemBase):
@@ -797,7 +798,7 @@ class Lens(LensedSystemBase):
         dec_lens = np.random.uniform(-90, 90)  # degrees
 
         # Make a copy of kwargs_microlensing to avoid modifying the original dict
-        kwargs_microlensing_updated = kwargs_microlensing.copy()
+        kwargs_microlensing_updated = deepcopy(kwargs_microlensing)
 
         # Get or initialize kwargs_source_morphology
         kwargs_source_morphology = kwargs_microlensing_updated.get(
@@ -814,25 +815,8 @@ class Lens(LensedSystemBase):
         if "observing_wavelength_band" not in kwargs_source_morphology:
             kwargs_source_morphology["observing_wavelength_band"] = band
 
-        # For AGN morphology, extract additional parameters from the source class if not provided
-        if kwargs_microlensing_updated.get("point_source_morphology") == "agn":
-            source_instance = self.source(source_index)
-
-            if source_instance.name == "QSO":
-                agn_params = [
-                    "black_hole_mass_exponent",
-                    "inclination_angle",
-                    "black_hole_spin",
-                    "eddington_ratio",
-                    "r_out",
-                    "r_resolution",
-                ]
-                kwargs_agn_model = source_instance._source.agn_class.kwargs_model
-
-                for param in agn_params:
-                    if param not in kwargs_source_morphology:
-                        if param in kwargs_agn_model:
-                            kwargs_source_morphology[param] = kwargs_agn_model[param]
+        # Extract additional parameters from the source class if not provided
+        kwargs_source_morphology = self.source(source_index)._source.update_microlensing_kwargs_source_morphology(kwargs_source_morphology)
 
         # Update the main microlensing kwargs dictionary
         kwargs_microlensing_updated["kwargs_source_morphology"] = (

@@ -844,6 +844,13 @@ def test_point_source_magnitude_microlensing(
     expected_source_morphology["cosmo"] = lens_system.cosmo
     expected_source_morphology["observing_wavelength_band"] = band_i
 
+    # Update with AGN params because the source is a Quasar and the lens class calls the update method
+    expected_source_morphology = (
+        source._source.update_microlensing_kwargs_source_morphology(
+            expected_source_morphology
+        )
+    )
+
     # Check key arguments passed to the constructor
     assert constructor_kwargs["source_redshift"] == source.redshift
     assert constructor_kwargs["deflector_redshift"] == lens_system.deflector_redshift
