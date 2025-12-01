@@ -124,9 +124,9 @@ def base_init_kwargs(
     kwargs_magnification_map_settings,
     kwargs_source_gaussian,
 ):
-    """
-    Provides the standard dictionary of arguments used to initialize
+    """Provides the standard dictionary of arguments used to initialize
     MicrolensingLightCurveFromLensModel.
+
     Use this to safely create new instances in tests.
     """
     return {
@@ -150,7 +150,8 @@ def base_init_kwargs(
 
 @pytest.fixture
 def ml_lens_model(base_init_kwargs):
-    """Provides an initialized instance of the class under test using the base kwargs."""
+    """Provides an initialized instance of the class under test using the base
+    kwargs."""
     return MicrolensingLightCurveFromLensModel(**base_init_kwargs)
 
 
@@ -211,7 +212,7 @@ class TestMicrolensingLightCurveFromLensModel:
 
     def test_initialization_errors(self, base_init_kwargs):
         """Tests that ValueError is raised for missing kwargs during init."""
-        
+
         # 1. kwargs_MagnificationMap is None
         with pytest.raises(
             ValueError, match="kwargs_MagnificationMap not in kwargs_microlensing"
@@ -258,7 +259,7 @@ class TestMicrolensingLightCurveFromLensModel:
         assert np.all(velocities >= 0)
 
         # ────── COVER ELSE BRANCHES FOR ra_lens, dec_lens, sig_star AS Quantity ──────
-        
+
         # Create a copy of args and modify for Quantity inputs
         args_q = base_init_kwargs.copy()
         args_q["ra_lens"] = args_q["ra_lens"] * u.deg
@@ -280,7 +281,7 @@ class TestMicrolensingLightCurveFromLensModel:
         args_pole = base_init_kwargs.copy()
         args_pole["ra_lens"] = 0 * u.deg
         args_pole["dec_lens"] = 90 * u.deg
-        
+
         model_pole = MicrolensingLightCurveFromLensModel(**args_pole)
 
         v_pole, a_pole = model_pole.effective_transverse_velocity_images(
@@ -393,7 +394,7 @@ class TestMicrolensingLightCurveFromLensModel:
         args = base_init_kwargs.copy()
         args["point_source_morphology"] = morphology_key
         args["kwargs_source_morphology"] = kwargs_morphology
-        
+
         ml_model = MicrolensingLightCurveFromLensModel(**args)
 
         try:
