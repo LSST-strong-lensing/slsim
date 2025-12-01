@@ -816,7 +816,9 @@ class Lens(LensedSystemBase):
             kwargs_source_morphology["observing_wavelength_band"] = band
 
         # Extract additional parameters from the source class if not provided
-        kwargs_source_morphology = self.source(source_index)._source.update_microlensing_kwargs_source_morphology(kwargs_source_morphology)
+        kwargs_source_morphology = self.source(
+            source_index
+        )._source.update_microlensing_kwargs_source_morphology(kwargs_source_morphology)
 
         # Update the main microlensing kwargs dictionary
         kwargs_microlensing_updated["kwargs_source_morphology"] = (

@@ -15,14 +15,14 @@ class TestQuasar:
             "ps_mag_i": [21, 20, 18, 21, 22, 23],
         }
         source_dict3 = {"z": 0.8}
-        
+
         # Source dict specifically for testing AGN parameter extraction/updates
         source_dict_agn = {
             "z": 0.8,
             "ps_mag_i": 20,
             "black_hole_mass_exponent": 8.5,
             "eddington_ratio": 0.1,
-            "random_seed": 42
+            "random_seed": 42,
         }
 
         variable_agn_kwarg_dict = {
@@ -62,9 +62,7 @@ class TestQuasar:
             source_dict=source_dict3, cosmo=None, **kwargs_quasar, **source_dict3
         )
         # Initialize the source with explicit AGN parameters for morphology testing
-        self.source_agn_params = Quasar(
-            cosmo=cosmo, **source_dict_agn, **kwargs_quasar
-        )
+        self.source_agn_params = Quasar(cosmo=cosmo, **source_dict_agn, **kwargs_quasar)
 
     def test_light_curve(self):
         light_curve = self.source.light_curve
@@ -99,8 +97,10 @@ class TestQuasar:
         _ = self.source_agn_params.light_curve
 
         initial_kwargs = {"some_other_param": 123}
-        updated_kwargs = self.source_agn_params.update_microlensing_kwargs_source_morphology(
-            initial_kwargs
+        updated_kwargs = (
+            self.source_agn_params.update_microlensing_kwargs_source_morphology(
+                initial_kwargs
+            )
         )
 
         # Check that original parameters are preserved

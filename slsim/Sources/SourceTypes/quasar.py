@@ -192,13 +192,13 @@ class Quasar(SourceBase):
         return super().point_source_magnitude(
             band=band, image_observation_times=image_observation_times
         )
-    
-    def update_microlensing_kwargs_source_morphology(self, kwargs_source_morphology):
-        """
-        Update the kwargs_source_morphology dictionary with AGN parameters from the AGN
-        class associated with this quasar.
 
-        :param kwargs_source_morphology: Dictionary of source morphology parameters.
+    def update_microlensing_kwargs_source_morphology(self, kwargs_source_morphology):
+        """Update the kwargs_source_morphology dictionary with AGN parameters
+        from the AGN class associated with this quasar.
+
+        :param kwargs_source_morphology: Dictionary of source morphology
+            parameters.
         :return: Updated dictionary of source morphology parameters.
         """
         agn_params = [
