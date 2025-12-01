@@ -162,6 +162,24 @@ agn_bounds_dict = {
     "intrinsic_light_curve": None,
 }
 
+#############################################################################
+# Distributions from MacLeod+2010 for Quasar AGN variability parameters
+# means and covariances for the log(BH_mass/Msun), M_i, log(SFi_inf/mag), log(tau/days), zsrc
+#############################################################################
+MACLEOD2010_MEANS = np.array(
+    [8.53308079, -23.48721021, -0.51665998, 2.28708691, 2.11640976]
+)
+MACLEOD2010_COVS = np.array(
+    [
+        [0.27862905, -0.29501766, 0.00675703, 0.04606804, -0.00665875],
+        [-0.29501766, 2.06855169, 0.19690851, 0.0244139, -0.29913764],
+        [0.00675703, 0.19690851, 0.02785685, 0.01083628, -0.02216221],
+        [0.04606804, 0.0244139, 0.01083628, 0.05636087, -0.02716507],
+        [-0.00665875, -0.29913764, -0.02216221, -0.02716507, 0.3077278],
+    ]
+)
+#############################################################################
+
 
 def RandomAgn(
     known_band,
@@ -295,20 +313,31 @@ def RandomAgn(
         known_mag_abs = known_mag - 5.0 * (np.log10(D) - 1)
 
         # here we assume that agn_driving_kwargs_variability contains the means and cov of the multivariate gaussian
-        if "multivariate_gaussian_means" not in agn_driving_kwargs_variability.keys():
-            raise ValueError(
-                "multivariate_gaussian_means not found in agn_driving_kwargs_variability\n",
-                "Please provide the means of the multivariate gaussian in agn_driving_kwargs_variability",
+        if (
+            ("multivariate_gaussian_means" not in agn_driving_kwargs_variability)
+            or ("multivariate_gaussian_covs" not in agn_driving_kwargs_variability)
+        ):
+            print(
+                "multivariate_gaussian_means or multivariate_gaussian_covs not found in agn_driving_kwargs_variability.\n"
+                "Using default MacLeod 2010 means and covariance matrix corresponding to i band."
             )
-        if "multivariate_gaussian_covs" not in agn_driving_kwargs_variability.keys():
+            agn_driving_kwargs_variability[
+                "multivariate_gaussian_means"
+            ] = MACLEOD2010_MEANS
+            agn_driving_kwargs_variability[
+                "multivariate_gaussian_covs"
+            ] = MACLEOD2010_COVS
+
+            if known_band in ["lsst2016-i", "lsst2023-i"]:
+                agn_driving_kwargs_variability["known_band"] = known_band
+            else:
+                raise ValueError(
+                    "known_band in kwargs_agn_model must be lsst2016-i or lsst2023-i, when using the default MacLeod 2010 means and covariance matrix."
+                )
+        
+        elif "known_band" not in agn_driving_kwargs_variability:
             raise ValueError(
-                "multivariate_gaussian_covs not found in agn_driving_kwargs_variability\n",
-                "Please provide the covariance matrix of the multivariate gaussian in agn_driving_kwargs_variability",
-            )
-        if "known_band" not in agn_driving_kwargs_variability.keys():
-            raise ValueError(
-                "known_band not found in agn_driving_kwargs_variability\n",
-                "Please provide the band in which the absolute magnitude is measured.",
+                "known_band not found in agn_driving_kwargs_variability when multivariate_gaussian_means and multivariate_gaussian_covs are provided."
             )
 
         means = agn_driving_kwargs_variability["multivariate_gaussian_means"]

@@ -265,12 +265,13 @@ def test_random_agn():
 def test_random_agn_variability_from_distribution():
     # Setup for the new distribution-based variability model
 
-    valid_band = "lsst2016-i"  # just for testing, in reality can be any band
+    valid_band = "lsst2016-i"  # Used for valid tests
+    invalid_band_for_defaults = "lsst2023-r"  # Used to trigger errors when defaults are attempted
 
     variability_model = "bending_power_law_from_distribution"
 
     # Mock means and covs (dimensions must match expectations of underlying util functions,
-    # typically 5 params: log_BH_mass, M_i, log_SFi_inf, log_tau, zsrc)
+    # i.e. 5 params: log_BH_mass, M_i, log_SFi_inf, log_tau, zsrc)
     means = np.array([8.0, -22.0, -0.5, 2.5, 1.0])
     covs = np.identity(5) * 0.1
 
@@ -295,83 +296,110 @@ def test_random_agn_variability_from_distribution():
         excinfo.value
     )
 
-    # Test 2: Raise ValueError if multivariate_gaussian_means is missing
+    # Test 2: Raise ValueError if multivariate_gaussian_means is missing AND band is not supported for defaults.
+    # (Triggers default logic -> Fails because 'r' band is not 'i' band)
     with pytest.raises(ValueError) as excinfo:
         RandomAgn(
-            known_band=valid_band,
+            known_band=invalid_band_for_defaults,
             known_mag=20,
             redshift=1.0,
             lightcurve_time=lightcurve_time,
             agn_driving_variability_model=variability_model,
             agn_driving_kwargs_variability={
                 "multivariate_gaussian_covs": covs,
-                "known_band": valid_band,
+                "known_band": invalid_band_for_defaults,
             },
             black_hole_mass_exponent=8.0,
         )
-    assert "multivariate_gaussian_means not found" in str(excinfo.value)
-
-    # Test 3: Raise ValueError if multivariate_gaussian_covs is missing
-    with pytest.raises(ValueError) as excinfo:
-        RandomAgn(
-            known_band=valid_band,
-            known_mag=20,
-            redshift=1.0,
-            lightcurve_time=lightcurve_time,
-            agn_driving_variability_model=variability_model,
-            agn_driving_kwargs_variability={
-                "multivariate_gaussian_means": means,
-                "known_band": valid_band,
-            },
-            black_hole_mass_exponent=8.0,
-        )
-    assert "multivariate_gaussian_covs not found" in str(excinfo.value)
-
-    # Test 4: Raise ValueError if known_band is missing in kwargs
-    with pytest.raises(ValueError) as excinfo:
-        RandomAgn(
-            known_band=valid_band,
-            known_mag=20,
-            redshift=1.0,
-            lightcurve_time=lightcurve_time,
-            agn_driving_variability_model=variability_model,
-            agn_driving_kwargs_variability={
-                "multivariate_gaussian_means": means,
-                "multivariate_gaussian_covs": covs,
-            },
-            black_hole_mass_exponent=8.0,
-        )
-    assert "known_band not found in agn_driving_kwargs_variability" in str(
+    assert "known_band in kwargs_agn_model must be lsst2016-i or lsst2023-i" in str(
         excinfo.value
     )
 
-    # Test 5: Successful generation
-    # Also test implicit time array generation by passing lightcurve_time=None
-    random_agn_dist = RandomAgn(
+    # Test 3: Raise ValueError if multivariate_gaussian_covs is missing AND band is not supported for defaults.
+    # (Triggers default logic -> Fails because 'r' band is not 'i' band)
+    with pytest.raises(ValueError) as excinfo:
+        RandomAgn(
+            known_band=invalid_band_for_defaults,
+            known_mag=20,
+            redshift=1.0,
+            lightcurve_time=lightcurve_time,
+            agn_driving_variability_model=variability_model,
+            agn_driving_kwargs_variability={
+                "multivariate_gaussian_means": means,
+                "known_band": invalid_band_for_defaults,
+            },
+            black_hole_mass_exponent=8.0,
+        )
+    assert "known_band in kwargs_agn_model must be lsst2016-i or lsst2023-i" in str(
+        excinfo.value
+    )
+
+    # Test 4: Raise ValueError if known_band is missing in kwargs but means/covs ARE present.
+    with pytest.raises(ValueError) as excinfo:
+        RandomAgn(
+            known_band=valid_band,
+            known_mag=20,
+            redshift=1.0,
+            lightcurve_time=lightcurve_time,
+            agn_driving_variability_model=variability_model,
+            agn_driving_kwargs_variability={
+                "multivariate_gaussian_means": means,
+                "multivariate_gaussian_covs": covs,
+            },
+            black_hole_mass_exponent=8.0,
+        )
+    assert "known_band not found in agn_driving_kwargs_variability when multivariate" in str(
+        excinfo.value
+    )
+
+    # Test 5: Successful generation with EXPLICIT means/covs
+    random_agn_explicit = RandomAgn(
         known_band=valid_band,
         known_mag=20,
         redshift=1.0,
-        lightcurve_time=None,  # Should trigger internal linspace creation
+        lightcurve_time=None,
         agn_driving_variability_model=variability_model,
         agn_driving_kwargs_variability=kwargs_variability_valid,
         black_hole_mass_exponent=8.0,
         random_seed=42,
     )
-
+    
     # Verify that the model was converted internally from "bending_power_law_from_distribution"
     # to "bending_power_law"
-    assert random_agn_dist.agn_driving_variability_model == "bending_power_law"
+    assert random_agn_explicit.agn_driving_variability_model == "bending_power_law"
 
     # Verify that the driving kwargs now contain the generated parameters
-    generated_kwargs = random_agn_dist.agn_driving_kwargs_variability
-    assert "log_breakpoint_frequency" in generated_kwargs
-    assert "standard_deviation" in generated_kwargs
-    assert "length_of_light_curve" in generated_kwargs
-    assert generated_kwargs["low_frequency_slope"] == 0  # DRW default
-    assert generated_kwargs["high_frequency_slope"] == 2  # DRW default
+    explicit_kwargs = random_agn_explicit.agn_driving_kwargs_variability
+    assert "log_breakpoint_frequency" in explicit_kwargs
+    assert "standard_deviation" in explicit_kwargs
+    assert "length_of_light_curve" in explicit_kwargs
+    assert explicit_kwargs["low_frequency_slope"] == 0  # DRW default
+    assert explicit_kwargs["high_frequency_slope"] == 2  # DRW default
 
     # Verify time array was generated (default length is 1000)
-    assert len(random_agn_dist.kwargs_model["time_array"]) == 1000
-    assert generated_kwargs["length_of_light_curve"] == 999.0
+    assert len(random_agn_explicit.kwargs_model["time_array"]) == 1000
+    assert explicit_kwargs["length_of_light_curve"] == 999.0
 
-    print("generated_kwargs:", generated_kwargs)
+    # Test 6: Successful generation with DEFAULTS (MacLeod 2010)
+    # Passing empty kwargs + i-band should trigger the default parameters.
+    random_agn_defaults = RandomAgn(
+        known_band="lsst2023-i",
+        known_mag=20,
+        redshift=1.0,
+        lightcurve_time=None,
+        agn_driving_variability_model=variability_model,
+        agn_driving_kwargs_variability={},  # Empty dict triggers defaults
+        black_hole_mass_exponent=8.0,
+        random_seed=42,
+    )
+    
+    # Assertions for Default Case
+    assert random_agn_defaults.agn_driving_variability_model == "bending_power_law"
+    default_kwargs = random_agn_defaults.agn_driving_kwargs_variability
+    
+    # Verify the calculated parameters exist
+    assert "log_breakpoint_frequency" in default_kwargs
+    assert "standard_deviation" in default_kwargs
+    assert "length_of_light_curve" in default_kwargs
+    assert default_kwargs["low_frequency_slope"] == 0
+    assert default_kwargs["high_frequency_slope"] == 2
