@@ -120,9 +120,9 @@ class MicrolensingLightCurveFromLensModel(object):
         magnification for various source morphologies. For single source only,
         it produces the lightcurve magnitudes for all images of the source.
 
-        :param time: Time array for which the lightcurve is needed.
-        :return: lightcurves_single: numpy array of microlensing
-            magnitudes with the shape (num_images, len(time)).
+        :param time: Time array for which the lightcurve is needed (in days).
+        :return: lightcurves_single: numpy array of microlensing magnitudes
+            with the shape (num_images, len(time)).
         """
         # if time is a number
         if isinstance(time, (int, float)):
