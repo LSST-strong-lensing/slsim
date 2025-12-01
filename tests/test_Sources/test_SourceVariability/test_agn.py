@@ -266,7 +266,9 @@ def test_random_agn_variability_from_distribution():
     # Setup for the new distribution-based variability model
 
     valid_band = "lsst2016-i"  # Used for valid tests
-    invalid_band_for_defaults = "lsst2023-r"  # Used to trigger errors when defaults are attempted
+    invalid_band_for_defaults = (
+        "lsst2023-r"  # Used to trigger errors when defaults are attempted
+    )
 
     variability_model = "bending_power_law_from_distribution"
 
@@ -348,8 +350,9 @@ def test_random_agn_variability_from_distribution():
             },
             black_hole_mass_exponent=8.0,
         )
-    assert "known_band not found in agn_driving_kwargs_variability when multivariate" in str(
-        excinfo.value
+    assert (
+        "known_band not found in agn_driving_kwargs_variability when multivariate"
+        in str(excinfo.value)
     )
 
     # Test 5: Successful generation with EXPLICIT means/covs
@@ -363,7 +366,7 @@ def test_random_agn_variability_from_distribution():
         black_hole_mass_exponent=8.0,
         random_seed=42,
     )
-    
+
     # Verify that the model was converted internally from "bending_power_law_from_distribution"
     # to "bending_power_law"
     assert random_agn_explicit.agn_driving_variability_model == "bending_power_law"
@@ -392,11 +395,11 @@ def test_random_agn_variability_from_distribution():
         black_hole_mass_exponent=8.0,
         random_seed=42,
     )
-    
+
     # Assertions for Default Case
     assert random_agn_defaults.agn_driving_variability_model == "bending_power_law"
     default_kwargs = random_agn_defaults.agn_driving_kwargs_variability
-    
+
     # Verify the calculated parameters exist
     assert "log_breakpoint_frequency" in default_kwargs
     assert "standard_deviation" in default_kwargs

@@ -313,20 +313,19 @@ def RandomAgn(
         known_mag_abs = known_mag - 5.0 * (np.log10(D) - 1)
 
         # here we assume that agn_driving_kwargs_variability contains the means and cov of the multivariate gaussian
-        if (
-            ("multivariate_gaussian_means" not in agn_driving_kwargs_variability)
-            or ("multivariate_gaussian_covs" not in agn_driving_kwargs_variability)
+        if ("multivariate_gaussian_means" not in agn_driving_kwargs_variability) or (
+            "multivariate_gaussian_covs" not in agn_driving_kwargs_variability
         ):
             print(
                 "multivariate_gaussian_means or multivariate_gaussian_covs not found in agn_driving_kwargs_variability.\n"
                 "Using default MacLeod 2010 means and covariance matrix corresponding to i band."
             )
-            agn_driving_kwargs_variability[
-                "multivariate_gaussian_means"
-            ] = MACLEOD2010_MEANS
-            agn_driving_kwargs_variability[
-                "multivariate_gaussian_covs"
-            ] = MACLEOD2010_COVS
+            agn_driving_kwargs_variability["multivariate_gaussian_means"] = (
+                MACLEOD2010_MEANS
+            )
+            agn_driving_kwargs_variability["multivariate_gaussian_covs"] = (
+                MACLEOD2010_COVS
+            )
 
             if known_band in ["lsst2016-i", "lsst2023-i"]:
                 agn_driving_kwargs_variability["known_band"] = known_band
@@ -334,7 +333,7 @@ def RandomAgn(
                 raise ValueError(
                     "known_band in kwargs_agn_model must be lsst2016-i or lsst2023-i, when using the default MacLeod 2010 means and covariance matrix."
                 )
-        
+
         elif "known_band" not in agn_driving_kwargs_variability:
             raise ValueError(
                 "known_band not found in agn_driving_kwargs_variability when multivariate_gaussian_means and multivariate_gaussian_covs are provided."
