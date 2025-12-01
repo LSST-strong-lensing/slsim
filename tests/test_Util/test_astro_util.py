@@ -1424,12 +1424,16 @@ def test_get_tau_sf_from_distribution_agn_variability():
         0, 0, 0, means, cov_zero, nsamps=1
     )
     assert np.isscalar(scalar_res[0]) or scalar_res[0].ndim == 0
+    assert scalar_res[0].ndim == scalar_res[1].ndim
 
     # nsamps=10 should return arrays
     arr_res = get_tau_sf_from_distribution_agn_variability(
         0, 0, 0, means, cov_zero, nsamps=10
     )
     assert arr_res[0].shape == (10,)
+    assert type(arr_res) == tuple
+    assert arr_res[0].shape == (10,)
+    assert arr_res[0].shape == arr_res[1].shape
 
 
 def test_get_breakpoint_frequency_and_std_agn_variability():
@@ -1453,3 +1457,16 @@ def test_get_breakpoint_frequency_and_std_agn_variability():
 
     assert log_freq_arr.shape == (2,)
     npt.assert_array_almost_equal(std_arr, [1.0, 1.0])
+    assert log_freq_arr.shape == log_freq_arr.shape
+
+    # --- 2D Vectorization ---
+    log_sf_arr = np.random.normal(log_sf, 0.1, size=(1000, 2))
+    log_tau_arr = np.random.normal(log_tau, 0.1, size=(1000, 2))
+
+    log_freq_arr, std_arr = get_breakpoint_frequency_and_std_agn_variability(
+        log_sf_arr, log_tau_arr
+    )
+
+    assert log_freq_arr.shape == (1000, 2)
+    assert std_arr.shape == (1000, 2)
+    assert log_freq_arr.shape == log_freq_arr.shape 
