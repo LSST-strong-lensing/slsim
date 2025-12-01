@@ -1469,4 +1469,4 @@ def test_get_breakpoint_frequency_and_std_agn_variability():
 
     assert log_freq_arr.shape == (1000, 2)
     assert std_arr.shape == (1000, 2)
-    assert log_freq_arr.shape == log_freq_arr.shape 
+    assert log_freq_arr.shape == log_freq_arr.shape
