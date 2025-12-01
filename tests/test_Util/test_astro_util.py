@@ -1431,7 +1431,7 @@ def test_get_tau_sf_from_distribution_agn_variability():
         0, 0, 0, means, cov_zero, nsamps=10
     )
     assert arr_res[0].shape == (10,)
-    assert type(arr_res) == tuple
+    assert isinstance(arr_res, tuple)
     assert arr_res[0].shape == (10,)
     assert arr_res[0].shape == arr_res[1].shape
 
