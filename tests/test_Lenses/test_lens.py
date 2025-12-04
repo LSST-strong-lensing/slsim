@@ -950,8 +950,11 @@ def test_point_source_magnitude_microlensing_defaults(
     band_i,
     time_array,
 ):
-    """Tests _point_source_magnitude_microlensing with defaults (kwargs_microlensing=None).
-    Verifies that 'agn' morphology is automatically assigned for QSO sources.
+    """Tests _point_source_magnitude_microlensing with defaults
+    (kwargs_microlensing=None).
+
+    Verifies that 'agn' morphology is automatically assigned for QSO
+    sources.
     """
     lens_system = deepcopy(lens_instance_with_variability)
     source_index = 0

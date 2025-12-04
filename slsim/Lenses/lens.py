@@ -755,7 +755,7 @@ class Lens(LensedSystemBase):
         return kappa_star_images, kappa_tot_images, shear_images, shear_angle_images
 
     def _point_source_magnitude_microlensing(
-        self, band, time, source_index, kwargs_microlensing = None
+        self, band, time, source_index, kwargs_microlensing=None
     ):
         """Returns point source magnitude variability from only microlensing
         effect. This function does operation only for the single source.
@@ -763,15 +763,16 @@ class Lens(LensedSystemBase):
         :param band: imaging band
         :type band: string
         :param time: time is an image observation time in units of days.
-        :param kwargs_microlensing (Optional): additional dictionary of settings
-            required by micro-lensing calculation. It is of type: kwargs_microlensing =
-            {"kwargs_magnification_map": kwargs_magnification_map,
-            "point_source_morphology": 'gaussian' or 'agn' or
-            'supernovae', "kwargs_source_morphology":
-            kwargs_source_morphology} The kwargs_source_morphology is
-            required for the source morphology calculation. The
-            kwargs_magnification_map is required for the microlensing
-            calculation. If None, defaults are used corresponding to the source in the lens class.
+        :param kwargs_microlensing (Optional): additional dictionary of
+            settings required by micro-lensing calculation. It is of
+            type: kwargs_microlensing = {"kwargs_magnification_map":
+            kwargs_magnification_map, "point_source_morphology":
+            'gaussian' or 'agn' or 'supernovae',
+            "kwargs_source_morphology": kwargs_source_morphology} The
+            kwargs_source_morphology is required for the source
+            morphology calculation. The kwargs_magnification_map is
+            required for the microlensing calculation. If None, defaults
+            are used corresponding to the source in the lens class.
         :type kwargs_microlensing: dict
         :return: point source magnitude for a single source, does not
             include the macro-magnification.
