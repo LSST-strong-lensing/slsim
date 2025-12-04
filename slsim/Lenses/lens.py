@@ -1431,20 +1431,32 @@ class Lens(LensedSystemBase):
                 )
 
         # store light model parameters
-        for i in self.deflector_light_model_lenstronomy("i")[1]:
-            for key in i.keys():
-                val = i[key]
-                df.loc[lens_index, "deflector_light_" + key] = safe_value(val)
+        bands = list("grizy")
+        for b in bands:
+            for i in self.deflector_light_model_lenstronomy(b)[1]:
+                for key in i.keys():
+                    val = i[key]
+                    df.loc[lens_index, f"deflector_light_{b}_" + key] = safe_value(val)
 
-        # store source light properties
-        for i in self.source_light_model_lenstronomy("i")[1]["kwargs_ps"]:
-            for key in i.keys():
-                if isinstance(i[key], np.ndarray):
-                    for j in range(len(i[key])):
-                        v = i[key][j]
-                        df.loc[lens_index, f"point_source_light_{key}_{j}"] = (
-                            safe_value(v)
-                        )
+            # store source light properties
+            for i in self.source_light_model_lenstronomy(b)[1]["kwargs_ps"]:
+                for key in i.keys():
+                    if isinstance(i[key], np.ndarray):
+                        for j in range(len(i[key])):
+                            v = i[key][j]
+                            df.loc[lens_index, f"point_source_light_{b}_{key}_{j}"] = (
+                                safe_value(v)
+                            )
+
+            # store source light properties
+            for i in self.source_light_model_lenstronomy(b)[1]["kwargs_source"]:
+                for key in i.keys():
+                    if isinstance(i[key], np.ndarray):
+                        for j in range(len(i[key])):
+                            v = i[key][j]
+                            df.loc[
+                                lens_index, f"extended_source_light_{b}_{key}_{j}"
+                            ] = safe_value(v)
         # single float values (velocity dispersion, redshifts)
         df.loc[lens_index, "velocity_dispersion"] = safe_value(
             self.deflector_velocity_dispersion()
@@ -1464,7 +1476,6 @@ class Lens(LensedSystemBase):
                 band="i", source_index=0
             )
         )
-        print(micro_lens_params)
         params = ["kappa_star", "kappa_tot", "shear", "shear_angle"]
         for i, p in enumerate(params):
             for k in range(num_images):

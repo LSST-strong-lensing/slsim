@@ -63,7 +63,11 @@ def create_image_montage_from_image_list(
                     )
                 else:
                     axes[i, j].imshow(
-                        image, origin="lower", vmin=global_min, vmax=global_max
+                        image,
+                        origin="lower",
+                        vmin=global_min,
+                        vmax=global_max,
+                        norm="linear",
                     )
                 axes[i, j].axis("off")  # Turn off axis labels
                 if time is not None:
