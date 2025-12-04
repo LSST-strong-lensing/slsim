@@ -31,9 +31,9 @@ class MicrolensingLightCurveFromLensModel(object):
         dec_lens,
         deflector_velocity_dispersion,
         cosmology,
-        kwargs_magnification_map: dict,
-        point_source_morphology: str,
-        kwargs_source_morphology: dict,
+        kwargs_magnification_map=None,
+        point_source_morphology=None,
+        kwargs_source_morphology=None,
     ):
         """Initialize the MicrolensingLightCurveFromLensModel with lens and
         source parameters.

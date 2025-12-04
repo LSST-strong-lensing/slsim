@@ -755,7 +755,7 @@ class Lens(LensedSystemBase):
         return kappa_star_images, kappa_tot_images, shear_images, shear_angle_images
 
     def _point_source_magnitude_microlensing(
-        self, band, time, source_index, kwargs_microlensing
+        self, band, time, source_index, kwargs_microlensing = None
     ):
         """Returns point source magnitude variability from only microlensing
         effect. This function does operation only for the single source.
@@ -763,16 +763,15 @@ class Lens(LensedSystemBase):
         :param band: imaging band
         :type band: string
         :param time: time is an image observation time in units of days.
-        :param kwargs_microlensing: additional dictionary of settings
-            required by micro-lensing calculation that do not depend on
-            the Lens() class. It is of type: kwargs_microlensing =
+        :param kwargs_microlensing (Optional): additional dictionary of settings
+            required by micro-lensing calculation. It is of type: kwargs_microlensing =
             {"kwargs_magnification_map": kwargs_magnification_map,
             "point_source_morphology": 'gaussian' or 'agn' or
             'supernovae', "kwargs_source_morphology":
             kwargs_source_morphology} The kwargs_source_morphology is
             required for the source morphology calculation. The
             kwargs_magnification_map is required for the microlensing
-            calculation.
+            calculation. If None, defaults are used corresponding to the source in the lens class.
         :type kwargs_microlensing: dict
         :return: point source magnitude for a single source, does not
             include the macro-magnification.
@@ -800,13 +799,19 @@ class Lens(LensedSystemBase):
         ##########################################################################
         ## Update kwargs_microlensing from source class
         ##########################################################################
-        # Make a copy of kwargs_microlensing to avoid modifying the original dict
-        kwargs_microlensing_updated = deepcopy(kwargs_microlensing)
+        if kwargs_microlensing is None:
+            kwargs_microlensing_updated = {}
+        else:
+            # Make a copy of kwargs_microlensing to avoid modifying the original dict
+            kwargs_microlensing_updated = deepcopy(kwargs_microlensing)
 
         # Get or initialize kwargs_source_morphology
-        kwargs_source_morphology = kwargs_microlensing_updated.get(
-            "kwargs_source_morphology", {}
-        )
+        if "kwargs_source_morphology" not in kwargs_microlensing_updated:
+            kwargs_source_morphology = {}
+        else:
+            kwargs_source_morphology = kwargs_microlensing_updated[
+                "kwargs_source_morphology"
+            ]
 
         # Update kwargs_source_morphology with values from the Lens class if not provided by the user
         if "source_redshift" not in kwargs_source_morphology:
@@ -827,6 +832,11 @@ class Lens(LensedSystemBase):
         kwargs_microlensing_updated["kwargs_source_morphology"] = (
             kwargs_source_morphology
         )
+
+        # Update point_source_morphology based on source type
+        if "point_source_morphology" not in kwargs_microlensing_updated:
+            if self.source(source_index)._source.name == "QSO":
+                kwargs_microlensing_updated["point_source_morphology"] = "agn"
         ##########################################################################
 
         # Instantiate the microlensing model with all required parameters

@@ -1,17 +1,17 @@
+import os
 import copy
-
 import pytest
 import numpy as np
-from numpy import testing as npt
-from astropy.cosmology import FlatLambdaCDM
+from copy import deepcopy
 from astropy.table import Table
+from numpy import testing as npt
 from slsim.Lenses.lens import Lens
+from astropy.cosmology import FlatLambdaCDM
 from slsim.Util.param_util import image_separation_from_positions
 from slsim.LOS.los_individual import LOSIndividual
 from slsim.LOS.los_pop import LOSPop
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
-import os
 
 # import pickle
 from unittest.mock import patch, MagicMock  # Added for mocking
@@ -941,6 +941,46 @@ def test_point_source_magnitude_microlensing_agn(
     ]
     for param in agn_params_to_check:
         assert final_source_morphology_kwargs[param] == source_agn_kwargs[param]
+
+
+@patch("slsim.Microlensing.lightcurvelensmodel.MicrolensingLightCurveFromLensModel")
+def test_point_source_magnitude_microlensing_defaults(
+    mock_ml_lc_from_lm_class,
+    lens_instance_with_variability,
+    band_i,
+    time_array,
+):
+    """Tests _point_source_magnitude_microlensing with defaults (kwargs_microlensing=None).
+    Verifies that 'agn' morphology is automatically assigned for QSO sources.
+    """
+    lens_system = deepcopy(lens_instance_with_variability)
+    source_index = 0
+
+    # Ensure the source name is "QSO" so the auto-logic triggers
+    # We force this just in case the fixture mapping is different in the installed slsim version
+    lens_system.source(source_index)._source.name = "QSO"
+
+    # Configure mock
+    mock_ml_lc_from_lm_class.return_value = MagicMock()
+
+    # Call with kwargs_microlensing=None
+    lens_system._point_source_magnitude_microlensing(
+        band_i,
+        time_array,
+        source_index=source_index,
+        kwargs_microlensing=None,
+    )
+
+    # Get constructor args
+    constructor_kwargs = mock_ml_lc_from_lm_class.call_args.kwargs
+
+    # Assert automatic assignment
+    assert constructor_kwargs["point_source_morphology"] == "agn"
+
+    # Assert kwargs_source_morphology was initialized and populated
+    kwargs_morph = constructor_kwargs["kwargs_source_morphology"]
+    assert kwargs_morph["observing_wavelength_band"] == band_i
+    assert kwargs_morph["source_redshift"] == lens_system.source(source_index).redshift
 
 
 ################################################
