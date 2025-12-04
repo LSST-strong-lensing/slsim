@@ -627,6 +627,7 @@ def lens_image(
             time=t_obs,
         )
 
+    image_ps = np.nan_to_num(image_ps, nan=0)  # Replace NaN if present with 0
     image = convolved_deflector_source
     if with_ps:
         image += image_ps

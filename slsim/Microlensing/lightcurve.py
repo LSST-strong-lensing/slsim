@@ -52,6 +52,27 @@ class MicrolensingLightCurve(object):
         self._convolved_map = None
         self._source_morphology = None
 
+    # properties for convolved map and magnification map and time_duration_observer_frame
+    @property
+    def convolved_map(self):
+        """Get the convolved map i.e., the magnification map convolved with the
+        source morphology."""
+        if self._convolved_map is None:
+            raise ValueError(
+                "Convolved map is not initialized. Please call get_convolved_map() first."
+            )
+        return self._convolved_map
+
+    @property
+    def magnification_map(self):
+        """Get the magnification map."""
+        return self._magnification_map
+
+    @property
+    def time_duration_observer_frame(self):
+        """Get the lightcurve time duration in observer frame."""
+        return self._time_duration_observer_frame
+
     def get_convolved_map(
         self,
         return_source_morphology=False,

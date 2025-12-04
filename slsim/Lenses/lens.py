@@ -19,6 +19,7 @@ from slsim.Util.catalog_util import safe_value
 from slsim.Lenses.lensed_system_base import LensedSystemBase
 from slsim.Deflectors.deflector import JAX_PROFILES
 import pandas as pd
+from copy import deepcopy
 
 
 class Lens(LensedSystemBase):
@@ -576,8 +577,6 @@ class Lens(LensedSystemBase):
         (array) with macro-model magnifications. This function provided
         magnitudes of all the sources.
 
-        # TODO: time-variability with micro-lensing
-
         :param band: imaging band
         :type band: string
         :param lensed: if True, returns the lensed magnified magnitude
@@ -590,15 +589,15 @@ class Lens(LensedSystemBase):
         :param kwargs_microlensing: additional (optional) dictionary of
             settings required by micro-lensing calculation that do not
             depend on the Lens() class. It is of type:
-            kwargs_microlensing = {"kwargs_MagnificationMap":
-            kwargs_MagnificationMap, "point_source_morphology":
+            kwargs_microlensing = {"kwargs_magnification_map":
+            kwargs_magnification_map, "point_source_morphology":
             'gaussian' or 'agn' or 'supernovae',
             "kwargs_source_morphology": kwargs_source_morphology} The
             kwargs_source_morphology is required for the source
-            morphology calculation. The kwargs_MagnificationMap is
+            morphology calculation. The kwargs_magnification_map is
             required for the microlensing calculation. See the classes
             in slsim.Microlensing for more details on the
-            kwargs_MagnificationMap and kwargs_source_morphology.
+            kwargs_magnification_map and kwargs_source_morphology.
         :type kwargs_microlensing: dict
         :return: list of point source magnitudes.
         """
@@ -630,8 +629,6 @@ class Lens(LensedSystemBase):
         (array) with macro-model magnifications. This function does operation
         only for the single source.
 
-        # TODO: time-variability of the source with micro-lensing
-
         :param band: imaging band
         :type band: string
         :param source_index: index of a source in source list.
@@ -644,15 +641,15 @@ class Lens(LensedSystemBase):
         :param kwargs_microlensing: additional (optional) dictionary of
             settings required by micro-lensing calculation that do not
             depend on the Lens() class. It is of type:
-            kwargs_microlensing = {"kwargs_MagnificationMap":
-            kwargs_MagnificationMap, "point_source_morphology":
+            kwargs_microlensing = {"kwargs_magnification_map":
+            kwargs_magnification_map, "point_source_morphology":
             'gaussian' or 'agn' or 'supernovae',
             "kwargs_source_morphology": kwargs_source_morphology} The
             kwargs_source_morphology is required for the source
-            morphology calculation. The kwargs_MagnificationMap is
+            morphology calculation. The kwargs_magnification_map is
             required for the microlensing calculation. See the classes
             in slsim.Microlensing for more details on the
-            kwargs_MagnificationMap and kwargs_source_morphology.
+            kwargs_magnification_map and kwargs_source_morphology.
         :type kwargs_microlensing: dict
         :return: point source magnitude of a single source
         """
@@ -758,7 +755,7 @@ class Lens(LensedSystemBase):
         return kappa_star_images, kappa_tot_images, shear_images, shear_angle_images
 
     def _point_source_magnitude_microlensing(
-        self, band, time, source_index, kwargs_microlensing
+        self, band, time, source_index, kwargs_microlensing=None
     ):
         """Returns point source magnitude variability from only microlensing
         effect. This function does operation only for the single source.
@@ -766,67 +763,125 @@ class Lens(LensedSystemBase):
         :param band: imaging band
         :type band: string
         :param time: time is an image observation time in units of days.
-        :param kwargs_microlensing: additional dictionary of settings
-            required by micro-lensing calculation that do not depend on
-            the Lens() class. It is of type: kwargs_microlensing =
-            {"kwargs_MagnificationMap": kwargs_MagnificationMap,
-            "point_source_morphology": 'gaussian' or 'agn' or
-            'supernovae', "kwargs_source_morphology":
-            kwargs_source_morphology} The kwargs_source_morphology is
-            required for the source morphology calculation. The
-            kwargs_MagnificationMap is required for the microlensing
-            calculation.
+        :param kwargs_microlensing (Optional): additional dictionary of
+            settings required by micro-lensing calculation. It is of
+            type: kwargs_microlensing = {"kwargs_magnification_map":
+            kwargs_magnification_map, "point_source_morphology":
+            'gaussian' or 'agn' or 'supernovae',
+            "kwargs_source_morphology": kwargs_source_morphology} The
+            kwargs_source_morphology is required for the source
+            morphology calculation. The kwargs_magnification_map is
+            required for the microlensing calculation. If None, defaults
+            are used corresponding to the source in the lens class.
         :type kwargs_microlensing: dict
         :return: point source magnitude for a single source, does not
             include the macro-magnification.
         :rtype: numpy array
         """
-
-        # get microlensing parameters
-        kappa_star_images, kappa_tot_images, shear_images, shear_angle_images = (
-            self._microlensing_parameters_for_image_positions_single_source(
-                band=band, source_index=source_index
-            )
-        )
-
         # importing here to keep it optional
         from slsim.Microlensing.lightcurvelensmodel import (
             MicrolensingLightCurveFromLensModel,
         )
+
+        # get microlensing parameters
+        kappa_star_images, kappa_tot_images, shear_images, shear_angle_images_rad = (
+            self._microlensing_parameters_for_image_positions_single_source(
+                band=band, source_index=source_index
+            )
+        )
+        # convert shear angle to degrees for the microlensing class
+        shear_phi_angle_images = np.degrees(shear_angle_images_rad)
 
         # select random RA and DEC in Sky for the lens,
         # #TODO: In future, this should be the position of the lens in the sky
         ra_lens = np.random.uniform(0, 360)  # degrees
         dec_lens = np.random.uniform(-90, 90)  # degrees
 
-        self._microlensing_model_class = MicrolensingLightCurveFromLensModel()
-        microlensing_magnitudes = self._microlensing_model_class.generate_point_source_microlensing_magnitudes(
-            time=time,
-            source_redshift=self.source(source_index).redshift,
-            deflector_redshift=self.deflector_redshift,
-            kappa_star_images=kappa_star_images,
-            kappa_tot_images=kappa_tot_images,
-            shear_images=shear_images,
-            shear_phi_angle_images=shear_angle_images,
-            ra_lens=ra_lens,
-            dec_lens=dec_lens,
-            deflector_velocity_dispersion=self.deflector_velocity_dispersion(),
-            cosmology=self.cosmo,
-            **kwargs_microlensing,
+        ##########################################################################
+        ## Update kwargs_microlensing from source class
+        ##########################################################################
+        if kwargs_microlensing is None:
+            kwargs_microlensing_updated = {}
+        else:
+            # Make a copy of kwargs_microlensing to avoid modifying the original dict
+            kwargs_microlensing_updated = deepcopy(kwargs_microlensing)
+
+        # Get or initialize kwargs_source_morphology
+        if "kwargs_source_morphology" not in kwargs_microlensing_updated:
+            kwargs_source_morphology = {}
+        else:
+            kwargs_source_morphology = kwargs_microlensing_updated[
+                "kwargs_source_morphology"
+            ]
+
+        # Update kwargs_source_morphology with values from the Lens class if not provided by the user
+        if "source_redshift" not in kwargs_source_morphology:
+            kwargs_source_morphology["source_redshift"] = self.source(
+                source_index
+            ).redshift
+        if "cosmo" not in kwargs_source_morphology:
+            kwargs_source_morphology["cosmo"] = self.cosmo
+        if "observing_wavelength_band" not in kwargs_source_morphology:
+            kwargs_source_morphology["observing_wavelength_band"] = band
+
+        # Extract additional parameters from the source class if not provided
+        kwargs_source_morphology = self.source(
+            source_index
+        )._source.update_microlensing_kwargs_source_morphology(kwargs_source_morphology)
+
+        # Update the main microlensing kwargs dictionary
+        kwargs_microlensing_updated["kwargs_source_morphology"] = (
+            kwargs_source_morphology
         )
+
+        # Update point_source_morphology based on source type
+        if "point_source_morphology" not in kwargs_microlensing_updated:
+            if self.source(source_index)._source.name == "QSO":
+                kwargs_microlensing_updated["point_source_morphology"] = "agn"
+        ##########################################################################
+
+        # Instantiate the microlensing model with all required parameters
+        self._microlensing_model_class = {}
+        self._microlensing_model_class[source_index] = (
+            MicrolensingLightCurveFromLensModel(
+                source_redshift=self.source(source_index).redshift,
+                deflector_redshift=self.deflector_redshift,
+                kappa_star_images=kappa_star_images,
+                kappa_tot_images=kappa_tot_images,
+                shear_images=shear_images,
+                shear_phi_angle_images=shear_phi_angle_images,
+                ra_lens=ra_lens,
+                dec_lens=dec_lens,
+                deflector_velocity_dispersion=self.deflector_velocity_dispersion(),
+                cosmology=self.cosmo,
+                **kwargs_microlensing_updated,
+            )
+        )
+
+        # Generate microlensing magnitudes with the simplified method call
+        microlensing_magnitudes = self._microlensing_model_class[
+            source_index
+        ].generate_point_source_microlensing_magnitudes(time=time)
 
         return microlensing_magnitudes  # # does not include the macro-lensing effect
 
-    @property
-    def microlensing_model_class(self):
-        """Returns the MicrolensingLightCurveFromLensModel class instance used
-        for the microlensing calculations. Only available if microlensing=True
-        was used in point_source_magnitude.
+    def microlensing_model_class(self, source_index):
+        """Returns the MicrolensingLightCurveFromLensModel class instance
+        corresponding to a specific source index for the microlensing
+        calculations. Only available if microlensing=True was used in
+        point_source_magnitude.
 
-        :return: MicrolensingLightCurveFromLensModel class instance
+        :param source_index: index of a source in source list.
+        :return: MicrolensingLightCurveFromLensModel class instance for
+            the specified source.
         """
         if hasattr(self, "_microlensing_model_class"):
-            return self._microlensing_model_class
+            if source_index not in self._microlensing_model_class:
+                raise AttributeError(
+                    f"MicrolensingLightCurveFromLensModel class is not set for source index {source_index}. "
+                    "Please run point_source_magnitude with microlensing=True."
+                )
+            return self._microlensing_model_class[source_index]
         else:
             raise AttributeError(
                 "MicrolensingLightCurveFromLensModel class is not set. "

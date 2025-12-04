@@ -137,6 +137,179 @@ def plot_montage_of_random_injected_lens(image_list, num, n_horizont=1, n_vertic
     return fig
 
 
+def plot_lightcurves(lightcurve_dict):
+    """Plots lightcurves dynamically for all available images across different
+    bands.
+
+    :param lightcurve_dict: Dictionary of lightciurves.
+         The format of this dictionary should be following:
+         lightcurve_dict = {
+        "obs_time": {
+            "i": [63105.42, 63107.41],
+            "r": [63107.39, 63118.22],
+        }, "magnitudes": {
+            "mag_image_1": {
+                "i": [21.21, 20.42],
+                "r": [20.87, 19.31],
+            },
+            "mag_image_2": {
+                "i": [23.82, 22.87],
+                "r": [23.45, 23.16],
+            },
+            "mag_image_3": {"i": [], "r": []},
+            "mag_image_4": {"i": [], "r": []},
+        }, "errors_low": {
+            "mag_error_image_1_low": {
+                "i": [0.04, 0.03],
+                "r": [0.03, 0.02],
+            },
+            "mag_error_image_2_low": {
+                "i": [0.06, 0.05],
+                "r": [0.04, 0.03],
+            },
+        }, "errors_high": {
+            "mag_error_image_1_high": {
+                "i": [0.05, 0.04],
+                "r": [0.03, 0.02],
+            },
+            "mag_error_image_2_high": {
+                "i": [0.07, 0.06],
+                "r": [0.05, 0.04],
+            },
+        },
+        }
+    :return: lightcurve plots.
+    """
+    magnitudes = lightcurve_dict["magnitudes"]
+    errors_low = lightcurve_dict["errors_low"]
+    errors_high = lightcurve_dict["errors_high"]
+    obs_time = lightcurve_dict["obs_time"]
+    # Extract all bands and filter out bands where all magnitudes are not NaN across.
+    bands = [
+        band
+        for band in obs_time.keys()
+        if any(
+            not np.all(np.isnan(magnitudes[image_key][band]))
+            for image_key in magnitudes.keys()
+            if image_key.startswith("mag_image_")
+        )
+    ]
+
+    # Identify non-empty magnitudes dynamically
+    image_keys = []
+    for key in magnitudes.keys():
+        if key.startswith("mag_image_"):
+            is_non_empty = any(
+                not np.all(np.isnan(magnitudes[key][band])) for band in bands
+            )
+            if is_non_empty:
+                image_keys.append(key)
+
+    # Prepare the plot grid: rows for bands, columns for images +
+    # optional images montage
+    fig, axs = plt.subplots(
+        nrows=len(bands),
+        ncols=len(image_keys),
+        figsize=(12, 6),
+        gridspec_kw={"hspace": 0.6, "wspace": 0.3},
+    )
+
+    # Adjust axes for single-row scenarios
+    if len(bands) == 1:
+        axs = axs[np.newaxis, :]  # Ensure axs is 2D
+
+    # Add titles for each column
+    for col_idx, image_key in enumerate(image_keys):
+        axs[0, col_idx].set_title(
+            f"Lightcurves of image {col_idx+1}", fontsize=12, loc="center"
+        )
+
+    # Plot data for each band
+    for row_idx, band in enumerate(bands):
+        band_time = obs_time[band]
+
+        for col_idx, image_key in enumerate(image_keys):
+            mag_band = magnitudes[image_key][band]
+            err_low_band = errors_low[
+                f"{image_key.replace('mag_image', 'mag_error_image')}_low"
+            ][band]
+            err_high_band = errors_high[
+                f"{image_key.replace('mag_image', 'mag_error_image')}_high"
+            ][band]
+            err_band = [err_low_band, err_high_band]
+
+            # Plot the lightcurve for the current image
+            axs[row_idx, col_idx].errorbar(
+                band_time,
+                mag_band,
+                yerr=err_band,
+                fmt=".",
+                label=f"{band}-band",
+                color=f"C{row_idx}",
+                alpha=0.7,
+            )
+            axs[row_idx, col_idx].set_ylim(None, 30)
+            axs[row_idx, col_idx].set_ylabel(f"Mag_{band}", fontsize=10)
+            axs[row_idx, col_idx].invert_yaxis()
+            axs[row_idx, col_idx].tick_params(axis="both", labelsize=8)
+
+            # Add x-label only for the bottom row
+            if row_idx == len(bands) - 1:
+                axs[row_idx, col_idx].set_xlabel("MJD [Days]", fontsize=10)
+    # Adjust layout to avoid overlaps
+    plt.tight_layout()
+    return fig
+
+
+def create_montage(images_band, grid_size=None):
+    """Creates a montage from a list of images, limited to the first 3 images,
+    with consistent scaling. This function is a helper function for
+    plot_lightcurves() function.
+
+    :param images_band: List of 2D NumPy arrays representing images.
+    :param grid_size: Tuple specifying the grid dimensions (rows, cols).
+        If None, calculates the grid size to be approximately square.
+    :return: 2D NumPy array representing the montage.
+    """
+    # Limit to the first 3 images
+    images_band = images_band[:3]
+
+    # Ensure all elements in images_band are 2D NumPy arrays
+    images_band = [np.array(img) for img in images_band]
+
+    # Determine the global minimum and maximum pixel values across all images
+    global_min = min(np.min(img) for img in images_band)
+    global_max = max(np.max(img) for img in images_band)
+
+    # Normalize all images to the range [0, 1] based on global min and max
+    normalized_images = [
+        (img - global_min) / (global_max - global_min) for img in images_band
+    ]
+
+    # Determine grid size if not provided
+    n_images = len(normalized_images)
+    if grid_size is None:
+        grid_cols = n_images
+        grid_rows = 1
+    else:
+        grid_rows, grid_cols = grid_size
+
+    # Determine the size of each image
+    img_h, img_w = normalized_images[0].shape  # Assuming all images have the same shape
+
+    # Create an empty array for the montage
+    montage = np.zeros((grid_rows * img_h, grid_cols * img_w))
+
+    # Fill the montage with images
+    for idx, image in enumerate(normalized_images):
+        row = idx // grid_cols
+        col = idx % grid_cols
+        montage[row * img_h : (row + 1) * img_h, col * img_w : (col + 1) * img_w] = (
+            image
+        )
+    return montage
+
+
 # microlensing lightcurve plot along with the magnification maps
 def plot_lightcurves_and_magmap(
     convolved_map,

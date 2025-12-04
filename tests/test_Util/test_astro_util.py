@@ -32,6 +32,8 @@ from slsim.Util.astro_util import (
     pull_value_from_grid,
     extract_light_curve,
     theta_star_physical,
+    get_tau_sf_from_distribution_agn_variability,
+    get_breakpoint_frequency_and_std_agn_variability,
 )
 from astropy.cosmology import Planck18
 from astropy.units import Quantity
@@ -1354,3 +1356,117 @@ def test_theta_star_physical_realistic_scenario():
     print(f"theta_E_arcsec: {theta_E_arcsec}")
     print(f"theta_E_lens_plane_m: {theta_E_lens_plane_m}")
     print(f"theta_E_src_plane_m: {theta_E_src_plane_m}")
+
+
+def test_get_tau_sf_from_distribution_agn_variability():
+
+    # --- Exact Mean (Sanity Check) ---
+    # If covariance is near-zero, output should exactly equal the target means.
+    means = np.array(
+        [8.0, -23.0, -0.5, 2.0, 1.0]
+    )  # [log_BH, M_i, log_SF, log_tau, z_src]
+    cov_zero = np.eye(5) * 1e-20
+
+    sf_res, tau_res = get_tau_sf_from_distribution_agn_variability(
+        black_hole_mass_exponent=8.0,
+        known_mag_abs=-23.0,
+        z_src=1.0,
+        means=means,
+        cov=cov_zero,
+        nsamps=1,
+    )
+    npt.assert_approx_equal(sf_res, -0.5, significant=3)  # Target index 2
+    npt.assert_approx_equal(tau_res, 2.0, significant=3)  # Target index 3
+
+    # --- Correlation Logic ---
+    # If BH_Mass (idx 0) is correlated with log_tau (idx 3), shifting BH_Mass must shift log_tau.
+    means_corr = np.zeros(5)
+    cov_corr = np.eye(5) * 1e-6  # Small variance to reduce noise
+    # Add strong positive correlation (0.9) between BH_Mass (0) and log_tau (3)
+    cov_corr[0, 3] = 0.9 * 1e-6
+    cov_corr[3, 0] = 0.9 * 1e-6
+
+    # Case A: Input at mean (0) -> Expect Output near mean (0)
+    _, tau_0 = get_tau_sf_from_distribution_agn_variability(
+        0, 0, 0, means_corr, cov_corr, nsamps=100
+    )
+    # Case B: Input shifted (+1 sigma) -> Expect Output shifted (+0.9 sigma)
+    _, tau_1 = get_tau_sf_from_distribution_agn_variability(
+        1.0, 0, 0, means_corr, cov_corr, nsamps=100
+    )
+
+    npt.assert_allclose(np.mean(tau_0), 0.0, atol=0.01)
+    npt.assert_allclose(np.mean(tau_1), 0.9, atol=0.01)
+
+    # --- Scatter/Variance Verification ---
+    # Setup: Uncorrelated variables with defined large variance
+    means_scatter = np.zeros(5)
+    cov_scatter = np.eye(5) * 4.0  # var = 4.0 => std = 2.0
+
+    # Draw large sample to ensure statistical significance
+    sf_scat, tau_scat = get_tau_sf_from_distribution_agn_variability(
+        0, 0, 0, means_scatter, cov_scatter, nsamps=5000
+    )
+
+    # 1. Check that the distribution width (std) matches the input matrix (2.0)
+    # allowing for small sampling error (atol=0.1)
+    npt.assert_allclose(np.std(sf_scat), 2.0, atol=0.1)
+    npt.assert_allclose(np.std(tau_scat), 2.0, atol=0.1)
+
+    # 2. Check explicitly that there is a large spread (min vs max)
+    sf_range = np.max(sf_scat) - np.min(sf_scat)
+    # For a normal distribution with std=2, range should be approx 2 * 3 * std (~12)
+    assert sf_range > 8.0
+
+    # --- Shapes ---
+    # nsamps=1 should return scalars
+    scalar_res = get_tau_sf_from_distribution_agn_variability(
+        0, 0, 0, means, cov_zero, nsamps=1
+    )
+    assert np.isscalar(scalar_res[0]) or scalar_res[0].ndim == 0
+    assert scalar_res[0].ndim == scalar_res[1].ndim
+
+    # nsamps=10 should return arrays
+    arr_res = get_tau_sf_from_distribution_agn_variability(
+        0, 0, 0, means, cov_zero, nsamps=10
+    )
+    assert arr_res[0].shape == (10,)
+    assert isinstance(arr_res, tuple)
+    assert arr_res[0].shape == (10,)
+    assert arr_res[0].shape == arr_res[1].shape
+
+
+def test_get_breakpoint_frequency_and_std_agn_variability():
+    # --- Math Check ---
+    # log_SF = log10(sqrt(2)) => SF = sqrt(2) => std = SF/sqrt(2) = 1.0
+    # log_tau = log10(1/2pi)  => tau = 1/2pi  => freq = 1/(2pi*tau) = 1.0 => log_freq = 0.0
+    log_sf = np.log10(np.sqrt(2))
+    log_tau = np.log10(1 / (2 * np.pi))
+
+    log_freq, std = get_breakpoint_frequency_and_std_agn_variability(log_sf, log_tau)
+    npt.assert_approx_equal(std, 1.0)
+    npt.assert_approx_equal(log_freq, 0.0)
+
+    # --- Vectorization ---
+    log_sf_arr = np.array([log_sf, log_sf])
+    log_tau_arr = np.array([log_tau, log_tau])
+
+    log_freq_arr, std_arr = get_breakpoint_frequency_and_std_agn_variability(
+        log_sf_arr, log_tau_arr
+    )
+
+    assert log_freq_arr.shape == (2,)
+    npt.assert_array_almost_equal(std_arr, [1.0, 1.0])
+    assert log_freq_arr.shape == log_freq_arr.shape
+
+    # --- 2D Vectorization ---
+    log_sf_arr = np.random.normal(log_sf, 0.1, size=(1000, 2))
+    log_tau_arr = np.random.normal(log_tau, 0.1, size=(1000, 2))
+
+    log_freq_arr, std_arr = get_breakpoint_frequency_and_std_agn_variability(
+        log_sf_arr, log_tau_arr
+    )
+
+    assert log_freq_arr.shape == (1000, 2)
+    assert std_arr.shape == (1000, 2)
+    assert log_freq_arr.shape == log_freq_arr.shape

@@ -15,6 +15,16 @@ class TestQuasar:
             "ps_mag_i": [21, 20, 18, 21, 22, 23],
         }
         source_dict3 = {"z": 0.8}
+
+        # Source dict specifically for testing AGN parameter extraction/updates
+        source_dict_agn = {
+            "z": 0.8,
+            "ps_mag_i": 20,
+            "black_hole_mass_exponent": 8.5,
+            "eddington_ratio": 0.1,
+            "random_seed": 42,
+        }
+
         variable_agn_kwarg_dict = {
             "length_of_light_curve": 500,
             "time_resolution": 1,
@@ -51,6 +61,8 @@ class TestQuasar:
         self.source_agn_band_error = Quasar(
             source_dict=source_dict3, cosmo=None, **kwargs_quasar, **source_dict3
         )
+        # Initialize the source with explicit AGN parameters for morphology testing
+        self.source_agn_params = Quasar(cosmo=cosmo, **source_dict_agn, **kwargs_quasar)
 
     def test_light_curve(self):
         light_curve = self.source.light_curve
@@ -79,6 +91,26 @@ class TestQuasar:
         npt.assert_almost_equal(
             self.source_light_curve.point_source_magnitude("i"), 20.833, decimal=2
         )
+
+    def test_update_microlensing_kwargs_source_morphology(self):
+        # We must trigger the light curve generation to ensure the internal agn_class is initialized
+        _ = self.source_agn_params.light_curve
+
+        initial_kwargs = {"some_other_param": 123}
+        updated_kwargs = (
+            self.source_agn_params.update_microlensing_kwargs_source_morphology(
+                initial_kwargs
+            )
+        )
+
+        # Check that original parameters are preserved
+        assert updated_kwargs["some_other_param"] == 123
+
+        # Check that AGN parameters provided in setup_method are correctly added
+        assert "black_hole_mass_exponent" in updated_kwargs
+        assert updated_kwargs["black_hole_mass_exponent"] == 8.5
+        assert "eddington_ratio" in updated_kwargs
+        assert updated_kwargs["eddington_ratio"] == 0.1
 
 
 def test_extract_agn_kwargs_from_source_dict():
