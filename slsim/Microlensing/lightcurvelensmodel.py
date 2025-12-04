@@ -9,6 +9,7 @@ import numpy as np
 # import astropy.constants as const
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+from slsim.Util.astro_util import theta_star_physical
 
 from slsim.Microlensing.magmap import MagnificationMap
 from slsim.Microlensing.lightcurve import MicrolensingLightCurve
@@ -30,7 +31,7 @@ class MicrolensingLightCurveFromLensModel(object):
         dec_lens,
         deflector_velocity_dispersion,
         cosmology,
-        kwargs_MagnificationMap: dict,
+        kwargs_magnification_map: dict,
         point_source_morphology: str,
         kwargs_source_morphology: dict,
     ):
@@ -54,9 +55,9 @@ class MicrolensingLightCurveFromLensModel(object):
             deflector in km/s.
         :param cosmology: Astropy cosmology object to use for the
             calculations.
-        :param kwargs_MagnificationMap: Keyword arguments for the
+        :param kwargs_magnification_map: Keyword arguments for the
             MagnificationMap class. An example can look like:
-            kwargs_MagnificationMap = { "theta_star": theta_star, #
+            kwargs_magnification_map = { "theta_star": theta_star, #
             arcsec "rectangular": True, "center_x": 0, # arcsec
             "center_y": 0, # arcsec "half_length_x": 25 * theta_star, #
             arcsec "half_length_y": 25 * theta_star, # arcsec
@@ -95,14 +96,14 @@ class MicrolensingLightCurveFromLensModel(object):
         self._dec_lens = dec_lens
         self._deflector_velocity_dispersion = deflector_velocity_dispersion
         self._cosmology = cosmology
-        self._kwargs_MagnificationMap = kwargs_MagnificationMap
+        self._kwargs_magnification_map = kwargs_magnification_map
         self._point_source_morphology = point_source_morphology
         self._kwargs_source_morphology = kwargs_source_morphology
 
-        if self._kwargs_MagnificationMap is None:
-            raise ValueError(
-                "kwargs_MagnificationMap not in kwargs_microlensing. Please provide a dictionary of settings required by micro-lensing calculation."
-            )
+        if self._kwargs_magnification_map is None:
+            self._kwargs_magnification_map = self._get_default_kwargs_magnification_map()
+            print("kwargs_magnification_map not in kwargs_microlensing. Using default magnification map kwargs.")
+
         if self._point_source_morphology is None:
             raise ValueError(
                 "point_source_morphology not in kwargs_microlensing. Please provide the point source morphology type. It can be either 'gaussian' or 'agn' or 'supernovae'."
@@ -314,7 +315,7 @@ class MicrolensingLightCurveFromLensModel(object):
                 kappa_tot=self._kappa_tot_images[i],
                 shear=self._shear_images[i],
                 kappa_star=self._kappa_star_images[i],
-                **self._kwargs_MagnificationMap,
+                **self._kwargs_magnification_map,
             )
             self._magmaps_images.append(magmap)
 
@@ -491,3 +492,40 @@ class MicrolensingLightCurveFromLensModel(object):
             np.array(effective_velocities),
             np.array(effective_velocities_angles_deg),
         )
+    
+    def _get_default_kwargs_magnification_map(self, mean_microlens_mass = 1):
+        """
+        Returns the default kwargs for the magnification map based on the source and deflector redshifts
+        
+        Parameters
+        ----------
+        mean_microlens_mass : float
+            The mean mass of the microlenses
+        
+        Returns
+        -------
+        dict
+            The default kwargs for the magnification map
+        """
+        theta_star_arcsec, _, _ = theta_star_physical(
+            z_lens = self._deflector_redshift,
+            z_src = self._source_redshift,
+            cosmo=self._cosmology,
+            m = mean_microlens_mass,
+        )
+
+        theta_star_arcsec = theta_star_arcsec.to(u.arcsec).value
+
+        return {
+            "theta_star": theta_star_arcsec,  # arcsec
+            "center_x": 0,  # arcsec
+            "center_y": 0,  # arcsec
+            "half_length_x": 5 * theta_star_arcsec,  # arcsec
+            "half_length_y": 5 * theta_star_arcsec,  # arcsec
+            "mass_function": "kroupa",
+            "m_solar": 1.0,
+            "m_lower": 0.08,
+            "m_upper": 100,
+            "num_pixels_x": 2500,
+            "num_pixels_y": 2500,
+        }

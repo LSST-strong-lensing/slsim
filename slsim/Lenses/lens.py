@@ -589,15 +589,15 @@ class Lens(LensedSystemBase):
         :param kwargs_microlensing: additional (optional) dictionary of
             settings required by micro-lensing calculation that do not
             depend on the Lens() class. It is of type:
-            kwargs_microlensing = {"kwargs_MagnificationMap":
-            kwargs_MagnificationMap, "point_source_morphology":
+            kwargs_microlensing = {"kwargs_magnification_map":
+            kwargs_magnification_map, "point_source_morphology":
             'gaussian' or 'agn' or 'supernovae',
             "kwargs_source_morphology": kwargs_source_morphology} The
             kwargs_source_morphology is required for the source
-            morphology calculation. The kwargs_MagnificationMap is
+            morphology calculation. The kwargs_magnification_map is
             required for the microlensing calculation. See the classes
             in slsim.Microlensing for more details on the
-            kwargs_MagnificationMap and kwargs_source_morphology.
+            kwargs_magnification_map and kwargs_source_morphology.
         :type kwargs_microlensing: dict
         :return: list of point source magnitudes.
         """
@@ -641,15 +641,15 @@ class Lens(LensedSystemBase):
         :param kwargs_microlensing: additional (optional) dictionary of
             settings required by micro-lensing calculation that do not
             depend on the Lens() class. It is of type:
-            kwargs_microlensing = {"kwargs_MagnificationMap":
-            kwargs_MagnificationMap, "point_source_morphology":
+            kwargs_microlensing = {"kwargs_magnification_map":
+            kwargs_magnification_map, "point_source_morphology":
             'gaussian' or 'agn' or 'supernovae',
             "kwargs_source_morphology": kwargs_source_morphology} The
             kwargs_source_morphology is required for the source
-            morphology calculation. The kwargs_MagnificationMap is
+            morphology calculation. The kwargs_magnification_map is
             required for the microlensing calculation. See the classes
             in slsim.Microlensing for more details on the
-            kwargs_MagnificationMap and kwargs_source_morphology.
+            kwargs_magnification_map and kwargs_source_morphology.
         :type kwargs_microlensing: dict
         :return: point source magnitude of a single source
         """
@@ -766,12 +766,12 @@ class Lens(LensedSystemBase):
         :param kwargs_microlensing: additional dictionary of settings
             required by micro-lensing calculation that do not depend on
             the Lens() class. It is of type: kwargs_microlensing =
-            {"kwargs_MagnificationMap": kwargs_MagnificationMap,
+            {"kwargs_magnification_map": kwargs_magnification_map,
             "point_source_morphology": 'gaussian' or 'agn' or
             'supernovae', "kwargs_source_morphology":
             kwargs_source_morphology} The kwargs_source_morphology is
             required for the source morphology calculation. The
-            kwargs_MagnificationMap is required for the microlensing
+            kwargs_magnification_map is required for the microlensing
             calculation.
         :type kwargs_microlensing: dict
         :return: point source magnitude for a single source, does not
@@ -797,6 +797,9 @@ class Lens(LensedSystemBase):
         ra_lens = np.random.uniform(0, 360)  # degrees
         dec_lens = np.random.uniform(-90, 90)  # degrees
 
+        ##########################################################################
+        ## Update kwargs_microlensing from source class
+        ##########################################################################
         # Make a copy of kwargs_microlensing to avoid modifying the original dict
         kwargs_microlensing_updated = deepcopy(kwargs_microlensing)
 
@@ -824,6 +827,7 @@ class Lens(LensedSystemBase):
         kwargs_microlensing_updated["kwargs_source_morphology"] = (
             kwargs_source_morphology
         )
+        ##########################################################################
 
         # Instantiate the microlensing model with all required parameters
         self._microlensing_model_class = {}

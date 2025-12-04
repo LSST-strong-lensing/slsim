@@ -142,7 +142,7 @@ def base_init_kwargs(
             "deflector_velocity_dispersion"
         ],
         "cosmology": cosmology,
-        "kwargs_MagnificationMap": kwargs_magnification_map_settings,
+        "kwargs_magnification_map": kwargs_magnification_map_settings,
         "point_source_morphology": "gaussian",
         "kwargs_source_morphology": kwargs_source_gaussian,
     }
@@ -211,17 +211,10 @@ def create_mock_magmap_list(microlensing_params, kwargs_magnification_map_settin
 class TestMicrolensingLightCurveFromLensModel:
 
     def test_initialization_errors(self, base_init_kwargs):
-        """Tests that ValueError is raised for missing kwargs during init."""
+        """Tests that ValueError is raised for missing morphology kwargs
+        during init."""
 
-        # 1. kwargs_MagnificationMap is None
-        with pytest.raises(
-            ValueError, match="kwargs_MagnificationMap not in kwargs_microlensing"
-        ):
-            args = base_init_kwargs.copy()
-            args["kwargs_MagnificationMap"] = None
-            MicrolensingLightCurveFromLensModel(**args)
-
-        # 2. point_source_morphology is None
+        # 1. point_source_morphology is None
         with pytest.raises(
             ValueError, match="point_source_morphology not in kwargs_microlensing"
         ):
@@ -229,13 +222,27 @@ class TestMicrolensingLightCurveFromLensModel:
             args["point_source_morphology"] = None
             MicrolensingLightCurveFromLensModel(**args)
 
-        # 3. kwargs_source_morphology is None
+        # 2. kwargs_source_morphology is None
         with pytest.raises(
             ValueError, match="kwargs_source_morphology not in kwargs_microlensing"
         ):
             args = base_init_kwargs.copy()
             args["kwargs_source_morphology"] = None
             MicrolensingLightCurveFromLensModel(**args)
+
+    def test_initialization_defaults(self, base_init_kwargs):
+        """Tests that default kwargs_magnification_map are generated if None provided."""
+        args = base_init_kwargs.copy()
+        args["kwargs_magnification_map"] = None
+
+        # Should not raise ValueError, should print to stdout (captured if -s not used)
+        ml_model = MicrolensingLightCurveFromLensModel(**args)
+
+        # Check that defaults were generated
+        assert ml_model._kwargs_magnification_map is not None
+        assert "theta_star" in ml_model._kwargs_magnification_map
+        assert "num_pixels_x" in ml_model._kwargs_magnification_map
+        assert ml_model._kwargs_magnification_map["num_pixels_x"] == 2500
 
     @pytest.mark.parametrize("magmap_frame", [True, False])
     def test_effective_transverse_velocity_images(

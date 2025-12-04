@@ -642,7 +642,7 @@ def kwargs_microlensing_settings(
     """Combines settings for the kwargs_microlensing dictionary for Gaussian
     source."""
     return {
-        "kwargs_MagnificationMap": kwargs_microlensing_magmap_settings_test,
+        "kwargs_magnification_map": kwargs_microlensing_magmap_settings_test,
         "point_source_morphology": "gaussian",
         "kwargs_source_morphology": kwargs_source_gaussian_test,
     }
@@ -664,7 +664,7 @@ def kwargs_microlensing_settings_agn(
     """Combines settings for the kwargs_microlensing dictionary for an AGN
     source."""
     return {
-        "kwargs_MagnificationMap": kwargs_microlensing_magmap_settings_test,
+        "kwargs_magnification_map": kwargs_microlensing_magmap_settings_test,
         "point_source_morphology": "agn",
         "kwargs_source_morphology": kwargs_source_agn_test,
     }
@@ -866,14 +866,17 @@ def test_point_source_magnitude_microlensing(
     )
     assert constructor_kwargs["cosmology"] == lens_system.cosmo
     assert (
-        constructor_kwargs["kwargs_MagnificationMap"]
-        == kwargs_microlensing_settings["kwargs_MagnificationMap"]
+        constructor_kwargs["kwargs_magnification_map"]
+        == kwargs_microlensing_settings["kwargs_magnification_map"]
     )
     assert (
         constructor_kwargs["point_source_morphology"]
         == kwargs_microlensing_settings["point_source_morphology"]
     )
-    assert constructor_kwargs["kwargs_source_morphology"] == expected_source_morphology
+    assert (
+        constructor_kwargs["kwargs_source_morphology"]
+        == expected_source_morphology
+    )
 
     # Verify the generate_... method was called on the INSTANCE with the correct time
     mock_ml_lc_instance.generate_point_source_microlensing_magnitudes.assert_called_once_with(
@@ -924,7 +927,9 @@ def test_point_source_magnitude_microlensing_agn(
 
     # Get the arguments passed to the constructor of the mocked class
     constructor_kwargs = mock_ml_lc_from_lm_class.call_args.kwargs
-    final_source_morphology_kwargs = constructor_kwargs["kwargs_source_morphology"]
+    final_source_morphology_kwargs = constructor_kwargs[
+        "kwargs_source_morphology"
+    ]
 
     # Check that standard parameters were added
     assert final_source_morphology_kwargs["source_redshift"] == source.redshift
