@@ -155,21 +155,46 @@ class TestMicrolensingLightCurve:
         ml_lc = MicrolensingLightCurve(
             magmap_instance, time_dur, morphology, kwargs_source_morphology_Gaussian
         )
-        assert ml_lc._magnification_map is magmap_instance
-        assert ml_lc._time_duration_observer_frame == time_dur
+        # Test public properties
+        assert ml_lc.magnification_map is magmap_instance
+        assert ml_lc.time_duration_observer_frame == time_dur
+        # Test internal attributes for those without public properties
         assert ml_lc._point_source_morphology == morphology
         assert ml_lc._kwargs_source_morphology == kwargs_source_morphology_Gaussian
+        # Test initialization state
         assert ml_lc._convolved_map is None
         assert ml_lc._source_morphology is None
+
+    def test_properties_access_and_error_handling(self, ml_lc_gaussian):
+        """Test the new properties and the error handling for convolved_map."""
+        # 1. Test basic properties
+        assert isinstance(ml_lc_gaussian.magnification_map, MagnificationMap)
+        assert ml_lc_gaussian.time_duration_observer_frame == 4000
+
+        # 2. Test convolved_map property BEFORE generation
+        # Should raise ValueError because get_convolved_map() hasn't been called yet
+        with pytest.raises(ValueError, match="Convolved map is not initialized"):
+            _ = ml_lc_gaussian.convolved_map
+
+        # 3. Generate the map
+        ml_lc_gaussian.get_convolved_map()
+
+        # 4. Test convolved_map property AFTER generation
+        assert isinstance(ml_lc_gaussian.convolved_map, np.ndarray)
 
     def test_get_convolved_map_gaussian(self, ml_lc_gaussian, magmap_instance):
         conv_map = ml_lc_gaussian.get_convolved_map(return_source_morphology=False)
         assert isinstance(conv_map, np.ndarray)
         assert conv_map.shape == magmap_instance.magnifications.shape
-        assert ml_lc_gaussian._convolved_map is conv_map
+
+        # Verify using the new property
+        assert ml_lc_gaussian.convolved_map is conv_map
         assert isinstance(ml_lc_gaussian._source_morphology, GaussianSourceMorphology)
+
+        # Reset to test reconstruction
         ml_lc_gaussian._convolved_map = None
         ml_lc_gaussian._source_morphology = None
+
         conv_map2, morph = ml_lc_gaussian.get_convolved_map(
             return_source_morphology=True
         )
@@ -186,7 +211,8 @@ class TestMicrolensingLightCurve:
         )
         assert isinstance(conv_map, np.ndarray)
         assert conv_map.shape == magmap_instance.magnifications.shape
-        assert ml_lc_agn_wave._convolved_map is conv_map
+        # Verify property access
+        assert ml_lc_agn_wave.convolved_map is conv_map
         assert isinstance(morph, AGNSourceMorphology)
         assert ml_lc_agn_wave._source_morphology is morph
         assert hasattr(morph, "pixel_scale_m")
@@ -200,7 +226,8 @@ class TestMicrolensingLightCurve:
         )
         assert isinstance(conv_map, np.ndarray)
         assert conv_map.shape == magmap_instance.magnifications.shape
-        assert ml_lc_agn_band._convolved_map is conv_map
+        # Verify property access
+        assert ml_lc_agn_band.convolved_map is conv_map
         assert isinstance(morph, AGNSourceMorphology)
         assert ml_lc_agn_band._source_morphology is morph
         assert hasattr(morph, "pixel_scale_m")
@@ -270,7 +297,7 @@ class TestMicrolensingLightCurve:
         """Tests passing specific start position and angle using real
         extract."""
         # coordinates in pixels
-        map_shape = ml_lc_gaussian._magnification_map.magnifications.shape
+        map_shape = ml_lc_gaussian.magnification_map.magnifications.shape
         x_start, y_start, phi = (
             map_shape[1] // 2 + 10,
             map_shape[0] // 2 - 5,
@@ -278,10 +305,10 @@ class TestMicrolensingLightCurve:
         )  # Offset slightly
 
         # convert to units of arcseconds
-        half_length_x = ml_lc_gaussian._magnification_map.half_length_x
-        half_length_y = ml_lc_gaussian._magnification_map.half_length_y
-        num_pix_x = ml_lc_gaussian._magnification_map.num_pixels[0]
-        num_pix_y = ml_lc_gaussian._magnification_map.num_pixels[1]
+        half_length_x = ml_lc_gaussian.magnification_map.half_length_x
+        half_length_y = ml_lc_gaussian.magnification_map.half_length_y
+        num_pix_x = ml_lc_gaussian.magnification_map.num_pixels[0]
+        num_pix_y = ml_lc_gaussian.magnification_map.num_pixels[1]
         x_start = (x_start - num_pix_x // 2) * 2 * half_length_x / num_pix_x
         y_start = (y_start - num_pix_y // 2) * 2 * half_length_y / num_pix_y
 

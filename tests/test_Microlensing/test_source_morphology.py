@@ -91,7 +91,7 @@ def kwargs_AGN_band(cosmology):
         "cosmo": cosmology,
         "r_out": 1000,
         "r_resolution": resolution,
-        "smbh_mass_exp": 8.0,
+        "black_hole_mass_exponent": 8.0,
         "inclination_angle": 0,
         "black_hole_spin": 0,
         "observing_wavelength_band": "r",  # Requires speclite
@@ -109,7 +109,7 @@ def kwargs_AGN_wave(cosmology):
         "cosmo": cosmology,
         "r_out": 1000,
         "r_resolution": resolution,
-        "smbh_mass_exp": 8.0,
+        "black_hole_mass_exponent": 8.0,
         "inclination_angle": 30,  # Test non-zero inclination
         "black_hole_spin": 0.5,  # Test non-zero spin
         "observer_frame_wavelength_in_nm": 600,
@@ -374,7 +374,10 @@ class TestAGNSourceMorphology:
             agn_source_band.observing_wavelength_band
             == kwargs_AGN_band["observing_wavelength_band"]
         )
-        assert agn_source_band.black_hole_mass == 10 ** kwargs_AGN_band["smbh_mass_exp"]
+        assert (
+            agn_source_band.black_hole_mass
+            == 10 ** kwargs_AGN_band["black_hole_mass_exponent"]
+        )
 
         filter_r = speclite.filters.load_filter("lsst2023-r")
         expected_wave_nm = filter_r.effective_wavelength.to(u.nm).value
@@ -470,7 +473,9 @@ class TestAGNSourceMorphology:
         kernel_shape = agn_source_wave.kernel_map.shape  # (rows, cols) = (y, x)
 
         # Calculate expected scales based on real grav radius and ACTUAL kernel shape
-        grav_radius = calculate_gravitational_radius(kwargs_AGN_wave["smbh_mass_exp"])
+        grav_radius = calculate_gravitational_radius(
+            kwargs_AGN_wave["black_hole_mass_exponent"]
+        )
         grav_radius_val = grav_radius.to(u.m).value
 
         # Use correct axes: x scale depends on cols (shape[1]), y scale depends on rows (shape[0])

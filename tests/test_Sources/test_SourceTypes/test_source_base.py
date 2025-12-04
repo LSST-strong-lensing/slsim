@@ -141,6 +141,15 @@ class TestSourceBase:
             image_pos_y=[0],
         )
 
+    def test_update_microlensing_kwargs_source_morphology(self):
+        # Test default pass-through behavior
+        source = SourceBase(z=1)
+        initial_kwargs = {"param1": 10, "param2": "test"}
+        updated_kwargs = source.update_microlensing_kwargs_source_morphology(
+            initial_kwargs
+        )
+        assert updated_kwargs == initial_kwargs
+
 
 if __name__ == "__main__":
     pytest.main()
