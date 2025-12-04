@@ -524,12 +524,12 @@ class MicrolensingLightCurveFromLensModel(object):
             "theta_star": theta_star_arcsec,  # arcsec
             "center_x": 0,  # arcsec
             "center_y": 0,  # arcsec
-            "half_length_x": 5 * theta_star_arcsec,  # arcsec
-            "half_length_y": 5 * theta_star_arcsec,  # arcsec
+            "half_length_x": 2 * theta_star_arcsec,  # arcsec
+            "half_length_y": 2 * theta_star_arcsec,  # arcsec
             "mass_function": "kroupa",
             "m_solar": 1.0,
             "m_lower": 0.08,
             "m_upper": 100,
-            "num_pixels_x": 2500,
-            "num_pixels_y": 2500,
+            "num_pixels_x": 500,
+            "num_pixels_y": 500,
         }

@@ -243,7 +243,7 @@ class TestMicrolensingLightCurveFromLensModel:
         assert ml_model._kwargs_magnification_map is not None
         assert "theta_star" in ml_model._kwargs_magnification_map
         assert "num_pixels_x" in ml_model._kwargs_magnification_map
-        assert ml_model._kwargs_magnification_map["num_pixels_x"] == 2500
+        assert ml_model._kwargs_magnification_map["num_pixels_x"] == 500
 
     @pytest.mark.parametrize("magmap_frame", [True, False])
     def test_effective_transverse_velocity_images(
