@@ -101,8 +101,12 @@ class MicrolensingLightCurveFromLensModel(object):
         self._kwargs_source_morphology = kwargs_source_morphology
 
         if self._kwargs_magnification_map is None:
-            self._kwargs_magnification_map = self._get_default_kwargs_magnification_map()
-            print("kwargs_magnification_map not in kwargs_microlensing. Using default magnification map kwargs.")
+            self._kwargs_magnification_map = (
+                self._get_default_kwargs_magnification_map()
+            )
+            print(
+                "kwargs_magnification_map not in kwargs_microlensing. Using default magnification map kwargs."
+            )
 
         if self._point_source_morphology is None:
             raise ValueError(
@@ -492,26 +496,26 @@ class MicrolensingLightCurveFromLensModel(object):
             np.array(effective_velocities),
             np.array(effective_velocities_angles_deg),
         )
-    
-    def _get_default_kwargs_magnification_map(self, mean_microlens_mass = 1):
-        """
-        Returns the default kwargs for the magnification map based on the source and deflector redshifts
-        
+
+    def _get_default_kwargs_magnification_map(self, mean_microlens_mass=1):
+        """Returns the default kwargs for the magnification map based on the
+        source and deflector redshifts.
+
         Parameters
         ----------
         mean_microlens_mass : float
             The mean mass of the microlenses
-        
+
         Returns
         -------
         dict
             The default kwargs for the magnification map
         """
         theta_star_arcsec, _, _ = theta_star_physical(
-            z_lens = self._deflector_redshift,
-            z_src = self._source_redshift,
+            z_lens=self._deflector_redshift,
+            z_src=self._source_redshift,
             cosmo=self._cosmology,
-            m = mean_microlens_mass,
+            m=mean_microlens_mass,
         )
 
         theta_star_arcsec = theta_star_arcsec.to(u.arcsec).value

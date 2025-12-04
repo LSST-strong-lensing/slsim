@@ -211,8 +211,8 @@ def create_mock_magmap_list(microlensing_params, kwargs_magnification_map_settin
 class TestMicrolensingLightCurveFromLensModel:
 
     def test_initialization_errors(self, base_init_kwargs):
-        """Tests that ValueError is raised for missing morphology kwargs
-        during init."""
+        """Tests that ValueError is raised for missing morphology kwargs during
+        init."""
 
         # 1. point_source_morphology is None
         with pytest.raises(
@@ -231,7 +231,8 @@ class TestMicrolensingLightCurveFromLensModel:
             MicrolensingLightCurveFromLensModel(**args)
 
     def test_initialization_defaults(self, base_init_kwargs):
-        """Tests that default kwargs_magnification_map are generated if None provided."""
+        """Tests that default kwargs_magnification_map are generated if None
+        provided."""
         args = base_init_kwargs.copy()
         args["kwargs_magnification_map"] = None
 
