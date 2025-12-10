@@ -466,7 +466,7 @@ class Lens(LensedSystemBase):
         return e1_light, e2_light, e1_mass, e2_mass
 
     def deflector_stellar_mass(self):
-        """
+        """# TODO: What is the unit?
 
         :return: stellar mass of deflector
         """
@@ -1506,12 +1506,10 @@ class Lens(LensedSystemBase):
             # store source light properties
             for i in self.source_light_model_lenstronomy(b)[1]["kwargs_source"]:
                 for key in i.keys():
-                    if isinstance(i[key], np.ndarray):
-                        for j in range(len(i[key])):
-                            v = i[key][j]
-                            df.loc[
-                                lens_index, f"extended_source_light_{b}_{key}_{j}"
-                            ] = safe_value(v)
+                    v = i[key]
+                    df.loc[lens_index, f"extended_source_light_{b}_{key}"] = safe_value(
+                        v
+                    )
         # single float values (velocity dispersion, redshifts)
         df.loc[lens_index, "velocity_dispersion"] = safe_value(
             self.deflector_velocity_dispersion()

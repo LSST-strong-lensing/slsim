@@ -34,7 +34,13 @@ def load_in_rubin_sim(
 def get_rubin_cadence(
     ra,
     dec,
-    columns=["filter", "observationStartMJD", "fiveSigmaDepth", "visitExposureTime"],
+    columns=[
+        "filter",
+        "observationStartMJD",
+        "fiveSigmaDepth",
+        "skyBrightness",
+        "visitExposureTime",
+    ],
 ):
     bundle_list = load_in_rubin_sim(ra, dec, columns)
     lsst_cadence = pd.DataFrame(bundle_list[0].metric_values[0])

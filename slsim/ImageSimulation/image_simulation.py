@@ -709,8 +709,14 @@ def lens_image_series(
         band = [band] * len(mag_zero_point)
 
     image_series = []
-    for time, psf_kern, mag_zero, transf_matrix, expo_time, band_obs in zip(
-        t_obs, psf_kernel, mag_zero_point, transform_pix2angle, exposure_time, band
+    for time, psf_kern, mag_zero, transf_matrix, expo_time, std_gauss, band_obs in zip(
+        t_obs,
+        psf_kernel,
+        mag_zero_point,
+        transform_pix2angle,
+        exposure_time,
+        std_gaussian_noise,
+        band,
     ):
         image = lens_image(
             lens_class=lens_class,
@@ -721,7 +727,7 @@ def lens_image_series(
             transform_pix2angle=transf_matrix,
             exposure_time=expo_time,
             t_obs=time,
-            std_gaussian_noise=std_gaussian_noise,
+            std_gaussian_noise=std_gauss,
             with_source=with_source,
             with_ps=with_ps,
             with_deflector=with_deflector,
