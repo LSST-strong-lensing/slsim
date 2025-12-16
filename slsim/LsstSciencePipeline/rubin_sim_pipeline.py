@@ -40,6 +40,7 @@ def get_rubin_cadence(
         "fiveSigmaDepth",
         "skyBrightness",
         "visitExposureTime",
+        "seeingFwhmEff",
     ],
 ):
     bundle_list = load_in_rubin_sim(ra, dec, columns)

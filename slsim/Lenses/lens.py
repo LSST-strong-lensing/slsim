@@ -677,15 +677,12 @@ class Lens(LensedSystemBase):
                     lensed_variable_magnitude += microlensing_magnitudes
 
                 return lensed_variable_magnitude
-
             else:
                 source_mag_unlensed = self.source(source_index).point_source_magnitude(
                     band
                 )
-                magnified_mag_list = []
-                for i in range(len(magnif_log)):
-                    magnified_mag_list.append(source_mag_unlensed - magnif_log[i])
-                return np.array(magnified_mag_list)
+                magnified_mag_list = np.array(source_mag_unlensed - magnif_log)
+                return magnified_mag_list
         return self.source(source_index).point_source_magnitude(band)
 
     def extended_source_magnitude_for_each_image(self, band, lensed=False):
@@ -825,6 +822,7 @@ class Lens(LensedSystemBase):
             kwargs_source_morphology["observing_wavelength_band"] = band
 
         # Extract additional parameters from the source class if not provided
+        # currently, this line of code assumes that source is PointSource
         kwargs_source_morphology = self.source(
             source_index
         )._source.update_microlensing_kwargs_source_morphology(kwargs_source_morphology)
@@ -1552,4 +1550,17 @@ class Lens(LensedSystemBase):
         df.loc[lens_index, "extended_magnification"] = safe_value(
             self.extended_source_magnification[0]
         )
+        df.loc[lens_index, "black_hole_mass_exponent"] = self.source(
+            0
+        )._source._point_source.agn_class.kwargs_model["black_hole_mass_exponent"]
+        df.loc[lens_index, "eddington_ratio"] = self.source(
+            0
+        )._source._point_source.agn_class.kwargs_model["eddington_ratio"]
+        df.loc[lens_index, "black_hole_spin"] = self.source(
+            0
+        )._source._point_source.agn_class.kwargs_model["black_hole_spin"]
+        df.loc[lens_index, "inclination_angle"] = self.source(
+            0
+        )._source._point_source.agn_class.kwargs_model["inclination_angle"]
+        # self.source(0)._source._point_source.agn_class.agn_driving_kwargs_variability
         return df

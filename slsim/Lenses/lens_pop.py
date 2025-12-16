@@ -51,7 +51,7 @@ class LensPop(LensedPopulationBase):
         if self.los_pop is None:
             self.los_pop = LOSPop()
 
-    def select_lens_at_random(self, test_area=None, **kwargs_lens_cut):
+    def select_lens_at_random(self, test_area=None, **kwargs_lens_cuts):
         """Draw a random lens within the cuts of the lens and source, with
         possible additional cuts in the lensing configuration.
 
@@ -61,14 +61,14 @@ class LensPop(LensedPopulationBase):
         :param test_area: Solid angle around one lensing galaxy to be investigated on
                         (in arc-seconds^2). If None, computed using deflector's velocity dispersion.
         :type test_area: float or None
-        :param kwargs_lens_cut: Dictionary of cuts that one wants to apply to the lens.
-                                Example: kwargs_lens_cut = {
+        :param kwargs_lens_cuts: Dictionary of cuts that one wants to apply to the lens.
+                                Example: kwargs_lens_cuts = {
                                     "min_image_separation": 0.5,
                                     "max_image_separation": 10,
                                     "mag_arc_limit": {"i", 24},
                                     "second_brightest_image_cut": {"i", 24}
                                 }. All these cuts are optional.
-        :type kwargs_lens_cut: dict
+        :type kwargs_lens_cuts: dict
         :return: Lens() instance with parameters of the deflector and lens and source light.
         :rtype: Lens
         """
@@ -95,7 +95,7 @@ class LensPop(LensedPopulationBase):
                 cosmo=self.cosmo,
                 los_class=_los,
             )
-            if gg_lens.validity_test(**kwargs_lens_cut):
+            if gg_lens.validity_test(**kwargs_lens_cuts):
                 return gg_lens
 
     @property
@@ -279,7 +279,7 @@ class LensPop(LensedPopulationBase):
 
         :param kwargs_lens_cuts: validity test keywords. dictionary of
             cuts that one wants to apply to the lens. eg:
-            kwargs_lens_cut = {}"min_image_separation": 0.5,
+            kwargs_lens_cuts = {}"min_image_separation": 0.5,
             "max_image_separation": 10, "mag_arc_limit": {"i", 24},
             "second_bright_image_cut = {"band": ["i"], "mag_max":[23]}.
             all these cuts are optional.

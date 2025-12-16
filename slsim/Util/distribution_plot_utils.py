@@ -8,6 +8,7 @@ CORNER_KWARGS = dict(
     smooth=0.9,
     label_kwargs=dict(fontsize=30),
     title_kwargs=dict(fontsize=30, loc="left"),
+    scatter_kwargs={"s": 50, "alpha": 1},
     plot_density=True,
     plot_datapoints=True,
     fill_contours=True,
@@ -50,6 +51,7 @@ def make_contour(
     colors,
     range_for_bin=False,
     show_correlation=False,
+    plot_scatter_only=False,
     truths_list=None,
     show_every_title=False,
     save_fig=False,
@@ -80,8 +82,15 @@ def make_contour(
         CORNER_KWARGS["title_kwargs"].update(color=title_color, fontsize=title_fontsize)
     except KeyError:
         CORNER_KWARGS["title_kwargs"] = dict(fontsize=title_fontsize, color=title_color)
+
     i = 0
     alpha = 0.3
+    if plot_scatter_only:
+        CORNER_KWARGS["plot_datapoints"] = True
+        CORNER_KWARGS["plot_density"] = True
+        CORNER_KWARGS["fill_contours"] = True
+        CORNER_KWARGS["plot_contours"] = True
+        alpha = 1
     for ax in fig.get_axes():
         ax.tick_params(axis="both", labelsize=15)
 
@@ -140,10 +149,14 @@ def make_contour(
                     transform=ax.transAxes,
                     bbox=props1,
                 )
-
+        # compute the y position of title text so that titles are stacked
+        # and no text is overlapping. this should scale with the number of distributions
+        # that are being plotted so that if there are more distribution
+        # the top most title is placed higher
         if show_every_title and i < len(list_of_dists) - 1:
             color_i = colors[i]
-            inch = 0.11 * i
+            initial_height = 1 + len(list_of_dists) / (11)
+            inch = i if i == 0 else initial_height / (14 * i)
             for panel in range(len(fig.axes)):
                 ax = fig.axes[panel]
                 titles_curr = ax.get_title("left")
@@ -151,7 +164,7 @@ def make_contour(
                     continue
                 ax.text(
                     0,
-                    1.25 + (0.06 * len(list_of_dists)) - inch,
+                    initial_height - inch,
                     titles_curr,
                     color=color_i,
                     weight=5,

@@ -240,6 +240,11 @@ class SourceBase(ABC):
         :return: Magnitude of the point source in the specified band
         :rtype: float
         """
+        # print('self._point_source: ', self._point_source)
+        # print('image_observation_times: ', image_observation_times)
+        # print('self._variability_model: ', self._variability_model)
+        # print('self._kwargs_variability_model: ', self._kwargs_variability_model)
+        # print('self.source_dict: ', self.source_dict)
         if self._point_source is False:
             return []
         if image_observation_times is None or self._variability_model == "NONE":
