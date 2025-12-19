@@ -184,8 +184,9 @@ class Lens(LensedSystemBase):
             kwargs_lens,
             solver=solver,
             search_window=einstein_radius * 6,
-            min_distance=einstein_radius * 6 / 200,
+            min_distance=einstein_radius * 6 / 100,
             magnification_limit=self._magnification_limit,
+            num_iter_max=25,
         )
         return image_positions
 
