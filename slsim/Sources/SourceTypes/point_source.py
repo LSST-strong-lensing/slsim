@@ -84,6 +84,8 @@ class PointSource(object):
         :return: Magnitude of the point source in the specified band
         :rtype: float
         """
+        if band == "i":
+            return self._point_source.source_dict["ps_mag_i"]
         return self._point_source.point_source_magnitude(
             band=band, image_observation_times=image_observation_times
         )

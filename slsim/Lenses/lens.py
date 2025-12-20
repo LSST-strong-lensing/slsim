@@ -467,7 +467,7 @@ class Lens(LensedSystemBase):
         return e1_light, e2_light, e1_mass, e2_mass
 
     def deflector_stellar_mass(self):
-        """
+        """# TODO: What is the unit?
 
         :return: stellar mass of deflector
         """
@@ -557,10 +557,10 @@ class Lens(LensedSystemBase):
         arrival_times = self._point_source_arrival_times(source_index)
         if type(t_obs) is np.ndarray and len(t_obs) > 1:
             observer_times = (
-                t_obs[:, np.newaxis] - arrival_times + np.min(arrival_times)
+                t_obs[:, np.newaxis] - arrival_times + np.max(arrival_times)
             ).T
         else:
-            observer_times = (t_obs - arrival_times + np.min(arrival_times))[
+            observer_times = (t_obs - arrival_times + np.max(arrival_times))[
                 :, np.newaxis
             ]
 
@@ -678,15 +678,12 @@ class Lens(LensedSystemBase):
                     lensed_variable_magnitude += microlensing_magnitudes
 
                 return lensed_variable_magnitude
-
             else:
                 source_mag_unlensed = self.source(source_index).point_source_magnitude(
                     band
                 )
-                magnified_mag_list = []
-                for i in range(len(magnif_log)):
-                    magnified_mag_list.append(source_mag_unlensed - magnif_log[i])
-                return np.array(magnified_mag_list)
+                magnified_mag_list = np.array(source_mag_unlensed - magnif_log)
+                return magnified_mag_list
         return self.source(source_index).point_source_magnitude(band)
 
     def extended_source_magnitude_for_each_image(self, band, lensed=False):
@@ -826,6 +823,7 @@ class Lens(LensedSystemBase):
             kwargs_source_morphology["observing_wavelength_band"] = band
 
         # Extract additional parameters from the source class if not provided
+        # currently, this line of code assumes that source is PointSource
         kwargs_source_morphology = self.source(
             source_index
         )._source.update_microlensing_kwargs_source_morphology(kwargs_source_morphology)
@@ -1487,20 +1485,30 @@ class Lens(LensedSystemBase):
                 )
 
         # store light model parameters
-        for i in self.deflector_light_model_lenstronomy("i")[1]:
-            for key in i.keys():
-                val = i[key]
-                df.loc[lens_index, "deflector_light_" + key] = safe_value(val)
+        bands = list("grizy")
+        for b in bands:
+            for i in self.deflector_light_model_lenstronomy(b)[1]:
+                for key in i.keys():
+                    val = i[key]
+                    df.loc[lens_index, f"deflector_light_{b}_" + key] = safe_value(val)
 
-        # store source light properties
-        for i in self.source_light_model_lenstronomy("i")[1]["kwargs_ps"]:
-            for key in i.keys():
-                if isinstance(i[key], np.ndarray):
-                    for j in range(len(i[key])):
-                        v = i[key][j]
-                        df.loc[lens_index, f"point_source_light_{key}_{j}"] = (
-                            safe_value(v)
-                        )
+            # store source light properties
+            for i in self.source_light_model_lenstronomy(b)[1]["kwargs_ps"]:
+                for key in i.keys():
+                    if isinstance(i[key], np.ndarray):
+                        for j in range(len(i[key])):
+                            v = i[key][j]
+                            df.loc[lens_index, f"point_source_light_{b}_{key}_{j}"] = (
+                                safe_value(v)
+                            )
+
+            # store source light properties
+            for i in self.source_light_model_lenstronomy(b)[1]["kwargs_source"]:
+                for key in i.keys():
+                    v = i[key]
+                    df.loc[lens_index, f"extended_source_light_{b}_{key}"] = safe_value(
+                        v
+                    )
         # single float values (velocity dispersion, redshifts)
         df.loc[lens_index, "velocity_dispersion"] = safe_value(
             self.deflector_velocity_dispersion()
@@ -1543,4 +1551,17 @@ class Lens(LensedSystemBase):
         df.loc[lens_index, "extended_magnification"] = safe_value(
             self.extended_source_magnification[0]
         )
+        df.loc[lens_index, "black_hole_mass_exponent"] = self.source(
+            0
+        )._source._point_source.agn_class.kwargs_model["black_hole_mass_exponent"]
+        df.loc[lens_index, "eddington_ratio"] = self.source(
+            0
+        )._source._point_source.agn_class.kwargs_model["eddington_ratio"]
+        df.loc[lens_index, "black_hole_spin"] = self.source(
+            0
+        )._source._point_source.agn_class.kwargs_model["black_hole_spin"]
+        df.loc[lens_index, "inclination_angle"] = self.source(
+            0
+        )._source._point_source.agn_class.kwargs_model["inclination_angle"]
+        # self.source(0)._source._point_source.agn_class.agn_driving_kwargs_variability
         return df

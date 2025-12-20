@@ -49,7 +49,7 @@ def create_image_montage_from_image_list(
         band = [band] * len(images)
 
     fig, axes = plt.subplots(num_rows, num_cols, figsize=(num_cols * 3, num_rows * 3))
-
+    axes = axes.reshape(num_rows, num_cols)
     for i in range(num_rows):
         for j in range(num_cols):
             if i * num_cols + j < len(images):
@@ -63,7 +63,11 @@ def create_image_montage_from_image_list(
                     )
                 else:
                     axes[i, j].imshow(
-                        image, origin="lower", vmin=global_min, vmax=global_max
+                        image,
+                        origin="lower",
+                        vmin=global_min,
+                        vmax=global_max,
+                        norm="linear",
                     )
                 axes[i, j].axis("off")  # Turn off axis labels
                 if time is not None:

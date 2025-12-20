@@ -388,8 +388,10 @@ class QuasarRate(object):
                 pipeline = SkyPyPipeline(
                     skypy_config=self.skypy_config,
                     sky_area=self.sky_area,
-                    filters=None,
+                    filters=["u", "g", "r", "i", "z", "y"],
                     cosmo=self.cosmo,
+                    z_min=0,
+                    z_max=4,
                 )
                 host_galaxy_catalog = vstack(
                     [pipeline.red_galaxies, pipeline.blue_galaxies],

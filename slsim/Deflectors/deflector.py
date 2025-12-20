@@ -33,6 +33,7 @@ class Deflector(object):
         :param deflector_dict: parameters of the deflector
         :type deflector_dict: dict
         # TODO: document magnitude inputs
+        # TODO: add absolute i-band magnitude as an input
         """
         self._name = "GAL"
         if deflector_type in ["EPL"]:
