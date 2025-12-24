@@ -7,7 +7,15 @@ class LensedSystemBase(ABC):
     """Abstract Base class to create a lens system with all lensing properties
     required to render populations."""
 
-    def __init__(self, source_class, deflector_class, los_class=None):
+    def __init__(
+        self,
+        source_class,
+        deflector_class,
+        los_class=None,
+        multi_plane=None,
+        shear=True,
+        convergence=False,
+    ):
         """
         :param source_class: :param source_class: A Source class instance or list of
          Source class instance
@@ -16,8 +24,18 @@ class LensedSystemBase(ABC):
         :type deflector_class: Deflector class instance from slsim.Deflectors.deflector
         :param los_class: Line of sight distortion class
         :type los_class: ~LOSIndividual instance
+        :param multi_plane: None for single-plane, 'Source' for multi-source plane, 'Deflector' for multi-deflector plane,
+            or 'Both' for both multi-deflector and multi-source plane
+        :type multi_plane: None or str
+        :param shear: whether to include external shear in multi-plane lensing
+        :type shear: bool
+        :param convergence: whether to include external convergence in multi-plane lensing
+        :type convergence: bool
         """
         self.deflector = deflector_class
+        self.multi_plane = multi_plane
+        self.shear = shear
+        self.convergence = convergence
         if isinstance(source_class, list):
             for source_class_ in source_class:
                 assert isinstance(source_class_, Source)
