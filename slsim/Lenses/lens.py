@@ -1235,7 +1235,7 @@ class Lens(LensedSystemBase):
             )
 
         # For significant speedup, use these mass profiles from jaxtronomy
-        
+
         # TODO: replace with change_source_redshift() currently not fully working
         # self._lens_model.change_source_redshift(z_source=z_source)
         if self.multi_plane:
@@ -1245,14 +1245,14 @@ class Lens(LensedSystemBase):
             lens_redshift_list = None
             # For significant speedup, use these mass profiles from jaxtronomy
             if self._use_jax is True:
-              use_jax = []
-              for profile in self._lens_mass_model_list:
-                  if profile in JAX_PROFILES:
-                      use_jax.append(True)
-                  else:
-                      use_jax.append(False)
+                use_jax = []
+                for profile in self._lens_mass_model_list:
+                    if profile in JAX_PROFILES:
+                        use_jax.append(True)
+                    else:
+                        use_jax.append(False)
             else:
-              use_jax = False
+                use_jax = False
         lens_model = LensModel(
             lens_model_list=self._lens_mass_model_list,
             cosmo=self.cosmo,
