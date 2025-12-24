@@ -16,7 +16,6 @@ class TestDeflector(object):
             os.path.join(module_path, "TestData/red_one_modified.fits"), format="fits"
         )
         self.deflector = Deflector(deflector_type="EPL_SERSIC", **red_one)
-        self.deflector_backup = Deflector(deflector_type="EPL_SERSIC", **red_one)
 
         red_two = Table(red_one).copy()
         red_two.remove_column("vel_disp")
@@ -40,6 +39,7 @@ class TestDeflector(object):
         self.deflector_nfw = Deflector(
             deflector_type="NFW_HERNQUIST", **deflector_nfw_dict
         )
+        self.deflector_backup = Deflector(deflector_type="NFW_HERNQUIST", **deflector_nfw_dict)
 
         self.deflector_epl = Deflector(deflector_type="EPL", **red_two)
 
