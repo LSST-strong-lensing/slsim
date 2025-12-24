@@ -184,7 +184,9 @@ class TestDeflector(object):
         npt.assert_almost_equal(theta_E_infinity, theta_E_infinity_new, decimal=5)
 
         # NFW_CLUSTER
-        theta_E_infinity = self.deflector_nfw_cluster1.theta_e_infinity(cosmo=None, use_jax=use_jax)
+        theta_E_infinity = self.deflector_nfw_cluster1.theta_e_infinity(
+            cosmo=None, use_jax=use_jax
+        )
         assert theta_E_infinity < 30
         theta_E_infinity_multi = self.deflector_nfw_cluster2.theta_e_infinity(
             cosmo=None, multi_plane=True, use_jax=use_jax
