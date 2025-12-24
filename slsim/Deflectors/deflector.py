@@ -249,8 +249,10 @@ class Deflector(object):
                 else:
                     num_main_lens_profiles = len(lens_mass_model_list)
                     lens_redshift_list = [self.redshift] * num_main_lens_profiles
-
-                _use_jax = True
+                if use_jax is True:
+                    _use_jax = True
+                else:
+                    _use_jax = False
             else:
                 lens_redshift_list = None
                 if use_jax is True:
