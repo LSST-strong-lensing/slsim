@@ -124,10 +124,15 @@ class TestDeflector(object):
         )
 
     def test_theta_e_when_source_infinity(self):
-        theta_E_infinity = self.deflector.theta_e_infinity(cosmo=None)
+        try:
+            import jax
+            use_jax = True
+        except:
+            use_jax = False
+        theta_E_infinity = self.deflector.theta_e_infinity(cosmo=None, use_jax=use_jax)
         assert theta_E_infinity < 15
-        theta_E_infinity_new = self.deflector.theta_e_infinity(cosmo=None)
+        theta_E_infinity_new = self.deflector.theta_e_infinity(cosmo=None, use_jax=use_jax)
         npt.assert_almost_equal(theta_E_infinity, theta_E_infinity_new, decimal=5)
 
-        theta_E_infinity = self.deflector_nfw.theta_e_infinity(cosmo=None)
+        theta_E_infinity = self.deflector_nfw.theta_e_infinity(cosmo=None, use_jax=use_jax)
         npt.assert_almost_equal(theta_E_infinity, 1, decimal=2)

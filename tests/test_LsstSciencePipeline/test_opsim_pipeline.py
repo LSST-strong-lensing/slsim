@@ -14,7 +14,11 @@ from slsim.Deflectors.deflector import Deflector
 import astropy.coordinates as coord
 import astropy.units as u
 import pytest
-
+try:
+    import jax
+    use_jax = True
+except:
+    use_jax = False
 
 @pytest.fixture
 def pes_lens_instance():
@@ -58,6 +62,7 @@ def pes_lens_instance():
             source_class=source,
             deflector_class=deflector,
             cosmo=cosmo,
+            use_jax=use_jax,
         )
         if pes_lens.validity_test():
             pes_lens = pes_lens
@@ -198,6 +203,7 @@ def lens_class_instance():
             deflector_class=deflector,
             source_class=source1,
             cosmo=cosmo,
+            use_jax=use_jax,
         )
         if lens_class1.validity_test():
             lens_class = lens_class1

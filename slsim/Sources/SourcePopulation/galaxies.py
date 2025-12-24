@@ -32,7 +32,7 @@ class Galaxies(SourcePopBase):
         downsample_to_dc2=False,
         source_size="Bernardi",
         extended_source_type="single_sersic",
-        extendedsource_kwargs={},
+        extended_source_kwargs={},
     ):
         """
 
@@ -54,14 +54,14 @@ class Galaxies(SourcePopBase):
         :param source_size: If "Bernardi", computes galaxy size using g-band
          magnitude otherwise rescales skypy source size to Shibuya et al. (2015):
          https://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
-        :param extendedsource_type: Keyword to specify type of the extended source.
+        :param extended_source_type: Keyword to specify type of the extended source.
          Supported extended source types are "single_sersic", "double_sersic", "interpolated".
-        :type extendedsource_type: str
-        :param extendedsource_kwargs: dictionary of keyword arguments for ExtendedSource.
+        :type extended_source_type: str
+        :param extended_source_kwargs: dictionary of keyword arguments for ExtendedSource.
          Please see documentation of ExtendedSource() class as well as specific extended source classes.
         """
         super().__init__(cosmo=cosmo, sky_area=sky_area)
-        self.extendedsource_kwargs = extendedsource_kwargs
+        self.extendedsource_kwargs = extended_source_kwargs
         self.light_profile = extended_source_type
         if downsample_to_dc2 is True:
             samp1, samp2, samp3, samp4, samp5, samp6 = down_sample_to_dc2(
@@ -330,7 +330,7 @@ def convert_to_slsim_convention(
         conventions.
     :type galaxy_catalog: astropy Table object.
     :param light_profile: keyword for number of sersic profile to use in
-        source light model. accepted kewords: "single_sersic",
+        source light model. accepted keywords: "single_sersic",
         "double_sersic".
     :param input_catalog_type: type of the catalog. If someone wants to
         use scotch catalog or skypy catalog, they need to specify it.
@@ -400,7 +400,6 @@ def down_sample_to_dc2(galaxy_pop, sky_area):
     :param galaxy_pop: Astropy table of galaxy population.
     :param sky_area: Sky area over which galaxies are sampled. Must be in units of
      solid angle and it should be astropy unit object.
-    :param cosmo: astropy.cosmology instance
     :return: Astropy tables of downsampled galaxy population in different bins.
      Redshift bins for returned populations are: (2-2.5), (2.5-3), (3-3.5),
      (3.5-4), (4-4.5), (4.5-5)

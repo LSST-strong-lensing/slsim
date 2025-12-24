@@ -22,6 +22,12 @@ galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
     filters=None,
 )
 
+try:
+    import jax
+    use_jax = True
+except:
+    use_jax = False
+
 
 def create_lens_pop_instance(return_kext=False):
 
@@ -54,6 +60,7 @@ def create_lens_pop_instance(return_kext=False):
         source_population=source_galaxies,
         cosmo=cosmo,
         sky_area=sky_area,
+        use_jax=use_jax
     )
 
     return lenspop
@@ -111,10 +118,11 @@ def test_pes_lens_pop_instance():
         source_population=source_galaxies,
         cosmo=cosmo,
         sky_area=sky_area,
+        use_jax=use_jax
     )
 
     kwargs_lens_cut = {}
-    pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
+    pes_lens_class = pes_lens_pop.select_lens_at_random(verbose=True, **kwargs_lens_cut)
     assert isinstance(pes_lens_class, Lens)
 
 
@@ -152,6 +160,7 @@ def test_galaxies_lens_pop_halo_model_instance():
         source_population=source_galaxies,
         cosmo=cosmo,
         sky_area=sky_area,
+        use_jax=use_jax
     )
     assert g_lens_halo_model_pop._lens_galaxies.draw_deflector().halo_properties[0] != 0
 
@@ -200,6 +209,7 @@ def test_cluster_lens_pop_instance():
         source_population=source_galaxies,
         cosmo=cosmo,
         sky_area=sky_area,
+        use_jax=use_jax,
     )
 
     kwargs_lens_cut = {}
@@ -250,6 +260,7 @@ def test_galaxies_lens_pop_instance():
         source_population=source_galaxies,
         cosmo=cosmo,
         sky_area=sky_area,
+        use_jax=use_jax,
     )
     kwargs_lens_cut = {}
     pes_lens_class = gg_lens_pop.select_lens_at_random(**kwargs_lens_cut)
@@ -315,6 +326,7 @@ def test_supernovae_plus_galaxies_lens_pop_instance_2():
         source_population=source_galaxies,
         cosmo=cosmo,
         sky_area=sky_area,
+        use_jax=use_jax,
     )
     kwargs_lens_cut = {}
     pes_lens_class = pes_lens_pop.select_lens_at_random(**kwargs_lens_cut)
@@ -378,6 +390,7 @@ def test_supernovae_lens_pop_instance():
         source_population=source_galaxies_1,
         cosmo=cosmo,
         sky_area=sky_area_pop,
+        use_jax=use_jax
     )
     # drawing population
     kwargs_lens_cuts = {}
@@ -397,6 +410,7 @@ def test_supernovae_lens_pop_instance():
             deflector_population=lens_galaxies_1,
             source_population=source_galaxies_1,
             cosmo=cosmo,
+            use_jax=use_jax,
         )
 
 

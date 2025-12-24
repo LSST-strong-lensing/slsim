@@ -33,6 +33,7 @@ class Lens(LensedSystemBase):
         lens_equation_solver="lenstronomy_analytical",
         magnification_limit=0.01,
         los_class=None,
+        use_jax=True,
     ):
         """
 
@@ -51,6 +52,9 @@ class Lens(LensedSystemBase):
         :type magnification_limit: float >= 0
         :param los_class: line of sight dictionary (optional, takes these values instead of drawing from distribution)
         :type los_class: ~LOSIndividual() class object
+        :param use_jax: if True, will use JAX version of lenstronomy to do lensing calculations for models that are
+            supported in JAXtronomy
+        :type use_jax: bool
         """
         LensedSystemBase.__init__(
             self,
@@ -69,6 +73,7 @@ class Lens(LensedSystemBase):
             z_source=self.max_redshift_source_class.redshift,
             cosmo=self.cosmo,
         )
+        self._use_jax = use_jax
 
     def source(self, index=0):
         """
@@ -398,7 +403,7 @@ class Lens(LensedSystemBase):
         :return: Einstein radius of a deflector.
         """
         if not hasattr(self, "_theta_E_infinity"):
-            self._theta_E_infinity = self.deflector.theta_e_infinity(self.cosmo)
+            self._theta_E_infinity = self.deflector.theta_e_infinity(self.cosmo, use_jax=self._use_jax)
         return self._theta_E_infinity
 
     def _approximate_einstein_radius(self, source_index):
@@ -1183,13 +1188,15 @@ class Lens(LensedSystemBase):
             )
 
         # For significant speedup, use these mass profiles from jaxtronomy
-        use_jax = []
-        for profile in self._lens_mass_model_list:
-            if profile in JAX_PROFILES:
-                use_jax.append(True)
-            else:
-                use_jax.append(False)
-
+        if self._use_jax is True:
+            use_jax = []
+            for profile in self._lens_mass_model_list:
+                if profile in JAX_PROFILES:
+                    use_jax.append(True)
+                else:
+                    use_jax.append(False)
+        else:
+            use_jax = False
         # TODO: replace with change_source_redshift() currently not fully working
         # self._lens_model.change_source_redshift(z_source=z_source)
         lens_model = LensModel(

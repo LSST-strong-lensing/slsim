@@ -202,12 +202,14 @@ class Deflector(object):
         )
         return mag_arcsec2
 
-    def theta_e_infinity(self, cosmo):
+    def theta_e_infinity(self, cosmo, use_jax=True):
         """Einstein radius for a source at infinity (or well passed where
         galaxies exist.
 
         :param cosmo: astropy.cosmology instance
-        :return:
+        :param use_jax: use JAX-accelerated lens models for lensing calculations, if available
+        :type use_jax: bool
+        :return: Einstein radius for source at infinite [arcsec]
         """
         if hasattr(self, "_theta_e_infinity"):
             return self._theta_e_infinity
@@ -226,12 +228,15 @@ class Deflector(object):
                     lens_cosmo=lens_cosmo, spherical=True
                 )
             )
-            use_jax = []
-            for profile in lens_mass_model_list:
-                if profile in JAX_PROFILES:
-                    use_jax.append(True)
-                else:
-                    use_jax.append(False)
+            if use_jax is True:
+                _use_jax = []
+                for profile in lens_mass_model_list:
+                    if profile in JAX_PROFILES:
+                        _use_jax.append(True)
+                    else:
+                        _use_jax.append(False)
+            else:
+                _use_jax = False
             lens_model = LensModel(
                 lens_model_list=lens_mass_model_list,
                 z_lens=self.redshift,
@@ -239,7 +244,7 @@ class Deflector(object):
                 multi_plane=False,
                 z_source=_z_source_infty,
                 cosmo=cosmo,
-                use_jax=use_jax,
+                use_jax=_use_jax,
             )
 
             lens_analysis = LensProfileAnalysis(lens_model=lens_model)
