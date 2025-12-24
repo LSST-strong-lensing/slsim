@@ -126,6 +126,7 @@ class TestDeflector(object):
     def test_theta_e_when_source_infinity(self):
         try:
             import jax
+            print(jax.__path__)
 
             use_jax = True
         except ImportError:

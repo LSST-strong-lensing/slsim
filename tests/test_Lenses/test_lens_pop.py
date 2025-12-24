@@ -24,7 +24,7 @@ galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
 
 try:
     import jax
-
+    print(jax.__path__)
     use_jax = True
 except ImportError:
     use_jax = False

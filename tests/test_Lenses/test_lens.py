@@ -19,6 +19,8 @@ from unittest.mock import patch, MagicMock  # Added for mocking
 try:
     import jax
 
+    print(jax.__path__)
+
     use_jax = True
 except ImportError:
     use_jax = False
