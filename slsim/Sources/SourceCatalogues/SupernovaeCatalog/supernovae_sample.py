@@ -121,7 +121,7 @@ class SupernovaeCatalog(object):
         :type mag_zpsys: str
         :param cosmo: astropy.cosmology instance
         :param skypy_config: path to SkyPy configuration yaml file
-        :type skypy_config: string
+        :type skypy_config: string or None
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
         :type sky_area: `~astropy.units.Quantity`

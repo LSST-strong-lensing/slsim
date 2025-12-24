@@ -16,6 +16,7 @@ class TestDeflector(object):
             os.path.join(module_path, "TestData/red_one_modified.fits"), format="fits"
         )
         self.deflector = Deflector(deflector_type="EPL_SERSIC", **red_one)
+        self.deflector_backup = Deflector(deflector_type="EPL_SERSIC", **red_one)
 
         red_two = Table(red_one).copy()
         red_two.remove_column("vel_disp")
@@ -142,4 +143,8 @@ class TestDeflector(object):
         theta_E_infinity = self.deflector_nfw.theta_e_infinity(
             cosmo=None, use_jax=use_jax
         )
+        # we do call the definition twice with use_jax=False to make sure it increases test coverage
+        self.deflector_backup.theta_e_infinity(cosmo=None, use_jax=False)
+        npt.assert_almost_equal(theta_E_infinity, 1, decimal=2)
+        self.deflector_backup.theta_e_infinity(cosmo=None, use_jax=False)
         npt.assert_almost_equal(theta_E_infinity, 1, decimal=2)

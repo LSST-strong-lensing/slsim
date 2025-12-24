@@ -4,6 +4,7 @@ import slsim
 import pickle
 
 import numpy as np
+from numpy.testing import assert_raises
 import slsim.Sources as sources
 import slsim.Pipelines as pipelines
 import slsim.Deflectors as deflectors
@@ -267,6 +268,11 @@ def test_galaxies_lens_pop_instance():
     kwargs_lens_cut = {"mag_arc_limit": {"i": 30}}
     pes_lens_class = gg_lens_pop.select_lens_at_random(**kwargs_lens_cut)
     assert isinstance(pes_lens_class, Lens)
+
+    # test that we can't find a lens with a lensed arc of magnitude 6
+    with assert_raises(ValueError):
+        kwargs_lens_cut = {"mag_arc_limit": {"i": 6}}
+        no_lens_class = gg_lens_pop.select_lens_at_random(**kwargs_lens_cut)
 
 
 def test_supernovae_plus_galaxies_lens_pop_instance_2():
