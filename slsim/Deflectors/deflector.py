@@ -237,7 +237,6 @@ class Deflector(object):
                     lens_cosmo=lens_cosmo, spherical=True
                 )
             )
-            
 
             if multi_plane:
 
@@ -253,6 +252,7 @@ class Deflector(object):
 
                 _use_jax = True
             else:
+                lens_redshift_list = None
                 if use_jax is True:
                   _use_jax = []
                   for profile in lens_mass_model_list:
