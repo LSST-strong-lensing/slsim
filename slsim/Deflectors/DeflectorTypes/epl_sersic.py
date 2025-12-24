@@ -9,15 +9,16 @@ class EPLSersic(EPL):
     - 'vel_disp': SIS equivalent velocity dispersion of the deflector
     - 'e1_mass': eccentricity of EPL profile
     - 'e2_mass': eccentricity of EPL profile
-    - 'stellar_mass': stellar mass in physical M_sol
     - 'angular_size': half-light radius of stellar/light profile in radian
     - 'n_sersic': Sersic index of deflector light
     - 'e1_light': eccentricity of light
     - 'e2_light': eccentricity of light
     - 'z': redshift of deflector
+    optional quantities in dictionary:
+    - center_x: RA coordinate (relative arcseconds)
+    - center_y: DEC coordinate (relative arcseconds)
+        If None, draws random center coordinates (see DeflectorBase)
     """
-
-    # TODO: add center_x center_y to documentation
 
     def __init__(self, **deflector_dict):
         """
