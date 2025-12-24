@@ -14,11 +14,14 @@ from slsim.Deflectors.deflector import Deflector
 import astropy.coordinates as coord
 import astropy.units as u
 import pytest
+
 try:
     import jax
+
     use_jax = True
 except:
     use_jax = False
+
 
 @pytest.fixture
 def pes_lens_instance():

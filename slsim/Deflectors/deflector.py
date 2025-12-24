@@ -207,7 +207,8 @@ class Deflector(object):
         galaxies exist.
 
         :param cosmo: astropy.cosmology instance
-        :param use_jax: use JAX-accelerated lens models for lensing calculations, if available
+        :param use_jax: use JAX-accelerated lens models for lensing
+            calculations, if available
         :type use_jax: bool
         :return: Einstein radius for source at infinite [arcsec]
         """

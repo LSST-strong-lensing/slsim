@@ -404,7 +404,9 @@ class Lens(LensedSystemBase):
         :return: Einstein radius of a deflector.
         """
         if not hasattr(self, "_theta_E_infinity"):
-            self._theta_E_infinity = self.deflector.theta_e_infinity(self.cosmo, use_jax=self._use_jax)
+            self._theta_E_infinity = self.deflector.theta_e_infinity(
+                self.cosmo, use_jax=self._use_jax
+            )
         return self._theta_E_infinity
 
     def _approximate_einstein_radius(self, source_index):
