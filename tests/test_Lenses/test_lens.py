@@ -1128,6 +1128,7 @@ class TestDifferentLens(object):
             cosmo=self.cosmo,
             lens_equation_solver="lenstronomy_general",
             multi_plane="Source",
+            use_jax=use_jax,
         )
         subhalos_table = Table.read(
             os.path.join(path, "../TestData/subhalos_table.fits"), format="fits"
@@ -1157,6 +1158,7 @@ class TestDifferentLens(object):
             cosmo=self.cosmo,
             lens_equation_solver="lenstronomy_general",
             multi_plane="Source",
+            use_jax=use_jax,
         )
 
     def test_different_setting(self):

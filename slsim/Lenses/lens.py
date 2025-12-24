@@ -816,7 +816,7 @@ class Lens(LensedSystemBase):
             morphology calculation. The kwargs_magnification_map is
             required for the microlensing calculation. If None, defaults
             are used corresponding to the source in the lens class.
-        :type kwargs_microlensing: dict
+        :type kwargs_microlensing: dict or None
         :return: point source magnitude for a single source, does not
             include the macro-magnification.
         :rtype: numpy array
@@ -1240,7 +1240,10 @@ class Lens(LensedSystemBase):
         # self._lens_model.change_source_redshift(z_source=z_source)
         if self.multi_plane:
             lens_redshift_list = self.deflector_redshift
-            use_jax = True
+            if self._use_jax is True:
+                use_jax = True
+            else:
+                use_jax = False
         else:
             lens_redshift_list = None
             # For significant speedup, use these mass profiles from jaxtronomy
