@@ -272,7 +272,7 @@ def test_galaxies_lens_pop_instance():
     # test that we can't find a lens with a lensed arc of magnitude 6
     with assert_raises(ValueError):
         kwargs_lens_cut = {"mag_arc_limit": {"i": 6}}
-        no_lens_class = gg_lens_pop.select_lens_at_random(**kwargs_lens_cut)
+        gg_lens_pop.select_lens_at_random(**kwargs_lens_cut)
 
 
 def test_supernovae_plus_galaxies_lens_pop_instance_2():
