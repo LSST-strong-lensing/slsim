@@ -1,5 +1,6 @@
 from slsim.Pipelines.halos_pipeline import HalosSkyPyPipeline
 from astropy.cosmology import FlatLambdaCDM, default_cosmology
+import numpy as np
 
 
 class TestHalosSkyPyPipeline(object):
@@ -32,6 +33,7 @@ def test_cosmology_initialization():
 
 
 def test_default_pipeline():
+    np.random.seed(41)
     pipeline0 = HalosSkyPyPipeline()
     halos0 = pipeline0.halos
     assert halos0[0]["z"] > 0
