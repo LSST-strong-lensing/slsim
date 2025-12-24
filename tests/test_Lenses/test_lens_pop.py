@@ -24,6 +24,7 @@ galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
 
 try:
     import jax
+
     use_jax = True
 except:
     use_jax = False
@@ -60,7 +61,7 @@ def create_lens_pop_instance(return_kext=False):
         source_population=source_galaxies,
         cosmo=cosmo,
         sky_area=sky_area,
-        use_jax=use_jax
+        use_jax=use_jax,
     )
 
     return lenspop
@@ -118,7 +119,7 @@ def test_pes_lens_pop_instance():
         source_population=source_galaxies,
         cosmo=cosmo,
         sky_area=sky_area,
-        use_jax=use_jax
+        use_jax=use_jax,
     )
 
     kwargs_lens_cut = {}
@@ -160,7 +161,7 @@ def test_galaxies_lens_pop_halo_model_instance():
         source_population=source_galaxies,
         cosmo=cosmo,
         sky_area=sky_area,
-        use_jax=use_jax
+        use_jax=use_jax,
     )
     assert g_lens_halo_model_pop._lens_galaxies.draw_deflector().halo_properties[0] != 0
 
@@ -390,7 +391,7 @@ def test_supernovae_lens_pop_instance():
         source_population=source_galaxies_1,
         cosmo=cosmo,
         sky_area=sky_area_pop,
-        use_jax=use_jax
+        use_jax=use_jax,
     )
     # drawing population
     kwargs_lens_cuts = {}

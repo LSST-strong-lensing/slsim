@@ -365,7 +365,9 @@ def catalog_with_angular_size_in_arcsec(galaxy_catalog, input_catalog_type="skyp
     """
     copied_galaxy_catalog = copy.deepcopy(galaxy_catalog)
     if input_catalog_type == "skypy":
-        copied_galaxy_catalog["angular_size"] = copied_galaxy_catalog["angular_size"].to(u.arcsec)
+        copied_galaxy_catalog["angular_size"] = copied_galaxy_catalog[
+            "angular_size"
+        ].to(u.arcsec)
         warning_msg = (
             "Angular size is converted to arcsec because provided"
             " input_catalog_type is skypy. If this is not correct, please refer to"

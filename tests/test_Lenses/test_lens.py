@@ -15,8 +15,10 @@ from slsim.Deflectors.deflector import Deflector
 
 # import pickle
 from unittest.mock import patch, MagicMock  # Added for mocking
+
 try:
     import jax
+
     use_jax = True
 except:
     use_jax = False
@@ -66,7 +68,7 @@ class TestLens(object):
                 # kwargs_variability={"MJD", "ps_mag_i"},  # This line will not be used in
                 # the testing but at least code go through this warning message.
                 cosmo=cosmo,
-                use_jax=use_jax
+                use_jax=use_jax,
             )
             second_brightest_image_cut = {"i": 30}
             if gg_lens.validity_test(

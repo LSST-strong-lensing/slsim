@@ -97,7 +97,7 @@ class LensPop(LensedPopulationBase):
                 source_class=_source,
                 cosmo=self.cosmo,
                 los_class=_los,
-                use_jax=self._use_jax
+                use_jax=self._use_jax,
             )
             if gg_lens.validity_test(**kwargs_lens_cut):
                 if verbose is True:
@@ -106,21 +106,24 @@ class LensPop(LensedPopulationBase):
             n += 1
 
     def _draw_source(self, mag_arc_limit=None, magnification_limit=2, **kwargs):
-        """
-        draw from source population considering some additional constraints to be fulfilled
+        """Draw from source population considering some additional constraints
+        to be fulfilled.
 
-        In particular, we are using a maximal intrinsic source magnitude 2 magnitudes fainter than the limit of a
-        detectable lensed arc.
+        In particular, we are using a maximal intrinsic source magnitude
+        2 magnitudes fainter than the limit of a detectable lensed arc.
 
         :param mag_arc_limit: dictionary with key of bands and values of
             magnitude limits of integrated lensed arc
         :type mag_arc_limit: dict with key of bands and values of
             magnitude limits
-        :param magnification_limit: lensing magnification limit that intrinsic sources fainter than
-            mag_source > mag_arc_limit + magnification_limit are ignored
+        :param magnification_limit: lensing magnification limit that
+            intrinsic sources fainter than mag_source > mag_arc_limit +
+            magnification_limit are ignored
         :type magnification_limit: float >=1
-        :param kwargs: additional Lens.validity_test() arguments that are not used
-        :return: Source() class that approximately satisfies additional selection
+        :param kwargs: additional Lens.validity_test() arguments that
+            are not used
+        :return: Source() class that approximately satisfies additional
+            selection
         """
         _source = self._sources.draw_source()
         if mag_arc_limit is None:
@@ -137,8 +140,10 @@ class LensPop(LensedPopulationBase):
                 return _source
             else:
                 n += 1
-        raise ValueError("selecting a source to match the mag_arc_limit %s did not work with %s tries."
-                         % (mag_arc_limit, magnification_limit))
+        raise ValueError(
+            "selecting a source to match the mag_arc_limit %s did not work with %s tries."
+            % (mag_arc_limit, magnification_limit)
+        )
 
     @property
     def deflector_number(self):
@@ -249,7 +254,7 @@ class LensPop(LensedPopulationBase):
                         source_class=_source,
                         cosmo=self.cosmo,
                         los_class=los_class,
-                        use_jax=self._use_jax
+                        use_jax=self._use_jax,
                     )
                     # Check the validity of the lens system
                     if lens_class.validity_test(**kwargs_lens_cuts):
