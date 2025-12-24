@@ -3,6 +3,7 @@ import numpy as np
 from slsim.Lenses.lens import Lens
 from typing import Optional
 from astropy.cosmology import Cosmology
+from astropy.units import Quantity
 from slsim.Sources.SourcePopulation.source_pop_base import SourcePopBase
 from slsim.LOS.los_pop import LOSPop
 from slsim.Deflectors.DeflectorPopulation.deflectors_base import DeflectorsBase
@@ -17,7 +18,7 @@ class LensPop(LensedPopulationBase):
         deflector_population: DeflectorsBase,
         source_population: SourcePopBase,
         cosmo: Optional[Cosmology] = None,
-        sky_area: Optional[float] = None,
+        sky_area: Optional[float or Quantity] = None,
         los_pop: Optional[LOSPop] = None,
         use_jax=True,
     ):
@@ -243,8 +244,8 @@ class LensPop(LensedPopulationBase):
                     )
                     if n == 0:
                         # TODO: this is only consistent for a single source. If there
-                        # are multiple sources at different redshift, this is not fully
-                        # acurate
+                        #  are multiple sources at different redshift, this is not fully
+                        #  accurate
                         los_class = self.los_pop.draw_los(
                             source_redshift=_source.redshift,
                             deflector_redshift=_deflector.redshift,

@@ -26,7 +26,7 @@ try:
     import jax
 
     use_jax = True
-except:
+except ImportError:
     use_jax = False
 
 

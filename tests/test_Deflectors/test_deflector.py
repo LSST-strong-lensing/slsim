@@ -128,7 +128,7 @@ class TestDeflector(object):
             import jax
 
             use_jax = True
-        except:
+        except ImportError:
             use_jax = False
         theta_E_infinity = self.deflector.theta_e_infinity(cosmo=None, use_jax=use_jax)
         assert theta_E_infinity < 15
