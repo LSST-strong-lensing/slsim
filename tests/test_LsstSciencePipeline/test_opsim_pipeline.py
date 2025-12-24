@@ -17,6 +17,7 @@ import pytest
 
 try:
     import jax
+
     print(jax.__path__)
 
     use_jax = True
