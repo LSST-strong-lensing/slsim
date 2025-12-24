@@ -129,7 +129,7 @@ class LensPop(LensedPopulationBase):
         if mag_arc_limit is None:
             return self._sources.draw_source()
         n = 0
-        while True or n > 1000:
+        while True and n < 1000:
             _source = self._sources.draw_source()
             condition = True
             for band, mag_limit_band in mag_arc_limit.items():
@@ -141,8 +141,8 @@ class LensPop(LensedPopulationBase):
             else:
                 n += 1
         raise ValueError(
-            "selecting a source to match the mag_arc_limit %s did not work with %s tries."
-            % (mag_arc_limit, magnification_limit)
+            "selecting a source to match the mag_arc_limit %s did not work with %s tries with a magnification cut at %s."
+            % (mag_arc_limit, 1000, magnification_limit)
         )
 
     @property

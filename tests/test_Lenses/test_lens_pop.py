@@ -263,7 +263,7 @@ def test_galaxies_lens_pop_instance():
         sky_area=sky_area,
         use_jax=use_jax,
     )
-    kwargs_lens_cut = {}
+    kwargs_lens_cut = {"mag_arc_limit": {"i": 30}}
     pes_lens_class = gg_lens_pop.select_lens_at_random(**kwargs_lens_cut)
     assert isinstance(pes_lens_class, Lens)
 

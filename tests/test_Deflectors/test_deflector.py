@@ -133,7 +133,7 @@ class TestDeflector(object):
         theta_E_infinity = self.deflector.theta_e_infinity(cosmo=None, use_jax=use_jax)
         assert theta_E_infinity < 15
         theta_E_infinity_new = self.deflector.theta_e_infinity(
-            cosmo=None, use_jax=use_jax
+            cosmo=None, use_jax=False
         )
         npt.assert_almost_equal(theta_E_infinity, theta_E_infinity_new, decimal=5)
 
