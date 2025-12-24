@@ -39,7 +39,9 @@ class TestDeflector(object):
         self.deflector_nfw = Deflector(
             deflector_type="NFW_HERNQUIST", **deflector_nfw_dict
         )
-        self.deflector_backup = Deflector(deflector_type="NFW_HERNQUIST", **deflector_nfw_dict)
+        self.deflector_backup = Deflector(
+            deflector_type="NFW_HERNQUIST", **deflector_nfw_dict
+        )
 
         self.deflector_epl = Deflector(deflector_type="EPL", **red_two)
 
