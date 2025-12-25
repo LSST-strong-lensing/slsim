@@ -1,4 +1,4 @@
-fsky: 0.0001 deg2
+fsky: 0.001 deg2
 z_max: 5.00
 m_min: 1.0E+12
 m_max: 1.0E+16

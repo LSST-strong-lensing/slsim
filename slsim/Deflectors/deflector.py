@@ -204,11 +204,15 @@ class Deflector(object):
         )
         return mag_arcsec2
 
-    def theta_e_infinity(self, cosmo, multi_plane=None):
+    def theta_e_infinity(self, cosmo, multi_plane=None, use_jax=True):
         """Einstein radius for a source at infinity (or well passed where
         galaxies exist.
 
         :param cosmo: astropy.cosmology instance
+        :param use_jax: use JAX-accelerated lens models for lensing
+            calculations, if available
+        :type use_jax: bool
+        :return: Einstein radius for source at infinite [arcsec]
         :type cosmo: ~astropy.cosmology class
         :param multi_plane: None for single-plane, 'Source' for multi-
             source plane, 'Deflector' for multi-deflector plane, or
@@ -245,16 +249,21 @@ class Deflector(object):
                 else:
                     num_main_lens_profiles = len(lens_mass_model_list)
                     lens_redshift_list = [self.redshift] * num_main_lens_profiles
-
-                use_jax = True
+                if use_jax is True:
+                    _use_jax = True
+                else:
+                    _use_jax = False
             else:
                 lens_redshift_list = None
-                use_jax = []
-                for profile in lens_mass_model_list:
-                    if profile in JAX_PROFILES:
-                        use_jax.append(True)
-                    else:
-                        use_jax.append(False)
+                if use_jax is True:
+                    _use_jax = []
+                    for profile in lens_mass_model_list:
+                        if profile in JAX_PROFILES:
+                            _use_jax.append(True)
+                        else:
+                            _use_jax.append(False)
+                else:
+                    _use_jax = False
 
             lens_model = LensModel(
                 lens_model_list=lens_mass_model_list,
@@ -264,7 +273,7 @@ class Deflector(object):
                 multi_plane=bool(multi_plane),
                 z_source=_z_source_infty,
                 cosmo=cosmo,
-                use_jax=use_jax,
+                use_jax=_use_jax,
             )
 
             lens_analysis = LensProfileAnalysis(lens_model=lens_model)

@@ -33,6 +33,7 @@ class Lens(LensedSystemBase):
         lens_equation_solver="lenstronomy_analytical",
         magnification_limit=0.01,
         los_class=None,
+        use_jax=True,
         multi_plane=None,
         shear=True,
         convergence=True,
@@ -54,6 +55,9 @@ class Lens(LensedSystemBase):
         :type magnification_limit: float >= 0
         :param los_class: line of sight dictionary (optional, takes these values instead of drawing from distribution)
         :type los_class: ~LOSIndividual() class object
+        :param use_jax: if True, will use JAX version of lenstronomy to do lensing calculations for models that are
+            supported in JAXtronomy
+        :type use_jax: bool
         :param multi_plane: None for single-plane, 'Source' for multi-source plane, 'Deflector' for multi-deflector plane,
             or 'Both' for both multi-deflector and multi-source plane
         :type multi_plane: None or str
@@ -83,6 +87,7 @@ class Lens(LensedSystemBase):
             z_source=self.max_redshift_source_class.redshift,
             cosmo=self.cosmo,
         )
+        self._use_jax = use_jax
 
     def source(self, index=0):
         """
@@ -435,7 +440,7 @@ class Lens(LensedSystemBase):
 
         if not hasattr(self, "_theta_E_infinity"):
             self._theta_E_infinity = self.deflector.theta_e_infinity(
-                self.cosmo, multi_plane=self.multi_plane
+                self.cosmo, multi_plane=self.multi_plane, use_jax=self._use_jax
             )
         return self._theta_E_infinity
 
@@ -811,7 +816,7 @@ class Lens(LensedSystemBase):
             morphology calculation. The kwargs_magnification_map is
             required for the microlensing calculation. If None, defaults
             are used corresponding to the source in the lens class.
-        :type kwargs_microlensing: dict
+        :type kwargs_microlensing: dict or None
         :return: point source magnitude for a single source, does not
             include the macro-magnification.
         :rtype: numpy array
@@ -1229,20 +1234,28 @@ class Lens(LensedSystemBase):
                 % self.deflector.deflector_type
             )
 
+        # For significant speedup, use these mass profiles from jaxtronomy
+
         # TODO: replace with change_source_redshift() currently not fully working
         # self._lens_model.change_source_redshift(z_source=z_source)
         if self.multi_plane:
             lens_redshift_list = self.deflector_redshift
-            use_jax = True
+            if self._use_jax is True:
+                use_jax = True
+            else:
+                use_jax = False
         else:
             lens_redshift_list = None
             # For significant speedup, use these mass profiles from jaxtronomy
-            use_jax = []
-            for profile in self._lens_mass_model_list:
-                if profile in JAX_PROFILES:
-                    use_jax.append(True)
-                else:
-                    use_jax.append(False)
+            if self._use_jax is True:
+                use_jax = []
+                for profile in self._lens_mass_model_list:
+                    if profile in JAX_PROFILES:
+                        use_jax.append(True)
+                    else:
+                        use_jax.append(False)
+            else:
+                use_jax = False
         lens_model = LensModel(
             lens_model_list=self._lens_mass_model_list,
             cosmo=self.cosmo,

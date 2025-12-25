@@ -16,6 +16,15 @@ from slsim.Deflectors.deflector import Deflector
 # import pickle
 from unittest.mock import patch, MagicMock  # Added for mocking
 
+try:
+    import jax
+
+    print(jax.__path__)
+
+    use_jax = True
+except ImportError:
+    use_jax = False
+
 
 class TestLens(object):
     # pytest.fixture(scope='class')
@@ -61,6 +70,7 @@ class TestLens(object):
                 # kwargs_variability={"MJD", "ps_mag_i"},  # This line will not be used in
                 # the testing but at least code go through this warning message.
                 cosmo=cosmo,
+                use_jax=use_jax,
             )
             second_brightest_image_cut = {"i": 30}
             if gg_lens.validity_test(
@@ -136,6 +146,7 @@ class TestLens(object):
             los_class=self.los_individual,
             lens_equation_solver="lenstronomy_analytical",
             cosmo=cosmo,
+            use_jax=use_jax,
         )
 
     def test_validity_test(self):
@@ -239,6 +250,7 @@ class TestLens(object):
             source_class=self.source,
             deflector_class=self.deflector,
             cosmo=cosmo,
+            use_jax=use_jax,
         )
         while True:
             gg_lens.validity_test()
@@ -249,6 +261,7 @@ class TestLens(object):
             source_class=self.source,
             deflector_class=self.deflector,
             cosmo=cosmo,
+            use_jax=use_jax,
         )
         while True:
             gg_lens.validity_test()
@@ -288,6 +301,7 @@ class TestLens(object):
                 deflector_class=self.deflector2,
                 lens_equation_solver="lenstronomy_default",
                 cosmo=cosmo,
+                use_jax=use_jax,
             )
             if gg_lens.validity_test():
                 # self.gg_lens = gg_lens
@@ -318,6 +332,7 @@ class TestLens(object):
                 deflector_class=self.deflector3,
                 lens_equation_solver="lenstronomy_default",
                 cosmo=cosmo,
+                use_jax=use_jax,
             )
             if cg_lens.validity_test(max_image_separation=50.0):
                 break
@@ -478,6 +493,7 @@ def pes_lens_instance():
             source_class=source4,
             deflector_class=deflector4,
             cosmo=cosmo,
+            use_jax=use_jax,
         )
         second_brightest_image_cut = {"i": 30}
         if pes_lens.validity_test(
@@ -599,6 +615,7 @@ def lens_instance_with_variability():
         deflector_class=deflector_quasar,
         cosmo=cosmo,
         los_class=los_class,
+        use_jax=use_jax,
     )
 
     return lens_class
@@ -1042,6 +1059,7 @@ def supernovae_lens_instance():
             source_class=source5,
             deflector_class=deflector5,
             cosmo=cosmo,
+            use_jax=use_jax,
         )
         if supernovae_lens.validity_test():
             supernovae_lens = supernovae_lens
@@ -1110,6 +1128,7 @@ class TestDifferentLens(object):
             cosmo=self.cosmo,
             lens_equation_solver="lenstronomy_general",
             multi_plane="Source",
+            use_jax=use_jax,
         )
         subhalos_table = Table.read(
             os.path.join(path, "../TestData/subhalos_table.fits"), format="fits"
@@ -1139,6 +1158,7 @@ class TestDifferentLens(object):
             cosmo=self.cosmo,
             lens_equation_solver="lenstronomy_general",
             multi_plane="Source",
+            use_jax=use_jax,
         )
 
     def test_different_setting(self):
@@ -1155,6 +1175,7 @@ class TestDifferentLens(object):
                 source_redshift=self.source6.redshift,
                 deflector_redshift=self.deflector6.redshift,
             ),
+            use_jax=use_jax,
         )
         assert gg_lens.external_shear >= 0
         assert isinstance(gg_lens.external_convergence, float)
@@ -1174,6 +1195,7 @@ class TestDifferentLens(object):
                 source_redshift=self.source6.redshift,
                 deflector_redshift=self.deflector6.redshift,
             ),
+            use_jax=use_jax,
         )
         assert gg_lens_2.external_shear >= 0
         assert isinstance(gg_lens_2.external_convergence, float)
@@ -1188,6 +1210,7 @@ class TestDifferentLens(object):
                 source_redshift=self.source6.redshift,
                 deflector_redshift=self.deflector6.redshift,
             ),
+            use_jax=use_jax,
         )
         assert gg_lens_3.external_convergence == 0
         assert gg_lens_3.external_shear == 0
@@ -1206,6 +1229,7 @@ class TestDifferentLens(object):
                     deflector_redshift=self.deflector6.redshift,
                     source_redshift=self.source6.redshift,
                 ),
+                use_jax=use_jax,
             )
             gg_lens_4.external_convergence()
 
@@ -1216,6 +1240,7 @@ class TestDifferentLens(object):
             deflector_class=self.deflector6,
             cosmo=self.cosmo,
             los_class=los,
+            use_jax=use_jax,
         )
         image_number = gg_lens_number.image_number
         assert (
@@ -1227,6 +1252,7 @@ class TestDifferentLens(object):
             deflector_class=self.deflector6,
             cosmo=self.cosmo,
             los_class=los,
+            use_jax=use_jax,
         )
         kwargs_model = gg_lens_multisource.lenstronomy_kwargs()[0]
         kwargs_model_keys = kwargs_model.keys()
@@ -1310,6 +1336,7 @@ def supernovae_lens_instance_double_sersic_multisource():
             deflector_class=deflector,
             source_class=[source, source],
             cosmo=cosmo,
+            use_jax=use_jax,
         )
         if supernovae_lens.validity_test():
             supernovae_lens = supernovae_lens
@@ -1385,17 +1412,20 @@ class TestMultiSource(object):
             deflector_class=self.deflector,
             source_class=self.source1,
             cosmo=self.cosmo,
+            use_jax=use_jax,
         )
         self.lens_class2 = Lens(
             deflector_class=self.deflector,
             source_class=self.source2,
             cosmo=self.cosmo,
+            use_jax=use_jax,
         )
         self.lens_class3 = Lens(
             deflector_class=self.deflector,
             source_class=[self.source1, self.source2],
             cosmo=self.cosmo,
             lens_equation_solver="lenstronomy_general",
+            use_jax=use_jax,
         )
 
         self.lens_class3_analytical = Lens(
@@ -1403,6 +1433,7 @@ class TestMultiSource(object):
             source_class=[self.source1, self.source2],
             cosmo=self.cosmo,
             lens_equation_solver="lenstronomy_analytical",
+            use_jax=use_jax,
         )
 
         deflector_nfw_dict = {
@@ -1427,6 +1458,7 @@ class TestMultiSource(object):
             source_class=self.source1,
             cosmo=self.cosmo,
             lens_equation_solver="lenstronomy_analytical",
+            use_jax=use_jax,
         )
 
     def test_point_source_arrival_time_multi(self):
@@ -1602,6 +1634,7 @@ class TestSlhammock(object):
             deflector_class=deflector,
             cosmo=self.cosmo,
             los_class=los_class,
+            use_jax=use_jax,
         )
 
     def test_theta_e_infinity(self):
