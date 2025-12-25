@@ -9,6 +9,8 @@ from slsim.LOS.los_pop import LOSPop
 from slsim.Deflectors.DeflectorPopulation.deflectors_base import DeflectorsBase
 from slsim.Lenses.lensed_population_base import LensedPopulationBase
 
+from tqdm import tqdm
+
 
 class LensPop(LensedPopulationBase):
     """Class to perform samples of lens population."""
@@ -191,6 +193,7 @@ class LensPop(LensedPopulationBase):
         kwargs_lens_cuts,
         multi_source=False,
         speed_factor=1,
+        verbose=False,
     ):
         """Return full population list of all lenses within the area.
 
@@ -211,6 +214,9 @@ class LensPop(LensedPopulationBase):
             decreased to speed up the calculations.
         :return: List of Lens instances with parameters of the
             deflectors and lens and source light.
+        :param verbose: If True, prints progress information. Default is
+            False.
+        :type verbose: bool
         :rtype: list
         """
 
@@ -225,7 +231,11 @@ class LensPop(LensedPopulationBase):
         #        print(np.int(num_lenses * num_sources_tested_mean))
 
         # Draw a population of galaxy-galaxy lenses within the area.
-        for _ in range(int(num_lenses / speed_factor)):
+        for _ in tqdm(
+            range(int(num_lenses / speed_factor)),
+            disable=not verbose,
+            desc="Drawing lens population",
+        ):
             _deflector = self._lens_galaxies.draw_deflector()
             _deflector.update_center(deflector_area=0.01)
             theta_e_infinity = _deflector.theta_e_infinity(cosmo=self.cosmo)
