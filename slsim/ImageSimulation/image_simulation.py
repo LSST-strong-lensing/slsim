@@ -18,6 +18,8 @@ def simulate_image(
     observatory="LSST",
     kwargs_psf=None,
     kwargs_numerics=None,
+    with_source=True,
+    with_deflector=True,
     **kwargs
 ):
     """Creates an image of a selected lens with noise.
@@ -38,6 +40,8 @@ def simulate_image(
     :param kwargs_numerics: options are
         "point_source_supersampling_factor", "supersampling_factor", and
         more in lenstronomy.ImSim.Numerics.numerics class
+    :param with_source: bool, if True computes source
+    :param with_deflector: bool, if True includes deflector light
     :type kwargs: dict
     :return: simulated image
     :rtype: 2d numpy array
@@ -70,6 +74,8 @@ def simulate_image(
         kwargs_source=kwargs_source,
         kwargs_lens_light=kwargs_lens_light,
         kwargs_ps=kwargs_ps,
+        source_add=with_source,
+        lens_light_add=with_deflector,
     )
     if add_noise:
         image += sim_api.noise_for_model(model=image)
