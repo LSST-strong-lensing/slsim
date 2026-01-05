@@ -119,12 +119,23 @@ class Quasar(SourceBase):
                 provided_lsst_bands = set(lsst_bands) & set(self._kwargs_variability)
 
                 # Roman Bands
-                roman_bands = ["F062", "F087", "F106", "F129", "F158", "F184", "F146", "F213"]
+                roman_bands = [
+                    "F062",
+                    "F087",
+                    "F106",
+                    "F129",
+                    "F158",
+                    "F184",
+                    "F146",
+                    "F213",
+                ]
                 provided_roman_bands = set(roman_bands) & set(self._kwargs_variability)
 
                 # Euclid Bands
                 euclid_bands = ["VIS", "Y", "H", "J"]
-                provided_euclid_bands = set(euclid_bands) & set(self._kwargs_variability)
+                provided_euclid_bands = set(euclid_bands) & set(
+                    self._kwargs_variability
+                )
 
                 # The set "provided_lsst_bands" is no longer ordered.
                 # Therefore, create a list of speclite names in the new order
