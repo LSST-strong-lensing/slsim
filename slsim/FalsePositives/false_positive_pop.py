@@ -74,11 +74,11 @@ class FalsePositivePop(object):
 
         for _ in range(source_number):
             source = self._sources.draw_source(z_max=z_max)
-            if area is not None:
-                source.update_center(area=area)
             # If no source is available, return None
             if source is None:
                 return None
+            if area is not None:
+                source.update_center(area=area)
             source_list.append(source)
         if source_number == 1:
             sources = source_list[0]
