@@ -1,3 +1,5 @@
+import copy
+
 from astropy.coordinates import SkyCoord
 import datetime
 import numpy as np
@@ -95,11 +97,19 @@ def simulate_roman_image(
     kwargs_single_band = image_quality_lenstronomy.kwargs_single_band(
         observatory=observatory, band=band, **kwargs
     )
+    galsim_psf = get_psf(band, detector, detector_pos, oversample, psf_directory)
 
     _exposure_time = kwargs_single_band["exposure_time"]
 
     # Unconvolved image will be drawn at oversampled pixel scale
+    kwargs_single_band_point_source = copy.deepcopy(kwargs_single_band)
     kwargs_single_band["pixel_scale"] /= oversample
+
+    kwargs_single_band_point_source["psf_type"] = "PIXEL"
+    # get array of supersampled PSF kernel
+    kwargs_single_band_point_source["kernel_point_source"] = galsim_psf.image.array
+    kwargs_single_band_point_source["point_source_supersampling_factor"] = oversample
+
     sim_api = SimAPI(
         numpix=num_pix * oversample,
         kwargs_single_band=kwargs_single_band,
@@ -117,7 +127,7 @@ def simulate_roman_image(
     image_model = sim_api.image_model_class(kwargs_numerics)
 
     kwargs_lens = kwargs_params.get("kwargs_lens", None)
-    # Draws the unconvolved image
+    # Draws the unconvolved image without point source
     array = _exposure_time * image_model.image(
         kwargs_lens=kwargs_lens,
         kwargs_source=kwargs_source,
@@ -126,6 +136,30 @@ def simulate_roman_image(
         unconvolved=True,
         source_add=with_source,
         lens_light_add=with_deflector,
+        point_source_add=False,
+    )
+
+    # generates point source image with lenstronomy
+    sim_api_ps = SimAPI(
+        numpix=num_pix,
+        kwargs_single_band=kwargs_single_band_point_source,
+        kwargs_model=kwargs_model,
+    )
+    kwargs_numerics_ps = {
+        "point_source_supersampling_factor": oversample,
+        "supersampling_factor": oversample,
+    }
+    image_model_ps = sim_api_ps.image_model_class(kwargs_numerics_ps)
+
+    # Draws the point source
+    image_ps = _exposure_time * image_model_ps.image(
+        kwargs_lens=kwargs_lens,
+        kwargs_source=kwargs_source,
+        kwargs_lens_light=kwargs_lens_light,
+        kwargs_ps=kwargs_ps,
+        unconvolved=False,
+        source_add=False,
+        lens_light_add=False,
         point_source_add=True,
     )
 
@@ -137,13 +171,15 @@ def simulate_roman_image(
     )
 
     # Gets psf and convolve
-    galsim_psf = get_psf(band, detector, detector_pos, oversample, psf_directory)
     convolved = galsim.Convolve(interp, galsim_psf)
 
     # Draw interpolated image at the original (not oversampled) pixel scale
     im = galsim.ImageF(num_pix, num_pix, scale=0.11)
     im.setOrigin(0, 0)
     image = convolved.drawImage(im)
+
+    # add point sources
+    image += image_ps
 
     if add_noise:
         # Obtain sky background corresponding to certain band and add it to the image
