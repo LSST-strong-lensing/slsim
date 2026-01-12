@@ -114,10 +114,7 @@ class EllipticalLensGalaxies(DeflectorsBase):
 
 
 def elliptical_projected_eccentricity(
-    ellipticity,
-    light2mass_e_scaling=1,
-    light2mass_e_scatter=0.1,
-    **kwargs
+    ellipticity, light2mass_e_scaling=1, light2mass_e_scatter=0.1, **kwargs
 ):
     """Projected eccentricity of elliptical galaxies as a function of other
     deflector parameters.
@@ -132,7 +129,8 @@ def elliptical_projected_eccentricity(
         between light and mass eccentricity
     :param kwargs: deflector properties
     :type kwargs: dict
-    :return: e1_light, e2_light, e1_mass, e2_mass eccentricity components
+    :return: e1_light, e2_light, e1_mass, e2_mass eccentricity
+        components
     """
     e_light = param_util.epsilon2e(ellipticity)
     # render uniform light direction
