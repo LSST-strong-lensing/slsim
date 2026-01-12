@@ -138,7 +138,8 @@ class SupernovaEvent(SourceBase):
         :param band: Imaging band
         :type band: str
         :param image_observation_times: Images observation time for an
-            image.
+            image. If None, takes the peak magnitude
+        :type image_observation_times: array or None
         :return: Magnitude of the point source in the specified band
         :rtype: float
         """
