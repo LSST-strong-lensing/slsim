@@ -45,8 +45,6 @@ class Quasar(SourceBase):
             a dictionary and this dict should be passed to the Variability class.
         :type kwargs_variability: list of str
         :param kwargs_variability_model: Pre-computed variabilities for each band (default=None)
-        :param lightcurve_time: observation time array for lightcurve in unit of days.
-        :type lightcurve_time: array
         """
 
         super().__init__(
