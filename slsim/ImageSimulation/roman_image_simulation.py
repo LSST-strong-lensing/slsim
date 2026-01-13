@@ -155,7 +155,9 @@ def simulate_roman_image(
         kwargs_single_band_point_source["psf_type"] = "PIXEL"
         # get array of supersampled PSF kernel
         kwargs_single_band_point_source["kernel_point_source"] = galsim_psf.image.array
-        kwargs_single_band_point_source["point_source_supersampling_factor"] = oversample
+        kwargs_single_band_point_source["point_source_supersampling_factor"] = (
+            oversample
+        )
 
         # generates point source image with lenstronomy
         sim_api_ps = SimAPI(
