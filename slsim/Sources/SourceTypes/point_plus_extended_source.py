@@ -74,7 +74,12 @@ class PointPlusExtendedSource(PointSource, ExtendedSource):
 
     def update_microlensing_kwargs_source_morphology(self, kwargs_source_morphology):
         """Update the microlensing kwargs_source_morphology for the point
-        source."""
+        source.
+        
+        :param kwargs_source_morphology: Dictionary of source morphology
+            parameters. See Microlensing.source_morphology for details.
+        :return: Updated dictionary of source morphology parameters.
+        """
         return self._point_source.update_microlensing_kwargs_source_morphology(
             kwargs_source_morphology=kwargs_source_morphology
         )
