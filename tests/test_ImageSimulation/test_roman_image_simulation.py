@@ -119,6 +119,32 @@ def test_simulate_roman_image_with_psf_and_noise():
     assert final_image_lenstronomy.shape == (45, 45)
     npt.assert_almost_equal((final_image_galsim - final_image_lenstronomy) / (final_image_galsim + final_image_lenstronomy) / 2, 0, decimal=1)
 
+    final_image_galsim = simulate_roman_image(
+        lens_class=SNIa_Lens,
+        band=BAND,
+        num_pix=45,
+        oversample=3,
+        add_noise=True,
+        psf_directory=PSF_DIRECTORY,
+        galsim_convolve=True
+    )
+
+    final_image_lenstronomy = simulate_roman_image(
+        lens_class=SNIa_Lens,
+        band=BAND,
+        num_pix=45,
+        oversample=3,
+        add_noise=True,
+        psf_directory=PSF_DIRECTORY,
+        galsim_convolve=False,
+    )
+
+    assert final_image_galsim.shape == (45, 45)
+    assert final_image_lenstronomy.shape == (45, 45)
+    npt.assert_almost_equal(
+        (final_image_galsim - final_image_lenstronomy) / (final_image_galsim + final_image_lenstronomy) / 2, 0,
+        decimal=1)
+
 
 def test_simulate_roman_image_with_psf_without_noise():
     with open(
