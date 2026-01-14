@@ -1,6 +1,6 @@
 mag_lim: 30
 fsky: 0.1 deg2
-z_range: !numpy.arange [0, 5.01, 0.1]
+z_range: !numpy.arange [0.0, 5.01, 0.01]
 M_star_blue: !astropy.modeling.models.Linear1D [-0.9408582, -20.40492365]
 phi_star_blue: !astropy.modeling.models.Exponential1D [0.00370253, -9.73858]
 alpha_blue: -1.3
