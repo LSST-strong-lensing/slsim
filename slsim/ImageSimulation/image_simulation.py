@@ -20,6 +20,7 @@ def simulate_image(
     kwargs_numerics=None,
     with_source=True,
     with_deflector=True,
+    with_point_source=True,
     **kwargs
 ):
     """Creates an image of a selected lens with noise.
@@ -76,6 +77,7 @@ def simulate_image(
         kwargs_ps=kwargs_ps,
         source_add=with_source,
         lens_light_add=with_deflector,
+        point_source_add=with_point_source,
     )
     if add_noise:
         image += sim_api.noise_for_model(model=image)

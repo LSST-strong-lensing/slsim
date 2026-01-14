@@ -1,5 +1,6 @@
 import astropy.cosmology
 import numpy as np
+import numpy.testing as npt
 from slsim.Lenses.lens import Lens
 from slsim.ImageSimulation.roman_image_simulation import (
     simulate_roman_image,
@@ -94,15 +95,65 @@ PSF_DIRECTORY = os.path.join(os.path.dirname(__file__), "../..", "data", "stpsf"
 
 # NOTE: Galsim is required which is not supported on Windows
 def test_simulate_roman_image_with_psf_and_noise():
-    final_image = simulate_roman_image(
+    final_image_galsim = simulate_roman_image(
         lens_class=LENS,
         band=BAND,
         num_pix=45,
         oversample=3,
         add_noise=True,
         psf_directory=PSF_DIRECTORY,
+        galsim_convolve=True,
     )
-    assert final_image.shape == (45, 45)
+
+    final_image_lenstronomy = simulate_roman_image(
+        lens_class=LENS,
+        band=BAND,
+        num_pix=45,
+        oversample=3,
+        add_noise=True,
+        psf_directory=PSF_DIRECTORY,
+        galsim_convolve=False,
+    )
+
+    assert final_image_galsim.shape == (45, 45)
+    assert final_image_lenstronomy.shape == (45, 45)
+    npt.assert_almost_equal(
+        (final_image_galsim - final_image_lenstronomy)
+        / (final_image_galsim + final_image_lenstronomy)
+        / 2,
+        0,
+        decimal=1,
+    )
+
+    final_image_galsim = simulate_roman_image(
+        lens_class=SNIa_Lens,
+        band=BAND,
+        num_pix=45,
+        oversample=3,
+        add_noise=True,
+        psf_directory=PSF_DIRECTORY,
+        galsim_convolve=True,
+    )
+
+    final_image_lenstronomy = simulate_roman_image(
+        lens_class=SNIa_Lens,
+        band=BAND,
+        num_pix=45,
+        oversample=3,
+        add_noise=True,
+        psf_directory=PSF_DIRECTORY,
+        galsim_convolve=False,
+    )
+
+    assert final_image_galsim.shape == (45, 45)
+    assert final_image_lenstronomy.shape == (45, 45)
+    npt.assert_almost_equal(
+        (final_image_galsim - final_image_lenstronomy)
+        / (final_image_galsim + final_image_lenstronomy)
+        / 2,
+        0,
+        decimal=1,
+    )
 
 
 def test_simulate_roman_image_with_psf_without_noise():
