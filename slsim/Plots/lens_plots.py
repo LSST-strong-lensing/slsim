@@ -51,34 +51,33 @@ class LensingPlots(object):
             None
         :param kwargs: additional keyword arguments for make_lupton_rgb
         """
+        main_kwargs = {
+            "lens_class": lens_class,
+            "num_pix": self.num_pix,
+            "add_noise": add_noise,
+            "observatory": self._observatory,
+        }
+
         if self._observatory == "Roman":
             # NOTE: Galsim is required which is not supported on Windows
             make_image = simulate_roman_image
+            main_kwargs.pop("observatory")
         else:
             make_image = simulate_image
 
         image_r = make_image(
-            lens_class=lens_class,
             band=rgb_band_list[0],
-            num_pix=self.num_pix,
-            add_noise=add_noise,
-            observatory=self._observatory,
+            **main_kwargs,
             **self._kwargs,
         )
         image_g = make_image(
-            lens_class=lens_class,
             band=rgb_band_list[1],
-            num_pix=self.num_pix,
-            add_noise=add_noise,
-            observatory=self._observatory,
+            **main_kwargs,
             **self._kwargs,
         )
         image_b = make_image(
-            lens_class=lens_class,
             band=rgb_band_list[2],
-            num_pix=self.num_pix,
-            add_noise=add_noise,
-            observatory=self._observatory,
+            **main_kwargs,
             **self._kwargs,
         )
 
