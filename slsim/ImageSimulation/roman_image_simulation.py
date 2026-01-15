@@ -120,7 +120,9 @@ def simulate_roman_image(
     galsim_psf = get_psf(band, detector, detector_pos, oversample, psf_directory)
 
     if exposure_time is None:
-        _exposure_time = kwargs_single_band["exposure_time"] * kwargs_single_band["num_exposures"]
+        _exposure_time = (
+            kwargs_single_band["exposure_time"] * kwargs_single_band["num_exposures"]
+        )
     else:
         _exposure_time = exposure_time
 
@@ -500,7 +502,9 @@ def lens_image_roman(
         observatory="Roman", band=band, survey_mode=survey_mode
     )
     if exposure_time is None:
-        _exposure_time = kwargs_single_band["exposure_time"] * kwargs_single_band["num_exposures"]
+        _exposure_time = (
+            kwargs_single_band["exposure_time"] * kwargs_single_band["num_exposures"]
+        )
     else:
         _exposure_time = exposure_time
     if add_noise is True:
