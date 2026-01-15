@@ -495,7 +495,7 @@ def lens_image_roman(
         observatory="Roman", band=band, survey_mode=survey_mode
     )
     if exposure_time is None:
-        _exposure_time = kwargs_single_band["exposure_time"]
+        _exposure_time = kwargs_single_band["exposure_time"] * kwargs_single_band["num_exposures"]
     else:
         _exposure_time = exposure_time
     if add_noise is True:
