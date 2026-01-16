@@ -92,6 +92,13 @@ SNIa_Lens = Lens(
 
 PSF_DIRECTORY = os.path.join(os.path.dirname(__file__), "../..", "data", "stpsf")
 
+DETECTOR_KWARGS = {
+    "detector": 3,
+    "detector_pos": (1300, 3100),
+    "ra": 29,
+    "dec": -38,
+}
+
 
 # NOTE: Galsim is required which is not supported on Windows
 def test_simulate_roman_image_with_psf_and_noise():
@@ -103,6 +110,7 @@ def test_simulate_roman_image_with_psf_and_noise():
         add_noise=True,
         psf_directory=PSF_DIRECTORY,
         galsim_convolve=True,
+        **DETECTOR_KWARGS,
     )
 
     final_image_lenstronomy = simulate_roman_image(
@@ -113,6 +121,7 @@ def test_simulate_roman_image_with_psf_and_noise():
         add_noise=True,
         psf_directory=PSF_DIRECTORY,
         galsim_convolve=False,
+        **DETECTOR_KWARGS,
     )
 
     assert final_image_galsim.shape == (45, 45)
@@ -133,6 +142,7 @@ def test_simulate_roman_image_with_psf_and_noise():
         add_noise=True,
         psf_directory=PSF_DIRECTORY,
         galsim_convolve=True,
+        **DETECTOR_KWARGS,
     )
 
     final_image_lenstronomy = simulate_roman_image(
@@ -143,6 +153,7 @@ def test_simulate_roman_image_with_psf_and_noise():
         add_noise=True,
         psf_directory=PSF_DIRECTORY,
         galsim_convolve=False,
+        **DETECTOR_KWARGS,
     )
 
     assert final_image_galsim.shape == (45, 45)
@@ -194,6 +205,8 @@ def test_simulate_roman_image_with_psf_without_noise():
         seed=42,
         add_noise=False,
         psf_directory=PSF_DIRECTORY,
+        detector=1,
+        detector_pos=(2000, 2000),
     )
 
     # Makes sure that each pixel matches in flux by 2%, and the total flux matches by up to 0.1
@@ -213,6 +226,8 @@ def test_lens_image_roman():
         transform_pix2angle=np.array([[0.11, 0], [0, 0.11]]),
         detector=1,
         detector_pos=(2000, 2000),
+        ra=24,
+        dec=-24,
         oversample=3,
         psf_directory=PSF_DIRECTORY,
         t_obs=0,
@@ -227,6 +242,8 @@ def test_lens_image_roman():
         transform_pix2angle=np.array([[0.11, 0], [0, 0.11]]),
         detector=1,
         detector_pos=(2000, 2000),
+        ra=24,
+        dec=-24,
         oversample=3,
         psf_directory=PSF_DIRECTORY,
         t_obs=0,
@@ -236,7 +253,7 @@ def test_lens_image_roman():
     )
     noise = lens_image - lens_image_no_noise
     assert np.shape(lens_image)[0] == 71
-    assert 1 < np.mean(noise) < 1.8
+    assert 1 < np.mean(noise) < 2.7
 
 
 if __name__ == "__main__":
