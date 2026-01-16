@@ -54,7 +54,6 @@ def simulate_roman_image(
     date=datetime.datetime(year=2027, month=7, day=7, hour=0, minute=0, second=0),
     psf_directory=None,
     galsim_convolve=True,
-    **kwargs,
 ):
     """Creates an image of a selected lens with noise.
 
@@ -149,7 +148,7 @@ def simulate_roman_image(
             "supersampling_factor": 1,
         }
         image_model = sim_api.image_model_class(kwargs_numerics)
-        # Draws the unconvolved image without point source
+        # Draws the unconvolved image with point source painted on single pixel
         array = _exposure_time * image_model.image(
             kwargs_lens=kwargs_lens,
             kwargs_source=kwargs_source,
