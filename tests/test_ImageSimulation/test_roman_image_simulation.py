@@ -206,7 +206,7 @@ def test_simulate_roman_image_with_psf_without_noise():
         add_noise=False,
         psf_directory=PSF_DIRECTORY,
         detector=1,
-        detector_pos=(2000,2000),
+        detector_pos=(2000, 2000),
     )
 
     # Makes sure that each pixel matches in flux by 2%, and the total flux matches by up to 0.1
