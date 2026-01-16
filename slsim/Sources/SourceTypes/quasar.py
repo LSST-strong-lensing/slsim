@@ -45,8 +45,6 @@ class Quasar(SourceBase):
             a dictionary and this dict should be passed to the Variability class.
         :type kwargs_variability: list of str
         :param kwargs_variability_model: Pre-computed variabilities for each band (default=None)
-        :param lightcurve_time: observation time array for lightcurve in unit of days.
-        :type lightcurve_time: array
         """
 
         super().__init__(
@@ -118,13 +116,42 @@ class Quasar(SourceBase):
                 lsst_bands = ["u", "g", "r", "i", "z", "y"]
                 provided_lsst_bands = set(lsst_bands) & set(self._kwargs_variability)
 
+                # Roman Bands
+                roman_bands = [
+                    "F062",
+                    "F087",
+                    "F106",
+                    "F129",
+                    "F158",
+                    "F184",
+                    "F146",
+                    "F213",
+                ]
+                provided_roman_bands = set(roman_bands) & set(self._kwargs_variability)
+
+                # Euclid Bands
+                euclid_bands = ["VIS", "Y", "H", "J"]
+                provided_euclid_bands = set(euclid_bands) & set(
+                    self._kwargs_variability
+                )
+
                 # The set "provided_lsst_bands" is no longer ordered.
                 # Therefore, create a list of speclite names in the new order
                 speclite_names = []
+                provided_bands = []
 
                 # change name to be compatible with speclite filter names
                 for band in provided_lsst_bands:
                     speclite_names.append("lsst2016-" + band)
+                    provided_bands.append(band)
+
+                for band in provided_roman_bands:
+                    speclite_names.append("Roman-" + band)
+                    provided_bands.append(band)
+
+                for band in provided_euclid_bands:
+                    speclite_names.append("Euclid-" + band)
+                    provided_bands.append(band)
 
                 # determine mean magnitudes for each band
                 mean_magnitudes = self.agn_class.get_mean_mags(speclite_names)
@@ -135,11 +162,11 @@ class Quasar(SourceBase):
                 # magnitudes of quasar at all bands so that we can access them at
                 # anytime.
                 self.source_dict = add_mean_mag_to_source_table(
-                    self.source_dict, mean_magnitudes, provided_lsst_bands
+                    self.source_dict, mean_magnitudes, provided_bands
                 )
 
                 # Calculate light curve in each band
-                for index, band in enumerate(provided_lsst_bands):
+                for index, band in enumerate(provided_bands):
 
                     # Define name for point source mags
                     filter_name = "ps_mag_" + band

@@ -67,3 +67,10 @@ def test_kwargs_model(supernovae_lens_instance):
 
     kwargs_model, kwargs_param = supernovae_lens_instance.lenstronomy_kwargs(band="i")
     assert kwargs_model["point_source_model_list"] == ["LENSED_POSITION"]
+
+
+def test_update_microlensing_kwargs_source_morphology(supernovae_lens_instance):
+    pp_source = supernovae_lens_instance._source[0]._source
+    kwargs_morph = {}
+    result = pp_source.update_microlensing_kwargs_source_morphology(kwargs_morph)
+    assert isinstance(result, dict)
