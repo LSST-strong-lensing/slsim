@@ -87,7 +87,7 @@ params_qsogen = {
     "M_i": None,  # Absolute Magnitude for scaling
 }
 
-# These are sourced from Viitanen++ in prep. for the AGILE project. 
+# These are sourced from Viitanen++ in prep. for the AGILE project.
 # This is more accurate for simulating quasar-only SEDs without host galaxy contamination.
 params_agile = {
     # -- Continuum Slopes & Breaks (AGILE Fig 5) --

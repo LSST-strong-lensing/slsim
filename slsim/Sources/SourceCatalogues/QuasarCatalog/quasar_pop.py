@@ -8,9 +8,7 @@ from astropy.table import Table, vstack
 import os
 from pathlib import Path
 import speclite.filters
-from slsim.Sources.SourceCatalogues.QuasarCatalog.qsogen import (
-    Quasar_sed, params_agile
-)
+from slsim.Sources.SourceCatalogues.QuasarCatalog.qsogen import Quasar_sed, params_agile
 from slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_host_match import (
     QuasarHostMatch,
 )
