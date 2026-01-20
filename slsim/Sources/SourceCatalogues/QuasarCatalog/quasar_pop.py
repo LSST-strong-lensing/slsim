@@ -7,6 +7,12 @@ from astropy.units import Quantity
 from astropy.table import Table, vstack
 import os
 from pathlib import Path
+import speclite.filters
+
+# sed QSOGEN imports
+from slsim.Sources.SourceCatalogues.QuasarCatalog.qsogen_files.qsosed import Quasar_sed
+from slsim.Sources.SourceCatalogues.QuasarCatalog.qsogen_files.config import params_agile
+
 from slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_host_match import (
     QuasarHostMatch,
 )
@@ -41,6 +47,8 @@ class QuasarRate(object):
         noise: bool = True,
         redshifts: np.ndarray = None,
         host_galaxy_candidate: Table = None,
+        use_qsogen_sed: bool = False,
+        qsogen_bands: list = None,
     ):
         """Initializes the QuasarRate class with given parameters.
 
@@ -76,6 +84,9 @@ class QuasarRate(object):
          is used to match with the supernova population. If None, the galaxy catalog is
          generated within this class.
         :type host_galaxy_candidate: `~astropy.table.Table`
+        :param use_qsogen_sed: If True, uses qsogen/qsosed to generate realistic SEDs and compute magnitudes.
+        :param qsogen_bands: List of strings for speclite filters (e.g., ['lsst2023-u', 'lsst2023-g']).
+                             Defaults to LSST bands if None.
         """
         self.zeta = zeta
         self.xi = xi
@@ -93,6 +104,16 @@ class QuasarRate(object):
             np.array(redshifts) if redshifts is not None else np.linspace(0.1, 5.0, 100)
         )
         self.host_galaxy_candidate = host_galaxy_candidate
+        
+        # SED Generation Configuration
+        self.use_qsogen_sed = use_qsogen_sed
+        if qsogen_bands is None:
+            self.qsogen_bands = [
+                'lsst2023-u', 'lsst2023-g', 'lsst2023-r', 
+                'lsst2023-i', 'lsst2023-z', 'lsst2023-y'
+            ]
+        else:
+            self.qsogen_bands = qsogen_bands
 
         # Construct the dynamic path to the data file
         base_path = Path(os.path.dirname(__file__))
@@ -342,6 +363,57 @@ class QuasarRate(object):
             inverse_cdf_dict[redshift] = inverse_cdf
 
         return inverse_cdf_dict
+    
+    def _calculate_sed_magnitudes(self, z, M_i, target_apparent_i_mag, filters):
+        """
+        Helper function to compute magnitudes from SED using speclite.
+        
+        We generate the SED using qsogen (with AGILE params). To ensure consistency 
+        with the sampled apparent magnitude (ps_mag_i), we 'anchor' the 
+        SED calculation to the i-band.
+        
+        :param z: Redshift of the quasar
+        :param M_i: Absolute magnitude (used in qsosed to set Baldwin effect slopes etc)
+        :param target_apparent_i_mag: The apparent i-band magnitude sampled by this class
+        :param filters: loaded speclite filters object
+        :return: dictionary of {filter_name: magnitude}
+        """
+        # Define a broader wavelength coverage to handle high-z shifting.
+        # Default qsosed is logspace(2.95, ...). 
+        # We start at 2.35 (~223 Angstroms) to ensure the blue end of the 
+        # u-band (approx 3000A) is covered even at z ~ 12.
+        # 3000 / (1 + 12) ~ 230 A.
+        wavlen = np.logspace(2.35, 4.48, num=25000, endpoint=True)
+
+        # 1. Generate the SED using AGILE parameters
+        # params_agile controls the physics (slopes, breaks, etc.)
+        # z and M_i control the specific instance (redshifting, emission line strengths)
+        quasar = Quasar_sed(z=z, M_i=M_i, params=params_agile, wavlen=wavlen)
+        
+        # 2. Extract flux and wavelength in the observed frame
+        # qsosed.py calculates wavred = (1+z)*wavlen
+        flux_sed = quasar.flux # f_lambda in arbitrary units
+        wave_sed = quasar.wavred # Observed wavelength in Angstroms
+        
+        # 3. Calculate raw magnitudes from the unscaled SED
+        # This returns an astropy table of magnitudes corresponding to self.qsogen_bands
+        raw_mags = filters.get_ab_magnitudes(flux_sed, wave_sed)
+        # convert to dict
+        raw_mags = dict(zip(raw_mags.colnames, raw_mags[0]))
+
+        # 4. Determine the anchor band (i-band) to normalize the flux
+        raw_anchor_mag = raw_mags['lsst2023-i']
+
+        # 5. Calculate the normalization offset
+        # true_mag = raw_mag + offset
+        # offset = true_mag - raw_mag
+        mag_offset = target_apparent_i_mag - raw_anchor_mag
+        
+        # 6. Apply offset to all bands
+        final_mags = {band: mag + mag_offset for band, mag in raw_mags.items()}
+        
+        # Return as a dictionary mapping band name to mag
+        return final_mags
 
     def quasar_sample(self, m_min, m_max, seed=42, host_galaxy=False):
         """Generates random redshift values and associated apparent i-band
@@ -378,6 +450,38 @@ class QuasarRate(object):
             table_data["M_i"].append(random_abs_M_i_value)
             table_data["z"].append(redshift)
             table_data["ps_mag_i"].append(apparent_i_mag)
+        
+        # --- QSOGEN SED FOR MULTIBAND PHOTOMETRY ---
+        if self.use_qsogen_sed:
+            # Load filters once
+            filters = speclite.filters.load_filters(*self.qsogen_bands)
+            
+            # Prepare storage for magnitude columns
+            split_bands = [('ps_mag_' + band.split('-')[1]) for band in self.qsogen_bands]
+            qsogen_results = {band: [] for band in split_bands}
+            
+            # Iterate through the generated quasars to compute multi-band photometry
+            for z, M_i, ps_mag_i in zip(table_data['z'], table_data['M_i'], table_data['ps_mag_i']):
+                mags = self._calculate_sed_magnitudes(
+                    z=z, 
+                    M_i=M_i, 
+                    target_apparent_i_mag=ps_mag_i, 
+                    filters=filters
+                )
+                
+                for band, mag in mags.items():
+                    # split the band name and remove the observatory name
+                    band_name = band.split('-')[1]
+                    qsogen_results['ps_mag_' + band_name].append(mag)
+            
+            # Add new columns to the table
+            new_colnames = qsogen_results.keys()
+            old_colnames = table_data.keys()
+            extra_cols = set(new_colnames) - set(old_colnames)
+            for col in extra_cols:
+                table_data[col] = qsogen_results[col]
+
+        # -----------------------------
 
         # Create an Astropy Table from the collected data
         table = Table(table_data)

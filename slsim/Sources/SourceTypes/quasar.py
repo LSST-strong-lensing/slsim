@@ -156,6 +156,12 @@ class Quasar(SourceBase):
                 # determine mean magnitudes for each band
                 mean_magnitudes = self.agn_class.get_mean_mags(speclite_names)
 
+                # check if source_dict already has mean mags for these bands
+                for index, band in enumerate(provided_bands):
+                    ps_mag_name = "ps_mag_" + band
+                    if ps_mag_name in self.source_dict:
+                        mean_magnitudes[index] = self.source_dict[ps_mag_name]
+
                 # Our input quasar catalog has magnitude only in i band. So, Agn
                 # class has computed mean magnitude of the given quasar in all lsst
                 # bands using available i-band magnitude. We want to save mean
@@ -209,6 +215,13 @@ class Quasar(SourceBase):
         :return: Magnitude of the point source in the specified band
         :rtype: float
         """
+
+        # check if source_dict has mean magnitude for this band
+        ps_mag_name = "ps_mag_" + band
+        if ps_mag_name in self.source_dict:
+            if image_observation_times is None:
+                return self.source_dict[ps_mag_name]
+
 
         # If variability has not yet been computed, compute it now
         # this also adds the mean magnitudes to the source_dict
