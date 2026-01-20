@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on 2020 November 10
-Public release 2021 March 13
-Edit 2021 November 17 to add DECam and HSC filters
-Edit 2022 June 08 to also allow filters to be stored in ./filters/
-Edit 2022 July 29 to add GALEX NUV and FUV filters
-Edit 2025 March 12 to add Euclid VIS filter
+"""Created on 2020 November 10 Public release 2021 March 13 Edit 2021 November
+17 to add DECam and HSC filters Edit 2022 June 08 to also allow filters to be
+stored in ./filters/ Edit 2022 July 29 to add GALEX NUV and FUV filters Edit
+2025 March 12 to add Euclid VIS filter.
 
 @author: Matthew Temple
 
@@ -35,7 +32,6 @@ And then run the SED model many times, using filter wav arrays as input wavlen:
     looping over z (or any other variable of interest)
     multiply relevant part of each flux array with filter response function
     convert to magnitude, return colours or mags as appropriate
-
 """
 
 import numpy as np
@@ -90,7 +86,7 @@ Vega_zeropoints = dict(
     WISE_W4_Vega=4.489671e-05,
 )
 AB_zeropoints = dict(
-    GALEX_NUV_AB=2.143184e+00,
+    GALEX_NUV_AB=2.143184e00,
     GALEX_FUV_AB=6.682505e-01,
     SDSS_u_AB=1.857387e-03,
     SDSS_g_AB=9.721695e-03,
@@ -140,72 +136,78 @@ zeropoints = {**Vega_zeropoints, **AB_zeropoints}
 
 
 wavarrs, resparrs = dict(), dict()
-for band in ['GALEX_NUV',
-             'GALEX_FUV',
-             'SDSS_u',
-             'SDSS_g',
-             'SDSS_r',
-             'SDSS_i',
-             'SDSS_z',
-             'DECam_u',
-             'DECam_g',
-             'DECam_r',
-             'DECam_i',
-             'DECam_z',
-             'DECam_Y',
-             'HSC_g',
-             'HSC_r',
-             'HSC_r2',
-             'HSC_i',
-             'HSC_i2',
-             'HSC_z',
-             'HSC_Y',
-             'LSST_u',
-             'LSST_g',
-             'LSST_r',
-             'LSST_i',
-             'LSST_z',
-             'LSST_y',
-             'Euclid_VIS',
-             'Euclid_Y',
-             'Euclid_J',
-             'Euclid_H',
-             'UKIDSS_Z',
-             'UKIDSS_Y',
-             'UKIDSS_J',
-             'UKIDSS_H',
-             'UKIDSS_K',
-             'VISTA_Z',
-             'VISTA_Y',
-             'VISTA_J',
-             'VISTA_H',
-             'VISTA_Ks',
-             'WISE_W1',
-             'WISE_W2',
-             'WISE_W3',
-             'WISE_W4']:
+for band in [
+    "GALEX_NUV",
+    "GALEX_FUV",
+    "SDSS_u",
+    "SDSS_g",
+    "SDSS_r",
+    "SDSS_i",
+    "SDSS_z",
+    "DECam_u",
+    "DECam_g",
+    "DECam_r",
+    "DECam_i",
+    "DECam_z",
+    "DECam_Y",
+    "HSC_g",
+    "HSC_r",
+    "HSC_r2",
+    "HSC_i",
+    "HSC_i2",
+    "HSC_z",
+    "HSC_Y",
+    "LSST_u",
+    "LSST_g",
+    "LSST_r",
+    "LSST_i",
+    "LSST_z",
+    "LSST_y",
+    "Euclid_VIS",
+    "Euclid_Y",
+    "Euclid_J",
+    "Euclid_H",
+    "UKIDSS_Z",
+    "UKIDSS_Y",
+    "UKIDSS_J",
+    "UKIDSS_H",
+    "UKIDSS_K",
+    "VISTA_Z",
+    "VISTA_Y",
+    "VISTA_J",
+    "VISTA_H",
+    "VISTA_Ks",
+    "WISE_W1",
+    "WISE_W2",
+    "WISE_W3",
+    "WISE_W4",
+]:
     try:
-        wavarr, response = np.genfromtxt(band+'.filter', unpack=True)
+        wavarr, response = np.genfromtxt(band + ".filter", unpack=True)
     except OSError:
-        wavarr, response = np.genfromtxt('filters/'+band+'.filter', unpack=True)
+        wavarr, response = np.genfromtxt("filters/" + band + ".filter", unpack=True)
     wavarrs[band] = wavarr
     resparrs[band] = response
 
 
 # default zeropoints use AB for SDSS and Vega for UKIDSS and WISE
-def get_colours(redshifts,
-                filters=['SDSS_u_AB',
-                         'SDSS_g_AB',
-                         'SDSS_r_AB',
-                         'SDSS_i_AB',
-                         'SDSS_z_AB',
-                         'UKIDSS_Y_Vega',
-                         'UKIDSS_J_Vega',
-                         'UKIDSS_H_Vega',
-                         'UKIDSS_K_Vega',
-                         'WISE_W1_Vega',
-                         'WISE_W2_Vega'],
-                **kwargs):
+def get_colours(
+    redshifts,
+    filters=[
+        "SDSS_u_AB",
+        "SDSS_g_AB",
+        "SDSS_r_AB",
+        "SDSS_i_AB",
+        "SDSS_z_AB",
+        "UKIDSS_Y_Vega",
+        "UKIDSS_J_Vega",
+        "UKIDSS_H_Vega",
+        "UKIDSS_K_Vega",
+        "WISE_W1_Vega",
+        "WISE_W2_Vega",
+    ],
+    **kwargs
+):
     """Get synthetic colours from quasar model.
 
     Parameters
@@ -237,8 +239,8 @@ def get_colours(redshifts,
 
     waves, responses = [], []
     for band in filters:
-        band = band.replace('_AB', '')
-        band = band.replace('_Vega', '')
+        band = band.replace("_AB", "")
+        band = band.replace("_Vega", "")
         waves.append(wavarrs[band])
         responses.append(resparrs[band])
 
@@ -252,23 +254,18 @@ def get_colours(redshifts,
 
     try:
         for z in redshifts:
-            rest_ordered_wav = np.sort(obs_wavlen/(1+z))
+            rest_ordered_wav = np.sort(obs_wavlen / (1 + z))
             # now in rest frame of qso
-            ordered_flux = Quasar_sed(wavlen=rest_ordered_wav,
-                                      z=z,
-                                      **kwargs).flux
+            ordered_flux = Quasar_sed(wavlen=rest_ordered_wav, z=z, **kwargs).flux
             # qsosed will produce redshifted flux
 
             # Create individual arrays with the flux in each observed passband
             fluxes = np.split(ordered_flux[isort], split_indices)
 
-            model_colours.append(-np.diff(sed2mags(filters,
-                                                   waves,
-                                                   fluxes,
-                                                   responses)))
+            model_colours.append(-np.diff(sed2mags(filters, waves, fluxes, responses)))
     except TypeError:
         z = float(redshifts)
-        rest_ordered_wav = np.sort(obs_wavlen/(1+z))
+        rest_ordered_wav = np.sort(obs_wavlen / (1 + z))
         # now in rest frame of qso
         ordered_flux = Quasar_sed(wavlen=rest_ordered_wav, z=z, **kwargs).flux
         # qsosed will produce redshifted flux
@@ -276,27 +273,28 @@ def get_colours(redshifts,
         # Create individual arrays with the flux in each observed passband
         fluxes = np.split(ordered_flux[isort], split_indices)
 
-        model_colours.append(-np.diff(sed2mags(filters,
-                                               waves,
-                                               fluxes,
-                                               responses)))
+        model_colours.append(-np.diff(sed2mags(filters, waves, fluxes, responses)))
 
-    return(np.array(model_colours))
+    return np.array(model_colours)
 
 
-def get_mags(redshifts,
-             filters=['SDSS_u_AB',
-                      'SDSS_g_AB',
-                      'SDSS_r_AB',
-                      'SDSS_i_AB',
-                      'SDSS_z_AB',
-                      'UKIDSS_Y_Vega',
-                      'UKIDSS_J_Vega',
-                      'UKIDSS_H_Vega',
-                      'UKIDSS_K_Vega',
-                      'WISE_W1_Vega',
-                      'WISE_W2_Vega'],
-             **kwargs):
+def get_mags(
+    redshifts,
+    filters=[
+        "SDSS_u_AB",
+        "SDSS_g_AB",
+        "SDSS_r_AB",
+        "SDSS_i_AB",
+        "SDSS_z_AB",
+        "UKIDSS_Y_Vega",
+        "UKIDSS_J_Vega",
+        "UKIDSS_H_Vega",
+        "UKIDSS_K_Vega",
+        "WISE_W1_Vega",
+        "WISE_W2_Vega",
+    ],
+    **kwargs
+):
     """Get synthetic magnitudes from quasar model.
 
     Parameters
@@ -328,8 +326,8 @@ def get_mags(redshifts,
 
     waves, responses = [], []
     for band in filters:
-        band = band.replace('_AB', '')
-        band = band.replace('_Vega', '')
+        band = band.replace("_AB", "")
+        band = band.replace("_Vega", "")
         waves.append(wavarrs[band])
         responses.append(resparrs[band])
 
@@ -343,12 +341,10 @@ def get_mags(redshifts,
 
     try:
         for z in redshifts:
-            rest_ordered_wav = np.sort(obs_wavlen/(1+z))
+            rest_ordered_wav = np.sort(obs_wavlen / (1 + z))
             # now in rest frame of qso
             # note wavlength array must cover 4000-5000 Angstroms
-            ordered_flux = Quasar_sed(wavlen=rest_ordered_wav,
-                                      z=z,
-                                      **kwargs).flux
+            ordered_flux = Quasar_sed(wavlen=rest_ordered_wav, z=z, **kwargs).flux
             # qsosed will produce redshifted flux
 
             # Create individual arrays with the flux in each observed passband
@@ -358,7 +354,7 @@ def get_mags(redshifts,
 
     except TypeError:
         z = float(redshifts)
-        rest_ordered_wav = np.sort(obs_wavlen/(1+z))
+        rest_ordered_wav = np.sort(obs_wavlen / (1 + z))
         # now in rest frame of qso
         # note wavlength array must cover 4000-5000 Angstroms
         ordered_flux = Quasar_sed(wavlen=rest_ordered_wav, z=z, **kwargs).flux
@@ -369,108 +365,112 @@ def get_mags(redshifts,
 
         model_mags.append(sed2mags(filters, waves, fluxes, responses))
 
-    return(np.array(model_mags))
+    return np.array(model_mags)
 
 
 def sed2mags(filters, waves, fluxes, responses):
 
-        mags = np.full(len(waves), np.nan)
+    mags = np.full(len(waves), np.nan)
 
-        for i in range(len(waves)):
-            flux = simps(waves[i]*responses[i]*fluxes[i], waves[i])
-            mags[i] = -2.5*np.log10(flux/zeropoints[filters[i]])
+    for i in range(len(waves)):
+        flux = simps(waves[i] * responses[i] * fluxes[i], waves[i])
+        mags[i] = -2.5 * np.log10(flux / zeropoints[filters[i]])
 
-        return(mags)
+    return mags
 
 
-def produce_zeropoints(system='Vega',
-                       filters=['GALEX_NUV',
-                                'GALEX_FUV',
-                                'SDSS_u',
-                                'SDSS_g',
-                                'SDSS_r',
-                                'SDSS_i',
-                                'SDSS_z',
-                                'DECam_u',
-                                'DECam_g',
-                                'DECam_r',
-                                'DECam_i',
-                                'DECam_z',
-                                'DECam_Y',
-                                'HSC_g',
-                                'HSC_r',
-                                'HSC_r2',
-                                'HSC_i',
-                                'HSC_i2',
-                                'HSC_z',
-                                'HSC_Y',
-                                'LSST_u',
-                                'LSST_g',
-                                'LSST_r',
-                                'LSST_i',
-                                'LSST_z',
-                                'LSST_y',
-                                'Euclid_VIS',
-                                'Euclid_Y',
-                                'Euclid_J',
-                                'Euclid_H',
-                                'UKIDSS_Z',
-                                'UKIDSS_Y',
-                                'UKIDSS_J',
-                                'UKIDSS_H',
-                                'UKIDSS_K',
-                                'VISTA_Z',
-                                'VISTA_Y',
-                                'VISTA_J',
-                                'VISTA_H',
-                                'VISTA_Ks',
-                                'WISE_W1',
-                                'WISE_W2',
-                                'WISE_W3',
-                                'WISE_W4']):
+def produce_zeropoints(
+    system="Vega",
+    filters=[
+        "GALEX_NUV",
+        "GALEX_FUV",
+        "SDSS_u",
+        "SDSS_g",
+        "SDSS_r",
+        "SDSS_i",
+        "SDSS_z",
+        "DECam_u",
+        "DECam_g",
+        "DECam_r",
+        "DECam_i",
+        "DECam_z",
+        "DECam_Y",
+        "HSC_g",
+        "HSC_r",
+        "HSC_r2",
+        "HSC_i",
+        "HSC_i2",
+        "HSC_z",
+        "HSC_Y",
+        "LSST_u",
+        "LSST_g",
+        "LSST_r",
+        "LSST_i",
+        "LSST_z",
+        "LSST_y",
+        "Euclid_VIS",
+        "Euclid_Y",
+        "Euclid_J",
+        "Euclid_H",
+        "UKIDSS_Z",
+        "UKIDSS_Y",
+        "UKIDSS_J",
+        "UKIDSS_H",
+        "UKIDSS_K",
+        "VISTA_Z",
+        "VISTA_Y",
+        "VISTA_J",
+        "VISTA_H",
+        "VISTA_Ks",
+        "WISE_W1",
+        "WISE_W2",
+        "WISE_W3",
+        "WISE_W4",
+    ],
+):
     """Produce the Vega and AB zero points for Sloan, UKIDSS and WISE.
-    Zero points are pre-computed to save time.
-    If you want to compute model photometry in additional filters, first use
-    this function to compute their zeropoints and add to dictionaries above.
+
+    Zero points are pre-computed to save time. If you want to compute
+    model photometry in additional filters, first use this function to
+    compute their zeropoints and add to dictionaries above.
     """
 
     waves, responses = [], []
     for band in filters:
         waves.append(wavarrs[band])
         responses.append(resparrs[band])
-    print(system + '_zeropoints = dict(')
+    print(system + "_zeropoints = dict(")
 
-    if system == 'Vega':
-        wav_Vega, flux_Vega = np.genfromtxt('vega_2007.lis', unpack=True)
+    if system == "Vega":
+        wav_Vega, flux_Vega = np.genfromtxt("vega_2007.lis", unpack=True)
         # Vega spectrum
         fluxes = [np.interp(wav, wav_Vega, flux_Vega) for wav in waves]
 
         for i in range(len(filters)):
-            F = simps(waves[i]*responses[i]*fluxes[i], waves[i])
-            print('    ' + filters[i] + '_Vega={:.6e},'.format(F))
+            F = simps(waves[i] * responses[i] * fluxes[i], waves[i])
+            print("    " + filters[i] + "_Vega={:.6e},".format(F))
 
-    elif system == 'AB':
+    elif system == "AB":
         const = 0.1088544752  # 3631Jy in erg/s/cm2/A
         # AB system has constant f_nu, so convert to f_lambda
         for i in range(len(filters)):
-            F = const*simps(waves[i]**(-1)*responses[i], waves[i])
-            print('    ' + filters[i] + '_AB={:.6e},'.format(F))
+            F = const * simps(waves[i] ** (-1) * responses[i], waves[i])
+            print("    " + filters[i] + "_AB={:.6e},".format(F))
     else:
         raise Exception('System must be "Vega" or "AB"')
-    print(')')
+    print(")")
 
 
-if __name__ == '__main__':
-    produce_zeropoints('Vega')
-    produce_zeropoints('AB')
-    print(
-        'Derived delta_m = m_AB - m_Vega conversions are as follows, assuming')
-    print(
-        'Vega has zero magnitude in all bands (consistent with Hewett+ 2006)')
+if __name__ == "__main__":
+    produce_zeropoints("Vega")
+    produce_zeropoints("AB")
+    print("Derived delta_m = m_AB - m_Vega conversions are as follows, assuming")
+    print("Vega has zero magnitude in all bands (consistent with Hewett+ 2006)")
     for band in AB_zeropoints:
-        band = band.replace('_AB', '')
-        print(band,
-              -2.5*np.log10(zeropoints[band+'_Vega']/zeropoints[band+'_AB']))
+        band = band.replace("_AB", "")
+        print(
+            band, -2.5 * np.log10(zeropoints[band + "_Vega"] / zeropoints[band + "_AB"])
+        )
 
 """
 Derived delta_m = m_AB - m_Vega conversions are as follows, assuming

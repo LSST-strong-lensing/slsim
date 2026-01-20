@@ -222,7 +222,6 @@ class Quasar(SourceBase):
             if image_observation_times is None:
                 return self.source_dict[ps_mag_name]
 
-
         # If variability has not yet been computed, compute it now
         # this also adds the mean magnitudes to the source_dict
         if self._variability_computed is False:
