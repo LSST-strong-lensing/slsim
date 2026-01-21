@@ -6,6 +6,7 @@ from slsim.ImageSimulation.roman_image_simulation import (
     simulate_roman_image,
     lens_image_roman,
 )
+from slsim.ImageSimulation import image_quality_lenstronomy
 from slsim.ImageSimulation.image_simulation import simulate_image
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
@@ -166,6 +167,18 @@ def test_simulate_roman_image_with_psf_and_noise():
         decimal=1,
     )
 
+    # with randomized detector, detector position
+    final_image_lenstronomy2 = simulate_roman_image(
+        lens_class=SNIa_Lens,
+        band=BAND,
+        num_pix=45,
+        oversample=3,
+        add_noise=True,
+        psf_directory=PSF_DIRECTORY,
+        galsim_convolve=False,
+    )
+    assert not np.allclose(final_image_lenstronomy, final_image_lenstronomy2)
+
 
 def test_simulate_roman_image_with_psf_without_noise():
     with open(
@@ -197,6 +210,10 @@ def test_simulate_roman_image_with_psf_without_noise():
     image_ref = array[3:-3, 3:-3]
 
     # Convolves psf through galsim, also no roman detector effects or background
+    kwargs_single_band = image_quality_lenstronomy.kwargs_single_band(
+        observatory="Roman", band=BAND
+    )
+    exposure_time = kwargs_single_band['exposure_time'] * kwargs_single_band['num_exposures']
     galsim_image = simulate_roman_image(
         lens_class=LENS,
         band=BAND,
@@ -207,6 +224,7 @@ def test_simulate_roman_image_with_psf_without_noise():
         psf_directory=PSF_DIRECTORY,
         detector=1,
         detector_pos=(2000, 2000),
+        exposure_time=exposure_time,
     )
 
     # Makes sure that each pixel matches in flux by 2%, and the total flux matches by up to 0.1
@@ -218,38 +236,62 @@ def test_simulate_roman_image_with_psf_without_noise():
 
 
 def test_lens_image_roman():
+    detector_kwargs = {
+        "detector": 1,
+        "detector_pos": (2000, 2000),
+        "ra": 24,
+        "dec": -24,
+    }
+    # with noise
     lens_image = lens_image_roman(
         lens_class=SNIa_Lens,
         band=BAND,
         mag_zero_point=28,
         num_pix=71,
         transform_pix2angle=np.array([[0.11, 0], [0, 0.11]]),
-        detector=1,
-        detector_pos=(2000, 2000),
-        ra=24,
-        dec=-24,
+        oversample=3,
+        psf_directory=PSF_DIRECTORY,
+        t_obs=0,
+        with_source=True,
+        with_deflector=True,
+        **detector_kwargs,
+    )
+
+    # with randomized detector, detector position, also with noise
+    lens_image2 = lens_image_roman(
+        lens_class=SNIa_Lens,
+        band=BAND,
+        mag_zero_point=28,
+        num_pix=71,
+        transform_pix2angle=np.array([[0.11, 0], [0, 0.11]]),
         oversample=3,
         psf_directory=PSF_DIRECTORY,
         t_obs=0,
         with_source=True,
         with_deflector=True,
     )
+
+    assert not np.allclose(lens_image, lens_image2)
+
+    # without noise
+    kwargs_single_band = image_quality_lenstronomy.kwargs_single_band(
+        observatory="Roman", band=BAND
+    )
+    exposure_time = kwargs_single_band['exposure_time'] * kwargs_single_band['num_exposures']
     lens_image_no_noise = lens_image_roman(
         lens_class=SNIa_Lens,
         band=BAND,
         mag_zero_point=28,
         num_pix=71,
         transform_pix2angle=np.array([[0.11, 0], [0, 0.11]]),
-        detector=1,
-        detector_pos=(2000, 2000),
-        ra=24,
-        dec=-24,
         oversample=3,
         psf_directory=PSF_DIRECTORY,
         t_obs=0,
         with_source=True,
         with_deflector=True,
         add_noise=False,
+        exposure_time=exposure_time,
+        **detector_kwargs,
     )
     noise = lens_image - lens_image_no_noise
     assert np.shape(lens_image)[0] == 71
