@@ -16,7 +16,10 @@ from lenstronomy.Util import data_util
 from lenstronomy.Util import util
 from slsim.Util.catalog_util import safe_value
 from slsim.ImageSimulation.image_simulation import simulate_image
-from slsim.ImageSimulation.image_quality_lenstronomy import kwargs_single_band, get_observatory
+from slsim.ImageSimulation.image_quality_lenstronomy import (
+    kwargs_single_band,
+    get_observatory,
+)
 from scipy.ndimage import label
 
 from slsim.Lenses.lensed_system_base import LensedSystemBase
@@ -364,12 +367,12 @@ class Lens(LensedSystemBase):
         # Compute signal-to-noise ratio of the lensed source
         if snr_limit is not None:
             fov_arcsec = 10  # field of view in arcseconds
-            observatory = get_observatory(list(snr_limit.keys())[0])  # assuming that all bands are from the same observatory
+            observatory = get_observatory(
+                list(snr_limit.keys())[0]
+            )  # assuming that all bands are from the same observatory
 
             for band, snr in snr_limit.items():
-                kwargs_band = kwargs_single_band(
-                    band=band, observatory=observatory
-                )
+                kwargs_band = kwargs_single_band(band=band, observatory=observatory)
                 pixel_scale = kwargs_band["pixel_scale"]
 
                 snr_calculated = self.snr(
@@ -381,7 +384,6 @@ class Lens(LensedSystemBase):
                 if snr_calculated is not None and np.max(snr_calculated) < snr:
                     return False
         return True
-
 
     def snr(self, band, num_pix=50, observatory="LSST", snr_per_pixel_threshold=1):
         """Calculate the signal-to-noise ratio (SNR) using
@@ -398,7 +400,7 @@ class Lens(LensedSystemBase):
             \\text{SNR}_\\text{region} = \\frac{\\sum\\limits_i N_{i,\\,S}}{\\sqrt{\\sum\\limits_i \\left(N_{i,\\,S} + N_{i,\\,L} + N_{i,\\,N}\\right)}}
 
         where the summations are over the pixels that comprise the region,
-        :math:`N_{i,\\,S}` are the counts in pixel :math:`i` due to the (lensed) 
+        :math:`N_{i,\\,S}` are the counts in pixel :math:`i` due to the (lensed)
         source galaxy, :math:`N_{i,\\,L}` are counts due to the lensing galaxy
         :math:`N_{i,\\,N}` are counts due to noise. If multiple regions
         are formed, the SNR of the region with the highest SNR is taken to be
@@ -406,7 +408,7 @@ class Lens(LensedSystemBase):
 
         :param band: imaging band
         :type band: string
-        :param num_pix: number of pixels for the image simulation (default is 50, or 
+        :param num_pix: number of pixels for the image simulation (default is 50, or
             10 arcseconds for LSST with 0.2 arcsec/pixel)
         :type num_pix: int
         :param observatory: observatory name (default is "LSST")
@@ -455,18 +457,18 @@ class Lens(LensedSystemBase):
         snr_array = np.nan_to_num(source / np.sqrt(image), nan=0, posinf=0, neginf=0)
 
         # calculate SNR regions based on SNR per pixel threshold
-        masked_snr_array = np.ma.masked_where(snr_array <= snr_per_pixel_threshold, snr_array)
+        masked_snr_array = np.ma.masked_where(
+            snr_array <= snr_per_pixel_threshold, snr_array
+        )
 
         # if no pixels are above the threshold, return None
         if masked_snr_array.mask.all():
             return None
 
-        structure = np.array([
-            [0, 1, 0],
-            [1, 1, 1],
-            [0, 1, 0]
-        ])
-        labeled_array, num_regions = label(masked_snr_array.filled(0), structure=structure)
+        structure = np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]])
+        labeled_array, num_regions = label(
+            masked_snr_array.filled(0), structure=structure
+        )
 
         # calculate the SNR for each region, excluding single-pixel regions
         snrs = []
@@ -481,7 +483,6 @@ class Lens(LensedSystemBase):
 
         # return the maximum SNR
         return np.max(snrs) if snrs else None
-
 
     @property
     def deflector_redshift(self):

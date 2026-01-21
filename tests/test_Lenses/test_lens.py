@@ -84,11 +84,15 @@ class TestLens(object):
         blue_one_high_snr = Table.read(
             os.path.join(path, "../TestData/blue_one_high_snr.fits"), format="fits"
         )
-        blue_one_high_snr["angular_size"] = blue_one_high_snr["angular_size"] / 4.84813681109536e-06
+        blue_one_high_snr["angular_size"] = (
+            blue_one_high_snr["angular_size"] / 4.84813681109536e-06
+        )
         red_one_high_snr = Table.read(
             os.path.join(path, "../TestData/red_one_high_snr.fits"), format="fits"
         )
-        red_one_high_snr["angular_size"] = red_one_high_snr["angular_size"] / 4.84813681109536e-06
+        red_one_high_snr["angular_size"] = (
+            red_one_high_snr["angular_size"] / 4.84813681109536e-06
+        )
         source_high_snr = Source(
             cosmo=cosmo,
             **blue_one_high_snr,
@@ -213,7 +217,9 @@ class TestLens(object):
         # Test basic SNR calculation
         snr_result = self.gg_lens_high_snr.snr(band="i", num_pix=30, observatory="LSST")
         # SNR should be either a positive float or None
-        assert snr_result is None or (isinstance(snr_result, (float, np.floating)) and snr_result > 0)
+        assert snr_result is None or (
+            isinstance(snr_result, (float, np.floating)) and snr_result > 0
+        )
 
     def test_snr_with_high_threshold(self):
         # Test that a very high per-pixel threshold returns None
@@ -231,13 +237,17 @@ class TestLens(object):
         blue_one_high_snr = Table.read(
             os.path.join(path, "../TestData/blue_one_high_snr.fits"), format="fits"
         )
-        blue_one_high_snr["angular_size"] = blue_one_high_snr["angular_size"] / 4.84813681109536e-06
+        blue_one_high_snr["angular_size"] = (
+            blue_one_high_snr["angular_size"] / 4.84813681109536e-06
+        )
         blue_one_high_snr[f"mag_{band}"] = blue_one_high_snr["mag_i"]
 
         red_one_high_snr = Table.read(
             os.path.join(path, "../TestData/red_one_high_snr.fits"), format="fits"
         )
-        red_one_high_snr["angular_size"] = red_one_high_snr["angular_size"] / 4.84813681109536e-06
+        red_one_high_snr["angular_size"] = (
+            red_one_high_snr["angular_size"] / 4.84813681109536e-06
+        )
         red_one_high_snr[f"mag_{band}"] = red_one_high_snr["mag_i"]
 
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -253,20 +263,28 @@ class TestLens(object):
             use_jax=use_jax,
         )
 
-    @pytest.mark.parametrize("band,observatory", [
-        ("F106", "Roman"),
-        ("VIS", "Euclid"),
-    ])
+    @pytest.mark.parametrize(
+        "band,observatory",
+        [
+            ("F106", "Roman"),
+            ("VIS", "Euclid"),
+        ],
+    )
     def test_snr_multi_observatory(self, band, observatory):
         """Test SNR calculation with different observatories."""
         lens = self._create_lens_for_observatory(band, observatory)
         snr_result = lens.snr(band=band, num_pix=30, observatory=observatory)
-        assert snr_result is None or (isinstance(snr_result, (float, np.floating)) and snr_result > 0)
+        assert snr_result is None or (
+            isinstance(snr_result, (float, np.floating)) and snr_result > 0
+        )
 
-    @pytest.mark.parametrize("band,observatory", [
-        ("F106", "Roman"),
-        ("VIS", "Euclid"),
-    ])
+    @pytest.mark.parametrize(
+        "band,observatory",
+        [
+            ("F106", "Roman"),
+            ("VIS", "Euclid"),
+        ],
+    )
     def test_validity_test_with_snr_limit_multi_observatory(self, band, observatory):
         """Test validity_test with SNR limit for different observatories."""
         lens = self._create_lens_for_observatory(band, observatory)
@@ -640,7 +658,8 @@ def test_validity_test_2(pes_lens_instance):
 
 
 def test_validity_test_2_with_snr_limit(pes_lens_instance):
-    """Test validity_test with snr_limit for point source + extended source lens."""
+    """Test validity_test with snr_limit for point source + extended source
+    lens."""
     second_brightest_image_cut = {"i": 30}
 
     # Test with snr_limit=None (backward compatibility)
@@ -674,7 +693,9 @@ def test_validity_test_2_with_snr_limit(pes_lens_instance):
 def test_snr_pes_lens(pes_lens_instance):
     """Test SNR calculation for point source + extended source lens."""
     snr_result = pes_lens_instance.snr(band="i", num_pix=30, observatory="LSST")
-    assert snr_result is None or (isinstance(snr_result, (float, np.floating)) and snr_result > 0)
+    assert snr_result is None or (
+        isinstance(snr_result, (float, np.floating)) and snr_result > 0
+    )
 
 
 def test_point_source_magnitude(pes_lens_instance):
@@ -1825,7 +1846,8 @@ class TestSlhammock(object):
 
 
 class TestSNR:
-    """Comprehensive tests for the SNR (signal-to-noise ratio) calculation method."""
+    """Comprehensive tests for the SNR (signal-to-noise ratio) calculation
+    method."""
 
     @pytest.fixture(autouse=True)
     def setup(self):
@@ -1930,27 +1952,28 @@ class TestSNRMocked:
     """Tests for SNR calculation logic using mocked image simulation."""
 
     def test_snr_region_identification(self):
-        """Test that region identification works correctly with controlled inputs."""
+        """Test that region identification works correctly with controlled
+        inputs."""
         from scipy.ndimage import label
 
         # Create a simple test case with known regions
-        snr_array = np.array([
-            [0, 0, 0, 0, 0],
-            [0, 2, 2, 0, 0],
-            [0, 2, 2, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 2, 0],
-        ])
+        snr_array = np.array(
+            [
+                [0, 0, 0, 0, 0],
+                [0, 2, 2, 0, 0],
+                [0, 2, 2, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 2, 0],
+            ]
+        )
 
         threshold = 1
         masked_snr_array = np.ma.masked_where(snr_array <= threshold, snr_array)
 
-        structure = np.array([
-            [0, 1, 0],
-            [1, 1, 1],
-            [0, 1, 0]
-        ])
-        labeled_array, num_regions = label(masked_snr_array.filled(0), structure=structure)
+        structure = np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]])
+        labeled_array, num_regions = label(
+            masked_snr_array.filled(0), structure=structure
+        )
 
         # Should identify 2 regions: the 2x2 block and the single pixel
         assert num_regions == 2
@@ -1960,23 +1983,23 @@ class TestSNRMocked:
         from scipy.ndimage import label
 
         # Create array with only single-pixel "regions"
-        snr_array = np.array([
-            [0, 0, 0, 0, 0],
-            [0, 2, 0, 2, 0],
-            [0, 0, 0, 0, 0],
-            [0, 2, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-        ])
+        snr_array = np.array(
+            [
+                [0, 0, 0, 0, 0],
+                [0, 2, 0, 2, 0],
+                [0, 0, 0, 0, 0],
+                [0, 2, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+            ]
+        )
 
         threshold = 1
         masked_snr_array = np.ma.masked_where(snr_array <= threshold, snr_array)
 
-        structure = np.array([
-            [0, 1, 0],
-            [1, 1, 1],
-            [0, 1, 0]
-        ])
-        labeled_array, num_regions = label(masked_snr_array.filled(0), structure=structure)
+        structure = np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]])
+        labeled_array, num_regions = label(
+            masked_snr_array.filled(0), structure=structure
+        )
 
         # Count regions with more than 1 pixel (mimicking the SNR method logic)
         valid_regions = 0
@@ -1991,26 +2014,32 @@ class TestSNRMocked:
     def test_snr_calculation_logic(self):
         """Test the SNR calculation formula with known values."""
         # Simulating the SNR calculation: SNR = source_counts / sqrt(total_counts)
-        source = np.array([
-            [0, 0, 0],
-            [0, 100, 100],
-            [0, 100, 100],
-        ])
-        image = np.array([
-            [10, 10, 10],
-            [10, 150, 150],
-            [10, 150, 150],
-        ])
+        source = np.array(
+            [
+                [0, 0, 0],
+                [0, 100, 100],
+                [0, 100, 100],
+            ]
+        )
+        image = np.array(
+            [
+                [10, 10, 10],
+                [10, 150, 150],
+                [10, 150, 150],
+            ]
+        )
 
         # For the 2x2 region in bottom-right
-        region_mask = np.array([
-            [False, False, False],
-            [False, True, True],
-            [False, True, True],
-        ])
+        region_mask = np.array(
+            [
+                [False, False, False],
+                [False, True, True],
+                [False, True, True],
+            ]
+        )
 
         source_counts = np.sum(source[region_mask])  # 400
-        total_counts = np.sum(image[region_mask])    # 600
+        total_counts = np.sum(image[region_mask])  # 600
         expected_snr = source_counts / np.sqrt(total_counts)  # 400 / sqrt(600) ≈ 16.33
 
         npt.assert_almost_equal(expected_snr, 400 / np.sqrt(600), decimal=2)
@@ -2020,22 +2049,22 @@ class TestSNRMocked:
         from scipy.ndimage import label
 
         # Create array where pixels are only diagonally connected
-        snr_array = np.array([
-            [2, 0, 0],
-            [0, 2, 0],
-            [0, 0, 2],
-        ])
+        snr_array = np.array(
+            [
+                [2, 0, 0],
+                [0, 2, 0],
+                [0, 0, 2],
+            ]
+        )
 
         threshold = 1
         masked_snr_array = np.ma.masked_where(snr_array <= threshold, snr_array)
 
         # Cross-shaped connectivity (no diagonals)
-        structure = np.array([
-            [0, 1, 0],
-            [1, 1, 1],
-            [0, 1, 0]
-        ])
-        labeled_array, num_regions = label(masked_snr_array.filled(0), structure=structure)
+        structure = np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]])
+        labeled_array, num_regions = label(
+            masked_snr_array.filled(0), structure=structure
+        )
 
         # With cross connectivity, these should be 3 separate regions
         assert num_regions == 3
