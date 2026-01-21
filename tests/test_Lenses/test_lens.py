@@ -225,6 +225,64 @@ class TestLens(object):
         )
         assert snr_result is None
 
+    def _create_lens_for_observatory(self, band, observatory):
+        """Helper method to create a lens with the specified band magnitude."""
+        path = os.path.dirname(__file__)
+        blue_one_high_snr = Table.read(
+            os.path.join(path, "../TestData/blue_one_high_snr.fits"), format="fits"
+        )
+        blue_one_high_snr["angular_size"] = blue_one_high_snr["angular_size"] / 4.84813681109536e-06
+        blue_one_high_snr[f"mag_{band}"] = blue_one_high_snr["mag_i"]
+
+        red_one_high_snr = Table.read(
+            os.path.join(path, "../TestData/red_one_high_snr.fits"), format="fits"
+        )
+        red_one_high_snr["angular_size"] = red_one_high_snr["angular_size"] / 4.84813681109536e-06
+        red_one_high_snr[f"mag_{band}"] = red_one_high_snr["mag_i"]
+
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+        kwargs = {"extended_source_type": "single_sersic"}
+        source = Source(cosmo=cosmo, **blue_one_high_snr, **kwargs)
+        deflector = Deflector(deflector_type="EPL_SERSIC", **red_one_high_snr)
+        return Lens(
+            source_class=source,
+            deflector_class=deflector,
+            los_class=self.los_individual,
+            lens_equation_solver="lenstronomy_analytical",
+            cosmo=cosmo,
+            use_jax=use_jax,
+        )
+
+    @pytest.mark.parametrize("band,observatory", [
+        ("F106", "Roman"),
+        ("VIS", "Euclid"),
+    ])
+    def test_snr_multi_observatory(self, band, observatory):
+        """Test SNR calculation with different observatories."""
+        lens = self._create_lens_for_observatory(band, observatory)
+        snr_result = lens.snr(band=band, num_pix=30, observatory=observatory)
+        assert snr_result is None or (isinstance(snr_result, (float, np.floating)) and snr_result > 0)
+
+    @pytest.mark.parametrize("band,observatory", [
+        ("F106", "Roman"),
+        ("VIS", "Euclid"),
+    ])
+    def test_validity_test_with_snr_limit_multi_observatory(self, band, observatory):
+        """Test validity_test with SNR limit for different observatories."""
+        lens = self._create_lens_for_observatory(band, observatory)
+
+        # Test with a very low SNR limit that should pass
+        result_low_snr = lens.validity_test(snr_limit={band: 0.1})
+        assert result_low_snr is True
+
+        # Test SNR calculation to check if regions are found
+        snr_result = lens.snr(band=band, num_pix=100, observatory=observatory)
+
+        # If SNR is calculable, verify high threshold fails
+        if snr_result is not None:
+            result_high_snr = lens.validity_test(snr_limit={band: 1e10})
+            assert result_high_snr is False
+
     def test_lens_id_gg(self):
         lens_id = self.gg_lens.generate_id()
         ra = self.gg_lens.deflector_position[0]
@@ -1844,17 +1902,6 @@ class TestSNR:
         )
         # This may or may not be None depending on the lens, but shouldn't error
         assert snr_low is None or isinstance(snr_low, (float, np.floating))
-
-    def test_snr_verbose_mode(self):
-        """Test that verbose mode doesn't break the function."""
-        # This should not raise an error
-        snr_result = self.lens.snr(
-            band="i",
-            num_pix=30,
-            observatory="LSST",
-            verbose=True,
-        )
-        assert snr_result is None or isinstance(snr_result, (float, np.floating))
 
     def test_snr_threshold_effect(self):
         """Test that higher thresholds give equal or lower SNR (or None)."""

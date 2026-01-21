@@ -16,6 +16,7 @@ from lenstronomy.Util import data_util
 from lenstronomy.Util import util
 from slsim.Util.catalog_util import safe_value
 from slsim.ImageSimulation.image_simulation import simulate_image
+from slsim.ImageSimulation.image_quality_lenstronomy import kwargs_single_band, get_observatory
 from scipy.ndimage import label
 
 from slsim.Lenses.lensed_system_base import LensedSystemBase
@@ -362,20 +363,27 @@ class Lens(LensedSystemBase):
         # Criteria 8: (optional)
         # Compute signal-to-noise ratio of the lensed source
         if snr_limit is not None:
+            fov_arcsec = 10  # field of view in arcseconds
+            observatory = get_observatory(list(snr_limit.keys())[0])  # assuming that all bands are from the same observatory
+
             for band, snr in snr_limit.items():
+                kwargs_band = kwargs_single_band(
+                    band=band, observatory=observatory
+                )
+                pixel_scale = kwargs_band["pixel_scale"]
+
                 snr_calculated = self.snr(
                     band=band,
-                    num_pix=50,
-                    observatory="LSST",
+                    num_pix=int(fov_arcsec / pixel_scale),
+                    observatory=observatory,
                     snr_per_pixel_threshold=1,
-                    verbose=True,
                 )
                 if snr_calculated is not None and np.max(snr_calculated) < snr:
                     return False
         return True
 
 
-    def snr(self, band, num_pix=50, observatory="LSST", snr_per_pixel_threshold=1, verbose=False):
+    def snr(self, band, num_pix=50, observatory="LSST", snr_per_pixel_threshold=1):
         """Calculate the signal-to-noise ratio (SNR) using
         the method of `Holloway et al. (2023) <https://doi.org/10.1093/mnras/stad2371>`_.
         This implementation is borrowed from `mejiro <https://github.com/AstroMusers/mejiro>`_,
@@ -406,9 +414,6 @@ class Lens(LensedSystemBase):
         :param snr_per_pixel_threshold: minimum SNR per pixel required to include
             a pixel in a region (default is 1)
         :type snr_per_pixel_threshold: float
-        :param verbose: if True, prints the number of identified regions and
-            the SNR of each region (default is False)
-        :type verbose: bool
         :return: maximum SNR found among the regions above the threshold.
             Returns None if no pixels are above the threshold or if no
             regions are found.
@@ -462,7 +467,6 @@ class Lens(LensedSystemBase):
             [0, 1, 0]
         ])
         labeled_array, num_regions = label(masked_snr_array.filled(0), structure=structure)
-        if verbose: print(f'Identified {num_regions} region(s)')
 
         # calculate the SNR for each region, excluding single-pixel regions
         snrs = []
@@ -474,7 +478,6 @@ class Lens(LensedSystemBase):
             total_counts = np.sum(image[region_mask])
             snr = source_counts / np.sqrt(total_counts)
             snrs.append(snr)
-            if verbose: print(f'Region {i} with {np.sum(region_mask)} pixel(s): SNR = {snr}')
 
         # return the maximum SNR
         return np.max(snrs) if snrs else None
