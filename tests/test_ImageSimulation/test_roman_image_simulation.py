@@ -213,7 +213,9 @@ def test_simulate_roman_image_with_psf_without_noise():
     kwargs_single_band = image_quality_lenstronomy.kwargs_single_band(
         observatory="Roman", band=BAND
     )
-    exposure_time = kwargs_single_band['exposure_time'] * kwargs_single_band['num_exposures']
+    exposure_time = (
+        kwargs_single_band["exposure_time"] * kwargs_single_band["num_exposures"]
+    )
     galsim_image = simulate_roman_image(
         lens_class=LENS,
         band=BAND,
@@ -277,7 +279,9 @@ def test_lens_image_roman():
     kwargs_single_band = image_quality_lenstronomy.kwargs_single_band(
         observatory="Roman", band=BAND
     )
-    exposure_time = kwargs_single_band['exposure_time'] * kwargs_single_band['num_exposures']
+    exposure_time = (
+        kwargs_single_band["exposure_time"] * kwargs_single_band["num_exposures"]
+    )
     lens_image_no_noise = lens_image_roman(
         lens_class=SNIa_Lens,
         band=BAND,
