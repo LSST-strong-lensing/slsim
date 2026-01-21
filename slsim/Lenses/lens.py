@@ -15,6 +15,8 @@ from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.Util import data_util
 from lenstronomy.Util import util
 from slsim.Util.catalog_util import safe_value
+from slsim.ImageSimulation.image_simulation import simulate_image
+from scipy.ndimage import label
 
 from slsim.Lenses.lensed_system_base import LensedSystemBase
 from slsim.Deflectors.deflector import JAX_PROFILES
@@ -215,6 +217,7 @@ class Lens(LensedSystemBase):
         max_image_separation=10,
         mag_arc_limit=None,
         second_brightest_image_cut=None,
+        snr_limit=None,
     ):
         """Check whether multiple lensing configuration matches selection and
         plausibility criteria.
@@ -231,6 +234,8 @@ class Lens(LensedSystemBase):
             image has a magnitude less than or equal to provided
             magnitude. e.g.: second_brightest_image_cut = {"i": 23, "g":
             24, "r": 22}
+        :param snr_limit: dictionary with key of bands and values of
+            signal-to-noise ratio limits, e.g., snr_limit = {"g": 20}
         :return: A boolean or dict of boolean.
         """
         validity_results = {}
@@ -240,6 +245,7 @@ class Lens(LensedSystemBase):
                 max_image_separation=max_image_separation,
                 mag_arc_limit=mag_arc_limit,
                 second_brightest_image_cut=second_brightest_image_cut,
+                snr_limit=snr_limit,
                 source_index=index,
             )
         if len(validity_results) == 1:
@@ -253,6 +259,7 @@ class Lens(LensedSystemBase):
         max_image_separation=10,
         mag_arc_limit=None,
         second_brightest_image_cut=None,
+        snr_limit=None,
         source_index=0,
     ):
         """Check whether a single lensing configuration matches selection and
@@ -270,11 +277,13 @@ class Lens(LensedSystemBase):
             image has a magnitude less than or equal to provided
             magnitude.
             eg: second_brightest_image_cut = {"i": 23, "g": 24, "r": 22}
+        :param snr_limit: dictionary with key of bands and values of
+            signal-to-noise ratio limits, e.g., snr_limit = {"g": 5}
         :param source_index: index of a source in source list.
         :return: boolean
         """
 
-        # Criteria 1:The redshift of the lens (z_lens) must be less than the
+        # Criteria 1: The redshift of the lens (z_lens) must be less than the
         # redshift of the source (z_source).
         z_lens = np.max(self.deflector_redshift)
         z_source = self.source(source_index).redshift
@@ -329,11 +338,11 @@ class Lens(LensedSystemBase):
                 if bool_mag_limit is False:
                     return False
         # TODO make similar criteria for point source magnitudes
+
         # Criteria 7: (optional)
         # computes the magnitude of each image and if the second brightest image has
         # the magnitude less or equal to "second_bright_mag_max" provided in the dict
         # second_bright_image_cut.
-
         if second_brightest_image_cut is not None:
             for band_max, mag_max in second_brightest_image_cut.items():
                 if self.source(source_index).source_type == "extended":
@@ -349,8 +358,127 @@ class Lens(LensedSystemBase):
                 second_brightest_mag = np.sort(image_magnitude_list[source_index])[1]
                 if second_brightest_mag > mag_max:
                     return False
+
+        # Criteria 8: (optional)
+        # Compute signal-to-noise ratio of the lensed source
+        if snr_limit is not None:
+            for band, snr in snr_limit.items():
+                snr_calculated = self.snr(
+                    band=band,
+                    num_pix=50,
+                    observatory="LSST",
+                    snr_per_pixel_threshold=1,
+                    verbose=True,
+                )
+                if snr_calculated is not None and np.max(snr_calculated) < snr:
+                    return False
         return True
-        # TODO: test for signal-to-noise ratio in surface brightness
+
+
+    def snr(self, band, num_pix=50, observatory="LSST", snr_per_pixel_threshold=1, verbose=False):
+        """Calculate the signal-to-noise ratio (SNR) using
+        the method of `Holloway et al. (2023) <https://doi.org/10.1093/mnras/stad2371>`_.
+        This implementation is borrowed from `mejiro <https://github.com/AstroMusers/mejiro>`_,
+        described in `Wedig et al. (2025) <https://doi.org/10.3847/1538-4357/adc24f>`_.
+
+        First, the SNR per pixel is calculated. Then, contiguous regions of pixels above
+        the SNR per pixel threshold are identified. The SNR for each region is
+        calculated in the following way:
+
+        .. math::
+
+            \\text{SNR}_\\text{region} = \\frac{\\sum\\limits_i N_{i,\\,S}}{\\sqrt{\\sum\\limits_i \\left(N_{i,\\,S} + N_{i,\\,L} + N_{i,\\,N}\\right)}}
+
+        where the summations are over the pixels that comprise the region,
+        :math:`N_{i,\\,S}` are the counts in pixel :math:`i` due to the (lensed) 
+        source galaxy, :math:`N_{i,\\,L}` are counts due to the lensing galaxy
+        :math:`N_{i,\\,N}` are counts due to noise. If multiple regions
+        are formed, the SNR of the region with the highest SNR is taken to be
+        the SNR of the system.
+
+        :param band: imaging band
+        :type band: string
+        :param num_pix: number of pixels for the image simulation (default is 50, or 
+            10 arcseconds for LSST with 0.2 arcsec/pixel)
+        :type num_pix: int
+        :param observatory: observatory name (default is "LSST")
+        :type observatory: string
+        :param snr_per_pixel_threshold: minimum SNR per pixel required to include
+            a pixel in a region (default is 1)
+        :type snr_per_pixel_threshold: float
+        :param verbose: if True, prints the number of identified regions and
+            the SNR of each region (default is False)
+        :type verbose: bool
+        :return: maximum SNR found among the regions above the threshold.
+            Returns None if no pixels are above the threshold or if no
+            regions are found.
+        :rtype: float or None
+
+        .. note::
+            Regions are defined as contiguous pixels (using a cross-shaped
+            connectivity).
+        """
+        # get surface brightness of the lensed source
+        source = simulate_image(
+            lens_class=self,
+            band=band,
+            num_pix=num_pix,
+            add_noise=False,  # no noise
+            observatory=observatory,
+            kwargs_psf=None,
+            kwargs_numerics=None,
+            with_source=True,
+            with_deflector=False,  # no deflector
+            with_point_source=True,
+        )
+
+        # get simulated image (source + deflector + noise)
+        image = simulate_image(
+            lens_class=self,
+            band=band,
+            num_pix=num_pix,
+            add_noise=True,  # add noise
+            observatory=observatory,
+            kwargs_psf=None,
+            kwargs_numerics=None,
+            with_source=True,
+            with_deflector=True,  # add deflector
+            with_point_source=True,
+        )
+
+        # calculate SNR per pixel
+        snr_array = np.nan_to_num(source / np.sqrt(image), nan=0, posinf=0, neginf=0)
+
+        # calculate SNR regions based on SNR per pixel threshold
+        masked_snr_array = np.ma.masked_where(snr_array <= snr_per_pixel_threshold, snr_array)
+
+        # if no pixels are above the threshold, return None
+        if masked_snr_array.mask.all():
+            return None
+
+        structure = np.array([
+            [0, 1, 0],
+            [1, 1, 1],
+            [0, 1, 0]
+        ])
+        labeled_array, num_regions = label(masked_snr_array.filled(0), structure=structure)
+        if verbose: print(f'Identified {num_regions} region(s)')
+
+        # calculate the SNR for each region, excluding single-pixel regions
+        snrs = []
+        for i in range(1, num_regions + 1):
+            region_mask = labeled_array == i
+            if np.sum(region_mask) < 2:
+                continue  # skip single-pixel regions due to Poisson noise
+            source_counts = np.sum(source[region_mask])
+            total_counts = np.sum(image[region_mask])
+            snr = source_counts / np.sqrt(total_counts)
+            snrs.append(snr)
+            if verbose: print(f'Region {i} with {np.sum(region_mask)} pixel(s): SNR = {snr}')
+
+        # return the maximum SNR
+        return np.max(snrs) if snrs else None
+
 
     @property
     def deflector_redshift(self):
