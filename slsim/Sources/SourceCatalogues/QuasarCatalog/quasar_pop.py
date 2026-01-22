@@ -118,7 +118,7 @@ class QuasarRate(object):
             ]
         else:
             self.qsogen_bands = qsogen_bands
-        
+
         self.use_sed_interpolator = use_sed_interpolator
 
         # Construct the dynamic path to the data file
@@ -389,8 +389,7 @@ class QuasarRate(object):
             # Interpolate to get raw magnitudes
             raw_mags_array = self._sed_interpolator((z, M_i))
             raw_mags = {
-                band: raw_mags_array[i]
-                for i, band in enumerate(self.qsogen_bands)
+                band: raw_mags_array[i] for i, band in enumerate(self.qsogen_bands)
             }
 
             # Determine the anchor band (i-band) to normalize the flux
@@ -440,12 +439,12 @@ class QuasarRate(object):
 
         # Return as a dictionary mapping band name to mag
         return final_mags
-    
+
     def _build_sed_interpolator(self, z_min=0.05, z_max=6.5, Mi_min=-30, Mi_max=-18):
         """Pre-computes a grid of SED magnitudes to create a fast lookup table.
 
-        Instead of generating a spectrum for every source (O(N)), we generate
-        spectra for a grid of (z, M_i) and interpolate.
+        Instead of generating a spectrum for every source (O(N)), we
+        generate spectra for a grid of (z, M_i) and interpolate.
         """
         # Load filters
         filters = speclite.filters.load_filters(*self.qsogen_bands)
@@ -470,7 +469,7 @@ class QuasarRate(object):
                 quasar = Quasar_sed(z=z, M_i=m_i, params=params_agile, wavlen=wavlen)
                 flux_sed = quasar.flux
                 wave_sed = quasar.wavred
-                
+
                 # Get magnitudes
                 mags = filters.get_ab_magnitudes(flux_sed, wave_sed)
                 # Extract values in order of qsogen_bands
@@ -480,10 +479,7 @@ class QuasarRate(object):
         # Create 2D Interpolator (z, M_i) -> (mag_band1, mag_band2, ...)
         # Use Scipy's RegularGridInterpolator which handles vector outputs
         self._sed_interpolator = RegularGridInterpolator(
-            (z_grid, mi_grid), 
-            grid_mags, 
-            bounds_error=False, 
-            fill_value=None 
+            (z_grid, mi_grid), grid_mags, bounds_error=False, fill_value=None
         )
 
     def quasar_sample(self, m_min, m_max, seed=42, host_galaxy=False):
@@ -530,10 +526,10 @@ class QuasarRate(object):
             # Build interpolator if not already done
             if self.use_sed_interpolator and not hasattr(self, "_sed_interpolator"):
                 self._build_sed_interpolator(
-                    z_min = np.min(table_data["z"]) - 0.1,
-                    z_max = np.max(table_data["z"]) + 0.1,
-                    Mi_min = np.min(table_data["M_i"]) - 1.0,
-                    Mi_max = np.max(table_data["M_i"]) + 1.0,
+                    z_min=np.min(table_data["z"]) - 0.1,
+                    z_max=np.max(table_data["z"]) + 0.1,
+                    Mi_min=np.min(table_data["M_i"]) - 1.0,
+                    Mi_max=np.max(table_data["M_i"]) + 1.0,
                 )
 
             # Prepare storage for magnitude columns
@@ -547,8 +543,11 @@ class QuasarRate(object):
                 table_data["z"], table_data["M_i"], table_data["ps_mag_i"]
             ):
                 mags = self._calculate_sed_magnitudes(
-                    z=z, M_i=M_i, target_apparent_i_mag=ps_mag_i, filters=filters,
-                    use_interpolator=self.use_sed_interpolator
+                    z=z,
+                    M_i=M_i,
+                    target_apparent_i_mag=ps_mag_i,
+                    filters=filters,
+                    use_interpolator=self.use_sed_interpolator,
                 )
 
                 for band, mag in mags.items():
