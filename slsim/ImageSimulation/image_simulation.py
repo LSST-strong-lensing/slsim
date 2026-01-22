@@ -21,6 +21,7 @@ def simulate_image(
     with_source=True,
     with_deflector=True,
     with_point_source=True,
+    image_units_counts=False,
     **kwargs
 ):
     """Creates an image of a selected lens with noise.
@@ -42,6 +43,9 @@ def simulate_image(
         "point_source_supersampling_factor", "supersampling_factor", and
         more in lenstronomy.ImSim.Numerics.numerics class
     :type kwargs: dict
+    :param image_units_counts: if True, return image in units of counts instead
+        of counts/second (default: False)
+    :type image_units_counts: bool
     :return: simulated image
     :rtype: 2d numpy array
     """
@@ -79,6 +83,9 @@ def simulate_image(
     )
     if add_noise:
         image += sim_api.noise_for_model(model=image)
+    if image_units_counts:
+        exposure_time = kwargs_single_band["exposure_time"]
+        image *= exposure_time
     return image
 
 

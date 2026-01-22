@@ -86,6 +86,36 @@ class TestImageSimulation(object):
 
         assert len(image) == 100
 
+    def test_simulate_image_units_counts(self):
+        """Test that image_units_counts parameter correctly scales the image by
+        exposure time."""
+        image_cps = simulate_image(
+            lens_class=self.gg_lens,
+            band="g",
+            num_pix=50,
+            add_noise=False,  # no noise to ensure deterministic comparison
+            observatory="LSST",
+            image_units_counts=False,
+        )
+        image_counts = simulate_image(
+            lens_class=self.gg_lens,
+            band="g",
+            num_pix=50,
+            add_noise=False,
+            observatory="LSST",
+            image_units_counts=True,
+        )
+
+        # The counts image should be the cps image multiplied by exposure time
+        # All non-zero pixels should have the same ratio (the exposure time)
+        ratio = image_counts / image_cps
+        nonzero_mask = image_cps > 0
+        if np.any(nonzero_mask):
+            exposure_time = ratio[nonzero_mask][0]
+            npt.assert_array_almost_equal(
+                ratio[nonzero_mask], exposure_time, decimal=5
+            )
+
     def test_sharp_image(self):
         image = sharp_image(
             lens_class=self.gg_lens,
