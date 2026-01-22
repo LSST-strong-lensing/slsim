@@ -335,6 +335,10 @@ class MicrolensingLightCurveFromLensModel(object):
                 "Magnification maps are not set. Please run generate_magnification_maps_from_microlensing_params first."
             )
 
+    def magmap_image_slices(self):
+        # this code exists in padma's branch of AMOEBA, copy it over
+        return None  # a 3D array of n_data_points x num_mag_map_pixels x num_mag_map_pixels
+
     def _interpolate_light_curve(self, lightcurve, time_array, time_array_new):
         """Interpolate the lightcurve to a new time array.
 
