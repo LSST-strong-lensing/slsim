@@ -43,8 +43,8 @@ def simulate_image(
         "point_source_supersampling_factor", "supersampling_factor", and
         more in lenstronomy.ImSim.Numerics.numerics class
     :type kwargs: dict
-    :param image_units_counts: if True, return image in units of counts instead
-        of counts/second (default: False)
+    :param image_units_counts: if True, return image in units of counts
+        instead of counts/second (default: False)
     :type image_units_counts: bool
     :return: simulated image
     :rtype: 2d numpy array

@@ -112,9 +112,7 @@ class TestImageSimulation(object):
         nonzero_mask = image_cps > 0
         if np.any(nonzero_mask):
             exposure_time = ratio[nonzero_mask][0]
-            npt.assert_array_almost_equal(
-                ratio[nonzero_mask], exposure_time, decimal=5
-            )
+            npt.assert_array_almost_equal(ratio[nonzero_mask], exposure_time, decimal=5)
 
     def test_sharp_image(self):
         image = sharp_image(
