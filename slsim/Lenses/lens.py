@@ -439,6 +439,7 @@ class Lens(LensedSystemBase):
             with_source=True,
             with_deflector=False,  # no deflector
             with_point_source=True,
+            image_units_counts=True,  # get image in counts, not counts/sec
         )
 
         # get simulated image (source + deflector + noise)
@@ -453,11 +454,8 @@ class Lens(LensedSystemBase):
             with_source=True,
             with_deflector=True,  # add deflector
             with_point_source=True,
+            image_units_counts=True,  # get image in counts, not counts/sec
         )
-
-        # units of images returned by `simulate_image()` are counts/sec
-        # convert to counts by multiplying with exposure time
-        
 
         # calculate SNR per pixel
         snr_array = np.nan_to_num(source / np.sqrt(image), nan=0, posinf=0, neginf=0)
