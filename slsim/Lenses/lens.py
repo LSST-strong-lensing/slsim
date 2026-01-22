@@ -366,7 +366,9 @@ class Lens(LensedSystemBase):
         # Criteria 8: (optional)
         # Compute signal-to-noise ratio of the lensed source
         if snr_limit is not None:
-            fov_arcsec = 10  # field of view in arcseconds
+            # field of view either 4 times the Einstein radius or at least 1 arcsecond
+            fov_arcsec = np.max([einstein_radius * 4, 1])
+
             observatory = get_observatory(
                 list(snr_limit.keys())[0]
             )  # assuming that all bands are from the same observatory
@@ -452,6 +454,10 @@ class Lens(LensedSystemBase):
             with_deflector=True,  # add deflector
             with_point_source=True,
         )
+
+        # units of images returned by `simulate_image()` are counts/sec
+        # convert to counts by multiplying with exposure time
+        
 
         # calculate SNR per pixel
         snr_array = np.nan_to_num(source / np.sqrt(image), nan=0, posinf=0, neginf=0)
