@@ -5,7 +5,6 @@ from astropy.cosmology import FlatLambdaCDM
 from slsim.Sources.SourceCatalogues.skypy_galaxy_catalog import GalaxyCatalog
 from slsim.Sources.Supernovae.supernovae_host_match import SupernovaeHostMatch
 
-
 skypy_config = None
 sky_area = Quantity(0.1, unit="deg2")
 sky_area2 = Quantity(1, unit="deg2")
