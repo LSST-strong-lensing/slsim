@@ -707,7 +707,7 @@ def test_microlensing_parameters_for_image_positions_single_source(
         pytest.skip("Skipping test: No lensed images found for this configuration.")
 
     try:
-        (kappa_star_img, kappa_tot_img, shear_img, shear_angle_img) = (
+        kappa_star_img, kappa_tot_img, shear_img, shear_angle_img = (
             lens_instance_with_variability._microlensing_parameters_for_image_positions_single_source(
                 band_i, source_index=0
             )

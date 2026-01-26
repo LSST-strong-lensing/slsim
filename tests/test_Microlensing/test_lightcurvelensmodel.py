@@ -15,7 +15,6 @@ from slsim.Microlensing.lightcurvelensmodel import (
 # Import supporting classes and functions needed for execution
 from slsim.Microlensing.magmap import MagnificationMap
 
-
 # ---- Test Fixtures ----
 
 
