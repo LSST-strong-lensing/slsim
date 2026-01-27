@@ -86,6 +86,36 @@ class TestImageSimulation(object):
 
         assert len(image) == 100
 
+    def test_simulate_image_with_kwargs_single_band(self):
+        """Test that passing kwargs_single_band produces identical results
+        to letting simulate_image compute it internally."""
+        from slsim.ImageSimulation.image_quality_lenstronomy import kwargs_single_band
+
+        # Get kwargs_single_band manually
+        kwargs_band = kwargs_single_band(observatory="LSST", band="g")
+
+        # Image without passing kwargs_single_band (standard path)
+        image_without = simulate_image(
+            lens_class=self.gg_lens,
+            band="g",
+            num_pix=50,
+            add_noise=False,  # deterministic comparison
+            observatory="LSST",
+        )
+
+        # Image with pre-computed kwargs_single_band (optimization path)
+        image_with = simulate_image(
+            lens_class=self.gg_lens,
+            band="g",
+            num_pix=50,
+            add_noise=False,
+            observatory="LSST",
+            kwargs_single_band=kwargs_band,
+        )
+
+        # Results should be identical
+        npt.assert_array_almost_equal(image_without, image_with, decimal=10)
+
     def test_simulate_image_units_counts(self):
         """Test that image_units_counts parameter correctly scales the image by
         exposure time."""
