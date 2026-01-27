@@ -84,8 +84,8 @@ def simulate_image(
     if add_noise:
         image += sim_api.noise_for_model(model=image)
     if image_units_counts:
-        exposure_time = kwargs_single_band["exposure_time"]
-        image *= exposure_time
+        effective_exposure_time = kwargs_single_band["exposure_time"] * kwargs_single_band["num_exposures"]
+        image *= effective_exposure_time
     return image
 
 
