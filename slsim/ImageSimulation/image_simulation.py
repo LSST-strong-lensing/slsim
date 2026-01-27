@@ -18,6 +18,7 @@ def simulate_image(
     observatory="LSST",
     kwargs_psf=None,
     kwargs_numerics=None,
+    kwargs_single_band=None,
     with_source=True,
     with_deflector=True,
     with_point_source=True,
@@ -37,24 +38,37 @@ def simulate_image(
         default options ("psf_type", "kernel_point_source",
         "point_source_supersampling_factor")
     :type kwargs_psf: dict
-    :param kwargs: additional keyword arguments for the bands
     :type kwargs_numerics: dict
-    :param kwargs_numerics: options are
+    :param kwargs_numerics (optional): options are
         "point_source_supersampling_factor", "supersampling_factor", and
         more in lenstronomy.ImSim.Numerics.numerics class
-    :type kwargs: dict
+    :param kwargs_single_band (optional): not intended to be provided 
+        directly by the user -- this is more efficient for the SNR 
+        criterion in the validity test
+    :type kwargs_single_band: dict
+    :param with_source: if True, include source light
+    :type with_source: bool
+    :param with_deflector: if True, include deflector light
+    :type with_deflector: bool
+    :param with_point_source: if True, include point source light
+    :type with_point_source: bool
     :param image_units_counts: if True, return image in units of counts
         instead of counts/second (default: False)
     :type image_units_counts: bool
+    :param kwargs: additional keyword arguments for the bands
+    :type kwargs: dict
     :return: simulated image
     :rtype: 2d numpy array
     """
     kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band)
     from slsim.ImageSimulation import image_quality_lenstronomy
 
-    kwargs_single_band = image_quality_lenstronomy.kwargs_single_band(
-        observatory=observatory, band=band, **kwargs
-    )
+    # passing in `kwargs_single_band` is more efficient for the SNR criterion 
+    # in Lens._validity_test()
+    if kwargs_single_band is None:
+        kwargs_single_band = image_quality_lenstronomy.kwargs_single_band(
+            observatory=observatory, band=band, **kwargs
+        )
     if kwargs_psf is not None:
         kwargs_single_band.update(kwargs_psf)
     sim_api = SimAPI(
