@@ -23,3 +23,27 @@ def kwargs_single_band(band, observatory="LSST", **kwargs):
     elif observatory == "Euclid":
         observatory = Euclid(band=band, **kwargs)
     return observatory.kwargs_single_band()
+
+
+def get_observatory(band):
+    """Determine the observatory based on the imaging band.
+
+    :param band: imaging band name
+    :type band: str
+    :return: observatory name ("LSST", "Roman", or "Euclid")
+    :rtype: str
+    :raises ValueError: if band is not recognized for any observatory
+
+    Supported bands:
+        - LSST: 'u', 'g', 'r', 'i', 'z', 'y'
+        - Roman: 'F062', 'F087', 'F106', 'F129', 'F158', 'F184', 'F146'
+        - Euclid: 'VIS'
+    """
+    if band in ["u", "g", "r", "i", "z", "y"]:
+        return "LSST"
+    elif band in ["F062", "F087", "F106", "F129", "F158", "F184", "F146"]:
+        return "Roman"
+    elif band in ["VIS"]:
+        return "Euclid"
+    else:
+        raise ValueError(f"Band {band} not recognized for any observatory.")
