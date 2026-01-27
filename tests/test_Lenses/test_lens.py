@@ -215,7 +215,7 @@ class TestLens(object):
 
     def test_snr(self):
         # Test basic SNR calculation
-        snr_result = self.gg_lens_high_snr.snr(band="i", num_pix=30, observatory="LSST")
+        snr_result = self.gg_lens_high_snr.snr(band="i", fov_arcsec=6, observatory="LSST")
         # SNR should be either a positive float or None
         assert snr_result is None or (
             isinstance(snr_result, (float, np.floating)) and snr_result > 0
@@ -225,7 +225,7 @@ class TestLens(object):
         # Test that a very high per-pixel threshold returns None
         snr_result = self.gg_lens_high_snr.snr(
             band="i",
-            num_pix=30,
+            fov_arcsec=6,
             observatory="LSST",
             snr_per_pixel_threshold=1e10,
         )
@@ -273,7 +273,7 @@ class TestLens(object):
     def test_snr_multi_observatory(self, band, observatory):
         """Test SNR calculation with different observatories."""
         lens = self._create_lens_for_observatory(band, observatory)
-        snr_result = lens.snr(band=band, num_pix=30, observatory=observatory)
+        snr_result = lens.snr(band=band, fov_arcsec=6, observatory=observatory)
         assert snr_result is None or (
             isinstance(snr_result, (float, np.floating)) and snr_result > 0
         )
@@ -294,7 +294,7 @@ class TestLens(object):
         assert result_low_snr is True
 
         # Test SNR calculation to check if regions are found
-        snr_result = lens.snr(band=band, num_pix=100, observatory=observatory)
+        snr_result = lens.snr(band=band, fov_arcsec=20, observatory=observatory)
 
         # If SNR is calculable, verify high threshold fails
         if snr_result is not None:
@@ -692,7 +692,7 @@ def test_validity_test_2_with_snr_limit(pes_lens_instance):
 
 def test_snr_pes_lens(pes_lens_instance):
     """Test SNR calculation for point source + extended source lens."""
-    snr_result = pes_lens_instance.snr(band="i", num_pix=30, observatory="LSST")
+    snr_result = pes_lens_instance.snr(band="i", fov_arcsec=6, observatory="LSST")
     assert snr_result is None or (
         isinstance(snr_result, (float, np.floating)) and snr_result > 0
     )
@@ -1881,12 +1881,12 @@ class TestSNR:
 
     def test_snr_returns_float_or_none(self):
         """Test that SNR returns a float or None."""
-        snr_result = self.lens.snr(band="i", num_pix=30, observatory="LSST")
+        snr_result = self.lens.snr(band="i", fov_arcsec=6, observatory="LSST")
         assert snr_result is None or isinstance(snr_result, (float, np.floating))
 
     def test_snr_positive_when_not_none(self):
         """Test that SNR is positive when it returns a value."""
-        snr_result = self.lens.snr(band="i", num_pix=30, observatory="LSST")
+        snr_result = self.lens.snr(band="i", fov_arcsec=6, observatory="LSST")
         if snr_result is not None:
             assert snr_result > 0
 
@@ -1894,20 +1894,20 @@ class TestSNR:
         """Test SNR calculation with different bands."""
         bands = ["g", "r", "i"]
         for band in bands:
-            snr_result = self.lens.snr(band=band, num_pix=30, observatory="LSST")
+            snr_result = self.lens.snr(band=band, fov_arcsec=6, observatory="LSST")
             assert snr_result is None or isinstance(snr_result, (float, np.floating))
 
-    def test_snr_num_pix_parameter(self):
-        """Test that different num_pix values work."""
-        for num_pix in [20, 30, 50]:
-            snr_result = self.lens.snr(band="i", num_pix=num_pix, observatory="LSST")
+    def test_snr_fov_arcsec_parameter(self):
+        """Test that different fov_arcsec values work."""
+        for fov_arcsec in [4, 6, 10]:
+            snr_result = self.lens.snr(band="i", fov_arcsec=fov_arcsec, observatory="LSST")
             assert snr_result is None or isinstance(snr_result, (float, np.floating))
 
     def test_snr_high_threshold_returns_none(self):
         """Test that a very high per-pixel SNR threshold returns None."""
         snr_result = self.lens.snr(
             band="i",
-            num_pix=30,
+            fov_arcsec=6,
             observatory="LSST",
             snr_per_pixel_threshold=1e10,
         )
@@ -1918,7 +1918,7 @@ class TestSNR:
         # With a very low threshold, we should get some regions
         snr_low = self.lens.snr(
             band="i",
-            num_pix=30,
+            fov_arcsec=6,
             observatory="LSST",
             snr_per_pixel_threshold=0.01,
         )
@@ -1929,13 +1929,13 @@ class TestSNR:
         """Test that higher thresholds give equal or lower SNR (or None)."""
         snr_low_thresh = self.lens.snr(
             band="i",
-            num_pix=30,
+            fov_arcsec=6,
             observatory="LSST",
             snr_per_pixel_threshold=0.5,
         )
         snr_high_thresh = self.lens.snr(
             band="i",
-            num_pix=30,
+            fov_arcsec=6,
             observatory="LSST",
             snr_per_pixel_threshold=2.0,
         )

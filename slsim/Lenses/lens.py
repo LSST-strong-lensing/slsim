@@ -373,13 +373,11 @@ class Lens(LensedSystemBase):
                 list(snr_limit.keys())[0]
             )  # assuming that all bands are from the same observatory
 
+            # SNR threshold must be met in every band
             for band, snr in snr_limit.items():
-                kwargs_band = kwargs_single_band(band=band, observatory=observatory)
-                pixel_scale = kwargs_band["pixel_scale"]
-
                 snr_calculated = self.snr(
                     band=band,
-                    num_pix=int(fov_arcsec / pixel_scale),
+                    fov_arcsec=fov_arcsec,
                     observatory=observatory,
                     snr_per_pixel_threshold=1,
                 )
@@ -387,7 +385,7 @@ class Lens(LensedSystemBase):
                     return False
         return True
 
-    def snr(self, band, num_pix=50, observatory="LSST", snr_per_pixel_threshold=1):
+    def snr(self, band, fov_arcsec=10, observatory="LSST", snr_per_pixel_threshold=1):
         """Calculate the signal-to-noise ratio (SNR) using
         the method of `Holloway et al. (2023) <https://doi.org/10.1093/mnras/stad2371>`_.
         This implementation is borrowed from `mejiro <https://github.com/AstroMusers/mejiro>`_,
@@ -410,9 +408,8 @@ class Lens(LensedSystemBase):
 
         :param band: imaging band
         :type band: string
-        :param num_pix: number of pixels for the image simulation (default is 50, or
-            10 arcseconds for LSST with 0.2 arcsec/pixel)
-        :type num_pix: int
+        :param fov_arcsec: field of view in arcseconds (default is 10)
+        :type fov_arcsec: float
         :param observatory: observatory name (default is "LSST")
         :type observatory: string
         :param snr_per_pixel_threshold: minimum SNR per pixel required to include
@@ -427,6 +424,11 @@ class Lens(LensedSystemBase):
             Regions are defined as contiguous pixels (using a cross-shaped
             connectivity).
         """
+        # set the size of the image
+        kwargs_band = kwargs_single_band(band=band, observatory=observatory)
+        pixel_scale = kwargs_band["pixel_scale"]
+        num_pix=int(fov_arcsec / pixel_scale)
+
         # get surface brightness of the lensed source
         source = simulate_image(
             lens_class=self,
@@ -436,6 +438,7 @@ class Lens(LensedSystemBase):
             observatory=observatory,
             kwargs_psf=None,
             kwargs_numerics=None,
+            kwargs_single_band=kwargs_band,
             with_source=True,
             with_deflector=False,  # no deflector
             with_point_source=True,
@@ -451,6 +454,7 @@ class Lens(LensedSystemBase):
             observatory=observatory,
             kwargs_psf=None,
             kwargs_numerics=None,
+            kwargs_single_band=kwargs_band,
             with_source=True,
             with_deflector=True,  # add deflector
             with_point_source=True,
