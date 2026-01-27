@@ -215,7 +215,9 @@ class TestLens(object):
 
     def test_snr(self):
         # Test basic SNR calculation
-        snr_result = self.gg_lens_high_snr.snr(band="i", fov_arcsec=6, observatory="LSST")
+        snr_result = self.gg_lens_high_snr.snr(
+            band="i", fov_arcsec=6, observatory="LSST"
+        )
         # SNR should be either a positive float or None
         assert snr_result is None or (
             isinstance(snr_result, (float, np.floating)) and snr_result > 0
@@ -1900,7 +1902,9 @@ class TestSNR:
     def test_snr_fov_arcsec_parameter(self):
         """Test that different fov_arcsec values work."""
         for fov_arcsec in [4, 6, 10]:
-            snr_result = self.lens.snr(band="i", fov_arcsec=fov_arcsec, observatory="LSST")
+            snr_result = self.lens.snr(
+                band="i", fov_arcsec=fov_arcsec, observatory="LSST"
+            )
             assert snr_result is None or isinstance(snr_result, (float, np.floating))
 
     def test_snr_high_threshold_returns_none(self):

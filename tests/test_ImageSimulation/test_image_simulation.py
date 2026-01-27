@@ -87,8 +87,8 @@ class TestImageSimulation(object):
         assert len(image) == 100
 
     def test_simulate_image_with_kwargs_single_band(self):
-        """Test that passing kwargs_single_band produces identical results
-        to letting simulate_image compute it internally."""
+        """Test that passing kwargs_single_band produces identical results to
+        letting simulate_image compute it internally."""
         from slsim.ImageSimulation.image_quality_lenstronomy import kwargs_single_band
 
         # Get kwargs_single_band manually

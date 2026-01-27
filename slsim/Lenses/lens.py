@@ -427,7 +427,7 @@ class Lens(LensedSystemBase):
         # set the size of the image
         kwargs_band = kwargs_single_band(band=band, observatory=observatory)
         pixel_scale = kwargs_band["pixel_scale"]
-        num_pix=int(fov_arcsec / pixel_scale)
+        num_pix = int(fov_arcsec / pixel_scale)
 
         # get surface brightness of the lensed source
         source = simulate_image(
