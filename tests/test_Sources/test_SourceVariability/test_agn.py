@@ -3,7 +3,6 @@ from slsim.Sources.SourceVariability.agn import Agn, RandomAgn
 from astropy import cosmology
 import pytest
 
-
 # Define some parameters common to all agn in this test
 # These are the intrinsic signal I am choosing
 agn_driving_variability_model = "light_curve"
