@@ -117,6 +117,9 @@ class QuasarRate(object):
                 "lsst2023-y",
             ]
         else:
+            # make sure it has 'lsst2023-i' for anchoring
+            if "lsst2023-i" not in qsogen_bands:
+                qsogen_bands.append("lsst2023-i")
             self.qsogen_bands = qsogen_bands
 
         self.use_sed_interpolator = use_sed_interpolator
@@ -547,7 +550,6 @@ class QuasarRate(object):
                     M_i=M_i,
                     target_apparent_i_mag=ps_mag_i,
                     filters=filters,
-                    use_interpolator=self.use_sed_interpolator,
                 )
 
                 for band, mag in mags.items():
