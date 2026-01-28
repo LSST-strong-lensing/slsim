@@ -11,6 +11,7 @@ curve once to minimise i/o.
 Edit 2021 July: v20210625 emline_templates and associated model params
 Edit 2022 May: update reference to published paper 2021MNRAS.508..737T
 """
+
 import os
 import numpy as np
 from pathlib import Path

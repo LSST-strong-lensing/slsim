@@ -12,6 +12,7 @@ pl_ext_comp_03.sph    Quasar extinction curve
 
 This version first created 2019 Feb 07; last updated 2021 Mar 13.
 """
+
 import numpy as np
 from scipy.integrate import quad
 from astropy.convolution import Gaussian1DKernel, convolve
