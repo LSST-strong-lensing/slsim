@@ -858,13 +858,13 @@ class ScotchSources(SourcePopBase):
 
     def _build_transient_index(self, transient_type: str) -> _ClassIndex:
 
-        (host_grps, gids_sorted_list, sort_idx_list, host_mask_sorted_list) = (
+        host_grps, gids_sorted_list, sort_idx_list, host_mask_sorted_list = (
             self._build_index_host_info(transient_type)
         )
 
         # Subclasses across files (as shards)
 
-        (ordered_sub_list, subclass_total, subclass_selected, subclass_expected) = (
+        ordered_sub_list, subclass_total, subclass_selected, subclass_expected = (
             self._build_subtype_indeces(
                 transient_type=transient_type,
                 host_grps=host_grps,
