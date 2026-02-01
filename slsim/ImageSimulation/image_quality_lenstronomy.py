@@ -24,6 +24,7 @@ def kwargs_single_band(band, observatory="LSST", **kwargs):
         observatory = Euclid(band=band, **kwargs)
     return observatory.kwargs_single_band()
 
+
 def get_observatory(band):
     """Determine the observatory based on the imaging band.
 
@@ -46,6 +47,7 @@ def get_observatory(band):
         return "Euclid"
     else:
         raise ValueError(f"Band {band} not recognized for any observatory.")
+
 
 def get_speclite_filtername(band):
     """Get the speclite filter name corresponding to the given band.
@@ -70,6 +72,7 @@ def get_speclite_filtername(band):
         return f"Euclid-{band}"
     else:
         raise ValueError(f"Band {band} not recognized for any observatory.")
+
 
 def get_speclite_filternames(bands):
     """Get a list of speclite filter names corresponding to the given bands.

@@ -34,6 +34,7 @@ class TestGetObservatory:
             with pytest.raises(ValueError, match=f"Band {band} not recognized"):
                 get_observatory(band)
 
+
 class TestGetSpecliteFiltername:
     """Tests for the get_speclite_filtername function."""
 
@@ -64,10 +65,11 @@ class TestGetSpecliteFiltername:
         for band in invalid_bands:
             with pytest.raises(ValueError, match=f"Band {band} not recognized"):
                 get_speclite_filtername(band)
-    
+
     def test_get_speclite_filternames(self):
-        """Test that get_speclite_filternames returns correct list of filter names."""
+        """Test that get_speclite_filternames returns correct list of filter
+        names."""
         bands = ["u", "F106", "VIS"]
         expected = ["lsst2023-u", "Roman-F106", "Euclid-VIS"]
-        
+
         assert get_speclite_filternames(bands) == expected

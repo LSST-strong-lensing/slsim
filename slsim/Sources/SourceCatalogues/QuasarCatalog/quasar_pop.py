@@ -127,7 +127,6 @@ class QuasarRate(object):
                 qsogen_bands.append("lsst2023-i")
             self.qsogen_bands = qsogen_bands
 
-
         # Construct the dynamic path to the data file
         base_path = Path(os.path.dirname(__file__))
         file_path = base_path / "i_band_Richards_et_al_2006.txt"
