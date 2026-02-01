@@ -10,7 +10,7 @@ class TestQuasar:
     def setup_method(self):
         cosmo = cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
         source_dict = {"z": 0.8, "ps_mag_i": 20}
-        
+
         # Dictionary simulating a light curve input
         source_dict2 = {
             "z": 0.8,
@@ -29,13 +29,9 @@ class TestQuasar:
         }
 
         # Source dict simulating input from QSOGen (pre-computed multi-band mags)
-        # We explicitly set 'g' to a value (15) that is likely very different 
+        # We explicitly set 'g' to a value (15) that is likely very different
         # from what the AGN model would predict based on i=20.
-        source_dict_multiband = {
-            "z": 0.8, 
-            "ps_mag_i": 20, 
-            "ps_mag_g": 15.0  
-        }
+        source_dict_multiband = {"z": 0.8, "ps_mag_i": 20, "ps_mag_g": 15.0}
 
         variable_agn_kwarg_dict = {
             "length_of_light_curve": 500,
@@ -66,7 +62,7 @@ class TestQuasar:
             "corona_height": 10,
             "r_resolution": 500,
         }
-        
+
         # Configuration for multiband test: request 'g' band variability
         kwargs_quasar_multiband = kwargs_quasar.copy()
         kwargs_quasar_multiband["kwargs_variability"] = {"agn_lightcurve", "g", "i"}
@@ -85,9 +81,11 @@ class TestQuasar:
         )
         # Initialize the source with explicit AGN parameters for morphology testing
         self.source_agn_params = Quasar(cosmo=cosmo, **source_dict_agn, **kwargs_quasar)
-        
+
         # Source with pre-existing magnitudes
-        self.source_multiband = Quasar(cosmo=cosmo, **source_dict_multiband, **kwargs_quasar_multiband)
+        self.source_multiband = Quasar(
+            cosmo=cosmo, **source_dict_multiband, **kwargs_quasar_multiband
+        )
 
     def test_light_curve(self):
         light_curve = self.source.light_curve
@@ -117,24 +115,22 @@ class TestQuasar:
             self.source_agn_band_error.light_curve
 
     def test_light_curve_with_existing_mags(self):
-        """
-        Test that if source_dict already contains magnitudes (e.g. from qsogen),
-        Quasar class uses them as the mean magnitude for variability, 
-        OVERRIDING the SS73 model prediction.
-        """
+        """Test that if source_dict already contains magnitudes (e.g. from
+        qsogen), Quasar class uses them as the mean magnitude for variability,
+        OVERRIDING the SS73 model prediction."""
         light_curve = self.source_multiband.light_curve
-        
+
         # Verify Variability was computed for 'g'
         assert "g" in light_curve
-        
+
         # Check the mean magnitude used in the reprocessing
         # The light curve should fluctuate around the INPUT magnitude (15.0),
         # not the SS73 model magnitude (which would be ~20 like the i-band).
         mean_g_mag = np.mean(light_curve["g"]["ps_mag_g"])
-        
+
         # Allow small deviation due to stochastic variability, but it should be close to 15
-        npt.assert_allclose(mean_g_mag, 15.0, atol=0.5) 
-        
+        npt.assert_allclose(mean_g_mag, 15.0, atol=0.5)
+
         # Verify it is NOT close to 20 (standard SS73 model prediction)
         assert abs(mean_g_mag - 20.0) > 1.0
 
@@ -145,7 +141,7 @@ class TestQuasar:
 
         # Test that calling point_source_magnitude WITH time triggers variability
         # and populates the source_dict with mean magnitudes for other bands.
-        
+
         # 1. Before computation, "F062" is unknown
         with pytest.raises(ValueError):
             # Fails because F062 is not in source_dict and we didn't provide time
@@ -154,11 +150,13 @@ class TestQuasar:
 
         # 2. Provide time -> triggers computation
         times = np.array([10, 20])
-        roman_mags = self.source.point_source_magnitude("F062", image_observation_times=times)
-        
+        roman_mags = self.source.point_source_magnitude(
+            "F062", image_observation_times=times
+        )
+
         assert len(roman_mags) == 2
-        
-        # 3. After computation, mean magnitude is added to source_dict, 
+
+        # 3. After computation, mean magnitude is added to source_dict,
         # so static call should now work
         roman_static = self.source.point_source_magnitude("F062")
         assert isinstance(roman_static, float)
@@ -171,7 +169,7 @@ class TestQuasar:
 
         # Test pass-through for non-variable source
         assert self.source_none.point_source_magnitude("i") == 20
-        
+
         # Test interpolation logic from source_light_curve (pre-defined lightcurve)
         npt.assert_almost_equal(
             self.source_light_curve.point_source_magnitude("i"), 20.833, decimal=2
