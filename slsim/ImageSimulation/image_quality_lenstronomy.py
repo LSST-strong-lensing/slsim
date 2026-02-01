@@ -79,7 +79,7 @@ def get_speclite_filternames(bands):
 
     :param bands: list of imaging band names. E.g., ['u', 'g', 'r', 'F062', 'VIS'].
     :type bands: list of str
-    :return: list of speclite filter names
+    :return: list of speclite filter names in the same order as input bands
     :rtype: list of str
     :raises ValueError: if any band is not recognized for any observatory
 

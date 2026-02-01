@@ -5,6 +5,7 @@ from slsim.Sources.SourceVariability.variability import (
 )
 from slsim.Sources.SourceVariability import agn
 from slsim.Sources.SourceTypes.source_base import SourceBase
+from slsim.ImageSimulation.image_quality_lenstronomy import get_speclite_filternames
 
 
 class Quasar(SourceBase):
@@ -111,52 +112,22 @@ class Quasar(SourceBase):
                     input_agn_bounds_dict=self.input_agn_bounds_dict,
                     **agn_kwarg_dict,
                 )
-                # Get mean mags for each provided band
-                # determine which kwargs_variability are lsst bands
-                lsst_bands = ["u", "g", "r", "i", "z", "y"]
-                provided_lsst_bands = set(lsst_bands) & set(self._kwargs_variability)
 
-                # Roman Bands
-                roman_bands = [
-                    "F062",
-                    "F087",
-                    "F106",
-                    "F129",
-                    "F158",
-                    "F184",
-                    "F146",
-                    "F213",
+                # Get mean mags for each provided band if not already present in source_dict
+                # determine which kwargs_variability are LSST, Roman or Euclid bands
+                all_supported_bands = [
+                    "u", "g", "r", "i", "z", "y",                                    # LSST
+                    "F062", "F087", "F106", "F129", "F158", "F184", "F146", "F213",  # Roman
+                    "VIS",                                                           # Euclid
                 ]
-                provided_roman_bands = set(roman_bands) & set(self._kwargs_variability)
+                provided_bands = set(all_supported_bands) & set(self._kwargs_variability)
+                speclite_names = get_speclite_filternames(provided_bands)
 
-                # Euclid Bands
-                euclid_bands = ["VIS", "Y", "H", "J"]
-                provided_euclid_bands = set(euclid_bands) & set(
-                    self._kwargs_variability
-                )
-
-                # The set "provided_lsst_bands" is no longer ordered.
-                # Therefore, create a list of speclite names in the new order
-                speclite_names = []
-                provided_bands = []
-
-                # change name to be compatible with speclite filter names
-                for band in provided_lsst_bands:
-                    speclite_names.append("lsst2016-" + band)
-                    provided_bands.append(band)
-
-                for band in provided_roman_bands:
-                    speclite_names.append("Roman-" + band)
-                    provided_bands.append(band)
-
-                for band in provided_euclid_bands:
-                    speclite_names.append("Euclid-" + band)
-                    provided_bands.append(band)
-
-                # determine mean magnitudes for each band
+                # determine mean magnitudes for each band using the AGN class (uses SS73 disk model)
                 mean_magnitudes = self.agn_class.get_mean_mags(speclite_names)
 
                 # check if source_dict already has mean mags for these bands
+                # If yes, use those instead of computed ones
                 for index, band in enumerate(provided_bands):
                     ps_mag_name = "ps_mag_" + band
                     if ps_mag_name in self.source_dict:
@@ -216,16 +187,11 @@ class Quasar(SourceBase):
         :rtype: float
         """
 
-        # check if source_dict has mean magnitude for this band
-        ps_mag_name = "ps_mag_" + band
-        if ps_mag_name in self.source_dict:
-            if image_observation_times is None:
-                return self.source_dict[ps_mag_name]
-
         # If variability has not yet been computed, compute it now
-        # this also adds the mean magnitudes to the source_dict
-        if self._variability_computed is False:
-            self._kwargs_variability_model = self.light_curve
+        # this also adds the mean magnitudes to the source_dict if not already present
+        if image_observation_times is not None:
+            if self._variability_computed is False:
+                self._kwargs_variability_model = self.light_curve
 
         # all the returning of variable magnitudes will be handled by the Parent class
         return super().point_source_magnitude(
