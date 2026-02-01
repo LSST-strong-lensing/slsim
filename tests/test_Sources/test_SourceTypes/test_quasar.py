@@ -9,7 +9,7 @@ from slsim.Pipelines import roman_speclite
 class TestQuasar:
     def setup_method(self):
         cosmo = cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
-        source_dict = {"z": 0.8, "ps_mag_i": 20}
+        self.source_dict = {"z": 0.8, "ps_mag_i": 20}
 
         # Dictionary simulating a light curve input
         source_dict2 = {
@@ -17,7 +17,7 @@ class TestQuasar:
             "MJD": [0, 2, 3, 4, 5, 6],
             "ps_mag_i": [21, 20, 18, 21, 22, 23],
         }
-        source_dict3 = {"z": 0.8}
+        self.source_dict3 = {"z": 0.8}
 
         # Source dict specifically for testing AGN parameter extraction/updates
         source_dict_agn = {
@@ -41,7 +41,7 @@ class TestQuasar:
             "high_frequency_slope": 3,
             "standard_deviation": 0.9,
         }
-        kwargs_quasar = {
+        self.kwargs_quasar = {
             "source_type": "quasar",
             "variability_model": "light_curve",
             "kwargs_variability": {"agn_lightcurve", "i", "r", "F062", "VIS"},
@@ -64,23 +64,34 @@ class TestQuasar:
         }
 
         # Configuration for multiband test: request 'g' band variability
-        kwargs_quasar_multiband = kwargs_quasar.copy()
+        kwargs_quasar_multiband = self.kwargs_quasar.copy()
         kwargs_quasar_multiband["kwargs_variability"] = {"agn_lightcurve", "g", "i"}
 
         # run roman_speclite to load the Roman filters
         roman_speclite.configure_roman_filters()
 
-        self.source = Quasar(cosmo=cosmo, **source_dict, **kwargs_quasar)
-        self.source_none = Quasar(cosmo=cosmo, **kwargs_quasar_none, **source_dict)
-        self.source_cosmo_error = Quasar(cosmo=None, **kwargs_quasar, **source_dict)
+        self.source = Quasar(cosmo=cosmo, **self.source_dict, **self.kwargs_quasar)
+        self.source_none = Quasar(
+            cosmo=cosmo, **kwargs_quasar_none, **self.source_dict
+        )
+        # Objects with missing cosmology or bands should raise errors when methods are called (lazy initialization)
+        self.source_cosmo_error = Quasar(
+            cosmo=None, **self.kwargs_quasar, **self.source_dict
+        )
+        self.source_agn_band_error = Quasar(
+            source_dict=self.source_dict3,
+            cosmo=cosmo,
+            **self.kwargs_quasar,
+            **self.source_dict3
+        )
+
         self.source_light_curve = Quasar(
             cosmo=cosmo, **kwargs_quasar_none, **source_dict2
         )
-        self.source_agn_band_error = Quasar(
-            source_dict=source_dict3, cosmo=None, **kwargs_quasar, **source_dict3
-        )
         # Initialize the source with explicit AGN parameters for morphology testing
-        self.source_agn_params = Quasar(cosmo=cosmo, **source_dict_agn, **kwargs_quasar)
+        self.source_agn_params = Quasar(
+            cosmo=cosmo, **source_dict_agn, **self.kwargs_quasar
+        )
 
         # Source with pre-existing magnitudes
         self.source_multiband = Quasar(
@@ -109,10 +120,14 @@ class TestQuasar:
         assert "ps_mag_VIS" in light_curve["VIS"].keys()
 
         assert light_curve_none == {}
+
+        # Test that runtime access raises ValueError for invalid cosmology
         with pytest.raises(ValueError):
-            self.source_cosmo_error.light_curve
+            _ = self.source_cosmo_error.light_curve
+
+        # Test that runtime access raises ValueError for missing bands/magnitudes
         with pytest.raises(ValueError):
-            self.source_agn_band_error.light_curve
+            _ = self.source_agn_band_error.light_curve
 
     def test_light_curve_with_existing_mags(self):
         """Test that if source_dict already contains magnitudes (e.g. from
@@ -176,8 +191,7 @@ class TestQuasar:
         )
 
     def test_update_microlensing_kwargs_source_morphology(self):
-        # We must trigger the light curve generation to ensure the internal agn_class is initialized
-        _ = self.source_agn_params.light_curve
+        # agn_class is now initialized lazily inside update_microlensing...
 
         initial_kwargs = {"some_other_param": 123}
         updated_kwargs = (
