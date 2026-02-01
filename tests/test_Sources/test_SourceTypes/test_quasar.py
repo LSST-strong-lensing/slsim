@@ -71,9 +71,7 @@ class TestQuasar:
         roman_speclite.configure_roman_filters()
 
         self.source = Quasar(cosmo=cosmo, **self.source_dict, **self.kwargs_quasar)
-        self.source_none = Quasar(
-            cosmo=cosmo, **kwargs_quasar_none, **self.source_dict
-        )
+        self.source_none = Quasar(cosmo=cosmo, **kwargs_quasar_none, **self.source_dict)
         # Objects with missing cosmology or bands should raise errors when methods are called (lazy initialization)
         self.source_cosmo_error = Quasar(
             cosmo=None, **self.kwargs_quasar, **self.source_dict

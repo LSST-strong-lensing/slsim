@@ -94,9 +94,7 @@ class Quasar(SourceBase):
                     self._agn_known_band = "lsst2016-i"
                     self._agn_known_mag = self.source_dict["ps_mag_i"]
                 else:
-                    raise ValueError(
-                        "Please provide a band and magnitude for the AGN"
-                    )
+                    raise ValueError("Please provide a band and magnitude for the AGN")
 
             # Create the agn object
             self.agn_class = agn.RandomAgn(
@@ -121,9 +119,7 @@ class Quasar(SourceBase):
 
             # Get mean mags for each provided band if not already present in source_dict
             # determine which kwargs_variability are LSST, Roman or Euclid bands
-            provided_bands = set(ALL_SUPPORTED_BANDS) & set(
-                self._kwargs_variability
-            )
+            provided_bands = set(ALL_SUPPORTED_BANDS) & set(self._kwargs_variability)
             speclite_names = get_speclite_filternames(provided_bands)
 
             # determine mean magnitudes for each band using the AGN class (uses SS73 disk model)
@@ -152,14 +148,14 @@ class Quasar(SourceBase):
                 filter_name = "ps_mag_" + band
 
                 # Set the filter to use
-                self.agn_class.variable_disk.reprocessing_kwargs[
-                    "speclite_filter"
-                ] = speclite_names[index]
+                self.agn_class.variable_disk.reprocessing_kwargs["speclite_filter"] = (
+                    speclite_names[index]
+                )
 
                 # Set the mean magnitude of this filter
-                self.agn_class.variable_disk.reprocessing_kwargs[
-                    "mean_magnitude"
-                ] = mean_magnitudes[index]
+                self.agn_class.variable_disk.reprocessing_kwargs["mean_magnitude"] = (
+                    mean_magnitudes[index]
+                )
 
                 # Extract the reprocessed light curve
                 reprocessed_lightcurve = reprocess_with_lamppost_model(
@@ -168,9 +164,7 @@ class Quasar(SourceBase):
 
                 # Prepare the light curve to be extracted
                 times = reprocessed_lightcurve["MJD"]
-                magnitudes = reprocessed_lightcurve[
-                    "ps_mag_" + speclite_names[index]
-                ]
+                magnitudes = reprocessed_lightcurve["ps_mag_" + speclite_names[index]]
                 # Extracts the variable light curve for each band
                 kwargs_variab_extracted[band] = {
                     "MJD": times,
