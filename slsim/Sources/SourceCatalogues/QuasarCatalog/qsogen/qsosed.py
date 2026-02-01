@@ -16,6 +16,7 @@ This version first created 2019 Feb 07; last updated 2021 Mar 13.
 import numpy as np
 from scipy.integrate import quad
 from astropy.convolution import Gaussian1DKernel, convolve
+from slsim.Sources.SourceCatalogues.QuasarCatalog.qsogen.config import params_agile
 
 _c_ = 299792458.0  # speed of light in m/s
 
@@ -190,7 +191,7 @@ class Quasar_sed:
             Default is an S0 galaxy template from the SWIRE library.
         """
         if params is None:
-            from config import params
+            params = params_agile.copy()
         _params = params.copy()  # avoid overwriting params dict with kwargs
         for key, value in kwargs.items():
             if key not in _params.keys():
