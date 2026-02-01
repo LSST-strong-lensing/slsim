@@ -89,3 +89,9 @@ def get_speclite_filternames(bands):
         - Euclid: 'VIS'
     """
     return [get_speclite_filtername(band) for band in bands]
+
+ALL_SUPPORTED_BANDS = [
+    "u", "g", "r", "i", "z", "y",
+    "F062", "F087", "F106", "F129", "F158", "F184", "F146", "F213",
+    "VIS"
+]
