@@ -19,6 +19,8 @@ from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 
 from scipy.interpolate import RegularGridInterpolator
 
+from slsim.ImageSimulation.image_quality_lenstronomy import get_speclite_filternames
+
 """
 References:
 Richards et al. 2005
@@ -84,7 +86,7 @@ class QuasarRate(object):
          generated within this class.
         :type host_galaxy_candidate: `~astropy.table.Table`
         :param use_qsogen_sed: If True, uses qsogen to generate realistic SEDs and compute magnitudes.
-        :param qsogen_bands: List of strings for speclite filters (e.g., ['lsst2023-u', 'lsst2023-g']).
+        :param qsogen_bands: List of strings for filters (e.g., ['u', 'g', 'r', 'i', 'z', 'y', 'F062', ...]).
                              Defaults to LSST bands if None.
         :param use_sed_interpolator: If True, uses a pre-computed SED magnitude interpolator on a z, M_i grid for speed. This is only relevant if `use_qsogen_sed` is True.
         """
@@ -107,6 +109,7 @@ class QuasarRate(object):
 
         # SED Generation Configuration
         self.use_qsogen_sed = use_qsogen_sed
+        self.use_sed_interpolator = use_sed_interpolator
         if qsogen_bands is None:
             self.qsogen_bands = [
                 "lsst2023-u",
@@ -117,12 +120,13 @@ class QuasarRate(object):
                 "lsst2023-y",
             ]
         else:
+            # convert to speclite filter names
+            qsogen_bands = get_speclite_filternames(qsogen_bands)
             # make sure it has 'lsst2023-i' for anchoring
             if "lsst2023-i" not in qsogen_bands:
                 qsogen_bands.append("lsst2023-i")
             self.qsogen_bands = qsogen_bands
 
-        self.use_sed_interpolator = use_sed_interpolator
 
         # Construct the dynamic path to the data file
         base_path = Path(os.path.dirname(__file__))
@@ -408,7 +412,7 @@ class QuasarRate(object):
 
         # Define a broader wavelength coverage to handle high-z shifting.
         # Default qsosed is logspace(2.95, ...).
-        # We start at 2.35 (~223 Angstroms) to ensure the blue end of the
+        # start at 2.35 (~223 Angstroms) to ensure the blue end of the
         # u-band (approx 3000A) is covered even at z ~ 12.
         # 3000 / (1 + 12) ~ 230 A.
         wavlen = np.logspace(2.35, 4.48, num=25000, endpoint=True)
@@ -465,7 +469,7 @@ class QuasarRate(object):
         # logspace(2.35, ...) covers ~223 Angstroms to IR
         wavlen = np.logspace(2.35, 4.48, num=25000, endpoint=True)
 
-        # Loop over grid (Cost = 60 * 10 = 600 spectrum generations. Fast.)
+        # Loop over grid and compute magnitudes
         for i, z in enumerate(z_grid):
             for j, m_i in enumerate(mi_grid):
                 # Generate SED
@@ -479,8 +483,7 @@ class QuasarRate(object):
                 for k, band in enumerate(self.qsogen_bands):
                     grid_mags[i, j, k] = mags[band][0]
 
-        # Create 2D Interpolator (z, M_i) -> (mag_band1, mag_band2, ...)
-        # Use Scipy's RegularGridInterpolator which handles vector outputs
+        # 2D Interpolator (z, M_i) -> (mag_band1, mag_band2, ...)
         self._sed_interpolator = RegularGridInterpolator(
             (z_grid, mi_grid), grid_mags, bounds_error=False, fill_value=None
         )

@@ -35,7 +35,7 @@ reddening_curve = np.genfromtxt(f3, unpack=True)
 # so taking R=3.1, A(lambda) = E(B-V)*[Col#2 + 3.1]
 
 # fit to DR16Q median 2sigma-clipped colours in multi-imag bins
-params_qsogen = {
+params_temple = {
     # -- Continuum Slopes & Breaks --
     "plslp1": -0.349,  # UV slope
     "plslp2": 0.593,  # Optical slope
