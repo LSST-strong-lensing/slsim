@@ -6,7 +6,7 @@ from scipy.stats import ks_2samp
 from astropy.table import Table
 import pytest
 import numpy.testing as npt
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 
 class TestQuasarRate:
