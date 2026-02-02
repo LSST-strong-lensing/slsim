@@ -6,5 +6,4 @@
 from slsim.Sources.SourceCatalogues.QuasarCatalog.qsogen.config import params_agile
 from slsim.Sources.SourceCatalogues.QuasarCatalog.qsogen.qsosed import Quasar_sed
 
-# Explicitly define the public API to satisfy F401
 __all__ = ["params_agile", "Quasar_sed"]
