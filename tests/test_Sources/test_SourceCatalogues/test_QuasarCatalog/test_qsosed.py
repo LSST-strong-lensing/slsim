@@ -336,9 +336,11 @@ def test_balmer_continuum(base_params):
     # (Because BC is an emission feature that "turns on" below 3646A)
     assert ratio_short > ratio_long
 
+
 # -----------------------------------------------------------------------------
 # 3. Coverage Extension Tests
 # -----------------------------------------------------------------------------
+
 
 def test_default_params_and_unknown_kwargs(capsys, mock_wavelengths):
     """
@@ -364,9 +366,7 @@ def test_no_logl3000(base_params, mock_wavelengths):
     Covers:
       - 'else: self.convert_fnu_flambda()' (when LogL3000 is None)
     """
-    qs = Quasar_sed(
-        z=2.0, LogL3000=None, wavlen=mock_wavelengths, params=base_params
-    )
+    qs = Quasar_sed(z=2.0, LogL3000=None, wavlen=mock_wavelengths, params=base_params)
     # Ensure flux is still generated and positive (normalization happened)
     assert np.all(qs.flux >= 0)
     assert np.sum(qs.flux) > 0

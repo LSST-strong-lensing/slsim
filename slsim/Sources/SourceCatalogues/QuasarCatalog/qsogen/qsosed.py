@@ -18,11 +18,14 @@ from pathlib import Path
 import numpy as np
 from scipy.integrate import quad
 from astropy.convolution import Gaussian1DKernel, convolve
-from slsim.Sources.SourceCatalogues.QuasarCatalog.qsogen.config import params_agile as default_params
+from slsim.Sources.SourceCatalogues.QuasarCatalog.qsogen.config import (
+    params_agile as default_params,
+)
 
 _c_ = 299792458.0  # speed of light in m/s
 
 base_path = Path(os.path.dirname(__file__))
+
 
 def four_pi_dL_sq(z):
     """Compute luminosity distance for flux-luminosity conversion."""
@@ -498,7 +501,7 @@ class Quasar_sed:
         fragal = max(fragal, 0.0)
 
         wavgal, flxtmp = self.galaxy_template
-        
+
         # Interpolate galaxy SED onto master wavlength array
         flxgal = np.interp(self.wavlen, wavgal, flxtmp)
         galcnt = np.sum(flxgal[self.wav2num(gwnmin) : self.wav2num(gwnmax)])
