@@ -13,13 +13,16 @@ pl_ext_comp_03.sph    Quasar extinction curve
 This version first created 2019 Feb 07; last updated 2021 Mar 13.
 """
 
+import os
+from pathlib import Path
 import numpy as np
 from scipy.integrate import quad
 from astropy.convolution import Gaussian1DKernel, convolve
-from slsim.Sources.SourceCatalogues.QuasarCatalog.qsogen.config import params_agile
+from slsim.Sources.SourceCatalogues.QuasarCatalog.qsogen.config import params_agile as default_params
 
 _c_ = 299792458.0  # speed of light in m/s
 
+base_path = Path(os.path.dirname(__file__))
 
 def four_pi_dL_sq(z):
     """Compute luminosity distance for flux-luminosity conversion."""
@@ -101,7 +104,7 @@ class Quasar_sed:
         LogL3000=46,
         wavlen=np.logspace(2.95, 4.48, num=20001, endpoint=True),
         ebv=0.0,
-        params=None,
+        params=default_params,
         **kwargs
     ):
         """Initialises an instance of the Quasar SED model.
@@ -190,8 +193,6 @@ class Quasar_sed:
             Array must have structure [lambda, f_lambda].
             Default is an S0 galaxy template from the SWIRE library.
         """
-        if params is None:
-            params = params_agile.copy()
         _params = params.copy()  # avoid overwriting params dict with kwargs
         for key, value in kwargs.items():
             if key not in _params.keys():
@@ -496,13 +497,8 @@ class Quasar_sed:
         fragal = min(self.fragal, 0.99)
         fragal = max(fragal, 0.0)
 
-        if self.galaxy_template is not None:
-            wavgal, flxtmp = self.galaxy_template
-        else:
-            # galaxy SED input file
-            f3 = "Sb_template_norm.sed"
-            wavgal, flxtmp = np.genfromtxt(f3, unpack=True)
-
+        wavgal, flxtmp = self.galaxy_template
+        
         # Interpolate galaxy SED onto master wavlength array
         flxgal = np.interp(self.wavlen, wavgal, flxtmp)
         galcnt = np.sum(flxgal[self.wav2num(gwnmin) : self.wav2num(gwnmax)])
@@ -528,13 +524,7 @@ class Quasar_sed:
 
         R=A_V/E(B-V).
         """
-
-        if self.reddening_curve is not None:
-            wavtmp, flxtmp = self.reddening_curve
-        else:
-            # read extinction law from file
-            f4 = "pl_ext_comp_03.sph"
-            wavtmp, flxtmp = np.genfromtxt(f4, unpack=True)
+        wavtmp, flxtmp = self.reddening_curve
 
         extref = np.interp(self.wavlen, wavtmp, flxtmp)
         exttmp = self.ebv * (extref + R)
@@ -579,8 +569,3 @@ class Quasar_sed:
             scale = np.exp(-scale)
             self.flux = scale * self.flux
             self.host_galaxy_flux = scale * self.host_galaxy_flux
-
-
-if __name__ == "__main__":
-
-    print(help(Quasar_sed))

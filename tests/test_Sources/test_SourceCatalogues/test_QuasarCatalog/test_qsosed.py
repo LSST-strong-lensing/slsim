@@ -335,3 +335,77 @@ def test_balmer_continuum(base_params):
     # The boost shortward of the break should be stronger than longward
     # (Because BC is an emission feature that "turns on" below 3646A)
     assert ratio_short > ratio_long
+
+# -----------------------------------------------------------------------------
+# 3. Coverage Extension Tests
+# -----------------------------------------------------------------------------
+
+def test_default_params_and_unknown_kwargs(capsys, mock_wavelengths):
+    """
+    Covers:
+      - Default params loading (via default argument params=default_params)
+      - 'Warning: "{}" not recognised as a kwarg'
+    """
+    # Initialize without 'params', forcing use of default params
+    # Pass an unknown keyword argument 'garbage_param'
+    qs = Quasar_sed(wavlen=mock_wavelengths, garbage_param=12345)
+
+    # Check that params were loaded successfully (default isn't empty)
+    assert qs.params is not None
+    assert "garbage_param" in qs.params
+
+    # Capture stdout to check for the warning print statement
+    captured = capsys.readouterr()
+    assert 'Warning: "garbage_param" not recognised as a kwarg' in captured.out
+
+
+def test_no_logl3000(base_params, mock_wavelengths):
+    """
+    Covers:
+      - 'else: self.convert_fnu_flambda()' (when LogL3000 is None)
+    """
+    qs = Quasar_sed(
+        z=2.0, LogL3000=None, wavlen=mock_wavelengths, params=base_params
+    )
+    # Ensure flux is still generated and positive (normalization happened)
+    assert np.all(qs.flux >= 0)
+    assert np.sum(qs.flux) > 0
+
+
+def test_emline_type_defaults(base_params, mock_wavelengths):
+    """
+    Covers:
+      - 'else: self.emline_type = 0.0'
+      - 'if varlin == 0.0:' (Average emission line template logic)
+    """
+    # Set conditions to hit the default emission line type logic
+    base_params["emline_type"] = None
+    base_params["beslope"] = 0.0  # Disable Baldwin effect
+
+    qs = Quasar_sed(wavlen=mock_wavelengths, params=base_params)
+
+    # Internally, emline_type should have been set to 0.0
+    assert qs.emline_type == 0.0
+
+    # Verify emission lines were added (check flux vs continuum only)
+    base_params["scal_emline"] = 0
+    qs_cont = Quasar_sed(wavlen=mock_wavelengths, params=base_params)
+
+    # Integrated flux with lines (default type 0) should be > continuum
+    assert np.sum(qs.flux) > np.sum(qs_cont.flux)
+
+
+def test_host_galaxy_wavelength_error(base_params):
+    """
+    Covers:
+      - 'wavlen must cover 4000-5000 A for galaxy normalisation' exception
+    """
+    base_params["gflag"] = True
+
+    # Wavelength array that does NOT cover 4000-5000A
+    bad_wav = np.linspace(1000, 3000, 500)
+
+    with pytest.raises(Exception) as excinfo:
+        Quasar_sed(wavlen=bad_wav, params=base_params)
+
+    assert "wavlen must cover 4000-5000 A" in str(excinfo.value)

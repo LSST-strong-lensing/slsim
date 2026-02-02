@@ -346,6 +346,16 @@ class TestQuasarSEDIntegration:
             qsogen_bands=["g", "r", "i"],
         )
 
+        self.qr_no_i_band = QuasarRate(
+            redshifts=np.linspace(0.5, 1.0, 5),
+            sky_area=Quantity(0.05, unit="deg2"),
+            noise=True,
+            cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
+            use_qsogen_sed=True,
+            use_sed_interpolator=False,
+            qsogen_bands=["g", "r"],  # No i-band provided
+        )
+
     def test_qsogen_sed_direct_calculation(self):
         """Test generating quasars with full spectral generation (slow mode).
 
@@ -408,6 +418,9 @@ class TestQuasarSEDIntegration:
         duplication, we implicitly test this by ensuring the other bands are
         'close' to the i-band (typical quasar colors are < 1 mag usually).
         """
+        # Ensure that the i-band anchor is set correctly if not specified
+        assert "lsst2023-i" in self.qr_no_i_band.qsogen_bands
+
         self.qr.use_sed_interpolator = False  # Use direct calc for precision
 
         table = self.qr.quasar_sample(m_min=20, m_max=23)

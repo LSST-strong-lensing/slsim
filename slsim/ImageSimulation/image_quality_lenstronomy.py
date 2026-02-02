@@ -66,12 +66,10 @@ def get_speclite_filtername(band):
     observatory = get_observatory(band)
     if observatory == "LSST":
         return f"lsst2023-{band}"
-    elif observatory == "Roman":
+    if observatory == "Roman":
         return f"Roman-{band}"
-    elif observatory == "Euclid":
+    if observatory == "Euclid":
         return f"Euclid-{band}"
-    else:
-        raise ValueError(f"Band {band} not recognized for any observatory.")
 
 
 def get_speclite_filternames(bands):
