@@ -405,16 +405,16 @@ class TestQuasarSEDIntegration:
     def test_sed_anchoring_consistency(self):
         """Verify that the SED generation preserves the input i-band magnitude.
 
-        The code logic is:
+        Currently we:
         1. Generate SED
         2. Calculate raw i-band magnitude from SED
         3. Calculate offset = (Desired i-band - Raw i-band)
         4. Apply offset to all bands.
 
         Therefore, if we were to recalculate the i-band from the output columns,
-        it should match the input 'ps_mag_i' exactly (conceptually).
+        it should match the input 'ps_mag_i' exactly.
 
-        However, since the code discards the recalculated i-band column to avoid
+        However, since currently the code discards the recalculated i-band column to avoid
         duplication, we implicitly test this by ensuring the other bands are
         'close' to the i-band (typical quasar colors are < 1 mag usually).
         """
@@ -426,7 +426,6 @@ class TestQuasarSEDIntegration:
         table = self.qr.quasar_sample(m_min=20, m_max=23)
 
         # Check that g-band is within a reasonable physical range of i-band
-        # (e.g., a quasar isn't 50 magnitudes brighter in g than i)
         g_i_color = table["ps_mag_g"] - table["ps_mag_i"]
 
         # Typical quasar colors are between -1 and +2 roughly
