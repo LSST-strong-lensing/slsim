@@ -887,7 +887,7 @@ class Lens(LensedSystemBase):
         # Check if the microlensing model class is already instantiated for this source index to avoid redundant instantiation
         if not hasattr(self, "_microlensing_model_class"):
             self._microlensing_model_class = {}
-        
+
         if source_index not in self._microlensing_model_class.keys():
             self._microlensing_model_class[source_index] = (
                 MicrolensingLightCurveFromLensModel(
