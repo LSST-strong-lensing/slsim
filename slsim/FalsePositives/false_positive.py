@@ -1,6 +1,7 @@
 from slsim.Lenses.lens import Lens
 import numpy as np
 
+
 class FalsePositive(Lens):
     """Class to manage individual false positive.
 
