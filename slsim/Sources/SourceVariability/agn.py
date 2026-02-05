@@ -115,7 +115,6 @@ class Agn(object):
         :param bands: list of speclite filter names.
         :return: list of magnitudes based on the speclite bands given.
         """
-        # print('bands: ',bands)
         magnitudes = []
         for band in bands:
             magnitudes.append(

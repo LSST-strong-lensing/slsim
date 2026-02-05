@@ -390,8 +390,6 @@ class QuasarRate(object):
                     sky_area=self.sky_area,
                     filters=["u", "g", "r", "i", "z", "y"],
                     cosmo=self.cosmo,
-                    z_min=0,
-                    z_max=4,
                 )
                 host_galaxy_catalog = vstack(
                     [pipeline.red_galaxies, pipeline.blue_galaxies],

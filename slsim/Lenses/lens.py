@@ -737,7 +737,6 @@ class Lens(LensedSystemBase):
         image_positions_x, image_positions_y = self._point_source_image_positions(
             source_index
         )
-
         kappa_star_images = self.kappa_star(image_positions_x, image_positions_y)
         kappa_tot_images = lens_model_lenstronomy.kappa(
             image_positions_x, image_positions_y, lenstronomy_kwargs_lens
@@ -1284,6 +1283,84 @@ class Lens(LensedSystemBase):
         all_source_kwarg_dict["kwargs_ps"] = kwargs_ps
         return source_models, all_source_kwarg_dict
 
+    # def total_flux(self):
+    #     kwargs_model, kwargs_params = self.lenstronomy_kwargs(band=None)
+    #     lightModel = LightModel(
+    #         light_model_list=kwargs_model.get("lens_light_model_list", [])
+    #     )
+    #     kwargs_lens_light_mag = kwargs_params["kwargs_lens_light"]
+    #     kwargs_lens_light_amp = data_util.magnitude2amplitude(
+    #         lightModel, kwargs_lens_light_mag, magnitude_zero_point=0
+    #     )
+    #     total_flux = lightModel.total_flux(kwargs_lens_light_amp)
+    #     return total_flux
+
+    # def deflector_stellar_mass_in_thetaE(self):
+    #     m_enclosed, m_star_enclosed = self.get_sigma(self.einstein_radius[0])
+
+    #     # offset = self.flux_in_radius(self.einstein_radius[0])/self.flux_in_radius()
+    #     return np.abs(m_enclosed[-1]), np.abs(m_star_enclosed[-1])
+
+    # def deflector_lensing_mass(self):
+    #     total_mass = self._lens_cosmo.mass_in_theta_E(self.einstein_radius[0])
+    #     return total_mass
+
+    def flux_in_radius(self, r_out=100):
+        kwargs_model, kwargs_params = self.lenstronomy_kwargs(band="i")
+        lightModel = LightModel(
+            light_model_list=kwargs_model.get("lens_light_model_list", [])
+        )
+        kwargs_lens_light_mag = kwargs_params["kwargs_lens_light"]
+        kwargs_lens_light_amp = data_util.magnitude2amplitude(
+            lightModel, kwargs_lens_light_mag, magnitude_zero_point=28.17
+        )
+        r = np.logspace(-5, np.log10(r_out), 5000)
+        theta_x = r
+        theta_y = np.zeros_like(r)
+
+        sb = lightModel.surface_brightness(theta_x, theta_y, kwargs_lens_light_amp)
+        flux_in_r = 2 * np.pi * np.trapz(sb * r, r)
+        return flux_in_r
+
+    # def get_sigma(self, r):
+    #     kwargs_model, kwargs_params = self.lenstronomy_kwargs(band=None)
+    #     lightModel = LightModel(
+    #         light_model_list=kwargs_model.get("lens_light_model_list", [])
+    #     )
+
+    #     lens_model_lenstronomy = LensModel(
+    #         lens_model_list=kwargs_model["lens_model_list"]
+    #     )
+    #     lenstronomy_kwargs_lens = kwargs_params["kwargs_lens"]
+    #     kwargs_lens_light_mag = kwargs_params["kwargs_lens_light"]
+
+    #     kwargs_lens_light_amp = data_util.magnitude2amplitude(
+    #         lightModel, kwargs_lens_light_mag, magnitude_zero_point=0
+    #     )
+    #     # kwargs_lens_light_amp[0]['n_sersic'] = 4
+    #     r_arr = np.logspace(-2, r, 1000)
+    #     theta_x = r_arr
+    #     theta_y = np.zeros_like(r_arr)
+
+    #     kappa = lens_model_lenstronomy.kappa(
+    #             theta_x,
+    #             theta_y,
+    #             lenstronomy_kwargs_lens
+    #         )
+    #     sigma = kappa * self._lens_cosmo.sigma_crit_angle
+    #     m_enclosed = 2 * np.pi * np.cumsum(sigma * r_arr * np.gradient(r_arr))
+    #     flux_local = lightModel.surface_brightness(
+    #         theta_x,
+    #         theta_y,
+    #         kwargs_lens_light_amp
+    #     )
+
+    #     total_flux = lightModel.total_flux(kwargs_lens_light_amp)
+    #     # sigma_star = (flux_local / total_flux) * min(self.deflector_stellar_mass()  , self.deflector_lensing_mass())
+    #     sigma_star = (flux_local / total_flux) * self.deflector_stellar_mass()
+    #     m_star_enclosed = 2 * np.pi * np.cumsum(sigma_star * r_arr * np.gradient(r_arr))
+    #     return m_enclosed, m_star_enclosed
+
     def kappa_star(self, ra, dec):
         """Computes the stellar surface density at location (ra, dec) in units
         of lensing convergence.
@@ -1292,22 +1369,24 @@ class Lens(LensedSystemBase):
         :param dec: position in the image plane
         :return: kappa_star
         """
-        stellar_mass = self.deflector_stellar_mass()
-        kwargs_model, kwargs_params = self.lenstronomy_kwargs(band=None)
+        kwargs_model, kwargs_params = self.lenstronomy_kwargs(band="i")
         lightModel = LightModel(
             light_model_list=kwargs_model.get("lens_light_model_list", [])
         )
         kwargs_lens_light_mag = kwargs_params["kwargs_lens_light"]
         kwargs_lens_light_amp = data_util.magnitude2amplitude(
-            lightModel, kwargs_lens_light_mag, magnitude_zero_point=0
+            lightModel, kwargs_lens_light_mag, magnitude_zero_point=28.17
         )
-
         total_flux = lightModel.total_flux(kwargs_lens_light_amp)  # integrated flux
         flux_local = lightModel.surface_brightness(
             ra, dec, kwargs_lens_light_amp
         )  # surface brightness per arcsecond square
+        total_mass = self._lens_cosmo.mass_in_theta_E(self.einstein_radius[0])
         kappa_star = (
-            flux_local / total_flux * stellar_mass / self._lens_cosmo.sigma_crit_angle
+            flux_local
+            / total_flux
+            * (np.random.uniform(0.3, 0.6) * total_mass)
+            / self._lens_cosmo.sigma_crit_angle
         )
         return kappa_star
 
@@ -1484,8 +1563,11 @@ class Lens(LensedSystemBase):
                 )
 
         # store light model parameters
-        bands = list("grizy")
+        bands = list("ugrizy")
         for b in bands:
+            df.loc[lens_index, f"ps_{b}_mag_true"] = self.point_source_magnitude(
+                band=b, lensed=False, time=None
+            )
             for i in self.deflector_light_model_lenstronomy(b)[1]:
                 for key in i.keys():
                     val = i[key]
@@ -1517,9 +1599,11 @@ class Lens(LensedSystemBase):
             self.source_redshift_list[0]
         )
         ps_times = self.point_source_arrival_times()[0]
+        magnifications = self.point_source_magnification()[0]
         num_images = len(ps_times)
         for i in range(num_images):
             df.loc[lens_index, f"image_{i}_arrival_time"] = ps_times[i]
+            df.loc[lens_index, f"point_source_magnification_{i}"] = magnifications[i]
         df.loc[lens_index, "num_ps_images"] = safe_value(num_images)
 
         micro_lens_params = (

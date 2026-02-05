@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-
 import numpy as np
 from slsim.Util import param_util
 
@@ -41,6 +40,7 @@ class DeflectorBase(ABC):
         self._z = z
         self._stellar_mass = stellar_mass
         self._deflector_dict = deflector_dict
+        self._absolute_mag = deflector_dict["M"]
         self._angular_size = angular_size
         if center_x is None or center_y is None:
 

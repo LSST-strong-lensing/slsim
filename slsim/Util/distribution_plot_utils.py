@@ -156,7 +156,7 @@ def make_contour(
         if show_every_title and i < len(list_of_dists) - 1:
             color_i = colors[i]
             initial_height = 1 + len(list_of_dists) / (11)
-            inch = i if i == 0 else initial_height / (14 * i)
+            inch = i if i == 0 else initial_height / (7 * i)
             for panel in range(len(fig.axes)):
                 ax = fig.axes[panel]
                 titles_curr = ax.get_title("left")

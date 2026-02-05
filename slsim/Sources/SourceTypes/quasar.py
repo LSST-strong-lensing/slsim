@@ -6,6 +6,11 @@ from slsim.Sources.SourceVariability.variability import (
 from slsim.Sources.SourceVariability import agn
 from slsim.Sources.SourceTypes.source_base import SourceBase
 
+# from slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_pop import QuasarRate
+from pathlib import Path
+import pandas as pd
+import numpy as np
+
 
 class Quasar(SourceBase):
     """A class to manage a quasar."""
@@ -23,7 +28,7 @@ class Quasar(SourceBase):
         variability_model="light_curve",
         random_seed=None,
         cosmo=None,
-        **kwargs
+        **kwargs,
     ):
         """
 
@@ -128,6 +133,13 @@ class Quasar(SourceBase):
 
                 # determine mean magnitudes for each band
                 mean_magnitudes = self.agn_class.get_mean_mags(speclite_names)
+                # add the offset obtained from AGILE
+                mean_magnitudes_with_offset = get_mag_with_color_offset(
+                    mean_magnitudes,
+                    provided_lsst_bands,
+                    self.redshift,
+                    self.source_dict["M_i"],
+                )
 
                 # Our input quasar catalog has magnitude only in i band. So, Agn
                 # class has computed mean magnitude of the given quasar in all lsst
@@ -135,7 +147,7 @@ class Quasar(SourceBase):
                 # magnitudes of quasar at all bands so that we can access them at
                 # anytime.
                 self.source_dict = add_mean_mag_to_source_table(
-                    self.source_dict, mean_magnitudes, provided_lsst_bands
+                    self.source_dict, mean_magnitudes_with_offset, provided_lsst_bands
                 )
 
                 # Calculate light curve in each band
@@ -152,7 +164,7 @@ class Quasar(SourceBase):
                     # Set the mean magnitude of this filter
                     self.agn_class.variable_disk.reprocessing_kwargs[
                         "mean_magnitude"
-                    ] = mean_magnitudes[index]
+                    ] = mean_magnitudes_with_offset[index]
 
                     # Extract the reprocessed light curve
                     reprocessed_lightcurve = reprocess_with_lamppost_model(
@@ -182,7 +194,6 @@ class Quasar(SourceBase):
         :return: Magnitude of the point source in the specified band
         :rtype: float
         """
-
         # If variability has not yet been computed, compute it now
         # this also adds the mean magnitudes to the source_dict
         if self._variability_computed is False:
@@ -216,6 +227,63 @@ class Quasar(SourceBase):
                 if param in kwargs_agn_model:
                     kwargs_source_morphology[param] = kwargs_agn_model[param]
         return kwargs_source_morphology
+
+
+def get_mag_with_color_offset(mean_mags, band_list, redshift, abs_mag_i):
+    """Compute magnitude offsets by finding the closest match in the AGILE
+    quasar catalog based on redshift and absolute i-band magnitude.
+
+    :param mean_mags: list of mean AGN mags computed from AGN disk
+        reprocessing
+    :type redshift: list
+    :param band_list: list of bands for which we compute AGN mags
+    :type redshift: float
+    :param abs_mag_i: Absolute i-band magnitude of the quasar
+    :type abs_mag_i: float
+    :return: Array of magnitude offsets for each band in band_list
+    :rtype: numpy.ndarray
+    """
+    current_dir = Path(__file__).parent
+    agile_csv_path = (
+        current_dir.parent.parent.parent / "data" / "AGILE_data" / "agile_quasars.csv"
+    )
+
+    if not agile_csv_path.exists():
+        raise FileNotFoundError(f"AGILE quasar catalog not found at {agile_csv_path}")
+
+    agile_df = pd.read_csv(agile_csv_path)
+
+    agile_colors = (
+        pd.DataFrame(
+            {
+                "z": agile_df["z"],
+                "M_i": agile_df["M_i"],
+                "u-g": agile_df["ps_mag_u"] - agile_df["ps_mag_g"],
+                "g-r": agile_df["ps_mag_g"] - agile_df["ps_mag_r"],
+                "r-i": agile_df["ps_mag_r"] - agile_df["ps_mag_i"],
+                "i-z": agile_df["ps_mag_i"] - agile_df["ps_mag_z"],
+                "z-y": agile_df["ps_mag_z"] - agile_df["ps_mag_y"],
+            }
+        )
+        .dropna()
+        .astype(np.float64)
+    )
+    agile_z = agile_colors["z"].values
+    agile_M_i = agile_colors["M_i"].values
+    ### nearest neighbor matching in redshift, M_i space
+    sum_of_squared_differences = np.sqrt(
+        (agile_z - redshift) ** 2 + (agile_M_i - abs_mag_i) ** 2
+    )
+    min_dist_ind = np.argmin(sum_of_squared_differences)
+    selected_sample = agile_colors.iloc[min_dist_ind]
+    band_to_mag = dict(zip(band_list, mean_mags))
+    band_to_mag_with_offset = {"i": band_to_mag["i"]}
+    band_to_mag_with_offset["z"] = band_to_mag_with_offset["i"] - selected_sample[5]
+    band_to_mag_with_offset["r"] = band_to_mag_with_offset["i"] + selected_sample[4]
+    band_to_mag_with_offset["g"] = band_to_mag_with_offset["r"] + selected_sample[3]
+    band_to_mag_with_offset["u"] = band_to_mag_with_offset["g"] + selected_sample[2]
+    band_to_mag_with_offset["y"] = band_to_mag_with_offset["z"] - selected_sample[6]
+    return list(band_to_mag_with_offset.values())
 
 
 def add_mean_mag_to_source_table(sourcedict, mean_mags, band_list):
