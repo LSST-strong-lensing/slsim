@@ -904,6 +904,11 @@ class Lens(LensedSystemBase):
                     **kwargs_microlensing_updated,
                 )
             )
+        else:
+            # Update existing instance with new parameters if needed
+            self._microlensing_model_class[source_index].update_source_morphology(
+                kwargs_source_morphology
+            )
 
         # Generate microlensing magnitudes with the simplified method call
         microlensing_magnitudes = self._microlensing_model_class[
