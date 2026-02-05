@@ -1,4 +1,5 @@
 from slsim.Lenses.lens import Lens
+import numpy as np
 
 
 class FalsePositive(Lens):
@@ -58,6 +59,8 @@ class FalsePositive(Lens):
             "lens_light_model_list": combined_lens_light_model_list,
             "lens_model_list": lens_model_list,
         }
+        if "point_source_model_list" in sources:
+            kwargs_model["point_source_model_list"] = sources["point_source_model_list"]
 
         kwargs_source = None
         kwargs_ps = sources_kwargs["kwargs_ps"]
