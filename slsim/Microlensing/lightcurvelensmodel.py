@@ -540,7 +540,6 @@ class MicrolensingLightCurveFromLensModel(object):
 
     def update_source_morphology(self, kwargs_source_morphology):
         """Updates the source morphology parameters (e.g., for a new band)
-        without requiring re-initialization of the class or re-generation
-        of magnification maps.
-        """
+        without requiring re-initialization of the class or re-generation of
+        magnification maps."""
         self._kwargs_source_morphology = kwargs_source_morphology
