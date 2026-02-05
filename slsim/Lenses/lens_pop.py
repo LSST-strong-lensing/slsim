@@ -1,5 +1,4 @@
 import numpy as np
-
 from slsim.Lenses.lens import Lens
 from typing import Optional
 from astropy.cosmology import Cosmology
@@ -8,8 +7,6 @@ from slsim.Sources.SourcePopulation.source_pop_base import SourcePopBase
 from slsim.LOS.los_pop import LOSPop
 from slsim.Deflectors.DeflectorPopulation.deflectors_base import DeflectorsBase
 from slsim.Lenses.lensed_population_base import LensedPopulationBase
-
-from tqdm import tqdm
 
 
 class LensPop(LensedPopulationBase):
@@ -54,7 +51,7 @@ class LensPop(LensedPopulationBase):
         if self.los_pop is None:
             self.los_pop = LOSPop()
 
-    def select_lens_at_random(self, test_area=None, verbose=False, **kwargs_lens_cut):
+    def select_lens_at_random(self, test_area=None, verbose=False, **kwargs_lens_cuts):
         """Draw a random lens within the cuts of the lens and source, with
         possible additional cuts in the lensing configuration.
 
@@ -64,23 +61,21 @@ class LensPop(LensedPopulationBase):
         :param test_area: Solid angle around one lensing galaxy to be investigated on
                         (in arc-seconds^2). If None, computed using deflector's velocity dispersion.
         :type test_area: float or None
-        :param kwargs_lens_cut: Dictionary of cuts that one wants to apply to the lens.
-                                Example: kwargs_lens_cut = {
+        :param kwargs_lens_cuts: Dictionary of cuts that one wants to apply to the lens.
+                                Example: kwargs_lens_cuts = {
                                     "min_image_separation": 0.5,
                                     "max_image_separation": 10,
                                     "mag_arc_limit": {"i", 24},
                                     "second_brightest_image_cut": {"i", 24}
                                 }. All these cuts are optional.
         :type kwargs_lens_cut: dict
-        :param verbose: print statements added
-        :type verbose: bool
         :return: Lens() instance with parameters of the deflector and lens and source light.
         :rtype: Lens
         """
         n = 0
         while True:
             # This creates a single deflector - single_source lens.
-            _source = self._draw_source(**kwargs_lens_cut)
+            _source = self._draw_source(**kwargs_lens_cuts)
             _deflector = self._lens_galaxies.draw_deflector()
             _los = self.los_pop.draw_los(
                 source_redshift=_source.redshift, deflector_redshift=_deflector.redshift
@@ -102,9 +97,7 @@ class LensPop(LensedPopulationBase):
                 los_class=_los,
                 use_jax=self._use_jax,
             )
-            if gg_lens.validity_test(**kwargs_lens_cut):
-                if verbose is True:
-                    print("selected lens after %s tries." % n)
+            if gg_lens.validity_test(**kwargs_lens_cuts):
                 return gg_lens
             n += 1
 
@@ -188,6 +181,66 @@ class LensPop(LensedPopulationBase):
         num_sources_range = np.random.poisson(lam=num_sources_tested_mean)
         return num_sources_range
 
+    def _process_single_deflector(self, args):
+        """Helper function for parallel processing.
+
+        Processes a SINGLE deflector and returns a Lens object or None.
+        """
+        kwargs_lens_cuts, multi_source, speed_factor = args
+
+        _deflector = self._lens_galaxies.draw_deflector()
+        _deflector.update_center(deflector_area=0.01)
+        theta_e_infinity = _deflector.theta_e_infinity(cosmo=self.cosmo)
+        test_area = area_theta_e_infinity(theta_e_infinity=theta_e_infinity)
+        num_sources_tested = self.get_num_sources_tested(
+            testarea=test_area * speed_factor
+        )
+
+        if num_sources_tested > 0:
+            valid_sources = []
+            n = 0
+            los_class = None  # Initialize los_class
+            while n < num_sources_tested:
+                _source = self._sources.draw_source()
+                _source.update_center(
+                    area=test_area, reference_position=_deflector.deflector_center
+                )
+                if n == 0:
+                    # Set LOS class based on the first source
+                    los_class = self.los_pop.draw_los(
+                        source_redshift=_source.redshift,
+                        deflector_redshift=_deflector.redshift,
+                    )
+
+                lens_class = Lens(
+                    deflector_class=_deflector,
+                    source_class=_source,
+                    cosmo=self.cosmo,
+                    los_class=los_class,
+                )
+
+                if lens_class.validity_test(**kwargs_lens_cuts):
+                    valid_sources.append(_source)
+                    if not multi_source:
+                        break
+                n += 1
+
+            if len(valid_sources) > 0:
+                if len(valid_sources) == 1:
+                    final_sources = valid_sources[0]
+                else:
+                    final_sources = valid_sources
+
+                lens_final = Lens(
+                    deflector_class=_deflector,
+                    source_class=final_sources,
+                    cosmo=self.cosmo,
+                    los_class=los_class,
+                )
+                return lens_final
+
+        return None
+
     def draw_population(
         self,
         kwargs_lens_cuts,
@@ -202,7 +255,7 @@ class LensPop(LensedPopulationBase):
 
         :param kwargs_lens_cuts: validity test keywords. dictionary of
             cuts that one wants to apply to the lens. eg:
-            kwargs_lens_cut = {}"min_image_separation": 0.5,
+            kwargs_lens_cuts = {}"min_image_separation": 0.5,
             "max_image_separation": 10, "mag_arc_limit": {"i", 24},
             "second_bright_image_cut = {"band": ["i"], "mag_max":[23]}.
             all these cuts are optional.
@@ -231,11 +284,7 @@ class LensPop(LensedPopulationBase):
         #        print(np.int(num_lenses * num_sources_tested_mean))
 
         # Draw a population of galaxy-galaxy lenses within the area.
-        for _ in tqdm(
-            range(int(num_lenses / speed_factor)),
-            disable=not verbose,
-            desc="Drawing lens population",
-        ):
+        for _ in range(int(num_lenses / speed_factor)):
             _deflector = self._lens_galaxies.draw_deflector()
             _deflector.update_center(deflector_area=0.01)
             theta_e_infinity = _deflector.theta_e_infinity(cosmo=self.cosmo)
@@ -254,8 +303,8 @@ class LensPop(LensedPopulationBase):
                     )
                     if n == 0:
                         # TODO: this is only consistent for a single source. If there
-                        #  are multiple sources at different redshift, this is not fully
-                        #  accurate
+                        # are multiple sources at different redshift, this is not fully
+                        # acurate
                         los_class = self.los_pop.draw_los(
                             source_redshift=_source.redshift,
                             deflector_redshift=_deflector.redshift,

@@ -115,7 +115,6 @@ class Agn(object):
         :param bands: list of speclite filter names.
         :return: list of magnitudes based on the speclite bands given.
         """
-
         magnitudes = []
         for band in bands:
             magnitudes.append(
@@ -179,6 +178,9 @@ MACLEOD2010_COVS = np.array(
     ]
 )
 #############################################################################
+# Distributions for AGN color from Viitanen+in prep
+# we draw color offset parameters conditioning on quasar absolute i-band magnitude
+# and redshift
 
 
 def RandomAgn(

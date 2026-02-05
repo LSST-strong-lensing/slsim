@@ -33,6 +33,7 @@ class Deflector(object):
         :param deflector_dict: parameters of the deflector
         :type deflector_dict: dict
         # TODO: document magnitude inputs
+        # TODO: add absolute i-band magnitude as an input
         """
         self._name = "GAL"
         if deflector_type in ["EPL"]:
@@ -78,6 +79,14 @@ class Deflector(object):
         """
         return self._deflector.velocity_dispersion(cosmo=cosmo)
 
+    def einstein_radius(self):
+        """Einstein radius of a deflector.
+
+        Returns:
+            float: einstein radius in arcsec
+        """
+        return self._deflector._einstein_radius
+
     @property
     def deflector_center(self):
         """Center of the deflector position.
@@ -111,6 +120,13 @@ class Deflector(object):
         :return: magnitude of deflector in given band
         """
         return self._deflector.magnitude(band=band)
+
+    def absolute_bessel_b_magnitude(self):
+        """Absolute magnitude of the deflector.
+
+        :return: absolute Bessel B magnitude
+        """
+        return self._deflector._absolute_mag
 
     @property
     def light_ellipticity(self):
