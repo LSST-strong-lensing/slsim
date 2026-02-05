@@ -3,6 +3,8 @@ import scipy.stats as st
 from colossus.halo import concentration
 from colossus.lss import mass_function
 
+# Changed "vir" to 200c in concent_m_w_scatter function, mdef="vir" is not supported in diemer19 model.
+
 
 def gene_e_ang_halo(Mh):
     """Ellipticity.
@@ -114,7 +116,7 @@ def concent_m_w_scatter(m, z, sig):
     :type  sig: float
     :return: con_halo: ndarray, concentration parameter of halos
     """
-    con_mean = concentration.concentration(m, "vir", z, model="diemer19")
+    con_mean = concentration.concentration(m, "200c", z, model="diemer19")
     sca = np.random.lognormal(0.0, sig, len(m))
     con = con_mean * sca
     con[con < 1.0] = 1.0  # TODO check

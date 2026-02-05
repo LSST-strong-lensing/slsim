@@ -3,12 +3,13 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 from astropy import cosmology
+from slsim.Pipelines import roman_speclite
 
 
 class TestQuasar:
     def setup_method(self):
         cosmo = cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
-        source_dict = {"z": 0.8, "ps_mag_i": 20, "random_seed": 42}
+        source_dict = {"z": 0.8, "ps_mag_i": 20}
         source_dict2 = {
             "z": 0.8,
             "MJD": [0, 2, 3, 4, 5, 6],
@@ -36,10 +37,12 @@ class TestQuasar:
         kwargs_quasar = {
             "source_type": "quasar",
             "variability_model": "light_curve",
-            "kwargs_variability": {"agn_lightcurve", "i", "r"},
+            "kwargs_variability": {"agn_lightcurve", "i", "r", "F062", "VIS"},
             "agn_driving_variability_model": "bending_power_law",
             "agn_driving_kwargs_variability": variable_agn_kwarg_dict,
             "lightcurve_time": np.linspace(0, 1000, 1000),
+            "corona_height": 10,
+            "r_resolution": 500,
         }
 
         kwargs_quasar_none = {
@@ -49,7 +52,12 @@ class TestQuasar:
             "agn_driving_variability_model": "bending_power_law",
             "agn_driving_kwargs_variability": variable_agn_kwarg_dict,
             "lightcurve_time": np.linspace(0, 1000, 1000),
+            "corona_height": 10,
+            "r_resolution": 500,
         }
+
+        # run roman_speclite to load the Roman filters
+        roman_speclite.configure_roman_filters()
 
         self.source = Quasar(cosmo=cosmo, **source_dict, **kwargs_quasar)
 
@@ -67,6 +75,8 @@ class TestQuasar:
     def test_light_curve(self):
         light_curve = self.source.light_curve
         light_curve_none = self.source_none.light_curve
+
+        # Test LSST bands
         assert "i" in light_curve.keys()
         assert "r" in light_curve.keys()
         assert "MJD" in light_curve["i"].keys()
@@ -75,6 +85,14 @@ class TestQuasar:
         assert "ps_mag_r" in light_curve["r"].keys()
         assert len(light_curve["i"]["MJD"]) == 1000
 
+        # Test Roman bands
+        assert "F062" in light_curve.keys()
+        assert "ps_mag_F062" in light_curve["F062"].keys()
+
+        # Test Euclid bands
+        assert "VIS" in light_curve.keys()
+        assert "ps_mag_VIS" in light_curve["VIS"].keys()
+
         assert light_curve_none == {}
         with pytest.raises(ValueError):
             self.source_cosmo_error.light_curve
@@ -82,7 +100,16 @@ class TestQuasar:
             self.source_agn_band_error.light_curve
 
     def test_point_source_magnitude(self):
+        # Test basic LSST magnitude
         assert self.source.point_source_magnitude("i") == 20
+
+        # Test that calling point_source_magnitude triggers variability computation
+        # and allows access to Roman/Euclid mean magnitudes if time is None
+        # Values will differ from i-band due to SED, just checking it returns a float
+        roman_mag = self.source.point_source_magnitude("F062")
+        assert isinstance(roman_mag, float)
+        assert roman_mag != 20  # Should be different from i-band magnitude
+
         with pytest.raises(ValueError):
             self.source.point_source_magnitude("g")
         with pytest.raises(ValueError):

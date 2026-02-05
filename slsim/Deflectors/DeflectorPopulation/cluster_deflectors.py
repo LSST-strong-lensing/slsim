@@ -42,6 +42,8 @@ class ClusterDeflectors(DeflectorsBase):
         catalog_type="skypy",
         richness_fn="Abdullah2022",
         kwargs_draw_members=None,
+        assign_galaxy_redshift=False,
+        cored_profile=False,
     ):
         """
 
@@ -67,6 +69,15 @@ class ClusterDeflectors(DeflectorsBase):
         :type sky_area: `~astropy.units.Quantity`
         :param richness_fn: richness-mass relation to assign a mass to each cluster
         :type richness_fn: str
+        :param kwargs_draw_members: kwargs for draw_members method
+        :type kwargs_draw_members: dict or None
+        :param catalog_type: type of input catalog (skypy or cosmoDC2)
+        :type catalog_type: str
+        :param assign_galaxy_redshift: if True, assign the redshift of the
+            galaxy to the member galaxy instead of the cluster redshift
+        :type assign_galaxy_redshift: bool
+        :param cored_profile: flag for adding cored density profile
+        :type cored_profile: boolean
         """
         galaxy_list = param_util.catalog_with_angular_size_in_arcsec(
             galaxy_catalog=galaxy_list, input_catalog_type=catalog_type
@@ -78,6 +89,7 @@ class ClusterDeflectors(DeflectorsBase):
             sky_area=sky_area,
         )
         self.deflector_profile = "NFW_CLUSTER"
+        self.cored_profile = cored_profile
         self.richness_fn = richness_fn
         if kwargs_draw_members is None:
             kwargs_draw_members = {}
@@ -85,7 +97,12 @@ class ClusterDeflectors(DeflectorsBase):
         self.set_cosmo()
 
         cluster_list = self.preprocess_clusters(cluster_list)
-        members_list = self.preprocess_members(cluster_list, members_list, galaxy_list)
+        members_list = self.preprocess_members(
+            cluster_list,
+            members_list,
+            galaxy_list,
+            assign_galaxy_redshift=assign_galaxy_redshift,
+        )
 
         self._f_vel_disp = vel_disp_abundance_matching(
             galaxy_list, z_max=0.5, sky_area=sky_area, cosmo=cosmo
@@ -120,12 +137,39 @@ class ClusterDeflectors(DeflectorsBase):
         """
         :param index: index of deflector, if not provided, draw randomly from all deflectors
         :type index: int or None
+        :param cored: Boolean flag for cored density profile
+        :type cored: True for cored, False for cuspy profile
         :return: dictionary of complete parameterization of deflector
         """
         index = random.randint(0, self._num_select - 1)
         deflector = self.draw_cluster(index)
         members = self.draw_members(deflector["cluster_id"], **self.kwargs_draw_members)
         deflector["subhalos"] = members
+        deflector["cored_profile"] = self.cored_profile
+        deflector_class = Deflector(deflector_type=self.deflector_profile, **deflector)
+        return deflector_class
+
+    def get_deflector(self, cluster_id, cored=False):
+        """
+        :param cluster_id: identifier of the cluster
+        :type cluster_id: int
+        :type index: int or None
+        :param cored: Boolean flag for cored density profile
+        :type cored: True for cored, False for cuspy profile
+        :return: dictionary of complete parameterization of deflector for the given cluster_id
+        """
+        indices = np.where(self._cluster_select["cluster_id"] == cluster_id)[0]
+
+        index = indices[0]  # Take the first match
+
+        # Draw the cluster using the found index
+        deflector = self.draw_cluster(index)
+
+        # Draw the members for this cluster
+        members = self.draw_members(deflector["cluster_id"], **self.kwargs_draw_members)
+        deflector["subhalos"] = members
+        deflector["cored_profile"] = self.cored_profile
+        # Create and return the deflector class
         deflector_class = Deflector(deflector_type=self.deflector_profile, **deflector)
         return deflector_class
 
@@ -214,6 +258,7 @@ class ClusterDeflectors(DeflectorsBase):
         cosmo=None,
         bands=("g", "r", "i", "z", "Y"),
         max_gals=10000,
+        assign_galaxy_redshift=False,
     ):
         """Assigns a similar galaxy to each member of a group/cluster member
         catalog by comparing their magnitudes and redshifts.
@@ -229,6 +274,14 @@ class ClusterDeflectors(DeflectorsBase):
         :type bands: list
         :param max_gals: maximum number of galaxies to compare to
         :type max_gals: int
+        :param assign_galaxy_redshift: if True, assign the redshift of
+            the galaxy to the member galaxy instead of the cluster
+            redshift
+        :type assign_galaxy_redshift: bool
+        :return: astropy table with the same number of rows as
+            members_list and columns from both members_list and
+            galaxy_list
+        :rtype: astropy.table.Table
         """
         # shuffle galaxy list and select a subset
         if len(galaxy_list) > max_gals:
@@ -253,10 +306,27 @@ class ClusterDeflectors(DeflectorsBase):
         )
         nearest_neighbors_indices = distance.argmin(axis=1)
         similar_galaxies = galaxy_list[nearest_neighbors_indices]
-        include_cols_members = [
-            col for col in members_list.columns if col not in mag_cols  # + ["z"]
-        ]
-        include_cols_galaxies = [col for col in galaxy_list.columns if col not in ["z"]]
+
+        if assign_galaxy_redshift:
+            # Use galaxy redshift instead of member redshift
+            include_cols_members = [
+                col
+                for col in members_list.columns
+                if col not in mag_cols + ["z"]  # Exclude both mags AND redshift
+            ]
+            include_cols_galaxies = [
+                col
+                for col in galaxy_list.columns  # Keep ALL galaxy columns including 'z'
+            ]
+        else:
+            # Original behavior - use member redshift
+            include_cols_members = [
+                col for col in members_list.columns if col not in mag_cols
+            ]
+            include_cols_galaxies = [
+                col for col in galaxy_list.columns if col not in ["z"]
+            ]
+
         return hstack(
             [
                 members_list[include_cols_members],
@@ -288,7 +358,9 @@ class ClusterDeflectors(DeflectorsBase):
             cluster_list["e2_mass"] = -np.ones(n_clusters)
         return cluster_list
 
-    def preprocess_members(self, cluster_list, members_list, galaxy_list):
+    def preprocess_members(
+        self, cluster_list, members_list, galaxy_list, assign_galaxy_redshift=False
+    ):
         n_clusters = len(cluster_list)
         n_members = len(members_list)
         column_names = members_list.columns
@@ -315,7 +387,10 @@ class ClusterDeflectors(DeflectorsBase):
                 members_list["dec"] = -np.ones(n_members)
         # assign a similar SLSim galaxy to each member
         members_list = self.assign_similar_galaxy(
-            members_list, galaxy_list, cosmo=self.cosmo
+            members_list,
+            galaxy_list,
+            cosmo=self.cosmo,
+            assign_galaxy_redshift=assign_galaxy_redshift,
         )
         # update column names
         column_names = members_list.colnames

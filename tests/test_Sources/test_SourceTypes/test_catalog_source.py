@@ -352,7 +352,7 @@ def test_galaxies():
         catalog_type="skypy",
         source_size=None,
         extended_source_type="catalog_source",
-        extendedsource_kwargs={
+        extended_source_kwargs={
             "catalog_path": catalog_path,
             "catalog_type": "COSMOS",
         },

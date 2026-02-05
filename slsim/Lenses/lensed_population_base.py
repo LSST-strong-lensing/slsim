@@ -13,6 +13,7 @@ class LensedPopulationBase(ABC):
         self,
         sky_area=None,
         cosmo=None,
+        use_jax=True,
     ):
         """
 
@@ -20,6 +21,9 @@ class LensedPopulationBase(ABC):
         :type sky_area: `~astropy.units.Quantity`
         :param cosmo: cosmology
         :type cosmo: ~astropy.cosmology instance
+        :param use_jax: if True, will use JAX version of lenstronomy to do lensing calculations for models that are
+         supported in JAXtronomy
+        :type use_jax: bool
         """
 
         if sky_area is None:
@@ -35,6 +39,7 @@ class LensedPopulationBase(ABC):
 
             cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         self.cosmo = cosmo
+        self._use_jax = use_jax
 
     @abstractmethod
     def select_lens_at_random(self):

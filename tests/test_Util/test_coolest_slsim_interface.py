@@ -51,6 +51,7 @@ def supernovae_lens_instance():
             deflector_class=deflector,
             source_class=source,
             cosmo=cosmo,
+            use_jax=False,
         )
         if supernovae_lens.validity_test():
             supernovae_lens = supernovae_lens

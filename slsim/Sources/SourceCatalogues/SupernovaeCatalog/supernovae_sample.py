@@ -111,17 +111,17 @@ class SupernovaeCatalog(object):
 
         :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
         :type sn_type: str
-        :param band: observation band. It sould be a list of bands. Eg: ["i"], ["i","r"]
-        :type band: str. eg: 'i', 'g', 'r', or any other supported band
+        :param band_list: observation band. It sould be a list of bands. Eg: ["i"], ["i","r"]
+        :type band_list: str. eg: 'i', 'g', 'r', or any other supported band
         :param lightcurve_time: observation time array for lightcurve in unit of days.
-        :type lightcurve_time: array
+        :type lightcurve_time: array or None
         :param absolute_mag_band: Band used to normalize to absolute magnitude
         :type absolute_mag_band: str or `~sncosmo.Bandpass`
         :param mag_zpsys: Optional, AB or Vega (AB default)
         :type mag_zpsys: str
         :param cosmo: astropy.cosmology instance
         :param skypy_config: path to SkyPy configuration yaml file
-        :type skypy_config: string
+        :type skypy_config: string or None
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
         :type sky_area: `~astropy.units.Quantity`

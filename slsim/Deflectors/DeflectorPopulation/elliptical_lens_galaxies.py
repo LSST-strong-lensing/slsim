@@ -114,11 +114,7 @@ class EllipticalLensGalaxies(DeflectorsBase):
 
 
 def elliptical_projected_eccentricity(
-    ellipticity,
-    light2mass_e_scaling=1,
-    light2mass_e_scatter=0.1,
-    light2mass_angle_scatter=0.1,
-    **kwargs
+    ellipticity, light2mass_e_scaling=1, light2mass_e_scatter=0.1, **kwargs
 ):
     """Projected eccentricity of elliptical galaxies as a function of other
     deflector parameters.
@@ -133,16 +129,20 @@ def elliptical_projected_eccentricity(
         between light and mass eccentricity
     :param kwargs: deflector properties
     :type kwargs: dict
-    :return: e1_light, e2_light,e1_mass, e2_mass eccentricity components
+    :return: e1_light, e2_light, e1_mass, e2_mass eccentricity
+        components
     """
     e_light = param_util.epsilon2e(ellipticity)
+    # render uniform light direction
     phi_light = np.random.uniform(0, np.pi)
     e1_light = e_light * np.cos(2 * phi_light)
     e2_light = e_light * np.sin(2 * phi_light)
-    e_mass = light2mass_e_scaling * e_light + np.random.normal(
-        loc=0, scale=light2mass_e_scatter
-    )
-    phi_mass = phi_light + np.random.normal(loc=0, scale=light2mass_angle_scatter)
-    e1_mass = e_mass * np.cos(2 * phi_mass)
-    e2_mass = e_mass * np.sin(2 * phi_mass)
+
+    # scale light to mass ellipticity
+    e1_mass, e2_mass = light2mass_e_scaling * e1_light, light2mass_e_scaling * e2_light
+    # add scatter in mass
+    e_mass_scatter = np.random.normal(loc=0, scale=light2mass_e_scatter)
+    phi_scatter = np.random.uniform(0, np.pi)
+    e1_mass += e_mass_scatter * np.cos(2 * phi_scatter)
+    e2_mass += e_mass_scatter * np.sin(2 * phi_scatter)
     return e1_light, e2_light, e1_mass, e2_mass

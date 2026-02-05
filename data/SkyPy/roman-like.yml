@@ -1,6 +1,6 @@
 mag_lim: 30
 fsky: 0.1 deg2
-z_range: !numpy.arange [0, 5.01, 0.1]
+z_range: !numpy.arange [0.0, 5.01, 0.01]
 M_star_blue: !astropy.modeling.models.Linear1D [-0.9408582, -20.40492365]
 phi_star_blue: !astropy.modeling.models.Exponential1D [0.00370253, -9.73858]
 alpha_blue: -1.3
@@ -55,20 +55,29 @@ tables:
       e_ratio: 0.45
       e_sum: 3.5
       size: !len [$blue.z]
+  red1:
+    z1, M1: !skypy.galaxies.schechter_lf
+              redshift: $z_range
+              M_star: $M_star_red
+              phi_star: $phi_star_red
+              alpha: -0.53
+              m_lim: $mag_lim
+              sky_area: $fsky
+              cosmology: $cosmology
+  red2:
+    z2, M2: !skypy.galaxies.schechter_lf
+              redshift: $z_range
+              M_star: -17.00
+              phi_star: $phi_star_red
+              alpha: -1.31
+              m_lim: $mag_lim
+              sky_area: $fsky
+              cosmology: $cosmology
   red:
-    z: !skypy.galaxies.redshift.schechter_lf_redshift
-      redshift: $z_range
-      M_star: $M_star_red
-      phi_star: $phi_star_red
-      alpha: $alpha_red
-      m_lim: $mag_lim
-      sky_area: $fsky
-      cosmology: $cosmology
-    M: !skypy.galaxies.luminosity.schechter_lf_magnitude
-      redshift: $red.z
-      M_star: $M_star_red
-      alpha: $alpha_red
-      m_lim: $mag_lim
+    z: !numpy.concatenate
+      - [$red1.z1, $red2.z2]
+    M: !numpy.concatenate
+      - [$red1.M1, $red2.M2]
     coeff: !skypy.galaxies.spectrum.dirichlet_coefficients
       redshift: $red.z
       alpha0: [2.461, 2.358, 2.568, 2.268, 2.402]

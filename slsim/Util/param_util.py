@@ -1,5 +1,6 @@
 import numpy as np
 import scipy
+import copy
 from scipy.signal import convolve2d
 from scipy.signal import fftconvolve
 from lenstronomy.Util.param_util import transform_e1e2_product_average
@@ -362,7 +363,7 @@ def catalog_with_angular_size_in_arcsec(galaxy_catalog, input_catalog_type="skyp
     :type input_catalog_type: str. "skypy" or None
     :return: galaxy catalog with anularsize in arcsec.
     """
-    copied_galaxy_catalog = galaxy_catalog.copy()
+    copied_galaxy_catalog = copy.deepcopy(galaxy_catalog)
     if input_catalog_type == "skypy":
         copied_galaxy_catalog["angular_size"] = copied_galaxy_catalog[
             "angular_size"
