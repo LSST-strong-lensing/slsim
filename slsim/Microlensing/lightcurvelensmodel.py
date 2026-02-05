@@ -234,7 +234,7 @@ class MicrolensingLightCurveFromLensModel(object):
         :rtype: tuple
         """
 
-        # generate magnification maps for each image of the source
+        # generate magnification maps for each image of the source if they are not already generated and cached
         magmaps_images = self.generate_magnification_maps_from_microlensing_params()
 
         if (isinstance(time, np.ndarray) or isinstance(time, list)) and len(time) > 1:
@@ -311,6 +311,10 @@ class MicrolensingLightCurveFromLensModel(object):
         Returns:
         magmaps_images: a list which contains the [magnification map for each image of the source].
         """
+        # check if magnification maps are already generated
+        if hasattr(self, "_magmaps_images"):
+            return self._magmaps_images
+
         # generate magnification maps for each image of the source
         self._magmaps_images = []
         for i in range(len(self._kappa_star_images)):
@@ -533,3 +537,9 @@ class MicrolensingLightCurveFromLensModel(object):
             "num_pixels_x": 500,
             "num_pixels_y": 500,
         }
+
+    def update_source_morphology(self, kwargs_source_morphology):
+        """Updates the source morphology parameters (e.g., for a new band)
+        without requiring re-initialization of the class or re-generation of
+        magnification maps."""
+        self._kwargs_source_morphology = kwargs_source_morphology

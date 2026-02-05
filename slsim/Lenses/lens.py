@@ -884,22 +884,31 @@ class Lens(LensedSystemBase):
         ##########################################################################
 
         # Instantiate the microlensing model with all required parameters
-        self._microlensing_model_class = {}
-        self._microlensing_model_class[source_index] = (
-            MicrolensingLightCurveFromLensModel(
-                source_redshift=self.source(source_index).redshift,
-                deflector_redshift=self.deflector_redshift,
-                kappa_star_images=kappa_star_images,
-                kappa_tot_images=kappa_tot_images,
-                shear_images=shear_images,
-                shear_phi_angle_images=shear_phi_angle_images,
-                ra_lens=ra_lens,
-                dec_lens=dec_lens,
-                deflector_velocity_dispersion=self.deflector_velocity_dispersion(),
-                cosmology=self.cosmo,
-                **kwargs_microlensing_updated,
+        # Check if the microlensing model class is already instantiated for this source index to avoid redundant instantiation
+        if not hasattr(self, "_microlensing_model_class"):
+            self._microlensing_model_class = {}
+
+        if source_index not in self._microlensing_model_class.keys():
+            self._microlensing_model_class[source_index] = (
+                MicrolensingLightCurveFromLensModel(
+                    source_redshift=self.source(source_index).redshift,
+                    deflector_redshift=self.deflector_redshift,
+                    kappa_star_images=kappa_star_images,
+                    kappa_tot_images=kappa_tot_images,
+                    shear_images=shear_images,
+                    shear_phi_angle_images=shear_phi_angle_images,
+                    ra_lens=ra_lens,
+                    dec_lens=dec_lens,
+                    deflector_velocity_dispersion=self.deflector_velocity_dispersion(),
+                    cosmology=self.cosmo,
+                    **kwargs_microlensing_updated,
+                )
             )
-        )
+        else:
+            # Update existing instance with new parameters if needed
+            self._microlensing_model_class[source_index].update_source_morphology(
+                kwargs_source_morphology
+            )
 
         # Generate microlensing magnitudes with the simplified method call
         microlensing_magnitudes = self._microlensing_model_class[
