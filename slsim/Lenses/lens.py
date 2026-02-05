@@ -1619,7 +1619,6 @@ class Lens(LensedSystemBase):
                 param_for_all_images = np.array(micro_lens_params[i])
                 if param_for_all_images.shape[0] > 0:
                     param_for_all_images = param_for_all_images.flatten()
-                # if param_for_all_images.shape[0]
                 val = param_for_all_images[k]
                 df.loc[lens_index, pls] = safe_value(val)
 
@@ -1646,5 +1645,4 @@ class Lens(LensedSystemBase):
         df.loc[lens_index, "inclination_angle"] = self.source(
             0
         )._source._point_source.agn_class.kwargs_model["inclination_angle"]
-        # self.source(0)._source._point_source.agn_class.agn_driving_kwargs_variability
         return df
