@@ -375,7 +375,8 @@ def point_source_image_at_time(
     :param transform_pix2angle: transformation matrix (2x2) of pixels
         into coordinate displacements
     :param time: time is an image observation time [day].
-    :param microlensing: boolean flag to include microlensing variability
+    :param microlensing: boolean flag to include microlensing
+        variability
     :return: point source images with variability
     """
 
