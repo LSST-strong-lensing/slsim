@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import corner
 from matplotlib.patches import Patch
 
-
 CORNER_KWARGS = dict(
     smooth=0.9,
     label_kwargs=dict(fontsize=30),
