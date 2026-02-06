@@ -8,6 +8,7 @@ from slsim.Sources.SourceCatalogues.QuasarCatalog.qsogen.qsosed import (
     four_pi_dL_sq,
 )
 from slsim.Sources.SourceCatalogues.QuasarCatalog.qsogen.config import params_agile
+from astropy.cosmology import Planck18 as cosmo
 
 # -----------------------------------------------------------------------------
 # Fixtures
@@ -49,7 +50,7 @@ def base_params():
 def test_luminosity_distance():
     """Test luminosity distance calculation returns positive floats."""
     z = 2.0
-    val = four_pi_dL_sq(z)
+    val = four_pi_dL_sq(z, cosmo=cosmo)
     assert isinstance(val, float)
     assert val > 0
 
@@ -239,7 +240,7 @@ def test_normalization_L3000(base_params):
     qs = Quasar_sed(z=z, LogL3000=target_logL, wavlen=wav, params=base_params)
 
     # Calculate expected f_lambda at 3000A rest frame manually
-    dL_term = four_pi_dL_sq(z)
+    dL_term = four_pi_dL_sq(z, cosmo=cosmo)
     expected_f3000 = 10 ** (target_logL - dL_term) / (3000 * (1 + z))
 
     # Check class attribute matches calculation

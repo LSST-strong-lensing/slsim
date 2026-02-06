@@ -16,8 +16,8 @@ This version first created 2019 Feb 07; last updated 2021 Mar 13.
 import os
 from pathlib import Path
 import numpy as np
-from scipy.integrate import quad
 from astropy.convolution import Gaussian1DKernel, convolve
+import astropy.units as u
 from slsim.Sources.SourceCatalogues.QuasarCatalog.qsogen.config import (
     params_agile as default_params,
 )
@@ -27,18 +27,17 @@ _c_ = 299792458.0  # speed of light in m/s
 base_path = Path(os.path.dirname(__file__))
 
 
-def four_pi_dL_sq(z):
-    """Compute luminosity distance for flux-luminosity conversion."""
+def four_pi_dL_sq(z, cosmo):
+    """Compute luminosity distance factor for flux-luminosity conversion.
 
-    def integrand(z):
-        return (0.27 * (1 + z) ** 3 + 0.73) ** (-0.5)
-
-    value, err = quad(integrand, 0, z)
-    Log_d_L = np.log10(1.303e28) + np.log10(1 + z) + np.log10(value)
-    # this is log10(c/H0)*(1+z)*(integral) in cgs units with
-    # Omega_m=0.27, Omega_lambda=0.73, Omega_k=0, H_0=71 km/s/Mpc
-
-    return np.log10(12.5663706144) + 2 * Log_d_L  # multiply by 4pi
+    Returns log10(4 * pi * dL^2) in cgs units (cm^2).
+    """
+    # astropy returns Mpc, convert to cm
+    dL_cm = cosmo.luminosity_distance(z).to(u.cm).value
+    
+    Log_d_L = np.log10(dL_cm)
+    
+    return np.log10(4*np.pi) + 2 * Log_d_L  # log10(4pi) + 2*log10(dL)
 
 
 def pl(wavlen, plslp, const):
@@ -103,11 +102,12 @@ class Quasar_sed:
 
     def __init__(
         self,
-        z=2,
-        LogL3000=46,
+        z=2.,
+        LogL3000=46.,
         wavlen=np.logspace(2.95, 4.48, num=20001, endpoint=True),
         ebv=0.0,
         params=default_params,
+        cosmo=None,
         **kwargs
     ):
         """Initialises an instance of the Quasar SED model.
@@ -205,6 +205,9 @@ class Quasar_sed:
 
         self.z = max(float(z), 0.005)
         # avoid crazy flux normalisation at zero redshift
+        
+        # Set cosmology
+        self.cosmo = cosmo
 
         self.wavlen = wavlen
         if np.any(self.wavlen[:-1] > self.wavlen[1:]):
@@ -252,8 +255,10 @@ class Quasar_sed:
         self.add_blackbody()
         if self.bcnorm:
             self.add_balmer_continuum()
+        
+        # Flux Normalization
         if LogL3000 is not None:
-            self.f3000 = 10 ** (LogL3000 - four_pi_dL_sq(self.z)) / (
+            self.f3000 = 10 ** (LogL3000 - four_pi_dL_sq(self.z, self.cosmo)) / (
                 3000 * (1 + self.z)
             )
             self.convert_fnu_flambda(flxnrm=self.f3000, wavnrm=3000)
