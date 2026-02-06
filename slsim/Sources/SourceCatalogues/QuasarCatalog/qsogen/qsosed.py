@@ -34,10 +34,10 @@ def four_pi_dL_sq(z, cosmo):
     """
     # astropy returns Mpc, convert to cm
     dL_cm = cosmo.luminosity_distance(z).to(u.cm).value
-    
+
     Log_d_L = np.log10(dL_cm)
-    
-    return np.log10(4*np.pi) + 2 * Log_d_L  # log10(4pi) + 2*log10(dL)
+
+    return np.log10(4 * np.pi) + 2 * Log_d_L  # log10(4pi) + 2*log10(dL)
 
 
 def pl(wavlen, plslp, const):
@@ -102,8 +102,8 @@ class Quasar_sed:
 
     def __init__(
         self,
-        z=2.,
-        LogL3000=46.,
+        z=2.0,
+        LogL3000=46.0,
         wavlen=np.logspace(2.95, 4.48, num=20001, endpoint=True),
         ebv=0.0,
         params=default_params,
@@ -205,7 +205,7 @@ class Quasar_sed:
 
         self.z = max(float(z), 0.005)
         # avoid crazy flux normalisation at zero redshift
-        
+
         # Set cosmology
         self.cosmo = cosmo
 
@@ -255,7 +255,7 @@ class Quasar_sed:
         self.add_blackbody()
         if self.bcnorm:
             self.add_balmer_continuum()
-        
+
         # Flux Normalization
         if LogL3000 is not None:
             self.f3000 = 10 ** (LogL3000 - four_pi_dL_sq(self.z, self.cosmo)) / (

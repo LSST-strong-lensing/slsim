@@ -419,7 +419,9 @@ class QuasarRate(object):
         # 1. Generate the SED using AGILE parameters
         # params_agile controls the physics (slopes, breaks, etc.)
         # z and M_i control the specific instance (redshifting, emission line strengths)
-        quasar = Quasar_sed(z=z, M_i=M_i, params=params_agile, wavlen=wavlen, cosmo=self.cosmo)
+        quasar = Quasar_sed(
+            z=z, M_i=M_i, params=params_agile, wavlen=wavlen, cosmo=self.cosmo
+        )
 
         # 2. Extract flux and wavelength in the observed frame
         # qsosed.py calculates wavred = (1+z)*wavlen
@@ -472,7 +474,9 @@ class QuasarRate(object):
         for i, z in enumerate(z_grid):
             for j, m_i in enumerate(mi_grid):
                 # Generate SED
-                quasar = Quasar_sed(z=z, M_i=m_i, params=params_agile, wavlen=wavlen, cosmo=self.cosmo)
+                quasar = Quasar_sed(
+                    z=z, M_i=m_i, params=params_agile, wavlen=wavlen, cosmo=self.cosmo
+                )
                 flux_sed = quasar.flux
                 wave_sed = quasar.wavred
 
