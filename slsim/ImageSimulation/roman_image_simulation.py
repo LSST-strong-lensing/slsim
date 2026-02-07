@@ -213,7 +213,15 @@ def simulate_roman_image(
         # Obtain sky background corresponding to certain band and add it to the image
         # Requires stpsf data files to use
         image = add_roman_background(
-            image, band, detector, num_pix, _exposure_time, ra, dec, date, add_background_counts=add_background_counts
+            image,
+            band,
+            detector,
+            num_pix,
+            _exposure_time,
+            ra,
+            dec,
+            date,
+            add_background_counts=add_background_counts,
         )
 
         # Add detector effects and get the resulting array
@@ -299,8 +307,9 @@ def add_roman_background(image, band, detector, num_pix, exposure_time, ra, dec,
     :type dec: float between -45 and -15
     :param date: Date used to generate sky background
     :type date: datetime.datetime class
-    :param add_background_counts: whether to add the absolute count of photons on the background.
-     If =False; the mean background is subtracted (not the noise)
+    :param add_background_counts: whether to add the absolute count of
+        photons on the background. If =False; the mean background is
+        subtracted (not the noise)
     :type add_background_counts: bool
     :return: image with added background
     :rtype: galsim Image class
