@@ -620,6 +620,7 @@ class TestImageSimulationInterpSingleSource:
             band="g",
             num_pix=100,
             add_noise=True,
+            add_background_counts=True,
             observatory="LSST",
         )
         assert image.shape == (100, 100)

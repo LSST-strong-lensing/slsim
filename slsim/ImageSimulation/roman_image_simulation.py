@@ -42,6 +42,7 @@ def simulate_roman_image(
     num_pix,
     oversample=3,
     add_noise=True,
+    add_background_counts=True,
     with_source=True,
     with_deflector=True,
     exposure_time=None,
@@ -64,7 +65,10 @@ def simulate_roman_image(
     :param num_pix: number of pixels per axis
     :type num_pix: integer
     :param add_noise: determines whether sky background and detector effects are added or not
-    :type add_background: bool
+    :type add_noise: bool
+    :param add_background_counts: whether to add the absolute count of photons on the background.
+     If =False; the mean background is subtracted (not the noise)
+    :type add_background_counts: bool
     :param with_source: determines whether source is included in image
     :type with_source: bool
     :param with_deflector: determines whether deflector is included in image
@@ -209,7 +213,7 @@ def simulate_roman_image(
         # Obtain sky background corresponding to certain band and add it to the image
         # Requires stpsf data files to use
         image = add_roman_background(
-            image, band, detector, num_pix, _exposure_time, ra, dec, date
+            image, band, detector, num_pix, _exposure_time, ra, dec, date, add_background_counts=add_background_counts
         )
 
         # Add detector effects and get the resulting array
@@ -276,7 +280,7 @@ def get_psf(band, detector, detector_pos, oversample, psf_directory):
     return galsim.InterpolatedImage(psf_image)
 
 
-def add_roman_background(image, band, detector, num_pix, exposure_time, ra, dec, date):
+def add_roman_background(image, band, detector, num_pix, exposure_time, ra, dec, date, add_background_counts):
     """Adds a sky and thermal background to image, corresponding to a specific
     band, detector, date, and coordinate in the sky.
 
@@ -295,6 +299,9 @@ def add_roman_background(image, band, detector, num_pix, exposure_time, ra, dec,
     :type dec: float between -45 and -15
     :param date: Date used to generate sky background
     :type date: datetime.datetime class
+    :param add_background_counts: whether to add the absolute count of photons on the background.
+     If =False; the mean background is subtracted (not the noise)
+    :type add_background_counts: bool
     :return: image with added background
     :rtype: galsim Image class
     """
@@ -318,6 +325,9 @@ def add_roman_background(image, band, detector, num_pix, exposure_time, ra, dec,
 
     image = image + sky_image + thermal_bkg
     # image.quantize()
+    if not add_background_counts:
+        mean_bkg = np.mean(sky_image + thermal_bkg)
+        image -= mean_bkg
 
     return image
 

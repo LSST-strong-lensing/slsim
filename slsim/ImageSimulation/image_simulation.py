@@ -15,6 +15,7 @@ def simulate_image(
     band,
     num_pix,
     add_noise=True,
+    add_background_counts=False,
     observatory="LSST",
     kwargs_psf=None,
     kwargs_numerics=None,
@@ -30,6 +31,9 @@ def simulate_image(
     :param band: imaging band
     :param num_pix: number of pixels per axis
     :param add_noise: if True, add noise
+    :param add_background_counts: whether to add the absolute count of photons on the background.
+     If =False; the mean background is subtracted (not the noise)
+    :type add_background_counts: bool
     :param observatory: telescope type to be simulated
     :type observatory: str
     :param kwargs_psf: (optional) specific PSF quantities to overwrite
@@ -42,6 +46,10 @@ def simulate_image(
         "point_source_supersampling_factor", "supersampling_factor", and
         more in lenstronomy.ImSim.Numerics.numerics class
     :type kwargs: dict
+    :param with_source: determines whether source is included in image
+    :type with_source: bool
+    :param with_deflector: determines whether deflector is included in image
+    :type with_deflector: bool
     :return: simulated image
     :rtype: 2d numpy array
     """
@@ -79,6 +87,10 @@ def simulate_image(
     )
     if add_noise:
         image += sim_api.noise_for_model(model=image)
+    if add_background_counts:
+        # the noise is Poisson, so the counts are the variance of the background rms
+        var_bkg = sim_api.background_noise **2
+        image += var_bkg
     return image
 
 
