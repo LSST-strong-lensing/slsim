@@ -288,7 +288,17 @@ def get_psf(band, detector, detector_pos, oversample, psf_directory):
     return galsim.InterpolatedImage(psf_image)
 
 
-def add_roman_background(image, band, detector, num_pix, exposure_time, ra, dec, date, add_background_counts=True):
+def add_roman_background(
+    image,
+    band,
+    detector,
+    num_pix,
+    exposure_time,
+    ra,
+    dec,
+    date,
+    add_background_counts=True,
+):
     """Adds a sky and thermal background to image, corresponding to a specific
     band, detector, date, and coordinate in the sky.
 
@@ -532,8 +542,15 @@ def lens_image_roman(
         # Obtain sky background corresponding to certain band and add it to the image
         # Requires stpsf data files to use
         noise_galsim = add_roman_background(
-            noise_galsim, band, detector, num_pix, _exposure_time, ra, dec, date,
-            add_background_counts=add_background_counts
+            noise_galsim,
+            band,
+            detector,
+            num_pix,
+            _exposure_time,
+            ra,
+            dec,
+            date,
+            add_background_counts=add_background_counts,
         )
 
         # Add detector effects and get the resulting array

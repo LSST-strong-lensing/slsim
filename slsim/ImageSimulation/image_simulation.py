@@ -92,7 +92,7 @@ def simulate_image(
     if add_background_counts:
         # the noise is Poisson, so the counts are the variance of the background rms
         exp_time = sim_api.exposure_time
-        var_bkg = (sim_api.background_noise * exp_time) **2
+        var_bkg = (sim_api.background_noise * exp_time) ** 2
         image += var_bkg / exp_time
     return image
 
