@@ -94,8 +94,6 @@ def simulate_roman_image(
     :type psf_directory: string
     :param galsim_convolve: if True, uses GalSim for the numerics, otherwise uses lenstronomy
     :type galsim_convolve: bool
-    :param kwargs: additional keyword arguments for the bands
-    :type kwargs: dict
     :return: simulated image
     :rtype: 2d numpy array
     """
@@ -335,7 +333,7 @@ def add_roman_background(image, band, detector, num_pix, exposure_time, ra, dec,
     image = image + sky_image + thermal_bkg
     # image.quantize()
     if not add_background_counts:
-        mean_bkg = np.mean(sky_image + thermal_bkg)
+        mean_bkg = np.mean(sky_image.array + thermal_bkg)
         image -= mean_bkg
 
     return image
@@ -465,7 +463,7 @@ def lens_image_roman(
     :param date: Date used to generate sky background
     :type date: datetime.datetime class
     :param add_noise: determines whether sky background and detector effects are added or not
-    :type add_background: bool
+    :type add_noise: bool
     :param poisson_noise: determines whether poisson noise is added or not
     :type poisson_noise: bool
     :param add_background_counts: whether to add the absolute count of photons on the background.
