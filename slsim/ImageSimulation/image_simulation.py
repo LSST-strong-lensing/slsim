@@ -31,8 +31,9 @@ def simulate_image(
     :param band: imaging band
     :param num_pix: number of pixels per axis
     :param add_noise: if True, add noise
-    :param add_background_counts: whether to add the absolute count of photons on the background.
-     If =False; the mean background is subtracted (not the noise)
+    :param add_background_counts: whether to add the absolute count of
+        photons on the background. If =False; the mean background is
+        subtracted (not the noise)
     :type add_background_counts: bool
     :param observatory: telescope type to be simulated
     :type observatory: str
@@ -48,7 +49,8 @@ def simulate_image(
     :type kwargs: dict
     :param with_source: determines whether source is included in image
     :type with_source: bool
-    :param with_deflector: determines whether deflector is included in image
+    :param with_deflector: determines whether deflector is included in
+        image
     :type with_deflector: bool
     :return: simulated image
     :rtype: 2d numpy array
@@ -89,7 +91,7 @@ def simulate_image(
         image += sim_api.noise_for_model(model=image)
     if add_background_counts:
         # the noise is Poisson, so the counts are the variance of the background rms
-        var_bkg = sim_api.background_noise **2
+        var_bkg = sim_api.background_noise**2
         image += var_bkg
     return image
 
