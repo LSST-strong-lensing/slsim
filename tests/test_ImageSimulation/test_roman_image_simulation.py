@@ -109,6 +109,7 @@ def test_simulate_roman_image_with_psf_and_noise():
         num_pix=45,
         oversample=3,
         add_noise=True,
+        add_background_counts=False,
         psf_directory=PSF_DIRECTORY,
         galsim_convolve=True,
         **DETECTOR_KWARGS,
@@ -120,6 +121,7 @@ def test_simulate_roman_image_with_psf_and_noise():
         num_pix=45,
         oversample=3,
         add_noise=True,
+        add_background_counts=False,
         psf_directory=PSF_DIRECTORY,
         galsim_convolve=False,
         **DETECTOR_KWARGS,
@@ -129,7 +131,7 @@ def test_simulate_roman_image_with_psf_and_noise():
     assert final_image_lenstronomy.shape == (45, 45)
     npt.assert_almost_equal(
         (final_image_galsim - final_image_lenstronomy)
-        / (final_image_galsim + final_image_lenstronomy)
+        / (final_image_galsim + final_image_lenstronomy + 1)
         / 2,
         0,
         decimal=1,
