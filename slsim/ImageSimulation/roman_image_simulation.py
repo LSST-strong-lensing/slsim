@@ -280,7 +280,7 @@ def get_psf(band, detector, detector_pos, oversample, psf_directory):
     return galsim.InterpolatedImage(psf_image)
 
 
-def add_roman_background(image, band, detector, num_pix, exposure_time, ra, dec, date, add_background_counts):
+def add_roman_background(image, band, detector, num_pix, exposure_time, ra, dec, date, add_background_counts=True):
     """Adds a sky and thermal background to image, corresponding to a specific
     band, detector, date, and coordinate in the sky.
 
@@ -409,6 +409,7 @@ def lens_image_roman(
     date=datetime.datetime(year=2027, month=7, day=7, hour=0, minute=0, second=0),
     add_noise=True,
     poisson_noise=True,
+    add_background_counts=True,
     seed=None,
 ):
     """Creates lens image on the basis of given information. It can simulate
@@ -458,6 +459,8 @@ def lens_image_roman(
     :type add_background: bool
     :param poisson_noise: determines whether poisson noise is added or not
     :type poisson_noise: bool
+    :param add_background_counts: whether to add the absolute count of photons on the background.
+     If =False; the mean background is subtracted (not the noise)
     :param seed: An rng seed used for generating detector effects in galsim
     :type seed: integer or None
     :return: lens image in roman filter
@@ -520,7 +523,8 @@ def lens_image_roman(
         # Obtain sky background corresponding to certain band and add it to the image
         # Requires stpsf data files to use
         noise_galsim = add_roman_background(
-            noise_galsim, band, detector, num_pix, _exposure_time, ra, dec, date
+            noise_galsim, band, detector, num_pix, _exposure_time, ra, dec, date,
+            add_background_counts=add_background_counts
         )
 
         # Add detector effects and get the resulting array

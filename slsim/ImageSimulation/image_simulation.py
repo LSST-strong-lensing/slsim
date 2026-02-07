@@ -89,8 +89,9 @@ def simulate_image(
         image += sim_api.noise_for_model(model=image)
     if add_background_counts:
         # the noise is Poisson, so the counts are the variance of the background rms
-        var_bkg = sim_api.background_noise **2
-        image += var_bkg
+        exp_time = sim_api.exposure_time
+        var_bkg = (sim_api.background_noise * exp_time) **2
+        image += var_bkg / exp_time
     return image
 
 
@@ -512,7 +513,7 @@ def deflector_images_with_different_zeropoint(
 def image_plus_poisson_noise(
     image, exposure_time, gain=1, coadd_zero_point=27, single_visit_zero_point=27
 ):
-    """Creates an image with possion noise.
+    """Creates an image with Poisson noise.
 
     :param image: an image
     :param exposure_time: exposure time or exposure map for an image
