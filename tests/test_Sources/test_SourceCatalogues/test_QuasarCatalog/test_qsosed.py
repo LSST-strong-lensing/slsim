@@ -264,6 +264,13 @@ def test_normalization_L3000(base_params, cosmo):
     # which might shift the exact value at 3000A slightly
     assert np.isclose(qs.flux[idx_3000], expected_f3000, rtol=0.2)
 
+    # Test with a quasar spectrum without emission lines for a tighter check
+    base_params["scal_emline"] = 0.0
+    qs_no_emlines = Quasar_sed(
+        z=z, LogL3000=target_logL, wavlen=wav, params=base_params, cosmo=cosmo
+    )
+    assert np.isclose(qs_no_emlines.flux[idx_3000], expected_f3000, rtol=0.0001)
+
 
 def test_convert_fnu_flambda(base_params, mock_wavelengths, cosmo):
     """Test helper method that converts f_nu to f_lambda.
@@ -423,3 +430,11 @@ def test_host_galaxy_wavelength_error(base_params, cosmo):
         Quasar_sed(wavlen=bad_wav, params=base_params, cosmo=cosmo)
 
     assert "wavlen must cover 4000-5000 A" in str(excinfo.value)
+
+    # Wavlength array that partially covers 4000-5000A
+    bad_wav2 = np.linspace(4500, 6000, 500)
+
+    with pytest.raises(Exception) as excinfo2:
+        Quasar_sed(wavlen=bad_wav2, params=base_params, cosmo=cosmo)
+
+    assert "wavlen must cover 4000-5000 A" in str(excinfo2.value)

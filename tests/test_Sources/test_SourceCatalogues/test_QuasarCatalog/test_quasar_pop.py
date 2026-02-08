@@ -388,7 +388,7 @@ class TestQuasarSEDIntegration:
         assert np.all(table["ps_mag_r"] > 0)
 
         # Check that the magnitudes are distinct (g != r)
-        assert not np.allclose(table["ps_mag_g"], table["ps_mag_r"])
+        assert not np.allclose(table["ps_mag_g"], table["ps_mag_r"], atol = 0.001)
 
     def test_qsogen_sed_with_interpolator(self):
         """Test generating quasars using the pre-computed interpolator grid
