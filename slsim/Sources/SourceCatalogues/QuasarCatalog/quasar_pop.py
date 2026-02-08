@@ -452,16 +452,15 @@ class QuasarRate(object):
         """Pre-computes a grid of SED magnitudes to create a fast lookup table.
 
         :param z_min: Minimum redshift for the grid.
-        :type z_min: float  
+        :type z_min: float
         :param z_max: Maximum redshift for the grid.
         :type z_max: float
         :param Mi_min: Minimum absolute magnitude for the grid.
         :type Mi_min: float
         :param Mi_max: Maximum absolute magnitude for the grid.
-        :type Mi_max: float
-
-        Instead of generating a spectrum for every source (O(N)), we
-        generate spectra for a grid of (z, M_i) and interpolate.
+        :type Mi_max: float Instead of generating a spectrum for every
+            source (O(N)), we generate spectra for a grid of (z, M_i)
+            and interpolate.
         """
         # Load filters
         filters = speclite.filters.load_filters(*self.qsogen_bands)

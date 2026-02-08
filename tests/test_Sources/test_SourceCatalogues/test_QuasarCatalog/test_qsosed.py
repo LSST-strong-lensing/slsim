@@ -14,10 +14,12 @@ from astropy.cosmology import FlatLambdaCDM
 # Fixtures
 # -----------------------------------------------------------------------------
 
+
 @pytest.fixture
 def cosmo():
     """Returns a standard flat LambdaCDM cosmology for testing."""
     return FlatLambdaCDM(H0=70.0, Om0=0.3)
+
 
 @pytest.fixture
 def mock_wavelengths():
@@ -185,10 +187,14 @@ def test_reddening(base_params, mock_wavelengths, cosmo):
     base_params["gflag"] = False
 
     # Case A: Unreddened
-    qs_clean = Quasar_sed(wavlen=mock_wavelengths, params=base_params, ebv=0.0, cosmo=cosmo)
+    qs_clean = Quasar_sed(
+        wavlen=mock_wavelengths, params=base_params, ebv=0.0, cosmo=cosmo
+    )
 
     # Case B: Reddened
-    qs_dusty = Quasar_sed(wavlen=mock_wavelengths, params=base_params, ebv=0.1, cosmo=cosmo)
+    qs_dusty = Quasar_sed(
+        wavlen=mock_wavelengths, params=base_params, ebv=0.1, cosmo=cosmo
+    )
 
     # Dusty flux should be lower
     assert np.sum(qs_dusty.flux) < np.sum(qs_clean.flux)
@@ -240,7 +246,9 @@ def test_normalization_L3000(base_params, cosmo):
     target_logL = 46.0
     z = 2.0
 
-    qs = Quasar_sed(z=z, LogL3000=target_logL, wavlen=wav, params=base_params, cosmo=cosmo)
+    qs = Quasar_sed(
+        z=z, LogL3000=target_logL, wavlen=wav, params=base_params, cosmo=cosmo
+    )
 
     # Calculate expected f_lambda at 3000A rest frame manually
     dL_term = four_pi_dL_sq(z, cosmo=cosmo)
@@ -370,7 +378,9 @@ def test_no_logl3000(base_params, mock_wavelengths, cosmo):
     Covers:
       - 'else: self.convert_fnu_flambda()' (when LogL3000 is None)
     """
-    qs = Quasar_sed(z=2.0, LogL3000=None, wavlen=mock_wavelengths, params=base_params, cosmo=cosmo)
+    qs = Quasar_sed(
+        z=2.0, LogL3000=None, wavlen=mock_wavelengths, params=base_params, cosmo=cosmo
+    )
     # Ensure flux is still generated and positive (normalization happened)
     assert np.all(qs.flux >= 0)
     assert np.sum(qs.flux) > 0
