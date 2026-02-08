@@ -8,12 +8,16 @@ from slsim.Sources.SourceCatalogues.QuasarCatalog.qsogen.qsosed import (
     four_pi_dL_sq,
 )
 from slsim.Sources.SourceCatalogues.QuasarCatalog.qsogen.config import params_agile
-from astropy.cosmology import Planck18 as cosmo
+from astropy.cosmology import FlatLambdaCDM
 
 # -----------------------------------------------------------------------------
 # Fixtures
 # -----------------------------------------------------------------------------
 
+@pytest.fixture
+def cosmo():
+    """Returns a standard flat LambdaCDM cosmology for testing."""
+    return FlatLambdaCDM(H0=70.0, Om0=0.3)
 
 @pytest.fixture
 def mock_wavelengths():
@@ -47,7 +51,7 @@ def base_params():
 # -----------------------------------------------------------------------------
 
 
-def test_luminosity_distance():
+def test_luminosity_distance(cosmo):
     """Test luminosity distance calculation returns positive floats."""
     z = 2.0
     val = four_pi_dL_sq(z, cosmo=cosmo)
@@ -106,40 +110,39 @@ def test_tau_eff():
 # -----------------------------------------------------------------------------
 
 
-def test_initialization_monotonicity(base_params):
+def test_initialization_monotonicity(base_params, cosmo):
     """Test that non-monotonic wavelength arrays raise an exception."""
     bad_wav = np.array([1000, 1200, 1100])  # Not sorted
     with pytest.raises(Exception) as excinfo:
-        Quasar_sed(wavlen=bad_wav, params=base_params)
+        Quasar_sed(wavlen=bad_wav, params=base_params, cosmo=cosmo)
     assert "monotonic" in str(excinfo.value)
 
 
-def test_continuum_generation(base_params, mock_wavelengths):
+def test_continuum_generation(base_params, mock_wavelengths, cosmo):
     """Test that a basic power-law continuum is generated."""
     # Isolate continuum by turning off lines, galaxy, dust, forest
     base_params["scal_emline"] = 0
 
-    qs = Quasar_sed(wavlen=mock_wavelengths, params=base_params)
-
+    qs = Quasar_sed(wavlen=mock_wavelengths, params=base_params, cosmo=cosmo)
     # Check flux is generated and positive
     assert not np.all(qs.flux == 0)
     assert np.all(qs.flux >= 0)
     assert len(qs.flux) == len(mock_wavelengths)
 
 
-def test_blackbody_addition(base_params, mock_wavelengths):
+def test_blackbody_addition(base_params, mock_wavelengths, cosmo):
     """Test that enabling blackbody (hot dust) adds an IR excess to the SED.
 
     We check that the Red/Blue flux ratio increases.
     """
     # 1. Baseline: No Blackbody
     base_params["bbnorm"] = 0.0
-    qs_no_bb = Quasar_sed(wavlen=mock_wavelengths, params=base_params)
+    qs_no_bb = Quasar_sed(wavlen=mock_wavelengths, params=base_params, cosmo=cosmo)
 
     # 2. With Blackbody (Hot dust, T~1200K, peaks in IR)
     base_params["bbnorm"] = 5.0
     base_params["tbb"] = 1200.0
-    qs_with_bb = Quasar_sed(wavlen=mock_wavelengths, params=base_params)
+    qs_with_bb = Quasar_sed(wavlen=mock_wavelengths, params=base_params, cosmo=cosmo)
 
     # Define "Blue" (UV) and "Red" (NIR) points
     # 2000A is far from the Blackbody peak; 8000A is closer
@@ -154,7 +157,7 @@ def test_blackbody_addition(base_params, mock_wavelengths):
     assert ratio_with_bb > ratio_no_bb
 
 
-def test_host_galaxy_integration(base_params):
+def test_host_galaxy_integration(base_params, cosmo):
     """Test that host galaxy flux is added correctly."""
     # We must enable the galaxy flag
     base_params["gflag"] = True
@@ -164,28 +167,28 @@ def test_host_galaxy_integration(base_params):
     # Wavelength array MUST cover 4000-5000A for normalization check
     wav = np.linspace(3500, 5500, 1000)
 
-    qs = Quasar_sed(wavlen=wav, params=base_params)
+    qs = Quasar_sed(wavlen=wav, params=base_params, cosmo=cosmo)
 
     # 1. Check host galaxy component is populated
     assert np.sum(qs.host_galaxy_flux) > 0
 
     # 2. Compare against pure quasar
     base_params["gflag"] = False
-    qs_pure = Quasar_sed(wavlen=wav, params=base_params)
+    qs_pure = Quasar_sed(wavlen=wav, params=base_params, cosmo=cosmo)
 
     # The composite flux should be higher than the pure AGN flux
     assert np.sum(qs.flux) > np.sum(qs_pure.flux)
 
 
-def test_reddening(base_params, mock_wavelengths):
+def test_reddening(base_params, mock_wavelengths, cosmo):
     """Test that applying extinction (EBV > 0) reduces flux."""
     base_params["gflag"] = False
 
     # Case A: Unreddened
-    qs_clean = Quasar_sed(wavlen=mock_wavelengths, params=base_params, ebv=0.0)
+    qs_clean = Quasar_sed(wavlen=mock_wavelengths, params=base_params, ebv=0.0, cosmo=cosmo)
 
     # Case B: Reddened
-    qs_dusty = Quasar_sed(wavlen=mock_wavelengths, params=base_params, ebv=0.1)
+    qs_dusty = Quasar_sed(wavlen=mock_wavelengths, params=base_params, ebv=0.1, cosmo=cosmo)
 
     # Dusty flux should be lower
     assert np.sum(qs_dusty.flux) < np.sum(qs_clean.flux)
@@ -202,7 +205,7 @@ def test_reddening(base_params, mock_wavelengths):
     assert ratio_dusty < ratio_clean
 
 
-def test_lyman_forest_suppression(base_params):
+def test_lyman_forest_suppression(base_params, cosmo):
     """Test that Lyman forest suppresses UV flux at high redshift."""
     z = 3.5
     # Wavelengths must cover rest-frame UV (800 - 1500 A)
@@ -211,7 +214,7 @@ def test_lyman_forest_suppression(base_params):
     base_params["lyForest"] = True
     base_params["gflag"] = False
 
-    qs = Quasar_sed(z=z, wavlen=wav, params=base_params)
+    qs = Quasar_sed(z=z, wavlen=wav, params=base_params, cosmo=cosmo)
 
     # 1. Hard Cutoff: Flux < lylim (912A) should be exactly zero
     limit_mask = wav < base_params["lylim"]
@@ -222,7 +225,7 @@ def test_lyman_forest_suppression(base_params):
 
     # Create comparison model without forest
     base_params["lyForest"] = False
-    qs_clear = Quasar_sed(z=z, wavlen=wav, params=base_params)
+    qs_clear = Quasar_sed(z=z, wavlen=wav, params=base_params, cosmo=cosmo)
 
     # The forest should suppress flux in this region
     flux_forest = np.mean(qs.flux[forest_mask])
@@ -231,13 +234,13 @@ def test_lyman_forest_suppression(base_params):
     assert flux_forest < flux_clear
 
 
-def test_normalization_L3000(base_params):
+def test_normalization_L3000(base_params, cosmo):
     """Test the flux normalization at 3000A."""
     wav = np.linspace(2500, 3500, 500)
     target_logL = 46.0
     z = 2.0
 
-    qs = Quasar_sed(z=z, LogL3000=target_logL, wavlen=wav, params=base_params)
+    qs = Quasar_sed(z=z, LogL3000=target_logL, wavlen=wav, params=base_params, cosmo=cosmo)
 
     # Calculate expected f_lambda at 3000A rest frame manually
     dL_term = four_pi_dL_sq(z, cosmo=cosmo)
@@ -254,12 +257,12 @@ def test_normalization_L3000(base_params):
     assert np.isclose(qs.flux[idx_3000], expected_f3000, rtol=0.2)
 
 
-def test_convert_fnu_flambda(base_params, mock_wavelengths):
+def test_convert_fnu_flambda(base_params, mock_wavelengths, cosmo):
     """Test helper method that converts f_nu to f_lambda.
 
     f_lambda = f_nu * c / lambda^2
     """
-    qs = Quasar_sed(wavlen=mock_wavelengths, params=base_params)
+    qs = Quasar_sed(wavlen=mock_wavelengths, params=base_params, cosmo=cosmo)
 
     # Mock a flat f_nu (flux density per unit frequency)
     qs.flux = np.ones_like(mock_wavelengths)
@@ -281,7 +284,7 @@ def test_convert_fnu_flambda(base_params, mock_wavelengths):
     assert np.isclose(ratio, 4.0, rtol=0.01)
 
 
-def test_emission_lines_scaling(base_params):
+def test_emission_lines_scaling(base_params, cosmo):
     """Test that changing the emission line scaling factor (scal_emline)
     actually changes the flux at a major line like Lyman Alpha (1216A) ."""
     # Use a dense grid near Lya to catch the peak
@@ -289,11 +292,11 @@ def test_emission_lines_scaling(base_params):
 
     # 1. No lines
     base_params["scal_emline"] = 0.0
-    qs_none = Quasar_sed(wavlen=wav, params=base_params)
+    qs_none = Quasar_sed(wavlen=wav, params=base_params, cosmo=cosmo)
 
     # 2. Positive scaling (scales by line flux)
     base_params["scal_emline"] = 1.0
-    qs_strong = Quasar_sed(wavlen=wav, params=base_params)
+    qs_strong = Quasar_sed(wavlen=wav, params=base_params, cosmo=cosmo)
 
     # 3. Check Flux at LyAlpha (approx 1216A)
     # The 'strong' model should have significantly higher flux at the line peak
@@ -305,7 +308,7 @@ def test_emission_lines_scaling(base_params):
     assert flux_strong > flux_none * 1.1  # Expecting at least 10% boost from lines
 
 
-def test_balmer_continuum(base_params):
+def test_balmer_continuum(base_params, cosmo):
     """Test the Balmer Continuum generation.
 
     The Balmer break is at ~3646 Angstroms. Flux shortward of 3646A
@@ -316,13 +319,13 @@ def test_balmer_continuum(base_params):
 
     # 1. Without Balmer Continuum
     base_params["bcnorm"] = 0.0
-    qs_no_bc = Quasar_sed(wavlen=wav, params=base_params)
+    qs_no_bc = Quasar_sed(wavlen=wav, params=base_params, cosmo=cosmo)
 
     # 2. With Balmer Continuum
     base_params["bcnorm"] = 1.0  # Enabled (flux density normalization)
     base_params["tbc"] = 15000.0  # Standard BC temp
 
-    qs_bc = Quasar_sed(wavlen=wav, params=base_params)
+    qs_bc = Quasar_sed(wavlen=wav, params=base_params, cosmo=cosmo)
 
     # Define Shortward (UV) and Longward (Optical) points
     # The BC adds flux primarily SHORTWARD of 3646A
@@ -343,7 +346,7 @@ def test_balmer_continuum(base_params):
 # -----------------------------------------------------------------------------
 
 
-def test_default_params_and_unknown_kwargs(capsys, mock_wavelengths):
+def test_default_params_and_unknown_kwargs(capsys, mock_wavelengths, cosmo):
     """
     Covers:
       - Default params loading (via default argument params=default_params)
@@ -351,7 +354,7 @@ def test_default_params_and_unknown_kwargs(capsys, mock_wavelengths):
     """
     # Initialize without 'params', forcing use of default params
     # Pass an unknown keyword argument 'garbage_param'
-    qs = Quasar_sed(wavlen=mock_wavelengths, garbage_param=12345)
+    qs = Quasar_sed(wavlen=mock_wavelengths, garbage_param=12345, cosmo=cosmo)
 
     # Check that params were loaded successfully (default isn't empty)
     assert qs.params is not None
@@ -362,18 +365,18 @@ def test_default_params_and_unknown_kwargs(capsys, mock_wavelengths):
     assert 'Warning: "garbage_param" not recognised as a kwarg' in captured.out
 
 
-def test_no_logl3000(base_params, mock_wavelengths):
+def test_no_logl3000(base_params, mock_wavelengths, cosmo):
     """
     Covers:
       - 'else: self.convert_fnu_flambda()' (when LogL3000 is None)
     """
-    qs = Quasar_sed(z=2.0, LogL3000=None, wavlen=mock_wavelengths, params=base_params)
+    qs = Quasar_sed(z=2.0, LogL3000=None, wavlen=mock_wavelengths, params=base_params, cosmo=cosmo)
     # Ensure flux is still generated and positive (normalization happened)
     assert np.all(qs.flux >= 0)
     assert np.sum(qs.flux) > 0
 
 
-def test_emline_type_defaults(base_params, mock_wavelengths):
+def test_emline_type_defaults(base_params, mock_wavelengths, cosmo):
     """
     Covers:
       - 'else: self.emline_type = 0.0'
@@ -383,20 +386,20 @@ def test_emline_type_defaults(base_params, mock_wavelengths):
     base_params["emline_type"] = None
     base_params["beslope"] = 0.0  # Disable Baldwin effect
 
-    qs = Quasar_sed(wavlen=mock_wavelengths, params=base_params)
+    qs = Quasar_sed(wavlen=mock_wavelengths, params=base_params, cosmo=cosmo)
 
     # Internally, emline_type should have been set to 0.0
     assert qs.emline_type == 0.0
 
     # Verify emission lines were added (check flux vs continuum only)
     base_params["scal_emline"] = 0
-    qs_cont = Quasar_sed(wavlen=mock_wavelengths, params=base_params)
+    qs_cont = Quasar_sed(wavlen=mock_wavelengths, params=base_params, cosmo=cosmo)
 
     # Integrated flux with lines (default type 0) should be > continuum
     assert np.sum(qs.flux) > np.sum(qs_cont.flux)
 
 
-def test_host_galaxy_wavelength_error(base_params):
+def test_host_galaxy_wavelength_error(base_params, cosmo):
     """
     Covers:
       - 'wavlen must cover 4000-5000 A for galaxy normalisation' exception
@@ -407,6 +410,6 @@ def test_host_galaxy_wavelength_error(base_params):
     bad_wav = np.linspace(1000, 3000, 500)
 
     with pytest.raises(Exception) as excinfo:
-        Quasar_sed(wavlen=bad_wav, params=base_params)
+        Quasar_sed(wavlen=bad_wav, params=base_params, cosmo=cosmo)
 
     assert "wavlen must cover 4000-5000 A" in str(excinfo.value)
