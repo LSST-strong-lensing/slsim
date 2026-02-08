@@ -279,7 +279,9 @@ class TestQuasarRate:
         assert "host_id" in result_table.colnames
         assert result_table["host_id"][0] == 1
 
-    @patch("slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_pop.vel_disp_abundance_matching")
+    @patch(
+        "slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_pop.vel_disp_abundance_matching"
+    )
     @patch.object(
         QuasarRate, "generate_quasar_redshifts", return_value=np.array([0.5001])
     )
@@ -296,7 +298,9 @@ class TestQuasarRate:
         npt.assert_almost_equal(result_table["vel_disp"][0], 150.0)
 
     @patch("slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_pop.SkyPyPipeline")
-    @patch("slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_pop.vel_disp_abundance_matching")
+    @patch(
+        "slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_pop.vel_disp_abundance_matching"
+    )
     @patch.object(
         QuasarRate, "generate_quasar_redshifts", return_value=np.array([0.80])
     )
@@ -432,6 +436,7 @@ class TestQuasarSEDIntegration:
         assert np.all(
             np.abs(g_i_color) < 5.0
         ), "Derived colors are unphysical, anchoring likely failed."
+
 
 # Running the tests with pytest
 if __name__ == "__main__":
