@@ -91,7 +91,7 @@ class Quasar(SourceBase):
             # the assumed point source magnitude column
             if self._agn_known_band is None:
                 if "ps_mag_i" in self.source_dict:
-                    self._agn_known_band = "lsst2016-i"
+                    self._agn_known_band = "lsst2023-i"
                     self._agn_known_mag = self.source_dict["ps_mag_i"]
                 else:
                     raise ValueError("Please provide a band and magnitude for the AGN")
