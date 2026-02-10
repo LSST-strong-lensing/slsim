@@ -15,6 +15,7 @@ def simulate_image(
     band,
     num_pix,
     add_noise=True,
+    add_background_counts=False,
     observatory="LSST",
     kwargs_psf=None,
     kwargs_numerics=None,
@@ -32,6 +33,10 @@ def simulate_image(
     :param band: imaging band
     :param num_pix: number of pixels per axis
     :param add_noise: if True, add noise
+    :param add_background_counts: whether to add the absolute count of
+        photons on the background. If =False; the mean background is
+        subtracted (not the noise)
+    :type add_background_counts: bool
     :param observatory: telescope type to be simulated
     :type observatory: str
     :param kwargs_psf: (optional) specific PSF quantities to overwrite
@@ -57,6 +62,11 @@ def simulate_image(
     :type image_units_counts: bool
     :param kwargs: additional keyword arguments for the bands
     :type kwargs: dict
+    :param with_source: determines whether source is included in image
+    :type with_source: bool
+    :param with_deflector: determines whether deflector is included in
+        image
+    :type with_deflector: bool
     :return: simulated image
     :rtype: 2d numpy array
     """
@@ -97,11 +107,11 @@ def simulate_image(
     )
     if add_noise:
         image += sim_api.noise_for_model(model=image)
-    if image_units_counts:
-        effective_exposure_time = (
-            kwargs_single_band["exposure_time"] * kwargs_single_band["num_exposures"]
-        )
-        image *= effective_exposure_time
+    if add_background_counts:
+        # the noise is Poisson, so the counts are the variance of the background rms
+        exp_time = sim_api.exposure_time
+        var_bkg = (sim_api.background_noise * exp_time) ** 2
+        image += var_bkg / exp_time
     return image
 
 
@@ -523,7 +533,7 @@ def deflector_images_with_different_zeropoint(
 def image_plus_poisson_noise(
     image, exposure_time, gain=1, coadd_zero_point=27, single_visit_zero_point=27
 ):
-    """Creates an image with possion noise.
+    """Creates an image with Poisson noise.
 
     :param image: an image
     :param exposure_time: exposure time or exposure map for an image
