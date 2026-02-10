@@ -46,6 +46,8 @@ def simulate_image(
     :param kwargs_numerics: options are
         "point_source_supersampling_factor", "supersampling_factor", and
         more in lenstronomy.ImSim.Numerics.numerics class
+    :param with_source: bool, if True computes source
+    :param with_deflector: bool, if True includes deflector light
     :type kwargs: dict
     :param with_source: determines whether source is included in image
     :type with_source: bool
