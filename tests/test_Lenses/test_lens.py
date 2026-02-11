@@ -1962,6 +1962,118 @@ class TestSNR:
             assert isinstance(snr_high_thresh, (float, np.floating))
 
 
+class TestSNRValidityIntegration:
+    """Tests for the integration of SNR calculation with validity_test.
+
+    These tests specifically verify the bug fix from commit fd895c9b,
+    which changed the condition from:
+        `if snr_calculated is not None and np.max(snr_calculated) < snr:`
+    to:
+        `if snr_calculated is None or np.max(snr_calculated) < snr:`
+
+    This ensures that lenses are rejected when SNR calculation returns None.
+    """
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        """Set up a lens instance for testing."""
+        path = os.path.dirname(__file__)
+        blue_one = Table.read(
+            os.path.join(path, "../TestData/blue_one_modified.fits"), format="fits"
+        )
+        blue_one["angular_size"] = blue_one["angular_size"] / 4.84813681109536e-06
+        red_one = Table.read(
+            os.path.join(path, "../TestData/red_one_modified.fits"), format="fits"
+        )
+        red_one["angular_size"] = red_one["angular_size"] / 4.84813681109536e-06
+        self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+
+        mag_arc_limit = {"i": 35, "g": 35, "r": 35}
+        while True:
+            kwargs = {"extended_source_type": "single_sersic"}
+            source = Source(cosmo=self.cosmo, **blue_one, **kwargs)
+            deflector = Deflector(deflector_type="EPL_SERSIC", **red_one)
+            lens = Lens(
+                source_class=source,
+                deflector_class=deflector,
+                lens_equation_solver="lenstronomy_analytical",
+                cosmo=self.cosmo,
+                use_jax=use_jax,
+            )
+            if lens.validity_test(mag_arc_limit=mag_arc_limit):
+                self.lens = lens
+                break
+
+    def test_validity_test_rejects_when_snr_returns_none(self):
+        """Test that validity_test returns False when SNR calculation returns None.
+
+        This tests the bug fix from fd895c9b. Previously, when snr() returned None,
+        the condition `snr_calculated is not None and np.max(snr_calculated) < snr`
+        would be False (because snr_calculated IS None), so the lens would pass.
+
+        Now with the fix `snr_calculated is None or np.max(snr_calculated) < snr`,
+        when snr() returns None, the condition is True and the lens is correctly rejected.
+        """
+        # Mock the snr method to return None (simulating no regions found)
+        with patch.object(self.lens, "snr", return_value=None):
+            # With snr_limit set, validity_test should return False
+            # because snr() returns None
+            result = self.lens.validity_test(snr_limit={"i": 1.0})
+            assert result is False, (
+                "validity_test should return False when snr() returns None"
+            )
+
+    def test_validity_test_passes_when_snr_exceeds_limit(self):
+        """Test that validity_test returns True when SNR exceeds the limit."""
+        # Mock the snr method to return a high value
+        with patch.object(self.lens, "snr", return_value=np.array([100.0])):
+            result = self.lens.validity_test(snr_limit={"i": 10.0})
+            assert result is True, (
+                "validity_test should return True when snr exceeds limit"
+            )
+
+    def test_validity_test_fails_when_snr_below_limit(self):
+        """Test that validity_test returns False when SNR is below the limit."""
+        # Mock the snr method to return a low value
+        with patch.object(self.lens, "snr", return_value=np.array([5.0])):
+            result = self.lens.validity_test(snr_limit={"i": 10.0})
+            assert result is False, (
+                "validity_test should return False when snr is below limit"
+            )
+
+    def test_validity_test_multi_band_snr_with_none(self):
+        """Test validity_test fails when any band's SNR returns None.
+
+        If multiple bands are specified in snr_limit and any one of them
+        returns None from snr(), the validity_test should fail.
+        """
+
+        def mock_snr(band, **kwargs):
+            # Return None for 'g' band, valid value for 'i' band
+            if band == "g":
+                return None
+            return np.array([100.0])
+
+        with patch.object(self.lens, "snr", side_effect=mock_snr):
+            # Even though 'i' band has high SNR, 'g' band returns None
+            result = self.lens.validity_test(snr_limit={"i": 10.0, "g": 10.0})
+            assert result is False, (
+                "validity_test should fail when any band's SNR returns None"
+            )
+
+    def test_validity_test_multi_band_snr_all_pass(self):
+        """Test validity_test passes when all bands exceed their limits."""
+
+        def mock_snr(band, **kwargs):
+            return np.array([100.0])
+
+        with patch.object(self.lens, "snr", side_effect=mock_snr):
+            result = self.lens.validity_test(snr_limit={"i": 10.0, "g": 10.0})
+            assert result is True, (
+                "validity_test should pass when all bands exceed their limits"
+            )
+
+
 class TestSNRMocked:
     """Tests for SNR calculation logic using mocked image simulation."""
 
