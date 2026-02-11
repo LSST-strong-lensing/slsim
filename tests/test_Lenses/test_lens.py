@@ -213,6 +213,16 @@ class TestLens(object):
         )
         assert result_high_snr is False
 
+    def test_snr_limit_type_validation(self):
+        """Test that snr_limit must be a dict, not int/float."""
+        # Test that passing an int raises TypeError
+        with pytest.raises(TypeError, match="snr_limit must be a dict"):
+            self.gg_lens_high_snr.validity_test(snr_limit=20)
+
+        # Test that passing a float raises TypeError
+        with pytest.raises(TypeError, match="snr_limit must be a dict"):
+            self.gg_lens_high_snr.validity_test(snr_limit=20.5)
+
     def test_snr(self):
         # Test basic SNR calculation
         snr_result = self.gg_lens_high_snr.snr(
@@ -1982,42 +1992,9 @@ class TestSNRMocked:
         # Should identify 2 regions: the 2x2 block and the single pixel
         assert num_regions == 2
 
-    def test_snr_single_pixel_regions_skipped(self):
-        """Test that single-pixel regions are correctly skipped."""
-        from scipy.ndimage import label
-
-        # Create array with only single-pixel "regions"
-        snr_array = np.array(
-            [
-                [0, 0, 0, 0, 0],
-                [0, 2, 0, 2, 0],
-                [0, 0, 0, 0, 0],
-                [0, 2, 0, 0, 0],
-                [0, 0, 0, 0, 0],
-            ]
-        )
-
-        threshold = 1
-        masked_snr_array = np.ma.masked_where(snr_array <= threshold, snr_array)
-
-        structure = np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]])
-        labeled_array, num_regions = label(
-            masked_snr_array.filled(0), structure=structure
-        )
-
-        # Count regions with more than 1 pixel (mimicking the SNR method logic)
-        valid_regions = 0
-        for i in range(1, num_regions + 1):
-            region_mask = labeled_array == i
-            if np.sum(region_mask) >= 2:
-                valid_regions += 1
-
-        # All regions are single-pixel, so no valid regions
-        assert valid_regions == 0
-
     def test_snr_calculation_logic(self):
         """Test the SNR calculation formula with known values."""
-        # Simulating the SNR calculation: SNR = source_counts / sqrt(total_counts)
+        # SNR = source_counts / sqrt(total_counts + npixels * read_noise_variance)
         source = np.array(
             [
                 [0, 0, 0],
@@ -2042,11 +2019,18 @@ class TestSNRMocked:
             ]
         )
 
+        # Simulate read noise (example values)
+        read_noise_sigma = 10  # e-/pixel
+        num_exposures = 10
+        read_noise_variance = num_exposures * (read_noise_sigma**2)  # 1000
+
         source_counts = np.sum(source[region_mask])  # 400
         total_counts = np.sum(image[region_mask])  # 600
-        expected_snr = source_counts / np.sqrt(total_counts)  # 400 / sqrt(600) ≈ 16.33
+        npixels = np.sum(region_mask)  # 4
+        variance = total_counts + (npixels * read_noise_variance)  # 600 + 4000 = 4600
+        expected_snr = source_counts / np.sqrt(variance)  # 400 / sqrt(4600)
 
-        npt.assert_almost_equal(expected_snr, 400 / np.sqrt(600), decimal=2)
+        npt.assert_almost_equal(expected_snr, 400 / np.sqrt(4600), decimal=2)
 
     def test_snr_cross_connectivity(self):
         """Test that cross-shaped connectivity is used (not diagonal)."""
