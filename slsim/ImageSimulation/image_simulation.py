@@ -112,6 +112,11 @@ def simulate_image(
         exp_time = sim_api.exposure_time
         var_bkg = (sim_api.background_noise * exp_time) ** 2
         image += var_bkg / exp_time
+    if image_units_counts:
+        effective_exposure_time =  (
+            kwargs_single_band["exposure_time"] * kwargs_single_band["num_exposures"]
+        )
+        image *= effective_exposure_time
     return image
 
 
