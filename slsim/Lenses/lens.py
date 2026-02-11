@@ -396,20 +396,39 @@ class Lens(LensedSystemBase):
         This implementation is borrowed from `mejiro <https://github.com/AstroMusers/mejiro>`_,
         described in `Wedig et al. (2025) <https://doi.org/10.3847/1538-4357/adc24f>`_.
 
-        First, the SNR per pixel is calculated. Then, contiguous regions of pixels above
-        the SNR per pixel threshold are identified. The SNR for each region is
-        calculated in the following way:
+        The method proceeds as follows:
 
-        .. math::
+        1. **Image simulation**: Two images are generated using :func:`simulate_image`:
 
-            \\text{SNR}_\\text{region} = \\frac{\\sum\\limits_i N_{i,\\,S}}{\\sqrt{\\sum\\limits_i \\left(N_{i,\\,S} + N_{i,\\,L} + N_{i,\\,N}\\right)}}
+           - Lensed source with no noise.
+           - Lensed source, deflector, and sky background (as a flat level)
 
-        where the summations are over the pixels that comprise the region,
-        :math:`N_{i,\\,S}` are the counts in pixel :math:`i` due to the (lensed)
-        source galaxy, :math:`N_{i,\\,L}` are counts due to the lensing galaxy
-        :math:`N_{i,\\,N}` are counts due to noise. If multiple regions
-        are formed, the SNR of the region with the highest SNR is taken to be
-        the SNR of the system.
+        2. **Per-pixel SNR calculation**: The SNR for each pixel is computed as:
+
+           .. math::
+
+               \\text{SNR}_i = \\frac{N_{i,\\,S}}{\\sqrt{N_{i,\\,\\text{tot}} + \\sigma_{\\text{read}}^2 \\cdot N_{\\text{exp}}}}
+
+           where :math:`N_{i,\\,S}` are the source counts in pixel :math:`i`,
+           :math:`N_{i,\\,\\text{tot}}` are the total counts (source + deflector +
+           sky background level), :math:`\\sigma_{\\text{read}}` is the read noise per exposure
+           (in :math:`e^-`/pixel), and :math:`N_{\\text{exp}}` is the number of exposures.
+
+        3. **Region identification**: Pixels with per-pixel SNR above the threshold
+           (default: 1) are identified. Contiguous regions of these pixels are labeled using
+           cross-shaped connectivity.
+
+        4. **Region SNR calculation**: For each multi-pixel region, the SNR is:
+
+           .. math::
+
+               \\text{SNR}_\\text{region} = \\frac{\\sum\\limits_i N_{i,\\,S}}{\\sqrt{\\sum\\limits_i N_{i,\\,\\text{tot}} + n \\cdot \\sigma_{\\text{read}}^2 \\cdot N_{\\text{exp}}}}
+
+           where the summations are over the :math:`n` pixels in the region.
+
+        5. **Result**: The maximum SNR among all identified regions is returned.
+           If no pixels exceed the threshold or no multi-pixel regions are found,
+           ``None`` is returned.
 
         :param band: imaging band
         :type band: string
@@ -421,13 +440,9 @@ class Lens(LensedSystemBase):
             a pixel in a region (default is 1)
         :type snr_per_pixel_threshold: float
         :return: maximum SNR found among the regions above the threshold.
-            Returns None if no pixels are above the threshold or if no
-            regions are found.
+            Returns ``None`` if no pixels are above the threshold or if no
+            multi-pixel regions are found.
         :rtype: float or None
-
-        .. note::
-            Regions are defined as contiguous pixels (using a cross-shaped
-            connectivity).
         """
         # set the size of the image
         kwargs_band = kwargs_single_band(band=band, observatory=observatory)
@@ -496,8 +511,6 @@ class Lens(LensedSystemBase):
         snrs = []
         for i in range(1, num_regions + 1):
             region_mask = labeled_array == i
-            if np.sum(region_mask) < 2:
-                continue  # skip single-pixel regions due to Poisson noise
 
             # signal: sum of lensed source counts in region
             source_counts = np.sum(source[region_mask])
