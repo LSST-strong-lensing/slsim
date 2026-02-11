@@ -485,7 +485,7 @@ class Lens(LensedSystemBase):
 
         # get the read noise
         read_noise_sigma = kwargs_band["read_noise"]  # units of e-/pixel
-        read_noise_variance = kwargs_band["num_exposures"] * (read_noise_sigma ** 2)
+        read_noise_variance = kwargs_band["num_exposures"] * (read_noise_sigma**2)
 
         # calculate the denominator of the SNR
         noise = np.sqrt(image + read_noise_variance)
@@ -517,7 +517,9 @@ class Lens(LensedSystemBase):
 
             # variance: sum of all variance contributions in region
             # Poisson variance + read noise variance per pixel
-            variance = np.sum(image[region_mask]) + (np.sum(region_mask) * read_noise_variance)
+            variance = np.sum(image[region_mask]) + (
+                np.sum(region_mask) * read_noise_variance
+            )
 
             # SNR
             snr = source_counts / np.sqrt(variance)
