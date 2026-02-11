@@ -357,11 +357,15 @@ class MicrolensingLightCurveFromLensModel(object):
     @property
     def effective_transverse_velocity_images(self):
         """Returns the effective transverse velocity in the source plane for
-        each image position in the frame of the magnification map by using appropriate
-        transformations. Once calculated, the values are cached for future use.
+        each image position in the frame of the magnification map by using
+        appropriate transformations. Once calculated, the values are cached for
+        future use.
 
-        :return: effective_velocities: list containing the effective transverse velocity in km/s for each image of the source.
-        :return: effective_velocities_angles_deg: list containing the angle of the effective transverse velocity in degrees for each image of the source.
+        :return: effective_velocities: list containing the effective
+            transverse velocity in km/s for each image of the source.
+        :return: effective_velocities_angles_deg: list containing the
+            angle of the effective transverse velocity in degrees for
+            each image of the source.
         :rtype: tuple
         """
         if hasattr(self, "_eff_trv_vel_images"):
@@ -565,12 +569,14 @@ class MicrolensingLightCurveFromLensModel(object):
 
     @property
     def lc_start_position(self):
-        """
-        Chooses a random starting position for the lightcurve track on the magnification map.
-        Once set, the starting position remains fixed for subsequent calls.
+        """Chooses a random starting position for the lightcurve track on the
+        magnification map. Once set, the starting position remains fixed for
+        subsequent calls.
 
-        :return: x_start_position: x-coordinate of the starting position on the magnification map (in arcsec).
-        :return: y_start_position: y-coordinate of the starting position on the magnification map (in arcsec).
+        :return: x_start_position: x-coordinate of the starting position
+            on the magnification map (in arcsec).
+        :return: y_start_position: y-coordinate of the starting position
+            on the magnification map (in arcsec).
         :rtype: tuple
         """
         if hasattr(self, "_lc_start_position"):
