@@ -2005,41 +2005,45 @@ class TestSNRValidityIntegration:
                 break
 
     def test_validity_test_rejects_when_snr_returns_none(self):
-        """Test that validity_test returns False when SNR calculation returns None.
+        """Test that validity_test returns False when SNR calculation returns
+        None.
 
-        This tests the bug fix from fd895c9b. Previously, when snr() returned None,
-        the condition `snr_calculated is not None and np.max(snr_calculated) < snr`
-        would be False (because snr_calculated IS None), so the lens would pass.
+        This tests the bug fix from fd895c9b. Previously, when snr()
+        returned None, the condition `snr_calculated is not None and
+        np.max(snr_calculated) < snr` would be False (because
+        snr_calculated IS None), so the lens would pass.
 
-        Now with the fix `snr_calculated is None or np.max(snr_calculated) < snr`,
-        when snr() returns None, the condition is True and the lens is correctly rejected.
+        Now with the fix `snr_calculated is None or
+        np.max(snr_calculated) < snr`, when snr() returns None, the
+        condition is True and the lens is correctly rejected.
         """
         # Mock the snr method to return None (simulating no regions found)
         with patch.object(self.lens, "snr", return_value=None):
             # With snr_limit set, validity_test should return False
             # because snr() returns None
             result = self.lens.validity_test(snr_limit={"i": 1.0})
-            assert result is False, (
-                "validity_test should return False when snr() returns None"
-            )
+            assert (
+                result is False
+            ), "validity_test should return False when snr() returns None"
 
     def test_validity_test_passes_when_snr_exceeds_limit(self):
         """Test that validity_test returns True when SNR exceeds the limit."""
         # Mock the snr method to return a high value
         with patch.object(self.lens, "snr", return_value=np.array([100.0])):
             result = self.lens.validity_test(snr_limit={"i": 10.0})
-            assert result is True, (
-                "validity_test should return True when snr exceeds limit"
-            )
+            assert (
+                result is True
+            ), "validity_test should return True when snr exceeds limit"
 
     def test_validity_test_fails_when_snr_below_limit(self):
-        """Test that validity_test returns False when SNR is below the limit."""
+        """Test that validity_test returns False when SNR is below the
+        limit."""
         # Mock the snr method to return a low value
         with patch.object(self.lens, "snr", return_value=np.array([5.0])):
             result = self.lens.validity_test(snr_limit={"i": 10.0})
-            assert result is False, (
-                "validity_test should return False when snr is below limit"
-            )
+            assert (
+                result is False
+            ), "validity_test should return False when snr is below limit"
 
     def test_validity_test_multi_band_snr_with_none(self):
         """Test validity_test fails when any band's SNR returns None.
@@ -2057,9 +2061,9 @@ class TestSNRValidityIntegration:
         with patch.object(self.lens, "snr", side_effect=mock_snr):
             # Even though 'i' band has high SNR, 'g' band returns None
             result = self.lens.validity_test(snr_limit={"i": 10.0, "g": 10.0})
-            assert result is False, (
-                "validity_test should fail when any band's SNR returns None"
-            )
+            assert (
+                result is False
+            ), "validity_test should fail when any band's SNR returns None"
 
     def test_validity_test_multi_band_snr_all_pass(self):
         """Test validity_test passes when all bands exceed their limits."""
@@ -2069,9 +2073,9 @@ class TestSNRValidityIntegration:
 
         with patch.object(self.lens, "snr", side_effect=mock_snr):
             result = self.lens.validity_test(snr_limit={"i": 10.0, "g": 10.0})
-            assert result is True, (
-                "validity_test should pass when all bands exceed their limits"
-            )
+            assert (
+                result is True
+            ), "validity_test should pass when all bands exceed their limits"
 
 
 class TestSNRMocked:
