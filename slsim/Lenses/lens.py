@@ -386,7 +386,7 @@ class Lens(LensedSystemBase):
                     observatory=observatory,
                     snr_per_pixel_threshold=1,
                 )
-                if snr_calculated is not None and np.max(snr_calculated) < snr:
+                if snr_calculated is None or np.max(snr_calculated) < snr:
                     return False
         return True
 
