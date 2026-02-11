@@ -366,6 +366,11 @@ class Lens(LensedSystemBase):
         # Criteria 8: (optional)
         # Compute signal-to-noise ratio of the lensed source
         if snr_limit is not None:
+            if isinstance(snr_limit, (int, float)):
+                raise TypeError(
+                    "snr_limit must be a dict with band names as keys and SNR thresholds "
+                    "as values (e.g., {'g': 20})."
+                )
             # field of view either 4 times the Einstein radius or at least 1 arcsecond
             fov_arcsec = np.max([einstein_radius * 4, 1])
 
@@ -435,6 +440,7 @@ class Lens(LensedSystemBase):
             band=band,
             num_pix=num_pix,
             add_noise=False,  # no noise
+            add_background_counts=False,  # no background counts
             observatory=observatory,
             kwargs_psf=None,
             kwargs_numerics=None,
@@ -442,7 +448,7 @@ class Lens(LensedSystemBase):
             with_source=True,
             with_deflector=False,  # no deflector
             with_point_source=True,
-            image_units_counts=True,  # get image in counts, not counts/sec
+            image_units_counts=True,  # units of counts, not counts/sec
         )
 
         # get simulated image (source + deflector + noise)
@@ -450,7 +456,8 @@ class Lens(LensedSystemBase):
             lens_class=self,
             band=band,
             num_pix=num_pix,
-            add_noise=True,  # add noise
+            add_noise=False,  # don't use the sim_api.noise_for_model()
+            add_background_counts=True,  # don't background-subtract
             observatory=observatory,
             kwargs_psf=None,
             kwargs_numerics=None,
@@ -458,11 +465,18 @@ class Lens(LensedSystemBase):
             with_source=True,
             with_deflector=True,  # add deflector
             with_point_source=True,
-            image_units_counts=True,  # get image in counts, not counts/sec
+            image_units_counts=True,  # units of counts, not counts/sec
         )
 
+        # get the read noise
+        read_noise_sigma = kwargs_band["read_noise"]  # units of e-/pixel
+        read_noise_variance = kwargs_band["num_exposures"] * (read_noise_sigma ** 2)
+
+        # calculate the denominator of the SNR
+        noise = np.sqrt(image + read_noise_variance)
+
         # calculate SNR per pixel
-        snr_array = np.nan_to_num(source / np.sqrt(image), nan=0, posinf=0, neginf=0)
+        snr_array = np.nan_to_num(source / noise, nan=0, posinf=0, neginf=0)
 
         # calculate SNR regions based on SNR per pixel threshold
         masked_snr_array = np.ma.masked_where(
@@ -484,9 +498,16 @@ class Lens(LensedSystemBase):
             region_mask = labeled_array == i
             if np.sum(region_mask) < 2:
                 continue  # skip single-pixel regions due to Poisson noise
+
+            # signal: sum of lensed source counts in region
             source_counts = np.sum(source[region_mask])
-            total_counts = np.sum(image[region_mask])
-            snr = source_counts / np.sqrt(total_counts)
+
+            # variance: sum of all variance contributions in region
+            # Poisson variance + read noise variance per pixel
+            variance = np.sum(image[region_mask]) + (np.sum(region_mask) * read_noise_variance)
+
+            # SNR
+            snr = source_counts / np.sqrt(variance)
             snrs.append(snr)
 
         # return the maximum SNR
