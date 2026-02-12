@@ -557,8 +557,8 @@ class MicrolensingLightCurveFromLensModel(object):
             "m_solar": 1.0,
             "m_lower": 0.08,
             "m_upper": 100,
-            "num_pixels_x": 500,
-            "num_pixels_y": 500,
+            "num_pixels_x": 1000,
+            "num_pixels_y": 1000,
         }
 
     def update_source_morphology(self, kwargs_source_morphology):

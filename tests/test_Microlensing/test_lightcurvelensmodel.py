@@ -242,18 +242,19 @@ class TestMicrolensingLightCurveFromLensModel:
         assert ml_model._kwargs_magnification_map is not None
         assert "theta_star" in ml_model._kwargs_magnification_map
         assert "num_pixels_x" in ml_model._kwargs_magnification_map
-        assert ml_model._kwargs_magnification_map["num_pixels_x"] == 500
+        assert ml_model._kwargs_magnification_map["num_pixels_x"] == 1000
 
     @pytest.mark.parametrize("magmap_frame", [True, False])
-    def test_effective_transverse_velocity_images(
+    def test_effective_transverse_velocity_images_calculation(
         self,
         ml_lens_model,
         base_init_kwargs,
         microlensing_params,
         magmap_frame,
     ):
+        """Test the private method for calculating effective velocities."""
         num_images = len(microlensing_params["shear_phi"])
-        velocities, angles = ml_lens_model.effective_transverse_velocity_images(
+        velocities, angles = ml_lens_model._effective_transverse_velocity_images(
             random_seed=42,
             magmap_reference_frame=magmap_frame,
         )
@@ -277,7 +278,7 @@ class TestMicrolensingLightCurveFromLensModel:
 
         model_q = MicrolensingLightCurveFromLensModel(**args_q)
 
-        velocities_q, angles_q = model_q.effective_transverse_velocity_images(
+        velocities_q, angles_q = model_q._effective_transverse_velocity_images(
             random_seed=42, magmap_reference_frame=magmap_frame
         )
         assert velocities_q.shape == (num_images,)
@@ -291,11 +292,56 @@ class TestMicrolensingLightCurveFromLensModel:
 
         model_pole = MicrolensingLightCurveFromLensModel(**args_pole)
 
-        v_pole, a_pole = model_pole.effective_transverse_velocity_images(
+        v_pole, a_pole = model_pole._effective_transverse_velocity_images(
             random_seed=42, magmap_reference_frame=magmap_frame
         )
         assert isinstance(v_pole, np.ndarray)
         # ─────────────────────────────────────────────────────────────────────────
+
+    def test_effective_transverse_velocity_images_property(self, ml_lens_model):
+        """Test the public property and its caching behavior."""
+        
+        # Ensure it's not set initially
+        assert not hasattr(ml_lens_model, "_eff_trv_vel_images")
+        
+        # Access property
+        res = ml_lens_model.effective_transverse_velocity_images
+        velocities, angles = res
+        
+        # Check cache is set
+        assert hasattr(ml_lens_model, "_eff_trv_vel_images")
+        assert ml_lens_model._eff_trv_vel_images is res
+        
+        # Access again, verify identity (caching)
+        res_2 = ml_lens_model.effective_transverse_velocity_images
+        assert res_2 is res
+
+    def test_lc_start_position(self, ml_lens_model):
+        """Test the lightcurve start position property and caching."""
+        
+        # Ensure it's not set initially
+        assert not hasattr(ml_lens_model, "_lc_start_position")
+        
+        # Access property
+        pos = ml_lens_model.lc_start_position
+        x_start, y_start = pos
+        
+        # Check values are within bounds of the map settings
+        half_x = ml_lens_model._kwargs_magnification_map["half_length_x"]
+        half_y = ml_lens_model._kwargs_magnification_map["half_length_y"]
+        assert -half_x <= x_start <= half_x
+        assert -half_y <= y_start <= half_y
+        
+        # Check caching
+        assert hasattr(ml_lens_model, "_lc_start_position")
+        pos_2 = ml_lens_model.lc_start_position
+        assert pos_2 == pos
+
+    def test_update_source_morphology(self, ml_lens_model):
+        """Test the method to update source morphology kwargs."""
+        new_morphology = {"test_param": "test_value"}
+        ml_lens_model.update_source_morphology(new_morphology)
+        assert ml_lens_model._kwargs_source_morphology == new_morphology
 
     def test_interpolate_light_curve(self, ml_lens_model):
         time_orig = np.array([0.0, 10.0, 20.0, 30.0])
