@@ -300,38 +300,38 @@ class TestMicrolensingLightCurveFromLensModel:
 
     def test_effective_transverse_velocity_images_property(self, ml_lens_model):
         """Test the public property and its caching behavior."""
-        
+
         # Ensure it's not set initially
         assert not hasattr(ml_lens_model, "_eff_trv_vel_images")
-        
+
         # Access property
         res = ml_lens_model.effective_transverse_velocity_images
         velocities, angles = res
-        
+
         # Check cache is set
         assert hasattr(ml_lens_model, "_eff_trv_vel_images")
         assert ml_lens_model._eff_trv_vel_images is res
-        
+
         # Access again, verify identity (caching)
         res_2 = ml_lens_model.effective_transverse_velocity_images
         assert res_2 is res
 
     def test_lc_start_position(self, ml_lens_model):
         """Test the lightcurve start position property and caching."""
-        
+
         # Ensure it's not set initially
         assert not hasattr(ml_lens_model, "_lc_start_position")
-        
+
         # Access property
         pos = ml_lens_model.lc_start_position
         x_start, y_start = pos
-        
+
         # Check values are within bounds of the map settings
         half_x = ml_lens_model._kwargs_magnification_map["half_length_x"]
         half_y = ml_lens_model._kwargs_magnification_map["half_length_y"]
         assert -half_x <= x_start <= half_x
         assert -half_y <= y_start <= half_y
-        
+
         # Check caching
         assert hasattr(ml_lens_model, "_lc_start_position")
         pos_2 = ml_lens_model.lc_start_position
