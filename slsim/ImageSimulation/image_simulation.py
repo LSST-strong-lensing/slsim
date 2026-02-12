@@ -62,11 +62,6 @@ def simulate_image(
     :type image_units_counts: bool
     :param kwargs: additional keyword arguments for the bands
     :type kwargs: dict
-    :param with_source: determines whether source is included in image
-    :type with_source: bool
-    :param with_deflector: determines whether deflector is included in
-        image
-    :type with_deflector: bool
     :return: simulated image
     :rtype: 2d numpy array
     """
