@@ -407,12 +407,11 @@ class Lens(LensedSystemBase):
 
            .. math::
 
-               \\text{SNR}_i = \\frac{N_{i,\\,S}}{\\sqrt{N_{i,\\,\\text{tot}} + \\sigma_{\\text{read}}^2 \\cdot N_{\\text{exp}}}}
+               \\text{SNR}_i = \\frac{N_{i,\\,S}}{\\sqrt{N_{i,\\,\\text{tot}}}}
 
-           where :math:`N_{i,\\,S}` are the source counts in pixel :math:`i`,
+           where :math:`N_{i,\\,S}` are the source counts in pixel :math:`i` and
            :math:`N_{i,\\,\\text{tot}}` are the total counts (source + deflector +
-           sky background level), :math:`\\sigma_{\\text{read}}` is the read noise per exposure
-           (in :math:`e^-`/pixel), and :math:`N_{\\text{exp}}` is the number of exposures.
+           sky background level).
 
         3. **Region identification**: Pixels with per-pixel SNR above the threshold
            (default: 1) are identified. Contiguous regions of these pixels are labeled using
@@ -422,7 +421,7 @@ class Lens(LensedSystemBase):
 
            .. math::
 
-               \\text{SNR}_\\text{region} = \\frac{\\sum\\limits_i N_{i,\\,S}}{\\sqrt{\\sum\\limits_i N_{i,\\,\\text{tot}} + n \\cdot \\sigma_{\\text{read}}^2 \\cdot N_{\\text{exp}}}}
+               \\text{SNR}_\\text{region} = \\frac{\\sum\\limits_i N_{i,\\,S}}{\\sqrt{\\sum\\limits_i N_{i,\\,\\text{tot}}}}
 
            where the summations are over the :math:`n` pixels in the region.
 
@@ -466,7 +465,7 @@ class Lens(LensedSystemBase):
             image_units_counts=True,  # units of counts, not counts/sec
         )
 
-        # get simulated image (source + deflector + noise)
+        # get simulated image (source + deflector + background noise)
         image = simulate_image(
             lens_class=self,
             band=band,
@@ -483,12 +482,8 @@ class Lens(LensedSystemBase):
             image_units_counts=True,  # units of counts, not counts/sec
         )
 
-        # get the read noise
-        read_noise_sigma = kwargs_band["read_noise"]  # units of e-/pixel
-        read_noise_variance = kwargs_band["num_exposures"] * (read_noise_sigma**2)
-
         # calculate the denominator of the SNR
-        noise = np.sqrt(image + read_noise_variance)
+        noise = np.sqrt(image)
 
         # calculate SNR per pixel
         snr_array = np.nan_to_num(source / noise, nan=0, posinf=0, neginf=0)
@@ -516,10 +511,7 @@ class Lens(LensedSystemBase):
             source_counts = np.sum(source[region_mask])
 
             # variance: sum of all variance contributions in region
-            # Poisson variance + read noise variance per pixel
-            variance = np.sum(image[region_mask]) + (
-                np.sum(region_mask) * read_noise_variance
-            )
+            variance = np.sum(image[region_mask])
 
             # SNR
             snr = source_counts / np.sqrt(variance)

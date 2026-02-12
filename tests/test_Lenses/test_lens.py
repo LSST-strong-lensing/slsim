@@ -2110,7 +2110,7 @@ class TestSNRMocked:
 
     def test_snr_calculation_logic(self):
         """Test the SNR calculation formula with known values."""
-        # SNR = source_counts / sqrt(total_counts + npixels * read_noise_variance)
+        # SNR = source_counts / sqrt(total_counts)
         source = np.array(
             [
                 [0, 0, 0],
@@ -2135,18 +2135,12 @@ class TestSNRMocked:
             ]
         )
 
-        # Simulate read noise (example values)
-        read_noise_sigma = 10  # e-/pixel
-        num_exposures = 10
-        read_noise_variance = num_exposures * (read_noise_sigma**2)  # 1000
-
         source_counts = np.sum(source[region_mask])  # 400
         total_counts = np.sum(image[region_mask])  # 600
-        npixels = np.sum(region_mask)  # 4
-        variance = total_counts + (npixels * read_noise_variance)  # 600 + 4000 = 4600
-        expected_snr = source_counts / np.sqrt(variance)  # 400 / sqrt(4600)
+        variance = total_counts  # 600
+        expected_snr = source_counts / np.sqrt(variance)  # 400 / sqrt(600)
 
-        npt.assert_almost_equal(expected_snr, 400 / np.sqrt(4600), decimal=2)
+        npt.assert_almost_equal(expected_snr, 400 / np.sqrt(600), decimal=2)
 
     def test_snr_cross_connectivity(self):
         """Test that cross-shaped connectivity is used (not diagonal)."""
