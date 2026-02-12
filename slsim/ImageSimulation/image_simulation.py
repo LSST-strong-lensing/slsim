@@ -733,8 +733,7 @@ def lens_image_series(
                 }. It sould contain at least values for the band in which one need to
                 simulate images. Default values are average magnitude zero points for
                 LSST single visists in each band.
-    :param microlensing: boolean flag to include microlensing
-        variability
+    :param microlensing: boolean flag to include microlensing variability
     :return: list of series of images of a lens
     """
 
