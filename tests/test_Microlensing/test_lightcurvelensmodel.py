@@ -414,6 +414,16 @@ class TestMicrolensingLightCurveFromLensModel:
                 assert magmap_obj._kappa_star == microlensing_params["kappa_star"][i]
                 assert isinstance(magmap_obj, MagnificationMap)
 
+            # Test Caching: Call the method a second time
+            result_cached = (
+                ml_lens_model.generate_magnification_maps_from_microlensing_params()
+            )
+
+            assert result_cached is result
+
+            # Assert that the constructor was NOT called again
+            assert mock_magmap_class.call_count == num_images
+
     @pytest.mark.parametrize(
         "morphology_key, kwargs_source",
         [("gaussian", "kwargs_source_gaussian"), ("agn", "kwargs_source_agn_wave")],
