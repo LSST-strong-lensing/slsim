@@ -3,7 +3,7 @@ from slsim.ImageSimulation.image_quality_lenstronomy import (
     get_speclite_filtername,
     get_speclite_filternames,
     kwargs_single_band,
-    get_observatory
+    get_observatory,
 )
 
 
@@ -74,7 +74,8 @@ class TestGetSpecliteFiltername:
         expected = ["lsst2023-u", "Roman-F106", "Euclid-VIS"]
 
         assert get_speclite_filternames(bands) == expected
-        
+
+
 class TestKwargsSingleBand:
     """Tests for the kwargs_single_band function."""
 
