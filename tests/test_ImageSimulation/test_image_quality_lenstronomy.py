@@ -1,8 +1,9 @@
 import pytest
 from slsim.ImageSimulation.image_quality_lenstronomy import (
-    get_observatory,
     get_speclite_filtername,
     get_speclite_filternames,
+    kwargs_single_band,
+    get_observatory
 )
 
 
@@ -73,3 +74,31 @@ class TestGetSpecliteFiltername:
         expected = ["lsst2023-u", "Roman-F106", "Euclid-VIS"]
 
         assert get_speclite_filternames(bands) == expected
+        
+class TestKwargsSingleBand:
+    """Tests for the kwargs_single_band function."""
+
+    def test_lsst_band_returns_dict(self):
+        """Test that LSST band returns a dictionary with expected keys."""
+        result = kwargs_single_band(band="i", observatory="LSST")
+        assert isinstance(result, dict)
+        assert "pixel_scale" in result
+        assert "exposure_time" in result
+
+    def test_roman_band_returns_dict(self):
+        """Test that Roman band returns a dictionary with expected keys."""
+        result = kwargs_single_band(band="F106", observatory="Roman")
+        assert isinstance(result, dict)
+        assert "pixel_scale" in result
+        assert "exposure_time" in result
+
+    def test_euclid_band_returns_dict(self):
+        """Test that Euclid band returns a dictionary with expected keys."""
+        result = kwargs_single_band(band="VIS", observatory="Euclid")
+        assert isinstance(result, dict)
+        assert "pixel_scale" in result
+        assert "exposure_time" in result
+
+
+if __name__ == "__main__":
+    pytest.main()
