@@ -821,9 +821,11 @@ def lens_instance_with_variability():
 def band_i():
     return "i"
 
+
 @pytest.fixture
 def band_r():
     return "r"
+
 
 @pytest.fixture
 def time_array():
@@ -1219,6 +1221,7 @@ def test_point_source_magnitude_microlensing_defaults(
 
     # update_source_morphology should have been called during the second execution
     mock_instance.update_source_morphology.assert_called_once()
+
 
 ################################################
 ################################################
