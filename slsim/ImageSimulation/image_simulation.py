@@ -623,6 +623,8 @@ def lens_image(
         sould contain at least values for the band in which one need to
         simulate images. Default values are average magnitude zero
         points for LSST single visists in each band.
+    :param microlensing: boolean flag to include microlensing
+        variability
     :return: lens image
     """
     delta_pix = transformmatrix_to_pixelscale(transform_pix2angle)
@@ -731,6 +733,8 @@ def lens_image_series(
                 }. It sould contain at least values for the band in which one need to
                 simulate images. Default values are average magnitude zero points for
                 LSST single visists in each band.
+    :param microlensing: boolean flag to include microlensing
+        variability
     :return: list of series of images of a lens
     """
 
