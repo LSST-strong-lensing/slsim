@@ -1335,7 +1335,9 @@ class Lens(LensedSystemBase):
                 self.max_redshift_source_class.redshift
             )
 
-        sources, sources_kwargs = self.source_light_model_lenstronomy(band=band, time=time)
+        sources, sources_kwargs = self.source_light_model_lenstronomy(
+            band=band, time=time
+        )
         # ensure that only the models that exist are getting added to kwargs_model
         for k in sources.keys():
             kwargs_model[k] = sources[k]

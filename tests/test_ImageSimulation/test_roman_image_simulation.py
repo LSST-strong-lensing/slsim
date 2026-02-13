@@ -292,5 +292,6 @@ def test_simulate_roman_image_with_time_variable_source():
 
     assert not np.allclose(lens_image, lens_image3, atol=1e-16, rtol=1e-16)
 
+
 if __name__ == "__main__":
     pytest.main()

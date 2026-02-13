@@ -320,7 +320,8 @@ def add_roman_background(
     :type dec: float between -45 and -15
     :param date: Date used to generate sky background
     :type date: datetime.datetime class
-    :param subtract_mean_background: whether to subtract the mean background from the image
+    :param subtract_mean_background: whether to subtract the mean
+        background from the image
     :type subtract_mean_background: bool
     :return: image with added background
     :rtype: galsim Image class
