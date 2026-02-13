@@ -5,12 +5,6 @@ import datetime
 import numpy as np
 from lenstronomy.SimulationAPI.sim_api import SimAPI
 from slsim.ImageSimulation import image_quality_lenstronomy
-from slsim.ImageSimulation.image_simulation import (
-    point_source_image_at_time,
-    sharp_image,
-    image_plus_poisson_noise,
-)
-from slsim.Util.param_util import transformmatrix_to_pixelscale, convolved_image
 import os.path
 import pickle
 from stpsf.roman import WFI
