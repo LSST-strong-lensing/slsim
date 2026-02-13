@@ -1287,12 +1287,15 @@ class Lens(LensedSystemBase):
             extended_source_magnification = 0
         return extended_source_magnification
 
-    def lenstronomy_kwargs(self, band=None):
+    def lenstronomy_kwargs(self, band=None, time=None):
         """Generates lenstronomy dictionary conventions for the class object.
 
         :param band: imaging band, if =None, will result in un-
             normalized amplitudes
         :type band: string or None
+        :param time: time is an image observation time in units of days.
+            If None, provides magnitude without variability.
+        :type time: float
         :return: lenstronomy model and parameter conventions
         """
         lens_model, kwargs_lens = self.deflector_mass_model_lenstronomy(source_index=0)
@@ -1332,7 +1335,7 @@ class Lens(LensedSystemBase):
                 self.max_redshift_source_class.redshift
             )
 
-        sources, sources_kwargs = self.source_light_model_lenstronomy(band=band)
+        sources, sources_kwargs = self.source_light_model_lenstronomy(band=band, time=time)
         # ensure that only the models that exist are getting added to kwargs_model
         for k in sources.keys():
             kwargs_model[k] = sources[k]
@@ -1506,7 +1509,7 @@ class Lens(LensedSystemBase):
                         lensed=True,
                         microlensing=microlensing,
                         kwargs_microlensing=kwargs_microlensing,
-                    )
+                    ).flatten()
                 ps_type, kwargs_ps_ = self.source(index).kwargs_point_source(
                     band, image_pos_x=img_x, image_pos_y=img_y, ps_mag=image_magnitudes
                 )
