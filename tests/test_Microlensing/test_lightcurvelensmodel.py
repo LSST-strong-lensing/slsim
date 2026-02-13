@@ -153,6 +153,7 @@ def ml_lens_model(base_init_kwargs):
     kwargs."""
     return MicrolensingLightCurveFromLensModel(**base_init_kwargs)
 
+
 # Helper function to set a safe track for testing to avoid map boundary issues
 def add_safe_track(ml_lc_lens_model: MicrolensingLightCurveFromLensModel):
     """Sets a safe start position and velocities to avoid map boundary issues
@@ -161,7 +162,7 @@ def add_safe_track(ml_lc_lens_model: MicrolensingLightCurveFromLensModel):
 
     num_images = len(ml_lc_lens_model._kappa_star_images)
     safe_velocity = np.ones(num_images) * 100.0  # 100 km/s
-    safe_angle = np.zeros(num_images)            # 0 degrees (horizontal)
+    safe_angle = np.zeros(num_images)  # 0 degrees (horizontal)
     ml_lc_lens_model._eff_trv_vel_images = (safe_velocity, safe_angle)
 
 
@@ -681,7 +682,7 @@ class TestMicrolensingLightCurveFromLensModel:
     ):
         """Test property access for lightcurves, tracks, and magmaps_images."""
         add_safe_track(ml_lens_model)
-        
+
         # Test AttributeError when properties are accessed before generation
         with pytest.raises(AttributeError, match="Lightcurves are not set"):
             _ = ml_lens_model.lightcurves
