@@ -391,6 +391,7 @@ def point_source_image_at_time(
     psf_kernel,
     transform_pix2angle,
     time,
+    microlensing=False,
 ):
     """Creates lensed point source images with variability at a given time on
     the basis of given information.
@@ -404,6 +405,8 @@ def point_source_image_at_time(
     :param transform_pix2angle: transformation matrix (2x2) of pixels
         into coordinate displacements
     :param time: time is an image observation time [day].
+    :param microlensing: boolean flag to include microlensing
+        variability
     :return: point source images with variability
     """
 
@@ -427,7 +430,7 @@ def point_source_image_at_time(
         ra_image_values = image_data["ra_image"]
         dec_image_values = image_data["dec_image"]
         variable_mag = lens_class.point_source_magnitude(
-            band=band, lensed=True, time=time
+            band=band, lensed=True, time=time, microlensing=microlensing
         )
         variable_mag = np.nan_to_num(variable_mag, nan=np.inf)
         variable_mag_list = np.concatenate(variable_mag)
@@ -592,6 +595,7 @@ def lens_image(
         "z": 31.45,
         "y": 30.63,
     },
+    microlensing=False,
 ):
     """Creates lens image on the basis of given information. It can simulate
     both static lens image and variable lens image.
@@ -619,6 +623,8 @@ def lens_image(
         sould contain at least values for the band in which one need to
         simulate images. Default values are average magnitude zero
         points for LSST single visists in each band.
+    :param microlensing: boolean flag to include microlensing
+        variability
     :return: lens image
     """
     delta_pix = transformmatrix_to_pixelscale(transform_pix2angle)
@@ -654,6 +660,7 @@ def lens_image(
             psf_kernel=psf_kernel,
             transform_pix2angle=transform_pix2angle,
             time=t_obs,
+            microlensing=microlensing,
         )
     image_ps = np.nan_to_num(image_ps, nan=0)  # Replace NaN if present with 0
     image = convolved_deflector_source + image_ps
@@ -694,6 +701,7 @@ def lens_image_series(
         "z": 31.45,
         "y": 30.63,
     },
+    microlensing=False,
 ):
     """Creates lens image on the basis of given information. This function is
     designed to simulate time series images of a lens.
@@ -725,6 +733,7 @@ def lens_image_series(
                 }. It sould contain at least values for the band in which one need to
                 simulate images. Default values are average magnitude zero points for
                 LSST single visists in each band.
+    :param microlensing: boolean flag to include microlensing variability
     :return: list of series of images of a lens
     """
 
@@ -750,6 +759,7 @@ def lens_image_series(
             with_deflector=with_deflector,
             gain=gain,
             single_visit_mag_zero_points=single_visit_mag_zero_points,
+            microlensing=microlensing,
         )
         image_series.append(image)
 

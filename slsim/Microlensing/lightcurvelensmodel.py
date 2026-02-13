@@ -234,7 +234,7 @@ class MicrolensingLightCurveFromLensModel(object):
         :rtype: tuple
         """
 
-        # generate magnification maps for each image of the source
+        # generate magnification maps for each image of the source if they are not already generated and cached
         magmaps_images = self.generate_magnification_maps_from_microlensing_params()
 
         if (isinstance(time, np.ndarray) or isinstance(time, list)) and len(time) > 1:
@@ -250,8 +250,11 @@ class MicrolensingLightCurveFromLensModel(object):
 
         # obtain velocities and angles for each image
         eff_trv_vel_images, eff_trv_vel_angles_images = (
-            self.effective_transverse_velocity_images()
+            self.effective_transverse_velocity_images
         )
+
+        # obtain lightcurve starting position
+        x_start_position, y_start_position = self.lc_start_position
 
         # generate lightcurves for each image of the source
         lightcurves = (
@@ -275,8 +278,8 @@ class MicrolensingLightCurveFromLensModel(object):
                     lightcurve_type=lightcurve_type,
                     effective_transverse_velocity=eff_trv_vel_images[i],
                     num_lightcurves=num_lightcurves,
-                    x_start_position=None,
-                    y_start_position=None,
+                    x_start_position=x_start_position,
+                    y_start_position=y_start_position,
                     phi_travel_direction=eff_trv_vel_angles_images[i],
                 )
             )
@@ -311,6 +314,10 @@ class MicrolensingLightCurveFromLensModel(object):
         Returns:
         magmaps_images: a list which contains the [magnification map for each image of the source].
         """
+        # check if magnification maps are already generated
+        if hasattr(self, "_magmaps_images"):
+            return self._magmaps_images
+
         # generate magnification maps for each image of the source
         self._magmaps_images = []
         for i in range(len(self._kappa_star_images)):
@@ -347,7 +354,27 @@ class MicrolensingLightCurveFromLensModel(object):
         """
         return np.interp(time_array_new, time_array, lightcurve)
 
-    def effective_transverse_velocity_images(
+    @property
+    def effective_transverse_velocity_images(self):
+        """Returns the effective transverse velocity in the source plane for
+        each image position in the frame of the magnification map by using
+        appropriate transformations. Once calculated, the values are cached for
+        future use.
+
+        :return: effective_velocities: list containing the effective
+            transverse velocity in km/s for each image of the source.
+        :return: effective_velocities_angles_deg: list containing the
+            angle of the effective transverse velocity in degrees for
+            each image of the source.
+        :rtype: tuple
+        """
+        if hasattr(self, "_eff_trv_vel_images"):
+            return self._eff_trv_vel_images
+        else:
+            self._eff_trv_vel_images = self._effective_transverse_velocity_images()
+            return self._eff_trv_vel_images
+
+    def _effective_transverse_velocity_images(
         self,
         random_seed=None,
         magmap_reference_frame=True,
@@ -530,6 +557,41 @@ class MicrolensingLightCurveFromLensModel(object):
             "m_solar": 1.0,
             "m_lower": 0.08,
             "m_upper": 100,
-            "num_pixels_x": 500,
-            "num_pixels_y": 500,
+            "num_pixels_x": 1000,
+            "num_pixels_y": 1000,
         }
+
+    def update_source_morphology(self, kwargs_source_morphology):
+        """Updates the source morphology parameters (e.g., for a new band)
+        without requiring re-initialization of the class or re-generation of
+        magnification maps."""
+        self._kwargs_source_morphology = kwargs_source_morphology
+
+    @property
+    def lc_start_position(self):
+        """Chooses a random starting position for the lightcurve track on the
+        magnification map. Once set, the starting position remains fixed for
+        subsequent calls.
+
+        :return: x_start_position: x-coordinate of the starting position
+            on the magnification map (in arcsec).
+        :return: y_start_position: y-coordinate of the starting position
+            on the magnification map (in arcsec).
+        :rtype: tuple
+        """
+        if hasattr(self, "_lc_start_position"):
+            return self._lc_start_position
+        else:
+            half_length_x = self._kwargs_magnification_map["half_length_x"]
+            half_length_y = self._kwargs_magnification_map["half_length_y"]
+
+            x_start_position = np.random.uniform(
+                -half_length_x,
+                half_length_x,
+            )
+            y_start_position = np.random.uniform(
+                -half_length_y,
+                half_length_y,
+            )
+            self._lc_start_position = (x_start_position, y_start_position)
+            return self._lc_start_position

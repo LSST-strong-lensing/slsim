@@ -823,6 +823,11 @@ def band_i():
 
 
 @pytest.fixture
+def band_r():
+    return "r"
+
+
+@pytest.fixture
 def time_array():
     return np.linspace(0, 100, 20)  # 20 time steps for microlensing tests
 
@@ -1161,6 +1166,7 @@ def test_point_source_magnitude_microlensing_defaults(
     mock_ml_lc_from_lm_class,
     lens_instance_with_variability,
     band_i,
+    band_r,
     time_array,
 ):
     """Tests _point_source_magnitude_microlensing with defaults
@@ -1177,7 +1183,8 @@ def test_point_source_magnitude_microlensing_defaults(
     lens_system.source(source_index)._source.name = "QSO"
 
     # Configure mock
-    mock_ml_lc_from_lm_class.return_value = MagicMock()
+    mock_instance = MagicMock()
+    mock_ml_lc_from_lm_class.return_value = mock_instance
 
     # Call with kwargs_microlensing=None
     lens_system._point_source_magnitude_microlensing(
@@ -1197,6 +1204,23 @@ def test_point_source_magnitude_microlensing_defaults(
     kwargs_morph = constructor_kwargs["kwargs_source_morphology"]
     assert kwargs_morph["observing_wavelength_band"] == band_i
     assert kwargs_morph["source_redshift"] == lens_system.source(source_index).redshift
+
+    # Constructor should be called exactly once here
+    mock_ml_lc_from_lm_class.assert_called_once()
+
+    # Second call with same settings - should reuse instance and update morphology
+    lens_system._point_source_magnitude_microlensing(
+        band_r,
+        time_array,
+        source_index=source_index,
+        kwargs_microlensing=None,
+    )
+
+    # Constructor should still have only been called once (from the first call)
+    mock_ml_lc_from_lm_class.assert_called_once()
+
+    # update_source_morphology should have been called during the second execution
+    mock_instance.update_source_morphology.assert_called_once()
 
 
 ################################################
