@@ -153,6 +153,17 @@ def ml_lens_model(base_init_kwargs):
     kwargs."""
     return MicrolensingLightCurveFromLensModel(**base_init_kwargs)
 
+# Helper function to set a safe track for testing to avoid map boundary issues
+def add_safe_track(ml_lc_lens_model: MicrolensingLightCurveFromLensModel):
+    """Sets a safe start position and velocities to avoid map boundary issues
+    during tests."""
+    ml_lc_lens_model._lc_start_position = (0, 0)
+
+    num_images = len(ml_lc_lens_model._kappa_star_images)
+    safe_velocity = np.ones(num_images) * 100.0  # 100 km/s
+    safe_angle = np.zeros(num_images)            # 0 degrees (horizontal)
+    ml_lc_lens_model._eff_trv_vel_images = (safe_velocity, safe_angle)
+
 
 # ---- Helper Function to Load Maps and Create Mock Return Value ---
 def create_mock_magmap_list(microlensing_params, kwargs_magnification_map_settings):
@@ -459,6 +470,7 @@ class TestMicrolensingLightCurveFromLensModel:
         args["kwargs_source_morphology"] = kwargs_morphology
 
         ml_model = MicrolensingLightCurveFromLensModel(**args)
+        add_safe_track(ml_model)
 
         try:
             lightcurves, tracks, time_arrays = (
@@ -546,6 +558,7 @@ class TestMicrolensingLightCurveFromLensModel:
         args["kwargs_source_morphology"] = kwargs_morphology
 
         ml_model = MicrolensingLightCurveFromLensModel(**args)
+        add_safe_track(ml_model)
 
         try:
             magnitudes = ml_model.generate_point_source_microlensing_magnitudes(
@@ -590,6 +603,7 @@ class TestMicrolensingLightCurveFromLensModel:
         args["kwargs_source_morphology"] = kwargs_morphology
 
         ml_model = MicrolensingLightCurveFromLensModel(**args)
+        add_safe_track(ml_model)
 
         try:
             magnitudes = ml_model.generate_point_source_microlensing_magnitudes(
@@ -633,6 +647,7 @@ class TestMicrolensingLightCurveFromLensModel:
         args["kwargs_source_morphology"] = kwargs_morphology
 
         ml_model = MicrolensingLightCurveFromLensModel(**args)
+        add_safe_track(ml_model)
 
         try:
             magnitudes = ml_model.generate_point_source_microlensing_magnitudes(
@@ -665,7 +680,8 @@ class TestMicrolensingLightCurveFromLensModel:
         kwargs_magnification_map_settings,
     ):
         """Test property access for lightcurves, tracks, and magmaps_images."""
-
+        add_safe_track(ml_lens_model)
+        
         # Test AttributeError when properties are accessed before generation
         with pytest.raises(AttributeError, match="Lightcurves are not set"):
             _ = ml_lens_model.lightcurves
