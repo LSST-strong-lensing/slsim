@@ -5,6 +5,10 @@ from slsim.Sources.SourceVariability.variability import (
 )
 from slsim.Sources.SourceVariability import agn
 from slsim.Sources.SourceTypes.source_base import SourceBase
+from slsim.ImageSimulation.image_quality_lenstronomy import (
+    get_speclite_filternames,
+    ALL_SUPPORTED_BANDS,
+)
 
 
 class Quasar(SourceBase):
@@ -72,130 +76,100 @@ class Quasar(SourceBase):
         else:
             self._random_seed = None
 
+    def _init_agn_class(self):
+        """Initialize the AGN class for this quasar."""
+        if self._cosmo is None:
+            raise ValueError(
+                "Cosmology cannot be None for AGN class. Please"
+                "provide a suitable astropy cosmology."
+            )
+        else:
+            # Pull the agn kwarg dict out of the kwargs_variability dict
+            agn_kwarg_dict = extract_agn_kwargs_from_source_dict(self.source_dict)
+
+            # If no other band and magnitude is given, populate with
+            # the assumed point source magnitude column
+            if self._agn_known_band is None:
+                if "ps_mag_i" in self.source_dict:
+                    self._agn_known_band = "lsst2023-i"
+                    self._agn_known_mag = self.source_dict["ps_mag_i"]
+                else:
+                    raise ValueError("Please provide a band and magnitude for the AGN")
+
+            # Create the agn object
+            self.agn_class = agn.RandomAgn(
+                self._agn_known_band,
+                self._agn_known_mag,
+                self._z,
+                cosmo=self._cosmo,
+                lightcurve_time=self._lightcurve_time,
+                agn_driving_variability_model=self._agn_driving_variability_model,
+                agn_driving_kwargs_variability=self._agn_driving_kwargs_variability,
+                random_seed=self._random_seed,
+                input_agn_bounds_dict=self.input_agn_bounds_dict,
+                **agn_kwarg_dict,
+            )
+
     @property
     def light_curve(self):
         kwargs_variab_extracted = {}
         if self._kwargs_variability is not None:
-            z = self._z
-            if self._cosmo is None:
-                raise ValueError(
-                    "Cosmology cannot be None for AGN class. Please"
-                    "provide a suitable astropy cosmology."
+            if not hasattr(self, "agn_class"):
+                self._init_agn_class()
+
+            # Get mean mags for each provided band if not already present in source_dict
+            # determine which kwargs_variability are LSST, Roman or Euclid bands
+            provided_bands = set(ALL_SUPPORTED_BANDS) & set(self._kwargs_variability)
+            speclite_names = get_speclite_filternames(provided_bands)
+
+            # determine mean magnitudes for each band using the AGN class (uses SS73 disk model)
+            mean_magnitudes = self.agn_class.get_mean_mags(speclite_names)
+
+            # check if source_dict already has mean mags for these bands
+            # If yes, use those instead of computed ones
+            for index, band in enumerate(provided_bands):
+                ps_mag_name = "ps_mag_" + band
+                if ps_mag_name in self.source_dict:
+                    mean_magnitudes[index] = self.source_dict[ps_mag_name]
+
+            # Our input quasar catalog has magnitude only in i band. So, Agn
+            # class has computed mean magnitude of the given quasar in all lsst
+            # bands using available i-band magnitude. We want to save mean
+            # magnitudes of quasar at all bands so that we can access them at
+            # anytime.
+            self.source_dict = add_mean_mag_to_source_table(
+                self.source_dict, mean_magnitudes, provided_bands
+            )
+
+            # Calculate light curve in each band
+            for index, band in enumerate(provided_bands):
+
+                # Define name for point source mags
+                filter_name = "ps_mag_" + band
+
+                # Set the filter to use
+                self.agn_class.variable_disk.reprocessing_kwargs["speclite_filter"] = (
+                    speclite_names[index]
                 )
 
-            else:
-                # Pull the agn kwarg dict out of the kwargs_variability dict
-                agn_kwarg_dict = extract_agn_kwargs_from_source_dict(self.source_dict)
-
-                # If no other band and magnitude is given, populate with
-                # the assumed point source magnitude column
-                if self._agn_known_band is None:
-                    if "ps_mag_i" in self.source_dict:
-                        self._agn_known_band = "lsst2016-i"
-                        self._agn_known_mag = self.source_dict["ps_mag_i"]
-                    else:
-                        raise ValueError(
-                            "Please provide a band and magnitude for the AGN"
-                        )
-
-                # Create the agn object
-                self.agn_class = agn.RandomAgn(
-                    self._agn_known_band,
-                    self._agn_known_mag,
-                    z,
-                    cosmo=self._cosmo,
-                    lightcurve_time=self._lightcurve_time,
-                    agn_driving_variability_model=self._agn_driving_variability_model,
-                    agn_driving_kwargs_variability=self._agn_driving_kwargs_variability,
-                    random_seed=self._random_seed,
-                    input_agn_bounds_dict=self.input_agn_bounds_dict,
-                    **agn_kwarg_dict,
-                )
-                # Get mean mags for each provided band
-                # determine which kwargs_variability are lsst bands
-                lsst_bands = ["u", "g", "r", "i", "z", "y"]
-                provided_lsst_bands = set(lsst_bands) & set(self._kwargs_variability)
-
-                # Roman Bands
-                roman_bands = [
-                    "F062",
-                    "F087",
-                    "F106",
-                    "F129",
-                    "F158",
-                    "F184",
-                    "F146",
-                    "F213",
-                ]
-                provided_roman_bands = set(roman_bands) & set(self._kwargs_variability)
-
-                # Euclid Bands
-                euclid_bands = ["VIS", "Y", "H", "J"]
-                provided_euclid_bands = set(euclid_bands) & set(
-                    self._kwargs_variability
+                # Set the mean magnitude of this filter
+                self.agn_class.variable_disk.reprocessing_kwargs["mean_magnitude"] = (
+                    mean_magnitudes[index]
                 )
 
-                # The set "provided_lsst_bands" is no longer ordered.
-                # Therefore, create a list of speclite names in the new order
-                speclite_names = []
-                provided_bands = []
-
-                # change name to be compatible with speclite filter names
-                for band in provided_lsst_bands:
-                    speclite_names.append("lsst2016-" + band)
-                    provided_bands.append(band)
-
-                for band in provided_roman_bands:
-                    speclite_names.append("Roman-" + band)
-                    provided_bands.append(band)
-
-                for band in provided_euclid_bands:
-                    speclite_names.append("Euclid-" + band)
-                    provided_bands.append(band)
-
-                # determine mean magnitudes for each band
-                mean_magnitudes = self.agn_class.get_mean_mags(speclite_names)
-
-                # Our input quasar catalog has magnitude only in i band. So, Agn
-                # class has computed mean magnitude of the given quasar in all lsst
-                # bands using available i-band magnitude. We want to save mean
-                # magnitudes of quasar at all bands so that we can access them at
-                # anytime.
-                self.source_dict = add_mean_mag_to_source_table(
-                    self.source_dict, mean_magnitudes, provided_bands
+                # Extract the reprocessed light curve
+                reprocessed_lightcurve = reprocess_with_lamppost_model(
+                    self.agn_class.variable_disk
                 )
 
-                # Calculate light curve in each band
-                for index, band in enumerate(provided_bands):
-
-                    # Define name for point source mags
-                    filter_name = "ps_mag_" + band
-
-                    # Set the filter to use
-                    self.agn_class.variable_disk.reprocessing_kwargs[
-                        "speclite_filter"
-                    ] = speclite_names[index]
-
-                    # Set the mean magnitude of this filter
-                    self.agn_class.variable_disk.reprocessing_kwargs[
-                        "mean_magnitude"
-                    ] = mean_magnitudes[index]
-
-                    # Extract the reprocessed light curve
-                    reprocessed_lightcurve = reprocess_with_lamppost_model(
-                        self.agn_class.variable_disk
-                    )
-
-                    # Prepare the light curve to be extracted
-                    times = reprocessed_lightcurve["MJD"]
-                    magnitudes = reprocessed_lightcurve[
-                        "ps_mag_" + speclite_names[index]
-                    ]
-                    # Extracts the variable light curve for each band
-                    kwargs_variab_extracted[band] = {
-                        "MJD": times,
-                        filter_name: magnitudes,
-                    }
+                # Prepare the light curve to be extracted
+                times = reprocessed_lightcurve["MJD"]
+                magnitudes = reprocessed_lightcurve["ps_mag_" + speclite_names[index]]
+                # Extracts the variable light curve for each band
+                kwargs_variab_extracted[band] = {
+                    "MJD": times,
+                    filter_name: magnitudes,
+                }
         self._variability_computed = True
         return kwargs_variab_extracted
 
@@ -211,9 +185,10 @@ class Quasar(SourceBase):
         """
 
         # If variability has not yet been computed, compute it now
-        # this also adds the mean magnitudes to the source_dict
-        if self._variability_computed is False:
-            self._kwargs_variability_model = self.light_curve
+        # this also adds the mean magnitudes to the source_dict if not already present
+        if image_observation_times is not None:
+            if self._variability_computed is False:
+                self._kwargs_variability_model = self.light_curve
 
         # all the returning of variable magnitudes will be handled by the Parent class
         return super().point_source_magnitude(
@@ -236,6 +211,8 @@ class Quasar(SourceBase):
             "r_out",
             "r_resolution",
         ]
+        if not hasattr(self, "agn_class"):
+            self._init_agn_class()
         kwargs_agn_model = self.agn_class.kwargs_model
 
         for param in agn_params:

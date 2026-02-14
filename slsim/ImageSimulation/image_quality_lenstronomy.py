@@ -36,14 +36,73 @@ def get_observatory(band):
 
     Supported bands:
         - LSST: 'u', 'g', 'r', 'i', 'z', 'y'
-        - Roman: 'F062', 'F087', 'F106', 'F129', 'F158', 'F184', 'F146'
+        - Roman: 'F062', 'F087', 'F106', 'F129', 'F158', 'F184', 'F146', 'F213'
         - Euclid: 'VIS'
     """
     if band in ["u", "g", "r", "i", "z", "y"]:
         return "LSST"
-    elif band in ["F062", "F087", "F106", "F129", "F158", "F184", "F146"]:
+    elif band in ["F062", "F087", "F106", "F129", "F158", "F184", "F146", "F213"]:
         return "Roman"
     elif band in ["VIS"]:
         return "Euclid"
     else:
         raise ValueError(f"Band {band} not recognized for any observatory.")
+
+
+def get_speclite_filtername(band):
+    """Get the speclite filter name corresponding to the given band.
+
+    :param band: imaging band name
+    :type band: str
+    :return: speclite filter name
+    :rtype: str
+    :raises ValueError: if band is not recognized for any observatory
+
+    Supported bands:
+        - LSST: 'u', 'g', 'r', 'i', 'z', 'y'
+        - Roman: 'F062', 'F087', 'F106', 'F129', 'F158', 'F184', 'F146', 'F213'
+        - Euclid: 'VIS'
+    """
+    observatory = get_observatory(band)
+    if observatory == "LSST":
+        return f"lsst2023-{band}"
+    if observatory == "Roman":
+        return f"Roman-{band}"
+    if observatory == "Euclid":
+        return f"Euclid-{band}"
+
+
+def get_speclite_filternames(bands):
+    """Get a list of speclite filter names corresponding to the given bands.
+
+    :param bands: list of imaging band names. E.g., ['u', 'g', 'r', 'F062', 'VIS'].
+    :type bands: list of str
+    :return: list of speclite filter names in the same order as input bands
+    :rtype: list of str
+    :raises ValueError: if any band is not recognized for any observatory
+
+    Supported bands:
+        - LSST: 'u', 'g', 'r', 'i', 'z', 'y'
+        - Roman: 'F062', 'F087', 'F106', 'F129', 'F158', 'F184', 'F146', 'F213'
+        - Euclid: 'VIS'
+    """
+    return [get_speclite_filtername(band) for band in bands]
+
+
+ALL_SUPPORTED_BANDS = [
+    "u",
+    "g",
+    "r",
+    "i",
+    "z",
+    "y",
+    "F062",
+    "F087",
+    "F106",
+    "F129",
+    "F158",
+    "F184",
+    "F146",
+    "F213",
+    "VIS",
+]

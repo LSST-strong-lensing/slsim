@@ -279,7 +279,9 @@ class TestQuasarRate:
         assert "host_id" in result_table.colnames
         assert result_table["host_id"][0] == 1
 
-    @patch("slsim.Sources.QuasarCatalog.quasar_pop.vel_disp_abundance_matching")
+    @patch(
+        "slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_pop.vel_disp_abundance_matching"
+    )
     @patch.object(
         QuasarRate, "generate_quasar_redshifts", return_value=np.array([0.5001])
     )
@@ -295,8 +297,10 @@ class TestQuasarRate:
         mock_vel_disp.assert_called_once()
         npt.assert_almost_equal(result_table["vel_disp"][0], 150.0)
 
-    @patch("slsim.Sources.QuasarCatalog.quasar_pop.SkyPyPipeline")
-    @patch("slsim.Sources.QuasarCatalog.quasar_pop.vel_disp_abundance_matching")
+    @patch("slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_pop.SkyPyPipeline")
+    @patch(
+        "slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_pop.vel_disp_abundance_matching"
+    )
     @patch.object(
         QuasarRate, "generate_quasar_redshifts", return_value=np.array([0.80])
     )
@@ -328,6 +332,110 @@ class TestQuasarRate:
         assert len(result_table) == 1
         npt.assert_almost_equal(result_table["stellar_mass"][0], 1e11)
         npt.assert_almost_equal(result_table["vel_disp"][0], 250.0)
+
+
+class TestQuasarSEDIntegration:
+    """Tests the QSOgen SED integration within QuasarRate."""
+
+    def setup_method(self):
+        """Setup a QuasarRate instance with real physics enabled."""
+        # We use a small redshift range and small area to keep tests fast
+        self.qr = QuasarRate(
+            redshifts=np.linspace(0.5, 1.0, 5),
+            sky_area=Quantity(0.05, unit="deg2"),
+            noise=True,
+            cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
+            use_qsogen_sed=True,
+            use_sed_interpolator=False,  # We will test both True and False
+            qsogen_bands=["g", "r", "i"],
+        )
+
+        self.qr_no_i_band = QuasarRate(
+            redshifts=np.linspace(0.5, 1.0, 5),
+            sky_area=Quantity(0.05, unit="deg2"),
+            noise=True,
+            cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
+            use_qsogen_sed=True,
+            use_sed_interpolator=False,
+            qsogen_bands=["g", "r"],  # No i-band provided
+        )
+
+    def test_qsogen_sed_direct_calculation(self):
+        """Test generating quasars with full spectral generation (slow mode).
+
+        Verifies that columns like 'ps_mag_g' and 'ps_mag_r' are
+        created.
+        """
+        self.qr.use_sed_interpolator = False
+
+        # Generate a small sample
+        # We set m_min/m_max to a range that guarantees at least one quasar is found
+        table = self.qr.quasar_sample(m_min=18, m_max=23)
+
+        # 1. Check that the table is not empty (sanity check)
+        assert len(table) > 0, "No quasars generated, cannot verify columns."
+
+        # 2. Verify new columns exist
+        # 'ps_mag_i' is the anchor, so it exists by default.
+        # 'ps_mag_g' and 'ps_mag_r' should be added by qsogen.
+        assert "ps_mag_g" in table.colnames
+        assert "ps_mag_r" in table.colnames
+
+        # 3. Physics Sanity Check: Quasar Color
+        # Quasars are typically blue (g is brighter/lower mag than r, or similar)
+        # We just check that the values are floats and reasonable (not 0 or inf)
+        assert np.all(table["ps_mag_g"] > 0)
+        assert np.all(table["ps_mag_r"] > 0)
+
+        # Check that the magnitudes are distinct (g != r)
+        assert not np.allclose(table["ps_mag_g"], table["ps_mag_r"], atol=0.001)
+
+    def test_qsogen_sed_with_interpolator(self):
+        """Test generating quasars using the pre-computed interpolator grid
+        (fast mode)."""
+        self.qr.use_sed_interpolator = True
+
+        # Run sampling. This triggers `_build_sed_interpolator` internally.
+        table = self.qr.quasar_sample(m_min=20, m_max=23)
+
+        # 1. Verify Interpolator was created
+        assert hasattr(self.qr, "_sed_interpolator"), "Interpolator attribute missing."
+
+        # 2. Verify output structure
+        assert len(table) > 0
+        assert "ps_mag_g" in table.colnames
+        assert "ps_mag_r" in table.colnames
+
+    def test_sed_anchoring_consistency(self):
+        """Verify that the SED generation preserves the input i-band magnitude.
+
+        Currently we:
+        1. Generate SED
+        2. Calculate raw i-band magnitude from SED
+        3. Calculate offset = (Desired i-band - Raw i-band)
+        4. Apply offset to all bands.
+
+        Therefore, if we were to recalculate the i-band from the output columns,
+        it should match the input 'ps_mag_i' exactly.
+
+        However, since currently the code discards the recalculated i-band column to avoid
+        duplication, we implicitly test this by ensuring the other bands are
+        'close' to the i-band (typical quasar colors are < 1 mag usually).
+        """
+        # Ensure that the i-band anchor is set correctly if not specified
+        assert "lsst2023-i" in self.qr_no_i_band.qsogen_bands
+
+        self.qr.use_sed_interpolator = False  # Use direct calc for precision
+
+        table = self.qr.quasar_sample(m_min=20, m_max=23)
+
+        # Check that g-band is within a reasonable physical range of i-band
+        g_i_color = table["ps_mag_g"] - table["ps_mag_i"]
+
+        # Typical quasar colors are between -1 and +2 roughly
+        assert np.all(
+            np.abs(g_i_color) < 5.0
+        ), "Derived colors are unphysical, anchoring likely failed."
 
 
 # Running the tests with pytest
