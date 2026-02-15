@@ -415,8 +415,10 @@ def point_source_image_at_time(
     data_class = image_data_class(
         lens_class, band, mag_zero_point, delta_pix, num_pix, transform_pix2angle
     )
-
-    psf_class = PSF(psf_type="PIXEL", kernel_point_source=psf_kernel)
+    if psf_kernel is None:
+        psf_class = PSF(psf_type="NONE")
+    else:
+        psf_class = PSF(psf_type="PIXEL", kernel_point_source=psf_kernel)
 
     if len(kwargs_ps) > 0:
         image_data = point_source_coordinate_properties(
@@ -586,7 +588,9 @@ def lens_image(
     t_obs=None,
     std_gaussian_noise=None,
     with_source=True,
+    with_ps=True,
     with_deflector=True,
+    add_noise=True,
     gain=0.7,
     single_visit_mag_zero_points={
         "g": 32.33,
@@ -637,9 +641,12 @@ def lens_image(
         with_source=with_source,
         with_deflector=with_deflector,
     )
-    convolved_deflector_source = convolved_image(
-        image=deflector_source, psf_kernel=psf_kernel
-    )
+    if psf_kernel is not None:
+        convolved_deflector_source = convolved_image(
+            image=deflector_source, psf_kernel=psf_kernel
+        )
+    else:
+        convolved_deflector_source = deflector_source
     if t_obs is None:
         image_ps = point_source_image_without_variability(
             lens_class=lens_class,
@@ -662,9 +669,12 @@ def lens_image(
             time=t_obs,
             microlensing=microlensing,
         )
+
     image_ps = np.nan_to_num(image_ps, nan=0)  # Replace NaN if present with 0
-    image = convolved_deflector_source + image_ps
-    if exposure_time is not None:
+    image = convolved_deflector_source
+    if with_ps:
+        image += image_ps
+    if exposure_time is not None and add_noise:
         # For DP0 images, gain is always 0.7.
         final_image = image_plus_poisson_noise(
             image=image,
@@ -675,7 +685,7 @@ def lens_image(
         )
     else:
         final_image = image
-    if std_gaussian_noise is not None:
+    if std_gaussian_noise is not None and add_noise:
         gaussian_noise = np.random.normal(0, std_gaussian_noise, final_image.shape)
         return final_image + gaussian_noise
     return final_image
@@ -692,7 +702,9 @@ def lens_image_series(
     t_obs=None,
     std_gaussian_noise=None,
     with_source=True,
+    with_ps=True,
     with_deflector=True,
+    add_noise=True,
     gain=0.7,
     single_visit_mag_zero_points={
         "g": 32.33,
@@ -742,8 +754,14 @@ def lens_image_series(
         band = [band] * len(mag_zero_point)
 
     image_series = []
-    for time, psf_kern, mag_zero, transf_matrix, expo_time, band_obs in zip(
-        t_obs, psf_kernel, mag_zero_point, transform_pix2angle, exposure_time, band
+    for time, psf_kern, mag_zero, transf_matrix, expo_time, std_gauss, band_obs in zip(
+        t_obs,
+        psf_kernel,
+        mag_zero_point,
+        transform_pix2angle,
+        exposure_time,
+        std_gaussian_noise,
+        band,
     ):
         image = lens_image(
             lens_class=lens_class,
@@ -754,9 +772,11 @@ def lens_image_series(
             transform_pix2angle=transf_matrix,
             exposure_time=expo_time,
             t_obs=time,
-            std_gaussian_noise=std_gaussian_noise,
+            std_gaussian_noise=std_gauss,
             with_source=with_source,
+            with_ps=with_ps,
             with_deflector=with_deflector,
+            add_noise=add_noise,
             gain=gain,
             single_visit_mag_zero_points=single_visit_mag_zero_points,
             microlensing=microlensing,
