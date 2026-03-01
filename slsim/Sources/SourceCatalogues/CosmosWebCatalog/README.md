@@ -10,7 +10,7 @@ Rather than working with the full catalog of sources, we first perform several c
 - magnitude < 20 in at least one band
 - warn_flag = 0 (to ensure high quality sources; see documentation about quality flags [here](https://cosmos2025.iap.fr/catalog.html#quality-flags))
 - redshift != -99 (some galaxies have their redshifts in the catalog set to -99; the documentation does not explain why)
-- type = 0 (to select source galaxies only; type = 1 is starts and type = 2 is QSOs)
+- type = 0 (to select source galaxies only; type = 1 is stars and type = 2 is QSOs)
 
 Additionally, a source exclusion list is applied to further filter out sources with contaminants within 75 pixels as well as sources containing nans within a 100x100 pixel cutout. Currently, the five cuts outlined above are hardcoded and not flexible for change, since the source exclusion list would need to be modified to include additional sources that would not have been filtered out by the initial cuts. Such an exclusion list can become several GB in size. Alternatively, the filtering of nans and contaminants would have to be done on-the-fly, which can take several minutes.
 
