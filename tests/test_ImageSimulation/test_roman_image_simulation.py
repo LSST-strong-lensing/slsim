@@ -10,7 +10,9 @@ from slsim.ImageSimulation.image_simulation import simulate_image
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
 from slsim.LOS.los_individual import LOSIndividual
+
 import os
+import pathlib
 import pickle
 import pytest
 
@@ -90,7 +92,7 @@ SNIa_Lens = Lens(
     cosmo=COSMO,
 )
 
-PSF_DIRECTORY = os.path.join(os.path.dirname(__file__), "../..", "data", "stpsf")
+PSF_DIRECTORY = os.path.join(str(pathlib.Path(__file__).parent.parent), "TestData")
 
 DETECTOR_KWARGS = {
     "detector": 3,
