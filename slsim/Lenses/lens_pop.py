@@ -5,7 +5,6 @@ from typing import Optional
 from astropy.cosmology import Cosmology
 from astropy.units import Quantity
 from slsim.Sources.SourcePopulation.source_pop_base import SourcePopBase
-from slsim.Sources.SourcePopulation.galaxies import Galaxies
 from slsim.LOS.los_pop import LOSPop
 from slsim.Deflectors.DeflectorPopulation.deflectors_base import DeflectorsBase
 from slsim.Lenses.lensed_population_base import LensedPopulationBase
@@ -24,7 +23,6 @@ class LensPop(LensedPopulationBase):
         sky_area: Optional[float or Quantity] = None,
         los_pop: Optional[LOSPop] = None,
         use_jax=True,
-        field_galaxy_population: Optional[Galaxies] = None,
     ):
         """
         :param deflector_population: Deflector population as a deflectors class
@@ -38,8 +36,6 @@ class LensPop(LensedPopulationBase):
         :param use_jax: if True, will use JAX version of lenstronomy to do lensing calculations for models that are
          supported in JAXtronomy
         :type use_jax: bool
-        :param field_galaxy_population: Population of field galaxies to include in the lensing configuration (optional). If provided, these galaxies will be included as additional light in the lens plane, and will not be explicitly included as deflectors in the lensing calculation. Defaults to None.
-        :type field_galaxy_population: `~Galaxies` or None (if None, no field galaxies)
         """
 
         # TODO: ADD EXCEPTION FOR DEFLECTOR AND SOURCE POP FILTER MISMATCH
@@ -47,7 +43,6 @@ class LensPop(LensedPopulationBase):
         self.cosmo = cosmo
         self._lens_galaxies = deflector_population
         self._sources = source_population
-        self._field_galaxy_population = field_galaxy_population
         self._factor_source = self.sky_area.to_value(
             "deg2"
         ) / self._sources.sky_area.to_value("deg2")
@@ -286,40 +281,15 @@ class LensPop(LensedPopulationBase):
                     else:
                         final_sources = valid_sources
 
-                    field_galaxies = None
-                    if self._field_galaxy_population is not None:
-                        field_galaxies = self._draw_field_galaxies(
-                            area=test_area * 10,
-                            z_max=_deflector.redshift,  # TODO: field galaxy area should come from the simulated image
-                        )
-                        if len(field_galaxies) == 0:
-                            field_galaxies = None
-
                     lens_final = Lens(
                         deflector_class=_deflector,
                         source_class=final_sources,
                         cosmo=self.cosmo,
                         los_class=los_class,
                         use_jax=self._use_jax,
-                        field_galaxies=field_galaxies,
                     )
                     lens_population.append(lens_final)
         return lens_population
-
-    def _draw_field_galaxies(self, area, z_max=None):
-        """Draw field galaxies within a specified area and redshift limit.
-
-        :param area: Area in which to draw field galaxies (in square
-            arcseconds).
-        :param z_max: Maximum redshift for the field galaxies. If None,
-            no redshift cut is applied.
-        :return: List of drawn field galaxy instances.
-        """
-        return draw_field_galaxies(
-            field_galaxy_population=self._field_galaxy_population,
-            area=area,
-            z_max=z_max,
-        )
 
 
 def area_theta_e_infinity(theta_e_infinity):
@@ -331,37 +301,3 @@ def area_theta_e_infinity(theta_e_infinity):
     """
     test_area = np.pi * (theta_e_infinity * 1.5) ** 2
     return test_area
-
-
-def draw_field_galaxies(field_galaxy_population, area, z_max=None):
-    """Draw field galaxies within a specified area and redshift limit.
-
-    :param field_galaxy_population: Population of field galaxies to draw from (usually an instance of `~Galaxies`). If None, no field galaxies will be drawn.
-        If None, no field galaxies will be drawn.
-    :param area: Area in which to draw field galaxies (in square
-        arcseconds).
-    :param z_max: Maximum redshift for the field galaxies. If None,
-        no redshift cut is applied.
-    :return: List of drawn field galaxy instances.
-    """
-    if field_galaxy_population is None:
-        return []
-
-    total_sources = field_galaxy_population.source_number_selected
-
-    pop_sky_area_deg2 = field_galaxy_population.sky_area.to_value("deg2")
-    # 1 deg = 3600 arcsec  =>  1 deg^2 = 12,960,000 arcsec^2
-    pop_sky_area_arcsec2 = pop_sky_area_deg2 * 12_960_000
-    mean_sources = (total_sources / pop_sky_area_arcsec2) * area
-
-    # draw from Poisson Distribution
-    number_of_sources = np.random.poisson(lam=mean_sources)
-
-    field_galaxies = []
-    for _ in range(number_of_sources):
-        galaxy = field_galaxy_population.draw_source(z_max=z_max)
-        if galaxy is not None:
-            galaxy.update_center(area=area)
-            field_galaxies.append(galaxy)
-
-    return field_galaxies

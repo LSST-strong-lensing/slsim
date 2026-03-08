@@ -1,7 +1,6 @@
 from slsim.FalsePositives.false_positive import FalsePositive
 from slsim.Lenses.lens_pop import area_theta_e_infinity
 from slsim.LOS.los_pop import LOSPop
-from slsim.Lenses.lens_pop import draw_field_galaxies
 import random
 import numpy as np
 
@@ -18,19 +17,15 @@ class FalsePositivePopBase(object):
         central_galaxy_population,
         cosmo=None,
         los_pop=None,
-        field_galaxy_population=None,
     ):
         """
         :param central_galaxy_population: Deflector population as a deflectors class instance.
         :param cosmo: astropy.cosmology instance
         :param los_pop: LOSPop instance which manages line-of-sight (LOS) effects
          and Gaussian mixture models in a simulation or analysis context.
-        :param field_galaxy_population: list of field galaxy instances to include in the lensing configuration, if any.
-         If provided, these galaxies will be included as additional light in the lens plane, and will not be explicitly included as deflectors in the lensing calculation.
         """
         self.cosmo = cosmo
         self._lens_galaxies = central_galaxy_population
-        self._field_galaxy_population = field_galaxy_population
         self.los_config = los_pop or LOSPop()
 
     def draw_deflector(self):
@@ -41,21 +36,6 @@ class FalsePositivePopBase(object):
         deflector = self._lens_galaxies.draw_deflector()
         z_max = deflector.redshift + 0.002  # Adding tolerance to redshift
         return deflector, z_max
-
-    def draw_field_galaxies(self, area, z_max=None):
-        """Draw field galaxies within a specified area and redshift limit.
-
-        :param area: Area in which to draw field galaxies (in square
-            arcseconds).
-        :param z_max: Maximum redshift for the field galaxies. If None,
-            no redshift cut is applied.
-        :return: List of drawn field galaxy instances.
-        """
-        return draw_field_galaxies(
-            field_galaxy_population=self._field_galaxy_population,
-            area=area,
-            z_max=z_max,
-        )
 
 
 class FalsePositivePop(FalsePositivePopBase):
@@ -84,7 +64,6 @@ class FalsePositivePop(FalsePositivePopBase):
         test_area_factor=1,
         clustering_mode="area",
         include_central_galaxy_light=True,
-        field_galaxy_population=None,
     ):
         """
         :param central_galaxy_population: Deflector population as a deflectors class instance.
@@ -102,14 +81,12 @@ class FalsePositivePop(FalsePositivePopBase):
         :param clustering_mode: 'area' (default) places sources within the calculated test area,
                                 'ring' for ring-like clustering around the deflector (places sources in a ring within a range of 0.5 to 2.5 times the Einstein radius),
         :param include_central_galaxy_light: Whether to include central galaxy light.
-        :param field_galaxy_population: Field galaxy population.
         """
 
         super(FalsePositivePop, self).__init__(
             central_galaxy_population=central_galaxy_population,
             cosmo=cosmo,
             los_pop=los_pop,
-            field_galaxy_population=field_galaxy_population,
         )
 
         # Normalize populations and choices into lists for uniform handling
@@ -218,12 +195,7 @@ class FalsePositivePop(FalsePositivePopBase):
                 if sources is None:
                     continue  # Retry if sources are invalid
 
-                # Step 4: Add field galaxies
-                field_galaxies = self.draw_field_galaxies(
-                    area=test_area * 10, z_max=z_max
-                )
-
-                # Step 5: Create false positive
+                # Step 4: Create false positive
                 false_positive = FalsePositive(
                     deflector_class=deflector,
                     source_class=sources,
@@ -232,7 +204,6 @@ class FalsePositivePop(FalsePositivePopBase):
                     los_class=self.los_config.draw_los(
                         source_redshift=z_max, deflector_redshift=deflector.redshift
                     ),
-                    field_galaxies=field_galaxies,
                 )
                 false_positive_population.append(false_positive)
                 successful = True
