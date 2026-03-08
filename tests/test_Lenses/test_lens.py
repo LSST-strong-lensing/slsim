@@ -717,7 +717,6 @@ class TestLens(object):
         lens_no_fg.add_field_galaxies(field_galaxy_population, area=50.0)
         assert lens_no_fg._field_galaxies is not None
         assert len(lens_no_fg._field_galaxies) >= 0
-        
 
 
 @pytest.fixture
