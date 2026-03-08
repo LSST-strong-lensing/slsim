@@ -49,6 +49,7 @@ def field_galaxy_population():
     )
     return field_galaxy_pop
 
+
 class TestLens(object):
     # pytest.fixture(scope='class')
     def setup_method(self):
