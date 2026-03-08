@@ -50,8 +50,7 @@ source_quasars_high_z = PointSources(
 
 
 def test_false_positive_core_and_area():
-    """Tests single population, area clustering, and base
-    methods."""
+    """Tests single population, area clustering, and base methods."""
     fp_pop = FalsePositivePop(
         central_galaxy_population=lens_galaxies,
         intruder_populations=source_galaxies,

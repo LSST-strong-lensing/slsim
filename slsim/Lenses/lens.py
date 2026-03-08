@@ -1827,9 +1827,11 @@ class Lens(LensedSystemBase):
             self.extended_source_magnification[0]
         )
         return df
-    
+
     def add_field_galaxies(self, field_galaxy_population, area, z_max=None):
-        """Add field galaxies to the lens. These galaxies will be included as additional light in the lens plane, and will not be explicitly included as deflectors in the lensing calculation.
+        """Add field galaxies to the lens. These galaxies will be included as
+        additional light in the lens plane, and will not be explicitly included
+        as deflectors in the lensing calculation.
 
         :param field_galaxy_population: Population of field galaxies to include in the lensing configuration (optional). If provided, these galaxies will be included as additional light in the lens plane, and will not be explicitly included as deflectors in the lensing calculation. Defaults to None.
         :type field_galaxy_population: `~Galaxies` or None (if None, no field galaxies)
@@ -1839,9 +1841,7 @@ class Lens(LensedSystemBase):
         :type z_max: float or None
         """
         self._field_galaxies = draw_field_galaxies(
-            field_galaxy_population=field_galaxy_population,
-            area=area,
-            z_max=z_max
+            field_galaxy_population=field_galaxy_population, area=area, z_max=z_max
         )
 
 

@@ -16,7 +16,6 @@ import slsim.Sources as sources
 from astropy.units import Quantity
 import slsim.Pipelines as pipelines
 
-
 try:
     import jax
 
@@ -46,6 +45,7 @@ def field_galaxy_population():
         **kwargs,
     )
     return field_galaxy_pop
+
 
 # import pickle
 from unittest.mock import patch, MagicMock  # Added for mocking
@@ -705,7 +705,7 @@ class TestLens(object):
         assert (
             empty_kwargs_list == []
         ), "Expected empty list when field_galaxies is None."
-    
+
     def test_add_field_galaxies(self, field_galaxy_population):
         """Test the add_field_galaxies method."""
 
