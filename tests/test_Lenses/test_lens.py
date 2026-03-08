@@ -20,7 +20,6 @@ try:
     import jax
 
     print(jax.__path__)
-
     use_jax = True
 except ImportError:
     use_jax = False
@@ -671,6 +670,23 @@ class TestLens(object):
         assert (
             empty_kwargs_list == []
         ), "Expected empty list when field_galaxies is None."
+
+    def test_add_field_galaxies(self):
+        """Test the add_field_galaxies method."""
+
+        lens_no_fg = Lens(
+            source_class=self.source,
+            deflector_class=self.deflector,
+            los_class=self.los_individual,
+            lens_equation_solver="lenstronomy_analytical",
+            cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
+            use_jax=use_jax,
+            field_galaxies=None,
+        )
+
+        lens_no_fg.add_field_galaxies([self.source, self.source])
+        assert lens_no_fg._field_galaxies is not None
+        assert len(lens_no_fg._field_galaxies) == 2
 
 
 @pytest.fixture

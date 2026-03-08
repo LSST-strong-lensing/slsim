@@ -73,13 +73,15 @@ class FalsePositive(Lens):
         """
         return np.array([0.0])
 
-    def lenstronomy_kwargs(self, band=None):
+    def lenstronomy_kwargs(self, band=None, time=None):
         """Generates lenstronomy dictionary conventions for the class object.
 
         :param band: imaging band, if =None, will result in un-
             normalized amplitudes
         :type band: string or None
-        :return: lenstronomy model and parameter conventions
+        :param time: observation time (optional, used for time-variable
+            sources like quasars; ignored for non-variable sources)
+        :type time: float or None
         """
         lens_model, kwargs_lens = self.deflector_mass_model_lenstronomy(source_index=0)
         lens_model_list = lens_model.lens_model_list
@@ -95,7 +97,9 @@ class FalsePositive(Lens):
             if self.source(i).extended_source is not None:
                 self.source(i).extended_source.lensed = False
 
-        sources, sources_kwargs = self.source_light_model_lenstronomy(band=band)
+        sources, sources_kwargs = self.source_light_model_lenstronomy(
+            band=band, time=time
+        )
         combined_lens_light_model_list = sources["source_light_model_list"]
         combined_kwargs_lens_light = sources_kwargs["kwargs_source"]
 

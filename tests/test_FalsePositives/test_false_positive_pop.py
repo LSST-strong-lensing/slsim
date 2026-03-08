@@ -50,14 +50,12 @@ source_quasars_high_z = PointSources(
 
 
 def test_false_positive_core_and_area():
-    """Tests single population, area clustering, field galaxies, and base
-    methods."""
+    """Tests single population, area clustering, and base methods."""
     fp_pop = FalsePositivePop(
         central_galaxy_population=lens_galaxies,
         intruder_populations=source_galaxies,
         intruder_number_choices=[1],
         cosmo=cosmo,
-        field_galaxy_population=source_galaxies,
     )
 
     # Check deflector logic explicitly
@@ -70,7 +68,6 @@ def test_false_positive_core_and_area():
 
     # Check overall FP generation
     draw_fp = fp_pop.draw_false_positive(number=1)
-    assert draw_fp._field_galaxies is not None
     assert draw_fp.source_number == 1
 
 

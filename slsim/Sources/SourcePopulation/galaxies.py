@@ -288,6 +288,34 @@ class Galaxies(SourcePopBase):
         )
         return source_class
 
+    def draw_galaxies(self, area, z_max=None):
+        """Draw galaxies within a specified area and redshift limit.
+
+        :param area (astropy.units.Quantity): Area in which to draw
+            galaxies (in square arcseconds).
+        :param z_max: Maximum redshift for the galaxies. If None, no
+            redshift cut is applied.
+        :return: List of drawn galaxy instances.
+        """
+
+        total_sources = self.source_number_selected
+
+        pop_sky_area_arcsec2 = self.sky_area.to_value("arcsec2")
+        area_arcsec2 = area.to_value("arcsec2")
+        mean_sources = (total_sources / pop_sky_area_arcsec2) * area_arcsec2
+
+        # draw from Poisson Distribution
+        number_of_sources = np.random.poisson(lam=mean_sources)
+
+        galaxies_list = []
+        for _ in range(number_of_sources):
+            galaxy = self.draw_source(z_max=z_max)
+            if galaxy is not None:
+                galaxy.update_center(area=area_arcsec2)
+                galaxies_list.append(galaxy)
+
+        return galaxies_list
+
 
 def galaxy_projected_eccentricity(ellipticity, rotation_angle=None):
     """Projected eccentricity of elliptical galaxies as a function of other
