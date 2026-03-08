@@ -79,7 +79,8 @@ class FalsePositive(Lens):
         :param band: imaging band, if =None, will result in un-
             normalized amplitudes
         :type band: string or None
-        :param time: observation time (optional, used for time-variable sources like quasars; ignored for non-variable sources)
+        :param time: observation time (optional, used for time-variable
+            sources like quasars; ignored for non-variable sources)
         :type time: float or None
         """
         lens_model, kwargs_lens = self.deflector_mass_model_lenstronomy(source_index=0)
