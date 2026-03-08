@@ -287,14 +287,14 @@ class Galaxies(SourcePopBase):
             **self.extendedsource_kwargs
         )
         return source_class
-    
+
     def draw_galaxies(self, area, z_max=None):
         """Draw galaxies within a specified area and redshift limit.
 
-        :param area (astropy.units.Quantity): Area in which to draw galaxies (in square
-            arcseconds).
-        :param z_max: Maximum redshift for the galaxies. If None,
-            no redshift cut is applied.
+        :param area (astropy.units.Quantity): Area in which to draw
+            galaxies (in square arcseconds).
+        :param z_max: Maximum redshift for the galaxies. If None, no
+            redshift cut is applied.
         :return: List of drawn galaxy instances.
         """
 
@@ -315,7 +315,7 @@ class Galaxies(SourcePopBase):
                 galaxies_list.append(galaxy)
 
         return galaxies_list
-        
+
 
 def galaxy_projected_eccentricity(ellipticity, rotation_angle=None):
     """Projected eccentricity of elliptical galaxies as a function of other

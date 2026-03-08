@@ -337,7 +337,7 @@ class TestGalaxies(object):
             self.galaxies9.draw_source()
         with pytest.raises(ValueError):
             self.galaxies10.draw_source()
-    
+
     def test_draw_galaxies(self):
         galaxies = self.galaxies11.draw_galaxies(area=Quantity(1, unit="deg2"), z_max=1)
         assert isinstance(galaxies, list)
