@@ -28,28 +28,6 @@ except ImportError:
     use_jax = False
 
 
-@pytest.fixture(scope="class")
-def field_galaxy_population():
-    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-    sky_area = Quantity(value=0.05, unit="deg2")
-    galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
-        skypy_config=None,
-        sky_area=sky_area,
-        filters=None,
-    )
-    kwargs_source_cut = {"band": "g", "band_max": 28, "z_min": 0.1, "z_max": 5.0}
-    kwargs = {"extended_source_type": "single_sersic"}
-    field_galaxy_pop = sources.Galaxies(
-        galaxy_list=galaxy_simulation_pipeline.blue_galaxies,
-        kwargs_cut=kwargs_source_cut,
-        cosmo=cosmo,
-        sky_area=sky_area,
-        catalog_type="skypy",
-        **kwargs,
-    )
-    return field_galaxy_pop
-
-
 class TestLens(object):
     # pytest.fixture(scope='class')
     def setup_method(self):
@@ -696,7 +674,7 @@ class TestLens(object):
             empty_kwargs_list == []
         ), "Expected empty list when field_galaxies is None."
 
-    def test_add_field_galaxies(self, field_galaxy_population):
+    def test_add_field_galaxies(self):
         """Test the add_field_galaxies method."""
 
         lens_no_fg = Lens(
@@ -709,14 +687,9 @@ class TestLens(object):
             field_galaxies=None,
         )
 
-        # case with field_galaxy_population = None
-        lens_no_fg.add_field_galaxies(None, area=50.0)
-        assert lens_no_fg._field_galaxies is None
-
-        # case with a valid field_galaxy_population
-        lens_no_fg.add_field_galaxies(field_galaxy_population, area=50.0)
+        lens_no_fg.add_field_galaxies([self.source, self.source])
         assert lens_no_fg._field_galaxies is not None
-        assert len(lens_no_fg._field_galaxies) >= 0
+        assert len(lens_no_fg._field_galaxies) == 2
 
 
 @pytest.fixture
