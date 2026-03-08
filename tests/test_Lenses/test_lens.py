@@ -12,9 +12,6 @@ from slsim.LOS.los_individual import LOSIndividual
 from slsim.LOS.los_pop import LOSPop
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
-import slsim.Sources as sources
-from astropy.units import Quantity
-import slsim.Pipelines as pipelines
 
 # import pickle
 from unittest.mock import patch, MagicMock  # Added for mocking
