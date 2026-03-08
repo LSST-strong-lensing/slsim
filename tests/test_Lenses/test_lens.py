@@ -16,6 +16,9 @@ import slsim.Sources as sources
 from astropy.units import Quantity
 import slsim.Pipelines as pipelines
 
+# import pickle
+from unittest.mock import patch, MagicMock  # Added for mocking
+
 try:
     import jax
 
@@ -45,20 +48,6 @@ def field_galaxy_population():
         **kwargs,
     )
     return field_galaxy_pop
-
-
-# import pickle
-from unittest.mock import patch, MagicMock  # Added for mocking
-
-try:
-    import jax
-
-    print(jax.__path__)
-
-    use_jax = True
-except ImportError:
-    use_jax = False
-
 
 class TestLens(object):
     # pytest.fixture(scope='class')
