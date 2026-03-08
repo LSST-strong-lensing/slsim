@@ -1857,7 +1857,7 @@ def draw_field_galaxies(field_galaxy_population, area, z_max=None):
     :return: List of drawn field galaxy instances.
     """
     if field_galaxy_population is None:
-        return []
+        return None
 
     total_sources = field_galaxy_population.source_number_selected
 
