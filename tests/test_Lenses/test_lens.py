@@ -12,6 +12,40 @@ from slsim.LOS.los_individual import LOSIndividual
 from slsim.LOS.los_pop import LOSPop
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
+import slsim.Sources as sources
+from astropy.units import Quantity
+import slsim.Pipelines as pipelines
+
+
+try:
+    import jax
+
+    print(jax.__path__)
+    use_jax = True
+except ImportError:
+    use_jax = False
+
+
+@pytest.fixture(scope="class")
+def field_galaxy_population():
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    sky_area = Quantity(value=0.05, unit="deg2")
+    galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
+        skypy_config=None,
+        sky_area=sky_area,
+        filters=None,
+    )
+    kwargs_source_cut = {"band": "g", "band_max": 28, "z_min": 0.1, "z_max": 5.0}
+    kwargs = {"extended_source_type": "single_sersic"}
+    field_galaxy_pop = sources.Galaxies(
+        galaxy_list=galaxy_simulation_pipeline.blue_galaxies,
+        kwargs_cut=kwargs_source_cut,
+        cosmo=cosmo,
+        sky_area=sky_area,
+        catalog_type="skypy",
+        **kwargs,
+    )
+    return field_galaxy_pop
 
 # import pickle
 from unittest.mock import patch, MagicMock  # Added for mocking
@@ -671,6 +705,24 @@ class TestLens(object):
         assert (
             empty_kwargs_list == []
         ), "Expected empty list when field_galaxies is None."
+    
+    def test_add_field_galaxies(self, field_galaxy_population):
+        """Test the add_field_galaxies method."""
+
+        lens_no_fg = Lens(
+            source_class=self.source,
+            deflector_class=self.deflector,
+            los_class=self.los_individual,
+            lens_equation_solver="lenstronomy_analytical",
+            cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
+            use_jax=use_jax,
+            field_galaxies=None,
+        )
+
+        lens_no_fg.add_field_galaxies(field_galaxy_population, area=50.0)
+
+        assert lens_no_fg._field_galaxies is not None
+        assert len(lens_no_fg._field_galaxies) >= 0
 
 
 @pytest.fixture
