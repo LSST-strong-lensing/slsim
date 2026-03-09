@@ -396,7 +396,14 @@ class Lens(LensedSystemBase):
                     return False
         return True
 
-    def snr(self, band, fov_arcsec=10, observatory="LSST", snr_per_pixel_threshold=1, exposure_time=None):
+    def snr(
+        self,
+        band,
+        fov_arcsec=10,
+        observatory="LSST",
+        snr_per_pixel_threshold=1,
+        exposure_time=None,
+    ):
         """Calculate the signal-to-noise ratio (SNR) using
         the method of `Holloway et al. (2023) <https://doi.org/10.1093/mnras/stad2371>`_.
         This implementation is borrowed from `mejiro <https://github.com/AstroMusers/mejiro>`_,

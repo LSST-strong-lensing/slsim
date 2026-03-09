@@ -47,8 +47,7 @@ class LensingPlots(object):
             to r-g-b color map
         :param add_noise: boolean flag, set to True to add noise to the
             image, default is True
-        :param minimum: minimum value for the color scale, default is
-            0
+        :param minimum: minimum value for the color scale, default is 0
         :param kwargs: additional keyword arguments for make_lupton_rgb
         """
         main_kwargs = {
@@ -62,7 +61,7 @@ class LensingPlots(object):
             # NOTE: Galsim is required which is not supported on Windows
             make_image = simulate_roman_image
             main_kwargs.pop("observatory")
-            main_kwargs['subtract_mean_background'] = True
+            main_kwargs["subtract_mean_background"] = True
         else:
             make_image = simulate_image
 

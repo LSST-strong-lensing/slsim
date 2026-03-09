@@ -83,8 +83,8 @@ def simulate_image(
             observatory=observatory, band=band, **kwargs
         )
     if exposure_time is not None:
-        kwargs_single_band['exposure_time'] = exposure_time
-        kwargs_single_band['num_exposures'] = 1
+        kwargs_single_band["exposure_time"] = exposure_time
+        kwargs_single_band["num_exposures"] = 1
     if kwargs_psf is not None:
         kwargs_single_band.update(kwargs_psf)
     sim_api = SimAPI(
