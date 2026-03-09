@@ -396,7 +396,7 @@ class Lens(LensedSystemBase):
                     return False
         return True
 
-    def snr(self, band, fov_arcsec=10, observatory="LSST", snr_per_pixel_threshold=1):
+    def snr(self, band, fov_arcsec=10, observatory="LSST", snr_per_pixel_threshold=1, exposure_time=None):
         """Calculate the signal-to-noise ratio (SNR) using
         the method of `Holloway et al. (2023) <https://doi.org/10.1093/mnras/stad2371>`_.
         This implementation is borrowed from `mejiro <https://github.com/AstroMusers/mejiro>`_,
@@ -444,6 +444,9 @@ class Lens(LensedSystemBase):
         :param snr_per_pixel_threshold: minimum SNR per pixel required to include
             a pixel in a region (default is 1)
         :type snr_per_pixel_threshold: float
+        :param exposure_time: exposure time in seconds for computing SNR. If None, will use defaults
+            from lenstronomy.SimulationAPI.ObservationConfig
+        :type exposure_time: float or None
         :return: maximum SNR found among the regions above the threshold.
             Returns ``None`` if no pixels are above the threshold or if no
             multi-pixel regions are found.
@@ -469,6 +472,7 @@ class Lens(LensedSystemBase):
             with_deflector=False,  # no deflector
             with_point_source=True,
             image_units_counts=True,  # units of counts, not counts/sec
+            exposure_time=exposure_time,
         )
 
         # get simulated image (source + deflector + background noise)
@@ -486,6 +490,7 @@ class Lens(LensedSystemBase):
             with_deflector=True,  # add deflector
             with_point_source=True,
             image_units_counts=True,  # units of counts, not counts/sec
+            exposure_time=exposure_time,
         )
 
         # calculate the denominator of the SNR
