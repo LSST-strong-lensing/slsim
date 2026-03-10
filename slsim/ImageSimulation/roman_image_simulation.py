@@ -36,7 +36,7 @@ def simulate_roman_image(
     num_pix,
     oversample=3,
     add_noise=True,
-    subtract_mean_background=False,
+    subtract_mean_background=True,
     with_source=True,
     with_deflector=True,
     exposure_time=None,
