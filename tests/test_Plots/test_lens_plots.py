@@ -129,7 +129,6 @@ def test_rgb_image(gg_lens_pop_instance):
         3,
     )
 
-
 # NOTE: Galsim is required which is not supported on Windows
 def setup_roman_lensing_plots():
     PSF_DIRECTORY = os.path.join(str(pathlib.Path(__file__).parent.parent), "TestData")
