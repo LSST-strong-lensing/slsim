@@ -180,6 +180,7 @@ def test_simulate_roman_image_with_psf_and_noise():
         oversample=3,
         add_noise=True,
         psf_directory=PSF_DIRECTORY,
+        subtract_mean_background=False,
         galsim_convolve=False,
     )
     assert not np.allclose(final_image_lenstronomy, final_image_lenstronomy2)
