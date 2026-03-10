@@ -225,12 +225,18 @@ class TestLens(object):
     def test_snr(self):
         # Test basic SNR calculation
         snr_result = self.gg_lens_high_snr.snr(
-            band="i", fov_arcsec=6, observatory="LSST"
+            band="i", fov_arcsec=6, observatory="LSST", exposure_time=500
         )
         # SNR should be either a positive float or None
         assert snr_result is None or (
             isinstance(snr_result, (float, np.floating)) and snr_result > 0
         )
+
+        # Test that the SNR should increase with exposure time
+        snr_result2 = self.gg_lens_high_snr.snr(
+            band="i", fov_arcsec=6, observatory="LSST", exposure_time=5000
+        )
+        assert snr_result2 > snr_result
 
     def test_snr_with_high_threshold(self):
         # Test that a very high per-pixel threshold returns None
@@ -357,6 +363,43 @@ class TestLens(object):
     def test_extended_source_magnification(self):
         host_mag = self.gg_lens.extended_source_magnification[0]
         assert host_mag > 0
+
+    def test_zero_einstein_radius(self):
+        cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+        path = os.path.dirname(__file__)
+        module_path, _ = os.path.split(path)
+        print(path, module_path)
+        blue_one = Table.read(
+            os.path.join(path, "../TestData/blue_one_modified.fits"), format="fits"
+        )
+        source_dict = blue_one
+        deflector_dict = {
+            "halo_mass": 10**13,
+            "concentration": 6,
+            "e1_mass": 0.1,
+            "e2_mass": -0.1,
+            "stellar_mass": 10.5e10,
+            "angular_size": 0.16,
+            "e1_light": -0.1,
+            "e2_light": 0.1,
+            "z": 50,
+            "mag_g": -20,
+        }
+
+        kwargs2 = {"extended_source_type": "single_sersic"}
+        self.source2 = Source(cosmo=cosmo, **kwargs2, **source_dict)
+        self.deflector2 = Deflector(
+            deflector_type="NFW_HERNQUIST",
+            **deflector_dict,
+        )
+        gg_lens = Lens(
+            source_class=self.source2,
+            deflector_class=self.deflector2,
+            lens_equation_solver="lenstronomy_default",
+            cosmo=cosmo,
+            use_jax=use_jax,
+        )
+        assert gg_lens._einstein_radius(source_index=0) == 0
 
     def test_deflector_stellar_mass(self):
         s_mass = self.gg_lens.deflector_stellar_mass()

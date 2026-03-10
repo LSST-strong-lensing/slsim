@@ -18,6 +18,7 @@ def simulate_image(
     add_background_counts=False,
     observatory="LSST",
     t_obs=None,
+    exposure_time=None,
     kwargs_psf=None,
     kwargs_numerics=None,
     kwargs_single_band=None,
@@ -43,6 +44,9 @@ def simulate_image(
     :param t_obs: an observation time in units of days. This is applicable only for
         variable source. In case of point source, if we do not provide
         t_obs, considers no variability in the lens.
+    :param exposure_time: exposure time in seconds for computing SNR. If None, will use defaults
+        from lenstronomy.SimulationAPI.ObservationConfig
+    :type exposure_time: float or None
     :param kwargs_psf: (optional) specific PSF quantities to overwrite
         default options ("psf_type", "kernel_point_source",
         "point_source_supersampling_factor")
@@ -78,6 +82,9 @@ def simulate_image(
         kwargs_single_band = image_quality_lenstronomy.kwargs_single_band(
             observatory=observatory, band=band, **kwargs
         )
+    if exposure_time is not None:
+        kwargs_single_band["exposure_time"] = exposure_time
+        kwargs_single_band["num_exposures"] = 1
     if kwargs_psf is not None:
         kwargs_single_band.update(kwargs_psf)
     sim_api = SimAPI(

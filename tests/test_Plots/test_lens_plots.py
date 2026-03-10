@@ -1,5 +1,6 @@
 import pytest
 import os
+import pathlib
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -130,13 +131,25 @@ def test_rgb_image(gg_lens_pop_instance):
 
 
 # NOTE: Galsim is required which is not supported on Windows
-def test_roman_rgb_image():
+def setup_roman_lensing_plots():
+    PSF_DIRECTORY = os.path.join(str(pathlib.Path(__file__).parent.parent), "TestData")
     lens_pop = gg_roman_lens_pop_instance()
-    kwargs_lens_cut = {}
-    lens_class = lens_pop.select_lens_at_random(**kwargs_lens_cut)
     # Only F106 can be tested since external files are required for other bands
+    detector_kwargs = {"detector": 1, "detector_pos": (2000, 2000)}
+    return LensingPlots(
+        lens_pop,
+        num_pix=64,
+        observatory="Roman",
+        psf_directory=PSF_DIRECTORY,
+        **detector_kwargs
+    )
+
+
+def test_roman_rgb_image():
+    kwargs_lens_cut = {}
     rgb_band_list = ["F106", "F106", "F106"]
-    lensing_plots = LensingPlots(lens_pop, num_pix=64, observatory="Roman")
+    lensing_plots = setup_roman_lensing_plots()
+    lens_class = lensing_plots._lens_pop.select_lens_at_random(**kwargs_lens_cut)
     image_rgb = lensing_plots.rgb_image(lens_class, rgb_band_list)
 
     assert isinstance(image_rgb, np.ndarray)
@@ -145,6 +158,27 @@ def test_roman_rgb_image():
         lensing_plots.num_pix,
         3,
     )
+
+
+def test_roman_plot_montage_single_band():
+    lensing_plots = setup_roman_lensing_plots()
+    rgb_band_list = ["F106", "F106", "F106"]
+    add_noise = True
+    n_horizont = 2
+    n_vertical = 2
+    kwargs_lens_cut_plot = {}
+
+    fig, axes = lensing_plots.plot_montage(
+        rgb_band_list,
+        add_noise=add_noise,
+        n_horizont=n_horizont,
+        n_vertical=n_vertical,
+        kwargs_lens_cut=kwargs_lens_cut_plot,
+        single_band=True,
+    )
+    assert isinstance(fig, plt.Figure)
+    assert len(axes) == n_vertical
+    assert len(axes[0]) == n_horizont
 
 
 def test_plot_montage(gg_lens_pop_instance):
