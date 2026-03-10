@@ -145,6 +145,7 @@ def test_simulate_roman_image_with_psf_and_noise():
         oversample=3,
         add_noise=True,
         psf_directory=PSF_DIRECTORY,
+        subtract_mean_background=False,
         galsim_convolve=True,
         **DETECTOR_KWARGS,
     )
@@ -156,6 +157,7 @@ def test_simulate_roman_image_with_psf_and_noise():
         oversample=3,
         add_noise=True,
         psf_directory=PSF_DIRECTORY,
+        subtract_mean_background=False,
         galsim_convolve=False,
         **DETECTOR_KWARGS,
     )
