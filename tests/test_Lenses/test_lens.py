@@ -225,12 +225,18 @@ class TestLens(object):
     def test_snr(self):
         # Test basic SNR calculation
         snr_result = self.gg_lens_high_snr.snr(
-            band="i", fov_arcsec=6, observatory="LSST"
+            band="i", fov_arcsec=6, observatory="LSST", exposure_time=500
         )
         # SNR should be either a positive float or None
         assert snr_result is None or (
             isinstance(snr_result, (float, np.floating)) and snr_result > 0
         )
+
+        # Test that the SNR should increase with exposure time
+        snr_result2 = self.gg_lens_high_snr.snr(
+            band="i", fov_arcsec=6, observatory="LSST", exposure_time=5000
+        )
+        assert snr_result2 > snr_result
 
     def test_snr_with_high_threshold(self):
         # Test that a very high per-pixel threshold returns None
