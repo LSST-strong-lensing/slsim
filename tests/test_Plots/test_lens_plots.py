@@ -129,13 +129,21 @@ def test_rgb_image(gg_lens_pop_instance):
         3,
     )
 
+
 # NOTE: Galsim is required which is not supported on Windows
 def setup_roman_lensing_plots():
     PSF_DIRECTORY = os.path.join(str(pathlib.Path(__file__).parent.parent), "TestData")
     lens_pop = gg_roman_lens_pop_instance()
     # Only F106 can be tested since external files are required for other bands
     detector_kwargs = {"detector": 1, "detector_pos": (2000, 2000)}
-    return LensingPlots(lens_pop, num_pix=64, observatory="Roman", psf_directory=PSF_DIRECTORY, **detector_kwargs)
+    return LensingPlots(
+        lens_pop,
+        num_pix=64,
+        observatory="Roman",
+        psf_directory=PSF_DIRECTORY,
+        **detector_kwargs
+    )
+
 
 def test_roman_rgb_image():
     kwargs_lens_cut = {}
@@ -151,6 +159,7 @@ def test_roman_rgb_image():
         3,
     )
 
+
 def test_roman_plot_montage_single_band():
     lensing_plots = setup_roman_lensing_plots()
     rgb_band_list = ["F106", "F106", "F106"]
@@ -158,7 +167,7 @@ def test_roman_plot_montage_single_band():
     n_horizont = 2
     n_vertical = 2
     kwargs_lens_cut_plot = {}
-    
+
     fig, axes = lensing_plots.plot_montage(
         rgb_band_list,
         add_noise=add_noise,
@@ -170,6 +179,7 @@ def test_roman_plot_montage_single_band():
     assert isinstance(fig, plt.Figure)
     assert len(axes) == n_vertical
     assert len(axes[0]) == n_horizont
+
 
 def test_plot_montage(gg_lens_pop_instance):
     rgb_band_list = ["r", "g", "i"]
