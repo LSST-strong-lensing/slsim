@@ -95,8 +95,8 @@ SNIa_Lens = Lens(
 PSF_DIRECTORY = os.path.join(str(pathlib.Path(__file__).parent.parent), "TestData")
 
 DETECTOR_KWARGS = {
-    "detector": 3,
-    "detector_pos": (1300, 3100),
+    "detector": 1,
+    "detector_pos": (2000, 2000),
     "ra": 29,
     "dec": -38,
 }
@@ -179,7 +179,6 @@ def test_simulate_roman_image_with_psf_and_noise():
         num_pix=45,
         oversample=3,
         add_noise=True,
-        psf_directory=PSF_DIRECTORY,
         subtract_mean_background=False,
         galsim_convolve=False,
     )
