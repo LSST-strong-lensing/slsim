@@ -915,7 +915,7 @@ class Lens(LensedSystemBase):
                 for i in range(len(magnif_log)):
                     magnified_mag_list.append(source_mag_unlensed - magnif_log[i])
                 return np.array(magnified_mag_list)
-        return self.source(source_index).point_source_magnitude(band)
+        return self.source(source_index).point_source_magnitude(band, image_observation_times=time)
 
     def extended_source_magnitude_for_each_image(self, band, lensed=False):
         """Extended source magnitudes, either unlensed (single value) or lensed
@@ -1314,7 +1314,7 @@ class Lens(LensedSystemBase):
             extended_source_magnification = 0
         return extended_source_magnification
 
-    def lenstronomy_kwargs(self, band=None, time=None):
+    def lenstronomy_kwargs(self, band=None, time=None, microlensing=False, kwargs_microlensing=None):
         """Generates lenstronomy dictionary conventions for the class object.
 
         :param band: imaging band, if =None, will result in un-
@@ -1371,7 +1371,7 @@ class Lens(LensedSystemBase):
             )
 
         sources, sources_kwargs = self.source_light_model_lenstronomy(
-            band=band, time=time
+            band=band, time=time, microlensing=microlensing, kwargs_microlensing=kwargs_microlensing
         )
         # ensure that only the models that exist are getting added to kwargs_model
         for k in sources.keys():
