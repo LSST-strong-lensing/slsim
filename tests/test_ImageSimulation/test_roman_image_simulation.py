@@ -126,8 +126,12 @@ def test_simulate_roman_image_with_psf_and_noise():
 
     assert final_image_galsim.shape == (80, 80)
     assert final_image_lenstronomy.shape == (80, 80)
-    
-    diff = (final_image_galsim - final_image_lenstronomy) / (final_image_galsim + final_image_lenstronomy + 1) / 2
+
+    diff = (
+        (final_image_galsim - final_image_lenstronomy)
+        / (final_image_galsim + final_image_lenstronomy + 1)
+        / 2
+    )
     npt.assert_array_less(diff, 0.2)
 
     final_image_galsim = simulate_roman_image(
@@ -152,7 +156,11 @@ def test_simulate_roman_image_with_psf_and_noise():
 
     assert final_image_galsim.shape == (80, 80)
     assert final_image_lenstronomy.shape == (80, 80)
-    diff = (final_image_galsim - final_image_lenstronomy) / (final_image_galsim + final_image_lenstronomy) / 2
+    diff = (
+        (final_image_galsim - final_image_lenstronomy)
+        / (final_image_galsim + final_image_lenstronomy)
+        / 2
+    )
     npt.assert_array_less(diff, 0.2)
 
     # with randomized detector, detector position
