@@ -178,6 +178,7 @@ def test_simulate_roman_image_with_psf_and_noise():
     )
     assert not np.allclose(final_image_galsim, final_image_galsim2)
 
+
 def test_simulate_roman_image_with_custom_exposures():
 
     kwargs_single_band = image_quality_lenstronomy.kwargs_single_band(
@@ -214,7 +215,6 @@ def test_simulate_roman_image_with_custom_exposures():
     # Since add_noise is False, these two should be the same
     npt.assert_allclose(galsim_image1, galsim_image2, atol=1e-16, rtol=1e-16)
 
-
     # The image with multiple exposures should have more noise due to readout noise and persistence
     # Keeping the overall exposure time the same
     galsim_image1 = simulate_roman_image(
@@ -248,6 +248,7 @@ def test_simulate_roman_image_with_custom_exposures():
     )
 
     assert np.mean(galsim_image2 - galsim_image1) > 0
+
 
 def test_simulate_roman_image_with_psf_without_noise():
     with open(

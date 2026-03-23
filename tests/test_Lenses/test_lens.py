@@ -225,7 +225,10 @@ class TestLens(object):
     def test_snr(self):
         # Test basic SNR calculation
         snr_result = self.gg_lens_high_snr.snr(
-            band="i", fov_arcsec=6, observatory="LSST", exposure_time=500,
+            band="i",
+            fov_arcsec=6,
+            observatory="LSST",
+            exposure_time=500,
         )
         # SNR should be either a positive float or None
         assert snr_result is None or (
@@ -234,13 +237,20 @@ class TestLens(object):
 
         # Test that the SNR should increase with exposure time
         snr_result2 = self.gg_lens_high_snr.snr(
-            band="i", fov_arcsec=6, observatory="LSST", exposure_time=5000,
+            band="i",
+            fov_arcsec=6,
+            observatory="LSST",
+            exposure_time=5000,
         )
         assert snr_result2 > snr_result
 
         # Test that the SNR should increase with number of exposures
         snr_result3 = self.gg_lens_high_snr.snr(
-            band="i", fov_arcsec=6, observatory="LSST", exposure_time=500, num_exposures=500
+            band="i",
+            fov_arcsec=6,
+            observatory="LSST",
+            exposure_time=500,
+            num_exposures=500,
         )
         assert snr_result3 > snr_result
 
