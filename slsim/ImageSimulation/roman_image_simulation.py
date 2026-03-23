@@ -193,23 +193,22 @@ def simulate_roman_image(
             date,
         )
 
-        # Add detector effects and get the resulting array
+        # Add noise realizations and detector effects
         # Need to handle each exposure separately to properly take into account read noise and persistence
-
         rng = galsim.UniformDeviate(seed)
 
-        final_image_list = []  # includes all noise
-        prev_exposures = (
-            []
-        )  # does not include readout noise; necessary to include the effects of persistence
+        # includes all noise
+        final_image_list = [] 
 
-        # Need to handle each exposure separately to properly take into account read noise and persistence
+        # does not include readout noise; necessary to include the effects of persistence
+        prev_exposures = []
+
         for i in range(_num_exposures):
 
             # Create new realizations of image + noise
             final_image_list.append(copy.deepcopy(image_with_background))
             prev_exposures = roman.allDetectorEffects(
-                final_image_list[i],
+                final_image_list[i], # this gets modified in-place
                 prev_exposures=prev_exposures,
                 rng=rng,
                 exptime=_exposure_time,
