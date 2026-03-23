@@ -51,8 +51,8 @@ def simulate_roman_image(
     date=datetime.datetime(year=2027, month=7, day=7, hour=0, minute=0, second=0),
     psf_directory=None,
 ):
-    """Creates a Roman-simulated image of a selected lens with noise, using galsim's noise settings
-    and PSFs from STPSF.
+    """Creates a Roman-simulated image of a selected lens with noise, using
+    galsim's noise settings and PSFs from STPSF.
 
     :param lens_class: class object containing all information of the lensing system
         (e.g., Lens())
@@ -126,8 +126,12 @@ def simulate_roman_image(
     galsim_psf = get_psf(band, detector, detector_pos, oversample, psf_directory)
 
     # Will use Galsim to handle individual exposures then add them up
-    _exposure_time = kwargs_single_band["exposure_time"] if exposure_time is None else exposure_time
-    _num_exposures = kwargs_single_band["num_exposures"] if num_exposures is None else num_exposures
+    _exposure_time = (
+        kwargs_single_band["exposure_time"] if exposure_time is None else exposure_time
+    )
+    _num_exposures = (
+        kwargs_single_band["num_exposures"] if num_exposures is None else num_exposures
+    )
 
     # Unconvolved image will be drawn at oversampled pixel scale
     kwargs_single_band["pixel_scale"] /= oversample
@@ -194,8 +198,10 @@ def simulate_roman_image(
 
         rng = galsim.UniformDeviate(seed)
 
-        final_image_list = [] # includes all noise
-        prev_exposures = [] # does not include readout noise; necessary to include the effects of persistence
+        final_image_list = []  # includes all noise
+        prev_exposures = (
+            []
+        )  # does not include readout noise; necessary to include the effects of persistence
 
         # Need to handle each exposure separately to properly take into account read noise and persistence
         for i in range(_num_exposures):
@@ -203,7 +209,10 @@ def simulate_roman_image(
             # Create new realizations of image + noise
             final_image_list.append(copy.deepcopy(image_with_background))
             prev_exposures = roman.allDetectorEffects(
-                final_image_list[i], prev_exposures=prev_exposures, rng=rng, exptime=_exposure_time
+                final_image_list[i],
+                prev_exposures=prev_exposures,
+                rng=rng,
+                exptime=_exposure_time,
             )
 
             if subtract_mean_background:
