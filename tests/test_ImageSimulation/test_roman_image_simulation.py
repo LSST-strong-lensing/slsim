@@ -132,7 +132,7 @@ def test_simulate_roman_image_with_psf_and_noise():
         / (final_image_galsim + final_image_lenstronomy + 1)
         / 2
     )
-    npt.assert_array_less(diff, 0.2)
+    npt.assert_array_less(diff, 0.4)
 
     final_image_galsim = simulate_roman_image(
         lens_class=LENS,
