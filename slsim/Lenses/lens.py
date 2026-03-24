@@ -403,6 +403,7 @@ class Lens(LensedSystemBase):
         observatory="LSST",
         snr_per_pixel_threshold=1,
         exposure_time=None,
+        num_exposures=None,
     ):
         """Calculate the signal-to-noise ratio (SNR) using
         the method of `Holloway et al. (2023) <https://doi.org/10.1093/mnras/stad2371>`_.
@@ -452,8 +453,11 @@ class Lens(LensedSystemBase):
             a pixel in a region (default is 1)
         :type snr_per_pixel_threshold: float
         :param exposure_time: exposure time in seconds for computing SNR. If None, will use defaults
-            from lenstronomy.SimulationAPI.ObservationConfig
+            from lenstronomy.SimulationAPI.ObservationConfig based on the observatory.
         :type exposure_time: float or None
+        :param num_exposures: number of exposures. If None, a default number will be retrieved from
+            lenstronomy's SimulationAPI.ObservationConfig based on the observatory.
+        :type num_exposures: int or None
         :return: maximum SNR found among the regions above the threshold.
             Returns ``None`` if no pixels are above the threshold or if no
             multi-pixel regions are found.
@@ -480,6 +484,7 @@ class Lens(LensedSystemBase):
             with_point_source=True,
             image_units_counts=True,  # units of counts, not counts/sec
             exposure_time=exposure_time,
+            num_exposures=num_exposures,
         )
 
         # get simulated image (source + deflector + background noise)
@@ -498,6 +503,7 @@ class Lens(LensedSystemBase):
             with_point_source=True,
             image_units_counts=True,  # units of counts, not counts/sec
             exposure_time=exposure_time,
+            num_exposures=num_exposures,
         )
 
         # calculate the denominator of the SNR
