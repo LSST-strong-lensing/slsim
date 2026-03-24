@@ -209,8 +209,8 @@ def simulate_roman_image(
             final_image_list.append(copy.deepcopy(image_with_background))
             prev_exposures = roman.allDetectorEffects(
                 final_image_list[i],  # this gets modified in-place
-                prev_exposures=prev_exposures, # this gets updated with each call
-                rng=rng, # rng updates are automatically done
+                prev_exposures=prev_exposures,  # this gets updated with each call
+                rng=rng,  # rng updates are automatically done
                 exptime=_exposure_time,
             )
 
