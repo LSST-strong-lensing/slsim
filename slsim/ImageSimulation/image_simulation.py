@@ -79,7 +79,12 @@ def simulate_image(
     :return: simulated image
     :rtype: 2d numpy array
     """
-    kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band, time=t_obs, microlensing=microlensing, kwargs_microlensing=kwargs_microlensing)
+    kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(
+        band,
+        time=t_obs,
+        microlensing=microlensing,
+        kwargs_microlensing=kwargs_microlensing,
+    )
     from slsim.ImageSimulation import image_quality_lenstronomy
 
     # passing in `kwargs_single_band` is more efficient for the SNR criterion
