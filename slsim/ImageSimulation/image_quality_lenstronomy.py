@@ -2,7 +2,6 @@ from lenstronomy.SimulationAPI.ObservationConfig.LSST import LSST
 from lenstronomy.SimulationAPI.ObservationConfig.Roman import Roman
 from lenstronomy.SimulationAPI.ObservationConfig.Euclid import Euclid
 
-
 _OBSERVATORY_REGISTRY: dict[str, dict] = {}
 
 
@@ -44,6 +43,7 @@ register_observatory(
     bands=["VIS"],
     speclite_fmt=lambda band: f"Euclid-{band}",
 )
+
 
 def _get_observatory_name_for_band(band: str) -> str:
     """Return the observatory name that owns *band*, searching the registry.
@@ -102,7 +102,8 @@ def get_speclite_filtername(band: str) -> str:
     """Return the speclite filter name for a given band.
 
     :param band: Imaging band name.
-    :raises ValueError: if the band is not registered or has no speclite filter.
+    :raises ValueError: if the band is not registered or has no speclite
+        filter.
     """
     obs_name = _get_observatory_name_for_band(band)
     fmt = _OBSERVATORY_REGISTRY[obs_name]["speclite_fmt"]
@@ -132,6 +133,7 @@ def get_all_supported_bands() -> list:
     for info in _OBSERVATORY_REGISTRY.values():
         all_bands.extend(info["bands"])
     return all_bands
+
 
 # to make it work with the existing codebase
 ALL_SUPPORTED_BANDS = get_all_supported_bands()
