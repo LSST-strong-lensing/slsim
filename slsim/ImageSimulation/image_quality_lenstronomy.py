@@ -3,106 +3,135 @@ from lenstronomy.SimulationAPI.ObservationConfig.Roman import Roman
 from lenstronomy.SimulationAPI.ObservationConfig.Euclid import Euclid
 
 
-def kwargs_single_band(band, observatory="LSST", **kwargs):
-    """This is the function for returning the band information.
+_OBSERVATORY_REGISTRY: dict[str, dict] = {}
 
-    :param band: 'u', 'g', 'r', 'i', 'z' or 'y' supported. Determines
-        imaging bands.
+
+def register_observatory(name: str, observatory_class, bands: list, speclite_fmt=None):
+    """Register a new observatory so all image_quality_lenstronomy functions
+    recognise it automatically.
+
+    :param name: Observatory name string (e.g. "MidEx"). Case-sensitive.
+    :param observatory_class: Class whose constructor accepts ``band`` as its
+        first keyword argument and exposes a ``kwargs_single_band()`` method.
+    :param bands: List of band name strings owned by this observatory.
+    :param speclite_fmt: Callable ``(band: str) -> str`` that returns the
+        speclite filter name for a given band, or ``None`` if the observatory
+        does not have speclite filters.
+    """
+    _OBSERVATORY_REGISTRY[name] = {
+        "class": observatory_class,
+        "bands": list(bands),
+        "speclite_fmt": speclite_fmt,
+    }
+
+
+# ── Pre-registered observatories ────────────────────────────────────────────────────
+register_observatory(
+    name="LSST",
+    observatory_class=LSST,
+    bands=["u", "g", "r", "i", "z", "y"],
+    speclite_fmt=lambda band: f"lsst2023-{band}",
+)
+register_observatory(
+    name="Roman",
+    observatory_class=Roman,
+    bands=["F062", "F087", "F106", "F129", "F158", "F184", "F146", "F213"],
+    speclite_fmt=lambda band: f"Roman-{band}",
+)
+register_observatory(
+    name="Euclid",
+    observatory_class=Euclid,
+    bands=["VIS"],
+    speclite_fmt=lambda band: f"Euclid-{band}",
+)
+
+def _get_observatory_name_for_band(band: str) -> str:
+    """Return the observatory name that owns *band*, searching the registry.
+
+    :param band: Imaging band name.
+    :raises ValueError: if no registered observatory claims the band.
+    """
+    for obs_name, info in _OBSERVATORY_REGISTRY.items():
+        if band in info["bands"]:
+            return obs_name
+    raise ValueError(
+        f"Band '{band}' is not recognised by any registered observatory. "
+        f"Registered bands: { {o: i['bands'] for o, i in _OBSERVATORY_REGISTRY.items()} }"
+    )
+
+
+def kwargs_single_band(band, observatory=None, **kwargs):
+    """Return the lenstronomy single-band keyword dict for a given band.
+
+    :param band: Imaging band name (e.g. ``'g'``, ``'F062'``, ``'VIS'``, etc.).
     :type band: str
-    :param observatory: observatory chosen
-    :type observatory: str
-    :param kwargs: additional keyword arguments for the bands
-    :type kwargs: dict
-    :return: configuration of imaging data
+    :param observatory: Observatory name.  When ``None`` the registry is
+        queried automatically based on *band*.
+    :type observatory: str or None
+    :param kwargs: Additional keyword arguments forwarded to the observatory
+        class constructor (e.g. ``coadd_years``).
+    :return: Configuration dict for lenstronomy.
     :rtype: dict
     """
-    if observatory == "LSST":
-        observatory = LSST(band=band, **kwargs)
-    elif observatory == "Roman":
-        observatory = Roman(band=band, **kwargs)
-    elif observatory == "Euclid":
-        observatory = Euclid(band=band, **kwargs)
-    return observatory.kwargs_single_band()
+    if observatory is None:
+        observatory = _get_observatory_name_for_band(band)
+
+    if observatory not in _OBSERVATORY_REGISTRY:
+        raise ValueError(
+            f"Observatory '{observatory}' is not registered. "
+            f"Registered observatories: {list(_OBSERVATORY_REGISTRY.keys())}"
+        )
+
+    obs_class = _OBSERVATORY_REGISTRY[observatory]["class"]
+    obs_instance = obs_class(band=band, **kwargs)
+    return obs_instance.kwargs_single_band()
 
 
-def get_observatory(band):
-    """Determine the observatory based on the imaging band.
+def get_observatory(band: str) -> str:
+    """Return the observatory name for a given imaging band.
 
-    :param band: imaging band name
-    :type band: str
-    :return: observatory name ("LSST", "Roman", or "Euclid")
-    :rtype: str
-    :raises ValueError: if band is not recognized for any observatory
+    Queries the registry; works for any registered observatory.
 
-    Supported bands:
-        - LSST: 'u', 'g', 'r', 'i', 'z', 'y'
-        - Roman: 'F062', 'F087', 'F106', 'F129', 'F158', 'F184', 'F146', 'F213'
-        - Euclid: 'VIS'
+    :param band: Imaging band name.
+    :raises ValueError: if the band does not belong to any observatory.
     """
-    if band in ["u", "g", "r", "i", "z", "y"]:
-        return "LSST"
-    elif band in ["F062", "F087", "F106", "F129", "F158", "F184", "F146", "F213"]:
-        return "Roman"
-    elif band in ["VIS"]:
-        return "Euclid"
-    else:
-        raise ValueError(f"Band {band} not recognized for any observatory.")
+    return _get_observatory_name_for_band(band)
 
 
-def get_speclite_filtername(band):
-    """Get the speclite filter name corresponding to the given band.
+def get_speclite_filtername(band: str) -> str:
+    """Return the speclite filter name for a given band.
 
-    :param band: imaging band name
-    :type band: str
-    :return: speclite filter name
-    :rtype: str
-    :raises ValueError: if band is not recognized for any observatory
-
-    Supported bands:
-        - LSST: 'u', 'g', 'r', 'i', 'z', 'y'
-        - Roman: 'F062', 'F087', 'F106', 'F129', 'F158', 'F184', 'F146', 'F213'
-        - Euclid: 'VIS'
+    :param band: Imaging band name.
+    :raises ValueError: if the band is not registered or has no speclite filter.
     """
-    observatory = get_observatory(band)
-    if observatory == "LSST":
-        return f"lsst2023-{band}"
-    if observatory == "Roman":
-        return f"Roman-{band}"
-    if observatory == "Euclid":
-        return f"Euclid-{band}"
+    obs_name = _get_observatory_name_for_band(band)
+    fmt = _OBSERVATORY_REGISTRY[obs_name]["speclite_fmt"]
+    if fmt is None:
+        raise ValueError(
+            f"Observatory '{obs_name}' (band '{band}') has no speclite filter registered."
+        )
+    return fmt(band)
 
 
-def get_speclite_filternames(bands):
-    """Get a list of speclite filter names corresponding to the given bands.
+def get_speclite_filternames(bands: list) -> list:
+    """Return speclite filter names for a list of bands.
 
-    :param bands: list of imaging band names. E.g., ['u', 'g', 'r', 'F062', 'VIS'].
-    :type bands: list of str
-    :return: list of speclite filter names in the same order as input bands
-    :rtype: list of str
-    :raises ValueError: if any band is not recognized for any observatory
-
-    Supported bands:
-        - LSST: 'u', 'g', 'r', 'i', 'z', 'y'
-        - Roman: 'F062', 'F087', 'F106', 'F129', 'F158', 'F184', 'F146', 'F213'
-        - Euclid: 'VIS'
+    :param bands: List of imaging band name strings.
+    :return: List of speclite filter name strings in the same order.
     """
     return [get_speclite_filtername(band) for band in bands]
 
 
-ALL_SUPPORTED_BANDS = [
-    "u",
-    "g",
-    "r",
-    "i",
-    "z",
-    "y",
-    "F062",
-    "F087",
-    "F106",
-    "F129",
-    "F158",
-    "F184",
-    "F146",
-    "F213",
-    "VIS",
-]
+def get_all_supported_bands() -> list:
+    """Return every band name currently registered across all observatories.
+
+    :return: Flat list of band name strings.
+    :rtype: list of str
+    """
+    all_bands = []
+    for info in _OBSERVATORY_REGISTRY.values():
+        all_bands.extend(info["bands"])
+    return all_bands
+
+# to make it work with the existing codebase
+ALL_SUPPORTED_BANDS = get_all_supported_bands()
