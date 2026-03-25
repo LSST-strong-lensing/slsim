@@ -107,82 +107,143 @@ def test_simulate_roman_image_with_psf_and_noise():
     final_image_galsim = simulate_roman_image(
         lens_class=LENS,
         band=BAND,
-        num_pix=45,
+        num_pix=80,
         oversample=3,
         add_noise=True,
         subtract_mean_background=True,
         psf_directory=PSF_DIRECTORY,
-        galsim_convolve=True,
         **DETECTOR_KWARGS,
     )
 
-    final_image_lenstronomy = simulate_roman_image(
+    final_image_lenstronomy = simulate_image(
+        lens_class=LENS,
+        band=BAND,
+        num_pix=80,
+        observatory="Roman",
+        add_noise=True,
+        add_background_counts=False,
+    )
+
+    assert final_image_galsim.shape == (80, 80)
+    assert final_image_lenstronomy.shape == (80, 80)
+
+    diff = (
+        (final_image_galsim - final_image_lenstronomy)
+        / (final_image_galsim + final_image_lenstronomy + 1)
+        / 2
+    )
+    npt.assert_array_less(diff, 0.4)
+
+    final_image_galsim = simulate_roman_image(
+        lens_class=LENS,
+        band=BAND,
+        num_pix=80,
+        oversample=3,
+        add_noise=True,
+        subtract_mean_background=False,
+        psf_directory=PSF_DIRECTORY,
+        **DETECTOR_KWARGS,
+    )
+
+    final_image_lenstronomy = simulate_image(
+        lens_class=LENS,
+        band=BAND,
+        num_pix=80,
+        observatory="Roman",
+        add_noise=True,
+        add_background_counts=True,
+    )
+
+    assert final_image_galsim.shape == (80, 80)
+    assert final_image_lenstronomy.shape == (80, 80)
+    diff = (
+        (final_image_galsim - final_image_lenstronomy)
+        / (final_image_galsim + final_image_lenstronomy)
+        / 2
+    )
+    npt.assert_array_less(diff, 0.2)
+
+    # with randomized detector, detector position
+    final_image_galsim2 = simulate_roman_image(
+        lens_class=LENS,
+        band=BAND,
+        num_pix=80,
+        oversample=3,
+        add_noise=True,
+        subtract_mean_background=False,
+    )
+    assert not np.allclose(final_image_galsim, final_image_galsim2)
+
+
+def test_simulate_roman_image_with_custom_exposures():
+
+    kwargs_single_band = image_quality_lenstronomy.kwargs_single_band(
+        observatory="Roman", band=BAND
+    )
+    galsim_image1 = simulate_roman_image(
         lens_class=LENS,
         band=BAND,
         num_pix=45,
         oversample=3,
-        add_noise=True,
-        subtract_mean_background=True,
+        seed=42,
+        add_noise=False,
         psf_directory=PSF_DIRECTORY,
-        galsim_convolve=False,
-        **DETECTOR_KWARGS,
+        detector=1,
+        detector_pos=(2000, 2000),
+        exposure_time=kwargs_single_band["exposure_time"],
+        num_exposures=kwargs_single_band["num_exposures"],
     )
 
-    assert final_image_galsim.shape == (45, 45)
-    assert final_image_lenstronomy.shape == (45, 45)
-    npt.assert_almost_equal(
-        (final_image_galsim - final_image_lenstronomy)
-        / (final_image_galsim + final_image_lenstronomy + 1)
-        / 2,
-        0,
-        decimal=1,
-    )
-
-    final_image_galsim = simulate_roman_image(
-        lens_class=SNIa_Lens,
+    galsim_image2 = simulate_roman_image(
+        lens_class=LENS,
         band=BAND,
         num_pix=45,
         oversample=3,
-        add_noise=True,
+        seed=42,
+        add_noise=False,
         psf_directory=PSF_DIRECTORY,
-        subtract_mean_background=False,
-        galsim_convolve=True,
-        **DETECTOR_KWARGS,
+        detector=1,
+        detector_pos=(2000, 2000),
+        exposure_time=kwargs_single_band["exposure_time"] * 2,
+        num_exposures=kwargs_single_band["num_exposures"] * 2,
     )
 
-    final_image_lenstronomy = simulate_roman_image(
-        lens_class=SNIa_Lens,
+    # Since add_noise is False, these two should be the same
+    npt.assert_allclose(galsim_image1, galsim_image2, atol=1e-16, rtol=1e-16)
+
+    # The image with multiple exposures should have more noise due to readout noise and persistence
+    # Keeping the overall exposure time the same
+    galsim_image1 = simulate_roman_image(
+        lens_class=LENS,
         band=BAND,
         num_pix=45,
         oversample=3,
+        seed=42,
         add_noise=True,
         psf_directory=PSF_DIRECTORY,
+        detector=1,
+        detector_pos=(2000, 2000),
+        exposure_time=100000,
+        num_exposures=1,
         subtract_mean_background=False,
-        galsim_convolve=False,
-        **DETECTOR_KWARGS,
     )
 
-    assert final_image_galsim.shape == (45, 45)
-    assert final_image_lenstronomy.shape == (45, 45)
-    npt.assert_almost_equal(
-        (final_image_galsim - final_image_lenstronomy)
-        / (final_image_galsim + final_image_lenstronomy)
-        / 2,
-        0,
-        decimal=1,
-    )
-
-    # with randomized detector, detector position
-    final_image_lenstronomy2 = simulate_roman_image(
-        lens_class=SNIa_Lens,
+    galsim_image2 = simulate_roman_image(
+        lens_class=LENS,
         band=BAND,
         num_pix=45,
         oversample=3,
+        seed=42,
         add_noise=True,
+        psf_directory=PSF_DIRECTORY,
+        detector=1,
+        detector_pos=(2000, 2000),
+        exposure_time=500,
+        num_exposures=200,
         subtract_mean_background=False,
-        galsim_convolve=False,
     )
-    assert not np.allclose(final_image_lenstronomy, final_image_lenstronomy2)
+
+    assert np.mean(galsim_image2 - galsim_image1) > 0
 
 
 def test_simulate_roman_image_with_psf_without_noise():
@@ -214,13 +275,6 @@ def test_simulate_roman_image_with_psf_without_noise():
     )
     image_ref = array[3:-3, 3:-3]
 
-    # Convolves psf through galsim, also no roman detector effects or background
-    kwargs_single_band = image_quality_lenstronomy.kwargs_single_band(
-        observatory="Roman", band=BAND
-    )
-    exposure_time = (
-        kwargs_single_band["exposure_time"] * kwargs_single_band["num_exposures"]
-    )
     galsim_image = simulate_roman_image(
         lens_class=LENS,
         band=BAND,
@@ -231,7 +285,6 @@ def test_simulate_roman_image_with_psf_without_noise():
         psf_directory=PSF_DIRECTORY,
         detector=1,
         detector_pos=(2000, 2000),
-        exposure_time=exposure_time,
     )
 
     # Makes sure that each pixel matches in flux by 2%, and the total flux matches by up to 0.1

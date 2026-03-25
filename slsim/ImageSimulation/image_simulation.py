@@ -19,6 +19,7 @@ def simulate_image(
     observatory="LSST",
     t_obs=None,
     exposure_time=None,
+    num_exposures=None,
     kwargs_psf=None,
     kwargs_numerics=None,
     kwargs_single_band=None,
@@ -46,8 +47,11 @@ def simulate_image(
         variable source. In case of point source, if we do not provide
         t_obs, considers no variability in the lens.
     :param exposure_time: exposure time in seconds for computing SNR. If None, will use defaults
-        from lenstronomy.SimulationAPI.ObservationConfig
+        from lenstronomy.SimulationAPI.ObservationConfig based on the observatory and survey mode.
     :type exposure_time: float or None
+    :param num_exposures: number of exposures. If None, a default number will be retrieved from
+        lenstronomy's SimulationAPI.ObservationConfig based on the observatory and survey mode.
+    :type num_exposures: int or None
     :param kwargs_psf: (optional) specific PSF quantities to overwrite
         default options ("psf_type", "kernel_point_source",
         "point_source_supersampling_factor")
@@ -85,7 +89,8 @@ def simulate_image(
         )
     if exposure_time is not None:
         kwargs_single_band["exposure_time"] = exposure_time
-        kwargs_single_band["num_exposures"] = 1
+    if num_exposures is not None:
+        kwargs_single_band["num_exposures"] = num_exposures
     if kwargs_psf is not None:
         kwargs_single_band.update(kwargs_psf)
     sim_api = SimAPI(

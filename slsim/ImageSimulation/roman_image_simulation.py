@@ -40,6 +40,7 @@ def simulate_roman_image(
     with_source=True,
     with_deflector=True,
     exposure_time=None,
+    num_exposures=None,
     t_obs=None,
     survey_mode="wide_area",
     detector=None,
@@ -49,9 +50,9 @@ def simulate_roman_image(
     dec=None,
     date=datetime.datetime(year=2027, month=7, day=7, hour=0, minute=0, second=0),
     psf_directory=None,
-    galsim_convolve=True,
 ):
-    """Creates an image of a selected lens with noise.
+    """Creates a Roman-simulated image of a selected lens with noise, using
+    galsim's noise settings and PSFs from STPSF.
 
     :param lens_class: class object containing all information of the lensing system
         (e.g., Lens())
@@ -69,8 +70,12 @@ def simulate_roman_image(
     :type with_source: bool
     :param with_deflector: determines whether deflector is included in image
     :type with_deflector: bool
-    :param exposure_time: exposure time of image. If None, a default exposure time will be retrieved from lenstronomy's SimulationAPI.
+    :param exposure_time: exposure time of image. If None, a default exposure time will be retrieved from
+        lenstronomy's SimulationAPI.ObservationConfig based on the Roman survey mode.
     :type exposure_time: int or None
+    :param num_exposures: number of exposures. If None, a default number will be retrieved from
+        lenstronomy's SimulationAPI.ObservationConfig based on the Roman survey mode.
+    :type num_exposures: int or None
     :param t_obs: an observation time in units of days. This is applicable only for
         variable source. In case of point source, if we do not provide
         t_obs, considers no variability in the lens.
@@ -94,9 +99,7 @@ def simulate_roman_image(
         psf_file_name = f"{band}_{detector}_{detector_pos[0]}_{detector_pos[1]}_{oversample}.pkl"
         For example, psf_file_name = "F106_SCA03_1934_1293_5.pkl"
     :type psf_directory: string
-    :param galsim_convolve: if True, uses GalSim for the numerics, otherwise uses lenstronomy
-    :type galsim_convolve: bool
-    :return: simulated image
+    :return: simulated image in units of flux per second
     :rtype: 2d numpy array
     """
 
@@ -122,15 +125,15 @@ def simulate_roman_image(
     )
     galsim_psf = get_psf(band, detector, detector_pos, oversample, psf_directory)
 
-    if exposure_time is None:
-        _exposure_time = (
-            kwargs_single_band["exposure_time"] * kwargs_single_band["num_exposures"]
-        )
-    else:
-        _exposure_time = exposure_time
+    # Will use Galsim to handle individual exposures then add them up
+    _exposure_time = (
+        kwargs_single_band["exposure_time"] if exposure_time is None else exposure_time
+    )
+    _num_exposures = (
+        kwargs_single_band["num_exposures"] if num_exposures is None else num_exposures
+    )
 
     # Unconvolved image will be drawn at oversampled pixel scale
-    kwargs_single_band_point_source = copy.deepcopy(kwargs_single_band)
     kwargs_single_band["pixel_scale"] /= oversample
 
     sim_api = SimAPI(
@@ -146,76 +149,41 @@ def simulate_roman_image(
 
     kwargs_lens = kwargs_params.get("kwargs_lens", None)
 
-    if galsim_convolve:
-        kwargs_numerics = {
-            "point_source_supersampling_factor": 1,
-            "supersampling_factor": 1,
-        }
-        image_model = sim_api.image_model_class(kwargs_numerics)
-        # Draws the unconvolved image with point source painted on single pixel
-        array = _exposure_time * image_model.image(
-            kwargs_lens=kwargs_lens,
-            kwargs_source=kwargs_source,
-            kwargs_lens_light=kwargs_lens_light,
-            kwargs_ps=kwargs_ps,
-            unconvolved=True,
-            source_add=with_source,
-            lens_light_add=with_deflector,
-            point_source_add=True,
-        )
-        # Converts image to the galsim InterpolatedImage class
-        interp = InterpolatedImage(
-            Image(array, xmin=0, ymin=0),
-            scale=0.11 / oversample,
-            flux=np.sum(array),
-        )
-        # Gets psf and convolve
-        convolved = galsim.Convolve(interp, galsim_psf)
+    kwargs_numerics = {
+        "point_source_supersampling_factor": 1,
+        "supersampling_factor": 1,
+    }
+    image_model = sim_api.image_model_class(kwargs_numerics)
+    # Draws the unconvolved image with point source painted on single pixel
+    array = _exposure_time * image_model.image(
+        kwargs_lens=kwargs_lens,
+        kwargs_source=kwargs_source,
+        kwargs_lens_light=kwargs_lens_light,
+        kwargs_ps=kwargs_ps,
+        unconvolved=True,
+        source_add=with_source,
+        lens_light_add=with_deflector,
+        point_source_add=True,
+    )
+    # Converts image to the galsim InterpolatedImage class
+    interp = InterpolatedImage(
+        Image(array, xmin=0, ymin=0),
+        scale=0.11 / oversample,
+        flux=np.sum(array),
+    )
+    # Gets psf and convolve
+    convolved = galsim.Convolve(interp, galsim_psf)
 
-        # Draw interpolated image at the original (not oversampled) pixel scale
-        im = galsim.ImageF(num_pix, num_pix, scale=0.11)
-        im.setOrigin(0, 0)
-        image = convolved.drawImage(im)
-    else:
-        kwargs_single_band_point_source["psf_type"] = "PIXEL"
-        # get array of supersampled PSF kernel
-        kwargs_single_band_point_source["kernel_point_source"] = galsim_psf.image.array
-        kwargs_single_band_point_source["point_source_supersampling_factor"] = (
-            oversample
-        )
-        # the PSFs are intentionally not normalized to one
-        kwargs_single_band_point_source["kernel_point_source_normalisation"] = False
-
-        # generates point source image with lenstronomy
-        sim_api_ps = SimAPI(
-            numpix=num_pix,
-            kwargs_single_band=kwargs_single_band_point_source,
-            kwargs_model=kwargs_model,
-        )
-        kwargs_numerics_ps = {
-            "point_source_supersampling_factor": oversample,
-            "supersampling_factor": oversample,
-        }
-        image_model_ps = sim_api_ps.image_model_class(kwargs_numerics_ps)
-
-        # Draws the point source
-        image = _exposure_time * image_model_ps.image(
-            kwargs_lens=kwargs_lens,
-            kwargs_source=kwargs_source,
-            kwargs_lens_light=kwargs_lens_light,
-            kwargs_ps=kwargs_ps,
-            unconvolved=False,
-            source_add=True,
-            lens_light_add=True,
-            point_source_add=True,
-        )
-        image = galsim.ImageF(image, scale=0.11)
+    # Draw interpolated image at the original (not oversampled) pixel scale
+    im = galsim.ImageF(num_pix, num_pix, scale=0.11)
+    im.setOrigin(0, 0)
+    image_no_noise = convolved.drawImage(im)
 
     if add_noise:
-        # Obtain sky background corresponding to certain band and add it to the image
-        # Requires stpsf data files to use
-        image = add_roman_background(
-            image,
+        # Obtain sky and thermal background corresponding to certain band and add it to the image
+        # Poisson noise realization is not handled until later
+        image_with_background = add_sky_plus_thermal_background(
+            image_no_noise,
             band,
             detector,
             num_pix,
@@ -223,20 +191,42 @@ def simulate_roman_image(
             ra,
             dec,
             date,
-            subtract_mean_background=subtract_mean_background,
         )
 
-        # Add detector effects and get the resulting array
+        # Add noise realizations and detector effects
+        # Need to handle each exposure separately to properly take into account read noise and persistence
         rng = galsim.UniformDeviate(seed)
-        roman.allDetectorEffects(
-            image, prev_exposures=(), rng=rng, exptime=_exposure_time
-        )
 
-    array = image.array
+        # includes all noise
+        final_image_list = []
 
-    final_array = array[3:-3, 3:-3]
-    final_array = final_array / _exposure_time
-    return final_array
+        # does not include readout noise; necessary to include the effects of persistence
+        prev_exposures = []
+
+        for i in range(_num_exposures):
+
+            # Create new realizations of image + noise
+            final_image_list.append(copy.deepcopy(image_with_background))
+            prev_exposures = roman.allDetectorEffects(
+                final_image_list[i],  # this gets modified in-place
+                prev_exposures=prev_exposures,  # this gets updated with each call
+                rng=rng,  # rng updates are automatically done
+                exptime=_exposure_time,
+            )
+
+            if subtract_mean_background:
+                mean_noise = np.mean(final_image_list[i].array - image_no_noise.array)
+                final_image_list[i].array -= mean_noise
+
+        # Combine exposures and compute flux per second
+        array_list = np.array([image_i.array for image_i in final_image_list])
+        array = np.sum(array_list, axis=0) / (_exposure_time * _num_exposures)
+    else:
+        array = image_no_noise.array / _exposure_time
+
+    final_image = array[3:-3, 3:-3]
+
+    return final_image
 
 
 # The following functions have been copy-pasted from the mejiro repo
@@ -294,7 +284,7 @@ def get_psf(band, detector, detector_pos, oversample, psf_directory):
     return galsim.InterpolatedImage(psf_image)
 
 
-def add_roman_background(
+def add_sky_plus_thermal_background(
     image,
     band,
     detector,
@@ -303,7 +293,6 @@ def add_roman_background(
     ra,
     dec,
     date,
-    subtract_mean_background=True,
 ):
     """Adds a sky and thermal background to image, corresponding to a specific
     band, detector, date, and coordinate in the sky.
@@ -323,9 +312,6 @@ def add_roman_background(
     :type dec: float between -45 and -15
     :param date: Date used to generate sky background
     :type date: datetime.datetime class
-    :param subtract_mean_background: whether to subtract the mean
-        background from the image
-    :type subtract_mean_background: bool
     :return: image with added background
     :rtype: galsim Image class
     """
@@ -348,10 +334,6 @@ def add_roman_background(
     thermal_bkg = roman.thermal_backgrounds[get_bandpass_key(band)] * exposure_time
 
     image = image + sky_image + thermal_bkg
-    # image.quantize()
-    if subtract_mean_background:
-        mean_bkg = np.mean(sky_image.array + thermal_bkg)
-        image -= mean_bkg
 
     return image
 
