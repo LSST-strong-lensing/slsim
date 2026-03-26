@@ -45,7 +45,7 @@ register_observatory(
 )
 
 
-def _get_observatory_name_for_band(band: str) -> str:
+def _get_observatory_name_for_band(band):
     """Return the observatory name that owns *band*, searching the registry.
 
     :param band: Imaging band name.
@@ -60,8 +60,8 @@ def _get_observatory_name_for_band(band: str) -> str:
     )
 
 
-def get_observatory(band: str) -> str:
-    """Return the observatory name for a given imaging band.
+def get_observatory(band):
+    """Determine the observatory based on the imaging band.
 
     Queries the registry; works for any registered observatory.
 
@@ -98,7 +98,7 @@ def kwargs_single_band(band, observatory=None, **kwargs):
     return obs_instance.kwargs_single_band()
 
 
-def get_speclite_filtername(band: str) -> str:
+def get_speclite_filtername(band):
     """Get the speclite filter name corresponding to the given band.
 
     :param band: imaging band name
@@ -122,7 +122,7 @@ def get_speclite_filtername(band: str) -> str:
     return fmt(band)
 
 
-def get_speclite_filternames(bands: list) -> list:
+def get_speclite_filternames(bands):
     """Get a list of speclite filter names corresponding to the provided bands.
 
     :param bands: list of imaging band names. E.g., ['u', 'g', 'r', 'F062', 'VIS'].
@@ -140,7 +140,7 @@ def get_speclite_filternames(bands: list) -> list:
     return [get_speclite_filtername(band) for band in bands]
 
 
-def get_all_supported_bands() -> list:
+def get_all_supported_bands():
     """Return every band name currently registered across all observatories.
 
     :return: Flat list of band name strings.

@@ -78,7 +78,7 @@ class TestGetObservatory:
             assert get_observatory(band) == "Euclid"
 
     def test_invalid_band_raises_error(self):
-        """Test that invalid bands raise a ValueError with the new message."""
+        """Test that invalid bands raise a ValueError."""
         invalid_bands = ["X", "invalid", "F999"]
         for band in invalid_bands:
             with pytest.raises(ValueError, match=f"Band '{band}' is not recognised"):
