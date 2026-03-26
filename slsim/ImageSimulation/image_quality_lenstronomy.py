@@ -59,6 +59,16 @@ def _get_observatory_name_for_band(band: str) -> str:
         f"Registered bands: { {o: i['bands'] for o, i in _OBSERVATORY_REGISTRY.items()} }"
     )
 
+def get_observatory(band: str) -> str:
+    """Return the observatory name for a given imaging band.
+
+    Queries the registry; works for any registered observatory.
+
+    :param band: Imaging band name.
+    :raises ValueError: if the band does not belong to any observatory.
+    """
+    return _get_observatory_name_for_band(band)
+
 
 def kwargs_single_band(band, observatory=None, **kwargs):
     """Return the lenstronomy single-band keyword dict for a given band.
@@ -74,7 +84,7 @@ def kwargs_single_band(band, observatory=None, **kwargs):
     :rtype: dict
     """
     if observatory is None:
-        observatory = _get_observatory_name_for_band(band)
+        observatory = get_observatory(band)
 
     if observatory not in _OBSERVATORY_REGISTRY:
         raise ValueError(
@@ -85,17 +95,6 @@ def kwargs_single_band(band, observatory=None, **kwargs):
     obs_class = _OBSERVATORY_REGISTRY[observatory]["class"]
     obs_instance = obs_class(band=band, **kwargs)
     return obs_instance.kwargs_single_band()
-
-
-def get_observatory(band: str) -> str:
-    """Return the observatory name for a given imaging band.
-
-    Queries the registry; works for any registered observatory.
-
-    :param band: Imaging band name.
-    :raises ValueError: if the band does not belong to any observatory.
-    """
-    return _get_observatory_name_for_band(band)
 
 
 def get_speclite_filtername(band: str) -> str:
@@ -113,7 +112,7 @@ def get_speclite_filtername(band: str) -> str:
         - Roman: 'F062', 'F087', 'F106', 'F129', 'F158', 'F184', 'F146', 'F213'
         - Euclid: 'VIS'
     """
-    obs_name = _get_observatory_name_for_band(band)
+    obs_name = get_observatory(band)
     fmt = _OBSERVATORY_REGISTRY[obs_name]["speclite_fmt"]
     if fmt is None:
         raise ValueError(

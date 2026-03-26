@@ -163,31 +163,28 @@ class TestKwargsSingleBand:
             kwargs_single_band(band="i", observatory="FakeObs")
 
 
-class TestGetAllSupportedBands:
-    """Tests for the get_all_supported_bands function."""
-
-    def test_get_all_supported_bands_contains_defaults(self):
-        """Test that all default bands are present in the returned list."""
-        all_bands = get_all_supported_bands()
-        expected_bands = [
-            "u",
-            "g",
-            "r",
-            "i",
-            "z",
-            "y",
-            "F062",
-            "F087",
-            "F106",
-            "F129",
-            "F158",
-            "F184",
-            "F146",
-            "F213",
-            "VIS",
-        ]
-        for band in expected_bands:
-            assert band in all_bands
+def test_get_all_supported_bands_contains_defaults():
+    """Test that all default bands are present in the returned list."""
+    all_bands = get_all_supported_bands()
+    expected_bands = [
+        "u",
+        "g",
+        "r",
+        "i",
+        "z",
+        "y",
+        "F062",
+        "F087",
+        "F106",
+        "F129",
+        "F158",
+        "F184",
+        "F146",
+        "F213",
+        "VIS",
+    ]
+    for band in expected_bands:
+        assert band in all_bands
 
 
 if __name__ == "__main__":
