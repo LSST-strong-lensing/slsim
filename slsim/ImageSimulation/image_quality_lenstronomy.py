@@ -65,12 +65,12 @@ def kwargs_single_band(band, observatory=None, **kwargs):
 
     :param band: Imaging band name (e.g. ``'g'``, ``'F062'``, ``'VIS'``, etc.).
     :type band: str
-    :param observatory: Observatory name.  When ``None`` the registry is
+    :param observatory: Observatory name.  When ``None`` the observatory registry is
         queried automatically based on *band*.
     :type observatory: str or None
     :param kwargs: Additional keyword arguments forwarded to the observatory
         class constructor (e.g. ``coadd_years``).
-    :return: Configuration dict for lenstronomy.
+    :return: Configuration dict of imaging data for lenstronomy.
     :rtype: dict
     """
     if observatory is None:
@@ -99,11 +99,19 @@ def get_observatory(band: str) -> str:
 
 
 def get_speclite_filtername(band: str) -> str:
-    """Return the speclite filter name for a given band.
+    """Get the speclite filter name corresponding to the given band.
 
-    :param band: Imaging band name.
+    :param band: imaging band name
+    :type band: str
+    :return: speclite filter name
+    :rtype: str
     :raises ValueError: if the band is not registered or has no speclite
         filter.
+
+    Default Supported bands:
+        - LSST: 'u', 'g', 'r', 'i', 'z', 'y'
+        - Roman: 'F062', 'F087', 'F106', 'F129', 'F158', 'F184', 'F146', 'F213'
+        - Euclid: 'VIS'
     """
     obs_name = _get_observatory_name_for_band(band)
     fmt = _OBSERVATORY_REGISTRY[obs_name]["speclite_fmt"]
@@ -115,10 +123,19 @@ def get_speclite_filtername(band: str) -> str:
 
 
 def get_speclite_filternames(bands: list) -> list:
-    """Return speclite filter names for a list of bands.
+    """Get a list of speclite filter names corresponding to the provided bands.
 
-    :param bands: List of imaging band name strings.
-    :return: List of speclite filter name strings in the same order.
+    :param bands: list of imaging band names. E.g., ['u', 'g', 'r', 'F062', 'VIS'].
+    :type bands: list of str
+    :return: list of speclite filter names in the same order as input bands
+    :rtype: list of str
+    :raises ValueError: if any band is not recognized for any observatory or has no speclite
+        filter.
+
+    Supported bands:
+        - LSST: 'u', 'g', 'r', 'i', 'z', 'y'
+        - Roman: 'F062', 'F087', 'F106', 'F129', 'F158', 'F184', 'F146', 'F213'
+        - Euclid: 'VIS'
     """
     return [get_speclite_filtername(band) for band in bands]
 
