@@ -2,7 +2,7 @@ from lenstronomy.SimulationAPI.ObservationConfig.LSST import LSST
 from lenstronomy.SimulationAPI.ObservationConfig.Roman import Roman
 from lenstronomy.SimulationAPI.ObservationConfig.Euclid import Euclid
 
-_OBSERVATORY_REGISTRY: dict[str, dict] = {}
+_OBSERVATORY_REGISTRY = {}
 
 
 def register_observatory(name: str, observatory_class, bands: list, speclite_fmt=None):
@@ -24,7 +24,7 @@ def register_observatory(name: str, observatory_class, bands: list, speclite_fmt
     }
 
 
-# ── Pre-registered observatories ────────────────────────────────────────────────────
+# Pre-registered observatories (LSST, Roman, and Euclid)
 register_observatory(
     name="LSST",
     observatory_class=LSST,
@@ -133,7 +133,3 @@ def get_all_supported_bands() -> list:
     for info in _OBSERVATORY_REGISTRY.values():
         all_bands.extend(info["bands"])
     return all_bands
-
-
-# to make it work with the existing codebase
-ALL_SUPPORTED_BANDS = get_all_supported_bands()

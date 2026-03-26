@@ -7,7 +7,7 @@ from slsim.Sources.SourceVariability import agn
 from slsim.Sources.SourceTypes.source_base import SourceBase
 from slsim.ImageSimulation.image_quality_lenstronomy import (
     get_speclite_filternames,
-    ALL_SUPPORTED_BANDS,
+    get_all_supported_bands,
 )
 
 
@@ -119,7 +119,7 @@ class Quasar(SourceBase):
 
             # Get mean mags for each provided band if not already present in source_dict
             # determine which kwargs_variability are LSST, Roman or Euclid bands
-            provided_bands = set(ALL_SUPPORTED_BANDS) & set(self._kwargs_variability)
+            provided_bands = set(get_all_supported_bands()) & set(self._kwargs_variability)
             speclite_names = get_speclite_filternames(provided_bands)
 
             # determine mean magnitudes for each band using the AGN class (uses SS73 disk model)
