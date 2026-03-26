@@ -59,6 +59,7 @@ def _get_observatory_name_for_band(band: str) -> str:
         f"Registered bands: { {o: i['bands'] for o, i in _OBSERVATORY_REGISTRY.items()} }"
     )
 
+
 def get_observatory(band: str) -> str:
     """Return the observatory name for a given imaging band.
 
