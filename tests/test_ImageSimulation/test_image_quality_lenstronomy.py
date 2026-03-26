@@ -31,13 +31,13 @@ class TestRegistrySystem:
             bands=["T1", "T2"],
             speclite_fmt=lambda b: f"TestObs-{b}",
         )
-        
+
         # Test observatory retrieval
         assert get_observatory("T1") == "TestObs"
-        
+
         # Test speclite name retrieval
         assert get_speclite_filtername("T2") == "TestObs-T2"
-        
+
         # Test kwargs_single_band auto-lookup
         kwargs = kwargs_single_band("T1")
         assert kwargs["dummy_band"] == "T1"
@@ -51,7 +51,7 @@ class TestRegistrySystem:
             bands=["N1"],
             speclite_fmt=None,
         )
-        
+
         with pytest.raises(ValueError, match="has no speclite filter registered"):
             get_speclite_filtername("N1")
 
@@ -117,7 +117,8 @@ class TestGetSpecliteFiltername:
                 get_speclite_filtername(band)
 
     def test_get_speclite_filternames(self):
-        """Test that get_speclite_filternames returns correct list of filter names."""
+        """Test that get_speclite_filternames returns correct list of filter
+        names."""
         bands = ["u", "F106", "VIS"]
         expected = ["lsst2023-u", "Roman-F106", "Euclid-VIS"]
         assert get_speclite_filternames(bands) == expected
@@ -148,14 +149,16 @@ class TestKwargsSingleBand:
         assert "exposure_time" in result
 
     def test_auto_observatory_lookup(self):
-        """Test that kwargs_single_band automatically finds the observatory if None."""
+        """Test that kwargs_single_band automatically finds the observatory if
+        None."""
         result = kwargs_single_band(band="i")  # Should auto-resolve to LSST
         assert isinstance(result, dict)
         assert "pixel_scale" in result
         assert "exposure_time" in result
 
     def test_unregistered_observatory_raises_error(self):
-        """Test that providing an explicitly unregistered observatory raises a ValueError."""
+        """Test that providing an explicitly unregistered observatory raises a
+        ValueError."""
         with pytest.raises(ValueError, match="is not registered"):
             kwargs_single_band(band="i", observatory="FakeObs")
 
@@ -167,9 +170,21 @@ class TestGetAllSupportedBands:
         """Test that all default bands are present in the returned list."""
         all_bands = get_all_supported_bands()
         expected_bands = [
-            "u", "g", "r", "i", "z", "y",
-            "F062", "F087", "F106", "F129", "F158", "F184", "F146", "F213",
-            "VIS"
+            "u",
+            "g",
+            "r",
+            "i",
+            "z",
+            "y",
+            "F062",
+            "F087",
+            "F106",
+            "F129",
+            "F158",
+            "F184",
+            "F146",
+            "F213",
+            "VIS",
         ]
         for band in expected_bands:
             assert band in all_bands
