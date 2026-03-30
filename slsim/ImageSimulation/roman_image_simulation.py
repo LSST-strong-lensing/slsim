@@ -299,16 +299,6 @@ def add_sky_plus_thermal_background(
     """Adds a sky and thermal background to image, corresponding to a specific
     band, detector, date, and coordinate in the sky.
 
-    :param image: image to add the background to :type image: galsim
-    Image class :param band: imaging band :type band: string :param
-    detector: The specific Roman detector being used to generate     the
-    psf :type detector: integer from 1 to 18 :param num_pix: number of
-    pixels per axis :type num_pix: integer :param ra: Coordinate in
-    space used to generate sky background. For possible coordinates, see
-    https://roman-docs.stsci.edu/files/215024143/215024145/2/1768495040130/outlines.png
-     :type ra: float or None :param dec: Coordinate in space used to
-    generate sky background. For possible coordinates, see
-    https://roman-docs.stsci.edu/files/215024143/215024145/2/1768495040130/outlines.png
     :param image: image to add the background to
     :type image: galsim Image class
     :param band: imaging band
