@@ -1,3 +1,4 @@
+import warnings
 from slsim.Sources.Supernovae import random_supernovae
 from slsim.Sources.SourceTypes.source_base import SourceBase
 from slsim.ImageSimulation.image_quality_lenstronomy import get_all_supported_bands
@@ -115,9 +116,14 @@ class SupernovaEvent(SourceBase):
                         band=provided_band,
                         zpsys=self._sn_absolute_zpsys,
                     )
-                except Exception:
+                except Exception as e:
                     # If sncosmo throws an error, it means the band isn't registered
                     # in sncosmo's internal system. We skip it to avoid crashing.
+                    warnings.warn(
+                        f"Skipping band '{provided_band}': Failed to generate lightcurve. "
+                        f"It may not be registered in sncosmo. (Error: {e})",
+                        UserWarning
+                    )
                     continue
 
                 # If successful, store the magnitudes

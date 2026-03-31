@@ -6,8 +6,8 @@ from astropy import cosmology
 
 class TestSupernovaEvent:
     def setup_method(self):
-        cosmo = cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
-        source_dict = {"z": 0.8, "ra_off": 0.001, "dec_off": 0.005}
+        self.cosmo = cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
+        self.source_dict = {"z": 0.8, "ra_off": 0.001, "dec_off": 0.005}
         source_dict2 = {"z": 0.8, "ra_off": 0.001, "dec_off": 0.005, "ps_mag_i": 20}
         source_dict3 = {
             "z": 0.8,
@@ -48,14 +48,14 @@ class TestSupernovaEvent:
             "sn_modeldir": None,
         }
 
-        self.source = SupernovaEvent(cosmo=cosmo, **kwargs_sn, **source_dict)
+        self.source = SupernovaEvent(cosmo=self.cosmo, **kwargs_sn, **self.source_dict)
         self.source_roman = SupernovaEvent(
-            cosmo=cosmo, **kwargs_sn_roman, **source_dict
+            cosmo=self.cosmo, **kwargs_sn_roman, **self.source_dict
         )
-        self.source_none = SupernovaEvent(cosmo=cosmo, **kwargs_sn_none, **source_dict2)
-        self.source_cosmo_error = SupernovaEvent(cosmo=None, **kwargs_sn, **source_dict)
+        self.source_none = SupernovaEvent(cosmo=self.cosmo, **kwargs_sn_none, **source_dict2)
+        self.source_cosmo_error = SupernovaEvent(cosmo=None, **kwargs_sn, **self.source_dict)
         self.source_light_curve = SupernovaEvent(
-            cosmo=cosmo, **kwargs_sn_none, **source_dict3
+            cosmo=self.cosmo, **kwargs_sn_none, **source_dict3
         )
 
     def test_light_curve(self):
@@ -86,6 +86,26 @@ class TestSupernovaEvent:
         assert not light_curve_none
         with pytest.raises(ValueError):
             self.source_cosmo_error.light_curve
+
+    def test_light_curve_warning(self):
+        """Test that a UserWarning is raised when a band is supported by SLSim but missing in sncosmo."""
+        import slsim.ImageSimulation.image_quality_lenstronomy as iql
+
+        # register a dummy observatory with a fake band so SLSim recognizes it but sncosmo does not
+        class DummyObs:
+            def __init__(self, band, **kwargs): pass
+            def kwargs_single_band(self): return {}
+            
+        iql.register_observatory("DummyObs", DummyObs, bands=["unregistered_sn_band"])
+
+        # modify the source to request this fake band
+        self.source._kwargs_variability = ["supernovae_lightcurve", "unregistered_sn_band"]
+
+        # sncosmo doesn't know about "unregistered_sn_band", so it should raise the warning and skip it
+        with pytest.warns(UserWarning, match="Failed to generate lightcurve"):
+            failed_light_curve = self.source.light_curve
+
+        assert failed_light_curve == {}
 
     def test_point_source_magnitude(self):
         # supernova is randomly generated. So, can't assert a fix number for magnitude.
