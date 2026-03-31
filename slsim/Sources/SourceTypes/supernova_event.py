@@ -95,7 +95,7 @@ class SupernovaEvent(SourceBase):
                     modeldir=self._sn_modeldir,
                 )
 
-            # Filter the input list against the global registry to ignore physical parameters
+            # Filter the input list against the global registry to ignore non-band parameters and unrecognized bands
             supported_bands = get_all_supported_bands()
             provided_bands = set(supported_bands) & set(self._kwargs_variability)
 
