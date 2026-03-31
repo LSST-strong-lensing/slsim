@@ -265,6 +265,6 @@ def load_source(
 
     # Rotate the COSMOS image so that it matches the angle given in source_dict
     # Convert desired angle from slsim convention (North to East) to lenstronomy convention (East to North)
-    phi = - matched_source["sersic_angle"] + (- sersic_angle - np.pi / 2)
+    phi = - matched_source["sersic_angle"] + (np.pi / 2 - sersic_angle)
 
     return [image], scale, phi, matched_source

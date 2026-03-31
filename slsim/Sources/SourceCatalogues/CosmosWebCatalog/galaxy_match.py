@@ -107,7 +107,7 @@ def load_source(
 
     # Rotate the image so that it matches the desired angle
     # Convert desired angle from slsim convention (North to East) to lenstronomy convention (East to North)
-    phi = - matched_source["sersic_angle"] + (- sersic_angle - np.pi / 2)
+    phi = - matched_source["sersic_angle"] + (np.pi / 2 - sersic_angle)
 
     return image_list, scale, phi, matched_source
 
