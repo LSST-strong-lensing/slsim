@@ -25,7 +25,7 @@ hst_cosmos_path = os.path.join(
 cosmos_web_path = os.path.join(
     str(pathlib.Path(__file__).parent.parent.parent),
     "TestData",
-    "test_COSMOS_WEB",
+    "test_COSMOSWeb_galaxy_catalog",
 )
 
 
@@ -66,6 +66,8 @@ class TestCatalogSource:
         )
 
     def test_kwargs_extended_source_light(self):
+
+        # Test HST COSMOS
         light_model_list1, results = self.source1.kwargs_extended_light(band="i")
         _, results2 = self.source1.kwargs_extended_light(band=None)
 
@@ -76,9 +78,18 @@ class TestCatalogSource:
         assert results[0]["magnitude"] == 20.3
         assert results2[0]["magnitude"] == 1
 
+        # Test COSMOSWeb
         light_model_list2, results3 = self.source2.kwargs_extended_light(band="i")
         assert light_model_list1 == light_model_list2
         assert results3[0]["magnitude"] == 20.3
+
+        image_list_ref = []
+        with fits.open(cosmos_web_path + "/COSMOSWeb_galaxy_885_image.fits") as file:
+            for i in range(4):
+                image_list_ref.append(file[i+1].data)
+
+        expected_image = (image_list_ref[1] + image_list_ref[2]) / 2
+        np.testing.assert_allclose(results3[0]['image'], expected_image, atol=1e-16, rtol=1e-16)
 
     def test_redshift(self):
         assert self.source1.redshift == 3.5
@@ -113,6 +124,7 @@ class TestCatalogSource:
             "center_y": 0.0,
             "phi_G": 0,
         }
+        # incorrect catalog type
         np.testing.assert_raises(
             ValueError,
             CatalogSource,
@@ -122,6 +134,7 @@ class TestCatalogSource:
             **source_dict,
         )
 
+        # angular size is too large, no match found since sersic_fallback is not set to True
         source = CatalogSource(
             cosmo=cosmo,
             catalog_path=hst_cosmos_path,
