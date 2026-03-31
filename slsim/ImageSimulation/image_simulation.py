@@ -27,6 +27,8 @@ def simulate_image(
     with_deflector=True,
     with_point_source=True,
     image_units_counts=False,
+    microlensing=False,
+    kwargs_microlensing=None,
     **kwargs
 ):
     """Creates an image of a selected lens with noise.
@@ -72,12 +74,32 @@ def simulate_image(
     :param image_units_counts: if True, return image in units of counts
         instead of counts/second (default: False)
     :type image_units_counts: bool
+    :param microlensing: if True, include microlensing variability in the point source.
+    :type microlensing: bool
+    :param kwargs_microlensing: additional (optional) dictionary of
+        settings required by micro-lensing calculation that do not
+        depend on the Lens() class. It is of type:
+        kwargs_microlensing = {"kwargs_magnification_map":
+        kwargs_magnification_map, "point_source_morphology":
+        'gaussian' or 'agn' or 'supernovae',
+        "kwargs_source_morphology": kwargs_source_morphology} The
+        kwargs_source_morphology is required for the source
+        morphology calculation. The kwargs_magnification_map is
+        required for the microlensing calculation. See the classes
+        in slsim.Microlensing for more details on the
+        kwargs_magnification_map and kwargs_source_morphology. If None, defaults are used corresponding to the source in the lens class.
+    :type kwargs_microlensing: dict or None
     :param kwargs: additional keyword arguments for the bands
     :type kwargs: dict
     :return: simulated image
     :rtype: 2d numpy array
     """
-    kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band, time=t_obs)
+    kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(
+        band,
+        time=t_obs,
+        microlensing=microlensing,
+        kwargs_microlensing=kwargs_microlensing,
+    )
     from slsim.ImageSimulation import image_quality_lenstronomy
 
     # passing in `kwargs_single_band` is more efficient for the SNR criterion
