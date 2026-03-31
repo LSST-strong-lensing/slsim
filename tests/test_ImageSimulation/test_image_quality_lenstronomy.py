@@ -1,5 +1,6 @@
 import pytest
 from slsim.ImageSimulation.image_quality_lenstronomy import (
+    check_speclite_name,
     get_speclite_filtername,
     get_speclite_filternames,
     kwargs_single_band,
@@ -22,6 +23,17 @@ class DummyObservatory:
 
 class TestRegistrySystem:
     """Tests for modular observatory registry system."""
+
+    def test_check_speclite_name(self):
+        """Test that check_speclite_name returns the band if it exists in speclite."""
+        
+        # valid filter
+        valid_filter = "sdss2010-r"
+        assert check_speclite_name(valid_filter) == valid_filter
+        
+        # invalid filter
+        invalid_filter = "invalid-filter-123"
+        assert check_speclite_name(invalid_filter) is None
 
     def test_register_new_observatory(self):
         """Test registering a custom observatory and retrieving its data."""
@@ -54,6 +66,25 @@ class TestRegistrySystem:
 
         with pytest.raises(ValueError, match="has no speclite filter registered"):
             get_speclite_filtername("N1")
+
+    def test_register_observatory_default_speclite(self):
+        """Test registering an observatory using the default check_speclite_name format."""
+        # Test with a valid speclite filter
+        register_observatory(
+            name="DefaultObsValid",
+            observatory_class=DummyObservatory,
+            bands=["sdss2010-r"],
+        )
+        assert get_speclite_filtername("sdss2010-r") == "sdss2010-r"
+
+        # Test with an invalid speclite filter
+        register_observatory(
+            name="DefaultObsInvalid",
+            observatory_class=DummyObservatory,
+            bands=["invalid-filter-123"],
+        )
+        # check_speclite_name returns None for invalid bands
+        assert get_speclite_filtername("invalid-filter-123") is None
 
 
 class TestGetObservatory:

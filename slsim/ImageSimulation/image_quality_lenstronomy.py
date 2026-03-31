@@ -1,11 +1,24 @@
 from lenstronomy.SimulationAPI.ObservationConfig.LSST import LSST
 from lenstronomy.SimulationAPI.ObservationConfig.Roman import Roman
 from lenstronomy.SimulationAPI.ObservationConfig.Euclid import Euclid
+import speclite.filters
 
 _OBSERVATORY_REGISTRY = {}
 
+def check_speclite_name(band):
+    """
+    Checks if the raw band name is a valid speclite filter. Returns the band name if valid, otherwise returns None.
+    This will serve as the default speclite_fmt for observatories that use the same band names as their speclite filters.
+    """
+    try:
+        # attempt to load the filter from speclite's registry
+        speclite.filters.load_filter(band)
+        return band
+    except ValueError:
+        # speclite doesn't recognize this exact name
+        return None
 
-def register_observatory(name: str, observatory_class, bands: list, speclite_fmt=None):
+def register_observatory(name: str, observatory_class, bands: list, speclite_fmt=check_speclite_name):
     """Register a new observatory to integrate it with image simulation tools.
 
     This allows external or user-defined observatories (e.g., "MidEx") 
