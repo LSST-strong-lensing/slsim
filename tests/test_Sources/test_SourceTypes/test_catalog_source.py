@@ -86,10 +86,12 @@ class TestCatalogSource:
         image_list_ref = []
         with fits.open(cosmos_web_path + "/COSMOSWeb_galaxy_885_image.fits") as file:
             for i in range(4):
-                image_list_ref.append(file[i+1].data)
+                image_list_ref.append(file[i + 1].data)
 
         expected_image = (image_list_ref[1] + image_list_ref[2]) / 2
-        np.testing.assert_allclose(results3[0]['image'], expected_image, atol=1e-16, rtol=1e-16)
+        np.testing.assert_allclose(
+            results3[0]["image"], expected_image, atol=1e-16, rtol=1e-16
+        )
 
     def test_redshift(self):
         assert self.source1.redshift == 3.5

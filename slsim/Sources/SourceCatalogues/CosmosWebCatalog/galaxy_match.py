@@ -9,9 +9,10 @@ from slsim.Util.catalog_util import match_source
 PIXEL_SCALE = 0.03
 
 # Ordered from shortest wavelength to longest wavelength, except Roman's F146
-ROMAN_BAND_LIST = ['F062', 'F087', 'F106', 'F129', 'F158', 'F184', 'F213', 'F146']
+ROMAN_BAND_LIST = ["F062", "F087", "F106", "F129", "F158", "F184", "F213", "F146"]
 LSST_BAND_LIST = ["G", "R", "I", "Z", "Y"]
 EUCLID_BAND_LIST = ["VIS", "Y", "J", "H"]
+
 
 def process_catalog(cosmo, catalog_path):
     """
@@ -27,7 +28,7 @@ def process_catalog(cosmo, catalog_path):
     catalog = Table.read(catalog_path, format="fits")
 
     # Convert angular_size to physical size (arcseconds to kPc)
-    ang_dist = cosmo.angular_diameter_distance(catalog['z'])
+    ang_dist = cosmo.angular_diameter_distance(catalog["z"])
     catalog["physical_size"] = (
         catalog["angular_size"].data * 4.84814e-6 * ang_dist.value * 1000
     )
@@ -93,13 +94,13 @@ def load_source(
     id = matched_source["id"]
     image_file = f"COSMOSWeb_galaxy_{id}_image.fits"
     image_file = os.path.join(catalog_path, image_file)
-    
-    image_list =[]
+
+    image_list = []
     with fits.open(image_file) as hdul:
 
         # The images are stored as [F115W, F150W, F277W, F444W]
         for i in range(4):
-            image_list.append(hdul[i+1].data)
+            image_list.append(hdul[i + 1].data)
 
     # Scale the image so that it matches the desired angular size
     # lenstronomy's Interpol class needs the pixel scale, so that gets included here
@@ -107,7 +108,7 @@ def load_source(
 
     # Rotate the image so that it matches the desired angle
     # Convert desired angle from slsim convention (North to East) to lenstronomy convention (East to North)
-    phi = - matched_source["sersic_angle"] + (np.pi / 2 - sersic_angle)
+    phi = -matched_source["sersic_angle"] + (np.pi / 2 - sersic_angle)
 
     return image_list, scale, phi, matched_source
 
@@ -151,7 +152,7 @@ def _select_image_from_band(band, image_list):
     elif band in EUCLID_BAND_LIST:
         index = EUCLID_BAND_LIST.index(band)
         return image_list[index]
-    
+
     elif band in LSST_BAND_LIST:
         if band == "G":
             return image_list[0]
@@ -165,4 +166,6 @@ def _select_image_from_band(band, image_list):
             return image_list[3]
 
     else:
-        raise ValueError(f"Band should be selected from one of the following:\nLSST: {LSST_BAND_LIST}\nRoman: {ROMAN_BAND_LIST}\nEuclid: {EUCLID_BAND_LIST}")
+        raise ValueError(
+            f"Band should be selected from one of the following:\nLSST: {LSST_BAND_LIST}\nRoman: {ROMAN_BAND_LIST}\nEuclid: {EUCLID_BAND_LIST}"
+        )

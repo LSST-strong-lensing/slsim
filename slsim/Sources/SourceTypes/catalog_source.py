@@ -111,16 +111,18 @@ class CatalogSource(SourceBase):
         :return: dictionary of keywords for the source light model(s)
         """
         if not hasattr(self, "_image_list"):
-            self._image_list, self._scale, self._phi, self._matched_source = self._match_source(
-                angular_size=self.angular_size,
-                physical_size=self.physical_size(cosmo=self._cosmo),
-                axis_ratio=self._q,
-                sersic_angle=self._phi,
-                n_sersic=self._n_sersic,
-                processed_catalog=self.final_catalog,
-                catalog_path=self.catalog_path,
-                max_scale=self._max_scale,
-                match_n_sersic=self._match_n_sersic,
+            self._image_list, self._scale, self._phi, self._matched_source = (
+                self._match_source(
+                    angular_size=self.angular_size,
+                    physical_size=self.physical_size(cosmo=self._cosmo),
+                    axis_ratio=self._q,
+                    sersic_angle=self._phi,
+                    n_sersic=self._n_sersic,
+                    processed_catalog=self.final_catalog,
+                    catalog_path=self.catalog_path,
+                    max_scale=self._max_scale,
+                    match_n_sersic=self._match_n_sersic,
+                )
             )
         # If the matching failed, fall back on a regular sersic profile
         if self._image_list is None:
@@ -162,17 +164,18 @@ class CatalogSource(SourceBase):
         return light_model_list, kwargs_extended_source
 
     def _select_image_from_band(self, band):
-        """Selects an image based off of the input band. Only relevant for source catalogs
-        that provide images for multiple bands.
+        """Selects an image based off of the input band. Only relevant for
+        source catalogs that provide images for multiple bands.
 
         :param band: imaging band
         :type band: string
-        :return: image from source catalog corresponding to specific band
+        :return: image from source catalog corresponding to specific
+            band
         """
 
         if len(self._image_list) == 1:
             return self._image_list[0]
-        
+
         # Image_list contains images for bands [F115W, F150W, F277W, F444W]
         if self.catalog_type == "COSMOS_WEB":
             return CosmosWeb._select_image_from_band(band, self._image_list)
