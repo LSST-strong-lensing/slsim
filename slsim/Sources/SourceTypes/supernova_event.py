@@ -104,7 +104,7 @@ class SupernovaEvent(SourceBase):
                     provided_band = "lsst" + element
                 else:
                     provided_band = element
-                
+
                 name = "ps_mag_" + element
                 times = self._lightcurve_time
 
@@ -116,21 +116,21 @@ class SupernovaEvent(SourceBase):
                         zpsys=self._sn_absolute_zpsys,
                     )
                 except Exception:
-                    # If sncosmo throws an error, it means the band isn't registered 
+                    # If sncosmo throws an error, it means the band isn't registered
                     # in sncosmo's internal system. We skip it to avoid crashing.
                     continue
 
                 # If successful, store the magnitudes
                 if name not in self.source_dict:
                     self.source_dict[name] = float(min(magnitudes))
-                
+
                 kwargs_variab_extracted[element] = {
                     "MJD": times,
                     name: magnitudes,
                 }
         else:
             kwargs_variab_extracted = {}
-            
+
         self._variability_computed = True
         return kwargs_variab_extracted
 

@@ -62,11 +62,11 @@ class TestSupernovaEvent:
         light_curve = self.source.light_curve
         light_curve_roman = self.source_roman.light_curve
         light_curve_none = self.source_none.light_curve
-        
+
         # Check that the non-band parameters are successfully ignored
         assert "supernovae_lightcurve" not in light_curve.keys()
         assert "supernovae_lightcurve" not in light_curve_roman.keys()
-        
+
         assert "i" in light_curve.keys()
         assert "r" in light_curve.keys()
         assert "MJD" in light_curve["i"].keys()
