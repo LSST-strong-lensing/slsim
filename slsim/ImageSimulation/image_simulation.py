@@ -82,12 +82,13 @@ def simulate_image(
         kwargs_microlensing = {"kwargs_magnification_map":
         kwargs_magnification_map, "point_source_morphology":
         'gaussian' or 'agn' or 'supernovae',
-        "kwargs_source_morphology": kwargs_source_morphology} The
-        kwargs_source_morphology is required for the source
+        "kwargs_source_morphology": kwargs_source_morphology}.
+        The kwargs_source_morphology is required for the source
         morphology calculation. The kwargs_magnification_map is
         required for the microlensing calculation. See the classes
         in slsim.Microlensing for more details on the
-        kwargs_magnification_map and kwargs_source_morphology. If None, defaults are used corresponding to the source in the lens class.
+        kwargs_magnification_map and kwargs_source_morphology.
+        If None, defaults are used corresponding to the source in the lens class.
     :type kwargs_microlensing: dict or None
     :param kwargs: additional keyword arguments for the bands
     :type kwargs: dict
