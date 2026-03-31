@@ -5,10 +5,13 @@ import speclite.filters
 
 _OBSERVATORY_REGISTRY = {}
 
+
 def check_speclite_name(band):
-    """
-    Checks if the raw band name is a valid speclite filter. Returns the band name if valid, otherwise returns None.
-    This will serve as the default speclite_fmt for observatories that use the same band names as their speclite filters.
+    """Checks if the raw band name is a valid speclite filter.
+
+    Returns the band name if valid, otherwise returns None. This will
+    serve as the default speclite_fmt for observatories that use the
+    same band names as their speclite filters.
     """
     try:
         # attempt to load the filter from speclite's registry
@@ -18,24 +21,27 @@ def check_speclite_name(band):
         # speclite doesn't recognize this exact name
         return None
 
-def register_observatory(name: str, observatory_class, bands: list, speclite_fmt=check_speclite_name):
+
+def register_observatory(
+    name: str, observatory_class, bands: list, speclite_fmt=check_speclite_name
+):
     """Register a new observatory to integrate it with image simulation tools.
 
-    This allows external or user-defined observatories (e.g., "MidEx") 
+    This allows external or user-defined observatories (e.g., "MidEx")
     to be automatically recognized by functions like ``kwargs_single_band``.
 
     :param name: The identifier for the observatory (e.g., "MidEx").
     :type name: str
-    :param observatory_class: The class defining the observatory's configuration. 
-        Similar to the ``lenstronomy.SimulationAPI.ObservationConfig`` classes, 
+    :param observatory_class: The class defining the observatory's configuration.
+        Similar to the ``lenstronomy.SimulationAPI.ObservationConfig`` classes,
         this class must fulfill two requirements:
         1. Its constructor must accept ``band`` as a keyword argument.
         2. It must expose a ``kwargs_single_band()`` method that returns a dictionary of lenstronomy observation parameters.
     :type observatory_class: type
     :param bands: List of band name strings owned by this observatory. E.g., for LSST this would be ['u', 'g', 'r', 'i', 'z', 'y'].
     :type bands: list[str]
-    :param speclite_fmt: A callable function that takes a ``band`` string and returns the corresponding 
-        speclite filter name (e.g., ``lambda b: f"MidEx-{b}"``). Set to ``None`` if the 
+    :param speclite_fmt: A callable function that takes a ``band`` string and returns the corresponding
+        speclite filter name (e.g., ``lambda b: f"MidEx-{b}"``). Set to ``None`` if the
         observatory does not utilize speclite filters.
     :type speclite_fmt: callable, optional
 
@@ -60,7 +66,7 @@ def register_observatory(name: str, observatory_class, bands: list, speclite_fmt
             def __init__(self, band="A", **kwargs):
                 if band not in custom_band_obs:
                     raise ValueError(f"Band '{band}' not supported! Choose from {list(custom_band_obs.keys())}.")
-                
+
                 self.obs = copy.deepcopy(custom_band_obs[band])
                 self.camera = {
                     "read_noise": 5.0,

@@ -25,12 +25,13 @@ class TestRegistrySystem:
     """Tests for modular observatory registry system."""
 
     def test_check_speclite_name(self):
-        """Test that check_speclite_name returns the band if it exists in speclite."""
-        
+        """Test that check_speclite_name returns the band if it exists in
+        speclite."""
+
         # valid filter
         valid_filter = "sdss2010-r"
         assert check_speclite_name(valid_filter) == valid_filter
-        
+
         # invalid filter
         invalid_filter = "invalid-filter-123"
         assert check_speclite_name(invalid_filter) is None
@@ -68,7 +69,8 @@ class TestRegistrySystem:
             get_speclite_filtername("N1")
 
     def test_register_observatory_default_speclite(self):
-        """Test registering an observatory using the default check_speclite_name format."""
+        """Test registering an observatory using the default
+        check_speclite_name format."""
         # Test with a valid speclite filter
         register_observatory(
             name="DefaultObsValid",
