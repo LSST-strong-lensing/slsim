@@ -741,14 +741,14 @@ def lens_image_series(
     :param gain: Amplifier gain (default 0.7 for LSST).
     :param single_visit_mag_zero_points: Zero points of the single-visit image in
      different bands. It is a dictionary of the form: {
-                    'g': 32.33,
-                    'r': 32.17,
-                    'i': 31.85,
-                    'z': 31.45,
-                    'y': 30.63
-                }. It sould contain at least values for the band in which one need to
-                simulate images. Default values are average magnitude zero points for
-                LSST single visists in each band.
+     'g': 32.33,
+     'r': 32.17,
+     'i': 31.85,
+     'z': 31.45,
+     'y': 30.63
+     }. It sould contain at least values for the band in which one need to
+     simulate images. Default values are average magnitude zero points for
+     LSST single visists in each band.
     :param microlensing: boolean flag to include microlensing variability
     :return: list of series of images of a lens
     """
