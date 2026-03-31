@@ -1,5 +1,6 @@
 from slsim.Sources.Supernovae import random_supernovae
 from slsim.Sources.SourceTypes.source_base import SourceBase
+from slsim.ImageSimulation.image_quality_lenstronomy import get_all_supported_bands
 
 
 class SupernovaEvent(SourceBase):
@@ -93,42 +94,43 @@ class SupernovaEvent(SourceBase):
                     modeldir=self._sn_modeldir,
                 )
 
-            for element in list(self._kwargs_variability):
-                # if lsst filter is being used
-                if element in [
-                    "r",
-                    "i",
-                    "g",
-                    "z",
-                    "y",
-                    "F062",
-                    "F087",
-                    "F106",
-                    "F129",
-                    "F158",
-                    "F184",
-                    "F146",
-                    "F213",
-                ]:
-                    if element in ["r", "i", "g", "z", "y"]:
-                        provided_band = "lsst" + element
-                    else:
-                        provided_band = element
-                    name = "ps_mag_" + element
-                    times = self._lightcurve_time
+            # Filter the input list against the global registry to ignore physical parameters
+            supported_bands = get_all_supported_bands()
+            provided_bands = set(supported_bands) & set(self._kwargs_variability)
+
+            for element in provided_bands:
+                # sncosmo registers LSST bands as 'lsstg', 'lsstr', etc.
+                if element in ["u", "g", "r", "i", "z", "y"]:
+                    provided_band = "lsst" + element
+                else:
+                    provided_band = element
+                
+                name = "ps_mag_" + element
+                times = self._lightcurve_time
+
+                # Safely attempt to generate the lightcurve
+                try:
                     magnitudes = lightcurve_class.get_apparent_magnitude(
                         time=times,
                         band=provided_band,
                         zpsys=self._sn_absolute_zpsys,
                     )
-                    if name not in self.source_dict:
-                        self.source_dict[name] = float(min(magnitudes))
-                    kwargs_variab_extracted[element] = {
-                        "MJD": times,
-                        name: magnitudes,
-                    }
+                except Exception:
+                    # If sncosmo throws an error, it means the band isn't registered 
+                    # in sncosmo's internal system. We skip it to avoid crashing.
+                    continue
+
+                # If successful, store the magnitudes
+                if name not in self.source_dict:
+                    self.source_dict[name] = float(min(magnitudes))
+                
+                kwargs_variab_extracted[element] = {
+                    "MJD": times,
+                    name: magnitudes,
+                }
         else:
             kwargs_variab_extracted = {}
+            
         self._variability_computed = True
         return kwargs_variab_extracted
 
