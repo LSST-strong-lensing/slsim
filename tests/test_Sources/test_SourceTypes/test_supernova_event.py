@@ -52,8 +52,12 @@ class TestSupernovaEvent:
         self.source_roman = SupernovaEvent(
             cosmo=self.cosmo, **kwargs_sn_roman, **self.source_dict
         )
-        self.source_none = SupernovaEvent(cosmo=self.cosmo, **kwargs_sn_none, **source_dict2)
-        self.source_cosmo_error = SupernovaEvent(cosmo=None, **kwargs_sn, **self.source_dict)
+        self.source_none = SupernovaEvent(
+            cosmo=self.cosmo, **kwargs_sn_none, **source_dict2
+        )
+        self.source_cosmo_error = SupernovaEvent(
+            cosmo=None, **kwargs_sn, **self.source_dict
+        )
         self.source_light_curve = SupernovaEvent(
             cosmo=self.cosmo, **kwargs_sn_none, **source_dict3
         )
@@ -88,18 +92,25 @@ class TestSupernovaEvent:
             self.source_cosmo_error.light_curve
 
     def test_light_curve_warning(self):
-        """Test that a UserWarning is raised when a band is supported by SLSim but missing in sncosmo."""
+        """Test that a UserWarning is raised when a band is supported by SLSim
+        but missing in sncosmo."""
         import slsim.ImageSimulation.image_quality_lenstronomy as iql
 
         # register a dummy observatory with a fake band so SLSim recognizes it but sncosmo does not
         class DummyObs:
-            def __init__(self, band, **kwargs): pass
-            def kwargs_single_band(self): return {}
-            
+            def __init__(self, band, **kwargs):
+                pass
+
+            def kwargs_single_band(self):
+                return {}
+
         iql.register_observatory("DummyObs", DummyObs, bands=["unregistered_sn_band"])
 
         # modify the source to request this fake band
-        self.source._kwargs_variability = ["supernovae_lightcurve", "unregistered_sn_band"]
+        self.source._kwargs_variability = [
+            "supernovae_lightcurve",
+            "unregistered_sn_band",
+        ]
 
         # sncosmo doesn't know about "unregistered_sn_band", so it should raise the warning and skip it
         with pytest.warns(UserWarning, match="Failed to generate lightcurve"):

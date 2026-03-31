@@ -17,7 +17,7 @@ class SupernovaEvent(SourceBase):
         sn_modeldir=None,
         kwargs_variability=None,
         cosmo=None,
-        **kwargs
+        **kwargs,
     ):
         """# TODO: is there a specific variability model needed for this class,
         if so, we should set it directly.
@@ -61,7 +61,7 @@ class SupernovaEvent(SourceBase):
             point_source=True,
             cosmo=cosmo,
             variability_model=variability_model,
-            **kwargs
+            **kwargs,
         )
         self.name = "SN" + sn_type
         self._variability_computed = False  # to be set to True once the light_curve() definition has been processed
@@ -122,7 +122,7 @@ class SupernovaEvent(SourceBase):
                     warnings.warn(
                         f"Skipping band '{provided_band}': Failed to generate lightcurve. "
                         f"It may not be registered in sncosmo. (Error: {e})",
-                        UserWarning
+                        UserWarning,
                     )
                     continue
 

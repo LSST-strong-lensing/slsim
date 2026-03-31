@@ -1333,7 +1333,8 @@ class Lens(LensedSystemBase):
         :param time: time is an image observation time in units of days.
             If None, provides magnitude without variability.
         :type time: float
-        :param microlensing: if True, include microlensing variability in the point source.
+        :param microlensing: if True, include microlensing variability
+            in the point source.
         :type microlensing: bool
         :param kwargs_microlensing: additional (optional) dictionary of
             settings required by micro-lensing calculation that do not
@@ -1346,7 +1347,9 @@ class Lens(LensedSystemBase):
             morphology calculation. The kwargs_magnification_map is
             required for the microlensing calculation. See the classes
             in slsim.Microlensing for more details on the
-            kwargs_magnification_map and kwargs_source_morphology. If None, defaults are used corresponding to the source in the lens class.
+            kwargs_magnification_map and kwargs_source_morphology. If
+            None, defaults are used corresponding to the source in the
+            lens class.
         :type kwargs_microlensing: dict or None
         :return: lenstronomy model and parameter conventions
         """
