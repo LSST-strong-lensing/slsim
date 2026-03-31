@@ -36,9 +36,7 @@ def match_source(
     :param match_n_sersic: determines whether to match based off of the sersic index as well.
         Since n_sersic is usually undefined and set to 1 in SLSim, this is set to False by default.
     :type match_n_sersic: bool
-    :return: tuple(ndarray, float, float, int)
-        This is the raw image matched from the catalog, the scale that the image needs to
-        match angular size, the angle of rotation needed to match the desired e1 and e2, and the galaxy ID.
+    :return: row of astropy table corresponding to the matched source in the catalog
     """
 
     # Later, the matched image will be scaled to match angular size

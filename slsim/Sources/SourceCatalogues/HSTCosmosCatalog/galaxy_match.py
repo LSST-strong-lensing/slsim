@@ -224,16 +224,18 @@ def load_source(
     :param sersic_angle: desired sersic angle
     :param processed_catalog: the returned object from calling process_catalog()
     :param catalog_path: path to the COSMOS_23.5_training_sample directory.
-     Example: catalog_path = "/home/data/COSMOS_23.5_training_sample"
+        Example: catalog_path = "/home/data/COSMOS_23.5_training_sample"
     :param max_scale: The COSMOS image will be scaled to have the desired angular size. Scaling up
-     results in a more pixelated image. This input determines what the maximum up-scale factor is.
+        results in a more pixelated image. This input determines what the maximum up-scale factor is.
     :type max_scale: int or float
     :param match_n_sersic: determines whether to match based off of the sersic index as well.
-     Since n_sersic is usually undefined and set to 1 in SLSim, this is set to False by default.
+        Since n_sersic is usually undefined and set to 1 in SLSim, this is set to False by default.
     :type match_n_sersic: bool
-    :return: tuple(ndarray, float, float, int)
-     This is the raw image matched from the catalog, the scale that the image needs to
-     match angular size, the angle of rotation needed to match the desired e1 and e2, and the galaxy ID.
+    :return: tuple(list, float, float, int) consisting of:
+        1. A list of band-specific images matched from the catalog (only F814W in this case)
+        2. The scale that the image needs to match the desired angular size
+        3. The angle of rotation needed to match the desired angle
+        4. The matched astropy row.
     """
 
     matched_source = match_source(
@@ -248,7 +250,7 @@ def load_source(
     if matched_source is None:
         return None, None, None, None
 
-    # load and save image
+    # load and save image (this catalog only provides one image for the HST F814W band)
     fname = matched_source["GAL_FILENAME"]
     hdu = int(matched_source["GAL_HDU"])
     path = os.path.join(catalog_path, fname)
@@ -262,6 +264,7 @@ def load_source(
     )
 
     # Rotate the COSMOS image so that it matches the angle given in source_dict
-    phi = np.pi / 2 - matched_source["sersic_angle"] - sersic_angle
+    # Convert desired angle from slsim convention (North to East) to lenstronomy convention (East to North)
+    phi = - matched_source["sersic_angle"] + (- sersic_angle - np.pi / 2)
 
-    return image, scale, phi, matched_source["IDENT"]
+    return [image], scale, phi, matched_source
