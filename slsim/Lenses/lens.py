@@ -921,7 +921,9 @@ class Lens(LensedSystemBase):
                 for i in range(len(magnif_log)):
                     magnified_mag_list.append(source_mag_unlensed - magnif_log[i])
                 return np.array(magnified_mag_list)
-        return self.source(source_index).point_source_magnitude(band)
+        return self.source(source_index).point_source_magnitude(
+            band, image_observation_times=time
+        )
 
     def extended_source_magnitude_for_each_image(self, band, lensed=False):
         """Extended source magnitudes, either unlensed (single value) or lensed
@@ -1320,7 +1322,9 @@ class Lens(LensedSystemBase):
             extended_source_magnification = 0
         return extended_source_magnification
 
-    def lenstronomy_kwargs(self, band=None, time=None):
+    def lenstronomy_kwargs(
+        self, band=None, time=None, microlensing=False, kwargs_microlensing=None
+    ):
         """Generates lenstronomy dictionary conventions for the class object.
 
         :param band: imaging band, if =None, will result in un-
@@ -1329,6 +1333,24 @@ class Lens(LensedSystemBase):
         :param time: time is an image observation time in units of days.
             If None, provides magnitude without variability.
         :type time: float
+        :param microlensing: if True, include microlensing variability
+            in the point source.
+        :type microlensing: bool
+        :param kwargs_microlensing: additional (optional) dictionary of
+            settings required by micro-lensing calculation that do not
+            depend on the Lens() class. It is of type:
+            kwargs_microlensing = {"kwargs_magnification_map":
+            kwargs_magnification_map, "point_source_morphology":
+            'gaussian' or 'agn' or 'supernovae',
+            "kwargs_source_morphology": kwargs_source_morphology} The
+            kwargs_source_morphology is required for the source
+            morphology calculation. The kwargs_magnification_map is
+            required for the microlensing calculation. See the classes
+            in slsim.Microlensing for more details on the
+            kwargs_magnification_map and kwargs_source_morphology. If
+            None, defaults are used corresponding to the source in the
+            lens class.
+        :type kwargs_microlensing: dict or None
         :return: lenstronomy model and parameter conventions
         """
         lens_model, kwargs_lens = self.deflector_mass_model_lenstronomy(source_index=0)
@@ -1377,7 +1399,10 @@ class Lens(LensedSystemBase):
             )
 
         sources, sources_kwargs = self.source_light_model_lenstronomy(
-            band=band, time=time
+            band=band,
+            time=time,
+            microlensing=microlensing,
+            kwargs_microlensing=kwargs_microlensing,
         )
         # ensure that only the models that exist are getting added to kwargs_model
         for k in sources.keys():

@@ -2,12 +2,13 @@ from slsim.Sources.SourceTypes.supernova_event import SupernovaEvent
 import numpy as np
 import pytest
 from astropy import cosmology
+import slsim.ImageSimulation.image_quality_lenstronomy as iql
 
 
 class TestSupernovaEvent:
     def setup_method(self):
-        cosmo = cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
-        source_dict = {"z": 0.8, "ra_off": 0.001, "dec_off": 0.005}
+        self.cosmo = cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
+        self.source_dict = {"z": 0.8, "ra_off": 0.001, "dec_off": 0.005}
         source_dict2 = {"z": 0.8, "ra_off": 0.001, "dec_off": 0.005, "ps_mag_i": 20}
         source_dict3 = {
             "z": 0.8,
@@ -48,20 +49,29 @@ class TestSupernovaEvent:
             "sn_modeldir": None,
         }
 
-        self.source = SupernovaEvent(cosmo=cosmo, **kwargs_sn, **source_dict)
+        self.source = SupernovaEvent(cosmo=self.cosmo, **kwargs_sn, **self.source_dict)
         self.source_roman = SupernovaEvent(
-            cosmo=cosmo, **kwargs_sn_roman, **source_dict
+            cosmo=self.cosmo, **kwargs_sn_roman, **self.source_dict
         )
-        self.source_none = SupernovaEvent(cosmo=cosmo, **kwargs_sn_none, **source_dict2)
-        self.source_cosmo_error = SupernovaEvent(cosmo=None, **kwargs_sn, **source_dict)
+        self.source_none = SupernovaEvent(
+            cosmo=self.cosmo, **kwargs_sn_none, **source_dict2
+        )
+        self.source_cosmo_error = SupernovaEvent(
+            cosmo=None, **kwargs_sn, **self.source_dict
+        )
         self.source_light_curve = SupernovaEvent(
-            cosmo=cosmo, **kwargs_sn_none, **source_dict3
+            cosmo=self.cosmo, **kwargs_sn_none, **source_dict3
         )
 
     def test_light_curve(self):
         light_curve = self.source.light_curve
         light_curve_roman = self.source_roman.light_curve
         light_curve_none = self.source_none.light_curve
+
+        # Check that the non-band parameters are successfully ignored
+        assert "supernovae_lightcurve" not in light_curve.keys()
+        assert "supernovae_lightcurve" not in light_curve_roman.keys()
+
         assert "i" in light_curve.keys()
         assert "r" in light_curve.keys()
         assert "MJD" in light_curve["i"].keys()
@@ -81,6 +91,32 @@ class TestSupernovaEvent:
         assert not light_curve_none
         with pytest.raises(ValueError):
             self.source_cosmo_error.light_curve
+
+    def test_light_curve_warning(self):
+        """Test that a UserWarning is raised when a band is supported by SLSim
+        but missing in sncosmo."""
+
+        # register a dummy observatory with a fake band so SLSim recognizes it but sncosmo does not
+        class DummyObs:
+            def __init__(self, band, **kwargs):
+                pass
+
+            def kwargs_single_band(self):
+                return {}
+
+        iql.register_observatory("DummyObs", DummyObs, bands=["unregistered_sn_band"])
+
+        # modify the source to request this fake band
+        self.source._kwargs_variability = [
+            "supernovae_lightcurve",
+            "unregistered_sn_band",
+        ]
+
+        # sncosmo doesn't know about "unregistered_sn_band", so it should raise the warning and skip it
+        with pytest.warns(UserWarning, match="Failed to generate lightcurve"):
+            failed_light_curve = self.source.light_curve
+
+        assert failed_light_curve == {}
 
     def test_point_source_magnitude(self):
         # supernova is randomly generated. So, can't assert a fix number for magnitude.

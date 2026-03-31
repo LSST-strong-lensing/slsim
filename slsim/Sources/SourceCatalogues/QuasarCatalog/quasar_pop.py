@@ -412,10 +412,10 @@ class QuasarRate(object):
 
         # Define a broader wavelength coverage to handle high-z shifting.
         # Default qsosed is logspace(2.95, ...).
-        # start at 2.35 (~223 Angstroms) to ensure the blue end of the
+        # start at 2.00 (~100 Angstroms) to ensure the blue end of the
         # u-band (approx 3000A) is covered even at z ~ 12.
         # 3000 / (1 + 12) ~ 230 A.
-        wavlen = np.logspace(2.35, 4.48, num=25000, endpoint=True)
+        wavlen = np.logspace(2.00, 4.48, num=30000, endpoint=True)
 
         # 1. Generate the SED using AGILE parameters
         # params_agile controls the physics (slopes, breaks, etc.)
@@ -476,8 +476,8 @@ class QuasarRate(object):
         grid_mags = np.zeros((len(z_grid), len(mi_grid), len(self.qsogen_bands)))
 
         # Pre-compute shared wavelength array
-        # logspace(2.35, ...) covers ~223 Angstroms to IR
-        wavlen = np.logspace(2.35, 4.48, num=25000, endpoint=True)
+        # logspace(2.00, ...) covers ~100 Angstroms to IR
+        wavlen = np.logspace(2.00, 4.48, num=30000, endpoint=True)
 
         # Loop over grid and compute magnitudes
         for i, z in enumerate(z_grid):
