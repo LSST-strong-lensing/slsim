@@ -6,16 +6,65 @@ _OBSERVATORY_REGISTRY = {}
 
 
 def register_observatory(name: str, observatory_class, bands: list, speclite_fmt=None):
-    """Register a new observatory so all image_quality_lenstronomy functions
-    recognise it automatically.
+    """Register a new observatory to integrate it with image simulation tools.
 
-    :param name: Observatory name string (e.g. "MidEx"). Case-sensitive.
-    :param observatory_class: Class whose constructor accepts ``band`` as its
-        first keyword argument and exposes a ``kwargs_single_band()`` method.
-    :param bands: List of band name strings owned by this observatory.
-    :param speclite_fmt: Callable ``(band: str) -> str`` that returns the
-        speclite filter name for a given band, or ``None`` if the observatory
-        does not have speclite filters.
+    This allows external or user-defined observatories (e.g., "MidEx") 
+    to be automatically recognized by functions like ``kwargs_single_band``.
+
+    :param name: The identifier for the observatory (e.g., "MidEx").
+    :type name: str
+    :param observatory_class: The class defining the observatory's configuration. 
+        Similar to the ``lenstronomy.SimulationAPI.ObservationConfig`` classes, 
+        this class must fulfill two requirements:
+        1. Its constructor must accept ``band`` as a keyword argument.
+        2. It must expose a ``kwargs_single_band()`` method that returns a dictionary of lenstronomy observation parameters.
+    :type observatory_class: type
+    :param bands: List of band name strings owned by this observatory. E.g., for LSST this would be ['u', 'g', 'r', 'i', 'z', 'y'].
+    :type bands: list[str]
+    :param speclite_fmt: A callable function that takes a ``band`` string and returns the corresponding 
+        speclite filter name (e.g., ``lambda b: f"MidEx-{b}"``). Set to ``None`` if the 
+        observatory does not utilize speclite filters.
+    :type speclite_fmt: callable, optional
+
+    Example:
+    --------
+    .. code-block:: python
+
+        import copy
+        import lenstronomy.Util.util as util
+        import slsim.simulation.image_quality_lenstronomy as iql
+
+        # Specify bands and their corresponding observation parameters for the custom observatory
+        custom_band_obs = {
+            "A": {"exposure_time": 90.0, "sky_brightness": 22.0, "magnitude_zero_point": 26.0},
+            "B": {"exposure_time": 90.0, "sky_brightness": 21.5, "magnitude_zero_point": 25.8}
+        }
+
+        # Define the observatory class
+        class CustomObs(object):
+            \"\"\"Class containing CustomObs instrument and observation configurations.\"\"\"
+
+            def __init__(self, band="A", **kwargs):
+                if band not in custom_band_obs:
+                    raise ValueError(f"Band '{band}' not supported! Choose from {list(custom_band_obs.keys())}.")
+                
+                self.obs = copy.deepcopy(custom_band_obs[band])
+                self.camera = {
+                    "read_noise": 5.0,
+                    "pixel_scale": 0.15,
+                    "ccd_gain": 2.0,
+                }
+
+            def kwargs_single_band(self):
+                return util.merge_dicts(self.camera, self.obs)
+
+        # Register the new observatory
+        iql.register_observatory(
+            name="CustomObs",
+            observatory_class=CustomObs,
+            bands=list(_custom_band_obs.keys()),
+            speclite_fmt=lambda b: f"CustomObs-{b}"
+        )
     """
     _OBSERVATORY_REGISTRY[name] = {
         "class": observatory_class,
