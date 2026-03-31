@@ -45,6 +45,9 @@ def register_observatory(
         observatory does not utilize speclite filters.
     :type speclite_fmt: callable, optional
 
+    Given below is a simple example of how to define a custom observatory and register it using this function.
+    A sophisticated example demonstrating full image simulation capabilities can be found at https://github.com/timedilatesme/MidEx-sims/blob/main/v1/lagn_sims.ipynb
+
     Example:
     --------
     .. code-block:: python
