@@ -2,6 +2,7 @@ from slsim.Sources.SourceTypes.supernova_event import SupernovaEvent
 import numpy as np
 import pytest
 from astropy import cosmology
+import slsim.ImageSimulation.image_quality_lenstronomy as iql
 
 
 class TestSupernovaEvent:
@@ -94,7 +95,6 @@ class TestSupernovaEvent:
     def test_light_curve_warning(self):
         """Test that a UserWarning is raised when a band is supported by SLSim
         but missing in sncosmo."""
-        import slsim.ImageSimulation.image_quality_lenstronomy as iql
 
         # register a dummy observatory with a fake band so SLSim recognizes it but sncosmo does not
         class DummyObs:
