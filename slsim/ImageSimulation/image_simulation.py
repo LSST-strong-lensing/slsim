@@ -82,12 +82,13 @@ def simulate_image(
         kwargs_microlensing = {"kwargs_magnification_map":
         kwargs_magnification_map, "point_source_morphology":
         'gaussian' or 'agn' or 'supernovae',
-        "kwargs_source_morphology": kwargs_source_morphology} The
-        kwargs_source_morphology is required for the source
+        "kwargs_source_morphology": kwargs_source_morphology}.
+        The kwargs_source_morphology is required for the source
         morphology calculation. The kwargs_magnification_map is
         required for the microlensing calculation. See the classes
         in slsim.Microlensing for more details on the
-        kwargs_magnification_map and kwargs_source_morphology. If None, defaults are used corresponding to the source in the lens class.
+        kwargs_magnification_map and kwargs_source_morphology.
+        If None, defaults are used corresponding to the source in the lens class.
     :type kwargs_microlensing: dict or None
     :param kwargs: additional keyword arguments for the bands
     :type kwargs: dict
@@ -763,14 +764,14 @@ def lens_image_series(
     :param gain: Amplifier gain (default 0.7 for LSST).
     :param single_visit_mag_zero_points: Zero points of the single-visit image in
      different bands. It is a dictionary of the form: {
-                    'g': 32.33,
-                    'r': 32.17,
-                    'i': 31.85,
-                    'z': 31.45,
-                    'y': 30.63
-                }. It sould contain at least values for the band in which one need to
-                simulate images. Default values are average magnitude zero points for
-                LSST single visists in each band.
+     'g': 32.33,
+     'r': 32.17,
+     'i': 31.85,
+     'z': 31.45,
+     'y': 30.63
+     }. It sould contain at least values for the band in which one need to
+     simulate images. Default values are average magnitude zero points for
+     LSST single visists in each band.
     :param microlensing: boolean flag to include microlensing variability
     :return: list of series of images of a lens
     """

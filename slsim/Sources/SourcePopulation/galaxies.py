@@ -215,7 +215,7 @@ class Galaxies(SourcePopBase):
                 else:
                     raise ValueError(
                         "ellipticity or semi-major and semi-minor axis are missing for"
-                        "the first light profile in galaxy_list columns"
+                        " the first light profile in galaxy_list columns"
                     )
 
             if galaxy["e1_1"] == -1 or galaxy["e1_2"] == -1:
@@ -234,7 +234,7 @@ class Galaxies(SourcePopBase):
                 else:
                     raise ValueError(
                         "ellipticity or semi-major and semi-minor axis are missing for"
-                        "the second light profile in galaxy_list columns"
+                        " the second light profile in galaxy_list columns"
                     )
             if galaxy["angular_size_0"] == -1 or galaxy["angular_size_1"] == -1:
                 if "a0" in galaxy.colnames and "b0" in galaxy.colnames:
@@ -244,7 +244,7 @@ class Galaxies(SourcePopBase):
                 else:
                     raise ValueError(
                         "semi-major and semi-minor axis are missing for the first light"
-                        "profile in galaxy_list columns"
+                        " profile in galaxy_list columns"
                     )
                 if "a1" in galaxy.colnames and "b1" in galaxy.colnames:
                     galaxy["angular_size_1"] = average_angular_size(
@@ -253,7 +253,7 @@ class Galaxies(SourcePopBase):
                 else:
                     raise ValueError(
                         "semi-major and semi-minor axis are missing for the second"
-                        "light profile in galaxy_list columns"
+                        " light profile in galaxy_list columns"
                     )
             if galaxy["n_sersic_0"] == -1 or galaxy["n_sersic_1"] == -1:
                 galaxy["n_sersic_0"] = 1
@@ -261,7 +261,7 @@ class Galaxies(SourcePopBase):
         else:
             raise ValueError(
                 "Provided number of light profiles is not supported. It should be"
-                "either 'single or 'double' "
+                " either 'single or 'double' "
             )
         return galaxy
 

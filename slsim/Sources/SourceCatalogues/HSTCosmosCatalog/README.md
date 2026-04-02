@@ -34,3 +34,42 @@ The final output is the cutout of the source, the scaling factor required to mat
 # Tutorial
 
 A notebook demonstrating how to match Sersics to real sources is given [here](https://github.com/LSST-strong-lensing/slsim/blob/main/notebooks/sersic_to_real_galaxy_source_matching.ipynb). In order to use the catalog, a path to the `COSMOS_23.5_training_sample` directory must be given.
+
+# Acknowledgments
+
+This catalog is described in [Mandelbaum et al. 2018](https://doi.org/10.1093/mnras/sty2420).
+
+```
+@article{Mandelbaum2018,
+    author = {Mandelbaum, Rachel and Lanusse, François and Leauthaud, Alexie and Armstrong, Robert and Simet, Melanie and Miyatake, Hironao and Meyers, Joshua E and Bosch, James and Murata, Ryoma and Miyazaki, Satoshi and Tanaka, Masayuki},
+    title = {Weak lensing shear calibration with simulations of the HSC survey},
+    journal = {Monthly Notices of the Royal Astronomical Society},
+    volume = {481},
+    number = {3},
+    pages = {3170-3195},
+    year = {2018},
+    month = {09},
+    abstract = {We present results from a set of simulations designed to constrain the weak lensing shear calibration for the Hyper Suprime-Cam (HSC) survey. These simulations include HSC observing conditions and galaxy images from the Hubble Space Telescope (HST), with fully realistic galaxy morphologies and the impact of nearby galaxies included. We find that the inclusion of nearby galaxies in the images is critical to reproducing the observed distributions of galaxy sizes and magnitudes, due to the non-negligible fraction of unrecognized blends in ground-based data, even with the excellent typical seeing of the HSC survey (0.58 arcsec in the i band). Using these simulations, we detect and remove the impact of selection biases due to the correlation of weights and the quantities used to define the sample (S/N and apparent size) with the lensing shear. We quantify and remove galaxy property-dependent multiplicative and additive shear biases that are intrinsic to our shear estimation method, including an ∼10 per cent-level multiplicative bias due to the impact of nearby galaxies and unrecognized blends. Finally, we check the sensitivity of our shear calibration estimates to other cuts made on the simulated samples, and find that the changes in shear calibration are well within the requirements for HSC weak lensing analysis. Overall, the simulations suggest that the weak lensing multiplicative biases in the first-year HSC shear catalogue are controlled at the 1 per cent level.},
+    issn = {0035-8711},
+    doi = {10.1093/mnras/sty2420},
+    url = {https://doi.org/10.1093/mnras/sty2420},
+    eprint = {https://academic.oup.com/mnras/article-pdf/481/3/3170/25823242/sty2420.pdf},
+}
+```
+
+```
+@dataset{mandelbaum_2012_3242143,
+  author       = {Mandelbaum, Rachel and
+                  Lackner, Claire and
+                  Leauthaud, Alexie and
+                  Rowe, Barnaby},
+  title        = {COSMOS real galaxy dataset},
+  month        = jan,
+  year         = 2012,
+  publisher    = {Zenodo},
+  doi          = {10.5281/zenodo.3242143},
+  url          = {https://doi.org/10.5281/zenodo.3242143},
+}
+```
+
+This dataset is based on observations made with the NASA/ESA Hubble Space Telescope obtained from the Space Telescope Science Institute, which is operated by the Association of Universities for Research in Astronomy, Inc., under NASA contract NAS 5–26555. These observations are associated with program(s) 9822 and 10092.
