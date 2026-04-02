@@ -81,10 +81,10 @@ def simulate_roman_image(
         t_obs, considers no variability in the lens.
     :param survey_mode: survey mode of the Roman detector. Can be "wide_area" or "time_domain".
     :type survey_mode: str
-    :param detector: The specific WFI detector being used to generate the psf (from 1 to 18). 
+    :param detector: The specific WFI detector being used to generate the psf (from 1 to 18).
         If None, one will be selected at random.
     :type detector: int, optional
-    :param detector_pos: The pixel on the detector being used to generate the psf. 
+    :param detector_pos: The pixel on the detector being used to generate the psf.
         Must be a 2-tuple of integers between 4 + num_pix * oversample and 4092 - num_pix * oversample.
     :type detector_pos: tuple, optional
     :param seed: An rng seed used for generating detector effects in galsim.
@@ -243,10 +243,10 @@ def get_psf(band, detector, detector_pos, oversample, psf_directory):
     :type band: str
     :param detector: The specific Roman detector being used to generate the psf (from 1 to 18).
     :type detector: int
-    :param detector_pos: The position of the detector being used to generate the psf. 
+    :param detector_pos: The position of the detector being used to generate the psf.
         Must be between 4 + num_pix * oversample and 4092 - num_pix * oversample.
     :type detector_pos: int
-    :param oversample: Number of times that each pixel's side is subdivided for higher 
+    :param oversample: Number of times that each pixel's side is subdivided for higher
         accuracy psf convolution.
     :type oversample: int
     :param psf_directory: Path to directory containing psf file(s) where the psf can be loaded.
