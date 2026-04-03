@@ -105,8 +105,19 @@ class TestCatalogSource:
 
         assert self.source2.matched_source["id"] == 885
 
+    def test_select_image_from_band(self):
+
+        _, _ = self.source2.kwargs_extended_light(band=None)
+
         for band in ROMAN_BAND_LIST + EUCLID_BAND_LIST + LSST_BAND_LIST:
-            _, _ = self.source2.kwargs_extended_light(band=band)
+            image = self.source2._select_image_from_band(band=band)
+            assert image.shape == (121, 121)
+
+        np.testing.assert_raises(
+            ValueError,
+            self.source2._select_image_from_band,
+            band="wrong",
+        )
 
     def test_redshift(self):
         assert self.source1.redshift == 3.5
