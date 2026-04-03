@@ -99,7 +99,9 @@ class CatalogSource(SourceBase):
     @property
     def matched_source(self):
         """Row of astropy table from the catalog describing the matched source.
-        The source is only matched after having called kwargs_extended_light() once.
+
+        The source is only matched after having called
+        kwargs_extended_light() once.
         """
         if hasattr(self, "_matched_source"):
             return self._matched_source
