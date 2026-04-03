@@ -125,8 +125,6 @@ def _select_image_from_band(band, image_list):
     :return: image from source catalog corresponding to specific band
     """
 
-    band = band.upper()
-
     if band in ROMAN_BAND_LIST:
         if band == "F062":
             return image_list[0]
@@ -149,8 +147,7 @@ def _select_image_from_band(band, image_list):
         index = EUCLID_BAND_LIST.index(band)
         return image_list[index]
 
-    elif band.lower() in LSST_BAND_LIST:
-        band = band.lower()
+    elif band in LSST_BAND_LIST:
         if band == "g":
             return image_list[0]
         elif band == "r":
