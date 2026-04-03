@@ -7,12 +7,7 @@ from slsim.Util.catalog_util import match_source
 
 # The pixel scale for the detection_images cutouts is 0.03 arcseconds per pixel
 PIXEL_SCALE = 0.03
-
-# Ordered from shortest wavelength to longest wavelength, except Roman's F146
-ROMAN_BAND_LIST = ["F062", "F087", "F106", "F129", "F158", "F184", "F213", "F146"]
-LSST_BAND_LIST = ["G", "R", "I", "Z", "Y"]
-EUCLID_BAND_LIST = ["VIS", "Y", "J", "H"]
-
+from slsim import ROMAN_BAND_LIST, EUCLID_BAND_LIST, LSST_BAND_LIST
 
 def process_catalog(cosmo, catalog_path):
     """
@@ -153,16 +148,17 @@ def _select_image_from_band(band, image_list):
         index = EUCLID_BAND_LIST.index(band)
         return image_list[index]
 
-    elif band in LSST_BAND_LIST:
-        if band == "G":
+    elif band.lower() in LSST_BAND_LIST:
+        band = band.lower()
+        if band == "g":
             return image_list[0]
-        elif band == "R":
+        elif band == "r":
             return image_list[1]
-        elif band == "I":
+        elif band == "i":
             return (image_list[1] + image_list[2]) / 2
-        elif band == "Z":
+        elif band == "z":
             return image_list[2]
-        elif band == "Y":
+        elif band == "y":
             return image_list[3]
 
     else:
