@@ -98,6 +98,9 @@ class CatalogSource(SourceBase):
 
     @property
     def matched_source(self):
+        """Row of astropy table from the catalog describing the matched source.
+        The source is only matched after having called kwargs_extended_light() once.
+        """
         if hasattr(self, "_matched_source"):
             return self._matched_source
         else:
@@ -173,7 +176,7 @@ class CatalogSource(SourceBase):
             band
         """
 
-        if len(self._image_list) == 1:
+        if len(self._image_list) == 1 or band is None:
             return self._image_list[0]
 
         # Image_list contains images for bands [F115W, F150W, F277W, F444W]
