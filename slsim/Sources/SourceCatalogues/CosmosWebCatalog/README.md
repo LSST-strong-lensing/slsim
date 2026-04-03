@@ -21,7 +21,7 @@ The final output is the cutout of the source, the scaling factor required to mat
 
 # Tutorial
 
-A notebook demonstrating how to match Sersics to real sources is given [here](https://github.com/LSST-strong-lensing/slsim/blob/main/notebooks/sersic_to_real_galaxy_source_matching.ipynb). In order to use the catalog, a path to the directory containing both the master catalog and the detection images must be given.
+A notebook demonstrating how to match Sersics to real sources is given [here](https://github.com/LSST-strong-lensing/slsim/blob/main/notebooks/sersic_to_real_galaxy_source_matching.ipynb). In order to use the catalog, a path to the directory containing both the catalog and the corresponding images must be given.
 
 # Acknowledgments
 
