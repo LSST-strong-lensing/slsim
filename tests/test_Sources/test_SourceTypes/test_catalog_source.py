@@ -16,6 +16,11 @@ from slsim.Deflectors.deflector import Deflector
 from slsim.Lenses.lens import Lens
 from slsim.ImageSimulation.image_simulation import lens_image
 from slsim.Util.param_util import gaussian_psf
+from slsim import (
+    ROMAN_BAND_LIST,
+    EUCLID_BAND_LIST,
+    LSST_BAND_LIST,
+)
 
 hst_cosmos_path = os.path.join(
     str(pathlib.Path(__file__).parent.parent.parent),
@@ -34,7 +39,6 @@ class TestCatalogSource:
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         source_dict = {
             "z": 3.5,
-            "mag_i": 20.3,
             "n_sersic": 0.8,
             "angular_size": 0.3,  # arcseconds
             "e1": 0.19697001616620306,
@@ -43,6 +47,10 @@ class TestCatalogSource:
             "center_y": 0.0,
             "phi_G": 0,
         }
+        for band in ROMAN_BAND_LIST + EUCLID_BAND_LIST + LSST_BAND_LIST:
+            key = "mag_" + band
+            source_dict.update({key: 20.3})
+
         self.source1 = CatalogSource(
             cosmo=cosmo,
             catalog_path=hst_cosmos_path,
@@ -64,6 +72,8 @@ class TestCatalogSource:
         assert id(self.source2.final_catalog) == id(
             CatalogSource.processed_cosmos_web_catalog
         )
+        assert self.source1.matched_source is None
+        assert self.source2.matched_source is None
 
     def test_kwargs_extended_source_light(self):
 
@@ -78,7 +88,7 @@ class TestCatalogSource:
         assert results[0]["magnitude"] == 20.3
         assert results2[0]["magnitude"] == 1
 
-        # Test COSMOSWeb
+        # Test COSMOSWeb -------------------------------------------------------------
         light_model_list2, results3 = self.source2.kwargs_extended_light(band="i")
         assert light_model_list1 == light_model_list2
         assert results3[0]["magnitude"] == 20.3
@@ -92,6 +102,11 @@ class TestCatalogSource:
         np.testing.assert_allclose(
             results3[0]["image"], expected_image, atol=1e-16, rtol=1e-16
         )
+
+        assert self.source2.matched_source['id'] == 885
+
+        for band in ROMAN_BAND_LIST + EUCLID_BAND_LIST + LSST_BAND_LIST:
+            _, _ = self.source2.kwargs_extended_light(band=band)
 
     def test_redshift(self):
         assert self.source1.redshift == 3.5
@@ -107,7 +122,7 @@ class TestCatalogSource:
     def test_extended_source_magnitude(self):
         assert self.source1.extended_source_magnitude("i") == 20.3
         with pytest.raises(ValueError):
-            self.source1.extended_source_magnitude("g")
+            self.source1.extended_source_magnitude(band="jdbfsajh")
 
     def test_extended_source_light_model(self):
         source_model, kwargs_light = self.source1.kwargs_extended_light()
