@@ -65,11 +65,11 @@ class LensPop(LensedPopulationBase):
         :type test_area: float or None
         :param kwargs_lens_cut: Dictionary of cuts that one wants to apply to the lens.
                                 Example: kwargs_lens_cut = {
-                                    "min_image_separation": 0.5,
-                                    "max_image_separation": 10,
-                                    "mag_arc_limit": {"i", 24},
-                                    "second_brightest_image_cut": {"i", 24}
-                                }. All these cuts are optional.
+                                "min_image_separation": 0.5,
+                                "max_image_separation": 10,
+                                "mag_arc_limit": {"i": 24},
+                                "second_brightest_image_cut": {"i": 24}}.
+                                All these cuts are optional.
         :type kwargs_lens_cut: dict
         :param verbose: print statements added
         :type verbose: bool

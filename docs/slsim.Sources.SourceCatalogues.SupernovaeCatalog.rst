@@ -4,8 +4,8 @@ slsim.Sources.SourceCatalogues.SupernovaeCatalog package
 Submodules
 ----------
 
-slsim.Sources.SourceCatalogues.supernovae\_sample module
---------------------------------------------------------
+slsim.Sources.SourceCatalogues.SupernovaeCatalog.supernovae\_sample module
+--------------------------------------------------------------------------
 
 .. automodule:: slsim.Sources.SourceCatalogues.SupernovaeCatalog.supernovae_sample
    :members:
