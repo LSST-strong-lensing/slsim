@@ -9,6 +9,7 @@ from slsim.Util.catalog_util import match_source
 PIXEL_SCALE = 0.03
 from slsim import ROMAN_BAND_LIST, EUCLID_BAND_LIST, LSST_BAND_LIST
 
+
 def process_catalog(cosmo, catalog_path):
     """
 

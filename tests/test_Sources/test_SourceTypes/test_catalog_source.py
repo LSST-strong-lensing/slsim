@@ -103,7 +103,7 @@ class TestCatalogSource:
             results3[0]["image"], expected_image, atol=1e-16, rtol=1e-16
         )
 
-        assert self.source2.matched_source['id'] == 885
+        assert self.source2.matched_source["id"] == 885
 
         for band in ROMAN_BAND_LIST + EUCLID_BAND_LIST + LSST_BAND_LIST:
             _, _ = self.source2.kwargs_extended_light(band=band)
