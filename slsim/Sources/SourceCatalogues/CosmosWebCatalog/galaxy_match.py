@@ -3,7 +3,7 @@ import numpy as np
 from astropy.table import Table
 from astropy.io import fits
 
-from slsim import ROMAN_BAND_LIST, EUCLID_BAND_LIST, LSST_BAND_LIST
+from slsim.ImageSimulation.image_quality_lenstronomy import ROMAN_BAND_LIST, EUCLID_BAND_LIST, LSST_BAND_LIST
 from slsim.Util.catalog_util import match_source
 
 # The pixel scale for the detection_images cutouts is 0.03 arcseconds per pixel
@@ -144,18 +144,20 @@ def _select_image_from_band(band, image_list):
             return image_list[1] + image_list[2]
 
     elif band in EUCLID_BAND_LIST:
-        index = EUCLID_BAND_LIST.index(band)
-        return image_list[index]
+        if band == "VIS":
+            return image_list[0]
 
     elif band in LSST_BAND_LIST:
-        if band == "g":
+        if band == "u":
             return image_list[0]
-        elif band == "r":
+        elif band == "g":
             return image_list[1]
-        elif band == "i":
+        elif band == "r":
             return (image_list[1] + image_list[2]) / 2
-        elif band == "z":
+        elif band == "i":
             return image_list[2]
+        elif band == "z":
+            return (image_list[2] + image_list[3]) / 2
         elif band == "y":
             return image_list[3]
 
