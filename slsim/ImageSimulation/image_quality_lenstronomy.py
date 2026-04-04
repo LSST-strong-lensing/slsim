@@ -10,6 +10,7 @@ ROMAN_BAND_LIST = ["F062", "F087", "F106", "F129", "F158", "F184", "F146", "F213
 LSST_BAND_LIST = ["u", "g", "r", "i", "z", "y"]
 EUCLID_BAND_LIST = ["VIS"]
 
+
 def check_speclite_name(band):
     """Checks if the raw band name is a valid speclite filter.
 
