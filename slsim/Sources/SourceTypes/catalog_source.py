@@ -34,24 +34,23 @@ class CatalogSource(SourceBase):
         :param e2: eccentricity modulus
         :param n_sersic: Sersic index
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
-         This dict or table should contain atleast redshift, a magnitude in any band,
-         sersic index, angular size in arcsec, and ellipticities e1 and e2.
-         eg: {"z": 0.8, "mag_i": 22, "n_sersic": 1, "angular_size": 0.10,
-         "e1": 0.002, "e2": 0.001}. One can provide magnitudes in multiple bands.
+            This dict or table should contain atleast redshift, a magnitude in any band,
+            sersic index, angular size in arcsec, and ellipticities e1 and e2.
+            eg: {"z": 0.8, "mag_i": 22, "n_sersic": 1, "angular_size": 0.10,
+            "e1": 0.002, "e2": 0.001}. One can provide magnitudes in multiple bands.
         :type source_dict: dict or astropy.table.Table
         :param cosmo: instance of astropy cosmology
         :param catalog_type: specifies which catalog to use. Curently the options are:
-         1. "HST_COSMOS" - https://zenodo.org/records/3242143
-         2. "COSMOS_WEB" - https://cosmos2025.iap.fr/catalog.html
-                         - download both the master catalog and detection_images
+            1. "HST_COSMOS" - https://zenodo.org/records/3242143
+            2. "COSMOS_WEB" - https://zenodo.org/records/19188494
         :type catalog_type: string
         :param catalog_path: path to the directory containing the source catalog
         :type catalog_path: string
-        :param max_scale: The matched COSMOS image will be scaled to have the desired angular size. Scaling up
-         results in a more pixelated image. This input determines what the maximum up-scale factor is.
+        :param max_scale: The matched image will be scaled to have the desired angular size. Scaling up
+            results in a more pixelated image. This input determines what the maximum up-scale factor is.
         :type max_scale: int or float
         :param match_n_sersic: determines whether to match based off of the sersic index as well.
-         Since n_sersic is usually undefined and set to 1 in SLSim, this is set to False by default.
+            Since n_sersic is usually undefined and set to 1 in SLSim, this is set to False by default.
         :type match_n_sersic: bool
         :param sersic_fallback: If the matching process returns no matches, then fall back on a single sersic profile.
         :type sersic_fallback: bool
@@ -68,12 +67,12 @@ class CatalogSource(SourceBase):
         self._sersic_fallback = sersic_fallback
         self.source_dict = source_dict
 
+        # Process catalog and store as class attribute
+        # If multiple instances of the class are created with the same catalog type, the catalog is only processed once
         if catalog_type == "HST_COSMOS":
 
-            self.match_source = HSTCosmos.load_source
+            self._match_source = HSTCosmos.load_source
 
-            # Process catalog and store as class attribute
-            # If multiple instances of the class are created with the same catalog type, the catalog is only processed once
             if not hasattr(CatalogSource, "processed_hst_cosmos_catalog"):
                 CatalogSource.processed_hst_cosmos_catalog = HSTCosmos.process_catalog(
                     cosmo=cosmo, catalog_path=catalog_path
@@ -82,7 +81,7 @@ class CatalogSource(SourceBase):
 
         elif catalog_type == "COSMOS_WEB":
 
-            self.match_source = CosmosWeb.load_source
+            self._match_source = CosmosWeb.load_source
 
             if not hasattr(CatalogSource, "processed_cosmos_web_catalog"):
                 CatalogSource.processed_cosmos_web_catalog = CosmosWeb.process_catalog(
@@ -97,6 +96,18 @@ class CatalogSource(SourceBase):
         self.catalog_type = catalog_type
         self.catalog_path = catalog_path
 
+    @property
+    def matched_source(self):
+        """Row of astropy table from the catalog describing the matched source.
+
+        The source is only matched after having called
+        kwargs_extended_light() once.
+        """
+        if hasattr(self, "_matched_source"):
+            return self._matched_source
+        else:
+            return None
+
     def kwargs_extended_light(self, band=None):
         """Provides dictionary of keywords for the source light model(s).
         Keywords used are in lenstronomy conventions.
@@ -104,20 +115,22 @@ class CatalogSource(SourceBase):
         :param band: Imaging band
         :return: dictionary of keywords for the source light model(s)
         """
-        if not hasattr(self, "_image"):
-            self._image, self._scale, self._phi, self.galaxy_ID = self.match_source(
-                angular_size=self.angular_size,
-                physical_size=self.physical_size(cosmo=self._cosmo),
-                axis_ratio=self._q,
-                sersic_angle=self._phi,
-                n_sersic=self._n_sersic,
-                processed_catalog=self.final_catalog,
-                catalog_path=self.catalog_path,
-                max_scale=self._max_scale,
-                match_n_sersic=self._match_n_sersic,
+        if not hasattr(self, "_image_list"):
+            self._image_list, self._scale, self._phi, self._matched_source = (
+                self._match_source(
+                    angular_size=self.angular_size,
+                    physical_size=self.physical_size(cosmo=self._cosmo),
+                    axis_ratio=self._q,
+                    sersic_angle=self._phi,
+                    n_sersic=self._n_sersic,
+                    processed_catalog=self.final_catalog,
+                    catalog_path=self.catalog_path,
+                    max_scale=self._max_scale,
+                    match_n_sersic=self._match_n_sersic,
+                )
             )
         # If the matching failed, fall back on a regular sersic profile
-        if self._image is None:
+        if self._image_list is None:
             if self._sersic_fallback:
                 if not hasattr(self, "single_sersic"):
                     self.single_sersic = SingleSersic(
@@ -140,11 +153,13 @@ class CatalogSource(SourceBase):
             mag_source = self.extended_source_magnitude(band=band)
         center_source = self.extended_source_position
 
+        image = self._select_image_from_band(band)
+
         light_model_list = ["INTERPOL"]
         kwargs_extended_source = [
             {
                 "magnitude": mag_source,
-                "image": self._image,
+                "image": image,
                 "center_x": center_source[0],
                 "center_y": center_source[1],
                 "phi_G": self._phi,
@@ -152,3 +167,20 @@ class CatalogSource(SourceBase):
             }
         ]
         return light_model_list, kwargs_extended_source
+
+    def _select_image_from_band(self, band):
+        """Selects an image based off of the input band. Only relevant for
+        source catalogs that provide images for multiple bands.
+
+        :param band: imaging band
+        :type band: string
+        :return: image from source catalog corresponding to specific
+            band
+        """
+
+        if len(self._image_list) == 1 or band is None:
+            return self._image_list[0]
+
+        # Image_list contains images for bands [F115W, F150W, F277W, F444W]
+        if self.catalog_type == "COSMOS_WEB":
+            return CosmosWeb._select_image_from_band(band, self._image_list)

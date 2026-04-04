@@ -5,6 +5,11 @@ import speclite.filters
 
 _OBSERVATORY_REGISTRY = {}
 
+# Default options in SLSim
+ROMAN_BAND_LIST = ["F062", "F087", "F106", "F129", "F158", "F184", "F146", "F213"]
+LSST_BAND_LIST = ["u", "g", "r", "i", "z", "y"]
+EUCLID_BAND_LIST = ["VIS"]
+
 
 def check_speclite_name(band):
     """Checks if the raw band name is a valid speclite filter.
@@ -99,19 +104,19 @@ def register_observatory(
 register_observatory(
     name="LSST",
     observatory_class=LSST,
-    bands=["u", "g", "r", "i", "z", "y"],
+    bands=LSST_BAND_LIST,
     speclite_fmt=lambda band: f"lsst2023-{band}",
 )
 register_observatory(
     name="Roman",
     observatory_class=Roman,
-    bands=["F062", "F087", "F106", "F129", "F158", "F184", "F146", "F213"],
+    bands=ROMAN_BAND_LIST,
     speclite_fmt=lambda band: f"Roman-{band}",
 )
 register_observatory(
     name="Euclid",
     observatory_class=Euclid,
-    bands=["VIS"],
+    bands=EUCLID_BAND_LIST,
     speclite_fmt=lambda band: f"Euclid-{band}",
 )
 
