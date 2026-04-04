@@ -3,7 +3,11 @@ import numpy as np
 from astropy.table import Table
 from astropy.io import fits
 
-from slsim.ImageSimulation.image_quality_lenstronomy import ROMAN_BAND_LIST, EUCLID_BAND_LIST, LSST_BAND_LIST
+from slsim.ImageSimulation.image_quality_lenstronomy import (
+    ROMAN_BAND_LIST,
+    EUCLID_BAND_LIST,
+    LSST_BAND_LIST,
+)
 from slsim.Util.catalog_util import match_source
 
 # The pixel scale for the detection_images cutouts is 0.03 arcseconds per pixel
