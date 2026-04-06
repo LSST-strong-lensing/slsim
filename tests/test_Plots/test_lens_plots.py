@@ -139,7 +139,7 @@ def setup_roman_lensing_plots():
     return LensingPlots(
         lens_pop,
         num_pix=64,
-        observatory="Roman",
+        observatory="Roman-galsim",
         psf_directory=PSF_DIRECTORY,
         **detector_kwargs
     )

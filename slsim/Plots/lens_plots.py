@@ -16,7 +16,9 @@ class LensingPlots(object):
         :type lens_pop: `LensPop`
         :param num_pix: number of pixels for the simulated image, default is 64
         :type num_pix: int
-        :param observatory: observatory chosen
+        :param observatory: observatory chosen. The possible options are:
+            - "LSST", "Euclid", or "Roman", which are simulated through lenstronomy
+            - "Roman-galsim", which is Roman image simulation done through galsim
         :type observatory: str
         :param kwargs: additional keyword arguments for the bands. Eg: coadd_years
             (=10): this is the number of years corresponding to num_exposures in obs
@@ -56,7 +58,7 @@ class LensingPlots(object):
             "observatory": self._observatory,
         }
 
-        if self._observatory == "Roman":
+        if self._observatory == "Roman-galsim":
             # NOTE: Galsim is required which is not supported on Windows
             make_image = simulate_roman_image
             main_kwargs.pop("observatory")
@@ -133,7 +135,7 @@ class LensingPlots(object):
                         **kwargs_lens_cut
                     )
                 if single_band:
-                    if self._observatory == "Roman":
+                    if self._observatory == "Roman-galsim":
                         # NOTE: Galsim is required which is not supported on Windows
                         make_image = simulate_roman_image
                         extra_kwargs = {"subtract_mean_background": True}
