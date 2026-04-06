@@ -286,7 +286,9 @@ def get_psf(band, detector, detector_pos, oversample, psf_directory):
         wfi.filter = band.upper()
         wfi.detector = detector
         wfi.detector_position = detector_pos
-        psf = wfi.calc_psf(oversample=oversample)
+        # Request a 45x45 PSF kernel which then gets supersampled
+        # If fov_pixels is not provided, the default is 46x46
+        psf = wfi.calc_psf(fov_pixels=45, oversample=oversample)
 
     # import PSF to GalSim
     oversampled_pixel_scale = 0.11 / oversample
