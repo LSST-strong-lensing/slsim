@@ -79,6 +79,9 @@ class TestCatalogSource:
         assert self.source1.matched_source is None
         assert self.source2.matched_source is None
 
+        assert self.source1.matched_source_id is None
+        assert self.source2.matched_source_id is None
+
     def test_kwargs_extended_source_light(self):
 
         # Test HST COSMOS
