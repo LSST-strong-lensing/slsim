@@ -75,7 +75,7 @@ class TestCatalogSource:
 
         assert self.source1.catalog_type == "HST_COSMOS"
         assert self.source2.catalog_type == "COSMOS_WEB"
-        
+
         assert self.source1.matched_source is None
         assert self.source2.matched_source is None
 
@@ -113,12 +113,11 @@ class TestCatalogSource:
         assert self.source2.matched_source["id"] == 885
         assert self.source2.matched_source_id == 885
 
-
     def test_select_image_from_band(self):
 
         _, _ = self.source2.kwargs_extended_light(band=None)
 
-        cutout_size = int(self.source2.matched_source['sersic_radius'] / 0.03 * 5)
+        cutout_size = int(self.source2.matched_source["sersic_radius"] / 0.03 * 5)
         if cutout_size % 2 == 0:
             cutout_size += 1
 

@@ -115,14 +115,13 @@ class CatalogSource(SourceBase):
 
     @property
     def matched_source_id(self):
-        """ID of the matched galaxy from the corresponding catalog.
-        """
+        """ID of the matched galaxy from the corresponding catalog."""
         if hasattr(self, "_matched_source"):
             if self._catalog_type == "HST_COSMOS":
-                return self._matched_source['IDENT']
-            
+                return self._matched_source["IDENT"]
+
             elif self._catalog_type == "COSMOS_WEB":
-                return self._matched_source['id']
+                return self._matched_source["id"]
         else:
             return None
 

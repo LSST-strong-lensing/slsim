@@ -15,6 +15,7 @@ PIXEL_SCALE = 0.03
 
 ARCSEC_TO_RADIANS = 4.84814e-6
 
+
 def process_catalog(cosmo, catalog_path):
     """
 
@@ -30,7 +31,9 @@ def process_catalog(cosmo, catalog_path):
 
     # sersic radius is the radius along the major axis
     # angular size is the geometric mean of the major and minor axes
-    catalog["angular_size"] = catalog["sersic_radius"].data * np.sqrt(catalog["axis_ratio"].data)
+    catalog["angular_size"] = catalog["sersic_radius"].data * np.sqrt(
+        catalog["axis_ratio"].data
+    )
 
     # Convert angular_size to physical size (arcseconds to kPc)
     ang_dist = cosmo.angular_diameter_distance(catalog["z"])
