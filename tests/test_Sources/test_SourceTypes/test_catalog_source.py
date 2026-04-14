@@ -104,7 +104,7 @@ class TestCatalogSource:
         assert results3[0]["magnitude"] == 20.3
 
         image_list_ref = []
-        with fits.open(cosmos_web_path + "/COSMOSWeb_galaxy_885_image.fits") as file:
+        with fits.open(cosmos_web_path + "/COSMOSWeb_galaxy_6701_image.fits") as file:
             for i in range(4):
                 image_list_ref.append(file[i + 1].data)
 
@@ -113,14 +113,14 @@ class TestCatalogSource:
             results3[0]["image"], expected_image, atol=1e-16, rtol=1e-16
         )
 
-        assert self.source2.matched_source["id"] == 885
-        assert self.source2.matched_source_id == 885
+        assert self.source2.matched_source["id"] == 6701
+        assert self.source2.matched_source_id == 6701
 
     def test_select_image_from_band(self):
 
         _, _ = self.source2.kwargs_extended_light(band=None)
 
-        cutout_size = int(self.source2.matched_source["sersic_radius"] / 0.03 * 5)
+        cutout_size = int(self.source2.matched_source["sersic_radius"] / 0.03 * 5.5)
         if cutout_size % 2 == 0:
             cutout_size += 1
 
