@@ -188,7 +188,7 @@ def process_catalog(cosmo, catalog_path):
         "PIXEL_SCALE",
         "axis_ratio",
         "sersic_index",
-        "sersic_angle", # radians
+        "sersic_angle",  # radians
         "angular_size",  # half light radius (geometric mean) in arcseconds
         "physical_size",  # kpc
     ]

@@ -39,9 +39,7 @@ def process_catalog(cosmo, catalog_path):
 
     # Convert angular_size to physical size (arcseconds to kPc)
     ang_dist = cosmo.angular_diameter_distance(catalog["z"])
-    catalog["physical_size"] = (
-        catalog["angular_size"].to(u.rad) * ang_dist.value * 1000
-    )
+    catalog["physical_size"] = catalog["angular_size"].to(u.rad) * ang_dist.value * 1000
     catalog["physical_size"].unit = u.kiloparsec
 
     return catalog
