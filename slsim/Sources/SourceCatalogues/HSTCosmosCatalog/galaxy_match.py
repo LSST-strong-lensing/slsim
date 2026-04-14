@@ -2,6 +2,7 @@ import os
 import numpy as np
 from astropy.table import Table, join
 from astropy.io import fits
+from astropy import units as u
 
 from slsim.Util.catalog_util import match_source
 
@@ -164,17 +165,20 @@ def process_catalog(cosmo, catalog_path):
     filtered_catalog["angular_size"] = (
         np.sqrt(q) * R_half * filtered_catalog["PIXEL_SCALE"].data
     )
+    filtered_catalog["angular_size"].unit = u.arcsec
 
     # Convert angular_size to physical size (arcseconds to kPc)
     ang_dist = cosmo.angular_diameter_distance(filtered_catalog["zphot"].data)
     filtered_catalog["physical_size"] = (
-        filtered_catalog["angular_size"].data * 4.84814e-6 * ang_dist.value * 1000
+        filtered_catalog["angular_size"].to(u.rad) * ang_dist.value * 1000
     )
+    filtered_catalog["physical_size"].unit = u.kiloparsec
 
     # Rename columns
     filtered_catalog["axis_ratio"] = filtered_catalog["sersicfit"][:, 3]
     filtered_catalog["sersic_index"] = filtered_catalog["sersicfit"][:, 2]
     filtered_catalog["sersic_angle"] = filtered_catalog["sersicfit"][:, 7]
+    filtered_catalog["sersic_angle"].unit = u.rad
 
     # drop extraneous data
     keep_columns = [
@@ -184,7 +188,7 @@ def process_catalog(cosmo, catalog_path):
         "PIXEL_SCALE",
         "axis_ratio",
         "sersic_index",
-        "sersic_angle",
+        "sersic_angle", # radians
         "angular_size",  # half light radius (geometric mean) in arcseconds
         "physical_size",  # kpc
     ]

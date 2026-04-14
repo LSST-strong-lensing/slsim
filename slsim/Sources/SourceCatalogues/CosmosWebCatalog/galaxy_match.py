@@ -2,6 +2,7 @@ import os
 import numpy as np
 from astropy.table import Table
 from astropy.io import fits
+from astropy import units as u
 
 from slsim.ImageSimulation.image_quality_lenstronomy import (
     ROMAN_BAND_LIST,
@@ -34,12 +35,14 @@ def process_catalog(cosmo, catalog_path):
     catalog["angular_size"] = catalog["sersic_radius"].data * np.sqrt(
         catalog["axis_ratio"].data
     )
+    catalog["angular_size"].unit = u.arcsec
 
     # Convert angular_size to physical size (arcseconds to kPc)
     ang_dist = cosmo.angular_diameter_distance(catalog["z"])
     catalog["physical_size"] = (
-        catalog["angular_size"].data * ARCSEC_TO_RADIANS * ang_dist.value * 1000
+        catalog["angular_size"].to(u.rad) * ang_dist.value * 1000
     )
+    catalog["physical_size"].unit = u.kiloparsec
 
     return catalog
 
