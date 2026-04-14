@@ -2,6 +2,7 @@ import os
 import numpy as np
 from astropy.table import Table
 from astropy.io import fits
+from astropy import units as u
 
 from slsim.ImageSimulation.image_quality_lenstronomy import (
     ROMAN_BAND_LIST,
@@ -12,6 +13,8 @@ from slsim.Util.catalog_util import match_source
 
 # The pixel scale for the detection_images cutouts is 0.03 arcseconds per pixel
 PIXEL_SCALE = 0.03
+
+ARCSEC_TO_RADIANS = 4.84814e-6
 
 
 def process_catalog(cosmo, catalog_path):
@@ -27,11 +30,17 @@ def process_catalog(cosmo, catalog_path):
     catalog_path = os.path.join(catalog_path, "COSMOSWeb_galaxy_catalog.fits")
     catalog = Table.read(catalog_path, format="fits")
 
+    # sersic radius is the radius along the major axis
+    # angular size is the geometric mean of the major and minor axes
+    catalog["angular_size"] = catalog["sersic_radius"].data * np.sqrt(
+        catalog["axis_ratio"].data
+    )
+    catalog["angular_size"].unit = u.arcsec
+
     # Convert angular_size to physical size (arcseconds to kPc)
     ang_dist = cosmo.angular_diameter_distance(catalog["z"])
-    catalog["physical_size"] = (
-        catalog["angular_size"].data * 4.84814e-6 * ang_dist.value * 1000
-    )
+    catalog["physical_size"] = catalog["angular_size"].to(u.rad) * ang_dist.value * 1000
+    catalog["physical_size"].unit = u.kiloparsec
 
     return catalog
 

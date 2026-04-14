@@ -72,8 +72,15 @@ class TestCatalogSource:
         assert id(self.source2.final_catalog) == id(
             CatalogSource.processed_cosmos_web_catalog
         )
+
+        assert self.source1.catalog_type == "HST_COSMOS"
+        assert self.source2.catalog_type == "COSMOS_WEB"
+
         assert self.source1.matched_source is None
         assert self.source2.matched_source is None
+
+        assert self.source1.matched_source_id is None
+        assert self.source2.matched_source_id is None
 
     def test_kwargs_extended_source_light(self):
 
@@ -88,13 +95,16 @@ class TestCatalogSource:
         assert results[0]["magnitude"] == 20.3
         assert results2[0]["magnitude"] == 1
 
+        assert self.source1.matched_source["IDENT"] == 97475
+        assert self.source1.matched_source_id == 97475
+
         # Test COSMOSWeb -------------------------------------------------------------
         light_model_list2, results3 = self.source2.kwargs_extended_light(band="i")
         assert light_model_list1 == light_model_list2
         assert results3[0]["magnitude"] == 20.3
 
         image_list_ref = []
-        with fits.open(cosmos_web_path + "/COSMOSWeb_galaxy_885_image.fits") as file:
+        with fits.open(cosmos_web_path + "/COSMOSWeb_galaxy_6701_image.fits") as file:
             for i in range(4):
                 image_list_ref.append(file[i + 1].data)
 
@@ -103,15 +113,20 @@ class TestCatalogSource:
             results3[0]["image"], expected_image, atol=1e-16, rtol=1e-16
         )
 
-        assert self.source2.matched_source["id"] == 885
+        assert self.source2.matched_source["id"] == 6701
+        assert self.source2.matched_source_id == 6701
 
     def test_select_image_from_band(self):
 
         _, _ = self.source2.kwargs_extended_light(band=None)
 
+        cutout_size = int(self.source2.matched_source["sersic_radius"] / 0.03 * 5.5)
+        if cutout_size % 2 == 0:
+            cutout_size += 1
+
         for band in ROMAN_BAND_LIST + EUCLID_BAND_LIST + LSST_BAND_LIST:
             image = self.source2._select_image_from_band(band=band)
-            assert image.shape == (121, 121)
+            assert image.shape == (cutout_size, cutout_size)
 
         np.testing.assert_raises(
             ValueError,

@@ -93,8 +93,13 @@ class CatalogSource(SourceBase):
                 f"Catalog_type {catalog_type} not supported. Currently only {CATALOG_TYPES} are supported."
             )
 
-        self.catalog_type = catalog_type
-        self.catalog_path = catalog_path
+        self._catalog_type = catalog_type
+        self._catalog_path = catalog_path
+
+    @property
+    def catalog_type(self):
+        """The catalog being used in this instance of the class."""
+        return self._catalog_type
 
     @property
     def matched_source(self):
@@ -105,6 +110,18 @@ class CatalogSource(SourceBase):
         """
         if hasattr(self, "_matched_source"):
             return self._matched_source
+        else:
+            return None
+
+    @property
+    def matched_source_id(self):
+        """ID of the matched galaxy from the corresponding catalog."""
+        if hasattr(self, "_matched_source"):
+            if self._catalog_type == "HST_COSMOS":
+                return self._matched_source["IDENT"]
+
+            elif self._catalog_type == "COSMOS_WEB":
+                return self._matched_source["id"]
         else:
             return None
 
@@ -124,7 +141,7 @@ class CatalogSource(SourceBase):
                     sersic_angle=self._phi,
                     n_sersic=self._n_sersic,
                     processed_catalog=self.final_catalog,
-                    catalog_path=self.catalog_path,
+                    catalog_path=self._catalog_path,
                     max_scale=self._max_scale,
                     match_n_sersic=self._match_n_sersic,
                 )
@@ -182,5 +199,5 @@ class CatalogSource(SourceBase):
             return self._image_list[0]
 
         # Image_list contains images for bands [F115W, F150W, F277W, F444W]
-        if self.catalog_type == "COSMOS_WEB":
+        if self._catalog_type == "COSMOS_WEB":
             return CosmosWeb._select_image_from_band(band, self._image_list)
