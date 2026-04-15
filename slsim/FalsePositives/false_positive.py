@@ -73,7 +73,7 @@ class FalsePositive(Lens):
         """
         return np.array([0.0])
 
-    def lenstronomy_kwargs(self, band=None, time=None):
+    def lenstronomy_kwargs(self, band=None, time=None, **kwargs):
         """Generates lenstronomy dictionary conventions for the class object.
 
         :param band: imaging band, if =None, will result in un-
