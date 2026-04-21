@@ -3,6 +3,7 @@ __author__ = "Paras Sharma"
 
 import numpy as np
 from skimage.transform import rescale
+from scipy.interpolate import interp1d
 
 from slsim.Microlensing.magmap import MagnificationMap
 
@@ -23,7 +24,7 @@ class MicrolensingLightCurve(object):
         self,
         magnification_map: MagnificationMap,
         time_duration: float,
-        point_source_morphology: str = "gaussian",  # 'gaussian' or 'agn' or 'supernovae' #TODO: supernovae not implemented yet!
+        point_source_morphology: str = "gaussian",  # 'gaussian' or 'agn' or 'supernovae'
         kwargs_source_morphology: dict = {},
     ):
         """
@@ -50,13 +51,13 @@ class MicrolensingLightCurve(object):
 
         # Initialize the convolved map and source morphology
         self._convolved_map = None
+        self._convolved_map_cube = None
         self._source_morphology = None
 
-    # properties for convolved map and magnification map and time_duration_observer_frame
     @property
     def convolved_map(self):
         """Get the convolved map i.e., the magnification map convolved with the
-        source morphology."""
+        source morphology. (Only for static sources like Gaussian)."""
         if self._convolved_map is None:
             raise ValueError(
                 "Convolved map is not initialized. Please call get_convolved_map() first."
@@ -73,11 +74,70 @@ class MicrolensingLightCurve(object):
         """Get the lightcurve time duration in observer frame."""
         return self._time_duration_observer_frame
 
+    def get_convolved_map_cube(self, time_anchors_days):
+        """Generates a 3D cube of convolved magnification maps for time-dependent sources
+        like Supernovae.
+        
+        :param time_anchors_days: Array of time epochs in the source rest-frame.
+        :return: A 3D numpy array of convolved maps.
+        """
+        if self._point_source_morphology == "supernovae":
+            from slsim.Microlensing.source_morphology.supernovae import SupernovaeSourceMorphology
+            
+            source_morphology = SupernovaeSourceMorphology(
+                time_days=time_anchors_days[0], # Initialize with the first epoch
+                **self._kwargs_source_morphology,
+            )
+            cosmo = source_morphology.cosmo
+            source_redshift = source_morphology.source_redshift
+
+            # 1. Physical pixel size of the underlying magnification map (meters/pixel)
+            pixel_size_magnification_map = (
+                self._magnification_map.get_pixel_size_meters(
+                    source_redshift=source_redshift, cosmo=cosmo
+                )
+            )
+
+            # 2. Extract the time-evolving kernels and their physical sizes
+            kernels, pixel_scales_m = source_morphology.get_time_dependent_kernel_maps(time_anchors_days)
+            convolved_cube = []
+            
+            for kernel, kernel_pixel_size_m in zip(kernels, pixel_scales_m):
+                
+                # 3. Calculate how to resize the kernel to match the mag map resolution
+                pixel_ratio = kernel_pixel_size_m / pixel_size_magnification_map
+                
+                # SUB-PIXEL SAFETY CATCH:
+                # If the rescaled kernel would be smaller than 1x1 pixel on the mag map,
+                # the source is effectively a perfect point source at this epoch.
+                if pixel_ratio * kernel.shape[0] < 1.0:
+                    rescaled_kernel_map = np.array([[1.0]])
+                else:
+                    rescaled_kernel_map = rescale(kernel, pixel_ratio, anti_aliasing=True)
+
+                if np.nansum(rescaled_kernel_map) > 0:
+                    rescaled_kernel_map = rescaled_kernel_map / np.nansum(rescaled_kernel_map)
+
+                # 4. Convolve
+                conv_map = convolved_image(
+                    self._magnification_map.magnifications,
+                    rescaled_kernel_map,
+                    convolution_type="fft",
+                )
+                convolved_cube.append(conv_map)
+                
+            self._convolved_map_cube = np.array(convolved_cube)
+            self._source_morphology = source_morphology
+            return self._convolved_map_cube
+        else:
+            raise ValueError("get_convolved_map_cube() is only designed for 'supernovae'.")
+
+
     def get_convolved_map(
         self,
         return_source_morphology=False,
     ):
-        """Get the convolved map based on the source morphology.
+        """Get the convolved map based on the source morphology for static sources.
 
         :param return_source_morphology: Whether to return the source
             morphology object or not. Default is False.
@@ -105,7 +165,7 @@ class MicrolensingLightCurve(object):
             )
 
         elif self._point_source_morphology == "agn":
-            # AGN source morphology
+            # Static AGN source morphology
             source_morphology = AGNSourceMorphology(
                 **self._kwargs_source_morphology,
             )
@@ -140,12 +200,9 @@ class MicrolensingLightCurve(object):
             )
 
         elif self._point_source_morphology == "supernovae":
-            # Supernovae source morphology
-            source_morphology = None
             raise NotImplementedError(
-                "Supernovae source morphology is not implemented yet."
+                "Supernovae are time-dependent. You must use get_convolved_map_cube() instead of get_convolved_map() directly."
             )
-
         else:
             raise ValueError(
                 "Invalid source morphology type. Choose 'gaussian', 'agn', or 'supernovae'."
@@ -198,10 +255,20 @@ class MicrolensingLightCurve(object):
             time_arrays: list of time arrays for each lightcurve
         """
 
-        # Get the convolved magmap after convolving the magnification map with a Gaussian kernel
-        convolved_map = self.get_convolved_map(
-            return_source_morphology=False,
-        )
+        # Handle time duration first as we need it for SNe anchor calculation
+        self._time_duration_source_frame = self._time_duration_observer_frame / (1 + source_redshift)
+
+        # Retrieve the appropriate base map(s) for the convolution
+        if self._point_source_morphology == "supernovae":
+            # Generate 10 time anchors (in source frame days) to capture the expansion
+            time_anchors_days = np.linspace(0.1, self._time_duration_source_frame, 10)
+            convolved_map_cube = self.get_convolved_map_cube(time_anchors_days)
+            # Use the largest/latest map as the base map purely to generate the tracking coordinates
+            base_convolved_map = convolved_map_cube[-1]
+        else:
+            time_anchors_days = None
+            convolved_map_cube = None
+            base_convolved_map = self.get_convolved_map(return_source_morphology=False)
 
         # determine physical pixel sizes in source plane
         pixel_size_magnification_map = self._magnification_map.get_pixel_size_meters(
@@ -231,7 +298,9 @@ class MicrolensingLightCurve(object):
 
         return self._generate_lightcurves(
             source_redshift=source_redshift,
-            convolved_map=convolved_map,
+            base_convolved_map=base_convolved_map,
+            convolved_map_cube=convolved_map_cube,
+            time_anchors_days=time_anchors_days,
             pixel_size_magnification_map=pixel_size_magnification_map,
             num_lightcurves=num_lightcurves,
             lightcurve_type=lightcurve_type,
@@ -241,10 +310,13 @@ class MicrolensingLightCurve(object):
             phi_travel_direction=phi_travel_direction,
         )
 
+
     def _generate_lightcurves(
         self,
         source_redshift,
-        convolved_map,
+        base_convolved_map,
+        convolved_map_cube,
+        time_anchors_days,
         pixel_size_magnification_map,
         num_lightcurves=1,
         lightcurve_type="magnitude",  # 'magnitude' or 'magnification'
@@ -253,7 +325,7 @@ class MicrolensingLightCurve(object):
         y_start_position=None,
         phi_travel_direction=None,
     ):
-        """Generate lightcurves for a point source based on the convolved map.
+        """Generate lightcurves for a point source based on the convolved map/cube.
 
         :param source_redshift: Redshift of the source
         :param convolved_map: Convolved magnification map
@@ -289,19 +361,13 @@ class MicrolensingLightCurve(object):
         tracks = []
         time_arrays = []
 
-        # time duration in source frame
-        self._time_duration_source_frame = self._time_duration_observer_frame / (
-            1 + source_redshift
-        )
-
-        time_duration_years = (
-            self._time_duration_source_frame / 365.25
-        )  # converting time_duration from days to years
+        time_duration_years = self._time_duration_source_frame / 365.25
 
         for _ in range(num_lightcurves):
-            light_curve, x_positions, y_positions = extract_light_curve(
-                convolution_array=convolved_map,
-                pixel_size=pixel_size_magnification_map,  # Make sure that the units for theta_star and pixel_size are in arcsec
+            # Extract the raw light_curve track coordinates from the base_convolved_map
+            raw_light_curve, x_positions, y_positions = extract_light_curve(
+                convolution_array=base_convolved_map,
+                pixel_size=pixel_size_magnification_map,
                 effective_transverse_velocity=effective_transverse_velocity,
                 light_curve_time_in_years=time_duration_years,
                 pixel_shift=0,
@@ -311,6 +377,36 @@ class MicrolensingLightCurve(object):
                 return_track_coords=True,
                 random_seed=None,
             )
+
+            actual_times_observer = np.linspace(0, self._time_duration_observer_frame, len(raw_light_curve))
+            actual_times_source = actual_times_observer / (1 + source_redshift)
+
+            # ==============================================================
+            # SPATIO-TEMPORAL INTERPOLATION (FOR EXPANDING SUPERNOVAE)
+            # ==============================================================
+            if self._point_source_morphology == "supernovae":
+                from scipy.ndimage import map_coordinates
+                
+                # Use bilinear interpolation (order=1) to smoothly sample sub-pixel magnification
+                tracks_at_anchors = np.array([
+                    map_coordinates(c_map, [y_positions, x_positions], order=1) 
+                    for c_map in convolved_map_cube
+                ])
+                
+                light_curve = np.zeros(len(actual_times_source))
+                
+                # Interpolate the physical expansion smoothly over time
+                for i, t in enumerate(actual_times_source):
+                    mag_values_at_pixel = tracks_at_anchors[:, i]
+                    interpolator = interp1d(
+                        time_anchors_days, mag_values_at_pixel, 
+                        kind='linear', fill_value="extrapolate"
+                    )
+                    light_curve[i] = interpolator(t)
+            else:
+                # Standard static source logic (AGN, Gaussian)
+                light_curve = raw_light_curve
+            # ==============================================================
 
             if lightcurve_type == "magnitude":
                 # print("Extracting magnitude for light curve...")
@@ -326,8 +422,6 @@ class MicrolensingLightCurve(object):
                 )
             LCs.append(light_curve)
             tracks.append(np.array([x_positions, y_positions]))
-            time_arrays.append(
-                np.linspace(0, self._time_duration_observer_frame, len(light_curve))
-            )
+            time_arrays.append(actual_times_observer)
 
         return LCs, tracks, time_arrays
