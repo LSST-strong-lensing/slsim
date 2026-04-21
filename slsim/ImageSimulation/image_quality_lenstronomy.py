@@ -28,7 +28,11 @@ def check_speclite_name(band):
 
 
 def register_observatory(
-    name: str, observatory_class, bands: list, speclite_fmt=check_speclite_name, sncosmo_fmt=None
+    name: str,
+    observatory_class,
+    bands: list,
+    speclite_fmt=check_speclite_name,
+    sncosmo_fmt=None,
 ):
     """Register a new observatory to integrate it with image simulation tools.
 
@@ -219,9 +223,10 @@ def get_speclite_filternames(bands):
     """
     return [get_speclite_filtername(band) for band in bands]
 
+
 def get_sncosmo_filtername(band):
     """Get the sncosmo bandpass name corresponding to the given band.
-    
+
     :param band: imaging band name
     :type band: str
     :return: sncosmo bandpass name
@@ -229,12 +234,13 @@ def get_sncosmo_filtername(band):
     """
     obs_name = get_observatory(band)
     fmt = _OBSERVATORY_REGISTRY[obs_name].get("sncosmo_fmt")
-    
+
     # If no specific sncosmo_fmt was registered, fallback to just the raw band name
     if fmt is None:
         return band
-        
+
     return fmt(band)
+
 
 def get_all_supported_bands():
     """Return every band name currently registered across all observatories.

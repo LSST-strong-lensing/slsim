@@ -214,9 +214,7 @@ class SupernovaeCatalog(object):
                 for band in self.band_list:
                     sncosmo_band_name = get_sncosmo_filtername(band)
                     mag = lightcurve_class.get_apparent_magnitude(
-                        self.lightcurve_time, 
-                        sncosmo_band_name,
-                        zpsys=self.mag_zpsys
+                        self.lightcurve_time, sncosmo_band_name, zpsys=self.mag_zpsys
                     )
                     getattr(self, f"magnitude_{band}").append(mag)
             lightcurve_data = {"MJD": time}
