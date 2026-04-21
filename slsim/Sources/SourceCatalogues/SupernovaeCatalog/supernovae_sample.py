@@ -9,6 +9,7 @@ from scipy import stats
 from slsim.Sources.SourcePopulation.galaxies import galaxy_projected_eccentricity
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 from slsim.Util.param_util import elliptical_distortion_product_average
+from slsim.ImageSimulation.image_quality_lenstronomy import get_sncosmo_filtername
 
 
 def supernovae_host_galaxy_offset(host_galaxy_catalog):
@@ -211,8 +212,11 @@ class SupernovaeCatalog(object):
                 )
                 time.append(self.lightcurve_time)
                 for band in self.band_list:
+                    sncosmo_band_name = get_sncosmo_filtername(band)
                     mag = lightcurve_class.get_apparent_magnitude(
-                        self.lightcurve_time, "lsst" + band, zpsys=self.mag_zpsys
+                        self.lightcurve_time, 
+                        sncosmo_band_name,
+                        zpsys=self.mag_zpsys
                     )
                     getattr(self, f"magnitude_{band}").append(mag)
             lightcurve_data = {"MJD": time}
