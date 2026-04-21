@@ -137,3 +137,10 @@ class SourceMorphology:
         # Calculate the arcseconds in the source plane
         arcsecs = (metres / angular_diameter_distance) * u.rad.to(u.arcsec)  # .value
         return arcsecs
+    
+    def get_time_dependent_kernel_maps(self, time_anchors):
+        """
+        Returns a list of kernel maps corresponding to the provided time anchors.
+        By default, for static sources, it just returns copies of the single kernel.
+        """
+        return [self.kernel_map for _ in time_anchors]
