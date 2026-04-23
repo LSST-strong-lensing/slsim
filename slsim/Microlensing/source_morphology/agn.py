@@ -74,9 +74,11 @@ class AGNSourceMorphology(SourceMorphology):
             temporally. Default is False. (Time-varying AGN morphology is not yet implemented).
         """
         super().__init__(is_time_varying=is_time_varying, *args, **kwargs)
-        
+
         if self.is_time_varying:
-            raise NotImplementedError("Time-varying AGN source morphology is not yet implemented.")
+            raise NotImplementedError(
+                "Time-varying AGN source morphology is not yet implemented."
+            )
 
         self.source_redshift = source_redshift
         self.cosmo = cosmo

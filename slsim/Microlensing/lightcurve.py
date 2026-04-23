@@ -23,6 +23,7 @@ MORPHOLOGY_CLASSES = {
     "supernovae": SupernovaeSourceMorphology,
 }
 
+
 class MicrolensingLightCurve(object):
     """Class to generate microlensing lightcurve(s) for a single source based
     on the magnification map, source morphology, and lens properties."""
@@ -126,15 +127,13 @@ class MicrolensingLightCurve(object):
         source_redshift = self._source_morphology.source_redshift
 
         # 1. Physical pixel size of the underlying magnification map (meters/pixel)
-        pixel_size_magnification_map = (
-            self._magnification_map.get_pixel_size_meters(
-                source_redshift=source_redshift, cosmo=cosmo
-            )
+        pixel_size_magnification_map = self._magnification_map.get_pixel_size_meters(
+            source_redshift=source_redshift, cosmo=cosmo
         )
 
         # 2. Extract the time-evolving kernels and their physical sizes
-        kernels, pixel_scales_m = self._source_morphology.get_time_dependent_kernel_maps(
-            time_anchors_days
+        kernels, pixel_scales_m = (
+            self._source_morphology.get_time_dependent_kernel_maps(time_anchors_days)
         )
         convolved_cube = []
 
@@ -149,9 +148,7 @@ class MicrolensingLightCurve(object):
             if pixel_ratio * kernel.shape[0] < 1.0:
                 rescaled_kernel_map = np.array([[1.0]])
             else:
-                rescaled_kernel_map = rescale(
-                    kernel, pixel_ratio, anti_aliasing=True
-                )
+                rescaled_kernel_map = rescale(kernel, pixel_ratio, anti_aliasing=True)
 
             if np.nansum(rescaled_kernel_map) > 0:
                 rescaled_kernel_map = rescaled_kernel_map / np.nansum(
@@ -168,7 +165,7 @@ class MicrolensingLightCurve(object):
 
         self._convolved_map_cube = np.array(convolved_cube)
         return self._convolved_map_cube
-        
+
     def get_convolved_map(
         self,
         return_source_morphology=False,
@@ -214,7 +211,9 @@ class MicrolensingLightCurve(object):
             # print(f"pixel size of magnification map: {pixel_size_magnification_map}")
             # print(f"pixel size of kernel map: {pixel_size_kernel_map}")
             # print(f"Pixel ratio: {pixel_ratio}")
-            rescaled_kernel_map = rescale(self._source_morphology.kernel_map, pixel_ratio)
+            rescaled_kernel_map = rescale(
+                self._source_morphology.kernel_map, pixel_ratio
+            )
 
             # normalize the rescaled kernel, just in case
             rescaled_kernel_map = rescaled_kernel_map / np.nansum(rescaled_kernel_map)
@@ -278,7 +277,9 @@ class MicrolensingLightCurve(object):
         # Retrieve the appropriate base map(s) for the convolution
         if self._source_morphology.is_time_varying:
             # Generate time anchors (in source frame days) to capture the expansion
-            time_anchors_days = np.linspace(0.1, self._time_duration_source_frame, 10) #TODO: allow user to specify number of anchors and their distribution (e.g., more anchors at early times for SNe)
+            time_anchors_days = np.linspace(
+                0.1, self._time_duration_source_frame, 10
+            )  # TODO: allow user to specify number of anchors and their distribution (e.g., more anchors at early times for SNe)
             convolved_map_cube = self.get_convolved_map_cube(time_anchors_days)
             # Use the largest/latest map as the base map purely to generate the tracking coordinates
             base_convolved_map = convolved_map_cube[-1]

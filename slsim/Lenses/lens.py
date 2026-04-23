@@ -1078,7 +1078,7 @@ class Lens(LensedSystemBase):
             # AGN
             if source_name == "QSO":
                 kwargs_microlensing_updated["point_source_morphology"] = "agn"
-                
+
             # Supernovae
             elif source_name.startswith("SN"):
                 kwargs_microlensing_updated["point_source_morphology"] = "supernovae"

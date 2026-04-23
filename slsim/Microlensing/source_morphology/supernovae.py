@@ -21,7 +21,8 @@ class SupernovaeSourceMorphology(SourceMorphology):
         v_uv_km_s=18000.0,
         u_limb_uv=0.8,
         u_limb_ir=0.2,
-        *args, **kwargs
+        *args,
+        **kwargs,
     ):
         """
         :param observing_wavelength_band: e.g., 'g', 'r', 'i', or a sncosmo bandpass name.
@@ -47,7 +48,7 @@ class SupernovaeSourceMorphology(SourceMorphology):
         self.cosmo = cosmo
         self.sn_model_name = sn_model_name
         self.ellipticity = ellipticity
-        
+
         self.v_base_km_s = v_base_km_s
         self.v_uv_km_s = v_uv_km_s
         self.u_limb_uv = u_limb_uv
@@ -57,7 +58,9 @@ class SupernovaeSourceMorphology(SourceMorphology):
         self._num_pix_y = grid_pixels
         self._sn_model = sncosmo.Model(source=self.sn_model_name)
 
-    def _continuous_monochromatic_morphology(self, wavelength_angstroms, time_seconds, max_scale_m):
+    def _continuous_monochromatic_morphology(
+        self, wavelength_angstroms, time_seconds, max_scale_m
+    ):
         """Generates the continuous wavelength-dependent spatial profile."""
         x = np.linspace(-max_scale_m, max_scale_m, self._num_pix_x)
         y = np.linspace(-max_scale_m, max_scale_m, self._num_pix_y)
@@ -68,7 +71,7 @@ class SupernovaeSourceMorphology(SourceMorphology):
         # Chromatic Velocity Interpolation (m/s)
         v_base_m_s = self.v_base_km_s * 1000.0
         v_uv_m_s = self.v_uv_km_s * 1000.0
-        
+
         # Exponential proxy for the opacity wall transition
         opacity_proxy = np.exp(-(wavelength_angstroms - 3000) / 2000)
         v_phot_m_s = v_base_m_s + (v_uv_m_s - v_base_m_s) * opacity_proxy
@@ -79,11 +82,13 @@ class SupernovaeSourceMorphology(SourceMorphology):
         # Wavelength-Dependent Limb Darkening
         u_limb_diff = self.u_limb_uv - self.u_limb_ir
         u_limb = self.u_limb_uv - u_limb_diff * ((wavelength_angstroms - 3000) / 7000)
-        
+
         # Safely clip to user bounds regardless of order
-        u_min, u_max = min(self.u_limb_uv, self.u_limb_ir), max(self.u_limb_uv, self.u_limb_ir)
+        u_min, u_max = min(self.u_limb_uv, self.u_limb_ir), max(
+            self.u_limb_uv, self.u_limb_ir
+        )
         u_limb = np.clip(u_limb, u_min, u_max)
-        
+
         mu = np.sqrt(1.0 - np.clip((R_eff / r_phot) ** 2, 0, 1))
 
         # Ring Detection (Absorption lines)
@@ -110,6 +115,7 @@ class SupernovaeSourceMorphology(SourceMorphology):
 
     def get_kernel_map(self, time_days):
         """Builds the SED-weighted kernel map for a specific epoch.
+
         Returns the kernel and its physical pixel scale in meters.
         """
         time_seconds = time_days * 24 * 3600
@@ -117,9 +123,9 @@ class SupernovaeSourceMorphology(SourceMorphology):
         # Define grid size based on the maximum possible expansion velocity
         max_v_m_s = max(self.v_base_km_s, self.v_uv_km_s) * 1000.0
         r_max_meters = max(max_v_m_s * time_seconds, 1e8)
-        
+
         # Grid width is 2.5x the maximum radius on each side
-        max_scale_m = r_max_meters * 2.5 
+        max_scale_m = r_max_meters * 2.5
 
         try:
             bandpass = sncosmo.get_bandpass(self.band)

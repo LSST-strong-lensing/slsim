@@ -126,8 +126,9 @@ class MicrolensingLightCurveFromLensModel(object):
         it produces the lightcurve magnitudes for all images of the source.
 
         :param time: Time array for which the lightcurve is needed (in
-            days). NOTE: For time-varying sources (like supernovae), this 
-            array dictates the physical elapsed time since the explosion in observer days.
+            days). NOTE: For time-varying sources (like supernovae),
+            this array dictates the physical elapsed time since the
+            explosion in observer days.
         :return: lightcurves_single: numpy array of microlensing
             magnitudes with the shape (num_images, len(time)).
         """
@@ -207,8 +208,8 @@ class MicrolensingLightCurveFromLensModel(object):
         The generated lightcurves will have the same length of time as
         the "time" array provided.
 
-        :param time: Time array for which the lightcurve is needed. 
-            NOTE: For time-varying sources (like supernovae), this array 
+        :param time: Time array for which the lightcurve is needed.
+            NOTE: For time-varying sources (like supernovae), this array
             dictates the physical elapsed time since the explosion in observer days.
         :param lightcurve_type: Type of lightcurve to generate, either
             'magnitude' or 'magnification'. If 'magnitude', the
