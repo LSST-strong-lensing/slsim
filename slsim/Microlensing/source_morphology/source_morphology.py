@@ -8,8 +8,8 @@ from astropy import units as u
 class SourceMorphology:
     """Base class for source morphologies."""
 
-    def __init__(self, *args, **kwargs):
-        pass
+    def __init__(self, is_time_varying=False, *args, **kwargs):
+        self.is_time_varying = is_time_varying
 
     def get_kernel_map(self, *args, **kwargs):
         """Returns the 2D array of the kernel map.
@@ -28,6 +28,12 @@ class SourceMorphology:
         the source. The kernel map is used to convolve with the
         microlensing magnification map.
         """
+        if self.is_time_varying:
+            raise AttributeError(
+                "Time-varying sources do not have a single static kernel_map. "
+                "Use get_time_dependent_kernel_maps() or get_kernel_map(time) instead."
+            )
+
         if not hasattr(self, "_kernel_map"):
             self._kernel_map = self.get_kernel_map()
         return self._kernel_map
