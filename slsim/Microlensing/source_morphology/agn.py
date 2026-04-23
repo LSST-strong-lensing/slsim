@@ -33,6 +33,7 @@ class AGNSourceMorphology(SourceMorphology):
         observer_frame_wavelength_in_nm=600,  # Wavelength in nanometers used to determine black body flux. For the surface flux density of the AccretionDisk at desired wavelength.
         eddington_ratio=0.15,  # Eddington ratio of the accretion disk
         observing_wavelength_band: str = None,
+        is_time_varying=False,
         *args,
         **kwargs
     ):
@@ -69,8 +70,16 @@ class AGNSourceMorphology(SourceMorphology):
             If a wavelength band is provided, the kernel map is generated at the mean wavelength of the band.
         :param eddington_ratio: Eddington ratio of the accretion disk.
             Default is 0.15.
+        :param is_time_varying: Boolean flag indicating if the AGN source varies
+            temporally. Default is False. (Time-varying AGN morphology is not yet implemented).
         """
-        super().__init__(*args, **kwargs)
+        super().__init__(is_time_varying=is_time_varying, *args, **kwargs)
+
+        if self.is_time_varying:
+            raise NotImplementedError(
+                "Time-varying AGN source morphology is not yet implemented."
+            )
+
         self.source_redshift = source_redshift
         self.cosmo = cosmo
         self.r_out = r_out
@@ -175,22 +184,3 @@ class AGNSourceMorphology(SourceMorphology):
         )
 
         return normalized_emission_map
-
-    def get_variable_kernel_map(self, *args, **kwargs):
-        """Returns the 2D array of the variable AGN kernel map.
-
-        The kernel map is a 2D array that represents the morphology of
-        the source. The kernel map is used to convolve with the
-        microlensing magnification map. The kernel is normalized to 1.
-        """
-        raise NotImplementedError("This method is not implemented yet.")
-
-    def get_integrated_kernel_map(self, band):
-        """Returns the 2D array of the integrated AGN kernel map for a given
-        wavelength range and transmission function.
-
-        The kernel map is a 2D array that represents the morphology of
-        the source. The kernel map is used to convolve with the
-        microlensing magnification map. The kernel is normalized to 1.
-        """
-        raise NotImplementedError("This method is not implemented yet.")

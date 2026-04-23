@@ -28,7 +28,11 @@ def check_speclite_name(band):
 
 
 def register_observatory(
-    name: str, observatory_class, bands: list, speclite_fmt=check_speclite_name
+    name: str,
+    observatory_class,
+    bands: list,
+    speclite_fmt=check_speclite_name,
+    sncosmo_fmt=None,
 ):
     """Register a new observatory to integrate it with image simulation tools.
 
@@ -97,6 +101,7 @@ def register_observatory(
         "class": observatory_class,
         "bands": list(bands),
         "speclite_fmt": speclite_fmt,
+        "sncosmo_fmt": sncosmo_fmt,
     }
 
 
@@ -106,18 +111,21 @@ register_observatory(
     observatory_class=LSST,
     bands=LSST_BAND_LIST,
     speclite_fmt=lambda band: f"lsst2023-{band}",
+    sncosmo_fmt=lambda band: f"lsst{band}",
 )
 register_observatory(
     name="Roman",
     observatory_class=Roman,
     bands=ROMAN_BAND_LIST,
     speclite_fmt=lambda band: f"Roman-{band}",
+    sncosmo_fmt=lambda band: f"{band}",
 )
 register_observatory(
     name="Euclid",
     observatory_class=Euclid,
     bands=EUCLID_BAND_LIST,
     speclite_fmt=lambda band: f"Euclid-{band}",
+    sncosmo_fmt=lambda band: f"euclid{band}",
 )
 
 
@@ -214,6 +222,24 @@ def get_speclite_filternames(bands):
         - Euclid: 'VIS'
     """
     return [get_speclite_filtername(band) for band in bands]
+
+
+def get_sncosmo_filtername(band):
+    """Get the sncosmo bandpass name corresponding to the given band.
+
+    :param band: imaging band name
+    :type band: str
+    :return: sncosmo bandpass name
+    :rtype: str
+    """
+    obs_name = get_observatory(band)
+    fmt = _OBSERVATORY_REGISTRY[obs_name].get("sncosmo_fmt")
+
+    # If no specific sncosmo_fmt was registered, fallback to just the raw band name
+    if fmt is None:
+        return band
+
+    return fmt(band)
 
 
 def get_all_supported_bands():

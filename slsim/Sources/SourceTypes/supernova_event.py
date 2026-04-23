@@ -1,7 +1,10 @@
 import warnings
 from slsim.Sources.Supernovae import random_supernovae
 from slsim.Sources.SourceTypes.source_base import SourceBase
-from slsim.ImageSimulation.image_quality_lenstronomy import get_all_supported_bands
+from slsim.ImageSimulation.image_quality_lenstronomy import (
+    get_all_supported_bands,
+    get_sncosmo_filtername,
+)
 
 
 class SupernovaEvent(SourceBase):
@@ -101,10 +104,7 @@ class SupernovaEvent(SourceBase):
 
             for element in provided_bands:
                 # sncosmo registers LSST bands as 'lsstg', 'lsstr', etc.
-                if element in ["u", "g", "r", "i", "z", "y"]:
-                    provided_band = "lsst" + element
-                else:
-                    provided_band = element
+                provided_band = get_sncosmo_filtername(element)
 
                 name = "ps_mag_" + element
                 times = self._lightcurve_time

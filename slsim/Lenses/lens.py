@@ -1073,8 +1073,15 @@ class Lens(LensedSystemBase):
 
         # Update point_source_morphology based on source type
         if "point_source_morphology" not in kwargs_microlensing_updated:
-            if self.source(source_index)._source.name == "QSO":
+            source_name = self.source(source_index)._source.name
+
+            # AGN
+            if source_name == "QSO":
                 kwargs_microlensing_updated["point_source_morphology"] = "agn"
+
+            # Supernovae
+            elif source_name.startswith("SN"):
+                kwargs_microlensing_updated["point_source_morphology"] = "supernovae"
         ##########################################################################
 
         # Instantiate the microlensing model with all required parameters
