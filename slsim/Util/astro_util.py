@@ -543,6 +543,38 @@ def calculate_accretion_disk_response_function(
     return response_function / np.nansum(response_function)
 
 
+def compute_variable_accretion_disk_response(
+    time,
+    variable_signal,
+    r_out,
+    r_resolution,
+    inclination_angle,
+    rest_frame_wavelength_in_nanometers,
+    black_hole_mass_exponent,
+    black_hole_spin,
+    corona_height,
+    eddington_ratio,
+):
+    """Primary function used to compute the disk response at different times
+    given a variable corona. :param time: Array of time values at which the
+    response is evaluated. :param variable_signal: Input signal representing
+    variability (e.g., luminosity changes) over time. :param r_out: Outer
+    radius of the accretion disk (in appropriate units). :param r_resolution:
+    Number of radial bins used to resolve the disk. :param inclination_angle:
+    Inclination angle of the disk in degrees. :param
+    rest_frame_wavelength_in_nanometers: Wavelength in nanometers in the rest
+    frame for which the response is computed. :param black_hole_mass_exponent:
+    Exponent for the black hole mass scaling relation. :param black_hole_spin:
+    Dimensionless spin parameter of the black hole (0 to 1). :param
+    corona_height: Height of the corona above the disk (in appropriate units).
+    :param eddington_ratio: Eddington ratio (accretion rate normalized to the
+    Eddington limit).
+
+    :return: Computed response of the accretion disk at each time value.
+    """
+    return
+
+
 def define_bending_power_law_psd(
     log_breakpoint_frequency, low_frequency_slope, high_frequency_slope, frequencies
 ):
