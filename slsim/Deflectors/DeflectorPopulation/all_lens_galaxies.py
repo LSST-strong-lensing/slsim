@@ -97,9 +97,13 @@ class AllLensGalaxies(DeflectorsBase):
 
         self._galaxy_select = object_cut(galaxy_list, **kwargs_cut)
         self._num_select = len(self._galaxy_select)
-        self._galaxy_select["vel_disp"] = self._f_vel_disp(
-            np.log10(self._galaxy_select["stellar_mass"])
-        )
+        
+        # Assign velocity dispersions through abundance matching if the "vel_disp" column is missing
+        if "vel_disp" not in column_names:
+            self._galaxy_select["vel_disp"] = self._f_vel_disp(
+                np.log10(self._galaxy_select["stellar_mass"])
+            )
+            
         # TODO: random reshuffle of matched list
 
     def deflector_number(self):
