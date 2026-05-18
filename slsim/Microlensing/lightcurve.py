@@ -1,20 +1,14 @@
 __author__ = "Paras Sharma"
 
-
 import numpy as np
 from skimage.transform import rescale
-from scipy.interpolate import interp1d
 
 from slsim.Microlensing.magmap import MagnificationMap
-
-from slsim.Util.astro_util import (
-    extract_light_curve,
-)
+from slsim.Util.astro_util import extract_light_curve
 
 from slsim.Microlensing.source_morphology.agn import AGNSourceMorphology
 from slsim.Microlensing.source_morphology.gaussian import GaussianSourceMorphology
 from slsim.Microlensing.source_morphology.supernovae import SupernovaeSourceMorphology
-from slsim.Util.param_util import convolved_image
 
 # Central routing dictionary for source morphology classes
 MORPHOLOGY_CLASSES = {
@@ -22,7 +16,6 @@ MORPHOLOGY_CLASSES = {
     "agn": AGNSourceMorphology,
     "supernovae": SupernovaeSourceMorphology,
 }
-
 
 class MicrolensingLightCurve(object):
     """Class to generate microlensing lightcurve(s) for a single source based
@@ -32,7 +25,7 @@ class MicrolensingLightCurve(object):
         self,
         magnification_map: MagnificationMap,
         time_duration: float,
-        point_source_morphology: str = "gaussian",  # 'gaussian' or 'agn' or 'supernovae'
+        point_source_morphology: str = "gaussian",  
         kwargs_source_morphology: dict = {},
     ):
         """
@@ -57,10 +50,6 @@ class MicrolensingLightCurve(object):
         self._point_source_morphology = point_source_morphology
         self._kwargs_source_morphology = kwargs_source_morphology
 
-        # Initialize the convolved map and source morphology
-        self._convolved_map = None
-        self._convolved_map_cube = None
-
         # Instantiate the morphology class up front
         self._setup_source_morphology()
 
@@ -73,7 +62,6 @@ class MicrolensingLightCurve(object):
                 f"Available options are: {list(MORPHOLOGY_CLASSES.keys())}"
             )
 
-        # Gaussian needs grid details to center properly
         if self._point_source_morphology == "gaussian":
             self._source_morphology = morph_class(
                 **self._kwargs_source_morphology,
@@ -88,147 +76,12 @@ class MicrolensingLightCurve(object):
             self._source_morphology = morph_class(**self._kwargs_source_morphology)
 
     @property
-    def convolved_map(self):
-        """Get the convolved map i.e., the magnification map convolved with the
-        source morphology.
-
-        (Only for static sources).
-        """
-        if self._convolved_map is None:
-            raise ValueError(
-                "Convolved map is not initialized. Please call get_convolved_map() first."
-            )
-        return self._convolved_map
-
-    @property
     def magnification_map(self):
-        """Get the magnification map."""
         return self._magnification_map
 
     @property
     def time_duration_observer_frame(self):
-        """Get the lightcurve time duration in observer frame."""
         return self._time_duration_observer_frame
-
-    def get_convolved_map_cube(self, time_anchors_days):
-        """Generates a 3D cube of convolved magnification maps for time-
-        dependent sources like Supernovae or AGN.
-
-        :param time_anchors_days: Array of time epochs in the source
-            rest-frame.
-        :return: A 3D numpy array of convolved maps.
-        """
-        if not self._source_morphology.is_time_varying:
-            raise ValueError(
-                "get_convolved_map_cube() is only designed for time-varying sources (is_time_varying=True)."
-            )
-
-        cosmo = self._source_morphology.cosmo
-        source_redshift = self._source_morphology.source_redshift
-
-        # 1. Physical pixel size of the underlying magnification map (meters/pixel)
-        pixel_size_magnification_map = self._magnification_map.get_pixel_size_meters(
-            source_redshift=source_redshift, cosmo=cosmo
-        )
-
-        # 2. Extract the time-evolving kernels and their physical sizes
-        kernels, pixel_scales_m = (
-            self._source_morphology.get_time_dependent_kernel_maps(time_anchors_days)
-        )
-        convolved_cube = []
-
-        for kernel, kernel_pixel_size_m in zip(kernels, pixel_scales_m):
-
-            # 3. Calculate how to resize the kernel to match the mag map resolution
-            pixel_ratio = kernel_pixel_size_m / pixel_size_magnification_map
-
-            # SUB-PIXEL SAFETY CATCH:
-            # If the rescaled kernel would be smaller than 1x1 pixel on the mag map,
-            # the source is effectively a perfect point source at this epoch.
-            if pixel_ratio * kernel.shape[0] < 1.0:
-                rescaled_kernel_map = np.array([[1.0]])
-            else:
-                rescaled_kernel_map = rescale(kernel, pixel_ratio, anti_aliasing=True)
-
-            if np.nansum(rescaled_kernel_map) > 0:
-                rescaled_kernel_map = rescaled_kernel_map / np.nansum(
-                    rescaled_kernel_map
-                )
-
-            # 4. Convolve
-            conv_map = convolved_image(
-                self._magnification_map.magnifications,
-                rescaled_kernel_map,
-                convolution_type="fft",
-            )
-            convolved_cube.append(conv_map)
-
-        self._convolved_map_cube = np.array(convolved_cube)
-        return self._convolved_map_cube
-
-    def get_convolved_map(
-        self,
-        return_source_morphology=False,
-    ):
-        """Get the convolved map based on the source morphology for static
-        sources.
-
-        :param return_source_morphology: Whether to return the source
-            morphology object or not. Default is False.
-        :return: The convolved map and the source morphology object if
-            requested. Otherwise, only the convolved map is returned.
-        :rtype: numpy.ndarray or tuple
-        """
-        if self._source_morphology.is_time_varying:
-            raise NotImplementedError(
-                "Time-varying sources (like supernovae) must use get_convolved_map_cube() instead of get_convolved_map() directly."
-            )
-
-        if self._point_source_morphology == "gaussian":
-            # convolve the magnification map with the Gaussian kernel
-            self._convolved_map = convolved_image(
-                self._magnification_map.magnifications,
-                self._source_morphology.kernel_map,
-                convolution_type="fft",
-            )
-
-        elif self._point_source_morphology == "agn":
-            cosmo = self._source_morphology.cosmo
-            source_redshift = self._source_morphology.source_redshift
-
-            # magnification map pixel size
-            pixel_size_magnification_map = (
-                self._magnification_map.get_pixel_size_meters(
-                    source_redshift=source_redshift, cosmo=cosmo
-                )
-            )
-
-            # source kernel pixel size
-            pixel_size_kernel_map = self._source_morphology.pixel_scale_m
-
-            # rescale the kernel to the pixel size of the magnification map
-            pixel_ratio = pixel_size_kernel_map / pixel_size_magnification_map
-            # print(f"pixel size of magnification map: {pixel_size_magnification_map}")
-            # print(f"pixel size of kernel map: {pixel_size_kernel_map}")
-            # print(f"Pixel ratio: {pixel_ratio}")
-            rescaled_kernel_map = rescale(
-                self._source_morphology.kernel_map, pixel_ratio
-            )
-
-            # normalize the rescaled kernel, just in case
-            rescaled_kernel_map = rescaled_kernel_map / np.nansum(rescaled_kernel_map)
-
-            # convolve the magnification map with the kernel map, #TODO: make this a cross-correlation
-            self._convolved_map = convolved_image(
-                self._magnification_map.magnifications,
-                rescaled_kernel_map,
-                convolution_type="fft",
-            )
-
-        if return_source_morphology:
-            return self._convolved_map, self._source_morphology
-        else:
-            return self._convolved_map
 
     def generate_lightcurves(
         self,
@@ -274,51 +127,26 @@ class MicrolensingLightCurve(object):
             1 + source_redshift
         )
 
-        # Retrieve the appropriate base map(s) for the convolution
-        if self._source_morphology.is_time_varying:
-            # Generate time anchors (in source frame days) to capture the expansion
-            time_anchors_days = np.linspace(
-                0.1, self._time_duration_source_frame, 10
-            )  # TODO: allow user to specify number of anchors and their distribution (e.g., more anchors at early times for SNe)
-            convolved_map_cube = self.get_convolved_map_cube(time_anchors_days)
-            # Use the largest/latest map as the base map purely to generate the tracking coordinates
-            base_convolved_map = convolved_map_cube[-1]
-        else:
-            time_anchors_days = None
-            convolved_map_cube = None
-            base_convolved_map = self.get_convolved_map(return_source_morphology=False)
-
-        # determine physical pixel sizes in source plane
         pixel_size_magnification_map = self._magnification_map.get_pixel_size_meters(
             source_redshift=source_redshift, cosmo=cosmo
         )
 
-        # convert x and y positions from arcsec to pixel coordinates on the magnification map grid
         if x_start_position is not None:
             x_start_position = (
                 (x_start_position / self._magnification_map.half_length_x)
-                * self._magnification_map.num_pixels_x
-                / 2
+                * self._magnification_map.num_pixels_x / 2
             )
-            x_start_position = int(
-                x_start_position + self._magnification_map.num_pixels_x // 2
-            )
+            x_start_position = int(x_start_position + self._magnification_map.num_pixels_x // 2)
 
         if y_start_position is not None:
             y_start_position = (
                 (y_start_position / self._magnification_map.half_length_y)
-                * self._magnification_map.num_pixels_y
-                / 2
+                * self._magnification_map.num_pixels_y / 2
             )
-            y_start_position = int(
-                y_start_position + self._magnification_map.num_pixels_y // 2
-            )
+            y_start_position = int(y_start_position + self._magnification_map.num_pixels_y // 2)
 
         return self._generate_lightcurves(
             source_redshift=source_redshift,
-            base_convolved_map=base_convolved_map,
-            convolved_map_cube=convolved_map_cube,
-            time_anchors_days=time_anchors_days,
             pixel_size_magnification_map=pixel_size_magnification_map,
             num_lightcurves=num_lightcurves,
             lightcurve_type=lightcurve_type,
@@ -331,13 +159,10 @@ class MicrolensingLightCurve(object):
     def _generate_lightcurves(
         self,
         source_redshift,
-        base_convolved_map,
-        convolved_map_cube,
-        time_anchors_days,
         pixel_size_magnification_map,
         num_lightcurves=1,
-        lightcurve_type="magnitude",  # 'magnitude' or 'magnification'
-        effective_transverse_velocity=1000,  # Transverse velocity in source plane (in km/s)
+        lightcurve_type="magnitude",
+        effective_transverse_velocity=1000,
         x_start_position=None,
         y_start_position=None,
         phi_travel_direction=None,
@@ -346,7 +171,6 @@ class MicrolensingLightCurve(object):
         map/cube.
 
         :param source_redshift: Redshift of the source
-        :param convolved_map: Convolved magnification map
         :param pixel_size_magnification_map: Pixel size of the
             magnification map in meters
         :param num_lightcurves: Number of lightcurves to generate.
@@ -382,9 +206,9 @@ class MicrolensingLightCurve(object):
         time_duration_years = self._time_duration_source_frame / 365.25
 
         for _ in range(num_lightcurves):
-            # Extract the raw light_curve track coordinates from the base_convolved_map
+            # 1. Extract the raw spatial track from the magnification map
             raw_light_curve, x_positions, y_positions = extract_light_curve(
-                convolution_array=base_convolved_map,
+                convolution_array=self._magnification_map.magnifications,
                 pixel_size=pixel_size_magnification_map,
                 effective_transverse_velocity=effective_transverse_velocity,
                 light_curve_time_in_years=time_duration_years,
@@ -396,54 +220,102 @@ class MicrolensingLightCurve(object):
                 random_seed=None,
             )
 
-            actual_times_observer = np.linspace(
-                0, self._time_duration_observer_frame, len(raw_light_curve)
-            )
+            n_steps = len(x_positions)
+            actual_times_observer = np.linspace(0, self._time_duration_observer_frame, n_steps)
             actual_times_source = actual_times_observer / (1 + source_redshift)
+            light_curve = np.zeros(n_steps)
 
-            # ==============================================================
-            # SPATIO-TEMPORAL INTERPOLATION (FOR TIME-VARYING SOURCES)
-            # ==============================================================
+            # ==========================================================
+            # TIME VARYING SOURCES (SUPERNOVAE)
+            # ==========================================================
             if self._source_morphology.is_time_varying:
+                kernels, pixel_scales_m = self._source_morphology.get_time_dependent_kernel_maps(actual_times_source)
+                
+                max_pad = 0
+                rescaled_kernels = []
+                for kernel, kernel_pixel_size_m in zip(kernels, pixel_scales_m):
+                    pixel_ratio = kernel_pixel_size_m / pixel_size_magnification_map
+                    if pixel_ratio * kernel.shape[0] < 1.0:
+                        res_k = np.array([[1.0]])
+                    else:
+                        res_k = rescale(kernel, pixel_ratio, anti_aliasing=True, mode='constant', cval=0.0)
+                    if np.nansum(res_k) > 0: 
+                        res_k /= np.nansum(res_k)
+                    rescaled_kernels.append(res_k)
+                    # + 2 ensures we have enough room for the +1 interpolation shift below
+                    max_pad = max(max_pad, res_k.shape[0] // 2 + 2, res_k.shape[1] // 2 + 2)
+                
+                padded_mag_map = np.pad(self._magnification_map.magnifications, max_pad, mode='reflect')
+                
+                for i in range(n_steps):
+                    res_k = rescaled_kernels[i]
+                    ky, kx = res_k.shape
+                    hw_y, hw_x = ky // 2, kx // 2
+                    
+                    # Get exact sub-pixel coordinates
+                    px_exact = x_positions[i] + max_pad
+                    py_exact = y_positions[i] + max_pad
+                    
+                    # Find the bounding integer pixels
+                    px0, py0 = int(np.floor(px_exact)), int(np.floor(py_exact))
+                    px1, py1 = px0 + 1, py0 + 1
+                    
+                    # Calculate sub-pixel weights
+                    dx = px_exact - px0
+                    dy = py_exact - py0
+                    
+                    # Helper to safely grab the dot product of a stamp
+                    def compute_stamp_flux(cx, cy):
+                        stamp = padded_mag_map[cy - hw_y : cy - hw_y + ky, cx - hw_x : cx - hw_x + kx]
+                        return np.sum(stamp * res_k)
+
+                    # Sample the fluxes at the 4 nearest grid intersections
+                    f00 = compute_stamp_flux(px0, py0)
+                    f10 = compute_stamp_flux(px1, py0)
+                    f01 = compute_stamp_flux(px0, py1)
+                    f11 = compute_stamp_flux(px1, py1)
+                    
+                    # Apply 2D Bilinear Interpolation
+                    flux_y0 = f00 * (1.0 - dx) + f10 * dx
+                    flux_y1 = f01 * (1.0 - dx) + f11 * dx
+                    light_curve[i] = flux_y0 * (1.0 - dy) + flux_y1 * dy
+
+            # ==========================================================
+            # STATIC SOURCES (STATIC AGN, GAUSSIAN)
+            # ==========================================================
+            else:
+                from scipy.signal import fftconvolve
                 from scipy.ndimage import map_coordinates
 
-                # Use bilinear interpolation (order=1) to smoothly sample sub-pixel magnification
-                tracks_at_anchors = np.array(
-                    [
-                        map_coordinates(c_map, [y_positions, x_positions], order=1)
-                        for c_map in convolved_map_cube
-                    ]
-                )
+                kernel, pixel_scale_m = self._source_morphology.kernel_map, self._source_morphology.pixel_scale_m
+                pixel_ratio = pixel_scale_m / pixel_size_magnification_map
+                
+                if pixel_ratio * kernel.shape[0] < 1.0:
+                    res_k = np.array([[1.0]])
+                else:
+                    res_k = rescale(kernel, pixel_ratio, anti_aliasing=True, mode='constant', cval=0.0)
+                if np.nansum(res_k) > 0: 
+                    res_k /= np.nansum(res_k)
+                    
+                max_pad = max(res_k.shape[0] // 2 + 1, res_k.shape[1] // 2 + 1)
+                padded_mag_map = np.pad(self._magnification_map.magnifications, max_pad, mode='reflect')
+                
+                # 1. Convolve the entire padded map with the static source kernel once
+                convolved_padded_map = fftconvolve(padded_mag_map, res_k, mode='same')
+                
+                # 2. Shift the continuous track coordinates to account for the padding
+                coords = np.vstack((y_positions + max_pad, x_positions + max_pad))
+                
+                # 3. Use map_coordinates for fast sub-pixel (bilinear) interpolation along the track
+                # order=1 ensures linear interpolation between pixels, removing the step function.
+                light_curve = map_coordinates(convolved_padded_map, coords, order=1)
 
-                light_curve = np.zeros(len(actual_times_source))
-
-                # Interpolate the physical expansion smoothly over time
-                for i, t in enumerate(actual_times_source):
-                    mag_values_at_pixel = tracks_at_anchors[:, i]
-                    interpolator = interp1d(
-                        time_anchors_days,
-                        mag_values_at_pixel,
-                        kind="linear",
-                        fill_value="extrapolate",
-                    )
-                    light_curve[i] = interpolator(t)
-            else:
-                # Standard static source logic (AGN, Gaussian)
-                light_curve = raw_light_curve
-            # ==============================================================
-
+            # Convert to Magnitude if required
             if lightcurve_type == "magnitude":
-                # print("Extracting magnitude for light curve...")
-                light_curve = -2.5 * np.log10(
-                    light_curve / np.abs(self._magnification_map.mu_ave)
-                )
-            elif lightcurve_type == "magnification":
-                # print("Extracting magnification for light curve...")
-                light_curve = light_curve
-            else:
-                raise ValueError(
-                    "Lightcurve type not recognized. Please use 'magnitude' or 'magnification'."
-                )
+                light_curve = -2.5 * np.log10(light_curve / np.abs(self._magnification_map.mu_ave))
+            elif lightcurve_type != "magnification":
+                raise ValueError("Lightcurve type not recognized. Please use 'magnitude' or 'magnification'.")
+
             LCs.append(light_curve)
             tracks.append(np.array([x_positions, y_positions]))
             time_arrays.append(actual_times_observer)
