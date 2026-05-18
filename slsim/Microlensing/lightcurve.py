@@ -25,13 +25,13 @@ class MicrolensingLightCurve(object):
     def __init__(
         self,
         magnification_map: MagnificationMap,
-        time_duration: float,
+        observation_time_array: np.ndarray,
         point_source_morphology: str = "gaussian",
         kwargs_source_morphology: dict = {},
     ):
         """
         :param magnification_map: MagnificationMap object, if not provided.
-        :param time_duration: Time duration for which the lightcurve is needed (in days). In observer frame (z = 0).
+        :param observation_time_array: Array of observation times for which the lightcurve is needed (in days). In observer frame (z = 0).
         :param point_source_morphology: Type of source morphology to use. Default is 'gaussian'. Options are 'gaussian' or 'agn' (Accretion Disk) or 'supernovae'.
         :param kwargs_source_morphology: Dictionary of keyword arguments for the source morphology class. This should be as per the source morphology type.
 
@@ -46,7 +46,8 @@ class MicrolensingLightCurve(object):
         """
 
         self._magnification_map = magnification_map
-        self._time_duration_observer_frame = time_duration
+        self._observation_time_array = observation_time_array
+        self._time_duration_observer_frame = self._observation_time_array[-1] - self._observation_time_array[0]
 
         self._point_source_morphology = point_source_morphology
         self._kwargs_source_morphology = kwargs_source_morphology
@@ -209,7 +210,6 @@ class MicrolensingLightCurve(object):
         LCs = []
         tracks = []
         time_arrays = []
-
         time_duration_years = self._time_duration_source_frame / 365.25
 
         for _ in range(num_lightcurves):
@@ -228,8 +228,12 @@ class MicrolensingLightCurve(object):
             )
 
             n_steps = len(x_positions)
+
+            # Anchor the times to the absolute start and end!
             actual_times_observer = np.linspace(
-                0, self._time_duration_observer_frame, n_steps
+                self._observation_time_array[0], 
+                self._observation_time_array[-1], 
+                n_steps
             )
             actual_times_source = actual_times_observer / (1 + source_redshift)
             light_curve = np.zeros(n_steps)

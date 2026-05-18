@@ -905,7 +905,7 @@ class Lens(LensedSystemBase):
                 if microlensing:
                     microlensing_magnitudes = self._point_source_magnitude_microlensing(
                         band=band,
-                        time=time,
+                        time=image_observed_times,
                         source_index=source_index,
                         kwargs_microlensing=kwargs_microlensing,
                     )

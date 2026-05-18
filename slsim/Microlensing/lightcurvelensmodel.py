@@ -152,10 +152,13 @@ class MicrolensingLightCurveFromLensModel(object):
             )
         )
 
+        # Get correct length of time axis whether it is 1D or 2D
+        time_steps = time_array.shape[1] if (isinstance(time_array, np.ndarray) and time_array.ndim == 2) else len(time_array)
+
         # Here we choose just 1 lightcurve for the point sources
         lightcurves_single = np.zeros(
-            (len(lightcurves), len(time_array))
-        )  # has shape (num_images, len(time))
+            (len(lightcurves), time_steps)
+        )  # has shape (num_images, time_steps)
         for i in range(len(lightcurves)):
             lightcurves_single[i] = lightcurves[i][0]
 
@@ -241,17 +244,6 @@ class MicrolensingLightCurveFromLensModel(object):
         # generate magnification maps for each image of the source if they are not already generated and cached
         magmaps_images = self.generate_magnification_maps_from_microlensing_params()
 
-        if (isinstance(time, np.ndarray) or isinstance(time, list)) and len(time) > 1:
-            lightcurve_duration = time[-1] - time[0]
-        elif (isinstance(time, np.ndarray) or isinstance(time, list)) and len(
-            time
-        ) == 1:
-            lightcurve_duration = 0
-        else:
-            raise ValueError(
-                "Time array not provided in the correct format. Supported formats are int, float, array, and list."
-            )
-
         # obtain velocities and angles for each image
         eff_trv_vel_images, eff_trv_vel_angles_images = (
             self.effective_transverse_velocity_images
@@ -259,6 +251,9 @@ class MicrolensingLightCurveFromLensModel(object):
 
         # obtain lightcurve starting position
         x_start_position, y_start_position = self.lc_start_position
+
+        # Check if time is a 2D array (multi-image time-delayed epochs) or 1D
+        time_is_2d = isinstance(time, np.ndarray) and time.ndim == 2
 
         # generate lightcurves for each image of the source
         lightcurves = (
@@ -269,9 +264,17 @@ class MicrolensingLightCurveFromLensModel(object):
         )  # a list which contains the [list of tracks] for each image of the source, depending on the num_lightcurves parameter.
         time_arrays = []  # corresponding to each lightcurve
         for i in range(len(self._kappa_star_images)):
+
+            # Grab the specific time array for this image
+            current_image_time_array = time[i] if time_is_2d else time
+            if len(current_image_time_array) > 1:
+                lightcurve_duration = current_image_time_array[-1] - current_image_time_array[0]
+            else:
+                lightcurve_duration = 0
+
             ml_lc = MicrolensingLightCurve(
                 magnification_map=magmaps_images[i],
-                time_duration=lightcurve_duration,
+                observation_time_array=current_image_time_array,
                 point_source_morphology=self._point_source_morphology,
                 kwargs_source_morphology=self._kwargs_source_morphology,
             )
@@ -294,10 +297,10 @@ class MicrolensingLightCurveFromLensModel(object):
             for j in range(len(curr_lightcurves)):
                 curr_lightcurves_interpolated.append(
                     self._interpolate_light_curve(
-                        curr_lightcurves[j], curr_time_arrays[j], time
+                        curr_lightcurves[j], curr_time_arrays[j], current_image_time_array
                     )
                 )
-                updated_curr_time_arrays.append(time)
+                updated_curr_time_arrays.append(current_image_time_array)
 
             lightcurves.append(curr_lightcurves_interpolated)
             tracks.append(curr_tracks)
