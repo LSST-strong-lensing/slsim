@@ -984,7 +984,9 @@ class Lens(LensedSystemBase):
         )
 
         # capping kappa_star to be less than kappa_tot to avoid unphysical microlensing parameters
-        kappa_star_images = np.minimum(kappa_star_images, np.array(kappa_tot_images) - 1e-6)
+        kappa_star_images = np.minimum(
+            kappa_star_images, np.array(kappa_tot_images) - 1e-6
+        )
 
         gamma1, gamma2 = lens_model_lenstronomy.gamma(
             image_positions_x, image_positions_y, lenstronomy_kwargs_lens

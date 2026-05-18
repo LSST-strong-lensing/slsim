@@ -66,7 +66,9 @@ class SupernovaeSourceMorphology(SourceMorphology):
         self, wavelength_angstroms, time_seconds, R_eff
     ):
         """Generates the continuous wavelength-dependent spatial profile.
-        Takes a pre-computed R_eff array to avoid the np.meshgrid bottleneck!
+
+        Takes a pre-computed R_eff array to avoid the np.meshgrid
+        bottleneck!
         """
         # Chromatic Velocity Interpolation (m/s)
         v_base_m_s = self.v_base_km_s * 1000.0
@@ -92,7 +94,7 @@ class SupernovaeSourceMorphology(SourceMorphology):
         # For optimization, only perform heavy math on the pixels inside the photosphere
         intensity = np.zeros_like(R_eff)
         mask = R_eff <= r_phot
-        
+
         # If the entire grid is empty for this wavelength, return the zeros immediately
         if not np.any(mask):
             return intensity

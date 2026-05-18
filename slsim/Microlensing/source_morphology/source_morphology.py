@@ -3,6 +3,7 @@ __author__ = "Paras Sharma"
 import numpy as np
 from astropy import units as u
 
+
 class SourceMorphology:
     """Base class for source morphologies."""
 
@@ -21,6 +22,7 @@ class SourceMorphology:
     @property
     def kernel_map(self):
         """Returns the 2D array of the static kernel map.
+
         The kernel map is a 2D array that represents the morphology of
         the source. The kernel map is used to convolve with the
         microlensing magnification map.
@@ -142,7 +144,12 @@ class SourceMorphology:
         return arcsecs
 
     def get_time_dependent_kernel_maps(self, time_anchors):
-        """Returns a list of kernel maps and pixel scales for the requested times.
-        By default, for static sources, it duplicates the single kernel to unify the pipeline.
+        """Returns a list of kernel maps and pixel scales for the requested
+        times.
+
+        By default, for static sources, it duplicates the single kernel
+        to unify the pipeline.
         """
-        return [self.kernel_map for _ in time_anchors], [self.pixel_scale_m for _ in time_anchors]
+        return [self.kernel_map for _ in time_anchors], [
+            self.pixel_scale_m for _ in time_anchors
+        ]

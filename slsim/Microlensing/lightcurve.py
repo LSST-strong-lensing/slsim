@@ -17,6 +17,7 @@ MORPHOLOGY_CLASSES = {
     "supernovae": SupernovaeSourceMorphology,
 }
 
+
 class MicrolensingLightCurve(object):
     """Class to generate microlensing lightcurve(s) for a single source based
     on the magnification map, source morphology, and lens properties."""
@@ -25,7 +26,7 @@ class MicrolensingLightCurve(object):
         self,
         magnification_map: MagnificationMap,
         time_duration: float,
-        point_source_morphology: str = "gaussian",  
+        point_source_morphology: str = "gaussian",
         kwargs_source_morphology: dict = {},
     ):
         """
@@ -134,16 +135,22 @@ class MicrolensingLightCurve(object):
         if x_start_position is not None:
             x_start_position = (
                 (x_start_position / self._magnification_map.half_length_x)
-                * self._magnification_map.num_pixels_x / 2
+                * self._magnification_map.num_pixels_x
+                / 2
             )
-            x_start_position = int(x_start_position + self._magnification_map.num_pixels_x // 2)
+            x_start_position = int(
+                x_start_position + self._magnification_map.num_pixels_x // 2
+            )
 
         if y_start_position is not None:
             y_start_position = (
                 (y_start_position / self._magnification_map.half_length_y)
-                * self._magnification_map.num_pixels_y / 2
+                * self._magnification_map.num_pixels_y
+                / 2
             )
-            y_start_position = int(y_start_position + self._magnification_map.num_pixels_y // 2)
+            y_start_position = int(
+                y_start_position + self._magnification_map.num_pixels_y // 2
+            )
 
         return self._generate_lightcurves(
             source_redshift=source_redshift,
@@ -221,7 +228,9 @@ class MicrolensingLightCurve(object):
             )
 
             n_steps = len(x_positions)
-            actual_times_observer = np.linspace(0, self._time_duration_observer_frame, n_steps)
+            actual_times_observer = np.linspace(
+                0, self._time_duration_observer_frame, n_steps
+            )
             actual_times_source = actual_times_observer / (1 + source_redshift)
             light_curve = np.zeros(n_steps)
 
@@ -229,8 +238,12 @@ class MicrolensingLightCurve(object):
             # TIME VARYING SOURCES (SUPERNOVAE)
             # ==========================================================
             if self._source_morphology.is_time_varying:
-                kernels, pixel_scales_m = self._source_morphology.get_time_dependent_kernel_maps(actual_times_source)
-                
+                kernels, pixel_scales_m = (
+                    self._source_morphology.get_time_dependent_kernel_maps(
+                        actual_times_source
+                    )
+                )
+
                 max_pad = 0
                 rescaled_kernels = []
                 for kernel, kernel_pixel_size_m in zip(kernels, pixel_scales_m):
@@ -238,35 +251,47 @@ class MicrolensingLightCurve(object):
                     if pixel_ratio * kernel.shape[0] < 1.0:
                         res_k = np.array([[1.0]])
                     else:
-                        res_k = rescale(kernel, pixel_ratio, anti_aliasing=True, mode='constant', cval=0.0)
-                    if np.nansum(res_k) > 0: 
+                        res_k = rescale(
+                            kernel,
+                            pixel_ratio,
+                            anti_aliasing=True,
+                            mode="constant",
+                            cval=0.0,
+                        )
+                    if np.nansum(res_k) > 0:
                         res_k /= np.nansum(res_k)
                     rescaled_kernels.append(res_k)
                     # + 2 ensures we have enough room for the +1 interpolation shift below
-                    max_pad = max(max_pad, res_k.shape[0] // 2 + 2, res_k.shape[1] // 2 + 2)
-                
-                padded_mag_map = np.pad(self._magnification_map.magnifications, max_pad, mode='reflect')
-                
+                    max_pad = max(
+                        max_pad, res_k.shape[0] // 2 + 2, res_k.shape[1] // 2 + 2
+                    )
+
+                padded_mag_map = np.pad(
+                    self._magnification_map.magnifications, max_pad, mode="reflect"
+                )
+
                 for i in range(n_steps):
                     res_k = rescaled_kernels[i]
                     ky, kx = res_k.shape
                     hw_y, hw_x = ky // 2, kx // 2
-                    
+
                     # Get exact sub-pixel coordinates
                     px_exact = x_positions[i] + max_pad
                     py_exact = y_positions[i] + max_pad
-                    
+
                     # Find the bounding integer pixels
                     px0, py0 = int(np.floor(px_exact)), int(np.floor(py_exact))
                     px1, py1 = px0 + 1, py0 + 1
-                    
+
                     # Calculate sub-pixel weights
                     dx = px_exact - px0
                     dy = py_exact - py0
-                    
+
                     # Helper to safely grab the dot product of a stamp
                     def compute_stamp_flux(cx, cy):
-                        stamp = padded_mag_map[cy - hw_y : cy - hw_y + ky, cx - hw_x : cx - hw_x + kx]
+                        stamp = padded_mag_map[
+                            cy - hw_y : cy - hw_y + ky, cx - hw_x : cx - hw_x + kx
+                        ]
                         return np.sum(stamp * res_k)
 
                     # Sample the fluxes at the 4 nearest grid intersections
@@ -274,7 +299,7 @@ class MicrolensingLightCurve(object):
                     f10 = compute_stamp_flux(px1, py0)
                     f01 = compute_stamp_flux(px0, py1)
                     f11 = compute_stamp_flux(px1, py1)
-                    
+
                     # Apply 2D Bilinear Interpolation
                     flux_y0 = f00 * (1.0 - dx) + f10 * dx
                     flux_y1 = f01 * (1.0 - dx) + f11 * dx
@@ -287,34 +312,49 @@ class MicrolensingLightCurve(object):
                 from scipy.signal import fftconvolve
                 from scipy.ndimage import map_coordinates
 
-                kernel, pixel_scale_m = self._source_morphology.kernel_map, self._source_morphology.pixel_scale_m
+                kernel, pixel_scale_m = (
+                    self._source_morphology.kernel_map,
+                    self._source_morphology.pixel_scale_m,
+                )
                 pixel_ratio = pixel_scale_m / pixel_size_magnification_map
-                
+
                 if pixel_ratio * kernel.shape[0] < 1.0:
                     res_k = np.array([[1.0]])
                 else:
-                    res_k = rescale(kernel, pixel_ratio, anti_aliasing=True, mode='constant', cval=0.0)
-                if np.nansum(res_k) > 0: 
+                    res_k = rescale(
+                        kernel,
+                        pixel_ratio,
+                        anti_aliasing=True,
+                        mode="constant",
+                        cval=0.0,
+                    )
+                if np.nansum(res_k) > 0:
                     res_k /= np.nansum(res_k)
-                    
+
                 max_pad = max(res_k.shape[0] // 2 + 1, res_k.shape[1] // 2 + 1)
-                padded_mag_map = np.pad(self._magnification_map.magnifications, max_pad, mode='reflect')
-                
+                padded_mag_map = np.pad(
+                    self._magnification_map.magnifications, max_pad, mode="reflect"
+                )
+
                 # 1. Convolve the entire padded map with the static source kernel once
-                convolved_padded_map = fftconvolve(padded_mag_map, res_k, mode='same')
-                
+                convolved_padded_map = fftconvolve(padded_mag_map, res_k, mode="same")
+
                 # 2. Shift the continuous track coordinates to account for the padding
                 coords = np.vstack((y_positions + max_pad, x_positions + max_pad))
-                
+
                 # 3. Use map_coordinates for fast sub-pixel (bilinear) interpolation along the track
                 # order=1 ensures linear interpolation between pixels, removing the step function.
                 light_curve = map_coordinates(convolved_padded_map, coords, order=1)
 
             # Convert to Magnitude if required
             if lightcurve_type == "magnitude":
-                light_curve = -2.5 * np.log10(light_curve / np.abs(self._magnification_map.mu_ave))
+                light_curve = -2.5 * np.log10(
+                    light_curve / np.abs(self._magnification_map.mu_ave)
+                )
             elif lightcurve_type != "magnification":
-                raise ValueError("Lightcurve type not recognized. Please use 'magnitude' or 'magnification'.")
+                raise ValueError(
+                    "Lightcurve type not recognized. Please use 'magnitude' or 'magnification'."
+                )
 
             LCs.append(light_curve)
             tracks.append(np.array([x_positions, y_positions]))

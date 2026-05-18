@@ -570,12 +570,17 @@ class MicrolensingLightCurveFromLensModel(object):
         without requiring re-initialization of the class or re-generation of
         magnification maps."""
         self._kwargs_source_morphology = kwargs_source_morphology
-    
-    def reset_start_position(self, x_start_position = None, y_start_position = None):
-        """Resets the starting position for the lightcurve track. If x_start_position and y_start_position are provided, the starting position will be set to those values. Otherwise, a new random starting position will be generated.
-        
-        :param x_start_position: The new x-coordinate for the starting position on the magnification map (in arcsec)
-        :param y_start_position: The new y-coordinate for the starting position on the magnification map (in arcsec)
+
+    def reset_start_position(self, x_start_position=None, y_start_position=None):
+        """Resets the starting position for the lightcurve track. If
+        x_start_position and y_start_position are provided, the starting
+        position will be set to those values. Otherwise, a new random starting
+        position will be generated.
+
+        :param x_start_position: The new x-coordinate for the starting
+            position on the magnification map (in arcsec)
+        :param y_start_position: The new y-coordinate for the starting
+            position on the magnification map (in arcsec)
         """
         if x_start_position is not None and y_start_position is not None:
             self._lc_start_position = (x_start_position, y_start_position)
@@ -592,9 +597,9 @@ class MicrolensingLightCurveFromLensModel(object):
                 half_length_y,
             )
             self._lc_start_position = (x_start_position, y_start_position)
-        
+
         return self._lc_start_position
-    
+
     @property
     def lc_start_position(self):
         """Chooses a random starting position for the lightcurve track on the
