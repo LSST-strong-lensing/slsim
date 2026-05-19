@@ -34,6 +34,7 @@ class AGNSourceMorphology(SourceMorphology):
         eddington_ratio=0.15,  # Eddington ratio of the accretion disk
         observing_wavelength_band: str = None,
         is_time_varying=False,
+        user_snapshots=None,
         *args,
         **kwargs
     ):
@@ -71,13 +72,24 @@ class AGNSourceMorphology(SourceMorphology):
         :param eddington_ratio: Eddington ratio of the accretion disk.
             Default is 0.15.
         :param is_time_varying: Boolean flag indicating if the AGN source varies
-            temporally. Default is False. (Time-varying AGN morphology is not yet implemented).
+            temporally. Default is False. 
+        :param user_snapshots: Optional dictionary containing pre-computed 
+            snapshots for time-varying AGN morphologies. If provided, the Base 
+            Class automatically handles vectorized temporal interpolation.
+            Must contain:
+            - 'times': 1D array of source-frame times (in days).
+            - 'kernels': List or 3D array of 2D kernel maps normalized to 1.
+            - 'pixel_scales_m': 1D array of pixel scales in meters corresponding to each kernel.
         """
-        super().__init__(is_time_varying=is_time_varying, *args, **kwargs)
+        # Pass the snapshots up to the Base Class. If user_snapshots is populated, 
+        # the base class will automatically intercept get_time_dependent_kernel_maps!
+        super().__init__(is_time_varying=is_time_varying, user_snapshots=user_snapshots, *args, **kwargs)
 
-        if self.is_time_varying:
+        if self.is_time_varying and user_snapshots is None:
             raise NotImplementedError(
-                "Time-varying AGN source morphology is not yet implemented."
+                "Time-varying AGN source morphology is currently only supported via "
+                "the injection of external grids into 'user_snapshots'. Analytical "
+                "time-varying generation is not yet implemented."
             )
 
         self.source_redshift = source_redshift
