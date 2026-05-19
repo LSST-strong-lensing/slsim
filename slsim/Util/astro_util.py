@@ -1143,17 +1143,18 @@ def extract_light_curve(
     point. If the light curve is too long, or the size of the object is too
     large, a "light curve" representing a constant magnification is returned.
 
-    :param convolution_array: The convolution between a flux distribution
-        and the magnification array due to microlensing. Note
-        coordinates on arrays have (y, x) signature.
+    :param convolution_array: The convolution between a flux
+        distribution and the magnification array due to microlensing.
+        Note coordinates on arrays have (y, x) signature.
     :param pixel_size: Physical size of a pixel in the source plane, in
         meters
     :param effective_transverse_velocity: effective transverse velocity
         in the source plane, in km / s
     :param light_curve_time_in_years: duration of the light curve to
-        generate, in years. This can be a scalar (float) OR a numpy array 
-        of timestamps. If an array is provided, the spatial track is mapped 
-        1:1 to the exact fractional timestamps to preserve irregular cadences.
+        generate, in years. This can be a scalar (float) OR a numpy
+        array of timestamps. If an array is provided, the spatial track
+        is mapped 1:1 to the exact fractional timestamps to preserve
+        irregular cadences.
     :param pixel_shift: offset of the SMBH with respect to the convolved
         map, in pixels
     :param x_start_position: None or the x coordinate to start pulling a
@@ -1175,7 +1176,7 @@ def extract_light_curve(
         ).value
     else:
         effective_transverse_velocity *= u.km.to(u.m)
-        
+
     # Handle time units (Scalar vs Array)
     if isinstance(light_curve_time_in_years, Quantity):
         time_val_s = light_curve_time_in_years.to(u.s).value
@@ -1199,9 +1200,7 @@ def extract_light_curve(
         )
         return np.sum(convolution_array) / np.size(convolution_array)
 
-    pixels_traversed = (
-        effective_transverse_velocity * duration_s / pixel_size
-    )
+    pixels_traversed = effective_transverse_velocity * duration_s / pixel_size
 
     if pixel_shift > 0:
         safe_convolution_array = convolution_array[
@@ -1236,9 +1235,9 @@ def extract_light_curve(
             return np.sum(convolution_array) / np.size(convolution_array)
 
         # Choose non-border pixel if possible
-        if N_safe_dim_x >= 3: 
+        if N_safe_dim_x >= 3:
             x_start_position = float(rng.integers(1, max_safe_idx_x))
-        else: 
+        else:
             x_start_position = float(rng.integers(0, max_safe_idx_x + 1))
 
     if y_start_position is not None:
@@ -1256,7 +1255,7 @@ def extract_light_curve(
         # Choose non-border pixel if possible
         if N_safe_dim_y >= 3:
             y_start_position = float(rng.integers(1, max_safe_idx_y))
-        else: 
+        else:
             y_start_position = float(rng.integers(0, max_safe_idx_y + 1))
 
     # Determine angle and deltas
@@ -1287,10 +1286,9 @@ def extract_light_curve(
             angle += np.pi / 2
             delta_x = pixels_traversed * np.cos(angle)
             delta_y = pixels_traversed * np.sin(angle)
-            if (
-                0 <= x_start_position + delta_x < np.size(safe_convolution_array, 0)
-                and 0 <= y_start_position + delta_y < np.size(safe_convolution_array, 1)
-            ):
+            if 0 <= x_start_position + delta_x < np.size(
+                safe_convolution_array, 0
+            ) and 0 <= y_start_position + delta_y < np.size(safe_convolution_array, 1):
                 success = True
             backup_counter += 1
             if backup_counter > 4:  # pragma: no cover

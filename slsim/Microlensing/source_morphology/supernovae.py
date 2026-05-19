@@ -37,7 +37,7 @@ class SupernovaeSourceMorphology(SourceMorphology):
         :param v_uv_km_s: Velocity of the UV line-blanketed shell in km/s.
         :param u_limb_uv: Limb darkening coefficient at 3000 Å.
         :param u_limb_ir: Limb darkening coefficient at 10000 Å.
-        :param anchor_spacing_days: Source-frame days between analytical 
+        :param anchor_spacing_days: Source-frame days between analytical
             evaluations. Controls the speed/accuracy tradeoff. Default is 5.0.
         :param user_snapshots: Optional dict containing pre-computed snapshots for time-varying sources.
             If provided, sncosmo analytical calculations are completely bypassed.
@@ -46,7 +46,7 @@ class SupernovaeSourceMorphology(SourceMorphology):
             - 'kernels': List or 3D array of 2D kernel maps normalized to 1.
             - 'pixel_scales_m': 1D array of pixel scales in meters corresponding to each kernel.
         """
-        
+
         if observing_wavelength_band in iql.get_all_supported_bands():
             self.band = iql.get_sncosmo_filtername(observing_wavelength_band)
         else:
@@ -72,23 +72,29 @@ class SupernovaeSourceMorphology(SourceMorphology):
                 self._bandpass = sncosmo.get_bandpass(self.band)
             except Exception:
                 raise ValueError(f"Band {self.band} not recognized by sncosmo.")
-            
+
             # Generate the analytical anchors automatically
             min_t = self._sn_model.mintime()
             max_t = self._sn_model.maxtime()
-            anchor_times = np.arange(min_t, max_t + anchor_spacing_days, anchor_spacing_days)
-            
-            anchor_kernels, anchor_scales = self._generate_analytical_anchors(anchor_times)
-            
+            anchor_times = np.arange(
+                min_t, max_t + anchor_spacing_days, anchor_spacing_days
+            )
+
+            anchor_kernels, anchor_scales = self._generate_analytical_anchors(
+                anchor_times
+            )
+
             # Format them into the standardized dictionary for the base class
             user_snapshots = {
-                'times': anchor_times,
-                'kernels': anchor_kernels,
-                'pixel_scales_m': anchor_scales
+                "times": anchor_times,
+                "kernels": anchor_kernels,
+                "pixel_scales_m": anchor_scales,
             }
 
         # Hand off the snapshots to the Base Class for vectorized interpolation!
-        super().__init__(is_time_varying=True, user_snapshots=user_snapshots, *args, **kwargs)
+        super().__init__(
+            is_time_varying=True, user_snapshots=user_snapshots, *args, **kwargs
+        )
 
     def _continuous_monochromatic_morphology(
         self, wavelength_angstroms, time_seconds, R_eff
@@ -197,7 +203,8 @@ class SupernovaeSourceMorphology(SourceMorphology):
         return kernel, current_pixel_scale_m
 
     def _generate_analytical_anchors(self, time_anchors_days):
-        """Internal helper to generate the sparse anchors during initialization."""
+        """Internal helper to generate the sparse anchors during
+        initialization."""
         kernels = []
         pixel_scales_m = []
         for t in time_anchors_days:

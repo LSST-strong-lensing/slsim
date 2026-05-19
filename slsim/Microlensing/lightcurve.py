@@ -212,7 +212,11 @@ class MicrolensingLightCurve(object):
         LCs = []
         tracks = []
         time_arrays = []
-        time_elapsed_source_years = (self._observation_time_array - self._observation_time_array[0]) / (1 + source_redshift) / 365.25
+        time_elapsed_source_years = (
+            (self._observation_time_array - self._observation_time_array[0])
+            / (1 + source_redshift)
+            / 365.25
+        )
 
         for _ in range(num_lightcurves):
             # 1. Extract the raw spatial track from the magnification map

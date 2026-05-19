@@ -5,8 +5,11 @@ from astropy import units as u
 
 
 class SourceMorphology:
-    """Base class for source morphologies. Handles static and time-varying
-    sources, including vectorized interpolation for dynamic arrays."""
+    """Base class for source morphologies.
+
+    Handles static and time-varying sources, including vectorized
+    interpolation for dynamic arrays.
+    """
 
     def __init__(self, is_time_varying=False, user_snapshots=None, *args, **kwargs):
         """Initializes the base SourceMorphology class.
