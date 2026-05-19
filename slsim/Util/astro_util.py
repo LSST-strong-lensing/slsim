@@ -1125,7 +1125,7 @@ def pull_value_from_grid(array_2d, x_position, y_position):
         return interpolated_values_flat.reshape(x_pos_arr.shape)
 
 
-# The credits for the following function go to Henry Best (https://github.com/Henry-Best-01/Amoeba)
+# The function below is inspired by AMOEBA (https://github.com/Henry-Best-01/Amoeba), developed by Henry Best
 def extract_light_curve(
     convolution_array,
     pixel_size,
@@ -1143,7 +1143,7 @@ def extract_light_curve(
     point. If the light curve is too long, or the size of the object is too
     large, a "light curve" representing a constant magnification is returned.
 
-    :param convolution_array: The convolution between a flux distribtion
+    :param convolution_array: The convolution between a flux distribution
         and the magnification array due to microlensing. Note
         coordinates on arrays have (y, x) signature.
     :param pixel_size: Physical size of a pixel in the source plane, in
@@ -1151,7 +1151,9 @@ def extract_light_curve(
     :param effective_transverse_velocity: effective transverse velocity
         in the source plane, in km / s
     :param light_curve_time_in_years: duration of the light curve to
-        generate, in years
+        generate, in years. This can be a scalar (float) OR a numpy array 
+        of timestamps. If an array is provided, the spatial track is mapped 
+        1:1 to the exact fractional timestamps to preserve irregular cadences.
     :param pixel_shift: offset of the SMBH with respect to the convolved
         map, in pixels
     :param x_start_position: None or the x coordinate to start pulling a
@@ -1166,16 +1168,30 @@ def extract_light_curve(
     """
     rng = np.random.default_rng(seed=random_seed)
 
+    # Handle velocity units
     if isinstance(effective_transverse_velocity, Quantity):
         effective_transverse_velocity = effective_transverse_velocity.to(
             u.m / u.s
         ).value
     else:
         effective_transverse_velocity *= u.km.to(u.m)
+        
+    # Handle time units (Scalar vs Array)
     if isinstance(light_curve_time_in_years, Quantity):
-        light_curve_time_in_years = light_curve_time_in_years.to(u.s).value
+        time_val_s = light_curve_time_in_years.to(u.s).value
     else:
-        light_curve_time_in_years *= u.yr.to(u.s)
+        time_val_s = light_curve_time_in_years * u.yr.to(u.s)
+
+    # Calculate duration and exact temporal fractions if time is an array
+    if isinstance(time_val_s, np.ndarray):
+        duration_s = time_val_s[-1] - time_val_s[0]
+        if duration_s > 0:
+            time_fractions = (time_val_s - time_val_s[0]) / duration_s
+        else:
+            time_fractions = np.zeros_like(time_val_s)
+    else:
+        duration_s = time_val_s
+        time_fractions = None
 
     if pixel_shift >= np.size(convolution_array, 0) / 2:
         print(
@@ -1184,12 +1200,8 @@ def extract_light_curve(
         return np.sum(convolution_array) / np.size(convolution_array)
 
     pixels_traversed = (
-        effective_transverse_velocity * light_curve_time_in_years / pixel_size
+        effective_transverse_velocity * duration_s / pixel_size
     )
-
-    n_points = (
-        effective_transverse_velocity * light_curve_time_in_years / pixel_size
-    ) + 2
 
     if pixel_shift > 0:
         safe_convolution_array = convolution_array[
@@ -1223,13 +1235,10 @@ def extract_light_curve(
             print("Error: max_safe_idx_x < 0, safe_array likely misconfigured.")
             return np.sum(convolution_array) / np.size(convolution_array)
 
-        # MODIFICATION: Choose non-border pixel if possible
-        if N_safe_dim_x >= 3:  # Possible to choose non-border
-            # Non-border indices are 1 to N_safe_dim_x - 2 (or max_safe_idx_x - 1)
-            x_start_position = float(
-                rng.integers(1, max_safe_idx_x)
-            )  # low is inclusive, high is exclusive
-        else:  # N_safe_dim_x is 1 or 2, all pixels are border pixels
+        # Choose non-border pixel if possible
+        if N_safe_dim_x >= 3: 
+            x_start_position = float(rng.integers(1, max_safe_idx_x))
+        else: 
             x_start_position = float(rng.integers(0, max_safe_idx_x + 1))
 
     if y_start_position is not None:
@@ -1244,15 +1253,13 @@ def extract_light_curve(
             print("Error: max_safe_idx_y < 0, safe_array likely misconfigured.")
             return np.sum(convolution_array) / np.size(convolution_array)
 
-        # MODIFICATION: Choose non-border pixel if possible
-        if N_safe_dim_y >= 3:  # Possible to choose non-border
-            # Non-border indices are 1 to N_safe_dim_y - 2 (or max_safe_idx_y - 1)
-            y_start_position = float(
-                rng.integers(1, max_safe_idx_y)
-            )  # low is inclusive, high is exclusive
-        else:  # N_safe_dim_y is 1 or 2, all pixels are border pixels
+        # Choose non-border pixel if possible
+        if N_safe_dim_y >= 3:
+            y_start_position = float(rng.integers(1, max_safe_idx_y))
+        else: 
             y_start_position = float(rng.integers(0, max_safe_idx_y + 1))
 
+    # Determine angle and deltas
     if phi_travel_direction is not None:
         angle = phi_travel_direction * np.pi / 180
         delta_x = pixels_traversed * np.cos(angle)
@@ -1281,23 +1288,30 @@ def extract_light_curve(
             delta_x = pixels_traversed * np.cos(angle)
             delta_y = pixels_traversed * np.sin(angle)
             if (
-                x_start_position + delta_x < np.size(safe_convolution_array, 0)
-                and y_start_position + delta_y < np.size(safe_convolution_array, 1)
-                and x_start_position + delta_x >= 0
-                and y_start_position + delta_y >= 0
+                0 <= x_start_position + delta_x < np.size(safe_convolution_array, 0)
+                and 0 <= y_start_position + delta_y < np.size(safe_convolution_array, 1)
             ):
                 success = True
             backup_counter += 1
             if backup_counter > 4:  # pragma: no cover
                 break
 
-    x_positions = np.linspace(
-        x_start_position, x_start_position + delta_x, 5 * int(n_points)
-    )
-    y_positions = np.linspace(
-        y_start_position, y_start_position + delta_y, 5 * int(n_points)
-    )
+    # Build the spatial coordinates
+    if time_fractions is not None:
+        # EXACT mapping
+        x_positions = x_start_position + time_fractions * delta_x
+        y_positions = y_start_position + time_fractions * delta_y
+    else:
+        # Fallback to highly-sampled scalar methodology
+        n_points = pixels_traversed + 2
+        x_positions = np.linspace(
+            x_start_position, x_start_position + delta_x, 5 * int(n_points)
+        )
+        y_positions = np.linspace(
+            y_start_position, y_start_position + delta_y, 5 * int(n_points)
+        )
 
+    # Pull the static flux (for backward compatibility / static sources)
     light_curve = pull_value_from_grid(safe_convolution_array, x_positions, y_positions)
 
     if return_track_coords:

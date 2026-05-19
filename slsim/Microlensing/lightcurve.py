@@ -212,7 +212,7 @@ class MicrolensingLightCurve(object):
         LCs = []
         tracks = []
         time_arrays = []
-        time_duration_years = self._time_duration_source_frame / 365.25
+        time_elapsed_source_years = (self._observation_time_array - self._observation_time_array[0]) / (1 + source_redshift) / 365.25
 
         for _ in range(num_lightcurves):
             # 1. Extract the raw spatial track from the magnification map
@@ -220,7 +220,7 @@ class MicrolensingLightCurve(object):
                 convolution_array=self._magnification_map.magnifications,
                 pixel_size=pixel_size_magnification_map,
                 effective_transverse_velocity=effective_transverse_velocity,
-                light_curve_time_in_years=time_duration_years,
+                light_curve_time_in_years=time_elapsed_source_years,
                 pixel_shift=0,
                 x_start_position=x_start_position,
                 y_start_position=y_start_position,
@@ -232,6 +232,7 @@ class MicrolensingLightCurve(object):
             n_steps = len(x_positions)
 
             # Anchor the times to the absolute start and end!
+            # Since extract_light_curve handled the time mapping, actual_times_source is perfectly mapped:
             actual_times_observer = np.linspace(
                 self._observation_time_array[0],
                 self._observation_time_array[-1],
