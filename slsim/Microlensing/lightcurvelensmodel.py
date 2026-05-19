@@ -153,7 +153,11 @@ class MicrolensingLightCurveFromLensModel(object):
         )
 
         # Get correct length of time axis whether it is 1D or 2D
-        time_steps = time_array.shape[1] if (isinstance(time_array, np.ndarray) and time_array.ndim == 2) else len(time_array)
+        time_steps = (
+            time_array.shape[1]
+            if (isinstance(time_array, np.ndarray) and time_array.ndim == 2)
+            else len(time_array)
+        )
 
         # Here we choose just 1 lightcurve for the point sources
         lightcurves_single = np.zeros(
@@ -268,7 +272,9 @@ class MicrolensingLightCurveFromLensModel(object):
             # Grab the specific time array for this image
             current_image_time_array = time[i] if time_is_2d else time
             if len(current_image_time_array) > 1:
-                lightcurve_duration = current_image_time_array[-1] - current_image_time_array[0]
+                lightcurve_duration = (
+                    current_image_time_array[-1] - current_image_time_array[0]
+                )
             else:
                 lightcurve_duration = 0
 
@@ -297,7 +303,9 @@ class MicrolensingLightCurveFromLensModel(object):
             for j in range(len(curr_lightcurves)):
                 curr_lightcurves_interpolated.append(
                     self._interpolate_light_curve(
-                        curr_lightcurves[j], curr_time_arrays[j], current_image_time_array
+                        curr_lightcurves[j],
+                        curr_time_arrays[j],
+                        current_image_time_array,
                     )
                 )
                 updated_curr_time_arrays.append(current_image_time_array)

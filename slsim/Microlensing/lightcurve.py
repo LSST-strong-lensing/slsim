@@ -47,7 +47,9 @@ class MicrolensingLightCurve(object):
 
         self._magnification_map = magnification_map
         self._observation_time_array = observation_time_array
-        self._time_duration_observer_frame = self._observation_time_array[-1] - self._observation_time_array[0]
+        self._time_duration_observer_frame = (
+            self._observation_time_array[-1] - self._observation_time_array[0]
+        )
 
         self._point_source_morphology = point_source_morphology
         self._kwargs_source_morphology = kwargs_source_morphology
@@ -231,9 +233,9 @@ class MicrolensingLightCurve(object):
 
             # Anchor the times to the absolute start and end!
             actual_times_observer = np.linspace(
-                self._observation_time_array[0], 
-                self._observation_time_array[-1], 
-                n_steps
+                self._observation_time_array[0],
+                self._observation_time_array[-1],
+                n_steps,
             )
             actual_times_source = actual_times_observer / (1 + source_redshift)
             light_curve = np.zeros(n_steps)
