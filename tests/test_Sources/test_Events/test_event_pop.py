@@ -3,6 +3,7 @@ from slsim.Sources.Events.event_pop import EventPopulation
 import numpy.testing as npt
 import pytest
 
+
 class TestEventPop:
     def setup_method(self):
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -40,7 +41,9 @@ class TestEventPop:
     def test_invalid_model(self):
         with pytest.raises(ValueError) as error:
             EventPopulation(
-                model="invalid_model", cosmo=self.cosmo, z_max=self.z_max,
-        )
+                model="invalid_model",
+                cosmo=self.cosmo,
+                z_max=self.z_max,
+            )
 
         assert str(error.value) == "model should be chosen from 'BNS' or 'SNIa'"
