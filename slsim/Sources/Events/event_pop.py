@@ -21,7 +21,7 @@ class EventPopulation(object):
 
         else:
             raise ValueError("model should be chosen from 'BNS' or 'SNIa'")
-    
+
     def calculate_event_rate(self, z):
         if self.model_name == "BNS":
             return self._model.calculate_event_rate(z)
