@@ -1,7 +1,7 @@
 from astropy.cosmology import FlatLambdaCDM
 from slsim.Sources.Events.event_pop import EventPopulation
 import numpy.testing as npt
-
+import pytest
 
 class TestEventPop:
     def setup_method(self):
@@ -36,3 +36,11 @@ class TestEventPop:
         npt.assert_almost_equal(rate_array[1], 0.0001191, decimal=3)
         npt.assert_almost_equal(rate_array[2], 0.0001349, decimal=3)
         npt.assert_almost_equal(rate_array[3], 0.00008008, decimal=3)
+
+    def test_invalid_model(self):
+        with pytest.raises(ValueError) as error:
+            EventPopulation(
+                model="invalid_model", cosmo=self.cosmo, z_max=self.z_max,
+        )
+
+        assert str(error.value) == "model should be chosen from 'BNS' or 'SNIa'"
