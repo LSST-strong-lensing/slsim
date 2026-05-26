@@ -7,18 +7,20 @@ import scipy.interpolate as interp
   BNS merger population: Kuwahara et al. 2025
 """
 
+
 def norm_delay_time_distribution(t_d, t_d_min, t_d_max):
-        """Calculates the normalized time delay. (Described in text after Eq 3 - Kuwahara et al. 2025)
+    """Calculates the normalized time delay. (Described in text after Eq 3 - Kuwahara et al. 2025)
 
-        :param t_d: time delay (t_d>=0) in [Gyr]
-        :param t_d_min: minimum of t_d in [Gyr]
-        :param t_d_max: maximum of t_d in [Gyr]
+    :param t_d: time delay (t_d>=0) in [Gyr]
+    :param t_d_min: minimum of t_d in [Gyr]
+    :param t_d_max: maximum of t_d in [Gyr]
 
-        :return: probability distribution of the time delay
-        """
+    :return: probability distribution of the time delay
+    """
 
-        ft_d = 1 / (t_d * (np.log(t_d_max / t_d_min)))
-        return ft_d
+    ft_d = 1 / (t_d * (np.log(t_d_max / t_d_min)))
+    return ft_d
+
 
 class BNSMergerRate(object):
     """Class to calculate BNS merger rates."""
@@ -43,11 +45,11 @@ class BNSMergerRate(object):
     def calculate_binary_formation_rate(self, z):
         """Calculates the binary formation rate. (Eq 3 - Kuwahara et al. 2025)
 
-        ``nu``, ``z_m``, ``a``, and ``b`` are fixed fitting parameters for 
+        ``nu``, ``z_m``, ``a``, and ``b`` are fixed fitting parameters for
         ``R_f(z)`` in Eq 3 from Kuwahara et al. 2025.
 
         :param z: redshift (z>=0)
-        
+
         :return: binary formation rate in [(M_sol)yr^(-1)Gpc^(-3)]
         """
         a = 2.80
@@ -82,7 +84,9 @@ class BNSMergerRate(object):
 
         :return: numerator integrand
         """
-        ft_d = norm_delay_time_distribution(t_d, t_d_min=self.t_d_min, t_d_max=self.t_d_max)
+        ft_d = norm_delay_time_distribution(
+            t_d, t_d_min=self.t_d_min, t_d_max=self.t_d_max
+        )
         z_t = self.z_from_time(t - t_d)  # time since big bang
         return self.calculate_binary_formation_rate(z_t) * ft_d
 

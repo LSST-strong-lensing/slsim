@@ -5,6 +5,7 @@ import numpy.testing as npt
 import numpy as np
 import pytest
 
+
 def test_norm_delay_time_distribution():
     t_d_min = 0.020
     t_d_max = 13.8
@@ -21,6 +22,7 @@ def test_norm_delay_time_distribution():
         1 / (5 * (np.log(13.8 / 0.020))),
         decimal=4,
     )
+
 
 class TestBNSMergerRate:
     def setup_method(self):
