@@ -1,9 +1,26 @@
 from slsim.Sources.Events.BNSMerger.BNSMerger_pop import BNSMergerRate
+from slsim.Sources.Events.BNSMerger.BNSMerger_pop import norm_delay_time_distribution
 from astropy.cosmology import FlatLambdaCDM
 import numpy.testing as npt
 import numpy as np
 import pytest
 
+def test_norm_delay_time_distribution():
+    t_d_min = 0.020
+    t_d_max = 13.8
+
+    t_d = 2
+    npt.assert_almost_equal(
+        norm_delay_time_distribution(t_d, t_d_min, t_d_max),
+        1 / (2 * (np.log(13.8 / 0.020))),
+        decimal=4,
+    )
+    t_d = 5
+    npt.assert_almost_equal(
+        norm_delay_time_distribution(t_d, t_d_min, t_d_max),
+        1 / (5 * (np.log(13.8 / 0.020))),
+        decimal=4,
+    )
 
 class TestBNSMergerRate:
     def setup_method(self):
@@ -14,28 +31,14 @@ class TestBNSMergerRate:
             z_max=self.z_max,
         )
 
-    def test_calculate_star_formation_rate(self):
+    def test_calculate_binary_formation_rate(self):
         z = 0
         npt.assert_almost_equal(
-            self.bnsm_rate.calculate_star_formation_rate(z), 0.01505, decimal=3
+            self.bnsm_rate.calculate_binary_formation_rate(z), 0.01505, decimal=3
         )
         z = 3
         npt.assert_almost_equal(
-            self.bnsm_rate.calculate_star_formation_rate(z), 0.10854, decimal=3
-        )
-
-    def test_delay_time_distribution(self):
-        t_d = 2
-        npt.assert_almost_equal(
-            self.bnsm_rate.delay_time_distribution(t_d),
-            1 / (2 * (np.log(13.8 / 0.020))),
-            decimal=4,
-        )
-        t_d = 5
-        npt.assert_almost_equal(
-            self.bnsm_rate.delay_time_distribution(t_d),
-            1 / (5 * (np.log(13.8 / 0.020))),
-            decimal=4,
+            self.bnsm_rate.calculate_binary_formation_rate(z), 0.10854, decimal=3
         )
 
     def test_z_from_time(self):

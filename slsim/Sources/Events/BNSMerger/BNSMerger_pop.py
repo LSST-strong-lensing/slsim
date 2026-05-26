@@ -7,6 +7,18 @@ import scipy.interpolate as interp
   BNS merger population: Kuwahara et al. 2025
 """
 
+def norm_delay_time_distribution(t_d, t_d_min, t_d_max):
+        """Calculates the normalized time delay. (Described in text after Eq 3 - Kuwahara et al. 2025)
+
+        :param t_d: time delay (t_d>=0) in [Gyr]
+        :param t_d_min: minimum of t_d in [Gyr]
+        :param t_d_max: maximum of t_d in [Gyr]
+
+        :return: probability distribution of the time delay
+        """
+
+        ft_d = 1 / (t_d * (np.log(t_d_max / t_d_min)))
+        return ft_d
 
 class BNSMergerRate(object):
     """Class to calculate BNS merger rates."""
@@ -25,17 +37,17 @@ class BNSMergerRate(object):
         ).to_value()  # Time at redshift z_max
         self._t_0 = self._cosmo.age(0).to_value()  # Time at redshift z = 0
 
-        self.t_d_min = 0.020  # Gyr, 20 Myr
-        self.t_d_max = 13.8  # Gyr, Hubble time approximately
+        self.t_d_min = 0.020  # minimum of t_d in [Gyr], assumed as 20 Myr
+        self.t_d_max = 13.8  # maximum of t_d in [Gyr], assumed as Hubble time
 
-    def calculate_star_formation_rate(self, z):
+    def calculate_binary_formation_rate(self, z):
         """Calculates the binary formation rate. (Eq 3 - Kuwahara et al. 2025)
 
-        :param z: redshift (z>=0)
-        :param z_m: peak-related redshift parameter
-        :param nu: normalization constant
-        :param a & b: observable parameters by fitting the data based on the gamma-ray burst.
+        ``nu``, ``z_m``, ``a``, and ``b`` are fixed fitting parameters for 
+        ``R_f(z)`` in Eq 3 from Kuwahara et al. 2025.
 
+        :param z: redshift (z>=0)
+        
         :return: binary formation rate in [(M_sol)yr^(-1)Gpc^(-3)]
         """
         a = 2.80
@@ -43,23 +55,10 @@ class BNSMergerRate(object):
         z_m = 1.72
         nu = 0.146  # in unit of M_sol * Gpc^(-3) * yr^(-1)
 
-        star_formation_rate = (nu * a * np.exp(b * (z - z_m))) / (
+        binary_formation_rate = (nu * a * np.exp(b * (z - z_m))) / (
             a - b + b * np.exp(a * (z - z_m))
         )
-        return star_formation_rate
-
-    def delay_time_distribution(self, t_d):
-        """Calculates the normalized time delay. (Described in text after Eq 3 - Kuwahara et al. 2025)
-
-        :param t_d: time delay (t_d>=0) in [Gyr]
-        :param t_d_min: minimum of t_d in [Gyr], assumed as 20 Myr
-        :param t_d_max: maximum of t_d in [Gyr], assumed as Hubble time
-
-        :return: probability distribution of the time delay
-        """
-
-        ft_d = 1 / (t_d * (np.log(self.t_d_max / self.t_d_min)))
-        return ft_d
+        return binary_formation_rate
 
     def z_from_time(self, t):
         """Calculates redshift given cosmic time.
@@ -78,21 +77,21 @@ class BNSMergerRate(object):
         """Calculates the numerator integrand to be used within calculate_event_rates.
         (Eq 4 - Kuwahara et al. 2025)
 
-        :param t_d: time delay (t>=0)
-        :param t: time at final integrated redshift (t>=0)
+        :param t_d: time delay in [Gyr]. It must satisfy ``t_d < t``.
+        :param t: Cosmic time at the merger redshift in [Gyr].
 
         :return: numerator integrand
         """
-        ft_d = self.delay_time_distribution(t_d)
+        ft_d = norm_delay_time_distribution(t_d, t_d_min=self.t_d_min, t_d_max=self.t_d_max)
         z_t = self.z_from_time(t - t_d)  # time since big bang
-        return self.calculate_star_formation_rate(z_t) * ft_d
+        return self.calculate_binary_formation_rate(z_t) * ft_d
 
     def calculate_event_rate(self, z):
         """Calculates the rate of events, such as BNS merger. (Eq 4 - Kuwahara et al. 2025)
 
-        :param z: redshift (z>=0)
+        :param z: an array of redshift (z>=0). No need to be sorted.
 
-        :return: BNS merger rate R_m(z), following the unit of R_f
+        :return: BNS merger rate R_m(z) in [(M_sol)yr^(-1)Gpc^(-3)], following the unit of R_f
         :return type: array-like
         """
         BNS_rate_list = []

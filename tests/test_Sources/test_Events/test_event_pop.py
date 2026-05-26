@@ -1,5 +1,7 @@
 from astropy.cosmology import FlatLambdaCDM
 from slsim.Sources.Events.event_pop import EventPopulation
+from slsim.Sources.Events.BNSMerger.BNSMerger_pop import BNSMergerRate
+from slsim.Sources.Supernovae.supernovae_pop import SNIaRate
 import numpy.testing as npt
 import pytest
 
@@ -17,12 +19,16 @@ class TestEventPop:
             z_max=self.z_max,
         )
 
-        rate_array = event_pop.calculate_event_rate(self.z_array)
+        bnsm_pop = BNSMergerRate(
+            cosmo=self.cosmo,
+            z_max=self.z_max,
+        )
 
-        npt.assert_almost_equal(rate_array[0], 0.03081, decimal=3)
-        npt.assert_almost_equal(rate_array[1], 0.09757, decimal=3)
-        npt.assert_almost_equal(rate_array[2], 0.09297, decimal=3)
-        npt.assert_almost_equal(rate_array[3], 0.05915, decimal=3)
+        rate_array = event_pop.calculate_event_rate(self.z_array)
+        bnsm_array = bnsm_pop.calculate_event_rate(self.z_array)
+
+        for i in range(len(self.z_array)):
+            npt.assert_almost_equal(bnsm_array[i], rate_array[i], decimal=3)
 
     def test_SNIa_pop(self):
         event_pop = EventPopulation(
@@ -31,12 +37,16 @@ class TestEventPop:
             z_max=self.z_max,
         )
 
-        rate_array = event_pop.calculate_event_rate(self.z_array)
+        sne_pop = SNIaRate(
+            cosmo=self.cosmo,
+            z_max=self.z_max,
+        )
 
-        npt.assert_almost_equal(rate_array[0], 0.000041006, decimal=3)
-        npt.assert_almost_equal(rate_array[1], 0.0001191, decimal=3)
-        npt.assert_almost_equal(rate_array[2], 0.0001349, decimal=3)
-        npt.assert_almost_equal(rate_array[3], 0.00008008, decimal=3)
+        rate_array = event_pop.calculate_event_rate(self.z_array)
+        sne_array = sne_pop.calculate_event_rate(self.z_array)
+
+        for i in range(len(self.z_array)):
+            npt.assert_almost_equal(sne_array[i], rate_array[i], decimal=3)
 
     def test_invalid_model(self):
         with pytest.raises(ValueError) as error:
