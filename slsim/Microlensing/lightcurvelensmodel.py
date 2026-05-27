@@ -116,6 +116,14 @@ class MicrolensingLightCurveFromLensModel(object):
             raise ValueError(
                 "kwargs_source_morphology not in kwargs_microlensing. Please provide a dictionary of settings required by source morphology calculation."
             )
+        
+        # If the source is a Supernova and 'user_snapshots' is not already provided, we instantiate the morphology class ONCE here at the top level. We then extract the computationally heavy analytical snapshots and inject them into the kwargs so that downstream multiple-images share the grids instantly.
+        if self._point_source_morphology == "supernovae":
+            if "user_snapshots" not in self._kwargs_source_morphology:
+                from slsim.Microlensing.source_morphology.supernovae import SupernovaeSourceMorphology
+                sn_morph = SupernovaeSourceMorphology(**self._kwargs_source_morphology)
+                self._kwargs_source_morphology["user_snapshots"] = sn_morph.user_snapshots
+        
 
     def generate_point_source_microlensing_magnitudes(
         self,
