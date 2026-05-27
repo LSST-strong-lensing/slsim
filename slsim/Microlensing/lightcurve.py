@@ -264,14 +264,22 @@ class MicrolensingLightCurve(object):
                     if pixel_ratio * kernel.shape[0] < 1.0:
                         res_k = np.array([[1.0]])
                     else:
-                        res_k = rescale(kernel, pixel_ratio, anti_aliasing=False, mode="constant", cval=0.0)
-                    
+                        res_k = rescale(
+                            kernel,
+                            pixel_ratio,
+                            anti_aliasing=False,
+                            mode="constant",
+                            cval=0.0,
+                        )
+
                     if np.nansum(res_k) > 0:
                         res_k /= np.nansum(res_k)
                     rescaled_kernels.append(res_k)
-                    
+
                     # + 4 ensures we have enough room for the 4x4 Bicubic sub-pixel grid extraction
-                    max_pad = max(max_pad, res_k.shape[0] // 2 + 4, res_k.shape[1] // 2 + 4)
+                    max_pad = max(
+                        max_pad, res_k.shape[0] // 2 + 4, res_k.shape[1] // 2 + 4
+                    )
 
                 padded_mag_map = np.pad(
                     self._magnification_map.magnifications, max_pad, mode="reflect"
@@ -289,14 +297,19 @@ class MicrolensingLightCurve(object):
                     # 16-Point Bicubic Stamp Logic (Order=3)
                     # Shift base anchor left and down by 1 to build a 4x4 surrounding grid
                     px_int, py_int = int(np.floor(px)) - 1, int(np.floor(py)) - 1
-                    
+
                     # Slice a 4x4 valid domain (Stamp size: ky+3 by kx+3)
-                    stamp_4x4 = padded_mag_map[py_int - hw_y : py_int + hw_y + 4, px_int - hw_x : px_int + hw_x + 4]
-                    conv_4x4 = fftconvolve(stamp_4x4, res_k, mode='valid') 
-                    
+                    stamp_4x4 = padded_mag_map[
+                        py_int - hw_y : py_int + hw_y + 4,
+                        px_int - hw_x : px_int + hw_x + 4,
+                    ]
+                    conv_4x4 = fftconvolve(stamp_4x4, res_k, mode="valid")
+
                     # Local coordinate is inherently shifted into the center of the 4x4 grid
-                    local_x, local_y = px - px_int, py - py_int 
-                    light_curve[i] = map_coordinates(conv_4x4, [[local_y], [local_x]], order=3)[0]
+                    local_x, local_y = px - px_int, py - py_int
+                    light_curve[i] = map_coordinates(
+                        conv_4x4, [[local_y], [local_x]], order=3
+                    )[0]
 
             # ==========================================================
             # STATIC SOURCES (STATIC AGN, GAUSSIAN)
@@ -311,7 +324,13 @@ class MicrolensingLightCurve(object):
                 if pixel_ratio * kernel.shape[0] < 1.0:
                     res_k = np.array([[1.0]])
                 else:
-                    res_k = rescale(kernel, pixel_ratio, anti_aliasing=False, mode="constant", cval=0.0)
+                    res_k = rescale(
+                        kernel,
+                        pixel_ratio,
+                        anti_aliasing=False,
+                        mode="constant",
+                        cval=0.0,
+                    )
                 if np.nansum(res_k) > 0:
                     res_k /= np.nansum(res_k)
 
@@ -325,7 +344,7 @@ class MicrolensingLightCurve(object):
 
                 # 2. Shift the continuous track coordinates to account for the padding
                 coords = np.vstack((y_positions + max_pad, x_positions + max_pad))
-                
+
                 # 3. Extract the light curve values at the track coordinates using bicubic interpolation (order=3)
                 light_curve = map_coordinates(convolved_padded_map, coords, order=3)
 
@@ -335,7 +354,9 @@ class MicrolensingLightCurve(object):
                     light_curve / np.abs(self._magnification_map.mu_ave)
                 )
             elif lightcurve_type != "magnification":
-                raise ValueError("Lightcurve type not recognized. Please use 'magnitude' or 'magnification'.")
+                raise ValueError(
+                    "Lightcurve type not recognized. Please use 'magnitude' or 'magnification'."
+                )
 
             LCs.append(light_curve)
             tracks.append(np.array([x_positions, y_positions]))

@@ -75,10 +75,11 @@ class SupernovaeSourceMorphology(SourceMorphology):
 
     def _build_analytical_snapshots(self, anchor_spacing_days):
         """Internal helper to load sncosmo and generate the analytical anchors.
+
         Bypassed if user provides their own grids.
         """
         import sncosmo
-        
+
         self._sn_model = sncosmo.Model(source=self.sn_model_name)
         try:
             self._bandpass = sncosmo.get_bandpass(self.band)
@@ -88,7 +89,9 @@ class SupernovaeSourceMorphology(SourceMorphology):
         # Generate the analytical anchors automatically
         min_t = self._sn_model.mintime()
         max_t = self._sn_model.maxtime()
-        anchor_times = np.arange(min_t, max_t + anchor_spacing_days, anchor_spacing_days)
+        anchor_times = np.arange(
+            min_t, max_t + anchor_spacing_days, anchor_spacing_days
+        )
 
         kernels, pixel_scales_m = self._generate_analytical_anchors(anchor_times)
 
@@ -98,13 +101,16 @@ class SupernovaeSourceMorphology(SourceMorphology):
             "pixel_scales_m": pixel_scales_m,
         }
 
-    def _continuous_monochromatic_morphology(self, wavelength_angstroms, time_seconds, R_eff):
+    def _continuous_monochromatic_morphology(
+        self, wavelength_angstroms, time_seconds, R_eff
+    ):
         """Generates the continuous wavelength-dependent spatial profile.
         Evaluated on a 1D radial grid for O(N) optimization.
 
         :param wavelength_angstroms: Wavelength in Angstroms.
         :param time_seconds: Time since explosion in seconds.
-        :param R_eff: 1D array of effective radii in meters at which to evaluate the profile.
+        :param R_eff: 1D array of effective radii in meters at which to
+            evaluate the profile.
         :return: 1D array of intensity values corresponding to R_eff.
         """
         v_base_m_s = self.v_base_km_s * 1000.0
@@ -116,7 +122,9 @@ class SupernovaeSourceMorphology(SourceMorphology):
 
         u_limb_diff = self.u_limb_uv - self.u_limb_ir
         u_limb = self.u_limb_uv - u_limb_diff * ((wavelength_angstroms - 3000) / 7000)
-        u_min, u_max = min(self.u_limb_uv, self.u_limb_ir), max(self.u_limb_uv, self.u_limb_ir)
+        u_min, u_max = min(self.u_limb_uv, self.u_limb_ir), max(
+            self.u_limb_uv, self.u_limb_ir
+        )
         u_limb = np.clip(u_limb, u_min, u_max)
 
         intensity = np.zeros_like(R_eff)
@@ -133,12 +141,18 @@ class SupernovaeSourceMorphology(SourceMorphology):
         for line_wave, line_width in major_lines:
             dist = abs(wavelength_angstroms - line_wave)
             if dist < line_width:
-                ring_fraction = max(ring_fraction, np.exp(-((dist / (line_width / 2)) ** 2)))
+                ring_fraction = max(
+                    ring_fraction, np.exp(-((dist / (line_width / 2)) ** 2))
+                )
 
         continuum_intensity = 1.0 - u_limb * (1.0 - mu)
-        ring_intensity = (R_eff_masked / r_phot) ** 2 * np.exp(-((R_eff_masked / (r_phot * 0.8)) ** 4))
+        ring_intensity = (R_eff_masked / r_phot) ** 2 * np.exp(
+            -((R_eff_masked / (r_phot * 0.8)) ** 4)
+        )
 
-        intensity[mask] = (1.0 - ring_fraction) * continuum_intensity + ring_fraction * ring_intensity
+        intensity[mask] = (
+            1.0 - ring_fraction
+        ) * continuum_intensity + ring_fraction * ring_intensity
         return intensity
 
     def get_kernel_map(self, time_days):
@@ -163,11 +177,15 @@ class SupernovaeSourceMorphology(SourceMorphology):
         intensity_1d = np.zeros_like(r_1d)
 
         for wave, weight in zip(valid_waves, valid_weights):
-            spatial_profile = self._continuous_monochromatic_morphology(wave, time_seconds, r_1d)
+            spatial_profile = self._continuous_monochromatic_morphology(
+                wave, time_seconds, r_1d
+            )
             intensity_1d += spatial_profile * weight
 
         # Create the fast 1D to 2D interpolator
-        interpolator = interp1d(r_1d, intensity_1d, kind='linear', bounds_error=False, fill_value=0.0)
+        interpolator = interp1d(
+            r_1d, intensity_1d, kind="linear", bounds_error=False, fill_value=0.0
+        )
 
         # Broadcast to 2D
         x = np.linspace(-max_scale_m, max_scale_m, self._num_pix_x)
@@ -182,14 +200,16 @@ class SupernovaeSourceMorphology(SourceMorphology):
 
         current_pixel_scale_m = (2.0 * max_scale_m) / self._num_pix_x
         return kernel, current_pixel_scale_m
-    
+
     def _generate_analytical_anchors(self, time_anchors_days):
         """Internal helper to generate the sparse anchors during
         initialization.
-        
-        :param time_anchors_days: 1D array of source-frame times (in days) at which to generate the analytical kernels.
-        :return: Tuple of (kernels, pixel_scales_m) where kernels is a list of 2D kernel maps and pixel_scales_m is a list of corresponding pixel scales in
 
+        :param time_anchors_days: 1D array of source-frame times (in
+            days) at which to generate the analytical kernels.
+        :return: Tuple of (kernels, pixel_scales_m) where kernels is a
+            list of 2D kernel maps and pixel_scales_m is a list of
+            corresponding pixel scales in
         """
         kernels = []
         pixel_scales_m = []
