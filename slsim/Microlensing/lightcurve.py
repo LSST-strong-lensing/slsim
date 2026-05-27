@@ -30,6 +30,7 @@ class MicrolensingLightCurve(object):
         observation_time_array: np.ndarray,
         point_source_morphology: str = "gaussian",
         kwargs_source_morphology: dict = {},
+        source_morphology_instance = None,
     ):
         """
         :param magnification_map: MagnificationMap object, if not provided.
@@ -45,6 +46,7 @@ class MicrolensingLightCurve(object):
             "r_out": r_out, "r_resolution": r_resolution, "smbh_mass_exp": smbh_mass_exp, "inclination_angle": inclination_angle,
             "black_hole_spin": black_hole_spin, "observer_frame_wavelength_in_nm": observer_frame_wavelength_in_nm,
             "eddington_ratio": eddington_ratio, }.
+        :param source_morphology_instance: Optional pre-instantiated source morphology object. If provided, this will be used directly instead of instantiating a new one based on the point_source_morphology and kwargs_source_morphology. This allows for more complex use cases where the source morphology needs to be shared or customized beyond the standard options.
         """
 
         self._magnification_map = magnification_map
@@ -56,8 +58,12 @@ class MicrolensingLightCurve(object):
         self._point_source_morphology = point_source_morphology
         self._kwargs_source_morphology = kwargs_source_morphology
 
-        # Instantiate the morphology class up front
-        self._setup_source_morphology()
+        # Use the global instance if provided, otherwise build locally (for backwards compatibility)
+        if source_morphology_instance is not None:
+            self._source_morphology = source_morphology_instance
+        else:
+            # Instantiate the morphology class
+            self._setup_source_morphology()
 
     def _setup_source_morphology(self):
         """Instantiates the specified source morphology class and caches it."""
@@ -274,39 +280,47 @@ class MicrolensingLightCurve(object):
 
                     if np.nansum(res_k) > 0:
                         res_k /= np.nansum(res_k)
+
                     rescaled_kernels.append(res_k)
+                    # +4 to leave room for the 4x4 bicubic extraction window
+                    max_pad = max(max_pad,
+                                res_k.shape[0] // 2 + 4,
+                                res_k.shape[1] // 2 + 4)
 
-                    # + 4 ensures we have enough room for the 4x4 Bicubic sub-pixel grid extraction
-                    max_pad = max(
-                        max_pad, res_k.shape[0] // 2 + 4, res_k.shape[1] // 2 + 4
-                    )
-
-                padded_mag_map = np.pad(
-                    self._magnification_map.magnifications, max_pad, mode="reflect"
-                )
+                padded_mag_map = np.pad(self._magnification_map.magnifications,
+                                        max_pad, mode="reflect")
 
                 for i in range(n_steps):
                     res_k = rescaled_kernels[i]
                     ky, kx = res_k.shape
-                    hw_y, hw_x = ky // 2, kx // 2
+
+                    # Use scipy's native kernel-center convention (fractional allowed)
+                    cy_k = (ky - 1) / 2.0
+                    cx_k = (kx - 1) / 2.0
 
                     # Get exact sub-pixel coordinates
                     px = x_positions[i] + max_pad
                     py = y_positions[i] + max_pad
 
-                    # 16-Point Bicubic Stamp Logic (Order=3)
-                    # Shift base anchor left and down by 1 to build a 4x4 surrounding grid
-                    px_int, py_int = int(np.floor(px)) - 1, int(np.floor(py)) - 1
+                    # We need a 4x4 valid-convolution grid surrounding (py, px).
+                    # fftconvolve(..., mode='valid')[a, b] corresponds to the
+                    # convolution evaluated at input position
+                    #     (stamp_y_start + cy_k + a, stamp_x_start + cx_k + b).
+                    # Pick stamp_y_start so that (py, px) lands in the interior
+                    # cell [1, 2) of the 4x4 output grid (ideal for bicubic).
+                    stamp_y_start = int(np.floor(py - cy_k)) - 1
+                    stamp_x_start = int(np.floor(px - cx_k)) - 1
 
-                    # Slice a 4x4 valid domain (Stamp size: ky+3 by kx+3)
-                    stamp_4x4 = padded_mag_map[
-                        py_int - hw_y : py_int + hw_y + 4,
-                        px_int - hw_x : px_int + hw_x + 4,
+                    stamp = padded_mag_map[
+                        stamp_y_start : stamp_y_start + ky + 3,
+                        stamp_x_start : stamp_x_start + kx + 3,
                     ]
-                    conv_4x4 = fftconvolve(stamp_4x4, res_k, mode="valid")
+                    conv_4x4 = fftconvolve(stamp, res_k, mode='valid')  # (4, 4)
 
-                    # Local coordinate is inherently shifted into the center of the 4x4 grid
-                    local_x, local_y = px - px_int, py - py_int
+                    # Local coords inside conv_4x4 corresponding to (py, px)
+                    local_y = py - stamp_y_start - cy_k   # always in [1, 2)
+                    local_x = px - stamp_x_start - cx_k   # always in [1, 2)
+
                     light_curve[i] = map_coordinates(
                         conv_4x4, [[local_y], [local_x]], order=3
                     )[0]
