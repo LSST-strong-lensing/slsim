@@ -30,7 +30,7 @@ class MicrolensingLightCurve(object):
         observation_time_array: np.ndarray,
         point_source_morphology: str = "gaussian",
         kwargs_source_morphology: dict = {},
-        source_morphology_instance = None,
+        source_morphology_instance=None,
     ):
         """
         :param magnification_map: MagnificationMap object, if not provided.
@@ -283,12 +283,13 @@ class MicrolensingLightCurve(object):
 
                     rescaled_kernels.append(res_k)
                     # +4 to leave room for the 4x4 bicubic extraction window
-                    max_pad = max(max_pad,
-                                res_k.shape[0] // 2 + 4,
-                                res_k.shape[1] // 2 + 4)
+                    max_pad = max(
+                        max_pad, res_k.shape[0] // 2 + 4, res_k.shape[1] // 2 + 4
+                    )
 
-                padded_mag_map = np.pad(self._magnification_map.magnifications,
-                                        max_pad, mode="reflect")
+                padded_mag_map = np.pad(
+                    self._magnification_map.magnifications, max_pad, mode="reflect"
+                )
 
                 for i in range(n_steps):
                     res_k = rescaled_kernels[i]
@@ -315,11 +316,11 @@ class MicrolensingLightCurve(object):
                         stamp_y_start : stamp_y_start + ky + 3,
                         stamp_x_start : stamp_x_start + kx + 3,
                     ]
-                    conv_4x4 = fftconvolve(stamp, res_k, mode='valid')  # (4, 4)
+                    conv_4x4 = fftconvolve(stamp, res_k, mode="valid")  # (4, 4)
 
                     # Local coords inside conv_4x4 corresponding to (py, px)
-                    local_y = py - stamp_y_start - cy_k   # always in [1, 2)
-                    local_x = px - stamp_x_start - cx_k   # always in [1, 2)
+                    local_y = py - stamp_y_start - cy_k  # always in [1, 2)
+                    local_x = px - stamp_x_start - cx_k  # always in [1, 2)
 
                     light_curve[i] = map_coordinates(
                         conv_4x4, [[local_y], [local_x]], order=3

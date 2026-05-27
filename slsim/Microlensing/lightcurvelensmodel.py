@@ -117,34 +117,38 @@ class MicrolensingLightCurveFromLensModel(object):
                 "kwargs_source_morphology not in kwargs_microlensing. Please provide a dictionary of settings required by source morphology calculation."
             )
 
-        
         # Global Morphology Instantiation
-        # We instantiate the morphology object ONCE for all images to prevent redundant 
-        # calculations (like SN grids or AGN profiles). Downstream LightCurve instances 
+        # We instantiate the morphology object ONCE for all images to prevent redundant
+        # calculations (like SN grids or AGN profiles). Downstream LightCurve instances
         # will share this single object in memory.
         self._source_morphology_instance = self._initialize_morphology_instance()
-    
+
     def _initialize_morphology_instance(self):
-        """Instantiates the source morphology class once for all downstream images."""
+        """Instantiates the source morphology class once for all downstream
+        images."""
         from slsim.Microlensing.lightcurve import MORPHOLOGY_CLASSES
-        
+
         morph_class = MORPHOLOGY_CLASSES.get(self._point_source_morphology)
         if morph_class is None:
-            raise ValueError(f"Invalid source morphology type: '{self._point_source_morphology}'")
-            
+            raise ValueError(
+                f"Invalid source morphology type: '{self._point_source_morphology}'"
+            )
+
         kwargs = self._kwargs_source_morphology.copy()
-        
+
         # Gaussian morphology specifically requires the map dimensions to build its grid
         if self._point_source_morphology == "gaussian":
-            kwargs.update({
-                "length_x": self._kwargs_magnification_map["half_length_x"] * 2,
-                "length_y": self._kwargs_magnification_map["half_length_y"] * 2,
-                "num_pix_x": self._kwargs_magnification_map["num_pixels_x"],
-                "num_pix_y": self._kwargs_magnification_map["num_pixels_y"],
-                "center_x": 0,
-                "center_y": 0,
-            })
-            
+            kwargs.update(
+                {
+                    "length_x": self._kwargs_magnification_map["half_length_x"] * 2,
+                    "length_y": self._kwargs_magnification_map["half_length_y"] * 2,
+                    "num_pix_x": self._kwargs_magnification_map["num_pixels_x"],
+                    "num_pix_y": self._kwargs_magnification_map["num_pixels_y"],
+                    "center_x": 0,
+                    "center_y": 0,
+                }
+            )
+
         return morph_class(**kwargs)
 
     def generate_point_source_microlensing_magnitudes(
@@ -313,7 +317,7 @@ class MicrolensingLightCurveFromLensModel(object):
                 observation_time_array=current_image_time_array,
                 point_source_morphology=self._point_source_morphology,
                 kwargs_source_morphology=self._kwargs_source_morphology,
-                source_morphology_instance = self._source_morphology_instance
+                source_morphology_instance=self._source_morphology_instance,
             )
             curr_lightcurves, curr_tracks, curr_time_arrays = (
                 ml_lc.generate_lightcurves(
