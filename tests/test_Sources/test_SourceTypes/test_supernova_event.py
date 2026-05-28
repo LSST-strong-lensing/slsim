@@ -3,6 +3,7 @@ import numpy as np
 import pytest
 from astropy import cosmology
 import slsim.ImageSimulation.image_quality_lenstronomy as iql
+from slsim.ImageSimulation.image_quality_lenstronomy import get_sncosmo_filtername
 
 
 class TestSupernovaEvent:
@@ -37,7 +38,6 @@ class TestSupernovaEvent:
             "lightcurve_time": np.linspace(-50, 100, 100),
             "sn_modeldir": None,
         }
-
         kwargs_sn_none = {
             "source_type": "supernova",
             "variability_model": "light_curve",
@@ -92,11 +92,27 @@ class TestSupernovaEvent:
         with pytest.raises(ValueError):
             self.source_cosmo_error.light_curve
 
+    def test_get_sncosmo_filtername_used_for_lsst_bands(self):
+        """Verify that the new get_sncosmo_filtername function is used instead
+        of the old hardcoded 'lsst' + band approach."""
+        # The function should correctly map LSST bands
+        assert get_sncosmo_filtername("r") == "lsstr"
+        assert get_sncosmo_filtername("i") == "lssti"
+        assert get_sncosmo_filtername("g") == "lsstg"
+        assert get_sncosmo_filtername("z") == "lsstz"
+        assert get_sncosmo_filtername("u") == "lsstu"
+        assert get_sncosmo_filtername("y") == "lssty"
+
+    def test_get_sncosmo_filtername_for_roman_bands(self):
+        """Verify Roman band sncosmo name mapping."""
+        # Roman sncosmo_fmt is lambda band: f"{band}"
+        assert get_sncosmo_filtername("F062") == "F062"
+        assert get_sncosmo_filtername("F106") == "F106"
+
     def test_light_curve_warning(self):
         """Test that a UserWarning is raised when a band is supported by SLSim
         but missing in sncosmo."""
 
-        # register a dummy observatory with a fake band so SLSim recognizes it but sncosmo does not
         class DummyObs:
             def __init__(self, band, **kwargs):
                 pass
@@ -106,21 +122,17 @@ class TestSupernovaEvent:
 
         iql.register_observatory("DummyObs", DummyObs, bands=["unregistered_sn_band"])
 
-        # modify the source to request this fake band
         self.source._kwargs_variability = [
             "supernovae_lightcurve",
             "unregistered_sn_band",
         ]
 
-        # sncosmo doesn't know about "unregistered_sn_band", so it should raise the warning and skip it
         with pytest.warns(UserWarning, match="Failed to generate lightcurve"):
             failed_light_curve = self.source.light_curve
 
         assert failed_light_curve == {}
 
     def test_point_source_magnitude(self):
-        # supernova is randomly generated. So, can't assert a fix number for magnitude.
-        # Just checking these numbers are generated.
         assert self.source.point_source_magnitude("i") is not None
         with pytest.raises(ValueError):
             self.source.point_source_magnitude("g")
