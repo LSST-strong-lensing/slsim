@@ -616,6 +616,7 @@ class MicrolensingLightCurveFromLensModel(object):
         without requiring re-initialization of the class or re-generation of
         magnification maps."""
         self._kwargs_source_morphology = kwargs_source_morphology
+        self._source_morphology_instance = self._initialize_morphology_instance()
 
     def reset_start_position(self, x_start_position=None, y_start_position=None):
         """Resets the starting position for the lightcurve track. If
