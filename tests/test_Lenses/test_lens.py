@@ -1070,9 +1070,8 @@ def test_point_source_magnitude_with_microlensing_block(
     lens_instance_with_variability, time_array, band_i, kwargs_microlensing_settings
 ):
     """Test lensed point source magnitude including the microlensing block."""
-    lens_system = lens_instance_with_variability  # Use the loaded instance
+    lens_system = lens_instance_with_variability
 
-    # 1. Get lensed magnitude WITH time but WITHOUT microlensing
     mag_lensed_time_list_no_ml = lens_system.point_source_magnitude(
         band=band_i, lensed=True, time=time_array, microlensing=False
     )
@@ -1081,39 +1080,39 @@ def test_point_source_magnitude_with_microlensing_block(
     if num_images == 0:
         pytest.skip("No lensed images for microlensing test.")
 
-    # 2. Mock the internal _point_source_magnitude_microlensing method
+    # Pre-compute what image_observed_times will be, so we can verify it later
+    expected_image_observed_times = lens_system._image_observer_times(0, time_array)
+
     with patch.object(
-        lens_system, "_point_source_magnitude_microlensing", autospec=True
+        lens_system, "_point_source_magnitude_microlensing"
     ) as mock_internal_microlensing_method:
-        # Define a specific return value for the mocked internal method
-        # This should be an array of shape (num_images, len(time_array))
         mock_delta_mags_microlensing = np.random.normal(
             0, 0.05, size=(num_images, len(time_array))
         )
         mock_internal_microlensing_method.return_value = mock_delta_mags_microlensing
 
-        # 3. Call point_source_magnitude WITH microlensing=True
-        # This should now call our mocked _point_source_magnitude_microlensing
         mag_lensed_time_with_ml_list = lens_system.point_source_magnitude(
             band=band_i,
             lensed=True,
             time=time_array,
-            microlensing=True,  # This activates the block we want to test
+            microlensing=True,
             kwargs_microlensing=kwargs_microlensing_settings,
         )
 
-        # 4. Assertions
-        # Check that our internal mock was called correctly
-        mock_internal_microlensing_method.assert_called_once_with(
-            band=band_i,
-            time=time_array,
-            source_index=0,
-            kwargs_microlensing=kwargs_microlensing_settings,
+        # Check the mock was called once
+        assert mock_internal_microlensing_method.call_count == 1
+
+        call_kwargs = mock_internal_microlensing_method.call_args.kwargs
+        assert call_kwargs["band"] == band_i
+        assert call_kwargs["source_index"] == 0
+        assert call_kwargs["kwargs_microlensing"] == kwargs_microlensing_settings
+        # The time passed is image_observed_times (shape num_images x len(time_array)),
+        # not the raw time_array
+        np.testing.assert_array_almost_equal(
+            call_kwargs["time"], expected_image_observed_times
         )
 
-        # Check that the final magnitude is the sum of the non-microlensed time-variable
-        # magnitude and the (mocked) microlensing delta magnitudes.
-        # We are testing the `+= microlensing_magnitudes` line.
+        # Verify the final magnitudes include the mocked microlensing contribution
         expected_final_mags = (
             mag_lensed_time_list_no_ml[0] + mock_delta_mags_microlensing
         )
