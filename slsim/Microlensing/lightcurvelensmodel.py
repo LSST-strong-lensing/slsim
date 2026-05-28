@@ -305,12 +305,6 @@ class MicrolensingLightCurveFromLensModel(object):
 
             # Grab the specific time array for this image
             current_image_time_array = time[i] if time_is_2d else time
-            if len(current_image_time_array) > 1:
-                lightcurve_duration = (
-                    current_image_time_array[-1] - current_image_time_array[0]
-                )
-            else:
-                lightcurve_duration = 0
 
             ml_lc = MicrolensingLightCurve(
                 magnification_map=magmaps_images[i],

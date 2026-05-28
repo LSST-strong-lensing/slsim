@@ -7,14 +7,6 @@ from slsim.Microlensing.lightcurve import MicrolensingLightCurve
 from slsim.Microlensing.magmap import MagnificationMap
 from slsim.Microlensing.source_morphology.gaussian import GaussianSourceMorphology
 from slsim.Microlensing.source_morphology.agn import AGNSourceMorphology
-from slsim.Microlensing.source_morphology.source_morphology import SourceMorphology
-
-try:
-    import sncosmo
-
-    SNCOSMO_AVAILABLE = True
-except ImportError:
-    SNCOSMO_AVAILABLE = False
 
 
 # ---- Fixtures ----
@@ -298,8 +290,8 @@ class TestMicrolensingLightCurveGaussian:
         self, ml_lc_gaussian, cosmology
     ):
         """Specifying start position and angle should not raise."""
-        half_x = ml_lc_gaussian.magnification_map.half_length_x
-        half_y = ml_lc_gaussian.magnification_map.half_length_y
+        # half_x = ml_lc_gaussian.magnification_map.half_length_x
+        # half_y = ml_lc_gaussian.magnification_map.half_length_y
         lcs, tracks, _ = ml_lc_gaussian.generate_lightcurves(
             source_redshift=0.5,
             cosmo=cosmology,

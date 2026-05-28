@@ -948,15 +948,6 @@ def test_pull_value_from_grid():
 NPT_DECIMAL_PLACES = 5
 
 
-import numpy as np
-import astropy.units as u
-
-# Assuming the function is imported here
-# from your_module import extract_light_curve
-
-NPT_DECIMAL_PLACES = 5
-
-
 def test_extract_light_curve_all_cases():
     print("Running tests for extract_light_curve...")
     pixel_size = 1.0

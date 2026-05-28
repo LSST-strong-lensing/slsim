@@ -8,30 +8,8 @@ from slsim.Microlensing.source_morphology.source_morphology import SourceMorphol
 from slsim.Microlensing.source_morphology.gaussian import GaussianSourceMorphology
 from slsim.Microlensing.source_morphology.agn import AGNSourceMorphology
 from slsim.Microlensing.source_morphology.supernovae import SupernovaeSourceMorphology
-
-try:
-    import speclite.filters
-
-    SPECLITE_AVAILABLE = True
-except ImportError:
-    SPECLITE_AVAILABLE = False
-
-try:
-    from slsim.Util.astro_util import (
-        calculate_accretion_disk_emission,
-        calculate_gravitational_radius,
-    )
-
-    ASTRO_UTIL_AVAILABLE = True
-except ImportError:
-    ASTRO_UTIL_AVAILABLE = False
-
-try:
-    import sncosmo
-
-    SNCOSMO_AVAILABLE = True
-except ImportError:
-    SNCOSMO_AVAILABLE = False
+from slsim.Util.astro_util import calculate_gravitational_radius
+import speclite.filters
 
 
 # ---- Fixtures ----
@@ -112,15 +90,11 @@ def gaussian_source_centered(kwargs_Gaussian_centered):
 
 @pytest.fixture()
 def agn_source_band(kwargs_AGN_band):
-    if not ASTRO_UTIL_AVAILABLE or not SPECLITE_AVAILABLE:
-        pytest.skip("Requires slsim.Util.astro_util and speclite")
     return AGNSourceMorphology(**kwargs_AGN_band)
 
 
 @pytest.fixture()
 def agn_source_wave(kwargs_AGN_wave):
-    if not ASTRO_UTIL_AVAILABLE:
-        pytest.skip("Requires slsim.Util.astro_util")
     return AGNSourceMorphology(**kwargs_AGN_wave)
 
 
@@ -409,11 +383,9 @@ class TestGaussianSourceMorphology:
 # ---- AGNSourceMorphology Tests ----
 
 
-@pytest.mark.skipif(not ASTRO_UTIL_AVAILABLE, reason="slsim.Util.astro_util not found")
 class TestAGNSourceMorphology:
     """Tests the AGNSourceMorphology class using real dependencies."""
 
-    @pytest.mark.skipif(not SPECLITE_AVAILABLE, reason="speclite not found")
     def test_initialization_band(self, agn_source_band, kwargs_AGN_band):
         """Tests AGN initialization using a wavelength band."""
         assert agn_source_band.source_redshift == kwargs_AGN_band["source_redshift"]
@@ -622,7 +594,6 @@ class TestAGNSourceMorphology:
 # ---- SupernovaeSourceMorphology Tests ----
 
 
-@pytest.mark.skipif(not SNCOSMO_AVAILABLE, reason="sncosmo not installed")
 class TestSupernovaeSourceMorphology:
     """Tests the new SupernovaeSourceMorphology class."""
 
