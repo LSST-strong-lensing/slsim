@@ -11,12 +11,14 @@ from slsim.Microlensing.source_morphology.source_morphology import SourceMorphol
 
 try:
     import sncosmo
+
     SNCOSMO_AVAILABLE = True
 except ImportError:
     SNCOSMO_AVAILABLE = False
 
 
 # ---- Fixtures ----
+
 
 @pytest.fixture
 def cosmology():
@@ -37,7 +39,9 @@ def magmap_instance(theta_star):
         )
         magmap2D = np.load(magmap2D_path)
     except Exception as e:
-        pytest.fail(f"Failed to load TestData/test_magmaps_microlensing/magmap_0.npy: {e}")
+        pytest.fail(
+            f"Failed to load TestData/test_magmaps_microlensing/magmap_0.npy: {e}"
+        )
 
     kwargs_MagnificationMap = {
         "kappa_tot": 0.47128266,
@@ -101,7 +105,9 @@ def kwargs_source_morphology_AGN_band(cosmology):
 
 
 @pytest.fixture
-def ml_lc_gaussian(magmap_instance, observation_time_array, kwargs_source_morphology_Gaussian):
+def ml_lc_gaussian(
+    magmap_instance, observation_time_array, kwargs_source_morphology_Gaussian
+):
     return MicrolensingLightCurve(
         magnification_map=magmap_instance,
         observation_time_array=observation_time_array,
@@ -111,7 +117,9 @@ def ml_lc_gaussian(magmap_instance, observation_time_array, kwargs_source_morpho
 
 
 @pytest.fixture
-def ml_lc_agn_wave(magmap_instance, observation_time_array, kwargs_source_morphology_AGN_wave):
+def ml_lc_agn_wave(
+    magmap_instance, observation_time_array, kwargs_source_morphology_AGN_wave
+):
     return MicrolensingLightCurve(
         magnification_map=magmap_instance,
         observation_time_array=observation_time_array,
@@ -121,7 +129,9 @@ def ml_lc_agn_wave(magmap_instance, observation_time_array, kwargs_source_morpho
 
 
 @pytest.fixture
-def ml_lc_agn_band(magmap_instance, observation_time_array, kwargs_source_morphology_AGN_band):
+def ml_lc_agn_band(
+    magmap_instance, observation_time_array, kwargs_source_morphology_AGN_band
+):
     return MicrolensingLightCurve(
         magnification_map=magmap_instance,
         observation_time_array=observation_time_array,
@@ -132,9 +142,12 @@ def ml_lc_agn_band(magmap_instance, observation_time_array, kwargs_source_morpho
 
 # ---- Tests ----
 
+
 class TestMicrolensingLightCurveInit:
 
-    def test_init_gaussian(self, magmap_instance, observation_time_array, kwargs_source_morphology_Gaussian):
+    def test_init_gaussian(
+        self, magmap_instance, observation_time_array, kwargs_source_morphology_Gaussian
+    ):
         ml_lc = MicrolensingLightCurve(
             magnification_map=magmap_instance,
             observation_time_array=observation_time_array,
@@ -148,9 +161,14 @@ class TestMicrolensingLightCurveInit:
         assert isinstance(ml_lc._source_morphology, GaussianSourceMorphology)
 
     def test_init_with_source_morphology_instance(
-        self, magmap_instance, observation_time_array, kwargs_source_morphology_Gaussian, cosmology
+        self,
+        magmap_instance,
+        observation_time_array,
+        kwargs_source_morphology_Gaussian,
+        cosmology,
     ):
-        """When a source_morphology_instance is passed, it should be used directly."""
+        """When a source_morphology_instance is passed, it should be used
+        directly."""
         shared_morph = GaussianSourceMorphology(
             source_redshift=0.5,
             cosmo=cosmology,
@@ -183,7 +201,8 @@ class TestMicrolensingLightCurveInit:
     def test_init_supernovae_raises_not_implemented(
         self, magmap_instance, observation_time_array
     ):
-        """SupernovaeSourceMorphology requires sncosmo; with no kwargs it raises."""
+        """SupernovaeSourceMorphology requires sncosmo; with no kwargs it
+        raises."""
         with pytest.raises(Exception):
             MicrolensingLightCurve(
                 magnification_map=magmap_instance,
@@ -266,7 +285,8 @@ class TestMicrolensingLightCurveGaussian:
     def test_generate_lightcurves_lc_length_matches_observation_time(
         self, ml_lc_gaussian, cosmology, observation_time_array
     ):
-        """The lightcurve length should match the number of observation time steps."""
+        """The lightcurve length should match the number of observation time
+        steps."""
         lcs, _, _ = ml_lc_gaussian.generate_lightcurves(
             source_redshift=0.5,
             cosmo=cosmology,
@@ -306,7 +326,9 @@ class TestMicrolensingLightCurveGaussian:
         assert track.shape[0] == 2
 
 
-@pytest.mark.filterwarnings("ignore:divide by zero encountered in divide:RuntimeWarning")
+@pytest.mark.filterwarnings(
+    "ignore:divide by zero encountered in divide:RuntimeWarning"
+)
 class TestMicrolensingLightCurveAGN:
 
     def test_generate_lightcurves_agn_wave(self, ml_lc_agn_wave, cosmology):
@@ -335,7 +357,8 @@ class TestMicrolensingLightCurveAGN:
 
 
 class TestMicrolensingLightCurveTimeVarying:
-    """Tests for time-varying source morphology path in MicrolensingLightCurve."""
+    """Tests for time-varying source morphology path in
+    MicrolensingLightCurve."""
 
     @pytest.fixture
     def user_snapshots_fixture(self):
@@ -356,14 +379,12 @@ class TestMicrolensingLightCurveTimeVarying:
         return FlatLambdaCDM(H0=70, Om0=0.3)
 
     @pytest.fixture
-    def ml_lc_time_varying(
-        self, magmap_instance, user_snapshots_fixture, cosmology
-    ):
+    def ml_lc_time_varying(self, magmap_instance, user_snapshots_fixture, cosmology):
         """Build a MicrolensingLightCurve with a time-varying AGN morphology.
 
-        AGNSourceMorphology now accepts user_snapshots correctly (pixel scales
-        are derived analytically, not from kernel_map), so we can use it
-        directly as the shared morphology instance.
+        AGNSourceMorphology now accepts user_snapshots correctly (pixel
+        scales are derived analytically, not from kernel_map), so we can
+        use it directly as the shared morphology instance.
         """
         kwargs_agn = {
             "source_redshift": 0.5,
@@ -392,9 +413,7 @@ class TestMicrolensingLightCurveTimeVarying:
         """The injected morphology must report is_time_varying=True."""
         assert ml_lc_time_varying._source_morphology.is_time_varying is True
 
-    def test_time_varying_lightcurve_generation(
-        self, ml_lc_time_varying, cosmology
-    ):
+    def test_time_varying_lightcurve_generation(self, ml_lc_time_varying, cosmology):
         """Time-varying morphology path should produce a valid lightcurve."""
         lcs, tracks, time_arrays = ml_lc_time_varying.generate_lightcurves(
             source_redshift=0.5,

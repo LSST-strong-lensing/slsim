@@ -122,9 +122,9 @@ class AGNSourceMorphology(SourceMorphology):
             filter_obj = speclite.filters.load_filter(
                 get_speclite_filtername(self.observing_wavelength_band)
             )
-            self.observer_frame_wavelength_in_nm = (
-                filter_obj.effective_wavelength.to(u.nm).value
-            )
+            self.observer_frame_wavelength_in_nm = filter_obj.effective_wavelength.to(
+                u.nm
+            ).value
             # TODO: In future handle this by integrating the flux map over the band
 
         # Generate analytical snapshots if requested but not provided
@@ -144,7 +144,8 @@ class AGNSourceMorphology(SourceMorphology):
     def _build_analytical_snapshots(self):
         """Internal helper to generate analytical time-varying anchors.
 
-        Currently not implemented for AGN. Bypassed if user provides their own grids.
+        Currently not implemented for AGN. Bypassed if user provides
+        their own grids.
         """
         raise NotImplementedError(
             "Time-varying AGN source morphology is currently only supported "
@@ -153,7 +154,8 @@ class AGNSourceMorphology(SourceMorphology):
         )
 
     def _setup_metadata(self):
-        """Sets up the required pixel scale and resolution attributes based on the run mode."""
+        """Sets up the required pixel scale and resolution attributes based on
+        the run mode."""
         if self.is_time_varying:
             # Pixel scales come from the snapshots. Use the first entry as a
             # representative value for metadata; actual per-step scales are
@@ -176,8 +178,8 @@ class AGNSourceMorphology(SourceMorphology):
             )
             num_pix = 2 * self.r_resolution
             kernel_pixel_size_m = (
-                2 * self.r_out * gravitational_radius_of_smbh / num_pix
-            ).to(u.m).value
+                (2 * self.r_out * gravitational_radius_of_smbh / num_pix).to(u.m).value
+            )
 
             self._pixel_scale_x_m = kernel_pixel_size_m
             self._pixel_scale_y_m = kernel_pixel_size_m
@@ -212,8 +214,8 @@ class AGNSourceMorphology(SourceMorphology):
             so that its sum equals 1.
         """
         # Convert observer-frame wavelength to rest-frame.
-        rest_frame_wavelength_nm = (
-            self.observer_frame_wavelength_in_nm / (1 + self.source_redshift)
+        rest_frame_wavelength_nm = self.observer_frame_wavelength_in_nm / (
+            1 + self.source_redshift
         )
 
         emission_map = calculate_accretion_disk_emission(

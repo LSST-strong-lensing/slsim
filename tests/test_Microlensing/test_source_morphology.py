@@ -11,6 +11,7 @@ from slsim.Microlensing.source_morphology.supernovae import SupernovaeSourceMorp
 
 try:
     import speclite.filters
+
     SPECLITE_AVAILABLE = True
 except ImportError:
     SPECLITE_AVAILABLE = False
@@ -20,18 +21,21 @@ try:
         calculate_accretion_disk_emission,
         calculate_gravitational_radius,
     )
+
     ASTRO_UTIL_AVAILABLE = True
 except ImportError:
     ASTRO_UTIL_AVAILABLE = False
 
 try:
     import sncosmo
+
     SNCOSMO_AVAILABLE = True
 except ImportError:
     SNCOSMO_AVAILABLE = False
 
 
 # ---- Fixtures ----
+
 
 @pytest.fixture
 def cosmology():
@@ -130,6 +134,7 @@ def _make_user_snapshots(n=3, shape=(10, 10)):
 
 # ---- SourceMorphology Base Class Tests ----
 
+
 class TestSourceMorphology:
     """Tests the SourceMorphology base class."""
 
@@ -144,8 +149,8 @@ class TestSourceMorphology:
         assert base.is_time_varying is True
 
     def test_base_class_init_with_user_snapshots(self):
-        """Providing user_snapshots should set is_time_varying=True and
-        call _prepare_snapshots."""
+        """Providing user_snapshots should set is_time_varying=True and call
+        _prepare_snapshots."""
         snapshots = _make_user_snapshots(n=3)
         base = SourceMorphology(user_snapshots=snapshots)
         assert base.is_time_varying is True
@@ -165,9 +170,7 @@ class TestSourceMorphology:
         }
         base = SourceMorphology(user_snapshots=snapshots)
         assert base._anchor_times[0] < base._anchor_times[1] < base._anchor_times[2]
-        np.testing.assert_array_equal(
-            base._anchor_times, np.sort(times_unsorted)
-        )
+        np.testing.assert_array_equal(base._anchor_times, np.sort(times_unsorted))
 
     def test_prepare_snapshots_pads_kernels_to_same_shape(self):
         """Kernels of different sizes should be padded to the max shape."""
@@ -201,7 +204,8 @@ class TestSourceMorphology:
             assert isinstance(k, np.ndarray)
 
     def test_interpolate_snapshots_clamps_out_of_bounds(self):
-        """Times outside the anchor range should be clamped (not extrapolated)."""
+        """Times outside the anchor range should be clamped (not
+        extrapolated)."""
         snapshots = _make_user_snapshots(n=3)
         base = SourceMorphology(user_snapshots=snapshots)
         # Request times way outside the anchor range
@@ -277,7 +281,8 @@ class TestSourceMorphology:
         assert gaussian_source.metres_to_arcsecs(0, cosmology, redshift) == 0.0
 
     def test_property_caching_gaussian(self, gaussian_source):
-        """Tests that kernel_map and pixel_scale are cached after first access."""
+        """Tests that kernel_map and pixel_scale are cached after first
+        access."""
         initial_kernel = gaussian_source.kernel_map.copy()
         with patch.object(
             GaussianSourceMorphology,
@@ -306,6 +311,7 @@ class TestSourceMorphology:
 
 # ---- GaussianSourceMorphology Tests ----
 
+
 class TestGaussianSourceMorphology:
 
     def test_initialization(self, gaussian_source, kwargs_Gaussian):
@@ -320,7 +326,9 @@ class TestGaussianSourceMorphology:
         assert gaussian_source.center_y == 0
         assert gaussian_source.is_time_varying is False
 
-    def test_get_kernel_map_shape_and_normalization(self, gaussian_source, kwargs_Gaussian):
+    def test_get_kernel_map_shape_and_normalization(
+        self, gaussian_source, kwargs_Gaussian
+    ):
         kernel = gaussian_source.get_kernel_map()
         assert kernel.shape == (
             kwargs_Gaussian["num_pix_y"],
@@ -337,7 +345,9 @@ class TestGaussianSourceMorphology:
         assert abs(peak_indices[1] - center_ix) <= 1
         assert np.all(kernel >= 0)
 
-    def test_get_kernel_map_centered(self, gaussian_source_centered, kwargs_Gaussian_centered):
+    def test_get_kernel_map_centered(
+        self, gaussian_source_centered, kwargs_Gaussian_centered
+    ):
         kernel = gaussian_source_centered.kernel_map
         num_pix_x = kwargs_Gaussian_centered["num_pix_x"]
         num_pix_y = kwargs_Gaussian_centered["num_pix_y"]
@@ -358,8 +368,12 @@ class TestGaussianSourceMorphology:
         assert peak_indices[1] == expected_ix
 
     def test_pixel_scale_properties(self, gaussian_source, kwargs_Gaussian):
-        expected_pix_scale_x = kwargs_Gaussian["length_x"] / kwargs_Gaussian["num_pix_x"]
-        expected_pix_scale_y = kwargs_Gaussian["length_y"] / kwargs_Gaussian["num_pix_y"]
+        expected_pix_scale_x = (
+            kwargs_Gaussian["length_x"] / kwargs_Gaussian["num_pix_x"]
+        )
+        expected_pix_scale_y = (
+            kwargs_Gaussian["length_y"] / kwargs_Gaussian["num_pix_y"]
+        )
         expected_pix_scale = np.sqrt(expected_pix_scale_x * expected_pix_scale_y)
 
         assert gaussian_source.pixel_scale_x == expected_pix_scale_x
@@ -393,6 +407,7 @@ class TestGaussianSourceMorphology:
 
 
 # ---- AGNSourceMorphology Tests ----
+
 
 @pytest.mark.skipif(not ASTRO_UTIL_AVAILABLE, reason="slsim.Util.astro_util not found")
 class TestAGNSourceMorphology:
@@ -479,9 +494,7 @@ class TestAGNSourceMorphology:
         grav_radius_m = grav_radius.to(u.m).value
 
         num_pix = 2 * kwargs_AGN_wave["r_resolution"]
-        expected_pixel_scale_m = (
-            2 * kwargs_AGN_wave["r_out"] * grav_radius_m / num_pix
-        )
+        expected_pixel_scale_m = 2 * kwargs_AGN_wave["r_out"] * grav_radius_m / num_pix
 
         np.testing.assert_allclose(
             agn_source_wave.pixel_scale_x_m, expected_pixel_scale_m, rtol=1e-6
@@ -523,9 +536,12 @@ class TestAGNSourceMorphology:
         )
 
     def test_pixel_scales_set_before_kernel_map_access(self, kwargs_AGN_wave):
-        """Pixel scales must be available immediately after __init__,
-        before kernel_map is ever accessed.  This verifies the analytical
-        derivation does not depend on the 2-D map."""
+        """Pixel scales must be available immediately after __init__, before
+        kernel_map is ever accessed.
+
+        This verifies the analytical derivation does not depend on the
+        2-D map.
+        """
         agn = AGNSourceMorphology(**kwargs_AGN_wave)
         # Ensure the kernel has NOT been computed yet.
         assert not hasattr(agn, "_kernel_map")
@@ -591,7 +607,8 @@ class TestAGNSourceMorphology:
             AGNSourceMorphology(**kwargs_AGN_wave, is_time_varying=True)
 
     def test_build_analytical_snapshots_raises(self, kwargs_AGN_wave):
-        """Directly testing the internal helper method for analytical snapshots."""
+        """Directly testing the internal helper method for analytical
+        snapshots."""
         agn = AGNSourceMorphology(**kwargs_AGN_wave)
         with pytest.raises(NotImplementedError, match="currently only supported via"):
             agn._build_analytical_snapshots()
@@ -603,6 +620,7 @@ class TestAGNSourceMorphology:
 
 
 # ---- SupernovaeSourceMorphology Tests ----
+
 
 @pytest.mark.skipif(not SNCOSMO_AVAILABLE, reason="sncosmo not installed")
 class TestSupernovaeSourceMorphology:
@@ -664,13 +682,14 @@ class TestSupernovaeSourceMorphology:
         assert sn.band == "bessellb"
 
     def test_kernel_map_raises_for_time_varying(self, sn_source_r):
-        """kernel_map property should raise AttributeError for SN (time-varying)."""
+        """kernel_map property should raise AttributeError for SN (time-
+        varying)."""
         with pytest.raises(AttributeError, match="Time-varying"):
             _ = sn_source_r.kernel_map
 
     def test_get_kernel_map_returns_normalized_array(self, sn_source_r):
-        """get_kernel_map(time_days) should return a normalized 2D array and
-        a pixel scale."""
+        """get_kernel_map(time_days) should return a normalized 2D array and a
+        pixel scale."""
         kernel, pixel_scale_m = sn_source_r.get_kernel_map(time_days=5.0)
         assert isinstance(kernel, np.ndarray)
         assert kernel.ndim == 2
@@ -740,7 +759,8 @@ class TestSupernovaeSourceMorphology:
         assert not np.allclose(k_sph, k_ell)
 
     def test_continuous_monochromatic_morphology_zero_mask(self, sn_source_r):
-        """When all radii exceed r_phot, intensity should be zero everywhere."""
+        """When all radii exceed r_phot, intensity should be zero
+        everywhere."""
         # Very early time (nearly t=0) means r_phot is tiny (clamped to 1e8 m)
         r_large = np.linspace(1e10, 1e12, 100)  # all beyond r_phot
         # Since r_phot = max(v * t, 1e8) ~ 1e8 at t=0, and all r_large >> 1e8
