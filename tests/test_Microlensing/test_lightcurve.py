@@ -8,7 +8,6 @@ from slsim.Microlensing.magmap import MagnificationMap
 from slsim.Microlensing.source_morphology.gaussian import GaussianSourceMorphology
 from slsim.Microlensing.source_morphology.agn import AGNSourceMorphology
 
-
 # ---- Fixtures ----
 
 

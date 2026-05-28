@@ -11,7 +11,6 @@ from slsim.Microlensing.source_morphology.supernovae import SupernovaeSourceMorp
 from slsim.Util.astro_util import calculate_gravitational_radius
 import speclite.filters
 
-
 # ---- Fixtures ----
 
 
