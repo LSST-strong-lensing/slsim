@@ -77,6 +77,9 @@ class SupernovaeSourceMorphology(SourceMorphology):
         """Internal helper to load sncosmo and generate the analytical anchors.
 
         Bypassed if user provides their own grids.
+
+        :param anchor_spacing_days: Source-frame days between analytical evaluations. Controls the speed/accuracy tradeoff.
+        :return: Dictionary containing 'times', 'kernels', and 'pixel_scales_m' for the analytical snapshots.
         """
         import sncosmo
 
