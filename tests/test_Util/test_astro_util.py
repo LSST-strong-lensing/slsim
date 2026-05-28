@@ -948,340 +948,161 @@ def test_pull_value_from_grid():
 NPT_DECIMAL_PLACES = 5
 
 
+import numpy as np
+import astropy.units as u
+
+# Assuming the function is imported here
+# from your_module import extract_light_curve
+
+NPT_DECIMAL_PLACES = 5
+
 def test_extract_light_curve_all_cases():
     print("Running tests for extract_light_curve...")
-
-    conv_array_3x3 = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=float)
-    conv_array_5x5 = np.arange(25, dtype=float).reshape(5, 5)
     pixel_size = 1.0
     eff_vel_km_s = 1.0
     time_yr_for_1px = 0.001 / u.yr.to(u.s)
 
+    conv_array_3x3 = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=float)
+    conv_array_5x5 = np.arange(25, dtype=float).reshape(5, 5)
+    
+    avg_val_3x3 = np.mean(conv_array_3x3)
+    avg_val_5x5 = np.mean(conv_array_5x5)
+
+    ## 1: BASIC FUNCTIONALITY & UNITS
+    
+    # 1.1 Standard scalar extraction
     lc1 = extract_light_curve(
-        conv_array_3x3,
-        pixel_size,
-        eff_vel_km_s,
-        time_yr_for_1px,
-        x_start_position=0.0,
-        y_start_position=0.0,
-        phi_travel_direction=0.0,
+        conv_array_3x3, pixel_size, eff_vel_km_s, time_yr_for_1px,
+        x_start_position=0.0, y_start_position=0.0, phi_travel_direction=0.0
     )
-    assert isinstance(lc1, np.ndarray), "Test Case 1a Failed: LC type"
-    assert lc1.shape[0] == 15, f"Test Case 1b Failed: LC shape {lc1.shape}"
+    assert isinstance(lc1, np.ndarray), "Failed: Expected ndarray return type"
+    assert lc1.shape[0] == 15, f"Failed: Expected length 15, got {lc1.shape[0]}"
     np.testing.assert_array_almost_equal(
-        lc1,
-        np.linspace(1.0, 4.0, 15),
-        decimal=NPT_DECIMAL_PLACES,
-        err_msg="Test Case 1c Failed: LC values",
+        lc1, np.linspace(1.0, 4.0, 15), decimal=NPT_DECIMAL_PLACES, err_msg="Failed: Standard scalar extraction values"
     )
 
+    # 1.2 Input using Astropy Quantities
     lc2 = extract_light_curve(
-        conv_array_3x3,
-        pixel_size,
-        eff_vel_km_s * u.km / u.s,
-        time_yr_for_1px * u.yr,
-        x_start_position=0.0,
-        y_start_position=0.0,
-        phi_travel_direction=0.0,
+        conv_array_3x3, pixel_size, eff_vel_km_s * u.km / u.s, time_yr_for_1px * u.yr,
+        x_start_position=0.0, y_start_position=0.0, phi_travel_direction=0.0
     )
     np.testing.assert_array_almost_equal(
-        lc2,
-        np.linspace(1.0, 4.0, 15),
-        decimal=NPT_DECIMAL_PLACES,
-        err_msg="Test Case 2b Failed: LC values with units",
+        lc2, np.linspace(1.0, 4.0, 15), decimal=NPT_DECIMAL_PLACES, err_msg="Failed: Astropy quantity extraction values"
     )
 
-    avg_val3 = np.mean(conv_array_5x5)
-    val3 = extract_light_curve(
-        conv_array_5x5, pixel_size, eff_vel_km_s, time_yr_for_1px, pixel_shift=3
-    )
-    np.testing.assert_almost_equal(
-        val3,
-        avg_val3,
-        decimal=NPT_DECIMAL_PLACES,
-        err_msg="Test Case 3 Failed: pixel_shift too large",
-    )
-
-    time_for_6px = time_yr_for_1px * 6.0
-    avg_val4 = np.mean(conv_array_5x5)
-    val4 = extract_light_curve(
-        conv_array_5x5, pixel_size, eff_vel_km_s, time_for_6px, pixel_shift=0
-    )
-    np.testing.assert_almost_equal(
-        val4,
-        avg_val4,
-        decimal=NPT_DECIMAL_PLACES,
-        err_msg="Test Case 4 Failed: pixels_traversed too large",
-    )
-
-    avg_val5 = np.mean(conv_array_5x5)
-    np.testing.assert_almost_equal(
-        extract_light_curve(
-            conv_array_5x5,
-            pixel_size,
-            eff_vel_km_s,
-            time_yr_for_1px,
-            x_start_position=-1.0,
-        ),
-        avg_val5,
-        decimal=NPT_DECIMAL_PLACES,
-        err_msg="Test Case 5a Failed: Negative start_position",
-    )
-    np.testing.assert_almost_equal(
-        extract_light_curve(
-            conv_array_5x5,
-            pixel_size,
-            eff_vel_km_s,
-            time_yr_for_1px,
-            x_start_position=5.0,
-        ),
-        avg_val5,
-        decimal=NPT_DECIMAL_PLACES,
-        err_msg="Test Case 5b Failed: Too large start_position",
-    )
-
-    # ▶ Test negative y_start_position (covers the y_start_position lower‐bounds check)
-    np.testing.assert_almost_equal(
-        extract_light_curve(
-            conv_array_5x5,
-            pixel_size,
-            eff_vel_km_s,
-            time_yr_for_1px,
-            y_start_position=-1.0,
-        ),
-        avg_val5,
-        decimal=NPT_DECIMAL_PLACES,
-        err_msg="Test Case 5c Failed: Negative y_start_position",
-    )
-
-    # ▶ Test too large y_start_position (covers the y_start_position upper‐bounds check)
-    np.testing.assert_almost_equal(
-        extract_light_curve(
-            conv_array_5x5,
-            pixel_size,
-            eff_vel_km_s,
-            time_yr_for_1px,
-            y_start_position=5.0,
-        ),
-        avg_val5,
-        decimal=NPT_DECIMAL_PLACES,
-        err_msg="Test Case 5d Failed: Too large y_start_position",
-    )
-
-    avg_val6 = np.mean(conv_array_5x5)
-    val6 = extract_light_curve(
-        conv_array_5x5,
-        pixel_size,
-        eff_vel_km_s,
-        time_yr_for_1px,
-        x_start_position=4.0,
-        y_start_position=2.0,
-        phi_travel_direction=0.0,
-    )
-    np.testing.assert_almost_equal(
-        val6,
-        avg_val6,
-        decimal=NPT_DECIMAL_PLACES,
-        err_msg="Test Case 6 Failed: Track leaves array",
-    )
-
-    lc7 = extract_light_curve(
-        conv_array_5x5,
-        pixel_size,
-        eff_vel_km_s,
-        time_yr_for_1px,
-        x_start_position=2,
-        y_start_position=2,
-        phi_travel_direction=None,
-        random_seed=42,
-    )
-    assert not np.allclose(
-        lc7, np.mean(conv_array_5x5)
-    ), "Test Case 7c Failed: LC is average (unexpected)"  # np.allclose is fine for "not" checks
-
-    lc8 = extract_light_curve(
-        conv_array_5x5,
-        pixel_size,
-        eff_vel_km_s,
-        time_yr_for_1px,
-        x_start_position=None,
-        y_start_position=None,
-        phi_travel_direction=None,
-        random_seed=123,
-    )
-    assert not np.allclose(
-        lc8, np.mean(conv_array_5x5)
-    ), "Test Case 8c Failed: LC is average (unexpected)"
-
-    res9 = extract_light_curve(
-        conv_array_5x5,
-        pixel_size,
-        eff_vel_km_s,
-        time_yr_for_1px,
-        pixel_shift=1,
-        x_start_position=0.0,
-        y_start_position=0.0,
-        phi_travel_direction=0.0,
-        return_track_coords=True,
-    )
-    lc9, x_coords9, y_coords9 = res9
-    np.testing.assert_array_almost_equal(
-        lc9,
-        np.linspace(conv_array_5x5[1, 1], conv_array_5x5[2, 1], 15),
-        decimal=NPT_DECIMAL_PLACES,
-        err_msg="Test Case 9b Failed: LC values with shift",
-    )
-    np.testing.assert_array_almost_equal(
-        x_coords9,
-        np.linspace(0.0, 1.0, 15) + 1.0,
-        decimal=NPT_DECIMAL_PLACES,
-        err_msg="Test Case 9c Failed: X coords with shift",
-    )
-    np.testing.assert_array_almost_equal(
-        y_coords9,
-        np.zeros(15) + 1.0,
-        decimal=NPT_DECIMAL_PLACES,
-        err_msg="Test Case 9d Failed: Y coords with shift",
-    )
-
-    avg_val10 = np.mean(conv_array_3x3)
-    val10 = extract_light_curve(
-        conv_array_3x3, pixel_size, eff_vel_km_s, time_yr_for_1px, pixel_shift=1
-    )
-    np.testing.assert_almost_equal(
-        val10,
-        avg_val10,
-        decimal=NPT_DECIMAL_PLACES,
-        err_msg="Test Case 10 Failed: Safe array empty",
-    )
-
+    # 1.3 Zero-duration traversal
     x_s, y_s = 1.0, 1.0
-    expected_val11 = conv_array_3x3[int(x_s), int(y_s)]
     lc11 = extract_light_curve(
-        conv_array_3x3,
-        pixel_size,
-        eff_vel_km_s,
-        0.0,
-        x_start_position=x_s,
-        y_start_position=y_s,
-        phi_travel_direction=0.0,
+        conv_array_3x3, pixel_size, eff_vel_km_s, 0.0,
+        x_start_position=x_s, y_start_position=y_s, phi_travel_direction=0.0
     )
     np.testing.assert_array_almost_equal(
-        lc11,
-        np.full(10, expected_val11),
-        decimal=NPT_DECIMAL_PLACES,
-        err_msg="Test Case 11c Failed: LC values zero traversal",
+        lc11, np.full(10, conv_array_3x3[int(x_s), int(y_s)]), decimal=NPT_DECIMAL_PLACES, err_msg="Failed: Zero-duration traversal values"
     )
 
-    # ---- NEW TEST CASES FOR COVERAGE ----
 
-    # Test Case 12: Covers `if max_safe_idx_x < 0:` in random x choice
-    # N_safe_dim_x from shape[0] of safe_array.
-    # conv_array (3,4), pixel_shift=1.
-    # safe_array slice for rows: [1 : -1-1] = [1 : 3-2] = [1:1]. Size 0.
-    # N_safe_dim_x = 0. max_safe_idx_x = -1.
-    conv_array_3x4_for_safe_x_neg = np.arange(12, dtype=float).reshape(3, 4)
-    avg_flux_tc12 = np.mean(conv_array_3x4_for_safe_x_neg)
-    val12 = extract_light_curve(
-        convolution_array=conv_array_3x4_for_safe_x_neg,
-        pixel_size=pixel_size,
-        effective_transverse_velocity=eff_vel_km_s,
-        light_curve_time_in_years=0,
-        pixel_shift=1,
-        x_start_position=None,
-        y_start_position=None,  # y_choice won't be reached if x_choice fails
-        random_seed=42,  # Seed helps if x_choice passes but y_choice has an issue
-    )
-    np.testing.assert_almost_equal(
-        val12,
-        avg_flux_tc12,
-        decimal=NPT_DECIMAL_PLACES,
-        err_msg="Test Case 12 Failed: max_safe_idx_x < 0 in x-choice should return avg flux.",
-    )
+    ## 2: FALLBACKS (RETURNS AVERAGE FLUX)
+    
+    # 2.1 Pixel shift too large
+    val3 = extract_light_curve(conv_array_5x5, pixel_size, eff_vel_km_s, time_yr_for_1px, pixel_shift=3)
+    np.testing.assert_almost_equal(val3, avg_val_5x5, decimal=NPT_DECIMAL_PLACES, err_msg="Failed: Pixel shift too large fallback")
 
-    # Test Case 13: Covers `else: x_start_position = float(rng.integers(0, max_safe_idx_x + 1))` (x random border)
-    # conv_array (2,4), pixel_shift=0.
-    # N_safe_dim_x (rows) = 2. max_safe_idx_x = 1. -> x_start_position chosen from [0,1] using rng.integers(0,2)
-    # N_safe_dim_y (cols) = 4. max_safe_idx_y = 3. -> y_start_position chosen from [1,2] using rng.integers(1,3)
-    conv_array_2x4_for_x_border = np.array(
-        [[10, 20, 30, 40], [50, 60, 70, 80]], dtype=float
-    )
-    # Based on pytest output (actual result is 30.0):
-    # x_start_position (row index) from rng.integers(0,2) (1st call, seed 42) -> 0
-    # y_start_position (col index) from rng.integers(1,3) (2nd call, seed 42) -> 2 (in your env)
-    # Point is (row=0, col=2), value is conv_array_2x4_for_x_border[0,2] = 30.0
-    expected_lc13 = np.full(10, 30.0)
-    lc13 = extract_light_curve(
-        convolution_array=conv_array_2x4_for_x_border,
-        pixel_size=pixel_size,
-        effective_transverse_velocity=eff_vel_km_s,
-        light_curve_time_in_years=0,
-        pixel_shift=0,
-        x_start_position=None,
-        y_start_position=None,
-        phi_travel_direction=0.0,
-        random_seed=42,
-    )
-    np.testing.assert_array_almost_equal(
-        lc13,
-        expected_lc13,
-        decimal=NPT_DECIMAL_PLACES,
-        err_msg="Test Case 13 Failed: x_start_position random border choice incorrect.",
-    )
+    # 2.2 Traversal distance exceeds array bounds
+    val4 = extract_light_curve(conv_array_5x5, pixel_size, eff_vel_km_s, time_yr_for_1px * 6.0, pixel_shift=0)
+    np.testing.assert_almost_equal(val4, avg_val_5x5, decimal=NPT_DECIMAL_PLACES, err_msg="Failed: Traversal too long fallback")
 
-    # Test Case 14: Covers `if max_safe_idx_y < 0:` in random y choice
-    # N_safe_dim_y from shape[1] of safe_array.
-    # conv_array (4,3), pixel_shift=1.
-    # safe_array slice for rows: [1 : 4-1-1=2]. N_safe_dim_x = 1. max_safe_idx_x = 0. (x_start chosen as 0)
-    # safe_array slice for cols: [1 : 3-1-1=1]. N_safe_dim_y = 0. max_safe_idx_y = -1.
-    conv_array_4x3_for_safe_y_neg = np.arange(12, dtype=float).reshape(4, 3)
-    avg_flux_tc14 = np.mean(conv_array_4x3_for_safe_y_neg)
-    val14 = extract_light_curve(
-        convolution_array=conv_array_4x3_for_safe_y_neg,
-        pixel_size=pixel_size,
-        effective_transverse_velocity=eff_vel_km_s,
-        light_curve_time_in_years=0,
-        pixel_shift=1,
-        x_start_position=None,
-        y_start_position=None,
-        random_seed=42,
-    )
-    np.testing.assert_almost_equal(
-        val14,
-        avg_flux_tc14,
-        decimal=NPT_DECIMAL_PLACES,
-        err_msg="Test Case 14 Failed: max_safe_idx_y < 0 in y-choice should return avg flux.",
-    )
+    # 2.3 Out of bounds start positions (Negative and Overshoot)
+    for bad_start in [-1.0, 5.0]:
+        val_x = extract_light_curve(conv_array_5x5, pixel_size, eff_vel_km_s, time_yr_for_1px, x_start_position=bad_start)
+        np.testing.assert_almost_equal(val_x, avg_val_5x5, decimal=NPT_DECIMAL_PLACES, err_msg=f"Failed: Invalid x_start_position {bad_start}")
+        
+        val_y = extract_light_curve(conv_array_5x5, pixel_size, eff_vel_km_s, time_yr_for_1px, y_start_position=bad_start)
+        np.testing.assert_almost_equal(val_y, avg_val_5x5, decimal=NPT_DECIMAL_PLACES, err_msg=f"Failed: Invalid y_start_position {bad_start}")
 
-    # Test Case 15: Covers `else: y_start_position = float(rng.integers(0, max_safe_idx_y + 1))` (y random border)
-    # conv_array (4,2), pixel_shift=0.
-    # N_safe_dim_x (rows) = 4. max_safe_idx_x = 3. -> x_start_position chosen from [1,2] using rng.integers(1,max_safe_idx_x) which is rng.integers(1,3)
-    # N_safe_dim_y (cols) = 2. max_safe_idx_y = 1. -> y_start_position chosen from [0,1] using rng.integers(0,max_safe_idx_y+1) which is rng.integers(0,2)
-    conv_array_4x2_for_y_border = np.array(
-        [[10, 20], [30, 40], [50, 60], [70, 80]], dtype=float
+    # 2.4 Track leaves the safe array area
+    val6 = extract_light_curve(
+        conv_array_5x5, pixel_size, eff_vel_km_s, time_yr_for_1px,
+        x_start_position=4.0, y_start_position=2.0, phi_travel_direction=0.0
     )
-    # With random_seed=42 (based on latest pytest output for TC15):
-    # 1st rng call for this test (for x_start): rng.integers(1, 3) -> 1. So x_start_position (row index) = 1.0
-    # 2nd rng call for this test (for y_start): rng.integers(0, 2) -> 1. So y_start_position (col index) = 1.0
-    # Point is (row=1, col=1), value is conv_array_4x2_for_y_border[1,1] = 40.0
-    expected_lc15 = np.full(10, 40.0)  # Corrected based on latest pytest output
-    lc15 = extract_light_curve(
-        convolution_array=conv_array_4x2_for_y_border,
-        pixel_size=pixel_size,
-        effective_transverse_velocity=eff_vel_km_s,
-        light_curve_time_in_years=0,
-        pixel_shift=0,
-        x_start_position=None,
-        y_start_position=None,
-        phi_travel_direction=0.0,
-        random_seed=42,
+    np.testing.assert_almost_equal(val6, avg_val_5x5, decimal=NPT_DECIMAL_PLACES, err_msg="Failed: Track leaves array fallback")
+
+    # 2.5 Safe array results in empty dimensions
+    val10 = extract_light_curve(conv_array_3x3, pixel_size, eff_vel_km_s, time_yr_for_1px, pixel_shift=1)
+    np.testing.assert_almost_equal(val10, avg_val_3x3, decimal=NPT_DECIMAL_PLACES, err_msg="Failed: Empty safe array fallback")
+
+    
+    ## 3: RANDOM PATH GENERATION & BORDERS
+    
+    # 3.1 Random seed reproducibility
+    lc7 = extract_light_curve(conv_array_5x5, pixel_size, eff_vel_km_s, time_yr_for_1px, x_start_position=2, y_start_position=2, random_seed=42)
+    assert not np.allclose(lc7, avg_val_5x5), "Failed: Seeded random track unexpectedly returned average"
+
+    lc8 = extract_light_curve(conv_array_5x5, pixel_size, eff_vel_km_s, time_yr_for_1px, random_seed=123)
+    assert not np.allclose(lc8, avg_val_5x5), "Failed: Fully random track unexpectedly returned average"
+
+    # 3.2 Negative safe dimensions fallback in random generation
+    conv_array_3x4 = np.arange(12, dtype=float).reshape(3, 4)
+    val12 = extract_light_curve(conv_array_3x4, pixel_size, eff_vel_km_s, 0, pixel_shift=1, random_seed=42)
+    np.testing.assert_almost_equal(val12, np.mean(conv_array_3x4), decimal=NPT_DECIMAL_PLACES, err_msg="Failed: Negative x-dimension choice fallback")
+
+    conv_array_4x3 = np.arange(12, dtype=float).reshape(4, 3)
+    val14 = extract_light_curve(conv_array_4x3, pixel_size, eff_vel_km_s, 0, pixel_shift=1, random_seed=42)
+    np.testing.assert_almost_equal(val14, np.mean(conv_array_4x3), decimal=NPT_DECIMAL_PLACES, err_msg="Failed: Negative y-dimension choice fallback")
+
+    # 3.3 Random border choice for narrow arrays
+    conv_array_2x4 = np.array([[10, 20, 30, 40], [50, 60, 70, 80]], dtype=float)
+    lc13 = extract_light_curve(conv_array_2x4, pixel_size, eff_vel_km_s, 0, pixel_shift=0, phi_travel_direction=0.0, random_seed=42)
+    np.testing.assert_array_almost_equal(lc13, np.full(10, 30.0), decimal=NPT_DECIMAL_PLACES, err_msg="Failed: x_start random border selection")
+
+    conv_array_4x2 = np.array([[10, 20], [30, 40], [50, 60], [70, 80]], dtype=float)
+    lc15 = extract_light_curve(conv_array_4x2, pixel_size, eff_vel_km_s, 0, pixel_shift=0, phi_travel_direction=0.0, random_seed=42)
+    np.testing.assert_array_almost_equal(lc15, np.full(10, 40.0), decimal=NPT_DECIMAL_PLACES, err_msg="Failed: y_start random border selection")
+
+
+    ## 4: COORDINATE RETURNS & SHIFTS
+    
+    lc9, x_coords9, y_coords9 = extract_light_curve(
+        conv_array_5x5, pixel_size, eff_vel_km_s, time_yr_for_1px, pixel_shift=1,
+        x_start_position=0.0, y_start_position=0.0, phi_travel_direction=0.0, return_track_coords=True
     )
-    np.testing.assert_array_almost_equal(
-        lc15,
-        expected_lc15,
-        decimal=NPT_DECIMAL_PLACES,
-        err_msg="Test Case 15 Failed: y_start_position random border choice incorrect.",
+    np.testing.assert_array_almost_equal(lc9, np.linspace(conv_array_5x5[1, 1], conv_array_5x5[2, 1], 15), decimal=NPT_DECIMAL_PLACES, err_msg="Failed: Lightcurve with pixel shift")
+    np.testing.assert_array_almost_equal(x_coords9, np.linspace(0.0, 1.0, 15) + 1.0, decimal=NPT_DECIMAL_PLACES, err_msg="Failed: X coords shift")
+    np.testing.assert_array_almost_equal(y_coords9, np.full(15, 1.0), decimal=NPT_DECIMAL_PLACES, err_msg="Failed: Y coords shift")
+
+    
+    ## 5: ARRAY TIMESTAMPS
+    
+    conv_array_10x10 = np.arange(100, dtype=float).reshape(10, 10)
+    pixel_size_m = 1e10
+    duration_yr = 1.0
+    
+    # 5.1 Uniform Array
+    time_uniform = np.linspace(0.0, duration_yr, 15)
+    lc_arr = extract_light_curve(conv_array_10x10, pixel_size_m, 1.0, time_uniform, x_start_position=4.0, y_start_position=4.0, phi_travel_direction=0.0)
+    assert isinstance(lc_arr, np.ndarray) and len(lc_arr) == 15 and not np.any(np.isnan(lc_arr)), "Failed: Uniform timestamp array extraction"
+
+    # 5.2 Zero-Duration Array
+    time_zero = np.zeros(8)
+    lc_zero = extract_light_curve(conv_array_10x10, pixel_size_m, 1.0, time_zero, x_start_position=4.0, y_start_position=4.0, phi_travel_direction=0.0)
+    assert len(lc_zero) == 8 and np.allclose(lc_zero, lc_zero[0]), "Failed: Zero-duration timestamp array extraction"
+
+    # 5.3 Irregular Cadence Array
+    time_irregular = np.array([0.0, 0.05, 0.1, 0.5, 1.0]) * duration_yr
+    lc_irr = extract_light_curve(conv_array_10x10, pixel_size_m, 1.0, time_irregular, x_start_position=4.0, y_start_position=4.0, phi_travel_direction=0.0)
+    assert len(lc_irr) == 5 and not np.any(np.isnan(lc_irr)), "Failed: Irregular timestamp array extraction"
+
+    # 5.4 Array with Astropy Quantities
+    time_qty = np.linspace(0.0, duration_yr, 12) * u.yr
+    lc_qty = extract_light_curve(conv_array_10x10, pixel_size_m, 1.0, time_qty, x_start_position=4.0, y_start_position=4.0, phi_travel_direction=0.0)
+    assert len(lc_qty) == 12, "Failed: Astropy quantity timestamp array extraction"
+
+    # 5.5 Coordinate tracking validation
+    lc_fwd, x_fwd, y_fwd = extract_light_curve(
+        conv_array_10x10, pixel_size_m, 1.0, np.linspace(0.0, duration_yr, 10),
+        x_start_position=1.0, y_start_position=4.0, phi_travel_direction=0.0, return_track_coords=True
     )
+    assert np.all(np.diff(x_fwd) >= -1e-12), "Failed: Monotonic X coordinate movement"
+    assert np.allclose(y_fwd, y_fwd[0]), "Failed: Constant Y coordinate movement"
 
     print("extract_light_curve tests PASSED")
 

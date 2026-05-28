@@ -1309,7 +1309,6 @@ def extract_light_curve(
             y_start_position, y_start_position + delta_y, 5 * int(n_points)
         )
 
-    # Pull the static flux (for backward compatibility / static sources)
     light_curve = pull_value_from_grid(safe_convolution_array, x_positions, y_positions)
 
     if return_track_coords:
