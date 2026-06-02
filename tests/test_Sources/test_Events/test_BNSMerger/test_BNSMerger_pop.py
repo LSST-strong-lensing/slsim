@@ -24,6 +24,7 @@ def test_norm_delay_time_distribution():
         decimal=4,
     )
 
+
 def test_z_time_interp():
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
     z_max = 10
@@ -48,6 +49,7 @@ def test_z_time_interp():
     t = cosmo.age(z_true).to_value()
     z_est = z_from_time(t)
     npt.assert_almost_equal(z_est, z_true, decimal=3)
+
 
 class TestBNSMergerRate:
     def setup_method(self):

@@ -21,19 +21,20 @@ def norm_delay_time_distribution(t_d, t_d_min, t_d_max):
     ft_d = 1 / (t_d * (np.log(t_d_max / t_d_min)))
     return ft_d
 
+
 def z_time_interp(cosmo, z_max):
-        """Calculates redshift given cosmic time.
+    """Calculates redshift given cosmic time.
 
-        :param cosmo: cosmology used to calculate cosmic time
-        :param z_max: maximum redshift for interpolation
+    :param cosmo: cosmology used to calculate cosmic time
+    :param z_max: maximum redshift for interpolation
+    :return: redshift at time t [float]
+    """
+    z_array = np.linspace(0, z_max, 1000)
+    z_array = z_array[::-1]
+    t_array = cosmo.age(z_array).to_value()
 
-        :return: redshift at time t [float]
-        """
-        z_array = np.linspace(0, z_max, 1000)
-        z_array = z_array[::-1]
-        t_array = cosmo.age(z_array).to_value()
-        
-        return interp.interp1d(t_array, z_array, fill_value="extrapolate")
+    return interp.interp1d(t_array, z_array, fill_value="extrapolate")
+
 
 class BNSMergerRate(object):
     """Class to calculate BNS merger rates."""
@@ -57,7 +58,7 @@ class BNSMergerRate(object):
 
         self._z_from_time = z_time_interp(self._cosmo, self._z_max)
 
-        self._local_merger_rate = 320 * 1e-9 # in [yr^(-1)Mpc^(-3)]
+        self._local_merger_rate = 320 * 1e-9  # in [yr^(-1)Mpc^(-3)]
 
     def calculate_binary_formation_rate(self, z):
         """Calculates the binary formation rate. (Eq 3 - Kuwahara et al. 2025)
@@ -88,8 +89,10 @@ class BNSMergerRate(object):
 
         :return: numerator integrand
         """
-        ft_d = norm_delay_time_distribution(t_d, t_d_min=self._t_d_min, t_d_max=self._t_d_max)
-        z_f = self._z_from_time(t - t_d).item() # formation redshift
+        ft_d = norm_delay_time_distribution(
+            t_d, t_d_min=self._t_d_min, t_d_max=self._t_d_max
+        )
+        z_f = self._z_from_time(t - t_d).item()  # formation redshift
         return self.calculate_binary_formation_rate(z_f) * ft_d
 
     def calculate_event_rate(self, z):
@@ -117,7 +120,7 @@ class BNSMergerRate(object):
                 epsrel=1e-6,
             )
             unorm_BNS_rate_list.append(numerator[0])
-        
+
         unorm_BNS_rate_array = np.array(unorm_BNS_rate_list)
 
         # Calculate unormalized BNS merger rate at z=0 for normalization
@@ -125,8 +128,10 @@ class BNSMergerRate(object):
             self._numerator_integrand,
             self._t_d_min,
             self._t_0 - self._t_min,
-            args=(self._t_0,)
+            args=(self._t_0,),
         )[0]
-        BNS_rate_list = (unorm_BNS_rate_array/unorm_BNS_rate_z0) * self._local_merger_rate
+        BNS_rate_list = (
+            unorm_BNS_rate_array / unorm_BNS_rate_z0
+        ) * self._local_merger_rate
 
         return np.array(BNS_rate_list)

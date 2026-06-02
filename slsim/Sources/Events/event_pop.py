@@ -13,7 +13,7 @@ class EventPopulation(object):
     def __init__(self, model, cosmo, z_max):
         """
         :param model: event population model, chosen from "BNS" or "SNIa"
-        
+
         :param cosmo: cosmology object
         :param z_max: maximum redshift for the event population model
         """
@@ -33,7 +33,6 @@ class EventPopulation(object):
         """Calculate the event rate for the selected event population model.
 
         :param z: an array of redshifts (z>=0). No need to be sorted.
-
         :return: event rate in [yr^(-1) Mpc^(-3)]
         :return type: array-like
         """
