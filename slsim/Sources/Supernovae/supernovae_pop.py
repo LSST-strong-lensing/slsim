@@ -108,6 +108,6 @@ class SNIaRate(object):
         :return type: array-like
         """
         h = self._cosmo.H(0).to_value() / 100
-        rate = self.calculate_SNIa_rate(z, eta) / h
+        rate = self.calculate_SNIa_rate(z, eta) * h
 
         return rate

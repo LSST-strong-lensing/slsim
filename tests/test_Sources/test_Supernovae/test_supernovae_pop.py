@@ -77,7 +77,7 @@ class TestSNIaRate:
         event_array = self.sne_rate.calculate_event_rate(z_array)
 
         for i in range(len(z_array)):
-            npt.assert_approx_equal(rate_array[i] / h, event_array[i], significant=3)
+            npt.assert_approx_equal(rate_array[i] * h, event_array[i], significant=3)
 
 
 if __name__ == "__main__":
