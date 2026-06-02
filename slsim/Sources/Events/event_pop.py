@@ -12,13 +12,10 @@ class EventPopulation(object):
 
     def __init__(self, model, cosmo, z_max):
         """
-        BNS model calls the function to calculate the rate of BNS merger. (Eq 4 - Kuwahara et al. 2025)
-        :return: BNS merger rate R_m(z), in (M_sol)yr^(-1)Gpc^(-3)
-        :return type: array-like
-
-        SNIa model calls the function to calculate the rate of SN Ia. (Eq 15 - Oguri and Marshall 2010)
-        :return: SN Ia rate n(z) in [(h)yr^(-1)Mpc^(-3)]
-        :return type: array-like
+        :param model: event population model, chosen from "BNS" or "SNIa"
+        
+        :param cosmo: cosmology object
+        :param z_max: maximum redshift for the event population model
         """
 
         self.model_name = model
@@ -33,4 +30,11 @@ class EventPopulation(object):
             raise ValueError("model should be chosen from 'BNS' or 'SNIa'")
 
     def calculate_event_rate(self, z):
+        """Calculate the event rate for the selected event population model.
+
+        :param z: an array of redshifts (z>=0). No need to be sorted.
+
+        :return: event rate in [yr^(-1) Mpc^(-3)]
+        :return type: array-like
+        """
         return self._model.calculate_event_rate(z)

@@ -101,10 +101,12 @@ class SNIaRate(object):
         return np.array(SNIa_rate_list)
 
     def calculate_event_rate(self, z, eta=0.04):
-        """Wrapper function for calculate_SNIa_rate to return the rate of SN
-        Ia.
-
-        :return: SN Ia rate n(z) in [(h)yr^(-1)Mpc^(-3)]
+        """Wrapper function for calculate_SNIa_rate to return the rate of SN Ia.
+        
+        :return: SN Ia rate n(z) in [yr^(-1)Mpc^(-3)]
         :return type: array-like
         """
-        return self.calculate_SNIa_rate(z, eta)
+        h = self._cosmo.H(0).to_value() / 100
+        rate = self.calculate_SNIa_rate(z, eta)/h
+
+        return rate
