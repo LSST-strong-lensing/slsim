@@ -1,11 +1,11 @@
 slsim.Sources.Events.Supernovae package
-======================================
+=======================================
 
 Submodules
 ----------
 
 slsim.Sources.Events.Supernovae.random\_supernovae module
---------------------------------------------------
+---------------------------------------------------------
 
 .. automodule:: slsim.Sources.Events.Supernovae.random_supernovae
    :members:
@@ -13,7 +13,7 @@ slsim.Sources.Events.Supernovae.random\_supernovae module
    :show-inheritance:
 
 slsim.Sources.Events.Supernovae.supernova module
------------------------------------------
+------------------------------------------------
 
 .. automodule:: slsim.Sources.Events.Supernovae.supernova
    :members:
@@ -21,7 +21,7 @@ slsim.Sources.Events.Supernovae.supernova module
    :show-inheritance:
 
 slsim.Sources.Events.Supernovae.supernovae\_host\_match module
--------------------------------------------------------
+--------------------------------------------------------------
 
 .. automodule:: slsim.Sources.Events.Supernovae.supernovae_host_match
    :members:
@@ -29,7 +29,7 @@ slsim.Sources.Events.Supernovae.supernovae\_host\_match module
    :show-inheritance:
 
 slsim.Sources.Events.Supernovae.supernovae\_lightcone module
------------------------------------------------------
+------------------------------------------------------------
 
 .. automodule:: slsim.Sources.Events.Supernovae.supernovae_lightcone
    :members:
@@ -37,7 +37,7 @@ slsim.Sources.Events.Supernovae.supernovae\_lightcone module
    :show-inheritance:
 
 slsim.Sources.Events.Supernovae.supernovae\_pop module
------------------------------------------------
+------------------------------------------------------
 
 .. automodule:: slsim.Sources.Events.Supernovae.supernovae_pop
    :members:
