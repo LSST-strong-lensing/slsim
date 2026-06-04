@@ -1,5 +1,5 @@
 import warnings
-from slsim.Sources.Supernovae import random_supernovae
+from slsim.Sources.Events.Supernovae import random_supernovae
 from slsim.Sources.SourceTypes.source_base import SourceBase
 from slsim.ImageSimulation.image_quality_lenstronomy import (
     get_all_supported_bands,

@@ -3,7 +3,7 @@ import numpy as np
 from astropy.units import Quantity
 from astropy.cosmology import FlatLambdaCDM
 from slsim.Sources.SourceCatalogues.skypy_galaxy_catalog import GalaxyCatalog
-from slsim.Sources.Supernovae.supernovae_host_match import SupernovaeHostMatch
+from slsim.Sources.Events.Supernovae.supernovae_host_match import SupernovaeHostMatch
 
 skypy_config = None
 sky_area = Quantity(0.1, unit="deg2")
