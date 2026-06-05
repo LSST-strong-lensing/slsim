@@ -4,6 +4,7 @@ def object_cut(
     z_max=5,
     band=None,
     band_max=40,
+    band_min=0,
     list_type="astropy_table",
     object_type="extended",
 ):
@@ -14,6 +15,7 @@ def object_cut(
     :param z_max: maximum redshift of selected sample
     :param band: imaging band
     :param band_max: maximum magnitude of galaxies in band
+    :param band_min: minimum magnitude of galaxies in band
     :param list_type: format of the source catalog file. Currently, it
         supports a single astropy table or a list of astropy tables.
     :param object_type: string to specify whether catalog contains an
@@ -36,6 +38,7 @@ def object_cut(
                 (galaxy_list["z"] > z_min)
                 & (galaxy_list["z"] < z_max)
                 & (galaxy_list[mag_string + band] < band_max)
+                & (galaxy_list[mag_string + band] > band_min)
             )
         galaxy_list_cut = galaxy_list[bool_cut]
     else:
@@ -48,6 +51,7 @@ def object_cut(
                     (table["z"] > z_min)
                     & (table["z"] < z_max)
                     & (table[mag_string + band] < band_max)
+                    & (table[mag_string + band] > band_min)
                 )
 
             # Check if any rows satisfy the cut

@@ -104,16 +104,16 @@ class PointSources(SourcePopBase):
             # Filter the selected catalog by redshift bounds
             filtered_sources = self._point_source_select[
                 (self._point_source_select["z"] < z_max)
-                & (z_min < self._point_source_select["z"])
+                & (z_min <= self._point_source_select["z"])
             ]
 
             if len(filtered_sources) == 0:
                 return None
             else:
-                index = random.randint(0, len(filtered_sources) - 1)
+                index = random.randint(0, len(filtered_sources))
                 point_source = filtered_sources[index]
         else:
-            index = random.randint(0, self._num_select - 1)
+            index = random.randint(0, self._num_select)
             point_source = self._point_source_select[index]
 
         source_class = Source(

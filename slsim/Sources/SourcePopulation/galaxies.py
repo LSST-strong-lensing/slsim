@@ -175,10 +175,10 @@ class Galaxies(SourcePopBase):
             if len(filtered_galaxies) == 0:
                 return None
             else:
-                index = random.randint(0, len(filtered_galaxies) - 1)
+                index = random.randint(0, len(filtered_galaxies))
                 galaxy = filtered_galaxies[index]
         else:
-            index = random.randint(0, self._num_select - 1)
+            index = random.randint(0, self._num_select)
             galaxy = self._galaxy_select[index]
         if "a_rot" in galaxy.colnames:
             phi_rot = galaxy["a_rot"]
