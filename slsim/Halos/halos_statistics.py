@@ -486,7 +486,7 @@ class HalosStatistics(HalosLensBase):
 
         # Use lenstronomy utility to make grid
         x_grid, y_grid = make_grid(
-            numPix=num_points, deltapix=2 * (radius_arcsec / 2.0) / num_points
+            num_pix=num_points, delta_pix=2 * (radius_arcsec / 2.0) / num_points
         )
         x_grid, y_grid = x_grid[mask_1D], y_grid[mask_1D]
 

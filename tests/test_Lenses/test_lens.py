@@ -555,7 +555,7 @@ class TestLens(object):
         from lenstronomy.Util.util import make_grid
 
         delta_pix = 0.05
-        x, y = make_grid(numPix=200, deltapix=delta_pix)
+        x, y = make_grid(num_pix=200, delta_pix=delta_pix)
         kappa_star = self.gg_lens.kappa_star(x, y)
         stellar_mass_from_kappa_star = (
             np.sum(kappa_star)
