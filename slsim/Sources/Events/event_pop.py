@@ -1,4 +1,4 @@
-from slsim.Sources.Events.BNSMerger.BNSMerger_pop import BNSMergerRate
+from slsim.Sources.Events.BNSMerger.bns_merger_pop import BNSMergerRate
 from slsim.Sources.Supernovae.supernovae_pop import SNIaRate
 
 """References:
@@ -29,11 +29,12 @@ class EventPopulation(object):
         else:
             raise ValueError("model should be chosen from 'BNS' or 'SNIa'")
 
-    def calculate_event_rate(self, z):
-        """Calculate the event rate for the selected event population model.
+    def event_rate(self, z):
+        """Call function to calculate the event rate for 
+        the selected event population model in source frame.
 
         :param z: an array of redshifts (z>=0). No need to be sorted.
         :return: event rate in [yr^(-1) Mpc^(-3)]
         :return type: array-like
         """
-        return self._model.calculate_event_rate(z)
+        return self._model.event_rate(z)

@@ -74,7 +74,7 @@ class TestSNIaRate:
 
         z_array = [0, 1, 2, 3]
         rate_array = self.sne_rate.calculate_SNIa_rate(z_array)
-        event_array = self.sne_rate.calculate_event_rate(z_array)
+        event_array = self.sne_rate.event_rate(z_array)
 
         for i in range(len(z_array)):
             npt.assert_approx_equal(rate_array[i] * h, event_array[i], significant=3)

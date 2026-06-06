@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.integrate as integrate
-import scipy.interpolate as interp
+from slsim.Util.cosmo_util import z_time_interp
 
 """References:
   SNIa population: Oguri and Marshall 2010
@@ -20,21 +20,6 @@ def norm_delay_time_distribution(t_d, t_d_min, t_d_max):
 
     ft_d = 1 / (t_d * (np.log(t_d_max / t_d_min)))
     return ft_d
-
-
-def z_time_interp(cosmo, z_max):
-    """Calculates redshift given cosmic time.
-
-    :param cosmo: cosmology used to calculate cosmic time
-    :param z_max: maximum redshift for interpolation
-    :return: redshift at time t [float]
-    """
-    z_array = np.linspace(0, z_max, 1000)
-    z_array = z_array[::-1]
-    t_array = cosmo.age(z_array).to_value()
-
-    return interp.interp1d(t_array, z_array, fill_value="extrapolate")
-
 
 class BNSMergerRate(object):
     """Class to calculate BNS merger rates."""
@@ -60,7 +45,7 @@ class BNSMergerRate(object):
 
         self._local_merger_rate = 320 * 1e-9  # in [yr^(-1)Mpc^(-3)]
 
-    def calculate_binary_formation_rate(self, z):
+    def binary_formation_rate(self, z):
         """Calculates the binary formation rate. (Eq 3 - Kuwahara et al. 2025)
 
         ``nu``, ``z_m``, ``a``, and ``b`` are fixed fitting parameters for
@@ -93,10 +78,10 @@ class BNSMergerRate(object):
             t_d, t_d_min=self._t_d_min, t_d_max=self._t_d_max
         )
         z_f = self._z_from_time(t - t_d).item()  # formation redshift
-        return self.calculate_binary_formation_rate(z_f) * ft_d
+        return self.binary_formation_rate(z_f) * ft_d
 
-    def calculate_event_rate(self, z):
-        """Calculates the rate of nomalized BNS merger, R_m(z),
+    def event_rate(self, z):
+        """Calculates the normalized BNS merger rate R_m(z) in source frame, which is
         calibrated by the local merger rate Rm(z = 0). (Eq 4 - Kuwahara et al. 2025)
 
         :param z: an array of redshift (z>=0). No need to be sorted.

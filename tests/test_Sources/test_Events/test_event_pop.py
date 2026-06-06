@@ -1,6 +1,6 @@
 from astropy.cosmology import FlatLambdaCDM
 from slsim.Sources.Events.event_pop import EventPopulation
-from slsim.Sources.Events.BNSMerger.BNSMerger_pop import BNSMergerRate
+from slsim.Sources.Events.BNSMerger.bns_merger_pop import BNSMergerRate
 from slsim.Sources.Supernovae.supernovae_pop import SNIaRate
 import numpy.testing as npt
 import pytest
@@ -24,8 +24,8 @@ class TestEventPop:
             z_max=self.z_max,
         )
 
-        rate_array = event_pop.calculate_event_rate(self.z_array)
-        bnsm_array = bnsm_pop.calculate_event_rate(self.z_array)
+        rate_array = event_pop.event_rate(self.z_array)
+        bnsm_array = bnsm_pop.event_rate(self.z_array)
 
         for i in range(len(self.z_array)):
             npt.assert_almost_equal(bnsm_array[i], rate_array[i], decimal=3)
@@ -42,8 +42,8 @@ class TestEventPop:
             z_max=self.z_max,
         )
 
-        rate_array = event_pop.calculate_event_rate(self.z_array)
-        sne_array = sne_pop.calculate_event_rate(self.z_array)
+        rate_array = event_pop.event_rate(self.z_array)
+        sne_array = sne_pop.event_rate(self.z_array)
 
         for i in range(len(self.z_array)):
             npt.assert_almost_equal(sne_array[i], rate_array[i], decimal=3)

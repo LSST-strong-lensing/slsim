@@ -1,6 +1,6 @@
-from slsim.Sources.Events.BNSMerger.BNSMerger_pop import BNSMergerRate
-from slsim.Sources.Events.BNSMerger.BNSMerger_pop import norm_delay_time_distribution
-from slsim.Sources.Events.BNSMerger.BNSMerger_pop import z_time_interp
+from slsim.Sources.Events.BNSMerger.bns_merger_pop import BNSMergerRate
+from slsim.Sources.Events.BNSMerger.bns_merger_pop import norm_delay_time_distribution
+from slsim.Sources.Events.BNSMerger.bns_merger_pop import z_time_interp
 from astropy.cosmology import FlatLambdaCDM
 import numpy.testing as npt
 import numpy as np
@@ -24,33 +24,6 @@ def test_norm_delay_time_distribution():
         decimal=4,
     )
 
-
-def test_z_time_interp():
-    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-    z_max = 10
-    z_from_time = z_time_interp(cosmo, z_max)
-
-    z_true = 0
-    t = cosmo.age(z_true).to_value()
-    z_est = z_from_time(t)
-    npt.assert_almost_equal(z_est, z_true, decimal=3)
-
-    z_true = 4
-    t = cosmo.age(z_true).to_value()
-    z_est = z_from_time(t)
-    npt.assert_almost_equal(z_est, z_true, decimal=3)
-
-    z_true = 7
-    t = cosmo.age(z_true).to_value()
-    z_est = z_from_time(t)
-    npt.assert_almost_equal(z_est, z_true, decimal=3)
-
-    z_true = 10
-    t = cosmo.age(z_true).to_value()
-    z_est = z_from_time(t)
-    npt.assert_almost_equal(z_est, z_true, decimal=3)
-
-
 class TestBNSMergerRate:
     def setup_method(self):
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -60,14 +33,14 @@ class TestBNSMergerRate:
             z_max=self.z_max,
         )
 
-    def test_calculate_binary_formation_rate(self):
+    def test_binary_formation_rate(self):
         z = 0
         npt.assert_almost_equal(
-            self.bnsm_rate.calculate_binary_formation_rate(z), 0.01505, decimal=3
+            self.bnsm_rate.binary_formation_rate(z), 0.01505, decimal=3
         )
         z = 3
         npt.assert_almost_equal(
-            self.bnsm_rate.calculate_binary_formation_rate(z), 0.10854, decimal=3
+            self.bnsm_rate.binary_formation_rate(z), 0.10854, decimal=3
         )
 
     def test_numerator_integrand(self):
@@ -76,9 +49,9 @@ class TestBNSMergerRate:
             self.bnsm_rate._numerator_integrand(t_d, t), 0.00013105, decimal=5
         )
 
-    def test_calculate_event_rate(self):
+    def test_event_rate(self):
         z_array = [0, 1, 2, 3]
-        rate_array = self.bnsm_rate.calculate_event_rate(z_array)
+        rate_array = self.bnsm_rate.event_rate(z_array)
 
         npt.assert_almost_equal(rate_array[0] * 1e9, 320.00, decimal=3)
         npt.assert_almost_equal(rate_array[1] * 1e9, 1014.585, decimal=3)
