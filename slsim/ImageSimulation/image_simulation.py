@@ -116,7 +116,7 @@ def simulate_image(
     if kwargs_psf is not None:
         kwargs_single_band.update(kwargs_psf)
     sim_api = SimAPI(
-        numpix=num_pix, kwargs_single_band=kwargs_single_band, kwargs_model=kwargs_model
+        num_pix=num_pix, kwargs_single_band=kwargs_single_band, kwargs_model=kwargs_model
     )
     kwargs_lens_light, kwargs_source, kwargs_ps = sim_api.magnitude2amplitude(
         kwargs_lens_light_mag=kwargs_params.get("kwargs_lens_light", None),
@@ -184,7 +184,7 @@ def sharp_image(
     }  # these are keywords not being used but need to be set in
     ##SimAPI
     sim_api = SimAPI(
-        numpix=num_pix, kwargs_single_band=kwargs_band, kwargs_model=kwargs_model
+        num_pix=num_pix, kwargs_single_band=kwargs_band, kwargs_model=kwargs_model
     )
     kwargs_lens_light, kwargs_source, kwargs_ps = sim_api.magnitude2amplitude(
         kwargs_lens_light_mag=kwargs_params.get("kwargs_lens_light", None),
@@ -307,7 +307,7 @@ def image_data_class(
         "kwargs_pixel_grid": centered_coordinate_system(num_pix, transform_pix2angle),
     }
     sim_api = SimAPI(
-        numpix=num_pix, kwargs_single_band=kwargs_band, kwargs_model=kwargs_model
+        num_pix=num_pix, kwargs_single_band=kwargs_band, kwargs_model=kwargs_model
     )
 
     imagedata = sim_api.data_class

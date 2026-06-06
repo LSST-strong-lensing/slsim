@@ -1307,7 +1307,7 @@ class Lens(LensedSystemBase):
         # TODO: this does not work well for clusters when the lensed source is relatively small compared to the image
         num_pix = 200
         delta_pix = theta_E * 4 / num_pix
-        x, y = util.make_grid(numPix=num_pix, deltapix=delta_pix)
+        x, y = util.make_grid(num_pix=num_pix, delta_pix=delta_pix)
         x += center_source[0]
         y += center_source[1]
         beta_x, beta_y = lens_model_class.ray_shooting(x, y, kwargs_lens)
