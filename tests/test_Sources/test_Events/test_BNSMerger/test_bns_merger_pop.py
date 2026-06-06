@@ -23,6 +23,7 @@ def test_norm_delay_time_distribution():
         decimal=4,
     )
 
+
 class TestBNSMergerRate:
     def setup_method(self):
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)

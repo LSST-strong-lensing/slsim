@@ -30,8 +30,8 @@ class EventPopulation(object):
             raise ValueError("model should be chosen from 'BNS' or 'SNIa'")
 
     def event_rate(self, z):
-        """Call function to calculate the event rate for 
-        the selected event population model in source frame.
+        """Call function to calculate the event rate for the selected event
+        population model in source frame.
 
         :param z: an array of redshifts (z>=0). No need to be sorted.
         :return: event rate in [yr^(-1) Mpc^(-3)]

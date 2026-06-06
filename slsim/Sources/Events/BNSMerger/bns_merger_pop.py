@@ -21,6 +21,7 @@ def norm_delay_time_distribution(t_d, t_d_min, t_d_max):
     ft_d = 1 / (t_d * (np.log(t_d_max / t_d_min)))
     return ft_d
 
+
 class BNSMergerRate(object):
     """Class to calculate BNS merger rates."""
 

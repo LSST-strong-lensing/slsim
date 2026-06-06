@@ -5,6 +5,7 @@ import numpy.testing as npt
 
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
+
 def test_z_scale_factor():
     z_old = 1.0
     z_new = 1.0
@@ -15,6 +16,7 @@ def test_z_scale_factor():
     z_new = 1.0
     scale_factor = z_scale_factor(z_old, z_new, cosmo)
     npt.assert_almost_equal(scale_factor.value, 0.762, decimal=3)
+
 
 def test_z_time_interp():
     z_max = 10
@@ -33,7 +35,7 @@ def test_z_time_interp():
     z_true = 7
     t = cosmo.age(z_true).to_value()
     z_est = z_from_time(t)
-    npt.assert_almost_equal(z_est, z_true, decimal=3)#
+    npt.assert_almost_equal(z_est, z_true, decimal=3)  #
 
     z_true = 10
     t = cosmo.age(z_true).to_value()
