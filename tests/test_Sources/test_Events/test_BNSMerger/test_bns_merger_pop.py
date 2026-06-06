@@ -1,6 +1,5 @@
 from slsim.Sources.Events.BNSMerger.bns_merger_pop import BNSMergerRate
 from slsim.Sources.Events.BNSMerger.bns_merger_pop import norm_delay_time_distribution
-from slsim.Sources.Events.BNSMerger.bns_merger_pop import z_time_interp
 from astropy.cosmology import FlatLambdaCDM
 import numpy.testing as npt
 import numpy as np
