@@ -5,6 +5,7 @@ from slsim.Deflectors.deflector import Deflector
 from slsim.Lenses.lens import Lens
 from slsim.LOS.los_individual import LOSIndividual
 from slsim.ImageSimulation.image_simulation import lens_image, simulate_image
+from slsim.ImageSimulation import euclid_image_simulation as euclid_rgb
 from slsim.Util.param_util import gaussian_psf
 import pytest
 
@@ -88,6 +89,231 @@ def test_lens_image_euclid():
     )
 
     assert np.shape(euclid_vis_lens_image)[0] == 61
+
+
+def test_euclid_nisp_num_pix_from_vis():
+    assert euclid_rgb.euclid_nisp_num_pix_from_vis(61) == 21
+
+
+def test_euclid_rgb_from_image_list_colour_modes_and_stretches():
+    vis, y, j = _rgb_test_images()
+
+    for stretch in ["mtf", "arcsinh"]:
+        for colour in ["VIS", "VIS_Y", "VIS_J", "VIS_Y_J"]:
+            image = euclid_rgb.euclid_rgb_from_image_list(
+                [vis, y, j],
+                colour=colour,
+                stretch=stretch,
+                black_percentile=0,
+                white_percentile=100,
+            )
+            assert image.shape == (5, 5, 3)
+            assert np.all(np.isfinite(image))
+            assert np.all((image >= 0) & (image <= 1))
+
+
+def test_euclid_rgb_from_image_list_optional_display_settings():
+    vis, y, j = _rgb_test_images()
+
+    no_luminance = euclid_rgb.euclid_rgb_from_image_list(
+        [vis, y, j],
+        colour="VIS_Y_J",
+        stretch="mtf",
+        use_luminance=False,
+        black_percentile=0,
+        white_percentile=100,
+    )
+    rec709 = euclid_rgb.euclid_rgb_from_image_list(
+        [vis, y, j],
+        colour="VIS_Y_J",
+        stretch="mtf",
+        luminance_method="rec709",
+        black_percentile=0,
+        white_percentile=100,
+    )
+    auto_mtf = euclid_rgb.euclid_rgb_from_image_list(
+        [vis, y, j],
+        colour="VIS_Y_J",
+        stretch="mtf",
+        mtf_midtone="auto",
+        mtf_target_mean=0.2,
+        mtf_region_size=3,
+        black_percentile=0,
+        white_percentile=100,
+    )
+    q1_arcsinh = euclid_rgb.euclid_rgb_from_image_list(
+        [vis, y, j],
+        colour="VIS_Y_J",
+        stretch="arcsinh",
+        arcsinh_scale="euclid_q1",
+        black_percentile=0,
+        white_percentile=100,
+    )
+    dict_arcsinh = euclid_rgb.euclid_rgb_from_image_list(
+        [vis, y, j],
+        colour="VIS_Y",
+        stretch="arcsinh",
+        arcsinh_scale={"VIS": 10, "Y": 2, "median": 3},
+        black_percentile=0,
+        white_percentile=100,
+    )
+
+    for image in [no_luminance, rec709, auto_mtf, q1_arcsinh, dict_arcsinh]:
+        assert image.shape == (5, 5, 3)
+        assert np.all(np.isfinite(image))
+
+
+def test_euclid_rgb_from_image_list_errors():
+    vis, y, j = _rgb_test_images()
+
+    with pytest.raises(ValueError, match="at least VIS"):
+        euclid_rgb.euclid_rgb_from_image_list([])
+
+    with pytest.raises(ValueError, match="requires Y"):
+        euclid_rgb.euclid_rgb_from_image_list([vis], colour="VIS_Y")
+
+    with pytest.raises(ValueError, match="requires J"):
+        euclid_rgb.euclid_rgb_from_image_list([vis, y], colour="VIS_J")
+
+    with pytest.raises(ValueError, match="colour must be"):
+        euclid_rgb.euclid_rgb_from_image_list([vis, y, j], colour="BAD")
+
+    with pytest.raises(ValueError, match="stretch must be"):
+        euclid_rgb.euclid_rgb_from_image_list([vis, y, j], stretch="linear")
+
+    with pytest.raises(ValueError, match="luminance_method"):
+        euclid_rgb.euclid_rgb_from_image_list(
+            [vis, y, j], colour="VIS_Y_J", luminance_method="bad"
+        )
+
+
+def test_resampling_crop_pad_and_channel_preparation_helpers():
+    small = np.ones((2, 2))
+    padded = euclid_rgb._center_crop_or_pad(small, (4, 4))
+    assert padded.shape == (4, 4)
+    assert np.sum(padded) == 4
+
+    large = np.arange(25).reshape(5, 5)
+    cropped = euclid_rgb._center_crop_or_pad(large, (3, 3))
+    assert cropped.shape == (3, 3)
+    npt_expected = large[1:4, 1:4]
+    np.testing.assert_array_equal(cropped, npt_expected)
+
+    resampled = euclid_rgb._resample_to_shape(np.ones((2, 3)), (5, 4))
+    assert resampled.shape == (5, 4)
+
+    degenerate = euclid_rgb._prepare_channel(np.ones((3, 3)), 1, 99)
+    assert np.all(degenerate == 0)
+
+
+def test_stretch_and_scale_helpers():
+    channel = np.linspace(0, 1, 9).reshape(3, 3)
+
+    assert euclid_rgb._arcsinh_scale_for_band(None, "VIS") == 500.0
+    assert euclid_rgb._arcsinh_scale_for_band("euclid_q1", "Y") == 1.0
+    assert euclid_rgb._arcsinh_scale_for_band({"J": 2.0}, "J") == 2.0
+    assert euclid_rgb._arcsinh_scale_for_band({"VIS": 2.0}, "Y") == 1.0
+    assert euclid_rgb._arcsinh_scale_for_band(4.0, "VIS") == 4.0
+    assert euclid_rgb._arcsinh_scale_for_mixed_channel(None, "Y") == 250.5
+    assert euclid_rgb._arcsinh_scale_for_mixed_channel({"median": 7.0}, "Y") == 7.0
+    assert euclid_rgb._arcsinh_scale_for_mixed_channel({"VIS": 4.0}, "J") == 2.25
+
+    stretched = euclid_rgb._arcsinh_stretch(channel, 4.0)
+    assert stretched.shape == channel.shape
+    assert np.all((stretched >= 0) & (stretched <= 1))
+
+    mtf = euclid_rgb._midtone_transfer_function(channel, 0.2)
+    assert mtf.shape == channel.shape
+    assert np.all((mtf >= 0) & (mtf <= 1))
+
+    with pytest.raises(ValueError, match="arcsinh_scale"):
+        euclid_rgb._arcsinh_stretch(channel, 0)
+
+    with pytest.raises(ValueError, match="mtf_midtone"):
+        euclid_rgb._midtone_transfer_function(channel, 1.5)
+
+
+def test_auto_mtf_and_region_helpers():
+    channel = np.linspace(0, 1, 25).reshape(5, 5)
+
+    region = euclid_rgb._central_region(channel, 3)
+    assert region.shape == (3, 3)
+
+    full_region = euclid_rgb._central_region(channel, 10)
+    assert full_region.shape == channel.shape
+
+    auto_midtone = euclid_rgb._auto_mtf_midtone(
+        channel, target_mean=0.2, region_size=3
+    )
+    assert 0 < auto_midtone < 1
+
+    resolved_auto = euclid_rgb._resolve_mtf_midtone("auto", channel, 0.2, 3)
+    assert 0 < resolved_auto < 1
+    assert euclid_rgb._resolve_mtf_midtone(0.3, channel, 0.2, 3) == 0.3
+    assert euclid_rgb._auto_mtf_midtone(np.zeros((3, 3)), 0.2, 3) == 0.5
+
+    with pytest.raises(ValueError, match="mtf_target_mean"):
+        euclid_rgb._auto_mtf_midtone(channel, target_mean=1.2, region_size=3)
+
+    with pytest.raises(ValueError, match="mtf_region_size"):
+        euclid_rgb._central_region(channel, 0)
+
+
+def test_mixed_channel_helper_and_luminance_helper():
+    vis, y, _ = _rgb_test_images()
+    vis = euclid_rgb._prepare_channel(vis, 0, 100)
+    y = euclid_rgb._prepare_channel(y, 0, 100)
+    y = euclid_rgb._resample_to_shape(y, vis.shape)
+
+    mixed_mtf = euclid_rgb._mixed_channel(
+        vis,
+        y,
+        stretch="mtf",
+        arcsinh_scale=4.0,
+        mtf_midtone=0.2,
+        mtf_target_mean=0.2,
+        mtf_region_size=3,
+        band="Y",
+    )
+    mixed_arcsinh = euclid_rgb._mixed_channel(
+        vis,
+        y,
+        stretch="arcsinh",
+        arcsinh_scale={"VIS": 10.0, "Y": 2.0},
+        mtf_midtone=0.2,
+        mtf_target_mean=0.2,
+        mtf_region_size=3,
+        band="Y",
+    )
+    assert mixed_mtf.shape == vis.shape
+    assert mixed_arcsinh.shape == vis.shape
+
+    with pytest.raises(ValueError, match="stretch must be"):
+        euclid_rgb._mixed_channel(
+            vis,
+            y,
+            stretch="linear",
+            arcsinh_scale=4.0,
+            mtf_midtone=0.2,
+            mtf_target_mean=0.2,
+            mtf_region_size=3,
+            band="Y",
+        )
+
+    rgb = np.dstack([vis, y, vis])
+    lum = vis
+    assert euclid_rgb._apply_luminance(rgb, lum, method="mean").shape == rgb.shape
+    assert euclid_rgb._apply_luminance(rgb, lum, method="rec709").shape == rgb.shape
+
+    with pytest.raises(ValueError, match="luminance_method"):
+        euclid_rgb._apply_luminance(rgb, lum, method="bad")
+
+
+def _rgb_test_images():
+    vis = np.linspace(0, 2, 25).reshape(5, 5)
+    y = np.linspace(0.1, 1.1, 9).reshape(3, 3)
+    j = np.linspace(0.2, 1.2, 16).reshape(4, 4)
+    return vis, y, j
 
 
 if __name__ == "__main__":
