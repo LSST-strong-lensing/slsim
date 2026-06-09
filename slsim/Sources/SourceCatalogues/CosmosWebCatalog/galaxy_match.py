@@ -159,6 +159,12 @@ def _select_image_from_band(band, image_list):
     elif band in EUCLID_BAND_LIST:
         if band == "VIS":
             return image_list[0]
+        elif band == "Y":
+            return image_list[1]
+        elif band == "J":
+            return (image_list[1] + image_list[2]) / 2
+        elif band == "H":
+            return image_list[2]
 
     elif band in LSST_BAND_LIST:
         if band == "u":
