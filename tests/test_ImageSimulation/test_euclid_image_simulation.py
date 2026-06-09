@@ -242,9 +242,7 @@ def test_auto_mtf_and_region_helpers():
     full_region = euclid_rgb._central_region(channel, 10)
     assert full_region.shape == channel.shape
 
-    auto_midtone = euclid_rgb._auto_mtf_midtone(
-        channel, target_mean=0.2, region_size=3
-    )
+    auto_midtone = euclid_rgb._auto_mtf_midtone(channel, target_mean=0.2, region_size=3)
     assert 0 < auto_midtone < 1
 
     resolved_auto = euclid_rgb._resolve_mtf_midtone("auto", channel, 0.2, 3)

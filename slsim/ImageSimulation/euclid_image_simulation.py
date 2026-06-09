@@ -7,7 +7,7 @@ processing options illustrated in the Euclid Q1 Strong Lensing Discovery Engine
 paper.
     See https://arxiv.org/pdf/2503.15324
     for specific details on the Euclid Q1 image processing steps.
-    We offer a variety of options for procedures not mentioned in the paper, 
+    We offer a variety of options for procedures not mentioned in the paper,
     or for methods used in the paper that are not applicable to the simulated data.
 
 The expected input order is ``[VIS, Y, J]``. VIS is treated as the high-resolution
@@ -20,6 +20,7 @@ from scipy.ndimage import zoom
 from lenstronomy.SimulationAPI.ObservationConfig.Euclid import Euclid
 
 EUCLID_Q1_ARCSINH_SCALE = {"VIS": 500.0, "Y": 1.0, "J": 0.5}
+
 
 def euclid_rgb_from_image_list(
     image_list,
@@ -139,11 +140,13 @@ def euclid_rgb_from_image_list(
             mtf_region_size=mtf_region_size,
             band="Y",
         )
-        rgb = np.dstack([
-            y_stretched,
-            green,
-            vis_stretched,
-        ])
+        rgb = np.dstack(
+            [
+                y_stretched,
+                green,
+                vis_stretched,
+            ]
+        )
 
     elif colour == "VIS_J":
         _require_channel(j, "J", colour)
@@ -157,20 +160,24 @@ def euclid_rgb_from_image_list(
             mtf_region_size=mtf_region_size,
             band="J",
         )
-        rgb = np.dstack([
-            j_stretched,
-            green,
-            vis_stretched,
-        ])
+        rgb = np.dstack(
+            [
+                j_stretched,
+                green,
+                vis_stretched,
+            ]
+        )
 
     elif colour == "VIS_Y_J":
         _require_channel(y, "Y", colour)
         _require_channel(j, "J", colour)
-        rgb = np.dstack([
-            j_stretched,
-            y_stretched,
-            vis_stretched,
-        ])
+        rgb = np.dstack(
+            [
+                j_stretched,
+                y_stretched,
+                vis_stretched,
+            ]
+        )
 
     else:
         raise ValueError("colour must be 'VIS', 'VIS_Y', 'VIS_J', or 'VIS_Y_J'.")
@@ -180,12 +187,14 @@ def euclid_rgb_from_image_list(
 
     return np.clip(rgb, 0, 1)
 
+
 def euclid_nisp_num_pix_from_vis(num_pix_vis):
     """Calculate a NISP pixel count that covers the same field as a VIS image.
 
     :param num_pix_vis: number of pixels per axis in the VIS image.
     :type num_pix_vis: int
-    :return: number of NISP pixels per axis needed to cover the VIS field of view.
+    :return: number of NISP pixels per axis needed to cover the VIS
+        field of view.
     :rtype: int
     """
     vis_pixel_scale = Euclid(band="VIS").kwargs_single_band()["pixel_scale"]
@@ -234,9 +243,9 @@ def _center_crop_or_pad(image, target_shape):
     out_y0 = (out_y - copy_y) // 2
     out_x0 = (out_x - copy_x) // 2
 
-    out[out_y0:out_y0 + copy_y, out_x0:out_x0 + copy_x] = image[
-        in_y0:in_y0 + copy_y,
-        in_x0:in_x0 + copy_x,
+    out[out_y0 : out_y0 + copy_y, out_x0 : out_x0 + copy_x] = image[
+        in_y0 : in_y0 + copy_y,
+        in_x0 : in_x0 + copy_x,
     ]
     return out
 
@@ -307,11 +316,15 @@ def _stretch_euclid_channels(
     if stretch == "arcsinh":
         return (
             _arcsinh_stretch(vis, _arcsinh_scale_for_band(arcsinh_scale, "VIS")),
-            None if y is None else _arcsinh_stretch(
-                y, _arcsinh_scale_for_band(arcsinh_scale, "Y")
+            (
+                None
+                if y is None
+                else _arcsinh_stretch(y, _arcsinh_scale_for_band(arcsinh_scale, "Y"))
             ),
-            None if j is None else _arcsinh_stretch(
-                j, _arcsinh_scale_for_band(arcsinh_scale, "J")
+            (
+                None
+                if j is None
+                else _arcsinh_stretch(j, _arcsinh_scale_for_band(arcsinh_scale, "J"))
             ),
         )
 
@@ -419,15 +432,19 @@ def _arcsinh_scale_for_mixed_channel(arcsinh_scale, band):
     :rtype: float
     """
     if arcsinh_scale is None or arcsinh_scale == "euclid_q1":
-        return np.median([EUCLID_Q1_ARCSINH_SCALE["VIS"], EUCLID_Q1_ARCSINH_SCALE[band]])
+        return np.median(
+            [EUCLID_Q1_ARCSINH_SCALE["VIS"], EUCLID_Q1_ARCSINH_SCALE[band]]
+        )
 
     if isinstance(arcsinh_scale, dict):
         if "median" in arcsinh_scale:
             return arcsinh_scale["median"]
-        return np.median([
-            arcsinh_scale.get("VIS", EUCLID_Q1_ARCSINH_SCALE["VIS"]),
-            arcsinh_scale.get(band, EUCLID_Q1_ARCSINH_SCALE[band]),
-        ])
+        return np.median(
+            [
+                arcsinh_scale.get("VIS", EUCLID_Q1_ARCSINH_SCALE["VIS"]),
+                arcsinh_scale.get(band, EUCLID_Q1_ARCSINH_SCALE[band]),
+            ]
+        )
 
     return float(arcsinh_scale)
 
@@ -464,16 +481,17 @@ def _resolve_mtf_midtone(
 def _auto_mtf_midtone(reference_channel, target_mean=0.2, region_size=100):
     """Find an MTF midtone value from a central-region target mean.
 
-    The Euclid Q1 paper sets the MTF parameter automatically so that the central
-    100 x 100 pixels have a mean of 0.2 after stretching. This helper implements
-    the same idea with a bisection search.
+    The Euclid Q1 paper sets the MTF parameter automatically so that the
+    central 100 x 100 pixels have a mean of 0.2 after stretching. This
+    helper implements the same idea with a bisection search.
 
     :param reference_channel: normalised reference image, typically VIS.
     :type reference_channel: numpy.ndarray
-    :param target_mean: desired central-region mean after MTF stretching.
+    :param target_mean: desired central-region mean after MTF
+        stretching.
     :type target_mean: float
-    :param region_size: central square size in pixels. The full image is used
-        when it is smaller than this region.
+    :param region_size: central square size in pixels. The full image is
+        used when it is smaller than this region.
     :type region_size: int
     :return: MTF midtone parameter between 0 and 1.
     :rtype: float
@@ -505,8 +523,8 @@ def _central_region(image, region_size):
 
     :param image: input image.
     :type image: numpy.ndarray
-    :param region_size: desired central square size. If this exceeds an image
-        dimension, that full dimension is used.
+    :param region_size: desired central square size. If this exceeds an
+        image dimension, that full dimension is used.
     :type region_size: int
     :return: central image region.
     :rtype: numpy.ndarray
@@ -519,7 +537,7 @@ def _central_region(image, region_size):
     size_x = min(region_size, nx)
     y0 = (ny - size_y) // 2
     x0 = (nx - size_x) // 2
-    return image[y0:y0 + size_y, x0:x0 + size_x]
+    return image[y0 : y0 + size_y, x0 : x0 + size_x]
 
 
 def _arcsinh_stretch(channel, scale):
@@ -562,7 +580,7 @@ def _midtone_transfer_function(channel, midtone):
 
 def _apply_luminance(rgb, luminance, method="mean", eps=1e-8):
     """Replace RGB luminance with a target luminance image.
-    
+
     :param rgb: input RGB image with shape ``(ny, nx, 3)``.
     :type rgb: numpy.ndarray
     :param luminance: target luminance image with shape ``(ny, nx)``.
@@ -583,9 +601,7 @@ def _apply_luminance(rgb, luminance, method="mean", eps=1e-8):
         current_luminance = np.mean(rgb, axis=-1)
     elif method == "rec709":
         current_luminance = (
-            0.2126 * rgb[:, :, 0]
-            + 0.7152 * rgb[:, :, 1]
-            + 0.0722 * rgb[:, :, 2]
+            0.2126 * rgb[:, :, 0] + 0.7152 * rgb[:, :, 1] + 0.0722 * rgb[:, :, 2]
         )
     else:
         raise ValueError("luminance_method must be 'mean' or 'rec709'.")
