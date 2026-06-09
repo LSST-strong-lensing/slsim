@@ -8,7 +8,7 @@ _OBSERVATORY_REGISTRY = {}
 # Default options in SLSim
 ROMAN_BAND_LIST = ["F062", "F087", "F106", "F129", "F158", "F184", "F146", "F213"]
 LSST_BAND_LIST = ["u", "g", "r", "i", "z", "y"]
-EUCLID_BAND_LIST = ["VIS"]
+EUCLID_BAND_LIST = ["VIS", "Y", "J", "H"]
 
 
 def check_speclite_name(band):
