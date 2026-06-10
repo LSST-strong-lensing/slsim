@@ -77,7 +77,7 @@ class SNIaRate(object):
         return calculate_star_formation_rate(z_t) * ft_d
 
     def calculate_SNIa_rate(self, z, eta=0.04):
-        """Calculates the rate of SN Ia. (Eq 15 - Oguri and Marshall 2010)
+        """Calculates the rate of SN Ia in source frame. (Eq 15 - Oguri and Marshall 2010)
 
         :param z: redshift (z>=0)
         :param eta: canonical efficiency
@@ -99,3 +99,15 @@ class SNIaRate(object):
             SNIa_rate_list.append(SNIa_rate)
 
         return np.array(SNIa_rate_list)
+
+    def event_rate(self, z, eta=0.04):
+        """Wrapper function for calculate_SNIa_rate to return the rate of SN Ia
+        in source frame.
+
+        :return: SN Ia rate n(z) in [yr^(-1)Mpc^(-3)]
+        :return type: array-like
+        """
+        h = self._cosmo.H(0).to_value() / 100
+        rate = self.calculate_SNIa_rate(z, eta) * h
+
+        return rate
