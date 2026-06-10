@@ -165,9 +165,9 @@ class SupernovaeSourceMorphology(SourceMorphology):
         followed by an exact 2D projection."""
         # Offset time so t=0 is the explosion, not the peak
         time_since_explosion_days = time_days - self._sn_model.mintime()
-        
+
         # Prevent negative times if the array happens to probe before the explosion
-        time_since_explosion_days = max(time_since_explosion_days, 0.0) 
+        time_since_explosion_days = max(time_since_explosion_days, 0.0)
         time_seconds = time_since_explosion_days * 24 * 3600
         max_v_m_s = max(self.v_base_km_s, self.v_uv_km_s) * 1000.0
         r_max_meters = max(max_v_m_s * time_seconds, 1e8)

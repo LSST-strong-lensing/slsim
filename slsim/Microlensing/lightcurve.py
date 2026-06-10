@@ -90,14 +90,18 @@ class MicrolensingLightCurve(object):
     @property
     def magnification_map(self):
         """Get the magnification map used for this lightcurve generation.
-        :return: MagnificationMap object (see slsim.Microlensing.magmap.MagnificationMap).
+
+        :return: MagnificationMap object (see
+            slsim.Microlensing.magmap.MagnificationMap).
         :rtype: MagnificationMap
         """
         return self._magnification_map
 
     @property
     def time_duration_observer_frame(self):
-        """Get the total time duration covered by the observation time array in the observer frame (in days).
+        """Get the total time duration covered by the observation time array in
+        the observer frame (in days).
+
         :return: Time duration in observer frame (in days).
         :rtype: float
         """
