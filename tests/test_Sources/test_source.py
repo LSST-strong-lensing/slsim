@@ -7,7 +7,7 @@ from astropy import cosmology
 
 class TestSource:
     def setup_method(self):
-        cosmo = cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
+        self.cosmo = cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
         self.source_dict_extended = {
             "z": 1.0,
             "mag_i": 21,
@@ -19,7 +19,7 @@ class TestSource:
             "center_y": -0.06,
         }
         self.source = Source(
-            cosmo=cosmo,
+            cosmo=self.cosmo,
             extended_source_type="single_sersic",
             **self.source_dict_extended,
         )
@@ -50,7 +50,7 @@ class TestSource:
         self.source_point_extended = Source(
             extended_source_type="single_sersic",
             point_source_type="supernova",
-            cosmo=cosmo,
+            cosmo=self.cosmo,
             **self.source_dict_point_extended,
             **kwargs_point_extended,
         )
@@ -91,7 +91,7 @@ class TestSource:
             "mag_i": 20,
         }
         self.source_interpolated = Source(
-            cosmo=cosmo,
+            cosmo=self.cosmo,
             extended_source_type="interpolated",
             **self.source_dict_interpolated,
         )
@@ -113,7 +113,7 @@ class TestSource:
         }
         self.source_point = Source(
             point_source_type="supernova",
-            cosmo=cosmo,
+            cosmo=self.cosmo,
             **self.source_dict_point,
             **kwargs_point,
         )
@@ -208,6 +208,18 @@ class TestSource:
             self.source_point_extended.extended_source
             == self.source_point_extended._source._extended_source
         )
+    
+    def test_prepare_microlensing_kwargs_sn(self):
+        """'supernovae' morphology auto-assigned for SN sources."""
+
+        # self.source_point is a supernova Source; its name is "SNIa" → startswith("SN")
+        result = self.source_point.prepare_microlensing_kwargs(
+            band="i", cosmo=self.cosmo
+        )
+
+        assert result["point_source_morphology"] == "supernovae"
+        assert result["kwargs_source_morphology"]["source_redshift"] == self.source_point.redshift
+        assert result["kwargs_source_morphology"]["observing_wavelength_band"] == "i"
 
 
 if __name__ == "__main__":

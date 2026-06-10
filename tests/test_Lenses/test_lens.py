@@ -1349,6 +1349,39 @@ def test_point_source_magnitude_microlensing_defaults(
     mock_instance.update_source_morphology.assert_called_once()
 
 
+@patch("slsim.Microlensing.lightcurvelensmodel.MicrolensingLightCurveFromLensModel")
+def test_reset_microlensing_model_class(
+    mock_ml_lc_from_lm_class,
+    lens_instance_with_variability,
+    band_i,
+    time_array,
+    kwargs_microlensing_settings,
+):
+    """Covers reset_microlensing_model_class."""
+    lens_system = lens_instance_with_variability
+    source_index = 0
+
+    # Error branch: model not yet set, must raise error
+    with pytest.raises(
+        AttributeError,
+        match="Cannot reset",
+    ):
+        lens_system.reset_microlensing_model_class(source_index=source_index)
+
+    # Success branch: set model, then delete it
+    mock_ml_lc_from_lm_class.return_value = MagicMock()
+    lens_system._point_source_magnitude_microlensing(
+        band_i,
+        time_array,
+        source_index=source_index,
+        kwargs_microlensing=kwargs_microlensing_settings,
+    )
+    # confirm the model is set
+    assert source_index in lens_system._microlensing_model_class
+
+    lens_system.reset_microlensing_model_class(source_index=source_index)
+    assert source_index not in lens_system._microlensing_model_class  # confirms deletion
+
 ################################################
 ################################################
 
