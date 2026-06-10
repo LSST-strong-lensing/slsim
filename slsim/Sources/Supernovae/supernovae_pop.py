@@ -102,7 +102,7 @@ class SNIaRate(object):
 
     def event_rate(self, z, eta=0.04):
         """Wrapper function for calculate_SNIa_rate to return the rate of SN
-        Ia.
+        Ia in source frame.
 
         :return: SN Ia rate n(z) in [yr^(-1)Mpc^(-3)]
         :return type: array-like
