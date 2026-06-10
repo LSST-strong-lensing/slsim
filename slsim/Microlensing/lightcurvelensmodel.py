@@ -656,4 +656,7 @@ class MicrolensingLightCurveFromLensModel(object):
         if hasattr(self, "_lc_start_position"):
             return self._lc_start_position
         else:
-            return self.reset_start_position()
+            # by default we set origin as starting position
+            self._lc_start_position = (0, 0)
+            return self._lc_start_position
+            # return self.reset_start_position()

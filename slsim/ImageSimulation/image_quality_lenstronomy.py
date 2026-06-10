@@ -53,6 +53,9 @@ def register_observatory(
         speclite filter name (e.g., ``lambda b: f"MidEx-{b}"``). Set to ``None`` if the
         observatory does not utilize speclite filters.
     :type speclite_fmt: callable, optional
+    :param sncosmo_fmt: A callable function that takes a ``band`` string and returns the corresponding
+        sncosmo bandpass name. Set to ``None`` to use the raw band name as the sncosmo bandpass name.
+    :type sncosmo_fmt: callable, optional
 
     Given below is a simple example of how to define a custom observatory and register it using this function.
     A sophisticated example demonstrating full image simulation capabilities can be found at https://github.com/timedilatesme/MidEx-sims/blob/main/v1/lagn_sims.ipynb
@@ -94,7 +97,8 @@ def register_observatory(
             name="CustomObs",
             observatory_class=CustomObs,
             bands=list(_custom_band_obs.keys()),
-            speclite_fmt=lambda b: f"CustomObs-{b}"
+            speclite_fmt=lambda b: f"CustomObs-{b}",
+            sncosmo_fmt=lambda b: f"customobs{b}"
         )
     """
     _OBSERVATORY_REGISTRY[name] = {

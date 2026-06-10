@@ -1079,7 +1079,7 @@ class Lens(LensedSystemBase):
 
         # Update point_source_morphology based on source type
         if "point_source_morphology" not in kwargs_microlensing_updated:
-            source_name = self.source(source_index)._source.name
+            source_name = self.source(source_index).name
 
             # AGN
             if source_name == "QSO":
@@ -1145,6 +1145,19 @@ class Lens(LensedSystemBase):
             raise AttributeError(
                 "MicrolensingLightCurveFromLensModel class is not set. "
                 "Please run point_source_magnitude with microlensing=True."
+            )
+    
+    def reset_microlensing_model_class(self, source_index):
+        """Resets the MicrolensingLightCurveFromLensModel class instance for a specific source index. This can be used to clear cached microlensing models if needed.
+
+        :param source_index: index of a source in source list.
+        """
+        if hasattr(self, "_microlensing_model_class") and source_index in self._microlensing_model_class:
+            del self._microlensing_model_class[source_index]
+        else:
+            raise AttributeError(
+                f"MicrolensingLightCurveFromLensModel class is not set for source index {source_index}. "
+                "Cannot reset."
             )
 
     def extended_source_magnitude(self, band, lensed=False):

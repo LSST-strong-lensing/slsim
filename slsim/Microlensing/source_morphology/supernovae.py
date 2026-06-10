@@ -163,7 +163,12 @@ class SupernovaeSourceMorphology(SourceMorphology):
     def get_kernel_map(self, time_days):
         """Builds the SED-weighted kernel map using O(N) 1D radial integration
         followed by an exact 2D projection."""
-        time_seconds = time_days * 24 * 3600
+        # Offset time so t=0 is the explosion, not the peak
+        time_since_explosion_days = time_days - self._sn_model.mintime()
+        
+        # Prevent negative times if the array happens to probe before the explosion
+        time_since_explosion_days = max(time_since_explosion_days, 0.0) 
+        time_seconds = time_since_explosion_days * 24 * 3600
         max_v_m_s = max(self.v_base_km_s, self.v_uv_km_s) * 1000.0
         r_max_meters = max(max_v_m_s * time_seconds, 1e8)
         max_scale_m = r_max_meters * 2.5
