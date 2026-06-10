@@ -430,3 +430,44 @@ class TestMicrolensingLightCurveTimeVarying:
         )
         assert len(lcs[0]) == 20
         np.testing.assert_allclose(time_arrays[0], np.linspace(0, 40, 20))
+
+
+@pytest.mark.parametrize("is_time_varying", [False, True])
+def test_tiny_kernel_fallback_warns(
+    magmap_instance, observation_time_array, cosmology, is_time_varying
+):
+    """
+    Tests the line "res_k = np.array([[1.0]])" in both the static and time-varying branches of MicrolensingLightCurve. If the source morphology kernel is smaller than one magnification map pixel, the code should trigger the fallback and emit a UserWarning.
+    """
+
+    # dummy morphology class that always returns a tiny kernel, to trigger the fallback
+    class TinyMorphology:
+        def __init__(self, time_varying):
+            self.is_time_varying = time_varying
+
+        @property
+        def kernel_map(self):
+            return np.ones((5, 5)) / 25.0
+
+        @property
+        def pixel_scale_m(self):
+            return 1e-10
+
+        def get_time_dependent_kernel_maps(self, times):
+            return [np.ones((5, 5)) / 25.0 for _ in times], [1e-10] * len(times)
+
+    ml_lc = MicrolensingLightCurve(
+        magnification_map=magmap_instance,
+        observation_time_array=observation_time_array,
+        point_source_morphology="gaussian",
+        kwargs_source_morphology={},
+        source_morphology_instance=TinyMorphology(is_time_varying),
+    )
+
+    with pytest.warns(UserWarning, match="treating as a point source"):
+        lcs, _, _ = ml_lc.generate_lightcurves(
+            source_redshift=0.5, cosmo=cosmology, lightcurve_type="magnification"
+        )
+
+    assert isinstance(lcs[0], np.ndarray)
+    assert not np.any(np.isnan(lcs[0]))

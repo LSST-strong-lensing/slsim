@@ -1,6 +1,7 @@
 __author__ = "Paras Sharma"
 
 import numpy as np
+import warnings
 from skimage.transform import rescale
 from scipy.signal import fftconvolve
 from scipy.ndimage import map_coordinates
@@ -280,6 +281,12 @@ class MicrolensingLightCurve(object):
                 for kernel, kernel_pixel_size_m in zip(kernels, pixel_scales_m):
                     pixel_ratio = kernel_pixel_size_m / pixel_size_magnification_map
                     if pixel_ratio * kernel.shape[0] < 1.0:
+                        warnings.warn(
+                            "Source smaller than one magnification map pixel; "
+                            "treating as a point source.",
+                            UserWarning,
+                            stacklevel=2,
+                        )
                         res_k = np.array([[1.0]])
                     else:
                         res_k = rescale(
@@ -349,6 +356,12 @@ class MicrolensingLightCurve(object):
                 pixel_ratio = pixel_scale_m / pixel_size_magnification_map
 
                 if pixel_ratio * kernel.shape[0] < 1.0:
+                    warnings.warn(
+                        "Source smaller than one magnification map pixel; "
+                        "treating as a point source.",
+                        UserWarning,
+                        stacklevel=2,
+                    )
                     res_k = np.array([[1.0]])
                 else:
                     res_k = rescale(
