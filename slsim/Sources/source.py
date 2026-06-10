@@ -281,10 +281,14 @@ class Source(object):
         :return: updated kwargs_microlensing dict
         """
 
-        kwargs_microlensing_updated = deepcopy(kwargs_microlensing) if kwargs_microlensing else {}
+        kwargs_microlensing_updated = (
+            deepcopy(kwargs_microlensing) if kwargs_microlensing else {}
+        )
 
         # Get or initialize kwargs_source_morphology
-        kwargs_source_morphology = kwargs_microlensing_updated.get("kwargs_source_morphology", {})
+        kwargs_source_morphology = kwargs_microlensing_updated.get(
+            "kwargs_source_morphology", {}
+        )
 
         # Update kwargs_source_morphology with values from the Lens class if not provided by the user
         kwargs_source_morphology.setdefault("source_redshift", self.redshift)
@@ -293,10 +297,14 @@ class Source(object):
 
         # Extract additional parameters from the source class if not provided
         # delegates to the specific source type (SingleSersic, Quasar, etc.)
-        kwargs_source_morphology = self._source.update_microlensing_kwargs_source_morphology(
+        kwargs_source_morphology = (
+            self._source.update_microlensing_kwargs_source_morphology(
+                kwargs_source_morphology
+            )
+        )
+        kwargs_microlensing_updated["kwargs_source_morphology"] = (
             kwargs_source_morphology
         )
-        kwargs_microlensing_updated["kwargs_source_morphology"] = kwargs_source_morphology
 
         # Update point_source_morphology based on source type
         if "point_source_morphology" not in kwargs_microlensing_updated:

@@ -1041,7 +1041,9 @@ class Lens(LensedSystemBase):
         dec_lens = np.random.uniform(-90, 90)  # degrees
 
         # Update kwargs_microlensing from source class with defaults if not provided
-        kwargs_microlensing_updated = self.source(source_index).prepare_microlensing_kwargs(
+        kwargs_microlensing_updated = self.source(
+            source_index
+        ).prepare_microlensing_kwargs(
             band=band,
             cosmo=self.cosmo,
             kwargs_microlensing=kwargs_microlensing,
