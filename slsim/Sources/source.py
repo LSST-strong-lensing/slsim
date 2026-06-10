@@ -1,4 +1,5 @@
 from slsim.Sources.SourceTypes.point_plus_extended_source import PointPlusExtendedSource
+from copy import deepcopy
 
 _SUPPORTED_POINT_SOURCES = ["supernova", "quasar", "general_lightcurve"]
 _SUPPORTED_EXTENDED_SOURCES = [
@@ -270,3 +271,38 @@ class Source(object):
         """
 
         return self._source.surface_brightness_reff(band=band)
+
+    def prepare_microlensing_kwargs(self, band, cosmo, kwargs_microlensing=None):
+        """Prepares kwargs_microlensing with source-level defaults.
+
+        :param band: imaging band
+        :param cosmo: astropy cosmology instance (from the Lens)
+        :param kwargs_microlensing: optional user-provided dict
+        :return: updated kwargs_microlensing dict
+        """
+
+        kwargs_microlensing_updated = deepcopy(kwargs_microlensing) if kwargs_microlensing else {}
+
+        # Get or initialize kwargs_source_morphology
+        kwargs_source_morphology = kwargs_microlensing_updated.get("kwargs_source_morphology", {})
+
+        # Update kwargs_source_morphology with values from the Lens class if not provided by the user
+        kwargs_source_morphology.setdefault("source_redshift", self.redshift)
+        kwargs_source_morphology.setdefault("cosmo", cosmo)
+        kwargs_source_morphology.setdefault("observing_wavelength_band", band)
+
+        # Extract additional parameters from the source class if not provided
+        # delegates to the specific source type (SingleSersic, Quasar, etc.)
+        kwargs_source_morphology = self._source.update_microlensing_kwargs_source_morphology(
+            kwargs_source_morphology
+        )
+        kwargs_microlensing_updated["kwargs_source_morphology"] = kwargs_source_morphology
+
+        # Update point_source_morphology based on source type
+        if "point_source_morphology" not in kwargs_microlensing_updated:
+            if self.name == "QSO":
+                kwargs_microlensing_updated["point_source_morphology"] = "agn"
+            elif self.name.startswith("SN"):
+                kwargs_microlensing_updated["point_source_morphology"] = "supernovae"
+
+        return kwargs_microlensing_updated
