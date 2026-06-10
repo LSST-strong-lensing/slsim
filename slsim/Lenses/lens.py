@@ -25,7 +25,6 @@ from scipy.ndimage import label
 from slsim.Lenses.lensed_system_base import LensedSystemBase
 from slsim.Deflectors.deflector import JAX_PROFILES
 import pandas as pd
-from copy import deepcopy
 
 
 class Lens(LensedSystemBase):
