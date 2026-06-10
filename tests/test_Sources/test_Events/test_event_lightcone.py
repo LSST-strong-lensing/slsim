@@ -8,6 +8,7 @@ import numpy.testing as npt
 import numpy as np
 import pytest
 
+
 class TestEventLightcone(object):
     def setup_method(self):
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -16,11 +17,7 @@ class TestEventLightcone(object):
         self.noise = False
         self.time_interval = 1 * units.year
 
-        self.bns_pop = EventPopulation(
-            model="BNS",
-            cosmo=self.cosmo,
-            z_max=5
-        )
+        self.bns_pop = EventPopulation(model="BNS", cosmo=self.cosmo, z_max=5)
 
         self.bns_lightcone = EventLightcone(
             cosmo=self.cosmo,
@@ -28,14 +25,10 @@ class TestEventLightcone(object):
             sky_area=self.sky_area,
             noise=self.noise,
             time_interval=self.time_interval,
-            model="BNS"
+            model="BNS",
         )
 
-        self.sne_pop = EventPopulation(
-            model="SNIa",
-            cosmo=self.cosmo,
-            z_max=5
-        )
+        self.sne_pop = EventPopulation(model="SNIa", cosmo=self.cosmo, z_max=5)
 
         self.sne_lightcone = EventLightcone(
             cosmo=self.cosmo,
@@ -43,12 +36,12 @@ class TestEventLightcone(object):
             sky_area=self.sky_area,
             noise=self.noise,
             time_interval=self.time_interval,
-            model="SNIa"
+            model="SNIa",
         )
 
     def test_convert_density(self):
         npt.assert_(isinstance(self.time_interval, units.Quantity))
-            
+
         self.time_interval = 2 * units.day
 
         self.bns_lightcone = EventLightcone(
@@ -57,12 +50,15 @@ class TestEventLightcone(object):
             sky_area=self.sky_area,
             noise=self.noise,
             time_interval=self.time_interval,
-            model="BNS"
-        )   
+            model="BNS",
+        )
         test_density = self.bns_lightcone.density[2]
         npt.assert_approx_equal(
             test_density,
-            (((self.bns_pop.event_rate(self.redshifts)[2] / 365.25) * 2) / (1 + self.redshifts[2])),
+            (
+                ((self.bns_pop.event_rate(self.redshifts)[2] / 365.25) * 2)
+                / (1 + self.redshifts[2])
+            ),
             significant=4,
         )
 
@@ -72,14 +68,17 @@ class TestEventLightcone(object):
             sky_area=self.sky_area,
             noise=self.noise,
             time_interval=self.time_interval,
-            model="SNIa"
-        )   
+            model="SNIa",
+        )
         test_density = self.sne_lightcone.density[2]
         npt.assert_approx_equal(
             test_density,
-            (((self.sne_pop.event_rate(self.redshifts)[2] / 365.25) * 2) / (1 + self.redshifts[2])),
+            (
+                ((self.sne_pop.event_rate(self.redshifts)[2] / 365.25) * 2)
+                / (1 + self.redshifts[2])
+            ),
             significant=4,
-        )   
+        )
 
         self.time_interval = 1 * units.year
 
@@ -89,13 +88,13 @@ class TestEventLightcone(object):
             sky_area=self.sky_area,
             noise=self.noise,
             time_interval=self.time_interval,
-            model="BNS"
+            model="BNS",
         )
         test_density = self.bns_lightcone.density[0]
         npt.assert_approx_equal(
-            test_density, 
+            test_density,
             (self.bns_pop.event_rate(self.redshifts)[0] / (1 + self.redshifts[0])),
-            significant=4
+            significant=4,
         )
 
         self.sne_lightcone = EventLightcone(
@@ -104,14 +103,14 @@ class TestEventLightcone(object):
             sky_area=self.sky_area,
             noise=self.noise,
             time_interval=self.time_interval,
-            model="SNIa"
+            model="SNIa",
         )
         test_density = self.sne_lightcone.density[0]
         npt.assert_approx_equal(
-            test_density, 
-            (self.sne_pop.event_rate(self.redshifts)[0] / (1 + self.redshifts[0])), 
-            significant=4
-        )  
+            test_density,
+            (self.sne_pop.event_rate(self.redshifts)[0] / (1 + self.redshifts[0])),
+            significant=4,
+        )
 
     def test_event_sample(self):
         lightcones = [self.bns_lightcone, self.sne_lightcone]
@@ -123,7 +122,7 @@ class TestEventLightcone(object):
             # Observed counts using Lightcone()
             observed_counts, bin_edges = np.histogram(
                 sample_output, bins=self.redshifts, density=True
-                )
+            )
 
             # Expected counts based on event comoving density
             dN_dz = (
