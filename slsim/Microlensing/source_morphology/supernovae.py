@@ -32,7 +32,7 @@ class SupernovaeSourceMorphology(SourceMorphology):
         :param observing_wavelength_band: e.g., 'g', 'r', 'i', or a sncosmo bandpass name.
         :param source_redshift: Redshift of the SN.
         :param cosmo: Astropy cosmology instance.
-        :param sn_modeldir: Directory containing sncosmo model files.   
+        :param sn_modeldir: Directory containing sncosmo model files.
         :param sn_model_name: sncosmo template name (default 'hsiao').
         :param ellipticity: Asymmetry of the explosion (default 1.0).
         :param grid_pixels: Resolution of the kernel map.
@@ -89,6 +89,7 @@ class SupernovaeSourceMorphology(SourceMorphology):
             'pixel_scales_m' for the analytical snapshots.
         """
         import sncosmo
+
         if self.sn_model_instance is not None:
             # RandomizedSupernova IS a sncosmo.Model — use directly.
             # x1 and c are already set by RandomizedSupernova.__init__,
@@ -98,7 +99,9 @@ class SupernovaeSourceMorphology(SourceMorphology):
         elif self.sn_modeldir is not None:
             source = sncosmo.SALT3Source(modeldir=self.sn_modeldir)
             self._sn_model = sncosmo.Model(source=source)
-            self._sn_model.set(x1=0.0, c=0.0)  # average SN Ia; shape is all that matters
+            self._sn_model.set(
+                x1=0.0, c=0.0
+            )  # average SN Ia; shape is all that matters
 
         else:
             self._sn_model = sncosmo.Model(source=self.sn_model_name)

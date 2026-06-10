@@ -159,12 +159,11 @@ class SupernovaEvent(SourceBase):
         return super().point_source_magnitude(
             band=band, image_observation_times=image_observation_times
         )
-    
+
     def update_microlensing_kwargs_source_morphology(self, kwargs_source_morphology):
         """Injects the sncosmo model instance into morphology kwargs so the
-        morphology uses the exact same SN realisation — template, x1, c —
-        as the lightcurve.
-        """
+        morphology uses the exact same SN realisation — template, x1, c — as
+        the lightcurve."""
         if not self._variability_computed:
             _ = self.light_curve  # ensures _lightcurve_class is populated
 

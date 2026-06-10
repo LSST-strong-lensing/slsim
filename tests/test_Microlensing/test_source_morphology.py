@@ -740,7 +740,7 @@ class TestSupernovaeSourceMorphology:
             wavelength_angstroms=5000, time_seconds=0.0, R_eff=r_large
         )
         assert np.all(intensity == 0.0)
-    
+
     def test_sn_model_instance_priority_paths(self, cosmo):
         """Covers all three priority paths in _build_analytical_snapshots:
         - sn_model_instance is used directly and takes priority over sn_model_name

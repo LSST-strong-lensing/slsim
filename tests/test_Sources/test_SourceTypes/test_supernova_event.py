@@ -144,7 +144,7 @@ class TestSupernovaEvent:
             self.source_none.point_source_magnitude("i", image_observation_times=10)
         assert self.source_none.point_source_magnitude("i") == 20
         assert self.source_light_curve.point_source_magnitude("i") == 21
-    
+
     def test_update_microlensing_kwargs_source_morphology(self):
         import sncosmo
 
