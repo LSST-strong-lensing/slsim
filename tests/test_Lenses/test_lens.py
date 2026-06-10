@@ -1380,7 +1380,10 @@ def test_reset_microlensing_model_class(
     assert source_index in lens_system._microlensing_model_class
 
     lens_system.reset_microlensing_model_class(source_index=source_index)
-    assert source_index not in lens_system._microlensing_model_class  # confirms deletion
+    assert (
+        source_index not in lens_system._microlensing_model_class
+    )  # confirms deletion
+
 
 ################################################
 ################################################

@@ -208,7 +208,7 @@ class TestSource:
             self.source_point_extended.extended_source
             == self.source_point_extended._source._extended_source
         )
-    
+
     def test_prepare_microlensing_kwargs_sn(self):
         """'supernovae' morphology auto-assigned for SN sources."""
 
@@ -219,7 +219,7 @@ class TestSource:
 
         assert result["point_source_morphology"] == "supernovae"
         assert (
-            result["kwargs_source_morphology"]["source_redshift"] 
+            result["kwargs_source_morphology"]["source_redshift"]
             == self.source_point.redshift
         )
         assert result["kwargs_source_morphology"]["observing_wavelength_band"] == "i"
