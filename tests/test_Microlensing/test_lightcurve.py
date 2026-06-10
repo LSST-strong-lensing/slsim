@@ -436,8 +436,12 @@ class TestMicrolensingLightCurveTimeVarying:
 def test_tiny_kernel_fallback_warns(
     magmap_instance, observation_time_array, cosmology, is_time_varying
 ):
-    """
-    Tests the line "res_k = np.array([[1.0]])" in both the static and time-varying branches of MicrolensingLightCurve. If the source morphology kernel is smaller than one magnification map pixel, the code should trigger the fallback and emit a UserWarning.
+    """Tests the line "res_k = np.array([[1.0]])" in both the static and time-
+    varying branches of MicrolensingLightCurve.
+
+    If the source morphology kernel is smaller than one magnification
+    map pixel, the code should trigger the fallback and emit a
+    UserWarning.
     """
 
     # dummy morphology class that always returns a tiny kernel, to trigger the fallback
