@@ -218,7 +218,10 @@ class TestSource:
         )
 
         assert result["point_source_morphology"] == "supernovae"
-        assert result["kwargs_source_morphology"]["source_redshift"] == self.source_point.redshift
+        assert (
+            result["kwargs_source_morphology"]["source_redshift"] 
+            == self.source_point.redshift
+        )
         assert result["kwargs_source_morphology"]["observing_wavelength_band"] == "i"
 
 
