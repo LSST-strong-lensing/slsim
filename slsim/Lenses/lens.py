@@ -983,6 +983,7 @@ class Lens(LensedSystemBase):
         )
 
         # capping kappa_star to be less than kappa_tot to avoid unphysical microlensing parameters
+        # TODO: In future we could also considering optimizing by not doing microlensing calculation if there are no stars/ small stellar mass/ etc.
         kappa_star_images = np.minimum(
             kappa_star_images, np.array(kappa_tot_images) - 1e-6
         )
