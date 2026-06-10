@@ -14,6 +14,8 @@ class SupernovaeSourceMorphology(SourceMorphology):
         observing_wavelength_band,
         source_redshift,
         cosmo,
+        sn_model_instance=None,  # RandomizedSupernova/Supernova instance — IS a sncosmo.Model
+        sn_modeldir=None,
         sn_model_name="hsiao",
         ellipticity=1.0,
         grid_pixels=300,
@@ -30,6 +32,7 @@ class SupernovaeSourceMorphology(SourceMorphology):
         :param observing_wavelength_band: e.g., 'g', 'r', 'i', or a sncosmo bandpass name.
         :param source_redshift: Redshift of the SN.
         :param cosmo: Astropy cosmology instance.
+        :param sn_modeldir: Directory containing sncosmo model files.   
         :param sn_model_name: sncosmo template name (default 'hsiao').
         :param ellipticity: Asymmetry of the explosion (default 1.0).
         :param grid_pixels: Resolution of the kernel map.
@@ -53,7 +56,9 @@ class SupernovaeSourceMorphology(SourceMorphology):
 
         self.source_redshift = source_redshift
         self.cosmo = cosmo
+        self.sn_model_instance = sn_model_instance
         self.sn_model_name = sn_model_name
+        self.sn_modeldir = sn_modeldir
         self.ellipticity = ellipticity
 
         self.v_base_km_s = v_base_km_s
@@ -84,8 +89,20 @@ class SupernovaeSourceMorphology(SourceMorphology):
             'pixel_scales_m' for the analytical snapshots.
         """
         import sncosmo
+        if self.sn_model_instance is not None:
+            # RandomizedSupernova IS a sncosmo.Model — use directly.
+            # x1 and c are already set by RandomizedSupernova.__init__,
+            # so spectral shape matches the lightcurve exactly.
+            self._sn_model = self.sn_model_instance
 
-        self._sn_model = sncosmo.Model(source=self.sn_model_name)
+        elif self.sn_modeldir is not None:
+            source = sncosmo.SALT3Source(modeldir=self.sn_modeldir)
+            self._sn_model = sncosmo.Model(source=source)
+            self._sn_model.set(x1=0.0, c=0.0)  # average SN Ia; shape is all that matters
+
+        else:
+            self._sn_model = sncosmo.Model(source=self.sn_model_name)
+
         try:
             self._bandpass = sncosmo.get_bandpass(self.band)
         except Exception:

@@ -1,3 +1,5 @@
+# test_source_morphology.py
+# tests all kinds of source morphologies, including Gaussian, AGN, and Supernovae. It also tests the base class functionality for time-varying morphologies and user-provided snapshots.
 import pytest
 import numpy as np
 import astropy.units as u
@@ -738,3 +740,42 @@ class TestSupernovaeSourceMorphology:
             wavelength_angstroms=5000, time_seconds=0.0, R_eff=r_large
         )
         assert np.all(intensity == 0.0)
+    
+    def test_sn_model_instance_priority_paths(self, cosmo):
+        """Covers all three priority paths in _build_analytical_snapshots:
+        - sn_model_instance is used directly and takes priority over sn_model_name
+        - sn_modeldir triggers SALT3Source construction with x1=c=0
+        - neither provided => falls back to sn_model_name (hsiao, already tested
+        implicitly by sn_source_r fixture)
+        """
+        import sncosmo
+        from unittest.mock import patch
+
+        # Path 1: sn_model_instance is the sncosmo.Model — used directly,
+        # sn_model_name is ignored regardless of what is passed
+        model = sncosmo.Model(source="hsiao")
+        sn = SupernovaeSourceMorphology(
+            observing_wavelength_band="bessellb",
+            source_redshift=0.5,
+            cosmo=cosmo,
+            sn_model_instance=model,
+            sn_model_name="random-model",  # this must be ignored
+            grid_pixels=20,
+            anchor_spacing_days=30.0,
+        )
+        assert sn._sn_model is model
+
+        # Path 2: sn_modeldir triggers SALT3Source; x1=c=0 must be set
+        salt3_source = sncosmo.get_source("salt3-nir")
+        with patch("sncosmo.SALT3Source", return_value=salt3_source) as mock_salt3:
+            sn_dir = SupernovaeSourceMorphology(
+                observing_wavelength_band="bessellb",
+                source_redshift=0.5,
+                cosmo=cosmo,
+                sn_modeldir="/fake/path",
+                grid_pixels=20,
+                anchor_spacing_days=30.0,
+            )
+            mock_salt3.assert_called_once_with(modeldir="/fake/path")
+        assert sn_dir._sn_model["x1"] == 0.0
+        assert sn_dir._sn_model["c"] == 0.0

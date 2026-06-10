@@ -1,3 +1,4 @@
+from slsim.Sources.Supernovae.random_supernovae import RandomizedSupernova
 from slsim.Sources.SourceTypes.supernova_event import SupernovaEvent
 import numpy as np
 import pytest
@@ -92,6 +93,9 @@ class TestSupernovaEvent:
         with pytest.raises(ValueError):
             self.source_cosmo_error.light_curve
 
+        # _lightcurve_class must be stored as a RandomizedSupernova instance
+        assert isinstance(self.source._lightcurve_class, RandomizedSupernova)
+
     def test_get_sncosmo_filtername_used_for_lsst_bands(self):
         """Verify that the new get_sncosmo_filtername function is used instead
         of the old hardcoded 'lsst' + band approach."""
@@ -140,6 +144,26 @@ class TestSupernovaEvent:
             self.source_none.point_source_magnitude("i", image_observation_times=10)
         assert self.source_none.point_source_magnitude("i") == 20
         assert self.source_light_curve.point_source_magnitude("i") == 21
+    
+    def test_update_microlensing_kwargs_source_morphology(self):
+        import sncosmo
+
+        # Branch 1: triggers computation, then injects
+        assert not self.source._variability_computed
+        result = self.source.update_microlensing_kwargs_source_morphology({})
+        assert self.source._variability_computed
+        assert result["sn_model_instance"] is self.source._lightcurve_class
+
+        # Branch 2: user-supplied value is never overwritten (setdefault)
+        user_model = sncosmo.Model(source="hsiao")
+        result = self.source.update_microlensing_kwargs_source_morphology(
+            {"sn_model_instance": user_model}
+        )
+        assert result["sn_model_instance"] is user_model
+
+        # Branch 3: kwargs_variability=None means no _lightcurve_class, no injection
+        result_none = self.source_none.update_microlensing_kwargs_source_morphology({})
+        assert "sn_model_instance" not in result_none
 
 
 if __name__ == "__main__":

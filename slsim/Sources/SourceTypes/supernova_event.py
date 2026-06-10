@@ -97,6 +97,7 @@ class SupernovaEvent(SourceBase):
                     cosmo=self._cosmo,
                     modeldir=self._sn_modeldir,
                 )
+                self._lightcurve_class = lightcurve_class
 
             # Filter the input list against the global registry to ignore non-band parameters and unrecognized bands
             supported_bands = get_all_supported_bands()
@@ -158,3 +159,17 @@ class SupernovaEvent(SourceBase):
         return super().point_source_magnitude(
             band=band, image_observation_times=image_observation_times
         )
+    
+    def update_microlensing_kwargs_source_morphology(self, kwargs_source_morphology):
+        """Injects the sncosmo model instance into morphology kwargs so the
+        morphology uses the exact same SN realisation — template, x1, c —
+        as the lightcurve.
+        """
+        if not self._variability_computed:
+            _ = self.light_curve  # ensures _lightcurve_class is populated
+
+        if hasattr(self, "_lightcurve_class"):
+            kwargs_source_morphology.setdefault(
+                "sn_model_instance", self._lightcurve_class
+            )
+        return kwargs_source_morphology
