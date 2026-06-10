@@ -310,7 +310,7 @@ def kwargs_source_morphology_AGN_wave(cosmology):
 def ml_lc_gaussian(magmap_instance, kwargs_source_morphology_Gaussian):
     return MicrolensingLightCurve(
         magnification_map=magmap_instance,
-        time_duration=4000,
+        observation_time_array=np.linspace(0, 4000, 400),
         point_source_morphology="gaussian",
         kwargs_source_morphology=kwargs_source_morphology_Gaussian,
     )
@@ -320,7 +320,7 @@ def ml_lc_gaussian(magmap_instance, kwargs_source_morphology_Gaussian):
 def ml_lc_agn_wave(magmap_instance, kwargs_source_morphology_AGN_wave):
     return MicrolensingLightCurve(
         magnification_map=magmap_instance,
-        time_duration=4000,
+        observation_time_array=np.linspace(0, 4000, 400),
         point_source_morphology="agn",
         kwargs_source_morphology=kwargs_source_morphology_AGN_wave,
     )
@@ -363,10 +363,11 @@ def test_plot_lightcurves_and_magmap_runs_magnitude(ml_lc_gaussian, cosmology):
     lcs, tracks, _time_arrays = ml_lc_gaussian.generate_lightcurves(
         0.5, cosmology, num_lightcurves=num_lc
     )
-    ml_lc_gaussian.get_convolved_map()
+    # build a simple convolved map for plotting (use the raw magnifications as proxy)
+    convolved_map = ml_lc_gaussian._magnification_map.magnifications
     try:
         ax_return = plot_lightcurves_and_magmap(
-            convolved_map=ml_lc_gaussian._convolved_map,
+            convolved_map=convolved_map,
             lightcurves=lcs,
             time_duration_observer_frame=ml_lc_gaussian._time_duration_observer_frame,
             tracks=tracks,
@@ -390,10 +391,10 @@ def test_plot_lightcurves_and_magmap_runs_magnification(ml_lc_agn_wave, cosmolog
     lcs, _tracks, _time_arrays = ml_lc_agn_wave.generate_lightcurves(
         0.5, cosmology, num_lightcurves=num_lc, lightcurve_type="magnification"
     )
-    ml_lc_agn_wave.get_convolved_map()
+    convolved_map = ml_lc_agn_wave._magnification_map.magnifications
     try:
         ax_return = plot_lightcurves_and_magmap(
-            convolved_map=ml_lc_agn_wave._convolved_map,
+            convolved_map=convolved_map,
             lightcurves=lcs,
             time_duration_observer_frame=ml_lc_agn_wave._time_duration_observer_frame,
             tracks=None,

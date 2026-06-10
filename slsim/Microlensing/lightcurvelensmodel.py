@@ -117,6 +117,40 @@ class MicrolensingLightCurveFromLensModel(object):
                 "kwargs_source_morphology not in kwargs_microlensing. Please provide a dictionary of settings required by source morphology calculation."
             )
 
+        # Global Morphology Instantiation
+        # We instantiate the morphology object ONCE for all images to prevent redundant
+        # calculations (like SN grids or AGN profiles). Downstream LightCurve instances
+        # will share this single object in memory.
+        self._source_morphology_instance = self._initialize_morphology_instance()
+
+    def _initialize_morphology_instance(self):
+        """Instantiates the source morphology class once for all downstream
+        images."""
+        from slsim.Microlensing.lightcurve import MORPHOLOGY_CLASSES
+
+        morph_class = MORPHOLOGY_CLASSES.get(self._point_source_morphology)
+        if morph_class is None:
+            raise ValueError(
+                f"Invalid source morphology type: '{self._point_source_morphology}'"
+            )
+
+        kwargs = self._kwargs_source_morphology.copy()
+
+        # Gaussian morphology specifically requires the map dimensions to build its grid
+        if self._point_source_morphology == "gaussian":
+            kwargs.update(
+                {
+                    "length_x": self._kwargs_magnification_map["half_length_x"] * 2,
+                    "length_y": self._kwargs_magnification_map["half_length_y"] * 2,
+                    "num_pix_x": self._kwargs_magnification_map["num_pixels_x"],
+                    "num_pix_y": self._kwargs_magnification_map["num_pixels_y"],
+                    "center_x": 0,
+                    "center_y": 0,
+                }
+            )
+
+        return morph_class(**kwargs)
+
     def generate_point_source_microlensing_magnitudes(
         self,
         time,
@@ -126,7 +160,9 @@ class MicrolensingLightCurveFromLensModel(object):
         it produces the lightcurve magnitudes for all images of the source.
 
         :param time: Time array for which the lightcurve is needed (in
-            days).
+            days). NOTE: For time-varying sources (like supernovae),
+            this array dictates the physical elapsed time since the
+            explosion in observer days.
         :return: lightcurves_single: numpy array of microlensing
             magnitudes with the shape (num_images, len(time)).
         """
@@ -150,10 +186,17 @@ class MicrolensingLightCurveFromLensModel(object):
             )
         )
 
+        # Get correct length of time axis whether it is 1D or 2D
+        time_steps = (
+            time_array.shape[1]
+            if (isinstance(time_array, np.ndarray) and time_array.ndim == 2)
+            else len(time_array)
+        )
+
         # Here we choose just 1 lightcurve for the point sources
         lightcurves_single = np.zeros(
-            (len(lightcurves), len(time_array))
-        )  # has shape (num_images, len(time))
+            (len(lightcurves), time_steps)
+        )  # has shape (num_images, time_steps)
         for i in range(len(lightcurves)):
             lightcurves_single[i] = lightcurves[i][0]
 
@@ -207,6 +250,8 @@ class MicrolensingLightCurveFromLensModel(object):
         the "time" array provided.
 
         :param time: Time array for which the lightcurve is needed.
+            NOTE: For time-varying sources (like supernovae), this array
+            dictates the physical elapsed time since the explosion in observer days.
         :param lightcurve_type: Type of lightcurve to generate, either
             'magnitude' or 'magnification'. If 'magnitude', the
             lightcurve is returned in magnitudes normalized to the macro
@@ -237,17 +282,6 @@ class MicrolensingLightCurveFromLensModel(object):
         # generate magnification maps for each image of the source if they are not already generated and cached
         magmaps_images = self.generate_magnification_maps_from_microlensing_params()
 
-        if (isinstance(time, np.ndarray) or isinstance(time, list)) and len(time) > 1:
-            lightcurve_duration = time[-1] - time[0]
-        elif (isinstance(time, np.ndarray) or isinstance(time, list)) and len(
-            time
-        ) == 1:
-            lightcurve_duration = 0
-        else:
-            raise ValueError(
-                "Time array not provided in the correct format. Supported formats are int, float, array, and list."
-            )
-
         # obtain velocities and angles for each image
         eff_trv_vel_images, eff_trv_vel_angles_images = (
             self.effective_transverse_velocity_images
@@ -255,6 +289,9 @@ class MicrolensingLightCurveFromLensModel(object):
 
         # obtain lightcurve starting position
         x_start_position, y_start_position = self.lc_start_position
+
+        # Check if time is a 2D array (multi-image time-delayed epochs) or 1D
+        time_is_2d = isinstance(time, np.ndarray) and time.ndim == 2
 
         # generate lightcurves for each image of the source
         lightcurves = (
@@ -265,11 +302,16 @@ class MicrolensingLightCurveFromLensModel(object):
         )  # a list which contains the [list of tracks] for each image of the source, depending on the num_lightcurves parameter.
         time_arrays = []  # corresponding to each lightcurve
         for i in range(len(self._kappa_star_images)):
+
+            # Grab the specific time array for this image
+            current_image_time_array = time[i] if time_is_2d else time
+
             ml_lc = MicrolensingLightCurve(
                 magnification_map=magmaps_images[i],
-                time_duration=lightcurve_duration,
+                observation_time_array=current_image_time_array,
                 point_source_morphology=self._point_source_morphology,
                 kwargs_source_morphology=self._kwargs_source_morphology,
+                source_morphology_instance=self._source_morphology_instance,
             )
             curr_lightcurves, curr_tracks, curr_time_arrays = (
                 ml_lc.generate_lightcurves(
@@ -290,10 +332,12 @@ class MicrolensingLightCurveFromLensModel(object):
             for j in range(len(curr_lightcurves)):
                 curr_lightcurves_interpolated.append(
                     self._interpolate_light_curve(
-                        curr_lightcurves[j], curr_time_arrays[j], time
+                        curr_lightcurves[j],
+                        curr_time_arrays[j],
+                        current_image_time_array,
                     )
                 )
-                updated_curr_time_arrays.append(time)
+                updated_curr_time_arrays.append(current_image_time_array)
 
             lightcurves.append(curr_lightcurves_interpolated)
             tracks.append(curr_tracks)
@@ -566,6 +610,36 @@ class MicrolensingLightCurveFromLensModel(object):
         without requiring re-initialization of the class or re-generation of
         magnification maps."""
         self._kwargs_source_morphology = kwargs_source_morphology
+        self._source_morphology_instance = self._initialize_morphology_instance()
+
+    def reset_start_position(self, x_start_position=None, y_start_position=None):
+        """Resets the starting position for the lightcurve track. If
+        x_start_position and y_start_position are provided, the starting
+        position will be set to those values. Otherwise, a new random starting
+        position will be generated.
+
+        :param x_start_position: The new x-coordinate for the starting
+            position on the magnification map (in arcsec)
+        :param y_start_position: The new y-coordinate for the starting
+            position on the magnification map (in arcsec)
+        """
+        if x_start_position is not None and y_start_position is not None:
+            self._lc_start_position = (x_start_position, y_start_position)
+        else:
+            half_length_x = self._kwargs_magnification_map["half_length_x"]
+            half_length_y = self._kwargs_magnification_map["half_length_y"]
+
+            x_start_position = np.random.uniform(
+                -half_length_x,
+                half_length_x,
+            )
+            y_start_position = np.random.uniform(
+                -half_length_y,
+                half_length_y,
+            )
+            self._lc_start_position = (x_start_position, y_start_position)
+
+        return self._lc_start_position
 
     @property
     def lc_start_position(self):
@@ -582,16 +656,7 @@ class MicrolensingLightCurveFromLensModel(object):
         if hasattr(self, "_lc_start_position"):
             return self._lc_start_position
         else:
-            half_length_x = self._kwargs_magnification_map["half_length_x"]
-            half_length_y = self._kwargs_magnification_map["half_length_y"]
-
-            x_start_position = np.random.uniform(
-                -half_length_x,
-                half_length_x,
-            )
-            y_start_position = np.random.uniform(
-                -half_length_y,
-                half_length_y,
-            )
-            self._lc_start_position = (x_start_position, y_start_position)
+            # by default we set origin as starting position
+            self._lc_start_position = (0, 0)
             return self._lc_start_position
+            # return self.reset_start_position()

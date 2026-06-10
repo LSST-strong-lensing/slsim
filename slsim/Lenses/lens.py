@@ -25,7 +25,6 @@ from scipy.ndimage import label
 from slsim.Lenses.lensed_system_base import LensedSystemBase
 from slsim.Deflectors.deflector import JAX_PROFILES
 import pandas as pd
-from copy import deepcopy
 
 
 class Lens(LensedSystemBase):
@@ -905,7 +904,7 @@ class Lens(LensedSystemBase):
                 if microlensing:
                     microlensing_magnitudes = self._point_source_magnitude_microlensing(
                         band=band,
-                        time=time,
+                        time=image_observed_times,
                         source_index=source_index,
                         kwargs_microlensing=kwargs_microlensing,
                     )
@@ -982,6 +981,13 @@ class Lens(LensedSystemBase):
         kappa_tot_images = lens_model_lenstronomy.kappa(
             image_positions_x, image_positions_y, lenstronomy_kwargs_lens
         )
+
+        # capping kappa_star to be less than kappa_tot to avoid unphysical microlensing parameters
+        # TODO: In future we could also considering optimizing by not doing microlensing calculation if there are no stars/ small stellar mass/ etc.
+        kappa_star_images = np.minimum(
+            kappa_star_images, np.array(kappa_tot_images) - 1e-6
+        )
+
         gamma1, gamma2 = lens_model_lenstronomy.gamma(
             image_positions_x, image_positions_y, lenstronomy_kwargs_lens
         )
@@ -1034,48 +1040,14 @@ class Lens(LensedSystemBase):
         ra_lens = np.random.uniform(0, 360)  # degrees
         dec_lens = np.random.uniform(-90, 90)  # degrees
 
-        ##########################################################################
-        ## Update kwargs_microlensing from source class
-        ##########################################################################
-        if kwargs_microlensing is None:
-            kwargs_microlensing_updated = {}
-        else:
-            # Make a copy of kwargs_microlensing to avoid modifying the original dict
-            kwargs_microlensing_updated = deepcopy(kwargs_microlensing)
-
-        # Get or initialize kwargs_source_morphology
-        if "kwargs_source_morphology" not in kwargs_microlensing_updated:
-            kwargs_source_morphology = {}
-        else:
-            kwargs_source_morphology = kwargs_microlensing_updated[
-                "kwargs_source_morphology"
-            ]
-
-        # Update kwargs_source_morphology with values from the Lens class if not provided by the user
-        if "source_redshift" not in kwargs_source_morphology:
-            kwargs_source_morphology["source_redshift"] = self.source(
-                source_index
-            ).redshift
-        if "cosmo" not in kwargs_source_morphology:
-            kwargs_source_morphology["cosmo"] = self.cosmo
-        if "observing_wavelength_band" not in kwargs_source_morphology:
-            kwargs_source_morphology["observing_wavelength_band"] = band
-
-        # Extract additional parameters from the source class if not provided
-        kwargs_source_morphology = self.source(
+        # Update kwargs_microlensing from source class with defaults if not provided
+        kwargs_microlensing_updated = self.source(
             source_index
-        )._source.update_microlensing_kwargs_source_morphology(kwargs_source_morphology)
-
-        # Update the main microlensing kwargs dictionary
-        kwargs_microlensing_updated["kwargs_source_morphology"] = (
-            kwargs_source_morphology
+        ).prepare_microlensing_kwargs(
+            band=band,
+            cosmo=self.cosmo,
+            kwargs_microlensing=kwargs_microlensing,
         )
-
-        # Update point_source_morphology based on source type
-        if "point_source_morphology" not in kwargs_microlensing_updated:
-            if self.source(source_index)._source.name == "QSO":
-                kwargs_microlensing_updated["point_source_morphology"] = "agn"
-        ##########################################################################
 
         # Instantiate the microlensing model with all required parameters
         # Check if the microlensing model class is already instantiated for this source index to avoid redundant instantiation
@@ -1101,7 +1073,7 @@ class Lens(LensedSystemBase):
         else:
             # Update existing instance with new parameters if needed
             self._microlensing_model_class[source_index].update_source_morphology(
-                kwargs_source_morphology
+                kwargs_microlensing_updated["kwargs_source_morphology"]
             )
 
         # Generate microlensing magnitudes with the simplified method call
@@ -1132,6 +1104,24 @@ class Lens(LensedSystemBase):
             raise AttributeError(
                 "MicrolensingLightCurveFromLensModel class is not set. "
                 "Please run point_source_magnitude with microlensing=True."
+            )
+
+    def reset_microlensing_model_class(self, source_index):
+        """Resets the MicrolensingLightCurveFromLensModel class instance for a
+        specific source index. This can be used to clear cached microlensing
+        models if needed.
+
+        :param source_index: index of a source in source list.
+        """
+        if (
+            hasattr(self, "_microlensing_model_class")
+            and source_index in self._microlensing_model_class
+        ):
+            del self._microlensing_model_class[source_index]
+        else:
+            raise AttributeError(
+                f"MicrolensingLightCurveFromLensModel class is not set for source index {source_index}. "
+                "Cannot reset."
             )
 
     def extended_source_magnitude(self, band, lensed=False):

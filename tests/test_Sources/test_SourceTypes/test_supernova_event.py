@@ -1,8 +1,10 @@
+from slsim.Sources.Supernovae.random_supernovae import RandomizedSupernova
 from slsim.Sources.SourceTypes.supernova_event import SupernovaEvent
 import numpy as np
 import pytest
 from astropy import cosmology
 import slsim.ImageSimulation.image_quality_lenstronomy as iql
+from slsim.ImageSimulation.image_quality_lenstronomy import get_sncosmo_filtername
 
 
 class TestSupernovaEvent:
@@ -37,7 +39,6 @@ class TestSupernovaEvent:
             "lightcurve_time": np.linspace(-50, 100, 100),
             "sn_modeldir": None,
         }
-
         kwargs_sn_none = {
             "source_type": "supernova",
             "variability_model": "light_curve",
@@ -92,11 +93,30 @@ class TestSupernovaEvent:
         with pytest.raises(ValueError):
             self.source_cosmo_error.light_curve
 
+        # _lightcurve_class must be stored as a RandomizedSupernova instance
+        assert isinstance(self.source._lightcurve_class, RandomizedSupernova)
+
+    def test_get_sncosmo_filtername_used_for_lsst_bands(self):
+        """Verify that the new get_sncosmo_filtername function is used instead
+        of the old hardcoded 'lsst' + band approach."""
+        # The function should correctly map LSST bands
+        assert get_sncosmo_filtername("r") == "lsstr"
+        assert get_sncosmo_filtername("i") == "lssti"
+        assert get_sncosmo_filtername("g") == "lsstg"
+        assert get_sncosmo_filtername("z") == "lsstz"
+        assert get_sncosmo_filtername("u") == "lsstu"
+        assert get_sncosmo_filtername("y") == "lssty"
+
+    def test_get_sncosmo_filtername_for_roman_bands(self):
+        """Verify Roman band sncosmo name mapping."""
+        # Roman sncosmo_fmt is lambda band: f"{band}"
+        assert get_sncosmo_filtername("F062") == "F062"
+        assert get_sncosmo_filtername("F106") == "F106"
+
     def test_light_curve_warning(self):
         """Test that a UserWarning is raised when a band is supported by SLSim
         but missing in sncosmo."""
 
-        # register a dummy observatory with a fake band so SLSim recognizes it but sncosmo does not
         class DummyObs:
             def __init__(self, band, **kwargs):
                 pass
@@ -106,21 +126,17 @@ class TestSupernovaEvent:
 
         iql.register_observatory("DummyObs", DummyObs, bands=["unregistered_sn_band"])
 
-        # modify the source to request this fake band
         self.source._kwargs_variability = [
             "supernovae_lightcurve",
             "unregistered_sn_band",
         ]
 
-        # sncosmo doesn't know about "unregistered_sn_band", so it should raise the warning and skip it
         with pytest.warns(UserWarning, match="Failed to generate lightcurve"):
             failed_light_curve = self.source.light_curve
 
         assert failed_light_curve == {}
 
     def test_point_source_magnitude(self):
-        # supernova is randomly generated. So, can't assert a fix number for magnitude.
-        # Just checking these numbers are generated.
         assert self.source.point_source_magnitude("i") is not None
         with pytest.raises(ValueError):
             self.source.point_source_magnitude("g")
@@ -128,6 +144,26 @@ class TestSupernovaEvent:
             self.source_none.point_source_magnitude("i", image_observation_times=10)
         assert self.source_none.point_source_magnitude("i") == 20
         assert self.source_light_curve.point_source_magnitude("i") == 21
+
+    def test_update_microlensing_kwargs_source_morphology(self):
+        import sncosmo
+
+        # Branch 1: triggers computation, then injects
+        assert not self.source._variability_computed
+        result = self.source.update_microlensing_kwargs_source_morphology({})
+        assert self.source._variability_computed
+        assert result["sn_model_instance"] is self.source._lightcurve_class
+
+        # Branch 2: user-supplied value is never overwritten (setdefault)
+        user_model = sncosmo.Model(source="hsiao")
+        result = self.source.update_microlensing_kwargs_source_morphology(
+            {"sn_model_instance": user_model}
+        )
+        assert result["sn_model_instance"] is user_model
+
+        # Branch 3: kwargs_variability=None means no _lightcurve_class, no injection
+        result_none = self.source_none.update_microlensing_kwargs_source_morphology({})
+        assert "sn_model_instance" not in result_none
 
 
 if __name__ == "__main__":

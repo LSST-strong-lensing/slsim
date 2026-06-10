@@ -123,7 +123,7 @@ class Supernova(sncosmo.Model):
                     self.maxwave(),
                 )
             )
-            return np.ones_like(time) * np.NaN
+            return np.ones_like(time) * np.nan
 
         minphase = self.source.minphase()
         if self._sn_type == "Ia":

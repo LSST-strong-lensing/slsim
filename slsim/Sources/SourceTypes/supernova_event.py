@@ -1,7 +1,10 @@
 import warnings
 from slsim.Sources.Supernovae import random_supernovae
 from slsim.Sources.SourceTypes.source_base import SourceBase
-from slsim.ImageSimulation.image_quality_lenstronomy import get_all_supported_bands
+from slsim.ImageSimulation.image_quality_lenstronomy import (
+    get_all_supported_bands,
+    get_sncosmo_filtername,
+)
 
 
 class SupernovaEvent(SourceBase):
@@ -94,6 +97,7 @@ class SupernovaEvent(SourceBase):
                     cosmo=self._cosmo,
                     modeldir=self._sn_modeldir,
                 )
+                self._lightcurve_class = lightcurve_class
 
             # Filter the input list against the global registry to ignore non-band parameters and unrecognized bands
             supported_bands = get_all_supported_bands()
@@ -101,10 +105,7 @@ class SupernovaEvent(SourceBase):
 
             for element in provided_bands:
                 # sncosmo registers LSST bands as 'lsstg', 'lsstr', etc.
-                if element in ["u", "g", "r", "i", "z", "y"]:
-                    provided_band = "lsst" + element
-                else:
-                    provided_band = element
+                provided_band = get_sncosmo_filtername(element)
 
                 name = "ps_mag_" + element
                 times = self._lightcurve_time
@@ -158,3 +159,16 @@ class SupernovaEvent(SourceBase):
         return super().point_source_magnitude(
             band=band, image_observation_times=image_observation_times
         )
+
+    def update_microlensing_kwargs_source_morphology(self, kwargs_source_morphology):
+        """Injects the sncosmo model instance into morphology kwargs so the
+        morphology uses the exact same SN realisation — template, x1, c — as
+        the lightcurve."""
+        if not self._variability_computed:
+            _ = self.light_curve  # ensures _lightcurve_class is populated
+
+        if hasattr(self, "_lightcurve_class"):
+            kwargs_source_morphology.setdefault(
+                "sn_model_instance", self._lightcurve_class
+            )
+        return kwargs_source_morphology
