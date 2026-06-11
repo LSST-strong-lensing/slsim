@@ -1,4 +1,4 @@
-from slsim.Sources.Supernovae.random_supernovae import RandomizedSupernova
+from slsim.Sources.Events.Supernovae.random_supernovae import RandomizedSupernova
 from slsim.Sources.SourceTypes.supernova_event import SupernovaEvent
 import numpy as np
 import pytest
