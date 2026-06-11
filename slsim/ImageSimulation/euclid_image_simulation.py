@@ -34,6 +34,8 @@ def euclid_rgb_from_image_list(
     mtf_region_size=100,
     use_luminance=True,
     luminance_method="mean",
+    channel_gains=None,
+    saturation=1.0,
 ):
     """Create a Euclid Q1-style RGB image from pre-simulated images.
 
@@ -90,6 +92,16 @@ def euclid_rgb_from_image_list(
         channel average and gives a softer display. ``"rec709"`` uses standard
         RGB luminance weights.
     :type luminance_method: str
+    :param channel_gains: optional display-only multiplicative gains applied to
+        the final ``(R, G, B)`` channels. ``None`` keeps the Euclid Q1 colour
+        mapping unchanged. This can be useful for reducing VIS/blue dominance
+        in purely simulated noisy images without changing the physical
+        simulation.
+    :type channel_gains: tuple[float, float, float] or None
+    :param saturation: display-only saturation factor applied after
+        ``channel_gains``. ``1`` leaves saturation unchanged, values below ``1``
+        soften colour noise, and values above ``1`` increase colour contrast.
+    :type saturation: float
     :return: RGB image with values clipped to ``[0, 1]`` and shape
         ``(ny, nx, 3)``.
     :rtype: numpy.ndarray
@@ -184,6 +196,12 @@ def euclid_rgb_from_image_list(
 
     if use_luminance and colour != "VIS":
         rgb = _apply_luminance(rgb, luminance, method=luminance_method)
+
+    rgb = _apply_display_colour_balance(
+        rgb,
+        channel_gains=channel_gains,
+        saturation=saturation,
+    )
 
     return np.clip(rgb, 0, 1)
 
@@ -608,6 +626,35 @@ def _apply_luminance(rgb, luminance, method="mean", eps=1e-8):
 
     scale = luminance / (current_luminance + eps)
     return np.clip(rgb * scale[:, :, None], 0, 1)
+
+
+def _apply_display_colour_balance(rgb, channel_gains=None, saturation=1.0):
+    """Apply optional display-only RGB gains and saturation adjustment.
+
+    :param rgb: input RGB image with shape ``(ny, nx, 3)``.
+    :type rgb: numpy.ndarray
+    :param channel_gains: optional multiplicative gains for ``(R, G, B)``.
+    :type channel_gains: tuple[float, float, float] or None
+    :param saturation: colour saturation multiplier.
+    :type saturation: float
+    :return: colour-balanced RGB image clipped to ``[0, 1]``.
+    :rtype: numpy.ndarray
+    """
+    rgb = np.clip(rgb, 0, 1)
+
+    if channel_gains is not None:
+        gains = np.asarray(channel_gains, dtype=float)
+        if gains.shape != (3,):
+            raise ValueError("channel_gains must contain three values for R, G, B.")
+        rgb = rgb * gains[None, None, :]
+
+    if saturation < 0:
+        raise ValueError("saturation must be non-negative.")
+    if saturation != 1.0:
+        grey = np.mean(rgb, axis=-1, keepdims=True)
+        rgb = grey + saturation * (rgb - grey)
+
+    return np.clip(rgb, 0, 1)
 
 
 def _require_channel(channel, band, colour):
