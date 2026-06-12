@@ -272,7 +272,7 @@ class SLSimLogo(object):
             ax.scatter(
                 x0 + xsr,
                 y0 + ysr,
-                s=1,
+                s=2,
                 color="white",
                 alpha=0.12,
             )
