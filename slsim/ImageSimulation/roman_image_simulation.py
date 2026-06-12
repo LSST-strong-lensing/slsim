@@ -50,6 +50,7 @@ def simulate_roman_image(
     dec=None,
     date=datetime.datetime(year=2027, month=7, day=7, hour=0, minute=0, second=0),
     psf_directory=None,
+    precomputed_background=None,
 ):
     """Creates a Roman-simulated image of a selected lens with noise, using
     galsim's noise settings and PSFs from STPSF.
@@ -139,7 +140,7 @@ def simulate_roman_image(
     kwargs_single_band["pixel_scale"] /= oversample
 
     sim_api = SimAPI(
-        num_pix=num_pix * oversample,
+        numpix=num_pix * oversample,
         kwargs_single_band=kwargs_single_band,
         kwargs_model=kwargs_model,
     )
@@ -182,18 +183,25 @@ def simulate_roman_image(
     image_no_noise = convolved.drawImage(im)
 
     if add_noise:
-        # Obtain sky and thermal background corresponding to certain band and add it to the image
-        # Poisson noise realization is not handled until later
-        image_with_background = add_sky_plus_thermal_background(
-            image_no_noise,
-            band,
-            detector,
-            num_pix,
-            _exposure_time,
-            ra,
-            dec,
-            date,
-        )
+        if precomputed_background is not None:
+            # Convert precomputed numpy array to a galsim Image with the same
+            # scale and origin as image_no_noise so the addition is element-wise.
+            bg = galsim.ImageF(precomputed_background.astype(np.float32), scale=0.11)
+            bg.setOrigin(0, 0)
+            image_with_background = image_no_noise + bg
+        else:
+            # Obtain sky and thermal background corresponding to certain band and add it to the image
+            # Poisson noise realization is not handled until later
+            image_with_background = add_sky_plus_thermal_background(
+                image_no_noise,
+                band,
+                detector,
+                num_pix,
+                _exposure_time,
+                ra,
+                dec,
+                date,
+            )
 
         # Add noise realizations and detector effects
         # Need to handle each exposure separately to properly take into account read noise and persistence
@@ -420,3 +428,53 @@ def _get_wcs_dict(ra, dec, date):
 
     # NB targ_pos indicates the position to observe at the center of the focal plane array
     return roman.getWCS(world_pos=targ_pos, date=date)
+
+def precompute_roman_background(
+    band,
+    num_pix,
+    exposure_time,
+    detector=None,
+    detector_pos=None,
+    ra=None,
+    dec=None,
+    date=datetime.datetime(year=2027, month=7, day=7),
+    oversample=3,
+):
+    """Precompute the Roman sky + thermal background as a numpy array.
+
+    Calls add_sky_plus_thermal_background with a zero image so no lens
+    computation is involved. Pass the returned array to simulate_roman_image
+    via precomputed_background to skip the WCS / sky-level computation on
+    every call.
+
+    :param band: imaging band (e.g. 'F106').
+    :param num_pix: pixels per axis — must match simulate_roman_image.
+    :param exposure_time: seconds — must match simulate_roman_image internally.
+    :param detector: WFI detector (1–18). Random if None.
+    :param detector_pos: (x, y) pixel position. Random if None.
+    :param ra: RA in degrees. Random if None.
+    :param dec: Dec in degrees. Random if None.
+    :param date: observation date; affects zodiacal light level.
+    :param oversample: must match simulate_roman_image.
+    :return: 2-D numpy array of background counts, shape (num_pix+6, num_pix+6).
+    """
+    if detector is None:
+        detector = random.randint(1, 18)
+    if detector_pos is None:
+        x_pos = random.randint(4 + num_pix * oversample, 4092 - num_pix * oversample)
+        y_pos = random.randint(4 + num_pix * oversample, 4092 - num_pix * oversample)
+        detector_pos = (x_pos, y_pos)
+    if ra is None:
+        ra = random.uniform(5, 60)
+    if dec is None:
+        dec = random.uniform(-40, -20)
+
+    num_pix_buffered = num_pix + 6
+
+    zero_image = galsim.ImageF(num_pix_buffered, num_pix_buffered, scale=0.11)
+    zero_image.setOrigin(0, 0)
+
+    background_image = add_sky_plus_thermal_background(
+        zero_image, band, detector, num_pix_buffered, exposure_time, ra, dec, date
+    )
+    return background_image.array
