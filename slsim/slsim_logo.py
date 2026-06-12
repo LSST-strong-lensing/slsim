@@ -193,3 +193,86 @@ class SLSimLogo(object):
             )
 
             ax.add_patch(patch)
+
+        def _draw_fake_galaxy(
+        self,
+        ax,
+        x0,
+        y0,
+        scale,
+    ):
+            """Draw a stylized elliptical galaxy.
+
+            :param ax: matplotlib axes
+            :param x0: x coordinate of galaxy center
+            :type x0: float
+            :param y0: y coordinate of galaxy center
+            :type y0: float
+            :param scale: overall galaxy size
+            :type scale: float
+            """
+
+            rng = np.random.default_rng(self.galaxy_seed)
+
+            q = 1 - self.galaxy_ellipticity
+
+            theta = np.linspace(0, 2 * np.pi, 220)
+
+            cos_a = np.cos(np.deg2rad(self.galaxy_angle))
+            sin_a = np.sin(np.deg2rad(self.galaxy_angle))
+
+            n_shells = 10
+
+            for i in range(n_shells):
+
+                r = (0.02 + i * 0.02) * scale
+
+                x = r * np.cos(theta)
+                y = r * np.sin(theta) * q
+
+                xr = x * cos_a - y * sin_a
+                yr = x * sin_a + y * cos_a
+
+                alpha = np.exp(-i / 2.2)
+
+                ax.fill(
+                    x0 + xr,
+                    y0 + yr,
+                    color=self.galaxy_color,
+                    alpha=alpha,
+                    edgecolor="none",
+                )
+
+            ax.add_patch(
+                Circle(
+                    (x0, y0),
+                    0.045 * scale,
+                    color=self.galaxy_color,
+                    alpha=0.95,
+                )
+            )
+
+            ax.add_patch(
+                Circle(
+                    (x0 + 0.015 * scale, y0 - 0.01 * scale),
+                    0.02 * scale,
+                    color=self.galaxy_color,
+                    alpha=0.6,
+                )
+            )
+
+            nstars = 60
+
+            xs = rng.normal(0, 0.04 * scale, nstars)
+            ys = rng.normal(0, 0.04 * scale, nstars)
+
+            xsr = xs * cos_a - ys * sin_a
+            ysr = xs * sin_a + ys * cos_a
+
+            ax.scatter(
+                x0 + xsr,
+                y0 + ysr,
+                s=2,
+                color="white",
+                alpha=0.12,
+            )
