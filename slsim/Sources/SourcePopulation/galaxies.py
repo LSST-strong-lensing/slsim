@@ -32,7 +32,7 @@ class Galaxies(SourcePopBase):
         downsample_to_dc2=False,
         source_size="Bernardi",
         extended_source_type="single_sersic",
-        extendedsource_kwargs={},
+        extended_source_kwargs={},
     ):
         """
 
@@ -54,14 +54,14 @@ class Galaxies(SourcePopBase):
         :param source_size: If "Bernardi", computes galaxy size using g-band
          magnitude otherwise rescales skypy source size to Shibuya et al. (2015):
          https://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
-        :param extendedsource_type: Keyword to specify type of the extended source.
+        :param extended_source_type: Keyword to specify type of the extended source.
          Supported extended source types are "single_sersic", "double_sersic", "interpolated".
-        :type extendedsource_type: str
-        :param extendedsource_kwargs: dictionary of keyword arguments for ExtendedSource.
+        :type extended_source_type: str
+        :param extended_source_kwargs: dictionary of keyword arguments for ExtendedSource.
          Please see documentation of ExtendedSource() class as well as specific extended source classes.
         """
         super().__init__(cosmo=cosmo, sky_area=sky_area)
-        self.extendedsource_kwargs = extendedsource_kwargs
+        self.extendedsource_kwargs = extended_source_kwargs
         self.light_profile = extended_source_type
         if downsample_to_dc2 is True:
             samp1, samp2, samp3, samp4, samp5, samp6 = down_sample_to_dc2(
@@ -175,10 +175,10 @@ class Galaxies(SourcePopBase):
             if len(filtered_galaxies) == 0:
                 return None
             else:
-                index = random.randint(0, len(filtered_galaxies) - 1)
+                index = random.randint(0, len(filtered_galaxies))
                 galaxy = filtered_galaxies[index]
         else:
-            index = random.randint(0, self._num_select - 1)
+            index = random.randint(0, self._num_select)
             galaxy = self._galaxy_select[index]
         if "a_rot" in galaxy.colnames:
             phi_rot = galaxy["a_rot"]
@@ -215,7 +215,7 @@ class Galaxies(SourcePopBase):
                 else:
                     raise ValueError(
                         "ellipticity or semi-major and semi-minor axis are missing for"
-                        "the first light profile in galaxy_list columns"
+                        " the first light profile in galaxy_list columns"
                     )
 
             if galaxy["e1_1"] == -1 or galaxy["e1_2"] == -1:
@@ -234,7 +234,7 @@ class Galaxies(SourcePopBase):
                 else:
                     raise ValueError(
                         "ellipticity or semi-major and semi-minor axis are missing for"
-                        "the second light profile in galaxy_list columns"
+                        " the second light profile in galaxy_list columns"
                     )
             if galaxy["angular_size_0"] == -1 or galaxy["angular_size_1"] == -1:
                 if "a0" in galaxy.colnames and "b0" in galaxy.colnames:
@@ -244,7 +244,7 @@ class Galaxies(SourcePopBase):
                 else:
                     raise ValueError(
                         "semi-major and semi-minor axis are missing for the first light"
-                        "profile in galaxy_list columns"
+                        " profile in galaxy_list columns"
                     )
                 if "a1" in galaxy.colnames and "b1" in galaxy.colnames:
                     galaxy["angular_size_1"] = average_angular_size(
@@ -253,7 +253,7 @@ class Galaxies(SourcePopBase):
                 else:
                     raise ValueError(
                         "semi-major and semi-minor axis are missing for the second"
-                        "light profile in galaxy_list columns"
+                        " light profile in galaxy_list columns"
                     )
             if galaxy["n_sersic_0"] == -1 or galaxy["n_sersic_1"] == -1:
                 galaxy["n_sersic_0"] = 1
@@ -261,7 +261,7 @@ class Galaxies(SourcePopBase):
         else:
             raise ValueError(
                 "Provided number of light profiles is not supported. It should be"
-                "either 'single or 'double' "
+                " either 'single or 'double' "
             )
         return galaxy
 
@@ -287,6 +287,34 @@ class Galaxies(SourcePopBase):
             **self.extendedsource_kwargs
         )
         return source_class
+
+    def draw_galaxies(self, area, z_max=None):
+        """Draw galaxies within a specified area and redshift limit.
+
+        :param area (astropy.units.Quantity): Area in which to draw
+            galaxies (in square arcseconds).
+        :param z_max: Maximum redshift for the galaxies. If None, no
+            redshift cut is applied.
+        :return: List of drawn galaxy instances.
+        """
+
+        total_sources = self.source_number_selected
+
+        pop_sky_area_arcsec2 = self.sky_area.to_value("arcsec2")
+        area_arcsec2 = area.to_value("arcsec2")
+        mean_sources = (total_sources / pop_sky_area_arcsec2) * area_arcsec2
+
+        # draw from Poisson Distribution
+        number_of_sources = np.random.poisson(lam=mean_sources)
+
+        galaxies_list = []
+        for _ in range(number_of_sources):
+            galaxy = self.draw_source(z_max=z_max)
+            if galaxy is not None:
+                galaxy.update_center(area=area_arcsec2)
+                galaxies_list.append(galaxy)
+
+        return galaxies_list
 
 
 def galaxy_projected_eccentricity(ellipticity, rotation_angle=None):
@@ -330,7 +358,7 @@ def convert_to_slsim_convention(
         conventions.
     :type galaxy_catalog: astropy Table object.
     :param light_profile: keyword for number of sersic profile to use in
-        source light model. accepted kewords: "single_sersic",
+        source light model. accepted keywords: "single_sersic",
         "double_sersic".
     :param input_catalog_type: type of the catalog. If someone wants to
         use scotch catalog or skypy catalog, they need to specify it.
@@ -400,7 +428,6 @@ def down_sample_to_dc2(galaxy_pop, sky_area):
     :param galaxy_pop: Astropy table of galaxy population.
     :param sky_area: Sky area over which galaxies are sampled. Must be in units of
      solid angle and it should be astropy unit object.
-    :param cosmo: astropy.cosmology instance
     :return: Astropy tables of downsampled galaxy population in different bins.
      Redshift bins for returned populations are: (2-2.5), (2.5-3), (3-3.5),
      (3.5-4), (4-4.5), (4.5-5)

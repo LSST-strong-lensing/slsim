@@ -28,6 +28,14 @@ slsim.Sources.SourcePopulation.point\_sources module
    :undoc-members:
    :show-inheritance:
 
+slsim.Sources.SourcePopulation.scotch\_sources module
+-----------------------------------------------------
+
+.. automodule:: slsim.Sources.SourcePopulation.scotch_sources
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 slsim.Sources.SourcePopulation.source\_pop\_base module
 -------------------------------------------------------
 

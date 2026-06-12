@@ -20,6 +20,7 @@ from slsim.Util.param_util import (
     transient_event_time_mjd,
     downsample_galaxies,
     galaxy_size_redshift_evolution,
+    flux_error_to_magnitude_error,
     additional_poisson_noise_with_rescaled_coadd,
     additional_bkg_rms_with_rescaled_coadd,
     degrade_coadd_data,
@@ -345,6 +346,91 @@ def test_downsample_galaxies():
 def test_galaxy_size_redshift_evolution():
     results = galaxy_size_redshift_evolution(z=0)
     assert results == 4.89
+
+
+def test_flux_error_to_magnitude_error_basic():
+    flux_mean = 100.0
+    flux_error = 10.0
+    mag_zero_point = 27.0
+
+    mag_mean, mag_error_lower, mag_error_upper = flux_error_to_magnitude_error(
+        flux_mean=flux_mean,
+        flux_error=flux_error,
+        mag_zero_point=mag_zero_point,
+        noise=False,
+        symmetric=False,
+    )
+
+    expected_mag_mean = amplitude_to_magnitude(flux_mean, mag_zero_point)
+    assert np.isclose(mag_mean, expected_mag_mean), "Mag mean computation failed."
+
+    upper_flux_limit = flux_mean + flux_error
+    lower_flux_limit = max(flux_mean - flux_error, flux_mean * 0.01)
+
+    expected_mag_error_lower = expected_mag_mean - amplitude_to_magnitude(
+        upper_flux_limit, mag_zero_point
+    )
+    expected_mag_error_upper = (
+        amplitude_to_magnitude(lower_flux_limit, mag_zero_point) - expected_mag_mean
+    )
+
+    assert mag_error_lower == expected_mag_error_lower
+    assert mag_error_upper == expected_mag_error_upper
+
+
+def test_flux_error_to_magnitude_error_symmetric():
+    flux_mean = 100.0
+    flux_error = 10.0
+    mag_zero_point = 27.0
+
+    mag_mean, mag_error_lower, mag_error_upper = flux_error_to_magnitude_error(
+        flux_mean=flux_mean,
+        flux_error=flux_error,
+        mag_zero_point=mag_zero_point,
+        noise=False,
+        symmetric=True,
+    )
+
+    expected_mag_mean = amplitude_to_magnitude(flux_mean, mag_zero_point)
+    expected_mag_error = (2.5 / np.log(10)) * flux_error / flux_mean
+
+    assert mag_mean == expected_mag_mean
+    assert mag_error_lower == expected_mag_error
+    assert mag_error_upper == expected_mag_error
+
+
+def test_flux_error_to_magnitude_error_with_noise():
+    flux_mean = 100.0
+    flux_error = 10.0
+    mag_zero_point = 27.0
+
+    mag_mean, mag_error_lower, mag_error_upper = flux_error_to_magnitude_error(
+        flux_mean=flux_mean,
+        flux_error=flux_error,
+        mag_zero_point=mag_zero_point,
+        noise=True,
+        symmetric=False,
+    )
+
+    # Noise makes mag_mean non-deterministic, so we validate the magnitude range
+    mag_mean_2 = amplitude_to_magnitude(flux_mean, mag_zero_point)
+
+    assert (
+        mag_mean_2 - 3 * mag_error_lower < mag_mean <= mag_mean_2 + 3 * mag_error_upper
+    )
+
+
+def test_flux_error_to_magnitude_error_negative_flux():
+    mag_mean, mag_error_lower, mag_error_upper = flux_error_to_magnitude_error(
+        flux_mean=10.0,
+        flux_error=11.0,
+        mag_zero_point=27.0,
+        symmetric=False,
+        noise=False,
+    )
+    expected_upper_mag = amplitude_to_magnitude(0, 27)
+    expected_upper_error = expected_upper_mag - mag_mean
+    assert expected_upper_error == mag_error_upper
 
 
 def test_additional_poisson_noise_with_rescaled_coadd():

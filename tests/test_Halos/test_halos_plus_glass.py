@@ -64,6 +64,7 @@ class Testhalosplusglass(object):
         assert skyarea2 == pytest.approx(2719311.41, rel=1e-2)
 
     def test_generate_maps_kmean_zero_using_halos(self):
+        np.random.seed(41)
         kappa_random_glass, gamma_random_glass = generate_maps_kmean_zero_using_halos(
             samples_number_for_one_halos=50, renders_numbers=50
         )
@@ -91,6 +92,7 @@ class Testhalosplusglass(object):
         assert isinstance(gamma_tot, (list, np.ndarray))
 
     def test_generate_m_h_m_t_for_small_area(self):
+        np.random.seed(41)
         kappa_random_glass, gamma_random_glass = generate_meanzero_halos_multiple_times(
             samples_number_for_one_halos=5,
             n_times=2,

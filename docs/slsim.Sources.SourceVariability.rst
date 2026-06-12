@@ -20,16 +20,16 @@ slsim.Sources.SourceVariability.agn module
    :undoc-members:
    :show-inheritance:
 
-slsim.Sources.SourceVariability.light_curve_interpolation module
-----------------------------------------------------------------
+slsim.Sources.SourceVariability.light\_curve\_interpolation module
+------------------------------------------------------------------
 
 .. automodule:: slsim.Sources.SourceVariability.light_curve_interpolation
    :members:
    :undoc-members:
    :show-inheritance:
 
-slsim.Sources.SourceVariability.sinusoidal_variability module
--------------------------------------------------------------
+slsim.Sources.SourceVariability.sinusoidal\_variability module
+--------------------------------------------------------------
 
 .. automodule:: slsim.Sources.SourceVariability.sinusoidal_variability
    :members:

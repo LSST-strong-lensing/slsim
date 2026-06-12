@@ -230,13 +230,17 @@ class SourceBase(ABC):
             self._center_point_source = self.extended_source_position + self._offset
         return self._center_point_source
 
-    def point_source_magnitude(self, band, image_observation_times=None):
+    def point_source_magnitude(
+        self, band, image_observation_times=None, at_maximum=False
+    ):
         """Get the magnitude of the point source in a specific band.
 
         :param band: Imaging band
         :type band: str
         :param image_observation_times: Images observation time for an
             image.
+        :param at_maximum: returns maximum brightness (minimum
+            magnitude) of a light curve. I.e. peak magnitude of a SNe.
         :return: Magnitude of the point source in the specified band
         :rtype: float
         """
@@ -341,3 +345,14 @@ class SourceBase(ABC):
                 "magnitude": ps_mag,
             }
         return ps_type, kwargs_ps
+
+    def update_microlensing_kwargs_source_morphology(self, kwargs_source_morphology):
+        """Update the kwargs_source_morphology dictionary with parameters from
+        the respective source type class. This method will be overwritten in
+        child classes for specific source types.
+
+        :param kwargs_source_morphology: Dictionary of source morphology
+            parameters.
+        :return: Updated dictionary of source morphology parameters.
+        """
+        return kwargs_source_morphology

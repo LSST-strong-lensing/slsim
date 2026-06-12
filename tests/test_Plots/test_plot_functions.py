@@ -7,6 +7,8 @@ from slsim.Lenses.lens import Lens
 from slsim.Plots.plot_functions import (
     create_image_montage_from_image_list,
     plot_montage_of_random_injected_lens,
+    create_montage,
+    plot_lightcurves,
 )
 from slsim.ImageSimulation.image_simulation import sharp_image
 from slsim.Sources.source import Source
@@ -142,6 +144,81 @@ def test_plot_montage_of_random_injected_lens(quasar_lens_pop_instance):
     assert fig.get_size_inches()[0] == np.array([num_cols * 3, num_rows * 3])[0]
 
 
+def test_create_montage_basics():
+    images = [
+        np.random.rand(5, 5),
+        np.random.rand(5, 5),
+        np.random.rand(5, 5),
+        np.random.rand(5, 5),
+    ]
+    montage = create_montage(images)
+
+    # Check shape
+    assert montage.shape == (5, 15)  # 1 row, 3 images wide
+
+    # Check normalization range
+    assert np.min(montage) >= 0
+    assert np.max(montage) <= 1
+
+
+def test_create_montage_specified_grid():
+    images = [
+        np.random.rand(5, 5),
+        np.random.rand(5, 5),
+        np.random.rand(5, 5),
+    ]
+    grid_size = (1, 3)
+    montage = create_montage(images, grid_size=grid_size)
+
+    # Check shape
+    assert montage.shape == (5, 15)  # 1 row, 3 images wide
+
+
+def test_plot_lightcurves():
+    data = {
+        "magnitudes": {
+            "mag_image_1": {"g": np.random.rand(5), "r": np.random.rand(5)},
+            "mag_image_2": {"g": np.random.rand(5), "r": np.random.rand(5)},
+        },
+        "errors_low": {
+            "mag_error_image_1_low": {"g": np.random.rand(5), "r": np.random.rand(5)},
+            "mag_error_image_2_low": {"g": np.random.rand(5), "r": np.random.rand(5)},
+        },
+        "errors_high": {
+            "mag_error_image_1_high": {"g": np.random.rand(5), "r": np.random.rand(5)},
+            "mag_error_image_2_high": {"g": np.random.rand(5), "r": np.random.rand(5)},
+        },
+        "obs_time": {"g": np.arange(5), "r": np.arange(5)},
+        "image_lists": {
+            "g": [np.random.rand(10, 10) for _ in range(3)],
+            "r": [np.random.rand(10, 10) for _ in range(3)],
+        },
+    }
+    data2 = {
+        "magnitudes": {
+            "mag_image_1": {"g": np.random.rand(5)},
+            "mag_image_2": {"g": np.random.rand(5)},
+        },
+        "errors_low": {
+            "mag_error_image_1_low": {"g": np.random.rand(5)},
+            "mag_error_image_2_low": {"g": np.random.rand(5)},
+        },
+        "errors_high": {
+            "mag_error_image_1_high": {"g": np.random.rand(5)},
+            "mag_error_image_2_high": {"g": np.random.rand(5)},
+        },
+        "obs_time": {"g": np.arange(5)},
+        "image_lists": {"g": [np.random.rand(10, 10) for _ in range(3)]},
+    }
+
+    fig = plot_lightcurves(data)
+    fig3 = plot_lightcurves(data2)
+    ax3 = fig3.get_axes()
+    assert fig is not None
+    assert isinstance(fig, plt.Figure)
+    assert len(ax3) == 2
+
+
 #### MICROLENSING TESTS ####
 
 # ---- Test Fixtures ----
@@ -233,7 +310,7 @@ def kwargs_source_morphology_AGN_wave(cosmology):
 def ml_lc_gaussian(magmap_instance, kwargs_source_morphology_Gaussian):
     return MicrolensingLightCurve(
         magnification_map=magmap_instance,
-        time_duration=4000,
+        observation_time_array=np.linspace(0, 4000, 400),
         point_source_morphology="gaussian",
         kwargs_source_morphology=kwargs_source_morphology_Gaussian,
     )
@@ -243,7 +320,7 @@ def ml_lc_gaussian(magmap_instance, kwargs_source_morphology_Gaussian):
 def ml_lc_agn_wave(magmap_instance, kwargs_source_morphology_AGN_wave):
     return MicrolensingLightCurve(
         magnification_map=magmap_instance,
-        time_duration=4000,
+        observation_time_array=np.linspace(0, 4000, 400),
         point_source_morphology="agn",
         kwargs_source_morphology=kwargs_source_morphology_AGN_wave,
     )
@@ -286,10 +363,11 @@ def test_plot_lightcurves_and_magmap_runs_magnitude(ml_lc_gaussian, cosmology):
     lcs, tracks, _time_arrays = ml_lc_gaussian.generate_lightcurves(
         0.5, cosmology, num_lightcurves=num_lc
     )
-    ml_lc_gaussian.get_convolved_map()
+    # build a simple convolved map for plotting (use the raw magnifications as proxy)
+    convolved_map = ml_lc_gaussian._magnification_map.magnifications
     try:
         ax_return = plot_lightcurves_and_magmap(
-            convolved_map=ml_lc_gaussian._convolved_map,
+            convolved_map=convolved_map,
             lightcurves=lcs,
             time_duration_observer_frame=ml_lc_gaussian._time_duration_observer_frame,
             tracks=tracks,
@@ -313,10 +391,10 @@ def test_plot_lightcurves_and_magmap_runs_magnification(ml_lc_agn_wave, cosmolog
     lcs, _tracks, _time_arrays = ml_lc_agn_wave.generate_lightcurves(
         0.5, cosmology, num_lightcurves=num_lc, lightcurve_type="magnification"
     )
-    ml_lc_agn_wave.get_convolved_map()
+    convolved_map = ml_lc_agn_wave._magnification_map.magnifications
     try:
         ax_return = plot_lightcurves_and_magmap(
-            convolved_map=ml_lc_agn_wave._convolved_map,
+            convolved_map=convolved_map,
             lightcurves=lcs,
             time_duration_observer_frame=ml_lc_agn_wave._time_duration_observer_frame,
             tracks=None,

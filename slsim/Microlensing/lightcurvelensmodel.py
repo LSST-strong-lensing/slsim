@@ -9,6 +9,7 @@ import numpy as np
 # import astropy.constants as const
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+from slsim.Util.astro_util import theta_star_physical
 
 from slsim.Microlensing.magmap import MagnificationMap
 from slsim.Microlensing.lightcurve import MicrolensingLightCurve
@@ -18,9 +19,8 @@ class MicrolensingLightCurveFromLensModel(object):
     """Class to generate microlensing lightcurves based on the microlensing
     parameters for each image of a source."""
 
-    def generate_point_source_microlensing_magnitudes(
+    def __init__(
         self,
-        time,
         source_redshift,
         deflector_redshift,
         kappa_star_images,
@@ -31,15 +31,13 @@ class MicrolensingLightCurveFromLensModel(object):
         dec_lens,
         deflector_velocity_dispersion,
         cosmology,
-        kwargs_MagnificationMap: dict,
-        point_source_morphology: str,
-        kwargs_source_morphology: dict,
+        kwargs_magnification_map=None,
+        point_source_morphology=None,
+        kwargs_source_morphology=None,
     ):
-        """Generate microlensing lightcurve magnitudes normalized to the mean
-        magnification for various source morphologies. For single source only,
-        it produces the lightcurve magnitudes for all images of the source.
+        """Initialize the MicrolensingLightCurveFromLensModel with lens and
+        source parameters.
 
-        :param time: Time array for which the lightcurve is needed.
         :param source_redshift: Redshift of the source
         :param deflector_redshift: Redshift of the deflector
         :param kappa_star_images: list containing the kappa star
@@ -57,17 +55,114 @@ class MicrolensingLightCurveFromLensModel(object):
             deflector in km/s.
         :param cosmology: Astropy cosmology object to use for the
             calculations.
-        :param kwargs_MagnificationMap: Keyword arguments for the
-            MagnificationMap class.
+        :param kwargs_magnification_map: Keyword arguments for the
+            MagnificationMap class. An example can look like:
+            kwargs_magnification_map = { "theta_star": theta_star, #
+            arcsec "rectangular": True, "center_x": 0, # arcsec
+            "center_y": 0, # arcsec "half_length_x": 25 * theta_star, #
+            arcsec "half_length_y": 25 * theta_star, # arcsec
+            "mass_function": "kroupa", "m_solar": 1.0, "m_lower": 0.08,
+            "m_upper": 100, "num_pixels_x": 500, "num_pixels_y": 500, }
+            Note that theta_star needs be estimated based on the
+            cosmology model and redshifts for the source and deflector.
         :param point_source_morphology: Morphology of the point source.
             Options are "gaussian", "agn" (Accretion Disk) or
             "supernovae".
         :param kwargs_source_morphology: Dictionary of keyword arguments
             for the source morphology class. (See
-            slsim.Microlensing.source_morphology for more details). Note
+            slsim.Microlensing.source_morphology for more details) Note
             that different parameters are defined for different source
             morphologies. So check the documentation for each
-            morphology.
+            morphology. For example, for Gaussian source morphology, it will look like:
+            kwargs_source_morphology = {"source_redshift":
+            source_redshift, "cosmo": cosmo, "source_size": source_size,
+            }. For AGN source morphology, it will look like:
+            kwargs_source_morphology = {"source_redshift":
+            source_redshift, "cosmo": cosmology, "r_out": r_out,
+            "r_resolution": r_resolution, "smbh_mass_exp":
+            smbh_mass_exp, "inclination_angle": inclination_angle,
+            "black_hole_spin": black_hole_spin,
+            "observer_frame_wavelength_in_nm":
+            observer_frame_wavelength_in_nm, "eddington_ratio":
+            eddington_ratio, }
+        """
+        self._source_redshift = source_redshift
+        self._deflector_redshift = deflector_redshift
+        self._kappa_star_images = kappa_star_images
+        self._kappa_tot_images = kappa_tot_images
+        self._shear_images = shear_images
+        self._shear_phi_angle_images = shear_phi_angle_images
+        self._ra_lens = ra_lens
+        self._dec_lens = dec_lens
+        self._deflector_velocity_dispersion = deflector_velocity_dispersion
+        self._cosmology = cosmology
+        self._kwargs_magnification_map = kwargs_magnification_map
+        self._point_source_morphology = point_source_morphology
+        self._kwargs_source_morphology = kwargs_source_morphology
+
+        if self._kwargs_magnification_map is None:
+            self._kwargs_magnification_map = (
+                self._get_default_kwargs_magnification_map()
+            )
+            print(
+                "kwargs_magnification_map not in kwargs_microlensing. Using default magnification map kwargs."
+            )
+
+        if self._point_source_morphology is None:
+            raise ValueError(
+                "point_source_morphology not in kwargs_microlensing. Please provide the point source morphology type. It can be either 'gaussian' or 'agn' or 'supernovae'."
+            )
+        if self._kwargs_source_morphology is None:
+            raise ValueError(
+                "kwargs_source_morphology not in kwargs_microlensing. Please provide a dictionary of settings required by source morphology calculation."
+            )
+
+        # Global Morphology Instantiation
+        # We instantiate the morphology object ONCE for all images to prevent redundant
+        # calculations (like SN grids or AGN profiles). Downstream LightCurve instances
+        # will share this single object in memory.
+        self._source_morphology_instance = self._initialize_morphology_instance()
+
+    def _initialize_morphology_instance(self):
+        """Instantiates the source morphology class once for all downstream
+        images."""
+        from slsim.Microlensing.lightcurve import MORPHOLOGY_CLASSES
+
+        morph_class = MORPHOLOGY_CLASSES.get(self._point_source_morphology)
+        if morph_class is None:
+            raise ValueError(
+                f"Invalid source morphology type: '{self._point_source_morphology}'"
+            )
+
+        kwargs = self._kwargs_source_morphology.copy()
+
+        # Gaussian morphology specifically requires the map dimensions to build its grid
+        if self._point_source_morphology == "gaussian":
+            kwargs.update(
+                {
+                    "length_x": self._kwargs_magnification_map["half_length_x"] * 2,
+                    "length_y": self._kwargs_magnification_map["half_length_y"] * 2,
+                    "num_pix_x": self._kwargs_magnification_map["num_pixels_x"],
+                    "num_pix_y": self._kwargs_magnification_map["num_pixels_y"],
+                    "center_x": 0,
+                    "center_y": 0,
+                }
+            )
+
+        return morph_class(**kwargs)
+
+    def generate_point_source_microlensing_magnitudes(
+        self,
+        time,
+    ):
+        """Generate microlensing lightcurve magnitudes normalized to the mean
+        magnification for various source morphologies. For single source only,
+        it produces the lightcurve magnitudes for all images of the source.
+
+        :param time: Time array for which the lightcurve is needed (in
+            days). NOTE: For time-varying sources (like supernovae),
+            this array dictates the physical elapsed time since the
+            explosion in observer days.
         :return: lightcurves_single: numpy array of microlensing
             magnitudes with the shape (num_images, len(time)).
         """
@@ -83,44 +178,25 @@ class MicrolensingLightCurveFromLensModel(object):
                 "Time array not provided in the correct format. Supported formats are int, float, array, and list."
             )
 
-        if kwargs_MagnificationMap is None:
-            raise ValueError(
-                "kwargs_MagnificationMap not in kwargs_microlensing. Please provide a dictionary of settings required by micro-lensing calculation."
-            )
-        if point_source_morphology is None:
-            raise ValueError(
-                "point_source_morphology not in kwargs_microlensing. Please provide the point source morphology type. It can be either 'gaussian' or 'agn' or 'supernovae'."
-            )
-        if kwargs_source_morphology is None:
-            raise ValueError(
-                "kwargs_source_morphology not in kwargs_microlensing. Please provide a dictionary of settings required by source morphology calculation."
-            )
-
         lightcurves, self._tracks, __time_arrays = (
             self.generate_point_source_lightcurves(
                 time_array,
-                source_redshift,
-                deflector_redshift,
-                kappa_star_images,
-                kappa_tot_images,
-                shear_images,
-                shear_phi_angle_images,
-                ra_lens,
-                dec_lens,
-                deflector_velocity_dispersion,
-                cosmology,
-                kwargs_MagnificationMap=kwargs_MagnificationMap,
-                point_source_morphology=point_source_morphology,
-                kwargs_source_morphology=kwargs_source_morphology,
                 lightcurve_type="magnitude",
                 num_lightcurves=1,
             )
         )
 
+        # Get correct length of time axis whether it is 1D or 2D
+        time_steps = (
+            time_array.shape[1]
+            if (isinstance(time_array, np.ndarray) and time_array.ndim == 2)
+            else len(time_array)
+        )
+
         # Here we choose just 1 lightcurve for the point sources
         lightcurves_single = np.zeros(
-            (len(lightcurves), len(time_array))
-        )  # has shape (num_images, len(time))
+            (len(lightcurves), time_steps)
+        )  # has shape (num_images, time_steps)
         for i in range(len(lightcurves)):
             lightcurves_single[i] = lightcurves[i][0]
 
@@ -159,19 +235,6 @@ class MicrolensingLightCurveFromLensModel(object):
     def generate_point_source_lightcurves(
         self,
         time,
-        source_redshift,
-        deflector_redshift,
-        kappa_star_images,
-        kappa_tot_images,
-        shear_images,
-        shear_phi_angle_images,
-        ra_lens,
-        dec_lens,
-        deflector_velocity_dispersion,
-        cosmology,
-        kwargs_MagnificationMap: dict,
-        point_source_morphology: str,
-        kwargs_source_morphology: dict,
         lightcurve_type="magnitude",  # 'magnitude' or 'magnification'
         num_lightcurves=1,  # Number of lightcurves to generate
     ):
@@ -187,51 +250,8 @@ class MicrolensingLightCurveFromLensModel(object):
         the "time" array provided.
 
         :param time: Time array for which the lightcurve is needed.
-        :param source_redshift: Redshift of the source
-        :param deflector_redshift: Redshift of the deflector
-        :param kappa_star_images: list containing the kappa star (stellar
-            convergence) for each image of the source.
-        :param kappa_tot_images: list containing the kappa total (total
-            convergence) for each image of the source.
-        :param shear_images: list containing the shear for each image of
-            the source.
-        :param shear_phi_angle_images: list containing the angle of the
-            shear vector, w.r.t. the x-axis of the image plane, in
-            degrees for each image of the source.
-        :param ra_lens: Right Ascension of the lens in degrees.
-        :param dec_lens: Declination of the lens in degrees.
-        :param deflector_velocity_dispersion: Velocity dispersion of the
-            deflector in km/s.
-        :param cosmology: Astropy cosmology object to use for the
-            calculations.
-        :param kwargs_MagnificationMap: Keyword arguments for the
-            MagnificationMap class. An example can look like:
-            kwargs_MagnificationMap = { "theta_star": theta_star, #
-            arcsec "rectangular": True, "center_x": 0, # arcsec
-            "center_y": 0, # arcsec "half_length_x": 25 * theta_star, #
-            arcsec "half_length_y": 25 * theta_star, # arcsec
-            "mass_function": "kroupa", "m_solar": 1.0, "m_lower": 0.08,
-            "m_upper": 100, "num_pixels_x": 500, "num_pixels_y": 500, }
-            Note that theta_star needs be estimated based on the
-            cosmology model and redshifts for the source and deflector.
-        :param point_source_morphology: Morphology of the point source.
-            Options are "gaussian", "agn" (Accretion Disk) or
-            "supernovae".
-        :param kwargs_source_morphology: Dictionary of keyword arguments
-            for the source morphology class. (See
-            slsim.Microlensing.source_morphology for more details) For
-            example, for Gaussian source morphology, it will look like:
-            kwargs_source_morphology = {"source_redshift":
-            source_redshift, "cosmo": cosmo, "source_size": source_size,
-            }. For AGN source morphology, it will look like:
-            kwargs_source_morphology = {"source_redshift":
-            source_redshift, "cosmo": cosmology, "r_out": r_out,
-            "r_resolution": r_resolution, "smbh_mass_exp":
-            smbh_mass_exp, "inclination_angle": inclination_angle,
-            "black_hole_spin": black_hole_spin,
-            "observer_frame_wavelength_in_nm":
-            observer_frame_wavelength_in_nm, "eddington_ratio":
-            eddington_ratio, }
+            NOTE: For time-varying sources (like supernovae), this array
+            dictates the physical elapsed time since the explosion in observer days.
         :param lightcurve_type: Type of lightcurve to generate, either
             'magnitude' or 'magnification'. If 'magnitude', the
             lightcurve is returned in magnitudes normalized to the macro
@@ -259,37 +279,19 @@ class MicrolensingLightCurveFromLensModel(object):
         :rtype: tuple
         """
 
-        # generate magnification maps for each image of the source
-        magmaps_images = self.generate_magnification_maps_from_microlensing_params(
-            kappa_star_images=kappa_star_images,
-            kappa_tot_images=kappa_tot_images,
-            shear_images=shear_images,
-            kwargs_MagnificationMap=kwargs_MagnificationMap,
-        )
-
-        if (isinstance(time, np.ndarray) or isinstance(time, list)) and len(time) > 1:
-            lightcurve_duration = time[-1] - time[0]
-        elif (isinstance(time, np.ndarray) or isinstance(time, list)) and len(
-            time
-        ) == 1:
-            lightcurve_duration = 0
-        else:
-            raise ValueError(
-                "Time array not provided in the correct format. Supported formats are int, float, array, and list."
-            )
+        # generate magnification maps for each image of the source if they are not already generated and cached
+        magmaps_images = self.generate_magnification_maps_from_microlensing_params()
 
         # obtain velocities and angles for each image
         eff_trv_vel_images, eff_trv_vel_angles_images = (
-            self.effective_transverse_velocity_images(
-                source_redshift=source_redshift,
-                deflector_redshift=deflector_redshift,
-                ra_lens=ra_lens,
-                dec_lens=dec_lens,
-                cosmo=cosmology,
-                shear_phi_angle_images=shear_phi_angle_images,
-                deflector_velocity_dispersion=deflector_velocity_dispersion,
-            )
+            self.effective_transverse_velocity_images
         )
+
+        # obtain lightcurve starting position
+        x_start_position, y_start_position = self.lc_start_position
+
+        # Check if time is a 2D array (multi-image time-delayed epochs) or 1D
+        time_is_2d = isinstance(time, np.ndarray) and time.ndim == 2
 
         # generate lightcurves for each image of the source
         lightcurves = (
@@ -299,22 +301,27 @@ class MicrolensingLightCurveFromLensModel(object):
             []
         )  # a list which contains the [list of tracks] for each image of the source, depending on the num_lightcurves parameter.
         time_arrays = []  # corresponding to each lightcurve
-        for i in range(len(kappa_star_images)):
+        for i in range(len(self._kappa_star_images)):
+
+            # Grab the specific time array for this image
+            current_image_time_array = time[i] if time_is_2d else time
+
             ml_lc = MicrolensingLightCurve(
                 magnification_map=magmaps_images[i],
-                time_duration=lightcurve_duration,
-                point_source_morphology=point_source_morphology,
-                kwargs_source_morphology=kwargs_source_morphology,
+                observation_time_array=current_image_time_array,
+                point_source_morphology=self._point_source_morphology,
+                kwargs_source_morphology=self._kwargs_source_morphology,
+                source_morphology_instance=self._source_morphology_instance,
             )
             curr_lightcurves, curr_tracks, curr_time_arrays = (
                 ml_lc.generate_lightcurves(
-                    source_redshift=source_redshift,
-                    cosmo=cosmology,
+                    source_redshift=self._source_redshift,
+                    cosmo=self._cosmology,
                     lightcurve_type=lightcurve_type,
                     effective_transverse_velocity=eff_trv_vel_images[i],
                     num_lightcurves=num_lightcurves,
-                    x_start_position=None,
-                    y_start_position=None,
+                    x_start_position=x_start_position,
+                    y_start_position=y_start_position,
                     phi_travel_direction=eff_trv_vel_angles_images[i],
                 )
             )
@@ -325,10 +332,12 @@ class MicrolensingLightCurveFromLensModel(object):
             for j in range(len(curr_lightcurves)):
                 curr_lightcurves_interpolated.append(
                     self._interpolate_light_curve(
-                        curr_lightcurves[j], curr_time_arrays[j], time
+                        curr_lightcurves[j],
+                        curr_time_arrays[j],
+                        current_image_time_array,
                     )
                 )
-                updated_curr_time_arrays.append(time)
+                updated_curr_time_arrays.append(current_image_time_array)
 
             lightcurves.append(curr_lightcurves_interpolated)
             tracks.append(curr_tracks)
@@ -342,32 +351,26 @@ class MicrolensingLightCurveFromLensModel(object):
 
     def generate_magnification_maps_from_microlensing_params(
         self,
-        kappa_star_images,
-        kappa_tot_images,
-        shear_images,
-        kwargs_MagnificationMap={},
     ):
         """Generate magnification maps for each image of the source based on
-        the image positions and the lens model. It requires the following
-        parameters:
-
-        :param kappa_star_images: Kappa star for each image of the source.
-        :param kappa_tot_images: Kappa total for each image of the source.
-        :param shear_images: Shear for each image of the source.
-        :param kwargs_MagnificationMap: Keyword arguments for the MagnificationMap class.
+        the image positions and the lens model.
 
         Returns:
         magmaps_images: a list which contains the [magnification map for each image of the source].
         """
+        # check if magnification maps are already generated
+        if hasattr(self, "_magmaps_images"):
+            return self._magmaps_images
+
         # generate magnification maps for each image of the source
         self._magmaps_images = []
-        for i in range(len(kappa_star_images)):
+        for i in range(len(self._kappa_star_images)):
             # generate magnification maps for each image of the source
             magmap = MagnificationMap(
-                kappa_tot=kappa_tot_images[i],
-                shear=shear_images[i],
-                kappa_star=kappa_star_images[i],
-                **kwargs_MagnificationMap,
+                kappa_tot=self._kappa_tot_images[i],
+                shear=self._shear_images[i],
+                kappa_star=self._kappa_star_images[i],
+                **self._kwargs_magnification_map,
             )
             self._magmaps_images.append(magmap)
 
@@ -395,15 +398,28 @@ class MicrolensingLightCurveFromLensModel(object):
         """
         return np.interp(time_array_new, time_array, lightcurve)
 
-    def effective_transverse_velocity_images(
+    @property
+    def effective_transverse_velocity_images(self):
+        """Returns the effective transverse velocity in the source plane for
+        each image position in the frame of the magnification map by using
+        appropriate transformations. Once calculated, the values are cached for
+        future use.
+
+        :return: effective_velocities: list containing the effective
+            transverse velocity in km/s for each image of the source.
+        :return: effective_velocities_angles_deg: list containing the
+            angle of the effective transverse velocity in degrees for
+            each image of the source.
+        :rtype: tuple
+        """
+        if hasattr(self, "_eff_trv_vel_images"):
+            return self._eff_trv_vel_images
+        else:
+            self._eff_trv_vel_images = self._effective_transverse_velocity_images()
+            return self._eff_trv_vel_images
+
+    def _effective_transverse_velocity_images(
         self,
-        source_redshift,
-        deflector_redshift,
-        ra_lens,
-        dec_lens,
-        cosmo,
-        shear_phi_angle_images,
-        deflector_velocity_dispersion,
         random_seed=None,
         magmap_reference_frame=True,
     ):
@@ -417,13 +433,6 @@ class MicrolensingLightCurveFromLensModel(object):
         2. https://iopscience.iop.org/article/10.1088/0004-637X/712/1/658/pdf
         3. https://iopscience.iop.org/article/10.3847/0004-637X/832/1/46/pdf
 
-        :param source_redshift: Redshift of the source
-        :param deflector_redshift: Redshift of the deflector
-        :param ra_lens: Right Ascension of the lens in degrees.
-        :param dec_lens: Declination of the lens in degrees.
-        :param cosmo: Astropy cosmology object to use for the calculations.
-        :param shear_phi_angle_images: list containing the angle of the shear vector, w.r.t. the x-axis of the image plane, in degrees for each image of the source.
-        :param deflector_velocity_dispersion: Velocity dispersion of the deflector in km/s.
         :param random_seed: Random seed for reproducibility. If None, a random seed will be generated.
 
         :return: effective_velocities: list containing the effective transverse velocity in km/s for each image of the source.
@@ -432,24 +441,24 @@ class MicrolensingLightCurveFromLensModel(object):
         """
 
         # --- Lens Model Inputs ---
-        z_s = source_redshift
-        z_l = deflector_redshift
+        z_s = self._source_redshift
+        z_l = self._deflector_redshift
 
-        if not isinstance(ra_lens, u.Quantity):
-            ra_l = ra_lens * u.deg
+        if not isinstance(self._ra_lens, u.Quantity):
+            ra_l = self._ra_lens * u.deg
         else:
-            ra_l = ra_lens
+            ra_l = self._ra_lens
 
-        if not isinstance(dec_lens, u.Quantity):
-            dec_l = dec_lens * u.deg
+        if not isinstance(self._dec_lens, u.Quantity):
+            dec_l = self._dec_lens * u.deg
         else:
-            dec_l = dec_lens
+            dec_l = self._dec_lens
 
         # σ⋆
-        if not isinstance(deflector_velocity_dispersion, u.Quantity):
-            sig_star = deflector_velocity_dispersion * u.km / u.s
+        if not isinstance(self._deflector_velocity_dispersion, u.Quantity):
+            sig_star = self._deflector_velocity_dispersion * u.km / u.s
         else:
-            sig_star = deflector_velocity_dispersion
+            sig_star = self._deflector_velocity_dispersion
 
         np.random.seed(random_seed)  # Set the random seed for reproducibility
 
@@ -458,8 +467,8 @@ class MicrolensingLightCurveFromLensModel(object):
         # f = Omega_m**(4./7.) + Omega_v*(1.+Omega_m/2.)/70.
         #############################################
         def f_GrowthRate(z):
-            Omega_m = cosmo.Om(z)
-            Omega_v = cosmo.Ode(z)
+            Omega_m = self._cosmology.Om(z)
+            Omega_v = self._cosmology.Ode(z)
             return Omega_m ** (4.0 / 7.0) + Omega_v * (1.0 + Omega_m / 2.0) / 70.0
 
         #############################################
@@ -478,9 +487,9 @@ class MicrolensingLightCurveFromLensModel(object):
         #############################################
 
         # angular‐diameter distances
-        D_l = cosmo.angular_diameter_distance(z_l)
-        D_s = cosmo.angular_diameter_distance(z_s)
-        D_ls = cosmo.angular_diameter_distance_z1z2(z_l, z_s)
+        D_l = self._cosmology.angular_diameter_distance(z_l)
+        D_s = self._cosmology.angular_diameter_distance(z_s)
+        D_ls = self._cosmology.angular_diameter_distance_z1z2(z_l, z_s)
 
         # effective combined pec.‐velocity dispersion σ_g (Eq.5)
         sigma_g = np.sqrt(
@@ -522,7 +531,7 @@ class MicrolensingLightCurveFromLensModel(object):
         effective_velocities = []  # km/s
         effective_velocities_angles_deg = []  # degrees
 
-        for i in range(len(shear_phi_angle_images)):
+        for i in range(len(self._shear_phi_angle_images)):
             # 5) lens‐galaxy peculiar velocity v_* (Eq.4)
             θ = np.random.uniform(0, 2 * np.pi)
             v_star_mag = np.sqrt(2) * sig_star  # (Eq.3)
@@ -551,10 +560,103 @@ class MicrolensingLightCurveFromLensModel(object):
             # the returned angle is with respect to the x-axis of the magnification map
             if magmap_reference_frame:
                 # convert the angle to the reference frame of the magnification map
-                v_e_angle_deg = v_e_angle_deg - shear_phi_angle_images[i]
+                v_e_angle_deg = v_e_angle_deg - self._shear_phi_angle_images[i]
             effective_velocities_angles_deg.append(v_e_angle_deg)
 
         return (
             np.array(effective_velocities),
             np.array(effective_velocities_angles_deg),
         )
+
+    def _get_default_kwargs_magnification_map(self, mean_microlens_mass=1):
+        """Returns the default kwargs for the magnification map based on the
+        source and deflector redshifts.
+
+        Parameters
+        ----------
+        mean_microlens_mass : float
+            The mean mass of the microlenses
+
+        Returns
+        -------
+        dict
+            The default kwargs for the magnification map
+        """
+        theta_star_arcsec, _, _ = theta_star_physical(
+            z_lens=self._deflector_redshift,
+            z_src=self._source_redshift,
+            cosmo=self._cosmology,
+            m=mean_microlens_mass,
+        )
+
+        theta_star_arcsec = theta_star_arcsec.to(u.arcsec).value
+
+        return {
+            "theta_star": theta_star_arcsec,  # arcsec
+            "center_x": 0,  # arcsec
+            "center_y": 0,  # arcsec
+            "half_length_x": 2 * theta_star_arcsec,  # arcsec
+            "half_length_y": 2 * theta_star_arcsec,  # arcsec
+            "mass_function": "kroupa",
+            "m_solar": 1.0,
+            "m_lower": 0.08,
+            "m_upper": 100,
+            "num_pixels_x": 1000,
+            "num_pixels_y": 1000,
+        }
+
+    def update_source_morphology(self, kwargs_source_morphology):
+        """Updates the source morphology parameters (e.g., for a new band)
+        without requiring re-initialization of the class or re-generation of
+        magnification maps."""
+        self._kwargs_source_morphology = kwargs_source_morphology
+        self._source_morphology_instance = self._initialize_morphology_instance()
+
+    def reset_start_position(self, x_start_position=None, y_start_position=None):
+        """Resets the starting position for the lightcurve track. If
+        x_start_position and y_start_position are provided, the starting
+        position will be set to those values. Otherwise, a new random starting
+        position will be generated.
+
+        :param x_start_position: The new x-coordinate for the starting
+            position on the magnification map (in arcsec)
+        :param y_start_position: The new y-coordinate for the starting
+            position on the magnification map (in arcsec)
+        """
+        if x_start_position is not None and y_start_position is not None:
+            self._lc_start_position = (x_start_position, y_start_position)
+        else:
+            half_length_x = self._kwargs_magnification_map["half_length_x"]
+            half_length_y = self._kwargs_magnification_map["half_length_y"]
+
+            x_start_position = np.random.uniform(
+                -half_length_x,
+                half_length_x,
+            )
+            y_start_position = np.random.uniform(
+                -half_length_y,
+                half_length_y,
+            )
+            self._lc_start_position = (x_start_position, y_start_position)
+
+        return self._lc_start_position
+
+    @property
+    def lc_start_position(self):
+        """Chooses a random starting position for the lightcurve track on the
+        magnification map. Once set, the starting position remains fixed for
+        subsequent calls.
+
+        :return: x_start_position: x-coordinate of the starting position
+            on the magnification map (in arcsec).
+        :return: y_start_position: y-coordinate of the starting position
+            on the magnification map (in arcsec).
+        :rtype: tuple
+        """
+        if hasattr(self, "_lc_start_position"):
+            return self._lc_start_position
+        else:
+            # by default we set origin as starting position
+            self._lc_start_position = (0, 0)
+            return self._lc_start_position
+            # return self.reset_start_position()

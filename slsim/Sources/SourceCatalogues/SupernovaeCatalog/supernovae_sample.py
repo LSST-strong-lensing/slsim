@@ -1,14 +1,15 @@
 from astropy.table import Table, hstack
-from slsim.Sources.Supernovae import random_supernovae
-from slsim.Sources.Supernovae.supernovae_lightcone import SNeLightcone
+from slsim.Sources.Events.Supernovae import random_supernovae
+from slsim.Sources.Events.Supernovae.supernovae_lightcone import SNeLightcone
 from slsim.Sources.SourceCatalogues.skypy_galaxy_catalog import GalaxyCatalog
-from slsim.Sources.Supernovae.supernovae_host_match import SupernovaeHostMatch
+from slsim.Sources.Events.Supernovae.supernovae_host_match import SupernovaeHostMatch
 import numpy as np
 from astropy import units
 from scipy import stats
 from slsim.Sources.SourcePopulation.galaxies import galaxy_projected_eccentricity
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 from slsim.Util.param_util import elliptical_distortion_product_average
+from slsim.ImageSimulation.image_quality_lenstronomy import get_sncosmo_filtername
 
 
 def supernovae_host_galaxy_offset(host_galaxy_catalog):
@@ -111,17 +112,17 @@ class SupernovaeCatalog(object):
 
         :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
         :type sn_type: str
-        :param band: observation band. It sould be a list of bands. Eg: ["i"], ["i","r"]
-        :type band: str. eg: 'i', 'g', 'r', or any other supported band
+        :param band_list: observation band. It sould be a list of bands. Eg: ["i"], ["i","r"]
+        :type band_list: str. eg: 'i', 'g', 'r', or any other supported band
         :param lightcurve_time: observation time array for lightcurve in unit of days.
-        :type lightcurve_time: array
+        :type lightcurve_time: array or None
         :param absolute_mag_band: Band used to normalize to absolute magnitude
         :type absolute_mag_band: str or `~sncosmo.Bandpass`
         :param mag_zpsys: Optional, AB or Vega (AB default)
         :type mag_zpsys: str
         :param cosmo: astropy.cosmology instance
         :param skypy_config: path to SkyPy configuration yaml file
-        :type skypy_config: string
+        :type skypy_config: string or None
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
         :type sky_area: `~astropy.units.Quantity`
@@ -211,8 +212,9 @@ class SupernovaeCatalog(object):
                 )
                 time.append(self.lightcurve_time)
                 for band in self.band_list:
+                    sncosmo_band_name = get_sncosmo_filtername(band)
                     mag = lightcurve_class.get_apparent_magnitude(
-                        self.lightcurve_time, "lsst" + band, zpsys=self.mag_zpsys
+                        self.lightcurve_time, sncosmo_band_name, zpsys=self.mag_zpsys
                     )
                     getattr(self, f"magnitude_{band}").append(mag)
             lightcurve_data = {"MJD": time}

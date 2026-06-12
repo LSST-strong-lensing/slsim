@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import numpy as np
 from astropy.visualization import make_lupton_rgb
 from slsim.ImageSimulation.image_simulation import simulate_image
 from slsim.ImageSimulation.roman_image_simulation import simulate_roman_image
@@ -17,7 +16,9 @@ class LensingPlots(object):
         :type lens_pop: `LensPop`
         :param num_pix: number of pixels for the simulated image, default is 64
         :type num_pix: int
-        :param observatory: observatory chosen
+        :param observatory: observatory chosen. The possible options are:
+            - "LSST", "Euclid", or "Roman", which are simulated through lenstronomy
+            - "Roman-galsim", which is Roman image simulation done through galsim
         :type observatory: str
         :param kwargs: additional keyword arguments for the bands. Eg: coadd_years
             (=10): this is the number of years corresponding to num_exposures in obs
@@ -35,9 +36,9 @@ class LensingPlots(object):
         lens_class,
         rgb_band_list,
         add_noise=True,
-        minimum=None,
-        stretch=None,
-        Q=None,
+        minimum=0,
+        stretch=0.5,
+        Q=8,
     ):
         """Method to generate a rgb-image with lupton_rgb color scale.
 
@@ -47,58 +48,39 @@ class LensingPlots(object):
             to r-g-b color map
         :param add_noise: boolean flag, set to True to add noise to the
             image, default is True
-        :param minimum: minimum value for the color scale, default is
-            None
+        :param minimum: minimum value for the color scale, default is 0
         :param kwargs: additional keyword arguments for make_lupton_rgb
         """
-        if self._observatory == "Roman":
+        main_kwargs = {
+            "lens_class": lens_class,
+            "num_pix": self.num_pix,
+            "add_noise": add_noise,
+            "observatory": self._observatory,
+        }
+
+        if self._observatory == "Roman-galsim":
             # NOTE: Galsim is required which is not supported on Windows
             make_image = simulate_roman_image
+            main_kwargs.pop("observatory")
+            main_kwargs["subtract_mean_background"] = True
         else:
             make_image = simulate_image
 
         image_r = make_image(
-            lens_class=lens_class,
             band=rgb_band_list[0],
-            num_pix=self.num_pix,
-            add_noise=add_noise,
-            observatory=self._observatory,
+            **main_kwargs,
             **self._kwargs,
         )
         image_g = make_image(
-            lens_class=lens_class,
             band=rgb_band_list[1],
-            num_pix=self.num_pix,
-            add_noise=add_noise,
-            observatory=self._observatory,
+            **main_kwargs,
             **self._kwargs,
         )
         image_b = make_image(
-            lens_class=lens_class,
             band=rgb_band_list[2],
-            num_pix=self.num_pix,
-            add_noise=add_noise,
-            observatory=self._observatory,
+            **main_kwargs,
             **self._kwargs,
         )
-
-        # Need to use different settings for make_lupton_rgb for roman images
-        defaults = {
-            "Roman": {
-                "minimum": [np.min(image_r), np.min(image_g), np.min(image_b)],
-                "stretch": 8,
-                "Q": 10,
-            },
-            "Other": {
-                "minimum": 0,
-                "stretch": 0.5,
-                "Q": 8,
-            },
-        }
-        cfg = defaults["Roman"] if self._observatory == "Roman" else defaults["Other"]
-        minimum = minimum if minimum is not None else cfg["minimum"]
-        stretch = stretch if stretch is not None else cfg["stretch"]
-        Q = Q if Q is not None else cfg["Q"]
 
         image_rgb = make_lupton_rgb(
             image_r, image_g, image_b, minimum=minimum, stretch=stretch, Q=Q
@@ -141,11 +123,6 @@ class LensingPlots(object):
         fig, axes = plt.subplots(
             n_vertical, n_horizont, figsize=(n_horizont * 3, n_vertical * 3)
         )
-        if self._observatory == "Roman":
-            # NOTE: Galsim is required which is not supported on Windows
-            make_image = simulate_roman_image
-        else:
-            make_image = simulate_image
         idx = 0
         for i in range(n_horizont):
             for j in range(n_vertical):
@@ -158,14 +135,22 @@ class LensingPlots(object):
                         **kwargs_lens_cut
                     )
                 if single_band:
+                    if self._observatory == "Roman-galsim":
+                        # NOTE: Galsim is required which is not supported on Windows
+                        make_image = simulate_roman_image
+                        extra_kwargs = {"subtract_mean_background": True}
+                    else:
+                        make_image = simulate_image
+                        extra_kwargs = {"observatory": self._observatory}
+
                     # If single band, we only show the first band in the list
                     image_rgb = make_image(
                         lens_class=current_lens,
                         band=rgb_band_list[0],
                         num_pix=self.num_pix,
                         add_noise=add_noise,
-                        observatory=self._observatory,
                         **self._kwargs,
+                        **extra_kwargs,
                     )
                     ax.imshow(image_rgb, aspect="equal", origin="lower", cmap="gray")
                 else:

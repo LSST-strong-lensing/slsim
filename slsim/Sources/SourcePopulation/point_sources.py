@@ -58,6 +58,7 @@ class PointSources(SourcePopBase):
         )
 
         self._num_select = len(self._point_source_select)
+        self._full_point_source_list = point_source_list
         super(SourcePopBase, self).__init__()
         self.source_type = "point_source"
 
@@ -78,14 +79,43 @@ class PointSources(SourcePopBase):
         """
         return self._num_select
 
-    def draw_source(self):
-        """Choose source at random with the selected range.
+    def draw_source(self, z_max=None, z_min=None, point_source_index=None):
+        """Choose source at random within the selected redshift range.
 
-        :return: dictionary of source
+        :param z_max: maximum redshift limit for the point source to be
+            drawn. If no point source is found for this limit, None will
+            be returned.
+        :param z_min: minimum redshift limit for the point source to be
+            drawn. If no point source is found for this limit, None will
+            be returned.
+        :param point_source_index: index of point source to pick (if
+            provided)
+        :return: instance of Source class
         """
+        if point_source_index is not None:
+            point_source = self._full_point_source_list[point_source_index]
 
-        index = random.randint(0, self._num_select - 1)
-        point_source = self._point_source_select[index]
+        elif z_max is not None or z_min is not None:
+            if z_max is None:
+                z_max = 1100
+            if z_min is None:
+                z_min = 0
+
+            # Filter the selected catalog by redshift bounds
+            filtered_sources = self._point_source_select[
+                (self._point_source_select["z"] < z_max)
+                & (z_min <= self._point_source_select["z"])
+            ]
+
+            if len(filtered_sources) == 0:
+                return None
+            else:
+                index = random.randint(0, len(filtered_sources))
+                point_source = filtered_sources[index]
+        else:
+            index = random.randint(0, self._num_select)
+            point_source = self._point_source_select[index]
+
         source_class = Source(
             cosmo=self._cosmo,
             point_source_type=self._point_source_type,

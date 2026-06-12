@@ -1,13 +1,16 @@
+from slsim.Sources.Events.Supernovae.random_supernovae import RandomizedSupernova
 from slsim.Sources.SourceTypes.supernova_event import SupernovaEvent
 import numpy as np
 import pytest
 from astropy import cosmology
+import slsim.ImageSimulation.image_quality_lenstronomy as iql
+from slsim.ImageSimulation.image_quality_lenstronomy import get_sncosmo_filtername
 
 
 class TestSupernovaEvent:
     def setup_method(self):
-        cosmo = cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
-        source_dict = {"z": 0.8, "ra_off": 0.001, "dec_off": 0.005}
+        self.cosmo = cosmology.FlatLambdaCDM(H0=70, Om0=0.3)
+        self.source_dict = {"z": 0.8, "ra_off": 0.001, "dec_off": 0.005}
         source_dict2 = {"z": 0.8, "ra_off": 0.001, "dec_off": 0.005, "ps_mag_i": 20}
         source_dict3 = {
             "z": 0.8,
@@ -36,7 +39,6 @@ class TestSupernovaEvent:
             "lightcurve_time": np.linspace(-50, 100, 100),
             "sn_modeldir": None,
         }
-
         kwargs_sn_none = {
             "source_type": "supernova",
             "variability_model": "light_curve",
@@ -48,20 +50,29 @@ class TestSupernovaEvent:
             "sn_modeldir": None,
         }
 
-        self.source = SupernovaEvent(cosmo=cosmo, **kwargs_sn, **source_dict)
+        self.source = SupernovaEvent(cosmo=self.cosmo, **kwargs_sn, **self.source_dict)
         self.source_roman = SupernovaEvent(
-            cosmo=cosmo, **kwargs_sn_roman, **source_dict
+            cosmo=self.cosmo, **kwargs_sn_roman, **self.source_dict
         )
-        self.source_none = SupernovaEvent(cosmo=cosmo, **kwargs_sn_none, **source_dict2)
-        self.source_cosmo_error = SupernovaEvent(cosmo=None, **kwargs_sn, **source_dict)
+        self.source_none = SupernovaEvent(
+            cosmo=self.cosmo, **kwargs_sn_none, **source_dict2
+        )
+        self.source_cosmo_error = SupernovaEvent(
+            cosmo=None, **kwargs_sn, **self.source_dict
+        )
         self.source_light_curve = SupernovaEvent(
-            cosmo=cosmo, **kwargs_sn_none, **source_dict3
+            cosmo=self.cosmo, **kwargs_sn_none, **source_dict3
         )
 
     def test_light_curve(self):
         light_curve = self.source.light_curve
         light_curve_roman = self.source_roman.light_curve
         light_curve_none = self.source_none.light_curve
+
+        # Check that the non-band parameters are successfully ignored
+        assert "supernovae_lightcurve" not in light_curve.keys()
+        assert "supernovae_lightcurve" not in light_curve_roman.keys()
+
         assert "i" in light_curve.keys()
         assert "r" in light_curve.keys()
         assert "MJD" in light_curve["i"].keys()
@@ -82,9 +93,50 @@ class TestSupernovaEvent:
         with pytest.raises(ValueError):
             self.source_cosmo_error.light_curve
 
+        # _lightcurve_class must be stored as a RandomizedSupernova instance
+        assert isinstance(self.source._lightcurve_class, RandomizedSupernova)
+
+    def test_get_sncosmo_filtername_used_for_lsst_bands(self):
+        """Verify that the new get_sncosmo_filtername function is used instead
+        of the old hardcoded 'lsst' + band approach."""
+        # The function should correctly map LSST bands
+        assert get_sncosmo_filtername("r") == "lsstr"
+        assert get_sncosmo_filtername("i") == "lssti"
+        assert get_sncosmo_filtername("g") == "lsstg"
+        assert get_sncosmo_filtername("z") == "lsstz"
+        assert get_sncosmo_filtername("u") == "lsstu"
+        assert get_sncosmo_filtername("y") == "lssty"
+
+    def test_get_sncosmo_filtername_for_roman_bands(self):
+        """Verify Roman band sncosmo name mapping."""
+        # Roman sncosmo_fmt is lambda band: f"{band}"
+        assert get_sncosmo_filtername("F062") == "F062"
+        assert get_sncosmo_filtername("F106") == "F106"
+
+    def test_light_curve_warning(self):
+        """Test that a UserWarning is raised when a band is supported by SLSim
+        but missing in sncosmo."""
+
+        class DummyObs:
+            def __init__(self, band, **kwargs):
+                pass
+
+            def kwargs_single_band(self):
+                return {}
+
+        iql.register_observatory("DummyObs", DummyObs, bands=["unregistered_sn_band"])
+
+        self.source._kwargs_variability = [
+            "supernovae_lightcurve",
+            "unregistered_sn_band",
+        ]
+
+        with pytest.warns(UserWarning, match="Failed to generate lightcurve"):
+            failed_light_curve = self.source.light_curve
+
+        assert failed_light_curve == {}
+
     def test_point_source_magnitude(self):
-        # supernova is randomly generated. So, can't assert a fix number for magnitude.
-        # Just checking these numbers are generated.
         assert self.source.point_source_magnitude("i") is not None
         with pytest.raises(ValueError):
             self.source.point_source_magnitude("g")
@@ -92,6 +144,26 @@ class TestSupernovaEvent:
             self.source_none.point_source_magnitude("i", image_observation_times=10)
         assert self.source_none.point_source_magnitude("i") == 20
         assert self.source_light_curve.point_source_magnitude("i") == 21
+
+    def test_update_microlensing_kwargs_source_morphology(self):
+        import sncosmo
+
+        # Branch 1: triggers computation, then injects
+        assert not self.source._variability_computed
+        result = self.source.update_microlensing_kwargs_source_morphology({})
+        assert self.source._variability_computed
+        assert result["sn_model_instance"] is self.source._lightcurve_class
+
+        # Branch 2: user-supplied value is never overwritten (setdefault)
+        user_model = sncosmo.Model(source="hsiao")
+        result = self.source.update_microlensing_kwargs_source_morphology(
+            {"sn_model_instance": user_model}
+        )
+        assert result["sn_model_instance"] is user_model
+
+        # Branch 3: kwargs_variability=None means no _lightcurve_class, no injection
+        result_none = self.source_none.update_microlensing_kwargs_source_morphology({})
+        assert "sn_model_instance" not in result_none
 
 
 if __name__ == "__main__":

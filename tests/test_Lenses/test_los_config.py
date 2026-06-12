@@ -3,7 +3,6 @@ import os
 from astropy.cosmology import FlatLambdaCDM
 import pytest
 
-
 path = os.path.dirname(__file__)
 module_path, _ = os.path.split(path)
 mother_path = os.path.dirname(os.path.dirname(path))

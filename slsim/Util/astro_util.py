@@ -1125,7 +1125,7 @@ def pull_value_from_grid(array_2d, x_position, y_position):
         return interpolated_values_flat.reshape(x_pos_arr.shape)
 
 
-# The credits for the following function go to Henry Best (https://github.com/Henry-Best-01/Amoeba)
+# The function below is inspired by AMOEBA (https://github.com/Henry-Best-01/Amoeba), developed by Henry Best
 def extract_light_curve(
     convolution_array,
     pixel_size,
@@ -1143,15 +1143,18 @@ def extract_light_curve(
     point. If the light curve is too long, or the size of the object is too
     large, a "light curve" representing a constant magnification is returned.
 
-    :param convolution_array: The convolution between a flux distribtion
-        and the magnification array due to microlensing. Note
-        coordinates on arrays have (y, x) signature.
+    :param convolution_array: The convolution between a flux
+        distribution and the magnification array due to microlensing.
+        Note coordinates on arrays have (y, x) signature.
     :param pixel_size: Physical size of a pixel in the source plane, in
         meters
     :param effective_transverse_velocity: effective transverse velocity
         in the source plane, in km / s
     :param light_curve_time_in_years: duration of the light curve to
-        generate, in years
+        generate, in years. This can be a scalar (float) OR a numpy
+        array of timestamps. If an array is provided, the spatial track
+        is mapped 1:1 to the exact fractional timestamps to preserve
+        irregular cadences.
     :param pixel_shift: offset of the SMBH with respect to the convolved
         map, in pixels
     :param x_start_position: None or the x coordinate to start pulling a
@@ -1166,16 +1169,30 @@ def extract_light_curve(
     """
     rng = np.random.default_rng(seed=random_seed)
 
+    # Handle velocity units
     if isinstance(effective_transverse_velocity, Quantity):
         effective_transverse_velocity = effective_transverse_velocity.to(
             u.m / u.s
         ).value
     else:
         effective_transverse_velocity *= u.km.to(u.m)
+
+    # Handle time units (Scalar vs Array)
     if isinstance(light_curve_time_in_years, Quantity):
-        light_curve_time_in_years = light_curve_time_in_years.to(u.s).value
+        time_val_s = light_curve_time_in_years.to(u.s).value
     else:
-        light_curve_time_in_years *= u.yr.to(u.s)
+        time_val_s = light_curve_time_in_years * u.yr.to(u.s)
+
+    # Calculate duration and exact temporal fractions if time is an array
+    if isinstance(time_val_s, np.ndarray):
+        duration_s = time_val_s[-1] - time_val_s[0]
+        if duration_s > 0:
+            time_fractions = (time_val_s - time_val_s[0]) / duration_s
+        else:
+            time_fractions = np.zeros_like(time_val_s)
+    else:
+        duration_s = time_val_s
+        time_fractions = None
 
     if pixel_shift >= np.size(convolution_array, 0) / 2:
         print(
@@ -1183,13 +1200,7 @@ def extract_light_curve(
         )
         return np.sum(convolution_array) / np.size(convolution_array)
 
-    pixels_traversed = (
-        effective_transverse_velocity * light_curve_time_in_years / pixel_size
-    )
-
-    n_points = (
-        effective_transverse_velocity * light_curve_time_in_years / pixel_size
-    ) + 2
+    pixels_traversed = effective_transverse_velocity * duration_s / pixel_size
 
     if pixel_shift > 0:
         safe_convolution_array = convolution_array[
@@ -1223,13 +1234,10 @@ def extract_light_curve(
             print("Error: max_safe_idx_x < 0, safe_array likely misconfigured.")
             return np.sum(convolution_array) / np.size(convolution_array)
 
-        # MODIFICATION: Choose non-border pixel if possible
-        if N_safe_dim_x >= 3:  # Possible to choose non-border
-            # Non-border indices are 1 to N_safe_dim_x - 2 (or max_safe_idx_x - 1)
-            x_start_position = float(
-                rng.integers(1, max_safe_idx_x)
-            )  # low is inclusive, high is exclusive
-        else:  # N_safe_dim_x is 1 or 2, all pixels are border pixels
+        # Choose non-border pixel if possible
+        if N_safe_dim_x >= 3:
+            x_start_position = float(rng.integers(1, max_safe_idx_x))
+        else:
             x_start_position = float(rng.integers(0, max_safe_idx_x + 1))
 
     if y_start_position is not None:
@@ -1244,15 +1252,13 @@ def extract_light_curve(
             print("Error: max_safe_idx_y < 0, safe_array likely misconfigured.")
             return np.sum(convolution_array) / np.size(convolution_array)
 
-        # MODIFICATION: Choose non-border pixel if possible
-        if N_safe_dim_y >= 3:  # Possible to choose non-border
-            # Non-border indices are 1 to N_safe_dim_y - 2 (or max_safe_idx_y - 1)
-            y_start_position = float(
-                rng.integers(1, max_safe_idx_y)
-            )  # low is inclusive, high is exclusive
-        else:  # N_safe_dim_y is 1 or 2, all pixels are border pixels
+        # Choose non-border pixel if possible
+        if N_safe_dim_y >= 3:
+            y_start_position = float(rng.integers(1, max_safe_idx_y))
+        else:
             y_start_position = float(rng.integers(0, max_safe_idx_y + 1))
 
+    # Determine angle and deltas
     if phi_travel_direction is not None:
         angle = phi_travel_direction * np.pi / 180
         delta_x = pixels_traversed * np.cos(angle)
@@ -1280,23 +1286,28 @@ def extract_light_curve(
             angle += np.pi / 2
             delta_x = pixels_traversed * np.cos(angle)
             delta_y = pixels_traversed * np.sin(angle)
-            if (
-                x_start_position + delta_x < np.size(safe_convolution_array, 0)
-                and y_start_position + delta_y < np.size(safe_convolution_array, 1)
-                and x_start_position + delta_x >= 0
-                and y_start_position + delta_y >= 0
-            ):
+            if 0 <= x_start_position + delta_x < np.size(
+                safe_convolution_array, 0
+            ) and 0 <= y_start_position + delta_y < np.size(safe_convolution_array, 1):
                 success = True
             backup_counter += 1
             if backup_counter > 4:  # pragma: no cover
                 break
 
-    x_positions = np.linspace(
-        x_start_position, x_start_position + delta_x, 5 * int(n_points)
-    )
-    y_positions = np.linspace(
-        y_start_position, y_start_position + delta_y, 5 * int(n_points)
-    )
+    # Build the spatial coordinates
+    if time_fractions is not None:
+        # EXACT mapping
+        x_positions = x_start_position + time_fractions * delta_x
+        y_positions = y_start_position + time_fractions * delta_y
+    else:
+        # Fallback to highly-sampled scalar methodology
+        n_points = pixels_traversed + 2
+        x_positions = np.linspace(
+            x_start_position, x_start_position + delta_x, 5 * int(n_points)
+        )
+        y_positions = np.linspace(
+            y_start_position, y_start_position + delta_y, 5 * int(n_points)
+        )
 
     light_curve = pull_value_from_grid(safe_convolution_array, x_positions, y_positions)
 
@@ -1341,3 +1352,99 @@ def theta_star_physical(
     theta_star_src = theta_star_lens * D_s / D_d
 
     return theta_star.to(u.arcsec), theta_star_lens.to(u.m), theta_star_src.to(u.m)
+
+
+def get_tau_sf_from_distribution_agn_variability(
+    black_hole_mass_exponent, known_mag_abs, z_src, means, cov, nsamps=1
+):
+    """Draw Tau and SF_inf from the joint distribution conditioned on the BH
+    mass, absolute magnitude, and source redshift.
+
+    The joint distribution is a multivariate normal distribution in
+    log(BH_mass/Msun), known_mag_abs, log_(SF_inf/mag), log_(tau/days),
+    zsrc space.
+
+    :param black_hole_mass_exponent: log_{10} of the black hole mass in
+        solar masses.
+    :param known_mag_abs: Absolute magnitude of the point source in some
+        known band.
+    :param z_src: Redshift of the source.
+    :param means: List of means of the joint distribution. Order:
+        log(BH_mass/Msun), known_mag_abs, log_(SF_inf/mag),
+        log_(tau/days), zsrc
+    :param cov: Covariance matrix of the joint distribution. Shape (5,
+        5).
+    :param nsamps: Number of samples to draw from the joint
+        distribution.
+    :return: SF_inf, tau drawn from the conditional distribution.
+        Returns a tuple of numpy arrays (SF_inf, tau). If nsamps == 1,
+        returns a tuple of scalars.
+    """
+    means = np.array(means)
+    cov = np.array(cov)
+
+    # 1. Define indices based on the docstring order:
+    # 0: log(BH_mass)  [Given]
+    # 1: known_mag_abs [Given]
+    # 2: log(SF_inf)   [Target]
+    # 3: log(tau)      [Target]
+    # 4: zsrc          [Given]
+
+    idx_given = [0, 1, 4]  # The variables we observe
+    idx_target = [2, 3]  # The variables we want to sample
+
+    # 2. Partition the Mean Vector
+    mu_given = means[idx_given]
+    mu_target = means[idx_target]
+
+    # 3. Partition the Covariance Matrix
+    # Covariance of the targets (2x2)
+    cov_target_target = cov[np.ix_(idx_target, idx_target)]
+    # Covariance of the given variables (3x3)
+    cov_given_given = cov[np.ix_(idx_given, idx_given)]
+    # Cross-covariance (2x3)
+    cov_target_given = cov[np.ix_(idx_target, idx_given)]
+
+    # Calculate Conditional Mean and Covariance
+    # solve for x in: cov_given_given * x = (observed_values - mu_given)
+    observed_values = np.array([black_hole_mass_exponent, known_mag_abs, z_src])
+    diff = observed_values - mu_given
+
+    # mu_cond = mu_target + cov_target_given * cov_given_given^-1 * diff
+    term1 = np.linalg.solve(cov_given_given, diff)
+    cond_mean = mu_target + np.dot(cov_target_given, term1)
+
+    # cov_cond = cov_target_target - cov_target_given * cov_given_given^-1 * cov_given_target
+    # cov_given_target is the transpose of cov_target_given
+    term2 = np.linalg.solve(cov_given_given, cov_target_given.T)
+    cond_cov = cov_target_target - np.dot(cov_target_given, term2)
+
+    # Sample from the new conditional distribution
+    # This returns shape (nsamps, 2) where col 0 is SF and col 1 is Tau
+    samples = np.random.multivariate_normal(cond_mean, cond_cov, size=nsamps)
+
+    sf_inf_samples = samples[:, 0]
+    tau_samples = samples[:, 1]
+
+    if nsamps == 1:
+        return sf_inf_samples[0], tau_samples[0]
+
+    return sf_inf_samples, tau_samples
+
+
+def get_breakpoint_frequency_and_std_agn_variability(log_SF_inf, log_tau):
+    """Convert SF_inf and tau to breakpoint frequency and standard deviation.
+
+    :param log_SF_inf: log_{10} of SF_inf in magnitudes.
+    :param log_tau: log_{10} of tau in days.
+    :return: log_{10} of the breakpoint frequency in 1/days and standard
+        deviation in magnitudes.
+    """
+    SF_inf = 10**log_SF_inf  # in mag
+    tau = 10**log_tau  # in days
+
+    standard_deviation = SF_inf / np.sqrt(2)  # in mag
+    breakpoint_frequency = 1 / (2 * np.pi * tau)  # in 1/days
+    log_breakpoint_frequency = np.log10(breakpoint_frequency)
+
+    return log_breakpoint_frequency, standard_deviation

@@ -15,6 +15,12 @@ from lenstronomy.LightModel.light_model import LightModel
 from lenstronomy.Util import data_util
 from lenstronomy.Util import util
 from slsim.Util.catalog_util import safe_value
+from slsim.ImageSimulation.image_simulation import simulate_image
+from slsim.ImageSimulation.image_quality_lenstronomy import (
+    kwargs_single_band,
+    get_observatory,
+)
+from scipy.ndimage import label
 
 from slsim.Lenses.lensed_system_base import LensedSystemBase
 from slsim.Deflectors.deflector import JAX_PROFILES
@@ -32,6 +38,11 @@ class Lens(LensedSystemBase):
         lens_equation_solver="lenstronomy_analytical",
         magnification_limit=0.01,
         los_class=None,
+        use_jax=True,
+        multi_plane=None,
+        shear=True,
+        convergence=True,
+        field_galaxies=None,
     ):
         """
 
@@ -50,12 +61,30 @@ class Lens(LensedSystemBase):
         :type magnification_limit: float >= 0
         :param los_class: line of sight dictionary (optional, takes these values instead of drawing from distribution)
         :type los_class: ~LOSIndividual() class object
+        :param use_jax: if True, will use JAX version of lenstronomy to do lensing calculations for models that are
+            supported in JAXtronomy
+        :type use_jax: bool
+        :param multi_plane: None for single-plane, 'Source' for multi-source plane, 'Deflector' for multi-deflector plane,
+            or 'Both' for both multi-deflector and multi-source plane
+        :type multi_plane: None or str
+        :param shear: whether to include external shear in multi-plane lensing
+        :type shear: bool
+        :param convergence: whether to include external convergence in multi-plane lensing
+        :type convergence: bool
+        :param field_galaxies: List of field galaxy instances.
+            Instances should be generated via :meth:`slsim.Sources.SourcePopulation.Galaxies.draw_field_galaxies`.
+            If None, no field galaxies are included.
+        :type field_galaxies: list[`slsim.Sources.source.Source`] or None
+
         """
         LensedSystemBase.__init__(
             self,
             source_class=source_class,
             deflector_class=deflector_class,
             los_class=los_class,
+            multi_plane=multi_plane,
+            shear=shear,
+            convergence=convergence,
         )
         # SourceList.__init__(self, source_class_list=source_class)
         self.cosmo = cosmo
@@ -68,6 +97,8 @@ class Lens(LensedSystemBase):
             z_source=self.max_redshift_source_class.redshift,
             cosmo=self.cosmo,
         )
+        self._use_jax = use_jax
+        self._field_galaxies = field_galaxies
 
     def source(self, index=0):
         """
@@ -167,7 +198,6 @@ class Lens(LensedSystemBase):
         )
         lens_eq_solver = LensEquationSolver(lens_model_class)
         point_source_pos_x, point_source_pos_y = x_source, y_source
-
         # uses analytical lens equation solver in case it is supported by lenstronomy for speed-up
         if (
             self._lens_equation_solver == "lenstronomy_analytical"
@@ -183,9 +213,11 @@ class Lens(LensedSystemBase):
             kwargs_lens,
             solver=solver,
             search_window=einstein_radius * 6,
-            min_distance=einstein_radius * 6 / 200,
+            min_distance=einstein_radius * 6 / 100,
             magnification_limit=self._magnification_limit,
+            num_iter_max=25,
         )
+
         return image_positions
 
     def validity_test(
@@ -194,6 +226,7 @@ class Lens(LensedSystemBase):
         max_image_separation=10,
         mag_arc_limit=None,
         second_brightest_image_cut=None,
+        snr_limit=None,
     ):
         """Check whether multiple lensing configuration matches selection and
         plausibility criteria.
@@ -210,6 +243,8 @@ class Lens(LensedSystemBase):
             image has a magnitude less than or equal to provided
             magnitude. e.g.: second_brightest_image_cut = {"i": 23, "g":
             24, "r": 22}
+        :param snr_limit: dictionary with key of bands and values of
+            signal-to-noise ratio limits, e.g., snr_limit = {"g": 20}
         :return: A boolean or dict of boolean.
         """
         validity_results = {}
@@ -219,6 +254,7 @@ class Lens(LensedSystemBase):
                 max_image_separation=max_image_separation,
                 mag_arc_limit=mag_arc_limit,
                 second_brightest_image_cut=second_brightest_image_cut,
+                snr_limit=snr_limit,
                 source_index=index,
             )
         if len(validity_results) == 1:
@@ -232,6 +268,7 @@ class Lens(LensedSystemBase):
         max_image_separation=10,
         mag_arc_limit=None,
         second_brightest_image_cut=None,
+        snr_limit=None,
         source_index=0,
     ):
         """Check whether a single lensing configuration matches selection and
@@ -249,13 +286,15 @@ class Lens(LensedSystemBase):
             image has a magnitude less than or equal to provided
             magnitude.
             eg: second_brightest_image_cut = {"i": 23, "g": 24, "r": 22}
+        :param snr_limit: dictionary with key of bands and values of
+            signal-to-noise ratio limits, e.g., snr_limit = {"g": 5}
         :param source_index: index of a source in source list.
         :return: boolean
         """
 
-        # Criteria 1:The redshift of the lens (z_lens) must be less than the
+        # Criteria 1: The redshift of the lens (z_lens) must be less than the
         # redshift of the source (z_source).
-        z_lens = self.deflector.redshift
+        z_lens = np.max(self.deflector_redshift)
         z_source = self.source(source_index).redshift
         if z_lens >= z_source:
             return False
@@ -308,11 +347,11 @@ class Lens(LensedSystemBase):
                 if bool_mag_limit is False:
                     return False
         # TODO make similar criteria for point source magnitudes
+
         # Criteria 7: (optional)
         # computes the magnitude of each image and if the second brightest image has
         # the magnitude less or equal to "second_bright_mag_max" provided in the dict
         # second_bright_image_cut.
-
         if second_brightest_image_cut is not None:
             for band_max, mag_max in second_brightest_image_cut.items():
                 if self.source(source_index).source_type == "extended":
@@ -328,16 +367,209 @@ class Lens(LensedSystemBase):
                 second_brightest_mag = np.sort(image_magnitude_list[source_index])[1]
                 if second_brightest_mag > mag_max:
                     return False
+
+        # Criteria 8: (optional)
+        # Compute signal-to-noise ratio of the lensed source
+        if snr_limit is not None:
+            if isinstance(snr_limit, (int, float)):
+                raise TypeError(
+                    "snr_limit must be a dict with band names as keys and SNR thresholds "
+                    "as values (e.g., {'g': 20})."
+                )
+            # field of view either 4 times the Einstein radius or at least 1 arcsecond
+            fov_arcsec = np.max([einstein_radius * 4, 1])
+
+            observatory = get_observatory(
+                list(snr_limit.keys())[0]
+            )  # assuming that all bands are from the same observatory
+
+            # SNR threshold must be met in every band
+            for band, snr in snr_limit.items():
+                snr_calculated = self.snr(
+                    band=band,
+                    fov_arcsec=fov_arcsec,
+                    observatory=observatory,
+                    snr_per_pixel_threshold=1,
+                )
+                if snr_calculated is None or np.max(snr_calculated) < snr:
+                    return False
         return True
-        # TODO: test for signal-to-noise ratio in surface brightness
+
+    def snr(
+        self,
+        band,
+        fov_arcsec=10,
+        observatory="LSST",
+        snr_per_pixel_threshold=1,
+        exposure_time=None,
+        num_exposures=None,
+    ):
+        """Calculate the signal-to-noise ratio (SNR) using
+        the method of `Holloway et al. (2023) <https://doi.org/10.1093/mnras/stad2371>`_.
+        This implementation is borrowed from `mejiro <https://github.com/AstroMusers/mejiro>`_,
+        described in `Wedig et al. (2025) <https://doi.org/10.3847/1538-4357/adc24f>`_.
+
+        The method proceeds as follows:
+
+        1. **Image simulation**: Two images are generated using :func:`simulate_image`:
+
+           - Lensed source with no noise.
+           - Lensed source, deflector, and sky background (as a flat level)
+
+        2. **Per-pixel SNR calculation**: The SNR for each pixel is computed as:
+
+           .. math::
+
+               \\text{SNR}_i = \\frac{N_{i,\\,S}}{\\sqrt{N_{i,\\,\\text{tot}}}}
+
+           where :math:`N_{i,\\,S}` are the source counts in pixel :math:`i` and
+           :math:`N_{i,\\,\\text{tot}}` are the total counts (source + deflector +
+           sky background level).
+
+        3. **Region identification**: Pixels with per-pixel SNR above the threshold
+           (default: 1) are identified. Contiguous regions of these pixels are labeled using
+           cross-shaped connectivity.
+
+        4. **Region SNR calculation**: For each multi-pixel region, the SNR is:
+
+           .. math::
+
+               \\text{SNR}_\\text{region} = \\frac{\\sum\\limits_i N_{i,\\,S}}{\\sqrt{\\sum\\limits_i N_{i,\\,\\text{tot}}}}
+
+           where the summations are over the :math:`n` pixels in the region.
+
+        5. **Result**: The maximum SNR among all identified regions is returned.
+           If no pixels exceed the threshold or no multi-pixel regions are found,
+           ``None`` is returned.
+
+        :param band: imaging band
+        :type band: string
+        :param fov_arcsec: field of view in arcseconds (default is 10)
+        :type fov_arcsec: float
+        :param observatory: observatory name (default is "LSST")
+        :type observatory: string
+        :param snr_per_pixel_threshold: minimum SNR per pixel required to include
+            a pixel in a region (default is 1)
+        :type snr_per_pixel_threshold: float
+        :param exposure_time: exposure time in seconds for computing SNR. If None, will use defaults
+            from lenstronomy.SimulationAPI.ObservationConfig based on the observatory.
+        :type exposure_time: float or None
+        :param num_exposures: number of exposures. If None, a default number will be retrieved from
+            lenstronomy's SimulationAPI.ObservationConfig based on the observatory.
+        :type num_exposures: int or None
+        :return: maximum SNR found among the regions above the threshold.
+            Returns ``None`` if no pixels are above the threshold or if no
+            multi-pixel regions are found.
+        :rtype: float or None
+        """
+        # set the size of the image
+        kwargs_band = kwargs_single_band(band=band, observatory=observatory)
+        pixel_scale = kwargs_band["pixel_scale"]
+        num_pix = int(fov_arcsec / pixel_scale)
+
+        # get surface brightness of the lensed source
+        source = simulate_image(
+            lens_class=self,
+            band=band,
+            num_pix=num_pix,
+            add_noise=False,  # no noise
+            add_background_counts=False,  # no background counts
+            observatory=observatory,
+            kwargs_psf=None,
+            kwargs_numerics=None,
+            kwargs_single_band=kwargs_band,
+            with_source=True,
+            with_deflector=False,  # no deflector
+            with_point_source=True,
+            image_units_counts=True,  # units of counts, not counts/sec
+            exposure_time=exposure_time,
+            num_exposures=num_exposures,
+        )
+
+        # get simulated image (source + deflector + background noise)
+        image = simulate_image(
+            lens_class=self,
+            band=band,
+            num_pix=num_pix,
+            add_noise=False,  # don't use the sim_api.noise_for_model()
+            add_background_counts=True,  # don't background-subtract
+            observatory=observatory,
+            kwargs_psf=None,
+            kwargs_numerics=None,
+            kwargs_single_band=kwargs_band,
+            with_source=True,
+            with_deflector=True,  # add deflector
+            with_point_source=True,
+            image_units_counts=True,  # units of counts, not counts/sec
+            exposure_time=exposure_time,
+            num_exposures=num_exposures,
+        )
+
+        # calculate the denominator of the SNR
+        noise = np.sqrt(image)
+
+        # calculate SNR per pixel
+        snr_array = np.nan_to_num(source / noise, nan=0, posinf=0, neginf=0)
+
+        # calculate SNR regions based on SNR per pixel threshold
+        masked_snr_array = np.ma.masked_where(
+            snr_array <= snr_per_pixel_threshold, snr_array
+        )
+
+        # if no pixels are above the threshold, return None
+        if masked_snr_array.mask.all():
+            return None
+
+        structure = np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]])
+        labeled_array, num_regions = label(
+            masked_snr_array.filled(0), structure=structure
+        )
+
+        # calculate the SNR for each region, excluding single-pixel regions
+        snrs = []
+        for i in range(1, num_regions + 1):
+            region_mask = labeled_array == i
+
+            # signal: sum of lensed source counts in region
+            source_counts = np.sum(source[region_mask])
+
+            # variance: sum of all variance contributions in region
+            variance = np.sum(image[region_mask])
+
+            # SNR
+            snr = source_counts / np.sqrt(variance)
+            snrs.append(snr)
+
+        # return the maximum SNR
+        return np.max(snrs) if snrs else None
 
     @property
     def deflector_redshift(self):
         """
 
         :return: lens redshift
+
         """
-        return self.deflector.redshift
+        deflector_redshifts = [self.deflector.redshift]
+
+        if self.multi_plane or self.source_number > 1:
+
+            if self.deflector.deflector_type in ["NFW_CLUSTER"]:
+
+                if self.deflector.cored_profile:
+                    deflector_redshifts.append(self.deflector.redshift)
+
+                deflector_redshifts.extend(self.deflector.subhalo_redshifts)
+
+            if self.shear:
+                deflector_redshifts.append(self.deflector.redshift)
+
+            if self.convergence:
+                deflector_redshifts.append(self.deflector.redshift)
+
+            return deflector_redshifts
+        else:
+            return deflector_redshifts[0]
 
     @property
     def source_redshift_list(self):
@@ -396,8 +628,11 @@ class Lens(LensedSystemBase):
 
         :return: Einstein radius of a deflector.
         """
+
         if not hasattr(self, "_theta_E_infinity"):
-            self._theta_E_infinity = self.deflector.theta_e_infinity(self.cosmo)
+            self._theta_E_infinity = self.deflector.theta_e_infinity(
+                self.cosmo, multi_plane=self.multi_plane, use_jax=self._use_jax
+            )
         return self._theta_E_infinity
 
     def _approximate_einstein_radius(self, source_index):
@@ -437,7 +672,7 @@ class Lens(LensedSystemBase):
                 kappa_ext = kappa_ext_convention
             else:
                 beta = self._lens_cosmo.beta_double_source_plane(
-                    z_lens=self.deflector_redshift,
+                    z_lens=self.deflector.redshift,
                     z_source_2=self.max_redshift_source_class.redshift,
                     z_source_1=self.source(source_index).redshift,
                 )
@@ -555,10 +790,10 @@ class Lens(LensedSystemBase):
         arrival_times = self._point_source_arrival_times(source_index)
         if type(t_obs) is np.ndarray and len(t_obs) > 1:
             observer_times = (
-                t_obs[:, np.newaxis] - arrival_times + np.min(arrival_times)
+                t_obs[:, np.newaxis] - arrival_times - np.max(arrival_times)
             ).T
         else:
-            observer_times = (t_obs - arrival_times + np.min(arrival_times))[
+            observer_times = (t_obs - arrival_times - np.max(arrival_times))[
                 :, np.newaxis
             ]
 
@@ -576,8 +811,6 @@ class Lens(LensedSystemBase):
         (array) with macro-model magnifications. This function provided
         magnitudes of all the sources.
 
-        # TODO: time-variability with micro-lensing
-
         :param band: imaging band
         :type band: string
         :param lensed: if True, returns the lensed magnified magnitude
@@ -590,15 +823,15 @@ class Lens(LensedSystemBase):
         :param kwargs_microlensing: additional (optional) dictionary of
             settings required by micro-lensing calculation that do not
             depend on the Lens() class. It is of type:
-            kwargs_microlensing = {"kwargs_MagnificationMap":
-            kwargs_MagnificationMap, "point_source_morphology":
+            kwargs_microlensing = {"kwargs_magnification_map":
+            kwargs_magnification_map, "point_source_morphology":
             'gaussian' or 'agn' or 'supernovae',
             "kwargs_source_morphology": kwargs_source_morphology} The
             kwargs_source_morphology is required for the source
-            morphology calculation. The kwargs_MagnificationMap is
+            morphology calculation. The kwargs_magnification_map is
             required for the microlensing calculation. See the classes
             in slsim.Microlensing for more details on the
-            kwargs_MagnificationMap and kwargs_source_morphology.
+            kwargs_magnification_map and kwargs_source_morphology.
         :type kwargs_microlensing: dict
         :return: list of point source magnitudes.
         """
@@ -630,8 +863,6 @@ class Lens(LensedSystemBase):
         (array) with macro-model magnifications. This function does operation
         only for the single source.
 
-        # TODO: time-variability of the source with micro-lensing
-
         :param band: imaging band
         :type band: string
         :param source_index: index of a source in source list.
@@ -644,15 +875,15 @@ class Lens(LensedSystemBase):
         :param kwargs_microlensing: additional (optional) dictionary of
             settings required by micro-lensing calculation that do not
             depend on the Lens() class. It is of type:
-            kwargs_microlensing = {"kwargs_MagnificationMap":
-            kwargs_MagnificationMap, "point_source_morphology":
+            kwargs_microlensing = {"kwargs_magnification_map":
+            kwargs_magnification_map, "point_source_morphology":
             'gaussian' or 'agn' or 'supernovae',
             "kwargs_source_morphology": kwargs_source_morphology} The
             kwargs_source_morphology is required for the source
-            morphology calculation. The kwargs_MagnificationMap is
+            morphology calculation. The kwargs_magnification_map is
             required for the microlensing calculation. See the classes
             in slsim.Microlensing for more details on the
-            kwargs_MagnificationMap and kwargs_source_morphology.
+            kwargs_magnification_map and kwargs_source_morphology.
         :type kwargs_microlensing: dict
         :return: point source magnitude of a single source
         """
@@ -673,7 +904,7 @@ class Lens(LensedSystemBase):
                 if microlensing:
                     microlensing_magnitudes = self._point_source_magnitude_microlensing(
                         band=band,
-                        time=time,
+                        time=image_observed_times,
                         source_index=source_index,
                         kwargs_microlensing=kwargs_microlensing,
                     )
@@ -689,7 +920,9 @@ class Lens(LensedSystemBase):
                 for i in range(len(magnif_log)):
                     magnified_mag_list.append(source_mag_unlensed - magnif_log[i])
                 return np.array(magnified_mag_list)
-        return self.source(source_index).point_source_magnitude(band)
+        return self.source(source_index).point_source_magnitude(
+            band, image_observation_times=time
+        )
 
     def extended_source_magnitude_for_each_image(self, band, lensed=False):
         """Extended source magnitudes, either unlensed (single value) or lensed
@@ -748,6 +981,13 @@ class Lens(LensedSystemBase):
         kappa_tot_images = lens_model_lenstronomy.kappa(
             image_positions_x, image_positions_y, lenstronomy_kwargs_lens
         )
+
+        # capping kappa_star to be less than kappa_tot to avoid unphysical microlensing parameters
+        # TODO: In future we could also considering optimizing by not doing microlensing calculation if there are no stars/ small stellar mass/ etc.
+        kappa_star_images = np.minimum(
+            kappa_star_images, np.array(kappa_tot_images) - 1e-6
+        )
+
         gamma1, gamma2 = lens_model_lenstronomy.gamma(
             image_positions_x, image_positions_y, lenstronomy_kwargs_lens
         )
@@ -758,7 +998,7 @@ class Lens(LensedSystemBase):
         return kappa_star_images, kappa_tot_images, shear_images, shear_angle_images
 
     def _point_source_magnitude_microlensing(
-        self, band, time, source_index, kwargs_microlensing
+        self, band, time, source_index, kwargs_microlensing=None
     ):
         """Returns point source magnitude variability from only microlensing
         effect. This function does operation only for the single source.
@@ -766,71 +1006,122 @@ class Lens(LensedSystemBase):
         :param band: imaging band
         :type band: string
         :param time: time is an image observation time in units of days.
-        :param kwargs_microlensing: additional dictionary of settings
-            required by micro-lensing calculation that do not depend on
-            the Lens() class. It is of type: kwargs_microlensing =
-            {"kwargs_MagnificationMap": kwargs_MagnificationMap,
-            "point_source_morphology": 'gaussian' or 'agn' or
-            'supernovae', "kwargs_source_morphology":
-            kwargs_source_morphology} The kwargs_source_morphology is
-            required for the source morphology calculation. The
-            kwargs_MagnificationMap is required for the microlensing
-            calculation.
-        :type kwargs_microlensing: dict
+        :param kwargs_microlensing (Optional): additional dictionary of
+            settings required by micro-lensing calculation. It is of
+            type: kwargs_microlensing = {"kwargs_magnification_map":
+            kwargs_magnification_map, "point_source_morphology":
+            'gaussian' or 'agn' or 'supernovae',
+            "kwargs_source_morphology": kwargs_source_morphology} The
+            kwargs_source_morphology is required for the source
+            morphology calculation. The kwargs_magnification_map is
+            required for the microlensing calculation. If None, defaults
+            are used corresponding to the source in the lens class.
+        :type kwargs_microlensing: dict or None
         :return: point source magnitude for a single source, does not
             include the macro-magnification.
         :rtype: numpy array
         """
-
-        # get microlensing parameters
-        kappa_star_images, kappa_tot_images, shear_images, shear_angle_images = (
-            self._microlensing_parameters_for_image_positions_single_source(
-                band=band, source_index=source_index
-            )
-        )
-
         # importing here to keep it optional
         from slsim.Microlensing.lightcurvelensmodel import (
             MicrolensingLightCurveFromLensModel,
         )
+
+        # get microlensing parameters
+        kappa_star_images, kappa_tot_images, shear_images, shear_angle_images_rad = (
+            self._microlensing_parameters_for_image_positions_single_source(
+                band=band, source_index=source_index
+            )
+        )
+        # convert shear angle to degrees for the microlensing class
+        shear_phi_angle_images = np.degrees(shear_angle_images_rad)
 
         # select random RA and DEC in Sky for the lens,
         # #TODO: In future, this should be the position of the lens in the sky
         ra_lens = np.random.uniform(0, 360)  # degrees
         dec_lens = np.random.uniform(-90, 90)  # degrees
 
-        self._microlensing_model_class = MicrolensingLightCurveFromLensModel()
-        microlensing_magnitudes = self._microlensing_model_class.generate_point_source_microlensing_magnitudes(
-            time=time,
-            source_redshift=self.source(source_index).redshift,
-            deflector_redshift=self.deflector_redshift,
-            kappa_star_images=kappa_star_images,
-            kappa_tot_images=kappa_tot_images,
-            shear_images=shear_images,
-            shear_phi_angle_images=shear_angle_images,
-            ra_lens=ra_lens,
-            dec_lens=dec_lens,
-            deflector_velocity_dispersion=self.deflector_velocity_dispersion(),
-            cosmology=self.cosmo,
-            **kwargs_microlensing,
+        # Update kwargs_microlensing from source class with defaults if not provided
+        kwargs_microlensing_updated = self.source(
+            source_index
+        ).prepare_microlensing_kwargs(
+            band=band,
+            cosmo=self.cosmo,
+            kwargs_microlensing=kwargs_microlensing,
         )
+
+        # Instantiate the microlensing model with all required parameters
+        # Check if the microlensing model class is already instantiated for this source index to avoid redundant instantiation
+        if not hasattr(self, "_microlensing_model_class"):
+            self._microlensing_model_class = {}
+
+        if source_index not in self._microlensing_model_class.keys():
+            self._microlensing_model_class[source_index] = (
+                MicrolensingLightCurveFromLensModel(
+                    source_redshift=self.source(source_index).redshift,
+                    deflector_redshift=self.deflector_redshift,
+                    kappa_star_images=kappa_star_images,
+                    kappa_tot_images=kappa_tot_images,
+                    shear_images=shear_images,
+                    shear_phi_angle_images=shear_phi_angle_images,
+                    ra_lens=ra_lens,
+                    dec_lens=dec_lens,
+                    deflector_velocity_dispersion=self.deflector_velocity_dispersion(),
+                    cosmology=self.cosmo,
+                    **kwargs_microlensing_updated,
+                )
+            )
+        else:
+            # Update existing instance with new parameters if needed
+            self._microlensing_model_class[source_index].update_source_morphology(
+                kwargs_microlensing_updated["kwargs_source_morphology"]
+            )
+
+        # Generate microlensing magnitudes with the simplified method call
+        microlensing_magnitudes = self._microlensing_model_class[
+            source_index
+        ].generate_point_source_microlensing_magnitudes(time=time)
 
         return microlensing_magnitudes  # # does not include the macro-lensing effect
 
-    @property
-    def microlensing_model_class(self):
-        """Returns the MicrolensingLightCurveFromLensModel class instance used
-        for the microlensing calculations. Only available if microlensing=True
-        was used in point_source_magnitude.
+    def microlensing_model_class(self, source_index):
+        """Returns the MicrolensingLightCurveFromLensModel class instance
+        corresponding to a specific source index for the microlensing
+        calculations. Only available if microlensing=True was used in
+        point_source_magnitude.
 
-        :return: MicrolensingLightCurveFromLensModel class instance
+        :param source_index: index of a source in source list.
+        :return: MicrolensingLightCurveFromLensModel class instance for
+            the specified source.
         """
         if hasattr(self, "_microlensing_model_class"):
-            return self._microlensing_model_class
+            if source_index not in self._microlensing_model_class:
+                raise AttributeError(
+                    f"MicrolensingLightCurveFromLensModel class is not set for source index {source_index}. "
+                    "Please run point_source_magnitude with microlensing=True."
+                )
+            return self._microlensing_model_class[source_index]
         else:
             raise AttributeError(
                 "MicrolensingLightCurveFromLensModel class is not set. "
                 "Please run point_source_magnitude with microlensing=True."
+            )
+
+    def reset_microlensing_model_class(self, source_index):
+        """Resets the MicrolensingLightCurveFromLensModel class instance for a
+        specific source index. This can be used to clear cached microlensing
+        models if needed.
+
+        :param source_index: index of a source in source list.
+        """
+        if (
+            hasattr(self, "_microlensing_model_class")
+            and source_index in self._microlensing_model_class
+        ):
+            del self._microlensing_model_class[source_index]
+        else:
+            raise AttributeError(
+                f"MicrolensingLightCurveFromLensModel class is not set for source index {source_index}. "
+                "Cannot reset."
             )
 
     def extended_source_magnitude(self, band, lensed=False):
@@ -1006,7 +1297,7 @@ class Lens(LensedSystemBase):
         # TODO: this does not work well for clusters when the lensed source is relatively small compared to the image
         num_pix = 200
         delta_pix = theta_E * 4 / num_pix
-        x, y = util.make_grid(numPix=num_pix, deltapix=delta_pix)
+        x, y = util.make_grid(num_pix=num_pix, delta_pix=delta_pix)
         x += center_source[0]
         y += center_source[1]
         beta_x, beta_y = lens_model_class.ray_shooting(x, y, kwargs_lens)
@@ -1021,12 +1312,35 @@ class Lens(LensedSystemBase):
             extended_source_magnification = 0
         return extended_source_magnification
 
-    def lenstronomy_kwargs(self, band=None):
+    def lenstronomy_kwargs(
+        self, band=None, time=None, microlensing=False, kwargs_microlensing=None
+    ):
         """Generates lenstronomy dictionary conventions for the class object.
 
         :param band: imaging band, if =None, will result in un-
             normalized amplitudes
         :type band: string or None
+        :param time: time is an image observation time in units of days.
+            If None, provides magnitude without variability.
+        :type time: float
+        :param microlensing: if True, include microlensing variability
+            in the point source.
+        :type microlensing: bool
+        :param kwargs_microlensing: additional (optional) dictionary of
+            settings required by micro-lensing calculation that do not
+            depend on the Lens() class. It is of type:
+            kwargs_microlensing = {"kwargs_magnification_map":
+            kwargs_magnification_map, "point_source_morphology":
+            'gaussian' or 'agn' or 'supernovae',
+            "kwargs_source_morphology": kwargs_source_morphology} The
+            kwargs_source_morphology is required for the source
+            morphology calculation. The kwargs_magnification_map is
+            required for the microlensing calculation. See the classes
+            in slsim.Microlensing for more details on the
+            kwargs_magnification_map and kwargs_source_morphology. If
+            None, defaults are used corresponding to the source in the
+            lens class.
+        :type kwargs_microlensing: dict or None
         :return: lenstronomy model and parameter conventions
         """
         lens_model, kwargs_lens = self.deflector_mass_model_lenstronomy(source_index=0)
@@ -1038,15 +1352,27 @@ class Lens(LensedSystemBase):
             kwargs_lens_light,
         ) = self.deflector.light_model_lenstronomy(band=band)
         # list of
+
+        # field galaxies
+        if self._field_galaxies is not None:
+            field_galaxies_lens_model_list, kwargs_field_galaxies = (
+                self.field_galaxy_light_model_lenstronomy(band=band)
+            )
+            lens_light_model_list += field_galaxies_lens_model_list
+            kwargs_lens_light += kwargs_field_galaxies
+
         kwargs_model = {
             "lens_light_model_list": lens_light_model_list,
             "lens_model_list": lens_model_list,
         }
-        if self.source_number > 1:
-            kwargs_model["lens_redshift_list"] = [self.deflector_redshift] * len(
-                lens_model_list
-            )
-            kwargs_model["z_lens"] = self.deflector_redshift
+
+        if self.multi_plane or self.source_number > 1:
+
+            kwargs_model["lens_redshift_list"] = self.deflector_redshift
+            kwargs_model["z_lens"] = self.deflector.redshift
+            kwargs_model["z_source"] = self.max_redshift_source_class.redshift
+            kwargs_model["cosmo"] = self.cosmo
+
             if self.max_redshift_source_class.extended_source_type in [
                 "single_sersic",
                 "interpolated",
@@ -1061,10 +1387,13 @@ class Lens(LensedSystemBase):
             kwargs_model["z_source_convention"] = (
                 self.max_redshift_source_class.redshift
             )
-            kwargs_model["z_source"] = self.max_redshift_source_class.redshift
-            kwargs_model["cosmo"] = self.cosmo
 
-        sources, sources_kwargs = self.source_light_model_lenstronomy(band=band)
+        sources, sources_kwargs = self.source_light_model_lenstronomy(
+            band=band,
+            time=time,
+            microlensing=microlensing,
+            kwargs_microlensing=kwargs_microlensing,
+        )
         # ensure that only the models that exist are getting added to kwargs_model
         for k in sources.keys():
             kwargs_model[k] = sources[k]
@@ -1108,19 +1437,26 @@ class Lens(LensedSystemBase):
             gamma1_lenstronomy, gamma2_lenstronomy = ellipticity_slsim_to_lenstronomy(
                 e1_slsim=gamma1, e2_slsim=gamma2
             )
-            kwargs_lens.append(
-                {
-                    "gamma1": gamma1_lenstronomy,
-                    "gamma2": gamma2_lenstronomy,
-                    "ra_0": 0,
-                    "dec_0": 0,
-                }
-            )
-            kwargs_lens.append({"kappa": kappa_ext, "ra_0": 0, "dec_0": 0})
-            lens_mass_model_list.append("SHEAR")
-            lens_mass_model_list.append("CONVERGENCE")
+            if self.shear:
+
+                kwargs_lens.append(
+                    {
+                        "gamma1": gamma1_lenstronomy,
+                        "gamma2": gamma2_lenstronomy,
+                        "ra_0": 0,
+                        "dec_0": 0,
+                    },
+                )
+                lens_mass_model_list.append("SHEAR")
+
+            if self.convergence:
+
+                kwargs_lens.append({"kappa": kappa_ext, "ra_0": 0, "dec_0": 0})
+                lens_mass_model_list.append("CONVERGENCE")
+
             self._kwargs_lens = kwargs_lens
             self._lens_mass_model_list = lens_mass_model_list
+
         else:
             raise ValueError(
                 "Deflector model %s not supported for lenstronomy model"
@@ -1128,24 +1464,38 @@ class Lens(LensedSystemBase):
             )
 
         # For significant speedup, use these mass profiles from jaxtronomy
-        use_jax = []
-        for profile in self._lens_mass_model_list:
-            if profile in JAX_PROFILES:
-                use_jax.append(True)
-            else:
-                use_jax.append(False)
 
         # TODO: replace with change_source_redshift() currently not fully working
         # self._lens_model.change_source_redshift(z_source=z_source)
+        if self.multi_plane:
+            lens_redshift_list = self.deflector_redshift
+            if self._use_jax is True:
+                use_jax = True
+            else:
+                use_jax = False
+        else:
+            lens_redshift_list = None
+            # For significant speedup, use these mass profiles from jaxtronomy
+            if self._use_jax is True:
+                use_jax = []
+                for profile in self._lens_mass_model_list:
+                    if profile in JAX_PROFILES:
+                        use_jax.append(True)
+                    else:
+                        use_jax.append(False)
+            else:
+                use_jax = False
         lens_model = LensModel(
             lens_model_list=self._lens_mass_model_list,
             cosmo=self.cosmo,
-            z_lens=self.deflector_redshift,
+            lens_redshift_list=lens_redshift_list,
+            z_lens=self.deflector.redshift,
             z_source=z_source,
             z_source_convention=self.max_redshift_source_class.redshift,
-            multi_plane=False,
             use_jax=use_jax,
+            multi_plane=bool(self.multi_plane),
         )
+
         return lens_model, self._kwargs_lens
 
     def deflector_light_model_lenstronomy(self, band):
@@ -1217,7 +1567,7 @@ class Lens(LensedSystemBase):
                         lensed=True,
                         microlensing=microlensing,
                         kwargs_microlensing=kwargs_microlensing,
-                    )
+                    ).flatten()
                 ps_type, kwargs_ps_ = self.source(index).kwargs_point_source(
                     band, image_pos_x=img_x, image_pos_y=img_y, ps_mag=image_magnitudes
                 )
@@ -1230,6 +1580,25 @@ class Lens(LensedSystemBase):
         all_source_kwarg_dict["kwargs_source"] = kwargs_source
         all_source_kwarg_dict["kwargs_ps"] = kwargs_ps
         return source_models, all_source_kwarg_dict
+
+    def field_galaxy_light_model_lenstronomy(self, band):
+        """Returns field galaxy light model instance and parameters in
+        lenstronomy conventions.
+
+        :param band: imaging band
+        :type band: str
+        :return: field_galaxy_light_model_list,
+            kwargs_field_galaxy_light
+        """
+        field_galaxy_light_model_list = []
+        kwargs_field_galaxy_light = []
+        if self._field_galaxies is None:
+            return field_galaxy_light_model_list, kwargs_field_galaxy_light
+        for field_galaxy in self._field_galaxies:
+            model_list, kwargs = field_galaxy.kwargs_extended_light(band=band)
+            field_galaxy_light_model_list += model_list
+            kwargs_field_galaxy_light += kwargs
+        return field_galaxy_light_model_list, kwargs_field_galaxy_light
 
     def kappa_star(self, ra, dec):
         """Computes the stellar surface density at location (ra, dec) in units
@@ -1377,7 +1746,7 @@ class Lens(LensedSystemBase):
         :return: LensModel instance for the halos only, and list of
             kwargs for the subhalos.
         """
-        z_lens = self.deflector_redshift
+        z_lens = self.deflector.redshift
         z_source = self.max_redshift_source_class.redshift
         if hasattr(self, "realization"):
             subhalos_lens_model_list, redshift_array, kwargs_subhalos, _ = (
@@ -1488,3 +1857,15 @@ class Lens(LensedSystemBase):
             self.extended_source_magnification[0]
         )
         return df
+
+    def add_field_galaxies(self, field_galaxies):
+        """Add field galaxies to the lens. These galaxies will be included as
+        additional light in the lens plane, and will not be explicitly included
+        as deflectors in the lensing calculation.
+
+        :param field_galaxies: List of field galaxy instances.
+            Instances should be generated via :meth:`slsim.Sources.SourcePopulation.Galaxies.draw_field_galaxies`.
+            If None, no field galaxies are included.
+        :type field_galaxies: list[`slsim.Sources.source.Source`] or None
+        """
+        self._field_galaxies = field_galaxies

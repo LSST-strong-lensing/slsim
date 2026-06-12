@@ -86,6 +86,64 @@ class TestImageSimulation(object):
 
         assert len(image) == 100
 
+    def test_simulate_image_with_kwargs_single_band(self):
+        """Test that passing kwargs_single_band produces identical results to
+        letting simulate_image compute it internally."""
+        from slsim.ImageSimulation.image_quality_lenstronomy import kwargs_single_band
+
+        # Get kwargs_single_band manually
+        kwargs_band = kwargs_single_band(observatory="LSST", band="g")
+
+        # Image without passing kwargs_single_band (standard path)
+        image_without = simulate_image(
+            lens_class=self.gg_lens,
+            band="g",
+            num_pix=50,
+            add_noise=False,  # deterministic comparison
+            observatory="LSST",
+        )
+
+        # Image with pre-computed kwargs_single_band (optimization path)
+        image_with = simulate_image(
+            lens_class=self.gg_lens,
+            band="g",
+            num_pix=50,
+            add_noise=False,
+            observatory="LSST",
+            kwargs_single_band=kwargs_band,
+        )
+
+        # Results should be identical
+        npt.assert_array_almost_equal(image_without, image_with, decimal=10)
+
+    def test_simulate_image_units_counts(self):
+        """Test that image_units_counts parameter correctly scales the image by
+        exposure time."""
+        image_cps = simulate_image(
+            lens_class=self.gg_lens,
+            band="g",
+            num_pix=50,
+            add_noise=False,  # no noise to ensure deterministic comparison
+            observatory="LSST",
+            image_units_counts=False,
+        )
+        image_counts = simulate_image(
+            lens_class=self.gg_lens,
+            band="g",
+            num_pix=50,
+            add_noise=False,
+            observatory="LSST",
+            image_units_counts=True,
+        )
+
+        # The counts image should be the cps image multiplied by exposure time
+        # All non-zero pixels should have the same ratio (the exposure time)
+        ratio = image_counts / image_cps
+        nonzero_mask = image_cps > 0
+        if np.any(nonzero_mask):
+            exposure_time = ratio[nonzero_mask][0]
+            npt.assert_array_almost_equal(ratio[nonzero_mask], exposure_time, decimal=5)
+
     def test_sharp_image(self):
         image = sharp_image(
             lens_class=self.gg_lens,
@@ -620,6 +678,7 @@ class TestImageSimulationInterpSingleSource:
             band="g",
             num_pix=100,
             add_noise=True,
+            add_background_counts=True,
             observatory="LSST",
         )
         assert image.shape == (100, 100)

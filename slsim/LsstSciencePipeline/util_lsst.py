@@ -5,6 +5,8 @@ from slsim.Util.param_util import (
     fits_append_table,
     convert_mjd_to_days,
     transient_event_time_mjd,
+    flux_error_to_magnitude_error,
+    magnitude_to_amplitude,
 )
 import os
 
@@ -161,7 +163,7 @@ def opsim_variable_lens_injection(
         dec), and the band in which the observation is taken (column
         name should be "band").
     :return: Astropy table of injected lenses and exposure information
-        of dp0 data
+        of dp0 data.
     """
 
     ## chose transient starting point randomly.
@@ -210,3 +212,182 @@ def opsim_variable_lens_injection(
     exposure_data_new.add_columns([lens_col, final_image_col])
 
     return exposure_data_new
+
+
+def transient_data_with_cadence(
+    lens_class,
+    exposure_data,
+    noise=True,
+    symmetric=False,
+    pix_scale=0.2,
+    random_seed=None,
+):
+    """Puts lensed transient into the provided cadence. For LSST, this will be
+    cadence from opsim.
+
+    :param lens_class: Lens() object
+    :param exposure_data: An astropy table of exposure data. One entry
+        of table_list_data generated from the
+        opsim_time_series_images_data function. It must contain the rms
+        of background noise fluctuations (column name should be
+        "bkg_noise"), psf kernel for each exposure (column name should
+        be "psf_kernel", these are pixel psf kernel for each single
+        exposure images in time series image), observation time (column
+        name should be "obs_time", these are observation time in days
+        for each single exposure images in time series images), exposure
+        time (column name should be "expo_time", these are exposure time
+        for each single exposure images in time series images),
+        magnitude zero point (column name should be "zero_point", these
+        are zero point magnitudes for each single exposure images in
+        time series image), coordinates of the object (column name
+        should be "calexp_center"), these are the coordinates in (ra,
+        dec), and the band in which the observation is taken (column
+        name should be "band").
+    :param noise: Boolean. If True, a gaussian noise is added to the
+        lightcurve flux.
+    :param symmetric: Boolean. If True, a symmetric error on magnitude
+        is provided.
+    :param pixscale: pixel scale of the observing instrument.
+    :return: Astropy table of lightcurve and exposure information of dp0
+        data. The table contains: Observation time in days, lens id,
+        magnitude of each image and associated errors, lens image. If
+        the lens system produces fewer than four images, the missing
+        magnitudes and errors are filled with -1.
+    """
+    copied_exposure_data = exposure_data.copy()
+    min_mjd = min(copied_exposure_data["obs_time"])
+    max_mjd = max(copied_exposure_data["obs_time"])
+
+    min_lc_time, max_lc_time = (
+        min(lens_class.source(0)._source._lightcurve_time),
+        max(lens_class.source(0)._source._lightcurve_time),
+    )
+
+    start_mjd_time = transient_event_time_mjd(min_mjd, max_mjd, random_seed=random_seed)
+
+    copied_exposure_data["obs_time_in_days"] = convert_mjd_to_days(
+        copied_exposure_data["obs_time"], start_mjd_time
+    )
+
+    copied_exposure_data = copied_exposure_data[
+        (copied_exposure_data["obs_time_in_days"] >= min_lc_time - 50)
+        & (copied_exposure_data["obs_time_in_days"] <= max_lc_time)
+    ]
+
+    ra_dec = copied_exposure_data["calexp_center"][0]
+    lens_id = lens_class.generate_id(ra=ra_dec[0].degree, dec=ra_dec[1].degree)
+
+    num_images = lens_class.image_number[0]
+    mag_images = {f"mag_image_{i+1}": [] for i in range(num_images)}
+    mag_errors = {
+        f"mag_error_image_{i+1}_{err}": []
+        for i in range(num_images)
+        for err in ["low", "high"]
+    }
+
+    for exposure in copied_exposure_data:
+        obs_time = exposure["obs_time_in_days"]
+        magnitudes = lens_class.point_source_magnitude(
+            band=exposure["band"], lensed=True, time=obs_time
+        )[0]
+
+        # Compute noise
+        bkg_noise, fwhm = exposure["bkg_noise"], exposure["psf_fwhm"]
+        N_pix = np.pi * (2 * fwhm) ** 2 / (pix_scale**2)
+        sigma_noise_total = bkg_noise / np.sqrt(N_pix)
+
+        for i in range(num_images):
+            amplitude = magnitude_to_amplitude(magnitudes[i], exposure["zero_point"])
+            total_counts = amplitude * exposure["expo_time"]
+            poisson_noise = np.sqrt(total_counts)
+            flux_err = np.sqrt(sigma_noise_total**2 + poisson_noise**2)
+
+            mag_realiz, mag_err_low, mag_err_high = flux_error_to_magnitude_error(
+                amplitude,
+                flux_err,
+                exposure["zero_point"],
+                noise=noise,
+                symmetric=symmetric,
+            )
+
+            mag_images[f"mag_image_{i+1}"].append(mag_realiz)
+            mag_errors[f"mag_error_image_{i+1}_low"].append(mag_err_low)
+            mag_errors[f"mag_error_image_{i+1}_high"].append(mag_err_high)
+
+    # Fill missing values for systems with <4 images
+    for i in range(num_images, 4):
+        mag_images[f"mag_image_{i+1}"] = [-1.0] * len(copied_exposure_data)
+        mag_errors[f"mag_error_image_{i+1}_low"] = [-1.0] * len(copied_exposure_data)
+        mag_errors[f"mag_error_image_{i+1}_high"] = [-1.0] * len(copied_exposure_data)
+
+    for key in list(mag_images.keys()) + list(mag_errors.keys()):
+        mag_images_or_errors = mag_images if key in mag_images else mag_errors
+        mag_images_or_errors[key] = np.array(
+            mag_images_or_errors[key], dtype=float
+        ).reshape(-1)
+
+    # Create and add columns to the table
+    copied_exposure_data.add_columns(
+        [Column(name="lens_id", data=[lens_id] * len(copied_exposure_data))]
+        + [Column(name=name, data=data) for name, data in mag_images.items()]
+        + [Column(name=name, data=data) for name, data in mag_errors.items()]
+    )
+
+    return copied_exposure_data
+
+
+def extract_lightcurves_in_different_bands(transient_data_table):
+    """Extract lightcurves and images in different bands from the given
+    catalog. This a function written to read data table from
+    transient_data_with_cadence function above.
+
+    :param transient_data_table: An astropy table containing lightcurves
+        in a certain cadence. This table must contain magnitude and
+        corresponding errors. The column name for magnitude should be
+        "mag_image_n", and column names for the error should be
+        "mag_error_image_n_low" and "mag_error_image_n_high", where n
+        could be 1, 2, 3, or 4.
+    :return: A dictionary of magnitudes, associated errors, observation
+        times, structured by band.
+    """
+    table = transient_data_table
+    # Extract unique bands
+    bands = np.unique(table["band"])
+
+    # Initialize dictionaries to hold magnitudes, errors, observation times, and
+    # optionally image lists
+    magnitudes = {f"mag_image_{i}": {band: [] for band in bands} for i in range(1, 5)}
+    errors_low = {
+        f"mag_error_image_{i}_low": {band: [] for band in bands} for i in range(1, 5)
+    }
+    errors_high = {
+        f"mag_error_image_{i}_high": {band: [] for band in bands} for i in range(1, 5)
+    }
+    obs_time = {band: [] for band in bands}
+
+    # Populate dictionaries with magnitudes, errors, and optionally image lists
+    # corresponding to each band
+    for band in bands:
+        # Filter rows that correspond to the current band
+        band_data = table[table["band"] == band]
+        obs_time[band] = band_data["obs_time"].tolist()
+
+        for i in range(1, 5):
+            mag_col = f"mag_image_{i}"
+            err_low_col = f"mag_error_image_{i}_low"
+            err_high_col = f"mag_error_image_{i}_high"
+
+            if mag_col in band_data.colnames and np.any(band_data[mag_col] != -1):
+                # Only proceed with the column if the magnitude is not -1
+                magnitudes[mag_col][band] = band_data[mag_col].tolist()
+                errors_low[err_low_col][band] = band_data[err_low_col].tolist()
+                errors_high[err_high_col][band] = band_data[err_high_col].tolist()
+
+    result = {
+        "magnitudes": magnitudes,
+        "errors_low": errors_low,
+        "errors_high": errors_high,
+        "obs_time": obs_time,
+    }
+
+    return result

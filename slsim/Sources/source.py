@@ -1,4 +1,5 @@
 from slsim.Sources.SourceTypes.point_plus_extended_source import PointPlusExtendedSource
+from copy import deepcopy
 
 _SUPPORTED_POINT_SOURCES = ["supernova", "quasar", "general_lightcurve"]
 _SUPPORTED_EXTENDED_SOURCES = [
@@ -21,10 +22,10 @@ class Source(object):
         """
         :param extended_source_type: Keyword to specify type of the extended source. Supported
          extended source types are 'single_sersic', 'double_sersic', 'catalog_source', and 'interpolated'.
-        :type extended_source_type: str
+        :type extended_source_type: str or None
         :param point_source_type: Keyword to specify type of point source. Supported point
          source types are 'supernova', 'quasar', and 'general_lightcurve'.
-        :type point_source_type: str
+        :type point_source_type: str or None
         :param source_dict: Source properties. Can be a dictionary or an Astropy table.
          For a detailed description of this dictionary, please see the documentation for
          the individual classes, such as SingleSersic, DoubleSersic, Interpolated classes, SupernovaEvent,
@@ -169,6 +170,28 @@ class Source(object):
 
         return self._source.point_source_position
 
+    @property
+    def point_source(self):
+        """Returns the point source object if it exists, otherwise returns
+        None."""
+        if self.source_type in ["point_plus_extended"]:
+            return self._source._point_source
+        elif self.source_type in ["point_source"]:
+            return self._source
+        else:
+            return None
+
+    @property
+    def extended_source(self):
+        """Returns the extended source object if it exists, otherwise returns
+        None."""
+        if self.source_type in ["point_plus_extended"]:
+            return self._source._extended_source
+        elif self.source_type in ["extended"]:
+            return self._source
+        else:
+            return None
+
     def extended_source_magnitude(self, band):
         """Get the magnitude of the extended source in a specific band.
 
@@ -248,3 +271,46 @@ class Source(object):
         """
 
         return self._source.surface_brightness_reff(band=band)
+
+    def prepare_microlensing_kwargs(self, band, cosmo, kwargs_microlensing=None):
+        """Prepares kwargs_microlensing with source-level defaults.
+
+        :param band: imaging band
+        :param cosmo: astropy cosmology instance (from the Lens)
+        :param kwargs_microlensing: optional user-provided dict
+        :return: updated kwargs_microlensing dict
+        """
+
+        kwargs_microlensing_updated = (
+            deepcopy(kwargs_microlensing) if kwargs_microlensing else {}
+        )
+
+        # Get or initialize kwargs_source_morphology
+        kwargs_source_morphology = kwargs_microlensing_updated.get(
+            "kwargs_source_morphology", {}
+        )
+
+        # Update kwargs_source_morphology with values from the Lens class if not provided by the user
+        kwargs_source_morphology.setdefault("source_redshift", self.redshift)
+        kwargs_source_morphology.setdefault("cosmo", cosmo)
+        kwargs_source_morphology.setdefault("observing_wavelength_band", band)
+
+        # Extract additional parameters from the source class if not provided
+        # delegates to the specific source type (SingleSersic, Quasar, etc.)
+        kwargs_source_morphology = (
+            self._source.update_microlensing_kwargs_source_morphology(
+                kwargs_source_morphology
+            )
+        )
+        kwargs_microlensing_updated["kwargs_source_morphology"] = (
+            kwargs_source_morphology
+        )
+
+        # Update point_source_morphology based on source type
+        if "point_source_morphology" not in kwargs_microlensing_updated:
+            if self.name == "QSO":
+                kwargs_microlensing_updated["point_source_morphology"] = "agn"
+            elif self.name.startswith("SN"):
+                kwargs_microlensing_updated["point_source_morphology"] = "supernovae"
+
+        return kwargs_microlensing_updated

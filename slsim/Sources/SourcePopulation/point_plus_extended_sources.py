@@ -71,7 +71,7 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
             catalog_type=catalog_type,
             source_size=source_size,
             extended_source_type=extended_source_type,
-            extendedsource_kwargs=extendedsource_kwargs,
+            extended_source_kwargs=extendedsource_kwargs,
         )
         SourcePopBase.__init__(
             self,

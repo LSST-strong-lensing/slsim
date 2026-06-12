@@ -64,7 +64,7 @@ class HalosSkyPyPipeline:
                 content = file.read()
 
             if sky_area is not None:
-                old_fsky = "fsky: 0.0001 deg2"
+                old_fsky = "fsky: 0.001 deg2"
                 new_fsky = f"fsky: {sky_area} deg2"
                 content = content.replace(old_fsky, new_fsky)
 

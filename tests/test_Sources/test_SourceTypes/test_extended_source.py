@@ -93,7 +93,7 @@ class TestExtendedSource:
         self.catalogue_source = ExtendedSource(
             cosmo=cosmo,
             source_type="catalog_source",
-            catalog_type="COSMOS",
+            catalog_type="HST_COSMOS",
             catalog_path=catalog_path,
             **self.source_dict_single_sersic
         )
