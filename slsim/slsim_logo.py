@@ -276,3 +276,166 @@ class SLSimLogo(object):
                 color="white",
                 alpha=0.12,
             )
+
+        def create(
+        self,
+        output_file=None,
+        save=False,
+        show=True,
+    ):
+            """Create the SLSim logo.
+
+            :param output_file: output filename
+            :param save: save figure to disk
+            :type save: bool
+            :param show: display figure
+            :type show: bool
+            :return: matplotlib figure and axes
+            """
+
+            fig, ax = plt.subplots(figsize=(14, 6))
+            # Text
+            ax.text(
+                -1.9,
+                0,
+                "SL",
+                fontsize=self.fontsize,
+                fontweight="bold",
+                color=self.rubin_color,
+                ha="center",
+                va="center",
+            )
+
+            ax.text(
+                2.2,
+                0,
+                "im",
+                fontsize=self.fontsize,
+                fontweight="bold",
+                color=self.rubin_color,
+                ha="center",
+                va="center",
+            )
+
+            upper_dot = np.array([-0.5, -0.06])
+            lower_dot = np.array([0.5, 0.06])
+            #upper arcs
+            P0 = np.array([1, 0.6])
+            P1 = np.array([-0.01, 1.50])
+            P2 = np.array([-1.05, 0.95])
+            P3 = np.array([0.4, -0.3])
+
+            x, y = self._bezier_curve(P0, P1, P2, P3)
+
+            x, y = self._rotate_about_point(
+                x,
+                y,
+                center=P3,
+                angle_deg=40,
+            )
+
+            x, y = self._transform(
+                x,
+                y,
+                scale=self.symbol_scale,
+                rotation_deg=self.symbol_rotation,
+                flip_x=self.flip_x,
+            )
+
+            self._tapered_ribbon(
+                ax,
+                x,
+                y,
+                0.18 * self.symbol_scale,
+                self.arc_color,
+            )
+            # Lower arc
+            P0 = np.array([-1, -0.6])
+            P1 = np.array([0.01, -1.50])
+            P2 = np.array([1.05, -0.95])
+            P3 = np.array([-0.4, 0.3])
+
+            x, y = self._bezier_curve(P0, P1, P2, P3)
+
+            x, y = self._rotate_about_point(
+                x,
+                y,
+                center=P3,
+                angle_deg=40,
+            )
+
+            x, y = self._transform(
+                x,
+                y,
+                scale=self.symbol_scale,
+                rotation_deg=self.symbol_rotation,
+                flip_x=self.flip_x,
+            )
+
+            self._tapered_ribbon(
+                ax,
+                x,
+                y,
+                0.22 * self.symbol_scale,
+                self.arc_color,
+            )
+            # Galaxy
+            gx, gy = self._transform(
+                [0],
+                [0],
+                scale=self.symbol_scale,
+                rotation_deg=self.symbol_rotation,
+                flip_x=self.flip_x,
+            )
+
+            self._draw_fake_galaxy(
+                ax,
+                gx[0],
+                gy[0],
+                self.symbol_scale * 5,
+            )
+            # Dots
+            dots = np.array([upper_dot, lower_dot])
+
+            dx, dy = self._transform(
+                dots[:, 0],
+                dots[:, 1],
+                scale=self.symbol_scale,
+                rotation_deg=self.symbol_rotation,
+                flip_x=self.flip_x,
+            )
+
+            for x0, y0 in zip(dx, dy):
+
+                ax.add_patch(
+                    Circle(
+                        (x0, y0),
+                        0.055 * self.symbol_scale,
+                        color=self.rubin_color,
+                    )
+                )
+            # Layout
+            ax.set_xlim(-5.5, 5.5)
+            ax.set_ylim(-2.5, 2.5)
+
+            ax.set_aspect("equal")
+            ax.axis("off")
+
+            plt.tight_layout()
+
+            if save and output_file is not None:
+
+                plt.savefig(
+                    output_file,
+                    dpi=600,
+                    transparent=True,
+                    bbox_inches="tight",
+                    pad_inches=0.02,
+                )
+
+            if show:
+                plt.show()
+            else:
+                plt.close(fig)
+
+            return fig, ax
