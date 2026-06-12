@@ -280,12 +280,14 @@ class SLSimLogo(object):
         def create(
         self,
         output_file=None,
+        figsize=(14, 6),
         save=False,
         show=True,
     ):
             """Create the SLSim logo.
 
             :param output_file: output filename
+            :param figsize: figure size for the matplotlib plot
             :param save: save figure to disk
             :type save: bool
             :param show: display figure
@@ -293,7 +295,7 @@ class SLSimLogo(object):
             :return: matplotlib figure and axes
             """
 
-            fig, ax = plt.subplots(figsize=(14, 6))
+            fig, ax = plt.subplots(figsize=figsize)
             # Text
             ax.text(
                 -1.9,
