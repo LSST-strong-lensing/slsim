@@ -342,7 +342,7 @@ class SLSimLogo(object):
                 flip_x=self.flip_x,
             )
 
-            self._tapered_ribbon(
+            self._draw_curve_in_S(
                 ax,
                 x,
                 y,
@@ -372,7 +372,7 @@ class SLSimLogo(object):
                 flip_x=self.flip_x,
             )
 
-            self._tapered_ribbon(
+            self._draw_curve_in_S(
                 ax,
                 x,
                 y,
