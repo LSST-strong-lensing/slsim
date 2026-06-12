@@ -116,7 +116,7 @@ def simulate_image(
     if kwargs_psf is not None:
         kwargs_single_band.update(kwargs_psf)
     sim_api = SimAPI(
-        numpix=num_pix,
+        num_pix=num_pix,
         kwargs_single_band=kwargs_single_band,
         kwargs_model=kwargs_model,
     )

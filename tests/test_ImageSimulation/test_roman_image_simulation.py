@@ -4,6 +4,7 @@ import numpy.testing as npt
 from slsim.Lenses.lens import Lens
 from slsim.ImageSimulation.roman_image_simulation import (
     simulate_roman_image,
+    precompute_roman_background,
 )
 from slsim.ImageSimulation import image_quality_lenstronomy
 from slsim.ImageSimulation.image_simulation import simulate_image
@@ -294,6 +295,23 @@ def test_simulate_roman_image_with_psf_without_noise():
         np.sum(galsim_image), np.sum(image_ref), rtol=0, atol=0.1
     )
 
+    # precomputed_background is only used inside the add_noise branch, so a dummy
+    # array must not affect the noiseless result
+    dummy_background = np.ones((45 + 6, 45 + 6), dtype=np.float32)
+    galsim_image_with_dummy_bg = simulate_roman_image(
+        lens_class=LENS,
+        band=BAND,
+        num_pix=45,
+        oversample=3,
+        seed=42,
+        add_noise=False,
+        psf_directory=PSF_DIRECTORY,
+        detector=1,
+        detector_pos=(2000, 2000),
+        precomputed_background=dummy_background,
+    )
+    npt.assert_array_equal(galsim_image_with_dummy_bg, galsim_image)
+
 
 def test_simulate_roman_image_with_time_variable_source():
     detector_kwargs = {
@@ -348,6 +366,72 @@ def test_simulate_roman_image_with_time_variable_source():
     )
 
     assert not np.allclose(lens_image, lens_image3, atol=1e-16, rtol=1e-16)
+
+
+def test_precompute_roman_background():
+    kwargs_single_band = image_quality_lenstronomy.kwargs_single_band(
+        observatory="Roman", band=BAND
+    )
+
+    background = precompute_roman_background(
+        band=BAND,
+        num_pix=45,
+        exposure_time=kwargs_single_band["exposure_time"],
+        **DETECTOR_KWARGS,
+    )
+
+    assert isinstance(background, np.ndarray)
+    assert background.shape == (45 + 6, 45 + 6)
+    assert np.all(np.isfinite(background))
+    assert np.all(background >= 0)
+
+
+def test_simulate_roman_image_with_precomputed_background():
+    kwargs_single_band = image_quality_lenstronomy.kwargs_single_band(
+        observatory="Roman", band=BAND
+    )
+    exposure_time = kwargs_single_band["exposure_time"]
+
+    background = precompute_roman_background(
+        band=BAND,
+        num_pix=45,
+        exposure_time=exposure_time,
+        **DETECTOR_KWARGS,
+    )
+
+    image_precomputed = simulate_roman_image(
+        lens_class=LENS,
+        band=BAND,
+        num_pix=45,
+        oversample=3,
+        add_noise=True,
+        subtract_mean_background=True,
+        seed=42,
+        exposure_time=exposure_time,
+        psf_directory=PSF_DIRECTORY,
+        precomputed_background=background,
+        **DETECTOR_KWARGS,
+    )
+
+    image_direct = simulate_roman_image(
+        lens_class=LENS,
+        band=BAND,
+        num_pix=45,
+        oversample=3,
+        add_noise=True,
+        subtract_mean_background=True,
+        seed=42,
+        exposure_time=exposure_time,
+        psf_directory=PSF_DIRECTORY,
+        **DETECTOR_KWARGS,
+    )
+
+    assert image_precomputed.shape == (45, 45)
+    assert image_direct.shape == (45, 45)
+    diff = np.abs(image_precomputed - image_direct) / (
+        np.abs(image_precomputed) + np.abs(image_direct) + 1e-10
+    )
+    npt.assert_array_less(np.mean(diff), 0.1)
 
 
 if __name__ == "__main__":

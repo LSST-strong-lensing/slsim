@@ -140,7 +140,7 @@ def simulate_roman_image(
     kwargs_single_band["pixel_scale"] /= oversample
 
     sim_api = SimAPI(
-        numpix=num_pix * oversample,
+        num_pix=num_pix * oversample,
         kwargs_single_band=kwargs_single_band,
         kwargs_model=kwargs_model,
     )
