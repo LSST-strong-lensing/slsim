@@ -87,3 +87,30 @@ class SLSimLogo(object):
             yr = x * np.sin(theta) + y * np.cos(theta)
 
             return xr, yr
+        
+        def _rotate_about_point(
+            self,
+            x,
+            y,
+            center,
+            angle_deg,
+        ):
+            """Rotate coordinates about a pivot point.
+
+            :param x: x coordinates
+            :param y: y coordinates
+            :param center: rotation center [x0, y0]
+            :param angle_deg: rotation angle in degrees
+            :type angle_deg: float
+            :return: rotated coordinates
+            """
+
+            theta = np.deg2rad(angle_deg)
+
+            xc = x - center[0]
+            yc = y - center[1]
+
+            xr = xc * np.cos(theta) - yc * np.sin(theta)
+            yr = xc * np.sin(theta) + yc * np.cos(theta)
+
+            return xr + center[0], yr + center[1]
