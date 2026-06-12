@@ -1,5 +1,5 @@
 .. image:: docs/figures/slsim_logo.png
-    :width: 400
+    :width: 500
     :alt: SLSim Logo
 
 |Read the Docs| |GitHub| |Codecov| |Black| |docformatter| |docstyle|
