@@ -429,6 +429,7 @@ def _get_wcs_dict(ra, dec, date):
     # NB targ_pos indicates the position to observe at the center of the focal plane array
     return roman.getWCS(world_pos=targ_pos, date=date)
 
+
 def precompute_roman_background(
     band,
     num_pix,
@@ -443,20 +444,22 @@ def precompute_roman_background(
     """Precompute the Roman sky + thermal background as a numpy array.
 
     Calls add_sky_plus_thermal_background with a zero image so no lens
-    computation is involved. Pass the returned array to simulate_roman_image
-    via precomputed_background to skip the WCS / sky-level computation on
-    every call.
+    computation is involved. Pass the returned array to
+    simulate_roman_image via precomputed_background to skip the WCS /
+    sky-level computation on every call.
 
     :param band: imaging band (e.g. 'F106').
     :param num_pix: pixels per axis — must match simulate_roman_image.
-    :param exposure_time: seconds — must match simulate_roman_image internally.
+    :param exposure_time: seconds — must match simulate_roman_image
+        internally.
     :param detector: WFI detector (1–18). Random if None.
     :param detector_pos: (x, y) pixel position. Random if None.
     :param ra: RA in degrees. Random if None.
     :param dec: Dec in degrees. Random if None.
     :param date: observation date; affects zodiacal light level.
     :param oversample: must match simulate_roman_image.
-    :return: 2-D numpy array of background counts, shape (num_pix+6, num_pix+6).
+    :return: 2-D numpy array of background counts, shape (num_pix+6,
+        num_pix+6).
     """
     if detector is None:
         detector = random.randint(1, 18)
