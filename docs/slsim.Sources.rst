@@ -7,11 +7,11 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
+   slsim.Sources.Events
    slsim.Sources.SourceCatalogues
    slsim.Sources.SourcePopulation
    slsim.Sources.SourceTypes
    slsim.Sources.SourceVariability
-   slsim.Sources.Supernovae
 
 Submodules
 ----------

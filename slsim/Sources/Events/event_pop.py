@@ -1,5 +1,5 @@
 from slsim.Sources.Events.BNSMerger.bns_merger_pop import BNSMergerRate
-from slsim.Sources.Supernovae.supernovae_pop import SNIaRate
+from slsim.Sources.Events.Supernovae.supernovae_pop import SNIaRate
 
 """References:
   SNIa population: Oguri and Marshall 2010

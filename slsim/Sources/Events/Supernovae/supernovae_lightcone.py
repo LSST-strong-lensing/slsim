@@ -1,5 +1,5 @@
 from skypy.galaxies.redshift import redshifts_from_comoving_density
-from slsim.Sources.Supernovae.supernovae_pop import SNIaRate
+from slsim.Sources.Events.Supernovae.supernovae_pop import SNIaRate
 from astropy import units
 
 

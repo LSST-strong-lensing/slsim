@@ -109,7 +109,7 @@ class BNSMergerRate(object):
 
         unorm_BNS_rate_array = np.array(unorm_BNS_rate_list)
 
-        # Calculate unormalized BNS merger rate at z=0 for normalization
+        # Calculate unnormalized BNS merger rate at z=0 for normalization
         unorm_BNS_rate_z0 = integrate.quad(
             self._numerator_integrand,
             self._t_d_min,

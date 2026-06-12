@@ -1,4 +1,4 @@
-from slsim.Sources.Supernovae.supernovae_lightcone import SNeLightcone
+from slsim.Sources.Events.Supernovae.supernovae_lightcone import SNeLightcone
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
 from scipy.stats import ks_2samp

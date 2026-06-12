@@ -1,8 +1,8 @@
-from slsim.Sources.Supernovae.supernovae_pop import (
+from slsim.Sources.Events.Supernovae.supernovae_pop import (
     calculate_star_formation_rate,
     delay_time_distribution,
 )
-from slsim.Sources.Supernovae.supernovae_pop import SNIaRate
+from slsim.Sources.Events.Supernovae.supernovae_pop import SNIaRate
 from astropy.cosmology import FlatLambdaCDM
 import numpy.testing as npt
 import pytest

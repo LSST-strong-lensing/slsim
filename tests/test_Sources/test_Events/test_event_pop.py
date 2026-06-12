@@ -1,7 +1,7 @@
 from astropy.cosmology import FlatLambdaCDM
 from slsim.Sources.Events.event_pop import EventPopulation
 from slsim.Sources.Events.BNSMerger.bns_merger_pop import BNSMergerRate
-from slsim.Sources.Supernovae.supernovae_pop import SNIaRate
+from slsim.Sources.Events.Supernovae.supernovae_pop import SNIaRate
 import numpy.testing as npt
 import pytest
 

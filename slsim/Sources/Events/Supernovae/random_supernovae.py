@@ -2,7 +2,7 @@ import os
 import numpy as np
 import sncosmo
 from astropy import cosmology
-from slsim.Sources.Supernovae.supernova import Supernova
+from slsim.Sources.Events.Supernovae.supernova import Supernova
 
 _ABSOLUTE_MAG_DISTS = {
     "Ia": [-19.37, 0.47],
