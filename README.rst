@@ -1,6 +1,3 @@
-==========================================
-SLSim (Strong Lensing Simulation) pipeline
-==========================================
 .. image:: docs/figures/slsim_logo.png
     :alt: SLSim Logo
 
