@@ -1,4 +1,4 @@
-.. image:: docs/figures/slsim_logo_3.png
+.. image:: docs/figures/slsim_logo_4.png
     :alt: SLSim Logo
 
 
