@@ -143,3 +143,53 @@ class SLSimLogo(object):
             )
 
             return B[:, 0], B[:, 1]
+        
+        def _draw_curve_in_S(
+        self,
+        ax,
+        x,
+        y,
+        max_width,
+        color):
+            """Draw a curve in S.
+
+            :param ax: matplotlib axes
+            :param x: x coordinates of the curve
+            :param y: y coordinates of the curve
+            :param max_width: maximum ribbon width
+            :type max_width: float
+            :param color: curve color
+            :return: curve in S
+            """
+
+            s = np.linspace(0, np.pi, len(x))
+            width = max_width * np.sin(s) ** 2.5
+
+            dx = np.gradient(x)
+            dy = np.gradient(y)
+
+            norm = np.sqrt(dx**2 + dy**2)
+
+            nx = -dy / norm
+            ny = dx / norm
+
+            xu = x + 0.5 * width * nx
+            yu = y + 0.5 * width * ny
+
+            xl = x - 0.5 * width * nx
+            yl = y - 0.5 * width * ny
+
+            verts = np.vstack(
+                [
+                    np.column_stack([xu, yu]),
+                    np.column_stack([xl[::-1], yl[::-1]]),
+                ]
+            )
+
+            patch = PathPatch(
+                Path(verts, closed=True),
+                facecolor=color,
+                edgecolor="none",
+            )
+
+            ax.add_patch(patch)
