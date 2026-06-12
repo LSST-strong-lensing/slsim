@@ -114,3 +114,32 @@ class SLSimLogo(object):
             yr = xc * np.sin(theta) + yc * np.cos(theta)
 
             return xr + center[0], yr + center[1]
+        
+        def _bezier_curve(
+        self,
+        P0,
+        P1,
+        P2,
+        P3,
+        n=800):
+            """Generate a cubic Bezier curve.
+
+            :param P0: first control point
+            :param P1: second control point
+            :param P2: third control point
+            :param P3: fourth control point
+            :param n: number of sampled points
+            :type n: int
+            :return: x and y coordinates of the curve
+            """
+
+            t = np.linspace(0, 1, n)[:, None]
+
+            B = (
+                ((1 - t) ** 3) * P0
+                + 3 * ((1 - t) ** 2) * t * P1
+                + 3 * (1 - t) * (t**2) * P2
+                + (t**3) * P3
+            )
+
+            return B[:, 0], B[:, 1]
