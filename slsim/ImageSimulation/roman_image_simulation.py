@@ -104,7 +104,7 @@ def simulate_roman_image(
     :type psf_directory: str
     :param precomputed_background: A 2-D numpy array of background counts, shape (num_pix+6, num_pix+6), to be added to the image before noise realizations. This can be computed by calling precompute_roman_background with the same band, num_pix, oversample, exposure_time, and date parameters as passed into this function. If None, the background will be computed on the fly.
     :type precomputed_background: numpy.ndarray, optional
-    
+
     :return: simulated image in units of flux per second.
     :rtype: numpy.ndarray
     """
