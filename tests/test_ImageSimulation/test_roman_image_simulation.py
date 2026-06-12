@@ -1,3 +1,4 @@
+# test_roman_image_simulation.py
 import astropy.cosmology
 import numpy as np
 import numpy.testing as npt
@@ -384,6 +385,14 @@ def test_precompute_roman_background():
     assert background.shape == (45 + 6, 45 + 6)
     assert np.all(np.isfinite(background))
     assert np.all(background >= 0)
+
+    # testing the randomised-defaults (detector, detector_pos, ra, dec all None)
+    background_random = precompute_roman_background(
+        band=BAND,
+        num_pix=45,
+        exposure_time=kwargs_single_band["exposure_time"],
+    )
+    assert background_random.shape == (45 + 6, 45 + 6)
 
 
 def test_simulate_roman_image_with_precomputed_background():
