@@ -11,3 +11,4 @@ ignore:
   - "slsim/LsstSciencePipeline/opsim_pipeline.py"
   - "setup.py"
   - "tests/*"
+  - "slsim/Util/slsim_logo.py"
