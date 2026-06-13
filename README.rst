@@ -65,3 +65,15 @@ See our Citation_ guidelines.
 
 .. |docformatter| image:: https://img.shields.io/badge/%20formatter-docformatter-fedcba.svg
     :target: https://github.com/PyCQA/docformatter
+
+SLSim Logo
+----------
+
+The SLSim logo can be generated using the built-in utility:
+
+.. code-block:: python
+
+    from slsim.Util.slsim_logo import SLSimLogo
+
+    slsim_logo = SLSimLogo()
+    slsim_logo.create()
