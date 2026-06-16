@@ -427,6 +427,44 @@ def test_vis_weighted_channel_helper():
         )
 
 
+def test_display_colour_balance_helper():
+    rgb = np.array(
+        [
+            [[0.2, 0.4, 0.6], [0.8, 0.6, 0.4]],
+            [[1.2, -0.1, 0.5], [0.1, 0.1, 0.1]],
+        ]
+    )
+
+    balanced = euclid_rgb._apply_display_colour_balance(
+        rgb,
+        channel_gains=(1.0, 0.5, 0.25),
+        saturation=0.5,
+    )
+
+    clipped = np.clip(rgb, 0, 1)
+    gained = clipped * np.array([1.0, 0.5, 0.25])[None, None, :]
+    grey = np.mean(gained, axis=-1, keepdims=True)
+    expected = np.clip(grey + 0.5 * (gained - grey), 0, 1)
+
+    np.testing.assert_allclose(balanced, expected)
+
+
+def test_display_colour_balance_helper_errors():
+    rgb = np.ones((2, 2, 3))
+
+    with pytest.raises(ValueError, match="channel_gains"):
+        euclid_rgb._apply_display_colour_balance(
+            rgb,
+            channel_gains=(1.0, 0.5),
+        )
+
+    with pytest.raises(ValueError, match="saturation"):
+        euclid_rgb._apply_display_colour_balance(
+            rgb,
+            saturation=-0.1,
+        )
+
+
 def _rgb_test_images():
     vis = np.linspace(0, 2, 25).reshape(5, 5)
     y = np.linspace(0.1, 1.1, 9).reshape(3, 3)
