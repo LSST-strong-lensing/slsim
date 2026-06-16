@@ -246,9 +246,7 @@ def test_euclid_rgb_from_image_list_errors():
         euclid_rgb.euclid_rgb_from_image_list([vis, y], colour="VIS_J")
 
     with pytest.raises(ValueError, match="requires H"):
-        euclid_rgb.euclid_rgb_from_image_list(
-            [vis, y, j], colour="VIS_WEIGHTED_Y_J_H"
-        )
+        euclid_rgb.euclid_rgb_from_image_list([vis, y, j], colour="VIS_WEIGHTED_Y_J_H")
 
     with pytest.raises(ValueError, match="colour must be"):
         euclid_rgb.euclid_rgb_from_image_list([vis, y, j], colour="BAD")
