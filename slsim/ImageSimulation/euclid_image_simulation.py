@@ -2,24 +2,24 @@
 
 The functions in this module are intended to be used after the physical image
 simulation has already been performed with ``slsim.ImageSimulation.simulate_image``.
-They convert Euclid VIS/Y/J image arrays into RGB products following the image
-processing options illustrated in the Euclid Q1 Strong Lensing Discovery Engine
-paper.
+They convert Euclid VIS/Y/J(/H) image arrays into RGB products following the
+image processing options illustrated in the Euclid Q1 Strong Lensing Discovery
+Engine paper.
     See https://arxiv.org/pdf/2503.15324
     for specific details on the Euclid Q1 image processing steps.
     We offer a variety of options for procedures not mentioned in the paper,
     or for methods used in the paper that are not applicable to the simulated data.
 
-The expected input order is ``[VIS, Y, J]``. VIS is treated as the high-resolution
-luminance channel, while Y and J provide colour information and are resampled to
-the VIS image shape when necessary.
+The expected input order is ``[VIS, Y, J]`` or ``[VIS, Y, J, H]``. VIS is
+treated as the high-resolution luminance channel, while the NISP bands provide
+colour information and are resampled to the VIS image shape when necessary.
 """
 
 import numpy as np
 from scipy.ndimage import zoom
 from lenstronomy.SimulationAPI.ObservationConfig.Euclid import Euclid
 
-EUCLID_Q1_ARCSINH_SCALE = {"VIS": 500.0, "Y": 1.0, "J": 0.5}
+EUCLID_Q1_ARCSINH_SCALE = {"VIS": 500.0, "Y": 1.0, "J": 0.5, "H": 0.25}
 
 
 def euclid_rgb_from_image_list(
@@ -34,6 +34,8 @@ def euclid_rgb_from_image_list(
     mtf_region_size=100,
     use_luminance=True,
     luminance_method="mean",
+    vis_red_fraction=0.35,
+    vis_green_fraction=0.45,
     channel_gains=None,
     saturation=1.0,
 ):
@@ -45,6 +47,10 @@ def euclid_rgb_from_image_list(
     - ``"VIS_Y"``: red = Y, green = median(Y, VIS), blue = VIS.
     - ``"VIS_J"``: red = J, green = median(J, VIS), blue = VIS.
     - ``"VIS_Y_J"``: red = J, green = Y, blue = VIS.
+    - ``"VIS_WEIGHTED_Y_J"``: red = weighted sum of J and VIS,
+      green = weighted sum of Y and VIS, blue = VIS.
+    - ``"VIS_WEIGHTED_Y_J_H"``: red = weighted sum of H and VIS,
+      green = weighted sum of the Y/J mean and VIS, blue = VIS.
 
     When ``use_luminance`` is True, the final image luminance is set by the
     stretched VIS channel. This preserves the higher VIS spatial resolution while
@@ -52,14 +58,17 @@ def euclid_rgb_from_image_list(
         See https://arxiv.org/pdf/2503.15324
         for specific details on the Euclid Q1 image processing steps.
 
-    :param image_list: images in order ``[VIS, Y, J]``. Y/J may have lower native
-        resolution than VIS and are resampled to the VIS shape when required.
+    :param image_list: images in order ``[VIS, Y, J]`` or ``[VIS, Y, J, H]``.
+        NISP images may have lower native resolution than VIS and are resampled
+        to the VIS shape when required.
     :type image_list: list[numpy.ndarray]
     :param colour: colour mapping to use. Supported values are ``"VIS"``,
-        ``"VIS_Y"``, ``"VIS_J"``, and ``"VIS_Y_J"``.
+        ``"VIS_Y"``, ``"VIS_J"``, ``"VIS_Y_J"``, and
+        ``"VIS_WEIGHTED_Y_J"``, and ``"VIS_WEIGHTED_Y_J_H"``.
     :type colour: str
-    :param stretch: display stretch to apply. Supported values are ``"arcsinh"``
-        and ``"mtf"``.
+    :param stretch: display stretch to apply. Supported values are ``"linear"``,
+        ``"arcsinh"``, and ``"mtf"``. ``"linear"`` applies only percentile
+        normalisation without a nonlinear display transform.
     :type stretch: str
     :param black_percentile: percentile of each input image mapped to black before
         stretching.
@@ -69,7 +78,8 @@ def euclid_rgb_from_image_list(
     :type white_percentile: float
     :param arcsinh_scale: contrast parameter for the arcsinh stretch. A single
         float applies the same value to all bands. If None or ``"euclid_q1"``,
-        use the Euclid Q1 values ``{"VIS": 500, "Y": 1, "J": 0.5}``. A
+        use the Euclid Q1 values ``{"VIS": 500, "Y": 1, "J": 0.5}`` and the
+        display fallback value ``{"H": 0.25}`` for the optional H band. A
         dictionary can override individual band values.
     :type arcsinh_scale: float or dict or str or None
     :param mtf_midtone: midtone transfer function parameter. Values below 0.5
@@ -92,6 +102,17 @@ def euclid_rgb_from_image_list(
         channel average and gives a softer display. ``"rec709"`` uses standard
         RGB luminance weights.
     :type luminance_method: str
+    :param vis_red_fraction: VIS fraction mixed into the red channel when using
+        a ``"VIS_WEIGHTED_*"`` colour mode. For ``"VIS_WEIGHTED_Y_J"``, the red
+        channel is ``(1 - vis_red_fraction) * J + vis_red_fraction * VIS``.
+        For ``"VIS_WEIGHTED_Y_J_H"``, J is replaced by H.
+    :type vis_red_fraction: float
+    :param vis_green_fraction: VIS fraction mixed into the green channel when
+        using a ``"VIS_WEIGHTED_*"`` colour mode. For ``"VIS_WEIGHTED_Y_J"``,
+        the green channel is
+        ``(1 - vis_green_fraction) * Y + vis_green_fraction * VIS``. For
+        ``"VIS_WEIGHTED_Y_J_H"``, Y is replaced by the mean of Y and J.
+    :type vis_green_fraction: float
     :param channel_gains: optional display-only multiplicative gains applied to
         the final ``(R, G, B)`` channels. ``None`` keeps the Euclid Q1 colour
         mapping unchanged. This can be useful for reducing VIS/blue dominance
@@ -112,23 +133,29 @@ def euclid_rgb_from_image_list(
     vis = np.asarray(image_list[0], dtype=float)
     y = np.asarray(image_list[1], dtype=float) if len(image_list) > 1 else None
     j = np.asarray(image_list[2], dtype=float) if len(image_list) > 2 else None
+    h = np.asarray(image_list[3], dtype=float) if len(image_list) > 3 else None
 
     target_shape = vis.shape
     if y is not None and y.shape != target_shape:
         y = _resample_to_shape(y, target_shape)
     if j is not None and j.shape != target_shape:
         j = _resample_to_shape(j, target_shape)
+    if h is not None and h.shape != target_shape:
+        h = _resample_to_shape(h, target_shape)
 
     vis = _prepare_channel(vis, black_percentile, white_percentile)
     if y is not None:
         y = _prepare_channel(y, black_percentile, white_percentile)
     if j is not None:
         j = _prepare_channel(j, black_percentile, white_percentile)
+    if h is not None:
+        h = _prepare_channel(h, black_percentile, white_percentile)
 
-    vis_stretched, y_stretched, j_stretched = _stretch_euclid_channels(
+    vis_stretched, y_stretched, j_stretched, h_stretched = _stretch_euclid_channels(
         vis=vis,
         y=y,
         j=j,
+        h=h,
         stretch=stretch,
         arcsinh_scale=arcsinh_scale,
         mtf_midtone=mtf_midtone,
@@ -191,8 +218,46 @@ def euclid_rgb_from_image_list(
             ]
         )
 
+    elif colour == "VIS_WEIGHTED_Y_J":
+        _require_channel(y, "Y", colour)
+        _require_channel(j, "J", colour)
+        red = _vis_weighted_channel(
+            vis_channel=vis_stretched,
+            colour_channel=j_stretched,
+            vis_fraction=vis_red_fraction,
+            channel_name="red",
+        )
+        green = _vis_weighted_channel(
+            vis_channel=vis_stretched,
+            colour_channel=y_stretched,
+            vis_fraction=vis_green_fraction,
+            channel_name="green",
+        )
+        rgb = np.dstack([red, green, vis_stretched])
+
+    elif colour == "VIS_WEIGHTED_Y_J_H":
+        _require_channel(y, "Y", colour)
+        _require_channel(j, "J", colour)
+        _require_channel(h, "H", colour)
+        red = _vis_weighted_channel(
+            vis_channel=vis_stretched,
+            colour_channel=h_stretched,
+            vis_fraction=vis_red_fraction,
+            channel_name="red",
+        )
+        green = _vis_weighted_channel(
+            vis_channel=vis_stretched,
+            colour_channel=0.5 * (y_stretched + j_stretched),
+            vis_fraction=vis_green_fraction,
+            channel_name="green",
+        )
+        rgb = np.dstack([red, green, vis_stretched])
+
     else:
-        raise ValueError("colour must be 'VIS', 'VIS_Y', 'VIS_J', or 'VIS_Y_J'.")
+        raise ValueError(
+            "colour must be 'VIS', 'VIS_Y', 'VIS_J', 'VIS_Y_J', "
+            "'VIS_WEIGHTED_Y_J', or 'VIS_WEIGHTED_Y_J_H'."
+        )
 
     if use_luminance and colour != "VIS":
         rgb = _apply_luminance(rgb, luminance, method=luminance_method)
@@ -297,18 +362,20 @@ def _stretch_euclid_channels(
     vis,
     y,
     j,
+    h,
     stretch,
     arcsinh_scale,
     mtf_midtone,
     mtf_target_mean,
     mtf_region_size,
 ):
-    """Stretch VIS, Y, and J channels using Euclid Q1 display settings.
+    """Stretch VIS, Y, J, and optional H channels using display settings.
 
-    The arcsinh branch supports band-dependent Q values. By default these are
-    the Euclid Q1 values: 500 for VIS, 1 for Y, and 0.5 for J. The MTF branch
-    supports the Euclid Q1 automatic midtone selection based on the central VIS
-    image region.
+    The linear branch returns the percentile-normalised channels without an
+    additional nonlinear transform. The arcsinh branch supports band-dependent Q
+    values. By default these are the Euclid Q1 values: 500 for VIS, 1 for Y, and
+    0.5 for J. The MTF branch supports the Euclid Q1 automatic midtone selection
+    based on the central VIS image region.
 
     :param vis: normalised VIS channel.
     :type vis: numpy.ndarray
@@ -316,7 +383,10 @@ def _stretch_euclid_channels(
     :type y: numpy.ndarray or None
     :param j: normalised J channel, or None if not provided.
     :type j: numpy.ndarray or None
-    :param stretch: stretch name, either ``"arcsinh"`` or ``"mtf"``.
+    :param h: normalised H channel, or None if not provided.
+    :type h: numpy.ndarray or None
+    :param stretch: stretch name, either ``"linear"``, ``"arcsinh"``, or
+        ``"mtf"``.
     :type stretch: str
     :param arcsinh_scale: arcsinh scale setting, passed to
         :func:`_arcsinh_scale_for_band`.
@@ -327,10 +397,14 @@ def _stretch_euclid_channels(
     :type mtf_target_mean: float
     :param mtf_region_size: central-region size in pixels for automatic MTF.
     :type mtf_region_size: int
-    :return: stretched ``(VIS, Y, J)`` channels. Missing channels are returned as
-        None.
-    :rtype: tuple[numpy.ndarray, numpy.ndarray or None, numpy.ndarray or None]
+    :return: stretched ``(VIS, Y, J, H)`` channels. Missing channels are returned
+        as None.
+    :rtype: tuple[numpy.ndarray, numpy.ndarray or None, numpy.ndarray or None,
+        numpy.ndarray or None]
     """
+    if stretch == "linear":
+        return vis, y, j, h
+
     if stretch == "arcsinh":
         return (
             _arcsinh_stretch(vis, _arcsinh_scale_for_band(arcsinh_scale, "VIS")),
@@ -343,6 +417,11 @@ def _stretch_euclid_channels(
                 None
                 if j is None
                 else _arcsinh_stretch(j, _arcsinh_scale_for_band(arcsinh_scale, "J"))
+            ),
+            (
+                None
+                if h is None
+                else _arcsinh_stretch(h, _arcsinh_scale_for_band(arcsinh_scale, "H"))
             ),
         )
 
@@ -357,9 +436,10 @@ def _stretch_euclid_channels(
             _midtone_transfer_function(vis, midtone),
             None if y is None else _midtone_transfer_function(y, midtone),
             None if j is None else _midtone_transfer_function(j, midtone),
+            None if h is None else _midtone_transfer_function(h, midtone),
         )
 
-    raise ValueError("stretch must be 'arcsinh' or 'mtf'.")
+    raise ValueError("stretch must be 'linear', 'arcsinh', or 'mtf'.")
 
 
 def _mixed_channel(
@@ -402,6 +482,9 @@ def _mixed_channel(
     """
     mixed = np.median(np.dstack([colour_channel, vis]), axis=2)
 
+    if stretch == "linear":
+        return mixed
+
     if stretch == "arcsinh":
         mixed_scale = _arcsinh_scale_for_mixed_channel(arcsinh_scale, band)
         return _arcsinh_stretch(mixed, mixed_scale)
@@ -415,7 +498,37 @@ def _mixed_channel(
         )
         return _midtone_transfer_function(mixed, midtone)
 
-    raise ValueError("stretch must be 'arcsinh' or 'mtf'.")
+    raise ValueError("stretch must be 'linear', 'arcsinh', or 'mtf'.")
+
+
+def _vis_weighted_channel(
+    vis_channel,
+    colour_channel,
+    vis_fraction,
+    channel_name,
+):
+    """Mix VIS morphology into a NISP colour channel.
+
+    This helper supports the simulation-friendly ``"VIS_WEIGHTED_Y_J"`` colour
+    mode. It keeps the high-resolution VIS structure in the red and green
+    channels while still retaining the NISP colour information.
+
+    :param vis_channel: stretched or normalised VIS image.
+    :type vis_channel: numpy.ndarray
+    :param colour_channel: stretched or normalised Y/J image.
+    :type colour_channel: numpy.ndarray
+    :param vis_fraction: fraction of VIS to mix into the output channel.
+    :type vis_fraction: float
+    :param channel_name: display channel name used in error messages.
+    :type channel_name: str
+    :return: weighted channel
+        ``(1 - vis_fraction) * colour_channel + vis_fraction * VIS``.
+    :rtype: numpy.ndarray
+    """
+    if not 0 <= vis_fraction <= 1:
+        raise ValueError(f"vis_{channel_name}_fraction must be between 0 and 1.")
+
+    return (1 - vis_fraction) * colour_channel + vis_fraction * vis_channel
 
 
 def _arcsinh_scale_for_band(arcsinh_scale, band):

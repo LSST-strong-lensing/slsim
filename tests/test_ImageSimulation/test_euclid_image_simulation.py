@@ -96,12 +96,19 @@ def test_euclid_nisp_num_pix_from_vis():
 
 
 def test_euclid_rgb_from_image_list_colour_modes_and_stretches():
-    vis, y, j = _rgb_test_images()
+    vis, y, j, h = _rgb_h_test_images()
 
-    for stretch in ["mtf", "arcsinh"]:
-        for colour in ["VIS", "VIS_Y", "VIS_J", "VIS_Y_J"]:
+    for stretch in ["linear", "mtf", "arcsinh"]:
+        for colour in [
+            "VIS",
+            "VIS_Y",
+            "VIS_J",
+            "VIS_Y_J",
+            "VIS_WEIGHTED_Y_J",
+            "VIS_WEIGHTED_Y_J_H",
+        ]:
             image = euclid_rgb.euclid_rgb_from_image_list(
-                [vis, y, j],
+                [vis, y, j, h],
                 colour=colour,
                 stretch=stretch,
                 black_percentile=0,
@@ -110,6 +117,69 @@ def test_euclid_rgb_from_image_list_colour_modes_and_stretches():
             assert image.shape == (5, 5, 3)
             assert np.all(np.isfinite(image))
             assert np.all((image >= 0) & (image <= 1))
+
+
+def test_euclid_rgb_from_image_list_vis_weighted_colour_mode():
+    vis, y, j = _rgb_test_images()
+
+    image = euclid_rgb.euclid_rgb_from_image_list(
+        [vis, y, j],
+        colour="VIS_WEIGHTED_Y_J",
+        stretch="linear",
+        black_percentile=0,
+        white_percentile=100,
+        vis_red_fraction=0.25,
+        vis_green_fraction=0.5,
+        use_luminance=False,
+    )
+
+    vis_prepared = euclid_rgb._prepare_channel(vis, 0, 100)
+    y_prepared = euclid_rgb._prepare_channel(
+        euclid_rgb._resample_to_shape(y, vis.shape), 0, 100
+    )
+    j_prepared = euclid_rgb._prepare_channel(
+        euclid_rgb._resample_to_shape(j, vis.shape), 0, 100
+    )
+
+    expected_red = 0.75 * j_prepared + 0.25 * vis_prepared
+    expected_green = 0.5 * y_prepared + 0.5 * vis_prepared
+
+    np.testing.assert_allclose(image[:, :, 0], expected_red)
+    np.testing.assert_allclose(image[:, :, 1], expected_green)
+    np.testing.assert_allclose(image[:, :, 2], vis_prepared)
+
+
+def test_euclid_rgb_from_image_list_vis_weighted_y_j_h_colour_mode():
+    vis, y, j, h = _rgb_h_test_images()
+
+    image = euclid_rgb.euclid_rgb_from_image_list(
+        [vis, y, j, h],
+        colour="VIS_WEIGHTED_Y_J_H",
+        stretch="linear",
+        black_percentile=0,
+        white_percentile=100,
+        vis_red_fraction=0.2,
+        vis_green_fraction=0.4,
+        use_luminance=False,
+    )
+
+    vis_prepared = euclid_rgb._prepare_channel(vis, 0, 100)
+    y_prepared = euclid_rgb._prepare_channel(
+        euclid_rgb._resample_to_shape(y, vis.shape), 0, 100
+    )
+    j_prepared = euclid_rgb._prepare_channel(
+        euclid_rgb._resample_to_shape(j, vis.shape), 0, 100
+    )
+    h_prepared = euclid_rgb._prepare_channel(
+        euclid_rgb._resample_to_shape(h, vis.shape), 0, 100
+    )
+
+    expected_red = 0.8 * h_prepared + 0.2 * vis_prepared
+    expected_green = 0.6 * (0.5 * (y_prepared + j_prepared)) + 0.4 * vis_prepared
+
+    np.testing.assert_allclose(image[:, :, 0], expected_red)
+    np.testing.assert_allclose(image[:, :, 1], expected_green)
+    np.testing.assert_allclose(image[:, :, 2], vis_prepared)
 
 
 def test_euclid_rgb_from_image_list_optional_display_settings():
@@ -175,15 +245,34 @@ def test_euclid_rgb_from_image_list_errors():
     with pytest.raises(ValueError, match="requires J"):
         euclid_rgb.euclid_rgb_from_image_list([vis, y], colour="VIS_J")
 
+    with pytest.raises(ValueError, match="requires H"):
+        euclid_rgb.euclid_rgb_from_image_list(
+            [vis, y, j], colour="VIS_WEIGHTED_Y_J_H"
+        )
+
     with pytest.raises(ValueError, match="colour must be"):
         euclid_rgb.euclid_rgb_from_image_list([vis, y, j], colour="BAD")
 
     with pytest.raises(ValueError, match="stretch must be"):
-        euclid_rgb.euclid_rgb_from_image_list([vis, y, j], stretch="linear")
+        euclid_rgb.euclid_rgb_from_image_list([vis, y, j], stretch="bad")
 
     with pytest.raises(ValueError, match="luminance_method"):
         euclid_rgb.euclid_rgb_from_image_list(
             [vis, y, j], colour="VIS_Y_J", luminance_method="bad"
+        )
+
+    with pytest.raises(ValueError, match="vis_red_fraction"):
+        euclid_rgb.euclid_rgb_from_image_list(
+            [vis, y, j],
+            colour="VIS_WEIGHTED_Y_J",
+            vis_red_fraction=-0.1,
+        )
+
+    with pytest.raises(ValueError, match="vis_green_fraction"):
+        euclid_rgb.euclid_rgb_from_image_list(
+            [vis, y, j],
+            colour="VIS_WEIGHTED_Y_J",
+            vis_green_fraction=1.1,
         )
 
 
@@ -211,6 +300,7 @@ def test_stretch_and_scale_helpers():
 
     assert euclid_rgb._arcsinh_scale_for_band(None, "VIS") == 500.0
     assert euclid_rgb._arcsinh_scale_for_band("euclid_q1", "Y") == 1.0
+    assert euclid_rgb._arcsinh_scale_for_band("euclid_q1", "H") == 0.25
     assert euclid_rgb._arcsinh_scale_for_band({"J": 2.0}, "J") == 2.0
     assert euclid_rgb._arcsinh_scale_for_band({"VIS": 2.0}, "Y") == 1.0
     assert euclid_rgb._arcsinh_scale_for_band(4.0, "VIS") == 4.0
@@ -283,14 +373,25 @@ def test_mixed_channel_helper_and_luminance_helper():
         mtf_region_size=3,
         band="Y",
     )
+    mixed_linear = euclid_rgb._mixed_channel(
+        vis,
+        y,
+        stretch="linear",
+        arcsinh_scale=4.0,
+        mtf_midtone=0.2,
+        mtf_target_mean=0.2,
+        mtf_region_size=3,
+        band="Y",
+    )
     assert mixed_mtf.shape == vis.shape
     assert mixed_arcsinh.shape == vis.shape
+    assert mixed_linear.shape == vis.shape
 
     with pytest.raises(ValueError, match="stretch must be"):
         euclid_rgb._mixed_channel(
             vis,
             y,
-            stretch="linear",
+            stretch="bad",
             arcsinh_scale=4.0,
             mtf_midtone=0.2,
             mtf_target_mean=0.2,
@@ -307,11 +408,38 @@ def test_mixed_channel_helper_and_luminance_helper():
         euclid_rgb._apply_luminance(rgb, lum, method="bad")
 
 
+def test_vis_weighted_channel_helper():
+    vis = np.ones((3, 3))
+    nisp = np.zeros((3, 3))
+
+    weighted = euclid_rgb._vis_weighted_channel(
+        vis_channel=vis,
+        colour_channel=nisp,
+        vis_fraction=0.4,
+        channel_name="red",
+    )
+    np.testing.assert_allclose(weighted, 0.4 * np.ones((3, 3)))
+
+    with pytest.raises(ValueError, match="vis_red_fraction"):
+        euclid_rgb._vis_weighted_channel(
+            vis_channel=vis,
+            colour_channel=nisp,
+            vis_fraction=1.2,
+            channel_name="red",
+        )
+
+
 def _rgb_test_images():
     vis = np.linspace(0, 2, 25).reshape(5, 5)
     y = np.linspace(0.1, 1.1, 9).reshape(3, 3)
     j = np.linspace(0.2, 1.2, 16).reshape(4, 4)
     return vis, y, j
+
+
+def _rgb_h_test_images():
+    vis, y, j = _rgb_test_images()
+    h = np.linspace(0.3, 1.3, 4).reshape(2, 2)
+    return vis, y, j, h
 
 
 if __name__ == "__main__":
