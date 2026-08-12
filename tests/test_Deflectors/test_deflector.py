@@ -2,6 +2,7 @@ import pytest
 import numpy.testing as npt
 from slsim.Deflectors.deflector import Deflector
 from lenstronomy.Cosmo.lens_cosmo import LensCosmo
+from slsim.Deflectors.deflector_util import critical_curves_caustics_list
 
 
 class TestDeflector(object):
@@ -208,3 +209,21 @@ class TestDeflector(object):
         npt.assert_almost_equal(theta_E_infinity, 1.8024, decimal=2)
 
         npt.assert_almost_equal(theta_E_infinity, theta_E_infinity_new, decimal=5)
+
+    def test_critical_curves_caustics(self):
+        ra_crit_list, dec_crit_list, ra_caustic_list, dec_caustic_list = (
+            critical_curves_caustics_list(
+                self.deflector_nfw_her,
+                10,
+                None,
+                {
+                    "compute_window": 40,
+                    "grid_scale": 1.0,
+                },
+            )
+        )
+
+        assert len(ra_crit_list) > 0
+        assert len(dec_crit_list) > 0
+        assert len(ra_caustic_list) > 0
+        assert len(dec_caustic_list) > 0

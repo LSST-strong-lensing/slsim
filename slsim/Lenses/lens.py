@@ -42,6 +42,7 @@ class Lens(LensedSystemBase):
         shear=True,
         convergence=True,
         field_galaxies=None,
+        create_field_galaxies=False,
     ):
         """
 
@@ -74,8 +75,21 @@ class Lens(LensedSystemBase):
             Instances should be generated via :meth:`slsim.Sources.SourcePopulation.Galaxies.draw_field_galaxies`.
             If None, no field galaxies are included.
         :type field_galaxies: list[`slsim.Sources.source.Source`] or None
-
+        :param create_field_galaxies: If True, make all source galaxies in front of `deflector_class.redshift` into field galaxies
+        :type create_field_galaxies: bool
         """
+
+        if create_field_galaxies and isinstance(source_class, list):
+            if field_galaxies is None:
+                field_galaxies = []
+
+            field_galaxies += [
+                s for s in source_class if s.redshift < deflector_class.redshift
+            ]
+            source_class = [
+                s for s in source_class if s.redshift > deflector_class.redshift
+            ]
+
         LensedSystemBase.__init__(
             self,
             source_class=source_class,
@@ -196,7 +210,12 @@ class Lens(LensedSystemBase):
             list], [DEC list]
         """
         lens_model_class, kwargs_lens = self.deflector_mass_model_lenstronomy(
-            source_index=source_index
+            source_index=source_index,
+            multi_plane=self.multi_plane
+            in [
+                "Deflector",
+                "Both",
+            ],  # unnecessary for source, makes calculations much faster
         )
         lens_eq_solver = LensEquationSolver(lens_model_class)
         point_source_pos_x, point_source_pos_y = x_source, y_source
@@ -226,6 +245,7 @@ class Lens(LensedSystemBase):
         self,
         min_image_separation=0,
         max_image_separation=10,
+        min_num_of_images=2,
         mag_arc_limit=None,
         second_brightest_image_cut=None,
         snr_limit=None,
@@ -235,6 +255,7 @@ class Lens(LensedSystemBase):
 
         :param min_image_separation: minimum image separation
         :param max_image_separation: maximum image separation
+        :param min_num_of_images: minimum number of images
         :param mag_arc_limit: dictionary with key of bands and values of
             magnitude limits of integrated lensed arc
         :type mag_arc_limit: dict with key of bands and values of
@@ -254,6 +275,7 @@ class Lens(LensedSystemBase):
             validity_results[index] = self._validity_test(
                 min_image_separation=min_image_separation,
                 max_image_separation=max_image_separation,
+                min_num_of_images=min_num_of_images,
                 mag_arc_limit=mag_arc_limit,
                 second_brightest_image_cut=second_brightest_image_cut,
                 snr_limit=snr_limit,
@@ -268,6 +290,7 @@ class Lens(LensedSystemBase):
         self,
         min_image_separation=0,
         max_image_separation=10,
+        min_num_of_images=2,
         mag_arc_limit=None,
         second_brightest_image_cut=None,
         snr_limit=None,
@@ -278,6 +301,7 @@ class Lens(LensedSystemBase):
 
         :param min_image_separation: minimum image separation
         :param max_image_separation: maximum image separation
+        :param min_num_of_images: minimum number of images
         :param mag_arc_limit: dictionary with key of bands and values of
             magnitude limits of integrated lensed arc
         :type mag_arc_limit: dict with key of bands and values of
@@ -317,9 +341,9 @@ class Lens(LensedSystemBase):
         if np.sum((center_lens - center_source) ** 2) > einstein_radius**2 * 2:
             return False
 
-        # Criteria 4: The lensing configuration must produce at least two SL images.
+        # Criteria 4: The lensing configuration must produce at least min_num_of_images SL images.
         image_positions = self.point_source_image_positions()[source_index]
-        if len(image_positions[0]) < 2:
+        if len(image_positions[0]) < min_num_of_images:
             return False
 
         # Criteria 5: The maximum separation between any two image positions must be
@@ -1440,7 +1464,7 @@ class Lens(LensedSystemBase):
 
         return kwargs_model, kwargs_params
 
-    def deflector_mass_model_lenstronomy(self, source_index=None):
+    def deflector_mass_model_lenstronomy(self, source_index=None, multi_plane=None):
         """Returns lens model instance and parameters in lenstronomy
         conventions.
 
@@ -1508,7 +1532,7 @@ class Lens(LensedSystemBase):
             z_source=z_source,
             z_source_convention=self.max_redshift_source_class.redshift,
             use_jax=use_jax,
-            multi_plane=bool(self.multi_plane),
+            multi_plane=bool(self.multi_plane) if multi_plane is None else multi_plane,
         )
 
         return lens_model, self._kwargs_lens

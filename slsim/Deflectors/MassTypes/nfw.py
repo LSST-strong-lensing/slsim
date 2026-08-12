@@ -6,7 +6,16 @@ from slsim.Deflectors.MassLightConnection.velocity_dispersion import vel_disp_nf
 class NFW(MassBase):
     """Class of a NFW lens model."""
 
-    def __init__(self, light, halo_mass, concentration, e1=0, e2=0, vel_disp=None):
+    def __init__(
+        self,
+        light,
+        halo_mass,
+        concentration,
+        e1=0,
+        e2=0,
+        vel_disp=None,
+        truncation_radius=None,
+    ):
         """
 
         :param light: light model (used for position of deflector and stellar mass density profile)
@@ -18,11 +27,13 @@ class NFW(MassBase):
         :param e2: halo eccentricity component 2
         :param vel_disp: velocity dispersion [km/s], optional as pre-computed value.
          ATTENTION: consistency is not checked with mass profile.
+        :param truncation_radius: if not None, uses the truncated nfw profile with this truncation radius
         """
         super().__init__(light=light, vel_disp=vel_disp)
         self._halo_mass = halo_mass
         self._concentration = concentration
         self._e1_mass, self._e2_mass = e1, e2
+        self._truncation_radius = truncation_radius
 
     def velocity_dispersion(self, cosmo=None):
         """Velocity dispersion of deflector. Simplified assumptions on
@@ -56,7 +67,9 @@ class NFW(MassBase):
         else:
             _spherical = False
 
-        if _spherical is True:
+        if self._truncation_radius is not None:
+            lens_mass_model_list = ["TNFW"]
+        elif _spherical is True:
             lens_mass_model_list = ["NFW"]
         else:
             lens_mass_model_list = ["NFW_ELLIPSE_CSE"]
@@ -74,6 +87,11 @@ class NFW(MassBase):
                 "center_y": center_y,
             }
         ]
+        if self._truncation_radius is not None:
+            kwargs_lens_mass[0]["r_trunc"] = lens_cosmo.phys2arcsec_lens(
+                self._truncation_radius / 1000
+            )  # function converts mpc to arcsec
+
         if _spherical is False:
             e1_mass_lenstronomy, e2_mass_lenstronomy = ellipticity_slsim_to_lenstronomy(
                 e1_slsim=self._e1_mass, e2_slsim=self._e2_mass
