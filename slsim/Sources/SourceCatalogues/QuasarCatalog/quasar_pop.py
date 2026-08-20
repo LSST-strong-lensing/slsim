@@ -203,6 +203,8 @@ class QuasarRate(object):
         :return: dPhi_dM value in the unit of comoving volume.
         :rtype: float or np.ndarray :unit: mag^-1 Mpc^-3
         """
+        return_scalar = np.ndim(M) == 0
+
         M = np.atleast_1d(M)
         z_value = np.atleast_1d(z_value)
 
@@ -226,7 +228,7 @@ class QuasarRate(object):
             where=denominator_dphi_dm != 0,
         )
 
-        return term1
+        return term1 if not return_scalar else term1.item()
 
     def convert_magnitude(self, magnitude, z, conversion="apparent_to_absolute"):
         """Converts between apparent and absolute magnitudes using
