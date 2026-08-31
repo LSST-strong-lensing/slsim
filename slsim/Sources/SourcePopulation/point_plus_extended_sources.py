@@ -79,7 +79,9 @@ class PointPlusExtendedSources(Galaxies):
         self._point_source_type = point_source_type
         self._joint_point_source_kwargs = joint_point_source_kwargs
 
-    def draw_source_dict(self, z_max=None, z_min=None, galaxy_index=None, include_all_keywords=False):
+    def draw_source_dict(
+        self, z_max=None, z_min=None, galaxy_index=None, include_all_keywords=False
+    ):
         """Choose source at random.
 
         :param z_max: maximum redshift limit for the galaxy to be drawn.
@@ -120,8 +122,5 @@ class PointPlusExtendedSources(Galaxies):
             include_all_keywords=True,
         )
 
-        source_class = Source(
-            cosmo=self._cosmo,
-            **kwargs_source
-        )
+        source_class = Source(cosmo=self._cosmo, **kwargs_source)
         return source_class
