@@ -1,47 +1,85 @@
 # Quasar Host Matching
 
-Here we describe the methodology to match Active Galactic Nuclei (AGN) or quasars with their most likely host galaxies from a large galaxy catalog generated with SkyPy pipeline.
+This describes how quasars drawn from a luminosity function are assigned host galaxies from a large galaxy catalog (e.g. one generated with the SkyPy pipeline), together with a black hole mass and an Eddington ratio.
 
-The main idea is to use established physical relationships to determine which galaxy could plausibly host a quasar of a given luminosity at a specific redshift. The algorithm essentially works backwards: for a set of candidate galaxies, it calculates the properties of the quasar each one *could* host and matches it to the target quasar from an input catalog.
+The quasar catalog already fixes *how many* quasars there are and *how bright* they are, because it is sampled from the Oguri & Marshall (2010) / Richards et al. (2006) luminosity function. The job of the matcher is therefore to draw the remaining latent variables — the host galaxy, the black hole mass and the Eddington ratio — from their joint distribution *conditioned on* the quasar's luminosity.
 
-## The Matching Algorithm
+## The generative model
 
-The matching process is driven by the physical connection between a host galaxy's properties (specifically its velocity dispersion) and the potential luminosity of the supermassive black hole (SMBH) at its center.
+For a quasar of absolute magnitude $M_i(z=2)$ at redshift $z$:
 
-The overall workflow for matching a single quasar is as follows:
+1. **Bolometric luminosity.** The absolute magnitude is converted to the monochromatic luminosity $\lambda L_\lambda(3000\,\text{Å})$ by rescaling the same qsogen SED (Temple et al. 2021) that generates the broad-band photometry, so the two are exactly consistent. Because the $i$ band at $z=2$ samples the rest-frame continuum at $\sim2500\,\text{Å}$, free of strong lines and host light, this relation is a pure $0.4\,$dex-per-magnitude rescaling and needs only a single reference SED evaluation. The bolometric luminosity then follows from the Runnoe et al. (2012) correction, $L_{\rm bol} = \zeta_{3000}\,\lambda L_\lambda(3000)$ with $\zeta_{3000} = 5.18$, with a configurable object-to-object scatter (default 0.1 dex).
 
-1.  **Select Candidate Hosts**: For a given quasar at redshift `z`, we select a pool of potential host galaxies from the galaxy catalog that are within a small redshift slice (`z ± Δz`) around the quasar's redshift.
+2. **Candidate hosts.** Galaxies within a thin redshift slice $z \pm \Delta z$ of the quasar. The slice is widened geometrically until it holds at least `min_candidates` galaxies, so the sampling does not degrade in sparsely populated redshift ranges.
 
-2.  **Estimate Black Hole Mass ($M_{BH}$)**: For each candidate galaxy, we estimate the mass of its central SMBH. This is done using the well-known M-$\sigma$ relation, which links the black hole's mass to the stellar velocity dispersion ($\sigma_e$) of the galaxy's bulge (Kormendy & Ho 2013; [arXiv:1304.7762](https://arxiv.org/abs/1304.7762)). The specific relation used is:\
-$$\frac{M_{\text{BH}}}{10^9 M_{\odot}} = 0.310_{-0.033}^{+0.037} \left( \frac{\sigma_e}{200 \text{km.s}^{-1}} \right)^{4.38 \pm 0.29}$$
+3. **M–σ relation.** Each candidate has a mean black hole mass from Kormendy & Ho (2013), $M_{\rm BH}/10^9 M_\odot = 0.310\,(\sigma_e/200\,\text{km s}^{-1})^{4.38}$, with an intrinsic scatter of $0.29$ dex. Note this relation is calibrated on ellipticals and classical bulges and $\sigma_e$ is the *bulge* dispersion; set `galaxy_types=["red"]` to restrict the hosts to bulge-dominated galaxies.
 
-    This calculation is performed by the `black_hole_mass_from_vel_disp()` function.
+4. **Eddington ratio.** The power-law distribution $p(\lambda) \propto \lambda^{\gamma_e}$ with $\gamma_e = -0.65$ from Korytov et al. (2019). Their Eq. (16) carries a $(1+z)/(1+z_0)^{\gamma_z}$ prefactor, but that sets the *fraction of galaxies that are active* rather than the shape of the distribution, and it cancels on normalisation. The redshift dependence of the quasar abundance is already carried by the luminosity function, so nothing is lost.
 
-3.  **Model Quasar Accretion (Eddington Ratio)**: A quasar's luminosity is powered by matter accreting onto the SMBH. The efficiency of this process is described by the Eddington Ratio, $\lambda_{\text{edd}} = L_{\text{bol}} / L_{\text{edd}}$, where $L_{\text{bol}}$ is the bolometric (total) luminosity and $L_{\text{edd}}$ is the theoretical maximum luminosity (the Eddington Luminosity).
+    The default range is $0.01 \le \lambda \le 1$ rather than the $0.1 \le \lambda \le 1$ of Korytov et al. The lower bound is roughly where a radiatively efficient thin disc gives way to an advection dominated flow, and it matches the lower edge of `agn_bounds_dict` in the variability model. It has to be this low because the luminosity function is sampled far below its knee: an $M_i = -19$ quasar needs a $10^6\,M_\odot$ black hole even at $\lambda = 0.1$, and no galaxy in a typical SkyPy catalog is that small, so every such quasar would otherwise be rejected.
 
-    Instead of assuming a single value, we draw a random $\lambda_{\text{edd}}$ for each candidate galaxy from a physically-motivated probability distribution that evolves with redshift (Korytov et al. 2019; [arXiv:1907.06530](https://arxiv.org/abs/1907.06530)). This acknowledges the observed diversity in quasar accretion rates. The probability distribution is modeled as:\
-    $$P(\lambda_{\text{edd}}|z) = A \frac{1+z}{(1+z_0)^{\gamma_z}} \lambda_{\text{edd}}^{\gamma_e}$$
+5. **The draw.** A (host $k$, Eddington ratio $\lambda$) pair is sampled from
 
-    This sampling is implemented in the `sample_eddington_rate()` function.
+    $$p(k, \lambda) \propto p(\lambda)\;\mathcal{N}\!\left(\log M_{\rm BH}^{\rm req}(\lambda)\;\middle|\;\log M_{\rm BH}(\sigma_k),\; 0.29\right),$$
 
-4.  **Calculate Predicted Quasar Magnitude**: With the black hole mass ($M_{BH}$) and a sampled Eddington ratio ($\lambda_{\text{edd}}$), we can calculate the predicted absolute magnitude of the potential quasar in a specific photometric band (e.g., LSST 'i' band). This involves a few steps, all handled within the `calculate_lsst_magnitude()` function:
-    * Calculate Eddington Luminosity: $L_{\text{edd}} \propto M_{BH}$.
-    * Calculate Bolometric Luminosity: $L_{\text{bol}} = \lambda_{\text{edd}} \times L_{\text{edd}}$.
-    * Convert to Bolometric Magnitude: $M_{\text{bol}}$.
-    * Apply a **Bolometric Correction (BC)** to convert $M_{\text{bol}}$ to the magnitude in the desired band, $M_i$ (Runnoe, Brotherton, & Shang 2012; [arXiv:1201.5155](https://arxiv.org/abs/1201.5155)).
+    where $M_{\rm BH}^{\rm req}(\lambda) = L_{\rm bol} / (\lambda\, L_{\rm Edd,1})$ is the mass that reproduces the observed luminosity at that Eddington ratio. Candidates enter with a uniform prior, which correctly weights by the galaxy number density in the slice. The reported black hole mass is $M_{\rm BH}^{\rm req}$, so the catalog satisfies $L_{\rm bol} = \lambda\, L_{\rm Edd}(M_{\rm BH})$ exactly, while the $(M_{\rm BH}, \sigma)$ pairs scatter about the M–σ relation with its measured dispersion.
 
-5.  **Find the Best Match**: After calculating a predicted i-band absolute magnitude ($M_{i, \text{predicted}}$) for every candidate galaxy, the algorithm compares these values to the actual magnitude of the target quasar ($M_{i, \text{target}}$). The galaxy that yields the predicted magnitude closest to the target magnitude is selected as the best-fit host.\
-Select galaxy that minimizes $|M_{i, \text{predicted}} - M_{i, \text{target}}|$
+6. **Rejection.** A quasar whose luminosity no candidate host can produce within `max_offset_sigma` times the M–σ scatter is dropped, and the number dropped is reported in `n_rejected`. This is a genuine physical statement — there may be no galaxy massive enough at that redshift — and is preferable to silently assigning an implausible host.
 
-This process is repeated for every quasar in the input catalog, resulting in a final catalog where each quasar is paired with a physically plausible host galaxy.
+Setting `unique_hosts=True` prevents a galaxy from being assigned to more than one quasar.
 
-## Implementation in `quasar_host_match.py`
+## Recommended settings, and why the defaults are not enough
 
-The physical model described above is implemented in the provided Python script.
+Validated against the SDSS DR7 quasar property catalog of Shen et al. (2011), in the magnitude range where the two overlap ($-26 < M_i < -24$):
 
-* **`black_hole_mass_from_vel_disp(sigma_e)`**: Implements the M-$\sigma$ relation (Equation 1) to calculate $M_{BH}$.
-* **`sample_eddington_rate(z, ...)`**: Implements inverse transform sampling to draw $\lambda_{\text{edd}}$ values from the redshift-dependent probability distribution (Equation 2).
-* **`calculate_lsst_magnitude(...)`**: Converts the physical properties ($M_{BH}$, $\lambda_{\text{edd}}$) into an observable absolute magnitude in a given LSST band.
-* **`QuasarHostMatch` class**: This class orchestrates the entire workflow. Its `match()` method iterates through the input quasar catalog, performs the candidate selection, calculates predicted magnitudes, and identifies the best-matching host galaxy for each quasar.
+| host pool | Eddington ratio distribution | median $\log M_{\rm BH}$ | median $\log \lambda$ |
+|---|---|---|---|
+| all galaxies | power law | 7.90 | −0.30 |
+| all galaxies | lognormal | 8.17 | −0.59 |
+| red only | power law | 8.20 | −0.62 |
+| **red only** | **lognormal** | **8.38** | **−0.80** |
+| Shen et al. (2011) | — | 8.83 | −0.86 |
 
-The final output is an `astropy` table containing the original quasar information merged with the properties of its newly assigned host galaxy.
+With the defaults the black hole masses come out $\sim0.9$ dex too low and the Eddington ratios $\sim0.5$ dex too high. Two things cause this.
+
+First, the Korytov et al. power law with $\gamma_e = -0.65$ puts most of its probability *mass* near the Eddington limit, because the mass per unit $\log\lambda$ goes as $\lambda^{\gamma_e+1}$, which rises. Broad-line quasars are observed near $\lambda \sim 0.1$.
+
+Second, and more importantly, **the AGN active fraction here does not depend on host mass**. A SkyPy catalog is overwhelmingly dwarf galaxies — the median velocity dispersion is 30–40 km/s at every redshift, and galaxies above 240 km/s are well under 1% of the catalog. Since candidates enter with a uniform prior (which is the correct *number density* weighting), the draw lands on a numerous $\sigma \approx 150\,$km/s host at high $\lambda$ rather than a rare $\sigma \approx 240\,$km/s host at low $\lambda$. In reality luminous quasars preferentially inhabit massive galaxies; cosmoDC2 encodes this with conditional abundance matching on specific star formation rate, and there is no equivalent term here. Restricting the candidates to red, bulge-dominated galaxies is a coarse stand-in that also happens to be where the Kormendy & Ho M–σ relation is calibrated.
+
+So for science use, pass:
+
+```python
+QuasarRate(
+    ...,
+    host_match_kwargs={
+        "galaxy_types": ["red"],
+        "eddington_ratio_distribution": "lognormal",
+    },
+)
+```
+
+The residual 0.45 dex in $M_{\rm BH}$ is within the systematic floor of the comparison: single-epoch virial masses carry $\sim0.4$ dex of uncertainty and are biased high at fixed luminosity in a flux-limited sample.
+
+## Why not nearest-neighbour matching?
+
+An earlier version drew an Eddington ratio for every candidate and kept the pair minimising $|M_i - M_{i,\rm pred}|$. That selects the extreme tail of the Eddington ratio distribution rather than sampling from it, and produces a $\sigma$–$L$ relation with no scatter at all, because the best match is by construction the one that lies on the relation. The weighted draw above is the same physics without those artefacts.
+
+## Implementation
+
+`quasar_host_match.py`:
+
+* `l3000_from_absolute_i_magnitude` / `absolute_i_magnitude_from_l3000` — qsogen-anchored luminosity–magnitude conversion.
+* `bolometric_luminosity_from_l3000` — Runnoe et al. (2012) bolometric correction, linear or log-log form, with optional anisotropy correction and scatter.
+* `black_hole_mass_from_vel_disp` — the M–σ relation, with optional intrinsic scatter.
+* `sample_eddington_rate` / `eddington_ratio_grid` — the Eddington ratio distribution.
+* `calculate_lsst_magnitude` — a coarse grey-bolometric-correction estimate of the absolute AB magnitude in an LSST band, kept for convenience; the matcher uses the qsogen route instead.
+* `QuasarHostMatch` — the matching class described above.
+
+## References
+
+* Kormendy & Ho (2013), [arXiv:1304.7762](https://arxiv.org/abs/1304.7762)
+* Korytov et al. (2019), [arXiv:1907.06530](https://arxiv.org/abs/1907.06530)
+* Oguri & Marshall (2010), [arXiv:1001.2037](https://arxiv.org/abs/1001.2037)
+* Richards et al. (2006), [arXiv:astro-ph/0601434](https://arxiv.org/abs/astro-ph/0601434)
+* Runnoe, Brotherton & Shang (2012), [arXiv:1201.5155](https://arxiv.org/abs/1201.5155), and its erratum
+* Temple, Hewett & Banerji (2021), [arXiv:2109.04472](https://arxiv.org/abs/2109.04472)

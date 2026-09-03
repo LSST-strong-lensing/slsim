@@ -51,6 +51,7 @@ class QuasarRate(object):
         use_qsogen_sed: bool = False,
         qsogen_bands: list = None,
         use_sed_interpolator: bool = True,
+        host_match_kwargs: dict = None,
     ):
         """Initializes the QuasarRate class with given parameters.
 
@@ -90,6 +91,20 @@ class QuasarRate(object):
         :param qsogen_bands: List of strings for filters (e.g., ['u', 'g', 'r', 'i', 'z', 'y', 'F062', ...]).
                              Defaults to LSST bands if None.
         :param use_sed_interpolator: If True, uses a pre-computed SED magnitude interpolator on a z, M_i grid for speed. This is only relevant if `use_qsogen_sed` is True.
+        :param host_match_kwargs: keyword arguments passed to
+         :class:`~slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_host_match.QuasarHostMatch`,
+         which assigns host galaxies, black hole masses and Eddington ratios.
+         Only used if `host_galaxy=True` is passed to `quasar_sample`. To
+         reproduce the black hole masses and Eddington ratios observed for SDSS
+         quasars, restrict the hosts to bulge-dominated galaxies and use the
+         lognormal Eddington ratio distribution::
+
+             host_match_kwargs = {
+                 "galaxy_types": ["red"],
+                 "eddington_ratio_distribution": "lognormal",
+             }
+
+        :type host_match_kwargs: dict or None
         """
         self.zeta = zeta
         self.xi = xi
@@ -107,6 +122,9 @@ class QuasarRate(object):
             np.array(redshifts) if redshifts is not None else np.linspace(0.1, 5.0, 100)
         )
         self.host_galaxy_candidate = host_galaxy_candidate
+        self.host_match_kwargs = (
+            host_match_kwargs if host_match_kwargs is not None else {}
+        )
 
         # SED Generation Configuration
         self.use_qsogen_sed = use_qsogen_sed
@@ -603,8 +621,15 @@ class QuasarRate(object):
                     filters=None,
                     cosmo=self.cosmo,
                 )
+                red_galaxies, blue_galaxies = (
+                    pipeline.red_galaxies,
+                    pipeline.blue_galaxies,
+                )
+                # tag the morphology so host candidates can be selected on it
+                red_galaxies["galaxy_type"] = "red"
+                blue_galaxies["galaxy_type"] = "blue"
                 host_galaxy_catalog = vstack(
-                    [pipeline.red_galaxies, pipeline.blue_galaxies],
+                    [red_galaxies, blue_galaxies],
                     join_type="exact",
                 )
             else:
@@ -625,6 +650,7 @@ class QuasarRate(object):
             matching_catalogs = QuasarHostMatch(
                 quasar_catalog=table,
                 galaxy_catalog=host_galaxy_catalog,
+                **self.host_match_kwargs,
             )
             matched_table = matching_catalogs.match()
 

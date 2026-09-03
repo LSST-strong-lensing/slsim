@@ -270,7 +270,7 @@ class TestQuasarRate:
     def test_quasar_sample_with_provided_hosts(self, mock_gen_z):
         """Tests sampling with a provided host catalog."""
         host_table = Table(
-            {"z": [0.50], "stellar_mass": [1e11], "vel_disp": [200], "host_id": [1]}
+            {"z": [0.50], "stellar_mass": [1e11], "vel_disp": [50], "host_id": [1]}
         )
         self.quasar_rate.host_galaxy_candidate = host_table
         result_table = self.quasar_rate.quasar_sample(
@@ -289,13 +289,13 @@ class TestQuasarRate:
         """Tests sampling with automatic velocity dispersion calculation."""
         host_table = Table({"z": [0.50], "stellar_mass": [1e11]})
         self.quasar_rate.host_galaxy_candidate = host_table
-        mock_vel_disp.return_value = lambda log_mass: np.full_like(log_mass, 150.0)
+        mock_vel_disp.return_value = lambda log_mass: np.full_like(log_mass, 50.0)
 
         result_table = self.quasar_rate.quasar_sample(
             m_min=15, m_max=25, host_galaxy=True
         )
         mock_vel_disp.assert_called_once()
-        npt.assert_almost_equal(result_table["vel_disp"][0], 150.0)
+        npt.assert_almost_equal(result_table["vel_disp"][0], 50.0)
 
     @patch("slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_pop.SkyPyPipeline")
     @patch(
@@ -319,7 +319,7 @@ class TestQuasarRate:
 
         self.quasar_rate.host_galaxy_candidate = None
         mock_vel_disp.return_value = lambda log_mass: np.full_like(
-            log_mass, 250.0, dtype=float
+            log_mass, 60.0, dtype=float
         )
 
         result_table = self.quasar_rate.quasar_sample(
@@ -328,10 +328,12 @@ class TestQuasarRate:
 
         # Assert that SkyPyPipeline was initialized
         mock_skypy_pipeline.assert_called_once()
-        # The result should contain a host galaxy matched from the mocked pipeline's output
+        # The result should contain a host galaxy matched from the mocked pipeline's
+        # output. Both mocked galaxies share a velocity dispersion, so which one is
+        # drawn is random.
         assert len(result_table) == 1
-        npt.assert_almost_equal(result_table["stellar_mass"][0], 1e11)
-        npt.assert_almost_equal(result_table["vel_disp"][0], 250.0)
+        assert result_table["stellar_mass"][0] in [1e11, 2e11]
+        npt.assert_almost_equal(result_table["vel_disp"][0], 60.0)
 
 
 class TestQuasarSEDIntegration:
