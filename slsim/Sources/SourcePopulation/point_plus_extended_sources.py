@@ -79,6 +79,35 @@ class PointPlusExtendedSources(Galaxies):
         self._point_source_type = point_source_type
         self._joint_point_source_kwargs = joint_point_source_kwargs
 
+    def draw_source_dict(
+        self, z_max=None, z_min=None, galaxy_index=None, include_all_keywords=False
+    ):
+        """Choose source at random.
+
+        :param z_max: maximum redshift limit for the galaxy to be drawn.
+            If no galaxy is found for this limit, None will be returned.
+        :return: dictionary of source parameters
+        """
+        kwargs_source = super().draw_source_dict(
+            z_max=z_max,
+            z_min=z_min,
+            galaxy_index=galaxy_index,
+            include_all_keywords=include_all_keywords,
+        )
+        if kwargs_source is None:
+            return None
+
+        # point source parameters are drawn from the catalog row, but any missing
+        # keys are filled in from the joint defaults
+        for key, value in self._joint_point_source_kwargs.items():
+            if key not in kwargs_source:
+                kwargs_source[key] = value
+
+        kwargs_source["point_source_type"] = self._point_source_type
+        kwargs_source["extended_source_type"] = self._extended_source_type
+
+        return kwargs_source
+
     def draw_source(self, z_max=None, z_min=None, galaxy_index=None):
         """Choose source at random.
 
@@ -92,14 +121,6 @@ class PointPlusExtendedSources(Galaxies):
             galaxy_index=galaxy_index,
             include_all_keywords=True,
         )
-        if kwargs_source is None:
-            return None
-        # per-object catalog values override the joint/population-level defaults
-        # on key collision, rather than raising (as a direct double-** unpack would)
-        merged_kwargs = {**self._joint_point_source_kwargs, **kwargs_source}
-        source_class = Source(
-            cosmo=self._cosmo,
-            point_source_type=self._point_source_type,
-            **merged_kwargs
-        )
+
+        source_class = Source(cosmo=self._cosmo, **kwargs_source)
         return source_class
