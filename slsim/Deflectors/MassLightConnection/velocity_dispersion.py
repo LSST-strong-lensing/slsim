@@ -717,9 +717,10 @@ def schechter_velocity_dispersion_function(
     v_sample = np.interp(u, cdf, v)
     return v_sample
 
+
 # TODO: abundance matching needs to be power law slope aware.
-# Currently pl-slope is randomly assigned to each galaxy and only the M_star and sigma_v are matched. 
-# This is not correct as the pl-slope and sigma_v are correlated. 
+# Currently pl-slope is randomly assigned to each galaxy and only the M_star and sigma_v are matched.
+# This is not correct as the pl-slope and sigma_v are correlated.
 # Need to implement a more sophisticated abundance matching that takes into account the pl-slope and sigma_v correlation.
 def vel_disp_abundance_matching(galaxy_list, z_max, sky_area, cosmo):
     """Calculates the velocity dispersion from the steller mass. The routine
