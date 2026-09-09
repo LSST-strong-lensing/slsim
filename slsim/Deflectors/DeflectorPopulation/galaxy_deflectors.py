@@ -26,6 +26,7 @@ class GalaxyDeflectors(DeflectorsBase):
         catalog_type="skypy",
         mass_type="EPL",
         light_type="single_sersic",
+        sis_convention=True,
     ):
         """
         :param red_galaxy_list: list of dictionary with elliptical galaxy
@@ -56,6 +57,11 @@ class GalaxyDeflectors(DeflectorsBase):
          default, this class considers deflector catalog is generated using skypy
          pipeline.
         :type catalog_type: str. "skypy" or None.
+        :param sis_convention: if True, the Einstein radius of an EPL deflector is
+         normalized with the SIS convention. Only relevant for mass_type="EPL" with
+         gamma_pl != 2. The non-SIS normalization solves the spherical Jeans equation
+         for every deflector and is orders of magnitude slower.
+        :type sis_convention: bool
         """
         red_column_names = red_galaxy_list.colnames
         if "galaxy_type" not in red_column_names:
@@ -87,4 +93,5 @@ class GalaxyDeflectors(DeflectorsBase):
             catalog_type=catalog_type,
             mass_type=mass_type,
             light_type=light_type,
+            sis_convention=sis_convention,
         )

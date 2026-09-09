@@ -46,6 +46,9 @@ class Deflector(object):
         )
         self.mass = Mass(light=self.light, **kwargs_mass)
 
+        self._kwargs_mass = kwargs_mass
+        self._kwargs_light = kwargs_light
+
     @property
     def name(self):
         """Takes name of light model.
