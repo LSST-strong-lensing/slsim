@@ -11,9 +11,12 @@ from slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_host_match import (
     L_EDDINGTON_PER_MSUN,
     RUNNOE12_ZETA_3000,
     QuasarHostMatch,
+    _conditional_eddington_parameters,
+    _draw_from_log_weights,
+    _host_log_weights,
     black_hole_mass,
     bolometric_luminosity,
-    eddington_ratio_grid,
+    log_bolometric_luminosity,
 )
 
 
@@ -88,30 +91,36 @@ class TestBlackHoleMass:
             black_hole_mass(["green"], vel_disp=[200.0])
 
 
-class TestEddingtonRatioGrid:
-    def test_weights_are_lognormal(self):
-        log_grid, weight = eddington_ratio_grid(n_grid=4096)
-        density = weight / np.gradient(log_grid)
-        mean = np.sum(weight * log_grid)
-        variance = np.sum(weight * (log_grid - mean) ** 2)
-        npt.assert_allclose(weight.sum(), 1.0)
-        npt.assert_allclose(mean, ERDF_LOCATION, atol=0.01)
-        npt.assert_allclose(np.sqrt(variance), ERDF_WIDTH, rtol=0.02)
-        npt.assert_allclose(log_grid[density.argmax()], ERDF_LOCATION, atol=0.01)
+class TestAnalyticPosterior:
+    def test_host_weights_are_the_gaussian_convolution(self):
+        c = 8.0
+        means = np.array([7.5, 8.5])
+        scatters = np.array([0.2, 0.4])
+        log_weight = _host_log_weights(c, means, scatters, -1.0, 0.3)
+        variance = scatters**2 + 0.3**2
+        expected = -0.5 * (np.log(variance) + (c - means + 1.0) ** 2 / variance)
+        npt.assert_allclose(log_weight, expected)
 
-    def test_grid_is_symmetric_about_the_mean(self):
-        n_grid = 8
-        log_grid, weight = eddington_ratio_grid(n_grid=n_grid, location=-1.0, width=0.5)
-        assert len(log_grid) == n_grid
-        npt.assert_allclose(log_grid.mean(), -1.0)
-        npt.assert_allclose(weight, weight[::-1])
+    def test_conditional_eddington_distribution(self):
+        mean, variance = _conditional_eddington_parameters(
+            c=8.2,
+            mean_log_mass=9.0,
+            mass_scatter=0.4,
+            location=-1.0,
+            width=0.3,
+        )
+        expected_variance = 1 / (1 / 0.3**2 + 1 / 0.4**2)
+        expected_mean = expected_variance * (-1.0 / 0.3**2 + (8.2 - 9.0) / 0.4**2)
+        npt.assert_allclose(variance, expected_variance)
+        npt.assert_allclose(mean, expected_mean)
 
-    def test_location_and_width_move_the_distribution(self):
-        narrow, _ = eddington_ratio_grid(location=-1.0, width=0.2)
-        wide, _ = eddington_ratio_grid(location=-1.0, width=0.4)
-        shifted, _ = eddington_ratio_grid(location=-0.5, width=0.2)
-        npt.assert_allclose(np.ptp(wide), 2 * np.ptp(narrow))
-        npt.assert_allclose(shifted - narrow, 0.5)
+    def test_draw_stabilizes_extreme_log_weights(self):
+        rng = np.random.default_rng(0)
+        draws = np.array(
+            [_draw_from_log_weights([-1000, -1001, -np.inf], rng) for _ in range(10000)]
+        )
+        assert not np.any(draws == 2)
+        npt.assert_allclose(np.mean(draws == 0), 1 / (1 + np.exp(-1)), atol=0.02)
 
 
 class TestBolometricLuminosity:
@@ -138,6 +147,12 @@ class TestBolometricLuminosity:
         )
         npt.assert_allclose(scattered.std(), 0.1, atol=0.01)
 
+    def test_log_variant_avoids_a_round_trip(self):
+        npt.assert_allclose(
+            log_bolometric_luminosity([-26.0, -24.0]),
+            np.log10(bolometric_luminosity([-26.0, -24.0])),
+        )
+
 
 class TestQuasarHostMatch:
     def test_match_is_self_consistent(self):
@@ -147,8 +162,7 @@ class TestQuasarHostMatch:
             quasar_catalog=quasar_catalog(),
             galaxy_catalog=galaxy_catalog(),
             rng=np.random.default_rng(1),
-            progress=False,
-        ).match()
+        ).match(progress=False)
         assert len(result) > 0
 
         log_l_edd = (
@@ -158,51 +172,61 @@ class TestQuasarHostMatch:
         )
         npt.assert_allclose(result["log_bolometric_luminosity"], log_l_edd, atol=1e-10)
 
-    def test_eddington_ratios_stay_within_the_sampled_grid(self):
-        result = QuasarHostMatch(
-            quasar_catalog=quasar_catalog(),
-            galaxy_catalog=galaxy_catalog(),
-            rng=np.random.default_rng(2),
-            progress=False,
-        ).match()
-        log_grid, _ = eddington_ratio_grid()
-        half_cell = 0.5 * (log_grid[1] - log_grid[0])
-        log_ratio = np.log10(result["eddington_ratio"])
-        assert np.all(log_ratio >= log_grid[0] - half_cell)
-        assert np.all(log_ratio <= log_grid[-1] + half_cell)
-
-    def test_scatter_of_the_mass_relation_is_recovered(self):
-        """The black hole masses must scatter about the relation of their
-        host's type, rather than lying on it as a nearest-neighbour match would
-        give."""
-        result = QuasarHostMatch(
-            quasar_catalog=quasar_catalog(n=6000),
-            galaxy_catalog=galaxy_catalog(n=60000),
-            rng=np.random.default_rng(3),
-            progress=False,
-        ).match()
-
-        mean, _ = black_hole_mass(
-            result["galaxy_type"],
-            vel_disp=result["vel_disp"],
-            stellar_mass=result["stellar_mass"],
+    def test_match_samples_the_analytic_posterior(self):
+        """Host frequencies and conditional Eddington ratios follow the closed-
+        form posterior."""
+        mean_log_mass = np.array([8.8, 9.2])
+        intercept = BLACK_HOLE_MASS_RELATIONS["red"]["intercept"]
+        slope = BLACK_HOLE_MASS_RELATIONS["red"]["slope"]
+        velocity_dispersion = 200 * 10 ** ((mean_log_mass - intercept) / slope)
+        n_quasars = 4000
+        quasars = Table(
+            {"z": np.full(n_quasars, 0.5), "M_i": np.full(n_quasars, -25.0)}
         )
-        residual = result["black_hole_mass_exponent"] - np.log10(mean)
-        assert 0.15 < np.std(residual) < 0.45
-        npt.assert_allclose(np.mean(residual), 0.0, atol=0.15)
+        galaxies = Table(
+            {
+                "z": [0.5, 0.5],
+                "vel_disp": velocity_dispersion,
+                "galaxy_type": ["red", "red"],
+                "host_id": [0, 1],
+            }
+        )
+        result = QuasarHostMatch(
+            quasar_catalog=quasars,
+            galaxy_catalog=galaxies,
+            min_candidates=2,
+            bolometric_correction_scatter=0,
+            rng=np.random.default_rng(3),
+        ).match(progress=False)
 
-    def test_duty_cycle_favours_massive_black_holes(self):
-        def median_mass(slope):
-            result = QuasarHostMatch(
-                quasar_catalog=quasar_catalog(),
-                galaxy_catalog=galaxy_catalog(),
-                duty_cycle_slope=slope,
-                rng=np.random.default_rng(4),
-                progress=False,
-            ).match()
-            return np.median(result["black_hole_mass_exponent"])
+        c = log_bolometric_luminosity(-25.0) - np.log10(L_EDDINGTON_PER_MSUN)
+        scatter = BLACK_HOLE_MASS_RELATIONS["red"]["scatter"]
+        log_weight = _host_log_weights(
+            c, mean_log_mass, np.full(2, scatter), ERDF_LOCATION, ERDF_WIDTH
+        )
+        expected_host_probability = np.exp(log_weight - np.max(log_weight))
+        expected_host_probability /= expected_host_probability.sum()
+        observed_host_probability = np.bincount(result["host_id"], minlength=2) / len(
+            result
+        )
+        npt.assert_allclose(
+            observed_host_probability, expected_host_probability, atol=0.025
+        )
 
-        assert median_mass(1.0) > median_mass(0.0)
+        log_eddington_ratio = np.log10(result["eddington_ratio"])
+        for host_id in (0, 1):
+            expected_mean, expected_variance = _conditional_eddington_parameters(
+                c, mean_log_mass[host_id], scatter, ERDF_LOCATION, ERDF_WIDTH
+            )
+            selected = result["host_id"] == host_id
+            npt.assert_allclose(
+                log_eddington_ratio[selected].mean(), expected_mean, atol=0.02
+            )
+            npt.assert_allclose(
+                log_eddington_ratio[selected].std(),
+                np.sqrt(expected_variance),
+                atol=0.02,
+            )
 
     def test_rng_makes_the_catalog_reproducible(self):
         def run():
@@ -210,8 +234,7 @@ class TestQuasarHostMatch:
                 quasar_catalog=quasar_catalog(n=200),
                 galaxy_catalog=galaxy_catalog(n=5000),
                 rng=np.random.default_rng(5),
-                progress=False,
-            ).match()
+            ).match(progress=False)
 
         npt.assert_array_equal(
             run()["black_hole_mass_exponent"], run()["black_hole_mass_exponent"]
@@ -231,10 +254,9 @@ class TestQuasarHostMatch:
                 }
             ),
             min_candidates=1,
-            progress=False,
         )
         with pytest.warns(UserWarning, match="were dropped"):
-            result = matcher.match()
+            result = matcher.match(progress=False)
         assert len(result) == 0
         assert matcher.n_rejected == 1
         assert matcher.rejected_indices == [0]
@@ -253,8 +275,7 @@ class TestQuasarHostMatch:
             ),
             min_candidates=2,
             rng=np.random.default_rng(6),
-            progress=False,
-        ).match()
+        ).match(progress=False)
 
         for column in [
             "z",
@@ -279,8 +300,7 @@ class TestQuasarHostMatch:
             quasar_catalog=quasar_catalog(n=100),
             galaxy_catalog=galaxies,
             rng=np.random.default_rng(7),
-            progress=False,
-        ).match()
+        ).match(progress=False)
         assert len(result) > 0
 
     def test_galaxies_without_a_usable_property_are_dropped(self):
@@ -300,8 +320,7 @@ class TestQuasarHostMatch:
             ),
             min_candidates=1,
             rng=np.random.default_rng(8),
-            progress=False,
-        ).match()
+        ).match(progress=False)
         assert list(result["host_id"]) == [2]
 
     def test_no_usable_galaxy(self):
@@ -315,7 +334,6 @@ class TestQuasarHostMatch:
                         "galaxy_type": ["blue"],
                     }
                 ),
-                progress=False,
             ).match()
 
     def test_missing_quasar_column(self):
@@ -323,7 +341,6 @@ class TestQuasarHostMatch:
             QuasarHostMatch(
                 quasar_catalog=Table({"z": [0.5]}),
                 galaxy_catalog=galaxy_catalog(n=10),
-                progress=False,
             ).match()
 
     def test_missing_galaxy_type_column(self):
@@ -331,8 +348,4 @@ class TestQuasarHostMatch:
             QuasarHostMatch(
                 quasar_catalog=quasar_catalog(n=10),
                 galaxy_catalog=Table({"z": [0.5], "vel_disp": [200.0]}),
-                progress=False,
             ).match()
-
-    def test_relations_cover_the_types_the_pipeline_produces(self):
-        assert set(BLACK_HOLE_MASS_RELATIONS) == {"red", "blue"}

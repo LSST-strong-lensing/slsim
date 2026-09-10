@@ -1,47 +1,10 @@
-"""Match quasars drawn from a luminosity function to plausible host galaxies.
+"""Assign quasars to plausible hosts, conditioned on quasar luminosity.
 
-The luminosity function already fixes how many quasars there are and how bright
-they are, so the luminosity is an input here, not an output. What is left to
-draw is the host galaxy, the black hole mass and the Eddington ratio, from their
-joint distribution *conditioned on* that luminosity:
-
-.. math::
-    p(k, \\lambda) \\propto w_k\\, p(\\lambda)\\,
-    \\mathcal{N}\\!\\left(\\log M_{BH}^{req}(\\lambda) \\,\\middle|\\,
-    \\log M_{BH}(k),\\, s_k\\right)
-
-:math:`w_k` is the prior over candidate hosts, the Gaussian is the intrinsic
-scatter of galaxy ``k``'s black hole mass relation, and
-
-.. math::
-    M_{BH}^{req}(\\lambda) = \\frac{L_{bol}}{\\lambda\\, L_{Edd,1}}
-
-is the mass that reproduces the luminosity at that Eddington ratio.
-:math:`L_{Edd,1}` there is the Eddington luminosity *per solar mass*, the
-constant :data:`L_EDDINGTON_PER_MSUN` — not the Eddington luminosity of the
-black hole itself, which would make the expression circular. Because
-:math:`L_{Edd}` is strictly linear in mass, :math:`L_{Edd}(M) = M L_{Edd,1}`,
-the definition :math:`\\lambda \\equiv L_{bol}/L_{Edd}(M_{BH})` inverts to the
-line above, and dividing an erg/s by an erg/s per solar mass leaves a mass.
-
-The Gaussian is what conditioning on the luminosity looks like: a galaxy does
-not have a black hole mass, it has a distribution of them, and that
-distribution is the only thing tying a host to a quasar.
-
-:meth:`QuasarHostMatch.match` samples it as two one-dimensional draws:
-
-1. :math:`\\lambda` from :math:`p(\\lambda)\\,\\Phi(\\log M_{BH}^{req}(\\lambda))`,
-   where :math:`\\Phi` is the candidate hosts' black hole mass function smoothed
-   by their scatter. Setting :math:`M_{BH} = M_{BH}^{req}(\\lambda)` then makes
-   :math:`L_{bol} = \\lambda L_{Edd}` exact.
-2. the host from :math:`w_k \\mathcal{N}(\\log M_{BH} | \\log M_{BH}(k), s_k)`.
-
-Because the scatter is a weight rather than a cut, the assigned black hole
-masses scatter about the mean relation instead of lying on it.
-
-Ingredients: :data:`BLACK_HOLE_MASS_RELATIONS` for the mass relations,
-:func:`eddington_ratio_grid` for :math:`p(\\lambda)`, and
-:func:`bolometric_luminosity` for :math:`L_{bol}`.
+Both the black-hole mass relations and the Eddington-ratio distribution
+are Gaussian in log space. Their convolution gives the host
+probabilities, and their product gives the conditional Eddington-ratio
+distribution after a host is drawn. See the accompanying README for the
+model and references.
 """
 
 import warnings
@@ -53,44 +16,22 @@ from tqdm import tqdm
 # Eddington luminosity per solar mass [erg s^-1], 4 pi G M_sun m_p c / sigma_T
 L_EDDINGTON_PER_MSUN = 1.2570e38
 
-# log10(lambda L_lambda(3000 A) / erg s^-1) = L3000_ZERO_POINT - 0.4 * M_i(z=2).
-# The slope follows from both sides being log luminosities; the zero point is
-# fitted to the Hbeta/Mg II subsample of Wu & Shen (2022), ApJS 263, 42, and
-# holds to 0.02 dex over M_i = -28 to -23 and 0.05 dex over z = 0.7 to 2.5.
-# Reading the flux off a model SED anchored to M_i instead runs 0.18 dex faint.
+# Fitted to the Hbeta/Mg II sample of Wu & Shen (2022); see the README.
 L3000_ZERO_POINT = 35.27
 
-# Runnoe et al. (2012), MNRAS 422, 478, erratum MNRAS 427, 1800, table 1:
-# L_bol = zeta * lambda L_lambda(3000 A). Wu & Shen use 5.15 from Richards
-# et al. (2006), ApJS 166, 470, which is the same number to 0.003 dex.
+# Runnoe et al. (2012), table 1 and erratum.
 RUNNOE12_ZETA_3000 = 5.18
 
-# Eddington ratio distribution, lognormal in log10(lambda) as broad-line
-# quasars are observed to be (Kelly & Shen 2013, ApJ 764, 45; Schulze et al.
-# 2015, MNRAS 447, 2085). Both are fitted to Wu & Shen (2022) at fixed
-# bolometric luminosity, where the survey flux limit barely bites. The width is
-# the one whose intrinsic spread plus the catalog's own 0.12 dex mass errors
-# reproduce the observed spread, rather than matching it outright. See the
-# README for why this replaced a bounded power law in the specific accretion
-# rate of galaxies, which counts the quasar selection twice.
+# Gaussian distribution of log10(lambda), fitted to Wu & Shen (2022).
 ERDF_LOCATION = -1.15
 ERDF_WIDTH = 0.30
-
-# Half-width of the Eddington ratio grid, in units of ERDF_WIDTH
-ERDF_GRID_HALF_WIDTH = 4.0
-
-# Black hole mass at which an optional mass-dependent duty cycle is normalised
-DUTY_CYCLE_PIVOT_MSUN = 1e8
 
 # Black hole mass relations, each of the form
 #     log10(M_BH / Msun) = intercept + slope * log10(property / pivot)
 # with a lognormal intrinsic scatter of ``scatter`` dex. The relation used for a
 # galaxy is selected by its "galaxy_type".
 BLACK_HOLE_MASS_RELATIONS = {
-    # Kormendy & Ho (2013), ARA&A 51, 511, equation 7: the M-sigma relation of
-    # ellipticals and classical bulges, M_BH = 0.309e9 Msun at sigma = 200
-    # km/s, with 0.29 dex of intrinsic scatter. It is calibrated on bulge
-    # velocity dispersions, so it is applied only to bulge-dominated hosts.
+    # Kormendy & Ho (2013), equation 7.
     "red": {
         "property": "vel_disp",
         "pivot": 200.0,
@@ -98,10 +39,7 @@ BLACK_HOLE_MASS_RELATIONS = {
         "slope": 4.38,
         "scatter": 0.29,
     },
-    # Reines & Volonteri (2015), ApJ 813, 82, equation 5: the M_BH-M_star
-    # relation of local broad-line AGN, whose hosts are mostly disc-dominated
-    # and whose normalisation sits more than a dex below the early-type one.
-    # A disc galaxy's dispersion is not a bulge dispersion, so mass is used.
+    # Reines & Volonteri (2015), equation 5.
     "blue": {
         "property": "stellar_mass",
         "pivot": 1e11,
@@ -178,32 +116,8 @@ def black_hole_mass(galaxy_type, vel_disp=None, stellar_mass=None, relations=Non
     return 10**log_mass, scatter
 
 
-def eddington_ratio_grid(n_grid=32, location=ERDF_LOCATION, width=ERDF_WIDTH):
-    """Grid of Eddington ratios and the probability of each.
-
-    The distribution is lognormal, ``dP/dlog10(lambda)`` a Gaussian of mean
-    ``location`` and standard deviation ``width``. Its normalisation would set
-    the fraction of galaxies that are active, but the abundance of quasars is
-    already fixed by the input luminosity function, so only the shape is used.
-
-    The grid spans :data:`ERDF_GRID_HALF_WIDTH` standard deviations either side
-    of the mean and carries equal intervals in dex, so the weights are the
-    per-dex density itself and a draw may be spread across its own cell.
-
-    :param n_grid: number of grid points
-    :param location: mean of log10(Eddington ratio)
-    :param width: standard deviation of log10(Eddington ratio) [dex]
-    :return: grid of log10(Eddington ratio), normalised weight of each point
-    :rtype: tuple of numpy.ndarray
-    """
-    reach = ERDF_GRID_HALF_WIDTH * width
-    log_grid = np.linspace(location - reach, location + reach, n_grid)
-    weight = np.exp(-0.5 * ((log_grid - location) / width) ** 2)
-    return log_grid, weight / weight.sum()
-
-
-def bolometric_luminosity(m_i, scatter=0.0, rng=None):
-    """Bolometric luminosity of a quasar of absolute i-band magnitude ``m_i``.
+def log_bolometric_luminosity(m_i, scatter=0.0, rng=None):
+    """Log10 bolometric luminosity for absolute magnitude ``M_i(z=2)``.
 
     ``m_i`` is the K-corrected absolute i-band magnitude normalised to z = 2,
     M_i(z=2), which is the quantity the Richards et al. (2006) / Oguri &
@@ -217,7 +131,7 @@ def bolometric_luminosity(m_i, scatter=0.0, rng=None):
     :param scatter: object-to-object scatter of the bolometric correction [dex]
     :param rng: random number generator used for the scatter
     :type rng: numpy.random.Generator or None
-    :return: bolometric luminosity [erg/s]
+    :return: log10 bolometric luminosity [erg/s]
     :rtype: float or numpy.ndarray
     """
     log_l3000 = L3000_ZERO_POINT - 0.4 * np.asarray(m_i, dtype=float)
@@ -225,16 +139,47 @@ def bolometric_luminosity(m_i, scatter=0.0, rng=None):
     if scatter:
         rng = np.random.default_rng() if rng is None else rng
         log_l_bol = log_l_bol + rng.normal(0, scatter, np.shape(log_l_bol))
-    return 10**log_l_bol
+    return log_l_bol
+
+
+def bolometric_luminosity(m_i, scatter=0.0, rng=None):
+    """Bolometric luminosity for absolute magnitude ``M_i(z=2)`` [erg/s]."""
+    return 10 ** log_bolometric_luminosity(m_i, scatter=scatter, rng=rng)
+
+
+def _draw_from_log_weights(log_weight, rng):
+    """Draw an index from unnormalised log weights."""
+    log_weight = np.asarray(log_weight, dtype=float)
+    finite = np.isfinite(log_weight)
+    if not finite.any():
+        raise ValueError("Cannot draw from weights with no finite value.")
+    weight = np.zeros_like(log_weight)
+    weight[finite] = np.exp(log_weight[finite] - np.max(log_weight[finite]))
+    cumulative = np.cumsum(weight)
+    return int(np.searchsorted(cumulative, rng.random() * cumulative[-1]))
+
+
+def _host_log_weights(c, mean_log_mass, mass_scatter, location, width):
+    """Marginal log probability of each host for luminosity coordinate
+    ``c``."""
+    variance = mass_scatter**2 + width**2
+    residual = c - mean_log_mass - location
+    return -0.5 * (np.log(variance) + residual**2 / variance)
+
+
+def _conditional_eddington_parameters(c, mean_log_mass, mass_scatter, location, width):
+    """Mean and variance of log10(Eddington ratio), conditional on a host."""
+    variance = 1.0 / (1.0 / width**2 + 1.0 / mass_scatter**2)
+    mean = variance * (location / width**2 + (c - mean_log_mass) / mass_scatter**2)
+    return mean, variance
 
 
 class QuasarHostMatch(object):
     """Assign host galaxies, black hole masses and Eddington ratios to quasars.
 
-    See the module docstring for the distribution being sampled. Host candidates
-    are the galaxies in a thin redshift slice around the quasar, so a uniform
-    prior over them weights by galaxy number density; ``duty_cycle_slope`` tilts
-    that prior towards more massive black holes.
+    Host candidates are galaxies in a thin redshift slice around the
+    quasar. A uniform prior over candidates therefore weights by galaxy
+    number density.
     """
 
     def __init__(
@@ -247,11 +192,8 @@ class QuasarHostMatch(object):
         bolometric_correction_scatter=0.1,
         eddington_ratio_location=ERDF_LOCATION,
         eddington_ratio_width=ERDF_WIDTH,
-        n_eddington_grid=32,
         max_offset_sigma=4.0,
-        duty_cycle_slope=0.0,
         rng=None,
-        progress=True,
     ):
         """
 
@@ -272,20 +214,11 @@ class QuasarHostMatch(object):
         :param eddington_ratio_location: mean of log10(Eddington ratio)
         :param eddington_ratio_width: standard deviation of log10(Eddington
             ratio) [dex]
-        :param n_eddington_grid: number of Eddington ratio grid points
         :param max_offset_sigma: a quasar is rejected if no candidate host can
-            produce it within this many times the scatter of its black hole mass
-            relation
-        :param duty_cycle_slope: exponent of an optional mass-dependent duty
-            cycle, which weights a candidate by ``(M_BH /
-            DUTY_CYCLE_PIVOT_MSUN)**duty_cycle_slope``. The default of zero
-            leaves the prior uniform over candidates, so that hosts are weighted
-            purely by their number density. A positive value makes massive black
-            holes more likely to be active, which is observed but is a
-            calibration rather than a first-principles ingredient.
+            produce it within this many combined standard deviations of the
+            mass relation and Eddington-ratio distribution
         :param rng: random number generator, for reproducible catalogs
         :type rng: numpy.random.Generator or None
-        :param progress: whether to show a progress bar
         """
         self.quasar_catalog = quasar_catalog
         self.galaxy_catalog = galaxy_catalog.copy()
@@ -295,11 +228,8 @@ class QuasarHostMatch(object):
         self._bc_scatter = bolometric_correction_scatter
         self._erdf_location = eddington_ratio_location
         self._erdf_width = eddington_ratio_width
-        self._n_eddington_grid = n_eddington_grid
         self._max_offset_sigma = max_offset_sigma
-        self._duty_cycle_slope = duty_cycle_slope
         self._rng = np.random.default_rng() if rng is None else rng
-        self._progress = progress
 
         # indices of the quasars no host galaxy could account for
         self.rejected_indices = []
@@ -309,9 +239,10 @@ class QuasarHostMatch(object):
         """Number of quasars that could not be assigned a host galaxy."""
         return len(self.rejected_indices)
 
-    def match(self):
+    def match(self, progress=True):
         """Match every quasar with a host galaxy.
 
+        :param progress: whether to show a progress bar
         :return: catalog of the quasars that could be matched, joined
             with their host galaxies and with
             "black_hole_mass_exponent", "eddington_ratio" and
@@ -319,19 +250,13 @@ class QuasarHostMatch(object):
         :rtype: astropy Table
         """
         self._validate()
-        galaxy_z, log_mass, scatter, weight = self._prepare_galaxies()
+        galaxy_z, log_mass, scatter = self._prepare_galaxies()
 
-        log_l_bol = np.log10(
-            bolometric_luminosity(
-                np.asarray(self.quasar_catalog["M_i"], dtype=float),
-                scatter=self._bc_scatter,
-                rng=self._rng,
-            )
+        log_l_bol = log_bolometric_luminosity(
+            np.asarray(self.quasar_catalog["M_i"], dtype=float),
+            scatter=self._bc_scatter,
+            rng=self._rng,
         )
-        log_lambda_grid, lambda_weight = eddington_ratio_grid(
-            self._n_eddington_grid, self._erdf_location, self._erdf_width
-        )
-        half_cell = 0.5 * (log_lambda_grid[1] - log_lambda_grid[0])
         log_l_edd_per_msun = np.log10(L_EDDINGTON_PER_MSUN)
 
         quasar_z = np.asarray(self.quasar_catalog["z"], dtype=float)
@@ -342,7 +267,7 @@ class QuasarHostMatch(object):
         rows = tqdm(
             range(len(self.quasar_catalog)),
             desc="Matching quasars with host galaxies",
-            disable=not self._progress,
+            disable=not progress,
         )
         for i in rows:
             start, end = self._candidate_range(galaxy_z, quasar_z[i])
@@ -351,42 +276,41 @@ class QuasarHostMatch(object):
                 continue
             mean = log_mass[start:end]
             spread = scatter[start:end]
-            prior = weight[start:end]
-
-            # mass each grid Eddington ratio would require of this quasar, and
-            # how many scatters each candidate sits from it
-            required = log_l_bol[i] - log_l_edd_per_msun - log_lambda_grid
-            offset = (required[None, :] - mean[:, None]) / spread[:, None]
-            if np.abs(offset).min() > self._max_offset_sigma:
+            c = log_l_bol[i] - log_l_edd_per_msun
+            combined_scatter = np.sqrt(spread**2 + self._erdf_width**2)
+            offset = (c - mean - self._erdf_location) / combined_scatter
+            if np.min(np.abs(offset)) > self._max_offset_sigma:
                 self.rejected_indices.append(i)
                 continue
 
-            # step 1: the Eddington ratio, with the hosts summed out. That sum
-            # is the candidates' black hole mass function smoothed by their
-            # intrinsic scatter, evaluated at the required mass.
-            smoothed_mass_function = (
-                prior[:, None] * np.exp(-0.5 * offset**2) / spread[:, None]
-            ).sum(axis=0)
-            cell = self._draw(lambda_weight * smoothed_mass_function)
-            log_lambda = log_lambda_grid[cell] + self._rng.uniform(
-                -half_cell, half_cell
+            host = _draw_from_log_weights(
+                _host_log_weights(
+                    c,
+                    mean,
+                    spread,
+                    self._erdf_location,
+                    self._erdf_width,
+                ),
+                self._rng,
             )
-            # the mass reproducing the luminosity at exactly this lambda, so
-            # that L_bol = lambda * L_Edd holds for the reported values
-            log_mass_bh = log_l_bol[i] - log_l_edd_per_msun - log_lambda
-
-            # step 2: the host, from the same Gaussian at that fixed mass
-            host_offset = (log_mass_bh - mean) / spread
-            host_index = start + self._draw(
-                prior * np.exp(-0.5 * host_offset**2) / spread
+            conditional_mean, conditional_variance = _conditional_eddington_parameters(
+                c,
+                mean[host],
+                spread[host],
+                self._erdf_location,
+                self._erdf_width,
             )
+            log_lambda = self._rng.normal(
+                conditional_mean, np.sqrt(conditional_variance)
+            )
+            log_mass_bh = c - log_lambda
 
             matched_quasars.append(i)
-            matched_galaxies.append(host_index)
+            matched_galaxies.append(start + host)
             matched_log_mass.append(log_mass_bh)
             matched_eddington_ratio.append(10**log_lambda)
 
-        self._warn_about_rejections(log_lambda_grid)
+        self._warn_about_rejections()
 
         quasars = self.quasar_catalog[matched_quasars]
         galaxies = self.galaxy_catalog[matched_galaxies]
@@ -414,10 +338,12 @@ class QuasarHostMatch(object):
                     "The galaxy catalog needs a '%s' column to perform the "
                     "quasar-host match." % column
                 )
+        if self._erdf_width <= 0:
+            raise ValueError("eddington_ratio_width must be positive.")
 
     def _prepare_galaxies(self):
-        """Redshift, log10 mean black hole mass, intrinsic scatter and duty
-        cycle weight of each candidate, sorted by redshift.
+        """Redshift, log10 mean black hole mass and scatter, sorted by
+        redshift.
 
         Galaxies whose black hole mass relation cannot be evaluated,
         because the property it uses is missing or non-positive, carry
@@ -447,8 +373,7 @@ class QuasarHostMatch(object):
 
         self.galaxy_catalog = self.galaxy_catalog[order]
         mass = mass[order]
-        weight = (mass / DUTY_CYCLE_PIVOT_MSUN) ** self._duty_cycle_slope
-        return redshift[order], np.log10(mass), scatter[order], weight
+        return redshift[order], np.log10(mass), scatter[order]
 
     def _candidate_range(self, galaxy_z, redshift):
         """Bounds of the redshift slice the host candidates are drawn from,
@@ -461,13 +386,7 @@ class QuasarHostMatch(object):
                 return start, end
             delta_z = min(delta_z * 2, self._max_delta_z)
 
-    def _draw(self, weight):
-        """Index drawn with probability proportional to ``weight``."""
-        cumulative = np.cumsum(weight)
-        index = np.searchsorted(cumulative, self._rng.random() * cumulative[-1])
-        return int(min(index, weight.size - 1))
-
-    def _warn_about_rejections(self, log_lambda_grid):
+    def _warn_about_rejections(self):
         """Report the quasars no host galaxy could account for, and where in
         magnitude and redshift they sit."""
         if not self.rejected_indices:
@@ -484,11 +403,10 @@ class QuasarHostMatch(object):
             )
 
         warnings.warn(
-            "%d of %d quasars (%.1f%%) were dropped: no candidate host has a "
-            "black hole mass relation reaching their luminosity within %g sigma. "
-            "They span M_i %s and z %s. The Eddington ratio grid runs over "
-            "log10(lambda) %.2f to %.2f, which bounds the mass a quasar of a "
-            "given luminosity can have."
+            "%d of %d quasars (%.1f%%) were dropped: no candidate host is "
+            "within %g combined standard deviations of the luminosity "
+            "implied by its mass relation and the Eddington-ratio distribution. "
+            "They span M_i %s and z %s."
             % (
                 self.n_rejected,
                 len(self.quasar_catalog),
@@ -496,8 +414,6 @@ class QuasarHostMatch(object):
                 self._max_offset_sigma,
                 span("M_i"),
                 span("z"),
-                log_lambda_grid[0],
-                log_lambda_grid[-1],
             ),
             UserWarning,
         )

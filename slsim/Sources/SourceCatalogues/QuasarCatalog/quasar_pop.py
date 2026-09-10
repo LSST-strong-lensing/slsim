@@ -84,7 +84,7 @@ class QuasarRate(object):
         :param redshifts: Redshifts for quasar density lightcone to be evaluated at.
         :type redshifts: np.ndarray
         :param host_galaxy_candidate: Galaxy catalog in an Astropy table. This catalog
-         is used to match with the supernova population. If None, the galaxy catalog is
+         is used to match with the quasar population. If None, the galaxy catalog is
          generated within this class.
         :type host_galaxy_candidate: `~astropy.table.Table`
         :param use_qsogen_sed: If True, uses qsogen to generate realistic SEDs and compute magnitudes.
@@ -95,8 +95,7 @@ class QuasarRate(object):
          :class:`~slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_host_match.QuasarHostMatch`,
          which assigns host galaxies, black hole masses and Eddington ratios.
          Only used if `host_galaxy=True` is passed to `quasar_sample`. Pass an
-         ``rng`` for a reproducible catalog, or a positive ``duty_cycle_slope``
-         to make massive black holes more likely to be active.
+         ``rng`` for a reproducible catalog.
         :type host_match_kwargs: dict or None
         """
         self.zeta = zeta
@@ -115,9 +114,7 @@ class QuasarRate(object):
             np.array(redshifts) if redshifts is not None else np.linspace(0.1, 5.0, 100)
         )
         self.host_galaxy_candidate = host_galaxy_candidate
-        self.host_match_kwargs = (
-            host_match_kwargs if host_match_kwargs is not None else {}
-        )
+        self.host_match_kwargs = dict(host_match_kwargs or {})
 
         # SED Generation Configuration
         self.use_qsogen_sed = use_qsogen_sed
@@ -633,7 +630,9 @@ class QuasarRate(object):
                     join_type="exact",
                 )
             else:
-                host_galaxy_catalog = self.host_galaxy_candidate
+                # Velocity-dispersion generation below must not mutate a table
+                # owned by the caller.
+                host_galaxy_catalog = self.host_galaxy_candidate.copy()
 
             # compute "vel_disp" if not present
             if "vel_disp" not in host_galaxy_catalog.colnames:

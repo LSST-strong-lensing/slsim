@@ -316,6 +316,7 @@ class TestQuasarRate:
         )
         mock_vel_disp.assert_called_once()
         npt.assert_almost_equal(result_table["vel_disp"][0], 50.0)
+        assert "vel_disp" not in host_table.colnames
 
     @patch("slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_pop.SkyPyPipeline")
     @patch(
