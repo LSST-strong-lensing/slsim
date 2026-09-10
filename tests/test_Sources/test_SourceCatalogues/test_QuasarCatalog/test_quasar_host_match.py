@@ -37,7 +37,10 @@ def quasar_catalog(n=2000, seed=4, m_i=(-26.0, -23.0)):
 
 class TestBlackHoleMass:
     def test_red_follows_kormendy_ho(self):
-        """Kormendy & Ho (2013) eq. 7: M_BH = 0.309e9 Msun at sigma = 200 km/s."""
+        """Kormendy & Ho (2013) eq.
+
+        7: M_BH = 0.309e9 Msun at sigma = 200 km/s.
+        """
         mass, scatter = black_hole_mass(["red"], vel_disp=[200.0])
         npt.assert_allclose(mass, 0.309e9)
         npt.assert_allclose(scatter, 0.29)
@@ -46,7 +49,10 @@ class TestBlackHoleMass:
         npt.assert_allclose(mass[1] / mass[0], (150 / 200) ** 4.38)
 
     def test_blue_follows_reines_volonteri(self):
-        """Reines & Volonteri (2015) eq. 5: log M_BH = 7.45 at M* = 1e11."""
+        """Reines & Volonteri (2015) eq.
+
+        5: log M_BH = 7.45 at M* = 1e11.
+        """
         mass, scatter = black_hole_mass(["blue"], stellar_mass=[1e11])
         npt.assert_allclose(np.log10(mass), 7.45)
         npt.assert_allclose(scatter, 0.24)
@@ -166,8 +172,9 @@ class TestQuasarHostMatch:
         assert np.all(log_ratio <= log_grid[-1] + half_cell)
 
     def test_scatter_of_the_mass_relation_is_recovered(self):
-        """The black hole masses must scatter about the relation of their host's
-        type, rather than lying on it as a nearest-neighbour match would give."""
+        """The black hole masses must scatter about the relation of their
+        host's type, rather than lying on it as a nearest-neighbour match would
+        give."""
         result = QuasarHostMatch(
             quasar_catalog=quasar_catalog(n=6000),
             galaxy_catalog=galaxy_catalog(n=60000),
@@ -277,8 +284,9 @@ class TestQuasarHostMatch:
         assert len(result) > 0
 
     def test_galaxies_without_a_usable_property_are_dropped(self):
-        """A blue galaxy with no stellar mass carries no black hole information,
-        so it cannot be a host and the other galaxy must be chosen."""
+        """A blue galaxy with no stellar mass carries no black hole
+        information, so it cannot be a host and the other galaxy must be
+        chosen."""
         result = QuasarHostMatch(
             quasar_catalog=Table({"z": [0.5], "M_i": [-23.0]}),
             galaxy_catalog=Table(

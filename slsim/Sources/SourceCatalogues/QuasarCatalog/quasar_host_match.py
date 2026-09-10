@@ -113,7 +113,8 @@ BLACK_HOLE_MASS_RELATIONS = {
 
 
 def _as_string_array(values):
-    """Galaxy types as text, decoding the bytes a FITS file round-trips them to."""
+    """Galaxy types as text, decoding the bytes a FITS file round-trips them
+    to."""
     values = np.atleast_1d(np.asarray(values))
     if values.dtype.kind == "S":
         return np.char.decode(values)
@@ -311,9 +312,10 @@ class QuasarHostMatch(object):
     def match(self):
         """Match every quasar with a host galaxy.
 
-        :return: catalog of the quasars that could be matched, joined with their
-            host galaxies and with "black_hole_mass_exponent", "eddington_ratio"
-            and "log_bolometric_luminosity" columns added
+        :return: catalog of the quasars that could be matched, joined
+            with their host galaxies and with
+            "black_hole_mass_exponent", "eddington_ratio" and
+            "log_bolometric_luminosity" columns added
         :rtype: astropy Table
         """
         self._validate()
@@ -417,9 +419,9 @@ class QuasarHostMatch(object):
         """Redshift, log10 mean black hole mass, intrinsic scatter and duty
         cycle weight of each candidate, sorted by redshift.
 
-        Galaxies whose black hole mass relation cannot be evaluated, because the
-        property it uses is missing or non-positive, carry no information about
-        the black hole and are dropped.
+        Galaxies whose black hole mass relation cannot be evaluated,
+        because the property it uses is missing or non-positive, carry
+        no information about the black hole and are dropped.
         """
         properties = {
             name: self.galaxy_catalog[name]

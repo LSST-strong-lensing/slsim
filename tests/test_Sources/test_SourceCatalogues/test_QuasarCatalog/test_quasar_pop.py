@@ -104,10 +104,13 @@ class TestQuasarRate:
         np.testing.assert_almost_equal(dphi_dm_calc, expected_values, decimal=4)
 
     def test_k_correction_is_normalised_to_z2(self):
-        """The Richards et al. (2006) correction is normalised to z = 2, to
-        match the M_i(z=2) system of the luminosity function. Its z = 0 value is
-        the continuum term of an alpha_nu = -0.5 power law between the z = 0 and
-        z = 2 normalisations, and must not be subtracted off."""
+        """The Richards et al.
+
+        (2006) correction is normalised to z = 2, to match the M_i(z=2)
+        system of the luminosity function. Its z = 0 value is the
+        continuum term of an alpha_nu = -0.5 power law between the z = 0
+        and z = 2 normalisations, and must not be subtracted off.
+        """
         np.testing.assert_almost_equal(
             self.quasar_rate.k_corr_interp(0.0), 1.25 * np.log10(3.0), decimal=3
         )
