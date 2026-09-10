@@ -157,22 +157,6 @@ class TestDeflector(object):
         assert light_model[0] == "SERSIC_ELLIPSE"
         assert kwargs_lens_light[0]["R_sersic"] == 0.5
 
-    def test_light_model_lenstronomy_returns_independent_lists(self, monkeypatch):
-        shared_models = ["SERSIC_ELLIPSE"]
-        shared_kwargs = [{"R_sersic": 0.5}]
-        monkeypatch.setattr(
-            self.deflector.light,
-            "kwargs_extended_light",
-            lambda band=None: (shared_models, shared_kwargs),
-        )
-
-        models, kwargs = self.deflector.light_model_lenstronomy(band="g")
-        models.append("SERSIC")
-        kwargs.append({"R_sersic": 1.0})
-
-        assert shared_models == ["SERSIC_ELLIPSE"]
-        assert shared_kwargs == [{"R_sersic": 0.5}]
-
     def test_mass_model_lenstronomy(self):
         results = self.deflector.mass_model_lenstronomy(lens_cosmo=self.lens_cosmo)[1]
         results2 = self.deflector2.mass_model_lenstronomy(lens_cosmo=self.lens_cosmo)[1]

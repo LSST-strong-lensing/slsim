@@ -80,6 +80,15 @@ class TestDoubleSersic:
         assert source_model[0] == "SERSIC_ELLIPSE"
         assert source_model[1] == "SERSIC_ELLIPSE"
 
+    def test_kwargs_extended_light_returns_independent_model_list(self):
+        source_model, _ = self.source.kwargs_extended_light(band="i")
+        source_model.append("SERSIC")
+
+        assert self.source._light_model_list == [
+            "SERSIC_ELLIPSE",
+            "SERSIC_ELLIPSE",
+        ]
+
     def test_surface_brightness_reff(self):
         result = self.source.surface_brightness_reff(band="i")
         npt.assert_almost_equal(result, 21.313, decimal=3)

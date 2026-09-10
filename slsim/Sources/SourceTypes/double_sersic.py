@@ -162,7 +162,7 @@ class DoubleSersic(SourceBase):
                 "center_y": center_source[1],
             },
         ]
-        return self._light_model_list, kwargs_extended_source
+        return self._light_model_list.copy(), kwargs_extended_source
 
     def _weights_for_band(self, band):
         """Return Sersic component weights for an imaging band."""
