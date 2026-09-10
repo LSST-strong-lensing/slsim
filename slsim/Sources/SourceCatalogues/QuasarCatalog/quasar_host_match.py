@@ -10,12 +10,23 @@ joint distribution *conditioned on* that luminosity:
     \\mathcal{N}\\!\\left(\\log M_{BH}^{req}(\\lambda) \\,\\middle|\\,
     \\log M_{BH}(k),\\, s_k\\right)
 
-:math:`M_{BH}^{req}(\\lambda) = L_{bol} / (\\lambda L_{Edd,1})` is the mass that
-reproduces the luminosity at that Eddington ratio, :math:`w_k` is the prior over
-candidate hosts, and the Gaussian is the intrinsic scatter of galaxy ``k``'s
-black hole mass relation. That Gaussian is what conditioning on the luminosity
-looks like: a galaxy does not have a black hole mass, it has a distribution of
-them, and that distribution is the only thing tying a host to a quasar.
+:math:`w_k` is the prior over candidate hosts, the Gaussian is the intrinsic
+scatter of galaxy ``k``'s black hole mass relation, and
+
+.. math::
+    M_{BH}^{req}(\\lambda) = \\frac{L_{bol}}{\\lambda\\, L_{Edd,1}}
+
+is the mass that reproduces the luminosity at that Eddington ratio.
+:math:`L_{Edd,1}` there is the Eddington luminosity *per solar mass*, the
+constant :data:`L_EDDINGTON_PER_MSUN` — not the Eddington luminosity of the
+black hole itself, which would make the expression circular. Because
+:math:`L_{Edd}` is strictly linear in mass, :math:`L_{Edd}(M) = M L_{Edd,1}`,
+the definition :math:`\\lambda \\equiv L_{bol}/L_{Edd}(M_{BH})` inverts to the
+line above, and dividing an erg/s by an erg/s per solar mass leaves a mass.
+
+The Gaussian is what conditioning on the luminosity looks like: a galaxy does
+not have a black hole mass, it has a distribution of them, and that
+distribution is the only thing tying a host to a quasar.
 
 :meth:`QuasarHostMatch.match` samples it as two one-dimensional draws:
 
@@ -319,7 +330,7 @@ class QuasarHostMatch(object):
             self._n_eddington_grid, self._erdf_location, self._erdf_width
         )
         half_cell = 0.5 * (log_lambda_grid[1] - log_lambda_grid[0])
-        log_l_edd = np.log10(L_EDDINGTON_PER_MSUN)
+        log_l_edd_per_msun = np.log10(L_EDDINGTON_PER_MSUN)
 
         quasar_z = np.asarray(self.quasar_catalog["z"], dtype=float)
         self.rejected_indices = []
@@ -342,7 +353,7 @@ class QuasarHostMatch(object):
 
             # mass each grid Eddington ratio would require of this quasar, and
             # how many scatters each candidate sits from it
-            required = log_l_bol[i] - log_l_edd - log_lambda_grid
+            required = log_l_bol[i] - log_l_edd_per_msun - log_lambda_grid
             offset = (required[None, :] - mean[:, None]) / spread[:, None]
             if np.abs(offset).min() > self._max_offset_sigma:
                 self.rejected_indices.append(i)
@@ -360,7 +371,7 @@ class QuasarHostMatch(object):
             )
             # the mass reproducing the luminosity at exactly this lambda, so
             # that L_bol = lambda * L_Edd holds for the reported values
-            log_mass_bh = log_l_bol[i] - log_l_edd - log_lambda
+            log_mass_bh = log_l_bol[i] - log_l_edd_per_msun - log_lambda
 
             # step 2: the host, from the same Gaussian at that fixed mass
             host_offset = (log_mass_bh - mean) / spread

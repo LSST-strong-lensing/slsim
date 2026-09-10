@@ -10,7 +10,13 @@ A galaxy does not have a black hole mass; it has a *distribution* of them, becau
 
 $$p(k, \lambda) \propto w_k\; p(\lambda)\; \mathcal{N}\!\left(\log M_{\rm BH}^{\rm req}(\lambda)\;\middle|\;\log M_{\rm BH}(k),\; s_k\right),$$
 
-where $M_{\rm BH}^{\rm req}(\lambda) = L_{\rm bol} / (\lambda\, L_{\rm Edd,1})$ is the mass that reproduces the observed luminosity at that Eddington ratio, $s_k$ is the intrinsic scatter of the relation appropriate to galaxy $k$, and $w_k$ is the prior over hosts. The constraint $L_{\rm bol} = \lambda M_{\rm BH} L_{\rm Edd,1}$ is exact, which is what collapses the black hole mass out of the problem and leaves the Gaussian evaluated at $M_{\rm BH}^{\rm req}$.
+where $s_k$ is the intrinsic scatter of the relation appropriate to galaxy $k$, $w_k$ is the prior over hosts, and
+
+$$M_{\rm BH}^{\rm req}(\lambda) = \frac{L_{\rm bol}}{\lambda\, L_{\rm Edd,1}}$$
+
+is the mass that reproduces the observed luminosity at that Eddington ratio. $L_{\rm Edd,1} = 1.257\times10^{38}\,\text{erg s}^{-1}M_\odot^{-1}$ is the Eddington luminosity **per solar mass**, a constant — not the Eddington luminosity of the black hole, which would make this circular. Since $L_{\rm Edd}$ is strictly linear in mass, $L_{\rm Edd}(M) = M\,L_{\rm Edd,1}$, the definition $\lambda \equiv L_{\rm bol}/L_{\rm Edd}(M_{\rm BH})$ rearranges to the line above, and an erg/s divided by an erg/s per solar mass is a mass.
+
+So the constraint $L_{\rm bol} = \lambda\, M_{\rm BH}\, L_{\rm Edd,1}$ is exact, which is what collapses the black hole mass out of the problem and leaves the Gaussian evaluated at $M_{\rm BH}^{\rm req}$.
 
 ## Ingredients
 
