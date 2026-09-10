@@ -4,61 +4,90 @@ This describes how quasars drawn from a luminosity function are assigned host ga
 
 The quasar catalog already fixes *how many* quasars there are and *how bright* they are, because it is sampled from the Oguri & Marshall (2010) / Richards et al. (2006) luminosity function. The job of the matcher is therefore to draw the remaining latent variables — the host galaxy, the black hole mass and the Eddington ratio — from their joint distribution *conditioned on* the quasar's luminosity.
 
-## The generative model
+## The model
 
-For a quasar of absolute magnitude $M_i(z=2)$ at redshift $z$:
+A galaxy does not have a black hole mass; it has a *distribution* of them, because the black hole mass relations have real intrinsic scatter. That distribution is the only thing tying a host to a quasar. Writing it out, the joint posterior for a host $k$ and an Eddington ratio $\lambda$ is
 
-1. **Bolometric luminosity.** The absolute magnitude is converted to the monochromatic luminosity $\lambda L_\lambda(3000\,\text{Å})$ by rescaling the same qsogen SED (Temple et al. 2021) that generates the broad-band photometry, so the two are exactly consistent. Because the $i$ band at $z=2$ samples the rest-frame continuum at $\sim2500\,\text{Å}$, free of strong lines and host light, this relation is a pure $0.4\,$dex-per-magnitude rescaling and needs only a single reference SED evaluation. The bolometric luminosity then follows from the Runnoe et al. (2012) correction, $L_{\rm bol} = \zeta_{3000}\,\lambda L_\lambda(3000)$ with $\zeta_{3000} = 5.18$, with a configurable object-to-object scatter (default 0.1 dex).
+$$p(k, \lambda) \propto w_k\; p(\lambda)\; \mathcal{N}\!\left(\log M_{\rm BH}^{\rm req}(\lambda)\;\middle|\;\log M_{\rm BH}(k),\; s_k\right),$$
+
+where $M_{\rm BH}^{\rm req}(\lambda) = L_{\rm bol} / (\lambda\, L_{\rm Edd,1})$ is the mass that reproduces the observed luminosity at that Eddington ratio, $s_k$ is the intrinsic scatter of the relation appropriate to galaxy $k$, and $w_k$ is the prior over hosts. The constraint $L_{\rm bol} = \lambda M_{\rm BH} L_{\rm Edd,1}$ is exact, which is what collapses the black hole mass out of the problem and leaves the Gaussian evaluated at $M_{\rm BH}^{\rm req}$.
+
+## Ingredients
+
+1. **Bolometric luminosity.** The absolute magnitude fixes the monochromatic luminosity through a single calibrated zero point,
+
+    $$\log_{10} \lambda L_\lambda(3000\,\text{Å}) = 35.27 - 0.4\,M_i(z=2),$$
+
+    the slope following from both sides being log luminosities. The zero point is fitted to the H$\beta$/Mg II subsample of Wu & Shen (2022), whose $M_i(z=2)$ comes from SDSS photometry through the same Richards et al. (2006) K-correction the luminosity function uses, so both sides sit in one magnitude system. It holds to 0.02 dex from $M_i = -28$ to $-23$ and 0.05 dex from $z = 0.7$ to $2.5$. The bolometric luminosity then follows from the Runnoe et al. (2012) correction, $L_{\rm bol} = \zeta_{3000}\,\lambda L_\lambda(3000)$ with $\zeta_{3000} = 5.18$, with a configurable object-to-object scatter (default 0.1 dex). Wu & Shen use 5.15 from Richards et al. (2006), which is the same number to 0.003 dex.
+
+    Earlier versions read the 3000 Å flux off a qsogen SED (Temple et al. 2021) anchored to $M_i$, which runs 0.18 dex faint. Roughly half of that was bookkeeping — the reported luminosity was the nominal `LogL3000` normalisation, while the spectrum whose synthetic photometry defined $M_i$ carried 0.095 dex more flux at 3000 Å — and the rest is spectral shape: qsogen's 2500/3000 colour is 0.04 dex bluer than the DR16Q continuum, and its 5100/3000 colour is off by 0.33 dex. The SED is still what generates the broad-band photometry; it is no longer what measures the luminosity.
 
 2. **Candidate hosts.** Galaxies within a thin redshift slice $z \pm \Delta z$ of the quasar. The slice is widened geometrically until it holds at least `min_candidates` galaxies, so the sampling does not degrade in sparsely populated redshift ranges.
 
-3. **M–σ relation.** Each candidate has a mean black hole mass from Kormendy & Ho (2013), $M_{\rm BH}/10^9 M_\odot = 0.310\,(\sigma_e/200\,\text{km s}^{-1})^{4.38}$, with an intrinsic scatter of $0.29$ dex. Note this relation is calibrated on ellipticals and classical bulges and $\sigma_e$ is the *bulge* dispersion; set `galaxy_types=["red"]` to restrict the hosts to bulge-dominated galaxies.
+3. **Black hole mass relations.** Each relation is applied only where it is calibrated, selected per galaxy by its `galaxy_type`:
 
-4. **Eddington ratio.** The power-law distribution $p(\lambda) \propto \lambda^{\gamma_e}$ with $\gamma_e = -0.65$ from Korytov et al. (2019). Their Eq. (16) carries a $(1+z)/(1+z_0)^{\gamma_z}$ prefactor, but that sets the *fraction of galaxies that are active* rather than the shape of the distribution, and it cancels on normalisation. The redshift dependence of the quasar abundance is already carried by the luminosity function, so nothing is lost.
+    | type | relation | scatter | reference |
+    |---|---|---|---|
+    | `red` | $M_{\rm BH}/10^9 M_\odot = 0.309\,(\sigma_e/200\,\text{km s}^{-1})^{4.38}$ | 0.29 dex | Kormendy & Ho (2013), eq. 7 |
+    | `blue` | $\log M_{\rm BH} = 7.45 + 1.05\,\log(M_\star/10^{11} M_\odot)$ | 0.24 dex | Reines & Volonteri (2015), eq. 5 |
 
-    The default range is $0.01 \le \lambda \le 1$ rather than the $0.1 \le \lambda \le 1$ of Korytov et al. The lower bound is roughly where a radiatively efficient thin disc gives way to an advection dominated flow, and it matches the lower edge of `agn_bounds_dict` in the variability model. It has to be this low because the luminosity function is sampled far below its knee: an $M_i = -19$ quasar needs a $10^6\,M_\odot$ black hole even at $\lambda = 0.1$, and no galaxy in a typical SkyPy catalog is that small, so every such quasar would otherwise be rejected.
+    M–σ is calibrated on ellipticals and classical bulges, and $\sigma_e$ is a *bulge* dispersion. A disc galaxy's dispersion is not one — in a SkyPy catalog it comes from abundance matching on total stellar mass — so applying M–σ there would be unjustified. The Reines & Volonteri relation is measured against *total* stellar mass, which is exactly what the catalog carries, and its normalisation sits more than a dex below the early-type one.
 
-5. **The draw.** A (host $k$, Eddington ratio $\lambda$) pair is sampled from
+    This is what keeps every galaxy type available as a host while still preferring bulge-dominated hosts for luminous quasars, without any morphology cut being applied. In practice the preference is now close to a cut: 96% of the hosts of $-26 < M_i < -24$ quasars come out red, because only the M–σ branch reaches the masses the observed Eddington ratios demand. See the limitations below.
 
-    $$p(k, \lambda) \propto p(\lambda)\;\mathcal{N}\!\left(\log M_{\rm BH}^{\rm req}(\lambda)\;\middle|\;\log M_{\rm BH}(\sigma_k),\; 0.29\right),$$
+4. **Eddington ratio.** A lognormal in $\log_{10}\lambda$, which is close to the shape found for broad-line quasars by Kelly & Shen (2013) and Schulze et al. (2015):
 
-    where $M_{\rm BH}^{\rm req}(\lambda) = L_{\rm bol} / (\lambda\, L_{\rm Edd,1})$ is the mass that reproduces the observed luminosity at that Eddington ratio. Candidates enter with a uniform prior, which correctly weights by the galaxy number density in the slice. The reported black hole mass is $M_{\rm BH}^{\rm req}$, so the catalog satisfies $L_{\rm bol} = \lambda\, L_{\rm Edd}(M_{\rm BH})$ exactly, while the $(M_{\rm BH}, \sigma)$ pairs scatter about the M–σ relation with its measured dispersion.
+    $$\frac{dP}{d\log_{10}\lambda} \propto \exp\!\left[-\frac{(\log_{10}\lambda - \mu)^2}{2\sigma_\lambda^2}\right], \qquad \mu = -1.15,\; \sigma_\lambda = 0.30\,\text{dex},$$
 
-6. **Rejection.** A quasar whose luminosity no candidate host can produce within `max_offset_sigma` times the M–σ scatter is dropped, and the number dropped is reported in `n_rejected`. This is a genuine physical statement — there may be no galaxy massive enough at that redshift — and is preferable to silently assigning an implausible host.
+    sampled over $\mu \pm 4\sigma_\lambda$. Both values are fitted to Wu & Shen (2022) *at fixed bolometric luminosity*, which is the comparison a flux limit barely touches: at fixed $L_{\rm bol}$ and $z$ every quasar has essentially the same apparent magnitude, so the selection cuts on luminosity alone and leaves the mass distribution within a bin almost intact.
 
-Setting `unique_hosts=True` prevents a galaxy from being assigned to more than one quasar.
+    The width is not simply the observed one. DR16Q's spread at fixed $L_{\rm bol}$ is an *upper* bound on the intrinsic spread, so $\sigma_\lambda$ is chosen such that 0.30 dex intrinsic plus the catalog's own 0.12 dex mass uncertainties reproduce what is observed, rather than matching it outright.
 
-## Recommended settings, and why the defaults are not enough
+    **Why not the Korytov et al. (2019) specific accretion rate distribution**, which this replaced. That form, $dP/d\log_{10}\lambda \propto \lambda^{-0.65}$ over $0.1 \le \lambda \le 1$, follows Aird et al. (2018) and describes *galaxies*, active and inactive alike. Applied to objects already drawn from a quasar luminosity function it counts the same selection twice, and it shows: its median $\log\lambda$ of $-0.67$ sits 0.24 dex above the observed $-0.91$, which propagates directly into black hole masses through $\log M_{\rm BH} = \log L_{\rm bol} - \log\lambda - \log L_{\rm Edd,1}$. Lowering its floor to reach the observed median widens it to 0.81 dex against an observed 0.60, because a bounded power law cannot move its centre without also changing its width — and the data want a shift alone.
 
-Validated against the SDSS DR7 quasar property catalog of Shen et al. (2011), in the magnitude range where the two overlap ($-26 < M_i < -24$):
+5. **The draw.** The joint distribution factorises into two one-dimensional draws, which is how it is implemented:
 
-| host pool | Eddington ratio distribution | median $\log M_{\rm BH}$ | median $\log \lambda$ |
-|---|---|---|---|
-| all galaxies | power law | 7.90 | −0.30 |
-| all galaxies | lognormal | 8.17 | −0.59 |
-| red only | power law | 8.20 | −0.62 |
-| **red only** | **lognormal** | **8.38** | **−0.80** |
-| Shen et al. (2011) | — | 8.83 | −0.86 |
+    - draw $\lambda$ from $p(\lambda)\,\Phi(\log M_{\rm BH}^{\rm req}(\lambda))$, where $\Phi$ is the black hole mass function of the candidates smoothed by their intrinsic scatter — *what accretion rate, given the distribution and the black holes that actually exist here* — then set $M_{\rm BH} = M_{\rm BH}^{\rm req}(\lambda)$, so the catalog satisfies $L_{\rm bol} = \lambda L_{\rm Edd}(M_{\rm BH})$ exactly;
+    - draw the host from $w_k\,\mathcal{N}(\log M_{\rm BH} \mid \log M_{\rm BH}(k), s_k)$ — *which galaxy plausibly hosts a black hole that size*.
 
-With the defaults the black hole masses come out $\sim0.9$ dex too low and the Eddington ratios $\sim0.5$ dex too high. Two things cause this.
+    Because the scatter enters as a weight rather than as a cut, the resulting $(M_{\rm BH}, \sigma)$ pairs scatter about the mean relation with its measured dispersion instead of lying on it.
 
-First, the Korytov et al. power law with $\gamma_e = -0.65$ puts most of its probability *mass* near the Eddington limit, because the mass per unit $\log\lambda$ goes as $\lambda^{\gamma_e+1}$, which rises. Broad-line quasars are observed near $\lambda \sim 0.1$.
+6. **Rejection.** A quasar whose luminosity no candidate host can produce within `max_offset_sigma` times the scatter of its relation is dropped, and `n_rejected`, `rejected_indices` and a warning report how many and where in magnitude and redshift they sit. This is a genuine physical statement — there may be no galaxy massive enough at that redshift — and is preferable to silently assigning an implausible host. On a 2 deg² SkyPy catalog nothing is rejected between $M_i = -27$ and $-18$.
 
-Second, and more importantly, **the AGN active fraction here does not depend on host mass**. A SkyPy catalog is overwhelmingly dwarf galaxies — the median velocity dispersion is 30–40 km/s at every redshift, and galaxies above 240 km/s are well under 1% of the catalog. Since candidates enter with a uniform prior (which is the correct *number density* weighting), the draw lands on a numerous $\sigma \approx 150\,$km/s host at high $\lambda$ rather than a rare $\sigma \approx 240\,$km/s host at low $\lambda$. In reality luminous quasars preferentially inhabit massive galaxies; cosmoDC2 encodes this with conditional abundance matching on specific star formation rate, and there is no equivalent term here. Restricting the candidates to red, bulge-dominated galaxies is a coarse stand-in that also happens to be where the Kormendy & Ho M–σ relation is calibrated.
+## Optional duty cycle
 
-So for science use, pass:
+`duty_cycle_slope` weights a candidate by $(M_{\rm BH}/10^8 M_\odot)^{\alpha}$. The default $\alpha = 0$ leaves the prior uniform over candidates, which is the correct *number density* weighting when the galaxy catalog is a fair sample.
 
-```python
-QuasarRate(
-    ...,
-    host_match_kwargs={
-        "galaxy_types": ["red"],
-        "eddington_ratio_distribution": "lognormal",
-    },
-)
-```
+A positive $\alpha$ makes massive black holes more likely to be active. That is observed, and cosmoDC2 encodes it through conditional abundance matching on specific star formation rate, but there is no published value to adopt — so it is a free calibration rather than a first-principles ingredient, and it is off by default.
 
-The residual 0.45 dex in $M_{\rm BH}$ is within the systematic floor of the comparison: single-epoch virial masses carry $\sim0.4$ dex of uncertainty and are biased high at fixed luminosity in a flux-limited sample.
+## Validation
+
+Against the H$\beta$/Mg II subsample of the SDSS DR16 quasar property catalog of Wu & Shen (2022), on a 2 deg² SkyPy host catalog. The mock is generated over 300 deg² down to $i = 21$, because a survey covering $10^4$ deg² has no useful overlap with a deep pencil beam. Both sides are restricted to $0.7 < z < 2$ — C IV masses above that carry blueshift-dependent systematics of their own — and to $i < 20.5$, and both are required to satisfy the broad-line criterion, which shows up in the data as a hard floor at FWHM = 1399 km/s.
+
+Medians in that window, mock minus DR16Q:
+
+| | $\log M_{\rm BH}$ | $\log \lambda_{\rm Edd}$ | $\log L_{\rm bol}$ | $M_i$ |
+|---|---|---|---|---|
+| before (Korytov ERDF, SED luminosity) | −0.64 | +0.38 | −0.22 | +0.12 |
+| now | −0.01 | −0.06 | −0.06 | +0.17 |
+
+The Eddington ratio distribution and the $L_{3000}$ zero point are fitted to this catalog, so those are a closed loop rather than an independent test. What is *not* fitted, and does hold:
+
+* a single $L_{3000}$ zero point reproduces $\lambda L_\lambda(3000)$ at fixed $M_i$ to 0.006 dex, with 0.014 dex of spread across five magnitude bins from $M_i = -27$ to $-22$;
+* the spread of $\log M_{\rm BH}$ at fixed $L_{\rm bol}$, 0.47–0.61 dex between the 16th and 84th percentiles against an observed 0.50–0.69;
+* the broad-line criterion, which now removes *no* mock quasar: every one implies an Mg II FWHM above the observed floor, where the old Eddington ratios put 5.6% of them below it.
+
+The residual is a tilt rather than an offset. At fixed $L_{\rm bol}$ the mass offset runs from −0.20 dex at $\log L_{\rm bol} \simeq 45.1$ to +0.15 dex at 46.6, crossing zero near 45.9. No change to the Eddington ratio distribution can remove it, because it comes from the host mass function tilting the draw — see below.
+
+## Known limitations
+
+* **The host black hole mass function runs out before the quasars do, and this is now the dominant error.** Over $0.7 < z < 2$ the candidates' mean-relation $\log M_{\rm BH}$ has a median of 5.35 and a 99.9th percentile of 9.02. The median mass *assigned* to a flux-limited quasar is 8.83 — the 99.83rd percentile of the candidates. Luminous quasars are therefore furnished almost entirely from the extreme tail of the available hosts, which is what produces both the luminosity-dependent tilt above and the 96% red host fraction: only the M–σ branch reaches those masses at all. The matcher is doing the right thing with the catalog it is given; the catalog is the problem.
+
+* **Velocity dispersions are morphology-blind and run low.** In a SkyPy catalog, red and blue galaxies of the same stellar mass are assigned nearly the same dispersion, and the values fall below the observed $\sigma(M_\star)$ of SDSS early types (Zahid et al. 2016), increasingly so at low mass. This is the proximate cause of the point above. It is shared with the galaxy deflector population, so changing it moves lensing predictions too.
+
+* **The fitted Eddington ratio location inherits the virial mass zero point**, of order 0.1–0.2 dex from the virial factor. The $L_{3000}$ zero point does not depend on that calibration and is the firmer of the two.
+
+* **Below $z \simeq 0.9$ the comparison sample is not clean.** DR16Q's target selection is heterogeneous there, and its $i$ band carries host light the K-correction does not model — the photometric $M_i$ runs 0.4 mag bright of the continuum-derived one at $z < 0.5$. Hence the $z > 0.7$ window.
 
 ## Why not nearest-neighbour matching?
 
@@ -68,18 +97,25 @@ An earlier version drew an Eddington ratio for every candidate and kept the pair
 
 `quasar_host_match.py`:
 
-* `l3000_from_absolute_i_magnitude` / `absolute_i_magnitude_from_l3000` — qsogen-anchored luminosity–magnitude conversion.
-* `bolometric_luminosity_from_l3000` — Runnoe et al. (2012) bolometric correction, linear or log-log form, with optional anisotropy correction and scatter.
-* `black_hole_mass_from_vel_disp` — the M–σ relation, with optional intrinsic scatter.
-* `sample_eddington_rate` / `eddington_ratio_grid` — the Eddington ratio distribution.
-* `calculate_lsst_magnitude` — a coarse grey-bolometric-correction estimate of the absolute AB magnitude in an LSST band, kept for convenience; the matcher uses the qsogen route instead.
-* `QuasarHostMatch` — the matching class described above.
+* `black_hole_mass` — mean black hole mass and intrinsic scatter of each galaxy, choosing the relation from its type.
+* `eddington_ratio_grid` — the lognormal Eddington ratio distribution, per dex, on a grid spanning $\pm4\sigma_\lambda$.
+* `bolometric_luminosity` — $M_i(z=2) \rightarrow L_{\rm bol}$ via the calibrated 3000 Å zero point and the Runnoe et al. (2012) correction.
+* `QuasarHostMatch` — the matching class described above. Pass an `rng` for a reproducible catalog.
 
 ## References
 
-* Kormendy & Ho (2013), [arXiv:1304.7762](https://arxiv.org/abs/1304.7762)
-* Korytov et al. (2019), [arXiv:1907.06530](https://arxiv.org/abs/1907.06530)
-* Oguri & Marshall (2010), [arXiv:1001.2037](https://arxiv.org/abs/1001.2037)
-* Richards et al. (2006), [arXiv:astro-ph/0601434](https://arxiv.org/abs/astro-ph/0601434)
-* Runnoe, Brotherton & Shang (2012), [arXiv:1201.5155](https://arxiv.org/abs/1201.5155), and its erratum
-* Temple, Hewett & Banerji (2021), [arXiv:2109.04472](https://arxiv.org/abs/2109.04472)
+* Aird, Coil & Georgakakis (2018), MNRAS 474, 1225, [arXiv:1705.01132](https://arxiv.org/abs/1705.01132)
+* Kelly & Shen (2013), ApJ 764, 45, [arXiv:1209.0477](https://arxiv.org/abs/1209.0477)
+* Kormendy & Ho (2013), ARA&A 51, 511, [arXiv:1304.7762](https://arxiv.org/abs/1304.7762)
+* Korytov et al. (2019), ApJS 245, 26, [arXiv:1907.06530](https://arxiv.org/abs/1907.06530)
+* Lyke et al. (2020), ApJS 250, 8, [arXiv:2007.09001](https://arxiv.org/abs/2007.09001)
+* Oguri & Marshall (2010), MNRAS 405, 2579, [arXiv:1001.2037](https://arxiv.org/abs/1001.2037)
+* Reines & Volonteri (2015), ApJ 813, 82, [arXiv:1508.06274](https://arxiv.org/abs/1508.06274)
+* Richards et al. (2006), AJ 131, 2766, [arXiv:astro-ph/0601434](https://arxiv.org/abs/astro-ph/0601434) — the luminosity function and the $M_i(z=2)$ system
+* Richards et al. (2006), ApJS 166, 470, [arXiv:astro-ph/0601558](https://arxiv.org/abs/astro-ph/0601558) — the spectral energy distributions and bolometric corrections
+* Runnoe, Brotherton & Shang (2012), MNRAS 422, 478, [arXiv:1201.5155](https://arxiv.org/abs/1201.5155), and its erratum, MNRAS 427, 1800
+* Schulze et al. (2015), MNRAS 447, 2085, [arXiv:1412.0754](https://arxiv.org/abs/1412.0754)
+* Shen et al. (2011), ApJS 194, 45, [arXiv:1006.5178](https://arxiv.org/abs/1006.5178)
+* Temple, Hewett & Banerji (2021), MNRAS 508, 737, [arXiv:2109.04472](https://arxiv.org/abs/2109.04472)
+* Wu & Shen (2022), ApJS 263, 42, [arXiv:2209.03987](https://arxiv.org/abs/2209.03987)
+* Zahid et al. (2016), ApJ 832, 203, [arXiv:1607.04275](https://arxiv.org/abs/1607.04275)

@@ -1,374 +1,228 @@
 """Match quasars drawn from a luminosity function to plausible host galaxies.
 
-The quasar catalog fixes the abundance and luminosity of the AGN; this
-module assigns each of them a host galaxy, a black hole mass and an
-Eddington ratio that are jointly consistent with
+The luminosity function already fixes how many quasars there are and how bright
+they are, so the luminosity is an input here, not an output. What is left to
+draw is the host galaxy, the black hole mass and the Eddington ratio, from their
+joint distribution *conditioned on* that luminosity:
 
-* the M-sigma relation of Kormendy & Ho (2013) *including* its 0.29 dex
-  intrinsic scatter,
-* an Eddington ratio distribution, either the power law of Korytov et al.
-  (2019) or a lognormal calibrated on the broad-line quasars of Shen et al.
-  (2011),
-* the bolometric correction of Runnoe et al. (2012), anchored to the same
-  qsogen SED that generates the broad-band photometry.
+.. math::
+    p(k, \\lambda) \\propto w_k\\, p(\\lambda)\\,
+    \\mathcal{N}\\!\\left(\\log M_{BH}^{req}(\\lambda) \\,\\middle|\\,
+    \\log M_{BH}(k),\\, s_k\\right)
 
-The assignment is a weighted draw from the joint posterior rather than a
-nearest-neighbour match, so the sampled Eddington ratios follow the input
-distribution and the resulting (M_BH, sigma) pairs scatter around the
-M-sigma relation instead of lying exactly on it.
+:math:`M_{BH}^{req}(\\lambda) = L_{bol} / (\\lambda L_{Edd,1})` is the mass that
+reproduces the luminosity at that Eddington ratio, :math:`w_k` is the prior over
+candidate hosts, and the Gaussian is the intrinsic scatter of galaxy ``k``'s
+black hole mass relation. That Gaussian is what conditioning on the luminosity
+looks like: a galaxy does not have a black hole mass, it has a distribution of
+them, and that distribution is the only thing tying a host to a quasar.
+
+:meth:`QuasarHostMatch.match` samples it as two one-dimensional draws:
+
+1. :math:`\\lambda` from :math:`p(\\lambda)\\,\\Phi(\\log M_{BH}^{req}(\\lambda))`,
+   where :math:`\\Phi` is the candidate hosts' black hole mass function smoothed
+   by their scatter. Setting :math:`M_{BH} = M_{BH}^{req}(\\lambda)` then makes
+   :math:`L_{bol} = \\lambda L_{Edd}` exact.
+2. the host from :math:`w_k \\mathcal{N}(\\log M_{BH} | \\log M_{BH}(k), s_k)`.
+
+Because the scatter is a weight rather than a cut, the assigned black hole
+masses scatter about the mean relation instead of lying on it.
+
+Ingredients: :data:`BLACK_HOLE_MASS_RELATIONS` for the mass relations,
+:func:`eddington_ratio_grid` for :math:`p(\\lambda)`, and
+:func:`bolometric_luminosity` for :math:`L_{bol}`.
 """
 
-from functools import lru_cache
 import warnings
 
 import numpy as np
-import speclite.filters
-from astropy.cosmology import FlatLambdaCDM
 from astropy.table import hstack
-from scipy.interpolate import interp1d
 from tqdm import tqdm
-
-from slsim.Sources.SourceCatalogues.QuasarCatalog.qsogen import Quasar_sed, params_agile
 
 # Eddington luminosity per solar mass [erg s^-1], 4 pi G M_sun m_p c / sigma_T
 L_EDDINGTON_PER_MSUN = 1.2570e38
 
-# Runnoe et al. (2012), erratum table 1: L_iso = zeta * lambda L_lambda and
-# log L_iso = A + B log(lambda L_lambda), for lambda L_lambda in erg/s.
-RUNNOE12_BOLOMETRIC_CORRECTION = {
-    1450: {"zeta": 4.20, "A": 4.745, "B": 0.910},
-    3000: {"zeta": 5.18, "A": 1.852, "B": 0.975},
-    5100: {"zeta": 8.10, "A": 4.891, "B": 0.912},
+# log10(lambda L_lambda(3000 A) / erg s^-1) = L3000_ZERO_POINT - 0.4 * M_i(z=2).
+# The slope follows from both sides being log luminosities; the zero point is
+# fitted to the Hbeta/Mg II subsample of Wu & Shen (2022), ApJS 263, 42, and
+# holds to 0.02 dex over M_i = -28 to -23 and 0.05 dex over z = 0.7 to 2.5.
+# Reading the flux off a model SED anchored to M_i instead runs 0.18 dex faint.
+L3000_ZERO_POINT = 35.27
+
+# Runnoe et al. (2012), MNRAS 422, 478, erratum MNRAS 427, 1800, table 1:
+# L_bol = zeta * lambda L_lambda(3000 A). Wu & Shen use 5.15 from Richards
+# et al. (2006), ApJS 166, 470, which is the same number to 0.003 dex.
+RUNNOE12_ZETA_3000 = 5.18
+
+# Eddington ratio distribution, lognormal in log10(lambda) as broad-line
+# quasars are observed to be (Kelly & Shen 2013, ApJ 764, 45; Schulze et al.
+# 2015, MNRAS 447, 2085). Both are fitted to Wu & Shen (2022) at fixed
+# bolometric luminosity, where the survey flux limit barely bites. The width is
+# the one whose intrinsic spread plus the catalog's own 0.12 dex mass errors
+# reproduce the observed spread, rather than matching it outright. See the
+# README for why this replaced a bounded power law in the specific accretion
+# rate of galaxies, which counts the quasar selection twice.
+ERDF_LOCATION = -1.15
+ERDF_WIDTH = 0.30
+
+# Half-width of the Eddington ratio grid, in units of ERDF_WIDTH
+ERDF_GRID_HALF_WIDTH = 4.0
+
+# Black hole mass at which an optional mass-dependent duty cycle is normalised
+DUTY_CYCLE_PIVOT_MSUN = 1e8
+
+# Black hole mass relations, each of the form
+#     log10(M_BH / Msun) = intercept + slope * log10(property / pivot)
+# with a lognormal intrinsic scatter of ``scatter`` dex. The relation used for a
+# galaxy is selected by its "galaxy_type".
+BLACK_HOLE_MASS_RELATIONS = {
+    # Kormendy & Ho (2013), ARA&A 51, 511, equation 7: the M-sigma relation of
+    # ellipticals and classical bulges, M_BH = 0.309e9 Msun at sigma = 200
+    # km/s, with 0.29 dex of intrinsic scatter. It is calibrated on bulge
+    # velocity dispersions, so it is applied only to bulge-dominated hosts.
+    "red": {
+        "property": "vel_disp",
+        "pivot": 200.0,
+        "intercept": 9 + np.log10(0.309),
+        "slope": 4.38,
+        "scatter": 0.29,
+    },
+    # Reines & Volonteri (2015), ApJ 813, 82, equation 5: the M_BH-M_star
+    # relation of local broad-line AGN, whose hosts are mostly disc-dominated
+    # and whose normalisation sits more than a dex below the early-type one.
+    # A disc galaxy's dispersion is not a bulge dispersion, so mass is used.
+    "blue": {
+        "property": "stellar_mass",
+        "pivot": 1e11,
+        "intercept": 7.45,
+        "slope": 1.05,
+        "scatter": 0.24,
+    },
 }
 
-# Reference monochromatic luminosity used to anchor the qsogen SED [log erg/s].
-_LOG_L3000_REFERENCE = 46.0
+
+def _as_string_array(values):
+    """Galaxy types as text, decoding the bytes a FITS file round-trips them to."""
+    values = np.atleast_1d(np.asarray(values))
+    if values.dtype.kind == "S":
+        return np.char.decode(values)
+    return values
 
 
-def sample_eddington_rate(
-    z,
-    z0=0.6,
-    gamma_e=-0.65,
-    gamma_z=3.47,
-    A=0.00071,
-    lambda_min=0.1,
-    lambda_max=1.0,
-    size=1,
-    n_grid=1000,
-):
-    """Sample Eddington ratios from the Korytov et al. (2019) distribution.
+def black_hole_mass(galaxy_type, vel_disp=None, stellar_mass=None, relations=None):
+    """Mean black hole mass of each galaxy and the scatter about it.
 
-    The distribution of Eq. (16) of Korytov et al. (2019),
-    https://arxiv.org/abs/1907.06530, is
+    The relation is chosen per galaxy from its type, so that each is used only
+    where it is calibrated: an M-sigma relation for bulge-dominated galaxies and
+    an M_BH-M_star relation for disc-dominated ones. See
+    :data:`BLACK_HOLE_MASS_RELATIONS` for the relations and their references.
 
-    .. math::
-        P(\\lambda|z) = A \\frac{1+z}{(1+z_0)^{\\gamma_z}} \\lambda^{\\gamma_e}
+    Only the properties the relations actually need have to be supplied.
 
-    Note that the redshift dependence lives entirely in the normalisation,
-    where it sets the fraction of galaxies that are active. Once the
-    distribution is normalised to draw from it, the shape is the pure power
-    law ``lambda**gamma_e`` and the returned samples are independent of ``z``.
-    That is the intended behaviour here, because the abundance of quasars is
-    already fixed by the luminosity function of the input catalog. The ``z``,
-    ``z0``, ``gamma_z`` and ``A`` arguments are kept for interface
-    compatibility and are not used.
-
-    :param z: redshift at which to sample Eddington ratios
-    :type z: float
-    :param z0: reference redshift of the amplitude evolution (unused)
-    :param gamma_e: power-law index of the Eddington ratio distribution
-    :param gamma_z: index of the amplitude redshift evolution (unused)
-    :param A: amplitude of the distribution (unused)
-    :param lambda_min: minimum Eddington ratio to sample
-    :param lambda_max: maximum Eddington ratio to sample
-    :param size: number of samples to generate
-    :param n_grid: number of grid points for the numerical CDF
-    :return: sampled Eddington ratios
-    :rtype: numpy.ndarray
+    :param galaxy_type: type of each galaxy, a key of ``relations``
+    :type galaxy_type: array_like of str
+    :param vel_disp: velocity dispersion of each galaxy [km/s]
+    :type vel_disp: array_like or None
+    :param stellar_mass: total stellar mass of each galaxy [solar masses]
+    :type stellar_mass: array_like or None
+    :param relations: black hole mass relations, defaulting to
+        :data:`BLACK_HOLE_MASS_RELATIONS`
+    :type relations: dict or None
+    :return: mean black hole mass [solar masses], intrinsic scatter [dex]
+    :rtype: tuple of numpy.ndarray
+    :raises ValueError: if a type is unknown or its property is missing
     """
-    grid, pdf = eddington_ratio_grid(
-        gamma_e=gamma_e,
-        lambda_min=lambda_min,
-        lambda_max=lambda_max,
-        n_grid=n_grid,
-    )
-    cdf = np.concatenate([[0.0], np.cumsum(np.diff(grid) * 0.5 * (pdf[1:] + pdf[:-1]))])
-    cdf /= cdf[-1]
-    inv_cdf = interp1d(cdf, grid)
-    return inv_cdf(np.random.uniform(0, 1, size))
+    relations = BLACK_HOLE_MASS_RELATIONS if relations is None else relations
+    types = _as_string_array(galaxy_type)
+    properties = {"vel_disp": vel_disp, "stellar_mass": stellar_mass}
+
+    unknown = set(np.unique(types)) - set(relations)
+    if unknown:
+        raise ValueError(
+            "No black hole mass relation for galaxy type(s) %s. The known types "
+            "are %s." % (sorted(unknown), list(relations))
+        )
+
+    log_mass = np.empty(types.shape)
+    scatter = np.empty(types.shape)
+    for name, relation in relations.items():
+        selected = types == name
+        if not selected.any():
+            continue
+        values = properties[relation["property"]]
+        if values is None:
+            raise ValueError(
+                "The black hole mass relation of the '%s' galaxies needs a "
+                "'%s' column." % (name, relation["property"])
+            )
+        values = np.asarray(values, dtype=float)[selected]
+        # a non-positive property gives -inf here, which the caller drops
+        with np.errstate(divide="ignore", invalid="ignore"):
+            log_mass[selected] = relation["intercept"] + relation["slope"] * np.log10(
+                values / relation["pivot"]
+            )
+        scatter[selected] = relation["scatter"]
+
+    return 10**log_mass, scatter
 
 
-# Default Eddington ratio bounds for each distribution shape.
-DEFAULT_LAMBDA_BOUNDS = {"power_law": (0.01, 1.0), "lognormal": (1e-3, 3.0)}
+def eddington_ratio_grid(n_grid=32, location=ERDF_LOCATION, width=ERDF_WIDTH):
+    """Grid of Eddington ratios and the probability of each.
 
-# Lognormal Eddington ratio distribution measured from the broad-line quasars of
-# Shen et al. (2011), https://arxiv.org/abs/1006.5178: mean and standard
-# deviation of log10(lambda) over the whole DR7 sample.
-SHEN11_LOG_LAMBDA_MEAN = -0.77
-SHEN11_LOG_LAMBDA_SIGMA = 0.42
+    The distribution is lognormal, ``dP/dlog10(lambda)`` a Gaussian of mean
+    ``location`` and standard deviation ``width``. Its normalisation would set
+    the fraction of galaxies that are active, but the abundance of quasars is
+    already fixed by the input luminosity function, so only the shape is used.
 
+    The grid spans :data:`ERDF_GRID_HALF_WIDTH` standard deviations either side
+    of the mean and carries equal intervals in dex, so the weights are the
+    per-dex density itself and a draw may be spread across its own cell.
 
-def eddington_ratio_grid(
-    gamma_e=-0.65,
-    lambda_min=0.01,
-    lambda_max=1.0,
-    n_grid=1000,
-    distribution="power_law",
-    log_mean=SHEN11_LOG_LAMBDA_MEAN,
-    log_sigma=SHEN11_LOG_LAMBDA_SIGMA,
-):
-    """Logarithmically spaced Eddington ratio grid and its (unnormalised) pdf.
-
-    Sampling on a log grid resolves the low-lambda end of the power law, which
-    a linear grid under-samples for the steep default index.
-
-    Two shapes are available. ``"power_law"`` is ``lambda**gamma_e``, the
-    distribution of Korytov et al. (2019). Note that for the default
-    ``gamma_e = -0.65`` this puts most of its probability *mass* near
-    ``lambda = 1``: the mass per unit log(lambda) goes as
-    ``lambda**(gamma_e + 1)``, which rises. ``"lognormal"`` is a Gaussian in
-    log10(lambda), which is the shape observed for broad-line quasars and is
-    centred well below Eddington.
-
-    :param gamma_e: power-law index, for ``distribution="power_law"``
-    :param lambda_min: minimum Eddington ratio
-    :param lambda_max: maximum Eddington ratio
     :param n_grid: number of grid points
-    :param distribution: "power_law" or "lognormal"
-    :type distribution: str
-    :param log_mean: mean of log10(lambda), for ``distribution="lognormal"``
-    :param log_sigma: standard deviation of log10(lambda), for
-        ``distribution="lognormal"``
-    :return: grid of Eddington ratios, pdf evaluated on the grid
+    :param location: mean of log10(Eddington ratio)
+    :param width: standard deviation of log10(Eddington ratio) [dex]
+    :return: grid of log10(Eddington ratio), normalised weight of each point
     :rtype: tuple of numpy.ndarray
     """
-    grid = np.logspace(np.log10(lambda_min), np.log10(lambda_max), n_grid)
-    if distribution == "power_law":
-        return grid, grid**gamma_e
-    if distribution == "lognormal":
-        log_grid = np.log10(grid)
-        density = np.exp(-0.5 * ((log_grid - log_mean) / log_sigma) ** 2)
-        # convert the density in log10(lambda) to a density in lambda
-        return grid, density / (grid * np.log(10))
-    raise ValueError(
-        "distribution must be 'power_law' or 'lognormal', got %s." % distribution
-    )
+    reach = ERDF_GRID_HALF_WIDTH * width
+    log_grid = np.linspace(location - reach, location + reach, n_grid)
+    weight = np.exp(-0.5 * ((log_grid - location) / width) ** 2)
+    return log_grid, weight / weight.sum()
 
 
-def black_hole_mass_from_vel_disp(sigma_e, alpha=4.38, beta=0.310, scatter=0.0):
-    """Black hole mass from the bulge velocity dispersion via the M-sigma
-    relation of Kormendy & Ho (2013), https://arxiv.org/abs/1304.7762:
-
-    .. math::
-        \\frac{M_{BH}}{10^9 M_\\odot} = \\beta
-        \\left(\\frac{\\sigma_e}{200\\,\\mathrm{km/s}}\\right)^{\\alpha}
-
-    The relation is calibrated on ellipticals and classical bulges, and
-    ``sigma_e`` is the *bulge* velocity dispersion. Applying it to a
-    disc-dominated galaxy with a pseudobulge overestimates the black hole
-    mass; restrict the host candidates to early-type galaxies if that matters.
-
-    :param sigma_e: bulge velocity dispersion [km/s]
-    :type sigma_e: float or numpy.ndarray
-    :param alpha: power-law index
-    :param beta: normalisation at 200 km/s, in units of 1e9 solar masses
-    :param scatter: intrinsic scatter of the relation [dex]. The measured
-        value is 0.29 dex; the default of zero returns the mean relation.
-    :return: black hole mass [solar masses]
-    :rtype: float or numpy.ndarray
-    """
-    log_mass = 9 + np.log10(beta) + alpha * np.log10(np.asarray(sigma_e) / 200)
-    if scatter:
-        log_mass = log_mass + np.random.normal(0, scatter, np.shape(log_mass))
-    return 10**log_mass
-
-
-def bolometric_luminosity_from_l3000(
-    l3000, form="linear", anisotropy_correction=1.0, scatter=0.0
-):
-    """Bolometric luminosity from the monochromatic 3000 Angstrom luminosity.
-
-    Uses the Runnoe et al. (2012) corrections,
-    https://arxiv.org/abs/1201.5155 (with the erratum coefficients).
-
-    :param l3000: monochromatic luminosity lambda L_lambda(3000 A) [erg/s]
-    :type l3000: float or numpy.ndarray
-    :param form: "linear" for L_iso = zeta * lambda L_lambda, or "log" for the
-        non-linear log-log fit
-    :type form: str
-    :param anisotropy_correction: factor applied to the isotropic luminosity
-        to account for the viewing angle of the disc. Runnoe et al. recommend
-        0.75; the default of 1 matches the convention of the SDSS quasar
-        property catalogs.
-    :param scatter: object-to-object scatter of the correction [dex]
-    :return: bolometric luminosity [erg/s]
-    :rtype: float or numpy.ndarray
-    """
-    coefficients = RUNNOE12_BOLOMETRIC_CORRECTION[3000]
-    log_l3000 = np.log10(l3000)
-    if form == "linear":
-        log_l_iso = log_l3000 + np.log10(coefficients["zeta"])
-    elif form == "log":
-        log_l_iso = coefficients["A"] + coefficients["B"] * log_l3000
-    else:
-        raise ValueError("form must be either 'linear' or 'log', got %s." % form)
-    log_l_bol = log_l_iso + np.log10(anisotropy_correction)
-    if scatter:
-        log_l_bol = log_l_bol + np.random.normal(0, scatter, np.shape(log_l_bol))
-    return 10**log_l_bol
-
-
-@lru_cache(maxsize=8)
-def _absolute_i_magnitude_reference(band="lsst2023-i"):
-    """Absolute i-band magnitude of a qsogen quasar with a known 3000 A
-    luminosity.
-
-    A quasar SED is generated at z = 2 and normalised to
-    ``10**_LOG_L3000_REFERENCE`` erg/s at 3000 Angstrom, and its absolute
-    magnitude in the M_i(z=2) system of Richards et al. (2006) is measured by
-    synthetic photometry. The luminosity distance used to flux-normalise the
-    SED cancels against the distance modulus, so the result is a property of
-    the SED alone and is independent of cosmology.
-
-    :param band: speclite filter defining the i band
-    :type band: str
-    :return: absolute i-band magnitude at the reference luminosity
-    :rtype: float
-    """
-    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-    wavlen = np.logspace(2.0, 4.48, num=20001, endpoint=True)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", RuntimeWarning)
-        sed = Quasar_sed(
-            z=2.0,
-            LogL3000=_LOG_L3000_REFERENCE,
-            params=params_agile,
-            wavlen=wavlen,
-            cosmo=cosmo,
-        )
-    filters = speclite.filters.load_filters(band)
-    apparent_mag = filters.get_ab_magnitudes(sed.flux, sed.wavred)[0][0]
-    return float(apparent_mag - cosmo.distmod(2.0).value)
-
-
-def l3000_from_absolute_i_magnitude(m_i, band="lsst2023-i"):
-    """Monochromatic 3000 Angstrom luminosity from the absolute i-band
-    magnitude.
+def bolometric_luminosity(m_i, scatter=0.0, rng=None):
+    """Bolometric luminosity of a quasar of absolute i-band magnitude ``m_i``.
 
     ``m_i`` is the K-corrected absolute i-band magnitude normalised to z = 2,
     M_i(z=2), which is the quantity the Richards et al. (2006) / Oguri &
-    Marshall (2010) luminosity function is written in and the quantity qsogen
-    expects. The conversion is a pure rescaling of the qsogen SED, so it is
-    exactly consistent with the broad-band photometry generated from the same
-    SED.
+    Marshall (2010) luminosity function is written in. It fixes lambda
+    L_lambda(3000 A) through :data:`L3000_ZERO_POINT`, and the bolometric
+    correction :data:`RUNNOE12_ZETA_3000` turns that into a bolometric
+    luminosity.
 
     :param m_i: absolute i-band magnitude M_i(z=2)
     :type m_i: float or numpy.ndarray
-    :param band: speclite filter defining the i band
-    :type band: str
-    :return: lambda L_lambda(3000 A) [erg/s]
+    :param scatter: object-to-object scatter of the bolometric correction [dex]
+    :param rng: random number generator used for the scatter
+    :type rng: numpy.random.Generator or None
+    :return: bolometric luminosity [erg/s]
     :rtype: float or numpy.ndarray
     """
-    reference = _absolute_i_magnitude_reference(band)
-    return 10 ** (_LOG_L3000_REFERENCE + 0.4 * (reference - np.asarray(m_i)))
-
-
-def absolute_i_magnitude_from_l3000(l3000, band="lsst2023-i"):
-    """Inverse of :func:`l3000_from_absolute_i_magnitude`.
-
-    :param l3000: lambda L_lambda(3000 A) [erg/s]
-    :type l3000: float or numpy.ndarray
-    :param band: speclite filter defining the i band
-    :type band: str
-    :return: absolute i-band magnitude M_i(z=2)
-    :rtype: float or numpy.ndarray
-    """
-    reference = _absolute_i_magnitude_reference(band)
-    return reference - 2.5 * (np.log10(l3000) - _LOG_L3000_REFERENCE)
-
-
-# Effective wavelengths of the LSST bands [nm], from Fig. 1 of Huber et al.
-# 2020, https://arxiv.org/abs/2008.10393.
-_LSST_EFFECTIVE_WAVELENGTH_NM = {
-    "u": 367.1,
-    "g": 482.7,
-    "r": 622.3,
-    "i": 754.6,
-    "z": 869.1,
-    "y": 971.2,
-}
-
-# Bolometric corrections of Runnoe et al. (2012) mapped onto the LSST bands by
-# rest-frame wavelength: u is closest to 3000 A, the rest to 5100 A.
-_LSST_BOLOMETRIC_CORRECTION = {
-    "u": RUNNOE12_BOLOMETRIC_CORRECTION[3000]["zeta"],
-    "g": RUNNOE12_BOLOMETRIC_CORRECTION[5100]["zeta"],
-    "r": RUNNOE12_BOLOMETRIC_CORRECTION[5100]["zeta"],
-    "i": RUNNOE12_BOLOMETRIC_CORRECTION[5100]["zeta"],
-    "z": RUNNOE12_BOLOMETRIC_CORRECTION[5100]["zeta"],
-    "y": RUNNOE12_BOLOMETRIC_CORRECTION[5100]["zeta"],
-}
-
-
-def calculate_lsst_magnitude(lsst_band, black_hole_mass_Msun, eddington_ratio):
-    """Rest-frame absolute AB magnitude of a quasar in an LSST band.
-
-    The Eddington luminosity is set by the black hole mass, the bolometric
-    luminosity by the Eddington ratio, and a grey bolometric correction
-    converts it to the monochromatic luminosity of the band, which is then
-    turned into an AB magnitude at the effective wavelength of that band.
-
-    This is a coarse estimate that assumes the band luminosity is
-    ``L_bol / BC`` at a single effective wavelength.
-    :class:`QuasarHostMatch` uses the qsogen SED instead, via
-    :func:`l3000_from_absolute_i_magnitude`, and should be preferred.
-
-    :param lsst_band: one of 'u', 'g', 'r', 'i', 'z', 'y'
-    :type lsst_band: str
-    :param black_hole_mass_Msun: black hole mass [solar masses]
-    :type black_hole_mass_Msun: float or numpy.ndarray
-    :param eddington_ratio: Eddington ratio L_bol / L_Edd
-    :type eddington_ratio: float or numpy.ndarray
-    :return: absolute AB magnitude in the requested band
-    :rtype: float or numpy.ndarray
-    :raises ValueError: if the band is not an LSST band
-    """
-    if lsst_band not in _LSST_BOLOMETRIC_CORRECTION:
-        raise ValueError(
-            "Invalid LSST band '%s'. Must be one of %s."
-            % (lsst_band, list(_LSST_BOLOMETRIC_CORRECTION.keys()))
-        )
-
-    l_bol = L_EDDINGTON_PER_MSUN * np.asarray(black_hole_mass_Msun) * eddington_ratio
-    nu_l_nu = l_bol / _LSST_BOLOMETRIC_CORRECTION[lsst_band]
-
-    # nu L_nu -> L_nu -> flux density at 10 pc -> AB magnitude
-    frequency = 2.99792458e17 / _LSST_EFFECTIVE_WAVELENGTH_NM[lsst_band]  # Hz
-    ten_parsec_cm = 3.0856775814913673e19
-    flux_density = nu_l_nu / frequency / (4 * np.pi * ten_parsec_cm**2)
-    return -2.5 * np.log10(flux_density) - 48.60
+    log_l3000 = L3000_ZERO_POINT - 0.4 * np.asarray(m_i, dtype=float)
+    log_l_bol = log_l3000 + np.log10(RUNNOE12_ZETA_3000)
+    if scatter:
+        rng = np.random.default_rng() if rng is None else rng
+        log_l_bol = log_l_bol + rng.normal(0, scatter, np.shape(log_l_bol))
+    return 10**log_l_bol
 
 
 class QuasarHostMatch(object):
-    """Assign host galaxies, black hole masses and Eddington ratios to a
-    quasar catalog.
+    """Assign host galaxies, black hole masses and Eddington ratios to quasars.
 
-    For every quasar the bolometric luminosity implied by its absolute
-    magnitude is computed, and a (host galaxy, Eddington ratio) pair is drawn
-    from
-
-    .. math::
-        p(k, \\lambda) \\propto p(\\lambda)\\,
-        \\mathcal{N}\\!\\left(\\log M_{BH}^{req}(\\lambda) \\,\\middle|\\,
-        \\log M_{BH}(\\sigma_k),\\, s_{M\\sigma}\\right)
-
-    where the required black hole mass is the one that reproduces the observed
-    luminosity at that Eddington ratio, and the Gaussian is the intrinsic
-    scatter of the M-sigma relation. Candidate hosts ``k`` are the galaxies in
-    a thin redshift slice around the quasar, so a uniform prior over them
-    correctly weights by the galaxy number density. The reported black hole
-    mass is the required one, so the catalog satisfies
-    ``L_bol = eddington_ratio * L_Edd(M_BH)`` exactly.
+    See the module docstring for the distribution being sampled. Host candidates
+    are the galaxies in a thin redshift slice around the quasar, so a uniform
+    prior over them weights by galaxy number density; ``duty_cycle_slope`` tilts
+    that prior towards more massive black holes.
     """
 
     def __init__(
@@ -378,20 +232,13 @@ class QuasarHostMatch(object):
         delta_z=0.001,
         min_candidates=50,
         max_delta_z=0.05,
-        m_sigma_scatter=0.29,
         bolometric_correction_scatter=0.1,
-        bolometric_correction_form="linear",
-        anisotropy_correction=1.0,
-        eddington_ratio_distribution="power_law",
-        lambda_bounds=None,
-        gamma_e=-0.65,
-        eddington_log_mean=SHEN11_LOG_LAMBDA_MEAN,
-        eddington_log_sigma=SHEN11_LOG_LAMBDA_SIGMA,
+        eddington_ratio_location=ERDF_LOCATION,
+        eddington_ratio_width=ERDF_WIDTH,
         n_eddington_grid=32,
         max_offset_sigma=4.0,
-        unique_hosts=False,
-        i_band="lsst2023-i",
-        galaxy_types=None,
+        duty_cycle_slope=0.0,
+        rng=None,
         progress=True,
     ):
         """
@@ -399,52 +246,33 @@ class QuasarHostMatch(object):
         :param quasar_catalog: quasar catalog with a redshift column "z" and an
             absolute i-band magnitude column "M_i" in the M_i(z=2) system
         :type quasar_catalog: astropy Table
-        :param galaxy_catalog: host galaxy candidates, requiring "z" and
-            "vel_disp" columns
+        :param galaxy_catalog: host galaxy candidates, with a "z" column, a
+            "galaxy_type" column, and whichever of "vel_disp" and
+            "stellar_mass" the relations of those types need
         :type galaxy_catalog: astropy Table
-        :param delta_z: half-width of the redshift slice from which host
-            candidates are drawn
-        :param min_candidates: the slice is widened until it holds at least
-            this many galaxies, up to ``max_delta_z``
+        :param delta_z: half-width of the redshift slice host candidates are
+            drawn from
+        :param min_candidates: the slice is widened until it holds at least this
+            many galaxies, up to ``max_delta_z``
         :param max_delta_z: largest half-width the slice may be widened to
-        :param m_sigma_scatter: intrinsic scatter of the M-sigma relation [dex]
         :param bolometric_correction_scatter: object-to-object scatter of the
             bolometric correction [dex]
-        :param bolometric_correction_form: "linear" or "log", see
-            :func:`bolometric_luminosity_from_l3000`
-        :param anisotropy_correction: disc viewing-angle factor, see
-            :func:`bolometric_luminosity_from_l3000`
-        :param eddington_ratio_distribution: "power_law" for the shape of
-            Korytov et al. (2019), or "lognormal" for a Gaussian in
-            log10(lambda). The power law places most of its probability mass
-            near the Eddington limit, well above what is observed for
-            broad-line quasars; see :func:`eddington_ratio_grid`.
-        :type eddington_ratio_distribution: str
-        :param lambda_bounds: (min, max) Eddington ratio, defaulting to
-            ``DEFAULT_LAMBDA_BOUNDS`` for the chosen distribution. The 0.01
-            lower bound of the power law is roughly where a radiatively
-            efficient thin disc gives way to an advection dominated flow, and
-            matches the lower edge of ``agn_bounds_dict`` used by the
-            variability model. Note that the 0.1 lower bound of Korytov et al.
-            (2019) is too high for a luminosity function sampled far below the
-            knee: a quasar with M_i = -19 needs a 1e6 solar mass black hole
-            even at lambda = 0.1, and no galaxy in a typical catalog is that
-            small, so those quasars would all be rejected.
-        :param gamma_e: power-law index, for the "power_law" distribution
-        :param eddington_log_mean: mean of log10(lambda), for the "lognormal"
-            distribution
-        :param eddington_log_sigma: standard deviation of log10(lambda), for
-            the "lognormal" distribution
-        :param n_eddington_grid: number of Eddington ratio grid points used in
-            the weighted draw
+        :param eddington_ratio_location: mean of log10(Eddington ratio)
+        :param eddington_ratio_width: standard deviation of log10(Eddington
+            ratio) [dex]
+        :param n_eddington_grid: number of Eddington ratio grid points
         :param max_offset_sigma: a quasar is rejected if no candidate host can
-            produce it within this many times ``m_sigma_scatter``
-        :param unique_hosts: if True, a galaxy hosts at most one quasar
-        :param i_band: speclite filter defining the i band
-        :param galaxy_types: if given, restrict host candidates to these values
-            of the "galaxy_type" column, e.g. ``["red"]`` to keep only
-            bulge-dominated hosts, for which the M-sigma relation is calibrated
-        :type galaxy_types: list of str or None
+            produce it within this many times the scatter of its black hole mass
+            relation
+        :param duty_cycle_slope: exponent of an optional mass-dependent duty
+            cycle, which weights a candidate by ``(M_BH /
+            DUTY_CYCLE_PIVOT_MSUN)**duty_cycle_slope``. The default of zero
+            leaves the prior uniform over candidates, so that hosts are weighted
+            purely by their number density. A positive value makes massive black
+            holes more likely to be active, which is observed but is a
+            calibration rather than a first-principles ingredient.
+        :param rng: random number generator, for reproducible catalogs
+        :type rng: numpy.random.Generator or None
         :param progress: whether to show a progress bar
         """
         self.quasar_catalog = quasar_catalog
@@ -452,215 +280,211 @@ class QuasarHostMatch(object):
         self._delta_z = delta_z
         self._min_candidates = min_candidates
         self._max_delta_z = max_delta_z
-        self._m_sigma_scatter = m_sigma_scatter
         self._bc_scatter = bolometric_correction_scatter
-        self._bc_form = bolometric_correction_form
-        self._anisotropy_correction = anisotropy_correction
+        self._erdf_location = eddington_ratio_location
+        self._erdf_width = eddington_ratio_width
+        self._n_eddington_grid = n_eddington_grid
         self._max_offset_sigma = max_offset_sigma
-        self._unique_hosts = unique_hosts
-        self._i_band = i_band
-        self._galaxy_types = galaxy_types
+        self._duty_cycle_slope = duty_cycle_slope
+        self._rng = np.random.default_rng() if rng is None else rng
         self._progress = progress
 
-        if lambda_bounds is None:
-            lambda_bounds = DEFAULT_LAMBDA_BOUNDS[eddington_ratio_distribution]
-        self._lambda_grid, pdf = eddington_ratio_grid(
-            gamma_e=gamma_e,
-            lambda_min=lambda_bounds[0],
-            lambda_max=lambda_bounds[1],
-            n_grid=n_eddington_grid,
-            distribution=eddington_ratio_distribution,
-            log_mean=eddington_log_mean,
-            log_sigma=eddington_log_sigma,
-        )
-        # trapezoidal weights so the discrete grid integrates the pdf
-        spacing = np.gradient(self._lambda_grid)
-        self._lambda_weight = pdf * spacing
-        self._lambda_weight /= self._lambda_weight.sum()
-        self._log_lambda_grid = np.log10(self._lambda_grid)
-        # half-width of a grid cell in log space, used to jitter the drawn
-        # Eddington ratio within its cell so the output is not quantised
-        self._log_lambda_half_width = 0.5 * np.gradient(self._log_lambda_grid)
+        # indices of the quasars no host galaxy could account for
+        self.rejected_indices = []
 
-        # number of quasars for which no host could produce the luminosity
-        self.n_rejected = 0
+    @property
+    def n_rejected(self):
+        """Number of quasars that could not be assigned a host galaxy."""
+        return len(self.rejected_indices)
 
     def match(self):
         """Match every quasar with a host galaxy.
 
-        :return: catalog of the quasars that could be matched, joined with
-            their host galaxies and with "black_hole_mass_exponent",
-            "eddington_ratio" and "log_bolometric_luminosity" columns added
+        :return: catalog of the quasars that could be matched, joined with their
+            host galaxies and with "black_hole_mass_exponent", "eddington_ratio"
+            and "log_bolometric_luminosity" columns added
         :rtype: astropy Table
         """
-        if "vel_disp" not in self.galaxy_catalog.colnames:
-            raise ValueError(
-                "Galaxy catalog must have 'vel_disp' column to perform quasar-host match."
-            )
-        for column in ["z", "M_i"]:
-            if column not in self.quasar_catalog.colnames:
-                raise ValueError(
-                    "Quasar catalog must have a '%s' column to perform "
-                    "quasar-host match." % column
-                )
-        if self._galaxy_types is not None:
-            if "galaxy_type" not in self.galaxy_catalog.colnames:
-                raise ValueError(
-                    "Galaxy catalog must have a 'galaxy_type' column to select on it."
-                )
-            # FITS stores strings as bytes, so a catalog round-tripped through a
-            # file has a bytes dtype here and would match nothing
-            types = np.asarray(self.galaxy_catalog["galaxy_type"])
-            if types.dtype.kind == "S":
-                types = np.char.decode(types)
-            keep = np.isin(types, self._galaxy_types)
-            if not keep.any():
-                raise ValueError(
-                    "No galaxy in the catalog has a 'galaxy_type' among %s. "
-                    "The catalog contains %s."
-                    % (list(self._galaxy_types), sorted(set(types.tolist()))[:10])
-                )
-            self.galaxy_catalog = self.galaxy_catalog[keep]
+        self._validate()
+        galaxy_z, log_mass, scatter, weight = self._prepare_galaxies()
 
-        # galaxies with an unmeasured velocity dispersion carry no information
-        # about the black hole mass and cannot be hosts
-        self.galaxy_catalog = self.galaxy_catalog[self.galaxy_catalog["vel_disp"] > 0]
-
-        self.galaxy_catalog.sort("z")
-        # dtype=float forces native byte order: a catalog read from FITS is
-        # big-endian, and numpy has no fast searchsorted path for that, which
-        # costs ~25 ms per lookup instead of ~1 us
-        galaxy_z = np.asarray(self.galaxy_catalog["z"], dtype=float)
-        galaxy_vel_disp = np.asarray(self.galaxy_catalog["vel_disp"], dtype=float)
-        log_mass_host = np.log10(black_hole_mass_from_vel_disp(galaxy_vel_disp))
-        available = np.ones(len(galaxy_z), dtype=bool)
-
-        # bolometric luminosity implied by the quasar magnitude, with the
-        # scatter of the bolometric correction applied once per quasar
-        l3000 = l3000_from_absolute_i_magnitude(
-            np.asarray(self.quasar_catalog["M_i"], dtype=float), band=self._i_band
-        )
         log_l_bol = np.log10(
-            bolometric_luminosity_from_l3000(
-                l3000,
-                form=self._bc_form,
-                anisotropy_correction=self._anisotropy_correction,
+            bolometric_luminosity(
+                np.asarray(self.quasar_catalog["M_i"], dtype=float),
                 scatter=self._bc_scatter,
+                rng=self._rng,
             )
         )
-        # black hole mass needed to radiate that luminosity at each grid lambda
-        log_mass_required = (
-            log_l_bol[:, None]
-            - np.log10(L_EDDINGTON_PER_MSUN)
-            - self._log_lambda_grid[None, :]
+        log_lambda_grid, lambda_weight = eddington_ratio_grid(
+            self._n_eddington_grid, self._erdf_location, self._erdf_width
         )
-
-        matched_galaxy_indices = []
-        matched_quasar_indices = []
-        matched_log_mass = []
-        matched_eddington_ratio = []
+        half_cell = 0.5 * (log_lambda_grid[1] - log_lambda_grid[0])
+        log_l_edd = np.log10(L_EDDINGTON_PER_MSUN)
 
         quasar_z = np.asarray(self.quasar_catalog["z"], dtype=float)
+        self.rejected_indices = []
+        matched_quasars, matched_galaxies = [], []
+        matched_log_mass, matched_eddington_ratio = [], []
+
         rows = tqdm(
             range(len(self.quasar_catalog)),
             desc="Matching quasars with host galaxies",
             disable=not self._progress,
         )
         for i in rows:
-            start, end = self._candidate_range(galaxy_z, quasar_z[i], available)
-            if start is None:
-                self.n_rejected += 1
+            start, end = self._candidate_range(galaxy_z, quasar_z[i])
+            if start == end:
+                self.rejected_indices.append(i)
+                continue
+            mean = log_mass[start:end]
+            spread = scatter[start:end]
+            prior = weight[start:end]
+
+            # mass each grid Eddington ratio would require of this quasar, and
+            # how many scatters each candidate sits from it
+            required = log_l_bol[i] - log_l_edd - log_lambda_grid
+            offset = (required[None, :] - mean[:, None]) / spread[:, None]
+            if np.abs(offset).min() > self._max_offset_sigma:
+                self.rejected_indices.append(i)
                 continue
 
-            if self._unique_hosts:
-                candidates = np.flatnonzero(available[start:end]) + start
-                mass = log_mass_host[candidates]
-            else:
-                # every galaxy in the slice is available, so index it as a view
-                # rather than materialising the indices for each quasar
-                candidates = None
-                mass = log_mass_host[start:end]
-
-            required = log_mass_required[i]
-            offset = (required[None, :] - mass[:, None]) / self._m_sigma_scatter
-            if np.min(np.abs(offset)) > self._max_offset_sigma:
-                self.n_rejected += 1
-                continue
-
-            weight = self._lambda_weight[None, :] * np.exp(-0.5 * offset**2)
-            cumulative = np.cumsum(weight)
-            if not cumulative[-1] > 0:
-                self.n_rejected += 1
-                continue
-
-            flat = min(
-                np.searchsorted(cumulative, np.random.uniform(0, 1) * cumulative[-1]),
-                weight.size - 1,
+            # step 1: the Eddington ratio, with the hosts summed out. That sum
+            # is the candidates' black hole mass function smoothed by their
+            # intrinsic scatter, evaluated at the required mass.
+            smoothed_mass_function = (
+                prior[:, None] * np.exp(-0.5 * offset**2) / spread[:, None]
+            ).sum(axis=0)
+            cell = self._draw(lambda_weight * smoothed_mass_function)
+            log_lambda = log_lambda_grid[cell] + self._rng.uniform(
+                -half_cell, half_cell
             )
-            host_local, lambda_index = np.unravel_index(flat, weight.shape)
-            host_index = start + host_local if candidates is None else candidates[host_local]
+            # the mass reproducing the luminosity at exactly this lambda, so
+            # that L_bol = lambda * L_Edd holds for the reported values
+            log_mass_bh = log_l_bol[i] - log_l_edd - log_lambda
 
-            # spread the draw uniformly across the grid cell it landed in, and
-            # take the black hole mass that reproduces the luminosity at that
-            # exact Eddington ratio
-            half_width = self._log_lambda_half_width[lambda_index]
-            log_lambda = self._log_lambda_grid[lambda_index] + np.random.uniform(
-                -half_width, half_width
+            # step 2: the host, from the same Gaussian at that fixed mass
+            host_offset = (log_mass_bh - mean) / spread
+            host_index = start + self._draw(
+                prior * np.exp(-0.5 * host_offset**2) / spread
             )
-            matched_galaxy_indices.append(host_index)
-            matched_quasar_indices.append(i)
-            matched_log_mass.append(
-                log_l_bol[i] - np.log10(L_EDDINGTON_PER_MSUN) - log_lambda
-            )
+
+            matched_quasars.append(i)
+            matched_galaxies.append(host_index)
+            matched_log_mass.append(log_mass_bh)
             matched_eddington_ratio.append(10**log_lambda)
-            if self._unique_hosts:
-                available[host_index] = False
 
-        matched_quasars = self.quasar_catalog[matched_quasar_indices]
-        matched_galaxies = self.galaxy_catalog[matched_galaxy_indices]
-        matched_galaxies["black_hole_mass_exponent"] = matched_log_mass
-        matched_galaxies["eddington_ratio"] = matched_eddington_ratio
-        matched_galaxies["log_bolometric_luminosity"] = log_l_bol[
-            matched_quasar_indices
-        ]
-        matched_galaxies.remove_column("z")
+        self._warn_about_rejections(log_lambda_grid)
 
-        if self.n_rejected:
-            warnings.warn(
-                "%d of %d quasars could not be assigned a host galaxy whose "
-                "velocity dispersion reproduces their luminosity within %g sigma "
-                "of the M-sigma relation, and were dropped."
-                % (self.n_rejected, len(self.quasar_catalog), self._max_offset_sigma),
-                UserWarning,
-            )
+        quasars = self.quasar_catalog[matched_quasars]
+        galaxies = self.galaxy_catalog[matched_galaxies]
+        galaxies["black_hole_mass_exponent"] = matched_log_mass
+        galaxies["eddington_ratio"] = matched_eddington_ratio
+        galaxies["log_bolometric_luminosity"] = log_l_bol[matched_quasars]
+        galaxies.remove_column("z")
 
         return hstack(
-            [matched_quasars, matched_galaxies],
+            [quasars, galaxies],
             table_names=["quasar", "host_galaxy"],
             join_type="exact",
         )
 
-    def _candidate_range(self, galaxy_z, redshift, available):
-        """Bounds of the redshift slice the host candidates are drawn from.
+    def _validate(self):
+        for column in ("z", "M_i"):
+            if column not in self.quasar_catalog.colnames:
+                raise ValueError(
+                    "The quasar catalog needs a '%s' column to perform the "
+                    "quasar-host match." % column
+                )
+        for column in ("z", "galaxy_type"):
+            if column not in self.galaxy_catalog.colnames:
+                raise ValueError(
+                    "The galaxy catalog needs a '%s' column to perform the "
+                    "quasar-host match." % column
+                )
 
-        The slice is widened geometrically until it holds ``min_candidates``
-        galaxies or reaches ``max_delta_z``.
+    def _prepare_galaxies(self):
+        """Redshift, log10 mean black hole mass, intrinsic scatter and duty
+        cycle weight of each candidate, sorted by redshift.
 
-        :param galaxy_z: sorted galaxy redshifts
-        :param redshift: quasar redshift
-        :param available: boolean mask of galaxies not yet used as hosts
-        :return: (start, end) indices, or (None, None) if the slice stays empty
+        Galaxies whose black hole mass relation cannot be evaluated, because the
+        property it uses is missing or non-positive, carry no information about
+        the black hole and are dropped.
         """
+        properties = {
+            name: self.galaxy_catalog[name]
+            for name in ("vel_disp", "stellar_mass")
+            if name in self.galaxy_catalog.colnames
+        }
+        mass, scatter = black_hole_mass(
+            self.galaxy_catalog["galaxy_type"], **properties
+        )
+
+        usable = np.isfinite(mass) & (mass > 0)
+        if not usable.any():
+            raise ValueError(
+                "No galaxy in the catalog has a usable black hole mass. Check "
+                "that the properties the relations of these galaxy types need "
+                "are present and positive."
+            )
+        # dtype=float forces native byte order: a catalog read from FITS is
+        # big-endian, and numpy has no fast searchsorted path for that, which
+        # costs ~25 ms per lookup instead of ~1 us
+        redshift = np.asarray(self.galaxy_catalog["z"], dtype=float)
+        order = np.flatnonzero(usable)[np.argsort(redshift[usable])]
+
+        self.galaxy_catalog = self.galaxy_catalog[order]
+        mass = mass[order]
+        weight = (mass / DUTY_CYCLE_PIVOT_MSUN) ** self._duty_cycle_slope
+        return redshift[order], np.log10(mass), scatter[order], weight
+
+    def _candidate_range(self, galaxy_z, redshift):
+        """Bounds of the redshift slice the host candidates are drawn from,
+        widened geometrically until it holds ``min_candidates`` galaxies."""
         delta_z = self._delta_z
         while True:
             start = np.searchsorted(galaxy_z, redshift - delta_z, side="left")
             end = np.searchsorted(galaxy_z, redshift + delta_z, side="right")
-            count = (
-                int(np.count_nonzero(available[start:end]))
-                if self._unique_hosts
-                else end - start
-            )
-            if count >= self._min_candidates or delta_z >= self._max_delta_z:
-                break
+            if end - start >= self._min_candidates or delta_z >= self._max_delta_z:
+                return start, end
             delta_z = min(delta_z * 2, self._max_delta_z)
-        return (start, end) if count else (None, None)
+
+    def _draw(self, weight):
+        """Index drawn with probability proportional to ``weight``."""
+        cumulative = np.cumsum(weight)
+        index = np.searchsorted(cumulative, self._rng.random() * cumulative[-1])
+        return int(min(index, weight.size - 1))
+
+    def _warn_about_rejections(self, log_lambda_grid):
+        """Report the quasars no host galaxy could account for, and where in
+        magnitude and redshift they sit."""
+        if not self.rejected_indices:
+            return
+
+        def span(column):
+            values = np.asarray(self.quasar_catalog[column], dtype=float)[
+                self.rejected_indices
+            ]
+            return "%.2f to %.2f (median %.2f)" % (
+                values.min(),
+                values.max(),
+                np.median(values),
+            )
+
+        warnings.warn(
+            "%d of %d quasars (%.1f%%) were dropped: no candidate host has a "
+            "black hole mass relation reaching their luminosity within %g sigma. "
+            "They span M_i %s and z %s. The Eddington ratio grid runs over "
+            "log10(lambda) %.2f to %.2f, which bounds the mass a quasar of a "
+            "given luminosity can have."
+            % (
+                self.n_rejected,
+                len(self.quasar_catalog),
+                100 * self.n_rejected / len(self.quasar_catalog),
+                self._max_offset_sigma,
+                span("M_i"),
+                span("z"),
+                log_lambda_grid[0],
+                log_lambda_grid[-1],
+            ),
+            UserWarning,
+        )

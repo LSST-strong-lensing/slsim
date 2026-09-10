@@ -94,16 +94,9 @@ class QuasarRate(object):
         :param host_match_kwargs: keyword arguments passed to
          :class:`~slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_host_match.QuasarHostMatch`,
          which assigns host galaxies, black hole masses and Eddington ratios.
-         Only used if `host_galaxy=True` is passed to `quasar_sample`. To
-         reproduce the black hole masses and Eddington ratios observed for SDSS
-         quasars, restrict the hosts to bulge-dominated galaxies and use the
-         lognormal Eddington ratio distribution::
-
-             host_match_kwargs = {
-                 "galaxy_types": ["red"],
-                 "eddington_ratio_distribution": "lognormal",
-             }
-
+         Only used if `host_galaxy=True` is passed to `quasar_sample`. Pass an
+         ``rng`` for a reproducible catalog, or a positive ``duty_cycle_slope``
+         to make massive black holes more likely to be active.
         :type host_match_kwargs: dict or None
         """
         self.zeta = zeta
@@ -168,13 +161,20 @@ class QuasarRate(object):
         """This function computes the k-correction for a quasar at a given
         redshift.
 
+        The tabulated correction is the one of Richards et al. (2006), which is
+        normalised to z = 2, matching the M_i(z=2) system the Oguri & Marshall
+        (2010) luminosity function is written in. Its value at z = 0 is not an
+        offset to be removed: it is 1.25 log10(3) = 0.596, exactly the continuum
+        term of an alpha_nu = -0.5 power law between the z = 0 and z = 2
+        normalisations.
+
         :param z: Redshift value at which k correction need to be
             computed.
         :type z: float or np.array
         :return: k-correction value for given redshifts.
         """
 
-        return self.k_corr(z) - self.k_corr(0)
+        return self.k_corr(z)
 
     def M_star(self, z_value):
         """Calculates the break absolute magnitude of quasars for a given
