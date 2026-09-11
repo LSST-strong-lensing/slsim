@@ -70,3 +70,46 @@ def test_light2mass():
         kwargs_source, mass_type="EPL", halo_dict={"theta_E": 1, "gamma_pl": 2}
     )
     npt.assert_almost_equal(kwargs_mass_epl["theta_E"], 1, decimal=5)
+
+
+def test_light2mass_uses_effective_double_sersic_ellipticity():
+    kwargs_mass = deflector_util.light2mass(
+        {
+            "e1_0": 0.2,
+            "e2_0": -0.1,
+            "e1_1": -0.1,
+            "e2_1": 0.3,
+            "w0": 0.25,
+            "w1": 0.75,
+        },
+        mass_type="EPL",
+        halo_dict={"theta_E": 1, "gamma_pl": 2},
+        light2mass_e_scaling=1,
+        light2mass_e_scatter=0,
+    )
+
+    npt.assert_almost_equal(kwargs_mass["e1"], -0.025)
+    npt.assert_almost_equal(kwargs_mass["e2"], 0.2)
+
+
+def test_light2mass_rejects_invalid_double_sersic_light_shapes():
+    common = {
+        "e1_0": 0.2,
+        "e2_0": -0.1,
+        "e1_1": -0.1,
+        "e2_1": 0.3,
+    }
+
+    with npt.assert_raises_regex(ValueError, "must be non-negative"):
+        deflector_util.light2mass(
+            {**common, "w0": -0.25, "w1": 0.75},
+            mass_type="EPL",
+            halo_dict={"theta_E": 1, "gamma_pl": 2},
+        )
+
+    with npt.assert_raises_regex(ValueError, "Cannot derive mass ellipticity"):
+        deflector_util.light2mass(
+            {"e1_0": 0.2, "e2_0": -0.1},
+            mass_type="EPL",
+            halo_dict={"theta_E": 1, "gamma_pl": 2},
+        )

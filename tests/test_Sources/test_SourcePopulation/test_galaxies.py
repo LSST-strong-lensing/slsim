@@ -402,6 +402,126 @@ def test_galaxy_projected_eccentricity():
     assert e2 == 0
 
 
+def test_double_sersic_catalog_single_component_fallbacks():
+    """Single-component catalog fields can seed both Sersic components."""
+    common = {
+        "z": 0.5,
+        "w0": 0.4,
+        "w1": 0.6,
+        "angular_size_0": 0.2,
+        "angular_size_1": 0.6,
+        "n_sersic_0": 1.0,
+        "n_sersic_1": 4.0,
+    }
+
+    cartesian = convert_catalog_to_source(
+        {**common, "e1": 0.1, "e2": -0.2},
+        extended_source_type="double_sersic",
+        catalog_type=None,
+    )
+    assert cartesian["e1_1"] == pytest.approx(0.1)
+    assert cartesian["e2_1"] == pytest.approx(-0.2)
+
+    projected = convert_catalog_to_source(
+        {**common, "ellipticity": 0.2, "a_rot": 0.0},
+        extended_source_type="double_sersic",
+        catalog_type=None,
+    )
+    assert projected["e1_1"] == pytest.approx(projected["e1_0"])
+    assert projected["e2_1"] == pytest.approx(projected["e2_0"])
+
+
+def test_double_sersic_catalog_component_defaults_and_validation():
+    common = {
+        "z": 0.5,
+        "w0": 0.4,
+        "w1": 0.6,
+        "e1": 0.1,
+        "e2": 0.0,
+    }
+
+    red_galaxy = convert_catalog_to_source(
+        {
+            **common,
+            "angular_size_0": 0.2,
+            "angular_size_1": 0.6,
+            "galaxy_type": "red",
+        },
+        extended_source_type="double_sersic",
+        catalog_type=None,
+    )
+    assert red_galaxy["n_sersic_0"] == pytest.approx(4.0)
+    assert red_galaxy["n_sersic_1"] == pytest.approx(4.0)
+
+    with pytest.raises(ValueError, match="component_radius_factors"):
+        convert_catalog_to_source(
+            {
+                **common,
+                "angular_size": 0.5,
+                "n_sersic_0": 1.0,
+                "n_sersic_1": 4.0,
+                "color_gradient": {"component_radius_factors": [1.0]},
+            },
+            extended_source_type="double_sersic",
+            catalog_type=None,
+            cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
+        )
+
+    with pytest.raises(
+        ValueError, match="Cannot determine DoubleSersic component sizes"
+    ):
+        convert_catalog_to_source(
+            {
+                **common,
+                "n_sersic_0": 1.0,
+                "n_sersic_1": 4.0,
+            },
+            extended_source_type="double_sersic",
+            catalog_type=None,
+        )
+
+    with pytest.raises(ValueError, match="component_sersic_indices"):
+        convert_catalog_to_source(
+            {
+                **common,
+                "angular_size_0": 0.2,
+                "angular_size_1": 0.6,
+                "color_gradient": {"component_sersic_indices": [1.0]},
+            },
+            extended_source_type="double_sersic",
+            catalog_type=None,
+        )
+
+    with pytest.raises(ValueError, match="missing reference-band flux weights"):
+        convert_catalog_to_source(
+            {
+                "z": 0.5,
+                "e1": 0.1,
+                "e2": 0.0,
+                "angular_size_0": 0.2,
+                "angular_size_1": 0.6,
+                "n_sersic_0": 1.0,
+                "n_sersic_1": 4.0,
+            },
+            extended_source_type="double_sersic",
+            catalog_type=None,
+        )
+
+    with pytest.raises(ValueError, match="color_gradient.*must be a dictionary"):
+        convert_catalog_to_source(
+            {
+                **common,
+                "angular_size_0": 0.2,
+                "angular_size_1": 0.6,
+                "n_sersic_0": 1.0,
+                "n_sersic_1": 4.0,
+                "color_gradient": "invalid",
+            },
+            extended_source_type="double_sersic",
+            catalog_type=None,
+        )
+
+
 def test_down_sample_to_dc2():
     galaxy_pop = Table(
         {

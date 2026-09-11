@@ -854,6 +854,18 @@ class TestLens(object):
             kwargs_params_no_fg["kwargs_lens_light"]
         )
 
+        # Repeated calls in different bands must not accumulate field-galaxy
+        # models in the deflector's internal light-model list.
+        kwargs_model_fg_r, kwargs_params_fg_r = lens_with_fg.lenstronomy_kwargs(
+            band="r"
+        )
+        assert len(kwargs_model_fg_r["lens_light_model_list"]) == len(
+            kwargs_model_fg["lens_light_model_list"]
+        )
+        assert len(kwargs_params_fg_r["kwargs_lens_light"]) == len(
+            kwargs_model_fg_r["lens_light_model_list"]
+        )
+
         # Test C: Ensure field_galaxy_light_model_lenstronomy correctly handles None (fallback)
         empty_model_list, empty_kwargs_list = (
             self.gg_lens.field_galaxy_light_model_lenstronomy(band="i")

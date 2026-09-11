@@ -10,6 +10,7 @@ import astropy.units as u
 from slsim.Pipelines import SkyPyPipeline
 from slsim.Sources.SourcePopulation.galaxies import Galaxies
 from slsim.Sources.SourceTypes.single_sersic import SingleSersic
+from slsim.Sources.SourceTypes.double_sersic import DoubleSersic
 from slsim.Sources.SourceTypes.catalog_source import CatalogSource
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
@@ -133,6 +134,108 @@ class TestCatalogSource:
             self.source2._select_image_from_band,
             band="wrong",
         )
+
+    def test_hst_band_dependent_color_gradient(self):
+        source_dict = dict(self.source1.source_dict)
+        source = CatalogSource(
+            angular_size=self.source1.angular_size,
+            e1=self.source1.ellipticity[0],
+            e2=self.source1.ellipticity[1],
+            n_sersic=0.8,
+            cosmo=self.source1._cosmo,
+            catalog_path=hst_cosmos_path,
+            catalog_type="HST_COSMOS",
+            band_dependent_color_gradient=True,
+            color_gradient={
+                "grad_color": -0.3,
+                "reference_band": "F814W",
+            },
+            **source_dict,
+        )
+        _, reference_kwargs = source.kwargs_extended_light(band="i")
+        reference_image = source._image_for_band(band=None)
+
+        assert not np.allclose(reference_kwargs[0]["image"], reference_image)
+        np.testing.assert_allclose(
+            np.sum(reference_kwargs[0]["image"]), np.sum(reference_image)
+        )
+        np.testing.assert_allclose(reference_image, source._image_list[0])
+
+        source._color_gradient["grad_color"] = 0.0
+        np.testing.assert_allclose(
+            source._image_for_band(band="i"), source._image_for_band(band=None)
+        )
+
+    def test_hst_chromatic_double_sersic_fallback(self):
+        source_dict = {
+            "z": 0.5,
+            "mag_g": 20.3,
+            "mag_i": 20.3,
+            "mag_y": 20.3,
+            "n_sersic": 0.8,
+            "angular_size": 1.3,
+            "e1": 0.09697001616620306,
+            "e2": 0.040998265256000574,
+            "center_x": 0.0,
+            "center_y": 0.0,
+        }
+        source = CatalogSource(
+            cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
+            catalog_path=hst_cosmos_path,
+            catalog_type="HST_COSMOS",
+            max_scale=0.1,
+            band_dependent_color_gradient=True,
+            color_gradient={
+                "component_spectral_slopes": [2.0, -1.0],
+                "reference_band": "i",
+            },
+            **source_dict,
+        )
+        source_model, kwargs_light = source.kwargs_extended_light(band="y")
+        _, kwargs_light_blue = source.kwargs_extended_light(band="g")
+
+        assert source_model == ["SERSIC_ELLIPSE", "SERSIC_ELLIPSE"]
+        assert isinstance(source.double_sersic, DoubleSersic)
+        assert len(kwargs_light) == 2
+
+        flux_y = 10 ** (-np.array([item["magnitude"] for item in kwargs_light]) / 2.5)
+        flux_g = 10 ** (
+            -np.array([item["magnitude"] for item in kwargs_light_blue]) / 2.5
+        )
+        assert flux_y[0] / np.sum(flux_y) > flux_g[0] / np.sum(flux_g)
+
+    def test_chromatic_catalog_source_validation(self):
+        source_dict = dict(self.source1.source_dict)
+        common_kwargs = {
+            "angular_size": self.source1.angular_size,
+            "e1": self.source1.ellipticity[0],
+            "e2": self.source1.ellipticity[1],
+            "n_sersic": 0.8,
+            "cosmo": self.source1._cosmo,
+            "catalog_path": hst_cosmos_path,
+            "band_dependent_color_gradient": True,
+        }
+
+        cosmos_web_kwargs = dict(common_kwargs)
+        cosmos_web_kwargs["catalog_path"] = cosmos_web_path
+        with pytest.raises(ValueError, match="received catalog_type='COSMOS_WEB'"):
+            CatalogSource(
+                catalog_type="COSMOS_WEB",
+                **cosmos_web_kwargs,
+                **source_dict,
+            )
+
+        with pytest.raises(ValueError, match=r"received None \(type NoneType\)"):
+            CatalogSource(catalog_type="HST_COSMOS", **common_kwargs, **source_dict)
+
+        with pytest.raises(ValueError, match="fallback_double_sersic_kwargs"):
+            CatalogSource(
+                catalog_type="HST_COSMOS",
+                color_gradient={"grad_color": -0.1},
+                fallback_double_sersic_kwargs="invalid",
+                **common_kwargs,
+                **source_dict,
+            )
 
     def test_redshift(self):
         assert self.source1.redshift == 3.5

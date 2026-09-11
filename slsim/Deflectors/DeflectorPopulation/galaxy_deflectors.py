@@ -3,6 +3,7 @@ from slsim.Deflectors.MassLightConnection.velocity_dispersion import (
     vel_disp_abundance_matching,
 )
 from slsim.Deflectors.DeflectorPopulation.deflectors_base import DeflectorsBase
+from slsim.Util.color_gradient import attach_foreground_deflector_color_gradient
 from astropy.table import vstack
 
 
@@ -26,6 +27,8 @@ class GalaxyDeflectors(DeflectorsBase):
         catalog_type="skypy",
         mass_type="EPL",
         light_type="single_sersic",
+        foreground_color_gradient=None,
+        foreground_component_weights=(0.4, 0.6),
     ):
         """
         :param red_galaxy_list: list of dictionary with elliptical galaxy
@@ -50,6 +53,13 @@ class GalaxyDeflectors(DeflectorsBase):
         :type mass_type: string
         :param light_type: type of Source() model class for the light distribution
         :type light_type: string
+        :param foreground_color_gradient: Optional configuration for a
+         band-dependent two-component deflector light profile. When provided,
+         the light is handled by the standard ``Source``/``DoubleSersic`` path.
+        :type foreground_color_gradient: dict or None
+        :param foreground_component_weights: Reference-band flux weights of the
+         two Sersic components.
+        :type foreground_component_weights: tuple or list
         :param catalog_type: type of the catalog. If user is using deflector catalog
          other than generated from skypy pipeline, we require them to provide angular
          size of the galaxy in arcsec and specify catalog_type as None. Otherwise, by
@@ -57,6 +67,27 @@ class GalaxyDeflectors(DeflectorsBase):
          pipeline.
         :type catalog_type: str. "skypy" or None.
         """
+        if foreground_color_gradient is not None:
+            if light_type not in ("single_sersic", "double_sersic"):
+                raise ValueError(
+                    "foreground_color_gradient requires a single_sersic or "
+                    "double_sersic light_type."
+                )
+            light_type = "double_sersic"
+            red_galaxy_list = red_galaxy_list.copy()
+            attach_foreground_deflector_color_gradient(
+                red_galaxy_list,
+                foreground_color_gradient,
+                component_weights=foreground_component_weights,
+            )
+            if blue_galaxy_list is not None:
+                blue_galaxy_list = blue_galaxy_list.copy()
+                attach_foreground_deflector_color_gradient(
+                    blue_galaxy_list,
+                    foreground_color_gradient,
+                    component_weights=foreground_component_weights,
+                )
+
         red_column_names = red_galaxy_list.colnames
         if "galaxy_type" not in red_column_names:
             red_galaxy_list["galaxy_type"] = "red"

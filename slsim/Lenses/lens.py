@@ -1388,8 +1388,8 @@ class Lens(LensedSystemBase):
             field_galaxies_lens_model_list, kwargs_field_galaxies = (
                 self.field_galaxy_light_model_lenstronomy(band=band)
             )
-            lens_light_model_list += field_galaxies_lens_model_list
-            kwargs_lens_light += kwargs_field_galaxies
+            lens_light_model_list.extend(field_galaxies_lens_model_list)
+            kwargs_lens_light.extend(kwargs_field_galaxies)
 
         kwargs_model = {
             "lens_light_model_list": lens_light_model_list,
