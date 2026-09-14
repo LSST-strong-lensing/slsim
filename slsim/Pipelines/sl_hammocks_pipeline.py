@@ -170,12 +170,12 @@ def table_translator_for_slsim(table, cosmo):
         - 'halo_mass_acc': M200 of subhalo component at the accretion time in units of M_sol.
             For host halos, this value becomes 0. Currently, this table does not include subhalos.
         - 'e_h': ellipticily of dark matter halo, which is defined by epsilon=(1-q^2)/(1+q^2), where q=b/a and a, b are major and minor axis of dark matter halo, respectively.
-        - 'p_h': posiiton angle of the halo in units of degree
+        - 'p_h': position angle of the halo in units of degree
         - 'concentration': Concentration parameter of the halo
         - 'stellar_mass': Mass of stars in the object
         - 'e_g': ellipticity of the galaxy, which is defined by epsilon=(1-q^2)/(1+q^2), where q=b/a and a, b are major and minor axis of galaxy, respectively
-        - 'p_g': posiiton angle of the galaxy in units of degree
-        - 'tb': the scale radius appreared in Hernquist profile in units of arcsec.
+        - 'p_g': position angle of the galaxy in units of degree
+        - 'tb': the scale radius appeared in Hernquist profile in units of arcsec.
             This parameter relates to the commonly used galaxy effective (half-mass) radius by t_b = 0.551*theta_eff.
         - 'angular_size': galaxy effective radius in units of arcsec
     """

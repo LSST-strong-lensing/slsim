@@ -106,7 +106,9 @@ class TestQuasarHostMatch:
         assert len(matcher.quasar_catalog) == len(quasar_cat)
         assert len(matcher.galaxy_catalog) == len(galaxy_cat)
 
-    @patch("slsim.Sources.QuasarCatalog.quasar_host_match.sample_eddington_rate")
+    @patch(
+        "slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_host_match.sample_eddington_rate"
+    )
     def test_match_successful(self, mock_sample_rate, setup_catalogs):
         """Tests a successful match between a quasar and its host galaxy."""
         quasar_cat, galaxy_cat = setup_catalogs

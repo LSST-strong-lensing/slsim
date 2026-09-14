@@ -27,28 +27,94 @@ class Quasar(SourceBase):
         variability_model="light_curve",
         random_seed=None,
         cosmo=None,
+        black_hole_mass_exponent=None,
+        black_hole_spin=None,
+        inclination_angle=None,
+        r_out=None,
+        r_resolution=None,
+        eddington_ratio=None,
+        accretion_disk=None,
+        corona_height=None,
+        driving_variability_model=None,
+        intrinsic_light_curve=None,
         **kwargs
     ):
         """
 
-        :param lightcurve_time: observation time array for lightcurve in unit of days.
+        AGN accretion-disk parameters below (all optional). Any left as ``None`` are
+        drawn randomly by :func:`~slsim.Sources.SourceVariability.agn.RandomAgn` from
+        ``agn_bounds_dict`` (or ``input_agn_bounds_dict`` if provided) the first time
+        the AGN model is needed (on first access of ``.light_curve`` or
+        ``update_microlensing_kwargs_source_morphology``) -- this is a deliberate
+        generative feature (population diversity), not a fallback to guard against.
+        See :mod:`slsim.Sources.SourceVariability.agn` for the sampling distributions.
+
+        :param lightcurve_time: time array for lightcurve in unit of days,
+         defined in the rest (source) frame relative to time_zero_point (see
+         Source._image_to_source_time_translation()). The AGN reprocessing response
+         function is defined by the disk's physical light-crossing time, which is
+         redshift-independent, so this is in rest-frame.
         :type lightcurve_time: array
-        :param source_dict: Source properties. May be a dictionary or an Astropy table.
-         This dict or table should contain atleast redshift and i-band magnitude.
-         eg: {"z": 0.8, "ps_mag_i": 22}
-        :type source_dict: dict or astropy.table.Table
         :param cosmo: astropy.cosmology instance
-        :param kwargs: dictionary of keyword arguments for a supernova. It sould contain
-          following keywords:
+        :param kwargs: required per-object catalog data (dict or one row of an
+         Astropy table), passed through to `SourceBase`. Must contain at least
+         redshift (``z``) and i-band magnitude (``ps_mag_i``).
+         eg: {"z": 0.8, "ps_mag_i": 22}
         :param variability_model: keyword for variability model to be used. This is an
             input for the Variability class.
         :type variability_model: str
         :param kwargs_variability: Keyword arguments for variability class.
-            This is associated with an input for Variability class. By using these key
-            words, code search for quantities in source_dict with these names and creates
+            This is associated with an input for Variability class. By using these keywords,
+            code search for quantities in source_dict with these names and creates
             a dictionary and this dict should be passed to the Variability class.
         :type kwargs_variability: list of str
         :param kwargs_variability_model: Pre-computed variabilities for each band (default=None)
+        :param black_hole_mass_exponent: mass exponent of the SMBH,
+         log10(M_BH/M_sun). If ``None``, drawn from
+         ``agn_bounds_dict["black_hole_mass_exponent_bounds"]``.
+        :type black_hole_mass_exponent: float or None
+        :param black_hole_spin: dimensionless spin of the SMBH, in [-1, 1]. 0 is
+         Schwarzschild; negative values are retrograde relative to the disk. If
+         ``None``, drawn from ``agn_bounds_dict["black_hole_spin_bounds"]``.
+        :type black_hole_spin: float or None
+        :param inclination_angle: inclination of the AGN disk w.r.t. the observer,
+         in degrees. If ``None``, drawn from
+         ``agn_bounds_dict["inclination_angle_bounds"]``.
+        :type inclination_angle: float or None
+        :param r_out: maximum radius of the disk, in gravitational radii. If
+         ``None``, drawn from ``agn_bounds_dict["r_out_bounds"]``.
+        :type r_out: float or None
+        :param eddington_ratio: fraction of the Eddington luminosity the disk is
+         radiating with (accretion-rate proxy; thin-disk solutions are only valid
+         for relatively low values). If ``None``, drawn from
+         ``agn_bounds_dict["eddington_ratio_bounds"]``.
+        :type eddington_ratio: float or None
+        :param accretion_disk: accretion disk model name. Currently only
+         ``"thin_disk"`` is supported. If ``None``, chosen randomly from
+         ``agn_bounds_dict["supported_disk_models"]`` (currently only one option).
+        :type accretion_disk: str or None
+        :param r_resolution: number of radial pixels the disk is resolved to.
+         Unlike the five parameters above, this is *not* part of `RandomAgn`'s
+         random-fill set -- if left ``None``, a default is applied deeper inside
+         the lamppost reprocessing model (see
+         :mod:`slsim.Sources.SourceVariability.variability`).
+        :type r_resolution: int or None
+        :param corona_height: height of the X-ray corona above the disk, used in
+         the lamppost reprocessing model. Same not-randomly-filled caveat as
+         ``r_resolution``.
+        :type corona_height: float or None
+        :param driving_variability_model: reserved/rarely-used passthrough key
+         consumed only by the lamppost reprocessing model directly; do not confuse
+         with ``agn_driving_variability_model`` above, which is the parameter
+         actually used to select the driving-signal model for `RandomAgn`/`Agn`.
+         Leave as ``None`` unless you specifically know you need it.
+        :type driving_variability_model: str or None
+        :param intrinsic_light_curve: reserved/rarely-used passthrough key; the
+         actual per-draw mechanism for supplying a library of intrinsic light
+         curves to sample from is ``input_agn_bounds_dict["intrinsic_light_curve"]``
+         (a list), not this key. Leave as ``None`` unless you specifically know you
+         need it.
+        :type intrinsic_light_curve: object or None
         """
 
         super().__init__(
@@ -67,6 +133,16 @@ class Quasar(SourceBase):
         self._agn_driving_kwargs_variability = agn_driving_kwargs_variability
         self.input_agn_bounds_dict = input_agn_bounds_dict
         self._kwargs_variability = kwargs_variability
+        self._black_hole_mass_exponent = black_hole_mass_exponent
+        self._black_hole_spin = black_hole_spin
+        self._inclination_angle = inclination_angle
+        self._r_out = r_out
+        self._r_resolution = r_resolution
+        self._eddington_ratio = eddington_ratio
+        self._accretion_disk = accretion_disk
+        self._corona_height = corona_height
+        self._driving_variability_model = driving_variability_model
+        self._intrinsic_light_curve = intrinsic_light_curve
         if kwargs_variability_model is None:
             self._variability_computed = False
         else:
@@ -84,8 +160,26 @@ class Quasar(SourceBase):
                 "provide a suitable astropy cosmology."
             )
         else:
-            # Pull the agn kwarg dict out of the kwargs_variability dict
-            agn_kwarg_dict = extract_agn_kwargs_from_source_dict(self.source_dict)
+            # Build the AGN disk-physics kwarg dict from the explicit constructor
+            # parameters, omitting any left as None so RandomAgn's random-fill
+            # behavior (see agn.py) kicks in for those -- a key present with value
+            # None would suppress that random-fill instead of triggering it.
+            agn_kwarg_dict = {
+                key: value
+                for key, value in {
+                    "black_hole_mass_exponent": self._black_hole_mass_exponent,
+                    "black_hole_spin": self._black_hole_spin,
+                    "inclination_angle": self._inclination_angle,
+                    "r_out": self._r_out,
+                    "r_resolution": self._r_resolution,
+                    "eddington_ratio": self._eddington_ratio,
+                    "accretion_disk": self._accretion_disk,
+                    "corona_height": self._corona_height,
+                    "driving_variability_model": self._driving_variability_model,
+                    "intrinsic_light_curve": self._intrinsic_light_curve,
+                }.items()
+                if value is not None
+            }
 
             # If no other band and magnitude is given, populate with
             # the assumed point source magnitude column
@@ -240,33 +334,3 @@ def add_mean_mag_to_source_table(sourcedict, mean_mags, band_list):
         _source_dict[name] = mean_mags[i]
 
     return _source_dict
-
-
-def extract_agn_kwargs_from_source_dict(source_dict):
-    """This extracts all AGN related parameters from a source_dict Table and
-    constructs a compact dictionary from them to pass into the agn class.
-
-    :param source_dict: Astropy Table with columns representing all
-        information of the source.
-    :return: Compact dict object containing key+value pairs of AGN
-        parameters.
-    """
-
-    kwargs_variable_agn = [
-        "r_out",
-        "r_resolution",
-        "corona_height",
-        "inclination_angle",
-        "black_hole_mass_exponent",
-        "black_hole_spin",
-        "intrinsic_light_curve",
-        "eddington_ratio",
-        "driving_variability_model",
-        "accretion_disk",
-    ]
-    # column_names = source_dict.colnames
-    agn_kwarg_dict = {}
-    for kwarg in kwargs_variable_agn:
-        if kwarg in source_dict:
-            agn_kwarg_dict[kwarg] = source_dict[kwarg]  # .data[0]
-    return agn_kwarg_dict

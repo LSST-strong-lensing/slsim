@@ -135,3 +135,11 @@ class ExtendedSource(object):
         """
 
         return self._extended_source.surface_brightness_reff(band=band)
+
+    @property
+    def stellar_mass(self):
+        """
+
+        :return: stellar mass of galaxy [M_sol]
+        """
+        return self._extended_source.stellar_mass

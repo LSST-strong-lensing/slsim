@@ -206,7 +206,7 @@ def test_redshifts_from_comoving_density():
     # Check that the number of galaxies is approximately equal to the expected number
     dN_dz = (cosmo.differential_comoving_volume(redshift) * sky_area).to_value("Mpc3")
     dN_dz *= density
-    N = np.trapz(dN_dz, redshift)
+    N = np.trapezoid(dN_dz, redshift)
     assert np.isclose(len(redshifts_no_noise), int(N), rtol=0.1)
 
 

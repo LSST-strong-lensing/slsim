@@ -5,28 +5,28 @@ from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
 from astropy.table import Table
 
-import slsim.Sources as sources
-import slsim.Deflectors as deflectors
-import slsim.Pipelines as pipelines
-from slsim.Sources.SourcePopulation.point_sources import PointSources
+from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
+from slsim.Sources.SourcePopulation.point_plus_extended_sources import (
+    PointPlusExtendedSources,
+)
+from slsim.Sources.SourcePopulation.galaxies import Galaxies
+from slsim.Deflectors.DeflectorPopulation.galaxy_deflectors import GalaxyDeflectors
 from slsim.FalsePositives.false_positive_pop import FalsePositivePop
 
 # --- Setup Mock Data and Pipelines ---
 sky_area = Quantity(value=0.01, unit="deg2")
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-galaxy_simulation_pipeline = pipelines.SkyPyPipeline(
-    skypy_config=None, sky_area=sky_area
-)
+galaxy_simulation_pipeline = SkyPyPipeline(skypy_config=None, sky_area=sky_area)
 
-lens_galaxies = deflectors.EllipticalLensGalaxies(
-    galaxy_list=galaxy_simulation_pipeline.red_galaxies,
+lens_galaxies = GalaxyDeflectors(
+    red_galaxy_list=galaxy_simulation_pipeline.red_galaxies,
     kwargs_cut={"band": "g", "band_max": 28, "z_min": 0.01, "z_max": 2.5},
-    kwargs_mass2light=0.1,
+    kwargs_mass2light={},
     cosmo=cosmo,
     sky_area=sky_area,
 )
 
-source_galaxies = sources.Galaxies(
+source_galaxies = Galaxies(
     galaxy_list=galaxy_simulation_pipeline.blue_galaxies,
     kwargs_cut={"band": "g", "band_max": 28, "z_min": 0.1, "z_max": 5.0},
     cosmo=cosmo,
@@ -39,13 +39,19 @@ path = os.path.dirname(__file__)
 loaded_qso_host_catalog = Table.read(
     os.path.join(path, "../TestData/qso_host_catalog.fits")
 )
-source_quasars_high_z = PointSources(
-    point_source_list=loaded_qso_host_catalog,
+
+loaded_qso_host_catalog.rename_column("e0_1", "e1_0")
+loaded_qso_host_catalog.rename_column("e0_2", "e2_0")
+loaded_qso_host_catalog.rename_column("e1_2", "e2_1")
+
+source_quasars_high_z = PointPlusExtendedSources(
+    point_plus_extended_sources_list=loaded_qso_host_catalog,
     kwargs_cut={"band": "g", "band_max": 28, "z_min": 2, "z_max": 5.0},
     cosmo=cosmo,
     sky_area=Quantity(12.0, unit="deg2"),
     point_source_type="quasar",
-    point_source_kwargs={},
+    joint_point_source_kwargs={},
+    extended_source_type="double_sersic",
 )
 
 

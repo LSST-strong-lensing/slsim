@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 from slsim.Lenses.lens import Lens
 from slsim.Sources.source import Source
@@ -11,13 +13,22 @@ import pytest
 
 @pytest.fixture
 def supernovae_lens_instance():
+
     path = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    print(path, "test path")
-    source_dict = Table.read(
-        os.path.join(path, "TestData/source_supernovae_new.fits"), format="fits"
-    )
-    source_dict.rename_column("angular_size0", "angular_size_0")
-    source_dict.rename_column("angular_size1", "angular_size_1")
+    source_dict = {
+        "z": 1.5,
+        "n_sersic_0": 1,
+        "n_sersic_1": 4,
+        "angular_size_0": 0.2,
+        "angular_size_1": 0.15,
+        "e1_0": 0.1,
+        "e1_1": 0.002,
+        "e2_0": 0.001,
+        "e2_1": 0.003,
+        "w0": 0.4,
+        "w1": 0.6,
+        "mag_i": 23,
+    }
     deflector_dict = Table.read(
         os.path.join(path, "TestData/deflector_supernovae_new.fits"), format="fits"
     )
@@ -40,17 +51,35 @@ def supernovae_lens_instance():
             **kwargs_sn,
             **source_dict,
         )
+        deflector_dict_new = copy.deepcopy(source_dict)
+        deflector_dict_new.pop("z")
+        deflector_dict_new["extended_source_type"] = "double_sersic"
+        kwargs_mass = {
+            "mass_type": "EPL",
+            "theta_E": 1,
+            "e1": 0.1,
+            "e2": 0.05,
+            "gamma_pl": 2.0,
+        }
         deflector = Deflector(
-            deflector_type="EPL_SERSIC",
-            **deflector_dict,
+            z=deflector_dict["z"],
+            center_x=0.1,
+            center_y=0,
+            kwargs_mass=kwargs_mass,
+            kwargs_light=deflector_dict_new,
         )
+
         supernovae_lens = Lens(
             deflector_class=deflector,
             source_class=source,
             cosmo=cosmo,
         )
+        print(supernovae_lens.deflector.deflector_center, "deflector center")
+        print(
+            supernovae_lens.source(index=0).point_source_position, "supernovae position"
+        )
         if supernovae_lens.validity_test():
-            supernovae_lens = supernovae_lens
+
             break
     return supernovae_lens
 

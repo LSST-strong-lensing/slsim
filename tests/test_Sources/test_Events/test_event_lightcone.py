@@ -13,7 +13,7 @@ class TestEventLightcone(object):
     def setup_method(self):
         self.cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
         self.redshifts = np.linspace(0, 5, 20)
-        self.sky_area = Quantity(value=0.05, unit="deg2")
+        self.sky_area = Quantity(value=1, unit="deg2")
         self.noise = False
         self.time_interval = 1 * units.year
 
@@ -162,6 +162,7 @@ class TestEventLightcone(object):
             expected_density = lightcone.convert_density(
                 event_pop.event_rate(self.redshifts) / (1 + self.redshifts)
             )
+
             dN_dz *= expected_density
             bin_widths = np.diff(self.redshifts)
             expected_counts = dN_dz[:-1] * bin_widths

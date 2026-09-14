@@ -1,4 +1,4 @@
-from slsim.Sources.SourceTypes.quasar import Quasar, extract_agn_kwargs_from_source_dict
+from slsim.Sources.SourceTypes.quasar import Quasar
 import numpy as np
 import numpy.testing as npt
 import pytest
@@ -42,7 +42,6 @@ class TestQuasar:
             "standard_deviation": 0.9,
         }
         self.kwargs_quasar = {
-            "source_type": "quasar",
             "variability_model": "light_curve",
             "kwargs_variability": {"agn_lightcurve", "i", "r", "F062", "VIS"},
             "agn_driving_variability_model": "bending_power_law",
@@ -53,7 +52,6 @@ class TestQuasar:
         }
 
         kwargs_quasar_none = {
-            "source_type": "quasar",
             "variability_model": "light_curve",
             "kwargs_variability": None,
             "agn_driving_variability_model": "bending_power_law",
@@ -77,10 +75,7 @@ class TestQuasar:
             cosmo=None, **self.kwargs_quasar, **self.source_dict
         )
         self.source_agn_band_error = Quasar(
-            source_dict=self.source_dict3,
-            cosmo=cosmo,
-            **self.kwargs_quasar,
-            **self.source_dict3
+            cosmo=cosmo, **self.kwargs_quasar, **self.source_dict3
         )
 
         self.source_light_curve = Quasar(
@@ -207,21 +202,32 @@ class TestQuasar:
         assert "eddington_ratio" in updated_kwargs
         assert updated_kwargs["eddington_ratio"] == 0.1
 
+    def test_unset_agn_params_get_random_fill(self):
+        """Unset AGN params (None) must still be randomly filled, not left as
+        None."""
+        updated_kwargs = (
+            self.source_agn_params.update_microlensing_kwargs_source_morphology({})
+        )
 
-def test_extract_agn_kwargs_from_source_dict():
-    source_dict = {
-        "z": 0.8,
-        "ps_mag_i": 20,
-        "random_seed": 42,
-        "black_hole_mass_exponent": 8.0,
-        "eddington_ratio": 0.5,
-    }
+        # explicitly-set values preserved
+        assert updated_kwargs["black_hole_mass_exponent"] == 8.5
+        assert updated_kwargs["eddington_ratio"] == 0.1
 
-    agn_kwargs = extract_agn_kwargs_from_source_dict(source_dict=source_dict)
-    assert "black_hole_mass_exponent" in agn_kwargs
-    assert "eddington_ratio" in agn_kwargs
-    assert agn_kwargs["black_hole_mass_exponent"] == 8.0
-    assert agn_kwargs["eddington_ratio"] == 0.5
+        # unset values were randomly filled within their bounds, not left as None
+        kwargs_model = self.source_agn_params.agn_class.kwargs_model
+        assert kwargs_model["black_hole_spin"] is not None
+        assert -0.997 <= kwargs_model["black_hole_spin"] <= 0.997
+        assert kwargs_model["inclination_angle"] is not None
+        assert 0 <= kwargs_model["inclination_angle"] <= 90
+        assert kwargs_model["r_out"] is not None
+        assert kwargs_model["accretion_disk"] == "thin_disk"
+
+
+def test_unrecognized_kwarg_raises_value_error():
+    """Misspelled/unrecognized keywords must raise, not be silently
+    absorbed."""
+    with pytest.raises(ValueError):
+        Quasar(z=0.8, ps_mag_i=20, black_hole_mass_exponet=8.0)
 
 
 if __name__ == "__main__":

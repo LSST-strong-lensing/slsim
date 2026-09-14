@@ -23,18 +23,23 @@ COSMO = astropy.cosmology.default_cosmology.get()
 DEFLECTOR_DICT = {
     "center_x": -0.007876281728887604,
     "center_y": 0.010633393703246008,
-    "e1_mass": -0.004858808997848661,
-    "e2_mass": 0.0075210751726143355,
     "stellar_mass": 286796906929.3925,
-    "e1_light": -0.023377277902774978,
-    "e2_light": 0.05349948216860632,
-    "vel_disp": 295.2347999078027,
+    "e1": -0.023377277902774978,
+    "e2": 0.05349948216860632,
     "angular_size": 0.5300707454127908,
     "n_sersic": 4.0,
     "z": 0.2902115249535011,
     "mag_F106": 17.5664222662219,
     "mag_F129": 17.269983557132853,
     "mag_F184": 17.00761457389914,
+    "extended_source_type": "single_sersic",
+}
+
+DEFLECTOR_MASS_DICT = {
+    "e1": -0.004858808997848661,
+    "e2": 0.0075210751726143355,
+    "vel_disp": 295.2347999078027,
+    "mass_type": "EPL",
 }
 
 LOS_DICT = {
@@ -53,13 +58,11 @@ SOURCE_DICT = {
     "mag_F184": 20.542431041034558,
     "n_sersic": 1.0,
     "z": 0.5876899931818929,
-    "x_off": -0.053568932950377096,
-    "y_off": 0.04383056304876015,
+    "extended_source_type": "single_sersic",
 }
 
 BAND = "F106"
-kwargs_extended = {"extended_source_type": "single_sersic"}
-source = Source(cosmo=COSMO, **kwargs_extended, **SOURCE_DICT)
+source = Source(cosmo=COSMO, **SOURCE_DICT)
 pointsource_kwargs = {
     "variability_model": "light_curve",
     "kwargs_variability": ["supernovae_lightcurve", "F184", "F129", "F106"],
@@ -72,14 +75,16 @@ pointsource_kwargs = {
 supernova_source = Source(
     cosmo=COSMO,
     point_source_type="supernova",
-    extended_source_type="single_sersic",
     **pointsource_kwargs,
     **SOURCE_DICT,
 )
 
 deflector = Deflector(
-    deflector_type="EPL_SERSIC",
-    **DEFLECTOR_DICT,
+    z=DEFLECTOR_DICT.pop("z"),
+    center_x=DEFLECTOR_DICT.pop("center_x"),
+    center_y=DEFLECTOR_DICT.pop("center_y"),
+    kwargs_mass=DEFLECTOR_MASS_DICT,
+    kwargs_light=DEFLECTOR_DICT,
 )
 LENS = Lens(
     source_class=source,

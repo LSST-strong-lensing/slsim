@@ -9,6 +9,8 @@ from slsim.LsstSciencePipeline.util_lsst import (
 )
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
+from slsim.Sources.SourcePopulation.galaxies import convert_catalog_to_source
+from slsim.Deflectors import deflector_util
 import pytest
 
 
@@ -20,6 +22,21 @@ def pes_lens_instance():
     )
     deflector_dict = Table.read(
         os.path.join(path, "../TestData/deflector_dict_ps.fits"), format="fits"
+    )
+
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+
+    kwargs_light = convert_catalog_to_source(
+        deflector_dict,
+        extended_source_type="single_sersic",
+        catalog_type=None,
+        size_model=None,
+        cosmo=cosmo,
+        include_all_keywords=False,
+    )
+    z = kwargs_light.pop("z")
+    kwargs_mass = deflector_util.light2mass(
+        kwargs_light, halo_dict=deflector_dict, mass_type="EPL"
     )
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
@@ -47,10 +64,7 @@ def pes_lens_instance():
             **kwargs_quasar,
             **source_dict,
         )
-        deflector = Deflector(
-            deflector_type="EPL_SERSIC",
-            **deflector_dict,
-        )
+        deflector = Deflector(z=z, kwargs_light=kwargs_light, kwargs_mass=kwargs_mass)
         pes_lens = Lens(
             source_class=source,
             deflector_class=deflector,

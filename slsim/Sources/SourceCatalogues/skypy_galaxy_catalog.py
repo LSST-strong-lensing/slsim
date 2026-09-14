@@ -1,8 +1,6 @@
-from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
+from astropy.table import vstack
 
-"""References:
-Wang et al. 2013
-"""
+from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 
 
 class GalaxyCatalog(object):
@@ -35,5 +33,9 @@ class GalaxyCatalog(object):
             filters=None,
             cosmo=self.cosmo,
         )
-        galaxy_table = pipeline.blue_galaxies
-        return galaxy_table
+        galaxy_table_blue = pipeline.blue_galaxies
+        galaxy_table_red = pipeline.red_galaxies
+        return vstack(
+            [galaxy_table_blue, galaxy_table_red],
+            join_type="exact",
+        )

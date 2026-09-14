@@ -65,8 +65,13 @@ def mass_richness_abdullah2022(rich, min_mass=1e12):
 
 
 def mass_richness_relation(rich, relation="Abdullah2022"):
-    """Mass-richness relation :param rich: richness :param relation: mass-
-    richness relation :type relation: str."""
+    """Mass-richness relation.
+
+    :param rich: richness
+    :param relation: mass-richness relation
+    :type relation: str.
+    :return: halo mass [M_sun]
+    """
     if relation == "simet2017":
         return mass_richness_simet2017(rich)
     elif relation == "Abdullah2022":

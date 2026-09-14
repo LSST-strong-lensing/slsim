@@ -2,6 +2,7 @@ import os
 from skypy.pipeline import Pipeline
 import tempfile
 import slsim.Util.param_util as util
+import astropy.units as u
 
 
 class SkyPyPipeline:
@@ -91,6 +92,13 @@ class SkyPyPipeline:
             os.remove(tmp_file.name)
         # TODO: note that the f_sky can not be set to large. Need to figure out
         #  how to do this properly
+
+        # convert angular sizes from radian to arcsec
+        self._pipeline["blue"]["angular_size"].convert_unit_to(u.arcsec)
+        self._pipeline["red"]["angular_size"].convert_unit_to(u.arcsec)
+        # self._pipeline["angular_size"] = self._pipeline["angular_size"] * 3600 * 180 / np.pi
+
+        # *3600 * 180 / np.pi
 
         # TODO: make filters work
 

@@ -629,7 +629,7 @@ def redshifts_from_comoving_density(redshift, density, sky_area, cosmo, noise=Tr
     dN_dz = (cosmo.differential_comoving_volume(redshift) * sky_area).to_value("Mpc3")
     dN_dz *= density
     # number
-    N = np.trapz(dN_dz, redshift)
+    N = np.trapezoid(dN_dz, redshift)
     # Poisson sample galaxy number if requested
     if noise:
         total_number = np.random.poisson(N)

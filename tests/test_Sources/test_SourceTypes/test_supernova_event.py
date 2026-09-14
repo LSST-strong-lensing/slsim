@@ -20,7 +20,6 @@ class TestSupernovaEvent:
             "ps_mag_i": [21, 20, 19, 21, 22, 23],
         }
         kwargs_sn = {
-            "source_type": "supernova",
             "variability_model": "light_curve",
             "kwargs_variability": ["supernovae_lightcurve", "i", "r"],
             "sn_type": "Ia",
@@ -30,7 +29,6 @@ class TestSupernovaEvent:
             "sn_modeldir": None,
         }
         kwargs_sn_roman = {
-            "source_type": "supernova",
             "variability_model": "light_curve",
             "kwargs_variability": ["supernovae_lightcurve", "F062", "F129"],
             "sn_type": "Ia",
@@ -40,7 +38,6 @@ class TestSupernovaEvent:
             "sn_modeldir": None,
         }
         kwargs_sn_none = {
-            "source_type": "supernova",
             "variability_model": "light_curve",
             "kwargs_variability": None,
             "sn_type": "Ia",
@@ -79,7 +76,7 @@ class TestSupernovaEvent:
         assert "ps_mag_i" in light_curve["i"].keys()
         assert "MJD" in light_curve["r"].keys()
         assert "ps_mag_r" in light_curve["r"].keys()
-        assert len(light_curve["i"]["MJD"]) == 150
+        assert len(light_curve["i"]["MJD"]) == 152
 
         assert "F062" in light_curve_roman.keys()
         assert "F129" in light_curve_roman.keys()
@@ -87,7 +84,7 @@ class TestSupernovaEvent:
         assert "ps_mag_F062" in light_curve_roman["F062"].keys()
         assert "MJD" in light_curve_roman["F129"].keys()
         assert "ps_mag_F129" in light_curve_roman["F129"].keys()
-        assert len(light_curve_roman["F062"]["MJD"]) == 100
+        assert len(light_curve_roman["F062"]["MJD"]) == 102
 
         assert not light_curve_none
         with pytest.raises(ValueError):

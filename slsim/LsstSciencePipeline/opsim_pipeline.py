@@ -1,6 +1,5 @@
 import numpy as np
 from astropy.table import Table
-import lenstronomy.Util.util as util
 import lenstronomy.Util.kernel_util as kernel_util
 import lenstronomy.Util.data_util as data_util
 
@@ -8,7 +7,7 @@ import lenstronomy.Util.data_util as data_util
 def opsim_time_series_images_data(
     ra_list,
     dec_list,
-    obs_strategy,
+    opsim_path,
     MJD_min=60000,
     MJD_max=64500,
     num_pix=101,
@@ -16,28 +15,29 @@ def opsim_time_series_images_data(
     readout_noise=10,
     delta_pix=0.2,
     print_warning=True,
-    opsim_path=None,
 ):
     """Creates time series data from opsim database.
+    The survey cadence files for Opsim can be found at
+    https://s3df.slac.stanford.edu/data/rubin/sim-
+        data/sims_featureScheduler_runsX.X/baseline/
+    folder. (replace X.X with the version of the opsim database you want to
+        use).
 
-    :param ra_list: a list of ra points (in degrees) from objects we want to collect
-        observations for
-    :param dec_list: a list of dec points (in degrees) from objects we want to collect
-        observations for
-    :param obs_strategy: version of observing strategy corresponding to opsim database.
-        for example "baseline_v3.0_10yrs" (string)
+    :param ra_list: a list of ra points (in degrees) from objects we
+        want to collect observations for
+    :param dec_list: a list of dec points (in degrees) from objects we
+        want to collect observations for
+    :param opsim_path: string, path to the opsim database.
     :param MJD_min: minimum MJD for the observations
     :param MJD_max: maximum MJD for the observations
     :param num_pix: cutout size of images (in pixels)
     :param moffat_beta: power index of the moffat psf kernel
     :param readout_noise: noise added per readout
     :param delta_pix: size of pixel in units arcseonds
-    :param print_warning: if True, prints a warning of coordinates outside of the LSST
-        footprint
-    :param opsim_path: optional: provide a path to the opsim database.
-        if None: use "../data/OpSim_database/" + obs_strategy + ".db" as default path.
-    :return: a list of astropy tables containing observation information for each
-        coordinate
+    :param print_warning: if True, prints a warning of coordinates
+        outside the LSST footprint
+    :return: a list of astropy tables containing observation information
+        for each coordinate
     """
 
     # Import OpSimSummaryV2
@@ -49,15 +49,13 @@ def opsim_time_series_images_data(
         )
 
     # Initialise OpSimSummaryV2 with opsim database
-    if opsim_path is None:
-        opsim_path = "../data/OpSim_database/" + obs_strategy + ".db"
     try:
         OpSimSurv = op.OpSimSurvey(opsim_path)
-    except FileNotFoundError:
+    except ValueError:
         raise FileNotFoundError(
             "File not found: "
             + opsim_path
-            + ". Input variable 'obs_strategy' should correspond to the name of an opsim database saved in the folder ../data/OpSim_database"
+            + ". Please provide a valid path to the opsim database. "
         )
 
     # Collect observations that cover the coordinates in ra_list and dec_list
@@ -113,7 +111,6 @@ def opsim_time_series_images_data(
             psf_kernel = kernel_util.kernel_moffat(
                 num_pix=num_pix, delta_pix=delta_pix, fwhm=psf, moffat_beta=moffat_beta
             )
-            psf_kernel = util.array2image(psf_kernel)
 
             psf_kernels.append(psf_kernel)
 

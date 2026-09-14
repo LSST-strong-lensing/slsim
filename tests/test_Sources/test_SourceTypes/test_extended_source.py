@@ -8,8 +8,8 @@ from numpy import testing as npt
 from astropy import cosmology
 
 catalog_path = os.path.join(
-    str(pathlib.Path(__file__).parent.parent.parent.parent),
-    "data",
+    str(pathlib.Path(__file__).parent.parent.parent),
+    "TestData",
     "test_COSMOS_23.5_training_sample",
 )
 
@@ -37,10 +37,10 @@ class TestExtendedSource:
             "n_sersic_1": 4,
             "angular_size_0": 0.2,
             "angular_size_1": 0.15,
-            "e0_1": 0.001,
-            "e0_2": 0.002,
-            "e1_1": 0.001,
-            "e1_2": 0.003,
+            "e1_0": 0.001,
+            "e1_1": 0.002,
+            "e2_0": 0.001,
+            "e2_1": 0.003,
             "w0": 0.4,
             "w1": 0.6,
             "mag_i": 23,

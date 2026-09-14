@@ -1,9 +1,7 @@
 import numpy as np
-import numpy.random as random
-from slsim.Lenses.selection import object_cut
 from slsim.Util import param_util
 from slsim.Sources.SourcePopulation.source_pop_base import SourcePopBase
-from astropy.table import Column, vstack
+from astropy.table import vstack
 from slsim.Util.param_util import (
     average_angular_size,
     axis_ratio,
@@ -13,257 +11,127 @@ from slsim.Util.param_util import (
     galaxy_size,
 )
 from astropy import units as u
+from astropy.table import Table
 from slsim.Sources.source import Source
 import os
 
 
-# TODO: Use type to determine galaxy_list type
 class Galaxies(SourcePopBase):
     """Class describing elliptical galaxies."""
 
     def __init__(
         self,
         galaxy_list,
-        kwargs_cut,
         cosmo,
         sky_area,
-        list_type="astropy_table",
-        catalog_type=None,
-        downsample_to_dc2=False,
-        source_size="Bernardi",
+        kwargs_cut=None,
+        catalog_type="skypy",
+        size_model=None,
         extended_source_type="single_sersic",
-        extended_source_kwargs={},
+        downsample_to_dc2=False,
+        extended_source_kwargs=None,
     ):
         """
 
         :param galaxy_list: An astropy table with galaxy parameters.
-        :type galaxy_list: astropy Table object.
+         The minimal requirement for the catalog is "z" for redshift and the magnitudes in case cuts are
+         being made on it.
+        :type galaxy_list: astropy Table object or list of objects.
         :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max
         :type kwargs_cut: dict
         :param cosmo: astropy.cosmology instance
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
          solid angle.
         :type sky_area: `~astropy.units.Quantity`
-        :param list_type: format of the source catalog file. Currently, it supports a
-         single astropy table or a list of astropy tables.
         :param catalog_type: type of the catalog. If someone wants to use scotch
-         catalog, they need to specify it.
+         catalog, they need to specify it. Default will be "skypy"
         :type catalog_type: str. eg: "scotch" or None
         :param downsample_to_dc2: Boolean. If True, downsamples the given galaxy
          population at redshift greater than 1.5 to DC2 galaxy population.
-        :param source_size: If "Bernardi", computes galaxy size using g-band
+        :param size_model: If "Bernardi", computes galaxy size using g-band
          magnitude otherwise rescales skypy source size to Shibuya et al. (2015):
          https://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
         :param extended_source_type: Keyword to specify type of the extended source.
          Supported extended source types are "single_sersic", "double_sersic", "interpolated".
-        :type extended_source_type: str
+        :type extended_source_type: str or None
         :param extended_source_kwargs: dictionary of keyword arguments for ExtendedSource.
          Please see documentation of ExtendedSource() class as well as specific extended source classes.
         """
-        super().__init__(cosmo=cosmo, sky_area=sky_area)
-        self.extendedsource_kwargs = extended_source_kwargs
-        self.light_profile = extended_source_type
+
+        self._size_model = size_model
+        self._catalog_type = catalog_type
+        if isinstance(galaxy_list, Table):
+            self._astropy_table = True
+        else:
+            self._astropy_table = False
+        if self._astropy_table:
+            if extended_source_type == "double_sersic":
+                column_names = galaxy_list.colnames
+                tuples = [
+                    ("n0", "n_sersic_0"),
+                    ("n1", "n_sersic_1"),
+                    ("e0", "ellipticity0"),
+                    ("e1", "ellipticity1"),
+                    ("angular_size0", "angular_size_0"),
+                    ("angular_size1", "angular_size_1"),
+                ]
+
+                for old, new in tuples:
+                    if old in column_names:
+                        galaxy_list.rename_column(old, new)
+        if extended_source_kwargs is None:
+            extended_source_kwargs = {}
+        self._extended_source_kwargs = extended_source_kwargs
+        if self._catalog_type == "scotch":
+            galaxy_list = _convert_scotch_catalog(galaxy_list)
         if downsample_to_dc2 is True:
             samp1, samp2, samp3, samp4, samp5, samp6 = down_sample_to_dc2(
                 galaxy_pop=galaxy_list, sky_area=sky_area
             )
             samp_low = galaxy_list[galaxy_list["z"] <= 2]
             galaxy_list = vstack([samp_low, samp1, samp2, samp3, samp4, samp5, samp6])
-            """slsim_sample_3_35, slsim_sample_35_4, slsim_sample_4_45,
-            slsim_sample_45_5])"""
-        self.n = len(galaxy_list)
-        # add missing keywords in astropy.Table object
-        if list_type == "astropy_table":
-            galaxy_list = convert_to_slsim_convention(
-                galaxy_catalog=galaxy_list,
-                light_profile=self.light_profile,
-                input_catalog_type=catalog_type,
-                source_size=source_size,
-                cosmo=cosmo,
-            )
-            column_names_update = galaxy_list.colnames
-            if self.light_profile in ["single_sersic", "catalog_source"]:
-                if "e1" not in column_names_update or "e2" not in column_names_update:
-                    galaxy_list["e1"] = -np.ones(self.n)
-                    galaxy_list["e2"] = -np.ones(self.n)
-                if "n_sersic" not in column_names_update:
-                    galaxy_list["n_sersic"] = -np.ones(self.n)
-            if self.light_profile == "double_sersic":
-                # these are the name convention for double sersic profiles.
-                if (
-                    "n_sersic_0" not in column_names_update
-                    or "n_sersic_1" not in column_names_update
-                ):
-                    galaxy_list["n_sersic_0"] = -np.ones(self.n)
-                    galaxy_list["n_sersic_1"] = -np.ones(self.n)
-                if (
-                    "e0_1" not in column_names_update
-                    or "e0_2" not in column_names_update
-                ):
-                    galaxy_list["e0_1"] = -np.ones(self.n)
-                    galaxy_list["e0_2"] = -np.ones(self.n)
-                if (
-                    "e1_1" not in column_names_update
-                    or "e1_2" not in column_names_update
-                ):
-                    galaxy_list["e1_1"] = -np.ones(self.n)
-                    galaxy_list["e1_2"] = -np.ones(self.n)
-                if (
-                    "angular_size_0" not in column_names_update
-                    or "angular_size_1" not in column_names_update
-                ):
-                    galaxy_list["angular_size_0"] = -np.ones(self.n)
-                    galaxy_list["angular_size_1"] = -np.ones(self.n)
-        else:
-            column_names = galaxy_list[0].colnames
-            if "ellipticity" not in column_names:
-                raise ValueError("ellipticity is missing in galaxy_list columns.")
-            if "e1" not in column_names or "e2" not in column_names:
-                for table in galaxy_list:
-                    new_column_length = len(table)
-                    new_column_1 = Column([-1.0] * new_column_length, name="e1")
-                    new_column_2 = Column([-1.0] * new_column_length, name="e2")
-                    table.add_columns([new_column_1, new_column_2])
-            if "n_sersic" not in column_names:
-                for table in galaxy_list:
-                    new_column_length = len(table)
-                    new_column = Column([-1] * new_column_length, name="n_sersic")
-                    table.add_column(new_column)
-        # make cuts
-        self._galaxy_select = object_cut(galaxy_list, list_type=list_type, **kwargs_cut)
-        self._num_select = len(self._galaxy_select)
-        self.list_type = list_type
-        self._full_galaxy_list = galaxy_list
+        self._num_galaxies_full = len(galaxy_list)
 
-    @property
-    def source_number(self):
-        """Number of sources registered (within given area on the sky)
+        super().__init__(
+            cosmo=cosmo,
+            object_list=galaxy_list,
+            kwargs_cut=kwargs_cut,
+            sky_area=sky_area,
+            extended_source_type=extended_source_type,
+            point_source_type=None,
+        )
 
-        :return: number of sources
-        """
-        return self.n
-
-    @property
-    def source_number_selected(self):
-        """Number of sources selected (within given area on the sky)
-
-        :return: number of sources passing the selection criteria
-        """
-        return self._num_select
-
-    def draw_source_dict(self, z_max=None, z_min=None, galaxy_index=None):
-        """Choose source at random.
+    def draw_source_dict(
+        self, z_max=None, z_min=None, galaxy_index=None, include_all_keywords=False
+    ):
+        """Choose source at random. For speed, it is recommended not to use
+        additional redshift selection here. Instead use the kwargs_cut of the
+        class initialization.
 
         :param z_max: maximum redshift limit for the galaxy to be drawn.
             If no galaxy is found for this limit, None will be returned.
         :param z_min: minimum redshift limit for the galaxy to be drawn.
             If no galaxy is found for this limit, None will be returned.
         :param galaxy_index: index of galaxy to pic (if provided)
-        :return: dictionary of source
+        :param include_all_keywords: if True, includes all keywords and
+            not just the ones required
+        :type include_all_keywords: bool
+        :return: dictionary of source in the form of compatible with
+            Source() class
         """
-        if galaxy_index is not None:
-            galaxy = self._full_galaxy_list[galaxy_index]
+        galaxy = self.draw_object(z_max=z_max, z_min=z_min, galaxy_index=galaxy_index)
+        if galaxy is None:
+            return None
 
-        elif z_max is not None or z_min is not None:
-            if z_max is None:
-                z_max = 1100
-            if z_min is None:
-                z_min = 0
-            filtered_galaxies = self._galaxy_select[
-                (self._galaxy_select["z"] < z_max) & (z_min < self._galaxy_select["z"])
-            ]
-            if len(filtered_galaxies) == 0:
-                return None
-            else:
-                index = random.randint(0, len(filtered_galaxies))
-                galaxy = filtered_galaxies[index]
-        else:
-            index = random.randint(0, self._num_select)
-            galaxy = self._galaxy_select[index]
-        if "a_rot" in galaxy.colnames:
-            phi_rot = galaxy["a_rot"]
-        else:
-            phi_rot = None
-        if self.light_profile in ["single_sersic", "catalog_source"]:
-            if "ellipticity" in galaxy.colnames:
-                if galaxy["e1"] == -1 or galaxy["e2"] == -1:
-                    e1, e2 = galaxy_projected_eccentricity(
-                        float(galaxy["ellipticity"]), rotation_angle=phi_rot
-                    )
-                    galaxy["e1"] = e1
-                    galaxy["e2"] = e2
-            else:
-                raise ValueError("ellipticity is missing in galaxy_list columns.")
-            if galaxy["n_sersic"] == -1:
-                galaxy["n_sersic"] = 1  # TODO make a better estimate with scatter
-        elif self.light_profile == "double_sersic":
-            if galaxy["e0_1"] == -1 or galaxy["e0_2"] == -1:
-                if "ellipticity0" in galaxy.colnames:
-                    e0_1, e0_2 = galaxy_projected_eccentricity(
-                        float(galaxy["ellipticity0"]), rotation_angle=phi_rot
-                    )
-                    galaxy["e0_1"] = e0_1
-                    galaxy["e0_2"] = e0_2
-                elif "a0" in galaxy.colnames and "b0" in galaxy.colnames:
-                    axis_ratio_0 = axis_ratio(a=galaxy["a0"], b=galaxy["b0"])
-                    ellip_0 = eccentricity(q=axis_ratio_0)
-                    e0_1, e0_2 = galaxy_projected_eccentricity(
-                        float(ellip_0), rotation_angle=phi_rot
-                    )
-                    galaxy["e0_1"] = e0_1
-                    galaxy["e0_2"] = e0_2
-                else:
-                    raise ValueError(
-                        "ellipticity or semi-major and semi-minor axis are missing for"
-                        " the first light profile in galaxy_list columns"
-                    )
-
-            if galaxy["e1_1"] == -1 or galaxy["e1_2"] == -1:
-                if "ellipticity1" in galaxy.colnames:
-                    e1_1, e1_2 = galaxy_projected_eccentricity(
-                        float(galaxy["ellipticity1"]), rotation_angle=phi_rot
-                    )
-                    galaxy["e1_1"] = e1_1
-                    galaxy["e1_2"] = e1_2
-                elif "a1" in galaxy.colnames and "b1" in galaxy.colnames:
-                    axis_ratio_1 = axis_ratio(a=galaxy["a1"], b=galaxy["b1"])
-                    ellip_1 = eccentricity(q=axis_ratio_1)
-                    e1_1, e1_2 = galaxy_projected_eccentricity(float(ellip_1))
-                    galaxy["e1_1"] = e1_1
-                    galaxy["e1_2"] = e1_2
-                else:
-                    raise ValueError(
-                        "ellipticity or semi-major and semi-minor axis are missing for"
-                        " the second light profile in galaxy_list columns"
-                    )
-            if galaxy["angular_size_0"] == -1 or galaxy["angular_size_1"] == -1:
-                if "a0" in galaxy.colnames and "b0" in galaxy.colnames:
-                    galaxy["angular_size_0"] = average_angular_size(
-                        a=galaxy["a0"], b=galaxy["b0"]
-                    )
-                else:
-                    raise ValueError(
-                        "semi-major and semi-minor axis are missing for the first light"
-                        " profile in galaxy_list columns"
-                    )
-                if "a1" in galaxy.colnames and "b1" in galaxy.colnames:
-                    galaxy["angular_size_1"] = average_angular_size(
-                        a=galaxy["a1"], b=galaxy["b1"]
-                    )
-                else:
-                    raise ValueError(
-                        "semi-major and semi-minor axis are missing for the second"
-                        " light profile in galaxy_list columns"
-                    )
-            if galaxy["n_sersic_0"] == -1 or galaxy["n_sersic_1"] == -1:
-                galaxy["n_sersic_0"] = 1
-                galaxy["n_sersic_1"] = 4
-        else:
-            raise ValueError(
-                "Provided number of light profiles is not supported. It should be"
-                " either 'single or 'double' "
-            )
-        return galaxy
+        kwargs_source = convert_catalog_to_source(
+            galaxy=galaxy,
+            extended_source_type=self._extended_source_type,
+            catalog_type=self._catalog_type,
+            size_model=self._size_model,
+            cosmo=self._cosmo,
+            include_all_keywords=include_all_keywords,
+        )
+        return kwargs_source
 
     def draw_source(self, z_max=None, z_min=None, galaxy_index=None):
         """Choose source at random.
@@ -275,24 +143,22 @@ class Galaxies(SourcePopBase):
         :param galaxy_index: index of galaxy to pic (if provided)
         :return: instance of Source class
         """
-        galaxy = self.draw_source_dict(
+        kwargs_source = self.draw_source_dict(
             z_max=z_max, z_min=z_min, galaxy_index=galaxy_index
         )
-        if galaxy is None:
+        if kwargs_source is None:
             return None
+
         source_class = Source(
-            cosmo=self._cosmo,
-            extended_source_type=self.light_profile,
-            **galaxy,
-            **self.extendedsource_kwargs
+            cosmo=self._cosmo, **kwargs_source, **self._extended_source_kwargs
         )
         return source_class
 
     def draw_galaxies(self, area, z_max=None):
         """Draw galaxies within a specified area and redshift limit.
 
-        :param area (astropy.units.Quantity): Area in which to draw
-            galaxies (in square arcseconds).
+        :param area: Area in which to draw galaxies
+        :type area: ~astropy.units.Quantity
         :param z_max: Maximum redshift for the galaxies. If None, no
             redshift cut is applied.
         :return: List of drawn galaxy instances.
@@ -340,37 +206,15 @@ def galaxy_projected_eccentricity(ellipticity, rotation_angle=None):
     return e1, e2
 
 
-def convert_to_slsim_convention(
-    galaxy_catalog,
-    light_profile,
-    input_catalog_type="skypy",
-    source_size=None,
-    cosmo=None,
-):
-    """This function converts scotch/catalog to slsim conventions. In slsim,
-    sersic index are either n_sersic or (n_sersic_0 and n_sersic_1).
-    Ellipticity are either ellipticity or (ellipticity0 and ellipticity1).
-    These kewords can be read by Galaxies class. This function is written to
-    convert scotch catalog to slsim convension and to change unit of angular
-    size in skypy source catalog to arcsec.
-
-    :param galaxy_catalog: An astropy table of galaxy catalog in other
-        conventions.
-    :type galaxy_catalog: astropy Table object.
-    :param light_profile: keyword for number of sersic profile to use in
-        source light model. accepted keywords: "single_sersic",
-        "double_sersic".
-    :param input_catalog_type: type of the catalog. If someone wants to
-        use scotch catalog or skypy catalog, they need to specify it.
-    :type input_catalog_type: str. eg: "scotch" or "skypy".
-    :param source_size: Keyword for source size convention. If
-        "Bernardi", computes galaxy size using g-band magnitude
-        otherwise rescales skypy source size to Shibuya et al.(2015): ht
-        tps://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
-    :param cosmo: astropy.cosmology instance
-    :return: galaxy catalog in slsim convension.
+def _convert_scotch_catalog(galaxy_catalog):
     """
-    galaxy_catalog = galaxy_catalog.copy()
+
+    :param galaxy_catalog: scotch catalog
+    :type galaxy_catalog: ~astropy.Table
+    :return:
+    """
+
+    # scotch catalog has _host naming that we do not need
     column_names = galaxy_catalog.colnames
     for col_name in column_names:
         if "_host" in col_name:
@@ -378,47 +222,342 @@ def convert_to_slsim_convention(
             new_col_name = col_name.replace("_host", "")
             # Rename the column
             galaxy_catalog.rename_column(col_name, new_col_name)
-    if light_profile == "double_sersic":
-        if "n0" in column_names or "n1" in column_names:
-            galaxy_catalog.rename_column("n0", "n_sersic_0")
-            galaxy_catalog.rename_column("n1", "n_sersic_1")
-        if "e0" in column_names or "e1" in column_names:
-            galaxy_catalog.rename_column("e0", "ellipticity0")
-            galaxy_catalog.rename_column("e1", "ellipticity1")
-        if "angular_size0" in column_names or "angular_size1" in column_names:
-            galaxy_catalog.rename_column("angular_size0", "angular_size_0")
-            galaxy_catalog.rename_column("angular_size1", "angular_size_1")
-    if light_profile == "single_sersic":
-        if "e" in column_names:
-            galaxy_catalog.rename_column("e", "ellipticity")
-    if input_catalog_type == "scotch":
-        galaxy_catalog["a_rot"] = np.deg2rad(galaxy_catalog["a_rot"])
-    if input_catalog_type == "skypy":
-        if source_size == "Bernardi":
-            # compute angular size from g-band magnitude.
-            source_size = galaxy_size(
-                galaxy_catalog["mag_g"], galaxy_catalog["z"], cosmo
-            )
-            physical_size = source_size[0] * u.kpc
-            angular_size = source_size[1].value * u.arcsec
-        else:
-            # rescales skypy source size to Shibuya et al. (2015).
-            # compute the rescaled physical size. The resulted value is devided by 2.5 to
-            #  match the best-fit model given in https://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
-            rescaled_physical_size = (
-                galaxy_catalog["physical_size"]
-                * galaxy_size_redshift_evolution(galaxy_catalog["z"])
-                / 2.5
-            )
-            # compute the rescaled angular size
-            rescaled_angular_size = (
-                rescaled_physical_size
-            ) / cosmo.angular_diameter_distance(galaxy_catalog["z"]).to(u.kpc)
-            physical_size = rescaled_physical_size
-            angular_size = (rescaled_angular_size * u.rad).to(u.arcsec)
-        galaxy_catalog["physical_size"] = physical_size
-        galaxy_catalog["angular_size"] = angular_size
     return galaxy_catalog
+
+
+def _galaxy_size(galaxy, size_model, catalog_type, cosmo):
+    """Converts or adjusts galaxy size.
+
+    :param galaxy: galaxy parameter keyword arguments
+    :type galaxy: dict or Table entry
+    :param size_model: galaxy size model
+    :type size_model: str
+    :param catalog_type: type of catalog, only relevant when conventions
+        of catalog are not in default SLSim conventions
+    :param cosmo: astrop cosmology
+    :return: angular_size [arcsec], physical_size [kpc]
+    """
+
+    z = galaxy["z"]
+    if isinstance(galaxy, dict):
+        col_names = list(galaxy.keys())
+    else:
+        col_names = galaxy.colnames
+    if size_model == "Bernardi" and catalog_type == "skypy":
+        # TODO: enable this scaling also for other catalogs. Currently not done to be backwards compatible
+        # compute angular size from g-band magnitude.
+        if "mag_g" not in col_names:
+            raise ValueError(
+                "mag_g needs to be in the arguments to use the Bernardi et al. g-band magnitude to "
+                "size conversion."
+            )
+        source_size = galaxy_size(float(galaxy["mag_g"]), z, cosmo)
+        physical_size = source_size[0] * u.kpc
+        angular_size = source_size[1] * u.arcsec
+        return angular_size, physical_size
+
+    if "physical_size" in col_names:
+        physical_size = galaxy["physical_size"]
+        if isinstance(physical_size, u.Quantity):
+            physical_size = physical_size.to(u.kpc)
+        else:
+            physical_size *= u.kpc
+    else:
+        physical_size = None
+    if "angular_size" in col_names:
+        angular_size = galaxy["angular_size"]
+        if isinstance(angular_size, u.Quantity):
+            angular_size = angular_size.to(u.arcsec)
+        else:
+            angular_size *= u.arcsec
+    else:
+        angular_size = None
+
+    if angular_size is None and physical_size is not None:
+        angular_size_rad = physical_size / cosmo.angular_diameter_distance(z).to(u.kpc)
+        angular_size = (angular_size_rad * u.rad).to(u.arcsec)
+    elif physical_size is None and angular_size is not None:
+        physical_size = angular_size.to(u.rad) * cosmo.angular_diameter_distance(z).to(
+            u.kpc
+        )
+    elif angular_size is None and physical_size is None:
+        raise ValueError("Either angular_size or physical_size need to be provided.")
+
+    if catalog_type == "skypy":
+        # skypy model comes with physical sizes in kpc
+
+        # rescales skypy source size to Shibuya et al. (2015).
+        # compute the rescaled physical size. The resulted value is divided by 2.5 to
+        #  match the best-fit model given in https://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
+        angular_size *= galaxy_size_redshift_evolution(z) / 2.5
+        physical_size *= galaxy_size_redshift_evolution(z) / 2.5
+
+    return angular_size.value, physical_size.value
+
+
+def convert_catalog_to_source(
+    galaxy,
+    extended_source_type,
+    catalog_type,
+    size_model=None,
+    cosmo=None,
+    include_all_keywords=False,
+):
+    """Converts input table entries into the quantities used in slsim Source()
+    class.
+
+    :param galaxy: entry in galaxy_list
+    :type galaxy: dictionary or table entry
+    :param extended_source_type: type of extended source compatible with
+        Source() class
+    :type extended_source_type: None or str
+    :param size_model: galaxy size model
+    :type size_model: str
+    :param catalog_type: type of catalog, only relevant when conventions
+        of catalog are not in default SLSim conventions
+    :param cosmo: astrop cosmology
+    :param include_all_keywords: if True, includes all keywords and not
+        just the ones required
+    :type include_all_keywords: bool
+    :return: dictionary compatible with Source() class
+    """
+    if isinstance(galaxy, dict):
+        colnames = list(galaxy.keys())
+    else:
+        colnames = galaxy.colnames
+    kwargs_source = {
+        "z": float(galaxy["z"]),
+        "extended_source_type": extended_source_type,
+    }
+    for key in colnames:
+        if key.startswith("ps_mag_") or key.startswith("mag_"):
+            kwargs_source[key] = galaxy[key]
+
+    if "a_rot" in colnames:
+        phi_rot = galaxy["a_rot"]
+        if catalog_type == "scotch":
+            phi_rot = np.deg2rad(phi_rot)
+    elif "p_g" in colnames:
+        # SL_hammock pipeline defines the position angle in degrees
+        phi_rot = np.deg2rad(galaxy["p_g"])
+    else:
+        phi_rot = np.random.uniform(0, np.pi)
+
+    if extended_source_type in ["single_sersic", "hernquist", "catalog_source"]:
+        # get angular_size
+        angular_size, physical_size = _galaxy_size(
+            galaxy, size_model=size_model, catalog_type=catalog_type, cosmo=cosmo
+        )
+        kwargs_source["angular_size"] = angular_size
+        kwargs_source["physical_size"] = physical_size
+
+    if extended_source_type in ["single_sersic", "hernquist", "catalog_source"]:
+        if "e1" in colnames and "e2" in colnames:
+            e1, e2 = galaxy["e1"], galaxy["e2"]
+        elif "e1_light" in colnames and "e2_light" in colnames:
+            e1, e2 = galaxy["e1_light"], galaxy["e2_light"]
+        else:
+            if "ellipticity" in colnames:
+                ellipticity = galaxy["ellipticity"]
+            elif "e" in colnames:
+                ellipticity = galaxy["e"]
+            else:
+                raise ValueError(
+                    "Ellipticity either as ('e1', 'e2'), 'e' or as 'ellipticity' is required."
+                )
+            e1, e2 = galaxy_projected_eccentricity(
+                float(ellipticity), rotation_angle=phi_rot
+            )
+
+        kwargs_source["e1"], kwargs_source["e2"] = e1, e2
+    if extended_source_type in ["single_sersic", "catalog_source"]:
+        if "n_sersic" not in colnames:
+            if "galaxy_type" in colnames and galaxy["galaxy_type"] == "red":
+                kwargs_source["n_sersic"] = 4
+            else:
+                kwargs_source["n_sersic"] = 1
+            # TODO make a better estimate with scatter and distinguish between blue and red galaxies
+        else:
+            kwargs_source["n_sersic"] = float(galaxy["n_sersic"])
+
+    if extended_source_type == "double_sersic":
+        kwargs_source.update(
+            _double_sersic_source_kwargs(
+                galaxy=galaxy,
+                colnames=colnames,
+                phi_rot=phi_rot,
+                size_model=size_model,
+                catalog_type=catalog_type,
+                cosmo=cosmo,
+            )
+        )
+    if "vel_disp" in colnames:
+        kwargs_source["vel_disp"] = float(galaxy["vel_disp"])
+    if "stellar_mass" in colnames:
+        kwargs_source["stellar_mass"] = float(galaxy["stellar_mass"])
+    if include_all_keywords is True:
+        for key in colnames:
+            if key not in kwargs_source:
+                kwargs_source[key] = galaxy[key]
+    return kwargs_source
+
+
+def _double_sersic_source_kwargs(
+    galaxy,
+    colnames,
+    phi_rot,
+    size_model=None,
+    catalog_type=None,
+    cosmo=None,
+):
+    """Build the DoubleSersic and colour-gradient Source dictionary.
+
+    The input ``galaxy`` dictionary may provide component-specific values or
+    single-component catalog values that are shared by both components:
+
+    .. code-block:: python
+
+        galaxy = {
+            # Required reference-band flux fractions
+            "w0": 0.4,
+            "w1": 0.6,
+            # Shape: component-specific, shared Cartesian, or shared scalar
+            "e1_0": 0.1,
+            "e2_0": 0.0,
+            "e1_1": 0.1,
+            "e2_1": 0.0,
+            # Size and Sersic-index component values
+            "angular_size_0": 0.3,
+            "angular_size_1": 0.9,
+            "n_sersic_0": 1.0,
+            "n_sersic_1": 4.0,
+            # Optional chromatic configuration
+            "color_gradient": {
+                "component_spectral_slopes": [0.5, -0.5],
+                "reference_band": "i",
+                "component_radius_factors": [0.5, 1.5],
+                "component_sersic_indices": [1.0, 4.0],
+                "min_weight": 1e-3,
+            },
+        }
+
+    When component sizes are absent, ``angular_size`` is multiplied by
+    ``color_gradient['component_radius_factors']``. When component Sersic
+    indices are absent, ``n_sersic`` and
+    ``color_gradient['component_sersic_indices']`` provide the defaults.
+
+    :param galaxy: Catalog row or dictionary containing light-profile fields.
+    :param colnames: Available keys/column names in ``galaxy``.
+    :param phi_rot: Position angle in radians used for scalar ellipticities.
+    :param size_model: Galaxy size model passed to :func:`_galaxy_size`.
+    :param catalog_type: Optional catalog convention identifier.
+    :param cosmo: Astropy cosmology used to convert physical/angular size.
+    :return: Dictionary containing ``e1_0``, ``e2_0``, ``e1_1``, ``e2_1``,
+        ``angular_size_0``, ``angular_size_1``, ``n_sersic_0``,
+        ``n_sersic_1``, ``w0``, ``w1``, and optional ``color_gradient``.
+    """
+    kwargs_double_sersic = {}
+    color_gradient = galaxy["color_gradient"] if "color_gradient" in colnames else {}
+    if not isinstance(color_gradient, dict):
+        raise ValueError(
+            "galaxy['color_gradient'] must be a dictionary when constructing "
+            f"a DoubleSersic source; received {color_gradient!r}."
+        )
+
+    for component in (0, 1):
+        e1_key, e2_key = f"e1_{component}", f"e2_{component}"
+        if e1_key in colnames and e2_key in colnames:
+            e1, e2 = galaxy[e1_key], galaxy[e2_key]
+        elif "e1" in colnames and "e2" in colnames:
+            e1, e2 = galaxy["e1"], galaxy["e2"]
+        elif "e1_light" in colnames and "e2_light" in colnames:
+            e1, e2 = galaxy["e1_light"], galaxy["e2_light"]
+        else:
+            ellipticity_key = f"ellipticity{component}"
+            a_key, b_key = f"a{component}", f"b{component}"
+            if ellipticity_key in colnames:
+                ellipticity = galaxy[ellipticity_key]
+            elif a_key in colnames and b_key in colnames:
+                ellipticity = eccentricity(
+                    q=axis_ratio(a=galaxy[a_key], b=galaxy[b_key])
+                )
+            elif "ellipticity" in colnames or "e" in colnames:
+                ellipticity = (
+                    galaxy["ellipticity"] if "ellipticity" in colnames else galaxy["e"]
+                )
+            else:
+                raise ValueError(
+                    f"Cannot determine ellipticity for DoubleSersic component "
+                    f"{component}; available galaxy_list columns are {colnames}."
+                )
+            e1, e2 = galaxy_projected_eccentricity(
+                float(ellipticity), rotation_angle=phi_rot
+            )
+        kwargs_double_sersic[e1_key] = e1
+        kwargs_double_sersic[e2_key] = e2
+
+    if "angular_size_0" in colnames and "angular_size_1" in colnames:
+        kwargs_double_sersic["angular_size_0"] = galaxy["angular_size_0"]
+        kwargs_double_sersic["angular_size_1"] = galaxy["angular_size_1"]
+    elif all(key in colnames for key in ("a0", "b0", "a1", "b1")):
+        kwargs_double_sersic["angular_size_0"] = average_angular_size(
+            a=galaxy["a0"], b=galaxy["b0"]
+        )
+        kwargs_double_sersic["angular_size_1"] = average_angular_size(
+            a=galaxy["a1"], b=galaxy["b1"]
+        )
+    elif "angular_size" in colnames or catalog_type is not None:
+        angular_size, _ = _galaxy_size(
+            galaxy,
+            size_model=size_model,
+            catalog_type=catalog_type,
+            cosmo=cosmo,
+        )
+        radius_factors = color_gradient.get("component_radius_factors", (0.5, 1.5))
+        if len(radius_factors) != 2:
+            raise ValueError(
+                "color_gradient['component_radius_factors'] must contain two values."
+            )
+        kwargs_double_sersic["angular_size_0"] = angular_size * float(radius_factors[0])
+        kwargs_double_sersic["angular_size_1"] = angular_size * float(radius_factors[1])
+    else:
+        raise ValueError(
+            "Cannot determine DoubleSersic component sizes. Provide one of: "
+            "(1) both 'angular_size_0' and 'angular_size_1'; "
+            "(2) all four axis fields 'a0', 'b0', 'a1', and 'b1'; "
+            "(3) a shared 'angular_size'; or "
+            "(4) a catalog_type from which the shared size can be inferred. "
+            f"Available galaxy_list columns are {colnames}."
+        )
+
+    if "n_sersic_0" in colnames and "n_sersic_1" in colnames:
+        indices = (galaxy["n_sersic_0"], galaxy["n_sersic_1"])
+    else:
+        if "n_sersic" in colnames:
+            n_sersic = float(galaxy["n_sersic"])
+        elif "galaxy_type" in colnames and galaxy["galaxy_type"] == "red":
+            n_sersic = 4.0
+        else:
+            n_sersic = 1.0
+        indices = color_gradient.get("component_sersic_indices", (n_sersic, n_sersic))
+    if len(indices) != 2:
+        raise ValueError(
+            "color_gradient['component_sersic_indices'] must contain two values."
+        )
+    kwargs_double_sersic["n_sersic_0"] = float(indices[0])
+    kwargs_double_sersic["n_sersic_1"] = float(indices[1])
+
+    missing_weights = [key for key in ("w0", "w1") if key not in colnames]
+    if missing_weights:
+        raise ValueError(
+            "DoubleSersic source dictionary is missing reference-band flux "
+            f"weights {missing_weights}; provide both 'w0' and 'w1'."
+        )
+    kwargs_double_sersic["w0"] = galaxy["w0"]
+    kwargs_double_sersic["w1"] = galaxy["w1"]
+    if "color_gradient" in colnames:
+        kwargs_double_sersic["color_gradient"] = color_gradient
+    return kwargs_double_sersic
 
 
 def down_sample_to_dc2(galaxy_pop, sky_area):
@@ -427,7 +566,7 @@ def down_sample_to_dc2(galaxy_pop, sky_area):
 
     :param galaxy_pop: Astropy table of galaxy population.
     :param sky_area: Sky area over which galaxies are sampled. Must be in units of
-     solid angle and it should be astropy unit object.
+     solid angle, and it should be astropy unit object.
     :return: Astropy tables of downsampled galaxy population in different bins.
      Redshift bins for returned populations are: (2-2.5), (2.5-3), (3-3.5),
      (3.5-4), (4-4.5), (4.5-5)

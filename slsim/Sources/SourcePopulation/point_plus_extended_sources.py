@@ -1,25 +1,21 @@
-from slsim.Sources.SourcePopulation.source_pop_base import SourcePopBase
 from slsim.Sources.source import Source
 from slsim.Sources.SourcePopulation.galaxies import Galaxies
-from slsim.Lenses.selection import object_cut
 
 
-class PointPlusExtendedSources(Galaxies, SourcePopBase):
-    """Class to describe point and extended sources."""
+class PointPlusExtendedSources(Galaxies):
+    """Class to describe population of point + extended sources."""
 
     def __init__(
         self,
         point_plus_extended_sources_list,
         cosmo,
         sky_area,
-        kwargs_cut,
-        list_type="astropy_table",
+        kwargs_cut=None,
         catalog_type=None,
-        source_size="Bernadi",
+        size_model=None,
         point_source_type=None,
         extended_source_type=None,
-        point_source_kwargs={},
-        extendedsource_kwargs={},
+        joint_point_source_kwargs={},
     ):
         """
 
@@ -31,73 +27,79 @@ class PointPlusExtendedSources(Galaxies, SourcePopBase):
             solid angle.
         :type sky_area: `~astropy.units.Quantity`
         :param kwargs_cut: cuts in parameters: band, band_mag, z_min, z_max
-        :type kwargs_cut: dict
-        :param list_type: format of the source catalog file. Currently, it supports
-         a single astropy table or a list of astropy tables.
+        :type kwargs_cut: dict or None
         :param catalog_type: type of the catalog. If someone wants to use scotch
          catalog, they need to specify it.
         :type catalog_type: str. eg: "scotch" or None
-        :param source_size: If "Bernardi", computes galaxy size using g-band
+        :param size_model: If "Bernardi", computes galaxy size using g-band
          magnitude otherwise rescales skypy source size to Shibuya et al. (2015):
          https://iopscience.iop.org/article/10.1088/0067-0049/219/2/15/pdf
         :param point_source_type: Keyword to specify type of the point source.
          Supported point source types are "supernova", "quasar", "general_lightcurve".
         :param extended_source_type: keyword for number of sersic profile to use in source
          light model. accepted kewords: "single_sersic", "double_sersic".
-        :param point_source_kwargs: dictionary of keyword arguments for PointSource.
-         For supernova kwargs dict, please see documentation of SupernovaEvent class.
-         For quasar kwargs dict, please see documentation of Quasar class.
-         Eg of supernova kwargs: point_source_kwargs={
-         "variability_model": "light_curve", "kwargs_variability": ["supernovae_lightcurve",
-            "i", "r"], "sn_type": "Ia", "sn_absolute_mag_band": "bessellb",
-            "sn_absolute_zpsys": "ab", "lightcurve_time": np.linspace(-50, 100, 150),
-            "sn_modeldir": None}.
-        :param extendedsource_kwargs: dictionary of keyword arguments for ExtendedSource.
-         Please see documentation of ExtendedSource() class as well as specific extended source classes.
+        :param joint_point_source_kwargs: dictionary of keyword arguments for PointSource that are joint among all
+         point sources. Provides population-level default values applied uniformly
+         to every draw. Any key here may be overridden on a per-object basis by
+         including a same-named column in `point_plus_extended_sources_list` -- the
+         catalog value takes precedence. Note this dict, together with the catalog
+         row, is also shared with the extended-source half of the combined source
+         (see `PointPlusExtendedSource` for how each half reads only its own
+         relevant keys and ignores the rest).
+         For supernova kwargs, please see documentation of SupernovaEvent class (slsim/Sources/SourceTypes/supernova_event.py).
+         For quasar kwargs, please see documentation of Quasar class (slsim/Sources/SourceTypes/quasar.py).
+         Eg of supernova kwargs::
+
+             joint_point_source_kwargs = {
+                 "variability_model": "light_curve",
+                 "kwargs_variability": ["supernovae_lightcurve", "i", "r"],
+                 "sn_type": "Ia",
+                 "sn_absolute_mag_band": "bessellb",
+                 "sn_absolute_zpsys": "ab",
+                 "lightcurve_time": np.linspace(-50, 100, 150),
+                 "sn_modeldir": None,
+             }
         """
-        object_list = object_cut(
-            point_plus_extended_sources_list,
-            list_type=list_type,
-            object_type="point",
-            **kwargs_cut
-        )
+        if kwargs_cut is None:
+            kwargs_cut = {}
+        if "object_type" not in kwargs_cut:
+            # make sure the magnitude selection is on the point source and not the extended one
+            kwargs_cut["object_type"] = "point"
+
         Galaxies.__init__(
             self,
-            galaxy_list=object_list,
+            galaxy_list=point_plus_extended_sources_list,
             cosmo=cosmo,
             sky_area=sky_area,
-            kwargs_cut={},
-            list_type=list_type,
+            kwargs_cut=kwargs_cut,
             catalog_type=catalog_type,
-            source_size=source_size,
+            size_model=size_model,
             extended_source_type=extended_source_type,
-            extended_source_kwargs=extendedsource_kwargs,
         )
-        SourcePopBase.__init__(
-            self,
-            cosmo=cosmo,
-            sky_area=sky_area,
-        )
-        self.source_type = "point_plus_extended"
-        self.point_source_kwargs = point_source_kwargs
-        self.point_source_type = point_source_type
+        self._point_source_type = point_source_type
+        self._joint_point_source_kwargs = joint_point_source_kwargs
 
-    def draw_source(self, z_max=None):
+    def draw_source(self, z_max=None, z_min=None, galaxy_index=None):
         """Choose source at random.
 
         :param z_max: maximum redshift limit for the galaxy to be drawn.
             If no galaxy is found for this limit, None will be returned.
         :return: instance of Source class
         """
-        galaxy = self.draw_source_dict(z_max)
-        if galaxy is None:
+        kwargs_source = self.draw_source_dict(
+            z_max=z_max,
+            z_min=z_min,
+            galaxy_index=galaxy_index,
+            include_all_keywords=True,
+        )
+        if kwargs_source is None:
             return None
+        # per-object catalog values override the joint/population-level defaults
+        # on key collision, rather than raising (as a direct double-** unpack would)
+        merged_kwargs = {**self._joint_point_source_kwargs, **kwargs_source}
         source_class = Source(
             cosmo=self._cosmo,
-            extended_source_type=self.light_profile,
-            point_source_type=self.point_source_type,
-            **self.point_source_kwargs,
-            **self.extendedsource_kwargs,
-            **galaxy
+            point_source_type=self._point_source_type,
+            **merged_kwargs
         )
         return source_class

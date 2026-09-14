@@ -19,6 +19,10 @@ from slsim.Plots.plot_functions import plot_lightcurves_and_magmap
 from slsim.Microlensing.lightcurve import MicrolensingLightCurve
 from slsim.Microlensing.magmap import MagnificationMap
 from slsim.Plots.plot_functions import plot_magnification_map
+from slsim.Sources.SourcePopulation.galaxies import convert_catalog_to_source
+from slsim.Deflectors import deflector_util
+
+plt.rcParams["text.usetex"] = False
 
 
 @pytest.fixture
@@ -33,6 +37,20 @@ def quasar_lens_pop_instance():
     )
 
     cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+
+    kwargs_light = convert_catalog_to_source(
+        deflector_dict,
+        extended_source_type="single_sersic",
+        catalog_type=None,
+        size_model=None,
+        cosmo=cosmo,
+        include_all_keywords=False,
+    )
+    z = kwargs_light.pop("z")
+    kwargs_mass = deflector_util.light2mass(
+        kwargs_light, halo_dict=deflector_dict, mass_type="EPL"
+    )
+
     while True:
         variable_agn_kwarg_dict = {
             "length_of_light_curve": 500,
@@ -57,10 +75,7 @@ def quasar_lens_pop_instance():
             **source_dict,
             **kwargs_quasar,
         )
-        deflector = Deflector(
-            deflector_type="EPL_SERSIC",
-            **deflector_dict,
-        )
+        deflector = Deflector(z=z, kwargs_mass=kwargs_mass, kwargs_light=kwargs_light)
         pes_lens = Lens(
             source_class=source,
             deflector_class=deflector,
@@ -73,6 +88,8 @@ def quasar_lens_pop_instance():
 
 
 def test_create_image_montage_from_image_list(quasar_lens_pop_instance):
+    plt.rcParams["text.usetex"] = False
+
     lens_class = quasar_lens_pop_instance
     image = sharp_image(
         lens_class=lens_class,

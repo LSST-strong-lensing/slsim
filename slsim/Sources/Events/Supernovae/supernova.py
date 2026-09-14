@@ -5,6 +5,36 @@ from sncosmo.bandpasses import get_bandpass
 import numpy as np
 from astropy import cosmology
 
+# Reading a sncosmo source from disk dominates the cost of building a
+# Supernova and depends only on the model, not on the individual supernova, so a
+# population loop can pay it once instead of once per object.
+_SOURCE_CACHE = {}
+
+
+def _source_from_modeldir(modeldir, sn_type, source):
+    """Build an sncosmo source from a model directory, reusing a cached
+    template when the same model has already been read from disk.
+
+    :param modeldir: directory including files for supernova models
+    :type modeldir: str
+    :param sn_type: Supernova type (Ia, Ib, Ic, IIP, etc.)
+    :type sn_type: str
+    :param source: name of the SED model, ignored for type Ia
+    :type source: str
+    :return: `~sncosmo.Source`, template shared by every supernova using this model
+    """
+    key = (modeldir, sn_type, source)
+    if key not in _SOURCE_CACHE:
+        if sn_type == "Ia":
+            _SOURCE_CACHE[key] = sncosmo.SALT3Source(modeldir=modeldir)
+        else:
+            sed_file = os.path.join(modeldir, sn_type, source) + ".SED"
+            phase, wave, flux = sncosmo.read_griddata_ascii(sed_file)
+            _SOURCE_CACHE[key] = sncosmo.TimeSeriesSource(
+                phase=phase, wave=wave, flux=flux
+            )
+    return _SOURCE_CACHE[key]
+
 
 class Supernova(sncosmo.Model):
     """Class for initializing a supernova of the type sn_type specified by the
@@ -71,18 +101,7 @@ class Supernova(sncosmo.Model):
 
         self._sn_type = sn_type
         if modeldir is not None:
-            if sn_type == "Ia":
-                source = sncosmo.SALT3Source(
-                    modeldir=modeldir,
-                )
-            else:
-                modeldir = os.path.join(modeldir, sn_type, source) + ".SED"
-                phase, wave, flux = sncosmo.read_griddata_ascii(modeldir)
-                source = sncosmo.TimeSeriesSource(
-                    phase=phase,
-                    wave=wave,
-                    flux=flux,
-                )
+            source = _source_from_modeldir(modeldir, sn_type, source)
 
         super(Supernova, self).__init__(source=source, **kwargs)
         self._parameters[0] = redshift
@@ -106,32 +125,47 @@ class Supernova(sncosmo.Model):
         :param zpsys: Optional, AB or Vega (AB default)
         :type zpsys: str
 
-        :return: magnitude of source
+        :return: magnitude of source. Never NaN: times at which the supernova has
+            no flux, and bands the SED model does not cover, give inf.
         """
         bandpass = get_bandpass(band)
 
+        scalar_time = np.ndim(time) == 0
+        time_array = np.atleast_1d(np.asarray(time, dtype=float))
+
+        # Infinite magnitude, i.e. no flux, wherever the supernova is not visible.
+        magnitude = np.full(time_array.shape, np.inf)
+
         if bandpass.minwave() < self.minwave() or bandpass.maxwave() > self.maxwave():
             warn(
-                "bandpass {0!r:s} [{1:.6g}, .., {2:.6g}] "
-                "outside spectral range [{3:.6g}, .., {4:.6g}]\n"
-                "Ignoring bandpass for now. Use extended wavelength SN models "
+                "no flux assigned in bandpass {0!r:s}: it lies outside the spectral "
+                "range of the supernova model. Use extended wavelength SN models "
                 "found here: https://github.com/LSST-strong-lensing/data_public/tree/main/sncosmo_sn_models".format(
-                    bandpass.name,
-                    bandpass.minwave(),
-                    bandpass.maxwave(),
-                    self.minwave(),
-                    self.maxwave(),
+                    bandpass.name
                 )
             )
-            return np.ones_like(time) * np.nan
+            return magnitude[0] if scalar_time else magnitude
 
-        minphase = self.source.minphase()
-        if self._sn_type == "Ia":
-            return self.bandmag(band, zpsys, time)
-        else:
+        # The template has zero flux outside its phase range, so only integrate over
+        # the times it covers; observation windows are typically much longer than
+        # the supernova itself.
+        covered = (time_array >= self.mintime()) & (time_array <= self.maxtime())
+        if covered.any():
+            with np.errstate(divide="ignore", invalid="ignore"):
+                magnitude[covered] = self.bandmag(bandpass, zpsys, time_array[covered])
+            # At high redshift a band probes the far ultraviolet, where the template
+            # flux can be zero or negative across the whole band and bandmag returns
+            # inf or NaN. Both mean no flux.
+            magnitude[np.isnan(magnitude)] = np.inf
+
+        if self._sn_type != "Ia":
             # This line is needed because non type Ia supernovae lightcurves do not drop to
             # zero flux as they should
-            return np.where(time > minphase, self.bandmag(band, zpsys, time), 10**8)
+            magnitude = np.where(time_array > self.source.minphase(), magnitude, 10**8)
+
+        if scalar_time:
+            return magnitude[0]
+        return magnitude
 
     def set_source_amplitude(
         self,

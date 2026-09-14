@@ -14,17 +14,21 @@ class PointPlusExtendedSource(PointSource, ExtendedSource):
         **source_dict,
     ):
         """
-        :param source_dict: Source properties. Can be a dictionary or an Astropy table.
-         For a detailed description of this dictionary, please see the documentation for
-         the SingleSersic, DoubleSersic, Interpolated classes, Supernova, and Quasar class.
-        :type source_dict: dict or astropy.table.Table .
-         eg of a supernova plus host galaxy dict: {"z": 0.8, "mag_i": 22, "n_sersic": 1,
+        :param source_dict: Source properties -- a dict or one row of an Astropy
+         table, containing both host-galaxy and point-source catalog data (each
+         half of this combined source reads only its own relevant keys and ignores
+         the rest). For a detailed description of the required keys, see the
+         documentation for the SingleSersic, DoubleSersic, Interpolated,
+         SupernovaEvent, and Quasar classes. Example of a supernova + host galaxy source_dict:
+         {"z": 0.8, "mag_i": 22, "n_sersic": 1,
            "angular_size": 0.10, "e1": 0.002, "e2": 0.001, "ra_off": 0.001, "dec_off": 0.005}
+        :type source_dict: dict or astropy.table.Table
         :param extended_source_type: keyword for specifying light profile model.
-        :type extended_source_type: str. supported types are "single_sersic",
-         "double_sersic", "interpolated".
+         Supported types are "single_sersic", "double_sersic", "interpolated".
+        :type extended_source_type: str
         :param point_source_type: keyword for specifying point source type.
-        :type point_source_type: str. supported types are "supernova", "quasar", "general_lightcurve".
+         Supported types are "supernova", "quasar", "general_lightcurve".
+        :type point_source_type: str
         """
         # Initialize the extended source. Here, source_dict will contain both host
         # galaxy and point source information but only extended source properties will
@@ -36,6 +40,7 @@ class PointPlusExtendedSource(PointSource, ExtendedSource):
             self,
             source_type=point_source_type,
             cosmo=cosmo,
+            allow_more_source_dict=True,
             **source_dict,
         )
 
@@ -43,6 +48,7 @@ class PointPlusExtendedSource(PointSource, ExtendedSource):
             self,
             source_type=extended_source_type,
             cosmo=cosmo,
+            allow_more_source_dict=True,
             **source_dict,
         )
 

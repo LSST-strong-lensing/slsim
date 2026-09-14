@@ -13,7 +13,7 @@ def quasar_catalog_simple(
     freq_min=0.5,
     freq_max=1.5,
 ):
-    """Creates an simple catalog of quasars. It generate random redshift and
+    """Creates a simple catalog of quasars. It generates random redshift and
     magnitude values in r, g, and i band. Also, generates amplitude and
     frequency for each source. The function only works for r, g, and i band
     magnitudes.
@@ -33,11 +33,11 @@ def quasar_catalog_simple(
     magnitude_r = np.random.uniform(m_min, m_max, num_quasars)
     magnitude_g = magnitude_r - 0.5
     magnitude_i = magnitude_r + 0.2
-    amplitude = np.random.uniform(amp_min, amp_max, num_quasars)
-    frequency = np.random.uniform(freq_min, freq_max, num_quasars)
+    # amplitude = np.random.uniform(amp_min, amp_max, num_quasars)
+    # frequency = np.random.uniform(freq_min, freq_max, num_quasars)
 
     point_source_catalog = Table(
-        [redshifts, magnitude_r, magnitude_g, magnitude_i, amplitude, frequency],
-        names=("z", "ps_mag_r", "ps_mag_g", "ps_mag_i", "amp", "freq"),
+        [redshifts, magnitude_r, magnitude_g, magnitude_i],
+        names=("z", "ps_mag_r", "ps_mag_g", "ps_mag_i"),
     )
     return point_source_catalog

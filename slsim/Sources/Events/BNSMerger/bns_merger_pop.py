@@ -34,9 +34,7 @@ class BNSMergerRate(object):
         self._cosmo = cosmo
         self._z_max = z_max
 
-        self._t_min = self._cosmo.age(
-            z=self._z_max
-        ).to_value()  # Time at redshift z_max
+        self._t_min = self._cosmo.age(self._z_max).to_value()  # Time at redshift z_max
         self._t_0 = self._cosmo.age(0).to_value()  # Time at redshift z = 0
 
         self._t_d_min = 0.020  # minimum of t_d in [Gyr], assumed as 20 Myr

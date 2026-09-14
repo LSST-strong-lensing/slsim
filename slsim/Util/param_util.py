@@ -15,6 +15,39 @@ import warnings
 from astropy.cosmology import default_cosmology
 
 
+def update_center(area=None, reference_position=None, center_x=None, center_y=None):
+    """Overwrites the source center position.
+
+    :param reference_position: [RA, DEC] in arc-seconds of the reference
+        from where within a circle the source position is being drawn
+        from
+    :type reference_position: 2d numpy array
+    :param area: area (in solid angle arc-seconds^2) to dither the
+        center of the source
+    :param center_x: RA position [arc-seconds] (optional, otherwise
+        renders within area)
+    :param center_y: DEC position [arc-seconds] (optional, otherwise
+        renders within area)
+    :return: Source() instance updated with new center position
+    """
+    if center_x is not None and center_y is not None:
+        center_source = np.array([float(center_x), float(center_y)])
+    else:
+        if reference_position is None:
+            reference_position = np.array([0, 0])
+        if area is None:
+            x_, y_ = 0, 0
+        else:
+            x_, y_ = draw_coord_in_circle(area=area, size=1)
+        center_source = np.array(
+            [
+                reference_position[0] + x_,
+                reference_position[1] + y_,
+            ]
+        )
+    return center_source
+
+
 def draw_coord_in_circle(area, size=1):
     """Draw realizations of points in circle.
 

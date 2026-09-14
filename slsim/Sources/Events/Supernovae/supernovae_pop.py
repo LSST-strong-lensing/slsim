@@ -41,9 +41,7 @@ class SNIaRate(object):
         self._cosmo = cosmo
         self._z_max = z_max
 
-        self._t_min = self._cosmo.age(
-            z=self._z_max
-        ).to_value()  # Time at redshift z_max
+        self._t_min = self._cosmo.age(self._z_max).to_value()  # Time at redshift z_max
         self._t_0 = self._cosmo.age(0).to_value()  # Time at redshift z = 0
 
         self._denominator = integrate.quad(
@@ -57,10 +55,11 @@ class SNIaRate(object):
         :return: redshift at time t [float]
         """
         if not hasattr(self, "_age_inv"):
-            z_array = np.linspace(0, self._z_max, 100)
+            z_array = np.linspace(0, self._z_max, 500)
             z_array = z_array[::-1]
             t_array = self._cosmo.age(z_array).to_value()
-            self._age_inv = interp.interp1d(t_array, z_array, fill_value="extrapolate")
+            # Use Pchip instead of interp1d to have smooth interpolation.
+            self._age_inv = interp.PchipInterpolator(t_array, z_array, extrapolate=True)
         return self._age_inv(t).item()
 
     def _numerator_integrand(self, t_d, t):

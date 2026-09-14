@@ -51,6 +51,8 @@ def simulate_roman_image(
     date=datetime.datetime(year=2027, month=7, day=7, hour=0, minute=0, second=0),
     psf_directory=None,
     precomputed_background=None,
+    microlensing=False,
+    kwargs_microlensing=None,
 ):
     """Creates a Roman-simulated image of a selected lens with noise, using
     galsim's noise settings and PSFs from STPSF.
@@ -104,6 +106,22 @@ def simulate_roman_image(
     :type psf_directory: str
     :param precomputed_background: A 2-D numpy array of background counts, shape (num_pix+6, num_pix+6), to be added to the image before noise realizations. This can be computed by calling precompute_roman_background with the same band, num_pix, oversample, exposure_time, and date parameters as passed into this function. If None, the background will be computed on the fly.
     :type precomputed_background: numpy.ndarray, optional
+    :param microlensing: if True, include microlensing variability in the point source.
+    :type microlensing: bool
+    :param kwargs_microlensing: additional (optional) dictionary of
+        settings required by micro-lensing calculation that do not
+        depend on the Lens() class. It is of type:
+        kwargs_microlensing = {"kwargs_magnification_map":
+        kwargs_magnification_map, "point_source_morphology":
+        'gaussian' or 'agn' or 'supernovae',
+        "kwargs_source_morphology": kwargs_source_morphology}.
+        The kwargs_source_morphology is required for the source
+        morphology calculation. The kwargs_magnification_map is
+        required for the microlensing calculation. See the classes
+        in slsim.Microlensing for more details on the
+        kwargs_magnification_map and kwargs_source_morphology.
+        If None, defaults are used corresponding to the source in the lens class.
+    :type kwargs_microlensing: dict or None
 
     :return: simulated image in units of flux per second.
     :rtype: numpy.ndarray
@@ -124,7 +142,12 @@ def simulate_roman_image(
     # to avoid edge effects, cropped out at the end
     num_pix += 6
 
-    kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(band=band, time=t_obs)
+    kwargs_model, kwargs_params = lens_class.lenstronomy_kwargs(
+        band=band,
+        time=t_obs,
+        microlensing=microlensing,
+        kwargs_microlensing=kwargs_microlensing,
+    )
 
     kwargs_single_band = image_quality_lenstronomy.kwargs_single_band(
         observatory="Roman", band=band, survey_mode=survey_mode

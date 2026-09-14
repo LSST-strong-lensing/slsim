@@ -1,6 +1,4 @@
-import numpy.random as random
 from slsim.Sources.SourcePopulation.source_pop_base import SourcePopBase
-from slsim.Lenses.selection import object_cut
 from slsim.Sources.source import Source
 
 
@@ -12,10 +10,9 @@ class PointSources(SourcePopBase):
         point_source_list,
         cosmo,
         sky_area,
-        kwargs_cut,
-        list_type="astropy_table",
+        kwargs_cut=None,
         point_source_type=None,
-        point_source_kwargs={},
+        joint_point_source_kwargs=None,
     ):
         """
 
@@ -31,55 +28,35 @@ class PointSources(SourcePopBase):
          definition for performing given cuts in given catalog. For the supernovae
          sample, we can only apply redshift cuts because supernovae sample contains only
          redshift in this stage.
-        :type kwargs_cut: dict
+        :type kwargs_cut: dict or None
         :param point_source_type: Keyword to specify type of the point source.
          Supported point source types are "supernova", "quasar", "general_lightcurve".
-        :param point_source_kwargs: dictionary of keyword arguments for a source. It should
+        :param joint_point_source_kwargs: dictionary of keyword arguments for point sources that are joint. It should
          contain keywords for point_source_type and other keywords associated with
-         pointsource. For supernova kwargs dict, please see documentation of
-         SupernovaEvent class. For quasar kwargs dict, please see documentation of
-         Quasar class.
-        Eg of supernova kwargs: kwargs={"point_source_type": "supernova",
-          "variability_model": "light_curve", "kwargs_variability": ["supernovae_lightcurve",
-            "i", "r"], "sn_type": "Ia", "sn_absolute_mag_band": "bessellb",
-            "sn_absolute_zpsys": "ab", "lightcurve_time": np.linspace(-50, 100, 150),
-            "sn_modeldir": "/Users/narayankhadka/Downloads/sncosmo_sn_models/SALT3.NIR_WAVEEXT/"}.
-         Other supported pointsource_types are "supernova", "quasar".
+         point source. Provides population-level default values applied uniformly
+         to every draw. Any key here may be overridden on a per-object basis by
+         including a same-named column in `point_source_list` -- the catalog value
+         takes precedence.
         """
-
-        self.n = len(point_source_list)
-        self._cosmo = cosmo
-        self.sky_area = sky_area
-        self.point_source_kwargs = point_source_kwargs
-        self._point_source_type = point_source_type
+        if joint_point_source_kwargs is None:
+            joint_point_source_kwargs = {}
+        self._joint_point_source_kwargs = joint_point_source_kwargs
         # make cuts
-        self._point_source_select = object_cut(
-            point_source_list, list_type=list_type, object_type="point", **kwargs_cut
+        if kwargs_cut is None:
+            kwargs_cut = {}
+        if "object_type" not in kwargs_cut:
+            # make sure the magnitude selection is on the point source and not the extended one
+            kwargs_cut["object_type"] = "point"
+
+        super().__init__(
+            object_list=point_source_list,
+            cosmo=cosmo,
+            sky_area=sky_area,
+            kwargs_cut=kwargs_cut,
+            point_source_type=point_source_type,
         )
 
-        self._num_select = len(self._point_source_select)
-        self._full_point_source_list = point_source_list
-        super(SourcePopBase, self).__init__()
-        self.source_type = "point_source"
-
-    @property
-    def source_number(self):
-        """Number of sources registered (within given area on the sky)
-
-        :return: number of sources
-        """
-        number = self.n
-        return number
-
-    @property
-    def source_number_selected(self):
-        """Number of sources selected (within given area on the sky)
-
-        :return: number of sources passing the selection criteria
-        """
-        return self._num_select
-
-    def draw_source(self, z_max=None, z_min=None, point_source_index=None):
+    def draw_source(self, z_max=None, z_min=None, object_index=None):
         """Choose source at random within the selected redshift range.
 
         :param z_max: maximum redshift limit for the point source to be
@@ -88,39 +65,20 @@ class PointSources(SourcePopBase):
         :param z_min: minimum redshift limit for the point source to be
             drawn. If no point source is found for this limit, None will
             be returned.
-        :param point_source_index: index of point source to pick (if
-            provided)
+        :param object_index: index of point source to pick (if provided)
         :return: instance of Source class
         """
-        if point_source_index is not None:
-            point_source = self._full_point_source_list[point_source_index]
+        point_source = self.draw_object(
+            z_max=z_max, z_min=z_min, galaxy_index=object_index
+        )
 
-        elif z_max is not None or z_min is not None:
-            if z_max is None:
-                z_max = 1100
-            if z_min is None:
-                z_min = 0
-
-            # Filter the selected catalog by redshift bounds
-            filtered_sources = self._point_source_select[
-                (self._point_source_select["z"] < z_max)
-                & (z_min <= self._point_source_select["z"])
-            ]
-
-            if len(filtered_sources) == 0:
-                return None
-            else:
-                index = random.randint(0, len(filtered_sources))
-                point_source = filtered_sources[index]
-        else:
-            index = random.randint(0, self._num_select)
-            point_source = self._point_source_select[index]
-
+        # per-object catalog values override the joint/population-level defaults
+        # on key collision, rather than raising (as a direct double-** unpack would)
+        merged_kwargs = {**self._joint_point_source_kwargs, **point_source}
         source_class = Source(
             cosmo=self._cosmo,
             point_source_type=self._point_source_type,
-            **self.point_source_kwargs,
-            **point_source
+            **merged_kwargs
         )
 
         return source_class

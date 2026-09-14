@@ -27,12 +27,12 @@ class TestPointPlusExtendedSources(object):
         }
         self.pe_source = PointPlusExtendedSources(
             point_plus_extended_sources_list=self.source_list,
-            kwargs_cut={},
+            kwargs_cut=None,
             cosmo=self.cosmo,
             sky_area=sky_area,
             point_source_type="quasar",
             extended_source_type="single_sersic",
-            point_source_kwargs=kwargs,
+            joint_point_source_kwargs=kwargs,
         )
 
     def test_source_number(self):
@@ -47,6 +47,29 @@ class TestPointPlusExtendedSources(object):
 
         point_plus_extended_sources2 = self.pe_source.draw_source(z_max=-1)
         assert point_plus_extended_sources2 is None
+
+    def test_catalog_overrides_joint_kwargs_on_collision(self):
+        """A catalog column should override a same-named joint kwarg, not
+        crash."""
+        sky_area = Quantity(value=0.1, unit="deg2")
+        catalog = self.source_list.copy()
+        catalog["black_hole_mass_exponent"] = 9.0
+        kwargs = {
+            "variability_model": "light_curve",
+            "kwargs_variability": None,
+            "black_hole_mass_exponent": 7.0,
+        }
+        pe_source = PointPlusExtendedSources(
+            point_plus_extended_sources_list=catalog,
+            kwargs_cut=None,
+            cosmo=self.cosmo,
+            sky_area=sky_area,
+            point_source_type="quasar",
+            extended_source_type="single_sersic",
+            joint_point_source_kwargs=kwargs,
+        )
+        source = pe_source.draw_source()
+        assert source.point_source._black_hole_mass_exponent == 9.0
 
 
 if __name__ == "__main__":

@@ -3,6 +3,8 @@ import numpy as np
 from slsim.Util import param_util
 from slsim.Sources.SourceVariability.variability import Variability
 
+_SUPPORTED_KEYS = ["M", "coeff", "physical_size", "ellipticity", "phi_G", "MJD"]
+
 
 class SourceBase(ABC):
     """Class of a single source with quantities only related to the source
@@ -12,6 +14,7 @@ class SourceBase(ABC):
         self,
         z,
         model_type="SourceBase",
+        name=None,
         lensed=True,
         point_source=False,
         extended_source=False,
@@ -25,6 +28,9 @@ class SourceBase(ABC):
         cosmo=None,
         variability_model="NONE",
         kwargs_variability_model=None,
+        stellar_mass=None,
+        vel_disp=None,
+        allow_more_source_dict=False,
         **kwargs
     ):
         """
@@ -33,7 +39,8 @@ class SourceBase(ABC):
         :param model_type: the model type, mostly used for error messages and information to the user
         :type model_type: str
         :param lensed: if True, regards the model be part of the lensed source,
-         if False, it can be used as a deflector (unlensed) model
+         if False, it can be used as a foreground (unlensed) model.
+         This is different from Deflector() in the sense that it does not contain mass.
         :param point_source: whether a point source is involved
         :type point_source: bool
         :param extended_source: whether an extended source is involved
@@ -51,16 +58,27 @@ class SourceBase(ABC):
         :param kwargs_variability_model: Dictionary with bands as strings, each containing a dictionary for a
          Variability() class input configurations for point source variability
         :type kwargs_variability_model: dict of dict
-        :param kwargs: ps_mag_<band> keyword arguments
-        :type kwargs: dict
-        :type source_dict: dict or astropy.table.Table
+        :param stellar_mass: stellar mass [M_sol]
+        :type stellar_mass: None or float
+        :param vel_disp: velocity dispersion [km/s]
+        :type vel_disp: float or None
+        :param kwargs: ps_mag_<band>, mag_<band> keyword arguments to store apparent magnitudes and
+         M_<band> to store absolute magnitudes for different bands
+        :type kwargs: dict or astropy.table.Table
+        :param allow_more_source_dict: if True, will not check for consistency of the dictionary with what is required.
+         This is due to Extended+Point source models
+        :type allow_more_source_dict: bool
         """
-        self.name = "NONE"
+        if name is None:
+            name = "NONE"
+        self.name = name
         self._z = float(z)
         self.lensed = lensed
         self._model_type = model_type
         self._point_source = point_source
         self._extended_source = extended_source
+        self._stellar_mass = stellar_mass
+        self._vel_disp = vel_disp
         self.update_center(
             area=None, reference_position=None, center_x=center_x, center_y=center_y
         )
@@ -73,6 +91,22 @@ class SourceBase(ABC):
         else:
             self._offset = np.array([0, 0])
         self.source_dict = kwargs
+        if not allow_more_source_dict:
+            for key in self.source_dict:
+                if (
+                    key.startswith("ps_mag_")
+                    or key.startswith("mag_")
+                    or key.startswith("M_")
+                ):
+                    pass
+                elif key in _SUPPORTED_KEYS:
+                    pass
+                else:
+                    raise ValueError(
+                        "Dictionary in Source class has invalid arguments. "
+                        "Key %s is not part of ps_mag_<band>, mag_<band> and M_<band> "
+                        "or the supported keys %s." % (key, _SUPPORTED_KEYS)
+                    )
 
         self._variability_bands = (
             {}
@@ -112,21 +146,12 @@ class SourceBase(ABC):
             renders within area)
         :return: Source() instance updated with new center position
         """
-        if center_x is not None and center_y is not None:
-            self._center_source = np.array([float(center_x), float(center_y)])
-        else:
-            if reference_position is None:
-                reference_position = np.array([0, 0])
-            if area is None:
-                x_, y_ = 0, 0
-            else:
-                x_, y_ = param_util.draw_coord_in_circle(area=area, size=1)
-            self._center_source = np.array(
-                [
-                    reference_position[0] + x_,
-                    reference_position[1] + y_,
-                ]
-            )
+        self._center_source = param_util.update_center(
+            area=area,
+            reference_position=reference_position,
+            center_x=center_x,
+            center_y=center_y,
+        )
 
     @property
     def point_source_offset(self):
@@ -156,6 +181,14 @@ class SourceBase(ABC):
         ang_dist = cosmo.angular_diameter_distance(self.redshift)
         physical_size = self.angular_size * 4.84814e-6 * ang_dist.value * 1000  # kPc
         return physical_size
+
+    @property
+    def stellar_mass(self):
+        """
+
+        :return: stellar mass of galaxy [M_sol]
+        """
+        return self._stellar_mass
 
     @property
     def ellipticity(self):

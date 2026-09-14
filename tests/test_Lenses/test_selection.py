@@ -16,7 +16,6 @@ def test_object_cut():
         z_max=1,
         band=None,
         band_max=40,
-        list_type="astropy_table",
         object_type="extended",
     )
     sample_cut2 = object_cut(
@@ -25,7 +24,6 @@ def test_object_cut():
         z_max=1,
         band="i",
         band_max=26,
-        list_type="list",
         object_type="extended",
     )
     assert max(sample_cut["z"]) < 1
@@ -37,7 +35,6 @@ def test_object_cut():
             z_max=1,
             band=None,
             band_max=40,
-            list_type="astropy_table",
             object_type="source",
         )
 

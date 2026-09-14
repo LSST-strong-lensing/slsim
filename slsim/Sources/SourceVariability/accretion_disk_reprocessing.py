@@ -279,7 +279,7 @@ class AccretionDiskReprocessing(object):
             bounds_error=False,
             fill_value=0,
         )
-        redshifted_time_axis = signal_time_axis / (1 + self.redshift)
+        redshifted_time_axis = signal_time_axis  #  / (1 + self.redshift)
         reprocessed_signal_in_observed_frame = interpolation_of_reprocessed_signal(
             redshifted_time_axis
         )

@@ -1,8 +1,4 @@
-from slsim.Sources.SourceTypes.supernova_event import SupernovaEvent
-from slsim.Sources.SourceTypes.quasar import Quasar
-from slsim.Sources.SourceTypes.general_lightcurve import GeneralLightCurve
-
-_SUPPORTED_POINT_SOURCES = ["supernova", "quasar", "general_lightcurve"]
+_SUPPORTED_POINT_SOURCES = ["supernova", "quasar", "general_lightcurve", "kilonova"]
 
 
 class PointSource(object):
@@ -18,11 +14,21 @@ class PointSource(object):
         :type source_dict: dict or astropy.table.Table
         """
         if source_type in ["supernova"]:
+            from slsim.Sources.SourceTypes.supernova_event import SupernovaEvent
+
             self._point_source = SupernovaEvent(**source_dict)
         elif source_type in ["quasar"]:
+            from slsim.Sources.SourceTypes.quasar import Quasar
+
             self._point_source = Quasar(**source_dict)
         elif source_type in ["general_lightcurve"]:
+            from slsim.Sources.SourceTypes.general_lightcurve import GeneralLightCurve
+
             self._point_source = GeneralLightCurve(**source_dict)
+        elif source_type in ["kilonova"]:
+            from slsim.Sources.SourceTypes.kilonova_event import KilonovaEvent
+
+            self._point_source = KilonovaEvent(**source_dict)
         else:
             raise ValueError(
                 "Point source type %s not supported. Chose among %s."

@@ -33,6 +33,8 @@ import slsim
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ["sphinx.ext.autodoc", "sphinx.ext.viewcode", "nbsphinx"]
+# Render both the class docstring and __init__'s docstring
+autoclass_content = "both"
 nbsphinx_allow_errors = True
 show_warnings_types = True
 suppress_warnings = ["ref.python"]

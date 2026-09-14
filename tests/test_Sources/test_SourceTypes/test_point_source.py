@@ -60,11 +60,29 @@ class TestPointSource:
             source_type="general_lightcurve",
             cosmo=cosmo,
             **kwargs_general_lc,
-            **source_dict_general_lc
+            **source_dict_general_lc,
+        )
+
+        source_dict_kilonova = {
+            "z": 0.8,
+            "ps_mag_i": 20,
+        }
+        kwargs_kilonova = {
+            "variability_model": "light_curve",
+            "kwargs_variability": None,
+            "lightcurve_time": np.linspace(0.1, 10, 50),
+            "kwargs_kilonova": None,
+        }
+        self.source_kilonova = PointSource(
+            source_type="kilonova",
+            cosmo=cosmo,
+            **kwargs_kilonova,
+            **source_dict_kilonova,
         )
 
     def test_redshift(self):
         assert self.source_sn.redshift == 1.0
+        assert self.source_kilonova.redshift == 0.8
 
     def test_source_position(self):
         # no host galaxy. So, point and extended source position are the same.

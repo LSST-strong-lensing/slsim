@@ -1,12 +1,14 @@
 from slsim.Sources.SourceTypes.point_plus_extended_source import PointPlusExtendedSource
+from slsim.Sources.SourceTypes.source_base import SourceBase
 from copy import deepcopy
 
-_SUPPORTED_POINT_SOURCES = ["supernova", "quasar", "general_lightcurve"]
+_SUPPORTED_POINT_SOURCES = ["supernova", "quasar", "general_lightcurve", "kilonova"]
 _SUPPORTED_EXTENDED_SOURCES = [
     "single_sersic",
     "double_sersic",
     "catalog_source",
     "interpolated",
+    "hernquist",
 ]
 
 
@@ -17,6 +19,7 @@ class Source(object):
         self,
         extended_source_type=None,
         point_source_type=None,
+        time_zero_point=0.0,
         **source_dict,
     ):
         """
@@ -24,15 +27,20 @@ class Source(object):
          extended source types are 'single_sersic', 'double_sersic', 'catalog_source', and 'interpolated'.
         :type extended_source_type: str or None
         :param point_source_type: Keyword to specify type of point source. Supported point
-         source types are 'supernova', 'quasar', and 'general_lightcurve'.
+         source types are 'supernova', 'quasar', 'general_lightcurve', and 'kilonova'.
         :type point_source_type: str or None
         :param source_dict: Source properties. Can be a dictionary or an Astropy table.
          For a detailed description of this dictionary, please see the documentation for
          the individual classes, such as SingleSersic, DoubleSersic, Interpolated classes, SupernovaEvent,
          and Quasar class.
         :type source_dict: dict or astropy.table.Table .
+        :param time_zero_point: observer time relative to which the source time is defined.
+         i.e. the observed transient event if not lensed.
+        :type time_zero_point: float
 
         """
+
+        self._time_zero_point = time_zero_point
         self.extended_source_type = extended_source_type
         if extended_source_type is not None and point_source_type is not None:
             source_type = "point_plus_extended"
@@ -44,12 +52,12 @@ class Source(object):
             source_type = point_source_type
             self.source_type = "point_source"
         else:
-            raise ValueError(
-                "either extended_source_type or point_source_type needs to be set."
-            )
+            source_type = "NONE"
 
+        if source_type in ["NONE"]:
+            self._source = SourceBase(**source_dict)
         # point sources
-        if source_type in ["supernova"]:
+        elif source_type in ["supernova"]:
             from slsim.Sources.SourceTypes.supernova_event import SupernovaEvent
 
             self._source = SupernovaEvent(**source_dict)
@@ -61,6 +69,10 @@ class Source(object):
             from slsim.Sources.SourceTypes.general_lightcurve import GeneralLightCurve
 
             self._source = GeneralLightCurve(**source_dict)
+        elif source_type in ["kilonova"]:
+            from slsim.Sources.SourceTypes.kilonova_event import KilonovaEvent
+
+            self._source = KilonovaEvent(**source_dict)
 
         # extended sources
         elif source_type in ["single_sersic"]:
@@ -79,6 +91,10 @@ class Source(object):
             from slsim.Sources.SourceTypes.interpolated_image import Interpolated
 
             self._source = Interpolated(**source_dict)
+        elif source_type in ["hernquist"]:
+            from slsim.Sources.SourceTypes.hernquist import Hernquist
+
+            self._source = Hernquist(**source_dict)
 
         # point source plus extended source
         elif source_type in ["point_plus_extended"]:
@@ -87,6 +103,7 @@ class Source(object):
                 point_source_type=point_source_type,
                 **source_dict,
             )
+
         else:
             raise ValueError(
                 "source type %s not supported. Chose among %s for extended sources and %s for point sources."
@@ -112,6 +129,14 @@ class Source(object):
         """Returns angular size of the extended source."""
 
         return self._source.angular_size
+
+    @property
+    def stellar_mass(self):
+        """
+
+        :return: stellar mass of galaxy [M_sol]
+        """
+        return self._source.stellar_mass
 
     @property
     def ellipticity(self):
@@ -213,8 +238,11 @@ class Source(object):
         :return: Magnitude of the point source in the specified band
         :rtype: float
         """
+        source_observation_time = self._image_to_source_time_translation(
+            image_observation_times
+        )
         return self._source.point_source_magnitude(
-            band=band, image_observation_times=image_observation_times
+            band=band, image_observation_times=source_observation_time
         )
 
     def point_source_type(self, image_positions=False):
@@ -271,6 +299,27 @@ class Source(object):
         """
 
         return self._source.surface_brightness_reff(band=band)
+
+    def _image_to_source_time_translation(self, image_observation_times):
+        """Translates times in the observer frame to time in the source frame
+        relative to a defined zero time point.
+
+        Note: this assumes the underlying point source's light curve (its "MJD"
+        axis / lightcurve_time) is stored in the rest (source) frame -- true for
+        Quasar, SupernovaEvent, and GeneralLightCurve by convention (see their
+        docstrings). If a new point source type is added, make sure its internal
+        light curve axis follows the same convention, or this translation will
+        silently double- or de-dilate it.
+
+        :param image_observation_times: observed times in the observer
+            frame
+        :return: corresponding times in the source frame
+        """
+        if image_observation_times is None:
+            return None
+        time_zero_point = self._time_zero_point
+        source_time = (image_observation_times - time_zero_point) / (1 + self.redshift)
+        return source_time
 
     def prepare_microlensing_kwargs(self, band, cosmo, kwargs_microlensing=None):
         """Prepares kwargs_microlensing with source-level defaults.

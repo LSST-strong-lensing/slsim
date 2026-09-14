@@ -1,7 +1,9 @@
+import numpy as np
+import speclite.filters
+
 from lenstronomy.SimulationAPI.ObservationConfig.LSST import LSST
 from lenstronomy.SimulationAPI.ObservationConfig.Roman import Roman
 from lenstronomy.SimulationAPI.ObservationConfig.Euclid import Euclid
-import speclite.filters
 
 _OBSERVATORY_REGISTRY = {}
 
@@ -9,6 +11,10 @@ _OBSERVATORY_REGISTRY = {}
 ROMAN_BAND_LIST = ["F062", "F087", "F106", "F129", "F158", "F184", "F146", "F213"]
 LSST_BAND_LIST = ["u", "g", "r", "i", "z", "y"]
 EUCLID_BAND_LIST = ["VIS", "Y", "J", "H"]
+
+# Ancillary bandpasses that are used by catalog sources but are not imaging
+# observatories registered below.
+_ADDITIONAL_BAND_EFFECTIVE_WAVELENGTH_MICRON = {"F814W": 0.805}
 
 
 def check_speclite_name(band):
@@ -33,6 +39,7 @@ def register_observatory(
     bands: list,
     speclite_fmt=check_speclite_name,
     sncosmo_fmt=None,
+    effective_wavelengths=None,
 ):
     """Register a new observatory to integrate it with image simulation tools.
 
@@ -56,6 +63,10 @@ def register_observatory(
     :param sncosmo_fmt: A callable function that takes a ``band`` string and returns the corresponding
         sncosmo bandpass name. Set to ``None`` to use the raw band name as the sncosmo bandpass name.
     :type sncosmo_fmt: callable, optional
+    :param effective_wavelengths: Optional mapping from registered band names to
+        throughput-weighted effective wavelengths in microns. Use this only
+        when the responses are not available through ``speclite_fmt``.
+    :type effective_wavelengths: dict or None
 
     Given below is a simple example of how to define a custom observatory and register it using this function.
     A sophisticated example demonstrating full image simulation capabilities can be found at https://github.com/timedilatesme/MidEx-sims/blob/main/v1/lagn_sims.ipynb
@@ -106,6 +117,7 @@ def register_observatory(
         "bands": list(bands),
         "speclite_fmt": speclite_fmt,
         "sncosmo_fmt": sncosmo_fmt,
+        "effective_wavelengths": dict(effective_wavelengths or {}),
     }
 
 
@@ -123,6 +135,16 @@ register_observatory(
     bands=ROMAN_BAND_LIST,
     speclite_fmt=lambda band: f"Roman-{band}",
     sncosmo_fmt=lambda band: f"{band}",
+    effective_wavelengths={
+        "F062": 0.620,
+        "F087": 0.870,
+        "F106": 1.060,
+        "F129": 1.290,
+        "F146": 1.460,
+        "F158": 1.580,
+        "F184": 1.840,
+        "F213": 2.130,
+    },
 )
 register_observatory(
     name="Euclid",
@@ -256,3 +278,54 @@ def get_all_supported_bands():
     for info in _OBSERVATORY_REGISTRY.values():
         all_bands.extend(info["bands"])
     return all_bands
+
+
+def get_band_effective_wavelength(band):
+    """Return the throughput-weighted effective wavelength of a band.
+
+    The registered speclite response is used when available. Roman and
+    HST bands that are not shipped by speclite use explicitly configured
+    fallback values. Band-list position is deliberately not used as a
+    wavelength proxy.
+
+    :param band: Imaging band name.
+    :type band: str
+    :return: Effective wavelength in microns.
+    :rtype: float
+    :raises ValueError: if the band is not registered.
+    """
+    if band in _ADDITIONAL_BAND_EFFECTIVE_WAVELENGTH_MICRON:
+        return _ADDITIONAL_BAND_EFFECTIVE_WAVELENGTH_MICRON[band]
+
+    obs_name = get_observatory(band)
+    configured_wavelengths = _OBSERVATORY_REGISTRY[obs_name]["effective_wavelengths"]
+    if band in configured_wavelengths:
+        return float(configured_wavelengths[band])
+
+    filter_name = get_speclite_filtername(band)
+    if filter_name is None:
+        raise ValueError(
+            f"Band '{band}' has neither an explicitly configured effective "
+            f"wavelength nor a registered speclite filter response."
+        )
+    response = speclite.filters.load_filter(filter_name)
+    return float(response.effective_wavelength.to("micron").value)
+
+
+def get_band_central_wavelength(band):
+    """Backward-compatible alias for :func:`get_band_effective_wavelength`."""
+    return get_band_effective_wavelength(band)
+
+
+def get_band_log_wavelength_ratio(band, reference_band):
+    """Return ``log(lambda_band / lambda_reference)``.
+
+    Both wavelengths are throughput-weighted effective wavelengths. This
+    is the chromatic coordinate used by the local power-law SED
+    approximation.
+    """
+    wavelength = get_band_effective_wavelength(band)
+    reference_wavelength = get_band_effective_wavelength(reference_band)
+    if wavelength <= 0 or reference_wavelength <= 0:
+        raise ValueError("Band effective wavelengths must be positive.")
+    return float(np.log(wavelength / reference_wavelength))

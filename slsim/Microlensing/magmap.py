@@ -26,6 +26,7 @@ class MagnificationMap(object):
         num_pixels_x: int = None,
         num_pixels_y: int = None,
         kwargs_IPM: dict = {},
+        verbose: bool = False,
     ):
         """
         :param magnifications_array: array of magnifications to use. If None, a new
@@ -46,6 +47,9 @@ class MagnificationMap(object):
         :param num_pixels_x: number of pixels for the x axis
         :param num_pixels_y: number of pixels for the y axis
         :param kwargs_IPM: additional keyword arguments to pass to the IPM class.
+        :param verbose: if True, announce each magnification map as it is
+            generated. Default is False. Population runs generate one map per
+            lensed image, so these messages otherwise dominate the log.
         """
 
         # Private attributes
@@ -56,6 +60,7 @@ class MagnificationMap(object):
         self._m_solar = m_solar
         self._m_lower = m_lower
         self._m_upper = m_upper
+        self._verbose = verbose
 
         # Public attributes
         self.center_x = center_x
@@ -108,12 +113,15 @@ class MagnificationMap(object):
                 **kwargs_IPM,
             )
 
-            print("Generating magnification map ...")
+            if self._verbose:
+                print("Generating magnification map ...")
             self._microlensing_IPM.run()
-            print("Done generating magnification map.")
+            if self._verbose:
+                print("Done generating magnification map.")
             self.magnifications = (
                 self._microlensing_IPM.magnifications
             )  # based on updated IPM class
+            del self._microlensing_IPM  # delete the IPM object to free up memory
 
     @property
     def mu_ave(self):

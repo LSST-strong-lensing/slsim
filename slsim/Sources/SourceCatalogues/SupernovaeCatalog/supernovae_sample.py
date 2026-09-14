@@ -25,54 +25,49 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
     :return type: list; float
     """
     # Select offset ratios based on observed offset distribution (Wang et al. 2013)
-    offset_ratios = list(
-        # Parameters (s, loc, and scale) obtained from fitting the observed data (Wang et al. 2013)
-        # to lognorm distribution with distfit
-        stats.lognorm.rvs(
-            0.764609, loc=-0.0284546, scale=0.450885, size=len(host_galaxy_catalog)
-        )
+    # Parameters (s, loc, and scale) obtained from fitting the observed data (Wang et al. 2013)
+    # to lognorm distribution with distfit
+    offset_ratios = stats.lognorm.rvs(
+        0.764609, loc=-0.0284546, scale=0.450885, size=len(host_galaxy_catalog)
     )
 
-    offsets = []
-    position_angle_galaxy = []
-    position_angle_supernovae = []
-    original_x_off = []
-    original_y_off = []
+    # Set a limit on maximum SN Ia offset ratio from host galaxy center, redrawing
+    # all of the rejected ratios at once.
+    too_large = offset_ratios > 3
+    while np.any(too_large):
+        offset_ratios[too_large] = stats.lognorm.rvs(
+            0.764609, loc=-0.0284546, scale=0.450885, size=int(np.sum(too_large))
+        )
+        too_large = offset_ratios > 3
+
+    ellipticity = np.asarray(host_galaxy_catalog["ellipticity"], dtype=float)
+    # By default, skypy gives arcsec for angular sizes.
+    # A catalog that carries no unit at all is still taken to be in arcsec.
+    angular_size = units.Quantity(
+        host_galaxy_catalog["angular_size"], unit=units.arcsec, copy=False
+    ).to_value(units.arcsec)
+
+    # Calculate offsets [arcsec]
+    offsets = offset_ratios * angular_size
+
+    position_angle_galaxy = np.random.uniform(0, np.pi, len(offsets))
+    position_angle_supernovae = np.random.uniform(0, 2 * np.pi, len(offsets))
+
+    # Calculate the x and y coordinates of the offset [arcsec]
+    original_x_off = np.cos(position_angle_supernovae) * offsets
+    original_y_off = np.sin(position_angle_supernovae) * offsets
+
     e1 = []
     e2 = []
     transformed_x_off = []
     transformed_y_off = []
 
+    # galaxy_projected_eccentricity and elliptical_distortion_product_average only
+    # accept scalars, so these two steps stay in a loop.
     for i in range(len(host_galaxy_catalog)):
 
-        # Set a limit on maximum SN Ia offset ratio from host galaxy center
-        while offset_ratios[i] > 3:
-            offset_ratios[i] = stats.lognorm.rvs(
-                0.764609, loc=-0.0284546, scale=0.450885, size=1
-            )[0]
-
-        # Calculate offsets [rad]
-        offset = offset_ratios[i] * list(host_galaxy_catalog["angular_size"])[i]
-        offsets.append(offset)
-
-        galaxy_angle = np.random.uniform(0, np.pi)
-        supernova_angle = np.random.uniform(0, 2 * np.pi)
-        position_angle_galaxy.append(galaxy_angle)
-        position_angle_supernovae.append(supernova_angle)
-
-        # Calculate the x and y coordinates of the offset [arcsec]
-        x_off = ((np.cos(supernova_angle * units.rad)) * (offset * units.rad)).to(
-            units.arcsec
-        )
-        y_off = ((np.sin(supernova_angle * units.rad)) * (offset * units.rad)).to(
-            units.arcsec
-        )
-        original_x_off.append(x_off)
-        original_y_off.append(y_off)
-
-        # Calculate projected eccentricities
         slsim_e1, slsim_e2 = galaxy_projected_eccentricity(
-            host_galaxy_catalog["ellipticity"][i], galaxy_angle * units.rad
+            ellipticity[i], position_angle_galaxy[i]
         )
         e1.append(slsim_e1)
         e2.append(slsim_e2)
@@ -82,7 +77,7 @@ def supernovae_host_galaxy_offset(host_galaxy_catalog):
         lens_e1, lens_e2 = ellipticity_slsim_to_lenstronomy(slsim_e1, slsim_e2)
 
         transform_x_off, transform_y_off = elliptical_distortion_product_average(
-            x_off.value, y_off.value, lens_e1, lens_e2, 0, 0
+            original_x_off[i], original_y_off[i], lens_e1, lens_e2, 0, 0
         )
         transformed_x_off.append(transform_x_off)
         transformed_y_off.append(transform_y_off)

@@ -14,16 +14,22 @@ DEFLECTOR_DICT = {
     "z": 0.5,
     "angular_size": 0.09604418906529916,  # effective radius of the deflector in arcsec
     "mag_VIS": 19.5,  # VIS-band magnitude of a deflector
-    "theta_E": 2,  # Einstein radius of the deflector
-    "e1_light": 0.09096489106609575,  # tangential component of the light ellipticity
-    "e2_light": 0.1489400739802363,  # cross component of the light ellipticity
-    "e1_mass": 0.1082427319496781,  # tangential component of the mass ellipticity
-    "e2_mass": 0.10051583213026649,  # cross component of the mass ellipticity
-    "gamma_pl": 2.0,  # power law slope in elliptical power law mass model
+    "e1": 0.09096489106609575,  # tangential component of the light ellipticity
+    "e2": 0.1489400739802363,  # cross component of the light ellipticity
     "n_sersic": 2.4362388918558664,  # sersic index of a sersic_ellipse profile of a deflector
     "center_x": 0.10039720005025651,  # x-position of the center of the lens
     "center_y": -0.0002092046265491892,  # y-position of the center of the lens
+    "extended_source_type": "single_sersic",
 }
+
+DEFLECTOR_MASS_DICT = {
+    "theta_E": 2,  # Einstein radius of the deflector
+    "e1": 0.1082427319496781,  # tangential component of the mass ellipticity
+    "e2": 0.10051583213026649,  # cross component of the mass ellipticity
+    "gamma_pl": 2.0,  # power law slope in elliptical power law mass model
+    "mass_type": "EPL",
+}
+
 
 LOS_DICT = {
     "gamma": [-0.03648819840013156, -0.06511863424492038],
@@ -39,6 +45,7 @@ SOURCE_DICT = {
     "n_sersic": 1.5547096361698418,  # sersic index for sersic_ellipse profile
     "center_x": 0.056053505877290584,  # x-position of the center of a source
     "center_y": -0.08071283196326566,
+    "extended_source_type": "single_sersic",
 }
 
 psf_kernel = gaussian_psf(fwhm=0.16, delta_pix=0.101, num_pix=41)
@@ -46,10 +53,13 @@ psf_kernel = gaussian_psf(fwhm=0.16, delta_pix=0.101, num_pix=41)
 transform_matrix = np.array([[0.101, 0], [0, 0.101]])
 
 BAND = "VIS"
-source = Source(cosmo=COSMO, extended_source_type="single_sersic", **SOURCE_DICT)
+source = Source(cosmo=COSMO, **SOURCE_DICT)
 deflector = Deflector(
-    deflector_type="EPL_SERSIC",
-    **DEFLECTOR_DICT,
+    z=DEFLECTOR_DICT.pop("z"),
+    center_x=DEFLECTOR_DICT.pop("center_x"),
+    center_y=DEFLECTOR_DICT.pop("center_y"),
+    kwargs_mass=DEFLECTOR_MASS_DICT,
+    kwargs_light=DEFLECTOR_DICT,
 )
 los_class = LOSIndividual(kappa=0, gamma=[-0.005061965833762263, 0.028825761226555197])
 

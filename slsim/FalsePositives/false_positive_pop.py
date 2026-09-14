@@ -1,5 +1,5 @@
 from slsim.FalsePositives.false_positive import FalsePositive
-from slsim.Lenses.lens_pop import area_theta_e_infinity
+from slsim.Lenses.LensPopulation.lens_pop import area_theta_e_infinity
 from slsim.LOS.los_pop import LOSPop
 import random
 import numpy as np

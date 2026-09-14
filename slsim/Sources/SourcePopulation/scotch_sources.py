@@ -344,7 +344,7 @@ class ScotchSources(SourcePopBase):
         The "mag_{band}" datasets contain magnitudes, with 99.0 indicating missing data.
         """
 
-        super().__init__(cosmo=cosmo, sky_area=sky_area)
+        super().__init__(cosmo=cosmo, sky_area=sky_area, object_list=[])
 
         self.files = (
             [h5py.File(p, "r") for p in scotch_path]

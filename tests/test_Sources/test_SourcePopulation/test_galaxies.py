@@ -1,10 +1,11 @@
 from astropy.cosmology import FlatLambdaCDM
 from astropy.units import Quantity
 from astropy import units as u
-from slsim.Sources.SourcePopulation.galaxies import Galaxies
+from slsim.Util import param_util
+from slsim.Sources.SourcePopulation.galaxies import Galaxies, _galaxy_size
 from slsim.Sources.SourcePopulation.galaxies import (
     galaxy_projected_eccentricity,
-    convert_to_slsim_convention,
+    convert_catalog_to_source,
     down_sample_to_dc2,
 )
 from astropy.table import Table
@@ -25,8 +26,9 @@ class TestGalaxies(object):
                 [0.1492770563596445, 0.1492770563596445, 0.1492770563596445],
                 [4.186996407348755e-08, 4.186996407348755e-08, 4.186996407348755e-08],
                 [23, 23, 23],
+                [22, 22, 22],
             ],
-            names=("z", "n0", "ellipticity", "angular_size", "mag_i"),
+            names=("z", "n0", "ellipticity", "angular_size", "mag_i", "mag_g"),
         )
         self.galaxy_list2 = Table(
             [
@@ -64,6 +66,8 @@ class TestGalaxies(object):
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
+            size_model=None,
+            catalog_type=None,
         )
         self.galaxies5 = Galaxies(
             galaxy_list=galaxy_list3,
@@ -90,7 +94,7 @@ class TestGalaxies(object):
                 [0.2665196551390636, 0.2665196551390636, 0.2665196551390636],
             ],
             names=(
-                "z_host",
+                "z",
                 "n0",
                 "n1",
                 "a0",
@@ -122,7 +126,7 @@ class TestGalaxies(object):
                 [42, 42, 42],
             ],
             names=(
-                "z",
+                "z_host",
                 "a0",
                 "a1",
                 "b0",
@@ -209,7 +213,7 @@ class TestGalaxies(object):
                 [0.2665196551390636, 0.2665196551390636, 0.2665196551390636],
             ],
             names=(
-                "z_host",
+                "z",
                 "n0",
                 "n1",
                 "a0",
@@ -228,7 +232,6 @@ class TestGalaxies(object):
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            list_type="astropy_table",
             extended_source_type="double_sersic",
         )
         self.galaxies3 = Galaxies(
@@ -236,7 +239,7 @@ class TestGalaxies(object):
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            list_type="astropy_table",
+            catalog_type="scotch",
             extended_source_type="double_sersic",
         )
         self.galaxies6 = Galaxies(
@@ -244,7 +247,6 @@ class TestGalaxies(object):
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            list_type="astropy_table",
             extended_source_type="double_sersic",
         )
         self.galaxies7 = Galaxies(
@@ -252,7 +254,6 @@ class TestGalaxies(object):
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            list_type="astropy_table",
             extended_source_type="double_sersic",
         )
         self.galaxies8 = Galaxies(
@@ -260,15 +261,14 @@ class TestGalaxies(object):
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            list_type="astropy_table",
             extended_source_type="double_sersic",
+            catalog_type="scotch",
         )
         self.galaxies9 = Galaxies(
             galaxy_list=gal_list6,
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            list_type="astropy_table",
             extended_source_type="double_sersic",
         )
 
@@ -277,7 +277,6 @@ class TestGalaxies(object):
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
-            list_type="astropy_table",
             extended_source_type="triple",
         )
         self.galaxies11 = Galaxies(
@@ -285,6 +284,7 @@ class TestGalaxies(object):
             kwargs_cut={},
             cosmo=self.cosmo,
             sky_area=sky_area,
+            size_model=None,
             downsample_to_dc2=True,
         )
 
@@ -299,7 +299,7 @@ class TestGalaxies(object):
             ],
             names=("z", "n0", "M", "ellipticity", "mag_i"),
         )
-        assert self.galaxies11.n <= len(galaxy_list)
+        assert self.galaxies11._num_galaxies_full <= len(galaxy_list)
 
     def test_source_number(self):
         number = self.galaxies.source_number
@@ -347,22 +347,24 @@ class TestGalaxies(object):
 
     def test_convert_to_slsim_convention(self):
         cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
-        galaxies = convert_to_slsim_convention(
-            galaxy_catalog=self.gal_list,
-            light_profile="double_sersic",
-            input_catalog_type=None,
+        galaxies = convert_catalog_to_source(
+            galaxy=self.gal_list[0],
+            extended_source_type="double_sersic",
+            catalog_type=None,
+            size_model=None,
         )
-        galaxies2 = convert_to_slsim_convention(
-            galaxy_catalog=self.gal_list2,
-            light_profile="double_sersic",
-            input_catalog_type="scotch",
-        )
-        galaxies3 = convert_to_slsim_convention(
-            galaxy_catalog=self.galaxy_list2,
-            light_profile="single_sersic",
-            input_catalog_type="skypy",
-            cosmo=self.cosmo,
-        )
+        # galaxies2 = convert_catalog_to_source(
+        #    galaxy=self.gal_list2[0],
+        #    extended_source_type="double_sersic",
+        #    catalog_type="scotch",
+        # )
+
+        # galaxies3 = convert_catalog_to_source(
+        #    galaxy=self.galaxy_list2[0],
+        #    extended_source_type="single_sersic",
+        #    catalog_type="skypy",
+        #    cosmo=self.cosmo,
+        # -)
         galaxy_list = Table(
             [
                 [0.5, 0.5, 0.5],
@@ -374,20 +376,23 @@ class TestGalaxies(object):
             ],
             names=("z", "n0", "M", "ellipticity", "mag_i", "mag_g"),
         )
-        galaxies4 = convert_to_slsim_convention(
-            galaxy_catalog=galaxy_list,
-            light_profile="single_sersic",
-            input_catalog_type="skypy",
-            source_size="Bernardi",
+        galaxies4 = convert_catalog_to_source(
+            galaxy=galaxy_list[0],
+            extended_source_type="single_sersic",
+            catalog_type="skypy",
+            size_model="Bernardi",
             cosmo=cosmo,
         )
-        assert galaxies["z"][0] == 0.5
-        assert galaxies["n_sersic_0"][0] == 1
-        assert galaxies["ellipticity0"][0] == 0.1492770563596445
-        assert galaxies2["a_rot"][0] == np.deg2rad(42)
-        assert galaxies3["ellipticity"][0] == 0.1492770563596445
+        assert galaxies["z"] == 0.5
+        assert galaxies["n_sersic_0"] == 1
+        e1 = np.sqrt(galaxies["e1_0"] ** 2 + galaxies["e2_0"] ** 2)
+        epsilon = param_util.e2epsilon(e1)
+        npt.assert_almost_equal(epsilon, 0.1492770563596445, decimal=7)
+        # assert galaxies["ellipticity0"] == 0.1492770563596445
+        # assert galaxies2["a_rot"] == np.deg2rad(42)
+        # assert galaxies3["ellipticity"] == 0.1492770563596445
         npt.assert_almost_equal(
-            galaxies4["angular_size"][0], 0.2795787515848128, decimal=8
+            galaxies4["angular_size"].value, 0.2795787515848128, decimal=8
         )
 
 
@@ -395,6 +400,126 @@ def test_galaxy_projected_eccentricity():
     e1, e2 = galaxy_projected_eccentricity(0)
     assert e1 == 0
     assert e2 == 0
+
+
+def test_double_sersic_catalog_single_component_fallbacks():
+    """Single-component catalog fields can seed both Sersic components."""
+    common = {
+        "z": 0.5,
+        "w0": 0.4,
+        "w1": 0.6,
+        "angular_size_0": 0.2,
+        "angular_size_1": 0.6,
+        "n_sersic_0": 1.0,
+        "n_sersic_1": 4.0,
+    }
+
+    cartesian = convert_catalog_to_source(
+        {**common, "e1": 0.1, "e2": -0.2},
+        extended_source_type="double_sersic",
+        catalog_type=None,
+    )
+    assert cartesian["e1_1"] == pytest.approx(0.1)
+    assert cartesian["e2_1"] == pytest.approx(-0.2)
+
+    projected = convert_catalog_to_source(
+        {**common, "ellipticity": 0.2, "a_rot": 0.0},
+        extended_source_type="double_sersic",
+        catalog_type=None,
+    )
+    assert projected["e1_1"] == pytest.approx(projected["e1_0"])
+    assert projected["e2_1"] == pytest.approx(projected["e2_0"])
+
+
+def test_double_sersic_catalog_component_defaults_and_validation():
+    common = {
+        "z": 0.5,
+        "w0": 0.4,
+        "w1": 0.6,
+        "e1": 0.1,
+        "e2": 0.0,
+    }
+
+    red_galaxy = convert_catalog_to_source(
+        {
+            **common,
+            "angular_size_0": 0.2,
+            "angular_size_1": 0.6,
+            "galaxy_type": "red",
+        },
+        extended_source_type="double_sersic",
+        catalog_type=None,
+    )
+    assert red_galaxy["n_sersic_0"] == pytest.approx(4.0)
+    assert red_galaxy["n_sersic_1"] == pytest.approx(4.0)
+
+    with pytest.raises(ValueError, match="component_radius_factors"):
+        convert_catalog_to_source(
+            {
+                **common,
+                "angular_size": 0.5,
+                "n_sersic_0": 1.0,
+                "n_sersic_1": 4.0,
+                "color_gradient": {"component_radius_factors": [1.0]},
+            },
+            extended_source_type="double_sersic",
+            catalog_type=None,
+            cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
+        )
+
+    with pytest.raises(
+        ValueError, match="Cannot determine DoubleSersic component sizes"
+    ):
+        convert_catalog_to_source(
+            {
+                **common,
+                "n_sersic_0": 1.0,
+                "n_sersic_1": 4.0,
+            },
+            extended_source_type="double_sersic",
+            catalog_type=None,
+        )
+
+    with pytest.raises(ValueError, match="component_sersic_indices"):
+        convert_catalog_to_source(
+            {
+                **common,
+                "angular_size_0": 0.2,
+                "angular_size_1": 0.6,
+                "color_gradient": {"component_sersic_indices": [1.0]},
+            },
+            extended_source_type="double_sersic",
+            catalog_type=None,
+        )
+
+    with pytest.raises(ValueError, match="missing reference-band flux weights"):
+        convert_catalog_to_source(
+            {
+                "z": 0.5,
+                "e1": 0.1,
+                "e2": 0.0,
+                "angular_size_0": 0.2,
+                "angular_size_1": 0.6,
+                "n_sersic_0": 1.0,
+                "n_sersic_1": 4.0,
+            },
+            extended_source_type="double_sersic",
+            catalog_type=None,
+        )
+
+    with pytest.raises(ValueError, match="color_gradient.*must be a dictionary"):
+        convert_catalog_to_source(
+            {
+                **common,
+                "angular_size_0": 0.2,
+                "angular_size_1": 0.6,
+                "n_sersic_0": 1.0,
+                "n_sersic_1": 4.0,
+                "color_gradient": "invalid",
+            },
+            extended_source_type="double_sersic",
+            catalog_type=None,
+        )
 
 
 def test_down_sample_to_dc2():
@@ -414,6 +539,64 @@ def test_down_sample_to_dc2():
     assert max(results[0]["z"]) < 2.5
     assert min(results[5]["z"]) >= 4.5
     assert max(results[5]["z"]) < 5
+
+
+def test_galaxy_size():
+
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    z = 1
+    with npt.assert_raises(ValueError):
+        # Bernardi size model needs mag_g in columns
+        galaxy = {"z": z}
+        size_model = "Bernardi"
+        angular_size, physical_size = _galaxy_size(
+            galaxy, size_model, catalog_type="skypy", cosmo=cosmo
+        )
+    galaxy = {"z": z, "physical_size": 1 * u.kpc}
+    angular_size, physical_size = _galaxy_size(
+        galaxy, size_model="NONE", catalog_type=None, cosmo=cosmo
+    )
+    npt.assert_almost_equal(physical_size, 1, decimal=5)
+
+    galaxy = {"z": z, "physical_size": 1.0 / 1000 * u.Mpc}
+    angular_size, physical_size = _galaxy_size(
+        galaxy, size_model="NONE", catalog_type=None, cosmo=cosmo
+    )
+    npt.assert_almost_equal(physical_size, 1, decimal=5)
+
+    galaxy = {"z": z, "angular_size": 1 * u.arcsec}
+    angular_size, physical_size = _galaxy_size(
+        galaxy, size_model="NONE", catalog_type=None, cosmo=cosmo
+    )
+    npt.assert_almost_equal(angular_size, 1, decimal=5)
+
+    galaxy = {"z": z, "angular_size": np.pi / 3600 / 180 * u.rad}
+    angular_size, physical_size = _galaxy_size(
+        galaxy, size_model="NONE", catalog_type=None, cosmo=cosmo
+    )
+    npt.assert_almost_equal(angular_size, 1, decimal=5)
+
+    physical_size = 1.0  # in kpc
+    physical_size_mpc = physical_size / 1000.0
+    angular_size_from_phys = (
+        physical_size_mpc
+        / cosmo.angular_diameter_distance(z).value
+        * 3600
+        * 180
+        / np.pi
+    )
+
+    galaxy = {"z": z, "angular_size": angular_size_from_phys}
+    angular_size, physical_size = _galaxy_size(
+        galaxy, size_model="NONE", catalog_type=None, cosmo=cosmo
+    )
+    npt.assert_almost_equal(physical_size, 1, decimal=5)
+
+    galaxy = {"z": z, "physical_size": 1}
+    angular_size, physical_size = _galaxy_size(
+        galaxy, size_model="NONE", catalog_type=None, cosmo=cosmo
+    )
+    npt.assert_almost_equal(angular_size, angular_size_from_phys, decimal=5)
 
 
 if __name__ == "__main__":

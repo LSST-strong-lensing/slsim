@@ -9,7 +9,6 @@ class TestSourceBase:
         self.source_dict = {
             "z": 0.8,
             "mag_i": 23,
-            "n_sersic": 1,
             "angular_size": 0.2,
             "e1": 0.002,
             "e2": 0.004,
@@ -18,7 +17,6 @@ class TestSourceBase:
         self.source_dict3 = {
             "z": 0.8,
             "mag_i": 23,
-            "n_sersic": 1,
             "angular_size": 0.2,
             "e1": 0.002,
             "e2": 0.004,

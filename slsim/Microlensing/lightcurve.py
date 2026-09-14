@@ -2,9 +2,10 @@ __author__ = "Paras Sharma"
 
 import numpy as np
 import warnings
+from skimage.measure import block_reduce
 from skimage.transform import rescale
 from scipy.signal import fftconvolve
-from scipy.ndimage import map_coordinates
+from scipy.ndimage import affine_transform, map_coordinates
 
 from slsim.Microlensing.magmap import MagnificationMap
 from slsim.Util.astro_util import extract_light_curve
@@ -13,7 +14,6 @@ from slsim.Microlensing.source_morphology.agn import AGNSourceMorphology
 from slsim.Microlensing.source_morphology.gaussian import GaussianSourceMorphology
 from slsim.Microlensing.source_morphology.supernovae import SupernovaeSourceMorphology
 
-# Central routing dictionary for source morphology classes
 MORPHOLOGY_CLASSES = {
     "gaussian": GaussianSourceMorphology,
     "agn": AGNSourceMorphology,
@@ -278,8 +278,21 @@ class MicrolensingLightCurve(object):
 
                 max_pad = 0
                 rescaled_kernels = []
-                for kernel, kernel_pixel_size_m in zip(kernels, pixel_scales_m):
+                stamp_starts = []
+                decimations = []
+                for i, (kernel, kernel_pixel_size_m) in enumerate(
+                    zip(kernels, pixel_scales_m)
+                ):
                     pixel_ratio = kernel_pixel_size_m / pixel_size_magnification_map
+                    # Coarsen the map rather than upsample the kernel past its
+                    # own sampling; this leaves pixel_ratio / decimation in [1, 2).
+                    decimation = 2 ** int(np.log2(max(pixel_ratio, 1.0)))
+
+                    # Source centre in decimated map pixels: decimated pixel j
+                    # is centred at j * d + (d - 1) / 2.
+                    py = (y_positions[i] - (decimation - 1) / 2.0) / decimation
+                    px = (x_positions[i] - (decimation - 1) / 2.0) / decimation
+
                     if pixel_ratio * kernel.shape[0] < 1.0:
                         warnings.warn(
                             "Source smaller than one magnification map pixel; "
@@ -288,11 +301,28 @@ class MicrolensingLightCurve(object):
                             stacklevel=2,
                         )
                         res_k = np.array([[1.0]])
+                        stamp_y_start, stamp_x_start = round(py), round(px)
                     else:
-                        res_k = rescale(
+                        # Sample the source onto the map grid with its exact
+                        # sub-pixel offset folded in, so that res_k[u, v] is the
+                        # source profile at map pixel (stamp_y_start + u, ...).
+                        # affine_transform will interpolate the kernel to the correct size --> continuous
+                        # skimage.rescale would have rounded the output size, stepping the source diameter.
+                        scale = pixel_ratio / decimation
+                        num_pix = 2 * max(kernel.shape)
+                        stamp_y_start = round(py) - num_pix // 2
+                        stamp_x_start = round(px) - num_pix // 2
+                        res_k = affine_transform(
                             kernel,
-                            pixel_ratio,
-                            anti_aliasing=False,
+                            np.array([1.0 / scale, 1.0 / scale]),
+                            offset=(
+                                (kernel.shape[0] - 1) / 2.0
+                                - (py - stamp_y_start) / scale,
+                                (kernel.shape[1] - 1) / 2.0
+                                - (px - stamp_x_start) / scale,
+                            ),
+                            output_shape=(num_pix, num_pix),
+                            order=3,
                             mode="constant",
                             cval=0.0,
                         )
@@ -301,49 +331,42 @@ class MicrolensingLightCurve(object):
                         res_k /= np.nansum(res_k)
 
                     rescaled_kernels.append(res_k)
-                    # +4 to leave room for the 4x4 bicubic extraction window
+                    stamp_starts.append((stamp_y_start, stamp_x_start))
+                    decimations.append(decimation)
                     max_pad = max(
-                        max_pad, res_k.shape[0] // 2 + 4, res_k.shape[1] // 2 + 4
+                        max_pad, res_k.shape[0] // 2 + 1, res_k.shape[1] // 2 + 1
                     )
 
-                padded_mag_map = np.pad(
-                    self._magnification_map.magnifications, max_pad, mode="reflect"
-                )
+                # Build one decimated, edge-padded magnification map per
+                # decimation level, shared by every step that uses it.
+                magnifications = self._magnification_map.magnifications
+                padded_mag_maps = {}
+                for d in set(decimations):
+                    # Crop to whole blocks; block_reduce zero-pads the remainder.
+                    ny = magnifications.shape[0] // d
+                    nx = magnifications.shape[1] // d
+                    padded_mag_maps[d] = np.pad(
+                        block_reduce(
+                            magnifications[: ny * d, : nx * d], (d, d), np.mean
+                        ),
+                        max_pad,
+                        mode="reflect",
+                    )
 
+                # Dot each step's source morphology with the magnification map patch it covers to
+                # get the magnification at that time.
                 for i in range(n_steps):
                     res_k = rescaled_kernels[i]
-                    ky, kx = res_k.shape
+                    padded_mag_map = padded_mag_maps[decimations[i]]
+                    sy, sx = stamp_starts[i]
 
-                    # Use scipy's native kernel-center convention (fractional allowed)
-                    cy_k = (ky - 1) / 2.0
-                    cx_k = (kx - 1) / 2.0
-
-                    # Get exact sub-pixel coordinates
-                    px = x_positions[i] + max_pad
-                    py = y_positions[i] + max_pad
-
-                    # We need a 4x4 valid-convolution grid surrounding (py, px).
-                    # fftconvolve(..., mode='valid')[a, b] corresponds to the
-                    # convolution evaluated at input position
-                    #     (stamp_y_start + cy_k + a, stamp_x_start + cx_k + b).
-                    # Pick stamp_y_start so that (py, px) lands in the interior
-                    # cell [1, 2) of the 4x4 output grid (ideal for bicubic).
-                    stamp_y_start = int(np.floor(py - cy_k)) - 1
-                    stamp_x_start = int(np.floor(px - cx_k)) - 1
-
+                    # The source is already placed at its exact position, so the
+                    # magnification is one weighted sum over the map beneath it.
                     stamp = padded_mag_map[
-                        stamp_y_start : stamp_y_start + ky + 3,
-                        stamp_x_start : stamp_x_start + kx + 3,
+                        sy + max_pad : sy + max_pad + res_k.shape[0],
+                        sx + max_pad : sx + max_pad + res_k.shape[1],
                     ]
-                    conv_4x4 = fftconvolve(stamp, res_k, mode="valid")  # (4, 4)
-
-                    # Local coords inside conv_4x4 corresponding to (py, px)
-                    local_y = py - stamp_y_start - cy_k  # always in [1, 2)
-                    local_x = px - stamp_x_start - cx_k  # always in [1, 2)
-
-                    light_curve[i] = map_coordinates(
-                        conv_4x4, [[local_y], [local_x]], order=3
-                    )[0]
+                    light_curve[i] = np.einsum("ij,ij->", stamp, res_k)
 
             # ==========================================================
             # STATIC SOURCES (STATIC AGN, GAUSSIAN)

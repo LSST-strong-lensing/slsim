@@ -57,14 +57,14 @@ def simulate_image(
         default options ("psf_type", "kernel_point_source",
         "point_source_supersampling_factor")
     :type kwargs_psf: dict
-    :type kwargs_numerics: dict
-    :param kwargs_numerics (optional): options are
+    :type kwargs_numerics: dict or None
+    :param kwargs_numerics: (optional) options are
         "point_source_supersampling_factor", "supersampling_factor", and
         more in lenstronomy.ImSim.Numerics.numerics class
-    :param kwargs_single_band (optional): not intended to be provided
+    :param kwargs_single_band: (optional) not intended to be provided
         directly by the user -- this is more efficient for the SNR
         criterion in the validity test
-    :type kwargs_single_band: dict
+    :type kwargs_single_band: dict or None
     :param with_source: if True, include source light
     :type with_source: bool
     :param with_deflector: if True, include deflector light
@@ -545,7 +545,7 @@ def deflector_images_with_different_zeropoint(
 ):
     """Creates deflector images with different magnitude zero point. This
     function is useful when one wants to simulate variable lens images. For
-    this, we need to simulate delctor images for different exposure (where we
+    this, we need to simulate deflector images for different exposure (where we
     want to inject lenses) and those exposure could have different magnitude
     zero point.
 
@@ -578,7 +578,6 @@ def image_plus_poisson_noise(
 
     :param image: an image
     :param exposure_time: exposure time or exposure map for an image
-    :param band: imaging band
     :param gain: Amplifier gain (default 1).
     :param coadd_zero_point: Zero point of the coadded image (default
         27).
@@ -606,7 +605,7 @@ def image_plus_poisson_noise_for_list_of_image(images, exposure_times):
     """Creates an image with possion noise.
 
     :param images: list of images
-    :param exposure_time: list of exposure times or exposure maps
+    :param exposure_times: list of exposure times or exposure maps
     :return: list of images with possion noise
     """
     list_of_noisy_images = [
@@ -645,11 +644,11 @@ def lens_image(
     :param band: imaging band
     :param mag_zero_point: magnitude zero point for the exposure
     :param num_pix: number of pixels per axis
-    :param psf_kernels: psf kernel for the exposures being.
+    :param psf_kernel: psf kernel for the exposures being.
     :param transform_pix2angle: transformation matrix (2x2) of pixels
         into coordinate displacements
-    :param exposure_time: exposure time for for the exposure. It could
-        be single exposure time or a exposure map.
+    :param exposure_time: exposure time for the exposure. It could be
+        single exposure time or an exposure map.
     :param t_obs: an observation time [day]. This is applicable only for
         variable source. In case of point source, if we do not provide
         t_obs, considers no variability in the lens.
@@ -663,7 +662,7 @@ def lens_image(
         32.33, 'r': 32.17, 'i': 31.85, 'z': 31.45, 'y': 30.63 }. It
         sould contain at least values for the band in which one need to
         simulate images. Default values are average magnitude zero
-        points for LSST single visists in each band.
+        points for LSST single visits in each band.
     :param microlensing: boolean flag to include microlensing
         variability
     :return: lens image
@@ -752,11 +751,10 @@ def lens_image_series(
         if float: assumed to apply to the full image series.
     :param mag_zero_point: list of magnitude zero point for sequence of exposure
     :param num_pix: number of pixels per axis
-    :param psf_kernels: list of psf kernel for each exposure.
     :param transform_pix2angle: list of transformation matrix (2x2) of pixels into
         coordinate displacements for each exposure
     :param exposure_time: list of exposure time for each exposure. It could be single
-        exposure time or a exposure map.
+        exposure time or an exposure map.
     :param t_obs: array of image observation time [day] for a lens.
     :param std_gaussian_noise: array of standard deviation for gaussian noise for each
         image
@@ -771,9 +769,9 @@ def lens_image_series(
      'i': 31.85,
      'z': 31.45,
      'y': 30.63
-     }. It sould contain at least values for the band in which one need to
+     }. It should contain at least values for the band in which one need to
      simulate images. Default values are average magnitude zero points for
-     LSST single visists in each band.
+     LSST single visits in each band.
     :param microlensing: boolean flag to include microlensing variability
     :return: list of series of images of a lens
     """

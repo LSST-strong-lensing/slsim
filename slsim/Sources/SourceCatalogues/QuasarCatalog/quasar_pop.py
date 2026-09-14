@@ -281,7 +281,7 @@ class QuasarRate(object):
         if isinstance(z_value, np.ndarray):
             integrals = np.zeros_like(z_value)
             for i, z in enumerate(z_value):
-                integral, _ = quad(self.dPhi_dM, M_min[i], M_max[i], args=(z,))
+                integral, _ = quad(func=self.dPhi_dM, a=M_min[i], b=M_max[i], args=(z,))
                 integrals[i] = integral
             return integrals
         else:

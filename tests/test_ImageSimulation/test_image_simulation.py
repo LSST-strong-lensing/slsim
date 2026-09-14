@@ -4,6 +4,7 @@ from numpy import testing as npt
 from astropy.table import Table
 from astropy.cosmology import FlatLambdaCDM
 from slsim.Lenses.lens import Lens
+from slsim.Deflectors import deflector_util
 from slsim.ImageSimulation.image_simulation import (
     simulate_image,
     sharp_image,
@@ -23,6 +24,7 @@ from slsim.ImageSimulation.image_simulation import (
 )
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
+from slsim.Sources.SourcePopulation.galaxies import convert_catalog_to_source
 import pytest
 
 
@@ -43,13 +45,33 @@ class TestImageSimulation(object):
 
         self.source_dict = blue_one
         self.deflector_dict = red_one
+
+        kwargs_light = convert_catalog_to_source(
+            self.deflector_dict,
+            extended_source_type="single_sersic",
+            catalog_type=None,
+            size_model=None,
+            cosmo=cosmo,
+            include_all_keywords=False,
+        )
+        kwargs_source = convert_catalog_to_source(
+            self.source_dict,
+            extended_source_type="single_sersic",
+            catalog_type=None,
+            size_model=None,
+            cosmo=cosmo,
+            include_all_keywords=False,
+        )
+
+        z = kwargs_light.pop("z")
+        kwargs_mass = deflector_util.light2mass(
+            kwargs_light, halo_dict=self.deflector_dict, mass_type="EPL"
+        )
+
         while True:
-            self.source = Source(
-                cosmo=cosmo, extended_source_type="single_sersic", **self.source_dict
-            )
+            self.source = Source(cosmo=cosmo, **kwargs_source)
             self.deflector = Deflector(
-                deflector_type="EPL_SERSIC",
-                **self.deflector_dict,
+                z=z, kwargs_mass=kwargs_mass, kwargs_light=kwargs_light
             )
             gg_lens = Lens(
                 source_class=self.source,
@@ -265,10 +287,21 @@ def pes_lens_instance():
             **kwargs_quasar,
             **source_dict,
         )
-        deflector = Deflector(
-            deflector_type="EPL_SERSIC",
-            **deflector_dict,
+        kwargs_light = convert_catalog_to_source(
+            deflector_dict,
+            extended_source_type="single_sersic",
+            catalog_type=None,
+            size_model=None,
+            cosmo=cosmo,
+            include_all_keywords=False,
         )
+        z = kwargs_light.pop("z")
+        kwargs_mass = deflector_util.light2mass(
+            kwargs_light, halo_dict=deflector_dict, mass_type="EPL"
+        )
+
+        deflector = Deflector(z=z, kwargs_mass=kwargs_mass, kwargs_light=kwargs_light)
+
         pes_lens = Lens(
             source_class=source,
             deflector_class=deflector,
@@ -491,10 +524,10 @@ class TestMultiSourceImageSimulation(object):
             "n_sersic_1": [4.0],
             "w0": [0.907],
             "w1": [0.093],
-            "e0_1": [0.14733325180101145],
-            "e0_2": [0.09874724195027847],
-            "e1_1": [0.03754887782202202],
-            "e1_2": [0.025166403903583694],
+            "e1_0": [0.14733325180101145],
+            "e1_1": [0.09874724195027847],
+            "e2_0": [0.03754887782202202],
+            "e2_1": [0.025166403903583694],
             "angular_size_0": [0.37156280037917327],
             "angular_size_1": [0.29701108506340096],
         }
@@ -526,9 +559,21 @@ class TestMultiSourceImageSimulation(object):
             **kwargs_sn,
             **source_dict2,
         )
+        kwargs_light = convert_catalog_to_source(
+            deflector_dict,
+            extended_source_type="single_sersic",
+            catalog_type=None,
+            size_model=None,
+            cosmo=self.cosmo,
+            include_all_keywords=False,
+        )
+        z = kwargs_light.pop("z")
+        kwargs_mass = deflector_util.light2mass(
+            kwargs_light, halo_dict=deflector_dict, mass_type="EPL"
+        )
+
         self.deflector = Deflector(
-            deflector_type="EPL_SERSIC",
-            **deflector_dict,
+            z=z, kwargs_mass=kwargs_mass, kwargs_light=kwargs_light
         )
         lens_class1 = Lens(
             deflector_class=self.deflector,
@@ -657,11 +702,21 @@ class TestImageSimulationInterpSingleSource:
         self.source_interp = Source(
             cosmo=self.cosmo, extended_source_type="interpolated", **interp_source_dict
         )
+        kwargs_light = convert_catalog_to_source(
+            red_one,
+            extended_source_type="single_sersic",
+            catalog_type=None,
+            size_model=None,
+            cosmo=self.cosmo,
+            include_all_keywords=False,
+        )
+        z = kwargs_light.pop("z")
+        kwargs_mass = deflector_util.light2mass(
+            kwargs_light, halo_dict=red_one, mass_type="EPL"
+        )
 
-        deflector_dict = red_one
         self.deflector_single = Deflector(
-            deflector_type="EPL_SERSIC",
-            **deflector_dict,
+            z=z, kwargs_mass=kwargs_mass, kwargs_light=kwargs_light
         )
 
         self.lens_interp_single = Lens(

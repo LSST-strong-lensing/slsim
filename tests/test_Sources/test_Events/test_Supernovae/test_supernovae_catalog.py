@@ -32,8 +32,8 @@ def test_supernovae_host_galaxy_offset():
 
     x_within_mean_radius = 0
     y_within_mean_radius = 0
-    mean_radius = np.rad2deg(np.mean(host_catalog["angular_size"])) * units.deg
-    mean_radius = mean_radius.to(units.arcsec)
+    # The catalog gives angular sizes in arcsec, the same unit the offsets come in.
+    mean_radius = np.mean(host_catalog["angular_size"]) * units.arcsec
 
     for i in range(len(x_off)):
 

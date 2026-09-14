@@ -1,14 +1,19 @@
-from abc import ABC, abstractmethod
+import numpy.random as random
+from slsim.Lenses.selection import object_cut
 
 
-class SourcePopBase(ABC):
+class SourcePopBase(object):
     """Base class with functions all source classes must have to be able to
     render populations."""
 
     def __init__(
         self,
+        object_list,
         cosmo,
         sky_area,
+        kwargs_cut=None,
+        point_source_type=None,
+        extended_source_type=None,
     ):
         """
 
@@ -17,51 +22,70 @@ class SourcePopBase(ABC):
         :param sky_area: Sky area over which galaxies are sampled. Must be in units of
             solid angle.
         :type sky_area: `~astropy.units.Quantity`
+        :param point_source_type: Keyword to specify type of the point source.
+         Supported point source types are "supernova", "quasar", "general_lightcurve".
+        :param extended_source_type: keyword for number of sersic profile to use in source
+         light model. accepted kewords: "single_sersic", "double_sersic".
         """
-        self.source_type = None
         self.sky_area = sky_area
         self._cosmo = cosmo
         # These quantities are defined here because Source class these quantities and
         # None act as default values.
-        self.pointsource_type = None
-        self.extendedsource_type = None
+        self._point_source_type = point_source_type
+        self._extended_source_type = extended_source_type
+
+        if kwargs_cut is None:
+            kwargs_cut = {}
+        self._objects_select = object_cut(object_list, **kwargs_cut)
+        self._num_select = len(self._objects_select)
+        self._full_object_list = object_list
+        self._object_number = len(object_list)
 
     @property
-    @abstractmethod
     def source_number(self):
         """Number of sources registered (within given area on the sky)
 
         :return: number of sources
         """
-        pass
+        return self._object_number
 
     @property
-    @abstractmethod
     def source_number_selected(self):
         """Number of sources selected (within given area on the sky)
 
         :return: number of sources passing the selection criteria
         """
-        pass
+        return self._num_select
 
-    @abstractmethod
-    def draw_source(self):
-        """Choose source at random.
+    def draw_object(self, z_max=None, z_min=None, galaxy_index=None):
+        """Chose object from catalog at random.
 
-        :return: dictionary of source
+        :param z_max: maximum redshift limit for the galaxy to be drawn.
+            If no galaxy is found for this limit, None will be returned.
+        :param z_min: minimum redshift limit for the galaxy to be drawn.
+            If no galaxy is found for this limit, None will be returned.
+        :param galaxy_index: index of galaxy to pic (if provided)
+        :return: dictionary of source in the form of the original
+            catalog
         """
-        pass
+        if galaxy_index is not None:
+            object = self._full_object_list[galaxy_index]
 
-    @property
-    def variability_model(self):
-        """
-        :return: keyword for the variability model
-        """
-        return self._variab_model
-
-    @property
-    def kwargs_variability(self):
-        """
-        :return: dict of keyword arguments for the variability model.
-        """
-        return self._kwargs_variab_model
+        elif z_max is not None or z_min is not None:
+            if z_max is None:
+                z_max = 1100
+            if z_min is None:
+                z_min = 0
+            filtered_galaxies = self._objects_select[
+                (self._objects_select["z"] < z_max)
+                & (z_min < self._objects_select["z"])
+            ]
+            if len(filtered_galaxies) == 0:
+                return None
+            else:
+                index = random.randint(0, len(filtered_galaxies))
+                object = filtered_galaxies[index]
+        else:
+            index = random.randint(0, self._num_select)
+            object = self._objects_select[index]
+        return object
