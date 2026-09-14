@@ -52,6 +52,9 @@ class TestCatalogSource:
             key = "mag_" + band
             source_dict.update({key: 20.3})
 
+        self.cosmo = cosmo
+        self.source_dict = source_dict
+
         self.source1 = CatalogSource(
             cosmo=cosmo,
             catalog_path=hst_cosmos_path,
@@ -116,6 +119,32 @@ class TestCatalogSource:
 
         assert self.source2.matched_source["id"] == 6701
         assert self.source2.matched_source_id == 6701
+
+    @pytest.mark.parametrize("missing_size", [False, True])
+    def test_cosmos_web_angular_size(self, tmp_path, monkeypatch, missing_size):
+        catalog = self.source2.final_catalog.copy()
+        catalog.remove_column("sersic_radius")
+        if missing_size:
+            catalog.remove_column("angular_size")
+        catalog.write(tmp_path / "COSMOSWeb_galaxy_catalog.fits", format="fits")
+
+        # Read the modified catalog instead of reusing the class cache.
+        monkeypatch.delattr(CatalogSource, "processed_cosmos_web_catalog")
+        kwargs = {
+            "cosmo": self.cosmo,
+            "catalog_path": str(tmp_path),
+            "catalog_type": "COSMOS_WEB",
+            **self.source_dict,
+        }
+        if missing_size:
+            with pytest.raises(ValueError, match="must contain either a column"):
+                CatalogSource(**kwargs)
+        else:
+            source = CatalogSource(**kwargs)
+            np.testing.assert_allclose(
+                source.final_catalog["angular_size"], catalog["angular_size"]
+            )
+            assert source.final_catalog["angular_size"].unit == u.arcsec
 
     def test_select_image_from_band(self):
 
