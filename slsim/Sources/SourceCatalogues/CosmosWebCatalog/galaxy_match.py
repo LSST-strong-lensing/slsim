@@ -40,7 +40,7 @@ def process_catalog(cosmo, catalog_path):
         raise ValueError(
             "The input catalog must contain either a column named 'sersic_radius' or 'angular_size'."
         )
-    
+
     catalog["angular_size"].unit = u.arcsec
 
     # Convert angular_size to physical size (arcseconds to kPc)
