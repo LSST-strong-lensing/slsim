@@ -192,7 +192,7 @@ def simulate_roman_image(
         unconvolved=True,
         source_add=with_source,
         lens_light_add=with_deflector,
-        point_source_add=True,
+        point_source_add=with_source,
     )
     # Converts image to the galsim InterpolatedImage class
     interp = InterpolatedImage(
