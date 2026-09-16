@@ -11,7 +11,7 @@ alpha_red: -0.5
 cosmology: !astropy.cosmology.default_cosmology.get []
 filters: ['Euclid-VIS', 'Euclid-Y', 'Euclid-H', 'Euclid-J',
           'Roman-F062', 'Roman-F087', 'Roman-F106', 'Roman-F129', 'Roman-F158', 'Roman-F184', 'Roman-F146', 'Roman-F213',
-          'lsst2016-g', 'lsst2016-r', 'lsst2016-i', 'lsst2016-z', 'lsst2016-y']
+          'lsst2016-u', 'lsst2016-g', 'lsst2016-r', 'lsst2016-i', 'lsst2016-z', 'lsst2016-y']
 tables:
   blue:
     z: !skypy.galaxies.redshift.schechter_lf_redshift
@@ -36,7 +36,7 @@ tables:
       magnitudes: $blue.M
       coefficients: $blue.coeff
       filter:  bessell-B
-    mag_VIS, mag_Y, mag_H, mag_J, mag_F062, mag_F087, mag_F106, mag_F129, mag_F158, mag_F184, mag_F146, mag_F213, mag_g, mag_r, mag_i, mag_z, mag_y: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+    mag_VIS, mag_Y, mag_H, mag_J, mag_F062, mag_F087, mag_F106, mag_F129, mag_F158, mag_F184, mag_F146, mag_F213, mag_u, mag_g, mag_r, mag_i, mag_z, mag_y: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
       coefficients: $blue.coeff
       filters: $filters
       redshift: $blue.z
@@ -90,7 +90,7 @@ tables:
       magnitudes: $red.M
       coefficients: $red.coeff
       filter:  bessell-B
-    mag_VIS, mag_Y, mag_H, mag_J, mag_F062, mag_F087, mag_F106, mag_F129, mag_F158, mag_F184, mag_F146, mag_F213, mag_g, mag_r, mag_i, mag_z, mag_y: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
+    mag_VIS, mag_Y, mag_H, mag_J, mag_F062, mag_F087, mag_F106, mag_F129, mag_F158, mag_F184, mag_F146, mag_F213, mag_u, mag_g, mag_r, mag_i, mag_z, mag_y: !skypy.galaxies.spectrum.kcorrect.apparent_magnitudes
       coefficients: $red.coeff
       filters: $filters
       redshift: $red.z
