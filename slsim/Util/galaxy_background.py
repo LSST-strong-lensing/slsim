@@ -22,11 +22,12 @@ from scipy.ndimage import binary_dilation
 def subtract_hst_catalog_background(image, matched_source):
     """Subtract the HST catalog NOISE_MEAN without estimating galaxy wings.
 
-    Returns corrected image, scalar level, None (no estimation mask), and
-    diagnostics. Missing/invalid metadata raises rather than silently using
-    the outskirts as sky. NOISE_VARIANCE is not subtracted. Input pixels,
-    shape and negative residuals are preserved apart from the constant shift.
-    Use on original catalog cutouts, not already corrected images.
+    Returns corrected image, scalar level, None (no estimation mask),
+    and diagnostics. Missing/invalid metadata raises rather than
+    silently using the outskirts as sky. NOISE_VARIANCE is not
+    subtracted. Input pixels, shape and negative residuals are preserved
+    apart from the constant shift. Use on original catalog cutouts, not
+    already corrected images.
     """
     try:
         value = matched_source["NOISE_MEAN"]
@@ -34,7 +35,9 @@ def subtract_hst_catalog_background(image, matched_source):
             raise ValueError("masked NOISE_MEAN")
         background = float(value)
     except (KeyError, TypeError, ValueError, IndexError) as exc:
-        raise ValueError("HST background subtraction requires valid NOISE_MEAN.") from exc
+        raise ValueError(
+            "HST background subtraction requires valid NOISE_MEAN."
+        ) from exc
     if not np.isfinite(background):
         raise ValueError("HST NOISE_MEAN must be finite.")
     data = np.array(image, dtype=float, copy=True)
@@ -52,15 +55,22 @@ def subtract_hst_catalog_background(image, matched_source):
     return corrected, background, None, diagnostics
 
 
-def subtract_galaxy_background(image, source_mask=None, coverage_mask=None,
-                               border_fraction=0.2, sigma=3.0, dilation=2):
+def subtract_galaxy_background(
+    image,
+    source_mask=None,
+    coverage_mask=None,
+    border_fraction=0.2,
+    sigma=3.0,
+    dilation=2,
+):
     """Return corrected image, scalar sky, usable-sky mask, and diagnostics.
 
     Masks are boolean arrays with True marking excluded pixels. Coverage
     pixels and nonfinite pixels are preserved, not shifted. Source masks
     exclude pixels from estimation only. A central ellipse and dilated
-    positive outliers supplement the optional source mask. Background RMS
-    is a descriptive scatter, not the uncertainty in the estimated sky.
+    positive outliers supplement the optional source mask. Background
+    RMS is a descriptive scatter, not the uncertainty in the estimated
+    sky.
     """
     data = np.array(image, dtype=float, copy=True)
     if data.ndim != 2 or min(data.shape) < 10:
@@ -82,21 +92,25 @@ def subtract_galaxy_background(image, source_mask=None, coverage_mask=None,
     ny, nx = data.shape
     yy, xx = np.indices(data.shape)
     width = max(1, int(min(data.shape) * border_fraction))
-    edge = (xx < width) | (xx >= nx-width) | (yy < width) | (yy >= ny-width)
-    central = ((xx-(nx-1)/2)/(0.35*nx))**2 + ((yy-(ny-1)/2)/(0.35*ny))**2 < 1
+    edge = (xx < width) | (xx >= nx - width) | (yy < width) | (yy >= ny - width)
+    central = ((xx - (nx - 1) / 2) / (0.35 * nx)) ** 2 + (
+        (yy - (ny - 1) / 2) / (0.35 * ny)
+    ) ** 2 < 1
     candidates = valid & edge & ~central & ~checked_mask(source_mask)
     if candidates.sum() < 30:
         raise ValueError("Insufficient sky pixels; use a larger cutout.")
-    preliminary = sigma_clip(data[candidates], sigma=sigma, maxiters=10,
-                             cenfunc="median", stdfunc="mad_std")
+    preliminary = sigma_clip(
+        data[candidates], sigma=sigma, maxiters=10, cenfunc="median", stdfunc="mad_std"
+    )
     level = float(np.ma.median(preliminary))
     rms = float(np.ma.std(preliminary))
-    bright = valid & (data > level + sigma*rms)
+    bright = valid & (data > level + sigma * rms)
     if dilation:
         bright = binary_dilation(bright, iterations=dilation)
     candidates &= ~bright
-    clipped = sigma_clip(data[candidates], sigma=sigma, maxiters=10,
-                         cenfunc="median", stdfunc="mad_std")
+    clipped = sigma_clip(
+        data[candidates], sigma=sigma, maxiters=10, cenfunc="median", stdfunc="mad_std"
+    )
     sky_mask = np.zeros(data.shape, dtype=bool)
     sky_mask[candidates] = ~np.ma.getmaskarray(clipped)
     if sky_mask.sum() < 30:
@@ -110,11 +124,13 @@ def subtract_galaxy_background(image, source_mask=None, coverage_mask=None,
         "background": background,
         "sky_rms": float(np.std(data[sky_mask])),
         "sky_pixels": int(sky_mask.sum()),
-        "sky_fraction": float(sky_mask.sum()/valid.sum()),
+        "sky_fraction": float(sky_mask.sum() / valid.sum()),
         "edge_median_before": float(np.median(edge_values)),
-        "edge_median_after": float(np.median(edge_values-background)),
+        "edge_median_after": float(np.median(edge_values - background)),
         "edge_rms_about_zero_before": float(np.sqrt(np.mean(edge_values**2))),
-        "edge_rms_about_zero_after": float(np.sqrt(np.mean((edge_values-background)**2))),
+        "edge_rms_about_zero_after": float(
+            np.sqrt(np.mean((edge_values - background) ** 2))
+        ),
         "valid_flux_before": float(data[valid].sum()),
         "valid_flux_after": float(corrected[valid].sum()),
         "caution": "Sky is estimated on this border; edge statistics are not independent validation. Inspect masks for galaxy wings. Noise remains.",
@@ -125,6 +141,7 @@ def subtract_galaxy_background(image, source_mask=None, coverage_mask=None,
 def compare_fits(path, hdu, output):
     """Save a reproducible diagnostic for one FITS image extension."""
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
@@ -133,16 +150,20 @@ def compare_fits(path, hdu, output):
     data, header = fits.getdata(path, hdu, header=True)
     corrected, background, mask, stats = subtract_galaxy_background(data)
     stem = f"{path.stem}_hdu{hdu}"
-    stats.update(input_file=str(path.resolve()), hdu=hdu,
-                 band=header.get("EXTNAME", "unknown"))
+    stats.update(
+        input_file=str(path.resolve()), hdu=hdu, band=header.get("EXTNAME", "unknown")
+    )
     finite = np.isfinite(data)
     scale = max(stats["sky_rms"], np.finfo(float).eps)
-    vmin, vmax = -2*scale, max(5*scale, float(np.percentile(data[finite], 95)))
+    vmin, vmax = -2 * scale, max(5 * scale, float(np.percentile(data[finite], 95)))
     fig, axes = plt.subplots(1, 4, figsize=(16, 4), constrained_layout=True)
-    pad = max(3, int(min(data.shape)*0.08))
-    for ax, values, title in zip(axes[:2], [data, corrected], ["Original", "Background subtracted"]):
-        shown = ax.imshow(np.pad(values, pad), origin="lower", cmap="magma",
-                          vmin=vmin, vmax=vmax)
+    pad = max(3, int(min(data.shape) * 0.08))
+    for ax, values, title in zip(
+        axes[:2], [data, corrected], ["Original", "Background subtracted"]
+    ):
+        shown = ax.imshow(
+            np.pad(values, pad), origin="lower", cmap="magma", vmin=vmin, vmax=vmax
+        )
         ax.set_title(title + " (zero padded)")
         ax.set_axis_off()
     fig.colorbar(shown, ax=list(axes[:2]), shrink=0.7, label="Native pixel units")
@@ -154,14 +175,19 @@ def compare_fits(path, hdu, output):
     axes[3].axhline(0, color="black", lw=0.7)
     axes[3].set(xlabel="Column", ylabel="Median pixel value")
     axes[3].legend()
-    fig.suptitle(f"{path.name} | HDU {hdu} | sky={background:.4g}, RMS={scale:.4g}", fontsize=10)
+    fig.suptitle(
+        f"{path.name} | HDU {hdu} | sky={background:.4g}, RMS={scale:.4g}", fontsize=10
+    )
     fig.savefig(output / f"{stem}.png", dpi=150)
     plt.close(fig)
     header["BGSUB"] = (background, "Experimental constant background removed")
     # Deliberately refuse to overwrite any previous FITS result.
-    fits.HDUList([fits.PrimaryHDU(corrected, header=header),
-                  fits.ImageHDU(mask.astype(np.uint8), name="SKYMASK")]).writeto(
-                      output / f"{stem}_bgsub.fits", overwrite=False)
+    fits.HDUList(
+        [
+            fits.PrimaryHDU(corrected, header=header),
+            fits.ImageHDU(mask.astype(np.uint8), name="SKYMASK"),
+        ]
+    ).writeto(output / f"{stem}_bgsub.fits", overwrite=False)
     (output / f"{stem}.json").write_text(json.dumps(stats, indent=2), encoding="utf-8")
     return stats
 
