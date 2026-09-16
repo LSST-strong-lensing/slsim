@@ -186,6 +186,9 @@ def process_catalog(cosmo, catalog_path):
         "GAL_FILENAME",
         "GAL_HDU",
         "PIXEL_SCALE",
+        "NOISE_MEAN",  # catalog sky level used by optional background subtraction
+        "NOISE_VARIANCE",
+        "NOISE_FILENAME",
         "axis_ratio",
         "sersic_index",
         "sersic_angle",  # radians
