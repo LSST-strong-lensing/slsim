@@ -4,6 +4,10 @@ from slsim.Sources.SourceTypes.source_base import SourceBase
 from slsim.Sources.SourceCatalogues.CosmosWebCatalog import galaxy_match as CosmosWeb
 from slsim.Sources.SourceCatalogues.HSTCosmosCatalog import galaxy_match as HSTCosmos
 from slsim.Util.color_gradient import radial_color_gradient_image
+from slsim.Util.galaxy_background import (
+    subtract_galaxy_background,
+    subtract_hst_catalog_background,
+)
 from lenstronomy.Util.param_util import ellipticity2phi_q
 
 CATALOG_TYPES = ["HST_COSMOS, COSMOS_WEB"]
@@ -31,6 +35,7 @@ class CatalogSource(SourceBase):
         band_dependent_color_gradient=False,
         color_gradient=None,
         fallback_double_sersic_kwargs=None,
+        subtract_background=False,
         **source_dict,
     ):
         """
@@ -71,6 +76,13 @@ class CatalogSource(SourceBase):
         :param fallback_double_sersic_kwargs: Optional overrides for the
          DoubleSersic parameters used after a failed HST_COSMOS match.
         :type fallback_double_sersic_kwargs: dict or None
+        :param subtract_background: Experimental opt-in constant sky subtraction
+         on each native catalog band, before band mixing or color gradients.
+         HST uses the matched catalog NOISE_MEAN (missing/invalid values raise
+         ValueError). COSMOS Web estimates sky from the outskirts, requiring
+         usable sky and potentially oversubtracting wings. Analytic fallback
+         is unaffected. Pass original, uncorrected catalog cutouts.
+        :type subtract_background: bool
         """
         super().__init__(extended_source=True, point_source=False, **source_dict)
         self.name = "GAL"
@@ -82,6 +94,8 @@ class CatalogSource(SourceBase):
         self._max_scale = max_scale
         self._match_n_sersic = match_n_sersic
         self._sersic_fallback = sersic_fallback
+        self._subtract_background = subtract_background
+        self.background_diagnostics = None
         self._band_dependent_color_gradient = band_dependent_color_gradient
         self._color_gradient = color_gradient
         self._fallback_double_sersic_kwargs = fallback_double_sersic_kwargs
@@ -211,6 +225,18 @@ class CatalogSource(SourceBase):
         else:
             mag_source = self.extended_source_magnitude(band=band)
         center_source = self.extended_source_position
+
+        if self._subtract_background and self.background_diagnostics is None:
+            # Commit only after every band succeeds; retries cannot subtract twice.
+            if self._catalog_type == "HST_COSMOS":
+                results = [
+                    subtract_hst_catalog_background(img, self._matched_source)
+                    for img in self._image_list
+                ]
+            else:
+                results = [subtract_galaxy_background(img) for img in self._image_list]
+            self._image_list = [result[0] for result in results]
+            self.background_diagnostics = [result[3] for result in results]
 
         image = self._image_for_band(band)
 
