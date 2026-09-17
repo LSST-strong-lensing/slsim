@@ -121,6 +121,8 @@ class PointPlusExtendedSources(Galaxies):
             galaxy_index=galaxy_index,
             include_all_keywords=True,
         )
+        if kwargs_source is None:
+            return None
 
         source_class = Source(cosmo=self._cosmo, **kwargs_source)
         return source_class
