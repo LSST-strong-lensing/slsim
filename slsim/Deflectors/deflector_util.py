@@ -121,7 +121,35 @@ def light2mass(
             )
         else:
             # scale light to mass ellipticity
-            e1_light, e2_light = kwargs_source["e1"], kwargs_source["e2"]
+            if "e1" in kwargs_source and "e2" in kwargs_source:
+                e1_light, e2_light = kwargs_source["e1"], kwargs_source["e2"]
+            elif all(
+                key in kwargs_source
+                for key in ("e1_0", "e2_0", "e1_1", "e2_1", "w0", "w1")
+            ):
+                # Use the total reference-band light shape rather than an
+                # arbitrarily selected DoubleSersic component.
+                weights = np.asarray(
+                    [kwargs_source["w0"], kwargs_source["w1"]], dtype=float
+                )
+                if np.any(weights < 0) or np.sum(weights) <= 0:
+                    raise ValueError(
+                        "DoubleSersic weights 'w0' and 'w1' must be non-negative "
+                        "and have a positive sum when deriving mass ellipticity."
+                    )
+                weights /= np.sum(weights)
+                e1_light = np.dot(
+                    weights, [kwargs_source["e1_0"], kwargs_source["e1_1"]]
+                )
+                e2_light = np.dot(
+                    weights, [kwargs_source["e2_0"], kwargs_source["e2_1"]]
+                )
+            else:
+                raise ValueError(
+                    "Cannot derive mass ellipticity from the light model. Provide "
+                    "either ('e1', 'e2') or all DoubleSersic fields "
+                    "('e1_0', 'e2_0', 'e1_1', 'e2_1', 'w0', 'w1')."
+                )
             e1_mass, e2_mass = (
                 light2mass_e_scaling * e1_light,
                 light2mass_e_scaling * e2_light,

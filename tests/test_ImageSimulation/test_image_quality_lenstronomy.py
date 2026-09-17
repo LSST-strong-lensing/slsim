@@ -1,4 +1,5 @@
 import pytest
+import numpy as np
 from slsim.ImageSimulation.image_quality_lenstronomy import (
     check_speclite_name,
     get_speclite_filtername,
@@ -8,6 +9,9 @@ from slsim.ImageSimulation.image_quality_lenstronomy import (
     get_observatory,
     register_observatory,
     get_all_supported_bands,
+    get_band_central_wavelength,
+    get_band_effective_wavelength,
+    get_band_log_wavelength_ratio,
 )
 
 
@@ -246,6 +250,51 @@ def test_get_all_supported_bands_contains_defaults():
     ]
     for band in expected_bands:
         assert band in all_bands
+
+
+def test_default_band_wavelength_ordering():
+    assert get_band_effective_wavelength("g") == pytest.approx(
+        get_band_central_wavelength("g")
+    )
+    assert get_band_central_wavelength("g") < get_band_central_wavelength("i")
+    assert get_band_central_wavelength("F106") < get_band_central_wavelength("F184")
+    assert get_band_central_wavelength("VIS") < get_band_central_wavelength("H")
+    assert get_band_log_wavelength_ratio("F184", reference_band="g") > 0
+
+
+def test_band_wavelength_helpers_cover_hst_and_custom_registry_fallback():
+    assert get_band_central_wavelength("F814W") == pytest.approx(0.805)
+    assert get_band_log_wavelength_ratio("F814W", reference_band="F814W") == 0
+
+    register_observatory(
+        name="WavelengthTestObs",
+        observatory_class=DummyObservatory,
+        bands=["bessell-B", "bessell-V", "bessell-R"],
+    )
+    assert get_band_central_wavelength("bessell-B") < get_band_central_wavelength(
+        "bessell-R"
+    )
+    assert get_band_log_wavelength_ratio(
+        "bessell-R", reference_band="bessell-B"
+    ) == pytest.approx(
+        np.log(
+            get_band_central_wavelength("bessell-R")
+            / get_band_central_wavelength("bessell-B")
+        )
+    )
+
+    with pytest.raises(ValueError, match="not recognised"):
+        get_band_central_wavelength("UnknownBand")
+
+    register_observatory(
+        name="NonPositiveWavelengthTestObs",
+        observatory_class=DummyObservatory,
+        bands=["NPW-band", "positive-band"],
+        speclite_fmt=None,
+        effective_wavelengths={"NPW-band": 0.0, "positive-band": 1.0},
+    )
+    with pytest.raises(ValueError, match="effective wavelengths must be positive"):
+        get_band_log_wavelength_ratio("NPW-band", reference_band="positive-band")
 
 
 if __name__ == "__main__":

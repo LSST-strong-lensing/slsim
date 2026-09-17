@@ -1,5 +1,4 @@
 import pytest
-
 from slsim.Deflectors.MassTypes.epl import EPL
 from slsim.Sources.source import Source
 from astropy.cosmology import FlatLambdaCDM
