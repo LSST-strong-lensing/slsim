@@ -30,9 +30,11 @@ The population Eddington ratio ($x = \log_{10}\lambda_{\rm Edd}$) is modeled as 
 To produce the required luminosity $c$, the drawn Eddington ratio and black hole mass must exactly satisfy $c = x + \log_{10} M_{\rm BH}$. 
 
 First, we calculate the probability that candidate $k$ can host this quasar by evaluating the sum of the two priors at $c$:
+
 $$p(k \mid c) \propto \frac{1}{\sqrt{s_k^2+\sigma_\lambda^2}}\exp\!\left[-\frac{(c-m_k-\mu)^2}{2(s_k^2+\sigma_\lambda^2)}\right]$$
 
 A host is drawn using these weights. Then, the specific Eddington ratio $x$ is drawn from a conditional Gaussian. This conditional distribution represents the statistical compromise between the population average ($\mu$) and what the specific galaxy needs ($c - m_k$), weighted by their precisions (inverse variances):
+
 $$V_k=\left(\sigma_\lambda^{-2}+s_k^{-2}\right)^{-1}, \qquad \bar{x}_k=V_k\left[\frac{\mu}{\sigma_\lambda^2}+\frac{c-m_k}{s_k^2}\right]$$
 
 Once $x$ is drawn from $\mathcal{N}(\bar{x}_k, V_k)$, the black hole mass is deterministically set to $\log_{10} M_{\rm BH} = c - x$ to conserve energy perfectly. 
