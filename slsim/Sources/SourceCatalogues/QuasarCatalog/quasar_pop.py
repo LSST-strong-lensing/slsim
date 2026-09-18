@@ -93,9 +93,10 @@ class QuasarRate(object):
         :param use_sed_interpolator: If True, uses a pre-computed SED magnitude interpolator on a z, M_i grid for speed. This is only relevant if `use_qsogen_sed` is True.
         :param host_match_kwargs: keyword arguments passed to
          :class:`~slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_host_match.QuasarHostMatch`,
-         which assigns host galaxies, black hole masses and Eddington ratios.
-         Only used if `host_galaxy=True` is passed to `quasar_sample`. Pass an
-         ``rng`` for a reproducible catalog.
+         which assigns host galaxies, black hole masses and Eddington ratios
+         when `host_galaxy=True` is passed to `quasar_sample` (e.g.
+         ``{"progress": False}``). Its ``rng`` defaults to a generator seeded
+         with the `seed` of `quasar_sample`.
         :type host_match_kwargs: dict or None
         """
         self.zeta = zeta
@@ -646,13 +647,10 @@ class QuasarRate(object):
                     np.log10(host_galaxy_catalog["stellar_mass"])
                 )
 
-            matching_catalogs = QuasarHostMatch(
+            return QuasarHostMatch(
                 quasar_catalog=table,
                 galaxy_catalog=host_galaxy_catalog,
-                **self.host_match_kwargs,
-            )
-            matched_table = matching_catalogs.match()
-
-            return matched_table
+                **{"rng": np.random.default_rng(seed), **self.host_match_kwargs},
+            ).match()
 
         return table

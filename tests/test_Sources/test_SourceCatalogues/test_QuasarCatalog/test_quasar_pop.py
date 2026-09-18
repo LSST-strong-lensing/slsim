@@ -297,6 +297,23 @@ class TestQuasarRate:
         assert "host_id" in result_table.colnames
         assert result_table["host_id"][0] == 1
 
+    @patch.object(
+        QuasarRate, "generate_quasar_redshifts", return_value=np.array([0.5001])
+    )
+    def test_quasar_sample_seed_covers_host_match(self, mock_gen_z):
+        self.quasar_rate.host_galaxy_candidate = Table(
+            {"z": [0.50], "vel_disp": [50], "galaxy_type": ["red"]}
+        )
+        self.quasar_rate.host_match_kwargs = {"progress": False}
+
+        def run(seed):
+            return self.quasar_rate.quasar_sample(
+                m_min=15, m_max=25, seed=seed, host_galaxy=True
+            )["black_hole_mass_exponent"][0]
+
+        assert run(1) == run(1)
+        assert run(1) != run(2)
+
     @patch(
         "slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_pop.vel_disp_abundance_matching"
     )
