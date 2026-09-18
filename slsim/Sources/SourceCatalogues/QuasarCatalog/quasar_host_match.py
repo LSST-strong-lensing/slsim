@@ -1,8 +1,9 @@
 """Assign quasars to host galaxies, conditioned on quasar luminosity.
 
-The black-hole mass relations and the Eddington-ratio distribution are both
-Gaussian in log space, so the host probabilities and the conditional
-Eddington ratio have closed forms. See the README for the model.
+The black-hole mass relations and the Eddington-ratio distribution are
+both Gaussian in log space, so the host probabilities and the
+conditional Eddington ratio have closed forms. See the README for the
+model.
 """
 
 import warnings
@@ -50,12 +51,14 @@ BLACK_HOLE_MASS_RELATIONS = {
 
 
 def log_black_hole_mass(galaxy_type, vel_disp=None, stellar_mass=None):
-    """Mean log10 black hole mass of each galaxy and the intrinsic scatter about
-    it, using the relation of its type (see :data:`BLACK_HOLE_MASS_RELATIONS`).
+    """Mean log10 black hole mass of each galaxy and the intrinsic scatter
+    about it, using the relation of its type (see
+    :data:`BLACK_HOLE_MASS_RELATIONS`).
 
     :param galaxy_type: type of each galaxy, a key of the relations
     :param vel_disp: velocity dispersion of each galaxy [km/s]
-    :param stellar_mass: total stellar mass of each galaxy [solar masses]
+    :param stellar_mass: total stellar mass of each galaxy [solar
+        masses]
     :return: log10 mean black hole mass [solar masses], scatter [dex]
     :rtype: tuple of numpy.ndarray
     """
@@ -93,7 +96,8 @@ def log_bolometric_luminosity(m_i, scatter=0.0, rng=None):
     """Log10 bolometric luminosity [erg/s] for absolute magnitude M_i(z=2).
 
     :param m_i: absolute i-band magnitude M_i(z=2)
-    :param scatter: object-to-object scatter of the bolometric correction [dex]
+    :param scatter: object-to-object scatter of the bolometric
+        correction [dex]
     :param rng: random number generator used for the scatter
     :type rng: numpy.random.Generator or None
     """
@@ -112,7 +116,8 @@ class QuasarHostMatch:
     """Assign host galaxies, black hole masses and Eddington ratios to quasars.
 
     Host candidates are the galaxies in a thin redshift slice around the
-    quasar, so a uniform prior over candidates weights by galaxy number density.
+    quasar, so a uniform prior over candidates weights by galaxy number
+    density.
     """
 
     def __init__(
@@ -171,9 +176,10 @@ class QuasarHostMatch:
     def match(self):
         """Match every quasar with a host galaxy.
 
-        :return: the quasars that could be matched, joined with their host
-            galaxies and with "black_hole_mass_exponent", "eddington_ratio" and
-            "log_bolometric_luminosity" columns added
+        :return: the quasars that could be matched, joined with their
+            host galaxies and with "black_hole_mass_exponent",
+            "eddington_ratio" and "log_bolometric_luminosity" columns
+            added
         :rtype: astropy Table
         """
         self._validate()
