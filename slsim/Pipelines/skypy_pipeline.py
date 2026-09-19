@@ -2,6 +2,7 @@ import os
 from skypy.pipeline import Pipeline
 import tempfile
 import slsim.Util.param_util as util
+from astropy.table import vstack
 import astropy.units as u
 
 
@@ -119,3 +120,12 @@ class SkyPyPipeline:
         :rtype: list of dict
         """
         return self._pipeline["red"]
+
+    @property
+    def all_galaxies(self):
+        """Skypy pipeline for red and blue galaxies.
+
+        :return: list of red and blue galaxies
+        :rtype: list of dict
+        """
+        return vstack([self.red_galaxies, self.blue_galaxies])
