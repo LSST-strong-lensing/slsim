@@ -67,10 +67,10 @@ def subtract_galaxy_background(
 
     Masks are boolean arrays with True marking excluded pixels. Coverage
     pixels and nonfinite pixels are preserved, not shifted. Source masks
-    exclude pixels from estimation only. A central ellipse and dilated bright
-    sources are excluded before iterative sigma clipping. Background
-    RMS is a descriptive scatter, not the uncertainty in the estimated
-    sky.
+    exclude pixels from estimation only. A central ellipse and dilated
+    bright sources are excluded before iterative sigma clipping.
+    Background RMS is a descriptive scatter, not the uncertainty in the
+    estimated sky.
     """
     data = np.array(image, dtype=float, copy=True)
     if data.ndim != 2 or min(data.shape) < 10:
@@ -78,7 +78,12 @@ def subtract_galaxy_background(
     if not 0 < border_fraction < 0.5:
         raise ValueError("Require 0 < border_fraction < 0.5.")
 
-    if not np.isfinite(sigma) or sigma <= 0 or not isinstance(dilation, int) or dilation < 0:
+    if (
+        not np.isfinite(sigma)
+        or sigma <= 0
+        or not isinstance(dilation, int)
+        or dilation < 0
+    ):
         raise ValueError("Invalid sigma or dilation.")
 
     def checked_mask(mask):
@@ -94,20 +99,24 @@ def subtract_galaxy_background(
     yy, xx = np.indices(data.shape)
     width = max(1, int(min(data.shape) * border_fraction))
     edge = (xx < width) | (xx >= nx - width) | (yy < width) | (yy >= ny - width)
-    central = ((xx-(nx-1)/2)/(0.35*nx))**2 + ((yy-(ny-1)/2)/(0.35*ny))**2 < 1
+    central = ((xx - (nx - 1) / 2) / (0.35 * nx)) ** 2 + (
+        (yy - (ny - 1) / 2) / (0.35 * ny)
+    ) ** 2 < 1
     candidates = valid & edge & ~central & ~checked_mask(source_mask)
     if candidates.sum() < 30:
         raise ValueError("Insufficient sky pixels; use a larger cutout.")
-    preliminary = sigma_clip(data[candidates], sigma=sigma, maxiters=10,
-                             cenfunc="median", stdfunc="mad_std")
+    preliminary = sigma_clip(
+        data[candidates], sigma=sigma, maxiters=10, cenfunc="median", stdfunc="mad_std"
+    )
     level = float(np.ma.median(preliminary))
     rms = float(np.ma.std(preliminary))
-    bright = valid & (data > level + sigma*rms)
+    bright = valid & (data > level + sigma * rms)
     if dilation:
         bright = binary_dilation(bright, iterations=dilation)
     candidates &= ~bright
-    clipped = sigma_clip(data[candidates], sigma=sigma, maxiters=10,
-                         cenfunc="median", stdfunc="mad_std")
+    clipped = sigma_clip(
+        data[candidates], sigma=sigma, maxiters=10, cenfunc="median", stdfunc="mad_std"
+    )
     sky_mask = np.zeros(data.shape, dtype=bool)
     sky_mask[candidates] = ~np.ma.getmaskarray(clipped)
     if sky_mask.sum() < 30:
@@ -135,18 +144,24 @@ def subtract_galaxy_background(
     return corrected, background, sky_mask, diagnostics
 
 
-def check_galaxy_edge(image, background, margin_fraction=0.1,
-                      peak_fraction=0.01, noise_threshold=3.0):
+def check_galaxy_edge(
+    image, background, margin_fraction=0.1, peak_fraction=0.01, noise_threshold=3.0
+):
     """Flag detected central structure entering a border margin.
 
     Experimental detection on a 3x3 median-filtered copy only. Track the
-    connected component containing the brightest pixel in the central half
-    of the stamp. Faint structure below the threshold can be missed; this is
-    not a guarantee of complete morphology. Invalid stamps are rejected.
-    The original image is never masked, smoothed, or cropped.
+    connected component containing the brightest pixel in the central
+    half of the stamp. Faint structure below the threshold can be
+    missed; this is not a guarantee of complete morphology. Invalid
+    stamps are rejected. The original image is never masked, smoothed,
+    or cropped.
     """
     data = np.asarray(image, dtype=float)
-    if not 0 < margin_fraction < 0.5 or not 0 < peak_fraction < 1 or noise_threshold <= 0:
+    if (
+        not 0 < margin_fraction < 0.5
+        or not 0 < peak_fraction < 1
+        or noise_threshold <= 0
+    ):
         raise ValueError("Invalid edge detection thresholds.")
     if data.ndim != 2 or min(data.shape) < 10 or not np.isfinite(data).all():
         return {"rejected": True, "reason": "invalid_cutout"}
@@ -157,27 +172,36 @@ def check_galaxy_edge(image, background, margin_fraction=0.1,
     edge[width:-width, width:-width] = False
     values = smooth[edge]
     noise = 1.4826 * np.median(np.abs(values - np.median(values)))
-    center = smooth[ny//4:ny-ny//4, nx//4:nx-nx//4]
+    center = smooth[ny // 4 : ny - ny // 4, nx // 4 : nx - nx // 4]
     iy, ix = np.unravel_index(np.argmax(center), center.shape)
-    seed = (iy + ny//4, ix + nx//4)
+    seed = (iy + ny // 4, ix + nx // 4)
     peak = float(smooth[seed])
     threshold = max(noise_threshold * noise, peak_fraction * peak)
     components, _ = label(smooth > threshold, structure=np.ones((3, 3)))
     component = components[seed]
     detected = component != 0
     touches = bool(np.any((components == component) & edge)) if detected else False
-    return {"rejected": touches or not detected,
-            "reason": "edge_structure" if touches else ("accepted" if detected else "undetected_source"),
-            "threshold": float(threshold), "margin_pixels": width,
-            "peak": peak, "background": float(background)}
+    return {
+        "rejected": touches or not detected,
+        "reason": (
+            "edge_structure"
+            if touches
+            else ("accepted" if detected else "undetected_source")
+        ),
+        "threshold": float(threshold),
+        "margin_pixels": width,
+        "peak": peak,
+        "background": float(background),
+    }
 
 
 def filter_edge_catalog(catalog, catalog_type, catalog_path, **edge_kwargs):
     """Read and screen native templates before any parameter matching.
 
-    Returns a new table and per-template diagnostics. Missing files or HST
-    metadata errors propagate; unusable images/sky are rejected. No FITS is
-    modified. All COSMOS Web bands must pass. Callers may cache this result.
+    Returns a new table and per-template diagnostics. Missing files or
+    HST metadata errors propagate; unusable images/sky are rejected. No
+    FITS is modified. All COSMOS Web bands must pass. Callers may cache
+    this result.
     """
     if catalog_type not in ("HST_COSMOS", "COSMOS_WEB"):
         raise ValueError("Unsupported catalog type.")
@@ -187,13 +211,20 @@ def filter_edge_catalog(catalog, catalog_type, catalog_path, **edge_kwargs):
     for row in catalog:
         hst = catalog_type == "HST_COSMOS"
         identifier = int(row["IDENT"] if hst else row["id"])
-        name = row["GAL_FILENAME"] if hst else f"COSMOSWeb_galaxy_{identifier}_image.fits"
+        name = (
+            row["GAL_FILENAME"] if hst else f"COSMOSWeb_galaxy_{identifier}_image.fits"
+        )
         bands = []
         with fits.open(Path(catalog_path) / name) as hdul:
             indices = [int(row["GAL_HDU"])] if hst else range(1, 5)
             for index in indices:
                 img = hdul[index].data
-                if img is None or img.ndim != 2 or min(img.shape) < 10 or not np.isfinite(img).all():
+                if (
+                    img is None
+                    or img.ndim != 2
+                    or min(img.shape) < 10
+                    or not np.isfinite(img).all()
+                ):
                     bands.append({"rejected": True, "reason": "invalid_cutout"})
                     continue
                 if hst:

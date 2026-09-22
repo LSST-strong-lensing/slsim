@@ -107,8 +107,14 @@ class CatalogSource(SourceBase):
         self._reject_edge_sources = reject_edge_sources
         self._edge_detection_kwargs = dict(edge_detection_kwargs or {})
         self.edge_diagnostics = None
-        if reject_edge_sources and catalog_type != "COSMOS_WEB" and not (sersic_fallback or band_dependent_color_gradient):
-            raise ValueError("Edge rejection requires sersic_fallback=True or chromatic fallback.")
+        if (
+            reject_edge_sources
+            and catalog_type != "COSMOS_WEB"
+            and not (sersic_fallback or band_dependent_color_gradient)
+        ):
+            raise ValueError(
+                "Edge rejection requires sersic_fallback=True or chromatic fallback."
+            )
         self._band_dependent_color_gradient = band_dependent_color_gradient
         self._color_gradient = color_gradient
         self._fallback_double_sersic_kwargs = fallback_double_sersic_kwargs
@@ -206,12 +212,19 @@ class CatalogSource(SourceBase):
                 cache = getattr(CatalogSource, "_edge_catalog_cache", None)
                 if cache is None:
                     cache = CatalogSource._edge_catalog_cache = {}
-                key = (id(catalog), self._catalog_type, str(self._catalog_path),
-                       tuple(sorted(self._edge_detection_kwargs.items())))
+                key = (
+                    id(catalog),
+                    self._catalog_type,
+                    str(self._catalog_path),
+                    tuple(sorted(self._edge_detection_kwargs.items())),
+                )
                 if key not in cache:
                     filtered, diagnostics = filter_edge_catalog(
-                        catalog, self._catalog_type, self._catalog_path,
-                        **self._edge_detection_kwargs)
+                        catalog,
+                        self._catalog_type,
+                        self._catalog_path,
+                        **self._edge_detection_kwargs,
+                    )
                     # Retain original table too, so its id cannot be recycled.
                     cache[key] = (catalog, filtered, diagnostics)
                 _, catalog, self.edge_diagnostics = cache[key]
@@ -303,7 +316,8 @@ class CatalogSource(SourceBase):
         )
 
     def _double_sersic_fallback(self):
-        """Build the DoubleSersic fallback after an unavailable catalog match."""
+        """Build the DoubleSersic fallback after an unavailable catalog
+        match."""
         if hasattr(self, "double_sersic"):
             return self.double_sersic
 

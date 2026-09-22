@@ -49,18 +49,30 @@ def test_background_native_bands(monkeypatch, catalog_type, count, enabled):
 
 @pytest.mark.parametrize("catalog_type, count", [("HST_COSMOS", 1), ("COSMOS_WEB", 4)])
 def test_edge_rejection_falls_back_once(monkeypatch, catalog_type, count):
-    attr = ("processed_hst_cosmos_catalog" if count == 1
-            else "processed_cosmos_web_catalog")
+    attr = (
+        "processed_hst_cosmos_catalog" if count == 1 else "processed_cosmos_web_catalog"
+    )
     monkeypatch.setattr(CatalogSource, attr, None, raising=False)
     source = CatalogSource(
-        angular_size=0.3, e1=0.1, e2=0, n_sersic=1,
-        cosmo=FlatLambdaCDM(H0=70, Om0=0.3), catalog_type=catalog_type,
-        catalog_path="unused", reject_edge_sources=True, sersic_fallback=True,
-        subtract_background=True, z=1, mag_i=22, mag_r=22,
-        center_x=0, center_y=0,
+        angular_size=0.3,
+        e1=0.1,
+        e2=0,
+        n_sersic=1,
+        cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
+        catalog_type=catalog_type,
+        catalog_path="unused",
+        reject_edge_sources=True,
+        sersic_fallback=True,
+        subtract_background=True,
+        z=1,
+        mag_i=22,
+        mag_r=22,
+        center_x=0,
+        center_y=0,
     )
     from astropy.table import Table
     import importlib
+
     module = importlib.import_module("slsim.Sources.SourceTypes.catalog_source")
     source.final_catalog = Table({"id": [1]})
     monkeypatch.setattr(CatalogSource, "_edge_catalog_cache", {}, raising=False)
