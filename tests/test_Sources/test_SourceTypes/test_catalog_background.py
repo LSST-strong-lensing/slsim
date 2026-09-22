@@ -45,3 +45,42 @@ def test_background_native_bands(monkeypatch, catalog_type, count, enabled):
     expected = source._image_list[0 if count == 1 else 2]
     np.testing.assert_array_equal(first[0]["image"], expected)
     assert (source.background_diagnostics is not None) == enabled
+
+
+@pytest.mark.parametrize("catalog_type, count", [("HST_COSMOS", 1), ("COSMOS_WEB", 4)])
+def test_edge_rejection_falls_back_once(monkeypatch, catalog_type, count):
+    attr = ("processed_hst_cosmos_catalog" if count == 1
+            else "processed_cosmos_web_catalog")
+    monkeypatch.setattr(CatalogSource, attr, None, raising=False)
+    source = CatalogSource(
+        angular_size=0.3, e1=0.1, e2=0, n_sersic=1,
+        cosmo=FlatLambdaCDM(H0=70, Om0=0.3), catalog_type=catalog_type,
+        catalog_path="unused", reject_edge_sources=True, sersic_fallback=True,
+        subtract_background=True, z=1, mag_i=22, mag_r=22,
+        center_x=0, center_y=0,
+    )
+    from astropy.table import Table
+    import importlib
+    module = importlib.import_module("slsim.Sources.SourceTypes.catalog_source")
+    source.final_catalog = Table({"id": [1]})
+    monkeypatch.setattr(CatalogSource, "_edge_catalog_cache", {}, raising=False)
+    calls = []
+
+    def screen(catalog, *args, **kwargs):
+        calls.append("screen")
+        return catalog[:0], [{"id": 1, "rejected": True}]
+
+    def match(**kwargs):
+        assert len(kwargs["processed_catalog"]) == 0
+        assert calls == ["screen"]
+        calls.append("match")
+        return None, None, None, None
+
+    monkeypatch.setattr(module, "filter_edge_catalog", screen)
+    monkeypatch.setattr(source, "_match_source", match)
+    for band in ["i", "r"]:
+        models, _ = source.kwargs_extended_light(band)
+        assert len(models) == (2 if catalog_type == "COSMOS_WEB" else 1)
+        assert "INTERPOL" not in models
+    assert calls == ["screen", "match"]
+    assert source.background_diagnostics is None
