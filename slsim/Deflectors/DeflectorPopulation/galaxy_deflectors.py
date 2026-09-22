@@ -27,6 +27,7 @@ class GalaxyDeflectors(DeflectorsBase):
         catalog_type="skypy",
         mass_type="EPL",
         light_type="single_sersic",
+        sis_convention=True,
         foreground_color_gradient=None,
         foreground_component_weights=(0.4, 0.6),
     ):
@@ -66,6 +67,11 @@ class GalaxyDeflectors(DeflectorsBase):
          default, this class considers deflector catalog is generated using skypy
          pipeline.
         :type catalog_type: str. "skypy" or None.
+        :param sis_convention: if True, the Einstein radius of an EPL deflector is
+         normalized with the SIS convention. Only relevant for mass_type="EPL" with
+         gamma_pl != 2. The non-SIS normalization solves the spherical Jeans equation
+         for every deflector and is orders of magnitude slower.
+        :type sis_convention: bool
         """
         if foreground_color_gradient is not None:
             if light_type not in ("single_sersic", "double_sersic"):
@@ -118,4 +124,5 @@ class GalaxyDeflectors(DeflectorsBase):
             catalog_type=catalog_type,
             mass_type=mass_type,
             light_type=light_type,
+            sis_convention=sis_convention,
         )
