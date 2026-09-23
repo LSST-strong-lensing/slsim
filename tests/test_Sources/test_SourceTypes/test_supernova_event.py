@@ -66,6 +66,15 @@ class TestSupernovaEvent:
         light_curve_roman = self.source_roman.light_curve
         light_curve_none = self.source_none.light_curve
 
+        assert "ps_mag_i" not in self.source.source_dict
+        assert self.source._kwargs_variability_model is light_curve
+        assert self.source.reference_magnitude("i") == np.nanmin(
+            light_curve["i"]["ps_mag_i"]
+        )
+        assert self.source.source_dict["ps_mag_i"] == self.source.reference_magnitude(
+            "i"
+        )
+
         # Check that the non-band parameters are successfully ignored
         assert "supernovae_lightcurve" not in light_curve.keys()
         assert "supernovae_lightcurve" not in light_curve_roman.keys()
@@ -134,12 +143,19 @@ class TestSupernovaEvent:
         assert failed_light_curve == {}
 
     def test_point_source_magnitude(self):
-        assert self.source.point_source_magnitude("i") is not None
+        assert not self.source._variability_computed
+        peak = self.source.reference_magnitude("i")
+        assert self.source._variability_computed
+        assert peak == self.source.point_source_magnitude("i")
+        assert peak == self.source.source_dict["ps_mag_i"]
+        assert peak == np.nanmin(self.source._kwargs_variability_model["i"]["ps_mag_i"])
         with pytest.raises(ValueError):
             self.source.point_source_magnitude("g")
         with pytest.raises(ValueError):
             self.source_none.point_source_magnitude("i", image_observation_times=10)
+        assert self.source_none.reference_magnitude("i") == 20
         assert self.source_none.point_source_magnitude("i") == 20
+        assert self.source_light_curve.reference_magnitude("i") == 21
         assert self.source_light_curve.point_source_magnitude("i") == 21
 
     def test_update_microlensing_kwargs_source_morphology(self):
