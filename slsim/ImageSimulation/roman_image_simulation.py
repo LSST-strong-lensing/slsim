@@ -39,6 +39,7 @@ def simulate_roman_image(
     subtract_mean_background=True,
     with_source=True,
     with_deflector=True,
+    with_point_source=True,
     exposure_time=None,
     num_exposures=None,
     t_obs=None,
@@ -73,6 +74,8 @@ def simulate_roman_image(
     :type with_source: bool
     :param with_deflector: determines whether deflector is included in image.
     :type with_deflector: bool
+    :param with_point_source: determines whether the point source is included.
+    :type with_point_source: bool
     :param exposure_time: exposure time of image. If None, a default exposure time will be retrieved from
         lenstronomy's SimulationAPI.ObservationConfig based on the Roman survey mode.
     :type exposure_time: int, optional
@@ -192,7 +195,7 @@ def simulate_roman_image(
         unconvolved=True,
         source_add=with_source,
         lens_light_add=with_deflector,
-        point_source_add=True,
+        point_source_add=with_point_source,
     )
     # Converts image to the galsim InterpolatedImage class
     interp = InterpolatedImage(

@@ -203,7 +203,7 @@ class QuasarRate(object):
         :return: dPhi_dM value in the unit of comoving volume.
         :rtype: float or np.ndarray :unit: mag^-1 Mpc^-3
         """
-        return_scalar = np.ndim(M) == 0
+        return_scalar = np.ndim(M) == 0 and np.ndim(z_value) == 0
 
         M = np.atleast_1d(M)
         z_value = np.atleast_1d(z_value)
