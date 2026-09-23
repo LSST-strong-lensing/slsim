@@ -1,6 +1,5 @@
 from slsim.Sources.SourceVariability.variability import Variability
 from slsim.Sources.SourceTypes.source_base import SourceBase
-import numpy as np
 
 
 class GeneralLightCurve(SourceBase):
