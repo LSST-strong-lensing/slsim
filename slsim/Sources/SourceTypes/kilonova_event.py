@@ -136,12 +136,16 @@ class KilonovaEvent(SourceBase):
         return kwargs_variab_extracted
 
     def point_source_magnitude(self, band, image_observation_times=None):
-        """Return the magnitude at a source-frame time or the reference value.
+        """Get the magnitude of the BNS/kilonova point source in a specific
+        band.
 
-        :param band: Imaging band
+        :param band: Imaging band.
+        :type band: str
         :param image_observation_times: Source-frame time(s), or None to use
             :meth:`reference_magnitude`
-        :return: Magnitude in the requested band
+        :type image_observation_times: float, array, or None
+        :return: Magnitude of the point source in the specified band.
+        :rtype: float or array-like
         """
         if image_observation_times is not None and not self._variability_computed:
             self._kwargs_variability_model = self.light_curve

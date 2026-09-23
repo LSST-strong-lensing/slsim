@@ -168,8 +168,10 @@ class SupernovaEvent(SourceBase):
         """Return the magnitude at a source-frame time or the reference value.
 
         :param band: Imaging band
+        :type band: str
         :param image_observation_times: Source-frame time(s), or None to use
             :meth:`reference_magnitude`
+        :type image_observation_times: float, array, or None
         :return: Magnitude in the requested band
         """
         # TODO: check whether image observation times are outside of light curve,
