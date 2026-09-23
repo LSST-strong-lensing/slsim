@@ -86,6 +86,10 @@ class TestSourceBase:
         assert source.point_source_magnitude("i") == 21
         assert source.point_source_magnitude("i", image_observation_times=0) == 21
 
+        # when no point_source then [] is returned
+        source = SourceBase(z=1, point_source=False)
+        assert source.point_source_magnitude("i") == []
+
     def test_kwargs_point_source(self):
         source = SourceBase(z=1, point_source=False)
         source_model, kwargs_source = source.kwargs_point_source(
