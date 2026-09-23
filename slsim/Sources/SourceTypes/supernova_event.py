@@ -153,13 +153,6 @@ class SupernovaEvent(SourceBase):
                     )
                     continue
 
-                # If successful, store the magnitudes. The light curve is infinite
-                # wherever the supernova has no flux, so a peak magnitude only
-                # exists if something finite is left.
-                peak_magnitude = np.nanmin(magnitudes)
-                if name not in self.source_dict and np.isfinite(peak_magnitude):
-                    self.source_dict[name] = float(peak_magnitude)
-
                 kwargs_variab_extracted[element] = {
                     "MJD": padded_times,
                     name: magnitudes,
@@ -167,30 +160,46 @@ class SupernovaEvent(SourceBase):
         else:
             kwargs_variab_extracted = {}
 
+        self._kwargs_variability_model = kwargs_variab_extracted
         self._variability_computed = True
         return kwargs_variab_extracted
 
     def point_source_magnitude(self, band, image_observation_times=None):
-        """Get the magnitude of the point source in a specific band.
+        """Return the magnitude at a source-frame time or the reference value.
 
         :param band: Imaging band
-        :type band: str
-        :param image_observation_times: Source-frame time(s) at which to evaluate
-            the light curve. If None, generate the light curve if needed and
-            return the brightest sampled magnitude stored in ``ps_mag_<band>``.
-            An explicitly supplied ``ps_mag_<band>`` takes precedence; if it
-            is an array, return its arithmetic mean.
-        :type image_observation_times: array or None
-        :return: Magnitude of the point source in the specified band
-        :rtype: float or array-like
+        :param image_observation_times: Source-frame time(s), or None to use
+            :meth:`reference_magnitude`
+        :return: Magnitude in the requested band
         """
         # TODO: check whether image observation times are outside of light curve,
         #  then we can simply set the magnitude = -inf
-        if not self._variability_computed:
+        if image_observation_times is not None and not self._variability_computed:
             self._kwargs_variability_model = self.light_curve
         return super().point_source_magnitude(
             band=band, image_observation_times=image_observation_times
         )
+
+    def reference_magnitude(self, band):
+        """Return the sampled peak, or a supplied magnitude if present.
+
+        If no magnitude was supplied, generate the light curve if needed and
+        store its brightest finite sample. A supplied array returns its
+        arithmetic mean.
+
+        :param band: Imaging band
+        :return: Reference magnitude in the requested band
+        :rtype: float
+        """
+        if not self._variability_computed:
+            self._kwargs_variability_model = self.light_curve
+        key = "ps_mag_" + band
+        if key not in self.source_dict and band in self._kwargs_variability_model:
+            samples = self._kwargs_variability_model[band][key]
+            peak = np.nanmin(samples)
+            if np.isfinite(peak):
+                self.source_dict[key] = float(peak)
+        return super().reference_magnitude(band)
 
     def update_microlensing_kwargs_source_morphology(self, kwargs_source_morphology):
         """Injects the sncosmo model instance into morphology kwargs so the

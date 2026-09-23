@@ -269,24 +269,15 @@ class SourceBase(ABC):
         :param band: Imaging band
         :type band: str
         :param image_observation_times: Source-frame time(s) at which to evaluate
-            the variability model. If None, return the arithmetic mean of the
-            stored ``ps_mag_<band>`` value(s), without evaluating the light curve.
-            This does not imply time zero or peak brightness. If the variability
-            model is ``"NONE"``, supplied times are ignored.
+            the variability model. If None, return :meth:`reference_magnitude`.
+            If the variability model is ``"NONE"``, supplied times are ignored.
         :return: Magnitude of the point source in the specified band
         :rtype: float or array-like (empty list if there is no point source)
         """
         if self._point_source is False:
             return []
         if image_observation_times is None or self._variability_model == "NONE":
-            band_string = "ps_mag_" + band
-            if band_string not in self.source_dict:
-                raise ValueError(
-                    "required parameter %s is missing in the source dictionary to provide point source "
-                    "magnitude without an image_observation_time or without a variability model."
-                    % band_string
-                )
-            return np.mean(self.source_dict[band_string])
+            return self.reference_magnitude(band)
         else:
             if band not in self._variability_bands:
                 if band not in self._kwargs_variability_model:
@@ -301,6 +292,28 @@ class SourceBase(ABC):
             return self._variability_bands[band].variability_at_time(
                 image_observation_times
             )
+
+    def reference_magnitude(self, band):
+        """Return the point source magnitude used when no time is supplied.
+
+        The default is the arithmetic mean of the stored ``ps_mag_<band>``
+        magnitude(s), not a flux mean or a value at time zero. Source types
+        may prepare their stored value before calling this method.
+
+        :param band: Imaging band
+        :type band: str
+        :return: Reference magnitude for the requested band
+        :rtype: float (empty list if there is no point source)
+        """
+        if self._point_source is False:
+            return []
+        band_string = "ps_mag_" + band
+        if band_string not in self.source_dict:
+            raise ValueError(
+                "required parameter %s is missing in the source dictionary to provide "
+                "the point source reference magnitude." % band_string
+            )
+        return np.mean(self.source_dict[band_string])
 
     def point_source_type(self, image_positions=False):
         """Type of point source model.

@@ -235,12 +235,8 @@ class Source(object):
         :type band: str
         :param image_observation_times: Observer-frame observation time(s).
             SLSim converts these to source-frame times using ``time_zero_point``
-            and redshift before evaluating variability. If None, return the
-            arithmetic mean of the stored ``ps_mag_<band>`` value(s) without querying
-            a particular time. For quasars this does not generate the light
-            curve. For supernovae and kilonovae it generates the light curve if
-            needed and stores its sampled peak if no magnitude was supplied.
-            None does not mean time zero.
+            and redshift before evaluating variability. If None, return
+            :meth:`reference_magnitude` without querying a particular time.
         :return: Magnitude of the point source in the specified band
         :rtype: float or array-like
         """
@@ -250,6 +246,23 @@ class Source(object):
         return self._source.point_source_magnitude(
             band=band, image_observation_times=source_observation_time
         )
+
+    def reference_magnitude(self, band):
+        """Return the point source magnitude used when no time is supplied.
+
+        This is the arithmetic mean of stored ``ps_mag_<band>`` value(s).
+        Quasars use a supplied or modeled mean without generating the light
+        curve. General light curves average their supplied magnitude samples.
+        Supernovae and kilonovae generate a light curve if needed and store
+        its sampled peak when no magnitude was supplied. This method does not
+        evaluate the source at time zero.
+
+        :param band: Imaging band
+        :type band: str
+        :return: Reference magnitude for the requested band
+        :rtype: float
+        """
+        return self._source.reference_magnitude(band)
 
     def point_source_type(self, image_positions=False):
         """Type of point source model.

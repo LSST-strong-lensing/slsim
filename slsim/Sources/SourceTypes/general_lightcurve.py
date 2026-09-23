@@ -59,10 +59,9 @@ class GeneralLightCurve(SourceBase):
         :param band: Imaging band
         :type band: str
         :param image_observation_times: Source-frame time(s) at which to
-            evaluate the light curve. If None, return the arithmetic
-            mean of the stored magnitudes, rather than the value at time
-            zero or at peak brightness. This averages magnitudes, not
-            fluxes or time intervals.
+            evaluate the light curve. If None, return
+            :meth:`reference_magnitude`, the arithmetic mean of the stored
+            magnitudes rather than the value at time zero or peak brightness.
         :return: Magnitude of the point source in the specified band
         :rtype: float or array-like
         """
@@ -74,7 +73,7 @@ class GeneralLightCurve(SourceBase):
             )
 
         if image_observation_times is None or self._variability_model == "NONE":
-            return np.mean(self.source_dict[band_string])
+            return self.reference_magnitude(band)
         else:
             if band not in self._variability_bands:
                 kwargs_variab_band = {
