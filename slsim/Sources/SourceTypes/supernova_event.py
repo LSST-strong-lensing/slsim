@@ -175,11 +175,14 @@ class SupernovaEvent(SourceBase):
 
         :param band: Imaging band
         :type band: str
-        :param image_observation_times: Images observation time for an
-            image. If None, takes the peak magnitude
+        :param image_observation_times: Source-frame time(s) at which to evaluate
+            the light curve. If None, generate the light curve if needed and
+            return the brightest sampled magnitude stored in ``ps_mag_<band>``.
+            An explicitly supplied ``ps_mag_<band>`` takes precedence; if it
+            is an array, return its arithmetic mean.
         :type image_observation_times: array or None
         :return: Magnitude of the point source in the specified band
-        :rtype: float
+        :rtype: float or array-like
         """
         # TODO: check whether image observation times are outside of light curve,
         #  then we can simply set the magnitude = -inf

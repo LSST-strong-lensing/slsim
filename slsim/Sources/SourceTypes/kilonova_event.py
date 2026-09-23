@@ -143,8 +143,11 @@ class KilonovaEvent(SourceBase):
 
         :param band: Imaging band.
         :type band: str
-        :param image_observation_times: Image observation times in
-            [days]. If None, takes the peak magnitude.
+        :param image_observation_times: Source-frame observation times in
+            days. If None, generate the light curve if needed and return the
+            brightest sampled magnitude stored in ``ps_mag_<band>``. An
+            explicitly supplied ``ps_mag_<band>`` takes precedence; if it is
+            an array, return its arithmetic mean.
         :type image_observation_times: array-like or None
         :return: Magnitude of the point source in the specified band.
         :rtype: float or array-like

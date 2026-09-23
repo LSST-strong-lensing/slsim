@@ -85,10 +85,13 @@ class PointSource(object):
 
         :param band: Imaging band
         :type band: str
-        :param image_observation_times: Images observation time for an
-            image.
+        :param image_observation_times: Source-frame observation time(s).
+            If None, return the mean of the stored ``ps_mag_<band>`` value(s).
+            A quasar uses its stored magnitude without generating a light curve;
+            a supernova or kilonova generates its light curve if needed and
+            stores its sampled peak unless a magnitude was supplied explicitly.
         :return: Magnitude of the point source in the specified band
-        :rtype: float
+        :rtype: float or array-like
         """
         return self._point_source.point_source_magnitude(
             band=band, image_observation_times=image_observation_times

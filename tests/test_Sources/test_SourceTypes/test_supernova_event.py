@@ -134,7 +134,11 @@ class TestSupernovaEvent:
         assert failed_light_curve == {}
 
     def test_point_source_magnitude(self):
-        assert self.source.point_source_magnitude("i") is not None
+        peak = self.source.point_source_magnitude("i")
+        assert peak == self.source.source_dict["ps_mag_i"]
+        assert peak == np.nanmin(
+            self.source._kwargs_variability_model["i"]["ps_mag_i"]
+        )
         with pytest.raises(ValueError):
             self.source.point_source_magnitude("g")
         with pytest.raises(ValueError):

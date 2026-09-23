@@ -233,10 +233,16 @@ class Source(object):
 
         :param band: Imaging band
         :type band: str
-        :param image_observation_times: Images observation time for an
-            image.
+        :param image_observation_times: Observer-frame observation time(s).
+            SLSim converts these to source-frame times using ``time_zero_point``
+            and redshift before evaluating variability. If None, return the
+            arithmetic mean of the stored ``ps_mag_<band>`` value(s) without querying
+            a particular time. For quasars this does not generate the light
+            curve. For supernovae and kilonovae it generates the light curve if
+            needed and stores its sampled peak if no magnitude was supplied.
+            None does not mean time zero.
         :return: Magnitude of the point source in the specified band
-        :rtype: float
+        :rtype: float or array-like
         """
         source_observation_time = self._image_to_source_time_translation(
             image_observation_times

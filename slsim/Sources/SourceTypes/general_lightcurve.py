@@ -53,17 +53,17 @@ class GeneralLightCurve(SourceBase):
         # These are the keywords that kwargs dict should contain
         self._MJD = MJD
 
-    def point_source_magnitude(
-        self, band, image_observation_times=None, at_maximum=False
-    ):
+    def point_source_magnitude(self, band, image_observation_times=None):
         """Get the magnitude of the point source in a specific band.
 
         :param band: Imaging band
         :type band: str
-        :param image_observation_times: Images observation time for an
-            image.
+        :param image_observation_times: Source-frame time(s) at which to evaluate
+            the light curve. If None, return the arithmetic mean of the stored
+            magnitudes, rather than the value at time zero or at peak brightness.
+            This averages magnitudes, not fluxes or time intervals.
         :return: Magnitude of the point source in the specified band
-        :rtype: float
+        :rtype: float or array-like
         """
 
         band_string = "ps_mag_" + band
@@ -73,7 +73,6 @@ class GeneralLightCurve(SourceBase):
             )
 
         if image_observation_times is None or self._variability_model == "NONE":
-            band_string = "ps_mag_" + band
             return np.mean(self.source_dict[band_string])
         else:
             if band not in self._variability_bands:

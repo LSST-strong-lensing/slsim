@@ -263,19 +263,18 @@ class SourceBase(ABC):
             self._center_point_source = self.extended_source_position + self._offset
         return self._center_point_source
 
-    def point_source_magnitude(
-        self, band, image_observation_times=None, at_maximum=False
-    ):
+    def point_source_magnitude(self, band, image_observation_times=None):
         """Get the magnitude of the point source in a specific band.
 
         :param band: Imaging band
         :type band: str
-        :param image_observation_times: Images observation time for an
-            image.
-        :param at_maximum: returns maximum brightness (minimum
-            magnitude) of a light curve. I.e. peak magnitude of a SNe.
+        :param image_observation_times: Source-frame time(s) at which to evaluate
+            the variability model. If None, return the arithmetic mean of the
+            stored ``ps_mag_<band>`` value(s), without evaluating the light curve.
+            This does not imply time zero or peak brightness. If the variability
+            model is ``"NONE"``, supplied times are ignored.
         :return: Magnitude of the point source in the specified band
-        :rtype: float
+        :rtype: float or array-like (empty list if there is no point source)
         """
         if self._point_source is False:
             return []
@@ -284,7 +283,7 @@ class SourceBase(ABC):
             if band_string not in self.source_dict:
                 raise ValueError(
                     "required parameter %s is missing in the source dictionary to provide point source "
-                    "magnitude without a image_observation_time or without variability model."
+                    "magnitude without an image_observation_time or without a variability model."
                     % band_string
                 )
             return np.mean(self.source_dict[band_string])
