@@ -4,6 +4,11 @@ from slsim.Sources.SourceTypes.source_base import SourceBase
 from slsim.Sources.SourceCatalogues.CosmosWebCatalog import galaxy_match as CosmosWeb
 from slsim.Sources.SourceCatalogues.HSTCosmosCatalog import galaxy_match as HSTCosmos
 from slsim.Util.color_gradient import radial_color_gradient_image
+from slsim.Util.galaxy_background import (
+    subtract_galaxy_background,
+    subtract_hst_catalog_background,
+    filter_edge_catalog,
+)
 from lenstronomy.Util.param_util import ellipticity2phi_q
 
 CATALOG_TYPES = ["HST_COSMOS, COSMOS_WEB"]
@@ -31,6 +36,9 @@ class CatalogSource(SourceBase):
         band_dependent_color_gradient=False,
         color_gradient=None,
         fallback_double_sersic_kwargs=None,
+        subtract_background=False,
+        reject_edge_sources=False,
+        edge_detection_kwargs=None,
         **source_dict,
     ):
         """
@@ -71,6 +79,18 @@ class CatalogSource(SourceBase):
         :param fallback_double_sersic_kwargs: Optional overrides for the
          DoubleSersic parameters used after a failed HST_COSMOS match.
         :type fallback_double_sersic_kwargs: dict or None
+        :param subtract_background: Experimental opt-in constant sky subtraction
+         on each native catalog band, before band mixing or color gradients.
+         HST uses the matched catalog NOISE_MEAN (missing/invalid values raise
+         ValueError). COSMOS Web estimates sky from the outskirts, requiring
+         usable sky and potentially oversubtracting wings. Analytic fallback
+         is unaffected. Pass original, uncorrected catalog cutouts.
+        :type subtract_background: bool
+        :param reject_edge_sources: Filter catalog templates before matching, cached per catalog and
+         detection settings. Reject a template if any native band fails. COSMOS
+         Web without a valid match automatically uses DoubleSersic; HST uses
+         its configured analytic fallback.
+        :param edge_detection_kwargs: Optional thresholds for check_galaxy_edge.
         """
         super().__init__(extended_source=True, point_source=False, **source_dict)
         self.name = "GAL"
@@ -82,6 +102,19 @@ class CatalogSource(SourceBase):
         self._max_scale = max_scale
         self._match_n_sersic = match_n_sersic
         self._sersic_fallback = sersic_fallback
+        self._subtract_background = subtract_background
+        self.background_diagnostics = None
+        self._reject_edge_sources = reject_edge_sources
+        self._edge_detection_kwargs = dict(edge_detection_kwargs or {})
+        self.edge_diagnostics = None
+        if (
+            reject_edge_sources
+            and catalog_type != "COSMOS_WEB"
+            and not (sersic_fallback or band_dependent_color_gradient)
+        ):
+            raise ValueError(
+                "Edge rejection requires sersic_fallback=True or chromatic fallback."
+            )
         self._band_dependent_color_gradient = band_dependent_color_gradient
         self._color_gradient = color_gradient
         self._fallback_double_sersic_kwargs = fallback_double_sersic_kwargs
@@ -157,7 +190,7 @@ class CatalogSource(SourceBase):
     @property
     def matched_source_id(self):
         """ID of the matched galaxy from the corresponding catalog."""
-        if hasattr(self, "_matched_source"):
+        if getattr(self, "_matched_source", None) is not None:
             if self._catalog_type == "HST_COSMOS":
                 return self._matched_source["IDENT"]
 
@@ -174,6 +207,27 @@ class CatalogSource(SourceBase):
         :return: dictionary of keywords for the source light model(s)
         """
         if not hasattr(self, "_image_list"):
+            catalog = self.final_catalog
+            if self._reject_edge_sources:
+                cache = getattr(CatalogSource, "_edge_catalog_cache", None)
+                if cache is None:
+                    cache = CatalogSource._edge_catalog_cache = {}
+                key = (
+                    id(catalog),
+                    self._catalog_type,
+                    str(self._catalog_path),
+                    tuple(sorted(self._edge_detection_kwargs.items())),
+                )
+                if key not in cache:
+                    filtered, diagnostics = filter_edge_catalog(
+                        catalog,
+                        self._catalog_type,
+                        self._catalog_path,
+                        **self._edge_detection_kwargs,
+                    )
+                    # Retain original table too, so its id cannot be recycled.
+                    cache[key] = (catalog, filtered, diagnostics)
+                _, catalog, self.edge_diagnostics = cache[key]
             self._image_list, self._scale, self._phi, self._matched_source = (
                 self._match_source(
                     angular_size=self.angular_size,
@@ -181,15 +235,17 @@ class CatalogSource(SourceBase):
                     axis_ratio=self._q,
                     sersic_angle=self._phi,
                     n_sersic=self._n_sersic,
-                    processed_catalog=self.final_catalog,
+                    processed_catalog=catalog,
                     catalog_path=self._catalog_path,
                     max_scale=self._max_scale,
                     match_n_sersic=self._match_n_sersic,
                 )
             )
-        # If matching fails, the optional chromatic mode uses DoubleSersic.
+        # If matching fails or a cutout is rejected, use the analytic fallback.
         if self._image_list is None:
-            if self._band_dependent_color_gradient:
+            if self._band_dependent_color_gradient or (
+                self._catalog_type == "COSMOS_WEB" and self._reject_edge_sources
+            ):
                 return self._double_sersic_fallback().kwargs_extended_light(band=band)
             if self._sersic_fallback:
                 if not hasattr(self, "single_sersic"):
@@ -211,6 +267,18 @@ class CatalogSource(SourceBase):
         else:
             mag_source = self.extended_source_magnitude(band=band)
         center_source = self.extended_source_position
+
+        if self._subtract_background and self.background_diagnostics is None:
+            # Commit only after every band succeeds; retries cannot subtract twice.
+            if self._catalog_type == "HST_COSMOS":
+                results = [
+                    subtract_hst_catalog_background(img, self._matched_source)
+                    for img in self._image_list
+                ]
+            else:
+                results = [subtract_galaxy_background(img) for img in self._image_list]
+            self._image_list = [result[0] for result in results]
+            self.background_diagnostics = [result[3] for result in results]
 
         image = self._image_for_band(band)
 
@@ -248,7 +316,8 @@ class CatalogSource(SourceBase):
         )
 
     def _double_sersic_fallback(self):
-        """Build the chromatic fallback model after a failed HST match."""
+        """Build the DoubleSersic fallback after an unavailable catalog
+        match."""
         if hasattr(self, "double_sersic"):
             return self.double_sersic
 
