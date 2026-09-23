@@ -81,9 +81,7 @@ class TestSourceBase:
         assert mag is None
 
     def test_point_source_magnitude_without_time(self):
-        source = SourceBase(
-            z=1, point_source=True, ps_mag_i=np.array([21, 18, 24])
-        )
+        source = SourceBase(z=1, point_source=True, ps_mag_i=np.array([21, 18, 24]))
         assert source.point_source_magnitude("i") == 21
 
     def test_kwargs_point_source(self):

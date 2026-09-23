@@ -58,10 +58,11 @@ class GeneralLightCurve(SourceBase):
 
         :param band: Imaging band
         :type band: str
-        :param image_observation_times: Source-frame time(s) at which to evaluate
-            the light curve. If None, return the arithmetic mean of the stored
-            magnitudes, rather than the value at time zero or at peak brightness.
-            This averages magnitudes, not fluxes or time intervals.
+        :param image_observation_times: Source-frame time(s) at which to
+            evaluate the light curve. If None, return the arithmetic
+            mean of the stored magnitudes, rather than the value at time
+            zero or at peak brightness. This averages magnitudes, not
+            fluxes or time intervals.
         :return: Magnitude of the point source in the specified band
         :rtype: float or array-like
         """
