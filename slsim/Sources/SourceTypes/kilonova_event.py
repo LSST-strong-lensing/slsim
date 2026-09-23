@@ -152,9 +152,9 @@ class KilonovaEvent(SourceBase):
     def reference_magnitude(self, band):
         """Return the sampled peak, or a supplied magnitude if present.
 
-        If no magnitude was supplied, generate the light curve if needed and
-        store its brightest finite sample. A supplied array returns its
-        arithmetic mean.
+        If no magnitude was supplied, generate the light curve if needed
+        and store its brightest finite sample. A supplied array returns
+        its arithmetic mean.
 
         :param band: Imaging band
         :return: Reference magnitude in the requested band
