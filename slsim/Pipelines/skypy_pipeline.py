@@ -3,6 +3,8 @@ from skypy.pipeline import Pipeline
 import tempfile
 import slsim.Util.param_util as util
 import astropy.units as u
+import numpy as np
+from skypy.galaxies.spectrum import KCorrectTemplates
 
 
 class SkyPyPipeline:
@@ -32,8 +34,9 @@ class SkyPyPipeline:
         :z_min: minimum redshift of the galaxy catalog to be simulated.
         :type z_min: float or None
         :z_max: maximum redshift of the galaxy catalog to be simulated.
-         If one passes u-band filter, z_max should be <= 4.09 to avoid
-         issues with skypy SED templates.
+         With the original SkyPy kcorrect templates, z_max should be <= 4.09
+         if the u-band filter is passed. Configurations using
+         slsim.Pipelines.skypy_pipeline.kcorrect are not limited by this.
         :type z_max: float or None
         """
         # path = os.path.dirname(slsim.__file__)
@@ -96,11 +99,6 @@ class SkyPyPipeline:
         # convert angular sizes from radian to arcsec
         self._pipeline["blue"]["angular_size"].convert_unit_to(u.arcsec)
         self._pipeline["red"]["angular_size"].convert_unit_to(u.arcsec)
-        # self._pipeline["angular_size"] = self._pipeline["angular_size"] * 3600 * 180 / np.pi
-
-        # *3600 * 180 / np.pi
-
-        # TODO: make filters work
 
     @property
     def blue_galaxies(self):
@@ -119,3 +117,46 @@ class SkyPyPipeline:
         :rtype: list of dict
         """
         return self._pipeline["red"]
+
+
+class ExtendedKCorrectTemplates(KCorrectTemplates):
+    """SkyPy kcorrect templates padded with zero flux blue-wards of the
+    template wavelength range. Original class :class:`~skypy.galaxies.spectrum.KCorrectTemplates`.
+
+    The kcorrect templates start at ~600 Angstrom rest-frame. SkyPy (via
+    speclite) raises an error when a redshifted filter response is not fully
+    covered by the templates, e.g. lsst u-band for z > ~4.09 or Euclid-VIS for
+    z > ~3.98. Rest-frame flux below 600 Angstrom lies beyond the Lyman limit
+    and is effectively zero, so padding the templates with zero flux there
+    allows computing magnitudes at all redshifts. Magnitudes that are fully
+    covered by the original templates are unchanged. Filters that fall entirely
+    in the padded region (e.g. u-band for z > ~5.8) return non-finite
+    magnitudes.
+    """
+
+    def __init__(self, hdu=1, wavelength_min=10 * u.AA):
+        """
+
+        :param hdu: kcorrect template HDU (1 for the smoothed templates)
+        :type hdu: int
+        :param wavelength_min: shortest rest-frame wavelength the zero-flux
+         padding extends to
+        :type wavelength_min: `~astropy.units.Quantity`
+        """
+        super().__init__(hdu=hdu)
+        wavelength_unit = self.wavelength.unit
+        edge = self.wavelength[0].to_value(wavelength_unit)
+        pad_wavelength = [
+            wavelength_min.to_value(wavelength_unit),
+            np.nextafter(edge, 0),
+        ]
+        self.wavelength = np.concatenate(
+            [pad_wavelength * wavelength_unit, self.wavelength]
+        )
+        pad_templates = np.zeros((self.templates.shape[0], len(pad_wavelength)))
+        self.templates = np.concatenate(
+            [pad_templates * self.templates.unit, self.templates], axis=1
+        )
+
+
+kcorrect = ExtendedKCorrectTemplates(hdu=1)

@@ -1,4 +1,5 @@
-﻿from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
+﻿from slsim.Pipelines.skypy_pipeline import SkyPyPipeline, kcorrect
+from skypy.galaxies.spectrum import kcorrect as skypy_kcorrect
 from astropy.cosmology import (
     LambdaCDM,
     FlatLambdaCDM,
@@ -7,6 +8,8 @@ from astropy.cosmology import (
     default_cosmology,
 )
 import os
+import numpy as np
+import astropy.units as u
 
 
 class TestSkyPyPipeline(object):
@@ -111,3 +114,41 @@ class TestSkyPyPipeline(object):
         assert "mag_z" in red_galaxies.colnames
         assert "mag_y" in red_galaxies.colnames
         assert "mag_u" in red_galaxies.colnames
+
+
+def test_euclid_roman_lsst_config_full_redshift_range():
+    import speclite.filters
+    from slsim.Pipelines.roman_speclite import configure_roman_filters, filter_names
+
+    configure_roman_filters()
+    speclite.filters.load_filters(*filter_names())
+
+    path = os.path.dirname(os.path.abspath(__file__))
+    module_path = os.path.dirname(os.path.dirname(path))
+    skypy_config = os.path.join(module_path, "data/SkyPy/euclid-roman-lsst-like.yml")
+    pipeline = SkyPyPipeline(
+        skypy_config=skypy_config,
+        sky_area=u.Quantity(0.001, "deg2"),
+        cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
+        z_min=0.0,
+        z_max=5.01,
+    )
+    blue_galaxies = pipeline.blue_galaxies
+    assert max(blue_galaxies["z"]) > 4.1
+    for name in ["mag_u", "mag_VIS", "mag_F062", "mag_i"]:
+        assert np.all(np.isfinite(blue_galaxies[name]))
+
+
+def test_extended_kcorrect_templates():
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    coeff = np.full((3, 5), 0.2)
+    args = (["lsst2016-u", "Euclid-VIS"], cosmo)
+    # unchanged where the original templates cover the filters
+    z_low = np.array([0.5, 2.0, 3.5])
+    np.testing.assert_allclose(
+        kcorrect.apparent_magnitudes(coeff, z_low, *args),
+        skypy_kcorrect.apparent_magnitudes(coeff, z_low, *args),
+    )
+    # finite where the original templates fail
+    z_high = np.array([4.2, 4.6, 5.0])
+    assert np.all(np.isfinite(kcorrect.apparent_magnitudes(coeff, z_high, *args)))
