@@ -274,10 +274,13 @@ class Quasar(SourceBase):
 
         :param band: Imaging band
         :type band: str
-        :param image_observation_times: Images observation time for an
-            image.
+        :param image_observation_times: Source-frame time(s) at which to
+            evaluate the AGN light curve. If None, return the arithmetic mean
+            of the stored ``ps_mag_<band>`` value(s) without generating the
+            light curve. This is normally a supplied or modeled mean magnitude.
+            A band with no stored magnitude raises ValueError.
         :return: Magnitude of the point source in the specified band
-        :rtype: float
+        :rtype: float or array-like
         """
 
         # If variability has not yet been computed, compute it now

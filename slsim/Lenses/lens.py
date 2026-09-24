@@ -809,8 +809,12 @@ class Lens(LensedSystemBase):
         :type band: string
         :param lensed: if True, returns the lensed magnified magnitude
         :type lensed: bool
-        :param time: time is an image observation time in units of days.
-            If None, provides magnitude without variability.
+        :param time: image observation time in days. If None, use each source's
+            ``reference_magnitude(band)``, then apply lens magnification if
+            requested. This is normally a stored mean for quasars and the
+            sampled peak for generated supernovae and kilonovae, unless a
+            magnitude was supplied. No-time calls can generate transient
+            light curves.
         :param microlensing: if using micro-lensing map to produce the
             lensed magnification
         :type microlensing: bool
@@ -1388,8 +1392,8 @@ class Lens(LensedSystemBase):
             field_galaxies_lens_model_list, kwargs_field_galaxies = (
                 self.field_galaxy_light_model_lenstronomy(band=band)
             )
-            lens_light_model_list += field_galaxies_lens_model_list
-            kwargs_lens_light += kwargs_field_galaxies
+            lens_light_model_list.extend(field_galaxies_lens_model_list)
+            kwargs_lens_light.extend(kwargs_field_galaxies)
 
         kwargs_model = {
             "lens_light_model_list": lens_light_model_list,

@@ -52,7 +52,7 @@ class BNSCatalog:
         :param model_name: The kilonova light curve model to be used. The
             model name must match a model implemented in
             ``redback.transient_models.kilonova_models``. The parameters in
-            ``kwargs_kilonova`` must match those required by the selected model. 
+            ``kwargs_kilonova`` must match those required by the selected model.
             If not provided, the default model is ``mosfit_kilonova``.
         :type model_name: str
         :param mag_zpsys: Optional, AB or Vega (AB default)
@@ -92,10 +92,10 @@ class BNSCatalog:
             self._kwargs_kilonova = default_kwargs_kilonova
         else:
             self._kwargs_kilonova = {
-            **default_kwargs_kilonova,
-            **kwargs_kilonova,
-        }
-    
+                **default_kwargs_kilonova,
+                **kwargs_kilonova,
+            }
+
     def bns_catalog(self):
         redshifts = np.linspace(0, self._z_max, 500)
 
