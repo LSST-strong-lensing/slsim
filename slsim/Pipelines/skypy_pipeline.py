@@ -121,17 +121,18 @@ class SkyPyPipeline:
 
 class ExtendedKCorrectTemplates(KCorrectTemplates):
     """SkyPy kcorrect templates padded with zero flux blue-wards of the
-    template wavelength range. Original class :class:`~skypy.galaxies.spectrum.KCorrectTemplates`.
+    template wavelength range. Original class
+    :class:`~skypy.galaxies.spectrum.KCorrectTemplates`.
 
     The kcorrect templates start at ~600 Angstrom rest-frame. SkyPy (via
-    speclite) raises an error when a redshifted filter response is not fully
-    covered by the templates, e.g. lsst u-band for z > ~4.09 or Euclid-VIS for
-    z > ~3.98. Rest-frame flux below 600 Angstrom lies beyond the Lyman limit
-    and is effectively zero, so padding the templates with zero flux there
-    allows computing magnitudes at all redshifts. Magnitudes that are fully
-    covered by the original templates are unchanged. Filters that fall entirely
-    in the padded region (e.g. u-band for z > ~5.8) return non-finite
-    magnitudes.
+    speclite) raises an error when a redshifted filter response is not
+    fully covered by the templates, e.g. lsst u-band for z > ~4.09 or
+    Euclid-VIS for z > ~3.98. Rest-frame flux below 600 Angstrom lies
+    beyond the Lyman limit and is effectively zero, so padding the
+    templates with zero flux there allows computing magnitudes at all
+    redshifts. Magnitudes that are fully covered by the original
+    templates are unchanged. Filters that fall entirely in the padded
+    region (e.g. u-band for z > ~5.8) return non-finite magnitudes.
     """
 
     def __init__(self, hdu=1, wavelength_min=10 * u.AA):
