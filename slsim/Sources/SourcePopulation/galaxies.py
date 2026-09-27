@@ -381,78 +381,16 @@ def convert_catalog_to_source(
             kwargs_source["n_sersic"] = float(galaxy["n_sersic"])
 
     if extended_source_type == "double_sersic":
-        if "e1_0" not in colnames or "e2_0" not in colnames:
-            if "ellipticity0" in colnames:
-                ellipticity0 = galaxy["ellipticity0"]
-            elif "a0" in colnames and "b0" in colnames:
-                axis_ratio_0 = axis_ratio(a=galaxy["a0"], b=galaxy["b0"])
-                ellipticity0 = eccentricity(q=axis_ratio_0)
-            else:
-                raise ValueError(
-                    "ellipticity or semi-major and semi-minor axis are missing for"
-                    " the first light profile in galaxy_list columns"
-                )
-
-            e1_0, e2_0 = galaxy_projected_eccentricity(
-                float(ellipticity0), rotation_angle=phi_rot
+        kwargs_source.update(
+            _double_sersic_source_kwargs(
+                galaxy=galaxy,
+                colnames=colnames,
+                phi_rot=phi_rot,
+                size_model=size_model,
+                catalog_type=catalog_type,
+                cosmo=cosmo,
             )
-            kwargs_source["e1_0"] = e1_0
-            kwargs_source["e2_0"] = e2_0
-
-        else:
-            kwargs_source["e1_0"] = galaxy["e1_0"]
-            kwargs_source["e2_0"] = galaxy["e2_0"]
-
-        if "e1_1" not in colnames or "e2_1" not in colnames:
-            if "ellipticity1" in colnames:
-                ellipticity1 = galaxy["ellipticity1"]
-            elif "a1" in colnames and "b1" in colnames:
-                axis_ratio_1 = axis_ratio(a=galaxy["a1"], b=galaxy["b1"])
-                ellipticity1 = eccentricity(q=axis_ratio_1)
-            else:
-                raise ValueError(
-                    "ellipticity or semi-major and semi-minor axis are missing for"
-                    " the second light profile in galaxy_list columns"
-                )
-
-            e1_1, e2_1 = galaxy_projected_eccentricity(
-                float(ellipticity1), rotation_angle=phi_rot
-            )
-            kwargs_source["e1_1"] = e1_1
-            kwargs_source["e2_1"] = e2_1
-        else:
-            kwargs_source["e1_1"] = galaxy["e1_1"]
-            kwargs_source["e2_1"] = galaxy["e2_1"]
-        if "angular_size_0" not in colnames or "angular_size_1" not in colnames:
-            if "a0" in colnames and "b0" in colnames:
-                kwargs_source["angular_size_0"] = average_angular_size(
-                    a=galaxy["a0"], b=galaxy["b0"]
-                )
-            else:
-                raise ValueError(
-                    "semi-major and semi-minor axis are missing for the first light"
-                    " profile in galaxy_list columns %s" % colnames
-                )
-            if "a1" in colnames and "b1" in colnames:
-                kwargs_source["angular_size_1"] = average_angular_size(
-                    a=galaxy["a1"], b=galaxy["b1"]
-                )
-            else:
-                raise ValueError(
-                    "semi-major and semi-minor axis are missing for the second"
-                    " light profile in galaxy_list columns"
-                )
-        else:
-            kwargs_source["angular_size_0"] = galaxy["angular_size_0"]
-            kwargs_source["angular_size_1"] = galaxy["angular_size_1"]
-        if "n_sersic_0" not in colnames or "n_sersic_1" not in colnames:
-            kwargs_source["n_sersic_0"] = 1
-            kwargs_source["n_sersic_1"] = 4
-        else:
-            kwargs_source["n_sersic_0"] = galaxy["n_sersic_0"]
-            kwargs_source["n_sersic_1"] = galaxy["n_sersic_1"]
-        kwargs_source["w0"] = galaxy["w0"]
-        kwargs_source["w1"] = galaxy["w1"]
+        )
     if "vel_disp" in colnames:
         kwargs_source["vel_disp"] = float(galaxy["vel_disp"])
     if "stellar_mass" in colnames:
@@ -462,6 +400,164 @@ def convert_catalog_to_source(
             if key not in kwargs_source:
                 kwargs_source[key] = galaxy[key]
     return kwargs_source
+
+
+def _double_sersic_source_kwargs(
+    galaxy,
+    colnames,
+    phi_rot,
+    size_model=None,
+    catalog_type=None,
+    cosmo=None,
+):
+    """Build the DoubleSersic and colour-gradient Source dictionary.
+
+    The input ``galaxy`` dictionary may provide component-specific values or
+    single-component catalog values that are shared by both components:
+
+    .. code-block:: python
+
+        galaxy = {
+            # Required reference-band flux fractions
+            "w0": 0.4,
+            "w1": 0.6,
+            # Shape: component-specific, shared Cartesian, or shared scalar
+            "e1_0": 0.1,
+            "e2_0": 0.0,
+            "e1_1": 0.1,
+            "e2_1": 0.0,
+            # Size and Sersic-index component values
+            "angular_size_0": 0.3,
+            "angular_size_1": 0.9,
+            "n_sersic_0": 1.0,
+            "n_sersic_1": 4.0,
+            # Optional chromatic configuration
+            "color_gradient": {
+                "component_spectral_slopes": [0.5, -0.5],
+                "reference_band": "i",
+                "component_radius_factors": [0.5, 1.5],
+                "component_sersic_indices": [1.0, 4.0],
+                "min_weight": 1e-3,
+            },
+        }
+
+    When component sizes are absent, ``angular_size`` is multiplied by
+    ``color_gradient['component_radius_factors']``. When component Sersic
+    indices are absent, ``n_sersic`` and
+    ``color_gradient['component_sersic_indices']`` provide the defaults.
+
+    :param galaxy: Catalog row or dictionary containing light-profile fields.
+    :param colnames: Available keys/column names in ``galaxy``.
+    :param phi_rot: Position angle in radians used for scalar ellipticities.
+    :param size_model: Galaxy size model passed to :func:`_galaxy_size`.
+    :param catalog_type: Optional catalog convention identifier.
+    :param cosmo: Astropy cosmology used to convert physical/angular size.
+    :return: Dictionary containing ``e1_0``, ``e2_0``, ``e1_1``, ``e2_1``,
+        ``angular_size_0``, ``angular_size_1``, ``n_sersic_0``,
+        ``n_sersic_1``, ``w0``, ``w1``, and optional ``color_gradient``.
+    """
+    kwargs_double_sersic = {}
+    color_gradient = galaxy["color_gradient"] if "color_gradient" in colnames else {}
+    if not isinstance(color_gradient, dict):
+        raise ValueError(
+            "galaxy['color_gradient'] must be a dictionary when constructing "
+            f"a DoubleSersic source; received {color_gradient!r}."
+        )
+
+    for component in (0, 1):
+        e1_key, e2_key = f"e1_{component}", f"e2_{component}"
+        if e1_key in colnames and e2_key in colnames:
+            e1, e2 = galaxy[e1_key], galaxy[e2_key]
+        elif "e1" in colnames and "e2" in colnames:
+            e1, e2 = galaxy["e1"], galaxy["e2"]
+        elif "e1_light" in colnames and "e2_light" in colnames:
+            e1, e2 = galaxy["e1_light"], galaxy["e2_light"]
+        else:
+            ellipticity_key = f"ellipticity{component}"
+            a_key, b_key = f"a{component}", f"b{component}"
+            if ellipticity_key in colnames:
+                ellipticity = galaxy[ellipticity_key]
+            elif a_key in colnames and b_key in colnames:
+                ellipticity = eccentricity(
+                    q=axis_ratio(a=galaxy[a_key], b=galaxy[b_key])
+                )
+            elif "ellipticity" in colnames or "e" in colnames:
+                ellipticity = (
+                    galaxy["ellipticity"] if "ellipticity" in colnames else galaxy["e"]
+                )
+            else:
+                raise ValueError(
+                    f"Cannot determine ellipticity for DoubleSersic component "
+                    f"{component}; available galaxy_list columns are {colnames}."
+                )
+            e1, e2 = galaxy_projected_eccentricity(
+                float(ellipticity), rotation_angle=phi_rot
+            )
+        kwargs_double_sersic[e1_key] = e1
+        kwargs_double_sersic[e2_key] = e2
+
+    if "angular_size_0" in colnames and "angular_size_1" in colnames:
+        kwargs_double_sersic["angular_size_0"] = galaxy["angular_size_0"]
+        kwargs_double_sersic["angular_size_1"] = galaxy["angular_size_1"]
+    elif all(key in colnames for key in ("a0", "b0", "a1", "b1")):
+        kwargs_double_sersic["angular_size_0"] = average_angular_size(
+            a=galaxy["a0"], b=galaxy["b0"]
+        )
+        kwargs_double_sersic["angular_size_1"] = average_angular_size(
+            a=galaxy["a1"], b=galaxy["b1"]
+        )
+    elif "angular_size" in colnames or catalog_type is not None:
+        angular_size, _ = _galaxy_size(
+            galaxy,
+            size_model=size_model,
+            catalog_type=catalog_type,
+            cosmo=cosmo,
+        )
+        radius_factors = color_gradient.get("component_radius_factors", (0.5, 1.5))
+        if len(radius_factors) != 2:
+            raise ValueError(
+                "color_gradient['component_radius_factors'] must contain two values."
+            )
+        kwargs_double_sersic["angular_size_0"] = angular_size * float(radius_factors[0])
+        kwargs_double_sersic["angular_size_1"] = angular_size * float(radius_factors[1])
+    else:
+        raise ValueError(
+            "Cannot determine DoubleSersic component sizes. Provide one of: "
+            "(1) both 'angular_size_0' and 'angular_size_1'; "
+            "(2) all four axis fields 'a0', 'b0', 'a1', and 'b1'; "
+            "(3) a shared 'angular_size'; or "
+            "(4) a catalog_type from which the shared size can be inferred. "
+            f"Available galaxy_list columns are {colnames}."
+        )
+
+    if "n_sersic_0" in colnames and "n_sersic_1" in colnames:
+        indices = (galaxy["n_sersic_0"], galaxy["n_sersic_1"])
+    else:
+        if "n_sersic" in colnames:
+            n_sersic = float(galaxy["n_sersic"])
+        elif "galaxy_type" in colnames and galaxy["galaxy_type"] == "red":
+            n_sersic = 4.0
+        else:
+            n_sersic = 1.0
+        indices = color_gradient.get("component_sersic_indices", (n_sersic, n_sersic))
+    if len(indices) != 2:
+        raise ValueError(
+            "color_gradient['component_sersic_indices'] must contain two values."
+        )
+    kwargs_double_sersic["n_sersic_0"] = float(indices[0])
+    kwargs_double_sersic["n_sersic_1"] = float(indices[1])
+
+    missing_weights = [key for key in ("w0", "w1") if key not in colnames]
+    if missing_weights:
+        raise ValueError(
+            "DoubleSersic source dictionary is missing reference-band flux "
+            f"weights {missing_weights}; provide both 'w0' and 'w1'."
+        )
+    kwargs_double_sersic["w0"] = galaxy["w0"]
+    kwargs_double_sersic["w1"] = galaxy["w1"]
+    if "color_gradient" in colnames:
+        kwargs_double_sersic["color_gradient"] = color_gradient
+    return kwargs_double_sersic
 
 
 def down_sample_to_dc2(galaxy_pop, sky_area):

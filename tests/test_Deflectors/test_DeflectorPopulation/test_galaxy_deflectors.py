@@ -7,6 +7,7 @@ from slsim.Deflectors.MassLightConnection.velocity_dispersion import (
 )
 from slsim.Pipelines.skypy_pipeline import SkyPyPipeline
 from astropy.units import Quantity
+from astropy.table import Table
 import numpy as np
 import pytest
 import copy
@@ -169,6 +170,81 @@ def test_elliptical_galaxies():
     )
 
     assert galaxy_class1.draw_deflector().mass_properties["gamma_pl"] == 2.05
+
+
+def test_galaxy_deflectors_foreground_color_gradient():
+    red_galaxies = foreground_test_galaxy_table()
+    blue_galaxies = foreground_test_galaxy_table()
+    kwargs_deflector_cut = {}
+    kwargs_mass2light = {}
+    cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
+    sky_area = Quantity(value=0.05, unit="deg2")
+    foreground_color_gradient = {
+        "component_spectral_slopes": [2.0, -1.0],
+        "reference_band": "i",
+    }
+
+    galaxy_class = GalaxyDeflectors(
+        red_galaxies,
+        blue_galaxy_list=blue_galaxies,
+        kwargs_cut=kwargs_deflector_cut,
+        kwargs_mass2light=kwargs_mass2light,
+        cosmo=cosmo,
+        sky_area=sky_area,
+        catalog_type=None,
+        foreground_color_gradient=foreground_color_gradient,
+        foreground_component_weights=(0.4, 0.6),
+    )
+    assert "color_gradient" not in red_galaxies.colnames
+    assert "color_gradient" not in blue_galaxies.colnames
+    deflector = galaxy_class.draw_deflector()
+    model_list, kwargs_i = deflector.light_model_lenstronomy(band="i")
+    _, kwargs_g = deflector.light_model_lenstronomy(band="g")
+    _, kwargs_y = deflector.light_model_lenstronomy(band="y")
+
+    assert model_list == ["SERSIC_ELLIPSE", "SERSIC_ELLIPSE"]
+    assert kwargs_i[0]["R_sersic"] < kwargs_i[1]["R_sersic"]
+    assert component_flux_fraction(kwargs_i) == pytest.approx(0.4)
+    assert component_flux_fraction(kwargs_y) > component_flux_fraction(kwargs_g)
+
+
+def test_foreground_color_gradient_rejects_unsupported_light_type():
+    with pytest.raises(ValueError, match="requires a single_sersic or double_sersic"):
+        GalaxyDeflectors(
+            foreground_test_galaxy_table(),
+            kwargs_mass2light={},
+            cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
+            sky_area=Quantity(value=0.05, unit="deg2"),
+            catalog_type=None,
+            light_type="catalog_source",
+            foreground_color_gradient={"component_spectral_slopes": [2.0, -1.0]},
+        )
+
+
+def foreground_test_galaxy_table():
+    return Table(
+        {
+            "z": [0.2, 0.3],
+            "stellar_mass": [10**11, 2 * 10**11],
+            "angular_size": [0.7, 0.8],
+            "ellipticity": [0.2, 0.25],
+            "mag_i": [19.0, 20.0],
+            "mag_g": [20.0, 21.0],
+            "mag_y": [18.0, 19.0],
+            "e1_light": [0.1, 0.1],
+            "e2_light": [0.0, 0.0],
+            "e1_mass": [0.1, 0.1],
+            "e2_mass": [0.0, 0.0],
+            "n_sersic": [4.0, 4.0],
+            "vel_disp": [200.0, 210.0],
+        }
+    )
+
+
+def component_flux_fraction(kwargs_light):
+    flux0 = 10 ** (-kwargs_light[0]["magnitude"] / 2.5)
+    flux1 = 10 ** (-kwargs_light[1]["magnitude"] / 2.5)
+    return flux0 / (flux0 + flux1)
 
 
 if __name__ == "__main__":

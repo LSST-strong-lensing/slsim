@@ -106,6 +106,10 @@ class TestPointSource:
             self.source_general_lc.point_source_magnitude(band="i")
             == np.mean(expected_result)
         )
+        assert self.source_general_lc.reference_magnitude("i") == np.mean(
+            expected_result
+        )
+        assert self.source_quasar.reference_magnitude("i") == 20
         with pytest.raises(ValueError):
             self.source_general_lc.point_source_magnitude(band="g")
 

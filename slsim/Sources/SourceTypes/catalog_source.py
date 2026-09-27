@@ -1,7 +1,9 @@
+from slsim.Sources.SourceTypes.double_sersic import DoubleSersic
 from slsim.Sources.SourceTypes.single_sersic import SingleSersic
 from slsim.Sources.SourceTypes.source_base import SourceBase
 from slsim.Sources.SourceCatalogues.CosmosWebCatalog import galaxy_match as CosmosWeb
 from slsim.Sources.SourceCatalogues.HSTCosmosCatalog import galaxy_match as HSTCosmos
+from slsim.Util.color_gradient import radial_color_gradient_image
 from lenstronomy.Util.param_util import ellipticity2phi_q
 
 CATALOG_TYPES = ["HST_COSMOS, COSMOS_WEB"]
@@ -26,6 +28,9 @@ class CatalogSource(SourceBase):
         max_scale=1,
         match_n_sersic=False,
         sersic_fallback=False,
+        band_dependent_color_gradient=False,
+        color_gradient=None,
+        fallback_double_sersic_kwargs=None,
         **source_dict,
     ):
         """
@@ -54,6 +59,18 @@ class CatalogSource(SourceBase):
         :type match_n_sersic: bool
         :param sersic_fallback: If the matching process returns no matches, then fall back on a single sersic profile.
         :type sersic_fallback: bool
+        :param band_dependent_color_gradient: If True, apply an opt-in radial
+         colour-gradient transfer to matched HST_COSMOS images. Failed matches
+         fall back to a DoubleSersic model with the same ``color_gradient``.
+        :type band_dependent_color_gradient: bool
+        :param color_gradient: Dictionary containing colour-gradient settings.
+         Matched HST_COSMOS images use ``grad_color`` (mag/dex) with
+         ``reference_band`` defaulting to ``F814W``. DoubleSersic fallback uses
+         ``component_spectral_slopes``.
+        :type color_gradient: dict or None
+        :param fallback_double_sersic_kwargs: Optional overrides for the
+         DoubleSersic parameters used after a failed HST_COSMOS match.
+        :type fallback_double_sersic_kwargs: dict or None
         """
         super().__init__(extended_source=True, point_source=False, **source_dict)
         self.name = "GAL"
@@ -65,6 +82,9 @@ class CatalogSource(SourceBase):
         self._max_scale = max_scale
         self._match_n_sersic = match_n_sersic
         self._sersic_fallback = sersic_fallback
+        self._band_dependent_color_gradient = band_dependent_color_gradient
+        self._color_gradient = color_gradient
+        self._fallback_double_sersic_kwargs = fallback_double_sersic_kwargs
         self.source_dict = source_dict
 
         # Process catalog and store as class attribute
@@ -92,6 +112,27 @@ class CatalogSource(SourceBase):
             raise ValueError(
                 f"Catalog_type {catalog_type} not supported. Currently only {CATALOG_TYPES} are supported."
             )
+
+        if self._band_dependent_color_gradient:
+            if catalog_type != "HST_COSMOS":
+                raise ValueError(
+                    "band_dependent_color_gradient is currently supported only "
+                    "for catalog_type='HST_COSMOS'; received "
+                    f"catalog_type={catalog_type!r}."
+                )
+            if not isinstance(self._color_gradient, dict):
+                raise ValueError(
+                    "color_gradient must be a dictionary when "
+                    "band_dependent_color_gradient is enabled; received "
+                    f"{self._color_gradient!r} (type "
+                    f"{type(self._color_gradient).__name__})."
+                )
+            if self._fallback_double_sersic_kwargs is not None and not isinstance(
+                self._fallback_double_sersic_kwargs, dict
+            ):
+                raise ValueError(
+                    "fallback_double_sersic_kwargs must be a dictionary or None."
+                )
 
         self._catalog_type = catalog_type
         self._catalog_path = catalog_path
@@ -146,8 +187,10 @@ class CatalogSource(SourceBase):
                     match_n_sersic=self._match_n_sersic,
                 )
             )
-        # If the matching failed, fall back on a regular sersic profile
+        # If matching fails, the optional chromatic mode uses DoubleSersic.
         if self._image_list is None:
+            if self._band_dependent_color_gradient:
+                return self._double_sersic_fallback().kwargs_extended_light(band=band)
             if self._sersic_fallback:
                 if not hasattr(self, "single_sersic"):
                     self.single_sersic = SingleSersic(
@@ -158,11 +201,10 @@ class CatalogSource(SourceBase):
                         **self.source_dict,
                     )
                 return self.single_sersic.kwargs_extended_light(band=band)
-            else:
-                raise ValueError(
-                    "No valid matches found! Try reducing the desired angular size or increasing max_scale."
-                    "Alternatively, enable sersic_fallback to use a single sersic whenever the matching fails."
-                )
+            raise ValueError(
+                "No valid matches found! Try reducing the desired angular size or increasing max_scale."
+                "Alternatively, enable sersic_fallback to use a single sersic whenever the matching fails."
+            )
 
         if band is None:
             mag_source = 1
@@ -170,7 +212,7 @@ class CatalogSource(SourceBase):
             mag_source = self.extended_source_magnitude(band=band)
         center_source = self.extended_source_position
 
-        image = self._select_image_from_band(band)
+        image = self._image_for_band(band)
 
         light_model_list = ["INTERPOL"]
         kwargs_extended_source = [
@@ -184,6 +226,51 @@ class CatalogSource(SourceBase):
             }
         ]
         return light_model_list, kwargs_extended_source
+
+    def _image_for_band(self, band):
+        """Return the catalog image, optionally with HST chromatic
+        morphology."""
+        if self._band_dependent_color_gradient:
+            image = self._image_list[0]
+        else:
+            image = self._select_image_from_band(band)
+
+        if not self._band_dependent_color_gradient or band is None:
+            return image
+
+        return radial_color_gradient_image(
+            image=image,
+            band=band,
+            color_gradient=self._color_gradient,
+            angular_size=self.angular_size,
+            pixel_scale=self._scale,
+            default_reference="F814W",
+        )
+
+    def _double_sersic_fallback(self):
+        """Build the chromatic fallback model after a failed HST match."""
+        if hasattr(self, "double_sersic"):
+            return self.double_sersic
+
+        fallback_kwargs = {
+            "angular_size_0": 0.5 * self.angular_size,
+            "angular_size_1": self.angular_size,
+            "n_sersic_0": 4.0,
+            "n_sersic_1": 1.0,
+            "w0": 0.4,
+            "w1": 0.6,
+            "e1_0": self._e1,
+            "e2_0": self._e2,
+            "e1_1": self._e1,
+            "e2_1": self._e2,
+        }
+        fallback_kwargs.update(self._fallback_double_sersic_kwargs or {})
+        fallback_kwargs["color_gradient"] = self._color_gradient
+        self.double_sersic = DoubleSersic(
+            **fallback_kwargs,
+            **self.source_dict,
+        )
+        return self.double_sersic
 
     def _select_image_from_band(self, band):
         """Selects an image based off of the input band. Only relevant for

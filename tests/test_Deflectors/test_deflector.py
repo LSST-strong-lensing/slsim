@@ -152,6 +152,8 @@ class TestDeflector(object):
         light_model, kwargs_lens_light = self.deflector.light_model_lenstronomy(
             band=band
         )
+        assert isinstance(light_model, list)
+        assert isinstance(kwargs_lens_light, list)
         assert light_model[0] == "SERSIC_ELLIPSE"
         assert kwargs_lens_light[0]["R_sersic"] == 0.5
 

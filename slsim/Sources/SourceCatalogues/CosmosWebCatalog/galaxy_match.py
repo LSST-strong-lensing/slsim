@@ -32,9 +32,15 @@ def process_catalog(cosmo, catalog_path):
 
     # sersic radius is the radius along the major axis
     # angular size is the geometric mean of the major and minor axes
-    catalog["angular_size"] = catalog["sersic_radius"].data * np.sqrt(
-        catalog["axis_ratio"].data
-    )
+    if "sersic_radius" in catalog.colnames:
+        catalog["angular_size"] = catalog["sersic_radius"].data * np.sqrt(
+            catalog["axis_ratio"].data
+        )
+    elif "angular_size" not in catalog.colnames:
+        raise ValueError(
+            "The input catalog must contain either a column named 'sersic_radius' or 'angular_size'."
+        )
+
     catalog["angular_size"].unit = u.arcsec
 
     # Convert angular_size to physical size (arcseconds to kPc)

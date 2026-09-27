@@ -2,6 +2,7 @@ import numpy as np
 from slsim.Sources.SourceTypes.source_base import SourceBase
 from slsim.Util.param_util import ellipticity_slsim_to_lenstronomy
 from slsim.Util.param_util import surface_brightness_reff
+from slsim.Util.color_gradient import component_weights_for_band
 
 
 class DoubleSersic(SourceBase):
@@ -19,6 +20,7 @@ class DoubleSersic(SourceBase):
         e2_0=0,
         e1_1=0,
         e2_1=0,
+        color_gradient=None,
         **source_dict
     ):
         """
@@ -33,6 +35,10 @@ class DoubleSersic(SourceBase):
         :param e2_1: eccentricity component of second Sersic
         :param w0: flux weight of first Sersic component
         :param w1: flux weight of second Sersic component, if =None, will be set w1 = 1 - w0, otherwise it has to match.
+        :param color_gradient: Optional dictionary defining a band-dependent
+         two-component colour gradient with lightweight SED slopes. Supported
+         keys are ``component_spectral_slopes``, ``reference_band``, and
+         ``min_weight``. Components with larger spectral slopes are redder.
 
         :param source_dict: dictionary for SourceBase() option (see documentation)
         :type source_dict: dict or astropy.table.Table
@@ -50,6 +56,7 @@ class DoubleSersic(SourceBase):
         w1 = 1 - w0
         assert np.isclose(w0 + w1, 1, rtol=1e-3)
         self._w1 = w1
+        self._color_gradient = color_gradient
 
         self._light_model_list = [
             "SERSIC_ELLIPSE",
@@ -118,8 +125,9 @@ class DoubleSersic(SourceBase):
         center_source = self.extended_source_position
         # compute magnitude for each sersic component based on weight
         flux = 10 ** (-mag_source / 2.5)
-        mag_source0 = -2.5 * np.log10(self._w0 * flux)
-        mag_source1 = -2.5 * np.log10(self._w1 * flux)
+        w0, w1 = self._weights_for_band(band)
+        mag_source0 = -2.5 * np.log10(w0 * flux)
+        mag_source1 = -2.5 * np.log10(w1 * flux)
         # convert from slsim to lenstronomy convention.
         e1_light_source_1_lenstronomy, e2_light_source_1_lenstronomy = (
             ellipticity_slsim_to_lenstronomy(
@@ -154,7 +162,17 @@ class DoubleSersic(SourceBase):
                 "center_y": center_source[1],
             },
         ]
-        return self._light_model_list, kwargs_extended_source
+        return self._light_model_list.copy(), kwargs_extended_source
+
+    def _weights_for_band(self, band):
+        """Return Sersic component weights for an imaging band."""
+        return component_weights_for_band(
+            base_weights=(self._w0, self._w1),
+            band=band,
+            color_gradient=self._color_gradient,
+            source_dict=self.source_dict,
+            default_reference="i",
+        )
 
     def _shape_light_model(self):
         """
