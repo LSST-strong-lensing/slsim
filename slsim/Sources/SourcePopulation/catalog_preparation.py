@@ -13,21 +13,26 @@ def prepare_source_catalog(
     """Converts an external source catalog into the conventions of the SLSim
     source populations (e.g. Galaxies() with catalog_type="external").
 
-    SLSim requires the redshift "z", AB magnitudes "mag_<band>" for the bands used in
-    the selection and, for Sersic profiles, a size ("angular_size" [arcsec] or
-    "physical_size" [kpc]) and a shape ("e1" and "e2", or "ellipticity").
+    SLSim requires the redshift "z", AB magnitudes "mag_<band>" for the
+    bands used in the selection and, for Sersic profiles, a size
+    ("angular_size" [arcsec] or "physical_size" [kpc]) and a shape ("e1"
+    and "e2", or "ellipticity").
 
     :param catalog: input catalog
     :type catalog: astropy Table, pandas DataFrame or dict of arrays
     :param column_mapping: renaming of columns into SLSim names, e.g.
-     {"Z": "z", "MAG_I": "mag_i"}
-    :param flux_columns: flux columns to convert into AB magnitudes, as {column: band},
-     e.g. {"FLUX_I": "i"} adds "mag_i". Non-positive fluxes get an infinite magnitude.
-    :param flux_unit: astropy unit of the flux columns without an attached unit
-    :param fill_missing: quantities not in the catalog to draw from a model. Supported
-     are "physical_size" (median size-redshift relation of Shibuya et al. 2015, derived
-     from rest-frame UV/optical sizes) and "ellipticity" (beta distribution of Kacprzak
-     et al. 2019 with the SLSim SkyPy parameters for star-forming galaxies).
+        {"Z": "z", "MAG_I": "mag_i"}
+    :param flux_columns: flux columns to convert into AB magnitudes, as
+        {column: band}, e.g. {"FLUX_I": "i"} adds "mag_i". Non-positive
+        fluxes get an infinite magnitude.
+    :param flux_unit: astropy unit of the flux columns without an
+        attached unit
+    :param fill_missing: quantities not in the catalog to draw from a
+        model. Supported are "physical_size" (median size-redshift
+        relation of Shibuya et al. 2015, derived from rest-frame
+        UV/optical sizes) and "ellipticity" (beta distribution of
+        Kacprzak et al. 2019 with the SLSim SkyPy parameters for star-
+        forming galaxies).
     :type fill_missing: list of str
     :return: catalog in SLSim conventions
     :rtype: astropy Table
