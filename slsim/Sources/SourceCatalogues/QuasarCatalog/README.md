@@ -67,7 +67,10 @@ The $L_{3000}$ zero point and the Eddington ratio distribution are fitted to thi
 * **`log_bolometric_luminosity(m_i, scatter, rng)`**: Implements Step 1.
 * **`QuasarHostMatch.match()`**: Runs steps 2–6 for every quasar. 
 
-*Note: `QuasarRate` uses the tabulated Richards et al. (2006) K-correction normalized to $z = 2$.*
+*Note: `QuasarRate` uses the tabulated Richards et al. (2006) K-correction normalized to $z = 2$, and shifts the
+luminosity function's $z = 0$-normalised break magnitude (Richards et al. 2005) by $-1.25\log_{10}3 = -0.596$ to the
+same $M_i(z=2)$ system. The model then gives 9.9 quasars per deg² for the SDSS DR3 uniform selection, against 9.46
+observed before completeness corrections (Richards et al. 2006).*
 
 ## References
 * Kormendy & Ho (2013), ARA&A 51, 511, [arXiv:1304.7762](https://arxiv.org/abs/1304.7762)

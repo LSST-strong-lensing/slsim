@@ -30,7 +30,7 @@ class TestQuasarRate:
     def test_M_star(self):
         # Test case 1: Regular case
         z_value = 2.01
-        expected_value = -25.59096969
+        expected_value = -25.59096969 - 1.25 * np.log10(3.0)
         m_star_calc = self.quasar_rate.M_star(z_value)
         np.testing.assert_almost_equal(m_star_calc, expected_value, decimal=4)
 
@@ -114,6 +114,18 @@ class TestQuasarRate:
         np.testing.assert_almost_equal(
             self.quasar_rate.k_corr_interp(0.0), 1.25 * np.log10(3.0), decimal=3
         )
+
+    def test_sdss_dr3_surface_density(self):
+        """The model reproduces the SDSS DR3 uniform sample (Richards et al.
+        2006): 15,343 quasars in 1622 deg^2 (9.46 per deg^2 before
+        completeness corrections) with i < 19.1 at z < 3 and i < 20.2 at z > 3."""
+        z = np.linspace(0.3, 5.0, 95)
+        n = np.array(
+            [self.quasar_rate.n_comoving(15.0, 19.1 if zi < 3 else 20.2, zi) for zi in z]
+        )
+        dvdz = self.quasar_rate.cosmo.differential_comoving_volume(z).value
+        density = np.trapezoid(n * dvdz, z) * (np.pi / 180) ** 2
+        assert 9.0 < density < 11.0
 
     def test_convert_magnitude(self):
         # Redshifts and apparent magnitudes taken from Table 5 of Richards et al. 2006: DOI: 10.1086/503559

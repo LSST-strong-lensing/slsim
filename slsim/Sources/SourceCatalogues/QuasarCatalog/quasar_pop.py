@@ -30,6 +30,10 @@ Oguri & Marshall (2010)
 """
 
 
+# M_i(z=2) - M_i(z=0) = -2.5 (1 + alpha_nu) log10(3) for alpha_nu = -0.5 (Richards et al. 2006)
+M_I_Z2_MINUS_Z0 = -1.25 * np.log10(3.0)
+
+
 class QuasarRate(object):
     """Class to calculate quasar luminosity functions and generate quasar
     samples."""
@@ -160,11 +164,11 @@ class QuasarRate(object):
         redshift.
 
         The tabulated correction is the one of Richards et al. (2006), which is
-        normalised to z = 2, matching the M_i(z=2) system the Oguri & Marshall
-        (2010) luminosity function is written in. Its value at z = 0 is not an
-        offset to be removed: it is 1.25 log10(3) = 0.596, exactly the continuum
-        term of an alpha_nu = -0.5 power law between the z = 0 and z = 2
-        normalisations.
+        normalised to z = 2, so absolute magnitudes are M_i(z=2) same as Oguri & Marshall
+        (2010) convention. Its value at
+        z = 0, 1.25 log10(3) = 0.596, is the continuum term of an alpha_nu = -0.5
+        power law between the z = 0 and z = 2 normalisations; the matching shift
+        of the luminosity function's break magnitude is applied in `M_star`.
 
         :param z: Redshift value at which k correction need to be
             computed.
@@ -179,6 +183,10 @@ class QuasarRate(object):
         redshift according to Eq. (11) in Oguri & Marshall (2010): DOI:
         10.1111/j.1365-2966.2010.16639.x.
 
+        The zero point -20.90 + 5 log h (Richards et al. 2005) is z = 0
+        normalised; it is shifted by M_I_Z2_MINUS_Z0 so that M_star is in the
+        M_i(z=2) system of the K-correction.
+
         :param z_value: Redshift value.
         :type z_value: float or np.ndarray
         :return: M_star value.
@@ -191,6 +199,7 @@ class QuasarRate(object):
         result = (
             -20.90
             + (5 * np.log10(self.cosmo.h))
+            + M_I_Z2_MINUS_Z0
             - (
                 2.5
                 * np.log10(
