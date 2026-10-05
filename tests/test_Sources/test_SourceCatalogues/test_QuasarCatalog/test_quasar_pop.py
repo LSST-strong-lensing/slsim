@@ -117,11 +117,17 @@ class TestQuasarRate:
 
     def test_sdss_dr3_surface_density(self):
         """The model reproduces the SDSS DR3 uniform sample (Richards et al.
+
         2006): 15,343 quasars in 1622 deg^2 (9.46 per deg^2 before
-        completeness corrections) with i < 19.1 at z < 3 and i < 20.2 at z > 3."""
+        completeness corrections) with i < 19.1 at z < 3 and i < 20.2 at
+        z > 3.
+        """
         z = np.linspace(0.3, 5.0, 95)
         n = np.array(
-            [self.quasar_rate.n_comoving(15.0, 19.1 if zi < 3 else 20.2, zi) for zi in z]
+            [
+                self.quasar_rate.n_comoving(15.0, 19.1 if zi < 3 else 20.2, zi)
+                for zi in z
+            ]
         )
         dvdz = self.quasar_rate.cosmo.differential_comoving_volume(z).value
         density = np.trapezoid(n * dvdz, z) * (np.pi / 180) ** 2

@@ -184,8 +184,8 @@ class QuasarRate(object):
         10.1111/j.1365-2966.2010.16639.x.
 
         The zero point -20.90 + 5 log h (Richards et al. 2005) is z = 0
-        normalised; it is shifted by M_I_Z2_MINUS_Z0 so that M_star is in the
-        M_i(z=2) system of the K-correction.
+        normalised; it is shifted by M_I_Z2_MINUS_Z0 so that M_star is
+        in the M_i(z=2) system of the K-correction.
 
         :param z_value: Redshift value.
         :type z_value: float or np.ndarray
