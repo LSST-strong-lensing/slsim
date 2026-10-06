@@ -30,7 +30,7 @@ class TestQuasarRate:
     def test_M_star(self):
         # Test case 1: Regular case
         z_value = 2.01
-        expected_value = -25.59096969
+        expected_value = -25.59096969 - 1.25 * np.log10(3.0)
         m_star_calc = self.quasar_rate.M_star(z_value)
         np.testing.assert_almost_equal(m_star_calc, expected_value, decimal=4)
 
@@ -103,17 +103,47 @@ class TestQuasarRate:
         dphi_dm_calc = self.quasar_rate.dPhi_dM(M, z_value)
         np.testing.assert_almost_equal(dphi_dm_calc, expected_values, decimal=4)
 
+    def test_k_correction_is_normalised_to_z2(self):
+        """The Richards et al.
+
+        (2006) correction is normalised to z = 2, to match the M_i(z=2)
+        system of the luminosity function. Its z = 0 value is the
+        continuum term of an alpha_nu = -0.5 power law between the z = 0
+        and z = 2 normalisations, and must not be subtracted off.
+        """
+        np.testing.assert_almost_equal(
+            self.quasar_rate.k_corr_interp(0.0), 1.25 * np.log10(3.0), decimal=3
+        )
+
+    def test_sdss_dr3_surface_density(self):
+        """The model reproduces the SDSS DR3 uniform sample (Richards et al.
+
+        2006): 15,343 quasars in 1622 deg^2 (9.46 per deg^2 before
+        completeness corrections) with i < 19.1 at z < 3 and i < 20.2 at
+        z > 3.
+        """
+        z = np.linspace(0.3, 5.0, 95)
+        n = np.array(
+            [
+                self.quasar_rate.n_comoving(15.0, 19.1 if zi < 3 else 20.2, zi)
+                for zi in z
+            ]
+        )
+        dvdz = self.quasar_rate.cosmo.differential_comoving_volume(z).value
+        density = np.trapezoid(n * dvdz, z) * (np.pi / 180) ** 2
+        assert 9.0 < density < 11.0
+
     def test_convert_magnitude(self):
-        # Test data: Example numbers taken directly from Table 5 of Richards et al. 2006: DOI: 10.1086/503559
+        # Redshifts and apparent magnitudes taken from Table 5 of Richards et al. 2006: DOI: 10.1086/503559
         test_redshifts = [1.199, 2.240, 0.460, 0.949, 0.989]
         test_magnitudes = [19.08, 18.18, 19.09, 19.05, 18.99]
 
         expected_abs_mags = [
-            -24.80839323533267,
-            -27.269795157423943,
-            -22.615584919748567,
-            -24.42567014140787,
-            -24.556647046788804,
+            -25.40439323533267,
+            -27.865795157423943,
+            -23.211584919748567,
+            -25.021670141407871,
+            -25.152647046788797,
         ]
         expected_app_mags = test_magnitudes
 
@@ -270,7 +300,13 @@ class TestQuasarRate:
     def test_quasar_sample_with_provided_hosts(self, mock_gen_z):
         """Tests sampling with a provided host catalog."""
         host_table = Table(
-            {"z": [0.50], "stellar_mass": [1e11], "vel_disp": [200], "host_id": [1]}
+            {
+                "z": [0.50],
+                "stellar_mass": [1e11],
+                "vel_disp": [50],
+                "galaxy_type": ["red"],
+                "host_id": [1],
+            }
         )
         self.quasar_rate.host_galaxy_candidate = host_table
         result_table = self.quasar_rate.quasar_sample(
@@ -278,6 +314,23 @@ class TestQuasarRate:
         )
         assert "host_id" in result_table.colnames
         assert result_table["host_id"][0] == 1
+
+    @patch.object(
+        QuasarRate, "generate_quasar_redshifts", return_value=np.array([0.5001])
+    )
+    def test_quasar_sample_seed_covers_host_match(self, mock_gen_z):
+        self.quasar_rate.host_galaxy_candidate = Table(
+            {"z": [0.50], "vel_disp": [50], "galaxy_type": ["red"]}
+        )
+        self.quasar_rate.host_match_kwargs = {"progress": False}
+
+        def run(seed):
+            return self.quasar_rate.quasar_sample(
+                m_min=15, m_max=25, seed=seed, host_galaxy=True
+            )["black_hole_mass_exponent"][0]
+
+        assert run(1) == run(1)
+        assert run(1) != run(2)
 
     @patch(
         "slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_pop.vel_disp_abundance_matching"
@@ -287,15 +340,18 @@ class TestQuasarRate:
     )
     def test_quasar_sample_with_vel_disp_calc(self, mock_gen_z, mock_vel_disp):
         """Tests sampling with automatic velocity dispersion calculation."""
-        host_table = Table({"z": [0.50], "stellar_mass": [1e11]})
+        host_table = Table(
+            {"z": [0.50], "stellar_mass": [1e11], "galaxy_type": ["red"]}
+        )
         self.quasar_rate.host_galaxy_candidate = host_table
-        mock_vel_disp.return_value = lambda log_mass: np.full_like(log_mass, 150.0)
+        mock_vel_disp.return_value = lambda log_mass: np.full_like(log_mass, 50.0)
 
         result_table = self.quasar_rate.quasar_sample(
             m_min=15, m_max=25, host_galaxy=True
         )
         mock_vel_disp.assert_called_once()
-        npt.assert_almost_equal(result_table["vel_disp"][0], 150.0)
+        npt.assert_almost_equal(result_table["vel_disp"][0], 50.0)
+        assert "vel_disp" not in host_table.colnames
 
     @patch("slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_pop.SkyPyPipeline")
     @patch(
@@ -319,7 +375,7 @@ class TestQuasarRate:
 
         self.quasar_rate.host_galaxy_candidate = None
         mock_vel_disp.return_value = lambda log_mass: np.full_like(
-            log_mass, 250.0, dtype=float
+            log_mass, 60.0, dtype=float
         )
 
         result_table = self.quasar_rate.quasar_sample(
@@ -328,10 +384,12 @@ class TestQuasarRate:
 
         # Assert that SkyPyPipeline was initialized
         mock_skypy_pipeline.assert_called_once()
-        # The result should contain a host galaxy matched from the mocked pipeline's output
+        # The result should contain a host galaxy matched from the mocked pipeline's
+        # output. Both mocked galaxies share a velocity dispersion, so which one is
+        # drawn is random.
         assert len(result_table) == 1
-        npt.assert_almost_equal(result_table["stellar_mass"][0], 1e11)
-        npt.assert_almost_equal(result_table["vel_disp"][0], 250.0)
+        assert result_table["stellar_mass"][0] in [1e11, 2e11]
+        npt.assert_almost_equal(result_table["vel_disp"][0], 60.0)
 
 
 class TestQuasarSEDIntegration:

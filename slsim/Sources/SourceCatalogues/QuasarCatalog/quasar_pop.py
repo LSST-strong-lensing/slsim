@@ -30,6 +30,10 @@ Oguri & Marshall (2010)
 """
 
 
+# M_i(z=2) - M_i(z=0) = -2.5 (1 + alpha_nu) log10(3) for alpha_nu = -0.5 (Richards et al. 2006)
+M_I_Z2_MINUS_Z0 = -1.25 * np.log10(3.0)
+
+
 class QuasarRate(object):
     """Class to calculate quasar luminosity functions and generate quasar
     samples."""
@@ -51,6 +55,7 @@ class QuasarRate(object):
         use_qsogen_sed: bool = False,
         qsogen_bands: list = None,
         use_sed_interpolator: bool = True,
+        host_match_kwargs: dict = None,
     ):
         """Initializes the QuasarRate class with given parameters.
 
@@ -83,13 +88,20 @@ class QuasarRate(object):
         :param redshifts: Redshifts for quasar density lightcone to be evaluated at.
         :type redshifts: np.ndarray
         :param host_galaxy_candidate: Galaxy catalog in an Astropy table. This catalog
-         is used to match with the supernova population. If None, the galaxy catalog is
+         is used to match with the quasar population. If None, the galaxy catalog is
          generated within this class.
         :type host_galaxy_candidate: `~astropy.table.Table`
         :param use_qsogen_sed: If True, uses qsogen to generate realistic SEDs and compute magnitudes.
         :param qsogen_bands: List of strings for filters (e.g., ['u', 'g', 'r', 'i', 'z', 'y', 'F062', ...]).
                              Defaults to LSST bands if None.
         :param use_sed_interpolator: If True, uses a pre-computed SED magnitude interpolator on a z, M_i grid for speed. This is only relevant if `use_qsogen_sed` is True.
+        :param host_match_kwargs: keyword arguments passed to
+         :class:`~slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_host_match.QuasarHostMatch`,
+         which assigns host galaxies, black hole masses and Eddington ratios
+         when `host_galaxy=True` is passed to `quasar_sample` (e.g.
+         ``{"progress": False}``). Its ``rng`` defaults to a generator seeded
+         with the `seed` of `quasar_sample`.
+        :type host_match_kwargs: dict or None
         """
         self.zeta = zeta
         self.xi = xi
@@ -107,6 +119,7 @@ class QuasarRate(object):
             np.array(redshifts) if redshifts is not None else np.linspace(0.1, 5.0, 100)
         )
         self.host_galaxy_candidate = host_galaxy_candidate
+        self.host_match_kwargs = dict(host_match_kwargs or {})
 
         # SED Generation Configuration
         self.use_qsogen_sed = use_qsogen_sed
@@ -150,18 +163,29 @@ class QuasarRate(object):
         """This function computes the k-correction for a quasar at a given
         redshift.
 
+        The tabulated correction is the one of Richards et al. (2006), which is
+        normalised to z = 2, so absolute magnitudes are M_i(z=2) same as Oguri & Marshall
+        (2010) convention. Its value at
+        z = 0, 1.25 log10(3) = 0.596, is the continuum term of an alpha_nu = -0.5
+        power law between the z = 0 and z = 2 normalisations; the matching shift
+        of the luminosity function's break magnitude is applied in `M_star`.
+
         :param z: Redshift value at which k correction need to be
             computed.
         :type z: float or np.array
         :return: k-correction value for given redshifts.
         """
 
-        return self.k_corr(z) - self.k_corr(0)
+        return self.k_corr(z)
 
     def M_star(self, z_value):
         """Calculates the break absolute magnitude of quasars for a given
         redshift according to Eq. (11) in Oguri & Marshall (2010): DOI:
         10.1111/j.1365-2966.2010.16639.x.
+
+        The zero point -20.90 + 5 log h (Richards et al. 2005) is z = 0
+        normalised; it is shifted by M_I_Z2_MINUS_Z0 so that M_star is
+        in the M_i(z=2) system of the K-correction.
 
         :param z_value: Redshift value.
         :type z_value: float or np.ndarray
@@ -175,6 +199,7 @@ class QuasarRate(object):
         result = (
             -20.90
             + (5 * np.log10(self.cosmo.h))
+            + M_I_Z2_MINUS_Z0
             - (
                 2.5
                 * np.log10(
@@ -605,12 +630,21 @@ class QuasarRate(object):
                     filters=None,
                     cosmo=self.cosmo,
                 )
+                red_galaxies, blue_galaxies = (
+                    pipeline.red_galaxies,
+                    pipeline.blue_galaxies,
+                )
+                # tag the morphology so host candidates can be selected on it
+                red_galaxies["galaxy_type"] = "red"
+                blue_galaxies["galaxy_type"] = "blue"
                 host_galaxy_catalog = vstack(
-                    [pipeline.red_galaxies, pipeline.blue_galaxies],
+                    [red_galaxies, blue_galaxies],
                     join_type="exact",
                 )
             else:
-                host_galaxy_catalog = self.host_galaxy_candidate
+                # Velocity-dispersion generation below must not mutate a table
+                # owned by the caller.
+                host_galaxy_catalog = self.host_galaxy_candidate.copy()
 
             # compute "vel_disp" if not present
             if "vel_disp" not in host_galaxy_catalog.colnames:
@@ -624,12 +658,10 @@ class QuasarRate(object):
                     np.log10(host_galaxy_catalog["stellar_mass"])
                 )
 
-            matching_catalogs = QuasarHostMatch(
+            return QuasarHostMatch(
                 quasar_catalog=table,
                 galaxy_catalog=host_galaxy_catalog,
-            )
-            matched_table = matching_catalogs.match()
-
-            return matched_table
+                **{"rng": np.random.default_rng(seed), **self.host_match_kwargs},
+            ).match()
 
         return table
