@@ -22,5 +22,13 @@ def test_simple_quasar():
     assert catalog.colnames[3] == column_names[3]
 
 
+def test_testmon():
+    assert 1 == 1
+
+
+def test_testmon2():
+    assert 1 == 1
+
+
 if __name__ == "__main__":
     pytest.main()
