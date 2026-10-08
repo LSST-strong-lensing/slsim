@@ -170,6 +170,7 @@ class TestSource:
     def test_point_source_magnitude(self):
         result = self.source_point_extended.point_source_magnitude(band="i")
         assert result == 20
+        assert self.source_point_extended.reference_magnitude("i") == result
 
     def test_point_source_only(self):
         x_pos_1, y_pos_1 = self.source_point.point_source_position

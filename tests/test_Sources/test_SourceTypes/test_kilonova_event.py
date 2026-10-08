@@ -81,6 +81,15 @@ class TestKilonovaEvent(object):
         light_curve = self.source.light_curve
         light_curve_none = self.source_none.light_curve
 
+        assert "ps_mag_i" not in self.source.source_dict
+        assert self.source._kwargs_variability_model is light_curve
+        assert self.source.reference_magnitude("i") == np.min(
+            light_curve["i"]["ps_mag_i"]
+        )
+        assert self.source.source_dict["ps_mag_i"] == self.source.reference_magnitude(
+            "i"
+        )
+
         # Check that the non-band parameter is successfully ignored.
         assert "bns_lightcurve" not in light_curve.keys()
 
@@ -166,7 +175,11 @@ class TestKilonovaEvent(object):
         assert failed_light_curve == {}
 
     def test_point_source_magnitude(self):
-        assert self.source.point_source_magnitude("i") is not None
+        assert not self.source._variability_computed
+        peak = self.source.reference_magnitude("i")
+        assert self.source._variability_computed
+        assert peak == self.source.source_dict["ps_mag_i"]
+        assert peak == self.source.point_source_magnitude("i")
 
         with pytest.raises(ValueError):
             self.source.point_source_magnitude("g")
@@ -174,7 +187,9 @@ class TestKilonovaEvent(object):
         with pytest.raises(ValueError):
             self.source_none.point_source_magnitude("i", image_observation_times=10)
 
+        assert self.source_none.reference_magnitude("i") == 20
         assert self.source_none.point_source_magnitude("i") == 20
+        assert self.source_light_curve.reference_magnitude("i") == 21
         assert self.source_light_curve.point_source_magnitude("i") == 21
 
 

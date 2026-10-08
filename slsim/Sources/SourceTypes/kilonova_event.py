@@ -124,9 +124,6 @@ class KilonovaEvent(SourceBase):
                     )
                     continue
 
-                if name not in self.source_dict:
-                    self.source_dict[name] = float(min(magnitudes))
-
                 kwargs_variab_extracted[element] = {
                     "MJD": padded_times,
                     name: magnitudes,
@@ -134,6 +131,7 @@ class KilonovaEvent(SourceBase):
         else:
             kwargs_variab_extracted = {}
 
+        self._kwargs_variability_model = kwargs_variab_extracted
         self._variability_computed = True
         return kwargs_variab_extracted
 
@@ -143,16 +141,35 @@ class KilonovaEvent(SourceBase):
 
         :param band: Imaging band.
         :type band: str
-        :param image_observation_times: Image observation times in
-            [days]. If None, takes the peak magnitude.
-        :type image_observation_times: array-like or None
+        :param image_observation_times: Source-frame time(s), or None to use
+            :meth:`reference_magnitude`
+        :type image_observation_times: float, array, or None
         :return: Magnitude of the point source in the specified band.
         :rtype: float or array-like
         """
-
-        if not self._variability_computed:
+        if image_observation_times is not None and not self._variability_computed:
             self._kwargs_variability_model = self.light_curve
-
         return super().point_source_magnitude(
             band=band, image_observation_times=image_observation_times
         )
+
+    def reference_magnitude(self, band):
+        """Return the sampled peak, or a supplied magnitude if present.
+
+        If no magnitude was supplied, generate the light curve if needed
+        and store its brightest finite sample. A supplied array returns
+        its arithmetic mean.
+
+        :param band: Imaging band
+        :return: Reference magnitude in the requested band
+        :rtype: float
+        """
+        if not self._variability_computed:
+            self._kwargs_variability_model = self.light_curve
+        key = "ps_mag_" + band
+        if key not in self.source_dict and band in self._kwargs_variability_model:
+            samples = self._kwargs_variability_model[band][key]
+            peak = np.nanmin(samples)
+            if np.isfinite(peak):
+                self.source_dict[key] = float(peak)
+        return super().reference_magnitude(band)

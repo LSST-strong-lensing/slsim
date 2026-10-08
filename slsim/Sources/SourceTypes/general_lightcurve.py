@@ -1,6 +1,5 @@
 from slsim.Sources.SourceVariability.variability import Variability
 from slsim.Sources.SourceTypes.source_base import SourceBase
-import numpy as np
 
 
 class GeneralLightCurve(SourceBase):
@@ -53,17 +52,17 @@ class GeneralLightCurve(SourceBase):
         # These are the keywords that kwargs dict should contain
         self._MJD = MJD
 
-    def point_source_magnitude(
-        self, band, image_observation_times=None, at_maximum=False
-    ):
+    def point_source_magnitude(self, band, image_observation_times=None):
         """Get the magnitude of the point source in a specific band.
 
         :param band: Imaging band
         :type band: str
-        :param image_observation_times: Images observation time for an
-            image.
+        :param image_observation_times: Source-frame time(s) at which to
+            evaluate the light curve. If None, return
+            :meth:`reference_magnitude`, the arithmetic mean of the stored
+            magnitudes rather than the value at time zero or peak brightness.
         :return: Magnitude of the point source in the specified band
-        :rtype: float
+        :rtype: float or array-like
         """
 
         band_string = "ps_mag_" + band
@@ -73,8 +72,7 @@ class GeneralLightCurve(SourceBase):
             )
 
         if image_observation_times is None or self._variability_model == "NONE":
-            band_string = "ps_mag_" + band
-            return np.mean(self.source_dict[band_string])
+            return self.reference_magnitude(band)
         else:
             if band not in self._variability_bands:
                 kwargs_variab_band = {
