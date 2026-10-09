@@ -36,6 +36,7 @@ def test_background_native_bands(monkeypatch, catalog_type, count, enabled):
     monkeypatch.setattr(
         source, "_match_source", lambda **kw: (images, 0.03, 0, {"NOISE_MEAN": 2.0})
     )
+    assert source.matched_source_id is None
     _, first = source.kwargs_extended_light("i")
     saved = [a.copy() for a in source._image_list]
     source.kwargs_extended_light("r")
@@ -78,7 +79,7 @@ def test_edge_rejection_falls_back_once(monkeypatch, catalog_type, count):
 
     module = importlib.import_module("slsim.Sources.SourceTypes.catalog_source")
     source.final_catalog = Table({"id": [1]})
-    monkeypatch.setattr(CatalogSource, "_edge_catalog_cache", {}, raising=False)
+    monkeypatch.setattr(CatalogSource, "_edge_catalog_cache", None, raising=False)
     calls = []
 
     def screen(catalog, *args, **kwargs):
@@ -99,3 +100,24 @@ def test_edge_rejection_falls_back_once(monkeypatch, catalog_type, count):
         assert "INTERPOL" not in models
     assert calls == ["screen", "match"]
     assert source.background_diagnostics is None
+
+
+def test_hst_edge_rejection_requires_fallback(monkeypatch):
+    monkeypatch.setattr(
+        CatalogSource, "processed_hst_cosmos_catalog", None, raising=False
+    )
+    with pytest.raises(ValueError, match="Edge rejection requires"):
+        CatalogSource(
+            angular_size=0.3,
+            e1=0.1,
+            e2=0,
+            n_sersic=1,
+            cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
+            catalog_type="HST_COSMOS",
+            catalog_path="unused",
+            reject_edge_sources=True,
+            z=1,
+            mag_i=22,
+            center_x=0,
+            center_y=0,
+        )

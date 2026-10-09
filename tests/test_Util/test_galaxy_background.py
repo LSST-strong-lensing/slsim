@@ -3,14 +3,22 @@ rejection."""
 
 import unittest
 import tempfile
+from unittest import mock
+from contextlib import redirect_stdout
+import io
+import json
 from pathlib import Path
+import runpy
+import sys
+import warnings
 from astropy.io import fits
 from astropy.table import Table
 
 import numpy as np
-
+import slsim.Util.galaxy_background as galaxy_background
 from slsim.Util.galaxy_background import (
     check_galaxy_edge,
+    compare_fits,
     subtract_galaxy_background,
     subtract_hst_catalog_background,
     filter_edge_catalog,
@@ -18,6 +26,60 @@ from slsim.Util.galaxy_background import (
 
 
 class TestGalaxyBackground(unittest.TestCase):
+    def test_hst_validation(self):
+        image = np.ones((10, 10))
+        invalid_metadata = (
+            {},
+            {"NOISE_MEAN": np.ma.masked},
+            {"NOISE_MEAN": "not-a-number"},
+            {"NOISE_MEAN": np.nan},
+        )
+        for metadata in invalid_metadata:
+            with self.subTest(metadata=metadata):
+                with self.assertRaises(ValueError):
+                    subtract_hst_catalog_background(image, metadata)
+        with self.assertRaisesRegex(ValueError, "2D HST"):
+            subtract_hst_catalog_background(np.ones(10), {"NOISE_MEAN": 0})
+
+    def test_background_validation(self):
+        image = np.ones((40, 40))
+        bad_arguments = (
+            ({"image": np.ones((9, 40))}, "at least 10"),
+            ({"image": image, "border_fraction": 0}, "border_fraction"),
+            ({"image": image, "border_fraction": 0.5}, "border_fraction"),
+            ({"image": image, "sigma": np.nan}, "sigma or dilation"),
+            ({"image": image, "sigma": 0}, "sigma or dilation"),
+            ({"image": image, "dilation": 1.5}, "sigma or dilation"),
+            ({"image": image, "dilation": -1}, "sigma or dilation"),
+            ({"image": image, "source_mask": np.ones((2, 2))}, "Mask shape"),
+        )
+        for kwargs, message in bad_arguments:
+            with self.subTest(kwargs=kwargs):
+                with self.assertRaisesRegex(ValueError, message):
+                    subtract_galaxy_background(**kwargs)
+
+        mask = np.ones(image.shape, dtype=bool)
+        with self.assertRaisesRegex(ValueError, "Insufficient sky pixels"):
+            subtract_galaxy_background(image, coverage_mask=mask)
+
+    def test_insufficient_sky_after_bright_mask(self):
+        image = np.ones((40, 40))
+        original_sigma_clip = galaxy_background.sigma_clip
+        calls = 0
+
+        def controlled_sigma_clip(values, **kwargs):
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                return np.ma.array(np.zeros_like(values))
+            return original_sigma_clip(values, **kwargs)
+
+        with mock.patch.object(
+            galaxy_background, "sigma_clip", side_effect=controlled_sigma_clip
+        ):
+            with self.assertRaisesRegex(ValueError, "Insufficient unmasked sky"):
+                subtract_galaxy_background(image, dilation=0)
+
     def test_hst_floor_nonfinite_and_nonmutation(self):
         image = np.array([[-2, 2, 5], [np.nan, np.inf, -np.inf]])
         original = image.copy()
@@ -119,6 +181,131 @@ class TestGalaxyBackground(unittest.TestCase):
         # A disconnected edge object does not become the central galaxy.
         compact[:3, :3] = 100
         self.assertFalse(check_galaxy_edge(compact + 7, 7)["rejected"])
+
+    def test_edge_validation_and_invalid_cutouts(self):
+        image = np.ones((20, 20))
+        for kwargs in (
+            {"margin_fraction": 0},
+            {"margin_fraction": 0.5},
+            {"peak_fraction": 0},
+            {"peak_fraction": 1},
+            {"noise_threshold": 0},
+        ):
+            with self.subTest(kwargs=kwargs):
+                with self.assertRaisesRegex(ValueError, "Invalid edge"):
+                    check_galaxy_edge(image, 0, **kwargs)
+        for invalid in (np.ones(9), np.ones((9, 10)), np.full((10, 10), np.nan)):
+            self.assertEqual(check_galaxy_edge(invalid, 0)["reason"], "invalid_cutout")
+
+    def test_filter_catalog_validation_and_hst(self):
+        with self.assertRaisesRegex(ValueError, "Unsupported catalog"):
+            filter_edge_catalog(Table(), "UNKNOWN", "unused")
+
+        y, x = np.indices((40, 40))
+        compact = 30 * np.exp(-((x - 20) ** 2 + (y - 20) ** 2) / 20) + 3
+        with tempfile.TemporaryDirectory() as directory:
+            fits.HDUList([fits.PrimaryHDU(), fits.ImageHDU(compact)]).writeto(
+                Path(directory) / "hst.fits"
+            )
+            table = Table(
+                {
+                    "IDENT": [7],
+                    "GAL_FILENAME": ["hst.fits"],
+                    "GAL_HDU": [1],
+                    "NOISE_MEAN": [3.0],
+                }
+            )
+            filtered, diagnostics = filter_edge_catalog(table, "HST_COSMOS", directory)
+            self.assertEqual(list(filtered["IDENT"]), [7])
+            self.assertFalse(diagnostics[0]["rejected"])
+
+    def test_filter_rejects_invalid_and_skyless_cosmos_bands(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "COSMOSWeb_galaxy_1_image.fits"
+            small = np.ones((5, 5))
+            fits.HDUList(
+                [fits.PrimaryHDU()] + [fits.ImageHDU(small) for _ in range(4)]
+            ).writeto(path)
+            filtered, diagnostics = filter_edge_catalog(
+                Table({"id": [1]}), "COSMOS_WEB", directory
+            )
+            self.assertEqual(len(filtered), 0)
+            self.assertTrue(
+                all(
+                    band["reason"] == "invalid_cutout"
+                    for band in diagnostics[0]["bands"]
+                )
+            )
+
+            path.unlink()
+            covered = np.ones((40, 40))
+            fits.HDUList(
+                [fits.PrimaryHDU()] + [fits.ImageHDU(covered) for _ in range(4)]
+            ).writeto(path)
+            with mock.patch.object(
+                galaxy_background,
+                "subtract_galaxy_background",
+                side_effect=ValueError("no sky"),
+            ):
+                _, diagnostics = filter_edge_catalog(
+                    Table({"id": [1]}), "COSMOS_WEB", directory
+                )
+            self.assertTrue(diagnostics[0]["rejected"])
+            self.assertTrue(
+                all(
+                    band["reason"] == "insufficient_sky"
+                    for band in diagnostics[0]["bands"]
+                )
+            )
+
+    def test_compare_fits_outputs(self):
+        rng = np.random.default_rng(4)
+        image = rng.normal(3, 0.05, (40, 40))
+        image[18:22, 18:22] += 10
+        with tempfile.TemporaryDirectory() as directory:
+            directory = Path(directory)
+            input_path = directory / "input.fits"
+            output = directory / "diagnostics"
+            fits.PrimaryHDU(image).writeto(input_path)
+            stats = compare_fits(input_path, 0, output)
+            self.assertEqual(stats["input_file"], str(input_path.resolve()))
+            self.assertEqual(stats["hdu"], 0)
+            self.assertEqual(stats["band"], "unknown")
+            self.assertTrue((output / "input_hdu0.png").is_file())
+            self.assertTrue((output / "input_hdu0.json").is_file())
+            result = output / "input_hdu0_bgsub.fits"
+            self.assertTrue(result.is_file())
+            with fits.open(result) as hdul:
+                self.assertIn("BGSUB", hdul[0].header)
+                self.assertEqual(hdul[1].name, "SKYMASK")
+            with self.assertRaises(OSError):
+                compare_fits(input_path, 0, output)
+
+    def test_command_line_entry_point(self):
+        image = np.random.default_rng(8).normal(2, 0.05, (40, 40))
+        with tempfile.TemporaryDirectory() as directory:
+            directory = Path(directory)
+            input_path = directory / "cli.fits"
+            output = directory / "output"
+            fits.PrimaryHDU(image).writeto(input_path)
+            argv = [
+                "galaxy_background.py",
+                str(input_path),
+                "--hdu",
+                "0",
+                "--output",
+                str(output),
+            ]
+            stdout = io.StringIO()
+            with (
+                mock.patch.object(sys, "argv", argv),
+                redirect_stdout(stdout),
+                warnings.catch_warnings(),
+            ):
+                warnings.simplefilter("ignore", RuntimeWarning)
+                runpy.run_module("slsim.Util.galaxy_background", run_name="__main__")
+            self.assertEqual(json.loads(stdout.getvalue())["hdu"], 0)
+            self.assertTrue((output / "cli_hdu0_bgsub.fits").is_file())
 
     def test_hst_uses_metadata(self):
         image = np.arange(100, dtype=float).reshape(10, 10)
