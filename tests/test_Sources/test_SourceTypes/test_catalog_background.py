@@ -30,6 +30,7 @@ def test_background_native_bands(monkeypatch, catalog_type, count, enabled):
     )
     y, x = np.indices((80, 80))
     galaxy = 20 * np.exp(-((x - 40) ** 2 + (y - 40) ** 2) / 40)
+    galaxy[0, 0] = -5
     images = [galaxy + 2 * (i + 1) for i in range(count)]
     originals = [a.copy() for a in images]
     monkeypatch.setattr(
@@ -41,7 +42,7 @@ def test_background_native_bands(monkeypatch, catalog_type, count, enabled):
     for i, (raw, current) in enumerate(zip(originals, source._image_list)):
         np.testing.assert_array_equal(images[i], raw)
         np.testing.assert_array_equal(current, saved[i])
-        np.testing.assert_allclose(current, galaxy if enabled else raw, atol=1e-6)
+        np.testing.assert_allclose(current, np.maximum(galaxy, 0) if enabled else raw, atol=1e-6)
     expected = source._image_list[0 if count == 1 else 2]
     np.testing.assert_array_equal(first[0]["image"], expected)
     assert (source.background_diagnostics is not None) == enabled

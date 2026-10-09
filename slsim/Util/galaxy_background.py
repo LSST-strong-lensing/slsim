@@ -1,6 +1,7 @@
 """Experimental constant sky subtraction for observed galaxy cutouts.
 
-No output-value clipping, tapering, flux rescaling, or noise removal is performed. The
+Finite valid residuals are floored at zero after subtraction. No tapering,
+flux rescaling, or noise removal is performed. The
 outer 20 percent of the cutout is assumed to contain usable sky. Inspect the
 returned mask: extended galaxy wings may violate that assumption. Supply a
 coverage mask for zero-filled missing data; zeros are not inherently invalid.
@@ -25,8 +26,8 @@ def subtract_hst_catalog_background(image, matched_source):
     Returns corrected image, scalar level, None (no estimation mask),
     and diagnostics. Missing/invalid metadata raises rather than
     silently using the outskirts as sky. NOISE_VARIANCE is not
-    subtracted. Input pixels, shape and negative residuals are preserved
-    apart from the constant shift. Use on original catalog cutouts, not
+    subtracted. Finite residuals are floored at zero; nonfinite values and
+    the input array are preserved. Use on original catalog cutouts, not
     already corrected images.
     """
     try:
@@ -45,10 +46,11 @@ def subtract_hst_catalog_background(image, matched_source):
         raise ValueError("Expected a 2D HST cutout.")
     valid = np.isfinite(data)
     corrected = data.copy()
-    corrected[valid] -= background
+    corrected[valid] = np.maximum(data[valid] - background, 0.0)
     diagnostics = {
         "method": "hst_catalog_noise_mean",
         "background": background,
+        "clipped_pixels": int(np.count_nonzero(data[valid] - background < 0)),
         "valid_flux_before": float(data[valid].sum()),
         "valid_flux_after": float(corrected[valid].sum()),
     }
@@ -70,7 +72,8 @@ def subtract_galaxy_background(
     exclude pixels from estimation only. A central ellipse and dilated
     bright sources are excluded before iterative sigma clipping.
     Background RMS is a descriptive scatter, not the uncertainty in the
-    estimated sky.
+    estimated sky. Finite valid output pixels are floored at zero.
+    Source masks affect estimation only; coverage pixels remain unchanged.
     """
     data = np.array(image, dtype=float, copy=True)
     if data.ndim != 2 or min(data.shape) < 10:
@@ -123,7 +126,7 @@ def subtract_galaxy_background(
         raise ValueError("Insufficient unmasked sky; use a larger cutout.")
     background = float(np.median(data[sky_mask]))
     corrected = data.copy()
-    corrected[valid] -= background
+    corrected[valid] = np.maximum(data[valid] - background, 0.0)
     # Include all valid border pixels in the diagnostic, including contaminants.
     edge_values = data[valid & edge]
     diagnostics = {
@@ -132,11 +135,12 @@ def subtract_galaxy_background(
         "sky_pixels": int(sky_mask.sum()),
         "sky_fraction": float(sky_mask.sum() / valid.sum()),
         "edge_median_before": float(np.median(edge_values)),
-        "edge_median_after": float(np.median(edge_values - background)),
+        "edge_median_after": float(np.median(corrected[valid & edge])),
         "edge_rms_about_zero_before": float(np.sqrt(np.mean(edge_values**2))),
         "edge_rms_about_zero_after": float(
-            np.sqrt(np.mean((edge_values - background) ** 2))
+            np.sqrt(np.mean(corrected[valid & edge] ** 2))
         ),
+        "clipped_pixels": int(np.count_nonzero(data[valid] - background < 0)),
         "valid_flux_before": float(data[valid].sum()),
         "valid_flux_after": float(corrected[valid].sum()),
         "caution": "Sky is estimated on this border; edge statistics are not independent validation. Inspect masks for galaxy wings. Noise remains.",

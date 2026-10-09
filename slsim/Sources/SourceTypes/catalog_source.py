@@ -81,6 +81,7 @@ class CatalogSource(SourceBase):
         :type fallback_double_sersic_kwargs: dict or None
         :param subtract_background: Experimental opt-in constant sky subtraction
          on each native catalog band, before band mixing or color gradients.
+         Finite background-subtracted pixels are floored at zero.
          HST uses the matched catalog NOISE_MEAN (missing/invalid values raise
          ValueError). COSMOS Web estimates sky from the outskirts, requiring
          usable sky and potentially oversubtracting wings. Analytic fallback
