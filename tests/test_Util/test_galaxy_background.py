@@ -22,15 +22,20 @@ class TestGalaxyBackground(unittest.TestCase):
         image = np.array([[-2, 2, 5], [np.nan, np.inf, -np.inf]])
         original = image.copy()
         corrected, _, _, stats = subtract_hst_catalog_background(
-            image, {"NOISE_MEAN": 2})
+            image, {"NOISE_MEAN": 2}
+        )
         np.testing.assert_array_equal(corrected, [[0, 0, 3], [np.nan, np.inf, -np.inf]])
         np.testing.assert_array_equal(image, original)
         self.assertEqual(stats["clipped_pixels"], 1)
         self.assertEqual(stats["valid_flux_after"], 3)
         for sky in (0, -3):
-            result, _, _, _ = subtract_hst_catalog_background(original, {"NOISE_MEAN": sky})
+            result, _, _, _ = subtract_hst_catalog_background(
+                original, {"NOISE_MEAN": sky}
+            )
             finite = np.isfinite(original)
-            np.testing.assert_array_equal(result[finite], np.maximum(original[finite]-sky, 0))
+            np.testing.assert_array_equal(
+                result[finite], np.maximum(original[finite] - sky, 0)
+            )
 
     def test_source_mask_floor_and_coverage_preservation(self):
         image = np.full((40, 40), 7.0)
@@ -46,7 +51,8 @@ class TestGalaxyBackground(unittest.TestCase):
         source_mask[20, 20:22] = True
         original = image.copy()
         corrected, sky, mask, stats = subtract_galaxy_background(
-            image, source_mask=source_mask, coverage_mask=coverage)
+            image, source_mask=source_mask, coverage_mask=coverage
+        )
         self.assertEqual(sky, 7)
         self.assertEqual(corrected[20, 20], 0)
         self.assertEqual(corrected[20, 21], 3)
@@ -69,7 +75,9 @@ class TestGalaxyBackground(unittest.TestCase):
         self.assertEqual(background, np.median(image[mask]))
         np.testing.assert_array_equal(image, original)
         np.testing.assert_array_equal(corrected[coverage], image[coverage])
-        np.testing.assert_allclose(corrected[~coverage], np.maximum(image[~coverage] - background, 0))
+        np.testing.assert_allclose(
+            corrected[~coverage], np.maximum(image[~coverage] - background, 0)
+        )
 
     def test_outliers_and_negative_residuals(self):
         image = np.random.default_rng(12).normal(7, 0.1, (100, 100))
@@ -79,7 +87,7 @@ class TestGalaxyBackground(unittest.TestCase):
         self.assertFalse(mask[2:5, 2:5].any())
         self.assertTrue((corrected == 0).any())
         self.assertTrue((corrected >= 0).all())
-        np.testing.assert_allclose(corrected, np.maximum(image-background, 0))
+        np.testing.assert_allclose(corrected, np.maximum(image - background, 0))
 
     def test_filter_before_matching(self):
         y, x = np.indices((100, 100))

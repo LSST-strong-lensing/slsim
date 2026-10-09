@@ -26,9 +26,9 @@ def subtract_hst_catalog_background(image, matched_source):
     Returns corrected image, scalar level, None (no estimation mask),
     and diagnostics. Missing/invalid metadata raises rather than
     silently using the outskirts as sky. NOISE_VARIANCE is not
-    subtracted. Finite residuals are floored at zero; nonfinite values and
-    the input array are preserved. Use on original catalog cutouts, not
-    already corrected images.
+    subtracted. Finite residuals are floored at zero; nonfinite values
+    and the input array are preserved. Use on original catalog cutouts,
+    not already corrected images.
     """
     try:
         value = matched_source["NOISE_MEAN"]
@@ -73,7 +73,8 @@ def subtract_galaxy_background(
     bright sources are excluded before iterative sigma clipping.
     Background RMS is a descriptive scatter, not the uncertainty in the
     estimated sky. Finite valid output pixels are floored at zero.
-    Source masks affect estimation only; coverage pixels remain unchanged.
+    Source masks affect estimation only; coverage pixels remain
+    unchanged.
     """
     data = np.array(image, dtype=float, copy=True)
     if data.ndim != 2 or min(data.shape) < 10:
