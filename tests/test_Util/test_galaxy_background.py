@@ -4,13 +4,7 @@ rejection."""
 import unittest
 import tempfile
 from unittest import mock
-from contextlib import redirect_stdout
-import io
-import json
 from pathlib import Path
-import runpy
-import sys
-import warnings
 from astropy.io import fits
 from astropy.table import Table
 
@@ -18,7 +12,6 @@ import numpy as np
 import slsim.Util.galaxy_background as galaxy_background
 from slsim.Util.galaxy_background import (
     check_galaxy_edge,
-    compare_fits,
     subtract_galaxy_background,
     subtract_hst_catalog_background,
     filter_edge_catalog,
@@ -257,55 +250,6 @@ class TestGalaxyBackground(unittest.TestCase):
                     for band in diagnostics[0]["bands"]
                 )
             )
-
-    def test_compare_fits_outputs(self):
-        rng = np.random.default_rng(4)
-        image = rng.normal(3, 0.05, (40, 40))
-        image[18:22, 18:22] += 10
-        with tempfile.TemporaryDirectory() as directory:
-            directory = Path(directory)
-            input_path = directory / "input.fits"
-            output = directory / "diagnostics"
-            fits.PrimaryHDU(image).writeto(input_path)
-            stats = compare_fits(input_path, 0, output)
-            self.assertEqual(stats["input_file"], str(input_path.resolve()))
-            self.assertEqual(stats["hdu"], 0)
-            self.assertEqual(stats["band"], "unknown")
-            self.assertTrue((output / "input_hdu0.png").is_file())
-            self.assertTrue((output / "input_hdu0.json").is_file())
-            result = output / "input_hdu0_bgsub.fits"
-            self.assertTrue(result.is_file())
-            with fits.open(result) as hdul:
-                self.assertIn("BGSUB", hdul[0].header)
-                self.assertEqual(hdul[1].name, "SKYMASK")
-            with self.assertRaises(OSError):
-                compare_fits(input_path, 0, output)
-
-    def test_command_line_entry_point(self):
-        image = np.random.default_rng(8).normal(2, 0.05, (40, 40))
-        with tempfile.TemporaryDirectory() as directory:
-            directory = Path(directory)
-            input_path = directory / "cli.fits"
-            output = directory / "output"
-            fits.PrimaryHDU(image).writeto(input_path)
-            argv = [
-                "galaxy_background.py",
-                str(input_path),
-                "--hdu",
-                "0",
-                "--output",
-                str(output),
-            ]
-            stdout = io.StringIO()
-            with (
-                mock.patch.object(sys, "argv", argv),
-                redirect_stdout(stdout),
-                warnings.catch_warnings(),
-            ):
-                warnings.simplefilter("ignore", RuntimeWarning)
-                runpy.run_module("slsim.Util.galaxy_background", run_name="__main__")
-            self.assertEqual(json.loads(stdout.getvalue())["hdu"], 0)
-            self.assertTrue((output / "cli_hdu0_bgsub.fits").is_file())
 
     def test_hst_uses_metadata(self):
         image = np.arange(100, dtype=float).reshape(10, 10)

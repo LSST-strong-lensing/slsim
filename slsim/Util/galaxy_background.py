@@ -5,13 +5,8 @@ flux rescaling, or noise removal is performed. The
 outer 20 percent of the cutout is assumed to contain usable sky. Inspect the
 returned mask: extended galaxy wings may violate that assumption. Supply a
 coverage mask for zero-filled missing data; zeros are not inherently invalid.
-
-Run this file with FITS_PATH --hdu 1 --output OUTPUT_DIRECTORY to write a
-diagnostic PNG, JSON statistics, and a new FITS (never the input file).
 """
 
-import argparse
-import json
 from pathlib import Path
 
 import numpy as np
@@ -245,66 +240,3 @@ def filter_edge_catalog(catalog, catalog_type, catalog_path, **edge_kwargs):
         accepted.append(not rejected)
         diagnostics.append({"id": identifier, "rejected": rejected, "bands": bands})
     return catalog[np.asarray(accepted, dtype=bool)], diagnostics
-
-
-def compare_fits(path, hdu, output):
-    """Save a reproducible diagnostic for one FITS image extension."""
-    import matplotlib
-
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-
-    path, output = Path(path), Path(output)
-    output.mkdir(parents=True, exist_ok=True)
-    data, header = fits.getdata(path, hdu, header=True)
-    corrected, background, mask, stats = subtract_galaxy_background(data)
-    stem = f"{path.stem}_hdu{hdu}"
-    stats.update(
-        input_file=str(path.resolve()), hdu=hdu, band=header.get("EXTNAME", "unknown")
-    )
-    finite = np.isfinite(data)
-    scale = max(stats["sky_rms"], np.finfo(float).eps)
-    vmin, vmax = -2 * scale, max(5 * scale, float(np.percentile(data[finite], 95)))
-    fig, axes = plt.subplots(1, 4, figsize=(16, 4), constrained_layout=True)
-    pad = max(3, int(min(data.shape) * 0.08))
-    for ax, values, title in zip(
-        axes[:2], [data, corrected], ["Original", "Background subtracted"]
-    ):
-        shown = ax.imshow(
-            np.pad(values, pad), origin="lower", cmap="magma", vmin=vmin, vmax=vmax
-        )
-        ax.set_title(title + " (zero padded)")
-        ax.set_axis_off()
-    fig.colorbar(shown, ax=list(axes[:2]), shrink=0.7, label="Native pixel units")
-    axes[2].imshow(mask, origin="lower", cmap="gray", vmin=0, vmax=1)
-    axes[2].set_title("White: pixels used for sky")
-    axes[2].set_axis_off()
-    axes[3].plot(np.nanmedian(data, axis=0), label="Before")
-    axes[3].plot(np.nanmedian(corrected, axis=0), label="After")
-    axes[3].axhline(0, color="black", lw=0.7)
-    axes[3].set(xlabel="Column", ylabel="Median pixel value")
-    axes[3].legend()
-    fig.suptitle(
-        f"{path.name} | HDU {hdu} | sky={background:.4g}, RMS={scale:.4g}", fontsize=10
-    )
-    fig.savefig(output / f"{stem}.png", dpi=150)
-    plt.close(fig)
-    header["BGSUB"] = (background, "Experimental constant background removed")
-    # Deliberately refuse to overwrite any previous FITS result.
-    fits.HDUList(
-        [
-            fits.PrimaryHDU(corrected, header=header),
-            fits.ImageHDU(mask.astype(np.uint8), name="SKYMASK"),
-        ]
-    ).writeto(output / f"{stem}_bgsub.fits", overwrite=False)
-    (output / f"{stem}.json").write_text(json.dumps(stats, indent=2), encoding="utf-8")
-    return stats
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("fits_path")
-    parser.add_argument("--hdu", type=int, default=0)
-    parser.add_argument("--output", required=True)
-    args = parser.parse_args()
-    print(json.dumps(compare_fits(args.fits_path, args.hdu, args.output), indent=2))
