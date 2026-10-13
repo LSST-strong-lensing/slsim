@@ -41,18 +41,24 @@ class CatalogSource(SourceBase):
         edge_detection_kwargs=None,
         **source_dict,
     ):
-        """
+        """Initialize a catalog source with optional screening and sky subtraction.
+
         :param angular_size: half light radius of object [arcseconds]
-        :param e1: eccentricity modulus
-        :param e2: eccentricity modulus
+        :type angular_size: float
+        :param e1: ellipticity component
+        :type e1: float
+        :param e2: ellipticity component
+        :type e2: float
         :param n_sersic: Sersic index
+        :type n_sersic: float
         :param source_dict: Source properties. May be a dictionary or an Astropy table.
             This dict or table should contain atleast redshift, a magnitude in any band,
             sersic index, angular size in arcsec, and ellipticities e1 and e2.
             eg: {"z": 0.8, "mag_i": 22, "n_sersic": 1, "angular_size": 0.10,
             "e1": 0.002, "e2": 0.001}. One can provide magnitudes in multiple bands.
-        :type source_dict: dict or astropy.table.Table
+        :type source_dict: dict[str, object]
         :param cosmo: instance of astropy cosmology
+        :type cosmo: astropy.cosmology.Cosmology
         :param catalog_type: specifies which catalog to use. Curently the options are:
             1. "HST_COSMOS" - https://zenodo.org/records/3242143
             2. "COSMOS_WEB" - https://zenodo.org/records/19188494
@@ -77,7 +83,7 @@ class CatalogSource(SourceBase):
          ``component_spectral_slopes``.
         :type color_gradient: dict or None
         :param fallback_double_sersic_kwargs: Optional overrides for the
-         DoubleSersic parameters used after a failed HST_COSMOS match.
+         DoubleSersic parameters used after an unavailable catalog match.
         :type fallback_double_sersic_kwargs: dict or None
         :param subtract_background: Experimental opt-in constant sky subtraction
          on each native catalog band, before band mixing or color gradients.
@@ -91,7 +97,14 @@ class CatalogSource(SourceBase):
          detection settings. Reject a template if any native band fails. COSMOS
          Web without a valid match automatically uses DoubleSersic; HST uses
          its configured analytic fallback.
-        :param edge_detection_kwargs: Optional thresholds for check_galaxy_edge.
+        :type reject_edge_sources: bool
+        :param edge_detection_kwargs: Optional float overrides for check_galaxy_edge:
+            margin_fraction (0.1), peak_fraction (0.01), noise_threshold (3.0).
+            None uses defaults.
+
+        :type edge_detection_kwargs: dict[str, float] or None
+        :return: None; initializes the catalog source and optional processing settings.
+        :rtype: None
         """
         super().__init__(extended_source=True, point_source=False, **source_dict)
         self.name = "GAL"
@@ -190,7 +203,11 @@ class CatalogSource(SourceBase):
 
     @property
     def matched_source_id(self):
-        """ID of the matched galaxy from the corresponding catalog."""
+        """Return the matched template identifier, if available.
+
+        :return: HST IDENT or COSMOS Web id; None before matching or after a failed match.
+        :rtype: int or numpy.integer or None
+        """
         if getattr(self, "_matched_source", None) is not None:
             if self._catalog_type == "HST_COSMOS":
                 return self._matched_source["IDENT"]
@@ -201,11 +218,24 @@ class CatalogSource(SourceBase):
             return None
 
     def kwargs_extended_light(self, band=None):
-        """Provides dictionary of keywords for the source light model(s).
-        Keywords used are in lenstronomy conventions.
+        """Return lenstronomy light models after optional screening and sky subtraction.
 
-        :param band: Imaging band
-        :return: dictionary of keywords for the source light model(s)
+        Screening precedes matching and is cached by catalog object, type, path,
+        and detection settings. Subtraction is applied once to each native band,
+        with finite valid residuals floored at zero, before band mixing or colour
+        transfer. COSMOS Web with screening enabled and no match returns
+        DoubleSersic. HST uses its configured chromatic or SingleSersic fallback.
+
+        :param band: Requested observing band. None selects the first native image
+            and magnitude 1 for matched templates; analytic fallbacks use their
+            own band=None convention.
+        :type band: str or None
+        :return: ``(light_model_list, kwargs_extended_source)``: model names and
+            one parameter dictionary per component. Matched templates use INTERPOL
+            with image (numpy.ndarray), magnitude (float), centre coordinates
+            (arcsec), phi_G (radians), and scale (arcsec per pixel). Fallbacks return
+            their analytic model parameters. Diagnostics are stored on the instance.
+        :rtype: tuple[list[str], list[dict[str, object]]]
         """
         if not hasattr(self, "_image_list"):
             catalog = self.final_catalog
@@ -317,8 +347,16 @@ class CatalogSource(SourceBase):
         )
 
     def _double_sersic_fallback(self):
-        """Build the DoubleSersic fallback after an unavailable catalog
-        match."""
+        """Construct or reuse the analytic two-component fallback.
+
+        Uses source size, ellipticity and photometry. Default indices are 4 and 1,
+        size factors are 0.5 and 1, and flux weights are 0.4 and 0.6. Constructor
+        fallback_double_sersic_kwargs overrides these; color_gradient is passed
+        from the source configuration. No explicit input arguments are required.
+
+        :return: Cached DoubleSersic source used when the catalog has no valid match.
+        :rtype: slsim.Sources.SourceTypes.double_sersic.DoubleSersic
+        """
         if hasattr(self, "double_sersic"):
             return self.double_sersic
 
