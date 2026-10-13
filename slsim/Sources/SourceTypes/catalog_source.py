@@ -277,7 +277,9 @@ class CatalogSource(SourceBase):
                     for img in self._image_list
                 ]
             else:
-                results = [subtract_cosmos_catalog_background(img) for img in self._image_list]
+                results = [
+                    subtract_cosmos_catalog_background(img) for img in self._image_list
+                ]
             self._image_list = [result[0] for result in results]
             self.background_diagnostics = [result[3] for result in results]
 

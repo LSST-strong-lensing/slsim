@@ -62,7 +62,8 @@ def subtract_cosmos_catalog_background(
 ):
     """Subtract estimated COSMOS Web sky and floor valid residuals at zero.
 
-    Return corrected image, scalar sky, usable-sky mask, and diagnostics.
+    Return corrected image, scalar sky, usable-sky mask, and
+    diagnostics.
 
     Masks are boolean arrays with True marking excluded pixels. Coverage
     pixels and nonfinite pixels are preserved, not shifted. Source masks
