@@ -12,7 +12,7 @@ import numpy as np
 import slsim.Util.galaxy_background as galaxy_background
 from slsim.Util.galaxy_background import (
     check_galaxy_edge,
-    subtract_galaxy_background,
+    subtract_cosmos_catalog_background,
     subtract_hst_catalog_background,
     filter_edge_catalog,
 )
@@ -49,11 +49,11 @@ class TestGalaxyBackground(unittest.TestCase):
         for kwargs, message in bad_arguments:
             with self.subTest(kwargs=kwargs):
                 with self.assertRaisesRegex(ValueError, message):
-                    subtract_galaxy_background(**kwargs)
+                    subtract_cosmos_catalog_background(**kwargs)
 
         mask = np.ones(image.shape, dtype=bool)
         with self.assertRaisesRegex(ValueError, "Insufficient sky pixels"):
-            subtract_galaxy_background(image, coverage_mask=mask)
+            subtract_cosmos_catalog_background(image, coverage_mask=mask)
 
     def test_insufficient_sky_after_bright_mask(self):
         image = np.ones((40, 40))
@@ -71,7 +71,7 @@ class TestGalaxyBackground(unittest.TestCase):
             galaxy_background, "sigma_clip", side_effect=controlled_sigma_clip
         ):
             with self.assertRaisesRegex(ValueError, "Insufficient unmasked sky"):
-                subtract_galaxy_background(image, dilation=0)
+                subtract_cosmos_catalog_background(image, dilation=0)
 
     def test_hst_floor_nonfinite_and_nonmutation(self):
         image = np.array([[-2, 2, 5], [np.nan, np.inf, -np.inf]])
@@ -105,7 +105,7 @@ class TestGalaxyBackground(unittest.TestCase):
         source_mask = np.zeros(image.shape, bool)
         source_mask[20, 20:22] = True
         original = image.copy()
-        corrected, sky, mask, stats = subtract_galaxy_background(
+        corrected, sky, mask, stats = subtract_cosmos_catalog_background(
             image, source_mask=source_mask, coverage_mask=coverage
         )
         self.assertEqual(sky, 7)
@@ -124,7 +124,7 @@ class TestGalaxyBackground(unittest.TestCase):
         original = image.copy()
         coverage = np.zeros(image.shape, bool)
         coverage[:3] = True
-        corrected, background, mask, _ = subtract_galaxy_background(
+        corrected, background, mask, _ = subtract_cosmos_catalog_background(
             image, coverage_mask=coverage
         )
         self.assertEqual(background, np.median(image[mask]))
@@ -137,7 +137,7 @@ class TestGalaxyBackground(unittest.TestCase):
     def test_outliers_and_negative_residuals(self):
         image = np.random.default_rng(12).normal(7, 0.1, (100, 100))
         image[2:5, 2:5] = 100
-        corrected, background, mask, _ = subtract_galaxy_background(image)
+        corrected, background, mask, _ = subtract_cosmos_catalog_background(image)
         self.assertLess(abs(background - 7), 0.02)
         self.assertFalse(mask[2:5, 2:5].any())
         self.assertTrue((corrected == 0).any())
@@ -237,7 +237,7 @@ class TestGalaxyBackground(unittest.TestCase):
             ).writeto(path)
             with mock.patch.object(
                 galaxy_background,
-                "subtract_galaxy_background",
+                "subtract_cosmos_catalog_background",
                 side_effect=ValueError("no sky"),
             ):
                 _, diagnostics = filter_edge_catalog(

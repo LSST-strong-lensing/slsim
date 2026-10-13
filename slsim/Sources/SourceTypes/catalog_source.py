@@ -5,7 +5,7 @@ from slsim.Sources.SourceCatalogues.CosmosWebCatalog import galaxy_match as Cosm
 from slsim.Sources.SourceCatalogues.HSTCosmosCatalog import galaxy_match as HSTCosmos
 from slsim.Util.color_gradient import radial_color_gradient_image
 from slsim.Util.galaxy_background import (
-    subtract_galaxy_background,
+    subtract_cosmos_catalog_background,
     subtract_hst_catalog_background,
     filter_edge_catalog,
 )
@@ -277,7 +277,7 @@ class CatalogSource(SourceBase):
                     for img in self._image_list
                 ]
             else:
-                results = [subtract_galaxy_background(img) for img in self._image_list]
+                results = [subtract_cosmos_catalog_background(img) for img in self._image_list]
             self._image_list = [result[0] for result in results]
             self.background_diagnostics = [result[3] for result in results]
 

@@ -52,7 +52,7 @@ def subtract_hst_catalog_background(image, matched_source):
     return corrected, background, None, diagnostics
 
 
-def subtract_galaxy_background(
+def subtract_cosmos_catalog_background(
     image,
     source_mask=None,
     coverage_mask=None,
@@ -60,7 +60,9 @@ def subtract_galaxy_background(
     sigma=3.0,
     dilation=2,
 ):
-    """Return corrected image, scalar sky, usable-sky mask, and diagnostics.
+    """Subtract estimated COSMOS Web sky and floor valid residuals at zero.
+
+    Return corrected image, scalar sky, usable-sky mask, and diagnostics.
 
     Masks are boolean arrays with True marking excluded pixels. Coverage
     pixels and nonfinite pixels are preserved, not shifted. Source masks
@@ -231,7 +233,7 @@ def filter_edge_catalog(catalog, catalog_type, catalog_path, **edge_kwargs):
                     background = subtract_hst_catalog_background(img, row)[1]
                 else:
                     try:
-                        background = subtract_galaxy_background(img)[1]
+                        background = subtract_cosmos_catalog_background(img)[1]
                     except ValueError:
                         bands.append({"rejected": True, "reason": "insufficient_sky"})
                         continue
