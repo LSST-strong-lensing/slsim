@@ -41,7 +41,8 @@ class CatalogSource(SourceBase):
         edge_detection_kwargs=None,
         **source_dict,
     ):
-        """Initialize a catalog source with optional screening and sky subtraction.
+        """Initialize a catalog source with optional screening and sky
+        subtraction.
 
         :param angular_size: half light radius of object [arcseconds]
         :type angular_size: float
@@ -205,7 +206,8 @@ class CatalogSource(SourceBase):
     def matched_source_id(self):
         """Return the matched template identifier, if available.
 
-        :return: HST IDENT or COSMOS Web id; None before matching or after a failed match.
+        :return: HST IDENT or COSMOS Web id; None before matching or
+            after a failed match.
         :rtype: int or numpy.integer or None
         """
         if getattr(self, "_matched_source", None) is not None:
@@ -218,23 +220,26 @@ class CatalogSource(SourceBase):
             return None
 
     def kwargs_extended_light(self, band=None):
-        """Return lenstronomy light models after optional screening and sky subtraction.
+        """Return lenstronomy light models after optional screening and sky
+        subtraction.
 
-        Screening precedes matching and is cached by catalog object, type, path,
-        and detection settings. Subtraction is applied once to each native band,
-        with finite valid residuals floored at zero, before band mixing or colour
-        transfer. COSMOS Web with screening enabled and no match returns
-        DoubleSersic. HST uses its configured chromatic or SingleSersic fallback.
+        Screening precedes matching and is cached by catalog object,
+        type, path, and detection settings. Subtraction is applied once
+        to each native band, with finite valid residuals floored at
+        zero, before band mixing or colour transfer. COSMOS Web with
+        screening enabled and no match returns DoubleSersic. HST uses
+        its configured chromatic or SingleSersic fallback.
 
-        :param band: Requested observing band. None selects the first native image
-            and magnitude 1 for matched templates; analytic fallbacks use their
-            own band=None convention.
+        :param band: Requested observing band. None selects the first
+            native image and magnitude 1 for matched templates; analytic
+            fallbacks use their own band=None convention.
         :type band: str or None
-        :return: ``(light_model_list, kwargs_extended_source)``: model names and
-            one parameter dictionary per component. Matched templates use INTERPOL
-            with image (numpy.ndarray), magnitude (float), centre coordinates
-            (arcsec), phi_G (radians), and scale (arcsec per pixel). Fallbacks return
-            their analytic model parameters. Diagnostics are stored on the instance.
+        :return:``(light_model_list, kwargs_extended_source)``: model
+            names and one parameter dictionary per component. Matched
+            templates use INTERPOL with image (numpy.ndarray), magnitude
+            (float), centre coordinates (arcsec), phi_G (radians), and
+            scale (arcsec per pixel). Fallbacks return their analytic
+            model parameters. Diagnostics are stored on the instance.
         :rtype: tuple[list[str], list[dict[str, object]]]
         """
         if not hasattr(self, "_image_list"):

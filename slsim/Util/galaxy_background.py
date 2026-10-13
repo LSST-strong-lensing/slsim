@@ -69,7 +69,8 @@ def subtract_cosmos_catalog_background(
     sigma=3.0,
     dilation=2,
 ):
-    """Estimate COSMOS Web sky with sigma clipping, subtract it, and floor at zero.
+    """Estimate COSMOS Web sky with sigma clipping, subtract it, and floor at
+    zero.
 
     A central ellipse and dilated bright-source mask exclude galaxy light
     from the outer border. Two clipping passes use a median centre, MAD-based
@@ -190,19 +191,22 @@ def check_galaxy_edge(
 ):
     """Detect central source structure entering the cutout border.
 
-    A 3x3 median-filtered, background-subtracted copy is used for detection
-    only. Track the 8-connected component containing the brightest pixel in
-    the central half of each image dimension. The threshold is the maximum
-    of peak_fraction times that peak and noise_threshold times the border
-    MAD scatter. No flooring is applied to this detection copy. Faint wings
-    and disconnected neighbours may be missed; this is not a morphology guarantee.
+    A 3x3 median-filtered, background-subtracted copy is used for
+    detection only. Track the 8-connected component containing the
+    brightest pixel in the central half of each image dimension. The
+    threshold is the maximum of peak_fraction times that peak and
+    noise_threshold times the border MAD scatter. No flooring is applied
+    to this detection copy. Faint wings and disconnected neighbours may
+    be missed; this is not a morphology guarantee.
 
     :param image: Original 2D cutout. The input is not modified.
     :type image: numpy.ndarray
-    :param background: Finite constant sky level in the image pixel units.
+    :param background: Finite constant sky level in the image pixel
+        units.
     :type background: float
-    :param margin_fraction: Width of the rejection border as a fraction of
-        the shorter dimension, strictly between 0 and 0.5. Default is 0.1.
+    :param margin_fraction: Width of the rejection border as a fraction
+        of the shorter dimension, strictly between 0 and 0.5. Default is
+        0.1.
     :type margin_fraction: float
     :param peak_fraction: Fraction of central peak defining the relative
         threshold, strictly between 0 and 1. Default is 0.01.
@@ -211,9 +215,10 @@ def check_galaxy_edge(
         Default is 3.0.
     :type noise_threshold: float
     :return: Dictionary with rejected (bool) and reason (str): accepted,
-        edge_structure, undetected_source, or invalid_cutout. Valid cutouts
-        also include threshold, peak, background (float), and margin_pixels
-        (int). Non-2D, smaller-than-10-pixel, or nonfinite cutouts are rejected.
+        edge_structure, undetected_source, or invalid_cutout. Valid
+        cutouts also include threshold, peak, background (float), and
+        margin_pixels (int). Non-2D, smaller-than-10-pixel, or nonfinite
+        cutouts are rejected.
     :rtype: dict[str, object]
     """
     data = np.asarray(image, dtype=float)
