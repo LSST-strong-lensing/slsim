@@ -80,15 +80,11 @@ class TestGalaxyBackground(unittest.TestCase):
     def test_catalog_background_preserves_input_and_nonfinite_pixels(self):
         image = np.array([[-2, 2, 5], [np.nan, np.inf, -np.inf]])
         original = image.copy()
-        corrected, _, _ = subtract_catalog_background(
-            image, {"NOISE_MEAN": 2}
-        )
+        corrected, _, _ = subtract_catalog_background(image, {"NOISE_MEAN": 2})
         np.testing.assert_array_equal(corrected, [[0, 0, 3], [np.nan, np.inf, -np.inf]])
         np.testing.assert_array_equal(image, original)
         for sky in (0, -3):
-            result, _, _ = subtract_catalog_background(
-                original, {"NOISE_MEAN": sky}
-            )
+            result, _, _ = subtract_catalog_background(original, {"NOISE_MEAN": sky})
             finite = np.isfinite(original)
             np.testing.assert_array_equal(
                 result[finite], np.maximum(original[finite] - sky, 0)
@@ -215,9 +211,7 @@ class TestGalaxyBackground(unittest.TestCase):
             fits.HDUList(
                 [fits.PrimaryHDU()] + [fits.ImageHDU(small) for _ in range(4)]
             ).writeto(path)
-            filtered = filter_edge_catalog(
-                Table({"id": [1]}), "COSMOS_WEB", directory
-            )
+            filtered = filter_edge_catalog(Table({"id": [1]}), "COSMOS_WEB", directory)
             self.assertEqual(len(filtered), 0)
 
             path.unlink()
@@ -244,17 +238,22 @@ class TestGalaxyBackground(unittest.TestCase):
         np.testing.assert_array_equal(corrected, np.maximum(image - 12, 0))
 
 
-@pytest.mark.parametrize("metadata, options, expected", [
-    ({"NOISE_MEAN": 3}, None, 3),
-    ({"noise_mean": 4}, None, 4),
-    ({"SKY": 5}, {"mean_key": "SKY"}, 5),
-    ({"NOISE_MEAN": 3}, {"noise_mean": 6}, 6),
-    ({}, {"noise_mean": [1, 2, 3, 4]}, 2),
-    ({"SKY": [1, 2, 3, 4]}, {"mean_key": "SKY"}, 2),
-])
+@pytest.mark.parametrize(
+    "metadata, options, expected",
+    [
+        ({"NOISE_MEAN": 3}, None, 3),
+        ({"noise_mean": 4}, None, 4),
+        ({"SKY": 5}, {"mean_key": "SKY"}, 5),
+        ({"NOISE_MEAN": 3}, {"noise_mean": 6}, 6),
+        ({}, {"noise_mean": [1, 2, 3, 4]}, 2),
+        ({"SKY": [1, 2, 3, 4]}, {"mean_key": "SKY"}, 2),
+    ],
+)
 def test_supplied_mean_routing(metadata, options, expected):
-    image = np.full((40, 40), 10.)
-    with mock.patch.object(galaxy_background, "subtract_estimated_background") as estimate:
+    image = np.full((40, 40), 10.0)
+    with mock.patch.object(
+        galaxy_background, "subtract_estimated_background"
+    ) as estimate:
         result = galaxy_background.subtract_source_background(
             image, metadata, options, band_index=1, band_count=4
         )
@@ -266,40 +265,51 @@ def test_supplied_mean_routing(metadata, options, expected):
 
 @pytest.mark.parametrize("metadata", [None, {}, {"NOISE_VARIANCE": 2}])
 def test_missing_mean_uses_estimation(metadata):
-    result = galaxy_background.subtract_source_background(np.full((40, 40), 7.), metadata)
+    result = galaxy_background.subtract_source_background(
+        np.full((40, 40), 7.0), metadata
+    )
     assert result[1] == 7
     assert result[2] is not None
 
 
-@pytest.mark.parametrize("metadata, options", [
-    ({"NOISE_MEAN": np.nan}, None),
-    ({"NOISE_MEAN": np.ma.masked}, None),
-    ({}, {"mean_key": "missing"}),
-    ({}, {"noise_mean": [1, 2]}),
-    ({}, {"noise_mean": None}),
-    ({}, {"noise_mean": np.inf}),
-    ({}, {"typo": 2}),
-    ({}, {"mean_key": 3}),
-])
+@pytest.mark.parametrize(
+    "metadata, options",
+    [
+        ({"NOISE_MEAN": np.nan}, None),
+        ({"NOISE_MEAN": np.ma.masked}, None),
+        ({}, {"mean_key": "missing"}),
+        ({}, {"noise_mean": [1, 2]}),
+        ({}, {"noise_mean": None}),
+        ({}, {"noise_mean": np.inf}),
+        ({}, {"typo": 2}),
+        ({}, {"mean_key": 3}),
+    ],
+)
 def test_invalid_supplied_mean_does_not_estimate(metadata, options):
-    with mock.patch.object(galaxy_background, "subtract_estimated_background") as estimate:
+    with mock.patch.object(
+        galaxy_background, "subtract_estimated_background"
+    ) as estimate:
         with pytest.raises(ValueError):
-            galaxy_background.subtract_source_background(np.ones((40, 40)), metadata, options)
+            galaxy_background.subtract_source_background(
+                np.ones((40, 40)), metadata, options
+            )
         estimate.assert_not_called()
 
 
 def test_screening_uses_supplied_per_band_means(tmp_path):
     y, x = np.indices((40, 40))
-    galaxy = 30 * np.exp(-((x - 20)**2 + (y - 20)**2) / 20)
-    means = [1., 2., 3., 4.]
-    fits.HDUList([fits.PrimaryHDU()] + [fits.ImageHDU(galaxy + b) for b in means]).writeto(
-        tmp_path / "COSMOSWeb_galaxy_1_image.fits"
-    )
+    galaxy = 30 * np.exp(-((x - 20) ** 2 + (y - 20) ** 2) / 20)
+    means = [1.0, 2.0, 3.0, 4.0]
+    fits.HDUList(
+        [fits.PrimaryHDU()] + [fits.ImageHDU(galaxy + b) for b in means]
+    ).writeto(tmp_path / "COSMOSWeb_galaxy_1_image.fits")
     with mock.patch.object(
         galaxy_background, "check_galaxy_edge", wraps=check_galaxy_edge
     ) as check:
         filtered = filter_edge_catalog(
-            Table({"id": [1]}), "COSMOS_WEB", tmp_path,
+            Table({"id": [1]}),
+            "COSMOS_WEB",
+            tmp_path,
             noise_kwargs={"noise_mean": means},
         )
     assert len(filtered) == 1
@@ -310,7 +320,7 @@ def test_screening_uses_supplied_per_band_means(tmp_path):
 @pytest.mark.parametrize("band_index", [0, 1, 2, 3])
 def test_catalog_noise_data_selects_native_band_without_mutation(band_index):
     """Read custom columns and keep the catalog values unchanged."""
-    means = [1., 2., 3., 4.]
+    means = [1.0, 2.0, 3.0, 4.0]
     table = Table({"SKY": [means]})
     result = galaxy_background.catalog_noise_data(
         table[0], {"mean_key": "SKY"}, band_index, 4
@@ -356,17 +366,20 @@ def test_filter_rejects_invalid_mean_instead_of_estimating(tmp_path):
     fits.HDUList(
         [fits.PrimaryHDU()] + [fits.ImageHDU(np.ones((40, 40))) for _ in range(4)]
     ).writeto(path)
-    with mock.patch.object(galaxy_background, "subtract_estimated_background") as estimate:
+    with mock.patch.object(
+        galaxy_background, "subtract_estimated_background"
+    ) as estimate:
         with pytest.raises(ValueError, match="finite"):
-            filter_edge_catalog(Table({"id": [1], "noise_mean": [np.nan]}),
-                                "COSMOS_WEB", tmp_path)
+            filter_edge_catalog(
+                Table({"id": [1], "noise_mean": [np.nan]}), "COSMOS_WEB", tmp_path
+            )
         estimate.assert_not_called()
 
 
 def test_edge_check_preserves_input():
     """Screening only reads the original image."""
     y, x = np.indices((40, 40))
-    image = 3 + 20 * np.exp(-((x - 20)**2 + (y - 20)**2) / 20)
+    image = 3 + 20 * np.exp(-((x - 20) ** 2 + (y - 20) ** 2) / 20)
     original = image.copy()
     assert not check_galaxy_edge(image, 3)["rejected"]
     np.testing.assert_array_equal(image, original)

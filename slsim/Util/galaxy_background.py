@@ -18,18 +18,22 @@ from scipy.ndimage import median_filter, label, binary_dilation
 def subtract_catalog_background(image, noise_data, mean_key="NOISE_MEAN"):
     """Subtract a supplied background mean.
 
-    When the catalog metadata provides background noise data, this function 
-    reads the corresponding parameters and subtracts the background noise 
-    from the image.
+    When the catalog metadata provides background noise data, this
+    function reads the corresponding parameters and subtracts the
+    background noise from the image.
 
-    :param image: Two-dimensional original image in native pixel-value units.
+    :param image: Two-dimensional original image in native pixel-value
+        units.
     :type image: numpy.ndarray
-    :param noise_data: Catalog row or dictionary containing the background mean.
+    :param noise_data: Catalog row or dictionary containing the
+        background mean.
     :type noise_data: astropy.table.Row or dict[str, object]
-    :param mean_key: Field containing a finite scalar mean in image units.
+    :param mean_key: Field containing a finite scalar mean in image
+        units.
     :type mean_key: str
-    :return: Corrected float image, background mean, and None (no sky mask).
-        Finite output pixels are nonnegative. The input is unchanged.
+    :return: Corrected float image, background mean, and None (no sky
+        mask). Finite output pixels are nonnegative. The input is
+        unchanged.
     :rtype: tuple[numpy.ndarray, float, None]
     """
     try:
@@ -64,35 +68,37 @@ def subtract_estimated_background(
 ):
     """Estimate background noise from the image, subtract it.
 
-    When the catalog metadata does not provide background noise data, 
-    this function will estimate the background noise from pixels near 
-    the image edges.
-    Exclude the central region and bright sources. Use 3-sigma clipping
-    to remove pixels whose values differ from the median by more than
-    three times the estimated scatter. Repeat until no more pixels are
-    removed, up to ten iterations per pass. Use the median of the
-    remaining pixels as the background noise.
+    When the catalog metadata does not provide background noise data,
+    this function will estimate the background noise from pixels near
+    the image edges. Exclude the central region and bright sources. Use
+    3-sigma clipping to remove pixels whose values differ from the
+    median by more than three times the estimated scatter. Repeat until
+    no more pixels are removed, up to ten iterations per pass. Use the
+    median of the remaining pixels as the background noise.
 
-    :param image: Original 2D cutout, at least 10 pixels per side. Not modified.
+    :param image: Original 2D cutout, at least 10 pixels per side. Not
+        modified.
     :type image: numpy.ndarray
-    :param source_mask: Same-shape mask; True excludes pixels from background
-        estimation only. Those pixels are still corrected. Default is None.
+    :param source_mask: Same-shape mask; True excludes pixels from
+        background estimation only. Those pixels are still corrected.
+        Default is None.
     :type source_mask: numpy.ndarray or None
     :param coverage_mask: Same-shape mask; True marks missing coverage.
-        These pixels are excluded from estimation and preserved in the output.
-        Nonfinite pixels are also preserved. Default is None.
+        These pixels are excluded from estimation and preserved in the
+        output. Nonfinite pixels are also preserved. Default is None.
     :type coverage_mask: numpy.ndarray or None
-    :param border_fraction: Border width as a fraction of the shorter image
-        dimension, strictly between 0 and 0.5. Default is 0.2; at least one pixel.
+    :param border_fraction: Border width as a fraction of the shorter
+        image dimension, strictly between 0 and 0.5. Default is 0.2; at
+        least one pixel.
     :type border_fraction: float
     :param sigma: Positive finite clipping threshold and bright-source
         detection multiplier. Default is 3.0.
     :type sigma: float
-    :param dilation: Nonnegative number of bright-mask dilation iterations.
-        Default is 2; zero disables dilation.
+    :param dilation: Nonnegative number of bright-mask dilation
+        iterations. Default is 2; zero disables dilation.
     :type dilation: int
-    :return: Corrected float image, background mean, and boolean sky mask.
-        True mask pixels were used to estimate the background.
+    :return: Corrected float image, background mean, and boolean sky
+        mask. True mask pixels were used to estimate the background.
     :rtype: tuple[numpy.ndarray, float, numpy.ndarray]
     """
     data = np.array(image, dtype=float, copy=True)
@@ -158,7 +164,8 @@ def subtract_estimated_background(
 
 
 def catalog_noise_data(matched_source, noise_kwargs=None, band_index=0, band_count=1):
-    """Read the background mean for the current band from the catalog or user settings.
+    """Read the background mean for the current band from the catalog or user
+    settings.
 
     :param matched_source: Catalog row, dictionary, or None.
     :type matched_source: astropy.table.Row or dict or None
@@ -210,20 +217,22 @@ def catalog_noise_data(matched_source, noise_kwargs=None, band_index=0, band_cou
 def subtract_source_background(
     image, matched_source=None, noise_kwargs=None, band_index=0, band_count=1
 ):
-    """Use a supplied background noise when available; 
-    otherwise estimate it from the image.
+    """Use a supplied background noise when available; otherwise estimate it
+    from the image.
 
     :param image: Original two-dimensional image.
     :type image: numpy.ndarray
     :param matched_source: Catalog metadata.
     :type matched_source: astropy.table.Row or dict or None
-    :param noise_kwargs: Mean values or column name; see catalog_noise_data.
+    :param noise_kwargs: Mean values or column name; see
+        catalog_noise_data.
     :type noise_kwargs: dict or None
     :param band_index: Zero-based native-band index.
     :type band_index: int
     :param band_count: Number of native image bands.
     :type band_count: int
-    :return: Corrected image, background mean, and sky mask (None for a supplied mean).
+    :return: Corrected image, background mean, and sky mask (None for a
+        supplied mean).
     :rtype: tuple[numpy.ndarray, float, numpy.ndarray or None]
     """
     noise = catalog_noise_data(matched_source, noise_kwargs, band_index, band_count)
@@ -307,8 +316,8 @@ def check_galaxy_edge(
 def filter_edge_catalog(
     catalog, catalog_type, catalog_path, noise_kwargs=None, **edge_kwargs
 ):
-    """Remove sources whose central structure reaches the image border
-    before matching.
+    """Remove sources whose central structure reaches the image border before
+    matching.
 
     :param catalog: Processed table. HST requires IDENT, GAL_FILENAME,
         GAL_HDU; COSMOS Web requires id. Other columns are retained.
@@ -361,7 +370,9 @@ def filter_edge_catalog(
                     except ValueError:
                         bands.append(True)
                         continue
-                bands.append(check_galaxy_edge(img, background, **edge_kwargs)["rejected"])
+                bands.append(
+                    check_galaxy_edge(img, background, **edge_kwargs)["rejected"]
+                )
         rejected = any(bands)
         accepted.append(not rejected)
     return catalog[np.asarray(accepted, dtype=bool)]

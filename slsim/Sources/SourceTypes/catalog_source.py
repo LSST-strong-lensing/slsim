@@ -43,7 +43,8 @@ class CatalogSource(SourceBase):
         noise_kwargs=None,
         **source_dict,
     ):
-        """Initialize a catalog source with optional edge checking and background subtraction.
+        """Initialize a catalog source with optional edge checking and
+        background subtraction.
 
         :param angular_size: half light radius of object [arcseconds]
         :type angular_size: float
@@ -228,16 +229,16 @@ class CatalogSource(SourceBase):
     def kwargs_extended_light(self, band=None):
         """Return the source light models and their parameters.
 
-        If edge filtering is enabled, remove sources whose structure reaches
-        the image border before matching. Reuse the filtered catalog for
-        later matches.
+        If edge filtering is enabled, remove sources whose structure
+        reaches the image border before matching. Reuse the filtered
+        catalog for later matches.
 
-        If background subtraction is enabled, subtract the background from
-        each image band once and set negative results to zero. 
-        
-        If no match is found after edge filtering, COSMOS Web uses DoubleSersic.
-        HST uses DoubleSersic if color gradients are enabled, or SingleSersic
-        if sersic_fallback is enabled.
+        If background subtraction is enabled, subtract the background
+        from each image band once and set negative results to zero.
+
+        If no match is found after edge filtering, COSMOS Web uses
+        DoubleSersic. HST uses DoubleSersic if color gradients are
+        enabled, or SingleSersic if sersic_fallback is enabled.
 
         :param band: Requested observing band. None selects the first
             native image and magnitude 1 for matched templates; analytic
@@ -319,8 +320,11 @@ class CatalogSource(SourceBase):
             # Commit only after every band succeeds; retries cannot subtract twice.
             results = [
                 subtract_source_background(
-                    img, self._matched_source, self._noise_kwargs,
-                    band_index=index, band_count=len(self._image_list),
+                    img,
+                    self._matched_source,
+                    self._noise_kwargs,
+                    band_index=index,
+                    band_count=len(self._image_list),
                 )
                 for index, img in enumerate(self._image_list)
             ]
