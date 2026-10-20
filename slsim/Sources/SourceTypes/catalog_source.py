@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from slsim.Sources.SourceTypes.double_sersic import DoubleSersic
 from slsim.Sources.SourceTypes.single_sersic import SingleSersic
 from slsim.Sources.SourceTypes.source_base import SourceBase
@@ -5,8 +7,7 @@ from slsim.Sources.SourceCatalogues.CosmosWebCatalog import galaxy_match as Cosm
 from slsim.Sources.SourceCatalogues.HSTCosmosCatalog import galaxy_match as HSTCosmos
 from slsim.Util.color_gradient import radial_color_gradient_image
 from slsim.Util.galaxy_background import (
-    subtract_cosmos_catalog_background,
-    subtract_hst_catalog_background,
+    subtract_source_background,
     filter_edge_catalog,
 )
 from lenstronomy.Util.param_util import ellipticity2phi_q
@@ -39,10 +40,10 @@ class CatalogSource(SourceBase):
         subtract_background=False,
         reject_edge_sources=False,
         edge_detection_kwargs=None,
+        noise_kwargs=None,
         **source_dict,
     ):
-        """Initialize a catalog source with optional screening and sky
-        subtraction.
+        """Initialize a catalog source with optional edge checking and background subtraction.
 
         :param angular_size: half light radius of object [arcseconds]
         :type angular_size: float
@@ -89,10 +90,8 @@ class CatalogSource(SourceBase):
         :param subtract_background: Experimental opt-in constant sky subtraction
          on each native catalog band, before band mixing or color gradients.
          Finite background-subtracted pixels are floored at zero.
-         HST uses the matched catalog NOISE_MEAN (missing/invalid values raise
-         ValueError). COSMOS Web estimates sky from the outskirts, requiring
-         usable sky and potentially oversubtracting wings. Analytic fallback
-         is unaffected. Pass original, uncorrected catalog cutouts.
+         Use a supplied noise mean when available; otherwise estimate sky
+         from the border. Pass original, uncorrected catalog cutouts.
         :type subtract_background: bool
         :param reject_edge_sources: Filter catalog templates before matching, cached per catalog and
          detection settings. Reject a template if any native band fails. COSMOS
@@ -104,6 +103,13 @@ class CatalogSource(SourceBase):
             None uses defaults.
 
         :type edge_detection_kwargs: dict[str, float] or None
+        :param noise_kwargs: Optional background settings: ``noise_mean`` is a
+         scalar or a list in native-band order; ``mean_key`` names a catalog
+         column. Values take priority over columns. By default read NOISE_MEAN
+         or noise_mean, then estimate from the image if neither exists.
+         COSMOS Web order is F115W, F150W, F277W, F444W; HST has one band.
+         Used for both edge screening and subtraction. Invalid means raise.
+        :type noise_kwargs: dict or None
         :return: None; initializes the catalog source and optional processing settings.
         :rtype: None
         """
@@ -118,10 +124,10 @@ class CatalogSource(SourceBase):
         self._match_n_sersic = match_n_sersic
         self._sersic_fallback = sersic_fallback
         self._subtract_background = subtract_background
-        self.background_diagnostics = None
+        self._noise_kwargs = deepcopy(noise_kwargs)
+        self._background_subtracted = False
         self._reject_edge_sources = reject_edge_sources
         self._edge_detection_kwargs = dict(edge_detection_kwargs or {})
-        self.edge_diagnostics = None
         if (
             reject_edge_sources
             and catalog_type != "COSMOS_WEB"
@@ -204,7 +210,7 @@ class CatalogSource(SourceBase):
 
     @property
     def matched_source_id(self):
-        """Return the matched template identifier, if available.
+        """Return the ID of the matched galaxy.
 
         :return: HST IDENT or COSMOS Web id; None before matching or
             after a failed match.
@@ -220,15 +226,18 @@ class CatalogSource(SourceBase):
             return None
 
     def kwargs_extended_light(self, band=None):
-        """Return lenstronomy light models after optional screening and sky
-        subtraction.
+        """Return the source light models and their parameters.
 
-        Screening precedes matching and is cached by catalog object,
-        type, path, and detection settings. Subtraction is applied once
-        to each native band, with finite valid residuals floored at
-        zero, before band mixing or colour transfer. COSMOS Web with
-        screening enabled and no match returns DoubleSersic. HST uses
-        its configured chromatic or SingleSersic fallback.
+        If edge filtering is enabled, remove sources whose structure reaches
+        the image border before matching. Reuse the filtered catalog for
+        later matches.
+
+        If background subtraction is enabled, subtract the background from
+        each image band once and set negative results to zero. 
+        
+        If no match is found after edge filtering, COSMOS Web uses DoubleSersic.
+        HST uses DoubleSersic if color gradients are enabled, or SingleSersic
+        if sersic_fallback is enabled.
 
         :param band: Requested observing band. None selects the first
             native image and magnitude 1 for matched templates; analytic
@@ -239,7 +248,7 @@ class CatalogSource(SourceBase):
             templates use INTERPOL with image (numpy.ndarray), magnitude
             (float), centre coordinates (arcsec), phi_G (radians), and
             scale (arcsec per pixel). Fallbacks return their analytic
-            model parameters. Diagnostics are stored on the instance.
+            model parameters.
         :rtype: tuple[list[str], list[dict[str, object]]]
         """
         if not hasattr(self, "_image_list"):
@@ -253,17 +262,19 @@ class CatalogSource(SourceBase):
                     self._catalog_type,
                     str(self._catalog_path),
                     tuple(sorted(self._edge_detection_kwargs.items())),
+                    repr(self._noise_kwargs),
                 )
                 if key not in cache:
-                    filtered, diagnostics = filter_edge_catalog(
+                    filtered = filter_edge_catalog(
                         catalog,
                         self._catalog_type,
                         self._catalog_path,
+                        noise_kwargs=self._noise_kwargs,
                         **self._edge_detection_kwargs,
                     )
                     # Retain original table too, so its id cannot be recycled.
-                    cache[key] = (catalog, filtered, diagnostics)
-                _, catalog, self.edge_diagnostics = cache[key]
+                    cache[key] = (catalog, filtered)
+                _, catalog = cache[key]
             self._image_list, self._scale, self._phi, self._matched_source = (
                 self._match_source(
                     angular_size=self.angular_size,
@@ -304,19 +315,17 @@ class CatalogSource(SourceBase):
             mag_source = self.extended_source_magnitude(band=band)
         center_source = self.extended_source_position
 
-        if self._subtract_background and self.background_diagnostics is None:
+        if self._subtract_background and not self._background_subtracted:
             # Commit only after every band succeeds; retries cannot subtract twice.
-            if self._catalog_type == "HST_COSMOS":
-                results = [
-                    subtract_hst_catalog_background(img, self._matched_source)
-                    for img in self._image_list
-                ]
-            else:
-                results = [
-                    subtract_cosmos_catalog_background(img) for img in self._image_list
-                ]
+            results = [
+                subtract_source_background(
+                    img, self._matched_source, self._noise_kwargs,
+                    band_index=index, band_count=len(self._image_list),
+                )
+                for index, img in enumerate(self._image_list)
+            ]
             self._image_list = [result[0] for result in results]
-            self.background_diagnostics = [result[3] for result in results]
+            self._background_subtracted = True
 
         image = self._image_for_band(band)
 

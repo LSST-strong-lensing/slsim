@@ -15,53 +15,46 @@ from astropy.stats import sigma_clip
 from scipy.ndimage import median_filter, label, binary_dilation
 
 
-def subtract_hst_catalog_background(image, matched_source):
-    """Subtract the HST catalog sky level and floor valid residuals at zero.
+def subtract_catalog_background(image, noise_data, mean_key="NOISE_MEAN"):
+    """Subtract a supplied background mean.
 
-    Use original catalog cutouts. NOISE_VARIANCE is not subtracted. The input
-    array is not modified; nonfinite pixels are preserved.
+    When the catalog metadata provides background noise data, this function 
+    reads the corresponding parameters and subtracts the background noise 
+    from the image.
 
     :param image: Two-dimensional original image in native pixel-value units.
     :type image: numpy.ndarray
-    :param matched_source: Catalog row or mapping with a finite, unmasked
-        scalar ``NOISE_MEAN`` in the same units as ``image``.
-    :type matched_source: astropy.table.Row or dict[str, object]
-    :return: ``(corrected, background, sky_mask, diagnostics)``. ``corrected``
-        is a float array of the same shape, with finite values floored at zero;
-        ``background`` is the catalog mean; ``sky_mask`` is None because no
-        sky is estimated. Diagnostics contain ``method`` (str), ``background``
-        (float), ``clipped_pixels`` (int), and ``valid_flux_before`` and
-        ``valid_flux_after`` (float pixel sums, excluding nonfinite pixels).
-    :rtype: tuple[numpy.ndarray, float, None, dict[str, object]]
+    :param noise_data: Catalog row or dictionary containing the background mean.
+    :type noise_data: astropy.table.Row or dict[str, object]
+    :param mean_key: Field containing a finite scalar mean in image units.
+    :type mean_key: str
+    :return: Corrected float image, background mean, and None (no sky mask).
+        Finite output pixels are nonnegative. The input is unchanged.
+    :rtype: tuple[numpy.ndarray, float, None]
     """
     try:
-        value = matched_source["NOISE_MEAN"]
+        value = noise_data[mean_key]
         if np.ma.is_masked(value):
             raise ValueError("masked NOISE_MEAN")
+        if np.ndim(value) != 0:
+            raise ValueError("Noise mean must be scalar.")
         background = float(value)
     except (KeyError, TypeError, ValueError, IndexError) as exc:
         raise ValueError(
-            "HST background subtraction requires valid NOISE_MEAN."
+            "Background subtraction requires a valid scalar noise mean."
         ) from exc
     if not np.isfinite(background):
-        raise ValueError("HST NOISE_MEAN must be finite.")
+        raise ValueError("Noise mean must be finite.")
     data = np.array(image, dtype=float, copy=True)
     if data.ndim != 2:
-        raise ValueError("Expected a 2D HST cutout.")
+        raise ValueError("Expected a 2D cutout.")
     valid = np.isfinite(data)
-    corrected = data.copy()
-    corrected[valid] = np.maximum(data[valid] - background, 0.0)
-    diagnostics = {
-        "method": "hst_catalog_noise_mean",
-        "background": background,
-        "clipped_pixels": int(np.count_nonzero(data[valid] - background < 0)),
-        "valid_flux_before": float(data[valid].sum()),
-        "valid_flux_after": float(corrected[valid].sum()),
-    }
-    return corrected, background, None, diagnostics
+    np.subtract(data, background, out=data, where=valid)
+    np.maximum(data, 0.0, out=data, where=valid)
+    return data, background, None
 
 
-def subtract_cosmos_catalog_background(
+def subtract_estimated_background(
     image,
     source_mask=None,
     coverage_mask=None,
@@ -69,17 +62,20 @@ def subtract_cosmos_catalog_background(
     sigma=3.0,
     dilation=2,
 ):
-    """Estimate COSMOS Web sky with sigma clipping, subtract it, and floor at
-    zero.
+    """Estimate background noise from the image, subtract it.
 
-    A central ellipse and dilated bright-source mask exclude galaxy light
-    from the outer border. Two clipping passes use a median centre, MAD-based
-    scatter, and at most ten iterations each. The final sky is the median
-    of retained pixels. Extended wings can still bias this estimate.
+    When the catalog metadata does not provide background noise data, 
+    this function will estimate the background noise from pixels near 
+    the image edges.
+    Exclude the central region and bright sources. Use 3-sigma clipping
+    to remove pixels whose values differ from the median by more than
+    three times the estimated scatter. Repeat until no more pixels are
+    removed, up to ten iterations per pass. Use the median of the
+    remaining pixels as the background noise.
 
     :param image: Original 2D cutout, at least 10 pixels per side. Not modified.
     :type image: numpy.ndarray
-    :param source_mask: Same-shape mask; True excludes pixels from sky
+    :param source_mask: Same-shape mask; True excludes pixels from background
         estimation only. Those pixels are still corrected. Default is None.
     :type source_mask: numpy.ndarray or None
     :param coverage_mask: Same-shape mask; True marks missing coverage.
@@ -95,16 +91,9 @@ def subtract_cosmos_catalog_background(
     :param dilation: Nonnegative number of bright-mask dilation iterations.
         Default is 2; zero disables dilation.
     :type dilation: int
-    :return: ``(corrected, background, sky_mask, diagnostics)``. The float
-        corrected array has the input shape and nonnegative finite valid pixels.
-        The boolean sky mask is True for pixels used to estimate the scalar
-        background. Diagnostics contain background and sky RMS (float, native
-        units), sky_pixels and clipped_pixels (int), sky_fraction (float),
-        edge_median_before/after and edge_rms_about_zero_before/after (float),
-        valid_flux_before/after (float pixel sums), and caution (str). After
-        statistics describe the floored output; sky RMS describes scatter,
-        not uncertainty in the background estimate.
-    :rtype: tuple[numpy.ndarray, float, numpy.ndarray, dict[str, object]]
+    :return: Corrected float image, background mean, and boolean sky mask.
+        True mask pixels were used to estimate the background.
+    :rtype: tuple[numpy.ndarray, float, numpy.ndarray]
     """
     data = np.array(image, dtype=float, copy=True)
     if data.ndim != 2 or min(data.shape) < 10:
@@ -121,7 +110,7 @@ def subtract_cosmos_catalog_background(
         raise ValueError("Invalid sigma or dilation.")
 
     def checked_mask(mask):
-        """Validate a mask against the enclosing image shape.
+        """Check that the mask has the same shape as the image.
 
         :param mask: Exclusion mask, or None for an all-False mask.
         :type mask: numpy.ndarray or None
@@ -163,41 +152,96 @@ def subtract_cosmos_catalog_background(
     if sky_mask.sum() < 30:
         raise ValueError("Insufficient unmasked sky; use a larger cutout.")
     background = float(np.median(data[sky_mask]))
-    corrected = data.copy()
-    corrected[valid] = np.maximum(data[valid] - background, 0.0)
-    # Include all valid border pixels in the diagnostic, including contaminants.
-    edge_values = data[valid & edge]
-    diagnostics = {
-        "background": background,
-        "sky_rms": float(np.std(data[sky_mask])),
-        "sky_pixels": int(sky_mask.sum()),
-        "sky_fraction": float(sky_mask.sum() / valid.sum()),
-        "edge_median_before": float(np.median(edge_values)),
-        "edge_median_after": float(np.median(corrected[valid & edge])),
-        "edge_rms_about_zero_before": float(np.sqrt(np.mean(edge_values**2))),
-        "edge_rms_about_zero_after": float(
-            np.sqrt(np.mean(corrected[valid & edge] ** 2))
-        ),
-        "clipped_pixels": int(np.count_nonzero(data[valid] - background < 0)),
-        "valid_flux_before": float(data[valid].sum()),
-        "valid_flux_after": float(corrected[valid].sum()),
-        "caution": "Sky is estimated on this border; edge statistics are not independent validation. Inspect masks for galaxy wings. Noise remains.",
-    }
-    return corrected, background, sky_mask, diagnostics
+    np.subtract(data, background, out=data, where=valid)
+    np.maximum(data, 0.0, out=data, where=valid)
+    return data, background, sky_mask
+
+
+def catalog_noise_data(matched_source, noise_kwargs=None, band_index=0, band_count=1):
+    """Read the background mean for the current band from the catalog or user settings.
+
+    :param matched_source: Catalog row, dictionary, or None.
+    :type matched_source: astropy.table.Row or dict or None
+    :param noise_kwargs: Optional ``noise_mean`` value or list in native-band
+        order, or ``mean_key`` naming a catalog column. A scalar applies to
+        every band. Explicit values take priority. Without options, look for
+        ``NOISE_MEAN`` then ``noise_mean``.
+    :type noise_kwargs: dict or None
+    :param band_index: Zero-based native-band index.
+    :type band_index: int
+    :param band_count: Number of native image bands.
+    :type band_count: int
+    :return: Dictionary with ``noise_mean``, or None if no mean is available.
+        Missing explicitly requested columns and invalid options raise ValueError.
+    :rtype: dict or None
+    """
+    options = {} if noise_kwargs is None else noise_kwargs
+    if not isinstance(options, dict) or set(options) - {"noise_mean", "mean_key"}:
+        raise ValueError("noise_kwargs accepts noise_mean and mean_key only.")
+    if "noise_mean" in options:
+        value = options["noise_mean"]
+    else:
+        keys = (
+            [options["mean_key"]]
+            if "mean_key" in options
+            else ["NOISE_MEAN", "noise_mean"]
+        )
+        if not all(isinstance(key, str) for key in keys):
+            raise ValueError("mean_key must be a column name.")
+        for key in keys:
+            try:
+                value = matched_source[key]
+                break
+            except (KeyError, TypeError, IndexError):
+                continue
+        else:
+            if "mean_key" in options:
+                raise ValueError("Requested noise mean column is missing.")
+            return None
+    if np.ndim(value) != 0:
+        if np.ndim(value) != 1 or len(value) != band_count:
+            raise ValueError(
+                "noise_mean must be scalar or have one value per native band."
+            )
+        value = value[band_index]
+    return {"noise_mean": value}
+
+
+def subtract_source_background(
+    image, matched_source=None, noise_kwargs=None, band_index=0, band_count=1
+):
+    """Use a supplied background noise when available; 
+    otherwise estimate it from the image.
+
+    :param image: Original two-dimensional image.
+    :type image: numpy.ndarray
+    :param matched_source: Catalog metadata.
+    :type matched_source: astropy.table.Row or dict or None
+    :param noise_kwargs: Mean values or column name; see catalog_noise_data.
+    :type noise_kwargs: dict or None
+    :param band_index: Zero-based native-band index.
+    :type band_index: int
+    :param band_count: Number of native image bands.
+    :type band_count: int
+    :return: Corrected image, background mean, and sky mask (None for a supplied mean).
+    :rtype: tuple[numpy.ndarray, float, numpy.ndarray or None]
+    """
+    noise = catalog_noise_data(matched_source, noise_kwargs, band_index, band_count)
+    if noise is not None:
+        return subtract_catalog_background(image, noise, mean_key="noise_mean")
+    return subtract_estimated_background(image)
 
 
 def check_galaxy_edge(
     image, background, margin_fraction=0.1, peak_fraction=0.01, noise_threshold=3.0
 ):
-    """Detect central source structure entering the cutout border.
+    """Check whether the central source extends into the image border.
 
-    A 3x3 median-filtered, background-subtracted copy is used for
-    detection only. Track the 8-connected component containing the
-    brightest pixel in the central half of each image dimension. The
-    threshold is the maximum of peak_fraction times that peak and
-    noise_threshold times the border MAD scatter. No flooring is applied
-    to this detection copy. Faint wings and disconnected neighbours may
-    be missed; this is not a morphology guarantee.
+    Subtract the background and smooth a copy of the image.
+    Find the brightest pixel in the central region, then identify
+    the connected pixels above the detection threshold around it.
+    Reject the image if this structure reaches the border or no
+    central source is detected.
 
     :param image: Original 2D cutout. The input is not modified.
     :type image: numpy.ndarray
@@ -260,38 +304,33 @@ def check_galaxy_edge(
     }
 
 
-def filter_edge_catalog(catalog, catalog_type, catalog_path, **edge_kwargs):
-    """Filter all native templates before parameter matching.
-
-    All four COSMOS Web bands must pass; HST uses its specified image HDU.
-    The original table and FITS files are unchanged. This function does not
-    cache results; CatalogSource caches them. Invalid images and COSMOS Web
-    sky-estimation failures reject the template, while file and HST metadata
-    errors propagate.
+def filter_edge_catalog(
+    catalog, catalog_type, catalog_path, noise_kwargs=None, **edge_kwargs
+):
+    """Remove sources whose central structure reaches the image border
+    before matching.
 
     :param catalog: Processed table. HST requires IDENT, GAL_FILENAME,
-        GAL_HDU and NOISE_MEAN; COSMOS Web requires id. Other columns are retained.
+        GAL_HDU; COSMOS Web requires id. Other columns are retained.
     :type catalog: astropy.table.Table
     :param catalog_type: Either ``HST_COSMOS`` or ``COSMOS_WEB``.
     :type catalog_type: str
     :param catalog_path: Directory containing the catalog image FITS files.
     :type catalog_path: str or pathlib.Path
+    :param noise_kwargs: Mean values or column name; see catalog_noise_data.
+    :type noise_kwargs: dict or None
     :param edge_kwargs: Keyword overrides forwarded to check_galaxy_edge:
         margin_fraction, peak_fraction, and noise_threshold (float).
     :type edge_kwargs: dict[str, float]
-    :return: ``(filtered_catalog, diagnostics)``. The new table contains only
-        accepted rows, in original order, and may be empty. Diagnostics is a
-        list in input-row order; each item has id (int), rejected (bool), and
-        bands (list of detection dictionaries). Band order is the single HST
-        HDU or F115W, F150W, F277W, F444W. Failed sky estimation has reason
-        insufficient_sky; invalid arrays have reason invalid_cutout.
-    :rtype: tuple[astropy.table.Table, list[dict[str, object]]]
+    :return: Catalog containing only sources that pass all native bands,
+        in the original order. The result may be empty.
+    :rtype: astropy.table.Table
     """
     if catalog_type not in ("HST_COSMOS", "COSMOS_WEB"):
         raise ValueError("Unsupported catalog type.")
     # Validate settings even for an empty catalog.
     check_galaxy_edge(np.zeros((10, 10)), 0, **edge_kwargs)
-    accepted, diagnostics = [], []
+    accepted = []
     for row in catalog:
         hst = catalog_type == "HST_COSMOS"
         identifier = int(row["IDENT"] if hst else row["id"])
@@ -299,9 +338,9 @@ def filter_edge_catalog(catalog, catalog_type, catalog_path, **edge_kwargs):
             row["GAL_FILENAME"] if hst else f"COSMOSWeb_galaxy_{identifier}_image.fits"
         )
         bands = []
-        with fits.open(Path(catalog_path) / name) as hdul:
+        with fits.open(Path(catalog_path) / name, memmap=False) as hdul:
             indices = [int(row["GAL_HDU"])] if hst else range(1, 5)
-            for index in indices:
+            for band_index, index in enumerate(indices):
                 img = hdul[index].data
                 if (
                     img is None
@@ -309,18 +348,20 @@ def filter_edge_catalog(catalog, catalog_type, catalog_path, **edge_kwargs):
                     or min(img.shape) < 10
                     or not np.isfinite(img).all()
                 ):
-                    bands.append({"rejected": True, "reason": "invalid_cutout"})
+                    bands.append(True)
                     continue
-                if hst:
-                    background = subtract_hst_catalog_background(img, row)[1]
+                noise = catalog_noise_data(row, noise_kwargs, band_index, len(indices))
+                if noise is not None:
+                    background = subtract_catalog_background(
+                        img, noise, mean_key="noise_mean"
+                    )[1]
                 else:
                     try:
-                        background = subtract_cosmos_catalog_background(img)[1]
+                        background = subtract_estimated_background(img)[1]
                     except ValueError:
-                        bands.append({"rejected": True, "reason": "insufficient_sky"})
+                        bands.append(True)
                         continue
-                bands.append(check_galaxy_edge(img, background, **edge_kwargs))
-        rejected = any(band["rejected"] for band in bands)
+                bands.append(check_galaxy_edge(img, background, **edge_kwargs)["rejected"])
+        rejected = any(bands)
         accepted.append(not rejected)
-        diagnostics.append({"id": identifier, "rejected": rejected, "bands": bands})
-    return catalog[np.asarray(accepted, dtype=bool)], diagnostics
+    return catalog[np.asarray(accepted, dtype=bool)]
