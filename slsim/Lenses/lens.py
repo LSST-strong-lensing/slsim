@@ -151,10 +151,18 @@ class Lens(LensedSystemBase):
         :param source_index: index of a source in source list.
         :return: x-pos, y-pos
         """
-        source_pos_x, source_pos_y = self.source(source_index).extended_source_position
-        return self._image_position_from_source(
-            source_pos_x, source_pos_y, source_index
-        )
+        if not hasattr(self, "_es_image_position_dict"):
+            self._es_image_position_dict = {}
+        if source_index not in self._es_image_position_dict:
+            source_pos_x, source_pos_y = self.source(
+                source_index
+            ).extended_source_position
+            self._es_image_position_dict[source_index] = (
+                self._image_position_from_source(
+                    source_pos_x, source_pos_y, source_index
+                )
+            )
+        return self._es_image_position_dict[source_index]
 
     def point_source_image_positions(self):
         """Returns point source image positions by solving the lens equation
@@ -179,12 +187,18 @@ class Lens(LensedSystemBase):
         :param source_index: index of a source in source list.
         :return: x-pos, y-pos
         """
-        point_source_pos_x, point_source_pos_y = self.source(
-            source_index
-        ).point_source_position
-        return self._image_position_from_source(
-            point_source_pos_x, point_source_pos_y, source_index
-        )
+        if not hasattr(self, "_ps_image_position_dict"):
+            self._ps_image_position_dict = {}
+        if source_index not in self._ps_image_position_dict:
+            point_source_pos_x, point_source_pos_y = self.source(
+                source_index
+            ).point_source_position
+            self._ps_image_position_dict[source_index] = (
+                self._image_position_from_source(
+                    point_source_pos_x, point_source_pos_y, source_index
+                )
+            )
+        return self._ps_image_position_dict[source_index]
 
     def _image_position_from_source(self, x_source, y_source, source_index):
         """Solves the lens equation.
@@ -1258,18 +1272,25 @@ class Lens(LensedSystemBase):
         :return: signed magnification of a point source (extended
             source) in same order as image positions
         """
-        lens_model_class, kwargs_lens = self.deflector_mass_model_lenstronomy(
-            source_index=source_index
-        )
-
-        if extended:
-            img_x, img_y = self._extended_source_image_positions(
+        if not hasattr(self, "_ps_magnification_cache"):
+            self._ps_magnification_cache = {}
+        cache_key = (source_index, extended)
+        if cache_key not in self._ps_magnification_cache:
+            lens_model_class, kwargs_lens = self.deflector_mass_model_lenstronomy(
                 source_index=source_index
             )
-        else:
-            img_x, img_y = self._point_source_image_positions(source_index=source_index)
-        ps_magnification = lens_model_class.magnification(img_x, img_y, kwargs_lens)
-        return ps_magnification
+            if extended:
+                img_x, img_y = self._extended_source_image_positions(
+                    source_index=source_index
+                )
+            else:
+                img_x, img_y = self._point_source_image_positions(
+                    source_index=source_index
+                )
+            self._ps_magnification_cache[cache_key] = lens_model_class.magnification(
+                img_x, img_y, kwargs_lens
+            )
+        return self._ps_magnification_cache[cache_key]
 
     @property
     def extended_source_magnification(self):
