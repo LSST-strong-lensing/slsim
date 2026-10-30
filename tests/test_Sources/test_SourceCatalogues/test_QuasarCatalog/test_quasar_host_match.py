@@ -64,11 +64,6 @@ class TestLogBlackHoleMass:
         npt.assert_allclose(log_mass, [np.log10(0.309e9), 7.45])
         npt.assert_allclose(scatter, [0.29, 0.24])
 
-    def test_bytes_galaxy_type(self):
-        """FITS round-trips strings as bytes."""
-        log_mass, _ = log_black_hole_mass(np.array([b"red"]), vel_disp=[200.0])
-        npt.assert_allclose(log_mass, np.log10(0.309e9))
-
     def test_missing_property(self):
         with pytest.raises(ValueError, match="vel_disp"):
             log_black_hole_mass(["red"], stellar_mass=[1e11])
@@ -215,12 +210,15 @@ class TestQuasarHostMatch:
             assert column in result.colnames
         assert result["host_id"][0] in [1, 2]
 
-    def test_bytes_galaxy_type_end_to_end(self):
-        galaxies = galaxy_catalog(n=5000)
-        galaxies["galaxy_type"] = np.char.encode(
-            np.asarray(galaxies["galaxy_type"], dtype=str)
+    def test_galaxy_type_read_from_fits(self):
+        """A catalog read from FITS stores galaxy_type as bytes."""
+        quasars, galaxies = quasar_catalog(n=100), galaxy_catalog(n=5000)
+        from_fits = galaxies.copy()
+        from_fits["galaxy_type"] = np.asarray(galaxies["galaxy_type"]).astype("S")
+        npt.assert_array_equal(
+            matcher(quasars, from_fits).match()["black_hole_mass_exponent"],
+            matcher(quasars, galaxies).match()["black_hole_mass_exponent"],
         )
-        assert len(matcher(quasar_catalog(n=100), galaxies).match()) > 0
 
     def test_galaxies_without_a_usable_property_are_dropped(self):
         result = matcher(
