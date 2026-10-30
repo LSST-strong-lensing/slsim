@@ -1,7 +1,7 @@
 import numpy as np
 import numpy.testing as npt
 import pytest
-from astropy.table import Table
+from astropy.table import MaskedColumn, Table
 
 from slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_host_match import (
     BLACK_HOLE_MASS_RELATIONS,
@@ -38,7 +38,7 @@ def matcher(quasars=None, galaxies=None, seed=1, **kwargs):
         quasar_catalog=quasar_catalog() if quasars is None else quasars,
         galaxy_catalog=galaxy_catalog() if galaxies is None else galaxies,
         rng=np.random.default_rng(seed),
-        progress=False,
+        verbose=False,
         **kwargs,
     )
 
@@ -72,6 +72,11 @@ class TestLogBlackHoleMass:
     def test_missing_property(self):
         with pytest.raises(ValueError, match="vel_disp"):
             log_black_hole_mass(["red"], stellar_mass=[1e11])
+
+    def test_masked_property_is_unusable(self):
+        vel_disp = MaskedColumn([200.0, 250.0], mask=[False, True])
+        log_mass, _ = log_black_hole_mass(["red", "red"], vel_disp=vel_disp)
+        assert np.isfinite(log_mass[0]) and np.isnan(log_mass[1])
 
     def test_unknown_type(self):
         with pytest.raises(ValueError, match="green"):
@@ -160,6 +165,14 @@ class TestQuasarHostMatch:
 
         npt.assert_array_equal(
             run()["black_hole_mass_exponent"], run()["black_hole_mass_exponent"]
+        )
+
+    def test_integer_seed_matches_generator(self):
+        quasars, galaxies = quasar_catalog(n=200), galaxy_catalog(n=5000)
+        with_seed = QuasarHostMatch(quasars, galaxies, rng=5, verbose=False).match()
+        npt.assert_array_equal(
+            with_seed["black_hole_mass_exponent"],
+            matcher(quasars, galaxies, seed=5).match()["black_hole_mass_exponent"],
         )
 
     def test_rejects_quasars_no_host_can_produce(self):

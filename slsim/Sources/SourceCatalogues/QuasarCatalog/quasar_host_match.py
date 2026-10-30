@@ -56,6 +56,7 @@ def log_black_hole_mass(galaxy_type, vel_disp=None, stellar_mass=None):
     :data:`BLACK_HOLE_MASS_RELATIONS`).
 
     :param galaxy_type: type of each galaxy, a key of the relations
+        (currently "red" or "blue")
     :param vel_disp: velocity dispersion of each galaxy [km/s]
     :param stellar_mass: total stellar mass of each galaxy [solar
         masses]
@@ -80,10 +81,11 @@ def log_black_hole_mass(galaxy_type, vel_disp=None, stellar_mass=None):
         values = properties[relation["property"]]
         if values is None:
             raise ValueError(
-                f"The '{name}' galaxies need a '{relation['property']}' column."
+                f"The '{name}' galaxies need '{relation['property']}' values."
             )
-        values = np.asarray(values, dtype=float)[selected]
-        # a non-positive property gives -inf/nan here, which the matcher drops
+        values = np.ma.asarray(values, dtype=float).filled(np.nan)[selected]
+        # a non-positive, NaN or masked property gives -inf/nan here;
+        # QuasarHostMatch then excludes that galaxy from the host candidates
         with np.errstate(divide="ignore", invalid="ignore"):
             log_mass[selected] = relation["intercept"] + relation["slope"] * np.log10(
                 values / relation["pivot"]
@@ -98,8 +100,8 @@ def log_bolometric_luminosity(m_i, scatter=0.0, rng=None):
     :param m_i: absolute i-band magnitude M_i(z=2)
     :param scatter: object-to-object scatter of the bolometric
         correction [dex]
-    :param rng: random number generator used for the scatter
-    :type rng: numpy.random.Generator or None
+    :param rng: random number generator or seed used for the scatter
+    :type rng: numpy.random.Generator, int or None
     """
     log_l_bol = (
         L3000_ZERO_POINT
@@ -107,7 +109,7 @@ def log_bolometric_luminosity(m_i, scatter=0.0, rng=None):
         + np.log10(BOLOMETRIC_CORRECTION_3000)
     )
     if scatter:
-        rng = np.random.default_rng() if rng is None else rng
+        rng = np.random.default_rng(rng)
         log_l_bol = log_l_bol + rng.normal(0, scatter, np.shape(log_l_bol))
     return log_l_bol
 
@@ -128,11 +130,11 @@ class QuasarHostMatch:
         min_candidates=50,
         max_delta_z=0.05,
         bolometric_correction_scatter=0.1,
-        eddington_ratio_location=ERDF_LOCATION,
-        eddington_ratio_width=ERDF_WIDTH,
+        log_eddington_ratio_location=ERDF_LOCATION,
+        log_eddington_ratio_width=ERDF_WIDTH,
         max_offset_sigma=4.0,
         rng=None,
-        progress=True,
+        verbose=False,
     ):
         """
         :param quasar_catalog: quasar catalog with a redshift column "z" and an
@@ -149,15 +151,15 @@ class QuasarHostMatch:
         :param max_delta_z: largest half-width the slice may be widened to
         :param bolometric_correction_scatter: object-to-object scatter of the
             bolometric correction [dex]
-        :param eddington_ratio_location: mean of log10(Eddington ratio)
-        :param eddington_ratio_width: standard deviation of log10(Eddington
-            ratio) [dex]
+        :param log_eddington_ratio_location: mean of log10(Eddington ratio)
+        :param log_eddington_ratio_width: standard deviation of
+            log10(Eddington ratio) [dex]
         :param max_offset_sigma: a quasar is rejected if no candidate host can
             produce it within this many combined standard deviations of the
             mass relation and Eddington-ratio distribution
-        :param rng: random number generator, for reproducible catalogs
-        :type rng: numpy.random.Generator or None
-        :param progress: whether to show a progress bar
+        :param rng: random number generator or seed, for reproducible catalogs
+        :type rng: numpy.random.Generator, int or None
+        :param verbose: whether to show a progress bar
         """
         self.quasar_catalog = quasar_catalog
         self.galaxy_catalog = galaxy_catalog
@@ -165,11 +167,11 @@ class QuasarHostMatch:
         self.min_candidates = min_candidates
         self.max_delta_z = max_delta_z
         self.bc_scatter = bolometric_correction_scatter
-        self.erdf_location = eddington_ratio_location
-        self.erdf_width = eddington_ratio_width
+        self.erdf_location = log_eddington_ratio_location
+        self.erdf_width = log_eddington_ratio_width
         self.max_offset_sigma = max_offset_sigma
-        self.rng = np.random.default_rng() if rng is None else rng
-        self.progress = progress
+        self.rng = np.random.default_rng(rng)
+        self.verbose = verbose
         # indices of the quasars no host galaxy could account for
         self.rejected_indices = []
 
@@ -196,7 +198,7 @@ class QuasarHostMatch:
         for i in tqdm(
             range(len(quasar_z)),
             desc="Matching quasars with host galaxies",
-            disable=not self.progress,
+            disable=not self.verbose,
         ):
             start, end = self._candidate_range(galaxy_z, quasar_z[i])
             mean, spread, c = log_mass[start:end], scatter[start:end], c_all[i]
@@ -230,6 +232,8 @@ class QuasarHostMatch:
         galaxies["black_hole_mass_exponent"] = matched[:, 2]
         galaxies["eddington_ratio"] = 10 ** matched[:, 3]
         galaxies["log_bolometric_luminosity"] = log_l_bol[quasar_index]
+        # the host sits at the quasar redshift; dropping its own "z" (within
+        # the slice half-width) keeps a single "z" column in the output
         galaxies.remove_column("z")
         return hstack(
             [quasars, galaxies],
@@ -238,6 +242,8 @@ class QuasarHostMatch:
         )
 
     def _validate(self):
+        """Check that both catalogs have the columns the matching needs and
+        that the Eddington-ratio width is positive."""
         for table, name, columns in (
             (self.quasar_catalog, "quasar", ("z", "M_i")),
             (self.galaxy_catalog, "galaxy", ("z", "galaxy_type")),
@@ -246,7 +252,7 @@ class QuasarHostMatch:
                 if column not in table.colnames:
                     raise ValueError(f"The {name} catalog needs a '{column}' column.")
         if self.erdf_width <= 0:
-            raise ValueError("eddington_ratio_width must be positive.")
+            raise ValueError("log_eddington_ratio_width must be positive.")
 
     def _prepare_galaxies(self):
         """Sort the galaxies by redshift, dropping those whose relation cannot
@@ -286,6 +292,8 @@ class QuasarHostMatch:
             delta_z = min(delta_z * 2, self.max_delta_z)
 
     def _warn_about_rejections(self):
+        """Warn how many quasars were dropped for lack of a plausible host, and
+        the M_i and redshift range they span."""
         if not self.rejected_indices:
             return
         n, n_total = len(self.rejected_indices), len(self.quasar_catalog)

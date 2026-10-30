@@ -322,7 +322,7 @@ class TestQuasarRate:
         self.quasar_rate.host_galaxy_candidate = Table(
             {"z": [0.50], "vel_disp": [50], "galaxy_type": ["red"]}
         )
-        self.quasar_rate.host_match_kwargs = {"progress": False}
+        self.quasar_rate.host_match_kwargs = {"verbose": False}
 
         def run(seed):
             return self.quasar_rate.quasar_sample(

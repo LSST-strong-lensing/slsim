@@ -99,7 +99,7 @@ class QuasarRate(object):
          :class:`~slsim.Sources.SourceCatalogues.QuasarCatalog.quasar_host_match.QuasarHostMatch`,
          which assigns host galaxies, black hole masses and Eddington ratios
          when `host_galaxy=True` is passed to `quasar_sample` (e.g.
-         ``{"progress": False}``). Its ``rng`` defaults to a generator seeded
+         ``{"verbose": False}``). Its ``rng`` defaults to a generator seeded
          with the `seed` of `quasar_sample`.
         :type host_match_kwargs: dict or None
         """
