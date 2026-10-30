@@ -85,14 +85,24 @@ class PointSource(object):
 
         :param band: Imaging band
         :type band: str
-        :param image_observation_times: Images observation time for an
-            image.
+        :param image_observation_times: Source-frame observation time(s).
+            If None, return :meth:`reference_magnitude`.
         :return: Magnitude of the point source in the specified band
-        :rtype: float
+        :rtype: float or array-like
         """
         return self._point_source.point_source_magnitude(
             band=band, image_observation_times=image_observation_times
         )
+
+    def reference_magnitude(self, band):
+        """Return the point source magnitude used when no time is supplied.
+
+        :param band: Imaging band
+        :type band: str
+        :return: Reference magnitude for the requested band
+        :rtype: float
+        """
+        return self._point_source.reference_magnitude(band)
 
     def point_source_type(self, image_positions=False):
         """Type of point source model.

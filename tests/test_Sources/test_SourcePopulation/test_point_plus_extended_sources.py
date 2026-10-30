@@ -48,6 +48,15 @@ class TestPointPlusExtendedSources(object):
         point_plus_extended_sources2 = self.pe_source.draw_source(z_max=-1)
         assert point_plus_extended_sources2 is None
 
+    def test_draw_source_dict(self):
+        kwargs_source = self.pe_source.draw_source_dict()
+        assert kwargs_source["point_source_type"] == "quasar"
+        assert kwargs_source["extended_source_type"] == "single_sersic"
+        assert kwargs_source["variability_model"] == "light_curve"
+        assert kwargs_source["z"] > 0
+
+        assert self.pe_source.draw_source_dict(z_max=-1) is None
+
     def test_catalog_overrides_joint_kwargs_on_collision(self):
         """A catalog column should override a same-named joint kwarg, not
         crash."""

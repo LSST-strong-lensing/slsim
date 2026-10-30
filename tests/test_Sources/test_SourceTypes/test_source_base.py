@@ -1,5 +1,6 @@
 from slsim.Sources.SourceTypes.source_base import SourceBase
 from numpy import testing as npt
+import numpy as np
 from astropy.table import Table
 import pytest
 
@@ -78,6 +79,16 @@ class TestSourceBase:
         source = SourceBase(z=1, extended_source=False)
         mag = source.extended_source_magnitude(band="i")
         assert mag is None
+
+    def test_point_source_magnitude_without_time(self):
+        source = SourceBase(z=1, point_source=True, ps_mag_i=np.array([21, 18, 24]))
+        assert source.reference_magnitude("i") == 21
+        assert source.point_source_magnitude("i") == 21
+        assert source.point_source_magnitude("i", image_observation_times=0) == 21
+
+        # when no point_source then [] is returned
+        source = SourceBase(z=1, point_source=False)
+        assert source.point_source_magnitude("i") == []
 
     def test_kwargs_point_source(self):
         source = SourceBase(z=1, point_source=False)

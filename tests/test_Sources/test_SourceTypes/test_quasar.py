@@ -144,7 +144,10 @@ class TestQuasar:
 
     def test_point_source_magnitude(self):
         # Test basic LSST magnitude (static check)
-        # This calls super().point_source_magnitude which checks source_dict
+        # Reference magnitudes use stored values without generating a light curve.
+        assert not self.source._variability_computed
+        assert self.source.reference_magnitude("i") == 20
+        assert not self.source._variability_computed
         assert self.source.point_source_magnitude("i") == 20
 
         # Test that calling point_source_magnitude WITH time triggers variability
@@ -167,6 +170,7 @@ class TestQuasar:
         # 3. After computation, mean magnitude is added to source_dict,
         # so static call should now work
         roman_static = self.source.point_source_magnitude("F062")
+        assert roman_static == self.source.reference_magnitude("F062")
         assert isinstance(roman_static, float)
         assert roman_static != 20  # Should be different from i-band magnitude
 

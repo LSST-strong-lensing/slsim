@@ -10,6 +10,7 @@ import astropy.units as u
 from slsim.Pipelines import SkyPyPipeline
 from slsim.Sources.SourcePopulation.galaxies import Galaxies
 from slsim.Sources.SourceTypes.single_sersic import SingleSersic
+from slsim.Sources.SourceTypes.double_sersic import DoubleSersic
 from slsim.Sources.SourceTypes.catalog_source import CatalogSource
 from slsim.Sources.source import Source
 from slsim.Deflectors.deflector import Deflector
@@ -50,6 +51,9 @@ class TestCatalogSource:
         for band in ROMAN_BAND_LIST + EUCLID_BAND_LIST + LSST_BAND_LIST:
             key = "mag_" + band
             source_dict.update({key: 20.3})
+
+        self.cosmo = cosmo
+        self.source_dict = source_dict
 
         self.source1 = CatalogSource(
             cosmo=cosmo,
@@ -116,6 +120,32 @@ class TestCatalogSource:
         assert self.source2.matched_source["id"] == 6701
         assert self.source2.matched_source_id == 6701
 
+    @pytest.mark.parametrize("missing_size", [False, True])
+    def test_cosmos_web_angular_size(self, tmp_path, monkeypatch, missing_size):
+        catalog = self.source2.final_catalog.copy()
+        catalog.remove_column("sersic_radius")
+        if missing_size:
+            catalog.remove_column("angular_size")
+        catalog.write(tmp_path / "COSMOSWeb_galaxy_catalog.fits", format="fits")
+
+        # Read the modified catalog instead of reusing the class cache.
+        monkeypatch.delattr(CatalogSource, "processed_cosmos_web_catalog")
+        kwargs = {
+            "cosmo": self.cosmo,
+            "catalog_path": str(tmp_path),
+            "catalog_type": "COSMOS_WEB",
+            **self.source_dict,
+        }
+        if missing_size:
+            with pytest.raises(ValueError, match="must contain either a column"):
+                CatalogSource(**kwargs)
+        else:
+            source = CatalogSource(**kwargs)
+            np.testing.assert_allclose(
+                source.final_catalog["angular_size"], catalog["angular_size"]
+            )
+            assert source.final_catalog["angular_size"].unit == u.arcsec
+
     def test_select_image_from_band(self):
 
         _, _ = self.source2.kwargs_extended_light(band=None)
@@ -133,6 +163,108 @@ class TestCatalogSource:
             self.source2._select_image_from_band,
             band="wrong",
         )
+
+    def test_hst_band_dependent_color_gradient(self):
+        source_dict = dict(self.source1.source_dict)
+        source = CatalogSource(
+            angular_size=self.source1.angular_size,
+            e1=self.source1.ellipticity[0],
+            e2=self.source1.ellipticity[1],
+            n_sersic=0.8,
+            cosmo=self.source1._cosmo,
+            catalog_path=hst_cosmos_path,
+            catalog_type="HST_COSMOS",
+            band_dependent_color_gradient=True,
+            color_gradient={
+                "grad_color": -0.3,
+                "reference_band": "F814W",
+            },
+            **source_dict,
+        )
+        _, reference_kwargs = source.kwargs_extended_light(band="i")
+        reference_image = source._image_for_band(band=None)
+
+        assert not np.allclose(reference_kwargs[0]["image"], reference_image)
+        np.testing.assert_allclose(
+            np.sum(reference_kwargs[0]["image"]), np.sum(reference_image)
+        )
+        np.testing.assert_allclose(reference_image, source._image_list[0])
+
+        source._color_gradient["grad_color"] = 0.0
+        np.testing.assert_allclose(
+            source._image_for_band(band="i"), source._image_for_band(band=None)
+        )
+
+    def test_hst_chromatic_double_sersic_fallback(self):
+        source_dict = {
+            "z": 0.5,
+            "mag_g": 20.3,
+            "mag_i": 20.3,
+            "mag_y": 20.3,
+            "n_sersic": 0.8,
+            "angular_size": 1.3,
+            "e1": 0.09697001616620306,
+            "e2": 0.040998265256000574,
+            "center_x": 0.0,
+            "center_y": 0.0,
+        }
+        source = CatalogSource(
+            cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
+            catalog_path=hst_cosmos_path,
+            catalog_type="HST_COSMOS",
+            max_scale=0.1,
+            band_dependent_color_gradient=True,
+            color_gradient={
+                "component_spectral_slopes": [2.0, -1.0],
+                "reference_band": "i",
+            },
+            **source_dict,
+        )
+        source_model, kwargs_light = source.kwargs_extended_light(band="y")
+        _, kwargs_light_blue = source.kwargs_extended_light(band="g")
+
+        assert source_model == ["SERSIC_ELLIPSE", "SERSIC_ELLIPSE"]
+        assert isinstance(source.double_sersic, DoubleSersic)
+        assert len(kwargs_light) == 2
+
+        flux_y = 10 ** (-np.array([item["magnitude"] for item in kwargs_light]) / 2.5)
+        flux_g = 10 ** (
+            -np.array([item["magnitude"] for item in kwargs_light_blue]) / 2.5
+        )
+        assert flux_y[0] / np.sum(flux_y) > flux_g[0] / np.sum(flux_g)
+
+    def test_chromatic_catalog_source_validation(self):
+        source_dict = dict(self.source1.source_dict)
+        common_kwargs = {
+            "angular_size": self.source1.angular_size,
+            "e1": self.source1.ellipticity[0],
+            "e2": self.source1.ellipticity[1],
+            "n_sersic": 0.8,
+            "cosmo": self.source1._cosmo,
+            "catalog_path": hst_cosmos_path,
+            "band_dependent_color_gradient": True,
+        }
+
+        cosmos_web_kwargs = dict(common_kwargs)
+        cosmos_web_kwargs["catalog_path"] = cosmos_web_path
+        with pytest.raises(ValueError, match="received catalog_type='COSMOS_WEB'"):
+            CatalogSource(
+                catalog_type="COSMOS_WEB",
+                **cosmos_web_kwargs,
+                **source_dict,
+            )
+
+        with pytest.raises(ValueError, match=r"received None \(type NoneType\)"):
+            CatalogSource(catalog_type="HST_COSMOS", **common_kwargs, **source_dict)
+
+        with pytest.raises(ValueError, match="fallback_double_sersic_kwargs"):
+            CatalogSource(
+                catalog_type="HST_COSMOS",
+                color_gradient={"grad_color": -0.1},
+                fallback_double_sersic_kwargs="invalid",
+                **common_kwargs,
+                **source_dict,
+            )
 
     def test_redshift(self):
         assert self.source1.redshift == 3.5
@@ -454,6 +586,204 @@ def test_galaxies():
     )
     source = source_simulation.draw_source()
     assert isinstance(source._source, CatalogSource)
+
+
+@pytest.mark.parametrize("catalog_type, count", [("HST_COSMOS", 1), ("COSMOS_WEB", 4)])
+@pytest.mark.parametrize("enabled", [False, True])
+@pytest.mark.parametrize("provided", [False, True, "column"])
+def test_background_native_bands(monkeypatch, catalog_type, count, enabled, provided):
+    attr = (
+        "processed_hst_cosmos_catalog" if count == 1 else "processed_cosmos_web_catalog"
+    )
+    monkeypatch.setattr(CatalogSource, attr, None, raising=False)
+    means = [2 * (i + 1) for i in range(count)]
+    if provided == "column":
+        noise_kwargs = {"mean_key": "SKY"}
+        metadata = {"SKY": means}
+    else:
+        noise_kwargs = {"noise_mean": means} if provided else None
+        metadata = {"NOISE_MEAN": 2.0} if count == 1 else {}
+    source = CatalogSource(
+        angular_size=0.3,
+        e1=0.1,
+        e2=0.0,
+        n_sersic=1,
+        cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
+        catalog_type=catalog_type,
+        catalog_path="unused",
+        subtract_background=enabled,
+        noise_kwargs=noise_kwargs,
+        z=1,
+        mag_i=22,
+        mag_r=22,
+        center_x=0,
+        center_y=0,
+    )
+    y, x = np.indices((80, 80))
+    galaxy = 20 * np.exp(-((x - 40) ** 2 + (y - 40) ** 2) / 40)
+    galaxy[0, 0] = -5
+    images = [galaxy + 2 * (i + 1) for i in range(count)]
+    originals = [a.copy() for a in images]
+    monkeypatch.setattr(
+        source, "_match_source", lambda **kw: (images, 0.03, 0, metadata)
+    )
+    assert source.matched_source_id is None
+    _, first = source.kwargs_extended_light("i")
+    saved = [a.copy() for a in source._image_list]
+    source.kwargs_extended_light("r")
+    for i, (raw, current) in enumerate(zip(originals, source._image_list)):
+        np.testing.assert_array_equal(images[i], raw)
+        np.testing.assert_array_equal(current, saved[i])
+        np.testing.assert_allclose(
+            current, np.maximum(galaxy, 0) if enabled else raw, atol=1e-6
+        )
+    expected = source._image_list[0 if count == 1 else 2]
+    np.testing.assert_array_equal(first[0]["image"], expected)
+    assert source._background_subtracted == enabled
+
+
+@pytest.mark.parametrize("catalog_type, count", [("HST_COSMOS", 1), ("COSMOS_WEB", 4)])
+def test_edge_rejection_falls_back_once(monkeypatch, catalog_type, count):
+    attr = (
+        "processed_hst_cosmos_catalog" if count == 1 else "processed_cosmos_web_catalog"
+    )
+    monkeypatch.setattr(CatalogSource, attr, None, raising=False)
+    source = CatalogSource(
+        angular_size=0.3,
+        e1=0.1,
+        e2=0,
+        n_sersic=1,
+        cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
+        catalog_type=catalog_type,
+        catalog_path="unused",
+        reject_edge_sources=True,
+        sersic_fallback=True,
+        subtract_background=True,
+        z=1,
+        mag_i=22,
+        mag_r=22,
+        center_x=0,
+        center_y=0,
+    )
+    from astropy.table import Table
+    import importlib
+
+    module = importlib.import_module("slsim.Sources.SourceTypes.catalog_source")
+    source.final_catalog = Table({"id": [1]})
+    monkeypatch.setattr(CatalogSource, "_edge_catalog_cache", None, raising=False)
+    calls = []
+
+    def screen(catalog, *args, **kwargs):
+        calls.append("screen")
+        return catalog[:0]
+
+    def match(**kwargs):
+        assert len(kwargs["processed_catalog"]) == 0
+        assert calls == ["screen"]
+        calls.append("match")
+        return None, None, None, None
+
+    monkeypatch.setattr(module, "filter_edge_catalog", screen)
+    monkeypatch.setattr(source, "_match_source", match)
+    for band in ["i", "r"]:
+        models, _ = source.kwargs_extended_light(band)
+        assert len(models) == (2 if catalog_type == "COSMOS_WEB" else 1)
+        assert "INTERPOL" not in models
+    assert calls == ["screen", "match"]
+    assert not source._background_subtracted
+
+
+def test_hst_edge_rejection_requires_fallback(monkeypatch):
+    monkeypatch.setattr(
+        CatalogSource, "processed_hst_cosmos_catalog", None, raising=False
+    )
+    with pytest.raises(ValueError, match="Edge rejection requires"):
+        CatalogSource(
+            angular_size=0.3,
+            e1=0.1,
+            e2=0,
+            n_sersic=1,
+            cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
+            catalog_type="HST_COSMOS",
+            catalog_path="unused",
+            reject_edge_sources=True,
+            z=1,
+            mag_i=22,
+            center_x=0,
+            center_y=0,
+        )
+
+
+def test_noise_settings_separate_screening_cache(monkeypatch):
+    import importlib
+    from astropy.table import Table
+
+    module = importlib.import_module("slsim.Sources.SourceTypes.catalog_source")
+    monkeypatch.setattr(
+        CatalogSource, "processed_cosmos_web_catalog", None, raising=False
+    )
+    monkeypatch.setattr(CatalogSource, "_edge_catalog_cache", None, raising=False)
+    table = Table({"id": [1]})
+    calls = []
+
+    def screen(catalog, *args, noise_kwargs=None, **kwargs):
+        calls.append(noise_kwargs["noise_mean"])
+        return catalog[:0]
+
+    monkeypatch.setattr(module, "filter_edge_catalog", screen)
+    for mean in [1, 2, 1]:
+        options = {"noise_mean": mean}
+        source = CatalogSource(
+            angular_size=0.3,
+            e1=0.1,
+            e2=0,
+            n_sersic=1,
+            cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
+            catalog_type="COSMOS_WEB",
+            catalog_path="unused",
+            reject_edge_sources=True,
+            noise_kwargs=options,
+            z=1,
+            mag_i=22,
+            center_x=0,
+            center_y=0,
+        )
+        options["noise_mean"] = 99
+        source.final_catalog = table
+        monkeypatch.setattr(
+            source, "_match_source", lambda **kw: (None, None, None, None)
+        )
+        source.kwargs_extended_light("i")
+    assert calls == [1, 2]
+
+
+def test_failed_band_does_not_partially_subtract(monkeypatch):
+    monkeypatch.setattr(
+        CatalogSource, "processed_cosmos_web_catalog", None, raising=False
+    )
+    source = CatalogSource(
+        angular_size=0.3,
+        e1=0.1,
+        e2=0,
+        n_sersic=1,
+        cosmo=FlatLambdaCDM(H0=70, Om0=0.3),
+        catalog_type="COSMOS_WEB",
+        catalog_path="unused",
+        subtract_background=True,
+        noise_kwargs={"noise_mean": [1, 2, np.nan, 4]},
+        z=1,
+        mag_i=22,
+        center_x=0,
+        center_y=0,
+    )
+    images = [np.full((40, 40), 10.0) for _ in range(4)]
+    monkeypatch.setattr(source, "_match_source", lambda **kw: (images, 0.03, 0, {}))
+    for _ in range(2):
+        with pytest.raises(ValueError, match="finite"):
+            source.kwargs_extended_light("i")
+        assert not source._background_subtracted
+        for image in source._image_list:
+            np.testing.assert_array_equal(image, np.full((40, 40), 10.0))
 
 
 if __name__ == "__main__":

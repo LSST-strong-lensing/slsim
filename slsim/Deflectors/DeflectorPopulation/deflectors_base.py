@@ -23,6 +23,7 @@ class DeflectorsBase(Galaxies):
         light_type="single_sersic",
         kwargs_mass2light=None,
         catalog_type=None,
+        sis_convention=True,
     ):
         """
 
@@ -47,6 +48,11 @@ class DeflectorsBase(Galaxies):
          size of the galaxy in arcsec and specify catalog_type as None. Otherwise, by
          default, this class considers deflector catalog is generated using skypy
          pipeline.
+        :param sis_convention: if True, the Einstein radius of an EPL deflector is
+         normalized with the SIS convention. Only relevant for mass_type="EPL" with
+         gamma_pl != 2. The non-SIS normalization solves the spherical Jeans equation
+         for every deflector and is orders of magnitude slower.
+        :type sis_convention: bool
         """
         super().__init__(
             galaxy_list=deflector_table,
@@ -65,6 +71,7 @@ class DeflectorsBase(Galaxies):
             kwargs_mass2light = {}
         self._kwargs_mass2light = kwargs_mass2light
         self._gamma_pl = gamma_pl
+        self._sis_convention = sis_convention
         self._vel_disp_from_stellar_mass = None
         # Will be overwriten by interpolation function deriving velocity dispersion from stellar mass
 
@@ -124,6 +131,7 @@ class DeflectorsBase(Galaxies):
         if self.mass_type in ["EPL"]:
             if self._gamma_pl is not None:
                 kwargs_mass["gamma_pl"] = _gamma_pl(self._gamma_pl)
+            kwargs_mass["sis_convention"] = self._sis_convention
         if (
             "vel_disp" not in kwargs_mass
             and "stellar_mass" in kwargs_source
