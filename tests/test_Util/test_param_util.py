@@ -30,6 +30,8 @@ from slsim.Util.param_util import (
     gaussian_psf,
     update_cosmology_in_yaml_file,
     draw_coord_in_circle,
+    flux_to_ab_magnitude,
+    ab_magnitude_to_flux,
 )
 from slsim.Sources.SourceVariability.variability import Variability
 from astropy.io import fits
@@ -567,6 +569,11 @@ def test_update_cosmology_in_yaml_file():
     assert "H0:" in updated_yaml
     assert "Om0:" in updated_yaml
     assert "Tcmb0:" in updated_yaml
+
+
+def test_flux_ab_magnitude_conversion():
+    npt.assert_almost_equal(flux_to_ab_magnitude(3631 * u.Jy), 0)
+    npt.assert_almost_equal(ab_magnitude_to_flux(flux_to_ab_magnitude(1.0)), 1.0)
 
 
 if __name__ == "__main__":

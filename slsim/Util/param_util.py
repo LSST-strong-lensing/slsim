@@ -868,3 +868,35 @@ def image_separation_from_positions(image_positions):
         )
         image_separation = np.max(separations)
     return image_separation
+
+
+def flux_to_ab_magnitude(flux, flux_unit=u.mJy):
+    """Converts a flux density into an AB magnitude.
+
+    .. math::
+        m_{AB} = -2.5 \\log_{10}(S_{\\nu} / 3631 {\\rm Jy})
+
+    :param flux: flux density (float, array or astropy Quantity). If not a Quantity,
+     it is interpreted in units of flux_unit.
+    :param flux_unit: unit of the flux if flux is not an astropy Quantity
+    :type flux_unit: astropy unit
+    :return: AB magnitude
+    """
+    if isinstance(flux, u.Quantity):
+        flux_jy = flux.to_value(u.Jy)
+    else:
+        flux_jy = (np.asarray(flux, dtype=float) * flux_unit).to_value(u.Jy)
+    return -2.5 * np.log10(flux_jy / 3631.0)
+
+
+def ab_magnitude_to_flux(magnitude, flux_unit=u.mJy):
+    """Converts an AB magnitude into a flux density (inverse of
+    flux_to_ab_magnitude).
+
+    :param magnitude: AB magnitude
+    :param flux_unit: unit of the returned flux
+    :type flux_unit: astropy unit
+    :return: flux density in units of flux_unit (float or array)
+    """
+    flux_jy = 3631.0 * 10 ** (-0.4 * np.asarray(magnitude, dtype=float))
+    return (flux_jy * u.Jy).to_value(flux_unit)

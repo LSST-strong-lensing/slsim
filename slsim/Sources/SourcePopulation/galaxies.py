@@ -44,8 +44,9 @@ class Galaxies(SourcePopBase):
          solid angle.
         :type sky_area: `~astropy.units.Quantity`
         :param catalog_type: type of the catalog. If someone wants to use scotch
-         catalog, they need to specify it. Default will be "skypy"
-        :type catalog_type: str. eg: "scotch" or None
+         catalog, they need to specify it. Default will be "skypy". For external catalogs
+         (e.g. created with prepare_source_catalog()), use "external" to keep the provided sizes.
+        :type catalog_type: str. eg: "scotch", "external" or None
         :param downsample_to_dc2: Boolean. If True, downsamples the given galaxy
          population at redshift greater than 1.5 to DC2 galaxy population.
         :param size_model: If "Bernardi", computes galaxy size using g-band
